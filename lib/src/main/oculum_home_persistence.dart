@@ -1,0 +1,3123 @@
+part of '../../main.dart';
+
+// ignore_for_file: invalid_use_of_protected_member, unused_element
+
+extension _OculumHomePersistence on _OculumHomePageState {
+  List<CharacterArt> artiBase() {
+    return [
+      CharacterArt(
+        nome: 'Prima Art',
+        tipo: 'Oculum Art',
+        descrizione: 'La prima manifestazione del potere personale.',
+        sbloccata: true,
+        openName: 'Open della Prima Art',
+        openDescription:
+            'Si sblocca quando tutte le Skill della Prima Art arrivano al livello 3.',
+        openBuff: '@???',
+        openSkill: 'Forma completa della Prima Art.',
+        skills: [
+          ArtSkill(nome: 'Prima Skill', livello: 0),
+          ArtSkill(nome: 'Seconda Skill', livello: 0),
+          ArtSkill(nome: 'Terza Skill', livello: 0),
+        ],
+      ),
+      CharacterArt(
+        nome: 'Seconda Art',
+        tipo: '???',
+        descrizione: 'Una seconda via ancora da comprendere.',
+        sbloccata: false,
+        openName: 'Open della Seconda Art',
+        openDescription:
+            'Si sblocca quando tutte le Skill della Seconda Art arrivano al livello 3.',
+        openBuff: '@???',
+        openSkill: 'Forma completa della Seconda Art.',
+        skills: [
+          ArtSkill(nome: 'Prima Skill', livello: 0),
+          ArtSkill(nome: 'Seconda Skill', livello: 0),
+          ArtSkill(nome: 'Terza Skill', livello: 0),
+        ],
+      ),
+      CharacterArt(
+        nome: 'Terza Art',
+        tipo: '???',
+        descrizione: 'Una terza forma del destino.',
+        sbloccata: false,
+        openName: 'Open della Terza Art',
+        openDescription:
+            'Si sblocca quando tutte le Skill della Terza Art arrivano al livello 3.',
+        openBuff: '@???',
+        openSkill: 'Forma completa della Terza Art.',
+        skills: [
+          ArtSkill(nome: 'Prima Skill', livello: 0),
+          ArtSkill(nome: 'Seconda Skill', livello: 0),
+          ArtSkill(nome: 'Terza Skill', livello: 0),
+        ],
+      ),
+    ];
+  }
+
+  void assicuraArtiBase() {
+    final base = artiBase();
+
+    if (arti.isEmpty) {
+      arti.addAll(base);
+    } else {
+      while (arti.length < base.length) {
+        arti.add(base[arti.length]);
+      }
+    }
+
+    for (final art in arti) {
+      while (art.skills.length < 3) {
+        art.skills.add(
+          ArtSkill(nome: '${t('Skill', 'Skill')} ${art.skills.length + 1}'),
+        );
+      }
+      final maxLevel = artMaxLevel(art);
+      for (final skill in art.skills) {
+        skill.livello = skill.livello.clamp(0, maxLevel).toInt();
+      }
+
+      final index = arti.indexOf(art);
+      if (index >= 0 && index < base.length) {
+        final baseArt = base[index];
+        if (art.openName.trim().isEmpty) art.openName = baseArt.openName;
+        if (art.openDescription.trim().isEmpty) {
+          art.openDescription = baseArt.openDescription;
+        }
+        if (art.openBuff.trim().isEmpty) art.openBuff = baseArt.openBuff;
+        if (art.openSkill.trim().isEmpty) art.openSkill = baseArt.openSkill;
+      }
+    }
+  }
+
+  void programmaSalvataggio() {
+    invalidateDerivedDataCaches();
+    autosaveTimer?.cancel();
+
+    autosaveTimer = Timer(const Duration(milliseconds: 900), () {
+      if (salvataggioBloccatoPerErrore) {
+        debugPrint(
+          'Autosave bloccato: il salvataggio precedente non deve essere sovrascritto.',
+        );
+        return;
+      }
+
+      unawaited(salvaDati());
+    });
+  }
+
+  Map<String, dynamic> statoVuotoPersonaggio({
+    String nome = '???',
+    String tipo = 'Personaggio',
+    int livello = 0,
+    int grado = 0,
+  }) {
+    return {
+      'nome': nome,
+      'tipoScheda': tipo,
+      'razza': '',
+      'livello': livello.toString(),
+      'grado': grado.toString(),
+      'exp': '0',
+      'expNomePersonalizzato': '',
+      'puoEssereOsservato': false,
+      'osservazionePuntiDaAssegnare': 0,
+      'osservazioneStatScelta': 'Resilienza',
+      'osservazioneStatAssegnata': '',
+      'osservazionePuntiAssegnati': <String, int>{
+        'resilienza': 0,
+        'volonta': 0,
+        'materia': 0,
+        'oculum': 0,
+      },
+      'osservazionePuntiApplicati': false,
+      'resilienza': tipo == 'Mostro' ? '6' : '3',
+      'volonta': tipo == 'Mostro' ? '3' : '1',
+      'materia': tipo == 'Mostro' ? '3' : '0',
+      'oculum': tipo == 'Mostro' ? '2' : '1',
+      'currentResilienza': tipo == 'Mostro' ? '6' : '3',
+      'currentVolonta': tipo == 'Mostro' ? '3' : '1',
+      'currentMateria': tipo == 'Mostro' ? '3' : '0',
+      'currentOculum': tipo == 'Mostro' ? '2' : '1',
+      'maxOculum': tipo == 'Mostro' ? 2 : 1,
+      'currentHp': tipo == 'Mostro' ? '60' : '30',
+      'hpTemp': '0',
+      'hpTempBonusConsumati': 0,
+      'scudo': '0',
+      'scudoBonusConsumati': 0,
+      'scudoCritico': '0',
+      'scudoOculum': '0',
+      'scudoOculumMax': '0',
+      'attaccoRapido': '0',
+      'cmRapido': '0',
+      'difesaRapida': '0',
+      'reazioni': '1',
+      'reazioniVeloci': '0',
+      'buffMalusRapidi': '',
+      'rebirthato': false,
+      'linguaInglese': false,
+      'tutorialCompletato': false,
+      'modalitaDesktop': false,
+      'modalitaVeloce': false,
+      'modalitaLeggera': false,
+      'desktopSideMenuOpen': false,
+      'background':
+          'Scrivi qui il passato, lo scopo, i legami, le paure e il destino del personaggio.',
+      'notePersonaggio': '',
+      'textAttachments': <String, List<Map<String, dynamic>>>{},
+      'obser': '0',
+      'ascensionDust': '0',
+      'ispirazioni': '0',
+      'superIspirazioni': '0',
+      'ispirazioniOculum': '0',
+      'karma': '0',
+      'cenere': '0',
+      'sessioniSenzaBisogni': '0',
+      'giorniSenzaCiboAcqua': '0',
+      'tempResilienza': 0,
+      'tempVolonta': 0,
+      'tempMateria': 0,
+      'tempOculum': 0,
+      'raccoltaResilienzaSpesa': 0,
+      'raccoltaVolontaSpesa': 0,
+      'raccoltaMateriaSpesa': 0,
+      'raccoltaOculumSpesa': 0,
+      'levelUpDaAssegnare': 0,
+      'monsterStatPoints': tipo == 'Mostro' ? livello * 9 : 0,
+      'titoli': [],
+      'trattiRazziali': [],
+      'inventario': [],
+      'skills': [],
+      'arti': artiBase().map((x) => x.toJson()).toList(),
+      'diarioPagine': [],
+      'logEventi': [],
+      'primaryColor': _OculumHomePageState.defaultPrimaryColor.toARGB32(),
+      'secondaryColor': _OculumHomePageState.defaultSecondaryColor.toARGB32(),
+      'tertiaryColor': _OculumHomePageState.defaultTertiaryColor.toARGB32(),
+      'eyeUtilityColor': _OculumHomePageState.defaultEyeUtilityColor.toARGB32(),
+      'backgroundTopColor': _OculumHomePageState.defaultBackgroundTopColor
+          .toARGB32(),
+      'backgroundMidColor': _OculumHomePageState.defaultBackgroundMidColor
+          .toARGB32(),
+      'backgroundBottomColor': _OculumHomePageState.defaultBackgroundBottomColor
+          .toARGB32(),
+      'eyePupilGlowColor': _OculumHomePageState.defaultEyePupilGlowColor
+          .toARGB32(),
+      'colorPreset': 'classic_reliquary',
+      'colorDecorationPresetId': 'none',
+      'colorGuiPresetId': 'classic_reliquary',
+      'themeDecorationOpacityScale': 1.0,
+      'themeDecorationGlowScale': 1.0,
+      'themeDecorationIntensityScale': 1.0,
+      'unlockedColorThemeIds': ['classic_reliquary'],
+      'filtroPrimario': 'Tutti',
+      'filtroSecondario': 'Tutti',
+      'filtroTerziario': 'Tutti',
+      'filtroExtraOcchio': 'Tutti',
+      'filtroAmbiente': 'Tutti',
+      'immaginePersonaggioBase64': '',
+      'usaBarraVita': true,
+      'mostraDannoCuraScheda': true,
+      'mostraStrumentiManualeRapidi': true,
+      'mostraBorsaCompatta': true,
+      'mostraPartyScheda': true,
+      'mostraTastiRapidiIndice': true,
+      'mostraValoriEditabiliScheda': true,
+      'scalaExpAutomatica': true,
+      'sottraiStatsDaExpAggiunta': true,
+      'mostraSempreScudoOculum': false,
+      'coMasterCanSetCoMaster': false,
+      'coMasterCanEditSheets': false,
+      'masterKickRequiresConfirmation': true,
+      'masterEnemyFullSheetVisibility': false,
+      'masterPublicDiceVisible': false,
+      'masterAskPublicDiceConfirmation': true,
+      'relayAutoReconnect': true,
+      'relayServerUrl': '',
+      'relayRoomCode': '',
+      'oculumUsername': '',
+      'id': '',
+      'sheetTag': '',
+      'localUpdatedAt': DateTime.now().toIso8601String(),
+      'inMasterParty': false,
+      'masterSideOverride': '',
+      'realtimeRevokedAccessTags': <String>[],
+      'partyMembri': [],
+      'fonteExpSelezionata': 'normale',
+      'enemyGradeExp': '0',
+      'elementColorOverrides': <String, int>{},
+      'customDamageTypes': <String>[],
+      'oculumStatFormulaColor': const Color(0xFF8B5CF6).toARGB32(),
+    };
+  }
+
+  Map<String, dynamic> statoCorrenteJson() {
+    assicuraTagSchede();
+
+    return {
+      'nome': nomeController.text,
+      'tipoScheda': tipoSchedaController.text,
+      'razza': razzaController.text,
+      'livello': livelloController.text,
+      'grado': gradoController.text,
+      'exp': expController.text,
+      'expNomePersonalizzato': expNomePersonalizzatoController.text,
+      'puoEssereOsservato': puoEssereOsservato,
+      'osservazionePuntiDaAssegnare': osservazionePuntiDisponibili(),
+      'osservazioneStatScelta': osservazioneStatScelta,
+      'osservazioneStatAssegnata': osservazioneStatAssegnataCompatibile(),
+      'osservazionePuntiAssegnati': Map<String, int>.from(
+        osservazionePuntiAssegnati,
+      ),
+      'osservazionePuntiApplicati': osservazionePuntiApplicati,
+      'resilienza': resilienzaController.text,
+      'volonta': volontaController.text,
+      'materia': materiaController.text,
+      'oculum': oculumController.text,
+      'currentResilienza': currentResilienza().toString(),
+      'currentVolonta': currentVolonta().toString(),
+      'currentMateria': currentMateria().toString(),
+      'currentOculum': currentOculum().toString(),
+      'maxOculum': oculumMassimo(),
+      'currentHp': currentHpController.text,
+      'hpTemp': hpTempController.text,
+      'hpTempBonusConsumati': hpTempBonusConsumati,
+      'scudo': scudoController.text,
+      'scudoBonusConsumati': scudoBonusConsumati,
+      'scudoCritico': scudoCriticoController.text,
+      'scudoOculum': scudoOculumController.text,
+      'scudoOculumMax': scudoOculumMaxController.text,
+      'attaccoRapido': attaccoRapidoController.text,
+      'cmRapido': cmRapidoController.text,
+      'difesaRapida': difesaRapidaController.text,
+      'reazioni': reazioniController.text,
+      'reazioniVeloci': reazioniVelociController.text,
+      'buffMalusRapidi': buffMalusRapidiController.text,
+      'derivedResilienzaTotal': resilienzaTotale(),
+      'derivedVolontaTotal': volontaTotale(),
+      'derivedMateriaTotal': materiaTotale(),
+      'derivedOculumTotal': oculumTotale(),
+      'derivedMaxHp': maxHp(),
+      'derivedDanno': dannoTotale(),
+      'derivedDifesa': difesa(),
+      'derivedVC': vc(),
+      'derivedCM': cm(),
+      'derivedIniziativa': iniziativa(),
+      'derivedMovimento': movimento(),
+      'derivedScudoOculum': scudoOculum(),
+      'derivedScudoOculumMax': scudoOculumMax(),
+      'derivedReazioni': reazioniTotali(),
+      'derivedReazioniVeloci': reazioniVelociTotali(),
+      'rebirthato': rebirthato,
+      'linguaInglese': linguaInglese,
+      'tutorialCompletato': tutorialCompletato,
+      'modalitaDesktop': modalitaDesktop,
+      'modalitaVeloce': modalitaVeloce,
+      'modalitaLeggera': modalitaLeggera,
+      'desktopSideMenuOpen': desktopSideMenuOpen,
+      'background': backgroundController.text,
+      'notePersonaggio': notePersonaggioController.text,
+      'textAttachments': textAttachments.map(
+        (key, value) => MapEntry(
+          key,
+          value.map((item) => Map<String, dynamic>.from(item)).toList(),
+        ),
+      ),
+      'obser': obserController.text,
+      'ascensionDust': ascensionDustController.text,
+      'ispirazioni': ispirazioniController.text,
+      'superIspirazioni': superIspirazioniController.text,
+      'ispirazioniOculum': ispirazioniOculumController.text,
+      'karma': karmaController.text,
+      'cenere': cenereController.text,
+      'sessioniSenzaBisogni': sessioniSenzaBisogniController.text,
+      'giorniSenzaCiboAcqua': giorniSenzaCiboAcquaController.text,
+      'tempResilienza': tempResilienza,
+      'tempVolonta': tempVolonta,
+      'tempMateria': tempMateria,
+      'tempOculum': tempOculum,
+      'raccoltaResilienzaSpesa': raccoltaResilienzaSpesa,
+      'raccoltaVolontaSpesa': raccoltaVolontaSpesa,
+      'raccoltaMateriaSpesa': raccoltaMateriaSpesa,
+      'raccoltaOculumSpesa': raccoltaOculumSpesa,
+      'levelUpDaAssegnare': levelUpDaAssegnare,
+      'monsterStatPoints': monsterStatPoints,
+      'titoli': titoli.map((x) => x.toJson()).toList(),
+      'trattiRazziali': trattiRazziali.map((x) => x.toJson()).toList(),
+      'inventario': inventario.map((x) => x.toJson()).toList(),
+      'skills': skills.map((x) => x.toJson()).toList(),
+      'arti': arti.map((x) => x.toJson()).toList(),
+      'diarioPagine': List<String>.from(diarioPagine),
+      'logEventi': List<String>.from(logEventi),
+      'primaryColor': primaryColor.toARGB32(),
+      'secondaryColor': secondaryColor.toARGB32(),
+      'tertiaryColor': tertiaryColor.toARGB32(),
+      'eyeUtilityColor': eyeUtilityColor.toARGB32(),
+      'backgroundTopColor': backgroundTopColor.toARGB32(),
+      'backgroundMidColor': backgroundMidColor.toARGB32(),
+      'backgroundBottomColor': backgroundBottomColor.toARGB32(),
+      'eyePupilGlowColor': eyePupilGlowColor.toARGB32(),
+      'colorPreset': colorPresetSelezionato,
+      'colorDecorationPresetId': colorDecorationPresetId,
+      'colorGuiPresetId': colorGuiPresetId,
+      'themeDecorationOpacityScale': themeDecorationOpacityScale,
+      'themeDecorationGlowScale': themeDecorationGlowScale,
+      'themeDecorationIntensityScale': themeDecorationIntensityScale,
+      'unlockedColorThemeIds': unlockedColorThemeIds.toList()..sort(),
+      'filtroPrimario': filtroPrimario,
+      'filtroSecondario': filtroSecondario,
+      'filtroTerziario': filtroTerziario,
+      'filtroExtraOcchio': filtroExtraOcchio,
+      'filtroAmbiente': filtroAmbiente,
+      'immaginePersonaggioBase64': immaginePersonaggio == null
+          ? ''
+          : base64Encode(immaginePersonaggio!),
+      'usaBarraVita': usaBarraVita,
+      'mostraDannoCuraScheda': mostraDannoCuraScheda,
+      'mostraStrumentiManualeRapidi': mostraStrumentiManualeRapidi,
+      'mostraBorsaCompatta': mostraBorsaCompatta,
+      'mostraPartyScheda': mostraPartyScheda,
+      'mostraTastiRapidiIndice': mostraTastiRapidiIndice,
+      'mostraValoriEditabiliScheda': mostraValoriEditabiliScheda,
+      'scalaExpAutomatica': scalaExpAutomatica,
+      'sottraiStatsDaExpAggiunta': sottraiStatsDaExpAggiunta,
+      'mostraSempreScudoOculum': mostraSempreScudoOculum,
+      'coMasterCanSetCoMaster': coMasterCanSetCoMaster,
+      'coMasterCanEditSheets': coMasterCanEditSheets,
+      'masterKickRequiresConfirmation': masterKickRequiresConfirmation,
+      'masterEnemyFullSheetVisibility': masterEnemyFullSheetVisibility,
+      'masterPublicDiceVisible': masterPublicDiceVisible,
+      'masterAskPublicDiceConfirmation': masterAskPublicDiceConfirmation,
+      'relayAutoReconnect': relayAutoReconnect,
+      'relayServerUrl': relayServerController.text,
+      'relayRoomCode': relayRoomController.text,
+      'oculumUsername': oculumUsernameController.text,
+      'id': sheetTagAt(schedaCorrente),
+      'sheetTag': sheetTagAt(schedaCorrente),
+      'inMasterParty': sheetInMasterPartyAt(schedaCorrente),
+      'masterSideOverride':
+          schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
+          ? '${schedePersonaggio[schedaCorrente]['masterSideOverride'] ?? ''}'
+          : '',
+      'realtimeRevokedAccessTags':
+          schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
+          ? currentSheetRevokedAccessTags().toList()
+          : <String>[],
+      'partyMembri': partyMembri
+          .map((x) => Map<String, dynamic>.from(x))
+          .toList(),
+      'fonteExpSelezionata': fonteExpSelezionata,
+      'enemyGradeExp': enemyGradeExpController.text,
+      'elementColorOverrides': Map<String, int>.from(elementColorOverrides),
+      'customDamageTypes': List<String>.from(customDamageTypes),
+      'oculumStatFormulaColor': oculumStatFormulaColor.toARGB32(),
+    };
+  }
+
+  void caricaStatoDaJson(Map<String, dynamic> json) {
+    nomeController.text = '${json['nome'] ?? '???'}';
+    tipoSchedaController.text = '${json['tipoScheda'] ?? 'Personaggio'}';
+    razzaController.text = '${json['razza'] ?? ''}';
+    livelloController.text = '${json['livello'] ?? '0'}';
+    gradoController.text = '${json['grado'] ?? '0'}';
+    expController.text = '${json['exp'] ?? '0'}';
+    expNomePersonalizzatoController.text =
+        '${json['expNomePersonalizzato'] ?? ''}';
+    puoEssereOsservato = readBoolValue(json['puoEssereOsservato']);
+    osservazioneStatScelta = normalizeObservationStat(
+      '${json['osservazioneStatScelta'] ?? 'Resilienza'}',
+    );
+    osservazioneStatAssegnata = normalizeObservationStat(
+      '${json['osservazioneStatAssegnata'] ?? ''}',
+      allowEmpty: true,
+    );
+    osservazionePuntiAssegnati = oculumNormalizeObservationAssignedCounts(
+      json['osservazionePuntiAssegnati'],
+      legacyAssigned: osservazioneStatAssegnata,
+    );
+    osservazionePuntiApplicati = readBoolValue(
+      json['osservazionePuntiApplicati'],
+      fallback:
+          puoEssereOsservato &&
+          oculumObservationAssignedTotal(osservazionePuntiAssegnati) > 0,
+    );
+    osservazionePuntiDaAssegnare = osservazionePuntiDisponibili();
+
+    resilienzaController.text = '${json['resilienza'] ?? '3'}';
+    volontaController.text = '${json['volonta'] ?? '1'}';
+    materiaController.text = '${json['materia'] ?? '0'}';
+    oculumController.text = '${json['oculum'] ?? '1'}';
+    final hasCurrentResilienza = json.containsKey('currentResilienza');
+    final hasCurrentVolonta = json.containsKey('currentVolonta');
+    final hasCurrentMateria = json.containsKey('currentMateria');
+    final hasCurrentOculum = json.containsKey('currentOculum');
+    currentResilienzaController.text = readIntValue(
+      json['currentResilienza'],
+      fallback: readIntValue(json['resilienza'], fallback: 3),
+    ).toString();
+    currentVolontaController.text = readIntValue(
+      json['currentVolonta'],
+      fallback: readIntValue(json['volonta'], fallback: 1),
+    ).toString();
+    currentMateriaController.text = readIntValue(
+      json['currentMateria'],
+      fallback: readIntValue(json['materia']),
+    ).toString();
+    final legacyOculumMax = readIntValue(
+      json['maxOculum'],
+      fallback: readIntValue(json['oculum'], fallback: 1),
+    );
+    currentOculumController.text = readIntValue(
+      json['currentOculum'],
+      fallback: legacyOculumMax,
+    ).toString();
+
+    currentHpController.text = '${json['currentHp'] ?? '30'}';
+    hpTempController.text = '${json['hpTemp'] ?? '0'}';
+    hpTempBonusConsumati = readIntValue(json['hpTempBonusConsumati']);
+    scudoController.text = '${json['scudo'] ?? '0'}';
+    scudoBonusConsumati = readIntValue(json['scudoBonusConsumati']);
+    scudoCriticoController.text = '${json['scudoCritico'] ?? '0'}';
+    scudoOculumController.text = '${json['scudoOculum'] ?? '0'}';
+    scudoOculumMaxController.text = '${json['scudoOculumMax'] ?? '0'}';
+    attaccoRapidoController.text = '${json['attaccoRapido'] ?? '0'}';
+    cmRapidoController.text = '${json['cmRapido'] ?? '0'}';
+    difesaRapidaController.text = '${json['difesaRapida'] ?? '0'}';
+    reazioniController.text = '${json['reazioni'] ?? '1'}';
+    reazioniVelociController.text = '${json['reazioniVeloci'] ?? '0'}';
+    buffMalusRapidiController.text = '${json['buffMalusRapidi'] ?? ''}';
+
+    rebirthato = readBoolValue(json['rebirthato']);
+    linguaInglese = readBoolValue(json['linguaInglese']);
+    tutorialCompletato = readBoolValue(json['tutorialCompletato']);
+    modalitaDesktop = readBoolValue(json['modalitaDesktop']);
+    modalitaVeloce = readBoolValue(json['modalitaVeloce']);
+    modalitaLeggera = readBoolValue(json['modalitaLeggera']);
+    desktopSideMenuOpen = readBoolValue(json['desktopSideMenuOpen']);
+    backgroundController.text =
+        '${json['background'] ?? 'Scrivi qui il passato, lo scopo, i legami, le paure e il destino del personaggio.'}';
+    notePersonaggioController.text = '${json['notePersonaggio'] ?? ''}';
+    textAttachments.clear();
+    final attachmentsRaw = json['textAttachments'];
+    if (attachmentsRaw is Map) {
+      for (final entry in attachmentsRaw.entries) {
+        final key = '${entry.key}'.trim();
+        if (key.isEmpty || entry.value is! List) continue;
+        final values = <Map<String, dynamic>>[];
+        for (final raw in entry.value as List) {
+          if (raw is! Map) continue;
+          final item = Map<String, dynamic>.from(raw);
+          final type = '${item['type'] ?? ''}'.trim();
+          final path = '${item['path'] ?? ''}'.trim();
+          final url = '${item['url'] ?? ''}'.trim();
+          if (type.isEmpty || (path.isEmpty && url.isEmpty)) continue;
+          values.add(item);
+        }
+        if (values.isNotEmpty) textAttachments[key] = values;
+      }
+    }
+
+    obserController.text = '${json['obser'] ?? '0'}';
+    ascensionDustController.text = '${json['ascensionDust'] ?? '0'}';
+    ispirazioniController.text = '${json['ispirazioni'] ?? '0'}';
+    superIspirazioniController.text = '${json['superIspirazioni'] ?? '0'}';
+    ispirazioniOculumController.text = '${json['ispirazioniOculum'] ?? '0'}';
+    karmaController.text = '${json['karma'] ?? '0'}';
+
+    cenereController.text = '${json['cenere'] ?? '0'}';
+    sessioniSenzaBisogniController.text =
+        '${json['sessioniSenzaBisogni'] ?? '0'}';
+    giorniSenzaCiboAcquaController.text =
+        '${json['giorniSenzaCiboAcqua'] ?? '0'}';
+
+    tempResilienza = readIntValue(json['tempResilienza']);
+    tempVolonta = readIntValue(json['tempVolonta']);
+    tempMateria = readIntValue(json['tempMateria']);
+    tempOculum = readIntValue(json['tempOculum']);
+
+    raccoltaResilienzaSpesa = readIntValue(json['raccoltaResilienzaSpesa']);
+    raccoltaVolontaSpesa = readIntValue(json['raccoltaVolontaSpesa']);
+    raccoltaMateriaSpesa = readIntValue(json['raccoltaMateriaSpesa']);
+    raccoltaOculumSpesa = readIntValue(json['raccoltaOculumSpesa']);
+
+    levelUpDaAssegnare = readIntValue(json['levelUpDaAssegnare']);
+    monsterStatPoints = readIntValue(json['monsterStatPoints']);
+
+    final titoliRaw = json['titoli'];
+    titoli
+      ..clear()
+      ..addAll(
+        (titoliRaw is List ? titoliRaw : const []).whereType<Map>().map(
+          (x) => OculumTitle.fromJson(Map<String, dynamic>.from(x)),
+        ),
+      );
+
+    final trattiRazzialiRaw = json['trattiRazziali'];
+    trattiRazziali
+      ..clear()
+      ..addAll(
+        (trattiRazzialiRaw is List ? trattiRazzialiRaw : const [])
+            .whereType<Map>()
+            .map((x) => OculumTitle.fromJson(Map<String, dynamic>.from(x))),
+      );
+
+    final inventarioRaw = json['inventario'];
+    inventario
+      ..clear()
+      ..addAll(
+        (inventarioRaw is List ? inventarioRaw : const []).whereType<Map>().map(
+          (x) => InventoryItem.fromJson(Map<String, dynamic>.from(x)),
+        ),
+      );
+
+    final skillsRaw = json['skills'];
+    skills
+      ..clear()
+      ..addAll(
+        (skillsRaw is List ? skillsRaw : const []).whereType<Map>().map(
+          (x) => CharacterSkill.fromJson(Map<String, dynamic>.from(x)),
+        ),
+      );
+
+    final artiRaw = json['arti'];
+    arti
+      ..clear()
+      ..addAll(
+        (artiRaw is List ? artiRaw : const []).whereType<Map>().map(
+          (x) => CharacterArt.fromJson(Map<String, dynamic>.from(x)),
+        ),
+      );
+
+    assicuraArtiBase();
+    normalizzaOpenAttiveSingole();
+
+    final diarioRaw = json['diarioPagine'];
+    diarioPagine
+      ..clear()
+      ..addAll((diarioRaw is List ? diarioRaw : const []).map((x) => '$x'));
+
+    final logRaw = json['logEventi'];
+    logEventi
+      ..clear()
+      ..addAll((logRaw is List ? logRaw : const []).map((x) => '$x'));
+
+    primaryColor = Color(
+      readIntValue(
+        json['primaryColor'],
+        fallback: _OculumHomePageState.defaultPrimaryColor.toARGB32(),
+      ),
+    );
+    secondaryColor = Color(
+      readIntValue(
+        json['secondaryColor'],
+        fallback: _OculumHomePageState.defaultSecondaryColor.toARGB32(),
+      ),
+    );
+    tertiaryColor = Color(
+      readIntValue(
+        json['tertiaryColor'],
+        fallback: _OculumHomePageState.defaultTertiaryColor.toARGB32(),
+      ),
+    );
+    eyeUtilityColor = Color(
+      readIntValue(
+        json['eyeUtilityColor'],
+        fallback: _OculumHomePageState.defaultEyeUtilityColor.toARGB32(),
+      ),
+    );
+    backgroundTopColor = Color(
+      readIntValue(
+        json['backgroundTopColor'],
+        fallback: _OculumHomePageState.defaultBackgroundTopColor.toARGB32(),
+      ),
+    );
+    backgroundMidColor = Color(
+      readIntValue(
+        json['backgroundMidColor'],
+        fallback: _OculumHomePageState.defaultBackgroundMidColor.toARGB32(),
+      ),
+    );
+    backgroundBottomColor = Color(
+      readIntValue(
+        json['backgroundBottomColor'],
+        fallback: _OculumHomePageState.defaultBackgroundBottomColor.toARGB32(),
+      ),
+    );
+    eyePupilGlowColor = Color(
+      readIntValue(
+        json['eyePupilGlowColor'],
+        fallback: _OculumHomePageState.defaultEyePupilGlowColor.toARGB32(),
+      ),
+    );
+    colorPresetSelezionato = '${json['colorPreset'] ?? 'custom'}';
+    if (colorPresetSelezionato.trim().isEmpty ||
+        !colorPresets.any((preset) => preset.id == colorPresetSelezionato)) {
+      colorPresetSelezionato = 'custom';
+    }
+    colorDecorationPresetId = '${json['colorDecorationPresetId'] ?? 'none'}';
+    if (colorDecorationPresetId != 'none' &&
+        (colorDecorationPresetId == 'custom' ||
+            colorDecorationPresetId.trim().isEmpty ||
+            !colorPresets.any(
+              (preset) => preset.id == colorDecorationPresetId,
+            ))) {
+      colorDecorationPresetId = 'classic_reliquary';
+    }
+    colorGuiPresetId = '${json['colorGuiPresetId'] ?? colorDecorationPresetId}';
+    if (colorGuiPresetId == 'custom' ||
+        colorGuiPresetId.trim().isEmpty ||
+        (!isBuiltInGuiModeId(colorGuiPresetId) &&
+            !colorPresets.any((preset) => preset.id == colorGuiPresetId))) {
+      colorGuiPresetId = colorDecorationPresetId == 'none'
+          ? 'classic_reliquary'
+          : colorDecorationPresetId;
+    }
+    themeDecorationOpacityScale = readDoubleValue(
+      json['themeDecorationOpacityScale'],
+      fallback: 1.0,
+    ).clamp(0.25, 2.5).toDouble();
+    themeDecorationGlowScale = readDoubleValue(
+      json['themeDecorationGlowScale'],
+      fallback: 1.0,
+    ).clamp(0.0, 2.5).toDouble();
+    themeDecorationIntensityScale = readDoubleValue(
+      json['themeDecorationIntensityScale'],
+      fallback: 1.0,
+    ).clamp(0.35, 2.5).toDouble();
+    final unlockedThemesRaw = json['unlockedColorThemeIds'];
+    unlockedColorThemeIds
+      ..clear()
+      ..add('classic_reliquary')
+      ..addAll(
+        (unlockedThemesRaw is List ? unlockedThemesRaw : const [])
+            .map((id) => '$id')
+            .where((id) => colorPresets.any((preset) => preset.id == id)),
+      );
+    ensureSecretThemeUnlocks();
+
+    elementColorOverrides
+      ..clear()
+      ..addAll(
+        (json['elementColorOverrides'] is Map)
+            ? Map<String, int>.from(
+                (json['elementColorOverrides'] as Map).map(
+                  (key, value) => MapEntry('$key', readIntValue(value)),
+                ),
+              )
+            : <String, int>{},
+      );
+    final customDamageTypesRaw = json['customDamageTypes'];
+    customDamageTypes
+      ..clear()
+      ..addAll(
+        (customDamageTypesRaw is List ? customDamageTypesRaw : const [])
+            .map((x) => cleanUiText('$x').trim())
+            .where((x) => x.isNotEmpty),
+      );
+    oculumStatFormulaColor = Color(
+      readIntValue(
+        json['oculumStatFormulaColor'],
+        fallback: const Color(0xFF8B5CF6).toARGB32(),
+      ),
+    );
+
+    filtroPrimario = '${json['filtroPrimario'] ?? 'Tutti'}';
+    filtroSecondario = '${json['filtroSecondario'] ?? 'Tutti'}';
+    filtroTerziario = '${json['filtroTerziario'] ?? 'Tutti'}';
+    filtroExtraOcchio = '${json['filtroExtraOcchio'] ?? 'Tutti'}';
+    filtroAmbiente = '${json['filtroAmbiente'] ?? 'Tutti'}';
+
+    usaBarraVita = readBoolValue(json['usaBarraVita'], fallback: true);
+    mostraDannoCuraScheda = readBoolValue(
+      json['mostraDannoCuraScheda'],
+      fallback: true,
+    );
+    mostraStrumentiManualeRapidi = readBoolValue(
+      json['mostraStrumentiManualeRapidi'],
+      fallback: true,
+    );
+    mostraBorsaCompatta = readBoolValue(
+      json['mostraBorsaCompatta'],
+      fallback: true,
+    );
+    mostraPartyScheda = readBoolValue(
+      json['mostraPartyScheda'],
+      fallback: true,
+    );
+    mostraTastiRapidiIndice = readBoolValue(
+      json['mostraTastiRapidiIndice'],
+      fallback: true,
+    );
+    mostraValoriEditabiliScheda = readBoolValue(
+      json['mostraValoriEditabiliScheda'],
+      fallback: true,
+    );
+    scalaExpAutomatica = readBoolValue(
+      json['scalaExpAutomatica'],
+      fallback: true,
+    );
+    sottraiStatsDaExpAggiunta = readBoolValue(
+      json['sottraiStatsDaExpAggiunta'],
+      fallback: true,
+    );
+    mostraSempreScudoOculum = readBoolValue(json['mostraSempreScudoOculum']);
+    coMasterCanSetCoMaster = readBoolValue(json['coMasterCanSetCoMaster']);
+    coMasterCanEditSheets = readBoolValue(json['coMasterCanEditSheets']);
+    masterKickRequiresConfirmation = readBoolValue(
+      json['masterKickRequiresConfirmation'],
+      fallback: masterKickRequiresConfirmation,
+    );
+    masterEnemyFullSheetVisibility = readBoolValue(
+      json['masterEnemyFullSheetVisibility'],
+    );
+    masterPublicDiceVisible = readBoolValue(json['masterPublicDiceVisible']);
+    masterAskPublicDiceConfirmation = readBoolValue(
+      json['masterAskPublicDiceConfirmation'],
+      fallback: true,
+    );
+    relayAutoReconnect = readBoolValue(
+      json['relayAutoReconnect'],
+      fallback: true,
+    );
+    relayServerController.text = '${json['relayServerUrl'] ?? ''}';
+    relayRoomController.text = '${json['relayRoomCode'] ?? ''}';
+    relayRoomCode = relayRoomController.text.trim().toUpperCase();
+
+    fonteExpSelezionata = '${json['fonteExpSelezionata'] ?? 'normale'}';
+    if (!['normale', 'miniboss', 'boss'].contains(fonteExpSelezionata)) {
+      fonteExpSelezionata = 'normale';
+    }
+    enemyGradeExpController.text =
+        '${json['enemyGradeExp'] ?? gradoController.text}';
+
+    final imageRaw = '${json['immaginePersonaggioBase64'] ?? ''}';
+    if (imageRaw.isNotEmpty) {
+      try {
+        immaginePersonaggio = base64Decode(imageRaw);
+      } catch (_) {
+        immaginePersonaggio = null;
+      }
+    } else {
+      immaginePersonaggio = null;
+    }
+
+    final partyRaw = json['partyMembri'];
+    partyMembri
+      ..clear()
+      ..addAll(
+        (partyRaw is List ? partyRaw : const []).whereType<Map>().map(
+          (x) => Map<String, dynamic>.from(x),
+        ),
+      );
+
+    assicuraTagSchede();
+
+    syncCurrentStatsToMax(
+      resetResilienzaToMax: !hasCurrentResilienza,
+      resetVolontaToMax: !hasCurrentVolonta,
+      resetMateriaToMax: !hasCurrentMateria,
+      resetOculumToMax: !hasCurrentOculum,
+    );
+  }
+
+  String get _backupSaveKey1 => '${_OculumHomePageState.saveKey}_backup_1';
+  String get _backupSaveKey2 => '${_OculumHomePageState.saveKey}_backup_2';
+  String get _backupSaveKey3 => '${_OculumHomePageState.saveKey}_backup_3';
+  String get _verifiedSaveKey => '${_OculumHomePageState.saveKey}_verified';
+  String get _pendingSaveKey => '${_OculumHomePageState.saveKey}_pending';
+  String get _diaryArchiveSaveKey =>
+      '${_OculumHomePageState.saveKey}_diary_archive_v1';
+
+  Set<String> get _knownTopLevelSaveKeys => const <String>{
+    'saveVersion',
+    'saveRevision',
+    'savedAt',
+    'multiScheda',
+    'schedaCorrente',
+    'schedePersonaggio',
+    'activeCampaignId',
+    'campaigns',
+    'oculumFriends',
+    'oculumFriendRequests',
+    'oculumSentFriendRequests',
+    'blockedOculumFriends',
+    'oculumUsername',
+    'masterKickRequiresConfirmation',
+    'masterEnemyFullSheetVisibility',
+    'masterPublicDiceVisible',
+    'masterAskPublicDiceConfirmation',
+  };
+
+  void _memorizzaCampiTopLevelSconosciuti(Map<String, dynamic> data) {
+    extraTopLevelSaveFields
+      ..clear()
+      ..addAll(
+        Map<String, dynamic>.fromEntries(
+          data.entries.where(
+            (entry) => !_knownTopLevelSaveKeys.contains(entry.key),
+          ),
+        ),
+      );
+  }
+
+  List<Map<String, dynamic>> _sheetsFromSaveData(Map<String, dynamic> data) {
+    final sheets = <Map<String, dynamic>>[];
+
+    void addSheets(dynamic value) {
+      if (value is! List) return;
+      for (final entry in value) {
+        if (entry is Map) {
+          sheets.add(Map<String, dynamic>.from(entry));
+        }
+      }
+    }
+
+    addSheets(data['schedePersonaggio']);
+
+    final campaigns = data['campaigns'];
+    if (campaigns is List) {
+      for (final campaign in campaigns.whereType<Map>()) {
+        addSheets(campaign['schedePersonaggio']);
+      }
+    }
+
+    return sheets;
+  }
+
+  bool _sheetLooksMeaningful(Map<String, dynamic> sheet) {
+    final name = '${sheet['nome'] ?? ''}'.trim();
+    if (name.isNotEmpty && name != '???') return true;
+
+    final type = '${sheet['tipoScheda'] ?? ''}'.trim();
+    if (type.isNotEmpty && type != 'Personaggio') return true;
+
+    for (final key in const <String>[
+      'livello',
+      'grado',
+      'exp',
+      'obser',
+      'ascensionDust',
+      'ispirazioni',
+      'superIspirazioni',
+      'ispirazioniOculum',
+      'karma',
+    ]) {
+      if (readIntValue(sheet[key]) != 0) return true;
+    }
+
+    for (final key in const <String>[
+      'titoli',
+      'inventario',
+      'skills',
+      'diarioPagine',
+      'logEventi',
+      'partyMembri',
+    ]) {
+      final value = sheet[key];
+      if (value is List && value.isNotEmpty) return true;
+    }
+
+    final background = '${sheet['background'] ?? ''}'.trim();
+    if (background.isNotEmpty &&
+        background !=
+            'Scrivi qui il passato, lo scopo, i legami, le paure e il destino del personaggio.') {
+      return true;
+    }
+
+    if ('${sheet['notePersonaggio'] ?? ''}'.trim().isNotEmpty) return true;
+    if ('${sheet['immaginePersonaggioBase64'] ?? ''}'.trim().isNotEmpty) {
+      return true;
+    }
+
+    return false;
+  }
+
+  bool _rawLooksLikeMeaningfulSave(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return false;
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return false;
+      final data = Map<String, dynamic>.from(decoded);
+      final sheets = _sheetsFromSaveData(data);
+      if (sheets.any(_sheetLooksMeaningful)) return true;
+
+      final campaigns = data['campaigns'];
+      if (campaigns is List && campaigns.length > 1) return true;
+
+      for (final key in const <String>[
+        'oculumFriends',
+        'oculumFriendRequests',
+        'oculumSentFriendRequests',
+        'blockedOculumFriends',
+      ]) {
+        final value = data[key];
+        if (value is List && value.isNotEmpty) return true;
+      }
+    } catch (_) {
+      // Anche un JSON non leggibile non va cancellato automaticamente.
+      // Potrebbe essere un salvataggio vecchio o parzialmente corrotto da recuperare.
+      return true;
+    }
+
+    return false;
+  }
+
+  String _normalizeDiaryKey(String value) {
+    return cleanUiText(
+      value,
+    ).trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  String _normalizeDiaryPage(String value) {
+    return cleanUiText(value)
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n')
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  bool _diaryPageLooksPlaceholder(String page) {
+    final normalized = _normalizeDiaryPage(page);
+    if (normalized.isEmpty) return true;
+    if (normalized == 'vuota' || normalized == 'empty') return true;
+    return RegExp(
+      r'^pagina\s+\d+\s*-\s*scrivi qui memoria',
+    ).hasMatch(normalized);
+  }
+
+  List<String> _diaryPagesFromSheet(Map<String, dynamic> sheet) {
+    final raw = sheet['diarioPagine'];
+    if (raw is! List) return <String>[];
+    return raw.map((x) => cleanUiText('$x')).toList();
+  }
+
+  List<String> _diarySheetArchiveKeys(
+    Map<String, dynamic> sheet,
+    int index, {
+    String? campaignId,
+  }) {
+    final keys = <String>[];
+    final seen = <String>{};
+
+    void addKey(String key) {
+      final clean = key.trim();
+      if (clean.isEmpty || !seen.add(clean)) return;
+      keys.add(clean);
+    }
+
+    final prefix = campaignId == null || campaignId.trim().isEmpty
+        ? 'global'
+        : 'campaign:${_normalizeDiaryKey(campaignId)}';
+
+    for (final key in const <String>['sheetTag', 'id']) {
+      final value = _normalizeDiaryKey('${sheet[key] ?? ''}');
+      if (value.isNotEmpty && value != '---') {
+        addKey('$prefix/$key:$value');
+        addKey('$key:$value');
+      }
+    }
+
+    final name = _normalizeDiaryKey('${sheet['nome'] ?? ''}');
+    final type = _normalizeDiaryKey('${sheet['tipoScheda'] ?? ''}');
+    if (name.isNotEmpty && name != '???') {
+      addKey('$prefix/name:$type/$name');
+      addKey('name:$type/$name');
+    }
+
+    addKey('$prefix/index:$index');
+    return keys;
+  }
+
+  Map<String, dynamic> _emptyDiaryArchive() {
+    return <String, dynamic>{
+      'version': 1,
+      'updatedAt': DateTime.now().toIso8601String(),
+      'sheets': <String, dynamic>{},
+    };
+  }
+
+  Map<String, dynamic> _decodeDiaryArchive(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return _emptyDiaryArchive();
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return _emptyDiaryArchive();
+      final archive = Map<String, dynamic>.from(decoded);
+      if (archive['sheets'] is! Map) {
+        archive['sheets'] = <String, dynamic>{};
+      }
+      return archive;
+    } catch (_) {
+      return _emptyDiaryArchive();
+    }
+  }
+
+  List<String> _archiveDiaryPages(dynamic value) {
+    if (value is Map && value['pages'] is List) {
+      return (value['pages'] as List).map((x) => cleanUiText('$x')).toList();
+    }
+    if (value is List) {
+      return value.map((x) => cleanUiText('$x')).toList();
+    }
+    return <String>[];
+  }
+
+  int _diaryPageQuality(String page) {
+    if (_diaryPageLooksPlaceholder(page)) return 0;
+    final clean = cleanUiText(page).trim();
+    if (clean.isEmpty) return 0;
+    final words = clean.split(RegExp(r'\s+')).where((x) => x.isNotEmpty).length;
+    return clean.length + words * 6;
+  }
+
+  bool _diaryListContainsNormalized(List<String> pages, String candidate) {
+    final normalized = _normalizeDiaryPage(candidate);
+    if (normalized.isEmpty) return true;
+    return pages.any((page) => _normalizeDiaryPage(page) == normalized);
+  }
+
+  bool _diaryCandidateExtendsCurrent(String current, String candidate) {
+    final currentNormalized = _normalizeDiaryPage(current);
+    final candidateNormalized = _normalizeDiaryPage(candidate);
+    if (currentNormalized.length < 24) return false;
+    if (candidateNormalized.length <= currentNormalized.length + 30) {
+      return false;
+    }
+    return candidateNormalized.startsWith(currentNormalized);
+  }
+
+  bool _mergeDiaryPagesIntoSlotList(
+    List<String> target,
+    List<String> incoming, {
+    bool replaceMeaningfulWithRicher = false,
+    bool recoverLostContinuations = false,
+  }) {
+    var changed = false;
+
+    for (int i = 0; i < incoming.length; i++) {
+      final candidate = cleanUiText(incoming[i]).trimRight();
+      if (_normalizeDiaryPage(candidate).isEmpty) continue;
+
+      if (i >= target.length) {
+        if (!_diaryListContainsNormalized(target, candidate)) {
+          target.add(candidate);
+          changed = true;
+        }
+        continue;
+      }
+
+      final current = target[i];
+      final currentQuality = _diaryPageQuality(current);
+      final candidateQuality = _diaryPageQuality(candidate);
+      final sameText =
+          _normalizeDiaryPage(current) == _normalizeDiaryPage(candidate);
+
+      if (sameText) continue;
+
+      if (currentQuality == 0 && candidateQuality > 0) {
+        target[i] = candidate;
+        changed = true;
+      } else if (recoverLostContinuations &&
+          _diaryCandidateExtendsCurrent(current, candidate) &&
+          !_diaryListContainsNormalized(target, candidate)) {
+        target[i] = candidate;
+        changed = true;
+      } else if (replaceMeaningfulWithRicher &&
+          candidateQuality > currentQuality + 30 &&
+          !_diaryListContainsNormalized(target, candidate)) {
+        target[i] = candidate;
+        changed = true;
+      }
+    }
+
+    return changed;
+  }
+
+  bool _mergeDiaryPagesIntoArchiveEntry(
+    Map<String, dynamic> entry,
+    List<String> incoming,
+  ) {
+    final pages = _archiveDiaryPages(entry['pages']);
+    final changed = _mergeDiaryPagesIntoSlotList(
+      pages,
+      incoming,
+      replaceMeaningfulWithRicher: true,
+    );
+    if (changed || entry['pages'] is! List) {
+      entry['pages'] = pages;
+      entry['updatedAt'] = DateTime.now().toIso8601String();
+    }
+    return changed;
+  }
+
+  int _mergeDiariesFromSaveDataIntoArchive(
+    Map<String, dynamic> archive,
+    Map<String, dynamic> data,
+  ) {
+    final sheetsArchive = Map<String, dynamic>.from(
+      archive['sheets'] is Map ? archive['sheets'] as Map : const {},
+    );
+    var changed = 0;
+
+    void mergeSheetList(dynamic rawSheets, {String? campaignId}) {
+      if (rawSheets is! List) return;
+
+      for (int i = 0; i < rawSheets.length; i++) {
+        final rawSheet = rawSheets[i];
+        if (rawSheet is! Map) continue;
+        final sheet = Map<String, dynamic>.from(rawSheet);
+        final pages = _diaryPagesFromSheet(sheet);
+        if (pages.every(_diaryPageLooksPlaceholder)) continue;
+
+        final keys = _diarySheetArchiveKeys(sheet, i, campaignId: campaignId);
+
+        for (final key in keys) {
+          final rawEntry = sheetsArchive[key];
+          final entry = rawEntry is Map
+              ? Map<String, dynamic>.from(rawEntry)
+              : <String, dynamic>{};
+          entry['name'] = '${sheet['nome'] ?? ''}';
+          entry['type'] = '${sheet['tipoScheda'] ?? ''}';
+          entry['sheetTag'] = '${sheet['sheetTag'] ?? sheet['id'] ?? ''}';
+          entry['campaignId'] = campaignId ?? '';
+
+          if (_mergeDiaryPagesIntoArchiveEntry(entry, pages)) {
+            changed++;
+          }
+          sheetsArchive[key] = entry;
+        }
+      }
+    }
+
+    mergeSheetList(data['schedePersonaggio']);
+
+    final campaigns = data['campaigns'];
+    if (campaigns is List) {
+      for (final rawCampaign in campaigns.whereType<Map>()) {
+        final campaign = Map<String, dynamic>.from(rawCampaign);
+        mergeSheetList(
+          campaign['schedePersonaggio'],
+          campaignId: '${campaign['id'] ?? ''}',
+        );
+      }
+    }
+
+    archive['sheets'] = sheetsArchive;
+    if (changed > 0) {
+      archive['updatedAt'] = DateTime.now().toIso8601String();
+    }
+    return changed;
+  }
+
+  Map<String, dynamic>? _decodeSaveDataForDiaryArchive(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return null;
+      return Map<String, dynamic>.from(decoded);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> _buildDiaryArchiveFromRecentSaves(
+    SharedPreferences prefs, {
+    Map<String, dynamic>? currentData,
+    String? currentRaw,
+  }) async {
+    final archive = _decodeDiaryArchive(prefs.getString(_diaryArchiveSaveKey));
+
+    for (final raw in <String?>[
+      prefs.getString(_backupSaveKey3),
+      prefs.getString(_backupSaveKey2),
+      prefs.getString(_backupSaveKey1),
+      prefs.getString(_verifiedSaveKey),
+      prefs.getString(_pendingSaveKey),
+      currentRaw,
+      prefs.getString(_OculumHomePageState.saveKey),
+    ]) {
+      final data = _decodeSaveDataForDiaryArchive(raw);
+      if (data != null) {
+        _mergeDiariesFromSaveDataIntoArchive(archive, data);
+      }
+    }
+
+    if (currentData != null) {
+      _mergeDiariesFromSaveDataIntoArchive(archive, currentData);
+    }
+
+    await prefs.setString(_diaryArchiveSaveKey, jsonEncode(archive));
+    return archive;
+  }
+
+  List<String> _candidateDiaryPagesFromArchive(
+    Map<String, dynamic> archive,
+    Map<String, dynamic> sheet,
+    int index, {
+    String? campaignId,
+  }) {
+    final sheetsArchive = archive['sheets'] is Map
+        ? archive['sheets'] as Map
+        : const {};
+    final candidates = <String>[];
+
+    for (final key in _diarySheetArchiveKeys(
+      sheet,
+      index,
+      campaignId: campaignId,
+    )) {
+      final pages = _archiveDiaryPages(sheetsArchive[key]);
+      for (final page in pages) {
+        if (!_diaryListContainsNormalized(candidates, page)) {
+          candidates.add(page);
+        }
+      }
+    }
+
+    return candidates;
+  }
+
+  int _recoverDiaryPagesIntoSaveData(
+    Map<String, dynamic> data,
+    Map<String, dynamic> archive,
+  ) {
+    var restored = 0;
+
+    void recoverSheetList(dynamic rawSheets, {String? campaignId}) {
+      if (rawSheets is! List) return;
+
+      for (int i = 0; i < rawSheets.length; i++) {
+        final rawSheet = rawSheets[i];
+        if (rawSheet is! Map) continue;
+        final sheet = Map<String, dynamic>.from(rawSheet);
+        final currentPages = _diaryPagesFromSheet(sheet);
+        final candidatePages = _candidateDiaryPagesFromArchive(
+          archive,
+          sheet,
+          i,
+          campaignId: campaignId,
+        );
+
+        if (candidatePages.isEmpty) continue;
+
+        final before = currentPages.length;
+        final changed = _mergeDiaryPagesIntoSlotList(
+          currentPages,
+          candidatePages,
+          recoverLostContinuations: true,
+        );
+        if (!changed) continue;
+
+        sheet['diarioPagine'] = currentPages;
+        rawSheets[i] = sheet;
+        final added = max(0, currentPages.length - before);
+        restored += added > 0 ? added : 1;
+      }
+    }
+
+    recoverSheetList(data['schedePersonaggio']);
+
+    final campaigns = data['campaigns'];
+    if (campaigns is List) {
+      for (int i = 0; i < campaigns.length; i++) {
+        final rawCampaign = campaigns[i];
+        if (rawCampaign is! Map) continue;
+        final campaign = Map<String, dynamic>.from(rawCampaign);
+        recoverSheetList(
+          campaign['schedePersonaggio'],
+          campaignId: '${campaign['id'] ?? ''}',
+        );
+        campaigns[i] = campaign;
+      }
+    }
+
+    return restored;
+  }
+
+  Future<int> _recoverDiariesFromRecentSaves(
+    SharedPreferences prefs,
+    Map<String, dynamic> data,
+    String currentRaw,
+  ) async {
+    final archive = await _buildDiaryArchiveFromRecentSaves(
+      prefs,
+      currentData: data,
+      currentRaw: currentRaw,
+    );
+    final restored = _recoverDiaryPagesIntoSaveData(data, archive);
+
+    if (restored > 0) {
+      _mergeDiariesFromSaveDataIntoArchive(archive, data);
+      await prefs.setString(_diaryArchiveSaveKey, jsonEncode(archive));
+    }
+
+    return restored;
+  }
+
+  Future<void> _creaBackupDelSalvataggioCorrente(
+    SharedPreferences prefs,
+  ) async {
+    final current = prefs.getString(_OculumHomePageState.saveKey);
+    if (!_rawLooksLikeMeaningfulSave(current)) return;
+
+    final backup1 = prefs.getString(_backupSaveKey1);
+    if (backup1 == current) return;
+
+    final backup2 = prefs.getString(_backupSaveKey2);
+    if (backup2 != null && backup2.isNotEmpty) {
+      await prefs.setString(_backupSaveKey3, backup2);
+    }
+    if (backup1 != null && backup1.isNotEmpty) {
+      await prefs.setString(_backupSaveKey2, backup1);
+    }
+    await prefs.setString(_backupSaveKey1, current!);
+  }
+
+  String? _firstMeaningfulBackupRaw(
+    SharedPreferences prefs, {
+    String? exclude,
+  }) {
+    for (final key in <String>[
+      _pendingSaveKey,
+      _verifiedSaveKey,
+      _backupSaveKey1,
+      _backupSaveKey2,
+      _backupSaveKey3,
+    ]) {
+      final raw = prefs.getString(key);
+      if (raw == null || raw.isEmpty || raw == exclude) continue;
+      if (_rawLooksLikeMeaningfulSave(raw)) return raw;
+    }
+    return null;
+  }
+
+  Future<bool> _scriviSalvataggioProtetto(
+    SharedPreferences prefs,
+    Map<String, dynamic> data,
+  ) async {
+    if (salvataggioBloccatoPerErrore) {
+      debugPrint(
+        'Scrittura salvataggio bloccata per proteggere i dati vecchi.',
+      );
+      return false;
+    }
+
+    final snapshot = jsonDecode(jsonEncode(data)) as Map<String, dynamic>;
+    final encoded = jsonEncode(snapshot);
+    final previous = prefs.getString(_OculumHomePageState.saveKey);
+
+    // Se esiste un salvataggio vero e la nuova scrittura sembra una scheda vuota,
+    // non lo sovrascrivo. Il reset intenzionale usa cancellaSalvataggio().
+    if (_rawLooksLikeMeaningfulSave(previous) &&
+        !_rawLooksLikeMeaningfulSave(encoded)) {
+      salvataggioBloccatoPerErrore = true;
+      ultimoErroreCaricamentoSalvataggio =
+          'Scrittura bloccata: la nuova memoria sembrava vuota e avrebbe sovrascritto un salvataggio esistente.';
+      risultato = ultimoErroreCaricamentoSalvataggio;
+      aggiungiLog(risultato);
+      return false;
+    }
+
+    await _creaBackupDelSalvataggioCorrente(prefs);
+    await _buildDiaryArchiveFromRecentSaves(
+      prefs,
+      currentData: snapshot,
+      currentRaw: previous,
+    );
+    await prefs.setString(_pendingSaveKey, encoded);
+    final writeOk = await prefs.setString(
+      _OculumHomePageState.saveKey,
+      encoded,
+    );
+    await prefs.reload();
+    final verified = prefs.getString(_OculumHomePageState.saveKey);
+    if (!writeOk || verified != encoded) {
+      salvataggioFallimentiConsecutivi++;
+      ultimoErroreCaricamentoSalvataggio =
+          'Scrittura salvataggio non verificata: i dati non sono stati confermati dal disco.';
+      risultato = ultimoErroreCaricamentoSalvataggio;
+      aggiungiLog(risultato);
+      return false;
+    }
+
+    await prefs.setString(_verifiedSaveKey, encoded);
+    await prefs.remove(_pendingSaveKey);
+    salvataggioFallimentiConsecutivi = 0;
+    salvataggioRevisione = readIntValue(
+      snapshot['saveRevision'],
+      fallback: salvataggioRevisione,
+    );
+    ultimoSalvataggioCompletatoAt = DateTime.now();
+    ultimoSalvataggioFirma =
+        '${encoded.length}:${snapshot['saveRevision'] ?? 0}';
+    return true;
+  }
+
+  void salvaSchedaCorrenteInMemoria() {
+    if (schedePersonaggio.isEmpty) {
+      final next = statoCorrenteJson();
+      next['localUpdatedAt'] = DateTime.now().toIso8601String();
+      schedePersonaggio.add(next);
+      schedaCorrente = 0;
+      assicuraTagSchede();
+      return;
+    }
+
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      schedaCorrente = 0;
+    }
+
+    final previous = Map<String, dynamic>.from(
+      schedePersonaggio[schedaCorrente],
+    );
+    final next = <String, dynamic>{...previous, ...statoCorrenteJson()};
+    const realtimeKeys = <String>[
+      'realtimeSharedSheet',
+      'realtimeSourceKey',
+      'realtimeSourceSheetTag',
+      'realtimeOwnerTag',
+      'realtimeOwnerName',
+      'realtimeCampaignId',
+      'realtimeCampaignName',
+      'realtimeSharedAt',
+      'realtimeReceivedAt',
+      'realtimeLocalSheetTag',
+      'realtimeDirtyLocal',
+      'realtimeDirtyAt',
+      'localUpdatedAt',
+      'realtimeRestrictedByMaster',
+      'realtimeReadOnlyByMaster',
+      'publicTokenSide',
+      'publicInitiativeBase',
+      'publicInitiativeTotal',
+      'publicInitiativeRollHidden',
+      'realtimeCoMaster',
+      'realtimeShareWithFriends',
+    ];
+
+    Map<String, dynamic> comparableSheet(Map<String, dynamic> sheet) {
+      final copy = Map<String, dynamic>.from(sheet);
+      for (final key in realtimeKeys) {
+        copy.remove(key);
+      }
+      return copy;
+    }
+
+    final contentChanged =
+        jsonEncode(comparableSheet(previous)) !=
+        jsonEncode(comparableSheet(next));
+
+    if (contentChanged && !applyingHistorySnapshot) {
+      undoHistory.add(<String, dynamic>{
+        'index': schedaCorrente,
+        'sheet': jsonDecode(jsonEncode(previous)),
+      });
+      if (undoHistory.length > 80) {
+        undoHistory.removeAt(0);
+      }
+      redoHistory.clear();
+    }
+
+    for (final key in realtimeKeys) {
+      if (previous.containsKey(key)) {
+        next[key] = previous[key];
+      }
+    }
+
+    final previousLocalUpdatedAt = '${previous['localUpdatedAt'] ?? ''}'.trim();
+    if (contentChanged || previousLocalUpdatedAt.isEmpty) {
+      next['localUpdatedAt'] = DateTime.now().toIso8601String();
+    } else {
+      next['localUpdatedAt'] = previousLocalUpdatedAt;
+    }
+
+    if (readBoolValue(previous['realtimeSharedSheet']) &&
+        !readBoolValue(previous['realtimeReadOnlyByMaster']) &&
+        !applyingRealtimeRemoteSheet &&
+        contentChanged) {
+      next['realtimeDirtyLocal'] = true;
+      next['realtimeDirtyAt'] = DateTime.now().toIso8601String();
+    }
+
+    schedePersonaggio[schedaCorrente] = next;
+  }
+
+  Map<String, dynamic> currentHistorySnapshot() {
+    return <String, dynamic>{
+      'index': schedaCorrente,
+      'sheet': jsonDecode(jsonEncode(statoCorrenteJson())),
+    };
+  }
+
+  void restoreHistorySnapshot(Map<String, dynamic> snapshot) {
+    final index = readIntValue(snapshot['index'], fallback: schedaCorrente);
+    final rawSheet = snapshot['sheet'];
+    if (rawSheet is! Map) return;
+    if (index < 0 || index >= schedePersonaggio.length) return;
+
+    final sheet = Map<String, dynamic>.from(rawSheet);
+    applyingHistorySnapshot = true;
+    try {
+      schedePersonaggio[index] = sheet;
+      schedaCorrente = index;
+      caricaStatoDaJson(sheet);
+    } finally {
+      applyingHistorySnapshot = false;
+    }
+  }
+
+  void annullaUltimaModifica() {
+    salvaSchedaCorrenteInMemoria();
+
+    if (undoHistory.isEmpty) {
+      setState(() {
+        risultato = t('Nessuna modifica da annullare.', 'No change to undo.');
+      });
+      return;
+    }
+
+    final redo = currentHistorySnapshot();
+    final snapshot = undoHistory.removeLast();
+    setState(() {
+      redoHistory.add(redo);
+      restoreHistorySnapshot(snapshot);
+      risultato = t('Ultima modifica annullata.', 'Last change undone.');
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  void ripristinaModificaAnnullata() {
+    salvaSchedaCorrenteInMemoria();
+
+    if (redoHistory.isEmpty) {
+      setState(() {
+        risultato = t(
+          'Nessuna modifica da ripristinare.',
+          'No change to redo.',
+        );
+      });
+      return;
+    }
+
+    final undo = currentHistorySnapshot();
+    final snapshot = redoHistory.removeLast();
+    setState(() {
+      undoHistory.add(undo);
+      restoreHistorySnapshot(snapshot);
+      risultato = t('Modifica ripristinata.', 'Change redone.');
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  Map<String, dynamic> datiSalvataggioJson({required int revision}) {
+    return {
+      ...extraTopLevelSaveFields,
+      'saveVersion': 10,
+      'saveRevision': revision,
+      'savedAt': DateTime.now().toIso8601String(),
+      'multiScheda': true,
+      'schedaCorrente': schedaCorrente,
+      'schedePersonaggio': schedePersonaggio,
+      'activeCampaignId': activeCampaignId,
+      'campaigns': campagneOculum,
+      'oculumFriends': amiciOculum,
+      'oculumFriendRequests': pendingOculumFriendRequests,
+      'oculumSentFriendRequests': sentOculumFriendRequests,
+      'blockedOculumFriends': blockedOculumFriends,
+      'oculumUsername': oculumUsernameController.text,
+      'masterKickRequiresConfirmation': masterKickRequiresConfirmation,
+      'masterEnemyFullSheetVisibility': masterEnemyFullSheetVisibility,
+      'masterPublicDiceVisible': masterPublicDiceVisible,
+      'masterAskPublicDiceConfirmation': masterAskPublicDiceConfirmation,
+    };
+  }
+
+  Future<void> forzaSalvataggioImmediato({bool soloLocale = false}) async {
+    autosaveTimer?.cancel();
+    if (soloLocale) {
+      await salvaDatiSoloLocale();
+    } else {
+      await salvaDati();
+    }
+  }
+
+  Future<void> _salvaDatiSerializzato({required bool soloLocale}) async {
+    if (!datiCaricati) return;
+
+    if (salvataggioInCorso) {
+      salvataggioRichiestoDuranteScrittura = true;
+      if (!soloLocale) {
+        salvataggioCompletoRichiestoDuranteScrittura = true;
+      }
+      while (salvataggioInCorso) {
+        await Future<void>.delayed(const Duration(milliseconds: 25));
+      }
+      return;
+    }
+
+    salvataggioInCorso = true;
+    var prossimaScritturaSoloLocale = soloLocale;
+
+    try {
+      while (true) {
+        salvataggioRichiestoDuranteScrittura = false;
+        salvataggioCompletoRichiestoDuranteScrittura = false;
+
+        await _salvaDatiCore(soloLocale: prossimaScritturaSoloLocale);
+
+        if (!salvataggioRichiestoDuranteScrittura) break;
+        prossimaScritturaSoloLocale =
+            !salvataggioCompletoRichiestoDuranteScrittura;
+      }
+    } finally {
+      salvataggioInCorso = false;
+      salvataggioRichiestoDuranteScrittura = false;
+      salvataggioCompletoRichiestoDuranteScrittura = false;
+    }
+  }
+
+  Future<void> _salvaDatiCore({required bool soloLocale}) async {
+    if (!datiCaricati) return;
+
+    if (!salvataggioInChiusura) {
+      salvaSchedaCorrenteInMemoria();
+      if (!soloLocale) {
+        await sendRealtimeEditedSharedSheetBack();
+      }
+      saveActiveCampaignInMemory();
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final revision = salvataggioRevisione + 1;
+    final saved = await _scriviSalvataggioProtetto(
+      prefs,
+      datiSalvataggioJson(revision: revision),
+    );
+    if (!saved || soloLocale) return;
+
+    // Sincronizza la scheda in rete P2P
+    p2pSyncOnSave();
+    sendRealtimeCurrentPartySheet();
+    sendRealtimeCurrentSheetToFriendsIfEnabled();
+  }
+
+  Future<void> salvaDati() => _salvaDatiSerializzato(soloLocale: false);
+
+  Future<void> salvaDatiSoloLocale() =>
+      _salvaDatiSerializzato(soloLocale: true);
+
+  Future<void> caricaDati({bool allowBackupRecovery = true}) async {
+    final prefs = await SharedPreferences.getInstance();
+    var raw = prefs.getString(_OculumHomePageState.saveKey);
+
+    // Se il salvataggio principale è vuoto/non significativo ma esiste un backup,
+    // ripristina automaticamente il backup prima di inizializzare una scheda vuota.
+    if (!_rawLooksLikeMeaningfulSave(raw)) {
+      final recovery = _firstMeaningfulBackupRaw(prefs);
+      if (recovery != null) {
+        raw = recovery;
+        await prefs.setString(_OculumHomePageState.saveKey, recovery);
+        await prefs.setString(_verifiedSaveKey, recovery);
+      }
+    }
+
+    if (raw == null || raw.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        extraTopLevelSaveFields.clear();
+        schedePersonaggio
+          ..clear()
+          ..add(statoVuotoPersonaggio());
+
+        schedaCorrente = 0;
+        oculumUsernameController.clear();
+        pendingOculumFriendRequests.clear();
+        sentOculumFriendRequests.clear();
+        blockedOculumFriends.clear();
+        caricaStatoDaJson(schedePersonaggio.first);
+        assicuraTagSchede();
+        activeCampaignId = generateCampaignId();
+        campaignNameController.text = 'Campagna principale';
+        campagneOculum
+          ..clear()
+          ..add(currentCampaignSnapshot());
+        salvataggioBloccatoPerErrore = false;
+        ultimoErroreCaricamentoSalvataggio = '';
+        salvataggioRevisione = 0;
+        salvataggioFallimentiConsecutivi = 0;
+        ultimoSalvataggioCompletatoAt = null;
+        ultimoSalvataggioFirma = '';
+        datiCaricati = true;
+      });
+
+      return;
+    }
+
+    try {
+      final data = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      final diariRipristinati = await _recoverDiariesFromRecentSaves(
+        prefs,
+        data,
+        raw,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _memorizzaCampiTopLevelSconosciuti(data);
+        schedePersonaggio.clear();
+        campagneOculum.clear();
+        activeCampaignId = '${data['activeCampaignId'] ?? ''}';
+        masterKickRequiresConfirmation = readBoolValue(
+          data['masterKickRequiresConfirmation'],
+          fallback: true,
+        );
+        masterEnemyFullSheetVisibility = readBoolValue(
+          data['masterEnemyFullSheetVisibility'],
+        );
+        masterPublicDiceVisible = readBoolValue(
+          data['masterPublicDiceVisible'],
+        );
+        masterAskPublicDiceConfirmation = readBoolValue(
+          data['masterAskPublicDiceConfirmation'],
+          fallback: true,
+        );
+
+        if (data['campaigns'] is List) {
+          campagneOculum.addAll(
+            ((data['campaigns'] ?? []) as List).whereType<Map>().map(
+              (x) => Map<String, dynamic>.from(x),
+            ),
+          );
+          oculumUsernameController.text = '${data['oculumUsername'] ?? ''}';
+          amiciOculum
+            ..clear()
+            ..addAll(
+              ((data['oculumFriends'] ?? []) as List).whereType<Map>().map(
+                (x) => Map<String, dynamic>.from(x),
+              ),
+            );
+          pendingOculumFriendRequests
+            ..clear()
+            ..addAll(
+              ((data['oculumFriendRequests'] ?? []) as List)
+                  .whereType<Map>()
+                  .map((x) => Map<String, dynamic>.from(x)),
+            );
+          sentOculumFriendRequests
+            ..clear()
+            ..addAll(
+              ((data['oculumSentFriendRequests'] ?? []) as List)
+                  .whereType<Map>()
+                  .map((x) => Map<String, dynamic>.from(x)),
+            );
+          blockedOculumFriends
+            ..clear()
+            ..addAll(
+              ((data['blockedOculumFriends'] ?? []) as List)
+                  .whereType<Map>()
+                  .map((x) => Map<String, dynamic>.from(x)),
+            );
+
+          if (campagneOculum.isEmpty) {
+            campagneOculum.add(campaignFromLegacyData(data));
+          }
+
+          if (activeCampaignId.isEmpty ||
+              !campagneOculum.any(
+                (x) => '${x['id'] ?? ''}' == activeCampaignId,
+              )) {
+            activeCampaignId =
+                '${campagneOculum.first['id'] ?? generateCampaignId()}';
+          }
+
+          final activeCampaign = campagneOculum.firstWhere(
+            (x) => '${x['id'] ?? ''}' == activeCampaignId,
+            orElse: () => campagneOculum.first,
+          );
+          loadCampaignSnapshot(activeCampaign);
+        } else if (data['multiScheda'] == true &&
+            data['schedePersonaggio'] is List) {
+          final campaign = campaignFromLegacyData(data);
+          campagneOculum.add(campaign);
+          activeCampaignId = '${campaign['id'] ?? generateCampaignId()}';
+          oculumUsernameController.text = '${data['oculumUsername'] ?? ''}';
+          loadCampaignSnapshot(campaign);
+          amiciOculum
+            ..clear()
+            ..addAll(
+              ((data['oculumFriends'] ?? []) as List).whereType<Map>().map(
+                (x) => Map<String, dynamic>.from(x),
+              ),
+            );
+          pendingOculumFriendRequests
+            ..clear()
+            ..addAll(
+              ((data['oculumFriendRequests'] ?? []) as List)
+                  .whereType<Map>()
+                  .map((x) => Map<String, dynamic>.from(x)),
+            );
+          sentOculumFriendRequests
+            ..clear()
+            ..addAll(
+              ((data['oculumSentFriendRequests'] ?? []) as List)
+                  .whereType<Map>()
+                  .map((x) => Map<String, dynamic>.from(x)),
+            );
+          blockedOculumFriends
+            ..clear()
+            ..addAll(
+              ((data['blockedOculumFriends'] ?? []) as List)
+                  .whereType<Map>()
+                  .map((x) => Map<String, dynamic>.from(x)),
+            );
+        } else {
+          final campaign = campaignFromLegacyData(data);
+          campagneOculum.add(campaign);
+          activeCampaignId = '${campaign['id'] ?? generateCampaignId()}';
+          oculumUsernameController.text = '${data['oculumUsername'] ?? ''}';
+          loadCampaignSnapshot(campaign);
+          amiciOculum.clear();
+          pendingOculumFriendRequests.clear();
+          sentOculumFriendRequests.clear();
+          blockedOculumFriends.clear();
+        }
+
+        if (schedePersonaggio.isEmpty) {
+          schedePersonaggio.add(statoVuotoPersonaggio());
+        }
+
+        if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+          schedaCorrente = 0;
+        }
+
+        caricaStatoDaJson(schedePersonaggio[schedaCorrente]);
+        assicuraTagSchede();
+        saveActiveCampaignInMemory();
+        assicuraAmiciOculum();
+        salvataggioBloccatoPerErrore = false;
+        ultimoErroreCaricamentoSalvataggio = '';
+        salvataggioRevisione = readIntValue(data['saveRevision']);
+        salvataggioFallimentiConsecutivi = 0;
+        ultimoSalvataggioCompletatoAt = DateTime.tryParse(
+          '${data['savedAt'] ?? ''}',
+        );
+        ultimoSalvataggioFirma =
+            '${raw!.length}:${data['saveRevision'] ?? salvataggioRevisione}';
+        datiCaricati = true;
+        if (diariRipristinati > 0) {
+          risultato = t(
+            'Recupero diario completato: ripristinate $diariRipristinati pagine dai salvataggi recenti.',
+            'Diary recovery completed: restored $diariRipristinati pages from recent saves.',
+          );
+          aggiungiLog(risultato);
+        }
+      });
+
+      // Il caricamento è riuscito: crea una copia di sicurezza del raw originale.
+      await _creaBackupDelSalvataggioCorrente(prefs);
+      if (diariRipristinati > 0) {
+        await salvaDatiSoloLocale();
+      }
+    } catch (error, stackTrace) {
+      debugPrint('Errore caricamento salvataggio Oculum: $error');
+      debugPrint('$stackTrace');
+
+      if (allowBackupRecovery) {
+        final recovery = _firstMeaningfulBackupRaw(prefs, exclude: raw);
+        if (recovery != null) {
+          await prefs.setString(_OculumHomePageState.saveKey, recovery);
+          await prefs.setString(_verifiedSaveKey, recovery);
+          return caricaDati(allowBackupRecovery: false);
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        extraTopLevelSaveFields.clear();
+        schedePersonaggio
+          ..clear()
+          ..add(statoVuotoPersonaggio());
+
+        schedaCorrente = 0;
+        oculumUsernameController.clear();
+        pendingOculumFriendRequests.clear();
+        sentOculumFriendRequests.clear();
+        blockedOculumFriends.clear();
+        caricaStatoDaJson(schedePersonaggio.first);
+        assicuraTagSchede();
+        activeCampaignId = generateCampaignId();
+        campaignNameController.text = 'Campagna principale';
+        campagneOculum
+          ..clear()
+          ..add(currentCampaignSnapshot());
+        salvataggioBloccatoPerErrore = true;
+        salvataggioFallimentiConsecutivi++;
+        ultimoErroreCaricamentoSalvataggio =
+            'Il salvataggio vecchio non è stato caricato, ma NON è stato cancellato né sovrascritto. Errore: $error';
+        risultato = ultimoErroreCaricamentoSalvataggio;
+        aggiungiLog(risultato);
+        datiCaricati = true;
+      });
+    }
+  }
+
+  Future<void> cancellaSalvataggio() async {
+    salvaSchedaCorrenteInMemoria();
+    saveActiveCampaignInMemory();
+
+    final prefs = await SharedPreferences.getInstance();
+    await _creaBackupDelSalvataggioCorrente(prefs);
+
+    if (!mounted) return;
+
+    setState(() {
+      final archived =
+          jsonDecode(jsonEncode(currentCampaignSnapshot()))
+              as Map<String, dynamic>;
+      archived['id'] = generateCampaignId();
+      archived['name'] =
+          '${t('Archivio', 'Archive')} - ${activeCampaignName()} - ${DateTime.now().toLocal().toIso8601String().substring(0, 16)}';
+      archived['archivedAt'] = DateTime.now().toIso8601String();
+      campagneOculum.add(archived);
+
+      schedePersonaggio
+        ..clear()
+        ..add(statoVuotoPersonaggio());
+      salvataggioBloccatoPerErrore = false;
+      ultimoErroreCaricamentoSalvataggio = '';
+
+      schedaCorrente = 0;
+      activeCampaignId = generateCampaignId();
+      campaignNameController.text = 'Campagna principale';
+      caricaStatoDaJson(schedePersonaggio.first);
+      saveActiveCampaignInMemory();
+
+      risultato = t(
+        'Nessun salvataggio cancellato: la campagna precedente e stata archiviata e hai una nuova scheda vuota.',
+        'No save was deleted: the previous campaign was archived and you have a new empty sheet.',
+      );
+
+      aggiungiLog(risultato);
+    });
+
+    await salvaDatiSoloLocale();
+  }
+
+  // =====================================================
+  // UTILITY BASE
+  // =====================================================
+
+  int leggiNumero(TextEditingController controller) {
+    return int.tryParse(controller.text.trim()) ?? 0;
+  }
+
+  double leggiDouble(TextEditingController controller) {
+    return double.tryParse(controller.text.trim().replaceAll(',', '.')) ?? 0;
+  }
+
+  bool isMostro() => tipoSchedaController.text == 'Mostro';
+
+  int clampKarmaTitolo(int valore) {
+    if (valore > 0) return 1;
+    if (valore < 0) return -1;
+    return 0;
+  }
+
+  int leggiKarmaTitolo(TextEditingController controller) {
+    return clampKarmaTitolo(int.tryParse(controller.text.trim()) ?? 0);
+  }
+
+  String nomeSchedaPersonaggio(int index) {
+    if (index < 0 || index >= schedePersonaggio.length) {
+      return '???';
+    }
+
+    if (index == schedaCorrente) {
+      final nomeAttuale = nomeController.text.trim();
+      return nomeAttuale.isEmpty ? '???' : nomeAttuale;
+    }
+
+    final nome = '${schedePersonaggio[index]['nome'] ?? '???'}'.trim();
+    return nome.isEmpty ? '???' : nome;
+  }
+
+  String chiaveNomeScheda(String value) {
+    return cleanUiText(
+      value,
+    ).trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  Set<String> nomiSchedeEsistenti({int? escluso}) {
+    final names = <String>{};
+    for (int i = 0; i < schedePersonaggio.length; i++) {
+      if (i == escluso) continue;
+      final key = chiaveNomeScheda('${schedePersonaggio[i]['nome'] ?? ''}');
+      if (key.isNotEmpty) names.add(key);
+    }
+    return names;
+  }
+
+  String nomeSchedaImportataUnico(String rawName, Set<String> usedNames) {
+    final base = cleanUiText(rawName).trim().isEmpty
+        ? t('Scheda importata', 'Imported sheet')
+        : cleanUiText(rawName).trim();
+
+    var candidate = base;
+    var key = chiaveNomeScheda(candidate);
+    if (key.isEmpty) {
+      candidate = t('Scheda importata', 'Imported sheet');
+      key = chiaveNomeScheda(candidate);
+    }
+
+    if (usedNames.add(key)) return candidate;
+
+    candidate = '$base Copy';
+    key = chiaveNomeScheda(candidate);
+    if (usedNames.add(key)) return candidate;
+
+    var counter = 2;
+    while (true) {
+      candidate = '$base Copy $counter';
+      key = chiaveNomeScheda(candidate);
+      if (usedNames.add(key)) return candidate;
+      counter++;
+    }
+  }
+
+  List<Map<String, dynamic>> preparaSchedeImportateUniche(
+    Iterable<Map<String, dynamic>> rawSheets,
+  ) {
+    final usedNames = nomiSchedeEsistenti();
+    return rawSheets.map((sheet) {
+      final copy = Map<String, dynamic>.from(sheet);
+      copy['nome'] = nomeSchedaImportataUnico(
+        '${copy['nome'] ?? t('Scheda importata', 'Imported sheet')}',
+        usedNames,
+      );
+      return copy;
+    }).toList();
+  }
+
+  String tipoSchedaPersonaggio(int index) {
+    if (index < 0 || index >= schedePersonaggio.length) {
+      return 'Personaggio';
+    }
+
+    if (index == schedaCorrente) {
+      return tipoSchedaController.text;
+    }
+
+    return '${schedePersonaggio[index]['tipoScheda'] ?? 'Personaggio'}';
+  }
+
+  Map<String, dynamic> schedaJsonAt(int index) {
+    if (index < 0 || index >= schedePersonaggio.length) {
+      return statoVuotoPersonaggio();
+    }
+
+    if (index == schedaCorrente) {
+      return statoCorrenteJson();
+    }
+
+    return schedePersonaggio[index];
+  }
+
+  bool assicuraTagSchede() {
+    if (schedePersonaggio.isEmpty) return false;
+
+    var changed = false;
+    final usati = <String>{};
+
+    for (int i = 0; i < schedePersonaggio.length; i++) {
+      final scheda = schedePersonaggio[i];
+      var tag = normalizeOculumFriendTag('${scheda['sheetTag'] ?? ''}');
+
+      final nonValido = shouldReplaceSheetTag(tag, i, usati);
+
+      if (nonValido) {
+        tag = generaTagUnicoScheda(i, usati);
+        scheda['sheetTag'] = tag;
+        scheda['id'] = tag;
+        changed = true;
+      } else if ('${scheda['sheetTag'] ?? ''}' != tag) {
+        scheda['sheetTag'] = tag;
+        scheda['id'] = tag;
+        changed = true;
+      }
+
+      if ('${scheda['id'] ?? ''}'.trim() != tag) {
+        scheda['id'] = tag;
+        changed = true;
+      }
+
+      usati.add(tag.toUpperCase());
+
+      if (!scheda.containsKey('inMasterParty')) {
+        scheda['inMasterParty'] = false;
+        changed = true;
+      }
+
+      if (scheda['inMasterParty'] is! bool) {
+        scheda['inMasterParty'] = readBoolValue(scheda['inMasterParty']);
+        changed = true;
+      }
+
+      final sideOverride = '${scheda['masterSideOverride'] ?? ''}'.trim();
+      if (sideOverride.isNotEmpty &&
+          sideOverride != 'enemy' &&
+          sideOverride != 'ally' &&
+          sideOverride != 'neutral') {
+        scheda['masterSideOverride'] = '';
+        changed = true;
+      }
+    }
+
+    return changed;
+  }
+
+  String sheetTagAt(int index) {
+    if (index < 0 || index >= schedePersonaggio.length) return '---';
+
+    assicuraTagSchede();
+    return '${schedePersonaggio[index]['sheetTag'] ?? '---'}';
+  }
+
+  bool sheetInMasterPartyAt(int index) {
+    if (index < 0 || index >= schedePersonaggio.length) return false;
+
+    assicuraTagSchede();
+    return readBoolValue(schedePersonaggio[index]['inMasterParty']);
+  }
+
+  List<int> masterPartyIndexes() {
+    assicuraTagSchede();
+
+    final indexes = <int>[];
+    for (int i = 0; i < schedePersonaggio.length; i++) {
+      if (sheetInMasterPartyAt(i)) indexes.add(i);
+    }
+    return indexes;
+  }
+
+  Uint8List? immagineSchedaAt(int index) {
+    if (index < 0 || index >= schedePersonaggio.length) return null;
+    if (index == schedaCorrente) return immaginePersonaggio;
+
+    final raw =
+        '${schedePersonaggio[index]['immaginePersonaggioBase64'] ?? ''}';
+    if (raw.isEmpty) return null;
+
+    try {
+      return base64Decode(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> cambiaSchedaMasterParty(int index, bool inParty) async {
+    if (index < 0 || index >= schedePersonaggio.length) return;
+
+    salvaSchedaCorrenteInMemoria();
+    assicuraTagSchede();
+
+    setState(() {
+      schedePersonaggio[index]['inMasterParty'] = inParty;
+      risultato = inParty
+          ? 'Scheda aggiunta al party: ${nomeSchedaPersonaggio(index)}.'
+          : 'Scheda rimossa dal party: ${nomeSchedaPersonaggio(index)}.';
+      aggiungiLog(risultato);
+    });
+
+    await salvaDati();
+    if (inParty) {
+      if (realtimeIsMasterRole) {
+        sendRealtimeMasterVisibleTokenAt(index);
+      } else {
+        sendRealtimeSharedSheetAt(index);
+      }
+    }
+  }
+
+  Future<void> apriSchedaDaParty(int index) async {
+    if (index < 0 || index >= schedePersonaggio.length) return;
+
+    await cambiaSchedaPersonaggio(index);
+    if (!mounted) return;
+
+    setState(() {
+      paginaCorrente = 0;
+      mostraPartyScheda = true;
+      _expandedFunctionSections.add('sheet_party');
+    });
+  }
+
+  void aggiungiLog(String testo) {
+    final now = DateTime.now();
+    final hh = now.hour.toString().padLeft(2, '0');
+    final mm = now.minute.toString().padLeft(2, '0');
+    final ss = now.second.toString().padLeft(2, '0');
+
+    logEventi.insert(0, '[$hh:$mm:$ss] $testo');
+
+    if (logEventi.length > 250) {
+      logEventi.removeRange(250, logEventi.length);
+    }
+  }
+
+  void pulisciLog() {
+    setState(() {
+      logEventi.clear();
+      risultato = t('Log cancellato.', 'Log cleared.');
+    });
+
+    programmaSalvataggio();
+  }
+
+  Map<String, dynamic> catturaImpostazioniGlobali() {
+    return <String, dynamic>{
+      'linguaInglese': linguaInglese,
+      'tutorialCompletato': tutorialCompletato,
+      'modalitaDesktop': modalitaDesktop,
+      'modalitaMaster': modalitaMaster,
+      'coMasterCanSetCoMaster': coMasterCanSetCoMaster,
+      'coMasterCanEditSheets': coMasterCanEditSheets,
+      'masterKickRequiresConfirmation': masterKickRequiresConfirmation,
+      'masterEnemyFullSheetVisibility': masterEnemyFullSheetVisibility,
+      'masterPublicDiceVisible': masterPublicDiceVisible,
+      'masterAskPublicDiceConfirmation': masterAskPublicDiceConfirmation,
+      'relayAutoReconnect': relayAutoReconnect,
+      'relayServerUrl': relayServerController.text,
+      'relayRoomCode': relayRoomController.text,
+      'realtimeRoom': realtimeRoomController.text,
+      'realtimeName': realtimeNameController.text,
+      'diceAmount': diceAmountController.text,
+      'diceModifier': diceModifierController.text,
+      'unlockedColorThemeIds': unlockedColorThemeIds.toList()..sort(),
+    };
+  }
+
+  void ripristinaImpostazioniGlobali(Map<String, dynamic> globali) {
+    linguaInglese = readBoolValue(globali['linguaInglese']);
+    tutorialCompletato = readBoolValue(globali['tutorialCompletato']);
+    modalitaDesktop = readBoolValue(globali['modalitaDesktop']);
+    modalitaMaster = readBoolValue(globali['modalitaMaster']);
+    coMasterCanSetCoMaster = readBoolValue(globali['coMasterCanSetCoMaster']);
+    coMasterCanEditSheets = readBoolValue(globali['coMasterCanEditSheets']);
+    masterKickRequiresConfirmation = readBoolValue(
+      globali['masterKickRequiresConfirmation'],
+      fallback: true,
+    );
+    masterEnemyFullSheetVisibility = readBoolValue(
+      globali['masterEnemyFullSheetVisibility'],
+    );
+    masterPublicDiceVisible = readBoolValue(globali['masterPublicDiceVisible']);
+    masterAskPublicDiceConfirmation = readBoolValue(
+      globali['masterAskPublicDiceConfirmation'],
+      fallback: true,
+    );
+    relayAutoReconnect = readBoolValue(
+      globali['relayAutoReconnect'],
+      fallback: true,
+    );
+    relayServerController.text = '${globali['relayServerUrl'] ?? ''}';
+    relayRoomController.text = '${globali['relayRoomCode'] ?? ''}';
+    relayRoomCode = relayRoomController.text.trim().toUpperCase();
+    realtimeRoomController.text =
+        '${globali['realtimeRoom'] ?? realtimeRoomController.text}';
+    realtimeNameController.text =
+        '${globali['realtimeName'] ?? realtimeNameController.text}';
+    diceAmountController.text =
+        '${globali['diceAmount'] ?? diceAmountController.text}';
+    diceModifierController.text =
+        '${globali['diceModifier'] ?? diceModifierController.text}';
+    final unlockedThemesRaw = globali['unlockedColorThemeIds'];
+    unlockedColorThemeIds
+      ..clear()
+      ..add('classic_reliquary')
+      ..addAll(
+        (unlockedThemesRaw is List ? unlockedThemesRaw : const [])
+            .map((id) => '$id')
+            .where((id) => colorPresets.any((preset) => preset.id == id)),
+      );
+  }
+
+  // =====================================================
+  // SCHEDE MULTIPLE
+  // =====================================================
+
+  Future<void> creaNuovaSchedaPersonaggio({
+    String nome = '???',
+    String tipo = 'Personaggio',
+    int livello = 0,
+    int grado = 0,
+    bool aggiungiAlMasterParty = false,
+  }) async {
+    salvaSchedaCorrenteInMemoria();
+    final globali = catturaImpostazioniGlobali();
+
+    setState(() {
+      final nuovaScheda = statoVuotoPersonaggio(
+        nome: nome,
+        tipo: tipo,
+        livello: livello,
+        grado: grado,
+      );
+      nuovaScheda['inMasterParty'] = aggiungiAlMasterParty;
+
+      schedePersonaggio.add(nuovaScheda);
+      assicuraTagSchede();
+
+      schedaCorrente = schedePersonaggio.length - 1;
+      caricaStatoDaJson(schedePersonaggio[schedaCorrente]);
+      ripristinaImpostazioniGlobali(globali);
+
+      if (isMostro()) {
+        currentHpController.text = maxHp().toString();
+      }
+
+      aggiornaGradoAutomatico();
+
+      risultato = t(
+        'Nuova scheda creata: $nome ($tipo).',
+        'New sheet created: $nome ($tipo).',
+      );
+
+      aggiungiLog('Nuova scheda creata: $nome ($tipo).');
+    });
+
+    await salvaDati();
+  }
+
+  Future<void> mostraMenuSchedaPersonaggio({
+    required int index,
+    required Offset position,
+  }) async {
+    if (index < 0 || index >= schedePersonaggio.length) return;
+
+    final choice = await showMenu<String>(
+      context: context,
+      color: const Color(0xFF10121A),
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        position.dx,
+        position.dy,
+      ),
+      items: [
+        PopupMenuItem<String>(
+          value: 'copy',
+          child: Row(
+            children: [
+              Icon(Icons.copy, color: primaryColor, size: 18),
+              const SizedBox(width: 10),
+              Text(t('Copia', 'Copy')),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'rename',
+          child: Row(
+            children: [
+              Icon(Icons.edit, color: primaryColor, size: 18),
+              const SizedBox(width: 10),
+              Text(t('Rinomina', 'Rename')),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'delete',
+          enabled: schedePersonaggio.length > 1,
+          child: Row(
+            children: [
+              Icon(
+                Icons.delete_outline,
+                color: schedePersonaggio.length > 1
+                    ? tertiaryColor
+                    : Colors.grey,
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              Text(t('Elimina', 'Delete')),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (!mounted || choice == null) return;
+
+    if (choice == 'copy') {
+      await duplicaSchedaPersonaggio(index);
+    } else if (choice == 'rename') {
+      await rinominaSchedaPersonaggio(index);
+    } else if (choice == 'delete') {
+      await eliminaSchedaPersonaggio(index);
+    }
+  }
+
+  Future<void> rinominaSchedaPersonaggio(int index) async {
+    if (index < 0 || index >= schedePersonaggio.length) return;
+
+    salvaSchedaCorrenteInMemoria();
+
+    final controller = TextEditingController(
+      text: nomeSchedaPersonaggio(index),
+    );
+    final nuovoNome = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF10121A),
+          title: Text(
+            t('Rinomina scheda', 'Rename sheet'),
+            style: TextStyle(color: primaryColor),
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              labelText: t('Nome', 'Name'),
+              labelStyle: TextStyle(color: primaryColor),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: primaryColor.withValues(alpha: 0.45),
+                ),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: tertiaryColor),
+              ),
+            ),
+            onSubmitted: (value) => Navigator.pop(context, value.trim()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(t('Annulla', 'Cancel')),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              child: Text(t('Salva', 'Save')),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+
+    final clean = cleanUiText(nuovoNome ?? '').trim();
+    if (clean.isEmpty) return;
+
+    setState(() {
+      schedePersonaggio[index]['nome'] = clean;
+      if (index == schedaCorrente) {
+        nomeController.text = clean;
+      }
+      risultato = t('Scheda rinominata: $clean.', 'Sheet renamed: $clean.');
+      aggiungiLog(risultato);
+    });
+
+    await salvaDati();
+  }
+
+  Future<void> duplicaSchedaCorrente() async {
+    await duplicaSchedaPersonaggio(schedaCorrente);
+  }
+
+  Future<void> duplicaSchedaPersonaggio(int index) async {
+    if (index < 0 || index >= schedePersonaggio.length) {
+      return;
+    }
+
+    salvaSchedaCorrenteInMemoria();
+    final globali = catturaImpostazioniGlobali();
+    final sourceName = nomeSchedaPersonaggio(index);
+    final copy =
+        jsonDecode(jsonEncode(schedePersonaggio[index]))
+            as Map<String, dynamic>;
+
+    for (final key in const <String>[
+      'id',
+      'sheetTag',
+      'realtimeSharedSheet',
+      'realtimeSourceKey',
+      'realtimeSourceSheetTag',
+      'realtimeOwnerTag',
+      'realtimeOwnerName',
+      'realtimeCampaignId',
+      'realtimeCampaignName',
+      'realtimeSharedAt',
+      'realtimeReceivedAt',
+      'realtimeLocalSheetTag',
+      'realtimeDirtyLocal',
+      'realtimeDirtyAt',
+      'localUpdatedAt',
+      'realtimeRestrictedByMaster',
+      'realtimeReadOnlyByMaster',
+      'publicTokenSide',
+      'publicInitiativeBase',
+      'publicInitiativeTotal',
+      'publicInitiativeRollHidden',
+      'realtimeCoMaster',
+      'realtimeShareWithFriends',
+    ]) {
+      copy.remove(key);
+    }
+
+    copy['nome'] = t('Copia di $sourceName', 'Copy of $sourceName');
+    copy['inMasterParty'] = false;
+    copy['masterSideOverride'] = '';
+
+    setState(() {
+      schedePersonaggio.add(copy);
+      assicuraTagSchede();
+      schedaCorrente = schedePersonaggio.length - 1;
+      caricaStatoDaJson(schedePersonaggio[schedaCorrente]);
+      ripristinaImpostazioniGlobali(globali);
+      risultato = t(
+        'Scheda duplicata: ${nomeSchedaPersonaggio(schedaCorrente)}.',
+        'Sheet duplicated: ${nomeSchedaPersonaggio(schedaCorrente)}.',
+      );
+      aggiungiLog(risultato);
+    });
+
+    await salvaDati();
+  }
+
+  Future<void> cambiaSchedaPersonaggio(int index) async {
+    if (index < 0 || index >= schedePersonaggio.length) return;
+    if (index == schedaCorrente) return;
+
+    salvaSchedaCorrenteInMemoria();
+    final globali = catturaImpostazioniGlobali();
+
+    setState(() {
+      schedaCorrente = index;
+      caricaStatoDaJson(schedePersonaggio[schedaCorrente]);
+      ripristinaImpostazioniGlobali(globali);
+
+      risultato = t(
+        'Scheda caricata: ${nomeSchedaPersonaggio(index)}',
+        'Sheet loaded: ${nomeSchedaPersonaggio(index)}',
+      );
+
+      aggiungiLog('Scheda caricata: ${nomeSchedaPersonaggio(index)}.');
+    });
+
+    await salvaDati();
+  }
+
+  Future<void> eliminaSchedaCorrente() async {
+    await eliminaSchedaPersonaggio(schedaCorrente);
+  }
+
+  Future<void> eliminaSchedaPersonaggio(int index) async {
+    if (index < 0 || index >= schedePersonaggio.length) return;
+
+    if (schedePersonaggio.length <= 1) {
+      setState(() {
+        risultato = t(
+          'Non puoi eliminare l’unica scheda rimasta.',
+          'You cannot delete the only remaining sheet.',
+        );
+      });
+
+      return;
+    }
+
+    salvaSchedaCorrenteInMemoria();
+
+    final nomeEliminato = nomeSchedaPersonaggio(index);
+    final diarioDaConservare = (schedaJsonAt(index)['diarioPagine'] is List)
+        ? (schedaJsonAt(index)['diarioPagine'] as List)
+              .map((x) => '$x')
+              .where((x) => x.trim().isNotEmpty)
+              .toList()
+        : <String>[];
+    final globali = catturaImpostazioniGlobali();
+
+    setState(() {
+      schedePersonaggio.removeAt(index);
+
+      if (schedaCorrente >= schedePersonaggio.length) {
+        schedaCorrente = schedePersonaggio.length - 1;
+      } else if (index < schedaCorrente) {
+        schedaCorrente -= 1;
+      }
+
+      caricaStatoDaJson(schedePersonaggio[schedaCorrente]);
+      ripristinaImpostazioniGlobali(globali);
+      if (diarioDaConservare.isNotEmpty) {
+        diarioPagine.addAll([
+          t(
+            'Archivio diario dalla scheda eliminata: $nomeEliminato.',
+            'Diary archive from deleted sheet: $nomeEliminato.',
+          ),
+          ...diarioDaConservare,
+        ]);
+      }
+
+      risultato = t(
+        'Scheda eliminata: $nomeEliminato',
+        'Sheet deleted: $nomeEliminato',
+      );
+
+      aggiungiLog('Scheda eliminata: $nomeEliminato.');
+    });
+
+    await salvaDati();
+  }
+
+  Future<void> creaSchedaRapidaMaster() async {
+    final nome = quickSheetNameController.text.trim().isEmpty
+        ? '???'
+        : quickSheetNameController.text.trim();
+
+    final livello = max(0, leggiNumero(quickSheetLevelController));
+    final grado = max(0, leggiNumero(quickSheetGradeController));
+
+    await creaNuovaSchedaPersonaggio(
+      nome: nome,
+      tipo: quickSheetType,
+      livello: livello,
+      grado: grado,
+      aggiungiAlMasterParty: true,
+    );
+  }
+
+  void cambiaTipoScheda(String tipo) {
+    if (!tipiScheda.contains(tipo)) return;
+
+    setState(() {
+      tipoSchedaController.text = tipo;
+
+      if (tipo == 'Mostro' && monsterStatPoints == 0) {
+        monsterStatPoints = leggiNumero(livelloController) * 9;
+      }
+
+      risultato = t(
+        'Tipo scheda cambiato in: $tipo.',
+        'Sheet type changed to: $tipo.',
+      );
+
+      aggiungiLog('Tipo scheda cambiato in: $tipo.');
+    });
+
+    programmaSalvataggio();
+  }
+
+  // =====================================================
+  // IMMAGINE PERSONAGGIO
+  // =====================================================
+
+  Future<void> scegliImmagine() async {
+    final XFile? file = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (file == null) return;
+
+    final bytes = await file.readAsBytes();
+    await importaImmaginePersonaggioDaBytes(
+      bytes,
+      sourceName: file.name.trim().isEmpty ? 'gallery' : file.name.trim(),
+    );
+  }
+
+  Future<void> incollaImmaginePersonaggioDaClipboard() async {
+    try {
+      final clipboardImage = await Pasteboard.image;
+      if (clipboardImage != null && clipboardImage.isNotEmpty) {
+        await importaImmaginePersonaggioDaBytes(
+          clipboardImage,
+          sourceName: t('appunti', 'clipboard'),
+        );
+        return;
+      }
+
+      final files = await Pasteboard.files();
+      for (final rawPath in files) {
+        final path = rawPath.startsWith('file:')
+            ? Uri.parse(rawPath).toFilePath()
+            : rawPath;
+        final file = File(path);
+        if (!await file.exists()) continue;
+
+        final bytes = await file.readAsBytes();
+        if (img.decodeImage(bytes) == null) continue;
+
+        await importaImmaginePersonaggioDaBytes(
+          bytes,
+          sourceName: file.uri.pathSegments.isEmpty
+              ? t('appunti', 'clipboard')
+              : Uri.decodeComponent(file.uri.pathSegments.last),
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        risultato = t(
+          'Nessuna immagine trovata negli appunti.',
+          'No image found in the clipboard.',
+        );
+        aggiungiLog(risultato);
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        risultato = t(
+          'Impossibile leggere l\'immagine dagli appunti.',
+          'Could not read an image from the clipboard.',
+        );
+        aggiungiLog('$risultato ($error)');
+      });
+    }
+  }
+
+  Future<void> importaImmaginePersonaggioDaBytes(
+    Uint8List bytes, {
+    String sourceName = '',
+  }) async {
+    if (bytes.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        risultato = t('Immagine vuota ignorata.', 'Empty image ignored.');
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null || decoded.width <= 0 || decoded.height <= 0) {
+      if (!mounted) return;
+      setState(() {
+        risultato = t(
+          'File immagine non valido: non ha sostituito l’immagine attuale.',
+          'Invalid image file: current image was not replaced.',
+        );
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+
+    final cropped = await mostraEditorCropEsagono(bytes);
+    if (cropped == null || cropped.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        risultato = t(
+          'Ritaglio annullato: immagine precedente mantenuta.',
+          'Crop cancelled: previous image kept.',
+        );
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      immaginePersonaggio = cropped;
+      if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length) {
+        schedePersonaggio[schedaCorrente]['immaginePersonaggioBase64'] =
+            base64Encode(cropped);
+      }
+      final suffix = sourceName.trim().isEmpty ? '' : ' ($sourceName)';
+      risultato = t(
+        'Immagine scheda aggiornata$suffix.',
+        'Sheet image updated$suffix.',
+      );
+      aggiungiLog(risultato);
+    });
+
+    await salvaDati();
+  }
+
+  Future<Uint8List?> mostraEditorCropEsagono(Uint8List bytes) async {
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null || decoded.width <= 0 || decoded.height <= 0) {
+      if (!mounted) return null;
+      setState(() {
+        risultato = t('Immagine non leggibile.', 'Image could not be read.');
+        aggiungiLog(risultato);
+      });
+      return null;
+    }
+
+    double zoom = 1.0;
+    double offsetX = 0.0;
+    double offsetY = 0.0;
+
+    return showDialog<Uint8List>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final compact = MediaQuery.of(context).size.shortestSide < 600;
+            final previewSize = compact ? 230.0 : 340.0;
+
+            Rect cropRect() {
+              final minSide = min(decoded.width, decoded.height);
+              final cropSide = (minSide / zoom).round().clamp(1, minSide);
+              final maxX = max(0, decoded.width - cropSide);
+              final maxY = max(0, decoded.height - cropSide);
+              final cropX = ((offsetX + 1) * 0.5 * maxX).round().clamp(0, maxX);
+              final cropY = ((offsetY + 1) * 0.5 * maxY).round().clamp(0, maxY);
+              return Rect.fromLTWH(
+                cropX.toDouble(),
+                cropY.toDouble(),
+                cropSide.toDouble(),
+                cropSide.toDouble(),
+              );
+            }
+
+            Uint8List cropCurrentImage({
+              int outputSize = 960,
+              int quality = 92,
+            }) {
+              final rect = cropRect();
+              final cropped = img.copyCrop(
+                decoded,
+                x: rect.left.round(),
+                y: rect.top.round(),
+                width: rect.width.round(),
+                height: rect.height.round(),
+              );
+              final resized = img.copyResize(
+                cropped,
+                width: outputSize,
+                height: outputSize,
+                interpolation: img.Interpolation.cubic,
+              );
+              final encoded = img.encodeJpg(resized, quality: quality);
+              if (encoded.isEmpty) return Uint8List(0);
+              return Uint8List.fromList(encoded);
+            }
+
+            void clampOffsets() {
+              final rect = cropRect();
+              if (decoded.width <= rect.width.round()) offsetX = 0.0;
+              if (decoded.height <= rect.height.round()) offsetY = 0.0;
+              offsetX = offsetX.clamp(-1.0, 1.0).toDouble();
+              offsetY = offsetY.clamp(-1.0, 1.0).toDouble();
+            }
+
+            void moveCrop(Offset delta) {
+              setDialogState(() {
+                final rect = cropRect();
+                final horizontalRoom = max(0.0, decoded.width - rect.width);
+                final verticalRoom = max(0.0, decoded.height - rect.height);
+                if (horizontalRoom > 0) {
+                  offsetX = (offsetX + delta.dx / previewSize * 2.0)
+                      .clamp(-1.0, 1.0)
+                      .toDouble();
+                }
+                if (verticalRoom > 0) {
+                  offsetY = (offsetY + delta.dy / previewSize * 2.0)
+                      .clamp(-1.0, 1.0)
+                      .toDouble();
+                }
+              });
+            }
+
+            final previewBytes = cropCurrentImage(
+              outputSize: compact ? 460 : 680,
+              quality: 82,
+            );
+
+            Widget slider({
+              required String label,
+              required double value,
+              required double min,
+              required double max,
+              required ValueChanged<double> onChanged,
+            }) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: primaryColor,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Slider(
+                    value: value,
+                    min: min,
+                    max: max,
+                    activeColor: tertiaryColor,
+                    inactiveColor: primaryColor.withValues(alpha: 0.22),
+                    onChanged: (next) => setDialogState(() => onChanged(next)),
+                  ),
+                ],
+              );
+            }
+
+            return Dialog(
+              backgroundColor: const Color(0xFF060408),
+              insetPadding: EdgeInsets.all(compact ? 10 : 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+                side: BorderSide(color: tertiaryColor.withValues(alpha: 0.75)),
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Padding(
+                  padding: EdgeInsets.all(compact ? 12 : 18),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.crop, color: tertiaryColor),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              t(
+                                'Ritaglia immagine esagonale',
+                                'Crop hex portrait',
+                              ),
+                              style: TextStyle(
+                                color: tertiaryColor,
+                                fontSize: compact ? 17 : 21,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(dialogContext),
+                            icon: Icon(Icons.close, color: primaryColor),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Center(
+                        child: SizedBox(
+                          width: previewSize,
+                          height: previewSize,
+                          child: GestureDetector(
+                            onPanUpdate: (details) => moveCrop(details.delta),
+                            child: ClipPath(
+                              clipper: const HexagonClipper(),
+                              child: ColoredBox(
+                                color: Colors.black,
+                                child: previewBytes.isEmpty
+                                    ? Image.memory(
+                                        bytes,
+                                        fit: BoxFit.cover,
+                                        alignment: Alignment(offsetX, offsetY),
+                                      )
+                                    : Image.memory(
+                                        previewBytes,
+                                        fit: BoxFit.cover,
+                                        gaplessPlayback: true,
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: smallInfoText(
+                          t(
+                            'Trascina l\'immagine o usa gli slider. Il ritaglio salvato e esattamente quello mostrato.',
+                            'Drag the image or use the sliders. The saved crop is exactly what is shown.',
+                          ),
+                          color: primaryColor.withValues(alpha: 0.72),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      slider(
+                        label: t('Zoom', 'Zoom'),
+                        value: zoom,
+                        min: 1.0,
+                        max: 3.0,
+                        onChanged: (next) {
+                          zoom = next;
+                          clampOffsets();
+                        },
+                      ),
+                      slider(
+                        label: t('Sposta orizzontale', 'Move horizontal'),
+                        value: offsetX,
+                        min: -1.0,
+                        max: 1.0,
+                        onChanged: (next) {
+                          offsetX = next;
+                          clampOffsets();
+                        },
+                      ),
+                      slider(
+                        label: t('Sposta verticale', 'Move vertical'),
+                        value: offsetY,
+                        min: -1.0,
+                        max: 1.0,
+                        onChanged: (next) {
+                          offsetY = next;
+                          clampOffsets();
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                setDialogState(() {
+                                  zoom = 1.0;
+                                  offsetX = 0.0;
+                                  offsetY = 0.0;
+                                });
+                              },
+                              icon: const Icon(Icons.restart_alt),
+                              label: Text(t('Reset', 'Reset')),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                final cropped = cropCurrentImage();
+                                Navigator.pop(dialogContext, cropped);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: tertiaryColor,
+                                foregroundColor:
+                                    tertiaryColor.computeLuminance() > 0.45
+                                    ? Colors.black
+                                    : Colors.white,
+                              ),
+                              icon: const Icon(Icons.check),
+                              label: Text(t('Usa ritaglio', 'Use crop')),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void rimuoviImmagine() {
+    setState(() {
+      immaginePersonaggio = null;
+      aggiungiLog('Immagine scheda rimossa.');
+    });
+
+    programmaSalvataggio();
+  }
+
+  // =====================================================
+}

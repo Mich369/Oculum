@@ -1,0 +1,1644 @@
+part of '../../main.dart';
+
+int readIntValue(dynamic value, {int fallback = 0}) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) {
+    return int.tryParse(value.trim()) ?? fallback;
+  }
+  return fallback;
+}
+
+double readDoubleValue(dynamic value, {double fallback = 0}) {
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  if (value is String) {
+    return double.tryParse(value.trim().replaceAll(',', '.')) ?? fallback;
+  }
+  return fallback;
+}
+
+bool readBoolValue(dynamic value, {bool fallback = false}) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  if (value is String) {
+    final normalized = value.trim().toLowerCase();
+    if (normalized == 'true' || normalized == '1' || normalized == 'si') {
+      return true;
+    }
+    if (normalized == 'false' || normalized == '0' || normalized == 'no') {
+      return false;
+    }
+  }
+  return fallback;
+}
+
+// =====================================================
+// FORMULE SICURE / ELEMENTI / RICERCA FUZZY
+// =====================================================
+
+String oculumNormalizeText(String value) {
+  final out = StringBuffer();
+  for (final rune in value.toLowerCase().trim().runes) {
+    final normalized = _oculumNormalizedLatinRune(rune);
+    if (normalized != null) {
+      out.write(normalized);
+    } else if ((rune >= 0x61 && rune <= 0x7A) ||
+        (rune >= 0x30 && rune <= 0x39)) {
+      out.writeCharCode(rune);
+    } else {
+      out.write(' ');
+    }
+  }
+  return out.toString().replaceAll(RegExp(r'\s+'), ' ').trim();
+}
+
+String oculumNormalizeFormulaTriggerText(String value) {
+  final out = StringBuffer();
+  for (final rune in value.toLowerCase().trim().runes) {
+    final normalized = _oculumNormalizedLatinRune(rune);
+    if (normalized != null) {
+      out.write(normalized);
+      continue;
+    }
+
+    final char = String.fromCharCode(rune);
+    if ((rune >= 0x61 && rune <= 0x7A) ||
+        (rune >= 0x30 && rune <= 0x39) ||
+        rune == 0x5F ||
+        '+-*/().,%'.contains(char) ||
+        _oculumUnicodeFractionValue(char) != null) {
+      out.write(char);
+    }
+  }
+  return out.toString();
+}
+
+String? _oculumNormalizedLatinRune(int rune) {
+  switch (rune) {
+    case 0x00E0:
+    case 0x00E1:
+    case 0x00E2:
+    case 0x00E3:
+    case 0x00E4:
+    case 0x00E5:
+    case 0x0101:
+    case 0x0103:
+    case 0x0105:
+      return 'a';
+    case 0x00E7:
+    case 0x0107:
+    case 0x010D:
+      return 'c';
+    case 0x00E8:
+    case 0x00E9:
+    case 0x00EA:
+    case 0x00EB:
+    case 0x0113:
+    case 0x0117:
+    case 0x0119:
+      return 'e';
+    case 0x00EC:
+    case 0x00ED:
+    case 0x00EE:
+    case 0x00EF:
+    case 0x012B:
+    case 0x012F:
+      return 'i';
+    case 0x00F1:
+    case 0x0144:
+      return 'n';
+    case 0x00F2:
+    case 0x00F3:
+    case 0x00F4:
+    case 0x00F5:
+    case 0x00F6:
+    case 0x00F8:
+    case 0x014D:
+      return 'o';
+    case 0x00F9:
+    case 0x00FA:
+    case 0x00FB:
+    case 0x00FC:
+    case 0x016B:
+      return 'u';
+  }
+  return null;
+}
+
+double? _oculumUnicodeFractionValue(String value) {
+  if (value.isEmpty) return null;
+  switch (value.runes.first) {
+    case 0x2153:
+      return 1 / 3;
+    case 0x2154:
+      return 2 / 3;
+    case 0x00BC:
+      return 1 / 4;
+    case 0x00BD:
+      return 1 / 2;
+    case 0x00BE:
+      return 3 / 4;
+    case 0x2155:
+      return 1 / 5;
+    case 0x2156:
+      return 2 / 5;
+    case 0x2157:
+      return 3 / 5;
+    case 0x2158:
+      return 4 / 5;
+  }
+  return null;
+}
+
+// ignore: unused_element
+String _oculumNormalizeTextLegacy(String value) {
+  var out = value.toLowerCase().trim();
+  const accents = <String, String>{
+    'à': 'a',
+    'á': 'a',
+    'â': 'a',
+    'ä': 'a',
+    'ã': 'a',
+    'è': 'e',
+    'é': 'e',
+    'ê': 'e',
+    'ë': 'e',
+    'ì': 'i',
+    'í': 'i',
+    'î': 'i',
+    'ï': 'i',
+    'ò': 'o',
+    'ó': 'o',
+    'ô': 'o',
+    'ö': 'o',
+    'õ': 'o',
+    'ù': 'u',
+    'ú': 'u',
+    'û': 'u',
+    'ü': 'u',
+    'ç': 'c',
+    'ñ': 'n',
+  };
+  accents.forEach((from, to) => out = out.replaceAll(from, to));
+  return out
+      .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+}
+
+int oculumLevenshtein(String a, String b) {
+  if (a == b) return 0;
+  if (a.isEmpty) return b.length;
+  if (b.isEmpty) return a.length;
+  final prev = List<int>.generate(b.length + 1, (i) => i);
+  final curr = List<int>.filled(b.length + 1, 0);
+  for (var i = 0; i < a.length; i++) {
+    curr[0] = i + 1;
+    for (var j = 0; j < b.length; j++) {
+      final cost = a.codeUnitAt(i) == b.codeUnitAt(j) ? 0 : 1;
+      curr[j + 1] = [
+        curr[j] + 1,
+        prev[j + 1] + 1,
+        prev[j] + cost,
+      ].reduce((x, y) => x < y ? x : y);
+    }
+    for (var j = 0; j < prev.length; j++) {
+      prev[j] = curr[j];
+    }
+  }
+  return prev[b.length];
+}
+
+int oculumSearchScore(String query, String text) {
+  final q = oculumNormalizeText(query);
+  final t = oculumNormalizeText(text);
+  if (q.isEmpty || t.isEmpty) return 0;
+  if (t == q) return 1000;
+  if (t.contains(q)) return 850 - (t.length - q.length).clamp(0, 300);
+
+  final qWords = q.split(' ').where((x) => x.isNotEmpty).toList();
+  final tWords = t.split(' ').where((x) => x.isNotEmpty).toList();
+  var score = 0;
+  for (final qw in qWords) {
+    for (final tw in tWords) {
+      if (tw == qw) {
+        score += 180;
+      } else if (tw.contains(qw) || qw.contains(tw)) {
+        score += 120;
+      } else {
+        final dist = oculumLevenshtein(qw, tw);
+        final maxLen = qw.length > tw.length ? qw.length : tw.length;
+        if (maxLen >= 4 && dist <= 2) score += 90 - dist * 20;
+      }
+    }
+  }
+  return score;
+}
+
+String oculumStatKey(String value) {
+  final raw = oculumNormalizeText(value).replaceAll(' ', '');
+  switch (raw) {
+    case 'res':
+    case 'resilienza':
+      return 'resilienza';
+    case 'vol':
+    case 'volonta':
+    case 'will':
+    case 'volontà':
+      return 'volonta';
+    case 'mat':
+    case 'materia':
+      return 'materia';
+    case 'ocu':
+    case 'oculum':
+      return 'oculum';
+    case 'dif':
+    case 'def':
+    case 'difesa':
+    case 'defense':
+      return 'difesa';
+    case 'vc':
+      return 'vc';
+    case 'cm':
+      return 'cm';
+    case 'danno':
+    case 'danni':
+    case 'dmg':
+    case 'damage':
+      return 'danni';
+    case 'hp':
+    case 'pv':
+    case 'puntivita':
+    case 'vita':
+    case 'life':
+    case 'health':
+      return 'hp';
+    case 'hptemp':
+    case 'hptemporanei':
+    case 'hptemporaneo':
+    case 'vitatemporanea':
+    case 'vitetemporanee':
+    case 'temp':
+    case 'temphp':
+    case 'temporaryhp':
+      return 'hp_temp';
+    case 'scudo':
+    case 'shield':
+      return 'scudo';
+    case 'scudooculum':
+    case 'scudoocu':
+    case 'scudooculare':
+    case 'oculumshield':
+    case 'eyeshield':
+      return 'scudo_oculum';
+    case 'iniziativa':
+    case 'iniziative':
+    case 'initiative':
+    case 'ini':
+      return 'iniziativa';
+    case 'mov':
+    case 'move':
+    case 'movement':
+    case 'movimento':
+    case 'metri':
+      return 'movimento';
+    case 'tiroattacco':
+    case 'tirodiattacco':
+    case 'attackroll':
+    case 'rollattack':
+      return 'tiro_attacco';
+    case 'tirodifesa':
+    case 'tirodifensivo':
+    case 'defenseroll':
+    case 'rolldefense':
+      return 'tiro_difesa';
+    case 'stats':
+    case 'stat':
+    case 'allstats':
+    case 'tuttestats':
+    case 'statistiche':
+    case 'statistichebase':
+      return 'stats';
+    case 'otherstats':
+    case 'altrestats':
+    case 'altrestatistiche':
+    case 'altristats':
+      return 'other_stats';
+  }
+  return '';
+}
+
+const Map<String, String> oculumElementAliases = <String, String>{
+  'fisico': 'fisico',
+  'physical': 'fisico',
+  'normale': 'fisico',
+  'normal': 'fisico',
+  'neutral': 'fisico',
+  'neutro': 'fisico',
+  'taglio': 'taglio',
+  'cutting': 'taglio',
+  'lama': 'taglio',
+  'blade': 'taglio',
+  'slash': 'taglio',
+  'lacerazione': 'taglio',
+  'perforante': 'perforante',
+  'piercing': 'perforante',
+  'perforazione': 'perforante',
+  'pierce': 'perforante',
+  'punta': 'perforante',
+  'contundente': 'contundente',
+  'blunt': 'contundente',
+  'botta': 'contundente',
+  'impatto': 'contundente',
+  'fuoco': 'fuoco',
+  'fiamma': 'fuoco',
+  'flame': 'fuoco',
+  'bruciatura': 'fuoco',
+  'burn': 'fuoco',
+  'fire': 'fuoco',
+  'gelo': 'gelo',
+  'ghiaccio': 'gelo',
+  'freddo': 'gelo',
+  'frost': 'gelo',
+  'cold': 'gelo',
+  'ice': 'gelo',
+  'acqua': 'acqua',
+  'water': 'acqua',
+  'fulmine': 'fulmine',
+  'elettrico': 'fulmine',
+  'electric': 'fulmine',
+  'elettro': 'fulmine',
+  'tuono': 'fulmine',
+  'lightning': 'fulmine',
+  'thunder': 'fulmine',
+  'terra': 'terra',
+  'earth': 'terra',
+  'vento': 'vento',
+  'wind': 'vento',
+  'veleno': 'veleno',
+  'tossico': 'veleno',
+  'toxic': 'veleno',
+  'toxin': 'veleno',
+  'poison': 'veleno',
+  'acido': 'acido',
+  'corrosivo': 'acido',
+  'corrosive': 'acido',
+  'acid': 'acido',
+  'oscuro': 'oscuro',
+  'ombra': 'oscuro',
+  'tenebra': 'oscuro',
+  'dark': 'oscuro',
+  'shadow': 'oscuro',
+  'sacro': 'sacro',
+  'holy': 'sacro',
+  'luce': 'sacro',
+  'santo': 'sacro',
+  'saint': 'sacro',
+  'light': 'sacro',
+  'lunare': 'lunare',
+  'lunar': 'lunare',
+  'luna': 'lunare',
+  'moon': 'lunare',
+  'solare': 'solare',
+  'solar': 'solare',
+  'sole': 'solare',
+  'sun': 'solare',
+  'diabolico': 'diabolico',
+  'diabolic': 'diabolico',
+  'demoniaco': 'diabolico',
+  'demon': 'diabolico',
+  'demonic': 'diabolico',
+  'angelico': 'angelico',
+  'angelic': 'angelico',
+  'angelo': 'angelico',
+  'angel': 'angelico',
+  'psichico': 'psichico',
+  'psychic': 'psichico',
+  'mentale': 'psichico',
+  'mind': 'psichico',
+  'psico': 'psichico',
+  'psyche': 'psichico',
+  'spirituale': 'spirituale',
+  'spirit': 'spirituale',
+  'necrotico': 'necrotico',
+  'necrotic': 'necrotico',
+  'necrosi': 'necrotico',
+  'necrosis': 'necrotico',
+  'morte': 'necrotico',
+  'death': 'necrotico',
+  'sangue': 'sangue',
+  'blood': 'sangue',
+  'magia': 'magia',
+  'magic': 'magia',
+  'energia': 'energia',
+  'energy': 'energia',
+  'esplosivo': 'esplosivo',
+  'explosive': 'esplosivo',
+  'esplosione': 'esplosivo',
+  'sonoro': 'sonoro',
+  'suono': 'sonoro',
+  'sonico': 'sonoro',
+  'sonic': 'sonoro',
+  'sound': 'sonoro',
+  'rumore': 'sonoro',
+  'acustico': 'sonoro',
+  'radiazione': 'radiazione',
+  'radiation': 'radiazione',
+  'plasma': 'plasma',
+  'tecnologia': 'tecnologia',
+  'technology': 'tecnologia',
+  'tech': 'tecnologia',
+  'proiettile': 'proiettile',
+  'bullet': 'proiettile',
+  'laser': 'laser',
+  'gravita': 'gravita',
+  'gravity': 'gravita',
+  'tempo': 'tempo',
+  'time': 'tempo',
+  'spazio': 'spazio',
+  'space': 'spazio',
+  'vuoto': 'vuoto',
+  'void': 'vuoto',
+  'null': 'vuoto',
+  'nullum': 'vuoto',
+  'niente': 'vuoto',
+  'nothing': 'vuoto',
+  'caos': 'caos',
+  'chaos': 'caos',
+  'natura': 'natura',
+  'nature': 'natura',
+  'radice': 'radice',
+  'root': 'radice',
+  'flora': 'radice',
+  'pianta': 'pianta',
+  'plant': 'pianta',
+  'bestiale': 'bestiale',
+  'beast': 'bestiale',
+  'maledizione': 'maledizione',
+  'curse': 'maledizione',
+  'benedizione': 'benedizione',
+  'blessing': 'benedizione',
+  'cura': 'cura',
+  'healing': 'cura',
+  'heal': 'cura',
+  'vero': 'vero',
+  'true': 'vero',
+  'cenere': 'cenere',
+  'ash': 'cenere',
+  'osso': 'osso',
+  'bone': 'osso',
+  'cristallo': 'cristallo',
+  'crystal': 'cristallo',
+  'lava': 'lava',
+  'vapium': 'vapium',
+  'sogno': 'sogno',
+  'dream': 'sogno',
+  'metallo': 'metallo',
+  'metal': 'metallo',
+  'postea': 'postea',
+  'slime': 'slime',
+  'oculum': 'oculum',
+  'stella': 'stella',
+  'star': 'stella',
+  'corrotto': 'corrotto',
+  'corrotta': 'corrotto',
+  'corrupted': 'corrotto',
+  'nonmorto': 'nonmorto',
+  'nonmorta': 'nonmorto',
+  'undead': 'nonmorto',
+  'sconosciuto': 'sconosciuto',
+  'unknown': 'sconosciuto',
+};
+
+String oculumNormalizeElementId(String value) {
+  final raw = oculumNormalizeText(value).replaceAll(' ', '');
+  if (raw.isEmpty) return 'sconosciuto';
+  return oculumElementAliases[raw] ?? raw;
+}
+
+String oculumElementDisplayIt(String idOrName) {
+  switch (oculumNormalizeElementId(idOrName)) {
+    case 'fisico':
+      return 'Fisico';
+    case 'taglio':
+      return 'Taglio';
+    case 'perforante':
+      return 'Perforante';
+    case 'contundente':
+      return 'Contundente';
+    case 'fuoco':
+      return 'Fuoco';
+    case 'gelo':
+      return 'Gelo';
+    case 'acqua':
+      return 'Acqua';
+    case 'fulmine':
+      return 'Fulmine';
+    case 'terra':
+      return 'Terra';
+    case 'vento':
+      return 'Vento';
+    case 'veleno':
+      return 'Veleno';
+    case 'acido':
+      return 'Acido';
+    case 'oscuro':
+      return 'Oscuro';
+    case 'sacro':
+      return 'Sacro';
+    case 'lunare':
+      return 'Lunare';
+    case 'solare':
+      return 'Solare';
+    case 'diabolico':
+      return 'Diabolico';
+    case 'angelico':
+      return 'Angelico';
+    case 'psichico':
+      return 'Psichico';
+    case 'spirituale':
+      return 'Spirituale';
+    case 'necrotico':
+      return 'Necrotico';
+    case 'sangue':
+      return 'Sangue';
+    case 'cenere':
+      return 'Cenere';
+    case 'osso':
+      return 'Osso';
+    case 'cristallo':
+      return 'Cristallo';
+    case 'lava':
+      return 'Lava';
+    case 'vapium':
+      return 'Vapium';
+    case 'sogno':
+      return 'Sogno';
+    case 'metallo':
+      return 'Metallo';
+    case 'postea':
+      return 'Postea';
+    case 'radice':
+      return 'Radice';
+    case 'slime':
+      return 'Slime';
+    case 'stella':
+      return 'Stella';
+    case 'corrotto':
+      return 'Corrotto';
+    case 'nonmorto':
+      return 'Non morto';
+    case 'magia':
+      return 'Magia';
+    case 'energia':
+      return 'Energia';
+    case 'esplosivo':
+      return 'Esplosivo';
+    case 'sonoro':
+      return 'Sonoro';
+    case 'radiazione':
+      return 'Radiazione';
+    case 'plasma':
+      return 'Plasma';
+    case 'tecnologia':
+      return 'Tecnologia';
+    case 'proiettile':
+      return 'Proiettile';
+    case 'laser':
+      return 'Laser';
+    case 'gravita':
+      return 'Gravità';
+    case 'tempo':
+      return 'Tempo';
+    case 'spazio':
+      return 'Spazio';
+    case 'vuoto':
+      return 'Vuoto';
+    case 'caos':
+      return 'Caos';
+    case 'natura':
+      return 'Natura';
+    case 'pianta':
+      return 'Pianta';
+    case 'bestiale':
+      return 'Bestiale';
+    case 'maledizione':
+      return 'Maledizione';
+    case 'benedizione':
+      return 'Benedizione';
+    case 'cura':
+      return 'Cura';
+    case 'vero':
+      return 'Vero';
+    case 'oculum':
+      return 'Oculum';
+    case 'sconosciuto':
+      return 'Sconosciuto';
+  }
+  final clean = idOrName.trim();
+  return clean.isEmpty ? 'Sconosciuto' : clean;
+}
+
+String oculumElementDisplayEn(String idOrName) {
+  switch (oculumNormalizeElementId(idOrName)) {
+    case 'fisico':
+      return 'Physical';
+    case 'taglio':
+      return 'Slash';
+    case 'perforante':
+      return 'Piercing';
+    case 'contundente':
+      return 'Blunt';
+    case 'fuoco':
+      return 'Fire';
+    case 'gelo':
+      return 'Ice';
+    case 'acqua':
+      return 'Water';
+    case 'fulmine':
+      return 'Lightning';
+    case 'terra':
+      return 'Earth';
+    case 'vento':
+      return 'Wind';
+    case 'veleno':
+      return 'Poison';
+    case 'acido':
+      return 'Acid';
+    case 'oscuro':
+      return 'Shadow';
+    case 'sacro':
+      return 'Light';
+    case 'lunare':
+      return 'Moon';
+    case 'solare':
+      return 'Sun';
+    case 'diabolico':
+      return 'Demonic';
+    case 'angelico':
+      return 'Angelic';
+    case 'psichico':
+      return 'Psyche';
+    case 'spirituale':
+      return 'Spirit';
+    case 'necrotico':
+      return 'Necrotic';
+    case 'sangue':
+      return 'Blood';
+    case 'cenere':
+      return 'Ash';
+    case 'osso':
+      return 'Bone';
+    case 'cristallo':
+      return 'Crystal';
+    case 'lava':
+      return 'Lava';
+    case 'vapium':
+      return 'Vapium';
+    case 'sogno':
+      return 'Dream';
+    case 'metallo':
+      return 'Metal';
+    case 'postea':
+      return 'Postea';
+    case 'radice':
+      return 'Root';
+    case 'slime':
+      return 'Slime';
+    case 'stella':
+      return 'Star';
+    case 'corrotto':
+      return 'Corrupted';
+    case 'nonmorto':
+      return 'Undead';
+    case 'magia':
+      return 'Magic';
+    case 'energia':
+      return 'Energy';
+    case 'esplosivo':
+      return 'Explosive';
+    case 'sonoro':
+      return 'Sound';
+    case 'radiazione':
+      return 'Radiation';
+    case 'plasma':
+      return 'Plasma';
+    case 'tecnologia':
+      return 'Technology';
+    case 'proiettile':
+      return 'Bullet';
+    case 'laser':
+      return 'Laser';
+    case 'gravita':
+      return 'Gravity';
+    case 'tempo':
+      return 'Time';
+    case 'spazio':
+      return 'Space';
+    case 'vuoto':
+      return 'Void';
+    case 'caos':
+      return 'Chaos';
+    case 'natura':
+      return 'Nature';
+    case 'pianta':
+      return 'Plant';
+    case 'bestiale':
+      return 'Beast';
+    case 'maledizione':
+      return 'Curse';
+    case 'benedizione':
+      return 'Blessing';
+    case 'cura':
+      return 'Healing';
+    case 'vero':
+      return 'True';
+    case 'oculum':
+      return 'Oculum';
+    case 'sconosciuto':
+      return 'Unknown';
+  }
+  final clean = idOrName.trim();
+  return clean.isEmpty ? 'Unknown' : clean;
+}
+
+const List<String> oculumDefaultElementIds = <String>[
+  'fisico',
+  'taglio',
+  'perforante',
+  'contundente',
+  'fuoco',
+  'vento',
+  'acqua',
+  'terra',
+  'gelo',
+  'sonoro',
+  'psichico',
+  'lava',
+  'fulmine',
+  'veleno',
+  'cenere',
+  'sangue',
+  'cristallo',
+  'oscuro',
+  'lunare',
+  'solare',
+  'vapium',
+  'osso',
+  'gravita',
+  'vuoto',
+  'sogno',
+  'metallo',
+  'postea',
+  'radice',
+  'slime',
+  'oculum',
+  'stella',
+  'corrotto',
+  'nonmorto',
+  'acido',
+  'sacro',
+  'diabolico',
+  'angelico',
+  'spirituale',
+  'necrotico',
+  'magia',
+  'energia',
+  'esplosivo',
+  'radiazione',
+  'plasma',
+  'tecnologia',
+  'proiettile',
+  'laser',
+  'tempo',
+  'spazio',
+  'caos',
+  'natura',
+  'pianta',
+  'bestiale',
+  'maledizione',
+  'benedizione',
+  'cura',
+  'vero',
+  'sconosciuto',
+];
+
+const List<String> oculumCommandAutocompleteLabels = <String>[
+  '@Difesa',
+  '@Danni',
+  '@HP',
+  '@Vita',
+  '@HPTemp',
+  '@Volonta',
+  '@Vol',
+  '@Materia',
+  '@Oculum',
+  '@Scudo',
+  '@ScudoOculum',
+  '@Iniziativa',
+  '@Movimento',
+  '@TiroAttacco',
+  '@TiroDifesa',
+  '@VC',
+  '@CM',
+  '@Stats',
+  '@AllStats',
+  '@OtherStats',
+  '@AltreStats',
+  '@Resilienza',
+  '@Mat',
+  '@Ocu',
+  '@Res',
+];
+
+String _oculumAutocompleteKey(String value) {
+  return oculumNormalizeText(value).replaceAll(' ', '').replaceAll('@', '');
+}
+
+bool _oculumIsLatinLetter(String char) {
+  if (char.isEmpty) return false;
+  final code = char.codeUnitAt(0);
+  return (code >= 0x41 && code <= 0x5A) ||
+      (code >= 0x61 && code <= 0x7A) ||
+      (code >= 0x00C0 && code <= 0x024F) ||
+      (code >= 0x1E00 && code <= 0x1EFF);
+}
+
+String? oculumBestCommandCompletion(String fragment) {
+  final query = _oculumAutocompleteKey(fragment);
+  if (query.isEmpty) return null;
+
+  for (final label in oculumCommandAutocompleteLabels) {
+    final key = _oculumAutocompleteKey(label);
+    if (key == query) return null;
+    if (key.startsWith(query)) return label;
+  }
+
+  return null;
+}
+
+String? oculumBestElementCompletion(
+  String fragment, {
+  required bool linguaInglese,
+}) {
+  final query = _oculumAutocompleteKey(fragment);
+  if (query.isEmpty) return null;
+
+  var bestId = '';
+  var bestScore = -1;
+
+  for (final id in oculumDefaultElementIds) {
+    final labels = <String>{
+      id,
+      oculumElementDisplayIt(id),
+      oculumElementDisplayEn(id),
+      for (final entry in oculumElementAliases.entries)
+        if (entry.value == id) entry.key,
+    };
+
+    for (final label in labels) {
+      final key = _oculumAutocompleteKey(label);
+      if (key == query) return null;
+
+      var score = 0;
+      if (key.startsWith(query)) {
+        score = 1000 - key.length;
+      } else if (query.length >= 4) {
+        final fuzzy = oculumSearchScore(query, key);
+        if (fuzzy >= 120) score = fuzzy;
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestId = id;
+      }
+    }
+  }
+
+  if (bestId.isEmpty || bestScore <= 0) return null;
+  return linguaInglese
+      ? oculumElementDisplayEn(bestId)
+      : oculumElementDisplayIt(bestId);
+}
+
+bool oculumApplyCommandAutocomplete(
+  TextEditingController controller, {
+  required bool linguaInglese,
+}) {
+  final value = controller.value;
+  final cursor = value.selection.baseOffset;
+  final text = value.text;
+  if (cursor < 0 || cursor > text.length) return false;
+
+  void replaceRange(int start, int end, String replacement) {
+    final nextText = text.replaceRange(start, end, replacement);
+    controller.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection.collapsed(offset: start + replacement.length),
+      composing: TextRange.empty,
+    );
+  }
+
+  final beforeCursor = text.substring(0, cursor);
+  final commandNameMatch = RegExp(
+    r'@([^\s@+\-*/(),;]*)$',
+  ).firstMatch(beforeCursor);
+
+  if (commandNameMatch != null) {
+    final completion = oculumBestCommandCompletion(
+      commandNameMatch.group(1) ?? '',
+    );
+    if (completion != null) {
+      replaceRange(commandNameMatch.start, cursor, completion);
+      return true;
+    }
+  }
+
+  final atIndex = beforeCursor.lastIndexOf('@');
+  if (atIndex < 0) return false;
+
+  final commandSegment = beforeCursor.substring(atIndex);
+  final commandMatch = RegExp(
+    r'^@([^\s@+\-*/(),;]+)\s*[+-]',
+  ).firstMatch(commandSegment);
+  final commandKey = oculumStatKey(commandMatch?.group(1) ?? '');
+  if (commandKey != 'danni' && commandKey != 'difesa') return false;
+
+  final elementMatch = RegExp(
+    r'([^\d@+\-*/(),;]+)$',
+  ).firstMatch(commandSegment);
+  if (elementMatch == null) return false;
+
+  final fragment = (elementMatch.group(1) ?? '').trim();
+  if (fragment.isEmpty) return false;
+  if (!fragment.contains(RegExp(r'\s')) && oculumStatKey(fragment).isNotEmpty) {
+    return false;
+  }
+
+  final completion = oculumBestElementCompletion(
+    fragment,
+    linguaInglese: linguaInglese,
+  );
+  if (completion == null) return false;
+
+  var start = atIndex + elementMatch.start;
+  while (start < cursor && text[start].trim().isEmpty) {
+    start++;
+  }
+  replaceRange(start, cursor, completion);
+  return true;
+}
+
+class OculumDamagePart {
+  const OculumDamagePart({required this.value, required this.elementId});
+  final int value;
+  final String elementId;
+}
+
+class OculumFormulaCommand {
+  const OculumFormulaCommand({
+    required this.key,
+    required this.value,
+    this.elementId = '',
+    this.triggerRaw = '',
+    this.valid = true,
+    this.error = '',
+  });
+  final String key;
+  final int value;
+  final String elementId;
+  final String triggerRaw;
+  final bool valid;
+  final String error;
+
+  bool get hasTrigger => triggerRaw.trim().isNotEmpty;
+}
+
+class OculumEveryTriggerSpec {
+  const OculumEveryTriggerSpec({
+    required this.divisor,
+    required this.sourceKey,
+    required this.sourceRaw,
+  });
+
+  final int divisor;
+  final String sourceKey;
+  final String sourceRaw;
+}
+
+String oculumEveryTriggerSourceKey(String rawSource) {
+  final source = oculumNormalizeText(rawSource).replaceAll(' ', '');
+  if (source.isEmpty) return '';
+
+  String normalizeBase(String rawBase) {
+    final base = rawBase.trim();
+    if (base.isEmpty) return '';
+    return oculumStatKey(base);
+  }
+
+  for (final suffix in const <String>[
+    'sacrificati',
+    'sacrificate',
+    'sacrificato',
+    'sacrificata',
+    'consumati',
+    'consumate',
+    'consumato',
+    'consumata',
+    'spesi',
+    'spese',
+    'speso',
+    'spesa',
+    'persi',
+    'perse',
+    'perso',
+    'persa',
+    'usati',
+    'usate',
+    'usato',
+    'usata',
+  ]) {
+    if (!source.endsWith(suffix)) continue;
+    final baseKey = normalizeBase(
+      source.substring(0, source.length - suffix.length),
+    );
+    if (baseKey.isNotEmpty) return '${baseKey}_spent';
+  }
+
+  for (final suffix in const <String>['totale', 'totali', 'total']) {
+    if (!source.endsWith(suffix)) continue;
+    final baseKey = normalizeBase(
+      source.substring(0, source.length - suffix.length),
+    );
+    if (baseKey.isNotEmpty) return '${baseKey}_total';
+  }
+
+  return '';
+}
+
+OculumEveryTriggerSpec? oculumParseEveryTriggerSpec(String rawTrigger) {
+  final normalized = oculumNormalizeFormulaTriggerText(rawTrigger);
+  final match = RegExp(
+    r'^(?:ogni|every)([0-9]+(?:[,.][0-9]+)?)([a-z_]+)$',
+  ).firstMatch(normalized);
+  if (match == null) return null;
+
+  final divisorValue = double.tryParse(
+    (match.group(1) ?? '1').replaceAll(',', '.'),
+  );
+  if (divisorValue == null || divisorValue <= 0) return null;
+  final divisor = max(1, divisorValue.round());
+  final sourceRaw = match.group(2) ?? '';
+  final sourceKey = oculumEveryTriggerSourceKey(sourceRaw);
+  if (sourceKey.isEmpty) return null;
+
+  return OculumEveryTriggerSpec(
+    divisor: divisor,
+    sourceKey: sourceKey,
+    sourceRaw: sourceRaw,
+  );
+}
+
+const List<String> oculumBaseStatKeys = <String>[
+  'resilienza',
+  'volonta',
+  'materia',
+  'oculum',
+];
+
+bool oculumIsGroupedStatKey(String key) {
+  return key == 'stats' || key == 'other_stats';
+}
+
+String oculumFormulaTriggerSourceKey(String rawTrigger) {
+  final normalized = oculumNormalizeFormulaTriggerText(rawTrigger);
+  if (normalized.isEmpty) return '';
+
+  final keyThenDelta = RegExp(
+    r'^([A-Za-zÀ-ÖØ-öø-ÿ_]+)([+-])(.+)$',
+  ).firstMatch(normalized);
+  if (keyThenDelta != null) {
+    return oculumStatKey(keyThenDelta.group(1) ?? '');
+  }
+
+  final deltaThenKey = RegExp(
+    r'^([+-])(.+?)([A-Za-zÀ-ÖØ-öø-ÿ_]+)$',
+  ).firstMatch(normalized);
+  if (deltaThenKey != null) {
+    return oculumStatKey(deltaThenKey.group(3) ?? '');
+  }
+
+  return '';
+}
+
+Set<String> oculumExcludedStatsForTrigger(String rawTrigger) {
+  final trimmed = rawTrigger.trim();
+  if (trimmed.isEmpty) return const <String>{};
+
+  // I trigger "ogni" hanno una sorgente normalizzata separata
+  // (es. HPSpesi -> hp_spent, MatTotale -> materia_total).
+  // Devono essere gestiti qui, prima dei trigger classici con =Stat-Numero,
+  // altrimenti Stats/OtherStats puo ridare Resilienza da HP e creare loop.
+  final everySpec = oculumParseEveryTriggerSpec(trimmed);
+  if (everySpec != null) {
+    var source = everySpec.sourceKey;
+    final isSpent = source.endsWith('_spent');
+    if (source.endsWith('_spent')) {
+      source = source.substring(0, source.length - '_spent'.length);
+    } else if (source.endsWith('_total')) {
+      source = source.substring(0, source.length - '_total'.length);
+    }
+
+    // HP/Vita/PV non devono mai rigenerare Resilienza tramite Stats,
+    // perche Resilienza aumenta gli HP e puo causare ricorsione/StackOverflow.
+    if (source == 'hp' || source == 'hp_temp') return {'resilienza'};
+
+    // Se una statistica base viene spesa/consumata/sacrificata, non ridarla
+    // nello stesso comando raggruppato. I trigger _total invece sono soglie,
+    // non costi, quindi non escludono la loro stessa stat.
+    if (isSpent && oculumBaseStatKeys.contains(source)) return {source};
+    return const <String>{};
+  }
+
+  final source = oculumFormulaTriggerSourceKey(trimmed);
+  if (source == 'hp' || source == 'hp_temp') return {'resilienza'};
+  if (oculumBaseStatKeys.contains(source)) return {source};
+  return const <String>{};
+}
+
+List<OculumFormulaCommand> oculumExpandGroupedFormulaCommand(
+  OculumFormulaCommand command,
+) {
+  if (!command.valid || !oculumIsGroupedStatKey(command.key)) {
+    return <OculumFormulaCommand>[command];
+  }
+
+  final excluded = oculumExcludedStatsForTrigger(command.triggerRaw);
+  return [
+    for (final key in oculumBaseStatKeys)
+      if (!excluded.contains(key))
+        OculumFormulaCommand(
+          key: key,
+          value: command.value,
+          elementId: command.elementId,
+          triggerRaw: command.triggerRaw,
+          valid: command.valid,
+          error: command.error,
+        ),
+  ];
+}
+
+const int oculumVcWillMultiplier = 3;
+const int oculumCmMateriaMultiplier = 2;
+
+OculumFormulaCommand oculumEffectiveFormulaCommand(
+  OculumFormulaCommand command,
+) {
+  if (!command.valid) return command;
+
+  switch (command.key) {
+    case 'vc':
+      return OculumFormulaCommand(
+        key: 'volonta',
+        value: command.value * oculumVcWillMultiplier,
+        elementId: command.elementId,
+        triggerRaw: command.triggerRaw,
+        valid: command.valid,
+        error: command.error,
+      );
+    case 'cm':
+      return OculumFormulaCommand(
+        key: 'materia',
+        value: command.value * oculumCmMateriaMultiplier,
+        elementId: command.elementId,
+        triggerRaw: command.triggerRaw,
+        valid: command.valid,
+        error: command.error,
+      );
+    default:
+      return command;
+  }
+}
+
+List<OculumFormulaCommand> oculumParseEffectiveFormulaCommands(
+  String text,
+  Map<String, num> vars,
+) {
+  return oculumParseFormulaCommands(
+    text,
+    vars,
+  ).map(oculumEffectiveFormulaCommand).toList();
+}
+
+class _OculumToken {
+  const _OculumToken(this.type, this.text, this.number);
+  final String type;
+  final String text;
+  final double number;
+}
+
+class _OculumFormulaParser {
+  _OculumFormulaParser(this.tokens, this.vars);
+  final List<_OculumToken> tokens;
+  final Map<String, num> vars;
+  int pos = 0;
+
+  bool get atEnd => pos >= tokens.length;
+  _OculumToken? get current => atEnd ? null : tokens[pos];
+
+  double parse() {
+    final value = parseExpression();
+    if (!atEnd) throw const FormatException('Token non valido nella formula.');
+    if (value.isNaN || value.isInfinite) {
+      throw const FormatException('Risultato impossibile.');
+    }
+    return value;
+  }
+
+  double parseExpression() {
+    var value = parseTerm();
+    while (!atEnd && (current!.text == '+' || current!.text == '-')) {
+      final op = current!.text;
+      pos++;
+      final rhs = parseTerm();
+      value = op == '+' ? value + rhs : value - rhs;
+    }
+    return value;
+  }
+
+  double parseTerm() {
+    var value = parseFactor();
+    while (!atEnd && (current!.text == '*' || current!.text == '/')) {
+      final op = current!.text;
+      pos++;
+      final rhs = parseFactor();
+      if (op == '/' && rhs == 0) {
+        throw const FormatException('Divisione per zero non permessa.');
+      }
+      value = op == '*' ? value * rhs : value / rhs;
+    }
+    return value;
+  }
+
+  double parseFactor() {
+    if (atEnd) throw const FormatException('Formula incompleta.');
+    final tok = current!;
+    if (tok.text == '+') {
+      pos++;
+      return parseFactor();
+    }
+    if (tok.text == '-') {
+      pos++;
+      return -parseFactor();
+    }
+    if (tok.text == '(') {
+      pos++;
+      final value = parseExpression();
+      if (atEnd || current!.text != ')') {
+        throw const FormatException('Parentesi non chiusa.');
+      }
+      pos++;
+      return value;
+    }
+    if (tok.type == 'number') {
+      pos++;
+      return tok.number;
+    }
+    if (tok.type == 'variable') {
+      pos++;
+      final key = oculumStatKey(tok.text);
+      if (key.isEmpty || !vars.containsKey(key)) {
+        throw FormatException('Variabile sconosciuta: ${tok.text}.');
+      }
+      return (vars[key] ?? 0).toDouble();
+    }
+    throw FormatException('Token non valido: ${tok.text}.');
+  }
+}
+
+List<_OculumToken> _oculumTokenizeFormula(String input) {
+  final tokens = <_OculumToken>[];
+  var i = 0;
+  bool prevCanMultiply = false;
+
+  void addToken(_OculumToken token) {
+    final nextCanStartValue =
+        token.type == 'number' || token.type == 'variable' || token.text == '(';
+    if (prevCanMultiply && nextCanStartValue) {
+      tokens.add(const _OculumToken('op', '*', 0));
+    }
+    tokens.add(token);
+    prevCanMultiply =
+        token.type == 'number' || token.type == 'variable' || token.text == ')';
+  }
+
+  while (i < input.length) {
+    final ch = input[i];
+    if (ch.trim().isEmpty) {
+      i++;
+      continue;
+    }
+    if ('+-*/()'.contains(ch)) {
+      addToken(_OculumToken('op', ch, 0));
+      if (ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '(') {
+        prevCanMultiply = ch == ')';
+      }
+      i++;
+      continue;
+    }
+    final unicodeFraction = _oculumUnicodeFractionValue(ch);
+    if (unicodeFraction != null) {
+      addToken(_OculumToken('number', ch, unicodeFraction));
+      i++;
+      continue;
+    }
+    const unicodeFractions = <String, double>{
+      '⅓': 1 / 3,
+      '⅔': 2 / 3,
+      '¼': 1 / 4,
+      '½': 1 / 2,
+      '¾': 3 / 4,
+      '⅕': 1 / 5,
+      '⅖': 2 / 5,
+      '⅗': 3 / 5,
+      '⅘': 4 / 5,
+    };
+    if (unicodeFractions.containsKey(ch)) {
+      addToken(_OculumToken('number', ch, unicodeFractions[ch]!));
+      i++;
+      continue;
+    }
+    if (RegExp(r'[0-9.,]').hasMatch(ch)) {
+      final start = i;
+      while (i < input.length && RegExp(r'[0-9.,]').hasMatch(input[i])) {
+        i++;
+      }
+      var raw = input.substring(start, i).replaceAll(',', '.');
+      final number = double.tryParse(raw);
+      if (number == null) throw FormatException('Numero non valido: $raw.');
+      if (i < input.length && input[i] == '%') {
+        i++;
+        addToken(_OculumToken('number', '$raw%', number / 100));
+      } else {
+        addToken(_OculumToken('number', raw, number));
+      }
+      continue;
+    }
+    if (_oculumIsLatinLetter(ch)) {
+      final start = i;
+      while (i < input.length && _oculumIsLatinLetter(input[i])) {
+        i++;
+      }
+      addToken(_OculumToken('variable', input.substring(start, i), 0));
+      continue;
+    }
+    throw FormatException('Carattere non valido: $ch.');
+  }
+  return tokens;
+}
+
+double oculumEvaluateFormula(String raw, Map<String, num> vars) {
+  final text = raw.trim();
+  if (text.isEmpty) throw const FormatException('Formula vuota.');
+  if (text.length > 80) throw const FormatException('Formula troppo lunga.');
+  final tokens = _oculumTokenizeFormula(text);
+  if (tokens.isEmpty) throw const FormatException('Formula vuota.');
+  final result = _OculumFormulaParser(tokens, vars).parse();
+  if (result.abs() > 999999) {
+    throw const FormatException('Risultato troppo grande.');
+  }
+  return result;
+}
+
+int oculumRoundFormulaResult(double value) {
+  if (value == 0) return 0;
+  final rounded = value.round();
+  if (rounded != 0) return rounded;
+  return value > 0 ? 1 : -1;
+}
+
+String? oculumSplitTrailingElement(
+  String rawExpression,
+  Map<String, num> vars,
+) {
+  final expression = rawExpression.trim();
+  if (expression.isEmpty) return null;
+
+  final parts = expression
+      .split(RegExp(r'\s+'))
+      .where((part) => part.trim().isNotEmpty)
+      .toList();
+  if (parts.length > 1) {
+    for (var suffixStart = 1; suffixStart < parts.length; suffixStart++) {
+      final suffix = parts.skip(suffixStart).join(' ').trim();
+      if (!RegExp(
+        r'^[^\s\d+\-*/().,;@]+(?:\s+[^\s\d+\-*/().,;@]+)*$',
+      ).hasMatch(suffix)) {
+        continue;
+      }
+      if (oculumStatKey(suffix).isNotEmpty) continue;
+
+      final before = parts.take(suffixStart).join(' ');
+      try {
+        oculumEvaluateFormula(before, vars);
+        return suffix;
+      } catch (_) {
+        final normalizedSuffix = oculumNormalizeText(
+          suffix,
+        ).replaceAll(' ', '');
+        if (oculumElementAliases.containsKey(normalizedSuffix)) return suffix;
+        // Prova un suffisso piu corto o il caso compatto, ad esempio Vol/2Fuoco.
+      }
+    }
+  }
+
+  final tailWordMatch = RegExp(r'[^\s\d+\-*/().,;@]+$').firstMatch(expression);
+  if (tailWordMatch == null) return null;
+
+  final tailWord = tailWordMatch.group(0) ?? '';
+  if (oculumStatKey(tailWord).isNotEmpty) return null;
+
+  final aliases =
+      oculumElementAliases.keys.where((alias) => alias.length >= 3).toList()
+        ..sort((a, b) => b.length.compareTo(a.length));
+
+  for (final alias in aliases) {
+    for (var offset = 0; offset < tailWord.length; offset++) {
+      final suffix = tailWord.substring(offset);
+      if (oculumNormalizeText(suffix).replaceAll(' ', '') != alias) continue;
+
+      final formula = expression.substring(0, tailWordMatch.start + offset);
+      if (formula.trim().isEmpty) continue;
+
+      try {
+        oculumEvaluateFormula(formula, vars);
+        return suffix;
+      } catch (_) {
+        if (oculumElementAliases.containsKey(alias)) return suffix;
+        // Prova un suffisso piu corto o un altro alias conosciuto.
+      }
+    }
+  }
+
+  // Fallback per elementi sconosciuti nei casi compatti semplici:
+  // 13TipoIgnoto resta un danno valido con tipo ripulito.
+  final compact = RegExp(
+    r'^([0-9]+(?:[,.][0-9]+)?|[¼½¾⅓⅔⅕⅖⅗⅘])\s*([^\s\d+\-*/().,;@]+)$',
+  ).firstMatch(expression);
+  if (compact != null) {
+    final word = compact.group(2) ?? '';
+    if (oculumStatKey(word).isEmpty) return word;
+  }
+
+  return null;
+}
+
+List<OculumFormulaCommand> oculumParseFormulaCommands(
+  String text,
+  Map<String, num> vars,
+) {
+  final out = <OculumFormulaCommand>[];
+  if (text.trim().isEmpty) return out;
+  final normalizedText = text.replaceAllMapped(
+    RegExp(
+      r'@([A-Za-zÀ-ÖØ-öø-ÿ_]+)\s*([+-])\s*([^@,;\n=]+?)\s*=\s*(Stats|AllStats|OtherStats|AltreStats)\s*([+-])\s*([^@,;\n]+)',
+      caseSensitive: false,
+    ),
+    (match) {
+      final sourceKey = match.group(1) ?? '';
+      final sourceSign = match.group(2) ?? '-';
+      final sourceAmount = (match.group(3) ?? '').trim();
+      final targetKey = match.group(4) ?? 'Stats';
+      final targetSign = match.group(5) ?? '+';
+      final targetAmount = (match.group(6) ?? '').trim();
+      return '@$targetKey$targetSign$targetAmount=$sourceKey$sourceSign$sourceAmount';
+    },
+  );
+  final regex = RegExp(
+    r'@([^\s@,+\-*/();=]+)\s*([+-])\s*([^@,;\n]+?)(?=$|[@,;\n]|\s+[A-Za-zÀ-ÖØ-öø-ÿ_]+[+-])|\b([A-Za-zÀ-ÖØ-öø-ÿ_]+)([+-])([^@\s,;\n]+(?:\s+[^\s@,;\n]+)?)',
+  );
+  for (final match in regex.allMatches(normalizedText)) {
+    final rawKeyText = match.group(1) ?? match.group(4) ?? '';
+    var key = oculumStatKey(rawKeyText);
+    if (key.isEmpty) continue;
+    var sign = (match.group(2) ?? match.group(5)) == '-' ? -1 : 1;
+    var expression = (match.group(3) ?? match.group(6) ?? '').trim();
+    var element = '';
+    var triggerRaw = '';
+
+    final triggerIndex = expression.indexOf('=');
+    if (triggerIndex >= 0) {
+      triggerRaw = expression.substring(triggerIndex + 1).trim();
+      expression = expression.substring(0, triggerIndex).trim();
+
+      final groupedTarget = RegExp(
+        r'^([A-Za-zÀ-ÖØ-öø-ÿ_]+)([+-])(.+)$',
+      ).firstMatch(triggerRaw.replaceAll(RegExp(r'\s+'), ''));
+      final groupedTargetKey = groupedTarget == null
+          ? ''
+          : oculumStatKey(groupedTarget.group(1) ?? '');
+      if (oculumIsGroupedStatKey(groupedTargetKey)) {
+        final leftSign = sign < 0 ? '-' : '+';
+        triggerRaw = '$rawKeyText$leftSign$expression';
+        key = groupedTargetKey;
+        sign = (groupedTarget?.group(2) ?? '+') == '-' ? -1 : 1;
+        expression = groupedTarget?.group(3) ?? '0';
+      }
+    }
+
+    final onHitMatch = RegExp(
+      r'(?:^|\s)(onhit|quandoColpito|colpito)$',
+      caseSensitive: false,
+    ).firstMatch(expression);
+    if (onHitMatch != null) {
+      triggerRaw = 'OnHit';
+      expression = expression.substring(0, onHitMatch.start).trim();
+    } else {
+      final compactOnHit = RegExp(
+        r'(onhit)$',
+        caseSensitive: false,
+      ).firstMatch(expression);
+      if (compactOnHit != null) {
+        triggerRaw = 'OnHit';
+        expression = expression.substring(0, compactOnHit.start).trim();
+      }
+    }
+
+    if (triggerRaw.isEmpty) {
+      final everyMatch = RegExp(
+        r'(?:^|\s)(ogni|every)\s+(.+)$',
+        caseSensitive: false,
+      ).firstMatch(expression);
+      if (everyMatch != null) {
+        final before = expression.substring(0, everyMatch.start).trim();
+        final everyTrigger = expression.substring(everyMatch.start).trim();
+        if (before.isNotEmpty &&
+            oculumParseEveryTriggerSpec(everyTrigger) != null) {
+          triggerRaw = everyTrigger;
+          expression = before;
+        }
+      }
+    }
+
+    if (key == 'danni' || key == 'difesa') {
+      final trailing = oculumSplitTrailingElement(expression, vars);
+      if (trailing != null && trailing.trim().isNotEmpty) {
+        element = oculumNormalizeElementId(trailing);
+        expression = expression
+            .substring(0, expression.length - trailing.length)
+            .trim();
+      }
+      final compact = RegExp(
+        r'^([0-9]+(?:[,.][0-9]+)?|[¼½¾⅓⅔⅕⅖⅗⅘])\s*([^\s\d+\-*/().,;@]+)$',
+      ).firstMatch(expression);
+      if (compact != null && oculumStatKey(compact.group(2) ?? '').isEmpty) {
+        expression = compact.group(1) ?? expression;
+        element = oculumNormalizeElementId(compact.group(2) ?? '');
+      }
+    }
+    try {
+      final value = oculumEvaluateFormula(expression, vars) * sign;
+      if (value.isNaN || value.isInfinite) {
+        out.addAll(
+          oculumExpandGroupedFormulaCommand(
+            OculumFormulaCommand(
+              key: key,
+              value: 0,
+              elementId: element,
+              triggerRaw: triggerRaw,
+              valid: false,
+              error: 'Risultato impossibile.',
+            ),
+          ),
+        );
+      } else {
+        out.addAll(
+          oculumExpandGroupedFormulaCommand(
+            OculumFormulaCommand(
+              key: key,
+              value: oculumRoundFormulaResult(value),
+              elementId: element,
+              triggerRaw: triggerRaw,
+              valid: true,
+            ),
+          ),
+        );
+      }
+    } catch (error) {
+      out.addAll(
+        oculumExpandGroupedFormulaCommand(
+          OculumFormulaCommand(
+            key: key,
+            value: 0,
+            elementId: element,
+            triggerRaw: triggerRaw,
+            valid: false,
+            error: '$error',
+          ),
+        ),
+      );
+    }
+  }
+  return out;
+}

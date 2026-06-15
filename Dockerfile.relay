@@ -1,0 +1,19 @@
+FROM dart:stable AS build
+
+WORKDIR /app
+
+COPY pubspec.yaml pubspec.lock ./
+RUN dart pub get
+
+COPY tool ./tool
+RUN dart compile exe tool/oculum_relay_server.dart -o /app/bin/oculum_relay_server
+
+FROM debian:bookworm-slim
+
+WORKDIR /app
+COPY --from=build /app/bin/oculum_relay_server /app/oculum_relay_server
+
+ENV PORT=8787
+EXPOSE 8787
+
+CMD ["/app/oculum_relay_server"]

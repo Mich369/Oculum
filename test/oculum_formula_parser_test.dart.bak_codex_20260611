@@ -1,0 +1,403 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:oculum/main.dart';
+
+const _vars = <String, num>{
+  'resilienza': 6,
+  'volonta': 10,
+  'materia': 12,
+  'oculum': 8,
+  'hp': 60,
+  'hp_temp': 3,
+  'difesa': 4,
+  'danni': 3,
+  'scudo': 20,
+  'scudo_oculum': 5,
+  'vc': 2,
+  'cm': 5,
+  'iniziativa': 4,
+  'movimento': 32,
+  'tiro_attacco': 2,
+  'tiro_difesa': 5,
+};
+
+Map<String, int> _typedTotals(String text, String key) {
+  final totals = <String, int>{};
+  for (final command in oculumParseFormulaCommands(text, _vars)) {
+    if (!command.valid || command.key != key) continue;
+    final element = command.elementId.isEmpty ? 'fisico' : command.elementId;
+    totals.update(
+      element,
+      (current) => current + command.value,
+      ifAbsent: () => command.value,
+    );
+  }
+  return totals;
+}
+
+String _dominant(Map<String, int> totals) {
+  var best = totals.entries.first;
+  for (final entry in totals.entries.skip(1)) {
+    if (entry.value > best.value) best = entry;
+  }
+  return best.key;
+}
+
+String _summary(Map<String, int> totals) {
+  final keys = totals.keys.toList();
+  final visible = keys.take(3).map(oculumElementDisplayIt).toList();
+  if (keys.length > 3) visible.add('+${keys.length - 3}');
+  return visible.join(' | ');
+}
+
+void main() {
+  test('parser riconosce danni elementali dungeon e formule compatte', () {
+    final cases = <String, MapEntry<String, int>>{
+      '@Danni+15 Fulmine': const MapEntry('fulmine', 15),
+      '@Danni+15Fulmine': const MapEntry('fulmine', 15),
+      '@Danni+Vol/2 Fuoco': const MapEntry('fuoco', 5),
+      '@Danni+Vol/2Fuoco': const MapEntry('fuoco', 5),
+      '@Danni+Mat/3 Gelo': const MapEntry('gelo', 4),
+      '@Danni+Mat/3Gelo': const MapEntry('gelo', 4),
+      '@Danni+\u2153Mat Gelo': const MapEntry('gelo', 4),
+      '@Danni+\u00BDVol Fuoco': const MapEntry('fuoco', 5),
+      '@Danni+25%Ocu Lunare': const MapEntry('lunare', 2),
+      '@Danni+25%OcuLunare': const MapEntry('lunare', 2),
+      '@Danni+10 Vapium': const MapEntry('vapium', 10),
+      '@Danni+8 Slime': const MapEntry('slime', 8),
+      '@Danni+12 Cristallo': const MapEntry('cristallo', 12),
+      '@Danni+5 Postea': const MapEntry('postea', 5),
+      '@Danni+7 Radice': const MapEntry('radice', 7),
+      '@Danni+10 Taglio': const MapEntry('taglio', 10),
+      '@Danni+8 Cenere': const MapEntry('cenere', 8),
+      '@Danni+5 Sonoro': const MapEntry('sonoro', 5),
+      '@Danni+5 Non morto': const MapEntry('nonmorto', 5),
+    };
+
+    for (final entry in cases.entries) {
+      final parsed = oculumParseFormulaCommands(entry.key, _vars);
+      expect(parsed, hasLength(1), reason: entry.key);
+      expect(parsed.single.valid, isTrue, reason: entry.key);
+      expect(parsed.single.elementId, entry.value.key, reason: entry.key);
+      expect(parsed.single.value, entry.value.value, reason: entry.key);
+    }
+  });
+
+  test('difesa tipizzata resta numerica e somma duplicati', () {
+    expect(_typedTotals('@Difesa+15 Cenere', 'difesa'), equals({'cenere': 15}));
+    expect(
+      _typedTotals('@Difesa+10 Osso @Difesa+5 Cenere', 'difesa'),
+      equals({'osso': 10, 'cenere': 5}),
+    );
+
+    final totals = _typedTotals(
+      '@Difesa+10 Cenere @Difesa+5 Cenere @Difesa+8 Osso',
+      'difesa',
+    );
+    expect(totals, equals({'cenere': 15, 'osso': 8}));
+    expect(_dominant(totals), 'cenere');
+
+    expect(_typedTotals('@Difesa+8 Null', 'difesa'), equals({'vuoto': 8}));
+    expect(
+      _typedTotals('@Difesa+4 Non morto', 'difesa'),
+      equals({'nonmorto': 4}),
+    );
+  });
+
+  test('normalizzazione riconosce accenti reali e alias sicuri', () {
+    expect(oculumNormalizeText('Volont\u00E0'), 'volonta');
+    expect(oculumStatKey('Volont\u00E0'), 'volonta');
+    expect(oculumStatKey('PV'), 'hp');
+    expect(oculumStatKey('Dmg'), 'danni');
+    expect(oculumNormalizeElementId('Normal'), 'fisico');
+    expect(oculumNormalizeElementId('Niente'), 'vuoto');
+    expect(oculumNormalizeElementId('Nothing'), 'vuoto');
+  });
+
+  test('duplicati danno, dominante, sconosciuti e sintesi breve', () {
+    final damage = _typedTotals(
+      '@Danni+10 Fuoco @Danni+5 Fuoco @Danni+8 Gelo',
+      'danni',
+    );
+    expect(damage, equals({'fuoco': 15, 'gelo': 8}));
+    expect(_dominant(damage), 'fuoco');
+
+    final mixed = _typedTotals(
+      '@Danni+10 Taglio @Danni+15 Fulmine @Danni+5 Oscuro',
+      'danni',
+    );
+    expect(_dominant(mixed), 'fulmine');
+    expect(mixed.keys.toSet(), equals({'taglio', 'fulmine', 'oscuro'}));
+
+    final unknown = oculumParseFormulaCommands('@Danni+3 TipoMaiVisto', _vars);
+    expect(unknown.single.valid, isTrue);
+    expect(unknown.single.value, 3);
+    expect(unknown.single.elementId, 'tipomaivisto');
+
+    final longSummary = _summary(
+      _typedTotals(
+        '@Danni+1 Fuoco @Danni+1 Fulmine @Danni+1 Gelo @Danni+1 Osso',
+        'danni',
+      ),
+    );
+    expect(longSummary, 'Fuoco | Fulmine | Gelo | +1');
+  });
+
+  test('formule impossibili restano invalide senza bloccare il parser', () {
+    final parsed = oculumParseFormulaCommands(
+      '@Danni+10/0 Fuoco @Danni+2 Gelo',
+      _vars,
+    );
+
+    expect(parsed, hasLength(2));
+    expect(parsed.first.valid, isFalse);
+    expect(parsed.first.value, 0);
+    expect(parsed.first.elementId, 'fuoco');
+    expect(parsed.first.error.toLowerCase(), contains('divisione'));
+    expect(parsed.last.valid, isTrue);
+    expect(parsed.last.elementId, 'gelo');
+    expect(parsed.last.value, 2);
+  });
+
+  test('comandi effettivi convertono VC e CM in Volonta e Materia', () {
+    final parsed = oculumParseEffectiveFormulaCommands(
+      '@VC+1 @CM+1 @Danni+2',
+      _vars,
+    );
+
+    expect(parsed.map((command) => command.key), [
+      'volonta',
+      'materia',
+      'danni',
+    ]);
+    expect(parsed.map((command) => command.value), [3, 2, 2]);
+  });
+
+  test('parser riconosce nuovi comandi vita, scudo oculum e tiri', () {
+    final parsed = oculumParseFormulaCommands(
+      '@Iniziativa+5 @Movimento+2 @HP+5 @Vita+5 @HPTemp+Vol1/6 @Scudo+3 @ScudoOculum+5 @TiroAttacco+1 @TiroDifesa+1',
+      _vars,
+    );
+
+    expect(parsed.map((command) => command.key), [
+      'iniziativa',
+      'movimento',
+      'hp',
+      'hp',
+      'hp_temp',
+      'scudo',
+      'scudo_oculum',
+      'tiro_attacco',
+      'tiro_difesa',
+    ]);
+    expect(parsed.map((command) => command.value), [5, 2, 5, 5, 2, 3, 5, 1, 1]);
+  });
+
+  test('Stats e OtherStats espandono le quattro statistiche senza loop', () {
+    final allStats = oculumParseFormulaCommands('@Stats+1', _vars);
+    expect(allStats.map((command) => command.key), [
+      'resilienza',
+      'volonta',
+      'materia',
+      'oculum',
+    ]);
+    expect(allStats.map((command) => command.value), [1, 1, 1, 1]);
+
+    final hpLoss = oculumParseFormulaCommands('@HP-10=Stats+1', _vars);
+    expect(hpLoss.map((command) => command.key), [
+      'volonta',
+      'materia',
+      'oculum',
+    ]);
+    expect(hpLoss.every((command) => command.triggerRaw == 'HP-10'), isTrue);
+
+    final volLoss = oculumParseFormulaCommands('@Vol-1=Stats+1', _vars);
+    expect(volLoss.map((command) => command.key), [
+      'resilienza',
+      'materia',
+      'oculum',
+    ]);
+    expect(volLoss.every((command) => command.triggerRaw == 'Vol-1'), isTrue);
+
+    final otherWill = oculumParseFormulaCommands(
+      '@Will-1=OtherStats+1 @Vol-1=AltreStats+1',
+      _vars,
+    );
+    expect(otherWill.map((command) => command.key), [
+      'resilienza',
+      'materia',
+      'oculum',
+      'resilienza',
+      'materia',
+      'oculum',
+    ]);
+  });
+
+  test('parser preserva trigger, OnHit, divisioni e frazioni piccole', () {
+    final parsed = oculumParseFormulaCommands(
+      '@Danni+1OnHit Danni+2OnHit @Vol+1=-10HP @HP+1=Vol-1 @Difesa-\u00BC @Mat-1/3Vol @Mat-\u2153Vol',
+      _vars,
+    );
+
+    expect(parsed.map((command) => command.key), [
+      'danni',
+      'danni',
+      'volonta',
+      'hp',
+      'difesa',
+      'materia',
+      'materia',
+    ]);
+    expect(parsed.map((command) => command.value), [1, 2, 1, 1, -1, -3, -3]);
+    expect(parsed[0].triggerRaw, 'OnHit');
+    expect(parsed[1].triggerRaw, 'OnHit');
+    expect(parsed[2].triggerRaw, '-10HP');
+    expect(parsed[3].triggerRaw, 'Vol-1');
+  });
+
+  test('parser riconosce bonus ogni risorsa spesa o totale', () {
+    final parsed = oculumParseFormulaCommands(
+      '@Vol+1 ogni 10 HPSpesi @Danni+2 ogni 1 OcuSpeso @Difesa+1 ogni 5 HPSacrificati @Mat+1 ogni 3 ScudoSpeso @Res+1 ogni 20 VitaPersa @Ini+1 ogni 5 MatTotale',
+      _vars,
+    );
+
+    expect(parsed.map((command) => command.key), [
+      'volonta',
+      'danni',
+      'difesa',
+      'materia',
+      'resilienza',
+      'iniziativa',
+    ]);
+    expect(parsed.map((command) => command.value), [1, 2, 1, 1, 1, 1]);
+    expect(parsed.map((command) => command.triggerRaw), [
+      'ogni 10 HPSpesi',
+      'ogni 1 OcuSpeso',
+      'ogni 5 HPSacrificati',
+      'ogni 3 ScudoSpeso',
+      'ogni 20 VitaPersa',
+      'ogni 5 MatTotale',
+    ]);
+  });
+
+  test('normalizza sorgenti dei trigger ogni', () {
+    expect(oculumEveryTriggerSourceKey('HPSpesi'), 'hp_spent');
+    expect(oculumEveryTriggerSourceKey('PVConsumati'), 'hp_spent');
+    expect(oculumEveryTriggerSourceKey('VitaPersa'), 'hp_spent');
+    expect(oculumEveryTriggerSourceKey('OcuSpeso'), 'oculum_spent');
+    expect(oculumEveryTriggerSourceKey('MateriaTotale'), 'materia_total');
+    expect(oculumParseEveryTriggerSpec('ogni 5 MatTotale')?.divisor, 5);
+  });
+
+
+  test('Stats e OtherStats con HPSpesi non danno Resilienza e non creano loop', () {
+    final everyStats = oculumParseFormulaCommands(
+      '@Stats+1 ogni 50 HPSpesi',
+      _vars,
+    );
+
+    expect(everyStats.map((command) => command.key), [
+      'volonta',
+      'materia',
+      'oculum',
+    ]);
+    expect(everyStats.map((command) => command.value), [1, 1, 1]);
+    expect(
+      everyStats.every((command) => command.triggerRaw == 'ogni 50 HPSpesi'),
+      isTrue,
+    );
+
+    final everyOtherStats = oculumParseFormulaCommands(
+      '@OtherStats+1 ogni 50 HPSpesi',
+      _vars,
+    );
+
+    expect(everyOtherStats.map((command) => command.key), [
+      'volonta',
+      'materia',
+      'oculum',
+    ]);
+    expect(everyOtherStats.map((command) => command.value), [1, 1, 1]);
+    expect(
+      everyOtherStats.every(
+        (command) => command.triggerRaw == 'ogni 50 HPSpesi',
+      ),
+      isTrue,
+    );
+  });
+
+  test('Stats ogni risorsa totale non HP resta completa', () {
+    final matTotalStats = oculumParseFormulaCommands(
+      '@Stats+1 ogni 5 MatTotale',
+      _vars,
+    );
+
+    expect(matTotalStats.map((command) => command.key), [
+      'resilienza',
+      'volonta',
+      'materia',
+      'oculum',
+    ]);
+    expect(matTotalStats.map((command) => command.value), [1, 1, 1, 1]);
+  });
+
+  test('item conserva buff @ e stato equipaggiato nel salvataggio', () {
+    final item = InventoryItem(
+      nome: 'Reliquia Oculum',
+      peso: 0.2,
+      quantita: 1,
+      note: 'Test',
+      buff: '@HPTemp+Vol1/6 @ScudoOculum+5',
+      equipaggiata: true,
+    );
+
+    final restored = InventoryItem.fromJson(item.toJson());
+
+    expect(restored.buff, '@HPTemp+Vol1/6 @ScudoOculum+5');
+    expect(restored.equipaggiata, isTrue);
+    expect(restored.arma, isFalse);
+    expect(restored.protegge, isFalse);
+  });
+
+  test('autocomplete completa comandi ed elementi senza cambiare altro', () {
+    final commandController = TextEditingController(text: '@Dif');
+    addTearDown(commandController.dispose);
+    commandController.selection = TextSelection.collapsed(
+      offset: commandController.text.length,
+    );
+
+    expect(
+      oculumApplyCommandAutocomplete(commandController, linguaInglese: false),
+      isTrue,
+    );
+    expect(commandController.text, '@Difesa');
+    expect(
+      commandController.selection.baseOffset,
+      commandController.text.length,
+    );
+
+    final elementController = TextEditingController(text: '@Danni+10 Ful');
+    addTearDown(elementController.dispose);
+    elementController.selection = TextSelection.collapsed(
+      offset: elementController.text.length,
+    );
+
+    expect(
+      oculumApplyCommandAutocomplete(elementController, linguaInglese: false),
+      isTrue,
+    );
+    expect(elementController.text, '@Danni+10 Fulmine');
+
+    final multiWordController = TextEditingController(text: '@Difesa+4 Non');
+    addTearDown(multiWordController.dispose);
+    multiWordController.selection = TextSelection.collapsed(
+      offset: multiWordController.text.length,
+    );
+
+    expect(
+      oculumApplyCommandAutocomplete(multiWordController, linguaInglese: false),
+      isTrue,
+    );
+    expect(multiWordController.text, '@Difesa+4 Non morto');
+  });
+}

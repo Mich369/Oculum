@@ -1,0 +1,11 @@
+services:
+  oculum-relay:
+    build:
+      context: .
+      dockerfile: Dockerfile.relay
+    container_name: oculum-relay
+    restart: unless-stopped
+    environment:
+      PORT: "8787"
+    ports:
+      - "8787:8787"

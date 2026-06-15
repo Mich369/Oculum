@@ -1,0 +1,96 @@
+ESEMPI COMANDI PARSER OCULUM
+============================
+
+Sintassi base:
+- Ogni comando inizia con @.
+- Puoi scrivere piu comandi nello stesso testo.
+- I trigger evento possono stare alla fine del comando oppure prima del comando compatto.
+- I nomi italiani e inglesi sono accettati.
+- Il parser non usa eval: divisioni per zero, formule vuote e variabili sconosciute vengono rifiutate in sicurezza.
+
+Trigger evento
+--------------
+
+1. OnHit / ad ogni colpo
+   Si applica quando la scheda e stata colpita, cioe gli HP attuali sono sotto gli HP massimi.
+
+   @Danni+1OnHit
+   @Difesa+2 ad ogni colpo
+   @HPTemp+Volonta/5 OgniColpo
+
+2. OnCrit / critico
+   Si applica con un critico positivo o negativo.
+
+   @Danni+3OnCrit
+   @ScudoCritico+1 Critico
+   @Stats+1 SuCritico
+
+3. OnMaxCrit / critico positivo
+   Si applica solo con critico positivo, per esempio dado al massimo.
+
+   @Danni+5OnMaxCrit
+   @TiroAttacco+2 Critico Positivo
+   @Danni+25%Oculum CriticoMassimo
+   OnMaxCrit+50HPAttuali
+
+4. On1Crit / critico negativo
+   Si applica solo con critico negativo, per esempio dado a 1.
+
+   @Difesa-2On1Crit
+   @HP-5 Critico Negativo
+   @Volonta-1 FallimentoCritico
+
+5. OnShieldBreaks / scudo rotto
+   Si applica quando la scheda aveva uno scudo previsto e lo scudo attuale e a 0.
+
+   @Danni+4OnShieldBreaks
+   @Scudo+3 Scudo Rotto
+   @OtherStats+1 QuandoSiSpezzaLoScudo
+
+Esempi complessi
+----------------
+
+Bonus danno elementale su critico positivo:
+@Danni+Volonta/2 Fuoco OnMaxCrit
+
+Malus difensivo su critico negativo:
+@Difesa-1/3Materia On1Crit
+
+Bonus a tutte le statistiche quando si rompe lo scudo:
+@Stats+1 OnShieldBreaks
+
+Bonus alle altre statistiche quando spendi Volonta:
+@Volonta-1=OtherStats+1
+@Volonta-1=AltreStats+1
+
+Trigger a soglia ogni risorsa spesa:
+@Danni+2 ogni 5 HPSpesi
+@Difesa+1 ogni 2 MateriaSpesa
+@Oculum+1 ogni 3 OculumSpeso
+
+Trigger a soglia su valore totale o attuale:
+@Danni+1 ogni 10 MateriaTotale
+@Difesa+1 ogni 5 HPAttuali
+
+Formule compatte:
+@Danni+Vol/2Fuoco
+@Danni+25%OcuLunare
+@Difesa+1/3Mat Gelo
+OnMaxCrit+50HPAttuali
+On1Crit-9HPAttuali
+
+Comandi utili comuni
+--------------------
+
+@HP+10
+@HPTemp+5
+@Scudo+12
+@ScudoOculum+3
+@ScudoCritico+1
+@VC+1
+@CM+1
+@TiroAttacco+2
+@TiroDifesa+2
+@TiroStats+1
+@Reazione+1
+@ReazioneVeloce+1
