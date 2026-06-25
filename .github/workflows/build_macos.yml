@@ -32,6 +32,16 @@ jobs:
           echo "========== PUBSPEC =========="
           cat pubspec.yaml
 
+      - name: Create missing asset folders
+        run: |
+          mkdir -p assets/oculum/sprites/characters
+          mkdir -p assets/oculum/monsters
+          mkdir -p assets/oculum/icons
+          mkdir -p assets/oculum/bosses
+          mkdir -p assets/oculum_dungeon/generated_sprites/enemies
+          mkdir -p assets/oculum_dungeon/generated_sprites/equipment
+          mkdir -p assets/oculum_dungeon/generated_sprites/npc
+
       - name: Get packages
         run: flutter pub get
 
@@ -41,8 +51,7 @@ jobs:
       - name: Zip App
         run: |
           cd build/macos/Build/Products/Release
-          APP=$(ls *.app)
-          ditto -c -k --sequesterRsrc --keepParent "$APP" Oculum-macOS.zip
+          ditto -c -k --sequesterRsrc --keepParent oculum.app Oculum-macOS.zip
 
       - name: Upload
         uses: actions/upload-artifact@v4
