@@ -23,25 +23,26 @@ jobs:
       - name: Enable macOS desktop
         run: flutter config --enable-macos-desktop
 
-      - name: Check Flutter doctor
-        run: flutter doctor -v
-
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Create macOS folder if missing
+      - name: Create macOS project if missing
         run: |
           if [ ! -d "macos" ]; then
             flutter create --platforms=macos .
           fi
 
+      - name: Analyze project
+        run: flutter analyze
+
       - name: Build macOS release
         run: flutter build macos --release
 
-      - name: Zip macOS app
+      - name: Compress macOS app
         run: |
           cd build/macos/Build/Products/Release
-          zip -r Oculum-macOS.zip *.app
+          APP_NAME=$(ls -d *.app | head -n 1)
+          ditto -c -k --sequesterRsrc --keepParent "$APP_NAME" Oculum-macOS.zip
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
