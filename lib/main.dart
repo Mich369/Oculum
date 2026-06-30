@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,6 +25,7 @@ import 'services/oculum_realtime_service.dart';
 import 'widgets/oculum_bottom_nav.dart';
 import 'widgets/oculum_desktop_top_menu.dart';
 import 'widgets/oculum_quick_edit_eye.dart';
+import 'pages/oculum_dungeon/monster_book.dart';
 import 'pages/oculum_dungeon_game.dart';
 import 'src/main/oculum_network_probe.dart';
 
@@ -33,6 +35,11 @@ part 'src/main/oculum_models.dart';
 part 'src/main/oculum_manual_sections.dart';
 part 'src/main/oculum_home_persistence.dart';
 part 'src/main/oculum_home_calculations.dart';
+part 'src/main/oculum_rune_art.dart';
+part 'src/main/oculum_home_force_state.dart';
+part 'src/main/oculum_home_death_rules.dart';
+part 'src/main/oculum_home_damage_impact.dart';
+part 'src/main/oculum_home_image_cache.dart';
 part 'src/main/oculum_home_combat_progression.dart';
 part 'src/main/oculum_home_resources_rest_titles_data.dart';
 part 'src/main/oculum_home_colors_and_base_widgets.dart';
@@ -53,22 +60,128 @@ part 'src/main/oculum_painters.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _configureOculumRuntimeCaches();
+  runApp(const OculumApp());
+}
 
+bool _oculumStartupServicesReady = false;
+Future<void>? _oculumStartupServicesFuture;
+Future<bool>? _oculumSupabaseInitializationFuture;
+
+enum OculumStartupRole { player, master }
+
+OculumStartupRole oculumStartupRole = OculumStartupRole.player;
+
+const int _oculumDesktopStartupSpritePrecacheLimit = 28;
+const int _oculumMobileStartupSpritePrecacheLimit = 12;
+const Duration _oculumStartupFrameYield = Duration(milliseconds: 16);
+
+Future<void> preloadOculumStartupServices({
+  void Function(double progress, String label)? onProgress,
+}) {
+  if (_oculumStartupServicesReady) {
+    onProgress?.call(1, 'Oculum pronto.');
+    return Future.value();
+  }
+
+  final existing = _oculumStartupServicesFuture;
+  if (existing != null) return existing;
+
+  final future = _preloadOculumStartupServices(onProgress: onProgress);
+  _oculumStartupServicesFuture = future;
+  return future;
+}
+
+Future<void> _preloadOculumStartupServices({
+  void Function(double progress, String label)? onProgress,
+}) async {
+  Future<void> step(
+    double progress,
+    String label,
+    FutureOr<void> Function() action,
+  ) async {
+    onProgress?.call(progress, label);
+    await Future<void>.delayed(Duration.zero);
+    await action();
+    await Future<void>.delayed(_oculumStartupFrameYield);
+  }
+
+  await step(0.12, 'Preparazione cache runtime...', () async {
+    _configureOculumRuntimeCaches();
+  });
+
+  await step(0.34, 'Preparazione salvataggi...', () async {
+    await SharedPreferences.getInstance();
+  });
+
+  await step(0.56, 'Preparazione testi e pagine...', () async {
+    oculumManualSections.length;
+    await rootBundle.load('AssetManifest.json').catchError((_) {
+      return ByteData(0);
+    });
+  });
+
+  await step(0.70, 'Catalogo sprite mostri...', () async {
+    await oculumStartupMonsterSpriteAssets();
+  });
+
+  await step(0.80, 'Connessione online...', () async {
+    await ensureOculumSupabaseInitialized();
+  });
+
+  await step(0.86, 'Stabilizzazione pagine e label...', () {});
+
+  _oculumStartupServicesReady = true;
+  onProgress?.call(0.88, 'Servizi pronti, sprite principali...');
+}
+
+Future<bool> ensureOculumSupabaseInitialized() {
+  if (OculumRealtimeService.supabaseAvailable) {
+    return Future<bool>.value(true);
+  }
+  final pending = _oculumSupabaseInitializationFuture;
+  if (pending != null) return pending;
+  final future = _initializeOculumSupabase();
+  _oculumSupabaseInitializationFuture = future;
+  return future.whenComplete(() {
+    _oculumSupabaseInitializationFuture = null;
+  });
+}
+
+Future<bool> _initializeOculumSupabase() async {
   try {
+    try {
+      Supabase.instance.client;
+      OculumRealtimeService.supabaseAvailable = true;
+      OculumRealtimeService.startupStatus = 'Supabase pronto.';
+      return true;
+    } catch (_) {}
+
     await Supabase.initialize(
       url: 'https://jgpxdlkbuxhriltxezdc.supabase.co',
       anonKey: 'sb_publishable_VXDF3x3izDbZNJ5VWX6RsQ_ZFYXpkPI',
-    ).timeout(const Duration(seconds: 8));
+    ).timeout(const Duration(seconds: 6));
     OculumRealtimeService.supabaseAvailable = true;
     OculumRealtimeService.startupStatus = 'Supabase pronto.';
+    return true;
   } catch (error) {
     OculumRealtimeService.supabaseAvailable = false;
     OculumRealtimeService.startupStatus =
         'Supabase offline: l\'app resta locale.';
     debugPrint('Supabase initialization skipped: $error');
+    return false;
   }
+}
 
-  runApp(const OculumApp());
+String oculumClientPlatformLabel() {
+  if (kIsWeb) return 'web';
+  return switch (defaultTargetPlatform) {
+    TargetPlatform.android => 'android',
+    TargetPlatform.iOS => 'ios',
+    TargetPlatform.macOS => 'macos',
+    TargetPlatform.windows => 'windows',
+    TargetPlatform.linux => 'linux',
+    TargetPlatform.fuchsia => 'fuchsia',
+  };
 }
 
 void _configureOculumRuntimeCaches() {
@@ -87,6 +200,96 @@ int oculumImageCacheDimension(
 }) {
   final dpr = MediaQuery.maybeOf(context)?.devicePixelRatio ?? 1.0;
   return (logicalPixels * dpr).clamp(min.toDouble(), max.toDouble()).round();
+}
+
+List<String>? _oculumStartupMonsterSpriteAssets;
+
+Future<List<String>> oculumStartupMonsterSpriteAssets() async {
+  final cached = _oculumStartupMonsterSpriteAssets;
+  if (cached != null) return cached;
+
+  try {
+    final raw = await rootBundle.loadString('AssetManifest.json');
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map) {
+      _oculumStartupMonsterSpriteAssets = const <String>[];
+      return _oculumStartupMonsterSpriteAssets!;
+    }
+
+    final assets =
+        decoded.keys
+            .map((key) => '$key')
+            .where(
+              (key) =>
+                  key.startsWith(
+                    'assets/oculum_dungeon/generated_sprites/enemies/',
+                  ) ||
+                  key == 'assets/oculum/sprites/Slime.png' ||
+                  key == 'assets/oculum/sprites/Crown_of_Bones.png' ||
+                  key == 'assets/oculum/sprites/Cultist_of_Purple_Eyes.png' ||
+                  key == 'assets/oculum/sprites/Occhio_della_Reliquia.png',
+            )
+            .where(
+              (key) =>
+                  key.endsWith('.png') ||
+                  key.endsWith('.jpg') ||
+                  key.endsWith('.jpeg') ||
+                  key.endsWith('.webp'),
+            )
+            .toList()
+          ..sort();
+    _oculumStartupMonsterSpriteAssets = List<String>.unmodifiable(assets);
+  } catch (error) {
+    debugPrint('Monster sprite manifest preload skipped: $error');
+    _oculumStartupMonsterSpriteAssets = const <String>[];
+  }
+
+  return _oculumStartupMonsterSpriteAssets!;
+}
+
+List<String> oculumPrioritizedStartupSpriteAssets(
+  List<String> assets, {
+  required int limit,
+}) {
+  if (assets.isEmpty || limit <= 0) return const <String>[];
+
+  const priorityAssets = <String>[
+    'assets/oculum/sprites/Slime.png',
+    'assets/oculum/sprites/Crown_of_Bones.png',
+    'assets/oculum/sprites/Cultist_of_Purple_Eyes.png',
+    'assets/oculum/sprites/Occhio_della_Reliquia.png',
+    'assets/oculum_dungeon/generated_sprites/enemies/oculiano.png',
+    'assets/oculum_dungeon/generated_sprites/enemies/generated_normal_001.png',
+    'assets/oculum_dungeon/generated_sprites/enemies/generated_miniboss_001.png',
+    'assets/oculum_dungeon/generated_sprites/enemies/generated_boss_001.png',
+  ];
+
+  final available = assets.toSet();
+  final ordered = <String>[];
+
+  void addIfAvailable(String asset) {
+    if (available.contains(asset) && !ordered.contains(asset)) {
+      ordered.add(asset);
+    }
+  }
+
+  for (final asset in priorityAssets) {
+    addIfAvailable(asset);
+  }
+
+  for (final asset in assets) {
+    if (ordered.length >= limit) break;
+    final fileName = asset.split('/').last;
+    if (fileName.contains('_variant_')) continue;
+    addIfAvailable(asset);
+  }
+
+  for (final asset in assets) {
+    if (ordered.length >= limit) break;
+    addIfAvailable(asset);
+  }
+
+  return List<String>.unmodifiable(ordered.take(limit));
 }
 
 // =====================================================
@@ -120,6 +323,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   int paginaCorrente = 0;
   int schedaCorrente = 0;
   final Map<String, GlobalKey> _functionNavKeys = <String, GlobalKey>{};
+  final Set<int> _preparedPageIndexes = <int>{0};
+  int? _lazyPageActivationScheduledFor;
+  Timer? _lazyPageActivationTimer;
 
   GlobalKey _functionNavKey(String id) {
     return _functionNavKeys.putIfAbsent(id, () => GlobalKey());
@@ -157,6 +363,13 @@ class _OculumHomePageState extends State<OculumHomePage>
     manualFilteredIndexesCacheKey = '';
     inferredDamageTypeLabelsCacheRevision = -1;
     allDamageElementIdsCacheRevision = -1;
+  }
+
+  /// Lets feature modules request a scoped UI refresh without exposing
+  /// [State.setState] outside this state object.
+  void refreshOculumHome(VoidCallback update) {
+    if (!mounted) return;
+    setState(update);
   }
 
   void scheduleInputUiRefresh({
@@ -243,6 +456,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   }) async {
     if (!mounted) return;
 
+    final targetPage = paginaVisibileSicura(page);
+    final needsLazyActivation = !_isPagePreparedForDisplay(targetPage);
+
     setState(() {
       paginaCorrente = page;
       _prepareFunctionNavigation(anchorId);
@@ -255,6 +471,11 @@ class _OculumHomePageState extends State<OculumHomePage>
         aggiungiLog('Aperta funzione: $logTitle.');
       }
     });
+
+    if (needsLazyActivation) {
+      _scheduleLazyPageActivation(targetPage);
+      await _waitForLazyPageActivation(targetPage);
+    }
 
     if (anchorId == null || anchorId.trim().isEmpty) return;
 
@@ -462,8 +683,11 @@ class _OculumHomePageState extends State<OculumHomePage>
   final difesaRapidaController = TextEditingController(text: '0');
   final reazioniController = TextEditingController(text: '1');
   final reazioniVelociController = TextEditingController(text: '0');
+  final realtimeChatController = TextEditingController();
   final buffMalusRapidiController = TextEditingController();
   final dannoSubitoController = TextEditingController();
+  final dannoBonusScudoPercentController = TextEditingController(text: '0');
+  final Map<String, Uint8List> decodedImageBase64Cache = <String, Uint8List>{};
   final scudoFocusNode = FocusNode();
   final attaccoRapidoFocusNode = FocusNode();
   final difesaRapidaFocusNode = FocusNode();
@@ -513,13 +737,18 @@ class _OculumHomePageState extends State<OculumHomePage>
   final itemNomeController = TextEditingController();
   final itemPesoController = TextEditingController(text: '0');
   final itemQuantitaController = TextEditingController(text: '1');
+  final itemPutrefazioneSessioniController = TextEditingController(text: '0');
   final itemNoteController = TextEditingController();
   final itemBuffController = TextEditingController();
   final itemBonusDannoController = TextEditingController(text: '0');
   final itemBonusDifesaController = TextEditingController(text: '0');
   final itemBonusScudoController = TextEditingController(text: '0');
+  final itemGradoOggettoController = TextEditingController(text: '0');
+  final itemGradoRichiestoController = TextEditingController(text: '0');
   final itemElementoDannoController = TextEditingController(text: 'Fisico');
   final customDamageTypeController = TextEditingController();
+  final masterEnemyDamageController = TextEditingController(text: '10');
+  final masterEnemyHealController = TextEditingController(text: '10');
 
   final partyNomeController = TextEditingController();
   final partyRuoloController = TextEditingController(text: 'Alleato');
@@ -532,16 +761,26 @@ class _OculumHomePageState extends State<OculumHomePage>
   final superIspirazioniController = TextEditingController(text: '0');
   final ispirazioniOculumController = TextEditingController(text: '0');
   final karmaController = TextEditingController(text: '0');
+  final folliaController = TextEditingController(text: '0');
+  final oculumTiroController = TextEditingController(text: '0');
 
   final cenereController = TextEditingController(text: '0');
   final sessioniSenzaBisogniController = TextEditingController(text: '0');
   final giorniSenzaCiboAcquaController = TextEditingController(text: '0');
+  final oculumCurrentDayController = TextEditingController(text: '1');
 
   final manualSearchController = TextEditingController();
+  final themeSearchController = TextEditingController();
+  final monsterBookSearchController = TextEditingController();
 
   final quickSheetNameController = TextEditingController(text: '???');
   final quickSheetLevelController = TextEditingController(text: '0');
   final quickSheetGradeController = TextEditingController(text: '0');
+  final quickSheetCountController = TextEditingController(text: '1');
+  final quickSheetDescriptionController = TextEditingController();
+  String quickSheetArtMode = 'random';
+  bool quickSheetAddToInitiative = true;
+  String selectedSystemMonsterPresetId = '';
 
   final tutorialLevelController = TextEditingController(text: '0');
   final tutorialExtraResController = TextEditingController(text: '0');
@@ -551,6 +790,7 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   final diceAmountController = TextEditingController(text: '1');
   final diceModifierController = TextEditingController(text: '0');
+  final difficoltaTiroController = TextEditingController(text: '0');
   final relayServerController = TextEditingController(text: '');
   final relayRoomController = TextEditingController(text: '');
   final realtimeRoomController = TextEditingController(text: 'test');
@@ -564,6 +804,10 @@ class _OculumHomePageState extends State<OculumHomePage>
   final newCampaignNameController = TextEditingController();
   final mapUrlController = TextEditingController();
   final mapNotesController = TextEditingController();
+  final mapTokenSizeController = TextEditingController(text: '64');
+  final mapWidthMetersController = TextEditingController(text: '30');
+  final mapHeightMetersController = TextEditingController(text: '20');
+  final mapFreeTokenMovementController = TextEditingController(text: '6');
   final TransformationController mapTransformationController =
       TransformationController();
   String mapMode = 'image';
@@ -571,6 +815,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   String mapImageName = '';
   bool mapSaveSession = false;
   bool mapSessionChoiceAsked = false;
+  bool mapPlayersCanManageOwnToken = true;
+  int mapTokenSheetIndex = 0;
+  final List<Map<String, dynamic>> localMapTokens = [];
 
   final primoTitoloFatoNomeController = TextEditingController(
     text: 'Titolo del Fato',
@@ -591,8 +838,15 @@ class _OculumHomePageState extends State<OculumHomePage>
   final List<CharacterSkill> skills = [];
   final List<CharacterArt> arti = [];
   final List<String> diarioPagine = [];
+  final List<JournalEntry> journalEntries = [];
+  final List<DraftNote> draftNotes = [];
+  final List<HiddenEyeStat> hiddenEyeStats = [];
+  final List<ReputationEntry> reputations = [];
+  bool reputationsManuallyCleared = false;
   final List<String> logEventi = [];
   final List<Map<String, dynamic>> partyMembri = [];
+  final List<MonsterBookEntry> monsterBookCustomEntries = [];
+  final Set<String> monsterBookRemovedIds = <String>{};
   final List<Map<String, dynamic>> amiciOculum = [];
   final List<Map<String, dynamic>> campagneOculum = [];
 
@@ -627,6 +881,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   int salvataggioFallimentiConsecutivi = 0;
   DateTime? ultimoSalvataggioCompletatoAt;
   String ultimoSalvataggioFirma = '';
+  String ultimoSalvataggioContenutoFirma = '';
   final Map<String, dynamic> extraTopLevelSaveFields = <String, dynamic>{};
   int derivedDataRevision = 0;
   int inferredDamageTypeLabelsCacheRevision = -1;
@@ -647,6 +902,11 @@ class _OculumHomePageState extends State<OculumHomePage>
   String colorPresetSelezionato = 'classic_reliquary';
   String colorDecorationPresetId = 'none';
   String colorGuiPresetId = 'classic_reliquary';
+  String campaignDifficulty = 'normale';
+  int fortuna = 0;
+  int fateTokens = 0;
+  int diarioRewardClaimedCount = 0;
+  bool campaignDifficultyStarterClaimed = false;
   double themeDecorationOpacityScale = 1.0;
   double themeDecorationGlowScale = 1.0;
   double themeDecorationIntensityScale = 1.0;
@@ -669,11 +929,26 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool overlayCriticoVenti = false;
 
   String ultimoEventoRiposo = 'Nessun evento di riposo registrato.';
+  String statoForzaAttivo = '';
+  bool statoForzaPronto = true;
+  bool personaggioSvenuto = false;
+  int cenereSvenimentoUltimoControllo = 0;
+  bool personaggioCaduto = false;
+  int feriteMorte = 0;
+  int volontaVitale = 0;
 
   int tempResilienza = 0;
   int tempVolonta = 0;
   int tempMateria = 0;
   int tempOculum = 0;
+  int schivateOculumConsumate = 0;
+  int schivataOculumRiduzionePronta = 0;
+  String schivataOculumEtichettaPronta = '';
+  bool scudoSalvataggioAttivo = false;
+  String vantaggioTiroSelezionato = 'Normale';
+  bool dannoOltreDifesa = false;
+  bool dannoOltreScudi = false;
+  int expMilestoneRegenClaimed = 0;
 
   int raccoltaResilienzaSpesa = 0;
   int raccoltaVolontaSpesa = 0;
@@ -738,6 +1013,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool phoneDiceSetupExpanded = true;
   bool phoneDiceClassicExpanded = true;
   bool phoneDiceExtraExpanded = false;
+  double userGuiScale = 1.0;
 
   // Protezione salvataggi: se un salvataggio vecchio/non compatibile fallisce
   // il caricamento, l'app NON deve sovrascriverlo con una scheda vuota.
@@ -745,6 +1021,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   String ultimoErroreCaricamentoSalvataggio = '';
   int hpTempBonusConsumati = 0;
   int scudoBonusConsumati = 0;
+  bool folliaDaMostri = false;
+  bool illnessArtSbloccata = false;
   bool applyingHistorySnapshot = false;
   final List<Map<String, dynamic>> undoHistory = [];
   final List<Map<String, dynamic>> redoHistory = [];
@@ -798,12 +1076,20 @@ class _OculumHomePageState extends State<OculumHomePage>
   int masterInitiativeActiveIndex = 0;
   int masterInitiativeManualCounter = 0;
   Map<String, dynamic> realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
+  final ValueNotifier<Map<String, dynamic>?> realtimeDungeonMessage =
+      ValueNotifier<Map<String, dynamic>?>(null);
+  final Map<String, Map<String, dynamic>> realtimeDungeonHosts =
+      <String, Map<String, dynamic>>{};
   final Set<String> realtimeCoMasterTags = <String>{};
   List<String> realtimeEvents = [];
   final Set<String> realtimeSeenEventKeys = <String>{};
   final Map<String, DateTime> realtimeRoleUpdateTimestamps =
       <String, DateTime>{};
   final Map<String, String> realtimeLastSentSheetHashes = <String, String>{};
+  final Map<String, String> realtimePendingMasterAckSheetIds =
+      <String, String>{};
+  final Map<String, int> realtimePendingMasterAckAttempts = <String, int>{};
+  final Map<String, Timer> realtimePendingMasterAckTimers = <String, Timer>{};
   OculumRealtimeService? realtimeService;
   bool applyingRealtimeRemoteSheet = false;
 
@@ -817,10 +1103,11 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   final List<String> tipiScheda = [
     'Personaggio',
-    'Mostro',
-    'NPC',
-    'Boss',
     'Alleato',
+    'NPC',
+    'Mostro',
+    'Mostro Mini Boss',
+    'Mostro Boss',
   ];
 
   final List<String> statsLevelUp = [
@@ -866,130 +1153,130 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   final List<DamageModifierOption> modificatoriDanno = [
     DamageModifierOption(
-      name: 'Normale',
-      multiplier: 1.00,
-      descriptionIt: 'Danno normale. Nessuna resistenza o fragilità applicata.',
-      descriptionEn: 'Normal damage. No resistance or fragility applied.',
-    ),
-    DamageModifierOption(
-      name: 'Resistenza Leggera',
-      multiplier: 0.90,
-      descriptionIt: 'Riduce il danno del 10%.',
-      descriptionEn: 'Reduces damage by 10%.',
-    ),
-    DamageModifierOption(
-      name: 'Resistenza Normale',
-      multiplier: 0.75,
-      descriptionIt: 'Riduce il danno del 25%.',
-      descriptionEn: 'Reduces damage by 25%.',
-    ),
-    DamageModifierOption(
-      name: 'Resistenza Alta',
-      multiplier: 0.50,
-      descriptionIt: 'Riduce il danno del 50%.',
-      descriptionEn: 'Reduces damage by 50%.',
-    ),
-    DamageModifierOption(
-      name: 'Semi Perfetta',
-      multiplier: 0.25,
-      descriptionIt: 'Riduce il danno del 75%.',
-      descriptionEn: 'Reduces damage by 75%.',
-    ),
-    DamageModifierOption(
-      name: 'Impenetrabile',
-      multiplier: 0.10,
-      descriptionIt: 'Riduce il danno del 90%.',
-      descriptionEn: 'Reduces damage by 90%.',
-    ),
-    DamageModifierOption(
-      name: 'Immunità',
-      multiplier: 0.00,
-      descriptionIt: 'Annulla il danno.',
-      descriptionEn: 'Negates the damage.',
-    ),
-    DamageModifierOption(
-      name: 'Fragilità Bassa',
-      multiplier: 1.10,
-      descriptionIt: 'Aumenta il danno del 10%.',
-      descriptionEn: 'Increases damage by 10%.',
-    ),
-    DamageModifierOption(
-      name: 'Fragilità Normale',
-      multiplier: 1.25,
-      descriptionIt: 'Aumenta il danno del 25%.',
-      descriptionEn: 'Increases damage by 25%.',
-    ),
-    DamageModifierOption(
-      name: 'Fragilità Alta',
-      multiplier: 1.50,
-      descriptionIt: 'Aumenta il danno del 50%.',
-      descriptionEn: 'Increases damage by 50%.',
-    ),
-    DamageModifierOption(
-      name: 'Fragilità Estrema',
-      multiplier: 1.75,
-      descriptionIt: 'Aumenta il danno del 75%.',
-      descriptionEn: 'Increases damage by 75%.',
-    ),
-    DamageModifierOption(
-      name: 'Fragilità Distruttiva',
-      multiplier: 1.90,
-      descriptionIt: 'Aumenta il danno del 90%.',
-      descriptionEn: 'Increases damage by 90%.',
-    ),
-    DamageModifierOption(
-      name: 'Fragilità Assoluta',
-      multiplier: 2.00,
-      descriptionIt: 'Raddoppia il danno.',
-      descriptionEn: 'Doubles the damage.',
+      name: 'Fragilità Letale',
+      multiplier: 6.00,
+      descriptionIt: 'Fragilità letale: il danno aumenta del 500%.',
+      descriptionEn: 'Lethal fragility: damage increases by 500%.',
     ),
     DamageModifierOption(
       name: 'Fragilità Semi Letale',
       multiplier: 3.50,
-      descriptionIt: 'Aumenta il danno del 250%.',
-      descriptionEn: 'Increases damage by 250%.',
+      descriptionIt: 'Fragilità semi letale: il danno aumenta del 250%.',
+      descriptionEn: 'Semi-lethal fragility: damage increases by 250%.',
     ),
     DamageModifierOption(
-      name: 'Fragilità Letale',
-      multiplier: 6.00,
-      descriptionIt: 'Aumenta il danno del 500%.',
-      descriptionEn: 'Increases damage by 500%.',
+      name: 'Fragilità Distruttiva',
+      multiplier: 2.00,
+      descriptionIt: 'Fragilità distruttiva: il danno aumenta del 100%.',
+      descriptionEn: 'Destructive fragility: damage increases by 100%.',
+    ),
+    DamageModifierOption(
+      name: 'Fragilità Assoluta',
+      multiplier: 1.90,
+      descriptionIt: 'Fragilità assoluta: il danno aumenta del 90%.',
+      descriptionEn: 'Absolute fragility: damage increases by 90%.',
+    ),
+    DamageModifierOption(
+      name: 'Fragilità Estrema',
+      multiplier: 1.75,
+      descriptionIt: 'Fragilità estrema: il danno aumenta del 75%.',
+      descriptionEn: 'Extreme fragility: damage increases by 75%.',
+    ),
+    DamageModifierOption(
+      name: 'Alta Fragilità',
+      multiplier: 1.50,
+      descriptionIt: 'Alta fragilità: il danno aumenta del 50%.',
+      descriptionEn: 'High fragility: damage increases by 50%.',
+    ),
+    DamageModifierOption(
+      name: 'Fragilità',
+      multiplier: 1.25,
+      descriptionIt: 'Fragilità: il danno aumenta del 25%.',
+      descriptionEn: 'Fragility: damage increases by 25%.',
+    ),
+    DamageModifierOption(
+      name: 'Bassa Fragilità',
+      multiplier: 1.10,
+      descriptionIt: 'Bassa fragilità: il danno aumenta del 10%.',
+      descriptionEn: 'Low fragility: damage increases by 10%.',
+    ),
+    DamageModifierOption(
+      name: 'Normale',
+      multiplier: 1.00,
+      descriptionIt: 'Danno normale: nessuna resistenza o fragilità applicata.',
+      descriptionEn: 'Normal damage: no resistance or fragility applied.',
+    ),
+    DamageModifierOption(
+      name: 'Resistenza Leggera',
+      multiplier: 0.90,
+      descriptionIt: 'Resistenza leggera: il danno si riduce del 10%.',
+      descriptionEn: 'Light resistance: damage is reduced by 10%.',
+    ),
+    DamageModifierOption(
+      name: 'Resistenza',
+      multiplier: 0.75,
+      descriptionIt: 'Resistenza: il danno si riduce del 25%.',
+      descriptionEn: 'Resistance: damage is reduced by 25%.',
+    ),
+    DamageModifierOption(
+      name: 'Alta Resistenza',
+      multiplier: 0.50,
+      descriptionIt: 'Alta resistenza: il danno si riduce del 50%.',
+      descriptionEn: 'High resistance: damage is reduced by 50%.',
+    ),
+    DamageModifierOption(
+      name: 'Resistenza Semi Perfetta',
+      multiplier: 0.25,
+      descriptionIt: 'Resistenza semi perfetta: il danno si riduce del 75%.',
+      descriptionEn: 'Semi-perfect resistance: damage is reduced by 75%.',
+    ),
+    DamageModifierOption(
+      name: 'Resistenza Impenetrabile',
+      multiplier: 0.10,
+      descriptionIt: 'Resistenza impenetrabile: il danno si riduce del 90%.',
+      descriptionEn: 'Impenetrable resistance: damage is reduced by 90%.',
+    ),
+    DamageModifierOption(
+      name: 'Immunità',
+      multiplier: 0.00,
+      descriptionIt: 'Immunità: nessun danno subito.',
+      descriptionEn: 'Immunity: no damage is taken.',
     ),
     DamageModifierOption(
       name: 'Rigenerazione Leggera',
       multiplier: -0.10,
-      descriptionIt: 'Trasforma parte del danno in cura leggera.',
-      descriptionEn: 'Turns part of the damage into light healing.',
+      descriptionIt: 'Rigeneri il 10% del danno totale.',
+      descriptionEn: 'You regenerate 10% of the total damage.',
     ),
     DamageModifierOption(
-      name: 'Rigenerazione Normale',
+      name: 'Rigenerazione',
       multiplier: -0.25,
-      descriptionIt: 'Trasforma parte del danno in cura.',
-      descriptionEn: 'Turns part of the damage into healing.',
+      descriptionIt: 'Rigeneri il 25% del danno totale.',
+      descriptionEn: 'You regenerate 25% of the total damage.',
     ),
     DamageModifierOption(
-      name: 'Rigenerazione Alta',
+      name: 'Alta Rigenerazione',
       multiplier: -0.50,
-      descriptionIt: 'Trasforma metà del danno in cura.',
-      descriptionEn: 'Turns half of the damage into healing.',
+      descriptionIt: 'Rigeneri il 50% del danno totale.',
+      descriptionEn: 'You regenerate 50% of the total damage.',
     ),
     DamageModifierOption(
       name: 'Rigenerazione Molto Forte',
       multiplier: -0.75,
-      descriptionIt: 'Trasforma il 75% del danno in cura.',
-      descriptionEn: 'Turns 75% of the damage into healing.',
+      descriptionIt: 'Rigeneri il 75% del danno totale.',
+      descriptionEn: 'You regenerate 75% of the total damage.',
     ),
     DamageModifierOption(
       name: 'Rigenerazione Semi Perfetta',
       multiplier: -0.90,
-      descriptionIt: 'Trasforma il 90% del danno in cura.',
-      descriptionEn: 'Turns 90% of the damage into healing.',
+      descriptionIt: 'Rigeneri il 90% del danno totale.',
+      descriptionEn: 'You regenerate 90% of the total damage.',
     ),
     DamageModifierOption(
       name: 'Rigenerazione Perfetta',
       multiplier: -1.00,
-      descriptionIt: 'Trasforma tutto il danno in cura.',
-      descriptionEn: 'Turns all damage into healing.',
+      descriptionIt: 'Rigeneri il 100% del danno totale.',
+      descriptionEn: 'You regenerate 100% of the total damage.',
     ),
   ];
 
@@ -1062,6 +1349,24 @@ class _OculumHomePageState extends State<OculumHomePage>
       backgroundMid: Color(0xFF10121A),
       backgroundBottom: Color(0xFF07080D),
       eyePupilGlow: Color(0xFFB84A28),
+    ),
+    OculumColorPreset(
+      id: 'classic_rpg',
+      nameIt: 'Classic RPG',
+      nameEn: 'Classic RPG',
+      descriptionIt:
+          'Tema fantasy avanzato: pergamena scura, bordi dorati e separazione JRPG.',
+      descriptionEn:
+          'Advanced fantasy theme: dark parchment, gold borders and JRPG separation.',
+      primary: Color(0xFFE8DCC2),
+      secondary: Color(0xFF2A241E),
+      tertiary: Color(0xFFC9A44C),
+      utility: Color(0xFF7A4B2B),
+      oculumFormula: Color(0xFFC9A44C),
+      backgroundTop: Color(0xFF1E1A16),
+      backgroundMid: Color(0xFF2A241E),
+      backgroundBottom: Color(0xFF1E1A16),
+      eyePupilGlow: Color(0xFFC9A44C),
     ),
     OculumColorPreset(
       id: 'classic_low_detail',
@@ -1490,6 +1795,25 @@ class _OculumHomePageState extends State<OculumHomePage>
       eyePupilGlow: Color(0xFFE0A84A),
     ),
     OculumColorPreset(
+      id: 'fortezza_oculum',
+      nameIt: 'Fortezza Oculum',
+      nameEn: 'Oculum Fortress',
+      descriptionIt:
+          'Tema premium bloccato: pietra nera, ferro inciso, oro antico e bagliore viola dell Occhio.',
+      descriptionEn:
+          'Locked premium theme: black stone, carved iron, antique gold and the Eye violet glow.',
+      primary: Color(0xFFF1DFC2),
+      secondary: Color(0xFF070608),
+      tertiary: Color(0xFF9A4DE8),
+      utility: Color(0xFFC28B48),
+      oculumFormula: Color(0xFFBC6CFF),
+      backgroundTop: Color(0xFF030304),
+      backgroundMid: Color(0xFF111017),
+      backgroundBottom: Color(0xFF050406),
+      eyePupilGlow: Color(0xFFB44CFF),
+      iconAssetPath: 'assets/oculum/icons/fortezza_oculum_theme.png',
+    ),
+    OculumColorPreset(
       id: 'hoshy_cosmic_cat',
       nameIt: 'Hoshy gatto cosmico',
       nameEn: 'Hoshy cosmic cat',
@@ -1612,6 +1936,309 @@ class _OculumHomePageState extends State<OculumHomePage>
       eyePupilGlow: Color(0xFFDAB14A),
     ),
     OculumColorPreset(
+      id: 'jrpg_legend',
+      nameIt: 'Leggenda JRPG',
+      nameEn: 'JRPG legend',
+      descriptionIt:
+          'Menu cristallino, stelle, oro chiaro e bestiario da grande avventura.',
+      descriptionEn:
+          'Crystal menu, stars, pale gold and a grand-adventure bestiary.',
+      primary: Color(0xFFF4EFD7),
+      secondary: Color(0xFF050816),
+      tertiary: Color(0xFF4C83F2),
+      utility: Color(0xFFE7B84A),
+      oculumFormula: Color(0xFF83E8FF),
+      backgroundTop: Color(0xFF04071A),
+      backgroundMid: Color(0xFF10204A),
+      backgroundBottom: Color(0xFF070414),
+      eyePupilGlow: Color(0xFFFF8B78),
+    ),
+    OculumColorPreset(
+      id: 'rogue_mutation',
+      nameIt: 'Mutazione Roguelike',
+      nameEn: 'Roguelike mutation',
+      descriptionIt:
+          'Interfaccia sporca da run: melma radioattiva, sangue secco e scarti.',
+      descriptionEn:
+          'Dirty run interface: radioactive slime, dry blood and scraps.',
+      primary: Color(0xFFEAF2C8),
+      secondary: Color(0xFF070806),
+      tertiary: Color(0xFF87C943),
+      utility: Color(0xFFE25A34),
+      oculumFormula: Color(0xFFA8E646),
+      backgroundTop: Color(0xFF080A06),
+      backgroundMid: Color(0xFF17210B),
+      backgroundBottom: Color(0xFF070404),
+      eyePupilGlow: Color(0xFFE6543A),
+    ),
+    OculumColorPreset(
+      id: 'cell_crimson_run',
+      nameIt: 'Cella cremisi',
+      nameEn: 'Crimson cell',
+      descriptionIt:
+          'Run laterale rapida: rosso vivo, viola scuro e cornici nervose.',
+      descriptionEn:
+          'Fast side-run mood: live red, dark violet and nervous frames.',
+      primary: Color(0xFFFFE6DC),
+      secondary: Color(0xFF08040A),
+      tertiary: Color(0xFFD63A56),
+      utility: Color(0xFF6DD4FF),
+      oculumFormula: Color(0xFFFF557A),
+      backgroundTop: Color(0xFF09030A),
+      backgroundMid: Color(0xFF260814),
+      backgroundBottom: Color(0xFF040208),
+      eyePupilGlow: Color(0xFF69D6FF),
+    ),
+    OculumColorPreset(
+      id: 'darkest_stagecoach',
+      nameIt: 'Carrozza cupa',
+      nameEn: 'Dark stagecoach',
+      descriptionIt:
+          'Roguelike gotico: pergamena sporca, rosso candela e ombre pesanti.',
+      descriptionEn:
+          'Gothic roguelike: stained parchment, candle red and heavy shadows.',
+      primary: Color(0xFFE8D6B2),
+      secondary: Color(0xFF080504),
+      tertiary: Color(0xFF9C2832),
+      utility: Color(0xFFD39A42),
+      oculumFormula: Color(0xFFC23C35),
+      backgroundTop: Color(0xFF080504),
+      backgroundMid: Color(0xFF1A0B08),
+      backgroundBottom: Color(0xFF030201),
+      eyePupilGlow: Color(0xFFD8A448),
+    ),
+    OculumColorPreset(
+      id: 'ashen_covenant',
+      nameIt: 'Patto di cenere',
+      nameEn: 'Ashen covenant',
+      descriptionIt:
+          'UI da boss lento: cenere, brace quasi spenta e metallo sacro.',
+      descriptionEn: 'Slow boss UI: ash, almost-dead embers and sacred metal.',
+      primary: Color(0xFFE0D6C6),
+      secondary: Color(0xFF060606),
+      tertiary: Color(0xFF8E7864),
+      utility: Color(0xFFC76832),
+      oculumFormula: Color(0xFFE09A4A),
+      backgroundTop: Color(0xFF060606),
+      backgroundMid: Color(0xFF17120E),
+      backgroundBottom: Color(0xFF030303),
+      eyePupilGlow: Color(0xFFE0713A),
+    ),
+    OculumColorPreset(
+      id: 'eclipse_bonfire',
+      nameIt: 'Falò d eclissi',
+      nameEn: 'Eclipse bonfire',
+      descriptionIt:
+          'Souls notturno: blu nero, oro pallido e un fuoco che resiste.',
+      descriptionEn:
+          'Night souls mood: black blue, pale gold and a fire that resists.',
+      primary: Color(0xFFECE1BD),
+      secondary: Color(0xFF030612),
+      tertiary: Color(0xFF526487),
+      utility: Color(0xFFE2A14E),
+      oculumFormula: Color(0xFF9AAEFF),
+      backgroundTop: Color(0xFF02040D),
+      backgroundMid: Color(0xFF0B1020),
+      backgroundBottom: Color(0xFF020203),
+      eyePupilGlow: Color(0xFFFFB65A),
+    ),
+    OculumColorPreset(
+      id: 'bolted_black_iron',
+      nameIt: 'Metallo nero bullonato',
+      nameEn: 'Bolted black iron',
+      descriptionIt:
+          'HUD metallico rigido: placche nere, viti e lettura industriale.',
+      descriptionEn:
+          'Rigid metal HUD: black plates, bolts and industrial readability.',
+      primary: Color(0xFFE5E5DF),
+      secondary: Color(0xFF050505),
+      tertiary: Color(0xFF363A40),
+      utility: Color(0xFF9B8F76),
+      oculumFormula: Color(0xFF90D8FF),
+      backgroundTop: Color(0xFF090A0C),
+      backgroundMid: Color(0xFF14171A),
+      backgroundBottom: Color(0xFF030303),
+      eyePupilGlow: Color(0xFF9BDFFF),
+    ),
+    OculumColorPreset(
+      id: 'bolted_gold_plate',
+      nameIt: 'Metallo oro bullonato',
+      nameEn: 'Bolted gold plate',
+      descriptionIt:
+          'Placca dorata pesante: bulloni, bordi neri e luce da reliquia.',
+      descriptionEn: 'Heavy gold plate: bolts, black edges and relic light.',
+      primary: Color(0xFFFFEDB8),
+      secondary: Color(0xFF080603),
+      tertiary: Color(0xFFD2A340),
+      utility: Color(0xFF2B2B2B),
+      oculumFormula: Color(0xFFFFC85A),
+      backgroundTop: Color(0xFF0A0803),
+      backgroundMid: Color(0xFF241808),
+      backgroundBottom: Color(0xFF040302),
+      eyePupilGlow: Color(0xFFFFD36A),
+    ),
+    OculumColorPreset(
+      id: 'bolted_copper_oxide',
+      nameIt: 'Rame ossidato bullonato',
+      nameEn: 'Bolted oxidized copper',
+      descriptionIt:
+          'Rame, chiazze ossidate e zolle verdi incise nelle placche.',
+      descriptionEn:
+          'Copper, oxidized stains and green chunks carved into the plates.',
+      primary: Color(0xFFFFD7B1),
+      secondary: Color(0xFF080504),
+      tertiary: Color(0xFFB86B3A),
+      utility: Color(0xFF58A07B),
+      oculumFormula: Color(0xFF70D5A3),
+      backgroundTop: Color(0xFF090604),
+      backgroundMid: Color(0xFF231006),
+      backgroundBottom: Color(0xFF04100B),
+      eyePupilGlow: Color(0xFF69C997),
+    ),
+    OculumColorPreset(
+      id: 'bolted_silver_plate',
+      nameIt: 'Metallo argento bullonato',
+      nameEn: 'Bolted silver plate',
+      descriptionIt:
+          'Acciaio chiaro, viti pulite e HUD freddo da laboratorio antico.',
+      descriptionEn: 'Bright steel, clean bolts and a cold ancient-lab HUD.',
+      primary: Color(0xFFF2F6FF),
+      secondary: Color(0xFF05070A),
+      tertiary: Color(0xFFAEB8C7),
+      utility: Color(0xFF5B86A6),
+      oculumFormula: Color(0xFFBFE6FF),
+      backgroundTop: Color(0xFF06090D),
+      backgroundMid: Color(0xFF151A22),
+      backgroundBottom: Color(0xFF030507),
+      eyePupilGlow: Color(0xFFC9ECFF),
+    ),
+    OculumColorPreset(
+      id: 'meadow_sprite',
+      nameIt: 'Folletto di prato',
+      nameEn: 'Meadow sprite',
+      descriptionIt:
+          'Tema naturale gioioso: erba luminosa, pesca e piccoli spiriti.',
+      descriptionEn:
+          'Joyful natural theme: luminous grass, peach and small spirits.',
+      primary: Color(0xFFF5F5D6),
+      secondary: Color(0xFF061108),
+      tertiary: Color(0xFF69B86A),
+      utility: Color(0xFFFFB07C),
+      oculumFormula: Color(0xFF94E68C),
+      backgroundTop: Color(0xFF041007),
+      backgroundMid: Color(0xFF14351B),
+      backgroundBottom: Color(0xFF07120A),
+      eyePupilGlow: Color(0xFFFFB68A),
+    ),
+    OculumColorPreset(
+      id: 'aurora_moth',
+      nameIt: 'Falena aurora',
+      nameEn: 'Aurora moth',
+      descriptionIt:
+          'Naturale onirico: notte viola, ali luminose e verde rugiada.',
+      descriptionEn:
+          'Dreamlike natural mood: violet night, glowing wings and dew green.',
+      primary: Color(0xFFF0E9FF),
+      secondary: Color(0xFF050615),
+      tertiary: Color(0xFF8F77FF),
+      utility: Color(0xFF67DDA4),
+      oculumFormula: Color(0xFFC09BFF),
+      backgroundTop: Color(0xFF040518),
+      backgroundMid: Color(0xFF171047),
+      backgroundBottom: Color(0xFF03110B),
+      eyePupilGlow: Color(0xFF75E8B1),
+    ),
+    OculumColorPreset(
+      id: 'modern_school_day',
+      nameIt: 'Giorno di scuola',
+      nameEn: 'School day',
+      descriptionIt:
+          'Tema moderno adolescenziale: quaderni scuri, penne colorate, neon urbano e appunti di classe.',
+      descriptionEn:
+          'Modern adolescent theme: dark notebooks, colored pens, urban neon and class notes.',
+      primary: Color(0xFFF4F1E8),
+      secondary: Color(0xFF071015),
+      tertiary: Color(0xFF57B8D9),
+      utility: Color(0xFFFFC857),
+      oculumFormula: Color(0xFFFF6B8A),
+      backgroundTop: Color(0xFF061119),
+      backgroundMid: Color(0xFF112632),
+      backgroundBottom: Color(0xFF07090D),
+      eyePupilGlow: Color(0xFFFF6B8A),
+    ),
+    OculumColorPreset(
+      id: 'vtt_arcane_table',
+      nameIt: 'Tavolo arcano',
+      nameEn: 'Arcane tabletop',
+      descriptionIt:
+          'Tema da tavolo virtuale: griglia sottile, pergamena scura e accenti magenta/ciano.',
+      descriptionEn:
+          'Virtual tabletop mood: thin grid, dark parchment and magenta/cyan accents.',
+      primary: Color(0xFFE9E2D2),
+      secondary: Color(0xFF08070B),
+      tertiary: Color(0xFF2FC3C7),
+      utility: Color(0xFFC15C9E),
+      oculumFormula: Color(0xFF7DE8E2),
+      backgroundTop: Color(0xFF07080E),
+      backgroundMid: Color(0xFF141018),
+      backgroundBottom: Color(0xFF050407),
+      eyePupilGlow: Color(0xFFE06DB6),
+    ),
+    OculumColorPreset(
+      id: 'vtt_obsidian_grid',
+      nameIt: 'Griglia ossidiana',
+      nameEn: 'Obsidian grid',
+      descriptionIt:
+          'Manuale digitale cupo: nero tecnico, linee da mappa e marcatori ambra.',
+      descriptionEn:
+          'Dark digital manual: technical black, map lines and amber markers.',
+      primary: Color(0xFFE7EEF2),
+      secondary: Color(0xFF030507),
+      tertiary: Color(0xFF54616D),
+      utility: Color(0xFFE0A94F),
+      oculumFormula: Color(0xFF9DD6FF),
+      backgroundTop: Color(0xFF020405),
+      backgroundMid: Color(0xFF0D1216),
+      backgroundBottom: Color(0xFF030303),
+      eyePupilGlow: Color(0xFFFFB85A),
+    ),
+    OculumColorPreset(
+      id: 'vtt_parchment_layers',
+      nameIt: 'Strati pergamena',
+      nameEn: 'Parchment layers',
+      descriptionIt:
+          'Scheda da campagna online: carta, inchiostro viola e bordi verde spento.',
+      descriptionEn:
+          'Online campaign sheet: paper, violet ink and muted green edges.',
+      primary: Color(0xFFF2E6C8),
+      secondary: Color(0xFF080604),
+      tertiary: Color(0xFF7B5C9E),
+      utility: Color(0xFF809C68),
+      oculumFormula: Color(0xFFC69BE8),
+      backgroundTop: Color(0xFF0A0805),
+      backgroundMid: Color(0xFF1A130B),
+      backgroundBottom: Color(0xFF080B06),
+      eyePupilGlow: Color(0xFFC49CFF),
+    ),
+    OculumColorPreset(
+      id: 'vtt_master_overlay',
+      nameIt: 'Overlay del Master',
+      nameEn: 'Master overlay',
+      descriptionIt:
+          'HUD da gestione sessione: blu notte, rosso nota critica e bianco da scheda.',
+      descriptionEn:
+          'Session-management HUD: night blue, critical-note red and sheet white.',
+      primary: Color(0xFFEAF0FF),
+      secondary: Color(0xFF040716),
+      tertiary: Color(0xFF4C6FFF),
+      utility: Color(0xFFE05263),
+      oculumFormula: Color(0xFF7AA7FF),
+      backgroundTop: Color(0xFF030615),
+      backgroundMid: Color(0xFF0B1230),
+      backgroundBottom: Color(0xFF05030A),
+      eyePupilGlow: Color(0xFFFF6A7A),
+    ),
+    OculumColorPreset(
       id: 'verdigris_mourning',
       nameIt: 'Rame sepolto',
       nameEn: 'Verdigris mourning',
@@ -1722,6 +2349,158 @@ class _OculumHomePageState extends State<OculumHomePage>
     return page;
   }
 
+  bool _isPagePreparedForDisplay(int page) {
+    return page == 0 || _preparedPageIndexes.contains(page);
+  }
+
+  void _scheduleLazyPageActivation(int page) {
+    if (_isPagePreparedForDisplay(page)) return;
+    if (_lazyPageActivationScheduledFor == page) return;
+
+    _lazyPageActivationScheduledFor = page;
+    _lazyPageActivationTimer?.cancel();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || paginaVisibileSicura(paginaCorrente) != page) {
+        if (_lazyPageActivationScheduledFor == page) {
+          _lazyPageActivationScheduledFor = null;
+        }
+        return;
+      }
+
+      _lazyPageActivationTimer = Timer(const Duration(milliseconds: 24), () {
+        if (!mounted || paginaVisibileSicura(paginaCorrente) != page) {
+          if (_lazyPageActivationScheduledFor == page) {
+            _lazyPageActivationScheduledFor = null;
+          }
+          return;
+        }
+        setState(() {
+          _preparedPageIndexes.add(page);
+          if (_lazyPageActivationScheduledFor == page) {
+            _lazyPageActivationScheduledFor = null;
+          }
+        });
+      });
+    });
+  }
+
+  Future<void> _waitForLazyPageActivation(int page) async {
+    for (var attempt = 0; attempt < 8; attempt++) {
+      if (!mounted ||
+          paginaVisibileSicura(paginaCorrente) != page ||
+          _isPagePreparedForDisplay(page)) {
+        return;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 35));
+    }
+  }
+
+  Widget pageLoadingPlaceholder(int page) {
+    final labels = linguaInglese ? pageNamesEn : pageNamesIt;
+    final label = page >= 0 && page < labels.length
+        ? cleanUiText(labels[page])
+        : t('Pagina', 'Page');
+
+    return Center(
+      key: ValueKey<String>('page_loading_$page'),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: gothicPanel(
+          borderColor: tertiaryColor.withValues(alpha: 0.55),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 30,
+                height: 30,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: tertiaryColor,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: primaryColor,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 6),
+              smallInfoText(
+                t(
+                  'Preparazione rapida della sezione...',
+                  'Preparing section...',
+                ),
+                color: Colors.grey.shade300,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget homeDataLoadingPlaceholder() {
+    return Center(
+      key: const ValueKey<String>('home_data_loading'),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: gothicPanel(
+          borderColor: primaryColor.withValues(alpha: 0.55),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 30,
+                height: 30,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: primaryColor,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                t('Caricamento salvataggi...', 'Loading saves...'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: primaryColor,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 6),
+              smallInfoText(
+                t(
+                  'Oculum sta preparando dati locali, cache e scheda attiva.',
+                  'Oculum is preparing local data, cache and active sheet.',
+                ),
+                color: Colors.grey.shade300,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildCurrentPageLazy(int page) {
+    if (!_isPagePreparedForDisplay(page)) {
+      _scheduleLazyPageActivation(page);
+      return pageLoadingPlaceholder(page);
+    }
+
+    return KeyedSubtree(
+      key: ValueKey<String>('page_ready_${currentSheetScrollId()}_$page'),
+      child: buildCurrentPage(page),
+    );
+  }
+
   Widget buildCurrentPage(int page) {
     switch (page) {
       case 0:
@@ -1765,12 +2544,24 @@ class _OculumHomePageState extends State<OculumHomePage>
   // INIT / SAVE / LOAD
   // =====================================================
 
+  void updateOculumHomeUi(VoidCallback callback) {
+    if (!mounted) return;
+    setState(callback);
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     assicuraArtiBase();
-    caricaDati();
+    unawaited(
+      caricaDati().then((_) {
+        if (!mounted) return;
+        setState(() {
+          modalitaMaster = oculumStartupRole == OculumStartupRole.master;
+        });
+      }),
+    );
     avviaControlloConnessioneOnline();
   }
 
@@ -1799,11 +2590,16 @@ class _OculumHomePageState extends State<OculumHomePage>
     autosaveTimer?.cancel();
     dadoOverlayTimer?.cancel();
     dadoOverlayRevealTimer?.cancel();
+    _lazyPageActivationTimer?.cancel();
     relayHeartbeatTimer?.cancel();
     relayReconnectTimer?.cancel();
     relayLobbyRefreshTimer?.cancel();
     realtimeOculumDebounceTimer?.cancel();
     realtimeSheetShareDebounceTimer?.cancel();
+    for (final timer in realtimePendingMasterAckTimers.values) {
+      timer.cancel();
+    }
+    realtimePendingMasterAckTimers.clear();
     inputUiRefreshTimer?.cancel();
     connectivitySubscription?.cancel();
     unawaited(realtimeService?.dispose());
@@ -1843,8 +2639,11 @@ class _OculumHomePageState extends State<OculumHomePage>
     difesaRapidaController.dispose();
     reazioniController.dispose();
     reazioniVelociController.dispose();
+    realtimeChatController.dispose();
+    realtimeDungeonMessage.dispose();
     buffMalusRapidiController.dispose();
     dannoSubitoController.dispose();
+    dannoBonusScudoPercentController.dispose();
     scudoFocusNode.dispose();
     attaccoRapidoFocusNode.dispose();
     difesaRapidaFocusNode.dispose();
@@ -1894,13 +2693,18 @@ class _OculumHomePageState extends State<OculumHomePage>
     itemNomeController.dispose();
     itemPesoController.dispose();
     itemQuantitaController.dispose();
+    itemPutrefazioneSessioniController.dispose();
     itemNoteController.dispose();
     itemBuffController.dispose();
     itemBonusDannoController.dispose();
     itemBonusDifesaController.dispose();
     itemBonusScudoController.dispose();
+    itemGradoOggettoController.dispose();
+    itemGradoRichiestoController.dispose();
     itemElementoDannoController.dispose();
     customDamageTypeController.dispose();
+    masterEnemyDamageController.dispose();
+    masterEnemyHealController.dispose();
     enemyGradeExpController.dispose();
 
     partyNomeController.dispose();
@@ -1914,19 +2718,27 @@ class _OculumHomePageState extends State<OculumHomePage>
     superIspirazioniController.dispose();
     ispirazioniOculumController.dispose();
     karmaController.dispose();
+    folliaController.dispose();
+    oculumTiroController.dispose();
 
     cenereController.dispose();
     sessioniSenzaBisogniController.dispose();
     giorniSenzaCiboAcquaController.dispose();
+    oculumCurrentDayController.dispose();
 
     manualSearchController.dispose();
+    themeSearchController.dispose();
+    monsterBookSearchController.dispose();
 
     quickSheetNameController.dispose();
     quickSheetLevelController.dispose();
     quickSheetGradeController.dispose();
+    quickSheetCountController.dispose();
+    quickSheetDescriptionController.dispose();
 
     diceAmountController.dispose();
     diceModifierController.dispose();
+    difficoltaTiroController.dispose();
     relayServerController.dispose();
     relayRoomController.dispose();
     realtimeRoomController.dispose();
@@ -1938,6 +2750,10 @@ class _OculumHomePageState extends State<OculumHomePage>
     newCampaignNameController.dispose();
     mapUrlController.dispose();
     mapNotesController.dispose();
+    mapTokenSizeController.dispose();
+    mapWidthMetersController.dispose();
+    mapHeightMetersController.dispose();
+    mapFreeTokenMovementController.dispose();
     mapTransformationController.dispose();
     masterInitiativeNameController.dispose();
     masterInitiativeTypeController.dispose();
@@ -2352,17 +3168,6 @@ class _OculumHomePageState extends State<OculumHomePage>
                 pageLabel: t('Cambia pagina', 'Switch page'),
               ),
             ),
-          if (!compactPhone)
-            IconButton(
-              tooltip: 'Dungeon',
-              onPressed: _openDungeonMiniGame,
-              icon: Icon(
-                Icons.castle,
-                color: tertiaryColor,
-                size: compactPhone ? 20 : 24,
-              ),
-            ),
-
           OculumQuickEditEyeButton(
             sections: quickEditSections(),
             primaryColor: primaryColor,
@@ -2482,7 +3287,13 @@ class _OculumHomePageState extends State<OculumHomePage>
                 return [
                   PopupMenuItem<String>(
                     value: 'dungeon',
-                    child: Text('Dungeon'),
+                    child: Row(
+                      children: [
+                        Icon(Icons.visibility, color: primaryColor, size: 18),
+                        const SizedBox(width: 8),
+                        Text(t('Dungeon', 'Dungeon')),
+                      ],
+                    ),
                   ),
                   PopupMenuItem<String>(
                     value: 'undo',
@@ -2738,15 +3549,27 @@ class _OculumHomePageState extends State<OculumHomePage>
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: IgnorePointer(child: themeDecorationBackdrop()),
+                  child: IgnorePointer(
+                    child: RepaintBoundary(child: themeDecorationBackdrop()),
+                  ),
                 ),
                 desktopSideMenuShell(
                   visiblePages: visiblePages,
                   pageLabels: pageLabels,
                   safePage: safePage,
                   child: datiCaricati
-                      ? RepaintBoundary(child: buildCurrentPage(safePage))
-                      : const Center(child: CircularProgressIndicator()),
+                      ? AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 160),
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeInCubic,
+                          child: RepaintBoundary(
+                            key: ValueKey<String>(
+                              'page_shell_${safePage}_${_isPagePreparedForDisplay(safePage)}',
+                            ),
+                            child: buildCurrentPageLazy(safePage),
+                          ),
+                        )
+                      : homeDataLoadingPlaceholder(),
                 ),
               ],
             ),

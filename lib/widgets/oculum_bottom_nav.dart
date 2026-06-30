@@ -205,6 +205,8 @@ class _BottomNavButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
+        splashColor: selectedColor.withValues(alpha: 0.24),
+        highlightColor: selectedColor.withValues(alpha: 0.14),
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),

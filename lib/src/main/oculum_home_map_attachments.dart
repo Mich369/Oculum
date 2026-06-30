@@ -103,6 +103,7 @@ class _OculumThemePanelClipper extends CustomClipper<Path> {
       case 'postea':
       case 'kingi':
       case 'medieval':
+      case 'bolted_metal':
         path
           ..moveTo(cut * 1.4, 0)
           ..lineTo(size.width - cut * 2.0, 0)
@@ -114,10 +115,25 @@ class _OculumThemePanelClipper extends CustomClipper<Path> {
           ..lineTo(0, cut)
           ..close();
         return path;
+      case 'roguelike':
+        path
+          ..moveTo(cut * 0.8, 0)
+          ..lineTo(size.width - cut * 2.4, 0)
+          ..lineTo(size.width - cut * 0.7, cut * 0.8)
+          ..lineTo(size.width, size.height - cut * 1.2)
+          ..lineTo(size.width - cut * 1.3, size.height)
+          ..lineTo(cut * 2.0, size.height)
+          ..lineTo(0, size.height - cut * 1.6)
+          ..lineTo(cut * 0.4, size.height * 0.48)
+          ..lineTo(0, cut * 1.0)
+          ..close();
+        return path;
       case 'rank_hud':
       case 'sigil':
       case 'relic':
       case 'archive':
+      case 'jrpg':
+      case 'souls':
         path
           ..moveTo(cut, 0)
           ..lineTo(size.width - cut, 0)
@@ -298,6 +314,137 @@ class _OculumThemePanelChromePainter extends CustomPainter {
           canvas.drawPath(diamond(Offset(14, 24 + i * 24), 4.5), fill);
         }
         break;
+      case 'jrpg':
+        for (final c in <Offset>[
+          const Offset(24, 22),
+          Offset(size.width - 24, 22),
+          Offset(24, size.height - 22),
+          Offset(size.width - 24, size.height - 22),
+        ]) {
+          canvas.drawPath(diamond(c, compact ? 5.0 : 7.0), accent);
+          canvas.drawCircle(c, compact ? 7.0 : 9.0, stroke);
+        }
+        for (var x = 54.0; x < size.width - 48; x += compact ? 54 : 68) {
+          final y = compact ? 12.0 : 15.0;
+          canvas.drawLine(Offset(x, y), Offset(x + 26, y), accent);
+          _paintTinyPanelStar(
+            canvas,
+            Offset(x + 36, y),
+            compact ? 3.0 : 4.0,
+            stroke,
+          );
+        }
+        break;
+      case 'roguelike':
+        for (var i = 0; i < 7; i++) {
+          final x = 16 + i * 31.0;
+          canvas.drawLine(
+            Offset(x, 7 + (i % 2) * 8),
+            Offset(x + 24, 21 + (i % 3) * 6),
+            i.isEven ? accent : stroke,
+          );
+          canvas.drawLine(
+            Offset(size.width - x, size.height - 8),
+            Offset(size.width - x - 20, size.height - 25),
+            i.isEven ? stroke : accent,
+          );
+        }
+        canvas.drawCircle(Offset(size.width - 24, 24), 7, fill);
+        canvas.drawCircle(Offset(size.width - 24, 24), 11, accent);
+        break;
+      case 'souls':
+        canvas.drawLine(
+          const Offset(16, 10),
+          Offset(size.width - 16, 10),
+          stroke,
+        );
+        canvas.drawLine(
+          Offset(16, size.height - 10),
+          Offset(size.width - 16, size.height - 10),
+          accent,
+        );
+        for (final c in <Offset>[
+          const Offset(22, 22),
+          Offset(size.width - 22, 22),
+          Offset(22, size.height - 22),
+          Offset(size.width - 22, size.height - 22),
+        ]) {
+          canvas.drawCircle(c, compact ? 6 : 8, fill);
+          canvas.drawArc(
+            Rect.fromCircle(center: c, radius: compact ? 9 : 12),
+            -pi * 0.72,
+            pi * 1.44,
+            false,
+            accent,
+          );
+        }
+        break;
+      case 'bolted_metal':
+        for (final c in <Offset>[
+          const Offset(18, 18),
+          Offset(size.width - 18, 18),
+          Offset(18, size.height - 18),
+          Offset(size.width - 18, size.height - 18),
+        ]) {
+          canvas.drawCircle(c, compact ? 5.5 : 7.0, fill);
+          canvas.drawCircle(c, compact ? 8.5 : 10.5, stroke);
+          canvas.drawLine(c.translate(-4, 0), c.translate(4, 0), accent);
+        }
+        for (var x = 40.0; x < size.width - 40; x += compact ? 46 : 58) {
+          canvas.drawLine(Offset(x, 8), Offset(x + 22, 8), stroke);
+          canvas.drawLine(
+            Offset(x + 7, size.height - 8),
+            Offset(x + 29, size.height - 8),
+            accent,
+          );
+        }
+        break;
+      case 'wild_companion':
+        final vine = Path()..moveTo(12, size.height - 20);
+        for (var x = 12.0; x < size.width - 12; x += compact ? 42 : 56) {
+          vine.cubicTo(
+            x + 12,
+            size.height - 36,
+            x + 34,
+            size.height - 6,
+            x + 56,
+            size.height - 20,
+          );
+        }
+        canvas.drawPath(vine, accent);
+        for (var i = 0; i < 5; i++) {
+          final c = Offset(24 + i * 28.0, 18 + (i % 2) * 6);
+          canvas.drawCircle(c, 3.2, fill);
+          _paintTinyPanelStar(canvas, c.translate(8, 0), 3.2, stroke);
+        }
+        break;
+      case 'modern_school':
+        for (
+          var y = compact ? 15.0 : 18.0;
+          y < size.height - 10;
+          y += compact ? 13 : 17
+        ) {
+          canvas.drawLine(Offset(14, y), Offset(size.width - 12, y), stroke);
+        }
+        canvas.drawLine(
+          const Offset(24, 8),
+          Offset(24, size.height - 8),
+          accent,
+        );
+        for (var i = 0; i < 4; i++) {
+          final c = Offset(size.width - 24 - i * (compact ? 23.0 : 30.0), 18);
+          final note = RRect.fromRectAndRadius(
+            Rect.fromCenter(
+              center: c.translate(0, (i % 2) * 6),
+              width: compact ? 15 : 19,
+              height: compact ? 10 : 12,
+            ),
+            const Radius.circular(3),
+          );
+          canvas.drawRRect(note, i.isEven ? fill : accent);
+          canvas.drawRRect(note, i.isEven ? accent : stroke);
+        }
+        break;
       case 'rank_hud':
       case 'sigil':
         for (final c in <Offset>[
@@ -395,6 +542,140 @@ class _OculumGuiModePanelPainter extends CustomPainter {
           accent,
         );
         break;
+      case 'crystal_command_menu':
+        final rail = Path()
+          ..moveTo(12, 14)
+          ..lineTo(size.width - 32, 14)
+          ..lineTo(size.width - 14, 32)
+          ..lineTo(size.width - 14, size.height - 14)
+          ..lineTo(32, size.height - 14)
+          ..lineTo(14, size.height - 32)
+          ..close();
+        canvas.drawPath(rail, line);
+        for (
+          var y = compact ? 15.0 : 18.0;
+          y < size.height - 12;
+          y += compact ? 13 : 17
+        ) {
+          canvas.drawLine(Offset(18, y), Offset(size.width - 20, y), line);
+        }
+        for (var i = 0; i < 4; i++) {
+          final c = Offset(22 + i * (compact ? 22.0 : 30.0), 16);
+          canvas.drawCircle(c, compact ? 2.4 : 3.2, fill);
+          _paintTinyPanelStar(
+            canvas,
+            c.translate(9, 0),
+            compact ? 2.6 : 3.4,
+            accent,
+          );
+        }
+        final crystal = Path()
+          ..moveTo(size.width - 30, size.height - 38)
+          ..lineTo(size.width - 16, size.height - 22)
+          ..lineTo(size.width - 30, size.height - 8)
+          ..lineTo(size.width - 44, size.height - 22)
+          ..close();
+        canvas.drawPath(crystal, fill);
+        canvas.drawPath(crystal, accent);
+        break;
+      case 'scrap_run_board':
+        for (var y = 10.0; y < size.height - 8; y += compact ? 15 : 19) {
+          canvas.drawLine(
+            Offset(10, y),
+            Offset(size.width - 10, y + ((y.round().isEven) ? 2 : -2)),
+            line,
+          );
+        }
+        for (var i = 0; i < 6; i++) {
+          final c = Offset(size.width - 18 - i * (compact ? 19.0 : 26.0), 18);
+          canvas.drawCircle(c, compact ? 2.8 : 3.6, i.isEven ? fill : accent);
+          canvas.drawLine(c.translate(-8, 5), c.translate(8, -5), accent);
+        }
+        break;
+      case 'ashen_boss_frame':
+        final bossBar = Rect.fromLTWH(
+          16,
+          12,
+          size.width - 32,
+          compact ? 8 : 10,
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(bossBar, const Radius.circular(2)),
+          fill,
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(bossBar, const Radius.circular(2)),
+          accent,
+        );
+        for (var i = 0; i < 4; i++) {
+          final x = 22 + i * (compact ? 26.0 : 36.0);
+          canvas.drawLine(
+            Offset(x, size.height - 14),
+            Offset(x + 18, size.height - 28),
+            i.isEven ? accent : line,
+          );
+        }
+        break;
+      case 'bolted_status_rig':
+        final step = compact ? 28.0 : 36.0;
+        for (var x = step; x < size.width; x += step) {
+          canvas.drawLine(Offset(x, 8), Offset(x, size.height - 8), line);
+        }
+        for (final c in <Offset>[
+          const Offset(17, 17),
+          Offset(size.width - 17, 17),
+          Offset(17, size.height - 17),
+          Offset(size.width - 17, size.height - 17),
+        ]) {
+          canvas.drawCircle(c, compact ? 4.5 : 6.0, fill);
+          canvas.drawCircle(c, compact ? 7.5 : 9.0, accent);
+        }
+        break;
+      case 'wild_story_panel':
+        final leafLine = Path()..moveTo(10, size.height - 16);
+        for (var x = 10.0; x < size.width - 10; x += compact ? 42 : 58) {
+          leafLine.cubicTo(
+            x + 14,
+            size.height - 34,
+            x + 36,
+            size.height - 2,
+            x + 58,
+            size.height - 16,
+          );
+        }
+        canvas.drawPath(leafLine, accent);
+        for (var i = 0; i < 5; i++) {
+          final c = Offset(size.width - 22 - i * 24.0, 18 + (i % 2) * 8);
+          canvas.drawCircle(c, 3.4, fill);
+          _paintTinyPanelStar(canvas, c, compact ? 3.0 : 4.0, line);
+        }
+        break;
+      case 'school_notebook':
+        for (
+          var y = compact ? 16.0 : 20.0;
+          y < size.height - 10;
+          y += compact ? 14 : 18
+        ) {
+          canvas.drawLine(Offset(14, y), Offset(size.width - 12, y), line);
+        }
+        canvas.drawLine(
+          const Offset(22, 8),
+          Offset(22, size.height - 8),
+          accent,
+        );
+        for (var i = 0; i < 4; i++) {
+          final c = Offset(
+            size.width - 26 - i * (compact ? 22.0 : 30.0),
+            18 + (i % 2) * 7,
+          );
+          _paintTinyPanelStar(
+            canvas,
+            c,
+            compact ? 3.2 : 4.2,
+            i.isEven ? accent : line,
+          );
+        }
+        break;
       case 'tactical_command_board':
         final step = compact ? 24.0 : 32.0;
         for (var x = step; x < size.width; x += step) {
@@ -484,6 +765,34 @@ Shader _oculumReverseBackgroundShader(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   ).createShader(Offset.zero & size);
+}
+
+void _paintTinyPanelStar(
+  Canvas canvas,
+  Offset center,
+  double radius,
+  Paint paint,
+) {
+  canvas.drawLine(
+    Offset(center.dx - radius, center.dy),
+    Offset(center.dx + radius, center.dy),
+    paint,
+  );
+  canvas.drawLine(
+    Offset(center.dx, center.dy - radius),
+    Offset(center.dx, center.dy + radius),
+    paint,
+  );
+  canvas.drawLine(
+    Offset(center.dx - radius * 0.48, center.dy - radius * 0.48),
+    Offset(center.dx + radius * 0.48, center.dy + radius * 0.48),
+    paint,
+  );
+  canvas.drawLine(
+    Offset(center.dx - radius * 0.48, center.dy + radius * 0.48),
+    Offset(center.dx + radius * 0.48, center.dy - radius * 0.48),
+    paint,
+  );
 }
 
 String _oculumTrimUrlCandidate(String value) {
@@ -1469,12 +1778,40 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         return 'cathedral';
       case 'medieval_keep':
         return 'medieval';
+      case 'fortezza_oculum':
+        return 'fortress_oculum';
       case 'postea_bloom':
         return 'postea';
       case 'vervain_gothic':
         return 'vervain';
       case 'kingi_wrong_future':
         return 'kingi';
+      case 'jrpg_legend':
+        return 'jrpg';
+      case 'rogue_mutation':
+      case 'cell_crimson_run':
+      case 'darkest_stagecoach':
+        return 'roguelike';
+      case 'ashen_covenant':
+      case 'eclipse_bonfire':
+        return 'souls';
+      case 'bolted_black_iron':
+      case 'bolted_gold_plate':
+      case 'bolted_copper_oxide':
+      case 'bolted_silver_plate':
+        return 'bolted_metal';
+      case 'meadow_sprite':
+      case 'aurora_moth':
+        return 'wild_companion';
+      case 'modern_school_day':
+        return 'modern_school';
+      case 'vtt_arcane_table':
+      case 'vtt_master_overlay':
+        return 'sigil';
+      case 'vtt_obsidian_grid':
+        return 'shadow_gate';
+      case 'vtt_parchment_layers':
+        return 'archive';
       case 'thorn_vigil':
       case 'blood_court':
       case 'monster_lantern':
@@ -1572,6 +1909,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
           'torri, scudi e spade medievali',
           'medieval towers, shields and swords',
         );
+      case 'fortezza_oculum':
+        return t(
+          'fortezza nera, cornici ferrate e Occhio viola',
+          'black fortress, iron frames and violet Eye',
+        );
       case 'ash_oracle':
         return t('oracolo di cenere stellare', 'star-ash oracle');
       case 'void_liturgy':
@@ -1590,6 +1932,76 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         );
       case 'monster_lantern':
         return t('lanterne da mostro e rovi', 'monster lanterns and thorns');
+      case 'vtt_arcane_table':
+        return t(
+          'griglia arcana da tavolo virtuale',
+          'arcane virtual-table grid',
+        );
+      case 'vtt_obsidian_grid':
+        return t(
+          'overlay ossidiana da mappa digitale',
+          'obsidian digital-map overlay',
+        );
+      case 'vtt_parchment_layers':
+        return t(
+          'strati di pergamena e indici',
+          'parchment layers and indexes',
+        );
+      case 'vtt_master_overlay':
+        return t(
+          'marcatori del Master e note critiche',
+          'Master markers and critical notes',
+        );
+      case 'jrpg_legend':
+        return t(
+          'cristalli, stelle e bestiario JRPG',
+          'crystals, stars and JRPG bestiary',
+        );
+      case 'rogue_mutation':
+        return t(
+          'mutazioni, scarti e run sporche',
+          'mutations, scrap and dirty runs',
+        );
+      case 'cell_crimson_run':
+        return t(
+          'celle cremisi e scatti laterali',
+          'crimson cells and side dashes',
+        );
+      case 'darkest_stagecoach':
+        return t(
+          'carrozza, lanterna e pergamena cupa',
+          'stagecoach, lantern and dark parchment',
+        );
+      case 'ashen_covenant':
+        return t(
+          'cenere, brace e patto inciso',
+          'ash, embers and carved covenant',
+        );
+      case 'eclipse_bonfire':
+        return t(
+          'falò d eclissi e acciaio sacro',
+          'eclipse bonfire and sacred steel',
+        );
+      case 'bolted_black_iron':
+        return t('placche nere e bulloni', 'black plates and bolts');
+      case 'bolted_gold_plate':
+        return t('placche dorate e bulloni', 'gold plates and bolts');
+      case 'bolted_copper_oxide':
+        return t(
+          'rame ossidato e zolle verdi',
+          'oxidized copper and green chunks',
+        );
+      case 'bolted_silver_plate':
+        return t('argento freddo e bulloni', 'cold silver and bolts');
+      case 'meadow_sprite':
+        return t('spirito di prato in basso', 'meadow spirit at the corner');
+      case 'aurora_moth':
+        return t('falena aurora e rugiada', 'aurora moth and dew');
+      case 'modern_school_day':
+        return t(
+          'quaderno, penne e graffiti leggeri',
+          'notebook, pens and light graffiti',
+        );
       case 'verdigris_mourning':
         return t(
           'rame verde e fiori funebri',
@@ -1603,6 +2015,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         return t('vetrate sottili', 'thin stained glass');
       case 'medieval':
         return t('mastio e armi medievali', 'keep and medieval arms');
+      case 'fortress_oculum':
+        return t('fortezza dell Occhio', 'Eye fortress');
       case 'postea':
         return t('rune e circuiti Postea', 'Postea rune circuits');
       case 'thorn':
@@ -1633,6 +2047,27 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         return t('reliquia Obser incisa', 'carved Obser relic');
       case 'hoshy':
         return t('orecchie feline e luna indaco', 'cat ears and indigo moon');
+      case 'jrpg':
+        return t(
+          'menu cristallini e bestiario da avventura',
+          'crystal menus and adventure bestiary',
+        );
+      case 'roguelike':
+        return t(
+          'run sporche e HUD da sopravvivenza',
+          'dirty runs and survival HUD',
+        );
+      case 'souls':
+        return t('boss frame, cenere e reliquia', 'boss frame, ash and relic');
+      case 'bolted_metal':
+        return t('placche metalliche bullonate', 'bolted metal plates');
+      case 'wild_companion':
+        return t(
+          'natura viva e compagno illustrato',
+          'living nature and illustrated companion',
+        );
+      case 'modern_school':
+        return t('diario scolastico moderno', 'modern school diary');
       default:
         return t('cornici reliquia', 'reliquary frames');
     }
@@ -1652,6 +2087,19 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       case 'deep_forest_demon':
       case 'vervain_gothic':
       case 'medieval_keep':
+      case 'jrpg_legend':
+      case 'rogue_mutation':
+      case 'cell_crimson_run':
+      case 'darkest_stagecoach':
+      case 'ashen_covenant':
+      case 'eclipse_bonfire':
+      case 'bolted_black_iron':
+      case 'bolted_gold_plate':
+      case 'bolted_copper_oxide':
+      case 'bolted_silver_plate':
+      case 'meadow_sprite':
+      case 'aurora_moth':
+      case 'modern_school_day':
         return false;
       default:
         return true;
@@ -1676,35 +2124,36 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         (kingiWorn ? 1.24 : 1.0) *
         themeDecorationOpacityScale *
         themeDecorationIntensityScale;
+    final kingiColorTint = kingiWorn && decorationId != 'kingi_wrong_future';
     final metalPrimary = Color.lerp(
       sourcePrimary,
       const Color(0xFF8FE6FF),
-      kingiWorn ? 0.62 : 0.0,
+      kingiColorTint ? 0.62 : 0.0,
     )!;
     final metalSecondary = Color.lerp(
       sourceSecondary,
       const Color(0xFF35435A),
-      kingiWorn ? 0.58 : 0.0,
+      kingiColorTint ? 0.58 : 0.0,
     )!;
     final electricBlue = Color.lerp(
       sourceAccent,
       const Color(0xFF16C8FF),
-      kingiWorn ? 0.78 : 0.0,
+      kingiColorTint ? 0.78 : 0.0,
     )!;
     final metalTop = Color.lerp(
       sourceTop,
       const Color(0xFF050B16),
-      kingiWorn ? 0.44 : 0.0,
+      kingiColorTint ? 0.44 : 0.0,
     )!;
     final metalMid = Color.lerp(
       sourceMid,
       const Color(0xFF142032),
-      kingiWorn ? 0.48 : 0.0,
+      kingiColorTint ? 0.48 : 0.0,
     )!;
     final metalBottom = Color.lerp(
       sourceBottom,
       const Color(0xFF020611),
-      kingiWorn ? 0.52 : 0.0,
+      kingiColorTint ? 0.52 : 0.0,
     )!;
     return OculumThemeDecorationSpec(
       presetId: kingiWorn ? '${decorationId}_worn' : decorationId,
@@ -1896,6 +2345,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         return 'classic';
     }
     switch (id) {
+      case 'classic_rpg':
+        return 'medieval';
       case 'classic_low_detail':
       case 'classic_reliquary':
         return 'classic';
@@ -1922,6 +2373,32 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         return 'botanical';
       case 'monster_lantern':
         return 'lantern';
+      case 'jrpg_legend':
+        return 'video_hud';
+      case 'rogue_mutation':
+      case 'cell_crimson_run':
+      case 'darkest_stagecoach':
+        return 'battle_focus';
+      case 'ashen_covenant':
+      case 'eclipse_bonfire':
+        return 'quick_grimoire';
+      case 'bolted_black_iron':
+      case 'bolted_gold_plate':
+      case 'bolted_copper_oxide':
+      case 'bolted_silver_plate':
+        return 'video_hud';
+      case 'meadow_sprite':
+      case 'aurora_moth':
+        return 'soft_orbit';
+      case 'modern_school_day':
+        return 'video_hud';
+      case 'vtt_arcane_table':
+      case 'vtt_master_overlay':
+        return 'tactical_board';
+      case 'vtt_obsidian_grid':
+        return 'battle_focus';
+      case 'vtt_parchment_layers':
+        return 'quick_grimoire';
       case 'postea_bloom':
         return 'machine';
       case 'obsidian_sigil':
@@ -1969,6 +2446,18 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         compactBorderWidth: 0.8,
         densityLevel: 1.34,
         panelMood: 'low_detail',
+      );
+    }
+    if (resolvedId == 'classic_rpg') {
+      return OculumMainSheetGuiStyle(
+        id: 'classic_rpg',
+        sheetLayoutId: 'medieval',
+        cardRadius: 8,
+        compactCardRadius: 6,
+        borderWidth: 1.8,
+        compactBorderWidth: 1.25,
+        densityLevel: 0.98,
+        panelMood: 'indexed_grimoire',
       );
     }
     if (requestedId == 'gui_videogame_hud') {
@@ -2021,6 +2510,17 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     }
     final style = themeDecorationStyleForPreset(resolvedId);
     switch (style) {
+      case 'fortress_oculum':
+        return OculumMainSheetGuiStyle(
+          id: 'fortress_oculum',
+          sheetLayoutId: layoutId,
+          cardRadius: 6,
+          compactCardRadius: 4,
+          borderWidth: 1.82,
+          compactBorderWidth: 1.34,
+          densityLevel: 1.18,
+          panelMood: 'black_fortress_hud',
+        );
       case 'postea':
         return OculumMainSheetGuiStyle(
           id: 'postea',
@@ -2064,6 +2564,72 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
           compactBorderWidth: 1.20,
           densityLevel: 1.12,
           panelMood: 'metal_plate',
+        );
+      case 'jrpg':
+        return OculumMainSheetGuiStyle(
+          id: 'jrpg',
+          sheetLayoutId: layoutId,
+          cardRadius: 9,
+          compactCardRadius: 7,
+          borderWidth: 1.46,
+          compactBorderWidth: 1.14,
+          densityLevel: 1.14,
+          panelMood: 'crystal_command_menu',
+        );
+      case 'roguelike':
+        return OculumMainSheetGuiStyle(
+          id: 'roguelike',
+          sheetLayoutId: layoutId,
+          cardRadius: 5,
+          compactCardRadius: 4,
+          borderWidth: 1.62,
+          compactBorderWidth: 1.18,
+          densityLevel: 1.24,
+          panelMood: 'scrap_run_board',
+        );
+      case 'souls':
+        return OculumMainSheetGuiStyle(
+          id: 'souls',
+          sheetLayoutId: layoutId,
+          cardRadius: 7,
+          compactCardRadius: 5,
+          borderWidth: 1.50,
+          compactBorderWidth: 1.14,
+          densityLevel: 1.10,
+          panelMood: 'ashen_boss_frame',
+        );
+      case 'bolted_metal':
+        return OculumMainSheetGuiStyle(
+          id: 'bolted_metal',
+          sheetLayoutId: layoutId,
+          cardRadius: 4,
+          compactCardRadius: 3,
+          borderWidth: 1.82,
+          compactBorderWidth: 1.32,
+          densityLevel: 1.20,
+          panelMood: 'bolted_status_rig',
+        );
+      case 'wild_companion':
+        return OculumMainSheetGuiStyle(
+          id: 'wild_companion',
+          sheetLayoutId: layoutId,
+          cardRadius: 15,
+          compactCardRadius: 11,
+          borderWidth: 1.26,
+          compactBorderWidth: 1.02,
+          densityLevel: 0.98,
+          panelMood: 'wild_story_panel',
+        );
+      case 'modern_school':
+        return OculumMainSheetGuiStyle(
+          id: 'modern_school',
+          sheetLayoutId: layoutId,
+          cardRadius: 7,
+          compactCardRadius: 5,
+          borderWidth: 1.12,
+          compactBorderWidth: 0.90,
+          densityLevel: 1.12,
+          panelMood: 'school_notebook',
         );
       case 'lunar':
         return OculumMainSheetGuiStyle(
@@ -2247,7 +2813,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
 
   Widget themeDecorationBackdrop() {
     final spec = currentThemeDecorationSpec();
-    if (spec.opacity <= 0 || lowCostVisuals) {
+    if (spec.opacity <= 0) {
       return const SizedBox.expand();
     }
     final desktopPainting = themeUsesDesktopPainting();
@@ -2291,6 +2857,23 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                   ),
                 ),
               ),
+            if (spec.style == 'jrpg')
+              Positioned(
+                right: -robotWidth * 0.06,
+                bottom: -robotWidth * 0.03,
+                width: robotWidth,
+                height: robotWidth * 1.08,
+                child: Opacity(
+                  opacity: (0.38 * themeDecorationOpacityScale)
+                      .clamp(0.16, 0.52)
+                      .toDouble(),
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      painter: _OculumJrpgCompanionPainter(spec: spec),
+                    ),
+                  ),
+                ),
+              ),
           ],
         );
       },
@@ -2299,17 +2882,19 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
 
   Widget themePanelDecoration(Color borderColor) {
     final spec = currentThemeDecorationSpec();
-    if (spec.opacity <= 0 || lowCostVisuals) {
+    if (spec.opacity <= 0 || modalitaLeggera || modalitaVeloce) {
       return const SizedBox.expand();
     }
-    return CustomPaint(
-      painter: _OculumThemePanelDecorationPainter(
-        spec,
-        borderColor,
-        modalitaLeggera || modalitaVeloce,
-        desktop: themeUsesDesktopPainting(),
+    return RepaintBoundary(
+      child: CustomPaint(
+        painter: _OculumThemePanelDecorationPainter(
+          spec,
+          borderColor,
+          modalitaLeggera || modalitaVeloce,
+          desktop: themeUsesDesktopPainting(),
+        ),
+        child: const SizedBox.expand(),
       ),
-      child: const SizedBox.expand(),
     );
   }
 
@@ -2323,7 +2908,14 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   }
 
   bool themeUsesStackedVitalsHud() {
-    return currentThemeVisualIdentity().mainSheetGuiStyle.id == 'rank_hud';
+    return const <String>{
+      'rank_hud',
+      'jrpg',
+      'roguelike',
+      'souls',
+      'bolted_metal',
+      'modern_school',
+    }.contains(currentThemeVisualIdentity().mainSheetGuiStyle.id);
   }
 
   double themePanelRadiusValue({bool compact = false}) {
@@ -2344,8 +2936,12 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     final gui = currentThemeVisualIdentity().mainSheetGuiStyle;
     final guiStyle = gui.id;
     final panelMood = gui.panelMood;
-    Color mix(Color base, Color tint, double t, double alpha) =>
-        Color.lerp(base, tint, t)!.withValues(alpha: alpha);
+    final minReadableAlpha = compact ? 0.97 : 0.965;
+    Color mix(Color base, Color tint, double t, double alpha) => Color.lerp(
+      base,
+      tint,
+      t,
+    )!.withValues(alpha: alpha.clamp(minReadableAlpha, 1.0).toDouble());
 
     switch (panelMood) {
       case 'arcade_party_hud':
@@ -2390,6 +2986,73 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
           begin: Alignment.topLeft,
           end: Alignment.bottomCenter,
         );
+      case 'crystal_command_menu':
+        return LinearGradient(
+          colors: [
+            mix(spec.backgroundBottom, const Color(0xFF081138), 0.66, 0.98),
+            mix(spec.backgroundMid, spec.accent, 0.14, 0.95),
+            mix(spec.backgroundTop, const Color(0xFF18265F), 0.40, 0.96),
+            mix(spec.backgroundBottom, spec.primary, 0.07, 0.99),
+          ],
+          stops: const [0.0, 0.42, 0.76, 1.0],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'scrap_run_board':
+        return LinearGradient(
+          colors: [
+            mix(spec.backgroundBottom, const Color(0xFF0B0705), 0.62, 0.99),
+            mix(spec.backgroundMid, spec.primary, 0.10, 0.95),
+            mix(spec.backgroundTop, spec.accent, 0.16, 0.96),
+          ],
+          stops: const [0.0, 0.52, 1.0],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'ashen_boss_frame':
+        return LinearGradient(
+          colors: [
+            mix(spec.backgroundBottom, Colors.black, 0.34, 0.99),
+            mix(spec.backgroundMid, const Color(0xFF2A1B12), 0.36, 0.95),
+            mix(spec.backgroundTop, spec.accent, 0.10, 0.97),
+          ],
+          stops: const [0.0, 0.58, 1.0],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomRight,
+        );
+      case 'bolted_status_rig':
+        return LinearGradient(
+          colors: [
+            mix(spec.backgroundTop, spec.primary, 0.13, 0.98),
+            mix(spec.backgroundMid, const Color(0xFF111417), 0.34, 0.97),
+            mix(spec.backgroundBottom, Colors.black, 0.26, 0.99),
+          ],
+          stops: const [0.0, 0.44, 1.0],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'wild_story_panel':
+        return LinearGradient(
+          colors: [
+            mix(spec.backgroundTop, spec.primary, 0.12, 0.94),
+            mix(spec.backgroundMid, spec.accent, 0.10, 0.91),
+            mix(spec.backgroundBottom, spec.secondary, 0.12, 0.95),
+          ],
+          stops: const [0.0, 0.54, 1.0],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'school_notebook':
+        return LinearGradient(
+          colors: [
+            mix(spec.backgroundTop, const Color(0xFF152B35), 0.38, 0.96),
+            mix(spec.backgroundMid, spec.primary, 0.08, 0.94),
+            mix(spec.backgroundBottom, spec.accent, 0.10, 0.97),
+          ],
+          stops: const [0.0, 0.54, 1.0],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
     }
 
     switch (guiStyle) {
@@ -2422,6 +3085,68 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
             mix(spec.backgroundBottom, spec.accent, 0.18, 0.96),
           ],
           stops: const [0.0, 0.36, 0.78, 1.0],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'jrpg':
+        return LinearGradient(
+          colors: [
+            mix(spec.backgroundTop, const Color(0xFF1C2A64), 0.40, 0.96),
+            mix(spec.backgroundMid, spec.accent, 0.12, 0.94),
+            mix(spec.backgroundBottom, const Color(0xFF070817), 0.52, 0.98),
+          ],
+          stops: const [0.0, 0.50, 1.0],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'roguelike':
+        return LinearGradient(
+          colors: [
+            mix(spec.backgroundBottom, Colors.black, 0.20, 0.98),
+            mix(spec.backgroundMid, spec.primary, 0.09, 0.95),
+            mix(spec.backgroundTop, spec.accent, 0.14, 0.97),
+          ],
+          stops: const [0.0, 0.56, 1.0],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'souls':
+        return LinearGradient(
+          colors: [
+            mix(spec.backgroundBottom, Colors.black, 0.28, 0.99),
+            mix(spec.backgroundMid, const Color(0xFF25160E), 0.30, 0.96),
+            mix(spec.backgroundTop, spec.accent, 0.09, 0.97),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomRight,
+        );
+      case 'bolted_metal':
+        return LinearGradient(
+          colors: [
+            mix(spec.backgroundTop, spec.primary, 0.12, 0.98),
+            mix(spec.backgroundMid, const Color(0xFF15171A), 0.32, 0.97),
+            mix(spec.backgroundBottom, Colors.black, 0.22, 0.99),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'wild_companion':
+        return LinearGradient(
+          colors: [
+            mix(spec.backgroundTop, spec.primary, 0.12, 0.92),
+            mix(spec.backgroundMid, spec.secondary, 0.18, 0.90),
+            mix(spec.backgroundBottom, spec.accent, 0.09, 0.94),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'modern_school':
+        return LinearGradient(
+          colors: [
+            mix(spec.backgroundTop, const Color(0xFF1A2B34), 0.30, 0.96),
+            mix(spec.backgroundMid, spec.primary, 0.07, 0.93),
+            mix(spec.backgroundBottom, spec.accent, 0.08, 0.96),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
@@ -2553,6 +3278,18 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         ? spec.accent
         : spec.style == 'kingi' || spec.style == 'postea'
         ? const Color(0xFF16C8FF)
+        : spec.style == 'jrpg'
+        ? const Color(0xFFE7B84A)
+        : spec.style == 'roguelike'
+        ? const Color(0xFFE6543A)
+        : spec.style == 'souls'
+        ? const Color(0xFFFF8A3D)
+        : spec.style == 'bolted_metal'
+        ? spec.primary
+        : spec.style == 'wild_companion'
+        ? spec.accent
+        : spec.style == 'modern_school'
+        ? const Color(0xFFFF6B8A)
         : spec.style == 'medieval'
         ? const Color(0xFFE0A84A)
         : color;
@@ -2564,6 +3301,16 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                   ? 0.11
                   : spec.style == 'kingi' || spec.style == 'postea'
                   ? 0.14
+                  : spec.style == 'jrpg'
+                  ? 0.12
+                  : spec.style == 'roguelike' ||
+                        spec.style == 'souls' ||
+                        spec.style == 'bolted_metal'
+                  ? 0.13
+                  : spec.style == 'wild_companion'
+                  ? 0.10
+                  : spec.style == 'modern_school'
+                  ? 0.11
                   : spec.style == 'medieval'
                   ? 0.14
                   : 0.08) *
@@ -2574,6 +3321,16 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                 ? 14
                 : spec.style == 'kingi' || spec.style == 'postea'
                 ? 18
+                : spec.style == 'jrpg'
+                ? 16
+                : spec.style == 'roguelike' ||
+                      spec.style == 'souls' ||
+                      spec.style == 'bolted_metal'
+                ? 15
+                : spec.style == 'wild_companion'
+                ? 13
+                : spec.style == 'modern_school'
+                ? 14
                 : spec.style == 'medieval'
                 ? 18
                 : 9) *
@@ -2581,8 +3338,12 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         spreadRadius:
             spec.style == 'kingi' ||
                 spec.style == 'postea' ||
-                spec.style == 'medieval'
+                spec.style == 'medieval' ||
+                spec.style == 'jrpg' ||
+                spec.style == 'bolted_metal'
             ? 0.6
+            : spec.style == 'roguelike' || spec.style == 'souls'
+            ? 0.35
             : spec.style == 'phobia' || spec.style == 'shadow_gate'
             ? 0.1
             : 0.2,
@@ -2616,6 +3377,18 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       case 'kingi':
       case 'postea':
         return mix(spec.backgroundBottom, spec.primary, 0.10, 0.95);
+      case 'jrpg':
+        return mix(spec.backgroundBottom, spec.accent, 0.08, 0.96);
+      case 'roguelike':
+        return mix(spec.backgroundBottom, spec.accent, 0.09, 0.96);
+      case 'souls':
+        return mix(spec.backgroundBottom, const Color(0xFF3A1A0D), 0.24, 0.96);
+      case 'bolted_metal':
+        return mix(spec.backgroundMid, spec.primary, 0.10, 0.97);
+      case 'wild_companion':
+        return mix(spec.backgroundBottom, spec.secondary, 0.18, 0.93);
+      case 'modern_school':
+        return mix(spec.backgroundBottom, spec.primary, 0.06, 0.95);
       case 'medieval':
         return mix(spec.backgroundBottom, spec.primary, 0.08, 0.95);
       case 'cathedral':
@@ -2640,6 +3413,12 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     if (gui == 'postea') return compact ? 5 : 8;
     if (gui == 'medieval') return compact ? 5 : 8;
     if (gui == 'rank_hud') return compact ? 4 : 7;
+    if (gui == 'jrpg') return compact ? 7 : 9;
+    if (gui == 'roguelike') return compact ? 4 : 5;
+    if (gui == 'souls') return compact ? 5 : 7;
+    if (gui == 'bolted_metal') return compact ? 3 : 4;
+    if (gui == 'wild_companion') return compact ? 11 : 14;
+    if (gui == 'modern_school') return compact ? 5 : 7;
     if (gui == 'soft_orbital') return compact ? 12 : 14;
     if (gui == 'botanical') return compact ? 10 : 12;
     if (gui == 'sigil') return compact ? 6 : 9;
@@ -2664,7 +3443,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
             spec.style == 'kingi' ||
             spec.style == 'postea' ||
             spec.style == 'medieval' ||
-            spec.style == 'shadow_gate'
+            spec.style == 'shadow_gate' ||
+            spec.style == 'roguelike' ||
+            spec.style == 'souls' ||
+            spec.style == 'bolted_metal' ||
+            spec.style == 'modern_school'
         ? 0.25
         : 0.0;
     final width =
@@ -2682,7 +3465,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   }) {
     final spec = currentThemeDecorationSpec();
     final gui = currentThemeVisualIdentity().mainSheetGuiStyle.id;
-    if (spec.opacity <= 0 || gui == 'low_detail' || lowCostVisuals) {
+    if (spec.opacity <= 0 || gui == 'low_detail') {
       return child;
     }
 
@@ -2699,6 +3482,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       'sigil',
       'archive',
       'relic',
+      'jrpg',
+      'roguelike',
+      'souls',
+      'bolted_metal',
+      'modern_school',
     }.contains(gui);
     final radius = BorderRadius.circular(switch (gui) {
       'phobia' => compact ? 4.0 : 6.0,
@@ -2812,47 +3600,85 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     );
   }
 
+  String normalizedThemeSearchQuery() {
+    return cleanUiText(themeSearchController.text).trim().toLowerCase();
+  }
+
+  bool themeSearchMatchesText(String text) {
+    final query = normalizedThemeSearchQuery();
+    if (query.isEmpty) return true;
+    final haystack = cleanUiText(text).toLowerCase();
+    final tokens = query.split(RegExp(r'\s+')).where((part) => part.isNotEmpty);
+    return tokens.every(haystack.contains);
+  }
+
+  String themeSearchHaystackForPreset(OculumColorPreset preset) {
+    return [
+      preset.id.replaceAll('_', ' '),
+      preset.nameIt,
+      preset.nameEn,
+      preset.descriptionIt,
+      preset.descriptionEn,
+      themeDecorationLabel(preset.id),
+      themeDecorationStyleForPreset(preset.id),
+      guiSkinLabel(preset.id),
+      guiSkinDescription(preset.id),
+    ].join(' ');
+  }
+
+  bool themeSearchMatchesPreset(OculumColorPreset preset) {
+    return themeSearchMatchesText(themeSearchHaystackForPreset(preset));
+  }
+
+  bool themeSearchMatchesGuiId(String id) {
+    final presetId = resolveGuiChoiceToPresetId(id);
+    final preset = colorPresetById(presetId);
+    return themeSearchMatchesText(
+      [
+        id.replaceAll('_', ' '),
+        guiSkinLabel(id),
+        guiSkinDescription(id),
+        if (preset != null) themeSearchHaystackForPreset(preset),
+      ].join(' '),
+    );
+  }
+
+  Widget themeSearchField() {
+    final hasQuery = normalizedThemeSearchQuery().isNotEmpty;
+    return TextField(
+      controller: themeSearchController,
+      textInputAction: TextInputAction.search,
+      style: TextStyle(fontSize: uiScale(15), color: Colors.white),
+      decoration:
+          fieldDecoration(
+            t('Cerca temi sbloccati', 'Search unlocked themes'),
+            helper: t(
+              'Cerca per nome o parole chiave. I temi non sbloccati restano nascosti.',
+              'Search by name or keywords. Locked themes stay hidden.',
+            ),
+          ).copyWith(
+            prefixIcon: Icon(Icons.search, color: tertiaryColor),
+            suffixIcon: hasQuery
+                ? IconButton(
+                    tooltip: t('Pulisci ricerca', 'Clear search'),
+                    onPressed: () {
+                      setState(() {
+                        themeSearchController.clear();
+                      });
+                    },
+                    icon: const Icon(Icons.close),
+                  )
+                : null,
+          ),
+      onChanged: (_) => setState(() {}),
+    );
+  }
+
   Widget settingsThemeShowcasePanel() {
-    final showcaseIds = <String>[
-      'classic_reliquary',
-      'classic_low_detail',
-      'blood_court',
-      'witch_glass',
-      'moon_iron',
-      'lunar_eclipse',
-      'cathedral_rose',
-      'thorn_vigil',
-      'frost_chapel',
-      'obsidian_sigil',
-      'solar_reliquary',
-      'storm_cathedral',
-      'abyssal_tide',
-      'ember_rite',
-      'ivory_archive',
-      'postea_bloom',
-      'shadow_gate_rank',
-      'karma_duality',
-      'monster_lantern',
-      'vervain_gothic',
-      'kingi_wrong_future',
-      'blood_chapel',
-      'null_crown',
-      if (isColorThemeUnlocked('phobia_dark')) 'phobia_dark',
-      'slime_prince',
-      'moon_rot',
-      'obser_relic',
-      'deep_forest_demon',
-      'astral_ink',
-      'bone_saint',
-      'medieval_keep',
-      'ash_oracle',
-      'void_liturgy',
-      'verdigris_mourning',
-      if (isColorThemeUnlocked('hoshy_cosmic_cat')) 'hoshy_cosmic_cat',
-    ];
+    final allUnlockedPresets = orderedColorPresets(unlockedOnly: true);
     final presets = [
-      for (final id in showcaseIds)
-        if (colorPresetById(id) != null) colorPresetById(id)!,
+      for (final preset in allUnlockedPresets)
+        if (themeSearchMatchesPreset(preset)) preset,
     ];
 
     return gothicPanel(
@@ -2917,9 +3743,26 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  themeSearchField(),
+                  const SizedBox(height: 10),
+                  smallInfoText(
+                    t(
+                      'Mostrati ${presets.length}/${allUnlockedPresets.length} temi sbloccati.',
+                      'Showing ${presets.length}/${allUnlockedPresets.length} unlocked themes.',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final narrow = constraints.maxWidth < 760;
+                      if (presets.isEmpty) {
+                        return smallInfoText(
+                          t(
+                            'Nessun tema sbloccato corrisponde alla ricerca.',
+                            'No unlocked theme matches the search.',
+                          ),
+                        );
+                      }
                       return Wrap(
                         spacing: 10,
                         runSpacing: 10,
@@ -2945,54 +3788,33 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   }
 
   List<String> decorationGalleryPresetIds() {
-    final ids = <String>[
-      'blood_court',
-      'witch_glass',
-      'moon_iron',
-      'lunar_eclipse',
-      'cathedral_rose',
-      'thorn_vigil',
-      'frost_chapel',
-      'obsidian_sigil',
-      'storm_cathedral',
-      'abyssal_tide',
-      'ember_rite',
-      'ivory_archive',
-      'postea_bloom',
-      'shadow_gate_rank',
-      'karma_duality',
-      'monster_lantern',
-      'vervain_gothic',
-      'kingi_wrong_future',
-      'blood_chapel',
-      'null_crown',
-      if (isColorThemeUnlocked('phobia_dark')) 'phobia_dark',
-      'slime_prince',
-      'moon_rot',
-      'obser_relic',
-      'deep_forest_demon',
-      'astral_ink',
-      'bone_saint',
-      'medieval_keep',
-      'ash_oracle',
-      'void_liturgy',
-      'verdigris_mourning',
-      'solar_reliquary',
-      if (isColorThemeUnlocked('hoshy_cosmic_cat')) 'hoshy_cosmic_cat',
-    ];
     final result = <String>[];
-    for (final id in ids) {
-      final preset = colorPresetById(id);
-      if (preset == null || !isColorThemeUnlocked(id)) continue;
-      result.add(id);
+    for (final preset in orderedColorPresets(unlockedOnly: true)) {
+      if (preset.id == 'classic_reliquary' ||
+          preset.id == 'classic_low_detail') {
+        continue;
+      }
+      result.add(preset.id);
     }
     return result;
   }
 
   Widget settingsDecorationsGalleryPanel() {
-    final ids = decorationGalleryPresetIds();
+    final allIds = decorationGalleryPresetIds();
+    final ids = [
+      for (final id in allIds)
+        if (themeSearchMatchesPreset(colorPresetById(id)!)) id,
+    ];
     final activeId = activeThemeDecorationPresetId();
     final activeStyle = themeDecorationStyleForPreset(activeId);
+    final showNoDecoration =
+        normalizedThemeSearchQuery().isEmpty ||
+        themeSearchMatchesText(
+          t(
+            'nessun disegno decorazione classica none no',
+            'none no drawings classic decoration',
+          ),
+        );
 
     return gothicPanel(
       borderColor: tertiaryColor,
@@ -3049,6 +3871,15 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                 ),
               ),
               const SizedBox(height: 12),
+              themeSearchField(),
+              const SizedBox(height: 10),
+              smallInfoText(
+                t(
+                  'Mostrate ${ids.length}/${allIds.length} decorazioni sbloccate.',
+                  'Showing ${ids.length}/${allIds.length} unlocked decorations.',
+                ),
+              ),
+              const SizedBox(height: 12),
               LayoutBuilder(
                 builder: (context, constraints) {
                   final columns = constraints.maxWidth < 640
@@ -3062,13 +3893,15 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                     spacing: 10,
                     runSpacing: 10,
                     children: [
-                      SizedBox(
-                        width: width,
-                        child: noDecorationChoiceCard(
-                          active:
-                              themeDecorationStyleForPreset(activeId) == 'none',
+                      if (showNoDecoration)
+                        SizedBox(
+                          width: width,
+                          child: noDecorationChoiceCard(
+                            active:
+                                themeDecorationStyleForPreset(activeId) ==
+                                'none',
+                          ),
                         ),
-                      ),
                       for (final id in ids)
                         SizedBox(
                           width: width,
@@ -3078,6 +3911,16 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                                 activeId == id ||
                                 themeDecorationStyleForPreset(id) ==
                                     activeStyle,
+                          ),
+                        ),
+                      if (!showNoDecoration && ids.isEmpty)
+                        SizedBox(
+                          width: constraints.maxWidth,
+                          child: smallInfoText(
+                            t(
+                              'Nessuna decorazione sbloccata corrisponde alla ricerca.',
+                              'No unlocked decoration matches the search.',
+                            ),
                           ),
                         ),
                     ],
@@ -3326,9 +4169,9 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
 
   List<String> guiSkinPresetIds() {
     final modeIds = <String>[
-      'gui_auto',
       'gui_classic',
       'gui_low_detail',
+      'gui_auto',
       'gui_videogame_hud',
       'gui_tactical_board',
       'gui_battle_focus',
@@ -3337,47 +4180,16 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       'gui_medieval_armory',
       'gui_living_vines',
     ];
-    final presetIds = <String>[
-      'classic_reliquary',
-      'classic_low_detail',
-      'blood_court',
-      'witch_glass',
-      'moon_iron',
-      'vervain_gothic',
-      'kingi_wrong_future',
-      if (isColorThemeUnlocked('phobia_dark')) 'phobia_dark',
-      'cathedral_rose',
-      'ivory_archive',
-      'frost_chapel',
-      'storm_cathedral',
-      'ember_rite',
-      'obsidian_sigil',
-      'lunar_eclipse',
-      'postea_bloom',
-      'shadow_gate_rank',
-      'karma_duality',
-      'monster_lantern',
-      'blood_chapel',
-      'null_crown',
-      'slime_prince',
-      'obser_relic',
-      'deep_forest_demon',
-      'astral_ink',
-      'bone_saint',
-      'medieval_keep',
-      'ash_oracle',
-      'void_liturgy',
-      'verdigris_mourning',
-      if (isColorThemeUnlocked('hoshy_cosmic_cat')) 'hoshy_cosmic_cat',
+    final presetIds = [
+      for (final preset in orderedColorPresets(unlockedOnly: true))
+        if (preset.id != 'classic_reliquary' &&
+            preset.id != 'classic_low_detail')
+          preset.id,
     ];
     return [
       ...modeIds,
       for (final id in presetIds)
-        if (id != 'classic_reliquary' &&
-            id != 'classic_low_detail' &&
-            colorPresetById(id) != null &&
-            isColorThemeUnlocked(id))
-          id,
+        if (colorPresetById(id) != null && isColorThemeUnlocked(id)) id,
     ];
   }
 
@@ -3406,6 +4218,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     }
     final resolvedId = resolveGuiChoiceToPresetId(id);
     switch (guiStyleForPreset(resolvedId).id) {
+      case 'classic_rpg':
+        return t('Classic RPG', 'Classic RPG');
       case 'low_detail':
         return t('Classic low detail', 'Classic low detail');
       case 'phobia':
@@ -3414,8 +4228,22 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         return t('Kingi runic engine', 'Kingi runic engine');
       case 'postea':
         return t('Postea rune-tech', 'Postea rune-tech');
+      case 'jrpg':
+        return t('Leggenda JRPG', 'JRPG legend');
+      case 'roguelike':
+        return t('Run roguelike', 'Roguelike run');
+      case 'souls':
+        return t('Patto di cenere', 'Ash covenant');
+      case 'bolted_metal':
+        return t('Metallo bullonato', 'Bolted metal');
+      case 'wild_companion':
+        return t('Compagno naturale', 'Natural companion');
+      case 'modern_school':
+        return t('Giorno di scuola', 'School day');
       case 'medieval':
         return t('Mastio medievale', 'Medieval keep');
+      case 'fortress_oculum':
+        return t('Fortezza Oculum', 'Oculum Fortress');
       case 'rank_hud':
         return t('Porta di rango', 'Rank gate');
       case 'botanical':
@@ -3522,10 +4350,45 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
           'Futuro errante: pannelli tecnici, rune-circuito e ritmo da console rituale.',
           'Wandering future: technical panels, rune-circuits and ritual-console rhythm.',
         );
+      case 'jrpg':
+        return t(
+          'Menu comando cristallini, ritmo da party RPG e cornici luminose da avventura.',
+          'Crystal command menus, party-RPG rhythm and bright adventure frames.',
+        );
+      case 'roguelike':
+        return t(
+          'Scheda da run skill based: pannelli densi, tagli sporchi e lettura immediata di HP, scudi e risorse.',
+          'Skill-run sheet: dense panels, dirty cuts and immediate reading of HP, shields and resources.',
+        );
+      case 'souls':
+        return t(
+          'Interfaccia cupa da boss: cornici di cenere, barre nette e spazio ridotto per non perdere il combattimento.',
+          'Gloomy boss interface: ash frames, sharp bars and reduced empty space so combat stays readable.',
+        );
+      case 'bolted_metal':
+        return t(
+          'HUD industriale con placche, bulloni e indicatori compatti per vita, HP temporanei, scudo e Scudo Oculum.',
+          'Industrial HUD with plates, bolts and compact gauges for life, temp HP, shield and Oculum Shield.',
+        );
+      case 'wild_companion':
+        return t(
+          'Scheda naturale illustrata: colori vivi o notturni, pannelli morbidi e disegno nell angolo senza coprire i dati.',
+          'Illustrated natural sheet: lively or night colors, softer panels and a corner drawing without covering data.',
+        );
+      case 'modern_school':
+        return t(
+          'Scheda moderna da diario scolastico: quaderno scuro, penne neon, appunti rapidi e HUD leggibile da telefono.',
+          'Modern school diary sheet: dark notebook, neon pens, quick notes and a phone-readable HUD.',
+        );
       case 'medieval':
         return t(
           'Scheda da sala d armi: pietra compatta, scudi, torri e bordi ferrati.',
           'Armory sheet: compact stone, shields, towers and iron-edged borders.',
+        );
+      case 'fortress_oculum':
+        return t(
+          'HUD da fortezza gotica: pannelli neri densi, cornici ferrate, accenti viola e oro antico.',
+          'Gothic fortress HUD: dense black panels, iron frames, violet accents and antique gold.',
         );
       case 'rank_hud':
         return t(
@@ -3581,7 +4444,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   }
 
   Widget settingsGuiSkinGalleryPanel() {
-    final ids = guiSkinPresetIds();
+    final allIds = guiSkinPresetIds();
+    final ids = [
+      for (final id in allIds)
+        if (themeSearchMatchesGuiId(id)) id,
+    ];
     final activeId = activeGuiChoiceId();
 
     return gothicPanel(
@@ -3626,6 +4493,15 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
             ),
           ),
           const SizedBox(height: 12),
+          themeSearchField(),
+          const SizedBox(height: 10),
+          smallInfoText(
+            t(
+              'Mostrate ${ids.length}/${allIds.length} GUI sbloccate o base.',
+              'Showing ${ids.length}/${allIds.length} unlocked or base GUIs.',
+            ),
+          ),
+          const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
               final columns = constraints.maxWidth < 640
@@ -3643,6 +4519,16 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                     SizedBox(
                       width: width,
                       child: guiSkinChoiceCard(id, active: activeId == id),
+                    ),
+                  if (ids.isEmpty)
+                    SizedBox(
+                      width: constraints.maxWidth,
+                      child: smallInfoText(
+                        t(
+                          'Nessuna GUI sbloccata corrisponde alla ricerca.',
+                          'No unlocked GUI matches the search.',
+                        ),
+                      ),
                     ),
                 ],
               );
@@ -3714,6 +4600,18 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                         ? Icons.precision_manufacturing
                         : gui.id == 'phobia'
                         ? Icons.visibility_off
+                        : gui.id == 'jrpg'
+                        ? Icons.auto_awesome
+                        : gui.id == 'roguelike'
+                        ? Icons.casino
+                        : gui.id == 'souls'
+                        ? Icons.local_fire_department
+                        : gui.id == 'bolted_metal'
+                        ? Icons.settings
+                        : gui.id == 'wild_companion'
+                        ? Icons.park
+                        : gui.id == 'modern_school'
+                        ? Icons.school
                         : Icons.dashboard_customize,
                     color: accent,
                     size: 19,
@@ -3999,6 +4897,20 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
             children: [
               Row(
                 children: [
+                  if (preset.iconAssetPath != null) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(7),
+                      child: Image.asset(
+                        preset.iconAssetPath!,
+                        width: 34,
+                        height: 34,
+                        fit: BoxFit.cover,
+                        cacheWidth: 68,
+                        cacheHeight: 68,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   Expanded(
                     child: Text(
                       colorPresetName(preset),
@@ -4219,6 +5131,15 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   }
 
   Future<void> incollaImmagineMappa() async {
+    final hasExistingLocalMap =
+        mapMode == 'image' &&
+        mapImagePath.trim().isNotEmpty &&
+        File(mapImagePath.trim()).existsSync();
+    if (hasExistingLocalMap) {
+      await incollaTokenImmagineMappa();
+      return;
+    }
+
     try {
       final clipboardImage = await Pasteboard.image;
       if (!mounted) return;
@@ -4282,6 +5203,135 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         risultato = t(
           'Impossibile leggere la mappa dagli appunti.',
           'Could not read the map from the clipboard.',
+        );
+        aggiungiLog('$risultato ($error)');
+      });
+    }
+  }
+
+  Color predominantImageColor(Uint8List bytes) {
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null || decoded.width <= 0 || decoded.height <= 0) {
+      return tertiaryColor;
+    }
+    final resized = img.copyResize(
+      decoded,
+      width: min(72, decoded.width),
+      height: min(72, decoded.height),
+      interpolation: img.Interpolation.average,
+    );
+    final rgba = resized.getBytes(order: img.ChannelOrder.rgba);
+    final buckets = <int, int>{};
+    for (var i = 0; i + 3 < rgba.length; i += 4) {
+      final alpha = rgba[i + 3];
+      if (alpha < 32) continue;
+      final r = rgba[i];
+      final g = rgba[i + 1];
+      final b = rgba[i + 2];
+      final saturation = max(r, max(g, b)) - min(r, min(g, b));
+      if (r + g + b < 45 || (r + g + b > 720 && saturation < 28)) continue;
+      final key = ((r >> 5) << 10) | ((g >> 5) << 5) | (b >> 5);
+      buckets[key] = (buckets[key] ?? 0) + 1 + saturation ~/ 20;
+    }
+    if (buckets.isEmpty) return tertiaryColor;
+    final key = buckets.entries
+        .reduce((a, b) => a.value >= b.value ? a : b)
+        .key;
+    final r = (((key >> 10) & 0x1F) * 32 + 16).clamp(0, 255).toInt();
+    final g = (((key >> 5) & 0x1F) * 32 + 16).clamp(0, 255).toInt();
+    final b = ((key & 0x1F) * 32 + 16).clamp(0, 255).toInt();
+    return Color.fromARGB(255, r, g, b);
+  }
+
+  Future<Uint8List?> readMapTokenImageFromClipboard() async {
+    Uint8List? bytes = await Pasteboard.image;
+    if (bytes != null && bytes.isNotEmpty && img.decodeImage(bytes) != null) {
+      return bytes;
+    }
+
+    final files = await Pasteboard.files();
+    for (final rawPath in files) {
+      final path = rawPath.startsWith('file:')
+          ? Uri.parse(rawPath).toFilePath()
+          : rawPath;
+      if (!fileLooksLikeImagePath(path)) continue;
+      final file = File(path);
+      if (!await file.exists()) continue;
+      final fileBytes = await file.readAsBytes();
+      if (img.decodeImage(fileBytes) == null) continue;
+      return fileBytes;
+    }
+
+    return null;
+  }
+
+  Future<void> incollaTokenImmagineMappa() async {
+    final hasMap =
+        mapImagePath.trim().isNotEmpty &&
+        File(mapImagePath.trim()).existsSync();
+    if (!hasMap) {
+      setState(() {
+        risultato = t(
+          'Prima genera o importa una mappa locale, poi incolla il token.',
+          'Generate or import a local map first, then paste the token.',
+        );
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+
+    try {
+      final bytes = await readMapTokenImageFromClipboard();
+
+      if (!mounted) return;
+      if (bytes == null || bytes.isEmpty || img.decodeImage(bytes) == null) {
+        setState(() {
+          risultato = t(
+            'Nessuna immagine token trovata negli appunti.',
+            'No token image found in the clipboard.',
+          );
+          aggiungiLog(risultato);
+        });
+        return;
+      }
+
+      final color = predominantImageColor(bytes);
+      final ownerTag = currentLocalMapOwnerTag();
+      setState(() {
+        localMapTokens.add(<String, dynamic>{
+          'id': 'map_image_${DateTime.now().microsecondsSinceEpoch}',
+          'sheetTag': '',
+          'ownerTag': ownerTag,
+          'name': t('Token immagine', 'Image token'),
+          'type': t('Token libero', 'Free token'),
+          'side': 'neutral',
+          'imageBase64': base64Encode(bytes),
+          'colorArgb': color.toARGB32(),
+          'shape': 'hex',
+          'level': 0,
+          'grade': 0,
+          'initiativeBase': 0,
+          'reactionMax': 1,
+          'reactionFastMax': 0,
+          'x': 0.5,
+          'y': 0.5,
+          'size': mapTokenDefaultSize(),
+          'movementMaxMeters': mapFreeTokenMovementValue(),
+          'movementUsedMeters': 0.0,
+        });
+        risultato = t(
+          'Token immagine creato dagli appunti.',
+          'Image token created from clipboard.',
+        );
+        aggiungiLog(risultato);
+      });
+      programmaSalvataggio();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        risultato = t(
+          'Impossibile creare il token dagli appunti.',
+          'Could not create token from clipboard.',
         );
         aggiungiLog('$risultato ($error)');
       });
@@ -4535,18 +5585,1569 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       pageKey: 'map',
       maxColumns: 2,
       minColumnWidth: 360,
-      fullWidthIndexes: const <int>{0, 2},
+      fullWidthIndexes: const <int>{0, 2, 3},
       children: [
         functionAnchor('map_root', sectionTitle(t('Mappa', 'Map'))),
         mapControlPanel(),
         mapViewerPanel(),
+        localMapMiniInitiativePanel(),
         mapNotesPanel(),
       ],
     );
   }
 
+  double mapTokenDefaultSize() {
+    final raw = mapTokenSizeController.text.trim().replaceAll(',', '.');
+    return (double.tryParse(raw) ?? 64).clamp(24.0, 240.0).toDouble();
+  }
+
+  double mapMetersControllerValue(
+    TextEditingController controller,
+    double fallback,
+  ) {
+    final raw = controller.text.trim().replaceAll(',', '.');
+    return (double.tryParse(raw) ?? fallback).clamp(1.0, 5000.0).toDouble();
+  }
+
+  double mapWidthMetersValue() {
+    return mapMetersControllerValue(mapWidthMetersController, 30);
+  }
+
+  double mapHeightMetersValue() {
+    return mapMetersControllerValue(mapHeightMetersController, 20);
+  }
+
+  double mapFreeTokenMovementValue() {
+    return mapMetersControllerValue(mapFreeTokenMovementController, 6);
+  }
+
+  List<int> localMapTokenSheetIndexes() {
+    if (schedePersonaggio.isEmpty) return const [];
+    final canManageShared = canUseSharedSheetsForMasterInitiative();
+    if (!canManageShared && !mapPlayersCanManageOwnToken) return const [];
+    final indexes = <int>[];
+    for (var i = 0; i < schedePersonaggio.length; i++) {
+      if (canManageShared || sheetIsOwnLocalSheetAt(i)) {
+        indexes.add(i);
+      }
+    }
+    return indexes;
+  }
+
+  int safeLocalMapTokenSheetIndex() {
+    final indexes = localMapTokenSheetIndexes();
+    if (indexes.isEmpty) return -1;
+    if (indexes.contains(mapTokenSheetIndex)) return mapTokenSheetIndex;
+    mapTokenSheetIndex = indexes.first;
+    return mapTokenSheetIndex;
+  }
+
+  int indexForLocalMapToken(Map<String, dynamic> token) {
+    final tag = normalizeOculumFriendTag('${token['sheetTag'] ?? ''}');
+    if (tag.isEmpty) return -1;
+    return schedePersonaggio.indexWhere(
+      (sheet) =>
+          normalizeOculumFriendTag(
+            '${sheet['sheetTag'] ?? sheet['id'] ?? ''}',
+          ) ==
+          tag,
+    );
+  }
+
+  String localMapTokenOwnerTag(Map<String, dynamic> token) {
+    final ownerTag = normalizeOculumFriendTag('${token['ownerTag'] ?? ''}');
+    if (ownerTag.isNotEmpty) return ownerTag;
+    return normalizeOculumFriendTag('${token['sheetTag'] ?? ''}');
+  }
+
+  String currentLocalMapOwnerTag() {
+    if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length) {
+      return sheetTagAt(schedaCorrente);
+    }
+    final tags = localOculumTags();
+    return tags.isEmpty ? '' : tags.first;
+  }
+
+  bool canManageLocalMapToken(Map<String, dynamic> token) {
+    if (canUseSharedSheetsForMasterInitiative()) return true;
+    if (!mapPlayersCanManageOwnToken) return false;
+    final tag = localMapTokenOwnerTag(token);
+    if (tag.isEmpty) return false;
+    return localOculumTags().map(normalizeOculumFriendTag).contains(tag);
+  }
+
+  bool canSendLocalMapTokenToInitiative(Map<String, dynamic> token) {
+    final index = indexForLocalMapToken(token);
+    if (index >= 0) return sheetCanBeAddedToMasterInitiative(index);
+    return canManageLocalMapToken(token);
+  }
+
+  int localMapTokenIndexForSheet(int sheetIndex) {
+    if (sheetIndex < 0 || sheetIndex >= schedePersonaggio.length) return -1;
+    final tag = normalizeOculumFriendTag(sheetTagAt(sheetIndex));
+    return localMapTokens.indexWhere(
+      (token) => normalizeOculumFriendTag('${token['sheetTag'] ?? ''}') == tag,
+    );
+  }
+
+  bool selectedSheetHasLocalMapToken() {
+    final index = safeLocalMapTokenSheetIndex();
+    return index >= 0 && localMapTokenIndexForSheet(index) >= 0;
+  }
+
+  Map<String, dynamic> localMapTokenFromSheet(
+    int index, {
+    double x = 0.5,
+    double y = 0.5,
+  }) {
+    return <String, dynamic>{
+      'id': 'map_${sheetTagAt(index)}_${DateTime.now().microsecondsSinceEpoch}',
+      'sheetTag': sheetTagAt(index),
+      'ownerTag': sheetTagAt(index),
+      'name': nomeSchedaPersonaggio(index),
+      'type': tipoSchedaPersonaggio(index),
+      'side': sheetSideAt(index),
+      'imageBase64': sheetImageBase64At(index),
+      'shape': 'hex',
+      'level': max(0, sheetIntValueAt(index, 'livello')),
+      'grade': max(0, sheetIntValueAt(index, 'grado')),
+      'initiativeBase': sheetRollBonusAt(index, 'iniziativa'),
+      'reactionMax': sheetReazioniAt(index),
+      'reactionFastMax': sheetReazioniVelociAt(index),
+      'x': x.clamp(0.0, 1.0),
+      'y': y.clamp(0.0, 1.0),
+      'size': mapTokenDefaultSize(),
+      'movementUsedMeters': 0.0,
+    };
+  }
+
+  void toggleSelectedLocalMapToken() {
+    final index = safeLocalMapTokenSheetIndex();
+    if (index < 0) return;
+
+    final existingIndex = localMapTokenIndexForSheet(index);
+    if (existingIndex >= 0) {
+      final token = localMapTokens[existingIndex];
+      if (!canManageLocalMapToken(token)) return;
+      setState(() {
+        localMapTokens.removeAt(existingIndex);
+        risultato = t(
+          'Token rimosso dalla mappa: ${nomeSchedaPersonaggio(index)}.',
+          'Token removed from map: ${nomeSchedaPersonaggio(index)}.',
+        );
+        aggiungiLog(risultato);
+      });
+    } else {
+      if (!canUseSharedSheetsForMasterInitiative() &&
+          !mapPlayersCanManageOwnToken) {
+        return;
+      }
+      setState(() {
+        localMapTokens.add(localMapTokenFromSheet(index));
+        risultato = t(
+          'Token messo sulla mappa: ${nomeSchedaPersonaggio(index)}.',
+          'Token placed on map: ${nomeSchedaPersonaggio(index)}.',
+        );
+        aggiungiLog(risultato);
+      });
+    }
+
+    programmaSalvataggio();
+  }
+
+  void placeAllAvailableSheetTokensOnLocalMap() {
+    final indexes = localMapTokenSheetIndexes()
+        .where((index) => localMapTokenIndexForSheet(index) < 0)
+        .toList();
+    if (indexes.isEmpty) {
+      setState(() {
+        risultato = t(
+          'Tutte le schede disponibili hanno gia un token sulla mappa.',
+          'Every available sheet already has a token on the map.',
+        );
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+
+    setState(() {
+      for (var slot = 0; slot < indexes.length; slot++) {
+        final column = slot % 5;
+        final row = slot ~/ 5;
+        localMapTokens.add(
+          localMapTokenFromSheet(
+            indexes[slot],
+            x: ((column + 1) / 6).clamp(0.08, 0.92).toDouble(),
+            y: (0.16 + row * 0.13).clamp(0.08, 0.92).toDouble(),
+          ),
+        );
+      }
+      risultato = t(
+        'Token creati dalle schede: ${indexes.length}.',
+        'Tokens created from sheets: ${indexes.length}.',
+      );
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  void updateLocalMapTokenFromSheet(Map<String, dynamic> token) {
+    final index = indexForLocalMapToken(token);
+    if (index < 0 || !canManageLocalMapToken(token)) return;
+    setState(() {
+      token['name'] = nomeSchedaPersonaggio(index);
+      token['type'] = tipoSchedaPersonaggio(index);
+      token['side'] = sheetSideAt(index);
+      token['imageBase64'] = sheetImageBase64At(index);
+      token['level'] = max(0, sheetIntValueAt(index, 'livello'));
+      token['grade'] = max(0, sheetIntValueAt(index, 'grado'));
+      token['initiativeBase'] = sheetRollBonusAt(index, 'iniziativa');
+      token['reactionMax'] = sheetReazioniAt(index);
+      token['reactionFastMax'] = sheetReazioniVelociAt(index);
+      token['size'] = mapTokenDefaultSize();
+      risultato = t(
+        'Token aggiornato dalla scheda: ${nomeSchedaPersonaggio(index)}.',
+        'Token refreshed from sheet: ${nomeSchedaPersonaggio(index)}.',
+      );
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  void resizeLocalMapToken(Map<String, dynamic> token, double delta) {
+    if (!canManageLocalMapToken(token)) return;
+    setState(() {
+      final next = (readDoubleValue(token['size']) + delta)
+          .clamp(24.0, 240.0)
+          .toDouble();
+      token['size'] = next;
+    });
+    programmaSalvataggio();
+  }
+
+  void removeLocalMapToken(Map<String, dynamic> token) {
+    if (!canManageLocalMapToken(token)) return;
+    setState(() {
+      localMapTokens.removeWhere((item) => identical(item, token));
+      risultato = t('Token rimosso dalla mappa.', 'Token removed from map.');
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  int localMapTokenLevel(Map<String, dynamic> token) {
+    return max(0, readIntValue(token['level']));
+  }
+
+  int localMapTokenGrade(Map<String, dynamic> token) {
+    return max(0, readIntValue(token['grade']));
+  }
+
+  int localMapTokenInitiativeBase(Map<String, dynamic> token) {
+    return readIntValue(token['initiativeBase']);
+  }
+
+  int localMapTokenReactionMax(Map<String, dynamic> token) {
+    return max(1, readIntValue(token['reactionMax'], fallback: 1));
+  }
+
+  int localMapTokenFastReactionMax(Map<String, dynamic> token) {
+    return max(0, readIntValue(token['reactionFastMax']));
+  }
+
+  void syncLocalMapTokenInitiativeMirror(Map<String, dynamic> token) {
+    final mapTokenId = '${token['id'] ?? ''}'.trim();
+    if (mapTokenId.isEmpty) return;
+    final initiativeIndex = masterInitiativeTokens.indexWhere(
+      (item) => '${item['mapTokenId'] ?? ''}' == mapTokenId,
+    );
+    if (initiativeIndex < 0) return;
+
+    final initiativeToken = masterInitiativeTokens[initiativeIndex];
+    final roll = readIntValue(initiativeToken['initiativeRoll']);
+    final base = localMapTokenInitiativeBase(token);
+    final level = localMapTokenLevel(token);
+    final grade = localMapTokenGrade(token);
+    final difficulty = readIntValue(
+      token['rollDifficulty'] ?? token['difficoltaTiro'],
+    );
+    initiativeToken['name'] = localMapTokenDisplayName(token);
+    initiativeToken['type'] =
+        '${token['type'] ?? t('Token libero', 'Free token')}';
+    initiativeToken['side'] = '${token['side'] ?? 'neutral'}';
+    initiativeToken['imageBase64'] = '${token['imageBase64'] ?? ''}';
+    initiativeToken['colorArgb'] = readIntValue(token['colorArgb']);
+    initiativeToken['level'] = level;
+    initiativeToken['grade'] = grade;
+    initiativeToken['initiativeBase'] = base;
+    initiativeToken['initiativeTotal'] = roll > 0
+        ? rollTotalWithCritical(
+            roll,
+            20,
+            [base],
+            level: level,
+            grade: grade,
+            difficulty: difficulty,
+          )
+        : base;
+    initiativeToken['reactionMax'] = localMapTokenReactionMax(token);
+    initiativeToken['reactionFastMax'] = localMapTokenFastReactionMax(token);
+    initiativeToken['reactionManual'] = true;
+    initiativeToken['reactionFastManual'] = true;
+    initiativeToken['updatedAt'] = DateTime.now().toIso8601String();
+    sortMasterInitiativeTokens(forceInitiative: true);
+  }
+
+  void sendLocalMapTokenToInitiative(Map<String, dynamic> token) {
+    final index = indexForLocalMapToken(token);
+    if (index >= 0) {
+      if (!sheetCanBeAddedToMasterInitiative(index)) {
+        setState(() {
+          risultato = t(
+            'Solo il Master/Co-Master puo mettere in turnistica token non propri.',
+            'Only the Master/Co-Master can add non-owned tokens to initiative.',
+          );
+          aggiungiLog(risultato);
+        });
+        return;
+      }
+      addSheetToMasterInitiative(index);
+      return;
+    }
+
+    if (!canManageLocalMapToken(token)) {
+      setState(() {
+        risultato = t(
+          'Non puoi mettere in turnistica questo token libero.',
+          'You cannot add this free token to initiative.',
+        );
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+
+    setState(() {
+      var mapTokenId = '${token['id'] ?? ''}'.trim();
+      if (mapTokenId.isEmpty) {
+        mapTokenId =
+            'map_token_${DateTime.now().microsecondsSinceEpoch}_${Random().nextInt(999999)}';
+        token['id'] = mapTokenId;
+      }
+      final roll = tiraD20();
+      final base = localMapTokenInitiativeBase(token);
+      final level = localMapTokenLevel(token);
+      final grade = localMapTokenGrade(token);
+      final difficulty = readIntValue(
+        token['rollDifficulty'] ?? token['difficoltaTiro'],
+      );
+      final total = rollTotalWithCritical(
+        roll,
+        20,
+        [base],
+        level: level,
+        grade: grade,
+        difficulty: difficulty,
+      );
+      final existingIndex = masterInitiativeTokens.indexWhere(
+        (item) => '${item['mapTokenId'] ?? ''}' == mapTokenId,
+      );
+      final initiativeToken = <String, dynamic>{
+        'id': 'initiative_$mapTokenId',
+        'mapTokenId': mapTokenId,
+        'sheetTag': '',
+        'name': localMapTokenDisplayName(token),
+        'type': '${token['type'] ?? t('Token libero', 'Free token')}',
+        'side': '${token['side'] ?? 'neutral'}',
+        'imageBase64': '${token['imageBase64'] ?? ''}',
+        'colorArgb': readIntValue(token['colorArgb']),
+        'level': level,
+        'grade': grade,
+        'rollDifficulty': difficulty,
+        'initiativeRoll': roll,
+        'initiativeBase': base,
+        'initiativeTotal': total,
+        'tieBreaker': Random().nextInt(1 << 31),
+        'status': 'ready',
+        'notes': t('Token libero dalla mappa locale.', 'Free local map token.'),
+        'reactionMax': localMapTokenReactionMax(token),
+        'reactionFastMax': localMapTokenFastReactionMax(token),
+        'reactionManual': true,
+        'reactionFastManual': true,
+        'reactionUsed': 0,
+        'reactionUsedRound': 0,
+        'reactionFastUsed': 0,
+        'reactionFastTurnKey': '',
+        'actionUsed': false,
+        'temporaryTurn': false,
+        'duplicateAction': false,
+        'manualOrder': masterInitiativeManualCounter++,
+        'updatedAt': DateTime.now().toIso8601String(),
+      };
+
+      if (existingIndex >= 0) {
+        final previous = masterInitiativeTokens[existingIndex];
+        initiativeToken['id'] = previous['id'] ?? initiativeToken['id'];
+        initiativeToken['tieBreaker'] =
+            previous['tieBreaker'] ?? initiativeToken['tieBreaker'];
+        initiativeToken['status'] = previous['status'] ?? 'ready';
+        initiativeToken['notes'] =
+            previous['notes'] ?? initiativeToken['notes'];
+        initiativeToken['manualOrder'] =
+            previous['manualOrder'] ?? existingIndex;
+        initiativeToken['reactionUsed'] = previous['reactionUsed'] ?? 0;
+        initiativeToken['reactionUsedRound'] =
+            previous['reactionUsedRound'] ?? 0;
+        initiativeToken['reactionFastUsed'] = previous['reactionFastUsed'] ?? 0;
+        initiativeToken['reactionFastTurnKey'] =
+            previous['reactionFastTurnKey'] ?? '';
+        initiativeToken['actionUsed'] = previous['actionUsed'] ?? false;
+        masterInitiativeTokens[existingIndex] = initiativeToken;
+      } else {
+        masterInitiativeTokens.add(initiativeToken);
+      }
+
+      sortMasterInitiativeTokens(forceInitiative: true);
+      risultato = t(
+        'Token libero in turnistica: ${localMapTokenDisplayName(token)}.',
+        'Free token added to initiative: ${localMapTokenDisplayName(token)}.',
+      );
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+    sendRealtimeInitiativeSnapshotIfPublished();
+  }
+
+  Future<void> showFreeLocalMapTokenEditor(Map<String, dynamic> token) async {
+    if (!canManageLocalMapToken(token)) return;
+
+    final nameController = TextEditingController(
+      text: localMapTokenDisplayName(token),
+    );
+    final typeController = TextEditingController(
+      text: '${token['type'] ?? t('Token libero', 'Free token')}',
+    );
+    final initiativeController = TextEditingController(
+      text: localMapTokenInitiativeBase(token).toString(),
+    );
+    final levelController = TextEditingController(
+      text: localMapTokenLevel(token).toString(),
+    );
+    final gradeController = TextEditingController(
+      text: localMapTokenGrade(token).toString(),
+    );
+    final reactionsController = TextEditingController(
+      text: localMapTokenReactionMax(token).toString(),
+    );
+    final fastReactionsController = TextEditingController(
+      text: localMapTokenFastReactionMax(token).toString(),
+    );
+    final sizeController = TextEditingController(
+      text: localMapTokenSize(token).round().toString(),
+    );
+    final movementController = TextEditingController(
+      text: localMapTokenMovementBudget(token).toStringAsFixed(0),
+    );
+    var side = '${token['side'] ?? 'neutral'}'.toLowerCase();
+    if (side != 'ally' && side != 'enemy' && side != 'neutral') {
+      side = 'neutral';
+    }
+    var previewImageBase64 = '${token['imageBase64'] ?? ''}';
+    var previewColor = localMapTokenColor(token);
+
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setDialogState) {
+            final previewToken = <String, dynamic>{
+              ...token,
+              'imageBase64': previewImageBase64,
+              'colorArgb': previewColor.toARGB32(),
+              'side': side,
+            };
+
+            return AlertDialog(
+              backgroundColor: const Color(0xFF10121A),
+              title: Text(
+                t('Modifica token libero', 'Edit free token'),
+                style: TextStyle(
+                  color: tertiaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          localMapTokenAvatar(previewToken, 76),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final bytes =
+                                    await readMapTokenImageFromClipboard();
+                                if (!mounted) return;
+                                if (bytes == null || bytes.isEmpty) {
+                                  setState(() {
+                                    risultato = t(
+                                      'Nessuna immagine token trovata negli appunti.',
+                                      'No token image found in the clipboard.',
+                                    );
+                                    aggiungiLog(risultato);
+                                  });
+                                  return;
+                                }
+                                setDialogState(() {
+                                  previewImageBase64 = base64Encode(bytes);
+                                  previewColor = predominantImageColor(bytes);
+                                });
+                              },
+                              icon: const Icon(Icons.image_search),
+                              label: Text(
+                                t(
+                                  'Cambia immagine dagli appunti',
+                                  'Change image from clipboard',
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: nameController,
+                        decoration: fieldDecoration(t('Nome', 'Name')),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: typeController,
+                        decoration: fieldDecoration(t('Tipo', 'Type')),
+                      ),
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<String>(
+                        initialValue: side,
+                        decoration: fieldDecoration(t('Lato', 'Side')),
+                        dropdownColor: const Color(0xFF10121A),
+                        items: [
+                          DropdownMenuItem(
+                            value: 'ally',
+                            child: Text(t('Alleato', 'Ally')),
+                          ),
+                          DropdownMenuItem(
+                            value: 'enemy',
+                            child: Text(t('Nemico', 'Enemy')),
+                          ),
+                          DropdownMenuItem(
+                            value: 'neutral',
+                            child: Text(t('Neutrale', 'Neutral')),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setDialogState(() => side = value);
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          SizedBox(
+                            width: 150,
+                            child: TextField(
+                              controller: initiativeController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    signed: true,
+                                  ),
+                              decoration: fieldDecoration(
+                                t('Iniziativa', 'Initiative'),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 110,
+                            child: TextField(
+                              controller: levelController,
+                              keyboardType: TextInputType.number,
+                              decoration: fieldDecoration(
+                                t('Livello', 'Level'),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 110,
+                            child: TextField(
+                              controller: gradeController,
+                              keyboardType: TextInputType.number,
+                              decoration: fieldDecoration(t('Grado', 'Grade')),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 130,
+                            child: TextField(
+                              controller: reactionsController,
+                              keyboardType: TextInputType.number,
+                              decoration: fieldDecoration(
+                                t('Reazioni', 'Reactions'),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 150,
+                            child: TextField(
+                              controller: fastReactionsController,
+                              keyboardType: TextInputType.number,
+                              decoration: fieldDecoration(
+                                t('Reaz. rapide', 'Fast react.'),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 130,
+                            child: TextField(
+                              controller: sizeController,
+                              keyboardType: TextInputType.number,
+                              decoration: fieldDecoration(
+                                t('Grandezza', 'Size'),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 150,
+                            child: TextField(
+                              controller: movementController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: fieldDecoration(
+                                t('Movimento m', 'Move m'),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(t('Annulla', 'Cancel')),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      token['name'] = cleanUiText(nameController.text).trim();
+                      token['type'] = cleanUiText(typeController.text).trim();
+                      token['side'] = side;
+                      token['imageBase64'] = previewImageBase64;
+                      token['colorArgb'] = previewColor.toARGB32();
+                      token['level'] = max(
+                        0,
+                        readIntValue(levelController.text),
+                      );
+                      token['grade'] = max(
+                        0,
+                        readIntValue(gradeController.text),
+                      );
+                      token['initiativeBase'] = readIntValue(
+                        initiativeController.text,
+                      );
+                      token['reactionMax'] = max(
+                        1,
+                        readIntValue(reactionsController.text, fallback: 1),
+                      );
+                      token['reactionFastMax'] = max(
+                        0,
+                        readIntValue(fastReactionsController.text),
+                      );
+                      token['size'] = readDoubleValue(
+                        sizeController.text,
+                      ).clamp(24.0, 240.0);
+                      final movement = readDoubleValue(movementController.text);
+                      token['movementMaxMeters'] = movement > 0
+                          ? movement
+                          : mapFreeTokenMovementValue();
+                      syncLocalMapTokenInitiativeMirror(token);
+                      risultato = t(
+                        'Token libero aggiornato: ${localMapTokenDisplayName(token)}.',
+                        'Free token updated: ${localMapTokenDisplayName(token)}.',
+                      );
+                      aggiungiLog(risultato);
+                    });
+                    programmaSalvataggio();
+                    sendRealtimeInitiativeSnapshotIfPublished();
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.save),
+                  label: Text(t('Salva', 'Save')),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    } finally {
+      nameController.dispose();
+      typeController.dispose();
+      initiativeController.dispose();
+      levelController.dispose();
+      gradeController.dispose();
+      reactionsController.dispose();
+      fastReactionsController.dispose();
+      sizeController.dispose();
+      movementController.dispose();
+    }
+  }
+
+  Future<void> showLocalMapTokenMenu(
+    Map<String, dynamic> token,
+    Offset globalPosition,
+  ) async {
+    final canManage = canManageLocalMapToken(token);
+    final canSend = canSendLocalMapTokenToInitiative(token);
+    final hasLinkedSheet = indexForLocalMapToken(token) >= 0;
+    final choice = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        globalPosition.dx,
+        globalPosition.dy,
+        globalPosition.dx,
+        globalPosition.dy,
+      ),
+      items: [
+        PopupMenuItem<String>(
+          value: 'initiative',
+          enabled: canSend,
+          child: Row(
+            children: [
+              Icon(Icons.sports_martial_arts, color: primaryColor, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(t('Metti in turnistica', 'Add to initiative')),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'edit',
+          enabled: canManage && !hasLinkedSheet,
+          child: Row(
+            children: [
+              Icon(Icons.tune, color: tertiaryColor, size: 18),
+              const SizedBox(width: 8),
+              Expanded(child: Text(t('Modifica token', 'Edit token'))),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'refresh',
+          enabled: canManage && hasLinkedSheet,
+          child: Row(
+            children: [
+              Icon(Icons.sync, color: tertiaryColor, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(t('Aggiorna dalla scheda', 'Refresh from sheet')),
+              ),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: 'bigger',
+          enabled: canManage,
+          child: Row(
+            children: [
+              Icon(Icons.zoom_in, color: primaryColor, size: 18),
+              const SizedBox(width: 8),
+              Text(t('Piu grande', 'Bigger')),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'smaller',
+          enabled: canManage,
+          child: Row(
+            children: [
+              Icon(Icons.zoom_out, color: primaryColor, size: 18),
+              const SizedBox(width: 8),
+              Text(t('Piu piccolo', 'Smaller')),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'resetMovement',
+          enabled: canManage,
+          child: Row(
+            children: [
+              Icon(Icons.directions_run, color: tertiaryColor, size: 18),
+              const SizedBox(width: 8),
+              Text(t('Reset movimento', 'Reset movement')),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'remove',
+          enabled: canManage,
+          child: Row(
+            children: [
+              const Icon(
+                Icons.delete_outline,
+                color: Colors.redAccent,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(t('Togli token', 'Remove token')),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (!mounted || choice == null) return;
+    switch (choice) {
+      case 'initiative':
+        sendLocalMapTokenToInitiative(token);
+        break;
+      case 'edit':
+        await showFreeLocalMapTokenEditor(token);
+        break;
+      case 'refresh':
+        updateLocalMapTokenFromSheet(token);
+        break;
+      case 'bigger':
+        resizeLocalMapToken(token, 12);
+        break;
+      case 'smaller':
+        resizeLocalMapToken(token, -12);
+        break;
+      case 'resetMovement':
+        setState(() {
+          resetLocalMapTokenMovement(token);
+          risultato = t('Movimento token resettato.', 'Token movement reset.');
+          aggiungiLog(risultato);
+        });
+        programmaSalvataggio();
+        break;
+      case 'remove':
+        removeLocalMapToken(token);
+        break;
+    }
+  }
+
+  Widget localMapTokenControlPanel() {
+    final indexes = localMapTokenSheetIndexes();
+    final selected = safeLocalMapTokenSheetIndex();
+    final hasSelectedToken = selectedSheetHasLocalMapToken();
+    final canManageShared = canUseSharedSheetsForMasterInitiative();
+    final canUseTokens = indexes.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 14),
+        Divider(color: primaryColor.withValues(alpha: 0.28)),
+        const SizedBox(height: 10),
+        Text(
+          t('Token mappa locale', 'Local map tokens'),
+          style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          value: mapPlayersCanManageOwnToken,
+          activeThumbColor: tertiaryColor,
+          title: Text(
+            t(
+              'I player possono mettere/togliere il proprio token',
+              'Players can place/remove their own token',
+            ),
+          ),
+          subtitle: Text(
+            canManageShared
+                ? t(
+                    'Il Master puo comunque gestire tutti i token e mandarli in turnistica.',
+                    'The Master can still manage every token and send it to initiative.',
+                  )
+                : t(
+                    'Se disattivo, solo Master/Co-Master puo gestire token sulla mappa.',
+                    'If disabled, only Master/Co-Master can manage map tokens.',
+                  ),
+          ),
+          onChanged: (value) {
+            setState(() => mapPlayersCanManageOwnToken = value);
+            programmaSalvataggio();
+          },
+        ),
+        const SizedBox(height: 8),
+        if (!canUseTokens)
+          smallInfoText(
+            t(
+              'Nessuna scheda disponibile per creare token.',
+              'No sheet available to create tokens.',
+            ),
+          )
+        else ...[
+          DropdownButtonFormField<int>(
+            initialValue: selected < 0 ? indexes.first : selected,
+            decoration: fieldDecoration(t('Scheda token', 'Token sheet')),
+            dropdownColor: const Color(0xFF10121A),
+            items: [
+              for (final index in indexes)
+                DropdownMenuItem<int>(
+                  value: index,
+                  child: Text(
+                    '${nomeSchedaPersonaggio(index)} - ${tipoSchedaPersonaggio(index)}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => mapTokenSheetIndex = value);
+              programmaSalvataggio();
+            },
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(
+                width: 150,
+                child: campoTesto(
+                  label: t('Grandezza token', 'Token size'),
+                  controller: mapTokenSizeController,
+                  helper: '24-240',
+                ),
+              ),
+              SizedBox(
+                width: 170,
+                child: campoTesto(
+                  label: t('Larghezza mappa m', 'Map width m'),
+                  controller: mapWidthMetersController,
+                  helper: t('Scala movimento', 'Movement scale'),
+                ),
+              ),
+              SizedBox(
+                width: 160,
+                child: campoTesto(
+                  label: t('Altezza mappa m', 'Map height m'),
+                  controller: mapHeightMetersController,
+                  helper: t('Metri verticali', 'Vertical meters'),
+                ),
+              ),
+              SizedBox(
+                width: 190,
+                child: campoTesto(
+                  label: t('Movimento token libero', 'Free token movement'),
+                  controller: mapFreeTokenMovementController,
+                  helper: t('Metri per turno', 'Meters per turn'),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: toggleSelectedLocalMapToken,
+                icon: Icon(
+                  hasSelectedToken ? Icons.visibility_off : Icons.add_location,
+                ),
+                label: Text(
+                  hasSelectedToken
+                      ? t('Togli token', 'Remove token')
+                      : t('Metti token', 'Place token'),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: placeAllAvailableSheetTokensOnLocalMap,
+                icon: const Icon(Icons.group_add),
+                label: Text(t('Metti schede', 'Place sheets')),
+              ),
+              if (canManageShared && localMapTokens.isNotEmpty)
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      localMapTokens.clear();
+                      risultato = t(
+                        'Token mappa locale rimossi.',
+                        'Local map tokens removed.',
+                      );
+                      aggiungiLog(risultato);
+                    });
+                    programmaSalvataggio();
+                  },
+                  icon: const Icon(Icons.layers_clear),
+                  label: Text(t('Pulisci token', 'Clear tokens')),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          smallInfoText(
+            t(
+              'Trascina i token sulla mappa. Tasto destro o pressione lunga: turnistica, modifica, dimensione, aggiorna o rimuovi.',
+              'Drag tokens on the map. Right-click or long press: initiative, edit, size, refresh or remove.',
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  double localMapTokenAxis(Map<String, dynamic> token, String key) {
+    final value = token[key];
+    if (value == null) return 0.5;
+    return readDoubleValue(value).clamp(0.0, 1.0).toDouble();
+  }
+
+  double localMapTokenSize(Map<String, dynamic> token) {
+    final size = readDoubleValue(token['size']);
+    if (size <= 0) return mapTokenDefaultSize();
+    return size.clamp(24.0, 240.0).toDouble();
+  }
+
+  int sheetMovementAt(int index) {
+    if (index < 0 || index >= schedePersonaggio.length) return 0;
+    if (index == schedaCorrente) return movimento();
+    final derived = readIntValue(
+      schedePersonaggio[index]['derivedMovimento'],
+      fallback: -1,
+    );
+    if (derived >= 0) return derived;
+    return max(0, 30 + sheetIntValueAt(index, 'materia') ~/ 6);
+  }
+
+  Map<String, dynamic>? initiativeTokenForLocalMapToken(
+    Map<String, dynamic> token,
+  ) {
+    final mapTokenId = '${token['id'] ?? ''}'.trim();
+    if (mapTokenId.isNotEmpty) {
+      for (final initiativeToken in masterInitiativeTokens) {
+        if ('${initiativeToken['mapTokenId'] ?? ''}' == mapTokenId) {
+          return initiativeToken;
+        }
+      }
+    }
+
+    final sheetTag = normalizeOculumFriendTag('${token['sheetTag'] ?? ''}');
+    final tag = sheetTag.isNotEmpty ? sheetTag : localMapTokenOwnerTag(token);
+    if (tag.isEmpty) return null;
+    for (final initiativeToken in masterInitiativeTokens) {
+      final candidate = normalizeOculumFriendTag(
+        '${initiativeToken['sheetTag'] ?? initiativeToken['sheetId'] ?? ''}',
+      );
+      if (candidate == tag) return initiativeToken;
+    }
+    return null;
+  }
+
+  double localMapTokenMovementUsed(Map<String, dynamic> token) {
+    return readDoubleValue(token['movementUsedMeters']);
+  }
+
+  double localMapTokenMovementBudget(Map<String, dynamic> token) {
+    final index = indexForLocalMapToken(token);
+    if (index < 0) {
+      final custom = readDoubleValue(token['movementMaxMeters']);
+      return custom > 0 ? custom : mapFreeTokenMovementValue();
+    }
+    return sheetMovementAt(index).toDouble();
+  }
+
+  void resetLocalMapTokenMovement(Map<String, dynamic> token) {
+    token['movementUsedMeters'] = 0.0;
+    token['movementTurnKey'] = masterInitiativeTurnKey();
+    token['movementRound'] = masterInitiativeRound;
+  }
+
+  void resetLocalMapMovementForInitiativeToken(Map<String, dynamic> token) {
+    final mapTokenId = '${token['mapTokenId'] ?? ''}'.trim();
+    if (mapTokenId.isNotEmpty) {
+      for (final mapToken in localMapTokens) {
+        if ('${mapToken['id'] ?? ''}' == mapTokenId) {
+          resetLocalMapTokenMovement(mapToken);
+          return;
+        }
+      }
+    }
+
+    final tag = normalizeOculumFriendTag(
+      '${token['sheetTag'] ?? token['sheetId'] ?? ''}',
+    );
+    if (tag.isEmpty) return;
+    for (final mapToken in localMapTokens) {
+      final mapSheetTag = normalizeOculumFriendTag(
+        '${mapToken['sheetTag'] ?? ''}',
+      );
+      final mapOwnerTag = localMapTokenOwnerTag(mapToken);
+      if (mapSheetTag == tag || mapOwnerTag == tag) {
+        resetLocalMapTokenMovement(mapToken);
+      }
+    }
+  }
+
+  double localMapTokenMovementRemaining(Map<String, dynamic> token) {
+    final budget = localMapTokenMovementBudget(token);
+    if (budget.isInfinite) return double.infinity;
+    return max(0.0, budget - localMapTokenMovementUsed(token)).toDouble();
+  }
+
+  Offset allowedLocalMapTokenDelta(
+    Map<String, dynamic> token,
+    Offset requested,
+    double canvasWidth,
+    double canvasHeight,
+  ) {
+    final initiativeToken = initiativeTokenForLocalMapToken(token);
+    if (initiativeToken != null &&
+        masterInitiativeReactionUsedTotal(initiativeToken) > 0) {
+      return Offset.zero;
+    }
+
+    if (initiativeToken != null) {
+      final movementKey =
+          '${initiativeToken['id'] ?? initiativeToken['sheetTag'] ?? ''}:$masterInitiativeRound';
+      if ('${initiativeToken['status'] ?? ''}' == 'active' &&
+          '${token['movementTurnKey'] ?? ''}' != movementKey) {
+        token['movementTurnKey'] = movementKey;
+        token['movementUsedMeters'] = 0.0;
+      } else {
+        token['movementTurnKey'] = '${token['movementTurnKey'] ?? movementKey}';
+      }
+    } else {
+      token['movementTurnKey'] =
+          '${token['movementTurnKey'] ?? masterInitiativeTurnKey()}';
+    }
+
+    final remaining = localMapTokenMovementRemaining(token);
+    if (remaining <= 0) return Offset.zero;
+    final dxMeters =
+        requested.dx / max(1.0, canvasWidth) * mapWidthMetersValue();
+    final dyMeters =
+        requested.dy / max(1.0, canvasHeight) * mapHeightMetersValue();
+    final requestedMeters = sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
+    if (requestedMeters <= 0) return requested;
+    final scale = min(1.0, remaining / requestedMeters);
+    token['movementUsedMeters'] =
+        localMapTokenMovementUsed(token) + requestedMeters * scale;
+    return requested * scale;
+  }
+
+  Color localMapTokenColor(Map<String, dynamic> token) {
+    final custom = readIntValue(token['colorArgb']);
+    if (custom != 0) return Color(custom);
+    final side = '${token['side'] ?? ''}'.toLowerCase();
+    if (side == 'enemy') return Colors.redAccent;
+    if (side == 'neutral') return Colors.blueGrey.shade200;
+    return primaryColor;
+  }
+
+  String localMapTokenDisplayName(Map<String, dynamic> token) {
+    final index = indexForLocalMapToken(token);
+    if (index >= 0) return nomeSchedaPersonaggio(index);
+    final name = '${token['name'] ?? ''}'.trim();
+    return name.isEmpty ? t('Token', 'Token') : name;
+  }
+
+  Widget localMapTokenAvatar(Map<String, dynamic> token, double size) {
+    final imageRaw = '${token['imageBase64'] ?? ''}';
+    final color = localMapTokenColor(token);
+    Widget child;
+    final bytes = decodedBase64ImageCached(imageRaw);
+    if (bytes != null) {
+      child = Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        errorBuilder: (context, error, stackTrace) =>
+            Icon(Icons.person_pin_circle, color: color, size: size * 0.54),
+      );
+    } else {
+      child = Icon(Icons.person_pin_circle, color: color, size: size * 0.54);
+    }
+
+    final border = max(3, size / 18).toDouble();
+    return SizedBox(
+      width: size,
+      height: size,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.34),
+              blurRadius: 14,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: ClipPath(
+          clipper: const HexagonClipper(),
+          child: ColoredBox(
+            color: Colors.black.withValues(alpha: 0.88),
+            child: Padding(
+              padding: EdgeInsets.all(border),
+              child: ClipPath(
+                clipper: const HexagonClipper(),
+                child: ColoredBox(
+                  color: color,
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: ClipPath(
+                      clipper: const HexagonClipper(),
+                      child: child,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget localMapTokenWidget(
+    Map<String, dynamic> token,
+    double canvasWidth,
+    double canvasHeight,
+  ) {
+    final size = localMapTokenSize(token);
+    final boxWidth = max(size + 40, 92).toDouble();
+    final movementBudget = localMapTokenMovementBudget(token);
+    final movementRemaining = localMapTokenMovementRemaining(token);
+    final hasMovementLabel = movementBudget.isFinite && movementBudget > 0;
+    final movementLabel = hasMovementLabel
+        ? '${movementRemaining.toStringAsFixed(movementRemaining < 10 ? 1 : 0)}/${movementBudget.toStringAsFixed(movementBudget < 10 ? 1 : 0)} m'
+        : '';
+    final canDrag = canManageLocalMapToken(token);
+    final boxHeight = size + (hasMovementLabel ? 44 : 28) + (canDrag ? 28 : 0);
+    final x = localMapTokenAxis(token, 'x');
+    final y = localMapTokenAxis(token, 'y');
+    final left = (x * canvasWidth - boxWidth / 2)
+        .clamp(0.0, max(0, canvasWidth - boxWidth))
+        .toDouble();
+    final top = (y * canvasHeight - boxHeight / 2)
+        .clamp(0.0, max(0, canvasHeight - boxHeight))
+        .toDouble();
+    final color = localMapTokenColor(token);
+    final name = localMapTokenDisplayName(token);
+
+    return Positioned(
+      left: left,
+      top: top,
+      width: boxWidth,
+      height: boxHeight,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onPanUpdate: canDrag
+            ? (details) {
+                setState(() {
+                  final allowedDelta = allowedLocalMapTokenDelta(
+                    token,
+                    details.delta,
+                    canvasWidth,
+                    canvasHeight,
+                  );
+                  final nextX =
+                      localMapTokenAxis(token, 'x') +
+                      allowedDelta.dx / canvasWidth;
+                  final nextY =
+                      localMapTokenAxis(token, 'y') +
+                      allowedDelta.dy / canvasHeight;
+                  token['x'] = nextX.clamp(0.0, 1.0).toDouble();
+                  token['y'] = nextY.clamp(0.0, 1.0).toDouble();
+                });
+              }
+            : null,
+        onPanEnd: canDrag ? (_) => programmaSalvataggio() : null,
+        onSecondaryTapDown: (details) =>
+            showLocalMapTokenMenu(token, details.globalPosition),
+        onLongPressStart: (details) =>
+            showLocalMapTokenMenu(token, details.globalPosition),
+        child: Tooltip(
+          message: t(
+            '$name${hasMovementLabel ? '\nMovimento: $movementLabel' : ''}\nTasto destro: turnistica e opzioni.',
+            '$name${hasMovementLabel ? '\nMovement: $movementLabel' : ''}\nRight-click: initiative and options.',
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (canDrag)
+                SizedBox(
+                  height: 24,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton.filledTonal(
+                        tooltip: t('Rimpicciolisci token', 'Shrink token'),
+                        onPressed: () => resizeLocalMapToken(token, -8),
+                        constraints: const BoxConstraints.tightFor(
+                          width: 28,
+                          height: 22,
+                        ),
+                        padding: EdgeInsets.zero,
+                        iconSize: 14,
+                        icon: const Icon(Icons.remove),
+                      ),
+                      const SizedBox(width: 4),
+                      IconButton.filledTonal(
+                        tooltip: t('Ingrandisci token', 'Enlarge token'),
+                        onPressed: () => resizeLocalMapToken(token, 8),
+                        constraints: const BoxConstraints.tightFor(
+                          width: 28,
+                          height: 22,
+                        ),
+                        padding: EdgeInsets.zero,
+                        iconSize: 14,
+                        icon: const Icon(Icons.add),
+                      ),
+                    ],
+                  ),
+                ),
+              localMapTokenAvatar(token, size),
+              const SizedBox(height: 3),
+              Container(
+                width: boxWidth,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.74),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: color.withValues(alpha: 0.55)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (hasMovementLabel)
+                      Text(
+                        movementLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget localImageMapViewer(File imageFile, double width, double height) {
+    return InteractiveViewer(
+      transformationController: mapTransformationController,
+      minScale: 0.5,
+      maxScale: 8,
+      child: SizedBox(
+        width: width,
+        height: height,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned.fill(
+              child: Image.file(
+                imageFile,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => mapEmptyState(
+                  t(
+                    'Immagine mappa non leggibile.',
+                    'Map image cannot be read.',
+                  ),
+                ),
+              ),
+            ),
+            for (final token in localMapTokens)
+              localMapTokenWidget(token, width, height),
+          ],
+        ),
+      ),
+    );
+  }
+
+  int sheetIndexForInitiativeToken(Map<String, dynamic> token) {
+    final tag = normalizeOculumFriendTag(
+      '${token['sheetTag'] ?? token['sheetId'] ?? ''}',
+    );
+    if (tag.isEmpty) return -1;
+    return schedePersonaggio.indexWhere(
+      (sheet) =>
+          normalizeOculumFriendTag(
+            '${sheet['sheetTag'] ?? sheet['id'] ?? ''}',
+          ) ==
+          tag,
+    );
+  }
+
+  Map<String, dynamic>? localMapTokenForInitiativeToken(
+    Map<String, dynamic> token,
+  ) {
+    final mapTokenId = '${token['mapTokenId'] ?? ''}'.trim();
+    if (mapTokenId.isNotEmpty) {
+      for (final mapToken in localMapTokens) {
+        if ('${mapToken['id'] ?? ''}' == mapTokenId) return mapToken;
+      }
+    }
+
+    final tag = normalizeOculumFriendTag(
+      '${token['sheetTag'] ?? token['sheetId'] ?? ''}',
+    );
+    if (tag.isEmpty) return null;
+    for (final mapToken in localMapTokens) {
+      final mapSheetTag = normalizeOculumFriendTag(
+        '${mapToken['sheetTag'] ?? ''}',
+      );
+      final mapOwnerTag = localMapTokenOwnerTag(mapToken);
+      if (mapSheetTag == tag || mapOwnerTag == tag) {
+        return mapToken;
+      }
+    }
+    return null;
+  }
+
+  Widget localMapMiniInitiativePanel() {
+    if (masterInitiativeTokens.isEmpty) {
+      return smallInfoText(
+        t(
+          'Mini turnistica: aggiungi token alla turnistica con tasto destro sulla mappa.',
+          'Mini initiative: add tokens to initiative with right-click on the map.',
+        ),
+      );
+    }
+
+    final active = masterInitiativeActiveIndex
+        .clamp(0, masterInitiativeTokens.length - 1)
+        .toInt();
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.24),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.26)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.sports_martial_arts, color: primaryColor, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${t('Mini turnistica', 'Mini initiative')} - ${t('Round', 'Round')} $masterInitiativeRound',
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: t('Turno precedente', 'Previous turn'),
+                onPressed: () => nextMasterInitiativeTurn(delta: -1),
+                icon: const Icon(Icons.chevron_left),
+                color: primaryColor,
+              ),
+              IconButton(
+                tooltip: t('Turno successivo', 'Next turn'),
+                onPressed: () => nextMasterInitiativeTurn(),
+                icon: const Icon(Icons.chevron_right),
+                color: primaryColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (var i = 0; i < masterInitiativeTokens.length; i++)
+                Builder(
+                  builder: (context) {
+                    final token = masterInitiativeTokens[i];
+                    final mapToken = localMapTokenForInitiativeToken(token);
+                    final sheetIndex = sheetIndexForInitiativeToken(token);
+                    final budget = sheetIndex >= 0
+                        ? sheetMovementAt(sheetIndex)
+                        : 0;
+                    final remaining = mapToken == null
+                        ? budget.toDouble()
+                        : localMapTokenMovementRemaining(mapToken);
+                    final reactionUsed =
+                        masterInitiativeReactionUsedTotal(token) > 0;
+                    final isActive = i == active;
+                    final sideColor = '${token['side'] ?? ''}' == 'enemy'
+                        ? Colors.redAccent
+                        : isActive
+                        ? tertiaryColor
+                        : primaryColor;
+                    return ActionChip(
+                      avatar: Icon(
+                        reactionUsed
+                            ? Icons.bolt
+                            : isActive
+                            ? Icons.play_arrow
+                            : Icons.circle,
+                        size: 16,
+                        color: sideColor,
+                      ),
+                      label: Text(
+                        '${token['name'] ?? '???'}'
+                        '${budget > 0 ? ' ${remaining.isInfinite ? '' : '${remaining.round()}/$budget m'}' : ''}',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      tooltip: reactionUsed
+                          ? t(
+                              'Reazione usata: movimento token bloccato.',
+                              'Reaction used: token movement locked.',
+                            )
+                          : t(
+                              'Tocca per renderlo turno attivo.',
+                              'Tap to make this the active turn.',
+                            ),
+                      backgroundColor: sideColor.withValues(
+                        alpha: isActive ? 0.24 : 0.12,
+                      ),
+                      side: BorderSide(color: sideColor.withValues(alpha: 0.6)),
+                      onPressed: () => setMasterInitiativeActiveIndex(i),
+                    );
+                  },
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget mapControlPanel() {
     final onlineSelected = mapMode == 'online';
+    final hasLocalImage =
+        !onlineSelected &&
+        mapImagePath.trim().isNotEmpty &&
+        File(mapImagePath.trim()).existsSync();
     return gothicPanel(
       borderColor: onlineSelected ? tertiaryColor : primaryColor,
       child: Column(
@@ -4616,8 +7217,19 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                 ),
                 OutlinedButton.icon(
                   onPressed: incollaImmagineMappa,
-                  icon: const Icon(Icons.content_paste),
-                  label: Text(t('Incolla', 'Paste')),
+                  icon: Icon(
+                    hasLocalImage ? Icons.hexagon : Icons.content_paste,
+                  ),
+                  label: Text(
+                    hasLocalImage
+                        ? t('Incolla token', 'Paste token')
+                        : t('Incolla', 'Paste'),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: incollaTokenImmagineMappa,
+                  icon: const Icon(Icons.hexagon),
+                  label: Text(t('Incolla token', 'Paste token')),
                 ),
                 OutlinedButton.icon(
                   onPressed: resetMapView,
@@ -4633,6 +7245,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                 ),
               ],
             ),
+            localMapTokenControlPanel(),
           ] else ...[
             smallInfoText(
               t(
@@ -4768,23 +7381,10 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                   child: onlineSelected
                       ? onlineMapViewer(onlineUri)
                       : hasImage
-                      ? InteractiveViewer(
-                          transformationController: mapTransformationController,
-                          minScale: 0.5,
-                          maxScale: 8,
-                          child: Center(
-                            child: Image.file(
-                              imageFile,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  mapEmptyState(
-                                    t(
-                                      'Immagine mappa non leggibile.',
-                                      'Map image cannot be read.',
-                                    ),
-                                  ),
-                            ),
-                          ),
+                      ? localImageMapViewer(
+                          imageFile,
+                          constraints.maxWidth,
+                          height,
                         )
                       : mapEmptyState(
                           t(
@@ -8019,6 +10619,206 @@ class _OculumThemePanelDecorationPainter extends CustomPainter {
   }
 }
 
+class _OculumJrpgCompanionPainter extends CustomPainter {
+  const _OculumJrpgCompanionPainter({required this.spec});
+
+  final OculumThemeDecorationSpec spec;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    final scale = min(size.width / 260.0, size.height / 280.0);
+    canvas.save();
+    canvas.translate(
+      (size.width - 260 * scale) / 2,
+      (size.height - 280 * scale) * 0.82,
+    );
+    canvas.scale(scale);
+
+    final outline = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..color = spec.primary.withValues(alpha: 0.72);
+    final fine = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.45
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..color = spec.accent.withValues(alpha: 0.72);
+    final body = Paint()
+      ..style = PaintingStyle.fill
+      ..shader = LinearGradient(
+        colors: [
+          Color.lerp(
+            spec.backgroundMid,
+            const Color(0xFF3957B8),
+            0.52,
+          )!.withValues(alpha: 0.92),
+          Color.lerp(
+            spec.backgroundBottom,
+            const Color(0xFF090A22),
+            0.44,
+          )!.withValues(alpha: 0.96),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(const Rect.fromLTWH(0, 0, 260, 280));
+    final belly = Paint()
+      ..style = PaintingStyle.fill
+      ..shader =
+          RadialGradient(
+            colors: [
+              spec.primary.withValues(alpha: 0.78),
+              spec.accent.withValues(alpha: 0.32),
+              Colors.transparent,
+            ],
+          ).createShader(
+            Rect.fromCircle(center: const Offset(132, 158), radius: 50),
+          );
+    final gold = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFFE7B84A).withValues(alpha: 0.78);
+    final coral = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFFFF8B78).withValues(alpha: 0.70);
+    final glow = Paint()
+      ..style = PaintingStyle.fill
+      ..color = spec.accent.withValues(alpha: 0.18)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
+
+    canvas.drawOval(const Rect.fromLTWH(52, 238, 152, 26), glow);
+    canvas.drawCircle(const Offset(136, 146), 86, glow);
+
+    final tail = Path()
+      ..moveTo(177, 177)
+      ..cubicTo(226, 171, 237, 214, 203, 224)
+      ..cubicTo(178, 231, 179, 202, 199, 204);
+    canvas.drawPath(tail, outline);
+    canvas.drawPath(tail, fine);
+
+    final leftWing = Path()
+      ..moveTo(72, 142)
+      ..cubicTo(32, 122, 30, 167, 52, 192)
+      ..cubicTo(67, 178, 76, 160, 72, 142)
+      ..close();
+    final rightWing = Path()
+      ..moveTo(188, 142)
+      ..cubicTo(229, 126, 228, 170, 207, 194)
+      ..cubicTo(192, 181, 183, 160, 188, 142)
+      ..close();
+    canvas.drawPath(leftWing, body);
+    canvas.drawPath(rightWing, body);
+    canvas.drawPath(leftWing, outline);
+    canvas.drawPath(rightWing, outline);
+    canvas.drawLine(const Offset(50, 181), const Offset(70, 158), fine);
+    canvas.drawLine(const Offset(210, 181), const Offset(190, 158), fine);
+
+    final torso = Path()
+      ..moveTo(130, 98)
+      ..cubicTo(80, 100, 66, 142, 75, 185)
+      ..cubicTo(82, 228, 112, 247, 139, 239)
+      ..cubicTo(181, 228, 195, 190, 187, 151)
+      ..cubicTo(181, 115, 159, 98, 130, 98)
+      ..close();
+    canvas.drawPath(torso, body);
+    canvas.drawPath(torso, outline);
+
+    final head = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(78, 42, 105, 78),
+      const Radius.circular(30),
+    );
+    canvas.drawRRect(head, body);
+    canvas.drawRRect(head, outline);
+
+    final crest = Path()
+      ..moveTo(112, 43)
+      ..lineTo(124, 16)
+      ..lineTo(138, 42)
+      ..lineTo(152, 19)
+      ..lineTo(158, 47);
+    canvas.drawPath(crest, outline);
+    canvas.drawCircle(const Offset(124, 18), 5.5, gold);
+    canvas.drawCircle(const Offset(152, 20), 4.8, coral);
+
+    canvas.drawCircle(const Offset(108, 76), 13, fine);
+    canvas.drawCircle(const Offset(154, 78), 10, gold);
+    canvas.drawCircle(
+      const Offset(111, 73),
+      4.2,
+      spec.primary.withValues(alpha: 0.94).toPaint(),
+    );
+    canvas.drawCircle(
+      const Offset(157, 75),
+      3.4,
+      spec.secondary.withValues(alpha: 0.92).toPaint(),
+    );
+
+    final mouth = Path()
+      ..moveTo(111, 100)
+      ..quadraticBezierTo(132, 112, 154, 101);
+    canvas.drawPath(mouth, fine);
+    canvas.drawCircle(const Offset(132, 107), 3.6, coral);
+
+    canvas.drawOval(const Rect.fromLTWH(96, 128, 73, 66), belly);
+    canvas.drawOval(const Rect.fromLTWH(96, 128, 73, 66), fine);
+    final core = Path()
+      ..moveTo(133, 138)
+      ..lineTo(156, 160)
+      ..lineTo(133, 183)
+      ..lineTo(110, 160)
+      ..close();
+    canvas.drawPath(core, spec.accent.withValues(alpha: 0.58).toPaint());
+    canvas.drawPath(core, outline);
+
+    for (final foot in <Offset>[
+      const Offset(99, 237),
+      const Offset(157, 235),
+    ]) {
+      canvas.drawOval(
+        Rect.fromCenter(center: foot, width: 44, height: 20),
+        body,
+      );
+      canvas.drawOval(
+        Rect.fromCenter(center: foot, width: 44, height: 20),
+        outline,
+      );
+    }
+
+    final charmLine = Path()
+      ..moveTo(198, 206)
+      ..quadraticBezierTo(206, 220, 198, 236);
+    canvas.drawPath(charmLine, fine);
+    _paintTinyPanelStar(canvas, const Offset(197, 246), 10, gold);
+
+    for (final star in <Offset>[
+      const Offset(62, 58),
+      const Offset(202, 71),
+      const Offset(218, 142),
+      const Offset(45, 219),
+    ]) {
+      _paintTinyPanelStar(canvas, star, 5.5, fine);
+    }
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _OculumJrpgCompanionPainter oldDelegate) {
+    return oldDelegate.spec.presetId != spec.presetId ||
+        oldDelegate.spec.primary != spec.primary ||
+        oldDelegate.spec.secondary != spec.secondary ||
+        oldDelegate.spec.accent != spec.accent;
+  }
+}
+
+extension _OculumColorPaint on Color {
+  Paint toPaint() => Paint()
+    ..style = PaintingStyle.fill
+    ..color = this;
+}
+
 class _OculumThemeDecorationPainter extends CustomPainter {
   _OculumThemeDecorationPainter(this.spec, {required this.desktop});
 
@@ -8084,8 +10884,29 @@ class _OculumThemeDecorationPainter extends CustomPainter {
       case 'kingi':
         _paintKingi(canvas, size, edge, paint, accent, fill);
         break;
+      case 'jrpg':
+        _paintJrpg(canvas, size, edge, paint, accent, fill);
+        break;
+      case 'roguelike':
+        _paintRoguelike(canvas, size, edge, paint, accent, fill);
+        break;
+      case 'souls':
+        _paintSouls(canvas, size, edge, paint, accent, fill);
+        break;
+      case 'bolted_metal':
+        _paintBoltedMetal(canvas, size, edge, paint, accent, fill);
+        break;
+      case 'wild_companion':
+        _paintWildCompanion(canvas, size, edge, paint, accent, fill);
+        break;
+      case 'modern_school':
+        _paintModernSchool(canvas, size, edge, paint, accent, fill);
+        break;
       case 'postea':
         _paintPostea(canvas, size, edge, paint, accent, fill);
+        break;
+      case 'fortress_oculum':
+        _paintOculumFortress(canvas, size, edge, paint, accent, fill);
         break;
       case 'medieval':
         _paintMedieval(canvas, size, edge, paint, accent, fill);
@@ -8128,6 +10949,701 @@ class _OculumThemeDecorationPainter extends CustomPainter {
     }
     _paintResponsiveDetailLayer(canvas, size, edge, paint, accent, fill);
     _paintPresetSignature(canvas, size, edge, paint, accent, fill);
+    _paintBottomRightThemeDoodle(canvas, size, edge);
+  }
+
+  void _paintBottomRightThemeDoodle(Canvas canvas, Size size, double edge) {
+    final scale = min(
+      desktop ? 184.0 : 128.0,
+      max(desktop ? 118.0 : 82.0, min(size.width, size.height) * 0.22),
+    );
+    final margin = desktop ? 34.0 : 18.0;
+    final center = Offset(
+      size.width - margin - scale * 0.48,
+      size.height - margin - scale * 0.42,
+    );
+    final alpha = (spec.opacity * (desktop ? 2.05 : 1.72))
+        .clamp(0.16, desktop ? 0.46 : 0.34)
+        .toDouble();
+    final line = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = desktop ? 1.85 : 1.28
+      ..color = spec.primary.withValues(alpha: alpha);
+    final accent = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = desktop ? 1.55 : 1.08
+      ..color = spec.accent.withValues(alpha: alpha * 0.95);
+    final fill = Paint()
+      ..style = PaintingStyle.fill
+      ..color = spec.secondary.withValues(alpha: alpha * 0.46);
+    final glow = Paint()
+      ..style = PaintingStyle.fill
+      ..color = spec.accent.withValues(alpha: alpha * 0.13)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
+
+    canvas.drawCircle(center, scale * 0.56, glow);
+
+    switch (spec.style) {
+      case 'lunar':
+        _paintOculumMoonPhase(
+          canvas,
+          center,
+          scale * 0.22,
+          3,
+          accent,
+          fill,
+          line,
+        );
+        for (var i = 0; i < 6; i++) {
+          _paintStar(
+            canvas,
+            center.translate(-scale * 0.42 + i * scale * 0.15, -scale * 0.28),
+            scale * (0.026 + (i % 2) * 0.008),
+            i.isEven ? line : accent,
+          );
+        }
+        break;
+      case 'hoshy':
+        _paintOculumMoonPhase(
+          canvas,
+          center.translate(0, -scale * 0.06),
+          scale * 0.18,
+          2,
+          accent,
+          fill,
+          line,
+        );
+        for (final dir in <double>[-1, 1]) {
+          final ear = Path()
+            ..moveTo(center.dx + dir * scale * 0.18, center.dy + scale * 0.05)
+            ..lineTo(center.dx + dir * scale * 0.36, center.dy - scale * 0.26)
+            ..lineTo(center.dx + dir * scale * 0.52, center.dy + scale * 0.08);
+          canvas.drawPath(ear, dir < 0 ? line : accent);
+        }
+        for (var i = 0; i < 5; i++) {
+          _paintStar(
+            canvas,
+            center.translate(-scale * 0.34 + i * scale * 0.17, scale * 0.30),
+            scale * 0.030,
+            i.isEven ? accent : line,
+          );
+        }
+        break;
+      case 'cathedral':
+        _paintRoseWindow(canvas, center, scale * 0.24, line, accent);
+        canvas.drawLine(
+          center.translate(0, -scale * 0.42),
+          center.translate(0, scale * 0.42),
+          accent,
+        );
+        canvas.drawLine(
+          center.translate(-scale * 0.42, 0),
+          center.translate(scale * 0.42, 0),
+          line,
+        );
+        break;
+      case 'fortress_oculum':
+        final shield = Path()
+          ..moveTo(center.dx, center.dy - scale * 0.48)
+          ..lineTo(center.dx + scale * 0.42, center.dy - scale * 0.20)
+          ..lineTo(center.dx + scale * 0.34, center.dy + scale * 0.34)
+          ..lineTo(center.dx, center.dy + scale * 0.52)
+          ..lineTo(center.dx - scale * 0.34, center.dy + scale * 0.34)
+          ..lineTo(center.dx - scale * 0.42, center.dy - scale * 0.20)
+          ..close();
+        canvas.drawPath(shield, fill);
+        canvas.drawPath(shield, line);
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: center.translate(0, -scale * 0.04),
+            width: scale * 0.56,
+            height: scale * 0.30,
+          ),
+          accent,
+        );
+        canvas.drawCircle(
+          center.translate(0, -scale * 0.04),
+          scale * 0.08,
+          line,
+        );
+        for (var i = 0; i < 5; i++) {
+          _paintDiamond(
+            canvas,
+            center.translate(-scale * 0.28 + i * scale * 0.14, scale * 0.34),
+            scale * 0.026,
+            i.isEven ? accent : line,
+          );
+        }
+        break;
+      case 'thorn':
+      case 'vervain':
+        final vine = Path()
+          ..moveTo(center.dx - scale * 0.52, center.dy + scale * 0.38);
+        vine.cubicTo(
+          center.dx - scale * 0.22,
+          center.dy - scale * 0.06,
+          center.dx + scale * 0.10,
+          center.dy + scale * 0.18,
+          center.dx + scale * 0.42,
+          center.dy - scale * 0.36,
+        );
+        canvas.drawPath(vine, line);
+        for (var i = 0; i < 4; i++) {
+          final base = center.translate(
+            -scale * 0.34 + i * scale * 0.22,
+            scale * (0.18 - i * 0.09),
+          );
+          _paintBotanicalLeaf(
+            canvas,
+            base,
+            i.isEven ? 1 : -1,
+            scale * 0.18,
+            fill,
+            accent,
+          );
+          if (spec.style == 'thorn') {
+            canvas.drawLine(
+              base,
+              base.translate(scale * 0.12, -scale * 0.16),
+              accent,
+            );
+          }
+        }
+        break;
+      case 'kingi':
+        final head = RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: center.translate(0, -scale * 0.16),
+            width: scale * 0.58,
+            height: scale * 0.42,
+          ),
+          Radius.circular(scale * 0.11),
+        );
+        final body = RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: center.translate(0, scale * 0.22),
+            width: scale * 0.42,
+            height: scale * 0.46,
+          ),
+          Radius.circular(scale * 0.08),
+        );
+        canvas.drawRRect(head, fill);
+        canvas.drawRRect(head, line);
+        canvas.drawRRect(body, fill);
+        canvas.drawRRect(body, line);
+        canvas.drawCircle(
+          center.translate(-scale * 0.15, -scale * 0.18),
+          scale * 0.055,
+          accent,
+        );
+        canvas.drawCircle(
+          center.translate(scale * 0.15, -scale * 0.18),
+          scale * 0.055,
+          accent,
+        );
+        canvas.drawArc(
+          Rect.fromCenter(
+            center: center.translate(0, -scale * 0.07),
+            width: scale * 0.34,
+            height: scale * 0.16,
+          ),
+          0,
+          pi,
+          false,
+          accent,
+        );
+        canvas.drawCircle(
+          center.translate(0, scale * 0.20),
+          scale * 0.10,
+          accent,
+        );
+        canvas.drawLine(
+          center.translate(0, -scale * 0.38),
+          center.translate(scale * 0.08, -scale * 0.55),
+          line,
+        );
+        canvas.drawCircle(
+          center.translate(scale * 0.10, -scale * 0.58),
+          scale * 0.035,
+          accent,
+        );
+        break;
+      case 'postea':
+        _paintSyntheticBloom(canvas, center, scale * 0.24, line, accent, fill);
+        for (var i = 0; i < 4; i++) {
+          final y = center.dy - scale * 0.36 + i * scale * 0.20;
+          canvas.drawLine(
+            Offset(center.dx - scale * 0.50, y),
+            Offset(center.dx + scale * 0.42, y + scale * 0.08),
+            i.isEven ? line : accent,
+          );
+          _paintDiamond(
+            canvas,
+            Offset(center.dx + scale * 0.46, y + scale * 0.08),
+            scale * 0.035,
+            fill,
+          );
+        }
+        break;
+      case 'jrpg':
+        _paintDiamond(
+          canvas,
+          center.translate(0, -scale * 0.08),
+          scale * 0.22,
+          fill,
+        );
+        _paintDiamond(
+          canvas,
+          center.translate(0, -scale * 0.08),
+          scale * 0.15,
+          accent,
+        );
+        for (var i = 0; i < 7; i++) {
+          _paintStar(
+            canvas,
+            center.translate(-scale * 0.42 + i * scale * 0.14, scale * 0.28),
+            scale * (0.026 + (i % 2) * 0.008),
+            i.isEven ? line : accent,
+          );
+        }
+        final cursor = Path()
+          ..moveTo(center.dx - scale * 0.54, center.dy - scale * 0.24)
+          ..lineTo(center.dx - scale * 0.34, center.dy - scale * 0.10)
+          ..lineTo(center.dx - scale * 0.54, center.dy + scale * 0.04)
+          ..close();
+        canvas.drawPath(cursor, fill);
+        canvas.drawPath(cursor, line);
+        break;
+      case 'roguelike':
+        final head = RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: center.translate(0, -scale * 0.06),
+            width: scale * 0.58,
+            height: scale * 0.44,
+          ),
+          Radius.circular(scale * 0.08),
+        );
+        canvas.drawRRect(head, fill);
+        canvas.drawRRect(head, line);
+        canvas.drawCircle(
+          center.translate(-scale * 0.15, -scale * 0.08),
+          scale * 0.050,
+          accent,
+        );
+        canvas.drawCircle(
+          center.translate(scale * 0.14, -scale * 0.06),
+          scale * 0.034,
+          line,
+        );
+        for (var i = 0; i < 4; i++) {
+          final x = center.dx - scale * 0.20 + i * scale * 0.13;
+          canvas.drawLine(
+            Offset(x, center.dy + scale * 0.06),
+            Offset(x + scale * 0.05, center.dy + scale * 0.18),
+            i.isEven ? line : accent,
+          );
+        }
+        final scrap = Path()
+          ..moveTo(center.dx - scale * 0.45, center.dy + scale * 0.35)
+          ..lineTo(center.dx + scale * 0.44, center.dy + scale * 0.26)
+          ..lineTo(center.dx + scale * 0.34, center.dy + scale * 0.44)
+          ..lineTo(center.dx - scale * 0.36, center.dy + scale * 0.48)
+          ..close();
+        canvas.drawPath(scrap, fill);
+        canvas.drawPath(scrap, accent);
+        break;
+      case 'souls':
+        final sword = Path()
+          ..moveTo(center.dx, center.dy - scale * 0.54)
+          ..lineTo(center.dx + scale * 0.06, center.dy + scale * 0.08)
+          ..lineTo(center.dx, center.dy + scale * 0.48)
+          ..lineTo(center.dx - scale * 0.06, center.dy + scale * 0.08)
+          ..close();
+        canvas.drawPath(sword, fill);
+        canvas.drawPath(sword, line);
+        canvas.drawLine(
+          center.translate(-scale * 0.28, scale * 0.05),
+          center.translate(scale * 0.28, scale * 0.05),
+          accent,
+        );
+        for (var i = 0; i < 5; i++) {
+          final ember = center.translate(
+            -scale * 0.28 + i * scale * 0.14,
+            scale * (0.36 - (i % 2) * 0.12),
+          );
+          canvas.drawCircle(ember, scale * 0.024, i.isEven ? accent : fill);
+        }
+        break;
+      case 'bolted_metal':
+        final plate = RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: center,
+            width: scale * 0.78,
+            height: scale * 0.56,
+          ),
+          Radius.circular(scale * 0.05),
+        );
+        canvas.drawRRect(plate, fill);
+        canvas.drawRRect(plate, line);
+        for (final bolt in <Offset>[
+          center.translate(-scale * 0.28, -scale * 0.18),
+          center.translate(scale * 0.28, -scale * 0.18),
+          center.translate(-scale * 0.28, scale * 0.18),
+          center.translate(scale * 0.28, scale * 0.18),
+        ]) {
+          canvas.drawCircle(bolt, scale * 0.052, accent);
+          canvas.drawLine(
+            bolt.translate(-scale * 0.035, 0),
+            bolt.translate(scale * 0.035, 0),
+            line,
+          );
+        }
+        if (spec.presetId.contains('copper')) {
+          for (var i = 0; i < 3; i++) {
+            _paintDiamond(
+              canvas,
+              center.translate(-scale * 0.18 + i * scale * 0.17, scale * 0.02),
+              scale * 0.055,
+              accent,
+            );
+          }
+        } else {
+          _paintDesktopMiniGear(
+            canvas,
+            center,
+            scale * 0.15,
+            line,
+            accent,
+            fill,
+          );
+        }
+        break;
+      case 'wild_companion':
+        if (spec.presetId.contains('moth')) {
+          final leftWing = Path()
+            ..moveTo(center.dx, center.dy)
+            ..cubicTo(
+              center.dx - scale * 0.42,
+              center.dy - scale * 0.36,
+              center.dx - scale * 0.54,
+              center.dy + scale * 0.18,
+              center.dx - scale * 0.08,
+              center.dy + scale * 0.22,
+            )
+            ..close();
+          final rightWing = Path()
+            ..moveTo(center.dx, center.dy)
+            ..cubicTo(
+              center.dx + scale * 0.42,
+              center.dy - scale * 0.36,
+              center.dx + scale * 0.54,
+              center.dy + scale * 0.18,
+              center.dx + scale * 0.08,
+              center.dy + scale * 0.22,
+            )
+            ..close();
+          canvas.drawPath(leftWing, fill);
+          canvas.drawPath(rightWing, fill);
+          canvas.drawPath(leftWing, line);
+          canvas.drawPath(rightWing, line);
+          canvas.drawLine(
+            center.translate(0, -scale * 0.24),
+            center.translate(0, scale * 0.34),
+            accent,
+          );
+        } else {
+          canvas.drawCircle(center, scale * 0.18, fill);
+          canvas.drawCircle(center, scale * 0.18, line);
+          for (final dir in <double>[-1, 1]) {
+            _paintBotanicalLeaf(
+              canvas,
+              center.translate(dir * scale * 0.10, -scale * 0.03),
+              dir,
+              scale * 0.34,
+              fill,
+              accent,
+            );
+          }
+          _paintTinyPanelStar(
+            canvas,
+            center.translate(0, -scale * 0.30),
+            scale * 0.055,
+            accent,
+          );
+        }
+        break;
+      case 'modern_school':
+        final notebook = RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: center.translate(-scale * 0.02, scale * 0.02),
+            width: scale * 0.72,
+            height: scale * 0.52,
+          ),
+          Radius.circular(scale * 0.06),
+        );
+        canvas.drawRRect(notebook, fill);
+        canvas.drawRRect(notebook, line);
+        canvas.drawLine(
+          center.translate(-scale * 0.22, -scale * 0.24),
+          center.translate(-scale * 0.22, scale * 0.28),
+          accent,
+        );
+        for (var i = 0; i < 5; i++) {
+          final y = center.dy - scale * 0.17 + i * scale * 0.09;
+          canvas.drawLine(
+            Offset(center.dx - scale * 0.14, y),
+            Offset(center.dx + scale * 0.30, y),
+            i.isEven ? line : accent,
+          );
+        }
+        final pen = Path()
+          ..moveTo(center.dx + scale * 0.14, center.dy - scale * 0.42)
+          ..lineTo(center.dx + scale * 0.42, center.dy - scale * 0.14)
+          ..lineTo(center.dx + scale * 0.36, center.dy - scale * 0.08)
+          ..lineTo(center.dx + scale * 0.08, center.dy - scale * 0.36)
+          ..close();
+        canvas.drawPath(pen, fill);
+        canvas.drawPath(pen, accent);
+        _paintTinyPanelStar(
+          canvas,
+          center.translate(-scale * 0.36, scale * 0.30),
+          scale * 0.050,
+          accent,
+        );
+        break;
+      case 'medieval':
+        _paintMedievalShield(canvas, center, scale * 0.24, fill, line);
+        canvas.drawLine(
+          center.translate(-scale * 0.40, -scale * 0.44),
+          center.translate(scale * 0.26, scale * 0.40),
+          accent,
+        );
+        canvas.drawLine(
+          center.translate(scale * 0.34, -scale * 0.40),
+          center.translate(-scale * 0.28, scale * 0.34),
+          line,
+        );
+        break;
+      case 'phobia':
+        final eye = Path()
+          ..moveTo(center.dx - scale * 0.48, center.dy)
+          ..quadraticBezierTo(
+            center.dx,
+            center.dy - scale * 0.25,
+            center.dx + scale * 0.48,
+            center.dy,
+          )
+          ..quadraticBezierTo(
+            center.dx,
+            center.dy + scale * 0.25,
+            center.dx - scale * 0.48,
+            center.dy,
+          );
+        canvas.drawPath(eye, line);
+        canvas.drawCircle(center, scale * 0.13, fill);
+        canvas.drawCircle(
+          center.translate(scale * 0.025, -scale * 0.015),
+          scale * 0.045,
+          accent,
+        );
+        for (var i = 0; i < 8; i++) {
+          final angle = -pi * 0.78 + i * pi * 0.22;
+          canvas.drawLine(
+            center.translate(
+              cos(angle) * scale * 0.44,
+              sin(angle) * scale * 0.18,
+            ),
+            center.translate(
+              cos(angle) * scale * 0.60,
+              sin(angle) * scale * 0.30,
+            ),
+            i.isEven ? accent : line,
+          );
+        }
+        break;
+      case 'shadow_gate':
+        canvas.drawArc(
+          Rect.fromCenter(
+            center: center,
+            width: scale * 0.66,
+            height: scale * 0.88,
+          ),
+          -pi * 0.16,
+          pi * 1.34,
+          false,
+          accent,
+        );
+        canvas.drawArc(
+          Rect.fromCenter(
+            center: center,
+            width: scale * 0.40,
+            height: scale * 0.58,
+          ),
+          pi * 0.08,
+          pi * 1.46,
+          false,
+          line,
+        );
+        _paintDiamond(canvas, center, scale * 0.11, fill);
+        break;
+      case 'frost':
+        for (var i = 0; i < 6; i++) {
+          final angle = i * pi / 3;
+          canvas.drawLine(
+            center.translate(
+              cos(angle) * scale * 0.10,
+              sin(angle) * scale * 0.10,
+            ),
+            center.translate(
+              cos(angle) * scale * 0.42,
+              sin(angle) * scale * 0.42,
+            ),
+            i.isEven ? line : accent,
+          );
+        }
+        _paintStar(canvas, center, scale * 0.16, accent);
+        break;
+      case 'storm':
+        final bolt = Path()
+          ..moveTo(center.dx - scale * 0.12, center.dy - scale * 0.46)
+          ..lineTo(center.dx + scale * 0.18, center.dy - scale * 0.06)
+          ..lineTo(center.dx + scale * 0.03, center.dy - scale * 0.05)
+          ..lineTo(center.dx + scale * 0.30, center.dy + scale * 0.42);
+        canvas.drawPath(bolt, accent);
+        canvas.drawCircle(
+          center.translate(-scale * 0.20, scale * 0.22),
+          scale * 0.07,
+          fill,
+        );
+        break;
+      case 'tide':
+        for (var row = 0; row < 3; row++) {
+          final y = center.dy - scale * 0.12 + row * scale * 0.16;
+          final wave = Path()..moveTo(center.dx - scale * 0.52, y);
+          for (
+            var x = center.dx - scale * 0.52;
+            x < center.dx + scale * 0.54;
+            x += scale * 0.20
+          ) {
+            wave.quadraticBezierTo(
+              x + scale * 0.10,
+              y - scale * 0.09,
+              x + scale * 0.20,
+              y,
+            );
+          }
+          canvas.drawPath(wave, row.isEven ? accent : line);
+        }
+        break;
+      case 'ember':
+        final flame = Path()
+          ..moveTo(center.dx, center.dy - scale * 0.46)
+          ..cubicTo(
+            center.dx + scale * 0.34,
+            center.dy - scale * 0.12,
+            center.dx + scale * 0.18,
+            center.dy + scale * 0.36,
+            center.dx,
+            center.dy + scale * 0.42,
+          )
+          ..cubicTo(
+            center.dx - scale * 0.28,
+            center.dy + scale * 0.16,
+            center.dx - scale * 0.16,
+            center.dy - scale * 0.18,
+            center.dx,
+            center.dy - scale * 0.46,
+          )
+          ..close();
+        canvas.drawPath(flame, fill);
+        canvas.drawPath(flame, accent);
+        break;
+      case 'archive':
+        final book = RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: center,
+            width: scale * 0.72,
+            height: scale * 0.46,
+          ),
+          Radius.circular(scale * 0.05),
+        );
+        canvas.drawRRect(book, fill);
+        canvas.drawRRect(book, line);
+        canvas.drawLine(
+          center.translate(0, -scale * 0.22),
+          center.translate(0, scale * 0.22),
+          accent,
+        );
+        for (var i = 0; i < 4; i++) {
+          canvas.drawLine(
+            center.translate(-scale * 0.28, -scale * 0.14 + i * scale * 0.09),
+            center.translate(-scale * 0.04, -scale * 0.20 + i * scale * 0.09),
+            accent,
+          );
+        }
+        break;
+      case 'slime':
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: center.translate(0, scale * 0.08),
+            width: scale * 0.78,
+            height: scale * 0.52,
+          ),
+          fill,
+        );
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: center.translate(0, scale * 0.08),
+            width: scale * 0.78,
+            height: scale * 0.52,
+          ),
+          line,
+        );
+        _paintCrown(
+          canvas,
+          center.translate(0, -scale * 0.20),
+          scale * 0.42,
+          scale * 0.24,
+          accent,
+          line,
+          fill,
+        );
+        canvas.drawCircle(
+          center.translate(-scale * 0.15, scale * 0.02),
+          scale * 0.035,
+          accent,
+        );
+        canvas.drawCircle(
+          center.translate(scale * 0.15, scale * 0.02),
+          scale * 0.035,
+          accent,
+        );
+        break;
+      case 'obser':
+      case 'sigil':
+        canvas.drawCircle(center, scale * 0.26, line);
+        _paintDiamond(canvas, center, scale * 0.19, accent);
+        _paintDiamond(canvas, center, scale * 0.09, fill);
+        break;
+      default:
+        _paintDiamond(canvas, center, scale * 0.28, fill);
+        _paintDiamond(canvas, center, scale * 0.18, accent);
+        canvas.drawArc(
+          Rect.fromCenter(
+            center: center.translate(-scale * 0.18, -scale * 0.04),
+            width: scale * 0.56,
+            height: scale * 0.56,
+          ),
+          -pi * 0.50,
+          pi * 1.35,
+          false,
+          line,
+        );
+    }
   }
 
   void _paintResponsiveDetailLayer(
@@ -8170,6 +11686,58 @@ class _OculumThemeDecorationPainter extends CustomPainter {
           accent,
         );
         _paintDiamond(canvas, c, 6, fill);
+      } else if (spec.style == 'jrpg') {
+        for (var i = 0; i < 5; i++) {
+          final c = Offset(size.width - edge * 0.34, 66 + i * 46);
+          _paintStar(canvas, c, 4.2 + i % 2, i.isEven ? accent : paint);
+          _paintDiamond(canvas, c.translate(-18, 18), 5, fill);
+        }
+      } else if (spec.style == 'roguelike') {
+        for (var i = 0; i < 5; i++) {
+          final c = Offset(size.width - edge * 0.34, 70 + i * 46);
+          canvas.drawLine(c.translate(-18, -8), c.translate(18, 8), accent);
+          canvas.drawCircle(c.translate(-8, 12), 3.5, fill);
+        }
+      } else if (spec.style == 'souls') {
+        for (var i = 0; i < 4; i++) {
+          final c = Offset(size.width - edge * 0.34, 76 + i * 58);
+          canvas.drawLine(c.translate(0, -22), c.translate(0, 24), paint);
+          canvas.drawArc(
+            Rect.fromCircle(center: c, radius: 15),
+            -pi * 0.7,
+            pi * 1.4,
+            false,
+            accent,
+          );
+        }
+      } else if (spec.style == 'bolted_metal') {
+        for (var i = 0; i < 5; i++) {
+          final c = Offset(size.width - edge * 0.34, 66 + i * 46);
+          canvas.drawCircle(c, 7, fill);
+          canvas.drawCircle(c, 11, accent);
+          canvas.drawLine(c.translate(-7, 0), c.translate(7, 0), paint);
+        }
+      } else if (spec.style == 'wild_companion') {
+        for (var i = 0; i < 5; i++) {
+          final c = Offset(size.width - edge * 0.34, 66 + i * 45);
+          _paintBotanicalLeaf(canvas, c, i.isEven ? 1 : -1, 18, fill, accent);
+          if (i % 2 == 0) _paintStar(canvas, c.translate(-18, 18), 3.8, paint);
+        }
+      } else if (spec.style == 'modern_school') {
+        for (var i = 0; i < 5; i++) {
+          final y = 62 + i * 44.0;
+          canvas.drawLine(
+            Offset(size.width - edge * 0.48, y),
+            Offset(size.width - edge * 0.18, y + (i.isEven ? 3 : -3)),
+            i.isEven ? accent : paint,
+          );
+          _paintTinyPanelStar(
+            canvas,
+            Offset(size.width - edge * 0.52, y + 6),
+            3.8,
+            i.isEven ? paint : accent,
+          );
+        }
       }
       return;
     }
@@ -8183,6 +11751,31 @@ class _OculumThemeDecorationPainter extends CustomPainter {
         break;
       case 'postea':
         _paintDesktopPosteaLayer(canvas, size, edge, paint, accent, fill);
+        break;
+      case 'jrpg':
+        _paintDesktopJrpgLayer(canvas, size, edge, paint, accent, fill);
+        break;
+      case 'roguelike':
+        _paintDesktopRoguelikeLayer(canvas, size, edge, paint, accent, fill);
+        break;
+      case 'souls':
+        _paintDesktopSoulsLayer(canvas, size, edge, paint, accent, fill);
+        break;
+      case 'bolted_metal':
+        _paintDesktopBoltedMetalLayer(canvas, size, edge, paint, accent, fill);
+        break;
+      case 'wild_companion':
+        _paintDesktopWildCompanionLayer(
+          canvas,
+          size,
+          edge,
+          paint,
+          accent,
+          fill,
+        );
+        break;
+      case 'modern_school':
+        _paintDesktopModernSchoolLayer(canvas, size, edge, paint, accent, fill);
         break;
       case 'medieval':
         _paintDesktopMedievalLayer(canvas, size, edge, paint, accent, fill);
@@ -8227,6 +11820,12 @@ class _OculumThemeDecorationPainter extends CustomPainter {
     final rect = Offset.zero & size;
     final center = switch (spec.style) {
       'postea' || 'kingi' || 'medieval' => Alignment.topRight,
+      'jrpg' => Alignment.bottomRight,
+      'roguelike' => Alignment.centerRight,
+      'souls' => Alignment.center,
+      'bolted_metal' => Alignment.topCenter,
+      'wild_companion' => Alignment.bottomRight,
+      'modern_school' => Alignment.centerRight,
       'phobia' || 'shadow_gate' => Alignment.center,
       'vervain' || 'thorn' => Alignment.bottomLeft,
       'hoshy' || 'slime' => Alignment.bottomRight,
@@ -8478,6 +12077,292 @@ class _OculumThemeDecorationPainter extends CustomPainter {
       final c = Offset(edge * 0.42 + i * 34, size.height - 42 - (i % 2) * 18);
       canvas.drawLine(c.translate(-18, 0), c.translate(18, 0), circuit);
       _paintSyntheticBloom(canvas, c, 9, paint, accent, fill);
+    }
+  }
+
+  void _paintDesktopJrpgLayer(
+    Canvas canvas,
+    Size size,
+    double edge,
+    Paint paint,
+    Paint accent,
+    Paint fill,
+  ) {
+    final crystal = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 1.22
+      ..color = spec.accent.withValues(
+        alpha: (spec.opacity * 1.30).clamp(0.09, 0.30).toDouble(),
+      );
+    final gold = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 1.05
+      ..color = const Color(
+        0xFFE7B84A,
+      ).withValues(alpha: (spec.opacity * 1.10).clamp(0.08, 0.24).toDouble());
+
+    for (final side in <double>[0, size.width]) {
+      final dir = side == 0 ? 1.0 : -1.0;
+      for (var i = 0; i < 7; i++) {
+        final c = Offset(side + dir * edge * 0.42, 68 + i * 58);
+        _paintDiamond(canvas, c, 12 + i % 2 * 3, i.isEven ? fill : accent);
+        canvas.drawLine(
+          c.translate(-dir * 24, -16),
+          c,
+          i.isEven ? crystal : gold,
+        );
+        canvas.drawLine(
+          c,
+          c.translate(dir * 22, 18),
+          i.isEven ? gold : crystal,
+        );
+        if (i % 2 == 0) {
+          _paintStar(canvas, c.translate(dir * 36, -22), 5, crystal);
+        }
+      }
+    }
+
+    final bottom = Path()..moveTo(edge * 0.26, size.height - 46);
+    for (var x = edge * 0.26; x < size.width - edge * 0.26; x += 82) {
+      bottom.cubicTo(
+        x + 20,
+        size.height - 76,
+        x + 58,
+        size.height - 18,
+        x + 82,
+        size.height - 46,
+      );
+    }
+    canvas.drawPath(bottom, crystal);
+    for (var i = 0; i < 9; i++) {
+      final x = edge * 0.36 + i * ((size.width - edge * 0.72) / 8);
+      _paintStar(
+        canvas,
+        Offset(x, size.height - 42 - (i % 3) * 16),
+        4.5 + i % 2,
+        i.isEven ? gold : crystal,
+      );
+    }
+  }
+
+  void _paintDesktopRoguelikeLayer(
+    Canvas canvas,
+    Size size,
+    double edge,
+    Paint paint,
+    Paint accent,
+    Paint fill,
+  ) {
+    final scratch = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 1.12
+      ..color = spec.accent.withValues(
+        alpha: (spec.opacity * 1.18).clamp(0.08, 0.27).toDouble(),
+      );
+    for (final side in <double>[0, size.width]) {
+      final dir = side == 0 ? 1.0 : -1.0;
+      for (var i = 0; i < 8; i++) {
+        final y = size.height * (0.10 + i * 0.105);
+        final c = Offset(side + dir * edge * (0.28 + (i % 3) * 0.08), y);
+        canvas.drawLine(
+          c.translate(-dir * 14, -16),
+          c.translate(dir * 28, 12),
+          i.isEven ? scratch : paint,
+        );
+        canvas.drawCircle(c.translate(dir * 22, 16), 3.6 + i % 3, fill);
+      }
+    }
+    for (var i = 0; i < 10; i++) {
+      final c = Offset(edge * 0.28 + i * 44, size.height - 46 - (i % 3) * 15);
+      canvas.drawLine(c.translate(-16, 5), c.translate(16, -5), scratch);
+      canvas.drawCircle(c, 3.0, i.isEven ? fill : accent);
+    }
+  }
+
+  void _paintDesktopSoulsLayer(
+    Canvas canvas,
+    Size size,
+    double edge,
+    Paint paint,
+    Paint accent,
+    Paint fill,
+  ) {
+    final ember = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 1.18
+      ..color = spec.accent.withValues(
+        alpha: (spec.opacity * 1.16).clamp(0.08, 0.26).toDouble(),
+      );
+    canvas.drawLine(
+      Offset(edge * 0.30, 42),
+      Offset(size.width - edge * 0.30, 42),
+      ember,
+    );
+    canvas.drawLine(
+      Offset(edge * 0.30, size.height - 42),
+      Offset(size.width - edge * 0.30, size.height - 42),
+      paint,
+    );
+    for (final side in <double>[0, size.width]) {
+      final dir = side == 0 ? 1.0 : -1.0;
+      for (var i = 0; i < 6; i++) {
+        final c = Offset(
+          side + dir * edge * 0.40,
+          size.height * (0.15 + i * 0.13),
+        );
+        canvas.drawLine(
+          c.translate(0, -28),
+          c.translate(0, 34),
+          i.isEven ? ember : paint,
+        );
+        canvas.drawLine(
+          c.translate(-dir * 18, 4),
+          c.translate(dir * 18, 4),
+          i.isEven ? paint : ember,
+        );
+        canvas.drawCircle(c.translate(0, 36), 3.2, fill);
+      }
+    }
+  }
+
+  void _paintDesktopBoltedMetalLayer(
+    Canvas canvas,
+    Size size,
+    double edge,
+    Paint paint,
+    Paint accent,
+    Paint fill,
+  ) {
+    final metal = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 1.05
+      ..color = spec.primary.withValues(
+        alpha: (spec.opacity * 1.16).clamp(0.08, 0.28).toDouble(),
+      );
+    for (var x = edge * 0.26; x < size.width - edge * 0.22; x += 92) {
+      canvas.drawLine(Offset(x, 30), Offset(x, size.height - 30), metal);
+    }
+    for (var y = 38.0; y < size.height - 30; y += 76) {
+      canvas.drawLine(
+        Offset(edge * 0.20, y),
+        Offset(size.width - edge * 0.20, y),
+        accent,
+      );
+    }
+    for (var i = 0; i < 16; i++) {
+      final c = Offset(
+        edge * 0.24 +
+            (i * 101 % max(1, (size.width - edge).round())).toDouble(),
+        54.0 + (i * 59 % max(1, (size.height - 108).round())).toDouble(),
+      );
+      canvas.drawCircle(c, 5.2, fill);
+      canvas.drawCircle(c, 8.4, metal);
+      canvas.drawLine(c.translate(-5, 0), c.translate(5, 0), accent);
+    }
+  }
+
+  void _paintDesktopWildCompanionLayer(
+    Canvas canvas,
+    Size size,
+    double edge,
+    Paint paint,
+    Paint accent,
+    Paint fill,
+  ) {
+    final vine = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 1.20
+      ..color = spec.accent.withValues(
+        alpha: (spec.opacity * 1.10).clamp(0.08, 0.25).toDouble(),
+      );
+    final bottom = Path()..moveTo(edge * 0.22, size.height - 48);
+    for (var x = edge * 0.22; x < size.width - edge * 0.22; x += 88) {
+      bottom.cubicTo(
+        x + 26,
+        size.height - 88,
+        x + 62,
+        size.height - 12,
+        x + 88,
+        size.height - 48,
+      );
+    }
+    canvas.drawPath(bottom, vine);
+    for (var i = 0; i < 12; i++) {
+      final c = Offset(edge * 0.30 + i * 72, 54 + (i % 4) * 13);
+      if (c.dx > size.width - edge * 0.28) break;
+      _paintBotanicalLeaf(canvas, c, i.isEven ? 1 : -1, 22, fill, vine);
+      if (i % 3 == 0) _paintStar(canvas, c.translate(26, 10), 4.2, accent);
+    }
+  }
+
+  void _paintDesktopModernSchoolLayer(
+    Canvas canvas,
+    Size size,
+    double edge,
+    Paint paint,
+    Paint accent,
+    Paint fill,
+  ) {
+    final notebookLine = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 1.05
+      ..color = spec.primary.withValues(
+        alpha: (spec.opacity * 1.05).clamp(0.08, 0.25).toDouble(),
+      );
+    final pinkInk = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 1.18
+      ..color = spec.accent.withValues(
+        alpha: (spec.opacity * 1.20).clamp(0.08, 0.28).toDouble(),
+      );
+
+    for (var y = 54.0; y < size.height - 42; y += 46) {
+      canvas.drawLine(
+        Offset(edge * 0.22, y),
+        Offset(size.width - edge * 0.22, y + ((y ~/ 46).isEven ? 2 : -2)),
+        notebookLine,
+      );
+    }
+    canvas.drawLine(
+      Offset(edge * 0.42, 32),
+      Offset(edge * 0.42, size.height - 34),
+      pinkInk,
+    );
+    for (var i = 0; i < 7; i++) {
+      final c = Offset(size.width - edge * 0.34, 58 + i * 54.0);
+      final sticker = RRect.fromRectAndRadius(
+        Rect.fromCenter(center: c, width: 34, height: 22),
+        const Radius.circular(5),
+      );
+      canvas.drawRRect(sticker, i.isEven ? fill : accent);
+      canvas.drawRRect(sticker, i.isEven ? pinkInk : notebookLine);
+      canvas.drawLine(c.translate(-10, 2), c.translate(10, -3), pinkInk);
+    }
+    for (var i = 0; i < 8; i++) {
+      final x = edge * 0.58 + i * ((size.width - edge * 1.16) / 7);
+      final y = size.height - 46 - (i % 3) * 14.0;
+      _paintTinyPanelStar(
+        canvas,
+        Offset(x, y),
+        4.0 + (i % 2),
+        i.isEven ? pinkInk : notebookLine,
+      );
     }
   }
 
@@ -11054,6 +14939,425 @@ class _OculumThemeDecorationPainter extends CustomPainter {
     }
   }
 
+  void _paintJrpg(
+    Canvas canvas,
+    Size size,
+    double edge,
+    Paint paint,
+    Paint accent,
+    Paint fill,
+  ) {
+    final detailed = desktop && size.width >= 720;
+    final crystalLine = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = detailed ? 1.42 : 1.02
+      ..color = spec.accent.withValues(
+        alpha: (spec.opacity * (detailed ? 1.36 : 0.96))
+            .clamp(0.08, detailed ? 0.34 : 0.20)
+            .toDouble(),
+      );
+    final goldLine = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = detailed ? 1.20 : 0.92
+      ..color = const Color(0xFFE7B84A).withValues(
+        alpha: (spec.opacity * (detailed ? 1.20 : 0.86))
+            .clamp(0.07, detailed ? 0.28 : 0.18)
+            .toDouble(),
+      );
+    final soft = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = detailed ? 4.2 : 2.0
+      ..color = spec.accent.withValues(
+        alpha: (spec.opacity * 0.22).clamp(0.02, 0.10).toDouble(),
+      )
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+
+    _paintCornerFlourishes(canvas, size, edge, paint, accent);
+
+    for (var row = 0; row < (detailed ? 6 : 4); row++) {
+      final y = size.height * (0.12 + row * (detailed ? 0.12 : 0.18));
+      final left = Path()
+        ..moveTo(edge * 0.18, y)
+        ..lineTo(edge * 0.54, y)
+        ..lineTo(edge * 0.68, y + 18)
+        ..lineTo(edge * 0.96, y + 18);
+      final right = Path()
+        ..moveTo(size.width - edge * 0.18, y + 10)
+        ..lineTo(size.width - edge * 0.54, y + 10)
+        ..lineTo(size.width - edge * 0.68, y - 8)
+        ..lineTo(size.width - edge * 0.98, y - 8);
+      canvas.drawPath(left, soft);
+      canvas.drawPath(right, soft);
+      canvas.drawPath(left, row.isEven ? crystalLine : goldLine);
+      canvas.drawPath(right, row.isEven ? goldLine : crystalLine);
+      _paintDiamond(canvas, Offset(edge * 0.68, y + 18), 7, fill);
+      _paintDiamond(canvas, Offset(size.width - edge * 0.68, y - 8), 7, fill);
+    }
+
+    final topRail = Path()..moveTo(edge * 0.42, 34);
+    for (var x = edge * 0.42; x < size.width - edge * 0.42; x += 74) {
+      topRail.cubicTo(x + 18, 14, x + 54, 54, x + 74, 34);
+    }
+    canvas.drawPath(topRail, goldLine);
+
+    for (var i = 0; i < (detailed ? 18 : 10); i++) {
+      final x = edge * 0.28 + (i * 73 % max(1, (size.width - edge).round()));
+      final y = 58.0 + (i * 41 % max(1, (size.height - 120).round()));
+      _paintStar(
+        canvas,
+        Offset(x.toDouble(), y.toDouble()),
+        3.0 + (i % 3),
+        i.isEven ? crystalLine : goldLine,
+      );
+    }
+
+    final menuCenter = Offset(size.width / 2, min(size.height * 0.18, 126.0));
+    final menu = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: menuCenter,
+        width: detailed ? 154 : 112,
+        height: detailed ? 58 : 42,
+      ),
+      Radius.circular(detailed ? 12 : 9),
+    );
+    canvas.drawRRect(menu, fill);
+    canvas.drawRRect(menu, crystalLine);
+    for (var i = 0; i < 3; i++) {
+      final y = menuCenter.dy - (detailed ? 16 : 11) + i * (detailed ? 16 : 11);
+      canvas.drawLine(
+        Offset(menu.left + 22, y),
+        Offset(menu.right - 16, y),
+        i.isEven ? goldLine : paint,
+      );
+    }
+    final cursor = Path()
+      ..moveTo(menu.left + 10, menuCenter.dy - 9)
+      ..lineTo(menu.left + 24, menuCenter.dy)
+      ..lineTo(menu.left + 10, menuCenter.dy + 9)
+      ..close();
+    canvas.drawPath(cursor, fill);
+    canvas.drawPath(cursor, accent);
+  }
+
+  void _paintRoguelike(
+    Canvas canvas,
+    Size size,
+    double edge,
+    Paint paint,
+    Paint accent,
+    Paint fill,
+  ) {
+    final detailed = desktop && size.width >= 720;
+    final scratch = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = detailed ? 1.34 : 0.95
+      ..color = spec.accent.withValues(
+        alpha: (spec.opacity * (detailed ? 1.26 : 0.96))
+            .clamp(0.08, detailed ? 0.30 : 0.20)
+            .toDouble(),
+      );
+    final grime = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = detailed ? 3.6 : 1.8
+      ..color = spec.primary.withValues(
+        alpha: (spec.opacity * 0.16).clamp(0.02, 0.08).toDouble(),
+      )
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+
+    _paintCornerFlourishes(canvas, size, edge, paint, accent);
+    for (var row = 0; row < (detailed ? 7 : 4); row++) {
+      final y = size.height * (0.10 + row * (detailed ? 0.12 : 0.20));
+      final left = Path()
+        ..moveTo(edge * 0.18, y + (row.isEven ? 0 : 8))
+        ..lineTo(edge * 0.58, y - 8)
+        ..lineTo(edge * 0.92, y + 18);
+      final right = Path()
+        ..moveTo(size.width - edge * 0.18, y)
+        ..lineTo(size.width - edge * 0.56, y + 12)
+        ..lineTo(size.width - edge * 0.88, y - 12);
+      canvas.drawPath(left, grime);
+      canvas.drawPath(right, grime);
+      canvas.drawPath(left, row.isEven ? scratch : paint);
+      canvas.drawPath(right, row.isEven ? paint : scratch);
+    }
+
+    for (var i = 0; i < (detailed ? 18 : 10); i++) {
+      final x = edge * 0.22 + (i * 79 % max(1, (size.width - edge).round()));
+      final y = 48.0 + (i * 47 % max(1, (size.height - 96).round()));
+      canvas.drawCircle(Offset(x.toDouble(), y.toDouble()), 2.2 + i % 3, fill);
+      if (i % 3 == 0) {
+        canvas.drawLine(
+          Offset(x.toDouble() - 9, y.toDouble() + 7),
+          Offset(x.toDouble() + 12, y.toDouble() - 6),
+          scratch,
+        );
+      }
+    }
+  }
+
+  void _paintSouls(
+    Canvas canvas,
+    Size size,
+    double edge,
+    Paint paint,
+    Paint accent,
+    Paint fill,
+  ) {
+    final detailed = desktop && size.width >= 720;
+    final ember = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = detailed ? 1.38 : 1.0
+      ..color = spec.accent.withValues(
+        alpha: (spec.opacity * (detailed ? 1.22 : 0.92))
+            .clamp(0.08, detailed ? 0.28 : 0.19)
+            .toDouble(),
+      );
+    final ash = Paint()
+      ..style = PaintingStyle.fill
+      ..color = spec.primary.withValues(
+        alpha: (spec.opacity * 0.26).clamp(0.025, 0.11).toDouble(),
+      );
+
+    canvas.drawLine(
+      Offset(edge * 0.24, 36),
+      Offset(size.width - edge * 0.24, 36),
+      ember,
+    );
+    canvas.drawLine(
+      Offset(edge * 0.24, size.height - 36),
+      Offset(size.width - edge * 0.24, size.height - 36),
+      paint,
+    );
+    for (final side in <double>[0, size.width]) {
+      final dir = side == 0 ? 1.0 : -1.0;
+      for (var i = 0; i < (detailed ? 6 : 4); i++) {
+        final y = size.height * (0.14 + i * (detailed ? 0.13 : 0.19));
+        final sword = Path()
+          ..moveTo(side + dir * edge * 0.34, y - 30)
+          ..lineTo(side + dir * edge * 0.41, y + 16)
+          ..lineTo(side + dir * edge * 0.34, y + 44)
+          ..lineTo(side + dir * edge * 0.27, y + 16)
+          ..close();
+        canvas.drawPath(sword, ash);
+        canvas.drawPath(sword, i.isEven ? ember : paint);
+      }
+    }
+    for (var i = 0; i < (detailed ? 22 : 12); i++) {
+      final x = edge * 0.28 + (i * 91 % max(1, (size.width - edge).round()));
+      final y = size.height - 54 - (i * 37 % 160);
+      canvas.drawCircle(
+        Offset(x.toDouble(), y.toDouble()),
+        1.8 + (i % 3) * 0.6,
+        i.isEven ? ash : fill,
+      );
+    }
+  }
+
+  void _paintBoltedMetal(
+    Canvas canvas,
+    Size size,
+    double edge,
+    Paint paint,
+    Paint accent,
+    Paint fill,
+  ) {
+    final detailed = desktop && size.width >= 720;
+    final metal = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = detailed ? 1.25 : 0.95
+      ..color = spec.primary.withValues(
+        alpha: (spec.opacity * (detailed ? 1.16 : 0.92))
+            .clamp(0.08, detailed ? 0.30 : 0.20)
+            .toDouble(),
+      );
+    final oxide = Paint()
+      ..style = PaintingStyle.fill
+      ..color = spec.accent.withValues(
+        alpha: (spec.opacity * 0.32).clamp(0.03, 0.12).toDouble(),
+      );
+
+    for (var y = 42.0; y < size.height - 28; y += detailed ? 78 : 96) {
+      canvas.drawLine(
+        Offset(edge * 0.18, y),
+        Offset(size.width - edge * 0.18, y),
+        metal,
+      );
+    }
+    for (
+      var x = edge * 0.28;
+      x < size.width - edge * 0.20;
+      x += detailed ? 98 : 120
+    ) {
+      canvas.drawLine(Offset(x, 26), Offset(x, size.height - 26), accent);
+    }
+    for (var i = 0; i < (detailed ? 16 : 10); i++) {
+      final x = edge * 0.24 + (i * 103 % max(1, (size.width - edge).round()));
+      final y = 46.0 + (i * 67 % max(1, (size.height - 92).round()));
+      final c = Offset(x.toDouble(), y.toDouble());
+      canvas.drawCircle(c, 5.0 + i % 2, fill);
+      canvas.drawCircle(c, 8.0 + i % 2, metal);
+      if (spec.presetId.contains('copper') && i % 3 == 0) {
+        _paintDiamond(canvas, c.translate(15, 4), 6, oxide);
+      }
+    }
+  }
+
+  void _paintWildCompanion(
+    Canvas canvas,
+    Size size,
+    double edge,
+    Paint paint,
+    Paint accent,
+    Paint fill,
+  ) {
+    final detailed = desktop && size.width >= 720;
+    final vinePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = detailed ? 1.28 : 0.92
+      ..color = spec.accent.withValues(
+        alpha: (spec.opacity * (detailed ? 1.14 : 0.84))
+            .clamp(0.07, detailed ? 0.27 : 0.18)
+            .toDouble(),
+      );
+
+    final top = Path()..moveTo(edge * 0.24, 42);
+    for (var x = edge * 0.24; x < size.width - edge * 0.24; x += 86) {
+      top.cubicTo(x + 24, 14, x + 60, 70, x + 86, 42);
+    }
+    canvas.drawPath(top, vinePaint);
+    final bottom = Path()..moveTo(edge * 0.22, size.height - 44);
+    for (var x = edge * 0.22; x < size.width - edge * 0.22; x += 92) {
+      bottom.cubicTo(
+        x + 24,
+        size.height - 78,
+        x + 62,
+        size.height - 14,
+        x + 92,
+        size.height - 44,
+      );
+    }
+    canvas.drawPath(bottom, paint);
+
+    for (var i = 0; i < (detailed ? 12 : 7); i++) {
+      final x = edge * 0.30 + (i * 83 % max(1, (size.width - edge).round()));
+      final y = 58.0 + (i * 53 % max(1, (size.height - 128).round()));
+      final c = Offset(x.toDouble(), y.toDouble());
+      if (i.isEven) {
+        _paintBotanicalLeaf(
+          canvas,
+          c,
+          i % 4 == 0 ? 1 : -1,
+          20,
+          fill,
+          vinePaint,
+        );
+      } else {
+        _paintTinyPanelStar(canvas, c, 4, accent);
+      }
+    }
+  }
+
+  void _paintModernSchool(
+    Canvas canvas,
+    Size size,
+    double edge,
+    Paint paint,
+    Paint accent,
+    Paint fill,
+  ) {
+    final detailed = desktop && size.width >= 720;
+    final notebookLine = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = detailed ? 1.12 : 0.82
+      ..color = spec.primary.withValues(
+        alpha: (spec.opacity * (detailed ? 1.05 : 0.78))
+            .clamp(0.06, detailed ? 0.24 : 0.16)
+            .toDouble(),
+      );
+    final pinkInk = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = detailed ? 1.28 : 0.92
+      ..color = spec.accent.withValues(
+        alpha: (spec.opacity * (detailed ? 1.18 : 0.90))
+            .clamp(0.07, detailed ? 0.27 : 0.18)
+            .toDouble(),
+      );
+    final blueWash = Paint()
+      ..style = PaintingStyle.fill
+      ..color = spec.secondary.withValues(
+        alpha: (spec.opacity * 0.20).clamp(0.025, 0.09).toDouble(),
+      );
+
+    _paintCornerFlourishes(canvas, size, edge, paint, accent);
+
+    for (var y = detailed ? 48.0 : 56.0; y < size.height - 36; y += 42) {
+      canvas.drawLine(
+        Offset(edge * 0.18, y),
+        Offset(size.width - edge * 0.18, y + ((y.round().isEven) ? 2 : -2)),
+        notebookLine,
+      );
+    }
+    canvas.drawLine(
+      Offset(edge * 0.36, 32),
+      Offset(edge * 0.36, size.height - 32),
+      pinkInk,
+    );
+
+    for (var i = 0; i < (detailed ? 10 : 6); i++) {
+      final x = edge * 0.52 + (i * 89 % max(1, (size.width - edge).round()));
+      final y = 58.0 + (i * 47 % max(1, (size.height - 116).round()));
+      final c = Offset(x.toDouble(), y.toDouble());
+      if (i.isEven) {
+        final note = RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: c,
+            width: detailed ? 42 : 30,
+            height: detailed ? 24 : 18,
+          ),
+          Radius.circular(detailed ? 5 : 4),
+        );
+        canvas.drawRRect(note, blueWash);
+        canvas.drawRRect(note, pinkInk);
+        canvas.drawLine(c.translate(-12, 1), c.translate(12, -3), notebookLine);
+      } else {
+        _paintTinyPanelStar(canvas, c, detailed ? 4.8 : 3.6, pinkInk);
+      }
+    }
+
+    final penBase = Offset(size.width - edge * 0.44, size.height - 72);
+    final pen = Path()
+      ..moveTo(penBase.dx - 26, penBase.dy - 44)
+      ..lineTo(penBase.dx + 28, penBase.dy + 10)
+      ..lineTo(penBase.dx + 18, penBase.dy + 22)
+      ..lineTo(penBase.dx - 36, penBase.dy - 34)
+      ..close();
+    canvas.drawPath(pen, blueWash);
+    canvas.drawPath(pen, pinkInk);
+    canvas.drawLine(
+      penBase.translate(-18, -34),
+      penBase.translate(20, 6),
+      notebookLine,
+    );
+  }
+
   void _paintPostea(
     Canvas canvas,
     Size size,
@@ -11498,6 +15802,81 @@ class _OculumThemeDecorationPainter extends CustomPainter {
       canvas.drawLine(Offset(x, y), Offset(x + 24, y + 8), accent);
       canvas.drawLine(Offset(x + 8, y + 14), Offset(x + 31, y + 25), paint);
     }
+  }
+
+  void _paintOculumFortress(
+    Canvas canvas,
+    Size size,
+    double edge,
+    Paint paint,
+    Paint accent,
+    Paint fill,
+  ) {
+    _paintMedieval(canvas, size, edge, paint, accent, fill);
+
+    final detailed = desktop && size.width >= 720;
+    final fortressPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = detailed ? 1.65 : 1.20
+      ..color = spec.accent.withValues(alpha: spec.opacity * 1.28);
+    final metalFill = Paint()
+      ..style = PaintingStyle.fill
+      ..color = spec.secondary.withValues(alpha: spec.opacity * 0.72);
+    final glow = Paint()
+      ..style = PaintingStyle.fill
+      ..color = spec.accent.withValues(alpha: spec.opacity * 0.18)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
+
+    final topY = detailed ? 78.0 : 54.0;
+    final center = Offset(size.width / 2, topY);
+    final width = min(size.width * 0.34, detailed ? 230.0 : 150.0);
+    final gate = Path()
+      ..moveTo(center.dx - width * 0.48, center.dy + width * 0.18)
+      ..lineTo(center.dx - width * 0.40, center.dy - width * 0.08)
+      ..lineTo(center.dx - width * 0.18, center.dy - width * 0.28)
+      ..lineTo(center.dx, center.dy - width * 0.16)
+      ..lineTo(center.dx + width * 0.18, center.dy - width * 0.28)
+      ..lineTo(center.dx + width * 0.40, center.dy - width * 0.08)
+      ..lineTo(center.dx + width * 0.48, center.dy + width * 0.18)
+      ..close();
+    canvas.drawPath(gate, glow);
+    canvas.drawPath(gate, metalFill);
+    canvas.drawPath(gate, fortressPaint);
+
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: center,
+        width: width * 0.58,
+        height: width * 0.30,
+      ),
+      fortressPaint,
+    );
+    canvas.drawCircle(center, width * 0.095, fill);
+    canvas.drawCircle(center, width * 0.040, accent);
+
+    for (final side in <double>[-1, 1]) {
+      final x = side < 0 ? edge * 0.34 : size.width - edge * 0.34;
+      final tower = Rect.fromCenter(
+        center: Offset(x, size.height * 0.50),
+        width: edge * 0.20,
+        height: size.height * (detailed ? 0.56 : 0.46),
+      );
+      canvas.drawRect(tower, metalFill);
+      canvas.drawRect(tower, fortressPaint);
+      for (var i = 0; i < 4; i++) {
+        final y = tower.top + tower.height * (0.18 + i * 0.20);
+        _paintDiamond(
+          canvas,
+          Offset(x, y),
+          detailed ? 10 : 7,
+          i.isEven ? accent : fill,
+        );
+      }
+    }
+
+    _paintSigils(canvas, size, edge * 0.82, paint, accent);
   }
 
   void _paintSigils(

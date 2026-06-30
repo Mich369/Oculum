@@ -274,6 +274,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return directSkillNumericBonus(key) + skillTextQuickBonus(key);
   }
 
+  int rebirthLevelBonus() {
+    if (!rebirthato) return 0;
+    return max(0, leggiNumero(livelloController)) * 2;
+  }
+
   int resilienzaMassimoNaturale() {
     return max(
       0,
@@ -282,7 +287,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           tempResilienza +
           skillFormaBonus('resilienza') +
           itemQuickBonus('resilienza') +
-          globalQuickBonus('resilienza'),
+          globalQuickBonus('resilienza') +
+          rebirthLevelBonus(),
     );
   }
 
@@ -294,7 +300,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           tempVolonta +
           skillFormaBonus('volonta') +
           itemQuickBonus('volonta') +
-          globalQuickBonus('volonta'),
+          globalQuickBonus('volonta') +
+          rebirthLevelBonus(),
     );
   }
 
@@ -306,7 +313,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           tempMateria +
           skillFormaBonus('materia') +
           itemQuickBonus('materia') +
-          globalQuickBonus('materia'),
+          globalQuickBonus('materia') +
+          rebirthLevelBonus(),
     );
   }
 
@@ -318,7 +326,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           tempOculum +
           skillFormaBonus('oculum') +
           itemQuickBonus('oculum') +
-          globalQuickBonus('oculum'),
+          globalQuickBonus('oculum') +
+          rebirthLevelBonus(),
     );
   }
 
@@ -384,7 +393,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         globalQuickBonus(key) +
         conditionalBuffStatBonus(key) +
         skillTextQuickBonus(key) +
-        tempStatBonus(key);
+        tempStatBonus(key) +
+        statoForzaQuickBonus(key) +
+        rebirthLevelBonus();
   }
 
   int tempStatBonus(String key) {
@@ -473,6 +484,17 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       case 'oculumshield':
       case 'eyeshield':
         return 'scudo_oculum';
+      case 'schivataoculum':
+      case 'schivateoculum':
+      case 'schivataocu':
+      case 'schivateocu':
+      case 'schivataoculare':
+      case 'schivateoculari':
+      case 'oculumdodge':
+      case 'oculumdodges':
+      case 'eyedodge':
+      case 'eyedodges':
+        return 'schivata_oculum';
       case 'iniziativa':
       case 'ini':
       case 'initiative':
@@ -570,6 +592,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       'tiro_oculum',
       'scudo',
       'scudo_oculum',
+      'schivata_oculum',
       'resilienza',
       'volonta',
       'materia',
@@ -629,8 +652,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final ocu = safeFormulaStatValue('oculum', currentOculum(), tempOculum);
     final livelloGrado = bonusLivelloGrado();
     final malusFatica = malusFaticaTiri();
+    final vantaggio = vantaggioTiroBonus();
     final dif =
-        ((mat + vol + livelloGrado) ~/ 2) +
+        ((vol + mat) ~/ 2) +
+        livelloGrado +
         bonusDifesaRapido() +
         bonusDifesaEquipaggiamento() +
         directSkillNumericBonus('difesa');
@@ -642,6 +667,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final baseHp = max(1, res) * moltiplicatoreHp();
     final baseMovimento = 30 + (mat ~/ 6);
     final grado = max(0, leggiNumero(gradoController));
+    final baseSchivataOculum = grado ~/ 3;
     final baseReazioni = max(0, leggiNumero(reazioniController)) + (grado ~/ 6);
     final baseReazioniVeloci = max(0, leggiNumero(reazioniVelociController));
     final statRollBaseBonus = livelloGrado + malusFatica;
@@ -654,6 +680,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       'livello': max(0, leggiNumero(livelloController)),
       'grado': grado,
       'livello_grado': livelloGrado,
+      'vantaggio_tiro': vantaggio,
+      'vantaggio': vantaggio,
       'fatica': max(0, leggiNumero(cenereController)),
       'cenere': max(0, leggiNumero(cenereController)),
       'hp': max(1, baseHp),
@@ -665,24 +693,35 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       'volonta_current': vol,
       'materia_current': mat,
       'oculum_current': ocu,
-      'tiro_resilienza': max(0, (res ~/ 2) + statRollBaseBonus),
-      'tiro_volonta': max(0, (vol ~/ 2) + statRollBaseBonus),
-      'tiro_materia': max(0, (mat ~/ 2) + statRollBaseBonus),
-      'tiro_oculum': max(0, (ocu ~/ 2) + statRollBaseBonus),
+      'tiro_resilienza': max(0, (res ~/ 2) + statRollBaseBonus + vantaggio),
+      'tiro_volonta': max(0, (vol ~/ 2) + statRollBaseBonus + vantaggio),
+      'tiro_materia': max(0, (mat ~/ 2) + statRollBaseBonus + vantaggio),
+      'tiro_oculum': max(0, (ocu ~/ 2) + statRollBaseBonus + vantaggio),
       'vc': max(
         0,
-        livelloGrado + (vol ~/ 3) + bonusAttaccoRapido() + malusFatica,
+        livelloGrado +
+            (vol ~/ 3) +
+            bonusAttaccoRapido() +
+            malusFatica +
+            vantaggio,
       ),
-      'cm': max(0, livelloGrado + (mat ~/ 2) + bonusCmRapido() + malusFatica),
-      'iniziativa': max(0, livelloGrado + (mat ~/ 5) + malusFatica),
+      'cm': max(
+        0,
+        livelloGrado + (mat ~/ 2) + bonusCmRapido() + malusFatica + vantaggio,
+      ),
+      'iniziativa': max(0, livelloGrado + (mat ~/ 5) + malusFatica + vantaggio),
       'movimento': max(0, baseMovimento),
       'tiro_attacco': max(
         0,
-        livelloGrado + (vol ~/ 3) + bonusAttaccoRapido() + malusFatica,
+        livelloGrado +
+            (vol ~/ 3) +
+            bonusAttaccoRapido() +
+            malusFatica +
+            vantaggio,
       ),
       'tiro_difesa': max(
         0,
-        livelloGrado + (mat ~/ 2) + bonusCmRapido() + malusFatica,
+        livelloGrado + (mat ~/ 2) + bonusCmRapido() + malusFatica + vantaggio,
       ),
       'danni': max(0, baseDanni),
       'reazione': max(0, baseReazioni),
@@ -693,6 +732,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       'scudo_current': max(0, leggiNumero(scudoController)),
       'scudo_oculum': max(0, leggiNumero(scudoOculumController)),
       'scudo_oculum_current': max(0, leggiNumero(scudoOculumController)),
+      'schivata_oculum': max(0, baseSchivataOculum),
+      'schivate_oculum': max(0, baseSchivataOculum),
     };
   }
 
@@ -1170,6 +1211,28 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return bonuses;
   }
 
+  String activeQuickCommandText() {
+    final parts = <String>[];
+    for (final titolo in titoli) {
+      if (!titolo.equipaggiato) continue;
+      parts.addAll(activeTitleQuickTexts(titolo));
+    }
+    for (final art in arti) {
+      if (!art.sbloccata) continue;
+      parts.addAll(activeArtQuickTexts(art));
+    }
+    for (final item in inventario) {
+      if (!item.equipaggiata) continue;
+      parts.addAll(activeItemQuickTexts(item));
+    }
+    for (final skill in skills) {
+      if (!skill.equipaggiata) continue;
+      parts.addAll(skillQuickCommandTexts(skill));
+    }
+    parts.add(buffMalusRapidiController.text);
+    return parts.where((text) => text.trim().isNotEmpty).join('\n');
+  }
+
   int quickResilienzaBonusFromTexts(Iterable<String> texts) {
     var total = 0;
     for (final text in texts) {
@@ -1236,7 +1299,20 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return normalized.contains('defiled');
   }
 
-  int artMaxLevel(CharacterArt art) => isDefiledArt(art) ? 5 : 3;
+  bool isRuneArt(CharacterArt art) {
+    final normalized = oculumNormalizeText(
+      cleanUiText('${art.tipo} ${art.nome}'),
+    );
+    return normalized.contains('rune') ||
+        normalized.contains('runica') ||
+        normalized.contains('runico');
+  }
+
+  int artMaxLevel(CharacterArt art) {
+    if (isDefiledArt(art)) return 5;
+    if (isRuneArt(art)) return 4;
+    return 3;
+  }
 
   String artLevelRoman(int level) {
     switch (level) {
@@ -1482,6 +1558,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       yield artSkillActiveLevelText(skill);
     }
 
+    if (isRuneArt(art)) {
+      final runeCustomText = runeArtQuickCustomEffectText(art);
+      if (runeCustomText.trim().isNotEmpty) yield runeCustomText;
+    }
+
     if (art.openAttiva && artOpenSbloccata(art)) {
       yield art.openBuff;
     }
@@ -1497,10 +1578,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       add(skill.evo1);
       add(skill.evo2);
       add(skill.evo3);
-      if (isDefiledArt(art)) {
-        add(skill.evo4);
-        add(skill.evo5);
-      }
+      final maxLevel = artMaxLevel(art);
+      if (maxLevel >= 4) add(skill.evo4);
+      if (maxLevel >= 5) add(skill.evo5);
     }
 
     add(art.openBuff);
@@ -1661,6 +1741,149 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int currentOculum() => readIntValue(currentOculumController.text);
+
+  int follia() => max(0, leggiNumero(folliaController));
+
+  int folliaPartyTotale() {
+    final party = partyStatsCountIndexes();
+    final source = party.isEmpty ? <int>[schedaCorrente] : party;
+    if (source.isEmpty) return follia();
+    var total = 0;
+    for (final index in source) {
+      if (index == schedaCorrente) {
+        total += follia();
+      } else if (index >= 0 && index < schedePersonaggio.length) {
+        total += readIntValue(schedePersonaggio[index]['follia']);
+      }
+    }
+    return max(0, total);
+  }
+
+  bool partyHaFolliaDaMostri() {
+    final party = partyStatsCountIndexes();
+    final source = party.isEmpty ? <int>[schedaCorrente] : party;
+    for (final index in source) {
+      if (index == schedaCorrente) {
+        if (follia() > 0 && folliaDaMostri) return true;
+      } else if (index >= 0 && index < schedePersonaggio.length) {
+        final sheet = schedePersonaggio[index];
+        if (readIntValue(sheet['follia']) > 0 &&
+            readBoolValue(sheet['folliaDaMostri'])) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool folliaGeneratoreSbloccato() {
+    return folliaPartyTotale() > 0 || partyHaFolliaDaMostri();
+  }
+
+  int folliaDannoPassivo() {
+    if (illnessArtSbloccata) return 0;
+    return follia();
+  }
+
+  int folliaIncontroPercentuale() {
+    final total = folliaPartyTotale();
+    if (total <= 0) return 0;
+    final difficultyBonus = switch (normalizedCampaignDifficulty()) {
+      'oculum' => 18,
+      'difficile' => 12,
+      'facile' => 4,
+      _ => 8,
+    };
+    final monsterBonus = partyHaFolliaDaMostri() ? 12 : 0;
+    return (total * 7 + difficultyBonus + monsterBonus).clamp(5, 85).toInt();
+  }
+
+  int folliaDannoConvertibile({bool totale = false}) {
+    final raw = totale
+        ? folliaPartyTotale()
+        : (folliaPartyTotale() * 0.5).ceil();
+    final mitigation = max(0, difesa() ~/ 12);
+    return max(0, raw - mitigation);
+  }
+
+  int oculumTiroLimiteRegola() {
+    final level = max(0, leggiNumero(livelloController));
+    final grade = max(0, leggiNumero(gradoController));
+    final byLevel = level ~/ 3;
+    final byGrade = grade <= 0
+        ? (level >= 9 ? 3 : byLevel)
+        : max(3, (grade ~/ 3) * 3);
+    return max(0, min(byLevel, byGrade));
+  }
+
+  int oculumTiroSpendCap() {
+    return min(oculumTiroLimiteRegola(), max(0, currentOculum()));
+  }
+
+  int oculumTiroPreparato() {
+    final cap = oculumTiroSpendCap();
+    final value = leggiNumero(oculumTiroController).clamp(0, cap).toInt();
+    if (oculumTiroController.text != value.toString()) {
+      oculumTiroController.text = value.toString();
+    }
+    return value;
+  }
+
+  void preparaOculumTiroDelta(int delta) {
+    setState(() {
+      final cap = oculumTiroSpendCap();
+      final next = (oculumTiroPreparato() + delta).clamp(0, cap).toInt();
+      oculumTiroController.text = next.toString();
+      risultato = t(
+        'Oculum per prossimo tiro fight: $next/$cap.',
+        'Oculum for next fight roll: $next/$cap.',
+      );
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  ({int spent, int bonus}) consumaOculumTiro() {
+    final spent = oculumTiroPreparato();
+    if (spent <= 0) return (spent: 0, bonus: 0);
+
+    currentOculumController.text = max(0, currentOculum() - spent).toString();
+    oculumTiroController.text = '0';
+    scheduleRealtimeOculumChanged();
+    programmaSalvataggio();
+    return (spent: spent, bonus: spent * 3);
+  }
+
+  String oculumTiroLogLabel(({int spent, int bonus}) spend) {
+    if (spend.spent <= 0) return '';
+    return ' Oculum fight +${spend.bonus} (${spend.spent} pt).';
+  }
+
+  void modificaFollia(int delta, {bool daMostro = false}) {
+    setState(() {
+      final before = follia();
+      final effectiveDelta = delta > 0 && illnessArtSbloccata
+          ? delta * 2
+          : delta;
+      final next = max(0, before + effectiveDelta);
+      final applied = next - before;
+      folliaController.text = next.toString();
+      if (daMostro && applied > 0) folliaDaMostri = true;
+
+      var damageText = '';
+      if (applied > 0 && !illnessArtSbloccata) {
+        final hpBefore = hpCorrenti();
+        currentHpController.text = max(0, hpBefore - applied).toString();
+        damageText = ' HP -$applied.';
+      }
+
+      risultato = applied >= 0
+          ? 'Follia +$applied ($next).$damageText'
+          : 'Follia $applied ($next).';
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
 
   double oculumRatio() {
     final massimo = oculumMassimo();
@@ -2036,14 +2259,25 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       if (key == 'resilienza') {
         rimarginaHpDaAumentoResilienza(appliedDelta);
       }
+      final massimo = statMassimo(key);
+      String? cenereMessage;
+      if (appliedDelta < 0 && massimo > 0 && next <= (massimo / 2).floor()) {
+        cenereMessage = modificaCenereControllata(1);
+      }
 
       if (!silent) {
-        final massimo = statMassimo(key);
         final label = statLabel(key);
         final total = currentStatValue(key);
         risultato = appliedDelta >= 0
             ? '$label attuale: +$appliedDelta ($total/$massimo).'
             : '$label attuale: $appliedDelta ($total/$massimo).';
+        if (appliedDelta < 0 && cenereMessage != null) {
+          risultato += '\n$cenereMessage';
+        } else if (appliedDelta < 0 &&
+            massimo > 0 &&
+            next <= (massimo / 2).floor()) {
+          risultato += '\nCenere/Fatica +1: risorsa usata sotto il 50%.';
+        }
         aggiungiLog(risultato);
       }
     });
@@ -2082,7 +2316,40 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int bonusLivelloGrado() {
     final livello = max(0, leggiNumero(livelloController));
     final grado = max(0, leggiNumero(gradoController));
-    return livello + grado * 6;
+    return livello + grado * 6 + rebirthLevelBonus();
+  }
+
+  List<MapEntry<String, int>> vantaggioTiroOptions() {
+    return const [
+      MapEntry('Svantaggio Oculum', -12),
+      MapEntry('Ultra Svantaggio', -9),
+      MapEntry('Super Svantaggio', -6),
+      MapEntry('Vero Svantaggio', -5),
+      MapEntry('Svantaggio', -3),
+      MapEntry('Svantaggio minore', -1),
+      MapEntry('Normale', 0),
+      MapEntry('Vantaggio minore', 1),
+      MapEntry('Vantaggio', 3),
+      MapEntry('Vero Vantaggio', 5),
+      MapEntry('Super Vantaggio', 6),
+      MapEntry('Ultra Vantaggio', 9),
+      MapEntry('Vantaggio Oculum', 12),
+    ];
+  }
+
+  String canonicalVantaggioTiroName(String raw) {
+    final value = cleanUiText(raw).trim().toLowerCase();
+    for (final option in vantaggioTiroOptions()) {
+      if (option.key.toLowerCase() == value) return option.key;
+    }
+    return 'Normale';
+  }
+
+  int vantaggioTiroBonus() {
+    final name = canonicalVantaggioTiroName(vantaggioTiroSelezionato);
+    return vantaggioTiroOptions()
+        .firstWhere((option) => option.key == name)
+        .value;
   }
 
   int sogliaFaticaSenzaMalus() {
@@ -2090,15 +2357,27 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int malusFaticaTiri() {
-    final extra = max(
-      0,
-      leggiNumero(cenereController) - sogliaFaticaSenzaMalus(),
-    );
-    return -extra;
+    if (statoForzaRimuoveMalus()) return 0;
+    return -max(0, leggiNumero(cenereController));
+  }
+
+  int tiroGlobaleBonus() {
+    return vantaggioTiroBonus() + malusFaticaTiri();
+  }
+
+  /// A positive DT makes every roll harder; a negative value makes it easier.
+  /// It is kept separate from advantages so criticals always remain natural.
+  int difficoltaTiro() {
+    return int.tryParse(difficoltaTiroController.text.trim()) ?? 0;
+  }
+
+  int modificatoreDifficoltaTiro({int? difficulty}) {
+    return -(difficulty ?? difficoltaTiro());
   }
 
   int moltiplicatoreHp() {
-    return 10;
+    final grado = max(0, leggiNumero(gradoController));
+    return 10 + grado * 5;
   }
 
   int globalQuickBonus(String key) {
@@ -2110,7 +2389,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         artQuickBonus(key) +
         itemQuickBonus(key) +
         skillTextQuickBonus(key) +
-        globalQuickBonus(key);
+        globalQuickBonus(key) +
+        statoForzaQuickBonus(key);
   }
 
   String statRollQuickBonusKey(String rawStat) {
@@ -2134,7 +2414,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int statRollQuickBonus(String rawStat) {
     final key = statRollQuickBonusKey(rawStat);
-    return key.isEmpty ? 0 : runtimeQuickBonus(key);
+    return (key.isEmpty ? 0 : runtimeQuickBonus(key)) + tiroGlobaleBonus();
   }
 
   int reazioniBonusGrado() {
@@ -2156,6 +2436,18 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       max(0, leggiNumero(reazioniVelociController)) +
           runtimeQuickBonus('reazione_veloce'),
     );
+  }
+
+  int schivataOculumBase() {
+    return max(0, leggiNumero(gradoController)) ~/ 3;
+  }
+
+  int schivateOculumTotali() {
+    return max(0, schivataOculumBase() + runtimeQuickBonus('schivata_oculum'));
+  }
+
+  int schivateOculumDisponibili() {
+    return max(0, schivateOculumTotali() - schivateOculumConsumate);
   }
 
   int maxHp() {
@@ -2198,8 +2490,294 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     hpTempBonusConsumati = positiveBonus;
   }
 
+  int scudoAutomaticoTipoScheda() {
+    final tipo = cleanUiText(tipoSchedaController.text).trim().toLowerCase();
+    if (!tipo.contains('mostro')) return 0;
+    final livello = max(1, leggiNumero(livelloController));
+    final grado = max(0, leggiNumero(gradoController));
+    final factor = tipo.contains('boss')
+        ? 9
+        : tipo.contains('mini')
+        ? 6
+        : 3;
+    return livello * factor + grado * 6;
+  }
+
+  List<HiddenEyeStat> defaultHiddenEyeStats() {
+    return [
+      HiddenEyeStat(
+        id: 'velo',
+        nome: 'Velo',
+        descrizione:
+            'Furtivita, rapidita di mano, nascondersi, borseggio. Bonus base: Materia/2.',
+      ),
+      HiddenEyeStat(
+        id: 'furbizia',
+        nome: 'Furbizia',
+        descrizione: 'Lama del Pensiero. Bonus: Resilienza/2.',
+      ),
+      HiddenEyeStat(
+        id: 'inganno',
+        nome: 'Inganno',
+        descrizione: 'Lama del Pensiero. Bonus: Materia/2.',
+      ),
+      HiddenEyeStat(
+        id: 'strategia',
+        nome: 'Strategia',
+        descrizione:
+            'Lama del Pensiero. Bonus: Resilienza/2. Se il nemico perde contro la tua strategia riceve Fragilita.',
+      ),
+      HiddenEyeStat(
+        id: 'eco',
+        nome: 'Eco',
+        descrizione:
+            'Carisma, leadership, intimidazione. Bonus base: Volonta/2.',
+      ),
+      HiddenEyeStat(
+        id: 'nodo',
+        nome: 'Nodo',
+        descrizione: 'Legami, diplomazia, alleanze. Bonus/malus: Karma totale.',
+      ),
+      HiddenEyeStat(
+        id: 'crepa',
+        nome: 'Crepa',
+        descrizione: 'Trauma, follia, corruzione. Bonus: Volonta/2.',
+      ),
+      HiddenEyeStat(
+        id: 'pressione',
+        nome: 'Pressione',
+        descrizione:
+            'Istinto. Bonus: Volonta/2. Puo imporre Fragilita o togliere azione con critico negativo.',
+      ),
+      HiddenEyeStat(
+        id: 'riflessi',
+        nome: 'Riflessi',
+        descrizione: 'Istinto. Bonus: Materia/2.',
+      ),
+      HiddenEyeStat(
+        id: 'percezione',
+        nome: 'Percezione',
+        descrizione: 'Istinto. Bonus: Oculum/2.',
+      ),
+      HiddenEyeStat(
+        id: 'sopravvivenza',
+        nome: 'Sopravvivenza',
+        descrizione: 'Istinto. Bonus: Resilienza/2.',
+      ),
+      HiddenEyeStat(
+        id: 'crafting',
+        nome: 'Crafting',
+        descrizione: 'Mano. Bonus: Materia/2.',
+      ),
+      HiddenEyeStat(
+        id: 'medicina',
+        nome: 'Medicina',
+        descrizione: 'Mano. Bonus: Resilienza/2.',
+      ),
+      HiddenEyeStat(
+        id: 'riparazioni',
+        nome: 'Riparazioni',
+        descrizione: 'Mano. Bonus: Materia/2.',
+      ),
+      HiddenEyeStat(
+        id: 'manifestazione_potere',
+        nome: 'Manifestazione del Potere',
+        descrizione: 'Sussurro. Bonus: maggiore tra Materia e Oculum / 2.',
+      ),
+      HiddenEyeStat(
+        id: 'sussurro',
+        nome: 'Sussurro',
+        descrizione: 'Segreti, linguaggi, simboli. Bonus: Oculum/2.',
+      ),
+    ];
+  }
+
+  List<ReputationEntry> defaultReputations() {
+    final karma = karmaTotale();
+    return [
+      ReputationEntry(
+        cityName: 'Vaitern',
+        value: (75 + karma).clamp(-100, 100).toInt(),
+        baseValue: 75,
+        lastKarmaApplied: karma,
+      ),
+      ReputationEntry(
+        cityName: 'Virelion',
+        value: (-25 + karma).clamp(-100, 100).toInt(),
+        baseValue: -25,
+        lastKarmaApplied: karma,
+      ),
+      ReputationEntry(
+        cityName: 'Monster Forest',
+        value: (10 + karma).clamp(-100, 100).toInt(),
+        baseValue: 10,
+        lastKarmaApplied: karma,
+      ),
+    ];
+  }
+
+  void ensureHiddenEyeDefaults() {
+    final byId = {for (final stat in hiddenEyeStats) stat.id: stat};
+    hiddenEyeStats
+      ..clear()
+      ..addAll(
+        defaultHiddenEyeStats().map((base) {
+          final existing = byId[base.id];
+          if (existing == null) return base;
+          existing.nome = existing.nome.trim().isEmpty
+              ? base.nome
+              : existing.nome;
+          existing.descrizione = existing.descrizione.trim().isEmpty
+              ? base.descrizione
+              : existing.descrizione;
+          existing.unlocked = true;
+          return existing;
+        }),
+      );
+  }
+
+  bool hiddenEyeDefaultsReady() {
+    final defaults = defaultHiddenEyeStats();
+    if (hiddenEyeStats.length != defaults.length) return false;
+
+    final byId = {for (final stat in hiddenEyeStats) stat.id: stat};
+    for (final base in defaults) {
+      final existing = byId[base.id];
+      if (existing == null) return false;
+      if (existing.nome.trim().isEmpty ||
+          existing.descrizione.trim().isEmpty ||
+          !existing.unlocked) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  String hiddenEyeStatGroup(String id) {
+    switch (id) {
+      case 'furbizia':
+      case 'strategia':
+      case 'sopravvivenza':
+      case 'medicina':
+        return 'resilienza';
+      case 'eco':
+      case 'crepa':
+      case 'pressione':
+        return 'volonta';
+      case 'velo':
+      case 'inganno':
+      case 'riflessi':
+      case 'crafting':
+      case 'riparazioni':
+        return 'materia';
+      case 'nodo':
+      case 'percezione':
+      case 'sussurro':
+        return 'oculum';
+      case 'manifestazione_potere':
+        return materiaTotale() >= oculumTotale() ? 'materia' : 'oculum';
+      default:
+        return 'materia';
+    }
+  }
+
+  String hiddenEyeGroupLabel(String group) {
+    switch (group) {
+      case 'resilienza':
+        return 'Resilienza';
+      case 'volonta':
+        return t('Volonta', 'Will');
+      case 'materia':
+        return 'Materia';
+      case 'oculum':
+        return 'Oculum';
+      case 'karma':
+        return 'Karma';
+      default:
+        return group;
+    }
+  }
+
+  void ensureReputationDefaults() {
+    if (reputationsManuallyCleared) return;
+    if (reputations.isEmpty) {
+      reputations.addAll(defaultReputations());
+      return;
+    }
+    syncReputationsWithKarma();
+  }
+
+  void syncReputationsWithKarma() {
+    final karma = karmaTotale();
+    for (final entry in reputations) {
+      if (entry.userModified) continue;
+      if (entry.baseValue == 0 && entry.lastKarmaApplied != 0) {
+        entry.baseValue = entry.value - entry.lastKarmaApplied;
+      }
+      entry.value = (entry.baseValue + karma).clamp(-100, 100).toInt();
+      entry.lastKarmaApplied = karma;
+    }
+  }
+
+  int hiddenEyeDerivedBonus(String id) {
+    switch (id) {
+      case 'velo':
+      case 'inganno':
+      case 'riflessi':
+      case 'crafting':
+      case 'riparazioni':
+        return materiaTotale() ~/ 2;
+      case 'furbizia':
+      case 'strategia':
+      case 'sopravvivenza':
+      case 'medicina':
+        return resilienzaTotale() ~/ 2;
+      case 'eco':
+      case 'crepa':
+      case 'pressione':
+        return volontaTotale() ~/ 2;
+      case 'nodo':
+        return leggiNumero(karmaController);
+      case 'percezione':
+      case 'sussurro':
+        return oculumTotale() ~/ 2;
+      case 'manifestazione_potere':
+        return max(materiaTotale(), oculumTotale()) ~/ 2;
+      default:
+        return 0;
+    }
+  }
+
+  int hiddenEyeTotal(HiddenEyeStat stat) {
+    return stat.valore + hiddenEyeDerivedBonus(stat.id);
+  }
+
+  String karmaStateLabel() {
+    final value = leggiNumero(karmaController);
+    if (value >= 50) return t('Benedetto', 'Blessed');
+    if (value >= 10) return t('Positivo', 'Positive');
+    if (value > -10) return t('Neutrale', 'Neutral');
+    if (value > -25) return t('Macchiato', 'Stained');
+    if (value > -50) return t('Corrotto', 'Corrupted');
+    if (value > -75) return t('Maledetto', 'Cursed');
+    return t('Sfiorato dal Vuoto', 'Void Touched');
+  }
+
+  String reputationLabel(int value) {
+    if (value >= 100) return t('Idolatrato', 'Idolized');
+    if (value >= 75) return t('Amato', 'Loved');
+    if (value >= 50) return t('Apprezzato', 'Appreciated');
+    if (value >= 25) return t('Conosciuto', 'Known');
+    if (value > -25) return t('Neutrale', 'Neutral');
+    if (value > -50) return t('Sospetto', 'Suspicious');
+    if (value > -75) return t('Malvisto', 'Disliked');
+    if (value > -100) return t('Ricercato', 'Wanted');
+    return t('Nemico Giurato', 'Sworn Enemy');
+  }
+
   int scudo() {
-    final bonus = runtimeQuickBonus('scudo');
+    final bonus = runtimeQuickBonus('scudo') + scudoAutomaticoTipoScheda();
     final spent = scudoBonusConsumati.clamp(0, max(0, bonus)).toInt();
     return max(0, leggiNumero(scudoController) + bonus - spent);
   }
@@ -2207,14 +2785,19 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int scudoRefullTarget() {
     return max(
       0,
-      bonusScudoEquipaggiamento() + max(0, runtimeQuickBonus('scudo')),
+      bonusScudoEquipaggiamento() +
+          scudoAutomaticoTipoScheda() +
+          max(0, runtimeQuickBonus('scudo')),
     );
   }
 
   void impostaScudoTotale(int value) {
     final target = max(0, value);
     final manual = max(0, leggiNumero(scudoController));
-    final bonus = max(0, runtimeQuickBonus('scudo'));
+    final bonus = max(
+      0,
+      runtimeQuickBonus('scudo') + scudoAutomaticoTipoScheda(),
+    );
 
     if (target >= manual) {
       scudoBonusConsumati = (manual + bonus - target).clamp(0, bonus).toInt();
@@ -2322,7 +2905,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int difesa() {
-    return ((materiaTotale() + volontaTotale() + bonusLivelloGrado()) ~/ 2) +
+    return ((volontaTotale() + materiaTotale()) ~/ 2) +
+        bonusLivelloGrado() +
         bonusDifesaRapido() +
         bonusDifesaEquipaggiamento() +
         titleQuickBonus('difesa') +
@@ -2336,7 +2920,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final volonta = volontaTotale();
     final materia = materiaTotale();
     final livelloGrado = bonusLivelloGrado();
-    final base = (materia + volonta + livelloGrado) ~/ 2;
+    final baseStats = (volonta + materia) ~/ 2;
+    final base = baseStats + livelloGrado;
     final bonusTitoli = titleQuickBonus('difesa');
     final bonusArt = artQuickBonus('difesa');
     final bonusItem = itemQuickBonus('difesa');
@@ -2346,21 +2931,24 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final bonusRapido = bonusDifesaRapido();
     final details = quickCommandRuntimeDetails('difesa');
     final detailText = details.isEmpty ? '' : ' | ${details.join('; ')}';
-    return '((VOL $volonta + MAT $materia + Lv/Gr $livelloGrado) / 2 = $base) + Rapido $bonusRapido + Equip $bonusEquip + Titoli $bonusTitoli + Art/Open $bonusArt + Oggetti @ $bonusItem + Buff/Malus @ $bonusGlobal + Skill/Forme $bonusSkill = ${difesa()}$detailText';
+    return '(VOL $volonta + MAT $materia) / 2 = $baseStats + Lv/Gr $livelloGrado = $base + Rapido $bonusRapido + Equip $bonusEquip + Titoli $bonusTitoli + Art/Open $bonusArt + Oggetti @ $bonusItem + Buff/Malus @ $bonusGlobal + Skill/Forme $bonusSkill = ${difesa()}$detailText';
   }
 
   List<InventoryItem> armiEquipaggiate() {
     final armi = inventario
-        .where((item) => item.arma && item.equipaggiata)
+        .where(
+          (item) =>
+              item.arma && item.equipaggiata && canEquipInventoryItem(item),
+        )
         .toList();
-    armi.sort((a, b) => b.bonusDanno.compareTo(a.bonusDanno));
+    armi.sort((a, b) => itemAttackBonus(b).compareTo(itemAttackBonus(a)));
     return armi;
   }
 
   int bonusDannoArmi() {
     final armi = armiEquipaggiate();
     if (armi.isEmpty) return 0;
-    return armi.first.bonusDanno;
+    return itemAttackBonus(armi.first);
   }
 
   InventoryItem? armaPiuForteEquipaggiata() {
@@ -2370,30 +2958,54 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   List<InventoryItem> protezioniEquipaggiate() {
     return inventario
-        .where((item) => item.protegge && item.equipaggiata)
+        .where(
+          (item) =>
+              item.protegge && item.equipaggiata && canEquipInventoryItem(item),
+        )
         .toList();
   }
 
   int bonusDifesaEquipaggiamento() {
     return protezioniEquipaggiate().fold(
       0,
-      (somma, item) => somma + item.bonusDifesa,
+      (somma, item) => somma + itemDefenseBonus(item),
     );
   }
 
   int bonusScudoEquipaggiamento() {
     return protezioniEquipaggiate().fold(
       0,
-      (somma, item) => somma + item.bonusScudo,
+      (somma, item) => somma + itemShieldBonus(item),
     );
   }
 
   void applicaScudoItemAttuale(InventoryItem item, int segno) {
-    if (!item.protegge || item.bonusScudo == 0) return;
+    final bonus = itemShieldBonus(item);
+    if (!item.protegge || bonus == 0 || !canEquipInventoryItem(item)) return;
     scudoController.text = max(
       0,
-      leggiNumero(scudoController) + item.bonusScudo * segno,
+      leggiNumero(scudoController) + bonus * segno,
     ).toString();
+  }
+
+  int itemGrade(InventoryItem item) => item.gradoOggetto.clamp(0, 12).toInt();
+
+  int requiredItemGrade(InventoryItem item) =>
+      item.gradoRichiesto.clamp(0, 12).toInt();
+
+  int itemAttackBonus(InventoryItem item) =>
+      item.bonusDanno + itemGrade(item) * 5;
+
+  int itemDefenseBonus(InventoryItem item) =>
+      item.bonusDifesa + itemGrade(item) * 2;
+
+  int itemShieldBonus(InventoryItem item) =>
+      item.bonusScudo + itemGrade(item) * 5;
+
+  bool canEquipInventoryItem(InventoryItem item) {
+    final requiredGrade = requiredItemGrade(item);
+    if (requiredGrade <= 0) return true;
+    return max(0, leggiNumero(gradoController)) >= requiredGrade;
   }
 
   String nomeArmaPiuForteEquipaggiata() {
@@ -2429,7 +3041,23 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return 'VOL ${volontaTotale()} + Arma ${bonusDannoArmi()} + Lv/Gr ${bonusLivelloGrado()} = $base + Titoli $bonusTitoli + Art/Open $bonusArt + Oggetti @ $bonusItem + Buff/Malus @ $bonusGlobal + Skill/Forme $bonusSkill = ${dannoTotale()}$detailText';
   }
 
-  Map<String, int> danniPerElemento() {
+  String activeTypeSwitchElement() {
+    final text = buffMalusRapidiController.text;
+    if (text.trim().isEmpty) return '';
+
+    final match = RegExp(
+      r'@(?:type\s*switch|typeswitch|tipo\s*switch|cambio\s*tipo)\s*[:=]?\s*([^@,;\n]+)',
+      caseSensitive: false,
+    ).firstMatch(text);
+    if (match == null) return '';
+
+    final raw = cleanUiText(match.group(1) ?? '').trim();
+    if (raw.isEmpty) return '';
+    final id = oculumNormalizeElementId(raw);
+    return allDamageElementIds().contains(id) ? id : '';
+  }
+
+  Map<String, int> danniPerElemento({bool applyTypeSwitch = true}) {
     final result = <String, int>{};
 
     void add(String element, int value) {
@@ -2514,6 +3142,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       expectedTotal: dannoTotale(),
       fallbackElement: armaPiuForteEquipaggiata()?.elementoDanno ?? 'Fisico',
     );
+
+    final switchedElement = applyTypeSwitch ? activeTypeSwitchElement() : '';
+    if (switchedElement.isNotEmpty && result.isNotEmpty) {
+      return <String, int>{switchedElement: dannoTotale()};
+    }
     return result;
   }
 
@@ -2660,6 +3293,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return bonusLivelloGrado() +
         materiaTotale() ~/ 5 +
         runtimeQuickBonus('iniziativa') +
+        vantaggioTiroBonus() +
         malusFaticaTiri();
   }
 
@@ -2676,6 +3310,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         globalQuickBonus('vc') +
         skillTextQuickBonus('vc') +
         runtimeQuickBonus('tiro_attacco') +
+        vantaggioTiroBonus() +
         malusFaticaTiri();
   }
 
@@ -2688,6 +3323,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         globalQuickBonus('cm') +
         skillTextQuickBonus('cm') +
         runtimeQuickBonus('tiro_difesa') +
+        vantaggioTiroBonus() +
         malusFaticaTiri();
   }
 

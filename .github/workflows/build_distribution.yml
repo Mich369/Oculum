@@ -1,0 +1,200 @@
+name: Build distribution
+run-name: Build distribution ${{ github.ref_name }} @ ${{ github.sha }}
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oculum-distribution-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Create Windows platform if missing
+        shell: pwsh
+        run: |
+          if (!(Test-Path "windows")) {
+            flutter create --platforms=windows .
+          }
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows release
+        run: flutter build windows --release
+
+      - name: Copy Windows build to distribution
+        shell: pwsh
+        run: |
+          $dist = "build/distribution/windows"
+          New-Item -ItemType Directory -Force -Path $dist
+          Copy-Item -Recurse -Force "build/windows/x64/runner/Release/*" $dist
+          Compress-Archive -Path "$dist/*" -DestinationPath "build/distribution/Oculum-Windows.zip" -Force
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Oculum-Windows
+          path: build/distribution/Oculum-Windows.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
+
+      - name: Create macOS platform if missing
+        run: |
+          if [ ! -d "macos" ]; then
+            flutter create --platforms=macos .
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build macOS release
+        run: flutter build macos --release
+
+      - name: Copy macOS build to distribution
+        run: |
+          mkdir -p build/distribution/macos
+          APP_PATH=$(find build/macos/Build/Products/Release -maxdepth 1 -name "*.app" -print -quit)
+
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app found"
+            exit 1
+          fi
+
+          cp -R "$APP_PATH" build/distribution/macos/
+          APP_NAME=$(basename "$APP_PATH")
+          ditto -c -k --sequesterRsrc --keepParent "build/distribution/macos/$APP_NAME" build/distribution/Oculum-macOS.zip
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Oculum-macOS
+          path: build/distribution/Oculum-macOS.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  build-ios-unsigned:
+    name: Build iOS unsigned
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create iOS platform if missing
+        run: |
+          if [ ! -d "ios" ]; then
+            flutter create --platforms=ios .
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS release without codesign
+        run: flutter build ios --release --no-codesign
+
+      - name: Copy iOS build to distribution
+        run: |
+          # Unsigned IPA: this is useful as a CI artifact, but it is not normally installable
+          # on an iPhone without Apple signing/provisioning.
+          if [ ! -d "build/ios/iphoneos/Runner.app" ]; then
+            echo "Runner.app missing"
+            exit 1
+          fi
+          mkdir -p build/distribution/ios/Payload
+          cp -R build/ios/iphoneos/Runner.app build/distribution/ios/Payload/
+          cd build/distribution/ios
+          zip -qry ../Oculum-iOS-unsigned.ipa Payload
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Oculum-iOS-unsigned
+          path: build/distribution/Oculum-iOS-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Android release APK
+        run: flutter build apk --release
+
+      - name: Copy Android build to distribution
+        run: |
+          mkdir -p build/distribution/android
+          cp build/app/outputs/flutter-apk/app-release.apk build/distribution/Oculum-Android-release.apk
+          cp build/app/outputs/flutter-apk/app-release.apk build/distribution/android/Oculum-Android-release.apk
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Oculum-Android
+          path: build/distribution/Oculum-Android-release.apk
+          if-no-files-found: error
+          retention-days: 14

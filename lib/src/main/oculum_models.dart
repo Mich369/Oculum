@@ -31,6 +31,7 @@ class OculumColorPreset {
     required this.backgroundMid,
     required this.backgroundBottom,
     required this.eyePupilGlow,
+    this.iconAssetPath,
   });
 
   final String id;
@@ -47,6 +48,30 @@ class OculumColorPreset {
   final Color backgroundMid;
   final Color backgroundBottom;
   final Color eyePupilGlow;
+  final String? iconAssetPath;
+}
+
+List<String> readStringListValue(dynamic value) {
+  if (value is String) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? <String>[] : <String>[trimmed];
+  }
+  if (value is! List) return <String>[];
+  return [
+    for (final entry in value)
+      if ('$entry'.trim().isNotEmpty) '$entry'.trim(),
+  ];
+}
+
+List<Map<String, dynamic>> readMapListValue(dynamic value) {
+  if (value is! List) return <Map<String, dynamic>>[];
+  final result = <Map<String, dynamic>>[];
+  for (final entry in value) {
+    if (entry is Map) {
+      result.add(Map<String, dynamic>.from(entry));
+    }
+  }
+  return result;
 }
 
 class DamageModifierOption {
@@ -82,6 +107,211 @@ class ManualSection {
   final String titleEn;
   final String contentIt;
   final String contentEn;
+}
+
+class HiddenEyeStat {
+  HiddenEyeStat({
+    required this.id,
+    required this.nome,
+    required this.descrizione,
+    this.valore = 0,
+    this.unlocked = true,
+    this.masteryProgress = 0,
+  });
+
+  final String id;
+  String nome;
+  String descrizione;
+  int valore;
+  bool unlocked;
+  int masteryProgress;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'nome': nome,
+    'descrizione': descrizione,
+    'valore': valore,
+    'unlocked': unlocked,
+    'oculusSubtraitMasteryProgress': masteryProgress,
+  };
+
+  factory HiddenEyeStat.fromJson(Map<String, dynamic> json) {
+    return HiddenEyeStat(
+      id: '${json['id'] ?? ''}',
+      nome: '${json['nome'] ?? ''}',
+      descrizione: '${json['descrizione'] ?? ''}',
+      valore: readIntValue(json['valore']),
+      unlocked: json.containsKey('unlocked')
+          ? readBoolValue(json['unlocked'])
+          : true,
+      masteryProgress: readIntValue(
+        json['oculusSubtraitMasteryProgress'] ?? json['maestria'],
+      ),
+    );
+  }
+}
+
+const List<int> oculusSubtraitMasteryTargets = <int>[
+  36,
+  63,
+  69,
+  96,
+  100,
+  150,
+  160,
+  369,
+  500,
+  693,
+  963,
+];
+const int _oculusSubtraitMasteryFinalTarget = 1000;
+
+int oculusSubtraitMasteryTargetForValue(int value) {
+  final normalizedValue = max(0, value);
+  if (normalizedValue < oculusSubtraitMasteryTargets.length) {
+    return oculusSubtraitMasteryTargets[normalizedValue];
+  }
+  return _oculusSubtraitMasteryFinalTarget;
+}
+
+int oculusSubtraitMasteryTargetForGrade(int grade) {
+  return oculusSubtraitMasteryTargetForValue(grade);
+}
+
+int oculusSubtraitMasteryGainForDie(int die) {
+  if (die < 15 || die > 20) return 0;
+  return die == 20 ? 60 : die;
+}
+
+int oculusSubtraitMasteryApplyGain(HiddenEyeStat stat, int gain) {
+  if (gain <= 0) return 0;
+
+  stat.masteryProgress = max(0, stat.masteryProgress) + gain;
+  var completedLevels = 0;
+  var safety = 0;
+
+  while (safety < 64) {
+    final target = oculusSubtraitMasteryTargetForValue(stat.valore);
+    if (target <= 0 || stat.masteryProgress < target) break;
+
+    stat.masteryProgress -= target;
+    stat.valore += 1;
+    completedLevels += 1;
+    safety += 1;
+  }
+
+  return completedLevels;
+}
+
+double oculusSubtraitMasteryFraction({
+  required int progress,
+  required int grade,
+}) {
+  final target = oculusSubtraitMasteryTargetForGrade(grade);
+  if (target <= 0) return 0;
+  return (max(0, progress) / target).clamp(0.0, 1.0).toDouble();
+}
+
+class ReputationEntry {
+  ReputationEntry({
+    required this.cityName,
+    this.description = '',
+    this.value = 0,
+    int? baseValue,
+    this.userModified = false,
+    this.lastKarmaApplied = 0,
+  }) : baseValue = baseValue ?? value;
+
+  String cityName;
+  String description;
+  int value;
+  int baseValue;
+  bool userModified;
+  int lastKarmaApplied;
+
+  Map<String, dynamic> toJson() => {
+    'cityName': cityName,
+    'description': description,
+    'value': value,
+    'baseValue': baseValue,
+    'userModified': userModified,
+    'lastKarmaApplied': lastKarmaApplied,
+  };
+
+  factory ReputationEntry.fromJson(Map<String, dynamic> json) {
+    final value = readIntValue(json['value']);
+    return ReputationEntry(
+      cityName: '${json['cityName'] ?? ''}',
+      description: '${json['description'] ?? ''}',
+      value: value,
+      baseValue: json.containsKey('baseValue')
+          ? readIntValue(json['baseValue'])
+          : value - readIntValue(json['lastKarmaApplied']),
+      userModified: readBoolValue(json['userModified']),
+      lastKarmaApplied: readIntValue(json['lastKarmaApplied']),
+    );
+  }
+}
+
+class JournalEntry {
+  JournalEntry({
+    required this.title,
+    required this.description,
+    required this.cycleDay,
+    required this.phase,
+    required this.location,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  String title;
+  String description;
+  int cycleDay;
+  String phase;
+  String location;
+  DateTime createdAt;
+
+  Map<String, dynamic> toJson() => {
+    'title': title,
+    'description': description,
+    'cycleDay': cycleDay,
+    'phase': phase,
+    'location': location,
+    'createdAt': createdAt.toIso8601String(),
+  };
+
+  factory JournalEntry.fromJson(Map<String, dynamic> json) {
+    return JournalEntry(
+      title: '${json['title'] ?? ''}',
+      description: '${json['description'] ?? ''}',
+      cycleDay: readIntValue(json['cycleDay']),
+      phase: '${json['phase'] ?? ''}',
+      location: '${json['location'] ?? ''}',
+      createdAt: DateTime.tryParse('${json['createdAt'] ?? ''}'),
+    );
+  }
+}
+
+class DraftNote {
+  DraftNote({required this.text, DateTime? createdAt, this.converted = false})
+    : createdAt = createdAt ?? DateTime.now();
+
+  String text;
+  DateTime createdAt;
+  bool converted;
+
+  Map<String, dynamic> toJson() => {
+    'text': text,
+    'createdAt': createdAt.toIso8601String(),
+    'converted': converted,
+  };
+
+  factory DraftNote.fromJson(Map<String, dynamic> json) {
+    return DraftNote(
+      text: '${json['text'] ?? ''}',
+      createdAt: DateTime.tryParse('${json['createdAt'] ?? ''}'),
+      converted: readBoolValue(json['converted']),
+    );
+  }
 }
 
 class ConditionalBuffEntry {
@@ -355,7 +585,14 @@ class InventoryItem {
     this.bonusDanno = 0,
     this.bonusDifesa = 0,
     this.bonusScudo = 0,
+    this.gradoOggetto = 0,
+    this.gradoRichiesto = 0,
     this.elementoDanno = 'Fisico',
+    this.putrefazioneSessioni = 0,
+    this.sessioniSegnate = 0,
+    this.putrefazioneGiornoInizio = 0,
+    this.safeHpUsedDay = 0,
+    this.saveShieldUsedDay = 0,
   });
 
   String nome;
@@ -369,7 +606,14 @@ class InventoryItem {
   int bonusDanno;
   int bonusDifesa;
   int bonusScudo;
+  int gradoOggetto;
+  int gradoRichiesto;
   String elementoDanno;
+  int putrefazioneSessioni;
+  int sessioniSegnate;
+  int putrefazioneGiornoInizio;
+  int safeHpUsedDay;
+  int saveShieldUsedDay;
 
   Map<String, dynamic> toJson() {
     return {
@@ -384,7 +628,14 @@ class InventoryItem {
       'bonusDanno': bonusDanno,
       'bonusDifesa': bonusDifesa,
       'bonusScudo': bonusScudo,
+      'gradoOggetto': gradoOggetto,
+      'gradoRichiesto': gradoRichiesto,
       'elementoDanno': elementoDanno,
+      'putrefazioneSessioni': putrefazioneSessioni,
+      'sessioniSegnate': sessioniSegnate,
+      'putrefazioneGiornoInizio': putrefazioneGiornoInizio,
+      'safeHpUsedDay': safeHpUsedDay,
+      'saveShieldUsedDay': saveShieldUsedDay,
     };
   }
 
@@ -401,8 +652,15 @@ class InventoryItem {
       bonusDanno: readIntValue(json['bonusDanno']),
       bonusDifesa: readIntValue(json['bonusDifesa']),
       bonusScudo: readIntValue(json['bonusScudo']),
+      gradoOggetto: readIntValue(json['gradoOggetto']).clamp(0, 12).toInt(),
+      gradoRichiesto: readIntValue(json['gradoRichiesto']).clamp(0, 12).toInt(),
       elementoDanno:
           '${json['elementoDanno'] ?? json['tipoDanno'] ?? 'Fisico'}',
+      putrefazioneSessioni: readIntValue(json['putrefazioneSessioni']),
+      sessioniSegnate: readIntValue(json['sessioniSegnate']),
+      putrefazioneGiornoInizio: readIntValue(json['putrefazioneGiornoInizio']),
+      safeHpUsedDay: readIntValue(json['safeHpUsedDay']),
+      saveShieldUsedDay: readIntValue(json['saveShieldUsedDay']),
     );
   }
 }
@@ -728,6 +986,59 @@ class ArtSkill {
   }
 }
 
+class RuneArtCustomWord {
+  RuneArtCustomWord({
+    required this.id,
+    required this.block,
+    required this.choiceIt,
+    required this.choiceEn,
+    required this.effectIt,
+    required this.effectEn,
+    this.cost = 0,
+    this.dt = 0,
+  });
+
+  String id;
+  String block;
+  String choiceIt;
+  String choiceEn;
+  String effectIt;
+  String effectEn;
+  int cost;
+  int dt;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'block': block,
+      'choiceIt': choiceIt,
+      'choiceEn': choiceEn,
+      'effectIt': effectIt,
+      'effectEn': effectEn,
+      'cost': cost,
+      'dt': dt,
+    };
+  }
+
+  factory RuneArtCustomWord.fromJson(Map<String, dynamic> json) {
+    final id = '${json['id'] ?? ''}'.trim();
+    final choiceIt = '${json['choiceIt'] ?? json['choice'] ?? ''}'.trim();
+    return RuneArtCustomWord(
+      id: id.isEmpty ? 'custom_${DateTime.now().microsecondsSinceEpoch}' : id,
+      block: '${json['block'] ?? 'CUSTOM'}'.trim(),
+      choiceIt: choiceIt.isEmpty ? 'Parola custom' : choiceIt,
+      choiceEn:
+          '${json['choiceEn'] ?? json['choice'] ?? choiceIt}'.trim().isEmpty
+          ? 'Custom word'
+          : '${json['choiceEn'] ?? json['choice'] ?? choiceIt}'.trim(),
+      effectIt: '${json['effectIt'] ?? json['effect'] ?? ''}'.trim(),
+      effectEn: '${json['effectEn'] ?? json['effect'] ?? ''}'.trim(),
+      cost: readIntValue(json['cost']),
+      dt: readIntValue(json['dt']),
+    );
+  }
+}
+
 class CharacterArt {
   CharacterArt({
     required this.nome,
@@ -740,7 +1051,22 @@ class CharacterArt {
     this.openBuff = '',
     this.openSkill = '',
     this.openAttiva = false,
-  });
+    List<String>? runeWordsKnown,
+    List<String>? runeQuickWordIds,
+    List<String>? runeQuickWordIdsSlot2,
+    this.runeActiveSlot = 1,
+    List<RuneArtCustomWord>? runeCustomWords,
+    this.runeBooksRead = 0,
+  }) : runeWordsKnown = List<String>.from(runeWordsKnown ?? const <String>[]),
+       runeQuickWordIds = List<String>.from(
+         runeQuickWordIds ?? const <String>[],
+       ),
+       runeQuickWordIdsSlot2 = List<String>.from(
+         runeQuickWordIdsSlot2 ?? const <String>[],
+       ),
+       runeCustomWords = List<RuneArtCustomWord>.from(
+         runeCustomWords ?? const <RuneArtCustomWord>[],
+       );
 
   String nome;
   String tipo;
@@ -752,6 +1078,12 @@ class CharacterArt {
   String openBuff;
   String openSkill;
   bool openAttiva;
+  List<String> runeWordsKnown;
+  List<String> runeQuickWordIds;
+  List<String> runeQuickWordIdsSlot2;
+  int runeActiveSlot;
+  List<RuneArtCustomWord> runeCustomWords;
+  int runeBooksRead;
 
   Map<String, dynamic> toJson() {
     return {
@@ -765,6 +1097,12 @@ class CharacterArt {
       'openBuff': openBuff,
       'openSkill': openSkill,
       'openAttiva': openAttiva,
+      'runeWordsKnown': List<String>.from(runeWordsKnown),
+      'runeQuickWordIds': List<String>.from(runeQuickWordIds),
+      'runeQuickWordIdsSlot2': List<String>.from(runeQuickWordIdsSlot2),
+      'runeActiveSlot': runeActiveSlot,
+      'runeCustomWords': runeCustomWords.map((x) => x.toJson()).toList(),
+      'runeBooksRead': runeBooksRead,
     };
   }
 
@@ -782,6 +1120,14 @@ class CharacterArt {
       openBuff: json['openBuff'] ?? '',
       openSkill: json['openSkill'] ?? '',
       openAttiva: readBoolValue(json['openAttiva']),
+      runeWordsKnown: readStringListValue(json['runeWordsKnown']),
+      runeQuickWordIds: readStringListValue(json['runeQuickWordIds']),
+      runeQuickWordIdsSlot2: readStringListValue(json['runeQuickWordIdsSlot2']),
+      runeActiveSlot: readIntValue(json['runeActiveSlot'], fallback: 1),
+      runeCustomWords: readMapListValue(
+        json['runeCustomWords'],
+      ).map(RuneArtCustomWord.fromJson).toList(),
+      runeBooksRead: readIntValue(json['runeBooksRead']),
     );
   }
 }
