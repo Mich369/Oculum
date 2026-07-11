@@ -96,6 +96,9 @@ void handleMessage(RelayClient client, dynamic raw) {
     case 'SHEET_UPDATE':
     case 'SET_COMASTER':
     case 'KICK_PLAYER':
+    case 'SESSION_NOTE':
+    case 'SESSION_NOTES_REQUEST':
+    case 'SESSION_NOTES_SNAPSHOT':
       relayToRoom(client, data);
       break;
     default:

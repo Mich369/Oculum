@@ -320,6 +320,7 @@ $Root = (Resolve-Path -LiteralPath (Join-Path $ScriptDir "..")).Path
 $Dist = Join-Path $Root "build\distribution"
 $WinDist = Join-Path $Dist "windows"
 $AndroidDist = Join-Path $Dist "android"
+$WebDist = Join-Path $Dist "web"
 $MacDist = Join-Path $Dist "macos"
 $IosDist = Join-Path $Dist "ios"
 $BattleRoot = Join-Path $Root "oculum_battle"
@@ -345,7 +346,7 @@ if (-not (Test-Path -LiteralPath (Join-Path $Root "pubspec_overrides.yaml"))) {
 Assert-DistributionNotRunning -WindowsDistribution $WinDist -ForceClose:$ForceCloseRunningDistribution
 Assert-DistributionPath -Root $Root -Distribution $Dist
 Reset-Directory -Path $Dist
-New-Item -ItemType Directory -Path $WinDist, $AndroidDist, $MacDist, $IosDist -Force | Out-Null
+New-Item -ItemType Directory -Path $WinDist, $AndroidDist, $WebDist, $MacDist, $IosDist -Force | Out-Null
 
 Invoke-CheckedCommand "flutter pub get" "flutter" "pub" "get"
 
@@ -414,6 +415,21 @@ if (-not (Test-Path -LiteralPath $ApkSource)) {
 Copy-Item -LiteralPath $ApkSource -Destination (Join-Path $Dist "Oculum-Android-release.apk") -Force
 Copy-Item -LiteralPath $ApkSource -Destination (Join-Path $AndroidDist "Oculum-Android-release.apk") -Force
 Add-DistributionArtifact -Label "Android apk" -Path (Join-Path $Dist "Oculum-Android-release.apk") -Required
+
+Invoke-CheckedCommand "flutter build web --release" "flutter" "build" "web" "--release"
+
+$WebRelease = Join-Path $Root "build\web"
+if (-not (Test-Path -LiteralPath (Join-Path $WebRelease "index.html"))) {
+  throw "Build Web non trovata: $WebRelease"
+}
+Write-Step "Copia Web Release completa"
+Copy-DirectoryContents -Source $WebRelease -Destination $WebDist
+$WebZip = Join-Path $Dist "Oculum-Web.zip"
+Compress-Archive -Path (Join-Path $WebRelease "*") -DestinationPath $WebZip -Force
+if (-not (Test-Path -LiteralPath $WebZip)) {
+  throw "Zip Web non creato: $WebZip"
+}
+Add-DistributionArtifact -Label "Web zip" -Path $WebZip -Required
 
 if (Test-Path -LiteralPath (Join-Path $BattleRoot "pubspec.yaml")) {
   Write-Step "Build Oculum Battle standalone"

@@ -8,7 +8,13 @@ extension _OculumHomeDicePage on _OculumHomePageState {
       1000,
       max(1, int.tryParse(diceAmountController.text) ?? 1),
     );
-    final modificatore = int.tryParse(diceModifierController.text) ?? 0;
+    final modificatoreManuale = int.tryParse(diceModifierController.text) ?? 0;
+    final modificatoreGlobale = tiroGlobaleBonus();
+    final difficulty = difficoltaTiro();
+    final modificatore =
+        modificatoreManuale +
+        modificatoreGlobale +
+        modificatoreDifficoltaTiro();
     final random = Random();
     final tiriConCritico = <String>[];
 
@@ -39,6 +45,12 @@ extension _OculumHomeDicePage on _OculumHomePageState {
     final testoMod = modificatore == 0
         ? ''
         : ' ${modificatore > 0 ? '+' : ''}$modificatore';
+    final testoGlobale = modificatoreGlobale == 0
+        ? ''
+        : ' (${t('mod. globale', 'global mod')} ${signedRollPart(modificatoreGlobale)})';
+    final testoDt = difficulty == 0
+        ? ''
+        : ' (DT ${signedRollPart(difficulty)})';
     final testoCritico = modificatoreCritico == 0
         ? ''
         : ' ${signedRollPart(modificatoreCritico)} ${t('critico', 'critical')}';
@@ -54,7 +66,7 @@ extension _OculumHomeDicePage on _OculumHomePageState {
       tiroCriticoUno = criticoUno;
       tiroCriticoVenti = criticoMax;
       risultato =
-          '${t('Lancio', 'Roll')} ${quantita}d$facce$testoMod: $formulaDadi$testoMod = $finale$testoCritico';
+          '${t('Lancio', 'Roll')} ${quantita}d$facce: $formulaDadi$testoMod = $finale$testoCritico$testoGlobale$testoDt';
       aggiungiLog(risultato);
     });
 
@@ -340,6 +352,8 @@ extension _OculumHomeDicePage on _OculumHomePageState {
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            rollDifficultyField(compact: true),
             const SizedBox(height: 12),
             diceGrid(classicDice, extra: false),
             const SizedBox(height: 10),
@@ -461,6 +475,8 @@ extension _OculumHomeDicePage on _OculumHomePageState {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        rollDifficultyField(compact: true),
       ],
     );
   }

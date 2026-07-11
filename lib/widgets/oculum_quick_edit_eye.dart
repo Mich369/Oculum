@@ -38,7 +38,7 @@ class OculumQuickEditSection {
 class OculumQuickEditEyeButton extends StatelessWidget {
   const OculumQuickEditEyeButton({
     super.key,
-    required this.sections,
+    required this.sectionsBuilder,
     required this.primaryColor,
     required this.secondaryColor,
     required this.tertiaryColor,
@@ -47,7 +47,7 @@ class OculumQuickEditEyeButton extends StatelessWidget {
     required this.subtitle,
   });
 
-  final List<OculumQuickEditSection> sections;
+  final List<OculumQuickEditSection> Function() sectionsBuilder;
   final Color primaryColor;
   final Color secondaryColor;
   final Color tertiaryColor;
@@ -70,6 +70,7 @@ class OculumQuickEditEyeButton extends StatelessWidget {
   }
 
   void _openQuickEdit(BuildContext context) {
+    final sections = sectionsBuilder();
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -132,17 +133,17 @@ class OculumQuickEditEyeButton extends StatelessWidget {
                   ),
                   SizedBox(height: compact ? 9 : 14),
                   Expanded(
-                    child: ListView(
-                      children: [
-                        for (final section in sections)
-                          _QuickEditSectionWidget(
-                            section: section,
-                            primaryColor: primaryColor,
-                            secondaryColor: secondaryColor,
-                            tertiaryColor: tertiaryColor,
-                            onChanged: onChanged,
-                          ),
-                      ],
+                    child: ListView.builder(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      itemCount: sections.length,
+                      itemBuilder: (context, index) => _QuickEditSectionWidget(
+                        section: sections[index],
+                        primaryColor: primaryColor,
+                        secondaryColor: secondaryColor,
+                        tertiaryColor: tertiaryColor,
+                        onChanged: onChanged,
+                      ),
                     ),
                   ),
                   SizedBox(height: compact ? 8 : 12),

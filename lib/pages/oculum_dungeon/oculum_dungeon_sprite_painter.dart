@@ -162,6 +162,16 @@ class _OculumSpritePainter extends CustomPainter {
       canvas.restore();
       return;
     }
+    if (kind == 'kitty_slime') {
+      _paintKittySlime(canvas, size, p, dark);
+      canvas.restore();
+      return;
+    }
+    if (kind == 'mrmr_snail') {
+      _paintMrmrSnail(canvas, size, p, dark);
+      canvas.restore();
+      return;
+    }
 
     p.color = color.withValues(alpha: 0.92);
     final body = Rect.fromCenter(
@@ -400,6 +410,199 @@ class _OculumSpritePainter extends CustomPainter {
       );
     }
     canvas.restore();
+  }
+
+  void _paintKittySlime(Canvas canvas, Size size, Paint p, Paint dark) {
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+    final cy = h * .57;
+    final body = Path()
+      ..moveTo(w * .18, h * .68)
+      ..quadraticBezierTo(w * .12, h * .42, w * .31, h * .31)
+      ..lineTo(w * .39, h * .16)
+      ..quadraticBezierTo(w * .45, h * .29, cx, h * .28)
+      ..quadraticBezierTo(w * .55, h * .29, w * .61, h * .16)
+      ..lineTo(w * .69, h * .31)
+      ..quadraticBezierTo(w * .88, h * .42, w * .82, h * .68)
+      ..quadraticBezierTo(cx, h * .84, w * .18, h * .68)
+      ..close();
+
+    p.color = Color.lerp(color, const Color(0xFF7CEBFF), .34)!.withValues(
+      alpha: .88,
+    );
+    canvas.drawPath(body, p);
+
+    p
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = max(1.0, w * .018)
+      ..color = Colors.white.withValues(alpha: .34);
+    canvas.drawPath(body, p);
+    p.style = PaintingStyle.fill;
+
+    p.color = eyeColor.withValues(alpha: .94);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(cx - w * .14, cy - h * .04),
+        width: w * .09,
+        height: h * .10,
+      ),
+      p,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(cx + w * .14, cy - h * .04),
+        width: w * .09,
+        height: h * .10,
+      ),
+      p,
+    );
+    dark.color = const Color(0xFF06101A);
+    canvas.drawCircle(Offset(cx - w * .14, cy - h * .04), w * .018, dark);
+    canvas.drawCircle(Offset(cx + w * .14, cy - h * .04), w * .018, dark);
+
+    p
+      ..color = const Color(0xFFFFF3A3).withValues(alpha: .74)
+      ..strokeWidth = w * .018
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(cx - w * .05, cy + h * .06), Offset(cx, cy), p);
+    canvas.drawLine(Offset(cx + w * .05, cy + h * .06), Offset(cx, cy), p);
+    canvas.drawLine(
+      Offset(cx - w * .30, cy + h * .02),
+      Offset(cx - w * .47, cy - h * .01),
+      p,
+    );
+    canvas.drawLine(
+      Offset(cx - w * .30, cy + h * .07),
+      Offset(cx - w * .48, cy + h * .08),
+      p,
+    );
+    canvas.drawLine(
+      Offset(cx + w * .30, cy + h * .02),
+      Offset(cx + w * .47, cy - h * .01),
+      p,
+    );
+    canvas.drawLine(
+      Offset(cx + w * .30, cy + h * .07),
+      Offset(cx + w * .48, cy + h * .08),
+      p,
+    );
+    p.strokeCap = StrokeCap.butt;
+
+    p.color = const Color(0xFFFFD36A).withValues(alpha: .28);
+    for (var i = 0; i < 5; i++) {
+      final angle = pi * .20 + i * pi * .36;
+      canvas.drawCircle(
+        Offset(cx + cos(angle) * w * .26, cy + sin(angle) * h * .19),
+        w * .012,
+        p,
+      );
+    }
+
+    p.color = color.withValues(alpha: .30);
+    final tail = Path()
+      ..moveTo(w * .76, h * .59)
+      ..quadraticBezierTo(w * .98, h * .50, w * .86, h * .35)
+      ..quadraticBezierTo(w * .76, h * .45, w * .82, h * .58)
+      ..close();
+    canvas.drawPath(tail, p);
+  }
+
+  void _paintMrmrSnail(Canvas canvas, Size size, Paint p, Paint dark) {
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+    final shell = Rect.fromCenter(
+      center: Offset(cx + w * .08, h * .44),
+      width: w * .52,
+      height: h * .46,
+    );
+    final body = Rect.fromCenter(
+      center: Offset(cx - w * .03, h * .64),
+      width: w * .68,
+      height: h * .30,
+    );
+
+    p.color = color.withValues(alpha: .88);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(body, Radius.circular(w * .15)),
+      p,
+    );
+
+    p.color = Color.lerp(color, const Color(0xFF6B4E3D), .38)!.withValues(
+      alpha: .96,
+    );
+    canvas.drawOval(shell, p);
+
+    p
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w * .035
+      ..strokeCap = StrokeCap.round
+      ..color = const Color(0xFF070812).withValues(alpha: .72);
+    final spiral = Path()
+      ..moveTo(cx + w * .16, h * .44)
+      ..cubicTo(
+        cx + w * .33,
+        h * .30,
+        cx + w * .48,
+        h * .54,
+        cx + w * .22,
+        h * .58,
+      )
+      ..cubicTo(cx, h * .60, cx - w * .01, h * .39, cx + w * .15, h * .40);
+    canvas.drawPath(spiral, p);
+    p
+      ..style = PaintingStyle.fill
+      ..strokeCap = StrokeCap.butt;
+
+    p.color = Color.lerp(color, Colors.white, .22)!.withValues(alpha: .92);
+    final head = Rect.fromCenter(
+      center: Offset(cx - w * .30, h * .54),
+      width: w * .34,
+      height: h * .25,
+    );
+    canvas.drawOval(head, p);
+
+    p
+      ..color = color.withValues(alpha: .9)
+      ..strokeWidth = w * .035
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(cx - w * .39, h * .43),
+      Offset(cx - w * .47, h * .22),
+      p,
+    );
+    canvas.drawLine(
+      Offset(cx - w * .24, h * .43),
+      Offset(cx - w * .18, h * .22),
+      p,
+    );
+    p.strokeCap = StrokeCap.butt;
+
+    p.color = eyeColor;
+    canvas.drawCircle(Offset(cx - w * .47, h * .21), w * .045, p);
+    canvas.drawCircle(Offset(cx - w * .18, h * .21), w * .045, p);
+    dark.color = const Color(0xFF070812);
+    canvas.drawCircle(Offset(cx - w * .47, h * .21), w * .018, dark);
+    canvas.drawCircle(Offset(cx - w * .18, h * .21), w * .018, dark);
+
+    p
+      ..color = const Color(0xFF4C3327)
+      ..strokeWidth = w * .045
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(cx - w * .18, h * .56),
+      Offset(cx + w * .08, h * .49),
+      p,
+    );
+    p.color = const Color(0xFF1B1210);
+    canvas.drawCircle(Offset(cx + w * .10, h * .485), w * .055, p);
+    p.color = Colors.white.withValues(alpha: .28);
+    canvas.drawCircle(Offset(cx + w * .125, h * .462), w * .022, p);
+    p.strokeCap = StrokeCap.butt;
+
+    p.color = const Color(0xFFFFD36A).withValues(alpha: .34);
+    canvas.drawOval(Rect.fromLTWH(w * .10, h * .77, w * .70, h * .07), p);
   }
 
   void _paintWeapon(Canvas canvas, Size size, Paint p, Paint dark) {

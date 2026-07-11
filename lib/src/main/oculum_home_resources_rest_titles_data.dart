@@ -2,6 +2,28 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+class _OculumCalendarPhase {
+  const _OculumCalendarPhase({
+    required this.id,
+    required this.nameIt,
+    required this.nameEn,
+    required this.startDay,
+    required this.duration,
+    required this.descriptionIt,
+    required this.descriptionEn,
+  });
+
+  final String id;
+  final String nameIt;
+  final String nameEn;
+  final int startDay;
+  final int duration;
+  final String descriptionIt;
+  final String descriptionEn;
+
+  int get endDay => startDay + duration - 1;
+}
+
 extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   // RISORSE / ISPIRAZIONI / KARMA
   // =====================================================
@@ -21,9 +43,59 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  void modificaFortuna(int delta) {
+    setState(() {
+      fortuna = max(0, fortuna + delta);
+      risultato = t('Fortuna aggiornata: $fortuna.', 'Luck updated: $fortuna.');
+      aggiungiLog(risultato);
+    });
+
+    programmaSalvataggio();
+  }
+
+  void usaFortunaRapida() {
+    if (fortuna <= 0) {
+      setState(() {
+        risultato = t('Nessuna Fortuna disponibile.', 'No Luck available.');
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+
+    setState(() => fortuna = max(0, fortuna - 1));
+
+    final bonusTargets = <({String rawKey, String label})>[
+      (rawKey: 'TiroStats', label: t('Tiri stats', 'Stat rolls')),
+      (rawKey: 'TiroAttacco', label: t('Tiri attacco', 'Attack rolls')),
+      (rawKey: 'TiroDifesa', label: t('Tiri difesa', 'Defense rolls')),
+      (rawKey: 'Iniziativa', label: t('Iniziativa', 'Initiative')),
+    ];
+
+    for (final target in bonusTargets) {
+      modificaBuffMalusRapido(
+        rawKey: target.rawKey,
+        label: target.label,
+        delta: 1,
+        log: false,
+        save: false,
+      );
+    }
+
+    setState(() {
+      risultato = t(
+        'Fortuna consumata: +1 a stats, attacco, difesa e iniziativa tramite bonus rapidi. Fortuna rimasta: $fortuna.',
+        'Luck consumed: +1 to stats, attack, defense and initiative through quick bonuses. Luck left: $fortuna.',
+      );
+      aggiungiLog(risultato);
+    });
+
+    programmaSalvataggio();
+  }
+
   void modificaKarmaBase(int delta) {
     setState(() {
       karmaController.text = (leggiNumero(karmaController) + delta).toString();
+      syncReputationsWithKarma();
 
       risultato = t(
         'Karma modificato: ${karmaController.text}.',
@@ -158,6 +230,234 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
     programmaSalvataggio();
   }
+
+  String normalizedCampaignDifficulty([String? value]) {
+    final raw = (value ?? campaignDifficulty).trim().toLowerCase();
+    switch (raw) {
+      case 'facile':
+      case 'easy':
+        return 'facile';
+      case 'difficile':
+      case 'hard':
+        return 'difficile';
+      case 'oculum':
+        return 'oculum';
+      case 'medio':
+      case 'media':
+      case 'medium':
+      case 'normale':
+      case 'normal':
+      default:
+        return 'normale';
+    }
+  }
+
+  String campaignDifficultyLabel([String? value]) {
+    switch (normalizedCampaignDifficulty(value)) {
+      case 'facile':
+        return t('Facile', 'Easy');
+      case 'difficile':
+        return t('Difficile', 'Hard');
+      case 'oculum':
+        return 'Oculum';
+      default:
+        return t('Normale', 'Normal');
+    }
+  }
+
+  int inspirationCap(String type) {
+    final diff = normalizedCampaignDifficulty();
+    switch (type) {
+      case 'super':
+        if (diff == 'oculum') return 3;
+        if (diff == 'facile') return 9;
+        return 6;
+      case 'oculum':
+        if (diff == 'oculum') return 1;
+        if (diff == 'difficile') return 3;
+        return 6;
+      default:
+        if (diff == 'oculum') return 6;
+        if (diff == 'difficile') return 9;
+        if (diff == 'facile') return 12;
+        return 10;
+    }
+  }
+
+  ({int obser, int dust, int luck}) inspirationOverflowReward(String type) {
+    final diff = normalizedCampaignDifficulty();
+    switch (type) {
+      case 'super':
+        if (diff == 'oculum') return (obser: 10, dust: 1, luck: 2);
+        if (diff == 'difficile') return (obser: 20, dust: 1, luck: 2);
+        if (diff == 'facile') return (obser: 50, dust: 2, luck: 2);
+        return (obser: 50, dust: 1, luck: 2);
+      case 'oculum':
+        if (diff == 'facile') return (obser: 100, dust: 6, luck: 3);
+        if (diff == 'normale') return (obser: 80, dust: 5, luck: 3);
+        return (obser: 69, dust: 3, luck: 3);
+      default:
+        if (diff == 'oculum') return (obser: 3, dust: 0, luck: 1);
+        if (diff == 'difficile') return (obser: 5, dust: 0, luck: 1);
+        if (diff == 'facile') return (obser: 25, dust: 0, luck: 1);
+        return (obser: 10, dust: 0, luck: 1);
+    }
+  }
+
+  void grantInspirationWithCap(
+    String type,
+    int amount,
+    List<String> rewardLog,
+  ) {
+    final controller = switch (type) {
+      'super' => superIspirazioniController,
+      'oculum' => ispirazioniOculumController,
+      _ => ispirazioniController,
+    };
+    final label = switch (type) {
+      'super' => 'Super Ispirazione',
+      'oculum' => 'Ispirazione Oculum',
+      _ => 'Ispirazione',
+    };
+    final cap = inspirationCap(type);
+    for (var i = 0; i < amount; i++) {
+      final current = leggiNumero(controller);
+      if (current < cap) {
+        controller.text = (current + 1).toString();
+        rewardLog.add('+$label');
+      } else {
+        final overflow = inspirationOverflowReward(type);
+        if (overflow.obser > 0) {
+          obserController.text = (leggiNumero(obserController) + overflow.obser)
+              .toString();
+        }
+        if (overflow.dust > 0) {
+          ascensionDustController.text =
+              (leggiNumero(ascensionDustController) + overflow.dust).toString();
+        }
+        fortuna += overflow.luck;
+        rewardLog.add(
+          '$label piena: +${overflow.obser} Obser'
+          '${overflow.dust > 0 ? ', +${overflow.dust} Ascension Dust' : ''}, +${overflow.luck} Fortuna',
+        );
+      }
+    }
+  }
+
+  TextEditingController inspirationControllerForType(String type) {
+    return switch (type) {
+      'super' => superIspirazioniController,
+      'oculum' => ispirazioniOculumController,
+      _ => ispirazioniController,
+    };
+  }
+
+  String inspirationLabelForType(String type) {
+    return switch (type) {
+      'super' => t('Super Ispirazione', 'Super Inspiration'),
+      'oculum' => t('Ispirazione Oculum', 'Oculum Inspiration'),
+      _ => t('Ispirazione', 'Inspiration'),
+    };
+  }
+
+  void normalizeInspirationOverflow({bool silent = false}) {
+    final rewardLog = <String>[];
+    for (final type in const ['base', 'super', 'oculum']) {
+      final controller = inspirationControllerForType(type);
+      final cap = inspirationCap(type);
+      var current = leggiNumero(controller);
+      while (current > cap) {
+        controller.text = cap.toString();
+        current--;
+        final reward = inspirationOverflowReward(type);
+        obserController.text = (leggiNumero(obserController) + reward.obser)
+            .toString();
+        ascensionDustController.text =
+            (leggiNumero(ascensionDustController) + reward.dust).toString();
+        fortuna += reward.luck;
+        rewardLog.add(
+          '${inspirationLabelForType(type)} extra: +${reward.obser} Obser'
+          '${reward.dust > 0 ? ', +${reward.dust} Ascension Dust' : ''}, +${reward.luck} Fortuna',
+        );
+      }
+    }
+    if (rewardLog.isEmpty) return;
+    setState(() {
+      risultato = rewardLog.join('\n');
+      if (!silent) aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  void convertiIspirazioneInRicompense(String type, {int amount = 1}) {
+    final controller = inspirationControllerForType(type);
+    final available = leggiNumero(controller);
+    final converted = min(max(0, amount), available);
+    if (converted <= 0) {
+      setState(() {
+        risultato = t(
+          'Nessuna ${inspirationLabelForType(type)} da convertire.',
+          'No ${inspirationLabelForType(type)} to convert.',
+        );
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+
+    final reward = inspirationOverflowReward(type);
+    setState(() {
+      controller.text = (available - converted).toString();
+      obserController.text =
+          (leggiNumero(obserController) + reward.obser * converted).toString();
+      ascensionDustController.text =
+          (leggiNumero(ascensionDustController) + reward.dust * converted)
+              .toString();
+      fortuna += reward.luck * converted;
+      risultato =
+          '${inspirationLabelForType(type)} convertite: $converted -> +${reward.obser * converted} Obser'
+          '${reward.dust > 0 ? ', +${reward.dust * converted} Ascension Dust' : ''}, +${reward.luck * converted} Fortuna.';
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  void ensureCampaignStarterRewards(List<String> rewardLog) {
+    if (campaignDifficultyStarterClaimed) return;
+    final diff = normalizedCampaignDifficulty();
+    campaignDifficultyStarterClaimed = true;
+    if (diff == 'difficile') {
+      grantInspirationWithCap('base', 1, rewardLog);
+    } else if (diff == 'normale') {
+      grantInspirationWithCap('base', 1, rewardLog);
+      grantInspirationWithCap('super', 1, rewardLog);
+    } else if (diff == 'facile') {
+      grantInspirationWithCap('base', 1, rewardLog);
+      grantInspirationWithCap('super', 1, rewardLog);
+      grantInspirationWithCap('oculum', 1, rewardLog);
+    }
+  }
+
+  void grantDiaryRewardsByCampaign(int diaryNumber, List<String> rewardLog) {
+    final diff = normalizedCampaignDifficulty();
+    if (diff == 'facile') {
+      grantInspirationWithCap('base', 1, rewardLog);
+      if (diaryNumber % 2 == 0) {
+        grantInspirationWithCap('super', 1, rewardLog);
+      }
+      if (diaryNumber % 9 == 0) {
+        grantInspirationWithCap('oculum', 1, rewardLog);
+      }
+      return;
+    }
+    if (diff == 'normale') {
+      grantInspirationWithCap('base', 1, rewardLog);
+      return;
+    }
+    if (diaryNumber % 2 == 0) {
+      grantInspirationWithCap('base', 1, rewardLog);
+    }
+  }
+
   // =====================================================
   // RIPOSO / BISOGNI / CENERE
   // =====================================================
@@ -170,27 +470,259 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     return max(minimo, recupero);
   }
 
+  List<_OculumCalendarPhase> oculumCalendarPhases() => const [
+    _OculumCalendarPhase(
+      id: 'safe_monster',
+      nameIt: 'Safe Monster',
+      nameEn: 'Safe Monster',
+      startDay: 1,
+      duration: 36,
+      descriptionIt:
+          'I mostri poco organizzati perdono il grado, dimenticano tutto e diventano pacifici. Ucciderli di solito dona karma negativo e i drop restano solo base o rari.',
+      descriptionEn:
+          'Poorly organized monsters lose grade, forget everything and become peaceful. Killing them usually gives negative karma and drops stay basic or rare.',
+    ),
+    _OculumCalendarPhase(
+      id: 'illness',
+      nameIt: 'Illness',
+      nameEn: 'Illness',
+      startDay: 37,
+      duration: 36,
+      descriptionIt:
+          'La Follia ricevuta raddoppia, gli altri diventano visibili a tutti ed e possibile ottenere Illness Art.',
+      descriptionEn:
+          'Madness received is doubled, the others become visible to everyone and Illness Art can be obtained.',
+    ),
+    _OculumCalendarPhase(
+      id: 'little_breath',
+      nameIt: 'Little Breath',
+      nameEn: 'Little Breath',
+      startDay: 73,
+      duration: 36,
+      descriptionIt:
+          'Il Fato concede piu titoli, soprattutto ai rebirthati. Gli effetti climatici sono indeboliti e il sentore delle aree si percepisce meno.',
+      descriptionEn:
+          'Fate grants more titles, especially to reborn characters. Weather effects are weakened and area pressure is harder to feel.',
+    ),
+    _OculumCalendarPhase(
+      id: 'piogge_fertilizzanti',
+      nameIt: 'Piogge Fertilizzanti',
+      nameEn: 'Fertilizing Rains',
+      startDay: 109,
+      duration: 36,
+      descriptionIt:
+          'Piove fango fertilizzante nauseante. Malanni e Nausea sono piu comuni; i maiali di fango diventano una fonte rischiosa ma utile contro le malattie.',
+      descriptionEn:
+          'Nauseating fertilizing mud rains from the sky. Sickness and Nausea are more common; mud pigs become a risky but useful source against illness.',
+    ),
+    _OculumCalendarPhase(
+      id: 'the_sun',
+      nameIt: 'The Sun',
+      nameEn: 'The Sun',
+      startDay: 145,
+      duration: 6,
+      descriptionIt:
+          'I Solari ricevono +25% alle stats, non piove e il cibo sotto grado VI diventa putrefatto entro massimo due giorni.',
+      descriptionEn:
+          'Solar beings gain +25% stats, rain stops and food below grade VI rots within at most two days.',
+    ),
+    _OculumCalendarPhase(
+      id: 'mezzo_ciclo',
+      nameIt: 'Mezzo Ciclo',
+      nameEn: 'Half Cycle',
+      startDay: 151,
+      duration: 33,
+      descriptionIt:
+          'Il meteo torna reggibile quasi ovunque e le piogge sono principalmente non magiche.',
+      descriptionEn:
+          'Weather becomes bearable almost everywhere and rain is mostly non-magical.',
+    ),
+    _OculumCalendarPhase(
+      id: 'the_moon',
+      nameIt: 'The Moon',
+      nameEn: 'The Moon',
+      startDay: 184,
+      duration: 6,
+      descriptionIt:
+          'Si festeggia accettando ogni razza; i Lunari ricevono +10%.',
+      descriptionEn:
+          'People celebrate by accepting every race; Lunar beings gain +10%.',
+    ),
+    _OculumCalendarPhase(
+      id: 'the_fate',
+      nameIt: 'The Fate',
+      nameEn: 'The Fate',
+      startDay: 190,
+      duration: 36,
+      descriptionIt:
+          'Chi possiede un Fato e potenziato contro chi non ne possiede uno.',
+      descriptionEn:
+          'Those who have a Fate are empowered against those who do not.',
+    ),
+    _OculumCalendarPhase(
+      id: 'caldo_infernale',
+      nameIt: 'Caldo Infernale',
+      nameEn: 'Infernal Heat',
+      startDay: 226,
+      duration: 36,
+      descriptionIt:
+          'Il caldo pesa molto di piu. Senza bere ogni ora subisci debuff a Volonta in base alla fatica: 1/3/6/9/12.',
+      descriptionEn:
+          'Heat is much harsher. Without drinking every hour, Will is debuffed by exertion: 1/3/6/9/12.',
+    ),
+    _OculumCalendarPhase(
+      id: 'the_null',
+      nameIt: 'The Null',
+      nameEn: 'The Null',
+      startDay: 262,
+      duration: 36,
+      descriptionIt:
+          'Il vuoto prende parte dei caduti e li fa rinascere Senza Fato, privi di ricordi o con ricordi falsati.',
+      descriptionEn:
+          'The void takes some of the fallen and returns them Fate-less, without memories or with false memories.',
+    ),
+    _OculumCalendarPhase(
+      id: 'ghiaccio_imponente',
+      nameIt: 'Ghiaccio Imponente',
+      nameEn: 'Overwhelming Ice',
+      startDay: 298,
+      duration: 36,
+      descriptionIt:
+          'Il freddo pesa molto di piu. Senza calore per oltre mezz ora subisci debuff a Materia: 1/3/6/9/12.',
+      descriptionEn:
+          'Cold is much harsher. Without heat for more than half an hour, Materia is debuffed: 1/3/6/9/12.',
+    ),
+    _OculumCalendarPhase(
+      id: 'ultimo_ciclo',
+      nameIt: 'Ultimo Ciclo',
+      nameEn: 'Last Cycle',
+      startDay: 334,
+      duration: 36,
+      descriptionIt:
+          'Si festeggia il ciclo passato. Non ci sono peculiarita meccaniche.',
+      descriptionEn:
+          'The past cycle is celebrated. There are no special mechanics.',
+    ),
+  ];
+
+  int normalizzaGiornoOculum(int day) {
+    return ((day - 1) % 369) + 1;
+  }
+
+  int oculumCurrentDay() {
+    final raw = leggiNumero(oculumCurrentDayController);
+    if (raw <= 0) return 1;
+    return normalizzaGiornoOculum(raw);
+  }
+
+  _OculumCalendarPhase oculumPhaseForDay(int day) {
+    final normalized = normalizzaGiornoOculum(day);
+    return oculumCalendarPhases().firstWhere(
+      (phase) => normalized >= phase.startDay && normalized <= phase.endDay,
+      orElse: () => oculumCalendarPhases().first,
+    );
+  }
+
+  int oculumDayInPhase(int day) {
+    final phase = oculumPhaseForDay(day);
+    return normalizzaGiornoOculum(day) - phase.startDay + 1;
+  }
+
+  int oculumTremanaDay(int day) => ((normalizzaGiornoOculum(day) - 1) % 3) + 1;
+
+  int oculumSemanaDay(int day) => ((normalizzaGiornoOculum(day) - 1) % 6) + 1;
+
+  int oculumDodemanaDay(int day) =>
+      ((normalizzaGiornoOculum(day) - 1) % 12) + 1;
+
+  int oculumDayDistance(int startDay, int currentDay) {
+    final start = normalizzaGiornoOculum(startDay);
+    final current = normalizzaGiornoOculum(currentDay);
+    if (current >= start) return current - start;
+    return (369 - start) + current;
+  }
+
+  String oculumCurrentPhaseLabel() {
+    final day = oculumCurrentDay();
+    final phase = oculumPhaseForDay(day);
+    return '${t(phase.nameIt, phase.nameEn)} ${oculumDayInPhase(day)}/${phase.duration} - ${t('Ciclo giorno', 'Cycle day')} $day';
+  }
+
+  void impostaGiornoOculum(int day, {bool annuncia = true}) {
+    final normalized = normalizzaGiornoOculum(day);
+    setState(() {
+      oculumCurrentDayController.text = normalized.toString();
+      final marciti = aggiornaPutrefazioneInventarioPerGiorno(normalized);
+      final phase = oculumPhaseForDay(normalized);
+      final base = t(
+        'Giorno Oculum impostato: ${t(phase.nameIt, phase.nameEn)} ${oculumDayInPhase(normalized)}/${phase.duration}, ciclo $normalized.',
+        'Oculum day set: ${t(phase.nameIt, phase.nameEn)} ${oculumDayInPhase(normalized)}/${phase.duration}, cycle $normalized.',
+      );
+      risultato = marciti.isEmpty
+          ? base
+          : '$base\n${t('Putrefazione aggiornata', 'Rot updated')}: ${marciti.join(', ')}.';
+      if (annuncia) {
+        ultimoEventoRiposo = risultato;
+        aggiungiLog(risultato);
+      }
+    });
+
+    programmaSalvataggio();
+  }
+
+  void avanzaGiorniOculum(int delta) {
+    if (delta == 0) return;
+    final before = oculumCurrentDay();
+    final after = normalizzaGiornoOculum(before + delta);
+    setState(() {
+      oculumCurrentDayController.text = after.toString();
+      final marciti = aggiornaPutrefazioneInventarioPerGiorno(after);
+      final phase = oculumPhaseForDay(after);
+      final direction = delta > 0 ? '+$delta' : '$delta';
+      risultato = t(
+        'Giorni passati: $direction. Ora sei in ${t(phase.nameIt, phase.nameEn)} ${oculumDayInPhase(after)}/${phase.duration}, ciclo $after.',
+        'Days passed: $direction. You are now in ${t(phase.nameIt, phase.nameEn)} ${oculumDayInPhase(after)}/${phase.duration}, cycle $after.',
+      );
+      if (marciti.isNotEmpty) {
+        risultato +=
+            '\n${t('Putrefazione aggiornata', 'Rot updated')}: ${marciti.join(', ')}.';
+      }
+      ultimoEventoRiposo = risultato;
+      aggiungiLog(risultato);
+    });
+
+    programmaSalvataggio();
+  }
+
   void segnaSessioneSenzaBisogni() {
-    final sessioni = leggiNumero(sessioniSenzaBisogniController) + 1;
+    final giorni = leggiNumero(sessioniSenzaBisogniController) + 1;
+    final nuovoGiorno = normalizzaGiornoOculum(oculumCurrentDay() + 1);
 
     setState(() {
-      sessioniSenzaBisogniController.text = sessioni.toString();
+      sessioniSenzaBisogniController.text = giorni.toString();
+      oculumCurrentDayController.text = nuovoGiorno.toString();
+      final marciti = aggiornaPutrefazioneInventarioPerGiorno(nuovoGiorno);
 
-      if (sessioni >= 3) {
+      if (giorni >= 3) {
         tempResilienza -= 1;
         rimarginaHpDaAumentoResilienza(-1);
         tempOculum -= 1;
         sessioniSenzaBisogniController.text = '0';
 
         ultimoEventoRiposo = t(
-          'Tre sessioni senza mangiare, bere o dormire: -1 Resilienza temporanea e -1 Oculum temporaneo.',
-          'Three sessions without eating, drinking or sleeping: -1 temporary Resilience and -1 temporary Oculum.',
+          'Tre giorni senza mangiare, bere o dormire: -1 Resilienza temporanea e -1 Oculum temporaneo.',
+          'Three days without eating, drinking or sleeping: -1 temporary Resilience and -1 temporary Oculum.',
         );
       } else {
         ultimoEventoRiposo = t(
-          'Sessione senza bisogni segnata: $sessioni/3. Alla terza sessione subisci -1 Resilienza e -1 Oculum temporanei.',
-          'Session without needs marked: $sessioni/3. On the third session you suffer -1 temporary Resilience and -1 temporary Oculum.',
+          'Giorno senza bisogni segnato: $giorni/3. Al terzo giorno subisci -1 Resilienza e -1 Oculum temporanei.',
+          'Day without needs marked: $giorni/3. On the third day you suffer -1 temporary Resilience and -1 temporary Oculum.',
         );
+      }
+
+      if (marciti.isNotEmpty) {
+        ultimoEventoRiposo +=
+            '\n${t('Putrefazione aggiornata', 'Rot updated')}: ${marciti.join(', ')}.';
       }
 
       risultato = ultimoEventoRiposo;
@@ -218,7 +750,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         tempOculum -= 1;
       }
 
-      cenereController.text = (leggiNumero(cenereController) + 3).toString();
+      final svenimento = modificaCenereControllata(3);
 
       final statNome = [
         t('Resilienza', 'Resilience'),
@@ -232,6 +764,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         'Day without food or water: -1 temporary to $statNome and +3 Ash.',
       );
 
+      if (svenimento != null) ultimoEventoRiposo += '\n$svenimento';
       risultato = ultimoEventoRiposo;
       aggiungiLog(risultato);
     });
@@ -243,16 +776,13 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     setState(() {
       modificaBuffTemporaneo('resilienza', 2, salva: false);
 
-      cenereController.text = max(
-        0,
-        leggiNumero(cenereController) - 1,
-      ).toString();
+      modificaCenereControllata(-1, controllaSvenimento: false);
 
       sessioniSenzaBisogniController.text = '0';
 
       ultimoEventoRiposo = t(
-        'Hai mangiato e bevuto a sufficienza: +2 Resilienza temporanea per la sessione, -1 Cenere e reset sessioni senza bisogni.',
-        'You ate and drank enough: +2 temporary Resilience for the session, -1 Ash and reset sessions without needs.',
+        'Hai mangiato e bevuto a sufficienza: +2 Resilienza temporanea per il giorno, -1 Cenere e reset giorni senza bisogni.',
+        'You ate and drank enough: +2 temporary Resilience for the day, -1 Ash and reset days without needs.',
       );
 
       risultato = ultimoEventoRiposo;
@@ -347,11 +877,13 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   void riposoBreve() {
     setState(() {
       final cenere = leggiNumero(cenereController);
+      final rimuoveMalusEsplosione = malusTiriOculumPostEsplosione < 0;
 
-      cenereController.text = max(
-        0,
-        cenere - recuperoPercentuale(cenere, 0.25, 1),
-      ).toString();
+      impostaCenereControllata(
+        max(0, cenere - recuperoPercentuale(cenere, 0.25, 1)),
+        precedente: cenere,
+        controllaSvenimento: false,
+      );
 
       final deficitRes = tempResilienza < 0 ? -tempResilienza : 0;
       final recuperoRes = (deficitRes / 2).ceil();
@@ -372,11 +904,18 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       raccoltaVolontaSpesa = max(0, raccoltaVolontaSpesa ~/ 2);
       raccoltaMateriaSpesa = max(0, raccoltaMateriaSpesa ~/ 2);
       raccoltaOculumSpesa = max(0, raccoltaOculumSpesa ~/ 2);
+      malusTiriOculumPostEsplosione = 0;
 
       ultimoEventoRiposo = t(
         'Riposo breve: recuperata metà delle penalità temporanee, metà delle stats attuali mancanti e 25% di Cenere, minimo 1.',
         'Short rest: recovered half of temporary penalties, half of missing current stats and 25% Ash, minimum 1.',
       );
+      if (rimuoveMalusEsplosione) {
+        ultimoEventoRiposo += t(
+          '\nMalus Esplosione di Oculum rimosso.',
+          '\nOculum Burst penalty removed.',
+        );
+      }
 
       risultato = ultimoEventoRiposo;
       aggiungiLog(risultato);
@@ -388,11 +927,13 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   void riposoLungo() {
     setState(() {
       final cenere = leggiNumero(cenereController);
+      final rimuoveMalusEsplosione = malusTiriOculumPostEsplosione < 0;
 
-      cenereController.text = max(
-        0,
-        cenere - recuperoPercentuale(cenere, 0.50, 3),
-      ).toString();
+      impostaCenereControllata(
+        max(0, cenere - recuperoPercentuale(cenere, 0.50, 3)),
+        precedente: cenere,
+        controllaSvenimento: false,
+      );
 
       final deficitRes = tempResilienza < 0 ? -tempResilienza : 0;
       final recuperoRes = (deficitRes / 2).ceil();
@@ -414,11 +955,18 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       sessioniSenzaBisogniController.text = '0';
 
       refullaHp();
+      malusTiriOculumPostEsplosione = 0;
 
       ultimoEventoRiposo = t(
         'Riposo lungo completato: dura 1 ora e mezza. Recupera metà Resilienza negativa, tutto Oculum negativo, tutte le stats attuali, 50% di Cenere minimo 3 e refulla gli HP.',
         'Long rest completed: it lasts 1.5 hours. It recovers half negative Resilience, all negative Oculum, all current stats, 50% Ash minimum 3 and refills HP.',
       );
+      if (rimuoveMalusEsplosione) {
+        ultimoEventoRiposo += t(
+          '\nMalus Esplosione di Oculum rimosso.',
+          '\nOculum Burst penalty removed.',
+        );
+      }
 
       risultato = ultimoEventoRiposo;
       aggiungiLog(risultato);
@@ -436,13 +984,14 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       );
       raccoltaVolontaSpesa += 1;
 
-      cenereController.text = (leggiNumero(cenereController) + 1).toString();
+      final svenimento = modificaCenereControllata(1);
 
       ultimoEventoRiposo = t(
         'Raccolta / Pesca / Caccia: -1 Volontà attuale e +1 Cenere.',
         'Gathering / Fishing / Hunting: -1 current Will and +1 Ash.',
       );
 
+      if (svenimento != null) ultimoEventoRiposo += '\n$svenimento';
       risultato = ultimoEventoRiposo;
       aggiungiLog(risultato);
     });
@@ -459,13 +1008,14 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       );
       raccoltaMateriaSpesa += 1;
 
-      cenereController.text = (leggiNumero(cenereController) + 1).toString();
+      final svenimento = modificaCenereControllata(1);
 
       ultimoEventoRiposo = t(
         'Forgiatura: -1 Materia attuale usata per la creazione e +1 Cenere.',
         'Forging: -1 current Materia used for crafting and +1 Ash.',
       );
 
+      if (svenimento != null) ultimoEventoRiposo += '\n$svenimento';
       risultato = ultimoEventoRiposo;
       aggiungiLog(risultato);
     });
@@ -482,13 +1032,14 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       );
       raccoltaOculumSpesa += 1;
 
-      cenereController.text = (leggiNumero(cenereController) + 1).toString();
+      final svenimento = modificaCenereControllata(1);
 
       ultimoEventoRiposo = t(
         'Forgiatura: -1 Oculum attuale usato come alternativa alla Materia e +1 Cenere.',
         'Forging: -1 current Oculum used as an alternative to Materia and +1 Ash.',
       );
 
+      if (svenimento != null) ultimoEventoRiposo += '\n$svenimento';
       risultato = ultimoEventoRiposo;
       aggiungiLog(risultato);
     });
@@ -786,19 +1337,20 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     final numero = diarioPagine.length + 1;
 
     setState(() {
+      final rewardLog = <String>[];
+      ensureCampaignStarterRewards(rewardLog);
+      diarioRewardClaimedCount = max(diarioRewardClaimedCount, numero);
+      grantDiaryRewardsByCampaign(numero, rewardLog);
       diarioPagine.add(
         'Pagina $numero - Scrivi qui memoria, sogni, colpe, legami, scoperte o ferite della sessione.',
       );
 
-      ispirazioniController.text = (leggiNumero(ispirazioniController) + 1)
-          .toString();
-
       risultato = t(
-        'Nuova pagina diario aggiunta. Ricompensa: +1 Ispirazione base.',
-        'New diary page added. Reward: +1 base Inspiration.',
+        'Nuova pagina diario aggiunta (${campaignDifficultyLabel()}). Ricompense: ${rewardLog.isEmpty ? "nessuna ora" : rewardLog.join(", ")}.',
+        'New diary page added (${campaignDifficultyLabel()}). Rewards: ${rewardLog.isEmpty ? "none now" : rewardLog.join(", ")}.',
       );
 
-      aggiungiLog('Pagina diario aggiunta. +1 Ispirazione base.');
+      aggiungiLog(risultato);
     });
 
     programmaSalvataggio();
@@ -1079,21 +1631,43 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         bonusDanno: leggiNumero(itemBonusDannoController),
         bonusDifesa: leggiNumero(itemBonusDifesaController),
         bonusScudo: leggiNumero(itemBonusScudoController),
+        gradoOggetto: leggiNumero(
+          itemGradoOggettoController,
+        ).clamp(0, 12).toInt(),
+        gradoRichiesto: leggiNumero(
+          itemGradoRichiestoController,
+        ).clamp(0, 12).toInt(),
         elementoDanno: itemElementoDannoController.text.trim().isEmpty
             ? 'Fisico'
             : itemElementoDannoController.text.trim(),
+        putrefazioneSessioni: max(
+          0,
+          leggiNumero(itemPutrefazioneSessioniController),
+        ),
+        putrefazioneGiornoInizio: oculumCurrentDay(),
       );
+      if (item.equipaggiata && !canEquipInventoryItem(item)) {
+        item.equipaggiata = false;
+        risultato = t(
+          'Oggetto creato ma non equipaggiato: richiede Grado ${requiredItemGrade(item)}.',
+          'Item created but not equipped: requires Grade ${requiredItemGrade(item)}.',
+        );
+        aggiungiLog(risultato);
+      }
       inventario.add(item);
       if (item.equipaggiata) applicaScudoItemAttuale(item, 1);
 
       itemNomeController.clear();
       itemPesoController.text = '0';
       itemQuantitaController.text = '1';
+      itemPutrefazioneSessioniController.text = '0';
       itemNoteController.clear();
       itemBuffController.clear();
       itemBonusDannoController.text = '0';
       itemBonusDifesaController.text = '0';
       itemBonusScudoController.text = '0';
+      itemGradoOggettoController.text = '0';
+      itemGradoRichiestoController.text = '0';
       itemElementoDannoController.text = 'Fisico';
 
       nuovoItemArma = false;
@@ -1101,6 +1675,169 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       nuovoItemEquipaggiato = false;
 
       risultato = t('Oggetto aggiunto: $nome.', 'Item added: $nome.');
+      aggiungiLog(risultato);
+    });
+
+    programmaSalvataggio();
+  }
+
+  String nomeItemPutrefatto(InventoryItem item) {
+    final nome = item.nome.trim().toLowerCase();
+    if (nome.contains('slime')) return 'Slime putrefatto';
+    if (nome.contains('carne') ||
+        nome.contains('meat') ||
+        nome.contains('cibo') ||
+        nome.contains('food')) {
+      return 'Carne marcia';
+    }
+    if (nome.contains('materiale') ||
+        nome.contains('material') ||
+        nome.contains('metallo') ||
+        nome.contains('metal') ||
+        nome.contains('pietra') ||
+        nome.contains('stone') ||
+        nome.contains('legno') ||
+        nome.contains('wood') ||
+        nome.contains('stoffa') ||
+        nome.contains('osso') ||
+        nome.contains('bone') ||
+        nome.contains('cristallo') ||
+        nome.contains('runico') ||
+        nome.contains('postea')) {
+      return 'Materiale putrefatto';
+    }
+    return 'Oggetto putrefatto';
+  }
+
+  bool itemGiaPutrefatto(InventoryItem item) {
+    final nome = item.nome.trim().toLowerCase();
+    return nome == 'oggetto putrefatto' ||
+        nome == 'slime putrefatto' ||
+        nome == 'carne marcia' ||
+        nome == 'materiale putrefatto';
+  }
+
+  void trasformaItemInPutrefatto(InventoryItem item) {
+    final nomeOriginale = item.nome.trim().isEmpty
+        ? 'Oggetto'
+        : item.nome.trim();
+    if (item.equipaggiata) applicaScudoItemAttuale(item, -1);
+    final nomePutrefatto = nomeItemPutrefatto(item);
+    item.nome = nomePutrefatto;
+    item.arma = false;
+    item.protegge = false;
+    item.equipaggiata = false;
+    item.bonusDanno = 0;
+    item.bonusDifesa = 0;
+    item.bonusScudo = 0;
+    item.buff = '';
+    item.elementoDanno = nomePutrefatto == 'Slime putrefatto'
+        ? 'Acido'
+        : 'Putrefatto';
+    item.putrefazioneSessioni = 0;
+    item.sessioniSegnate = 0;
+    item.putrefazioneGiornoInizio = 0;
+    final nota = t(
+      'Putrefatto da $nomeOriginale.',
+      'Rotted from $nomeOriginale.',
+    );
+    item.note = item.note.trim().isEmpty ? nota : '${item.note.trim()}\n$nota';
+  }
+
+  void unisciItemPutrefatti() {
+    final visti = <String, InventoryItem>{};
+    final daRimuovere = <InventoryItem>[];
+
+    for (final item in inventario) {
+      if (!itemGiaPutrefatto(item)) continue;
+      final key = item.nome.trim().toLowerCase();
+      final esistente = visti[key];
+      if (esistente == null) {
+        visti[key] = item;
+        continue;
+      }
+
+      final quantitaEsistente = max(1, esistente.quantita);
+      final quantitaAggiunta = max(1, item.quantita);
+      final totale = quantitaEsistente + quantitaAggiunta;
+      esistente.peso =
+          ((esistente.peso * quantitaEsistente) +
+              (item.peso * quantitaAggiunta)) /
+          totale;
+      esistente.quantita = totale;
+      final nota = item.note.trim();
+      if (nota.isNotEmpty && !esistente.note.contains(nota)) {
+        esistente.note = esistente.note.trim().isEmpty
+            ? nota
+            : '${esistente.note.trim()}\n$nota';
+      }
+      daRimuovere.add(item);
+    }
+
+    if (daRimuovere.isEmpty) return;
+    inventario.removeWhere(
+      (item) => daRimuovere.any((rimosso) => identical(rimosso, item)),
+    );
+  }
+
+  List<String> aggiornaPutrefazioneInventarioPerGiorno(int currentDay) {
+    final marciti = <String>[];
+    final day = normalizzaGiornoOculum(currentDay);
+
+    for (final item in inventario) {
+      if (item.putrefazioneSessioni <= 0 || itemGiaPutrefatto(item)) continue;
+
+      if (item.putrefazioneGiornoInizio <= 0) {
+        final giorniGiaSegnati = max(0, item.sessioniSegnate);
+        item.putrefazioneGiornoInizio = giorniGiaSegnati == 0
+            ? day
+            : normalizzaGiornoOculum(day - giorniGiaSegnati);
+      }
+
+      final trascorsi = oculumDayDistance(item.putrefazioneGiornoInizio, day);
+      item.sessioniSegnate = min(item.putrefazioneSessioni, trascorsi);
+
+      if (trascorsi >= item.putrefazioneSessioni) {
+        final nome = item.nome.trim().isEmpty ? 'Oggetto' : item.nome.trim();
+        trasformaItemInPutrefatto(item);
+        marciti.add('$nome -> ${item.nome}');
+      }
+    }
+
+    if (marciti.isNotEmpty) unisciItemPutrefatti();
+    return marciti;
+  }
+
+  void segnaSessioneInventario() {
+    if (inventario.isEmpty) return;
+
+    setState(() {
+      final nuovoGiorno = normalizzaGiornoOculum(oculumCurrentDay() + 1);
+      oculumCurrentDayController.text = nuovoGiorno.toString();
+      final marciti = aggiornaPutrefazioneInventarioPerGiorno(nuovoGiorno);
+      final aggiornati = inventario
+          .where(
+            (item) => item.putrefazioneSessioni > 0 && !itemGiaPutrefatto(item),
+          )
+          .length;
+
+      if (marciti.isNotEmpty) {
+        risultato = t(
+          'Giorno inventario segnato: ${marciti.join(', ')}.',
+          'Inventory day marked: ${marciti.join(', ')}.',
+        );
+      } else if (aggiornati == 0) {
+        risultato = t(
+          'Giorno inventario segnato: nessun oggetto con putrefazione attiva.',
+          'Inventory day marked: no item has active rot tracking.',
+        );
+      } else if (marciti.isEmpty) {
+        risultato = t(
+          'Giorno inventario segnato: $aggiornati oggetti deperibili controllati.',
+          'Inventory day marked: $aggiornati perishable items checked.',
+        );
+      }
+      ultimoEventoRiposo = risultato;
       aggiungiLog(risultato);
     });
 

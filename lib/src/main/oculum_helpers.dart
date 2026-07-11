@@ -368,6 +368,17 @@ String oculumStatKey(String value) {
     case 'oculumshieldcurrent':
     case 'currentoculumshield':
       return 'scudo_oculum_current';
+    case 'schivataoculum':
+    case 'schivateoculum':
+    case 'schivataocu':
+    case 'schivateocu':
+    case 'schivataoculare':
+    case 'schivateoculari':
+    case 'oculumdodge':
+    case 'oculumdodges':
+    case 'eyedodge':
+    case 'eyedodges':
+      return 'schivata_oculum';
     case 'iniziativa':
     case 'iniziative':
     case 'initiative':
@@ -1008,6 +1019,7 @@ const List<String> oculumDefaultElementIds = <String>[
 const List<String> oculumCommandAutocompleteLabels = <String>[
   '@Difesa',
   '@Danni',
+  '@TypeSwitch',
   '@HP',
   '@HPAttuali',
   '@Vita',
@@ -1546,6 +1558,23 @@ bool oculumIsGroupedStatKey(String key) {
       key == 'tiro_other_stats';
 }
 
+List<String> oculumGroupedFormulaTargetKeys(
+  String key, {
+  String triggerRaw = '',
+}) {
+  if (!oculumIsGroupedStatKey(key)) return <String>[key];
+  final excluded = oculumExcludedStatsForTrigger(triggerRaw);
+  final groupedKeys = key == 'tiro_stats' || key == 'tiro_other_stats'
+      ? oculumBaseRollStatKeys
+      : oculumBaseStatKeys;
+  return <String>[
+    for (final groupedKey in groupedKeys)
+      if (!excluded.contains(groupedKey) &&
+          !excluded.contains(oculumBaseKeyForRollStat(groupedKey)))
+        groupedKey,
+  ];
+}
+
 String oculumFormulaTriggerSourceKey(String rawTrigger) {
   final normalized = oculumNormalizeFormulaTriggerText(rawTrigger);
   if (normalized.isEmpty) return '';
@@ -1610,23 +1639,19 @@ List<OculumFormulaCommand> oculumExpandGroupedFormulaCommand(
     return <OculumFormulaCommand>[command];
   }
 
-  final excluded = oculumExcludedStatsForTrigger(command.triggerRaw);
-  final groupedKeys =
-      command.key == 'tiro_stats' || command.key == 'tiro_other_stats'
-      ? oculumBaseRollStatKeys
-      : oculumBaseStatKeys;
   return [
-    for (final key in groupedKeys)
-      if (!excluded.contains(key) &&
-          !excluded.contains(oculumBaseKeyForRollStat(key)))
-        OculumFormulaCommand(
-          key: key,
-          value: command.value,
-          elementId: command.elementId,
-          triggerRaw: command.triggerRaw,
-          valid: command.valid,
-          error: command.error,
-        ),
+    for (final key in oculumGroupedFormulaTargetKeys(
+      command.key,
+      triggerRaw: command.triggerRaw,
+    ))
+      OculumFormulaCommand(
+        key: key,
+        value: command.value,
+        elementId: command.elementId,
+        triggerRaw: command.triggerRaw,
+        valid: command.valid,
+        error: command.error,
+      ),
   ];
 }
 
@@ -1859,6 +1884,28 @@ int oculumRoundFormulaResult(double value) {
   return value > 0 ? 1 : -1;
 }
 
+double? oculumStandalonePercentage(String raw) {
+  final match = RegExp(r'^([0-9]+(?:[,.][0-9]+)?)\s*%$').firstMatch(raw.trim());
+  if (match == null) return null;
+  final value = double.tryParse((match.group(1) ?? '').replaceAll(',', '.'));
+  if (value == null) return null;
+  return value / 100;
+}
+
+double oculumEvaluateCommandFormula(
+  String raw, {
+  required String targetKey,
+  required Map<String, num> vars,
+}) {
+  final percentage = oculumStandalonePercentage(raw);
+  if (percentage == null) return oculumEvaluateFormula(raw, vars);
+  final base = vars[targetKey];
+  if (base == null) {
+    throw FormatException('Percentuale senza base disponibile per $targetKey.');
+  }
+  return base.toDouble() * percentage;
+}
+
 String? oculumSplitTrailingElement(
   String rawExpression,
   Map<String, num> vars,
@@ -1874,7 +1921,7 @@ String? oculumSplitTrailingElement(
     for (var suffixStart = 1; suffixStart < parts.length; suffixStart++) {
       final suffix = parts.skip(suffixStart).join(' ').trim();
       if (!RegExp(
-        r'^[^\s\d+\-*/().,;@]+(?:\s+[^\s\d+\-*/().,;@]+)*$',
+        r'^[^\s\d+\-*/().,;@%]+(?:\s+[^\s\d+\-*/().,;@%]+)*$',
       ).hasMatch(suffix)) {
         continue;
       }
@@ -1894,7 +1941,7 @@ String? oculumSplitTrailingElement(
     }
   }
 
-  final tailWordMatch = RegExp(r'[^\s\d+\-*/().,;@]+$').firstMatch(expression);
+  final tailWordMatch = RegExp(r'[^\s\d+\-*/().,;@%]+$').firstMatch(expression);
   if (tailWordMatch == null) return null;
 
   final tailWord = tailWordMatch.group(0) ?? '';
@@ -1925,7 +1972,7 @@ String? oculumSplitTrailingElement(
   // Fallback per elementi sconosciuti nei casi compatti semplici:
   // 13TipoIgnoto resta un danno valido con tipo ripulito.
   final compact = RegExp(
-    r'^([0-9]+(?:[,.][0-9]+)?|[¼½¾⅓⅔⅕⅖⅗⅘])\s*([^\s\d+\-*/().,;@]+)$',
+    r'^([0-9]+(?:[,.][0-9]+)?|[¼½¾⅓⅔⅕⅖⅗⅘])\s*([^\s\d+\-*/().,;@%]+)$',
   ).firstMatch(expression);
   if (compact != null) {
     final word = compact.group(2) ?? '';
@@ -1941,7 +1988,11 @@ List<OculumFormulaCommand> oculumParseFormulaCommands(
 ) {
   final out = <OculumFormulaCommand>[];
   if (text.trim().isEmpty) return out;
-  final normalizedText = text.replaceAllMapped(
+  final decimalNormalizedText = text.replaceAllMapped(
+    RegExp(r'([0-9]),(?=[0-9])'),
+    (match) => '${match.group(1)}.',
+  );
+  final normalizedText = decimalNormalizedText.replaceAllMapped(
     RegExp(
       r'@([A-Za-zÀ-ÖØ-öø-ÿ_]+)\s*([+-])\s*([^@,;\n=]+?)\s*=\s*(Stats|AllStats|OtherStats|AltreStats|TiroStats|TiroAllStats|TiriStats|TiroStatistiche|TiriStatistiche|TiroOtherStats|TiroAltreStats|TiriAltreStats)\s*([+-])\s*([^@,;\n]+)',
       caseSensitive: false,
@@ -2039,15 +2090,52 @@ List<OculumFormulaCommand> oculumParseFormulaCommands(
             .trim();
       }
       final compact = RegExp(
-        r'^([0-9]+(?:[,.][0-9]+)?|[¼½¾⅓⅔⅕⅖⅗⅘])\s*([^\s\d+\-*/().,;@]+)$',
+        r'^([0-9]+(?:[,.][0-9]+)?|[¼½¾⅓⅔⅕⅖⅗⅘])\s*([^\s\d+\-*/().,;@%]+)$',
       ).firstMatch(expression);
       if (compact != null && oculumStatKey(compact.group(2) ?? '').isEmpty) {
         expression = compact.group(1) ?? expression;
         element = oculumNormalizeElementId(compact.group(2) ?? '');
       }
     }
+    final standalonePercentage = oculumStandalonePercentage(expression);
+    if (standalonePercentage != null && oculumIsGroupedStatKey(key)) {
+      for (final targetKey in oculumGroupedFormulaTargetKeys(
+        key,
+        triggerRaw: triggerRaw,
+      )) {
+        final base = vars[targetKey];
+        if (base == null) {
+          out.add(
+            OculumFormulaCommand(
+              key: targetKey,
+              value: 0,
+              elementId: element,
+              triggerRaw: triggerRaw,
+              valid: false,
+              error: 'Percentuale senza base disponibile per $targetKey.',
+            ),
+          );
+          continue;
+        }
+        out.add(
+          OculumFormulaCommand(
+            key: targetKey,
+            value: oculumRoundFormulaResult(
+              base.toDouble() * standalonePercentage * sign,
+            ),
+            elementId: element,
+            triggerRaw: triggerRaw,
+            valid: true,
+          ),
+        );
+      }
+      continue;
+    }
+
     try {
-      final value = oculumEvaluateFormula(expression, vars) * sign;
+      final value =
+          oculumEvaluateCommandFormula(expression, targetKey: key, vars: vars) *
+          sign;
       if (value.isNaN || value.isInfinite) {
         out.addAll(
           oculumExpandGroupedFormulaCommand(

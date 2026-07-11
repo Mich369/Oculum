@@ -65,6 +65,69 @@ String _summary(Map<String, int> totals) {
 }
 
 void main() {
+  test('formula aritmetica semplice funziona per danno e cura', () {
+    final value = oculumEvaluateFormula('10+100-20', _vars);
+    expect(oculumRoundFormulaResult(value), 90);
+  });
+
+  test('percentuali nude usano il bersaglio e quelle composte la sorgente', () {
+    OculumFormulaCommand parseOne(String text) {
+      final parsed = oculumParseFormulaCommands(text, _vars);
+      expect(parsed, hasLength(1), reason: text);
+      expect(parsed.single.valid, isTrue, reason: text);
+      return parsed.single;
+    }
+
+    expect(parseOne('@Mat+50%').value, 6);
+    expect(parseOne('@Mat-25%').value, -3);
+    expect(parseOne('@Mat+12,5%').value, 2);
+    expect(parseOne('@Danni+150%').value, 5);
+    expect(parseOne('Mat+Vol50%').value, 5);
+    expect(parseOne('@Mat+50%Vol').value, 5);
+    expect(parseOne('@Mat+(Vol+Res)25%').value, 4);
+  });
+
+  test('percentuali nude si calcolano separatamente per Stats e TiroStats', () {
+    final stats = oculumParseFormulaCommands('@Stats+50%', _vars);
+    expect(stats.map((command) => command.key), <String>[
+      'resilienza',
+      'volonta',
+      'materia',
+      'oculum',
+    ]);
+    expect(stats.map((command) => command.value), <int>[3, 5, 6, 4]);
+
+    final rolls = oculumParseFormulaCommands('@TiroStats+50%', _vars);
+    expect(rolls.map((command) => command.key), <String>[
+      'tiro_resilienza',
+      'tiro_volonta',
+      'tiro_materia',
+      'tiro_oculum',
+    ]);
+    expect(rolls.map((command) => command.value), <int>[2, 3, 3, 2]);
+  });
+
+  test('il Punto Cieco entra nelle formule runtime del Titolo', () {
+    final title = OculumTitle(
+      nome: 'Titolo test',
+      tipo: 'Attributo',
+      ottenimento: '',
+      buff: '@Mat+25%',
+      puntoCieco: '@Mat-50%',
+      skill: '',
+      richiede: '',
+      equipaggiato: true,
+    );
+
+    final texts = oculumActiveTitleFormulaTexts(title).toList();
+    expect(texts, contains(title.puntoCieco));
+    final commands = oculumParseFormulaCommands(
+      texts.join(' '),
+      _vars,
+    ).where((command) => command.key == 'materia').toList();
+    expect(commands.map((command) => command.value), <int>[3, -6]);
+  });
+
   test('parser riconosce danni elementali dungeon e formule compatte', () {
     final cases = <String, MapEntry<String, int>>{
       '@Danni+15 Fulmine': const MapEntry('fulmine', 15),
@@ -185,6 +248,60 @@ void main() {
     expect(difese, equals({'cenere': 8, 'fisico': 4}));
   });
 
+  test('fatica sotto meta risorsa scatta solo entrando in soglia', () {
+    expect(
+      oculumShouldApplyHalfResourceFatigue(before: 6, after: 5, maximum: 10),
+      isTrue,
+    );
+    expect(
+      oculumShouldApplyHalfResourceFatigue(before: 5, after: 4, maximum: 10),
+      isFalse,
+    );
+    expect(
+      oculumShouldApplyHalfResourceFatigue(before: 4, after: 3, maximum: 10),
+      isFalse,
+    );
+    expect(
+      oculumShouldApplyHalfResourceFatigue(before: 6, after: 6, maximum: 10),
+      isFalse,
+    );
+    expect(
+      oculumShouldApplyHalfResourceFatigue(before: 6, after: 7, maximum: 10),
+      isFalse,
+    );
+    expect(
+      oculumShouldApplyHalfResourceFatigue(before: 6, after: 5, maximum: 0),
+      isFalse,
+    );
+  });
+
+  test('esplosione di Oculum usa gli esiti finali richiesti', () {
+    expect(
+      oculumExplosionAftermathForRoll(0),
+      OculumExplosionAftermath.oculumRollPenalty,
+    );
+    expect(
+      oculumExplosionAftermathForRoll(55),
+      OculumExplosionAftermath.oculumRollPenalty,
+    );
+    expect(
+      oculumExplosionAftermathForRoll(56),
+      OculumExplosionAftermath.ashOne,
+    );
+    expect(
+      oculumExplosionAftermathForRoll(91),
+      OculumExplosionAftermath.ashOne,
+    );
+    expect(
+      oculumExplosionAftermathForRoll(92),
+      OculumExplosionAftermath.ashThree,
+    );
+    expect(
+      oculumExplosionAftermathForRoll(100),
+      OculumExplosionAftermath.ashThree,
+    );
+  });
+
   test('normalizzazione riconosce accenti reali e alias sicuri', () {
     expect(oculumNormalizeText('Volont\u00E0'), 'volonta');
     expect(oculumStatKey('Volont\u00E0'), 'volonta');
@@ -278,7 +395,7 @@ void main() {
 
   test('parser riconosce nuovi comandi vita, scudo oculum e tiri', () {
     final parsed = oculumParseFormulaCommands(
-      '@Iniziativa+5 @Movimento+2 @HP+5 @Vita+5 @HPTemp+Vol1/6 @Scudo+3 @ScudoOculum+5 @TiroAttacco+1 @TiroDifesa+1 @TiroVC+2 @TiroCM+3 @TiroVolont\u00E0+1 @TiroRes+2 @TiroMateria+3 @TiroOculum+4',
+      '@Iniziativa+5 @Movimento+2 @HP+5 @Vita+5 @HPTemp+Vol1/6 @Scudo+3 @ScudoOculum+5 @SchivataOculum+1 @SchivateOculum+2 @TiroAttacco+1 @TiroDifesa+1 @TiroVC+2 @TiroCM+3 @TiroVolont\u00E0+1 @TiroRes+2 @TiroMateria+3 @TiroOculum+4',
       _vars,
     );
 
@@ -290,6 +407,8 @@ void main() {
       'hp_temp',
       'scudo',
       'scudo_oculum',
+      'schivata_oculum',
+      'schivata_oculum',
       'tiro_attacco',
       'tiro_difesa',
       'tiro_attacco',
@@ -307,6 +426,8 @@ void main() {
       2,
       3,
       5,
+      1,
+      2,
       1,
       1,
       2,

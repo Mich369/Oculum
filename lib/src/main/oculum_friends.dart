@@ -862,7 +862,10 @@ extension _OculumFriends on _OculumHomePageState {
       title: t('Scheda da condividere agli amici', 'Sheet to share to friends'),
     );
     if (index == null) return;
-    sendRealtimeCurrentSheetToFriendsInternal(manual: true, sheetIndex: index);
+    await sendRealtimeCurrentSheetToFriendsInternal(
+      manual: true,
+      sheetIndex: index,
+    );
   }
 
   Future<void> shareSheetToOculumFriend(Map<String, dynamic> friend) async {
@@ -893,7 +896,7 @@ extension _OculumFriends on _OculumHomePageState {
     }
 
     final name = '${friend['name'] ?? ''}'.trim();
-    sendRealtimeCurrentSheetToFriendsInternal(
+    await sendRealtimeCurrentSheetToFriendsInternal(
       manual: true,
       sheetIndex: index,
       targetTagsOverride: <String>[tag],

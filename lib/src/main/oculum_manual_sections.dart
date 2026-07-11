@@ -44,7 +44,7 @@ Each stat can also be used creatively in roleplay, if the scene justifies it.
 Resilienza rappresenta la tenuta fisica, mentale e spirituale.
 
 Effetto principale:
-• ogni punto di Resilienza aumenta la vita di +10.
+• la vita massima è Resilienza x (10 + Grado x5).
 
 Scala superiore della Resilienza:
 • 100 Resilienza = 1 Vera Resilienza
@@ -58,7 +58,7 @@ La Resilienza non è solo “quanta vita hai”.
 Resilience represents physical, mental, and spiritual endurance.
 
 Main effect:
-• each point of Resilience increases health by +10.
+• maximum health is Resilience x (10 + Grade x5).
 
 Higher Resilience scale:
 • 100 Resilience = 1 True Resilience
@@ -261,7 +261,7 @@ Danno totale:
 • se più armi sono equipaggiate, si usa solo il bonus dell’arma più forte.
 
 Difesa:
-• (Volontà + Materia + Livello + Grado x6) / 2;
+• (Volontà + Materia) / 2 + Livello + Grado x6;
 • aggiunge anche bonus Difesa e Scudo degli oggetti equipaggiati che proteggono.
 ''',
     contentEn: r'''
@@ -292,7 +292,7 @@ Total damage:
 • if multiple weapons are equipped, only the strongest weapon bonus is used.
 
 Defense:
-• (Will + Materia + Level + Grade x6) / 2.
+• (Will + Materia) / 2 + Level + Grade x6.
 ''',
   ),
 
@@ -685,6 +685,14 @@ Fatica:
 • i primi 3 + Grado stati di Cenere non danno malus ai tiri;
 • ogni stato di Cenere oltre quella soglia dà -1 a VC, CM, Iniziativa e tiri di statistica.
 
+Svenimento da Cenere:
+• da 3 Cenere in poi, ogni aumento di Cenere impone un tiro automatico per restare cosciente;
+• il tiro parte da 1d120 + Resilienza/3 + Livello + Grado x6;
+• a ogni nuovo controllo il dado scende lungo la scala dei dadi dell'app, mentre la difficoltà è 20 + Cenere x3;
+• se il tiro supera la difficoltà, resti cosciente e il log riporta che riesci a non svenire nonostante la fatica;
+• se il tiro fallisce, diventi Incosciente finché non usi Sveglia o una regola esplicita ti rimette cosciente;
+• il dettaglio del tiro resta nei log completi e non appare come tiro centrale.
+
 Puoi ottenere Cenere quando:
 • non mangi;
 • non bevi;
@@ -720,6 +728,14 @@ Ash represents physical, mental, and spiritual exhaustion.
 Fatigue:
 • the first 3 + Grade Ash states do not penalize rolls;
 • each Ash state beyond that threshold gives -1 to VC, CM, Initiative and stat rolls.
+
+Ash fainting:
+• from 3 Ash onward, each Ash increase automatically forces a roll to remain conscious;
+• the roll starts at 1d120 + Resilience/3 + Level + Grade x6;
+• at each new check the die moves down the app's die scale, while difficulty is 20 + Ash x3;
+• if the roll beats the difficulty, you remain conscious and the log says you manage not to faint despite the fatigue;
+• if the roll fails, you become Unconscious until Wake Up or an explicit rule restores consciousness;
+• the roll detail stays in the full logs and does not appear as the central die roll.
 
 You may gain Ash when:
 • you do not eat;
@@ -814,7 +830,11 @@ Summons:
     titleEn: '17. Criticals and Fragility',
     contentIt: r'''
 Regola base:
-- non si può crittare se non con 20 naturale.
+- ogni dado può crittare sul suo massimo naturale;
+- 1 naturale è critico negativo;
+- critico positivo: aggiungi metà dado + Livello + Grado x6 al tiro;
+- critico negativo: togli metà dado + Livello + Grado x3 dal tiro.
+- se il tiro nemico viene raddoppiato, quel tiro conta come critico positivo.
 
 Critico in Attacco:
 - applichi una Fragilità nella zona bersagliata;
@@ -837,7 +857,10 @@ Danno letale:
 ''',
     contentEn: r'''
 Base rule:
-- critical hits happen only on natural 20.
+- each die can crit on its natural maximum;
+- natural 1 is a negative critical;
+- positive critical adds half die + Level + Grade x6 to the roll;
+- negative critical subtracts half die + Level + Grade x3 from the roll.
 
 Attack Critical:
 - apply Fragility to the targeted zone;
@@ -969,7 +992,16 @@ Razze:
 Tipi di Art:
 - Oculum, Illness, Emblem, Martial, Null, Rune, Defiled;
 - le Rune Art hanno combo al 25%;
+- le Rune Art arrivano alla IV forma e usano parole componibili;
 - le Defiled Art hanno 5 stadi e la loro Open non esclude le altre.
+
+Rune Art:
+- una formula nasce scegliendo parole di Target, Verbo, Aspetto, Mod, Intensita, Durata e Trigger;
+- Self / Ally, Pulse, Intensita I e 1 azione sono sempre parole base;
+- ogni Libro Runico insegna fino a sei parole nuove;
+- Intensita e Durata sono sequenziali: devi conoscere il grado precedente prima del successivo;
+- il costo e la DT della formula sono la somma delle parole scelte;
+- il master puo aggiungere parole custom, con costo e DT propri, senza cancellare le parole ufficiali.
 ''',
     contentEn: r'''
 Titles:
@@ -1000,7 +1032,16 @@ Races:
 Art types:
 - Oculum, Illness, Emblem, Martial, Null, Rune, Defiled;
 - Rune Art combos count as 25%;
+- Rune Arts reach form IV and use modular words;
 - Defiled Arts have 5 stages and their Open does not exclude the others.
+
+Rune Art:
+- a formula is built by choosing Target, Verb, Aspect, Mod, Intensity, Duration and Trigger words;
+- Self / Ally, Pulse, Intensity I and 1 action are always base words;
+- each Runic Book teaches up to six new words;
+- Intensity and Duration are sequential: you must know the previous grade before the next one;
+- formula cost and DT are the sum of the selected words;
+- the master can add custom words with their own cost and DT without deleting official words.
 ''',
   ),
   ManualSection(
@@ -1182,7 +1223,7 @@ L'ordine pratico e:
 Danno/Cura serve per inserire un numero e applicarlo.
 Il danno usa il tipo dominante: Fuoco, Gelo, Taglio, Maledizione, Malanno o qualunque tipo scritto nei comandi.
 Se scrivi un tipo nuovo in un comando, l'app lo rileva e lo rende colorabile dalle Impostazioni.
-Il pulsante Refull Vita riporta solo gli HP attuali al massimo: non cambia Scudo, HP Temp o Scudo Critico.
+Il pulsante Refull Vita riporta gli HP attuali al massimo, rimargina HP Temp dinamici e Scudo Oculum. Lo Scudo normale consumato resta consumato e lo Scudo Critico non cambia.
 
 TIPI DANNO LIBERI
 
@@ -1545,7 +1586,10 @@ Critici dei dadi:
 - se tiri un solo dado e fai 1, il risultato e critico negativo e diventa rosso;
 - se tiri un solo dado e fai il massimo di quel dado, il risultato e critico positivo brillante;
 - il critico positivo vale per tutti i dadi: d2, d3, d4, d5, d6, d7, d8, d10, d12, d16, d20, d24, d30, d50, d60 e d100;
-- se tiri piu dadi insieme, l'app mostra il totale e il dettaglio dei dadi, ma non forza un singolo critico naturale.
+- critico positivo: aggiungi metà dado + Livello + Grado x6;
+- critico negativo: togli metà dado + Livello + Grado x3;
+- se il tiro nemico viene raddoppiato, quel tiro conta come critico positivo;
+- se tiri piu dadi insieme, ogni dado puo aggiungere o togliere il proprio modificatore critico.
 
 Per evitare blocchi accidentali, la quantita di dadi viene limitata a un massimo gestibile. I dadi vengono disegnati in modo piu leggero e isolato, cosi il resto della schermata non deve ridisegnarsi inutilmente.
 
@@ -1580,7 +1624,7 @@ Ricarica automatica:
 - si ricarica con il riposo breve;
 - si ricarica con il riposo lungo;
 - si ricarica dopo il fight quando applichi l'EXP/fine combattimento.
-- il pulsante Refull Vita ricarica HP, HP temporanei dinamici, Scudo e Scudo Oculum.
+- il pulsante Refull Vita ricarica HP, HP temporanei dinamici e Scudo Oculum. Lo Scudo normale consumato non torna.
 
 Ordine dei danni:
 1. Scudo Oculum
@@ -1589,6 +1633,25 @@ Ordine dei danni:
 4. HP reali
 
 Questo significa che, se subisci danno, viene consumato prima lo Scudo Oculum. Solo quando finisce si passa allo Scudo normale, poi agli HP temporanei, poi agli HP veri.
+
+SCHIVATA OCULUM
+
+La Schivata Oculum e una difesa gratuita, limitata e consumabile. Ne ottieni una ogni terzo Grado:
+- Grado III: 1 Schivata Oculum.
+- Grado VI: 2 Schivate Oculum.
+- Grado IX: 3 Schivate Oculum.
+- Grado XII: 4 Schivate Oculum.
+
+Puoi aggiungere cariche extra con il parser, per esempio @SchivataOculum+1.
+Le cariche non si rigenerano con il turno, con il riposo o con il Refull: quando ne spendi una resta consumata finche non ottieni una nuova carica.
+
+Quando la usi, scegli dal menu rapido:
+- Inferiore: immunita ai danni dell'azione.
+- Al tuo pari: riduzione del 90%.
+- Forte: riduzione del 75%, pensata per minacce fino a tre Gradi sopra di te.
+- Impossibile: riduzione del 50% contro minacce oltre quel limite.
+
+La riduzione si applica al prossimo danno subito, dopo avere contato eventuali bonus critici del danno in arrivo e prima di Difesa, Scudo Oculum, Scudo, HP temporanei e HP. La carica viene consumata quando prepari la Schivata Oculum e le cariche usate restano tracciate nella scheda.
 
 COMANDI @ NUOVI E DINAMICI
 
@@ -1601,6 +1664,7 @@ Comandi principali:
 - @Vita+5: uguale a @HP+5.
 - @HPTemp+Vol1/6: aggiunge HP temporanei pari a un sesto della Volonta.
 - @ScudoOculum+5: aggiunge +5 al massimo Scudo Oculum.
+- @SchivataOculum+1: aggiunge una Schivata Oculum extra.
 - @TiroAttacco+1: aggiunge +1 ai tiri d'attacco.
 - @TiroDifesa+1: aggiunge +1 ai tiri difensivi.
 - @TiroVolontà+1: aggiunge +1 solo al tiro di Volontà, non alla Volontà base.
@@ -1620,6 +1684,20 @@ Oggetti con buff @:
 - puoi usarlo per reliquie, armature, focus o item speciali;
 - esempi validi: @HP+5, @HPTemp+Vol1/6, @Scudo+3, @ScudoOculum+5, @TiroAttacco+1, @TiroVolontà+1, @TiroStats+1.
 
+Grado oggetto:
+- ogni grado aggiunto ad armi o armature aumenta di +5 Attacco, +5 Scudo e +2 Difesa;
+- il massimo e Grado XII;
+- se un oggetto richiede un grado superiore al tuo, non puoi equipaggiarlo.
+
+Putrefazione oggetti:
+- il valore PUT indica dopo quanti giorni l'oggetto marcisce;
+- esempio: una mela ottenuta al giorno 10 con PUT 5 diventa marcia al giorno 15;
+- carne e cibo diventano "Carne marcia";
+- materiali e metalli diventano "Materiale putrefatto";
+- lo Slime diventa "Slime putrefatto";
+- gli altri oggetti diventano "Oggetto putrefatto";
+- piu oggetti putrefatti dello stesso tipo si uniscono nello stesso stack.
+
 HP temporanei dinamici:
 - @HPTemp+Vol1/6 puo dipendere dalla Volonta attuale;
 - se la Volonta cambia, il bonus si aggiorna;
@@ -1629,7 +1707,7 @@ HP temporanei dinamici:
 Scudo dinamico:
 - @Scudo+X funziona come riserva dinamica;
 - se il danno lo consuma, la parte consumata resta consumata;
-- Refull Vita azzera il consumo e riporta lo Scudo al valore pieno dei bonus equipaggiati/attivi.
+- Refull Vita non azzera il consumo dello Scudo normale: se lo perdi, resta perso finche non ottieni nuovo Scudo da una regola, oggetto o bonus.
 
 FORMULE E ALIAS UTILI
 
@@ -1637,6 +1715,7 @@ Alias riconosciuti:
 - HP, Vita, Life, Health;
 - HPTemp, HPTemporanei, TempHP;
 - ScudoOculum, ScudoOcu, OculumShield, EyeShield;
+- SchivataOculum, SchivataOcu, OculumDodge, EyeDodge;
 - Iniziativa, Ini, Initiative;
 - TiroAttacco, TiroDiAttacco, AttackRoll;
 - TiroDifesa, TiroDifensivo, DefenseRoll.
@@ -1646,6 +1725,7 @@ Esempi:
 - @HP+5 e @Vita+5 danno lo stesso risultato;
 - @HPTemp+Vol1/6 usa una formula;
 - @ScudoOculum+5 crea o aumenta la barriera dell'occhio;
+- @SchivataOculum+1 aggiunge una carica extra di Schivata Oculum;
 - @TiroAttacco+1, @TiroDifesa+1, @TiroVolontà+1 e @TiroStats+1 si sommano ai bonus rapidi gia presenti, ma non modificano le statistiche base.
 
 PERMESSI SCHEDA AGLI AMICI
@@ -1766,7 +1846,9 @@ Dice criticals:
 - if you roll one die and it lands on 1, it is a negative critical and turns red;
 - if you roll one die and it lands on that die maximum, it is a bright positive critical;
 - positive critical works for every die: d2, d3, d4, d5, d6, d7, d8, d10, d12, d16, d20, d24, d30, d50, d60 and d100;
-- if you roll multiple dice together, the app shows total and details, but does not force a single natural critical.
+- positive critical adds half die + Level + Grade x6;
+- negative critical subtracts half die + Level + Grade x3;
+- if you roll multiple dice together, every die can add or subtract its own critical modifier.
 
 To avoid accidental freezes, dice amount is capped to a manageable maximum. Dice drawing is lighter and isolated, so the rest of the screen does not repaint unnecessarily.
 
@@ -1801,7 +1883,7 @@ Automatic recharge:
 - recharges on short rest;
 - recharges on long rest;
 - recharges after fight when EXP/end combat is applied.
-- the Refill Life button restores HP, dynamic temporary HP, Shield and Oculum Shield.
+- the Refill Life button restores HP, dynamic temporary HP and Oculum Shield. Spent normal Shield does not come back.
 
 Damage order:
 1. Oculum Shield
@@ -1810,6 +1892,25 @@ Damage order:
 4. Real HP
 
 So when you take damage, Oculum Shield is consumed first. Only when it is empty does damage move to normal Shield, then temporary HP, then real HP.
+
+OCULUM DODGE
+
+Oculum Dodge is a free, limited and consumable defense. You gain one charge every third Grade:
+- Grade III: 1 Oculum Dodge.
+- Grade VI: 2 Oculum Dodges.
+- Grade IX: 3 Oculum Dodges.
+- Grade XII: 4 Oculum Dodges.
+
+Extra charges can be added through the parser, for example @SchivataOculum+1.
+Charges do not regenerate with the turn, rest or Refill: once spent, a charge stays consumed until you gain a new one.
+
+When you use it, choose from the quick menu:
+- Inferiore: immunity to that action's damage.
+- Al tuo pari: 90% reduction.
+- Forte: 75% reduction, intended for threats up to three Grades above you.
+- Impossibile: 50% reduction against threats beyond that limit.
+
+The reduction applies to the next damage taken, after any incoming critical damage bonus has been counted and before Defense, Oculum Shield, Shield, temporary HP and HP. The charge is consumed when you prepare Oculum Dodge, and used charges remain tracked on the sheet.
 
 NEW DYNAMIC @ COMMANDS
 
@@ -1822,6 +1923,7 @@ Main commands:
 - @Vita+5: same as @HP+5.
 - @HPTemp+Vol1/6: adds temporary HP equal to one sixth of Will.
 - @ScudoOculum+5: adds +5 maximum Oculum Shield.
+- @SchivataOculum+1: adds one extra Oculum Dodge.
 - @TiroAttacco+1: adds +1 to attack rolls.
 - @TiroDifesa+1: adds +1 to defense rolls.
 - @TiroVolontà+1: adds +1 only to the Will roll, not to base Will.
@@ -1841,6 +1943,15 @@ Items with @ buffs:
 - use it for relics, armor, focuses or special items;
 - valid examples: @HP+5, @HPTemp+Vol1/6, @Scudo+3, @ScudoOculum+5, @TiroAttacco+1, @TiroVolontà+1, @TiroStats+1.
 
+Item rot:
+- PUT means how many days pass before the item rots;
+- example: an apple gained on day 10 with PUT 5 rots on day 15;
+- meat and food become "Carne marcia";
+- materials and metals become "Materiale putrefatto";
+- Slime becomes "Slime putrefatto";
+- other items become "Oggetto putrefatto";
+- multiple rotten items with the same type merge into one stack.
+
 Dynamic temporary HP:
 - @HPTemp+Vol1/6 can depend on current Will;
 - if Will changes, the bonus updates;
@@ -1850,7 +1961,7 @@ Dynamic temporary HP:
 Dynamic Shield:
 - @Scudo+X works as a dynamic reserve;
 - if damage consumes it, the consumed part stays consumed;
-- Refill Life clears the spent amount and restores Shield to the full equipped/active bonus value.
+- Refill Life does not clear spent normal Shield: once lost, it stays lost until a rule, item or bonus grants new Shield.
 
 FORMULAS AND USEFUL ALIASES
 
@@ -1858,6 +1969,7 @@ Recognized aliases:
 - HP, Vita, Life, Health;
 - HPTemp, HPTemporanei, TempHP;
 - ScudoOculum, ScudoOcu, OculumShield, EyeShield;
+- SchivataOculum, SchivataOcu, OculumDodge, EyeDodge;
 - Iniziativa, Ini, Initiative;
 - TiroAttacco, TiroDiAttacco, AttackRoll;
 - TiroDifesa, TiroDifensivo, DefenseRoll.
@@ -1867,6 +1979,7 @@ Examples:
 - @HP+5 and @Vita+5 do the same thing;
 - @HPTemp+Vol1/6 uses a formula;
 - @ScudoOculum+5 creates or increases the eye barrier;
+- @SchivataOculum+1 adds one extra Oculum Dodge charge;
 - @TiroAttacco+1, @TiroDifesa+1, @TiroVolontà+1 and @TiroStats+1 stack with existing quick bonuses, but do not change base stats.
 
 SHEET PERMISSIONS FOR FRIENDS
@@ -1971,6 +2084,426 @@ The app has been made lighter for phone and PC:
 - bright positive critical is calculated simply: natural result equal to die maximum.
 ''',
   ),
+
+  ManualSection(
+    titleIt: 'Regole aggiornate: giorni, crisi e dungeon',
+    titleEn: 'Updated rules: days, crisis and dungeon',
+    contentIt: r'''
+Questa sezione riassume le regole automatizzate nell'app.
+
+VITA E GRADO
+
+La vita massima non usa piu un x10 fisso.
+Formula:
+- Vita massima = Resilienza x (10 + Grado x5).
+
+Esempi:
+- Grado 0: Resilienza x10.
+- Grado 1: Resilienza x15.
+- Grado 2: Resilienza x20.
+
+DADI E CRITICI
+
+Ogni dado puo generare un critico:
+- 1 naturale: critico negativo;
+- massimo naturale del dado: critico positivo.
+
+Il modificatore critico si applica a ogni dado, anche quando tiri piu dadi insieme.
+- Critico positivo: aggiungi meta del dado + Livello + Grado x6.
+- Critico negativo: togli meta del dado + Livello + Grado x3.
+- Se il tiro nemico viene raddoppiato, quel tiro conta come critico positivo.
+
+Risveglio al 50% Vita:
+- ogni creatura tenta una sola volta quando scende a meta vita;
+- 9% Risveglio Piccolo: +2 Resilienza, +2 Oculum;
+- 6% Risveglio Parziale: +3 Resilienza, +3 Oculum;
+- 3% Risveglio Totale: +5 a tutte le stats;
+- 1% Fatica: +1 Cenere, solo se oggi hai usato almeno il 75% dell'Oculum o una schivata Oculum;
+- negli altri casi non succede nulla.
+
+Il campo Danno / Cura accetta anche formule semplici. Per esempio:
+- 10+100-20 viene letto come 90.
+
+Dopo il calcolo restano attive tutte le altre regole: Difesa, Scudo Oculum, Scudo, HP temporanei, HP, modificatori di danno e critici.
+
+VANTAGGIO E SVANTAGGIO
+
+La scheda puo applicare un modificatore globale ai tiri senza cambiare le statistiche base.
+La scala va da Svantaggio Oculum (-12) a Vantaggio Oculum (+12), passando per svantaggi e vantaggi minori, normali, veri, super e ultra.
+Il valore scelto si somma ai tiri di statistica, VC, CM e Iniziativa. Serve per condizioni temporanee, terreno, posizione, aiuti narrativi o pressione della scena.
+
+DT - DIFFICOLTA TIRO
+
+Ogni scheda ha un campo DT modificabile scrivendo un numero. Il valore 0 e neutro. Un DT positivo viene sottratto dal totale di tutti i tiri della scheda, rendendoli piu difficili; un DT negativo facilita i tiri. La formula visualizzata mostra sempre la DT applicata. Un 1 o il massimo naturale del dado restano comunque critici naturali.
+
+MODIFICATORI DI DANNO E CURA
+
+Il menu Danno / Cura segue questa scala, dall'esposizione peggiore alla rigenerazione completa:
+- Fragilita Letale +500%.
+- Fragilita Semi Letale +250%.
+- Fragilita Distruttiva +100%.
+- Fragilita Assoluta +90%.
+- Fragilita Estrema +75%.
+- Alta Fragilita +50%.
+- Fragilita +25%.
+- Bassa Fragilita +10%.
+- Normale.
+- Resistenza Leggera -10%.
+- Resistenza -25%.
+- Alta Resistenza -50%.
+- Resistenza Semi Perfetta -75%.
+- Resistenza Impenetrabile -90%.
+- Immunita -100%.
+- Rigenerazione Leggera: rigenera il 10% del danno totale.
+- Rigenerazione: rigenera il 25% del danno totale.
+- Alta Rigenerazione: rigenera il 50% del danno totale.
+- Rigenerazione Molto Forte: rigenera il 75% del danno totale.
+- Rigenerazione Semi Perfetta: rigenera il 90% del danno totale.
+- Rigenerazione Perfetta: rigenera il 100% del danno totale.
+
+Opzioni impatto nel pannello Danno / Cura:
+- Oltre difesa: il danno non viene ridotto dalla Difesa.
+- Oltre scudi: il danno salta Scudo Oculum e Scudo, ma continua a rispettare HP temporanei, HP e le altre regole.
+- Bonus danno agli scudi %: aumenta solo il danno consumato dagli scudi. L'eccesso non diventa danno extra alla vita.
+
+Ogni volta che l'EXP raggiunge o supera una nuova soglia di 369, quella soglia si attiva una sola volta e recuperi un quarto degli HP, lo Scudo Oculum e un terzo dell'Oculum.
+
+SCUDO DI SALVATAGGIO
+
+Lo Scudo di Salvataggio e un consumabile difensivo usato con Azione Gratuita, al massimo una volta per turno.
+Quando e attivo, se il prossimo danno rompe il tuo ultimo scudo, il danno in eccesso non passa a HP temporanei o vita.
+Non sostituisce Difesa, Scudo Oculum, Scudo normale, HP temporanei o altre riduzioni: interviene solo dopo la rottura dell'ultimo scudo e viene consumato quando blocca l'overflow.
+
+GIORNI E CICLO OCULUM
+
+Le sessioni di riposo e putrefazione sono gestite come giorni.
+Un Giorno dura 9 ore.
+
+Unita del calendario:
+- Tremana: 3 giorni.
+- Semana: 6 giorni.
+- Dodemana: 12 giorni.
+- Nuova Fase: stagione mutevole, 36 giorni o meno.
+- Ciclo Pieno: 369 giorni.
+
+Le 12 Nuove Fasi del Ciclo Pieno:
+- Safe Monster, giorni 1-36: molti mostri perdono il Grado, diventano pacifici, danno karma negativo se uccisi e non hanno drop oltre quelli base o rari.
+- Illness, giorni 37-72: la Follia ricevuta raddoppia, gli "altri" diventano visibili e si puo ottenere Illness Art.
+- Little Breath, giorni 73-108: il Fato concede piu Titoli, soprattutto ai rebirthati; clima e sentore delle aree sono piu deboli.
+- Piogge Fertilizzanti, giorni 109-144: piove fango nauseante, i malanni sono piu facili e il cibo puo causare Nausea.
+- The Sun, giorni 145-150: i Solari ricevono +25% alle stats, non piove e il cibo sotto Grado VI marcisce entro massimo 2 giorni.
+- Mezzo Ciclo, giorni 151-183: il meteo diventa reggibile quasi ovunque e le piogge tornano principalmente non magiche.
+- The Moon, giorni 184-189: si festeggia l'accettazione di ogni razza; i Lunari ricevono +10%.
+- The Fate, giorni 190-225: chi possiede un Fato e potenziato contro chi non ne possiede uno.
+- Caldo Infernale, giorni 226-261: il caldo pesa molto di piu; senza bere si subiscono debuff a Volonta in base alla fatica.
+- The Null, giorni 262-297: il vuoto prende parte dei caduti e li fa rinascere Senza Fato, con ricordi assenti o falsati.
+- Ghiaccio Imponente, giorni 298-333: il freddo pesa molto di piu; senza calore si perde Materia e si rischia il congelamento.
+- Ultimo Ciclo, giorni 334-369: si festeggia il ciclo passato, senza peculiarita meccaniche forti.
+
+RIPOSO
+
+La pagina Riposo mostra:
+- giorno corrente del Ciclo Oculum;
+- Nuova Fase corrente;
+- giorno interno alla fase;
+- Tremana, Semana e Dodemana;
+- pulsanti per avanzare o retrocedere di un giorno.
+
+Il riposo lungo refulla HP e Scudo Oculum quando presente. Lo Scudo normale consumato resta consumato.
+
+PUTREFAZIONE
+
+La putrefazione degli oggetti in borsa si basa sul giorno corrente.
+Quando un oggetto viene aggiunto, l'app segna il giorno in cui e stato ottenuto.
+
+Esempio:
+- sei al giorno 10;
+- ottieni una mela con PUT 5;
+- al giorno 15 la mela diventa Carne marcia.
+
+Risultati standard:
+- carne o cibo: Carne marcia;
+- materiali: Materiale putrefatto;
+- slime: Slime putrefatto;
+- altro: Oggetto putrefatto.
+
+Oggetti putrefatti dello stesso tipo si uniscono nello stesso stack.
+
+STATO DI FORZA
+
+Lo Stato di Forza si controlla automaticamente quando gli HP scendono a un quarto o meno della vita massima.
+L'app pesca uno stato casuale. Gli stati piu forti sono piu rari, ma non impossibili.
+
+Possibili risultati:
+- Corpo non Mollare: +20 + Livello + Grado HP temporanei, +3 Volonta, +2 Materia.
+- Occhi Attenti: +5 + Livello + Grado ai tiri di attacco e difesa.
+- Esplosione di Oculum: +25 HP, Oculum attuale pari alla vita anche oltre il massimo, danni pari a Livello + Grado, difesa pari alla meta di Livello + Grado e durata minima 9 tiri, inclusi i sottotratti.
+- Adrenalina: +1 Reazione veloce e +5 + Livello + Grado iniziativa.
+- Azzeramento delle vulnerabilita: resistenza ai colpi, rimozione dei malus temporanei negativi e della fatica oltre soglia.
+- Stanchezza: -2 ai tiri per colpire e difendersi, -5 - Livello - Grado ai danni.
+- Niente: nessun effetto.
+
+Lo stato si applica da solo quando subisci danni o modifichi gli HP. Quando Esplosione di Oculum finisce, tira l'esito automatico: 56% -1 ai tiri Oculum fino al prossimo riposo breve o lungo, 36% +1 Cenere, 9% +3 Cenere. Quando torni sopra la soglia dopo la durata minima, l'app lo resetta e si prepara alla prossima crisi.
+
+MAPPA E TOKEN
+
+Nella mappa non online puoi usare token derivati dalle schede o creati da immagini gia generate.
+Il token puo essere ridimensionato rapidamente con i pulsanti + e - direttamente sulla mappa.
+Con tasto destro o pressione lunga puoi gestire opzioni e turnistica.
+
+I token collegati alla turnistica riprendono le loro statistiche. A ogni nuovo turno il movimento disponibile viene resettato.
+Gli utenti possono muovere solo i propri token, salvo permessi del Master.
+
+DUNGEON
+
+Il tema "Giorno di scuola" si sblocca automaticamente se arrivi al piano 3 con l'Art Scolastica Moderna scelta nella run.
+Il tema resta anche acquistabile dagli sblocchi del dungeon, cosi le progressioni piu vecchie possono recuperarlo.
+
+Kitty Slime si sblocca selezionando l'Art Hoshy o avendo una scheda chiamata Hoshy almeno di livello 5.
+Ha moltissima vita e pochi danni. Quando subisce un attacco ha il 50% di probabilita di generare una copia, fino a due copie.
+Le copie hanno meta delle sue statistiche, sono piu facili da colpire rispetto al personaggio principale e attaccano insieme a lui.
+
+EQUIPAGGIAMENTO DELLA RUN
+
+Nel dungeon puoi cambiare arma, costume e Oculus solo con cose trovate o comprate nella run corrente.
+Le armi possono apparire negli eventi e nei negozi. Alcune armi bloccate possono comparire raramente, ma quelle sbloccate sono piu comuni.
+I costumi seguono la stessa regola: li puoi indossare solo dopo averli trovati nella run, anche quando appartengono a contenuti gia sbloccati.
+
+Gli Oculus permettono di aggiungere Skill Oculum da altre Art Oculum, fino a un massimo di 9 skill attive nella run.
+Quando installi un Oculus, la scena viene descritta cosi: "Togli un tuo occhio, fa male, lo sostituisci con un oculus pieno di potere."
+Gli Oculus delle Art gia sbloccate sono piu frequenti; quelli non sbloccati sono rari.
+
+NPC EVOCABILI
+
+Gli NPC trovati nella run non entrano nel party permanente.
+Vanno in una coda di evocazione e possono sostituire automaticamente un alleato quando qualcuno muore o sparisce.
+Se li rimuovi manualmente, non vengono evocati di nuovo automaticamente finche non li riaggiungi.
+
+COSTUME: CUORE DI RICAMBIO SBAGLIATO
+
+Cuore di Ricambio Sbagliato e un costume rischioso.
+Quando lo indossi, riduce molto la vita massima, concede una Rinascita e rigenera tra 20 e 150 HP a ogni turno di combattimento.
+Il bonus e forte, ma il taglio alla vita rende pericolosi i colpi grossi e le stanze con danni improvvisi.
+
+Dal Grado VI puo comparire l'evento Occhio di Pietra e Bilancia.
+L'occhio di pietra osserva una bilancia vuota. Puoi appoggiare tutti i drop e tutto il Metallo Runico Postea posseduto nella run.
+La stanza fonde tutto in una volta come un fabbro piu forte:
+- aumenta danno arma;
+- aumenta difesa arma;
+- aggiunge resistenze dagli elementi dei drop;
+- puo generare Dust, critico run, Scudo Oculum e favore del fabbro.
+
+Se non hai oggetti da fondere, l'evento non blocca la run e concede Scudo Oculum.
+
+PRESTAZIONI
+
+L'app deve restare fluida su telefono, desktop e macOS.
+Le ottimizzazioni devono alleggerire calcoli e ridisegni senza rimuovere decorazioni, painter, temi o funzioni gia presenti.
+''',
+    contentEn: r'''
+This section summarizes the rules automated by the app.
+
+LIFE AND GRADE
+
+Maximum life no longer uses a fixed x10.
+Formula:
+- Maximum life = Resilience x (10 + Grade x5).
+
+Examples:
+- Grade 0: Resilience x10.
+- Grade 1: Resilience x15.
+- Grade 2: Resilience x20.
+
+DICE AND CRITICALS
+
+Every die can generate a critical:
+- natural 1: negative critical;
+- natural maximum of that die: positive critical.
+
+The critical modifier applies to every die, even when several dice are rolled together.
+- Positive critical: add half die + Level + Grade x6.
+- Negative critical: subtract half die + Level + Grade x3.
+
+The Damage / Healing field also accepts simple formulas. For example:
+- 10+100-20 is read as 90.
+
+After the calculation, all other rules still apply: Defense, Oculum Shield, Shield, temporary HP, HP, damage modifiers and criticals.
+
+ADVANTAGE AND DISADVANTAGE
+
+The sheet can apply a global roll modifier without changing base stats.
+The scale goes from Oculum Disadvantage (-12) to Oculum Advantage (+12), including minor, normal, true, super and ultra steps.
+The selected value is added to stat rolls, VC, CM and Initiative. It is meant for temporary conditions, terrain, positioning, narrative help or scene pressure.
+
+DT - ROLL DIFFICULTY
+
+Every sheet has a DT field that accepts a typed number. 0 is neutral. A positive DT is subtracted from the total of every roll made by that sheet, making rolls harder; a negative DT makes them easier. The displayed formula always includes the applied DT. A natural 1 or the die's natural maximum still remains a natural critical.
+
+DAMAGE AND HEALING MODIFIERS
+
+The Damage / Healing menu follows this scale, from worst exposure to full regeneration:
+- Lethal Fragility +500%.
+- Semi-lethal Fragility +250%.
+- Destructive Fragility +100%.
+- Absolute Fragility +90%.
+- Extreme Fragility +75%.
+- High Fragility +50%.
+- Fragility +25%.
+- Low Fragility +10%.
+- Normal.
+- Light Resistance -10%.
+- Resistance -25%.
+- High Resistance -50%.
+- Semi-perfect Resistance -75%.
+- Impenetrable Resistance -90%.
+- Immunity -100%.
+- Light Regeneration: regenerates 10% of total damage.
+- Regeneration: regenerates 25% of total damage.
+- High Regeneration: regenerates 50% of total damage.
+- Very Strong Regeneration: regenerates 75% of total damage.
+- Semi-perfect Regeneration: regenerates 90% of total damage.
+- Perfect Regeneration: regenerates 100% of total damage.
+
+Impact options in the Damage / Healing panel:
+- Beyond defense: damage is not reduced by Defense.
+- Beyond shields: damage skips Oculum Shield and Shield, while temporary HP, HP and the other rules still apply.
+- Shield damage bonus %: increases only the damage consumed by shields. Overflow does not become extra life damage.
+
+Whenever EXP reaches or passes a new 369 threshold, that threshold triggers once and restores one quarter of HP, Oculum Shield and one third of Oculum.
+
+SAVING SHIELD
+
+Saving Shield is a defensive consumable used with a Free Action, at most once per turn.
+When active, if the next damage breaks your last shield, overflow damage does not pass to temporary HP or life.
+It does not replace Defense, Oculum Shield, normal Shield, temporary HP or other reductions: it triggers only after the last shield breaks and is consumed when it blocks overflow.
+
+DAYS AND OCULUM CYCLE
+
+Rest and rot tracking are managed as days.
+One Day lasts 9 hours.
+
+Calendar units:
+- Tremana: 3 days.
+- Semana: 6 days.
+- Dodemana: 12 days.
+- New Phase: mutable season, 36 days or less.
+- Full Cycle: 369 days.
+
+The 12 New Phases of the Full Cycle:
+- Safe Monster, days 1-36: many monsters lose Grade, become peaceful, give negative karma if killed and have only basic or rare drops.
+- Illness, days 37-72: Madness received is doubled, "the others" become visible and Illness Art can be obtained.
+- Little Breath, days 73-108: Fate grants more Titles, especially to reborn characters; weather and area pressure are weaker.
+- Fertilizing Rains, days 109-144: nauseating mud rains down, sickness is easier to catch and food may cause Nausea.
+- The Sun, days 145-150: Solar beings gain +25% stats, rain stops and food below Grade VI rots within at most 2 days.
+- Half Cycle, days 151-183: weather becomes bearable almost everywhere and rain is mostly non-magical.
+- The Moon, days 184-189: every race is celebrated and accepted; Lunar beings gain +10%.
+- The Fate, days 190-225: characters with a Fate are empowered against those without one.
+- Infernal Heat, days 226-261: heat is harsher; without drinking, Will is debuffed based on exertion.
+- The Null, days 262-297: the void takes some of the fallen and returns them Fate-less, with missing or false memories.
+- Overwhelming Ice, days 298-333: cold is harsher; without heat, Materia is lost and freezing becomes a risk.
+- Last Cycle, days 334-369: the past cycle is celebrated, without strong mechanical traits.
+
+REST
+
+The Rest page shows:
+- current day of the Oculum Cycle;
+- current New Phase;
+- day inside the phase;
+- Tremana, Semana and Dodemana;
+- buttons to move one day forward or backward.
+
+Long rest refills HP and Oculum Shield when present.
+
+ROT
+
+Item rot in the bag is based on the current day.
+When an item is added, the app records the day it was obtained.
+
+Example:
+- you are on day 10;
+- you obtain an apple with PUT 5;
+- on day 15 the apple becomes Rotten meat.
+
+Standard results:
+- meat or food: Rotten meat;
+- materials: Rotted material;
+- slime: Rotted slime;
+- anything else: Rotted item.
+
+Rotted items of the same type merge into one stack.
+
+FORCE STATE
+
+Force State is checked automatically when HP drop to one quarter or less of maximum life.
+The app rolls a random state. Stronger states are rarer, but never impossible.
+
+Possible results:
+- Body, Do Not Give Up: +20 + Level + Grade temporary HP, +3 Will, +2 Materia.
+- Sharp Eyes: +5 + Level + Grade to attack and defense rolls.
+- Oculum Burst: +25 HP, current Oculum equal to life even above the maximum, damage equal to Level + Grade, defense equal to half Level + Grade and minimum duration 9 rolls, including subtraits.
+- Adrenaline: +1 fast Reaction and +5 + Level + Grade initiative.
+- Vulnerability Reset: resistance to hits, removal of negative temporary penalties and fatigue above threshold.
+- Exhaustion: -2 to attack and defense rolls, -5 - Level - Grade to damage.
+- Nothing: no effect.
+
+The state applies automatically when you take damage or edit HP. When Oculum Burst ends, the automatic outcome is rolled: 56% -1 to Oculum rolls until the next short or long rest, 36% +1 Ash, 9% +3 Ash. When HP rise above the threshold after the minimum duration, the app resets it and prepares for the next crisis.
+
+MAP AND TOKENS
+
+On the offline map you can use tokens derived from sheets or created from already generated images.
+Token size can be changed quickly with + and - buttons directly on the map.
+Right-click or long press opens options and turn order tools.
+
+Tokens linked to turn order use their stats. At each new turn, available movement resets.
+Players can move only their own tokens unless the Master allows otherwise.
+
+DUNGEON
+
+The "School day" theme unlocks automatically if you reach floor 3 with Modern School Art chosen in the run.
+It also remains purchasable from dungeon unlocks, so older progressions can still recover it.
+
+Kitty Slime unlocks by selecting Hoshy Art or by having a sheet named Hoshy at level 5 or higher.
+It has very high life and low damage. When it receives an attack, it has a 50% chance to create a copy, up to two copies.
+Copies have half its stats, are easier to hit than the main character and attack with it.
+
+RUN EQUIPMENT
+
+Inside the dungeon, you can change weapon, costume and Oculus only with things found or bought during the current run.
+Weapons can appear in events and shops. Some locked weapons can appear rarely, while unlocked ones are more common.
+Costumes follow the same rule: you can wear them only after finding them in the run, even when they belong to already unlocked content.
+
+Oculus items let you add Oculum Skills from other Oculum Arts, up to 9 active skills in the run.
+When you install an Oculus, the scene is described this way: "Togli un tuo occhio, fa male, lo sostituisci con un oculus pieno di potere."
+Oculus items from already unlocked Arts are more common; locked ones are rare.
+
+SUMMONABLE NPCS
+
+NPCs found during the run do not join the permanent party.
+They enter a summon queue and can automatically replace an ally when someone dies or disappears.
+If you remove them manually, they are not summoned automatically again until you add them back.
+
+COSTUME: WRONG SPARE HEART
+
+Wrong Spare Heart is a risky costume.
+When worn, it greatly reduces maximum life, grants one Rebirth and regenerates 20 to 150 HP each combat turn.
+The bonus is strong, but the life reduction makes heavy hits and sudden-damage rooms dangerous.
+
+From Grade VI, the Stone Eye and Scale event can appear.
+The stone eye watches an empty scale. You can place every drop and all Postea Runic Metal owned in the run.
+The room fuses everything at once like a stronger blacksmith:
+- increases weapon damage;
+- increases weapon defense;
+- adds resistances from drop elements;
+- may generate Dust, run critical, Oculum Shield and blacksmith favor.
+
+If you have nothing to fuse, the event does not block the run and grants Oculum Shield.
+
+PERFORMANCE
+
+The app must stay smooth on phone, desktop and macOS.
+Optimizations must reduce calculations and redraws without removing decorations, painters, themes or existing features.
+''',
+  ),
 ];
 
 const List<ManualSection> activeManualSections = oculumManualSections;
@@ -2009,7 +2542,7 @@ Stats may also be used creatively in roleplay when the scene allows it.
     titleEn: '2. Stats',
     contentIt: r'''
 Resilienza:
-- aumenta la vita di +10 per punto;
+- aumenta la vita con formula Resilienza x (10 + Grado x5);
 - rappresenta tenuta fisica e mentale;
 - 100 Resilienza = 1 Vera Resilienza;
 - 10 Vera Resilienza = 1 Resilius;
@@ -2033,7 +2566,7 @@ Oculum:
 ''',
     contentEn: r'''
 Resilience:
-- increases health by +10 per point;
+- increases health with the formula Resilience x (10 + Grade x5);
 - represents physical and mental endurance;
 - 100 Resilience = 1 True Resilience;
 - 10 True Resilience = 1 Resilius;
@@ -2120,7 +2653,7 @@ Nel calcolo dell'app:
 - CM = Livello + Grado x6 + Materia / 2;
 - Danno = Volontà + arma migliore + Livello + Grado x6;
 - Iniziativa = Materia / 5 + Livello + Grado x6;
-- Difesa = (Materia + Volontà + Livello + Grado x6) / 2.
+- Difesa = (Materia + Volontà) / 2 + Livello + Grado x6.
 ''',
     contentEn: r'''
 DT = Roll Difficulty.
@@ -2155,7 +2688,7 @@ In the app:
 - CM = Level + Grade x6 + Materia / 2;
 - Damage = Will + strongest weapon + Level + Grade x6;
 - Initiative = Materia / 5 + Level + Grade x6;
-- Defense = (Materia + Will + Level + Grade x6) / 2.
+- Defense = (Materia + Will) / 2 + Level + Grade x6.
 ''',
   ),
   ManualSection(
@@ -2552,7 +3085,9 @@ Summons: maximum 5 + Grade EXP, once per summon. Your own Summon grants no EXP u
     titleIt: '17. Critici e Fragilità',
     titleEn: '17. Criticals and Fragility',
     contentIt: r'''
-Si critta solo con 20 naturale.
+Ogni dado può crittare: il massimo naturale è critico positivo, 1 naturale è critico negativo.
+Critico positivo: aggiungi Livello + Grado x6 al tiro.
+Critico negativo: togli Livello + Grado x3 dal tiro.
 
 Attacco: applichi Fragilità nella zona bersagliata e +5 danni.
 Difesa: ottieni una Reazione contro chi ti ha attaccato.
@@ -2563,7 +3098,9 @@ Catena: primo critico Fragilità Leggera; ogni critico successivo nello stesso f
 Danno letale: x5 danni e +5 danni.
 ''',
     contentEn: r'''
-Critical hits happen only on natural 20.
+Every die can crit: natural maximum is a positive critical, natural 1 is a negative critical.
+Positive critical adds half die + Level + Grade x6 to the roll.
+Negative critical subtracts half die + Level + Grade x3 from the roll.
 
 Attack: apply Fragility to the targeted zone and +5 damage.
 Defense: gain one Reaction against the attacker.
@@ -2628,7 +3165,7 @@ Titoli Attributo: +1/+3, fino a +6 Evoluti, +7 Reforgiati, +9 Evoluti e Reforgia
 
 Razze: razza iniziale senza slot, fino ad altre 3 in storia; ogni razza ha 3 sottorazze. Completare 12 Razze/Sottorazze rivela la vera identita e permette una terza Art.
 
-Art: Oculum, Illness, Emblem, Martial, Null, Rune, Defiled. Rune Art combo al 25%; Defiled Art a 5 stadi e Open compatibile con le altre.
+Art: Oculum, Illness, Emblem, Martial, Null, Rune, Defiled. Rune Art combo al 25%, IV forma, parole componibili, Libri Runici da sei parole, Intensita e Durata sequenziali; Defiled Art a 5 stadi e Open compatibile con le altre. Il master puo aggiungere parole Rune custom con costo e DT propri.
 ''',
     contentEn: r'''
 Titles: Action, Item, Fate, Learning, Illness/Wellness, Alchemy/Magic, Chaos, Attribute. Each Title has buffs, Blind Spot, Legend, and possible Evolution. Every 3 equipped Titles reveal one, prioritizing Evolved ones. Grade III, VI, and IX grant extra slots. During a fight, Titles cannot be changed; anything consumed or activated still counts until the fight ends.
@@ -2639,7 +3176,7 @@ Attribute Titles: +1/+3, up to +6 Evolved, +7 Reforged, +9 Evolved and Reforged;
 
 Races: starting race uses no slot, up to 3 more in story; each race has 3 subraces. Completing 12 Races/Subraces reveals true identity and allows a third Art.
 
-Arts: Oculum, Illness, Emblem, Martial, Null, Rune, Defiled. Rune Art combos count as 25%; Defiled Art has 5 stages and compatible Open.
+Arts: Oculum, Illness, Emblem, Martial, Null, Rune, Defiled. Rune Art combos count as 25%, reach form IV, use modular words, Runic Books teach six words, and Intensity/Duration are sequential; Defiled Art has 5 stages and compatible Open. The master can add custom Rune words with their own cost and DT.
 ''',
   ),
 
@@ -2666,7 +3203,7 @@ Buff e debuff rapidi:
 • @Stats e @AllStats agiscono sulle 4 statistiche base; se il trigger consuma HP o una stat, l'app esclude automaticamente cio che rigenererebbe il costo;
 • / indica divisione normale, mentre frazioni speciali come ⅓, ¼, ½ e ¾ restano riconosciute;
 • i buff @ degli oggetti valgono solo quando l'oggetto e equipaggiato, senza duplicarsi quando lo togli e lo rimetti;
-• Refull Vita ricarica HP, HP temporanei dinamici, Scudo e Scudo Oculum;
+• Refull Vita ricarica HP, HP temporanei dinamici e Scudo Oculum; lo Scudo normale consumato resta consumato;
 • il parser non usa eval e rifiuta calcoli impossibili come divisioni per zero, formule vuote, variabili sconosciute o risultati infiniti.
 
 EXP:
@@ -2704,7 +3241,7 @@ Quick buffs and debuffs:
 • @Stats and @AllStats affect the 4 base stats; if the trigger spends HP or a stat, the app automatically excludes what would regenerate that cost;
 • / is normal division, while special fractions such as ⅓, ¼, ½ and ¾ remain recognized;
 • item @ buffs count only while the item is equipped, without duplicating when you remove and equip it again;
-• Refill Life restores HP, dynamic temporary HP, Shield and Oculum Shield;
+• Refill Life restores HP, dynamic temporary HP and Oculum Shield; spent normal Shield stays spent;
 • the parser does not use eval and rejects impossible calculations such as division by zero, empty formulas, unknown variables or infinite results.
 
 EXP:
@@ -2750,6 +3287,7 @@ SPAZI PRINCIPALI DELL’APP
 
 • Danno / Cura / Tipo danno:
   contiene il campo dove inserire danni o cure, il modificatore danno e il tipo danno. Qui vengono mostrati anche elemento dominante e tipo coinvolto.
+  Il campo accetta anche formule semplici: 10+100-20 viene calcolato come 90. Dopo il calcolo restano attive difesa, scudi, HP temporanei, Scudo Oculum, critici e modificatori.
 
 • Valori modificabili:
   contiene le statistiche e i valori rapidi modificabili della scheda.
@@ -2961,6 +3499,7 @@ MAIN APP AREAS
 
 • Damage / Heal / Damage type:
   contains the field for damage or healing, damage modifier and damage type. Dominant element and involved type are shown here.
+  The field also accepts simple formulas: 10+100-20 is calculated as 90. After that calculation, defense, shields, temporary HP, Oculum Shield, criticals and modifiers still apply.
 
 • Editable values:
   contains editable stats and quick values.

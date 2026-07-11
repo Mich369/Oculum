@@ -2,7 +2,7 @@ name: oculum
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.0+2
+version: 1.0.0+3
 
 
 environment:
@@ -26,6 +26,7 @@ dependencies:
   url_launcher: ^6.3.2
   webview_flutter: ^4.13.1
   webview_windows: ^0.4.0
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

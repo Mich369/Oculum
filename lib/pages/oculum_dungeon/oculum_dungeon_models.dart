@@ -270,6 +270,7 @@ class _EnemyInstance {
     required this.elementId,
     required this.hp,
     required this.maxHp,
+    this.shield = 0,
     required this.attack,
     required this.defense,
     required this.boss,
@@ -293,6 +294,10 @@ class _EnemyInstance {
     this.defenseDebuffValue = 0,
     this.burnPotency = 0,
     this.bleedPotency = 0,
+    this.phase = 1,
+    this.phaseTriggered = false,
+    this.quarterPowerTriggered = false,
+    this.partialAwakeningTriggered = false,
   }) : adaptedAttackTypes = adaptedAttackTypes ?? <String>{} {
     this.skillIds = skillIds ?? [];
     this.dropIds = dropIds ?? [];
@@ -312,12 +317,17 @@ class _EnemyInstance {
   int defenseDebuffValue;
   int burnPotency;
   int bleedPotency;
+  int phase;
+  bool phaseTriggered;
+  bool quarterPowerTriggered;
+  bool partialAwakeningTriggered;
 
   String nameIt;
   String nameEn;
   String elementId;
   int hp;
   int maxHp;
+  int shield;
   int attack;
   int defense;
   bool boss;
@@ -328,6 +338,68 @@ class _EnemyInstance {
   int originalPower;
   Set<String> adaptedAttackTypes;
   String? copiedArtId;
+}
+
+class _DownedCombatant {
+  _DownedCombatant({
+    required this.id,
+    required this.nameIt,
+    required this.nameEn,
+    required this.maxHp,
+    required this.maxOculum,
+    required this.will,
+    required this.materia,
+    this.wounds = 0,
+    this.vitalWills = 0,
+  });
+
+  final String id;
+  final String nameIt;
+  final String nameEn;
+  final int maxHp;
+  final int maxOculum;
+  final int will;
+  final int materia;
+  int wounds;
+  int vitalWills;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'nameIt': nameIt,
+    'nameEn': nameEn,
+    'maxHp': maxHp,
+    'maxOculum': maxOculum,
+    'will': will,
+    'materia': materia,
+    'wounds': wounds,
+    'vitalWills': vitalWills,
+  };
+
+  factory _DownedCombatant.fromJson(
+    Map<String, dynamic> json, {
+    required String fallbackId,
+  }) {
+    int readInt(String key, {int fallback = 0}) =>
+        (json[key] as num?)?.toInt() ?? fallback;
+
+    return _DownedCombatant(
+      id: (json['id'] as String?)?.trim().isNotEmpty == true
+          ? (json['id'] as String).trim()
+          : fallbackId,
+      nameIt: (json['nameIt'] as String?)?.trim().isNotEmpty == true
+          ? (json['nameIt'] as String).trim()
+          : fallbackId,
+      nameEn: (json['nameEn'] as String?)?.trim().isNotEmpty == true
+          ? (json['nameEn'] as String).trim()
+          : fallbackId,
+      maxHp: readInt('maxHp', fallback: 1).clamp(1, 999999).toInt(),
+      maxOculum: readInt('maxOculum').clamp(0, 999999).toInt(),
+      will: readInt('will').clamp(0, 999999).toInt(),
+      materia: readInt('materia').clamp(0, 999999).toInt(),
+      wounds: readInt('wounds').clamp(0, 3).toInt(),
+      vitalWills: readInt('vitalWills').clamp(0, 3).toInt(),
+    );
+  }
 }
 
 class _GoodNpc {

@@ -181,7 +181,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
   }
 
   Widget backgroundAndSkillsPageEfficient() {
-    final diaryTitleIndex = modalitaMaster ? 3 : 2;
+    final diaryTitleIndex = modalitaMaster ? 4 : 3;
     final headerBuilders = <WidgetBuilder>[
       (_) => functionAnchor(
         'story_root',
@@ -189,6 +189,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       ),
       (_) => storyBackgroundPanelEfficient(),
       if (modalitaMaster) (_) => storyMasterPanelEfficient(),
+      (_) => storyOnlineSessionNotesPanel(),
       (_) => sectionTitle(t('Diario', 'Diary')),
       (_) => storyDiaryIntroPanelEfficient(),
     ];
@@ -632,6 +633,46 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     );
   }
 
+  void usaFormaSkill(CharacterSkill skill, int skillIndex, int formIndex) {
+    skill.ensureForms();
+    if (formIndex < 0 || formIndex >= skill.forme.length) return;
+    final form = skill.forme[formIndex];
+    final formName = form.nome.trim().isEmpty
+        ? 'Forma ${formIndex + 1}'
+        : form.nome.trim();
+    final isHighLearnedForm = formIndex >= max(0, skill.forme.length - 2);
+    final atQuarterHp = hpCorrenti() <= sogliaStatoForzaHp();
+
+    setState(() {
+      final parts = <String>[
+        t('Forma skill usata', 'Skill form used'),
+        '${skill.nome.trim().isEmpty ? t('Skill senza nome', 'Unnamed skill') : skill.nome.trim()} - $formName',
+      ];
+      if (form.costo.trim().isNotEmpty) {
+        parts.add('${t('Costo', 'Cost')}: ${form.costo.trim()}');
+      }
+      if (form.cooldown.trim().isNotEmpty) {
+        parts.add('Cooldown: ${form.cooldown.trim()}');
+      }
+
+      if (atQuarterHp && isHighLearnedForm) {
+        final svenimento = modificaCenereControllata(1);
+        parts.add(
+          t(
+            'A un quarto HP o meno, usare una forma alta imparata aggiunge +1 Cenere.',
+            'At one quarter HP or lower, using a high learned form adds +1 Ash.',
+          ),
+        );
+        if (svenimento != null) parts.add(svenimento);
+      }
+
+      risultato = parts.join('\n');
+      ultimoEventoRiposo = risultato;
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
   Widget skillFormEditorTile(
     CharacterSkill skill,
     int skillIndex,
@@ -838,6 +879,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               value: form.note,
               maxLines: 3,
               onChanged: (value) => form.note = value,
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: () => usaFormaSkill(skill, skillIndex, formIndex),
+                icon: const Icon(Icons.play_arrow),
+                label: Text(t('Usa forma', 'Use form')),
+              ),
             ),
           ],
         ),
@@ -1455,515 +1505,727 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     final titleKind = trattoRazziale
         ? t('Tratto razziale', 'Racial trait')
         : t('Titolo', 'Title');
+    final sectionId =
+        '${trattoRazziale ? 'racial_trait' : 'title'}_${currentSheetScrollId()}_$index';
+    final expanded = _expandedFunctionSections.contains(sectionId);
+    final borderColor = titolo.openAttiva
+        ? tertiaryColor
+        : equipped
+        ? primaryColor
+        : primaryColor.withValues(alpha: 0.65);
+    final titleColor = titolo.openAttiva
+        ? tertiaryColor
+        : equipped
+        ? primaryColor
+        : Colors.white;
+    final quickBonuses = titleQuickBonuses(titolo);
+    final titleSubtitleParts = <String>[
+      if (titolo.tipo.trim().isNotEmpty) cleanUiText(titolo.tipo),
+      if (titolo.openAttiva) t('Open attiva', 'Open active'),
+      if (quickBonuses.isNotEmpty)
+        '${quickBonuses.length} ${t('comandi @', '@ commands')}',
+    ];
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          final runtimeRes =
-              titleQuickResilienzaBonus(titolo) +
-              buffCondizionaleResilienza(titolo);
-          titolo.equipaggiato = !titolo.equipaggiato;
-          final segno = titolo.equipaggiato ? 1 : -1;
-          applicaBonusTitoloAttuali(titolo, segno);
-          rimarginaHpDaAumentoResilienza(runtimeRes * segno);
-          if (!titolo.equipaggiato) {
-            titolo.openAttiva = false;
-            for (final open in titolo.openExtra) {
-              open.attiva = false;
-            }
+    void toggleTitleEquipped() {
+      setState(() {
+        final runtimeRes =
+            titleQuickResilienzaBonus(titolo) +
+            buffCondizionaleResilienza(titolo);
+        titolo.equipaggiato = !titolo.equipaggiato;
+        final segno = titolo.equipaggiato ? 1 : -1;
+        applicaBonusTitoloAttuali(titolo, segno);
+        rimarginaHpDaAumentoResilienza(runtimeRes * segno);
+        if (!titolo.equipaggiato) {
+          titolo.openAttiva = false;
+          for (final open in titolo.openExtra) {
+            open.attiva = false;
           }
-          aggiungiLog(
-            '${titolo.equipaggiato ? "Equipaggiato" : "Rimosso"} $titleKind: [${titolo.nome}].',
+        }
+        aggiungiLog(
+          '${titolo.equipaggiato ? "Equipaggiato" : "Rimosso"} $titleKind: [${titolo.nome}].',
+        );
+      });
+      programmaSalvataggio();
+    }
+
+    void deleteTitle() {
+      final currentIndex = list.indexOf(titolo);
+      if (currentIndex < 0) return;
+      setState(() {
+        _expandedFunctionSections.remove(sectionId);
+        if (titolo.equipaggiato) {
+          applicaBonusTitoloAttuali(titolo, -1);
+          rimarginaHpDaAumentoResilienza(
+            -titleQuickResilienzaBonus(titolo) -
+                buffCondizionaleResilienza(titolo),
+          );
+        }
+        aggiungiLog('$titleKind eliminato: [${titolo.nome}].');
+        list.removeAt(currentIndex);
+      });
+      programmaSalvataggio();
+    }
+
+    void duplicateTitle() {
+      final currentIndex = list.indexOf(titolo);
+      if (currentIndex < 0) return;
+      if (trattoRazziale && list.length >= 13) {
+        setState(() {
+          risultato = t(
+            'Puoi avere al massimo 13 Tratti razziali.',
+            'You can have at most 13 Racial Traits.',
           );
         });
-        programmaSalvataggio();
-      },
-      child: gothicPanel(
-        borderColor: titolo.openAttiva
-            ? tertiaryColor
-            : equipped
-            ? primaryColor
-            : primaryColor.withValues(alpha: 0.65),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  equipped ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color: equipped ? tertiaryColor : Colors.grey,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
+        return;
+      }
+      final copy = copiaTitolo(titolo)
+        ..nome = '${titolo.nome} - ${t('copia', 'copy')}'
+        ..equipaggiato = false
+        ..openAttiva = false
+        ..chiaveSistema = '';
+      for (final open in copy.openExtra) {
+        open.attiva = false;
+      }
+      setState(() {
+        list.insert(currentIndex + 1, copy);
+        aggiungiLog('$titleKind duplicato: [${titolo.nome}].');
+      });
+      programmaSalvataggio();
+    }
+
+    Future<void> showTitleContextMenu(Offset position) async {
+      final choice = await showMenu<String>(
+        context: context,
+        color: const Color(0xFF10121A),
+        position: RelativeRect.fromLTRB(
+          position.dx,
+          position.dy,
+          position.dx,
+          position.dy,
+        ),
+        items: <PopupMenuEntry<String>>[
+          PopupMenuItem<String>(
+            value: 'equip',
+            child: ListTile(
+              leading: Icon(
+                titolo.equipaggiato
+                    ? Icons.remove_circle_outline
+                    : Icons.check_circle_outline,
+              ),
+              title: Text(
+                titolo.equipaggiato
+                    ? t('Rimuovi equipaggiamento', 'Unequip')
+                    : t('Equipaggia', 'Equip'),
+              ),
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'send',
+            child: ListTile(
+              leading: const Icon(Icons.send_outlined),
+              title: Text(t('Copia o invia', 'Copy or send')),
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'duplicate',
+            enabled: !trattoRazziale || list.length < 13,
+            child: ListTile(
+              leading: const Icon(Icons.copy),
+              title: Text(t('Duplica', 'Duplicate')),
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'manual',
+            child: ListTile(
+              leading: const Icon(Icons.menu_book_outlined),
+              title: Text(t('Cerca nel manuale', 'Search in manual')),
+            ),
+          ),
+          const PopupMenuDivider(),
+          PopupMenuItem<String>(
+            value: 'delete',
+            child: ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: Text(t('Elimina', 'Delete')),
+            ),
+          ),
+        ],
+      );
+      if (!mounted || choice == null || !list.contains(titolo)) return;
+      switch (choice) {
+        case 'equip':
+          toggleTitleEquipped();
+          break;
+        case 'send':
+          await mostraDialogCopiaTitolo(titolo);
+          break;
+        case 'duplicate':
+          duplicateTitle();
+          break;
+        case 'manual':
+          openManualForQuickTerm(titolo.nome);
+          break;
+        case 'delete':
+          deleteTitle();
+          break;
+      }
+    }
+
+    final card = gothicPanel(
+      borderColor: borderColor,
+      padding: EdgeInsets.zero,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: sheetExpansionKey(sectionId),
+          initiallyExpanded: expanded,
+          onExpansionChanged: (value) {
+            if (!mounted) return;
+            setState(() {
+              if (value) {
+                _expandedFunctionSections.add(sectionId);
+              } else {
+                _expandedFunctionSections.remove(sectionId);
+              }
+            });
+          },
+          tilePadding: const EdgeInsets.fromLTRB(10, 4, 8, 4),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+          iconColor: borderColor,
+          collapsedIconColor: borderColor,
+          leading: Tooltip(
+            message: equipped
+                ? t('Rimuovi Titolo', 'Unequip Title')
+                : t('Equipaggia Titolo', 'Equip Title'),
+            child: IconButton(
+              onPressed: toggleTitleEquipped,
+              icon: Icon(
+                equipped ? Icons.check_circle : Icons.radio_button_unchecked,
+                color: equipped ? tertiaryColor : Colors.grey,
+              ),
+            ),
+          ),
+          title: Text(
+            '[${titolo.nome}]',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: titleColor,
+            ),
+          ),
+          subtitle: titleSubtitleParts.isEmpty
+              ? null
+              : Padding(
+                  padding: const EdgeInsets.only(top: 3),
                   child: Text(
-                    '[${titolo.nome}]',
+                    titleSubtitleParts.join(' - '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: titolo.openAttiva
-                          ? tertiaryColor
-                          : equipped
-                          ? primaryColor
-                          : Colors.white,
+                      color: titleColor.withValues(alpha: 0.78),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-                if (titolo.chiaveSistema.isNotEmpty)
-                  Tooltip(
-                    message: t(
-                      'Creato automaticamente dal sistema delle Art.',
-                      'Automatically created by the Art system.',
-                    ),
-                    child: Icon(Icons.auto_awesome, color: tertiaryColor),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (titolo.chiaveSistema.isNotEmpty)
+                Tooltip(
+                  message: t(
+                    'Creato automaticamente dal sistema delle Art.',
+                    'Automatically created by the Art system.',
                   ),
-                IconButton(
-                  tooltip: t('Copia / invia Titolo', 'Copy / send Title'),
-                  onPressed: () => mostraDialogCopiaTitolo(titolo),
-                  icon: Icon(Icons.send, color: primaryColor),
+                  child: Icon(Icons.auto_awesome, color: tertiaryColor),
                 ),
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      if (titolo.equipaggiato) {
-                        applicaBonusTitoloAttuali(titolo, -1);
-                        rimarginaHpDaAumentoResilienza(
-                          -titleQuickResilienzaBonus(titolo) -
-                              buffCondizionaleResilienza(titolo),
-                        );
-                      }
-                      aggiungiLog('$titleKind eliminato: [${titolo.nome}].');
-                      list.removeAt(index);
-                    });
-                    programmaSalvataggio();
-                  },
-                  icon: const Icon(Icons.delete, color: Colors.redAccent),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            titleQuickCombatLine(titolo),
-            if (titleQuickBonuses(titolo).isNotEmpty) const SizedBox(height: 8),
-            const SizedBox(height: 10),
-            campoModello(
-              label: t('Nome Titolo', 'Title Name'),
-              initialValue: titolo.nome,
-              onChanged: (value) => titolo.nome = value,
-            ),
-            const SizedBox(height: 8),
-            campoModello(
-              label: t('Tipo Titolo', 'Title Type'),
-              initialValue: titolo.tipo,
-              onChanged: (value) => titolo.tipo = value,
-            ),
-            const SizedBox(height: 8),
-            campoModello(
-              label: t('Ottenimento', 'Obtained'),
-              initialValue: titolo.ottenimento,
-              onChanged: (value) => titolo.ottenimento = value,
-              maxLines: 3,
-            ),
-            const SizedBox(height: 8),
-            campoModello(
-              label: t('Buff @ Titolo', 'Title @ Buff'),
-              initialValue: titolo.buff,
-              onChanged: (value) => titolo.buff = value,
-              maxLines: 3,
-              helper: '@HP+5 @HPTemp+Vol1/6 @ScudoOculum+5 @TiroAttacco+1',
-            ),
-            const SizedBox(height: 8),
-            campoModello(
-              label: t('Skill aggiunta', 'Added Skill'),
-              initialValue: titolo.skill,
-              onChanged: (value) => titolo.skill = value,
-              maxLines: 3,
-            ),
-            const SizedBox(height: 8),
-            campoModello(
-              label: t('Punto Cieco', 'Blind Spot'),
-              initialValue: titolo.puntoCieco,
-              onChanged: (value) => titolo.puntoCieco = value,
-              maxLines: 3,
-            ),
-            const SizedBox(height: 8),
-            campoModello(
-              label: t('Richiede / Evoluzione', 'Requires / Evolution'),
-              initialValue: titolo.richiede,
-              onChanged: (value) => titolo.richiede = value,
-              maxLines: 3,
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                statChip('RES', titolo.resilienza),
-                statChip('VOL', titolo.volonta),
-                statChip('MAT', titolo.materia),
-                statChip('OCU', titolo.oculum),
-                statChip('KARMA', titolo.karma),
-              ],
-            ),
-            const SizedBox(height: 16),
-            titleQuickCommandChips(titolo),
-            if (titleQuickBonuses(titolo).isNotEmpty)
-              const SizedBox(height: 12),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: campoModello(
-                    label: '+ Res',
-                    initialValue: titolo.resilienza.toString(),
-                    onChanged: (value) {
-                      final nuovo = int.tryParse(value.trim()) ?? 0;
-                      if (titolo.equipaggiato) {
-                        applicaBonusAttuali(
-                          resilienza: nuovo - titolo.resilienza,
-                        );
-                      }
-                      titolo.resilienza = nuovo;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: campoModello(
-                    label: '+ Vol',
-                    initialValue: titolo.volonta.toString(),
-                    onChanged: (value) {
-                      final nuovo = int.tryParse(value.trim()) ?? 0;
-                      if (titolo.equipaggiato) {
-                        applicaBonusAttuali(volonta: nuovo - titolo.volonta);
-                      }
-                      titolo.volonta = nuovo;
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: campoModello(
-                    label: '+ Mat',
-                    initialValue: titolo.materia.toString(),
-                    onChanged: (value) {
-                      final nuovo = int.tryParse(value.trim()) ?? 0;
-                      if (titolo.equipaggiato) {
-                        applicaBonusAttuali(materia: nuovo - titolo.materia);
-                      }
-                      titolo.materia = nuovo;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: campoModello(
-                    label: '+ Ocu',
-                    initialValue: titolo.oculum.toString(),
-                    onChanged: (value) {
-                      final nuovo = int.tryParse(value.trim()) ?? 0;
-                      if (titolo.equipaggiato) {
-                        applicaBonusAttuali(oculum: nuovo - titolo.oculum);
-                      }
-                      titolo.oculum = nuovo;
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              t('Karma Titolo', 'Title Karma'),
-              style: TextStyle(
-                color: tertiaryColor,
-                fontWeight: FontWeight.bold,
+              IconButton(
+                tooltip: t('Copia / invia Titolo', 'Copy / send Title'),
+                onPressed: () => mostraDialogCopiaTitolo(titolo),
+                icon: Icon(Icons.send, color: primaryColor),
               ),
-            ),
-            const SizedBox(height: 8),
-            karmaTitleEditorRow(
-              value: titolo.karma,
-              onChanged: (value) {
-                setState(() {
-                  titolo.karma = value;
-                });
-                programmaSalvataggio();
-              },
-            ),
-            const SizedBox(height: 12),
-            conditionalBuffPanel(
-              title: t(
-                'Buff Condizionali del Titolo',
-                'Title Conditional Buffs',
+              IconButton(
+                tooltip: t('Elimina Titolo', 'Delete Title'),
+                onPressed: deleteTitle,
+                icon: const Icon(Icons.delete, color: Colors.redAccent),
               ),
-              buffs: titolo.titleConditionalBuffs,
-              color: tertiaryColor,
-              appliesToCurrentStats: titolo.equipaggiato,
-            ),
-            Divider(color: tertiaryColor.withValues(alpha: 0.5)),
-            SwitchListTile(
-              value: titolo.evoluto,
-              activeThumbColor: tertiaryColor,
-              title: Text(t('Evoluto', 'Evolved')),
-              subtitle: Text(
-                t(
-                  'Un Titolo Evoluto può avere una Open e Skill extra.',
-                  'An Evolved Title can have an Open and extra Skills.',
-                ),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  if (!value) disattivaOpenDelTitolo(titolo);
-                  titolo.evoluto = value;
-                });
-                programmaSalvataggio();
-              },
-            ),
-            if (titolo.evoluto) ...[
-              campoModello(
-                label: t('Nome Open', 'Open Name'),
-                initialValue: titolo.openName,
-                onChanged: (value) => titolo.openName = value,
-              ),
-              const SizedBox(height: 8),
-              campoModello(
-                label: t('Descrizione Open', 'Open Description'),
-                initialValue: titolo.openDescription,
-                onChanged: (value) => titolo.openDescription = value,
-                maxLines: 2,
-              ),
-              const SizedBox(height: 8),
-              campoModello(
-                label: t('Open Buff @', 'Open @ Buff'),
-                initialValue: titolo.openBuff,
-                onChanged: (value) => titolo.openBuff = value,
-                maxLines: 2,
-                helper: '@Iniziativa+5 @TiroDifesa+1 @Danni+Vol/2 Fuoco',
-              ),
-              const SizedBox(height: 8),
-              campoModello(
-                label: t('Open Skill', 'Open Skill'),
-                initialValue: titolo.openSkill,
-                onChanged: (value) => titolo.openSkill = value,
-                maxLines: 2,
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: () => usaOpen(titolo),
-                icon: Icon(
-                  titolo.openAttiva ? Icons.lock_open : Icons.auto_awesome,
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: titolo.openAttiva
-                      ? tertiaryColor
-                      : secondaryColor,
-                  foregroundColor: titolo.openAttiva
-                      ? Colors.black
-                      : Colors.white,
-                  minimumSize: const Size.fromHeight(46),
-                ),
-                label: Text(
-                  titolo.openAttiva
-                      ? t('Open Attiva', 'Open Active')
-                      : t('Usa Open', 'Use Open'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              conditionalBuffPanel(
-                title: t(
-                  'Buff Condizionali della Open',
-                  'Open Conditional Buffs',
-                ),
-                buffs: titolo.openConditionalBuffs,
-                color: primaryColor,
-                appliesToCurrentStats: titolo.equipaggiato && titolo.openAttiva,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  plusEyeButton(
-                    label: t('Aggiungi Open', 'Add Open'),
-                    subtitle: '$openExtraCount/12',
-                    color: tertiaryColor,
-                    onTap: () => aggiungiOpenExtra(titolo),
-                  ),
-                  const SizedBox(width: 10),
-                  plusEyeButton(
-                    label: t('Aggiungi Skill', 'Add Skill'),
-                    color: primaryColor,
-                    onTap: () => aggiungiSkillExtraTitolo(titolo),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              for (int i = 0; i < titolo.openExtra.length; i++)
-                gothicPanel(
-                  borderColor: titolo.openExtra[i].attiva
-                      ? tertiaryColor
-                      : primaryColor.withValues(alpha: 0.6),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      campoModello(
-                        label: t('Nome Open Extra', 'Extra Open Name'),
-                        initialValue: titolo.openExtra[i].nome,
-                        onChanged: (value) => titolo.openExtra[i].nome = value,
-                      ),
-                      const SizedBox(height: 8),
-                      campoModello(
-                        label: t('Descrizione', 'Description'),
-                        initialValue: titolo.openExtra[i].descrizione,
-                        onChanged: (value) {
-                          titolo.openExtra[i].descrizione = value;
-                        },
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 8),
-                      campoModello(
-                        label: t('Buff @ Open Extra', 'Extra Open @ Buff'),
-                        initialValue: titolo.openExtra[i].openBuff,
-                        onChanged: (value) {
-                          titolo.openExtra[i].openBuff = value;
-                        },
-                        maxLines: 2,
-                        helper: '@HP+5 @Scudo+3 @ScudoOculum+5',
-                      ),
-                      const SizedBox(height: 8),
-                      campoModello(
-                        label: t('Open Skill', 'Open Skill'),
-                        initialValue: titolo.openExtra[i].openSkill,
-                        onChanged: (value) {
-                          titolo.openExtra[i].openSkill = value;
-                        },
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 10),
-                      conditionalBuffPanel(
-                        title: t(
-                          'Buff Condizionali Open Extra',
-                          'Extra Open Conditional Buffs',
-                        ),
-                        buffs: titolo.openExtra[i].conditionalBuffs,
-                        color: tertiaryColor,
-                        appliesToCurrentStats:
-                            titolo.equipaggiato && titolo.openExtra[i].attiva,
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => usaOpen(
-                                titolo,
-                                openExtra: titolo.openExtra[i],
-                              ),
-                              icon: Icon(
-                                titolo.openExtra[i].attiva
-                                    ? Icons.lock_open
-                                    : Icons.auto_awesome,
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: titolo.openExtra[i].attiva
-                                    ? tertiaryColor
-                                    : secondaryColor,
-                                foregroundColor: titolo.openExtra[i].attiva
-                                    ? Colors.black
-                                    : Colors.white,
-                              ),
-                              label: Text(
-                                titolo.openExtra[i].attiva
-                                    ? t('Attiva', 'Active')
-                                    : t('Usa', 'Use'),
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              setState(() {
-                                if (titolo.openExtra[i].attiva &&
-                                    titolo.equipaggiato) {
-                                  rimarginaHpDaAumentoResilienza(
-                                    -extraOpenRuntimeResilienzaBonus(
-                                      titolo.openExtra[i],
-                                    ),
-                                  );
-                                }
-                                titolo.openExtra.removeAt(i);
-                                aggiungiLog(
-                                  'Open extra rimossa da [${titolo.nome}].',
-                                );
-                              });
-                              programmaSalvataggio();
-                            },
-                            icon: const Icon(
-                              Icons.delete,
-                              color: Colors.redAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              for (int i = 0; i < titolo.skillExtra.length; i++)
-                gothicPanel(
-                  borderColor: tertiaryColor.withValues(alpha: 0.65),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      campoModello(
-                        label: t('Nome Skill Extra', 'Extra Skill Name'),
-                        initialValue: titolo.skillExtra[i].nome,
-                        onChanged: (value) => titolo.skillExtra[i].nome = value,
-                      ),
-                      const SizedBox(height: 8),
-                      campoModello(
-                        label: t(
-                          'Descrizione Skill Extra',
-                          'Extra Skill Description',
-                        ),
-                        initialValue: titolo.skillExtra[i].descrizione,
-                        onChanged: (value) {
-                          titolo.skillExtra[i].descrizione = value;
-                        },
-                        maxLines: 3,
-                      ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              titolo.skillExtra.removeAt(i);
-                              aggiungiLog(
-                                'Skill extra rimossa da [${titolo.nome}].',
-                              );
-                            });
-                            programmaSalvataggio();
-                          },
-                          icon: const Icon(
-                            Icons.delete,
-                            color: Colors.redAccent,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              Icon(Icons.expand_more, color: borderColor),
             ],
-          ],
+          ),
+          children: expanded
+              ? [
+                  titleQuickCombatLine(titolo),
+                  if (quickBonuses.isNotEmpty) const SizedBox(height: 8),
+                  const SizedBox(height: 10),
+                  campoModello(
+                    label: t('Nome Titolo', 'Title Name'),
+                    initialValue: titolo.nome,
+                    onChanged: (value) => titolo.nome = value,
+                  ),
+                  const SizedBox(height: 8),
+                  campoModello(
+                    label: t('Tipo Titolo', 'Title Type'),
+                    initialValue: titolo.tipo,
+                    onChanged: (value) => titolo.tipo = value,
+                  ),
+                  const SizedBox(height: 8),
+                  campoModello(
+                    label: t('Ottenimento', 'Obtained'),
+                    initialValue: titolo.ottenimento,
+                    onChanged: (value) => titolo.ottenimento = value,
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 8),
+                  campoModello(
+                    label: t('Buff @ Titolo', 'Title @ Buff'),
+                    initialValue: titolo.buff,
+                    onChanged: (value) => titolo.buff = value,
+                    maxLines: 3,
+                    helper:
+                        '@HP+5 @HPTemp+Vol1/6 @ScudoOculum+5 @TiroAttacco+1',
+                  ),
+                  const SizedBox(height: 8),
+                  campoModello(
+                    label: t('Skill aggiunta', 'Added Skill'),
+                    initialValue: titolo.skill,
+                    onChanged: (value) => titolo.skill = value,
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 8),
+                  campoModello(
+                    label: t('Punto Cieco', 'Blind Spot'),
+                    initialValue: titolo.puntoCieco,
+                    onChanged: (value) => titolo.puntoCieco = value,
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 8),
+                  campoModello(
+                    label: t('Richiede / Evoluzione', 'Requires / Evolution'),
+                    initialValue: titolo.richiede,
+                    onChanged: (value) => titolo.richiede = value,
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      statChip('RES', titolo.resilienza),
+                      statChip('VOL', titolo.volonta),
+                      statChip('MAT', titolo.materia),
+                      statChip('OCU', titolo.oculum),
+                      statChip('KARMA', titolo.karma),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  titleQuickCommandChips(titolo),
+                  if (quickBonuses.isNotEmpty) const SizedBox(height: 12),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: campoModello(
+                          label: '+ Res',
+                          initialValue: titolo.resilienza.toString(),
+                          onChanged: (value) {
+                            final nuovo = int.tryParse(value.trim()) ?? 0;
+                            if (titolo.equipaggiato) {
+                              applicaBonusAttuali(
+                                resilienza: nuovo - titolo.resilienza,
+                              );
+                            }
+                            titolo.resilienza = nuovo;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: campoModello(
+                          label: '+ Vol',
+                          initialValue: titolo.volonta.toString(),
+                          onChanged: (value) {
+                            final nuovo = int.tryParse(value.trim()) ?? 0;
+                            if (titolo.equipaggiato) {
+                              applicaBonusAttuali(
+                                volonta: nuovo - titolo.volonta,
+                              );
+                            }
+                            titolo.volonta = nuovo;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: campoModello(
+                          label: '+ Mat',
+                          initialValue: titolo.materia.toString(),
+                          onChanged: (value) {
+                            final nuovo = int.tryParse(value.trim()) ?? 0;
+                            if (titolo.equipaggiato) {
+                              applicaBonusAttuali(
+                                materia: nuovo - titolo.materia,
+                              );
+                            }
+                            titolo.materia = nuovo;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: campoModello(
+                          label: '+ Ocu',
+                          initialValue: titolo.oculum.toString(),
+                          onChanged: (value) {
+                            final nuovo = int.tryParse(value.trim()) ?? 0;
+                            if (titolo.equipaggiato) {
+                              applicaBonusAttuali(
+                                oculum: nuovo - titolo.oculum,
+                              );
+                            }
+                            titolo.oculum = nuovo;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    t('Karma Titolo', 'Title Karma'),
+                    style: TextStyle(
+                      color: tertiaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  karmaTitleEditorRow(
+                    value: titolo.karma,
+                    onChanged: (value) {
+                      setState(() {
+                        titolo.karma = value;
+                      });
+                      programmaSalvataggio();
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  conditionalBuffPanel(
+                    title: t(
+                      'Buff Condizionali del Titolo',
+                      'Title Conditional Buffs',
+                    ),
+                    buffs: titolo.titleConditionalBuffs,
+                    color: tertiaryColor,
+                    appliesToCurrentStats: titolo.equipaggiato,
+                  ),
+                  Divider(color: tertiaryColor.withValues(alpha: 0.5)),
+                  SwitchListTile(
+                    value: titolo.evoluto,
+                    activeThumbColor: tertiaryColor,
+                    title: Text(t('Evoluto', 'Evolved')),
+                    subtitle: Text(
+                      t(
+                        'Un Titolo Evoluto può avere una Open e Skill extra.',
+                        'An Evolved Title can have an Open and extra Skills.',
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        if (!value) disattivaOpenDelTitolo(titolo);
+                        titolo.evoluto = value;
+                      });
+                      programmaSalvataggio();
+                    },
+                  ),
+                  if (titolo.evoluto) ...[
+                    campoModello(
+                      label: t('Nome Open', 'Open Name'),
+                      initialValue: titolo.openName,
+                      onChanged: (value) => titolo.openName = value,
+                    ),
+                    const SizedBox(height: 8),
+                    campoModello(
+                      label: t('Descrizione Open', 'Open Description'),
+                      initialValue: titolo.openDescription,
+                      onChanged: (value) => titolo.openDescription = value,
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 8),
+                    campoModello(
+                      label: t('Open Buff @', 'Open @ Buff'),
+                      initialValue: titolo.openBuff,
+                      onChanged: (value) => titolo.openBuff = value,
+                      maxLines: 2,
+                      helper: '@Iniziativa+5 @TiroDifesa+1 @Danni+Vol/2 Fuoco',
+                    ),
+                    const SizedBox(height: 8),
+                    campoModello(
+                      label: t('Open Skill', 'Open Skill'),
+                      initialValue: titolo.openSkill,
+                      onChanged: (value) => titolo.openSkill = value,
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => usaOpen(titolo),
+                      icon: Icon(
+                        titolo.openAttiva
+                            ? Icons.lock_open
+                            : Icons.auto_awesome,
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: titolo.openAttiva
+                            ? tertiaryColor
+                            : secondaryColor,
+                        foregroundColor: titolo.openAttiva
+                            ? Colors.black
+                            : Colors.white,
+                        minimumSize: const Size.fromHeight(46),
+                      ),
+                      label: Text(
+                        titolo.openAttiva
+                            ? t('Open Attiva', 'Open Active')
+                            : t('Usa Open', 'Use Open'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    conditionalBuffPanel(
+                      title: t(
+                        'Buff Condizionali della Open',
+                        'Open Conditional Buffs',
+                      ),
+                      buffs: titolo.openConditionalBuffs,
+                      color: primaryColor,
+                      appliesToCurrentStats:
+                          titolo.equipaggiato && titolo.openAttiva,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        plusEyeButton(
+                          label: t('Aggiungi Open', 'Add Open'),
+                          subtitle: '$openExtraCount/12',
+                          color: tertiaryColor,
+                          onTap: () => aggiungiOpenExtra(titolo),
+                        ),
+                        const SizedBox(width: 10),
+                        plusEyeButton(
+                          label: t('Aggiungi Skill', 'Add Skill'),
+                          color: primaryColor,
+                          onTap: () => aggiungiSkillExtraTitolo(titolo),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    for (int i = 0; i < titolo.openExtra.length; i++)
+                      gothicPanel(
+                        borderColor: titolo.openExtra[i].attiva
+                            ? tertiaryColor
+                            : primaryColor.withValues(alpha: 0.6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            campoModello(
+                              label: t('Nome Open Extra', 'Extra Open Name'),
+                              initialValue: titolo.openExtra[i].nome,
+                              onChanged: (value) =>
+                                  titolo.openExtra[i].nome = value,
+                            ),
+                            const SizedBox(height: 8),
+                            campoModello(
+                              label: t('Descrizione', 'Description'),
+                              initialValue: titolo.openExtra[i].descrizione,
+                              onChanged: (value) {
+                                titolo.openExtra[i].descrizione = value;
+                              },
+                              maxLines: 2,
+                            ),
+                            const SizedBox(height: 8),
+                            campoModello(
+                              label: t(
+                                'Buff @ Open Extra',
+                                'Extra Open @ Buff',
+                              ),
+                              initialValue: titolo.openExtra[i].openBuff,
+                              onChanged: (value) {
+                                titolo.openExtra[i].openBuff = value;
+                              },
+                              maxLines: 2,
+                              helper: '@HP+5 @Scudo+3 @ScudoOculum+5',
+                            ),
+                            const SizedBox(height: 8),
+                            campoModello(
+                              label: t('Open Skill', 'Open Skill'),
+                              initialValue: titolo.openExtra[i].openSkill,
+                              onChanged: (value) {
+                                titolo.openExtra[i].openSkill = value;
+                              },
+                              maxLines: 2,
+                            ),
+                            const SizedBox(height: 10),
+                            conditionalBuffPanel(
+                              title: t(
+                                'Buff Condizionali Open Extra',
+                                'Extra Open Conditional Buffs',
+                              ),
+                              buffs: titolo.openExtra[i].conditionalBuffs,
+                              color: tertiaryColor,
+                              appliesToCurrentStats:
+                                  titolo.equipaggiato &&
+                                  titolo.openExtra[i].attiva,
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: () => usaOpen(
+                                      titolo,
+                                      openExtra: titolo.openExtra[i],
+                                    ),
+                                    icon: Icon(
+                                      titolo.openExtra[i].attiva
+                                          ? Icons.lock_open
+                                          : Icons.auto_awesome,
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          titolo.openExtra[i].attiva
+                                          ? tertiaryColor
+                                          : secondaryColor,
+                                      foregroundColor:
+                                          titolo.openExtra[i].attiva
+                                          ? Colors.black
+                                          : Colors.white,
+                                    ),
+                                    label: Text(
+                                      titolo.openExtra[i].attiva
+                                          ? t('Attiva', 'Active')
+                                          : t('Usa', 'Use'),
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      if (titolo.openExtra[i].attiva &&
+                                          titolo.equipaggiato) {
+                                        rimarginaHpDaAumentoResilienza(
+                                          -extraOpenRuntimeResilienzaBonus(
+                                            titolo.openExtra[i],
+                                          ),
+                                        );
+                                      }
+                                      titolo.openExtra.removeAt(i);
+                                      aggiungiLog(
+                                        'Open extra rimossa da [${titolo.nome}].',
+                                      );
+                                    });
+                                    programmaSalvataggio();
+                                  },
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.redAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    for (int i = 0; i < titolo.skillExtra.length; i++)
+                      gothicPanel(
+                        borderColor: tertiaryColor.withValues(alpha: 0.65),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            campoModello(
+                              label: t('Nome Skill Extra', 'Extra Skill Name'),
+                              initialValue: titolo.skillExtra[i].nome,
+                              onChanged: (value) =>
+                                  titolo.skillExtra[i].nome = value,
+                            ),
+                            const SizedBox(height: 8),
+                            campoModello(
+                              label: t(
+                                'Descrizione Skill Extra',
+                                'Extra Skill Description',
+                              ),
+                              initialValue: titolo.skillExtra[i].descrizione,
+                              onChanged: (value) {
+                                titolo.skillExtra[i].descrizione = value;
+                              },
+                              maxLines: 3,
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    titolo.skillExtra.removeAt(i);
+                                    aggiungiLog(
+                                      'Skill extra rimossa da [${titolo.nome}].',
+                                    );
+                                  });
+                                  programmaSalvataggio();
+                                },
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.redAccent,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ]
+              : const <Widget>[],
         ),
       ),
+    );
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onSecondaryTapDown: (details) =>
+          showTitleContextMenu(details.globalPosition),
+      onLongPressStart: (details) =>
+          showTitleContextMenu(details.globalPosition),
+      child: card,
     );
   }
 
   Widget createTitlePanel() {
+    final sectionId = 'titles_create_form';
+    final expanded = _expandedFunctionSections.contains(sectionId);
+
     return gothicPanel(
       borderColor: tertiaryColor,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
+      padding: EdgeInsets.zero,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: sheetExpansionKey(sectionId),
+          initiallyExpanded: expanded,
+          onExpansionChanged: (value) {
+            if (!mounted) return;
+            setState(() {
+              if (value) {
+                _expandedFunctionSections.add(sectionId);
+              } else {
+                _expandedFunctionSections.remove(sectionId);
+              }
+            });
+          },
+          tilePadding: const EdgeInsets.fromLTRB(12, 4, 10, 4),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+          iconColor: tertiaryColor,
+          collapsedIconColor: tertiaryColor,
+          leading: Icon(Icons.add_circle_outline, color: tertiaryColor),
+          title: Text(
             t('Crea Nuovo Titolo', 'Create New Title'),
             style: TextStyle(
               color: tertiaryColor,
@@ -1971,200 +2233,237 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
-          smallInfoText(
+          subtitle: Text(
             t(
-              'I Titoli sono memoria, reputazione, ferite, benedizioni e identità. Possono dare bonus, malus, skill, Open e Punto Cieco.',
+              'I Titoli sono memoria, reputazione, ferite, benedizioni e identita. Possono dare bonus, malus, skill, Open e Punto Cieco.',
               'Titles are memory, reputation, wounds, blessings and identity. They can grant bonuses, penalties, skills, Opens and Blind Spots.',
             ),
-          ),
-          const SizedBox(height: 12),
-          campoTesto(
-            label: t('Nome Titolo', 'Title Name'),
-            controller: titoloNomeController,
-            numero: false,
-          ),
-          const SizedBox(height: 12),
-          campoTesto(
-            label: t('Tipo', 'Type'),
-            controller: titoloTipoController,
-            numero: false,
-          ),
-          const SizedBox(height: 6),
-          smallInfoText(
-            t(
-              'Categorie regole: ${titleCategoryOrder.join(', ')}. Se Tipo è Tratto razziale, Razza o Sottorazza, viene salvato nei Tratti Razziali.',
-              'Rule categories: ${titleCategoryOrder.join(', ')}. If Type is Racial Trait, Race or Subrace, it is saved into Racial Traits.',
-            ),
-          ),
-          const SizedBox(height: 12),
-          campoTesto(
-            label: t('Ottenimento', 'Obtained'),
-            controller: titoloOttenimentoController,
-            numero: false,
             maxLines: 2,
-          ),
-          const SizedBox(height: 12),
-          campoTesto(
-            label: t('Buff @ Titolo', 'Title @ Buff'),
-            controller: titoloBuffController,
-            numero: false,
-            maxLines: 3,
-            helper: '@HP+5 @HPTemp+Vol1/6 @ScudoOculum+5 @TiroAttacco+1',
-          ),
-          const SizedBox(height: 12),
-          campoTesto(
-            label: t('Skill Aggiunta', 'Added Skill'),
-            controller: titoloSkillController,
-            numero: false,
-            maxLines: 3,
-          ),
-          const SizedBox(height: 12),
-          campoTesto(
-            label: t('Punto Cieco', 'Blind Spot'),
-            controller: titoloPuntoCiecoController,
-            numero: false,
-            maxLines: 2,
-          ),
-          const SizedBox(height: 12),
-          campoTesto(
-            label: t('Richiede / Evoluzione', 'Requires / Evolution'),
-            controller: titoloRichiedeController,
-            numero: false,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: campoTesto(
-                  label: '+ Res',
-                  controller: titoloResController,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: campoTesto(
-                  label: '+ Vol',
-                  controller: titoloVolController,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: campoTesto(
-                  label: '+ Mat',
-                  controller: titoloMatController,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: campoTesto(
-                  label: '+ Ocu',
-                  controller: titoloOcuController,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            t(
-              'Karma del Titolo: ${titoloKarmaController.text}',
-              'Title Karma: ${titoloKarmaController.text}',
-            ),
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: coloreTestoKarma(leggiKarmaTitolo(titoloKarmaController)),
-              fontWeight: FontWeight.bold,
-              shadows: ombraKarma(leggiKarmaTitolo(titoloKarmaController)),
+              color: Colors.grey.shade300,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
-          karmaTitleEditorRow(
-            value: leggiKarmaTitolo(titoloKarmaController),
-            onChanged: (value) {
-              modificaKarmaTitolo(titoloKarmaController, value);
-            },
-          ),
-          const SizedBox(height: 14),
-          SwitchListTile(
-            value: nuovoTitoloEvoluto,
-            activeThumbColor: tertiaryColor,
-            title: Text(
-              t('Titolo Evoluto con Open', 'Evolved Title with Open'),
-            ),
-            subtitle: Text(
-              t(
-                'Attiva se il Titolo ha già una forma evoluta o una Open.',
-                'Enable if the Title already has an evolved form or an Open.',
-              ),
-            ),
-            onChanged: (value) {
-              setState(() => nuovoTitoloEvoluto = value);
-              programmaSalvataggio();
-            },
-          ),
-          if (nuovoTitoloEvoluto) ...[
-            campoTesto(
-              label: t('Nome Open', 'Open Name'),
-              controller: titoloOpenNameController,
-              numero: false,
-            ),
-            const SizedBox(height: 12),
-            campoTesto(
-              label: t('Descrizione Open', 'Open Description'),
-              controller: titoloOpenDescriptionController,
-              numero: false,
-              maxLines: 3,
-            ),
-            const SizedBox(height: 12),
-            campoTesto(
-              label: t('Open Buff @', 'Open @ Buff'),
-              controller: titoloOpenBuffController,
-              numero: false,
-              maxLines: 3,
-              helper: '@Iniziativa+5 @TiroDifesa+1 @Danni+Vol/2 Fuoco',
-            ),
-            const SizedBox(height: 12),
-            campoTesto(
-              label: t('Open Skill', 'Open Skill'),
-              controller: titoloOpenSkillController,
-              numero: false,
-              maxLines: 3,
-            ),
-          ],
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: creaTitolo,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: tertiaryColor,
-              foregroundColor: tertiaryColor.computeLuminance() > 0.45
-                  ? Colors.black
-                  : Colors.white,
-              minimumSize: const Size.fromHeight(50),
-            ),
-            child: Text(t('Crea Titolo', 'Create Title')),
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton.icon(
-            onPressed: trattiRazziali.length >= 13 ? null : creaTrattoRazziale,
-            icon: const Icon(Icons.diversity_3),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              foregroundColor: primaryColor.computeLuminance() > 0.45
-                  ? Colors.black
-                  : Colors.white,
-              minimumSize: const Size.fromHeight(48),
-            ),
-            label: Text(
-              t(
-                'Crea come Tratto Razziale (${trattiRazziali.length}/13)',
-                'Create as Racial Trait (${trattiRazziali.length}/13)',
-              ),
-            ),
-          ),
-        ],
+          children: expanded
+              ? [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      smallInfoText(
+                        t(
+                          'I Titoli sono memoria, reputazione, ferite, benedizioni e identità. Possono dare bonus, malus, skill, Open e Punto Cieco.',
+                          'Titles are memory, reputation, wounds, blessings and identity. They can grant bonuses, penalties, skills, Opens and Blind Spots.',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      campoTesto(
+                        label: t('Nome Titolo', 'Title Name'),
+                        controller: titoloNomeController,
+                        numero: false,
+                      ),
+                      const SizedBox(height: 12),
+                      campoTesto(
+                        label: t('Tipo', 'Type'),
+                        controller: titoloTipoController,
+                        numero: false,
+                      ),
+                      const SizedBox(height: 6),
+                      smallInfoText(
+                        t(
+                          'Categorie regole: ${titleCategoryOrder.join(', ')}. Se Tipo è Tratto razziale, Razza o Sottorazza, viene salvato nei Tratti Razziali.',
+                          'Rule categories: ${titleCategoryOrder.join(', ')}. If Type is Racial Trait, Race or Subrace, it is saved into Racial Traits.',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      campoTesto(
+                        label: t('Ottenimento', 'Obtained'),
+                        controller: titoloOttenimentoController,
+                        numero: false,
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 12),
+                      campoTesto(
+                        label: t('Buff @ Titolo', 'Title @ Buff'),
+                        controller: titoloBuffController,
+                        numero: false,
+                        maxLines: 3,
+                        helper:
+                            '@HP+5 @HPTemp+Vol1/6 @ScudoOculum+5 @TiroAttacco+1',
+                      ),
+                      const SizedBox(height: 12),
+                      campoTesto(
+                        label: t('Skill Aggiunta', 'Added Skill'),
+                        controller: titoloSkillController,
+                        numero: false,
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 12),
+                      campoTesto(
+                        label: t('Punto Cieco', 'Blind Spot'),
+                        controller: titoloPuntoCiecoController,
+                        numero: false,
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 12),
+                      campoTesto(
+                        label: t(
+                          'Richiede / Evoluzione',
+                          'Requires / Evolution',
+                        ),
+                        controller: titoloRichiedeController,
+                        numero: false,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: campoTesto(
+                              label: '+ Res',
+                              controller: titoloResController,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: campoTesto(
+                              label: '+ Vol',
+                              controller: titoloVolController,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: campoTesto(
+                              label: '+ Mat',
+                              controller: titoloMatController,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: campoTesto(
+                              label: '+ Ocu',
+                              controller: titoloOcuController,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        t(
+                          'Karma del Titolo: ${titoloKarmaController.text}',
+                          'Title Karma: ${titoloKarmaController.text}',
+                        ),
+                        style: TextStyle(
+                          color: coloreTestoKarma(
+                            leggiKarmaTitolo(titoloKarmaController),
+                          ),
+                          fontWeight: FontWeight.bold,
+                          shadows: ombraKarma(
+                            leggiKarmaTitolo(titoloKarmaController),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      karmaTitleEditorRow(
+                        value: leggiKarmaTitolo(titoloKarmaController),
+                        onChanged: (value) {
+                          modificaKarmaTitolo(titoloKarmaController, value);
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      SwitchListTile(
+                        value: nuovoTitoloEvoluto,
+                        activeThumbColor: tertiaryColor,
+                        title: Text(
+                          t(
+                            'Titolo Evoluto con Open',
+                            'Evolved Title with Open',
+                          ),
+                        ),
+                        subtitle: Text(
+                          t(
+                            'Attiva se il Titolo ha già una forma evoluta o una Open.',
+                            'Enable if the Title already has an evolved form or an Open.',
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setState(() => nuovoTitoloEvoluto = value);
+                          programmaSalvataggio();
+                        },
+                      ),
+                      if (nuovoTitoloEvoluto) ...[
+                        campoTesto(
+                          label: t('Nome Open', 'Open Name'),
+                          controller: titoloOpenNameController,
+                          numero: false,
+                        ),
+                        const SizedBox(height: 12),
+                        campoTesto(
+                          label: t('Descrizione Open', 'Open Description'),
+                          controller: titoloOpenDescriptionController,
+                          numero: false,
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 12),
+                        campoTesto(
+                          label: t('Open Buff @', 'Open @ Buff'),
+                          controller: titoloOpenBuffController,
+                          numero: false,
+                          maxLines: 3,
+                          helper:
+                              '@Iniziativa+5 @TiroDifesa+1 @Danni+Vol/2 Fuoco',
+                        ),
+                        const SizedBox(height: 12),
+                        campoTesto(
+                          label: t('Open Skill', 'Open Skill'),
+                          controller: titoloOpenSkillController,
+                          numero: false,
+                          maxLines: 3,
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: creaTitolo,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: tertiaryColor,
+                          foregroundColor:
+                              tertiaryColor.computeLuminance() > 0.45
+                              ? Colors.black
+                              : Colors.white,
+                          minimumSize: const Size.fromHeight(50),
+                        ),
+                        child: Text(t('Crea Titolo', 'Create Title')),
+                      ),
+                      const SizedBox(height: 10),
+                      ElevatedButton.icon(
+                        onPressed: trattiRazziali.length >= 13
+                            ? null
+                            : creaTrattoRazziale,
+                        icon: const Icon(Icons.diversity_3),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor:
+                              primaryColor.computeLuminance() > 0.45
+                              ? Colors.black
+                              : Colors.white,
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                        label: Text(
+                          t(
+                            'Crea come Tratto Razziale (${trattiRazziali.length}/13)',
+                            'Create as Racial Trait (${trattiRazziali.length}/13)',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ]
+              : const <Widget>[],
+        ),
       ),
     );
   }
@@ -2343,8 +2642,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         children: [
           smallInfoText(
             t(
-              'Tocca un Titolo per equipaggiarlo o rimuoverlo. I Titoli equipaggiati sommano i loro bonus alle statistiche totali.',
-              'Tap a Title to equip or remove it. Equipped Titles add their bonuses to total stats.',
+              'Apri un Titolo dalla tendina per modificarlo. Usa l\'icona a sinistra per equipaggiarlo o rimuoverlo. I Titoli equipaggiati sommano i loro bonus alle statistiche totali.',
+              'Open a Title dropdown to edit it. Use the icon on the left to equip or remove it. Equipped Titles add their bonuses to total stats.',
             ),
           ),
           const SizedBox(height: 6),
@@ -2462,8 +2761,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             children: [
               smallInfoText(
                 t(
-                  'Tocca un Titolo per equipaggiarlo o rimuoverlo. I Titoli equipaggiati sommano i loro bonus alle statistiche totali.',
-                  'Tap a Title to equip or remove it. Equipped Titles add their bonuses to total stats.',
+                  'Apri un Titolo dalla tendina per modificarlo. Usa l\'icona a sinistra per equipaggiarlo o rimuoverlo. I Titoli equipaggiati sommano i loro bonus alle statistiche totali.',
+                  'Open a Title dropdown to edit it. Use the icon on the left to equip or remove it. Equipped Titles add their bonuses to total stats.',
                 ),
               ),
               const SizedBox(height: 6),
@@ -2765,6 +3064,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               color: rimasto >= 0 ? Colors.greenAccent : Colors.redAccent,
             ),
           ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ElevatedButton.icon(
+              onPressed: inventario.isEmpty ? null : segnaSessioneInventario,
+              icon: const Icon(Icons.event_available),
+              label: Text(t('Segna giorno inventario', 'Mark inventory day')),
+            ),
+          ),
           const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -2808,6 +3116,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             campoTesto(
               label: t('Quantita', 'Quantity'),
               controller: itemQuantitaController,
+            ),
+            campoTesto(
+              label: t('Putrefazione giorni', 'Rot days'),
+              controller: itemPutrefazioneSessioniController,
+              helper: t('0 = non marcisce', '0 = does not rot'),
             ),
           ]),
           const SizedBox(height: 12),
@@ -2891,6 +3204,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             campoTesto(
               label: t('Bonus Scudo', 'Shield Bonus'),
               controller: itemBonusScudoController,
+            ),
+            campoTesto(
+              label: t('Grado oggetto', 'Item grade'),
+              controller: itemGradoOggettoController,
+            ),
+            campoTesto(
+              label: t('Grado richiesto', 'Required grade'),
+              controller: itemGradoRichiestoController,
             ),
           ]),
           const SizedBox(height: 12),
@@ -2981,7 +3302,152 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       );
     }
 
-    return gothicPanel(
+    void setItemEquipped(bool value) {
+      if (!inventario.contains(item)) return;
+      setState(() {
+        if (value && !canEquipInventoryItem(item)) {
+          risultato = t(
+            'Non puoi equipaggiare ${item.nome}: richiede Grado ${requiredItemGrade(item)}.',
+            'You cannot equip ${item.nome}: requires Grade ${requiredItemGrade(item)}.',
+          );
+          aggiungiLog(risultato);
+          return;
+        }
+        if (item.equipaggiata != value) {
+          applicaScudoItemAttuale(item, value ? 1 : -1);
+        }
+        item.equipaggiata = value;
+      });
+      programmaSalvataggio();
+    }
+
+    void deleteItem() {
+      final currentIndex = inventario.indexOf(item);
+      if (currentIndex < 0) return;
+      setState(() {
+        if (item.equipaggiata) {
+          applicaScudoItemAttuale(item, -1);
+        }
+        aggiungiLog('Oggetto eliminato: ${item.nome}.');
+        inventario.removeAt(currentIndex);
+      });
+      programmaSalvataggio();
+    }
+
+    void duplicateItem() {
+      final currentIndex = inventario.indexOf(item);
+      if (currentIndex < 0) return;
+      final copy = copiaOggetto(item)
+        ..nome = '${item.nome} - ${t('copia', 'copy')}'
+        ..equipaggiata = false;
+      setState(() {
+        inventario.insert(currentIndex + 1, copy);
+        aggiungiLog('Oggetto duplicato: ${item.nome}.');
+      });
+      programmaSalvataggio();
+    }
+
+    Future<void> showInventoryContextMenu(Offset position) async {
+      final choice = await showMenu<String>(
+        context: context,
+        color: const Color(0xFF10121A),
+        position: RelativeRect.fromLTRB(
+          position.dx,
+          position.dy,
+          position.dx,
+          position.dy,
+        ),
+        items: <PopupMenuEntry<String>>[
+          PopupMenuItem<String>(
+            value: 'equip',
+            child: ListTile(
+              leading: Icon(
+                item.equipaggiata
+                    ? Icons.remove_circle_outline
+                    : Icons.check_circle_outline,
+              ),
+              title: Text(
+                item.equipaggiata
+                    ? t('Rimuovi equipaggiamento', 'Unequip')
+                    : t('Equipaggia', 'Equip'),
+              ),
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'send',
+            child: ListTile(
+              leading: const Icon(Icons.send_outlined),
+              title: Text(t('Copia o invia', 'Copy or send')),
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'duplicate',
+            child: ListTile(
+              leading: const Icon(Icons.copy),
+              title: Text(t('Duplica', 'Duplicate')),
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'quantity_add',
+            child: ListTile(
+              leading: const Icon(Icons.add),
+              title: Text(t('Aumenta quantita', 'Increase quantity')),
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'quantity_remove',
+            enabled: item.quantita > 1,
+            child: ListTile(
+              leading: const Icon(Icons.remove),
+              title: Text(t('Riduci quantita', 'Decrease quantity')),
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'manual',
+            child: ListTile(
+              leading: const Icon(Icons.menu_book_outlined),
+              title: Text(t('Cerca nel manuale', 'Search in manual')),
+            ),
+          ),
+          const PopupMenuDivider(),
+          PopupMenuItem<String>(
+            value: 'delete',
+            child: ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: Text(t('Elimina', 'Delete')),
+            ),
+          ),
+        ],
+      );
+      if (!mounted || choice == null || !inventario.contains(item)) return;
+      switch (choice) {
+        case 'equip':
+          setItemEquipped(!item.equipaggiata);
+          break;
+        case 'send':
+          await mostraDialogCopiaOggetto(item);
+          break;
+        case 'duplicate':
+          duplicateItem();
+          break;
+        case 'quantity_add':
+          setState(() => item.quantita++);
+          programmaSalvataggio();
+          break;
+        case 'quantity_remove':
+          setState(() => item.quantita = max(1, item.quantita - 1));
+          programmaSalvataggio();
+          break;
+        case 'manual':
+          openManualForQuickTerm(item.nome);
+          break;
+        case 'delete':
+          deleteItem();
+          break;
+      }
+    }
+
+    final card = gothicPanel(
       borderColor: tertiaryColor.withValues(alpha: 0.7),
       padding: EdgeInsets.zero,
       child: Theme(
@@ -3033,16 +3499,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   height: 30,
                 ),
                 padding: EdgeInsets.zero,
-                onPressed: () {
-                  setState(() {
-                    if (item.equipaggiata) {
-                      applicaScudoItemAttuale(item, -1);
-                    }
-                    aggiungiLog('Oggetto eliminato: ${item.nome}.');
-                    inventario.removeAt(i);
-                  });
-                  programmaSalvataggio();
-                },
+                onPressed: deleteItem,
                 icon: const Icon(Icons.delete, color: Colors.redAccent),
               ),
             ],
@@ -3071,23 +3528,32 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                 if (item.arma)
                   compactInventoryChip(
                     label:
-                        'DAN ${item.bonusDanno >= 0 ? '+' : ''}${item.bonusDanno}',
+                        'DAN ${itemAttackBonus(item) >= 0 ? '+' : ''}${itemAttackBonus(item)}',
                     color: tertiaryColor,
                     icon: Icons.close,
                   ),
                 if (item.protegge)
                   compactInventoryChip(
                     label:
-                        'DIF ${item.bonusDifesa >= 0 ? '+' : ''}${item.bonusDifesa}',
+                        'DIF ${itemDefenseBonus(item) >= 0 ? '+' : ''}${itemDefenseBonus(item)}',
                     color: primaryColor,
                     icon: Icons.shield_outlined,
                   ),
                 if (item.protegge)
                   compactInventoryChip(
                     label:
-                        'SCU ${item.bonusScudo >= 0 ? '+' : ''}${item.bonusScudo}',
+                        'SCU ${itemShieldBonus(item) >= 0 ? '+' : ''}${itemShieldBonus(item)}',
                     color: Colors.lightBlueAccent,
                     icon: Icons.shield,
+                  ),
+                if (item.gradoOggetto > 0 || item.gradoRichiesto > 0)
+                  compactInventoryChip(
+                    label:
+                        'G ${item.gradoOggetto.clamp(0, 12)}/R ${item.gradoRichiesto.clamp(0, 12)}',
+                    color: canEquipInventoryItem(item)
+                        ? Colors.amberAccent
+                        : Colors.redAccent,
+                    icon: Icons.military_tech,
                   ),
                 if (totalBuff != 0)
                   compactInventoryChip(
@@ -3100,6 +3566,17 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     label: elementDisplayName(item.elementoDanno),
                     color: elementColor(item.elementoDanno),
                     icon: item.protegge ? Icons.shield : Icons.gavel,
+                  ),
+                if (item.putrefazioneSessioni > 0 || item.sessioniSegnate > 0)
+                  compactInventoryChip(
+                    label:
+                        'PUT ${item.sessioniSegnate}/${item.putrefazioneSessioni}G',
+                    color:
+                        item.putrefazioneSessioni > 0 &&
+                            item.sessioniSegnate < item.putrefazioneSessioni
+                        ? Colors.lightGreenAccent
+                        : Colors.redAccent,
+                    icon: Icons.compost,
                   ),
               ],
             ),
@@ -3116,15 +3593,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   'Enables weapon/protection and this item\'s @ buffs.',
                 ),
               ),
-              onChanged: (value) {
-                setState(() {
-                  if (item.equipaggiata != value) {
-                    applicaScudoItemAttuale(item, value ? 1 : -1);
-                  }
-                  item.equipaggiata = value;
-                });
-                programmaSalvataggio();
-              },
+              onChanged: setItemEquipped,
             ),
             const SizedBox(height: 6),
             campoModello(
@@ -3147,6 +3616,40 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                 initialValue: item.quantita.toString(),
                 onChanged: (value) {
                   item.quantita = max(1, int.tryParse(value.trim()) ?? 1);
+                },
+              ),
+              campoModello(
+                label: t('Grado oggetto', 'Item grade'),
+                initialValue: item.gradoOggetto.toString(),
+                onChanged: (value) {
+                  item.gradoOggetto = (int.tryParse(value.trim()) ?? 0)
+                      .clamp(0, 12)
+                      .toInt();
+                },
+              ),
+              campoModello(
+                label: t('Grado richiesto', 'Required grade'),
+                initialValue: item.gradoRichiesto.toString(),
+                onChanged: (value) {
+                  item.gradoRichiesto = (int.tryParse(value.trim()) ?? 0)
+                      .clamp(0, 12)
+                      .toInt();
+                },
+              ),
+              campoModello(
+                label: t('Putrefazione giorni', 'Rot days'),
+                initialValue: item.putrefazioneSessioni.toString(),
+                onChanged: (value) {
+                  final previous = item.putrefazioneSessioni;
+                  item.putrefazioneSessioni = max(
+                    0,
+                    int.tryParse(value.trim()) ?? 0,
+                  );
+                  if (item.putrefazioneSessioni > 0 &&
+                      (item.putrefazioneGiornoInizio <= 0 || previous == 0)) {
+                    item.putrefazioneGiornoInizio = oculumCurrentDay();
+                    item.sessioniSegnate = 0;
+                  }
                 },
               ),
             ]),
@@ -3228,7 +3731,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   if (item.equipaggiata && item.protegge) {
                     scudoController.text = max(
                       0,
-                      leggiNumero(scudoController) + nuovo - item.bonusScudo,
+                      leggiNumero(scudoController) +
+                          (nuovo + itemGrade(item) * 5) -
+                          itemShieldBonus(item),
                     ).toString();
                   }
                   item.bonusScudo = nuovo;
@@ -3269,6 +3774,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           ],
         ),
       ),
+    );
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onSecondaryTapDown: (details) =>
+          showInventoryContextMenu(details.globalPosition),
+      onLongPressStart: (details) =>
+          showInventoryContextMenu(details.globalPosition),
+      child: card,
     );
   }
 
@@ -3330,6 +3843,19 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   color: rimasto >= 0 ? Colors.greenAccent : Colors.redAccent,
                 ),
               ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: ElevatedButton.icon(
+                  onPressed: inventario.isEmpty
+                      ? null
+                      : segnaSessioneInventario,
+                  icon: const Icon(Icons.event_available),
+                  label: Text(
+                    t('Segna giorno inventario', 'Mark inventory day'),
+                  ),
+                ),
+              ),
               const SizedBox(height: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -3371,6 +3897,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                 campoTesto(
                   label: t('Quantità', 'Quantity'),
                   controller: itemQuantitaController,
+                ),
+                campoTesto(
+                  label: t('Putrefazione giorni', 'Rot days'),
+                  controller: itemPutrefazioneSessioniController,
+                  helper: t('0 = non marcisce', '0 = does not rot'),
                 ),
               ]),
               const SizedBox(height: 12),
@@ -3454,6 +3985,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                 campoTesto(
                   label: t('Bonus Scudo', 'Shield Bonus'),
                   controller: itemBonusScudoController,
+                ),
+                campoTesto(
+                  label: t('Grado oggetto', 'Item grade'),
+                  controller: itemGradoOggettoController,
+                ),
+                campoTesto(
+                  label: t('Grado richiesto', 'Required grade'),
+                  controller: itemGradoRichiestoController,
                 ),
               ]),
               const SizedBox(height: 12),
@@ -3545,11 +4084,24 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   runSpacing: 8,
                   children: [
                     if (inventario[i].arma)
-                      statChip('DMG', inventario[i].bonusDanno),
+                      statChip('DMG', itemAttackBonus(inventario[i])),
                     if (inventario[i].protegge)
-                      statChip('DIF', inventario[i].bonusDifesa),
+                      statChip('DIF', itemDefenseBonus(inventario[i])),
                     if (inventario[i].protegge)
-                      statChip('SCU', inventario[i].bonusScudo),
+                      statChip('SCU', itemShieldBonus(inventario[i])),
+                    if (inventario[i].gradoOggetto > 0 ||
+                        inventario[i].gradoRichiesto > 0)
+                      Chip(
+                        avatar: const Icon(Icons.military_tech, size: 16),
+                        label: Text(
+                          'G ${inventario[i].gradoOggetto.clamp(0, 12)}/R ${inventario[i].gradoRichiesto.clamp(0, 12)}',
+                        ),
+                        backgroundColor:
+                            (canEquipInventoryItem(inventario[i])
+                                    ? Colors.amberAccent
+                                    : Colors.redAccent)
+                                .withValues(alpha: 0.18),
+                      ),
                     if (inventario[i].buff.trim().isNotEmpty)
                       statChip(
                         '@',
@@ -3576,6 +4128,21 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                           color: elementColor(inventario[i].elementoDanno),
                           fontWeight: FontWeight.w800,
                         ),
+                      ),
+                    if (inventario[i].putrefazioneSessioni > 0 ||
+                        inventario[i].sessioniSegnate > 0)
+                      Chip(
+                        avatar: const Icon(Icons.compost, size: 16),
+                        label: Text(
+                          'PUT ${inventario[i].sessioniSegnate}/${inventario[i].putrefazioneSessioni}G',
+                        ),
+                        backgroundColor:
+                            (inventario[i].putrefazioneSessioni > 0 &&
+                                        inventario[i].sessioniSegnate <
+                                            inventario[i].putrefazioneSessioni
+                                    ? Colors.lightGreenAccent
+                                    : Colors.redAccent)
+                                .withValues(alpha: 0.18),
                       ),
                   ],
                 ),
@@ -3608,6 +4175,44 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                         1,
                         int.tryParse(value.trim()) ?? 1,
                       );
+                    },
+                  ),
+                  campoModello(
+                    label: t('Grado oggetto', 'Item grade'),
+                    initialValue: inventario[i].gradoOggetto.toString(),
+                    onChanged: (value) {
+                      inventario[i].gradoOggetto =
+                          (int.tryParse(value.trim()) ?? 0)
+                              .clamp(0, 12)
+                              .toInt();
+                    },
+                  ),
+                  campoModello(
+                    label: t('Grado richiesto', 'Required grade'),
+                    initialValue: inventario[i].gradoRichiesto.toString(),
+                    onChanged: (value) {
+                      inventario[i].gradoRichiesto =
+                          (int.tryParse(value.trim()) ?? 0)
+                              .clamp(0, 12)
+                              .toInt();
+                    },
+                  ),
+                  campoModello(
+                    label: t('Putrefazione giorni', 'Rot days'),
+                    initialValue: inventario[i].putrefazioneSessioni.toString(),
+                    onChanged: (value) {
+                      final previous = inventario[i].putrefazioneSessioni;
+                      inventario[i].putrefazioneSessioni = max(
+                        0,
+                        int.tryParse(value.trim()) ?? 0,
+                      );
+                      if (inventario[i].putrefazioneSessioni > 0 &&
+                          (inventario[i].putrefazioneGiornoInizio <= 0 ||
+                              previous == 0)) {
+                        inventario[i].putrefazioneGiornoInizio =
+                            oculumCurrentDay();
+                        inventario[i].sessioniSegnate = 0;
+                      }
                     },
                   ),
                 ]),
@@ -3652,8 +4257,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                         scudoController.text = max(
                           0,
                           leggiNumero(scudoController) +
-                              nuovo -
-                              inventario[i].bonusScudo,
+                              (nuovo + itemGrade(inventario[i]) * 5) -
+                              itemShieldBonus(inventario[i]),
                         ).toString();
                       }
                       inventario[i].bonusScudo = nuovo;
@@ -3747,6 +4352,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   ),
                   onChanged: (value) {
                     setState(() {
+                      if (value && !canEquipInventoryItem(inventario[i])) {
+                        risultato = t(
+                          'Non puoi equipaggiare ${inventario[i].nome}: richiede Grado ${requiredItemGrade(inventario[i])}.',
+                          'You cannot equip ${inventario[i].nome}: requires Grade ${requiredItemGrade(inventario[i])}.',
+                        );
+                        aggiungiLog(risultato);
+                        return;
+                      }
                       if (inventario[i].equipaggiata != value) {
                         applicaScudoItemAttuale(inventario[i], value ? 1 : -1);
                       }

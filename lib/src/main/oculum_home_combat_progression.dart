@@ -221,15 +221,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     dadoOverlayRevealTimer?.cancel();
     final reduceEffects = modalitaLeggera || modalitaVeloce || phoneCompactUi;
 
-    setState(() {
-      _applyDadoCentraleOverlayState(
-        valore: valore,
-        criticoUno: criticoUno,
-        criticoVenti: criticoVenti,
-        facce: facce,
-        reduceEffects: reduceEffects,
-      );
-    });
+    _applyDadoCentraleOverlayState(
+      valore: valore,
+      criticoUno: criticoUno,
+      criticoVenti: criticoVenti,
+      facce: facce,
+      reduceEffects: reduceEffects,
+    );
+    notifyDiceOverlayChanged();
 
     _scheduleDadoCentraleOverlayTimers(reduceEffects: reduceEffects);
   }
@@ -256,9 +255,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       dadoOverlayRevealTimer = Timer(const Duration(milliseconds: 500), () {
         if (!mounted) return;
 
-        setState(() {
-          dadoOverlayMostraRisultato = true;
-        });
+        dadoOverlayMostraRisultato = true;
+        notifyDiceOverlayChanged();
       });
     }
 
@@ -267,9 +265,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       () {
         if (!mounted) return;
 
-        setState(() {
-          dadoOverlayDismissibile = true;
-        });
+        dadoOverlayDismissibile = true;
+        notifyDiceOverlayChanged();
       },
     );
   }
@@ -277,11 +274,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   Future<void> tiraStat(String nome, int valore) async {
     final dado = tiraD20();
     final oculumSpend = consumaOculumTiro();
-    final bonus =
-        valore ~/ 2 +
-        bonusLivelloGrado() +
-        statRollQuickBonus(nome) +
-        oculumSpend.bonus;
+    final bonus = oculumStatRollBonus(
+      statValue: valore,
+      levelGradeBonus: bonusLivelloGrado(),
+      quickBonus: statRollQuickBonus(nome),
+      extraBonus: oculumSpend.bonus,
+    );
     final totale = rollTotalWithCritical(dado, 20, [bonus]);
     final testoDado = rollFormulaWithCritical(
       roll: dado,
@@ -289,15 +287,22 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       bonuses: [bonus],
     );
 
+    var statoForzaLog = '';
     setState(() {
+      statoForzaLog = registraTiroStatoForza();
       dadoMostrato = testoDado;
       dadoMostratoFacce = 20;
       tiroCriticoUno = dado == 1;
       tiroCriticoVenti = dado == 20;
-      risultato = '$nome: $testoDado';
+      risultato = '$nome: $testoDado$statoForzaLog';
 
-      aggiungiLog('Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}');
+      aggiungiLog(
+        'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog',
+      );
     });
+    if (statoForzaLog.isNotEmpty) {
+      programmaSalvataggio();
+    }
 
     mostraDadoCentrale(
       valore: testoDado,
@@ -331,15 +336,22 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       bonuses: [bonusTotale],
     );
 
+    var statoForzaLog = '';
     setState(() {
+      statoForzaLog = registraTiroStatoForza();
       dadoMostrato = testoDado;
       dadoMostratoFacce = 20;
       tiroCriticoUno = dado == 1;
       tiroCriticoVenti = dado == 20;
-      risultato = '$nome: $testoDado';
+      risultato = '$nome: $testoDado$statoForzaLog';
 
-      aggiungiLog('Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}');
+      aggiungiLog(
+        'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog',
+      );
     });
+    if (statoForzaLog.isNotEmpty) {
+      programmaSalvataggio();
+    }
 
     mostraDadoCentrale(
       valore: testoDado,
@@ -360,7 +372,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   Future<void> tiraSottotrattoOcchio(HiddenEyeStat stat) async {
     final dado = tiraD20();
     final oculumSpend = consumaOculumTiro();
-    final bonus = hiddenEyeTotal(stat) + tiroGlobaleBonus() + oculumSpend.bonus;
+    final bonus =
+        hiddenEyeTotal(stat) +
+        hiddenEyeStatRollQuickBonus(stat) +
+        tiroGlobaleBonus() +
+        oculumSpend.bonus;
     final totale = rollTotalWithCritical(dado, 20, [bonus]);
     final testoDado = rollFormulaWithCritical(
       roll: dado,
@@ -373,56 +389,67 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     var masteryCompletedLevels = 0;
     final reduceDiceEffects =
         modalitaLeggera || modalitaVeloce || phoneCompactUi;
+    var statoForzaLog = '';
 
     dadoOverlayTimer?.cancel();
     dadoOverlayRevealTimer?.cancel();
-    setState(() {
-      if (masteryGain > 0) {
-        masteryCompletedLevels = oculusSubtraitMasteryApplyGain(
-          stat,
-          masteryGain,
-        );
-      }
-      final masteryText = masteryGain <= 0
-          ? ''
-          : masteryCompletedLevels > 1
-          ? ' ${t('Maestria piena: +$masteryCompletedLevels sottotratti.', 'Mastery full: +$masteryCompletedLevels subtraits.')}'
-          : masteryCompletedLevels == 1
-          ? ' ${t('Maestria piena: +1 sottotratto.', 'Mastery full: +1 subtrait.')}'
-          : ' ${t('Maestria avanzata.', 'Mastery advanced.')}';
-      dadoMostrato = testoDado;
-      dadoMostratoFacce = 20;
-      tiroCriticoUno = dado == 1;
-      tiroCriticoVenti = dado == 20;
-      risultato = '$label: $testoDado$masteryText';
-      _applyDadoCentraleOverlayState(
-        valore: testoDado,
-        criticoUno: dado == 1,
-        criticoVenti: dado == 20,
-        facce: 20,
-        reduceEffects: reduceDiceEffects,
+    if (masteryGain > 0) {
+      masteryCompletedLevels = oculusSubtraitMasteryApplyGain(
+        stat,
+        masteryGain,
       );
-      aggiungiLog(
-        'Tiro sottotratto $label: $testoDado.${oculumTiroLogLabel(oculumSpend)}$masteryText',
-      );
-    });
+      notifyHiddenEyeStatChanged(stat);
+    }
+    final masteryText = masteryGain <= 0
+        ? ''
+        : masteryCompletedLevels > 1
+        ? ' ${t('Maestria piena: +$masteryCompletedLevels sottotratti.', 'Mastery full: +$masteryCompletedLevels subtraits.')}'
+        : masteryCompletedLevels == 1
+        ? ' ${t('Maestria piena: +1 sottotratto.', 'Mastery full: +1 subtrait.')}'
+        : ' ${t('Maestria avanzata.', 'Mastery advanced.')}';
+    statoForzaLog = registraTiroStatoForza();
+    dadoMostrato = testoDado;
+    dadoMostratoFacce = 20;
+    tiroCriticoUno = dado == 1;
+    tiroCriticoVenti = dado == 20;
+    risultato = '$label: $testoDado$masteryText$statoForzaLog';
+    _applyDadoCentraleOverlayState(
+      valore: testoDado,
+      criticoUno: dado == 1,
+      criticoVenti: dado == 20,
+      facce: 20,
+      reduceEffects: reduceDiceEffects,
+    );
+    aggiungiLog(
+      'Tiro sottotratto $label: $testoDado.${oculumTiroLogLabel(oculumSpend)}$masteryText$statoForzaLog',
+    );
+    notifyDiceResultChanged();
+    notifyDiceOverlayChanged();
     _scheduleDadoCentraleOverlayTimers(reduceEffects: reduceDiceEffects);
 
-    if (masteryGain > 0) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (masteryGain > 0 || statoForzaLog.isNotEmpty) {
+        Future<void>.delayed(const Duration(milliseconds: 80), () {
+          if (!mounted) return;
+          scheduleHiddenEyeProgressSave();
+        });
+      }
+      Future<void>.delayed(const Duration(milliseconds: 120), () {
         if (!mounted) return;
-        programmaSalvataggio();
+        unawaited(
+          sendRealtimeDiceRollWithMasterConsent(
+            label: label,
+            roll: dado,
+            bonus:
+                bonus +
+                criticalDieModifier(dado, 20) +
+                modificatoreDifficoltaTiro(),
+            total: totale,
+          ),
+        );
       });
-    }
-
-    await Future<void>.delayed(Duration.zero);
-    await sendRealtimeDiceRollWithMasterConsent(
-      label: label,
-      roll: dado,
-      bonus:
-          bonus + criticalDieModifier(dado, 20) + modificatoreDifficoltaTiro(),
-      total: totale,
-    );
+    });
   }
 
   Future<void> tiraAiutaCompagno() async {
@@ -443,14 +470,19 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
     final label = t('Aiuta compagno', 'Help ally');
 
+    var statoForzaLog = '';
     setState(() {
+      statoForzaLog = registraTiroStatoForza();
       dadoMostrato = testoDado;
       dadoMostratoFacce = 10;
       tiroCriticoUno = dado == 1;
       tiroCriticoVenti = dado == 10;
-      risultato = '$label: $testoDado';
-      aggiungiLog('Tiro $label: $testoDado.');
+      risultato = '$label: $testoDado$statoForzaLog';
+      aggiungiLog('Tiro $label: $testoDado.$statoForzaLog');
     });
+    if (statoForzaLog.isNotEmpty) {
+      programmaSalvataggio();
+    }
 
     mostraDadoCentrale(
       valore: testoDado,
@@ -1843,8 +1875,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   Future<void> tiraSchedaMasterParty(int index, String key) async {
-    if (index < 0 || index >= schedePersonaggio.length) return;
-
+    if (index < 0 || index >= schedePersonaggio.length) {
+      return;
+    }
     final dado = tiraD20();
     final bonus = sheetRollBonusAt(index, key);
     final level = sheetCriticalLevelAt(index);
@@ -1915,8 +1948,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int tokenIndex, {
     bool reaction = false,
   }) async {
-    if (tokenIndex < 0 || tokenIndex >= masterInitiativeTokens.length) return;
-
+    if (tokenIndex < 0 || tokenIndex >= masterInitiativeTokens.length) {
+      return;
+    }
     String label = t('Aiuta compagno', 'Help ally');
     String name = '???';
     String testoDado = '';
@@ -2047,7 +2081,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int tokenIndex,
     String key,
   ) async {
-    if (tokenIndex < 0 || tokenIndex >= masterInitiativeTokens.length) return;
+    if (tokenIndex < 0 || tokenIndex >= masterInitiativeTokens.length) {
+      return;
+    }
     normalizeMasterInitiativeTokens();
     final token = masterInitiativeTokens[tokenIndex];
     final sheetTag = '${token['sheetTag'] ?? ''}';
@@ -2988,22 +3024,19 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       currentHpController.text = maxHp().toString();
       statoForzaAttivo = '';
       statoForzaPronto = true;
+      statoForzaTiriRimanenti = 0;
       hpTempBonusConsumati = 0;
-      scudoBonusConsumati = 0;
-      final shieldBonus = runtimeQuickBonus('scudo');
-      final shieldTargetTotal = max(scudo(), scudoRefullTarget());
-      scudoController.text = max(0, shieldTargetTotal - shieldBonus).toString();
       final oculumShieldMax = scudoOculumMax();
       if (oculumShieldMax > 0) {
         ricaricaScudoOculum();
       }
       risultato = t(
         oculumShieldMax > 0
-            ? 'Refull Vita: HP ${maxHp()}, HP Temp ${hpTemp()}, Scudo ${scudo()} e Scudo Oculum ${scudoOculum()}/$oculumShieldMax.'
-            : 'Refull Vita: HP ${maxHp()}, HP Temp ${hpTemp()} e Scudo ${scudo()}.',
+            ? 'Refull Vita: HP ${maxHp()}, HP Temp ${hpTemp()} e Scudo Oculum ${scudoOculum()}/$oculumShieldMax. Scudo normale invariato: ${scudo()}.'
+            : 'Refull Vita: HP ${maxHp()} e HP Temp ${hpTemp()}. Scudo normale invariato: ${scudo()}.',
         oculumShieldMax > 0
-            ? 'Refill Life: HP ${maxHp()}, Temp HP ${hpTemp()}, Shield ${scudo()} and Oculum Shield ${scudoOculum()}/$oculumShieldMax.'
-            : 'Refill Life: HP ${maxHp()}, Temp HP ${hpTemp()} and Shield ${scudo()}.',
+            ? 'Refill Life: HP ${maxHp()}, Temp HP ${hpTemp()} and Oculum Shield ${scudoOculum()}/$oculumShieldMax. Normal Shield unchanged: ${scudo()}.'
+            : 'Refill Life: HP ${maxHp()} and Temp HP ${hpTemp()}. Normal Shield unchanged: ${scudo()}.',
       );
       aggiungiLog(risultato);
     });
@@ -3031,6 +3064,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    invalidateHiddenEyeDerivedCaches();
     programmaSalvataggio();
   }
 
@@ -3103,6 +3137,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(
         'Grado automatico: $gradoAttuale -> $nuovoGrado. +${gradiGuadagnati * 36} Scudo, +$gradiGuadagnati Scudo Critico.',
       );
+      invalidateHiddenEyeDerivedCaches();
     }
   }
 
@@ -3110,6 +3145,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     setState(() {
       rebirthato = value;
       aggiornaGradoAutomatico();
+      invalidateHiddenEyeDerivedCaches();
 
       risultato = rebirthato
           ? t(
@@ -3450,6 +3486,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         aggiungiLog(risultato);
       });
 
+      invalidateHiddenEyeDerivedCaches();
       programmaSalvataggio();
       return;
     }
@@ -3504,6 +3541,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    invalidateHiddenEyeDerivedCaches();
     programmaSalvataggio();
   }
 
@@ -3548,6 +3586,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    invalidateHiddenEyeDerivedCaches();
     programmaSalvataggio();
   }
 
@@ -3577,6 +3616,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    invalidateHiddenEyeDerivedCaches();
     programmaSalvataggio();
   }
 
@@ -3592,6 +3632,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    invalidateHiddenEyeDerivedCaches();
     programmaSalvataggio();
   }
 
@@ -3644,6 +3685,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    invalidateHiddenEyeDerivedCaches();
     programmaSalvataggio();
   }
 
@@ -3936,6 +3978,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       );
     });
 
+    invalidateHiddenEyeDerivedCaches();
     programmaSalvataggio();
   }
 

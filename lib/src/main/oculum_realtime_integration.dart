@@ -175,6 +175,37 @@ Map<String, dynamic> oculumRealtimeMergeSheetPatch(
   return merged;
 }
 
+String oculumRealtimeSheetDeliveryHashKey(
+  String audience,
+  String sheetId,
+  Iterable<String> targetTags,
+) {
+  final targets =
+      targetTags
+          .map((tag) => tag.trim().toUpperCase())
+          .where((tag) => tag.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+  return '$audience:${sheetId.trim().toUpperCase()}:${targets.join(',')}';
+}
+
+String oculumRealtimePresenceTagSignature(
+  Iterable<Map<String, dynamic>> users,
+) {
+  final tags = <String>{};
+  for (final user in users) {
+    final rawTags = user['localSheetTags'];
+    if (rawTags is! List) continue;
+    for (final raw in rawTags) {
+      final tag = '$raw'.trim().toUpperCase();
+      if (tag.isNotEmpty) tags.add(tag);
+    }
+  }
+  final ordered = tags.toList()..sort();
+  return ordered.join('|');
+}
+
 extension _OculumRealtimeIntegration on _OculumHomePageState {
   String realtimeDisplayName() {
     final chosen = realtimeNameController.text.trim();
@@ -186,7 +217,89 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     return 'Scheda ${schedaCorrente + 1}';
   }
 
+  void publishRealtimeStateAfterConnection() {
+    if (realtimeService?.isConnected != true) return;
+    sendRealtimeSheetPreview();
+    sendRealtimeCurrentSheetToStaff(immediate: true);
+    if (!realtimeIsMasterRole) {
+      resendRealtimeFriendSheetsForPresence();
+    }
+    syncStorySessionNotesRealtime();
+    if (modalitaMaster) {
+      scheduleVttRealtimePublish(includeAsset: true);
+    } else {
+      requestRealtimeVttScene();
+    }
+  }
+
+  void scheduleRealtimeReconnect(OculumRealtimeService service) {
+    if (!mounted ||
+        !realtimeAutoReconnectEnabled ||
+        realtimeService != service ||
+        service.isConnected ||
+        (realtimeReconnectTimer?.isActive ?? false)) {
+      return;
+    }
+
+    realtimeReconnectAttempt = (realtimeReconnectAttempt + 1)
+        .clamp(1, 8)
+        .toInt();
+    const delays = <int>[2, 4, 8, 12, 18, 25, 30, 30];
+    final delaySeconds = delays[realtimeReconnectAttempt - 1];
+    realtimeReconnectTimer = Timer(Duration(seconds: delaySeconds), () async {
+      realtimeReconnectTimer = null;
+      if (!mounted ||
+          !realtimeAutoReconnectEnabled ||
+          realtimeService != service ||
+          service.isConnected) {
+        return;
+      }
+      setState(() {
+        realtimeConnecting = true;
+        realtimeStatus = t(
+          'Riconnessione realtime $realtimeReconnectAttempt/8...',
+          'Realtime reconnect $realtimeReconnectAttempt/8...',
+        );
+      });
+      await service.connect();
+      if (!mounted || realtimeService != service) return;
+      setState(() {
+        realtimeConnecting = false;
+        realtimeConnected = service.isConnected;
+      });
+      if (service.isConnected) {
+        realtimeReconnectAttempt = 0;
+        realtimeLastSentSheetHashes.clear();
+        publishRealtimeStateAfterConnection();
+      } else {
+        scheduleRealtimeReconnect(service);
+      }
+    });
+  }
+
   Future<void> connectRealtimeOculum() async {
+    if (realtimeConnecting) return;
+
+    realtimeAutoReconnectEnabled = true;
+    realtimeReconnectAttempt = 0;
+    realtimeReconnectTimer?.cancel();
+    realtimeReconnectTimer = null;
+
+    setState(() {
+      realtimeConnecting = true;
+      realtimeStatus = t('Preparazione realtime...', 'Preparing realtime...');
+    });
+    final supabaseReady = await ensureOculumSupabaseInitialized();
+    if (!mounted) return;
+    if (!supabaseReady) {
+      setState(() {
+        realtimeConnecting = false;
+        realtimeConnected = false;
+        realtimeStatus = OculumRealtimeService.startupStatus;
+      });
+      return;
+    }
+
     final room = realtimeRoomController.text.trim().isEmpty
         ? 'test'
         : realtimeRoomController.text.trim();
@@ -207,6 +320,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         'campaignId': activeCampaignId,
         'campaignName': activeCampaignName(),
         'masterClaimId': realtimeMasterClaimId,
+        'platform': oculumClientPlatformLabel(),
+        'protocolVersion': 2,
       },
       onEvent: (event, payload) {
         if (!mounted || realtimeService != service) return;
@@ -215,8 +330,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       onPresenceChanged: (users) {
         if (!mounted || realtimeService != service) return;
         final blockMaster = realtimeShouldYieldMaster(users);
+        final presenceSignature = oculumRealtimePresenceTagSignature(users);
+        final friendPresenceChanged =
+            presenceSignature != realtimeFriendPresenceSignature;
         setState(() {
           realtimeUsers = users;
+          realtimeFriendPresenceSignature = presenceSignature;
           realtimeConnected = service.isConnected;
           realtimeFirstPresenceHandled = true;
           realtimeMasterBlockedByPresence = blockMaster;
@@ -230,14 +349,32 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         if (blockMaster) {
           unawaited(service.refreshPresence());
         }
+        if (service.isConnected &&
+            !realtimeIsMasterRole &&
+            friendPresenceChanged) {
+          sendRealtimeCurrentSheetToStaff(immediate: true);
+        }
+        if (service.isConnected && friendPresenceChanged) {
+          realtimeLastSentSheetHashes.removeWhere(
+            (key, _) => key.startsWith('friend:'),
+          );
+          resendRealtimeFriendSheetsForPresence();
+        }
       },
       onStatusChanged: (status) {
         if (!mounted || realtimeService != service) return;
+        final connected = service.isConnected;
+        if (connected) {
+          realtimeReconnectTimer?.cancel();
+          realtimeReconnectTimer = null;
+          realtimeReconnectAttempt = 0;
+        }
         setState(() {
           realtimeStatus = status;
-          realtimeConnected = service.isConnected;
+          realtimeConnected = connected;
           realtimeConnecting = false;
         });
+        if (!connected) scheduleRealtimeReconnect(service);
       },
     );
 
@@ -253,6 +390,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeCoMasterTags.clear();
       realtimeSeenEventKeys.clear();
       realtimeRoleUpdateTimestamps.clear();
+      realtimeLastSentSheetHashes.clear();
+      realtimeFriendPresenceSignature = '';
+      clearRealtimeMasterAckTracking();
       realtimeStatus = t('Connessione realtime...', 'Connecting realtime...');
     });
 
@@ -265,13 +405,18 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     });
 
     if (service.isConnected) {
-      sendRealtimeSheetPreview();
-      sendRealtimeCurrentSheetToStaff();
+      publishRealtimeStateAfterConnection();
+    } else {
+      scheduleRealtimeReconnect(service);
     }
   }
 
   Future<void> disconnectRealtimeOculum() async {
     final service = realtimeService;
+    realtimeAutoReconnectEnabled = false;
+    realtimeReconnectAttempt = 0;
+    realtimeReconnectTimer?.cancel();
+    realtimeReconnectTimer = null;
     setState(() {
       realtimeConnecting = false;
       realtimeConnected = false;
@@ -281,9 +426,18 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeUsers = [];
       realtimeSharedSheets.clear();
       realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
+      realtimeVisibleVttSnapshot = <String, dynamic>{};
+      realtimeVisibleVttScene = null;
+      realtimeVisibleVttImageBytes = null;
+      realtimeVisibleVttAssetId = '';
+      realtimeVttAssetProgress = 0;
+      realtimeVttAssetAssemblers.clear();
       realtimeCoMasterTags.clear();
       realtimeSeenEventKeys.clear();
       realtimeRoleUpdateTimestamps.clear();
+      realtimeLastSentSheetHashes.clear();
+      realtimeFriendPresenceSignature = '';
+      clearRealtimeMasterAckTracking();
     });
 
     await service?.disconnect();
@@ -297,21 +451,71 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
   void handleRealtimeEvent(String event, Map<String, dynamic> payload) {
     final eventKey =
-        '$event|${payload['playerName'] ?? ''}|${payload['sentAt'] ?? ''}|${payload['message'] ?? payload.toString()}';
+        '$event|${payload['playerName'] ?? ''}'
+        '|${payload['id'] ?? payload['noteId'] ?? payload['syncId'] ?? ''}'
+        '|${payload['chunkIndex'] ?? ''}'
+        '|${payload['sentAt'] ?? ''}'
+        '|${payload['message'] ?? ''}';
     if (!realtimeSeenEventKeys.add(eventKey)) return;
     if (realtimeSeenEventKeys.length > 400) {
       realtimeSeenEventKeys.clear();
     }
 
     var persistRealtimeRemote = false;
+    var persistStoryNotes = false;
+    var showInRealtimeEvents = true;
+    var storyNotesRequesterTag = '';
     final text = realtimeEventText(event, payload);
     setState(() {
       switch (event) {
+        case 'session_note':
+          persistStoryNotes = mergeStorySessionNotePayload(payload);
+          break;
+        case 'session_notes_snapshot':
+          persistStoryNotes = mergeStorySessionNotesSnapshot(payload);
+          showInRealtimeEvents = false;
+          break;
+        case 'session_notes_request':
+          showInRealtimeEvents = false;
+          if (realtimeIsMasterRole) {
+            storyNotesRequesterTag = '${payload['requesterTag'] ?? ''}'.trim();
+          }
+          break;
+        case 'vtt_scene_request':
+          showInRealtimeEvents = false;
+          receiveRealtimeVttSceneRequest(payload);
+          break;
+        case 'vtt_scene_shared':
+          receiveRealtimeVttSceneSnapshot(payload);
+          break;
+        case 'vtt_asset_chunk':
+          showInRealtimeEvents = false;
+          receiveRealtimeVttAssetChunk(payload);
+          break;
+        case 'vtt_token_patch':
+          showInRealtimeEvents = false;
+          receiveRealtimeVttTokenPatch(payload);
+          break;
+        case 'vtt_door_patch':
+          showInRealtimeEvents = false;
+          receiveRealtimeVttDoorPatch(payload);
+          break;
+        case 'vtt_ping':
+          showInRealtimeEvents = false;
+          receiveRealtimeVttPing(payload);
+          break;
         case 'sheet_shared':
           persistRealtimeRemote = receiveRealtimeSharedSheet(payload);
           break;
+        case 'sheet_received_ack':
+          receiveRealtimeSheetReceivedAck(payload);
+          break;
         case 'initiative_shared':
           receiveRealtimeInitiativeSnapshot(payload);
+          break;
+        case 'dungeon_shared':
+          realtimeDungeonMessage.value = Map<String, dynamic>.from(payload);
+          rememberRealtimeDungeonHost(payload);
           break;
         case 'friend_request':
           persistRealtimeRemote = registerIncomingOculumFriendRequest(payload);
@@ -324,15 +528,26 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           break;
       }
 
-      realtimeEvents.insert(0, text);
-      if (realtimeEvents.length > 30) {
-        realtimeEvents.removeRange(30, realtimeEvents.length);
+      if (showInRealtimeEvents) {
+        realtimeEvents.insert(0, text);
+        if (realtimeEvents.length > 30) {
+          realtimeEvents.removeRange(30, realtimeEvents.length);
+        }
       }
 
       if (event == 'party_log') {
         aggiungiLog('[Realtime] $text');
       }
     });
+
+    if (storyNotesRequesterTag.isNotEmpty) {
+      unawaited(
+        sendRealtimeStorySessionNotesSnapshot(
+          targetTag: storyNotesRequesterTag,
+        ),
+      );
+    }
+    if (persistStoryNotes) scheduleStorySessionNotesSave();
 
     if (persistRealtimeRemote) {
       applyingRealtimeRemoteSheet = true;
@@ -342,6 +557,151 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         }),
       );
     }
+  }
+
+  void rememberRealtimeDungeonHost(Map<String, dynamic> payload) {
+    final kind = '${payload['kind'] ?? ''}';
+    final sessionId = '${payload['sessionId'] ?? ''}'.trim();
+    final hostId = '${payload['hostId'] ?? ''}'.trim();
+    if (kind == 'session_close') {
+      realtimeDungeonHosts.removeWhere(
+        (key, host) =>
+            key == sessionId ||
+            (hostId.isNotEmpty && '${host['hostId'] ?? ''}' == hostId),
+      );
+      return;
+    }
+    if ((kind != 'session_open' && kind != 'session_state') ||
+        sessionId.isEmpty ||
+        hostId.isEmpty) {
+      return;
+    }
+
+    final localId = sheetTagAt(schedaCorrente).trim();
+    if (hostId == localId) return;
+    final sentAt =
+        DateTime.tryParse('${payload['sentAt'] ?? ''}') ?? DateTime.now();
+    realtimeDungeonHosts[sessionId] = <String, dynamic>{
+      'sessionId': sessionId,
+      'hostId': hostId,
+      'hostName': '${payload['hostName'] ?? payload['playerName'] ?? hostId}',
+      'passwordProtected': payload['passwordProtected'] == true,
+      'passwordHash': '${payload['passwordHash'] ?? ''}',
+      'seenAt': sentAt.toIso8601String(),
+    };
+    pruneRealtimeDungeonHosts();
+  }
+
+  void pruneRealtimeDungeonHosts() {
+    final limit = DateTime.now().subtract(const Duration(minutes: 3));
+    realtimeDungeonHosts.removeWhere((_, host) {
+      final seenAt = DateTime.tryParse('${host['seenAt'] ?? ''}');
+      return seenAt == null || seenAt.isBefore(limit);
+    });
+  }
+
+  List<Map<String, dynamic>> availableRealtimeDungeonHosts() {
+    pruneRealtimeDungeonHosts();
+    final hosts = realtimeDungeonHosts.values
+        .map((host) => Map<String, dynamic>.from(host))
+        .toList();
+    hosts.sort(
+      (a, b) => '${a['hostName'] ?? ''}'.compareTo('${b['hostName'] ?? ''}'),
+    );
+    return hosts;
+  }
+
+  void requestRealtimeDungeonHosts() {
+    final service = realtimeService;
+    if (service?.isConnected != true) return;
+    unawaited(
+      service!.sendDungeonShared(<String, dynamic>{
+        'kind': 'session_discover',
+        'senderId': sheetTagAt(schedaCorrente),
+        'campaignId': activeCampaignId,
+        'campaignName': activeCampaignName(),
+      }),
+    );
+  }
+
+  Future<void> showRealtimeDungeonJoinPicker() async {
+    if (realtimeService?.isConnected != true) {
+      setState(() {
+        risultato = t(
+          'Connettiti a Realtime prima di cercare una run online.',
+          'Connect to Realtime before looking for an online run.',
+        );
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+
+    requestRealtimeDungeonHosts();
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+    if (!mounted) return;
+    final hosts = availableRealtimeDungeonHosts();
+    final selected = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: backgroundMidColor,
+        title: Text(
+          t('Unisciti alla run', 'Join a run'),
+          style: TextStyle(color: primaryColor),
+        ),
+        content: SizedBox(
+          width: min(MediaQuery.of(dialogContext).size.width * 0.88, 460),
+          child: hosts.isEmpty
+              ? Text(
+                  t(
+                    'Nessuna run online ha risposto nella tua stanza Realtime. Chiedi all host di aprire il Dungeon online e avviare la run.',
+                    'No online run answered in your Realtime room. Ask the host to open Online Dungeon and start the run.',
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: hosts.length,
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final host = hosts[index];
+                    final name = '${host['hostName'] ?? '???'}';
+                    final protected =
+                        host['passwordProtected'] == true ||
+                        '${host['passwordHash'] ?? ''}'.trim().isNotEmpty;
+                    return ListTile(
+                      leading: const Icon(
+                        Icons.wifi_tethering,
+                        color: Colors.greenAccent,
+                      ),
+                      title: Text(
+                        name,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      subtitle: Text(
+                        protected
+                            ? t(
+                                'Run online protetta da password',
+                                'Password-protected online run',
+                              )
+                            : t('Run online libera', 'Open online run'),
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      onTap: () => Navigator.of(dialogContext).pop(host),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(t('Chiudi', 'Close')),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || selected == null) return;
+    _openDungeonMiniGame(openOnlinePanel: true, initialOnlineSession: selected);
   }
 
   String realtimeEventText(String event, Map<String, dynamic> payload) {
@@ -363,6 +723,46 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             ' = ${payload['total'] ?? '?'}';
       case 'party_log':
         return '$player: ${payload['message'] ?? ''}';
+      case 'session_note':
+        final note = OculumSessionNote.tryParse(payload);
+        if (note == null) return '$player: ${payload['message'] ?? ''}';
+        return '${note.author} [${oculumSessionNoteTimeLabel(note.createdAt)}]: '
+            '${note.message}';
+      case 'session_notes_request':
+        return t('$player richiede gli appunti.', '$player requests notes.');
+      case 'session_notes_snapshot':
+        return t('$player sincronizza gli appunti.', '$player syncs notes.');
+      case 'vtt_scene_request':
+        return t(
+          '$player richiede la scena attiva.',
+          '$player requests the active scene.',
+        );
+      case 'vtt_scene_shared':
+        final snapshot = payload['snapshot'];
+        final scene = snapshot is Map && snapshot['scene'] is Map
+            ? snapshot['scene'] as Map
+            : const <dynamic, dynamic>{};
+        return t(
+          '$player mostra la scena ${scene['name'] ?? 'mappa'}.',
+          '$player shares scene ${scene['name'] ?? 'map'}.',
+        );
+      case 'vtt_asset_chunk':
+        return t(
+          '$player sincronizza l immagine della scena.',
+          '$player syncs the scene image.',
+        );
+      case 'vtt_token_patch':
+        return t(
+          '$player muove una pedina sulla mappa.',
+          '$player moves a map token.',
+        );
+      case 'vtt_door_patch':
+        return t(
+          '$player modifica una porta sulla mappa.',
+          '$player changes a map door.',
+        );
+      case 'vtt_ping':
+        return t('$player crea un ping.', '$player creates a ping.');
       case 'sheet_ping':
         return '$player ping';
       case 'sheet_sync_preview':
@@ -374,6 +774,11 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         return t(
           '$player ha condiviso ${payload['sheetName'] ?? 'una scheda'} da ${payload['campaignName'] ?? 'campagna online'}.',
           '$player shared ${payload['sheetName'] ?? 'a sheet'} from ${payload['campaignName'] ?? 'online campaign'}.',
+        );
+      case 'sheet_received_ack':
+        return t(
+          '$player conferma ricezione scheda: ${payload['sheetName'] ?? '???'}.',
+          '$player confirmed sheet receipt: ${payload['sheetName'] ?? '???'}.',
         );
       case 'initiative_shared':
         if (readBoolValue(payload['closed'])) {
@@ -387,6 +792,11 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         return t(
           '$player ha inviato la Fight - Round ${snapshot['round'] ?? '?'} - Turni ${snapshot['turnCount'] ?? '?'}.',
           '$player sent the Fight - Round ${snapshot['round'] ?? '?'} - Turns ${snapshot['turnCount'] ?? '?'}.',
+        );
+      case 'dungeon_shared':
+        return t(
+          '$player ha aggiornato una run dungeon condivisa.',
+          '$player updated a shared dungeon run.',
         );
       case 'friend_request':
         return t(
@@ -511,6 +921,21 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     });
   }
 
+  void sendRealtimeChatMessage() {
+    final service = realtimeService;
+    if (service?.isConnected != true) return;
+
+    final message = cleanUiText(realtimeChatController.text).trim();
+    if (message.isEmpty) return;
+
+    final signedMessage = '${realtimeDisplayName()}: $message';
+    realtimeChatController.clear();
+    unawaited(service!.sendPartyLog(signedMessage));
+    setState(() {
+      realtimeEvents.insert(0, signedMessage);
+    });
+  }
+
   bool get realtimeWantsMasterRole => modalitaMaster || isMasterHost;
 
   bool get realtimeIsMasterRole =>
@@ -521,10 +946,139 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   bool get realtimeCanBrowseOtherSheets =>
       realtimeIsMasterRole || realtimeIsCoMasterRole;
 
+  bool get realtimeHasMasterOnline {
+    return realtimeUsers.any((user) => '${user['role'] ?? ''}' == 'master');
+  }
+
   String realtimeLocalRole() {
     if (realtimeIsMasterRole) return 'master';
     if (realtimeIsCoMasterRole) return 'coMaster';
     return 'player';
+  }
+
+  void clearRealtimeMasterAckTracking() {
+    for (final timer in realtimePendingMasterAckTimers.values) {
+      timer.cancel();
+    }
+    realtimePendingMasterAckTimers.clear();
+    realtimePendingMasterAckSheetIds.clear();
+    realtimePendingMasterAckAttempts.clear();
+  }
+
+  String newRealtimeSheetDeliveryId(String sheetId) {
+    return 'sheet_${sheetId}_${DateTime.now().microsecondsSinceEpoch}_${Random().nextInt(999999)}';
+  }
+
+  void cancelRealtimeMasterAckWatch(String deliveryId) {
+    realtimePendingMasterAckTimers.remove(deliveryId)?.cancel();
+    realtimePendingMasterAckSheetIds.remove(deliveryId);
+    realtimePendingMasterAckAttempts.remove(deliveryId);
+  }
+
+  void watchRealtimeMasterAck({
+    required String deliveryId,
+    required String sheetId,
+    required int attempt,
+  }) {
+    if (deliveryId.isEmpty || sheetId.isEmpty) return;
+    realtimePendingMasterAckSheetIds[deliveryId] = sheetId;
+    realtimePendingMasterAckAttempts[deliveryId] = attempt;
+    realtimePendingMasterAckTimers.remove(deliveryId)?.cancel();
+    realtimePendingMasterAckTimers[deliveryId] = Timer(
+      Duration(seconds: attempt <= 1 ? 3 : 5),
+      () {
+        realtimePendingMasterAckTimers.remove(deliveryId);
+        if (!mounted) return;
+        if (!canShareRealtimeSheetToStaff) {
+          cancelRealtimeMasterAckWatch(deliveryId);
+          return;
+        }
+        if (!realtimeHasMasterOnline) {
+          cancelRealtimeMasterAckWatch(deliveryId);
+          return;
+        }
+        if (attempt >= 5) {
+          final sheetIndex = localSheetIndexForOculumTag(sheetId);
+          final sheetName = sheetIndex >= 0
+              ? nomeSchedaPersonaggio(sheetIndex)
+              : sheetId;
+          setState(() {
+            risultato = t(
+              'Conferma Master non ricevuta per $sheetName: ritenta manualmente o attendi il prossimo aggiornamento della Presence.',
+              'Master receipt was not confirmed for $sheetName: retry manually or wait for the next Presence update.',
+            );
+            aggiungiLog(risultato);
+          });
+          cancelRealtimeMasterAckWatch(deliveryId);
+          return;
+        }
+
+        final sheetIndex = localSheetIndexForOculumTag(sheetId);
+        if (sheetIndex < 0) {
+          cancelRealtimeMasterAckWatch(deliveryId);
+          return;
+        }
+        sendRealtimeSheetToStaffAt(
+          sheetIndex,
+          force: true,
+          ensureMasterReceipt: true,
+          deliveryId: deliveryId,
+          attempt: attempt + 1,
+        );
+      },
+    );
+  }
+
+  void receiveRealtimeSheetReceivedAck(Map<String, dynamic> payload) {
+    if (realtimeIsMasterRole) return;
+    final deliveryId = '${payload['deliveryId'] ?? ''}'.trim();
+    if (deliveryId.isEmpty) return;
+
+    final ownerTag = normalizeOculumFriendTag(
+      '${payload['ownerTag'] ?? payload['sheetId'] ?? ''}',
+    ).toUpperCase();
+    final localTags = localOculumTags().map((tag) => tag.toUpperCase()).toSet();
+    if (!localTags.contains(ownerTag)) return;
+    if (!realtimePendingMasterAckSheetIds.containsKey(deliveryId)) return;
+
+    cancelRealtimeMasterAckWatch(deliveryId);
+    final sheetName = '${payload['sheetName'] ?? '???'}';
+    risultato = t(
+      'Master ha ricevuto la scheda: $sheetName.',
+      'Master received the sheet: $sheetName.',
+    );
+    aggiungiLog(risultato);
+  }
+
+  void sendRealtimeMasterSheetAck({
+    required Map<String, dynamic> payload,
+    required String senderRole,
+    required String sheetId,
+  }) {
+    if (!realtimeIsMasterRole) return;
+    if (senderRole != 'player' && senderRole != 'coMaster') return;
+    final service = realtimeService;
+    if (service?.isConnected != true) return;
+
+    final deliveryId = '${payload['deliveryId'] ?? ''}'.trim();
+    if (deliveryId.isEmpty) return;
+    final ownerTag = normalizeOculumFriendTag(
+      '${payload['ownerTag'] ?? sheetId}',
+    );
+    if (ownerTag.isEmpty) return;
+
+    unawaited(
+      service!.sendSheetReceivedAck(
+        deliveryId: deliveryId,
+        ownerTag: ownerTag,
+        sheetId: sheetId,
+        sheetName: '${payload['sheetName'] ?? sheetId}',
+        campaignId: '${payload['campaignId'] ?? activeCampaignId}',
+        campaignName: '${payload['campaignName'] ?? activeCampaignName()}',
+        receiverRole: 'master',
+        receiverTag: sheetTagAt(schedaCorrente),
+      ),
+    );
   }
 
   bool get canShareRealtimeSheetToStaff {
@@ -556,6 +1110,14 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             .contains(tag.toUpperCase()),
       );
     }
+    if (senderRole == 'fullShare') {
+      if (ownerTag.isNotEmpty && isOculumFriendBlocked(ownerTag)) return false;
+      return targetTags.any(
+        (tag) => localOculumTags()
+            .map((localTag) => localTag.toUpperCase())
+            .contains(tag.toUpperCase()),
+      );
+    }
     if (senderRole == 'friend') {
       return (localRole == 'master' || localRole == 'coMaster') &&
           targetTags.any(
@@ -571,6 +1133,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   Map<String, dynamic> realtimeSafeSheetJson(
     Map<String, dynamic> source, {
     bool includeImage = false,
+    bool includePartyMembers = false,
   }) {
     final safe = jsonDecode(jsonEncode(source)) as Map<String, dynamic>;
 
@@ -593,7 +1156,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       safe['immaginePersonaggioBase64'] = '';
     }
     safe['logEventi'] = <String>[];
-    safe['partyMembri'] = <Map<String, dynamic>>[];
+    if (!includePartyMembers) {
+      safe['partyMembri'] = <Map<String, dynamic>>[];
+    }
     return safe;
   }
 
@@ -814,6 +1379,15 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         'Online patch applied by ${payload['playerName'] ?? 'online'}: ${updated['nome'] ?? '???'} (${appliedKeys.join(', ')}).',
       ),
     );
+    final deathOutcome = linguaInglese
+        ? '${updated['realtimeDeathOutcomeEn'] ?? ''}'.trim()
+        : '${updated['realtimeDeathOutcomeIt'] ?? ''}'.trim();
+    if (deathOutcome.isNotEmpty) {
+      risultato = deathOutcome;
+      aggiungiLog(
+        '${t('Esito combattimento ricevuto', 'Combat result received')}: $deathOutcome',
+      );
+    }
     saveActiveCampaignInMemory();
     if (!realtimeIsMasterRole &&
         !readBoolValue(existing['realtimeSharedSheet'])) {
@@ -932,6 +1506,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'side': '${masterInitiativeTokens[i]['side'] ?? 'ally'}',
             'status': '${masterInitiativeTokens[i]['status'] ?? 'ready'}',
             'imageBase64': '${masterInitiativeTokens[i]['imageBase64'] ?? ''}',
+            'spriteAssetPath': masterInitiativeTokenSpriteAsset(
+              masterInitiativeTokens[i],
+            ),
+            'tokenSize': masterInitiativeTokenSize(masterInitiativeTokens[i]),
             'initiativeTotal': readIntValue(
               masterInitiativeTokens[i]['initiativeTotal'],
             ),
@@ -1058,11 +1636,17 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         : realtimeSafeSheetJson(
             Map<String, dynamic>.from(sheetRaw),
             includeImage: true,
+            includePartyMembers: senderRole == 'fullShare',
           );
     final sheetId = normalizeOculumFriendTag(
       '${payload['sheetId'] ?? sheet['sheetTag'] ?? sheet['id'] ?? ''}',
     );
     if (sheetId.isEmpty) return false;
+    sendRealtimeMasterSheetAck(
+      payload: payload,
+      senderRole: senderRole,
+      sheetId: sheetId,
+    );
 
     if (senderRole == 'sheetEdit') {
       return receiveRealtimeSheetEdit(sheet, sheetId, payload);
@@ -1124,7 +1708,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
     final localIndex = realtimeLocalSheetIndexForKey(key);
     if (localIndex < 0) {
-      if (senderRole == 'player' ||
+      if (senderRole == 'fullShare' ||
+          senderRole == 'player' ||
           senderRole == 'coMaster' ||
           (senderRole == 'master' &&
               readBoolValue(payload['masterParty']) &&
@@ -1199,10 +1784,20 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
   }
 
-  void sendRealtimeCurrentSheetToStaff() {
+  void sendRealtimeCurrentSheetToStaff({bool immediate = false}) {
     if (!canShareRealtimeSheetToStaff) return;
 
     realtimeSheetShareDebounceTimer?.cancel();
+    if (immediate) {
+      salvaSchedaCorrenteInMemoria();
+      sendRealtimeSheetToStaffAt(
+        schedaCorrente,
+        force: true,
+        ensureMasterReceipt: true,
+      );
+      return;
+    }
+
     realtimeSheetShareDebounceTimer = Timer(const Duration(seconds: 2), () {
       if (!mounted || !canShareRealtimeSheetToStaff) return;
       salvaSchedaCorrenteInMemoria();
@@ -1213,20 +1808,128 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   bool shouldSendRealtimeSheetHash(String key, Map<String, dynamic> sheet) {
     final hash = jsonEncode(sheet);
     if (realtimeLastSentSheetHashes[key] == hash) return false;
+    rememberRealtimeSheetHash(key, hash);
+    return true;
+  }
+
+  void rememberRealtimeSheetHash(String key, String hash) {
     realtimeLastSentSheetHashes[key] = hash;
     if (realtimeLastSentSheetHashes.length > 80) {
       realtimeLastSentSheetHashes.remove(
         realtimeLastSentSheetHashes.keys.first,
       );
     }
-    return true;
   }
 
   void sendRealtimeCurrentSheetToFriends() {
-    sendRealtimeCurrentSheetToFriendsInternal(
-      manual: true,
-      sheetIndex: schedaCorrente,
+    unawaited(
+      sendRealtimeCurrentSheetToFriendsInternal(
+        manual: true,
+        sheetIndex: schedaCorrente,
+      ),
     );
+  }
+
+  List<String> realtimeFullSheetTargetTags() {
+    final tags = <String>{};
+    final localTags = localOculumTags().map((tag) => tag.toUpperCase()).toSet();
+    for (final friend in amiciOculum) {
+      final tag = normalizeOculumFriendTag('${friend['tag'] ?? ''}');
+      if (tag.isNotEmpty && !isOculumFriendBlocked(tag)) {
+        tags.add(tag);
+      }
+    }
+    for (final user in realtimeUsers) {
+      final rawTags = user['localSheetTags'];
+      if (rawTags is! List) continue;
+      for (final raw in rawTags) {
+        final tag = normalizeOculumFriendTag('$raw');
+        if (tag.isEmpty) continue;
+        if (localTags.contains(tag.toUpperCase())) continue;
+        if (isOculumFriendBlocked(tag)) continue;
+        tags.add(tag);
+      }
+    }
+    return tags.toList()..sort();
+  }
+
+  void sendRealtimeFullSheetToFriendsAndPartyAt(int index) {
+    final service = realtimeService;
+    if (service?.isConnected != true) {
+      setState(() {
+        risultato = t(
+          'Realtime non connesso: scheda non inviata.',
+          'Realtime is not connected: sheet not sent.',
+        );
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+    if (index < 0 || index >= schedePersonaggio.length) return;
+    if (readBoolValue(schedePersonaggio[index]['realtimeSharedSheet'])) {
+      setState(() {
+        risultato = t(
+          'Questa e gia una copia online: non la reinvio come scheda completa.',
+          'This is already an online copy: it was not reshared as a full sheet.',
+        );
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+
+    salvaSchedaCorrenteInMemoria();
+    final targetTags = realtimeFullSheetTargetTags();
+    if (targetTags.isEmpty) {
+      setState(() {
+        risultato = t(
+          'Nessun amico o partecipante realtime con tag valido trovato.',
+          'No friend or realtime participant with a valid tag was found.',
+        );
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+
+    final sheet = realtimeSafeSheetJson(
+      schedaJsonAt(index),
+      includeImage: true,
+      includePartyMembers: true,
+    );
+    sheet['realtimeRestrictedByMaster'] = false;
+    final sheetId = normalizeOculumFriendTag(
+      '${sheet['sheetTag'] ?? sheet['id'] ?? sheetTagAt(index)}',
+    );
+    if (sheetId.isEmpty) return;
+    if (!shouldSendRealtimeSheetHash(
+      'full:$sheetId:${targetTags.join(',')}',
+      sheet,
+    )) {
+      return;
+    }
+
+    unawaited(
+      service!.sendSharedSheet(
+        sheet: sheet,
+        campaignId: activeCampaignId,
+        campaignName: activeCampaignName(),
+        sheetId: sheetId,
+        sheetName: nomeSchedaPersonaggio(index),
+        ownerTag: sheetId,
+        senderRole: 'fullShare',
+        targetAudience: 'friends_party_full',
+        fromMaster: realtimeIsMasterRole,
+        masterParty: sheetInMasterPartyAt(index),
+        targetTags: targetTags,
+      ),
+    );
+
+    setState(() {
+      risultato = t(
+        'Scheda completa inviata ad amici e partecipanti realtime (${targetTags.length} tag). Le schede locali dei destinatari non vengono cancellate.',
+        'Full sheet sent to friends and realtime participants (${targetTags.length} tags). Recipient local sheets are not deleted.',
+      );
+      aggiungiLog(risultato);
+    });
   }
 
   void sendRealtimeCurrentSheetToFriendsIfEnabled() {
@@ -1238,30 +1941,54 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     )) {
       return;
     }
-    sendRealtimeCurrentSheetToFriendsInternal(
-      manual: false,
-      sheetIndex: schedaCorrente,
+    unawaited(
+      sendRealtimeCurrentSheetToFriendsInternal(
+        manual: false,
+        sheetIndex: schedaCorrente,
+      ),
     );
   }
 
-  void sendRealtimeCurrentSheetToFriendsInternal({
+  void resendRealtimeFriendSheetsForPresence() {
+    for (var index = 0; index < schedePersonaggio.length; index++) {
+      if (!readBoolValue(
+        schedePersonaggio[index]['realtimeShareWithFriends'],
+      )) {
+        continue;
+      }
+      unawaited(
+        sendRealtimeCurrentSheetToFriendsInternal(
+          manual: false,
+          sheetIndex: index,
+        ),
+      );
+    }
+  }
+
+  Future<bool> sendRealtimeCurrentSheetToFriendsInternal({
     required bool manual,
     required int sheetIndex,
     List<String>? targetTagsOverride,
     String? targetLabel,
-  }) {
+  }) async {
     final service = realtimeService;
-    if (service?.isConnected != true) return;
-    if (realtimeIsMasterRole) return;
-    if (sheetIndex < 0 || sheetIndex >= schedePersonaggio.length) return;
-    if (amiciOculum.isEmpty && targetTagsOverride == null) return;
+    if (service?.isConnected != true) return false;
+    if (realtimeIsMasterRole) return false;
+    if (sheetIndex < 0 || sheetIndex >= schedePersonaggio.length) return false;
+    if (amiciOculum.isEmpty && targetTagsOverride == null) return false;
     if (readBoolValue(schedePersonaggio[sheetIndex]['realtimeSharedSheet'])) {
-      return;
+      return false;
     }
 
-    salvaSchedaCorrenteInMemoria();
-    schedePersonaggio[sheetIndex]['realtimeShareWithFriends'] = true;
-    saveActiveCampaignInMemory();
+    if (sheetIndex == schedaCorrente) {
+      salvaSchedaCorrenteInMemoria();
+    }
+    if (!readBoolValue(
+      schedePersonaggio[sheetIndex]['realtimeShareWithFriends'],
+    )) {
+      schedePersonaggio[sheetIndex]['realtimeShareWithFriends'] = true;
+      saveActiveCampaignInMemory();
+    }
     final revokedTags = sheetRevokedAccessTagsAt(
       sheetIndex,
     ).map((tag) => tag.toUpperCase()).toSet();
@@ -1271,10 +1998,15 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             .map((friend) => normalizeOculumFriendTag('${friend['tag'] ?? ''}'))
             .where((tag) => tag.isNotEmpty && !isOculumFriendBlocked(tag))
             .toList();
-    final allowedTargetTags = targetTags
-        .where((tag) => !revokedTags.contains(tag.toUpperCase()))
-        .toList();
-    if (allowedTargetTags.isEmpty) return;
+    final allowedTargetTags =
+        targetTags
+            .where((tag) => !revokedTags.contains(tag.toUpperCase()))
+            .map(normalizeOculumFriendTag)
+            .where((tag) => tag.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    if (allowedTargetTags.isEmpty) return false;
 
     final sheet = realtimeSafeSheetJson(
       schedaJsonAt(sheetIndex),
@@ -1283,28 +2015,48 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final sheetId = normalizeOculumFriendTag(
       '${sheet['sheetTag'] ?? sheet['id'] ?? sheetTagAt(sheetIndex)}',
     );
-    if (sheetId.isEmpty) return;
-    if (!shouldSendRealtimeSheetHash('friend:$sheetId', sheet)) return;
-
-    unawaited(
-      service!.sendSharedSheet(
-        sheet: sheet,
-        campaignId: activeCampaignId,
-        campaignName: activeCampaignName(),
-        sheetId: sheetId,
-        sheetName: nomeSchedaPersonaggio(sheetIndex),
-        ownerTag: sheetId,
-        senderRole: 'friend',
-        targetAudience: 'friends',
-        fromMaster: false,
-        masterParty: false,
-        targetTags: allowedTargetTags,
-      ),
+    if (sheetId.isEmpty) return false;
+    final hashKey = oculumRealtimeSheetDeliveryHashKey(
+      'friend',
+      sheetId,
+      allowedTargetTags,
     );
+    final hash = jsonEncode(sheet);
+    if (realtimeLastSentSheetHashes[hashKey] == hash) {
+      if (manual && mounted) {
+        setState(() {
+          risultato = t(
+            'La scheda condivisa e gia aggiornata per questi amici.',
+            'The shared sheet is already up to date for these friends.',
+          );
+        });
+      }
+      return true;
+    }
 
-    if (manual) {
+    final sent = await service!.sendSharedSheetConfirmed(
+      sheet: sheet,
+      campaignId: activeCampaignId,
+      campaignName: activeCampaignName(),
+      sheetId: sheetId,
+      sheetName: nomeSchedaPersonaggio(sheetIndex),
+      ownerTag: sheetId,
+      senderRole: 'friend',
+      targetAudience: 'friends',
+      fromMaster: false,
+      masterParty: false,
+      targetTags: allowedTargetTags,
+    );
+    if (sent) rememberRealtimeSheetHash(hashKey, hash);
+
+    if (manual && mounted) {
       setState(() {
-        risultato = targetLabel == null
+        risultato = !sent
+            ? t(
+                'Invio scheda fallito: controlla la connessione Realtime e riprova.',
+                'Sheet delivery failed: check the Realtime connection and try again.',
+              )
+            : targetLabel == null
             ? t(
                 'Scheda condivisa agli amici online. Le modifiche future verranno reinviate finche Realtime resta connesso.',
                 'Sheet shared to online friends. Future edits will be resent while Realtime stays connected.',
@@ -1316,17 +2068,73 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         aggiungiLog(risultato);
       });
     }
+    return sent;
   }
 
   void sendRealtimeSharedSheetAt(int index) {
     if (realtimeIsMasterRole) {
       sendRealtimeMasterVisibleTokenAt(index);
     } else {
-      sendRealtimeSheetToStaffAt(index);
+      sendRealtimeSheetToStaffAt(index, force: true, ensureMasterReceipt: true);
     }
   }
 
-  void sendRealtimeSheetToStaffAt(int index) {
+  void sendRealtimeMasterDeathPatchToOwner(
+    int index,
+    Map<String, dynamic> token,
+  ) {
+    final service = realtimeService;
+    if (service?.isConnected != true || !realtimeIsMasterRole) return;
+    if (index < 0 || index >= schedePersonaggio.length) return;
+
+    final source = schedePersonaggio[index];
+    if (!readBoolValue(source['realtimeSharedSheet'])) return;
+    final ownerTag = normalizeOculumFriendTag(
+      '${source['realtimeSourceSheetTag'] ?? source['realtimeOwnerTag'] ?? ''}',
+    );
+    if (ownerTag.isEmpty) return;
+
+    final patch = <String, dynamic>{
+      'id': ownerTag,
+      'sheetTag': ownerTag,
+      'currentHp': '${token['currentHp'] ?? 0}',
+      'currentOculum': '${token['currentOculum'] ?? 0}',
+      'hpTemp': '${token['hpTemp'] ?? 0}',
+      'scudo': '${token['shield'] ?? 0}',
+      'personaggioCaduto': masterInitiativeTokenIsDowned(token),
+      'feriteMorte': readIntValue(token['deathWounds']),
+      'volontaVitale': readIntValue(token['vitalWills']),
+      'realtimeDeathOutcomeIt': '${token['realtimeDeathOutcomeIt'] ?? ''}',
+      'realtimeDeathOutcomeEn': '${token['realtimeDeathOutcomeEn'] ?? ''}',
+      'realtimeDeathOutcomeAt': '${token['realtimeDeathOutcomeAt'] ?? ''}',
+    };
+
+    unawaited(
+      service!.sendSharedSheetConfirmed(
+        sheet: patch,
+        campaignId: '${source['realtimeCampaignId'] ?? activeCampaignId}'
+            .trim(),
+        campaignName:
+            '${source['realtimeCampaignName'] ?? activeCampaignName()}',
+        sheetId: ownerTag,
+        sheetName: nomeSchedaPersonaggio(index),
+        ownerTag: ownerTag,
+        senderRole: 'sheetEdit',
+        targetAudience: 'owner',
+        fromMaster: true,
+        masterParty: true,
+        targetTags: <String>[ownerTag],
+      ),
+    );
+  }
+
+  void sendRealtimeSheetToStaffAt(
+    int index, {
+    bool force = false,
+    bool ensureMasterReceipt = false,
+    String? deliveryId,
+    int attempt = 1,
+  }) {
     final service = realtimeService;
     if (service?.isConnected != true || !canShareRealtimeSheetToStaff) return;
     if (index < 0 || index >= schedePersonaggio.length) return;
@@ -1342,21 +2150,48 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       '${sheet['sheetTag'] ?? sheet['id'] ?? sheetTagAt(index)}',
     );
     if (sheetId.isEmpty) return;
-    if (!shouldSendRealtimeSheetHash('staff:$sheetId', sheet)) return;
+    final hashKey = 'staff:$sheetId';
+    final hash = jsonEncode(sheet);
+    if (!force && realtimeLastSentSheetHashes[hashKey] == hash) return;
+    rememberRealtimeSheetHash(hashKey, hash);
+
+    final waitForMasterAck = ensureMasterReceipt || realtimeHasMasterOnline;
+    final activeDeliveryId = waitForMasterAck
+        ? (deliveryId ?? newRealtimeSheetDeliveryId(sheetId))
+        : '';
+    if (waitForMasterAck && activeDeliveryId.isNotEmpty) {
+      watchRealtimeMasterAck(
+        deliveryId: activeDeliveryId,
+        sheetId: sheetId,
+        attempt: attempt,
+      );
+    }
 
     unawaited(
-      service!.sendSharedSheet(
-        sheet: sheet,
-        campaignId: activeCampaignId,
-        campaignName: activeCampaignName(),
-        sheetId: sheetId,
-        sheetName: nomeSchedaPersonaggio(index),
-        ownerTag: sheetId,
-        senderRole: role,
-        targetAudience: role == 'coMaster' ? 'master' : 'master_coMaster',
-        fromMaster: false,
-        masterParty: false,
-      ),
+      service!
+          .sendSharedSheetConfirmed(
+            sheet: sheet,
+            campaignId: activeCampaignId,
+            campaignName: activeCampaignName(),
+            sheetId: sheetId,
+            sheetName: nomeSchedaPersonaggio(index),
+            ownerTag: sheetId,
+            senderRole: role,
+            targetAudience: role == 'coMaster' ? 'master' : 'master_coMaster',
+            fromMaster: false,
+            masterParty: false,
+            deliveryId: activeDeliveryId,
+          )
+          .then((sent) {
+            if (!mounted || sent) return;
+            if (activeDeliveryId.isNotEmpty) {
+              watchRealtimeMasterAck(
+                deliveryId: activeDeliveryId,
+                sheetId: sheetId,
+                attempt: attempt,
+              );
+            }
+          }),
     );
   }
 
@@ -1542,27 +2377,30 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     required int roll,
     required int bonus,
     required int total,
-  }) async {
-    if (!realtimeIsMasterRole) {
+  }) {
+    return realtimeDiceConsentQueue.enqueue('dice-consent', () async {
+      if (!mounted) return;
+      if (!realtimeIsMasterRole) {
+        sendRealtimeDiceRoll(
+          label: label,
+          roll: roll,
+          bonus: bonus,
+          total: total,
+        );
+        return;
+      }
+
+      final canShowPublic = await confirmMasterPublicDiceRoll();
+      if (!canShowPublic) return;
+
       sendRealtimeDiceRoll(
         label: label,
         roll: roll,
         bonus: bonus,
         total: total,
+        forceMasterVisible: true,
       );
-      return;
-    }
-
-    final canShowPublic = await confirmMasterPublicDiceRoll();
-    if (!canShowPublic) return;
-
-    sendRealtimeDiceRoll(
-      label: label,
-      roll: roll,
-      bonus: bonus,
-      total: total,
-      forceMasterVisible: true,
-    );
+    });
   }
 
   Future<void> apriSchedaRealtimeCondivisa(
@@ -2013,13 +2851,46 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Realtime Oculum',
-            style: TextStyle(
-              color: Colors.greenAccent,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Realtime Oculum',
+                  style: TextStyle(
+                    color: Colors.greenAccent,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              PopupMenuButton<String>(
+                tooltip: t('Azioni dungeon online', 'Online Dungeon actions'),
+                color: backgroundMidColor,
+                icon: Icon(Icons.more_vert, color: primaryColor),
+                onSelected: (value) {
+                  if (value == 'join') {
+                    unawaited(showRealtimeDungeonJoinPicker());
+                  }
+                  if (value == 'open') {
+                    _openDungeonMiniGame(openOnlinePanel: true);
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'join',
+                    enabled: realtimeConnected,
+                    child: Text(t('Unisciti alla run', 'Join a run')),
+                  ),
+                  PopupMenuItem(
+                    value: 'open',
+                    enabled: realtimeConnected,
+                    child: Text(
+                      t('Apri Dungeon online', 'Open Online Dungeon'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           smallInfoText(
@@ -2140,12 +3011,46 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                 icon: const Icon(Icons.notes),
                 label: Text(t('Log test', 'Test log')),
               ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: tertiaryColor,
+                  foregroundColor: Colors.black,
+                ),
+                onPressed: realtimeConnected
+                    ? () => _openDungeonMiniGame(openOnlinePanel: true)
+                    : null,
+                icon: const Icon(Icons.sports_martial_arts),
+                label: Text(t('Dungeon online', 'Online Dungeon')),
+              ),
             ],
           ),
           const SizedBox(height: 12),
           smallInfoText(
             connectedLabel,
             color: realtimeConnected ? Colors.greenAccent : tertiaryColor,
+          ),
+          const SizedBox(height: 14),
+          Text(
+            t('Chat sessione', 'Session chat'),
+            style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          campoTesto(
+            label: t('Messaggio', 'Message'),
+            controller: realtimeChatController,
+            numero: false,
+            helper: realtimeConnected
+                ? t('Invia al party realtime.', 'Send to realtime party.')
+                : t('Connettiti per inviare.', 'Connect to send.'),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: realtimeConnected ? sendRealtimeChatMessage : null,
+              icon: const Icon(Icons.send),
+              label: Text(t('Invia chat', 'Send chat')),
+            ),
           ),
           const SizedBox(height: 14),
           Text(

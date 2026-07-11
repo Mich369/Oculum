@@ -3,7 +3,10 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 extension _OculumHomeDialogsQuickEdit on _OculumHomePageState {
-  void _openDungeonMiniGame() {
+  void _openDungeonMiniGame({
+    bool openOnlinePanel = false,
+    Map<String, dynamic>? initialOnlineSession,
+  }) {
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -36,9 +39,66 @@ extension _OculumHomeDialogsQuickEdit on _OculumHomePageState {
           },
           onThemeUnlocked: unlockColorThemeFromDungeon,
           initialUnlockedThemePresetIds: [
-            for (final preset in colorPresets)
+            for (final preset in orderedColorPresets())
               if (isColorThemeUnlocked(preset.id)) preset.id,
           ],
+          availableThemeUnlocks: [
+            for (final preset in orderedColorPresets())
+              if (preset.id != 'classic_reliquary' &&
+                  !oculumThemeStartsUnlocked(preset.id))
+                {
+                  'id': preset.id,
+                  'nameIt': preset.nameIt,
+                  'nameEn': preset.nameEn,
+                  'color': preset.tertiary,
+                },
+          ],
+          hoshyLevelFiveUnlocked: schedePersonaggio.any((sheet) {
+            final name = cleanUiText(
+              '${sheet['nome'] ?? ''}',
+            ).trim().toLowerCase();
+            return name == 'hoshy' && readIntValue(sheet['livello']) >= 5;
+          }),
+          hiresSheetAvailable: schedePersonaggio.any((sheet) {
+            final name = cleanUiText(
+              '${sheet['nome'] ?? ''}',
+            ).trim().toLowerCase();
+            return name == 'hires';
+          }),
+          hiresLevelFiveAvailable: schedePersonaggio.any((sheet) {
+            final name = cleanUiText(
+              '${sheet['nome'] ?? ''}',
+            ).trim().toLowerCase();
+            return name == 'hires' && readIntValue(sheet['livello']) >= 5;
+          }),
+          openOnlinePanelInitially: openOnlinePanel,
+          initialOnlineSession: initialOnlineSession,
+          realtimeBridge: OculumDungeonRealtimeBridge(
+            isConnected: () => realtimeService?.isConnected == true,
+            localPlayerId: () {
+              final tag = sheetTagAt(schedaCorrente).trim();
+              return tag.isEmpty ? realtimeDisplayName() : tag;
+            },
+            playerIds: () => <String>{
+              sheetTagAt(schedaCorrente),
+              ...realtimeUsers.map(
+                (user) =>
+                    '${user['activeSheetTag'] ?? user['playerName'] ?? ''}',
+              ),
+            }.where((id) => id.trim().isNotEmpty).toList(),
+            send: (payload) {
+              final service = realtimeService;
+              if (service?.isConnected != true) return;
+              unawaited(
+                service!.sendDungeonShared(<String, dynamic>{
+                  ...payload,
+                  'campaignId': activeCampaignId,
+                  'campaignName': activeCampaignName(),
+                }),
+              );
+            },
+            messages: realtimeDungeonMessage,
+          ),
         );
       },
     );
@@ -324,6 +384,82 @@ extension _OculumHomeDialogsQuickEdit on _OculumHomePageState {
                   setLocalState(() {});
                   programmaSalvataggio();
                 },
+              );
+            }
+
+            Widget quickCounter({
+              required String label,
+              required String value,
+              required VoidCallback onMinus,
+              required VoidCallback onPlus,
+            }) {
+              return Row(
+                children: [
+                  SizedBox(
+                    width: compact ? 86 : 110,
+                    child: Text(
+                      label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontSize: compact ? 12.5 : null,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    constraints: BoxConstraints.tightFor(
+                      width: compact ? 34 : 44,
+                      height: compact ? 34 : 44,
+                    ),
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      setState(onMinus);
+                      setLocalState(() {});
+                      programmaSalvataggio();
+                    },
+                    icon: const Icon(
+                      Icons.remove_circle,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      height: compact ? 38 : 44,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: tertiaryColor.withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: Text(
+                        value,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: compact ? 14 : null,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    constraints: BoxConstraints.tightFor(
+                      width: compact ? 34 : 44,
+                      height: compact ? 34 : 44,
+                    ),
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      setState(onPlus);
+                      setLocalState(() {});
+                      programmaSalvataggio();
+                    },
+                    icon: Icon(Icons.add_circle, color: tertiaryColor),
+                  ),
+                ],
               );
             }
 

@@ -2,6 +2,87 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+bool oculumShouldApplyHalfResourceFatigue({
+  required int before,
+  required int after,
+  required int maximum,
+}) {
+  if (maximum <= 0 || after >= before) return false;
+  final threshold = (maximum / 2).floor();
+  return before > threshold && after <= threshold;
+}
+
+int oculumFatigueRollPenalty({
+  required int ash,
+  required int grade,
+  bool suppressPenalty = false,
+}) {
+  if (suppressPenalty) return 0;
+  final normalizedGrade = grade < 0 ? 0 : grade;
+  final normalizedAsh = ash < 0 ? 0 : ash;
+  final excessAsh = normalizedAsh - (3 + normalizedGrade);
+  return excessAsh > 0 ? -excessAsh : 0;
+}
+
+int oculumStatRollBonus({
+  required int statValue,
+  required int levelGradeBonus,
+  required int quickBonus,
+  int extraBonus = 0,
+}) {
+  return statValue ~/ 2 + levelGradeBonus + quickBonus + extraBonus;
+}
+
+Iterable<String> oculumActiveTitleFormulaTexts(OculumTitle title) sync* {
+  yield title.buff;
+  yield title.puntoCieco;
+
+  if (title.evoluto && title.openAttiva) {
+    yield title.openBuff;
+  }
+
+  for (final open in title.openExtra) {
+    if (open.attiva) yield open.openBuff;
+  }
+}
+
+int oculumHiddenEyeDerivedBonusFor({
+  required String id,
+  required int resilienza,
+  required int volonta,
+  required int materia,
+  required int oculum,
+  required int karma,
+}) {
+  switch (id) {
+    case 'velo':
+    case 'inganno':
+    case 'riflessi':
+    case 'crafting':
+    case 'riparazioni':
+      return materia ~/ 2;
+    case 'furbizia':
+    case 'strategia':
+    case 'sopravvivenza':
+    case 'medicina':
+      return resilienza ~/ 2;
+    case 'forza':
+    case 'eco':
+    case 'crepa':
+    case 'pressione':
+      return volonta ~/ 2;
+    case 'nodo':
+      return karma;
+    case 'percezione':
+    case 'sussurro':
+      return oculum ~/ 2;
+    case 'manifestazione_potere':
+      return max(materia, oculum) ~/ 2;
+    default:
+      return 0;
+  }
+}
+
 extension _OculumHomeCalculations on _OculumHomePageState {
   Iterable<OculumTitle> get titoliCalcolabili sync* {
     yield* titoli;
@@ -1258,16 +1339,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   Iterable<String> activeTitleQuickTexts(OculumTitle titolo) sync* {
-    yield titolo.buff;
-
-    if (titolo.evoluto && titolo.openAttiva) {
-      yield titolo.openBuff;
-    }
-
-    for (final open in titolo.openExtra) {
-      if (!open.attiva) continue;
-      yield open.openBuff;
-    }
+    yield* oculumActiveTitleFormulaTexts(titolo);
   }
 
   Map<String, int> detectedTitleQuickCommands(OculumTitle titolo) {
@@ -1276,6 +1348,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     void add(String text) => addTitleQuickCommands(detected, text);
 
     add(titolo.buff);
+    add(titolo.puntoCieco);
     add(titolo.openBuff);
 
     for (final open in titolo.openExtra) {
@@ -1849,6 +1922,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     currentOculumController.text = max(0, currentOculum() - spent).toString();
     oculumTiroController.text = '0';
+    invalidateHiddenEyeDerivedCaches();
     scheduleRealtimeOculumChanged();
     programmaSalvataggio();
     return (spent: spent, bonus: spent * 3);
@@ -1895,6 +1969,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final massimo = currentStatNaturalControllerMax('oculum');
     final current = resetToMax ? massimo : currentOculum();
     currentOculumController.text = current.toString();
+    invalidateHiddenEyeDerivedCaches();
   }
 
   void syncCurrentStatsToMax({
@@ -1922,6 +1997,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     }
 
     syncCurrentOculumToMax(resetToMax: resetOculumToMax);
+    invalidateHiddenEyeDerivedCaches();
   }
 
   void recuperaStatAttuale(TextEditingController controller, int massimo) {
@@ -1948,6 +2024,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     currentOculumController.text = currentStatNaturalControllerMax(
       'oculum',
     ).toString();
+    invalidateHiddenEyeDerivedCaches();
   }
 
   void recuperaStatsAttualiConRiposoBreve() {
@@ -1969,6 +2046,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       currentOculumController,
       currentStatNaturalControllerMax('oculum'),
     );
+    invalidateHiddenEyeDerivedCaches();
   }
 
   void applicaBonusAttuali({
@@ -1978,28 +2056,38 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     int oculum = 0,
     int segno = 1,
   }) {
+    var changed = false;
     if (resilienza != 0) {
       final before = currentResilienza();
       final next = before + resilienza * segno;
       final appliedDelta = next - before;
       currentResilienzaController.text = next.toString();
       rimarginaHpDaAumentoResilienza(appliedDelta);
+      changed = changed || appliedDelta != 0;
     }
 
     if (volonta != 0) {
+      final before = currentVolonta();
       currentVolontaController.text = (currentVolonta() + volonta * segno)
           .toString();
+      changed = changed || before != currentVolonta();
     }
 
     if (materia != 0) {
+      final before = currentMateria();
       currentMateriaController.text = (currentMateria() + materia * segno)
           .toString();
+      changed = changed || before != currentMateria();
     }
 
     if (oculum != 0) {
+      final before = currentOculum();
       currentOculumController.text = (currentOculum() + oculum * segno)
           .toString();
+      changed = changed || before != currentOculum();
     }
+
+    if (changed) invalidateHiddenEyeDerivedCaches();
   }
 
   void rimarginaHpDaAumentoResilienza(int delta) {
@@ -2260,8 +2348,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         rimarginaHpDaAumentoResilienza(appliedDelta);
       }
       final massimo = statMassimo(key);
+      final applyHalfResourceFatigue = oculumShouldApplyHalfResourceFatigue(
+        before: before,
+        after: next,
+        maximum: massimo,
+      );
       String? cenereMessage;
-      if (appliedDelta < 0 && massimo > 0 && next <= (massimo / 2).floor()) {
+      if (applyHalfResourceFatigue) {
         cenereMessage = modificaCenereControllata(1);
       }
 
@@ -2273,9 +2366,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
             : '$label attuale: $appliedDelta ($total/$massimo).';
         if (appliedDelta < 0 && cenereMessage != null) {
           risultato += '\n$cenereMessage';
-        } else if (appliedDelta < 0 &&
-            massimo > 0 &&
-            next <= (massimo / 2).floor()) {
+        } else if (applyHalfResourceFatigue) {
           risultato += '\nCenere/Fatica +1: risorsa usata sotto il 50%.';
         }
         aggiungiLog(risultato);
@@ -2357,8 +2448,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int malusFaticaTiri() {
-    if (statoForzaRimuoveMalus()) return 0;
-    return -max(0, leggiNumero(cenereController));
+    return oculumFatigueRollPenalty(
+      ash: leggiNumero(cenereController),
+      grade: leggiNumero(gradoController),
+      suppressPenalty: statoForzaRimuoveMalus(),
+    );
   }
 
   int tiroGlobaleBonus() {
@@ -2534,6 +2628,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
             'Carisma, leadership, intimidazione. Bonus base: Volonta/2.',
       ),
       HiddenEyeStat(
+        id: 'forza',
+        nome: 'Forza',
+        descrizione: 'Potenza fisica. Bonus base: Volonta/2.',
+      ),
+      HiddenEyeStat(
         id: 'nodo',
         nome: 'Nodo',
         descrizione: 'Legami, diplomazia, alleanze. Bonus/malus: Karma totale.',
@@ -2634,6 +2733,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           return existing;
         }),
       );
+    invalidateHiddenEyeDerivedCaches(notifyCards: false);
   }
 
   bool hiddenEyeDefaultsReady() {
@@ -2655,31 +2755,54 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   String hiddenEyeStatGroup(String id) {
+    final cached = hiddenEyeStatGroupCache[id];
+    if (cached != null) return cached;
+
+    late final String group;
     switch (id) {
       case 'furbizia':
       case 'strategia':
       case 'sopravvivenza':
       case 'medicina':
-        return 'resilienza';
+        group = 'resilienza';
+        break;
       case 'eco':
+      case 'forza':
       case 'crepa':
       case 'pressione':
-        return 'volonta';
+        group = 'volonta';
+        break;
       case 'velo':
       case 'inganno':
       case 'riflessi':
       case 'crafting':
       case 'riparazioni':
-        return 'materia';
+        group = 'materia';
+        break;
       case 'nodo':
       case 'percezione':
       case 'sussurro':
-        return 'oculum';
+        group = 'oculum';
+        break;
       case 'manifestazione_potere':
-        return materiaTotale() >= oculumTotale() ? 'materia' : 'oculum';
+        group = materiaTotale() >= oculumTotale() ? 'materia' : 'oculum';
+        break;
       default:
-        return 'materia';
+        group = 'materia';
     }
+    hiddenEyeStatGroupCache[id] = group;
+    return group;
+  }
+
+  List<HiddenEyeStat> hiddenEyeStatsForGroup(String group) {
+    final cached = hiddenEyeStatsByGroupCache[group];
+    if (cached != null) return cached;
+
+    final stats = hiddenEyeStats
+        .where((stat) => hiddenEyeStatGroup(stat.id) == group)
+        .toList(growable: false);
+    hiddenEyeStatsByGroupCache[group] = stats;
+    return stats;
   }
 
   String hiddenEyeGroupLabel(String group) {
@@ -2720,37 +2843,54 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     }
   }
 
+  Map<String, int> hiddenEyeDerivedStatsSnapshot() {
+    final cached = hiddenEyeDerivedStatsCache;
+    if (cached != null) return cached;
+
+    final snapshot = <String, int>{
+      'resilienza': resilienzaTotale(),
+      'volonta': volontaTotale(),
+      'materia': materiaTotale(),
+      'oculum': oculumTotale(),
+      'karma': leggiNumero(karmaController),
+    };
+    hiddenEyeDerivedStatsCache = snapshot;
+    return snapshot;
+  }
+
   int hiddenEyeDerivedBonus(String id) {
-    switch (id) {
-      case 'velo':
-      case 'inganno':
-      case 'riflessi':
-      case 'crafting':
-      case 'riparazioni':
-        return materiaTotale() ~/ 2;
-      case 'furbizia':
-      case 'strategia':
-      case 'sopravvivenza':
-      case 'medicina':
-        return resilienzaTotale() ~/ 2;
-      case 'eco':
-      case 'crepa':
-      case 'pressione':
-        return volontaTotale() ~/ 2;
-      case 'nodo':
-        return leggiNumero(karmaController);
-      case 'percezione':
-      case 'sussurro':
-        return oculumTotale() ~/ 2;
-      case 'manifestazione_potere':
-        return max(materiaTotale(), oculumTotale()) ~/ 2;
-      default:
-        return 0;
-    }
+    final cached = hiddenEyeDerivedBonusCache[id];
+    if (cached != null) return cached;
+
+    final stats = hiddenEyeDerivedStatsSnapshot();
+    final bonus = oculumHiddenEyeDerivedBonusFor(
+      id: id,
+      resilienza: stats['resilienza'] ?? 0,
+      volonta: stats['volonta'] ?? 0,
+      materia: stats['materia'] ?? 0,
+      oculum: stats['oculum'] ?? 0,
+      karma: stats['karma'] ?? 0,
+    );
+
+    hiddenEyeDerivedBonusCache[id] = bonus;
+    return bonus;
   }
 
   int hiddenEyeTotal(HiddenEyeStat stat) {
-    return stat.valore + hiddenEyeDerivedBonus(stat.id);
+    final cachedBase = hiddenEyeTotalBaseCache[stat.id];
+    final cachedValue = hiddenEyeTotalValueCache[stat.id];
+    if (cachedBase == stat.valore && cachedValue != null) return cachedValue;
+
+    final total = stat.valore + hiddenEyeDerivedBonus(stat.id);
+    hiddenEyeTotalBaseCache[stat.id] = stat.valore;
+    hiddenEyeTotalValueCache[stat.id] = total;
+    return total;
+  }
+
+  int hiddenEyeStatRollQuickBonus(HiddenEyeStat stat) {
+    if (stat.id == 'nodo') return 0;
+    final key = statRollQuickBonusKey(hiddenEyeStatGroup(stat.id));
+    return key.isEmpty ? 0 : runtimeQuickBonus(key);
   }
 
   String karmaStateLabel() {

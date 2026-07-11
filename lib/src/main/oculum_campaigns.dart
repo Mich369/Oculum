@@ -33,6 +33,9 @@ extension _OculumCampaigns on _OculumHomePageState {
       'masterInitiativeActiveIndex': masterInitiativeActiveIndex,
       'masterInitiativeManualCounter': masterInitiativeManualCounter,
       'masterSessionNotes': masterSessionController.text,
+      'storySessionNotes': storySessionNotes
+          .map((note) => note.toJson())
+          .toList(growable: false),
       'mapMode': mapMode,
       'mapImagePath': mapImagePath,
       'mapImageName': mapImageName,
@@ -40,6 +43,16 @@ extension _OculumCampaigns on _OculumHomePageState {
       'mapNotes': mapNotesController.text,
       'mapSaveSession': mapSaveSession,
       'mapSessionChoiceAsked': mapSessionChoiceAsked,
+      'mapPlayersCanManageOwnToken': mapPlayersCanManageOwnToken,
+      'mapTokenSize': mapTokenSizeController.text,
+      'mapWidthMeters': mapWidthMetersController.text,
+      'mapHeightMeters': mapHeightMetersController.text,
+      'mapFreeTokenMovement': mapFreeTokenMovementController.text,
+      'mapTokenSheetIndex': mapTokenSheetIndex,
+      'localMapTokens': localMapTokens
+          .map((token) => Map<String, dynamic>.from(token))
+          .toList(growable: false),
+      'vttState': captureVttStateJson(),
       'updatedAt': DateTime.now().toIso8601String(),
     };
   }
@@ -98,6 +111,9 @@ extension _OculumCampaigns on _OculumHomePageState {
       'masterInitiativeActiveIndex': 0,
       'masterInitiativeManualCounter': 0,
       'masterSessionNotes': '${data['masterSessionNotes'] ?? ''}',
+      'storySessionNotes': oculumSessionNotesFromJson(
+        data['storySessionNotes'],
+      ).map((note) => note.toJson()).toList(growable: false),
       'mapMode': '${data['mapMode'] ?? 'image'}',
       'mapImagePath': '${data['mapImagePath'] ?? ''}',
       'mapImageName': '${data['mapImageName'] ?? ''}',
@@ -105,6 +121,23 @@ extension _OculumCampaigns on _OculumHomePageState {
       'mapNotes': '${data['mapNotes'] ?? ''}',
       'mapSaveSession': readBoolValue(data['mapSaveSession']),
       'mapSessionChoiceAsked': readBoolValue(data['mapSessionChoiceAsked']),
+      'mapPlayersCanManageOwnToken': readBoolValue(
+        data['mapPlayersCanManageOwnToken'],
+        fallback: true,
+      ),
+      'mapTokenSize': '${data['mapTokenSize'] ?? '64'}',
+      'mapWidthMeters': '${data['mapWidthMeters'] ?? '30'}',
+      'mapHeightMeters': '${data['mapHeightMeters'] ?? '20'}',
+      'mapFreeTokenMovement': '${data['mapFreeTokenMovement'] ?? '6'}',
+      'mapTokenSheetIndex': readIntValue(data['mapTokenSheetIndex']),
+      'localMapTokens': _oculumVttMapList(
+        data['localMapTokens'],
+        maxItems: 1000,
+      ),
+      'vttState': OculumVttState.fromJson(
+        data['vttState'],
+        legacy: data,
+      ).toJson(),
       'updatedAt': DateTime.now().toIso8601String(),
     };
   }
@@ -167,6 +200,9 @@ extension _OculumCampaigns on _OculumHomePageState {
       readIntValue(campaign['masterInitiativeManualCounter']),
     );
     masterSessionController.text = '${campaign['masterSessionNotes'] ?? ''}';
+    storySessionNotes
+      ..clear()
+      ..addAll(oculumSessionNotesFromJson(campaign['storySessionNotes']));
     mapMode = '${campaign['mapMode'] ?? 'image'}' == 'online'
         ? 'online'
         : 'image';
@@ -176,6 +212,30 @@ extension _OculumCampaigns on _OculumHomePageState {
     mapNotesController.text = '${campaign['mapNotes'] ?? ''}';
     mapSaveSession = readBoolValue(campaign['mapSaveSession']);
     mapSessionChoiceAsked = readBoolValue(campaign['mapSessionChoiceAsked']);
+    mapPlayersCanManageOwnToken = readBoolValue(
+      campaign['mapPlayersCanManageOwnToken'],
+      fallback: true,
+    );
+    mapTokenSizeController.text = '${campaign['mapTokenSize'] ?? '64'}';
+    mapWidthMetersController.text = '${campaign['mapWidthMeters'] ?? '30'}';
+    mapHeightMetersController.text = '${campaign['mapHeightMeters'] ?? '20'}';
+    mapFreeTokenMovementController.text =
+        '${campaign['mapFreeTokenMovement'] ?? '6'}';
+    mapTokenSheetIndex = readIntValue(campaign['mapTokenSheetIndex']);
+    final campaignMapTokens = _oculumVttMapList(
+      campaign['localMapTokens'],
+      maxItems: 1000,
+    );
+    localMapTokens
+      ..clear()
+      ..addAll(campaignMapTokens);
+    restoreVttStateFromJson(
+      campaign['vttState'],
+      legacy: <String, dynamic>{
+        ...campaign,
+        'localMapTokens': campaignMapTokens,
+      },
+    );
 
     if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
       schedaCorrente = 0;
@@ -215,6 +275,8 @@ extension _OculumCampaigns on _OculumHomePageState {
       schedePersonaggio
         ..clear()
         ..add(emptySheet);
+      storySessionNotes.clear();
+      resetVttForNewCampaign();
       schedaCorrente = 0;
       caricaStatoDaJson(emptySheet);
       assicuraTagSchede();

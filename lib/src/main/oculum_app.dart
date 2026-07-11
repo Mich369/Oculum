@@ -109,28 +109,37 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader> {
   Future<void> startPreload() async {
     if (selectedRole == null || preloadStarted) return;
     preloadStarted = true;
-    await preloadOculumStartupServices(
-      onProgress: (nextProgress, nextLabel) {
-        if (!mounted) return;
-        setState(() {
-          progress = nextProgress.clamp(0.0, 1.0).toDouble();
-          label = nextLabel;
-        });
-      },
-    );
+    try {
+      await preloadOculumStartupServices(
+        onProgress: (nextProgress, nextLabel) {
+          if (!mounted) return;
+          setState(() {
+            progress = nextProgress.clamp(0.0, 1.0).toDouble();
+            label = nextLabel;
+          });
+        },
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Oculum startup preload recovered: $error\n$stackTrace');
+      if (!mounted) return;
+      setState(() {
+        progress = 0.94;
+        label = 'Avvio in modalita locale...';
+      });
+    }
 
-    await precacheStartupMonsterSprites();
     if (!mounted) return;
     setState(() {
       progress = 1;
       label = 'Apertura scheda...';
     });
-    await Future<void>.delayed(const Duration(milliseconds: 180));
+    await Future<void>.delayed(const Duration(milliseconds: 80));
     if (!mounted) return;
     setState(() => ready = true);
+    unawaited(precacheStartupMonsterSprites(background: true));
   }
 
-  Future<void> precacheStartupMonsterSprites() async {
+  Future<void> precacheStartupMonsterSprites({bool background = false}) async {
     final compactUi = MediaQuery.maybeOf(context)?.size.shortestSide ?? 900;
     final limit = compactUi < 600
         ? _oculumMobileStartupSpritePrecacheLimit
@@ -146,21 +155,23 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader> {
     for (var i = 0; i < total; i++) {
       if (!mounted) return;
       final asset = assets[i];
-      setState(() {
-        progress = (0.88 + (i / total) * 0.10).clamp(0.0, 0.98).toDouble();
-        label = 'Cache sprite essenziali ${i + 1}/$total...';
-      });
+      if (!background && !ready) {
+        setState(() {
+          progress = (0.88 + (i / total) * 0.10).clamp(0.0, 0.98).toDouble();
+          label = 'Cache sprite essenziali ${i + 1}/$total...';
+        });
+      }
       try {
         await precacheImage(
-          ResizeImage.resizeIfNeeded(256, 256, AssetImage(asset)),
+          ResizeImage.resizeIfNeeded(192, 192, AssetImage(asset)),
           context,
         );
       } catch (error) {
         debugPrint('Monster sprite precache skipped for $asset: $error');
       }
-      if (i.isEven) {
-        await Future<void>.delayed(Duration.zero);
-      }
+      await Future<void>.delayed(
+        background || i.isEven ? _oculumStartupFrameYield : Duration.zero,
+      );
     }
   }
 
@@ -172,58 +183,84 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader> {
     final percent = (progress * 100).clamp(0, 100).round();
     return Scaffold(
       backgroundColor: const Color(0xFF050408),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Icon(
-                  Icons.remove_red_eye,
-                  color: Color(0xFFE6D8BD),
-                  size: 48,
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'OCULUM',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFFE6D8BD),
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 8,
-                  color: const Color(0xFFC9A44C),
-                  backgroundColor: const Color(0xFF2A241E),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  '$percent%',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFFC9A44C),
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFFE8DCC2),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+      body: RepaintBoundary(
+        child: DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: <Color>[
+                Color(0xFF07080D),
+                Color(0xFF10121A),
+                Color(0xFF050408),
               ],
+            ),
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Icon(
+                      Icons.remove_red_eye,
+                      color: Color(0xFFE6D8BD),
+                      size: 48,
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      'OCULUM',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFFE6D8BD),
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOutCubic,
+                      tween: Tween<double>(end: progress),
+                      builder: (context, value, _) {
+                        return LinearProgressIndicator(
+                          value: value,
+                          minHeight: 8,
+                          color: const Color(0xFFC9A44C),
+                          backgroundColor: const Color(0xFF2A241E),
+                          borderRadius: BorderRadius.circular(8),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '$percent%',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFFC9A44C),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 140),
+                      child: Text(
+                        label,
+                        key: ValueKey<String>(label),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0xFFE8DCC2),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -234,66 +271,79 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader> {
   Widget startupRoleChoice(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF050408),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 460),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Icon(
-                  Icons.remove_red_eye,
-                  color: Color(0xFFE6D8BD),
-                  size: 54,
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'OCULUM',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[
+              Color(0xFF07080D),
+              Color(0xFF10121A),
+              Color(0xFF050408),
+            ],
+          ),
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Icon(
+                    Icons.remove_red_eye,
                     color: Color(0xFFE6D8BD),
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0,
+                    size: 54,
                   ),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      selectedRole = OculumStartupRole.player;
-                      oculumStartupRole = OculumStartupRole.player;
-                    });
-                    unawaited(startPreload());
-                  },
-                  icon: const Icon(Icons.person),
-                  label: const Text('Player'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE6D8BD),
-                    foregroundColor: const Color(0xFF050408),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'OCULUM',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFFE6D8BD),
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      selectedRole = OculumStartupRole.master;
-                      oculumStartupRole = OculumStartupRole.master;
-                    });
-                    unawaited(startPreload());
-                  },
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Master'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFE6D8BD),
-                    side: const BorderSide(color: Color(0xFFE6D8BD)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        selectedRole = OculumStartupRole.player;
+                        oculumStartupRole = OculumStartupRole.player;
+                      });
+                      unawaited(startPreload());
+                    },
+                    icon: const Icon(Icons.person),
+                    label: const Text('Player'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE6D8BD),
+                      foregroundColor: const Color(0xFF050408),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        selectedRole = OculumStartupRole.master;
+                        oculumStartupRole = OculumStartupRole.master;
+                      });
+                      unawaited(startPreload());
+                    },
+                    icon: const Icon(Icons.auto_awesome),
+                    label: const Text('Master'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFE6D8BD),
+                      side: const BorderSide(color: Color(0xFFE6D8BD)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -11,6 +11,8 @@ import 'oculum_dungeon/monster_book.dart';
 part 'oculum_dungeon/oculum_dungeon_models.dart';
 part 'oculum_dungeon/oculum_dungeon_sprite_painter.dart';
 part 'oculum_dungeon/oculum_dungeon_skin_system.dart';
+part 'oculum_dungeon/oculum_dungeon_realtime_coop.dart';
+part 'oculum_dungeon/oculum_battle.dart';
 
 class OculumDungeonGameDialog extends StatefulWidget {
   const OculumDungeonGameDialog({
@@ -31,6 +33,13 @@ class OculumDungeonGameDialog extends StatefulWidget {
     required this.onReward,
     this.onThemeUnlocked,
     this.initialUnlockedThemePresetIds = const [],
+    this.availableThemeUnlocks = const [],
+    this.hoshyLevelFiveUnlocked = false,
+    this.hiresSheetAvailable = false,
+    this.hiresLevelFiveAvailable = false,
+    this.openOnlinePanelInitially = false,
+    this.initialOnlineSession,
+    this.realtimeBridge,
   });
 
   final bool linguaInglese;
@@ -51,6 +60,13 @@ class OculumDungeonGameDialog extends StatefulWidget {
   final void Function({int obser, int ascensionDust, String? log}) onReward;
   final void Function(String presetId)? onThemeUnlocked;
   final List<String> initialUnlockedThemePresetIds;
+  final List<Map<String, Object?>> availableThemeUnlocks;
+  final bool hoshyLevelFiveUnlocked;
+  final bool hiresSheetAvailable;
+  final bool hiresLevelFiveAvailable;
+  final bool openOnlinePanelInitially;
+  final Map<String, dynamic>? initialOnlineSession;
+  final OculumDungeonRealtimeBridge? realtimeBridge;
 
   @override
   State<OculumDungeonGameDialog> createState() =>
@@ -75,11 +91,13 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   final ScrollController _skinCodexScrollController = ScrollController();
   final Random _random = Random();
   late String playerNameInRun;
+  final _DungeonCoopState dungeonCoop = _DungeonCoopState();
+  int selectedEnemyTargetIndex = -1;
 
   int rasterCacheDimension(
     double logicalPixels, {
     int min = 24,
-    int max = 2048,
+    int max = 1024,
   }) {
     final dpr = MediaQuery.maybeOf(context)?.devicePixelRatio ?? 1.0;
     return (logicalPixels * dpr).clamp(min.toDouble(), max.toDouble()).round();
@@ -502,6 +520,60 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       partnerNameIt: 'Cultista Viola',
       partnerNameEn: 'Purple Cultist',
     ),
+    _CharacterOrigin(
+      id: 'mrmr_snail_curse',
+      nameIt: 'Mrmr',
+      nameEn: 'Mrmr',
+      descIt:
+          'La tua maledizione da lumaca ti ha resa fragile al tocco ma non meno potente. One-shotta ogni nemico, ma ha pochissima vita.',
+      descEn:
+          'Your snail curse has made you fragile to the touch but no less powerful. One-shots every enemy, but has very little life.',
+      spriteKind: 'mrmr_snail',
+      primaryColor: Color(0xFF8E7CFF),
+      hpBonus: 0,
+      shieldBonus: 0,
+      damageBonus: 0,
+      defenseBonus: 0,
+      oculumBonus: 0,
+      partnerNameIt: 'Pipa nel Guscio',
+      partnerNameEn: 'Pipe in the Shell',
+    ),
+    _CharacterOrigin(
+      id: 'kitty_slime_hoshy',
+      nameIt: 'Kitty Slime',
+      nameEn: 'Kitty Slime',
+      descIt:
+          'Kitty Slime morbido come il disegno di Hoshy: moltissima vita, pochi danni e una riproduzione difensiva fino a due copie.',
+      descEn:
+          'A Kitty Slime as soft as Hoshy\'s doodle: huge life, low damage and defensive reproduction up to two copies.',
+      spriteKind: 'kitty_slime',
+      primaryColor: Color(0xFF7CEBFF),
+      hpBonus: 0,
+      shieldBonus: 0,
+      damageBonus: 0,
+      defenseBonus: 1,
+      oculumBonus: 0,
+      partnerNameIt: 'Goccia Miao',
+      partnerNameEn: 'Meow Drop',
+    ),
+    _CharacterOrigin(
+      id: 'aegis_runix_duo',
+      nameIt: 'Aegis e Runix',
+      nameEn: 'Aegis and Runix',
+      descIt:
+          'Due corpi come un solo personaggio: Aegis intercetta il 70% dei colpi con una vita enorme, Runix combatte fragile e viene colpito nel 30% dei casi.',
+      descEn:
+          'Two bodies acting as one character: Aegis intercepts 70% of hits with enormous life, while fragile Runix fights and is hit 30% of the time.',
+      spriteKind: 'aegis_runix',
+      primaryColor: Color(0xFF8FB7FF),
+      hpBonus: 0,
+      shieldBonus: 0,
+      damageBonus: 1,
+      defenseBonus: 2,
+      oculumBonus: 0,
+      partnerNameIt: 'Secondo Corpo Runico',
+      partnerNameEn: 'Second Runic Body',
+    ),
   ];
   late final List<_DungeonArt> _allArts = _generateArts();
   late final List<_EnemyTemplate> _enemies = _generateEnemies();
@@ -511,14 +583,23 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   late final List<_AchievementDef> _achievements = _generateAchievements();
   late final List<_RelicDef> _allRelics = _generateRelics();
   late final List<_TitleDef> _allTitles = _generateTitles();
+  late final List<_OculumBattleDominantDef> _oculumBattleDominants =
+      _generateOculumBattleDominants();
+  late final List<_OculumBattleTroopDef> _oculumBattleTroops =
+      _generateOculumBattleTroops();
 
   bool runActive = false;
   bool inCombat = false;
   bool gameOver = false;
   bool victory = false;
   bool enemyTurnPending = false;
+  final Map<String, _DownedCombatant> downedCombatants =
+      <String, _DownedCombatant>{};
 
-  bool get canUseCombatInput => inCombat && !gameOver && !enemyTurnPending;
+  bool get isPlayerDowned => downedCombatants.containsKey('player');
+  bool isCombatantDowned(String id) => downedCombatants.containsKey(id);
+  bool get canUseCombatInput =>
+      inCombat && !gameOver && !enemyTurnPending && !isPlayerDowned;
 
   int runCount = 0;
   int room = 0;
@@ -533,6 +614,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   int playerShield = 0;
   int playerOculumShield = 0;
   int playerOculumShieldMax = 0;
+  bool playerPartialAwakeningTriggered = false;
   int dungeonKarma = 0;
 
   int dungeonLevel = 0;
@@ -568,6 +650,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   String enemyElementId = 'neutral';
 
   final List<_EnemyInstance> enemyParty = [];
+  final Map<String, int> enemySkillCooldowns = {};
   final List<String> defeatedEnemyNamesIt = [];
   final List<String> defeatedEnemyNamesEn = [];
   int defeatedEnemyPowerTotal = 0;
@@ -611,6 +694,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   int artTechniqueCooldown = 0;
   int artTechniqueUses = 0;
+  int oculumSkillActionsThisTurn = 0;
+  int oculumSkillTurnScheduleToken = 0;
   int drownedSummonTurns = 0;
   int evonestProof = 0;
   int asherContractUses = 0;
@@ -652,6 +737,13 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   int vervainBuffFloor = 0;
   int skeletonHandsHp = 0;
   int skeletonHandsMaxHp = 0;
+  int necromancyStaffHitCount = 0;
+  int undeadSkullTurnCounter = 0;
+  final List<int> necromancySkullHp = <int>[];
+  bool undeadFormActive = false;
+  bool undeadRebirthUsedThisRun = false;
+  int undeadRebirthCooldownRuns = 0;
+  bool mouseKeyFormActive = false;
   int cipoSerpentHp = 0;
   int cipoSerpentMaxHp = 0;
   int floralGuardCharges = 0;
@@ -666,6 +758,15 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   int pawnShield = 0;
   int pawnVolonta = 20;
   int pawnMateria = 15;
+  int pawnExtraCopies = 0;
+  int pawnLastSpawnFloor = 0;
+  int kittySlimeCopies = 0;
+  List<int> kittySlimeCopyHp = <int>[];
+  int aegisHp = 0;
+  int aegisMaxHp = 0;
+  int aegisShield = 0;
+  int runixHp = 0;
+  int runixMaxHp = 0;
   int posteaEliteGuardHp = 0;
   int posteaEliteGuardMaxHp = 0;
   int posteaEliteGuardShield = 0;
@@ -693,10 +794,24 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   int combo = 0;
   int killStreak = 0;
   int roomsWithoutDamage = 0;
+  int roomsSinceCombatEncounter = 0;
   int fightsSinceTavernRest = 0;
   int consecutivePlayerCritsThisFight = 0;
 
   bool reactionAvailable = true;
+  bool counterattackReady = false;
+  bool autoModeEnabled = false;
+  bool autoModeStepQueued = false;
+  bool autoModeActing = false;
+  int autoPrefExplore = 0;
+  int autoPrefRest = 0;
+  int autoPrefAttackVc = 0;
+  int autoPrefAttackCm = 0;
+  int autoPrefAoe = 0;
+  int autoPrefDefend = 0;
+  int autoPrefCounter = 0;
+  int autoPrefShieldStyle = 0;
+  int autoPrefAttackStyle = 0;
   bool secondChanceUsed = false;
   bool moonSecondChance = false;
   bool mapRevealed = false;
@@ -733,6 +848,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   final Set<int> randomTitleFloorRewardsClaimed = {};
   final Set<int> titleChoiceRoomsClaimed = {};
   final Set<String> gradeEventsSeenThisRun = {};
+  final Set<String> guestCharacterOriginsEncountered = <String>{};
+  bool hiresEncounteredThisRun = false;
   final Map<String, List<String>> artSkillChoices = {};
   final Map<String, _ArtSkillProgress> artSkillProgress = {};
 
@@ -759,6 +876,63 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   final Set<String> weakNpcRunEncounteredIds = {};
   final Set<int> earlyDustRoomsClaimed = {};
 
+  bool showOculumBattle = false;
+  bool oculumBattleActive = false;
+  bool oculumBattleFinished = false;
+  bool oculumBattleVictory = false;
+  int oculumBattleTurn = 0;
+  int oculumBattleDominantHp = 0;
+  int oculumBattleEnemyDominantHp = 0;
+  String oculumBattleSelectedDominantId = 'noctis';
+  String oculumBattleEnemyDominantId = 'eiva';
+  final Set<String> oculumBattleDraftTroopIds = <String>{
+    'first_strong_archers',
+    'first_lancers',
+    'first_squires',
+    'shadow_knights',
+    'black_assassins',
+    'grave_vanguard',
+  };
+  final Set<String> unlockedOculumBattleDominantIds = <String>{
+    'noctis',
+    'eiva',
+    'first_melee_lord',
+    'first_balanced_lord',
+    'first_ranged_lord',
+  };
+  final Set<String> unlockedOculumBattleTroopIds = <String>{
+    'first_strong_archers',
+    'first_lancers',
+    'first_squires',
+    'shadow_knights',
+    'black_assassins',
+    'grave_vanguard',
+  };
+  final Set<String> unlockedOculumBattlePetIds = <String>{'duelist_candle'};
+  final Map<String, int> oculumBattleCardLevels = <String, int>{};
+  final Map<String, int> oculumBattleCardMastery = <String, int>{};
+  final Map<String, int> oculumBattleCardCopies = <String, int>{};
+  final Map<String, int> oculumBattleBotMemory = <String, int>{};
+  final Set<String> unlockedOculumBattleHeroicCardIds = <String>{};
+  final Set<String> equippedOculumBattleTitleIds = <String>{'noctis'};
+  final Set<String> revealedOculumBattleTitleIds = <String>{};
+  final Set<String> oculumBattleActivatedTitleIds = <String>{};
+  final Map<String, int> oculumBattleArtUses = <String, int>{};
+  String oculumBattleSelectedArtId = 'oculum_art';
+  String? oculumBattleGraduatedSlotCardId;
+  String? oculumBattleHeroicSlotCardId;
+  int oculumBattleDefiledBar = 0;
+  int oculumBattleEvolutionPrinciples = 0;
+  int oculumBattleWins = 0;
+  bool oculumBattleFirstWinPackClaimed = false;
+  bool oculumBattleTrainingMode = false;
+  String oculumBattleArenaId = 'grave_courtyard';
+  String oculumBattleLastRewardIt = '';
+  String oculumBattleLastRewardEn = '';
+  final List<_OculumBattleUnit> oculumBattleAllies = <_OculumBattleUnit>[];
+  final List<_OculumBattleUnit> oculumBattleEnemies = <_OculumBattleUnit>[];
+  final List<String> oculumBattleLog = <String>[];
+
   bool showDungeonDetails = false;
   bool showEventChoices = true;
   String choicePanelMode = 'event';
@@ -766,7 +940,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   bool showLogPanel = false;
   bool showArtBoard = false;
   bool showWeaponBoard = false;
-  bool showSpritePanel = true;
+  bool showSpritePanel = false;
   bool showSpriteCodex = false;
   bool classicCombatView = false;
   bool showCombatHudDetails = false;
@@ -782,6 +956,20 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   int trapFocusCharges = 0;
   int trapBestCombo = 0;
   int trapCurrentCombo = 0;
+  bool guardPunchMiniGameActive = false;
+  int guardPunchIndex = 0;
+  int guardPunchTotal = 0;
+  int guardPunchPerfects = 0;
+  int guardPunchGrazes = 0;
+  int guardPunchMisses = 0;
+  int guardPunchTravelMs = 1200;
+  DateTime? guardPunchStartedAt;
+  Timer? guardPunchTimer;
+  bool _permanentProgressSaveInFlight = false;
+  bool _permanentProgressSaveQueued = false;
+  final List<int> mirrorSigilPattern = <int>[];
+  int mirrorSigilStep = 0;
+  bool mirrorSigilMiniGameActive = false;
   bool oculianAllianceActive = false;
   bool get hasOculianPact {
     final originId = activeCharacterOrigin?.id;
@@ -800,7 +988,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   int posteaScientistTurnCounter = 0;
   bool posteaScientistEnhanced = false;
   bool monsterVillageFightActive = false;
+  bool mourningMotherMinibossActive = false;
   final Set<String> selectedRunArtIds = {};
+  final Set<String> runWeaponIds = {};
+  final Set<String> runCostumeIds = {};
+  final Set<String> queuedRunNpcIds = {};
+  final Set<String> manuallyRemovedRunNpcIds = {};
   int trapRevealedStep = -1;
   final List<String> quickTileOrder = [
     'party',
@@ -815,11 +1008,13 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   bool merchantActionUsedThisRoom = false;
   bool blacksmithActionUsedThisRoom = false;
+  int blacksmithActionsUsedThisRoom = 0;
   bool dropActionUsedThisRoom = false;
   bool restActionUsedThisRoom = false;
   bool tavernMealUsedThisRoom = false;
   bool tavernMerchantActionUsedThisRoom = false;
   bool tavernBlacksmithActionUsedThisRoom = false;
+  int tavernBlacksmithActionsUsedThisRoom = 0;
   bool tavernSleepUsedThisRoom = false;
 
   int oculumSpento = 0;
@@ -1151,6 +1346,22 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       critBonus: 0,
       elementId: 'neutral',
     ),
+    _RunCostume(
+      id: 'cuore_di_ricambio_sbagliato',
+      nameIt: 'Cuore di Ricambio Sbagliato',
+      nameEn: 'Wrong Spare Heart',
+      descIt:
+          'Costume medico da dungeon: ti riduce pesantemente la vita massima, ma concede una Rinascita e rigenera da 20 a 150 HP a ogni turno finché lo indossi.',
+      descEn:
+          'Dungeon medical costume: heavily lowers max HP, but grants one Rebirth and regenerates 20 to 150 HP each turn while worn.',
+      hpBonus: 0,
+      shieldBonus: 0,
+      defenseBonus: 0,
+      damageBonus: 2,
+      oculumBonus: 1,
+      critBonus: 4,
+      elementId: 'blood',
+    ),
   ];
 
   static const List<_StarterWeapon> _starterWeapons = [
@@ -1213,6 +1424,36 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       oculumCharges: 2,
       elementId: 'moon',
       unlockedByDefault: true,
+    ),
+    _StarterWeapon(
+      id: 'necromancy_staff',
+      nameIt: 'Staffa della Necromanzia',
+      nameEn: 'Necromancy Staff',
+      descIt:
+          '+1 danno osso, +1 Oculum. Fa pochi danni, ma ogni 3 colpi evoca un Teschio: 1/4 dei tuoi danni e 1/10 della tua vita. Si sblocca con una rinascita da non morto.',
+      descEn:
+          '+1 bone damage, +1 Oculum. It deals little damage, but every 3 hits it summons a Skull: 1/4 of your damage and 1/10 of your life. It unlocks through an undead rebirth.',
+      damageBonus: 1,
+      defenseBonus: 0,
+      shieldBonus: 8,
+      oculumBonus: 1,
+      oculumCharges: 0,
+      elementId: 'bone',
+    ),
+    _StarterWeapon(
+      id: 'mouse_key',
+      nameIt: 'Chiave del Topolino',
+      nameEn: 'Little Mouse Key',
+      descIt:
+          'Arma di una rinascita rarissima. Colpisce molto forte, ma chi la impugna resta minuscolo e fragile.',
+      descEn:
+          'Weapon of an exceedingly rare rebirth. It hits very hard, but its bearer stays tiny and fragile.',
+      damageBonus: 6,
+      defenseBonus: -1,
+      shieldBonus: 0,
+      oculumBonus: 0,
+      oculumCharges: 0,
+      elementId: 'earth',
     ),
     _StarterWeapon(
       id: 'hidenas_saber',
@@ -1845,6 +2086,80 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       unlockedByDefault: true,
     ),
     _StarterWeapon(
+      id: 'desk_leg_club',
+      nameIt: 'Mazza Gamba di Banco',
+      nameEn: 'Desk-Leg Club',
+      descIt:
+          '+4 danni, +1 difesa. Un pezzo di banco con gomme secche ancora appiccicate sotto.',
+      descEn:
+          '+4 damage, +1 defense. A desk leg with old dried gum still stuck underneath.',
+      damageBonus: 4,
+      defenseBonus: 1,
+      shieldBonus: 8,
+      oculumBonus: 0,
+      oculumCharges: 0,
+      elementId: 'neutral',
+    ),
+    _StarterWeapon(
+      id: 'chalk_launcher',
+      nameIt: 'Sparagesso',
+      nameEn: 'Chalk Launcher',
+      descIt:
+          '+3 danni, +1 Oculum. Spara polvere bianca negli occhi e scrive male sui muri.',
+      descEn:
+          '+3 damage, +1 Oculum. Shoots white dust into eyes and writes badly on walls.',
+      damageBonus: 3,
+      defenseBonus: 0,
+      shieldBonus: 0,
+      oculumBonus: 1,
+      oculumCharges: 1,
+      elementId: 'oculum',
+    ),
+    _StarterWeapon(
+      id: 'traffic_sign_axe',
+      nameIt: 'Ascia Cartello Stradale',
+      nameEn: 'Road-Sign Axe',
+      descIt:
+          '+5 danni metallo. Un cartello piegato a lama: indica pericolo e poi lo crea.',
+      descEn:
+          '+5 metal damage. A road sign bent into a blade: it warns of danger, then makes it.',
+      damageBonus: 5,
+      defenseBonus: 0,
+      shieldBonus: 6,
+      oculumBonus: 0,
+      oculumCharges: 0,
+      elementId: 'metal',
+    ),
+    _StarterWeapon(
+      id: 'bike_chain_whip',
+      nameIt: 'Frusta Catena da Bici',
+      nameEn: 'Bike-Chain Whip',
+      descIt: '+3 danni, +5 critico, +1 schivata. Fa rumore da strada vuota.',
+      descEn:
+          '+3 damage, +5 critical, +1 dodge. It sounds like an empty street.',
+      damageBonus: 3,
+      defenseBonus: 0,
+      shieldBonus: 0,
+      oculumBonus: 1,
+      oculumCharges: 0,
+      elementId: 'metal',
+    ),
+    _StarterWeapon(
+      id: 'umbrella_sabre',
+      nameIt: 'Sciabola Ombrello',
+      nameEn: 'Umbrella Sabre',
+      descIt:
+          '+2 danni, +2 difesa, +18 Scudo. Si apre contro pioggia, denti e cattive idee.',
+      descEn:
+          '+2 damage, +2 defense, +18 Shield. Opens against rain, teeth and bad ideas.',
+      damageBonus: 2,
+      defenseBonus: 2,
+      shieldBonus: 18,
+      oculumBonus: 0,
+      oculumCharges: 0,
+      elementId: 'water',
+    ),
+    _StarterWeapon(
       id: 'arcane_dash_blade',
       nameIt: 'Lama del Passo Arcano',
       nameEn: 'Arcane Step Blade',
@@ -1928,6 +2243,17 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       }
     }
 
+    initDungeonCoop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final initialSession = widget.initialOnlineSession;
+      if (initialSession != null && !isDungeonCoopActive) {
+        dungeonCoop.pendingSession = Map<String, dynamic>.from(initialSession);
+      } else {
+        _handleDungeonCoopMessage();
+      }
+      if (widget.openOnlinePanelInitially) showDungeonCoopPanel();
+    });
     _loadPermanentProgress();
   }
 
@@ -1948,6 +2274,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   @override
   void dispose() {
+    disposeDungeonCoop();
+    guardPunchTimer?.cancel();
     _skinCodexScrollController.dispose();
     restorePhonePortraitAfterDungeon();
     super.dispose();
@@ -2020,6 +2348,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
       oculumSpento = prefs.getInt('oculumDungeon.oculumSpento') ?? oculumSpento;
       runCount = prefs.getInt('oculumDungeon.runCount') ?? runCount;
+      undeadRebirthCooldownRuns =
+          prefs.getInt('oculumDungeon.undeadRebirthCooldownRuns') ??
+          undeadRebirthCooldownRuns;
       gufusUsedInPreviousRun =
           prefs.getBool('oculumDungeon.gufusUsedInPreviousRun') ??
           gufusUsedInPreviousRun;
@@ -2043,6 +2374,24 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       alliesRecruitedTotal =
           prefs.getInt('oculumDungeon.alliesRecruitedTotal') ??
           alliesRecruitedTotal;
+      autoPrefExplore =
+          prefs.getInt('oculumDungeon.autoPrefExplore') ?? autoPrefExplore;
+      autoPrefRest = prefs.getInt('oculumDungeon.autoPrefRest') ?? autoPrefRest;
+      autoPrefAttackVc =
+          prefs.getInt('oculumDungeon.autoPrefAttackVc') ?? autoPrefAttackVc;
+      autoPrefAttackCm =
+          prefs.getInt('oculumDungeon.autoPrefAttackCm') ?? autoPrefAttackCm;
+      autoPrefAoe = prefs.getInt('oculumDungeon.autoPrefAoe') ?? autoPrefAoe;
+      autoPrefDefend =
+          prefs.getInt('oculumDungeon.autoPrefDefend') ?? autoPrefDefend;
+      autoPrefCounter =
+          prefs.getInt('oculumDungeon.autoPrefCounter') ?? autoPrefCounter;
+      autoPrefShieldStyle =
+          prefs.getInt('oculumDungeon.autoPrefShieldStyle') ??
+          autoPrefShieldStyle;
+      autoPrefAttackStyle =
+          prefs.getInt('oculumDungeon.autoPrefAttackStyle') ??
+          autoPrefAttackStyle;
 
       if (savedTitleLevels != null && savedTitleLevels.isNotEmpty) {
         final pairs = savedTitleLevels.split('|');
@@ -2061,6 +2410,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       for (final npc in activeAllies.where(isSmallNpc)) {
         prepareSmallNpcActions(npc);
       }
+      restoreOculumBattleProgressFromPrefs(prefs);
     });
 
     addLog(t('Progressi permanenti caricati.', 'Permanent progress loaded.'));
@@ -2070,6 +2420,23 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   }
 
   Future<void> _savePermanentProgress() async {
+    if (_permanentProgressSaveInFlight) {
+      _permanentProgressSaveQueued = true;
+      return;
+    }
+
+    _permanentProgressSaveInFlight = true;
+    try {
+      do {
+        _permanentProgressSaveQueued = false;
+        await _writePermanentProgressSnapshot();
+      } while (_permanentProgressSaveQueued);
+    } finally {
+      _permanentProgressSaveInFlight = false;
+    }
+  }
+
+  Future<void> _writePermanentProgressSnapshot() async {
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setStringList(
@@ -2132,6 +2499,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
     await prefs.setInt('oculumDungeon.oculumSpento', oculumSpento);
     await prefs.setInt('oculumDungeon.runCount', runCount);
+    await prefs.setInt(
+      'oculumDungeon.undeadRebirthCooldownRuns',
+      undeadRebirthCooldownRuns.clamp(0, 10).toInt(),
+    );
     await prefs.setBool(
       'oculumDungeon.gufusUsedInPreviousRun',
       gufusUsedInPreviousRun,
@@ -2148,6 +2519,22 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'oculumDungeon.alliesRecruitedTotal',
       alliesRecruitedTotal,
     );
+    await prefs.setInt('oculumDungeon.autoPrefExplore', autoPrefExplore);
+    await prefs.setInt('oculumDungeon.autoPrefRest', autoPrefRest);
+    await prefs.setInt('oculumDungeon.autoPrefAttackVc', autoPrefAttackVc);
+    await prefs.setInt('oculumDungeon.autoPrefAttackCm', autoPrefAttackCm);
+    await prefs.setInt('oculumDungeon.autoPrefAoe', autoPrefAoe);
+    await prefs.setInt('oculumDungeon.autoPrefDefend', autoPrefDefend);
+    await prefs.setInt('oculumDungeon.autoPrefCounter', autoPrefCounter);
+    await prefs.setInt(
+      'oculumDungeon.autoPrefShieldStyle',
+      autoPrefShieldStyle,
+    );
+    await prefs.setInt(
+      'oculumDungeon.autoPrefAttackStyle',
+      autoPrefAttackStyle,
+    );
+    await saveOculumBattleProgressToPrefs(prefs);
   }
 
   List<String> get permanentSaveKeys => const [
@@ -2168,10 +2555,41 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     'oculumDungeon.selectedAllyIds',
     'oculumDungeon.oculumSpento',
     'oculumDungeon.runCount',
+    'oculumDungeon.undeadRebirthCooldownRuns',
     'oculumDungeon.gufusUsedInPreviousRun',
     'oculumDungeon.posteaGufusEventCompleted',
     'oculumDungeon.valleySacrificedInPostea',
     'oculumDungeon.alliesRecruitedTotal',
+    'oculumDungeon.autoPrefExplore',
+    'oculumDungeon.autoPrefRest',
+    'oculumDungeon.autoPrefAttackVc',
+    'oculumDungeon.autoPrefAttackCm',
+    'oculumDungeon.autoPrefAoe',
+    'oculumDungeon.autoPrefDefend',
+    'oculumDungeon.autoPrefCounter',
+    'oculumDungeon.autoPrefShieldStyle',
+    'oculumDungeon.autoPrefAttackStyle',
+    'oculumBattle.unlockedDominantIds',
+    'oculumBattle.unlockedTroopIds',
+    'oculumBattle.unlockedPetIds',
+    'oculumBattle.cardLevels',
+    'oculumBattle.cardMastery',
+    'oculumBattle.cardCopies',
+    'oculumBattle.botMemory',
+    'oculumBattle.unlockedHeroicCardIds',
+    'oculumBattle.equippedTitleIds',
+    'oculumBattle.revealedTitleIds',
+    'oculumBattle.artUses',
+    'oculumBattle.wins',
+    'oculumBattle.firstWinPackClaimed',
+    'oculumBattle.selectedDominantId',
+    'oculumBattle.arenaId',
+    'oculumBattle.selectedArtId',
+    'oculumBattle.defiledBar',
+    'oculumBattle.evolutionPrinciples',
+    'oculumBattle.graduatedSlotCardId',
+    'oculumBattle.heroicSlotCardId',
+    'oculumBattle.deckIds',
   ];
 
   void showDeleteSaveConfirm() {
@@ -3815,9 +4233,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         nameIt: 'Defiled Art di Postea',
         nameEn: 'Postea Defiled Art',
         descIt:
-            'Rarissima. Si sblocca con pagine chiamate Kingi o Ki Korangi e permette di trovare pezzi di Metallo Runico Postea da 1/2 kg.',
+            'Rarissima. Si sblocca con pagine chiamate Kingi o Ki Korangi e usa pezzi di Metallo Runico Postea da 1 a 6 kg.',
         descEn:
-            'Very rare. Unlocked by pages named Kingi or Ki Korangi and enables 1/2 kg Postea Runic Metal pieces.',
+            'Very rare. Unlocked by pages named Kingi or Ki Korangi and uses 1 to 6 kg Postea Runic Metal pieces.',
         effectId: 'defiled_postea_art',
         elementId: 'postea',
         unlockedByDefault: false,
@@ -4148,6 +4566,104 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         defMod: 2,
       ),
       _EnemyTemplate(
+        nameIt: 'Coro delle Facce Spezzate',
+        nameEn: 'Choir of Broken Faces',
+        descIt:
+            'Mostro Follia fantasma. Coro di maschere incrinate: Urlo della Memoria, Eco Follia e Frantuma Volonta.',
+        descEn:
+            'Madness ghost monster. Choir of cracked masks: Memory Wail, Madness Echo and Will Shatter.',
+        elementId: 'madness',
+        hpMod: 4,
+        atkMod: 5,
+        defMod: 2,
+      ),
+      _EnemyTemplate(
+        nameIt: 'Utero di Specchio',
+        nameEn: 'Mirror Womb',
+        descIt:
+            'Mini Boss Follia. Guscio riflettente: copia paure, riflette su critico e chiude il bersaglio in immagini false.',
+        descEn:
+            'Madness mini boss. Reflective shell: copies fears, reflects on criticals and traps targets in false images.',
+        elementId: 'mirror',
+        hpMod: 7,
+        atkMod: 5,
+        defMod: 6,
+        boss: true,
+      ),
+      _EnemyTemplate(
+        nameIt: 'Giullare Ossa-Filo',
+        nameEn: 'Thread-Bone Jester',
+        descIt:
+            'Mostro Follia veloce. Burattino d ossa: risata stunnante, taglio reazioni e scatto appeso.',
+        descEn:
+            'Fast Madness monster. Bone puppet: stunning laugh, reaction cut and hanging dash.',
+        elementId: 'thread',
+        hpMod: 3,
+        atkMod: 6,
+        defMod: 1,
+      ),
+      _EnemyTemplate(
+        nameIt: 'Santo delle Vene di Candela',
+        nameEn: 'Candle-Vein Saint',
+        descIt:
+            'Boss Follia. Cera, aghi e vene accese: marchia il Fato, rigenera orrore e brucia certezze.',
+        descEn:
+            'Madness boss. Wax, needles and lit veins: brands Fate, regenerates horror and burns certainty.',
+        elementId: 'wax_blood',
+        hpMod: 12,
+        atkMod: 8,
+        defMod: 7,
+        boss: true,
+      ),
+      _EnemyTemplate(
+        nameIt: 'Opalus',
+        nameEn: 'Opalus',
+        descIt:
+            'Mostro palustre di opale. Open: trasforma tutto in palude; +10 nelle paludi e riflesso su critico.',
+        descEn:
+            'Opal swamp monster. Open: turns everything into swamp; +10 in swamps and critical reflection.',
+        elementId: 'swamp',
+        hpMod: 5,
+        atkMod: 4,
+        defMod: 5,
+      ),
+      _EnemyTemplate(
+        nameIt: 'Ushrin',
+        nameEn: 'Ushrin',
+        descIt:
+            'Mostro solare piccolo. Ali dorate, armatura nera, colpisce in branco e acceca con lampi brevi.',
+        descEn:
+            'Small solar monster. Golden wings, black armor, attacks in swarms and blinds with short flashes.',
+        elementId: 'solar',
+        hpMod: 2,
+        atkMod: 5,
+        defMod: 1,
+      ),
+      _EnemyTemplate(
+        nameIt: 'Cavaliere Campana Ruggine',
+        nameEn: 'Rust Bell Knight',
+        descIt:
+            'Tank lento. Rintocchi di ruggine rompono difesa e catene trascinano i bersagli vicini.',
+        descEn:
+            'Slow tank. Rust tolls break defense and chains drag nearby targets.',
+        elementId: 'rust',
+        hpMod: 7,
+        atkMod: 4,
+        defMod: 8,
+      ),
+      _EnemyTemplate(
+        nameIt: 'Kitty Slime Errante',
+        nameEn: 'Wandering Kitty Slime',
+        descIt:
+            'Slime puccioso e spesso innocuo. In facile puo non attaccare e reagire alle coccole.',
+        descEn:
+            'Cute and often harmless slime. On easy it may avoid attacking and react to affection.',
+        elementId: 'slime',
+        hpMod: 1,
+        atkMod: -1,
+        defMod: 0,
+      ),
+      _EnemyTemplate(
         nameIt: 'Prince Slime',
         nameEn: 'Prince Slime',
         descIt:
@@ -4200,6 +4716,26 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         boss: true,
       ),
     ]);
+    final existingNames = list.map((enemy) => enemy.nameIt).toSet();
+    for (final monster in monsterBookEntries) {
+      if (!existingNames.add(monster.nameIt)) continue;
+      final hp = monster.stats['hp'] ?? 80;
+      final atk = monster.stats['atk'] ?? 14;
+      final def = monster.stats['def'] ?? 6;
+      list.add(
+        _EnemyTemplate(
+          nameIt: monster.nameIt,
+          nameEn: monster.nameEn,
+          descIt: monster.descIt,
+          descEn: monster.descEn,
+          elementId: monster.elementId,
+          hpMod: (hp / 40).round().clamp(0, 14).toInt(),
+          atkMod: (atk / 8).round().clamp(-1, 10).toInt(),
+          defMod: (def / 8).round().clamp(0, 10).toInt(),
+          boss: monster.isBoss || monster.isMiniBoss,
+        ),
+      );
+    }
     return list;
   }
 
@@ -4915,6 +5451,50 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         role: 'postea_elite_guard',
         elementId: 'postea',
       ),
+      _GoodNpc(
+        id: 'mannaro_il_bullo',
+        nameIt: 'Mannaro il Bullo',
+        nameEn: 'Mannaro the Bully',
+        descIt:
+            'Giovane lupo mannaro con giacca troppo grande e sorriso da corridoio scolastico. Fischia e richiama un Topo da Tasca che combatte con lui: omaggio ai giochi di mostri tascabili, senza copiare nomi o creature.',
+        descEn:
+            'Young werewolf with an oversized jacket and a school-corridor grin. He whistles and calls a Pocket Rat that fights with him: a nod to pocket-monster games without copying names or creatures.',
+        role: 'bully_werewolf',
+        elementId: 'moon',
+      ),
+      _GoodNpc(
+        id: 'cavaliere_del_vaso_crepato',
+        nameIt: 'Cavaliere del Vaso Crepato',
+        nameEn: 'Cracked Pot Knight',
+        descIt:
+            'Un cavaliere minuscolo dentro un vaso ammaccato. Rotola, sbatte, si rialza e prende colpi che nessuno gli aveva chiesto di prendere.',
+        descEn:
+            'A tiny knight inside a dented pot. It rolls, crashes, stands up, and takes hits nobody asked it to take.',
+        role: 'guard',
+        elementId: 'earth',
+      ),
+      _GoodNpc(
+        id: 'cartomante_del_corridoio_storto',
+        nameIt: 'Cartomante del Corridoio Storto',
+        nameEn: 'Crooked Hall Cartomancer',
+        descIt:
+            'Legge carte tutte sbagliate ma utili: scambia un brutto presagio con un buff o una ricarica Oculum.',
+        descEn:
+            'Reads cards that are all wrong yet useful: trades a bad omen for a buff or an Oculum recharge.',
+        role: 'occult',
+        elementId: 'fate',
+      ),
+      _GoodNpc(
+        id: 'ragazza_del_menu_a_turni',
+        nameIt: 'Ragazza del Menu a Turni',
+        nameEn: 'Turn Menu Girl',
+        descIt:
+            'Parla come se il mondo fosse un menu JRPG: ordina il party, chiama i tempi giusti e rende i critici meno timidi.',
+        descEn:
+            'Talks as if the world were a JRPG menu: orders the party, calls timing, and makes critical hits less shy.',
+        role: 'buffer',
+        elementId: 'lightning',
+      ),
 
       _GoodNpc(
         id: 'kooba_glimmer_moralist',
@@ -5069,6 +5649,17 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             'The Novel keeps one extra memory open: a fourth drowned remains briefly.',
         role: 'striker',
         elementId: 'water',
+      ),
+      _GoodNpc(
+        id: 'hires',
+        nameIt: 'Hires',
+        nameEn: 'Hires',
+        descIt:
+            'Pelle pallida, capelli bianchi, occhi cremisi e abiti gotici. Non accetta ordini: entra come alleato IA con il suo spadone e decide da solo quando aprire le fiamme.',
+        descEn:
+            'Pale skin, white hair, crimson eyes and gothic clothes. He accepts no orders: he joins as an AI ally with his greatsword and decides for himself when to open the flames.',
+        role: 'hires_ai',
+        elementId: 'fire',
       ),
     ];
   }
@@ -5875,6 +6466,51 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     return '$posteaRunicMetalKg kg';
   }
 
+  static const int maxBlacksmithActionsPerRoom = 2;
+
+  bool get hasDefiledPosteaArtAccess =>
+      activeArt?.effectId == 'defiled_postea_art' ||
+      selectedRunArtIds.contains('defiled_postea_art') ||
+      unlockedArtIds.contains('defiled_postea_art');
+
+  int get blacksmithActionsLeftThisRoom => max(
+    0,
+    maxBlacksmithActionsPerRoom - blacksmithActionsUsedThisRoom,
+  ).toInt();
+
+  int get tavernBlacksmithActionsLeftThisRoom => max(
+    0,
+    maxBlacksmithActionsPerRoom - tavernBlacksmithActionsUsedThisRoom,
+  ).toInt();
+
+  void resetBlacksmithActionsThisRoom() {
+    blacksmithActionsUsedThisRoom = 0;
+    blacksmithActionUsedThisRoom = false;
+  }
+
+  void spendBlacksmithActionThisRoom() {
+    blacksmithActionsUsedThisRoom = min(
+      maxBlacksmithActionsPerRoom,
+      blacksmithActionsUsedThisRoom + 1,
+    ).toInt();
+    blacksmithActionUsedThisRoom =
+        blacksmithActionsUsedThisRoom >= maxBlacksmithActionsPerRoom;
+  }
+
+  void resetTavernBlacksmithActionsThisRoom() {
+    tavernBlacksmithActionsUsedThisRoom = 0;
+    tavernBlacksmithActionUsedThisRoom = false;
+  }
+
+  void spendTavernBlacksmithActionThisRoom() {
+    tavernBlacksmithActionsUsedThisRoom = min(
+      maxBlacksmithActionsPerRoom,
+      tavernBlacksmithActionsUsedThisRoom + 1,
+    ).toInt();
+    tavernBlacksmithActionUsedThisRoom =
+        tavernBlacksmithActionsUsedThisRoom >= maxBlacksmithActionsPerRoom;
+  }
+
   String principianteNameIt(int level) {
     const names = [
       'Principiante',
@@ -6296,6 +6932,32 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         .toInt();
   }
 
+  bool get pawnAwakenedWithPawnRelic =>
+      activeCharacterOrigin?.id == 'pawn_awakened' &&
+      (activeRelic?.effectId == 'pawn_guardian' || pawnHp > 0);
+
+  void maybeSpawnAwakenedPawnCopiesForFloor() {
+    if (!pawnAwakenedWithPawnRelic || currentFloor < 2 || currentFloor.isOdd) {
+      return;
+    }
+    if (pawnLastSpawnFloor == currentFloor) return;
+    pawnLastSpawnFloor = currentFloor;
+    pawnExtraCopies += 2;
+    pawnHp = max(pawnHp, pawnMaxHp > 0 ? pawnMaxHp : 120).toInt();
+    pawnMaxHp = max(pawnMaxHp, 120).toInt();
+    pawnShield += 14 + currentFloor * 2;
+    textIt +=
+        '\n\nPedina Risvegliata: al piano $currentFloor la Pawn chiama due pedine gemelle. Pedine extra: $pawnExtraCopies.';
+    textEn +=
+        '\n\nAwakened Pawn: on floor $currentFloor the Pawn calls two twin pawns. Extra pawns: $pawnExtraCopies.';
+    addLog(
+      t(
+        'Pedina Risvegliata: +2 Pawn al piano $currentFloor.',
+        'Awakened Pawn: +2 Pawns on floor $currentFloor.',
+      ),
+    );
+  }
+
   int get roomsRemainingInRun => max(0, maxRooms - room);
 
   bool get isInLastSixteenRooms => runActive && roomsRemainingInRun <= 16;
@@ -6363,14 +7025,53 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     final successPressure =
         1.0 + min(0.30, killStreak * 0.025 + dungeonLevel * 0.030);
     final postThirdRunPressure = runCount > 3 ? 1.07 : 1.0;
+    final coopPressure = 1.0 + max(0, dungeonCoop.memberIds.length - 1) * 0.34;
 
     return floorPressure *
         roomPressure *
         sheetPressure *
         successPressure *
         postThirdRunPressure *
+        coopPressure *
         selectedDifficultyMultiplier;
   }
+
+  int get unlockedOculumSkillCount =>
+      artSkillProgress.values.where((progress) => progress.level > 0).length;
+
+  static const List<String> _thousandFiresAttunementSkillIds = <String>[
+    'thousand_fires_emblem_attunement_ember',
+    'thousand_fires_emblem_attunement_cinder',
+    'thousand_fires_emblem_attunement_inferno',
+  ];
+
+  bool get hasThousandFiresAttunement => _thousandFiresAttunementSkillIds.every(
+    (skillId) => (artSkillProgress[skillId]?.level ?? 0) > 0,
+  );
+
+  int get thousandFiresOculumSkillCount =>
+      activeOculumSkillIds().length +
+      (hasThousandFiresAttunement
+          ? _thousandFiresAttunementSkillIds.length
+          : 0);
+
+  bool get canAttuneThousandFires => activeOculumSkillIds().length >= 9;
+
+  void attuneThousandFires() {
+    for (final skillId in _thousandFiresAttunementSkillIds) {
+      final progress = artSkillProgress.putIfAbsent(
+        skillId,
+        () => _ArtSkillProgress(skillId: skillId),
+      );
+      progress.level = max(progress.level, 1).toInt();
+    }
+  }
+
+  double get coopEnemyHpMultiplier =>
+      1.0 + max(0, dungeonCoop.memberIds.length - 1) * 0.45;
+
+  double get miniGameDifficultyMultiplier =>
+      selectedDifficultyMultiplier.clamp(0.65, 1.45);
 
   List<String> preferredEnemyElementsForSheet() {
     if (sheetMagicScore >= sheetOffenseScore &&
@@ -6420,19 +7121,22 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       egoDefenseStacks * 2 +
       (starterWeapon?.defenseBonus ?? 0);
 
-  int get totalDamage =>
-      widget.playerDamage +
-      titleDamageBonus +
-      runDamageBonus +
-      dungeonVolonta +
-      artDamageBonus() +
-      activeArtSkillDamageBonus() +
-      attachedDamageBonus +
-      attachedDropDamage +
-      setDamageBonus +
-      activeRelicRollBonus +
-      egoWeaponStacks * 5 +
-      (starterWeapon?.damageBonus ?? 0);
+  int get totalDamage {
+    final baseDamage =
+        widget.playerDamage +
+        titleDamageBonus +
+        runDamageBonus +
+        dungeonVolonta +
+        artDamageBonus() +
+        activeArtSkillDamageBonus() +
+        attachedDamageBonus +
+        attachedDropDamage +
+        setDamageBonus +
+        activeRelicRollBonus +
+        egoWeaponStacks * 5 +
+        (starterWeapon?.damageBonus ?? 0);
+    return mouseKeyFormActive ? max(1, baseDamage * 2).toInt() : baseDamage;
+  }
 
   int get expToNextDungeonLevel =>
       150 + dungeonLevel * 90 + runGrade * 30 + currentFloor * 22;
@@ -6674,11 +7378,32 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   }
 
   void addLog(String message) {
+    final clean = message.trim();
+    if (clean.isEmpty) return;
+    if (log.isNotEmpty && log.first.endsWith(clean)) return;
     final now = DateTime.now();
     final hh = now.hour.toString().padLeft(2, '0');
     final mm = now.minute.toString().padLeft(2, '0');
-    log.insert(0, '[$hh:$mm] $message');
-    if (log.length > 160) log.removeRange(160, log.length);
+    log.insert(0, '[$hh:$mm] $clean');
+    if (log.length > 80) log.removeRange(80, log.length);
+  }
+
+  int get forcedCombatRoomLimit {
+    if (selectedDifficultyId == 'very_easy') return 5;
+    if (selectedDifficultyId == 'easy') return 4;
+    if (selectedDifficultyId == 'hard' || selectedDifficultyId == 'very_hard') {
+      return 2;
+    }
+    return mapRevealed ? 4 : 3;
+  }
+
+  bool shouldForceCombatEncounter() {
+    if (!floorZeroCompleted || inCombat || gameOver || posteaGufusEventActive) {
+      return false;
+    }
+    if (isBossRoom || isBeforeBossRoom) return false;
+    if (trapMiniGameActive || guardPunchMiniGameActive) return false;
+    return roomsSinceCombatEncounter >= forcedCombatRoomLimit;
   }
 
   Map<String, dynamic> enemyToCheckpoint(_EnemyInstance enemy) {
@@ -6688,6 +7413,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'elementId': enemy.elementId,
       'hp': enemy.hp,
       'maxHp': enemy.maxHp,
+      'shield': enemy.shield,
       'attack': enemy.attack,
       'defense': enemy.defense,
       'boss': enemy.boss,
@@ -6711,6 +7437,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'defenseDebuffValue': enemy.defenseDebuffValue,
       'burnPotency': enemy.burnPotency,
       'bleedPotency': enemy.bleedPotency,
+      'phase': enemy.phase,
+      'phaseTriggered': enemy.phaseTriggered,
+      'quarterPowerTriggered': enemy.quarterPowerTriggered,
+      'partialAwakeningTriggered': enemy.partialAwakeningTriggered,
     };
   }
 
@@ -6721,6 +7451,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       elementId: data['elementId'] as String? ?? 'neutral',
       hp: (data['hp'] as num?)?.toInt() ?? 1,
       maxHp: (data['maxHp'] as num?)?.toInt() ?? 1,
+      shield: (data['shield'] as num?)?.toInt() ?? 0,
       attack: (data['attack'] as num?)?.toInt() ?? 1,
       defense: (data['defense'] as num?)?.toInt() ?? 0,
       boss: readSavedBool(data['boss']),
@@ -6750,6 +7481,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       defenseDebuffValue: (data['defenseDebuffValue'] as num?)?.toInt() ?? 0,
       burnPotency: (data['burnPotency'] as num?)?.toInt() ?? 0,
       bleedPotency: (data['bleedPotency'] as num?)?.toInt() ?? 0,
+      phase: (data['phase'] as num?)?.toInt() ?? 1,
+      phaseTriggered: readSavedBool(data['phaseTriggered']),
+      quarterPowerTriggered: readSavedBool(data['quarterPowerTriggered']),
+      partialAwakeningTriggered: readSavedBool(
+        data['partialAwakeningTriggered'],
+      ),
     );
   }
 
@@ -6779,6 +7516,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'spentRunOculum': spentRunOculum,
       'playerMaxHp': playerMaxHp,
       'playerHp': playerHp,
+      'playerPartialAwakeningTriggered': playerPartialAwakeningTriggered,
       'playerShield': playerShield,
       'playerOculumShield': playerOculumShield,
       'playerOculumShieldMax': playerOculumShieldMax,
@@ -6800,6 +7538,18 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'criticalShieldActive': criticalShieldActive,
       'criticalShieldBlocks': criticalShieldBlocks,
       'reactionAvailable': reactionAvailable,
+      'counterattackReady': counterattackReady,
+      'enemySkillCooldowns': Map<String, int>.from(enemySkillCooldowns),
+      'autoModeEnabled': autoModeEnabled,
+      'autoPrefExplore': autoPrefExplore,
+      'autoPrefRest': autoPrefRest,
+      'autoPrefAttackVc': autoPrefAttackVc,
+      'autoPrefAttackCm': autoPrefAttackCm,
+      'autoPrefAoe': autoPrefAoe,
+      'autoPrefDefend': autoPrefDefend,
+      'autoPrefCounter': autoPrefCounter,
+      'autoPrefShieldStyle': autoPrefShieldStyle,
+      'autoPrefAttackStyle': autoPrefAttackStyle,
       'rebirthBlessingActive': rebirthBlessingActive,
       'freeReforges': freeReforges,
       'reforgeCount': reforgeCount,
@@ -6820,6 +7570,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'vervainBuffFloor': vervainBuffFloor,
       'skeletonHandsHp': skeletonHandsHp,
       'skeletonHandsMaxHp': skeletonHandsMaxHp,
+      'necromancyStaffHitCount': necromancyStaffHitCount,
+      'undeadSkullTurnCounter': undeadSkullTurnCounter,
+      'necromancySkullHp': List<int>.from(necromancySkullHp),
+      'undeadFormActive': undeadFormActive,
+      'undeadRebirthUsedThisRun': undeadRebirthUsedThisRun,
+      'mouseKeyFormActive': mouseKeyFormActive,
       'cipoSerpentHp': cipoSerpentHp,
       'cipoSerpentMaxHp': cipoSerpentMaxHp,
       'floralGuardCharges': floralGuardCharges,
@@ -6832,6 +7588,15 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'pawnHp': pawnHp,
       'pawnMaxHp': pawnMaxHp,
       'pawnShield': pawnShield,
+      'pawnExtraCopies': pawnExtraCopies,
+      'pawnLastSpawnFloor': pawnLastSpawnFloor,
+      'kittySlimeCopies': kittySlimeCopies,
+      'kittySlimeCopyHp': List<int>.from(kittySlimeCopyHp),
+      'aegisHp': aegisHp,
+      'aegisMaxHp': aegisMaxHp,
+      'aegisShield': aegisShield,
+      'runixHp': runixHp,
+      'runixMaxHp': runixMaxHp,
       'posteaEliteGuardHp': posteaEliteGuardHp,
       'posteaEliteGuardMaxHp': posteaEliteGuardMaxHp,
       'posteaEliteGuardShield': posteaEliteGuardShield,
@@ -6841,6 +7606,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'combo': combo,
       'killStreak': killStreak,
       'roomsWithoutDamage': roomsWithoutDamage,
+      'roomsSinceCombatEncounter': roomsSinceCombatEncounter,
       'fightsSinceTavernRest': fightsSinceTavernRest,
       'consecutivePlayerCritsThisFight': consecutivePlayerCritsThisFight,
       'defeatedEnemyPowerTotal': defeatedEnemyPowerTotal,
@@ -6863,13 +7629,17 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'valleyTrainingTurnsLeft': valleyTrainingTurnsLeft,
       'merchantActionUsedThisRoom': merchantActionUsedThisRoom,
       'blacksmithActionUsedThisRoom': blacksmithActionUsedThisRoom,
+      'blacksmithActionsUsedThisRoom': blacksmithActionsUsedThisRoom,
       'dropActionUsedThisRoom': dropActionUsedThisRoom,
       'restActionUsedThisRoom': restActionUsedThisRoom,
       'tavernMealUsedThisRoom': tavernMealUsedThisRoom,
       'tavernMerchantActionUsedThisRoom': tavernMerchantActionUsedThisRoom,
       'tavernBlacksmithActionUsedThisRoom': tavernBlacksmithActionUsedThisRoom,
+      'tavernBlacksmithActionsUsedThisRoom':
+          tavernBlacksmithActionsUsedThisRoom,
       'tavernSleepUsedThisRoom': tavernSleepUsedThisRoom,
       'monsterVillageFightActive': monsterVillageFightActive,
+      'mourningMotherMinibossActive': mourningMotherMinibossActive,
       'sparklingGears': sparklingGears,
 
       'enemyHp': enemyHp,
@@ -6893,8 +7663,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'enemyNameEn': enemyNameEn,
       'enemyElementId': enemyElementId,
       'enemyParty': enemyParty.map(enemyToCheckpoint).toList(),
+      'selectedEnemyTargetIndex': selectedEnemyTargetIndex,
       'defeatedEnemyNamesIt': defeatedEnemyNamesIt,
       'defeatedEnemyNamesEn': defeatedEnemyNamesEn,
+      'downedCombatants': downedCombatants.map(
+        (key, value) => MapEntry(key, value.toJson()),
+      ),
 
       'activeQuestId': activeQuestId,
       'activeQuestIt': activeQuestIt,
@@ -6911,6 +7685,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'activeCostumeId': activeCostume?.id,
       'activeArtId': activeArt?.effectId,
       'selectedRunArtIds': selectedRunArtIds.toList(),
+      'runWeaponIds': runWeaponIds.toList(),
+      'runCostumeIds': runCostumeIds.toList(),
+      'queuedRunNpcIds': queuedRunNpcIds.toList(),
+      'manuallyRemovedRunNpcIds': manuallyRemovedRunNpcIds.toList(),
       'oculianAllianceActive': hasOculianPact,
       'gufusUsedThisRun': gufusUsedThisRun,
       'posteaGufusEventActive': posteaGufusEventActive,
@@ -6925,6 +7703,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'runBoons': runBoons,
       'smallNpcActions': smallNpcActions,
       'weakNpcRunEncounteredIds': weakNpcRunEncounteredIds.toList(),
+      'hiresEncounteredThisRun': hiresEncounteredThisRun,
       'earlyDustRoomsClaimed': earlyDustRoomsClaimed.toList(),
       'floorSaveEventsClaimed': floorSaveEventsClaimed.toList(),
       'randomTitleFloorRewardsClaimed': randomTitleFloorRewardsClaimed.toList(),
@@ -6961,7 +7740,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     String reasonIt = 'Checkpoint salvato.',
     String reasonEn = 'Checkpoint saved.',
   }) async {
-    if (!runActive || gameOver || playerHp <= 0) return;
+    if (!runActive || gameOver) return;
+    if (isDungeonCoopClient) return;
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
@@ -6970,6 +7750,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     );
 
     addLog(t(reasonIt, reasonEn));
+    _broadcastDungeonCoopState();
   }
 
   Future<void> clearRunCheckpoint() async {
@@ -7014,6 +7795,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     inCombat = readSavedBool(data['inCombat']);
     gameOver = false;
     victory = false;
+    selectedEnemyTargetIndex = readSavedInt(
+      data['selectedEnemyTargetIndex'],
+      fallback: -1,
+    );
 
     room = (data['room'] as num?)?.toInt() ?? room;
     maxRooms = (data['maxRooms'] as num?)?.toInt() ?? maxRooms;
@@ -7045,6 +7830,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
     playerMaxHp = (data['playerMaxHp'] as num?)?.toInt() ?? playerMaxHp;
     playerHp = (data['playerHp'] as num?)?.toInt() ?? playerHp;
+    playerPartialAwakeningTriggered = readSavedBool(
+      data['playerPartialAwakeningTriggered'],
+    );
     playerShield = (data['playerShield'] as num?)?.toInt() ?? playerShield;
     playerOculumShield =
         (data['playerOculumShield'] as num?)?.toInt() ?? playerOculumShield;
@@ -7088,6 +7876,20 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       data['reactionAvailable'],
       fallback: true,
     );
+    counterattackReady = readSavedBool(data['counterattackReady']);
+    enemySkillCooldowns
+      ..clear()
+      ..addAll(readSavedIntMap(data['enemySkillCooldowns']));
+    autoModeEnabled = readSavedBool(data['autoModeEnabled']);
+    autoPrefExplore = readSavedInt(data['autoPrefExplore']);
+    autoPrefRest = readSavedInt(data['autoPrefRest']);
+    autoPrefAttackVc = readSavedInt(data['autoPrefAttackVc']);
+    autoPrefAttackCm = readSavedInt(data['autoPrefAttackCm']);
+    autoPrefAoe = readSavedInt(data['autoPrefAoe']);
+    autoPrefDefend = readSavedInt(data['autoPrefDefend']);
+    autoPrefCounter = readSavedInt(data['autoPrefCounter']);
+    autoPrefShieldStyle = readSavedInt(data['autoPrefShieldStyle']);
+    autoPrefAttackStyle = readSavedInt(data['autoPrefAttackStyle']);
     rebirthBlessingActive = readSavedBool(data['rebirthBlessingActive']);
 
     freeReforges = (data['freeReforges'] as num?)?.toInt() ?? freeReforges;
@@ -7125,6 +7927,26 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         (data['skeletonHandsHp'] as num?)?.toInt() ?? skeletonHandsHp;
     skeletonHandsMaxHp =
         (data['skeletonHandsMaxHp'] as num?)?.toInt() ?? skeletonHandsMaxHp;
+    necromancyStaffHitCount = readSavedInt(
+      data['necromancyStaffHitCount'],
+      fallback: 0,
+    );
+    undeadSkullTurnCounter = readSavedInt(
+      data['undeadSkullTurnCounter'],
+      fallback: 0,
+    );
+    necromancySkullHp
+      ..clear()
+      ..addAll(
+        ((data['necromancySkullHp'] as List?) ?? const [])
+            .whereType<num>()
+            .map((value) => value.toInt())
+            .where((value) => value > 0),
+      );
+    undeadFormActive = readSavedBool(data['undeadFormActive']);
+    undeadRebirthUsedThisRun = readSavedBool(data['undeadRebirthUsedThisRun']);
+    mouseKeyFormActive = readSavedBool(data['mouseKeyFormActive']);
+    normalizeNecromancySkulls();
     cipoSerpentHp = (data['cipoSerpentHp'] as num?)?.toInt() ?? cipoSerpentHp;
     cipoSerpentMaxHp =
         (data['cipoSerpentMaxHp'] as num?)?.toInt() ?? cipoSerpentMaxHp;
@@ -7144,6 +7966,26 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     pawnHp = (data['pawnHp'] as num?)?.toInt() ?? pawnHp;
     pawnMaxHp = (data['pawnMaxHp'] as num?)?.toInt() ?? pawnMaxHp;
     pawnShield = (data['pawnShield'] as num?)?.toInt() ?? pawnShield;
+    pawnExtraCopies = readSavedInt(data['pawnExtraCopies']);
+    pawnLastSpawnFloor = readSavedInt(data['pawnLastSpawnFloor']);
+    kittySlimeCopies =
+        (data['kittySlimeCopies'] as num?)?.toInt() ?? kittySlimeCopies;
+    kittySlimeCopyHp = ((data['kittySlimeCopyHp'] as List?) ?? const [])
+        .whereType<num>()
+        .map((value) => value.toInt())
+        .where((value) => value > 0)
+        .toList();
+    normalizeKittySlimeCopies();
+    aegisHp = (data['aegisHp'] as num?)?.toInt() ?? aegisHp;
+    aegisMaxHp = (data['aegisMaxHp'] as num?)?.toInt() ?? aegisMaxHp;
+    aegisShield = (data['aegisShield'] as num?)?.toInt() ?? aegisShield;
+    runixMaxHp = readSavedInt(data['runixMaxHp'], fallback: runixMaxHp);
+    runixHp = readSavedInt(data['runixHp'], fallback: runixHp);
+    if ((aegisRunixDuoActive || defiledRunicDuoSummoned) && runixMaxHp <= 0) {
+      syncRunixHpWithResilience(refill: true);
+    } else if (runixMaxHp > 0) {
+      runixHp = runixHp.clamp(0, runixMaxHp).toInt();
+    }
     posteaEliteGuardHp =
         (data['posteaEliteGuardHp'] as num?)?.toInt() ?? posteaEliteGuardHp;
     posteaEliteGuardMaxHp =
@@ -7155,12 +7997,29 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     posteaEliteGuardCriticalShieldActive = readSavedBool(
       data['posteaEliteGuardCriticalShieldActive'],
     );
+    downedCombatants.clear();
+    final savedDownedCombatants = data['downedCombatants'];
+    if (savedDownedCombatants is Map) {
+      for (final entry in savedDownedCombatants.entries) {
+        if (entry.value is! Map) continue;
+        final id = entry.key.toString().trim();
+        if (id.isEmpty) continue;
+        final saved = _DownedCombatant.fromJson(
+          Map<String, dynamic>.from(entry.value as Map),
+          fallbackId: id,
+        );
+        downedCombatants[saved.id] = saved;
+      }
+    }
     skellyGuardCharges =
         (data['skellyGuardCharges'] as num?)?.toInt() ?? skellyGuardCharges;
     combo = (data['combo'] as num?)?.toInt() ?? combo;
     killStreak = (data['killStreak'] as num?)?.toInt() ?? killStreak;
     roomsWithoutDamage =
         (data['roomsWithoutDamage'] as num?)?.toInt() ?? roomsWithoutDamage;
+    roomsSinceCombatEncounter =
+        (data['roomsSinceCombatEncounter'] as num?)?.toInt() ??
+        roomsSinceCombatEncounter;
     fightsSinceTavernRest =
         (data['fightsSinceTavernRest'] as num?)?.toInt() ??
         fightsSinceTavernRest;
@@ -7210,21 +8069,40 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     merchantActionUsedThisRoom = readSavedBool(
       data['merchantActionUsedThisRoom'],
     );
-    blacksmithActionUsedThisRoom = readSavedBool(
+    final savedBlacksmithActionUsed = readSavedBool(
       data['blacksmithActionUsedThisRoom'],
     );
+    blacksmithActionsUsedThisRoom =
+        (data['blacksmithActionsUsedThisRoom'] as num?)?.toInt() ??
+        (savedBlacksmithActionUsed ? maxBlacksmithActionsPerRoom : 0);
+    blacksmithActionsUsedThisRoom = blacksmithActionsUsedThisRoom
+        .clamp(0, maxBlacksmithActionsPerRoom)
+        .toInt();
+    blacksmithActionUsedThisRoom =
+        blacksmithActionsUsedThisRoom >= maxBlacksmithActionsPerRoom;
     dropActionUsedThisRoom = readSavedBool(data['dropActionUsedThisRoom']);
     restActionUsedThisRoom = readSavedBool(data['restActionUsedThisRoom']);
     tavernMealUsedThisRoom = readSavedBool(data['tavernMealUsedThisRoom']);
     tavernMerchantActionUsedThisRoom = readSavedBool(
       data['tavernMerchantActionUsedThisRoom'],
     );
-    tavernBlacksmithActionUsedThisRoom = readSavedBool(
+    final savedTavernBlacksmithActionUsed = readSavedBool(
       data['tavernBlacksmithActionUsedThisRoom'],
     );
+    tavernBlacksmithActionsUsedThisRoom =
+        (data['tavernBlacksmithActionsUsedThisRoom'] as num?)?.toInt() ??
+        (savedTavernBlacksmithActionUsed ? maxBlacksmithActionsPerRoom : 0);
+    tavernBlacksmithActionsUsedThisRoom = tavernBlacksmithActionsUsedThisRoom
+        .clamp(0, maxBlacksmithActionsPerRoom)
+        .toInt();
+    tavernBlacksmithActionUsedThisRoom =
+        tavernBlacksmithActionsUsedThisRoom >= maxBlacksmithActionsPerRoom;
     tavernSleepUsedThisRoom = readSavedBool(data['tavernSleepUsedThisRoom']);
     monsterVillageFightActive = readSavedBool(
       data['monsterVillageFightActive'],
+    );
+    mourningMotherMinibossActive = readSavedBool(
+      data['mourningMotherMinibossActive'],
     );
     sparklingGears =
         (data['sparklingGears'] as num?)?.toInt() ?? sparklingGears;
@@ -7282,6 +8160,24 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     if (selectedRunArtIds.isEmpty && activeArt != null) {
       selectedRunArtIds.add(activeArt!.effectId);
     }
+    runWeaponIds
+      ..clear()
+      ..addAll(readSavedStringList(data['runWeaponIds']));
+    if (runWeaponIds.isEmpty && starterWeapon != null) {
+      runWeaponIds.add(starterWeapon!.id);
+    }
+    runCostumeIds
+      ..clear()
+      ..addAll(readSavedStringList(data['runCostumeIds']));
+    if (runCostumeIds.isEmpty && activeCostume != null) {
+      runCostumeIds.add(activeCostume!.id);
+    }
+    queuedRunNpcIds
+      ..clear()
+      ..addAll(readSavedStringList(data['queuedRunNpcIds']));
+    manuallyRemovedRunNpcIds
+      ..clear()
+      ..addAll(readSavedStringList(data['manuallyRemovedRunNpcIds']));
     oculianAllianceActive = readSavedBool(data['oculianAllianceActive']);
     gufusUsedThisRun = readSavedBool(data['gufusUsedThisRun']);
     posteaGufusEventActive = readSavedBool(data['posteaGufusEventActive']);
@@ -7341,6 +8237,11 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     runBoons
       ..clear()
       ..addAll(readSavedStringList(data['runBoons']));
+    if ((aegisRunixDuoActive || defiledRunicDuoSummoned) && runixMaxHp <= 0) {
+      syncRunixHpWithResilience(refill: true);
+    } else if (runixMaxHp > 0) {
+      syncRunixHpWithResilience();
+    }
 
     smallNpcActions
       ..clear()
@@ -7349,6 +8250,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     weakNpcRunEncounteredIds
       ..clear()
       ..addAll(readSavedStringList(data['weakNpcRunEncounteredIds']));
+    hiresEncounteredThisRun = readSavedBool(data['hiresEncounteredThisRun']);
 
     earlyDustRoomsClaimed
       ..clear()
@@ -7510,7 +8412,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     showLogPanel = readSavedBool(data['showLogPanel']);
     showArtBoard = readSavedBool(data['showArtBoard']);
     showWeaponBoard = readSavedBool(data['showWeaponBoard']);
-    showSpritePanel = readSavedBool(data['showSpritePanel'], fallback: true);
+    showSpritePanel = readSavedBool(data['showSpritePanel']);
     showSpriteCodex = readSavedBool(data['showSpriteCodex']);
     classicCombatView = readSavedBool(data['classicCombatView']);
     quickEyeCollapsed = readSavedBool(data['quickEyeCollapsed']);
@@ -7813,8 +8715,37 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   }
 
   void addMaxHp(int amount) {
-    playerMaxHp += amount;
-    playerHp = min(playerMaxHp, playerHp + amount);
+    playerMaxHp = max(1, playerMaxHp + amount).toInt();
+    playerHp = min(playerMaxHp, max(1, playerHp + amount)).toInt();
+  }
+
+  bool get hasWrongSpareHeartCostume =>
+      activeCostume?.id == 'cuore_di_ricambio_sbagliato';
+
+  void applyWrongSpareHeartCostumeEffect() {
+    if (!hasWrongSpareHeartCostume) return;
+
+    if (!runBoons.contains('wrong_spare_heart_life_cost')) {
+      runBoons.add('wrong_spare_heart_life_cost');
+      final loss = max(20, (playerMaxHp * 0.58).round()).toInt();
+      playerMaxHp = max(10, playerMaxHp - loss).toInt();
+      playerHp = min(playerHp, playerMaxHp).toInt();
+    }
+
+    if (!runBoons.contains('wrong_spare_heart_rebirth_granted')) {
+      runBoons.add('wrong_spare_heart_rebirth_granted');
+      rebirthBlessingActive = true;
+    }
+  }
+
+  int applyWrongSpareHeartTurnRegen() {
+    if (!hasWrongSpareHeartCostume || !inCombat || gameOver || playerHp <= 0) {
+      return 0;
+    }
+    final heal = 20 + _random.nextInt(131);
+    final before = playerHp;
+    playerHp = min(playerMaxHp, playerHp + heal).toInt();
+    return playerHp - before;
   }
 
   bool get convertsShieldToOculumShield =>
@@ -7868,6 +8799,48 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     playerShield = 0;
   }
 
+  void maybeTriggerPlayerPartialAwakening() {
+    if (playerPartialAwakeningTriggered ||
+        playerMaxHp <= 0 ||
+        playerHp <= 0 ||
+        playerHp > (playerMaxHp / 2).ceil()) {
+      return;
+    }
+    playerPartialAwakeningTriggered = true;
+    final roll = _random.nextInt(100);
+    final usedMostOculum =
+        oculumMaxCharges > 0 &&
+        spentRunOculum >= (oculumMaxCharges * 0.75).ceil();
+    if (roll < 9) {
+      dungeonResilienza += 2;
+      dungeonOculum += 2;
+      textIt += '\n\nRisveglio Piccolo al 50%: +2 Resilienza, +2 Oculum.';
+      textEn += '\n\nSmall awakening at 50% HP: +2 Resilience, +2 Oculum.';
+      return;
+    }
+    if (roll < 15) {
+      dungeonResilienza += 3;
+      dungeonOculum += 3;
+      textIt += '\n\nRisveglio Parziale al 50%: +3 Resilienza, +3 Oculum.';
+      textEn += '\n\nPartial awakening at 50% HP: +3 Resilience, +3 Oculum.';
+      return;
+    }
+    if (roll < 18) {
+      dungeonResilienza += 5;
+      dungeonOculum += 5;
+      dungeonVolonta += 5;
+      dungeonMateria += 5;
+      textIt += '\n\nRisveglio Totale al 50%: +5 a tutte le stats.';
+      textEn += '\n\nTotal awakening at 50% HP: +5 to all stats.';
+      return;
+    }
+    if (roll < 19 && usedMostOculum) {
+      ascensionDustInRun += 1;
+      textIt += '\n\nFatica al 50%: +1 Dust.';
+      textEn += '\n\nFatigue at 50% HP: +1 Dust.';
+    }
+  }
+
   Map<String, int> applyPlayerDamage(
     int damage, {
     bool ignoreShields = false,
@@ -7877,6 +8850,21 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     var remaining = max(0, damage);
     var oculumAbsorbed = 0;
     var shieldAbsorbed = 0;
+    var aegisAbsorbed = 0;
+
+    if (aegisRunixProtectionActive &&
+        inCombat &&
+        !ignoreShields &&
+        chance(70)) {
+      gainAegisShield(4 + totalDefense ~/ 5);
+      final aegisShieldAbsorb = min(aegisShield, remaining);
+      aegisShield -= aegisShieldAbsorb;
+      remaining -= aegisShieldAbsorb;
+      final aegisHpAbsorb = min(aegisHp, remaining);
+      aegisHp -= aegisHpAbsorb;
+      remaining -= aegisHpAbsorb;
+      aegisAbsorbed = aegisShieldAbsorb + aegisHpAbsorb;
+    }
 
     if (!ignoreShields && !ignoreOculumShield && playerOculumShield > 0) {
       oculumAbsorbed = min(playerOculumShield, remaining);
@@ -7894,10 +8882,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     if (hpDamage > 0) {
       playerHp = max(0, playerHp - hpDamage).toInt();
       roomsWithoutDamage = 0;
+      maybeTriggerPlayerPartialAwakening();
     }
 
     return {
       'total': max(0, damage),
+      'aegis': aegisAbsorbed,
       'oculumShield': oculumAbsorbed,
       'shield': shieldAbsorbed,
       'hp': hpDamage,
@@ -7914,14 +8904,24 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   void unlockKarmaRewards(int previousKarma) {
     var changed = false;
     if (previousKarma < 6 && dungeonKarma >= 6) {
-      changed = unlockedNpcIds.add('karma_split_guide') || changed;
+      final npc = npcById('karma_split_guide');
+      changed =
+          (npc != null
+              ? markNpcExchangeable(npc, save: false)
+              : unlockedNpcIds.add('karma_split_guide')) ||
+          changed;
       widget.onThemeUnlocked?.call('karma_duality');
       textIt +=
           '\n\nKarma +6: la Guida della Bilancia si ricorda di te. NPC sbloccato.';
       textEn += '\n\nKarma +6: the Scale Guide remembers you. NPC unlocked.';
     }
     if (previousKarma > -6 && dungeonKarma <= -6) {
-      changed = unlockedNpcIds.add('debt_black_candle') || changed;
+      final npc = npcById('debt_black_candle');
+      changed =
+          (npc != null
+              ? markNpcExchangeable(npc, save: false)
+              : unlockedNpcIds.add('debt_black_candle')) ||
+          changed;
       widget.onThemeUnlocked?.call('karma_duality');
       textIt +=
           '\n\nKarma -6: la Candela Nera del Debito accetta di seguirti. NPC sbloccato.';
@@ -8040,6 +9040,61 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         .toList();
   }
 
+  List<_StarterWeapon> availableRunWeapons() {
+    final ids = <String>{
+      ...runWeaponIds,
+      if (starterWeapon != null) starterWeapon!.id,
+    };
+    return _starterWeapons
+        .where((weapon) => ids.contains(weapon.id))
+        .where((weapon) => canShowStoryLockedWeapon(weapon.id))
+        .toList();
+  }
+
+  _StarterWeapon? randomRunWeaponLoot({bool allowLockedRare = true}) {
+    final already = <String>{
+      ...runWeaponIds,
+      if (starterWeapon != null) starterWeapon!.id,
+    };
+    final unlockedPool =
+        _starterWeapons
+            .where((weapon) => !already.contains(weapon.id))
+            .where((weapon) => canShowStoryLockedWeapon(weapon.id))
+            .where(
+              (weapon) =>
+                  weapon.unlockedByDefault ||
+                  unlockedWeaponIds.contains(weapon.id),
+            )
+            .toList()
+          ..shuffle(_random);
+    final lockedPool =
+        _starterWeapons
+            .where((weapon) => !already.contains(weapon.id))
+            .where((weapon) => !isStoryLockedWeaponId(weapon.id))
+            .where((weapon) => !isDeathLockedWeaponId(weapon.id))
+            .where(
+              (weapon) =>
+                  !weapon.unlockedByDefault &&
+                  !unlockedWeaponIds.contains(weapon.id),
+            )
+            .toList()
+          ..shuffle(_random);
+
+    if (allowLockedRare && lockedPool.isNotEmpty && chance(12 + currentFloor)) {
+      return lockedPool.first;
+    }
+    if (unlockedPool.isNotEmpty) return unlockedPool.first;
+    if (allowLockedRare && lockedPool.isNotEmpty && chance(25)) {
+      return lockedPool.first;
+    }
+    return null;
+  }
+
+  void equipRunWeapon(_StarterWeapon weapon) {
+    runWeaponIds.add(weapon.id);
+    starterWeapon = weapon;
+  }
+
   List<_StarterWeapon> randomStartingWeaponChoices() {
     final weapons = List<_StarterWeapon>.from(availableStartingWeapons());
     weapons.shuffle(_random);
@@ -8058,6 +9113,93 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           (a) => a.unlockedByDefault || unlockedArtIds.contains(a.effectId),
         )
         .toList();
+  }
+
+  _DungeonArt? artByEffectId(String id) {
+    for (final art in _allArts) {
+      if (art.effectId == id) return art;
+    }
+    return null;
+  }
+
+  bool isOculusCompatibleArt(_DungeonArt art) {
+    return art.effectId != 'swiftness_martial_art' &&
+        !selectedRunArtIds.contains(art.effectId) &&
+        isArtUnlockableOutsideLateGame(art);
+  }
+
+  List<_DungeonArt> activeOculumArts() {
+    final ids = <String>{
+      if (activeArt != null) activeArt!.effectId,
+      ...selectedRunArtIds,
+    };
+    final arts = <_DungeonArt>[];
+    for (final id in ids) {
+      final art = artByEffectId(id);
+      if (art != null && !arts.any((item) => item.effectId == art.effectId)) {
+        arts.add(art);
+      }
+      if (arts.length >= 3) break;
+    }
+    return arts;
+  }
+
+  List<String> activeOculumSkillIds() {
+    final ids = <String>[];
+    for (final art in activeOculumArts()) {
+      ids.addAll(ensureThreeRandomSkillsForArt(art));
+      if (ids.length >= 9) break;
+    }
+    return ids.take(9).toList();
+  }
+
+  _DungeonArt? randomOculusArtLoot({bool allowLockedRare = true}) {
+    if (selectedRunArtIds.length >= 3) return null;
+    final unlockedPool =
+        _allArts
+            .where(isOculusCompatibleArt)
+            .where(
+              (art) =>
+                  art.unlockedByDefault ||
+                  unlockedArtIds.contains(art.effectId),
+            )
+            .toList()
+          ..shuffle(_random);
+    final lockedPool =
+        _allArts
+            .where(isOculusCompatibleArt)
+            .where(
+              (art) =>
+                  !art.unlockedByDefault &&
+                  !unlockedArtIds.contains(art.effectId),
+            )
+            .toList()
+          ..shuffle(_random);
+
+    if (allowLockedRare && lockedPool.isNotEmpty && chance(10 + currentFloor)) {
+      return lockedPool.first;
+    }
+    if (unlockedPool.isNotEmpty) return unlockedPool.first;
+    if (allowLockedRare && lockedPool.isNotEmpty && chance(20)) {
+      return lockedPool.first;
+    }
+    return null;
+  }
+
+  void installRunOculusArt(_DungeonArt art) {
+    if (selectedRunArtIds.length >= 3) return;
+    selectedRunArtIds.add(art.effectId);
+    activeArt ??= art;
+    final ids = ensureThreeRandomSkillsForArt(art);
+    if (ids.isNotEmpty && !ids.any(skillUnlocked)) {
+      final progress = artSkillProgress.putIfAbsent(
+        ids.first,
+        () => _ArtSkillProgress(skillId: ids.first),
+      );
+      progress.level = max(progress.level, 1).toInt();
+      applyArtSkillPassive(ids.first);
+    }
+    generateNextSkillQuest();
   }
 
   List<String> ensureThreeRandomSkillsForArt(_DungeonArt art) {
@@ -8910,9 +10052,16 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     return null;
   }
 
+  String skillArtElementId(String skillId) {
+    for (final art in _allArts) {
+      if (skillId.startsWith('${art.effectId}_')) return art.elementId;
+    }
+    return activeElementId;
+  }
+
   String buildArtSkillSummaryText() {
-    if (activeArt == null) return 'Skill Oculum: —';
-    final skillIds = artSkillChoices[activeArt!.effectId] ?? [];
+    if (activeOculumArts().isEmpty) return 'Skill Oculum: —';
+    final skillIds = activeOculumSkillIds();
     if (skillIds.isEmpty) return 'Skill Oculum: —';
 
     return 'Skill Oculum: ${skillIds.map((id) {
@@ -8923,8 +10072,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   }
 
   List<String> unlockedActiveArtSkillIds() {
-    if (activeArt == null) return [];
-    final ids = artSkillChoices[activeArt!.effectId] ?? [];
+    if (activeOculumArts().isEmpty) return [];
+    final ids = activeOculumSkillIds();
     return ids.where(skillUnlocked).toList();
   }
 
@@ -8978,8 +10127,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   }
 
   void generateNextSkillQuest() {
-    if (activeArt == null) return;
-    final ids = ensureThreeRandomSkillsForArt(activeArt!);
+    if (activeOculumArts().isEmpty) return;
+    final ids = activeOculumSkillIds();
     final available = ids.where((id) => !skillFullyUpgraded(id)).toList();
 
     if (available.isEmpty) {
@@ -9199,6 +10348,260 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     startRun();
   }
 
+  void restartRun() {
+    autoModeStepQueued = false;
+    counterattackReady = false;
+    final option = _difficultyOptions.firstWhere(
+      (difficulty) => difficulty.id == selectedDifficultyId,
+      orElse: () => _difficultyOptions.firstWhere(
+        (difficulty) => difficulty.id == 'normal',
+      ),
+    );
+    selectedDifficultyId = option.id;
+    selectedDifficultyMultiplier = option.multiplier;
+    tutorialRunActive = !hasNoviceAchievement && !firstRunGateSkipped;
+    startRun();
+  }
+
+  void showRestartRunConfirm() {
+    setState(() {
+      clearChoices(mode: 'event');
+      textIt =
+          'Sei sicuro?\n\n'
+          'Restart run cancella solo la run attuale del dungeon e riparte dalla difficoltÃ  selezionata. Non cancella progressi permanenti, temi, NPC sbloccati, Oculum Spento o salvataggi della scheda.';
+      textEn =
+          'Are you sure?\n\n'
+          'Restart run clears only the current dungeon run and restarts from the selected difficulty. It does not delete permanent progress, themes, unlocked NPCs, Spent Oculum or character-sheet saves.';
+      eventChoices.add(
+        _DungeonChoice(
+          labelIt: 'SÃ¬, restart run',
+          labelEn: 'Yes, restart run',
+          icon: Icons.restart_alt,
+          color: Colors.redAccent,
+          onPressed: restartRun,
+        ),
+      );
+      eventChoices.add(
+        _DungeonChoice(
+          labelIt: 'No, continua',
+          labelEn: 'No, continue',
+          icon: Icons.visibility,
+          color: widget.tertiaryColor,
+          onPressed: () {
+            setState(() {
+              clearChoices();
+              textIt = 'Restart annullato. La run resta intatta.';
+              textEn = 'Restart cancelled. The run stays intact.';
+            });
+          },
+        ),
+      );
+    });
+  }
+
+  void toggleAutoMode() {
+    setState(() {
+      autoModeEnabled = !autoModeEnabled;
+      textIt = autoModeEnabled
+          ? 'ModalitÃ  automatica attiva.\n\nIl dungeon agirÃ  con prudenza: riposa prima di esplorare, attacca quando il fight Ã¨ aperto e usa la reazione per difendersi o controattaccare.'
+          : 'ModalitÃ  automatica disattivata.';
+      textEn = autoModeEnabled
+          ? 'Auto mode enabled.\n\nThe dungeon will act carefully: it rests before exploring, attacks when combat is open, and uses the reaction to defend or counterattack.'
+          : 'Auto mode disabled.';
+    });
+    scheduleAutoModeStep();
+  }
+
+  void scheduleAutoModeStep({
+    Duration delay = const Duration(milliseconds: 420),
+  }) {
+    if (!autoModeEnabled || autoModeStepQueued || !mounted) return;
+    autoModeStepQueued = true;
+    Future.delayed(delay, () {
+      if (!mounted) return;
+      autoModeStepQueued = false;
+      if (!autoModeEnabled) return;
+      runAutoModeStep();
+    });
+  }
+
+  void recordAutoModePreference(String action) {
+    if (autoModeActing) return;
+    switch (action) {
+      case 'explore':
+        autoPrefExplore++;
+        break;
+      case 'rest':
+        autoPrefRest++;
+        break;
+      case 'attack_vc':
+        autoPrefAttackVc++;
+        autoPrefAttackStyle += 2;
+        break;
+      case 'attack_cm':
+        autoPrefAttackCm++;
+        autoPrefAttackStyle++;
+        break;
+      case 'aoe':
+        autoPrefAoe++;
+        autoPrefAttackStyle += 2;
+        break;
+      case 'defend':
+        autoPrefDefend++;
+        autoPrefShieldStyle += 2;
+        break;
+      case 'counter':
+        autoPrefCounter++;
+        autoPrefAttackStyle++;
+        autoPrefShieldStyle++;
+        break;
+      case 'shield_style':
+        autoPrefShieldStyle++;
+        break;
+      case 'attack_style':
+        autoPrefAttackStyle++;
+        break;
+    }
+    final total =
+        autoPrefExplore +
+        autoPrefRest +
+        autoPrefAttackVc +
+        autoPrefAttackCm +
+        autoPrefAoe +
+        autoPrefDefend +
+        autoPrefCounter +
+        autoPrefShieldStyle +
+        autoPrefAttackStyle;
+    if (total > 240) {
+      autoPrefExplore = (autoPrefExplore * 0.72).round();
+      autoPrefRest = (autoPrefRest * 0.72).round();
+      autoPrefAttackVc = (autoPrefAttackVc * 0.72).round();
+      autoPrefAttackCm = (autoPrefAttackCm * 0.72).round();
+      autoPrefAoe = (autoPrefAoe * 0.72).round();
+      autoPrefDefend = (autoPrefDefend * 0.72).round();
+      autoPrefCounter = (autoPrefCounter * 0.72).round();
+      autoPrefShieldStyle = (autoPrefShieldStyle * 0.72).round();
+      autoPrefAttackStyle = (autoPrefAttackStyle * 0.72).round();
+    }
+    _savePermanentProgress();
+  }
+
+  void runAutoAction(VoidCallback action) {
+    autoModeActing = true;
+    try {
+      action();
+    } finally {
+      autoModeActing = false;
+    }
+  }
+
+  bool get autoPrefersRest => autoPrefRest >= autoPrefExplore + 2;
+  bool get autoPrefersCmAttack => autoPrefAttackCm > autoPrefAttackVc + 1;
+  bool get autoPrefersAoe =>
+      autoPrefAoe > max(autoPrefAttackVc, autoPrefAttackCm);
+  bool get autoPrefersCounter => autoPrefCounter > autoPrefDefend + 1;
+
+  bool autoChoiceLooksDangerous(_DungeonChoice choice) {
+    final label = '${choice.labelIt} ${choice.labelEn}'.toLowerCase();
+    if (playerHp <= max(1, playerMaxHp ~/ 3)) {
+      return label.contains('paga') ||
+          label.contains('sacrifica') ||
+          label.contains('forza') ||
+          label.contains('rompi') ||
+          label.contains('blood') ||
+          label.contains('sangue');
+    }
+    if (label.contains('fuggi') || label.contains('flee')) {
+      return enemyIsBoss || estimatedVictoryChance() >= 45;
+    }
+    return false;
+  }
+
+  bool tryAutoResolveEventChoice() {
+    if (eventChoices.isEmpty || choicePanelMode != 'event') return false;
+    final indexed = <MapEntry<int, _DungeonChoice>>[
+      for (var i = 0; i < eventChoices.length; i++)
+        MapEntry(i, eventChoices[i]),
+    ].where((entry) => !autoChoiceLooksDangerous(entry.value)).toList();
+    if (indexed.isEmpty) return false;
+
+    int score(MapEntry<int, _DungeonChoice> entry) {
+      final label = '${entry.value.labelIt} ${entry.value.labelEn}'
+          .toLowerCase();
+      var value = 0;
+      if (label.contains('riposo') || label.contains('rest')) {
+        value += autoPrefRest + (playerHp < playerMaxHp ~/ 2 ? 8 : 0);
+      }
+      if (label.contains('attacca') || label.contains('attack')) {
+        value += autoPrefAttackVc + autoPrefAttackCm;
+      }
+      if (label.contains('leggi') ||
+          label.contains('read') ||
+          label.contains('scudo') ||
+          label.contains('shield')) {
+        value += autoPrefDefend + 3;
+      }
+      if (label.contains('esplora') || label.contains('explore')) {
+        value += autoPrefExplore;
+      }
+      return value;
+    }
+
+    indexed.sort((a, b) {
+      final scoreCompare = score(b).compareTo(score(a));
+      if (scoreCompare != 0) return scoreCompare;
+      return a.key.compareTo(b.key);
+    });
+    runAutoAction(indexed.first.value.onPressed);
+    return true;
+  }
+
+  void runAutoModeStep() {
+    if (!mounted || !autoModeEnabled || gameOver) return;
+    if (enemyTurnPending) {
+      scheduleAutoModeStep(delay: const Duration(milliseconds: 900));
+      return;
+    }
+    if (inCombat && canUseCombatInput) {
+      if (reactionAvailable && counterattackReady) {
+        final shouldCounter =
+            playerHp > max(1, playerMaxHp ~/ 3) &&
+            estimatedVictoryChance() >= 48 &&
+            autoPrefersCounter;
+        if (shouldCounter) {
+          runAutoAction(useReactionCounter);
+        } else {
+          runAutoAction(useReactionDefense);
+        }
+        scheduleAutoModeStep();
+        return;
+      }
+
+      final livingEnemies = enemyParty.where((enemy) => enemy.hp > 0).length;
+      if (livingEnemies > 1 && canUseAoeVc() && autoPrefersAoe) {
+        runAutoAction(() => attackAllEnemies(useVc: !autoPrefersCmAttack));
+      } else if (autoPrefersCmAttack && canUseCmAttack()) {
+        runAutoAction(() => attack(useVc: false));
+      } else {
+        runAutoAction(() => attack(useVc: true));
+      }
+      return;
+    }
+
+    if (!runActive || inCombat || gameOver) return;
+    if (eventChoices.isNotEmpty) {
+      if (tryAutoResolveEventChoice()) scheduleAutoModeStep();
+      return;
+    }
+
+    final lowHp = playerHp <= max(1, (playerMaxHp * 0.46).round());
+    if (!restActionUsedThisRoom && (lowHp || autoPrefersRest)) {
+      runAutoAction(restShort);
+      return;
+    }
+    runAutoAction(exploreRoom);
+  }
+
   void startRun() {
     setState(() {
       runCount++;
@@ -9214,6 +10617,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       inCombat = false;
       gameOver = false;
       victory = false;
+      downedCombatants.clear();
 
       room = 0;
       dungeonFloor = 1;
@@ -9222,6 +10626,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       playerShield = 0;
       playerOculumShield = 0;
       playerOculumShieldMax = 0;
+      playerPartialAwakeningTriggered = false;
       dungeonKarma = 0;
 
       dungeonLevel = 0;
@@ -9239,6 +10644,17 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       activeCostume = null;
       activeArt = null;
       selectedRunArtIds.clear();
+      runWeaponIds.clear();
+      runCostumeIds.clear();
+      guardPunchTimer?.cancel();
+      guardPunchMiniGameActive = false;
+      mirrorSigilMiniGameActive = false;
+      mirrorSigilPattern.clear();
+      mirrorSigilStep = 0;
+      selectedEnemyTargetIndex = -1;
+      hiresEncounteredThisRun = false;
+      queuedRunNpcIds.clear();
+      manuallyRemovedRunNpcIds.clear();
       oculianAllianceActive = false;
       gufusUsedThisRun = false;
       posteaGufusEventActive = false;
@@ -9246,6 +10662,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       posteaScientistTurnCounter = 0;
       posteaScientistEnhanced = false;
       monsterVillageFightActive = false;
+      mourningMotherMinibossActive = false;
       unlockedArtIds.remove('thousand_fires_emblem_art');
       final lowerPlayerName = widget.playerName.trim().toLowerCase();
       if (lowerPlayerName == 'kingi' || lowerPlayerName == 'ki korangi') {
@@ -9291,6 +10708,13 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       thornWhipRollBonus = 0;
       dodgeCharges = 0;
       skellyGuardCharges = 0;
+      pawnHp = 0;
+      pawnMaxHp = 0;
+      pawnShield = 0;
+      pawnVolonta = 20;
+      pawnMateria = 15;
+      pawnExtraCopies = 0;
+      pawnLastSpawnFloor = 0;
       cipoSerpentHp = 0;
       cipoSerpentMaxHp = 0;
       posteaEliteGuardHp = 0;
@@ -9310,10 +10734,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       combo = 0;
       killStreak = 0;
       roomsWithoutDamage = 0;
+      roomsSinceCombatEncounter = 0;
       fightsSinceTavernRest = 0;
       consecutivePlayerCritsThisFight = 0;
 
       reactionAvailable = true;
+      counterattackReady = false;
       secondChanceUsed = false;
       moonSecondChance = false;
       mapRevealed = false;
@@ -9325,15 +10751,16 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
       merchantActionUsedThisRoom = false;
       merchantGearsSoldThisRoom = false;
-      blacksmithActionUsedThisRoom = false;
+      resetBlacksmithActionsThisRoom();
       dropActionUsedThisRoom = false;
       restActionUsedThisRoom = false;
       levelUpRestAvailable = false;
       tavernMealUsedThisRoom = false;
       tavernMerchantActionUsedThisRoom = false;
-      tavernBlacksmithActionUsedThisRoom = false;
+      resetTavernBlacksmithActionsThisRoom();
       tavernSleepUsedThisRoom = false;
       monsterVillageFightActive = false;
+      mourningMotherMinibossActive = false;
       endRunOculumPaid = false;
       // NON resettare Oculum Spento: è una valuta permanente salvata.
       // oculumSpento resta quello caricato da SharedPreferences.
@@ -9389,9 +10816,22 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       vervainBuffFloor = 0;
       skeletonHandsHp = 0;
       skeletonHandsMaxHp = 0;
+      necromancyStaffHitCount = 0;
+      undeadSkullTurnCounter = 0;
+      necromancySkullHp.clear();
+      undeadFormActive = false;
+      undeadRebirthUsedThisRun = false;
+      mouseKeyFormActive = false;
       pawnHp = 0;
       pawnMaxHp = 0;
       pawnShield = 0;
+      kittySlimeCopies = 0;
+      kittySlimeCopyHp.clear();
+      aegisHp = 0;
+      aegisMaxHp = 0;
+      aegisShield = 0;
+      runixHp = 0;
+      runixMaxHp = 0;
       oculianKills = 0;
       relicOpenLastFloor.clear();
       minorOculianSeen = false;
@@ -9466,24 +10906,17 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           'First blacksmith reforge: free.\n'
           'Permanent Spent Oculum: $oculumSpento.';
 
-      for (final origin in _characterOrigins) {
-        final unlocked = isCharacterOriginUnlocked(origin);
+      final visibleOrigins = _characterOrigins
+          .where(isCharacterOriginUnlocked)
+          .toList(growable: false);
+      for (final origin in visibleOrigins) {
         eventChoices.add(
           _DungeonChoice(
-            labelIt: unlocked ? origin.nameIt : 'Bloccata: ${origin.nameIt}',
-            labelEn: unlocked ? origin.nameEn : 'Locked: ${origin.nameEn}',
-            icon: unlocked ? Icons.person : Icons.lock,
-            color: unlocked ? origin.primaryColor : Colors.grey,
-            onPressed: unlocked
-                ? () => chooseCharacterOrigin(origin)
-                : () {
-                    setState(() {
-                      textIt =
-                          '${origin.nameIt} e bloccato.\nSblocca il relativo achievement o la reliquia collegata.';
-                      textEn =
-                          '${origin.nameEn} is locked.\nUnlock the related achievement or linked relic.';
-                    });
-                  },
+            labelIt: origin.nameIt,
+            labelEn: origin.nameEn,
+            icon: Icons.person,
+            color: origin.primaryColor,
+            onPressed: () => chooseCharacterOrigin(origin),
           ),
         );
       }
@@ -9499,6 +10932,40 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     runDamageBonus += origin.damageBonus;
     runDefenseBonus += origin.defenseBonus;
     dungeonOculum += origin.oculumBonus;
+    if (origin.id == 'mrmr_snail_curse') {
+      playerMaxHp = 3;
+      playerHp = min(playerHp, playerMaxHp);
+      playerShield = 0;
+      playerOculumShield = 0;
+      playerOculumShieldMax = 0;
+      criticalShieldActive = false;
+      runCritBonus += 6;
+    }
+    if (origin.id == 'kitty_slime_hoshy') {
+      playerMaxHp = max(playerMaxHp * 3, playerMaxHp + 160).toInt();
+      playerHp = playerMaxHp;
+      runDamageBonus -= max(3, totalDamage ~/ 3);
+      runDefenseBonus += 1;
+      kittySlimeCopies = 0;
+      kittySlimeCopyHp.clear();
+      gainPlayerShield(18);
+    }
+    if (origin.id == 'aegis_runix_duo') {
+      final baseHp = max(30, widget.playerMaxHp);
+      final baseResilience = max(
+        1,
+        baseHp ~/ 12 + max(0, widget.playerGrade),
+      ).toInt();
+      runixMaxHp = runixMaxHpFromResilience(resilience: baseResilience);
+      runixHp = runixMaxHp;
+      playerMaxHp = runixMaxHp;
+      playerHp = runixHp;
+      aegisMaxHp = max(baseHp * 2, baseHp + 180).toInt();
+      aegisHp = aegisMaxHp;
+      aegisShield = min(aegisShieldCap, 24 + totalDefense).toInt();
+      runDefenseBonus += 4;
+      gainPlayerShield(10);
+    }
     if (origin.oculumBonus > 0) {
       oculumMaxCharges += origin.oculumBonus;
       oculumCharges = max(oculumCharges, oculumMaxCharges).toInt();
@@ -9511,7 +10978,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     if (isOculianCultist) {
       final minor = npcById('minor_oculian_watcher');
       if (minor != null) {
-        unlockedNpcIds.add(minor.id);
+        markNpcExchangeable(minor, save: false);
         addAllyToParty(minor, replaceIfFull: true, save: false);
       }
       textIt +=
@@ -9537,6 +11004,18 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       return completedAchievementIds.contains('oculian_costume_unlocked') ||
           completedAchievementIds.contains('three_oculians') ||
           unlockedCostumeIds.contains('oculian_eye_mantle');
+    }
+    if (origin.id == 'mrmr_snail_curse') {
+      return completedAchievementIds.contains('floor_twelve_end') ||
+          widget.playerName.trim().toLowerCase() == 'mrmr';
+    }
+    if (origin.id == 'kitty_slime_hoshy') {
+      return completedAchievementIds.contains('kitty_slime_origin_unlocked') ||
+          widget.hoshyLevelFiveUnlocked;
+    }
+    if (origin.id == 'aegis_runix_duo') {
+      return completedAchievementIds.contains('defiled_postea_used') ||
+          completedAchievementIds.contains('aegis_runix_origin_unlocked');
     }
     return true;
   }
@@ -9686,6 +11165,67 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         .toList();
   }
 
+  List<_RunCostume> availableRunCostumes() {
+    final ids = <String>{
+      ...runCostumeIds,
+      if (activeCostume != null) activeCostume!.id,
+    };
+    return _runCostumes
+        .where((costume) => ids.contains(costume.id))
+        .where(
+          (costume) =>
+              !isPosteaCostumeId(costume.id) || posteaGufusEventCompleted,
+        )
+        .toList();
+  }
+
+  _RunCostume? randomRunCostumeLoot({bool allowLockedRare = true}) {
+    final already = <String>{
+      ...runCostumeIds,
+      if (activeCostume != null) activeCostume!.id,
+    };
+    final unlockedPool =
+        _runCostumes
+            .where((costume) => !already.contains(costume.id))
+            .where(
+              (costume) =>
+                  !isPosteaCostumeId(costume.id) || posteaGufusEventCompleted,
+            )
+            .where(
+              (costume) =>
+                  costume.unlockedByDefault ||
+                  unlockedCostumeIds.contains(costume.id),
+            )
+            .toList()
+          ..shuffle(_random);
+    final lockedPool =
+        _runCostumes
+            .where((costume) => !already.contains(costume.id))
+            .where((costume) => !isPosteaCostumeId(costume.id))
+            .where(
+              (costume) =>
+                  !costume.unlockedByDefault &&
+                  !unlockedCostumeIds.contains(costume.id),
+            )
+            .toList()
+          ..shuffle(_random);
+
+    if (allowLockedRare && lockedPool.isNotEmpty && chance(10 + currentFloor)) {
+      return lockedPool.first;
+    }
+    if (unlockedPool.isNotEmpty) return unlockedPool.first;
+    if (allowLockedRare && lockedPool.isNotEmpty && chance(20)) {
+      return lockedPool.first;
+    }
+    return null;
+  }
+
+  void equipRunCostume(_RunCostume costume) {
+    runCostumeIds.add(costume.id);
+    activeCostume = costume;
+    applyWrongSpareHeartCostumeEffect();
+  }
+
   List<_RunCostume> randomStartingCostumeChoices() {
     final costumes = List<_RunCostume>.from(availableStartingCostumes())
       ..shuffle(_random);
@@ -9694,6 +11234,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   void applyStartingCostume(_RunCostume costume) {
     activeCostume = costume;
+    runCostumeIds.add(costume.id);
     addMaxHp(costume.hpBonus);
     gainPlayerShield(costume.shieldBonus);
     runDefenseBonus += costume.defenseBonus;
@@ -9756,6 +11297,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       oculumMaxCharges = max(oculumMaxCharges, 2).toInt();
       oculumCharges = max(oculumCharges, oculumMaxCharges).toInt();
     }
+
+    applyWrongSpareHeartCostumeEffect();
   }
 
   void chooseStartingCostume(_RunCostume costume) {
@@ -9791,6 +11334,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   void chooseStarterWeapon(_StarterWeapon weapon) {
     setState(() {
       starterWeapon = weapon;
+      runWeaponIds.add(weapon.id);
       gainPlayerShield(weapon.shieldBonus);
       dungeonOculum += weapon.oculumBonus;
       oculumMaxCharges += weapon.oculumCharges;
@@ -9800,6 +11344,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       );
 
       if (weapon.id.contains('mimic')) dodgeCharges += 1;
+      if (weapon.id == 'bike_chain_whip') dodgeCharges += 1;
       if (weapon.id.contains('blood')) runLifesteal += 1;
       if (weapon.id == 'postea_auto_rifle') runCritBonus += 3;
       if (weapon.id == 'postea_grenades') runBoons.add('postea_free_vc_aoe');
@@ -9843,6 +11388,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       if (hasOculianPact) {
         selectedRunArtIds.add(art.effectId);
         activeArt = art;
+        if (art.effectId == 'hoshy_oculum_art') {
+          completedAchievementIds.add('kitty_slime_origin_unlocked');
+          _savePermanentProgress();
+        }
         final chosen = selectedRunArtIds.length;
         if (chosen < 3) {
           textIt =
@@ -9871,19 +11420,23 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
       activeArt = art;
       selectedRunArtIds.add(art.effectId);
+      if (art.effectId == 'hoshy_oculum_art') {
+        completedAchievementIds.add('kitty_slime_origin_unlocked');
+        _savePermanentProgress();
+      }
       applyStartingArtBonus(art);
 
-      final ids = ensureThreeRandomSkillsForArt(art);
+      final ids = activeOculumSkillIds();
 
       textIt =
           'Hai scelto:\n${art.nameIt}\n\n'
           '${art.descIt}\n\n'
-          'Il dungeon prepara 3 Skill Oculum uniche per questa Art.\n'
+          'Il dungeon prepara fino a 9 Skill Oculum dalle Art attive.\n'
           'Scegli quale sbloccare per prima.';
       textEn =
           'You chose:\n${art.nameEn}\n\n'
           '${art.descEn}\n\n'
-          'The dungeon prepares 3 unique Oculum Skills for this Art.\n'
+          'The dungeon prepares up to 9 Oculum Skills from active Arts.\n'
           'Choose which one to unlock first.';
 
       for (final id in ids) {
@@ -9947,6 +11500,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           'Quest:\n$activeQuestEn\n\n'
           'Skill Quest:\n$activeSkillQuestEn';
     });
+    scheduleAutoModeStep();
   }
 
   void applyEquippedTitleStartBonuses() {
@@ -10468,15 +12022,15 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   void recruitKooba() {
     setState(() {
-      unlockedNpcIds.add('kooba_glimmer_moralist');
       final kooba = _goodNpcs.firstWhere(
         (npc) => npc.id == 'kooba_glimmer_moralist',
       );
+      markNpcExchangeable(kooba, save: false);
 
       final joined = addAllyToParty(kooba, replaceIfFull: true);
       sparklingGears += 3;
       if (!joined) {
-        unlockedNpcIds.add('kooba_glimmer_moralist');
+        markNpcExchangeable(kooba, save: false);
         _savePermanentProgress();
       }
       checkPassiveAchievements();
@@ -10580,6 +12134,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   bool isVillageWeaponId(String id) => id == 'combattimento_mani_nude';
 
+  bool isDeathLockedWeaponId(String id) =>
+      id == 'necromancy_staff' || id == 'mouse_key';
+
   bool isStoryLockedWeaponId(String id) =>
       isPosteaWeaponId(id) || isVillageWeaponId(id);
 
@@ -10634,8 +12191,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   void valleyFloorThreeEncounter() {
     if (valleySacrificedInPostea) return;
     valleyEncounterSeenThisRun = true;
-    unlockedNpcIds.add('valley_child_of_mother_nature');
     final valley = npcById('valley_child_of_mother_nature');
+    if (valley != null) {
+      markNpcExchangeable(valley, save: false);
+    }
     if (valley != null && !hasValleyInTeam) {
       addAllyToParty(valley, replaceIfFull: false);
     }
@@ -11033,6 +12592,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     final rewardDust = phase == 'scientist' ? 5 + currentFloor ~/ 2 : 2;
 
     inCombat = false;
+    counterattackReady = false;
     egoWeaponStacks = 0;
     egoDefenseStacks = 0;
     killStreak++;
@@ -11085,9 +12645,11 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     final changedRifle = unlockedWeaponIds.add('postea_auto_rifle');
     final changedGrenades = unlockedWeaponIds.add('postea_grenades');
     final changedCostume = unlockedCostumeIds.add('postea_elite_armor');
-    final changedGuard = unlockedNpcIds.add('postea_elite_guard');
+    final guard = npcById('postea_elite_guard');
+    final changedGuard = guard != null
+        ? markNpcExchangeable(guard, save: false)
+        : unlockedNpcIds.add('postea_elite_guard');
     if (changedGuard) {
-      final guard = npcById('postea_elite_guard');
       if (guard != null && runActive && !gameOver) {
         final joined = addAllyToParty(guard, replaceIfFull: true, save: false);
         if (joined) {
@@ -11108,9 +12670,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   }
 
   void addBloomedPosteaScientistAlly({required bool rare}) {
-    unlockedNpcIds.add('bloomed_postea_scientist');
     final bloomed = npcById('bloomed_postea_scientist');
     if (bloomed != null) {
+      markNpcExchangeable(bloomed, save: false);
       addAllyToParty(bloomed, replaceIfFull: true, save: false);
     }
     if (rare) {
@@ -11195,7 +12757,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       completeAchievement('postea_leviante_genes');
     }
     grantPosteaSetRewards();
-    unlockedNpcIds.add('gufus_leviante');
+    final gufus = npcById('gufus_leviante');
+    if (gufus != null) {
+      markNpcExchangeable(gufus, save: false);
+    } else {
+      unlockedNpcIds.add('gufus_leviante');
+    }
     textIt =
         '${prefixIt.isEmpty ? '' : '$prefixIt\n\n'}'
         'Gufus Leviante e salvo.\n\n'
@@ -11226,8 +12793,227 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     );
   }
 
+  bool tryMourningMotherEvent() {
+    if (!runActive || inCombat || gameOver) return false;
+    if (currentFloor < 2 || isBossRoom || isBeforeBossRoom) return false;
+    if (hasRunFlag('mourning_mother_seen_floor_$currentFloor')) return false;
+    if (!chance(4 + currentFloor ~/ 2)) return false;
+    runBoons.add('mourning_mother_seen_floor_$currentFloor');
+    mourningMotherEvent();
+    return true;
+  }
+
+  bool hasKittySlimeInParty() {
+    if (activeCharacterOrigin?.id == 'kitty_slime_hoshy') return true;
+    if (kittySlimeCopies > 0) return true;
+    return activeAllies.any((ally) {
+      final text = '${ally.id} ${ally.nameIt} ${ally.nameEn}'.toLowerCase();
+      return text.contains('kitty') && text.contains('slime');
+    });
+  }
+
+  bool tryKarmaSlimeKingEvent() {
+    if (!runActive || inCombat || gameOver) return false;
+    if (dungeonKarma > -10) return false;
+    if (hasKittySlimeInParty()) return false;
+    if (hasRunFlag('karma_slime_king_defeated')) return false;
+    if (hasRunFlag('karma_slime_king_started')) return false;
+    if (isBossRoom || isBeforeBossRoom) return false;
+    runBoons.add('karma_slime_king_started');
+    startKarmaSlimeKingFight();
+    return true;
+  }
+
+  _EnemyInstance createSummonedKittySlime(int index) {
+    final hp = 34 + currentFloor * 8 + runGrade * 7;
+    final attack = 8 + currentFloor + runGrade * 2;
+    final defense = 4 + currentFloor ~/ 2 + runGrade;
+    final enemy = _EnemyInstance(
+      nameIt: 'Kitty Slime evocato ${index + 1}',
+      nameEn: 'Summoned Kitty Slime ${index + 1}',
+      elementId: 'slime',
+      hp: hp,
+      maxHp: hp,
+      attack: attack,
+      defense: defense,
+      boss: false,
+      elite: false,
+      fetal: false,
+      level: max(1, currentFloor),
+      grade: max(0, runGrade),
+      originalPower: enemyPowerScoreFromStats(hp, attack, defense),
+      monsterId: 'summoned_kitty_slime',
+      skillIds: ['generic_heal'],
+    );
+    applyStartingShieldToEnemy(enemy);
+    return enemy;
+  }
+
+  _EnemyInstance createKarmaSlimeKing() {
+    final hp = max(260, playerMaxHp * 2 + currentFloor * 58 + runGrade * 44);
+    final attack = max(28, totalDamage + currentFloor * 6 + dungeonKarma.abs());
+    final defense = max(16, totalDefense + currentFloor * 2 + runGrade * 3);
+    final enemy = _EnemyInstance(
+      nameIt: 'Slime King',
+      nameEn: 'Slime King',
+      elementId: 'slime',
+      hp: hp,
+      maxHp: hp,
+      attack: attack,
+      defense: defense,
+      boss: true,
+      elite: true,
+      fetal: false,
+      level: max(3, currentFloor + runGrade + 2),
+      grade: max(1, runGrade + 2),
+      originalPower: enemyPowerScoreFromStats(hp, attack, defense),
+      monsterId: 'karma_slime_king',
+      skillIds: ['royal_slime_slam', 'king_slime_sword', 'summon_kitty_slimes'],
+      spriteAssetPath:
+          'assets/oculum_dungeon/generated_sprites/enemies/king_slime.png',
+    );
+    applyStartingShieldToEnemy(enemy);
+    return enemy;
+  }
+
+  void startKarmaSlimeKingFight() {
+    clearChoices();
+    inCombat = true;
+    enemyTurnPending = false;
+    reactionAvailable = true;
+    enemyWeak = 0;
+    enemyBurn = 0;
+    enemyBleed = 0;
+    defeatedEnemyNamesIt.clear();
+    defeatedEnemyNamesEn.clear();
+    defeatedEnemyPowerTotal = 0;
+    defeatedEnemyExpTotal = 0;
+    defeatedBossCount = 0;
+    defeatedEliteCount = 0;
+    enemySkillCooldowns.clear();
+    enemyParty
+      ..clear()
+      ..add(createKarmaSlimeKing());
+    syncPrimaryEnemyFromParty();
+    textIt =
+        'Boss fight - Slime King.\n\n'
+        'Il karma scende a $dungeonKarma e il pavimento diventa gommoso.\n'
+        'Non stai usando Kitty Slime e nessun Kitty Slime e nel party: il re reclama la mancanza.\n\n'
+        'Skill note: Schianto dello Slime Regale, Spadata del King Slime, Evocazione di 2 Kitty Slime.\n'
+        'Le skill piu pesanti hanno cooldown.';
+    textEn =
+        'Boss fight - Slime King.\n\n'
+        'Karma drops to $dungeonKarma and the floor turns rubbery.\n'
+        'You are not using Kitty Slime and no Kitty Slime is in the party: the king claims the absence.\n\n'
+        'Skill notes: Royal Slime Slam, King Slime Sword, Summon 2 Kitty Slimes.\n'
+        'The heaviest skills have cooldowns.';
+    addLog('Karma -10: Slime King entra in boss fight.');
+    saveRunCheckpoint(
+      reasonIt: 'Boss fight Slime King registrata.',
+      reasonEn: 'Slime King boss fight recorded.',
+    );
+  }
+
+  void mourningMotherEvent() {
+    clearChoices(mode: 'event');
+    textIt =
+        'Evento - Madre della Pietra.\n\n'
+        'Una donna è inginocchiata al centro della stanza. Piange senza alzare la voce e coccola un bambino ormai morto, la testa spezzata in un angolo impossibile.\n\n'
+        'Gli sussurra: "Andrà tutto bene. Va tutto bene. La mamma è qui."\n\n'
+        'Dietro di lei, il dolore prende una forma di pietra e muschio.';
+    textEn =
+        'Event - Stone Mother.\n\n'
+        'A woman kneels in the center of the room. She cries without raising her voice and cuddles a dead child, his head broken at an impossible angle.\n\n'
+        'She whispers: "It will be alright. Everything is alright. Mother is here."\n\n'
+        'Behind her, grief takes a shape of stone and moss.';
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: 'Proteggi la donna',
+        labelEn: 'Protect the woman',
+        icon: Icons.shield,
+        color: const Color(0xFF55B86B),
+        onPressed: startMourningMotherMinibossFight,
+      ),
+    );
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: 'Allontanati piano',
+        labelEn: 'Step away quietly',
+        icon: Icons.directions_walk,
+        color: Colors.blueGrey,
+        onPressed: () {
+          setState(() {
+            clearChoices();
+            textIt =
+                'Ti allontani senza rumore. La donna continua a cullare cio che resta.';
+            textEn =
+                'You step away without sound. The woman keeps rocking what remains.';
+          });
+        },
+      ),
+    );
+  }
+
+  void startMourningMotherMinibossFight() {
+    setState(() {
+      clearChoices();
+      mourningMotherMinibossActive = true;
+      inCombat = true;
+      enemyTurnPending = false;
+      reactionAvailable = true;
+      enemyWeak = 0;
+      enemyBurn = 0;
+      enemyBleed = 0;
+      defeatedEnemyNamesIt.clear();
+      defeatedEnemyNamesEn.clear();
+      defeatedEnemyPowerTotal = 0;
+      defeatedEnemyExpTotal = 0;
+      defeatedBossCount = 0;
+      defeatedEliteCount = 0;
+      final hp = max(90, playerMaxHp + currentFloor * 26 + runGrade * 18);
+      final attack = max(
+        14,
+        totalDamage ~/ 2 + currentFloor * 5 + runGrade * 4,
+      );
+      final defense = max(8, totalDefense ~/ 2 + currentFloor * 2);
+      enemyParty
+        ..clear()
+        ..add(
+          _EnemyInstance(
+            nameIt: 'Custode di Pietra del Bambino',
+            nameEn: 'Stone Child Warden',
+            elementId: 'stone',
+            hp: hp,
+            maxHp: hp,
+            attack: attack,
+            defense: defense,
+            boss: false,
+            elite: true,
+            fetal: false,
+            level: max(2, currentFloor + runGrade),
+            grade: max(1, runGrade),
+            originalPower: enemyPowerScoreFromStats(hp, attack, defense),
+            monsterId: 'stone_child_warden',
+            skillIds: const ['generic_stun_slam', 'generic_stunning_roar'],
+          ),
+        );
+      syncPrimaryEnemyFromParty();
+      textIt =
+          'Miniboss - Custode di Pietra del Bambino.\n\n'
+          'La cosa non nasce dal bambino. Nasce da cio che la stanza ha fatto alla madre.';
+      textEn =
+          'Miniboss - Stone Child Warden.\n\n'
+          'The thing is not born from the child. It is born from what the room did to the mother.';
+      saveRunCheckpoint(
+        reasonIt: 'Miniboss Madre della Pietra iniziato.',
+        reasonEn: 'Stone Mother miniboss started.',
+      );
+    });
+  }
+
   void exploreRoom() {
     if (!runActive || inCombat || gameOver) return;
+    recordAutoModePreference('explore');
     if (posteaGufusEventActive) {
       setState(() {
         textIt =
@@ -11253,9 +13039,13 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       merchantGearsSoldThisRoom = false;
       peacefulMonstersMet = false;
       relicSkillUsesThisRoom = 0;
-      blacksmithActionUsedThisRoom = false;
+      resetBlacksmithActionsThisRoom();
       dropActionUsedThisRoom = false;
       restActionUsedThisRoom = false;
+      tavernMealUsedThisRoom = false;
+      tavernMerchantActionUsedThisRoom = false;
+      resetTavernBlacksmithActionsThisRoom();
+      tavernSleepUsedThisRoom = false;
       if (currentFloorStart != currentFloor &&
           vervainBuffFloor > 0 &&
           vervainBuffFloor != currentFloor) {
@@ -11271,9 +13061,11 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       currentFloorStart = currentFloor;
       dungeonFloor = currentFloor;
       evolvePrincipianteForCurrentFloor();
+      maybeSpawnAwakenedPawnCopiesForFloor();
       if (maybeFloorSaveEvent()) return;
       if (maybeAwardFloorRandomTitle()) return;
       roomsWithoutDamage++;
+      roomsSinceCombatEncounter++;
 
       if (!floorZeroCompleted) {
         gainDungeonExp(6, forceLevelCheck: false);
@@ -11292,13 +13084,22 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         playerHp = min(playerMaxHp, playerHp + runHealOnExplore);
       }
 
+      if (shouldForceCombatEncounter()) {
+        spawnEnemy(elite: currentFloor >= 3 && chance(20));
+        return;
+      }
+
       if (tryTitleTriggeredEvent()) return;
       if (tryExpertOculumEvent()) return;
       if (tryCalendarPhaseEvent()) return;
       if (tryStartPosteaGufusKidnapEvent()) return;
+      if (tryMourningMotherEvent()) return;
+      if (tryKarmaSlimeKingEvent()) return;
       if (tryOculumShieldRareEvent()) return;
+      if (tryOculumDodgeRareEvent()) return;
       if (tryKarmaChoiceEvent()) return;
       if (tryGradeScaledEvent()) return;
+      if (tryDungeonMicrogameEvent()) return;
 
       if (room >= maxRooms) {
         winRun();
@@ -11342,6 +13143,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         offerValleyTrainingEvent();
         return;
       }
+
+      if (tryHiresEncounter()) return;
 
       if (currentFloor >= 2 && chance(mapRevealed ? 10 : 7)) {
         gainKoobaGearsForPeacefulRoom();
@@ -11431,6 +13234,71 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         shrineEvent();
       }
     });
+    scheduleAutoModeStep();
+  }
+
+  bool tryHiresEncounter() {
+    final hasHiresSheet =
+        widget.hiresSheetAvailable ||
+        widget.playerName.trim().toLowerCase() == 'hires';
+    final chancePercent = widget.hiresLevelFiveAvailable
+        ? 80
+        : hasHiresSheet
+        ? 70
+        : 3;
+    if (hiresEncounteredThisRun || currentFloor < 5 || !chance(chancePercent)) {
+      return false;
+    }
+
+    hiresEncounteredThisRun = true;
+    final hires = npcById('hires');
+    var hiresJoined = false;
+    var hiresAlreadyInParty = false;
+    if (hires != null) {
+      markNpcExchangeable(hires, save: false);
+      hiresAlreadyInParty = activeAllies.any((ally) => ally.id == hires.id);
+      hiresJoined = addAllyToParty(hires, replaceIfFull: true, save: false);
+    }
+    final trainingExp = max(
+      90,
+      playerMaxHp + totalDamage * 10 + totalDefense * 6 + currentFloor * 30,
+    );
+    gainDungeonExp(trainingExp, forceLevelCheck: true);
+    final shieldGain = max(18, totalDefense + currentFloor * 4);
+    gainPlayerShield(shieldGain);
+
+    textIt =
+        'Incontro speciale - Hires.\n\n'
+        'Pelle pallida, capelli bianchi e occhi cremisi emergono dal buio. Hires ti misura in silenzio: e sempre un po piu forte di te, quindi entra solo come alleato IA e decide da solo quando combattere.\n'
+        'Ti allena senza ferirti davvero: +$trainingExp EXP dungeon e +$shieldGain Scudo per reggere la prossima stanza.'
+        '${hires == null
+            ? ''
+            : hiresAlreadyInParty
+            ? '\nHires era gia nel party della run.'
+            : hiresJoined
+            ? '\nHires entra nel party della run e resta tra gli NPC scambiabili.'
+            : '\nHires resta tra gli NPC scambiabili, ma non riesce a entrare ora.'}'
+        '${hasHiresSheet ? '\nLa scheda Hires nell app ha richiamato l incontro: chance ${widget.hiresLevelFiveAvailable ? '80%' : '70%'}.' : ''}';
+    textEn =
+        'Special encounter - Hires.\n\n'
+        'Pale skin, white hair and crimson eyes emerge from the dark. Hires silently measures you: he is always a little stronger than you, so he only joins as an AI ally and decides by himself when to fight.\n'
+        'He trains you without making it lethal: +$trainingExp dungeon EXP and +$shieldGain Shield for the next room.'
+        '${hires == null
+            ? ''
+            : hiresAlreadyInParty
+            ? '\nHires was already in the run party.'
+            : hiresJoined
+            ? '\nHires joins the run party and stays among exchangeable NPCs.'
+            : '\nHires stays among exchangeable NPCs, but cannot join right now.'}'
+        '${hasHiresSheet ? '\nThe Hires sheet in the app called the encounter: chance ${widget.hiresLevelFiveAvailable ? '80%' : '70%'}.' : ''}';
+    addLog(
+      t(
+        'Hires ti allena: +$trainingExp EXP e diventa alleato IA.',
+        'Hires trains you: +$trainingExp EXP and becomes an AI ally.',
+      ),
+    );
+    _savePermanentProgress();
+    return true;
   }
 
   List<_GradeEventDef> gradeEventDefs() {
@@ -11785,12 +13653,202 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     return true;
   }
 
+  bool tryOculumDodgeRareEvent() {
+    if (currentFloor < 2 || inCombat || gameOver) return false;
+    final lowLifePressure = playerHp <= max(1, playerMaxHp ~/ 3) ? 2 : 0;
+    final chancePercent = 2 + currentFloor ~/ 4 + lowLifePressure;
+    if (!chance(chancePercent)) return false;
+    oculumDodgeRareEvent();
+    return true;
+  }
+
   bool tryKarmaChoiceEvent() {
     if (inCombat || gameOver) return false;
     final titleBonus = equippedTitleIds.contains('mille_lacrime') ? 3 : 0;
     if (!chance(7 + currentFloor ~/ 2 + titleBonus)) return false;
     karmaCrossroadsEvent();
     return true;
+  }
+
+  void grantOculumDodgeRewardFromDungeon({
+    required String sourceIt,
+    required String sourceEn,
+  }) {
+    final lineIt =
+        'Premio raro convertito: il minigame resta interno al dungeon e non aggiunge Schivata Oculum alla scheda.';
+    final lineEn =
+        'Rare reward converted: the minigame stays inside the dungeon and does not add Oculum Dodge to the sheet.';
+    gainPlayerShield(max(12, currentFloor * 3 + dungeonOculum * 2));
+    addLog(t('$sourceIt: $lineIt', '$sourceEn: $lineEn'));
+    textIt = '$textIt\n\n$lineIt';
+    textEn = '$textEn\n\n$lineEn';
+  }
+
+  void oculumDodgeRareEvent() {
+    clearChoices(mode: 'event');
+    final variant = _random.nextInt(3);
+    final titleIt = [
+      'Evento raro — Corridoio del Battito Mancato',
+      'Evento raro — Specchio che Sbatte le Palpebre',
+      'Evento raro — Filo Nero della Retina',
+    ][variant];
+    final titleEn = [
+      'Rare Event — Missed Blink Corridor',
+      'Rare Event — Blinking Mirror',
+      'Rare Event — Black Retinal Thread',
+    ][variant];
+    final bodyIt = [
+      'Le pareti si chiudono e si aprono come palpebre stanche. Il corridoio non vuole colpirti: vuole capire quando guardi.',
+      'Uno specchio senza cornice ripete i tuoi movimenti con mezzo secondo di ritardo. Nel ritardo c’è uno spazio per sparire.',
+      'Un filo scuro attraversa la stanza da pupilla a pupilla. Se lo segui, il dungeon perde per un attimo il tuo contorno.',
+    ][variant];
+    final bodyEn = [
+      'The walls close and open like tired eyelids. The corridor does not want to hit you: it wants to learn when you watch.',
+      'A frameless mirror repeats your moves half a second late. Inside the delay there is room to vanish.',
+      'A dark thread crosses the room from pupil to pupil. If you follow it, the dungeon briefly loses your outline.',
+    ][variant];
+
+    textIt =
+        '$titleIt\n\n$bodyIt\n\nLa Schivata Oculum può nascere qui, ma solo se accetti il rischio.';
+    textEn =
+        '$titleEn\n\n$bodyEn\n\nAn Oculum Dodge can be born here, but only if you accept the risk.';
+
+    eventChoices.addAll([
+      _DungeonChoice(
+        labelIt: 'Leggi il battito',
+        labelEn: 'Read the blink',
+        icon: Icons.remove_red_eye,
+        color: widget.tertiaryColor,
+        onPressed: () {
+          setState(() {
+            clearChoices();
+            final target = 7 + currentFloor ~/ 2;
+            final score = dungeonOculum + dungeonVolonta + runGrade;
+            final success = score >= target || chance(14 + dungeonOculum * 5);
+            if (success) {
+              textIt =
+                  '$titleIt\n\nLeggi il battito giusto: quando la stanza chiude gli occhi, tu sei già oltre.\n+1 Karma, +2 progressi Oculum.';
+              textEn =
+                  '$titleEn\n\nYou read the correct blink: when the room closes its eyes, you are already past it.\n+1 Karma, +2 Oculum progress.';
+              changeDungeonKarma(1);
+              progressQuest('oculum', amount: 2);
+              grantOculumDodgeRewardFromDungeon(
+                sourceIt: titleIt,
+                sourceEn: titleEn,
+              );
+            } else {
+              final damage = 7 + currentFloor * 2;
+              final hit = applyPlayerDamage(damage);
+              gainOculumShield(6 + currentFloor, expandMaximum: true);
+              textIt =
+                  '$titleIt\n\nIl battito ti anticipa e ti schiaccia contro il bordo della stanza.\nDanno HP: ${hit['hp']}. +${6 + currentFloor} Scudo Oculum.';
+              textEn =
+                  '$titleEn\n\nThe blink predicts you and crushes you against the room edge.\nHP damage: ${hit['hp']}. +${6 + currentFloor} Oculum Shield.';
+            }
+            saveRunCheckpoint(
+              reasonIt: 'Evento raro Schivata Oculum registrato.',
+              reasonEn: 'Rare Oculum Dodge event recorded.',
+            );
+          });
+        },
+      ),
+      _DungeonChoice(
+        labelIt: 'Brucia un Oculum',
+        labelEn: 'Burn one Oculum',
+        icon: Icons.local_fire_department,
+        color: Colors.deepOrangeAccent,
+        onPressed: () {
+          setState(() {
+            clearChoices();
+            if (dungeonOculum <= 0) {
+              final damage = 5 + currentFloor;
+              final hit = applyPlayerDamage(damage);
+              textIt =
+                  '$titleIt\n\nProvi a bruciare Oculum, ma non ne hai. La stanza brucia te.\nDanno HP: ${hit['hp']}.';
+              textEn =
+                  '$titleEn\n\nYou try to burn Oculum, but you have none. The room burns you instead.\nHP damage: ${hit['hp']}.';
+              return;
+            }
+            dungeonOculum -= 1;
+            runCritBonus += 2;
+            gainOculumShield(12 + currentFloor * 2, expandMaximum: true);
+            textIt =
+                '$titleIt\n\nBruci un Oculum e lasci una sagoma falsa davanti alla stanza.\n-1 Oculum, +2 critico, +${12 + currentFloor * 2} Scudo Oculum.';
+            textEn =
+                '$titleEn\n\nYou burn one Oculum and leave a false outline before the room.\n-1 Oculum, +2 critical, +${12 + currentFloor * 2} Oculum Shield.';
+            if (chance(35 + runGrade * 3)) {
+              grantOculumDodgeRewardFromDungeon(
+                sourceIt: titleIt,
+                sourceEn: titleEn,
+              );
+            }
+            saveRunCheckpoint(
+              reasonIt: 'Evento raro Schivata Oculum registrato.',
+              reasonEn: 'Rare Oculum Dodge event recorded.',
+            );
+          });
+        },
+      ),
+      _DungeonChoice(
+        labelIt: 'Passa nel punto cieco',
+        labelEn: 'Step through the blind spot',
+        icon: Icons.directions_run,
+        color: Colors.cyanAccent,
+        onPressed: () {
+          setState(() {
+            clearChoices();
+            final roll =
+                _random.nextInt(20) +
+                1 +
+                dungeonResilienza +
+                dungeonVolonta +
+                runGrade;
+            final target = 15 + currentFloor;
+            if (roll >= target) {
+              final reward = 4 + currentFloor;
+              obserInRun += reward;
+              dodgeCharges += 1;
+              textIt =
+                  '$titleIt\n\nScivoli nel punto cieco e la stanza attacca il tuo ricordo.\n+$reward Obser, +1 schivata run.';
+              textEn =
+                  '$titleEn\n\nYou slip through the blind spot and the room attacks your memory.\n+$reward Obser, +1 run dodge.';
+              if (chance(28 + runGrade * 4)) {
+                grantOculumDodgeRewardFromDungeon(
+                  sourceIt: titleIt,
+                  sourceEn: titleEn,
+                );
+              }
+            } else {
+              final damage = 8 + currentFloor * 2;
+              final hit = applyPlayerDamage(damage);
+              textIt =
+                  '$titleIt\n\nIl punto cieco era troppo stretto. Ti salva solo una parte dello scudo.\nDanno HP: ${hit['hp']}.';
+              textEn =
+                  '$titleEn\n\nThe blind spot was too narrow. Only part of your shield saves you.\nHP damage: ${hit['hp']}.';
+            }
+            saveRunCheckpoint(
+              reasonIt: 'Evento raro Schivata Oculum registrato.',
+              reasonEn: 'Rare Oculum Dodge event recorded.',
+            );
+          });
+        },
+      ),
+      _DungeonChoice(
+        labelIt: 'Chiudi gli occhi e passa oltre',
+        labelEn: 'Close your eyes and move on',
+        icon: Icons.visibility_off,
+        color: Colors.blueGrey,
+        onPressed: () {
+          setState(() {
+            clearChoices();
+            textIt =
+                '$titleIt\n\nChiudi gli occhi. Il dungeon non ti premia, ma smette di misurarti.';
+            textEn =
+                '$titleEn\n\nYou close your eyes. The dungeon gives no reward, but stops measuring you.';
+          });
+        },
+      ),
+    ]);
   }
 
   void oculumShieldRareEvent() {
@@ -12070,7 +14128,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       syncPrimaryEnemyFromParty();
       final ally = npcById('minor_oculian_watcher');
       if (ally != null) {
-        unlockedNpcIds.add(ally.id);
+        markNpcExchangeable(ally, save: false);
         addAllyToParty(ally, replaceIfFull: true, save: false);
       }
       oculianAllianceActive = true;
@@ -12131,7 +14189,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   void thousandEyesChildEvent() {
     clearChoices(mode: 'event');
     completeAchievement('thousand_eyes_child');
-    unlockedNpcIds.add('thousand_eyes_child');
+    final child = npcById('thousand_eyes_child');
+    if (child != null) {
+      markNpcExchangeable(child, save: false);
+    } else {
+      unlockedNpcIds.add('thousand_eyes_child');
+    }
     _savePermanentProgress();
 
     textIt =
@@ -12223,7 +14286,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
     final npc = pool[_random.nextInt(pool.length)];
     weakNpcRunEncounteredIds.add(npc.id);
-    unlockedNpcIds.add(npc.id);
+    markNpcExchangeable(npc, save: false);
     final joined = addAllyToParty(npc, replaceIfFull: false);
     prepareSmallNpcActions(npc, forceRefresh: true);
 
@@ -12330,7 +14393,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   void spawnEnemy({bool boss = false, bool elite = false}) {
     clearChoices();
+    roomsSinceCombatEncounter = 0;
     enemyParty.clear();
+    selectedEnemyTargetIndex = -1;
+    oculumSkillActionsThisTurn = 0;
     enemyTurnPending = false;
     consecutivePlayerCritsThisFight = 0;
 
@@ -12343,11 +14409,13 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     valleyParticipatedInFight = valleyInFight;
     valleyBloomResolvedThisFight = false;
 
+    final coopExtraEncounterChance =
+        max(0, dungeonCoop.memberIds.length - 1) * 22;
     final multipleChance = boss
         ? 30
         : elite
         ? 20
-        : 8 + currentFloor;
+        : 8 + currentFloor + coopExtraEncounterChance;
     final enemyCount = boss
         ? (_random.nextInt(100) < multipleChance ? 2 + _random.nextInt(2) : 1)
         : (_random.nextInt(100) < multipleChance ? 2 + _random.nextInt(2) : 1);
@@ -12383,11 +14451,33 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           : selectedDifficultyId == 'very_easy'
           ? 7
           : 10;
+      final forceTrueEye = localBoss && currentFloor >= 12;
       final forceBaghest =
           localBoss &&
           currentFloor == baghestFloor &&
           !hasBaghestEye &&
-          !baghestBossDefeated;
+          !baghestBossDefeated &&
+          !forceTrueEye;
+
+      if (forceTrueEye) {
+        nameIt = 'Il Vero Occhio';
+        nameEn = 'The True Eye';
+        if (canAttuneThousandFires) {
+          final milleFuochi = _allArts.firstWhere(
+            (art) => art.effectId == 'thousand_fires_emblem_art',
+          );
+          activeArt = milleFuochi;
+          selectedRunArtIds.add(milleFuochi.effectId);
+          attuneThousandFires();
+          completeAchievement('mille_fuochi_unlocked');
+          addLog(
+            t(
+              'Il Vero Occhio accende le dodici attunazioni dei Mille Fuochi.',
+              'The True Eye ignites the twelve Thousand Fires attunements.',
+            ),
+          );
+        }
+      }
 
       if (forceBaghest) {
         nameIt = 'Eiva Baghest';
@@ -12410,6 +14500,20 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       final magicPunish =
           sheetMagicScore > max(sheetOffenseScore, sheetDefenseScore)
           ? 1.08
+          : 1.0;
+      final shieldStyleLean = autoPrefShieldStyle - autoPrefAttackStyle;
+      final attackStyleLean = autoPrefAttackStyle - autoPrefShieldStyle;
+      final autoShieldAttackBoost = shieldStyleLean > 4
+          ? 1.0 + min(0.24, shieldStyleLean * 0.012)
+          : 1.0;
+      final autoShieldDefenseTrim = shieldStyleLean > 4
+          ? 1.0 - min(0.18, shieldStyleLean * 0.007)
+          : 1.0;
+      final autoAttackDefenseBoost = attackStyleLean > 4
+          ? 1.0 + min(0.24, attackStyleLean * 0.012)
+          : 1.0;
+      final autoAttackDamageTrim = attackStyleLean > 4
+          ? 1.0 - min(0.14, attackStyleLean * 0.006)
           : 1.0;
 
       var maxHp =
@@ -12455,9 +14559,38 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                 : 0),
       ).toInt();
 
-      final finalHp = forceBaghest ? (maxHp * 1.35).round() : maxHp;
-      final finalAttack = forceBaghest ? attack + currentFloor * 3 : attack;
-      final finalDefense = forceBaghest ? defense + 4 : defense;
+      final finalHp =
+          ((forceTrueEye
+                      ? maxHp * 2.25
+                      : forceBaghest
+                      ? maxHp * 1.35
+                      : maxHp) *
+                  coopEnemyHpMultiplier)
+              .round();
+      final finalAttack = max(
+        1,
+        ((forceTrueEye
+                    ? attack +
+                          currentFloor * 5 +
+                          dungeonCoop.memberIds.length * 3
+                    : forceBaghest
+                    ? attack + currentFloor * 3
+                    : attack) *
+                autoShieldAttackBoost *
+                autoAttackDamageTrim)
+            .round(),
+      ).toInt();
+      final finalDefense = max(
+        0,
+        ((forceTrueEye
+                    ? defense + 12
+                    : forceBaghest
+                    ? defense + 4
+                    : defense) *
+                autoAttackDefenseBoost *
+                autoShieldDefenseTrim)
+            .round(),
+      ).toInt();
       final enemyLevel = max(
         1,
         currentFloor +
@@ -12491,48 +14624,64 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         }
       }
 
-      enemyParty.add(
-        _EnemyInstance(
-          nameIt: nameIt,
-          nameEn: nameEn,
-          elementId: forceBaghest ? 'shadow' : template.elementId,
-          hp: finalHp,
-          maxHp: finalHp,
-          attack: finalAttack,
-          defense: finalDefense,
-          boss: localBoss,
-          elite: localElite,
-          fetal: nameIt.contains('Fetale') || nameEn.contains('Fetal'),
-          level: enemyLevel,
-          grade: enemyGrade,
-          originalPower: enemyPowerScoreFromStats(
-            finalHp,
-            finalAttack,
-            finalDefense,
-          ),
-          monsterId: matchedMonster?.id,
-          skillIds: matchedMonster?.skillIds,
-          dropIds: matchedMonster?.dropIds,
-          spriteAssetPath: matchedMonster?.spriteAssetPath,
+      final enemy = _EnemyInstance(
+        nameIt: nameIt,
+        nameEn: nameEn,
+        elementId: forceTrueEye
+            ? 'oculum'
+            : forceBaghest
+            ? 'shadow'
+            : template.elementId,
+        hp: finalHp,
+        maxHp: finalHp,
+        attack: finalAttack,
+        defense: finalDefense,
+        boss: localBoss,
+        elite: localElite,
+        fetal: nameIt.contains('Fetale') || nameEn.contains('Fetal'),
+        level: enemyLevel,
+        grade: enemyGrade,
+        originalPower: enemyPowerScoreFromStats(
+          finalHp,
+          finalAttack,
+          finalDefense,
         ),
+        monsterId: forceTrueEye ? 'true_eye_final_boss' : matchedMonster?.id,
+        skillIds: forceTrueEye
+            ? trueEyeSkillsForRun()
+            : matchedMonster?.skillIds,
+        dropIds: matchedMonster?.dropIds,
+        spriteAssetPath: matchedMonster == null
+            ? null
+            : monsterSpriteAssetFor(
+                matchedMonster,
+                seed: monsterSpriteStableSeed(
+                  '$nameIt $currentFloor ${enemyParty.length}',
+                ),
+              ),
+        phase: (forceTrueEye || forceBaghest) ? 1 : 0,
       );
+      applyStartingShieldToEnemy(enemy);
+      enemyParty.add(enemy);
     }
 
     if (hasOculianPact) {
       final ally = npcById('minor_oculian_watcher');
       if (ally != null) {
-        unlockedNpcIds.add(ally.id);
+        markNpcExchangeable(ally, save: false);
         addAllyToParty(ally, replaceIfFull: true, save: false);
       }
       enemyWeak += 1;
     }
 
     syncPrimaryEnemyFromParty();
+    if (enemyParty.isNotEmpty) selectedEnemyTargetIndex = 0;
     ensureBossHasUnlockedArtSkill();
     saveRunCheckpoint(
       reasonIt: 'Battaglia registrata nel salvataggio.',
       reasonEn: 'Battle recorded into the save.',
     );
+    openDungeonCoopTurnWindow();
 
     if (nextEnemyWeakened) {
       nextEnemyWeakened = false;
@@ -12580,6 +14729,142 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   int elementalIncomingReduction(String elementId) {
     final resist = elementalResist[elementId] ?? 0;
     return resist.clamp(0, 18).toInt();
+  }
+
+  int monsterStartingShieldFor({
+    required int level,
+    required int grade,
+    required bool elite,
+    required bool boss,
+  }) {
+    final safeLevel = max(1, level);
+    final safeGrade = max(0, grade);
+    final levelFactor = boss
+        ? 9
+        : elite
+        ? 6
+        : 3;
+    return safeLevel * levelFactor + safeGrade * 6;
+  }
+
+  void applyStartingShieldToEnemy(_EnemyInstance enemy) {
+    enemy.shield = max(
+      enemy.shield,
+      monsterStartingShieldFor(
+        level: enemy.level,
+        grade: enemy.grade,
+        elite: enemy.elite,
+        boss: enemy.boss,
+      ),
+    ).toInt();
+  }
+
+  bool triggerEnemyPartialAwakening(_EnemyInstance enemy) {
+    if (enemy.partialAwakeningTriggered ||
+        enemy.maxHp <= 0 ||
+        enemy.hp <= 0 ||
+        enemy.hp > (enemy.maxHp / 2).ceil()) {
+      return false;
+    }
+    enemy.partialAwakeningTriggered = true;
+    final roll = _random.nextInt(100);
+    if (roll >= 18) return false;
+    final gain = roll < 9
+        ? 2
+        : roll < 15
+        ? 3
+        : 5;
+    final hpGain = gain * 10;
+    enemy.maxHp += hpGain;
+    enemy.hp = min(enemy.maxHp, enemy.hp + hpGain).toInt();
+    enemy.attack += gain;
+    enemy.defense += gain;
+    enemy.shield += gain * 6;
+    var extraIt = roll < 9
+        ? 'Risveglio Piccolo: +2 Res e +2 Ocu tradotti in corpo e scudo'
+        : 'Risveglio Parziale: +3 Res e +3 Ocu tradotti in corpo e scudo';
+    var extraEn = roll < 9
+        ? 'Small Awakening: +2 Res and +2 Ocu translated into body and shield'
+        : 'Partial Awakening: +3 Res and +3 Ocu translated into body and shield';
+    if (gain == 5) {
+      extraIt = 'Risveglio Totale: +5 stats tradotte in corpo e scudo';
+      extraEn = 'Total Awakening: +5 stats translated into body and shield';
+    }
+    textIt += '\n\n${enemy.nameIt} si risveglia al 50%: $extraIt.';
+    textEn += '\n\n${enemy.nameEn} awakens at 50% HP: $extraEn.';
+    return true;
+  }
+
+  int applyDamageToEnemy(_EnemyInstance target, int rawDamage) {
+    var remaining = max(0, rawDamage);
+    if (remaining <= 0) return 0;
+    if (target.shield > 0) {
+      final absorbed = min(target.shield, remaining);
+      target.shield -= absorbed;
+      remaining -= absorbed;
+    }
+    if (remaining > 0) {
+      target.hp = max(0, target.hp - remaining).toInt();
+      triggerEnemyPartialAwakening(target);
+    }
+    return remaining;
+  }
+
+  String enemyCooldownKey(_EnemyInstance enemy, String skillId) {
+    final id = enemy.monsterId ?? '${enemy.nameIt}_${enemy.nameEn}';
+    return '$id:${enemy.level}:${enemy.grade}:$skillId';
+  }
+
+  bool isEnemySkillOnCooldown(_EnemyInstance enemy, String skillId) {
+    return (enemySkillCooldowns[enemyCooldownKey(enemy, skillId)] ?? 0) > 0;
+  }
+
+  int enemySkillCooldownTurns(String skillId) {
+    switch (skillId) {
+      case 'summon_kitty_slimes':
+        return 4;
+      case 'king_slime_sword':
+      case 'true_eye_unblinking_judgment':
+      case 'postea_vivisection_future':
+        return 3;
+      case 'royal_slime_slam':
+      case 'true_eye_shield_eater':
+      case 'true_eye_false_future':
+      case 'generic_element_burst':
+      case 'oculum_freeze_stasis':
+      case 'oculum_arborify':
+      case 'oculum_ustione':
+      case 'generic_stun_slam':
+      case 'generic_stunning_roar':
+      case 'generic_blood_rite':
+      case 'bloody_swarm':
+      case 'bone_crown_rend':
+      case 'postea_grenade':
+      case 'postea_breach_blade':
+      case 'postea_levitation_field':
+        return 2;
+      default:
+        return 0;
+    }
+  }
+
+  void startEnemySkillCooldown(_EnemyInstance enemy, String skillId) {
+    final turns = enemySkillCooldownTurns(skillId);
+    if (turns <= 0) return;
+    enemySkillCooldowns[enemyCooldownKey(enemy, skillId)] = turns;
+  }
+
+  void tickEnemySkillCooldowns() {
+    if (enemySkillCooldowns.isEmpty) return;
+    final expired = <String>[];
+    enemySkillCooldowns.updateAll((key, value) {
+      final next = value - 1;
+      if (next <= 0) expired.add(key);
+      return next;
+    });
+    for (final key in expired) {
+      enemySkillCooldowns.remove(key);
+    }
   }
 
   void maybeWoundedAllyAssist(_EnemyInstance target) {
@@ -12690,7 +14975,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       // CM gives helpers a slightly cleaner opening, but never makes the chip damage huge.
       if (!useVc && chance(25)) damage += 1;
 
-      target.hp = max(0, target.hp - damage).toInt();
+      applyDamageToEnemy(target, damage);
 
       linesIt.add('${npc.nameIt}: +$damage danni$extraIt');
       linesEn.add('${npc.nameEn}: +$damage damage$extraEn');
@@ -12748,6 +15033,13 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   void attack({required bool useVc}) {
     if (!canUseCombatInput) return;
+    recordAutoModePreference(useVc ? 'attack_vc' : 'attack_cm');
+    oculumSkillActionsThisTurn = 0;
+    oculumSkillTurnScheduleToken++;
+    if (isDungeonCoopTurnOpen && !dungeonCoop.resolvingTurn) {
+      submitDungeonCoopAction('attack');
+      return;
+    }
     if (playerStunTurns > 0) {
       setState(() {
         playerStunTurns = max(0, playerStunTurns - 1);
@@ -12822,22 +15114,39 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       damage = max(1, damage + enemyWeak);
       final attackType = useVc ? 'VC' : 'CM';
       damage = damageAfterEnemyAdaptation(target, attackType, damage);
+      final mrmrOneShot = activeCharacterOrigin?.id == 'mrmr_snail_curse';
+      if (mrmrOneShot) {
+        damage = max(damage, target.hp);
+      }
+      final kittySlimeAttack = activeCharacterOrigin?.id == 'kitty_slime_hoshy';
+      if (kittySlimeAttack) {
+        damage = max(1, (damage * 0.42).round()).toInt();
+      }
 
       target.hp = max(0, target.hp - damage).toInt();
+      var kittyCopyDamage = 0;
+      if (kittySlimeAttack && kittySlimeCopies > 0 && target.hp > 0) {
+        normalizeKittySlimeCopies();
+        kittyCopyDamage = min(
+          target.hp,
+          kittySlimeCopies * kittySlimeCopyDamage(target),
+        ).toInt();
+        applyDamageToEnemy(target, kittyCopyDamage);
+      }
       var rifleBurstDamage = 0;
       var unarmedChainDamage = 0;
       var unarmedCritEffectIt = '';
       var unarmedCritEffectEn = '';
       if (starterWeapon?.id == 'postea_auto_rifle' && target.hp > 0) {
         rifleBurstDamage = max(1, 3 + totalVc ~/ 4 - target.defense ~/ 5);
-        target.hp = max(0, target.hp - rifleBurstDamage).toInt();
+        applyDamageToEnemy(target, rifleBurstDamage);
       }
       if (starterWeapon?.id == 'combattimento_mani_nude' && target.hp > 0) {
         unarmedChainDamage = max(
           2,
           5 + combo + totalVc ~/ 5 - target.defense ~/ 6,
         ).toInt();
-        target.hp = max(0, target.hp - unarmedChainDamage).toInt();
+        applyDamageToEnemy(target, unarmedChainDamage);
         if (crit) {
           target.stunTurns = max(target.stunTurns, 1);
           enemyWeak += 2;
@@ -12864,6 +15173,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           'Bersaglio: ${target.nameIt}\n'
           'Elemento: ${elementName(activeElementId)}\n'
           'Danni: $damage${consumedRelicRollBonus > 0 ? ' (+$consumedRelicRollBonus benedizione)' : ''}${crit ? ' CRITICO 20: +5 danni, ${playerCritFragilityNameIt(consecutivePlayerCritsThisFight)}' : ''}.'
+          '${mrmrOneShot ? '\nMrmr: la maledizione da lumaca trasforma il colpo in esecuzione.' : ''}'
+          '${kittyCopyDamage > 0 ? '\nCopie Kitty Slime: +$kittyCopyDamage danni morbidi.' : ''}'
           '${rifleBurstDamage > 0 ? '\nFucile Automatico di Postea: raffica +$rifleBurstDamage danni.' : ''}'
           '${unarmedChainDamage > 0 ? '\nCombattimento a Mani Nude: colpo concatenato +$unarmedChainDamage danni.$unarmedCritEffectIt' : ''}'
           '$adaptationIt';
@@ -12872,6 +15183,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           'Target: ${target.nameEn}\n'
           'Element: ${elementName(activeElementId)}\n'
           'Damage: $damage${consumedRelicRollBonus > 0 ? ' (+$consumedRelicRollBonus blessing)' : ''}${crit ? ' NATURAL 20 CRITICAL: +5 damage, ${playerCritFragilityNameEn(consecutivePlayerCritsThisFight)}' : ''}.'
+          '${mrmrOneShot ? '\nMrmr: the snail curse turns the strike into an execution.' : ''}'
+          '${kittyCopyDamage > 0 ? '\nKitty Slime copies: +$kittyCopyDamage soft damage.' : ''}'
           '${rifleBurstDamage > 0 ? '\nPostea Automatic Rifle: burst +$rifleBurstDamage damage.' : ''}'
           '${unarmedChainDamage > 0 ? '\nBare-Hand Combat: chained hit +$unarmedChainDamage damage.$unarmedCritEffectEn' : ''}'
           '${adaptationIt.isEmpty ? '' : '\n${target.boss ? 'Boss adapts to this attack type.' : 'Mini-boss adapts to this attack.'}'}';
@@ -12995,13 +15308,671 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     }
   }
 
+  bool get kittySlimeOriginActive =>
+      activeCharacterOrigin?.id == 'kitty_slime_hoshy';
+
+  int kittySlimeCopyMaxHp() {
+    return max(6, (playerMaxHp / 2).ceil()).toInt();
+  }
+
+  int kittySlimeCopyHpTotal() {
+    final known = kittySlimeCopyHp
+        .take(kittySlimeCopies)
+        .fold<int>(0, (sum, hp) => sum + hp);
+    final missing = max(0, kittySlimeCopies - kittySlimeCopyHp.length);
+    return known + missing * kittySlimeCopyMaxHp();
+  }
+
+  int kittySlimeCopyDamage(_EnemyInstance target) {
+    final halfDamage = max(1, totalDamage ~/ 2);
+    final halfVc = max(0, totalVc ~/ 2);
+    final halfOculum = max(0, totalOculum ~/ 2);
+    return max(
+      1,
+      halfDamage + halfVc ~/ 3 + halfOculum - target.defense ~/ 6,
+    ).toInt();
+  }
+
+  void normalizeKittySlimeCopies() {
+    kittySlimeCopies = kittySlimeCopies.clamp(0, 2).toInt();
+    final copyMax = kittySlimeCopyMaxHp();
+    while (kittySlimeCopyHp.length < kittySlimeCopies) {
+      kittySlimeCopyHp.add(copyMax);
+    }
+    if (kittySlimeCopyHp.length > kittySlimeCopies) {
+      kittySlimeCopyHp = kittySlimeCopyHp.take(kittySlimeCopies).toList();
+    }
+    for (var i = 0; i < kittySlimeCopyHp.length; i++) {
+      kittySlimeCopyHp[i] = kittySlimeCopyHp[i].clamp(1, copyMax).toInt();
+    }
+  }
+
+  static const int necromancySkullLimit = 6;
+
+  bool get necromancyStaffEquipped => starterWeapon?.id == 'necromancy_staff';
+
+  int necromancySkullMaxHp() {
+    return max(1, playerMaxHp ~/ 10).toInt();
+  }
+
+  int necromancySkullHpTotal() {
+    return necromancySkullHp.fold<int>(0, (sum, hp) => sum + hp);
+  }
+
+  void normalizeNecromancySkulls() {
+    final maxHp = necromancySkullMaxHp();
+    necromancySkullHp.removeWhere((hp) => hp <= 0);
+    if (necromancySkullHp.length > necromancySkullLimit) {
+      necromancySkullHp.removeRange(
+        0,
+        necromancySkullHp.length - necromancySkullLimit,
+      );
+    }
+    for (var i = 0; i < necromancySkullHp.length; i++) {
+      necromancySkullHp[i] = necromancySkullHp[i].clamp(1, maxHp).toInt();
+    }
+  }
+
+  bool summonNecromancySkull() {
+    normalizeNecromancySkulls();
+    final skullHp = necromancySkullMaxHp();
+    if (necromancySkullHp.length < necromancySkullLimit) {
+      necromancySkullHp.add(skullHp);
+      return true;
+    }
+
+    var weakestIndex = 0;
+    for (var i = 1; i < necromancySkullHp.length; i++) {
+      if (necromancySkullHp[i] < necromancySkullHp[weakestIndex]) {
+        weakestIndex = i;
+      }
+    }
+    necromancySkullHp[weakestIndex] = skullHp;
+    return false;
+  }
+
+  int necromancyRebirthChance() {
+    final level = max(1, max(widget.playerLevel, dungeonLevel));
+    return (level * 6).clamp(6, 100).toInt();
+  }
+
+  bool tryUndeadRebirth() {
+    if (playerHp > 0 ||
+        undeadRebirthUsedThisRun ||
+        undeadRebirthCooldownRuns > 0) {
+      return false;
+    }
+
+    final chancePercent = necromancyRebirthChance();
+    if (!chance(chancePercent)) return false;
+
+    undeadRebirthUsedThisRun = true;
+    undeadFormActive = true;
+    undeadRebirthCooldownRuns = 10;
+    undeadSkullTurnCounter = 0;
+    playerHp = max(1, (playerMaxHp / 2).ceil()).toInt();
+    playerShield = 0;
+    unlockedWeaponIds.add('necromancy_staff');
+    runWeaponIds.add('necromancy_staff');
+    final added = summonNecromancySkull();
+    final skullVerbIt = added ? 'si alza' : 'si ricompone';
+    final skullVerbEn = added ? 'rises' : 'reforms';
+
+    textIt +=
+        '\n\nRinascita non morta riuscita ($chancePercent%).\n'
+        'Torni con $playerHp/$playerMaxHp HP. La Staffa della Necromanzia è sbloccata per le prossime run.\n'
+        'Un Teschio $skullVerbIt accanto a te: ${necromancySkullHp.length}/$necromancySkullLimit.';
+    textEn +=
+        '\n\nUndead rebirth succeeds ($chancePercent%).\n'
+        'You return with $playerHp/$playerMaxHp HP. The Necromancy Staff is unlocked for future runs.\n'
+        'A Skull $skullVerbEn beside you: ${necromancySkullHp.length}/$necromancySkullLimit.';
+    addLog(
+      t(
+        'Rinascita non morta: Staffa della Necromanzia sbloccata. Blocco di 10 run attivo.',
+        'Undead rebirth: Necromancy Staff unlocked. 10-run cooldown active.',
+      ),
+    );
+    _savePermanentProgress();
+    return true;
+  }
+
+  bool tryMouseKeyRebirth() {
+    if (playerHp > 0 || mouseKeyFormActive || !chance(1)) return false;
+
+    mouseKeyFormActive = true;
+    final originalMaxHp = max(1, playerMaxHp);
+    playerMaxHp = max(1, (originalMaxHp * 0.35).ceil()).toInt();
+    playerHp = max(1, (playerMaxHp / 2).ceil()).toInt();
+    playerShield = 0;
+    final key = _starterWeapons.firstWhere(
+      (weapon) => weapon.id == 'mouse_key',
+    );
+    starterWeapon = key;
+    runWeaponIds.add(key.id);
+    textIt +=
+        '\n\nL\'occhio si restringe e il mondo diventa enorme. Rinasci come Topolino della Chiave: $playerHp/$playerMaxHp HP, danno raddoppiato e Chiave del Topolino equipaggiata.';
+    textEn +=
+        '\n\nYour eye narrows and the world becomes enormous. You return as the Key Mouse: $playerHp/$playerMaxHp HP, doubled damage and the Little Mouse Key equipped.';
+    addLog(
+      t(
+        'Rinascita rarissima: Topolino della Chiave (1%). Forte, ma fragile.',
+        'Rare rebirth: Key Mouse (1%). Strong, but fragile.',
+      ),
+    );
+    return true;
+  }
+
+  int get playerDeathSaveWill => max(1, totalVc + dungeonVolonta).toInt();
+  int get playerDeathSaveMateria => max(0, totalCm + dungeonMateria).toInt();
+
+  List<_DownedCombatant> get downedCompanions => downedCombatants.values
+      .where((combatant) => combatant.id != 'player')
+      .toList();
+
+  void markCombatantDowned({
+    required String id,
+    required String nameIt,
+    required String nameEn,
+    required int maxHp,
+    required int will,
+    required int materia,
+    int maxOculum = 0,
+  }) {
+    if (downedCombatants.containsKey(id)) return;
+
+    downedCombatants[id] = _DownedCombatant(
+      id: id,
+      nameIt: nameIt,
+      nameEn: nameEn,
+      maxHp: max(1, maxHp).toInt(),
+      maxOculum: max(0, maxOculum).toInt(),
+      will: max(0, will).toInt(),
+      materia: max(0, materia).toInt(),
+    );
+    addLog(
+      t(
+        '$nameIt e a terra: servono 3 Ferite per morire o 3 Volonta Vitale per rialzarsi.',
+        '$nameEn is down: 3 Wounds mean death, while 3 Vital Wills bring them back.',
+      ),
+    );
+  }
+
+  void markPlayerDowned() {
+    if (isPlayerDowned) return;
+    playerHp = 0;
+    markCombatantDowned(
+      id: 'player',
+      nameIt: playerNameInRun,
+      nameEn: playerNameInRun,
+      maxHp: playerMaxHp,
+      maxOculum: oculumMaxCharges,
+      will: playerDeathSaveWill,
+      materia: playerDeathSaveMateria,
+    );
+    textIt +=
+        '\n\nSei a terra. Al prossimo turno dei mostri farai un tiro contro la morte.';
+    textEn +=
+        '\n\nYou are down. On the next monster turn you will make a death save.';
+  }
+
+  void markSupportDowned(
+    String id, {
+    required String nameIt,
+    required String nameEn,
+    required int maxHp,
+    required int will,
+    required int materia,
+  }) {
+    markCombatantDowned(
+      id: id,
+      nameIt: nameIt,
+      nameEn: nameEn,
+      maxHp: maxHp,
+      will: will,
+      materia: materia,
+    );
+  }
+
+  void resolveCombatantDeath(_DownedCombatant combatant) {
+    downedCombatants.remove(combatant.id);
+
+    if (combatant.id == 'player') {
+      textIt += '\n\nLe tre Ferite diventano definitive. La run termina.';
+      textEn += '\n\nThe third Wound becomes final. The run ends.';
+      finishRun(victorious: false);
+      return;
+    }
+
+    switch (combatant.id) {
+      case 'aegis':
+        aegisHp = 0;
+        aegisShield = 0;
+        break;
+      case 'runix':
+        runixHp = 0;
+        break;
+      case 'pawn':
+        pawnHp = 0;
+        pawnShield = 0;
+        break;
+      case 'cipo_serpent':
+        cipoSerpentHp = 0;
+        break;
+      case 'skeleton_hands':
+        skeletonHandsHp = 0;
+        break;
+      case 'postea_elite_guard':
+        activeAllies.removeWhere((npc) => npc.id == combatant.id);
+        clearPosteaEliteGuardState();
+        break;
+      default:
+        final npc = npcById(combatant.id);
+        if (npc != null) {
+          removeSmallNpcFromParty(
+            npc,
+            reasonIt: 'subisce la terza Ferita e non puo piu combattere.',
+            reasonEn: 'takes a third Wound and can no longer fight.',
+          );
+        } else {
+          activeAllies.removeWhere((npc) => npc.id == combatant.id);
+        }
+        break;
+    }
+
+    textIt += '\n${combatant.nameIt} subisce la terza Ferita e muore.';
+    textEn += '\n${combatant.nameEn} takes a third Wound and dies.';
+    addLog(
+      t(
+        '${combatant.nameIt} e morto dopo la terza Ferita.',
+        '${combatant.nameEn} died after the third Wound.',
+      ),
+    );
+  }
+
+  void reviveCombatant(
+    _DownedCombatant combatant, {
+    bool forceFull = false,
+    bool criticalShield = false,
+    String? sourceIt,
+    String? sourceEn,
+  }) {
+    final fullStrength = forceFull || combatant.wounds == 0;
+    final restoredHp = fullStrength
+        ? combatant.maxHp
+        : max(1, (combatant.maxHp / 2).ceil()).toInt();
+    final restoredOculum = fullStrength
+        ? combatant.maxOculum
+        : max(0, (combatant.maxOculum / 2).ceil()).toInt();
+    final restoredShield = max(
+      0,
+      combatant.will + (criticalShield ? combatant.materia : 0),
+    ).toInt();
+
+    switch (combatant.id) {
+      case 'player':
+        playerHp = min(playerMaxHp, restoredHp).toInt();
+        oculumCharges = min(oculumMaxCharges, restoredOculum).toInt();
+        setPlayerShieldAtLeast(restoredShield);
+        break;
+      case 'aegis':
+        aegisHp = min(aegisMaxHp, restoredHp).toInt();
+        aegisShield = min(aegisShieldCap, restoredShield).toInt();
+        break;
+      case 'runix':
+        runixHp = min(runixMaxHp, restoredHp).toInt();
+        break;
+      case 'pawn':
+        pawnHp = min(pawnMaxHp, restoredHp).toInt();
+        pawnShield = restoredShield;
+        break;
+      case 'cipo_serpent':
+        cipoSerpentHp = min(cipoSerpentMaxHp, restoredHp).toInt();
+        break;
+      case 'skeleton_hands':
+        skeletonHandsHp = min(skeletonHandsMaxHp, restoredHp).toInt();
+        break;
+      case 'postea_elite_guard':
+        posteaEliteGuardHp = min(posteaEliteGuardMaxHp, restoredHp).toInt();
+        posteaEliteGuardShield = restoredShield;
+        break;
+      default:
+        if (activeAllies.any((npc) => npc.id == combatant.id)) {
+          smallNpcActions[combatant.id] = max(
+            1,
+            smallNpcActions[combatant.id] ?? 3,
+          ).toInt();
+        }
+        break;
+    }
+
+    downedCombatants.remove(combatant.id);
+    final strengthIt = fullStrength ? 'al massimo delle forze' : 'con meta HP';
+    final strengthEn = fullStrength ? 'at full strength' : 'with half HP';
+    final shieldLabelIt = criticalShield
+        ? '${combatant.will} Volonta + ${combatant.materia} Materia'
+        : '${combatant.will} Volonta';
+    final shieldLabelEn = criticalShield
+        ? '${combatant.will} Will + ${combatant.materia} Materia'
+        : '${combatant.will} Will';
+    final prefixIt = sourceIt == null ? '' : '$sourceIt ';
+    final prefixEn = sourceEn == null ? '' : '$sourceEn ';
+
+    textIt +=
+        '\n$prefixIt${combatant.nameIt} si rialza $strengthIt: $restoredHp HP, $restoredOculum Oculum, Scudo $shieldLabelIt.';
+    textEn +=
+        '\n$prefixEn${combatant.nameEn} rises $strengthEn: $restoredHp HP, $restoredOculum Oculum, $shieldLabelEn Shield.';
+    addLog(
+      t(
+        '${combatant.nameIt} si rialza $strengthIt.',
+        '${combatant.nameEn} rises $strengthEn.',
+      ),
+    );
+  }
+
+  void resolveDeathSavesAtTurnStart() {
+    for (final combatant in List<_DownedCombatant>.from(
+      downedCombatants.values,
+    )) {
+      if (!downedCombatants.containsKey(combatant.id)) continue;
+
+      final roll = _random.nextInt(20) + 1;
+      if (roll == 20) {
+        combatant.vitalWills = 3;
+        textIt +=
+            '\nTiro contro la morte di ${combatant.nameIt}: 20 critico, la Volonta Vitale esplode.';
+        textEn +=
+            '\n${combatant.nameEn} death save: critical 20, Vital Will surges.';
+        reviveCombatant(
+          combatant,
+          forceFull: true,
+          criticalShield: true,
+          sourceIt: 'Critico positivo:',
+          sourceEn: 'Positive critical:',
+        );
+        continue;
+      }
+
+      if (roll >= 10) {
+        combatant.vitalWills = min(3, combatant.vitalWills + 1);
+        textIt +=
+            '\nTiro contro la morte di ${combatant.nameIt}: successo, Volonta Vitale ${combatant.vitalWills}/3.';
+        textEn +=
+            '\n${combatant.nameEn} death save: success, Vital Will ${combatant.vitalWills}/3.';
+        if (combatant.vitalWills >= 3) {
+          reviveCombatant(combatant);
+        }
+        continue;
+      }
+
+      combatant.wounds = min(3, combatant.wounds + 1);
+      textIt +=
+          '\nTiro contro la morte di ${combatant.nameIt}: ${roll == 1 ? '1 critico, ' : ''}Ferita ${combatant.wounds}/3.';
+      textEn +=
+          '\n${combatant.nameEn} death save: ${roll == 1 ? 'critical 1, ' : ''}Wound ${combatant.wounds}/3.';
+      if (combatant.wounds >= 3) {
+        resolveCombatantDeath(combatant);
+        if (gameOver) return;
+      }
+    }
+  }
+
+  void showReviveCompanionChoices() {
+    if (!canUseCombatInput || downedCompanions.isEmpty) return;
+    setState(() {
+      clearChoices(mode: 'revive');
+      textIt =
+          'Rialza compagno. Usi un azione e tiri 1d20: 1 = Ferita, 2-7 = nulla, 8-15 = +1 Volonta Vitale, 16-19 = +2, 20 = ritorno al massimo.';
+      textEn =
+          'Raise companion. Spend an action and roll 1d20: 1 = Wound, 2-7 = nothing, 8-15 = +1 Vital Will, 16-19 = +2, 20 = full revival.';
+
+      for (final combatant in downedCompanions) {
+        eventChoices.add(
+          _DungeonChoice(
+            labelIt:
+                'Rialza ${combatant.nameIt} (${combatant.wounds} Ferite, ${combatant.vitalWills} Volonta)',
+            labelEn:
+                'Raise ${combatant.nameEn} (${combatant.wounds} Wounds, ${combatant.vitalWills} Vital Will)',
+            icon: Icons.volunteer_activism,
+            color: const Color(0xFF7DD3FC),
+            onPressed: () => raiseDownedCompanion(combatant.id),
+          ),
+        );
+      }
+    });
+  }
+
+  void raiseDownedCompanion(String id) {
+    if (!canUseCombatInput) return;
+    final combatant = downedCombatants[id];
+    if (combatant == null || id == 'player') return;
+
+    setState(() {
+      clearChoices();
+      final roll = _random.nextInt(20) + 1;
+      if (roll == 1) {
+        combatant.wounds = min(3, combatant.wounds + 1);
+        textIt =
+            'Rialza compagno: 1 critico. ${combatant.nameIt} riceve una Ferita (${combatant.wounds}/3).';
+        textEn =
+            'Raise companion: critical 1. ${combatant.nameEn} receives a Wound (${combatant.wounds}/3).';
+        if (combatant.wounds >= 3) {
+          resolveCombatantDeath(combatant);
+        }
+      } else if (roll <= 7) {
+        textIt =
+            'Rialza compagno: $roll. Non riesci ancora a raggiungere ${combatant.nameIt}.';
+        textEn =
+            'Raise companion: $roll. You cannot reach ${combatant.nameEn} yet.';
+      } else if (roll <= 15) {
+        combatant.vitalWills = min(3, combatant.vitalWills + 1);
+        textIt =
+            'Rialza compagno: $roll. ${combatant.nameIt} riceve 1 Volonta Vitale (${combatant.vitalWills}/3).';
+        textEn =
+            'Raise companion: $roll. ${combatant.nameEn} gains 1 Vital Will (${combatant.vitalWills}/3).';
+        if (combatant.vitalWills >= 3) {
+          reviveCombatant(
+            combatant,
+            sourceIt: 'La tua azione lo raggiunge:',
+            sourceEn: 'Your action reaches them:',
+          );
+        }
+      } else if (roll <= 19) {
+        combatant.vitalWills = min(3, combatant.vitalWills + 2);
+        textIt =
+            'Rialza compagno: $roll. ${combatant.nameIt} riceve 2 Volonta Vitale (${combatant.vitalWills}/3).';
+        textEn =
+            'Raise companion: $roll. ${combatant.nameEn} gains 2 Vital Will (${combatant.vitalWills}/3).';
+        if (combatant.vitalWills >= 3) {
+          reviveCombatant(
+            combatant,
+            sourceIt: 'La tua azione lo raggiunge:',
+            sourceEn: 'Your action reaches them:',
+          );
+        }
+      } else {
+        reviveCombatant(
+          combatant,
+          forceFull: true,
+          criticalShield: true,
+          sourceIt: '20 critico:',
+          sourceEn: 'Critical 20:',
+        );
+      }
+      enemyTurn();
+    });
+  }
+
+  bool tryResolvePlayerDeath() {
+    if (tryConsumeRebirthBlessing()) return true;
+    if (tryMouseKeyRebirth()) return true;
+    if (tryUndeadRebirth()) return true;
+    if (!inCombat) return false;
+    markPlayerDowned();
+    return true;
+  }
+
+  void resolvePlayerDeathAfterDamage() {
+    if (playerHp > 0 || tryResolvePlayerDeath()) return;
+    finishRun(victorious: false);
+  }
+
+  void applyUndeadTurnEffects() {
+    if (!undeadFormActive || playerHp <= 0 || gameOver) return;
+
+    final heal = max(1, 5 * currentFloor).toInt();
+    final before = playerHp;
+    playerHp = min(playerMaxHp, playerHp + heal).toInt();
+    undeadSkullTurnCounter++;
+
+    var summonLineIt = '';
+    var summonLineEn = '';
+    if (undeadSkullTurnCounter % 5 == 0) {
+      final added = summonNecromancySkull();
+      summonLineIt = added
+          ? ' Al quinto turno un Teschio torna a combattere.'
+          : ' Al quinto turno un Teschio danneggiato si ricompone.';
+      summonLineEn = added
+          ? ' On the fifth turn, a Skull returns to battle.'
+          : ' On the fifth turn, a damaged Skull reforms.';
+    }
+
+    textIt +=
+        '\nForma non morta: $before → $playerHp HP (+$heal).$summonLineIt';
+    textEn += '\nUndead form: $before → $playerHp HP (+$heal).$summonLineEn';
+  }
+
+  void necromancySkullsAct(List<_EnemyInstance> aliveEnemies) {
+    normalizeNecromancySkulls();
+    if (necromancySkullHp.isEmpty || aliveEnemies.isEmpty) return;
+
+    var totalHit = 0;
+    var attacks = 0;
+    for (var index = 0; index < necromancySkullHp.length; index++) {
+      final targets = enemyParty.where((enemy) => enemy.hp > 0).toList();
+      if (targets.isEmpty) break;
+      final target = targets[_random.nextInt(targets.length)];
+      final rawDamage = max(1, totalDamage ~/ 4).toInt();
+      final damage = damageAfterEnemyAdaptation(
+        target,
+        'Necromancy Skull',
+        rawDamage,
+      );
+      target.hp = max(0, target.hp - damage).toInt();
+      totalHit += damage;
+      attacks++;
+    }
+
+    if (attacks <= 0) return;
+    textIt +=
+        '\nTeschi della necromanzia: $attacks attacchi, $totalHit danni totali.';
+    textEn += '\nNecromancy Skulls: $attacks attacks, $totalHit total damage.';
+    defeatDeadEnemiesFromParty();
+  }
+
+  void tryKittySlimeMultiplyOnAttackReceived(
+    List<String> reportIt,
+    List<String> reportEn,
+  ) {
+    if (!kittySlimeOriginActive) return;
+    normalizeKittySlimeCopies();
+    if (kittySlimeCopies >= 2 || !chance(50)) return;
+    kittySlimeCopies++;
+    kittySlimeCopyHp.add(kittySlimeCopyMaxHp());
+    reportIt.add(
+      'Kitty Slime subisce la pressione del colpo e si moltiplica: copia $kittySlimeCopies/2.',
+    );
+    reportEn.add(
+      'Kitty Slime reacts to the pressure of the hit and multiplies: copy $kittySlimeCopies/2.',
+    );
+  }
+
   int absorbWithSummons(
     int incoming,
     List<String> reportIt,
     List<String> reportEn, {
     bool criticalHit = false,
+    VoidCallback? onKittyCopyHit,
   }) {
     var remaining = incoming;
+
+    if (aegisRunixProtectionActive && remaining > 0 && chance(70)) {
+      gainAegisShield(6 + totalDefense ~/ 4);
+      final beforeHp = aegisHp;
+      final beforeShield = aegisShield;
+      final shieldAbsorb = min(aegisShield, remaining);
+      aegisShield -= shieldAbsorb;
+      remaining -= shieldAbsorb;
+      final hpAbsorb = min(aegisHp, remaining);
+      aegisHp -= hpAbsorb;
+      remaining -= hpAbsorb;
+      final absorbed = shieldAbsorb + hpAbsorb;
+      reportIt.add(
+        aegisHp <= 0 && beforeHp > 0
+            ? 'Aegis intercetta il colpo per Runix e crolla. Assorbe $absorbed danni ($shieldAbsorb Scudo, $hpAbsorb HP).'
+            : 'Aegis intercetta il colpo per Runix: $absorbed danni assorbiti. HP $aegisHp/$aegisMaxHp, Scudo $aegisShield/$beforeShield.',
+      );
+      reportEn.add(
+        aegisHp <= 0 && beforeHp > 0
+            ? 'Aegis intercepts the hit for Runix and collapses. It absorbs $absorbed damage ($shieldAbsorb Shield, $hpAbsorb HP).'
+            : 'Aegis intercepts the hit for Runix: $absorbed damage absorbed. HP $aegisHp/$aegisMaxHp, Shield $aegisShield/$beforeShield.',
+      );
+    }
+
+    if (runicDuoSupportActive &&
+        remaining > 0 &&
+        chance(aegisHp > 0 ? 30 : 55)) {
+      syncRunixHpWithResilience();
+      final before = runixHp;
+      final absorbed = min(runixHp, remaining);
+      runixHp -= absorbed;
+      remaining -= absorbed;
+
+      if (before > 0 && runixHp <= 0) {
+        reportIt.add(
+          'Runix prende il colpo al posto tuo: la Resilienza runica si spezza. Assorbe $absorbed danni.',
+        );
+        reportEn.add(
+          'Runix takes the hit instead of you: its runic Resilience breaks. It absorbs $absorbed damage.',
+        );
+      } else {
+        reportIt.add(
+          'Runix intercetta con la Resilienza: $absorbed danni assorbiti. HP $runixHp/$runixMaxHp.',
+        );
+        reportEn.add(
+          'Runix intercepts with Resilience: $absorbed damage absorbed. HP $runixHp/$runixMaxHp.',
+        );
+      }
+    }
+
+    if (kittySlimeOriginActive &&
+        kittySlimeCopies > 0 &&
+        remaining > 0 &&
+        chance(68)) {
+      normalizeKittySlimeCopies();
+      onKittyCopyHit?.call();
+      final beforeCopyCount = kittySlimeCopies;
+      final beforeCopyHp = kittySlimeCopyHp.first;
+      final absorbed = min(beforeCopyHp, remaining);
+      kittySlimeCopyHp[0] = beforeCopyHp - absorbed;
+      remaining -= absorbed;
+      if (kittySlimeCopyHp[0] <= 0) {
+        kittySlimeCopyHp.removeAt(0);
+        kittySlimeCopies = kittySlimeCopyHp.length;
+        reportIt.add(
+          'Una copia Kitty Slime prende il colpo al posto tuo e si scioglie. Assorbe $absorbed danni.',
+        );
+        reportEn.add(
+          'A Kitty Slime copy takes the hit for you and melts. It absorbs $absorbed damage.',
+        );
+      } else {
+        reportIt.add(
+          'Una copia Kitty Slime viene colpita al posto tuo: assorbe $absorbed danni. Copie $beforeCopyCount/2, HP copia ${kittySlimeCopyHp[0]}/${kittySlimeCopyMaxHp()}.',
+        );
+        reportEn.add(
+          'A Kitty Slime copy is hit instead of you: absorbs $absorbed damage. Copies $beforeCopyCount/2, copy HP ${kittySlimeCopyHp[0]}/${kittySlimeCopyMaxHp()}.',
+        );
+      }
+    }
 
     if (pawnHp > 0 && remaining > 0) {
       pawnShield += 10;
@@ -13220,6 +16191,16 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     return remaining;
   }
 
+  List<String> trueEyeSkillsForRun() {
+    final pool = <String>[
+      'true_eye_shield_eater',
+      'true_eye_split_gaze',
+      'true_eye_false_future',
+      'true_eye_unblinking_judgment',
+    ]..shuffle(_random);
+    return pool.take(3).toList();
+  }
+
   List<String> enemySkillPoolFor(_EnemyInstance attacker) {
     final pool = <String>{...attacker.skillIds};
     final lowerName = '${attacker.nameIt} ${attacker.nameEn}'.toLowerCase();
@@ -13236,6 +16217,24 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     if (attacker.boss || attacker.elite) {
       pool.add('generic_element_burst');
       pool.add('generic_guard');
+      pool.add('generic_stunning_roar');
+    }
+    if (attacker.elementId == 'water' ||
+        attacker.elementId == 'ice' ||
+        attacker.elementId == 'dream') {
+      pool.add('oculum_freeze_stasis');
+    }
+    if (attacker.elementId == 'flora' ||
+        lowerName.contains('sbocciat') ||
+        lowerName.contains('muschio') ||
+        lowerName.contains('radice')) {
+      pool.add('oculum_arborify');
+    }
+    if (attacker.elementId == 'fire' ||
+        attacker.elementId == 'lava' ||
+        lowerName.contains('cenere') ||
+        lowerName.contains('braci')) {
+      pool.add('oculum_ustione');
     }
     if (attacker.elementId == 'blood' ||
         lowerName.contains('sangue') ||
@@ -13252,6 +16251,16 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     if (attacker.elementId == 'oculum') {
       pool.add('generic_oculum_guard');
     }
+    if (attacker.elementId == 'earth' ||
+        attacker.elementId == 'sound' ||
+        attacker.elementId == 'metal' ||
+        lowerName.contains('golem') ||
+        lowerName.contains('talpa') ||
+        lowerName.contains('patalpa') ||
+        lowerName.contains('guard') ||
+        lowerName.contains('sentinella')) {
+      pool.add('generic_stun_slam');
+    }
 
     return pool.toList();
   }
@@ -13263,6 +16272,201 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     List<String> reportEn,
   ) {
     switch (skillId) {
+      case 'royal_slime_slam':
+        {
+          final base = attacker.attack + currentFloor * 4 + attacker.grade * 5;
+          final dmg = max(1, base - totalDefense ~/ 5);
+          final hit = applyPlayerDamage(dmg);
+          final applied = hit['hp'] ?? 0;
+          playerSlowTurns = max(playerSlowTurns, 1);
+          if (pawnHp > 0) pawnHp = max(0, pawnHp - max(1, dmg ~/ 4)).toInt();
+          if (aegisHp > 0) aegisHp = max(0, aegisHp - max(1, dmg ~/ 5)).toInt();
+          reportIt.add(
+            'Schianto dello Slime Regale: lo Slime King colpisce tutta la zona. -$applied HP e Slow.',
+          );
+          reportEn.add(
+            'Royal Slime Slam: the Slime King hits the whole area. -$applied HP and Slow.',
+          );
+          return true;
+        }
+
+      case 'king_slime_sword':
+        {
+          final defensePunish = max(10, totalDefense);
+          final dmg =
+              attacker.attack +
+              defensePunish +
+              currentFloor * 5 +
+              attacker.grade * 6;
+          final hit = applyPlayerDamage(max(1, dmg));
+          final applied = hit['hp'] ?? 0;
+          playerDefenseDebuffTurns = max(playerDefenseDebuffTurns, 2);
+          playerDefenseDebuffValue = max(
+            playerDefenseDebuffValue,
+            3 + attacker.grade,
+          );
+          reportIt.add(
+            'Spadata del King Slime: danni assurdi contro la Difesa. -$applied HP, Difesa incrinata.',
+          );
+          reportEn.add(
+            'King Slime Sword: absurd damage against Defense. -$applied HP, Defense cracked.',
+          );
+          return true;
+        }
+
+      case 'summon_kitty_slimes':
+        {
+          final livingSummons = enemyParty
+              .where(
+                (enemy) =>
+                    enemy.hp > 0 && enemy.monsterId == 'summoned_kitty_slime',
+              )
+              .length;
+          if (enemyParty.where((enemy) => enemy.hp > 0).length >= 7 ||
+              livingSummons >= 4) {
+            return false;
+          }
+          enemyParty
+            ..add(createSummonedKittySlime(livingSummons))
+            ..add(createSummonedKittySlime(livingSummons + 1));
+          reportIt.add('Evocazione reale: lo Slime King chiama 2 Kitty Slime.');
+          reportEn.add('Royal Summon: the Slime King calls 2 Kitty Slimes.');
+          return true;
+        }
+
+      case 'oculum_freeze_stasis':
+        {
+          final dmg = max(
+            1,
+            attacker.attack ~/ 2 + currentFloor + attacker.grade * 2,
+          );
+          final hit = applyPlayerDamage(
+            max(1, dmg - elementalIncomingReduction('water')),
+          );
+          final applied = hit['hp'] ?? 0;
+          final stunTurns = attacker.elite || attacker.boss ? 2 : 1;
+          playerStunTurns = max(playerStunTurns, stunTurns);
+          playerSlowTurns = max(playerSlowTurns, stunTurns);
+          counterattackReady = false;
+          reportIt.add(
+            '${attacker.nameIt} usa Stasi Vitrea: congelamento, -$applied HP, Stun $stunTurns.',
+          );
+          reportEn.add(
+            '${attacker.nameEn} uses Glass Stasis: freezing, -$applied HP, Stun $stunTurns.',
+          );
+          return true;
+        }
+
+      case 'oculum_arborify':
+        {
+          final defenseQuarter = max(1, totalDefense ~/ 4);
+          final defenseLoss = max(1, totalDefense - defenseQuarter);
+          playerDefenseDebuffTurns = max(playerDefenseDebuffTurns, 2);
+          playerDefenseDebuffValue = max(playerDefenseDebuffValue, defenseLoss);
+          playerSlowTurns = max(playerSlowTurns, 1);
+          reportIt.add(
+            '${attacker.nameIt} usa Arborificamento: la Difesa resta a circa 1/4 per 2 turni e subisci Slow.',
+          );
+          reportEn.add(
+            '${attacker.nameEn} uses Arborification: Defense drops to about 1/4 for 2 turns and you suffer Slow.',
+          );
+          return true;
+        }
+
+      case 'oculum_ustione':
+        {
+          final dmg = max(1, attacker.attack ~/ 3 + currentFloor);
+          final hit = applyPlayerDamage(
+            max(1, dmg - elementalIncomingReduction('fire')),
+          );
+          final applied = hit['hp'] ?? 0;
+          playerBurnTurns = max(playerBurnTurns, 3);
+          reportIt.add(
+            '${attacker.nameIt} usa Ustione del Sigillo: -$applied HP e D.O.T. da ustione.',
+          );
+          reportEn.add(
+            '${attacker.nameEn} uses Sigil Burn: -$applied HP and burn D.O.T.',
+          );
+          return true;
+        }
+
+      case 'true_eye_shield_eater':
+        {
+          final beforeShield = playerShield;
+          final beforeOculumShield = playerOculumShield;
+          final shieldLoss = max(12, (playerShield * 0.55).ceil());
+          final oculumShieldLoss = max(0, (playerOculumShield * 0.25).ceil());
+          playerShield = max(0, playerShield - shieldLoss).toInt();
+          playerOculumShield = max(
+            0,
+            playerOculumShield - oculumShieldLoss,
+          ).toInt();
+          final hit = applyPlayerDamage(
+            max(1, attacker.attack + currentFloor * 2),
+          );
+          final applied = hit['hp'] ?? 0;
+          reportIt.add(
+            'Il Vero Occhio divora gli scudi: -${beforeShield - playerShield} Scudo, -${beforeOculumShield - playerOculumShield} Scudo Oculum e -$applied HP.',
+          );
+          reportEn.add(
+            'The True Eye devours shields: -${beforeShield - playerShield} Shield, -${beforeOculumShield - playerOculumShield} Oculum Shield and -$applied HP.',
+          );
+          return true;
+        }
+
+      case 'true_eye_split_gaze':
+        {
+          final hits = 2 + _random.nextInt(2);
+          var totalHp = 0;
+          for (var i = 0; i < hits; i++) {
+            final hit = applyPlayerDamage(
+              max(1, attacker.attack ~/ 2 + currentFloor + attacker.grade * 2),
+            );
+            totalHp += hit['hp'] ?? 0;
+          }
+          playerBurnTurns = max(playerBurnTurns, 2);
+          reportIt.add(
+            'Il Vero Occhio apre $hits palpebre nello stesso istante: -$totalHp HP e Bruciatura.',
+          );
+          reportEn.add(
+            'The True Eye opens $hits eyelids at once: -$totalHp HP and Burn.',
+          );
+          return true;
+        }
+
+      case 'true_eye_false_future':
+        {
+          final defenseLoss = 5 + attacker.grade;
+          playerDefenseDebuffTurns = max(playerDefenseDebuffTurns, 2);
+          playerDefenseDebuffValue = max(playerDefenseDebuffValue, defenseLoss);
+          playerAttackDebuffTurns = max(playerAttackDebuffTurns, 2);
+          playerAttackDebuffValue = max(playerAttackDebuffValue, 3);
+          reportIt.add(
+            'Il Vero Occhio mostra un futuro falso: -$defenseLoss Difesa e -3 danni per 2 turni.',
+          );
+          reportEn.add(
+            'The True Eye shows a false future: -$defenseLoss Defense and -3 damage for 2 turns.',
+          );
+          return true;
+        }
+
+      case 'true_eye_unblinking_judgment':
+        {
+          final strike = max(
+            1,
+            attacker.attack + currentFloor * 4 + attacker.grade * 6,
+          );
+          final hit = applyPlayerDamage(strike);
+          final applied = hit['hp'] ?? 0;
+          reportIt.add(
+            'Giudizio senza palpebra: il Vero Occhio incide -$applied HP attraverso la pressione del fight.',
+          );
+          reportEn.add(
+            'Unblinking Judgment: the True Eye carves -$applied HP through combat pressure.',
+          );
+          return true;
+        }
+
       case 'generic_power_strike':
         {
           var dmg = attacker.attack + currentFloor + attacker.level ~/ 2;
@@ -13324,6 +16528,40 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           );
           reportEn.add(
             '${attacker.nameEn} opens an area ${elementName(attacker.elementId)} Skill: -$applied HP and Slow.',
+          );
+          return true;
+        }
+
+      case 'generic_stun_slam':
+        {
+          var dmg = attacker.attack ~/ 2 + currentFloor + attacker.grade * 2;
+          dmg = max(1, dmg - elementalIncomingReduction(attacker.elementId));
+          final hit = applyPlayerDamage(dmg);
+          final applied = hit['hp'] ?? 0;
+          final stunTurns = attacker.elite || attacker.boss ? 2 : 1;
+          playerStunTurns = max(playerStunTurns, stunTurns);
+          counterattackReady = false;
+          reportIt.add(
+            '${attacker.nameIt} usa Colpo Stordente: -$applied HP e Stun $stunTurns.',
+          );
+          reportEn.add(
+            '${attacker.nameEn} uses Stunning Slam: -$applied HP and Stun $stunTurns.',
+          );
+          return true;
+        }
+
+      case 'generic_stunning_roar':
+        {
+          final shieldLoss = min(playerShield, 8 + attacker.grade * 4);
+          playerShield = max(0, playerShield - shieldLoss).toInt();
+          playerStunTurns = max(playerStunTurns, 1);
+          playerAttackDebuffTurns = max(playerAttackDebuffTurns, 1);
+          playerAttackDebuffValue = max(playerAttackDebuffValue, 1);
+          reportIt.add(
+            '${attacker.nameIt} impone un Ruggito Stordente: -$shieldLoss Scudo, Stun 1 e attacco ridotto.',
+          );
+          reportEn.add(
+            '${attacker.nameEn} imposes a Stunning Roar: -$shieldLoss Shield, Stun 1 and reduced attack.',
           );
           return true;
         }
@@ -13596,27 +16834,56 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   void enemyTurn() {
     if (!inCombat || gameOver || enemyTurnPending) return;
 
+    if (oculumSkillActionsThisTurn == 1) {
+      oculumSkillTurnScheduleToken++;
+      textIt +=
+          '\n\nPuoi usare ancora una Skill Oculum prima del turno di alleati e mostri.';
+      textEn +=
+          '\n\nYou can use one more Oculum Skill before allies and monsters take their turn.';
+      return;
+    }
+    if (oculumSkillActionsThisTurn >= 2) {
+      oculumSkillActionsThisTurn = 0;
+      oculumSkillTurnScheduleToken++;
+      alliesAct();
+      if (enemyParty.where((enemy) => enemy.hp > 0).isEmpty) {
+        completeCombatVictory();
+        return;
+      }
+    }
+
     enemyTurnPending = true;
     reactionAvailable = false;
-    textIt +=
-        '\n\nTurno dei mostri in arrivo... CM automatica pronta tra 3 secondi.';
-    textEn +=
-        '\n\nMonster turn incoming... automatic CM defense ready in 3 seconds.';
+    counterattackReady = false;
+    textIt += '\n\nTurno dei mostri in arrivo... CM automatica in movimento.';
+    textEn += '\n\nMonster turn incoming... automatic CM defense in motion.';
 
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(milliseconds: 425), () {
       if (!mounted) return;
       setState(() {
         enemyTurnPending = false;
         _resolveEnemyTurn();
         if (inCombat && !gameOver) {
           reactionAvailable = true;
+          final wrongHeartHeal = applyWrongSpareHeartTurnRegen();
+          if (wrongHeartHeal > 0) {
+            textIt +=
+                '\n\nCuore di Ricambio Sbagliato: rigeneri $wrongHeartHeal HP.';
+            textEn +=
+                '\n\nWrong Spare Heart: you regenerate $wrongHeartHeal HP.';
+          }
         }
+        if (isDungeonCoopHost && inCombat && !gameOver) {
+          Future.microtask(openDungeonCoopTurnWindow);
+        }
+        scheduleAutoModeStep();
       });
     });
   }
 
   void _resolveEnemyTurn() {
     if (!inCombat || gameOver) return;
+    tickEnemySkillCooldowns();
 
     final attackers = enemyParty.where((enemy) => enemy.hp > 0).toList();
     if (attackers.isEmpty) {
@@ -13626,6 +16893,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
     final reportIt = <String>[];
     final reportEn = <String>[];
+    var enemyActionResolved = false;
 
     if (fifiSleepActions > 0) {
       fifiSleepActions--;
@@ -13670,12 +16938,16 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       }
 
       // Enemy may use a skill instead of a basic attack.
-      final skillPool = enemySkillPoolFor(attacker);
+      final skillPool = enemySkillPoolFor(
+        attacker,
+      ).where((sid) => !isEnemySkillOnCooldown(attacker, sid)).toList();
       final skillChance =
           24 + (attacker.elite ? 8 : 0) + (attacker.boss ? 12 : 0);
       if (skillPool.isNotEmpty && _random.nextInt(100) < skillChance) {
         final sid = skillPool[_random.nextInt(skillPool.length)];
         if (tryExecuteEnemySkill(attacker, sid, reportIt, reportEn)) {
+          startEnemySkillCooldown(attacker, sid);
+          enemyActionResolved = true;
           if (playerHp <= 0) break;
           continue;
         }
@@ -13729,6 +17001,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       if (enemyCrit) {
         incoming = (incoming * 1.65).round();
       }
+      enemyActionResolved = true;
 
       var playerCriticalShieldApplied = false;
       if (criticalShieldActive && !posteaEliteGuardInParty) {
@@ -13765,11 +17038,16 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         continue;
       }
 
+      var kittyCopyHitThisAttack = false;
       incoming = absorbWithSummons(
         incoming,
         reportIt,
         reportEn,
         criticalHit: enemyCrit,
+        onKittyCopyHit: () {
+          kittyCopyHitThisAttack = true;
+          tryKittySlimeMultiplyOnAttackReceived(reportIt, reportEn);
+        },
       );
       if (incoming <= 0) continue;
 
@@ -13802,6 +17080,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       final oculumShieldAbsorb = hit['oculumShield'] ?? 0;
       final shieldAbsorb = hit['shield'] ?? 0;
       incoming = hit['hp'] ?? 0;
+      if (!kittyCopyHitThisAttack) {
+        tryKittySlimeMultiplyOnAttackReceived(reportIt, reportEn);
+      }
 
       if (incoming > 0) {
         markNullFatelessWound(attacker, incoming);
@@ -13813,8 +17094,13 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       reportEn.add(
         '${attacker.nameEn} [${elementName(attacker.elementId)}] → $originalIncoming damage${enemyCrit ? ' CRITICAL' : ''} ($oculumShieldAbsorb Oculum Shield, $shieldAbsorb Shield, -$reduction resistance).',
       );
+      enemyActionResolved = true;
 
       if (playerHp <= 0) break;
+    }
+
+    if (enemyActionResolved && playerHp > 0 && inCombat && !gameOver) {
+      counterattackReady = true;
     }
 
     if (playerSlowTurns > 0) {
@@ -14087,7 +17373,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           (w) =>
               !w.unlockedByDefault &&
               !unlockedWeaponIds.contains(w.id) &&
-              !isStoryLockedWeaponId(w.id),
+              !isStoryLockedWeaponId(w.id) &&
+              !isDeathLockedWeaponId(w.id),
         )
         .toList();
     if (locked.isEmpty) return;
@@ -14400,8 +17687,22 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     return true;
   }
 
+  void registerOculumSkillCombatAction() {
+    if (!inCombat || gameOver) return;
+    oculumSkillActionsThisTurn++;
+    final token = ++oculumSkillTurnScheduleToken;
+    Future.microtask(() {
+      if (!mounted || token != oculumSkillTurnScheduleToken) return;
+      if (!inCombat || gameOver || enemyTurnPending) return;
+      enemyTurn();
+    });
+  }
+
   void useArtSkill(String skillId) {
-    if (!runActive || gameOver || enemyTurnPending || activeArt == null) {
+    if (!runActive ||
+        gameOver ||
+        enemyTurnPending ||
+        activeOculumArts().isEmpty) {
       return;
     }
     final skill = findArtSkillDef(skillId);
@@ -14414,6 +17715,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       if (!spendOculumForSkill(skillId)) {
         return;
       }
+      registerOculumSkillCombatAction();
       oculumSkillCasts++;
       final power = max(1, min(artSkillMaxLevel(skillId), lvl)).toInt();
 
@@ -14699,6 +18001,17 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       }
 
       if (skillId.startsWith('defiled_postea_art_')) {
+        if (!hasDefiledPosteaArtAccess) {
+          textIt =
+              '${skill.nameIt}\n\nServe Defiled Art: senza la giusta Art il Metallo Runico Postea puo solo potenziare armi dal fabbro.';
+          textEn =
+              '${skill.nameEn}\n\nDefiled Art is required: without the right Art, Postea Runic Metal can only upgrade weapons at the blacksmith.';
+          return;
+        }
+        completedAchievementIds.add('defiled_postea_used');
+        completedAchievementIds.add('aegis_runix_origin_unlocked');
+        unawaited(_savePermanentProgress());
+
         if (skillId.endsWith('runic_guards')) {
           final kg = spendPosteaMetalInvestment(skillId);
           if (kg < 0) return;
@@ -14707,22 +18020,35 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           final guardMat = 25 + 5 * kg + power * 5;
           final shield = guardRes * 2 + guardVol ~/ 2;
           final explosion = 50 + kg * 12 + power * 10;
+          final duoMaxHp = max(
+            aegisMaxHp,
+            guardRes * 2 + guardVol + guardMat ~/ 2 + currentFloor * 8,
+          ).toInt();
           dungeonResilienza += max(1, kg);
           dungeonVolonta += power;
           dungeonMateria += power;
           gainPlayerShield(shield);
+          runBoons.add('defiled_runic_duo_summoned');
+          aegisMaxHp = duoMaxHp;
+          aegisHp = max(aegisHp, duoMaxHp).toInt();
+          aegisShield = min(aegisShieldCap, max(aegisShield, shield)).toInt();
+          final runixNewMax = runixMaxHpFromResilience(
+            resilience: guardRes + max(0, power - 1),
+          );
+          runixMaxHp = max(runixMaxHp, runixNewMax).toInt();
+          runixHp = max(runixHp, runixMaxHp).toInt();
           skellyGuardCharges += 2 + power;
           runDamageBonus += explosion ~/ 10;
           textIt =
               '${skill.nameIt}\n\n'
               'Consumi $kg kg di Metallo Runico Postea. Metallo rimasto: $posteaRunicMetalLabel.\n'
-              'Evochi due guardie runiche di metà livello: Resilienza $guardRes, Volontà $guardVol, Materia $guardMat.\n'
-              '+$shield Scudo, +${2 + power} cariche guardia, esplosione a morte $explosion.';
+              'Evochi Aegis e Runix, le Guardie Runiche di Postea: Resilienza $guardRes, Volontà $guardVol, Materia $guardMat.\n'
+              '+$shield Scudo, Aegis $aegisHp/$aegisMaxHp HP con $aegisShield Scudo, Runix $runixHp/$runixMaxHp HP da Resilienza, +${2 + power} cariche guardia, esplosione a morte $explosion.';
           textEn =
               '${skill.nameEn}\n\n'
               'You consume $kg kg of Postea Runic Metal. Metal left: $posteaRunicMetalLabel.\n'
-              'You summon two half-level runic guards: Resilience $guardRes, Will $guardVol, Materia $guardMat.\n'
-              '+$shield Shield, +${2 + power} guard charges, death explosion $explosion.';
+              'You summon Aegis and Runix, the Runic Guards of Postea: Resilience $guardRes, Will $guardVol, Materia $guardMat.\n'
+              '+$shield Shield, Aegis $aegisHp/$aegisMaxHp HP with $aegisShield Shield, Runix $runixHp/$runixMaxHp HP from Resilience, +${2 + power} guard charges, death explosion $explosion.';
           progressQuest('oculum');
           progressSkillQuest(amount: power);
           return;
@@ -15315,9 +18641,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   }
 
   void ensureBossHasUnlockedArtSkill() {
-    if (!inCombat || !enemyIsBoss || activeArt == null) return;
+    if (!inCombat || !enemyIsBoss || activeOculumArts().isEmpty) return;
 
-    final skillIds = ensureThreeRandomSkillsForArt(activeArt!);
+    final skillIds = activeOculumSkillIds();
     if (skillIds.any(skillUnlocked)) return;
     if (skillIds.isEmpty) return;
 
@@ -15343,29 +18669,67 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         '\n\nThe boss does not leave you with three sealed Skills: ${skill?.nameEn ?? picked} emergency-unlocks.';
   }
 
+  void usePercentLifeArtSkill({
+    required String labelIt,
+    required String labelEn,
+    required int percent,
+    required int cost,
+  }) {
+    setState(() {
+      final target = firstAliveEnemy();
+      if (!inCombat || target == null) {
+        textIt = '$labelIt\n\nServe un nemico vivo.';
+        textEn = '$labelEn\n\nA living enemy is required.';
+        return;
+      }
+      if (!spendRunStat('ocu', cost)) {
+        textIt =
+            '$labelIt\n\nOculum insufficiente: costo $cost, disponibile $dungeonOculum.';
+        textEn =
+            '$labelEn\n\nNot enough Oculum: cost $cost, available $dungeonOculum.';
+        return;
+      }
+      final source = max(1, playerHp + playerShield + playerOculumShield);
+      final damage = max(1, (source * percent / 100).ceil());
+      final hpDamage = applyDamageToEnemy(target, damage);
+      textIt =
+          '$labelIt\n\nConsumi $cost Oculum. Danno $percent% di Vita+Scudi ($source): $damage. HP oltre scudo: $hpDamage a ${target.nameIt}.';
+      textEn =
+          '$labelEn\n\nYou spend $cost Oculum. Damage $percent% of Life+Shields ($source): $damage. HP after shield: $hpDamage to ${target.nameEn}.';
+      defeatDeadEnemiesFromParty();
+      if (enemyParty.isEmpty) {
+        completeCombatVictory();
+        return;
+      }
+      syncPrimaryEnemyFromParty();
+      enemyTurn();
+    });
+  }
+
   void showArtSkillChoices() {
-    if (activeArt == null) return;
+    if (activeOculumArts().isEmpty) return;
 
     setState(() {
       ensureBossHasUnlockedArtSkill();
       clearChoices(mode: 'skills');
       showCombatActions = true;
-      final skillIds = ensureThreeRandomSkillsForArt(activeArt!);
+      final arts = activeOculumArts();
+      final skillIds = activeOculumSkillIds();
 
-      final drownedHintIt = activeArt!.elementId == 'water'
+      final drownedHintIt = arts.any((art) => art.elementId == 'water')
           ? '\n\nArt degli Affogati: Catena d’Annegamento è garantita. Usala prima o durante un fight: i nemici caduti resteranno come Affogati temporanei, 3 base o 4 con Romanzo.'
           : '';
-      final drownedHintEn = activeArt!.elementId == 'water'
+      final drownedHintEn = arts.any((art) => art.elementId == 'water')
           ? '\n\nDrowned Art: Drowning Chain is guaranteed. Use it before or during a fight: fallen enemies will remain as Temporary Drowned, 3 base or 4 with the Novel.'
           : '';
 
       textIt =
-          'Skill Oculum della tua Art:\n\n'
+          'Skill Oculum delle tue Art/Oculus (${skillIds.length}/9):\n\n'
           '${buildArtSkillSummaryText()}\n\n'
           'Puoi usare le Skill sbloccate. Quelle bloccate richiedono quest.'
           '$drownedHintIt';
       textEn =
-          'Oculum Skills of your Art:\n\n'
+          'Oculum Skills of your Arts/Oculus (${skillIds.length}/9):\n\n'
           '${buildArtSkillSummaryText()}\n\n'
           'You can use unlocked Skills. Locked ones require quests.'
           '$drownedHintEn';
@@ -15381,7 +18745,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             labelEn:
                 '${unlocked ? 'Use' : 'Locked'}: ${skill.nameEn} • ${skillLevelLabel(id)} • ${artSkillCostLabel(id)}',
             icon: unlocked ? Icons.auto_fix_high : Icons.lock,
-            color: unlocked ? elementColor(activeElementId) : Colors.grey,
+            color: unlocked ? elementColor(skillArtElementId(id)) : Colors.grey,
             onPressed: unlocked
                 ? () => useArtSkill(id)
                 : () {
@@ -15394,6 +18758,35 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                   },
           ),
         );
+      }
+
+      if (inCombat && enemyParty.any((enemy) => enemy.hp > 0)) {
+        for (final spec in const [
+          ('Skill I: Taglio Vitale', 'Skill I: Vital Cut', 15, 6),
+          ('Skill II: Frattura Vitale', 'Skill II: Vital Fracture', 25, 10),
+          ('Skill III: Eclissi Vitale', 'Skill III: Vital Eclipse', 50, 16),
+          (
+            'Defiled Art: Cuore a Novanta',
+            'Defiled Art: Heart at Ninety',
+            90,
+            24,
+          ),
+        ]) {
+          eventChoices.add(
+            _DungeonChoice(
+              labelIt: '${spec.$1} - ${spec.$3}% - ${spec.$4} Oculum',
+              labelEn: '${spec.$2} - ${spec.$3}% - ${spec.$4} Oculum',
+              icon: Icons.percent,
+              color: spec.$3 >= 90 ? Colors.purpleAccent : Colors.redAccent,
+              onPressed: () => usePercentLifeArtSkill(
+                labelIt: spec.$1,
+                labelEn: spec.$2,
+                percent: spec.$3,
+                cost: spec.$4,
+              ),
+            ),
+          );
+        }
       }
 
       saveRunCheckpoint(
@@ -15470,14 +18863,16 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     });
   }
 
-  bool get canFindPosteaRunicMetal =>
-      activeArt?.effectId == 'defiled_postea_art' ||
-      selectedRunArtIds.contains('defiled_postea_art') ||
-      unlockedArtIds.contains('defiled_postea_art');
+  bool get canFindPosteaRunicMetal => runActive && floorZeroCompleted;
 
   int maybeGainPosteaRunicMetalFromTreasure() {
     if (!canFindPosteaRunicMetal) return 0;
-    if (!chance(activeArt?.effectId == 'defiled_postea_art' ? 55 : 28)) {
+    final findChance = hasDefiledPosteaArtAccess
+        ? 72
+        : currentFloor >= 4
+        ? 52
+        : 42;
+    if (!chance(findChance)) {
       return 0;
     }
     final kg = 1 + _random.nextInt(6);
@@ -15518,7 +18913,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           'Rompi il forziere e ne tieni una scheggia.\n-$damage HP\n+1 Dust\n+1 danno run.';
       textEn =
           'You break the chest and keep one shard.\n-$damage HP\n+1 Dust\n+1 run damage.';
-      if (playerHp <= 0) gameOver = true;
+      if (playerHp <= 0) resolvePlayerDeathAfterDamage();
     });
   }
 
@@ -15594,7 +18989,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         playerHp = max(0, playerHp - damage).toInt();
         textIt = 'Trappola di palpebre nere.\nSubisci $damage danni.';
         textEn = 'Black eyelid trap.\nYou take $damage damage.';
-        if (playerHp <= 0) gameOver = true;
+        if (playerHp <= 0) resolvePlayerDeathAfterDamage();
       }
     }
   }
@@ -15619,7 +19014,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         playerHp = max(0, playerHp - damage).toInt();
         textIt = 'La lettura fallisce.\nSubisci $damage danni.';
         textEn = 'The reading fails.\nYou take $damage damage.';
-        if (playerHp <= 0) gameOver = true;
+        if (playerHp <= 0) resolvePlayerDeathAfterDamage();
       }
     });
   }
@@ -15634,7 +19029,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           'Sfianchi il meccanismo a colpi.\nSubisci $damage danni.\n+1 danno run.';
       textEn =
           'You break the mechanism by force.\nYou take $damage damage.\n+1 run damage.';
-      if (playerHp <= 0) gameOver = true;
+      if (playerHp <= 0) resolvePlayerDeathAfterDamage();
     });
   }
 
@@ -15646,16 +19041,20 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       trapStep = 0;
       trapHits = 0;
       trapReward = 8 + currentFloor * 2;
-      trapStepsTotal = 6 + min(4, currentFloor ~/ 3);
+      trapStepsTotal = max(
+        4,
+        ((6 + min(4, currentFloor ~/ 3)) * miniGameDifficultyMultiplier)
+            .round(),
+      );
       trapFocusCharges = 1 + (oculumCharges > 0 ? 1 : 0);
       trapBestCombo = 0;
       trapCurrentCombo = 0;
       trapRevealedStep = -1;
       textIt =
-          'Minigioco trappola: muoviti tra le tre corsie ed evita gli occhi neri.\n'
+          'Minigioco ostacoli 2D: clicca una corsia o usa i pulsanti per muoverti ed evita gli occhi neri.\n'
           'Puoi usare Leggi per rivelare una corsia sicura.';
       textEn =
-          'Trap minigame: move across three lanes and avoid the black eyes.\n'
+          '2D obstacle minigame: click a lane or use the buttons to move and avoid the black eyes.\n'
           'You can use Read to reveal a safe lane.';
     });
   }
@@ -15728,7 +19127,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     final comboShield = trapBestCombo >= 3 ? trapBestCombo * 2 : 0;
     final damage = max(
       0,
-      trapHits * (5 + currentFloor) - totalDefense ~/ 4 - trapBestCombo,
+      (trapHits * (5 + currentFloor) * miniGameDifficultyMultiplier).round() -
+          totalDefense ~/ 4 -
+          trapBestCombo,
     );
     if (damage > 0) playerHp = max(0, playerHp - damage).toInt();
     final shield = max(0, trapReward - trapHits * 4 + comboShield);
@@ -15752,7 +19153,331 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         '${damage > 0 ? 'Damage: $damage\n' : ''}'
         '+$shield Shield'
         '${trapHits == 0 ? '\nPerfect: +3 critical, +1 Oculum and +2 Skill progress.' : ''}';
-    if (playerHp <= 0) gameOver = true;
+    if (playerHp <= 0) resolvePlayerDeathAfterDamage();
+  }
+
+  bool tryDungeonMicrogameEvent() {
+    if (!runActive || inCombat || gameOver || trapMiniGameActive) return false;
+    if (guardPunchMiniGameActive || mirrorSigilMiniGameActive) return false;
+    if (isBossRoom || isBeforeBossRoom || currentFloor < 2 || !chance(7)) {
+      return false;
+    }
+
+    if (dungeonMobileLike) {
+      mobileRuneSwipeQteEvent();
+    } else if (dungeonDesktopLike && chance(58)) {
+      guardPunchEvent();
+    } else {
+      mirrorSigilEvent();
+    }
+    return true;
+  }
+
+  bool get dungeonMobileLike {
+    final size = MediaQuery.maybeOf(context)?.size;
+    return size != null && size.shortestSide < 600;
+  }
+
+  bool get dungeonDesktopLike {
+    final size = MediaQuery.maybeOf(context)?.size;
+    return size == null || size.width >= 900;
+  }
+
+  void mobileRuneSwipeQteEvent() {
+    clearChoices(mode: 'event');
+    final correct = _random.nextInt(3);
+    const labelsIt = ['Tocca il centro', 'Trascina la luna', 'Tieni premuto'];
+    const labelsEn = ['Tap center', 'Drag the moon', 'Hold press'];
+    const icons = [Icons.touch_app, Icons.swipe, Icons.motion_photos_pause];
+    textIt =
+        'QTE mobile - Rune orbitanti.\n\n'
+        'Tre rune scivolano sotto il dito. Su telefono compaiono prove pensate per tocchi rapidi e gesti brevi; online la scelta resta votabile dal party.';
+    textEn =
+        'Mobile QTE - Orbiting runes.\n\n'
+        'Three runes slide under your finger. On phone, tests use fast taps and short gestures; online the choice remains party-votable.';
+    for (var i = 0; i < labelsIt.length; i++) {
+      eventChoices.add(
+        _DungeonChoice(
+          labelIt: labelsIt[i],
+          labelEn: labelsEn[i],
+          icon: icons[i],
+          color: i == correct ? const Color(0xFF67E8F9) : Colors.blueGrey,
+          onPressed: () => resolveMobileRuneSwipeQte(i == correct),
+        ),
+      );
+    }
+  }
+
+  void resolveMobileRuneSwipeQte(bool success) {
+    setState(() {
+      clearChoices();
+      if (success) {
+        gainOculumCharges(1);
+        dodgeCharges += 1;
+        recordAutoModePreference('shield_style');
+        textIt =
+            'QTE riuscito.\n\nLa runa entra nell Oculum senza ferire il dito: +1 Oculum massimo e +1 schivata.';
+        textEn =
+            'QTE success.\n\nThe rune enters the Oculum without cutting your finger: +1 max Oculum and +1 dodge.';
+        return;
+      }
+      final damage = max(1, 8 + currentFloor * 2 - totalDefense ~/ 4);
+      playerHp = max(0, playerHp - damage).toInt();
+      recordAutoModePreference('attack_style');
+      textIt =
+          'QTE fallito.\n\nLa runa scatta nella direzione sbagliata. Subisci $damage danni, ma il dungeon impara il tuo ritmo.';
+      textEn =
+          'QTE failed.\n\nThe rune snaps the wrong way. You take $damage damage, but the dungeon learns your rhythm.';
+      if (playerHp <= 0) resolvePlayerDeathAfterDamage();
+    });
+  }
+
+  void guardPunchEvent() {
+    clearChoices(mode: 'event');
+    textIt =
+        'Corridoio dei Pugni.\n\n'
+        'Braccia di pietra sbucano dalle pareti. Tocca ogni pugno quando entra nel cerchio centrale: perfetto annulla il colpo, poco prima o dopo lo trasforma in un colpo di striscio.\n'
+        '${isDungeonCoopActive ? 'In online i colpi sono quasi doppi: il gruppo deve restare concentrato.' : ''}';
+    textEn =
+        'Fist Corridor.\n\n'
+        'Stone arms burst from the walls. Tap each fist as it enters the central circle: a perfect parry cancels the hit, slightly early or late turns it into a graze.\n'
+        '${isDungeonCoopActive ? 'Online hits are almost doubled: the group must stay focused.' : ''}';
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: 'Inizia parate',
+        labelEn: 'Start parries',
+        icon: Icons.front_hand,
+        color: Colors.orangeAccent,
+        onPressed: startGuardPunchMiniGame,
+      ),
+    );
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: 'Allontanati',
+        labelEn: 'Leave',
+        icon: Icons.directions_walk,
+        color: Colors.blueGrey,
+        onPressed: () {
+          setState(() {
+            clearChoices();
+            textIt =
+                'Lasci il corridoio prima che le braccia imparino il tuo ritmo.';
+            textEn =
+                'You leave the corridor before the arms learn your rhythm.';
+          });
+        },
+      ),
+    );
+  }
+
+  void startGuardPunchMiniGame() {
+    setState(() {
+      clearChoices();
+      guardPunchTimer?.cancel();
+      guardPunchMiniGameActive = true;
+      guardPunchIndex = 0;
+      guardPunchTotal = max(
+        3,
+        ((5 + min(5, currentFloor ~/ 2)) * miniGameDifficultyMultiplier)
+            .round(),
+      );
+      guardPunchPerfects = 0;
+      guardPunchGrazes = 0;
+      guardPunchMisses = 0;
+      guardPunchTravelMs = max(
+        460,
+        ((1180 - currentFloor * 34) / miniGameDifficultyMultiplier).round(),
+      );
+      textIt =
+          'Parata a tempo iniziata. Tocca il pugno quando raggiunge il sigillo.';
+      textEn = 'Timing parry started. Tap the fist when it reaches the seal.';
+      _startNextGuardPunch();
+    });
+  }
+
+  void _startNextGuardPunch() {
+    guardPunchTimer?.cancel();
+    guardPunchStartedAt = DateTime.now();
+    guardPunchTimer = Timer(
+      Duration(milliseconds: guardPunchTravelMs + 130),
+      () => resolveGuardPunch(timedOut: true),
+    );
+  }
+
+  void resolveGuardPunch({bool timedOut = false}) {
+    if (!guardPunchMiniGameActive || guardPunchStartedAt == null) return;
+    guardPunchTimer?.cancel();
+    final elapsed = DateTime.now()
+        .difference(guardPunchStartedAt!)
+        .inMilliseconds;
+    final target = (guardPunchTravelMs * 0.72).round();
+    final delta = timedOut ? guardPunchTravelMs : (elapsed - target).abs();
+    final baseDamage = max(
+      2,
+      ((5 + currentFloor * 2 - totalDefense ~/ 6) *
+              miniGameDifficultyMultiplier)
+          .round(),
+    );
+    final onlineMultiplier = isDungeonCoopActive ? 1.8 : 1.0;
+    final fullDamage = max(1, (baseDamage * onlineMultiplier).round());
+
+    setState(() {
+      if (delta <= 85) {
+        guardPunchPerfects++;
+      } else if (delta <= 230) {
+        guardPunchGrazes++;
+        playerHp = max(0, playerHp - max(1, fullDamage ~/ 3)).toInt();
+      } else {
+        guardPunchMisses++;
+        playerHp = max(0, playerHp - fullDamage).toInt();
+      }
+
+      guardPunchIndex++;
+      if (playerHp <= 0) {
+        guardPunchMiniGameActive = false;
+        resolvePlayerDeathAfterDamage();
+        return;
+      }
+      if (guardPunchIndex >= guardPunchTotal) {
+        finishGuardPunchMiniGame();
+        return;
+      }
+      _startNextGuardPunch();
+    });
+  }
+
+  void finishGuardPunchMiniGame() {
+    guardPunchTimer?.cancel();
+    guardPunchMiniGameActive = false;
+    final shield = max(
+      0,
+      guardPunchPerfects * (4 + currentFloor) - guardPunchMisses * 2,
+    );
+    final dust = guardPunchPerfects >= guardPunchTotal - 1 ? 1 : 0;
+    gainPlayerShield(shield);
+    ascensionDustInRun += dust;
+    if (guardPunchPerfects >= guardPunchTotal - 1) {
+      runCritBonus += 2;
+      progressSkillQuest(amount: 2);
+    }
+    textIt =
+        'Corridoio dei Pugni concluso.\n'
+        'Parate perfette: $guardPunchPerfects • Strisciate: $guardPunchGrazes • Colpi pieni: $guardPunchMisses\n'
+        '+$shield Scudo${dust > 0 ? ', +$dust Ascension Dust' : ''}'
+        '${guardPunchPerfects >= guardPunchTotal - 1 ? '\nRitmo impeccabile: +2 critico e +2 progressi Skill.' : ''}';
+    textEn =
+        'Fist Corridor complete.\n'
+        'Perfect parries: $guardPunchPerfects • Grazes: $guardPunchGrazes • Full hits: $guardPunchMisses\n'
+        '+$shield Shield${dust > 0 ? ', +$dust Ascension Dust' : ''}'
+        '${guardPunchPerfects >= guardPunchTotal - 1 ? '\nFlawless rhythm: +2 critical and +2 Skill progress.' : ''}';
+  }
+
+  void mirrorSigilEvent() {
+    clearChoices(mode: 'event');
+    textIt =
+        'Specchi dei Tre Sigilli.\n\n'
+        'Tre simboli lampeggiano per un istante. Ripeti la sequenza ricordata: ogni errore ferisce, ogni passo corretto rende l’occhio più chiaro.';
+    textEn =
+        'Three-Sigil Mirrors.\n\n'
+        'Three symbols flash for a moment. Repeat the remembered sequence: each mistake wounds, each correct step clears the eye.';
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: 'Memorizza i sigilli',
+        labelEn: 'Memorize sigils',
+        icon: Icons.psychology,
+        color: const Color(0xFF8B5CF6),
+        onPressed: startMirrorSigilMiniGame,
+      ),
+    );
+  }
+
+  void startMirrorSigilMiniGame() {
+    setState(() {
+      clearChoices(mode: 'event');
+      mirrorSigilMiniGameActive = true;
+      mirrorSigilStep = 0;
+      mirrorSigilPattern
+        ..clear()
+        ..addAll(
+          List<int>.generate(
+            max(
+              2,
+              ((3 + min(3, currentFloor ~/ 3)) * miniGameDifficultyMultiplier)
+                  .round(),
+            ),
+            (_) => _random.nextInt(3),
+          ),
+        );
+      _buildMirrorSigilChoices();
+      final names = ['Luna', 'Occhio', 'Osso'];
+      textIt =
+          'Ricorda: ${mirrorSigilPattern.map((index) => names[index]).join(' - ')}. Ora ripetili.';
+      textEn =
+          'Remember: ${mirrorSigilPattern.map((index) => names[index]).join(' - ')}. Now repeat them.';
+    });
+  }
+
+  void _buildMirrorSigilChoices() {
+    eventChoices.clear();
+    const icons = <IconData>[
+      Icons.nightlight_round,
+      Icons.visibility,
+      Icons.hexagon,
+    ];
+    const colors = <Color>[
+      Color(0xFF8B5CF6),
+      Color(0xFF67E8F9),
+      Color(0xFFFFD36A),
+    ];
+    for (var index = 0; index < 3; index++) {
+      eventChoices.add(
+        _DungeonChoice(
+          labelIt: ['Luna', 'Occhio', 'Osso'][index],
+          labelEn: ['Moon', 'Eye', 'Bone'][index],
+          icon: icons[index],
+          color: colors[index],
+          onPressed: () => chooseMirrorSigil(index),
+        ),
+      );
+    }
+  }
+
+  void chooseMirrorSigil(int index) {
+    if (!mirrorSigilMiniGameActive ||
+        mirrorSigilStep >= mirrorSigilPattern.length) {
+      return;
+    }
+    setState(() {
+      if (mirrorSigilPattern[mirrorSigilStep] != index) {
+        final damage = max(
+          1,
+          ((6 + currentFloor * 2 - totalDefense ~/ 5) *
+                  miniGameDifficultyMultiplier)
+              .round(),
+        );
+        playerHp = max(0, playerHp - damage).toInt();
+        mirrorSigilMiniGameActive = false;
+        clearChoices();
+        textIt = 'Lo specchio si spezza. -$damage HP.';
+        textEn = 'The mirror shatters. -$damage HP.';
+        if (playerHp <= 0) resolvePlayerDeathAfterDamage();
+        return;
+      }
+      mirrorSigilStep++;
+      if (mirrorSigilStep >= mirrorSigilPattern.length) {
+        mirrorSigilMiniGameActive = false;
+        clearChoices();
+        gainOculumCharges(1);
+        runDefenseBonus += 1;
+        textIt = 'Sequenza perfetta. +1 carica Oculum e +1 Difesa run.';
+        textEn = 'Perfect sequence. +1 Oculum charge and +1 run Defense.';
+        return;
+      }
+      textIt =
+          'Sigillo corretto. Passo ${mirrorSigilStep + 1}/${mirrorSigilPattern.length}.';
+      textEn =
+          'Correct sigil. Step ${mirrorSigilStep + 1}/${mirrorSigilPattern.length}.';
+    });
   }
 
   void shrineEvent() {
@@ -16034,7 +19759,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
               if (locked.isNotEmpty) {
                 final npc = locked[_random.nextInt(locked.length)];
-                unlockedNpcIds.add(npc.id);
+                markNpcExchangeable(npc, save: false);
                 _savePermanentProgress();
 
                 textIt =
@@ -16124,9 +19849,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                   'The chest bites your hand.\n'
                   'You take $damage damage.\n'
                   '+1 Weakness to next enemies.';
-              if (playerHp <= 0 && !tryConsumeRebirthBlessing()) {
-                finishRun(victorious: false);
-              }
+              if (playerHp <= 0) resolvePlayerDeathAfterDamage();
             }
           });
         },
@@ -16316,7 +20039,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
               return;
             }
             final npc = pool.first;
-            unlockedNpcIds.add(npc.id);
+            markNpcExchangeable(npc, save: false);
             final joined = addAllyToParty(
               npc,
               replaceIfFull: false,
@@ -16419,10 +20142,76 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
     eventChoices.add(
       _DungeonChoice(
-        labelIt: 'Tenta sblocco arma',
-        labelEn: 'Try weapon unlock',
+        labelIt: 'Prendi arma da run',
+        labelEn: 'Take run weapon',
         icon: Icons.hardware,
         color: const Color(0xFFFFD36A),
+        onPressed: () {
+          setState(() {
+            clearChoices();
+            final weapon = randomRunWeaponLoot(allowLockedRare: true);
+            if (weapon != null) {
+              equipRunWeapon(weapon);
+              textIt =
+                  'Trovi e impugni ${weapon.nameIt}.\n\n'
+                  '${weapon.descIt}\n\n'
+                  'Puoi cambiarla dal menu armi della run.';
+              textEn =
+                  'You find and equip ${weapon.nameEn}.\n\n'
+                  '${weapon.descEn}\n\n'
+                  'You can swap it from the run weapon menu.';
+            } else {
+              runDamageBonus += 2;
+              textIt = 'Nessuna arma utile.\n+2 danni run.';
+              textEn = 'No useful weapon.\n+2 run damage.';
+            }
+            saveRunCheckpoint(
+              reasonIt: 'Armeria run risolta.',
+              reasonEn: 'Run armory resolved.',
+            );
+          });
+        },
+      ),
+    );
+
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: 'Cerca costume',
+        labelEn: 'Search costume',
+        icon: Icons.checkroom,
+        color: const Color(0xFFA78BFA),
+        onPressed: () {
+          setState(() {
+            clearChoices();
+            final costume = randomRunCostumeLoot(allowLockedRare: true);
+            if (costume != null) {
+              equipRunCostume(costume);
+              textIt =
+                  'Tra stoffa, cinghie e occhi cuciti trovi ${costume.nameIt}.\n\n'
+                  '${costume.descIt}';
+              textEn =
+                  'Among cloth, straps and sewn eyes you find ${costume.nameEn}.\n\n'
+                  '${costume.descEn}';
+            } else {
+              gainPlayerShield(10 + currentFloor);
+              textIt = 'Trovi solo imbottiture ancora buone.\n+Scudo.';
+              textEn = 'You only find padding still good enough.\n+Shield.';
+            }
+            saveRunCheckpoint(
+              reasonIt: 'Costume run cercato.',
+              reasonEn: 'Run costume searched.',
+            );
+          });
+        },
+      ),
+    );
+
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: 'Sblocca arma permanente',
+        labelEn: 'Unlock permanent weapon',
+        icon: Icons.lock_open,
+        color: Colors.orangeAccent,
         onPressed: () {
           setState(() {
             clearChoices();
@@ -16433,8 +20222,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
               textEn = 'New starting weapon unlocked.';
             } else {
               runDamageBonus += 2;
-              textIt = 'Nessuna arma nuova.\n+2 danni run.';
-              textEn = 'No new weapon.\n+2 run damage.';
+              textIt = 'Nessuna arma permanente nuova.\n+2 danni run.';
+              textEn = 'No new permanent weapon.\n+2 run damage.';
             }
           });
         },
@@ -16488,6 +20277,42 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
               textIt = '+1 Oculum run.';
               textEn = '+1 run Oculum.';
             }
+          });
+        },
+      ),
+    );
+
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: 'Cerca Oculus',
+        labelEn: 'Search Oculus',
+        icon: Icons.remove_red_eye,
+        color: const Color(0xFF8B5CF6),
+        onPressed: () {
+          setState(() {
+            clearChoices();
+            final art = randomOculusArtLoot(allowLockedRare: true);
+            if (art == null) {
+              dungeonOculum += 1;
+              textIt =
+                  'Trovi una lente vuota.\n+1 Oculum run.\nSkill Oculum attive: ${activeOculumSkillIds().length}/9.';
+              textEn =
+                  'You find an empty lens.\n+1 run Oculum.\nActive Oculum Skills: ${activeOculumSkillIds().length}/9.';
+            } else {
+              installRunOculusArt(art);
+              textIt =
+                  'Togli un tuo occhio, fa male, lo sostituisci con un oculus pieno di potere.\n\n'
+                  'Oculus trovato: ${art.nameIt}.\n'
+                  'Skill Oculum disponibili: ${activeOculumSkillIds().length}/9.';
+              textEn =
+                  'You remove one of your eyes, it hurts, and replace it with an Oculus full of power.\n\n'
+                  'Found Oculus: ${art.nameEn}.\n'
+                  'Available Oculum Skills: ${activeOculumSkillIds().length}/9.';
+            }
+            saveRunCheckpoint(
+              reasonIt: 'Oculus cercato in biblioteca.',
+              reasonEn: 'Oculus searched in library.',
+            );
           });
         },
       ),
@@ -16701,7 +20526,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       monsterId: matchedMonster?.id ?? 'monster_village_fighter',
       skillIds: matchedMonster?.skillIds,
       dropIds: matchedMonster?.dropIds,
-      spriteAssetPath: matchedMonster?.spriteAssetPath,
+      spriteAssetPath: matchedMonster == null
+          ? null
+          : monsterSpriteAssetFor(
+              matchedMonster,
+              seed: monsterSpriteStableSeed('$suffixIt $currentFloor $index'),
+            ),
     );
   }
 
@@ -16752,20 +20582,30 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     setState(() {
       clearChoices();
       final restoredStats = restoreSpentRunStats(full: true);
+      final oldOculumShield = playerOculumShield;
       playerHp = playerMaxHp;
       oculumCharges = oculumMaxCharges;
       gainPlayerShield(10 + currentFloor * 2);
+      refillOculumShield();
+      final oculumShieldLineIt = playerOculumShieldMax > 0
+          ? '\nScudo Oculum pieno: $oldOculumShield -> $playerOculumShield/$playerOculumShieldMax.'
+          : '';
+      final oculumShieldLineEn = playerOculumShieldMax > 0
+          ? '\nFull Oculum Shield: $oldOculumShield -> $playerOculumShield/$playerOculumShieldMax.'
+          : '';
       restActionUsedThisRoom = true;
       fightsSinceTavernRest = 0;
       textIt =
           'Dormitorio del villaggio.\n\n'
           'Dormi tra coperte pesanti e russate non umane.\n'
           'Riposo lungo: HP pieni, Oculum pieno, Scudo +${10 + currentFloor * 2}.'
+          '$oculumShieldLineIt'
           '${spentStatsRestoreLineIt(restoredStats)}';
       textEn =
           'Village dormitory.\n\n'
           'You sleep among non-human snores and heavy blankets.\n'
           'Long rest: full HP, full Oculum, Shield +${10 + currentFloor * 2}.'
+          '$oculumShieldLineEn'
           '${spentStatsRestoreLineEn(restoredStats)}';
     });
   }
@@ -16797,6 +20637,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         'City of aquatic magic and the drowned.\n\n'
         'Low stalls, weak gadgets, water between the bricks.\n'
         'Here even small objects feel like Item Titles.';
+    textIt += '\nTra le bancarelle ora trovi un venditore e un fabbro stabile.';
+    textEn += '\nAmong the stalls you now find a steady seller and blacksmith.';
 
     eventChoices.add(
       _DungeonChoice(
@@ -16847,6 +20689,38 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             textEn =
                 'Aquatic Necromancy Art unlocked.\n'
                 'With 3 Oculum you can keep a drowned creature alive for 3 turns.';
+          });
+        },
+      ),
+    );
+
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: 'Venditore della citta',
+        labelEn: 'City seller',
+        icon: Icons.storefront,
+        color: Colors.tealAccent,
+        onPressed: () {
+          setState(() {
+            merchantEvent();
+            textIt = 'Venditore della citta.\n\n$textIt';
+            textEn = 'City seller.\n\n$textEn';
+          });
+        },
+      ),
+    );
+
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: 'Fabbro della citta',
+        labelEn: 'City blacksmith',
+        icon: Icons.construction,
+        color: Colors.orangeAccent,
+        onPressed: () {
+          setState(() {
+            blacksmithEvent();
+            textIt = 'Fabbro della citta.\n\n$textIt';
+            textEn = 'City blacksmith.\n\n$textEn';
           });
         },
       ),
@@ -17050,7 +20924,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         'Their leader bears the Thousand Fires Emblem Art through Asher.\n\n'
         'This Art appears only in the last 16 rooms of the whole experience.';
 
-    if (isInLastSixteenRooms) {
+    if (isInLastSixteenRooms && canAttuneThousandFires) {
       eventChoices.add(
         _DungeonChoice(
           labelIt: 'Studia Mille Fuochi finale (gratis)',
@@ -17060,7 +20934,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           onPressed: () {
             setState(() {
               clearChoices();
-              if (runCount <= 1) {
+              if (runCount <= 1 && !canAttuneThousandFires) {
                 textIt =
                     'Mille Fuochi rifiuta la prima run.\n\n'
                     'Le braci hideane ti guardano, ma non ti riconoscono ancora.\n'
@@ -17076,6 +20950,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                 (art) => art.effectId == 'thousand_fires_emblem_art',
               );
               activeArt = milleFuochi;
+              selectedRunArtIds.add(milleFuochi.effectId);
+              attuneThousandFires();
               completeAchievement('mille_fuochi_unlocked');
               textIt =
                   'Emblem Art dei Mille Fuochi risvegliata per questa run.\n\n'
@@ -17100,14 +20976,17 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             setState(() {
               clearChoices();
               final missing = max(0, roomsRemainingInRun - 16);
+              final missingSkills = max(0, 9 - activeOculumSkillIds().length);
               textIt =
                   'Gli Hideani scuotono la testa.\n\n'
                   'L’Emblem Art dei Mille Fuochi non si apre ancora.\n'
-                  'Devi avvicinarti alla fine: mancano circa $missing stanze prima che possa apparire.';
+                  'Devi avvicinarti alla fine: mancano circa $missing stanze prima che possa apparire.\n'
+                  'Skill Oculum comuni mancanti: $missingSkills/9.';
               textEn =
                   'The Hideans shake their heads.\n\n'
                   'The Thousand Fires Emblem Art does not open yet.\n'
-                  'You must approach the end: about $missing rooms remain before it can appear.';
+                  'You must approach the end: about $missing rooms remain before it can appear.\n'
+                  'Standard Oculum Skills still needed: $missingSkills/9.';
             });
           },
         ),
@@ -17207,6 +21086,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     }
     final pool = currentShopPool()..shuffle(_random);
     final offers = pool.take(4).toList();
+    final weaponOffer = randomRunWeaponLoot(allowLockedRare: true);
+    final costumeOffer = randomRunCostumeLoot(allowLockedRare: true);
+    final oculusOffer = randomOculusArtLoot(allowLockedRare: true);
+    final npcOffer = randomRunNpcLoot(allowLockedRare: true);
 
     textIt = 'Mercante della Piuma Indaco.\nScegli cosa comprare.';
     textEn = 'Indigo Feather Merchant.\nChoose what to buy.';
@@ -17221,6 +21104,68 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           icon: Icons.auto_awesome,
           color: const Color(0xFFFFD36A),
           onPressed: sellSparklingGearsToMerchant,
+        ),
+      );
+    }
+
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: 'Metallo Runico Postea (65 Obser / 1 kg)',
+        labelEn: 'Postea Runic Metal (65 Obser / 1 kg)',
+        icon: Icons.precision_manufacturing,
+        color: const Color(0xFF67E8F9),
+        onPressed: buyPosteaRunicMetalFromMerchant,
+      ),
+    );
+
+    if (weaponOffer != null) {
+      final cost = tavernDiscountedObserCost(26 + currentFloor * 3);
+      eventChoices.add(
+        _DungeonChoice(
+          labelIt: '${weaponOffer.nameIt} ($cost Obser)',
+          labelEn: '${weaponOffer.nameEn} ($cost Obser)',
+          icon: Icons.hardware,
+          color: elementColor(weaponOffer.elementId),
+          onPressed: () => buyRunWeaponFromMerchant(weaponOffer, cost),
+        ),
+      );
+    }
+
+    if (costumeOffer != null) {
+      final cost = tavernDiscountedObserCost(28 + currentFloor * 3);
+      eventChoices.add(
+        _DungeonChoice(
+          labelIt: '${costumeOffer.nameIt} ($cost Obser)',
+          labelEn: '${costumeOffer.nameEn} ($cost Obser)',
+          icon: Icons.checkroom,
+          color: elementColor(costumeOffer.elementId),
+          onPressed: () => buyRunCostumeFromMerchant(costumeOffer, cost),
+        ),
+      );
+    }
+
+    if (oculusOffer != null && chance(35 + currentFloor * 2)) {
+      final cost = tavernDiscountedObserCost(40 + currentFloor * 5);
+      eventChoices.add(
+        _DungeonChoice(
+          labelIt: 'Oculus ${oculusOffer.nameIt} ($cost Obser)',
+          labelEn: 'Oculus ${oculusOffer.nameEn} ($cost Obser)',
+          icon: Icons.remove_red_eye,
+          color: elementColor(oculusOffer.elementId),
+          onPressed: () => buyRunOculusFromMerchant(oculusOffer, cost),
+        ),
+      );
+    }
+
+    if (npcOffer != null) {
+      final cost = tavernDiscountedObserCost(22 + currentFloor * 2);
+      eventChoices.add(
+        _DungeonChoice(
+          labelIt: 'Contratto evocazione: ${npcOffer.nameIt} ($cost Obser)',
+          labelEn: 'Summon contract: ${npcOffer.nameEn} ($cost Obser)',
+          icon: Icons.person_add_alt_1,
+          color: elementColor(npcOffer.elementId),
+          onPressed: () => buyRunNpcContractFromMerchant(npcOffer, cost),
         ),
       );
     }
@@ -17240,6 +21185,171 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         ),
       );
     }
+  }
+
+  void buyRunWeaponFromMerchant(_StarterWeapon weapon, int cost) {
+    setState(() {
+      if (merchantActionUsedThisRoom) {
+        merchantEvent();
+        return;
+      }
+      if (obserInRun < cost) {
+        textIt = 'Ti mancano Obser per comprare ${weapon.nameIt}.';
+        textEn = 'You lack Obser to buy ${weapon.nameEn}.';
+        return;
+      }
+      obserInRun -= cost;
+      merchantActionUsedThisRoom = true;
+      merchantBuys++;
+      clearChoices();
+      equipRunWeapon(weapon);
+      textIt =
+          'Compri e impugni ${weapon.nameIt}.\n\n'
+          '${weapon.descIt}\n\n'
+          'Armi trovate nella run: ${runWeaponIds.length}.';
+      textEn =
+          'You buy and equip ${weapon.nameEn}.\n\n'
+          '${weapon.descEn}\n\n'
+          'Weapons found this run: ${runWeaponIds.length}.';
+      saveRunCheckpoint(
+        reasonIt: 'Arma comprata nella run.',
+        reasonEn: 'Run weapon bought.',
+      );
+    });
+  }
+
+  void buyRunCostumeFromMerchant(_RunCostume costume, int cost) {
+    setState(() {
+      if (merchantActionUsedThisRoom) {
+        merchantEvent();
+        return;
+      }
+      if (obserInRun < cost) {
+        textIt = 'Ti mancano Obser per comprare ${costume.nameIt}.';
+        textEn = 'You lack Obser to buy ${costume.nameEn}.';
+        return;
+      }
+      obserInRun -= cost;
+      merchantActionUsedThisRoom = true;
+      merchantBuys++;
+      clearChoices();
+      equipRunCostume(costume);
+      textIt =
+          'Compri e indossi ${costume.nameIt}.\n\n'
+          '${costume.descIt}\n\n'
+          'Costumi trovati nella run: ${runCostumeIds.length}.';
+      textEn =
+          'You buy and wear ${costume.nameEn}.\n\n'
+          '${costume.descEn}\n\n'
+          'Costumes found this run: ${runCostumeIds.length}.';
+      saveRunCheckpoint(
+        reasonIt: 'Costume comprato nella run.',
+        reasonEn: 'Run costume bought.',
+      );
+    });
+  }
+
+  void buyRunOculusFromMerchant(_DungeonArt art, int cost) {
+    setState(() {
+      if (merchantActionUsedThisRoom) {
+        merchantEvent();
+        return;
+      }
+      if (obserInRun < cost) {
+        textIt = 'Ti mancano Obser per comprare l’Oculus ${art.nameIt}.';
+        textEn = 'You lack Obser to buy the ${art.nameEn} Oculus.';
+        return;
+      }
+      if (selectedRunArtIds.length >= 3) {
+        textIt = 'Hai già il massimo di 9 Skill Oculum attive.';
+        textEn = 'You already have the maximum of 9 active Oculum Skills.';
+        return;
+      }
+      obserInRun -= cost;
+      merchantActionUsedThisRoom = true;
+      merchantBuys++;
+      clearChoices();
+      installRunOculusArt(art);
+      textIt =
+          'Togli un tuo occhio, fa male, lo sostituisci con un oculus pieno di potere.\n\n'
+          'Oculus installato: ${art.nameIt}.\n'
+          'Skill Oculum disponibili: ${activeOculumSkillIds().length}/9.';
+      textEn =
+          'You remove one of your eyes, it hurts, and replace it with an Oculus full of power.\n\n'
+          'Installed Oculus: ${art.nameEn}.\n'
+          'Available Oculum Skills: ${activeOculumSkillIds().length}/9.';
+      saveRunCheckpoint(
+        reasonIt: 'Oculus comprato nella run.',
+        reasonEn: 'Run Oculus bought.',
+      );
+    });
+  }
+
+  void buyRunNpcContractFromMerchant(_GoodNpc npc, int cost) {
+    setState(() {
+      if (merchantActionUsedThisRoom) {
+        merchantEvent();
+        return;
+      }
+      if (obserInRun < cost) {
+        textIt = 'Ti mancano Obser per il contratto di ${npc.nameIt}.';
+        textEn = 'You lack Obser for ${npc.nameEn} contract.';
+        return;
+      }
+      obserInRun -= cost;
+      merchantActionUsedThisRoom = true;
+      merchantBuys++;
+      clearChoices();
+      queueRunNpc(npc);
+      tryAutoSummonQueuedRunNpc(reasonIt: 'slot libero', reasonEn: 'free slot');
+      textIt =
+          'Contratto evocazione ottenuto: ${npc.nameIt}.\n'
+          'Non entra come membro permanente: se qualcuno muore o sparisce, si evocherà da solo a sostituirlo finché non lo rimuovi tu.\n\n'
+          '${npc.descIt}\n\n'
+          '$textIt';
+      textEn =
+          'Summon contract obtained: ${npc.nameEn}.\n'
+          'It does not join as a permanent member: if someone dies or disappears, it will summon itself to replace them until you remove it manually.\n\n'
+          '${npc.descEn}\n\n'
+          '$textEn';
+      saveRunCheckpoint(
+        reasonIt: 'Contratto NPC run comprato.',
+        reasonEn: 'Run NPC contract bought.',
+      );
+    });
+  }
+
+  void buyPosteaRunicMetalFromMerchant() {
+    setState(() {
+      const cost = 65;
+      if (merchantActionUsedThisRoom) {
+        merchantEvent();
+        return;
+      }
+      if (obserInRun < cost) {
+        textIt =
+            'Il venditore tiene stretto il metallo.\nServono $cost Obser per 1 kg. Ne hai $obserInRun.';
+        textEn =
+            'The seller keeps the metal close.\nYou need $cost Obser for 1 kg. You have $obserInRun.';
+        return;
+      }
+
+      obserInRun -= cost;
+      posteaRunicMetalKg += 1;
+      merchantActionUsedThisRoom = true;
+      merchantBuys++;
+      checkPassiveAchievements();
+      clearChoices();
+
+      textIt =
+          'Compri 1 kg di Metallo Runico Postea per $cost Obser.\n'
+          'Metallo totale: $posteaRunicMetalLabel.'
+          '${hasDefiledPosteaArtAccess ? '\nLa Defiled Art puo usarlo come costo skill.' : '\nSenza Defiled Art puoi usarlo solo dal fabbro per potenziare armi.'}';
+      textEn =
+          'You buy 1 kg of Postea Runic Metal for $cost Obser.\n'
+          'Total metal: $posteaRunicMetalLabel.'
+          '${hasDefiledPosteaArtAccess ? '\nDefiled Art can use it as a skill cost.' : '\nWithout Defiled Art you can only use it at the blacksmith for weapon upgrades.'}';
+    });
   }
 
   void sellSparklingGearsToMerchant() {
@@ -17864,10 +21974,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
       textIt =
           'Fabbro della taverna.\n\n'
-          'Puoi fare una sola azione fabbro in questa taverna.';
+          'Puoi fare fino a due azioni fabbro in questa taverna.\n'
+          'Azioni rimaste: $tavernBlacksmithActionsLeftThisRoom/$maxBlacksmithActionsPerRoom.';
       textEn =
           'Tavern blacksmith.\n\n'
-          'You can take only one blacksmith action in this tavern.';
+          'You can take up to two blacksmith actions in this tavern.\n'
+          'Actions left: $tavernBlacksmithActionsLeftThisRoom/$maxBlacksmithActionsPerRoom.';
 
       eventChoices.add(
         _DungeonChoice(
@@ -17899,6 +22011,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           color: Colors.blueGrey,
           onPressed: () {
             setState(() {
+              tavernBlacksmithActionsUsedThisRoom = maxBlacksmithActionsPerRoom;
               tavernBlacksmithActionUsedThisRoom = true;
               buildTavernHub();
             });
@@ -17906,6 +22019,21 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         ),
       );
     });
+  }
+
+  void addReturnToTavernBlacksmithChoice() {
+    if (tavernBlacksmithActionsLeftThisRoom <= 0) return;
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt:
+            'Ancora dal fabbro ($tavernBlacksmithActionsLeftThisRoom rim.)',
+        labelEn:
+            'Back to blacksmith ($tavernBlacksmithActionsLeftThisRoom left)',
+        icon: Icons.construction,
+        color: const Color(0xFFA98BFF),
+        onPressed: tavernBlacksmithService,
+      ),
+    );
   }
 
   void tavernTuneWeapon() {
@@ -17937,7 +22065,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
       obserInRun -= costObser;
       ascensionDustInRun -= costDust;
-      tavernBlacksmithActionUsedThisRoom = true;
+      spendTavernBlacksmithActionThisRoom();
       final damageGain = 1 + blacksmithFavor ~/ 5;
       final defenseGain = currentFloor >= 6 ? 1 : 0;
 
@@ -17967,6 +22095,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           onPressed: showTavernHub,
         ),
       );
+      addReturnToTavernBlacksmithChoice();
     });
   }
 
@@ -17997,7 +22126,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       elementalResist[drop.elementId] =
           (elementalResist[drop.elementId] ?? 0) + resistGain;
       blacksmithFavor += 1;
-      tavernBlacksmithActionUsedThisRoom = true;
+      spendTavernBlacksmithActionThisRoom();
 
       textIt =
           'Il fabbro frantuma il drop dentro l’arma:\n'
@@ -18029,6 +22158,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           onPressed: showTavernHub,
         ),
       );
+      addReturnToTavernBlacksmithChoice();
     });
   }
 
@@ -18067,6 +22197,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       final fullCharges = tavernFullOculumCharges;
       final halfCharges = max(1, fullCharges ~/ 2);
       final halfHp = max(1, playerMaxHp ~/ 2);
+      refillOculumShield();
 
       if (oculumFocused) {
         oculumCharges = max(oculumCharges, fullCharges);
@@ -18177,7 +22308,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             '${npc.id == 'skelly_bone_innkeeper' ? 'Skelly says: “oh, sweet death sweet death!”\n' : ''}'
             '+$heal HP.';
       } else {
-        unlockedNpcIds.add(npc.id);
+        markNpcExchangeable(npc, save: false);
         _savePermanentProgress();
 
         textIt =
@@ -18235,6 +22366,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         'Mute Vapium Blacksmith.\n\n'
         'He can reforge your weapon or work unique drops.\n'
         'First reforge of the run: free.';
+    textIt +=
+        '\nAzioni fabbro rimaste: $blacksmithActionsLeftThisRoom/$maxBlacksmithActionsPerRoom.\n'
+        'Il Metallo Runico Postea senza Defiled Art puo solo potenziare armi.';
+    textEn +=
+        '\nBlacksmith actions left: $blacksmithActionsLeftThisRoom/$maxBlacksmithActionsPerRoom.\n'
+        'Without Defiled Art, Postea Runic Metal can only upgrade weapons.';
 
     eventChoices.add(
       _DungeonChoice(
@@ -18261,10 +22398,82 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         ),
       );
     }
+
+    if (posteaRunicMetalKg > 0) {
+      eventChoices.add(
+        _DungeonChoice(
+          labelIt: 'Runa arma Postea (1 kg)',
+          labelEn: 'Postea weapon rune (1 kg)',
+          icon: Icons.auto_awesome,
+          color: const Color(0xFF67E8F9),
+          onPressed: forgePosteaRunicMetalIntoWeapon,
+        ),
+      );
+    }
+  }
+
+  void addReturnToBlacksmithChoice() {
+    if (blacksmithActionsLeftThisRoom <= 0) return;
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: 'Ancora dal fabbro ($blacksmithActionsLeftThisRoom rim.)',
+        labelEn: 'Back to blacksmith ($blacksmithActionsLeftThisRoom left)',
+        icon: Icons.keyboard_return,
+        color: widget.tertiaryColor,
+        onPressed: () => setState(blacksmithEvent),
+      ),
+    );
+  }
+
+  void forgePosteaRunicMetalIntoWeapon() {
+    setState(() {
+      if (blacksmithActionUsedThisRoom) {
+        blacksmithEvent();
+        return;
+      }
+      if (posteaRunicMetalKg <= 0) {
+        textIt = 'Non hai Metallo Runico Postea da fondere nell arma.';
+        textEn = 'You have no Postea Runic Metal to forge into the weapon.';
+        return;
+      }
+
+      posteaRunicMetalKg -= 1;
+      spendBlacksmithActionThisRoom();
+      clearChoices();
+
+      final damageGain = 2 + currentFloor ~/ 2 + blacksmithFavor ~/ 4;
+      final defenseGain = 1 + runGrade ~/ 2;
+      attachedDamageBonus += damageGain;
+      attachedDefenseBonus += defenseGain;
+      blacksmithFavor += 1;
+      if (hasDefiledPosteaArtAccess) dungeonMateria += 1;
+
+      textIt =
+          'Metallo Runico Postea fuso nell arma.\n'
+          '-1 kg Metallo Runico Postea\n'
+          '+$damageGain danni arma\n'
+          '+$defenseGain difesa arma\n'
+          '+1 favore fabbro.'
+          '${hasDefiledPosteaArtAccess ? '\nLa Defiled Art riconosce la runa: +1 Materia run.' : '\nSenza Defiled Art il metallo resta solo un potenziamento arma.'}\n'
+          'Metallo rimasto: $posteaRunicMetalLabel';
+      textEn =
+          'Postea Runic Metal forged into the weapon.\n'
+          '-1 kg Postea Runic Metal\n'
+          '+$damageGain weapon damage\n'
+          '+$defenseGain weapon defense\n'
+          '+1 blacksmith favor.'
+          '${hasDefiledPosteaArtAccess ? '\nDefiled Art recognizes the rune: +1 run Materia.' : '\nWithout Defiled Art the metal stays only a weapon upgrade.'}\n'
+          'Metal left: $posteaRunicMetalLabel';
+      addReturnToBlacksmithChoice();
+    });
   }
 
   void reforgeWeapon() {
     setState(() {
+      if (blacksmithActionUsedThisRoom) {
+        blacksmithEvent();
+        return;
+      }
       if (freeReforges > 0) {
         freeReforges--;
       } else {
@@ -18280,7 +22489,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         ascensionDustInRun -= costDust;
       }
 
-      blacksmithActionUsedThisRoom = true;
+      spendBlacksmithActionThisRoom();
       clearChoices();
       reforgeCount++;
       final gainDmg = 1 + reforgeCount ~/ 3 + blacksmithFavor ~/ 4;
@@ -18298,6 +22507,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           '+$gainDmg weapon damage\n'
           '+$gainDef weapon defense\n'
           'Total reforges: $reforgeCount';
+      addReturnToBlacksmithChoice();
     });
   }
 
@@ -18773,7 +22983,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     if (locked.isEmpty) return;
 
     final npc = locked[_random.nextInt(locked.length)];
-    unlockedNpcIds.add(npc.id);
+    markNpcExchangeable(npc, save: false);
     _savePermanentProgress();
 
     addLog(
@@ -18794,7 +23004,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     }
 
     if (activeArt?.effectId == 'thousand_fires_emblem_art') {
-      return isInLastSixteenRooms;
+      return isInLastSixteenRooms &&
+          hasThousandFiresAttunement &&
+          thousandFiresOculumSkillCount >= 12;
     }
 
     if (activeArt?.effectId == 'water_necromancy_art') {
@@ -19290,7 +23502,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       setState(() {
         final artId = activeArt?.effectId ?? '';
         final specialNeed = artId == 'thousand_fires_emblem_art'
-            ? 'Mille Fuochi funziona solo nelle ultime 16 stanze e con cooldown a 0.'
+            ? 'Mille Fuochi richiede le ultime 16 stanze, 12 Skill Oculum totali e cooldown a 0.'
             : artId == 'water_necromancy_art'
             ? 'Necromanzia Acquatica richiede 3 Oculum totali e cooldown a 0.'
             : 'Serve una Art attiva, 2 cariche Oculum e cooldown a 0.';
@@ -19301,7 +23513,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         textEn =
             'Art Technique unavailable.\n\n'
             '${artId == 'thousand_fires_emblem_art'
-                ? 'Thousand Fires works only in the last 16 rooms and with cooldown at 0.'
+                ? 'Thousand Fires requires the last 16 rooms, 12 total Oculum Skills and cooldown at 0.'
                 : artId == 'water_necromancy_art'
                 ? 'Aquatic Necromancy requires 3 total Oculum and cooldown at 0.'
                 : 'You need an active Art, 2 Oculum charges and cooldown at 0.'}\n'
@@ -19324,10 +23536,14 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         checkPassiveAchievements();
 
         final finalPressure = max(1, 17 - roomsRemainingInRun);
-        final flames = 12 + currentFloor * 2 + dungeonLevel * 3 + finalPressure;
-        final bonusBurn = 8 + oculumArtPower + finalPressure;
-        final shieldGain = 20 + flames;
-        final critGain = 6 + finalPressure ~/ 2;
+        final finalFloorPower = currentFloor >= 12 ? 2 : 1;
+        final flames =
+            (12 + currentFloor * 2 + dungeonLevel * 3 + finalPressure) *
+            finalFloorPower;
+        final bonusBurn =
+            (8 + oculumArtPower + finalPressure) * finalFloorPower;
+        final shieldGain = 20 + flames + (currentFloor >= 12 ? 40 : 0);
+        final critGain = 6 + finalPressure ~/ 2 + (currentFloor >= 12 ? 6 : 0);
 
         gainPlayerShield(shieldGain);
         runCritBonus += critGain;
@@ -19698,7 +23914,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         textEn = 'You can work only one drop per visit.';
         return;
       }
-      blacksmithActionUsedThisRoom = true;
+      spendBlacksmithActionThisRoom();
       dropActionUsedThisRoom = true;
       clearChoices();
       inventoryDrops.remove(drop);
@@ -19727,6 +23943,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           '+${drop.damageBonus} damage\n'
           '+${drop.defenseBonus} defense\n'
           '+${drop.resistBonus} ${elementName(drop.elementId)} resistance';
+      addReturnToBlacksmithChoice();
     });
   }
 
@@ -19743,7 +23960,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         textEn = 'You can work only one drop per visit.';
         return;
       }
-      blacksmithActionUsedThisRoom = true;
+      spendBlacksmithActionThisRoom();
       dropActionUsedThisRoom = true;
       clearChoices();
       inventoryDrops.remove(drop);
@@ -19761,6 +23978,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           '+${drop.sellObser} Obser\n'
           '+${drop.sellDust} Dust\n'
           '+1 blacksmith favor.';
+      addReturnToBlacksmithChoice();
     });
   }
 
@@ -19792,7 +24010,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                 'Provi a fuggire da Baghest. I tuoi compagni ti fermano prima che tu diventi altro.';
             textEn =
                 'You try to flee Baghest. Your companions stop you before you become something else.';
-            if (!tryConsumeRebirthBlessing()) finishRun(victorious: false);
+            resolvePlayerDeathAfterDamage();
           } else {
             final damage = max(10, enemyAttack + currentFloor * 3);
             playerHp = max(0, playerHp - damage).toInt();
@@ -19800,9 +24018,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                 'Baghest ti confonde. Resti nel fight e subisci $damage danni.';
             textEn =
                 'Baghest confuses you. You remain in the fight and take $damage damage.';
-            if (playerHp <= 0 && !tryConsumeRebirthBlessing()) {
-              finishRun(victorious: false);
-            }
+            if (playerHp <= 0) resolvePlayerDeathAfterDamage();
           }
           return;
         }
@@ -19816,9 +24032,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             'Il boss non permette la fuga. Ti colpisce mentre indietreggi: $bossStrike danni.';
         textEn =
             'The boss does not allow fleeing. It strikes as you step back: $bossStrike damage.';
-        if (playerHp <= 0 && !tryConsumeRebirthBlessing()) {
-          finishRun(victorious: false);
-        }
+        if (playerHp <= 0) resolvePlayerDeathAfterDamage();
         return;
       }
 
@@ -19854,8 +24068,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             'Critical back damage: $criticalBackstab.\n'
             'You failed to escape.'
             '$criticalShieldNoteEn';
-        if (playerHp <= 0 && !tryConsumeRebirthBlessing()) {
-          finishRun(victorious: false);
+        if (playerHp <= 0) {
+          resolvePlayerDeathAfterDamage();
         } else {
           completeAchievement('fetal_survivor');
         }
@@ -19887,15 +24101,14 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         textIt = 'La fuga fallisce. Subisci $damage danni mentre ti volti.';
         textEn =
             'The escape fails. You take $damage damage while turning away.';
-        if (playerHp <= 0 && !tryConsumeRebirthBlessing()) {
-          finishRun(victorious: false);
-        }
+        if (playerHp <= 0) resolvePlayerDeathAfterDamage();
       }
     });
   }
 
   void restShort() {
     if (!runActive || inCombat || gameOver || restActionUsedThisRoom) return;
+    recordAutoModePreference('rest');
 
     setState(() {
       restActionUsedThisRoom = true;
@@ -19909,21 +24122,31 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
         final oldHp = playerHp;
         final oldOculum = oculumCharges;
+        final oldOculumShield = playerOculumShield;
         final restoredStats = restoreSpentRunStats(full: false);
 
         playerHp = max(playerHp, halfHp);
         oculumCharges = max(oculumCharges, halfCharges);
+        refillOculumShield();
+        final oculumShieldLineIt = playerOculumShieldMax > 0
+            ? 'Scudo Oculum: $oldOculumShield -> $playerOculumShield/$playerOculumShieldMax\n'
+            : '';
+        final oculumShieldLineEn = playerOculumShieldMax > 0
+            ? 'Oculum Shield: $oldOculumShield -> $playerOculumShield/$playerOculumShieldMax\n'
+            : '';
 
         textIt =
             'Riposo da level up.\n\n'
             'Vita almeno a metà: $oldHp → $playerHp/$playerMaxHp\n'
             'Oculum almeno a metà: $oldOculum → $oculumCharges/$fullCharges\n\n'
+            '$oculumShieldLineIt'
             'Hai consumato il riposo della stanza.'
             '${spentStatsRestoreLineIt(restoredStats)}';
         textEn =
             'Level up rest.\n\n'
             'HP at least half: $oldHp → $playerHp/$playerMaxHp\n'
             'Oculum at least half: $oldOculum → $oculumCharges/$fullCharges\n\n'
+            '$oculumShieldLineEn'
             'You consumed this room rest.'
             '${spentStatsRestoreLineEn(restoredStats)}';
         return;
@@ -19931,50 +24154,95 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
       final heal = 10 + totalOculum + skillEventBonus('rest');
       final shieldGain = 4 + currentFloor;
+      final oldOculumShield = playerOculumShield;
       final restoredStats = restoreSpentRunStats(full: false);
 
       playerHp = min(playerMaxHp, playerHp + heal);
       gainPlayerShield(shieldGain);
+      refillOculumShield();
+      final oculumShieldLineIt = playerOculumShieldMax > 0
+          ? '\nScudo Oculum: $oldOculumShield -> $playerOculumShield/$playerOculumShieldMax.'
+          : '';
+      final oculumShieldLineEn = playerOculumShieldMax > 0
+          ? '\nOculum Shield: $oldOculumShield -> $playerOculumShield/$playerOculumShieldMax.'
+          : '';
 
       textIt =
           'Riposo breve.\n'
           '+$heal HP\n'
           '+$shieldGain Scudo.'
+          '$oculumShieldLineIt'
           '${spentStatsRestoreLineIt(restoredStats)}\n\n'
           'Hai già riposato in questa stanza: dovrai esplorare per riposare di nuovo.';
       textEn =
           'Short rest.\n'
           '+$heal HP\n'
           '+$shieldGain Shield.'
+          '$oculumShieldLineEn'
           '${spentStatsRestoreLineEn(restoredStats)}\n\n'
           'You already rested in this room: you must explore before resting again.';
     });
+    scheduleAutoModeStep();
   }
 
   void useReactionDefense() {
     if (!reactionAvailable || !canUseCombatInput) return;
+    recordAutoModePreference('defend');
+    if (isDungeonCoopTurnOpen && !dungeonCoop.resolvingTurn) {
+      submitDungeonCoopAction('reaction_defend');
+      return;
+    }
     setState(() {
       reactionAvailable = false;
+      counterattackReady = false;
       final shield = 20 + totalDefense ~/ 2 + skillEventBonus('defense');
       gainPlayerShield(shield);
-      textIt = 'Reazione difensiva.\n+$shield Scudo.';
-      textEn = 'Defensive reaction.\n+$shield Shield.';
+      var extraIt = '';
+      var extraEn = '';
+      if (aegisRunixProtectionActive) {
+        final aegisBefore = aegisShield;
+        final aegisGain = shield + 12 + currentFloor * 2;
+        gainAegisShield(aegisGain);
+        final gained = max(0, aegisShield - aegisBefore).toInt();
+        extraIt += '\nAegis apre i pannelli runici: +$aegisGain Scudo Aegis.';
+        if (gained < aegisGain) {
+          extraIt += ' Cap raggiunto: $aegisShield/$aegisShieldCap.';
+        }
+        extraEn += '\nAegis opens the runic plates: +$aegisGain Aegis Shield.';
+        if (gained < aegisGain) {
+          extraEn += ' Cap reached: $aegisShield/$aegisShieldCap.';
+        }
+      }
+      textIt = 'Reazione difensiva.\n+$shield Scudo.$extraIt';
+      textEn = 'Defensive reaction.\n+$shield Shield.$extraEn';
     });
+    scheduleAutoModeStep();
   }
 
   void useReactionCounter() {
-    if (!reactionAvailable || !canUseCombatInput) return;
+    if (!reactionAvailable || !canUseCombatInput || !counterattackReady) return;
+    recordAutoModePreference('counter');
+    if (isDungeonCoopTurnOpen && !dungeonCoop.resolvingTurn) {
+      submitDungeonCoopAction('reaction_counter');
+      return;
+    }
     setState(() {
       reactionAvailable = false;
+      counterattackReady = false;
       final damage = max(
         1,
-        totalDamage ~/ 2 + totalOculum + skillEventBonus('combat'),
+        totalDamage ~/ 2 +
+            totalVc ~/ 4 +
+            totalOculum +
+            skillEventBonus('combat'),
       );
       final target = firstAliveEnemy();
       if (target != null) {
         target.hp = max(0, target.hp - damage).toInt();
-        textIt = 'Counter Oculiano.\n$damage danni a ${target.nameIt}.';
-        textEn = 'Oculian counter.\n$damage damage to ${target.nameEn}.';
+        textIt =
+            'Controattacco.\n$damage danni a ${target.nameIt}.\nHai consumato la reazione: non puoi aggiungere Scudo con Difenditi in questo turno.';
+        textEn =
+            'Counterattack.\n$damage damage to ${target.nameEn}.\nYou spent your reaction: you cannot add Shield with Defend this turn.';
         defeatDeadEnemiesFromParty();
         if (enemyParty.isEmpty) {
           completeCombatVictory();
@@ -19985,6 +24253,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         enemyHp = max(0, enemyHp - damage).toInt();
       }
     });
+    scheduleAutoModeStep();
   }
 
   void winRun() {
@@ -20022,11 +24291,15 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     clearRunCheckpoint();
     if (endRunOculumPaid) return;
     endRunOculumPaid = true;
+    if (undeadRebirthCooldownRuns > 0 && !undeadRebirthUsedThisRun) {
+      undeadRebirthCooldownRuns--;
+    }
     victory = victorious;
     gameOver = true;
     runActive = false;
     inCombat = false;
     enemyTurnPending = false;
+    counterattackReady = false;
     valleyTrainingActive = false;
     valleyTrainingTurnsLeft = 0;
     valleyTurnsLeft = 0;
@@ -20059,6 +24332,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           (victorious ? 10 : 0),
     ).toInt();
     oculumSpento += spentGain;
+    _broadcastDungeonCoopRewards(spentGain: spentGain);
     _savePermanentProgress();
     activeAllies
       ..clear()
@@ -20224,8 +24498,34 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         widget.initialUnlockedThemePresetIds.contains(id);
   }
 
+  List<_DungeonThemeUnlockDef> allDungeonThemeUnlocks() {
+    final result = <_DungeonThemeUnlockDef>[];
+    final seen = <String>{};
+
+    for (final raw in widget.availableThemeUnlocks) {
+      final id = '${raw['id'] ?? ''}'.trim();
+      if (id.isEmpty || !seen.add(id)) continue;
+      final colorRaw = raw['color'];
+      result.add(
+        _DungeonThemeUnlockDef(
+          id: id,
+          nameIt: '${raw['nameIt'] ?? id}',
+          nameEn: '${raw['nameEn'] ?? raw['nameIt'] ?? id}',
+          color: colorRaw is Color ? colorRaw : widget.tertiaryColor,
+        ),
+      );
+    }
+
+    for (final theme in _themeUnlocks) {
+      if (!seen.add(theme.id)) continue;
+      result.add(theme);
+    }
+
+    return result;
+  }
+
   List<_DungeonThemeUnlockDef> lockedThemeUnlocks() {
-    return _themeUnlocks
+    return allDungeonThemeUnlocks()
         .where((theme) => !isDungeonThemeUnlocked(theme.id))
         .toList();
   }
@@ -20262,7 +24562,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   void showSpecificThemeUnlockChoices() {
     setState(() {
       clearChoices(mode: 'unlocks');
+      const pageSize = 12;
       final locked = lockedThemeUnlocks()..shuffle(_random);
+      final visibleThemes = locked.take(pageSize).toList();
       textIt =
           'Scegli un tema specifico da sbloccare.\n\nCosto: 6 Oculum Spento.';
       textEn = 'Choose a specific theme to unlock.\n\nCost: 6 Spent Oculum.';
@@ -20274,7 +24576,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         return;
       }
 
-      for (final theme in locked) {
+      textIt =
+          '$textIt\nMostrati ${visibleThemes.length}/${locked.length} temi: usa "Altri temi" per cambiare pagina senza appesantire l’app.';
+      textEn =
+          '$textEn\nShowing ${visibleThemes.length}/${locked.length} themes: use "More themes" to change page without weighing down the app.';
+
+      for (final theme in visibleThemes) {
         eventChoices.add(
           _DungeonChoice(
             labelIt: theme.nameIt,
@@ -20284,6 +24591,18 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                 : Icons.palette,
             color: theme.color,
             onPressed: () => unlockSpecificThemeWithSpent(theme),
+          ),
+        );
+      }
+
+      if (locked.length > visibleThemes.length) {
+        eventChoices.add(
+          _DungeonChoice(
+            labelIt: 'Altri temi',
+            labelEn: 'More themes',
+            icon: Icons.shuffle,
+            color: Colors.indigoAccent,
+            onPressed: showSpecificThemeUnlockChoices,
           ),
         );
       }
@@ -20417,7 +24736,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           .where(
             (weapon) =>
                 !unlockedWeaponIds.contains(weapon.id) &&
-                !isStoryLockedWeaponId(weapon.id),
+                !isStoryLockedWeaponId(weapon.id) &&
+                !isDeathLockedWeaponId(weapon.id),
           )
           .toList();
 
@@ -20457,7 +24777,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
               .where(
                 (weapon) =>
                     !unlockedWeaponIds.contains(weapon.id) &&
-                    !isStoryLockedWeaponId(weapon.id),
+                    !isStoryLockedWeaponId(weapon.id) &&
+                    !isDeathLockedWeaponId(weapon.id),
               )
               .toList()
             ..shuffle(_random);
@@ -20626,7 +24947,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
     switch (achievement.rewardType) {
       case 'npc':
-        unlockedNpcIds.add(achievement.rewardId);
+        final npc = npcById(achievement.rewardId);
+        if (npc != null) {
+          markNpcExchangeable(npc, save: false);
+        } else {
+          unlockedNpcIds.add(achievement.rewardId);
+        }
         autoBringNpcRewardIfPossible(achievement.rewardId);
         break;
 
@@ -20706,7 +25032,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       switch (achievement.rewardType) {
         case 'npc':
           if (!unlockedNpcIds.contains(achievement.rewardId)) {
-            unlockedNpcIds.add(achievement.rewardId);
+            final npc = npcById(achievement.rewardId);
+            if (npc != null) {
+              markNpcExchangeable(npc, save: false);
+            } else {
+              unlockedNpcIds.add(achievement.rewardId);
+            }
             changed = true;
           }
           break;
@@ -20765,7 +25096,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       changed = unlockedWeaponIds.add('postea_auto_rifle') || changed;
       changed = unlockedWeaponIds.add('postea_grenades') || changed;
       changed = unlockedCostumeIds.add('postea_elite_armor') || changed;
-      changed = unlockedNpcIds.add('postea_elite_guard') || changed;
+      final guard = npcById('postea_elite_guard');
+      changed =
+          (guard != null
+              ? markNpcExchangeable(guard, save: false)
+              : unlockedNpcIds.add('postea_elite_guard')) ||
+          changed;
     }
 
     if (changed) _savePermanentProgress();
@@ -21656,6 +25992,75 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     }
   }
 
+  _GoodNpc? randomRunNpcLoot({bool allowLockedRare = true}) {
+    final unavailable = <String>{
+      ...queuedRunNpcIds,
+      ...manuallyRemovedRunNpcIds,
+      ...activeAllies.map((npc) => npc.id),
+    };
+    final unlockedPool =
+        _goodNpcs
+            .where((npc) => !unavailable.contains(npc.id))
+            .where((npc) => unlockedNpcIds.contains(npc.id))
+            .toList()
+          ..shuffle(_random);
+    final lockedPool =
+        _goodNpcs
+            .where((npc) => !unavailable.contains(npc.id))
+            .where((npc) => !unlockedNpcIds.contains(npc.id))
+            .toList()
+          ..shuffle(_random);
+
+    if (allowLockedRare && lockedPool.isNotEmpty && chance(8 + currentFloor)) {
+      return lockedPool.first;
+    }
+    if (unlockedPool.isNotEmpty) return unlockedPool.first;
+    if (allowLockedRare && lockedPool.isNotEmpty && chance(18)) {
+      return lockedPool.first;
+    }
+    return null;
+  }
+
+  bool queueRunNpc(_GoodNpc npc) {
+    if (manuallyRemovedRunNpcIds.contains(npc.id)) return false;
+    if (activeAllies.any((ally) => ally.id == npc.id)) return false;
+    return queuedRunNpcIds.add(npc.id);
+  }
+
+  bool tryAutoSummonQueuedRunNpc({String reasonIt = '', String reasonEn = ''}) {
+    if (!runActive || gameOver || activeAllies.length >= maxRunNpcAllies) {
+      return false;
+    }
+
+    final id = queuedRunNpcIds.firstWhere(
+      (candidate) =>
+          !manuallyRemovedRunNpcIds.contains(candidate) &&
+          activeAllies.every((ally) => ally.id != candidate),
+      orElse: () => '',
+    );
+    if (id.isEmpty) return false;
+
+    final npc = npcById(id);
+    if (npc == null) {
+      queuedRunNpcIds.remove(id);
+      return false;
+    }
+
+    queuedRunNpcIds.remove(id);
+    activeAllies.add(npc);
+    prepareSmallNpcActions(npc, forceRefresh: true);
+    final suffixIt = reasonIt.isEmpty ? '' : ' ($reasonIt)';
+    final suffixEn = reasonEn.isEmpty ? '' : ' ($reasonEn)';
+    final lineIt =
+        '${npc.nameIt} si evoca da solo$suffixIt e sostituisce lo spazio lasciato libero.';
+    final lineEn =
+        '${npc.nameEn} summons itself$suffixEn and replaces the free slot.';
+    addLog(t(lineIt, lineEn));
+    textIt += '\n$lineIt';
+    textEn += '\n$lineEn';
+    return true;
+  }
+
   int get activeTemporaryDrownedCount =>
       activeAllies.where((npc) => drownedNpcIds.contains(npc.id)).length;
 
@@ -21830,6 +26235,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         '${npc.nameIt}: $reasonIt$officialIt',
         '${npc.nameEn}: $reasonEn$officialEn',
       ),
+    );
+    tryAutoSummonQueuedRunNpc(
+      reasonIt: 'sostituzione',
+      reasonEn: 'replacement',
     );
   }
 
@@ -22075,7 +26484,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       return false;
     }
 
-    if (activeAllies.length >= maxActiveAllies) {
+    markNpcExchangeable(npc, save: false);
+
+    if (activeAllies.length >= maxRunNpcAllies) {
       if (!replaceIfFull) return false;
       final removed = activeAllies.removeAt(0);
       if (removed.id == 'postea_elite_guard') {
@@ -22102,6 +26513,18 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     }
 
     return true;
+  }
+
+  bool markNpcExchangeable(_GoodNpc npc, {bool save = true}) {
+    if (npc.id == 'valley_child_of_mother_nature' && valleySacrificedInPostea) {
+      return false;
+    }
+
+    final changed = unlockedNpcIds.add(npc.id);
+    if (changed && save) {
+      _savePermanentProgress();
+    }
+    return changed;
   }
 
   void autoBringNpcRewardIfPossible(String npcId) {
@@ -22143,16 +26566,24 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         .toList();
 
     if (runActive) {
+      final supportLabels = specialSupportColumnLabels();
+      final supportsText = supportLabels.isEmpty
+          ? t('nessuno', 'none')
+          : supportLabels.join(', ');
       textIt =
           'Party della run.\n\n'
           'Qui appaiono solo gli NPC vivi nella run: i due scelti prima di partire e quelli trovati nel dungeon.\n'
-          'Se un NPC muore, finisce le azioni o se ne va, sparisce da questa tendina.\n\n'
-          'Party attuale: ${activeAllies.isEmpty ? 'nessuno' : activeAllies.map((a) => a.nameIt).join(', ')}';
+          'Se un NPC muore, finisce le azioni o se ne va, sparisce da questa tendina.\n'
+          'NPC evocabili in attesa: ${queuedRunNpcIds.isEmpty ? 'nessuno' : queuedRunNpcIds.map((id) => npcById(id)?.nameIt ?? id).join(', ')}.\n\n'
+          'Party attuale: ${activeAllies.isEmpty ? 'nessuno' : activeAllies.map((a) => a.nameIt).join(', ')}\n'
+          'Supporti speciali: $supportsText';
       textEn =
           'Run party.\n\n'
           'Only NPCs alive in this run appear here: the two chosen before starting and those found in the dungeon.\n'
-          'If an NPC dies, spends all actions or leaves, it disappears from this menu.\n\n'
-          'Current party: ${activeAllies.isEmpty ? 'none' : activeAllies.map((a) => a.nameEn).join(', ')}';
+          'If an NPC dies, spends all actions or leaves, it disappears from this menu.\n'
+          'Queued summon NPCs: ${queuedRunNpcIds.isEmpty ? 'none' : queuedRunNpcIds.map((id) => npcById(id)?.nameEn ?? id).join(', ')}.\n\n'
+          'Current party: ${activeAllies.isEmpty ? 'none' : activeAllies.map((a) => a.nameEn).join(', ')}\n'
+          'Special supports: $supportsText';
 
       for (final npc in activeAllies) {
         final actionsIt = isPosteaEliteGuard(npc)
@@ -22276,6 +26707,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       if (runActive) {
         final already = activeAllies.any((ally) => ally.id == npc.id);
         if (already) {
+          manuallyRemovedRunNpcIds.add(npc.id);
+          queuedRunNpcIds.remove(npc.id);
           activeAllies.removeWhere((ally) => ally.id == npc.id);
           smallNpcActions.remove(npc.id);
           if (npc.id == 'postea_elite_guard') {
@@ -22284,11 +26717,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           textIt = '${npc.nameIt} rimosso dal party della run.';
           textEn = '${npc.nameEn} removed from run party.';
         } else {
-          if (activeAllies.length >= maxActiveAllies) {
+          manuallyRemovedRunNpcIds.remove(npc.id);
+          if (activeAllies.length >= maxRunNpcAllies) {
             textIt =
-                'Party run pieno ($maxActiveAllies). Rimuovi prima un alleato.';
+                'Party run pieno ($maxRunNpcAllies). Rimuovi prima un alleato.';
             textEn =
-                'Run party is full ($maxActiveAllies). Remove an ally first.';
+                'Run party is full ($maxRunNpcAllies). Remove an ally first.';
           } else {
             addAllyToParty(npc, save: false);
             textIt = '${npc.nameIt} aggiunto al party della run.';
@@ -22406,37 +26840,119 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   }
 
   _EnemyInstance? firstAliveEnemy() {
-    for (final enemy in enemyParty) {
-      if (enemy.hp > 0) return enemy;
+    if (selectedEnemyTargetIndex >= 0 &&
+        selectedEnemyTargetIndex < enemyParty.length) {
+      final selected = enemyParty[selectedEnemyTargetIndex];
+      if (selected.hp > 0) return selected;
     }
+    for (final enemy in enemyParty) {
+      if (enemy.hp > 0) {
+        selectedEnemyTargetIndex = enemyParty.indexOf(enemy);
+        return enemy;
+      }
+    }
+    selectedEnemyTargetIndex = -1;
     return null;
   }
+
+  void selectEnemyTarget(int index) {
+    if (index < 0 || index >= enemyParty.length || enemyParty[index].hp <= 0) {
+      return;
+    }
+    setState(() {
+      selectedEnemyTargetIndex = index;
+      final target = enemyParty[index];
+      textIt = 'Bersaglio selezionato: ${target.nameIt}.';
+      textEn = 'Selected target: ${target.nameEn}.';
+    });
+  }
+
+  bool get hasAnyCombatSupportActor =>
+      activeAllies.isNotEmpty ||
+      valleyInFight ||
+      pawnHp > 0 ||
+      cipoSerpentHp > 0 ||
+      skeletonHandsHp > 0 ||
+      kittySlimeCopies > 0 ||
+      aegisHp > 0 ||
+      runixCombatActive ||
+      floralGuardCharges > 0 ||
+      egoShieldHp > 0;
 
   String enemyPartySummary() {
     if (enemyParty.isEmpty) return '—';
 
     return enemyParty
         .where((enemy) => enemy.hp > 0)
-        .map(
-          (enemy) =>
-              '${widget.linguaInglese ? enemy.nameEn : enemy.nameIt} ${enemy.hp}/${enemy.maxHp}',
-        )
+        .map((enemy) {
+          final shieldText = enemy.shield > 0 ? ' SCU ${enemy.shield}' : '';
+          return '${widget.linguaInglese ? enemy.nameEn : enemy.nameIt} ${enemy.hp}/${enemy.maxHp}$shieldText';
+        })
         .join(' • ');
+  }
+
+  void runixAoeAct(List<_EnemyInstance> aliveEnemies) {
+    if (!runixCombatActive || aliveEnemies.isEmpty) return;
+    syncRunixHpWithResilience();
+    if (!runixCombatActive) return;
+
+    final runixResilience = max(1, runixDisplayMaxHp ~/ 8);
+    var totalHit = 0;
+    var hits = 0;
+    for (final target in aliveEnemies.where((enemy) => enemy.hp > 0)) {
+      final rawDamage = max(
+        2,
+        totalDamage ~/ 3 +
+            runixResilience +
+            currentFloor +
+            runGrade -
+            target.defense ~/ 5,
+      );
+      final damage = damageAfterEnemyAdaptation(target, 'Runix AoE', rawDamage);
+      target.hp = max(0, target.hp - damage).toInt();
+      totalHit += damage;
+      hits++;
+    }
+
+    if (hits <= 0) return;
+
+    textIt +=
+        '\nRunix apre le rune in cerchio: $totalHit danni AoE su $hits bersagli.';
+    textEn +=
+        '\nRunix opens the runes in a circle: $totalHit AoE damage across $hits targets.';
+    defeatDeadEnemiesFromParty();
   }
 
   void alliesAct() {
     if (!inCombat || enemyParty.where((enemy) => enemy.hp > 0).isEmpty) return;
-    if (activeAllies.isEmpty && !valleyInFight) return;
+    if (!hasAnyCombatSupportActor) return;
 
     var aliveEnemies = enemyParty.where((enemy) => enemy.hp > 0).toList();
 
     if (pawnHp > 0 && aliveEnemies.isNotEmpty) {
       pawnShield += 10;
-      final target = aliveEnemies[_random.nextInt(aliveEnemies.length)];
-      final damage = 8 + pawnVolonta ~/ 2 + pawnMateria ~/ 3 + currentFloor;
-      target.hp = max(0, target.hp - damage).toInt();
-      textIt += '\nPawn colpisce ${target.nameIt}: $damage danni.';
-      textEn += '\nPawn hits ${target.nameEn}: $damage damage.';
+      final pawnCount = 1 + pawnExtraCopies;
+      var totalPawnDamage = 0;
+      var hits = 0;
+      for (var i = 0; i < pawnCount && aliveEnemies.isNotEmpty; i++) {
+        final target = aliveEnemies[_random.nextInt(aliveEnemies.length)];
+        final damage =
+            8 +
+            pawnVolonta ~/ 2 +
+            pawnMateria ~/ 3 +
+            currentFloor +
+            (i == 0 ? 0 : currentFloor ~/ 2);
+        target.hp = max(0, target.hp - damage).toInt();
+        totalPawnDamage += damage;
+        hits++;
+        aliveEnemies = enemyParty.where((enemy) => enemy.hp > 0).toList();
+      }
+      textIt += pawnExtraCopies > 0
+          ? '\nSquadra Pawn x$pawnCount colpisce $hits volte: $totalPawnDamage danni totali.'
+          : '\nPawn colpisce: $totalPawnDamage danni.';
+      textEn += pawnExtraCopies > 0
+          ? '\nPawn squad x$pawnCount hits $hits times: $totalPawnDamage total damage.'
+          : '\nPawn hits: $totalPawnDamage damage.';
       defeatDeadEnemiesFromParty();
       aliveEnemies = enemyParty.where((enemy) => enemy.hp > 0).toList();
     }
@@ -22457,6 +26973,11 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       aliveEnemies = enemyParty.where((enemy) => enemy.hp > 0).toList();
     }
 
+    if (runixCombatActive && aliveEnemies.isNotEmpty) {
+      runixAoeAct(aliveEnemies);
+      aliveEnemies = enemyParty.where((enemy) => enemy.hp > 0).toList();
+    }
+
     for (final ally in List<_GoodNpc>.from(activeAllies)) {
       aliveEnemies = enemyParty.where((enemy) => enemy.hp > 0).toList();
       if (aliveEnemies.isEmpty) break;
@@ -22471,6 +26992,68 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       }
 
       switch (ally.role) {
+        case 'hires_ai':
+          final useExplosion = aliveEnemies.length > 1 && chance(32);
+          if (useExplosion) {
+            final damage = max(
+              18,
+              totalDamage + currentFloor * 8 + dungeonLevel * 4,
+            );
+            var totalHit = 0;
+            for (final target in aliveEnemies) {
+              final hit = max(1, damage - target.defense ~/ 6);
+              target.hp = max(0, target.hp - hit).toInt();
+              target.burnTurns = max(target.burnTurns, 2);
+              target.burnPotency = max(
+                target.burnPotency,
+                8 + dungeonLevel + runGrade * 3,
+              );
+              totalHit += hit;
+            }
+            textIt +=
+                '\nHires usa Explosion Art: $totalHit danni ad area e fiamme persistenti.';
+            textEn +=
+                '\nHires uses Explosion Art: $totalHit area damage and lingering flames.';
+            break;
+          }
+
+          final firstTarget =
+              aliveEnemies[_random.nextInt(aliveEnemies.length)];
+          final secondTarget = aliveEnemies.length > 1
+              ? aliveEnemies.firstWhere(
+                  (enemy) => enemy != firstTarget,
+                  orElse: () => firstTarget,
+                )
+              : firstTarget;
+          final flightDamage = max(
+            10,
+            totalDamage +
+                currentFloor * 4 +
+                dungeonLevel * 2 -
+                firstTarget.defense ~/ 5,
+          );
+          firstTarget.hp = max(0, firstTarget.hp - flightDamage).toInt();
+          secondTarget.hp = max(0, secondTarget.hp - flightDamage).toInt();
+          final fireTick =
+              1 + _random.nextInt(30) + dungeonLevel + runGrade * 6;
+          for (final target in {firstTarget, secondTarget}) {
+            target.burnTurns = max(target.burnTurns, 2);
+            target.burnPotency = max(target.burnPotency, fireTick);
+          }
+          if (chance(28)) {
+            final dodgeShield = max(1, dungeonMateria * 2);
+            gainPlayerShield(dodgeShield);
+            textIt +=
+                '\nHires usa Schivata di Fiamme: vieni colpito di striscio nel suo passo nelle fiamme. +$dodgeShield Scudo.';
+            textEn +=
+                '\nHires uses Flame Dodge: you are grazed in his step through the flames. +$dodgeShield Shield.';
+          }
+          textIt +=
+              '\nHires usa Volo di Fuoco: due sfere colpiscono ${firstTarget.nameIt}${identical(firstTarget, secondTarget) ? ' due volte' : ' e ${secondTarget.nameIt}'}. Bruciatura che ignora la difesa: $fireTick a fine turno.';
+          textEn +=
+              '\nHires uses Fire Flight: two spheres hit ${firstTarget.nameEn}${identical(firstTarget, secondTarget) ? ' twice' : ' and ${secondTarget.nameEn}'}. Defense-piercing burn: $fireTick at end of turn.';
+          break;
+
         case 'healer':
           final heal = 4 + currentFloor + totalOculum ~/ 2;
           playerHp = min(playerMaxHp, playerHp + heal);
@@ -22571,6 +27154,25 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
               '\n${ally.nameEn} blooms against ${target.nameEn}: $damage damage, +2 Fragility and plant shield.';
           break;
 
+        case 'bully_werewolf':
+          final target = aliveEnemies[_random.nextInt(aliveEnemies.length)];
+          final biteDamage = max(
+            4,
+            7 + currentFloor + totalVc ~/ 6 - target.defense ~/ 5,
+          ).toInt();
+          final ratDamage = max(1, 2 + currentFloor ~/ 2 + runGrade).toInt();
+          target.hp = max(0, target.hp - biteDamage).toInt();
+          if (target.hp > 0) {
+            target.hp = max(0, target.hp - ratDamage).toInt();
+          }
+          enemyWeak += 1;
+          gainPlayerShield(3 + runGrade);
+          textIt +=
+              '\n${ally.nameIt} spinge avanti il muso e morde ${target.nameIt}: $biteDamage danni. Il Topo da Tasca scatta subito dopo: $ratDamage danni, +1 Fragilità.';
+          textEn +=
+              '\n${ally.nameEn} shoves forward and bites ${target.nameEn}: $biteDamage damage. The Pocket Rat darts in after him: $ratDamage damage, +1 Fragility.';
+          break;
+
         default:
           final target = aliveEnemies[_random.nextInt(aliveEnemies.length)];
           final damage = max(
@@ -22596,6 +27198,29 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     if (aliveEnemies.isEmpty) return;
 
     valleyParticipatedInFight = true;
+    if (valleyBloomGuards > 0) {
+      final guardHits = min(valleyBloomGuards, 3).toInt();
+      var totalGuardDamage = 0;
+      for (var i = 0; i < guardHits; i++) {
+        final targets = enemyParty.where((enemy) => enemy.hp > 0).toList();
+        if (targets.isEmpty) break;
+        final target = targets[_random.nextInt(targets.length)];
+        final damage = max(
+          1,
+          2 + currentFloor ~/ 2 + runGrade - target.defense ~/ 10,
+        ).toInt();
+        target.hp = max(0, target.hp - damage).toInt();
+        totalGuardDamage += damage;
+      }
+      if (totalGuardDamage > 0) {
+        textIt +=
+            '\nGli sbocciati nel team graffiano i nemici: $totalGuardDamage danni totali.';
+        textEn +=
+            '\nThe bloomed team creatures scratch the enemies: $totalGuardDamage total damage.';
+        defeatDeadEnemiesFromParty();
+        if (enemyParty.where((enemy) => enemy.hp > 0).isEmpty) return;
+      }
+    }
     valleyTurnsLeft = max(0, valleyTurnsLeft - 1).toInt();
     final baseDamage = max(
       8,
@@ -22645,6 +27270,19 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   }
 
   void defeatDeadEnemiesFromParty() {
+    for (final enemy in enemyParty.where((enemy) => enemy.hp > 0)) {
+      triggerEnemyPartialAwakening(enemy);
+      triggerBossQuarterPower(enemy);
+    }
+
+    var phaseTriggered = false;
+    for (final enemy in enemyParty.where((enemy) => enemy.hp <= 0)) {
+      if (triggerBossSecondPhase(enemy)) phaseTriggered = true;
+    }
+    if (phaseTriggered) {
+      syncPrimaryEnemyFromParty();
+    }
+
     final dead = enemyParty.where((enemy) => enemy.hp <= 0).toList();
     if (dead.isEmpty) return;
 
@@ -22664,8 +27302,74 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     enemyParty.removeWhere((enemy) => enemy.hp <= 0);
   }
 
+  bool triggerBossQuarterPower(_EnemyInstance enemy) {
+    if (!enemy.boss || enemy.quarterPowerTriggered) return false;
+    if (enemy.maxHp <= 0 || enemy.hp > (enemy.maxHp / 4).ceil()) return false;
+    enemy.quarterPowerTriggered = true;
+    final gain = max(6, max(1, enemy.grade) * 6);
+    enemy.maxHp += gain;
+    enemy.hp = min(enemy.maxHp, enemy.hp + gain).toInt();
+    enemy.attack += gain;
+    enemy.defense += gain;
+    enemy.shield += gain;
+    textIt +=
+        '\n\n${enemy.nameIt} entra nella fase critica: +$gain stats e scudo.';
+    textEn +=
+        '\n\n${enemy.nameEn} enters critical phase: +$gain stats and shield.';
+    return true;
+  }
+
+  bool triggerBossSecondPhase(_EnemyInstance enemy) {
+    if (enemy.phaseTriggered || enemy.phase != 1 || !enemy.boss) return false;
+    final name = '${enemy.nameIt} ${enemy.nameEn}'.toLowerCase();
+    final isBaghest = name.contains('baghest');
+    final isTrueEye = name.contains('vero occhio') || name.contains('true eye');
+    if (!isBaghest && !isTrueEye) return false;
+
+    enemy.phaseTriggered = true;
+    enemy.phase = 2;
+    final restoredHp = isTrueEye
+        ? max(enemy.maxHp ~/ 2, playerMaxHp + currentFloor * 22)
+        : max(enemy.maxHp ~/ 3, playerMaxHp ~/ 2 + currentFloor * 14);
+    enemy.maxHp = max(enemy.maxHp, restoredHp + enemy.maxHp ~/ 4);
+    enemy.hp = restoredHp;
+    enemy.attack += isTrueEye ? currentFloor * 3 + 12 : currentFloor * 2 + 7;
+    enemy.defense += isTrueEye ? 8 : 5;
+    enemy.burnTurns = 0;
+    enemy.bleedTurns = 0;
+    enemy.stunTurns = 0;
+    enemy.slowTurns = 0;
+    if (isTrueEye) {
+      enemy.nameIt = 'Il Vero Occhio - Seconda Palpebra';
+      enemy.nameEn = 'The True Eye - Second Lid';
+      enemy.skillIds = {...enemy.skillIds, ...trueEyeSkillsForRun()}.toList();
+      textIt +=
+          '\n\nIl Vero Occhio non muore: chiude la prima palpebra e apre la seconda fase.';
+      textEn +=
+          '\n\nThe True Eye does not die: it closes the first lid and opens phase two.';
+    } else {
+      enemy.nameIt = 'Eiva Baghest - Fase del Cultista';
+      enemy.nameEn = 'Eiva Baghest - Cultist Phase';
+      enemy.elementId = 'oculum';
+      textIt +=
+          '\n\nBaghest crolla, poi il culto dietro la maschera prende il controllo: seconda fase.';
+      textEn +=
+          '\n\nBaghest collapses, then the cult behind the mask takes control: phase two.';
+    }
+    addLog(
+      t(
+        '${enemy.nameIt}: seconda fase attivata.',
+        '${enemy.nameEn}: phase two triggered.',
+      ),
+    );
+    return true;
+  }
+
   void attackAllEnemies({required bool useVc}) {
     if (!canUseCombatInput || enemyParty.isEmpty) return;
+    recordAutoModePreference('aoe');
+    oculumSkillActionsThisTurn = 0;
+    oculumSkillTurnScheduleToken++;
     final freePosteaGrenades = useVc && posteaGrenadesEquipped;
 
     if (useVc && !canUseAoeVc()) {
@@ -22839,7 +27543,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             'La corruzione ti prende. I tuoi compagni ti uccidono prima che tu diventi altro.';
         textEn =
             'Corruption takes you. Your companions kill you before you become something else.';
-        if (!tryConsumeRebirthBlessing()) finishRun(victorious: false);
+        resolvePlayerDeathAfterDamage();
         return;
       }
 
@@ -22876,7 +27580,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         playerHp = 0;
         textIt = 'Lo prendi con te. I compagni ti uccidono per fermarti.';
         textEn = 'You take it with you. Your companions kill you to stop you.';
-        if (!tryConsumeRebirthBlessing()) finishRun(victorious: false);
+        resolvePlayerDeathAfterDamage();
       } else {
         final relic = unlockRandomRelic();
         textIt =
@@ -23060,11 +27764,14 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     addLog('Allenamento con Valley interrotto: EXP media alta.');
   }
 
-  bool isRedCorruptedName(String name) {
+  bool isCorruptedName(String name) {
     final lower = name.toLowerCase();
     return lower.contains('corrotto rosso') ||
         lower.contains('red corrupted') ||
-        lower.contains('corruzione rossa');
+        lower.contains('corruzione rossa') ||
+        lower.contains('corrotto') ||
+        lower.contains('corrupted') ||
+        lower.contains('corruzione');
   }
 
   void resolveValleyBlooming() {
@@ -23085,14 +27792,14 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
     var bloomed = 0;
     for (final name in names) {
-      final red = isRedCorruptedName(name);
-      if (red || chance(10)) {
+      final corrupted = isCorruptedName(name);
+      if (corrupted || chance(18)) {
         bloomed++;
-        if (red) {
+        if (corrupted) {
           textIt +=
-              '\nLa corruzione rossa non resiste alla natura. Valley la costringe a sbocciare.';
+              '\nLa corruzione non resiste alla natura. Valley la costringe a sbocciare.';
           textEn +=
-              '\nRed corruption does not resist nature. Valley forces it to bloom.';
+              '\nCorruption does not resist nature. Valley forces it to bloom.';
         } else {
           textIt +=
               '\nIl corpo del mostro si apre in fiori, rami e carne: Valley lo fa sbocciare.';
@@ -23109,7 +27816,18 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       return;
     }
 
-    valleyBloomGuards = min(3, valleyBloomGuards + bloomed).toInt();
+    valleyBloomGuards = min(8, valleyBloomGuards + bloomed).toInt();
+    valleyTurnsLeft += bloomed;
+    valleyAttack += max(1, bloomed * 2);
+    valleyDefense += max(1, bloomed);
+    valleyMaxHp += bloomed * 5;
+    valleyHp = min(valleyMaxHp, valleyHp + bloomed * 4).toInt();
+    textIt +=
+        '\n$bloomed mostri sbocciati entrano nel tuo team: hanno poca vita, fanno pochi danni e proteggono Valley.'
+        '\nValley si potenzia e resta +$bloomed turni.';
+    textEn +=
+        '\n$bloomed bloomed monsters join your team: low HP, low damage, and they protect Valley.'
+        '\nValley powers up and stays +$bloomed turns.';
     textIt += '\nValley sorride con un sorriso impossibilmente spalancato.';
     textEn += '\nValley smiles with an impossibly wide smile.';
     addLog('Valley sorride con un sorriso impossibilmente spalancato.');
@@ -23173,8 +27891,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       rewardDust += max(1, 1 + currentFloor ~/ 3 + partyBonus ~/ 2).toInt();
       fightsSinceTavernRest = 0;
     }
+    final mourningMotherReward = mourningMotherMinibossActive ? 50 : 0;
 
     obserInRun += rewardObser;
+    obserInRun += mourningMotherReward;
     ascensionDustInRun += rewardDust;
 
     var combatExp = calculateDungeonCombatExp();
@@ -23258,6 +27978,16 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
     summonDrownedAlliesFromLastFight();
 
+    if (mourningMotherReward > 0) {
+      textIt +=
+          '\n\nLa donna ti guarda senza davvero vederti. Ti dona 50 Obser e mormora: "Non è molto, ma è tutto ciò che avevo."\n'
+          'Poi torna a guardare il figlio, ormai in parte pietra, muschio e terra.';
+      textEn +=
+          '\n\nThe woman looks at you without truly seeing you. She gives you 50 Obser and whispers: "It is not much, but it is all I had."\n'
+          'Then she looks back at her son, now partly stone, moss and earth.';
+      mourningMotherMinibossActive = false;
+    }
+
     defeatedEnemyNamesIt.clear();
     defeatedEnemyNamesEn.clear();
     defeatedEnemyPowerTotal = 0;
@@ -23290,6 +28020,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         reasonEn: 'Oculum grows after the fight.',
       );
     }
+    scheduleAutoModeStep();
   }
 
   // ================= UI =================
@@ -23424,6 +28155,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         return 'Scelta Titolo';
       case 'skills':
         return 'Skill Oculum';
+      case 'battle':
+        return 'Oculum Battle';
       default:
         return 'Scelte evento';
     }
@@ -23451,6 +28184,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         return 'Title Choice';
       case 'skills':
         return 'Oculum Skills';
+      case 'battle':
+        return 'Oculum Battle';
       default:
         return 'Event choices';
     }
@@ -23476,6 +28211,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         return Icons.workspace_premium;
       case 'skills':
         return Icons.auto_fix_high;
+      case 'battle':
+        return Icons.workspace_premium;
       default:
         return Icons.auto_awesome;
     }
@@ -23501,6 +28238,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         return const Color(0xFFFFD36A);
       case 'skills':
         return const Color(0xFFA78BFA);
+      case 'battle':
+        return const Color(0xFFE7C66B);
       default:
         return widget.tertiaryColor;
     }
@@ -23830,6 +28569,96 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       activeSkin.monsterSkin ||
       !spriteKindSupportsEquipment(currentPlayerSpriteKind);
 
+  bool get aegisRunixDuoActive =>
+      activeCharacterOrigin?.id == 'aegis_runix_duo';
+
+  bool get defiledRunicDuoSummoned =>
+      runBoons.contains('defiled_runic_duo_summoned');
+
+  bool get runicDuoSupportActive =>
+      defiledRunicDuoSummoned && !aegisRunixDuoActive && runixHp > 0;
+
+  bool get aegisRunixProtectionActive =>
+      aegisHp > 0 && (aegisRunixDuoActive || defiledRunicDuoSummoned);
+
+  int runixMaxHpFromResilience({int? resilience}) {
+    final sheetResilience = max(1, widget.playerMaxHp ~/ 12);
+    final res = max(
+      1,
+      resilience ??
+          (sheetResilience +
+              dungeonResilienza +
+              max(0, widget.playerGrade) +
+              max(0, runGrade - 1)),
+    );
+    return max(8, res * 8 + currentFloor * 3 + runGrade * 4).toInt();
+  }
+
+  void syncRunixHpWithResilience({bool refill = false, int? resilience}) {
+    if (!aegisRunixDuoActive && !defiledRunicDuoSummoned) return;
+
+    if (aegisRunixDuoActive && runixMaxHp > 0 && !refill) {
+      runixHp = playerHp.clamp(0, max(playerMaxHp, runixMaxHp)).toInt();
+    }
+
+    final nextMax = runixMaxHpFromResilience(resilience: resilience);
+    if (runixMaxHp <= 0 || refill) {
+      runixMaxHp = nextMax;
+      runixHp = nextMax;
+    } else if (nextMax > runixMaxHp) {
+      final gained = nextMax - runixMaxHp;
+      runixMaxHp = nextMax;
+      runixHp = min(runixMaxHp, runixHp + gained).toInt();
+    } else {
+      runixMaxHp = max(1, runixMaxHp).toInt();
+      runixHp = runixHp.clamp(0, runixMaxHp).toInt();
+    }
+
+    if (aegisRunixDuoActive) {
+      playerMaxHp = runixMaxHp;
+      playerHp = runixHp.clamp(0, playerMaxHp).toInt();
+    }
+  }
+
+  int get runixDisplayHp => aegisRunixDuoActive ? playerHp : runixHp;
+
+  int get runixDisplayMaxHp =>
+      aegisRunixDuoActive ? playerMaxHp : max(1, runixMaxHp).toInt();
+
+  bool get runixCombatActive =>
+      (aegisRunixDuoActive && playerHp > 0) ||
+      (runicDuoSupportActive && runixHp > 0);
+
+  int get aegisShieldCap =>
+      max(18, aegisMaxHp ~/ 3 + totalDefense ~/ 2 + currentFloor * 5).toInt();
+
+  int get aegisDisplayHp => max(0, aegisHp + aegisShield).toInt();
+
+  int get aegisDisplayMaxHp => max(1, aegisMaxHp + aegisShieldCap).toInt();
+
+  void gainAegisShield(int amount) {
+    if (amount <= 0 || aegisHp <= 0) return;
+    aegisShield = min(aegisShieldCap, max(0, aegisShield) + amount).toInt();
+  }
+
+  String get visualPlayerSpriteKind =>
+      aegisRunixDuoActive ? 'aegis_runix' : currentPlayerSpriteKind;
+
+  Color get visualPlayerSpriteColor =>
+      aegisRunixDuoActive ? const Color(0xFF3F7DD3) : playerAppearanceColor;
+
+  Color get visualPlayerEyeColor =>
+      aegisRunixDuoActive ? const Color(0xFF7CEBFF) : playerEyeColor;
+
+  int get visualPlayerSpriteLayers =>
+      aegisRunixDuoActive ? 4 : playerAppearanceLayers;
+
+  bool get visualPlayerSkinHidesEquipment =>
+      aegisRunixDuoActive || currentPlayerSkinHidesEquipment;
+
+  String? get visualPlayerAssetPath =>
+      playerDungeonSpriteAssetForKind(visualPlayerSpriteKind);
+
   int stableSpriteSeed(String value) {
     var hash = 17;
     for (final unit in value.codeUnits) {
@@ -23916,6 +28745,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         return 'assets/oculum/sprites/Pawn.png';
       case 'cultist':
         return 'assets/oculum/sprites/Cultist_of_Purple_Eyes.png';
+      case 'aegis_runix':
+      case 'aegis_robot':
+        return 'assets/oculum/kingi_robot.png';
       case 'eye':
       case 'relic':
       case 'relic_eye':
@@ -23961,7 +28793,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     final lower = name.toLowerCase();
     String? candidate;
 
-    if (lower.contains('uomo in posizione fetale') || lower.contains('fetal')) {
+    if (lower.contains('hires')) {
+      candidate = 'assets/oculum/sprites/hires_oculum.png';
+    } else if (lower.contains('vero occhio') || lower.contains('true eye')) {
+      candidate = 'assets/oculum/sprites/Occhio_della_Reliquia.png';
+    } else if (lower.contains('uomo in posizione fetale') ||
+        lower.contains('fetal')) {
       candidate =
           'assets/oculum_dungeon/generated_sprites/enemies/uomo_in_posizione_fetale_refit.png';
     } else if (lower.contains('decapitato') ||
@@ -24126,6 +28963,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     int layers = 0,
     double size = 74,
     bool flip = false,
+    int? hp,
+    int? maxHp,
     Color? eyeColor,
     String weaponKind = '',
     Color weaponColor = Colors.white,
@@ -24182,6 +29021,15 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
               ),
             ),
           ),
+          if (hp != null && maxHp != null) ...[
+            const SizedBox(height: 4),
+            miniHpBar(
+              current: hp,
+              maxValue: maxHp,
+              color: color,
+              width: min(cardWidth - 8, 82.0),
+            ),
+          ],
           const SizedBox(height: 6),
           Tooltip(
             message: spriteLabel,
@@ -24267,10 +29115,17 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     int armorSeed = 0,
     String? assetPath,
     String? armorAssetPath,
+    bool selected = false,
+    VoidCallback? onTap,
   }) {
     final actorWidth = max(spriteSize + 26, 92.0);
     final cleanLabel = cleanDungeonText(label);
-    return SizedBox(
+    final turnNudge = !inCombat
+        ? 0.0
+        : enemyTurnPending
+        ? (faceRight ? -2.0 : -6.0)
+        : (faceRight ? 4.0 : 1.0);
+    final actor = SizedBox(
       width: actorWidth,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -24321,6 +29176,34 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         ],
       ),
     );
+    final selectableActor = onTap == null
+        ? actor
+        : InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: selected ? color : Colors.transparent,
+                  width: selected ? 2 : 1,
+                ),
+                color: selected ? color.withValues(alpha: 0.12) : null,
+              ),
+              child: actor,
+            ),
+          );
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: turnNudge),
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+      child: selectableActor,
+      builder: (context, value, child) {
+        return Transform.translate(offset: Offset(value, 0), child: child);
+      },
+    );
   }
 
   Widget stageQuickButton({
@@ -24369,6 +29252,40 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           spriteSize: 62,
         ),
       );
+    }
+    if (valleyBloomGuards > 0) {
+      final visibleBloomed = min(valleyBloomGuards, 4).toInt();
+      for (var i = 0; i < visibleBloomed; i++) {
+        allies.add(
+          battleActor(
+            label: t('Sbocciato ${i + 1}', 'Bloomed ${i + 1}'),
+            color: const Color(0xFF8BE38F),
+            kind: 'flora',
+            seed: stableSpriteSeed('ally:valley_bloom_$i'),
+            faceRight: true,
+            layers: 2,
+            hp: 1,
+            maxHp: 2,
+            spriteSize: 42,
+          ),
+        );
+      }
+      if (valleyBloomGuards > visibleBloomed) {
+        allies.add(
+          battleActor(
+            label:
+                '+${valleyBloomGuards - visibleBloomed} ${t('sbocciati', 'bloomed')}',
+            color: const Color(0xFF6EE7B7),
+            kind: 'flora',
+            seed: stableSpriteSeed('ally:valley_bloom_more'),
+            faceRight: true,
+            layers: 1,
+            hp: 1,
+            maxHp: 1,
+            spriteSize: 38,
+          ),
+        );
+      }
     }
     for (final ally in activeAllies.take(4)) {
       if (ally.id == 'valley_child_of_mother_nature' && valleyInFight) {
@@ -24452,7 +29369,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     if (pawnHp > 0) {
       allies.add(
         battleActor(
-          label: t('Pedina', 'Pawn'),
+          label: pawnExtraCopies > 0
+              ? t(
+                  'Pedine x${pawnExtraCopies + 1}',
+                  'Pawns x${pawnExtraCopies + 1}',
+                )
+              : t('Pedina', 'Pawn'),
           color: widget.tertiaryColor,
           kind: 'pawn',
           seed: stableSpriteSeed('ally:pawn'),
@@ -24463,6 +29385,61 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           spriteSize: 55,
         ),
       );
+    }
+    if (kittySlimeCopies > 0) {
+      final kittyHp = kittySlimeCopyHpTotal();
+      allies.add(
+        battleActor(
+          label: 'Kitty x$kittySlimeCopies',
+          color: const Color(0xFF7CEBFF),
+          kind: 'kitty_slime',
+          seed: stableSpriteSeed('ally:kitty_slime_copies'),
+          faceRight: true,
+          layers: 2,
+          hp: kittyHp,
+          maxHp: max(1, kittySlimeCopies * kittySlimeCopyMaxHp()),
+          spriteSize: 50,
+          eyeColor: const Color(0xFFFFF3A3),
+        ),
+      );
+    }
+    if (runicDuoSupportActive) {
+      allies.add(
+        battleActor(
+          label: 'Runix',
+          color: const Color(0xFF3F7DD3),
+          kind: 'aegis_runix',
+          seed: stableSpriteSeed('ally:runix_robot'),
+          faceRight: true,
+          layers: 4,
+          hp: runixDisplayHp,
+          maxHp: runixDisplayMaxHp,
+          spriteSize: 74,
+          eyeColor: const Color(0xFF7CEBFF),
+          assetPath: playerDungeonSpriteAssetForKind('aegis_runix'),
+        ),
+      );
+    }
+    if (aegisHp > 0) {
+      allies.add(
+        battleActor(
+          label: 'Aegis',
+          color: const Color(0xFF8FB7FF),
+          kind: 'aegis_robot',
+          seed: stableSpriteSeed('ally:aegis_robot'),
+          faceRight: true,
+          layers: 4,
+          hp: aegisDisplayHp,
+          maxHp: aegisDisplayMaxHp,
+          spriteSize: 82,
+          eyeColor: const Color(0xFF7CEBFF),
+          assetPath: playerDungeonSpriteAssetForKind('aegis_robot'),
+        ),
+      );
+    }
+    if (aegisHp > 0 && allies.isNotEmpty) {
+      final aegisActor = allies.removeLast();
+      return [aegisActor, ...allies.take(4)];
     }
     return allies.take(5).toList();
   }
@@ -24475,6 +29452,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     final allyHp =
         activeAllies.length * 35 +
         (pawnHp > 0 ? pawnHp + pawnShield : 0) +
+        (kittySlimeCopies > 0 ? kittySlimeCopies * 35 : 0) +
+        (aegisHp > 0 ? aegisDisplayHp + totalDefense * 2 : 0) +
+        (runixCombatActive ? runixDisplayHp + totalDamage * 2 : 0) +
         (posteaEliteGuardHp > 0
             ? posteaEliteGuardHp +
                   posteaEliteGuardShield +
@@ -24568,6 +29548,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     if (!showSpritePanel) return const SizedBox.shrink();
     final enemies = enemyParty.where((e) => e.hp > 0).take(5).toList();
     final allyActors = liveAllyActors();
+    final onlineActors = liveOnlineCompanionActors();
 
     if (!inCombat) {
       final equippedSprites = <Widget>[];
@@ -24608,39 +29589,53 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             ),
             const SizedBox(height: 6),
             SizedBox(
-              height: 124,
+              height: aegisRunixDuoActive ? 142 : 124,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
                   spriteBox(
-                    label: safeSpriteLabel(
-                      playerNameInRun,
-                      t('Personaggio', 'Character'),
-                    ),
-                    color: playerAppearanceColor,
-                    kind: currentPlayerSpriteKind,
+                    label: aegisRunixDuoActive
+                        ? 'Runix'
+                        : safeSpriteLabel(
+                            playerNameInRun,
+                            t('Personaggio', 'Character'),
+                          ),
+                    color: visualPlayerSpriteColor,
+                    kind: visualPlayerSpriteKind,
                     seed: stableSpriteSeed(
                       'player:${safeSpriteLabel(playerNameInRun, 'character')}',
                     ),
-                    layers: playerAppearanceLayers,
-                    eyeColor: playerEyeColor,
-                    weaponKind: currentPlayerSkinHidesEquipment
+                    layers: visualPlayerSpriteLayers,
+                    eyeColor: visualPlayerEyeColor,
+                    hp: aegisRunixDuoActive ? playerHp : null,
+                    maxHp: aegisRunixDuoActive ? playerMaxHp : null,
+                    weaponKind: visualPlayerSkinHidesEquipment
                         ? ''
                         : playerWeaponSpriteKind,
                     weaponColor: playerWeaponColor,
                     weaponSeed: playerWeaponSeed,
-                    armorKind: currentPlayerSkinHidesEquipment
+                    armorKind: visualPlayerSkinHidesEquipment
                         ? ''
                         : playerArmorSpriteKind,
                     armorColor: playerArmorColor,
                     armorSeed: playerArmorSeed,
-                    assetPath: playerDungeonSpriteAssetForKind(
-                      currentPlayerSpriteKind,
-                    ),
-                    armorAssetPath: dungeonArmorAssetForKind(
-                      playerArmorSpriteKind,
-                    ),
+                    assetPath: visualPlayerAssetPath,
+                    armorAssetPath: visualPlayerSkinHidesEquipment
+                        ? null
+                        : dungeonArmorAssetForKind(playerArmorSpriteKind),
                   ),
+                  if (aegisRunixDuoActive)
+                    spriteBox(
+                      label: 'Aegis',
+                      color: const Color(0xFF8FB7FF),
+                      kind: 'aegis_robot',
+                      seed: stableSpriteSeed('ally:aegis_robot'),
+                      layers: 4,
+                      size: 82,
+                      hp: aegisDisplayHp,
+                      maxHp: aegisDisplayMaxHp,
+                      assetPath: playerDungeonSpriteAssetForKind('aegis_robot'),
+                    ),
                   ...equippedSprites,
                   for (final enemy in enemies)
                     spriteBox(
@@ -24711,36 +29706,70 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             final partyActors = <Widget>[
               battleActor(
                 label: safeSpriteLabel(
-                  playerNameInRun,
+                  aegisRunixDuoActive ? 'Runix' : playerNameInRun,
                   t('Personaggio', 'Character'),
                 ),
-                color: playerAppearanceColor,
-                kind: currentPlayerSpriteKind,
+                color: visualPlayerSpriteColor,
+                kind: visualPlayerSpriteKind,
                 seed: stableSpriteSeed(
                   'player:${safeSpriteLabel(playerNameInRun, 'character')}',
                 ),
                 faceRight: true,
-                layers: playerAppearanceLayers,
+                layers: visualPlayerSpriteLayers,
                 hp: playerHp,
                 maxHp: playerMaxHp,
-                spriteSize: actorSize + 8,
-                eyeColor: playerEyeColor,
-                weaponKind: currentPlayerSkinHidesEquipment
+                spriteSize: actorSize + (aegisRunixDuoActive ? 14 : 8),
+                eyeColor: visualPlayerEyeColor,
+                weaponKind: visualPlayerSkinHidesEquipment
                     ? ''
                     : playerWeaponSpriteKind,
                 weaponColor: playerWeaponColor,
                 weaponSeed: playerWeaponSeed,
-                armorKind: currentPlayerSkinHidesEquipment
+                armorKind: visualPlayerSkinHidesEquipment
                     ? ''
                     : playerArmorSpriteKind,
                 armorColor: playerArmorColor,
                 armorSeed: playerArmorSeed,
-                assetPath: playerDungeonSpriteAssetForKind(
-                  currentPlayerSpriteKind,
-                ),
-                armorAssetPath: dungeonArmorAssetForKind(playerArmorSpriteKind),
+                assetPath: visualPlayerAssetPath,
+                armorAssetPath: visualPlayerSkinHidesEquipment
+                    ? null
+                    : dungeonArmorAssetForKind(playerArmorSpriteKind),
               ),
             ];
+            if (runicDuoSupportActive) {
+              partyActors.add(
+                battleActor(
+                  label: 'Runix',
+                  color: const Color(0xFF3F7DD3),
+                  kind: 'aegis_runix',
+                  seed: stableSpriteSeed('ally:runix_robot'),
+                  faceRight: true,
+                  layers: 4,
+                  hp: runixDisplayHp,
+                  maxHp: runixDisplayMaxHp,
+                  spriteSize: actorSize + 14,
+                  eyeColor: const Color(0xFF7CEBFF),
+                  assetPath: playerDungeonSpriteAssetForKind('aegis_runix'),
+                ),
+              );
+            }
+            if (aegisHp > 0) {
+              partyActors.add(
+                battleActor(
+                  label: 'Aegis',
+                  color: const Color(0xFF8FB7FF),
+                  kind: 'aegis_robot',
+                  seed: stableSpriteSeed('ally:aegis_robot'),
+                  faceRight: true,
+                  layers: 4,
+                  hp: aegisDisplayHp,
+                  maxHp: aegisDisplayMaxHp,
+                  spriteSize: actorSize + 18,
+                  eyeColor: const Color(0xFF7CEBFF),
+                  assetPath: playerDungeonSpriteAssetForKind('aegis_robot'),
+                ),
+              );
+            }
 
             if (valleyInFight) {
               partyActors.add(
@@ -24860,6 +29889,23 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                   hp: pawnHp,
                   maxHp: pawnMaxHp,
                   spriteSize: actorSize,
+                ),
+              );
+            }
+            if (kittySlimeCopies > 0) {
+              final kittyHp = kittySlimeCopyHpTotal();
+              partyActors.add(
+                battleActor(
+                  label: 'Kitty x$kittySlimeCopies',
+                  color: const Color(0xFF7CEBFF),
+                  kind: 'kitty_slime',
+                  seed: stableSpriteSeed('ally:kitty_slime_copies'),
+                  faceRight: true,
+                  layers: 2,
+                  hp: kittyHp,
+                  maxHp: max(1, kittySlimeCopies * kittySlimeCopyMaxHp()),
+                  spriteSize: actorSize,
+                  eyeColor: const Color(0xFFFFF3A3),
                 ),
               );
             }
@@ -25132,6 +30178,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                     enemy.nameIt,
                     enemy.spriteAssetPath,
                   ),
+                  selected:
+                      enemyParty.indexOf(enemy) == selectedEnemyTargetIndex,
+                  onTap: () => selectEnemyTarget(enemyParty.indexOf(enemy)),
                 );
               }).toList();
               final enemyAlignment = WrapAlignment.end;
@@ -25172,11 +30221,11 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
               final allyScale = narrow ? 0.84 : 1.0;
               final stageCacheWidth = rasterCacheDimension(
                 constraints.maxWidth,
-                max: 1920,
+                max: 960,
               );
               final stageCacheHeight = rasterCacheDimension(
                 stageHeight,
-                max: 1080,
+                max: 540,
               );
 
               return Container(
@@ -25261,44 +30310,84 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                       bottom: playerBottom,
                       child: battleActor(
                         label: safeSpriteLabel(
-                          playerNameInRun,
+                          aegisRunixDuoActive ? 'Runix' : playerNameInRun,
                           t('Personaggio', 'Character'),
                         ),
-                        color: playerAppearanceColor,
-                        kind: currentPlayerSpriteKind,
+                        color: visualPlayerSpriteColor,
+                        kind: visualPlayerSpriteKind,
                         seed: stableSpriteSeed(
                           'player:${safeSpriteLabel(playerNameInRun, 'character')}',
                         ),
                         faceRight: true,
-                        layers: playerAppearanceLayers,
+                        layers: visualPlayerSpriteLayers,
                         hp: playerHp,
                         maxHp: playerMaxHp,
                         spriteSize: narrow
-                            ? 72
+                            ? (aegisRunixDuoActive ? 78 : 72)
                             : wide
-                            ? 122
+                            ? (aegisRunixDuoActive ? 112 : 122)
                             : phoneLandscape
-                            ? 116
-                            : 96,
-                        eyeColor: playerEyeColor,
-                        weaponKind: currentPlayerSkinHidesEquipment
+                            ? (aegisRunixDuoActive ? 104 : 116)
+                            : (aegisRunixDuoActive ? 92 : 96),
+                        eyeColor: visualPlayerEyeColor,
+                        weaponKind: visualPlayerSkinHidesEquipment
                             ? ''
                             : playerWeaponSpriteKind,
                         weaponColor: playerWeaponColor,
                         weaponSeed: playerWeaponSeed,
-                        armorKind: currentPlayerSkinHidesEquipment
+                        armorKind: visualPlayerSkinHidesEquipment
                             ? ''
                             : playerArmorSpriteKind,
                         armorColor: playerArmorColor,
                         armorSeed: playerArmorSeed,
-                        assetPath: playerDungeonSpriteAssetForKind(
-                          currentPlayerSpriteKind,
-                        ),
-                        armorAssetPath: dungeonArmorAssetForKind(
-                          playerArmorSpriteKind,
-                        ),
+                        assetPath: visualPlayerAssetPath,
+                        armorAssetPath: visualPlayerSkinHidesEquipment
+                            ? null
+                            : dungeonArmorAssetForKind(playerArmorSpriteKind),
                       ),
                     ),
+                    if (onlineActors.isNotEmpty)
+                      Positioned(
+                        left: narrow ? 10 : 18,
+                        top: narrow ? 50 : 42,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: narrow ? 150 : 230,
+                          ),
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: const Color(0xCC080912),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: const Color(
+                                  0xFF67E8F9,
+                                ).withValues(alpha: 0.45),
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    t('ONLINE', 'ONLINE'),
+                                    style: const TextStyle(
+                                      color: Color(0xFF67E8F9),
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  Wrap(
+                                    spacing: 2,
+                                    runSpacing: 2,
+                                    children: onlineActors,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     Positioned(
                       left: narrow
                           ? 10
@@ -25479,26 +30568,65 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
     final cards = <Widget>[
       spriteBox(
-        label: safeSpriteLabel(playerNameInRun, t('Personaggio', 'Character')),
-        color: playerAppearanceColor,
-        kind: currentPlayerSpriteKind,
+        label: safeSpriteLabel(
+          aegisRunixDuoActive ? 'Runix' : playerNameInRun,
+          t('Personaggio', 'Character'),
+        ),
+        color: visualPlayerSpriteColor,
+        kind: visualPlayerSpriteKind,
         seed: stableSpriteSeed(
           'player:${safeSpriteLabel(playerNameInRun, 'character')}',
         ),
-        layers: playerAppearanceLayers,
-        eyeColor: playerEyeColor,
-        weaponKind: currentPlayerSkinHidesEquipment
+        layers: visualPlayerSpriteLayers,
+        eyeColor: visualPlayerEyeColor,
+        hp: aegisRunixDuoActive ? playerHp : null,
+        maxHp: aegisRunixDuoActive ? playerMaxHp : null,
+        weaponKind: visualPlayerSkinHidesEquipment
             ? ''
             : playerWeaponSpriteKind,
         weaponColor: playerWeaponColor,
         weaponSeed: playerWeaponSeed,
-        armorKind: currentPlayerSkinHidesEquipment ? '' : playerArmorSpriteKind,
+        armorKind: visualPlayerSkinHidesEquipment ? '' : playerArmorSpriteKind,
         armorColor: playerArmorColor,
         armorSeed: playerArmorSeed,
-        assetPath: playerDungeonSpriteAssetForKind(currentPlayerSpriteKind),
-        armorAssetPath: dungeonArmorAssetForKind(playerArmorSpriteKind),
+        assetPath: visualPlayerAssetPath,
+        armorAssetPath: visualPlayerSkinHidesEquipment
+            ? null
+            : dungeonArmorAssetForKind(playerArmorSpriteKind),
       ),
     ];
+
+    if (runicDuoSupportActive) {
+      cards.add(
+        spriteBox(
+          label: 'Runix',
+          color: const Color(0xFF3F7DD3),
+          kind: 'aegis_runix',
+          seed: stableSpriteSeed('ally:runix_robot'),
+          layers: 4,
+          size: 78,
+          hp: runixDisplayHp,
+          maxHp: runixDisplayMaxHp,
+          assetPath: playerDungeonSpriteAssetForKind('aegis_runix'),
+        ),
+      );
+    }
+
+    if (aegisRunixDuoActive || runicDuoSupportActive) {
+      cards.add(
+        spriteBox(
+          label: 'Aegis',
+          color: const Color(0xFF8FB7FF),
+          kind: 'aegis_robot',
+          seed: stableSpriteSeed('ally:aegis_robot'),
+          layers: 4,
+          size: 82,
+          hp: aegisDisplayHp,
+          maxHp: aegisDisplayMaxHp,
+          assetPath: playerDungeonSpriteAssetForKind('aegis_robot'),
+        ),
+      );
+    }
 
     if (starterWeapon != null) {
       cards.add(
@@ -25675,40 +30803,43 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
               final player = trapPlayerLane == lane;
               final safe = revealedSafeLane == lane;
               return Expanded(
-                child: Container(
-                  height: 72,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: BoxDecoration(
-                    color: safe
-                        ? Colors.tealAccent.withValues(alpha: .16)
-                        : hazard
-                        ? Colors.redAccent.withValues(alpha: .20)
-                        : const Color(0xFF11121E),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: player
-                          ? Colors.tealAccent
-                          : safe
-                          ? Colors.tealAccent
+                child: GestureDetector(
+                  onTap: () => trapMiniGameMove(lane - trapPlayerLane),
+                  child: Container(
+                    height: 72,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: safe
+                          ? Colors.tealAccent.withValues(alpha: .16)
                           : hazard
-                          ? Colors.redAccent
-                          : const Color(0xFF3A3558),
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      player
-                          ? 'YOU'
-                          : safe
-                          ? 'SAFE'
-                          : hazard
-                          ? 'EYE'
-                          : '',
-                      style: TextStyle(
-                        color: player || safe
+                          ? Colors.redAccent.withValues(alpha: .20)
+                          : const Color(0xFF11121E),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: player
                             ? Colors.tealAccent
-                            : Colors.redAccent,
-                        fontWeight: FontWeight.w900,
+                            : safe
+                            ? Colors.tealAccent
+                            : hazard
+                            ? Colors.redAccent
+                            : const Color(0xFF3A3558),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        player
+                            ? 'YOU'
+                            : safe
+                            ? 'SAFE'
+                            : hazard
+                            ? 'EYE'
+                            : '',
+                        style: TextStyle(
+                          color: player || safe
+                              ? Colors.tealAccent
+                              : Colors.redAccent,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
                   ),
@@ -25757,6 +30888,107 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             style: const TextStyle(
               color: Color(0xFFBFB7DD),
               fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildGuardPunchMiniGamePanel(Color c) {
+    if (!guardPunchMiniGameActive) return const SizedBox.shrink();
+    final remaining = max(0, guardPunchTotal - guardPunchIndex);
+    return compactCard(
+      borderColor: Colors.orangeAccent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            t('Corridoio dei Pugni', 'Fist Corridor'),
+            style: const TextStyle(
+              color: Colors.orangeAccent,
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            t(
+              'Tocca il pugno nel cerchio. Perfetto: nessun danno. Poco prima o dopo: colpo di striscio.',
+              'Tap the fist inside the circle. Perfect: no damage. Slightly early or late: a graze.',
+            ),
+            style: const TextStyle(
+              color: Color(0xFFBFB7DD),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 150,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 76,
+                  height: 76,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: c.withValues(alpha: 0.12),
+                    border: Border.all(color: c, width: 3),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    t('PARA', 'PARRY'),
+                    style: TextStyle(
+                      color: c,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                TweenAnimationBuilder<double>(
+                  key: ValueKey<int>(guardPunchIndex),
+                  tween: Tween<double>(begin: 0, end: 1),
+                  duration: Duration(milliseconds: guardPunchTravelMs),
+                  curve: Curves.linear,
+                  builder: (context, progress, child) => Align(
+                    alignment: Alignment(1.7 - progress * 2.36, 0),
+                    child: GestureDetector(
+                      onTap: resolveGuardPunch,
+                      child: child,
+                    ),
+                  ),
+                  child: Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: Colors.deepOrangeAccent,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFFFFD36A),
+                        width: 2,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0x88FF5A3C), blurRadius: 14),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.front_hand,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '${t('Pugni rimasti', 'Fists remaining')}: $remaining • ${t('Perfetti', 'Perfects')}: $guardPunchPerfects • ${t('Strisciate', 'Grazes')}: $guardPunchGrazes • ${t('Colpi', 'Hits')}: $guardPunchMisses',
+            style: const TextStyle(
+              color: Color(0xFFBFB7DD),
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -25918,18 +31150,25 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   }
 
   Widget buildStoryBox(Color c) {
+    final storyText = cleanDungeonText(widget.linguaInglese ? textEn : textIt);
     return compactCard(
       borderColor: c,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 120, maxHeight: 235),
         child: SingleChildScrollView(
-          child: Text(
-            cleanDungeonText(widget.linguaInglese ? textEn : textIt),
-            style: const TextStyle(
-              color: Color(0xFFE8E2FF),
-              fontSize: 14,
-              height: 1.38,
-              fontWeight: FontWeight.w500,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            child: Text(
+              storyText,
+              key: ValueKey<int>(storyText.hashCode),
+              style: const TextStyle(
+                color: Color(0xFFE8E2FF),
+                fontSize: 14,
+                height: 1.38,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ),
@@ -25938,20 +31177,23 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   }
 
   Widget buildEventChoicesPanel() {
-    if (eventChoices.isEmpty) return const SizedBox.shrink();
+    final visibleChoices = dungeonCoopChoicesForPanel(eventChoices);
+    if (visibleChoices.isEmpty) return const SizedBox.shrink();
 
     return collapsiblePanel(
       title: t(choicePanelTitleIt(), choicePanelTitleEn()),
       icon: choicePanelIcon(),
       expanded: showEventChoices,
-      trailing: '${eventChoices.length}',
+      trailing: isDungeonCoopActive && choicePanelMode == 'event'
+          ? '${dungeonCoop.votesByPlayer.length}/${max(1, dungeonCoop.memberIds.length)}'
+          : '${visibleChoices.length}',
       color: choicePanelColor(),
       onTap: () => setState(() => showEventChoices = !showEventChoices),
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
         alignment: WrapAlignment.center,
-        children: eventChoices
+        children: visibleChoices
             .map(
               (choice) => modernActionButton(
                 label: widget.linguaInglese ? choice.labelEn : choice.labelIt,
@@ -26032,8 +31274,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   void showDefenseShortcutChoices() {
     setState(() {
       clearChoices(mode: 'defense');
-      textIt = 'Difesa.\nDifenditi, contrattacca o fuggi.';
-      textEn = 'Defense.\nDefend, counter, or flee.';
+      textIt =
+          'Difesa.\nDifenditi, controattacca dopo un attacco nemico o fuggi.';
+      textEn =
+          'Defense.\nDefend, counterattack after an enemy attack, or flee.';
       eventChoices.addAll([
         _DungeonChoice(
           labelIt: 'Difenditi',
@@ -26045,11 +31289,15 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
               : unavailableShortcut(),
         ),
         _DungeonChoice(
-          labelIt: 'Counter',
-          labelEn: 'Counter',
+          labelIt: 'Controattacca',
+          labelEn: 'Counterattack',
           icon: Icons.sync,
           color: const Color(0xFFE11D48),
-          onPressed: runActive && canUseCombatInput && reactionAvailable
+          onPressed:
+              runActive &&
+                  canUseCombatInput &&
+                  reactionAvailable &&
+                  counterattackReady
               ? useReactionCounter
               : unavailableShortcut(),
         ),
@@ -26253,11 +31501,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   void showRunWeaponSwapChoices() {
     setState(() {
       clearChoices(mode: 'info');
-      textIt =
-          'Armi trovate/sbloccate in questa run.\nScegli quale equipaggiare ora.';
-      textEn =
-          'Weapons found/unlocked in this run.\nChoose which one to equip now.';
-      for (final weapon in availableStartingWeapons()) {
+      textIt = 'Armi trovate in questa run.\nScegli quale equipaggiare ora.';
+      textEn = 'Weapons found in this run.\nChoose which one to equip now.';
+      for (final weapon in availableRunWeapons()) {
         eventChoices.add(
           _DungeonChoice(
             labelIt: weapon.nameIt,
@@ -26266,7 +31512,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             color: elementColor(weapon.elementId),
             onPressed: () {
               setState(() {
-                starterWeapon = weapon;
+                equipRunWeapon(weapon);
                 textIt = 'Arma equipaggiata: ${weapon.nameIt}.';
                 textEn = 'Equipped weapon: ${weapon.nameEn}.';
                 saveRunCheckpoint(
@@ -26277,6 +31523,45 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             },
           ),
         );
+      }
+      if (eventChoices.isEmpty) {
+        textIt = 'Non hai ancora trovato armi in questa run.';
+        textEn = 'You have not found weapons during this run yet.';
+      }
+    });
+  }
+
+  void showRunCostumeSwapChoices() {
+    setState(() {
+      clearChoices(mode: 'info');
+      textIt =
+          'Costumi trovati in questa run.\nIl cambio non duplica i bonus iniziali: aggiorna aspetto, set e sinergie attive.';
+      textEn =
+          'Costumes found in this run.\nChanging does not duplicate starting bonuses: it updates look, set and active synergies.';
+      for (final costume in availableRunCostumes()) {
+        eventChoices.add(
+          _DungeonChoice(
+            labelIt: costume.nameIt,
+            labelEn: costume.nameEn,
+            icon: Icons.checkroom,
+            color: elementColor(costume.elementId),
+            onPressed: () {
+              setState(() {
+                equipRunCostume(costume);
+                textIt = 'Costume equipaggiato: ${costume.nameIt}.';
+                textEn = 'Equipped costume: ${costume.nameEn}.';
+                saveRunCheckpoint(
+                  reasonIt: 'Costume run cambiato.',
+                  reasonEn: 'Run costume changed.',
+                );
+              });
+            },
+          ),
+        );
+      }
+      if (eventChoices.isEmpty) {
+        textIt = 'Non hai ancora trovato costumi in questa run.';
+        textEn = 'You have not found costumes during this run yet.';
       }
     });
   }
@@ -26333,8 +31618,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       textEn = 'Run party management.\nTap to add/remove allies.';
       for (final npc in _goodNpcs.where(
         (n) =>
-            unlockedNpcIds.contains(n.id) ||
-            activeAllies.any((a) => a.id == n.id),
+            n.id != 'hires' &&
+            (unlockedNpcIds.contains(n.id) ||
+                activeAllies.any((a) => a.id == n.id)),
       )) {
         final active = activeAllies.any((a) => a.id == npc.id);
         eventChoices.add(
@@ -26367,6 +31653,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           'Attack: Valley concentrates transparent nature spheres and throws them at enemies. In 30% of cases the spheres split into four rays.\n\n'
           'Blooming: at fight end Valley has a 10% chance to transform monsters into bloomed creatures. Against red corrupted enemies the chance becomes 100%. Bloomed creatures can sacrifice themselves to protect Valley.\n\n'
           'When it succeeds, Valley smiles with an impossibly wide smile.';
+      textIt +=
+          '\n\nOra gli sbocciati entrano nel team con poca vita e pochi danni; ogni mostro sbocciato potenzia Valley e lo fa restare un turno in piu.';
+      textEn +=
+          '\n\nBloomed monsters now join the team with low HP and low damage; each bloomed monster powers Valley up and makes Valley stay one extra turn.';
       eventChoices.add(
         _DungeonChoice(
           labelIt: 'Torna a Info',
@@ -26525,6 +31815,14 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                   onPressed: useReactionDefense,
                   compact: compact,
                 ),
+              if (canUseCombatInput && reactionAvailable && counterattackReady)
+                modernActionButton(
+                  label: t('Controattacca', 'Counterattack'),
+                  icon: Icons.sync,
+                  color: const Color(0xFFE11D48),
+                  onPressed: useReactionCounter,
+                  compact: compact,
+                ),
               if (canUseCombatInput &&
                   (activeArt != null ||
                       selectedRunArtIds.isNotEmpty ||
@@ -26576,10 +31874,30 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                   if (value == 'weapon_board') {
                     setState(() => showWeaponBoard = !showWeaponBoard);
                   }
+                  if (value == 'coop') showDungeonCoopPanel();
+                  if (value == 'auto') toggleAutoMode();
+                  if (value == 'restart') showRestartRunConfirm();
                   if (value == 'delete') showDeleteSaveConfirm();
                 },
                 itemBuilder: (context) => [
                   PopupMenuItem(value: 'bag', child: Text(t('Zaino', 'Bag'))),
+                  PopupMenuItem(
+                    value: 'coop',
+                    child: Text(t('Dungeon online', 'Online Dungeon')),
+                  ),
+                  PopupMenuItem(
+                    value: 'auto',
+                    child: Text(
+                      autoModeEnabled
+                          ? t('Auto: spegni', 'Auto: off')
+                          : t('Auto: accendi', 'Auto: on'),
+                    ),
+                  ),
+                  if (runActive || inCombat || gameOver)
+                    PopupMenuItem(
+                      value: 'restart',
+                      child: Text(t('Restart run...', 'Restart run...')),
+                    ),
                   PopupMenuItem(
                     value: 'art_board',
                     child: Text(t('Art Board', 'Art Board')),
@@ -26889,14 +32207,75 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     );
   }
 
+  int get specialSupportUnitsCount {
+    var count = 0;
+    count += valleyBloomGuards;
+    count += kittySlimeCopies;
+    count += floralGuardCharges;
+    if (pawnHp > 0) count += 1 + pawnExtraCopies;
+    if (skeletonHandsHp > 0) count++;
+    if (cipoSerpentHp > 0) count++;
+    if (egoShieldHp > 0) count++;
+    if (runicDuoSupportActive) {
+      count += 2;
+    } else if (aegisHp > 0) {
+      count++;
+    }
+    return count;
+  }
+
+  List<String> specialSupportColumnLabels() {
+    final labels = <String>[];
+    if (valleyBloomGuards > 0) {
+      labels.add(
+        t('Sbocciati x$valleyBloomGuards', 'Bloomed x$valleyBloomGuards'),
+      );
+    }
+    if (kittySlimeCopies > 0) labels.add('Kitty x$kittySlimeCopies');
+    if (runicDuoSupportActive) {
+      labels.add('Aegis + Runix');
+    } else if (aegisHp > 0) {
+      labels.add('Aegis');
+    }
+    if (pawnHp > 0) {
+      labels.add(
+        pawnExtraCopies > 0
+            ? t(
+                'Pedine x${pawnExtraCopies + 1}',
+                'Pawns x${pawnExtraCopies + 1}',
+              )
+            : t('Pedina', 'Pawn'),
+      );
+    }
+    if (skeletonHandsHp > 0) {
+      labels.add(t('Mani scheletro', 'Skeleton hands'));
+    }
+    if (cipoSerpentHp > 0) labels.add(t('Serpente Cipo', 'Cipo serpent'));
+    if (floralGuardCharges > 0) {
+      labels.add(
+        t(
+          'Umani floreali x$floralGuardCharges',
+          'Floral humans x$floralGuardCharges',
+        ),
+      );
+    }
+    if (egoShieldHp > 0) labels.add(t("Scudo dell'Io", 'Ego shield'));
+    return labels;
+  }
+
   Widget buildQuickSectionsPanel(Color c) {
     final titleCount = equippedTitleIds.length;
-    final allyNames = activeAllies.isEmpty
+    final partyLabels = [
+      ...activeAllies.map((a) => widget.linguaInglese ? a.nameEn : a.nameIt),
+      ...specialSupportColumnLabels(),
+    ];
+    final allyNames = partyLabels.isEmpty
         ? t('nessuno', 'none')
-        : activeAllies
-              .map((a) => widget.linguaInglese ? a.nameEn : a.nameIt)
-              .take(2)
-              .join(', ');
+        : partyLabels.take(3).join(', ');
+    final supportCount = specialSupportUnitsCount;
+    final partyValue = supportCount > 0
+        ? '${activeAllies.length}/$maxActiveAllies +$supportCount'
+        : '${activeAllies.length}/$maxActiveAllies';
     final relicName = activeRelic == null
         ? '—'
         : widget.linguaInglese
@@ -26921,7 +32300,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             color: Colors.tealAccent,
             child: quickModernTile(
               title: t('Party', 'Party'),
-              value: '${activeAllies.length}/$maxActiveAllies',
+              value: partyValue,
               subtitle: allyNames,
               icon: Icons.groups,
               color: Colors.tealAccent,
@@ -26936,9 +32315,13 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             child: quickModernTile(
               title: t('Costume', 'Costume'),
               value: costumeName,
-              subtitle: t('scelto a inizio run', 'chosen at run start'),
+              subtitle: t(
+                'trovati run: ${runCostumeIds.length}',
+                'run found: ${runCostumeIds.length}',
+              ),
               icon: Icons.checkroom,
               color: const Color(0xFFFFD36A),
+              onTap: runActive ? showRunCostumeSwapChoices : null,
             ),
           );
 
@@ -27339,12 +32722,15 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   Widget buildWeaponBoardPanel() {
     if (!showWeaponBoard) return const SizedBox.shrink();
-    final runWeaponIds = <String>{if (starterWeapon != null) starterWeapon!.id};
+    final visibleRunWeaponIds = <String>{
+      ...runWeaponIds,
+      if (starterWeapon != null) starterWeapon!.id,
+    };
     final visibleWeapons = _starterWeapons.where((weapon) {
       if (!canShowStoryLockedWeapon(weapon.id)) {
         return false;
       }
-      if (runActive) return runWeaponIds.contains(weapon.id);
+      if (runActive) return visibleRunWeaponIds.contains(weapon.id);
       return weapon.unlockedByDefault || unlockedWeaponIds.contains(weapon.id);
     }).toList();
 
@@ -27388,7 +32774,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
               itemBuilder: (context, index) {
                 final weapon = visibleWeapons[index];
                 final unlocked = runActive
-                    ? runWeaponIds.contains(weapon.id)
+                    ? visibleRunWeaponIds.contains(weapon.id)
                     : weapon.unlockedByDefault ||
                           unlockedWeaponIds.contains(weapon.id);
                 final c = elementColor(weapon.elementId);
@@ -27482,6 +32868,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             if (showSpriteCodex) (_) => const SizedBox(height: 10),
             (_) => buildTrapMiniGamePanel(c),
             if (trapMiniGameActive) (_) => const SizedBox(height: 10),
+            (_) => buildGuardPunchMiniGamePanel(c),
+            if (guardPunchMiniGameActive) (_) => const SizedBox(height: 10),
+            (_) => buildOculumBattlePanel(c),
+            if (showOculumBattle) (_) => const SizedBox(height: 10),
             (_) => buildStoryBox(c),
             (_) => const SizedBox(height: 10),
             if (!showChoicesNearCombat) ...[
@@ -27509,8 +32899,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             child: Padding(
               padding: EdgeInsets.all(phoneLandscape ? 8 : 12),
               child: ListView.builder(
-                primary: false,
+                // ignore: deprecated_member_use
                 cacheExtent: 360,
+                primary: false,
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 itemCount: listBuilders.length,

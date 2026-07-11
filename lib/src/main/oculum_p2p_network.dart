@@ -180,6 +180,20 @@ extension _OculumP2PNetwork on _OculumHomePageState {
     return null;
   }
 
+  void _receiveStorySessionTransport(
+    Map<String, dynamic> data, {
+    required bool snapshot,
+  }) {
+    if (!mounted) return;
+    var changed = false;
+    setState(() {
+      changed = snapshot
+          ? mergeStorySessionNotesSnapshot(data)
+          : mergeStorySessionNotePayload(data['note'] ?? data);
+    });
+    if (changed) scheduleStorySessionNotesSave();
+  }
+
   void _handleMessageFromClient(dynamic message, WebSocket sender) {
     final data = decodeOnlineMessage(message);
     if (data == null) return;
@@ -190,6 +204,19 @@ extension _OculumP2PNetwork on _OculumHomePageState {
       final staffMessage = jsonEncode({...data, 'staffOnly': true});
       _broadcastToClients(staffMessage, exclude: sender);
     } else if (data['type'] == 'KICK_PLAYER') {
+      _broadcastToClients(message as String, exclude: sender);
+    } else if (data['type'] == 'SESSION_NOTE') {
+      _receiveStorySessionTransport(data, snapshot: false);
+      _broadcastToClients(message as String, exclude: sender);
+    } else if (data['type'] == 'SESSION_NOTES_REQUEST') {
+      final targetTag = '${data['requesterTag'] ?? ''}'.trim();
+      for (final payload in storySessionNotesSnapshotPayloads(
+        targetTag: targetTag,
+      )) {
+        sender.add(jsonEncode(payload));
+      }
+    } else if (data['type'] == 'SESSION_NOTES_SNAPSHOT') {
+      _receiveStorySessionTransport(data, snapshot: true);
       _broadcastToClients(message as String, exclude: sender);
     }
   }
@@ -246,6 +273,7 @@ extension _OculumP2PNetwork on _OculumHomePageState {
 
       // Invia subito la mia scheda
       sendSheetToMaster();
+      syncStorySessionNotesP2p();
 
       _myClientSocket?.listen(
         (message) {
@@ -316,6 +344,10 @@ extension _OculumP2PNetwork on _OculumHomePageState {
       if (sonoCoMaster) {
         registraSchedaRemota(data['sheet']);
       }
+    } else if (data['type'] == 'SESSION_NOTE') {
+      _receiveStorySessionTransport(data, snapshot: false);
+    } else if (data['type'] == 'SESSION_NOTES_SNAPSHOT') {
+      _receiveStorySessionTransport(data, snapshot: true);
     } else if (data['type'] == 'KICK_PLAYER') {
       handleKickFromMaster(data);
     }
@@ -822,6 +854,7 @@ extension _OculumP2PNetwork on _OculumHomePageState {
       if (role == 'master') {
         unawaited(copyRelayInvite());
       }
+      syncStorySessionNotesP2p();
     } else if (type == 'LOBBY_READY') {
       setState(() {
         waitingInternetInvite = true;
@@ -863,6 +896,16 @@ extension _OculumP2PNetwork on _OculumHomePageState {
       if (isMasterHost || sonoCoMaster) {
         registraSchedaRemota(data['sheet']);
       }
+    } else if (type == 'SESSION_NOTE') {
+      _receiveStorySessionTransport(data, snapshot: false);
+    } else if (type == 'SESSION_NOTES_REQUEST') {
+      if (isMasterHost) {
+        sendStorySessionNotesSnapshotP2p(
+          targetTag: '${data['requesterTag'] ?? ''}',
+        );
+      }
+    } else if (type == 'SESSION_NOTES_SNAPSHOT') {
+      _receiveStorySessionTransport(data, snapshot: true);
     } else if (type == 'KICK_PLAYER') {
       handleKickFromMaster(data);
     } else if (type == 'SET_COMASTER') {
@@ -1055,6 +1098,64 @@ extension _OculumP2PNetwork on _OculumHomePageState {
         'sheet': schedePersonaggio[schedaCorrente],
       });
     }
+  }
+
+  void sendStorySessionNoteP2p(OculumSessionNote note) {
+    final payload = <String, dynamic>{
+      'type': 'SESSION_NOTE',
+      'note': note.toJson(),
+      'id': note.id,
+      'message': note.message,
+      'authorTag': note.authorTag,
+      'playerName': note.author,
+      'campaignId': activeCampaignId,
+      'campaignName': activeCampaignName(),
+      'sentAt': note.createdAt.toUtc().toIso8601String(),
+    };
+    final encoded = jsonEncode(payload);
+    if (usingInternetRelay && relayConnected && _relaySocket != null) {
+      _sendRelay(<String, dynamic>{...payload, 'room': relayRoomCode});
+    } else if (isConnectedToMaster && _myClientSocket != null) {
+      _myClientSocket?.add(encoded);
+    } else if (isMasterHost && _clientSockets.isNotEmpty) {
+      _broadcastToClients(encoded);
+    }
+  }
+
+  void requestStorySessionNotesP2p() {
+    final payload = <String, dynamic>{
+      'type': 'SESSION_NOTES_REQUEST',
+      'requesterTag': storySessionAuthorTag(),
+      'campaignId': activeCampaignId,
+      'sentAt': DateTime.now().toUtc().toIso8601String(),
+    };
+    if (usingInternetRelay &&
+        relayConnected &&
+        _relaySocket != null &&
+        !isMasterHost) {
+      _sendRelay(<String, dynamic>{...payload, 'room': relayRoomCode});
+    } else if (isConnectedToMaster && _myClientSocket != null) {
+      _myClientSocket?.add(jsonEncode(payload));
+    }
+  }
+
+  void sendStorySessionNotesSnapshotP2p({String targetTag = ''}) {
+    final payloads = storySessionNotesSnapshotPayloads(targetTag: targetTag);
+    for (final payload in payloads) {
+      final encoded = jsonEncode(payload);
+      if (usingInternetRelay && relayConnected && _relaySocket != null) {
+        _sendRelay(<String, dynamic>{...payload, 'room': relayRoomCode});
+      } else if (isConnectedToMaster && _myClientSocket != null) {
+        _myClientSocket?.add(encoded);
+      } else if (isMasterHost && _clientSockets.isNotEmpty) {
+        _broadcastToClients(encoded);
+      }
+    }
+  }
+
+  void syncStorySessionNotesP2p() {
+    requestStorySessionNotesP2p();
+    sendStorySessionNotesSnapshotP2p();
   }
 
   // ---------------------------------------------------------

@@ -49,13 +49,15 @@ class OculumEyeCard extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             Positioned.fill(
-              child: CustomPaint(
-                isComplex: true,
-                willChange: false,
-                painter: _OculumEyeBackgroundPainter(
-                  primaryColor: primaryColor,
-                  secondaryColor: secondaryColor,
-                  tertiaryColor: tertiaryColor,
+              child: RepaintBoundary(
+                child: CustomPaint(
+                  isComplex: true,
+                  willChange: false,
+                  painter: _OculumEyeBackgroundPainter(
+                    primaryColor: primaryColor,
+                    secondaryColor: secondaryColor,
+                    tertiaryColor: tertiaryColor,
+                  ),
                 ),
               ),
             ),

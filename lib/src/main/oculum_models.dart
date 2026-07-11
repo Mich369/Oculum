@@ -151,6 +151,31 @@ class HiddenEyeStat {
   }
 }
 
+class OculumActionQueue {
+  OculumActionQueue();
+
+  final Map<String, Future<void>> _tails = <String, Future<void>>{};
+
+  Future<void> enqueue(String key, Future<void> Function() action) {
+    final previous = _tails[key] ?? Future<void>.value();
+    late final Future<void> next;
+    next = previous
+        .catchError((Object _) {})
+        .then((_) => action())
+        .whenComplete(() {
+          if (identical(_tails[key], next)) {
+            _tails.remove(key);
+          }
+        });
+    _tails[key] = next;
+    return next;
+  }
+
+  void clear() {
+    _tails.clear();
+  }
+}
+
 const List<int> oculusSubtraitMasteryTargets = <int>[
   36,
   63,

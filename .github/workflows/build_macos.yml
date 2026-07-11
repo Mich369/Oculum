@@ -1,51 +1,128 @@
-name: Build macOS App
+name: Crea e aggiorna macOS
+run-name: macOS ${{ github.ref_name }} @ ${{ github.sha }}
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
+    inputs:
+      publish_release:
+        description: Aggiorna anche l asset della release macOS latest
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: oculum-macos-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-macos:
+    name: Verifica e crea Oculum macOS
     runs-on: macos-latest
+    timeout-minutes: 45
 
     steps:
-      - name: Checkout repository
+      - name: Checkout del commit richiesto
         uses: actions/checkout@v4
 
-      - name: Setup Flutter
+      - name: Configura Flutter stabile
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
-      - name: Enable macOS desktop
-        run: flutter config --enable-macos-desktop
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Create macOS project if missing
+      - name: Diagnostica toolchain Apple
         run: |
-          if [ ! -d "macos" ]; then
+          flutter --version
+          flutter doctor -v
+          xcodebuild -version
+          sw_vers
+
+      - name: Verifica dipendenza compatibile macOS
+        run: |
+          test -f pubspec_overrides.yaml
+          grep -q "connectivity_plus: 6.1.5" pubspec_overrides.yaml
+
+      - name: Prepara progetto macOS e dipendenze
+        run: |
+          flutter config --enable-macos-desktop
+          if [ ! -d macos ]; then
             flutter create --platforms=macos .
           fi
+          flutter pub get
 
-      - name: Analyze project
+      - name: Analisi statica
         run: flutter analyze
+
+      - name: Test Flutter
+        run: flutter test
 
       - name: Build macOS release
         run: flutter build macos --release
 
-      - name: Compress macOS app
+      - name: Valida e impacchetta applicazione
+        id: package
+        shell: bash
         run: |
-          cd build/macos/Build/Products/Release
-          APP_NAME=$(ls -d *.app | head -n 1)
-          ditto -c -k --sequesterRsrc --keepParent "$APP_NAME" Oculum-macOS.zip
+          set -euo pipefail
+          APP_PATH=$(find build/macos/Build/Products/Release -maxdepth 1 -type d -name "*.app" -print -quit)
+          if [ -z "$APP_PATH" ]; then
+            echo "Nessun bundle .app trovato nella cartella Release"
+            exit 1
+          fi
 
-      - name: Upload macOS artifact
+          INFO_PLIST="$APP_PATH/Contents/Info.plist"
+          plutil -lint "$INFO_PLIST"
+          EXECUTABLE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$INFO_PLIST")
+          test -n "$EXECUTABLE"
+          test -x "$APP_PATH/Contents/MacOS/$EXECUTABLE"
+
+          mkdir -p build/distribution/macos
+          cp -R "$APP_PATH" build/distribution/macos/
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" build/distribution/Oculum-macOS.zip
+          shasum -a 256 build/distribution/Oculum-macOS.zip > build/distribution/Oculum-macOS.sha256
+
+          APP_NAME=$(basename "$APP_PATH")
+          echo "app_name=$APP_NAME" >> "$GITHUB_OUTPUT"
+          echo "### Oculum macOS" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Bundle: \`$APP_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Eseguibile verificato: \`$EXECUTABLE\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- SHA-256: \`$(cut -d ' ' -f 1 build/distribution/Oculum-macOS.sha256)\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Carica artefatto macOS aggiornato
         uses: actions/upload-artifact@v4
         with:
           name: Oculum-macOS
-          path: build/macos/Build/Products/Release/Oculum-macOS.zip
+          path: |
+            build/distribution/Oculum-macOS.zip
+            build/distribution/Oculum-macOS.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Aggiorna release macOS latest
+        if: ${{ inputs.publish_release }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="Build macOS aggiornata dal commit $GITHUB_SHA. Bundle verificato: ${{ steps.package.outputs.app_name }}."
+          if gh release view oculum-macos-latest >/dev/null 2>&1; then
+            gh release upload oculum-macos-latest \
+              build/distribution/Oculum-macOS.zip \
+              build/distribution/Oculum-macOS.sha256 \
+              --clobber
+            gh release edit oculum-macos-latest \
+              --title "Oculum macOS - latest" \
+              --notes "$NOTES" \
+              --prerelease
+          else
+            gh release create oculum-macos-latest \
+              build/distribution/Oculum-macOS.zip \
+              build/distribution/Oculum-macOS.sha256 \
+              --target "$GITHUB_SHA" \
+              --title "Oculum macOS - latest" \
+              --notes "$NOTES" \
+              --prerelease
+          fi

@@ -1,7 +1,47 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('Forza usa sempre meta della Volonta e resta serializzabile', () {
+    expect(
+      oculumHiddenEyeDerivedBonusFor(
+        id: 'forza',
+        resilienza: 99,
+        volonta: 11,
+        materia: 80,
+        oculum: 70,
+        karma: 60,
+      ),
+      5,
+    );
+    expect(
+      oculumHiddenEyeDerivedBonusFor(
+        id: 'forza',
+        resilienza: 0,
+        volonta: 12,
+        materia: 0,
+        oculum: 0,
+        karma: 0,
+      ),
+      6,
+    );
+
+    final restored = HiddenEyeStat.fromJson(
+      HiddenEyeStat(
+        id: 'forza',
+        nome: 'Forza',
+        descrizione: 'Bonus base: Volonta/2.',
+        valore: 3,
+        masteryProgress: 17,
+      ).toJson(),
+    );
+    expect(restored.id, 'forza');
+    expect(restored.valore, 3);
+    expect(restored.masteryProgress, 17);
+  });
+
   test('calcola soglia e guadagno maestria dei sottotratti Oculus', () {
     expect(oculusSubtraitMasteryTargetForGrade(0), 36);
     expect(oculusSubtraitMasteryTargetForGrade(1), 63);
@@ -65,5 +105,93 @@ void main() {
       oculusSubtraitMasteryFraction(progress: 18, grade: 0),
       closeTo(0.5, 0.0001),
     );
+  });
+
+  test('carica il vecchio campo maestria dei salvataggi legacy', () {
+    final restored = HiddenEyeStat.fromJson({
+      'id': 'velo',
+      'nome': 'Velo',
+      'descrizione': 'Test',
+      'valore': 3,
+      'unlocked': true,
+      'maestria': 42,
+    });
+
+    expect(restored.id, 'velo');
+    expect(restored.valore, 3);
+    expect(restored.masteryProgress, 42);
+    expect(restored.toJson()['oculusSubtraitMasteryProgress'], 42);
+  });
+
+  test('non serializza cache o stato UI volatile nei sottotratti', () {
+    final stat = HiddenEyeStat(
+      id: 'velo',
+      nome: 'Velo',
+      descrizione: 'Test',
+      valore: 4,
+      masteryProgress: 99,
+    );
+
+    final json = stat.toJson();
+
+    expect(
+      json.keys,
+      containsAll(<String>[
+        'id',
+        'nome',
+        'descrizione',
+        'valore',
+        'unlocked',
+        'oculusSubtraitMasteryProgress',
+      ]),
+    );
+    expect(
+      json.keys.any((key) => key.toLowerCase().contains('cache')),
+      isFalse,
+    );
+    expect(
+      json.keys.any((key) => key.toLowerCase().contains('revision')),
+      isFalse,
+    );
+  });
+
+  test('gestisce guadagni rapidi ripetuti senza perdere avanzo', () {
+    final stat = HiddenEyeStat(
+      id: 'velo',
+      nome: 'Velo',
+      descrizione: 'Test',
+      valore: 0,
+    );
+
+    var completed = 0;
+    for (var i = 0; i < 40; i++) {
+      completed += oculusSubtraitMasteryApplyGain(stat, 60);
+      final target = oculusSubtraitMasteryTargetForValue(stat.valore);
+      expect(stat.masteryProgress, inInclusiveRange(0, target - 1));
+    }
+
+    expect(completed, greaterThan(1));
+    expect(stat.valore, completed);
+  });
+
+  test('accoda gli effetti remoti senza perdere eventi', () async {
+    final queue = OculumActionQueue();
+    final firstGate = Completer<void>();
+    final started = <int>[];
+
+    final first = queue.enqueue('dice', () async {
+      started.add(1);
+      await firstGate.future;
+    });
+    final second = queue.enqueue('dice', () async {
+      started.add(2);
+    });
+
+    await Future<void>.delayed(Duration.zero);
+    expect(started, <int>[1]);
+
+    firstGate.complete();
+    await Future.wait(<Future<void>>[first, second]);
+    expect(started, <int>[1, 2]);
   });
 }

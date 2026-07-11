@@ -28,6 +28,10 @@ import 'widgets/oculum_quick_edit_eye.dart';
 import 'pages/oculum_dungeon/monster_book.dart';
 import 'pages/oculum_dungeon_game.dart';
 import 'src/main/oculum_network_probe.dart';
+import 'src/main/oculum_web_download_stub.dart'
+    if (dart.library.js_interop) 'src/main/oculum_web_download_web.dart';
+import 'src/main/oculum_web_save_store_stub.dart'
+    if (dart.library.js_interop) 'src/main/oculum_web_save_store_web.dart';
 
 part 'src/main/oculum_app.dart';
 part 'src/main/oculum_helpers.dart';
@@ -45,12 +49,17 @@ part 'src/main/oculum_home_resources_rest_titles_data.dart';
 part 'src/main/oculum_home_colors_and_base_widgets.dart';
 part 'src/main/oculum_home_sheet_page.dart';
 part 'src/main/oculum_home_secondary_pages.dart';
+part 'src/main/oculum_vtt.dart';
+part 'src/main/oculum_vtt_integration.dart';
+part 'src/main/oculum_vtt_ui.dart';
+part 'src/main/oculum_vtt_panels.dart';
 part 'src/main/oculum_home_map_attachments.dart';
 part 'src/main/oculum_home_dice_page.dart';
 part 'src/main/oculum_p2p_network.dart';
 part 'src/main/oculum_realtime_integration.dart';
 part 'src/main/oculum_friends.dart';
 part 'src/main/oculum_campaigns.dart';
+part 'src/main/oculum_story_session_notes.dart';
 part 'src/main/oculum_home_titles_inventory_pages.dart';
 part 'src/main/oculum_home_share_content.dart';
 part 'src/main/oculum_home_rules_settings_search.dart';
@@ -59,6 +68,9 @@ part 'src/main/oculum_painters.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (kIsWeb) {
+    await BrowserContextMenu.disableContextMenu();
+  }
   _configureOculumRuntimeCaches();
   runApp(const OculumApp());
 }
@@ -71,9 +83,10 @@ enum OculumStartupRole { player, master }
 
 OculumStartupRole oculumStartupRole = OculumStartupRole.player;
 
-const int _oculumDesktopStartupSpritePrecacheLimit = 28;
-const int _oculumMobileStartupSpritePrecacheLimit = 12;
+const int _oculumDesktopStartupSpritePrecacheLimit = 10;
+const int _oculumMobileStartupSpritePrecacheLimit = 5;
 const Duration _oculumStartupFrameYield = Duration(milliseconds: 16);
+const Duration _oculumStartupNetworkWarmupBudget = Duration(milliseconds: 1400);
 
 Future<void> preloadOculumStartupServices({
   void Function(double progress, String label)? onProgress,
@@ -125,7 +138,16 @@ Future<void> _preloadOculumStartupServices({
   });
 
   await step(0.80, 'Connessione online...', () async {
-    await ensureOculumSupabaseInitialized();
+    final warmup = ensureOculumSupabaseInitialized();
+    await warmup.timeout(
+      _oculumStartupNetworkWarmupBudget,
+      onTimeout: () {
+        OculumRealtimeService.startupStatus =
+            'Supabase in preparazione: l\'app resta reattiva.';
+        debugPrint('Supabase startup warmup continues in background.');
+        return false;
+      },
+    );
   });
 
   await step(0.86, 'Stabilizzazione pagine e label...', () {});
@@ -187,9 +209,9 @@ String oculumClientPlatformLabel() {
 void _configureOculumRuntimeCaches() {
   final imageCache = PaintingBinding.instance.imageCache;
   final desktopRuntime =
-      Platform.isWindows || Platform.isMacOS || Platform.isLinux;
-  imageCache.maximumSize = desktopRuntime ? 360 : 180;
-  imageCache.maximumSizeBytes = (desktopRuntime ? 192 : 96) * 1024 * 1024;
+      !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+  imageCache.maximumSize = desktopRuntime ? 240 : 120;
+  imageCache.maximumSizeBytes = (desktopRuntime ? 128 : 64) * 1024 * 1024;
 }
 
 int oculumImageCacheDimension(
@@ -363,6 +385,57 @@ class _OculumHomePageState extends State<OculumHomePage>
     manualFilteredIndexesCacheKey = '';
     inferredDamageTypeLabelsCacheRevision = -1;
     allDamageElementIdsCacheRevision = -1;
+    invalidateHiddenEyeDerivedCaches();
+  }
+
+  void notifyDiceResultChanged() {
+    if (!mounted) return;
+    diceResultRevision.value++;
+  }
+
+  void notifyDiceOverlayChanged() {
+    if (!mounted) return;
+    diceOverlayRevision.value++;
+  }
+
+  ValueListenable<int> hiddenEyeStatListenable(HiddenEyeStat stat) {
+    return hiddenEyeStatRevisions.putIfAbsent(
+      stat.id,
+      () => ValueNotifier<int>(0),
+    );
+  }
+
+  void invalidateHiddenEyeDerivedCaches({bool notifyCards = true}) {
+    hiddenEyeStatGroupCache.clear();
+    hiddenEyeStatsByGroupCache.clear();
+    hiddenEyeDerivedStatsCache = null;
+    hiddenEyeDerivedBonusCache.clear();
+    hiddenEyeTotalBaseCache.clear();
+    hiddenEyeTotalValueCache.clear();
+
+    if (!notifyCards || !mounted) return;
+    hiddenEyeListRevision.value++;
+    for (final notifier in hiddenEyeStatRevisions.values) {
+      notifier.value++;
+    }
+  }
+
+  void notifyHiddenEyeStatChanged(HiddenEyeStat stat) {
+    if (!mounted) return;
+    hiddenEyeTotalBaseCache.remove(stat.id);
+    hiddenEyeTotalValueCache.remove(stat.id);
+    final notifier = hiddenEyeStatRevisions[stat.id];
+    if (notifier == null) return;
+    notifier.value++;
+  }
+
+  void scheduleHiddenEyeProgressSave() {
+    hiddenEyeProgressSaveTimer?.cancel();
+    hiddenEyeProgressSaveTimer = Timer(const Duration(milliseconds: 420), () {
+      hiddenEyeProgressSaveTimer = null;
+      if (!mounted) return;
+      programmaSalvataggio();
+    });
   }
 
   /// Lets feature modules request a scoped UI refresh without exposing
@@ -376,9 +449,52 @@ class _OculumHomePageState extends State<OculumHomePage>
     Duration delay = const Duration(milliseconds: 140),
   }) {
     if (!mounted) return;
+    if (appOculumInBackground || appOculumFocusTransition) {
+      inputRefreshPendingAfterFocusTransition = true;
+      inputUiRefreshTimer?.cancel();
+      inputUiRefreshTimer = null;
+      return;
+    }
+
     inputUiRefreshTimer?.cancel();
     inputUiRefreshTimer = Timer(delay, () {
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      if (appOculumInBackground || appOculumFocusTransition) {
+        inputRefreshPendingAfterFocusTransition = true;
+        return;
+      }
+      inputRefreshPendingAfterFocusTransition = false;
+      setState(() {});
+    });
+  }
+
+  void beginOculumFocusTransition() {
+    appOculumFocusTransition = true;
+    lifecycleFocusSettleTimer?.cancel();
+    if (autosaveTimer?.isActive ?? false) {
+      autosavePendingAfterFocusTransition = true;
+      autosaveTimer?.cancel();
+      autosaveTimer = null;
+    }
+    inputUiRefreshTimer?.cancel();
+    inputUiRefreshTimer = null;
+  }
+
+  void scheduleOculumFocusSettled() {
+    lifecycleFocusSettleTimer?.cancel();
+    lifecycleFocusSettleTimer = Timer(const Duration(milliseconds: 360), () {
+      if (!mounted || appOculumInBackground) return;
+      appOculumFocusTransition = false;
+
+      if (inputRefreshPendingAfterFocusTransition) {
+        inputRefreshPendingAfterFocusTransition = false;
+        scheduleInputUiRefresh(delay: const Duration(milliseconds: 120));
+      }
+
+      if (autosavePendingAfterFocusTransition) {
+        autosavePendingAfterFocusTransition = false;
+        programmaSalvataggio();
+      }
     });
   }
 
@@ -684,10 +800,12 @@ class _OculumHomePageState extends State<OculumHomePage>
   final reazioniController = TextEditingController(text: '1');
   final reazioniVelociController = TextEditingController(text: '0');
   final realtimeChatController = TextEditingController();
+  final storySessionNoteController = TextEditingController();
   final buffMalusRapidiController = TextEditingController();
   final dannoSubitoController = TextEditingController();
   final dannoBonusScudoPercentController = TextEditingController(text: '0');
-  final Map<String, Uint8List> decodedImageBase64Cache = <String, Uint8List>{};
+  final OculumDecodedImageCache decodedImageBase64Cache =
+      OculumDecodedImageCache();
   final scudoFocusNode = FocusNode();
   final attaccoRapidoFocusNode = FocusNode();
   final difesaRapidaFocusNode = FocusNode();
@@ -818,6 +936,26 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool mapPlayersCanManageOwnToken = true;
   int mapTokenSheetIndex = 0;
   final List<Map<String, dynamic>> localMapTokens = [];
+  OculumVttState vttState = OculumVttState.empty();
+  OculumVttTool vttTool = OculumVttTool.pan;
+  String vttFogAudience = 'party';
+  final ValueNotifier<int> vttCanvasRevision = ValueNotifier<int>(0);
+  final List<Offset> vttDraftPoints = <Offset>[];
+  final List<Offset> vttMeasurePoints = <Offset>[];
+  final List<String> vttUndoHistory = <String>[];
+  final List<String> vttRedoHistory = <String>[];
+  final Set<String> vttSelectedTokenIds = <String>{};
+  Offset? vttPointerStart;
+  String vttSelectedElementId = '';
+  bool vttPublishing = false;
+  bool vttRealtimeAssetPending = false;
+  Map<String, dynamic> realtimeVisibleVttSnapshot = <String, dynamic>{};
+  OculumVttScene? realtimeVisibleVttScene;
+  Uint8List? realtimeVisibleVttImageBytes;
+  String realtimeVisibleVttAssetId = '';
+  double realtimeVttAssetProgress = 0;
+  final Map<String, OculumVttAssetAssembler> realtimeVttAssetAssemblers =
+      <String, OculumVttAssetAssembler>{};
 
   final primoTitoloFatoNomeController = TextEditingController(
     text: 'Titolo del Fato',
@@ -838,6 +976,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final List<CharacterSkill> skills = [];
   final List<CharacterArt> arti = [];
   final List<String> diarioPagine = [];
+  final List<OculumSessionNote> storySessionNotes = [];
   final List<JournalEntry> journalEntries = [];
   final List<DraftNote> draftNotes = [];
   final List<HiddenEyeStat> hiddenEyeStats = [];
@@ -871,17 +1010,31 @@ class _OculumHomePageState extends State<OculumHomePage>
   Timer? relayLobbyRefreshTimer;
   Timer? realtimeOculumDebounceTimer;
   Timer? realtimeSheetShareDebounceTimer;
+  Timer? realtimeReconnectTimer;
   Timer? inputUiRefreshTimer;
+  Timer? hiddenEyeProgressSaveTimer;
+  Timer? storySessionNotesSaveTimer;
+  Timer? lifecycleLocalSaveTimer;
+  Timer? lifecycleFocusSettleTimer;
+  Timer? vttRealtimeDebounceTimer;
+  Timer? vttPingCleanupTimer;
   StreamSubscription<List<ConnectivityResult>>? connectivitySubscription;
+  Future<void>? activeSaveFuture;
   bool salvataggioInCorso = false;
   bool salvataggioRichiestoDuranteScrittura = false;
   bool salvataggioCompletoRichiestoDuranteScrittura = false;
   bool salvataggioInChiusura = false;
+  bool appOculumInBackground = false;
+  bool appOculumFocusTransition = false;
+  bool inputRefreshPendingAfterFocusTransition = false;
+  bool autosavePendingAfterFocusTransition = false;
   int salvataggioRevisione = 0;
   int salvataggioFallimentiConsecutivi = 0;
   DateTime? ultimoSalvataggioCompletatoAt;
+  DateTime? ultimaRotazioneBackupAt;
   String ultimoSalvataggioFirma = '';
   String ultimoSalvataggioContenutoFirma = '';
+  String ultimoArchivioDiarioFirma = '';
   final Map<String, dynamic> extraTopLevelSaveFields = <String, dynamic>{};
   int derivedDataRevision = 0;
   int inferredDamageTypeLabelsCacheRevision = -1;
@@ -890,6 +1043,14 @@ class _OculumHomePageState extends State<OculumHomePage>
   List<String>? allDamageElementIdsCache;
   String manualFilteredIndexesCacheKey = '';
   List<int>? manualFilteredIndexesCache;
+  final Map<String, String> hiddenEyeStatGroupCache = <String, String>{};
+  final Map<String, List<HiddenEyeStat>> hiddenEyeStatsByGroupCache =
+      <String, List<HiddenEyeStat>>{};
+  Map<String, int>? hiddenEyeDerivedStatsCache;
+  final Map<String, int> hiddenEyeDerivedBonusCache = <String, int>{};
+  final Map<String, int> hiddenEyeTotalBaseCache = <String, int>{};
+  final Map<String, int> hiddenEyeTotalValueCache = <String, int>{};
+  final OculumActionQueue realtimeDiceConsentQueue = OculumActionQueue();
 
   Color primaryColor = defaultPrimaryColor;
   Color secondaryColor = defaultSecondaryColor;
@@ -915,6 +1076,11 @@ class _OculumHomePageState extends State<OculumHomePage>
   String risultato = 'Scegli una statistica e tira il dado.';
   String dadoMostrato = '';
   int dadoMostratoFacce = 20;
+  final ValueNotifier<int> diceResultRevision = ValueNotifier<int>(0);
+  final ValueNotifier<int> diceOverlayRevision = ValueNotifier<int>(0);
+  final ValueNotifier<int> hiddenEyeListRevision = ValueNotifier<int>(0);
+  final Map<String, ValueNotifier<int>> hiddenEyeStatRevisions =
+      <String, ValueNotifier<int>>{};
 
   bool tiroCriticoUno = false;
   bool tiroCriticoVenti = false;
@@ -931,6 +1097,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   String ultimoEventoRiposo = 'Nessun evento di riposo registrato.';
   String statoForzaAttivo = '';
   bool statoForzaPronto = true;
+  int statoForzaTiriRimanenti = 0;
+  int malusTiriOculumPostEsplosione = 0;
   bool personaggioSvenuto = false;
   int cenereSvenimentoUltimoControllo = 0;
   bool personaggioCaduto = false;
@@ -1086,12 +1254,15 @@ class _OculumHomePageState extends State<OculumHomePage>
   final Map<String, DateTime> realtimeRoleUpdateTimestamps =
       <String, DateTime>{};
   final Map<String, String> realtimeLastSentSheetHashes = <String, String>{};
+  String realtimeFriendPresenceSignature = '';
   final Map<String, String> realtimePendingMasterAckSheetIds =
       <String, String>{};
   final Map<String, int> realtimePendingMasterAckAttempts = <String, int>{};
   final Map<String, Timer> realtimePendingMasterAckTimers = <String, Timer>{};
   OculumRealtimeService? realtimeService;
   bool applyingRealtimeRemoteSheet = false;
+  bool realtimeAutoReconnectEnabled = false;
+  int realtimeReconnectAttempt = 0;
 
   String modificatoreDannoSelezionato = 'Normale';
   bool imageDropActive = false;
@@ -1622,8 +1793,8 @@ class _OculumHomePageState extends State<OculumHomePage>
       descriptionEn: 'Wrong future: iron, blue runes and ritual machinery.',
       primary: Color(0xFF78CFFF),
       secondary: Color(0xFF05080D),
-      tertiary: Color(0xFF102B4D),
-      utility: Color(0xFF9A6A3E),
+      tertiary: Color(0xFFE7A354),
+      utility: Color(0xFFA9D7E8),
       oculumFormula: Color(0xFF45E7FF),
       backgroundTop: Color(0xFF020713),
       backgroundMid: Color(0xFF161B22),
@@ -1679,6 +1850,42 @@ class _OculumHomePageState extends State<OculumHomePage>
       backgroundMid: Color(0xFF071822),
       backgroundBottom: Color(0xFF000101),
       eyePupilGlow: Color(0xFFFF335F),
+    ),
+    OculumColorPreset(
+      id: 'whispering_reliquary',
+      nameIt: 'Reliquiario dei sussurri',
+      nameEn: 'Whispering reliquary',
+      descriptionIt:
+          'Horror occulto: osso antico, sangue secco, vetro annerito e simboli appena visibili.',
+      descriptionEn:
+          'Occult horror: old bone, dried blood, blackened glass and barely visible symbols.',
+      primary: Color(0xFFE7DDC9),
+      secondary: Color(0xFF050304),
+      tertiary: Color(0xFFB94A58),
+      utility: Color(0xFF9BAA78),
+      oculumFormula: Color(0xFFD46A73),
+      backgroundTop: Color(0xFF080405),
+      backgroundMid: Color(0xFF16090D),
+      backgroundBottom: Color(0xFF020102),
+      eyePupilGlow: Color(0xFFC6324B),
+    ),
+    OculumColorPreset(
+      id: 'black_briar_kingdom',
+      nameIt: 'Regno del rovo nero',
+      nameEn: 'Black briar kingdom',
+      descriptionIt:
+          'Dark fantasy regale: ferro annerito, oro consunto, rovi, brace e luna d argento.',
+      descriptionEn:
+          'Royal dark fantasy: blackened iron, worn gold, briars, embers and a silver moon.',
+      primary: Color(0xFFD9D4C8),
+      secondary: Color(0xFF030504),
+      tertiary: Color(0xFFC39A52),
+      utility: Color(0xFF8D4540),
+      oculumFormula: Color(0xFFD5B365),
+      backgroundTop: Color(0xFF050706),
+      backgroundMid: Color(0xFF0D1512),
+      backgroundBottom: Color(0xFF020302),
+      eyePupilGlow: Color(0xFFB5443E),
     ),
     OculumColorPreset(
       id: 'slime_prince',
@@ -2567,11 +2774,50 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused ||
-        state == AppLifecycleState.detached ||
-        state == AppLifecycleState.hidden) {
+    if (state == AppLifecycleState.resumed) {
+      final autosaveWasPending =
+          (autosaveTimer?.isActive ?? false) ||
+          autosavePendingAfterFocusTransition;
+      appOculumInBackground = false;
+      lifecycleLocalSaveTimer?.cancel();
+      lifecycleLocalSaveTimer = null;
+      lifecycleFocusSettleTimer?.cancel();
+      if (autosaveWasPending) {
+        autosavePendingAfterFocusTransition = true;
+      }
+      scheduleOculumFocusSettled();
+      return;
+    }
+
+    if (state == AppLifecycleState.inactive) {
+      beginOculumFocusTransition();
+      return;
+    }
+
+    if (state == AppLifecycleState.detached) {
+      beginOculumFocusTransition();
+      appOculumInBackground = true;
+      lifecycleLocalSaveTimer?.cancel();
+      lifecycleLocalSaveTimer = null;
       unawaited(forzaSalvataggioImmediato(soloLocale: true));
+      return;
+    }
+
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      beginOculumFocusTransition();
+      appOculumInBackground = true;
+      lifecycleLocalSaveTimer?.cancel();
+      lifecycleLocalSaveTimer = Timer(const Duration(seconds: 45), () {
+        if (!mounted ||
+            !appOculumInBackground ||
+            !datiCaricati ||
+            salvataggioInCorso ||
+            salvataggioBloccatoPerErrore) {
+          return;
+        }
+        unawaited(forzaSalvataggioImmediato(soloLocale: true));
+      });
     }
   }
 
@@ -2591,11 +2837,18 @@ class _OculumHomePageState extends State<OculumHomePage>
     dadoOverlayTimer?.cancel();
     dadoOverlayRevealTimer?.cancel();
     _lazyPageActivationTimer?.cancel();
+    lifecycleLocalSaveTimer?.cancel();
+    lifecycleFocusSettleTimer?.cancel();
     relayHeartbeatTimer?.cancel();
     relayReconnectTimer?.cancel();
     relayLobbyRefreshTimer?.cancel();
     realtimeOculumDebounceTimer?.cancel();
     realtimeSheetShareDebounceTimer?.cancel();
+    realtimeReconnectTimer?.cancel();
+    hiddenEyeProgressSaveTimer?.cancel();
+    storySessionNotesSaveTimer?.cancel();
+    vttRealtimeDebounceTimer?.cancel();
+    vttPingCleanupTimer?.cancel();
     for (final timer in realtimePendingMasterAckTimers.values) {
       timer.cancel();
     }
@@ -2640,7 +2893,17 @@ class _OculumHomePageState extends State<OculumHomePage>
     reazioniController.dispose();
     reazioniVelociController.dispose();
     realtimeChatController.dispose();
+    storySessionNoteController.dispose();
     realtimeDungeonMessage.dispose();
+    diceResultRevision.dispose();
+    diceOverlayRevision.dispose();
+    hiddenEyeListRevision.dispose();
+    vttCanvasRevision.dispose();
+    for (final notifier in hiddenEyeStatRevisions.values) {
+      notifier.dispose();
+    }
+    hiddenEyeStatRevisions.clear();
+    realtimeDiceConsentQueue.clear();
     buffMalusRapidiController.dispose();
     dannoSubitoController.dispose();
     dannoBonusScudoPercentController.dispose();
@@ -2964,6 +3227,11 @@ class _OculumHomePageState extends State<OculumHomePage>
                                   index: i,
                                   position: details.globalPosition,
                                 ),
+                            onLongPressStart: (details) =>
+                                mostraMenuSchedaPersonaggio(
+                                  index: i,
+                                  position: details.globalPosition,
+                                ),
                             child: Material(
                               color: Colors.transparent,
                               borderRadius: BorderRadius.circular(10),
@@ -3169,7 +3437,7 @@ class _OculumHomePageState extends State<OculumHomePage>
               ),
             ),
           OculumQuickEditEyeButton(
-            sections: quickEditSections(),
+            sectionsBuilder: quickEditSections,
             primaryColor: primaryColor,
             secondaryColor: secondaryColor,
             tertiaryColor: tertiaryColor,

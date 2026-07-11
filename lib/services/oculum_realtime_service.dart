@@ -20,13 +20,24 @@ class OculumRealtimeService {
     'oculum_changed',
     'dice_roll',
     'party_log',
+    'session_note',
+    'session_notes_request',
+    'session_notes_snapshot',
+    'vtt_scene_request',
+    'vtt_scene_shared',
+    'vtt_asset_chunk',
+    'vtt_token_patch',
+    'vtt_door_patch',
+    'vtt_ping',
     'sheet_ping',
     'sheet_sync_preview',
     'sheet_shared',
     'initiative_shared',
+    'dungeon_shared',
     'friend_request',
     'friend_response',
     'role_update',
+    'sheet_received_ack',
   };
 
   final String roomId;
@@ -210,6 +221,170 @@ class OculumRealtimeService {
     });
   }
 
+  Future<void> sendSessionNote({
+    required Map<String, dynamic> note,
+    required String campaignId,
+    required String campaignName,
+  }) {
+    return _send('session_note', <String, dynamic>{
+      ...note,
+      'playerName': _displayName,
+      'campaignId': campaignId,
+      'campaignName': campaignName,
+      'sentAt': '${note['createdAt'] ?? _nowIso()}',
+    });
+  }
+
+  Future<void> requestSessionNotes({
+    required String requesterTag,
+    required String campaignId,
+  }) {
+    return _send('session_notes_request', <String, dynamic>{
+      'playerName': _displayName,
+      'requesterTag': requesterTag,
+      'campaignId': campaignId,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  Future<void> sendSessionNotesSnapshot({
+    required List<Map<String, dynamic>> notes,
+    required String targetTag,
+    required String syncId,
+    required int chunkIndex,
+    required int chunkCount,
+    required String campaignId,
+    required String campaignName,
+  }) {
+    return _send('session_notes_snapshot', <String, dynamic>{
+      'playerName': _displayName,
+      'notes': notes,
+      'targetTag': targetTag,
+      'syncId': syncId,
+      'chunkIndex': chunkIndex,
+      'chunkCount': chunkCount,
+      'campaignId': campaignId,
+      'campaignName': campaignName,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  Future<void> requestVttScene({required String requesterTag}) {
+    return _send('vtt_scene_request', <String, dynamic>{
+      'playerName': _displayName,
+      'requesterTag': requesterTag,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  Future<void> sendVttSceneSnapshot({
+    required Map<String, dynamic> snapshot,
+    required String campaignId,
+    required String campaignName,
+    required String assetId,
+    required int assetChunkCount,
+    String targetTag = '',
+  }) {
+    return _send('vtt_scene_shared', <String, dynamic>{
+      'playerName': _displayName,
+      'senderRole': 'master',
+      'campaignId': campaignId,
+      'campaignName': campaignName,
+      'snapshot': snapshot,
+      'assetId': assetId,
+      'assetChunkCount': assetChunkCount,
+      'targetTag': targetTag,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  Future<void> sendVttAssetChunk({
+    required String assetId,
+    required int chunkIndex,
+    required int chunkCount,
+    required String data,
+    String targetTag = '',
+  }) {
+    return _send('vtt_asset_chunk', <String, dynamic>{
+      'playerName': _displayName,
+      'senderRole': 'master',
+      'assetId': assetId,
+      'chunkIndex': chunkIndex,
+      'chunkCount': chunkCount,
+      'data': data,
+      'targetTag': targetTag,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  Future<void> sendVttTokenPatch({
+    required String campaignId,
+    required String sceneId,
+    required String tokenId,
+    required String senderRole,
+    required String senderTag,
+    required double x,
+    required double y,
+    required double movementUsedMeters,
+  }) {
+    return _send('vtt_token_patch', <String, dynamic>{
+      'playerName': _displayName,
+      'campaignId': campaignId,
+      'sceneId': sceneId,
+      'tokenId': tokenId,
+      'senderRole': senderRole,
+      'senderTag': senderTag,
+      'x': x,
+      'y': y,
+      'movementUsedMeters': movementUsedMeters,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  Future<void> sendVttDoorPatch({
+    required String campaignId,
+    required String sceneId,
+    required String doorId,
+    required String senderRole,
+    required String senderTag,
+    required bool open,
+  }) {
+    return _send('vtt_door_patch', <String, dynamic>{
+      'playerName': _displayName,
+      'campaignId': campaignId,
+      'sceneId': sceneId,
+      'doorId': doorId,
+      'senderRole': senderRole,
+      'senderTag': senderTag,
+      'open': open,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  Future<void> sendVttPing({
+    required String campaignId,
+    required String sceneId,
+    required String pingId,
+    required String senderRole,
+    required String senderTag,
+    required double x,
+    required double y,
+    required int colorArgb,
+  }) {
+    return _send('vtt_ping', <String, dynamic>{
+      'playerName': _displayName,
+      'campaignId': campaignId,
+      'sceneId': sceneId,
+      'pingId': pingId,
+      'senderRole': senderRole,
+      'senderTag': senderTag,
+      'x': x,
+      'y': y,
+      'colorArgb': colorArgb,
+      'sentAt': _nowIso(),
+    });
+  }
+
   Future<void> sendPing() {
     return _send('sheet_ping', <String, dynamic>{
       'playerName': _displayName,
@@ -243,6 +418,14 @@ class OculumRealtimeService {
     });
   }
 
+  Future<void> sendDungeonShared(Map<String, dynamic> message) {
+    return _send('dungeon_shared', <String, dynamic>{
+      'playerName': _displayName,
+      ...message,
+      'sentAt': _nowIso(),
+    });
+  }
+
   Future<void> sendSharedSheet({
     required Map<String, dynamic> sheet,
     required String campaignId,
@@ -255,6 +438,7 @@ class OculumRealtimeService {
     required bool fromMaster,
     required bool masterParty,
     List<String> targetTags = const <String>[],
+    String deliveryId = '',
   }) {
     return _send('sheet_shared', <String, dynamic>{
       'playerName': _displayName,
@@ -269,6 +453,7 @@ class OculumRealtimeService {
       'fromMaster': fromMaster,
       'masterParty': masterParty,
       'sheet': sheet,
+      'deliveryId': deliveryId,
       'sentAt': _nowIso(),
     });
   }
@@ -285,6 +470,7 @@ class OculumRealtimeService {
     required bool fromMaster,
     required bool masterParty,
     List<String> targetTags = const <String>[],
+    String deliveryId = '',
   }) {
     return _sendConfirmed('sheet_shared', <String, dynamic>{
       'playerName': _displayName,
@@ -299,6 +485,31 @@ class OculumRealtimeService {
       'fromMaster': fromMaster,
       'masterParty': masterParty,
       'sheet': sheet,
+      'deliveryId': deliveryId,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  Future<void> sendSheetReceivedAck({
+    required String deliveryId,
+    required String ownerTag,
+    required String sheetId,
+    required String sheetName,
+    required String campaignId,
+    required String campaignName,
+    required String receiverRole,
+    required String receiverTag,
+  }) {
+    return _send('sheet_received_ack', <String, dynamic>{
+      'playerName': _displayName,
+      'deliveryId': deliveryId,
+      'ownerTag': ownerTag,
+      'sheetId': sheetId,
+      'sheetName': sheetName,
+      'campaignId': campaignId,
+      'campaignName': campaignName,
+      'receiverRole': receiverRole,
+      'receiverTag': receiverTag,
       'sentAt': _nowIso(),
     });
   }

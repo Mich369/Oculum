@@ -2,6 +2,53 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+const String oculumSheetShareCodePrefix = 'OCULUM-SHEETS-v1:';
+
+List<Map<String, dynamic>> oculumDecodeSheetShareText(String rawText) {
+  List<Map<String, dynamic>> sheetsFromPayload(dynamic decoded) {
+    if (decoded is! Map) {
+      throw const FormatException('Payload non valido.');
+    }
+    final map = Map<String, dynamic>.from(decoded);
+    final rawSheets = map['sheets'] ?? map['schedePersonaggio'];
+    if (rawSheets is List) {
+      return rawSheets
+          .whereType<Map>()
+          .map((sheet) => Map<String, dynamic>.from(sheet))
+          .toList();
+    }
+    if (map.containsKey('nome') || map.containsKey('tipoScheda')) {
+      return <Map<String, dynamic>>[map];
+    }
+    throw const FormatException('Nessuna scheda trovata.');
+  }
+
+  final text = rawText.trim();
+  if (text.isEmpty) throw const FormatException('Il codice e vuoto.');
+  final codeParts = text
+      .split(RegExp(r'[\s,;]+'))
+      .map((part) => part.trim())
+      .where((part) => part.startsWith(oculumSheetShareCodePrefix))
+      .toList();
+  if (codeParts.isEmpty) return sheetsFromPayload(jsonDecode(text));
+
+  final sheets = <Map<String, dynamic>>[];
+  for (final code in codeParts) {
+    var encoded = code.substring(oculumSheetShareCodePrefix.length).trim();
+    while (encoded.length % 4 != 0) {
+      encoded += '=';
+    }
+    final decodedText = utf8.decode(base64Url.decode(encoded));
+    sheets.addAll(sheetsFromPayload(jsonDecode(decodedText)));
+  }
+  if (sheets.isEmpty) {
+    throw const FormatException('Nessuna scheda trovata.');
+  }
+  return sheets;
+}
+
+dynamic oculumDecodeJsonText(String text) => jsonDecode(text);
+
 extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
   // REGOLE / MANUALE
   // =====================================================
@@ -19,8 +66,102 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
         .replaceAll('⅔', '2/3');
   }
 
+  String manualPdfExtraSafeText(String value) {
+    return manualPdfSafeText(value)
+        .replaceAll('•', '-')
+        .replaceAll('—', '-')
+        .replaceAll('–', '-')
+        .replaceAll('→', '->')
+        .replaceAll('’', "'")
+        .replaceAll('“', '"')
+        .replaceAll('”', '"')
+        .replaceAll('…', '...')
+        .replaceAll('¼', '1/4')
+        .replaceAll('½', '1/2')
+        .replaceAll('¾', '3/4')
+        .replaceAll('⅓', '1/3')
+        .replaceAll('⅔', '2/3')
+        .replaceAll('Ã ', 'a')
+        .replaceAll('Ã¨', 'e')
+        .replaceAll('Ã©', 'e')
+        .replaceAll('Ã¬', 'i')
+        .replaceAll('Ã²', 'o')
+        .replaceAll('Ã¹', 'u')
+        .replaceAll('à', 'a')
+        .replaceAll('è', 'e')
+        .replaceAll('é', 'e')
+        .replaceAll('ì', 'i')
+        .replaceAll('ò', 'o')
+        .replaceAll('ù', 'u');
+  }
+
+  String manualParserExamplesPdfText() {
+    return t(
+      '''
+Esempi complessi funzionanti:
+
+@Resistenza Fuoco
+Riduce il danno Fuoco in arrivo.
+
+@FragilitaVera Acqua
+Aumenta molto il danno Acqua in arrivo.
+
+@ResistenzaImpenetrabile fisico
+Riduce fortemente il danno fisico/normale.
+
+@DanniSubiti+15% Acqua
+Aumenta del 15% il danno Acqua dopo difesa e modificatori.
+
+@DanniSubiti-6 fuoco
+Toglie 6 danni Fuoco dopo difesa e modificatori.
+
+@safehp
+Consumabile: se un colpo ti porterebbe a 0 HP, resti a 1 HP.
+
+@saveShield+30
+Consumabile: se dopo un colpo resti vivo a 25% HP o meno, ottieni 30 Scudo.
+
+Combo esempio:
+@Resistenza Fuoco
+@DanniSubiti-6 Fuoco
+@saveShield+25
+Un colpo Fuoco viene ridotto, poi perde 6 danni; se sopravvivi sotto il 25% HP ricevi 25 Scudo.
+''',
+      '''
+Working complex examples:
+
+@Resistenza Fuoco
+Reduces incoming Fire damage.
+
+@FragilitaVera Acqua
+Greatly increases incoming Water damage.
+
+@ResistenzaImpenetrabile fisico
+Strongly reduces physical/normal damage.
+
+@DanniSubiti+15% Acqua
+Increases Water damage by 15% after defense and modifiers.
+
+@DanniSubiti-6 fuoco
+Removes 6 Fire damage after defense and modifiers.
+
+@safehp
+Consumable: if a hit would take you to 0 HP, you stay at 1 HP.
+
+@saveShield+30
+Consumable: if after a hit you survive at 25% HP or lower, you gain 30 Shield.
+
+Combo example:
+@Resistenza Fuoco
+@DanniSubiti-6 Fuoco
+@saveShield+25
+A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain 25 Shield.
+''',
+    );
+  }
+
   List<String> manualPdfSplitTextBlocks(String value, {int maxChars = 650}) {
-    final text = manualPdfSafeText(
+    final text = manualPdfExtraSafeText(
       value,
     ).replaceAll('\r\n', '\n').replaceAll('\r', '\n').trim();
     if (text.isEmpty) return const <String>[];
@@ -89,6 +230,12 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
         color: PdfColors.deepPurple600,
       );
       final bodyStyle = const pw.TextStyle(fontSize: 10.5, lineSpacing: 2);
+      final indexStyle = pw.TextStyle(
+        fontSize: 10.5,
+        fontWeight: pw.FontWeight.bold,
+        color: PdfColors.deepPurple700,
+      );
+      final sections = activeManualSections;
 
       doc.addPage(
         pw.MultiPage(
@@ -99,7 +246,7 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
               pw.Text('MANUALE OCULUM', style: titleStyle),
               pw.SizedBox(height: 6),
               pw.Text(
-                manualPdfSafeText(
+                manualPdfExtraSafeText(
                   t(
                     'Versione esportata dall app con regole e formule aggiornate.',
                     'Version exported from the app with updated rules and formulas.',
@@ -108,9 +255,44 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
                 style: bodyStyle,
               ),
               pw.SizedBox(height: 18),
-              for (final section in activeManualSections) ...[
+              pw.Text(
+                manualPdfExtraSafeText(t('Indice', 'Index')),
+                style: sectionStyle,
+              ),
+              pw.SizedBox(height: 6),
+              for (var i = 0; i < sections.length; i++)
+                pw.Padding(
+                  padding: const pw.EdgeInsets.only(bottom: 3),
+                  child: pw.Text(
+                    manualPdfExtraSafeText(
+                      '${i + 1}. ${manualTitle(sections[i])}',
+                    ),
+                    style: indexStyle,
+                  ),
+                ),
+              pw.SizedBox(height: 8),
+              pw.Text(
+                manualPdfExtraSafeText(
+                  t(
+                    'Appendice. Parser e comandi rapidi',
+                    'Appendix. Parsers and quick commands',
+                  ),
+                ),
+                style: indexStyle,
+              ),
+              pw.NewPage(),
+              pw.Text(
+                manualPdfExtraSafeText(
+                  t('Appendice parser', 'Parser appendix'),
+                ),
+                style: sectionStyle,
+              ),
+              pw.SizedBox(height: 5),
+              ...manualPdfTextWidgets(manualParserExamplesPdfText(), bodyStyle),
+              pw.NewPage(),
+              for (final section in sections) ...[
                 pw.Text(
-                  manualPdfSafeText(manualTitle(section)),
+                  manualPdfExtraSafeText(manualTitle(section)),
                   style: sectionStyle,
                 ),
                 pw.SizedBox(height: 5),
@@ -125,20 +307,36 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
         ),
       );
 
+      final now = DateTime.now();
+      final stamp =
+          '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+      final fileName = 'oculum_manuale_$stamp.pdf';
+      final bytes = await doc.save();
+      if (kIsWeb) {
+        await oculumDownloadBytes(
+          bytes: bytes,
+          fileName: fileName,
+          mimeType: 'application/pdf',
+        );
+        if (!mounted) return;
+        setState(() {
+          risultato = t(
+            'Download manuale PDF avviato.',
+            'Manual PDF download started.',
+          );
+          aggiungiLog(risultato);
+        });
+        return;
+      }
+
       Directory dir;
       try {
         dir = await getApplicationDocumentsDirectory();
       } catch (_) {
         dir = Directory.current;
       }
-
-      final now = DateTime.now();
-      final stamp =
-          '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
-      final file = File(
-        '${dir.path}${Platform.pathSeparator}oculum_manuale_$stamp.pdf',
-      );
-      await file.writeAsBytes(await doc.save());
+      final file = File('${dir.path}${Platform.pathSeparator}$fileName');
+      await file.writeAsBytes(bytes);
 
       if (!mounted) return;
       setState(() {
@@ -711,13 +909,13 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
 
   String creaBackupJson() {
     salvaSchedaCorrenteInMemoria();
+    saveActiveCampaignInMemory();
 
-    final data = {
+    final data = <String, dynamic>{
+      ...datiSalvataggioJson(revision: salvataggioRevisione),
       'oculumBackup': true,
-      'versioneBackup': 1,
-      'multiScheda': true,
-      'schedaCorrente': schedaCorrente,
-      'schedePersonaggio': schedePersonaggio,
+      'versioneBackup': 2,
+      'backupCreatedAt': DateTime.now().toIso8601String(),
     };
 
     return const JsonEncoder.withIndent('  ').convert(data);
@@ -727,18 +925,32 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
     final backup = creaBackupJson();
 
     await Clipboard.setData(ClipboardData(text: backup));
+    if (kIsWeb) {
+      final now = DateTime.now();
+      final stamp =
+          '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+      await oculumDownloadBytes(
+        bytes: Uint8List.fromList(utf8.encode(backup)),
+        fileName: 'oculum_backup_$stamp.json',
+        mimeType: 'application/json',
+      );
+    }
 
     setState(() {
       risultato = t(
-        'Backup esportato negli appunti. Incollalo in un file di testo per conservarlo.',
-        'Backup exported to clipboard. Paste it into a text file to keep it safe.',
+        kIsWeb
+            ? 'Backup completo copiato e scaricato in JSON.'
+            : 'Backup completo esportato negli appunti. Incollalo in un file di testo per conservarlo.',
+        kIsWeb
+            ? 'Full backup copied and downloaded as JSON.'
+            : 'Full backup exported to clipboard. Paste it into a text file to keep it safe.',
       );
 
       aggiungiLog('Backup esportato negli appunti.');
     });
   }
 
-  String get sheetShareCodePrefix => 'OCULUM-SHEETS-v1:';
+  String get sheetShareCodePrefix => oculumSheetShareCodePrefix;
 
   Map<String, dynamic> schedaPerCodiceCondivisione(int index) {
     if (index < 0 || index >= schedePersonaggio.length) {
@@ -797,38 +1009,24 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
   }
 
   List<Map<String, dynamic>> decodificaCodiciScheda(String rawText) {
-    final text = rawText.trim();
-    if (text.isEmpty) {
-      throw const FormatException('Il codice e vuoto.');
+    return oculumDecodeSheetShareText(rawText);
+  }
+
+  Future<List<Map<String, dynamic>>> decodificaCodiciSchedaAsync(
+    String rawText,
+  ) async {
+    if (kIsWeb || rawText.length < 48 * 1024) {
+      return decodificaCodiciScheda(rawText);
     }
-
-    final codeParts = text
-        .split(RegExp(r'[\s,;]+'))
-        .map((part) => part.trim())
-        .where((part) => part.startsWith(sheetShareCodePrefix))
-        .toList();
-
-    if (codeParts.isNotEmpty) {
-      final sheets = <Map<String, dynamic>>[];
-
-      for (final code in codeParts) {
-        var encoded = code.substring(sheetShareCodePrefix.length).trim();
-        while (encoded.length % 4 != 0) {
-          encoded += '=';
-        }
-
-        final decodedText = utf8.decode(base64Url.decode(encoded));
-        sheets.addAll(schedeDaPayloadCodice(jsonDecode(decodedText)));
-      }
-
-      if (sheets.isEmpty) {
-        throw const FormatException('Nessuna scheda trovata.');
-      }
-
-      return sheets;
+    try {
+      return await compute(
+        oculumDecodeSheetShareText,
+        rawText,
+        debugLabel: 'oculum-sheet-import-decode',
+      );
+    } catch (_) {
+      return decodificaCodiciScheda(rawText);
     }
-
-    return schedeDaPayloadCodice(jsonDecode(text));
   }
 
   Map<String, dynamic> normalizzaSchedaImportata(Map<String, dynamic> raw) {
@@ -927,10 +1125,11 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
 
   Future<void> importaCodiceSchedeIncollato() async {
     try {
+      final decodedSheets = await decodificaCodiciSchedaAsync(
+        sheetCodeController.text,
+      );
       final imported = preparaSchedeImportateUniche(
-        decodificaCodiciScheda(
-          sheetCodeController.text,
-        ).map(normalizzaSchedaImportata),
+        decodedSheets.map(normalizzaSchedaImportata),
       );
 
       if (imported.isEmpty) {
@@ -992,10 +1191,65 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
         return;
       }
 
-      final decoded = jsonDecode(pulito);
+      final decoded = kIsWeb || pulito.length < 48 * 1024
+          ? jsonDecode(pulito)
+          : await compute(
+              oculumDecodeJsonText,
+              pulito,
+              debugLabel: 'oculum-backup-import-decode',
+            );
 
       if (decoded is! Map<String, dynamic>) {
         throw Exception('Formato backup non valido.');
+      }
+      if (!mounted) return;
+
+      if (readIntValue(decoded['versioneBackup']) >= 2 &&
+          decoded['campaigns'] is List) {
+        final mode = await showDialog<String>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(t('Importa backup completo', 'Import full backup')),
+            content: Text(
+              t(
+                'Puoi aggiungere solo le schede senza toccare i dati attuali, oppure ripristinare campagne, scene, mappe e impostazioni. Prima del ripristino Oculum conserva comunque i backup recenti.',
+                'You can add only the sheets without changing current data, or restore campaigns, scenes, maps and settings. Oculum still preserves recent backups before restoring.',
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(t('Annulla', 'Cancel')),
+              ),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(dialogContext, 'sheets'),
+                child: Text(t('Aggiungi schede', 'Add sheets')),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, 'full'),
+                child: Text(t('Ripristina tutto', 'Restore all')),
+              ),
+            ],
+          ),
+        );
+        if (!mounted || mode == null) return;
+        if (mode == 'full') {
+          final restored = await importaBackupCompletoProtetto(decoded);
+          if (!mounted) return;
+          setState(() {
+            risultato = restored
+                ? t(
+                    'Backup completo ripristinato con protezione.',
+                    'Full backup restored with protection.',
+                  )
+                : t(
+                    'Ripristino completo non riuscito: i dati precedenti sono rimasti protetti.',
+                    'Full restore failed: previous data remained protected.',
+                  );
+            aggiungiLog(risultato);
+          });
+          return;
+        }
       }
 
       List<dynamic> rawSchede;
@@ -1164,6 +1418,48 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
     return null;
   }
 
+  int colorPresetDisplayRank(String id) {
+    switch (id) {
+      case 'classic_reliquary':
+        return 0;
+      case 'classic_rpg':
+        return 1;
+      case 'classic_low_detail':
+        return 2;
+    }
+    final index = colorPresets.indexWhere((preset) => preset.id == id);
+    return index < 0 ? 999999 : 100 + index;
+  }
+
+  List<OculumColorPreset> orderedColorPresets({
+    bool visibleOnly = false,
+    bool unlockedOnly = false,
+  }) {
+    final presets = [
+      for (final preset in colorPresets)
+        if ((!visibleOnly || isColorThemeVisibleInPicker(preset)) &&
+            (!unlockedOnly || isColorThemeUnlocked(preset.id)))
+          preset,
+    ];
+    presets.sort(
+      (a, b) =>
+          colorPresetDisplayRank(a.id).compareTo(colorPresetDisplayRank(b.id)),
+    );
+    return presets;
+  }
+
+  List<String> orderedColorPresetIds(Iterable<String> ids) {
+    final unique = <String>{};
+    final ordered = [
+      for (final id in ids)
+        if (unique.add(id)) id,
+    ];
+    ordered.sort(
+      (a, b) => colorPresetDisplayRank(a).compareTo(colorPresetDisplayRank(b)),
+    );
+    return ordered;
+  }
+
   String colorPresetName(OculumColorPreset preset) {
     return t(preset.nameIt, preset.nameEn);
   }
@@ -1174,6 +1470,7 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
 
   bool isColorThemeUnlocked(String id) {
     return id == 'classic_reliquary' ||
+        id == 'classic_rpg' ||
         oculumThemeStartsUnlocked(id) ||
         (id == 'hoshy_cosmic_cat' && hoshySecretThemeCondition()) ||
         (id == 'phobia_dark' && phobiaSecretThemeCondition()) ||
@@ -1270,6 +1567,7 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
       backgroundBottomColor = preset.backgroundBottom;
       eyePupilGlowColor = preset.eyePupilGlow;
       colorPresetSelezionato = preset.id;
+      normalizzaContrastoTemaAttivo();
       risultato = t(
         'Solo colori applicati: ${preset.nameIt}. GUI e decorazioni non cambiano.',
         'Colors only applied: ${preset.nameEn}. GUI and decorations do not change.',
@@ -1317,6 +1615,7 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
       backgroundBottomColor = preset.backgroundBottom;
       eyePupilGlowColor = preset.eyePupilGlow;
       colorPresetSelezionato = preset.id;
+      normalizzaContrastoTemaAttivo();
       colorDecorationPresetId =
           (preset.id == 'classic_reliquary' ||
               preset.id == 'classic_low_detail')
@@ -1435,7 +1734,7 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
                 value: 'custom',
                 child: Text(t('Personalizzato', 'Custom')),
               ),
-              for (final preset in colorPresets)
+              for (final preset in orderedColorPresets(visibleOnly: true))
                 if (isColorThemeVisibleInPicker(preset))
                   DropdownMenuItem<String>(
                     value: preset.id,
@@ -1482,7 +1781,7 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
             spacing: 8,
             runSpacing: 8,
             children: [
-              for (final preset in colorPresets)
+              for (final preset in orderedColorPresets(visibleOnly: true))
                 if (isColorThemeVisibleInPicker(preset))
                   Tooltip(
                     message:
@@ -3816,16 +4115,24 @@ extension _OculumHomeRulesSettingsSearch on _OculumHomePageState {
                     'Enables local Master permissions and tools. The Master Session section appears on the Story page.',
                   ),
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    modalitaMaster = value;
-                    risultato = value
-                        ? t('Modalita Master attiva.', 'Master Mode enabled.')
-                        : t('Modalita Master spenta.', 'Master Mode disabled.');
-                    aggiungiLog(risultato);
-                  });
-                  programmaSalvataggio();
-                },
+                onChanged: oculumStartupRole == OculumStartupRole.player
+                    ? null
+                    : (value) {
+                        setState(() {
+                          modalitaMaster = value;
+                          risultato = value
+                              ? t(
+                                  'Modalita Master attiva.',
+                                  'Master Mode enabled.',
+                                )
+                              : t(
+                                  'Modalita Master spenta.',
+                                  'Master Mode disabled.',
+                                );
+                          aggiungiLog(risultato);
+                        });
+                        programmaSalvataggio();
+                      },
               ),
               SwitchListTile(
                 value: usaBarraVita,

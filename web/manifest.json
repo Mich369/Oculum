@@ -1,12 +1,13 @@
 {
-    "name": "oculum",
-    "short_name": "oculum",
+    "name": "Oculum",
+    "short_name": "Oculum",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#07080D",
+    "theme_color": "#8B5CF6",
+    "description": "Schede, campagne, realtime e tavolo virtuale per Oculum.",
+    "orientation": "any",
+    "categories": ["games", "entertainment", "productivity"],
     "prefer_related_applications": false,
     "icons": [
         {

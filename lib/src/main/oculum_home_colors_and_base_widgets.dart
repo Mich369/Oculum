@@ -2,6 +2,44 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+double oculumThemeContrastRatio(Color a, Color b) {
+  final l1 = a.computeLuminance();
+  final l2 = b.computeLuminance();
+  final lighter = max(l1, l2);
+  final darker = min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+Color oculumReadableThemeColor(
+  Color color,
+  Color background, {
+  double minRatio = 4.5,
+}) {
+  var candidate = color.withValues(alpha: 1);
+  if (oculumThemeContrastRatio(candidate, background) >= minRatio) {
+    return color;
+  }
+
+  final backgroundIsLight = background.computeLuminance() > 0.42;
+  var hsl = HSLColor.fromColor(candidate);
+  for (var i = 0; i < 16; i++) {
+    final nextLightness = backgroundIsLight
+        ? (hsl.lightness - 0.055).clamp(0.0, 1.0)
+        : (hsl.lightness + 0.055).clamp(0.0, 1.0);
+    hsl = hsl.withLightness(nextLightness);
+    candidate = hsl.toColor();
+    if (oculumThemeContrastRatio(candidate, background) >= minRatio) {
+      return candidate.withValues(alpha: color.a);
+    }
+  }
+
+  final blackRatio = oculumThemeContrastRatio(Colors.black, background);
+  final whiteRatio = oculumThemeContrastRatio(Colors.white, background);
+  return (whiteRatio >= blackRatio ? Colors.white : Colors.black).withValues(
+    alpha: color.a,
+  );
+}
+
 class _OculumModelTextField extends StatefulWidget {
   const _OculumModelTextField({
     super.key,
@@ -531,11 +569,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
   }
 
   double themeContrastRatio(Color a, Color b) {
-    final l1 = a.computeLuminance();
-    final l2 = b.computeLuminance();
-    final lighter = max(l1, l2);
-    final darker = min(l1, l2);
-    return (lighter + 0.05) / (darker + 0.05);
+    return oculumThemeContrastRatio(a, b);
   }
 
   Color readableOnTheme(
@@ -544,28 +578,40 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     double minRatio = 4.5,
   }) {
     final bg = background ?? backgroundMidColor;
-    var candidate = color.withValues(alpha: 1);
-    if (themeContrastRatio(candidate, bg) >= minRatio) {
-      return color;
-    }
+    return oculumReadableThemeColor(color, bg, minRatio: minRatio);
+  }
 
-    final backgroundIsLight = bg.computeLuminance() > 0.42;
-    var hsl = HSLColor.fromColor(candidate);
-    for (var i = 0; i < 16; i++) {
-      final nextLightness = backgroundIsLight
-          ? (hsl.lightness - 0.055).clamp(0.0, 1.0)
-          : (hsl.lightness + 0.055).clamp(0.0, 1.0);
-      hsl = hsl.withLightness(nextLightness);
-      candidate = hsl.toColor();
-      if (themeContrastRatio(candidate, bg) >= minRatio) {
-        return candidate.withValues(alpha: color.a);
-      }
-    }
-
-    final blackRatio = themeContrastRatio(Colors.black, bg);
-    final whiteRatio = themeContrastRatio(Colors.white, bg);
-    return (whiteRatio >= blackRatio ? Colors.white : Colors.black).withValues(
-      alpha: color.a,
+  void normalizzaContrastoTemaAttivo() {
+    if (colorPresetSelezionato == 'custom') return;
+    final surface = Color.lerp(
+      backgroundMidColor,
+      backgroundBottomColor,
+      0.42,
+    )!;
+    primaryColor = readableOnTheme(
+      primaryColor,
+      background: surface,
+      minRatio: 4.5,
+    );
+    tertiaryColor = readableOnTheme(
+      tertiaryColor,
+      background: surface,
+      minRatio: 4.5,
+    );
+    eyeUtilityColor = readableOnTheme(
+      eyeUtilityColor,
+      background: surface,
+      minRatio: 3.2,
+    );
+    oculumStatFormulaColor = readableOnTheme(
+      oculumStatFormulaColor,
+      background: surface,
+      minRatio: 4.5,
+    );
+    eyePupilGlowColor = readableOnTheme(
+      eyePupilGlowColor,
+      background: surface,
+      minRatio: 3.2,
     );
   }
 
@@ -734,34 +780,35 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
   }
 
   double uiScale(double value, [double phoneScale = 0.82]) {
-    if (phoneCompactUi) return value * (phoneScale * 0.96);
-    if (tabletCompactUi) return value * 0.92;
+    final userScale = userGuiScale.clamp(0.82, 1.18).toDouble();
+    if (phoneCompactUi) return value * (phoneScale * 0.96) * userScale;
+    if (tabletCompactUi) return value * 0.92 * userScale;
     if (modalitaDesktop || modalitaVeloce || modalitaLeggera) {
-      return value * 0.90;
+      return value * 0.90 * userScale;
     }
-    return value;
+    return value * userScale;
   }
 
   EdgeInsets scaledInsets(EdgeInsets value, [double phoneScale = 0.80]) {
+    final userScale = userGuiScale.clamp(0.82, 1.18).toDouble();
     if (!phoneCompactUi) {
       final factor = modalitaDesktop || tabletCompactUi || modalitaLeggera
           ? 0.70
           : modalitaVeloce
           ? 0.78
           : 1.0;
-      if (factor == 1.0) return value;
       return EdgeInsets.fromLTRB(
-        value.left * factor,
-        value.top * factor,
-        value.right * factor,
-        value.bottom * factor,
+        value.left * factor * userScale,
+        value.top * factor * userScale,
+        value.right * factor * userScale,
+        value.bottom * factor * userScale,
       );
     }
     return EdgeInsets.fromLTRB(
-      value.left * phoneScale * 0.90,
-      value.top * phoneScale * 0.90,
-      value.right * phoneScale * 0.90,
-      value.bottom * phoneScale * 0.90,
+      value.left * phoneScale * 0.90 * userScale,
+      value.top * phoneScale * 0.90 * userScale,
+      value.right * phoneScale * 0.90 * userScale,
+      value.bottom * phoneScale * 0.90 * userScale,
     );
   }
 
@@ -769,17 +816,32 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     final light = lightweightUi;
     final radius = themeFieldRadiusValue(compact: light);
     final fill = themeFieldFillColor();
+    final labelColor = readableOnTheme(
+      primaryColor,
+      background: fill,
+      minRatio: 4.5,
+    );
+    final activeColor = readableOnTheme(
+      tertiaryColor,
+      background: fill,
+      minRatio: 4.5,
+    );
+    final helperColor = readableOnTheme(
+      Colors.grey.shade500,
+      background: fill,
+      minRatio: 4.5,
+    );
     return InputDecoration(
       labelText: cleanUiText(label),
-      labelStyle: TextStyle(color: primaryColor.withValues(alpha: 0.90)),
+      labelStyle: TextStyle(color: labelColor.withValues(alpha: 0.96)),
       floatingLabelStyle: TextStyle(
-        color: tertiaryColor,
+        color: activeColor,
         fontWeight: FontWeight.w800,
       ),
       helperText: light || helper == null ? null : cleanUiText(helper),
       helperMaxLines: 2,
       helperStyle: TextStyle(
-        color: Colors.grey.shade500,
+        color: helperColor,
         fontSize: uiScale(11.5),
         height: 1.15,
       ),
@@ -793,16 +855,16 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radius),
-        borderSide: themeFieldBorderSide(primaryColor, compact: light),
+        borderSide: themeFieldBorderSide(labelColor, compact: light),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radius),
-        borderSide: themeFieldBorderSide(primaryColor, compact: light),
+        borderSide: themeFieldBorderSide(labelColor, compact: light),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radius),
         borderSide: themeFieldBorderSide(
-          tertiaryColor,
+          activeColor,
           compact: light,
           focused: true,
         ),
@@ -835,10 +897,22 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       maxLines: maxLines,
       onEditingComplete: () {
         scheduleInputUiRefresh(delay: Duration.zero);
+        if (autosaveTimer?.isActive ?? false) {
+          programmaSalvataggio(
+            deferCacheInvalidation: true,
+            delay: const Duration(milliseconds: 260),
+          );
+        }
       },
       onTapOutside: (_) {
         FocusManager.instance.primaryFocus?.unfocus();
         scheduleInputUiRefresh(delay: Duration.zero);
+        if (autosaveTimer?.isActive ?? false) {
+          programmaSalvataggio(
+            deferCacheInvalidation: true,
+            delay: const Duration(milliseconds: 260),
+          );
+        }
       },
       onChanged: (value) {
         onChanged?.call(value);
@@ -860,12 +934,17 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         }
 
         if (needsRefresh) {
+          invalidateDerivedDataCaches();
           scheduleInputUiRefresh();
+          programmaSalvataggio(invalidateCaches: false);
+        } else {
+          programmaSalvataggio(deferCacheInvalidation: true);
         }
-
-        programmaSalvataggio();
       },
-      style: TextStyle(fontSize: uiScale(16), color: Colors.white),
+      style: TextStyle(
+        fontSize: uiScale(16),
+        color: readableOnTheme(Colors.white, background: themeFieldFillColor()),
+      ),
       decoration: fieldDecoration(label, helper: helper),
     );
 
@@ -887,9 +966,18 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
 
           if (controller == manualSearchController) {
             manualSearchText = manualSearchController.text.trim().toLowerCase();
+            invalidateDerivedDataCaches();
             scheduleInputUiRefresh(delay: Duration.zero);
+            programmaSalvataggio(
+              invalidateCaches: false,
+              delay: const Duration(milliseconds: 300),
+            );
+          } else {
+            programmaSalvataggio(
+              deferCacheInvalidation: true,
+              delay: const Duration(milliseconds: 300),
+            );
           }
-          programmaSalvataggio();
           return KeyEventResult.handled;
         },
         child: field,
@@ -936,6 +1024,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         identical(controller, attaccoRapidoController) ||
         identical(controller, cmRapidoController) ||
         identical(controller, difesaRapidaController) ||
+        identical(controller, difficoltaTiroController) ||
         identical(controller, buffMalusRapidiController) ||
         identical(controller, karmaController) ||
         identical(controller, cenereController);
@@ -965,7 +1054,10 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       linguaInglese: linguaInglese,
       enableCommandAutocomplete: enableCommandAutocomplete,
       liveRefresh: liveRefresh,
-      style: TextStyle(fontSize: uiScale(16), color: Colors.white),
+      style: TextStyle(
+        fontSize: uiScale(16),
+        color: readableOnTheme(Colors.white, background: themeFieldFillColor()),
+      ),
       decoration: fieldDecoration(label, helper: helper),
     );
 
@@ -984,6 +1076,21 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
   Widget sectionTitle(String text) {
     final cleanText = cleanUiText(text);
     final light = lightweightUi;
+    final surface = Color.lerp(
+      backgroundMidColor,
+      backgroundBottomColor,
+      0.36,
+    )!;
+    final titleColor = readableOnTheme(
+      primaryColor,
+      background: surface,
+      minRatio: 4.5,
+    );
+    final markerColor = readableOnTheme(
+      tertiaryColor,
+      background: surface,
+      minRatio: 3.0,
+    );
     return themeSectionTitleShell(
       text: cleanText,
       compact: light,
@@ -997,7 +1104,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
               width: uiScale(4),
               height: uiScale(light ? 18 : 22),
               decoration: BoxDecoration(
-                color: tertiaryColor,
+                color: markerColor,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -1008,12 +1115,12 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                 style: TextStyle(
                   fontSize: uiScale(18),
                   fontWeight: FontWeight.w900,
-                  color: primaryColor,
+                  color: titleColor,
                   shadows: light
                       ? const []
                       : [
                           Shadow(
-                            color: primaryColor.withValues(alpha: 0.18),
+                            color: titleColor.withValues(alpha: 0.18),
                             blurRadius: 8,
                           ),
                         ],
@@ -1031,7 +1138,16 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     EdgeInsets padding = const EdgeInsets.all(14),
     Color? borderColor,
   }) {
-    final color = borderColor ?? primaryColor;
+    final panelSurface = Color.lerp(
+      backgroundMidColor,
+      backgroundBottomColor,
+      0.42,
+    )!;
+    final color = readableOnTheme(
+      borderColor ?? primaryColor,
+      background: panelSurface,
+      minRatio: 2.6,
+    );
     final compact = lightweightUi;
     final spec = currentThemeDecorationSpec();
     final gui = currentThemeVisualIdentity().mainSheetGuiStyle;
@@ -1056,23 +1172,22 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     final radius = BorderRadius.circular(
       themePanelRadiusValue(compact: compact),
     );
-    if (lowCostVisuals) {
-      final simpleFill =
-          Color.lerp(secondaryColor, backgroundBottomColor, 0.58) ??
-          backgroundBottomColor;
+    if (modalitaLeggera || modalitaVeloce) {
       return RepaintBoundary(
         child: Container(
-          margin: EdgeInsets.symmetric(vertical: compact ? 2 : 4),
-          padding: scaledInsets(padding),
+          margin: const EdgeInsets.symmetric(vertical: 2),
           decoration: BoxDecoration(
-            color: simpleFill.withValues(alpha: compact ? 0.82 : 0.88),
+            gradient: themePanelSurfaceGradient(color, compact: true),
             borderRadius: radius,
             border: Border.all(
-              color: color.withValues(alpha: compact ? 0.50 : 0.64),
-              width: compact ? 0.8 : 1.0,
+              color: color.withValues(alpha: 0.50),
+              width: themePanelBorderWidth(compact: true),
             ),
           ),
-          child: child,
+          child: ClipRRect(
+            borderRadius: radius,
+            child: Padding(padding: scaledInsets(padding), child: child),
+          ),
         ),
       );
     }
@@ -1223,9 +1338,10 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
 
         if (columns <= 1) {
           return ListView.builder(
+            // ignore: deprecated_member_use
+            cacheExtent: cacheExtent,
             key: sheetScrollKey(pageKey),
             padding: padding,
-            cacheExtent: cacheExtent,
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             itemCount: builders.length,
             itemBuilder: (context, index) => builders[index](context),
@@ -1239,9 +1355,10 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         );
 
         return ListView.builder(
+          // ignore: deprecated_member_use
+          cacheExtent: cacheExtent,
           key: sheetScrollKey(pageKey),
           padding: padding,
-          cacheExtent: cacheExtent,
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           itemCount: rows.length,
           itemBuilder: (context, rowIndex) {
@@ -1272,11 +1389,107 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     int maxColumns = 3,
     double minColumnWidth = 360,
     double cacheExtent = 420,
+    bool masonryColumns = false,
   }) {
     bool isFullWidthSection(Widget child) {
       if (child is _OculumSectionTitle) return true;
       if (child is KeyedSubtree) return isFullWidthSection(child.child);
       return false;
+    }
+
+    if (masonryColumns) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = responsivePageColumnCount(
+            constraints.maxWidth,
+            maxColumns: maxColumns,
+            minColumnWidth: minColumnWidth,
+          );
+          final padding = responsivePagePadding();
+          if (columns <= 1) {
+            return ListView.builder(
+              // ignore: deprecated_member_use
+              cacheExtent: cacheExtent,
+              key: sheetScrollKey(pageKey),
+              padding: padding,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              itemCount: children.length,
+              itemBuilder: (context, index) => children[index],
+            );
+          }
+
+          var contentStart = 0;
+          while (contentStart < children.length &&
+              fullWidthIndexes.contains(contentStart)) {
+            contentStart++;
+          }
+
+          final groups = <List<Widget>>[];
+          var index = contentStart;
+          while (index < children.length) {
+            final child = children[index];
+            if (!isFullWidthSection(child)) {
+              groups.add(<Widget>[child]);
+              index++;
+              continue;
+            }
+
+            final group = <Widget>[child];
+            index++;
+            while (index < children.length &&
+                !isFullWidthSection(children[index]) &&
+                !fullWidthIndexes.contains(index)) {
+              group.add(children[index]);
+              index++;
+            }
+            groups.add(group);
+          }
+
+          final columnGroups = List<List<List<Widget>>>.generate(
+            columns,
+            (_) => <List<Widget>>[],
+          );
+          final columnWeights = List<int>.filled(columns, 0);
+          for (final group in groups) {
+            var target = 0;
+            for (var column = 1; column < columns; column++) {
+              if (columnWeights[column] < columnWeights[target]) {
+                target = column;
+              }
+            }
+            columnGroups[target].add(group);
+            columnWeights[target] +=
+                group.length + (isFullWidthSection(group.first) ? 1 : 0);
+          }
+
+          return ListView(
+            // ignore: deprecated_member_use
+            cacheExtent: cacheExtent,
+            key: sheetScrollKey(pageKey),
+            padding: padding,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            children: [
+              for (var i = 0; i < contentStart; i++) children[i],
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var column = 0; column < columns; column++) ...[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final group in columnGroups[column]) ...group,
+                        ],
+                      ),
+                    ),
+                    if (column < columns - 1) const SizedBox(width: 10),
+                  ],
+                ],
+              ),
+            ],
+          );
+        },
+      );
     }
 
     final effectiveFullWidthIndexes = <int>{...fullWidthIndexes};
@@ -1295,10 +1508,20 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
   }
 
   Widget smallInfoText(String text, {Color? color}) {
+    final surface = Color.lerp(
+      backgroundMidColor,
+      backgroundBottomColor,
+      0.42,
+    )!;
+    final resolvedColor = readableOnTheme(
+      color ?? Colors.grey.shade300,
+      background: surface,
+      minRatio: 4.5,
+    );
     return Text(
       cleanUiText(text),
       style: TextStyle(
-        color: color ?? Colors.grey.shade300,
+        color: resolvedColor,
         fontSize: uiScale(12.5),
         height: lightweightUi ? 1.22 : 1.32,
       ),
@@ -1550,15 +1773,18 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
   }) {
     final cleanLabel = cleanUiText(label);
     final compact = lightweightUi;
+    final foreground = readableOnTheme(
+      Colors.white,
+      background: color,
+      minRatio: 4.5,
+    );
 
     return ElevatedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, size: compact ? 16 : 19),
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
-        foregroundColor: color.computeLuminance() > 0.45
-            ? Colors.black
-            : Colors.white,
+        foregroundColor: foreground,
         minimumSize: Size.fromHeight(compact ? 34 : 42),
         padding: EdgeInsets.symmetric(
           horizontal: compact ? 8 : 12,
@@ -1837,10 +2063,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
   }
 
   Widget damageModifierDropdown() {
-    final safeValue =
-        modificatoriDanno.any((x) => x.name == modificatoreDannoSelezionato)
-        ? modificatoreDannoSelezionato
-        : 'Normale';
+    final safeValue = canonicalDamageModifierName(modificatoreDannoSelezionato);
 
     final selected = modificatoriDanno.firstWhere(
       (x) => x.name == safeValue,
@@ -1871,7 +2094,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
             if (value == null) return;
 
             setState(() {
-              modificatoreDannoSelezionato = value;
+              modificatoreDannoSelezionato = canonicalDamageModifierName(value);
               aggiungiLog('Modificatore danno selezionato: $value.');
             });
 
@@ -1883,8 +2106,8 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         const SizedBox(height: 6),
         smallInfoText(
           t(
-            'Nota: Critico aggiunge +5 danni e peggiora lo stadio di uno: Rigenerazione → Resistenze → Normale → Fragilità. Poi Difesa, modificatore e Scudo Critico.',
-            'Note: Critical adds +5 damage and worsens the stage by one: Regeneration → Resistances → Normal → Fragility. Then Defense, modifier and Critical Shield.',
+            'Nota: il critico aggiunge +5 danni e peggiora lo stadio di uno: Rigenerazione → Resistenze → Normale → Fragilità. Poi applica Difesa, modificatore e Scudo Critico.',
+            'Note: Critical adds +5 damage and worsens the stage by one: Regeneration → Resistances → Normal → Fragility. Then Defense, modifier and Critical Shield apply.',
           ),
           color: tertiaryColor,
         ),
@@ -1892,151 +2115,234 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     );
   }
 
-  Widget dadoOverlayCentrale() {
-    final overlayResultColor = overlayCriticoUno
-        ? Colors.redAccent
-        : overlayCriticoVenti
-        ? tertiaryColor
-        : primaryColor;
+  Widget advantageModifierDropdown() {
+    final safeValue = canonicalVantaggioTiroName(vantaggioTiroSelezionato);
+    final selected = vantaggioTiroOptions().firstWhere(
+      (option) => option.key == safeValue,
+      orElse: () => const MapEntry('Normale', 0),
+    );
 
-    return IgnorePointer(
-      ignoring: !mostraOverlayDado || !dadoOverlayDismissibile,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: dadoOverlayDismissibile
-            ? () {
-                dadoOverlayTimer?.cancel();
-                dadoOverlayRevealTimer?.cancel();
-                setState(() {
-                  mostraOverlayDado = false;
-                  dadoOverlayMostraRisultato = false;
-                  dadoOverlayDismissibile = false;
-                });
-              }
-            : null,
-        child: AnimatedOpacity(
-          opacity: mostraOverlayDado ? 1 : 0,
-          duration: const Duration(milliseconds: 180),
-          child: Center(
-            child: AnimatedScale(
-              scale: mostraOverlayDado ? 1.0 : 0.55,
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutBack,
-              child: Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.20),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: overlayCriticoVenti
-                          ? tertiaryColor.withValues(alpha: 0.14)
-                          : primaryColor.withValues(alpha: 0.10),
-                      blurRadius: overlayCriticoVenti ? 12 : 7,
-                      spreadRadius: overlayCriticoVenti ? 1.5 : 0.5,
-                    ),
-                  ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DropdownButtonFormField<String>(
+          initialValue: safeValue,
+          dropdownColor: const Color(0xFF11131A),
+          decoration: fieldDecoration(
+            t('Vantaggio / Svantaggio tiri', 'Roll Advantage / Disadvantage'),
+          ),
+          items: [
+            for (final option in vantaggioTiroOptions())
+              DropdownMenuItem<String>(
+                value: option.key,
+                child: Text(
+                  option.value == 0
+                      ? option.key
+                      : '${option.key} (${option.value > 0 ? '+' : ''}${option.value})',
                 ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    AnimatedRotation(
-                      turns: mostraOverlayDado ? dadoOverlaySpinSeed * 0.18 : 0,
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeOutCubic,
-                      child: D20Widget(
-                        text: '',
-                        fillColor: secondaryColor,
-                        textColor: overlayResultColor,
-                        glow: overlayCriticoVenti,
-                        tertiaryColor: tertiaryColor,
-                        faces: dadoOverlayFacce,
-                      ),
+              ),
+          ],
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() {
+              vantaggioTiroSelezionato = canonicalVantaggioTiroName(value);
+              aggiungiLog(
+                'Modificatore tiri selezionato: $vantaggioTiroSelezionato.',
+              );
+            });
+            programmaSalvataggio();
+          },
+        ),
+        const SizedBox(height: 8),
+        smallInfoText(
+          selected.value == 0
+              ? t('Nessun bonus o malus ai tiri.', 'No roll bonus or penalty.')
+              : t(
+                  'Si applica ai tiri di statistica, VC, CM e iniziativa: ${selected.value > 0 ? '+' : ''}${selected.value}.',
+                  'Applies to stat rolls, VC, CM and initiative: ${selected.value > 0 ? '+' : ''}${selected.value}.',
+                ),
+          color: selected.value >= 0 ? tertiaryColor : Colors.redAccent,
+        ),
+      ],
+    );
+  }
+
+  Widget rollDifficultyField({bool compact = false}) {
+    return campoTesto(
+      label: 'DT (${t('Difficolta Tiro', 'Roll Difficulty')})',
+      controller: difficoltaTiroController,
+      helper: compact
+          ? null
+          : t(
+              '0 e neutro. Un valore positivo viene sottratto a tutti i tiri; un valore negativo li rende piu facili. I critici naturali restano invariati.',
+              '0 is neutral. A positive value is subtracted from every roll; a negative value makes rolls easier. Natural criticals remain unchanged.',
+            ),
+    );
+  }
+
+  Widget dadoOverlayCentrale() {
+    return ValueListenableBuilder<int>(
+      valueListenable: diceOverlayRevision,
+      builder: (context, revision, child) {
+        final overlayResultColor = overlayCriticoUno
+            ? Colors.redAccent
+            : overlayCriticoVenti
+            ? tertiaryColor
+            : primaryColor;
+
+        return IgnorePointer(
+          ignoring: !mostraOverlayDado || !dadoOverlayDismissibile,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: dadoOverlayDismissibile
+                ? () {
+                    dadoOverlayTimer?.cancel();
+                    dadoOverlayRevealTimer?.cancel();
+                    mostraOverlayDado = false;
+                    dadoOverlayMostraRisultato = false;
+                    dadoOverlayDismissibile = false;
+                    notifyDiceOverlayChanged();
+                  }
+                : null,
+            child: AnimatedOpacity(
+              opacity: mostraOverlayDado ? 1 : 0,
+              duration: const Duration(milliseconds: 180),
+              child: Center(
+                child: AnimatedScale(
+                  scale: mostraOverlayDado ? 1.0 : 0.55,
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutBack,
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.20),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: overlayCriticoVenti
+                              ? tertiaryColor.withValues(alpha: 0.14)
+                              : primaryColor.withValues(alpha: 0.10),
+                          blurRadius: overlayCriticoVenti ? 12 : 7,
+                          spreadRadius: overlayCriticoVenti ? 1.5 : 0.5,
+                        ),
+                      ],
                     ),
-                    AnimatedOpacity(
-                      opacity: dadoOverlayMostraRisultato ? 1 : 0,
-                      duration: const Duration(milliseconds: 120),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 104),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            dadoOverlay,
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            style: TextStyle(
-                              color: overlayResultColor,
-                              fontSize: dadoOverlay.length > 8
-                                  ? 22
-                                  : dadoOverlay.length > 4
-                                  ? 28
-                                  : 40,
-                              fontWeight: FontWeight.w900,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black.withValues(alpha: 0.92),
-                                  blurRadius: 5,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        AnimatedRotation(
+                          turns: mostraOverlayDado
+                              ? dadoOverlaySpinSeed * 0.18
+                              : 0,
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeOutCubic,
+                          child: D20Widget(
+                            text: '',
+                            fillColor: secondaryColor,
+                            textColor: overlayResultColor,
+                            glow: overlayCriticoVenti,
+                            tertiaryColor: tertiaryColor,
+                            faces: dadoOverlayFacce,
+                          ),
+                        ),
+                        AnimatedOpacity(
+                          opacity: dadoOverlayMostraRisultato ? 1 : 0,
+                          duration: const Duration(milliseconds: 120),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 104),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                dadoOverlay,
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                style: TextStyle(
+                                  color: overlayResultColor,
+                                  fontSize: dadoOverlay.length > 8
+                                      ? 22
+                                      : dadoOverlay.length > 4
+                                      ? 28
+                                      : 40,
+                                  fontWeight: FontWeight.w900,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.92,
+                                      ),
+                                      blurRadius: 5,
+                                    ),
+                                    Shadow(
+                                      color: tertiaryColor.withValues(
+                                        alpha: 0.32,
+                                      ),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
                                 ),
-                                Shadow(
-                                  color: tertiaryColor.withValues(alpha: 0.32),
-                                  blurRadius: 8,
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   Widget diceResultPanel() {
-    return gothicPanel(
-      borderColor: tiroCriticoVenti
-          ? tertiaryColor
-          : tiroCriticoUno
-          ? Colors.redAccent
-          : primaryColor,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            t('Risultato', 'Result'),
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: primaryColor,
-            ),
+    return ValueListenableBuilder<int>(
+      valueListenable: diceResultRevision,
+      builder: (context, revision, child) {
+        return gothicPanel(
+          borderColor: tiroCriticoVenti
+              ? tertiaryColor
+              : tiroCriticoUno
+              ? Colors.redAccent
+              : primaryColor,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                t('Risultato', 'Result'),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (dadoMostrato.isNotEmpty)
+                D20Widget(
+                  text: dadoMostrato,
+                  fillColor: secondaryColor,
+                  textColor: tiroCriticoUno
+                      ? Colors.redAccent
+                      : tiroCriticoVenti
+                      ? tertiaryColor
+                      : primaryColor,
+                  glow: tiroCriticoVenti,
+                  tertiaryColor: tertiaryColor,
+                  faces: dadoMostratoFacce,
+                ),
+              if (dadoMostrato.isNotEmpty) const SizedBox(height: 18),
+              Text(
+                risultato,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          if (dadoMostrato.isNotEmpty)
-            D20Widget(
-              text: dadoMostrato,
-              fillColor: secondaryColor,
-              textColor: tiroCriticoUno
-                  ? Colors.redAccent
-                  : tiroCriticoVenti
-                  ? tertiaryColor
-                  : primaryColor,
-              glow: tiroCriticoVenti,
-              tertiaryColor: tertiaryColor,
-              faces: dadoMostratoFacce,
-            ),
-          if (dadoMostrato.isNotEmpty) const SizedBox(height: 18),
-          Text(
-            risultato,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

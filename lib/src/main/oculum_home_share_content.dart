@@ -3,16 +3,15 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 extension _OculumHomeShareContent on _OculumHomePageState {
-  bool get haPermessiMaster => modalitaMaster || isMasterHost || sonoCoMaster;
+  bool get haPermessiMaster =>
+      realtimeIsMasterRole ||
+      realtimeIsCoMasterRole ||
+      modalitaMaster ||
+      isMasterHost ||
+      sonoCoMaster;
 
   void mostraSceltaRuoloSeNecessaria() {
-    if (sceltaRuoloSessioneMostrata || !tutorialCompletato) return;
-
     sceltaRuoloSessioneMostrata = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      mostraDialogSceltaRuolo();
-    });
   }
 
   void mostraDialogSceltaRuolo() {
@@ -1236,10 +1235,16 @@ extension _OculumHomeShareContent on _OculumHomePageState {
   void tiraSchedaConnessa(Map<String, dynamic> sheet, String key) {
     final dado = tiraD20();
     final bonus = connectedSheetRollBonus(sheet, key);
+    final level = max(0, readIntValue(sheet['livello']));
+    final grade = max(0, readIntValue(sheet['grado']));
+    final difficulty = readIntValue(sheet['difficoltaTiro']);
     final testoDado = rollFormulaWithCritical(
       roll: dado,
       faces: 20,
       bonuses: [bonus],
+      level: level,
+      grade: grade,
+      difficulty: difficulty,
     );
     final nome = '${sheet['nome'] ?? sheet['name'] ?? '???'}';
     final label = sheetRollLabel(key);
@@ -1299,21 +1304,25 @@ extension _OculumHomeShareContent on _OculumHomePageState {
     final id = '${sheet['id'] ?? sheet['sheetTag'] ?? ''}'.trim();
     if (id.isEmpty) return;
 
-    var targetIndex = schedePersonaggio.indexWhere(
-      (x) => '${x['id'] ?? x['sheetTag'] ?? ''}'.trim() == id,
-    );
+    salvaSchedaCorrenteInMemoria();
+    final imported = preparaSchedeImportateUniche(<Map<String, dynamic>>[
+      normalizzaSchedaImportata(sheet),
+    ]).single;
+    imported['inMasterParty'] = true;
+    var targetIndex = -1;
 
     setState(() {
-      final copy = Map<String, dynamic>.from(sheet);
-      copy['inMasterParty'] = true;
-      if (targetIndex >= 0) {
-        schedePersonaggio[targetIndex] = copy;
-      } else {
-        schedePersonaggio.add(copy);
-        targetIndex = schedePersonaggio.length - 1;
-      }
+      schedePersonaggio.add(imported);
+      assicuraTagSchede();
+      targetIndex = schedePersonaggio.length - 1;
+      risultato = t(
+        'Scheda connessa importata come nuova copia: ${nomeSchedaPersonaggio(targetIndex)}. Le schede locali esistenti non sono state sovrascritte.',
+        'Connected sheet imported as a new copy: ${nomeSchedaPersonaggio(targetIndex)}. Existing local sheets were not overwritten.',
+      );
+      aggiungiLog(risultato);
     });
 
+    await salvaDati();
     await apriSchedaDaParty(targetIndex);
   }
 

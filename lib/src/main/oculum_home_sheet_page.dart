@@ -2653,6 +2653,15 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         onIncrease: onIncrease,
         manualQuery: manualQuery,
       ),
+      onLongPressStart: (details) => showQuickContextMenu(
+        label: label,
+        position: details.globalPosition,
+        onEdit: onEdit,
+        onRoll: onRoll,
+        onDecrease: onDecrease,
+        onIncrease: onIncrease,
+        manualQuery: manualQuery,
+      ),
       child: child,
     );
   }
@@ -3462,50 +3471,104 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   }
 
   void showFortunaQuickEditor() {
+    final fortunaController = TextEditingController(text: '$fortuna');
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: const Color(0xFF10121A),
       builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                const Icon(Icons.auto_awesome, color: Color(0xFF9BE564)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    '${t('Fortuna', 'Luck')}: $fortuna',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            void applyFortunaValue(int value) {
+              final next = max(0, value);
+              setSheetState(() {
+                fortuna = next;
+                fortunaController.text = '$next';
+                fortunaController.selection = TextSelection.collapsed(
+                  offset: fortunaController.text.length,
+                );
+              });
+              scheduleInputUiRefresh(delay: const Duration(milliseconds: 80));
+              programmaSalvataggio();
+            }
+
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  12,
+                  12,
+                  12,
+                  12 + MediaQuery.of(sheetContext).viewInsets.bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.auto_awesome,
+                          color: Color(0xFF9BE564),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '${t('Fortuna', 'Luck')}: $fortuna',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: t('Diminuisci', 'Decrease'),
+                          onPressed: () {
+                            applyFortunaValue(fortuna - 1);
+                            Navigator.pop(sheetContext);
+                          },
+                          icon: const Icon(Icons.remove_circle_outline),
+                        ),
+                        IconButton(
+                          tooltip: t('Aumenta', 'Increase'),
+                          onPressed: () {
+                            applyFortunaValue(fortuna + 1);
+                            Navigator.pop(sheetContext);
+                          },
+                          icon: const Icon(Icons.add_circle_outline),
+                        ),
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: fortunaController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        signed: true,
+                      ),
+                      style: TextStyle(
+                        fontSize: uiScale(16),
+                        color: Colors.white,
+                      ),
+                      decoration: fieldDecoration(t('Fortuna', 'Luck')),
+                      onChanged: (value) {
+                        final parsed = int.tryParse(value.trim()) ?? 0;
+                        setSheetState(() => fortuna = max(0, parsed));
+                        scheduleInputUiRefresh(
+                          delay: const Duration(milliseconds: 80),
+                        );
+                        programmaSalvataggio();
+                      },
+                    ),
+                  ],
                 ),
-                IconButton(
-                  tooltip: t('Diminuisci', 'Decrease'),
-                  onPressed: () {
-                    setState(() => fortuna -= 1);
-                    programmaSalvataggio();
-                    Navigator.pop(sheetContext);
-                  },
-                  icon: const Icon(Icons.remove_circle_outline),
-                ),
-                IconButton(
-                  tooltip: t('Aumenta', 'Increase'),
-                  onPressed: () {
-                    setState(() => fortuna += 1);
-                    programmaSalvataggio();
-                    Navigator.pop(sheetContext);
-                  },
-                  icon: const Icon(Icons.add_circle_outline),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
-    );
+    ).whenComplete(() {
+      fortunaController.dispose();
+      if (!mounted) return;
+      setState(() {});
+      programmaSalvataggio();
+    });
   }
 
   void openReputationManagerSheet() {
@@ -3686,184 +3749,75 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         var selectedGroup = 'resilienza';
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            final visibleStats = hiddenEyeStats
-                .where((stat) => hiddenEyeStatGroup(stat.id) == selectedGroup)
-                .toList(growable: false);
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(sheetContext).size.height * 0.82,
-                  ),
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: [
-                      ListTile(
-                        leading: Icon(
-                          Icons.remove_red_eye,
-                          color: eyePupilGlowColor,
-                        ),
-                        title: Text(
-                          t('Sottotratti dell\'Oculus', 'Oculus subtraits'),
-                          style: TextStyle(
-                            color: eyePupilGlowColor,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        subtitle: Text(
-                          t(
-                            'Scegli la statistica base e tira 1d20 + sottotratto dell\'Oculus.',
-                            'Choose the base stat and roll 1d20 + Oculus subtrait.',
-                          ),
-                          style: const TextStyle(color: Colors.white70),
-                        ),
+            return ValueListenableBuilder<int>(
+              valueListenable: hiddenEyeListRevision,
+              builder: (context, revision, child) {
+                final visibleStats = hiddenEyeStatsForGroup(selectedGroup);
+                return SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight:
+                            MediaQuery.of(sheetContext).size.height * 0.82,
                       ),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+                      child: ListView(
+                        shrinkWrap: true,
                         children: [
-                          for (final group in const [
-                            'resilienza',
-                            'volonta',
-                            'materia',
-                            'oculum',
-                          ])
-                            ChoiceChip(
-                              selected: selectedGroup == group,
-                              label: Text(hiddenEyeGroupLabel(group)),
-                              onSelected: (_) {
-                                setSheetState(() => selectedGroup = group);
-                              },
+                          ListTile(
+                            leading: Icon(
+                              Icons.remove_red_eye,
+                              color: eyePupilGlowColor,
                             ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final stat in visibleStats)
-                            SizedBox(
-                              width: 250,
-                              child: gothicPanel(
-                                borderColor: eyePupilGlowColor,
-                                padding: const EdgeInsets.all(8),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    ElevatedButton.icon(
-                                      onPressed: () {
-                                        Navigator.pop(sheetContext);
-                                        WidgetsBinding.instance
-                                            .addPostFrameCallback((_) {
-                                              if (!mounted) return;
-                                              unawaited(
-                                                tiraSottotrattoOcchio(stat),
-                                              );
-                                            });
-                                      },
-                                      icon: const Icon(Icons.add),
-                                      label: Text(
-                                        '${stat.nome} +${hiddenEyeTotal(stat)}',
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: eyePupilGlowColor,
-                                        foregroundColor:
-                                            eyePupilGlowColor
-                                                    .computeLuminance() >
-                                                0.45
-                                            ? Colors.black
-                                            : Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(999),
-                                      child: SizedBox(
-                                        height: 5,
-                                        child: LinearProgressIndicator(
-                                          value: oculusSubtraitMasteryFraction(
-                                            progress: stat.masteryProgress,
-                                            grade: stat.valore,
-                                          ),
-                                          backgroundColor: Colors.white
-                                              .withValues(alpha: 0.10),
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                eyePupilGlowColor,
-                                              ),
-                                        ),
-                                      ),
-                                    ),
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                          tooltip: t(
-                                            'Riduci base',
-                                            'Lower base',
-                                          ),
-                                          onPressed: () {
-                                            setSheetState(() {
-                                              stat.valore -= 1;
-                                              editedBaseValues = true;
-                                            });
-                                          },
-                                          icon: const Icon(
-                                            Icons.remove_circle_outline,
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: Text(
-                                            '${t('Base', 'Base')} ${stat.valore}\n${t('Totale', 'Total')} ${hiddenEyeTotal(stat)}',
-                                            textAlign: TextAlign.center,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              color: Colors.white70,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        IconButton(
-                                          tooltip: t(
-                                            'Aumenta base',
-                                            'Raise base',
-                                          ),
-                                          onPressed: () {
-                                            setSheetState(() {
-                                              stat.valore += 1;
-                                              editedBaseValues = true;
-                                            });
-                                          },
-                                          icon: const Icon(
-                                            Icons.add_circle_outline,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    smallInfoText(
-                                      stat.descrizione,
-                                      color: Colors.grey.shade400,
-                                    ),
-                                  ],
-                                ),
+                            title: Text(
+                              t('Sottotratti dell\'Oculus', 'Oculus subtraits'),
+                              style: TextStyle(
+                                color: eyePupilGlowColor,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
-                          if (visibleStats.isEmpty)
-                            smallInfoText(
+                            subtitle: Text(
                               t(
-                                'Nessun sottotratto dell\'Oculus in questa categoria.',
-                                'No Oculus subtrait in this category.',
+                                'Scegli la statistica base e tira 1d20 + sottotratto dell\'Oculus.',
+                                'Choose the base stat and roll 1d20 + Oculus subtrait.',
                               ),
+                              style: const TextStyle(color: Colors.white70),
                             ),
+                          ),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final group in const [
+                                'resilienza',
+                                'volonta',
+                                'materia',
+                                'oculum',
+                              ])
+                                ChoiceChip(
+                                  selected: selectedGroup == group,
+                                  label: Text(hiddenEyeGroupLabel(group)),
+                                  onSelected: (_) {
+                                    setSheetState(() => selectedGroup = group);
+                                  },
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          hiddenEyeStatsGrid(
+                            sheetContext: sheetContext,
+                            group: selectedGroup,
+                            visibleStats: visibleStats,
+                            onBaseEdited: () {
+                              editedBaseValues = true;
+                            },
+                          ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             );
           },
         );
@@ -3871,9 +3825,199 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     ).whenComplete(() {
       if (!mounted) return;
       if (!editedBaseValues) return;
-      setState(() {});
+      scheduleInputUiRefresh(delay: const Duration(milliseconds: 80));
       programmaSalvataggio();
     });
+  }
+
+  Widget hiddenEyeStatsGrid({
+    required BuildContext sheetContext,
+    required String group,
+    required List<HiddenEyeStat> visibleStats,
+    required VoidCallback onBaseEdited,
+  }) {
+    if (visibleStats.isEmpty) {
+      return smallInfoText(
+        t(
+          'Nessun sottotratto dell\'Oculus in questa categoria.',
+          'No Oculus subtrait in this category.',
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.of(context).size.width;
+        final columns = max(1, maxWidth ~/ 258);
+        final rows = (visibleStats.length / columns).ceil();
+        final rowHeight = uiScale(172);
+        final gridHeight = min(
+          MediaQuery.of(context).size.height * 0.52,
+          max(rowHeight, rows * rowHeight),
+        );
+
+        return SizedBox(
+          height: gridHeight.toDouble(),
+          child: GridView.builder(
+            key: PageStorageKey<String>('hidden_eye_grid_$group'),
+            primary: false,
+            itemCount: visibleStats.length,
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 258,
+              mainAxisExtent: rowHeight,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+            ),
+            itemBuilder: (context, index) {
+              final stat = visibleStats[index];
+              return KeyedSubtree(
+                key: ValueKey<String>(
+                  'hidden_eye_stat_${currentSheetScrollId()}_${stat.id}',
+                ),
+                child: hiddenEyeStatManagerCard(
+                  sheetContext: sheetContext,
+                  stat: stat,
+                  onBaseEdited: onBaseEdited,
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget hiddenEyeStatDynamic({
+    required HiddenEyeStat stat,
+    required Widget Function(BuildContext context) builder,
+  }) {
+    return ValueListenableBuilder<int>(
+      valueListenable: hiddenEyeStatListenable(stat),
+      builder: (context, revision, child) => builder(context),
+    );
+  }
+
+  Widget hiddenEyeStatRollButton({
+    required BuildContext sheetContext,
+    required HiddenEyeStat stat,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.pop(sheetContext);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          unawaited(tiraSottotrattoOcchio(stat));
+        });
+      },
+      icon: const Icon(Icons.add),
+      label: hiddenEyeStatDynamic(
+        stat: stat,
+        builder: (context) {
+          return Text('${stat.nome} +${hiddenEyeTotal(stat)}');
+        },
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: eyePupilGlowColor,
+        foregroundColor: eyePupilGlowColor.computeLuminance() > 0.45
+            ? Colors.black
+            : Colors.white,
+      ),
+    );
+  }
+
+  Widget hiddenEyeStatProgressBar(HiddenEyeStat stat) {
+    return hiddenEyeStatDynamic(
+      stat: stat,
+      builder: (context) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: SizedBox(
+            height: 5,
+            child: LinearProgressIndicator(
+              value: oculusSubtraitMasteryFraction(
+                progress: stat.masteryProgress,
+                grade: stat.valore,
+              ),
+              backgroundColor: Colors.white.withValues(alpha: 0.10),
+              valueColor: AlwaysStoppedAnimation<Color>(eyePupilGlowColor),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget hiddenEyeStatBaseControls({
+    required HiddenEyeStat stat,
+    required VoidCallback onBaseEdited,
+  }) {
+    void applyBaseDelta(int delta) {
+      stat.valore += delta;
+      onBaseEdited();
+      notifyHiddenEyeStatChanged(stat);
+      scheduleHiddenEyeProgressSave();
+    }
+
+    return Row(
+      children: [
+        IconButton(
+          tooltip: t('Riduci base', 'Lower base'),
+          onPressed: () => applyBaseDelta(-1),
+          icon: const Icon(Icons.remove_circle_outline),
+        ),
+        Expanded(
+          child: hiddenEyeStatDynamic(
+            stat: stat,
+            builder: (context) {
+              return Text(
+                '${t('Base', 'Base')} ${stat.valore}\n${t('Totale', 'Total')} ${hiddenEyeTotal(stat)}',
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.bold,
+                ),
+              );
+            },
+          ),
+        ),
+        IconButton(
+          tooltip: t('Aumenta base', 'Raise base'),
+          onPressed: () => applyBaseDelta(1),
+          icon: const Icon(Icons.add_circle_outline),
+        ),
+      ],
+    );
+  }
+
+  Widget hiddenEyeStatDescription(HiddenEyeStat stat) {
+    return smallInfoText(stat.descrizione, color: Colors.grey.shade400);
+  }
+
+  Widget hiddenEyeStatManagerCard({
+    required BuildContext sheetContext,
+    required HiddenEyeStat stat,
+    required VoidCallback onBaseEdited,
+  }) {
+    return RepaintBoundary(
+      child: gothicPanel(
+        borderColor: eyePupilGlowColor,
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            hiddenEyeStatRollButton(sheetContext: sheetContext, stat: stat),
+            const SizedBox(height: 8),
+            hiddenEyeStatProgressBar(stat),
+            hiddenEyeStatBaseControls(stat: stat, onBaseEdited: onBaseEdited),
+            hiddenEyeStatDescription(stat),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget occhiataVeloceRaWidget() {
@@ -4704,7 +4848,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   value: dannoOltreDifesa,
                   onChanged: (value) {
                     setState(() => dannoOltreDifesa = value ?? false);
-                    programmaSalvataggio();
+                    programmaSalvataggio(invalidateCaches: false);
                   },
                 ),
                 compactCheck(
@@ -4712,7 +4856,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   value: dannoOltreScudi,
                   onChanged: (value) {
                     setState(() => dannoOltreScudi = value ?? false);
-                    programmaSalvataggio();
+                    programmaSalvataggio(invalidateCaches: false);
                   },
                 ),
               ];
@@ -6133,11 +6277,11 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     VoidCallback? onDecrease,
     VoidCallback? onIncrease,
   }) {
-    final rollBonus =
-        value ~/ 2 +
-        bonusLivelloGrado() +
-        malusFaticaTiri() +
-        statRollQuickBonus(label);
+    final rollBonus = oculumStatRollBonus(
+      statValue: value,
+      levelGradeBonus: bonusLivelloGrado(),
+      quickBonus: statRollQuickBonus(label),
+    );
     final hasExtra = buff != 0 || temp != 0 || bonusSkillForma != 0;
     final compact = lightweightUi;
     final diceButtonSize = compact ? 34.0 : 40.0;

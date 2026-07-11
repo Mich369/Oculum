@@ -907,10 +907,10 @@ class _OculumEmbeddedBrowserState extends State<OculumEmbeddedBrowser> {
   bool _canGoForward = false;
   String _error = '';
 
-  bool get _usesWindowsWebView => Platform.isWindows;
+  bool get _usesWindowsWebView => !kIsWeb && Platform.isWindows;
 
   bool get _usesMobileWebView =>
-      Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
+      !kIsWeb && (Platform.isAndroid || Platform.isIOS || Platform.isMacOS);
 
   String _tr(String it, String en) => widget.english ? en : it;
 
@@ -1291,10 +1291,10 @@ class _OculumInAppBrowserPageState extends State<OculumInAppBrowserPage> {
     super.dispose();
   }
 
-  bool get _usesWindowsWebView => Platform.isWindows;
+  bool get _usesWindowsWebView => !kIsWeb && Platform.isWindows;
 
   bool get _usesMobileWebView =>
-      Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
+      !kIsWeb && (Platform.isAndroid || Platform.isIOS || Platform.isMacOS);
 
   String _tr(String it, String en) => widget.english ? en : it;
 
@@ -1690,6 +1690,8 @@ bool oculumThemeStartsUnlocked(String id) {
     'kingi_wrong_future',
     'blood_chapel',
     'null_crown',
+    'whispering_reliquary',
+    'black_briar_kingdom',
     'slime_prince',
     'moon_rot',
     'obser_relic',
@@ -1823,7 +1825,10 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       case 'null_crown':
         return 'sigil';
       case 'phobia_dark':
+      case 'whispering_reliquary':
         return 'phobia';
+      case 'black_briar_kingdom':
+        return 'souls';
       case 'shadow_gate_rank':
         return 'shadow_gate';
       case 'frost_chapel':
@@ -1892,6 +1897,16 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         );
       case 'null_crown':
         return t('corona del vuoto', 'void crown');
+      case 'whispering_reliquary':
+        return t(
+          'reliquiario incrinato, graffi e sussurri',
+          'cracked reliquary, scratches and whispers',
+        );
+      case 'black_briar_kingdom':
+        return t(
+          'rovi neri, corona consunta e brace regale',
+          'black briars, worn crown and royal embers',
+        );
       case 'slime_prince':
         return t('corona gelatinosa regale', 'royal slime crown');
       case 'moon_rot':
@@ -2077,6 +2092,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     switch (id) {
       case 'kingi_wrong_future':
       case 'phobia_dark':
+      case 'whispering_reliquary':
+      case 'black_briar_kingdom':
       case 'hoshy_cosmic_cat':
       case 'postea_bloom':
       case 'shadow_gate_rank':
@@ -3670,7 +3687,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                   )
                 : null,
           ),
-      onChanged: (_) => setState(() {}),
+      onChanged: (_) => scheduleInputUiRefresh(),
     );
   }
 
@@ -5114,6 +5131,28 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     final picked = await _picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
     final sourceName = picked.name.trim().isEmpty ? 'mappa.png' : picked.name;
+    if (kIsWeb) {
+      final prepared = await prepareVttImportedImage(
+        await picked.readAsBytes(),
+        maxDimension: 1920,
+        quality: 72,
+      );
+      if (!mounted || '${prepared['base64'] ?? ''}'.isEmpty) return;
+      setState(() {
+        mapMode = 'image';
+        mapImagePath = '';
+        mapImageName = sourceName;
+        activeVttScene.imageDataBase64 = '${prepared['base64']}';
+        risultato = t(
+          'Mappa importata nel sito.',
+          'Map imported in the web app.',
+        );
+        aggiungiLog(risultato);
+      });
+      markVttLegacyMapChanged(includeAsset: true);
+      programmaSalvataggio();
+      return;
+    }
     final savedPath = await copyFileToOculumStorage(
       source: File(picked.path),
       directoryName: 'maps',
@@ -5124,17 +5163,21 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       mapMode = 'image';
       mapImagePath = savedPath;
       mapImageName = sourceName;
+      activeVttScene.imageDataBase64 = '';
       risultato = t('Mappa importata.', 'Map imported.');
       aggiungiLog(risultato);
     });
+    markVttLegacyMapChanged(includeAsset: true);
     programmaSalvataggio();
   }
 
   Future<void> incollaImmagineMappa() async {
     final hasExistingLocalMap =
         mapMode == 'image' &&
-        mapImagePath.trim().isNotEmpty &&
-        File(mapImagePath.trim()).existsSync();
+        (activeVttScene.imageDataBase64.isNotEmpty ||
+            (!kIsWeb &&
+                mapImagePath.trim().isNotEmpty &&
+                File(mapImagePath.trim()).existsSync()));
     if (hasExistingLocalMap) {
       await incollaTokenImmagineMappa();
       return;
@@ -5144,20 +5187,44 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       final clipboardImage = await Pasteboard.image;
       if (!mounted) return;
       if (clipboardImage != null && clipboardImage.isNotEmpty) {
-        final savedPath = await saveBytesToOculumStorage(
-          bytes: clipboardImage,
-          directoryName: 'maps',
-          sourceName: 'mappa_appunti.png',
-        );
+        var savedPath = '';
+        var embedded = '';
+        if (kIsWeb) {
+          final prepared = await prepareVttImportedImage(
+            clipboardImage,
+            maxDimension: 1920,
+            quality: 72,
+          );
+          embedded = '${prepared['base64'] ?? ''}';
+        } else {
+          savedPath = await saveBytesToOculumStorage(
+            bytes: clipboardImage,
+            directoryName: 'maps',
+            sourceName: 'mappa_appunti.png',
+          );
+        }
         if (!mounted) return;
         setState(() {
           mapMode = 'image';
           mapImagePath = savedPath;
           mapImageName = t('Appunti', 'Clipboard');
+          activeVttScene.imageDataBase64 = embedded;
           risultato = t('Mappa incollata dagli appunti.', 'Map pasted.');
           aggiungiLog(risultato);
         });
+        markVttLegacyMapChanged(includeAsset: true);
         programmaSalvataggio();
+        return;
+      }
+
+      if (kIsWeb) {
+        setState(() {
+          risultato = t(
+            'Nessuna immagine leggibile negli appunti del browser.',
+            'No readable image in the browser clipboard.',
+          );
+          aggiungiLog(risultato);
+        });
         return;
       }
 
@@ -5183,9 +5250,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
           mapMode = 'image';
           mapImagePath = savedPath;
           mapImageName = name;
+          activeVttScene.imageDataBase64 = '';
           risultato = t('Mappa incollata da file.', 'Map pasted from file.');
           aggiungiLog(risultato);
         });
+        markVttLegacyMapChanged(includeAsset: true);
         programmaSalvataggio();
         return;
       }
@@ -5249,6 +5318,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       return bytes;
     }
 
+    if (kIsWeb) return null;
     final files = await Pasteboard.files();
     for (final rawPath in files) {
       final path = rawPath.startsWith('file:')
@@ -5267,8 +5337,10 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
 
   Future<void> incollaTokenImmagineMappa() async {
     final hasMap =
-        mapImagePath.trim().isNotEmpty &&
-        File(mapImagePath.trim()).existsSync();
+        activeVttScene.imageDataBase64.isNotEmpty ||
+        (!kIsWeb &&
+            mapImagePath.trim().isNotEmpty &&
+            File(mapImagePath.trim()).existsSync());
     if (!hasMap) {
       setState(() {
         risultato = t(
@@ -5325,6 +5397,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         );
         aggiungiLog(risultato);
       });
+      markVttLegacyMapChanged();
       programmaSalvataggio();
     } catch (error) {
       if (!mounted) return;
@@ -5350,10 +5423,12 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     setState(() {
       mapImagePath = '';
       mapImageName = '';
+      activeVttScene.imageDataBase64 = '';
       mapTransformationController.value = Matrix4.identity();
       risultato = t('Mappa rimossa.', 'Map removed.');
       aggiungiLog(risultato);
     });
+    markVttLegacyMapChanged(includeAsset: true);
     programmaSalvataggio();
   }
 
@@ -5383,6 +5458,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         aggiungiLog(risultato);
       }
     });
+    markVttLegacyMapChanged(includeAsset: true);
     programmaSalvataggio();
     return true;
   }
@@ -5413,6 +5489,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         );
         aggiungiLog(risultato);
       });
+      markVttLegacyMapChanged(includeAsset: true);
       programmaSalvataggio();
     } catch (error) {
       if (!mounted) return;
@@ -5496,10 +5573,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
 
   Future<bool> openUriInOculumBrowser(Uri uri, {String? title}) async {
     final supported =
-        Platform.isWindows ||
-        Platform.isAndroid ||
-        Platform.isIOS ||
-        Platform.isMacOS;
+        !kIsWeb &&
+        (Platform.isWindows ||
+            Platform.isAndroid ||
+            Platform.isIOS ||
+            Platform.isMacOS);
     if (!supported) {
       return launchUrl(uri, mode: LaunchMode.externalApplication);
     }
@@ -5585,10 +5663,12 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       pageKey: 'map',
       maxColumns: 2,
       minColumnWidth: 360,
-      fullWidthIndexes: const <int>{0, 2, 3},
+      fullWidthIndexes: const <int>{0, 3, 4, 5},
       children: [
         functionAnchor('map_root', sectionTitle(t('Mappa', 'Map'))),
+        vttSceneManagerPanel(),
         mapControlPanel(),
+        vttToolbarPanel(),
         mapViewerPanel(),
         localMapMiniInitiativePanel(),
         mapNotesPanel(),
@@ -5623,6 +5703,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
 
   List<int> localMapTokenSheetIndexes() {
     if (schedePersonaggio.isEmpty) return const [];
+    if (!vttCanManageTokens) return const [];
     final canManageShared = canUseSharedSheetsForMasterInitiative();
     if (!canManageShared && !mapPlayersCanManageOwnToken) return const [];
     final indexes = <int>[];
@@ -5669,6 +5750,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   }
 
   bool canManageLocalMapToken(Map<String, dynamic> token) {
+    if (!vttCanManageTokens) return false;
     if (canUseSharedSheetsForMasterInitiative()) return true;
     if (!mapPlayersCanManageOwnToken) return false;
     final tag = localMapTokenOwnerTag(token);
@@ -5714,6 +5796,21 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       'initiativeBase': sheetRollBonusAt(index, 'iniziativa'),
       'reactionMax': sheetReazioniAt(index),
       'reactionFastMax': sheetReazioniVelociAt(index),
+      'currentHp': max(0, sheetCurrentHpForDeathAt(index)),
+      'maxHp': max(0, sheetMaxHpForDeathAt(index)),
+      'tempHp': max(0, sheetIntValueAt(index, 'hpTemp')),
+      'shield': max(0, sheetIntValueAt(index, 'scudo')),
+      'conditions': <String>[],
+      'visionMeters': 0.0,
+      'auraMeters': 0.0,
+      'elevationMeters': 0.0,
+      'rotationDegrees': 0.0,
+      'visible': true,
+      'hidden': false,
+      'defeated': false,
+      'dead': false,
+      'publicNotes': '',
+      'privateNotes': '',
       'x': x.clamp(0.0, 1.0),
       'y': y.clamp(0.0, 1.0),
       'size': mapTokenDefaultSize(),
@@ -5752,6 +5849,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       });
     }
 
+    markVttLegacyMapChanged();
     programmaSalvataggio();
   }
 
@@ -5788,6 +5886,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       );
       aggiungiLog(risultato);
     });
+    markVttLegacyMapChanged();
     programmaSalvataggio();
   }
 
@@ -5804,6 +5903,10 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       token['initiativeBase'] = sheetRollBonusAt(index, 'iniziativa');
       token['reactionMax'] = sheetReazioniAt(index);
       token['reactionFastMax'] = sheetReazioniVelociAt(index);
+      token['currentHp'] = max(0, sheetCurrentHpForDeathAt(index));
+      token['maxHp'] = max(0, sheetMaxHpForDeathAt(index));
+      token['tempHp'] = max(0, sheetIntValueAt(index, 'hpTemp'));
+      token['shield'] = max(0, sheetIntValueAt(index, 'scudo'));
       token['size'] = mapTokenDefaultSize();
       risultato = t(
         'Token aggiornato dalla scheda: ${nomeSchedaPersonaggio(index)}.',
@@ -5811,6 +5914,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       );
       aggiungiLog(risultato);
     });
+    markVttLegacyMapChanged();
     programmaSalvataggio();
   }
 
@@ -5822,16 +5926,19 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
           .toDouble();
       token['size'] = next;
     });
+    markVttLegacyMapChanged();
     programmaSalvataggio();
   }
 
   void removeLocalMapToken(Map<String, dynamic> token) {
     if (!canManageLocalMapToken(token)) return;
+    vttSelectedTokenIds.remove(localMapTokenStableId(token));
     setState(() {
       localMapTokens.removeWhere((item) => identical(item, token));
       risultato = t('Token rimosso dalla mappa.', 'Token removed from map.');
       aggiungiLog(risultato);
     });
+    markVttLegacyMapChanged();
     programmaSalvataggio();
   }
 
@@ -6047,6 +6154,50 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     final movementController = TextEditingController(
       text: localMapTokenMovementBudget(token).toStringAsFixed(0),
     );
+    final linkedSheetIndex = indexForLocalMapToken(token);
+    final currentHpController = TextEditingController(
+      text:
+          '${token['currentHp'] ?? (linkedSheetIndex >= 0 ? sheetCurrentHpForDeathAt(linkedSheetIndex) : 0)}',
+    );
+    final maxHpController = TextEditingController(
+      text:
+          '${token['maxHp'] ?? (linkedSheetIndex >= 0 ? sheetMaxHpForDeathAt(linkedSheetIndex) : 0)}',
+    );
+    final tempHpController = TextEditingController(
+      text:
+          '${token['tempHp'] ?? (linkedSheetIndex >= 0 ? sheetIntValueAt(linkedSheetIndex, 'hpTemp') : 0)}',
+    );
+    final shieldController = TextEditingController(
+      text:
+          '${token['shield'] ?? (linkedSheetIndex >= 0 ? sheetIntValueAt(linkedSheetIndex, 'scudo') : 0)}',
+    );
+    final visionController = TextEditingController(
+      text: '${token['visionMeters'] ?? 0}',
+    );
+    final auraController = TextEditingController(
+      text: '${token['auraMeters'] ?? 0}',
+    );
+    final elevationController = TextEditingController(
+      text: '${token['elevationMeters'] ?? 0}',
+    );
+    final rotationController = TextEditingController(
+      text: '${token['rotationDegrees'] ?? 0}',
+    );
+    final conditionsController = TextEditingController(
+      text: token['conditions'] is List
+          ? (token['conditions'] as List).join(', ')
+          : '${token['conditions'] ?? ''}',
+    );
+    final publicNotesController = TextEditingController(
+      text: '${token['publicNotes'] ?? ''}',
+    );
+    final privateNotesController = TextEditingController(
+      text: '${token['privateNotes'] ?? ''}',
+    );
+    var visible = _oculumVttBool(token['visible'], true);
+    var hidden = _oculumVttBool(token['hidden']);
+    var defeated = _oculumVttBool(token['defeated']);
+    var dead = _oculumVttBool(token['dead']);
     var side = '${token['side'] ?? 'neutral'}'.toLowerCase();
     if (side != 'ally' && side != 'enemy' && side != 'neutral') {
       side = 'neutral';
@@ -6069,7 +6220,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
             return AlertDialog(
               backgroundColor: const Color(0xFF10121A),
               title: Text(
-                t('Modifica token libero', 'Edit free token'),
+                t('Proprieta pedina', 'Token properties'),
                 style: TextStyle(
                   color: tertiaryColor,
                   fontWeight: FontWeight.bold,
@@ -6232,6 +6383,120 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: <Widget>[
+                          for (final field
+                              in <
+                                ({
+                                  TextEditingController controller,
+                                  String label,
+                                })
+                              >[
+                                (
+                                  controller: currentHpController,
+                                  label: t('HP attuali', 'Current HP'),
+                                ),
+                                (
+                                  controller: maxHpController,
+                                  label: t('HP massimi', 'Max HP'),
+                                ),
+                                (
+                                  controller: tempHpController,
+                                  label: t('HP temporanei', 'Temporary HP'),
+                                ),
+                                (
+                                  controller: shieldController,
+                                  label: t('Scudo', 'Shield'),
+                                ),
+                                (
+                                  controller: visionController,
+                                  label: t('Visione m', 'Vision m'),
+                                ),
+                                (
+                                  controller: auraController,
+                                  label: t('Aura m', 'Aura m'),
+                                ),
+                                (
+                                  controller: elevationController,
+                                  label: t('Elevazione m', 'Elevation m'),
+                                ),
+                                (
+                                  controller: rotationController,
+                                  label: t(
+                                    'Rotazione gradi',
+                                    'Rotation degrees',
+                                  ),
+                                ),
+                              ])
+                            SizedBox(
+                              width: 150,
+                              child: TextField(
+                                controller: field.controller,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      signed: true,
+                                      decimal: true,
+                                    ),
+                                decoration: fieldDecoration(field.label),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: conditionsController,
+                        decoration: fieldDecoration(
+                          t(
+                            'Condizioni separate da virgola',
+                            'Comma-separated conditions',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: publicNotesController,
+                        maxLines: 2,
+                        decoration: fieldDecoration(
+                          t('Note pubbliche', 'Public notes'),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: privateNotesController,
+                        maxLines: 2,
+                        decoration: fieldDecoration(
+                          t('Note private Master', 'Private Master notes'),
+                        ),
+                      ),
+                      SwitchListTile.adaptive(
+                        value: visible,
+                        onChanged: (value) =>
+                            setDialogState(() => visible = value),
+                        title: Text(
+                          t('Visibile ai giocatori', 'Visible to players'),
+                        ),
+                      ),
+                      SwitchListTile.adaptive(
+                        value: hidden,
+                        onChanged: (value) =>
+                            setDialogState(() => hidden = value),
+                        title: Text(t('Nascosta', 'Hidden')),
+                      ),
+                      SwitchListTile.adaptive(
+                        value: defeated,
+                        onChanged: (value) =>
+                            setDialogState(() => defeated = value),
+                        title: Text(t('Sconfitta', 'Defeated')),
+                      ),
+                      SwitchListTile.adaptive(
+                        value: dead,
+                        onChanged: (value) =>
+                            setDialogState(() => dead = value),
+                        title: Text(t('Morta', 'Dead')),
+                      ),
                     ],
                   ),
                 ),
@@ -6275,13 +6540,61 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                       token['movementMaxMeters'] = movement > 0
                           ? movement
                           : mapFreeTokenMovementValue();
+                      token['currentHp'] = max(
+                        0,
+                        readIntValue(currentHpController.text),
+                      );
+                      token['maxHp'] = max(
+                        0,
+                        readIntValue(maxHpController.text),
+                      );
+                      token['tempHp'] = max(
+                        0,
+                        readIntValue(tempHpController.text),
+                      );
+                      token['shield'] = max(
+                        0,
+                        readIntValue(shieldController.text),
+                      );
+                      token['visionMeters'] = max(
+                        0.0,
+                        readDoubleValue(visionController.text),
+                      );
+                      token['auraMeters'] = max(
+                        0.0,
+                        readDoubleValue(auraController.text),
+                      );
+                      token['elevationMeters'] = readDoubleValue(
+                        elevationController.text,
+                      );
+                      token['rotationDegrees'] = readDoubleValue(
+                        rotationController.text,
+                      ).clamp(-180.0, 180.0);
+                      token['conditions'] = conditionsController.text
+                          .split(',')
+                          .map((value) => cleanUiText(value).trim())
+                          .where((value) => value.isNotEmpty)
+                          .toSet()
+                          .take(24)
+                          .toList();
+                      token['publicNotes'] = cleanUiText(
+                        publicNotesController.text,
+                      ).trim();
+                      token['privateNotes'] = cleanUiText(
+                        privateNotesController.text,
+                      ).trim();
+                      token['visible'] = visible;
+                      token['hidden'] = hidden;
+                      token['defeated'] = defeated;
+                      token['dead'] = dead;
                       syncLocalMapTokenInitiativeMirror(token);
                       risultato = t(
-                        'Token libero aggiornato: ${localMapTokenDisplayName(token)}.',
-                        'Free token updated: ${localMapTokenDisplayName(token)}.',
+                        'Token aggiornato: ${localMapTokenDisplayName(token)}.',
+                        'Token updated: ${localMapTokenDisplayName(token)}.',
                       );
                       aggiungiLog(risultato);
                     });
+                    markVttLegacyMapChanged();
                     programmaSalvataggio();
                     sendRealtimeInitiativeSnapshotIfPublished();
                     Navigator.pop(context);
@@ -6304,6 +6617,17 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       fastReactionsController.dispose();
       sizeController.dispose();
       movementController.dispose();
+      currentHpController.dispose();
+      maxHpController.dispose();
+      tempHpController.dispose();
+      shieldController.dispose();
+      visionController.dispose();
+      auraController.dispose();
+      elevationController.dispose();
+      rotationController.dispose();
+      conditionsController.dispose();
+      publicNotesController.dispose();
+      privateNotesController.dispose();
     }
   }
 
@@ -6314,6 +6638,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     final canManage = canManageLocalMapToken(token);
     final canSend = canSendLocalMapTokenToInitiative(token);
     final hasLinkedSheet = indexForLocalMapToken(token) >= 0;
+    final selected = localMapTokenIsSelected(token);
     final choice = await showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
@@ -6338,7 +6663,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         ),
         PopupMenuItem<String>(
           value: 'edit',
-          enabled: canManage && !hasLinkedSheet,
+          enabled: canManage,
           child: Row(
             children: [
               Icon(Icons.tune, color: tertiaryColor, size: 18),
@@ -6360,6 +6685,51 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
             ],
           ),
         ),
+        PopupMenuItem<String>(
+          value: 'select',
+          enabled: canManage,
+          child: Row(
+            children: [
+              Icon(
+                selected ? Icons.deselect : Icons.select_all,
+                color: tertiaryColor,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  selected
+                      ? t('Deseleziona', 'Deselect')
+                      : t('Seleziona per il gruppo', 'Select for group'),
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'select_side',
+          enabled: canManage,
+          child: Row(
+            children: [
+              Icon(Icons.groups, color: primaryColor, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(t('Seleziona stesso lato', 'Select same side')),
+              ),
+            ],
+          ),
+        ),
+        if (vttSelectedTokenIds.isNotEmpty)
+          PopupMenuItem<String>(
+            value: 'clear_selection',
+            child: Row(
+              children: [
+                const Icon(Icons.clear_all, size: 18),
+                const SizedBox(width: 8),
+                Expanded(child: Text(t('Azzera selezione', 'Clear selection'))),
+              ],
+            ),
+          ),
         const PopupMenuDivider(),
         PopupMenuItem<String>(
           value: 'bigger',
@@ -6422,6 +6792,29 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         break;
       case 'refresh':
         updateLocalMapTokenFromSheet(token);
+        break;
+      case 'select':
+        toggleLocalMapTokenSelection(token);
+        break;
+      case 'select_side':
+        final side = '${token['side'] ?? ''}';
+        vttSelectedTokenIds
+          ..clear()
+          ..addAll(
+            localMapTokens
+                .where(
+                  (candidate) =>
+                      '${candidate['side'] ?? ''}' == side &&
+                      canManageLocalMapToken(candidate),
+                )
+                .map(localMapTokenStableId)
+                .where((id) => id.isNotEmpty),
+          );
+        vttCanvasRevision.value++;
+        break;
+      case 'clear_selection':
+        vttSelectedTokenIds.clear();
+        vttCanvasRevision.value++;
         break;
       case 'bigger':
         resizeLocalMapToken(token, 12);
@@ -6698,16 +7091,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     return max(0.0, budget - localMapTokenMovementUsed(token)).toDouble();
   }
 
-  Offset allowedLocalMapTokenDelta(
-    Map<String, dynamic> token,
-    Offset requested,
-    double canvasWidth,
-    double canvasHeight,
-  ) {
+  bool prepareLocalMapTokenMovement(Map<String, dynamic> token) {
     final initiativeToken = initiativeTokenForLocalMapToken(token);
     if (initiativeToken != null &&
         masterInitiativeReactionUsedTotal(initiativeToken) > 0) {
-      return Offset.zero;
+      return false;
     }
 
     if (initiativeToken != null) {
@@ -6724,19 +7112,54 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       token['movementTurnKey'] =
           '${token['movementTurnKey'] ?? masterInitiativeTurnKey()}';
     }
+    return true;
+  }
 
-    final remaining = localMapTokenMovementRemaining(token);
-    if (remaining <= 0) return Offset.zero;
-    final dxMeters =
-        requested.dx / max(1.0, canvasWidth) * mapWidthMetersValue();
-    final dyMeters =
-        requested.dy / max(1.0, canvasHeight) * mapHeightMetersValue();
-    final requestedMeters = sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
-    if (requestedMeters <= 0) return requested;
-    final scale = min(1.0, remaining / requestedMeters);
-    token['movementUsedMeters'] =
-        localMapTokenMovementUsed(token) + requestedMeters * scale;
-    return requested * scale;
+  double localMapTokenMovementScale(
+    Map<String, dynamic> token,
+    Offset requested,
+    double canvasWidth,
+    double canvasHeight,
+  ) {
+    return oculumVttMovementTranslationScale(
+      requested,
+      remainingMeters: localMapTokenMovementRemaining(token),
+      canvasWidth: canvasWidth,
+      canvasHeight: canvasHeight,
+      mapWidthMeters: mapWidthMetersValue(),
+      mapHeightMeters: mapHeightMetersValue(),
+    );
+  }
+
+  void consumeLocalMapTokenMovement(
+    Map<String, dynamic> token,
+    Offset delta,
+    double canvasWidth,
+    double canvasHeight,
+  ) {
+    final meters = oculumVttDistanceMetersForDelta(
+      delta,
+      canvasWidth: canvasWidth,
+      canvasHeight: canvasHeight,
+      mapWidthMeters: mapWidthMetersValue(),
+      mapHeightMeters: mapHeightMetersValue(),
+    );
+    if (meters <= 0 || localMapTokenMovementBudget(token).isInfinite) return;
+    token['movementUsedMeters'] = localMapTokenMovementUsed(token) + meters;
+  }
+
+  Offset allowedLocalMapTokenDelta(
+    Map<String, dynamic> token,
+    Offset requested,
+    double canvasWidth,
+    double canvasHeight,
+  ) {
+    if (!prepareLocalMapTokenMovement(token)) return Offset.zero;
+    final allowed =
+        requested *
+        localMapTokenMovementScale(token, requested, canvasWidth, canvasHeight);
+    consumeLocalMapTokenMovement(token, allowed, canvasWidth, canvasHeight);
+    return allowed;
   }
 
   Color localMapTokenColor(Map<String, dynamic> token) {
@@ -6753,6 +7176,166 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     if (index >= 0) return nomeSchedaPersonaggio(index);
     final name = '${token['name'] ?? ''}'.trim();
     return name.isEmpty ? t('Token', 'Token') : name;
+  }
+
+  String localMapTokenStableId(Map<String, dynamic> token) {
+    return '${token['id'] ?? token['sheetTag'] ?? ''}'.trim();
+  }
+
+  bool localMapTokenIsSelected(Map<String, dynamic> token) {
+    final id = localMapTokenStableId(token);
+    return id.isNotEmpty && vttSelectedTokenIds.contains(id);
+  }
+
+  void toggleLocalMapTokenSelection(Map<String, dynamic> token) {
+    if (!canManageLocalMapToken(token)) return;
+    final id = localMapTokenStableId(token);
+    if (id.isEmpty) return;
+    if (vttSelectedTokenIds.contains(id)) {
+      vttSelectedTokenIds.remove(id);
+    } else {
+      vttSelectedTokenIds.add(id);
+    }
+    vttCanvasRevision.value++;
+  }
+
+  List<Map<String, dynamic>> localMapTokenDragGroup(
+    Map<String, dynamic> anchor,
+  ) {
+    if (!localMapTokenIsSelected(anchor) || vttSelectedTokenIds.length < 2) {
+      return <Map<String, dynamic>>[anchor];
+    }
+    final selected = localMapTokens
+        .where(
+          (token) =>
+              localMapTokenIsSelected(token) && canManageLocalMapToken(token),
+        )
+        .toList(growable: false);
+    return selected.isEmpty ? <Map<String, dynamic>>[anchor] : selected;
+  }
+
+  void moveLocalMapTokenGroup(
+    Map<String, dynamic> anchor,
+    Offset requested,
+    double canvasWidth,
+    double canvasHeight,
+  ) {
+    final group = localMapTokenDragGroup(anchor);
+    if (requested == Offset.zero || group.isEmpty) return;
+
+    var commonScale = 1.0;
+    for (final token in group) {
+      if (!prepareLocalMapTokenMovement(token)) return;
+      commonScale = min(
+        commonScale,
+        oculumVttBoundaryTranslationScale(
+          x: localMapTokenAxis(token, 'x'),
+          y: localMapTokenAxis(token, 'y'),
+          delta: requested,
+          canvasWidth: canvasWidth,
+          canvasHeight: canvasHeight,
+        ),
+      );
+      commonScale = min(
+        commonScale,
+        localMapTokenMovementScale(token, requested, canvasWidth, canvasHeight),
+      );
+    }
+    if (commonScale <= 0) return;
+
+    final allowedDelta = requested * commonScale;
+    for (final token in group) {
+      if (vttConstrainTokenDelta(
+            token,
+            allowedDelta,
+            canvasWidth,
+            canvasHeight,
+          ) !=
+          allowedDelta) {
+        return;
+      }
+    }
+
+    for (final token in group) {
+      token['x'] =
+          (localMapTokenAxis(token, 'x') +
+                  allowedDelta.dx / max(1.0, canvasWidth))
+              .clamp(0.0, 1.0);
+      token['y'] =
+          (localMapTokenAxis(token, 'y') +
+                  allowedDelta.dy / max(1.0, canvasHeight))
+              .clamp(0.0, 1.0);
+      consumeLocalMapTokenMovement(
+        token,
+        allowedDelta,
+        canvasWidth,
+        canvasHeight,
+      );
+    }
+    notifyVttCanvasChanged();
+  }
+
+  void finishLocalMapTokenGroupMove(
+    Map<String, dynamic> anchor,
+    double canvasWidth,
+    double canvasHeight,
+  ) {
+    final group = localMapTokenDragGroup(anchor);
+    if (activeVttScene.snapToGrid && activeVttScene.gridType != 'none') {
+      final anchorPoint = Offset(
+        localMapTokenAxis(anchor, 'x') * canvasWidth,
+        localMapTokenAxis(anchor, 'y') * canvasHeight,
+      );
+      final snappedAnchor = oculumVttSnapPoint(
+        anchorPoint,
+        gridType: activeVttScene.gridType,
+        cellSize: activeVttScene.gridSizePx,
+      );
+      final requestedSnap = snappedAnchor - anchorPoint;
+      var snapScale = 1.0;
+      for (final token in group) {
+        snapScale = min(
+          snapScale,
+          oculumVttBoundaryTranslationScale(
+            x: localMapTokenAxis(token, 'x'),
+            y: localMapTokenAxis(token, 'y'),
+            delta: requestedSnap,
+            canvasWidth: canvasWidth,
+            canvasHeight: canvasHeight,
+          ),
+        );
+      }
+      final snapDelta = requestedSnap * snapScale;
+      final blocked = group.any(
+        (token) =>
+            vttConstrainTokenDelta(
+              token,
+              snapDelta,
+              canvasWidth,
+              canvasHeight,
+            ) !=
+            snapDelta,
+      );
+      if (!blocked) {
+        for (final token in group) {
+          token['x'] =
+              (localMapTokenAxis(token, 'x') +
+                      snapDelta.dx / max(1.0, canvasWidth))
+                  .clamp(0.0, 1.0);
+          token['y'] =
+              (localMapTokenAxis(token, 'y') +
+                      snapDelta.dy / max(1.0, canvasHeight))
+                  .clamp(0.0, 1.0);
+        }
+      }
+    }
+    notifyVttCanvasChanged(save: true);
+    for (final token in group) {
+      if (modalitaMaster && realtimeService?.isConnected == true) {
+        unawaited(sendAuthoritativeVttTokenPosition(token));
+      }
+      evaluateVttTriggersForToken(token);
+    }
   }
 
   Widget localMapTokenAvatar(Map<String, dynamic> token, double size) {
@@ -6812,6 +7395,176 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     );
   }
 
+  List<String> localMapTokenConditions(Map<String, dynamic> token) {
+    final raw = token['conditions'];
+    if (raw is List) {
+      return raw
+          .map((value) => cleanUiText('$value').trim())
+          .where((value) => value.isNotEmpty)
+          .take(24)
+          .toList(growable: false);
+    }
+    return '$raw'
+        .split(',')
+        .map((value) => cleanUiText(value).trim())
+        .where((value) => value.isNotEmpty && value != 'null')
+        .take(24)
+        .toList(growable: false);
+  }
+
+  Widget localMapTokenStateAvatar(Map<String, dynamic> token, double size) {
+    final color = localMapTokenColor(token);
+    final selected = localMapTokenIsSelected(token);
+    final visible = _oculumVttBool(token['visible'], true);
+    final hidden = _oculumVttBool(token['hidden']);
+    final defeated = _oculumVttBool(token['defeated']);
+    final dead = _oculumVttBool(token['dead']);
+    final auraMeters = max(0.0, readDoubleValue(token['auraMeters']));
+    final rotation = readDoubleValue(token['rotationDegrees']) * pi / 180;
+    final opacity = dead
+        ? 0.38
+        : defeated
+        ? 0.52
+        : (!visible || hidden)
+        ? 0.58
+        : 1.0;
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        fit: StackFit.expand,
+        clipBehavior: Clip.none,
+        children: <Widget>[
+          if (auraMeters > 0)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: color.withValues(alpha: 0.72),
+                  width: 2,
+                ),
+                color: color.withValues(alpha: 0.08),
+              ),
+            ),
+          Opacity(
+            opacity: opacity,
+            child: Transform.rotate(
+              angle: rotation,
+              child: localMapTokenAvatar(token, size),
+            ),
+          ),
+          if (selected)
+            IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(7),
+                  border: Border.all(color: Colors.cyanAccent, width: 3),
+                  boxShadow: const <BoxShadow>[
+                    BoxShadow(color: Colors.cyanAccent, blurRadius: 8),
+                  ],
+                ),
+              ),
+            ),
+          if (dead || defeated)
+            IgnorePointer(
+              child: Center(
+                child: Icon(
+                  dead ? Icons.close : Icons.heart_broken,
+                  color: dead ? Colors.redAccent : Colors.orangeAccent,
+                  size: size * 0.48,
+                  shadows: const <Shadow>[
+                    Shadow(color: Colors.black, blurRadius: 5),
+                  ],
+                ),
+              ),
+            ),
+          if (!visible || hidden)
+            Align(
+              alignment: Alignment.topRight,
+              child: Icon(
+                hidden ? Icons.visibility_off : Icons.hide_source,
+                color: Colors.white,
+                size: max(14.0, size * 0.24),
+                shadows: const <Shadow>[
+                  Shadow(color: Colors.black, blurRadius: 4),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget localMapTokenVitals(
+    Map<String, dynamic> token,
+    double width,
+    Color color,
+  ) {
+    final currentHp = max(0, readIntValue(token['currentHp']));
+    final maxHp = max(0, readIntValue(token['maxHp']));
+    final tempHp = max(0, readIntValue(token['tempHp']));
+    final shield = max(0, readIntValue(token['shield']));
+    final elevation = readDoubleValue(token['elevationMeters']);
+    final conditions = localMapTokenConditions(token);
+    final hpRatio = maxHp <= 0 ? 0.0 : (currentHp / maxHp).clamp(0.0, 1.0);
+    final detailParts = <String>[
+      ...conditions.take(2),
+      if (elevation != 0) 'H ${elevation.toStringAsFixed(1)} m',
+    ];
+
+    return SizedBox(
+      width: width,
+      height: 25,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: SizedBox(
+              height: 4,
+              child: LinearProgressIndicator(
+                value: hpRatio,
+                backgroundColor: Colors.white.withValues(alpha: 0.14),
+                color: currentHp <= 0 && maxHp > 0 ? Colors.redAccent : color,
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 10,
+            child: Text(
+              maxHp > 0
+                  ? 'HP $currentHp/$maxHp${tempHp > 0 ? ' T$tempHp' : ''}${shield > 0 ? ' S$shield' : ''}'
+                  : '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 8,
+                height: 1,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 10,
+            child: Text(
+              detailParts.join(' | '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color.withValues(alpha: 0.92),
+                fontSize: 8,
+                height: 1,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget localMapTokenWidget(
     Map<String, dynamic> token,
     double canvasWidth,
@@ -6825,8 +7578,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     final movementLabel = hasMovementLabel
         ? '${movementRemaining.toStringAsFixed(movementRemaining < 10 ? 1 : 0)}/${movementBudget.toStringAsFixed(movementBudget < 10 ? 1 : 0)} m'
         : '';
-    final canDrag = canManageLocalMapToken(token);
-    final boxHeight = size + (hasMovementLabel ? 44 : 28) + (canDrag ? 28 : 0);
+    final canDrag =
+        canManageLocalMapToken(token) &&
+        (vttTool == OculumVttTool.select || vttTool == OculumVttTool.pan);
+    final infoHeight = hasMovementLabel ? 57.0 : 45.0;
+    final boxHeight = size + infoHeight + 3 + (canDrag ? 24 : 0);
     final x = localMapTokenAxis(token, 'x');
     final y = localMapTokenAxis(token, 'y');
     final left = (x * canvasWidth - boxWidth / 2)
@@ -6846,26 +7602,20 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onPanUpdate: canDrag
-            ? (details) {
-                setState(() {
-                  final allowedDelta = allowedLocalMapTokenDelta(
-                    token,
-                    details.delta,
-                    canvasWidth,
-                    canvasHeight,
-                  );
-                  final nextX =
-                      localMapTokenAxis(token, 'x') +
-                      allowedDelta.dx / canvasWidth;
-                  final nextY =
-                      localMapTokenAxis(token, 'y') +
-                      allowedDelta.dy / canvasHeight;
-                  token['x'] = nextX.clamp(0.0, 1.0).toDouble();
-                  token['y'] = nextY.clamp(0.0, 1.0).toDouble();
-                });
-              }
+            ? (details) => moveLocalMapTokenGroup(
+                token,
+                details.delta,
+                canvasWidth,
+                canvasHeight,
+              )
             : null,
-        onPanEnd: canDrag ? (_) => programmaSalvataggio() : null,
+        onPanEnd: canDrag
+            ? (_) =>
+                  finishLocalMapTokenGroupMove(token, canvasWidth, canvasHeight)
+            : null,
+        onTap: canDrag && vttTool == OculumVttTool.select
+            ? () => toggleLocalMapTokenSelection(token)
+            : null,
         onSecondaryTapDown: (details) =>
             showLocalMapTokenMenu(token, details.globalPosition),
         onLongPressStart: (details) =>
@@ -6910,10 +7660,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                     ],
                   ),
                 ),
-              localMapTokenAvatar(token, size),
+              localMapTokenStateAvatar(token, size),
               const SizedBox(height: 3),
               Container(
                 width: boxWidth,
+                height: infoHeight,
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.74),
@@ -6946,6 +7697,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                           fontWeight: FontWeight.w900,
                         ),
                       ),
+                    localMapTokenVitals(token, boxWidth - 8, color),
                   ],
                 ),
               ),
@@ -6957,33 +7709,10 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   }
 
   Widget localImageMapViewer(File imageFile, double width, double height) {
-    return InteractiveViewer(
-      transformationController: mapTransformationController,
-      minScale: 0.5,
-      maxScale: 8,
-      child: SizedBox(
-        width: width,
-        height: height,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Positioned.fill(
-              child: Image.file(
-                imageFile,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => mapEmptyState(
-                  t(
-                    'Immagine mappa non leggibile.',
-                    'Map image cannot be read.',
-                  ),
-                ),
-              ),
-            ),
-            for (final token in localMapTokens)
-              localMapTokenWidget(token, width, height),
-          ],
-        ),
-      ),
+    return vttMapCanvas(
+      width: width,
+      height: height,
+      imageProvider: FileImage(imageFile),
     );
   }
 
@@ -7146,8 +7875,10 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     final onlineSelected = mapMode == 'online';
     final hasLocalImage =
         !onlineSelected &&
-        mapImagePath.trim().isNotEmpty &&
-        File(mapImagePath.trim()).existsSync();
+        (activeVttScene.imageDataBase64.isNotEmpty ||
+            (!kIsWeb &&
+                mapImagePath.trim().isNotEmpty &&
+                File(mapImagePath.trim()).existsSync()));
     return gothicPanel(
       borderColor: onlineSelected ? tertiaryColor : primaryColor,
       child: Column(
@@ -7183,6 +7914,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                 avatar: const Icon(Icons.image, size: 18),
                 onSelected: (_) {
                   setState(() => mapMode = 'image');
+                  markVttLegacyMapChanged(includeAsset: true);
                   programmaSalvataggio();
                 },
               ),
@@ -7192,6 +7924,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                 avatar: const Icon(Icons.public, size: 18),
                 onSelected: (_) {
                   setState(() => mapMode = 'online');
+                  markVttLegacyMapChanged(includeAsset: true);
                   programmaSalvataggio();
                 },
               ),
@@ -7311,10 +8044,35 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
 
   Widget mapViewerPanel() {
     final onlineSelected = mapMode == 'online';
+    final remoteSelected = vttShowingRemoteScene;
+    final remoteScene = remoteSelected ? vttSceneForDisplay() : null;
+    ImageProvider? remoteImageProvider;
+    if (remoteSelected && realtimeVisibleVttImageBytes != null) {
+      remoteImageProvider = MemoryImage(realtimeVisibleVttImageBytes!);
+    } else if (remoteScene != null) {
+      final uri = Uri.tryParse(remoteScene.mapUrl.trim());
+      final lowerPath = uri?.path.toLowerCase() ?? '';
+      if (uri != null &&
+          (lowerPath.endsWith('.png') ||
+              lowerPath.endsWith('.jpg') ||
+              lowerPath.endsWith('.jpeg') ||
+              lowerPath.endsWith('.webp'))) {
+        remoteImageProvider = NetworkImage(uri.toString());
+      }
+    }
     final onlineUri = safeMapUri();
     final imagePath = mapImagePath.trim();
-    final imageFile = imagePath.isEmpty ? null : File(imagePath);
+    final imageFile = kIsWeb || imagePath.isEmpty ? null : File(imagePath);
     final hasImage = imageFile != null && imageFile.existsSync();
+    ImageProvider? embeddedImageProvider;
+    final embedded = activeVttScene.imageDataBase64.trim();
+    if (embedded.isNotEmpty) {
+      try {
+        embeddedImageProvider = MemoryImage(base64Decode(embedded));
+      } catch (_) {
+        embeddedImageProvider = null;
+      }
+    }
     return gothicPanel(
       borderColor: onlineSelected ? tertiaryColor : primaryColor,
       child: Column(
@@ -7329,7 +8087,9 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  onlineSelected
+                  remoteSelected
+                      ? remoteScene!.name
+                      : onlineSelected
                       ? t('Mappa online', 'Online map')
                       : (mapImageName.trim().isEmpty
                             ? t('Mappa locale', 'Local map')
@@ -7343,7 +8103,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                   ),
                 ),
               ),
-              if (onlineSelected && onlineUri != null) ...[
+              if (!remoteSelected && onlineSelected && onlineUri != null) ...[
                 IconButton(
                   tooltip: t('Apri fullscreen', 'Open fullscreen'),
                   onPressed: openOnlineMapInApp,
@@ -7363,7 +8123,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
           LayoutBuilder(
             builder: (context, constraints) {
               final width = constraints.maxWidth.clamp(300.0, 640.0).toDouble();
-              final height = onlineSelected
+              final height = onlineSelected && !remoteSelected
                   ? (width * 0.74).clamp(360.0, 560.0).toDouble()
                   : (width * 0.62).clamp(260.0, 520.0).toDouble();
               return ClipRRect(
@@ -7378,19 +8138,31 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                           .withValues(alpha: 0.48),
                     ),
                   ),
-                  child: onlineSelected
+                  child: remoteSelected
+                      ? vttMapCanvas(
+                          width: constraints.maxWidth,
+                          height: height,
+                          imageProvider: remoteImageProvider,
+                          sceneOverride: remoteScene,
+                          readOnly: true,
+                        )
+                      : onlineSelected
                       ? onlineMapViewer(onlineUri)
+                      : embeddedImageProvider != null
+                      ? vttMapCanvas(
+                          width: constraints.maxWidth,
+                          height: height,
+                          imageProvider: embeddedImageProvider,
+                        )
                       : hasImage
                       ? localImageMapViewer(
                           imageFile,
                           constraints.maxWidth,
                           height,
                         )
-                      : mapEmptyState(
-                          t(
-                            'Importa o incolla una mappa immagine.',
-                            'Import or paste an image map.',
-                          ),
+                      : vttMapCanvas(
+                          width: constraints.maxWidth,
+                          height: height,
                         ),
                 ),
               );
@@ -7678,16 +8450,28 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   Future<void> addAttachmentImage(String fieldId) async {
     final picked = await _picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
-    final savedPath = await copyFileToOculumStorage(
-      source: File(picked.path),
-      directoryName: 'attachments',
-      sourceName: picked.name.trim().isEmpty ? 'allegato.png' : picked.name,
-    );
+    var savedPath = '';
+    var imageBase64 = '';
+    if (kIsWeb) {
+      final prepared = await prepareVttImportedImage(
+        await picked.readAsBytes(),
+        maxDimension: 1440,
+        quality: 70,
+      );
+      imageBase64 = '${prepared['base64'] ?? ''}';
+    } else {
+      savedPath = await copyFileToOculumStorage(
+        source: File(picked.path),
+        directoryName: 'attachments',
+        sourceName: picked.name.trim().isEmpty ? 'allegato.png' : picked.name,
+      );
+    }
     if (!mounted) return;
     setState(() {
       attachmentsForField(fieldId).add({
         'type': 'image',
         'path': savedPath,
+        'imageBase64': imageBase64,
         'title': picked.name.trim().isEmpty
             ? t('Immagine', 'Image')
             : picked.name,
@@ -7704,16 +8488,28 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       final clipboardImage = await Pasteboard.image;
       if (!mounted) return;
       if (clipboardImage != null && clipboardImage.isNotEmpty) {
-        final path = await saveBytesToOculumStorage(
-          bytes: clipboardImage,
-          directoryName: 'attachments',
-          sourceName: 'allegato_appunti.png',
-        );
+        var path = '';
+        var imageBase64 = '';
+        if (kIsWeb) {
+          final prepared = await prepareVttImportedImage(
+            clipboardImage,
+            maxDimension: 1440,
+            quality: 70,
+          );
+          imageBase64 = '${prepared['base64'] ?? ''}';
+        } else {
+          path = await saveBytesToOculumStorage(
+            bytes: clipboardImage,
+            directoryName: 'attachments',
+            sourceName: 'allegato_appunti.png',
+          );
+        }
         if (!mounted) return;
         setState(() {
           attachmentsForField(fieldId).add({
             'type': 'image',
             'path': path,
+            'imageBase64': imageBase64,
             'title': t('Immagine incollata', 'Pasted image'),
             'createdAt': DateTime.now().toIso8601String(),
           });
@@ -7727,36 +8523,38 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         return;
       }
 
-      final files = await Pasteboard.files();
-      if (!mounted) return;
-      for (final rawPath in files) {
-        final path = rawPath.startsWith('file:')
-            ? Uri.parse(rawPath).toFilePath()
-            : rawPath;
-        if (!fileLooksLikeImagePath(path)) continue;
-        final source = File(path);
-        if (!await source.exists()) continue;
-        final name = source.uri.pathSegments.isEmpty
-            ? 'allegato.png'
-            : Uri.decodeComponent(source.uri.pathSegments.last);
-        final savedPath = await copyFileToOculumStorage(
-          source: source,
-          directoryName: 'attachments',
-          sourceName: name,
-        );
+      if (!kIsWeb) {
+        final files = await Pasteboard.files();
         if (!mounted) return;
-        setState(() {
-          attachmentsForField(fieldId).add({
-            'type': 'image',
-            'path': savedPath,
-            'title': name,
-            'createdAt': DateTime.now().toIso8601String(),
+        for (final rawPath in files) {
+          final path = rawPath.startsWith('file:')
+              ? Uri.parse(rawPath).toFilePath()
+              : rawPath;
+          if (!fileLooksLikeImagePath(path)) continue;
+          final source = File(path);
+          if (!await source.exists()) continue;
+          final name = source.uri.pathSegments.isEmpty
+              ? 'allegato.png'
+              : Uri.decodeComponent(source.uri.pathSegments.last);
+          final savedPath = await copyFileToOculumStorage(
+            source: source,
+            directoryName: 'attachments',
+            sourceName: name,
+          );
+          if (!mounted) return;
+          setState(() {
+            attachmentsForField(fieldId).add({
+              'type': 'image',
+              'path': savedPath,
+              'title': name,
+              'createdAt': DateTime.now().toIso8601String(),
+            });
+            risultato = t('File immagine allegato.', 'Image file attached.');
+            aggiungiLog(risultato);
           });
-          risultato = t('File immagine allegato.', 'Image file attached.');
-          aggiungiLog(risultato);
-        });
-        programmaSalvataggio();
-        return;
+          programmaSalvataggio();
+          return;
+        }
       }
 
       final data = await Clipboard.getData(Clipboard.kTextPlain);
@@ -7818,7 +8616,14 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     }
 
     final path = '${item['path'] ?? ''}';
-    final file = File(path);
+    final embedded = '${item['imageBase64'] ?? ''}';
+    Uint8List? embeddedBytes;
+    if (embedded.isNotEmpty) {
+      try {
+        embeddedBytes = base64Decode(embedded);
+      } catch (_) {}
+    }
+    final file = kIsWeb || path.isEmpty ? null : File(path);
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -7829,8 +8634,12 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         ),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 780, maxHeight: 620),
-          child: file.existsSync()
-              ? InteractiveViewer(child: Image.file(file, fit: BoxFit.contain))
+          child: embeddedBytes != null
+              ? InteractiveViewer(
+                  child: Image.memory(embeddedBytes, fit: BoxFit.contain),
+                )
+              : file?.existsSync() == true
+              ? InteractiveViewer(child: Image.file(file!, fit: BoxFit.contain))
               : Text(
                   t('File non trovato.', 'File not found.'),
                   style: const TextStyle(color: Colors.white),
@@ -16357,15 +17166,33 @@ class _OculumThemeDecorationPainter extends CustomPainter {
       );
       canvas.drawCircle(eye.translate(dir * 2, -3), bodyWidth * 0.018, white);
     }
-    final frown = Path()
-      ..moveTo(center.dx - bodyWidth * 0.12, center.dy + bodyHeight * 0.15)
+    final expression = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = desktop ? 2.2 : 1.45
+      ..strokeCap = StrokeCap.round
+      ..color = const Color(0xFF183322).withValues(alpha: alpha * 0.92);
+    final cheek = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFFE7C45A).withValues(alpha: alpha * 0.34);
+    final smile = Path()
+      ..moveTo(center.dx - bodyWidth * 0.11, center.dy + bodyHeight * 0.11)
       ..quadraticBezierTo(
         center.dx,
-        center.dy + bodyHeight * 0.05,
-        center.dx + bodyWidth * 0.13,
-        center.dy + bodyHeight * 0.15,
+        center.dy + bodyHeight * 0.22,
+        center.dx + bodyWidth * 0.11,
+        center.dy + bodyHeight * 0.11,
       );
-    canvas.drawPath(frown, outline);
+    canvas.drawPath(smile, expression);
+    canvas.drawCircle(
+      center.translate(-bodyWidth * 0.25, bodyHeight * 0.10),
+      bodyWidth * 0.026,
+      cheek,
+    );
+    canvas.drawCircle(
+      center.translate(bodyWidth * 0.25, bodyHeight * 0.10),
+      bodyWidth * 0.026,
+      cheek,
+    );
 
     final crownBase = center.translate(0, -bodyHeight * 0.43);
     final crown = Path()
@@ -16396,6 +17223,17 @@ class _OculumThemeDecorationPainter extends CustomPainter {
       ..close();
     canvas.drawPath(crown, gold);
     canvas.drawPath(crown, outline);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: crownBase.translate(0, bodyHeight * 0.14),
+          width: bodyWidth * 0.44,
+          height: bodyHeight * 0.075,
+        ),
+        Radius.circular(bodyHeight * 0.035),
+      ),
+      gold,
+    );
     canvas.drawCircle(
       crownBase.translate(bodyWidth * 0.05, -bodyHeight * 0.04),
       bodyWidth * 0.025,
@@ -16532,10 +17370,10 @@ class _OculumThemeDecorationPainter extends CustomPainter {
     }
     _paintCornerFlourishes(canvas, size, edge, paint, accent);
     _paintEdgeBeads(canvas, size, edge, accent);
-    for (var i = 0; i < 6; i++) {
-      final start = Offset(size.width * (0.18 + i * 0.11), size.height - 32);
+    for (var i = 0; i < 4; i++) {
+      final start = Offset(size.width * (0.12 + i * 0.10), size.height - 32);
       final end = Offset(
-        size.width * (0.24 + i * 0.10),
+        size.width * (0.17 + i * 0.10),
         size.height - 74 - (i.isEven ? 0 : 18),
       );
       canvas.drawLine(start, end, paint);
