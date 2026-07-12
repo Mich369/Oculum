@@ -60,27 +60,152 @@ int oculumHiddenEyeDerivedBonusFor({
     case 'riflessi':
     case 'crafting':
     case 'riparazioni':
+    case 'precisione':
+    case 'meccanica':
+    case 'alchimia':
+    case 'controllo_corporeo':
       return materia ~/ 2;
     case 'furbizia':
     case 'strategia':
     case 'sopravvivenza':
     case 'medicina':
+    case 'resistenza':
+    case 'adattamento':
       return resilienza ~/ 2;
     case 'forza':
     case 'eco':
     case 'crepa':
     case 'pressione':
+    case 'concentrazione':
+    case 'fermezza':
       return volonta ~/ 2;
     case 'nodo':
       return karma;
     case 'percezione':
     case 'sussurro':
+    case 'canalizzazione':
       return oculum ~/ 2;
     case 'manifestazione_potere':
       return max(materia, oculum) ~/ 2;
     default:
       return 0;
   }
+}
+
+String? oculumHiddenEyeStaticGroupFor(String id) {
+  switch (id) {
+    case 'furbizia':
+    case 'strategia':
+    case 'sopravvivenza':
+    case 'medicina':
+    case 'resistenza':
+    case 'adattamento':
+      return 'resilienza';
+    case 'eco':
+    case 'forza':
+    case 'crepa':
+    case 'pressione':
+    case 'fermezza':
+      return 'volonta';
+    case 'velo':
+    case 'inganno':
+    case 'riflessi':
+    case 'crafting':
+    case 'riparazioni':
+    case 'precisione':
+    case 'meccanica':
+    case 'alchimia':
+    case 'controllo_corporeo':
+      return 'materia';
+    case 'nodo':
+    case 'percezione':
+    case 'sussurro':
+    case 'canalizzazione':
+      return 'oculum';
+    default:
+      return null;
+  }
+}
+
+String oculumConcentrationGroupForStatIds(Iterable<String> ids) {
+  var willCount = 0;
+  var resilienceCount = 0;
+  for (final id in ids) {
+    if (id == 'concentrazione') continue;
+    final group = oculumHiddenEyeStaticGroupFor(id);
+    if (group == 'volonta') willCount++;
+    if (group == 'resilienza') resilienceCount++;
+  }
+  return willCount <= resilienceCount ? 'volonta' : 'resilienza';
+}
+
+bool oculumHiddenEyeHasLegacyDefaultDescription(String id, String description) {
+  final normalized = description.trim();
+  const legacyDescriptions = <String, Set<String>>{
+    'velo': {
+      'Furtivita, rapidita di mano, nascondersi, borseggio. Bonus base: Materia/2.',
+    },
+    'furbizia': {'Lama del Pensiero. Bonus: Resilienza/2.'},
+    'inganno': {'Lama del Pensiero. Bonus: Materia/2.'},
+    'strategia': {
+      'Lama del Pensiero. Bonus: Resilienza/2. Se il nemico perde contro la tua strategia riceve Fragilita.',
+    },
+    'eco': {'Carisma, leadership, intimidazione. Bonus base: Volonta/2.'},
+    'forza': {'Potenza fisica. Bonus base: Volonta/2.'},
+    'nodo': {'Legami, diplomazia, alleanze. Bonus/malus: Karma totale.'},
+    'crepa': {'Trauma, follia, corruzione. Bonus: Volonta/2.'},
+    'pressione': {
+      'Istinto. Bonus: Volonta/2. Puo imporre Fragilita o togliere azione con critico negativo.',
+    },
+    'riflessi': {'Istinto. Bonus: Materia/2.'},
+    'percezione': {'Istinto. Bonus: Oculum/2.'},
+    'sopravvivenza': {'Istinto. Bonus: Resilienza/2.'},
+    'crafting': {'Mano. Bonus: Materia/2.'},
+    'medicina': {'Mano. Bonus: Resilienza/2.'},
+    'riparazioni': {'Mano. Bonus: Materia/2.'},
+    'manifestazione_potere': {
+      'Sussurro. Bonus: maggiore tra Materia e Oculum / 2.',
+    },
+    'sussurro': {'Segreti, linguaggi, simboli. Bonus: Oculum/2.'},
+  };
+  return legacyDescriptions[id]?.contains(normalized) ?? false;
+}
+
+List<HiddenEyeStat> oculumMergeHiddenEyeStatsWithDefaults({
+  required Iterable<HiddenEyeStat> existing,
+  required Iterable<HiddenEyeStat> defaults,
+}) {
+  final existingById = <String, HiddenEyeStat>{};
+  for (final stat in existing) {
+    if (stat.id.trim().isEmpty) continue;
+    existingById.putIfAbsent(stat.id, () => stat);
+  }
+
+  final defaultList = defaults.toList(growable: false);
+  final defaultIds = defaultList.map((stat) => stat.id).toSet();
+  final merged = <HiddenEyeStat>[];
+  for (final base in defaultList) {
+    final current = existingById[base.id];
+    if (current == null) {
+      merged.add(base);
+      continue;
+    }
+    if (current.nome.trim().isEmpty) current.nome = base.nome;
+    if (current.descrizione.trim().isEmpty ||
+        oculumHiddenEyeHasLegacyDefaultDescription(
+          current.id,
+          current.descrizione,
+        )) {
+      current.descrizione = base.descrizione;
+    }
+    current.unlocked = true;
+    merged.add(current);
+  }
+
+  for (final stat in existingById.values) {
+    if (!defaultIds.contains(stat.id)) merged.add(stat);
+  }
+  return merged;
 }
 
 extension _OculumHomeCalculations on _OculumHomePageState {
@@ -723,6 +848,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   /// formule tipo @Mat-⅓Vol o @Danni+Scudo restano utili, ma non possono
   /// autodistruggere la build con uno StackOverflow.
   Map<String, num> formulaValueContext() {
+    final cached = formulaValueContextCache;
+    if (formulaParserCacheRevision == derivedDataRevision && cached != null) {
+      return cached;
+    }
     final res = safeFormulaStatValue(
       'resilienza',
       currentResilienza(),
@@ -753,7 +882,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final baseReazioniVeloci = max(0, leggiNumero(reazioniVelociController));
     final statRollBaseBonus = livelloGrado + malusFatica;
 
-    return <String, num>{
+    final context = Map<String, num>.unmodifiable(<String, num>{
       'resilienza': res,
       'volonta': vol,
       'materia': mat,
@@ -815,17 +944,17 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       'scudo_oculum_current': max(0, leggiNumero(scudoOculumController)),
       'schivata_oculum': max(0, baseSchivataOculum),
       'schivate_oculum': max(0, baseSchivataOculum),
-    };
+    });
+    formulaParserCacheRevision = derivedDataRevision;
+    formulaValueContextCache = context;
+    return context;
   }
 
   Map<String, int> parseTitleQuickCommands(String text) {
     final result = <String, int>{};
     if (text.trim().isEmpty) return result;
 
-    for (final rawCommand in oculumParseFormulaCommands(
-      text,
-      formulaValueContext(),
-    )) {
+    for (final rawCommand in parseQuickCommandsDetailed(text)) {
       final command = oculumEffectiveFormulaCommand(rawCommand);
       if (!command.valid) continue;
       final value = triggeredFormulaCommandValue(command);
@@ -841,7 +970,20 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   List<OculumFormulaCommand> parseQuickCommandsDetailed(String text) {
-    return oculumParseFormulaCommands(text, formulaValueContext());
+    if (text.trim().isEmpty) return const <OculumFormulaCommand>[];
+    if (formulaParserCacheRevision != derivedDataRevision) {
+      formulaValueContextCache = null;
+      formulaCommandCache.clear();
+      formulaParserCacheRevision = derivedDataRevision;
+    }
+    final cached = formulaCommandCache[text];
+    if (cached != null) return cached;
+    final parsed = List<OculumFormulaCommand>.unmodifiable(
+      oculumParseFormulaCommands(text, formulaValueContext()),
+    );
+    if (formulaCommandCache.length >= 256) formulaCommandCache.clear();
+    formulaCommandCache[text] = parsed;
+    return parsed;
   }
 
   int triggeredFormulaCommandValue(OculumFormulaCommand command) {
@@ -1293,6 +1435,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   String activeQuickCommandText() {
+    if (activeQuickCommandTextCacheRevision == derivedDataRevision) {
+      return activeQuickCommandTextCache;
+    }
     final parts = <String>[];
     for (final titolo in titoli) {
       if (!titolo.equipaggiato) continue;
@@ -1311,7 +1456,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       parts.addAll(skillQuickCommandTexts(skill));
     }
     parts.add(buffMalusRapidiController.text);
-    return parts.where((text) => text.trim().isNotEmpty).join('\n');
+    final text = parts.where((text) => text.trim().isNotEmpty).join('\n');
+    activeQuickCommandTextCacheRevision = derivedDataRevision;
+    activeQuickCommandTextCache = text;
+    return text;
   }
 
   int quickResilienzaBonusFromTexts(Iterable<String> texts) {
@@ -2603,90 +2751,157 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         id: 'velo',
         nome: 'Velo',
         descrizione:
-            'Furtivita, rapidita di mano, nascondersi, borseggio. Bonus base: Materia/2.',
+            'Nascondersi, borseggiare e agire senza farsi notare. Bonus: Materia/2.',
       ),
       HiddenEyeStat(
         id: 'furbizia',
         nome: 'Furbizia',
-        descrizione: 'Lama del Pensiero. Bonus: Resilienza/2.',
+        descrizione:
+            'Trovare soluzioni astute e aggirare ostacoli o avversari. Bonus: Resilienza/2.',
       ),
       HiddenEyeStat(
         id: 'inganno',
         nome: 'Inganno',
-        descrizione: 'Lama del Pensiero. Bonus: Materia/2.',
+        descrizione:
+            'Mentire, depistare, mascherare le intenzioni e raggirare gli altri. Bonus: Materia/2.',
       ),
       HiddenEyeStat(
         id: 'strategia',
         nome: 'Strategia',
         descrizione:
-            'Lama del Pensiero. Bonus: Resilienza/2. Se il nemico perde contro la tua strategia riceve Fragilita.',
+            'Pianificare e sfruttare punti deboli; chi perde riceve Fragilita. Bonus: Resilienza/2.',
       ),
       HiddenEyeStat(
         id: 'eco',
         nome: 'Eco',
         descrizione:
-            'Carisma, leadership, intimidazione. Bonus base: Volonta/2.',
+            'Convincere, guidare, ispirare o intimidire con carisma e presenza. Bonus: Volonta/2.',
       ),
       HiddenEyeStat(
         id: 'forza',
         nome: 'Forza',
-        descrizione: 'Potenza fisica. Bonus base: Volonta/2.',
+        descrizione:
+            'Sollevare, spingere, spezzare e compiere prove di potenza fisica. Bonus: Volonta/2.',
       ),
       HiddenEyeStat(
         id: 'nodo',
         nome: 'Nodo',
-        descrizione: 'Legami, diplomazia, alleanze. Bonus/malus: Karma totale.',
+        descrizione:
+            'Creare legami, trattare con diplomazia e costruire alleanze. Bonus/malus: Karma totale.',
       ),
       HiddenEyeStat(
         id: 'crepa',
         nome: 'Crepa',
-        descrizione: 'Trauma, follia, corruzione. Bonus: Volonta/2.',
+        descrizione:
+            'Affrontare trauma, follia e corruzione senza perdere il controllo. Bonus: Volonta/2.',
       ),
       HiddenEyeStat(
         id: 'pressione',
         nome: 'Pressione',
         descrizione:
-            'Istinto. Bonus: Volonta/2. Puo imporre Fragilita o togliere azione con critico negativo.',
+            'Agire d\'istinto; puo imporre Fragilita o togliere un\'azione con critico negativo. Bonus: Volonta/2.',
       ),
       HiddenEyeStat(
         id: 'riflessi',
         nome: 'Riflessi',
-        descrizione: 'Istinto. Bonus: Materia/2.',
+        descrizione:
+            'Reagire rapidamente, schivare pericoli e rispondere a eventi improvvisi. Bonus: Materia/2.',
       ),
       HiddenEyeStat(
         id: 'percezione',
         nome: 'Percezione',
-        descrizione: 'Istinto. Bonus: Oculum/2.',
+        descrizione:
+            'Notare dettagli, minacce, tracce e indizi nascosti nell\'ambiente. Bonus: Oculum/2.',
       ),
       HiddenEyeStat(
         id: 'sopravvivenza',
         nome: 'Sopravvivenza',
-        descrizione: 'Istinto. Bonus: Resilienza/2.',
+        descrizione:
+            'Orientarsi, seguire tracce e trovare risorse in territori difficili. Bonus: Resilienza/2.',
       ),
       HiddenEyeStat(
         id: 'crafting',
         nome: 'Crafting',
-        descrizione: 'Mano. Bonus: Materia/2.',
+        descrizione:
+            'Creare e assemblare oggetti o strumenti lavorando materiali diversi. Bonus: Materia/2.',
       ),
       HiddenEyeStat(
         id: 'medicina',
         nome: 'Medicina',
-        descrizione: 'Mano. Bonus: Resilienza/2.',
+        descrizione:
+            'Diagnosticare, curare, medicare ferite e stabilizzare chi e in pericolo. Bonus: Resilienza/2.',
       ),
       HiddenEyeStat(
         id: 'riparazioni',
         nome: 'Riparazioni',
-        descrizione: 'Mano. Bonus: Materia/2.',
+        descrizione:
+            'Ripristinare equipaggiamento, strumenti e oggetti danneggiati. Bonus: Materia/2.',
       ),
       HiddenEyeStat(
         id: 'manifestazione_potere',
         nome: 'Manifestazione del Potere',
-        descrizione: 'Sussurro. Bonus: maggiore tra Materia e Oculum / 2.',
+        descrizione:
+            'Dare forma al proprio potere e mantenerne la manifestazione. Bonus: maggiore tra Materia e Oculum / 2.',
       ),
       HiddenEyeStat(
         id: 'sussurro',
         nome: 'Sussurro',
-        descrizione: 'Segreti, linguaggi, simboli. Bonus: Oculum/2.',
+        descrizione:
+            'Comprendere segreti, linguaggi, simboli e messaggi nascosti. Bonus: Oculum/2.',
+      ),
+      HiddenEyeStat(
+        id: 'concentrazione',
+        nome: 'Concentrazione',
+        descrizione:
+            'Concentrarsi durante Arti, rituali, combattimenti e situazioni di forte pressione. Bonus: Volonta/2.',
+      ),
+      HiddenEyeStat(
+        id: 'fermezza',
+        nome: 'Fermezza',
+        descrizione:
+            'Resistere a paura, provocazioni, manipolazione e controllo mentale. Bonus: Volonta/2.',
+      ),
+      HiddenEyeStat(
+        id: 'resistenza',
+        nome: 'Resistenza',
+        descrizione:
+            'Sopportare dolore, ferite, fatica e sforzi prolungati. Bonus: Resilienza/2.',
+      ),
+      HiddenEyeStat(
+        id: 'adattamento',
+        nome: 'Adattamento',
+        descrizione:
+            'Adattarsi ad ambienti ostili, alterazioni del corpo e situazioni nuove. Bonus: Resilienza/2.',
+      ),
+      HiddenEyeStat(
+        id: 'precisione',
+        nome: 'Precisione',
+        descrizione:
+            'Mirare, lanciare e compiere lavori di coordinazione e accuratezza. Bonus: Materia/2.',
+      ),
+      HiddenEyeStat(
+        id: 'meccanica',
+        nome: 'Meccanica',
+        descrizione:
+            'Costruire, smontare e modificare congegni, trappole, serrature e armi. Bonus: Materia/2.',
+      ),
+      HiddenEyeStat(
+        id: 'alchimia',
+        nome: 'Alchimia',
+        descrizione:
+            'Preparare pozioni, reagenti, antidoti, veleni e composti. Bonus: Materia/2.',
+      ),
+      HiddenEyeStat(
+        id: 'controllo_corporeo',
+        nome: 'Controllo corporeo',
+        descrizione:
+            'Controllare in battaglia Materia generata, appendici, costrutti, copie o entita collegate. Bonus: Materia/2.',
+      ),
+      HiddenEyeStat(
+        id: 'canalizzazione',
+        nome: 'Canalizzazione',
+        descrizione:
+            'Dirigere l\'Oculum e stabilizzare Arti prolungate e poteri complessi. Bonus: Oculum/2.',
       ),
     ];
   }
@@ -2716,23 +2931,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   void ensureHiddenEyeDefaults() {
-    final byId = {for (final stat in hiddenEyeStats) stat.id: stat};
+    final merged = oculumMergeHiddenEyeStatsWithDefaults(
+      existing: hiddenEyeStats,
+      defaults: defaultHiddenEyeStats(),
+    );
     hiddenEyeStats
       ..clear()
-      ..addAll(
-        defaultHiddenEyeStats().map((base) {
-          final existing = byId[base.id];
-          if (existing == null) return base;
-          existing.nome = existing.nome.trim().isEmpty
-              ? base.nome
-              : existing.nome;
-          existing.descrizione = existing.descrizione.trim().isEmpty
-              ? base.descrizione
-              : existing.descrizione;
-          existing.unlocked = true;
-          return existing;
-        }),
-      );
+      ..addAll(merged);
     invalidateHiddenEyeDerivedCaches(notifyCards: false);
   }
 
@@ -2764,12 +2969,15 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       case 'strategia':
       case 'sopravvivenza':
       case 'medicina':
+      case 'resistenza':
+      case 'adattamento':
         group = 'resilienza';
         break;
       case 'eco':
       case 'forza':
       case 'crepa':
       case 'pressione':
+      case 'fermezza':
         group = 'volonta';
         break;
       case 'velo':
@@ -2777,12 +2985,22 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       case 'riflessi':
       case 'crafting':
       case 'riparazioni':
+      case 'precisione':
+      case 'meccanica':
+      case 'alchimia':
+      case 'controllo_corporeo':
         group = 'materia';
         break;
       case 'nodo':
       case 'percezione':
       case 'sussurro':
+      case 'canalizzazione':
         group = 'oculum';
+        break;
+      case 'concentrazione':
+        group = oculumConcentrationGroupForStatIds(
+          hiddenEyeStats.map((stat) => stat.id),
+        );
         break;
       case 'manifestazione_potere':
         group = materiaTotale() >= oculumTotale() ? 'materia' : 'oculum';

@@ -218,100 +218,11 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     });
 
     try {
-      final doc = pw.Document();
-      final titleStyle = pw.TextStyle(
-        fontSize: 20,
-        fontWeight: pw.FontWeight.bold,
-        color: PdfColors.deepPurple700,
-      );
-      final sectionStyle = pw.TextStyle(
-        fontSize: 13.5,
-        fontWeight: pw.FontWeight.bold,
-        color: PdfColors.deepPurple600,
-      );
-      final bodyStyle = const pw.TextStyle(fontSize: 10.5, lineSpacing: 2);
-      final indexStyle = pw.TextStyle(
-        fontSize: 10.5,
-        fontWeight: pw.FontWeight.bold,
-        color: PdfColors.deepPurple700,
-      );
-      final sections = activeManualSections;
-
-      doc.addPage(
-        pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(34),
-          build: (context) {
-            return [
-              pw.Text('MANUALE OCULUM', style: titleStyle),
-              pw.SizedBox(height: 6),
-              pw.Text(
-                manualPdfExtraSafeText(
-                  t(
-                    'Versione esportata dall app con regole e formule aggiornate.',
-                    'Version exported from the app with updated rules and formulas.',
-                  ),
-                ),
-                style: bodyStyle,
-              ),
-              pw.SizedBox(height: 18),
-              pw.Text(
-                manualPdfExtraSafeText(t('Indice', 'Index')),
-                style: sectionStyle,
-              ),
-              pw.SizedBox(height: 6),
-              for (var i = 0; i < sections.length; i++)
-                pw.Padding(
-                  padding: const pw.EdgeInsets.only(bottom: 3),
-                  child: pw.Text(
-                    manualPdfExtraSafeText(
-                      '${i + 1}. ${manualTitle(sections[i])}',
-                    ),
-                    style: indexStyle,
-                  ),
-                ),
-              pw.SizedBox(height: 8),
-              pw.Text(
-                manualPdfExtraSafeText(
-                  t(
-                    'Appendice. Parser e comandi rapidi',
-                    'Appendix. Parsers and quick commands',
-                  ),
-                ),
-                style: indexStyle,
-              ),
-              pw.NewPage(),
-              pw.Text(
-                manualPdfExtraSafeText(
-                  t('Appendice parser', 'Parser appendix'),
-                ),
-                style: sectionStyle,
-              ),
-              pw.SizedBox(height: 5),
-              ...manualPdfTextWidgets(manualParserExamplesPdfText(), bodyStyle),
-              pw.NewPage(),
-              for (final section in sections) ...[
-                pw.Text(
-                  manualPdfExtraSafeText(manualTitle(section)),
-                  style: sectionStyle,
-                ),
-                pw.SizedBox(height: 5),
-                ...manualPdfTextWidgets(
-                  manualContent(section).trim(),
-                  bodyStyle,
-                ),
-                pw.SizedBox(height: 12),
-              ],
-            ];
-          },
-        ),
-      );
-
       final now = DateTime.now();
       final stamp =
           '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
       final fileName = 'oculum_manuale_$stamp.pdf';
-      final bytes = await doc.save();
+      final bytes = await oculumBuildManualPdf(english: linguaInglese);
       if (kIsWeb) {
         await oculumDownloadBytes(
           bytes: bytes,
@@ -3675,6 +3586,8 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                     icon: const Icon(Icons.download),
                     label: Text(t('Backup', 'Backup')),
                   ),
+                  const SizedBox(width: 8),
+                  const OculumAuthPanel(),
                   OutlinedButton.icon(
                     onPressed: resetSheetLayoutSettings,
                     icon: const Icon(Icons.dashboard_customize),

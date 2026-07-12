@@ -2,7 +2,57 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+final RegExp _oculumIncomingDamageRulePattern = RegExp(
+  r'@([A-Za-zÀ-ÿ]+)\s*([+-]\s*\d+\s*%?)?\s*([^@\n,;]*)',
+);
+final RegExp _oculumSafeHpCommandPattern = RegExp(
+  r'@safehp\b',
+  caseSensitive: false,
+);
+final RegExp _oculumSaveShieldCommandPattern = RegExp(
+  r'@saveShield\s*\+?(\d+)',
+  caseSensitive: false,
+);
+final RegExp _oculumConsumeSafeHpPattern = RegExp(
+  r'\s*@safehp\b',
+  caseSensitive: false,
+);
+final RegExp _oculumConsumeSaveShieldPattern = RegExp(
+  r'\s*@saveShield\s*\+?\d+',
+  caseSensitive: false,
+);
+
 extension _OculumHomeCombatProgression on _OculumHomePageState {
+  bool currentCombatIsActive() {
+    final realtimeTokens = realtimeVisibleInitiativeSnapshot['tokens'];
+    return masterInitiativePublished ||
+        masterInitiativeTokens.isNotEmpty ||
+        (realtimeTokens is List && realtimeTokens.isNotEmpty);
+  }
+
+  String currentTemporaryResistanceOwnerSheetId() {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return '';
+    }
+    final sheet = schedePersonaggio[schedaCorrente];
+    final id = '${sheet['sheetTag'] ?? sheet['id'] ?? ''}'.trim();
+    return id.isNotEmpty ? id : 'local_sheet_$schedaCorrente';
+  }
+
+  bool currentSheetHasAdaptationTemporaryResistance() {
+    final ownerSheetId = currentTemporaryResistanceOwnerSheetId();
+    if (ownerSheetId.isEmpty || !currentCombatIsActive()) return false;
+    return temporaryCombatResistanceEffects.any(
+      (effect) =>
+          effect.ownerSheetId == ownerSheetId &&
+          effect.isAdaptationAllDamageCurrentCombat,
+    );
+  }
+
+  void clearTemporaryCombatResistanceEffects() {
+    oculumRemoveCurrentCombatTemporaryEffects(temporaryCombatResistanceEffects);
+  }
+
   // DADO / TIRI
   // =====================================================
 
@@ -271,6 +321,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
   }
 
+  void scheduleCombatRollSave() {
+    programmaSalvataggio(
+      invalidateCaches: false,
+      delay: const Duration(milliseconds: 2600),
+    );
+  }
+
   Future<void> tiraStat(String nome, int valore) async {
     final dado = tiraD20();
     final oculumSpend = consumaOculumTiro();
@@ -286,22 +343,31 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       faces: 20,
       bonuses: [bonus],
     );
+    final expGuadagnata = oculumRollExperienceGain(
+      naturalRoll: dado,
+      faces: 20,
+      rollSucceeded: totale > 0,
+    );
 
     var statoForzaLog = '';
     setState(() {
       statoForzaLog = registraTiroStatoForza();
+      final expText = applicaEsperienzaFlat(
+        expGuadagnata,
+        motivo: t('Tiro superato', 'Successful roll'),
+      );
       dadoMostrato = testoDado;
       dadoMostratoFacce = 20;
       tiroCriticoUno = dado == 1;
       tiroCriticoVenti = dado == 20;
-      risultato = '$nome: $testoDado$statoForzaLog';
+      risultato = '$nome: $testoDado$statoForzaLog$expText';
 
       aggiungiLog(
-        'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog',
+        'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText',
       );
     });
-    if (statoForzaLog.isNotEmpty) {
-      programmaSalvataggio();
+    if (statoForzaLog.isNotEmpty || expGuadagnata > 0) {
+      scheduleCombatRollSave();
     }
 
     mostraDadoCentrale(
@@ -335,22 +401,31 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       faces: 20,
       bonuses: [bonusTotale],
     );
+    final expGuadagnata = oculumRollExperienceGain(
+      naturalRoll: dado,
+      faces: 20,
+      rollSucceeded: totale > 0,
+    );
 
     var statoForzaLog = '';
     setState(() {
       statoForzaLog = registraTiroStatoForza();
+      final expText = applicaEsperienzaFlat(
+        expGuadagnata,
+        motivo: t('Tiro superato', 'Successful roll'),
+      );
       dadoMostrato = testoDado;
       dadoMostratoFacce = 20;
       tiroCriticoUno = dado == 1;
       tiroCriticoVenti = dado == 20;
-      risultato = '$nome: $testoDado$statoForzaLog';
+      risultato = '$nome: $testoDado$statoForzaLog$expText';
 
       aggiungiLog(
-        'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog',
+        'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText',
       );
     });
-    if (statoForzaLog.isNotEmpty) {
-      programmaSalvataggio();
+    if (statoForzaLog.isNotEmpty || expGuadagnata > 0) {
+      scheduleCombatRollSave();
     }
 
     mostraDadoCentrale(
@@ -386,6 +461,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final label =
         '${stat.nome} (${hiddenEyeGroupLabel(hiddenEyeStatGroup(stat.id))})';
     final masteryGain = oculusSubtraitMasteryGainForDie(dado);
+    final expGuadagnata = oculumRollExperienceGain(
+      naturalRoll: dado,
+      faces: 20,
+      rollSucceeded: totale > 0,
+    );
     var masteryCompletedLevels = 0;
     final reduceDiceEffects =
         modalitaLeggera || modalitaVeloce || phoneCompactUi;
@@ -408,11 +488,30 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         ? ' ${t('Maestria piena: +1 sottotratto.', 'Mastery full: +1 subtrait.')}'
         : ' ${t('Maestria avanzata.', 'Mastery advanced.')}';
     statoForzaLog = registraTiroStatoForza();
+    final expText = applicaEsperienzaFlat(
+      expGuadagnata,
+      motivo: t('Tiro superato', 'Successful roll'),
+    );
+    var adaptationCriticalText = '';
+    if (stat.id == 'adattamento') {
+      final outcome = oculumApplyAdaptationCritical(
+        naturalRoll: dado,
+        combatActive: currentCombatIsActive(),
+        ownerSheetId: currentTemporaryResistanceOwnerSheetId(),
+        effects: temporaryCombatResistanceEffects,
+      );
+      if (outcome.isNaturalCritical) {
+        adaptationCriticalText = outcome.applied || outcome.alreadyActive
+            ? '\n${t('CRITICO DI ADATTAMENTO: Resistenza Temporanea a tutti i danni ottenuta fino alla fine del combattimento.', 'ADAPTATION CRITICAL: Temporary Resistance to all damage gained until the end of combat.')}'
+            : '\n${t('CRITICO DI ADATTAMENTO: nessun combattimento attivo, effetto temporaneo non applicato.', 'ADAPTATION CRITICAL: no active combat, temporary effect not applied.')}';
+      }
+    }
     dadoMostrato = testoDado;
     dadoMostratoFacce = 20;
     tiroCriticoUno = dado == 1;
     tiroCriticoVenti = dado == 20;
-    risultato = '$label: $testoDado$masteryText$statoForzaLog';
+    risultato =
+        '$label: $testoDado$masteryText$statoForzaLog$adaptationCriticalText$expText';
     _applyDadoCentraleOverlayState(
       valore: testoDado,
       criticoUno: dado == 1,
@@ -421,7 +520,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       reduceEffects: reduceDiceEffects,
     );
     aggiungiLog(
-      'Tiro sottotratto $label: $testoDado.${oculumTiroLogLabel(oculumSpend)}$masteryText$statoForzaLog',
+      'Tiro sottotratto $label: $testoDado.${oculumTiroLogLabel(oculumSpend)}$masteryText$statoForzaLog$adaptationCriticalText$expText',
     );
     notifyDiceResultChanged();
     notifyDiceOverlayChanged();
@@ -429,11 +528,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (masteryGain > 0 || statoForzaLog.isNotEmpty) {
-        Future<void>.delayed(const Duration(milliseconds: 80), () {
-          if (!mounted) return;
-          scheduleHiddenEyeProgressSave();
-        });
+      if (masteryGain > 0 || statoForzaLog.isNotEmpty || expGuadagnata > 0) {
+        scheduleCombatRollSave();
       }
       Future<void>.delayed(const Duration(milliseconds: 120), () {
         if (!mounted) return;
@@ -1814,6 +1910,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   void clearMasterInitiativeTokens() {
     setState(() {
       masterInitiativeTokens.clear();
+      clearTemporaryCombatResistanceEffects();
       masterInitiativeRound = 1;
       masterInitiativeActiveIndex = 0;
       masterInitiativeManualOrder = false;
@@ -2377,9 +2474,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   List<({String command, String value, String element})> incomingDamageRules() {
     final text = activeQuickCommandText();
     if (!text.contains('@')) return const [];
-    final matches = RegExp(
-      r'@([A-Za-zÀ-ÿ]+)\s*([+-]\s*\d+\s*%?)?\s*([^@\n,;]*)',
-    ).allMatches(text);
+    final cached = incomingDamageRulesCache[text];
+    if (cached != null) return cached;
+    final matches = _oculumIncomingDamageRulePattern.allMatches(text);
     final rules = <({String command, String value, String element})>[];
     for (final match in matches) {
       final command = (match.group(1) ?? '').trim();
@@ -2388,7 +2485,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final element = (match.group(3) ?? '').trim();
       rules.add((command: command, value: value, element: element));
     }
-    return rules;
+    final result =
+        List<({String command, String value, String element})>.unmodifiable(
+          rules,
+        );
+    if (incomingDamageRulesCache.length >= 32) {
+      incomingDamageRulesCache.clear();
+    }
+    incomingDamageRulesCache[text] = result;
+    return result;
   }
 
   List<({String command, String value, String element})>
@@ -2457,14 +2562,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   bool textHasSafeHpParserCommand(String text) {
-    return RegExp(r'@safehp\b', caseSensitive: false).hasMatch(text);
+    return _oculumSafeHpCommandPattern.hasMatch(text);
   }
 
   int textSaveShieldParserValue(String text) {
-    final match = RegExp(
-      r'@saveShield\s*\+?(\d+)',
-      caseSensitive: false,
-    ).firstMatch(text);
+    final match = _oculumSaveShieldCommandPattern.firstMatch(text);
     if (match == null) return 0;
     return max(0, int.tryParse(match.group(1) ?? '') ?? 0);
   }
@@ -2501,8 +2603,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   void consumeOneShotParserCommand(String command) {
     final source = buffMalusRapidiController.text;
     final pattern = command.toLowerCase() == 'saveshield'
-        ? RegExp(r'\s*@saveShield\s*\+?\d+', caseSensitive: false)
-        : RegExp(r'\s*@safehp\b', caseSensitive: false);
+        ? _oculumConsumeSaveShieldPattern
+        : _oculumConsumeSafeHpPattern;
     final nextSource = source.replaceFirst(pattern, '').trim();
     if (nextSource != source.trim()) {
       buffMalusRapidiController.text = nextSource;
@@ -2884,6 +2986,21 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         ? ' Vulnerability Reset: damage reduced to $dannoFinale.'
         : '';
 
+    final resistenzaAdattamentoAttiva =
+        currentSheetHasAdaptationTemporaryResistance();
+    if (resistenzaAdattamentoAttiva) {
+      dannoFinale = max(
+        1,
+        (dannoFinale * damageRuleMultiplierForCommand('Resistenza')).ceil(),
+      );
+    }
+    final resistenzaAdattamentoLogIt = resistenzaAdattamentoAttiva
+        ? ' Adattamento: Resistenza Temporanea a tutti i danni, danno ridotto a $dannoFinale.'
+        : '';
+    final resistenzaAdattamentoLogEn = resistenzaAdattamentoAttiva
+        ? ' Adaptation: Temporary Resistance to all damage, damage reduced to $dannoFinale.'
+        : '';
+
     int rimanente = dannoFinale;
     int oculumShield = scudoOculum();
     int shield = scudo();
@@ -2967,15 +3084,22 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         hpAfter: hp,
         oculumDodgeUsedToday: riduzioneSchivata > 0,
       );
+      final lowHpLog = applicaRicompensaAscensionDustRisorsaBassa(
+        before: hpPrima,
+        after: hp,
+        maximum: maxHp(),
+        resourceName: t('HP', 'HP'),
+      );
       if (scudoCriticoSpezzato) {
         scudoCriticoController.text = max(0, scudoCriticoPrima - 1).toString();
       }
 
       risultato = t(
-        'Danno subito: $dannoLog$schivataLogIt$difesaLogIt. ${modificatore.name}: $dannoModificatoBase.$parserRulesLog$criticoLogIt ${scudoCriticoAttivo ? "Scudo Critico attivo: danno dimezzato a $dannoFinale. " : ""}$resistenzaStatoForzaLogIt$opzioniImpattoIt${scudoSalvataggioAttivato ? " Scudo di Salvataggio: l'overflow viene bloccato dopo l'ultimo scudo." : ""}${safeHpAttivato ? " @safehp: resti a 1 HP e il comando viene consumato." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Scudo, comando consumato." : ""} Applicato a ${ignoraScudi ? "HP Temp -> HP" : "Scudo Oculum -> Scudo -> HP Temp -> HP"}.',
-        'Damage taken: $dannoLog$schivataLogEn$difesaLogEn. ${modificatore.name}: $dannoModificatoBase.$parserRulesLog$criticoLogEn ${scudoCriticoAttivo ? "Critical Shield active: damage halved to $dannoFinale. " : ""}$resistenzaStatoForzaLogEn$opzioniImpattoEn${scudoSalvataggioAttivato ? " Saving Shield: overflow is blocked after the last shield." : ""}${safeHpAttivato ? " @safehp: you stay at 1 HP and the command is consumed." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Shield, command consumed." : ""} Applied to ${ignoraScudi ? "Temp HP -> HP" : "Oculum Shield -> Shield -> Temp HP -> HP"}.',
+        'Danno subito: $dannoLog$schivataLogIt$difesaLogIt. ${modificatore.name}: $dannoModificatoBase.$parserRulesLog$criticoLogIt ${scudoCriticoAttivo ? "Scudo Critico attivo: danno dimezzato a $dannoFinale. " : ""}$resistenzaStatoForzaLogIt$resistenzaAdattamentoLogIt$opzioniImpattoIt${scudoSalvataggioAttivato ? " Scudo di Salvataggio: l'overflow viene bloccato dopo l'ultimo scudo." : ""}${safeHpAttivato ? " @safehp: resti a 1 HP e il comando viene consumato." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Scudo, comando consumato." : ""} Applicato a ${ignoraScudi ? "HP Temp -> HP" : "Scudo Oculum -> Scudo -> HP Temp -> HP"}.',
+        'Damage taken: $dannoLog$schivataLogEn$difesaLogEn. ${modificatore.name}: $dannoModificatoBase.$parserRulesLog$criticoLogEn ${scudoCriticoAttivo ? "Critical Shield active: damage halved to $dannoFinale. " : ""}$resistenzaStatoForzaLogEn$resistenzaAdattamentoLogEn$opzioniImpattoEn${scudoSalvataggioAttivato ? " Saving Shield: overflow is blocked after the last shield." : ""}${safeHpAttivato ? " @safehp: you stay at 1 HP and the command is consumed." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Shield, command consumed." : ""} Applied to ${ignoraScudi ? "Temp HP -> HP" : "Oculum Shield -> Shield -> Temp HP -> HP"}.',
       );
       risultato += partialAwakeningLog;
+      risultato += lowHpLog;
 
       if (scudoCriticoSpezzato) {
         risultato += t(
@@ -3429,6 +3553,57 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     return pow(1.2, diff).toDouble();
   }
 
+  String applicaEsperienzaFlat(int amount, {required String motivo}) {
+    final expAggiunta = max(0, amount);
+    if (expAggiunta == 0) return '';
+
+    final expPrima = expCorrente();
+    final expTotale = expPrima + expAggiunta;
+    final sogliaPrima = max(expMilestoneRegenClaimed, expPrima ~/ 369);
+    final sogliaDopo = expTotale ~/ 369;
+    final soglieRecupero = max(0, sogliaDopo - sogliaPrima);
+    final recuperoCento = applicaRecuperoOgniCentoExp(expAggiunta);
+
+    if (!scalaExpAutomatica) {
+      expController.text = expTotale.clamp(0, 999999).toString();
+      expMilestoneRegenClaimed = max(
+        expMilestoneRegenClaimed,
+        expTotale ~/ 369,
+      );
+      final recupero = applicaRecuperoSogliaExp(soglieRecupero);
+      return '\n$motivo: +$expAggiunta EXP. Totale: ${expController.text}.$recuperoCento$recupero';
+    }
+
+    final expPerLivello = normalizedCampaignDifficulty() == 'oculum'
+        ? 1369
+        : 1000;
+    final livelliGuadagnati = expTotale ~/ expPerLivello;
+    final expRimasta = expTotale % expPerLivello;
+    expController.text = expRimasta.toString();
+    expMilestoneRegenClaimed = expRimasta ~/ 369;
+    final recupero = applicaRecuperoSogliaExp(soglieRecupero);
+
+    var livelloText = '';
+    if (livelliGuadagnati > 0) {
+      livelloController.text =
+          (leggiNumero(livelloController) + livelliGuadagnati).toString();
+      aggiornaGradoAutomatico();
+      if (isMostro()) {
+        monsterStatPoints += livelliGuadagnati * 9;
+      } else {
+        levelUpDaAssegnare += livelliGuadagnati;
+      }
+      refullaHp();
+      invalidateHiddenEyeDerivedCaches(notifyCards: false);
+      livelloText = t(
+        ' Livelli ottenuti: $livelliGuadagnati.',
+        ' Levels gained: $livelliGuadagnati.',
+      );
+    }
+
+    return '\n$motivo: +$expAggiunta EXP. EXP attuale: $expRimasta/$expPerLivello.$livelloText$recuperoCento$recupero';
+  }
+
   int expFinalePreview() {
     final base = max(0, leggiNumero(expDaAggiungereController));
     final value = base * expSourceMultiplier() * expGradeMultiplier();
@@ -3466,6 +3641,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final sogliaPrima = max(expMilestoneRegenClaimed, expPrima ~/ 369);
     final sogliaDopo = expTotale ~/ 369;
     final soglieRecupero = max(0, sogliaDopo - sogliaPrima);
+    final recuperoCento = applicaRecuperoOgniCentoExp(expRealeAggiunta);
     if (!scalaExpAutomatica) {
       setState(() {
         expController.text = expTotale.clamp(0, 999999).toString();
@@ -3482,6 +3658,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         if (recuperoExpLog.isNotEmpty) {
           risultato += recuperoExpLog;
         }
+        risultato += recuperoCento;
         expDaAggiungereController.clear();
         aggiungiLog(risultato);
       });
@@ -3536,6 +3713,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       if (recuperoExpLog.isNotEmpty) {
         risultato += recuperoExpLog;
       }
+      risultato += recuperoCento;
       expDaAggiungereController.clear();
 
       aggiungiLog(risultato);

@@ -776,6 +776,11 @@ Armi:
 - arma con Titolo: +10 danni;
 - arma con Titolo gradato: +20 danni per Grado dell'arma.
 
+Recupero da EXP:
+- ogni 100 EXP realmente ottenuti recuperi 6 HP e 1 Oculum;
+- i guadagni inferiori a 100 si accumulano e il resto prosegue verso la soglia successiva;
+- il recupero non supera i massimi di HP e Oculum e continua a funzionare attraversando un level-up.
+
 EXP da mostri:
 - conta il livello superiore al tuo;
 - conta le statistiche maggiori delle tue;
@@ -803,6 +808,11 @@ Weapons:
 - titled weapon: +10 damage;
 - graded titled weapon: +20 damage per weapon Grade.
 
+EXP recovery:
+- every 100 EXP actually gained restores 6 HP and 1 Oculum;
+- gains below 100 accumulate and any remainder carries toward the next threshold;
+- recovery cannot exceed maximum HP or Oculum and continues across a level-up.
+
 Monster EXP:
 - count levels above yours;
 - count stats higher than yours;
@@ -826,8 +836,8 @@ Summons:
 ''',
   ),
   ManualSection(
-    titleIt: '17. Critici e Fragilità',
-    titleEn: '17. Criticals and Fragility',
+    titleIt: '17. Critici, Fragilità ed EXP dei tiri',
+    titleEn: '17. Criticals, Fragility and Roll EXP',
     contentIt: r'''
 Regola base:
 - ogni dado può crittare sul suo massimo naturale;
@@ -835,6 +845,14 @@ Regola base:
 - critico positivo: aggiungi metà dado + Livello + Grado x6 al tiro;
 - critico negativo: togli metà dado + Livello + Grado x3 dal tiro.
 - se il tiro nemico viene raddoppiato, quel tiro conta come critico positivo.
+
+EXP dei tiri riusciti:
+- la regola vale soltanto per i tiri di gioco su d20, non per il lanciatore separato da d2 a d120;
+- il tiro deve riuscire dopo avere applicato bonus, malus e DT;
+- con un risultato naturale di 18 ottieni 18 EXP;
+- con un risultato naturale di 19 ottieni 19 EXP;
+- con un 20 naturale, quindi un critico positivo, ottieni 20 + metà faccia: 30 EXP;
+- il valore aggiunto all'EXP dipende dal dado naturale e non comprende alcun bonus.
 
 Critico in Attacco:
 - applichi una Fragilità nella zona bersagliata;
@@ -861,6 +879,14 @@ Base rule:
 - natural 1 is a negative critical;
 - positive critical adds half die + Level + Grade x6 to the roll;
 - negative critical subtracts half die + Level + Grade x3 from the roll.
+
+EXP from successful rolls:
+- this rule applies only to gameplay d20 rolls, never to the separate d2-d120 roller;
+- the roll must succeed after bonuses, penalties and DT are applied;
+- a natural 18 grants 18 EXP;
+- a natural 19 grants 19 EXP;
+- a natural 20, therefore a positive critical, grants 20 + half the die: 30 EXP;
+- EXP uses the natural die result and never includes bonuses.
 
 Attack Critical:
 - apply Fragility to the targeted zone;
@@ -927,6 +953,12 @@ Open:
 - le Open Skill sono versioni ridotte usabili con pochi limiti;
 - dopo l'uso dell'Open, le Open Skill collegate restano potenziate per 1 ora.
 
+EXP di evoluzione:
+- quando un Titolo sblocca la prima Open ricevi 25 EXP, una sola volta;
+- il totale riconosciuto dal Titolo diventa 125 EXP quando possiede 2 Open e 175 EXP quando ne possiede 3;
+- dalla terza Open in poi, ogni nuova Open aumenta il totale di 50 EXP;
+- disattivare l'evoluzione, eliminare una Open o duplicare il Titolo non permette di riscuotere di nuovo l'EXP già assegnata.
+
 Oculum:
 - e l'energia dell'oculus, l'Occhio;
 - serve per Oculum Art, cerchi magici e item specifici;
@@ -946,6 +978,12 @@ Opens:
 - the Open buff lasts until the Open is recovered;
 - Open Skills are reduced versions usable with few limits;
 - after using the Open, linked Open Skills stay empowered for 1 hour.
+
+Evolution EXP:
+- when a Title unlocks its first Open, you gain 25 EXP once;
+- that Title's recognized total becomes 125 EXP at 2 Opens and 175 EXP at 3 Opens;
+- from the third Open onward, each new Open increases the total by 50 EXP;
+- disabling evolution, deleting an Open or duplicating the Title cannot award already claimed EXP again.
 
 Oculum:
 - it is the energy of the oculus, the Eye;
@@ -2506,7 +2544,356 @@ Optimizations must reduce calculations and redraws without removing decorations,
   ),
 ];
 
-const List<ManualSection> activeManualSections = oculumManualSections;
+const ManualSection oculumCycleCrisisDungeonManualSection = ManualSection(
+  titleIt: '24. Ciclo, crisi, mappa e dungeon',
+  titleEn: '24. Cycle, Crisis, Map and Dungeon',
+  contentIt: r'''
+Queste regole descrivono il tempo di Oculum, le crisi automatiche e le attività di esplorazione. Le formule generali di vita, danno, critici ed EXP restano nelle sezioni precedenti e qui non vengono ripetute.
+
+GIORNI E CICLO OCULUM
+
+Un Giorno dura 9 ore. Tre Giorni formano una Tremana, sei una Semana e dodici una Dodemana. Un Ciclo Pieno dura 369 Giorni ed è diviso in dodici Nuove Fasi:
+- Safe Monster, Giorni 1-36: molti mostri perdono il Grado, diventano pacifici e non offrono drop oltre quelli base o rari; ucciderli assegna Karma negativo;
+- Illness, Giorni 37-72: la Follia ricevuta raddoppia, gli "altri" diventano visibili e può emergere una Illness Art;
+- Little Breath, Giorni 73-108: il Fato concede più Titoli, soprattutto ai personaggi con Rebirth, mentre clima e pressione delle aree si attenuano;
+- Piogge Fertilizzanti, Giorni 109-144: piove fango, i malanni sono più facili e il cibo può causare Nausea;
+- The Sun, Giorni 145-150: i Solari ottengono +25% alle statistiche, non piove e il cibo sotto Grado VI marcisce entro 2 Giorni;
+- Mezzo Ciclo, Giorni 151-183: il clima torna più sostenibile e le piogge sono soprattutto naturali;
+- The Moon, Giorni 184-189: si celebra l'accettazione delle razze e i Lunari ottengono +10%;
+- The Fate, Giorni 190-225: chi possiede un Fato è avvantaggiato contro chi ne è privo;
+- Caldo Infernale, Giorni 226-261: senza bere, il caldo riduce la Volontà in base alla fatica;
+- The Null, Giorni 262-297: il vuoto può restituire alcuni caduti Senza Fato, con ricordi mancanti o falsi;
+- Ghiaccio Imponente, Giorni 298-333: senza calore si perde Materia e si rischia il congelamento;
+- Ultimo Ciclo, Giorni 334-369: si celebra il ciclo trascorso senza un modificatore meccanico dominante.
+
+RIPOSO E PUTREFAZIONE
+
+La pagina Riposo mostra Giorno, Nuova Fase, Tremana, Semana e Dodemana. Il riposo lungo ripristina HP e Scudo Oculum quando presente; lo Scudo normale consumato non ritorna. Ogni oggetto conserva il Giorno di ottenimento: raggiunta la sua durata PUT, diventa Carne marcia, Materiale putrefatto, Slime putrefatto oppure Oggetto putrefatto. Risultati uguali si uniscono nello stesso stack.
+
+STATO DI FORZA
+
+Quando gli HP scendono a un quarto o meno del massimo, la scheda esegue un solo controllo di crisi. Il risultato può essere Corpo non Mollare, Occhi Attenti, Esplosione di Oculum, Adrenalina, Azzeramento delle Vulnerabilità, Stanchezza oppure nessun effetto. Esplosione di Oculum dura almeno 9 tiri, compresi quelli dei sottotratti. Al termine applica il proprio esito automatico; lo Stato di Forza si azzera soltanto quando la durata minima è conclusa e gli HP tornano sopra la soglia.
+
+MAPPA, TOKEN E TURNISTICA
+
+I token possono provenire dalle schede o da immagini, essere ridimensionati e collegati alla turnistica. All'inizio di ogni turno il movimento disponibile viene ripristinato. Un giocatore muove i propri token; il Master può concedere permessi diversi. Barre, stati, rotazione, visibilità e condizioni seguono i dati del token condiviso.
+
+OCULUM DUNGEON
+
+Armi, costumi e Oculus utilizzabili in una run devono essere trovati o acquistati durante quella run. Gli sblocchi permanenti aumentano la frequenza dei contenuti ma non li equipaggiano automaticamente. Un Oculus può aggiungere Skill provenienti da altre Oculum Art fino a 9 Skill attive. Gli NPC incontrati entrano nella coda di evocazione, non nel party permanente; se vengono rimossi manualmente non tornano finché non sono riaggiunti.
+
+Il tema Giorno di scuola si sblocca raggiungendo il piano 3 con Art Scolastica Moderna. Kitty Slime si sblocca con Art Hoshy o con una scheda Hoshy almeno di livello 5; quando subisce un attacco ha il 50% di probabilità di generare una copia, fino a due copie, ciascuna con metà statistiche.
+
+Dal Grado VI può comparire Occhio di Pietra e Bilancia. L'evento fonde drop e Metallo Runico Postea della run per migliorare l'arma e può generare Dust, critico run, Scudo Oculum o favore del fabbro. Se non esiste nulla da fondere, concede Scudo Oculum e non blocca la run.
+''',
+  contentEn: r'''
+These rules cover Oculum time, automatic crises and exploration activities. General life, damage, critical and EXP formulas remain in the previous sections and are not repeated here.
+
+DAYS AND THE OCULUM CYCLE
+
+One Day lasts 9 hours. Three Days make a Tremana, six a Semana and twelve a Dodemana. A Full Cycle lasts 369 Days and contains twelve New Phases:
+- Safe Monster, Days 1-36: many monsters lose Grade, become peaceful and offer only basic or rare drops; killing them grants negative Karma;
+- Illness, Days 37-72: received Madness doubles, the "others" become visible and an Illness Art may emerge;
+- Little Breath, Days 73-108: Fate grants more Titles, especially to Rebirth characters, while weather and area pressure weaken;
+- Fertilizing Rains, Days 109-144: mud rains down, illnesses spread more easily and food may cause Nausea;
+- The Sun, Days 145-150: Solar beings gain +25% stats, rain stops and food below Grade VI rots within 2 Days;
+- Half Cycle, Days 151-183: weather becomes more sustainable and rain is mostly natural;
+- The Moon, Days 184-189: races are celebrated and Lunar beings gain +10%;
+- The Fate, Days 190-225: those who possess a Fate are empowered against those without one;
+- Infernal Heat, Days 226-261: without drinking, heat reduces Will according to fatigue;
+- The Null, Days 262-297: the void may return some fallen without Fate and with missing or false memories;
+- Overwhelming Ice, Days 298-333: without heat, Materia is lost and freezing becomes a risk;
+- Last Cycle, Days 334-369: the past cycle is celebrated without one dominant mechanical modifier.
+
+REST AND ROT
+
+The Rest page shows Day, New Phase, Tremana, Semana and Dodemana. A long rest restores HP and Oculum Shield when present; spent normal Shield does not return. Every item records the Day it was obtained. When its PUT duration expires, it becomes Rotten Meat, Rotted Material, Rotted Slime or Rotted Item. Equal results merge into one stack.
+
+FORCE STATE
+
+When HP fall to one quarter or less of maximum, the sheet makes one crisis check. The result may be Body, Do Not Give Up; Sharp Eyes; Oculum Burst; Adrenaline; Vulnerability Reset; Exhaustion; or no effect. Oculum Burst lasts at least 9 rolls, including subtrait rolls. Its automatic aftermath is resolved at the end; Force State resets only after the minimum duration ends and HP rise above the threshold.
+
+MAP, TOKENS AND TURN ORDER
+
+Tokens may come from sheets or images, can be resized and linked to turn order. Available movement resets at the start of each turn. Players move their own tokens unless the Master grants different permissions. Bars, states, rotation, visibility and conditions follow the shared token data.
+
+OCULUM DUNGEON
+
+Weapons, costumes and Oculus items used in a run must be found or bought during that run. Permanent unlocks increase content frequency but never equip it automatically. An Oculus can add Skills from other Oculum Arts up to 9 active Skills. Encountered NPCs enter the summon queue rather than the permanent party; manually removed NPCs do not return until added again.
+
+The School Day theme unlocks by reaching floor 3 with Modern School Art. Kitty Slime unlocks through Hoshy Art or a level 5 or higher Hoshy sheet; when attacked, it has a 50% chance to create a copy, up to two copies, each with half its stats.
+
+From Grade VI, the Stone Eye and Scale event may appear. It fuses run drops and Postea Runic Metal to improve a weapon and may produce Dust, a run critical, Oculum Shield or blacksmith favor. If nothing can be fused, it grants Oculum Shield and never blocks the run.
+''',
+);
+
+final List<ManualSection> activeManualSections =
+    List<ManualSection>.unmodifiable(<ManualSection>[
+      ...oculumManualSections.sublist(0, oculumManualSections.length - 1),
+      oculumCycleCrisisDungeonManualSection,
+    ]);
+
+String oculumManualPdfText(String value) {
+  final normalized = value
+      .replaceAll('\r\n', '\n')
+      .replaceAll('\r', '\n')
+      .replaceAll('•', '- ')
+      .replaceAll('—', '-')
+      .replaceAll('–', '-')
+      .replaceAll('→', '->')
+      .replaceAll('’', "'")
+      .replaceAll('‘', "'")
+      .replaceAll('“', '"')
+      .replaceAll('”', '"')
+      .replaceAll('…', '...')
+      .replaceAll('¼', '1/4')
+      .replaceAll('½', '1/2')
+      .replaceAll('¾', '3/4')
+      .replaceAll('⅓', '1/3')
+      .replaceAll('⅔', '2/3');
+  final out = StringBuffer();
+  for (final rune in normalized.runes) {
+    if (rune == 10 || rune == 9 || (rune >= 32 && rune <= 126)) {
+      out.writeCharCode(rune);
+      continue;
+    }
+    if (rune >= 160 && rune <= 255) {
+      out.writeCharCode(rune);
+      continue;
+    }
+    out.write('?');
+  }
+  return out.toString();
+}
+
+bool _oculumManualPdfLooksLikeHeading(String line) {
+  final trimmed = line.trim();
+  if (trimmed.isEmpty || trimmed.length > 82) return false;
+  final letters = trimmed.replaceAll(RegExp(r'[^A-Za-zÀ-ÿ]'), '');
+  return letters.length >= 4 && letters == letters.toUpperCase();
+}
+
+List<pw.Widget> _oculumManualPdfBodyWidgets(
+  String value, {
+  required pw.TextStyle bodyStyle,
+  required pw.TextStyle subheadingStyle,
+}) {
+  final text = oculumManualPdfText(value).trim();
+  if (text.isEmpty) return const <pw.Widget>[];
+  final widgets = <pw.Widget>[];
+  for (final paragraph in text.split(RegExp(r'\n{2,}'))) {
+    final lines = paragraph
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList(growable: false);
+    if (lines.isEmpty) continue;
+
+    if (lines.length == 1 && _oculumManualPdfLooksLikeHeading(lines.first)) {
+      widgets.add(pw.SizedBox(height: 5));
+      widgets.add(pw.Text(lines.first, style: subheadingStyle));
+      widgets.add(pw.SizedBox(height: 3));
+      continue;
+    }
+
+    for (final line in lines) {
+      if (line.startsWith('- ')) {
+        widgets.add(
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(left: 8, bottom: 3),
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.SizedBox(width: 10, child: pw.Text('-', style: bodyStyle)),
+                pw.Expanded(
+                  child: pw.Text(
+                    line.substring(2).trim(),
+                    style: bodyStyle,
+                    textAlign: pw.TextAlign.justify,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else {
+        widgets.add(
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(bottom: 5),
+            child: pw.Text(
+              line,
+              style: bodyStyle,
+              textAlign: pw.TextAlign.justify,
+            ),
+          ),
+        );
+      }
+    }
+    widgets.add(pw.SizedBox(height: 3));
+  }
+  return widgets;
+}
+
+Future<Uint8List> oculumBuildManualPdf({required bool english}) async {
+  final document = pw.Document(
+    title: english ? 'Oculum Rulebook' : 'Manuale di Oculum',
+    author: 'Oculum',
+    subject: english
+        ? 'Complete rules exported by the Oculum app'
+        : 'Regolamento completo esportato dall app Oculum',
+  );
+  final baseFont = pw.Font.ttf(
+    await rootBundle.load('assets/fonts/Poppins-Regular.ttf'),
+  );
+  final boldFont = pw.Font.ttf(
+    await rootBundle.load('assets/fonts/Poppins-SemiBold.ttf'),
+  );
+  final italicFont = pw.Font.ttf(
+    await rootBundle.load('assets/fonts/Poppins-Italic.ttf'),
+  );
+  final theme = pw.ThemeData.withFont(
+    base: baseFont,
+    bold: boldFont,
+    italic: italicFont,
+    boldItalic: italicFont,
+  );
+  final titleStyle = pw.TextStyle(
+    font: boldFont,
+    fontSize: 29,
+    color: PdfColors.deepPurple800,
+  );
+  final sectionStyle = pw.TextStyle(
+    font: boldFont,
+    fontSize: 17,
+    color: PdfColors.deepPurple800,
+  );
+  final subheadingStyle = pw.TextStyle(
+    font: boldFont,
+    fontSize: 11.5,
+    color: PdfColors.deepPurple700,
+  );
+  final bodyStyle = pw.TextStyle(
+    font: baseFont,
+    fontSize: 10.2,
+    lineSpacing: 2.2,
+    color: PdfColors.grey900,
+  );
+  final smallStyle = pw.TextStyle(
+    font: baseFont,
+    fontSize: 8.5,
+    color: PdfColors.grey700,
+  );
+
+  document.addPage(
+    pw.Page(
+      theme: theme,
+      pageFormat: PdfPageFormat.a4,
+      margin: const pw.EdgeInsets.all(46),
+      build: (context) => pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Spacer(flex: 2),
+          pw.Container(width: 58, height: 5, color: PdfColors.deepPurple700),
+          pw.SizedBox(height: 18),
+          pw.Text(
+            english ? 'OCULUM RULEBOOK' : 'MANUALE DI OCULUM',
+            style: titleStyle,
+          ),
+          pw.SizedBox(height: 12),
+          pw.Text(
+            english
+                ? 'Rules, progression and play procedures'
+                : 'Regole, progressione e procedure di gioco',
+            style: pw.TextStyle(
+              font: italicFont,
+              fontSize: 15,
+              color: PdfColors.deepPurple600,
+            ),
+          ),
+          pw.SizedBox(height: 24),
+          pw.Text(
+            english
+                ? 'A complete reference generated from the same manual used by the app. Read the core chapters in order, then use the operational chapters during play.'
+                : 'Un riferimento completo generato dallo stesso manuale usato dall app. Leggi i capitoli fondamentali in ordine e consulta quelli operativi durante la sessione.',
+            style: bodyStyle,
+            textAlign: pw.TextAlign.justify,
+          ),
+          pw.Spacer(flex: 3),
+          pw.Text(
+            english
+                ? 'Updated rules edition'
+                : 'Edizione con regole aggiornate',
+            style: smallStyle,
+          ),
+        ],
+      ),
+    ),
+  );
+
+  document.addPage(
+    pw.MultiPage(
+      theme: theme,
+      pageFormat: PdfPageFormat.a4,
+      margin: const pw.EdgeInsets.fromLTRB(38, 42, 38, 40),
+      header: (context) => pw.Container(
+        padding: const pw.EdgeInsets.only(bottom: 6),
+        decoration: const pw.BoxDecoration(
+          border: pw.Border(
+            bottom: pw.BorderSide(color: PdfColors.deepPurple200, width: 0.6),
+          ),
+        ),
+        child: pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text('OCULUM', style: smallStyle),
+            pw.Text(english ? 'RULEBOOK' : 'MANUALE', style: smallStyle),
+          ],
+        ),
+      ),
+      footer: (context) => pw.Align(
+        alignment: pw.Alignment.centerRight,
+        child: pw.Text('${context.pageNumber}', style: smallStyle),
+      ),
+      build: (context) {
+        final widgets = <pw.Widget>[
+          pw.Text(english ? 'Contents' : 'Indice', style: sectionStyle),
+          pw.SizedBox(height: 12),
+          for (final section in activeManualSections)
+            pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 5),
+              child: pw.Text(
+                oculumManualPdfText(
+                  english ? section.titleEn : section.titleIt,
+                ),
+                style: bodyStyle.copyWith(font: boldFont),
+              ),
+            ),
+        ];
+
+        for (final section in activeManualSections) {
+          widgets.add(pw.NewPage());
+          widgets.add(
+            pw.Text(
+              oculumManualPdfText(english ? section.titleEn : section.titleIt),
+              style: sectionStyle,
+            ),
+          );
+          widgets.add(pw.SizedBox(height: 10));
+          widgets.addAll(
+            _oculumManualPdfBodyWidgets(
+              english ? section.contentEn : section.contentIt,
+              bodyStyle: bodyStyle,
+              subheadingStyle: subheadingStyle,
+            ),
+          );
+        }
+        return widgets;
+      },
+    ),
+  );
+
+  return document.save();
+}
 
 // Kept as a compact fallback draft, but the app renders the canonical manual
 // above so rule updates have one source of truth.

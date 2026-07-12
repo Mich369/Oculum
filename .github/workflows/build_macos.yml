@@ -9,6 +9,9 @@ on:
         required: true
         default: true
         type: boolean
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -60,7 +63,14 @@ jobs:
         run: flutter test
 
       - name: Build macOS release
-        run: flutter build macos --release
+        shell: bash
+        env:
+          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          flutter build macos --release \
+            "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
+            "--dart-define=OculumSupabaseAnonKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
       - name: Valida e impacchetta applicazione
         id: package

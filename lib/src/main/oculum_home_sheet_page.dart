@@ -3845,44 +3845,29 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth.isFinite
-            ? constraints.maxWidth
-            : MediaQuery.of(context).size.width;
-        final columns = max(1, maxWidth ~/ 258);
-        final rows = (visibleStats.length / columns).ceil();
-        final rowHeight = uiScale(172);
-        final gridHeight = min(
-          MediaQuery.of(context).size.height * 0.52,
-          max(rowHeight, rows * rowHeight),
-        );
-
-        return SizedBox(
-          height: gridHeight.toDouble(),
-          child: GridView.builder(
-            key: PageStorageKey<String>('hidden_eye_grid_$group'),
-            primary: false,
-            itemCount: visibleStats.length,
-            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 258,
-              mainAxisExtent: rowHeight,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemBuilder: (context, index) {
-              final stat = visibleStats[index];
-              return KeyedSubtree(
-                key: ValueKey<String>(
-                  'hidden_eye_stat_${currentSheetScrollId()}_${stat.id}',
-                ),
-                child: hiddenEyeStatManagerCard(
-                  sheetContext: sheetContext,
-                  stat: stat,
-                  onBaseEdited: onBaseEdited,
-                ),
-              );
-            },
+    final rowHeight = uiScale(172);
+    return GridView.builder(
+      key: PageStorageKey<String>('hidden_eye_grid_$group'),
+      primary: false,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: visibleStats.length,
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 258,
+        mainAxisExtent: rowHeight,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemBuilder: (context, index) {
+        final stat = visibleStats[index];
+        return KeyedSubtree(
+          key: ValueKey<String>(
+            'hidden_eye_stat_${currentSheetScrollId()}_${stat.id}',
+          ),
+          child: hiddenEyeStatManagerCard(
+            sheetContext: sheetContext,
+            stat: stat,
+            onBaseEdited: onBaseEdited,
           ),
         );
       },

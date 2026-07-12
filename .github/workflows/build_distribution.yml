@@ -43,7 +43,14 @@ jobs:
         run: flutter pub get
 
       - name: Build Windows release
-        run: flutter build windows --release
+        shell: pwsh
+        env:
+          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          flutter build windows --release `
+            "--dart-define=OculumSupabaseUrl=$env:OCULUM_SUPABASE_URL" `
+            "--dart-define=OculumSupabaseAnonKey=$env:OCULUM_SUPABASE_PUBLISHABLE_KEY"
 
       - name: Copy Windows build to distribution
         shell: pwsh
@@ -88,7 +95,14 @@ jobs:
         run: flutter pub get
 
       - name: Build macOS release
-        run: flutter build macos --release
+        shell: bash
+        env:
+          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          flutter build macos --release \
+            "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
+            "--dart-define=OculumSupabaseAnonKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
       - name: Copy macOS build to distribution
         run: |
@@ -136,7 +150,14 @@ jobs:
         run: flutter pub get
 
       - name: Build iOS release without codesign
-        run: flutter build ios --release --no-codesign
+        shell: bash
+        env:
+          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          flutter build ios --release --no-codesign \
+            "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
+            "--dart-define=OculumSupabaseAnonKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
       - name: Copy iOS build to distribution
         run: |
@@ -183,7 +204,14 @@ jobs:
         run: flutter pub get
 
       - name: Build Android release APK
-        run: flutter build apk --release
+        shell: bash
+        env:
+          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          flutter build apk --release \
+            "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
+            "--dart-define=OculumSupabaseAnonKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
       - name: Copy Android build to distribution
         run: |

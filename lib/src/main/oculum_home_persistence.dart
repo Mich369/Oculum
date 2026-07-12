@@ -269,6 +269,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'dannoOltreScudi': false,
       'dannoBonusScudoPercent': '0',
       'expMilestoneRegenClaimed': 0,
+      'expHundredRegenRemainder': 0,
       'raccoltaResilienzaSpesa': 0,
       'raccoltaVolontaSpesa': 0,
       'raccoltaMateriaSpesa': 0,
@@ -479,6 +480,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'dannoOltreScudi': dannoOltreScudi,
       'dannoBonusScudoPercent': dannoBonusScudoPercentController.text,
       'expMilestoneRegenClaimed': expMilestoneRegenClaimed,
+      'expHundredRegenRemainder': expHundredRegenRemainder,
       'raccoltaResilienzaSpesa': raccoltaResilienzaSpesa,
       'raccoltaVolontaSpesa': raccoltaVolontaSpesa,
       'raccoltaMateriaSpesa': raccoltaMateriaSpesa,
@@ -731,6 +733,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
     dannoBonusScudoPercentController.text =
         '${json['dannoBonusScudoPercent'] ?? '0'}';
     expMilestoneRegenClaimed = readIntValue(json['expMilestoneRegenClaimed']);
+    expHundredRegenRemainder = readIntValue(
+      json['expHundredRegenRemainder'],
+    ).clamp(0, 99).toInt();
 
     raccoltaResilienzaSpesa = readIntValue(json['raccoltaResilienzaSpesa']);
     raccoltaVolontaSpesa = readIntValue(json['raccoltaVolontaSpesa']);
@@ -1840,8 +1845,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
       _OculumHomePageState.saveKey,
       encoded,
     );
-    if (!kIsWeb) await prefs.reload();
-    final verified = await _readSaveBlob(prefs, _OculumHomePageState.saveKey);
+    String? verified;
+    if (writeOk) {
+      verified = await _readSaveBlob(prefs, _OculumHomePageState.saveKey);
+      if (!kIsWeb && verified != encoded) {
+        // Avoid blocking reload on every save; force a reload only on mismatch.
+        await prefs.reload();
+        verified = await _readSaveBlob(prefs, _OculumHomePageState.saveKey);
+      }
+    }
     if (!writeOk || verified != encoded) {
       salvataggioFallimentiConsecutivi++;
       ultimoErroreCaricamentoSalvataggio =
@@ -2147,11 +2159,19 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
     final prefs = await SharedPreferences.getInstance();
     final revision = salvataggioRevisione + 1;
-    final saved = await _scriviSalvataggioProtetto(
-      prefs,
-      datiSalvataggioJson(revision: revision),
-    );
+    final savePayload = datiSalvataggioJson(revision: revision);
+    final saved = await _scriviSalvataggioProtetto(prefs, savePayload);
     if (!saved || soloLocale) return;
+
+    final authState = OculumAuthService.instance.state;
+    if (authState.canSyncToCloud && authState.userId != null) {
+      unawaited(
+        OculumCloudSaveService.instance.queueLocalSaveForSync(
+          authState.userId!,
+          payload: savePayload,
+        ),
+      );
+    }
 
     // Sincronizza la scheda in rete P2P
     p2pSyncOnSave();

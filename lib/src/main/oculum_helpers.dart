@@ -33,6 +33,43 @@ bool readBoolValue(dynamic value, {bool fallback = false}) {
   return fallback;
 }
 
+int oculumTitleOpenExperienceTarget(int unlockedOpenCount) {
+  final count = max(0, unlockedOpenCount);
+  if (count == 0) return 0;
+  if (count == 1) return 25;
+  return 25 + count * 50;
+}
+
+int oculumRollExperienceGain({
+  required int naturalRoll,
+  required int faces,
+  required bool rollSucceeded,
+}) {
+  if (faces != 20 || !rollSucceeded || naturalRoll < 18) return 0;
+  return naturalRoll == faces ? naturalRoll + faces ~/ 2 : naturalRoll;
+}
+
+({int recoveries, int remainder}) oculumExperienceHundredProgress({
+  required int previousRemainder,
+  required int experienceGained,
+}) {
+  final total =
+      (previousRemainder.clamp(0, 99).toInt() + max(0, experienceGained))
+          .toInt();
+  return (recoveries: total ~/ 100, remainder: total % 100);
+}
+
+int oculumLowResourceDustChance({
+  required int current,
+  required int maximum,
+}) {
+  if (maximum <= 0) return 0;
+  if (current * 4 >= maximum) return 0;
+  final ratio = current / maximum;
+  final deficitPercent = ((0.25 - ratio) * 100).ceil();
+  return min(90, max(0, 10 + deficitPercent * 4));
+}
+
 // =====================================================
 // FORMULE SICURE / ELEMENTI / RICERCA FUZZY
 // =====================================================

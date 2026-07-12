@@ -1937,6 +1937,13 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       setState(() {
                         if (!value) disattivaOpenDelTitolo(titolo);
                         titolo.evoluto = value;
+                        if (value) {
+                          final expText = assegnaEsperienzaOpenTitolo(titolo);
+                          if (expText.isNotEmpty) {
+                            risultato = expText.trim();
+                            aggiungiLog(risultato);
+                          }
+                        }
                       });
                       programmaSalvataggio();
                     },

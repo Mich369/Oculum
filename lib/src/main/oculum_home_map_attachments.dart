@@ -1671,42 +1671,7 @@ class _OculumInAppBrowserPageState extends State<OculumInAppBrowserPage> {
 }
 
 bool oculumThemeStartsUnlocked(String id) {
-  return const <String>{
-    'classic_low_detail',
-    'blood_court',
-    'witch_glass',
-    'moon_iron',
-    'lunar_eclipse',
-    'cathedral_rose',
-    'thorn_vigil',
-    'frost_chapel',
-    'obsidian_sigil',
-    'solar_reliquary',
-    'storm_cathedral',
-    'abyssal_tide',
-    'ember_rite',
-    'ivory_archive',
-    'vervain_gothic',
-    'kingi_wrong_future',
-    'blood_chapel',
-    'null_crown',
-    'whispering_reliquary',
-    'black_briar_kingdom',
-    'slime_prince',
-    'moon_rot',
-    'obser_relic',
-    'postea_bloom',
-    'karma_duality',
-    'monster_lantern',
-    'shadow_gate_rank',
-    'deep_forest_demon',
-    'astral_ink',
-    'bone_saint',
-    'medieval_keep',
-    'ash_oracle',
-    'void_liturgy',
-    'verdigris_mourning',
-  }.contains(id);
+  return id.trim().isNotEmpty;
 }
 
 extension _OculumHomeMapAttachments on _OculumHomePageState {

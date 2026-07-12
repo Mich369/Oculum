@@ -43,20 +43,63 @@ void main() {
   });
 
   test('calcola soglia e guadagno maestria dei sottotratti Oculus', () {
-    expect(oculusSubtraitMasteryTargetForGrade(0), 36);
-    expect(oculusSubtraitMasteryTargetForGrade(1), 63);
-    expect(oculusSubtraitMasteryTargetForGrade(2), 69);
-    expect(oculusSubtraitMasteryTargetForGrade(3), 96);
-    expect(oculusSubtraitMasteryTargetForGrade(4), 100);
-    expect(oculusSubtraitMasteryTargetForGrade(5), 150);
-    expect(oculusSubtraitMasteryTargetForGrade(6), 160);
-    expect(oculusSubtraitMasteryTargetForGrade(7), 369);
-    expect(oculusSubtraitMasteryTargetForGrade(8), 500);
-    expect(oculusSubtraitMasteryTargetForGrade(9), 693);
-    expect(oculusSubtraitMasteryTargetForGrade(10), 963);
-    expect(oculusSubtraitMasteryTargetForGrade(11), 1000);
+    const expectedTargets = <int>[
+      33,
+      36,
+      63,
+      69,
+      96,
+      100,
+      120,
+      160,
+      236,
+      296,
+      300,
+      369,
+      396,
+      436,
+      469,
+      536,
+      596,
+      639,
+      663,
+      669,
+      693,
+      700,
+      703,
+      736,
+      769,
+      836,
+      869,
+      896,
+      900,
+      903,
+      906,
+      909,
+    ];
+    for (var grade = 0; grade < expectedTargets.length; grade++) {
+      expect(
+        oculusSubtraitMasteryTargetForGrade(grade),
+        expectedTargets[grade],
+        reason: 'soglia Base $grade -> ${grade + 1}',
+      );
+    }
+    const lateDigits = <int>[3, 6, 9];
+    var grade = expectedTargets.length;
+    for (var decade = 91; decade <= 99; decade++) {
+      for (final digit in lateDigits) {
+        expect(
+          oculusSubtraitMasteryTargetForGrade(grade),
+          decade * 10 + digit,
+          reason: 'soglia Base $grade -> ${grade + 1}',
+        );
+        grade++;
+      }
+    }
+    expect(oculusSubtraitMasteryTargetForGrade(58), 999);
+    expect(oculusSubtraitMasteryTargetForGrade(59), 1000);
     expect(oculusSubtraitMasteryTargetForGrade(99), 1000);
-    expect(oculusSubtraitMasteryTargetForGrade(-1), 36);
+    expect(oculusSubtraitMasteryTargetForGrade(-1), 33);
 
     expect(oculusSubtraitMasteryGainForDie(14), 0);
     expect(oculusSubtraitMasteryGainForDie(15), 15);
@@ -75,15 +118,15 @@ void main() {
 
     final completed = oculusSubtraitMasteryApplyGain(stat, 60);
 
-    expect(completed, 1);
-    expect(stat.valore, 1);
-    expect(stat.masteryProgress, 54);
+    expect(completed, 2);
+    expect(stat.valore, 2);
+    expect(stat.masteryProgress, 21);
     expect(
       oculusSubtraitMasteryFraction(
         progress: stat.masteryProgress,
         grade: stat.valore,
       ),
-      closeTo(54 / 63, 0.0001),
+      closeTo(21 / 63, 0.0001),
     );
   });
 
@@ -103,7 +146,7 @@ void main() {
     expect(restored.masteryProgress, 600);
     expect(
       oculusSubtraitMasteryFraction(progress: 18, grade: 0),
-      closeTo(0.5, 0.0001),
+      closeTo(18 / 33, 0.0001),
     );
   });
 
@@ -193,5 +236,215 @@ void main() {
     firstGate.complete();
     await Future.wait(<Future<void>>[first, second]);
     expect(started, <int>[1, 2]);
+  });
+
+  test('assegna i nuovi sottotratti alle categorie e usa divisione intera', () {
+    expect(oculumHiddenEyeStaticGroupFor('fermezza'), 'volonta');
+    expect(oculumHiddenEyeStaticGroupFor('resistenza'), 'resilienza');
+    expect(oculumHiddenEyeStaticGroupFor('adattamento'), 'resilienza');
+    for (final id in <String>[
+      'precisione',
+      'meccanica',
+      'alchimia',
+      'controllo_corporeo',
+    ]) {
+      expect(oculumHiddenEyeStaticGroupFor(id), 'materia');
+      expect(
+        oculumHiddenEyeDerivedBonusFor(
+          id: id,
+          resilienza: 0,
+          volonta: 0,
+          materia: 11,
+          oculum: 0,
+          karma: 0,
+        ),
+        5,
+      );
+    }
+    expect(oculumHiddenEyeStaticGroupFor('canalizzazione'), 'oculum');
+    expect(
+      oculumHiddenEyeDerivedBonusFor(
+        id: 'concentrazione',
+        resilienza: 0,
+        volonta: 11,
+        materia: 0,
+        oculum: 0,
+        karma: 0,
+      ),
+      5,
+    );
+  });
+
+  test(
+    'Concentrazione sceglie il gruppo meno popolato e la parita va a Volonta',
+    () {
+      expect(
+        oculumConcentrationGroupForStatIds(<String>['eco', 'furbizia']),
+        'volonta',
+      );
+      expect(
+        oculumConcentrationGroupForStatIds(<String>[
+          'eco',
+          'forza',
+          'furbizia',
+        ]),
+        'resilienza',
+      );
+      expect(
+        oculumConcentrationGroupForStatIds(<String>[
+          'eco',
+          'furbizia',
+          'strategia',
+        ]),
+        'volonta',
+      );
+      expect(
+        oculumConcentrationGroupForStatIds(<String>[
+          'eco',
+          'forza',
+          'crepa',
+          'pressione',
+          'fermezza',
+          'furbizia',
+          'strategia',
+          'sopravvivenza',
+          'medicina',
+          'resistenza',
+          'adattamento',
+          'concentrazione',
+        ]),
+        'volonta',
+      );
+    },
+  );
+
+  test(
+    'un vecchio salvataggio mantiene valori e riceve nuovi default a zero',
+    () {
+      final oldForza = HiddenEyeStat(
+        id: 'forza',
+        nome: 'Forza',
+        descrizione: 'Potenza fisica. Bonus base: Volonta/2.',
+        valore: 7,
+        masteryProgress: 23,
+      );
+      final custom = HiddenEyeStat(
+        id: 'custom_legacy',
+        nome: 'Personalizzato',
+        descrizione: 'Da conservare',
+        valore: 4,
+      );
+      final merged = oculumMergeHiddenEyeStatsWithDefaults(
+        existing: <HiddenEyeStat>[oldForza, custom],
+        defaults: <HiddenEyeStat>[
+          HiddenEyeStat(
+            id: 'forza',
+            nome: 'Forza',
+            descrizione: 'Descrizione funzionale. Bonus: Volonta/2.',
+          ),
+          HiddenEyeStat(
+            id: 'adattamento',
+            nome: 'Adattamento',
+            descrizione: 'Descrizione funzionale. Bonus: Resilienza/2.',
+          ),
+        ],
+      );
+
+      final forza = merged.singleWhere((stat) => stat.id == 'forza');
+      final adattamento = merged.singleWhere(
+        (stat) => stat.id == 'adattamento',
+      );
+      expect(forza.valore, 7);
+      expect(forza.masteryProgress, 23);
+      expect(forza.descrizione, startsWith('Descrizione funzionale'));
+      expect(adattamento.valore, 0);
+      expect(adattamento.masteryProgress, 0);
+      expect(merged.singleWhere((stat) => stat.id == 'custom_legacy'), custom);
+    },
+  );
+
+  test('il critico di Adattamento usa solo il 20 naturale e non duplica', () {
+    final effects = <OculumTemporaryResistanceEffect>[];
+
+    final totalTwentyWithoutNaturalTwenty = oculumApplyAdaptationCritical(
+      naturalRoll: 15,
+      combatActive: true,
+      ownerSheetId: 'SHEET-A',
+      effects: effects,
+    );
+    expect(totalTwentyWithoutNaturalTwenty.isNaturalCritical, isFalse);
+    expect(effects, isEmpty);
+
+    final first = oculumApplyAdaptationCritical(
+      naturalRoll: 20,
+      combatActive: true,
+      ownerSheetId: 'SHEET-A',
+      effects: effects,
+    );
+    expect(first.applied, isTrue);
+    expect(effects, hasLength(1));
+    expect(effects.single.isAdaptationAllDamageCurrentCombat, isTrue);
+
+    final second = oculumApplyAdaptationCritical(
+      naturalRoll: 20,
+      combatActive: true,
+      ownerSheetId: 'SHEET-A',
+      effects: effects,
+    );
+    expect(second.alreadyActive, isTrue);
+    expect(effects, hasLength(1));
+
+    oculumApplyAdaptationCritical(
+      naturalRoll: 20,
+      combatActive: true,
+      ownerSheetId: 'SHEET-B',
+      effects: effects,
+    );
+    expect(effects, hasLength(2));
+  });
+
+  test(
+    'Adattamento fuori fight non applica effetti e la fine fight li rimuove',
+    () {
+      final effects = <OculumTemporaryResistanceEffect>[];
+      final outsideCombat = oculumApplyAdaptationCritical(
+        naturalRoll: 20,
+        combatActive: false,
+        ownerSheetId: 'SHEET-A',
+        effects: effects,
+      );
+      expect(outsideCombat.isNaturalCritical, isTrue);
+      expect(outsideCombat.applied, isFalse);
+      expect(effects, isEmpty);
+
+      oculumApplyAdaptationCritical(
+        naturalRoll: 20,
+        combatActive: true,
+        ownerSheetId: 'SHEET-A',
+        effects: effects,
+      );
+      expect(oculumRemoveCurrentCombatTemporaryEffects(effects), 1);
+      expect(effects, isEmpty);
+    },
+  );
+
+  test('serializza lo stato temporaneo solo con metadati di combattimento', () {
+    final effects = <OculumTemporaryResistanceEffect>[];
+    oculumApplyAdaptationCritical(
+      naturalRoll: 20,
+      combatActive: true,
+      ownerSheetId: 'SHEET-A',
+      effects: effects,
+    );
+    final json = effects.single.toJson();
+    final restored = OculumTemporaryResistanceEffect.fromJson(json);
+
+    expect(restored.id, oculumAdaptationResistanceEffectId);
+    expect(restored.ownerSheetId, 'SHEET-A');
+    expect(restored.origin, 'Adattamento');
+    expect(restored.type, 'temporaneo');
+    expect(restored.duration, 'combattimento_corrente');
+    expect(restored.coverage, 'tutti_i_tipi_di_danno');
+    expect(restored.isAdaptationAllDamageCurrentCombat, isTrue);
   });
 }

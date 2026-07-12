@@ -22,6 +22,8 @@ dependencies:
   path_provider: ^2.1.5
   pdf: ^3.11.3
   supabase_flutter: ^2.12.4
+  google_sign_in: ^6.2.2
+  sign_in_with_apple: ^6.0.0
   pasteboard: ^0.5.0
   url_launcher: ^6.3.2
   webview_flutter: ^4.13.1
@@ -50,6 +52,7 @@ flutter:
     - assets/oculum_dungeon/generated_sprites/enemies/
     - assets/oculum_dungeon/generated_sprites/equipment/
     - assets/oculum_dungeon/generated_sprites/npc/
+    - assets/fonts/
 
 flutter_launcher_icons:
   android: true

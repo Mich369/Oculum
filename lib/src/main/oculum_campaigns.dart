@@ -32,6 +32,11 @@ extension _OculumCampaigns on _OculumHomePageState {
       'masterInitiativeRound': masterInitiativeRound,
       'masterInitiativeActiveIndex': masterInitiativeActiveIndex,
       'masterInitiativeManualCounter': masterInitiativeManualCounter,
+      'temporaryCombatResistanceEffects': currentCombatIsActive()
+          ? temporaryCombatResistanceEffects
+                .map((effect) => effect.toJson())
+                .toList(growable: false)
+          : <Map<String, dynamic>>[],
       'masterSessionNotes': masterSessionController.text,
       'storySessionNotes': storySessionNotes
           .map((note) => note.toJson())
@@ -110,6 +115,7 @@ extension _OculumCampaigns on _OculumHomePageState {
       'masterInitiativeRound': 1,
       'masterInitiativeActiveIndex': 0,
       'masterInitiativeManualCounter': 0,
+      'temporaryCombatResistanceEffects': <Map<String, dynamic>>[],
       'masterSessionNotes': '${data['masterSessionNotes'] ?? ''}',
       'storySessionNotes': oculumSessionNotesFromJson(
         data['storySessionNotes'],
@@ -199,6 +205,26 @@ extension _OculumCampaigns on _OculumHomePageState {
       0,
       readIntValue(campaign['masterInitiativeManualCounter']),
     );
+    final temporaryEffectsRaw = campaign['temporaryCombatResistanceEffects'];
+    temporaryCombatResistanceEffects
+      ..clear()
+      ..addAll(
+        (temporaryEffectsRaw is List ? temporaryEffectsRaw : const [])
+            .whereType<Map>()
+            .map(
+              (effect) => OculumTemporaryResistanceEffect.fromJson(
+                Map<String, dynamic>.from(effect),
+              ),
+            )
+            .where(
+              (effect) =>
+                  effect.ownerSheetId.trim().isNotEmpty &&
+                  effect.isAdaptationAllDamageCurrentCombat,
+            ),
+      );
+    if (masterInitiativeTokens.isEmpty && !masterInitiativePublished) {
+      temporaryCombatResistanceEffects.clear();
+    }
     masterSessionController.text = '${campaign['masterSessionNotes'] ?? ''}';
     storySessionNotes
       ..clear()
@@ -276,6 +302,7 @@ extension _OculumCampaigns on _OculumHomePageState {
         ..clear()
         ..add(emptySheet);
       storySessionNotes.clear();
+      temporaryCombatResistanceEffects.clear();
       resetVttForNewCampaign();
       schedaCorrente = 0;
       caricaStatoDaJson(emptySheet);

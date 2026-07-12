@@ -5,6 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('tutti i temi con un identificativo valido partono sbloccati', () {
+    expect(oculumThemeStartsUnlocked('classic_reliquary'), isTrue);
+    expect(oculumThemeStartsUnlocked('hoshy_cosmic_cat'), isTrue);
+    expect(oculumThemeStartsUnlocked('phobia_dark'), isTrue);
+    expect(oculumThemeStartsUnlocked('future_theme'), isTrue);
+    expect(oculumThemeStartsUnlocked(''), isFalse);
+  });
+
   test('theme colors are corrected against a dark Kingi surface', () {
     const surface = Color(0xFF161B22);
     const oldKingiTertiary = Color(0xFF102B4D);

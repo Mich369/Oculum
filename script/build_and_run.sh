@@ -3,7 +3,7 @@ set -euo pipefail
 
 MODE="${1:-run}"
 APP_NAME="oculum"
-BUNDLE_ID="com.example.oculum"
+BUNDLE_ID="com.mich.oculum"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_BUNDLE="$ROOT_DIR/build/macos/Build/Products/Release/$APP_NAME.app"
 

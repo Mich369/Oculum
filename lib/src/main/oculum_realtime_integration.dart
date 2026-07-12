@@ -1525,6 +1525,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
     if (readBoolValue(payload['closed'])) {
       realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
+      clearTemporaryCombatResistanceEffects();
       risultato = t('Fight chiusa dal Master.', 'Fight closed by the Master.');
       aggiungiLog(risultato);
       return;
@@ -1534,6 +1535,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (snapshotRaw is! Map) return;
     realtimeVisibleInitiativeSnapshot =
         jsonDecode(jsonEncode(snapshotRaw)) as Map<String, dynamic>;
+    final realtimeTokens = realtimeVisibleInitiativeSnapshot['tokens'];
+    if (realtimeTokens is! List || realtimeTokens.isEmpty) {
+      clearTemporaryCombatResistanceEffects();
+    }
     risultato = t(
       'Fight aggiornata dal Master.',
       'Fight updated by the Master.',
@@ -1583,13 +1588,17 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
   void closeRealtimeInitiativeSnapshot() {
     if (realtimeService?.isConnected != true || !realtimeIsMasterRole) {
-      setState(() => masterInitiativePublished = false);
+      setState(() {
+        masterInitiativePublished = false;
+        clearTemporaryCombatResistanceEffects();
+      });
       programmaSalvataggio();
       return;
     }
 
     setState(() {
       masterInitiativePublished = false;
+      clearTemporaryCombatResistanceEffects();
       risultato = t('Fight chiusa per i player.', 'Fight closed for players.');
       aggiungiLog(risultato);
     });

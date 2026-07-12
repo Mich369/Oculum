@@ -235,6 +235,14 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
         ? '1d20=$roll'
         : '1d20=$roll${signedRollPart(modificatoreDifficoltaTiro(difficulty: difficulty))}=$total (DT ${signedRollPart(difficulty)})';
     updateOculumHomeUi(() {
+      final expText = applicaEsperienzaFlat(
+        oculumRollExperienceGain(
+          naturalRoll: roll,
+          faces: 20,
+          rollSucceeded: roll == 20 || total >= 10,
+        ),
+        motivo: t('Tiro superato', 'Successful roll'),
+      );
       dadoMostrato = rollText;
       dadoMostratoFacce = 20;
       tiroCriticoUno = roll == 1;
@@ -269,6 +277,10 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
         aggiungiLog(risultato);
         salvaSchedaCorrenteInMemoria();
         syncCurrentSheetDeathStateToInitiative();
+      }
+      if (expText.isNotEmpty) {
+        risultato += expText;
+        aggiungiLog(expText.trim());
       }
     });
     mostraDadoCentrale(

@@ -151,6 +151,129 @@ class HiddenEyeStat {
   }
 }
 
+const String oculumAdaptationResistanceEffectId =
+    'oculum.temp_resistance.adattamento.all_damage.current_combat.v1';
+
+class OculumTemporaryResistanceEffect {
+  OculumTemporaryResistanceEffect({
+    required this.id,
+    required this.ownerSheetId,
+    required this.origin,
+    required this.type,
+    required this.duration,
+    required this.coverage,
+  });
+
+  final String id;
+  final String ownerSheetId;
+  final String origin;
+  final String type;
+  final String duration;
+  final String coverage;
+
+  bool get isAdaptationAllDamageCurrentCombat =>
+      id == oculumAdaptationResistanceEffectId &&
+      origin == 'Adattamento' &&
+      type == 'temporaneo' &&
+      duration == 'combattimento_corrente' &&
+      coverage == 'tutti_i_tipi_di_danno';
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'id': id,
+    'ownerSheetId': ownerSheetId,
+    'origin': origin,
+    'type': type,
+    'duration': duration,
+    'coverage': coverage,
+  };
+
+  factory OculumTemporaryResistanceEffect.fromJson(Map<String, dynamic> json) {
+    return OculumTemporaryResistanceEffect(
+      id: '${json['id'] ?? ''}',
+      ownerSheetId: '${json['ownerSheetId'] ?? ''}',
+      origin: '${json['origin'] ?? ''}',
+      type: '${json['type'] ?? ''}',
+      duration: '${json['duration'] ?? ''}',
+      coverage: '${json['coverage'] ?? ''}',
+    );
+  }
+}
+
+class OculumAdaptationCriticalOutcome {
+  const OculumAdaptationCriticalOutcome({
+    required this.isNaturalCritical,
+    required this.applied,
+    required this.alreadyActive,
+  });
+
+  final bool isNaturalCritical;
+  final bool applied;
+  final bool alreadyActive;
+}
+
+OculumAdaptationCriticalOutcome oculumApplyAdaptationCritical({
+  required int naturalRoll,
+  required bool combatActive,
+  required String ownerSheetId,
+  required List<OculumTemporaryResistanceEffect> effects,
+}) {
+  if (naturalRoll != 20) {
+    return const OculumAdaptationCriticalOutcome(
+      isNaturalCritical: false,
+      applied: false,
+      alreadyActive: false,
+    );
+  }
+  if (!combatActive || ownerSheetId.trim().isEmpty) {
+    return const OculumAdaptationCriticalOutcome(
+      isNaturalCritical: true,
+      applied: false,
+      alreadyActive: false,
+    );
+  }
+
+  final alreadyActive = effects.any(
+    (effect) =>
+        effect.ownerSheetId == ownerSheetId &&
+        effect.isAdaptationAllDamageCurrentCombat,
+  );
+  if (alreadyActive) {
+    return const OculumAdaptationCriticalOutcome(
+      isNaturalCritical: true,
+      applied: false,
+      alreadyActive: true,
+    );
+  }
+
+  effects.add(
+    OculumTemporaryResistanceEffect(
+      id: oculumAdaptationResistanceEffectId,
+      ownerSheetId: ownerSheetId,
+      origin: 'Adattamento',
+      type: 'temporaneo',
+      duration: 'combattimento_corrente',
+      coverage: 'tutti_i_tipi_di_danno',
+    ),
+  );
+  return const OculumAdaptationCriticalOutcome(
+    isNaturalCritical: true,
+    applied: true,
+    alreadyActive: false,
+  );
+}
+
+int oculumRemoveCurrentCombatTemporaryEffects(
+  List<OculumTemporaryResistanceEffect> effects,
+) {
+  final before = effects.length;
+  effects.removeWhere(
+    (effect) =>
+        effect.type == 'temporaneo' &&
+        effect.duration == 'combattimento_corrente',
+  );
+  return before - effects.length;
+}
+
 class OculumActionQueue {
   OculumActionQueue();
 
@@ -177,24 +300,58 @@ class OculumActionQueue {
 }
 
 const List<int> oculusSubtraitMasteryTargets = <int>[
+  33,
   36,
   63,
   69,
   96,
   100,
-  150,
+  120,
   160,
+  236,
+  296,
+  300,
   369,
-  500,
+  396,
+  436,
+  469,
+  536,
+  596,
+  639,
+  663,
+  669,
   693,
-  963,
+  700,
+  703,
+  736,
+  769,
+  836,
+  869,
+  896,
+  900,
+  903,
+  906,
+  909,
 ];
 const int _oculusSubtraitMasteryFinalTarget = 1000;
+const List<int> _oculusSubtraitMasteryLateDigits = <int>[3, 6, 9];
+const int _oculusSubtraitMasteryLateDecades = 9;
 
 int oculusSubtraitMasteryTargetForValue(int value) {
   final normalizedValue = max(0, value);
   if (normalizedValue < oculusSubtraitMasteryTargets.length) {
     return oculusSubtraitMasteryTargets[normalizedValue];
+  }
+  final lateIndex = normalizedValue - oculusSubtraitMasteryTargets.length;
+  final lateTargetCount =
+      _oculusSubtraitMasteryLateDigits.length *
+      _oculusSubtraitMasteryLateDecades;
+  if (lateIndex < lateTargetCount) {
+    final decade = 91 + lateIndex ~/ _oculusSubtraitMasteryLateDigits.length;
+    final digit =
+        _oculusSubtraitMasteryLateDigits[lateIndex %
+            _oculusSubtraitMasteryLateDigits.length];
+    return decade * 10 + digit;
   }
   return _oculusSubtraitMasteryFinalTarget;
 }
@@ -480,6 +637,7 @@ class OculumTitle {
     this.openSkill = '',
     this.openAttiva = false,
     this.chiaveSistema = '',
+    this.openExperienceClaimed = 0,
     List<TitleOpenEntry>? openExtra,
     List<TitleExtraSkillEntry>? skillExtra,
     List<ConditionalBuffEntry>? titleConditionalBuffs,
@@ -514,6 +672,7 @@ class OculumTitle {
   String openSkill;
   bool openAttiva;
   String chiaveSistema;
+  int openExperienceClaimed;
 
   late List<TitleOpenEntry> openExtra;
   late List<TitleExtraSkillEntry> skillExtra;
@@ -542,6 +701,7 @@ class OculumTitle {
       'openSkill': openSkill,
       'openAttiva': openAttiva,
       'chiaveSistema': chiaveSistema,
+      'openExperienceClaimed': openExperienceClaimed,
       'openExtra': openExtra.map((x) => x.toJson()).toList(),
       'skillExtra': skillExtra.map((x) => x.toJson()).toList(),
       'titleConditionalBuffs': titleConditionalBuffs
@@ -575,6 +735,15 @@ class OculumTitle {
       openSkill: json['openSkill'] ?? '',
       openAttiva: readBoolValue(json['openAttiva']),
       chiaveSistema: json['chiaveSistema'] ?? '',
+      openExperienceClaimed: json.containsKey('openExperienceClaimed')
+          ? readIntValue(json['openExperienceClaimed'])
+          : oculumTitleOpenExperienceTarget(
+              readBoolValue(json['evoluto'])
+                  ? 1 +
+                        ((json['openExtra'] ?? const <dynamic>[]) as List)
+                            .length
+                  : 0,
+            ),
       openExtra: ((json['openExtra'] ?? []) as List)
           .map((x) => TitleOpenEntry.fromJson(Map<String, dynamic>.from(x)))
           .toList(),

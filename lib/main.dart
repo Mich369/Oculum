@@ -21,6 +21,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart' as mobile_webview;
 import 'package:webview_windows/webview_windows.dart' as windows_webview;
 
+import 'services/oculum_auth_service.dart';
+import 'services/oculum_auth_ui.dart';
+import 'services/oculum_cloud_save_service.dart';
 import 'services/oculum_realtime_service.dart';
 import 'widgets/oculum_bottom_nav.dart';
 import 'widgets/oculum_desktop_top_menu.dart';
@@ -72,6 +75,8 @@ Future<void> main() async {
     await BrowserContextMenu.disableContextMenu();
   }
   _configureOculumRuntimeCaches();
+  await OculumAuthService.instance.initialize();
+  await OculumCloudSaveService.instance.initialize();
   runApp(const OculumApp());
 }
 
@@ -178,18 +183,40 @@ Future<bool> _initializeOculumSupabase() async {
       return true;
     } catch (_) {}
 
+    final supabaseUrl = const String.fromEnvironment(
+      'OculumSupabaseUrl',
+      defaultValue: '',
+    );
+    final supabaseAnonKey = const String.fromEnvironment(
+      'OculumSupabaseAnonKey',
+      defaultValue: '',
+    );
+
+    if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+      OculumRealtimeService.supabaseAvailable = false;
+      OculumRealtimeService.startupStatus =
+          'Supabase non configurato: l\'app resta in modalità locale.';
+      return false;
+    }
+
     await Supabase.initialize(
-      url: 'https://jgpxdlkbuxhriltxezdc.supabase.co',
-      anonKey: 'sb_publishable_VXDF3x3izDbZNJ5VWX6RsQ_ZFYXpkPI',
+      url: supabaseUrl,
+      anonKey: supabaseAnonKey,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+        autoRefreshToken: true,
+        detectSessionInUri: true,
+      ),
     ).timeout(const Duration(seconds: 6));
     OculumRealtimeService.supabaseAvailable = true;
     OculumRealtimeService.startupStatus = 'Supabase pronto.';
+    await OculumAuthService.instance.initialize(supabaseReady: true);
     return true;
-  } catch (error) {
+  } catch (_) {
     OculumRealtimeService.supabaseAvailable = false;
     OculumRealtimeService.startupStatus =
         'Supabase offline: l\'app resta locale.';
-    debugPrint('Supabase initialization skipped: $error');
+    debugPrint('Supabase initialization skipped; local mode remains active.');
     return false;
   }
 }
@@ -379,6 +406,12 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   void invalidateDerivedDataCaches() {
     derivedDataRevision++;
+    formulaParserCacheRevision = -1;
+    formulaValueContextCache = null;
+    formulaCommandCache.clear();
+    activeQuickCommandTextCacheRevision = -1;
+    activeQuickCommandTextCache = '';
+    incomingDamageRulesCache.clear();
     inferredDamageTypeLabelsCache = null;
     allDamageElementIdsCache = null;
     manualFilteredIndexesCache = null;
@@ -434,7 +467,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     hiddenEyeProgressSaveTimer = Timer(const Duration(milliseconds: 420), () {
       hiddenEyeProgressSaveTimer = null;
       if (!mounted) return;
-      programmaSalvataggio();
+      programmaSalvataggio(invalidateCaches: false);
     });
   }
 
@@ -980,6 +1013,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final List<JournalEntry> journalEntries = [];
   final List<DraftNote> draftNotes = [];
   final List<HiddenEyeStat> hiddenEyeStats = [];
+  final List<OculumTemporaryResistanceEffect> temporaryCombatResistanceEffects =
+      <OculumTemporaryResistanceEffect>[];
   final List<ReputationEntry> reputations = [];
   bool reputationsManuallyCleared = false;
   final List<String> logEventi = [];
@@ -1037,6 +1072,15 @@ class _OculumHomePageState extends State<OculumHomePage>
   String ultimoArchivioDiarioFirma = '';
   final Map<String, dynamic> extraTopLevelSaveFields = <String, dynamic>{};
   int derivedDataRevision = 0;
+  int formulaParserCacheRevision = -1;
+  Map<String, num>? formulaValueContextCache;
+  final Map<String, List<OculumFormulaCommand>> formulaCommandCache =
+      <String, List<OculumFormulaCommand>>{};
+  int activeQuickCommandTextCacheRevision = -1;
+  String activeQuickCommandTextCache = '';
+  final Map<String, List<({String command, String value, String element})>>
+  incomingDamageRulesCache =
+      <String, List<({String command, String value, String element})>>{};
   int inferredDamageTypeLabelsCacheRevision = -1;
   Map<String, String>? inferredDamageTypeLabelsCache;
   int allDamageElementIdsCacheRevision = -1;
@@ -1117,6 +1161,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool dannoOltreDifesa = false;
   bool dannoOltreScudi = false;
   int expMilestoneRegenClaimed = 0;
+  int expHundredRegenRemainder = 0;
 
   int raccoltaResilienzaSpesa = 0;
   int raccoltaVolontaSpesa = 0;

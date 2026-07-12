@@ -1434,6 +1434,21 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     nuovoTitoloEvoluto = false;
   }
 
+  String assegnaEsperienzaOpenTitolo(OculumTitle titolo) {
+    final openSbloccate = titolo.evoluto ? 1 + titolo.openExtra.length : 0;
+    final target = oculumTitleOpenExperienceTarget(openSbloccate);
+    final guadagno = max(0, target - titolo.openExperienceClaimed);
+    titolo.openExperienceClaimed = max(titolo.openExperienceClaimed, target);
+    if (guadagno == 0) return '';
+    return applicaEsperienzaFlat(
+      guadagno,
+      motivo: t(
+        'Evoluzione Open di ${titolo.nome}',
+        'Open evolution of ${titolo.nome}',
+      ),
+    );
+  }
+
   void creaTitolo() {
     final nome = titoloNomeController.text.trim();
 
@@ -1444,15 +1459,18 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       return;
     }
 
+    final nuovoTitolo = titoloDaCampiCorrenti(
+      nome: nome,
+      fallbackTipo: t('Titolo', 'Title'),
+    );
     setState(() {
-      titoli.add(
-        titoloDaCampiCorrenti(nome: nome, fallbackTipo: t('Titolo', 'Title')),
-      );
+      titoli.add(nuovoTitolo);
+      final expText = assegnaEsperienzaOpenTitolo(nuovoTitolo);
 
       pulisciCampiTitolo();
 
-      risultato = t('Titolo creato.', 'Title created.');
-      aggiungiLog('Titolo creato: [$nome].');
+      risultato = '${t('Titolo creato.', 'Title created.')}$expText';
+      aggiungiLog('Titolo creato: [$nome].$expText');
     });
 
     programmaSalvataggio();
@@ -1472,16 +1490,13 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       return;
     }
 
+    final nuovoTratto = titoloDaCampiCorrenti(
+      nome: nome,
+      fallbackTipo: t('Tratto Razziale / Sottorazza', 'Racial Trait / Subrace'),
+    )..equipaggiato = true;
     setState(() {
-      trattiRazziali.add(
-        titoloDaCampiCorrenti(
-          nome: nome,
-          fallbackTipo: t(
-            'Tratto Razziale / Sottorazza',
-            'Racial Trait / Subrace',
-          ),
-        )..equipaggiato = true,
-      );
+      trattiRazziali.add(nuovoTratto);
+      final expText = assegnaEsperienzaOpenTitolo(nuovoTratto);
 
       if (razzaController.text.trim().isEmpty) {
         razzaController.text = nome;
@@ -1489,8 +1504,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
       pulisciCampiTitolo();
 
-      risultato = t('Tratto razziale creato.', 'Racial trait created.');
-      aggiungiLog('Tratto razziale creato: [$nome].');
+      risultato =
+          '${t('Tratto razziale creato.', 'Racial trait created.')}$expText';
+      aggiungiLog('Tratto razziale creato: [$nome].$expText');
     });
 
     programmaSalvataggio();
@@ -1577,9 +1593,11 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         ),
       );
 
+      final expText = assegnaEsperienzaOpenTitolo(titolo);
+
       risultato = t(
-        'Nuova Open aggiunta al titolo: ${titolo.nome} (${titolo.openExtra.length}/12)',
-        'New Open added to title: ${titolo.nome} (${titolo.openExtra.length}/12)',
+        'Nuova Open aggiunta al titolo: ${titolo.nome} (${titolo.openExtra.length}/12)$expText',
+        'New Open added to title: ${titolo.nome} (${titolo.openExtra.length}/12)$expText',
       );
 
       aggiungiLog(risultato);
