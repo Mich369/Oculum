@@ -57,7 +57,7 @@ void main() {
           faces: 20,
           rollSucceeded: true,
         ),
-        18,
+        9,
       );
       expect(
         oculumRollExperienceGain(
@@ -73,7 +73,7 @@ void main() {
           faces: 20,
           rollSucceeded: true,
         ),
-        30,
+        15,
       );
     });
 

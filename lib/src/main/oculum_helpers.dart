@@ -46,7 +46,10 @@ int oculumRollExperienceGain({
   required bool rollSucceeded,
 }) {
   if (faces != 20 || !rollSucceeded || naturalRoll < 18) return 0;
-  return naturalRoll == faces ? naturalRoll + faces ~/ 2 : naturalRoll;
+  final fullGain = naturalRoll == faces
+      ? naturalRoll + faces ~/ 2
+      : naturalRoll;
+  return fullGain ~/ 2;
 }
 
 ({int recoveries, int remainder}) oculumExperienceHundredProgress({
