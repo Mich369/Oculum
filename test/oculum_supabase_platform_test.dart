@@ -34,12 +34,21 @@ void main() {
     final entitlements = File(
       'macos/Runner/Release.entitlements',
     ).readAsStringSync();
+    final xcodeProject = File(
+      'macos/Runner.xcodeproj/project.pbxproj',
+    ).readAsStringSync();
 
     expect(infoPlist, contains('<key>CFBundleURLTypes</key>'));
     expect(infoPlist, contains('<string>com.mich.oculum</string>'));
     expect(
       entitlements,
-      contains('<key>com.apple.security.network.client</key>'),
+      matches(
+        RegExp(r'<key>com\.apple\.security\.network\.client</key>\s*<true/>'),
+      ),
+    );
+    expect(
+      xcodeProject,
+      contains('CODE_SIGN_ENTITLEMENTS = Runner/Release.entitlements;'),
     );
   });
 
