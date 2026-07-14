@@ -427,8 +427,8 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
     final scene = activeVttScene;
     final embedded = scene.imageDataBase64.trim();
     if (embedded.isNotEmpty) {
-      try {
-        final bytes = base64Decode(embedded);
+      final bytes = decodedBase64ImageCached(embedded);
+      if (bytes != null) {
         return <String, dynamic>{
           'assetId':
               'vtt_${bytes.length}_${_oculumVttStableBytesHash(bytes).toRadixString(16).padLeft(8, '0')}',
@@ -438,9 +438,8 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
           'width': 0,
           'height': 0,
         };
-      } catch (_) {
-        scene.imageDataBase64 = '';
       }
+      scene.imageDataBase64 = '';
     }
     if (scene.mapUrl.trim().isNotEmpty && scene.imagePath.trim().isEmpty) {
       return <String, dynamic>{};

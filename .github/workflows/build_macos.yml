@@ -70,7 +70,8 @@ jobs:
         run: |
           flutter build macos --release \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
-            "--dart-define=OculumSupabaseAnonKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}" \
+            "--dart-define=OculumOAuthRedirectUrl=com.mich.oculum://login-callback"
 
       - name: Valida e impacchetta applicazione
         id: package

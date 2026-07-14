@@ -109,6 +109,7 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader> {
   Future<void> startPreload() async {
     if (selectedRole == null || preloadStarted) return;
     preloadStarted = true;
+    oculumProfileMark('startup_preload');
     try {
       await preloadOculumStartupServices(
         onProgress: (nextProgress, nextLabel) {
@@ -135,6 +136,7 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader> {
     });
     await Future<void>.delayed(const Duration(milliseconds: 80));
     if (!mounted) return;
+    oculumProfileMark('home_initial_build');
     setState(() => ready = true);
     unawaited(precacheStartupMonsterSprites(background: true));
   }

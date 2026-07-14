@@ -2560,7 +2560,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             : titolo.nome,
         subtitle: t('Titolo creato dall’utente', 'User-created title'),
         haystack:
-            '${titolo.tipo} ${titolo.ottenimento} ${titolo.buff} ${titolo.puntoCieco} ${titolo.skill} ${titolo.richiede} ${titolo.openName} ${titolo.openDescription} ${titolo.openBuff} ${titolo.openSkill}',
+            '${titolo.tipo} ${titolo.ottenimento} ${titolo.leggenda} ${titolo.buff} ${titolo.puntoCieco} ${titolo.skill} ${titolo.richiede} ${titolo.openName} ${titolo.openDescription} ${titolo.openBuff} ${titolo.openSkill}',
         page: 2,
         anchorId: titleEditorAnchorId(titolo),
       );
@@ -2574,7 +2574,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             : tratto.nome,
         subtitle: t('Tratto razziale / Razza', 'Racial trait / Race'),
         haystack:
-            '${tratto.tipo} ${tratto.ottenimento} ${tratto.buff} ${tratto.puntoCieco} ${tratto.skill} ${tratto.richiede} ${tratto.openName} ${tratto.openDescription} ${tratto.openBuff} ${tratto.openSkill}',
+            '${tratto.tipo} ${tratto.ottenimento} ${tratto.leggenda} ${tratto.buff} ${tratto.puntoCieco} ${tratto.skill} ${tratto.richiede} ${tratto.openName} ${tratto.openDescription} ${tratto.openBuff} ${tratto.openSkill}',
         page: 2,
         anchorId: titleEditorAnchorId(tratto, trattoRazziale: true),
       );

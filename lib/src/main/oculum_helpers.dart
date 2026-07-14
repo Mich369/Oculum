@@ -46,10 +46,10 @@ int oculumRollExperienceGain({
   required bool rollSucceeded,
 }) {
   if (faces != 20 || !rollSucceeded || naturalRoll < 18) return 0;
-  final fullGain = naturalRoll == faces
-      ? naturalRoll + faces ~/ 2
-      : naturalRoll;
-  return fullGain ~/ 2;
+  if (naturalRoll == faces) {
+    return naturalRoll + faces ~/ 2;
+  }
+  return (naturalRoll + 1) ~/ 2;
 }
 
 ({int recoveries, int remainder}) oculumExperienceHundredProgress({
@@ -62,10 +62,7 @@ int oculumRollExperienceGain({
   return (recoveries: total ~/ 100, remainder: total % 100);
 }
 
-int oculumLowResourceDustChance({
-  required int current,
-  required int maximum,
-}) {
+int oculumLowResourceDustChance({required int current, required int maximum}) {
   if (maximum <= 0) return 0;
   if (current * 4 >= maximum) return 0;
   final ratio = current / maximum;

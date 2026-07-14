@@ -5449,29 +5449,83 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       icon: Icons.menu_book,
       borderColor: primaryColor,
       initiallyExpanded: false,
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (int i = 0; i < min(activeManualSections.length, 8); i++)
-            ElevatedButton(
-              onPressed: () {
-                vaiAllaFunzione(
-                  page: 8,
-                  anchorId: 'rules_open_section',
-                  manualIndex: i,
-                  logTitle: manualTitle(activeManualSections[i]),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: secondaryColor,
-                foregroundColor: primaryColor,
-                side: BorderSide(color: tertiaryColor.withValues(alpha: 0.45)),
-              ),
-              child: Text(
-                '${i + 1}. ${manualTitle(activeManualSections[i]).split('.').last.trim()}',
-              ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (int i = 0; i < min(activeManualSections.length, 8); i++)
+                ElevatedButton(
+                  onPressed: () {
+                    vaiAllaFunzione(
+                      page: 8,
+                      anchorId: 'rules_open_section',
+                      manualIndex: i,
+                      logTitle: manualTitle(activeManualSections[i]),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: secondaryColor,
+                    foregroundColor: primaryColor,
+                    side: BorderSide(
+                      color: tertiaryColor.withValues(alpha: 0.45),
+                    ),
+                  ),
+                  child: Text(
+                    '${i + 1}. ${manualTitle(activeManualSections[i]).split('.').last.trim()}',
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Divider(color: tertiaryColor.withValues(alpha: 0.35)),
+          const SizedBox(height: 8),
+          Text(
+            t('Parole Rune', 'Rune Words'),
+            style: TextStyle(
+              color: primaryColor,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
             ),
+          ),
+          const SizedBox(height: 6),
+          smallInfoText(
+            t(
+              'Ogni Libro Runico insegna sei parole. Self / Ally e Pulse sono le prime obbligatorie; Intensita I resta sempre disponibile.',
+              'Each Runic Book teaches six words. Self / Ally and Pulse are the first required words; Intensity I always stays available.',
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ElevatedButton.icon(
+                onPressed: openRuneQuickWordsDialog,
+                icon: const Icon(Icons.tune),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: primaryColor.computeLuminance() > 0.45
+                      ? Colors.black
+                      : Colors.white,
+                ),
+                label: Text(t('Parole Rune', 'Rune Words')),
+              ),
+              ElevatedButton.icon(
+                onPressed: learnRuneBookForSheet,
+                icon: const Icon(Icons.menu_book),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: tertiaryColor,
+                  foregroundColor: tertiaryColor.computeLuminance() > 0.45
+                      ? Colors.black
+                      : Colors.white,
+                ),
+                label: Text(t('Libro Runico +6', 'Runic Book +6')),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -7017,7 +7071,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     final dense = lightweightUi;
     final layoutId =
         currentThemeVisualIdentity().mainSheetGuiStyle.sheetLayoutId;
-    final children = <Widget>[];
+    final builders = <Widget Function()>[];
 
     Widget command() =>
         functionAnchor('sheet_command_center', sheetCommandCenter());
@@ -7041,241 +7095,244 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     Widget glance() =>
         functionAnchor('sheet_quick_glance', occhiataVeloceRaWidget());
 
-    children.add(glance());
+    builders.add(glance);
 
     void addTrailingTools() {
       if (!modalitaVeloce) {
-        children
-          ..add(quickIndexButtonsPanel())
-          ..add(quickLoreButtonsPanel());
+        builders
+          ..add(quickIndexButtonsPanel)
+          ..add(quickLoreButtonsPanel);
       }
-      children.add(functionAnchor('sheet_party', partyPanel()));
-      if (!modalitaVeloce) children.add(manualQuickToolsPanel());
-      children
-        ..add(gradeBonusActionButton())
-        ..add(const SizedBox(height: 12))
-        ..add(diceResultPanel());
+      builders.add(() => functionAnchor('sheet_party', partyPanel()));
+      if (!modalitaVeloce) builders.add(manualQuickToolsPanel);
+      builders
+        ..add(gradeBonusActionButton)
+        ..add(() => const SizedBox(height: 12))
+        ..add(diceResultPanel);
     }
 
     switch (layoutId) {
       case 'video_hud':
-        children.addAll([
-          command(),
-          hp(),
-          combat(),
-          stats(),
-          damage(),
-          dice(),
-          oculumResourcePanel(),
-          values(),
-          editable(),
-          eye(),
-          identity(),
-          race(),
-          exp(),
+        builders.addAll([
+          command,
+          hp,
+          combat,
+          stats,
+          damage,
+          dice,
+          oculumResourcePanel,
+          values,
+          editable,
+          eye,
+          identity,
+          race,
+          exp,
         ]);
         break;
       case 'tactical_board':
-        children.addAll([
-          command(),
-          values(),
-          stats(),
-          combat(),
-          hp(),
-          damage(),
-          editable(),
-          oculumResourcePanel(),
-          dice(),
-          identity(),
-          race(),
-          eye(),
-          exp(),
+        builders.addAll([
+          command,
+          values,
+          stats,
+          combat,
+          hp,
+          damage,
+          editable,
+          oculumResourcePanel,
+          dice,
+          identity,
+          race,
+          eye,
+          exp,
         ]);
         break;
       case 'battle_focus':
-        children.addAll([
-          command(),
-          combat(),
-          hp(),
-          damage(),
-          dice(),
-          stats(),
-          oculumResourcePanel(),
-          values(),
-          editable(),
-          identity(),
-          race(),
-          eye(),
-          exp(),
+        builders.addAll([
+          command,
+          combat,
+          hp,
+          damage,
+          dice,
+          stats,
+          oculumResourcePanel,
+          values,
+          editable,
+          identity,
+          race,
+          eye,
+          exp,
         ]);
         break;
       case 'quick_grimoire':
-        children.addAll([
-          values(),
-          editable(),
-          stats(),
-          command(),
-          combat(),
-          hp(),
-          damage(),
-          dice(),
-          oculumResourcePanel(),
-          identity(),
-          race(),
-          eye(),
-          exp(),
+        builders.addAll([
+          values,
+          editable,
+          stats,
+          command,
+          combat,
+          hp,
+          damage,
+          dice,
+          oculumResourcePanel,
+          identity,
+          race,
+          eye,
+          exp,
         ]);
         break;
       case 'soft_orbit':
-        children.addAll([
-          eye(),
-          identity(),
-          oculumResourcePanel(),
-          command(),
-          stats(),
-          hp(),
-          damage(),
-          combat(),
-          dice(),
-          values(),
-          editable(),
-          race(),
-          exp(),
+        builders.addAll([
+          eye,
+          identity,
+          oculumResourcePanel,
+          command,
+          stats,
+          hp,
+          damage,
+          combat,
+          dice,
+          values,
+          editable,
+          race,
+          exp,
         ]);
         break;
       case 'botanical':
       case 'lantern':
-        children.addAll([
-          eye(),
-          identity(),
-          race(),
-          oculumResourcePanel(),
-          stats(),
-          hp(),
-          damage(),
-          combat(),
-          command(),
-          dice(),
-          values(),
-          editable(),
-          exp(),
+        builders.addAll([
+          eye,
+          identity,
+          race,
+          oculumResourcePanel,
+          stats,
+          hp,
+          damage,
+          combat,
+          command,
+          dice,
+          values,
+          editable,
+          exp,
         ]);
         break;
       case 'machine':
-        children.addAll([
-          command(),
-          values(),
-          editable(),
-          combat(),
-          stats(),
-          hp(),
-          damage(),
-          oculumResourcePanel(),
-          exp(),
-          eye(),
-          identity(),
-          race(),
-          dice(),
+        builders.addAll([
+          command,
+          values,
+          editable,
+          combat,
+          stats,
+          hp,
+          damage,
+          oculumResourcePanel,
+          exp,
+          eye,
+          identity,
+          race,
+          dice,
         ]);
         break;
       case 'phobia':
-        children.addAll([
-          command(),
-          combat(),
-          hp(),
-          damage(),
-          dice(),
-          stats(),
-          values(),
-          editable(),
-          eye(),
-          identity(),
-          race(),
-          oculumResourcePanel(),
-          exp(),
+        builders.addAll([
+          command,
+          combat,
+          hp,
+          damage,
+          dice,
+          stats,
+          values,
+          editable,
+          eye,
+          identity,
+          race,
+          oculumResourcePanel,
+          exp,
         ]);
         break;
       case 'chapel':
       case 'altar':
       case 'medieval':
-        children.addAll([
-          eye(),
-          command(),
-          hp(),
-          damage(),
-          combat(),
-          stats(),
-          dice(),
-          values(),
-          editable(),
-          identity(),
-          race(),
-          oculumResourcePanel(),
-          exp(),
+        builders.addAll([
+          eye,
+          command,
+          hp,
+          damage,
+          combat,
+          stats,
+          dice,
+          values,
+          editable,
+          identity,
+          race,
+          oculumResourcePanel,
+          exp,
         ]);
         break;
       case 'archive':
       case 'sigil':
       case 'relic':
-        children.addAll([
-          identity(),
-          race(),
-          values(),
-          editable(),
-          stats(),
-          oculumResourcePanel(),
-          exp(),
-          command(),
-          combat(),
-          hp(),
-          damage(),
-          dice(),
-          eye(),
+        builders.addAll([
+          identity,
+          race,
+          values,
+          editable,
+          stats,
+          oculumResourcePanel,
+          exp,
+          command,
+          combat,
+          hp,
+          damage,
+          dice,
+          eye,
         ]);
         break;
       case 'orbital':
       case 'slime':
       case 'elemental':
-        children.addAll([
-          eye(),
-          command(),
-          stats(),
-          hp(),
-          oculumResourcePanel(),
-          damage(),
-          combat(),
-          dice(),
-          values(),
-          editable(),
-          identity(),
-          race(),
-          exp(),
+        builders.addAll([
+          eye,
+          command,
+          stats,
+          hp,
+          oculumResourcePanel,
+          damage,
+          combat,
+          dice,
+          values,
+          editable,
+          identity,
+          race,
+          exp,
         ]);
         break;
       case 'classic':
       default:
-        children.addAll([
-          command(),
-          combat(),
-          values(),
-          hp(),
-          damage(),
-          dice(),
-          stats(),
-          editable(),
-          eye(),
-          identity(),
-          race(),
-          oculumResourcePanel(),
-          exp(),
+        builders.addAll([
+          command,
+          combat,
+          values,
+          hp,
+          damage,
+          dice,
+          stats,
+          editable,
+          eye,
+          identity,
+          race,
+          oculumResourcePanel,
+          exp,
         ]);
     }
     addTrailingTools();
 
-    return ListView(
+    return ListView.builder(
       key: sheetScrollKey('sheet_mobile'),
       padding: EdgeInsets.all(dense ? 7 : 12),
-      children: children,
+      cacheExtent: 420,
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      itemCount: builders.length,
+      itemBuilder: (context, index) => builders[index](),
     );
   }
 

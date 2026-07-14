@@ -870,8 +870,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             children: [
               smallInfoText(
                 t(
-                  'Il riposo breve è utile per recuperare parte delle penalità, ma non cancella completamente il peso della giornata. Il riposo lungo è più potente e refulla gli HP.',
-                  'Short rest helps recover part of the penalties, but it does not fully erase the weight of the day. Long rest is stronger and refills HP.',
+                  'Il riposo breve è utile per recuperare parte delle penalità, ma non cancella completamente il peso della giornata. Il riposo lungo porta gli HP ad almeno il 75% del massimale.',
+                  'Short rest helps recover part of the penalties, but it does not fully erase the weight of the day. Long rest brings HP to at least 75% of maximum.',
                 ),
               ),
               const SizedBox(height: 12),

@@ -24,6 +24,13 @@ class _OculumCalendarPhase {
   int get endDay => startDay + duration - 1;
 }
 
+int oculumLongRestHpTarget({required int currentHp, required int maxHp}) {
+  final safeMax = max(1, maxHp);
+  final safeCurrent = currentHp.clamp(0, safeMax).toInt();
+  final seventyFivePercent = (safeMax * 3 / 4).ceil();
+  return max(safeCurrent, seventyFivePercent);
+}
+
 extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   // RISORSE / ISPIRAZIONI / KARMA
   // =====================================================
@@ -954,12 +961,15 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
       sessioniSenzaBisogniController.text = '0';
 
-      refullaHp();
+      currentHpController.text = oculumLongRestHpTarget(
+        currentHp: hpCorrenti(),
+        maxHp: maxHp(),
+      ).toString();
       malusTiriOculumPostEsplosione = 0;
 
       ultimoEventoRiposo = t(
-        'Riposo lungo completato: dura 1 ora e mezza. Recupera metà Resilienza negativa, tutto Oculum negativo, tutte le stats attuali, 50% di Cenere minimo 3 e refulla gli HP.',
-        'Long rest completed: it lasts 1.5 hours. It recovers half negative Resilience, all negative Oculum, all current stats, 50% Ash minimum 3 and refills HP.',
+        'Riposo lungo completato: dura 1 ora e mezza. Recupera metà Resilienza negativa, tutto Oculum negativo, tutte le stats attuali, 50% di Cenere minimo 3 e porta gli HP ad almeno il 75% del massimale.',
+        'Long rest completed: it lasts 1.5 hours. It recovers half negative Resilience, all negative Oculum, all current stats, 50% Ash minimum 3 and brings HP to at least 75% of maximum.',
       );
       if (rimuoveMalusEsplosione) {
         ultimoEventoRiposo += t(
@@ -1379,6 +1389,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       nome: nome,
       tipo: tipo.isEmpty ? fallbackTipo : tipo,
       ottenimento: titoloOttenimentoController.text.trim(),
+      leggenda: titoloLeggendaController.text.trim(),
       buff: titoloBuffController.text.trim(),
       puntoCieco: titoloPuntoCiecoController.text.trim(),
       skill: titoloSkillController.text.trim(),
@@ -1418,6 +1429,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   void pulisciCampiTitolo() {
     titoloNomeController.clear();
     titoloOttenimentoController.clear();
+    titoloLeggendaController.clear();
     titoloBuffController.clear();
     titoloPuntoCiecoController.clear();
     titoloSkillController.clear();

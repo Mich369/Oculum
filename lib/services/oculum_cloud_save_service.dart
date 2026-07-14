@@ -9,6 +9,10 @@ const String _pendingCloudPayloadKey = 'oculum.cloud_save.pending_payload';
 const String _pendingCloudUserKey = 'oculum.cloud_save.pending_user';
 const String _pendingCloudDeviceKey = 'oculum.cloud_save.pending_device';
 
+String _encodeCloudSavePayload(Map<String, dynamic> payload) {
+  return jsonEncode(payload);
+}
+
 class OculumCloudSaveService extends ChangeNotifier {
   OculumCloudSaveService._();
 
@@ -44,12 +48,22 @@ class OculumCloudSaveService extends ChangeNotifier {
   Future<bool> queueLocalSaveForSync(
     String userId, {
     required Map<String, dynamic> payload,
+    String? encodedPayload,
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final String encoded =
+          encodedPayload ??
+          (kIsWeb
+              ? _encodeCloudSavePayload(payload)
+              : await compute(
+                  _encodeCloudSavePayload,
+                  payload,
+                  debugLabel: 'oculum-cloud-save-encode',
+                ));
       await prefs.setString(_pendingCloudUserKey, userId);
       await prefs.setString(_pendingCloudDeviceKey, 'flutter');
-      await prefs.setString(_pendingCloudPayloadKey, jsonEncode(payload));
+      await prefs.setString(_pendingCloudPayloadKey, encoded);
       statusNotifier.value = 'Saved on device';
       return true;
     } catch (_) {

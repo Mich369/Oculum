@@ -1685,26 +1685,55 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     );
   }
 
+  Color titleCategoryColor(String category) {
+    return switch (category) {
+      'Titoli del Fato' => const Color(0xFFFFD166),
+      'Titolo Azione' => const Color(0xFFFF6B6B),
+      'Titolo Item' => const Color(0xFF5DADE2),
+      'Titolo Malanno' => const Color(0xFFA569BD),
+      'Titolo Benessere' => const Color(0xFF58D68D),
+      'Titoli Di Apprendimento' => const Color(0xFF48C9B0),
+      'Titolo Chaos' => const Color(0xFFFF8C42),
+      'Titoli Alchimia/Magia' => const Color(0xFFC39BD3),
+      'Titoli Attributo' => const Color(0xFF4DD0E1),
+      _ => const Color(0xFFB0BEC5),
+    };
+  }
+
+  IconData titleCategoryIcon(String category) {
+    return switch (category) {
+      'Titoli del Fato' => Icons.auto_awesome,
+      'Titolo Azione' => Icons.bolt,
+      'Titolo Item' => Icons.inventory_2,
+      'Titolo Malanno' => Icons.coronavirus,
+      'Titolo Benessere' => Icons.spa,
+      'Titoli Di Apprendimento' => Icons.menu_book,
+      'Titolo Chaos' => Icons.shuffle,
+      'Titoli Alchimia/Magia' => Icons.science,
+      'Titoli Attributo' => Icons.tune,
+      _ => Icons.style,
+    };
+  }
+
   Widget titleCategoryHeader(String category, int count) {
+    final categoryColor = titleCategoryColor(category);
+    final visibleColor = count > 0
+        ? categoryColor
+        : categoryColor.withValues(alpha: 0.48);
     return gothicPanel(
-      borderColor: count > 0
-          ? tertiaryColor
-          : primaryColor.withValues(alpha: 0.4),
+      borderColor: visibleColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.style,
-                color: count > 0 ? tertiaryColor : primaryColor,
-              ),
+              Icon(titleCategoryIcon(category), color: visibleColor),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   category,
                   style: TextStyle(
-                    color: count > 0 ? tertiaryColor : primaryColor,
+                    color: visibleColor,
                     fontSize: 17,
                     fontWeight: FontWeight.w900,
                   ),
@@ -1713,7 +1742,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
               Text(
                 '$count',
                 style: TextStyle(
-                  color: count > 0 ? tertiaryColor : Colors.grey,
+                  color: visibleColor,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -2236,13 +2265,15 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                               : 0,
                           duration: const Duration(milliseconds: 500),
                           curve: Curves.easeOutCubic,
-                          child: D20Widget(
-                            text: '',
-                            fillColor: secondaryColor,
-                            textColor: overlayResultColor,
-                            glow: overlayCriticoVenti,
-                            tertiaryColor: tertiaryColor,
-                            faces: dadoOverlayFacce,
+                          child: RepaintBoundary(
+                            child: D20Widget(
+                              text: '',
+                              fillColor: secondaryColor,
+                              textColor: overlayResultColor,
+                              glow: overlayCriticoVenti,
+                              tertiaryColor: tertiaryColor,
+                              faces: dadoOverlayFacce,
+                            ),
                           ),
                         ),
                         AnimatedOpacity(
@@ -2318,17 +2349,19 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
               ),
               const SizedBox(height: 16),
               if (dadoMostrato.isNotEmpty)
-                D20Widget(
-                  text: dadoMostrato,
-                  fillColor: secondaryColor,
-                  textColor: tiroCriticoUno
-                      ? Colors.redAccent
-                      : tiroCriticoVenti
-                      ? tertiaryColor
-                      : primaryColor,
-                  glow: tiroCriticoVenti,
-                  tertiaryColor: tertiaryColor,
-                  faces: dadoMostratoFacce,
+                RepaintBoundary(
+                  child: D20Widget(
+                    text: dadoMostrato,
+                    fillColor: secondaryColor,
+                    textColor: tiroCriticoUno
+                        ? Colors.redAccent
+                        : tiroCriticoVenti
+                        ? tertiaryColor
+                        : primaryColor,
+                    glow: tiroCriticoVenti,
+                    tertiaryColor: tertiaryColor,
+                    faces: dadoMostratoFacce,
+                  ),
                 ),
               if (dadoMostrato.isNotEmpty) const SizedBox(height: 18),
               Text(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
@@ -40,6 +41,31 @@ void main() {
     expect(restored.id, 'forza');
     expect(restored.valore, 3);
     expect(restored.masteryProgress, 17);
+  });
+
+  test('Nodo usa tutto il Karma ricevuto, inclusi i buff dei titoli', () {
+    expect(
+      oculumHiddenEyeDerivedBonusFor(
+        id: 'nodo',
+        resilienza: 99,
+        volonta: 99,
+        materia: 99,
+        oculum: 99,
+        karma: 17,
+      ),
+      17,
+    );
+    expect(
+      oculumHiddenEyeDerivedBonusFor(
+        id: 'nodo',
+        resilienza: 0,
+        volonta: 0,
+        materia: 0,
+        oculum: 0,
+        karma: -8,
+      ),
+      -8,
+    );
   });
 
   test('calcola soglia e guadagno maestria dei sottotratti Oculus', () {
@@ -237,6 +263,44 @@ void main() {
     await Future.wait(<Future<void>>[first, second]);
     expect(started, <int>[1, 2]);
   });
+
+  test(
+    'accorpa i salvataggi in corso, conserva l ultimo stato e non sovrappone scritture',
+    () async {
+      final queue = OculumSaveRequestQueue();
+      final firstGate = Completer<void>();
+      final writtenStates = <int>[];
+      final writeModes = <bool>[];
+      var currentState = 1;
+      var concurrentWrites = 0;
+      var maxConcurrentWrites = 0;
+
+      Future<void> write(bool soloLocal) async {
+        concurrentWrites++;
+        maxConcurrentWrites = max(maxConcurrentWrites, concurrentWrites);
+        writtenStates.add(currentState);
+        writeModes.add(soloLocal);
+        if (writtenStates.length == 1) await firstGate.future;
+        concurrentWrites--;
+      }
+
+      final first = queue.enqueue(soloLocal: true, write: write);
+      await Future<void>.delayed(Duration.zero);
+      currentState = 2;
+      final second = queue.enqueue(soloLocal: true, write: write);
+      currentState = 3;
+      final third = queue.enqueue(soloLocal: false, write: write);
+
+      expect(writtenStates, <int>[1]);
+      firstGate.complete();
+      await Future.wait(<Future<void>>[first, second, third]);
+
+      expect(writtenStates, <int>[1, 3]);
+      expect(writeModes, <bool>[true, false]);
+      expect(maxConcurrentWrites, 1);
+      expect(queue.isRunning, isFalse);
+    },
+  );
 
   test('assegna i nuovi sottotratti alle categorie e usa divisione intera', () {
     expect(oculumHiddenEyeStaticGroupFor('fermezza'), 'volonta');

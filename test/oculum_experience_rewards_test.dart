@@ -69,11 +69,19 @@ void main() {
       );
       expect(
         oculumRollExperienceGain(
+          naturalRoll: 19,
+          faces: 20,
+          rollSucceeded: true,
+        ),
+        10,
+      );
+      expect(
+        oculumRollExperienceGain(
           naturalRoll: 20,
           faces: 20,
           rollSucceeded: true,
         ),
-        15,
+        30,
       );
     });
 

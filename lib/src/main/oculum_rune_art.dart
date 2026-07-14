@@ -434,6 +434,14 @@ const Set<String> runeArtBaseWordIds = <String>{
   'duration_1_action',
 };
 
+const int runeArtWordsPerBook = 6;
+
+const List<String> runeArtRequiredStartingWordIds = <String>[
+  'target_self_ally',
+  'mod_pulse',
+  'intensity_i',
+];
+
 const List<String> _runeArtIntensityOrder = <String>[
   'intensity_i',
   'intensity_ii',
@@ -447,6 +455,47 @@ const List<String> _runeArtDurationOrder = <String>[
   'duration_5_turns',
   'duration_scene',
 ];
+
+bool runeArtCanLearnWordFromKnown(Set<String> known, RuneArtWordDef word) {
+  if (known.contains(word.id)) return false;
+
+  final intensityIndex = _runeArtIntensityOrder.indexOf(word.id);
+  if (intensityIndex > 0) {
+    return known.contains(_runeArtIntensityOrder[intensityIndex - 1]);
+  }
+
+  final durationIndex = _runeArtDurationOrder.indexOf(word.id);
+  if (durationIndex > 0) {
+    return known.contains(_runeArtDurationOrder[durationIndex - 1]);
+  }
+
+  return true;
+}
+
+List<RuneArtWordDef> runeArtBookLearningPlan({
+  required Iterable<RuneArtWordDef> words,
+  required Iterable<String> knownWordIds,
+  int count = runeArtWordsPerBook,
+}) {
+  final known = <String>{...runeArtBaseWordIds, ...knownWordIds};
+  final available = words.toList(growable: false);
+  final learned = <RuneArtWordDef>[];
+
+  while (learned.length < count) {
+    RuneArtWordDef? next;
+    for (final word in available) {
+      if (runeArtCanLearnWordFromKnown(known, word)) {
+        next = word;
+        break;
+      }
+    }
+    if (next == null) break;
+    known.add(next.id);
+    learned.add(next);
+  }
+
+  return learned;
+}
 
 String runeArtCustomIdFromName(String name) {
   final base = oculumNormalizeText(name.trim())
@@ -507,7 +556,7 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
             nome: 'Libro Runico',
             livello: 1,
             evo1:
-                'Apprendi sei parole da un libro. Self / Ally, Pulse, Intensita I e 1 azione sono sempre disponibili.',
+                'Ogni libro insegna sei parole. Self / Ally e Pulse sono le prime parole obbligatorie; Intensita I e 1 azione sono sempre disponibili.',
             evo2:
                 'Puoi tenere due formule rapide e ricombinare parole tra primo e secondo slot.',
             evo3:
@@ -598,30 +647,6 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
     return null;
   }
 
-  bool runeCanLearnWord(CharacterArt art, RuneArtWordDef word) {
-    final known = runeKnownWordSet(art);
-    if (known.contains(word.id)) return false;
-
-    final intensityIndex = _runeArtIntensityOrder.indexOf(word.id);
-    if (intensityIndex > 0) {
-      return known.contains(_runeArtIntensityOrder[intensityIndex - 1]);
-    }
-
-    final durationIndex = _runeArtDurationOrder.indexOf(word.id);
-    if (durationIndex > 0) {
-      return known.contains(_runeArtDurationOrder[durationIndex - 1]);
-    }
-
-    return true;
-  }
-
-  List<RuneArtWordDef> runeLearnableWords(CharacterArt art) {
-    return [
-      for (final word in runeWordsForArt(art))
-        if (runeCanLearnWord(art, word)) word,
-    ];
-  }
-
   String runeWordLabel(RuneArtWordDef word) {
     return t(word.choiceIt, word.choiceEn);
   }
@@ -657,28 +682,34 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
   }
 
   void learnRuneBookForSheet() {
+    var bookConsumed = false;
     refreshOculumHome(() {
       final art = ensureRuneArtOnSheet();
-      final learned = <RuneArtWordDef>[];
-      while (learned.length < 6) {
-        final learnable = runeLearnableWords(art);
-        if (learnable.isEmpty) break;
-        final next = learnable.first;
-        art.runeWordsKnown.add(next.id);
-        learned.add(next);
+      final learned = runeArtBookLearningPlan(
+        words: runeWordsForArt(art),
+        knownWordIds: runeKnownWordSet(art),
+      );
+      if (learned.length < runeArtWordsPerBook) {
+        risultato = t(
+          'Libro Runico non consumato: servono sei parole nuove disponibili.',
+          'Runic Book not consumed: six new available words are required.',
+        );
+        aggiungiLog(risultato);
+        return;
       }
+
+      art.runeWordsKnown.addAll(learned.map((word) => word.id));
       art.runeBooksRead += 1;
+      bookConsumed = true;
       ensureRuneArtDefaults(art);
-      final learnedText = learned.isEmpty
-          ? t('nessuna parola nuova', 'no new word')
-          : learned.map(runeWordLabel).join(', ');
+      final learnedText = learned.map(runeWordLabel).join(', ');
       risultato = t(
         'Libro Runico letto. Parole apprese: $learnedText. ${runeArtFormulaSummary(art)}',
         'Runic book read. Learned words: $learnedText. ${runeArtFormulaSummary(art)}',
       );
       aggiungiLog(risultato);
     });
-    programmaSalvataggio();
+    if (bookConsumed) programmaSalvataggio();
   }
 
   void createRuneArtQuickly() {
@@ -728,8 +759,8 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
                     children: [
                       smallInfoText(
                         t(
-                          'Ogni libro insegna fino a sei parole; Self / Ally, Pulse e Intensita I restano sempre disponibili. Seleziona lo slot e le sottovoci: la scheda calcola costo Oculum e DT.',
-                          'Each book teaches up to six words; Self / Ally, Pulse and Intensity I always stay available. Select the slot and subvoices: the sheet calculates Oculum cost and DT.',
+                          'Ogni libro insegna sei parole; Self / Ally e Pulse sono le prime parole obbligatorie, con Intensita I sempre disponibile. Seleziona lo slot e le sottovoci: la scheda calcola costo Oculum e DT.',
+                          'Each book teaches six words; Self / Ally and Pulse are the first required words, with Intensity I always available. Select the slot and subvoices: the sheet calculates Oculum cost and DT.',
                         ),
                       ),
                       const SizedBox(height: 12),

@@ -299,6 +299,7 @@ extension _OculumHomeShareContent on _OculumHomePageState {
     final nome = TextEditingController(text: edited.nome);
     final tipo = TextEditingController(text: edited.tipo);
     final ottenimento = TextEditingController(text: edited.ottenimento);
+    final leggenda = TextEditingController(text: edited.leggenda);
     final buff = TextEditingController(text: edited.buff);
     final skill = TextEditingController(text: edited.skill);
     final res = TextEditingController(text: '${edited.resilienza}');
@@ -347,6 +348,13 @@ extension _OculumHomeShareContent on _OculumHomePageState {
                           controller: ottenimento,
                           numero: false,
                           maxLines: 3,
+                        ),
+                        const SizedBox(height: 8),
+                        campoTesto(
+                          label: t('Leggenda', 'Legend'),
+                          controller: leggenda,
+                          numero: false,
+                          maxLines: 5,
                         ),
                         const SizedBox(height: 8),
                         campoTesto(
@@ -443,6 +451,7 @@ extension _OculumHomeShareContent on _OculumHomePageState {
                                   : nome.text.trim()
                               ..tipo = tipo.text.trim()
                               ..ottenimento = ottenimento.text.trim()
+                              ..leggenda = leggenda.text.trim()
                               ..buff = buff.text.trim()
                               ..skill = skill.text.trim()
                               ..resilienza = readIntValue(res.text)
@@ -474,6 +483,7 @@ extension _OculumHomeShareContent on _OculumHomePageState {
       nome.dispose();
       tipo.dispose();
       ottenimento.dispose();
+      leggenda.dispose();
       buff.dispose();
       skill.dispose();
       res.dispose();

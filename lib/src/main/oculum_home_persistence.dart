@@ -1,5 +1,31 @@
 part of '../../main.dart';
 
+Map<String, dynamic> _decodeOculumJsonMapInWorker(String raw) {
+  final decoded = jsonDecode(raw);
+  if (decoded is! Map) {
+    throw const FormatException('Oculum save root is not a JSON object.');
+  }
+  return Map<String, dynamic>.from(decoded);
+}
+
+String _encodeOculumJsonMapInWorker(Map<String, dynamic> data) {
+  return jsonEncode(data);
+}
+
+String _oculumRawSampleSignature(String raw) {
+  if (raw.isEmpty) return '0';
+  final length = raw.length;
+  const sampleSize = 96;
+  final start = raw.substring(0, min(sampleSize, length));
+  final middleStart = max(0, (length ~/ 2) - (sampleSize ~/ 2));
+  final middle = raw.substring(
+    middleStart,
+    min(length, middleStart + sampleSize),
+  );
+  final end = raw.substring(max(0, length - sampleSize));
+  return '$length:${start.hashCode}:${middle.hashCode}:${end.hashCode}';
+}
+
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 Map<String, String> _encodeOculumSavePayloadForStorage(
@@ -14,6 +40,35 @@ Map<String, String> _encodeOculumSavePayloadForStorage(
     'encoded': encoded,
     'contentSignature':
         '${comparableEncoded.length}:${comparableEncoded.hashCode}',
+  };
+}
+
+String _oculumSaveContentSignature(Map<String, dynamic> data) {
+  final comparable = Map<String, dynamic>.from(data)
+    ..remove('savedAt')
+    ..remove('saveRevision');
+  final encoded = jsonEncode(comparable);
+  return '${encoded.length}:${encoded.hashCode}';
+}
+
+String _encodeOculumHistorySnapshot(Map<String, dynamic> sheet) {
+  return jsonEncode(sheet);
+}
+
+Map<String, dynamic> _compareOculumSheetSnapshots(
+  Map<String, dynamic> message,
+) {
+  final previous = Map<String, dynamic>.from(message['previous'] as Map);
+  final next = Map<String, dynamic>.from(message['next'] as Map);
+  final realtimeKeys = (message['realtimeKeys'] as List).cast<String>();
+  final previousSnapshot = jsonEncode(previous);
+  for (final key in realtimeKeys) {
+    previous.remove(key);
+    next.remove(key);
+  }
+  return <String, dynamic>{
+    'changed': jsonEncode(previous) != jsonEncode(next),
+    'previousSnapshot': previousSnapshot,
   };
 }
 
@@ -111,6 +166,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
     bool deferCacheInvalidation = false,
     Duration delay = const Duration(milliseconds: 1800),
   }) {
+    salvataggioMutazioneRevisione++;
+    salvataggioMutazioneNota = true;
     if (appOculumInBackground || appOculumFocusTransition) {
       autosavePendingAfterFocusTransition = true;
       autosaveTimer?.cancel();
@@ -140,11 +197,23 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   String firmaContenutoSalvataggio(Map<String, dynamic> data) {
-    final comparable = Map<String, dynamic>.from(data)
-      ..remove('savedAt')
-      ..remove('saveRevision');
-    final encoded = jsonEncode(comparable);
-    return '${encoded.length}:${encoded.hashCode}';
+    return _oculumSaveContentSignature(data);
+  }
+
+  Future<String> firmaContenutoSalvataggioNonBloccante(
+    Map<String, dynamic> data,
+  ) async {
+    if (kIsWeb) return _oculumSaveContentSignature(data);
+    try {
+      return await compute(
+        _oculumSaveContentSignature,
+        data,
+        debugLabel: 'oculum-save-content-signature',
+      );
+    } catch (error) {
+      debugPrint('Save signature fallback on main isolate: $error');
+      return _oculumSaveContentSignature(data);
+    }
   }
 
   Future<({String encoded, String contentSignature})>
@@ -1060,11 +1129,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
     final imageRaw = '${json['immaginePersonaggioBase64'] ?? ''}';
     if (imageRaw.isNotEmpty) {
-      try {
-        immaginePersonaggio = base64Decode(imageRaw);
-      } catch (_) {
-        immaginePersonaggio = null;
-      }
+      immaginePersonaggio = decodedBase64ImageCached(imageRaw);
     } else {
       immaginePersonaggio = null;
     }
@@ -1240,13 +1305,28 @@ extension _OculumHomePersistence on _OculumHomePageState {
     return false;
   }
 
-  bool _rawLooksLikeMeaningfulSave(String? raw) {
+  Future<Map<String, dynamic>> _decodeOculumJsonMap(String raw) {
+    if (raw.length < 128 * 1024) {
+      return Future<Map<String, dynamic>>.value(
+        _decodeOculumJsonMapInWorker(raw),
+      );
+    }
+    return compute(_decodeOculumJsonMapInWorker, raw);
+  }
+
+  Future<String> _encodeOculumJsonMap(Map<String, dynamic> data) {
+    return compute(_encodeOculumJsonMapInWorker, data);
+  }
+
+  Future<bool> _rawLooksLikeMeaningfulSave(String? raw) async {
     if (raw == null || raw.trim().isEmpty) return false;
+    if (identical(raw, ultimoRawSalvataggioConfermato)) return true;
 
     try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! Map) return false;
-      return _saveDataLooksMeaningful(Map<String, dynamic>.from(decoded));
+      final decoded = await _decodeOculumJsonMap(raw);
+      final meaningful = _saveDataLooksMeaningful(decoded);
+      if (meaningful) ultimoRawSalvataggioConfermato = raw;
+      return meaningful;
     } catch (_) {
       // Anche un JSON non leggibile non va cancellato automaticamente.
       // Potrebbe essere un salvataggio vecchio o parzialmente corrotto da recuperare.
@@ -1349,13 +1429,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
     };
   }
 
-  Map<String, dynamic> _decodeDiaryArchive(String? raw) {
+  Future<Map<String, dynamic>> _decodeDiaryArchive(String? raw) async {
     if (raw == null || raw.trim().isEmpty) return _emptyDiaryArchive();
 
     try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! Map) return _emptyDiaryArchive();
-      final archive = Map<String, dynamic>.from(decoded);
+      final archive = await _decodeOculumJsonMap(raw);
       if (archive['sheets'] is! Map) {
         archive['sheets'] = <String, dynamic>{};
       }
@@ -1575,12 +1653,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
     return changed;
   }
 
-  Map<String, dynamic>? _decodeSaveDataForDiaryArchive(String? raw) {
+  Future<Map<String, dynamic>?> _decodeSaveDataForDiaryArchive(
+    String? raw,
+  ) async {
     if (raw == null || raw.trim().isEmpty) return null;
     try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! Map) return null;
-      return Map<String, dynamic>.from(decoded);
+      return await _decodeOculumJsonMap(raw);
     } catch (_) {
       return null;
     }
@@ -1591,30 +1669,72 @@ extension _OculumHomePersistence on _OculumHomePageState {
     Map<String, dynamic>? currentData,
     String? currentRaw,
   }) async {
-    final archive = _decodeDiaryArchive(
+    final archive = await _decodeDiaryArchive(
       await _readSaveBlob(prefs, _diaryArchiveSaveKey),
     );
+    final sourceSignatures = Map<String, dynamic>.from(
+      archive['sourceSignatures'] is Map
+          ? archive['sourceSignatures'] as Map
+          : const <String, dynamic>{},
+    );
+    final archiveAlreadyPopulated =
+        archive['sheets'] is Map && (archive['sheets'] as Map).isNotEmpty;
+    final migrateExistingArchive =
+        archiveAlreadyPopulated && sourceSignatures.isEmpty;
+    final seenRawSignatures = <String>{};
+    var archiveChanged = false;
 
-    for (final raw in <String?>[
-      await _readSaveBlob(prefs, _backupSaveKey3),
-      await _readSaveBlob(prefs, _backupSaveKey2),
-      await _readSaveBlob(prefs, _backupSaveKey1),
-      await _readSaveBlob(prefs, _verifiedSaveKey),
-      await _readSaveBlob(prefs, _pendingSaveKey),
-      currentRaw,
-      await _readSaveBlob(prefs, _OculumHomePageState.saveKey),
-    ]) {
-      final data = _decodeSaveDataForDiaryArchive(raw);
-      if (data != null) {
-        _mergeDiariesFromSaveDataIntoArchive(archive, data);
+    final sources = <String, String?>{
+      'backup3': await _readSaveBlob(prefs, _backupSaveKey3),
+      'backup2': await _readSaveBlob(prefs, _backupSaveKey2),
+      'backup1': await _readSaveBlob(prefs, _backupSaveKey1),
+      'verified': await _readSaveBlob(prefs, _verifiedSaveKey),
+      'pending': await _readSaveBlob(prefs, _pendingSaveKey),
+      'current':
+          currentRaw ??
+          await _readSaveBlob(prefs, _OculumHomePageState.saveKey),
+    };
+
+    for (final source in sources.entries) {
+      final raw = source.value;
+      if (raw == null || raw.trim().isEmpty) continue;
+      final signature = _oculumRawSampleSignature(raw);
+      if (!seenRawSignatures.add(signature)) {
+        if (sourceSignatures[source.key] != signature) {
+          sourceSignatures[source.key] = signature;
+          archiveChanged = true;
+        }
+        continue;
       }
+      if (sourceSignatures[source.key] == signature) continue;
+
+      // Existing v1 archives were produced by this same complete scan. During
+      // the first metadata upgrade, record their sources without decoding all
+      // backup blobs again; currentData is still merged below.
+      if (!migrateExistingArchive) {
+        final data = await _decodeSaveDataForDiaryArchive(raw);
+        if (data != null &&
+            _mergeDiariesFromSaveDataIntoArchive(archive, data) > 0) {
+          archiveChanged = true;
+        }
+      }
+      sourceSignatures[source.key] = signature;
+      archiveChanged = true;
     }
 
     if (currentData != null) {
-      _mergeDiariesFromSaveDataIntoArchive(archive, currentData);
+      if (_mergeDiariesFromSaveDataIntoArchive(archive, currentData) > 0) {
+        archiveChanged = true;
+      }
     }
-
-    await _writeSaveBlob(prefs, _diaryArchiveSaveKey, jsonEncode(archive));
+    archive['sourceSignatures'] = sourceSignatures;
+    if (archiveChanged) {
+      await _writeSaveBlob(
+        prefs,
+        _diaryArchiveSaveKey,
+        await _encodeOculumJsonMap(archive),
+      );
+    }
     return archive;
   }
 
@@ -1716,7 +1836,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
     if (restored > 0) {
       _mergeDiariesFromSaveDataIntoArchive(archive, data);
-      await _writeSaveBlob(prefs, _diaryArchiveSaveKey, jsonEncode(archive));
+      await _writeSaveBlob(
+        prefs,
+        _diaryArchiveSaveKey,
+        await _encodeOculumJsonMap(archive),
+      );
     }
 
     return restored;
@@ -1751,7 +1875,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     bool force = false,
   }) async {
     final current = await _readSaveBlob(prefs, _OculumHomePageState.saveKey);
-    if (!_rawLooksLikeMeaningfulSave(current)) return;
+    if (!await _rawLooksLikeMeaningfulSave(current)) return;
 
     final backup1 = await _readSaveBlob(prefs, _backupSaveKey1);
     if (backup1 == current) return;
@@ -1788,12 +1912,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
     ]) {
       final raw = await _readSaveBlob(prefs, key);
       if (raw == null || raw.isEmpty || raw == exclude) continue;
-      if (_rawLooksLikeMeaningfulSave(raw)) return raw;
+      if (await _rawLooksLikeMeaningfulSave(raw)) return raw;
     }
     return null;
   }
 
-  Future<bool> _scriviSalvataggioProtetto(
+  Future<({bool saved, String encoded, String contentSignature})>
+  _scriviSalvataggioProtetto(
     SharedPreferences prefs,
     Map<String, dynamic> data,
   ) async {
@@ -1801,7 +1926,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       debugPrint(
         'Scrittura salvataggio bloccata per proteggere i dati vecchi.',
       );
-      return false;
+      return (saved: false, encoded: '', contentSignature: '');
     }
 
     final dataLooksMeaningful = _saveDataLooksMeaningful(data);
@@ -1814,19 +1939,27 @@ extension _OculumHomePersistence on _OculumHomePageState {
     final encoded = payload.encoded;
     final contentSignature = payload.contentSignature;
     if (contentSignature == ultimoSalvataggioContenutoFirma) {
-      return false;
+      return (
+        saved: false,
+        encoded: encoded,
+        contentSignature: contentSignature,
+      );
     }
     final previous = await _readSaveBlob(prefs, _OculumHomePageState.saveKey);
 
     // Se esiste un salvataggio vero e la nuova scrittura sembra una scheda vuota,
     // non lo sovrascrivo. Il reset intenzionale usa cancellaSalvataggio().
-    if (_rawLooksLikeMeaningfulSave(previous) && !dataLooksMeaningful) {
+    if (await _rawLooksLikeMeaningfulSave(previous) && !dataLooksMeaningful) {
       salvataggioBloccatoPerErrore = true;
       ultimoErroreCaricamentoSalvataggio =
           'Scrittura bloccata: la nuova memoria sembrava vuota e avrebbe sovrascritto un salvataggio esistente.';
       risultato = ultimoErroreCaricamentoSalvataggio;
       aggiungiLog(risultato);
-      return false;
+      return (
+        saved: false,
+        encoded: encoded,
+        contentSignature: contentSignature,
+      );
     }
 
     await _creaBackupDelSalvataggioCorrente(prefs);
@@ -1860,7 +1993,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
           'Scrittura salvataggio non verificata: i dati non sono stati confermati dal disco.';
       risultato = ultimoErroreCaricamentoSalvataggio;
       aggiungiLog(risultato);
-      return false;
+      return (
+        saved: false,
+        encoded: encoded,
+        contentSignature: contentSignature,
+      );
     }
 
     await _writeSaveBlob(prefs, _verifiedSaveKey, encoded);
@@ -1870,7 +2007,183 @@ extension _OculumHomePersistence on _OculumHomePageState {
     ultimoSalvataggioCompletatoAt = DateTime.now();
     ultimoSalvataggioFirma = '${encoded.length}:$dataRevision';
     ultimoSalvataggioContenutoFirma = contentSignature;
-    return true;
+    ultimoRawSalvataggioConfermato = verified;
+    return (saved: true, encoded: encoded, contentSignature: contentSignature);
+  }
+
+  Future<void> salvaSchedaCorrenteInMemoriaNonBloccante() async {
+    if (schedePersonaggio.isEmpty) {
+      final next = statoCorrenteJson();
+      next['localUpdatedAt'] = DateTime.now().toIso8601String();
+      schedePersonaggio.add(next);
+      schedaCorrente = 0;
+      assicuraTagSchede();
+      salvataggioMutazioneNota = false;
+      return;
+    }
+
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      schedaCorrente = 0;
+    }
+
+    while (true) {
+      final inputRevision = salvataggioMutazioneRevisione;
+      final mutationKnown = salvataggioMutazioneNota;
+      final snapshotWatch = Stopwatch()..start();
+      final previous = Map<String, dynamic>.from(
+        schedePersonaggio[schedaCorrente],
+      );
+      final next = <String, dynamic>{...previous, ...statoCorrenteJson()};
+      next['diarioPagine'] = _preserveDiaryPagesForSheetSave(next, previous);
+
+      bool hasMeaningfulValue(dynamic value) {
+        if (value == null) return false;
+        if (value is String) return value.trim().isNotEmpty;
+        if (value is Iterable) return value.isNotEmpty;
+        if (value is Map) return value.isNotEmpty;
+        return true;
+      }
+
+      void preservePreviousIfCurrentLost(String key) {
+        if (!hasMeaningfulValue(previous[key])) return;
+        if (hasMeaningfulValue(next[key])) return;
+        next[key] = previous[key];
+      }
+
+      for (final key in <String>[
+        'textAttachments',
+        'titoli',
+        'trattiRazziali',
+        'inventario',
+        'skills',
+        'arti',
+        'diarioPagine',
+        'journalEntries',
+        'draftNotes',
+        'hiddenEyeStats',
+        'reputations',
+        'logEventi',
+        'partyMembri',
+        'customDamageTypes',
+        'elementColorOverrides',
+        'immaginePersonaggioBase64',
+      ]) {
+        preservePreviousIfCurrentLost(key);
+      }
+
+      final previousName = '${previous['nome'] ?? ''}'.trim();
+      final nextName = '${next['nome'] ?? ''}'.trim();
+      if (previousName.isNotEmpty &&
+          previousName != '???' &&
+          (nextName.isEmpty || nextName == '???')) {
+        next['nome'] = previousName;
+      }
+
+      const realtimeKeys = <String>[
+        'realtimeSharedSheet',
+        'realtimeSourceKey',
+        'realtimeSourceSheetTag',
+        'realtimeOwnerTag',
+        'realtimeOwnerName',
+        'realtimeCampaignId',
+        'realtimeCampaignName',
+        'realtimeSharedAt',
+        'realtimeReceivedAt',
+        'realtimeLocalSheetTag',
+        'realtimeDirtyLocal',
+        'realtimeDirtyAt',
+        'localUpdatedAt',
+        'realtimeRestrictedByMaster',
+        'realtimeReadOnlyByMaster',
+        'publicTokenSide',
+        'publicInitiativeBase',
+        'publicInitiativeTotal',
+        'publicInitiativeRollHidden',
+        'realtimeCoMaster',
+        'realtimeShareWithFriends',
+      ];
+      snapshotWatch.stop();
+
+      final workerWatch = Stopwatch()..start();
+      bool contentChanged;
+      String previousSnapshot;
+      if (mutationKnown) {
+        previousSnapshot = kIsWeb
+            ? _encodeOculumHistorySnapshot(previous)
+            : await compute(
+                _encodeOculumHistorySnapshot,
+                previous,
+                debugLabel: 'oculum-save-history',
+              );
+        contentChanged = true;
+      } else {
+        final comparisonMessage = <String, dynamic>{
+          'previous': previous,
+          'next': next,
+          'realtimeKeys': realtimeKeys,
+        };
+        final comparison = kIsWeb
+            ? _compareOculumSheetSnapshots(comparisonMessage)
+            : await compute(
+                _compareOculumSheetSnapshots,
+                comparisonMessage,
+                debugLabel: 'oculum-save-compare',
+              );
+        contentChanged = comparison['changed'] == true;
+        previousSnapshot = '${comparison['previousSnapshot'] ?? ''}';
+      }
+      workerWatch.stop();
+
+      // Se l'utente ha cambiato ancora qualcosa mentre l'isolate lavorava,
+      // scarta la fotografia vecchia e prepara direttamente l'ultima.
+      if (inputRevision != salvataggioMutazioneRevisione) {
+        continue;
+      }
+
+      if (contentChanged && !applyingHistorySnapshot) {
+        undoHistory.add(<String, dynamic>{
+          'index': schedaCorrente,
+          'sheetJson': previousSnapshot,
+        });
+        if (undoHistory.length > 80) {
+          undoHistory.removeAt(0);
+        }
+        redoHistory.clear();
+      }
+
+      for (final key in realtimeKeys) {
+        if (previous.containsKey(key)) {
+          next[key] = previous[key];
+        }
+      }
+
+      final previousLocalUpdatedAt = '${previous['localUpdatedAt'] ?? ''}'
+          .trim();
+      if (contentChanged || previousLocalUpdatedAt.isEmpty) {
+        next['localUpdatedAt'] = DateTime.now().toIso8601String();
+      } else {
+        next['localUpdatedAt'] = previousLocalUpdatedAt;
+      }
+
+      if (readBoolValue(previous['realtimeSharedSheet']) &&
+          !readBoolValue(previous['realtimeReadOnlyByMaster']) &&
+          !applyingRealtimeRemoteSheet &&
+          contentChanged) {
+        next['realtimeDirtyLocal'] = true;
+        next['realtimeDirtyAt'] = DateTime.now().toIso8601String();
+      }
+
+      schedePersonaggio[schedaCorrente] = next;
+      salvataggioMutazioneNota = false;
+      if (kDebugMode || kProfileMode) {
+        debugPrint(
+          'Oculum save profile: snapshot UI ${snapshotWatch.elapsedMicroseconds} us, '
+          'history worker ${workerWatch.elapsedMicroseconds} us, '
+          'UI JSON serializations 0.',
+        );
+      }
+      return;
+    }
   }
 
   void salvaSchedaCorrenteInMemoria() {
@@ -2016,7 +2329,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   void restoreHistorySnapshot(Map<String, dynamic> snapshot) {
     final index = readIntValue(snapshot['index'], fallback: schedaCorrente);
-    final rawSheet = snapshot['sheet'];
+    dynamic rawSheet = snapshot['sheet'];
+    if (rawSheet is! Map) {
+      final encoded = '${snapshot['sheetJson'] ?? ''}';
+      if (encoded.isNotEmpty) {
+        try {
+          rawSheet = jsonDecode(encoded);
+        } catch (_) {
+          rawSheet = null;
+        }
+      }
+    }
     if (rawSheet is! Map) return;
     if (index < 0 || index >= schedePersonaggio.length) return;
 
@@ -2110,47 +2433,18 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   Future<void> _salvaDatiSerializzato({required bool soloLocale}) async {
     if (!datiCaricati) return;
-
-    final running = activeSaveFuture;
-    if (running != null) {
-      salvataggioRichiestoDuranteScrittura = true;
-      if (!soloLocale) {
-        salvataggioCompletoRichiestoDuranteScrittura = true;
-      }
-      await running;
-      return;
-    }
-
-    final save = _eseguiCodaSalvataggio(soloLocale: soloLocale);
-    activeSaveFuture = save;
-    await save;
-  }
-
-  Future<void> _eseguiCodaSalvataggio({required bool soloLocale}) async {
-    salvataggioInCorso = true;
-    var prossimaScritturaSoloLocale = soloLocale;
-    try {
-      while (true) {
-        salvataggioRichiestoDuranteScrittura = false;
-        salvataggioCompletoRichiestoDuranteScrittura = false;
-        await _salvaDatiCore(soloLocale: prossimaScritturaSoloLocale);
-        if (!salvataggioRichiestoDuranteScrittura) break;
-        prossimaScritturaSoloLocale =
-            !salvataggioCompletoRichiestoDuranteScrittura;
-      }
-    } finally {
-      salvataggioInCorso = false;
-      salvataggioRichiestoDuranteScrittura = false;
-      salvataggioCompletoRichiestoDuranteScrittura = false;
-      activeSaveFuture = null;
-    }
+    await saveRequestQueue.enqueue(
+      soloLocal: soloLocale,
+      write: (requestSoloLocal) => _salvaDatiCore(soloLocale: requestSoloLocal),
+      onRunningChanged: (running) => salvataggioInCorso = running,
+    );
   }
 
   Future<void> _salvaDatiCore({required bool soloLocale}) async {
     if (!datiCaricati) return;
 
     if (!salvataggioInChiusura) {
-      salvaSchedaCorrenteInMemoria();
+      await salvaSchedaCorrenteInMemoriaNonBloccante();
       if (!soloLocale) {
         await sendRealtimeEditedSharedSheetBack();
       }
@@ -2160,8 +2454,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
     final prefs = await SharedPreferences.getInstance();
     final revision = salvataggioRevisione + 1;
     final savePayload = datiSalvataggioJson(revision: revision);
-    final saved = await _scriviSalvataggioProtetto(prefs, savePayload);
-    if (!saved || soloLocale) return;
+    final saveResult = await _scriviSalvataggioProtetto(prefs, savePayload);
+    if (!saveResult.saved || soloLocale) return;
 
     final authState = OculumAuthService.instance.state;
     if (authState.canSyncToCloud && authState.userId != null) {
@@ -2169,6 +2463,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         OculumCloudSaveService.instance.queueLocalSaveForSync(
           authState.userId!,
           payload: savePayload,
+          encodedPayload: saveResult.encoded,
         ),
       );
     }
@@ -2201,21 +2496,39 @@ extension _OculumHomePersistence on _OculumHomePageState {
     salvataggioBloccatoPerErrore = false;
     ultimoSalvataggioContenutoFirma = '';
     final written = await _scriviSalvataggioProtetto(prefs, imported);
-    if (!written) return false;
+    if (!written.saved) return false;
     await caricaDati(allowBackupRecovery: true);
     return true;
   }
 
   Future<void> caricaDati({bool allowBackupRecovery = true}) async {
+    final loadWatch = Stopwatch()..start();
     final prefs = await SharedPreferences.getInstance();
     var raw = await _readSaveBlob(prefs, _OculumHomePageState.saveKey);
+    Map<String, dynamic>? decodedPrimary;
+    var primaryDecodedSuccessfully = false;
+
+    if (raw != null && raw.isNotEmpty) {
+      oculumProfileMark('save_load_decode');
+      try {
+        decodedPrimary = await _decodeOculumJsonMap(raw);
+        primaryDecodedSuccessfully = true;
+      } catch (_) {
+        // The protected recovery path below still handles malformed saves.
+      }
+    }
 
     // Se il salvataggio principale è vuoto/non significativo ma esiste un backup,
     // ripristina automaticamente il backup prima di inizializzare una scheda vuota.
-    if (!_rawLooksLikeMeaningfulSave(raw)) {
+    if (raw == null ||
+        raw.isEmpty ||
+        (primaryDecodedSuccessfully &&
+            !_saveDataLooksMeaningful(decodedPrimary!))) {
       final recovery = await _firstMeaningfulBackupRaw(prefs);
       if (recovery != null) {
         raw = recovery;
+        decodedPrimary = null;
+        primaryDecodedSuccessfully = false;
         await _writeSaveBlob(prefs, _OculumHomePageState.saveKey, recovery);
         await _writeSaveBlob(prefs, _verifiedSaveKey, recovery);
       }
@@ -2254,12 +2567,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
 
     try {
-      final data = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      final data = decodedPrimary ?? await _decodeOculumJsonMap(raw);
+      oculumProfileMark('save_load_diary_recovery');
       final diariRipristinati = await _recoverDiariesFromRecentSaves(
         prefs,
         data,
         raw,
       );
+      final loadedContentSignature =
+          await firmaContenutoSalvataggioNonBloccante(data);
 
       if (!mounted) return;
       setState(() {
@@ -2403,7 +2719,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         );
         ultimoSalvataggioFirma =
             '${raw!.length}:${data['saveRevision'] ?? salvataggioRevisione}';
-        ultimoSalvataggioContenutoFirma = firmaContenutoSalvataggio(data);
+        ultimoSalvataggioContenutoFirma = loadedContentSignature;
         datiCaricati = true;
         if (diariRipristinati > 0) {
           risultato = t(
@@ -2415,9 +2731,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
       });
 
       // Il caricamento è riuscito: crea una copia di sicurezza del raw originale.
+      ultimoRawSalvataggioConfermato = raw;
       await _creaBackupDelSalvataggioCorrente(prefs);
       if (diariRipristinati > 0) {
         await salvaDatiSoloLocale();
+      }
+      if (kDebugMode || kProfileMode) {
+        debugPrint(
+          'Oculum load profile: ${raw.length} chars loaded in '
+          '${loadWatch.elapsedMilliseconds} ms.',
+        );
       }
     } catch (error, stackTrace) {
       debugPrint('Errore caricamento salvataggio Oculum: $error');
@@ -4666,11 +4989,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       Uint8List? presetImageBytes;
       final presetImageBase64 = matchedMonster?.imageBase64 ?? '';
       if (presetImageBase64.isNotEmpty) {
-        try {
-          presetImageBytes = base64Decode(presetImageBase64);
-        } catch (error) {
-          debugPrint('Monster Book custom image ignored: $error');
-        }
+        presetImageBytes = decodedBase64ImageCached(presetImageBase64);
       }
 
       await creaNuovaSchedaPersonaggio(

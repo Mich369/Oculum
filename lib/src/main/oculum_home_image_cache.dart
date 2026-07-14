@@ -49,9 +49,7 @@ class OculumDecodedImageCache {
 
   String? _cacheKey(String clean) {
     if (clean.isEmpty) return null;
-    final first = clean.codeUnitAt(0);
-    final last = clean.codeUnitAt(clean.length - 1);
-    return '${clean.length}:${clean.hashCode}:$first:$last';
+    return _oculumRawSampleSignature(clean);
   }
 
   void _store(String key, Uint8List bytes) {

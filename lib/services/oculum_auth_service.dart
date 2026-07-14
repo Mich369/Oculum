@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 const String oculumOAuthRedirectUrl = String.fromEnvironment(
   'OculumOAuthRedirectUrl',
-  defaultValue: '',
+  defaultValue: 'com.mich.oculum://login-callback',
 );
 const bool _googleOAuthConfigured = bool.fromEnvironment(
   'OculumGoogleOAuthEnabled',

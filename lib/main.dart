@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:ui' show FrameTiming;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -69,8 +70,68 @@ part 'src/main/oculum_home_rules_settings_search.dart';
 part 'src/main/oculum_home_dialogs_quick_edit.dart';
 part 'src/main/oculum_painters.dart';
 
+const String oculumDefaultSupabaseUrl =
+    'https://jgpxdlkbuxhriltxezdc.supabase.co';
+const String oculumDefaultSupabasePublishableKey =
+    'sb_publishable_VXDF3x3izDbZNJ5VWX6RsQ_ZFYXpkPI';
+const bool oculumPerformanceHarness = bool.fromEnvironment(
+  'OculumPerformanceHarness',
+);
+const String _oculumSupabaseUrlOverride = String.fromEnvironment(
+  'OculumSupabaseUrl',
+  defaultValue: '',
+);
+const String _oculumSupabasePublishableKeyOverride = String.fromEnvironment(
+  'OculumSupabasePublishableKey',
+  defaultValue: '',
+);
+const String _oculumSupabaseLegacyAnonKeyOverride = String.fromEnvironment(
+  'OculumSupabaseAnonKey',
+  defaultValue: '',
+);
+
+String get oculumConfiguredSupabaseUrl {
+  final override = _oculumSupabaseUrlOverride.trim();
+  return override.isEmpty ? oculumDefaultSupabaseUrl : override;
+}
+
+String get oculumConfiguredSupabasePublishableKey {
+  final publishableOverride = _oculumSupabasePublishableKeyOverride.trim();
+  if (publishableOverride.isNotEmpty) return publishableOverride;
+  final legacyOverride = _oculumSupabaseLegacyAnonKeyOverride.trim();
+  return legacyOverride.isEmpty
+      ? oculumDefaultSupabasePublishableKey
+      : legacyOverride;
+}
+
+bool oculumSupabaseConfigurationIsValid({
+  required String url,
+  required String publishableKey,
+}) {
+  final uri = Uri.tryParse(url.trim());
+  final validUrl =
+      uri != null &&
+      uri.scheme == 'https' &&
+      uri.host.endsWith('.supabase.co') &&
+      uri.userInfo.isEmpty;
+  final key = publishableKey.trim();
+  final validPublishableKey =
+      key.startsWith('sb_publishable_') && key.length > 24;
+  final validLegacyAnonKey =
+      key.startsWith('eyJ') && key.split('.').length == 3;
+  return validUrl && (validPublishableKey || validLegacyAnonKey);
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (oculumPerformanceHarness) {
+    // Profile harness only: keeps automated stress tests away from real saves.
+    // ignore: invalid_use_of_visible_for_testing_member
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  }
+  if (kProfileMode) {
+    _oculumFrameProfiler.start();
+  }
   if (kIsWeb) {
     await BrowserContextMenu.disableContextMenu();
   }
@@ -78,6 +139,77 @@ Future<void> main() async {
   await OculumAuthService.instance.initialize();
   await OculumCloudSaveService.instance.initialize();
   runApp(const OculumApp());
+}
+
+final _OculumFrameProfiler _oculumFrameProfiler = _OculumFrameProfiler();
+
+void oculumProfileMark(String label) {
+  if (!kProfileMode) return;
+  _oculumFrameProfiler.mark(label);
+}
+
+class _OculumFrameProfiler {
+  final List<int> _totalMicros = <int>[];
+  int _buildMicros = 0;
+  int _rasterMicros = 0;
+  int _jankyFrames = 0;
+  DateTime _lastReport = DateTime.now();
+  String _label = 'startup';
+  bool _started = false;
+
+  void start() {
+    if (_started) return;
+    _started = true;
+    WidgetsBinding.instance.addTimingsCallback(_onTimings);
+  }
+
+  void mark(String label) {
+    _report(force: true);
+    _label = label;
+    _lastReport = DateTime.now();
+  }
+
+  void _onTimings(List<FrameTiming> timings) {
+    for (final timing in timings) {
+      final total = timing.totalSpan.inMicroseconds;
+      _totalMicros.add(total);
+      _buildMicros += timing.buildDuration.inMicroseconds;
+      _rasterMicros += timing.rasterDuration.inMicroseconds;
+      if (total > 16667) _jankyFrames++;
+    }
+
+    final overdue =
+        DateTime.now().difference(_lastReport) >= const Duration(seconds: 2);
+    final severeFrame = timings.any(
+      (timing) => timing.totalSpan > const Duration(milliseconds: 32),
+    );
+    if (overdue || severeFrame || _totalMicros.length >= 120) {
+      _report(force: true);
+    }
+  }
+
+  void _report({required bool force}) {
+    if (!force || _totalMicros.isEmpty) return;
+    final sorted = List<int>.from(_totalMicros)..sort();
+    final count = sorted.length;
+    int percentile(double value) {
+      final index = ((count - 1) * value).round().clamp(0, count - 1);
+      return sorted[index];
+    }
+
+    debugPrint(
+      'Oculum frame profile [$_label]: frames=$count, '
+      'jank=$_jankyFrames, p50=${percentile(0.50)}us, '
+      'p95=${percentile(0.95)}us, max=${sorted.last}us, '
+      'buildAvg=${_buildMicros ~/ count}us, '
+      'rasterAvg=${_rasterMicros ~/ count}us.',
+    );
+    _totalMicros.clear();
+    _buildMicros = 0;
+    _rasterMicros = 0;
+    _jankyFrames = 0;
+    _lastReport = DateTime.now();
+  }
 }
 
 bool _oculumStartupServicesReady = false;
@@ -183,16 +315,13 @@ Future<bool> _initializeOculumSupabase() async {
       return true;
     } catch (_) {}
 
-    final supabaseUrl = const String.fromEnvironment(
-      'OculumSupabaseUrl',
-      defaultValue: '',
-    );
-    final supabaseAnonKey = const String.fromEnvironment(
-      'OculumSupabaseAnonKey',
-      defaultValue: '',
-    );
+    final supabaseUrl = oculumConfiguredSupabaseUrl;
+    final supabasePublishableKey = oculumConfiguredSupabasePublishableKey;
 
-    if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+    if (!oculumSupabaseConfigurationIsValid(
+      url: supabaseUrl,
+      publishableKey: supabasePublishableKey,
+    )) {
       OculumRealtimeService.supabaseAvailable = false;
       OculumRealtimeService.startupStatus =
           'Supabase non configurato: l\'app resta in modalità locale.';
@@ -201,22 +330,24 @@ Future<bool> _initializeOculumSupabase() async {
 
     await Supabase.initialize(
       url: supabaseUrl,
-      anonKey: supabaseAnonKey,
+      anonKey: supabasePublishableKey,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
         autoRefreshToken: true,
         detectSessionInUri: true,
       ),
-    ).timeout(const Duration(seconds: 6));
+    ).timeout(const Duration(seconds: 10));
     OculumRealtimeService.supabaseAvailable = true;
     OculumRealtimeService.startupStatus = 'Supabase pronto.';
     await OculumAuthService.instance.initialize(supabaseReady: true);
     return true;
-  } catch (_) {
+  } catch (error) {
     OculumRealtimeService.supabaseAvailable = false;
     OculumRealtimeService.startupStatus =
         'Supabase offline: l\'app resta locale.';
-    debugPrint('Supabase initialization skipped; local mode remains active.');
+    debugPrint(
+      'Supabase initialization failed (${error.runtimeType}); local mode remains active.',
+    );
     return false;
   }
 }
@@ -404,7 +535,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     );
   }
 
-  void invalidateDerivedDataCaches() {
+  void invalidateDerivedDataCaches({bool notifyHiddenEyeCards = true}) {
     derivedDataRevision++;
     formulaParserCacheRevision = -1;
     formulaValueContextCache = null;
@@ -418,7 +549,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     manualFilteredIndexesCacheKey = '';
     inferredDamageTypeLabelsCacheRevision = -1;
     allDamageElementIdsCacheRevision = -1;
-    invalidateHiddenEyeDerivedCaches();
+    invalidateHiddenEyeDerivedCaches(notifyCards: notifyHiddenEyeCards);
   }
 
   void notifyDiceResultChanged() {
@@ -462,6 +593,16 @@ class _OculumHomePageState extends State<OculumHomePage>
     notifier.value++;
   }
 
+  void scheduleHiddenEyeDerivedCardsRefresh() {
+    if (hiddenEyeDerivedCardsRefreshScheduled || !mounted) return;
+    hiddenEyeDerivedCardsRefreshScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      hiddenEyeDerivedCardsRefreshScheduled = false;
+      if (!mounted) return;
+      invalidateHiddenEyeDerivedCaches();
+    });
+  }
+
   void scheduleHiddenEyeProgressSave() {
     hiddenEyeProgressSaveTimer?.cancel();
     hiddenEyeProgressSaveTimer = Timer(const Duration(milliseconds: 420), () {
@@ -497,7 +638,7 @@ class _OculumHomePageState extends State<OculumHomePage>
         return;
       }
       inputRefreshPendingAfterFocusTransition = false;
-      setState(() {});
+      inputUiRevision.value++;
     });
   }
 
@@ -606,6 +747,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     if (!mounted) return;
 
     final targetPage = paginaVisibileSicura(page);
+    oculumProfileMark('navigation_page_$targetPage');
     final needsLazyActivation = !_isPagePreparedForDisplay(targetPage);
 
     setState(() {
@@ -869,6 +1011,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final titoloNomeController = TextEditingController();
   final titoloTipoController = TextEditingController(text: 'Titolo Azione');
   final titoloOttenimentoController = TextEditingController();
+  final titoloLeggendaController = TextEditingController();
   final titoloBuffController = TextEditingController();
   final titoloPuntoCiecoController = TextEditingController();
   final titoloSkillController = TextEditingController();
@@ -1054,11 +1197,11 @@ class _OculumHomePageState extends State<OculumHomePage>
   Timer? vttRealtimeDebounceTimer;
   Timer? vttPingCleanupTimer;
   StreamSubscription<List<ConnectivityResult>>? connectivitySubscription;
-  Future<void>? activeSaveFuture;
   bool salvataggioInCorso = false;
-  bool salvataggioRichiestoDuranteScrittura = false;
-  bool salvataggioCompletoRichiestoDuranteScrittura = false;
+  final OculumSaveRequestQueue saveRequestQueue = OculumSaveRequestQueue();
   bool salvataggioInChiusura = false;
+  int salvataggioMutazioneRevisione = 0;
+  bool salvataggioMutazioneNota = false;
   bool appOculumInBackground = false;
   bool appOculumFocusTransition = false;
   bool inputRefreshPendingAfterFocusTransition = false;
@@ -1069,6 +1212,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   DateTime? ultimaRotazioneBackupAt;
   String ultimoSalvataggioFirma = '';
   String ultimoSalvataggioContenutoFirma = '';
+  String? ultimoRawSalvataggioConfermato;
   String ultimoArchivioDiarioFirma = '';
   final Map<String, dynamic> extraTopLevelSaveFields = <String, dynamic>{};
   int derivedDataRevision = 0;
@@ -1094,6 +1238,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final Map<String, int> hiddenEyeDerivedBonusCache = <String, int>{};
   final Map<String, int> hiddenEyeTotalBaseCache = <String, int>{};
   final Map<String, int> hiddenEyeTotalValueCache = <String, int>{};
+  bool hiddenEyeDerivedCardsRefreshScheduled = false;
   final OculumActionQueue realtimeDiceConsentQueue = OculumActionQueue();
 
   Color primaryColor = defaultPrimaryColor;
@@ -1122,6 +1267,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   int dadoMostratoFacce = 20;
   final ValueNotifier<int> diceResultRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> diceOverlayRevision = ValueNotifier<int>(0);
+  final ValueNotifier<int> inputUiRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> hiddenEyeListRevision = ValueNotifier<int>(0);
   final Map<String, ValueNotifier<int>> hiddenEyeStatRevisions =
       <String, ValueNotifier<int>>{};
@@ -2942,6 +3088,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     realtimeDungeonMessage.dispose();
     diceResultRevision.dispose();
     diceOverlayRevision.dispose();
+    inputUiRevision.dispose();
     hiddenEyeListRevision.dispose();
     vttCanvasRevision.dispose();
     for (final notifier in hiddenEyeStatRevisions.values) {
@@ -2982,6 +3129,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     titoloNomeController.dispose();
     titoloTipoController.dispose();
     titoloOttenimentoController.dispose();
+    titoloLeggendaController.dispose();
     titoloBuffController.dispose();
     titoloPuntoCiecoController.dispose();
     titoloSkillController.dispose();
@@ -3879,7 +4027,11 @@ class _OculumHomePageState extends State<OculumHomePage>
                             key: ValueKey<String>(
                               'page_shell_${safePage}_${_isPagePreparedForDisplay(safePage)}',
                             ),
-                            child: buildCurrentPageLazy(safePage),
+                            child: ValueListenableBuilder<int>(
+                              valueListenable: inputUiRevision,
+                              builder: (context, revision, child) =>
+                                  buildCurrentPageLazy(safePage),
+                            ),
                           ),
                         )
                       : homeDataLoadingPlaceholder(),

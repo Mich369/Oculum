@@ -720,7 +720,7 @@ Riposo lungo:
 • recupera metà Resilienza negativa;
 • recupera tutto Oculum negativo;
 • recupera tutte le stats spese;
-• refulla gli HP.
+• porta gli HP ad almeno il 75% del massimale.
 ''',
     contentEn: r'''
 Ash represents physical, mental, and spiritual exhaustion.
@@ -764,7 +764,7 @@ Long rest:
 • recovers half negative Resilience;
 • recovers all negative Oculum;
 • recovers all spent stats;
-• refills HP.
+• brings HP to at least 75% of maximum.
 ''',
   ),
   ManualSection(
@@ -849,8 +849,8 @@ Regola base:
 EXP dei tiri riusciti:
 - la regola vale soltanto per i tiri di gioco su d20, non per il lanciatore separato da d2 a d120;
 - il tiro deve riuscire dopo avere applicato bonus, malus e DT;
-- con un risultato naturale di 18 ottieni 18 EXP;
-- con un risultato naturale di 19 ottieni 19 EXP;
+- con un risultato naturale di 18 ottieni 9 EXP;
+- con un risultato naturale di 19 ottieni 10 EXP;
 - con un 20 naturale, quindi un critico positivo, ottieni 20 + metà faccia: 30 EXP;
 - il valore aggiunto all'EXP dipende dal dado naturale e non comprende alcun bonus.
 
@@ -883,8 +883,8 @@ Base rule:
 EXP from successful rolls:
 - this rule applies only to gameplay d20 rolls, never to the separate d2-d120 roller;
 - the roll must succeed after bonuses, penalties and DT are applied;
-- a natural 18 grants 18 EXP;
-- a natural 19 grants 19 EXP;
+- a natural 18 grants 9 EXP;
+- a natural 19 grants 10 EXP;
 - a natural 20, therefore a positive critical, grants 20 + half the die: 30 EXP;
 - EXP uses the natural die result and never includes bonuses.
 
@@ -1035,8 +1035,8 @@ Tipi di Art:
 
 Rune Art:
 - una formula nasce scegliendo parole di Target, Verbo, Aspetto, Mod, Intensita, Durata e Trigger;
-- Self / Ally, Pulse, Intensita I e 1 azione sono sempre parole base;
-- ogni Libro Runico insegna fino a sei parole nuove;
+- Self / Ally e Pulse sono le prime parole obbligatorie; Intensita I e 1 azione sono sempre parole base;
+- ogni Libro Runico insegna esattamente sei parole nuove e non viene consumato se non ce ne sono abbastanza;
 - Intensita e Durata sono sequenziali: devi conoscere il grado precedente prima del successivo;
 - il costo e la DT della formula sono la somma delle parole scelte;
 - il master puo aggiungere parole custom, con costo e DT propri, senza cancellare le parole ufficiali.
@@ -1075,8 +1075,8 @@ Art types:
 
 Rune Art:
 - a formula is built by choosing Target, Verb, Aspect, Mod, Intensity, Duration and Trigger words;
-- Self / Ally, Pulse, Intensity I and 1 action are always base words;
-- each Runic Book teaches up to six new words;
+- Self / Ally and Pulse are the first required words; Intensity I and 1 action are always base words;
+- each Runic Book teaches exactly six new words and is not consumed if fewer are available;
 - Intensity and Duration are sequential: you must know the previous grade before the next one;
 - formula cost and DT are the sum of the selected words;
 - the master can add custom words with their own cost and DT without deleting official words.
@@ -2247,7 +2247,7 @@ La pagina Riposo mostra:
 - Tremana, Semana e Dodemana;
 - pulsanti per avanzare o retrocedere di un giorno.
 
-Il riposo lungo refulla HP e Scudo Oculum quando presente. Lo Scudo normale consumato resta consumato.
+Il riposo lungo porta gli HP ad almeno il 75% del massimale e ricarica lo Scudo Oculum quando presente. Lo Scudo normale consumato resta consumato.
 
 PUTREFAZIONE
 
@@ -2450,7 +2450,7 @@ The Rest page shows:
 - Tremana, Semana and Dodemana;
 - buttons to move one day forward or backward.
 
-Long rest refills HP and Oculum Shield when present.
+Long rest brings HP to at least 75% of maximum and refills Oculum Shield when present.
 
 ROT
 
@@ -2568,7 +2568,7 @@ Un Giorno dura 9 ore. Tre Giorni formano una Tremana, sei una Semana e dodici un
 
 RIPOSO E PUTREFAZIONE
 
-La pagina Riposo mostra Giorno, Nuova Fase, Tremana, Semana e Dodemana. Il riposo lungo ripristina HP e Scudo Oculum quando presente; lo Scudo normale consumato non ritorna. Ogni oggetto conserva il Giorno di ottenimento: raggiunta la sua durata PUT, diventa Carne marcia, Materiale putrefatto, Slime putrefatto oppure Oggetto putrefatto. Risultati uguali si uniscono nello stesso stack.
+La pagina Riposo mostra Giorno, Nuova Fase, Tremana, Semana e Dodemana. Il riposo lungo porta gli HP ad almeno il 75% del massimale e ricarica lo Scudo Oculum quando presente; lo Scudo normale consumato non ritorna. Ogni oggetto conserva il Giorno di ottenimento: raggiunta la sua durata PUT, diventa Carne marcia, Materiale putrefatto, Slime putrefatto oppure Oggetto putrefatto. Risultati uguali si uniscono nello stesso stack.
 
 STATO DI FORZA
 
@@ -2607,7 +2607,7 @@ One Day lasts 9 hours. Three Days make a Tremana, six a Semana and twelve a Dode
 
 REST AND ROT
 
-The Rest page shows Day, New Phase, Tremana, Semana and Dodemana. A long rest restores HP and Oculum Shield when present; spent normal Shield does not return. Every item records the Day it was obtained. When its PUT duration expires, it becomes Rotten Meat, Rotted Material, Rotted Slime or Rotted Item. Equal results merge into one stack.
+The Rest page shows Day, New Phase, Tremana, Semana and Dodemana. A long rest brings HP to at least 75% of maximum and refills Oculum Shield when present; spent normal Shield does not return. Every item records the Day it was obtained. When its PUT duration expires, it becomes Rotten Meat, Rotted Material, Rotted Slime or Rotted Item. Equal results merge into one stack.
 
 FORCE STATE
 
@@ -3327,7 +3327,7 @@ Riposo lungo:
 - recupera metà Resilienza negativa;
 - recupera tutto Oculum negativo;
 - recupera tutte le stats spese;
-- refulla gli HP.
+- porta gli HP ad almeno il 75% del massimale.
 ''',
     contentEn: r'''
 Obser:
@@ -3349,7 +3349,7 @@ Long rest:
 - recovers half negative Resilience;
 - recovers all negative Oculum;
 - recovers all spent stats;
-- refills HP.
+- brings HP to at least 75% of maximum.
 ''',
   ),
   ManualSection(

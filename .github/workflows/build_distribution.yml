@@ -50,7 +50,7 @@ jobs:
         run: |
           flutter build windows --release `
             "--dart-define=OculumSupabaseUrl=$env:OCULUM_SUPABASE_URL" `
-            "--dart-define=OculumSupabaseAnonKey=$env:OCULUM_SUPABASE_PUBLISHABLE_KEY"
+            "--dart-define=OculumSupabasePublishableKey=$env:OCULUM_SUPABASE_PUBLISHABLE_KEY"
 
       - name: Copy Windows build to distribution
         shell: pwsh
@@ -102,7 +102,8 @@ jobs:
         run: |
           flutter build macos --release \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
-            "--dart-define=OculumSupabaseAnonKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}" \
+            "--dart-define=OculumOAuthRedirectUrl=com.mich.oculum://login-callback"
 
       - name: Copy macOS build to distribution
         run: |
@@ -157,7 +158,8 @@ jobs:
         run: |
           flutter build ios --release --no-codesign \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
-            "--dart-define=OculumSupabaseAnonKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}" \
+            "--dart-define=OculumOAuthRedirectUrl=com.mich.oculum://login-callback"
 
       - name: Copy iOS build to distribution
         run: |
@@ -211,7 +213,8 @@ jobs:
         run: |
           flutter build apk --release \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
-            "--dart-define=OculumSupabaseAnonKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}" \
+            "--dart-define=OculumOAuthRedirectUrl=com.mich.oculum://login-callback"
 
       - name: Copy Android build to distribution
         run: |

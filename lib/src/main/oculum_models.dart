@@ -299,6 +299,46 @@ class OculumActionQueue {
   }
 }
 
+class OculumSaveRequestQueue {
+  Future<void>? _active;
+  bool? _pendingSoloLocal;
+
+  bool get isRunning => _active != null;
+
+  Future<void> enqueue({
+    required bool soloLocal,
+    required Future<void> Function(bool soloLocal) write,
+    void Function(bool running)? onRunningChanged,
+  }) {
+    final pending = _pendingSoloLocal;
+    _pendingSoloLocal = pending == null ? soloLocal : pending && soloLocal;
+
+    final active = _active;
+    if (active != null) return active;
+
+    final drain = _drain(write, onRunningChanged);
+    _active = drain;
+    return drain;
+  }
+
+  Future<void> _drain(
+    Future<void> Function(bool soloLocal) write,
+    void Function(bool running)? onRunningChanged,
+  ) async {
+    onRunningChanged?.call(true);
+    try {
+      while (_pendingSoloLocal != null) {
+        final soloLocal = _pendingSoloLocal!;
+        _pendingSoloLocal = null;
+        await write(soloLocal);
+      }
+    } finally {
+      _active = null;
+      onRunningChanged?.call(false);
+    }
+  }
+}
+
 const List<int> oculusSubtraitMasteryTargets = <int>[
   33,
   36,
@@ -620,6 +660,7 @@ class OculumTitle {
     required this.nome,
     required this.tipo,
     required this.ottenimento,
+    this.leggenda = '',
     required this.buff,
     required this.puntoCieco,
     required this.skill,
@@ -652,6 +693,7 @@ class OculumTitle {
   String nome;
   String tipo;
   String ottenimento;
+  String leggenda;
   String buff;
   String puntoCieco;
   String skill;
@@ -684,6 +726,7 @@ class OculumTitle {
       'nome': nome,
       'tipo': tipo,
       'ottenimento': ottenimento,
+      'leggenda': leggenda,
       'buff': buff,
       'puntoCieco': puntoCieco,
       'skill': skill,
@@ -718,6 +761,7 @@ class OculumTitle {
       nome: json['nome'] ?? '',
       tipo: json['tipo'] ?? '',
       ottenimento: json['ottenimento'] ?? '',
+      leggenda: json['leggenda'] ?? '',
       buff: json['buff'] ?? '',
       puntoCieco: json['puntoCieco'] ?? '',
       skill: json['skill'] ?? '',

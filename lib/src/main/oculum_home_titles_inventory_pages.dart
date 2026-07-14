@@ -1508,15 +1508,18 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     final sectionId =
         '${trattoRazziale ? 'racial_trait' : 'title'}_${currentSheetScrollId()}_$index';
     final expanded = _expandedFunctionSections.contains(sectionId);
+    final categoryColor = trattoRazziale
+        ? const Color(0xFF7EE7C8)
+        : titleCategoryColor(normalizeTitleCategory(titolo.tipo));
     final borderColor = titolo.openAttiva
         ? tertiaryColor
         : equipped
-        ? primaryColor
-        : primaryColor.withValues(alpha: 0.65);
+        ? categoryColor
+        : categoryColor.withValues(alpha: 0.55);
     final titleColor = titolo.openAttiva
         ? tertiaryColor
         : equipped
-        ? primaryColor
+        ? categoryColor
         : Colors.white;
     final quickBonuses = titleQuickBonuses(titolo);
     final titleSubtitleParts = <String>[
@@ -1701,7 +1704,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               onPressed: toggleTitleEquipped,
               icon: Icon(
                 equipped ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: equipped ? tertiaryColor : Colors.grey,
+                color: equipped ? categoryColor : Colors.grey,
               ),
             ),
           ),
@@ -1776,6 +1779,17 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     initialValue: titolo.ottenimento,
                     onChanged: (value) => titolo.ottenimento = value,
                     maxLines: 3,
+                  ),
+                  const SizedBox(height: 8),
+                  campoModello(
+                    label: t('Leggenda', 'Legend'),
+                    initialValue: titolo.leggenda,
+                    onChanged: (value) => titolo.leggenda = value,
+                    maxLines: 5,
+                    helper: t(
+                      'Scrivi la storia, la memoria o la diceria legata a questo Titolo.',
+                      'Write the story, memory, or tale connected to this Title.',
+                    ),
                   ),
                   const SizedBox(height: 8),
                   campoModello(
@@ -2208,9 +2222,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
   Widget createTitlePanel() {
     final sectionId = 'titles_create_form';
     final expanded = _expandedFunctionSections.contains(sectionId);
+    const createColor = Color(0xFF7EE7C8);
 
     return gothicPanel(
-      borderColor: tertiaryColor,
+      borderColor: createColor,
       padding: EdgeInsets.zero,
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -2229,13 +2244,13 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           },
           tilePadding: const EdgeInsets.fromLTRB(12, 4, 10, 4),
           childrenPadding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
-          iconColor: tertiaryColor,
-          collapsedIconColor: tertiaryColor,
-          leading: Icon(Icons.add_circle_outline, color: tertiaryColor),
+          iconColor: createColor,
+          collapsedIconColor: createColor,
+          leading: const Icon(Icons.add_circle_outline, color: createColor),
           title: Text(
             t('Crea Nuovo Titolo', 'Create New Title'),
             style: TextStyle(
-              color: tertiaryColor,
+              color: createColor,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -2289,6 +2304,17 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                         controller: titoloOttenimentoController,
                         numero: false,
                         maxLines: 2,
+                      ),
+                      const SizedBox(height: 12),
+                      campoTesto(
+                        label: t('Leggenda', 'Legend'),
+                        controller: titoloLeggendaController,
+                        numero: false,
+                        maxLines: 5,
+                        helper: t(
+                          'Scrivi la storia, la memoria o la diceria legata a questo Titolo.',
+                          'Write the story, memory, or tale connected to this Title.',
+                        ),
                       ),
                       const SizedBox(height: 12),
                       campoTesto(
@@ -2714,14 +2740,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
   }
 
   Widget titlesFateCheckPanelEfficient() {
+    final fateColor = titleCategoryColor('Titoli del Fato');
     return gothicPanel(
-      borderColor: tertiaryColor,
+      borderColor: fateColor,
       child: ElevatedButton.icon(
         onPressed: controllaTitoliDelFatoAutomatici,
         icon: const Icon(Icons.auto_awesome),
         style: ElevatedButton.styleFrom(
-          backgroundColor: tertiaryColor,
-          foregroundColor: tertiaryColor.computeLuminance() > 0.45
+          backgroundColor: fateColor,
+          foregroundColor: fateColor.computeLuminance() > 0.45
               ? Colors.black
               : Colors.white,
           minimumSize: const Size.fromHeight(48),

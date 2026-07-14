@@ -8032,11 +8032,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     ImageProvider? embeddedImageProvider;
     final embedded = activeVttScene.imageDataBase64.trim();
     if (embedded.isNotEmpty) {
-      try {
-        embeddedImageProvider = MemoryImage(base64Decode(embedded));
-      } catch (_) {
-        embeddedImageProvider = null;
-      }
+      final bytes = decodedBase64ImageCached(embedded);
+      if (bytes != null) embeddedImageProvider = MemoryImage(bytes);
     }
     return gothicPanel(
       borderColor: onlineSelected ? tertiaryColor : primaryColor,
@@ -8582,12 +8579,9 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
 
     final path = '${item['path'] ?? ''}';
     final embedded = '${item['imageBase64'] ?? ''}';
-    Uint8List? embeddedBytes;
-    if (embedded.isNotEmpty) {
-      try {
-        embeddedBytes = base64Decode(embedded);
-      } catch (_) {}
-    }
+    final embeddedBytes = embedded.isEmpty
+        ? null
+        : decodedBase64ImageCached(embedded);
     final file = kIsWeb || path.isEmpty ? null : File(path);
     await showDialog<void>(
       context: context,

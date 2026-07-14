@@ -329,6 +329,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   Future<void> tiraStat(String nome, int valore) async {
+    oculumProfileMark('roll_stat');
     final dado = tiraD20();
     final oculumSpend = consumaOculumTiro();
     final bonus = oculumStatRollBonus(
@@ -349,23 +350,20 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       rollSucceeded: totale > 0,
     );
 
-    var statoForzaLog = '';
-    setState(() {
-      statoForzaLog = registraTiroStatoForza();
-      final expText = applicaEsperienzaFlat(
-        expGuadagnata,
-        motivo: t('Tiro superato', 'Successful roll'),
-      );
-      dadoMostrato = testoDado;
-      dadoMostratoFacce = 20;
-      tiroCriticoUno = dado == 1;
-      tiroCriticoVenti = dado == 20;
-      risultato = '$nome: $testoDado$statoForzaLog$expText';
-
-      aggiungiLog(
-        'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText',
-      );
-    });
+    final statoForzaLog = registraTiroStatoForza();
+    final expText = applicaEsperienzaFlat(
+      expGuadagnata,
+      motivo: t('Tiro superato', 'Successful roll'),
+    );
+    dadoMostrato = testoDado;
+    dadoMostratoFacce = 20;
+    tiroCriticoUno = dado == 1;
+    tiroCriticoVenti = dado == 20;
+    risultato = '$nome: $testoDado$statoForzaLog$expText';
+    aggiungiLog(
+      'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText',
+    );
+    notifyDiceResultChanged();
     if (statoForzaLog.isNotEmpty || expGuadagnata > 0) {
       scheduleCombatRollSave();
     }
@@ -375,7 +373,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       criticoUno: dado == 1,
       criticoVenti: dado == 20,
     );
-    await sendRealtimeDiceRollWithMasterConsent(
+    scheduleCombatRollRealtime(
       label: nome,
       roll: dado,
       bonus:
@@ -389,6 +387,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int bonus, {
     bool applyGlobalRollModifier = true,
   }) async {
+    oculumProfileMark('roll_special');
     final dado = tiraD20();
     final oculumSpend = consumaOculumTiro();
     final bonusTotale =
@@ -407,23 +406,20 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       rollSucceeded: totale > 0,
     );
 
-    var statoForzaLog = '';
-    setState(() {
-      statoForzaLog = registraTiroStatoForza();
-      final expText = applicaEsperienzaFlat(
-        expGuadagnata,
-        motivo: t('Tiro superato', 'Successful roll'),
-      );
-      dadoMostrato = testoDado;
-      dadoMostratoFacce = 20;
-      tiroCriticoUno = dado == 1;
-      tiroCriticoVenti = dado == 20;
-      risultato = '$nome: $testoDado$statoForzaLog$expText';
-
-      aggiungiLog(
-        'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText',
-      );
-    });
+    final statoForzaLog = registraTiroStatoForza();
+    final expText = applicaEsperienzaFlat(
+      expGuadagnata,
+      motivo: t('Tiro superato', 'Successful roll'),
+    );
+    dadoMostrato = testoDado;
+    dadoMostratoFacce = 20;
+    tiroCriticoUno = dado == 1;
+    tiroCriticoVenti = dado == 20;
+    risultato = '$nome: $testoDado$statoForzaLog$expText';
+    aggiungiLog(
+      'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText',
+    );
+    notifyDiceResultChanged();
     if (statoForzaLog.isNotEmpty || expGuadagnata > 0) {
       scheduleCombatRollSave();
     }
@@ -433,7 +429,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       criticoUno: dado == 1,
       criticoVenti: dado == 20,
     );
-    await sendRealtimeDiceRollWithMasterConsent(
+    scheduleCombatRollRealtime(
       label: nome,
       roll: dado,
       bonus:
@@ -445,6 +441,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   Future<void> tiraSottotrattoOcchio(HiddenEyeStat stat) async {
+    oculumProfileMark('roll_subtrait');
     final dado = tiraD20();
     final oculumSpend = consumaOculumTiro();
     final bonus =
@@ -531,20 +528,47 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       if (masteryGain > 0 || statoForzaLog.isNotEmpty || expGuadagnata > 0) {
         scheduleCombatRollSave();
       }
+      scheduleCombatRollRealtime(
+        label: label,
+        roll: dado,
+        bonus:
+            bonus +
+            criticalDieModifier(dado, 20) +
+            modificatoreDifficoltaTiro(),
+        total: totale,
+        afterCurrentFrame: false,
+      );
+    });
+  }
+
+  void scheduleCombatRollRealtime({
+    required String label,
+    required int roll,
+    required int bonus,
+    required int total,
+    bool afterCurrentFrame = true,
+  }) {
+    void enqueueAfterUiSettles() {
       Future<void>.delayed(const Duration(milliseconds: 120), () {
         if (!mounted) return;
         unawaited(
           sendRealtimeDiceRollWithMasterConsent(
             label: label,
-            roll: dado,
-            bonus:
-                bonus +
-                criticalDieModifier(dado, 20) +
-                modificatoreDifficoltaTiro(),
-            total: totale,
+            roll: roll,
+            bonus: bonus,
+            total: total,
           ),
         );
       });
+    }
+
+    if (!afterCurrentFrame) {
+      enqueueAfterUiSettles();
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      enqueueAfterUiSettles();
     });
   }
 

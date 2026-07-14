@@ -70,6 +70,24 @@ void main() {
     expect(prefs.getString('oculum.cloud_save.pending_payload'), isNotNull);
   });
 
+  test(
+    'cloud queue riusa la codifica locale senza serializzare di nuovo',
+    () async {
+      final service = OculumCloudSaveService.instance;
+      const encoded = '{ "name" : "A", "revision" : 7 }';
+
+      final queued = await service.queueLocalSaveForSync(
+        'user-encoded',
+        payload: {'name': 'A', 'revision': 7},
+        encodedPayload: encoded,
+      );
+
+      expect(queued, isTrue);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('oculum.cloud_save.pending_payload'), encoded);
+    },
+  );
+
   test('pending snapshot export preserves the user id', () async {
     final service = OculumCloudSaveService.instance;
     await service.queueLocalSaveForSync('user-2', payload: {'name': 'B'});

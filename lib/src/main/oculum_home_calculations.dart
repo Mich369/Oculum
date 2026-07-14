@@ -33,6 +33,15 @@ int oculumStatRollBonus({
   return statValue ~/ 2 + levelGradeBonus + quickBonus + extraBonus;
 }
 
+({int remainingOculum, int bonus}) oculumFightRollSpendResult({
+  required int currentOculum,
+  required int spentOculum,
+}) {
+  final safeCurrent = max(0, currentOculum);
+  final safeSpent = spentOculum.clamp(0, safeCurrent).toInt();
+  return (remainingOculum: safeCurrent - safeSpent, bonus: safeSpent * 3);
+}
+
 Iterable<String> oculumActiveTitleFormulaTexts(OculumTitle title) sync* {
   yield title.buff;
   yield title.puntoCieco;
@@ -2068,12 +2077,17 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final spent = oculumTiroPreparato();
     if (spent <= 0) return (spent: 0, bonus: 0);
 
-    currentOculumController.text = max(0, currentOculum() - spent).toString();
+    final result = oculumFightRollSpendResult(
+      currentOculum: currentOculum(),
+      spentOculum: spent,
+    );
+    currentOculumController.text = result.remainingOculum.toString();
     oculumTiroController.text = '0';
-    invalidateHiddenEyeDerivedCaches();
+    invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+    scheduleHiddenEyeDerivedCardsRefresh();
     scheduleRealtimeOculumChanged();
-    programmaSalvataggio();
-    return (spent: spent, bonus: spent * 3);
+    programmaSalvataggio(invalidateCaches: false);
+    return (spent: spent, bonus: result.bonus);
   }
 
   String oculumTiroLogLabel(({int spent, int bonus}) spend) {
@@ -3070,7 +3084,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       'volonta': volontaTotale(),
       'materia': materiaTotale(),
       'oculum': oculumTotale(),
-      'karma': leggiNumero(karmaController),
+      'karma': karmaTotale(),
     };
     hiddenEyeDerivedStatsCache = snapshot;
     return snapshot;
@@ -3112,7 +3126,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   String karmaStateLabel() {
-    final value = leggiNumero(karmaController);
+    final value = karmaTotale();
     if (value >= 50) return t('Benedetto', 'Blessed');
     if (value >= 10) return t('Positivo', 'Positive');
     if (value > -10) return t('Neutrale', 'Neutral');
