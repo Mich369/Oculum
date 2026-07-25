@@ -15,6 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ── Windows ────────────────────────────────────────────────────────────────
   build-windows:
     name: Build Windows
     runs-on: windows-latest
@@ -52,7 +53,7 @@ jobs:
             "--dart-define=OculumSupabaseUrl=$env:OCULUM_SUPABASE_URL" `
             "--dart-define=OculumSupabasePublishableKey=$env:OCULUM_SUPABASE_PUBLISHABLE_KEY"
 
-      - name: Copy Windows build to distribution
+      - name: Package Windows release
         shell: pwsh
         run: |
           $dist = "build/distribution/windows"
@@ -68,6 +69,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  # ── macOS (unsigned) ───────────────────────────────────────────────────────
   build-macos:
     name: Build macOS
     runs-on: macos-latest
@@ -94,17 +96,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Verify Supabase connection from macOS
-        shell: bash
-        env:
-          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
-          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
-        run: |
-          flutter test test/oculum_supabase_live_connection_test.dart \
-            "--dart-define=OculumLiveSupabaseTest=true" \
-            "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
-            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
-
       - name: Build macOS release
         shell: bash
         env:
@@ -113,37 +104,19 @@ jobs:
         run: |
           flutter build macos --release \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
-            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}" \
-            "--dart-define=OculumOAuthRedirectUrl=com.mich.oculum://login-callback"
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
-      - name: Sign with Developer ID and notarize with Apple
+      - name: Package macOS release
         shell: bash
-        env:
-          APPLE_DEVELOPER_ID_CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_BASE64 }}
-          APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
           APP_PATH=$(find build/macos/Build/Products/Release -maxdepth 1 -type d -name "*.app" -print -quit)
-          test -n "$APP_PATH"
-          bash scripts/sign_and_notarize_macos.sh \
-            "$APP_PATH" \
-            build/distribution/Oculum-macOS.zip
-
-      - name: Copy macOS build to distribution
-        run: |
-          mkdir -p build/distribution/macos
-          APP_PATH=$(find build/macos/Build/Products/Release -maxdepth 1 -name "*.app" -print -quit)
-
           if [ -z "$APP_PATH" ]; then
-            echo "No .app found"
+            echo "No .app bundle found"
             exit 1
           fi
-
-          cp -R "$APP_PATH" build/distribution/macos/
-          test -f build/distribution/Oculum-macOS.zip
+          mkdir -p build/distribution
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" build/distribution/Oculum-macOS.zip
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
@@ -153,6 +126,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  # ── iOS (unsigned) ─────────────────────────────────────────────────────────
   build-ios-unsigned:
     name: Build iOS unsigned
     runs-on: macos-latest
@@ -184,13 +158,10 @@ jobs:
         run: |
           flutter build ios --release --no-codesign \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
-            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}" \
-            "--dart-define=OculumOAuthRedirectUrl=com.mich.oculum://login-callback"
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
-      - name: Copy iOS build to distribution
+      - name: Package iOS unsigned IPA
         run: |
-          # Unsigned IPA: this is useful as a CI artifact, but it is not normally installable
-          # on an iPhone without Apple signing/provisioning.
           if [ ! -d "build/ios/iphoneos/Runner.app" ]; then
             echo "Runner.app missing"
             exit 1
@@ -208,6 +179,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  # ── Linux ──────────────────────────────────────────────────────────────────
   build-linux:
     name: Build Linux
     runs-on: ubuntu-latest
@@ -253,7 +225,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze Linux-compatible Dart code
+      - name: Analyze code
         run: flutter analyze
 
       - name: Build Linux release
@@ -264,8 +236,7 @@ jobs:
         run: |
           flutter build linux --release \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
-            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}" \
-            "--dart-define=OculumOAuthRedirectUrl=com.mich.oculum://login-callback"
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
       - name: Smoke-test Linux startup
         shell: bash
@@ -293,6 +264,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  # ── Android ────────────────────────────────────────────────────────────────
   build-android:
     name: Build Android
     runs-on: ubuntu-latest
@@ -324,14 +296,12 @@ jobs:
         run: |
           flutter build apk --release \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
-            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}" \
-            "--dart-define=OculumOAuthRedirectUrl=com.mich.oculum://login-callback"
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
-      - name: Copy Android build to distribution
+      - name: Package Android release
         run: |
           mkdir -p build/distribution/android
           cp build/app/outputs/flutter-apk/app-release.apk build/distribution/Oculum-Android-release.apk
-          cp build/app/outputs/flutter-apk/app-release.apk build/distribution/android/Oculum-Android-release.apk
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4

@@ -81,24 +81,7 @@ jobs:
         run: |
           flutter build macos --release \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
-            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}" \
-            "--dart-define=OculumOAuthRedirectUrl=com.mich.oculum://login-callback"
-
-      - name: Firma Developer ID e notarizza con Apple
-        shell: bash
-        env:
-          APPLE_DEVELOPER_ID_CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_BASE64 }}
-          APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          set -euo pipefail
-          APP_PATH=$(find build/macos/Build/Products/Release -maxdepth 1 -type d -name "*.app" -print -quit)
-          test -n "$APP_PATH"
-          bash scripts/sign_and_notarize_macos.sh \
-            "$APP_PATH" \
-            build/distribution/Oculum-macOS.zip
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
       - name: Valida e impacchetta applicazione
         id: package
@@ -117,9 +100,8 @@ jobs:
           test -n "$EXECUTABLE"
           test -x "$APP_PATH/Contents/MacOS/$EXECUTABLE"
 
-          mkdir -p build/distribution/macos
-          cp -R "$APP_PATH" build/distribution/macos/
-          test -f build/distribution/Oculum-macOS.zip
+          mkdir -p build/distribution
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" build/distribution/Oculum-macOS.zip
           shasum -a 256 build/distribution/Oculum-macOS.zip > build/distribution/Oculum-macOS.sha256
 
           APP_NAME=$(basename "$APP_PATH")
@@ -128,8 +110,6 @@ jobs:
           echo "- Commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Bundle: \`$APP_NAME\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Eseguibile verificato: \`$EXECUTABLE\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Firma: Developer ID Application" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Notarizzazione Apple e stapling: verificati" >> "$GITHUB_STEP_SUMMARY"
           echo "- SHA-256: \`$(cut -d ' ' -f 1 build/distribution/Oculum-macOS.sha256)\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Carica artefatto macOS aggiornato
