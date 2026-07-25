@@ -120,7 +120,7 @@ jobs:
             build/distribution/Oculum-macOS.zip
             build/distribution/Oculum-macOS.sha256
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 1
 
       - name: Aggiorna release macOS latest
         if: ${{ inputs.publish_release }}
