@@ -859,6 +859,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   }
 
   Widget oculumResourcePanel() {
+    return ValueListenableBuilder<int>(
+      valueListenable: oculumResourceRevision,
+      builder: (context, revision, child) => _oculumResourcePanelContent(),
+    );
+  }
+
+  Widget _oculumResourcePanelContent() {
     final massimo = oculumMassimo();
     final current = oculumTotale();
     final ratio = oculumRatio();
@@ -1442,17 +1449,6 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 ),
               ),
               ElevatedButton.icon(
-                onPressed: aggiungiPaginaDiario,
-                icon: const Icon(Icons.edit_note),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: secondaryColor,
-                  foregroundColor: Colors.white,
-                ),
-                label: Text(
-                  t('+ Diario / + Ispirazione', '+ Diary / + Inspiration'),
-                ),
-              ),
-              ElevatedButton.icon(
                 onPressed: randomizzaStatsBilanciate,
                 icon: const Icon(Icons.casino),
                 style: ElevatedButton.styleFrom(
@@ -1511,11 +1507,60 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   }
 
   Widget experiencePanel() {
-    final exp = expCorrente();
+    return experiencePanelContent();
+  }
+
+  Widget experienceProgress() {
+    return ValueListenableBuilder<int>(
+      valueListenable: experienceRevision,
+      builder: (context, revision, child) {
+        oculumProgressProfileCount('expWidgetRebuilds');
+        final exp = expCorrente();
+        final expPerLivello = normalizedCampaignDifficulty() == 'oculum'
+            ? 1369
+            : 1000;
+        final ratio = (exp / expPerLivello).clamp(0.0, 1.0);
+        return RepaintBoundary(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$exp / $expPerLivello',
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: SizedBox(
+                  height: 22,
+                  child: ColoredBox(
+                    color: Colors.black45,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FractionallySizedBox(
+                        widthFactor: ratio,
+                        heightFactor: 1,
+                        child: ColoredBox(color: tertiaryColor),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget experiencePanelContent() {
     final expPerLivello = normalizedCampaignDifficulty() == 'oculum'
         ? 1369
         : 1000;
-    final ratio = (exp / expPerLivello).clamp(0.0, 1.0);
     final expName = expDisplayName();
 
     return gothicPanel(
@@ -1552,24 +1597,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           const SizedBox(height: 8),
           observationExpPanel(),
           const SizedBox(height: 12),
-          Text(
-            '$exp / $expPerLivello',
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: LinearProgressIndicator(
-              value: ratio,
-              minHeight: 22,
-              color: tertiaryColor,
-              backgroundColor: Colors.black45,
-            ),
-          ),
+          experienceProgress(),
           const SizedBox(height: 14),
           campoTesto(
             label: t('$expName attuale manuale', 'Manual current $expName'),
@@ -3746,13 +3774,14 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       isScrollControlled: true,
       backgroundColor: const Color(0xFF10121A),
       builder: (sheetContext) {
-        var selectedGroup = 'resilienza';
         return StatefulBuilder(
           builder: (context, setSheetState) {
             return ValueListenableBuilder<int>(
               valueListenable: hiddenEyeListRevision,
               builder: (context, revision, child) {
-                final visibleStats = hiddenEyeStatsForGroup(selectedGroup);
+                final visibleStats = hiddenEyeStatsForGroup(
+                  hiddenEyeManagerSelectedGroup,
+                );
                 return SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
@@ -3762,6 +3791,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                             MediaQuery.of(sheetContext).size.height * 0.82,
                       ),
                       child: ListView(
+                        controller: hiddenEyeManagerScrollController,
+                        key: const PageStorageKey<String>(
+                          'hidden_eye_manager_scroll',
+                        ),
                         shrinkWrap: true,
                         children: [
                           ListTile(
@@ -3795,10 +3828,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                                 'oculum',
                               ])
                                 ChoiceChip(
-                                  selected: selectedGroup == group,
+                                  selected:
+                                      hiddenEyeManagerSelectedGroup == group,
                                   label: Text(hiddenEyeGroupLabel(group)),
                                   onSelected: (_) {
-                                    setSheetState(() => selectedGroup = group);
+                                    setSheetState(() {
+                                      hiddenEyeManagerSelectedGroup = group;
+                                    });
                                   },
                                 ),
                             ],
@@ -3806,7 +3842,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                           const SizedBox(height: 10),
                           hiddenEyeStatsGrid(
                             sheetContext: sheetContext,
-                            group: selectedGroup,
+                            group: hiddenEyeManagerSelectedGroup,
                             visibleStats: visibleStats,
                             onBaseEdited: () {
                               editedBaseValues = true;
@@ -3890,6 +3926,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   }) {
     return ElevatedButton.icon(
       onPressed: () {
+        hiddenEyeManagerSelectedGroup = hiddenEyeStatGroup(stat.id);
+        hiddenEyeManagerSelectedStatId = stat.id;
         Navigator.pop(sheetContext);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
@@ -3989,7 +4027,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   }) {
     return RepaintBoundary(
       child: gothicPanel(
-        borderColor: eyePupilGlowColor,
+        borderColor: hiddenEyeManagerSelectedStatId == stat.id
+            ? tertiaryColor
+            : eyePupilGlowColor,
         padding: const EdgeInsets.all(8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -4081,6 +4121,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   label: Text(campaignDifficultyLabel(difficulty)),
                   onSelected: (_) {
                     setState(() {
+                      handleDifficultyChange(difficulty);
                       campaignDifficulty = difficulty;
                       risultato = t(
                         'Difficolta campagna: ${campaignDifficultyLabel(difficulty)}.',
@@ -4088,6 +4129,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                       );
                       aggiungiLog(risultato);
                     });
+                    for (var i = 0; i < arti.length; i++) {
+                      notifyArtActivationAvailableChanged(i);
+                    }
                     programmaSalvataggio();
                   },
                 ),
@@ -4652,6 +4696,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       sectionId: 'sheet_hp',
       child: Column(
         children: [
+          reportedTurnCard(),
+          activeStructuredEffectsCard(),
+          const SizedBox(height: 10),
           SwitchListTile(
             value: usaBarraVita,
             activeThumbColor: tertiaryColor,
@@ -5493,8 +5540,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           const SizedBox(height: 6),
           smallInfoText(
             t(
-              'Ogni Libro Runico insegna sei parole. Self / Ally e Pulse sono le prime obbligatorie; Intensita I resta sempre disponibile.',
-              'Each Runic Book teaches six words. Self / Ally and Pulse are the first required words; Intensity I always stays available.',
+              'Tutte le parole Rune sono visibili. Ogni Libro Runico ne rende selezionabili altre sei. Il tasto Rune Art spende il costo Oculum selezionato e aggiunge la DT della formula.',
+              'All Rune words are visible. Every Runic Book makes six more selectable. The Rune Art button spends the selected Oculum cost and adds the formula DT.',
             ),
           ),
           const SizedBox(height: 10),
@@ -5555,7 +5602,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 color: const Color(0xFF10121A),
                 child: ListTile(
                   title: Text(
-                    item.nome,
+                    cleanUiText(item.nome),
                     style: TextStyle(
                       color: primaryColor,
                       fontWeight: FontWeight.bold,
@@ -5568,7 +5615,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                       if (item.arma) 'DMG +${itemAttackBonus(item)}',
                       if (item.protegge) 'DIF +${itemDefenseBonus(item)}',
                       if (item.protegge) 'SCU +${itemShieldBonus(item)}',
-                      if (item.note.trim().isNotEmpty) item.note,
+                      if (item.note.trim().isNotEmpty) cleanUiText(item.note),
                     ].join(' • '),
                     style: const TextStyle(color: Colors.white70),
                   ),

@@ -59,19 +59,24 @@ extension _OculumHomeDicePage on _OculumHomePageState {
         : tiriConCritico.length <= 40
         ? tiriConCritico.join(' + ')
         : totale.toString();
+    final zeroOutcome = oculumRollZeroOutcomeText(
+      total: finale,
+      difficulty: difficulty,
+    );
 
     setState(() {
-      dadoMostrato = '$finale';
+      dadoMostrato = '$finale$zeroOutcome';
       dadoMostratoFacce = facce;
       tiroCriticoUno = criticoUno;
       tiroCriticoVenti = criticoMax;
       risultato =
-          '${t('Lancio', 'Roll')} ${quantita}d$facce: $formulaDadi$testoMod = $finale$testoCritico$testoGlobale$testoDt';
+          '${t('Lancio', 'Roll')} ${quantita}d$facce: $formulaDadi$testoMod = $finale$testoCritico$testoGlobale$testoDt$zeroOutcome';
       aggiungiLog(risultato);
     });
+    registerValidRoll();
 
     mostraDadoCentrale(
-      valore: '$finale',
+      valore: '$finale$zeroOutcome',
       criticoUno: criticoUno,
       criticoVenti: criticoMax,
       facce: facce,

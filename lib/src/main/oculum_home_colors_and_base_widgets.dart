@@ -10,6 +10,13 @@ double oculumThemeContrastRatio(Color a, Color b) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+final List<TextInputFormatter> oculumNonNegativeIntegerFormatters =
+    List<TextInputFormatter>.unmodifiable(<TextInputFormatter>[
+      TextInputFormatter.withFunction((oldValue, newValue) {
+        return RegExp(r'^\d*$').hasMatch(newValue.text) ? newValue : oldValue;
+      }),
+    ]);
+
 Color oculumReadableThemeColor(
   Color color,
   Color background, {
@@ -53,6 +60,8 @@ class _OculumModelTextField extends StatefulWidget {
     this.maxLines = 1,
     this.enableCommandAutocomplete = true,
     this.liveRefresh = false,
+    this.keyboardType,
+    this.inputFormatters,
   });
 
   final String initialValue;
@@ -65,6 +74,8 @@ class _OculumModelTextField extends StatefulWidget {
   final int maxLines;
   final bool enableCommandAutocomplete;
   final bool liveRefresh;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   State<_OculumModelTextField> createState() => _OculumModelTextFieldState();
@@ -154,7 +165,10 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
       child: TextField(
         controller: _controller,
         focusNode: _focusNode,
-        keyboardType: multiline ? TextInputType.multiline : TextInputType.text,
+        keyboardType:
+            widget.keyboardType ??
+            (multiline ? TextInputType.multiline : TextInputType.text),
+        inputFormatters: widget.inputFormatters,
         textInputAction: multiline ? TextInputAction.newline : null,
         maxLines: widget.maxLines,
         onChanged: (_) => _notifyEdited(),
@@ -896,6 +910,9 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       textInputAction: multiline ? TextInputAction.newline : null,
       maxLines: maxLines,
       onEditingComplete: () {
+        if (identical(controller, hpTempController)) {
+          impostaHpTempTotali(hpTemp());
+        }
         scheduleInputUiRefresh(delay: Duration.zero);
         if (autosaveTimer?.isActive ?? false) {
           programmaSalvataggio(
@@ -905,6 +922,9 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         }
       },
       onTapOutside: (_) {
+        if (identical(controller, hpTempController)) {
+          impostaHpTempTotali(hpTemp());
+        }
         FocusManager.instance.primaryFocus?.unfocus();
         scheduleInputUiRefresh(delay: Duration.zero);
         if (autosaveTimer?.isActive ?? false) {
@@ -1039,6 +1059,8 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     String? helper,
     bool enableCommandAutocomplete = true,
     bool liveRefresh = false,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     final field = _OculumModelTextField(
       key: fieldKey,
@@ -1054,6 +1076,8 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       linguaInglese: linguaInglese,
       enableCommandAutocomplete: enableCommandAutocomplete,
       liveRefresh: liveRefresh,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       style: TextStyle(
         fontSize: uiScale(16),
         color: readableOnTheme(Colors.white, background: themeFieldFillColor()),
@@ -1326,6 +1350,9 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     int maxColumns = 3,
     double minColumnWidth = 360,
     double cacheExtent = 420,
+    ScrollPhysics? physics,
+    bool? primary,
+    bool respectKeyboardInsets = false,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1334,7 +1361,17 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
           maxColumns: maxColumns,
           minColumnWidth: minColumnWidth,
         );
-        final padding = responsivePagePadding();
+        var padding = responsivePagePadding();
+        if (respectKeyboardInsets) {
+          final media = MediaQuery.of(context);
+          padding = EdgeInsets.fromLTRB(
+            padding.left,
+            padding.top,
+            padding.right,
+            padding.bottom +
+                max(media.viewPadding.bottom, media.viewInsets.bottom),
+          );
+        }
 
         if (columns <= 1) {
           return ListView.builder(
@@ -1342,6 +1379,8 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
             cacheExtent: cacheExtent,
             key: sheetScrollKey(pageKey),
             padding: padding,
+            primary: primary,
+            physics: physics,
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             itemCount: builders.length,
             itemBuilder: (context, index) => builders[index](context),
@@ -1359,6 +1398,8 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
           cacheExtent: cacheExtent,
           key: sheetScrollKey(pageKey),
           padding: padding,
+          primary: primary,
+          physics: physics,
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           itemCount: rows.length,
           itemBuilder: (context, rowIndex) {
@@ -2326,10 +2367,244 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     );
   }
 
+  Widget aggiustaNucleoResultPanel(OculumAggiustaNucleoResult result) {
+    final maximum = max(1, result.integrityMaximum);
+    final fraction = (result.integrityAfter / maximum).clamp(0.0, 1.0);
+    final recoveryColor = result.effectiveRecovery > 0
+        ? Colors.greenAccent
+        : Colors.orangeAccent;
+
+    return gothicPanel(
+      borderColor: tertiaryColor,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: tertiaryColor.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: tertiaryColor.withValues(alpha: 0.65),
+                  ),
+                ),
+                child: Icon(Icons.build_circle_outlined, color: tertiaryColor),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t('Aggiusta nucleo completato', 'Repair core completed'),
+                      style: TextStyle(
+                        color: tertiaryColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      cleanUiText(result.artName),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.lock, color: Colors.grey.shade400, size: 18),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.28),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: tertiaryColor.withValues(alpha: 0.32)),
+            ),
+            child: Column(
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '${result.d10}',
+                          style: TextStyle(color: primaryColor),
+                        ),
+                        TextSpan(
+                          text: result.medicine >= 0
+                              ? '  +  ${result.medicine}'
+                              : '  −  ${result.medicine.abs()}',
+                          style: const TextStyle(color: Colors.lightBlueAccent),
+                        ),
+                        const TextSpan(
+                          text: '  =  ',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        TextSpan(
+                          text: '${result.rawTotal}',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        const TextSpan(
+                          text: '   →   ',
+                          style: TextStyle(color: Colors.white54),
+                        ),
+                        TextSpan(
+                          text: '${result.roundedTotal}',
+                          style: TextStyle(color: tertiaryColor),
+                        ),
+                      ],
+                      style: const TextStyle(
+                        fontSize: 26,
+                        height: 1,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${t('d10', 'd10')}  +  ${t('Medicina', 'Medicine')}  =  '
+                  '${t('totale', 'total')}  →  ${t('arrotondato', 'rounded')}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.grey.shade400,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: recoveryColor.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: recoveryColor.withValues(alpha: 0.55)),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  result.effectiveRecovery > 0
+                      ? '+${result.effectiveRecovery}'
+                      : '0',
+                  style: TextStyle(
+                    color: recoveryColor,
+                    fontSize: 42,
+                    height: 1,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  t(
+                    'Integrità Art recuperata',
+                    'Art Integrity actually recovered',
+                  ),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    value: fraction,
+                    minHeight: 9,
+                    color: artIntegrityColorForValue(
+                      result.integrityAfter,
+                      maximum,
+                    ),
+                    backgroundColor: Colors.black45,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  '${result.integrityBefore} → '
+                  '${result.integrityAfter} / $maximum',
+                  style: TextStyle(
+                    color: Colors.grey.shade200,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (result.lostRecovery > 0) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: Colors.orangeAccent.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Colors.orangeAccent.withValues(alpha: 0.45),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline,
+                    color: Colors.orangeAccent,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      t(
+                        '${result.lostRecovery} punti non applicati perché l’Art ha raggiunto il massimo.',
+                        '${result.lostRecovery} points were not applied because the Art reached its maximum.',
+                      ),
+                      style: const TextStyle(
+                        color: Colors.orangeAccent,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Text(
+            t(
+              'Utilizzo registrato · disponibile di nuovo dopo il prossimo riposo lungo.',
+              'Use recorded: the command is locked on every Art until the next long rest.',
+            ),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey.shade400,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget diceResultPanel() {
     return ValueListenableBuilder<int>(
       valueListenable: diceResultRevision,
       builder: (context, revision, child) {
+        final coreRepairResult = ultimoRisultatoAggiustaNucleo;
+        if (coreRepairResult != null && coreRepairResult.message == risultato) {
+          return aggiustaNucleoResultPanel(coreRepairResult);
+        }
         return gothicPanel(
           borderColor: tiroCriticoVenti
               ? tertiaryColor
@@ -2365,7 +2640,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                 ),
               if (dadoMostrato.isNotEmpty) const SizedBox(height: 18),
               Text(
-                risultato,
+                cleanUiText(risultato),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 21,

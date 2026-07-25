@@ -40,49 +40,69 @@ extension _OculumHomeDamageImpact on _OculumHomePageState {
 
   String applicaRecuperoSogliaExp(int soglie) {
     if (soglie <= 0) return '';
-    final hpGain = max(1, (maxHp() / 4).ceil()) * soglie;
-    currentHpController.text = min(maxHp(), hpCorrenti() + hpGain).toString();
-    ricaricaScudoOculum();
+    final profile = oculumExperienceRecoveryProfile(
+      normalizedCampaignDifficulty(),
+    );
+    final maximumHp = maxHp();
+    final hpGain =
+        max(1, (maximumHp / profile.milestoneHpDivisor).ceil()) * soglie;
+    currentHpController.text = min(maximumHp, hpCorrenti() + hpGain).toString();
 
-    final maxOcu = max(0, oculumMassimo());
-    final ocuGain = maxOcu <= 0 ? 0 : max(1, (maxOcu / 3).ceil()) * soglie;
-    if (ocuGain > 0) {
-      currentOculumController.text = min(
-        maxOcu,
-        currentOculum() + ocuGain,
+    final shieldMax = scudoOculumMax();
+    final shieldGain = shieldMax <= 0
+        ? 0
+        : max(1, (shieldMax / profile.milestoneShieldDivisor).ceil()) * soglie;
+    if (shieldGain > 0) {
+      scudoOculumController.text = min(
+        shieldMax,
+        scudoOculum() + shieldGain,
       ).toString();
-      invalidateHiddenEyeDerivedCaches();
     }
 
+    final maxOcu = max(0, oculumMassimoNaturale());
+    final requestedOcuGain = maxOcu <= 0
+        ? 0
+        : max(1, (maxOcu / profile.milestoneOculumDivisor).ceil()) * soglie;
+    final ocuGain = addOculum(
+      requestedOcuGain,
+      scheduleSave: false,
+      deferDerivedCardNotifications: true,
+    );
+
     return t(
-      ' Soglia EXP 369 x$soglie: recuperi fino a $hpGain HP, Scudo Oculum e $ocuGain Oculum.',
-      ' EXP 369 threshold x$soglie: recover up to $hpGain HP, Oculum Shield and $ocuGain Oculum.',
+      ' Soglia EXP 369 x$soglie (${campaignDifficultyLabel()}): recuperi fino a $hpGain HP, $shieldGain Scudo Oculum e $ocuGain Oculum.',
+      ' EXP 369 threshold x$soglie (${campaignDifficultyLabel()}): recover up to $hpGain HP, $shieldGain Oculum Shield and $ocuGain Oculum.',
     );
   }
 
   String applicaRecuperoOgniCentoExp(int expGuadagnata) {
-    final progress = oculumExperienceHundredProgress(
+    final profile = oculumExperienceRecoveryProfile(
+      normalizedCampaignDifficulty(),
+    );
+    final progress = oculumExperienceRecoveryProgress(
       previousRemainder: expHundredRegenRemainder,
       experienceGained: expGuadagnata,
+      threshold: profile.periodicThreshold,
     );
     expHundredRegenRemainder = progress.remainder;
     if (progress.recoveries <= 0) return '';
 
-    final hpGain = progress.recoveries * 6;
-    final oculumGain = progress.recoveries;
+    final hpGain = progress.recoveries * profile.periodicHp;
+    final requestedOculumGain = progress.recoveries;
     final hpPrima = hpCorrenti();
-    final oculumPrima = currentOculum();
+    final maximumHp = maxHp();
     currentHpController.text = max(
       hpPrima,
-      min(maxHp(), hpPrima + hpGain),
+      min(maximumHp, hpPrima + hpGain),
     ).toString();
-    currentOculumController.text = max(
-      oculumPrima,
-      min(max(0, oculumMassimo()), oculumPrima + oculumGain),
-    ).toString();
+    final oculumGain = addOculum(
+      requestedOculumGain,
+      scheduleSave: false,
+      deferDerivedCardNotifications: true,
+    );
     return t(
-      ' Recupero EXP 100 x${progress.recoveries}: +$hpGain HP e +$oculumGain Oculum.',
-      ' EXP 100 recovery x${progress.recoveries}: +$hpGain HP and +$oculumGain Oculum.',
+      ' Recupero EXP ${profile.periodicThreshold} x${progress.recoveries} (${campaignDifficultyLabel()}): fino a +$hpGain HP e +$oculumGain Oculum.',
+      ' EXP ${profile.periodicThreshold} recovery x${progress.recoveries} (${campaignDifficultyLabel()}): up to +$hpGain HP and +$oculumGain Oculum.',
     );
   }
 
@@ -179,8 +199,8 @@ extension _OculumHomeDamageImpact on _OculumHomePageState {
     if (chance <= 0 || Random().nextInt(100) >= chance) return '';
 
     final dust = Random().nextInt(2) + 1;
-    ascensionDustController.text =
-        (leggiNumero(ascensionDustController) + dust).toString();
+    ascensionDustController.text = (leggiNumero(ascensionDustController) + dust)
+        .toString();
     return t(
       '\n$resourceName basso: +$dust Ascension Dust.',
       '\nLow $resourceName: +$dust Ascension Dust.',

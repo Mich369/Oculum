@@ -68,4 +68,29 @@ void main() {
       );
     }
   });
+
+  test('le build macOS richiedono firma Developer ID e notarizzazione', () {
+    final signingScript = File(
+      'scripts/sign_and_notarize_macos.sh',
+    ).readAsStringSync();
+    final distributionWorkflow = File(
+      '.github/workflows/build_distribution.yml',
+    ).readAsStringSync();
+    final macosWorkflow = File(
+      '.github/workflows/build_macos.yml',
+    ).readAsStringSync();
+
+    expect(signingScript, contains('codesign'));
+    expect(signingScript, contains('--options runtime'));
+    expect(signingScript, contains('xcrun notarytool submit'));
+    expect(signingScript, contains('xcrun stapler staple'));
+    expect(signingScript, contains('spctl --assess'));
+
+    for (final workflow in [distributionWorkflow, macosWorkflow]) {
+      expect(workflow, contains('scripts/sign_and_notarize_macos.sh'));
+      expect(workflow, contains('APPLE_DEVELOPER_ID_CERTIFICATE_BASE64'));
+      expect(workflow, contains('APPLE_APP_SPECIFIC_PASSWORD'));
+      expect(workflow, contains('APPLE_TEAM_ID'));
+    }
+  });
 }

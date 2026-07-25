@@ -497,6 +497,52 @@ List<RuneArtWordDef> runeArtBookLearningPlan({
   return learned;
 }
 
+Set<String> runeArtSelectableWordIds(Iterable<String> knownWordIds) {
+  return <String>{...runeArtBaseWordIds, ...knownWordIds};
+}
+
+int runeArtFormulaDtForSelection({
+  required Iterable<RuneArtWordDef> words,
+  required Iterable<String> selectedWordIds,
+}) {
+  final selected = selectedWordIds.toSet();
+  return words
+      .where((word) => selected.contains(word.id))
+      .fold<int>(0, (total, word) => total + word.dt);
+}
+
+int runeArtFormulaCostForSelection({
+  required Iterable<RuneArtWordDef> words,
+  required Iterable<String> selectedWordIds,
+}) {
+  final selected = selectedWordIds.toSet();
+  return words
+      .where((word) => selected.contains(word.id))
+      .fold<int>(0, (total, word) => total + word.cost);
+}
+
+({bool used, int remainingOculum, int nextDifficulty}) runeArtUseResult({
+  required int currentOculum,
+  required int currentDifficulty,
+  required int formulaCost,
+  required int formulaDt,
+}) {
+  final safeOculum = max(0, currentOculum);
+  final safeCost = max(0, formulaCost);
+  if (safeOculum < safeCost) {
+    return (
+      used: false,
+      remainingOculum: safeOculum,
+      nextDifficulty: currentDifficulty,
+    );
+  }
+  return (
+    used: true,
+    remainingOculum: safeOculum - safeCost,
+    nextDifficulty: currentDifficulty + max(0, formulaDt),
+  );
+}
+
 String runeArtCustomIdFromName(String name) {
   final base = oculumNormalizeText(name.trim())
       .toLowerCase()
@@ -630,7 +676,7 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
   }
 
   Set<String> runeKnownWordSet(CharacterArt art) {
-    return <String>{...runeArtBaseWordIds, ...art.runeWordsKnown};
+    return runeArtSelectableWordIds(art.runeWordsKnown);
   }
 
   List<RuneArtWordDef> runeWordsForArt(CharacterArt art) {
@@ -659,6 +705,20 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
     return slot == 2 ? art.runeQuickWordIdsSlot2 : art.runeQuickWordIds;
   }
 
+  int runeFormulaDtForSlot(CharacterArt art, int slot) {
+    return runeArtFormulaDtForSelection(
+      words: runeWordsForArt(art),
+      selectedWordIds: runeSlotWordIds(art, slot),
+    );
+  }
+
+  int runeFormulaCostForSlot(CharacterArt art, int slot) {
+    return runeArtFormulaCostForSelection(
+      words: runeWordsForArt(art),
+      selectedWordIds: runeSlotWordIds(art, slot),
+    );
+  }
+
   String runeArtFormulaSummary(CharacterArt art, {int? slot}) {
     ensureRuneArtDefaults(art);
     final activeSlot = slot ?? art.runeActiveSlot;
@@ -666,8 +726,14 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
       for (final id in runeSlotWordIds(art, activeSlot))
         if (runeWordById(art, id) != null) runeWordById(art, id)!,
     ];
-    final totalCost = words.fold<int>(0, (sum, word) => sum + word.cost);
-    final totalDt = words.fold<int>(0, (sum, word) => sum + word.dt);
+    final totalCost = runeArtFormulaCostForSelection(
+      words: words,
+      selectedWordIds: words.map((word) => word.id),
+    );
+    final totalDt = runeArtFormulaDtForSelection(
+      words: words,
+      selectedWordIds: words.map((word) => word.id),
+    );
     final blocks = <String, List<String>>{};
     for (final word in words) {
       blocks.putIfAbsent(word.block, () => <String>[]).add(runeWordLabel(word));
@@ -708,25 +774,71 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
         'Runic book read. Learned words: $learnedText. ${runeArtFormulaSummary(art)}',
       );
       aggiungiLog(risultato);
+      recordRuneArtProgress(arti.indexOf(art));
     });
     if (bookConsumed) programmaSalvataggio();
   }
 
   void createRuneArtQuickly() {
-    refreshOculumHome(() {
-      final art = ensureRuneArtOnSheet();
+    final art = ensureRuneArtOnSheet();
+    ensureRuneArtDefaults(art);
+    final slot = art.runeActiveSlot;
+    final formulaCost = runeFormulaCostForSlot(art, slot);
+    final formulaDt = runeFormulaDtForSlot(art, slot);
+    final beforeOculum = currentOculum();
+    final use = runeArtUseResult(
+      currentOculum: beforeOculum,
+      currentDifficulty: difficoltaTiro(),
+      formulaCost: formulaCost,
+      formulaDt: formulaDt,
+    );
+    if (!use.used) {
       risultato = t(
-        'Rune Art pronta. ${runeArtFormulaSummary(art)}',
-        'Rune Art ready. ${runeArtFormulaSummary(art)}',
+        'Rune Art non utilizzata: servono $formulaCost Oculum, ma ne restano $beforeOculum. ${runeArtFormulaSummary(art)}',
+        'Rune Art not used: $formulaCost Oculum are required, but only $beforeOculum remain. ${runeArtFormulaSummary(art)}',
       );
       aggiungiLog(risultato);
-    });
-    programmaSalvataggio();
+      notifyDiceResultChanged();
+      return;
+    }
+
+    spendOculum(formulaCost, scheduleSave: false);
+    adjustRecordedStatSpentFromDelta('oculum', -formulaCost);
+    difficoltaTiroController.text = use.nextDifficulty.toString();
+    final applyHalfResourceFatigue = oculumShouldApplyHalfResourceFatigue(
+      before: beforeOculum,
+      after: use.remainingOculum,
+      maximum: statMassimo('oculum'),
+    );
+    final cenereMessage = applyHalfResourceFatigue
+        ? modificaCenereControllata(1)
+        : null;
+    invalidateHiddenEyeDerivedCaches();
+    scheduleHiddenEyeDerivedCardsRefresh();
+
+    risultato = t(
+      'Rune Art usata, slot $slot: -$formulaCost Oculum, +$formulaDt DT. ${runeArtFormulaSummary(art)}',
+      'Rune Art used, slot $slot: -$formulaCost Oculum, +$formulaDt DT. ${runeArtFormulaSummary(art)}',
+    );
+    if (cenereMessage != null && cenereMessage.isNotEmpty) {
+      risultato += '\n$cenereMessage';
+    }
+    aggiungiLog(risultato);
+    notifyDiceResultChanged();
+    recordCurrentOculumProgress();
+    recordRollDifficultyProgress();
+    recordRuneArtProgress(arti.indexOf(art));
+    scheduleRealtimeOculumChanged();
+    programmaSalvataggio(
+      invalidateCaches: false,
+      delay: const Duration(milliseconds: 1200),
+    );
   }
 
   Future<void> openRuneQuickWordsDialog() async {
     final art = ensureRuneArtOnSheet();
     ensureRuneArtDefaults(art);
+    recordRuneArtProgress(arti.indexOf(art));
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -734,10 +846,7 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             final known = runeKnownWordSet(art);
-            final words = [
-              for (final word in runeWordsForArt(art))
-                if (known.contains(word.id)) word,
-            ];
+            final words = runeWordsForArt(art);
             final groupedWords = <String, List<RuneArtWordDef>>{};
             for (final word in words) {
               groupedWords.putIfAbsent(word.block, () => []).add(word);
@@ -759,8 +868,8 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
                     children: [
                       smallInfoText(
                         t(
-                          'Ogni libro insegna sei parole; Self / Ally e Pulse sono le prime parole obbligatorie, con Intensita I sempre disponibile. Seleziona lo slot e le sottovoci: la scheda calcola costo Oculum e DT.',
-                          'Each book teaches six words; Self / Ally and Pulse are the first required words, with Intensity I always available. Select the slot and subvoices: the sheet calculates Oculum cost and DT.',
+                          'Tutte le parole sono visibili. Self / Ally, Pulse, Intensita I e 1 azione sono disponibili subito; ogni Libro Runico rende selezionabili altre sei parole. Premi Rune Art per spendere il costo Oculum e aumentare davvero la DT.',
+                          'All words are visible. Self / Ally, Pulse, Intensity I and 1 action are available immediately; every Runic Book makes six more words selectable. Press Rune Art to spend the Oculum cost and actually increase DT.',
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -780,13 +889,12 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
                         selected: {selectedSlot},
                         onSelectionChanged: (selection) {
                           final next = selection.first;
-                          refreshOculumHome(() {
-                            selectedSlot = next;
-                            art.runeActiveSlot = next;
-                            risultato = runeArtFormulaSummary(art);
-                          });
+                          selectedSlot = next;
+                          art.runeActiveSlot = next;
+                          risultato = runeArtFormulaSummary(art);
+                          notifyDiceResultChanged();
+                          recordRuneArtProgress(arti.indexOf(art));
                           setDialogState(() {});
-                          programmaSalvataggio();
                         },
                       ),
                       const SizedBox(height: 12),
@@ -817,34 +925,42 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
                                       label: Text(
                                         '${runeWordLabel(word)}  +${word.cost} / DT ${word.dt}',
                                       ),
-                                      tooltip: runeWordEffect(word),
+                                      tooltip: known.contains(word.id)
+                                          ? runeWordEffect(word)
+                                          : t(
+                                              '${runeWordEffect(word)} · Richiede un Libro Runico',
+                                              '${runeWordEffect(word)} · Requires a Runic Book',
+                                            ),
                                       selectedColor: tertiaryColor.withValues(
                                         alpha: 0.35,
                                       ),
                                       checkmarkColor: primaryColor,
-                                      onSelected: (selected) {
-                                        refreshOculumHome(() {
-                                          final target = runeSlotWordIds(
-                                            art,
-                                            selectedSlot,
-                                          );
-                                          if (selected) {
-                                            if (!target.contains(word.id)) {
-                                              target.add(word.id);
-                                            }
-                                          } else {
-                                            target.remove(word.id);
-                                          }
-                                          art.runeActiveSlot = selectedSlot;
-                                          ensureRuneArtDefaults(art);
-                                          risultato = runeArtFormulaSummary(
-                                            art,
-                                          );
-                                          aggiungiLog(risultato);
-                                        });
-                                        setDialogState(() {});
-                                        programmaSalvataggio();
-                                      },
+                                      onSelected: !known.contains(word.id)
+                                          ? null
+                                          : (selected) {
+                                              final target = runeSlotWordIds(
+                                                art,
+                                                selectedSlot,
+                                              );
+                                              if (selected) {
+                                                if (!target.contains(word.id)) {
+                                                  target.add(word.id);
+                                                }
+                                              } else {
+                                                target.remove(word.id);
+                                              }
+                                              art.runeActiveSlot = selectedSlot;
+                                              ensureRuneArtDefaults(art);
+                                              risultato = runeArtFormulaSummary(
+                                                art,
+                                              );
+                                              aggiungiLog(risultato);
+                                              notifyDiceResultChanged();
+                                              recordRuneArtProgress(
+                                                arti.indexOf(art),
+                                              );
+                                              setDialogState(() {});
+                                            },
                                     ),
                                 ],
                               ),
@@ -868,6 +984,8 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
         );
       },
     );
+    scheduleInputUiRefresh(delay: Duration.zero);
+    programmaSalvataggio(deferCacheInvalidation: true);
   }
 
   Future<void> openRuneCustomWordDialog() async {
@@ -1034,6 +1152,7 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
         'Rune word added: ${custom.choiceEn}. ${runeArtFormulaSummary(art)}',
       );
       aggiungiLog(risultato);
+      recordRuneArtProgress(arti.indexOf(art));
     });
     programmaSalvataggio();
   }

@@ -380,6 +380,11 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       maxColumns: 3,
       minColumnWidth: 320,
       cacheExtent: 420,
+      primary: false,
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: ClampingScrollPhysics(),
+      ),
+      respectKeyboardInsets: true,
     );
   }
 
@@ -2126,7 +2131,13 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       currentResilienzaController.text = resilienzaController.text;
       currentVolontaController.text = volontaController.text;
       currentMateriaController.text = materiaController.text;
-      currentOculumController.text = oculumController.text;
+      applyTemporaryOculumState(
+        TemporaryOculumState(
+          normalCurrent: readIntValue(oculumController.text),
+          temporary: 0,
+          rollsRemaining: 0,
+        ),
+      );
 
       aggiornaGradoAutomatico();
       refullaHp();

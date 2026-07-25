@@ -33,6 +33,7 @@ class OculumRealtimeService {
     'sheet_sync_preview',
     'sheet_shared',
     'initiative_shared',
+    'initiative_turn_adjusted',
     'dungeon_shared',
     'friend_request',
     'friend_response',
@@ -414,6 +415,24 @@ class OculumRealtimeService {
       'campaignName': campaignName,
       'closed': closed,
       'snapshot': snapshot,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  Future<void> sendInitiativeTurnAdjusted({
+    required String senderRole,
+    required String campaignId,
+    required String campaignName,
+    required String sheetTag,
+    required int turn,
+  }) {
+    return _send('initiative_turn_adjusted', <String, dynamic>{
+      'playerName': _displayName,
+      'senderRole': senderRole,
+      'campaignId': campaignId,
+      'campaignName': campaignName,
+      'sheetTag': sheetTag,
+      'turn': turn,
       'sentAt': _nowIso(),
     });
   }

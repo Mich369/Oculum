@@ -196,12 +196,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
 
     final builders = <WidgetBuilder>[
       ...headerBuilders,
-      for (int i = 0; i < diarioPagine.length; i++)
+      for (int i = 0; i < journalEntries.length; i++)
         (_) {
           final diaryIndex = i;
           return RepaintBoundary(
             key: ValueKey('diary_tile_${currentSheetScrollId()}_$diaryIndex'),
-            child: storyDiaryPageTileEfficient(diaryIndex),
+            child: storyDiaryDatabaseTile(diaryIndex),
           );
         },
     ];
@@ -300,29 +300,176 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         children: [
           smallInfoText(
             t(
-              'Il diario e una parte meccanica e narrativa. Scrivere ricordi, paure, sogni, traumi, promesse e decisioni importanti puo dare Ispirazioni. Non serve scrivere tanto: serve scrivere qualcosa che abbia peso.',
-              'The diary is both narrative and mechanical. Writing memories, fears, dreams, traumas, promises and important decisions can grant Inspirations. It does not need to be long: it needs to matter.',
+              'Database permanente dei diari della scheda. Tutte le voci sono visibili e modificabili solo in questa pagina; il testo viene conservato esattamente, inclusi accenti, simboli e ritorni a capo.',
+              'Permanent database for this sheet diary. Every entry is visible and editable only on this page; text is preserved exactly, including accents, symbols and line breaks.',
             ),
           ),
           const SizedBox(height: 12),
-          ElevatedButton.icon(
-            onPressed: aggiungiPaginaDiario,
-            icon: const Icon(Icons.edit_note),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: tertiaryColor,
-              foregroundColor: tertiaryColor.computeLuminance() > 0.45
-                  ? Colors.black
-                  : Colors.white,
-              minimumSize: const Size.fromHeight(48),
-            ),
-            label: Text(
-              t(
-                'Aggiungi pagina diario e +1 Ispirazione',
-                'Add diary page and +1 Inspiration',
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              ElevatedButton.icon(
+                onPressed: aggiungiPaginaDiario,
+                icon: const Icon(Icons.edit_note),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: tertiaryColor,
+                  foregroundColor: tertiaryColor.computeLuminance() > 0.45
+                      ? Colors.black
+                      : Colors.white,
+                ),
+                label: Text(
+                  t('Nuova pagina + ricompensa', 'New page + reward'),
+                ),
               ),
-            ),
+              OutlinedButton.icon(
+                onPressed: aggiungiVoceDatabaseDiario,
+                icon: const Icon(Icons.add_box_outlined),
+                label: Text(
+                  t('Nuova voce senza ricompensa', 'New entry without reward'),
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget storyDiaryDatabaseTile(int i) {
+    final entry = journalEntries[i];
+    return gothicPanel(
+      padding: EdgeInsets.zero,
+      borderColor: primaryColor.withValues(alpha: 0.75),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: sheetExpansionKey('journal_database_entry_$i'),
+          initiallyExpanded: false,
+          iconColor: primaryColor,
+          collapsedIconColor: primaryColor,
+          title: Text(
+            entry.title.isEmpty
+                ? '${t('Voce Diario', 'Diary Entry')} ${i + 1}'
+                : entry.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: primaryColor,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          subtitle: Text(
+            entry.description.isEmpty ? t('Vuota', 'Empty') : entry.description,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+          ),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+          children: [
+            campoModello(
+              fieldKey: ValueKey(
+                'journal_${currentSheetScrollId()}_${i}_title',
+              ),
+              label: t('Titolo', 'Title'),
+              initialValue: entry.title,
+              onChanged: (value) => entry.title = value,
+            ),
+            const SizedBox(height: 10),
+            campoModello(
+              fieldKey: ValueKey(
+                'journal_${currentSheetScrollId()}_${i}_description',
+              ),
+              label: t('Testo diario', 'Diary text'),
+              initialValue: entry.description,
+              onChanged: (value) {
+                entry.description = value;
+                final legacyIndex = entry.legacyPageIndex;
+                if (legacyIndex != null &&
+                    legacyIndex >= 0 &&
+                    legacyIndex < diarioPagine.length) {
+                  diarioPagine[legacyIndex] = value;
+                }
+              },
+              maxLines: 7,
+            ),
+            const SizedBox(height: 10),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final fields = <Widget>[
+                  campoModello(
+                    fieldKey: ValueKey(
+                      'journal_${currentSheetScrollId()}_${i}_day',
+                    ),
+                    label: t('Giorno ciclo', 'Cycle day'),
+                    initialValue: '${entry.cycleDay}',
+                    onChanged: (value) {
+                      entry.cycleDay = int.tryParse(value) ?? entry.cycleDay;
+                    },
+                    keyboardType: TextInputType.number,
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                  ),
+                  campoModello(
+                    fieldKey: ValueKey(
+                      'journal_${currentSheetScrollId()}_${i}_phase',
+                    ),
+                    label: t('Fase', 'Phase'),
+                    initialValue: entry.phase,
+                    onChanged: (value) => entry.phase = value,
+                  ),
+                  campoModello(
+                    fieldKey: ValueKey(
+                      'journal_${currentSheetScrollId()}_${i}_location',
+                    ),
+                    label: t('Luogo', 'Location'),
+                    initialValue: entry.location,
+                    onChanged: (value) => entry.location = value,
+                  ),
+                ];
+                if (constraints.maxWidth < 620) {
+                  return Column(
+                    children: [
+                      for (
+                        int fieldIndex = 0;
+                        fieldIndex < fields.length;
+                        fieldIndex++
+                      ) ...[
+                        fields[fieldIndex],
+                        if (fieldIndex + 1 < fields.length)
+                          const SizedBox(height: 10),
+                      ],
+                    ],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (
+                      int fieldIndex = 0;
+                      fieldIndex < fields.length;
+                      fieldIndex++
+                    ) ...[
+                      Expanded(child: fields[fieldIndex]),
+                      if (fieldIndex + 1 < fields.length)
+                        const SizedBox(width: 10),
+                    ],
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 10),
+            smallInfoText(
+              t(
+                'Voce permanente: non esiste alcun comando di eliminazione.',
+                'Permanent entry: no delete command is available.',
+              ),
+              color: tertiaryColor,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -621,11 +768,17 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     required String value,
     required ValueChanged<String> onChanged,
     int maxLines = 1,
+    bool enableCommandAutocomplete = true,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return campoModello(
       label: label,
       initialValue: value,
       maxLines: maxLines,
+      enableCommandAutocomplete: enableCommandAutocomplete,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       onChanged: (value) {
         onChanged(value);
         syncSkillLegacyFromForm(skill, formIndex);
@@ -633,21 +786,113 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     );
   }
 
-  void usaFormaSkill(CharacterSkill skill, int skillIndex, int formIndex) {
-    skill.ensureForms();
-    if (formIndex < 0 || formIndex >= skill.forme.length) return;
-    final form = skill.forme[formIndex];
-    final formName = form.nome.trim().isEmpty
+  String skillFormDisplayName(CharacterSkillForm form, int formIndex) {
+    return form.nome.trim().isEmpty
         ? 'Forma ${formIndex + 1}'
         : form.nome.trim();
+  }
+
+  bool applicaUsoFormaSkill({
+    required CharacterSkill skill,
+    required int skillIndex,
+    required CharacterSkillForm expectedForm,
+    required int formIndex,
+    required int oculumImmesso,
+    required int minimoScelto,
+    required int massimoScelto,
+    required bool limitsChanged,
+  }) {
+    skill.ensureForms();
+    if (skillIndex < 0 ||
+        skillIndex >= skills.length ||
+        !identical(skills[skillIndex], skill) ||
+        formIndex < 0 ||
+        formIndex >= skill.forme.length ||
+        !identical(skill.forme[formIndex], expectedForm)) {
+      return false;
+    }
+    final form = skill.forme[formIndex];
+    final formName = skillFormDisplayName(form, formIndex);
+    final tracksOculumUse =
+        minimoScelto > 0 || massimoScelto > 0 || oculumImmesso > 0;
+    final availableBefore = oculumTotale();
+    final maximumBefore = max(0, massimoScelto);
+    final nextInitial = formIndex + 1 < skill.forme.length
+        ? skill.forme[formIndex + 1].oculumMassimoMaestriaIniziale
+        : 0;
+    final masteryLimitBefore = limitsChanged
+        ? max(maximumBefore, nextInitial > 0 ? nextInitial : maximumBefore + 10)
+        : oculumSkillMasteryGrowthLimit(skill, formIndex);
+    final limits = OculumSkillUseLimits(
+      minimum: minimoScelto,
+      maximum: massimoScelto,
+      available: availableBefore,
+    );
+    if (!limits.accepts(oculumImmesso)) return false;
+    final masteryPreview = OculumSkillMasteryPreview(
+      minimum: minimoScelto,
+      currentMaximum: maximumBefore,
+      growthLimit: masteryLimitBefore,
+      selected: oculumImmesso,
+      validSelection: true,
+    );
     final isHighLearnedForm = formIndex >= max(0, skill.forme.length - 2);
     final atQuarterHp = hpCorrenti() <= sogliaStatoForzaHp();
+    final applyHalfResourceFatigue =
+        oculumImmesso > 0 &&
+        oculumShouldApplyHalfResourceFatigue(
+          before: availableBefore,
+          after: availableBefore - oculumImmesso,
+          maximum: oculumMassimo(),
+        );
+    var oculumChanged = false;
 
     setState(() {
+      if (limitsChanged) {
+        form.oculumMinimoUtilizzabile = max(0, minimoScelto);
+        form.oculumMassimoUtilizzabile = maximumBefore;
+        form.oculumMassimoMaestriaIniziale = maximumBefore;
+        form.oculumLimitiConfiguratiManualmente = true;
+      }
+      if (oculumImmesso > 0) {
+        spendOculum(oculumImmesso, scheduleSave: false);
+        adjustRecordedStatSpentFromDelta('oculum', -oculumImmesso);
+        oculumChanged = true;
+      }
+      if (masteryPreview.appliedIncrease > 0) {
+        form.oculumMassimoUtilizzabile = masteryPreview.newMaximum;
+      }
       final parts = <String>[
         t('Forma skill usata', 'Skill form used'),
         '${skill.nome.trim().isEmpty ? t('Skill senza nome', 'Unnamed skill') : skill.nome.trim()} - $formName',
       ];
+      if (tracksOculumUse) {
+        parts.add(
+          '${t('Oculum immesso', 'Oculum invested')}: $oculumImmesso '
+          '(${t('rimanente', 'remaining')}: ${oculumTotale()})',
+        );
+        parts.add(
+          '${t('Maestria', 'Mastery')}: '
+          '+${masteryPreview.appliedIncrease} '
+          '(${form.oculumMinimoUtilizzabile}/'
+          '${form.oculumMassimoUtilizzabile})',
+        );
+        if (form.oculumMassimoUtilizzabile >= masteryLimitBefore) {
+          parts.add(
+            t('Massimale di Maestria raggiunto', 'Mastery maximum reached'),
+          );
+        }
+      }
+      if (applyHalfResourceFatigue) {
+        final svenimento = modificaCenereControllata(1);
+        parts.add(
+          t(
+            'Cenere/Fatica +1: Oculum usato sotto il 50%.',
+            'Ash/Fatigue +1: Oculum used below 50%.',
+          ),
+        );
+        if (svenimento != null) parts.add(svenimento);
+      }
       if (form.costo.trim().isNotEmpty) {
         parts.add('${t('Costo', 'Cost')}: ${form.costo.trim()}');
       }
@@ -669,8 +914,416 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       risultato = parts.join('\n');
       ultimoEventoRiposo = risultato;
       aggiungiLog(risultato);
+      form.cooldownStrutturato?.activate();
     });
-    programmaSalvataggio();
+    if (oculumChanged) {
+      invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+      scheduleHiddenEyeDerivedCardsRefresh();
+      scheduleRealtimeOculumChanged();
+      recordCurrentOculumProgress();
+    }
+    if (limitsChanged || masteryPreview.appliedIncrease > 0) {
+      recordSkillFormOculumProgress(skillIndex, formIndex);
+    }
+    final structuredMessages = applyStructuredEffectsOnActivation(
+      form.effettiStrutturati,
+      source:
+          '${skill.nome.trim().isEmpty ? t('Skill senza nome', 'Unnamed skill') : skill.nome.trim()} - $formName',
+      spentResources: <String, num>{'oculum': oculumImmesso},
+    );
+    if (structuredMessages.isNotEmpty) {
+      setState(() {
+        risultato +=
+            '\n${t('Effetti attivati', 'Activated effects')}:\n'
+            '${structuredMessages.join('\n')}';
+        ultimoEventoRiposo = risultato;
+        aggiungiLog(risultato);
+      });
+    }
+    programmaSalvataggio(invalidateCaches: !oculumChanged);
+    return true;
+  }
+
+  String skillOculumValidationMessage(
+    OculumSkillUseLimits limits,
+    int? selected,
+  ) {
+    if (!limits.configurationValid) {
+      return t(
+        'Limiti Oculum non validi: il massimo deve essere almeno pari al minimo.',
+        'Invalid Oculum limits: maximum must be at least the minimum.',
+      );
+    }
+    if (!limits.hasEnoughOculum) {
+      return t(
+        'Oculum insufficiente: servono almeno ${limits.safeMinimum} punti.',
+        'Not enough Oculum: at least ${limits.safeMinimum} points are required.',
+      );
+    }
+    if (selected == null) {
+      return t('Inserisci un numero intero valido.', 'Enter a valid integer.');
+    }
+    if (selected < limits.safeMinimum) {
+      return t(
+        'Il valore minimo è ${limits.safeMinimum}.',
+        'The minimum is ${limits.safeMinimum}.',
+      );
+    }
+    if (selected > limits.effectiveMaximum) {
+      return t(
+        'Il massimo disponibile è ${limits.effectiveMaximum}.',
+        'The available maximum is ${limits.effectiveMaximum}.',
+      );
+    }
+    return '';
+  }
+
+  Future<void> usaFormaSkill(
+    CharacterSkill skill,
+    int skillIndex,
+    int formIndex,
+  ) async {
+    skill.ensureForms();
+    if (formIndex < 0 || formIndex >= skill.forme.length) return;
+    final form = skill.forme[formIndex];
+    final structuredCooldown = form.cooldownStrutturato;
+    if (structuredCooldown != null && !structuredCooldown.ready) {
+      setState(() {
+        risultato =
+            '${t('Skill in cooldown', 'Skill on cooldown')}: '
+            '${structuredCooldown.remaining} ${structuredCooldown.unit}.';
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+    if (skillOculumUseDialogOpen || !mounted) return;
+
+    skillOculumUseDialogOpen = true;
+    final initialMinimum = max(0, form.oculumMinimoUtilizzabile);
+    final initialMaximum = max(0, form.oculumMassimoUtilizzabile);
+    final controller = TextEditingController(text: initialMinimum.toString());
+    final minimumController = TextEditingController(text: '$initialMinimum');
+    final maximumController = TextEditingController(text: '$initialMaximum');
+    final confirmationGuard = OculumSingleConfirmationGuard();
+    String transientError = '';
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (context, setLocalState) => AnimatedBuilder(
+            animation: currentOculumController,
+            builder: (context, _) {
+              final localMinimum =
+                  oculumParseSkillUseAmount(minimumController.text) ?? 0;
+              final localMaximum =
+                  oculumParseSkillUseAmount(maximumController.text) ?? 0;
+              final limits = OculumSkillUseLimits(
+                minimum: localMinimum,
+                maximum: localMaximum,
+                available: oculumTotale(),
+              );
+              final selected = oculumParseSkillUseAmount(controller.text);
+              final limitsChanged =
+                  localMinimum != initialMinimum ||
+                  localMaximum != initialMaximum;
+              final nextInitial = formIndex + 1 < skill.forme.length
+                  ? skill.forme[formIndex + 1].oculumMassimoMaestriaIniziale
+                  : 0;
+              final masteryLimit = limitsChanged
+                  ? max(
+                      localMaximum,
+                      nextInitial > 0 ? nextInitial : localMaximum + 10,
+                    )
+                  : oculumSkillMasteryGrowthLimit(skill, formIndex);
+              final masteryPreview = OculumSkillMasteryPreview(
+                minimum: limits.safeMinimum,
+                currentMaximum: limits.safeMaximum,
+                growthLimit: masteryLimit,
+                selected: selected,
+                validSelection: limits.accepts(selected),
+              );
+              final maxPreview = OculumSkillMasteryPreview(
+                minimum: limits.safeMinimum,
+                currentMaximum: limits.safeMaximum,
+                growthLimit: masteryLimit,
+                selected: limits.effectiveMaximum,
+                validSelection: limits.accepts(limits.effectiveMaximum),
+              );
+              final validation = transientError.isNotEmpty
+                  ? transientError
+                  : skillOculumValidationMessage(limits, selected);
+              final canConfirm =
+                  limits.accepts(selected) && !confirmationGuard.started;
+              final remaining = selected == null
+                  ? limits.safeAvailable
+                  : max(0, limits.safeAvailable - selected);
+
+              void changeSelected(int delta) {
+                final base = selected ?? limits.safeMinimum;
+                final next = (base + delta)
+                    .clamp(limits.safeMinimum, limits.effectiveMaximum)
+                    .toInt();
+                setLocalState(() {
+                  transientError = '';
+                  controller.text = next.toString();
+                  controller.selection = TextSelection.collapsed(
+                    offset: controller.text.length,
+                  );
+                });
+              }
+
+              void useMaximum() {
+                if (limits.effectiveMaximum < limits.safeMinimum) return;
+                setLocalState(() {
+                  transientError = '';
+                  controller.text = '${limits.effectiveMaximum}';
+                  controller.selection = TextSelection.collapsed(
+                    offset: controller.text.length,
+                  );
+                });
+              }
+
+              return AlertDialog(
+                backgroundColor: const Color(0xFF120D18),
+                title: Text(
+                  skill.nome.trim().isEmpty
+                      ? t('Usa Skill', 'Use Skill')
+                      : skill.nome.trim(),
+                ),
+                content: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 430),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${t('Forma', 'Form')}: '
+                          '${skillFormDisplayName(form, formIndex)}',
+                          style: TextStyle(
+                            color: tertiaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          '${t('Oculum disponibile', 'Available Oculum')}: '
+                          '${limits.safeAvailable}',
+                        ),
+                        if (limits.unlimited)
+                          Text(
+                            t(
+                              '0/0: nessun limite, puoi spendere fino a ${limits.safeAvailable} Oculum.',
+                              '0/0: no limit, you can spend up to ${limits.safeAvailable} Oculum.',
+                            ),
+                            style: TextStyle(color: tertiaryColor),
+                          ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: minimumController,
+                                enabled: !confirmationGuard.started,
+                                keyboardType: TextInputType.number,
+                                inputFormatters:
+                                    oculumNonNegativeIntegerFormatters,
+                                decoration: fieldDecoration(
+                                  t('Oculum minimo', 'Minimum Oculum'),
+                                ),
+                                onChanged: (_) => setLocalState(() {
+                                  transientError = '';
+                                }),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: maximumController,
+                                enabled: !confirmationGuard.started,
+                                keyboardType: TextInputType.number,
+                                inputFormatters:
+                                    oculumNonNegativeIntegerFormatters,
+                                decoration: fieldDecoration(
+                                  t(
+                                    'Oculum massimo attuale',
+                                    'Current maximum Oculum',
+                                  ),
+                                ),
+                                onChanged: (_) => setLocalState(() {
+                                  transientError = '';
+                                }),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            IconButton(
+                              tooltip: t('Diminuisci', 'Decrease'),
+                              onPressed:
+                                  limits.effectiveMaximum >=
+                                          limits.safeMinimum &&
+                                      selected != null &&
+                                      selected > limits.safeMinimum
+                                  ? () => changeSelected(-1)
+                                  : null,
+                              icon: const Icon(Icons.remove_circle_outline),
+                            ),
+                            Expanded(
+                              child: TextField(
+                                controller: controller,
+                                enabled: !confirmationGuard.started,
+                                keyboardType: TextInputType.number,
+                                inputFormatters:
+                                    oculumNonNegativeIntegerFormatters,
+                                textAlign: TextAlign.center,
+                                decoration:
+                                    fieldDecoration(
+                                      t(
+                                        'Oculum selezionato',
+                                        'Selected Oculum',
+                                      ),
+                                    ).copyWith(
+                                      suffixIcon: TextButton(
+                                        onPressed:
+                                            limits.effectiveMaximum >=
+                                                limits.safeMinimum
+                                            ? useMaximum
+                                            : null,
+                                        child: const Text('MAX'),
+                                      ),
+                                    ),
+                                onChanged: (_) => setLocalState(() {
+                                  transientError = '';
+                                }),
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: t('Aumenta', 'Increase'),
+                              onPressed:
+                                  limits.effectiveMaximum >=
+                                          limits.safeMinimum &&
+                                      selected != null &&
+                                      selected < limits.effectiveMaximum
+                                  ? () => changeSelected(1)
+                                  : null,
+                              icon: const Icon(Icons.add_circle_outline),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          'MAX: +${maxPreview.appliedIncrease} ${t('Maestria', 'Mastery')}',
+                          style: TextStyle(
+                            color: maxPreview.appliedIncrease == 2
+                                ? tertiaryColor
+                                : Colors.grey.shade300,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          '${t('Oculum rimanente', 'Remaining Oculum')}: '
+                          '$remaining',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${t('Aumento previsto', 'Expected increase')}: '
+                          '+${masteryPreview.appliedIncrease}',
+                        ),
+                        Text(
+                          '${t('Nuovo massimo previsto', 'Expected new maximum')}: '
+                          '${masteryPreview.newMaximum}',
+                        ),
+                        Text(
+                          '${t('Limite Forma successiva', 'Next Form limit')}: '
+                          '$masteryLimit',
+                        ),
+                        Text(
+                          masteryPreview.reached
+                              ? t(
+                                  'Massimale di Maestria raggiunto',
+                                  'Mastery maximum reached',
+                                )
+                              : t(
+                                  'Maestria in crescita',
+                                  'Mastery progressing',
+                                ),
+                          style: TextStyle(
+                            color: masteryPreview.reached
+                                ? tertiaryColor
+                                : Colors.grey.shade300,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (validation.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            validation,
+                            style: const TextStyle(color: Colors.redAccent),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: confirmationGuard.started
+                        ? null
+                        : () => Navigator.pop(dialogContext),
+                    child: Text(t('Annulla', 'Cancel')),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: canConfirm
+                        ? () {
+                            if (!confirmationGuard.tryStart()) return;
+                            final liveSelected = oculumParseSkillUseAmount(
+                              controller.text,
+                            );
+                            final applied =
+                                liveSelected != null &&
+                                applicaUsoFormaSkill(
+                                  skill: skill,
+                                  skillIndex: skillIndex,
+                                  expectedForm: form,
+                                  formIndex: formIndex,
+                                  oculumImmesso: liveSelected,
+                                  minimoScelto: localMinimum,
+                                  massimoScelto: localMaximum,
+                                  limitsChanged: limitsChanged,
+                                );
+                            if (applied) {
+                              Navigator.pop(dialogContext);
+                              return;
+                            }
+                            confirmationGuard.release();
+                            setLocalState(() {
+                              transientError = t(
+                                'La Forma o l’Oculum disponibile sono cambiati. Controlla il valore e riprova.',
+                                'The Form or available Oculum changed. Check the value and try again.',
+                              );
+                            });
+                          }
+                        : null,
+                    icon: const Icon(Icons.play_arrow),
+                    label: Text(t('Conferma', 'Confirm')),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      );
+    } finally {
+      skillOculumUseDialogOpen = false;
+      controller.dispose();
+      minimumController.dispose();
+      maximumController.dispose();
+    }
   }
 
   Widget skillFormEditorTile(
@@ -684,6 +1337,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     final formTitle = form.nome.trim().isEmpty
         ? 'Forma ${formIndex + 1}'
         : form.nome.trim();
+    final masteryLimit = oculumSkillMasteryGrowthLimit(skill, formIndex);
+    final masteryReached =
+        form.usaOculumConfigurabile &&
+        form.oculumMassimoUtilizzabile >= masteryLimit;
     final summary = [
       if (form.tipo.trim().isNotEmpty) form.tipo.trim(),
       if (form.costo.trim().isNotEmpty) form.costo.trim(),
@@ -719,7 +1376,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             ),
           ),
           title: Text(
-            cleanUiText(formTitle),
+            cleanUiText(
+              '$formTitle '
+              '(${form.oculumMinimoUtilizzabile}/'
+              '${form.oculumMassimoUtilizzabile})',
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontWeight: FontWeight.bold),
@@ -804,6 +1465,73 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               ],
             ),
             const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: skillFormTextField(
+                    skill: skill,
+                    form: form,
+                    formIndex: formIndex,
+                    label: t(
+                      'Oculum minimo utilizzabile',
+                      'Minimum usable Oculum',
+                    ),
+                    value: '${form.oculumMinimoUtilizzabile}',
+                    onChanged: (value) {
+                      form.oculumMinimoUtilizzabile = max(
+                        0,
+                        readIntValue(value),
+                      );
+                      form.oculumLimitiConfiguratiManualmente = true;
+                    },
+                    enableCommandAutocomplete: false,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: oculumNonNegativeIntegerFormatters,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: skillFormTextField(
+                    skill: skill,
+                    form: form,
+                    formIndex: formIndex,
+                    label: t(
+                      'Oculum massimo utilizzabile',
+                      'Maximum usable Oculum',
+                    ),
+                    value: '${form.oculumMassimoUtilizzabile}',
+                    onChanged: (value) {
+                      final parsed = max(0, readIntValue(value));
+                      form.oculumMassimoUtilizzabile = parsed;
+                      form.oculumMassimoMaestriaIniziale = parsed;
+                      form.oculumLimitiConfiguratiManualmente = true;
+                    },
+                    enableCommandAutocomplete: false,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: oculumNonNegativeIntegerFormatters,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            smallInfoText(
+              t(
+                'Usare questa skill aumenta il suo Oculum massimo: +1 utilizzando una quantità inferiore al massimo attuale, oppure +2 utilizzando esattamente il massimo. La crescita si ferma al massimale della Forma successiva; se questo non è definito, può aumentare al massimo di 10.',
+                'Using this skill increases its maximum Oculum: +1 when using less than the current maximum, or +2 when using exactly the maximum. Growth stops at the next Form maximum; if it is not defined, it can increase by at most 10.',
+              ),
+              color: Colors.grey.shade300,
+            ),
+            if (masteryReached) ...[
+              const SizedBox(height: 6),
+              Text(
+                t('Massimale di Maestria raggiunto', 'Mastery maximum reached'),
+                style: TextStyle(
+                  color: tertiaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
             skillFormTextField(
               skill: skill,
               form: form,
@@ -811,7 +1539,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               label: t('Descrizione', 'Description'),
               value: form.descrizione,
               maxLines: 4,
-              onChanged: (value) => form.descrizione = value,
+              onChanged: (value) {
+                form.descrizione = value;
+                if (form.aggiornaLimitiOculumDaDescrizione()) {
+                  scheduleInputUiRefresh();
+                }
+              },
             ),
             const SizedBox(height: 8),
             skillFormTextField(
@@ -880,11 +1613,45 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               maxLines: 3,
               onChanged: (value) => form.note = value,
             ),
+            structuredCostEditor(
+              cost: form.costoStrutturato,
+              storageId: 'skill_${skillIndex}_form_$formIndex',
+              onChanged: (value) {
+                setState(() => form.costoStrutturato = value);
+              },
+            ),
+            structuredCooldownEditor(
+              cooldown: form.cooldownStrutturato,
+              storageId: 'skill_${skillIndex}_form_$formIndex',
+              onChanged: (value) {
+                setState(() => form.cooldownStrutturato = value);
+              },
+            ),
+            structuredEffectsEditor(
+              effects: form.effettiStrutturati,
+              previousEffects: formIndex > 0
+                  ? skill.forme[formIndex - 1].effettiStrutturati
+                  : null,
+              freeText: <String>[
+                form.descrizione,
+                form.effetto,
+                form.buff,
+                form.danni,
+                form.cura,
+                form.difesa,
+              ].where((value) => value.trim().isNotEmpty).join(' e '),
+              storageId: 'skill_${skillIndex}_form_$formIndex',
+              onChanged: () {
+                syncSkillLegacyFromForm(skill, formIndex);
+                invalidateDerivedDataCaches();
+              },
+            ),
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerRight,
               child: OutlinedButton.icon(
-                onPressed: () => usaFormaSkill(skill, skillIndex, formIndex),
+                onPressed: () =>
+                    unawaited(usaFormaSkill(skill, skillIndex, formIndex)),
                 icon: const Icon(Icons.play_arrow),
                 label: Text(t('Usa forma', 'Use form')),
               ),

@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oculum.local/schema/prefab-character-v1.json",
+  "title": "Oculum prefab character import subset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "version", "createdAt", "sheets"],
+  "properties": {
+    "kind": { "const": "oculum_sheets" },
+    "version": { "const": 1 },
+    "createdAt": { "type": "string" },
+    "sheets": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/sheet" }
+    }
+  },
+  "$defs": {
+    "sheet": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["nome", "tipoScheda", "razza", "titoli", "trattiRazziali", "arti"],
+      "properties": {
+        "nome": { "type": "string", "minLength": 1 },
+        "tipoScheda": { "const": "Personaggio" },
+        "razza": { "type": "string", "minLength": 1 },
+        "livello": { "type": "string", "pattern": "^[0-9]+$" },
+        "grado": { "type": "string", "pattern": "^[0-9]+$" },
+        "exp": { "type": "string", "pattern": "^[0-9]+$" },
+        "background": { "type": "string" },
+        "titoli": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/title" }
+        },
+        "trattiRazziali": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/title" }
+        },
+        "arti": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/art" }
+        }
+      }
+    },
+    "title": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nome", "tipo", "ottenimento", "leggenda", "buff", "puntoCieco", "skill", "richiede",
+        "resilienza", "volonta", "materia", "oculum", "karma", "equipaggiato", "evoluto",
+        "openName", "openDescription", "openBuff", "openSkill", "openAttiva", "chiaveSistema",
+        "openExperienceClaimed", "openExtra", "skillExtra", "titleConditionalBuffs", "openConditionalBuffs"
+      ],
+      "properties": {
+        "nome": { "type": "string", "minLength": 1 },
+        "tipo": { "enum": ["Titolo del Fato", "Tratto Razziale"] },
+        "ottenimento": { "type": "string" },
+        "leggenda": { "type": "string" },
+        "buff": { "type": "string" },
+        "puntoCieco": { "type": "string" },
+        "skill": { "type": "string" },
+        "richiede": { "type": "string" },
+        "resilienza": { "type": "integer" },
+        "volonta": { "type": "integer" },
+        "materia": { "type": "integer" },
+        "oculum": { "type": "integer" },
+        "karma": { "type": "integer" },
+        "equipaggiato": { "type": "boolean" },
+        "evoluto": { "type": "boolean" },
+        "openName": { "type": "string" },
+        "openDescription": { "type": "string" },
+        "openBuff": { "type": "string" },
+        "openSkill": { "type": "string" },
+        "openAttiva": { "type": "boolean" },
+        "chiaveSistema": { "type": "string" },
+        "openExperienceClaimed": { "type": "integer", "minimum": 0 },
+        "openExtra": { "type": "array" },
+        "skillExtra": { "type": "array" },
+        "titleConditionalBuffs": { "type": "array" },
+        "openConditionalBuffs": { "type": "array" }
+      }
+    },
+    "art": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nome", "tipo", "descrizione", "skills", "sbloccata", "openName", "openDescription",
+        "openBuff", "openSkill", "openAttiva", "runeWordsKnown", "runeQuickWordIds",
+        "runeQuickWordIdsSlot2", "runeActiveSlot", "runeCustomWords", "runeBooksRead",
+        "integritaCorrente", "esaurimentoCompleto"
+      ],
+      "properties": {
+        "nome": { "type": "string", "minLength": 1 },
+        "tipo": { "type": "string", "minLength": 1 },
+        "descrizione": { "type": "string" },
+        "skills": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "$ref": "#/$defs/artSkill" }
+        },
+        "sbloccata": { "type": "boolean" },
+        "openName": { "type": "string" },
+        "openDescription": { "type": "string" },
+        "openBuff": { "type": "string" },
+        "openSkill": { "type": "string" },
+        "openAttiva": { "type": "boolean" },
+        "runeWordsKnown": { "type": "array", "items": { "type": "string" } },
+        "runeQuickWordIds": { "type": "array", "items": { "type": "string" } },
+        "runeQuickWordIdsSlot2": { "type": "array", "items": { "type": "string" } },
+        "runeActiveSlot": { "type": "integer" },
+        "runeCustomWords": { "type": "array" },
+        "runeBooksRead": { "type": "integer" },
+        "integritaCorrente": { "type": "integer" },
+        "esaurimentoCompleto": { "type": "boolean" }
+      }
+    },
+    "artSkill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nome", "livello", "evo1", "evo2", "evo3", "evo4", "evo5", "resilienza", "volonta",
+        "materia", "oculum", "danni", "difesa", "oculumMinimiPerLivello", "oculumMassimiPerLivello",
+        "oculumMassimiInizialiPerLivello", "oculumLimitiManualiPerLivello",
+        "costoOculumDisabilitatoPerLivello", "risorseCostoPerLivello"
+      ],
+      "properties": {
+        "nome": { "type": "string", "minLength": 1 },
+        "livello": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "evo1": { "type": "string" },
+        "evo2": { "type": "string" },
+        "evo3": { "type": "string" },
+        "evo4": { "type": "string" },
+        "evo5": { "type": "string" },
+        "resilienza": { "type": "integer" },
+        "volonta": { "type": "integer" },
+        "materia": { "type": "integer" },
+        "oculum": { "type": "integer" },
+        "danni": { "type": "integer" },
+        "difesa": { "type": "integer" },
+        "oculumMinimiPerLivello": { "$ref": "#/$defs/fiveIntegers" },
+        "oculumMassimiPerLivello": { "$ref": "#/$defs/fiveIntegers" },
+        "oculumMassimiInizialiPerLivello": { "$ref": "#/$defs/fiveIntegers" },
+        "oculumLimitiManualiPerLivello": { "$ref": "#/$defs/fiveBooleans" },
+        "costoOculumDisabilitatoPerLivello": { "$ref": "#/$defs/fiveBooleans" },
+        "risorseCostoPerLivello": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "enum": ["oculum", "materia", "volonta", "resilienza", "nessuna"]
+          }
+        }
+      }
+    },
+    "fiveIntegers": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": { "type": "integer", "minimum": 0 }
+    },
+    "fiveBooleans": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": { "type": "boolean" }
+    }
+  }
+}

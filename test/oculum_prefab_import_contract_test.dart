@@ -1,0 +1,52 @@
+import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:oculum/main.dart';
+
+void main() {
+  test('il prefab ChatGPT rispetta il contratto import Oculum', () {
+    final raw = File(
+      'docs/chatgpt_handoff/prefab_character_generator/example_prefab_character.json',
+    ).readAsStringSync();
+    final sheets = oculumDecodeSheetShareText(raw);
+
+    expect(sheets, hasLength(1));
+    final sheet = sheets.single;
+    expect(sheet['id'], isNull);
+    expect(sheet['sheetTag'], isNull);
+
+    final titles = (sheet['titoli'] as List).cast<Map>();
+    final fateTitle = OculumTitle.fromJson(
+      Map<String, dynamic>.from(titles.single),
+    );
+    expect(fateTitle.tipo, 'Titolo del Fato');
+    expect(fateTitle.chiaveSistema, 'fate_title_1_first_art_skill_1_lvl_1');
+
+    final traits = (sheet['trattiRazziali'] as List).cast<Map>();
+    final racialTrait = OculumTitle.fromJson(
+      Map<String, dynamic>.from(traits.single),
+    );
+    expect(racialTrait.tipo, 'Tratto Razziale');
+
+    final arts = (sheet['arti'] as List).cast<Map>();
+    final firstArt = CharacterArt.fromJson(
+      Map<String, dynamic>.from(arts.first),
+    );
+    expect(firstArt.tipo, 'Oculum Art');
+    expect(firstArt.skills, hasLength(3));
+    expect(firstArt.skills.first.livello, 1);
+    expect(firstArt.skills[1].livello, 0);
+    expect(firstArt.skills[2].livello, 0);
+    expect(firstArt.skills.first.risorsaCostoPerLivello(1), 'oculum');
+    expect(firstArt.skills[1].risorsaCostoPerLivello(1), 'materia');
+    expect(firstArt.skills[2].risorsaCostoPerLivello(1), 'volonta');
+    expect(fateTitle.richiede, contains(firstArt.skills.first.nome));
+    expect(fateTitle.richiede, contains('livello 1'));
+
+    final restoredArt = CharacterArt.fromJson(firstArt.toJson());
+    final restoredTitle = OculumTitle.fromJson(fateTitle.toJson());
+    expect(restoredArt.skills.first.livello, 1);
+    expect(restoredArt.skills[1].risorsaCostoPerLivello(1), 'materia');
+    expect(restoredTitle.richiede, fateTitle.richiede);
+  });
+}

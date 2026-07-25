@@ -190,8 +190,13 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     );
 
     currentHpController.text = hp.toString();
-    currentOculumController.text = oculum.toString();
-    invalidateHiddenEyeDerivedCaches();
+    applyTemporaryOculumState(
+      TemporaryOculumState(
+        normalCurrent: oculum,
+        temporary: 0,
+        rollsRemaining: 0,
+      ),
+    );
     impostaScudoTotale(shield);
     personaggioCaduto = false;
     personaggioSvenuto = false;
@@ -229,6 +234,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     }
 
     final roll = tiraD20();
+    registerValidRoll();
     final difficulty = difficoltaTiro();
     final total = roll + modificatoreDifficoltaTiro(difficulty: difficulty);
     final rollText = difficulty == 0
@@ -330,7 +336,9 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     final hp = max(0, readIntValue(token['currentHp']));
     final oculum = max(0, readIntValue(token['currentOculum']));
     final shield = max(0, readIntValue(token['shield']));
-    final temporaryHp = max(0, readIntValue(token['hpTemp']));
+    final temporaryHp = readIntValue(
+      token['hpTemp'],
+    ).clamp(0, oculumTemporaryHpLimit).toInt();
     final wounds = readIntValue(
       token['deathWounds'],
     ).clamp(0, deathWoundLimit).toInt();
@@ -354,8 +362,13 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
 
     if (index == schedaCorrente) {
       currentHpController.text = '$hp';
-      currentOculumController.text = '$oculum';
-      invalidateHiddenEyeDerivedCaches();
+      applyTemporaryOculumState(
+        TemporaryOculumState(
+          normalCurrent: oculum,
+          temporary: 0,
+          rollsRemaining: 0,
+        ),
+      );
       hpTempController.text = '$temporaryHp';
       impostaScudoTotale(shield);
       personaggioCaduto = downed;

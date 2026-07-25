@@ -40,6 +40,7 @@ import 'src/main/oculum_web_save_store_stub.dart'
 part 'src/main/oculum_app.dart';
 part 'src/main/oculum_helpers.dart';
 part 'src/main/oculum_models.dart';
+part 'src/main/oculum_skill_effects.dart';
 part 'src/main/oculum_manual_sections.dart';
 part 'src/main/oculum_home_persistence.dart';
 part 'src/main/oculum_home_calculations.dart';
@@ -64,7 +65,10 @@ part 'src/main/oculum_realtime_integration.dart';
 part 'src/main/oculum_friends.dart';
 part 'src/main/oculum_campaigns.dart';
 part 'src/main/oculum_story_session_notes.dart';
+part 'src/main/oculum_home_recipes.dart';
 part 'src/main/oculum_home_titles_inventory_pages.dart';
+part 'src/main/oculum_skill_effects_ui.dart';
+part 'src/main/oculum_structured_effect_runtime.dart';
 part 'src/main/oculum_home_share_content.dart';
 part 'src/main/oculum_home_rules_settings_search.dart';
 part 'src/main/oculum_home_dialogs_quick_edit.dart';
@@ -136,16 +140,65 @@ Future<void> main() async {
     await BrowserContextMenu.disableContextMenu();
   }
   _configureOculumRuntimeCaches();
-  await OculumAuthService.instance.initialize();
-  await OculumCloudSaveService.instance.initialize();
+  await _initializeOculumOptionalStartupServices();
   runApp(const OculumApp());
 }
 
+Future<void> _initializeOculumOptionalStartupServices() async {
+  try {
+    await OculumAuthService.instance.initialize();
+  } catch (error, stackTrace) {
+    debugPrint(
+      'Oculum auth startup unavailable (${error.runtimeType}); '
+      'continuing in local mode.\n$stackTrace',
+    );
+  }
+  try {
+    await OculumCloudSaveService.instance.initialize();
+  } catch (error, stackTrace) {
+    debugPrint(
+      'Oculum cloud startup unavailable (${error.runtimeType}); '
+      'local saves remain available.\n$stackTrace',
+    );
+  }
+}
+
 final _OculumFrameProfiler _oculumFrameProfiler = _OculumFrameProfiler();
+final _OculumProgressProfiler _oculumProgressProfiler =
+    _OculumProgressProfiler();
 
 void oculumProfileMark(String label) {
   if (!kProfileMode) return;
   _oculumFrameProfiler.mark(label);
+}
+
+void oculumProgressProfileCount(String event) {
+  if (!kProfileMode) return;
+  _oculumProgressProfiler.count(event);
+}
+
+class _OculumProgressProfiler {
+  String _label = '';
+  final Map<String, int> _counts = <String, int>{};
+
+  void begin(String label) {
+    _label = label;
+    _counts.clear();
+    oculumProfileMark(label);
+  }
+
+  void count(String event) {
+    if (_label.isEmpty) return;
+    _counts[event] = (_counts[event] ?? 0) + 1;
+  }
+
+  void report() {
+    if (_label.isEmpty) return;
+    debugPrint('Oculum progress profile [$_label]: $_counts.');
+    oculumProfileMark('${_label}_complete');
+    _label = '';
+    _counts.clear();
+  }
 }
 
 class _OculumFrameProfiler {
@@ -499,6 +552,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   static const int settingsPageIndex = 11;
   static const int onlinePageIndex = 12;
   static const int dicePageIndex = 13;
+  static const int recipesPageIndex = 14;
 
   int paginaCorrente = 0;
   int schedaCorrente = 0;
@@ -560,6 +614,201 @@ class _OculumHomePageState extends State<OculumHomePage>
   void notifyDiceOverlayChanged() {
     if (!mounted) return;
     diceOverlayRevision.value++;
+  }
+
+  bool aggiustaNucleoDisponibile() {
+    return !aggiustaNucleoUsato && !aggiustaNucleoInCorso;
+  }
+
+  void notifyAggiustaNucleoDisponibilitaChanged() {
+    aggiustaNucleoDisponibileRevision.value++;
+  }
+
+  ValueListenable<int> artIntegrityListenable(int artIndex) {
+    final current = artIndex >= 0 && artIndex < arti.length
+        ? arti[artIndex].integritaCorrente
+        : 0;
+    return artIntegrityRevisions.putIfAbsent(
+      artIndex,
+      () => ValueNotifier<int>(current),
+    );
+  }
+
+  bool artActivationAvailable(int artIndex) {
+    if (artIndex < 0 || artIndex >= arti.length) return false;
+    final current = arti[artIndex].integritaCorrente;
+    final effectiveCurrent = current < 0
+        ? oculumArtMaximumValue(
+            level: leggiNumero(livelloController),
+            grade: leggiNumero(gradoController),
+          )
+        : current;
+    return oculumArtCanActivate(
+      effectiveCurrent,
+      cost: oculumArtUseCostForDifficulty(
+        oculumArtActivationCost,
+        normalizedCampaignDifficulty(),
+      ),
+    );
+  }
+
+  ValueListenable<bool> artActivationAvailableListenable(int artIndex) {
+    return artActivationAvailableRevisions.putIfAbsent(
+      artIndex,
+      () => ValueNotifier<bool>(artActivationAvailable(artIndex)),
+    );
+  }
+
+  void notifyArtActivationAvailableChanged(int artIndex) {
+    if (!mounted || artIndex < 0 || artIndex >= arti.length) return;
+    final current = artActivationAvailable(artIndex);
+    final notifier = artActivationAvailableRevisions.putIfAbsent(
+      artIndex,
+      () => ValueNotifier<bool>(current),
+    );
+    if (notifier.value != current) notifier.value = current;
+  }
+
+  void notifyArtIntegrityChanged(int artIndex) {
+    if (!mounted || artIndex < 0 || artIndex >= arti.length) return;
+    final notifier = artIntegrityRevisions.putIfAbsent(
+      artIndex,
+      () => ValueNotifier<int>(arti[artIndex].integritaCorrente),
+    );
+    if (notifier.value != arti[artIndex].integritaCorrente) {
+      oculumProgressProfileCount('artNotifications');
+      notifier.value = arti[artIndex].integritaCorrente;
+    }
+    notifyArtActivationAvailableChanged(artIndex);
+  }
+
+  void syncArtIntegrityNotifiers() {
+    for (var i = 0; i < arti.length; i++) {
+      notifyArtIntegrityChanged(i);
+    }
+  }
+
+  String artSkillLevelRevisionKey(int artIndex, int skillIndex) {
+    return '$artIndex:$skillIndex';
+  }
+
+  ValueListenable<int> artSkillUiListenable(int artIndex, int skillIndex) {
+    return artSkillUiRevisions.putIfAbsent(
+      artSkillLevelRevisionKey(artIndex, skillIndex),
+      () => ValueNotifier<int>(0),
+    );
+  }
+
+  void notifyArtSkillUiChanged(int artIndex, int skillIndex) {
+    if (!mounted ||
+        artIndex < 0 ||
+        artIndex >= arti.length ||
+        skillIndex < 0 ||
+        skillIndex >= arti[artIndex].skills.length) {
+      return;
+    }
+    final notifier = artSkillUiRevisions.putIfAbsent(
+      artSkillLevelRevisionKey(artIndex, skillIndex),
+      () => ValueNotifier<int>(0),
+    );
+    notifier.value++;
+  }
+
+  ValueListenable<int> artSkillLevelListenable(int artIndex, int skillIndex) {
+    final current =
+        artIndex >= 0 &&
+            artIndex < arti.length &&
+            skillIndex >= 0 &&
+            skillIndex < arti[artIndex].skills.length
+        ? arti[artIndex].skills[skillIndex].livello
+        : 0;
+    return artSkillLevelRevisions.putIfAbsent(
+      artSkillLevelRevisionKey(artIndex, skillIndex),
+      () => ValueNotifier<int>(current),
+    );
+  }
+
+  Listenable artSkillLevelsListenable(int artIndex) {
+    if (artIndex < 0 || artIndex >= arti.length) {
+      return Listenable.merge(const <Listenable>[]);
+    }
+    return Listenable.merge(<Listenable>[
+      for (
+        var skillIndex = 0;
+        skillIndex < arti[artIndex].skills.length;
+        skillIndex++
+      )
+        artSkillLevelListenable(artIndex, skillIndex),
+    ]);
+  }
+
+  void notifyArtSkillLevelChanged(int artIndex, int skillIndex) {
+    if (!mounted ||
+        artIndex < 0 ||
+        artIndex >= arti.length ||
+        skillIndex < 0 ||
+        skillIndex >= arti[artIndex].skills.length) {
+      return;
+    }
+    final current = arti[artIndex].skills[skillIndex].livello;
+    final notifier = artSkillLevelRevisions.putIfAbsent(
+      artSkillLevelRevisionKey(artIndex, skillIndex),
+      () => ValueNotifier<int>(current),
+    );
+    if (notifier.value != current) {
+      oculumProgressProfileCount('artSkillNotifications');
+      notifier.value = current;
+    }
+    notifyArtSkillUiChanged(artIndex, skillIndex);
+  }
+
+  void syncArtSkillLevelNotifiers() {
+    for (var artIndex = 0; artIndex < arti.length; artIndex++) {
+      for (
+        var skillIndex = 0;
+        skillIndex < arti[artIndex].skills.length;
+        skillIndex++
+      ) {
+        notifyArtSkillLevelChanged(artIndex, skillIndex);
+      }
+    }
+  }
+
+  ValueListenable<bool> artUnlockedListenable(int artIndex) {
+    final current = artIndex >= 0 && artIndex < arti.length
+        ? arti[artIndex].sbloccata
+        : false;
+    return artUnlockedRevisions.putIfAbsent(
+      artIndex,
+      () => ValueNotifier<bool>(current),
+    );
+  }
+
+  void notifyArtUnlockedChanged(int artIndex) {
+    if (!mounted || artIndex < 0 || artIndex >= arti.length) return;
+    final current = arti[artIndex].sbloccata;
+    final notifier = artUnlockedRevisions.putIfAbsent(
+      artIndex,
+      () => ValueNotifier<bool>(current),
+    );
+    if (notifier.value != current) notifier.value = current;
+  }
+
+  void syncArtUnlockedNotifiers() {
+    for (var artIndex = 0; artIndex < arti.length; artIndex++) {
+      notifyArtUnlockedChanged(artIndex);
+    }
+  }
+
+  void notifyExperienceChanged() {
+    if (!mounted) return;
+    oculumProgressProfileCount('expNotifications');
+    experienceRevision.value++;
+  }
+
+  void notifyOculumResourceChanged() {
+    if (!mounted) return;
+    oculumResourceRevision.value++;
   }
 
   ValueListenable<int> hiddenEyeStatListenable(HiddenEyeStat stat) {
@@ -903,14 +1152,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   }
 
   String cleanUiText(String value) {
-    var cleaned = value;
-    for (var i = 0; i < 3; i++) {
-      final decoded = decodeMojibakePass(cleaned);
-      if (decoded == cleaned) break;
-      cleaned = decoded;
-    }
-
-    return cleaned.replaceAll('\u00A0', ' ');
+    return oculumCleanMojibakeText(value);
   }
 
   String t(String it, String en) => cleanUiText(linguaInglese ? en : it);
@@ -1066,6 +1308,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final manualSearchController = TextEditingController();
   final themeSearchController = TextEditingController();
   final monsterBookSearchController = TextEditingController();
+  final recipeSearchController = TextEditingController();
 
   final quickSheetNameController = TextEditingController(text: '???');
   final quickSheetLevelController = TextEditingController(text: '0');
@@ -1153,6 +1396,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final List<CharacterArt> arti = [];
   final List<String> diarioPagine = [];
   final List<OculumSessionNote> storySessionNotes = [];
+  final List<OculumRecipe> recipes = [];
   final List<JournalEntry> journalEntries = [];
   final List<DraftNote> draftNotes = [];
   final List<HiddenEyeStat> hiddenEyeStats = [];
@@ -1191,6 +1435,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   Timer? realtimeReconnectTimer;
   Timer? inputUiRefreshTimer;
   Timer? hiddenEyeProgressSaveTimer;
+  Timer? progressJournalSaveTimer;
   Timer? storySessionNotesSaveTimer;
   Timer? lifecycleLocalSaveTimer;
   Timer? lifecycleFocusSettleTimer;
@@ -1239,6 +1484,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   final Map<String, int> hiddenEyeTotalBaseCache = <String, int>{};
   final Map<String, int> hiddenEyeTotalValueCache = <String, int>{};
   bool hiddenEyeDerivedCardsRefreshScheduled = false;
+  String hiddenEyeManagerSelectedGroup = 'resilienza';
+  String hiddenEyeManagerSelectedStatId = '';
+  final ScrollController hiddenEyeManagerScrollController = ScrollController();
   final OculumActionQueue realtimeDiceConsentQueue = OculumActionQueue();
 
   Color primaryColor = defaultPrimaryColor;
@@ -1265,15 +1513,42 @@ class _OculumHomePageState extends State<OculumHomePage>
   String risultato = 'Scegli una statistica e tira il dado.';
   String dadoMostrato = '';
   int dadoMostratoFacce = 20;
+  OculumAggiustaNucleoResult? ultimoRisultatoAggiustaNucleo;
   final ValueNotifier<int> diceResultRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> diceOverlayRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> inputUiRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> hiddenEyeListRevision = ValueNotifier<int>(0);
+  final ValueNotifier<int> experienceRevision = ValueNotifier<int>(0);
+  final ValueNotifier<int> oculumResourceRevision = ValueNotifier<int>(0);
+  final ValueNotifier<int> aggiustaNucleoDisponibileRevision =
+      ValueNotifier<int>(0);
+  final ValueNotifier<int> recipesRevision = ValueNotifier<int>(0);
+  final ValueNotifier<String> recipeSearchQuery = ValueNotifier<String>('');
+  bool recipeMutationInProgress = false;
   final Map<String, ValueNotifier<int>> hiddenEyeStatRevisions =
       <String, ValueNotifier<int>>{};
+  final Map<int, ValueNotifier<int>> artIntegrityRevisions =
+      <int, ValueNotifier<int>>{};
+  final Map<String, ValueNotifier<int>> artSkillLevelRevisions =
+      <String, ValueNotifier<int>>{};
+  final Map<String, ValueNotifier<int>> artSkillUiRevisions =
+      <String, ValueNotifier<int>>{};
+  bool skillOculumUseDialogOpen = false;
+  final Map<int, ValueNotifier<bool>> artUnlockedRevisions =
+      <int, ValueNotifier<bool>>{};
+  final Map<int, ValueNotifier<bool>> artActivationAvailableRevisions =
+      <int, ValueNotifier<bool>>{};
+  final Map<String, dynamic> progressJournalSheets = <String, dynamic>{};
+  Future<void> progressJournalWriteChain = Future<void>.value();
+  int progressJournalRevision = 0;
+  int artIntegrityColorThemeSignature = -1;
+  Color? cachedArtIntegrityStartColor;
+  final Map<String, Color> cachedArtIntegrityColors = <String, Color>{};
 
   bool tiroCriticoUno = false;
   bool tiroCriticoVenti = false;
+  String lastValidRollSnapshot = '';
+  bool lastValidRollCancelled = false;
 
   String dadoOverlay = '';
   int dadoOverlayFacce = 20;
@@ -1285,11 +1560,18 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool overlayCriticoVenti = false;
 
   String ultimoEventoRiposo = 'Nessun evento di riposo registrato.';
+  int artIntegrityRestIndex = 0;
+  bool longRestInProgress = false;
+  bool aggiustaNucleoUsato = false;
+  bool aggiustaNucleoInCorso = false;
   String statoForzaAttivo = '';
   bool statoForzaPronto = true;
   int statoForzaTiriRimanenti = 0;
   int malusTiriOculumPostEsplosione = 0;
   bool personaggioSvenuto = false;
+  bool sottoStress = false;
+  bool sottoStressManuale = false;
+  final Map<String, int> stressStatConsumptionProgress = <String, int>{};
   int cenereSvenimentoUltimoControllo = 0;
   bool personaggioCaduto = false;
   int feriteMorte = 0;
@@ -1308,6 +1590,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool dannoOltreScudi = false;
   int expMilestoneRegenClaimed = 0;
   int expHundredRegenRemainder = 0;
+  int temporaryOculum = 0;
+  int temporaryOculumRollsRemaining = 0;
 
   int raccoltaResilienzaSpesa = 0;
   int raccoltaVolontaSpesa = 0;
@@ -1434,6 +1718,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   int masterInitiativeRound = 1;
   int masterInitiativeActiveIndex = 0;
   int masterInitiativeManualCounter = 0;
+  int playerReportedTurn = 0;
+  int automaticAshLastCheckedTurn = 0;
+  final List<Map<String, dynamic>> activeStructuredEffects = [];
   Map<String, dynamic> realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
   final ValueNotifier<Map<String, dynamic>?> realtimeDungeonMessage =
       ValueNotifier<Map<String, dynamic>?>(null);
@@ -1494,6 +1781,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     'Impostazioni',
     'Online',
     'Sessione Dadi',
+    'Ricette',
   ];
 
   final List<String> pageNamesEn = [
@@ -1511,6 +1799,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     'Settings',
     'Online',
     'Dice Session',
+    'Recipes',
   ];
 
   final List<DamageModifierOption> modificatoriDanno = [
@@ -2737,6 +3026,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       mapPageIndex,
       if (includeSettings) settingsPageIndex,
       onlinePageIndex,
+      recipesPageIndex,
     ];
 
     return indexes;
@@ -2929,6 +3219,8 @@ class _OculumHomePageState extends State<OculumHomePage>
         return onlinePage();
       case dicePageIndex:
         return dicePage();
+      case recipesPageIndex:
+        return recipesPage();
       default:
         return characterPage();
     }
@@ -3037,6 +3329,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     realtimeSheetShareDebounceTimer?.cancel();
     realtimeReconnectTimer?.cancel();
     hiddenEyeProgressSaveTimer?.cancel();
+    progressJournalSaveTimer?.cancel();
     storySessionNotesSaveTimer?.cancel();
     vttRealtimeDebounceTimer?.cancel();
     vttPingCleanupTimer?.cancel();
@@ -3088,13 +3381,37 @@ class _OculumHomePageState extends State<OculumHomePage>
     realtimeDungeonMessage.dispose();
     diceResultRevision.dispose();
     diceOverlayRevision.dispose();
+    oculumResourceRevision.dispose();
     inputUiRevision.dispose();
     hiddenEyeListRevision.dispose();
+    hiddenEyeManagerScrollController.dispose();
+    experienceRevision.dispose();
+    aggiustaNucleoDisponibileRevision.dispose();
     vttCanvasRevision.dispose();
     for (final notifier in hiddenEyeStatRevisions.values) {
       notifier.dispose();
     }
     hiddenEyeStatRevisions.clear();
+    for (final notifier in artIntegrityRevisions.values) {
+      notifier.dispose();
+    }
+    artIntegrityRevisions.clear();
+    for (final notifier in artSkillLevelRevisions.values) {
+      notifier.dispose();
+    }
+    artSkillLevelRevisions.clear();
+    for (final notifier in artSkillUiRevisions.values) {
+      notifier.dispose();
+    }
+    artSkillUiRevisions.clear();
+    for (final notifier in artUnlockedRevisions.values) {
+      notifier.dispose();
+    }
+    artUnlockedRevisions.clear();
+    for (final notifier in artActivationAvailableRevisions.values) {
+      notifier.dispose();
+    }
+    artActivationAvailableRevisions.clear();
     realtimeDiceConsentQueue.clear();
     buffMalusRapidiController.dispose();
     dannoSubitoController.dispose();
@@ -3216,6 +3533,9 @@ class _OculumHomePageState extends State<OculumHomePage>
     masterInitiativeBonusController.dispose();
     masterInitiativeNotesController.dispose();
     sheetCodeController.dispose();
+    recipeSearchController.dispose();
+    recipeSearchQuery.dispose();
+    recipesRevision.dispose();
 
     monsterPointAmountController.dispose();
 
@@ -3258,6 +3578,8 @@ class _OculumHomePageState extends State<OculumHomePage>
         return Icons.public;
       case dicePageIndex:
         return Icons.casino;
+      case recipesPageIndex:
+        return Icons.menu_book_outlined;
       default:
         return Icons.radio_button_unchecked;
     }
@@ -3568,6 +3890,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       'OCULUM — ${t('IMPOSTAZIONI', 'SETTINGS')}',
       'OCULUM — ONLINE',
       'OCULUM — ${t('DADI', 'DICE')}',
+      'OCULUM — ${t('RICETTE', 'RECIPES')}',
     ];
 
     final int safePage = paginaVisibileSicura(

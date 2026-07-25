@@ -513,6 +513,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         case 'initiative_shared':
           receiveRealtimeInitiativeSnapshot(payload);
           break;
+        case 'initiative_turn_adjusted':
+          receiveRealtimeReportedTurn(payload);
+          break;
         case 'dungeon_shared':
           realtimeDungeonMessage.value = Map<String, dynamic>.from(payload);
           rememberRealtimeDungeonHost(payload);
@@ -792,6 +795,11 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         return t(
           '$player ha inviato la Fight - Round ${snapshot['round'] ?? '?'} - Turni ${snapshot['turnCount'] ?? '?'}.',
           '$player sent the Fight - Round ${snapshot['round'] ?? '?'} - Turns ${snapshot['turnCount'] ?? '?'}.',
+        );
+      case 'initiative_turn_adjusted':
+        return t(
+          '$player ha riportato il proprio turno a ${payload['turn'] ?? 0}.',
+          '$player reported their turn as ${payload['turn'] ?? 0}.',
         );
       case 'dungeon_shared':
         return t(
@@ -1513,6 +1521,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'initiativeTotal': readIntValue(
               masterInitiativeTokens[i]['initiativeTotal'],
             ),
+            'reportedTurn': max(
+              0,
+              readIntValue(masterInitiativeTokens[i]['reportedTurn']),
+            ),
             'active': i == safeActive,
           },
       ],
@@ -1535,6 +1547,24 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (snapshotRaw is! Map) return;
     realtimeVisibleInitiativeSnapshot =
         jsonDecode(jsonEncode(snapshotRaw)) as Map<String, dynamic>;
+    final currentTag = sheetTagAt(schedaCorrente);
+    final snapshotTokens = realtimeVisibleInitiativeSnapshot['tokens'];
+    if (snapshotTokens is List) {
+      for (final raw in snapshotTokens.whereType<Map>()) {
+        final token = Map<String, dynamic>.from(raw);
+        if ('${token['id'] ?? token['sheetTag'] ?? ''}' != currentTag) {
+          continue;
+        }
+        final reported = max(0, readIntValue(token['reportedTurn']));
+        if (reported > playerReportedTurn) {
+          for (var i = playerReportedTurn; i < reported; i++) {
+            tickStructuredAbilityCooldowns('turni', scheduleSave: false);
+          }
+        }
+        playerReportedTurn = reported;
+        break;
+      }
+    }
     final realtimeTokens = realtimeVisibleInitiativeSnapshot['tokens'];
     if (realtimeTokens is! List || realtimeTokens.isEmpty) {
       clearTemporaryCombatResistanceEffects();
@@ -1544,6 +1574,57 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'Fight updated by the Master.',
     );
     aggiungiLog(risultato);
+  }
+
+  void sendRealtimeReportedTurn({
+    required String sheetTag,
+    required int turn,
+    required String senderRole,
+  }) {
+    final service = realtimeService;
+    if (service?.isConnected != true) return;
+    unawaited(
+      service!.sendInitiativeTurnAdjusted(
+        senderRole: senderRole,
+        campaignId: activeCampaignId,
+        campaignName: activeCampaignName(),
+        sheetTag: sheetTag,
+        turn: max(0, turn),
+      ),
+    );
+  }
+
+  void receiveRealtimeReportedTurn(Map<String, dynamic> payload) {
+    final targetTag = '${payload['sheetTag'] ?? ''}'.trim();
+    if (targetTag.isEmpty) return;
+    final turn = max(0, readIntValue(payload['turn']));
+    final senderRole = '${payload['senderRole'] ?? 'player'}';
+    if (realtimeIsMasterRole && senderRole != 'master') {
+      final index = masterInitiativeTokens.indexWhere(
+        (token) =>
+            '${token['sheetTag'] ?? token['id'] ?? ''}'.trim() == targetTag,
+      );
+      if (index < 0) return;
+      masterInitiativeTokens[index]['reportedTurn'] = turn;
+      masterInitiativeTokens[index]['updatedAt'] = DateTime.now()
+          .toIso8601String();
+      programmaSalvataggio(invalidateCaches: false);
+      sendRealtimeInitiativeSnapshotIfPublished();
+      return;
+    }
+    if (!realtimeIsMasterRole &&
+        senderRole == 'master' &&
+        targetTag == sheetTagAt(schedaCorrente)) {
+      final previousTurn = playerReportedTurn;
+      if (turn > playerReportedTurn) {
+        for (var i = playerReportedTurn; i < turn; i++) {
+          tickStructuredAbilityCooldowns('turni', scheduleSave: false);
+        }
+      }
+      playerReportedTurn = turn;
+      applyAutomaticAshForTurnProgress(previousTurn, turn);
+      programmaSalvataggio(invalidateCaches: false);
+    }
   }
 
   void sendRealtimeInitiativeSnapshot({bool close = false}) {

@@ -41,6 +41,9 @@ extension _OculumCampaigns on _OculumHomePageState {
       'storySessionNotes': storySessionNotes
           .map((note) => note.toJson())
           .toList(growable: false),
+      'recipes': recipes
+          .map((recipe) => recipe.toJson())
+          .toList(growable: false),
       'mapMode': mapMode,
       'mapImagePath': mapImagePath,
       'mapImageName': mapImageName,
@@ -120,6 +123,9 @@ extension _OculumCampaigns on _OculumHomePageState {
       'storySessionNotes': oculumSessionNotesFromJson(
         data['storySessionNotes'],
       ).map((note) => note.toJson()).toList(growable: false),
+      'recipes': ((data['recipes'] ?? data['ricette']) is List
+          ? (data['recipes'] ?? data['ricette']) as List
+          : const <dynamic>[]),
       'mapMode': '${data['mapMode'] ?? 'image'}',
       'mapImagePath': '${data['mapImagePath'] ?? ''}',
       'mapImageName': '${data['mapImageName'] ?? ''}',
@@ -229,6 +235,18 @@ extension _OculumCampaigns on _OculumHomePageState {
     storySessionNotes
       ..clear()
       ..addAll(oculumSessionNotesFromJson(campaign['storySessionNotes']));
+    final recipesRaw = campaign['recipes'] ?? campaign['ricette'];
+    recipes
+      ..clear()
+      ..addAll(
+        (recipesRaw is List ? recipesRaw : const <dynamic>[])
+            .whereType<Map>()
+            .map(
+              (recipe) =>
+                  OculumRecipe.fromJson(Map<String, dynamic>.from(recipe)),
+            ),
+      );
+    recipesRevision.value++;
     mapMode = '${campaign['mapMode'] ?? 'image'}' == 'online'
         ? 'online'
         : 'image';
@@ -302,6 +320,8 @@ extension _OculumCampaigns on _OculumHomePageState {
         ..clear()
         ..add(emptySheet);
       storySessionNotes.clear();
+      recipes.clear();
+      recipesRevision.value++;
       temporaryCombatResistanceEffects.clear();
       resetVttForNewCampaign();
       schedaCorrente = 0;

@@ -1,5 +1,96 @@
 part of '../../main.dart';
 
+int? _oculumWindows1252Byte(int codePoint) {
+  if (codePoint <= 0xFF) return codePoint;
+
+  const mapped = <int, int>{
+    0x20AC: 0x80,
+    0x201A: 0x82,
+    0x0192: 0x83,
+    0x201E: 0x84,
+    0x2026: 0x85,
+    0x2020: 0x86,
+    0x2021: 0x87,
+    0x02C6: 0x88,
+    0x2030: 0x89,
+    0x0160: 0x8A,
+    0x2039: 0x8B,
+    0x0152: 0x8C,
+    0x017D: 0x8E,
+    0x2018: 0x91,
+    0x2019: 0x92,
+    0x201C: 0x93,
+    0x201D: 0x94,
+    0x2022: 0x95,
+    0x2013: 0x96,
+    0x2014: 0x97,
+    0x02DC: 0x98,
+    0x2122: 0x99,
+    0x0161: 0x9A,
+    0x203A: 0x9B,
+    0x0153: 0x9C,
+    0x017E: 0x9E,
+    0x0178: 0x9F,
+  };
+
+  return mapped[codePoint];
+}
+
+String _oculumDecodeMojibakePass(String value) {
+  final runes = value.runes.toList(growable: false);
+  final output = StringBuffer();
+
+  for (var index = 0; index < runes.length; index++) {
+    final firstByte = _oculumWindows1252Byte(runes[index]);
+    var sequenceLength = 0;
+    if (firstByte != null) {
+      if (firstByte >= 0xC2 && firstByte <= 0xDF) {
+        sequenceLength = 2;
+      } else if (firstByte >= 0xE0 && firstByte <= 0xEF) {
+        sequenceLength = 3;
+      } else if (firstByte >= 0xF0 && firstByte <= 0xF4) {
+        sequenceLength = 4;
+      }
+    }
+
+    if (sequenceLength > 0 && index + sequenceLength <= runes.length) {
+      final bytes = <int>[];
+      var encodable = true;
+      for (var offset = 0; offset < sequenceLength; offset++) {
+        final byte = _oculumWindows1252Byte(runes[index + offset]);
+        if (byte == null) {
+          encodable = false;
+          break;
+        }
+        bytes.add(byte);
+      }
+      if (encodable) {
+        try {
+          output.write(utf8.decode(bytes, allowMalformed: false));
+          index += sequenceLength - 1;
+          continue;
+        } catch (_) {
+          // La sequenza non era mojibake: conserva il carattere originale.
+        }
+      }
+    }
+
+    output.writeCharCode(runes[index]);
+  }
+
+  return output.toString();
+}
+
+String oculumCleanMojibakeText(String value) {
+  var cleaned = value;
+  for (var i = 0; i < 5; i++) {
+    final decoded = _oculumDecodeMojibakePass(cleaned);
+    if (decoded == cleaned) break;
+    cleaned = decoded;
+  }
+  return cleaned.replaceAll('\u00A0', ' ');
+}
+
 int readIntValue(dynamic value, {int fallback = 0}) {
   if (value is int) return value;
   if (value is num) return value.toInt();
@@ -56,10 +147,67 @@ int oculumRollExperienceGain({
   required int previousRemainder,
   required int experienceGained,
 }) {
-  final total =
-      (previousRemainder.clamp(0, 99).toInt() + max(0, experienceGained))
-          .toInt();
-  return (recoveries: total ~/ 100, remainder: total % 100);
+  return oculumExperienceRecoveryProgress(
+    previousRemainder: previousRemainder,
+    experienceGained: experienceGained,
+    threshold: 100,
+  );
+}
+
+({int recoveries, int remainder}) oculumExperienceRecoveryProgress({
+  required int previousRemainder,
+  required int experienceGained,
+  required int threshold,
+}) {
+  final safeThreshold = max(1, threshold);
+  final total = (max(0, previousRemainder) + max(0, experienceGained)).toInt();
+  return (recoveries: total ~/ safeThreshold, remainder: total % safeThreshold);
+}
+
+({
+  int periodicThreshold,
+  int periodicHp,
+  int milestoneHpDivisor,
+  int milestoneOculumDivisor,
+  int milestoneShieldDivisor,
+})
+oculumExperienceRecoveryProfile(String difficulty) {
+  switch (difficulty.trim().toLowerCase()) {
+    case 'facile':
+    case 'easy':
+      return (
+        periodicThreshold: 100,
+        periodicHp: 4,
+        milestoneHpDivisor: 5,
+        milestoneOculumDivisor: 4,
+        milestoneShieldDivisor: 10,
+      );
+    case 'difficile':
+    case 'hard':
+      return (
+        periodicThreshold: 200,
+        periodicHp: 2,
+        milestoneHpDivisor: 8,
+        milestoneOculumDivisor: 6,
+        milestoneShieldDivisor: 20,
+      );
+    case 'oculum':
+      return (
+        periodicThreshold: 300,
+        periodicHp: 1,
+        milestoneHpDivisor: 10,
+        milestoneOculumDivisor: 8,
+        milestoneShieldDivisor: 30,
+      );
+    default:
+      return (
+        periodicThreshold: 150,
+        periodicHp: 3,
+        milestoneHpDivisor: 6,
+        milestoneOculumDivisor: 5,
+        milestoneShieldDivisor: 15,
+      );
+  }
 }
 
 int oculumLowResourceDustChance({required int current, required int maximum}) {
@@ -1810,7 +1958,7 @@ class _OculumFormulaParser {
     }
     if (tok.type == 'variable') {
       pos++;
-      final key = oculumStatKey(tok.text);
+      final key = oculumFormulaVariableKey(tok.text, vars);
       if (key.isEmpty || !vars.containsKey(key)) {
         throw FormatException('Variabile sconosciuta: ${tok.text}.');
       }
@@ -1818,6 +1966,23 @@ class _OculumFormulaParser {
     }
     throw FormatException('Token non valido: ${tok.text}.');
   }
+}
+
+String oculumDynamicFormulaKey(String value) {
+  return oculumNormalizeText(value)
+      .trim()
+      .replaceAll(RegExp(r'[^a-z0-9_]+'), '_')
+      .replaceAll(RegExp(r'_+'), '_')
+      .replaceAll(RegExp(r'^_|_$'), '');
+}
+
+String oculumFormulaVariableKey(String value, Map<String, num> vars) {
+  final builtIn = oculumStatKey(value);
+  if (builtIn.isNotEmpty) return builtIn;
+  final dynamicKey = oculumDynamicFormulaKey(value);
+  if (vars.containsKey(dynamicKey)) return dynamicKey;
+  final compact = dynamicKey.replaceAll('_', '');
+  return vars.containsKey(compact) ? compact : '';
 }
 
 List<_OculumToken> _oculumTokenizeFormula(String input) {
@@ -1888,9 +2053,10 @@ List<_OculumToken> _oculumTokenizeFormula(String input) {
       }
       continue;
     }
-    if (_oculumIsLatinLetter(ch)) {
+    if (_oculumIsLatinLetter(ch) || ch == '_') {
       final start = i;
-      while (i < input.length && _oculumIsLatinLetter(input[i])) {
+      while (i < input.length &&
+          (_oculumIsLatinLetter(input[i]) || input[i] == '_')) {
         i++;
       }
       addToken(_OculumToken('variable', input.substring(start, i), 0));
@@ -2049,7 +2215,7 @@ List<OculumFormulaCommand> oculumParseFormulaCommands(
   );
   for (final match in regex.allMatches(normalizedText)) {
     final rawKeyText = match.group(1) ?? match.group(4) ?? '';
-    var key = oculumStatKey(rawKeyText);
+    var key = oculumFormulaVariableKey(rawKeyText, vars);
     var sign = (match.group(2) ?? match.group(5)) == '-' ? -1 : 1;
     var expression = (match.group(3) ?? match.group(6) ?? '').trim();
     var element = '';

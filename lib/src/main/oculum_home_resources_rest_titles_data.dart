@@ -31,6 +31,151 @@ int oculumLongRestHpTarget({required int currentHp, required int maxHp}) {
   return max(safeCurrent, seventyFivePercent);
 }
 
+int oculumArtMaximumValue({required int level, required int grade}) {
+  return 100 + max(0, level) * 20 + max(0, grade) * 100;
+}
+
+int oculumArtLongRestRecovery(
+  int maximum, {
+  bool limitedAfterFullExhaustion = false,
+}) {
+  final safeMaximum = max(0, maximum);
+  return limitedAfterFullExhaustion
+      ? (safeMaximum / 10).ceil()
+      : (safeMaximum / 4).ceil();
+}
+
+int oculumArtRecoveredValue({
+  required int current,
+  required int maximum,
+  bool limitedAfterFullExhaustion = false,
+}) {
+  final safeMaximum = max(0, maximum);
+  return (max(0, current) +
+          oculumArtLongRestRecovery(
+            safeMaximum,
+            limitedAfterFullExhaustion: limitedAfterFullExhaustion,
+          ))
+      .clamp(0, safeMaximum)
+      .toInt();
+}
+
+const int oculumArtActivationCost = 10;
+
+int oculumArtUseCostForDifficulty(int baseCost, String difficulty) {
+  final safeCost = max(0, baseCost);
+  final normalized = difficulty.trim().toLowerCase();
+  return normalized == 'difficile' ||
+          normalized == 'hard' ||
+          normalized == 'oculum'
+      ? safeCost * 2
+      : safeCost;
+}
+
+({int plusOneDt, int plusThreeDt}) oculumArtLowIntegrityDebuffChances(
+  String difficulty,
+) {
+  final normalized = difficulty.trim().toLowerCase();
+  if (normalized == 'oculum') return (plusOneDt: 20, plusThreeDt: 15);
+  if (normalized == 'difficile' || normalized == 'hard') {
+    return (plusOneDt: 15, plusThreeDt: 10);
+  }
+  return (plusOneDt: 10, plusThreeDt: 5);
+}
+
+bool oculumArtIsAtOrBelowLowIntegrity({
+  required int current,
+  required int maximum,
+}) {
+  final safeMaximum = max(0, maximum);
+  if (safeMaximum <= 0) return false;
+  return max(0, current) * 4 <= safeMaximum;
+}
+
+int oculumArtLowIntegrityDtForRoll({
+  required int roll,
+  required String difficulty,
+}) {
+  final safeRoll = roll.clamp(0, 99).toInt();
+  final chances = oculumArtLowIntegrityDebuffChances(difficulty);
+  if (safeRoll < chances.plusOneDt) return 1;
+  if (safeRoll < chances.plusOneDt + chances.plusThreeDt) return 3;
+  return 0;
+}
+
+int oculumArtSkillLevelChangeCost({
+  required int previousLevel,
+  required int nextLevel,
+  int stepCost = oculumArtActivationCost,
+}) {
+  final safePrevious = max(0, previousLevel);
+  final safeNext = max(0, nextLevel);
+  final safeStepCost = max(0, stepCost);
+  if (safeNext == 0 || safeNext == safePrevious) return 0;
+  if (safePrevious == 0) return safeNext * safeStepCost;
+  return (safeNext - safePrevious).abs() * safeStepCost;
+}
+
+bool oculumArtCanActivate(int current, {int cost = oculumArtActivationCost}) {
+  return max(0, current) >= max(0, cost);
+}
+
+int oculumArtValueAfterActivation(
+  int current, {
+  int cost = oculumArtActivationCost,
+}) {
+  final safeCurrent = max(0, current);
+  final safeCost = max(0, cost);
+  return oculumArtCanActivate(safeCurrent, cost: safeCost)
+      ? safeCurrent - safeCost
+      : safeCurrent;
+}
+
+int oculumAggiustaNucleoRoundedTotal(int total) {
+  final safeTotal = max(0, total);
+  final units = safeTotal % 10;
+  final rounded = units <= 5 ? safeTotal - units : safeTotal + (10 - units);
+  return max(10, rounded);
+}
+
+int oculumAggiustaNucleoEffectiveRecovery({
+  required int current,
+  required int maximum,
+  required int roundedTotal,
+}) {
+  final safeMaximum = max(0, maximum);
+  final safeCurrent = current.clamp(0, safeMaximum).toInt();
+  return min(max(0, roundedTotal), safeMaximum - safeCurrent);
+}
+
+class OculumAggiustaNucleoResult {
+  const OculumAggiustaNucleoResult({
+    required this.message,
+    required this.artName,
+    required this.d10,
+    required this.medicine,
+    required this.rawTotal,
+    required this.roundedTotal,
+    required this.effectiveRecovery,
+    required this.lostRecovery,
+    required this.integrityBefore,
+    required this.integrityAfter,
+    required this.integrityMaximum,
+  });
+
+  final String message;
+  final String artName;
+  final int d10;
+  final int medicine;
+  final int rawTotal;
+  final int roundedTotal;
+  final int effectiveRecovery;
+  final int lostRecovery;
+  final int integrityBefore;
+  final int integrityAfter;
+  final int integrityMaximum;
+}
+
 extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   // RISORSE / ISPIRAZIONI / KARMA
   // =====================================================
@@ -139,10 +284,11 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
     setState(() {
       ispirazioniController.text = (valore - 1).toString();
+      final cancelled = cancelPreviousRollForInspiration();
 
       risultato = t(
-        'Ispirazione usata: puoi ritirare un tiro non critico.',
-        'Inspiration used: you may reroll a non-critical roll.',
+        '$cancelled\nIspirazione usata: il tiro precedente non vale e puoi ritirare un tiro non critico.',
+        '$cancelled\nInspiration used: the previous roll does not count and you may reroll a non-critical roll.',
       );
 
       aggiungiLog(risultato);
@@ -167,10 +313,11 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
     setState(() {
       superIspirazioniController.text = (valore - 1).toString();
+      final cancelled = cancelPreviousRollForInspiration();
 
       risultato = t(
-        'Super Ispirazione usata: puoi ritirare anche un critico.',
-        'Super Inspiration used: you may reroll even a critical roll.',
+        '$cancelled\nSuper Ispirazione usata: il tiro precedente non vale e puoi ritirare anche un critico.',
+        '$cancelled\nSuper Inspiration used: the previous roll does not count and you may reroll even a critical roll.',
       );
 
       aggiungiLog(risultato);
@@ -195,10 +342,11 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
     setState(() {
       ispirazioniOculumController.text = (valore - 1).toString();
+      final cancelled = cancelPreviousRollForInspiration();
 
       risultato = t(
-        'Ispirazione Oculum usata: puoi ritirare un critico mantenendolo critico.',
-        'Oculum Inspiration used: you may reroll a critical roll while keeping it critical.',
+        '$cancelled\nIspirazione Oculum usata: il tiro precedente non vale e puoi ritirare un critico mantenendolo critico.',
+        '$cancelled\nOculum Inspiration used: the previous roll does not count and you may reroll a critical roll while keeping it critical.',
       );
 
       aggiungiLog(risultato);
@@ -239,24 +387,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   String normalizedCampaignDifficulty([String? value]) {
-    final raw = (value ?? campaignDifficulty).trim().toLowerCase();
-    switch (raw) {
-      case 'facile':
-      case 'easy':
-        return 'facile';
-      case 'difficile':
-      case 'hard':
-        return 'difficile';
-      case 'oculum':
-        return 'oculum';
-      case 'medio':
-      case 'media':
-      case 'medium':
-      case 'normale':
-      case 'normal':
-      default:
-        return 'normale';
-    }
+    return normalizeTemporaryOculumDifficulty(value ?? campaignDifficulty);
   }
 
   String campaignDifficultyLabel([String? value]) {
@@ -932,6 +1063,11 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void riposoLungo() {
+    if (longRestInProgress) return;
+    longRestInProgress = true;
+    final changedArtIndexes = <int>[];
+    var limitedArtRecoveries = 0;
+    final aggiustaNucleoEraUsato = aggiustaNucleoUsato;
     setState(() {
       final cenere = leggiNumero(cenereController);
       final rimuoveMalusEsplosione = malusTiriOculumPostEsplosione < 0;
@@ -966,6 +1102,31 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         maxHp: maxHp(),
       ).toString();
       malusTiriOculumPostEsplosione = 0;
+      aggiustaNucleoUsato = false;
+
+      for (var i = 0; i < arti.length; i++) {
+        final art = arti[i];
+        if (!art.sbloccata) continue;
+        ensureArtIntegrityValue(i);
+        final maximum = artIntegrityMaximum();
+        final limitedRecovery = art.esaurimentoCompleto;
+        final recovered = oculumArtRecoveredValue(
+          current: art.integritaCorrente,
+          maximum: maximum,
+          limitedAfterFullExhaustion: limitedRecovery,
+        );
+        var artChanged = false;
+        if (recovered != art.integritaCorrente) {
+          art.integritaCorrente = recovered;
+          artChanged = true;
+        }
+        if (limitedRecovery) {
+          art.esaurimentoCompleto = false;
+          limitedArtRecoveries++;
+          artChanged = true;
+        }
+        if (artChanged) changedArtIndexes.add(i);
+      }
 
       ultimoEventoRiposo = t(
         'Riposo lungo completato: dura 1 ora e mezza. Recupera metà Resilienza negativa, tutto Oculum negativo, tutte le stats attuali, 50% di Cenere minimo 3 e porta gli HP ad almeno il 75% del massimale.',
@@ -977,11 +1138,37 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
           '\nOculum Burst penalty removed.',
         );
       }
+      if (limitedArtRecoveries > 0) {
+        ultimoEventoRiposo += t(
+          '\n$limitedArtRecoveries Art completamente esaurite hanno recuperato solo il 10%; dai prossimi riposi torneranno al recupero normale.',
+          '\n$limitedArtRecoveries fully exhausted Arts recovered only 10%; normal recovery resumes from the next rests.',
+        );
+      }
+      if (aggiustaNucleoEraUsato) {
+        ultimoEventoRiposo += t(
+          '\nAggiusta nucleo è di nuovo disponibile: scegli un’Art per usarlo.',
+          '\nRepair core is available again: choose an Art to use it.',
+        );
+      }
 
       risultato = ultimoEventoRiposo;
       aggiungiLog(risultato);
     });
 
+    for (final index in changedArtIndexes) {
+      notifyArtIntegrityChanged(index);
+    }
+    notifyAggiustaNucleoDisponibilitaChanged();
+
+    Timer(const Duration(milliseconds: 450), () {
+      if (!mounted) return;
+      longRestInProgress = false;
+    });
+
+    if (changedArtIndexes.isNotEmpty) {
+      scheduleArtIntegritySave(changedArtIndexes, immediate: true);
+    }
+    recordAggiustaNucleoProgress(immediate: true);
     programmaSalvataggio();
   }
 
@@ -1157,7 +1344,10 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     );
   }
 
-  void controllaTitoliDelFatoAutomatici({bool silenzioso = false}) {
+  void controllaTitoliDelFatoAutomatici({
+    bool silenzioso = false,
+    bool salva = true,
+  }) {
     if (arti.isEmpty || arti.first.skills.length < 3) {
       if (!silenzioso) {
         setState(() {
@@ -1169,7 +1359,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
           aggiungiLog(risultato);
         });
 
-        programmaSalvataggio();
+        if (salva) programmaSalvataggio();
       }
 
       return;
@@ -1177,7 +1367,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
     int creati = 0;
 
-    setState(() {
+    void runCheck() {
       final primaArt = arti.first;
       final primaSkill = primaArt.skills[0];
       final secondaSkill = primaArt.skills[1];
@@ -1266,9 +1456,15 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
         aggiungiLog(risultato);
       }
-    });
+    }
 
-    programmaSalvataggio();
+    if (silenzioso) {
+      runCheck();
+    } else {
+      setState(runCheck);
+    }
+
+    if (salva) programmaSalvataggio();
   }
 
   void creaPrimoTitoloDelFato() {
@@ -1351,8 +1547,18 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       ensureCampaignStarterRewards(rewardLog);
       diarioRewardClaimedCount = max(diarioRewardClaimedCount, numero);
       grantDiaryRewardsByCampaign(numero, rewardLog);
-      diarioPagine.add(
-        'Pagina $numero - Scrivi qui memoria, sogni, colpe, legami, scoperte o ferite della sessione.',
+      final testoIniziale =
+          'Pagina $numero - Scrivi qui memoria, sogni, colpe, legami, scoperte o ferite della sessione.';
+      diarioPagine.add(testoIniziale);
+      journalEntries.add(
+        JournalEntry(
+          title: 'Pagina Diario $numero',
+          description: testoIniziale,
+          cycleDay: 0,
+          phase: '',
+          location: '',
+          legacyPageIndex: numero - 1,
+        ),
       );
 
       risultato = t(
@@ -1363,6 +1569,41 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    programmaSalvataggio();
+  }
+
+  void assicuraDatabaseDiariCompleto() {
+    final indiciGiaCollegati = journalEntries
+        .map((entry) => entry.legacyPageIndex)
+        .whereType<int>()
+        .toSet();
+    for (int i = 0; i < diarioPagine.length; i++) {
+      if (indiciGiaCollegati.contains(i)) continue;
+      journalEntries.add(
+        JournalEntry(
+          title: 'Pagina Diario ${i + 1}',
+          description: diarioPagine[i],
+          cycleDay: 0,
+          phase: '',
+          location: '',
+          legacyPageIndex: i,
+        ),
+      );
+    }
+  }
+
+  void aggiungiVoceDatabaseDiario() {
+    setState(() {
+      journalEntries.add(
+        JournalEntry(
+          title: t('Nuova voce diario', 'New diary entry'),
+          description: '',
+          cycleDay: 0,
+          phase: '',
+          location: '',
+        ),
+      );
+    });
     programmaSalvataggio();
   }
 

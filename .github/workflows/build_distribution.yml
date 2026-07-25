@@ -116,6 +116,22 @@ jobs:
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}" \
             "--dart-define=OculumOAuthRedirectUrl=com.mich.oculum://login-callback"
 
+      - name: Sign with Developer ID and notarize with Apple
+        shell: bash
+        env:
+          APPLE_DEVELOPER_ID_CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_BASE64 }}
+          APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          APP_PATH=$(find build/macos/Build/Products/Release -maxdepth 1 -type d -name "*.app" -print -quit)
+          test -n "$APP_PATH"
+          bash scripts/sign_and_notarize_macos.sh \
+            "$APP_PATH" \
+            build/distribution/Oculum-macOS.zip
+
       - name: Copy macOS build to distribution
         run: |
           mkdir -p build/distribution/macos
@@ -127,8 +143,7 @@ jobs:
           fi
 
           cp -R "$APP_PATH" build/distribution/macos/
-          APP_NAME=$(basename "$APP_PATH")
-          ditto -c -k --sequesterRsrc --keepParent "build/distribution/macos/$APP_NAME" build/distribution/Oculum-macOS.zip
+          test -f build/distribution/Oculum-macOS.zip
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
@@ -190,6 +205,91 @@ jobs:
         with:
           name: Oculum-iOS-unsigned
           path: build/distribution/Oculum-iOS-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux desktop build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libgtk-3-dev \
+            liblzma-dev \
+            libsecret-1-dev \
+            xvfb
+
+      - name: Setup Java for native package hooks
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Create Linux platform if missing
+        run: |
+          if [ ! -d "linux" ]; then
+            flutter create --platforms=linux .
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze Linux-compatible Dart code
+        run: flutter analyze
+
+      - name: Build Linux release
+        shell: bash
+        env:
+          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          flutter build linux --release \
+            "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}" \
+            "--dart-define=OculumOAuthRedirectUrl=com.mich.oculum://login-callback"
+
+      - name: Smoke-test Linux startup
+        shell: bash
+        run: |
+          set +e
+          timeout 20s xvfb-run -a \
+            build/linux/x64/release/bundle/oculum \
+            > build/linux-startup.log 2>&1
+          status=$?
+          set -e
+          cat build/linux-startup.log
+          if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then
+            echo "Oculum exited unexpectedly during the Linux startup test."
+            exit "$status"
+          fi
+
+      - name: Package Linux release
+        run: bash scripts/package_linux_release.sh
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Oculum-Linux
+          path: build/distribution/Oculum-Linux-x64.tar.gz
           if-no-files-found: error
           retention-days: 14
 

@@ -26,6 +26,123 @@ String _oculumRawSampleSignature(String raw) {
   return '$length:${start.hashCode}:${middle.hashCode}:${end.hashCode}';
 }
 
+Map<String, dynamic> oculumPreparePortraitEditorPreview(
+  Map<String, dynamic> input,
+) {
+  final rawBytes = input['bytes'];
+  if (rawBytes is! Uint8List || rawBytes.isEmpty) {
+    return <String, dynamic>{};
+  }
+  img.Image? decoded;
+  try {
+    decoded = img.decodeImage(rawBytes);
+  } catch (_) {
+    return <String, dynamic>{};
+  }
+  if (decoded == null || decoded.width <= 0 || decoded.height <= 0) {
+    return <String, dynamic>{};
+  }
+
+  final requestedDimension = (input['maxDimension'] as num?)?.toInt() ?? 512;
+  final maxDimension = requestedDimension.clamp(256, 768);
+  img.Image preview = decoded;
+  final largestSide = max(decoded.width, decoded.height);
+  if (largestSide > maxDimension) {
+    final scale = maxDimension / largestSide;
+    preview = img.copyResize(
+      decoded,
+      width: max(1, (decoded.width * scale).round()),
+      height: max(1, (decoded.height * scale).round()),
+      interpolation: img.Interpolation.average,
+    );
+  }
+  final encoded = img.encodeJpg(preview, quality: 86);
+  if (encoded.isEmpty) return <String, dynamic>{};
+  return <String, dynamic>{
+    'bytes': Uint8List.fromList(encoded),
+    'width': decoded.width,
+    'height': decoded.height,
+  };
+}
+
+Uint8List oculumRenderPortraitEditorCrop(Map<String, dynamic> input) {
+  final rawBytes = input['bytes'];
+  if (rawBytes is! Uint8List || rawBytes.isEmpty) return Uint8List(0);
+  img.Image? decoded;
+  try {
+    decoded = img.decodeImage(rawBytes);
+  } catch (_) {
+    return Uint8List(0);
+  }
+  if (decoded == null || decoded.width <= 0 || decoded.height <= 0) {
+    return Uint8List(0);
+  }
+
+  var working = decoded;
+  final rotationDegrees = (input['rotationDegrees'] as num?)?.toInt() ?? 0;
+  if (rotationDegrees % 360 != 0) {
+    working = img.copyRotate(
+      working,
+      angle: rotationDegrees,
+      interpolation: img.Interpolation.cubic,
+    );
+  }
+  if (input['flipHorizontal'] == true) {
+    working = img.flipHorizontal(working);
+  }
+
+  final contrast = (input['contrast'] as num?)?.toDouble() ?? 1.0;
+  final saturation = (input['saturation'] as num?)?.toDouble() ?? 1.0;
+  final brightness = (input['brightness'] as num?)?.toDouble() ?? 1.0;
+  if (contrast != 1.0 || saturation != 1.0 || brightness != 1.0) {
+    working = img.adjustColor(
+      working,
+      contrast: contrast,
+      saturation: saturation,
+      brightness: brightness,
+    );
+  }
+
+  final zoom = ((input['zoom'] as num?)?.toDouble() ?? 1.0).clamp(1.0, 3.0);
+  final offsetX = ((input['offsetX'] as num?)?.toDouble() ?? 0.0).clamp(
+    -1.0,
+    1.0,
+  );
+  final offsetY = ((input['offsetY'] as num?)?.toDouble() ?? 0.0).clamp(
+    -1.0,
+    1.0,
+  );
+  final minSide = min(working.width, working.height);
+  final cropSide = (minSide / zoom).round().clamp(1, minSide);
+  final maxX = max(0, working.width - cropSide);
+  final maxY = max(0, working.height - cropSide);
+  final cropX = ((offsetX + 1) * 0.5 * maxX).round().clamp(0, maxX);
+  final cropY = ((offsetY + 1) * 0.5 * maxY).round().clamp(0, maxY);
+  final cropped = img.copyCrop(
+    working,
+    x: cropX,
+    y: cropY,
+    width: cropSide,
+    height: cropSide,
+  );
+  final outputSize = ((input['outputSize'] as num?)?.toInt() ?? 960).clamp(
+    256,
+    1600,
+  );
+  final outputQuality = ((input['outputQuality'] as num?)?.toInt() ?? 92).clamp(
+    72,
+    96,
+  );
+  final resized = img.copyResize(
+    cropped,
+    width: outputSize,
+    height: outputSize,
+    interpolation: img.Interpolation.cubic,
+  );
+  final encoded = img.encodeJpg(resized, quality: outputQuality);
+  return encoded.isEmpty ? Uint8List(0) : Uint8List.fromList(encoded);
+}
+
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 Map<String, String> _encodeOculumSavePayloadForStorage(
@@ -73,6 +190,583 @@ Map<String, dynamic> _compareOculumSheetSnapshots(
 }
 
 extension _OculumHomePersistence on _OculumHomePageState {
+  static const String _progressJournalPreferenceKey =
+      'oculum_progress_journal_v1';
+  static const List<String> _experienceProgressKeys = <String>[
+    'exp',
+    'livello',
+    'grado',
+    'expMilestoneRegenClaimed',
+    'expHundredRegenRemainder',
+    'levelUpDaAssegnare',
+    'monsterStatPoints',
+    'currentResilienza',
+    'currentVolonta',
+    'currentMateria',
+    'currentHp',
+    'hpTemp',
+    'scudoOculum',
+    'currentOculum',
+    'normalCurrentOculum',
+    'temporaryOculum',
+    'temporaryOculumRollsRemaining',
+    'raccoltaResilienzaSpesa',
+    'raccoltaVolontaSpesa',
+    'raccoltaMateriaSpesa',
+    'raccoltaOculumSpesa',
+  ];
+
+  Future<File> _progressJournalFile() async {
+    final directory = oculumPerformanceHarness
+        ? await getTemporaryDirectory()
+        : await getApplicationSupportDirectory();
+    final suffix = oculumPerformanceHarness ? '_profile_$pid' : '';
+    return File(
+      '${directory.path}${Platform.pathSeparator}'
+      'oculum_progress_journal_v1$suffix.json',
+    );
+  }
+
+  Future<String?> _readProgressJournalRaw() async {
+    oculumProgressProfileCount('journalDiskReads');
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_progressJournalPreferenceKey);
+    }
+    final file = await _progressJournalFile();
+    if (!await file.exists()) return null;
+    return file.readAsString();
+  }
+
+  Future<void> _writeProgressJournalRaw(String raw) async {
+    oculumProgressProfileCount('journalDiskWrites');
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_progressJournalPreferenceKey, raw);
+      return;
+    }
+    final file = await _progressJournalFile();
+    await file.parent.create(recursive: true);
+    await file.writeAsString(raw, flush: true);
+  }
+
+  Future<void> _deleteProgressJournalRaw() async {
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_progressJournalPreferenceKey);
+      return;
+    }
+    final file = await _progressJournalFile();
+    if (await file.exists()) await file.delete();
+  }
+
+  Map<String, dynamic> _progressJournalSheet(String tag) {
+    final existing = progressJournalSheets[tag];
+    if (existing is Map<String, dynamic>) return existing;
+    if (existing is Map) {
+      final normalized = Map<String, dynamic>.from(existing);
+      progressJournalSheets[tag] = normalized;
+      return normalized;
+    }
+    final created = <String, dynamic>{};
+    progressJournalSheets[tag] = created;
+    return created;
+  }
+
+  void _scheduleProgressJournalWrite({bool immediate = false}) {
+    progressJournalRevision++;
+    progressJournalSaveTimer?.cancel();
+    progressJournalSaveTimer = Timer(
+      immediate
+          ? const Duration(milliseconds: 120)
+          : const Duration(milliseconds: 320),
+      () {
+        progressJournalSaveTimer = null;
+        final payload = <String, dynamic>{
+          'version': 1,
+          'sheets': progressJournalSheets,
+        };
+        progressJournalWriteChain = progressJournalWriteChain
+            .catchError((Object _, StackTrace _) {})
+            .then((_) async {
+              var raw = '';
+              if (kIsWeb) {
+                raw = jsonEncode(payload);
+              } else {
+                try {
+                  raw = await compute(
+                    _encodeOculumJsonMapInWorker,
+                    payload,
+                    debugLabel: 'oculum-progress-journal-encode',
+                  );
+                } catch (error) {
+                  debugPrint(
+                    'Progress journal encode fallback on main isolate: $error',
+                  );
+                  raw = jsonEncode(payload);
+                }
+              }
+              await _writeProgressJournalRaw(raw);
+            });
+      },
+    );
+  }
+
+  void recordArtIntegrityProgress(
+    Iterable<int> artIndexes, {
+    bool immediate = false,
+  }) {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
+    final tag = sheetTagAt(schedaCorrente);
+    final sheetPatch = _progressJournalSheet(tag);
+    final existingArts = sheetPatch['arts'];
+    final artPatch = existingArts is Map
+        ? Map<String, dynamic>.from(existingArts)
+        : <String, dynamic>{};
+    final existingExhaustion = sheetPatch['artExhaustion'];
+    final exhaustionPatch = existingExhaustion is Map
+        ? Map<String, dynamic>.from(existingExhaustion)
+        : <String, dynamic>{};
+    var changed = false;
+    for (final index in artIndexes) {
+      if (index < 0 || index >= arti.length) continue;
+      artPatch['$index'] = arti[index].integritaCorrente;
+      exhaustionPatch['$index'] = arti[index].esaurimentoCompleto;
+      changed = true;
+    }
+    if (!changed) return;
+    sheetPatch['arts'] = artPatch;
+    sheetPatch['artExhaustion'] = exhaustionPatch;
+    _scheduleProgressJournalWrite(immediate: immediate);
+  }
+
+  void recordAggiustaNucleoProgress({bool immediate = false}) {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
+    schedePersonaggio[schedaCorrente]['aggiustaNucleoUsato'] =
+        aggiustaNucleoUsato;
+    final tag = sheetTagAt(schedaCorrente);
+    _progressJournalSheet(tag)['aggiustaNucleoUsato'] = aggiustaNucleoUsato;
+    _scheduleProgressJournalWrite(immediate: immediate);
+  }
+
+  void recordArtSkillLevelProgress(
+    int artIndex,
+    int skillIndex, {
+    bool immediate = false,
+  }) {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
+    if (artIndex < 0 || artIndex >= arti.length) return;
+    if (skillIndex < 0 || skillIndex >= arti[artIndex].skills.length) return;
+
+    final tag = sheetTagAt(schedaCorrente);
+    final sheetPatch = _progressJournalSheet(tag);
+    final existingArts = sheetPatch['artSkillLevels'];
+    final artSkillPatch = existingArts is Map
+        ? Map<String, dynamic>.from(existingArts)
+        : <String, dynamic>{};
+    final existingSkills = artSkillPatch['$artIndex'];
+    final skillPatch = existingSkills is Map
+        ? Map<String, dynamic>.from(existingSkills)
+        : <String, dynamic>{};
+    skillPatch['$skillIndex'] = arti[artIndex].skills[skillIndex].livello;
+    artSkillPatch['$artIndex'] = skillPatch;
+    sheetPatch['artSkillLevels'] = artSkillPatch;
+    _scheduleProgressJournalWrite(immediate: immediate);
+  }
+
+  void recordArtSkillOculumProgress(
+    int artIndex,
+    int skillIndex, {
+    bool immediate = false,
+  }) {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
+    if (artIndex < 0 || artIndex >= arti.length) return;
+    if (skillIndex < 0 || skillIndex >= arti[artIndex].skills.length) return;
+    final skill = arti[artIndex].skills[skillIndex];
+    final values = <String, dynamic>{
+      'oculumMinimiPerLivello': List<int>.from(skill.oculumMinimiPerLivello),
+      'oculumMassimiPerLivello': List<int>.from(skill.oculumMassimiPerLivello),
+      'oculumMassimiInizialiPerLivello': List<int>.from(
+        skill.oculumMassimiInizialiPerLivello,
+      ),
+      'oculumLimitiManualiPerLivello': List<bool>.from(
+        skill.oculumLimitiManualiPerLivello,
+      ),
+      'costoOculumDisabilitatoPerLivello': List<bool>.from(
+        skill.costoOculumDisabilitatoPerLivello,
+      ),
+      'risorseCostoPerLivello': List<String>.from(skill.risorseCostoPerLivello),
+    };
+    final sheetArts = schedePersonaggio[schedaCorrente]['arti'];
+    if (sheetArts is List && artIndex < sheetArts.length) {
+      final sheetArt = sheetArts[artIndex];
+      if (sheetArt is Map && sheetArt['skills'] is List) {
+        final sheetSkills = sheetArt['skills'] as List;
+        if (skillIndex < sheetSkills.length && sheetSkills[skillIndex] is Map) {
+          (sheetSkills[skillIndex] as Map).addAll(values);
+        }
+      }
+    }
+    final tag = sheetTagAt(schedaCorrente);
+    final sheetPatch = _progressJournalSheet(tag);
+    final existingArts = sheetPatch['artSkillOculum'];
+    final artPatch = existingArts is Map
+        ? Map<String, dynamic>.from(existingArts)
+        : <String, dynamic>{};
+    final existingSkills = artPatch['$artIndex'];
+    final skillPatch = existingSkills is Map
+        ? Map<String, dynamic>.from(existingSkills)
+        : <String, dynamic>{};
+    skillPatch['$skillIndex'] = values;
+    artPatch['$artIndex'] = skillPatch;
+    sheetPatch['artSkillOculum'] = artPatch;
+    _scheduleProgressJournalWrite(immediate: immediate);
+  }
+
+  void recordRuneArtProgress(int artIndex, {bool immediate = false}) {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
+    if (artIndex < 0 || artIndex >= arti.length) return;
+    final art = arti[artIndex];
+    final values = <String, dynamic>{
+      'runeWordsKnown': List<String>.from(art.runeWordsKnown),
+      'runeQuickWordIds': List<String>.from(art.runeQuickWordIds),
+      'runeQuickWordIdsSlot2': List<String>.from(art.runeQuickWordIdsSlot2),
+      'runeActiveSlot': art.runeActiveSlot,
+      'runeCustomWords': art.runeCustomWords
+          .map((word) => word.toJson())
+          .toList(),
+      'runeBooksRead': art.runeBooksRead,
+    };
+    final sheetArts = schedePersonaggio[schedaCorrente]['arti'];
+    if (sheetArts is List && artIndex < sheetArts.length) {
+      final sheetArt = sheetArts[artIndex];
+      if (sheetArt is Map) sheetArt.addAll(values);
+    }
+    final tag = sheetTagAt(schedaCorrente);
+    final sheetPatch = _progressJournalSheet(tag);
+    final existingRuneArts = sheetPatch['runeArts'];
+    final runeArtsPatch = existingRuneArts is Map
+        ? Map<String, dynamic>.from(existingRuneArts)
+        : <String, dynamic>{};
+    runeArtsPatch['$artIndex'] = values;
+    sheetPatch['runeArts'] = runeArtsPatch;
+    _scheduleProgressJournalWrite(immediate: immediate);
+  }
+
+  void recordExperienceProgress({bool immediate = false}) {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
+    final values = <String, dynamic>{
+      'exp': expController.text,
+      'livello': livelloController.text,
+      'grado': gradoController.text,
+      'expMilestoneRegenClaimed': expMilestoneRegenClaimed,
+      'expHundredRegenRemainder': expHundredRegenRemainder,
+      'levelUpDaAssegnare': levelUpDaAssegnare,
+      'monsterStatPoints': monsterStatPoints,
+      'currentResilienza': currentResilienzaController.text,
+      'currentVolonta': currentVolontaController.text,
+      'currentMateria': currentMateriaController.text,
+      'currentHp': currentHpController.text,
+      'hpTemp': hpTemp().toString(),
+      'scudoOculum': scudoOculumController.text,
+      'currentOculum': currentOculum().toString(),
+      'normalCurrentOculum': normalCurrentOculum(),
+      'temporaryOculum': temporaryOculum,
+      'temporaryOculumRollsRemaining': temporaryOculumRollsRemaining,
+      'raccoltaResilienzaSpesa': raccoltaResilienzaSpesa,
+      'raccoltaVolontaSpesa': raccoltaVolontaSpesa,
+      'raccoltaMateriaSpesa': raccoltaMateriaSpesa,
+      'raccoltaOculumSpesa': raccoltaOculumSpesa,
+    };
+    final currentSheet = schedePersonaggio[schedaCorrente];
+    currentSheet.addAll(values);
+    final tag = sheetTagAt(schedaCorrente);
+    _progressJournalSheet(tag)['experience'] = values;
+    _scheduleProgressJournalWrite(immediate: immediate);
+  }
+
+  void recordRollDifficultyProgress({bool immediate = false}) {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
+    final value = difficoltaTiroController.text;
+    schedePersonaggio[schedaCorrente]['difficoltaTiro'] = value;
+    final tag = sheetTagAt(schedaCorrente);
+    _progressJournalSheet(tag)['rollDifficulty'] = value;
+    _scheduleProgressJournalWrite(immediate: immediate);
+  }
+
+  void recordCurrentOculumProgress({bool immediate = false}) {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
+    final values = <String, dynamic>{
+      'currentOculum': currentOculumController.text,
+      'normalCurrentOculum': normalCurrentOculum(),
+      'temporaryOculum': temporaryOculum,
+      'temporaryOculumRollsRemaining': temporaryOculumRollsRemaining,
+      'raccoltaOculumSpesa': raccoltaOculumSpesa,
+    };
+    schedePersonaggio[schedaCorrente].addAll(values);
+    final tag = sheetTagAt(schedaCorrente);
+    _progressJournalSheet(tag)['currentOculum'] = values;
+    _scheduleProgressJournalWrite(immediate: immediate);
+  }
+
+  void recordSkillFormOculumProgress(
+    int skillIndex,
+    int formIndex, {
+    bool immediate = false,
+  }) {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
+    if (skillIndex < 0 || skillIndex >= skills.length) return;
+    final skill = skills[skillIndex]..ensureForms();
+    if (formIndex < 0 || formIndex >= skill.forme.length) return;
+    final form = skill.forme[formIndex];
+    final values = <String, dynamic>{
+      'oculumMinimoUtilizzabile': form.oculumMinimoUtilizzabile,
+      'oculumMassimoUtilizzabile': form.oculumMassimoUtilizzabile,
+      'oculumMassimoMaestriaIniziale': form.oculumMassimoMaestriaIniziale,
+      'oculumLimitiConfiguratiManualmente':
+          form.oculumLimitiConfiguratiManualmente,
+    };
+    final sheetSkills = schedePersonaggio[schedaCorrente]['skills'];
+    if (sheetSkills is List && skillIndex < sheetSkills.length) {
+      final sheetSkill = sheetSkills[skillIndex];
+      if (sheetSkill is Map && sheetSkill['forme'] is List) {
+        final forms = sheetSkill['forme'] as List;
+        if (formIndex < forms.length && forms[formIndex] is Map) {
+          (forms[formIndex] as Map).addAll(values);
+        }
+      }
+    }
+    final tag = sheetTagAt(schedaCorrente);
+    final sheetPatch = _progressJournalSheet(tag);
+    final existingSkills = sheetPatch['skillForms'];
+    final skillFormsPatch = existingSkills is Map
+        ? Map<String, dynamic>.from(existingSkills)
+        : <String, dynamic>{};
+    final existingForms = skillFormsPatch['$skillIndex'];
+    final formsPatch = existingForms is Map
+        ? Map<String, dynamic>.from(existingForms)
+        : <String, dynamic>{};
+    formsPatch['$formIndex'] = values;
+    skillFormsPatch['$skillIndex'] = formsPatch;
+    sheetPatch['skillForms'] = skillFormsPatch;
+    _scheduleProgressJournalWrite(immediate: immediate);
+  }
+
+  void _applyProgressPatchToSheet(
+    Map<dynamic, dynamic> sheet,
+    Map<String, dynamic> patch,
+  ) {
+    final experience = patch['experience'];
+    if (experience is Map) {
+      for (final key in _experienceProgressKeys) {
+        if (experience.containsKey(key)) sheet[key] = experience[key];
+      }
+    }
+    if (patch.containsKey('rollDifficulty')) {
+      sheet['difficoltaTiro'] = '${patch['rollDifficulty']}';
+    }
+    if (patch.containsKey('aggiustaNucleoUsato')) {
+      sheet['aggiustaNucleoUsato'] = readBoolValue(
+        patch['aggiustaNucleoUsato'],
+      );
+    }
+    final currentOculum = patch['currentOculum'];
+    if (currentOculum is Map) {
+      if (currentOculum.containsKey('currentOculum')) {
+        sheet['currentOculum'] = '${currentOculum['currentOculum']}';
+      }
+      if (currentOculum.containsKey('raccoltaOculumSpesa')) {
+        sheet['raccoltaOculumSpesa'] = readIntValue(
+          currentOculum['raccoltaOculumSpesa'],
+        );
+      }
+    }
+    final sheetSkills = sheet['skills'];
+    final skillForms = patch['skillForms'];
+    if (sheetSkills is List && skillForms is Map) {
+      for (final skillEntry in skillForms.entries) {
+        final skillIndex = int.tryParse('${skillEntry.key}');
+        if (skillIndex == null ||
+            skillIndex < 0 ||
+            skillIndex >= sheetSkills.length ||
+            skillEntry.value is! Map) {
+          continue;
+        }
+        final sheetSkill = sheetSkills[skillIndex];
+        if (sheetSkill is! Map || sheetSkill['forme'] is! List) continue;
+        final forms = sheetSkill['forme'] as List;
+        for (final formEntry in (skillEntry.value as Map).entries) {
+          final formIndex = int.tryParse('${formEntry.key}');
+          if (formIndex == null ||
+              formIndex < 0 ||
+              formIndex >= forms.length ||
+              formEntry.value is! Map ||
+              forms[formIndex] is! Map) {
+            continue;
+          }
+          (forms[formIndex] as Map).addAll(formEntry.value as Map);
+        }
+      }
+    }
+    final sheetArts = sheet['arti'];
+    if (sheetArts is! List) return;
+
+    final arts = patch['arts'];
+    if (arts is Map) {
+      for (final entry in arts.entries) {
+        final index = int.tryParse('${entry.key}');
+        if (index == null || index < 0 || index >= sheetArts.length) continue;
+        final art = sheetArts[index];
+        if (art is Map) art['integritaCorrente'] = readIntValue(entry.value);
+      }
+    }
+
+    final artExhaustion = patch['artExhaustion'];
+    if (artExhaustion is Map) {
+      for (final entry in artExhaustion.entries) {
+        final index = int.tryParse('${entry.key}');
+        if (index == null || index < 0 || index >= sheetArts.length) continue;
+        final art = sheetArts[index];
+        if (art is Map) {
+          art['esaurimentoCompleto'] = readBoolValue(entry.value);
+        }
+      }
+    }
+
+    final runeArts = patch['runeArts'];
+    if (runeArts is Map) {
+      for (final entry in runeArts.entries) {
+        final index = int.tryParse('${entry.key}');
+        if (index == null ||
+            index < 0 ||
+            index >= sheetArts.length ||
+            entry.value is! Map) {
+          continue;
+        }
+        final art = sheetArts[index];
+        if (art is Map) art.addAll(entry.value as Map);
+      }
+    }
+
+    final artSkillOculum = patch['artSkillOculum'];
+    if (artSkillOculum is Map) {
+      for (final artEntry in artSkillOculum.entries) {
+        final artIndex = int.tryParse('${artEntry.key}');
+        if (artIndex == null ||
+            artIndex < 0 ||
+            artIndex >= sheetArts.length ||
+            artEntry.value is! Map) {
+          continue;
+        }
+        final art = sheetArts[artIndex];
+        if (art is! Map || art['skills'] is! List) continue;
+        final skills = art['skills'] as List;
+        for (final skillEntry in (artEntry.value as Map).entries) {
+          final skillIndex = int.tryParse('${skillEntry.key}');
+          if (skillIndex == null ||
+              skillIndex < 0 ||
+              skillIndex >= skills.length ||
+              skillEntry.value is! Map ||
+              skills[skillIndex] is! Map) {
+            continue;
+          }
+          (skills[skillIndex] as Map).addAll(skillEntry.value as Map);
+        }
+      }
+    }
+
+    final artSkillLevels = patch['artSkillLevels'];
+    if (artSkillLevels is! Map) return;
+    for (final artEntry in artSkillLevels.entries) {
+      final artIndex = int.tryParse('${artEntry.key}');
+      if (artIndex == null ||
+          artIndex < 0 ||
+          artIndex >= sheetArts.length ||
+          artEntry.value is! Map) {
+        continue;
+      }
+      final art = sheetArts[artIndex];
+      if (art is! Map || art['skills'] is! List) continue;
+      final skills = art['skills'] as List;
+      for (final skillEntry in (artEntry.value as Map).entries) {
+        final skillIndex = int.tryParse('${skillEntry.key}');
+        if (skillIndex == null ||
+            skillIndex < 0 ||
+            skillIndex >= skills.length) {
+          continue;
+        }
+        final skill = skills[skillIndex];
+        if (skill is Map) skill['livello'] = readIntValue(skillEntry.value);
+      }
+    }
+  }
+
+  Future<void> _applyProgressJournal(Map<String, dynamic> saveData) async {
+    final raw = await _readProgressJournalRaw();
+    if (raw == null || raw.trim().isEmpty) return;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map || readIntValue(decoded['version']) != 1) return;
+      final sheets = decoded['sheets'];
+      if (sheets is! Map) return;
+      progressJournalSheets
+        ..clear()
+        ..addAll(Map<String, dynamic>.from(sheets));
+
+      void applyToList(dynamic rawSheets) {
+        if (rawSheets is! List) return;
+        for (final sheet in rawSheets.whereType<Map>()) {
+          final tag = '${sheet['sheetTag'] ?? sheet['id'] ?? ''}';
+          final patch = progressJournalSheets[tag];
+          if (patch is Map) {
+            _applyProgressPatchToSheet(sheet, Map<String, dynamic>.from(patch));
+          }
+        }
+      }
+
+      applyToList(saveData['schedePersonaggio']);
+      final campaigns = saveData['campaigns'];
+      if (campaigns is List) {
+        for (final campaign in campaigns.whereType<Map>()) {
+          applyToList(campaign['schedePersonaggio']);
+        }
+      }
+    } catch (error) {
+      if (kDebugMode || kProfileMode) {
+        debugPrint('Oculum progress journal ignored: $error');
+      }
+    }
+  }
+
+  Future<void> _clearProgressJournalIfCurrent(int revision) async {
+    if (revision != progressJournalRevision) return;
+    progressJournalSaveTimer?.cancel();
+    progressJournalSaveTimer = null;
+    progressJournalSheets.clear();
+    progressJournalWriteChain = progressJournalWriteChain
+        .catchError((Object _, StackTrace _) {})
+        .then((_) => _deleteProgressJournalRaw());
+    await progressJournalWriteChain;
+  }
+
   List<CharacterArt> artiBase() {
     return [
       CharacterArt(
@@ -274,6 +968,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'currentVolonta': tipo == 'Mostro' ? '3' : '1',
       'currentMateria': tipo == 'Mostro' ? '3' : '0',
       'currentOculum': tipo == 'Mostro' ? '2' : '1',
+      'normalCurrentOculum': tipo == 'Mostro' ? 2 : 1,
+      'temporaryOculum': 0,
+      'temporaryOculumRollsRemaining': 0,
       'maxOculum': tipo == 'Mostro' ? 2 : 1,
       'currentHp': tipo == 'Mostro' ? '60' : '30',
       'hpTemp': '0',
@@ -319,7 +1016,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'statoForzaPronto': true,
       'statoForzaTiriRimanenti': 0,
       'malusTiriOculumPostEsplosione': 0,
+      'aggiustaNucleoUsato': false,
       'personaggioSvenuto': false,
+      'sottoStress': false,
+      'sottoStressManuale': false,
+      'stressStatConsumptionProgress': <String, int>{},
       'cenereSvenimentoUltimoControllo': 0,
       'personaggioCaduto': false,
       'feriteMorte': 0,
@@ -328,6 +1029,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'tempVolonta': 0,
       'tempMateria': 0,
       'tempOculum': 0,
+      'playerReportedTurn': 0,
+      'automaticAshLastCheckedTurn': 0,
+      'activeStructuredEffects': <Map<String, dynamic>>[],
       'schivateOculumConsumate': 0,
       'schivataOculumRiduzionePronta': 0,
       'schivataOculumEtichettaPronta': '',
@@ -430,6 +1134,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   Map<String, dynamic> statoCorrenteJson() {
     assicuraTagSchede();
+    final vitals = OculumPersistentVitalsSnapshot(
+      normalCurrentOculum: normalCurrentOculum(),
+      temporaryOculum: temporaryOculum,
+      temporaryOculumRollsRemaining: temporaryOculumRollsRemaining,
+      currentHp: hpCorrenti(),
+      temporaryHp: hpTemp(),
+      difficulty: campaignDifficulty,
+    );
 
     return {
       'nome': nomeController.text,
@@ -455,8 +1167,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'currentVolonta': currentVolonta().toString(),
       'currentMateria': currentMateria().toString(),
       'currentOculum': currentOculum().toString(),
+      ...vitals.toJson(),
       'maxOculum': oculumMassimo(),
-      'currentHp': currentHpController.text,
       'partialAwakeningHalfHpTriggered':
           schedePersonaggio.isNotEmpty &&
               schedaCorrente >= 0 &&
@@ -465,7 +1177,6 @@ extension _OculumHomePersistence on _OculumHomePageState {
               schedePersonaggio[schedaCorrente]['partialAwakeningHalfHpTriggered'],
             )
           : false,
-      'hpTemp': hpTempController.text,
       'hpTempBonusConsumati': hpTempBonusConsumati,
       'scudo': scudoController.text,
       'scudoBonusConsumati': scudoBonusConsumati,
@@ -530,7 +1241,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'statoForzaPronto': statoForzaPronto,
       'statoForzaTiriRimanenti': statoForzaTiriRimanenti,
       'malusTiriOculumPostEsplosione': malusTiriOculumPostEsplosione,
+      'aggiustaNucleoUsato': aggiustaNucleoUsato,
       'personaggioSvenuto': personaggioSvenuto,
+      'sottoStress': sottoStress,
+      'sottoStressManuale': sottoStressManuale,
+      if (stressStatConsumptionProgress.isNotEmpty)
+        'stressStatConsumptionProgress': stressStatConsumptionProgress,
       'cenereSvenimentoUltimoControllo': cenereSvenimentoUltimoControllo,
       'personaggioCaduto': personaggioCaduto,
       'feriteMorte': feriteMorte,
@@ -539,6 +1255,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'tempVolonta': tempVolonta,
       'tempMateria': tempMateria,
       'tempOculum': tempOculum,
+      'playerReportedTurn': playerReportedTurn,
+      'automaticAshLastCheckedTurn': automaticAshLastCheckedTurn,
+      if (activeStructuredEffects.isNotEmpty)
+        'activeStructuredEffects': activeStructuredEffects
+            .map((effect) => Map<String, dynamic>.from(effect))
+            .toList(growable: false),
       'schivateOculumConsumate': schivateOculumConsumate,
       'schivataOculumRiduzionePronta': schivataOculumRiduzionePronta,
       'schivataOculumEtichettaPronta': schivataOculumEtichettaPronta,
@@ -568,7 +1290,6 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'reputations': reputations.map((x) => x.toJson()).toList(),
       'reputationsManuallyCleared': reputationsManuallyCleared,
       'logEventi': List<String>.from(logEventi),
-      'campaignDifficulty': campaignDifficulty,
       'fortuna': fortuna,
       'fateTokens': fateTokens,
       'userGuiScale': userGuiScale,
@@ -645,6 +1366,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   void caricaStatoDaJson(Map<String, dynamic> json) {
+    temporaryOculum = 0;
+    temporaryOculumRollsRemaining = 0;
     restoreMonsterBookCustomization(json);
     nomeController.text = '${json['nome'] ?? '???'}';
     tipoSchedaController.text = '${json['tipoScheda'] ?? 'Personaggio'}';
@@ -704,7 +1427,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
     ).toString();
 
     currentHpController.text = '${json['currentHp'] ?? '30'}';
-    hpTempController.text = '${json['hpTemp'] ?? '0'}';
+    hpTempController.text = readIntValue(
+      json['hpTemp'],
+    ).clamp(0, oculumTemporaryHpLimit).toString();
     hpTempBonusConsumati = readIntValue(json['hpTempBonusConsumati']);
     scudoController.text = '${json['scudo'] ?? '0'}';
     scudoBonusConsumati = readIntValue(json['scudoBonusConsumati']);
@@ -774,7 +1499,26 @@ extension _OculumHomePersistence on _OculumHomePageState {
     malusTiriOculumPostEsplosione = readIntValue(
       json['malusTiriOculumPostEsplosione'],
     ).clamp(-1, 0).toInt();
+    aggiustaNucleoUsato = readBoolValue(json['aggiustaNucleoUsato']);
+    aggiustaNucleoInCorso = false;
+    notifyAggiustaNucleoDisponibilitaChanged();
     personaggioSvenuto = readBoolValue(json['personaggioSvenuto']);
+    sottoStress = readBoolValue(json['sottoStress']);
+    sottoStressManuale = readBoolValue(
+      json['sottoStressManuale'],
+      fallback: sottoStress,
+    );
+    stressStatConsumptionProgress
+      ..clear()
+      ..addAll(
+        json['stressStatConsumptionProgress'] is Map
+            ? <String, int>{
+                for (final entry
+                    in (json['stressStatConsumptionProgress'] as Map).entries)
+                  '${entry.key}': max(0, readIntValue(entry.value)),
+              }
+            : const <String, int>{},
+      );
     cenereSvenimentoUltimoControllo = readIntValue(
       json['cenereSvenimentoUltimoControllo'],
     );
@@ -786,6 +1530,21 @@ extension _OculumHomePersistence on _OculumHomePageState {
     tempVolonta = readIntValue(json['tempVolonta']);
     tempMateria = readIntValue(json['tempMateria']);
     tempOculum = readIntValue(json['tempOculum']);
+    playerReportedTurn = max(0, readIntValue(json['playerReportedTurn']));
+    automaticAshLastCheckedTurn = max(
+      0,
+      readIntValue(json['automaticAshLastCheckedTurn']),
+    );
+    activeStructuredEffects
+      ..clear()
+      ..addAll(
+        ((json['activeStructuredEffects'] is List)
+                ? json['activeStructuredEffects'] as List
+                : const <dynamic>[])
+            .whereType<Map>()
+            .map((effect) => Map<String, dynamic>.from(effect))
+            .where((effect) => readIntValue(effect['remaining']) > 0),
+      );
     schivateOculumConsumate = readIntValue(json['schivateOculumConsumate']);
     schivataOculumRiduzionePronta = readIntValue(
       json['schivataOculumRiduzionePronta'],
@@ -858,8 +1617,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
           (x) => CharacterArt.fromJson(Map<String, dynamic>.from(x)),
         ),
       );
-
     assicuraArtiBase();
+    ensureArtIntegrityValues();
+    syncArtIntegrityNotifiers();
+    syncArtSkillLevelNotifiers();
+    syncArtUnlockedNotifiers();
     normalizzaOpenAttiveSingole();
 
     final diarioRaw = json['diarioPagine'];
@@ -875,6 +1637,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
           (x) => JournalEntry.fromJson(Map<String, dynamic>.from(x)),
         ),
       );
+    assicuraDatabaseDiariCompleto();
 
     final draftRaw = json['draftNotes'];
     draftNotes
@@ -1151,6 +1914,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       resetMateriaToMax: !hasCurrentMateria,
       resetOculumToMax: !hasCurrentOculum,
     );
+    restoreTemporaryOculumState(json);
   }
 
   String get _backupSaveKey1 => '${_OculumHomePageState.saveKey}_backup_1';
@@ -1381,7 +2145,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   List<String> _diaryPagesFromSheet(Map<String, dynamic> sheet) {
     final raw = sheet['diarioPagine'];
     if (raw is! List) return <String>[];
-    return raw.map((x) => cleanUiText('$x')).toList();
+    return raw.map((x) => '$x').toList();
   }
 
   List<String> _diarySheetArchiveKeys(
@@ -1445,10 +2209,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   List<String> _archiveDiaryPages(dynamic value) {
     if (value is Map && value['pages'] is List) {
-      return (value['pages'] as List).map((x) => cleanUiText('$x')).toList();
+      return (value['pages'] as List).map((x) => '$x').toList();
     }
     if (value is List) {
-      return value.map((x) => cleanUiText('$x')).toList();
+      return value.map((x) => '$x').toList();
     }
     return <String>[];
   }
@@ -1502,9 +2266,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   bool _diaryListContainsNormalized(List<String> pages, String candidate) {
-    final normalized = _normalizeDiaryPage(candidate);
-    if (normalized.isEmpty) return true;
-    return pages.any((page) => _normalizeDiaryPage(page) == normalized);
+    return pages.contains(candidate);
   }
 
   bool _diaryCandidateExtendsCurrent(String current, String candidate) {
@@ -1526,8 +2288,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     var changed = false;
 
     for (int i = 0; i < incoming.length; i++) {
-      final candidate = cleanUiText(incoming[i]).trimRight();
-      if (_normalizeDiaryPage(candidate).isEmpty) continue;
+      final candidate = incoming[i];
 
       if (i >= target.length) {
         if (!_diaryListContainsNormalized(target, candidate)) {
@@ -1540,23 +2301,24 @@ extension _OculumHomePersistence on _OculumHomePageState {
       final current = target[i];
       final currentQuality = _diaryPageQuality(current);
       final candidateQuality = _diaryPageQuality(candidate);
-      final sameText =
-          _normalizeDiaryPage(current) == _normalizeDiaryPage(candidate);
+      final sameText = current == candidate;
 
       if (sameText) continue;
 
       if (currentQuality == 0 && candidateQuality > 0) {
-        target[i] = candidate;
+        if (!_diaryListContainsNormalized(target, candidate)) {
+          target.add(candidate);
+        }
         changed = true;
       } else if (recoverLostContinuations &&
           _diaryCandidateExtendsCurrent(current, candidate) &&
           !_diaryListContainsNormalized(target, candidate)) {
-        target[i] = candidate;
+        target.add(candidate);
         changed = true;
       } else if (replaceMeaningfulWithRicher &&
           candidateQuality > currentQuality + 30 &&
           !_diaryListContainsNormalized(target, candidate)) {
-        target[i] = candidate;
+        target.add(candidate);
         changed = true;
       }
     }
@@ -1569,11 +2331,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
     Map<String, dynamic> previous,
   ) {
     final pages = _diaryPagesFromSheet(next);
-    _mergeDiaryPagesIntoSlotList(
-      pages,
-      _diaryPagesFromSheet(previous),
-      recoverLostContinuations: true,
-    );
+    final previousPages = _diaryPagesFromSheet(previous);
+    if (pages.length < previousPages.length) {
+      pages.addAll(previousPages.skip(pages.length));
+    }
     return pages;
   }
 
@@ -2442,6 +3203,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   Future<void> _salvaDatiCore({required bool soloLocale}) async {
     if (!datiCaricati) return;
+    oculumProgressProfileCount('fullSaves');
 
     if (!salvataggioInChiusura) {
       await salvaSchedaCorrenteInMemoriaNonBloccante();
@@ -2451,10 +3213,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
       saveActiveCampaignInMemory();
     }
 
+    final progressRevisionAtSnapshot = progressJournalRevision;
     final prefs = await SharedPreferences.getInstance();
     final revision = salvataggioRevisione + 1;
     final savePayload = datiSalvataggioJson(revision: revision);
     final saveResult = await _scriviSalvataggioProtetto(prefs, savePayload);
+    if (saveResult.saved) {
+      await _clearProgressJournalIfCurrent(progressRevisionAtSnapshot);
+    }
     if (!saveResult.saved || soloLocale) return;
 
     final authState = OculumAuthService.instance.state;
@@ -2574,6 +3340,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         data,
         raw,
       );
+      await _applyProgressJournal(data);
       final loadedContentSignature =
           await firmaContenutoSalvataggioNonBloccante(data);
 
@@ -5429,19 +6196,6 @@ extension _OculumHomePersistence on _OculumHomePageState {
       return;
     }
 
-    final decoded = img.decodeImage(bytes);
-    if (decoded == null || decoded.width <= 0 || decoded.height <= 0) {
-      if (!mounted) return;
-      setState(() {
-        risultato = t(
-          'File immagine non valido: non ha sostituito l’immagine attuale.',
-          'Invalid image file: current image was not replaced.',
-        );
-        aggiungiLog(risultato);
-      });
-      return;
-    }
-
     final cropped = await mostraEditorCropEsagono(bytes);
     if (cropped == null || cropped.isEmpty) {
       if (!mounted) return;
@@ -5475,7 +6229,18 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   Future<Uint8List?> mostraEditorCropEsagono(Uint8List bytes) async {
-    final decoded = img.decodeImage(bytes);
+    final previewInput = <String, dynamic>{'bytes': bytes, 'maxDimension': 512};
+    final previewData = kIsWeb
+        ? oculumPreparePortraitEditorPreview(previewInput)
+        : await compute(
+            oculumPreparePortraitEditorPreview,
+            previewInput,
+            debugLabel: 'oculum-portrait-editor-preview',
+          );
+    final previewRaw = previewData['bytes'];
+    final decoded = previewRaw is Uint8List
+        ? img.decodeImage(previewRaw)
+        : null;
     if (decoded == null || decoded.width <= 0 || decoded.height <= 0) {
       if (!mounted) return null;
       setState(() {
@@ -5484,6 +6249,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       });
       return null;
     }
+    if (!mounted) return null;
 
     double zoom = 1.0;
     double offsetX = 0.0;
@@ -5495,6 +6261,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
     double brightness = 1.0;
     int outputSize = 960;
     int outputQuality = 92;
+    bool renderingFinal = false;
+    String workingCacheKey = '';
+    img.Image? workingCache;
+    String previewCacheKey = '';
+    Uint8List previewCache = Uint8List(0);
 
     return showDialog<Uint8List>(
       context: context,
@@ -5504,12 +6275,20 @@ extension _OculumHomePersistence on _OculumHomePageState {
             final compact = MediaQuery.of(context).size.shortestSide < 600;
             final previewSize = compact ? 230.0 : 340.0;
             img.Image editedImage() {
+              final cacheKey =
+                  '$rotationDegrees:$flipHorizontal:'
+                  '${contrast.toStringAsFixed(3)}:'
+                  '${saturation.toStringAsFixed(3)}:'
+                  '${brightness.toStringAsFixed(3)}';
+              if (workingCache != null && workingCacheKey == cacheKey) {
+                return workingCache!;
+              }
               var result = img.Image.from(decoded);
               if (rotationDegrees % 360 != 0) {
                 result = img.copyRotate(
                   result,
                   angle: rotationDegrees,
-                  interpolation: img.Interpolation.cubic,
+                  interpolation: img.Interpolation.linear,
                 );
               }
               if (flipHorizontal) {
@@ -5523,6 +6302,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
                   brightness: brightness,
                 );
               }
+              workingCacheKey = cacheKey;
+              workingCache = result;
               return result;
             }
 
@@ -5543,10 +6324,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
               );
             }
 
-            Uint8List cropCurrentImage({
-              int? previewOutputSize,
-              int? previewQuality,
-            }) {
+            Uint8List cropPreviewImage() {
+              final cacheKey =
+                  '$workingCacheKey:${zoom.toStringAsFixed(3)}:'
+                  '${offsetX.toStringAsFixed(3)}:'
+                  '${offsetY.toStringAsFixed(3)}:$compact';
+              if (previewCacheKey == cacheKey && previewCache.isNotEmpty) {
+                return previewCache;
+              }
               final rect = cropRect();
               final cropped = img.copyCrop(
                 working,
@@ -5555,19 +6340,18 @@ extension _OculumHomePersistence on _OculumHomePageState {
                 width: rect.width.round(),
                 height: rect.height.round(),
               );
-              final targetSize = previewOutputSize ?? outputSize;
+              final targetSize = compact ? 230 : 340;
               final resized = img.copyResize(
                 cropped,
                 width: targetSize,
                 height: targetSize,
-                interpolation: img.Interpolation.cubic,
+                interpolation: img.Interpolation.linear,
               );
-              final encoded = img.encodeJpg(
-                resized,
-                quality: previewQuality ?? outputQuality,
-              );
+              final encoded = img.encodeJpg(resized, quality: 72);
               if (encoded.isEmpty) return Uint8List(0);
-              return Uint8List.fromList(encoded);
+              previewCacheKey = cacheKey;
+              previewCache = Uint8List.fromList(encoded);
+              return previewCache;
             }
 
             void clampOffsets() {
@@ -5596,10 +6380,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
               });
             }
 
-            final previewBytes = cropCurrentImage(
-              previewOutputSize: compact ? 460 : 680,
-              previewQuality: 82,
-            );
+            final previewBytes = cropPreviewImage();
 
             Widget slider({
               required String label,
@@ -5823,10 +6604,44 @@ extension _OculumHomePersistence on _OculumHomePageState {
                             const SizedBox(width: 10),
                             Expanded(
                               child: ElevatedButton.icon(
-                                onPressed: () {
-                                  final cropped = cropCurrentImage();
-                                  Navigator.pop(dialogContext, cropped);
-                                },
+                                onPressed: renderingFinal
+                                    ? null
+                                    : () async {
+                                        setDialogState(
+                                          () => renderingFinal = true,
+                                        );
+                                        final renderInput = <String, dynamic>{
+                                          'bytes': bytes,
+                                          'zoom': zoom,
+                                          'offsetX': offsetX,
+                                          'offsetY': offsetY,
+                                          'rotationDegrees': rotationDegrees,
+                                          'flipHorizontal': flipHorizontal,
+                                          'contrast': contrast,
+                                          'saturation': saturation,
+                                          'brightness': brightness,
+                                          'outputSize': outputSize,
+                                          'outputQuality': outputQuality,
+                                        };
+                                        final cropped = kIsWeb
+                                            ? oculumRenderPortraitEditorCrop(
+                                                renderInput,
+                                              )
+                                            : await compute(
+                                                oculumRenderPortraitEditorCrop,
+                                                renderInput,
+                                                debugLabel:
+                                                    'oculum-portrait-editor-final',
+                                              );
+                                        if (!dialogContext.mounted) return;
+                                        if (cropped.isEmpty) {
+                                          setDialogState(
+                                            () => renderingFinal = false,
+                                          );
+                                          return;
+                                        }
+                                        Navigator.pop(dialogContext, cropped);
+                                      },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: tertiaryColor,
                                   foregroundColor:
@@ -5834,8 +6649,19 @@ extension _OculumHomePersistence on _OculumHomePageState {
                                       ? Colors.black
                                       : Colors.white,
                                 ),
-                                icon: const Icon(Icons.check),
-                                label: Text(t('Usa ritaglio', 'Use crop')),
+                                icon: renderingFinal
+                                    ? const SizedBox.square(
+                                        dimension: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.check),
+                                label: Text(
+                                  renderingFinal
+                                      ? t('Elaborazione...', 'Processing...')
+                                      : t('Usa ritaglio', 'Use crop'),
+                                ),
                               ),
                             ),
                           ],

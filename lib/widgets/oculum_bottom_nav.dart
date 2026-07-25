@@ -80,6 +80,11 @@ class OculumBottomNav extends StatelessWidget {
       icon: Icons.map_outlined,
       pageIndex: 10,
     ),
+    OculumBottomNavItem(
+      label: 'Ricette',
+      icon: Icons.menu_book_outlined,
+      pageIndex: 14,
+    ),
   ];
 
   static const OculumBottomNavItem onlineItem = OculumBottomNavItem(

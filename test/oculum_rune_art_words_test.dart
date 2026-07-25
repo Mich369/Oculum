@@ -71,10 +71,18 @@ void main() {
     expect(runeArtBaseWordIds, containsAll(runeArtRequiredStartingWordIds));
   });
 
+  test('tutte le parole sono visibili ma solo le note sono selezionabili', () {
+    expect(runeArtOfficialWords, hasLength(40));
+    final selectable = runeArtSelectableWordIds(const <String>[]);
+    expect(selectable, runeArtBaseWordIds);
+    expect(selectable.length, lessThan(runeArtOfficialWords.length));
+  });
+
   test('ogni Libro Runico completo insegna esattamente sei parole', () {
     final known = <String>{...runeArtBaseWordIds};
 
     for (var book = 0; book < 6; book++) {
+      final before = runeArtSelectableWordIds(known).length;
       final learned = runeArtBookLearningPlan(
         words: runeArtOfficialWords,
         knownWordIds: known,
@@ -85,6 +93,11 @@ void main() {
         reason: 'libro ${book + 1}',
       );
       known.addAll(learned.map((word) => word.id));
+      expect(
+        runeArtSelectableWordIds(known).length,
+        before + runeArtWordsPerBook,
+        reason: 'parole selezionabili dopo il libro ${book + 1}',
+      );
     }
 
     expect(known, containsAll(runeArtOfficialWords.map((word) => word.id)));
@@ -93,4 +106,87 @@ void main() {
       isEmpty,
     );
   });
+
+  test('la formula somma costo Oculum e DT delle parole selezionate', () {
+    const selected = <String>{'target_zone_5m', 'verb_bind', 'intensity_ii'};
+    expect(
+      runeArtFormulaCostForSelection(
+        words: runeArtOfficialWords,
+        selectedWordIds: selected,
+      ),
+      4,
+    );
+    expect(
+      runeArtFormulaDtForSelection(
+        words: runeArtOfficialWords,
+        selectedWordIds: selected,
+      ),
+      3,
+    );
+  });
+
+  test('usare Rune Art spende Oculum e aumenta davvero la DT', () {
+    final first = runeArtUseResult(
+      currentOculum: 10,
+      currentDifficulty: 2,
+      formulaCost: 4,
+      formulaDt: 3,
+    );
+    expect(first.used, isTrue);
+    expect(first.remainingOculum, 6);
+    expect(first.nextDifficulty, 5);
+
+    final second = runeArtUseResult(
+      currentOculum: first.remainingOculum,
+      currentDifficulty: first.nextDifficulty,
+      formulaCost: 4,
+      formulaDt: 3,
+    );
+    expect(second.used, isTrue);
+    expect(second.remainingOculum, 2);
+    expect(second.nextDifficulty, 8);
+
+    final blocked = runeArtUseResult(
+      currentOculum: 2,
+      currentDifficulty: 8,
+      formulaCost: 4,
+      formulaDt: 3,
+    );
+    expect(blocked.used, isFalse);
+    expect(blocked.remainingOculum, 2);
+    expect(blocked.nextDifficulty, 8);
+  });
+
+  test(
+    'le Rune restano compatibili e persistenti nel JSON multipiattaforma',
+    () {
+      final legacy = CharacterArt.fromJson(<String, dynamic>{
+        'nome': 'Rune Art legacy',
+        'tipo': 'Rune Art',
+        'descrizione': '',
+        'skills': <Map<String, dynamic>>[],
+      });
+      expect(legacy.runeWordsKnown, isEmpty);
+      expect(legacy.runeBooksRead, 0);
+      expect(legacy.runeActiveSlot, 1);
+
+      final source = CharacterArt(
+        nome: 'Rune Art',
+        tipo: 'Rune Art',
+        descrizione: '',
+        skills: <ArtSkill>[],
+        runeWordsKnown: const <String>['verb_ward', 'aspect_vital'],
+        runeQuickWordIds: const <String>['verb_ward'],
+        runeQuickWordIdsSlot2: const <String>['aspect_vital'],
+        runeActiveSlot: 2,
+        runeBooksRead: 3,
+      );
+      final restored = CharacterArt.fromJson(source.toJson());
+      expect(restored.runeWordsKnown, source.runeWordsKnown);
+      expect(restored.runeQuickWordIds, source.runeQuickWordIds);
+      expect(restored.runeQuickWordIdsSlot2, source.runeQuickWordIdsSlot2);
+      expect(restored.runeActiveSlot, 2);
+      expect(restored.runeBooksRead, 3);
+    },
+  );
 }

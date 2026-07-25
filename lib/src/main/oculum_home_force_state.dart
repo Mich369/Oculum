@@ -170,14 +170,7 @@ extension _OculumHomeForceState on _OculumHomePageState {
       );
     }
     final def = statoForzaDef(statoForzaAttivo);
-    final description = t(def.descriptionIt, def.descriptionEn);
-    if (statoForzaAttivo != 'esplosione_oculum') return description;
-
-    final remaining = max(0, statoForzaTiriRimanenti);
-    if (remaining > 0) {
-      return '$description\n${t('Tiri minimi rimanenti', 'Minimum rolls remaining')}: $remaining/9.';
-    }
-    return '$description\n${t('Durata minima completata: termina quando gli HP tornano sopra la soglia.', 'Minimum duration complete: ends when HP rise above the threshold.')}';
+    return t(def.descriptionIt, def.descriptionEn);
   }
 
   _StatoForzaDef pescaStatoForza() {
@@ -196,23 +189,25 @@ extension _OculumHomeForceState on _OculumHomePageState {
     switch (id) {
       case 'corpo_non_mollare':
         final hpTempBonus = 20 + livelloGrado;
-        hpTempController.text =
-            (max(0, leggiNumero(hpTempController)) + hpTempBonus).toString();
+        final hpTempPrima = hpTemp();
+        impostaHpTempTotali(
+          min(oculumTemporaryHpLimit, hpTempPrima + hpTempBonus),
+        );
+        final hpTempApplicati = hpTemp() - hpTempPrima;
         return t(
-          '+$hpTempBonus HP temporanei applicati.',
-          '+$hpTempBonus temporary HP applied.',
+          '+$hpTempApplicati HP temporanei applicati (massimo $oculumTemporaryHpLimit).',
+          '+$hpTempApplicati temporary HP applied (maximum $oculumTemporaryHpLimit).',
         );
       case 'esplosione_oculum':
         final prima = hpCorrenti();
         final hpDopo = min(maxHp(), prima + 25);
         currentHpController.text = hpDopo.toString();
-        final oculumDopo = max(currentOculum(), hpDopo);
-        currentOculumController.text = oculumDopo.toString();
-        invalidateHiddenEyeDerivedCaches();
+        addOculum(max(0, hpDopo - currentOculum()), scheduleSave: false);
+        final oculumDopo = currentOculum();
         statoForzaTiriRimanenti = max(statoForzaTiriRimanenti, 9);
         return t(
-          '+25 HP applicati. Oculum attuale portato a $oculumDopo anche oltre il massimo. Durata minima: 9 tiri.',
-          '+25 HP applied. Current Oculum raised to $oculumDopo even above the maximum. Minimum duration: 9 rolls.',
+          '+25 HP applicati. Oculum attuale portato a $oculumDopo entro il limite temporaneo della difficolta.',
+          '+25 HP applied. Current Oculum raised to $oculumDopo within the difficulty temporary limit.',
         );
       case 'azzeramento_vulnerabilita':
         tempResilienza = max(0, tempResilienza);
@@ -272,26 +267,14 @@ extension _OculumHomeForceState on _OculumHomePageState {
     }
 
     statoForzaTiriRimanenti = max(0, statoForzaTiriRimanenti - 1);
-    if (statoForzaTiriRimanenti > 0) {
-      return t(
-        '\nEsplosione di Oculum: $statoForzaTiriRimanenti/9 tiri rimanenti.',
-        '\nOculum Burst: $statoForzaTiriRimanenti/9 rolls remaining.',
-      );
-    }
+    if (statoForzaTiriRimanenti > 0) return '';
 
     if (hpCorrenti() > sogliaStatoForzaHp()) {
       final finale = terminaStatoForzaAttivo();
-      return t(
-            '\nEsplosione di Oculum: durata minima completata.',
-            '\nOculum Burst: minimum duration complete.',
-          ) +
-          (finale.isEmpty ? '' : '\n$finale');
+      return finale.isEmpty ? '' : '\n$finale';
     }
 
-    return t(
-      '\nEsplosione di Oculum: 9 tiri completati; resta attiva finche gli HP sono alla soglia di crisi.',
-      '\nOculum Burst: 9 rolls complete; it stays active while HP remain at the crisis threshold.',
-    );
+    return '';
   }
 
   List<int> svenimentoCenereDadi() => const [

@@ -124,4 +124,67 @@ void main() {
       );
     });
   });
+
+  group('recupero EXP per difficolta', () {
+    test('Facile usa il vecchio ritmo ma con recuperi ridotti', () {
+      final profile = oculumExperienceRecoveryProfile('facile');
+      expect(profile.periodicThreshold, 100);
+      expect(profile.periodicHp, 4);
+      expect(profile.milestoneHpDivisor, 5);
+      expect(profile.milestoneOculumDivisor, 4);
+      expect(profile.milestoneShieldDivisor, 10);
+    });
+
+    test('le difficolta aumentano la soglia e riducono i recuperi', () {
+      final normal = oculumExperienceRecoveryProfile('normale');
+      final hard = oculumExperienceRecoveryProfile('difficile');
+      final oculum = oculumExperienceRecoveryProfile('oculum');
+
+      expect(normal.periodicThreshold, 150);
+      expect(hard.periodicThreshold, 200);
+      expect(oculum.periodicThreshold, 300);
+      expect(normal.periodicHp, 3);
+      expect(hard.periodicHp, 2);
+      expect(oculum.periodicHp, 1);
+      expect(normal.milestoneShieldDivisor, 15);
+      expect(hard.milestoneShieldDivisor, 20);
+      expect(oculum.milestoneShieldDivisor, 30);
+    });
+
+    test('il resto usa la soglia della difficolta senza perdere EXP', () {
+      final first = oculumExperienceRecoveryProgress(
+        previousRemainder: 0,
+        experienceGained: 175,
+        threshold: 150,
+      );
+      final second = oculumExperienceRecoveryProgress(
+        previousRemainder: first.remainder,
+        experienceGained: 125,
+        threshold: 150,
+      );
+
+      expect(first, (recoveries: 1, remainder: 25));
+      expect(second, (recoveries: 1, remainder: 0));
+    });
+
+    test('cambiare difficolta non cancella il progresso gia accumulato', () {
+      final progress = oculumExperienceRecoveryProgress(
+        previousRemainder: 299,
+        experienceGained: 1,
+        threshold: 100,
+      );
+
+      expect(progress, (recoveries: 3, remainder: 0));
+    });
+
+    test('calcola grandi aggiunte EXP senza iterare sulle singole soglie', () {
+      final progress = oculumExperienceRecoveryProgress(
+        previousRemainder: 149,
+        experienceGained: 999999,
+        threshold: 150,
+      );
+
+      expect(progress, (recoveries: 6667, remainder: 98));
+    });
+  });
 }

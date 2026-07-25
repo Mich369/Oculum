@@ -1,0 +1,33 @@
+OCULUM PORTATILE PER LINUX
+
+Questo pacchetto non richiede Flutter e non deve essere compilato.
+
+1. Estrai completamente Oculum-Linux-Portable-Web.zip.
+2. Apri un terminale nella cartella estratta.
+3. Esegui:
+
+   bash Avvia-Oculum-Linux.sh
+
+4. Oculum si aprirà nel browser all'indirizzo:
+
+   http://127.0.0.1:8765
+
+Lascia aperto il terminale mentre utilizzi l'app.
+Per chiudere il server premi Ctrl+C.
+
+REQUISITI
+
+- Un browser moderno.
+- Python 3, normalmente già presente su Linux.
+
+Se Python 3 manca su Ubuntu, Debian o Linux Mint:
+
+sudo apt update
+sudo apt install python3
+
+SALVATAGGI
+
+I salvataggi del pacchetto Web rimangono nel profilo del browser associato
+all'indirizzo http://127.0.0.1:8765. Usa sempre lo stesso browser e non
+cancellarne i dati del sito. Per maggiore sicurezza usa regolarmente le
+funzioni di esportazione di Oculum.

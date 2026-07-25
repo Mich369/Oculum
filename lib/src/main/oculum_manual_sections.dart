@@ -1029,6 +1029,8 @@ Razze:
 
 Tipi di Art:
 - Oculum, Illness, Emblem, Martial, Null, Rune, Defiled;
+- ogni evoluzione di una Skill Art può consumare Oculum, Materia, Volontà, Resilienza oppure nessuna statistica;
+- Min e Max stabiliscono quanto della statistica scelta può essere investito all'attivazione;
 - le Rune Art hanno combo al 25%;
 - le Rune Art arrivano alla IV forma e usano parole componibili;
 - le Defiled Art hanno 5 stadi e la loro Open non esclude le altre.
@@ -1069,6 +1071,8 @@ Races:
 
 Art types:
 - Oculum, Illness, Emblem, Martial, Null, Rune, Defiled;
+- each Art Skill evolution may consume Oculum, Matter, Will, Resilience, or no stat;
+- Min and Max define how much of the selected stat may be invested on activation;
 - Rune Art combos count as 25%;
 - Rune Arts reach form IV and use modular words;
 - Defiled Arts have 5 stages and their Open does not exclude the others.
@@ -1661,8 +1665,14 @@ Pulsanti disponibili:
 Ricarica automatica:
 - si ricarica con il riposo breve;
 - si ricarica con il riposo lungo;
-- si ricarica dopo il fight quando applichi l'EXP/fine combattimento.
+- con l'EXP recupera soltanto la quota ridotta prevista dalla difficolta; non viene ricaricato completamente.
 - il pulsante Refull Vita ricarica HP, HP temporanei dinamici e Scudo Oculum. Lo Scudo normale consumato non torna.
+
+OCULUM TEMPORANEO E HP TEMPORANEI
+
+Quando ottieni Oculum oltre il massimo normale, l'eccesso diventa temporaneo entro il limite della difficolta: +6 in Facile, +5 in Normale, +3 in Difficile e +3 in Oculum. Il massimo normale non cambia. La durata viene gestita internamente attraverso i tiri validi del personaggio: dado, durata e tiri residui non vengono mostrati. Un cambio di difficolta riduce subito l'eccesso se il nuovo limite e inferiore, ma non regala Oculum se il limite aumenta.
+
+Le cure riempiono prima gli HP normali; l'eccesso diventa HP temporanei fino a un massimo di 20. Il danno consuma prima Scudo Oculum, Scudo normale, HP temporanei e infine HP normali, salvo le opzioni che ignorano gli scudi.
 
 Ordine dei danni:
 1. Scudo Oculum
@@ -2204,7 +2214,7 @@ Opzioni impatto nel pannello Danno / Cura:
 - Oltre scudi: il danno salta Scudo Oculum e Scudo, ma continua a rispettare HP temporanei, HP e le altre regole.
 - Bonus danno agli scudi %: aumenta solo il danno consumato dagli scudi. L'eccesso non diventa danno extra alla vita.
 
-Ogni volta che l'EXP raggiunge o supera una nuova soglia di 369, quella soglia si attiva una sola volta e recuperi un quarto degli HP, lo Scudo Oculum e un terzo dell'Oculum.
+I recuperi EXP dipendono dalla difficolta e non superano mai i massimali naturali. Facile: ogni 100 EXP recuperi fino a 4 HP e 1 Oculum; alla soglia 369 recuperi un quinto degli HP massimi, un quarto dell'Oculum massimo e un decimo dello Scudo Oculum. Normale: ogni 150 EXP recuperi fino a 3 HP e 1 Oculum; alla soglia 369 recuperi un sesto HP, un quinto Oculum e un quindicesimo dello Scudo Oculum. Difficile: ogni 200 EXP recuperi fino a 2 HP e 1 Oculum; alla soglia 369 recuperi un ottavo HP, un sesto Oculum e un ventesimo dello Scudo Oculum. Oculum: ogni 300 EXP recuperi fino a 1 HP e 1 Oculum; alla soglia 369 recuperi un decimo HP, un ottavo Oculum e un trentesimo dello Scudo Oculum. Il resto di EXP viene conservato verso il recupero successivo.
 
 SCUDO DI SALVATAGGIO
 
@@ -2407,7 +2417,7 @@ Impact options in the Damage / Healing panel:
 - Beyond shields: damage skips Oculum Shield and Shield, while temporary HP, HP and the other rules still apply.
 - Shield damage bonus %: increases only the damage consumed by shields. Overflow does not become extra life damage.
 
-Whenever EXP reaches or passes a new 369 threshold, that threshold triggers once and restores one quarter of HP, Oculum Shield and one third of Oculum.
+EXP recovery depends on difficulty and never exceeds natural caps. Easy: every 100 EXP restores up to 4 HP and 1 Oculum; at threshold 369 it restores one fifth maximum HP, one quarter maximum Oculum and one tenth Oculum Shield. Normal: every 150 EXP restores up to 3 HP and 1 Oculum; at threshold 369 it restores one sixth HP, one fifth Oculum and one fifteenth Oculum Shield. Hard: every 200 EXP restores up to 2 HP and 1 Oculum; at threshold 369 it restores one eighth HP, one sixth Oculum and one twentieth Oculum Shield. Oculum: every 300 EXP restores up to 1 HP and 1 Oculum; at threshold 369 it restores one tenth HP, one eighth Oculum and one thirtieth Oculum Shield. Remaining EXP is preserved toward the next recovery.
 
 SAVING SHIELD
 
