@@ -7408,6 +7408,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     return ListView.builder(
       key: sheetScrollKey('sheet_mobile'),
       padding: EdgeInsets.all(dense ? 7 : 12),
+      // Compatibilità Flutter 3.41/3.44: rinominato in scrollCacheExtent
+      // solo nelle versioni più recenti.
+      // ignore: deprecated_member_use
       cacheExtent: 420,
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       itemCount: builders.length,

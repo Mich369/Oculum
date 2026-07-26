@@ -12,16 +12,25 @@ required_secrets=(
   APPLE_TEAM_ID
 )
 
-for secret_name in "${required_secrets[@]}"; do
-  if [[ -z "${!secret_name:-}" ]]; then
-    echo "Secret GitHub obbligatorio mancante: ${secret_name}" >&2
-    exit 1
-  fi
-done
-
 if [[ ! -d "$APP_PATH" ]]; then
   echo "Bundle macOS non trovato: $APP_PATH" >&2
   exit 1
+fi
+
+missing_secrets=()
+for secret_name in "${required_secrets[@]}"; do
+  if [[ -z "${!secret_name:-}" ]]; then
+    missing_secrets+=("$secret_name")
+  fi
+done
+
+if (( ${#missing_secrets[@]} > 0 )); then
+  echo "::warning::Segreti Apple non configurati (${missing_secrets[*]}). Creo un pacchetto macOS non firmato."
+  mkdir -p "$(dirname "$OUTPUT_ZIP")"
+  rm -f "$OUTPUT_ZIP"
+  ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$OUTPUT_ZIP"
+  shasum -a 256 "$OUTPUT_ZIP"
+  exit 0
 fi
 
 CERTIFICATE_PATH="$RUNNER_TEMP/oculum-developer-id.p12"

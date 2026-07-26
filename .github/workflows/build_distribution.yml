@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -62,7 +62,7 @@ jobs:
           Compress-Archive -Path "$dist/*" -DestinationPath "build/distribution/Oculum-Windows.zip" -Force
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Oculum-Windows
           path: build/distribution/Oculum-Windows.zip
@@ -76,7 +76,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -126,7 +126,7 @@ jobs:
           bash scripts/sign_and_notarize_macos.sh "$APP_PATH" build/distribution/Oculum-macOS.zip
 
       - name: Upload macOS artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Oculum-macOS
           path: build/distribution/Oculum-macOS.zip
@@ -140,7 +140,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -179,7 +179,7 @@ jobs:
           zip -qry ../Oculum-iOS-unsigned.ipa Payload
 
       - name: Upload iOS artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Oculum-iOS-unsigned
           path: build/distribution/Oculum-iOS-unsigned.ipa
@@ -193,7 +193,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Linux desktop build dependencies
         run: |
@@ -209,7 +209,7 @@ jobs:
             xvfb
 
       - name: Setup Java for native package hooks
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -265,7 +265,7 @@ jobs:
         run: bash scripts/package_linux_release.sh
 
       - name: Upload Linux artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Oculum-Linux
           path: build/distribution/Oculum-Linux-x64.tar.gz
@@ -279,10 +279,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -312,7 +312,7 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk build/distribution/Oculum-Android-release.apk
 
       - name: Upload Android artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Oculum-Android
           path: build/distribution/Oculum-Android-release.apk

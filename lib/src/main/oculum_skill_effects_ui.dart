@@ -1807,6 +1807,9 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: effects.length,
+              // Compatibilità Flutter 3.41/3.44: onReorderItem non è
+              // disponibile nelle versioni locali precedenti.
+              // ignore: deprecated_member_use
               onReorder: (oldIndex, newIndex) {
                 setState(() {
                   if (newIndex > oldIndex) newIndex--;

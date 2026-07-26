@@ -420,6 +420,8 @@ extension _OculumStorySessionNotes on _OculumHomePageState {
               child: ListView.builder(
                 key: ValueKey('story_notes_${activeCampaignId}_$ownTag'),
                 itemCount: items.length,
+                // Compatibilità Flutter 3.41/3.44.
+                // ignore: deprecated_member_use
                 cacheExtent: 360,
                 itemBuilder: (context, index) {
                   final item = items[index];
