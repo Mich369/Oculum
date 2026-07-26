@@ -141,7 +141,7 @@ extension _OculumHomeDamageImpact on _OculumHomePageState {
     final roll = Random().nextInt(100);
     final maxOcu = max(0, oculumMassimo());
     final usedMostOculum =
-        maxOcu > 0 && currentOculum() <= (maxOcu * 0.25).floor();
+        maxOcu > 0 && oculumTotale() <= (maxOcu * 0.25).floor();
     final canFatigue = usedMostOculum || oculumDodgeUsedToday;
     if (roll < 9) {
       aumentaStatBaseEAttuale('resilienza', 2);

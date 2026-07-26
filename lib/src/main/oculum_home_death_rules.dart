@@ -30,13 +30,16 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
   }
 
   int sheetCurrentOculumForDeathAt(int index) {
-    if (index == schedaCorrente) return currentOculum();
+    if (index == schedaCorrente) return oculumTotale();
     if (index < 0 || index >= schedePersonaggio.length) return 0;
     return max(
       0,
       readIntValue(
-        schedePersonaggio[index]['currentOculum'],
-        fallback: readIntValue(schedePersonaggio[index]['oculum']),
+        schedePersonaggio[index]['derivedOculumTotal'],
+        fallback: readIntValue(
+          schedePersonaggio[index]['currentOculum'],
+          fallback: readIntValue(schedePersonaggio[index]['oculum']),
+        ),
       ),
     );
   }

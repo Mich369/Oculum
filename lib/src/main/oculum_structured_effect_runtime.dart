@@ -42,9 +42,11 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
   void applyStructuredHealing(String resource, int amount) {
     if (amount == 0) return;
     if (oculumNormalizeEffectResource(resource) == 'oculum') {
-      currentOculumController.text = (currentOculum() + amount)
-          .clamp(0, oculumMassimo())
-          .toString();
+      if (amount > 0) {
+        addOculum(amount, scheduleSave: false);
+      } else {
+        spendOculum(-amount, scheduleSave: false);
+      }
       recordCurrentOculumProgress();
       return;
     }

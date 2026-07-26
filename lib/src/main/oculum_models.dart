@@ -435,10 +435,12 @@ TemporaryOculumState addOculumToTemporaryState({
   required int amount,
   required String difficulty,
   required int Function(int faces) rollDie,
+  int minimumNormalCurrent = 0,
 }) {
-  final safeMaximum = max(0, normalMaximum);
+  final safeMinimum = min(minimumNormalCurrent, normalMaximum);
+  final safeMaximum = max(safeMinimum, normalMaximum);
   final rules = getTemporaryOculumRulesForDifficulty(difficulty);
-  final normal = state.normalCurrent.clamp(0, safeMaximum).toInt();
+  final normal = state.normalCurrent.clamp(safeMinimum, safeMaximum).toInt();
   final temporary = state.temporary.clamp(0, rules.extraLimit).toInt();
   final safeAmount = max(0, amount);
   final toNormal = min(safeAmount, safeMaximum - normal);
@@ -465,12 +467,13 @@ TemporaryOculumState addOculumToTemporaryState({
 TemporaryOculumState spendOculumFromTemporaryState({
   required TemporaryOculumState state,
   required int amount,
+  int minimumNormalCurrent = 0,
 }) {
   var remaining = max(0, amount);
   final temporarySpent = min(max(0, state.temporary), remaining);
   remaining -= temporarySpent;
   final nextTemporary = max(0, state.temporary - temporarySpent);
-  final nextNormal = max(0, state.normalCurrent - remaining);
+  final nextNormal = max(minimumNormalCurrent, state.normalCurrent - remaining);
   return TemporaryOculumState(
     normalCurrent: nextNormal,
     temporary: nextTemporary,
@@ -493,11 +496,12 @@ TemporaryOculumState registerValidTemporaryOculumRoll(
 TemporaryOculumState handleTemporaryOculumDifficultyChange({
   required TemporaryOculumState state,
   required String difficulty,
+  int minimumNormalCurrent = 0,
 }) {
   final limit = getTemporaryOculumLimitForDifficulty(difficulty);
   final temporary = state.temporary.clamp(0, limit).toInt();
   return TemporaryOculumState(
-    normalCurrent: max(0, state.normalCurrent),
+    normalCurrent: max(minimumNormalCurrent, state.normalCurrent),
     temporary: temporary,
     rollsRemaining: temporary > 0 ? max(0, state.rollsRemaining) : 0,
   );
@@ -507,13 +511,18 @@ TemporaryOculumState temporaryOculumStateFromJson({
   required Map<String, dynamic> json,
   required int normalMaximum,
   required String difficulty,
+  int minimumNormalCurrent = 0,
 }) {
-  final safeMaximum = max(0, normalMaximum);
+  final safeMinimum = min(minimumNormalCurrent, normalMaximum);
+  final safeMaximum = max(safeMinimum, normalMaximum);
   final hasTemporaryFields =
       json.containsKey('temporaryOculum') ||
       json.containsKey('temporaryOculumRollsRemaining') ||
       json.containsKey('normalCurrentOculum');
-  final loadedTotal = max(0, readIntValue(json['currentOculum']));
+  final loadedTotal = readIntValue(json['currentOculum']).clamp(
+    safeMinimum,
+    safeMaximum + getTemporaryOculumLimitForDifficulty(difficulty),
+  );
   final loadedTemporary = hasTemporaryFields
       ? readIntValue(
           json['temporaryOculum'],
@@ -522,9 +531,9 @@ TemporaryOculumState temporaryOculumStateFromJson({
   final loadedNormal = hasTemporaryFields
       ? readIntValue(
           json['normalCurrentOculum'],
-          fallback: max(0, loadedTotal - loadedTemporary),
-        ).clamp(0, safeMaximum).toInt()
-      : loadedTotal.clamp(0, safeMaximum).toInt();
+          fallback: loadedTotal - loadedTemporary,
+        ).clamp(safeMinimum, safeMaximum).toInt()
+      : loadedTotal.clamp(safeMinimum, safeMaximum).toInt();
   final loadedDuration = loadedTemporary > 0
       ? max(0, readIntValue(json['temporaryOculumRollsRemaining']))
       : 0;

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oculum/main.dart';
@@ -142,6 +144,80 @@ void main() {
       expect(restored.normalCurrent, 8);
       expect(restored.temporary, 0);
       expect(restored.rollsRemaining, 0);
+    });
+
+    test('i bonus Oculum da testo possono essere consumati fino a zero', () {
+      final spent = spendOculumFromTemporaryState(
+        state: const TemporaryOculumState(
+          normalCurrent: 0,
+          temporary: 0,
+          rollsRemaining: 0,
+        ),
+        amount: 5,
+        minimumNormalCurrent: -5,
+      );
+
+      expect(spent.normalCurrent, -5);
+      expect(spent.temporary, 0);
+      expect(spent.normalCurrent + 5, 0);
+    });
+
+    test('un guadagno ripristina prima il bonus testuale consumato', () {
+      final restored = addOculumToTemporaryState(
+        state: const TemporaryOculumState(
+          normalCurrent: -5,
+          temporary: 0,
+          rollsRemaining: 0,
+        ),
+        normalMaximum: 10,
+        amount: 3,
+        difficulty: 'normale',
+        rollDie: (_) => 1,
+        minimumNormalCurrent: -5,
+      );
+
+      expect(restored.normalCurrent, -2);
+      expect(restored.normalCurrent + 5, 3);
+      expect(restored.temporary, 0);
+    });
+
+    test('il salvataggio conserva il bonus testuale gia consumato', () {
+      final restored = temporaryOculumStateFromJson(
+        json: <String, dynamic>{
+          'currentOculum': '-5',
+          'normalCurrentOculum': -5,
+          'temporaryOculum': 0,
+        },
+        normalMaximum: 10,
+        difficulty: 'normale',
+        minimumNormalCurrent: -5,
+      );
+
+      expect(restored.normalCurrent, -5);
+      expect(restored.total + 5, 0);
+    });
+
+    test('il controller conserva il debito runtime senza bloccarlo a zero', () {
+      final source = File(
+        'lib/src/main/oculum_home_calculations.dart',
+      ).readAsStringSync();
+
+      expect(
+        source,
+        contains('currentOculumController.text = state.total.toString();'),
+      );
+      expect(
+        source,
+        isNot(
+          contains(
+            'currentOculumController.text = max(0, state.total).toString();',
+          ),
+        ),
+      );
+      expect(
+        source,
+        contains('return min(oculumTiroLimiteRegola(), oculumTotale());'),
+      );
     });
   });
 

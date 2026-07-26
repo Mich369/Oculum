@@ -2068,8 +2068,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int currentOculum() => readIntValue(currentOculumController.text);
 
+  int currentOculumRuntimeFloor() => -runtimeCurrentStatBonus('oculum');
+
   int normalCurrentOculum() {
-    return max(0, currentOculum() - max(0, temporaryOculum));
+    return max(
+      currentOculumRuntimeFloor(),
+      currentOculum() - max(0, temporaryOculum),
+    );
   }
 
   TemporaryOculumState currentTemporaryOculumState() {
@@ -2090,7 +2095,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     temporaryOculumRollsRemaining = temporaryOculum > 0
         ? max(0, state.rollsRemaining)
         : 0;
-    currentOculumController.text = max(0, state.total).toString();
+    // Il valore interno può essere negativo quanto il bonus runtime già
+    // consumato. Il totale mostrato resta comunque limitato a zero.
+    currentOculumController.text = state.total.toString();
     final visibleChanged = before != currentOculum();
     if (visibleChanged && notifyVisibleChange) {
       syncVisibleCurrentStatEditor('oculum');
@@ -2113,19 +2120,20 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     bool deferDerivedCardNotifications = false,
   }) {
     if (amount <= 0) return 0;
-    final before = currentOculum();
+    final before = oculumTotale();
     final next = addOculumToTemporaryState(
       state: currentTemporaryOculumState(),
       normalMaximum: currentStatNaturalControllerMax('oculum'),
       amount: amount,
       difficulty: normalizedCampaignDifficulty(),
       rollDie: (faces) => (random ?? Random()).nextInt(faces) + 1,
+      minimumNormalCurrent: currentOculumRuntimeFloor(),
     );
     applyTemporaryOculumState(
       next,
       deferDerivedCardNotifications: deferDerivedCardNotifications,
     );
-    final applied = max(0, currentOculum() - before);
+    final applied = max(0, oculumTotale() - before);
     if (scheduleSave && applied > 0) {
       recordCurrentOculumProgress();
       programmaSalvataggio(
@@ -2138,13 +2146,16 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int spendOculum(int amount, {bool scheduleSave = true}) {
     if (amount <= 0) return 0;
-    final before = currentOculum();
+    final before = oculumTotale();
+    final spendable = min(amount, before);
+    if (spendable <= 0) return 0;
     final next = spendOculumFromTemporaryState(
       state: currentTemporaryOculumState(),
-      amount: amount,
+      amount: spendable,
+      minimumNormalCurrent: currentOculumRuntimeFloor(),
     );
     applyTemporaryOculumState(next);
-    final spent = max(0, before - currentOculum());
+    final spent = max(0, before - oculumTotale());
     if (scheduleSave && spent > 0) {
       recordCurrentOculumProgress();
       programmaSalvataggio(invalidateCaches: false);
@@ -2200,6 +2211,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final next = handleTemporaryOculumDifficultyChange(
       state: currentTemporaryOculumState(),
       difficulty: difficulty,
+      minimumNormalCurrent: currentOculumRuntimeFloor(),
     );
     return applyTemporaryOculumState(next);
   }
@@ -2210,6 +2222,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       json: json,
       normalMaximum: normalMaximum,
       difficulty: campaignDifficulty,
+      minimumNormalCurrent: currentOculumRuntimeFloor(),
     );
     applyTemporaryOculumState(restored, notifyVisibleChange: false);
     syncVisibleCurrentStatEditor('oculum');
@@ -2290,7 +2303,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int oculumTiroSpendCap() {
-    return min(oculumTiroLimiteRegola(), max(0, currentOculum()));
+    return min(oculumTiroLimiteRegola(), oculumTotale());
   }
 
   int oculumTiroPreparato() {
@@ -2321,7 +2334,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (spent <= 0) return (spent: 0, bonus: 0);
 
     final result = oculumFightRollSpendResult(
-      currentOculum: currentOculum(),
+      currentOculum: oculumTotale(),
       spentOculum: spent,
     );
     spendOculum(spent, scheduleSave: false);
@@ -2388,9 +2401,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       );
     } else {
       final current = currentTemporaryOculumState();
+      final minimum = currentOculumRuntimeFloor();
       applyTemporaryOculumState(
         TemporaryOculumState(
-          normalCurrent: current.normalCurrent.clamp(0, massimo).toInt(),
+          normalCurrent: current.normalCurrent.clamp(minimum, massimo).toInt(),
           temporary: current.temporary,
           rollsRemaining: current.rollsRemaining,
         ),
@@ -2733,10 +2747,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }) {
     final before = currentStatValue(key);
     final visible = max(0, readIntValue(value));
-    final runtimeBonus = runtimeCurrentStatBonus(key);
     if (key == 'oculum') {
-      final requestedRaw = max(0, visible - runtimeBonus);
-      final delta = requestedRaw - currentOculum();
+      final delta = visible - before;
       if (delta > 0) {
         addOculum(delta, scheduleSave: false);
       } else if (delta < 0) {
@@ -2752,6 +2764,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       scheduleRealtimeOculumChanged();
       return;
     }
+    final runtimeBonus = runtimeCurrentStatBonus(key);
     currentStatController(key).text = (visible - runtimeBonus).toString();
     if (trackConsumption) {
       adjustRecordedStatSpentFromDelta(key, visible - before);

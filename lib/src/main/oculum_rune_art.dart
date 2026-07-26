@@ -785,7 +785,7 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
     final slot = art.runeActiveSlot;
     final formulaCost = runeFormulaCostForSlot(art, slot);
     final formulaDt = runeFormulaDtForSlot(art, slot);
-    final beforeOculum = currentOculum();
+    final beforeOculum = oculumTotale();
     final use = runeArtUseResult(
       currentOculum: beforeOculum,
       currentDifficulty: difficoltaTiro(),

@@ -202,8 +202,8 @@ extension _OculumHomeForceState on _OculumHomePageState {
         final prima = hpCorrenti();
         final hpDopo = min(maxHp(), prima + 25);
         currentHpController.text = hpDopo.toString();
-        addOculum(max(0, hpDopo - currentOculum()), scheduleSave: false);
-        final oculumDopo = currentOculum();
+        addOculum(max(0, hpDopo - oculumTotale()), scheduleSave: false);
+        final oculumDopo = oculumTotale();
         statoForzaTiriRimanenti = max(statoForzaTiriRimanenti, 9);
         return t(
           '+25 HP applicati. Oculum attuale portato a $oculumDopo entro il limite temporaneo della difficolta.',

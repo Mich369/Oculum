@@ -2056,8 +2056,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           const SizedBox(height: 8),
           Text(
             t(
-              'Limite regola: $ruleCap | Oculum attuale: ${currentOculum()}',
-              'Rule cap: $ruleCap | Current Oculum: ${currentOculum()}',
+              'Limite regola: $ruleCap | Oculum attuale: ${oculumTotale()}',
+              'Rule cap: $ruleCap | Current Oculum: ${oculumTotale()}',
             ),
             style: const TextStyle(color: Colors.white70),
           ),
