@@ -482,6 +482,38 @@ class OculumStructuredEffect {
   }
 }
 
+int oculumStructuredEffectFrequency(dynamic raw) {
+  return max(0, readIntValue(raw));
+}
+
+/// Avanza il contatore persistente di un effetto periodico.
+///
+/// Ritorna `true` soltanto sul tick in cui l'effetto deve agire. Le vecchie
+/// mappe senza frequenza restano inalterate e non diventano periodiche.
+bool oculumAdvanceStructuredEffectFrequency(
+  Map<String, dynamic> state,
+  String eventUnit,
+) {
+  final frequency = oculumStructuredEffectFrequency(state['frequency']);
+  if (frequency <= 0 ||
+      oculumNormalizeText('${state['unit'] ?? 'turni'}') !=
+          oculumNormalizeText(eventUnit)) {
+    return false;
+  }
+  final elapsed = max(0, readIntValue(state['frequencyElapsed'])) + 1;
+  final due = elapsed >= frequency;
+  state['frequencyElapsed'] = due ? 0 : elapsed;
+  state['periodicActive'] = due;
+  return due;
+}
+
+bool oculumShouldRestoreActiveStructuredEffect(Map<String, dynamic> state) {
+  final remaining = readIntValue(state['remaining']);
+  return remaining > 0 ||
+      (remaining < 0 &&
+          oculumStructuredEffectFrequency(state['frequency']) > 0);
+}
+
 List<OculumStructuredEffect> oculumReadStructuredEffects(dynamic raw) {
   if (raw is! List) return <OculumStructuredEffect>[];
   return <OculumStructuredEffect>[
@@ -594,7 +626,10 @@ String oculumEffectFormulaExpression(
   Iterable<HiddenEyeStat> subtraits,
 ) {
   var text = oculumNormalizeSubtraitReferences(raw, subtraits).trim();
-  text = text.replaceAll(RegExp(r'\b[xX×]\b'), '*');
+  text = text
+      .replaceAll('\u00D7', '*')
+      .replaceAll('Ã—', '*')
+      .replaceAll(RegExp(r'[xX](?=\s*\d)'), '*');
   text = text.replaceAllMapped(
     RegExp(
       r'([0-9]+(?:[,.][0-9]+)?)\s*%\s*([A-Za-zÀ-ÖØ-öø-ÿ_]+)',
@@ -603,7 +638,10 @@ String oculumEffectFormulaExpression(
     (match) => '${match.group(2)}*${match.group(1)}%',
   );
   text = text.replaceAllMapped(
-    RegExp(r'\b(Oculum\s*Speso|OculumSpeso)\b', caseSensitive: false),
+    RegExp(
+      r'\b(Oculum\s*(?:Speso|Immesso|Utilizzato)|OculumSpeso|OculumImmesso)\b',
+      caseSensitive: false,
+    ),
     (_) => 'oculum_spent',
   );
 
@@ -796,7 +834,19 @@ String oculumStructuredEffectDescription(
   Iterable<HiddenEyeStat> subtraits = const <HiddenEyeStat>[],
 }) {
   final custom = effect.customDisplayText.trim();
-  if (custom.isNotEmpty) return custom;
+  final frequency = oculumStructuredEffectFrequency(effect.frequency);
+  final periodicText = frequency <= 0
+      ? ''
+      : ' ogni $frequency ${effect.durationUnit.trim().isEmpty ? 'turni' : effect.durationUnit}';
+  String withPeriod(String text) {
+    if (periodicText.isEmpty ||
+        RegExp(r'\bogni\s+\d+', caseSensitive: false).hasMatch(text)) {
+      return text;
+    }
+    return '$text$periodicText';
+  }
+
+  if (custom.isNotEmpty) return withPeriod(custom);
   final value = oculumNormalizeSubtraitReferences(
     effect.valueExpression,
     subtraits,
@@ -825,25 +875,35 @@ String oculumStructuredEffectDescription(
       '$value$dice$progressionText$elementText$damageBypassText';
   switch (effect.type) {
     case 'danno':
-      return effect.mode == 'finche_attivo'
-          ? 'Danni + $displayedValue finché l’effetto è attivo'
-          : 'Infligge $displayedValue danni';
+      return withPeriod(
+        effect.mode == 'finche_attivo'
+            ? 'Danni + $displayedValue finché l’effetto è attivo'
+            : 'Infligge $displayedValue danni',
+      );
     case 'difesa':
-      return 'Difesa + $displayedValue';
+      return withPeriod('Difesa + $displayedValue');
     case 'cura':
       final verb = effect.mode == 'rigenerazione' ? 'Rigenera' : 'Cura';
-      return '$verb $displayedValue ${resource == 'oculum' ? 'Oculum' : 'Vita'}';
+      return withPeriod(
+        '$verb $displayedValue ${resource == 'oculum' ? 'Oculum' : 'Vita'}',
+      );
     case 'scudo':
-      return 'Scudo + $displayedValue';
+      return withPeriod('Scudo + $displayedValue');
     case 'hp_temporanei':
-      return 'HP temporanei + $displayedValue';
+      return withPeriod('HP temporanei + $displayedValue');
     case 'modifica_statistica':
     case 'modifica_sottotratto':
-      return '$target ${effect.mode == 'diminuzione' ? '-' : '+'}$displayedValue';
+      return withPeriod(
+        '$target ${effect.mode == 'diminuzione' ? '-' : '+'}$displayedValue',
+      );
     case 'velocita':
-      return '${target.isEmpty ? 'Velocità' : target} + $displayedValue';
+      return withPeriod(
+        '${target.isEmpty ? 'Velocità' : target} + $displayedValue',
+      );
     case 'forza':
-      return '${target.isEmpty ? 'Forza' : target} + $displayedValue';
+      return withPeriod(
+        '${target.isEmpty ? 'Forza' : target} + $displayedValue',
+      );
     case 'rimuovi_vita':
       return 'Rimuove $value Vita';
     case 'rimuovi_oculum':
@@ -896,6 +956,39 @@ OculumFreeTextEffectParseResult oculumParseStructuredEffectsFromText(
   for (final piece in pieces) {
     final lower = oculumNormalizeText(piece);
     var recognized = false;
+
+    final isWall =
+        RegExp(r'\b(muro|barriera)\b', caseSensitive: false).hasMatch(piece) &&
+        (lower.contains('assorb') ||
+            lower.contains('sottrae ai danni') ||
+            lower.contains('riduce i danni'));
+    final wallFormula = RegExp(
+      r'oculum\s*(?:immess\w*|spes\w*|utilizzat\w*)\s*(?:x|\*|\u00D7)\s*(\d+)\s*(?:([+-])\s*(\d+))?',
+      caseSensitive: false,
+    ).firstMatch(piece);
+    if (isWall && wallFormula != null) {
+      final multiplier = wallFormula.group(1) ?? '1';
+      final sign = wallFormula.group(2) ?? '';
+      final bonus = wallFormula.group(3) ?? '';
+      final expression =
+          'OculumSpeso*$multiplier${sign.isEmpty || bonus.isEmpty ? '' : '$sign$bonus'}';
+      effects.add(
+        OculumStructuredEffect(
+          type: 'scudo',
+          valueExpression: expression,
+          narrativeText: piece,
+          customDisplayText:
+              'Muro: assorbe $expression danni e crolla quando esaurito',
+        ),
+      );
+      recognized = true;
+    } else if (RegExp(
+      r'\b(muro|barriera)\b.*\b(crolla|svanisce|si rompe)\b',
+      caseSensitive: false,
+    ).hasMatch(piece)) {
+      // Continuazione narrativa di un muro già riconosciuto.
+      recognized = true;
+    }
 
     final periodicDamage = RegExp(
       r'(?:\+|aument\w*\s+(?:il\s+)?(?:tuo\s+)?)?(\d+)\s*(?:a\s+)?dann\w*\s+ogni\s+(\d+)\s*turn',
@@ -1026,8 +1119,16 @@ OculumFreeTextEffectParseResult oculumParseStructuredEffectsFromText(
     }
 
     for (final match in effectPattern.allMatches(piece)) {
+      if (isWall) continue;
       final rawType = oculumNormalizeText(match.group(1) ?? '');
-      final value = (match.group(2) ?? '').trim();
+      final rawValue = (match.group(2) ?? '').trim();
+      final periodic = RegExp(
+        r'\s+ogni\s+(\d+)\s*(turn\w*|tir\w*)\s*$',
+        caseSensitive: false,
+      ).firstMatch(rawValue);
+      final value = periodic == null
+          ? rawValue
+          : rawValue.substring(0, periodic.start).trim();
       if (value.isEmpty ||
           (periodicDamage != null &&
               (rawType == 'danno' || rawType == 'danni')) ||
@@ -1048,6 +1149,11 @@ OculumFreeTextEffectParseResult oculumParseStructuredEffectsFromText(
           valueExpression: value,
           mode: rawType == 'rigenera' ? 'rigenerazione' : 'immediato',
           resource: type == 'cura' ? 'vita' : '',
+          frequency: periodic?.group(1) ?? '',
+          durationUnit:
+              oculumNormalizeText(periodic?.group(2) ?? '').startsWith('tir')
+              ? 'tiri'
+              : 'turni',
           narrativeText: piece,
         ),
       );

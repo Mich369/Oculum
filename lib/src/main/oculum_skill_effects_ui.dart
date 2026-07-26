@@ -1219,9 +1219,12 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
               final isHealing = type == 'cura';
               final isCost = type == 'consumo_risorsa';
               final isState = type == 'stato';
+              final hasFrequency =
+                  oculumStructuredEffectFrequency(frequencyController.text) > 0;
               final supportsDuration =
                   mode == 'finche_attivo' ||
                   mode == 'rigenerazione' ||
+                  hasFrequency ||
                   type == 'modifica_statistica' ||
                   type == 'modifica_sottotratto' ||
                   type == 'velocita' ||
@@ -1428,6 +1431,25 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                               ),
                           onChanged: (_) => setDialogState(() => error = ''),
                         ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: frequencyController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: oculumNonNegativeIntegerFormatters,
+                          decoration:
+                              fieldDecoration(
+                                t(
+                                  'Ripeti ogni N turni/tiri (opzionale)',
+                                  'Repeat every N turns/rolls (optional)',
+                                ),
+                              ).copyWith(
+                                helperText: t(
+                                  'Esempio: 3 = agisce al 3°, 6°, 9° turno. Lascia vuoto per agire subito una volta.',
+                                  'Example: 3 = acts on turns 3, 6 and 9. Leave empty to act once immediately.',
+                                ),
+                              ),
+                          onChanged: (_) => setDialogState(() => error = ''),
+                        ),
                         if (supportsDuration) ...[
                           const SizedBox(height: 10),
                           TextField(
@@ -1460,18 +1482,6 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             onChanged: (value) => setDialogState(() {
                               durationUnit = value ?? 'turni';
                             }),
-                          ),
-                        ],
-                        if (isHealing && mode == 'rigenerazione') ...[
-                          const SizedBox(height: 10),
-                          TextField(
-                            controller: frequencyController,
-                            decoration: fieldDecoration(
-                              t(
-                                'Frequenza rigenerazione',
-                                'Regeneration frequency',
-                              ),
-                            ),
                           ),
                         ],
                         const SizedBox(height: 10),

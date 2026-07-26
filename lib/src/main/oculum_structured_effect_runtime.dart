@@ -25,7 +25,11 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     final normalized = normalizedStructuredTarget(target);
     var total = 0;
     for (final effect in activeStructuredEffects) {
-      if (readIntValue(effect['remaining']) <= 0) continue;
+      if (readIntValue(effect['remaining']) == 0) continue;
+      if (oculumStructuredEffectFrequency(effect['frequency']) > 0 &&
+          !readBoolValue(effect['periodicActive'])) {
+        continue;
+      }
       if (normalizedStructuredTarget('${effect['target'] ?? ''}') !=
           normalized) {
         continue;
@@ -62,18 +66,36 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         continue;
       }
       final remaining = readIntValue(effect['remaining']);
-      if (remaining <= 0) continue;
-      if ('${effect['mode'] ?? ''}' == 'rigenerazione') {
-        applyStructuredHealing(
-          '${effect['resource'] ?? 'vita'}',
-          readIntValue(effect['value']),
-        );
+      if (remaining == 0) continue;
+      final frequency = oculumStructuredEffectFrequency(effect['frequency']);
+      final due = frequency <= 0
+          ? true
+          : oculumAdvanceStructuredEffectFrequency(effect, unit);
+      if (frequency > 0) changed = true;
+      if (due) {
+        final value = readIntValue(effect['value']);
+        switch ('${effect['type'] ?? ''}') {
+          case 'cura':
+            applyStructuredHealing('${effect['resource'] ?? 'vita'}', value);
+            break;
+          case 'scudo':
+            scudoController.text = max(
+              0,
+              leggiNumero(scudoController) + value,
+            ).toString();
+            break;
+          case 'hp_temporanei':
+            hpTempController.text = (leggiNumero(hpTempController) + value)
+                .clamp(0, oculumTemporaryHpLimit)
+                .toString();
+            break;
+        }
       }
-      effect['remaining'] = max(0, remaining - 1);
+      if (remaining > 0) effect['remaining'] = max(0, remaining - 1);
       changed = true;
     }
     activeStructuredEffects.removeWhere(
-      (effect) => readIntValue(effect['remaining']) <= 0,
+      (effect) => readIntValue(effect['remaining']) == 0,
     );
     if (hadTimedStressEffect &&
         !activeStructuredEffects.any(
@@ -138,23 +160,29 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             : normalizedStructuredTarget(
                 effectTarget.isNotEmpty ? effectTarget : effect.target,
               );
+        final frequency = oculumStructuredEffectFrequency(effect.frequency);
+        final isPeriodic = frequency > 0;
 
         switch (effect.type) {
           case 'cura':
-            if (effect.mode != 'rigenerazione') {
+            if (!isPeriodic && effect.mode != 'rigenerazione') {
               applyStructuredHealing(effect.resource, value);
             }
             break;
           case 'scudo':
-            scudoController.text = max(
-              0,
-              leggiNumero(scudoController) + value,
-            ).toString();
+            if (!isPeriodic) {
+              scudoController.text = max(
+                0,
+                leggiNumero(scudoController) + value,
+              ).toString();
+            }
             break;
           case 'hp_temporanei':
-            hpTempController.text = (leggiNumero(hpTempController) + value)
-                .clamp(0, oculumTemporaryHpLimit)
-                .toString();
+            if (!isPeriodic) {
+              hpTempController.text = (leggiNumero(hpTempController) + value)
+                  .clamp(0, oculumTemporaryHpLimit)
+                  .toString();
+            }
             break;
           case 'rimuovi_vita':
             final hpBeforeRemoval = hpCorrenti();
@@ -228,7 +256,8 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
                 duration <= 0
             ? 1
             : duration;
-        if ((isOngoingBonus || isRegeneration) && effectiveDuration > 0) {
+        if ((isOngoingBonus || isRegeneration || isPeriodic) &&
+            (effectiveDuration > 0 || isPeriodic)) {
           if (!effect.stackable) {
             activeStructuredEffects.removeWhere(
               (active) =>
@@ -246,8 +275,15 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             'target': target,
             'resource': effect.resource,
             'value': value,
-            'remaining': effectiveDuration,
+            // -1 rappresenta una periodicità senza scadenza. I vecchi
+            // salvataggi continuano a usare soltanto durate positive.
+            'remaining': effectiveDuration > 0 ? effectiveDuration : -1,
             'unit': effect.durationUnit,
+            if (isPeriodic) ...<String, dynamic>{
+              'frequency': frequency,
+              'frequencyElapsed': 0,
+              'periodicActive': false,
+            },
           });
         } else if (isOngoingBonus && duration == 0) {
           final fixedKey = normalizedStructuredTarget(effect.target);
@@ -287,6 +323,19 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     return messages;
   }
 
+  String activeStructuredEffectTiming(Map<String, dynamic> effect) {
+    final frequency = oculumStructuredEffectFrequency(effect['frequency']);
+    final remaining = readIntValue(effect['remaining']);
+    final unit = '${effect['unit'] ?? 'turni'}';
+    if (frequency > 0) {
+      final elapsed = max(0, readIntValue(effect['frequencyElapsed']));
+      final untilNext = max(1, frequency - elapsed);
+      final expiry = remaining > 0 ? ' · durata $remaining $unit' : '';
+      return 'ogni $frequency $unit · prossimo tra $untilNext$expiry';
+    }
+    return '$remaining $unit';
+  }
+
   Widget activeStructuredEffectsCard() {
     if (activeStructuredEffects.isEmpty) return const SizedBox.shrink();
     return Container(
@@ -313,8 +362,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
                     '${activeStructuredEffects[index]['target']} '
                     '${readIntValue(activeStructuredEffects[index]['value']) >= 0 ? '+' : ''}'
                     '${activeStructuredEffects[index]['value']} - '
-                    '${activeStructuredEffects[index]['remaining']} '
-                    '${activeStructuredEffects[index]['unit']}',
+                    '${activeStructuredEffectTiming(activeStructuredEffects[index])}',
                   ),
                 ),
                 IconButton(

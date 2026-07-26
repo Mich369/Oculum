@@ -323,6 +323,104 @@ void main() {
       );
     });
 
+    test(
+      'riconosce un muro basato su Oculum immesso e conserva i limiti 1/4',
+      () {
+        const text =
+            'Innalza un muro che sottrae ai danni in arrivo una quantità pari '
+            'a Oculum immesso ×2 +3; il muro crolla quando ha assorbito '
+            'interamente tale quantità. (1/4)';
+        final parsed = oculumParseStructuredEffectsFromText(text);
+        final wall = parsed.effects.single;
+
+        expect(wall.type, 'scudo');
+        expect(wall.valueExpression, 'OculumSpeso*2+3');
+        expect(
+          oculumEvaluateStructuredEffectValue(
+            wall,
+            variables: variables,
+            spentResources: const <String, num>{'oculum': 4},
+          ),
+          11,
+        );
+        final limits = oculumSkillTextLimitsAtEnd(text);
+        expect(limits?.minimum, 1);
+        expect(limits?.maximum, 4);
+      },
+    );
+
+    test('Oculum immesso e utilizzato sono alias di Oculum speso', () {
+      for (final formula in <String>[
+        'Oculum immesso ×2 +3',
+        'Oculum utilizzato x2 +3',
+        'OculumSpeso*2+3',
+      ]) {
+        final effect = OculumStructuredEffect(valueExpression: formula);
+        expect(
+          oculumEvaluateStructuredEffectValue(
+            effect,
+            variables: variables,
+            spentResources: const <String, num>{'oculum': 4},
+          ),
+          11,
+          reason: formula,
+        );
+      }
+    });
+
+    test('gli effetti generici ogni N turni conservano valore e frequenza', () {
+      final parsed = oculumParseStructuredEffectsFromText(
+        'Scudo + 3 ogni 2 turni e Cura 4 ogni 3 turni',
+      );
+      expect(parsed.effects, hasLength(2));
+      expect(parsed.effects[0].type, 'scudo');
+      expect(parsed.effects[0].valueExpression, '3');
+      expect(parsed.effects[0].frequency, '2');
+      expect(parsed.effects[1].type, 'cura');
+      expect(parsed.effects[1].valueExpression, '4');
+      expect(parsed.effects[1].frequency, '3');
+      expect(
+        oculumStructuredEffectDescription(parsed.effects[0]),
+        contains('ogni 2 turni'),
+      );
+    });
+
+    test(
+      'il contatore periodico agisce solo ogni N tick ed è persistibile',
+      () {
+        final state = <String, dynamic>{
+          'frequency': 3,
+          'frequencyElapsed': 0,
+          'periodicActive': false,
+          'unit': 'turni',
+          'remaining': -1,
+        };
+        expect(oculumAdvanceStructuredEffectFrequency(state, 'turni'), isFalse);
+        expect(state['frequencyElapsed'], 1);
+        expect(oculumAdvanceStructuredEffectFrequency(state, 'tiri'), isFalse);
+        expect(state['frequencyElapsed'], 1);
+        expect(oculumAdvanceStructuredEffectFrequency(state, 'turni'), isFalse);
+        expect(oculumAdvanceStructuredEffectFrequency(state, 'turni'), isTrue);
+        expect(state['frequencyElapsed'], 0);
+        expect(state['periodicActive'], isTrue);
+        expect(oculumAdvanceStructuredEffectFrequency(state, 'turni'), isFalse);
+        expect(state['periodicActive'], isFalse);
+        expect(oculumShouldRestoreActiveStructuredEffect(state), isTrue);
+        expect(
+          oculumShouldRestoreActiveStructuredEffect(<String, dynamic>{
+            'remaining': -1,
+          }),
+          isFalse,
+        );
+        expect(
+          oculumShouldRestoreActiveStructuredEffect(<String, dynamic>{
+            'remaining': 2,
+          }),
+          isTrue,
+        );
+      },
+    );
+
     test('le evoluzioni Art sono indipendenti e copiabili', () {
       final skill = ArtSkill(
         nome: 'Eco',

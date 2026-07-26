@@ -1546,7 +1546,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
                 : const <dynamic>[])
             .whereType<Map>()
             .map((effect) => Map<String, dynamic>.from(effect))
-            .where((effect) => readIntValue(effect['remaining']) > 0),
+            .where(oculumShouldRestoreActiveStructuredEffect),
       );
     schivateOculumConsumate = readIntValue(json['schivateOculumConsumate']);
     schivataOculumRiduzionePronta = readIntValue(
