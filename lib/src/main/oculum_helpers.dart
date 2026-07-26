@@ -463,6 +463,15 @@ String oculumStatKey(String value) {
     case 'oc':
     case 'oculum':
       return 'oculum';
+    case 'oculumspeso':
+    case 'oculumspesi':
+    case 'ocuspeso':
+    case 'ocuspesi':
+    case 'oculumconsumato':
+    case 'oculumconsumati':
+    case 'ocuconsumato':
+    case 'ocuconsumati':
+      return 'oculum_spent';
     case 'ocuattuale':
     case 'ocuattuali':
     case 'oculumattuale':
@@ -1216,6 +1225,7 @@ const List<String> oculumCommandAutocompleteLabels = <String>[
   '@Materia',
   '@MateriaAttuale',
   '@Oculum',
+  '@OculumSpeso',
   '@OculumAttuale',
   '@Scudo',
   '@ScudoAttuale',

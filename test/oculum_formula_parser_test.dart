@@ -794,6 +794,16 @@ void main() {
     }
   });
 
+  test('@OculumSpeso+5 viene riconosciuto come comando diretto', () {
+    final parsed = oculumParseFormulaCommands('@OculumSpeso+5', _vars);
+
+    expect(parsed, hasLength(1));
+    expect(parsed.single.key, 'oculum_spent');
+    expect(parsed.single.value, 5);
+    expect(parsed.single.valid, isTrue);
+    expect(parsed.single.hasTrigger, isFalse);
+  });
+
   test('item conserva buff @ e stato equipaggiato nel salvataggio', () {
     final item = InventoryItem(
       nome: 'Reliquia Oculum',

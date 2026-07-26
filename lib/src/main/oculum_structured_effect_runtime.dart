@@ -13,6 +13,10 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
       'danno' || 'danni' => 'danni',
       'dif' || 'difesa' => 'difesa',
       'velocita' || 'movimento' => 'movimento',
+      'reazione' || 'reazioni' => 'reazione',
+      'reazione_veloce' ||
+      'reazioni_veloci' ||
+      'reazioni_rapide' => 'reazione_veloce',
       _ => key,
     };
   }
@@ -162,11 +166,37 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             );
             break;
           case 'rimuovi_oculum':
-            currentOculumController.text = max(
-              0,
-              currentOculum() + value,
-            ).toString();
+            final spent = spendOculum(value.abs(), scheduleSave: false);
+            adjustRecordedStatSpentFromDelta('oculum', -spent);
             recordCurrentOculumProgress();
+            scheduleRealtimeOculumChanged();
+            break;
+          case 'consumo_risorsa':
+            final amount = roll.value.abs();
+            final resource = oculumNormalizeEffectResource(effect.resource);
+            if (resource == 'vita') {
+              final hpBeforeRemoval = hpCorrenti();
+              currentHpController.text = max(
+                0,
+                hpBeforeRemoval - amount,
+              ).toString();
+              checkAutomaticAshFromHpLoss(
+                hpBeforeRemoval,
+                hpCorrenti(),
+                source: source,
+              );
+            } else if (resource == 'oculum') {
+              final spent = spendOculum(amount, scheduleSave: false);
+              adjustRecordedStatSpentFromDelta('oculum', -spent);
+              recordCurrentOculumProgress();
+              scheduleRealtimeOculumChanged();
+            } else if (<String>{
+              'resilienza',
+              'volonta',
+              'materia',
+            }.contains(resource)) {
+              spendArtSkillCostResource(resource, amount);
+            }
             break;
           case 'stato':
             if (target == 'sotto_stress') sottoStress = true;
@@ -181,10 +211,24 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           'velocita',
           'forza',
           'stato',
+          'rimuovi_reazioni',
+          'rimuovi_reazioni_rapide',
+          'aggiungi_reazioni',
+          'aggiungi_reazioni_rapide',
         }.contains(effect.type);
         final isRegeneration =
             effect.type == 'cura' && effect.mode == 'rigenerazione';
-        if ((isOngoingBonus || isRegeneration) && duration > 0) {
+        final effectiveDuration =
+            <String>{
+                  'rimuovi_reazioni',
+                  'rimuovi_reazioni_rapide',
+                  'aggiungi_reazioni',
+                  'aggiungi_reazioni_rapide',
+                }.contains(effect.type) &&
+                duration <= 0
+            ? 1
+            : duration;
+        if ((isOngoingBonus || isRegeneration) && effectiveDuration > 0) {
           if (!effect.stackable) {
             activeStructuredEffects.removeWhere(
               (active) =>
@@ -202,7 +246,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             'target': target,
             'resource': effect.resource,
             'value': value,
-            'remaining': duration,
+            'remaining': effectiveDuration,
             'unit': effect.durationUnit,
           });
         } else if (isOngoingBonus && duration == 0) {
@@ -221,8 +265,8 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             ? ''
             : ' [${roll.dice.expression}: ${roll.dice.rolls.join(', ')}'
                   '${roll.dice.modifier == 0 ? '' : ' ${roll.dice.modifier > 0 ? '+' : ''}${roll.dice.modifier}'}]';
-        final durationText = duration > 0
-            ? ' - ${t('durata', 'duration')} $duration ${effect.durationUnit}'
+        final durationText = effectiveDuration > 0
+            ? ' - ${t('durata', 'duration')} $effectiveDuration ${effect.durationUnit}'
             : '';
         messages.add(
           '${oculumStructuredEffectDescription(effect, subtraits: hiddenEyeStats)}'

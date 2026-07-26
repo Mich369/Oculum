@@ -230,7 +230,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   Future<String?> _readProgressJournalRaw() async {
     oculumProgressProfileCount('journalDiskReads');
     if (kIsWeb) {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _prefs();
       return prefs.getString(_progressJournalPreferenceKey);
     }
     final file = await _progressJournalFile();
@@ -241,7 +241,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   Future<void> _writeProgressJournalRaw(String raw) async {
     oculumProgressProfileCount('journalDiskWrites');
     if (kIsWeb) {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _prefs();
       await prefs.setString(_progressJournalPreferenceKey, raw);
       return;
     }
@@ -252,7 +252,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   Future<void> _deleteProgressJournalRaw() async {
     if (kIsWeb) {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _prefs();
       await prefs.remove(_progressJournalPreferenceKey);
       return;
     }
@@ -399,6 +399,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       ),
       'oculumLimitiManualiPerLivello': List<bool>.from(
         skill.oculumLimitiManualiPerLivello,
+      ),
+      'aumentoMassimoOculumAttivoPerLivello': List<bool>.from(
+        skill.aumentoMassimoOculumAttivoPerLivello,
       ),
       'costoOculumDisabilitatoPerLivello': List<bool>.from(
         skill.costoOculumDisabilitatoPerLivello,
@@ -1925,7 +1928,155 @@ extension _OculumHomePersistence on _OculumHomePageState {
   String get _diaryArchiveSaveKey =>
       '${_OculumHomePageState.saveKey}_diary_archive_v1';
 
+  String _saveBlobSignatureKey(String key) => '${key}_sample_sig_v1';
+
+  Future<SharedPreferences> _prefs() {
+    sharedPreferencesFuture ??= SharedPreferences.getInstance();
+    return sharedPreferencesFuture!;
+  }
+
+  Future<Directory> _saveBlobDirectory() {
+    saveBlobDirectoryFuture ??= () async {
+      final root = oculumPerformanceHarness
+          ? await getTemporaryDirectory()
+          : await getApplicationSupportDirectory();
+      final suffix = oculumPerformanceHarness ? '_profile_$pid' : '';
+      final directory = Directory(
+        '${root.path}${Platform.pathSeparator}oculum_save_blobs$suffix',
+      );
+      await directory.create(recursive: true);
+      return directory;
+    }();
+    return saveBlobDirectoryFuture!;
+  }
+
+  String _saveBlobFileName(String key) {
+    final encoded = base64Url.encode(utf8.encode(key));
+    return encoded.replaceAll('=', '');
+  }
+
+  Future<File> _saveBlobFileForKey(String key) async {
+    final directory = await _saveBlobDirectory();
+    return File(
+      '${directory.path}${Platform.pathSeparator}${_saveBlobFileName(key)}.json',
+    );
+  }
+
+  Future<bool> _writeFileAtomically(File file, String value) async {
+    final stamp = DateTime.now().microsecondsSinceEpoch;
+    final randomBits = Random().nextInt(1 << 32);
+    final tempFile = File('${file.path}.tmp_${stamp}_$randomBits');
+    final backupFile = File('${file.path}.bak');
+
+    await tempFile.parent.create(recursive: true);
+    await tempFile.writeAsString(value, flush: true);
+    final verification = await tempFile.readAsString();
+    if (verification != value) {
+      if (await tempFile.exists()) {
+        await tempFile.delete();
+      }
+      return false;
+    }
+
+    final hadOriginal = await file.exists();
+    try {
+      if (hadOriginal) {
+        if (await backupFile.exists()) {
+          await backupFile.delete();
+        }
+        await file.copy(backupFile.path);
+      }
+
+      if (await file.exists()) {
+        await file.delete();
+      }
+      await tempFile.rename(file.path);
+
+      if (await backupFile.exists()) {
+        await backupFile.delete();
+      }
+      return true;
+    } catch (_) {
+      if (await tempFile.exists()) {
+        await tempFile.delete();
+      }
+      if (hadOriginal && await backupFile.exists()) {
+        if (await file.exists()) {
+          await file.delete();
+        }
+        await backupFile.rename(file.path);
+      }
+      return false;
+    }
+  }
+
+  Future<String?> _readSaveBlobSignature(
+    SharedPreferences prefs,
+    String key,
+  ) async {
+    final cached = prefs.getString(_saveBlobSignatureKey(key));
+    if (cached != null && cached.isNotEmpty) return cached;
+
+    final raw = await _readSaveBlob(prefs, key);
+    if (raw == null || raw.isEmpty) return null;
+
+    final signature = _oculumRawSampleSignature(raw);
+    await prefs.setString(_saveBlobSignatureKey(key), signature);
+    return signature;
+  }
+
+  Future<void> _writeSaveBlobSignature(
+    SharedPreferences prefs,
+    String key,
+    String value,
+  ) async {
+    await prefs.setString(
+      _saveBlobSignatureKey(key),
+      _oculumRawSampleSignature(value),
+    );
+  }
+
+  Future<String?> _readSaveBlobFileOnly(String key) async {
+    if (kIsWeb) return null;
+    try {
+      final file = await _saveBlobFileForKey(key);
+      if (!await file.exists()) return null;
+      final raw = await file.readAsString();
+      return raw.isEmpty ? null : raw;
+    } catch (error) {
+      debugPrint('Fast file save read skipped for $key: $error');
+      return null;
+    }
+  }
+
+  Future<bool> _diaryArchiveCoversCurrentRaw(String currentRaw) async {
+    if (kIsWeb || currentRaw.isEmpty) return false;
+    final archiveRaw = await _readSaveBlobFileOnly(_diaryArchiveSaveKey);
+    if (archiveRaw == null || archiveRaw.isEmpty) return false;
+    try {
+      final archive = await _decodeDiaryArchive(archiveRaw);
+      final signatures = archive['sourceSignatures'];
+      return signatures is Map &&
+          '${signatures['current'] ?? ''}' ==
+              _oculumRawSampleSignature(currentRaw);
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<String?> _readSaveBlob(SharedPreferences prefs, String key) async {
+    if (!kIsWeb) {
+      try {
+        final file = await _saveBlobFileForKey(key);
+        if (await file.exists()) {
+          final raw = await file.readAsString();
+          if (raw.isNotEmpty) return raw;
+        }
+      } catch (error) {
+        debugPrint('File save read fallback for $key: $error');
+      }
+    }
+
     if (kIsWeb) {
       try {
         final indexed = await oculumWebSaveRead(key);
@@ -1934,7 +2085,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
         debugPrint('IndexedDB read fallback for $key: $error');
       }
     }
-    return prefs.getString(key);
+
+    final legacy = prefs.getString(key);
+    if (!kIsWeb && legacy != null && legacy.isNotEmpty) {
+      try {
+        final file = await _saveBlobFileForKey(key);
+        await _writeFileAtomically(file, legacy);
+      } catch (error) {
+        debugPrint('Legacy save mirror write skipped for $key: $error');
+      }
+    }
+    return legacy;
   }
 
   Future<bool> _writeSaveBlob(
@@ -1942,6 +2103,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
     String key,
     String value,
   ) async {
+    var wroteFile = false;
+    if (!kIsWeb) {
+      try {
+        final file = await _saveBlobFileForKey(key);
+        wroteFile = await _writeFileAtomically(file, value);
+      } catch (error) {
+        debugPrint('File save write fallback for $key: $error');
+      }
+    }
+
     if (kIsWeb) {
       try {
         if (await oculumWebSaveWrite(key, value)) return true;
@@ -1949,11 +2120,36 @@ extension _OculumHomePersistence on _OculumHomePageState {
         debugPrint('IndexedDB write fallback for $key: $error');
       }
     }
-    return prefs.setString(key, value);
+
+    final legacySaved = await prefs.setString(key, value);
+    final saved = wroteFile || legacySaved;
+    if (saved) {
+      await _writeSaveBlobSignature(prefs, key, value);
+    }
+    return saved;
   }
 
   Future<bool> _removeSaveBlob(SharedPreferences prefs, String key) async {
     var indexedRemoved = false;
+    var fileRemoved = false;
+
+    if (!kIsWeb) {
+      try {
+        final file = await _saveBlobFileForKey(key);
+        if (await file.exists()) {
+          await file.delete();
+          fileRemoved = true;
+        }
+        final backup = File('${file.path}.bak');
+        if (await backup.exists()) {
+          await backup.delete();
+          fileRemoved = true;
+        }
+      } catch (error) {
+        debugPrint('File save delete fallback for $key: $error');
+      }
+    }
+
     if (kIsWeb) {
       try {
         indexedRemoved = await oculumWebSaveDelete(key);
@@ -1962,7 +2158,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       }
     }
     final legacyRemoved = await prefs.remove(key);
-    return indexedRemoved || legacyRemoved;
+    await prefs.remove(_saveBlobSignatureKey(key));
+    return fileRemoved || indexedRemoved || legacyRemoved;
   }
 
   Set<String> get _knownTopLevelSaveKeys => const <String>{
@@ -2445,29 +2642,45 @@ extension _OculumHomePersistence on _OculumHomePageState {
     final seenRawSignatures = <String>{};
     var archiveChanged = false;
 
-    final sources = <String, String?>{
-      'backup3': await _readSaveBlob(prefs, _backupSaveKey3),
-      'backup2': await _readSaveBlob(prefs, _backupSaveKey2),
-      'backup1': await _readSaveBlob(prefs, _backupSaveKey1),
-      'verified': await _readSaveBlob(prefs, _verifiedSaveKey),
-      'pending': await _readSaveBlob(prefs, _pendingSaveKey),
-      'current':
-          currentRaw ??
-          await _readSaveBlob(prefs, _OculumHomePageState.saveKey),
+    final sources = <String, String>{
+      'backup3': _backupSaveKey3,
+      'backup2': _backupSaveKey2,
+      'backup1': _backupSaveKey1,
+      'verified': _verifiedSaveKey,
+      'pending': _pendingSaveKey,
+      'current': _OculumHomePageState.saveKey,
     };
 
     for (final source in sources.entries) {
-      final raw = source.value;
-      if (raw == null || raw.trim().isEmpty) continue;
-      final signature = _oculumRawSampleSignature(raw);
+      String? signature;
+      String? raw;
+
+      if (source.key == 'current' &&
+          currentRaw != null &&
+          currentRaw.isNotEmpty) {
+        raw = currentRaw;
+        signature = _oculumRawSampleSignature(raw);
+      } else {
+        signature = await _readSaveBlobSignature(prefs, source.value);
+      }
+
+      if (signature == null || signature.isEmpty) continue;
       if (!seenRawSignatures.add(signature)) {
-        if (sourceSignatures[source.key] != signature) {
+        if ('${sourceSignatures[source.key] ?? ''}' != signature) {
           sourceSignatures[source.key] = signature;
           archiveChanged = true;
         }
         continue;
       }
-      if (sourceSignatures[source.key] == signature) continue;
+      if ('${sourceSignatures[source.key] ?? ''}' == signature) continue;
+
+      raw ??= await _readSaveBlob(prefs, source.value);
+      if (raw == null || raw.trim().isEmpty) {
+        continue;
+      }
+      if (source.key != 'current') {
+        await _writeSaveBlobSignature(prefs, source.value, raw);
+      }
 
       // Existing v1 archives were produced by this same complete scan. During
       // the first metadata upgrade, record their sources without decoding all
@@ -2615,7 +2828,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     final pages = _diaryPagesFromSheet(safeSheet);
     if (pages.isEmpty || pages.every(_diaryPageLooksPlaceholder)) return;
 
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _prefs();
     await _buildDiaryArchiveFromRecentSaves(
       prefs,
       currentData: <String, dynamic>{
@@ -3214,7 +3427,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
 
     final progressRevisionAtSnapshot = progressJournalRevision;
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _prefs();
     final revision = salvataggioRevisione + 1;
     final savePayload = datiSalvataggioJson(revision: revision);
     final saveResult = await _scriviSalvataggioProtetto(prefs, savePayload);
@@ -3250,7 +3463,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   ) async {
     if (!_saveDataLooksMeaningful(backup)) return false;
     await forzaSalvataggioImmediato(soloLocale: true);
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _prefs();
     await _creaBackupDelSalvataggioCorrente(prefs, force: true);
     final imported = _oculumVttDeepMap(backup)
       ..remove('oculumBackup')
@@ -3269,8 +3482,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   Future<void> caricaDati({bool allowBackupRecovery = true}) async {
     final loadWatch = Stopwatch()..start();
-    final prefs = await SharedPreferences.getInstance();
-    var raw = await _readSaveBlob(prefs, _OculumHomePageState.saveKey);
+    final prefsFuture = _prefs();
+    SharedPreferences? loadedPrefs;
+    var raw = await _readSaveBlobFileOnly(_OculumHomePageState.saveKey);
+    if (raw == null || raw.isEmpty) {
+      loadedPrefs = await prefsFuture;
+      raw = await _readSaveBlob(loadedPrefs, _OculumHomePageState.saveKey);
+    }
     Map<String, dynamic>? decodedPrimary;
     var primaryDecodedSuccessfully = false;
 
@@ -3290,13 +3508,18 @@ extension _OculumHomePersistence on _OculumHomePageState {
         raw.isEmpty ||
         (primaryDecodedSuccessfully &&
             !_saveDataLooksMeaningful(decodedPrimary!))) {
-      final recovery = await _firstMeaningfulBackupRaw(prefs);
+      loadedPrefs ??= await prefsFuture;
+      final recovery = await _firstMeaningfulBackupRaw(loadedPrefs);
       if (recovery != null) {
         raw = recovery;
         decodedPrimary = null;
         primaryDecodedSuccessfully = false;
-        await _writeSaveBlob(prefs, _OculumHomePageState.saveKey, recovery);
-        await _writeSaveBlob(prefs, _verifiedSaveKey, recovery);
+        await _writeSaveBlob(
+          loadedPrefs,
+          _OculumHomePageState.saveKey,
+          recovery,
+        );
+        await _writeSaveBlob(loadedPrefs, _verifiedSaveKey, recovery);
       }
     }
 
@@ -3335,14 +3558,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
     try {
       final data = decodedPrimary ?? await _decodeOculumJsonMap(raw);
       oculumProfileMark('save_load_diary_recovery');
-      final diariRipristinati = await _recoverDiariesFromRecentSaves(
-        prefs,
-        data,
-        raw,
-      );
+      var diariRipristinati = 0;
+      if (!await _diaryArchiveCoversCurrentRaw(raw)) {
+        loadedPrefs ??= await prefsFuture;
+        diariRipristinati = await _recoverDiariesFromRecentSaves(
+          loadedPrefs,
+          data,
+          raw,
+        );
+      }
       await _applyProgressJournal(data);
-      final loadedContentSignature =
-          await firmaContenutoSalvataggioNonBloccante(data);
+      final loadedRevision = readIntValue(data['saveRevision']);
 
       if (!mounted) return;
       setState(() {
@@ -3486,7 +3712,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         );
         ultimoSalvataggioFirma =
             '${raw!.length}:${data['saveRevision'] ?? salvataggioRevisione}';
-        ultimoSalvataggioContenutoFirma = loadedContentSignature;
+        ultimoSalvataggioContenutoFirma = '';
         datiCaricati = true;
         if (diariRipristinati > 0) {
           risultato = t(
@@ -3498,8 +3724,23 @@ extension _OculumHomePersistence on _OculumHomePageState {
       });
 
       // Il caricamento è riuscito: crea una copia di sicurezza del raw originale.
+      // La firma completa attraversa anche immagini e molte schede. Viene
+      // calcolata fuori dal percorso del primo frame e applicata solo se nel
+      // frattempo il salvataggio non è cambiato.
+      unawaited(() async {
+        final loadedContentSignature =
+            await firmaContenutoSalvataggioNonBloccante(data);
+        if (!mounted ||
+            salvataggioRevisione != loadedRevision ||
+            salvataggioMutazioneNota) {
+          return;
+        }
+        ultimoSalvataggioContenutoFirma = loadedContentSignature;
+      }());
+
       ultimoRawSalvataggioConfermato = raw;
-      await _creaBackupDelSalvataggioCorrente(prefs);
+      loadedPrefs ??= await prefsFuture;
+      await _creaBackupDelSalvataggioCorrente(loadedPrefs);
       if (diariRipristinati > 0) {
         await salvaDatiSoloLocale();
       }
@@ -3514,10 +3755,18 @@ extension _OculumHomePersistence on _OculumHomePageState {
       debugPrint('$stackTrace');
 
       if (allowBackupRecovery) {
-        final recovery = await _firstMeaningfulBackupRaw(prefs, exclude: raw);
+        loadedPrefs ??= await prefsFuture;
+        final recovery = await _firstMeaningfulBackupRaw(
+          loadedPrefs,
+          exclude: raw,
+        );
         if (recovery != null) {
-          await _writeSaveBlob(prefs, _OculumHomePageState.saveKey, recovery);
-          await _writeSaveBlob(prefs, _verifiedSaveKey, recovery);
+          await _writeSaveBlob(
+            loadedPrefs,
+            _OculumHomePageState.saveKey,
+            recovery,
+          );
+          await _writeSaveBlob(loadedPrefs, _verifiedSaveKey, recovery);
           return caricaDati(allowBackupRecovery: false);
         }
       }
@@ -3556,7 +3805,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     salvaSchedaCorrenteInMemoria();
     saveActiveCampaignInMemory();
 
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _prefs();
     await _creaBackupDelSalvataggioCorrente(prefs, force: true);
 
     if (!mounted) return;
@@ -5747,18 +5996,6 @@ extension _OculumHomePersistence on _OculumHomePageState {
       final artMode = matchedMonster == null
           ? generatedArtModeForDescription(description)
           : systemMonsterPresetArtMode(matchedMonster);
-      final spriteAssetPath = matchedMonster == null
-          ? ''
-          : monsterSpriteAssetFor(
-              matchedMonster,
-              seed: monsterSpriteStableSeed('$nome $i $description'),
-            );
-      Uint8List? presetImageBytes;
-      final presetImageBase64 = matchedMonster?.imageBase64 ?? '';
-      if (presetImageBase64.isNotEmpty) {
-        presetImageBytes = decodedBase64ImageCached(presetImageBase64);
-      }
-
       await creaNuovaSchedaPersonaggio(
         nome: nome,
         tipo: selectedType,
@@ -5782,14 +6019,6 @@ extension _OculumHomePersistence on _OculumHomePageState {
         } else if (enemyProfile) {
           schedePersonaggio[schedaCorrente]['masterSideOverride'] = 'enemy';
         }
-        if (spriteAssetPath.isNotEmpty) {
-          schedePersonaggio[schedaCorrente]['spriteAssetPath'] =
-              spriteAssetPath;
-        }
-        if (presetImageBytes != null) {
-          immaginePersonaggio = presetImageBytes;
-        }
-
         backgroundController.text = generatedEntityNotes(
           name: nome,
           kind: kind,
@@ -6181,6 +6410,142 @@ extension _OculumHomePersistence on _OculumHomePageState {
         aggiungiLog('$risultato ($error)');
       });
     }
+  }
+
+  Future<void> copiaImmaginePersonaggioNegliAppunti() async {
+    final bytes = immaginePersonaggio;
+    if (bytes == null || bytes.isEmpty) return;
+
+    try {
+      await Pasteboard.writeImage(bytes);
+      if (!mounted) return;
+      setState(() {
+        risultato = t(
+          'Immagine personaggio copiata negli appunti.',
+          'Character image copied to the clipboard.',
+        );
+        aggiungiLog(risultato);
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        risultato = t(
+          'Impossibile copiare l\'immagine negli appunti.',
+          'Could not copy the image to the clipboard.',
+        );
+        aggiungiLog('$risultato ($error)');
+      });
+    }
+  }
+
+  Future<void> scaricaImmaginePersonaggio() async {
+    final bytes = immaginePersonaggio;
+    if (bytes == null || bytes.isEmpty) return;
+
+    try {
+      final now = DateTime.now();
+      final stamp =
+          '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_'
+          '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}'
+          '${now.second.toString().padLeft(2, '0')}';
+      final rawName = nomeController.text.trim();
+      final safeName = rawName
+          .replaceAll(RegExp(r'[^A-Za-z0-9_-]+'), '_')
+          .replaceAll(RegExp(r'_+'), '_')
+          .replaceAll(RegExp(r'^_|_$'), '');
+      final fileName =
+          'oculum_${safeName.isEmpty ? 'personaggio' : safeName}_$stamp.png';
+
+      if (kIsWeb) {
+        await oculumDownloadBytes(
+          bytes: bytes,
+          fileName: fileName,
+          mimeType: 'image/png',
+        );
+        if (!mounted) return;
+        setState(() {
+          risultato = t(
+            'Download immagine avviato.',
+            'Image download started.',
+          );
+          aggiungiLog(risultato);
+        });
+        return;
+      }
+
+      Directory directory;
+      try {
+        directory =
+            await getDownloadsDirectory() ??
+            await getApplicationDocumentsDirectory();
+      } catch (_) {
+        directory = await getApplicationDocumentsDirectory();
+      }
+      final oculumDirectory = Directory(
+        '${directory.path}${Platform.pathSeparator}Oculum',
+      );
+      if (!await oculumDirectory.exists()) {
+        await oculumDirectory.create(recursive: true);
+      }
+      final file = File(
+        '${oculumDirectory.path}${Platform.pathSeparator}$fileName',
+      );
+      await file.writeAsBytes(bytes, flush: true);
+
+      if (!mounted) return;
+      setState(() {
+        risultato = t(
+          'Immagine salvata: ${file.path}',
+          'Image saved: ${file.path}',
+        );
+        aggiungiLog(risultato);
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        risultato = t(
+          'Impossibile salvare l\'immagine.',
+          'Could not save the image.',
+        );
+        aggiungiLog('$risultato ($error)');
+      });
+    }
+  }
+
+  void mostraAzioniImmaginePersonaggio() {
+    if (immaginePersonaggio == null || !mounted) return;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF111111),
+      builder: (sheetContext) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.copy, color: Colors.white),
+              title: Text(
+                t('Copia negli appunti', 'Copy to clipboard'),
+                style: const TextStyle(color: Colors.white),
+              ),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                unawaited(copiaImmaginePersonaggioNegliAppunti());
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.download, color: Colors.white),
+              title: Text(
+                t('Scarica immagine', 'Download image'),
+                style: const TextStyle(color: Colors.white),
+              ),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                unawaited(scaricaImmaginePersonaggio());
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> importaImmaginePersonaggioDaBytes(

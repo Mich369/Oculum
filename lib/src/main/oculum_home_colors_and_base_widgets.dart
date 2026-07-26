@@ -62,6 +62,9 @@ class _OculumModelTextField extends StatefulWidget {
     this.liveRefresh = false,
     this.keyboardType,
     this.inputFormatters,
+    this.onCommandHelpRequested,
+    this.commandPreviewBuilder,
+    this.commandSuggestionBuilder,
   });
 
   final String initialValue;
@@ -76,6 +79,9 @@ class _OculumModelTextField extends StatefulWidget {
   final bool liveRefresh;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
+  final Future<String?> Function(String currentText)? onCommandHelpRequested;
+  final String Function(String text)? commandPreviewBuilder;
+  final List<String> Function(String text)? commandSuggestionBuilder;
 
   @override
   State<_OculumModelTextField> createState() => _OculumModelTextFieldState();
@@ -134,9 +140,30 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
     widget.onChanged(_controller.text);
     widget.onEdited();
     _dirtySinceRefresh = true;
+    if (mounted &&
+        (widget.commandPreviewBuilder != null ||
+            widget.commandSuggestionBuilder != null)) {
+      setState(() {});
+    }
     if (widget.liveRefresh) {
       _refreshParent();
     }
+  }
+
+  void _insertSuggestion(String suggestion) {
+    final value = _controller.value;
+    final cursor = value.selection.baseOffset < 0
+        ? value.text.length
+        : value.selection.baseOffset.clamp(0, value.text.length);
+    final before = value.text.substring(0, cursor);
+    final atIndex = before.lastIndexOf('@');
+    final start = atIndex >= 0 ? atIndex : cursor;
+    final nextText = value.text.replaceRange(start, cursor, suggestion);
+    _controller.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection.collapsed(offset: start + suggestion.length),
+    );
+    _notifyEdited();
   }
 
   KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
@@ -160,7 +187,25 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
   Widget build(BuildContext context) {
     final multiline = widget.maxLines > 1;
 
-    return Focus(
+    final helpCallback = widget.onCommandHelpRequested;
+    final decorated = helpCallback == null
+        ? widget.decoration
+        : widget.decoration.copyWith(
+            suffixIcon: IconButton(
+              tooltip: 'Manuale dei comandi',
+              icon: const Icon(Icons.menu_book_outlined),
+              onPressed: () async {
+                final inserted = await helpCallback(_controller.text);
+                if (!mounted || inserted == null) return;
+                _controller.value = TextEditingValue(
+                  text: inserted,
+                  selection: TextSelection.collapsed(offset: inserted.length),
+                );
+                _notifyEdited();
+              },
+            ),
+          );
+    final field = Focus(
       onKeyEvent: _handleKey,
       child: TextField(
         controller: _controller,
@@ -173,8 +218,47 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
         maxLines: widget.maxLines,
         onChanged: (_) => _notifyEdited(),
         style: widget.style,
-        decoration: widget.decoration,
+        decoration: decorated,
       ),
+    );
+    final suggestions =
+        widget.commandSuggestionBuilder?.call(_controller.text) ??
+        const <String>[];
+    final preview = widget.commandPreviewBuilder?.call(_controller.text) ?? '';
+    if (suggestions.isEmpty && preview.isEmpty) return field;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        field,
+        if (suggestions.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final suggestion in suggestions.take(8))
+                ActionChip(
+                  avatar: const Icon(Icons.add, size: 15),
+                  label: Text(suggestion),
+                  onPressed: () => _insertSuggestion(suggestion),
+                ),
+            ],
+          ),
+        ],
+        if (preview.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(
+            preview,
+            style: TextStyle(
+              color: preview.startsWith('!')
+                  ? Colors.redAccent
+                  : Colors.white70,
+              fontSize: 11.5,
+              height: 1.25,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -1061,6 +1145,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     bool liveRefresh = false,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
+    bool showCommandHelp = false,
   }) {
     final field = _OculumModelTextField(
       key: fieldKey,
@@ -1078,6 +1163,13 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       liveRefresh: liveRefresh,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
+      onCommandHelpRequested: showCommandHelp
+          ? (text) => showCommandManualInsertDialog(text)
+          : null,
+      commandPreviewBuilder: showCommandHelp ? commandNaturalPreview : null,
+      commandSuggestionBuilder: showCommandHelp
+          ? commandSuggestionsForText
+          : null,
       style: TextStyle(
         fontSize: uiScale(16),
         color: readableOnTheme(Colors.white, background: themeFieldFillColor()),

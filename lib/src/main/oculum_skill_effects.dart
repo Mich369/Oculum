@@ -19,6 +19,8 @@ const List<String> oculumStructuredEffectTypes = <String>[
   'rimuovi_azioni',
   'rimuovi_reazioni',
   'rimuovi_reazioni_rapide',
+  'aggiungi_reazioni',
+  'aggiungi_reazioni_rapide',
   'consumo_risorsa',
   'stato',
 ];
@@ -40,13 +42,19 @@ const List<String> oculumEffectConsumableResourceKeys = <String>[
   'nessuna',
 ];
 
+int oculumAutomaticAshFreeTurns(int level) {
+  return 6 + (max(0, level) ~/ 6) * 2;
+}
+
 int oculumAutomaticAshChancePercent({
   required int turn,
   required String difficulty,
+  int level = 0,
   bool underStress = false,
 }) {
-  if (turn <= 6) return 0;
-  final step = turn - 7;
+  final freeTurns = oculumAutomaticAshFreeTurns(level);
+  if (turn <= freeTurns) return 0;
+  final step = turn - freeTurns - 1;
   final normalized = normalizeTemporaryOculumDifficulty(difficulty);
   final (base, increase, cap) = switch (normalized) {
     'facile' => (5, 5, 50),
@@ -756,8 +764,10 @@ String oculumStructuredEffectTargetKey(OculumStructuredEffect effect) {
     case 'modifica_sottotratto':
       return oculumDynamicFormulaKey(effect.target);
     case 'rimuovi_reazioni':
+    case 'aggiungi_reazioni':
       return 'reazioni';
     case 'rimuovi_reazioni_rapide':
+    case 'aggiungi_reazioni_rapide':
       return 'reazioni_veloci';
     default:
       return '';
@@ -844,6 +854,10 @@ String oculumStructuredEffectDescription(
       return 'Rimuove $value reazioni';
     case 'rimuovi_reazioni_rapide':
       return 'Rimuove $value reazioni rapide';
+    case 'aggiungi_reazioni':
+      return 'Aggiunge $value reazioni';
+    case 'aggiungi_reazioni_rapide':
+      return 'Aggiunge $value reazioni rapide';
     case 'consumo_risorsa':
       return 'Consuma $value $resource';
     case 'stato':
@@ -872,36 +886,177 @@ OculumFreeTextEffectParseResult oculumParseStructuredEffectsFromText(
   final leftovers = <String>[];
   final normalized = oculumNormalizeSubtraitReferences(raw, subtraits);
   final pieces = normalized
-      .split(RegExp(r'\s+(?:e|and)\s+|[;\n]', caseSensitive: false))
+      .split(RegExp(r'\s+(?:e|and)\s+|[;\n]+', caseSensitive: false))
       .map((part) => part.trim())
       .where((part) => part.isNotEmpty);
   final effectPattern = RegExp(
-    r'^(Danni|Danno|Difesa|Scudo|Cura|Rigenera|HP\s*temporanei?)\s*(?:\+)?\s*(.+)$',
+    r'(Danni|Danno|Difesa|Scudo|Cura|Rigenera|HP\s*temporanei?)\s*(?:\+|di)?\s*(.+)$',
     caseSensitive: false,
   );
   for (final piece in pieces) {
-    final match = effectPattern.firstMatch(piece);
-    if (match == null) {
-      leftovers.add(piece);
-      continue;
+    final lower = oculumNormalizeText(piece);
+    var recognized = false;
+
+    final periodicDamage = RegExp(
+      r'(?:\+|aument\w*\s+(?:il\s+)?(?:tuo\s+)?)?(\d+)\s*(?:a\s+)?dann\w*\s+ogni\s+(\d+)\s*turn',
+      caseSensitive: false,
+    ).firstMatch(piece);
+    if (periodicDamage != null) {
+      effects.add(
+        OculumStructuredEffect(
+          type: 'danno',
+          valueExpression: periodicDamage.group(1) ?? '0',
+          mode: 'finche_attivo',
+          frequency: periodicDamage.group(2) ?? '',
+          narrativeText: piece,
+          customDisplayText:
+              '+${periodicDamage.group(1)} danni ogni ${periodicDamage.group(2)} turni',
+        ),
+      );
+      recognized = true;
     }
-    final rawType = oculumNormalizeText(match.group(1) ?? '');
-    final value = (match.group(2) ?? '').trim();
-    final type = switch (rawType.replaceAll(' ', '')) {
-      'danno' || 'danni' => 'danno',
-      'difesa' => 'difesa',
-      'scudo' => 'scudo',
-      'cura' || 'rigenera' => 'cura',
-      _ => 'hp_temporanei',
-    };
-    effects.add(
-      OculumStructuredEffect(
-        type: type,
-        valueExpression: value,
-        mode: rawType == 'rigenera' ? 'rigenerazione' : 'immediato',
-        resource: type == 'cura' ? 'vita' : '',
-      ),
-    );
+
+    final allStats = RegExp(
+      r'\+?\s*(\d+)\s+(?:a\s+)?tutt\w*\s+(?:le\s+)?stat',
+      caseSensitive: false,
+    ).firstMatch(piece);
+    if (allStats != null) {
+      for (final target in const <String>[
+        'Resilienza',
+        'Volontà',
+        'Materia',
+        'Oculum',
+      ]) {
+        effects.add(
+          OculumStructuredEffect(
+            type: 'modifica_statistica',
+            target: target,
+            valueExpression: allStats.group(1) ?? '0',
+            mode: 'finche_attivo',
+            narrativeText: piece,
+          ),
+        );
+      }
+      recognized = true;
+    }
+
+    if (RegExp(
+      r'(?:stats?|statistiche)\s*\+\s*oculum\s*spes',
+      caseSensitive: false,
+    ).hasMatch(piece)) {
+      for (final target in const <String>[
+        'Resilienza',
+        'Volontà',
+        'Materia',
+        'Oculum',
+      ]) {
+        effects.add(
+          OculumStructuredEffect(
+            type: 'modifica_statistica',
+            target: target,
+            valueExpression: 'OculumSpeso',
+            mode: 'finche_attivo',
+            narrativeText: piece,
+            customDisplayText: '$target + Oculum speso',
+          ),
+        );
+      }
+      recognized = true;
+    }
+
+    final temporaryDamage = RegExp(
+      r'(?:aument\w*\s+(?:il\s+)?(?:tuo\s+)?dann\w*\s+di|dann\w*\s*\+)\s*(\d+)(?:\s+per\s+(\d+|un|uno)\s+turn\w*)?',
+      caseSensitive: false,
+    ).firstMatch(piece);
+    if (temporaryDamage != null && periodicDamage == null) {
+      final rawDuration = oculumNormalizeText(temporaryDamage.group(2) ?? '');
+      final duration = rawDuration == 'un' || rawDuration == 'uno'
+          ? '1'
+          : rawDuration;
+      effects.add(
+        OculumStructuredEffect(
+          type: 'danno',
+          valueExpression: temporaryDamage.group(1) ?? '0',
+          mode: duration.isEmpty ? 'immediato' : 'finche_attivo',
+          duration: duration,
+          durationUnit: 'turni',
+          narrativeText: piece,
+        ),
+      );
+      recognized = true;
+    }
+
+    final nextHits = RegExp(
+      r'(?:prossim\w*\s+)?(\d+)\s+colp\w*',
+      caseSensitive: false,
+    ).firstMatch(piece);
+    if (nextHits != null &&
+        (lower.contains('letale') || lower.contains('lethal'))) {
+      effects.add(
+        OculumStructuredEffect(
+          type: 'stato',
+          target: 'Danno letale',
+          valueExpression: '1',
+          mode: 'finche_attivo',
+          duration: nextHits.group(1) ?? '',
+          durationUnit: 'tiri',
+          appliedState: lower.contains('anti fato')
+              ? 'Danno letale contro anti-Fato'
+              : 'Danno letale',
+          narrativeText: piece,
+          customDisplayText: piece,
+        ),
+      );
+      recognized = true;
+    }
+
+    if (lower.contains('trasform')) {
+      effects.add(
+        OculumStructuredEffect(
+          type: 'stato',
+          target: 'Trasformazione',
+          valueExpression: '1',
+          mode: 'finche_attivo',
+          appliedState: 'Trasformazione',
+          narrativeText: piece,
+          customDisplayText: piece,
+        ),
+      );
+      recognized = true;
+    }
+
+    for (final match in effectPattern.allMatches(piece)) {
+      final rawType = oculumNormalizeText(match.group(1) ?? '');
+      final value = (match.group(2) ?? '').trim();
+      if (value.isEmpty ||
+          (periodicDamage != null &&
+              (rawType == 'danno' || rawType == 'danni')) ||
+          (temporaryDamage != null &&
+              (rawType == 'danno' || rawType == 'danni'))) {
+        continue;
+      }
+      final type = switch (rawType.replaceAll(' ', '')) {
+        'danno' || 'danni' => 'danno',
+        'difesa' => 'difesa',
+        'scudo' => 'scudo',
+        'cura' || 'rigenera' => 'cura',
+        _ => 'hp_temporanei',
+      };
+      effects.add(
+        OculumStructuredEffect(
+          type: type,
+          valueExpression: value,
+          mode: rawType == 'rigenera' ? 'rigenerazione' : 'immediato',
+          resource: type == 'cura' ? 'vita' : '',
+          narrativeText: piece,
+        ),
+      );
+      recognized = true;
+    }
+
+    if (!recognized) {
+      leftovers.add(piece);
+    }
   }
   return OculumFreeTextEffectParseResult(
     effects: effects,

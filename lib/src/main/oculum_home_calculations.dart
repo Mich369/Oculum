@@ -969,6 +969,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       'volonta_current': vol,
       'materia_current': mat,
       'oculum_current': ocu,
+      'resilienza_spent': max(0, raccoltaResilienzaSpesa),
+      'volonta_spent': max(0, raccoltaVolontaSpesa),
+      'materia_spent': max(0, raccoltaMateriaSpesa),
+      'oculum_spent': max(0, raccoltaOculumSpesa),
       'tiro_resilienza': max(0, (res ~/ 2) + statRollBaseBonus + vantaggio),
       'tiro_volonta': max(0, (vol ~/ 2) + statRollBaseBonus + vantaggio),
       'tiro_materia': max(0, (mat ~/ 2) + statRollBaseBonus + vantaggio),
@@ -1162,15 +1166,44 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int? formulaRecordedStatSpentValue(String key) {
+    int directBonus(String spentKey) {
+      var total = 0;
+      final texts = <String>[];
+      for (final titolo in titoliCalcolabili) {
+        if (titolo.equipaggiato) texts.addAll(activeTitleQuickTexts(titolo));
+      }
+      for (final art in arti) {
+        if (art.sbloccata) texts.addAll(activeArtQuickTexts(art));
+      }
+      for (final item in inventario) {
+        if (item.equipaggiata) texts.addAll(activeItemQuickTexts(item));
+      }
+      for (final skill in skills) {
+        if (skill.equipaggiata) texts.addAll(skillQuickCommandTexts(skill));
+      }
+      texts.add(buffMalusRapidiController.text);
+      for (final text in texts) {
+        for (final command in parseQuickCommandsDetailed(text)) {
+          if (command.valid && !command.hasTrigger && command.key == spentKey) {
+            total += command.value;
+          }
+        }
+      }
+      return total;
+    }
+
     switch (key) {
       case 'resilienza':
-        return max(0, raccoltaResilienzaSpesa);
+        return max(
+          0,
+          raccoltaResilienzaSpesa + directBonus('resilienza_spent'),
+        );
       case 'volonta':
-        return max(0, raccoltaVolontaSpesa);
+        return max(0, raccoltaVolontaSpesa + directBonus('volonta_spent'));
       case 'materia':
-        return max(0, raccoltaMateriaSpesa);
+        return max(0, raccoltaMateriaSpesa + directBonus('materia_spent'));
       case 'oculum':
-        return max(0, raccoltaOculumSpesa);
+        return max(0, raccoltaOculumSpesa + directBonus('oculum_spent'));
       default:
         return null;
     }
@@ -2848,9 +2881,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       if (!silent) {
         final label = statLabel(key);
         final total = currentStatValue(key);
-        risultato = appliedDelta >= 0
-            ? '$label attuale: +$appliedDelta ($total/$massimo).'
-            : '$label attuale: $appliedDelta ($total/$massimo).';
+        risultato = appliedDelta > 0
+            ? '$label aumentato di $appliedDelta ($total/$massimo).'
+            : appliedDelta < 0
+            ? '$label ridotto di ${appliedDelta.abs()} ($total/$massimo).'
+            : '$label invariato ($total/$massimo).';
         if (appliedDelta < 0 && cenereMessage != null) {
           risultato += '\n$cenereMessage';
         } else if (applyHalfResourceFatigue) {
@@ -3007,7 +3042,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       0,
       max(0, leggiNumero(reazioniController)) +
           reazioniBonusGrado() +
-          runtimeQuickBonus('reazione'),
+          runtimeQuickBonus('reazione') +
+          activeStructuredEffectBonus('reazione'),
     );
   }
 
@@ -3015,7 +3051,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return max(
       0,
       max(0, leggiNumero(reazioniVelociController)) +
-          runtimeQuickBonus('reazione_veloce'),
+          runtimeQuickBonus('reazione_veloce') +
+          activeStructuredEffectBonus('reazione_veloce'),
     );
   }
 

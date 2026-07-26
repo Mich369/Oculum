@@ -6650,7 +6650,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               final nextInitial = targetLevel < maximumArtLevel
                   ? skill.oculumMassimoInizialePerLivello(targetLevel + 1)
                   : 0;
-              final masteryLimit = limitsChanged
+              final masteryLimit =
+                  !skill.aumentoMassimoOculumAttivo(targetLevel)
+                  ? maximum
+                  : limitsChanged
                   ? max(maximum, nextInitial > 0 ? nextInitial : maximum + 10)
                   : oculumArtSkillMasteryGrowthLimit(
                       skill,
@@ -6980,6 +6983,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     OculumSkillUseDialogResult? resourceUse;
     OculumSkillMasteryPreview? masteryPreview;
     var masteryLimit = 0;
+    var learningTitleCreated = false;
     if (activationCost > 0 && hasStatCost) {
       resourceUse = await mostraDialogUsoOculumSkillArt(
         art: art,
@@ -7028,7 +7032,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       final nextInitial = livelloNuovo < maximumArtLevel
           ? skill.oculumMassimoInizialePerLivello(livelloNuovo + 1)
           : 0;
-      masteryLimit = resourceUse.limitsChanged
+      masteryLimit = !skill.aumentoMassimoOculumAttivo(livelloNuovo)
+          ? resourceUse.maximum
+          : resourceUse.limitsChanged
           ? max(
               resourceUse.maximum,
               nextInitial > 0 ? nextInitial : resourceUse.maximum + 10,
@@ -7062,6 +7068,24 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       if (masteryPreview != null && masteryPreview.appliedIncrease > 0) {
         skill.oculumMassimiPerLivello[livelloNuovo - 1] =
             masteryPreview.newMaximum;
+      }
+      final nextLearningLevel = livelloNuovo + 1;
+      final nextLearningThreshold = livelloNuovo < artMaxLevel(art)
+          ? max(
+              skill.oculumMassimoInizialePerLivello(nextLearningLevel),
+              skill.oculumMassimoPerLivello(nextLearningLevel),
+            )
+          : 0;
+      if (nextLearningThreshold > 0 &&
+          skill.oculumMassimoPerLivello(livelloNuovo) >=
+              nextLearningThreshold) {
+        learningTitleCreated = creaTitoloApprendimentoAutomatico(
+          chiaveSistema:
+              'learning_title_art_${artIndex}_skill_${skillIndex}_level_$livelloNuovo',
+          skillName: '${art.nome} / ${skill.nome}',
+          formName:
+              '${skill.nome.trim().isEmpty ? t('Skill', 'Skill') : skill.nome.trim()} ${artLevelRoman(nextLearningLevel)}',
+        );
       }
       if (requestedResourceSpend > 0) {
         resourceSpent = spendArtSkillCostResource(
@@ -7133,6 +7157,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       risultato += t(
         ' Debuff integritÃ  critica: +$dtDebuff DT.',
         ' Critical integrity debuff: +$dtDebuff DT.',
+      );
+    }
+    if (learningTitleCreated) {
+      risultato += t(
+        '\nTitolo d’Apprendimento creato e modificabile nella sezione Titoli.',
+        '\nLearning Title created and editable in the Titles section.',
       );
     }
     if (fatigueMessage != null) {
@@ -7275,6 +7305,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     ValueChanged<int>? onOculumMaximumChanged,
     bool oculumCostDisabled = false,
     ValueChanged<bool>? onOculumCostDisabledChanged,
+    bool masteryGrowthEnabled = true,
+    ValueChanged<bool>? onMasteryGrowthEnabledChanged,
     String costResource = 'oculum',
     ValueChanged<String>? onCostResourceChanged,
     Widget? structuredEffects,
@@ -7345,7 +7377,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   initialValue: cleanedValue,
                   onChanged: onChanged,
                   maxLines: 3,
-                  helper: '@VC+10 @Difesa+15 @Danni-5',
+                  helper: t(
+                    'Descrivi l’evoluzione e usa comandi reali. Esempio: @VC+10 @Difesa+15',
+                    'Describe the evolution and use real commands. Example: @VC+10 @Difesa+15',
+                  ),
+                  showCommandHelp: true,
                 ),
               ),
               if (oculumMinimum != null &&
@@ -7437,6 +7473,36 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 ),
               ),
               activeThumbColor: tertiaryColor,
+            ),
+          ],
+          if (onMasteryGrowthEnabledChanged != null) ...[
+            const SizedBox(height: 4),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              value: masteryGrowthEnabled,
+              onChanged: onMasteryGrowthEnabledChanged,
+              title: Text(
+                t('Aumento massimo Oculum', 'Oculum maximum growth'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                masteryGrowthEnabled
+                    ? t(
+                        'Attivo: il massimo può crescere fino alla forma successiva.',
+                        'Enabled: the maximum can grow up to the next form.',
+                      )
+                    : t(
+                        'Bloccato: il costo funziona, ma il massimo non aumenta.',
+                        'Locked: the cost still works, but the maximum does not grow.',
+                      ),
+              ),
+              secondary: Icon(
+                masteryGrowthEnabled ? Icons.trending_up : Icons.lock_outline,
+                color: masteryGrowthEnabled
+                    ? tertiaryColor
+                    : Colors.orangeAccent,
+              ),
             ),
           ],
           if (quickCommands.isNotEmpty) ...[
@@ -8126,6 +8192,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               ),
             ),
             const SizedBox(height: 12),
+            smallInfoText(
+              t(
+                'Open: effetto che si manifesta quando le condizioni sono soddisfatte. Open Buff è il bonus passivo o temporaneo mentre l’Open è attivo; Open Skill è la nuova capacità resa disponibile.',
+                'Open: an effect that manifests when its conditions are met. Open Buff is the passive or temporary bonus while the Open is active; Open Skill is the new ability it unlocks.',
+              ),
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 8),
             campoModello(
               fieldKey: ValueKey('art_${artIndex}_open_name'),
               label: t('Nome Open Art', 'Art Open Name'),
@@ -8139,6 +8213,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               initialValue: art.openDescription,
               onChanged: (value) => art.openDescription = value,
               maxLines: 2,
+              helper: t(
+                'Spiega quando e come si manifesta l’Open.',
+                'Explain when and how the Open manifests.',
+              ),
+              showCommandHelp: true,
             ),
             const SizedBox(height: 8),
             campoModello(
@@ -8148,6 +8227,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               onChanged: (value) => art.openBuff = value,
               maxLines: 2,
               helper: '@VC+10 @Difesa+15 @Danni+Vol/2 Fuoco @ScudoOculum+5',
+              showCommandHelp: true,
             ),
             const SizedBox(height: 8),
             campoModello(
@@ -8156,6 +8236,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               initialValue: art.openSkill,
               onChanged: (value) => art.openSkill = value,
               maxLines: 2,
+              helper: t(
+                'Nuova capacità resa disponibile dall’Open. Esempio: @Danni+3',
+                'New ability made available by the Open. Example: @Danni+3',
+              ),
+              showCommandHelp: true,
             ),
             const SizedBox(height: 8),
             Text(
@@ -8500,6 +8585,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 color: tertiaryColor,
               ),
             const SizedBox(height: 12),
+            smallInfoText(
+              t(
+                'Art: potere, stile o sistema principale del personaggio. Contiene evoluzioni, modificatori, Skill e Open collegate.',
+                'Art: the character’s main power, style or system. It contains evolutions, modifiers, Skills and linked Opens.',
+              ),
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 8),
             campoModello(
               fieldKey: ValueKey('art_${artIndex}_name'),
               label: t('Nome Art', 'Art Name'),
@@ -8604,6 +8697,19 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     notifyArtSkillUiChanged(artIndex, skillIndex);
     recordArtSkillOculumProgress(artIndex, skillIndex);
     programmaSalvataggio();
+  }
+
+  void aggiornaAumentoMassimoOculumArtSkill(
+    int artIndex,
+    int skillIndex,
+    int level,
+    bool enabled,
+  ) {
+    final skill = arti[artIndex].skills[skillIndex];
+    skill.impostaAumentoMassimoOculumAttivo(level, enabled);
+    notifyArtSkillUiChanged(artIndex, skillIndex);
+    recordArtSkillOculumProgress(artIndex, skillIndex);
+    programmaSalvataggio(invalidateCaches: false);
   }
 
   void aggiornaRisorsaCostoArtSkill(
@@ -8905,6 +9011,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   1,
                   value,
                 ),
+                masteryGrowthEnabled: skill.aumentoMassimoOculumAttivo(1),
+                onMasteryGrowthEnabledChanged: (value) =>
+                    aggiornaAumentoMassimoOculumArtSkill(
+                      artIndex,
+                      skillIndex,
+                      1,
+                      value,
+                    ),
                 structuredEffects: artStructuredEvolutionEditors(
                   skill: skill,
                   artIndex: artIndex,
@@ -8956,6 +9070,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   2,
                   value,
                 ),
+                masteryGrowthEnabled: skill.aumentoMassimoOculumAttivo(2),
+                onMasteryGrowthEnabledChanged: (value) =>
+                    aggiornaAumentoMassimoOculumArtSkill(
+                      artIndex,
+                      skillIndex,
+                      2,
+                      value,
+                    ),
                 structuredEffects: artStructuredEvolutionEditors(
                   skill: skill,
                   artIndex: artIndex,
@@ -9007,6 +9129,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   3,
                   value,
                 ),
+                masteryGrowthEnabled: skill.aumentoMassimoOculumAttivo(3),
+                onMasteryGrowthEnabledChanged: (value) =>
+                    aggiornaAumentoMassimoOculumArtSkill(
+                      artIndex,
+                      skillIndex,
+                      3,
+                      value,
+                    ),
                 structuredEffects: artStructuredEvolutionEditors(
                   skill: skill,
                   artIndex: artIndex,
@@ -9062,6 +9192,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         4,
                         value,
                       ),
+                  masteryGrowthEnabled: skill.aumentoMassimoOculumAttivo(4),
+                  onMasteryGrowthEnabledChanged: (value) =>
+                      aggiornaAumentoMassimoOculumArtSkill(
+                        artIndex,
+                        skillIndex,
+                        4,
+                        value,
+                      ),
                   structuredEffects: artStructuredEvolutionEditors(
                     skill: skill,
                     artIndex: artIndex,
@@ -9111,6 +9249,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   costResource: skill.risorsaCostoPerLivello(5),
                   onCostResourceChanged: (value) =>
                       aggiornaRisorsaCostoArtSkill(
+                        artIndex,
+                        skillIndex,
+                        5,
+                        value,
+                      ),
+                  masteryGrowthEnabled: skill.aumentoMassimoOculumAttivo(5),
+                  onMasteryGrowthEnabledChanged: (value) =>
+                      aggiornaAumentoMassimoOculumArtSkill(
                         artIndex,
                         skillIndex,
                         5,

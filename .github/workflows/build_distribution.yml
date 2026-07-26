@@ -104,10 +104,17 @@ jobs:
         run: |
           flutter build macos --release \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
-            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}" \
+            "--dart-define=OculumOAuthRedirectUrl=com.mich.oculum://login-callback"
 
       - name: Package macOS release
         shell: bash
+        env:
+          APPLE_DEVELOPER_ID_CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_BASE64 }}
+          APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
           APP_PATH=$(find build/macos/Build/Products/Release -maxdepth 1 -type d -name "*.app" -print -quit)
@@ -116,7 +123,7 @@ jobs:
             exit 1
           fi
           mkdir -p build/distribution
-          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" build/distribution/Oculum-macOS.zip
+          bash scripts/sign_and_notarize_macos.sh "$APP_PATH" build/distribution/Oculum-macOS.zip
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4

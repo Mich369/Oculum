@@ -1280,6 +1280,43 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     return titoli.any((titolo) => titolo.chiaveSistema == chiave);
   }
 
+  bool creaTitoloApprendimentoAutomatico({
+    required String chiaveSistema,
+    required String skillName,
+    required String formName,
+  }) {
+    if (titoloEsistePerChiave(chiaveSistema)) return false;
+    final safeSkill = skillName.trim().isEmpty
+        ? t('Skill senza nome', 'Unnamed Skill')
+        : skillName.trim();
+    final safeForm = formName.trim().isEmpty
+        ? t('forma successiva', 'next form')
+        : formName.trim();
+    titoli.add(
+      OculumTitle(
+        nome: t('Apprendimento di $safeSkill', 'Learning of $safeSkill'),
+        tipo: t('Titolo d’Apprendimento', 'Learning Title'),
+        ottenimento: t(
+          'Ottenuto raggiungendo il massimo Oculum richiesto per $safeForm.',
+          'Earned by reaching the Oculum maximum required for $safeForm.',
+        ),
+        leggenda: t(
+          'La padronanza della Skill ha lasciato un segno permanente e modificabile.',
+          'Mastering the Skill left a permanent, editable mark.',
+        ),
+        buff: '',
+        puntoCieco: '',
+        skill: safeSkill,
+        richiede: t(
+          'Può essere modificato liberamente dalla sezione Titoli.',
+          'It can be freely edited in the Titles section.',
+        ),
+        chiaveSistema: chiaveSistema,
+      ),
+    );
+    return true;
+  }
+
   String rimuoviBuffFatoPredefiniti(String text) {
     var clean = text;
     for (final tag in const [
@@ -1766,6 +1803,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void usaOpen(OculumTitle titolo, {TitleOpenEntry? openExtra}) {
+    List<OculumStructuredEffect> effectsToActivate =
+        const <OculumStructuredEffect>[];
+    var effectSource = '';
     setState(() {
       if (!titolo.evoluto) return;
 
@@ -1781,6 +1821,12 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
           disattivaTutteLeOpen(exceptTitle: titolo, exceptOpenExtra: openExtra);
           equipaggiaTitoloPerOpen(titolo);
           openExtra.attiva = true;
+          effectsToActivate = List<OculumStructuredEffect>.from(
+            openExtra.effects,
+          );
+          effectSource = openExtra.nome.trim().isEmpty
+              ? titolo.nome
+              : openExtra.nome.trim();
           if (titolo.equipaggiato) {
             rimarginaHpDaAumentoResilienza(
               extraOpenRuntimeResilienzaBonus(openExtra),
@@ -1807,6 +1853,12 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         disattivaTutteLeOpen(exceptTitle: titolo);
         equipaggiaTitoloPerOpen(titolo);
         titolo.openAttiva = true;
+        effectsToActivate = List<OculumStructuredEffect>.from(
+          titolo.openEffects,
+        );
+        effectSource = titolo.openName.trim().isEmpty
+            ? titolo.nome
+            : titolo.openName.trim();
         if (titolo.equipaggiato) {
           rimarginaHpDaAumentoResilienza(
             titleOpenRuntimeResilienzaBonus(titolo),
@@ -1821,6 +1873,23 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    if (effectsToActivate.isNotEmpty) {
+      final messages = applyStructuredEffectsOnActivation(
+        effectsToActivate,
+        source: effectSource,
+      );
+      if (messages.isNotEmpty) {
+        setState(() {
+          risultato +=
+              '\n${t('Effetti Open attivati', 'Activated Open effects')}:\n'
+              '${messages.join('\n')}';
+          aggiungiLog(
+            '${t('Effetti Open attivati', 'Activated Open effects')} '
+            '[$effectSource]: ${messages.join(' | ')}',
+          );
+        });
+      }
+    }
     scheduleRealtimeOculumChanged();
     programmaSalvataggio();
   }

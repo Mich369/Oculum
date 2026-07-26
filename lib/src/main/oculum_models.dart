@@ -869,8 +869,10 @@ class TitleOpenEntry {
     this.openSkill = '',
     this.attiva = false,
     List<ConditionalBuffEntry>? conditionalBuffs,
+    List<OculumStructuredEffect>? effects,
   }) {
     this.conditionalBuffs = conditionalBuffs ?? [];
+    this.effects = effects ?? [];
   }
 
   String nome;
@@ -880,6 +882,7 @@ class TitleOpenEntry {
   bool attiva;
 
   late List<ConditionalBuffEntry> conditionalBuffs;
+  late List<OculumStructuredEffect> effects;
 
   Map<String, dynamic> toJson() {
     return {
@@ -889,6 +892,8 @@ class TitleOpenEntry {
       'openSkill': openSkill,
       'attiva': attiva,
       'conditionalBuffs': conditionalBuffs.map((x) => x.toJson()).toList(),
+      if (effects.isNotEmpty)
+        'effects': effects.map((effect) => effect.toJson()).toList(),
     };
   }
 
@@ -904,6 +909,9 @@ class TitleOpenEntry {
             (x) => ConditionalBuffEntry.fromJson(Map<String, dynamic>.from(x)),
           )
           .toList(),
+      effects: oculumReadStructuredEffects(
+        json['effects'] ?? json['openEffects'],
+      ),
     );
   }
 }
@@ -954,11 +962,13 @@ class OculumTitle {
     List<TitleExtraSkillEntry>? skillExtra,
     List<ConditionalBuffEntry>? titleConditionalBuffs,
     List<ConditionalBuffEntry>? openConditionalBuffs,
+    List<OculumStructuredEffect>? openEffects,
   }) {
     this.openExtra = openExtra ?? [];
     this.skillExtra = skillExtra ?? [];
     this.titleConditionalBuffs = titleConditionalBuffs ?? [];
     this.openConditionalBuffs = openConditionalBuffs ?? [];
+    this.openEffects = openEffects ?? [];
   }
 
   String nome;
@@ -991,6 +1001,7 @@ class OculumTitle {
   late List<TitleExtraSkillEntry> skillExtra;
   late List<ConditionalBuffEntry> titleConditionalBuffs;
   late List<ConditionalBuffEntry> openConditionalBuffs;
+  late List<OculumStructuredEffect> openEffects;
 
   Map<String, dynamic> toJson() {
     return {
@@ -1024,6 +1035,8 @@ class OculumTitle {
       'openConditionalBuffs': openConditionalBuffs
           .map((x) => x.toJson())
           .toList(),
+      if (openEffects.isNotEmpty)
+        'openEffects': openEffects.map((effect) => effect.toJson()).toList(),
     };
   }
 
@@ -1077,6 +1090,7 @@ class OculumTitle {
             (x) => ConditionalBuffEntry.fromJson(Map<String, dynamic>.from(x)),
           )
           .toList(),
+      openEffects: oculumReadStructuredEffects(json['openEffects']),
     );
   }
 }
@@ -1183,7 +1197,9 @@ class OculumSkillTextLimits {
 }
 
 OculumSkillTextLimits? oculumSkillTextLimitsAtEnd(String text) {
-  final match = RegExp(r'\(\s*(\d+)\s*\/\s*(\d+)\s*\)\s*$').firstMatch(text);
+  final match = RegExp(
+    r'\(\s*(\d+)\s*(?:\/|,|;|-|\s+)\s*(\d+)\s*\)\s*$',
+  ).firstMatch(text);
   if (match == null) return null;
   final minimum = int.tryParse(match.group(1)!);
   final maximum = int.tryParse(match.group(2)!);
@@ -1209,6 +1225,7 @@ class CharacterSkillForm {
     this.oculumMassimoUtilizzabile = 0,
     int? oculumMassimoMaestriaIniziale,
     bool? oculumLimitiConfiguratiManualmente,
+    this.aumentoMassimoOculumAttivo = true,
     List<OculumStructuredEffect>? effettiStrutturati,
     this.costoStrutturato,
     this.cooldownStrutturato,
@@ -1241,6 +1258,7 @@ class CharacterSkillForm {
   int oculumMassimoUtilizzabile;
   int oculumMassimoMaestriaIniziale;
   bool oculumLimitiConfiguratiManualmente;
+  bool aumentoMassimoOculumAttivo;
   List<OculumStructuredEffect> effettiStrutturati;
   OculumSkillCost? costoStrutturato;
   OculumAbilityCooldown? cooldownStrutturato;
@@ -1302,6 +1320,7 @@ class CharacterSkillForm {
       'oculumMassimoUtilizzabile': oculumMassimoUtilizzabile,
       'oculumMassimoMaestriaIniziale': oculumMassimoMaestriaIniziale,
       'oculumLimitiConfiguratiManualmente': oculumLimitiConfiguratiManualmente,
+      'aumentoMassimoOculumAttivo': aumentoMassimoOculumAttivo,
       if (effettiStrutturati.isNotEmpty)
         'effettiStrutturati': effettiStrutturati
             .map((effect) => effect.toJson())
@@ -1369,6 +1388,10 @@ class CharacterSkillForm {
           json.containsKey('oculumLimitiConfiguratiManualmente')
           ? readBoolValue(json['oculumLimitiConfiguratiManualmente'])
           : minimum > 0 || maximum > 0,
+      aumentoMassimoOculumAttivo: readBoolValue(
+        json['aumentoMassimoOculumAttivo'] ?? json['masteryGrowthEnabled'],
+        fallback: true,
+      ),
       effettiStrutturati: oculumReadStructuredEffects(
         json['effettiStrutturati'] ?? json['structuredEffects'],
       ),
@@ -1633,6 +1656,7 @@ int oculumSkillMasteryGrowthLimit(CharacterSkill skill, int formIndex) {
   skill.ensureForms();
   if (formIndex < 0 || formIndex >= skill.forme.length) return 0;
   final form = skill.forme[formIndex];
+  form.aggiornaLimitiOculumDaDescrizione();
   final currentMaximum = max(0, form.oculumMassimoUtilizzabile);
   final initialMaximum = max(
     0,
@@ -1642,9 +1666,13 @@ int oculumSkillMasteryGrowthLimit(CharacterSkill skill, int formIndex) {
   );
   var configuredLimit = 0;
   if (formIndex + 1 < skill.forme.length) {
+    final nextForm = skill.forme[formIndex + 1];
+    nextForm.aggiornaLimitiOculumDaDescrizione();
     configuredLimit = max(
       0,
-      skill.forme[formIndex + 1].oculumMassimoMaestriaIniziale,
+      nextForm.oculumMassimoMaestriaIniziale > 0
+          ? nextForm.oculumMassimoMaestriaIniziale
+          : nextForm.oculumMassimoUtilizzabile,
     );
   }
   final rawLimit = configuredLimit > 0 ? configuredLimit : initialMaximum + 10;
@@ -1670,6 +1698,7 @@ class ArtSkill {
     List<int>? oculumMassimiPerLivello,
     List<int>? oculumMassimiInizialiPerLivello,
     List<bool>? oculumLimitiManualiPerLivello,
+    List<bool>? aumentoMassimoOculumAttivoPerLivello,
     List<bool>? costoOculumDisabilitatoPerLivello,
     List<String>? risorseCostoPerLivello,
     Iterable<Iterable<OculumStructuredEffect>>? effettiPerLivello,
@@ -1689,6 +1718,10 @@ class ArtSkill {
          minimums: oculumMinimiPerLivello,
          maximums: oculumMassimiPerLivello,
        ),
+       aumentoMassimoOculumAttivoPerLivello =
+           _normalizeArtSkillGrowthEnabledLevels(
+             aumentoMassimoOculumAttivoPerLivello,
+           ),
        risorseCostoPerLivello = _normalizeArtSkillCostResourceLevels(
          risorseCostoPerLivello,
          legacyDisabled: costoOculumDisabilitatoPerLivello,
@@ -1736,6 +1769,7 @@ class ArtSkill {
   List<int> oculumMassimiPerLivello;
   List<int> oculumMassimiInizialiPerLivello;
   List<bool> oculumLimitiManualiPerLivello;
+  List<bool> aumentoMassimoOculumAttivoPerLivello;
   List<bool> costoOculumDisabilitatoPerLivello;
   List<String> risorseCostoPerLivello;
   List<List<OculumStructuredEffect>> effettiPerLivello;
@@ -1808,6 +1842,22 @@ class ArtSkill {
   bool costoOculumDisabilitato(int level) =>
       _artSkillBoolLevelValue(costoOculumDisabilitatoPerLivello, level);
 
+  bool aumentoMassimoOculumAttivo(int level) {
+    final index = level - 1;
+    if (index < 0 || index >= aumentoMassimoOculumAttivoPerLivello.length) {
+      return true;
+    }
+    return aumentoMassimoOculumAttivoPerLivello[index];
+  }
+
+  void impostaAumentoMassimoOculumAttivo(int level, bool enabled) {
+    final index = level - 1;
+    if (index < 0 || index >= aumentoMassimoOculumAttivoPerLivello.length) {
+      return;
+    }
+    aumentoMassimoOculumAttivoPerLivello[index] = enabled;
+  }
+
   String risorsaCostoPerLivello(int level) {
     final index = level - 1;
     if (index < 0 || index >= risorseCostoPerLivello.length) return 'oculum';
@@ -1873,6 +1923,9 @@ class ArtSkill {
       'oculumLimitiManualiPerLivello': List<bool>.from(
         oculumLimitiManualiPerLivello,
       ),
+      'aumentoMassimoOculumAttivoPerLivello': List<bool>.from(
+        aumentoMassimoOculumAttivoPerLivello,
+      ),
       'costoOculumDisabilitatoPerLivello': List<bool>.from(
         costoOculumDisabilitatoPerLivello,
       ),
@@ -1925,6 +1978,10 @@ class ArtSkill {
         json['oculumLimitiManualiPerLivello'],
         minimums: minimums,
         maximums: maximums,
+      ),
+      aumentoMassimoOculumAttivoPerLivello: _readArtSkillBoolLevels(
+        json['aumentoMassimoOculumAttivoPerLivello'] ??
+            json['masteryGrowthEnabledPerLevel'],
       ),
       costoOculumDisabilitatoPerLivello: _readArtSkillBoolLevels(
         json['costoOculumDisabilitatoPerLivello'] ??
@@ -2046,6 +2103,15 @@ List<bool> _normalizeArtSkillBoolLevels(Iterable<bool>? values) {
   );
 }
 
+List<bool> _normalizeArtSkillGrowthEnabledLevels(Iterable<bool>? values) {
+  final source = values?.toList(growable: false);
+  return List<bool>.generate(
+    5,
+    (index) => source == null || index >= source.length || source[index],
+    growable: false,
+  );
+}
+
 List<String> _normalizeArtSkillCostResourceLevels(
   Iterable<String>? values, {
   Iterable<bool>? legacyDisabled,
@@ -2107,12 +2173,24 @@ int oculumArtSkillMasteryGrowthLimit(
 }) {
   final safeMaxLevel = maxLevel.clamp(1, 5).toInt();
   if (level <= 0 || level > safeMaxLevel) return 0;
+  skill.aggiornaLimitiOculumDalTestoPerLivello(
+    level,
+    skill.testoEvoluzione(level),
+  );
   final currentMaximum = skill.oculumMassimoPerLivello(level);
   final storedInitial = skill.oculumMassimoInizialePerLivello(level);
   final initialMaximum = storedInitial > 0 ? storedInitial : currentMaximum;
-  final nextInitial = level < safeMaxLevel
-      ? skill.oculumMassimoInizialePerLivello(level + 1)
-      : 0;
+  var nextInitial = 0;
+  if (level < safeMaxLevel) {
+    skill.aggiornaLimitiOculumDalTestoPerLivello(
+      level + 1,
+      skill.testoEvoluzione(level + 1),
+    );
+    nextInitial = skill.oculumMassimoInizialePerLivello(level + 1);
+    if (nextInitial <= 0) {
+      nextInitial = skill.oculumMassimoPerLivello(level + 1);
+    }
+  }
   final rawLimit = nextInitial > 0 ? nextInitial : initialMaximum + 10;
   return max(currentMaximum, rawLimit);
 }

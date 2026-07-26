@@ -91,23 +91,30 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
   }
 
   Future<void> showAutomaticAshTurnChanceDialog() async {
+    final level = max(0, leggiNumero(livelloController));
+    final freeTurns = oculumAutomaticAshFreeTurns(level);
+    final firstAshTurn = freeTurns + 1;
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF120D18),
-        title: Text(t('Cenere dopo il turno 6', 'Ash after turn 6')),
+        title: Text(
+          t('Cenere dopo il turno $freeTurns', 'Ash after turn $freeTurns'),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               t(
-                'Dal turno 7 viene effettuato un controllo percentuale a ogni '
+                'Dal turno $firstAshTurn viene effettuato un controllo percentuale a ogni '
                     'nuovo turno. La probabilita cresce, senza sostituire gli '
-                    'altri modi gia esistenti di ottenere Cenere.',
-                'From turn 7 a percentage check runs on every new turn. '
+                    'altri modi gia esistenti di ottenere Cenere. Ogni 6 livelli '
+                    'il personaggio ottiene 2 turni aggiuntivi senza questo controllo.',
+                'From turn $firstAshTurn a percentage check runs on every new turn. '
                     'The chance increases without replacing any existing way '
-                    'to gain Ash.',
+                    'to gain Ash. Every 6 levels the character gains 2 additional '
+                    'turns without this check.',
               ),
             ),
             const SizedBox(height: 12),
@@ -242,10 +249,16 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             unawaited(showAutomaticAshTurnChanceDialog()),
                         icon: const Icon(Icons.local_fire_department, size: 16),
                         label: Text(
-                          current < 6
-                              ? t('Cenere % dal turno 7', 'Ash % from turn 7')
+                          current <
+                                  oculumAutomaticAshFreeTurns(
+                                    max(0, leggiNumero(livelloController)),
+                                  )
+                              ? t(
+                                  'Cenere % dal turno ${oculumAutomaticAshFreeTurns(max(0, leggiNumero(livelloController))) + 1}',
+                                  'Ash % from turn ${oculumAutomaticAshFreeTurns(max(0, leggiNumero(livelloController))) + 1}',
+                                )
                               : '${t('Cenere turno seguente', 'Next-turn Ash')}: '
-                                    '${oculumAutomaticAshChancePercent(turn: current + 1, difficulty: campaignDifficulty, underStress: sottoStress)}%',
+                                    '${oculumAutomaticAshChancePercent(turn: current + 1, difficulty: campaignDifficulty, level: max(0, leggiNumero(livelloController)), underStress: sottoStress)}%',
                         ),
                       ),
                   ],
@@ -464,6 +477,349 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     );
   }
 
+  List<String> commandSuggestionsForText(String text) {
+    final cursorText = text;
+    final atIndex = cursorText.lastIndexOf('@');
+    if (atIndex < 0) return const <String>[];
+    final fragment = cursorText.substring(atIndex);
+    if (fragment.contains(RegExp(r'[\s+\-*/=]'))) {
+      return const <String>[];
+    }
+    final query = oculumNormalizeText(fragment).replaceAll('@', '');
+    final dynamic = <String>[
+      for (final stat in hiddenEyeStats.where((item) => item.unlocked))
+        '@${stat.nome.trim().isEmpty ? stat.id : stat.nome.trim()}',
+    ];
+    final candidates = <String>{
+      ...oculumCommandAutocompleteLabels,
+      ...dynamic,
+      '@OculumSpeso',
+    };
+    return candidates
+        .where(
+          (value) =>
+              query.isEmpty ||
+              oculumNormalizeText(value).replaceAll('@', '').startsWith(query),
+        )
+        .take(8)
+        .toList(growable: false);
+  }
+
+  String commandNaturalPreview(String text) {
+    if (!text.contains('@')) {
+      return t(
+        'Scrivi @ per vedere i suggerimenti oppure apri il Manuale dei comandi.',
+        'Type @ to see suggestions or open the Command Manual.',
+      );
+    }
+    final parsed = parseQuickCommandsDetailed(text);
+    final invalid = parsed.where((command) => !command.valid).toList();
+    if (invalid.isNotEmpty) {
+      final error = invalid.first.error
+          .replaceFirst('FormatException: ', '')
+          .trim();
+      return t(
+        '! Parte non valida: $error Esempio corretto: @Danni+3',
+        '! Invalid part: $error Correct example: @Danni+3',
+      );
+    }
+    if (parsed.isEmpty) {
+      return t(
+        '! Comando non riconosciuto. Controlla il nome e usa una forma come @Difesa+2.',
+        '! Command not recognized. Check its name and use a form such as @Difesa+2.',
+      );
+    }
+    String describe(OculumFormulaCommand command) {
+      final label = switch (command.key) {
+        'danni' => t('Danno', 'Damage'),
+        'difesa' => t('Difesa', 'Defense'),
+        'hp' => t('Vita massima', 'Maximum Life'),
+        'hp_temp' => t('HP temporanei', 'Temporary HP'),
+        'scudo' => t('Scudo', 'Shield'),
+        'oculum_spent' => t('Oculum speso', 'Spent Oculum'),
+        'reazione' => t('Reazioni', 'Reactions'),
+        'reazione_veloce' => t('Reazioni rapide', 'Quick reactions'),
+        _ => command.key.replaceAll('_', ' '),
+      };
+      final sign = command.value >= 0 ? '+' : '';
+      final trigger = command.triggerRaw.trim().isEmpty
+          ? ''
+          : ' (${command.triggerRaw})';
+      return '$label $sign${command.value}$trigger';
+    }
+
+    return '${t('Anteprima', 'Preview')}: '
+        '${parsed.take(4).map(describe).join(' · ')}';
+  }
+
+  Future<String?> showCommandManualInsertDialog(String currentText) async {
+    final dynamicSubtraits = hiddenEyeStats
+        .where((item) => item.unlocked)
+        .map((item) => item.nome.trim().isEmpty ? item.id : item.nome.trim())
+        .where((name) => name.isNotEmpty)
+        .toList(growable: false);
+    final dynamicSubtrait = dynamicSubtraits.isEmpty
+        ? null
+        : dynamicSubtraits.first;
+    final entries =
+        <
+          ({
+            String category,
+            String name,
+            String syntax,
+            String example,
+            String result,
+            String limits,
+          })
+        >[
+          (
+            category: t('Più usati', 'Most used'),
+            name: t('Aumento danno', 'Increase damage'),
+            syntax: '@Danni+Valore',
+            example: '@Danni+3',
+            result: t('Aumenta il danno di 3.', 'Increases damage by 3.'),
+            limits: t(
+              'Utilizzabile nei campi che supportano @.',
+              'Available in fields that support @.',
+            ),
+          ),
+          (
+            category: t('Più usati', 'Most used'),
+            name: t('Aumento difesa', 'Increase defense'),
+            syntax: '@Difesa+Valore',
+            example: '@Difesa+2',
+            result: t('Aumenta la Difesa di 2.', 'Increases Defense by 2.'),
+            limits: t(
+              'Può essere seguito da un tipo, per esempio Cenere.',
+              'It may be followed by a type, for example Ash.',
+            ),
+          ),
+          (
+            category: t('Risorse', 'Resources'),
+            name: t('Vita e HP temporanei', 'Life and temporary HP'),
+            syntax: '@HP+Valore / @HPTemp+Valore',
+            example: '@HPTemp+5',
+            result: t('Aggiunge 5 HP temporanei.', 'Adds 5 temporary HP.'),
+            limits: t(
+              'Il limite degli HP temporanei resta quello del gioco.',
+              'The temporary HP game limit still applies.',
+            ),
+          ),
+          (
+            category: t('Risorse', 'Resources'),
+            name: t('Oculum speso', 'Spent Oculum'),
+            syntax: '@OculumSpeso+Valore',
+            example: '@OculumSpeso+5',
+            result: t(
+              'Aggiunge 5 al conteggio usato dai trigger OculumSpeso.',
+              'Adds 5 to the counter used by OculumSpeso triggers.',
+            ),
+            limits: t(
+              'Non aumenta l’Oculum disponibile.',
+              'It does not increase available Oculum.',
+            ),
+          ),
+          (
+            category: t('Statistiche', 'Stats'),
+            name: t('Modifica statistica', 'Change stat'),
+            syntax: '@NomeStatistica±Valore',
+            example: '@Volonta+2',
+            result: t('Aumenta Volontà di 2.', 'Increases Will by 2.'),
+            limits: t(
+              'Usa nomi realmente presenti nel parser.',
+              'Use names actually supported by the parser.',
+            ),
+          ),
+          if (dynamicSubtrait != null)
+            (
+              category: t('Sottotratti', 'Subtraits'),
+              name: t('Modifica sottotratto', 'Change subtrait'),
+              syntax: '@NomeSottotratto±Valore',
+              example: '@$dynamicSubtrait+1',
+              result: t(
+                'Aumenta il sottotratto $dynamicSubtrait di 1.',
+                'Increases the $dynamicSubtrait subtrait by 1.',
+              ),
+              limits: t(
+                'I sottotratti non diventano risorse consumabili.',
+                'Subtraits do not become consumable resources.',
+              ),
+            ),
+          (
+            category: t('Tiri', 'Rolls'),
+            name: t('Bonus ai tiri statistica', 'Stat roll bonus'),
+            syntax: '@TiroStats±Valore',
+            example: '@TiroStats+1',
+            result: t(
+              'Aggiunge 1 ai tiri delle statistiche.',
+              'Adds 1 to stat rolls.',
+            ),
+            limits: t(
+              'Non modifica direttamente il valore base.',
+              'Does not directly change the base value.',
+            ),
+          ),
+          (
+            category: t('Trigger', 'Triggers'),
+            name: t('Ogni Oculum speso', 'Per Oculum spent'),
+            syntax: '@Effetto+Valore ogni N OculumSpeso',
+            example: '@Danni+2 ogni 1 OculumSpeso',
+            result: t(
+              'Aggiunge 2 Danni per ogni Oculum speso.',
+              'Adds 2 Damage for every Oculum spent.',
+            ),
+            limits: t(
+              'Il conteggio usa la raccolta corrente.',
+              'The count uses the current tracked total.',
+            ),
+          ),
+          (
+            category: t('Trigger', 'Triggers'),
+            name: t('Quando colpisci', 'On hit'),
+            syntax: '@Effetto+Valore OnHit',
+            example: '@Danni+2 OnHit',
+            result: t(
+              'Applica il bonus quando il trigger OnHit è attivo.',
+              'Applies the bonus while the OnHit trigger is active.',
+            ),
+            limits: t(
+              'Disponibile nei testi rapidi calcolabili.',
+              'Available in calculable quick-command text.',
+            ),
+          ),
+          (
+            category: t('Tipo danno', 'Damage type'),
+            name: t('Cambio tipo', 'Type switch'),
+            syntax: '@TypeSwitch Tipo',
+            example: '@TypeSwitch Fuoco',
+            result: t(
+              'Converte il tipo di danno attivo in Fuoco.',
+              'Converts the active damage type to Fire.',
+            ),
+            limits: t(
+              'Usa un tipo di danno riconosciuto.',
+              'Use a recognized damage type.',
+            ),
+          ),
+        ];
+    var query = '';
+    var category = t('Tutti', 'All');
+    final categories = <String>{
+      t('Tutti', 'All'),
+      for (final entry in entries) entry.category,
+    }.toList();
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final filtered = entries.where((entry) {
+            final matchesCategory =
+                category == t('Tutti', 'All') || entry.category == category;
+            final haystack = oculumNormalizeText(
+              '${entry.name} ${entry.syntax} ${entry.example} ${entry.result}',
+            );
+            return matchesCategory &&
+                (query.isEmpty ||
+                    haystack.contains(oculumNormalizeText(query)));
+          }).toList();
+          return AlertDialog(
+            backgroundColor: const Color(0xFF120D18),
+            title: Row(
+              children: [
+                const Icon(Icons.menu_book_outlined),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(t('Manuale dei comandi', 'Command Manual')),
+                ),
+              ],
+            ),
+            content: SizedBox(
+              width: 680,
+              height: 560,
+              child: Column(
+                children: [
+                  TextField(
+                    decoration: fieldDecoration(
+                      t('Cerca comando', 'Search command'),
+                    ).copyWith(prefixIcon: const Icon(Icons.search)),
+                    onChanged: (value) =>
+                        setDialogState(() => query = value.trim()),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: category,
+                    decoration: fieldDecoration(t('Categoria', 'Category')),
+                    items: [
+                      for (final value in categories)
+                        DropdownMenuItem(value: value, child: Text(value)),
+                    ],
+                    onChanged: (value) => setDialogState(
+                      () => category = value ?? categories.first,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final entry = filtered[index];
+                        return Card(
+                          color: Colors.white.withValues(alpha: 0.045),
+                          child: ListTile(
+                            title: Text(entry.name),
+                            subtitle: Text(
+                              '${entry.syntax}\n'
+                              '${t('Esempio', 'Example')}: ${entry.example}\n'
+                              '${entry.result}\n${entry.limits}',
+                            ),
+                            isThreeLine: true,
+                            trailing: Wrap(
+                              spacing: 2,
+                              children: [
+                                IconButton(
+                                  tooltip: t('Copia esempio', 'Copy example'),
+                                  onPressed: () => Clipboard.setData(
+                                    ClipboardData(text: entry.example),
+                                  ),
+                                  icon: const Icon(Icons.copy, size: 19),
+                                ),
+                                IconButton(
+                                  tooltip: t(
+                                    'Inserisci comando',
+                                    'Insert command',
+                                  ),
+                                  onPressed: () => Navigator.pop(
+                                    dialogContext,
+                                    entry.example,
+                                  ),
+                                  icon: const Icon(Icons.add_circle_outline),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(t('Chiudi', 'Close')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    if (selected == null || selected.trim().isEmpty) return null;
+    final separator =
+        currentText.isEmpty || RegExp(r'\s$').hasMatch(currentText) ? '' : ' ';
+    return '$currentText$separator${selected.trim()}';
+  }
+
   String structuredEffectTypeLabel(String type) {
     return switch (type) {
       'danno' => t('Danno', 'Damage'),
@@ -488,6 +844,11 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       'rimuovi_reazioni_rapide' => t(
         'Rimozione reazioni rapide',
         'Remove quick reactions',
+      ),
+      'aggiungi_reazioni' => t('Aggiunta reazioni', 'Add reactions'),
+      'aggiungi_reazioni_rapide' => t(
+        'Aggiunta reazioni rapide',
+        'Add quick reactions',
       ),
       'consumo_risorsa' => t('Consumo risorsa', 'Consume resource'),
       'stato' => t('Applica stato', 'Apply condition'),

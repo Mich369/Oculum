@@ -1151,12 +1151,25 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                                 color: tertiaryColor.withValues(alpha: 0.88),
                                 child: Padding(
                                   padding: const EdgeInsets.all(4),
-                                  child: ClipPath(
-                                    clipper: const HexagonClipper(),
-                                    child: Image.memory(
-                                      immaginePersonaggio!,
-                                      fit: BoxFit.cover,
-                                      alignment: Alignment.center,
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onSecondaryTap:
+                                        copiaImmaginePersonaggioNegliAppunti,
+                                    onLongPress:
+                                        mostraAzioniImmaginePersonaggio,
+                                    child: Tooltip(
+                                      message: t(
+                                        'Tasto destro: copia. Pressione lunga: copia o scarica.',
+                                        'Right-click: copy. Long press: copy or download.',
+                                      ),
+                                      child: ClipPath(
+                                        clipper: const HexagonClipper(),
+                                        child: Image.memory(
+                                          immaginePersonaggio!,
+                                          fit: BoxFit.cover,
+                                          alignment: Alignment.center,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -1209,6 +1222,25 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                                   : t('Incolla', 'Paste'),
                             ),
                           ),
+                          if (immaginePersonaggio != null)
+                            ElevatedButton.icon(
+                              onPressed: copiaImmaginePersonaggioNegliAppunti,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black.withValues(
+                                  alpha: 0.72,
+                                ),
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: compact ? 7 : 14,
+                                  vertical: compact ? 5 : 10,
+                                ),
+                              ),
+                              icon: Icon(
+                                Icons.content_copy,
+                                size: compact ? 15 : 20,
+                              ),
+                              label: Text(compact ? '' : t('Copia', 'Copy')),
+                            ),
                           if (immaginePersonaggio != null)
                             ElevatedButton.icon(
                               onPressed: rimuoviImmagine,

@@ -152,7 +152,11 @@ void main() {
       expect(cooldown.remaining, 2);
     });
 
-    test('la Cenere usa percentuali crescenti dopo il turno 6', () {
+    test('la Cenere aggiunge 2 turni sicuri ogni 6 livelli', () {
+      expect(oculumAutomaticAshFreeTurns(0), 6);
+      expect(oculumAutomaticAshFreeTurns(5), 6);
+      expect(oculumAutomaticAshFreeTurns(6), 8);
+      expect(oculumAutomaticAshFreeTurns(12), 10);
       for (final difficulty in <String>[
         'facile',
         'normale',
@@ -165,6 +169,22 @@ void main() {
         );
       }
       expect(oculumAutomaticAshChancePercent(turn: 7, difficulty: 'facile'), 5);
+      expect(
+        oculumAutomaticAshChancePercent(
+          turn: 8,
+          difficulty: 'facile',
+          level: 6,
+        ),
+        0,
+      );
+      expect(
+        oculumAutomaticAshChancePercent(
+          turn: 9,
+          difficulty: 'facile',
+          level: 6,
+        ),
+        5,
+      );
       expect(
         oculumAutomaticAshChancePercent(turn: 8, difficulty: 'normale'),
         17,
@@ -357,6 +377,79 @@ void main() {
       expect(restored.openDescriptionEffects.single.type, 'cura');
       expect(restored.openSkillEffects.single.type, 'danno');
       expect(restored.openBuffEffects.single.type, 'difesa');
+    });
+
+    test('le Open dei Titoli conservano gli effetti guidati', () {
+      final title = OculumTitle(
+        nome: 'Titolo del Chaos',
+        tipo: 'Chaos',
+        ottenimento: '',
+        buff: '',
+        puntoCieco: '',
+        skill: '',
+        richiede: '',
+        openEffects: <OculumStructuredEffect>[
+          OculumStructuredEffect(type: 'danno', valueExpression: '30'),
+        ],
+        openExtra: <TitleOpenEntry>[
+          TitleOpenEntry(
+            nome: 'Punizione del Fato',
+            effects: <OculumStructuredEffect>[
+              OculumStructuredEffect(
+                type: 'modifica_statistica',
+                target: 'Oculum',
+                valueExpression: '9',
+              ),
+            ],
+          ),
+        ],
+      );
+      final restored = OculumTitle.fromJson(title.toJson());
+      expect(restored.openEffects.single.valueExpression, '30');
+      expect(restored.openExtra.single.effects.single.target, 'Oculum');
+    });
+
+    test('riconosce il testo naturale del Titolo del Chaos', () {
+      final parsed = oculumParseStructuredEffectsFromText(
+        '+9 danni ogni 3 turni\n'
+        'ti trasformi in un mezzo mostro, stats+oculum speso\n'
+        'gli anti Fato subiscono danno letale dai prossimi 5 colpi\n'
+        '+9 a tutte le stats\n'
+        'puoi aumentare il tuo danno di 30 per un turno',
+      );
+      expect(
+        parsed.effects.where(
+          (effect) =>
+              effect.type == 'danno' &&
+              effect.valueExpression == '9' &&
+              effect.frequency == '3',
+        ),
+        hasLength(1),
+      );
+      expect(
+        parsed.effects.where(
+          (effect) => effect.valueExpression == 'OculumSpeso',
+        ),
+        hasLength(4),
+      );
+      expect(
+        parsed.effects.where(
+          (effect) =>
+              effect.type == 'stato' &&
+              effect.duration == '5' &&
+              effect.durationUnit == 'tiri',
+        ),
+        hasLength(1),
+      );
+      expect(
+        parsed.effects.where(
+          (effect) =>
+              effect.type == 'danno' &&
+              effect.valueExpression == '30' &&
+              effect.duration == '1',
+        ),
+        hasLength(1),
+      );
     });
 
     test('tipo elemento e stato Sotto stress restano nel salvataggio', () {

@@ -138,43 +138,6 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader> {
     if (!mounted) return;
     oculumProfileMark('home_initial_build');
     setState(() => ready = true);
-    unawaited(precacheStartupMonsterSprites(background: true));
-  }
-
-  Future<void> precacheStartupMonsterSprites({bool background = false}) async {
-    final compactUi = MediaQuery.maybeOf(context)?.size.shortestSide ?? 900;
-    final limit = compactUi < 600
-        ? _oculumMobileStartupSpritePrecacheLimit
-        : _oculumDesktopStartupSpritePrecacheLimit;
-    final allAssets = await oculumStartupMonsterSpriteAssets();
-    final assets = oculumPrioritizedStartupSpriteAssets(
-      allAssets,
-      limit: limit,
-    );
-    if (!mounted || assets.isEmpty) return;
-
-    final total = assets.length;
-    for (var i = 0; i < total; i++) {
-      if (!mounted) return;
-      final asset = assets[i];
-      if (!background && !ready) {
-        setState(() {
-          progress = (0.88 + (i / total) * 0.10).clamp(0.0, 0.98).toDouble();
-          label = 'Cache sprite essenziali ${i + 1}/$total...';
-        });
-      }
-      try {
-        await precacheImage(
-          ResizeImage.resizeIfNeeded(192, 192, AssetImage(asset)),
-          context,
-        );
-      } catch (error) {
-        debugPrint('Monster sprite precache skipped for $asset: $error');
-      }
-      await Future<void>.delayed(
-        background || i.isEven ? _oculumStartupFrameYield : Duration.zero,
-      );
-    }
   }
 
   @override

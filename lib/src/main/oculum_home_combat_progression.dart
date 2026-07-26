@@ -75,8 +75,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       automaticAshLastCheckedTurn = next;
       return;
     }
+    final level = max(0, leggiNumero(livelloController));
+    final firstAshTurn = oculumAutomaticAshFreeTurns(level) + 1;
     final firstTurn = max(
-      7,
+      firstAshTurn,
       max(previous + 1, automaticAshLastCheckedTurn + 1),
     );
     if (firstTurn > next) return;
@@ -85,6 +87,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final chance = oculumAutomaticAshChancePercent(
         turn: checkedTurn,
         difficulty: campaignDifficulty,
+        level: level,
         underStress: sottoStress,
       );
       final roll = random.nextInt(100) + 1;
@@ -1014,7 +1017,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
     if (matched.isNotEmpty) return matched;
 
-    return 'assets/oculum_dungeon/generated_sprites/enemies/oculiano.png';
+    return '';
   }
 
   void setMasterInitiativeTokenSize(int index, int value) {
@@ -1312,18 +1315,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   String monsterBookSpriteAssetForText(String raw, {int variantSeed = 0}) {
-    final text = oculumNormalizeText(raw);
-    if (text.isEmpty) return '';
-    for (final monster in monsterBookEntries) {
-      final id = oculumNormalizeText(monster.id);
-      final nameIt = oculumNormalizeText(monster.nameIt);
-      final nameEn = oculumNormalizeText(monster.nameEn);
-      if ((id.isNotEmpty && text.contains(id)) ||
-          (nameIt.isNotEmpty && text.contains(nameIt)) ||
-          (nameEn.isNotEmpty && text.contains(nameEn))) {
-        return monsterSpriteAssetFor(monster, seed: variantSeed);
-      }
-    }
+    // Le immagini scelte manualmente restano nei dati. Non assegnare più
+    // sprite automatici in base a nome, tipo o descrizione del mostro.
     return '';
   }
 
@@ -3764,6 +3757,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final recupero = applicaRecuperoSogliaExp(soglieRecupero);
       recordExperienceProgress();
       notifyExperienceChanged();
+      scheduleInputUiRefresh(delay: Duration.zero);
       return '\n$motivo: +$expAggiunta EXP. Totale: ${expController.text}.$recuperoCento$recupero';
     }
 
@@ -3797,6 +3791,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     recordExperienceProgress();
     notifyExperienceChanged();
+    scheduleInputUiRefresh(delay: Duration.zero);
     return '\n$motivo: +$expAggiunta EXP. EXP attuale: $expRimasta/$expPerLivello.$livelloText$recuperoCento$recupero';
   }
 
@@ -3858,6 +3853,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       recordExperienceProgress();
       notifyExperienceChanged();
       notifyDiceResultChanged();
+      scheduleInputUiRefresh(delay: Duration.zero);
       return;
     }
 
@@ -3912,6 +3908,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     recordExperienceProgress();
     notifyExperienceChanged();
     notifyDiceResultChanged();
+    scheduleInputUiRefresh(delay: Duration.zero);
   }
 
   void aggiungiLivelliRapidi() {
@@ -3956,6 +3953,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
 
     invalidateHiddenEyeDerivedCaches();
+    recordExperienceProgress(immediate: true);
+    notifyExperienceChanged();
+    scheduleInputUiRefresh(delay: Duration.zero);
     programmaSalvataggio();
   }
 
@@ -4124,6 +4124,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    recordExperienceProgress(immediate: true);
+    notifyExperienceChanged();
+    scheduleInputUiRefresh(delay: Duration.zero);
+    invalidateHiddenEyeDerivedCaches();
     programmaSalvataggio();
   }
 

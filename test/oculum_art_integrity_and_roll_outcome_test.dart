@@ -246,6 +246,16 @@ void main() {
       expect(skill.oculumMassimoPerLivello(3), 0);
     });
 
+    test('la Maestria Art rilegge il costo non zero della forma seguente', () {
+      final skill = ArtSkill(
+        nome: 'Forma testuale',
+        evo1: 'Effetto I (1 4)',
+        evo2: 'Effetto II (2 9)',
+      );
+
+      expect(oculumArtSkillMasteryGrowthLimit(skill, 1, maxLevel: 3), 9);
+    });
+
     test('i limiti manuali Art hanno precedenza sul testo', () {
       final skill = ArtSkill(
         nome: 'Manuale',

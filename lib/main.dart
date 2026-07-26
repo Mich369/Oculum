@@ -74,6 +74,12 @@ part 'src/main/oculum_home_rules_settings_search.dart';
 part 'src/main/oculum_home_dialogs_quick_edit.dart';
 part 'src/main/oculum_painters.dart';
 
+class OculumObservedValueNotifier<T> extends ValueNotifier<T> {
+  OculumObservedValueNotifier(super.value);
+
+  bool get hasActiveListeners => hasListeners;
+}
+
 const String oculumDefaultSupabaseUrl =
     'https://jgpxdlkbuxhriltxezdc.supabase.co';
 const String oculumDefaultSupabasePublishableKey =
@@ -273,8 +279,6 @@ enum OculumStartupRole { player, master }
 
 OculumStartupRole oculumStartupRole = OculumStartupRole.player;
 
-const int _oculumDesktopStartupSpritePrecacheLimit = 10;
-const int _oculumMobileStartupSpritePrecacheLimit = 5;
 const Duration _oculumStartupFrameYield = Duration(milliseconds: 16);
 const Duration _oculumStartupNetworkWarmupBudget = Duration(milliseconds: 1400);
 
@@ -323,9 +327,7 @@ Future<void> _preloadOculumStartupServices({
     });
   });
 
-  await step(0.70, 'Catalogo sprite mostri...', () async {
-    await oculumStartupMonsterSpriteAssets();
-  });
+  await step(0.70, 'Preparazione interfaccia...', () {});
 
   await step(0.80, 'Connessione online...', () async {
     final warmup = ensureOculumSupabaseInitialized();
@@ -383,7 +385,7 @@ Future<bool> _initializeOculumSupabase() async {
 
     await Supabase.initialize(
       url: supabaseUrl,
-      anonKey: supabasePublishableKey,
+      publishableKey: supabasePublishableKey,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
         autoRefreshToken: true,
@@ -814,7 +816,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   ValueListenable<int> hiddenEyeStatListenable(HiddenEyeStat stat) {
     return hiddenEyeStatRevisions.putIfAbsent(
       stat.id,
-      () => ValueNotifier<int>(0),
+      () => OculumObservedValueNotifier<int>(0),
     );
   }
 
@@ -827,9 +829,13 @@ class _OculumHomePageState extends State<OculumHomePage>
     hiddenEyeTotalValueCache.clear();
 
     if (!notifyCards || !mounted) return;
-    hiddenEyeListRevision.value++;
+    if (hiddenEyeListRevision.hasActiveListeners) {
+      hiddenEyeListRevision.value++;
+    }
     for (final notifier in hiddenEyeStatRevisions.values) {
-      notifier.value++;
+      if (notifier.hasActiveListeners) {
+        notifier.value++;
+      }
     }
   }
 
@@ -844,6 +850,12 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   void scheduleHiddenEyeDerivedCardsRefresh() {
     if (hiddenEyeDerivedCardsRefreshScheduled || !mounted) return;
+    if (!hiddenEyeListRevision.hasActiveListeners &&
+        hiddenEyeStatRevisions.values.every(
+          (notifier) => !notifier.hasActiveListeners,
+        )) {
+      return;
+    }
     hiddenEyeDerivedCardsRefreshScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       hiddenEyeDerivedCardsRefreshScheduled = false;
@@ -1444,6 +1456,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   StreamSubscription<List<ConnectivityResult>>? connectivitySubscription;
   bool salvataggioInCorso = false;
   final OculumSaveRequestQueue saveRequestQueue = OculumSaveRequestQueue();
+  Future<SharedPreferences>? sharedPreferencesFuture;
+  Future<Directory>? saveBlobDirectoryFuture;
   bool salvataggioInChiusura = false;
   int salvataggioMutazioneRevisione = 0;
   bool salvataggioMutazioneNota = false;
@@ -1517,7 +1531,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final ValueNotifier<int> diceResultRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> diceOverlayRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> inputUiRevision = ValueNotifier<int>(0);
-  final ValueNotifier<int> hiddenEyeListRevision = ValueNotifier<int>(0);
+  final OculumObservedValueNotifier<int> hiddenEyeListRevision =
+      OculumObservedValueNotifier<int>(0);
   final ValueNotifier<int> experienceRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> oculumResourceRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> aggiustaNucleoDisponibileRevision =
@@ -1525,8 +1540,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final ValueNotifier<int> recipesRevision = ValueNotifier<int>(0);
   final ValueNotifier<String> recipeSearchQuery = ValueNotifier<String>('');
   bool recipeMutationInProgress = false;
-  final Map<String, ValueNotifier<int>> hiddenEyeStatRevisions =
-      <String, ValueNotifier<int>>{};
+  final Map<String, OculumObservedValueNotifier<int>> hiddenEyeStatRevisions =
+      <String, OculumObservedValueNotifier<int>>{};
   final Map<int, ValueNotifier<int>> artIntegrityRevisions =
       <int, ValueNotifier<int>>{};
   final Map<String, ValueNotifier<int>> artSkillLevelRevisions =
@@ -3291,6 +3306,11 @@ class _OculumHomePageState extends State<OculumHomePage>
       beginOculumFocusTransition();
       appOculumInBackground = true;
       lifecycleLocalSaveTimer?.cancel();
+      if ((autosaveTimer?.isActive ?? false) ||
+          autosavePendingAfterFocusTransition ||
+          salvataggioMutazioneNota) {
+        unawaited(forzaSalvataggioImmediato(soloLocale: true));
+      }
       lifecycleLocalSaveTimer = Timer(const Duration(seconds: 45), () {
         if (!mounted ||
             !appOculumInBackground ||

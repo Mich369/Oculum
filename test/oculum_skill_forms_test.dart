@@ -200,11 +200,14 @@ void main() {
   test('I limiti vengono letti solo dalla coppia valida a fine testo', () {
     final compact = oculumSkillTextLimitsAtEnd('Effetto 2 danni (1/5)');
     final spaced = oculumSkillTextLimitsAtEnd('Effetto\n( 2 / 8 )\n');
+    final legacySpaces = oculumSkillTextLimitsAtEnd('Effetto (3 9)');
 
     expect(compact?.minimum, 1);
     expect(compact?.maximum, 5);
     expect(spaced?.minimum, 2);
     expect(spaced?.maximum, 8);
+    expect(legacySpaces?.minimum, 3);
+    expect(legacySpaces?.maximum, 9);
     expect(oculumSkillTextLimitsAtEnd('(1/5) altro testo'), isNull);
     expect(oculumSkillTextLimitsAtEnd('testo (5/1)'), isNull);
     expect(oculumSkillTextLimitsAtEnd('testo (-1/5)'), isNull);
@@ -431,6 +434,22 @@ void main() {
       expect(oculumSkillMasteryGrowthLimit(skill, 0), 8);
     },
   );
+
+  test('Il limite rilegge il costo non zero della Forma successiva', () {
+    final skill = CharacterSkill(
+      nome: 'Eco',
+      tipo: '',
+      costo: '',
+      cooldown: '',
+      descrizione: '',
+      forme: [
+        CharacterSkillForm(descrizione: 'Forma I (1 4)'),
+        CharacterSkillForm(descrizione: 'Forma II (2 9)'),
+      ],
+    );
+
+    expect(oculumSkillMasteryGrowthLimit(skill, 0), 9);
+  });
 
   test('Al limite la Skill resta valida ma la Maestria mostra +0', () {
     const preview = OculumSkillMasteryPreview(

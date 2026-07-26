@@ -771,6 +771,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     bool enableCommandAutocomplete = true,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
+    String? helper,
+    bool showCommandHelp = false,
   }) {
     return campoModello(
       label: label,
@@ -779,6 +781,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       enableCommandAutocomplete: enableCommandAutocomplete,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
+      helper: helper,
+      showCommandHelp: showCommandHelp,
       onChanged: (value) {
         onChanged(value);
         syncSkillLegacyFromForm(skill, formIndex);
@@ -822,7 +826,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         : 0;
     final masteryLimitBefore = limitsChanged
         ? max(maximumBefore, nextInitial > 0 ? nextInitial : maximumBefore + 10)
-        : oculumSkillMasteryGrowthLimit(skill, formIndex);
+        : form.aumentoMassimoOculumAttivo
+        ? oculumSkillMasteryGrowthLimit(skill, formIndex)
+        : maximumBefore;
     final limits = OculumSkillUseLimits(
       minimum: minimoScelto,
       maximum: massimoScelto,
@@ -846,6 +852,18 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           maximum: oculumMassimo(),
         );
     var oculumChanged = false;
+    var learningTitleCreated = false;
+    final nextForm = formIndex + 1 < skill.forme.length
+        ? skill.forme[formIndex + 1]
+        : null;
+    final learningTitleThreshold = nextForm == null
+        ? 0
+        : max(
+            0,
+            nextForm.oculumMassimoMaestriaIniziale > 0
+                ? nextForm.oculumMassimoMaestriaIniziale
+                : nextForm.oculumMassimoUtilizzabile,
+          );
 
     setState(() {
       if (limitsChanged) {
@@ -861,6 +879,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       }
       if (masteryPreview.appliedIncrease > 0) {
         form.oculumMassimoUtilizzabile = masteryPreview.newMaximum;
+      }
+      if (learningTitleThreshold > 0 &&
+          form.oculumMassimoUtilizzabile >= learningTitleThreshold) {
+        learningTitleCreated = creaTitoloApprendimentoAutomatico(
+          chiaveSistema:
+              'learning_title_skill_${skillIndex}_form_${formIndex + 1}',
+          skillName: skill.nome,
+          formName: nextForm?.nome ?? '',
+        );
       }
       final parts = <String>[
         t('Forma skill usata', 'Skill form used'),
@@ -898,6 +925,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       }
       if (form.cooldown.trim().isNotEmpty) {
         parts.add('Cooldown: ${form.cooldown.trim()}');
+      }
+      if (learningTitleCreated) {
+        parts.add(
+          t(
+            'Creato un Titolo d’Apprendimento modificabile nella sezione Titoli.',
+            'An editable Learning Title was created in the Titles section.',
+          ),
+        );
       }
 
       if (atQuarterHp && isHighLearnedForm) {
@@ -1030,7 +1065,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               final nextInitial = formIndex + 1 < skill.forme.length
                   ? skill.forme[formIndex + 1].oculumMassimoMaestriaIniziale
                   : 0;
-              final masteryLimit = limitsChanged
+              final masteryLimit = !form.aumentoMassimoOculumAttivo
+                  ? localMaximum
+                  : limitsChanged
                   ? max(
                       localMaximum,
                       nextInitial > 0 ? nextInitial : localMaximum + 10,
@@ -1404,6 +1441,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                 )
               : null,
           children: [
+            smallInfoText(
+              t(
+                'Skill: capacità utilizzabile dal personaggio. Può avere costi, utilizzi, danni, cure, modificatori ed effetti. La modalità guidata è facoltativa: i vecchi testi restano validi.',
+                'Skill: an ability used by the character. It may have costs, uses, damage, healing, modifiers and effects. Guided mode is optional: old text remains valid.',
+              ),
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 8),
             skillFormTextField(
               skill: skill,
               form: form,
@@ -1449,6 +1494,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     label: t('Costo', 'Cost'),
                     value: form.costo,
                     onChanged: (value) => form.costo = value,
+                    helper: t(
+                      'Descrivi il costo. Esempio: @OculumSpeso+5',
+                      'Describe the cost. Example: @OculumSpeso+5',
+                    ),
+                    showCommandHelp: true,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1513,6 +1563,38 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                 ),
               ],
             ),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              value: form.aumentoMassimoOculumAttivo,
+              title: Text(t('Aumento massimo Oculum', 'Oculum maximum growth')),
+              subtitle: Text(
+                form.aumentoMassimoOculumAttivo
+                    ? t(
+                        'Attivo: usare la Skill può aumentare il massimo fino alla forma successiva.',
+                        'Enabled: using the Skill can increase its maximum up to the next form.',
+                      )
+                    : t(
+                        'Bloccato: la Skill consuma normalmente, ma il massimo non aumenta.',
+                        'Locked: the Skill spends normally, but its maximum does not grow.',
+                      ),
+              ),
+              secondary: Icon(
+                form.aumentoMassimoOculumAttivo
+                    ? Icons.trending_up
+                    : Icons.lock_outline,
+                color: form.aumentoMassimoOculumAttivo
+                    ? tertiaryColor
+                    : Colors.orangeAccent,
+              ),
+              onChanged: (value) {
+                setState(() {
+                  form.aumentoMassimoOculumAttivo = value;
+                  syncSkillLegacyFromForm(skill, formIndex);
+                });
+                recordSkillFormOculumProgress(skillIndex, formIndex);
+                programmaSalvataggio(invalidateCaches: false);
+              },
+            ),
             const SizedBox(height: 8),
             smallInfoText(
               t(
@@ -1545,6 +1627,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   scheduleInputUiRefresh();
                 }
               },
+              helper: t(
+                'Spiega narrativamente cosa fa. Esempio: il bersaglio viene immobilizzato dal ghiaccio.',
+                'Describe what it does. Example: the target is immobilized by ice.',
+              ),
+              showCommandHelp: true,
             ),
             const SizedBox(height: 8),
             skillFormTextField(
@@ -1555,6 +1642,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               value: form.effetto,
               maxLines: 3,
               onChanged: (value) => form.effetto = value,
+              helper: t(
+                'Effetto mostrato durante l’uso. Esempio: @Danni+3',
+                'Effect shown during use. Example: @Danni+3',
+              ),
+              showCommandHelp: true,
             ),
             const SizedBox(height: 8),
             skillFormTextField(
@@ -1565,6 +1657,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               value: form.buff,
               maxLines: 2,
               onChanged: (value) => form.buff = value,
+              helper: t(
+                'Modifica automaticamente statistiche e condizioni. Esempio: @Difesa+2',
+                'Automatically changes stats and conditions. Example: @Difesa+2',
+              ),
+              showCommandHelp: true,
             ),
             const SizedBox(height: 8),
             Row(
@@ -1577,6 +1674,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     label: t('Danni', 'Damage'),
                     value: form.danni,
                     onChanged: (value) => form.danni = value,
+                    helper: '@Danni+3',
+                    showCommandHelp: true,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1588,6 +1687,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     label: t('Cura', 'Healing'),
                     value: form.cura,
                     onChanged: (value) => form.cura = value,
+                    helper: '@HP+5',
+                    showCommandHelp: true,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1599,6 +1700,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     label: t('Difesa', 'Defense'),
                     value: form.difesa,
                     onChanged: (value) => form.difesa = value,
+                    helper: '@Difesa+2',
+                    showCommandHelp: true,
                   ),
                 ),
               ],
@@ -2749,6 +2852,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       onChanged: (value) => titolo.openBuff = value,
                       maxLines: 2,
                       helper: '@Iniziativa+5 @TiroDifesa+1 @Danni+Vol/2 Fuoco',
+                      showCommandHelp: true,
                     ),
                     const SizedBox(height: 8),
                     campoModello(
@@ -2756,6 +2860,18 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       initialValue: titolo.openSkill,
                       onChanged: (value) => titolo.openSkill = value,
                       maxLines: 2,
+                      showCommandHelp: true,
+                    ),
+                    structuredEffectsEditor(
+                      effects: titolo.openEffects,
+                      freeText: <String>[
+                        titolo.openDescription,
+                        titolo.openBuff,
+                        titolo.openSkill,
+                      ].where((value) => value.trim().isNotEmpty).join(' e '),
+                      storageId:
+                          'title_${titolo.chiaveSistema.isEmpty ? index : titolo.chiaveSistema}_open',
+                      onChanged: invalidateDerivedDataCaches,
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton.icon(
@@ -2844,6 +2960,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                               },
                               maxLines: 2,
                               helper: '@HP+5 @Scudo+3 @ScudoOculum+5',
+                              showCommandHelp: true,
                             ),
                             const SizedBox(height: 8),
                             campoModello(
@@ -2853,6 +2970,21 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                                 titolo.openExtra[i].openSkill = value;
                               },
                               maxLines: 2,
+                              showCommandHelp: true,
+                            ),
+                            structuredEffectsEditor(
+                              effects: titolo.openExtra[i].effects,
+                              freeText:
+                                  <String>[
+                                        titolo.openExtra[i].descrizione,
+                                        titolo.openExtra[i].openBuff,
+                                        titolo.openExtra[i].openSkill,
+                                      ]
+                                      .where((value) => value.trim().isNotEmpty)
+                                      .join(' e '),
+                              storageId:
+                                  'title_${titolo.chiaveSistema.isEmpty ? index : titolo.chiaveSistema}_open_extra_$i',
+                              onChanged: invalidateDerivedDataCaches,
                             ),
                             const SizedBox(height: 10),
                             conditionalBuffPanel(
