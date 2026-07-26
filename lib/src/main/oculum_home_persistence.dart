@@ -1927,6 +1927,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
   String get _pendingSaveKey => '${_OculumHomePageState.saveKey}_pending';
   String get _diaryArchiveSaveKey =>
       '${_OculumHomePageState.saveKey}_diary_archive_v1';
+  String get _diaryArchiveCurrentDiarySignatureKey =>
+      '${_diaryArchiveSaveKey}_current_diary_sig_v1';
 
   String _saveBlobSignatureKey(String key) => '${key}_sample_sig_v1';
 
@@ -2049,16 +2051,33 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
   }
 
-  Future<bool> _diaryArchiveCoversCurrentRaw(String currentRaw) async {
-    if (kIsWeb || currentRaw.isEmpty) return false;
-    final archiveRaw = await _readSaveBlobFileOnly(_diaryArchiveSaveKey);
+  Future<bool> _diaryArchiveCoversCurrentData(
+    SharedPreferences prefs,
+    Map<String, dynamic> currentData,
+  ) async {
+    final currentDiarySignature = firmaDiarioSalvataggio(currentData);
+    final cachedSignature = prefs.getString(
+      _diaryArchiveCurrentDiarySignatureKey,
+    );
+    if (cachedSignature != null) {
+      return cachedSignature == currentDiarySignature;
+    }
+
+    // Compatibilita con gli archivi creati prima del metadato rapido. Questo
+    // ramo viene eseguito una sola volta; dai caricamenti successivi basta
+    // confrontare la piccola firma dei soli diari, senza leggere e decodificare
+    // l'intero archivio.
+    final archiveRaw = await _readSaveBlob(prefs, _diaryArchiveSaveKey);
     if (archiveRaw == null || archiveRaw.isEmpty) return false;
     try {
       final archive = await _decodeDiaryArchive(archiveRaw);
-      final signatures = archive['sourceSignatures'];
-      return signatures is Map &&
-          '${signatures['current'] ?? ''}' ==
-              _oculumRawSampleSignature(currentRaw);
+      final archivedSignature = '${archive['currentDiarySignature'] ?? ''}';
+      if (archivedSignature.isEmpty) return false;
+      await prefs.setString(
+        _diaryArchiveCurrentDiarySignatureKey,
+        archivedSignature,
+      );
+      return archivedSignature == currentDiarySignature;
     } catch (_) {
       return false;
     }
@@ -2700,6 +2719,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
       if (_mergeDiariesFromSaveDataIntoArchive(archive, currentData) > 0) {
         archiveChanged = true;
       }
+      final currentDiarySignature = firmaDiarioSalvataggio(currentData);
+      if ('${archive['currentDiarySignature'] ?? ''}' !=
+          currentDiarySignature) {
+        archive['currentDiarySignature'] = currentDiarySignature;
+        archiveChanged = true;
+      }
     }
     archive['sourceSignatures'] = sourceSignatures;
     if (archiveChanged) {
@@ -2707,6 +2732,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
         prefs,
         _diaryArchiveSaveKey,
         await _encodeOculumJsonMap(archive),
+      );
+    }
+    if (currentData != null) {
+      await prefs.setString(
+        _diaryArchiveCurrentDiarySignatureKey,
+        firmaDiarioSalvataggio(currentData),
       );
     }
     return archive;
@@ -2810,10 +2841,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
     if (restored > 0) {
       _mergeDiariesFromSaveDataIntoArchive(archive, data);
+      final currentDiarySignature = firmaDiarioSalvataggio(data);
+      archive['currentDiarySignature'] = currentDiarySignature;
       await _writeSaveBlob(
         prefs,
         _diaryArchiveSaveKey,
         await _encodeOculumJsonMap(archive),
+      );
+      await prefs.setString(
+        _diaryArchiveCurrentDiarySignatureKey,
+        currentDiarySignature,
       );
     }
 
@@ -3559,8 +3596,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       final data = decodedPrimary ?? await _decodeOculumJsonMap(raw);
       oculumProfileMark('save_load_diary_recovery');
       var diariRipristinati = 0;
-      if (!await _diaryArchiveCoversCurrentRaw(raw)) {
-        loadedPrefs ??= await prefsFuture;
+      loadedPrefs ??= await prefsFuture;
+      if (!await _diaryArchiveCoversCurrentData(loadedPrefs, data)) {
         diariRipristinati = await _recoverDiariesFromRecentSaves(
           loadedPrefs,
           data,
@@ -3739,7 +3776,6 @@ extension _OculumHomePersistence on _OculumHomePageState {
       }());
 
       ultimoRawSalvataggioConfermato = raw;
-      loadedPrefs ??= await prefsFuture;
       await _creaBackupDelSalvataggioCorrente(loadedPrefs);
       if (diariRipristinati > 0) {
         await salvaDatiSoloLocale();
