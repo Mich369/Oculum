@@ -722,8 +722,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
   }
 
-  Future<void> _applyProgressJournal(Map<String, dynamic> saveData) async {
-    final raw = await _readProgressJournalRaw();
+  Future<void> _applyProgressJournal(
+    Map<String, dynamic> saveData, {
+    required Future<String?> rawFuture,
+  }) async {
+    final raw = await rawFuture;
     if (raw == null || raw.trim().isEmpty) return;
     try {
       final decoded = jsonDecode(raw);
@@ -1939,6 +1942,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   Future<Directory> _saveBlobDirectory() {
     saveBlobDirectoryFuture ??= () async {
+      final fixturePath = oculumPerformanceSaveFixtureDirectory.trim();
+      if (oculumPerformanceHarness && fixturePath.isNotEmpty) {
+        final fixtureDirectory = Directory(fixturePath);
+        await fixtureDirectory.create(recursive: true);
+        return fixtureDirectory;
+      }
       final root = oculumPerformanceHarness
           ? await getTemporaryDirectory()
           : await getApplicationSupportDirectory();
@@ -2830,14 +2839,37 @@ extension _OculumHomePersistence on _OculumHomePageState {
   Future<int> _recoverDiariesFromRecentSaves(
     SharedPreferences prefs,
     Map<String, dynamic> data,
-    String currentRaw,
-  ) async {
+    String currentRaw, {
+    bool applyToLoadedState = false,
+  }) async {
     final archive = await _buildDiaryArchiveFromRecentSaves(
       prefs,
       currentData: data,
       currentRaw: currentRaw,
     );
-    final restored = _recoverDiaryPagesIntoSaveData(data, archive);
+    var restored = _recoverDiaryPagesIntoSaveData(data, archive);
+
+    if (applyToLoadedState && restored > 0 && mounted) {
+      setState(() {
+        final liveData = <String, dynamic>{
+          'schedePersonaggio': schedePersonaggio,
+          'campaigns': campagneOculum,
+        };
+        final restoredLive = _recoverDiaryPagesIntoSaveData(liveData, archive);
+        restored = max(restored, restoredLive);
+
+        if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length) {
+          final recoveredCurrentPages = _diaryPagesFromSheet(
+            schedePersonaggio[schedaCorrente],
+          );
+          _mergeDiaryPagesIntoSlotList(
+            diarioPagine,
+            recoveredCurrentPages,
+            recoverLostContinuations: true,
+          );
+        }
+      });
+    }
 
     if (restored > 0) {
       _mergeDiariesFromSaveDataIntoArchive(archive, data);
@@ -2855,6 +2887,70 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
 
     return restored;
+  }
+
+  void _schedulePostLoadMaintenance({
+    required Future<SharedPreferences> prefsFuture,
+    required Map<String, dynamic> data,
+    required String raw,
+    required int loadedRevision,
+    required Stopwatch loadWatch,
+  }) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(() async {
+        // Lascia completare il primo frame e le prime interazioni prima di
+        // iniziare scansioni di backup, archivio diari e firme complete.
+        await Future<void>.delayed(const Duration(milliseconds: 350));
+        if (!mounted) return;
+
+        try {
+          final prefs = await prefsFuture;
+          var restored = 0;
+          if (!await _diaryArchiveCoversCurrentData(prefs, data)) {
+            restored = await _recoverDiariesFromRecentSaves(
+              prefs,
+              data,
+              raw,
+              applyToLoadedState: true,
+            );
+          }
+
+          if (!mounted) return;
+          if (restored > 0) {
+            setState(() {
+              risultato = t(
+                'Recupero diario completato: ripristinate $restored pagine dai salvataggi recenti.',
+                'Diary recovery completed: restored $restored pages from recent saves.',
+              );
+              aggiungiLog(risultato);
+            });
+            await salvaDatiSoloLocale();
+          }
+
+          final loadedContentSignature =
+              await firmaContenutoSalvataggioNonBloccante(data);
+          if (mounted &&
+              salvataggioRevisione == loadedRevision &&
+              !salvataggioMutazioneNota) {
+            ultimoSalvataggioContenutoFirma = loadedContentSignature;
+          }
+
+          await _creaBackupDelSalvataggioCorrente(prefs);
+          if (kDebugMode || kProfileMode) {
+            debugPrint(
+              'Oculum load maintenance: ${raw.length} chars completed in '
+              '${loadWatch.elapsedMilliseconds} ms.',
+            );
+          }
+        } catch (error, stackTrace) {
+          // La scheda e gia caricata e utilizzabile. Un errore nella
+          // manutenzione differita non deve mai sostituire o cancellare lo
+          // stato visibile; verra ritentata al caricamento successivo.
+          debugPrint('Oculum post-load maintenance skipped: $error');
+          if (kDebugMode) debugPrint('$stackTrace');
+        }
+      }());
+    });
   }
 
   Future<void> _archiveDiaryForSheetBeforeRemoval(int index) async {
@@ -3520,6 +3616,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   Future<void> caricaDati({bool allowBackupRecovery = true}) async {
     final loadWatch = Stopwatch()..start();
     final prefsFuture = _prefs();
+    final progressJournalRawFuture = _readProgressJournalRaw();
     SharedPreferences? loadedPrefs;
     var raw = await _readSaveBlobFileOnly(_OculumHomePageState.saveKey);
     if (raw == null || raw.isEmpty) {
@@ -3594,17 +3691,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
     try {
       final data = decodedPrimary ?? await _decodeOculumJsonMap(raw);
-      oculumProfileMark('save_load_diary_recovery');
-      var diariRipristinati = 0;
-      loadedPrefs ??= await prefsFuture;
-      if (!await _diaryArchiveCoversCurrentData(loadedPrefs, data)) {
-        diariRipristinati = await _recoverDiariesFromRecentSaves(
-          loadedPrefs,
-          data,
-          raw,
-        );
-      }
-      await _applyProgressJournal(data);
+      await _applyProgressJournal(data, rawFuture: progressJournalRawFuture);
       final loadedRevision = readIntValue(data['saveRevision']);
 
       if (!mounted) return;
@@ -3751,41 +3838,23 @@ extension _OculumHomePersistence on _OculumHomePageState {
             '${raw!.length}:${data['saveRevision'] ?? salvataggioRevisione}';
         ultimoSalvataggioContenutoFirma = '';
         datiCaricati = true;
-        if (diariRipristinati > 0) {
-          risultato = t(
-            'Recupero diario completato: ripristinate $diariRipristinati pagine dai salvataggi recenti.',
-            'Diary recovery completed: restored $diariRipristinati pages from recent saves.',
-          );
-          aggiungiLog(risultato);
-        }
       });
 
-      // Il caricamento è riuscito: crea una copia di sicurezza del raw originale.
-      // La firma completa attraversa anche immagini e molte schede. Viene
-      // calcolata fuori dal percorso del primo frame e applicata solo se nel
-      // frattempo il salvataggio non è cambiato.
-      unawaited(() async {
-        final loadedContentSignature =
-            await firmaContenutoSalvataggioNonBloccante(data);
-        if (!mounted ||
-            salvataggioRevisione != loadedRevision ||
-            salvataggioMutazioneNota) {
-          return;
-        }
-        ultimoSalvataggioContenutoFirma = loadedContentSignature;
-      }());
-
       ultimoRawSalvataggioConfermato = raw;
-      await _creaBackupDelSalvataggioCorrente(loadedPrefs);
-      if (diariRipristinati > 0) {
-        await salvaDatiSoloLocale();
-      }
+      oculumProfileMark('save_load_first_frame_ready');
       if (kDebugMode || kProfileMode) {
         debugPrint(
-          'Oculum load profile: ${raw.length} chars loaded in '
+          'Oculum first-frame load: ${raw.length} chars loaded in '
           '${loadWatch.elapsedMilliseconds} ms.',
         );
       }
+      _schedulePostLoadMaintenance(
+        prefsFuture: prefsFuture,
+        data: data,
+        raw: raw,
+        loadedRevision: loadedRevision,
+        loadWatch: loadWatch,
+      );
     } catch (error, stackTrace) {
       debugPrint('Errore caricamento salvataggio Oculum: $error');
       debugPrint('$stackTrace');

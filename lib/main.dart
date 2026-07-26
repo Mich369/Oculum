@@ -87,6 +87,9 @@ const String oculumDefaultSupabasePublishableKey =
 const bool oculumPerformanceHarness = bool.fromEnvironment(
   'OculumPerformanceHarness',
 );
+const String oculumPerformanceSaveFixtureDirectory = String.fromEnvironment(
+  'OculumPerformanceSaveFixtureDirectory',
+);
 const String _oculumSupabaseUrlOverride = String.fromEnvironment(
   'OculumSupabaseUrl',
   defaultValue: '',

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -17,6 +18,19 @@ void main() {
     'oculum_spent': 5,
     'vita': 20,
   };
+
+  test('editor effetti offre preset rapidi e anteprima fluida', () {
+    final source = File(
+      'lib/src/main/oculum_skill_effects_ui.dart',
+    ).readAsStringSync();
+
+    expect(source, contains("t('Configurazione rapida', 'Quick setup')"));
+    expect(source, contains("'muro'"));
+    expect(source, contains("'periodico'"));
+    expect(source, contains("t('Effetto attivo', 'Effect enabled')"));
+    expect(source, contains('Duration(milliseconds: 120)'));
+    expect(source, contains("t('Anteprima completa', 'Full preview')"));
+  });
 
   group('riferimenti ai sottotratti', () {
     test('@Res, +1 e -1 sono valutati senza modificare il sottotratto', () {

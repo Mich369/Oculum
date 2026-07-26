@@ -1138,6 +1138,16 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     var includeGrade = seed.includeGrade;
     var bypassDefense = seed.bypassDefense;
     var bypassShields = seed.bypassShields;
+    var advancedExpanded =
+        seed.diceExpression.trim().isNotEmpty ||
+        seed.includeLevel ||
+        seed.includeGrade ||
+        seed.minimum != null ||
+        seed.maximum != null ||
+        seed.stackable ||
+        seed.customDisplayText.trim().isNotEmpty ||
+        seed.narrativeText.trim().isNotEmpty;
+    Timer? dialogRefreshTimer;
     final valueController = TextEditingController(text: seed.valueExpression);
     final targetController = TextEditingController(text: seed.target);
     final durationController = TextEditingController(text: seed.duration);
@@ -1161,6 +1171,13 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         ? 'sotto_stress'
         : seed.appliedState;
     String error = '';
+
+    void scheduleDialogRefresh(StateSetter update) {
+      dialogRefreshTimer?.cancel();
+      dialogRefreshTimer = Timer(const Duration(milliseconds: 120), () {
+        update(() => error = '');
+      });
+    }
 
     List<String> modesFor(String effectType) {
       return switch (effectType) {
@@ -1206,6 +1223,64 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       );
     }
 
+    void applyQuickPreset(String preset, StateSetter update) {
+      update(() {
+        bypassDefense = false;
+        bypassShields = false;
+        frequencyController.clear();
+        durationController.clear();
+        durationUnit = 'turni';
+        diceController.clear();
+        includeLevel = false;
+        includeGrade = false;
+        minimumController.clear();
+        maximumController.clear();
+        stackable = false;
+        error = '';
+
+        switch (preset) {
+          case 'muro':
+            type = 'scudo';
+            mode = 'immediato';
+            recipient = 'se_stesso';
+            valueController.text = 'OculumSpeso*2+3';
+            elementTypeController.text = '';
+          case 'cura':
+            type = 'cura';
+            mode = 'immediato';
+            resource = 'vita';
+            recipient = 'se_stesso';
+            valueController.text = '10';
+            elementTypeController.text = '';
+          case 'bonus':
+            type = 'modifica_statistica';
+            mode = 'aumento';
+            targetController.text = 'Resilienza';
+            recipient = 'se_stesso';
+            valueController.text = '2';
+            durationController.text = '3';
+          case 'periodico':
+            type = 'danno';
+            mode = 'immediato';
+            recipient = 'bersaglio';
+            valueController.text = '5';
+            frequencyController.text = '3';
+          case 'costo':
+            type = 'consumo_risorsa';
+            mode = 'immediato';
+            resource = 'oculum';
+            recipient = 'se_stesso';
+            valueController.text = '1';
+          default:
+            type = 'danno';
+            mode = 'immediato';
+            recipient = 'bersaglio';
+            valueController.text = '10';
+            elementTypeController.text = '';
+        }
+      });
+    }
+
     try {
       return await showDialog<OculumStructuredEffect>(
         context: context,
@@ -1243,12 +1318,81 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                       : t('Modifica effetto', 'Edit effect'),
                 ),
                 content: SizedBox(
-                  width: 520,
+                  width: 620,
+                  height: min(720, MediaQuery.sizeOf(context).height * 0.72),
                   child: SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Text(
+                          t('Configurazione rapida', 'Quick setup'),
+                          style: TextStyle(
+                            color: tertiaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            for (final preset
+                                in const <(String, IconData, String, String)>[
+                                  ('danno', Icons.flash_on, 'Danno', 'Damage'),
+                                  ('muro', Icons.shield, 'Muro', 'Wall'),
+                                  ('cura', Icons.favorite, 'Cura', 'Healing'),
+                                  (
+                                    'bonus',
+                                    Icons.trending_up,
+                                    'Bonus',
+                                    'Bonus',
+                                  ),
+                                  (
+                                    'periodico',
+                                    Icons.update,
+                                    'Ogni 3 turni',
+                                    'Every 3 turns',
+                                  ),
+                                  (
+                                    'costo',
+                                    Icons.remove_circle_outline,
+                                    'Costo',
+                                    'Cost',
+                                  ),
+                                ])
+                              ActionChip(
+                                avatar: Icon(preset.$2, size: 17),
+                                label: Text(t(preset.$3, preset.$4)),
+                                onPressed: () =>
+                                    applyQuickPreset(preset.$1, setDialogState),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        SwitchListTile.adaptive(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          value: enabled,
+                          title: Text(
+                            t('Effetto attivo', 'Effect enabled'),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Text(
+                            enabled
+                                ? t(
+                                    'Verrà applicato quando usi questa capacità.',
+                                    'It will be applied when this ability is used.',
+                                  )
+                                : t(
+                                    'Resta salvato ma non viene applicato.',
+                                    'It stays saved but is not applied.',
+                                  ),
+                          ),
+                          onChanged: (value) =>
+                              setDialogState(() => enabled = value),
+                        ),
+                        const Divider(height: 18),
                         DropdownButtonFormField<String>(
                           initialValue: type,
                           dropdownColor: const Color(0xFF10121A),
@@ -1346,6 +1490,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                   'Examples: Ice, Fire, Ash, Physical',
                                 ),
                               ),
+                          onChanged: (_) =>
+                              scheduleDialogRefresh(setDialogState),
                         ),
                         const SizedBox(height: 10),
                         if (isState) ...[
@@ -1429,7 +1575,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                 helperText:
                                     '10, @Res+1, 25% Forza, OculumSpeso x 1.3',
                               ),
-                          onChanged: (_) => setDialogState(() => error = ''),
+                          onChanged: (_) =>
+                              scheduleDialogRefresh(setDialogState),
                         ),
                         const SizedBox(height: 10),
                         TextField(
@@ -1448,16 +1595,24 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                   'Example: 3 = acts on turns 3, 6 and 9. Leave empty to act once immediately.',
                                 ),
                               ),
-                          onChanged: (_) => setDialogState(() => error = ''),
+                          onChanged: (_) =>
+                              scheduleDialogRefresh(setDialogState),
                         ),
                         if (supportsDuration) ...[
                           const SizedBox(height: 10),
                           TextField(
                             controller: durationController,
-                            decoration: fieldDecoration(
-                              t('Durata', 'Duration'),
-                            ),
-                            onChanged: (_) => setDialogState(() {}),
+                            decoration: fieldDecoration(t('Durata', 'Duration'))
+                                .copyWith(
+                                  helperText: hasFrequency
+                                      ? t(
+                                          'Lascia vuoto per continuare senza una scadenza automatica.',
+                                          'Leave empty to continue without an automatic expiry.',
+                                        )
+                                      : null,
+                                ),
+                            onChanged: (_) =>
+                                scheduleDialogRefresh(setDialogState),
                           ),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
@@ -1513,6 +1668,10 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                         ExpansionTile(
                           tilePadding: EdgeInsets.zero,
                           childrenPadding: EdgeInsets.zero,
+                          initiallyExpanded: advancedExpanded,
+                          onExpansionChanged: (value) {
+                            advancedExpanded = value;
+                          },
                           title: Text(
                             t('Opzioni avanzate', 'Advanced options'),
                             style: TextStyle(
@@ -1526,9 +1685,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                               decoration: fieldDecoration(
                                 t('Dadi all’attivazione', 'Dice on activation'),
                               ).copyWith(helperText: '1d6, 2d8+2'),
-                              onChanged: (_) => setDialogState(() {
-                                error = '';
-                              }),
+                              onChanged: (_) =>
+                                  scheduleDialogRefresh(setDialogState),
                             ),
                             const SizedBox(height: 4),
                             smallInfoText(
@@ -1600,7 +1758,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                 decoration: fieldDecoration(
                                   t('Valore di ogni Grado', 'Value per Grade'),
                                 ),
-                                onChanged: (_) => setDialogState(() {}),
+                                onChanged: (_) =>
+                                    scheduleDialogRefresh(setDialogState),
                               ),
                               const SizedBox(height: 8),
                             ],
@@ -1611,6 +1770,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                     controller: minimumController,
                                     keyboardType: TextInputType.number,
                                     decoration: fieldDecoration('Min'),
+                                    onChanged: (_) =>
+                                        scheduleDialogRefresh(setDialogState),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -1619,6 +1780,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                     controller: maximumController,
                                     keyboardType: TextInputType.number,
                                     decoration: fieldDecoration('Max'),
+                                    onChanged: (_) =>
+                                        scheduleDialogRefresh(setDialogState),
                                   ),
                                 ),
                               ],
@@ -1640,7 +1803,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                   'Custom display text',
                                 ),
                               ),
-                              onChanged: (_) => setDialogState(() {}),
+                              onChanged: (_) =>
+                                  scheduleDialogRefresh(setDialogState),
                             ),
                             const SizedBox(height: 8),
                             TextField(
@@ -1652,6 +1816,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                   'Narrative text (does not change command)',
                                 ),
                               ),
+                              onChanged: (_) =>
+                                  scheduleDialogRefresh(setDialogState),
                             ),
                           ],
                         ),
@@ -1664,7 +1830,51 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                               color: tertiaryColor.withValues(alpha: 0.35),
                             ),
                           ),
-                          child: Text('${t('Anteprima', 'Preview')}: $preview'),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.visibility_outlined,
+                                    size: 17,
+                                    color: tertiaryColor,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    t('Anteprima completa', 'Full preview'),
+                                    style: TextStyle(
+                                      color: tertiaryColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(preview),
+                              const SizedBox(height: 6),
+                              Text(
+                                [
+                                  enabled
+                                      ? t('attivo', 'enabled')
+                                      : t('disattivato', 'disabled'),
+                                  structuredEffectTypeLabel(type),
+                                  recipient == 'se_stesso'
+                                      ? t('su di te', 'on self')
+                                      : recipient == 'area'
+                                      ? t('in area', 'in an area')
+                                      : t('sul bersaglio', 'on target'),
+                                  if (hasFrequency)
+                                    '${t('ogni', 'every')} ${frequencyController.text} $durationUnit',
+                                  if (supportsDuration &&
+                                      durationController.text.trim().isNotEmpty)
+                                    '${t('durata', 'duration')}: ${durationController.text} $durationUnit',
+                                ].join(' · '),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: Colors.white70),
+                              ),
+                            ],
+                          ),
                         ),
                         if (error.isNotEmpty) ...[
                           const SizedBox(height: 8),
@@ -1739,6 +1949,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         },
       );
     } finally {
+      dialogRefreshTimer?.cancel();
       valueController.dispose();
       targetController.dispose();
       durationController.dispose();

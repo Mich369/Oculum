@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
@@ -35,5 +37,34 @@ void main() {
 
     expect(entry.legacyPageIndex, isNull);
     expect(entry.description, 'Testo originale');
+  });
+
+  test('backup e recupero diario partono solo dopo il primo frame', () {
+    final source = File(
+      'lib/src/main/oculum_home_persistence.dart',
+    ).readAsStringSync();
+    final loadStart = source.indexOf(
+      'Future<void> caricaDati({bool allowBackupRecovery = true})',
+    );
+    final firstFrameReady = source.indexOf(
+      "oculumProfileMark('save_load_first_frame_ready')",
+      loadStart,
+    );
+    final maintenanceScheduled = source.indexOf(
+      '_schedulePostLoadMaintenance(',
+      firstFrameReady,
+    );
+
+    expect(loadStart, greaterThanOrEqualTo(0));
+    expect(firstFrameReady, greaterThan(loadStart));
+    expect(maintenanceScheduled, greaterThan(firstFrameReady));
+    expect(
+      source.substring(loadStart, firstFrameReady),
+      isNot(contains('_recoverDiariesFromRecentSaves(')),
+    );
+    expect(
+      source.substring(loadStart, firstFrameReady),
+      contains('datiCaricati = true'),
+    );
   });
 }
