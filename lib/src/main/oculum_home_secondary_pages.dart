@@ -7196,6 +7196,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
 
     aggiungiLog(risultato);
+    // Ogni cambio di livello modifica i bonus calcolati da Art/Skill. Anche
+    // quando non viene spesa una risorsa (soprattutto nella disattivazione),
+    // la Scheda deve ricalcolare subito Danno, Difesa e statistiche: prima
+    // rimaneva visualizzato il valore precedente fino al Riposo.
+    invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+    scheduleHiddenEyeDerivedCardsRefresh();
+    scheduleInputUiRefresh(delay: Duration.zero);
     // Stato, bonus e UI vengono notificati prima della persistenza.
     notifyArtSkillLevelChanged(artIndex, skillIndex);
     if (activationCost > 0) {
