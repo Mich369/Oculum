@@ -152,6 +152,37 @@ int oculumExperienceAfterStatTax({
   return afterTax;
 }
 
+/// Bonus EXP legato al grado del nemico appena sconfitto.
+/// Il calcolo e separato dalla fonte (Boss, Mini-boss ecc.) per mantenere
+/// leggibili le regole e compatibili i salvataggi gia esistenti.
+int oculumGradeExperienceBonus({
+  required int enemyGrade,
+  required bool rebirth,
+  required String difficulty,
+}) {
+  final grade = max(0, enemyGrade);
+  final base = rebirth ? max(5, grade * 200) : grade * 100;
+  final multiplier = switch (difficulty.trim().toLowerCase()) {
+    'facile' || 'easy' => 0.75,
+    'difficile' || 'hard' => 1.25,
+    'oculum' => 1.5,
+    _ => 1.0,
+  };
+  return max(rebirth ? 5 : 0, (base * multiplier).round());
+}
+
+/// Converte il testo libero del danno ricevuto in un moltiplicatore.
+/// `+25%` significa 125% del danno; `-25%` significa 75%.
+double? oculumIncomingDamagePercentMultiplier(String raw) {
+  final text = raw.trim().replaceAll(' ', '').replaceAll(',', '.');
+  if (text.isEmpty) return null;
+  final match = RegExp(r'^([+-]?\d+(?:\.\d+)?)%?$').firstMatch(text);
+  if (match == null) return null;
+  final percentage = double.tryParse(match.group(1) ?? '');
+  if (percentage == null) return null;
+  return (1 + (percentage / 100)).clamp(0, 100).toDouble();
+}
+
 int readIntValue(dynamic value, {int fallback = 0}) {
   if (value is int) return value;
   if (value is num) return value.toInt();
@@ -489,6 +520,14 @@ String oculumStatKey(String value) {
     case 'resilienza':
     case 'resilience':
       return 'resilienza';
+    case 'resilienzaspesa':
+    case 'resilienzaspeso':
+    case 'resilienzaimmessa':
+    case 'resilienzaimmesso':
+    case 'resilienzautilizzata':
+    case 'resilienzautilizzato':
+    case 'resilienzaskill':
+      return 'resilienza_spent';
     case 'resattuale':
     case 'resattuali':
     case 'resilienzaattuale':
@@ -501,6 +540,14 @@ String oculumStatKey(String value) {
     case 'will':
     case 'volontà':
       return 'volonta';
+    case 'volontaspesa':
+    case 'volontaspeso':
+    case 'volontaimmessa':
+    case 'volontaimmesso':
+    case 'volontautilizzata':
+    case 'volontautilizzato':
+    case 'volontaskill':
+      return 'volonta_spent';
     case 'volattuale':
     case 'volattuali':
     case 'volontaattuale':
@@ -513,6 +560,14 @@ String oculumStatKey(String value) {
     case 'materia':
     case 'matter':
       return 'materia';
+    case 'materiaspesa':
+    case 'materiaspeso':
+    case 'materiaimmessa':
+    case 'materiaimmesso':
+    case 'materiautilizzata':
+    case 'materiautilizzato':
+    case 'materiaskill':
+      return 'materia_spent';
     case 'matattuale':
     case 'matattuali':
     case 'materiaattuale':
@@ -532,6 +587,13 @@ String oculumStatKey(String value) {
     case 'oculumconsumati':
     case 'ocuconsumato':
     case 'ocuconsumati':
+      return 'oculum_spent';
+    case 'oculumimmesso':
+    case 'oculumimmessa':
+    case 'oculumutilizzato':
+    case 'oculumutilizzata':
+    case 'oculumskill':
+    case 'ocuskill':
       return 'oculum_spent';
     case 'ocuattuale':
     case 'ocuattuali':
@@ -711,6 +773,10 @@ String oculumStatKey(String value) {
     case 'statistiche':
     case 'statistichebase':
       return 'stats';
+    case 'statsskill':
+    case 'statsdellaskill':
+    case 'statistichedellaskill':
+      return 'stats_skill';
     case 'otherstats':
     case 'altrestats':
     case 'altrestatistiche':
@@ -1286,6 +1352,11 @@ const List<String> oculumCommandAutocompleteLabels = <String>[
   '@MateriaAttuale',
   '@Oculum',
   '@OculumSpeso',
+  '@OculumImmesso',
+  '@OculumSkill',
+  '@ResilienzaSkill',
+  '@VolontaSkill',
+  '@MateriaSkill',
   '@OculumAttuale',
   '@Scudo',
   '@ScudoAttuale',
@@ -1310,6 +1381,7 @@ const List<String> oculumCommandAutocompleteLabels = <String>[
   '@VC',
   '@CM',
   '@Stats',
+  '@StatsSkill',
   '@AllStats',
   '@OtherStats',
   '@AltreStats',
@@ -1808,6 +1880,7 @@ int oculumObservationAvailablePoints({
 
 bool oculumIsGroupedStatKey(String key) {
   return key == 'stats' ||
+      key == 'stats_skill' ||
       key == 'other_stats' ||
       key == 'tiro_stats' ||
       key == 'tiro_other_stats';
@@ -2267,7 +2340,7 @@ List<OculumFormulaCommand> oculumParseFormulaCommands(
   );
   final normalizedText = decimalNormalizedText.replaceAllMapped(
     RegExp(
-      r'@([A-Za-zÀ-ÖØ-öø-ÿ_]+)\s*([+-])\s*([^@,;\n=]+?)\s*=\s*(Stats|AllStats|OtherStats|AltreStats|TiroStats|TiroAllStats|TiriStats|TiroStatistiche|TiriStatistiche|TiroOtherStats|TiroAltreStats|TiriAltreStats)\s*([+-])\s*([^@,;\n]+)',
+      r'@([A-Za-zÀ-ÖØ-öø-ÿ_]+)\s*([+-])\s*([^@,;\n=]+?)\s*=\s*(Stats|StatsSkill|AllStats|OtherStats|AltreStats|TiroStats|TiroAllStats|TiriStats|TiroStatistiche|TiriStatistiche|TiroOtherStats|TiroAltreStats|TiriAltreStats)\s*([+-])\s*([^@,;\n]+)',
       caseSensitive: false,
     ),
     (match) {

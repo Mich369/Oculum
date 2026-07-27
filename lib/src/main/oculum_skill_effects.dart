@@ -588,6 +588,14 @@ String oculumNormalizeSubtraitReferences(
           '@${entry.value}${match.group(1) ?? ''}${match.group(2) ?? ''}',
     );
   }
+  text = text.replaceAllMapped(
+    RegExp(
+      r'\b(Resilienza|Volonta|Materia|Oculum)\s+(Speso|Spesa|Immesso|Immessa|Utilizzato|Utilizzata|Skill)\b',
+      caseSensitive: false,
+    ),
+    (match) => oculumStatKey('${match.group(1)}${match.group(2)}'),
+  );
+
   final ordered = subtraits.toList(growable: false)
     ..sort((a, b) {
       final aLength = max(a.nome.length, a.id.length);
@@ -638,11 +646,15 @@ String oculumEffectFormulaExpression(
     (match) => '${match.group(2)}*${match.group(1)}%',
   );
   text = text.replaceAllMapped(
-    RegExp(
-      r'\b(Oculum\s*(?:Speso|Immesso|Utilizzato)|OculumSpeso|OculumImmesso)\b',
-      caseSensitive: false,
-    ),
-    (_) => 'oculum_spent',
+    RegExp(r'\b[A-Za-zÃ€-Ã–Ã˜-Ã¶Ã¸-Ã¿_]+\b', caseSensitive: false),
+    (match) {
+      final rawKey = match.group(0) ?? '';
+      if (oculumNormalizeText(rawKey).replaceAll(' ', '') == 'statsskill') {
+        return 'stats_skill_spent';
+      }
+      final builtIn = oculumStatKey(rawKey);
+      return builtIn.endsWith('_spent') ? builtIn : rawKey;
+    },
   );
 
   final ordered = subtraits.toList(growable: false)
@@ -678,6 +690,12 @@ int oculumEvaluateStructuredEffectValue(
     vars['${key}_spent'] = entry.value;
     if (key == 'oculum') vars['oculum_spent'] = entry.value;
   }
+  vars['stats_skill_spent'] = <String>[
+    'resilienza_spent',
+    'volonta_spent',
+    'materia_spent',
+    'oculum_spent',
+  ].fold<num>(0, (sum, key) => sum + (vars[key] ?? 0));
   final expression = oculumEffectFormulaExpression(
     effect.valueExpression,
     subtraits,

@@ -45,6 +45,62 @@ void main() {
     });
   });
 
+  group('bonus EXP per grado', () {
+    test('usa 100 per grado con il profilo di difficolta', () {
+      expect(
+        oculumGradeExperienceBonus(
+          enemyGrade: 3,
+          rebirth: false,
+          difficulty: 'facile',
+        ),
+        225,
+      );
+      expect(
+        oculumGradeExperienceBonus(
+          enemyGrade: 3,
+          rebirth: false,
+          difficulty: 'normale',
+        ),
+        300,
+      );
+      expect(
+        oculumGradeExperienceBonus(
+          enemyGrade: 3,
+          rebirth: false,
+          difficulty: 'difficile',
+        ),
+        375,
+      );
+      expect(
+        oculumGradeExperienceBonus(
+          enemyGrade: 3,
+          rebirth: false,
+          difficulty: 'oculum',
+        ),
+        450,
+      );
+    });
+
+    test('Rebirth usa 200 per grado e garantisce almeno 5 EXP', () {
+      expect(
+        oculumGradeExperienceBonus(
+          enemyGrade: 0,
+          rebirth: true,
+          difficulty: 'facile',
+        ),
+        5,
+      );
+      expect(
+        oculumGradeExperienceBonus(
+          enemyGrade: 2,
+          rebirth: true,
+          difficulty: 'normale',
+        ),
+        400,
+      );
+    });
+  });
+
   group('EXP delle Open', () {
     test('segue i totali 25, 125 e 175 senza sommare due volte', () {
       expect(oculumTitleOpenExperienceTarget(0), 0);

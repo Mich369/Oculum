@@ -627,6 +627,24 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
               'Use names actually supported by the parser.',
             ),
           ),
+          (
+            category: t('Skill / Art / Open', 'Skill / Art / Open'),
+            name: t(
+              'Risorse immesse nella singola attivazione',
+              'Resources spent in this activation',
+            ),
+            syntax:
+                'OculumImmesso, OculumSkill, ResilienzaSkill, VolontaSkill, MateriaSkill',
+            example: 'OculumImmesso*2+3',
+            result: t(
+              'Nella formula di un effetto strutturato usa la risorsa spesa proprio in quella Skill, Art o Open.',
+              'In a structured-effect formula, uses the resource spent in that exact Skill, Art, or Open.',
+            ),
+            limits: t(
+              'StatsSkill somma le quattro risorse spese; @StatsSkill+1 applica invece il comando rapido a tutte le quattro statistiche.',
+              'StatsSkill sums the four spent resources; @StatsSkill+1 instead applies the quick command to all four main stats.',
+            ),
+          ),
           if (dynamicSubtrait != null)
             (
               category: t('Sottotratti', 'Subtraits'),

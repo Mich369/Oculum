@@ -973,6 +973,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       'volonta_spent': max(0, raccoltaVolontaSpesa),
       'materia_spent': max(0, raccoltaMateriaSpesa),
       'oculum_spent': max(0, raccoltaOculumSpesa),
+      'stats_skill_spent': max(
+        0,
+        raccoltaResilienzaSpesa +
+            raccoltaVolontaSpesa +
+            raccoltaMateriaSpesa +
+            raccoltaOculumSpesa,
+      ),
       'tiro_resilienza': max(0, (res ~/ 2) + statRollBaseBonus + vantaggio),
       'tiro_volonta': max(0, (vol ~/ 2) + statRollBaseBonus + vantaggio),
       'tiro_materia': max(0, (mat ~/ 2) + statRollBaseBonus + vantaggio),

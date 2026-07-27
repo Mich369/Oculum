@@ -382,6 +382,29 @@ void main() {
       }
     });
 
+    test('riconosce le quattro risorse della singola Skill e StatsSkill', () {
+      const spent = <String, num>{
+        'resilienza': 2,
+        'volonta': 3,
+        'materia': 4,
+        'oculum': 5,
+      };
+      for (final formula in <String>[
+        'ResilienzaSkill+VolontaSkill+MateriaSkill+OculumSkill',
+        'StatsSkill',
+      ]) {
+        expect(
+          oculumEvaluateStructuredEffectValue(
+            OculumStructuredEffect(valueExpression: formula),
+            variables: variables,
+            spentResources: spent,
+          ),
+          14,
+          reason: formula,
+        );
+      }
+    });
+
     test('gli effetti generici ogni N turni conservano valore e frequenza', () {
       final parsed = oculumParseStructuredEffectsFromText(
         'Scudo + 3 ogni 2 turni e Cura 4 ogni 3 turni',

@@ -1669,8 +1669,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           const SizedBox(height: 8),
           smallInfoText(
             t(
-              'Anteprima $expName finale: ${expFinalePreview()} (${expSourceLabel()}, grado x${expGradeMultiplier().toStringAsFixed(2)}).',
-              'Final $expName preview: ${expFinalePreview()} (${expSourceLabel()}, grade x${expGradeMultiplier().toStringAsFixed(2)}).',
+              'Anteprima $expName finale: ${expFinalePreview()} (${expSourceLabel()}, grado x${expGradeMultiplier().toStringAsFixed(2)}, ${expGradeBonusLabel()}).',
+              'Final $expName preview: ${expFinalePreview()} (${expSourceLabel()}, grade x${expGradeMultiplier().toStringAsFixed(2)}, ${expGradeBonusLabel()}).',
             ),
             color: tertiaryColor,
           ),

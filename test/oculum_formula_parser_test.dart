@@ -878,4 +878,27 @@ void main() {
     );
     expect(multiWordController.text, '@Difesa+4 Non morto');
   });
+
+  test('StatsSkill espande il comando rapido sulle quattro statistiche', () {
+    final parsed = oculumParseFormulaCommands('@StatsSkill+2', _vars);
+    expect(
+      parsed.where((command) => command.valid).map((command) => command.key),
+      containsAll(<String>['resilienza', 'volonta', 'materia', 'oculum']),
+    );
+  });
+
+  test('accetta gli alias delle risorse immesse nelle Skill', () {
+    expect(oculumStatKey('OculumImmesso'), 'oculum_spent');
+    expect(oculumStatKey('OculumSkill'), 'oculum_spent');
+    expect(oculumStatKey('ResilienzaSkill'), 'resilienza_spent');
+    expect(oculumStatKey('VolontaSkill'), 'volonta_spent');
+    expect(oculumStatKey('MateriaSkill'), 'materia_spent');
+  });
+
+  test('legge la percentuale libera del danno ricevuto', () {
+    expect(oculumIncomingDamagePercentMultiplier('+25%'), 1.25);
+    expect(oculumIncomingDamagePercentMultiplier('-20'), 0.8);
+    expect(oculumIncomingDamagePercentMultiplier('-100%'), 0);
+    expect(oculumIncomingDamagePercentMultiplier('boh'), isNull);
+  });
 }

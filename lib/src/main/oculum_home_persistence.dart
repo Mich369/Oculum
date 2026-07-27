@@ -1365,6 +1365,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
           .toList(),
       'fonteExpSelezionata': fonteExpSelezionata,
       'enemyGradeExp': enemyGradeExpController.text,
+      'dannoSubitoPercentuale': dannoSubitoPercentController.text,
       'elementColorOverrides': Map<String, int>.from(elementColorOverrides),
       'customDamageTypes': List<String>.from(customDamageTypes),
       'oculumStatFormulaColor': oculumStatFormulaColor.toARGB32(),
@@ -1896,6 +1897,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
     enemyGradeExpController.text =
         '${json['enemyGradeExp'] ?? gradoController.text}';
+    dannoSubitoPercentController.text =
+        '${json['dannoSubitoPercentuale'] ?? ''}';
 
     final imageRaw = '${json['immaginePersonaggioBase64'] ?? ''}';
     if (imageRaw.isNotEmpty) {

@@ -9,7 +9,10 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     final before = activeStructuredEffects.length;
     activeStructuredEffects.removeWhere((effect) {
       final source = '${effect['source'] ?? ''}'.trim();
-      return source == prefix || source.startsWith('$prefix ');
+      final belongsToSource = source == prefix || source.startsWith('$prefix ');
+      // Un effetto accumulabile e' l'unico che puo' sopravvivere allo
+      // spegnimento della Skill: tutti gli altri bonus vengono rimossi.
+      return belongsToSource && !readBoolValue(effect['stackable']);
     });
     if (activeStructuredEffects.length == before) return false;
 
@@ -300,6 +303,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             'target': target,
             'resource': effect.resource,
             'value': value,
+            'stackable': effect.stackable,
             // -1 rappresenta una periodicità senza scadenza. I vecchi
             // salvataggi continuano a usare soltanto durate positive.
             'remaining': effectiveDuration > 0 ? effectiveDuration : -1,

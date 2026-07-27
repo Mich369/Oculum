@@ -2226,6 +2226,51 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     );
   }
 
+  void mostraMenuModificatoriDanno() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF11131A),
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text(
+              t('Preset danno ricevuto', 'Incoming damage presets'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            for (final option in modificatoriDanno)
+              ListTile(
+                title: Text(cleanUiText(option.name)),
+                subtitle: Text(damageDescription(option)),
+                trailing:
+                    option.name ==
+                        canonicalDamageModifierName(
+                          modificatoreDannoSelezionato,
+                        )
+                    ? const Icon(Icons.check, color: Colors.lightBlueAccent)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    modificatoreDannoSelezionato = canonicalDamageModifierName(
+                      option.name,
+                    );
+                    dannoSubitoPercentController.clear();
+                    aggiungiLog(
+                      'Modificatore danno selezionato: ${option.name}.',
+                    );
+                  });
+                  programmaSalvataggio();
+                  Navigator.of(sheetContext).pop();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget damageModifierDropdown() {
     final safeValue = canonicalDamageModifierName(modificatoreDannoSelezionato);
 
@@ -2237,36 +2282,45 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        DropdownButtonFormField<String>(
-          initialValue: safeValue,
-          dropdownColor: const Color(0xFF11131A),
-          decoration: fieldDecoration(
-            t(
-              'Resistenza / Fragilità / Cura',
-              'Resistance / Fragility / Healing',
-            ),
+        TextFormField(
+          controller: dannoSubitoPercentController,
+          keyboardType: const TextInputType.numberWithOptions(
+            signed: true,
+            decimal: true,
           ),
-          items: modificatoriDanno
-              .map(
-                (option) => DropdownMenuItem<String>(
-                  value: option.name,
-                  child: Text(option.name),
+          decoration: fieldDecoration('Danno subito in più / meno (%)')
+              .copyWith(
+                hintText: '+25% oppure -20%',
+                suffixIcon: IconButton(
+                  tooltip: 'Apri resistenze, fragilità e rigenerazione',
+                  icon: const Icon(Icons.visibility_outlined),
+                  onPressed: mostraMenuModificatoriDanno,
                 ),
-              )
-              .toList(),
-          onChanged: (value) {
-            if (value == null) return;
-
-            setState(() {
-              modificatoreDannoSelezionato = canonicalDamageModifierName(value);
-              aggiungiLog('Modificatore danno selezionato: $value.');
-            });
-
-            programmaSalvataggio();
-          },
+              ),
+          onChanged: (_) => programmaSalvataggio(invalidateCaches: false),
         ),
         const SizedBox(height: 8),
-        smallInfoText(damageDescription(selected)),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: dannoSubitoPercentController,
+          builder: (context, value, _) {
+            final multiplier = oculumIncomingDamagePercentMultiplier(
+              value.text,
+            );
+            if (value.text.trim().isNotEmpty && multiplier == null) {
+              return smallInfoText(
+                'Scrivi una percentuale valida, ad esempio +25% o -20%.',
+                color: Colors.orangeAccent,
+              );
+            }
+            if (multiplier != null) {
+              final shown = ((multiplier - 1) * 100).toStringAsFixed(0);
+              return smallInfoText(
+                'Valore libero attivo: $shown% (${(multiplier * 100).toStringAsFixed(0)}% del danno in arrivo).',
+              );
+            }
+            return smallInfoText(damageDescription(selected));
+          },
+        ),
         const SizedBox(height: 6),
         smallInfoText(
           t(

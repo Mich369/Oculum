@@ -1235,6 +1235,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final storySessionNoteController = TextEditingController();
   final buffMalusRapidiController = TextEditingController();
   final dannoSubitoController = TextEditingController();
+  final dannoSubitoPercentController = TextEditingController();
   final dannoBonusScudoPercentController = TextEditingController(text: '0');
   final OculumDecodedImageCache decodedImageBase64Cache =
       OculumDecodedImageCache();
@@ -3438,6 +3439,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     realtimeDiceConsentQueue.clear();
     buffMalusRapidiController.dispose();
     dannoSubitoController.dispose();
+    dannoSubitoPercentController.dispose();
     dannoBonusScudoPercentController.dispose();
     scudoFocusNode.dispose();
     attaccoRapidoFocusNode.dispose();

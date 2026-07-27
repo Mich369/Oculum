@@ -2540,7 +2540,20 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   int applicaModificatoreDanno(int dannoBase) {
+    final percentMultiplier = oculumIncomingDamagePercentMultiplier(
+      dannoSubitoPercentController.text,
+    );
+    if (percentMultiplier != null) {
+      return applicaModificatoreDannoPercentuale(dannoBase, percentMultiplier);
+    }
     return applicaModificatoreDannoCon(dannoBase, modificatoreDannoAttuale());
+  }
+
+  int applicaModificatoreDannoPercentuale(int dannoBase, double multiplier) {
+    if (dannoBase <= 0) return 0;
+    final modified = dannoBase * multiplier;
+    if (modified > 0 && modified < 1) return 1;
+    return modified.round();
   }
 
   String normalizedDamageRuleText(String raw) {
@@ -3050,10 +3063,18 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final modificatore = critico
         ? modificatoreDannoDaNome(modificatoreDopo)
         : modificatoreDannoAttuale();
-    final dannoModificatoBase = applicaModificatoreDannoCon(
-      dannoDopoDifesa,
-      modificatore,
+    final modificatorePercentualeLibero = oculumIncomingDamagePercentMultiplier(
+      dannoSubitoPercentController.text,
     );
+    final dannoModificatoBase = modificatorePercentualeLibero == null
+        ? applicaModificatoreDannoCon(dannoDopoDifesa, modificatore)
+        : applicaModificatoreDannoPercentuale(
+            dannoDopoDifesa,
+            modificatorePercentualeLibero,
+          );
+    final modificatoreNome = modificatorePercentualeLibero == null
+        ? modificatore.name
+        : '${((modificatorePercentualeLibero - 1) * 100).toStringAsFixed(0)}% danno ricevuto';
     final elementoAttivo = elementoDannoDominante();
     final dannoModificato = dannoModificatoBase > 0
         ? applicaParserDanniSubiti(dannoModificatoBase, elementoAttivo)
@@ -3099,8 +3120,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         impostaHpTempTotali(healed.temporary);
 
         risultato = t(
-          'Rigenerazione: $dannoLog$schivataLogIt$difesaLogIt. ${modificatore.name}: +$hpRecuperati HP${hpTempOttenuti > 0 ? ", +$hpTempOttenuti HP temporanei" : ""}.$criticoLogIt$opzioniImpattoIt',
-          'Regeneration: $dannoLog$schivataLogEn$difesaLogEn. ${modificatore.name}: +$hpRecuperati HP${hpTempOttenuti > 0 ? ", +$hpTempOttenuti temporary HP" : ""}.$criticoLogEn$opzioniImpattoEn',
+          'Rigenerazione: $dannoLog$schivataLogIt$difesaLogIt. $modificatoreNome: +$hpRecuperati HP${hpTempOttenuti > 0 ? ", +$hpTempOttenuti HP temporanei" : ""}.$criticoLogIt$opzioniImpattoIt',
+          'Regeneration: $dannoLog$schivataLogEn$difesaLogEn. $modificatoreNome: +$hpRecuperati HP${hpTempOttenuti > 0 ? ", +$hpTempOttenuti temporary HP" : ""}.$criticoLogEn$opzioniImpattoEn',
         );
 
         dannoSubitoController.clear();
@@ -3123,8 +3144,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         schivataOculumEtichettaPronta = '';
 
         risultato = t(
-          'Danno annullato: $dannoLog$schivataLogIt$difesaLogIt. ${modificatore.name}: nessun danno subito.$parserRulesLog$criticoLogIt$opzioniImpattoIt',
-          'Damage negated: $dannoLog$schivataLogEn$difesaLogEn. ${modificatore.name}: no damage taken.$parserRulesLog$criticoLogEn$opzioniImpattoEn',
+          'Danno annullato: $dannoLog$schivataLogIt$difesaLogIt. $modificatoreNome: nessun danno subito.$parserRulesLog$criticoLogIt$opzioniImpattoIt',
+          'Damage negated: $dannoLog$schivataLogEn$difesaLogEn. $modificatoreNome: no damage taken.$parserRulesLog$criticoLogEn$opzioniImpattoEn',
         );
 
         dannoSubitoController.clear();
@@ -3266,8 +3287,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
 
       risultato = t(
-        'Danno subito: $dannoLog$schivataLogIt$difesaLogIt. ${modificatore.name}: $dannoModificatoBase.$parserRulesLog$criticoLogIt ${scudoCriticoAttivo ? "Scudo Critico attivo: danno dimezzato a $dannoFinale. " : ""}$resistenzaStatoForzaLogIt$resistenzaAdattamentoLogIt$opzioniImpattoIt${scudoSalvataggioAttivato ? " Scudo di Salvataggio: l'overflow viene bloccato dopo l'ultimo scudo." : ""}${safeHpAttivato ? " @safehp: resti a 1 HP e il comando viene consumato." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Scudo, comando consumato." : ""} Applicato a ${ignoraScudi ? "HP Temp -> HP" : "Scudo Oculum -> Scudo -> HP Temp -> HP"}.',
-        'Damage taken: $dannoLog$schivataLogEn$difesaLogEn. ${modificatore.name}: $dannoModificatoBase.$parserRulesLog$criticoLogEn ${scudoCriticoAttivo ? "Critical Shield active: damage halved to $dannoFinale. " : ""}$resistenzaStatoForzaLogEn$resistenzaAdattamentoLogEn$opzioniImpattoEn${scudoSalvataggioAttivato ? " Saving Shield: overflow is blocked after the last shield." : ""}${safeHpAttivato ? " @safehp: you stay at 1 HP and the command is consumed." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Shield, command consumed." : ""} Applied to ${ignoraScudi ? "Temp HP -> HP" : "Oculum Shield -> Shield -> Temp HP -> HP"}.',
+        'Danno subito: $dannoLog$schivataLogIt$difesaLogIt. $modificatoreNome: $dannoModificatoBase.$parserRulesLog$criticoLogIt ${scudoCriticoAttivo ? "Scudo Critico attivo: danno dimezzato a $dannoFinale. " : ""}$resistenzaStatoForzaLogIt$resistenzaAdattamentoLogIt$opzioniImpattoIt${scudoSalvataggioAttivato ? " Scudo di Salvataggio: l'overflow viene bloccato dopo l'ultimo scudo." : ""}${safeHpAttivato ? " @safehp: resti a 1 HP e il comando viene consumato." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Scudo, comando consumato." : ""} Applicato a ${ignoraScudi ? "HP Temp -> HP" : "Scudo Oculum -> Scudo -> HP Temp -> HP"}.',
+        'Damage taken: $dannoLog$schivataLogEn$difesaLogEn. $modificatoreNome: $dannoModificatoBase.$parserRulesLog$criticoLogEn ${scudoCriticoAttivo ? "Critical Shield active: damage halved to $dannoFinale. " : ""}$resistenzaStatoForzaLogEn$resistenzaAdattamentoLogEn$opzioniImpattoEn${scudoSalvataggioAttivato ? " Saving Shield: overflow is blocked after the last shield." : ""}${safeHpAttivato ? " @safehp: you stay at 1 HP and the command is consumed." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Shield, command consumed." : ""} Applied to ${ignoraScudi ? "Temp HP -> HP" : "Oculum Shield -> Shield -> Temp HP -> HP"}.',
       );
       risultato += partialAwakeningLog;
       risultato += lowHpLog;
@@ -3737,6 +3758,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     return pow(1.2, diff).toDouble();
   }
 
+  int expGradeBonus() => oculumGradeExperienceBonus(
+    enemyGrade: max(0, leggiNumero(enemyGradeExpController)),
+    rebirth: rebirthato,
+    difficulty: normalizedCampaignDifficulty(),
+  );
+
+  String expGradeBonusLabel() => '+${expGradeBonus()} EXP grado';
+
   String applicaEsperienzaFlat(int amount, {required String motivo}) {
     final expAggiunta = max(0, amount);
     if (expAggiunta == 0) return '';
@@ -3797,7 +3826,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   int expFinalePreview() {
     final base = max(0, leggiNumero(expDaAggiungereController));
-    final value = base * expSourceMultiplier() * expGradeMultiplier();
+    if (base == 0) return 0;
+    final value =
+        (base * expSourceMultiplier() * expGradeMultiplier()) + expGradeBonus();
     if (value.isNaN || value.isInfinite) return 0;
     return value.round().clamp(0, 999999).toInt();
   }
@@ -3844,8 +3875,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       );
       final recuperoExpLog = applicaRecuperoSogliaExp(soglieRecupero);
       risultato = t(
-        'EXP aggiunta senza scalare livelli: base $expBase, ${expSourceLabel()}, grado x${expGradeMultiplier().toStringAsFixed(2)} → +$expRealeAggiunta${tassaStatsExp > 0 ? ' ($expAggiunta - $tassaStatsExp stats)' : ''}. EXP attuale: ${expController.text}.',
-        'EXP added without level scaling: base $expBase, ${expSourceLabel()}, grade x${expGradeMultiplier().toStringAsFixed(2)} → +$expRealeAggiunta${tassaStatsExp > 0 ? ' ($expAggiunta - $tassaStatsExp stats)' : ''}. Current EXP: ${expController.text}.',
+        'EXP aggiunta senza scalare livelli: base $expBase, ${expSourceLabel()}, grado x${expGradeMultiplier().toStringAsFixed(2)}, ${expGradeBonusLabel()} → +$expRealeAggiunta${tassaStatsExp > 0 ? ' ($expAggiunta - $tassaStatsExp stats)' : ''}. EXP attuale: ${expController.text}.',
+        'EXP added without level scaling: base $expBase, ${expSourceLabel()}, grade x${expGradeMultiplier().toStringAsFixed(2)}, ${expGradeBonusLabel()} → +$expRealeAggiunta${tassaStatsExp > 0 ? ' ($expAggiunta - $tassaStatsExp stats)' : ''}. Current EXP: ${expController.text}.',
       );
       if (recuperoExpLog.isNotEmpty) {
         risultato += recuperoExpLog;
@@ -3896,8 +3927,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
     } else {
       risultato = t(
-        'EXP aggiunta: base $expBase, ${expSourceLabel()}, grado x${expGradeMultiplier().toStringAsFixed(2)} → +$expRealeAggiunta${tassaStatsExp > 0 ? ' ($expAggiunta - $tassaStatsExp stats)' : ''}. EXP attuale: $expRimasta/1000.',
-        'EXP added: base $expBase, ${expSourceLabel()}, grade x${expGradeMultiplier().toStringAsFixed(2)} → +$expRealeAggiunta${tassaStatsExp > 0 ? ' ($expAggiunta - $tassaStatsExp stats)' : ''}. Current EXP: $expRimasta/1000.',
+        'EXP aggiunta: base $expBase, ${expSourceLabel()}, grado x${expGradeMultiplier().toStringAsFixed(2)}, ${expGradeBonusLabel()} → +$expRealeAggiunta${tassaStatsExp > 0 ? ' ($expAggiunta - $tassaStatsExp stats)' : ''}. EXP attuale: $expRimasta/1000.',
+        'EXP added: base $expBase, ${expSourceLabel()}, grade x${expGradeMultiplier().toStringAsFixed(2)}, ${expGradeBonusLabel()} → +$expRealeAggiunta${tassaStatsExp > 0 ? ' ($expAggiunta - $tassaStatsExp stats)' : ''}. Current EXP: $expRimasta/1000.',
       );
     }
 
