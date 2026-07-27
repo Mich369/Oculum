@@ -1372,6 +1372,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   void caricaStatoDaJson(Map<String, dynamic> json) {
+    oculumRepairMojibakeJsonInPlace(json);
     temporaryOculum = 0;
     temporaryOculumRollsRemaining = 0;
     restoreMonsterBookCustomization(json);

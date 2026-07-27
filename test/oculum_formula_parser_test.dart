@@ -804,6 +804,21 @@ void main() {
     expect(parsed.single.hasTrigger, isFalse);
   });
 
+  test('un comando @ sconosciuto viene sempre segnalato', () {
+    final parsed = oculumParseFormulaCommands(
+      '@Danni+3 @ComandoCheNonEsiste+2',
+      _vars,
+    );
+    expect(parsed.any((command) => command.valid), isTrue);
+    expect(
+      parsed.any(
+        (command) =>
+            !command.valid && command.error.contains('non riconosciuto'),
+      ),
+      isTrue,
+    );
+  });
+
   test('item conserva buff @ e stato equipaggiato nel salvataggio', () {
     final item = InventoryItem(
       nome: 'Reliquia Oculum',

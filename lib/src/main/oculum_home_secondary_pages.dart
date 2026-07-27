@@ -7113,6 +7113,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
 
     skill.livello = livelloNuovo;
+    if (livelloNuovo == 0 && livelloPrecedente > 0) {
+      removeActiveStructuredEffectsForSourcePrefix(
+        '${art.nome} / ${skill.nome}',
+      );
+    }
     if (livelloNuovo > livelloPrecedente) {
       structuredCooldown?.activate();
     }

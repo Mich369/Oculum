@@ -1940,6 +1940,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                                           !skills[i].equipaggiata;
                                       skills[i].equipaggiata =
                                           nuovaEquipaggiata;
+                                      if (!nuovaEquipaggiata) {
+                                        removeActiveStructuredEffectsForSourcePrefix(
+                                          skills[i].nome,
+                                        );
+                                      }
                                       final segno = nuovaEquipaggiata ? 1 : -1;
                                       applicaBonusSkillAttuali(
                                         skills[i],
@@ -2000,6 +2005,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                                           -skillQuickResilienzaBonus(skills[i]),
                                         );
                                       }
+                                      removeActiveStructuredEffectsForSourcePrefix(
+                                        skills[i].nome,
+                                      );
                                       aggiungiLog(
                                         'Skill eliminata: ${skills[i].nome}.',
                                       );

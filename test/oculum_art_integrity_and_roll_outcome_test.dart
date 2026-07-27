@@ -5,6 +5,21 @@ import 'package:oculum/main.dart';
 
 void main() {
   group('integrita Art', () {
+    test('Min e Max supportano tutte le quattro statistiche', () {
+      expect(
+        oculumArtSkillCostResourceKeys,
+        containsAll(<String>['resilienza', 'volonta', 'materia', 'oculum']),
+      );
+      for (final resource in <String>[
+        'resilienza',
+        'volonta',
+        'materia',
+        'oculum',
+      ]) {
+        expect(oculumNormalizeArtSkillCostResource(resource), resource);
+      }
+    });
+
     test('il massimo segue livello e grado senza valori negativi', () {
       expect(oculumArtMaximumValue(level: 0, grade: 0), 100);
       expect(oculumArtMaximumValue(level: 3, grade: 2), 360);

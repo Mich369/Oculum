@@ -3,6 +3,29 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 extension _OculumStructuredEffectRuntime on _OculumHomePageState {
+  bool removeActiveStructuredEffectsForSourcePrefix(String rawPrefix) {
+    final prefix = rawPrefix.trim();
+    if (prefix.isEmpty) return false;
+    final before = activeStructuredEffects.length;
+    activeStructuredEffects.removeWhere((effect) {
+      final source = '${effect['source'] ?? ''}'.trim();
+      return source == prefix || source.startsWith('$prefix ');
+    });
+    if (activeStructuredEffects.length == before) return false;
+
+    if (!activeStructuredEffects.any(
+      (effect) =>
+          '${effect['type'] ?? ''}' == 'stato' &&
+          '${effect['target'] ?? ''}' == 'sotto_stress',
+    )) {
+      sottoStress = sottoStressManuale;
+      if (!sottoStress) stressStatConsumptionProgress.clear();
+    }
+    invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+    scheduleHiddenEyeDerivedCardsRefresh();
+    return true;
+  }
+
   String normalizedStructuredTarget(String raw) {
     final key = oculumDynamicFormulaKey(raw);
     return switch (key) {
@@ -259,7 +282,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             ? 1
             : duration;
         if ((isOngoingBonus || isRegeneration || isPeriodic) &&
-            (effectiveDuration > 0 || isPeriodic)) {
+            (effectiveDuration > 0 || isPeriodic || isOngoingBonus)) {
           if (!effect.stackable) {
             activeStructuredEffects.removeWhere(
               (active) =>
@@ -287,16 +310,6 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
               'periodicActive': false,
             },
           });
-        } else if (isOngoingBonus && duration == 0) {
-          final fixedKey = normalizedStructuredTarget(effect.target);
-          if (<String>{
-            'resilienza',
-            'volonta',
-            'materia',
-            'oculum',
-          }.contains(fixedKey)) {
-            modificaBuffTemporaneo(fixedKey, value, salva: false);
-          }
         }
 
         final diceText = roll.dice.rolls.isEmpty

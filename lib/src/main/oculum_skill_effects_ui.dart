@@ -507,10 +507,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
 
   String commandNaturalPreview(String text) {
     if (!text.contains('@')) {
-      return t(
-        'Scrivi @ per vedere i suggerimenti oppure apri il Manuale dei comandi.',
-        'Type @ to see suggestions or open the Command Manual.',
-      );
+      return '';
     }
     final parsed = parseQuickCommandsDetailed(text);
     final invalid = parsed.where((command) => !command.valid).toList();
@@ -688,17 +685,118 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
             ),
           ),
           (
-            category: t('Tipo danno', 'Damage type'),
-            name: t('Cambio tipo', 'Type switch'),
-            syntax: '@TypeSwitch Tipo',
-            example: '@TypeSwitch Fuoco',
+            category: t('Formule', 'Formulas'),
+            name: t('Moltiplicazione', 'Multiplication'),
+            syntax: '@Statistica+Variabile*Moltiplicatore',
+            example: '@Danni+Volonta*2',
             result: t(
-              'Converte il tipo di danno attivo in Fuoco.',
-              'Converts the active damage type to Fire.',
+              'Somma al Danno due volte la Volontà attuale.',
+              'Adds twice the current Will to Damage.',
             ),
             limits: t(
-              'Usa un tipo di danno riconosciuto.',
-              'Use a recognized damage type.',
+              'Usa *; moltiplicazioni e divisioni vengono calcolate prima di somme e sottrazioni.',
+              'Use *; multiplication and division are evaluated before addition and subtraction.',
+            ),
+          ),
+          (
+            category: t('Formule', 'Formulas'),
+            name: t('Divisione', 'Division'),
+            syntax: '@Statistica+Variabile/Divisore',
+            example: '@Difesa+Resilienza/2',
+            result: t(
+              'Somma metà Resilienza alla Difesa.',
+              'Adds half Resilience to Defense.',
+            ),
+            limits: t(
+              'Il divisore non può essere zero. I risultati vengono arrotondati con le regole del parser.',
+              'The divisor cannot be zero. Results follow parser rounding rules.',
+            ),
+          ),
+          (
+            category: t('Formule', 'Formulas'),
+            name: t('Percentuale di una statistica', 'Percentage of a stat'),
+            syntax: '@Statistica+Percentuale%Variabile',
+            example: '@Oculum+25%Materia',
+            result: t(
+              'Somma il 25% della Materia all’Oculum.',
+              'Adds 25% of Materia to Oculum.',
+            ),
+            limits: t(
+              'La statistica usata come base deve essere riconosciuta.',
+              'The stat used as the base must be recognized.',
+            ),
+          ),
+          (
+            category: t('Formule', 'Formulas'),
+            name: t('Percentuale sul bersaglio', 'Percentage of target'),
+            syntax: '@Statistica±Percentuale%',
+            example: '@Danni+25%',
+            result: t(
+              'Aumenta il Danno del 25% del suo valore di riferimento.',
+              'Increases Damage by 25% of its reference value.',
+            ),
+            limits: t(
+              'Se non esiste una base valida, il comando viene mostrato come errore e non applicato.',
+              'If no valid base exists, the command is shown as an error and is not applied.',
+            ),
+          ),
+          (
+            category: t('Formule', 'Formulas'),
+            name: t('Frazioni', 'Fractions'),
+            syntax: '@Statistica±1/2Variabile',
+            example: '@Materia-1/3Volonta',
+            result: t(
+              'Sottrae un terzo della Volontà dalla Materia.',
+              'Subtracts one third of Will from Materia.',
+            ),
+            limits: t(
+              'Sono accettate anche le frazioni ⅓, ¼, ½ e ¾.',
+              'The fractions ⅓, ¼, ½ and ¾ are also accepted.',
+            ),
+          ),
+          (
+            category: t('Formule', 'Formulas'),
+            name: t('Più comandi insieme', 'Multiple commands'),
+            syntax: '@Comando1... @Comando2...',
+            example: '@Danni+3, @Difesa+2; @Materia-1',
+            result: t(
+              'Valuta ogni comando separatamente.',
+              'Evaluates every command separately.',
+            ),
+            limits: t(
+              'Puoi separarli con spazio, virgola, punto e virgola o nuova riga. Ogni comando errato viene segnalato.',
+              'Separate them with spaces, commas, semicolons, or new lines. Every invalid command is reported.',
+            ),
+          ),
+          (
+            category: t('Trigger', 'Triggers'),
+            name: t('Costo che genera un bonus', 'Cost that grants a bonus'),
+            syntax: '@Costo-Valore=Effetto+Valore',
+            example: '@HP-10=Stats+1',
+            result: t(
+              'Ogni 10 HP persi aggiunge 1 alle statistiche consentite.',
+              'Every 10 HP lost adds 1 to the allowed stats.',
+            ),
+            limits: t(
+              'La statistica consumata non può rigenerare se stessa nello stesso comando.',
+              'The spent stat cannot regenerate itself in the same command.',
+            ),
+          ),
+          (
+            category: t('Trigger', 'Triggers'),
+            name: t(
+              'Ogni totale o risorsa spesa',
+              'Per total or spent resource',
+            ),
+            syntax: '@Effetto+Valore ogni N Sorgente',
+            example: '@Danni+2 ogni 5 MateriaTotale',
+            result: t(
+              'Aggiunge 2 Danni per ogni blocco completo di 5 Materia totale.',
+              'Adds 2 Damage for every complete block of 5 total Materia.',
+            ),
+            limits: t(
+              'Sono supportate sorgenti totali, attuali e spese riconosciute dal parser.',
+              'Parser-recognized total, current, and spent sources are supported.',
             ),
           ),
         ];

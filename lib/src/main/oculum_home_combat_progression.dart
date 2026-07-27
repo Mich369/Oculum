@@ -3825,7 +3825,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                 oculumTotale(),
           )
         : 0;
-    final expRealeAggiunta = max(0, expAggiunta - tassaStatsExp);
+    final expRealeAggiunta = oculumExperienceAfterStatTax(
+      difficulty: normalizedCampaignDifficulty(),
+      calculatedExperience: expAggiunta,
+      statTax: tassaStatsExp,
+    );
     final expPrima = expCorrente();
     final expTotale = expPrima + expRealeAggiunta;
     final sogliaPrima = max(expMilestoneRegenClaimed, expPrima ~/ 369);

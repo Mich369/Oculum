@@ -2,6 +2,49 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  group('EXP minima per difficolta', () {
+    test('Facile garantisce almeno 1 EXP se il guadagno era positivo', () {
+      expect(
+        oculumExperienceAfterStatTax(
+          difficulty: 'facile',
+          calculatedExperience: 5,
+          statTax: 99,
+        ),
+        1,
+      );
+      expect(
+        oculumExperienceAfterStatTax(
+          difficulty: 'easy',
+          calculatedExperience: 1,
+          statTax: 1,
+        ),
+        1,
+      );
+    });
+
+    test('Facile non crea EXP da un guadagno originario nullo', () {
+      expect(
+        oculumExperienceAfterStatTax(
+          difficulty: 'facile',
+          calculatedExperience: 0,
+          statTax: 0,
+        ),
+        0,
+      );
+    });
+
+    test('le altre difficolta mantengono la sottrazione normale', () {
+      expect(
+        oculumExperienceAfterStatTax(
+          difficulty: 'normale',
+          calculatedExperience: 5,
+          statTax: 8,
+        ),
+        0,
+      );
+    });
+  });
+
   group('EXP delle Open', () {
     test('segue i totali 25, 125 e 175 senza sommare due volte', () {
       expect(oculumTitleOpenExperienceTarget(0), 0);

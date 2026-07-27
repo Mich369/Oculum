@@ -91,6 +91,67 @@ String oculumCleanMojibakeText(String value) {
   return cleaned.replaceAll('\u00A0', ' ');
 }
 
+int oculumRepairMojibakeJsonInPlace(dynamic value, {String parentKey = ''}) {
+  var repaired = 0;
+  if (value is Map) {
+    for (final entry in value.entries.toList(growable: false)) {
+      final key = '${entry.key}';
+      final child = entry.value;
+      if (child is String) {
+        final normalizedKey = key.toLowerCase();
+        if (child.length > 200000 ||
+            normalizedKey.contains('base64') ||
+            normalizedKey.contains('binary')) {
+          continue;
+        }
+        final cleaned = oculumCleanMojibakeText(child);
+        if (cleaned != child) {
+          value[entry.key] = cleaned;
+          repaired++;
+        }
+      } else {
+        repaired += oculumRepairMojibakeJsonInPlace(child, parentKey: key);
+      }
+    }
+  } else if (value is List) {
+    for (var index = 0; index < value.length; index++) {
+      final child = value[index];
+      if (child is String) {
+        if (child.length > 200000 ||
+            parentKey.toLowerCase().contains('base64')) {
+          continue;
+        }
+        final cleaned = oculumCleanMojibakeText(child);
+        if (cleaned != child) {
+          value[index] = cleaned;
+          repaired++;
+        }
+      } else {
+        repaired += oculumRepairMojibakeJsonInPlace(
+          child,
+          parentKey: parentKey,
+        );
+      }
+    }
+  }
+  return repaired;
+}
+
+int oculumExperienceAfterStatTax({
+  required String difficulty,
+  required int calculatedExperience,
+  required int statTax,
+}) {
+  final calculated = max(0, calculatedExperience);
+  if (calculated == 0) return 0;
+  final afterTax = max(0, calculated - max(0, statTax)).toInt();
+  final normalized = difficulty.trim().toLowerCase();
+  if (normalized == 'facile' || normalized == 'easy') {
+    return max(1, afterTax);
+  }
+  return afterTax;
+}
+
 int readIntValue(dynamic value, {int fallback = 0}) {
   if (value is int) return value;
   if (value is num) return value.toInt();
@@ -1213,7 +1274,6 @@ const List<String> oculumDefaultElementIds = <String>[
 const List<String> oculumCommandAutocompleteLabels = <String>[
   '@Difesa',
   '@Danni',
-  '@TypeSwitch',
   '@HP',
   '@HPAttuali',
   '@Vita',
@@ -2236,7 +2296,20 @@ List<OculumFormulaCommand> oculumParseFormulaCommands(
       final target = prefixTrigger.isEmpty
           ? null
           : oculumSplitTrailingStatTarget(expression);
-      if (target == null) continue;
+      if (target == null) {
+        if (match.group(1) != null) {
+          out.add(
+            OculumFormulaCommand(
+              key: oculumNormalizeText(rawKeyText),
+              value: 0,
+              valid: false,
+              error:
+                  'Comando @$rawKeyText non riconosciuto. Apri il Manuale dei comandi per vedere nomi ed esempi validi.',
+            ),
+          );
+        }
+        continue;
+      }
       key = target.key;
       expression = target.expression;
       triggerRaw = prefixTrigger;

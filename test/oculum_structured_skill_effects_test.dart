@@ -626,5 +626,29 @@ void main() {
         expect(guard.tryApply('use-2', effect), isTrue);
       },
     );
+
+    test('disattivare una Skill rimuove gli effetti della sorgente', () {
+      final runtimeSource = File(
+        'lib/src/main/oculum_structured_effect_runtime.dart',
+      ).readAsStringSync();
+      final skillPageSource = File(
+        'lib/src/main/oculum_home_titles_inventory_pages.dart',
+      ).readAsStringSync();
+      final artPageSource = File(
+        'lib/src/main/oculum_home_secondary_pages.dart',
+      ).readAsStringSync();
+      expect(
+        runtimeSource,
+        contains('removeActiveStructuredEffectsForSourcePrefix'),
+      );
+      expect(
+        skillPageSource,
+        contains('removeActiveStructuredEffectsForSourcePrefix'),
+      );
+      expect(
+        artPageSource,
+        contains('livelloNuovo == 0 && livelloPrecedente > 0'),
+      );
+    });
   });
 }

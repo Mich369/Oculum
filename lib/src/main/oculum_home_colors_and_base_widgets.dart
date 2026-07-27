@@ -1166,7 +1166,9 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       onCommandHelpRequested: showCommandHelp
           ? (text) => showCommandManualInsertDialog(text)
           : null,
-      commandPreviewBuilder: showCommandHelp ? commandNaturalPreview : null,
+      commandPreviewBuilder: enableCommandAutocomplete
+          ? commandNaturalPreview
+          : null,
       commandSuggestionBuilder: showCommandHelp
           ? commandSuggestionsForText
           : null,
