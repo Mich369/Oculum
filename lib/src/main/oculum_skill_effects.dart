@@ -633,7 +633,10 @@ String oculumEffectFormulaExpression(
   String raw,
   Iterable<HiddenEyeStat> subtraits,
 ) {
-  var text = oculumNormalizeSubtraitReferences(raw, subtraits).trim();
+  var text = oculumNormalizeSubtraitReferences(
+    oculumCleanMojibakeText(raw),
+    subtraits,
+  ).trim();
   text = text
       .replaceAll('\u00D7', '*')
       .replaceAll('Ã—', '*')
@@ -646,7 +649,7 @@ String oculumEffectFormulaExpression(
     (match) => '${match.group(2)}*${match.group(1)}%',
   );
   text = text.replaceAllMapped(
-    RegExp(r'\b[A-Za-zÃ€-Ã–Ã˜-Ã¶Ã¸-Ã¿_]+\b', caseSensitive: false),
+    RegExp(r'\b[A-Za-z_]+\b', caseSensitive: false),
     (match) {
       final rawKey = match.group(0) ?? '';
       if (oculumNormalizeText(rawKey).replaceAll(' ', '') == 'statsskill') {
@@ -962,7 +965,10 @@ OculumFreeTextEffectParseResult oculumParseStructuredEffectsFromText(
 }) {
   final effects = <OculumStructuredEffect>[];
   final leftovers = <String>[];
-  final normalized = oculumNormalizeSubtraitReferences(raw, subtraits);
+  final normalized = oculumNormalizeSubtraitReferences(
+    oculumCleanMojibakeText(raw),
+    subtraits,
+  );
   final pieces = normalized
       .split(RegExp(r'\s+(?:e|and)\s+|[;\n]+', caseSensitive: false))
       .map((part) => part.trim())
@@ -981,7 +987,7 @@ OculumFreeTextEffectParseResult oculumParseStructuredEffectsFromText(
             lower.contains('sottrae ai danni') ||
             lower.contains('riduce i danni'));
     final wallFormula = RegExp(
-      r'oculum\s*(?:immess\w*|spes\w*|utilizzat\w*)\s*(?:x|\*|\u00D7)\s*(\d+)\s*(?:([+-])\s*(\d+))?',
+      r'(?:oculum\s*(?:immess\w*|spes\w*|utilizzat\w*)|oculum_spent)\s*(?:x|\*|\u00D7)\s*(\d+)\s*(?:([+-])\s*(\d+))?',
       caseSensitive: false,
     ).firstMatch(piece);
     if (isWall && wallFormula != null) {
@@ -1052,7 +1058,7 @@ OculumFreeTextEffectParseResult oculumParseStructuredEffectsFromText(
     }
 
     if (RegExp(
-      r'(?:stats?|statistiche)\s*\+\s*oculum\s*spes',
+      r'(?:stats?|statistiche)\s*\+\s*(?:oculum\s*spes|oculum_spent)',
       caseSensitive: false,
     ).hasMatch(piece)) {
       for (final target in const <String>[
