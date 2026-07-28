@@ -289,6 +289,27 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                 ],
               ),
               const SizedBox(height: 12),
+              if (recipe.recipeKind == 'forge') ...[
+                _recipeSectionTitle('Forge'),
+                const SizedBox(height: 6),
+                Text(
+                  '${t('Peso', 'Weight')}: ${recipe.forgeWeightMinKg.isEmpty ? '?' : recipe.forgeWeightMinKg}–${recipe.forgeWeightMaxKg.isEmpty ? '?' : recipe.forgeWeightMaxKg} kg · ${t('Raccoglibile', 'Gatherable')}: ${t('Volontà', 'Will')} kg',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                if (recipe.forgeDuration.trim().isNotEmpty)
+                  Text(
+                    '${t('Tempo', 'Time')}: ${cleanUiText(recipe.forgeDuration)}',
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                if (recipe.forgeAttributes.trim().isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    '${t('Attributi', 'Attributes')}: ${cleanUiText(recipe.forgeAttributes)}',
+                    style: const TextStyle(color: Colors.white70, height: 1.35),
+                  ),
+                ],
+                const Divider(height: 24),
+              ],
               _recipeSectionTitle(t('Ingredienti', 'Ingredients')),
               const SizedBox(height: 6),
               ...recipe.ingredients.map(
@@ -414,8 +435,13 @@ class _OculumRecipeEditorDialogState extends State<_OculumRecipeEditorDialog> {
   late final TextEditingController _resultController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _notesController;
+  late final TextEditingController _forgeMinKgController;
+  late final TextEditingController _forgeMaxKgController;
+  late final TextEditingController _forgeDurationController;
+  late final TextEditingController _forgeAttributesController;
   final List<_RecipeIngredientControllers> _ingredients = [];
   late bool _visibleToPlayers;
+  late bool _isForge;
   bool _submitting = false;
 
   String _t(String italian, String english) =>
@@ -431,7 +457,20 @@ class _OculumRecipeEditorDialogState extends State<_OculumRecipeEditorDialog> {
       text: existing?.resultDescription ?? '',
     );
     _notesController = TextEditingController(text: existing?.masterNotes ?? '');
+    _forgeMinKgController = TextEditingController(
+      text: existing?.forgeWeightMinKg ?? '',
+    );
+    _forgeMaxKgController = TextEditingController(
+      text: existing?.forgeWeightMaxKg ?? '',
+    );
+    _forgeDurationController = TextEditingController(
+      text: existing?.forgeDuration ?? '',
+    );
+    _forgeAttributesController = TextEditingController(
+      text: existing?.forgeAttributes ?? '',
+    );
     _visibleToPlayers = existing?.visibleToPlayers ?? true;
+    _isForge = existing?.recipeKind == 'forge';
     for (final ingredient in existing?.ingredients ?? const []) {
       _ingredients.add(
         _RecipeIngredientControllers(
@@ -449,6 +488,10 @@ class _OculumRecipeEditorDialogState extends State<_OculumRecipeEditorDialog> {
     _resultController.dispose();
     _descriptionController.dispose();
     _notesController.dispose();
+    _forgeMinKgController.dispose();
+    _forgeMaxKgController.dispose();
+    _forgeDurationController.dispose();
+    _forgeAttributesController.dispose();
     for (final ingredient in _ingredients) {
       ingredient.dispose();
     }
@@ -509,6 +552,11 @@ class _OculumRecipeEditorDialogState extends State<_OculumRecipeEditorDialog> {
         visibleToPlayers: _visibleToPlayers,
         createdAt: widget.existing?.createdAt ?? now,
         updatedAt: now,
+        recipeKind: _isForge ? 'forge' : 'standard',
+        forgeWeightMinKg: _forgeMinKgController.text.trim(),
+        forgeWeightMaxKg: _forgeMaxKgController.text.trim(),
+        forgeDuration: _forgeDurationController.text.trim(),
+        forgeAttributes: _forgeAttributesController.text.trim(),
       ),
     );
   }
@@ -539,6 +587,79 @@ class _OculumRecipeEditorDialogState extends State<_OculumRecipeEditorDialog> {
                   controller: _nameController,
                   label: _t('Nome della ricetta', 'Recipe name'),
                 ),
+                const SizedBox(height: 12),
+                SegmentedButton<bool>(
+                  segments: <ButtonSegment<bool>>[
+                    ButtonSegment<bool>(
+                      value: false,
+                      label: Text(_t('Ricetta', 'Recipe')),
+                      icon: const Icon(Icons.menu_book_outlined),
+                    ),
+                    ButtonSegment<bool>(
+                      value: true,
+                      label: const Text('Forge'),
+                      icon: const Icon(Icons.construction_outlined),
+                    ),
+                  ],
+                  selected: <bool>{_isForge},
+                  onSelectionChanged: (selection) =>
+                      setState(() => _isForge = selection.first),
+                ),
+                if (_isForge) ...[
+                  const SizedBox(height: 14),
+                  Text(
+                    _t('Dati materiale Forge', 'Forge material data'),
+                    style: TextStyle(
+                      color: widget.tertiaryColor,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _field(
+                          controller: _forgeMinKgController,
+                          label: _t('Peso min (kg)', 'Min weight (kg)'),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _field(
+                          controller: _forgeMaxKgController,
+                          label: _t('Peso max (kg)', 'Max weight (kg)'),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    _t(
+                      'I kg raccoglibili sono pari alla Volontà attuale del personaggio.',
+                      'Gatherable kg equal the character current Will.',
+                    ),
+                    style: const TextStyle(color: Colors.white54),
+                  ),
+                  const SizedBox(height: 10),
+                  _field(
+                    controller: _forgeDurationController,
+                    label: _t('Tempo (es. 50\')', 'Time (e.g. 50\')'),
+                    required: false,
+                  ),
+                  const SizedBox(height: 10),
+                  _field(
+                    controller: _forgeAttributesController,
+                    label: _t(
+                      'Attributi Forge (uno per riga)',
+                      'Forge attributes (one per line)',
+                    ),
+                    minLines: 2,
+                    maxLines: 5,
+                    required: false,
+                  ),
+                ],
                 const SizedBox(height: 18),
                 Text(
                   _t('Ingredienti', 'Ingredients'),

@@ -7182,6 +7182,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       );
     }
     if (livelloNuovo > livelloPrecedente && livelloNuovo > 0) {
+      recordSkillActivationSpent(
+        artSkillActivationKey(art, skill),
+        <String, num>{costResource: resourceSpent},
+      );
       final structuredMessages = applyStructuredEffectsOnActivation(
         skill.effettiPerLivello[livelloNuovo - 1],
         source: '${art.nome} / ${skill.nome} ${artLevelRoman(livelloNuovo)}',

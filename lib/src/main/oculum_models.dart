@@ -2322,6 +2322,11 @@ class OculumRecipe {
     required this.visibleToPlayers,
     required this.createdAt,
     required this.updatedAt,
+    this.recipeKind = 'standard',
+    this.forgeWeightMinKg = '',
+    this.forgeWeightMaxKg = '',
+    this.forgeDuration = '',
+    this.forgeAttributes = '',
   });
 
   final String id;
@@ -2333,6 +2338,11 @@ class OculumRecipe {
   final bool visibleToPlayers;
   final String createdAt;
   final String updatedAt;
+  final String recipeKind;
+  final String forgeWeightMinKg;
+  final String forgeWeightMaxKg;
+  final String forgeDuration;
+  final String forgeAttributes;
 
   OculumRecipe copyWith({
     String? id,
@@ -2344,6 +2354,11 @@ class OculumRecipe {
     bool? visibleToPlayers,
     String? createdAt,
     String? updatedAt,
+    String? recipeKind,
+    String? forgeWeightMinKg,
+    String? forgeWeightMaxKg,
+    String? forgeDuration,
+    String? forgeAttributes,
   }) {
     return OculumRecipe(
       id: id ?? this.id,
@@ -2355,6 +2370,11 @@ class OculumRecipe {
       visibleToPlayers: visibleToPlayers ?? this.visibleToPlayers,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      recipeKind: recipeKind ?? this.recipeKind,
+      forgeWeightMinKg: forgeWeightMinKg ?? this.forgeWeightMinKg,
+      forgeWeightMaxKg: forgeWeightMaxKg ?? this.forgeWeightMaxKg,
+      forgeDuration: forgeDuration ?? this.forgeDuration,
+      forgeAttributes: forgeAttributes ?? this.forgeAttributes,
     );
   }
 
@@ -2368,6 +2388,11 @@ class OculumRecipe {
     'visibleToPlayers': visibleToPlayers,
     'createdAt': createdAt,
     'updatedAt': updatedAt,
+    'recipeKind': recipeKind,
+    'forgeWeightMinKg': forgeWeightMinKg,
+    'forgeWeightMaxKg': forgeWeightMaxKg,
+    'forgeDuration': forgeDuration,
+    'forgeAttributes': forgeAttributes,
   };
 
   factory OculumRecipe.fromJson(Map<String, dynamic> json) {
@@ -2402,6 +2427,20 @@ class OculumRecipe {
       ),
       createdAt: '${json['createdAt'] ?? now}',
       updatedAt: '${json['updatedAt'] ?? now}',
+      recipeKind:
+          '${json['recipeKind'] ?? json['tipo'] ?? 'standard'}' == 'forge'
+          ? 'forge'
+          : 'standard',
+      forgeWeightMinKg:
+          '${json['forgeWeightMinKg'] ?? json['pesoMinKg'] ?? ''}',
+      forgeWeightMaxKg:
+          '${json['forgeWeightMaxKg'] ?? json['pesoMaxKg'] ?? ''}',
+      forgeDuration: oculumCleanMojibakeText(
+        '${json['forgeDuration'] ?? json['tempoForge'] ?? ''}',
+      ).trim(),
+      forgeAttributes: oculumCleanMojibakeText(
+        '${json['forgeAttributes'] ?? json['attributiForge'] ?? ''}',
+      ).trim(),
     );
   }
 }

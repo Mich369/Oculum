@@ -403,11 +403,131 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int materiaBase() => leggiNumero(materiaController);
   int oculumBase() => leggiNumero(oculumController);
 
+  String artSkillActivationKey(CharacterArt art, ArtSkill skill) =>
+      'art:${arti.indexOf(art)}:skill:${art.skills.indexOf(skill)}';
+
+  String skillFormActivationKey(int skillIndex, int formIndex) =>
+      'skill:$skillIndex:form:$formIndex';
+
+  void recordSkillActivationSpent(
+    String sourceKey,
+    Map<String, num> resources,
+  ) {
+    final normalized = <String, num>{
+      for (final key in const <String>[
+        'resilienza',
+        'volonta',
+        'materia',
+        'oculum',
+      ])
+        key: max(0, resources[oculumDynamicFormulaKey(key)] ?? 0),
+    };
+    final previous = skillActivationSpentResources[sourceKey];
+    if (previous != null &&
+        previous.length == normalized.length &&
+        previous.entries.every(
+          (entry) => normalized[entry.key] == entry.value,
+        )) {
+      return;
+    }
+    skillActivationSpentResources[sourceKey] = normalized;
+  }
+
+  String replaceSkillSpentTokens(String text, Map<String, num> resources) {
+    final values = <String, int>{
+      'oculum': max(0, resources['oculum'] ?? 0).round(),
+      'resilienza': max(0, resources['resilienza'] ?? 0).round(),
+      'volonta': max(0, resources['volonta'] ?? 0).round(),
+      'materia': max(0, resources['materia'] ?? 0).round(),
+    };
+    final stats = values.values.fold<int>(0, (sum, value) => sum + value);
+    int sourceValue(String raw) {
+      final key = oculumNormalizeText(raw).replaceAll(' ', '');
+      if (key.contains('statsskill') || key.contains('statsspes')) return stats;
+      if (key.contains('resilienza')) return values['resilienza'] ?? 0;
+      if (key.contains('volonta')) return values['volonta'] ?? 0;
+      if (key.contains('materia')) return values['materia'] ?? 0;
+      return values['oculum'] ?? 0;
+    }
+
+    // Forma compatta: @StatsSkill10=Danno+3. Il numero dopo Skill e' la
+    // soglia, il valore dopo = e' il bonus per ogni soglia completata.
+    var result = text.replaceAllMapped(
+      RegExp(
+        r'@?([a-zà-ÿ]+skill)(\d+)\s*=\s*([a-zà-ÿ_]+)\s*([+-]\s*\d+)',
+        caseSensitive: false,
+      ),
+      (match) {
+        final threshold = int.tryParse(match.group(2) ?? '') ?? 0;
+        if (threshold <= 0) return match.group(0)!;
+        final amount =
+            int.tryParse((match.group(4) ?? '').replaceAll(' ', '')) ?? 0;
+        final times = sourceValue(match.group(1) ?? '') ~/ threshold;
+        return '${amount * times} ${match.group(3)!.trim()}';
+      },
+    );
+    // Un comando del tipo "+3 Danni ogni 10 StatsSkill" e' calcolato
+    // nell'esatta attivazione a cui appartiene il testo, non sul contatore
+    // generale del personaggio. Vale per qualunque bersaglio del parser.
+    result = result.replaceAllMapped(
+      RegExp(
+        r'([+-]?\d+)\s+([^,;\n]+?)\s+(?:ogni|every)\s+(\d+)\s+([a-zà-ÿ_]+)',
+        caseSensitive: false,
+      ),
+      (match) {
+        final threshold = int.tryParse(match.group(3) ?? '') ?? 0;
+        if (threshold <= 0) return match.group(0)!;
+        final rawSource = match.group(4) ?? '';
+        if (!RegExp(
+          r'(?:skill|immess|spes|utilizz)',
+          caseSensitive: false,
+        ).hasMatch(rawSource)) {
+          return match.group(0)!;
+        }
+        final amount = int.tryParse(match.group(1) ?? '') ?? 0;
+        final times = sourceValue(rawSource) ~/ threshold;
+        return '${amount * times} ${match.group(2)!.trim()}';
+      },
+    );
+    final replacements = <RegExp, String>{
+      RegExp(r'@?oculum(?:immess\w*|skill|utilizzat\w*)', caseSensitive: false):
+          '${values['oculum']}',
+      RegExp(
+        r'@?resilienza(?:skill|immess\w*|utilizzat\w*)',
+        caseSensitive: false,
+      ): '${values['resilienza']}',
+      RegExp(
+        r'@?volonta(?:skill|immess\w*|utilizzat\w*)',
+        caseSensitive: false,
+      ): '${values['volonta']}',
+      RegExp(
+        r'@?materia(?:skill|immess\w*|utilizzat\w*)',
+        caseSensitive: false,
+      ): '${values['materia']}',
+      RegExp(r'@?statsskill', caseSensitive: false): '$stats',
+    };
+    for (final entry in replacements.entries) {
+      result = result.replaceAll(entry.key, entry.value);
+    }
+    return result;
+  }
+
   Iterable<String> skillQuickCommandTexts(CharacterSkill skill) sync* {
     skill.ensureForms();
     yield skill.nome;
-    for (final form in skill.forme) {
-      yield* form.quickCommandTexts(subtraits: hiddenEyeStats);
+    final skillIndex = skills.indexOf(skill);
+    for (var formIndex = 0; formIndex < skill.forme.length; formIndex++) {
+      final resources =
+          skillActivationSpentResources[skillFormActivationKey(
+            skillIndex,
+            formIndex,
+          )] ??
+          const <String, num>{};
+      for (final text in skill.forme[formIndex].quickCommandTexts(
+        subtraits: hiddenEyeStats,
+      )) {
+        yield replaceSkillSpentTokens(text, resources);
+      }
     }
   }
 
@@ -1888,7 +2008,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     for (final skill in art.skills) {
       if (artSkillBonusLevel(skill) <= 0) continue;
-      yield artSkillActiveLevelText(skill);
+      yield replaceSkillSpentTokens(
+        artSkillActiveLevelText(skill),
+        skillActivationSpentResources[artSkillActivationKey(art, skill)] ??
+            const <String, num>{},
+      );
     }
 
     if (isRuneArt(art)) {

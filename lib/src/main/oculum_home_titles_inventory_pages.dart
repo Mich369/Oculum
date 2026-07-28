@@ -960,6 +960,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     if (limitsChanged || masteryPreview.appliedIncrease > 0) {
       recordSkillFormOculumProgress(skillIndex, formIndex);
     }
+    recordSkillActivationSpent(
+      skillFormActivationKey(skillIndex, formIndex),
+      <String, num>{'oculum': oculumImmesso},
+    );
     final structuredMessages = applyStructuredEffectsOnActivation(
       form.effettiStrutturati,
       source:

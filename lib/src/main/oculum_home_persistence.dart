@@ -492,6 +492,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'raccoltaVolontaSpesa': raccoltaVolontaSpesa,
       'raccoltaMateriaSpesa': raccoltaMateriaSpesa,
       'raccoltaOculumSpesa': raccoltaOculumSpesa,
+      if (skillActivationSpentResources.isNotEmpty)
+        'skillActivationSpentResources': skillActivationSpentResources.map(
+          (key, value) => MapEntry(key, Map<String, num>.from(value)),
+        ),
     };
     final currentSheet = schedePersonaggio[schedaCorrente];
     currentSheet.addAll(values);
@@ -1282,6 +1286,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'raccoltaVolontaSpesa': raccoltaVolontaSpesa,
       'raccoltaMateriaSpesa': raccoltaMateriaSpesa,
       'raccoltaOculumSpesa': raccoltaOculumSpesa,
+      if (skillActivationSpentResources.isNotEmpty)
+        'skillActivationSpentResources': skillActivationSpentResources.map(
+          (key, value) => MapEntry(key, Map<String, num>.from(value)),
+        ),
       'levelUpDaAssegnare': levelUpDaAssegnare,
       'monsterStatPoints': monsterStatPoints,
       'titoli': titoli.map((x) => x.toJson()).toList(),
@@ -1577,6 +1585,25 @@ extension _OculumHomePersistence on _OculumHomePageState {
     raccoltaVolontaSpesa = readIntValue(json['raccoltaVolontaSpesa']);
     raccoltaMateriaSpesa = readIntValue(json['raccoltaMateriaSpesa']);
     raccoltaOculumSpesa = readIntValue(json['raccoltaOculumSpesa']);
+    skillActivationSpentResources
+      ..clear()
+      ..addAll(
+        ((json['skillActivationSpentResources'] is Map)
+                ? json['skillActivationSpentResources'] as Map
+                : const <dynamic, dynamic>{})
+            .map<String, Map<String, num>>((key, value) {
+              final raw = value is Map ? value : const <dynamic, dynamic>{};
+              return MapEntry(
+                '$key',
+                raw.map<String, num>(
+                  (resource, amount) => MapEntry(
+                    oculumDynamicFormulaKey('$resource'),
+                    max(0, readIntValue(amount)),
+                  ),
+                ),
+              );
+            }),
+      );
 
     levelUpDaAssegnare = readIntValue(json['levelUpDaAssegnare']);
     monsterStatPoints = readIntValue(json['monsterStatPoints']);

@@ -1616,6 +1616,10 @@ class _OculumHomePageState extends State<OculumHomePage>
   int raccoltaVolontaSpesa = 0;
   int raccoltaMateriaSpesa = 0;
   int raccoltaOculumSpesa = 0;
+  // Risorse dell'ultima attivazione, separate per Skill/Forma. Non sostituisce
+  // i contatori generali di riposo: serve ai parser @OculumImmesso e StatsSkill.
+  final Map<String, Map<String, num>> skillActivationSpentResources =
+      <String, Map<String, num>>{};
 
   int levelUpDaAssegnare = 0;
   int monsterStatPoints = 0;

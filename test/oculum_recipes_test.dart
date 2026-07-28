@@ -45,6 +45,32 @@ void main() {
       expect(restored.ingredients.single.grams, '5');
     });
 
+    test('la ricetta Forge conserva peso, tempo e attributi', () {
+      const recipe = OculumRecipe(
+        id: 'forge_1',
+        name: 'Roccia',
+        ingredients: [OculumRecipeIngredient(name: 'Pietra', grams: '5')],
+        resultName: 'Roccia attiva',
+        resultDescription: 'Difesa basata su Oculum.',
+        masterNotes: '',
+        visibleToPlayers: true,
+        createdAt: '',
+        updatedAt: '',
+        recipeKind: 'forge',
+        forgeWeightMinKg: '5',
+        forgeWeightMaxKg: '30',
+        forgeDuration: '50 min',
+        forgeAttributes: 'hollow resilience\nforgecraft',
+      );
+
+      final restored = OculumRecipe.fromJson(recipe.toJson());
+      expect(restored.recipeKind, 'forge');
+      expect(restored.forgeWeightMinKg, '5');
+      expect(restored.forgeWeightMaxKg, '30');
+      expect(restored.forgeDuration, '50 min');
+      expect(restored.forgeAttributes, contains('forgecraft'));
+    });
+
     test('ricerca per nome, ingrediente e risultato e nasconde i segreti', () {
       const visible = OculumRecipe(
         id: 'visible',
