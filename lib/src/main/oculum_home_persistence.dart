@@ -214,6 +214,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
     'raccoltaVolontaSpesa',
     'raccoltaMateriaSpesa',
     'raccoltaOculumSpesa',
+    'presaMaterialiGrammi',
+    'presaMaterialiBonusTemporaneoGrammi',
   ];
 
   Future<File> _progressJournalFile() async {
@@ -492,6 +494,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'raccoltaVolontaSpesa': raccoltaVolontaSpesa,
       'raccoltaMateriaSpesa': raccoltaMateriaSpesa,
       'raccoltaOculumSpesa': raccoltaOculumSpesa,
+      'presaMaterialiGrammi': presaMaterialiGrammi,
+      'presaMaterialiBonusTemporaneoGrammi':
+          presaMaterialiBonusTemporaneoGrammi,
       if (skillActivationSpentResources.isNotEmpty)
         'skillActivationSpentResources': skillActivationSpentResources.map(
           (key, value) => MapEntry(key, Map<String, num>.from(value)),
@@ -1288,6 +1293,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'raccoltaVolontaSpesa': raccoltaVolontaSpesa,
       'raccoltaMateriaSpesa': raccoltaMateriaSpesa,
       'raccoltaOculumSpesa': raccoltaOculumSpesa,
+      'presaMaterialiGrammi': presaMaterialiGrammi,
+      'presaMaterialiBonusTemporaneoGrammi':
+          presaMaterialiBonusTemporaneoGrammi,
       if (skillActivationSpentResources.isNotEmpty)
         'skillActivationSpentResources': skillActivationSpentResources.map(
           (key, value) => MapEntry(key, Map<String, num>.from(value)),
@@ -1593,6 +1601,25 @@ extension _OculumHomePersistence on _OculumHomePageState {
     raccoltaVolontaSpesa = readIntValue(json['raccoltaVolontaSpesa']);
     raccoltaMateriaSpesa = readIntValue(json['raccoltaMateriaSpesa']);
     raccoltaOculumSpesa = readIntValue(json['raccoltaOculumSpesa']);
+    presaMaterialiBonusTemporaneoGrammi = max(
+      0,
+      json.containsKey('presaMaterialiBonusTemporaneoGrammi')
+          ? readIntValue(json['presaMaterialiBonusTemporaneoGrammi'])
+          : readIntValue(json['presaMaterialiBonusTemporaneoMezziKg']) * 500,
+    );
+    final presaMaterialiMassimoCaricato =
+        max(0, currentStatValue('volonta')) * 500 +
+        presaMaterialiBonusTemporaneoGrammi;
+    presaMaterialiGrammi = json.containsKey('presaMaterialiGrammi')
+        ? readIntValue(
+            json['presaMaterialiGrammi'],
+          ).clamp(0, presaMaterialiMassimoCaricato)
+        : json.containsKey('presaMaterialiMezziKg')
+        ? (readIntValue(json['presaMaterialiMezziKg']) * 500).clamp(
+            0,
+            presaMaterialiMassimoCaricato,
+          )
+        : presaMaterialiMassimoCaricato;
     skillActivationSpentResources
       ..clear()
       ..addAll(

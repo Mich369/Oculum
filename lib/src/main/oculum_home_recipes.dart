@@ -5,6 +5,166 @@ part of '../../main.dart';
 extension _OculumHomeRecipes on _OculumHomePageState {
   bool get canManageRecipes => modalitaMaster || isMasterHost;
 
+  int presaMaterialiMassimoBaseGrammi() =>
+      max(0, currentStatValue('volonta')) * 500;
+
+  int presaMaterialiMassimoGrammi() =>
+      presaMaterialiMassimoBaseGrammi() +
+      max(0, presaMaterialiBonusTemporaneoGrammi);
+
+  String formatoPesoMateriali(int grammi) {
+    final safe = max(0, grammi);
+    if (safe < 1000) return '$safe g';
+    final kg = safe / 1000;
+    final decimals = safe % 1000 == 0 ? 0 : (safe % 10 == 0 ? 2 : 3);
+    return '${kg.toStringAsFixed(decimals).replaceAll('.', ',')} kg';
+  }
+
+  int? _leggiGrammiDaKg(String raw, {bool allowZero = false}) {
+    final lowered = raw.trim().toLowerCase();
+    final isGrams = lowered.endsWith('g') && !lowered.endsWith('kg');
+    final normalized = lowered
+        .replaceAll(isGrams ? 'g' : 'kg', '')
+        .trim()
+        .replaceAll(',', '.');
+    final parsed = double.tryParse(normalized);
+    if (parsed == null || parsed < 0 || (!allowZero && parsed == 0)) {
+      return null;
+    }
+    final grams = isGrams ? parsed : parsed * 1000;
+    if ((grams - grams.round()).abs() > 0.001) return null;
+    return grams.round();
+  }
+
+  Future<double?> _chiediKg({
+    required String title,
+    required String label,
+    String initial = '0,5',
+    bool allowZero = false,
+  }) async {
+    final controller = TextEditingController(text: initial);
+    final result = await showDialog<double>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.text,
+          decoration: InputDecoration(
+            labelText: label,
+            helperText: t(
+              'Scrivi 5g, 120g oppure i kg (es. 0,125).',
+              'Enter 5g, 120g or kg (e.g. 0.125).',
+            ),
+          ),
+          onSubmitted: (_) {
+            final grams = _leggiGrammiDaKg(
+              controller.text,
+              allowZero: allowZero,
+            );
+            if (grams != null) {
+              Navigator.pop(dialogContext, grams / 1000);
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () {
+              final grams = _leggiGrammiDaKg(
+                controller.text,
+                allowZero: allowZero,
+              );
+              if (grams == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      t(
+                        'Inserisci un valore valido fino al singolo grammo.',
+                        'Enter a valid value down to one gram.',
+                      ),
+                    ),
+                  ),
+                );
+                return;
+              }
+              Navigator.pop(dialogContext, grams / 1000);
+            },
+            child: Text(t('Conferma', 'Confirm')),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result;
+  }
+
+  Future<void> _usaPresaMateriali() async {
+    final kg = await _chiediKg(
+      title: t('Raccogli materiali', 'Gather materials'),
+      label: t('Quanto prendi/spendi (kg)', 'Amount taken/spent (kg)'),
+    );
+    if (kg == null || !mounted) return;
+    final requested = (kg * 1000).round();
+    if (requested > presaMaterialiGrammi) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t(
+              'Presa insufficiente: disponibili ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+              'Insufficient capacity: ${formatoPesoMateriali(presaMaterialiGrammi)} available.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+    setState(() {
+      presaMaterialiGrammi -= requested;
+      risultato = t(
+        'Materiali presi: ${formatoPesoMateriali(requested)}. Presa rimasta: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+        'Materials taken: ${formatoPesoMateriali(requested)}. Remaining capacity: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+      );
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  Future<void> _aumentaPresaMaterialiTemporanea() async {
+    final kg = await _chiediKg(
+      title: t('Aumento temporaneo', 'Temporary increase'),
+      label: t('Bonus temporaneo (kg)', 'Temporary bonus (kg)'),
+    );
+    if (kg == null || !mounted) return;
+    final added = (kg * 1000).round();
+    setState(() {
+      presaMaterialiBonusTemporaneoGrammi += added;
+      presaMaterialiGrammi += added;
+      risultato = t(
+        'Presa materiali aumentata temporaneamente di ${formatoPesoMateriali(added)}.',
+        'Material capacity temporarily increased by ${formatoPesoMateriali(added)}.',
+      );
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  void _refullaPresaMateriali() {
+    setState(() {
+      presaMaterialiGrammi = presaMaterialiMassimoGrammi();
+      risultato = t(
+        'Presa materiali ricaricata manualmente a ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+        'Material capacity manually refilled to ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+      );
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
   String _newRecipeId() =>
       'recipe_${DateTime.now().microsecondsSinceEpoch}_${Random().nextInt(999999)}';
 
@@ -276,7 +436,10 @@ extension _OculumHomeRecipes on _OculumHomePageState {
 
   Widget recipesPage() {
     final isMaster = canManageRecipes;
-    final gatherableMaterialKg = max(0, currentStatValue('volonta') ~/ 2);
+    final gatherableMaterialKg = formatoPesoMateriali(presaMaterialiGrammi);
+    final gatherableMaterialMaxKg = formatoPesoMateriali(
+      presaMaterialiMassimoGrammi(),
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       child: Column(
@@ -358,16 +521,19 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                 color: const Color(0xFFFFA726).withValues(alpha: 0.55),
               ),
             ),
-            child: Row(
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Icon(Icons.scale_outlined, color: Color(0xFFFFA726)),
-                const SizedBox(width: 10),
-                Expanded(
+                SizedBox(
+                  width: 360,
                   child: Text(
                     t(
-                      'Presa materiali: $gatherableMaterialKg kg '
+                      'Presa materiali: $gatherableMaterialKg / $gatherableMaterialMaxKg '
                           '(Volontà ${currentStatValue('volonta')} ÷ 2)',
-                      'Material capacity: $gatherableMaterialKg kg '
+                      'Material capacity: $gatherableMaterialKg / $gatherableMaterialMaxKg '
                           '(Will ${currentStatValue('volonta')} ÷ 2)',
                     ),
                     style: const TextStyle(
@@ -375,6 +541,21 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
+                ),
+                FilledButton.icon(
+                  onPressed: _usaPresaMateriali,
+                  icon: const Icon(Icons.inventory_2_outlined),
+                  label: Text(t('Prendi', 'Take')),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _aumentaPresaMaterialiTemporanea,
+                  icon: const Icon(Icons.add),
+                  label: Text(t('Bonus temporaneo', 'Temporary bonus')),
+                ),
+                IconButton(
+                  tooltip: t('Ricarica manualmente', 'Refill manually'),
+                  onPressed: _refullaPresaMateriali,
+                  icon: const Icon(Icons.refresh),
                 ),
               ],
             ),
@@ -491,7 +672,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   }
 
   Widget _recipeCard(OculumRecipe recipe, {required bool isMaster}) {
-    final gatherableMaterialKg = max(0, currentStatValue('volonta') ~/ 2);
+    final gatherableMaterialKg = formatoPesoMateriali(presaMaterialiGrammi);
     final categoryColor = switch (recipe.recipeKind) {
       'forge' =>
         recipe.personal ? const Color(0xFFFFA726) : const Color(0xFFE53935),
@@ -565,7 +746,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                 _recipeSectionTitle('Forge'),
                 const SizedBox(height: 6),
                 Text(
-                  '${t('Peso', 'Weight')}: ${recipe.forgeWeightMinKg.isEmpty ? '?' : recipe.forgeWeightMinKg}–${recipe.forgeWeightMaxKg.isEmpty ? '?' : recipe.forgeWeightMaxKg} kg · ${t('Presa', 'Capacity')}: $gatherableMaterialKg kg',
+                  '${t('Peso', 'Weight')}: ${recipe.forgeWeightMinKg.isEmpty ? '?' : recipe.forgeWeightMinKg}–${recipe.forgeWeightMaxKg.isEmpty ? '?' : recipe.forgeWeightMaxKg} kg · ${t('Presa', 'Capacity')}: $gatherableMaterialKg',
                   style: const TextStyle(color: Colors.white70),
                 ),
                 if (recipe.forgeDuration.trim().isNotEmpty)

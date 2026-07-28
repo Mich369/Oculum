@@ -1042,12 +1042,26 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       raccoltaVolontaSpesa = max(0, raccoltaVolontaSpesa ~/ 2);
       raccoltaMateriaSpesa = max(0, raccoltaMateriaSpesa ~/ 2);
       raccoltaOculumSpesa = max(0, raccoltaOculumSpesa ~/ 2);
+      final presaMassima = presaMaterialiMassimoGrammi();
+      final recuperoPresa = presaMassima <= 0
+          ? 0
+          : max(500, (presaMassima / 4).ceil());
+      presaMaterialiGrammi = min(
+        presaMassima,
+        presaMaterialiGrammi + recuperoPresa,
+      );
       malusTiriOculumPostEsplosione = 0;
 
       ultimoEventoRiposo = t(
         'Riposo breve: recuperata metà delle penalità temporanee, metà delle stats attuali mancanti e 25% di Cenere, minimo 1.',
         'Short rest: recovered half of temporary penalties, half of missing current stats and 25% Ash, minimum 1.',
       );
+      if (recuperoPresa > 0) {
+        ultimoEventoRiposo += t(
+          '\nPresa materiali recuperata: ${formatoPesoMateriali(recuperoPresa)} (massimo ${formatoPesoMateriali(presaMassima)}).',
+          '\nMaterial capacity recovered: ${formatoPesoMateriali(recuperoPresa)} (maximum ${formatoPesoMateriali(presaMassima)}).',
+        );
+      }
       if (rimuoveMalusEsplosione) {
         ultimoEventoRiposo += t(
           '\nMalus Esplosione di Oculum rimosso.',
@@ -1094,6 +1108,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       raccoltaVolontaSpesa = 0;
       raccoltaMateriaSpesa = 0;
       raccoltaOculumSpesa = 0;
+      presaMaterialiBonusTemporaneoGrammi = 0;
+      presaMaterialiGrammi = presaMaterialiMassimoBaseGrammi();
 
       sessioniSenzaBisogniController.text = '0';
 
@@ -1131,6 +1147,10 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       ultimoEventoRiposo = t(
         'Riposo lungo completato: dura 1 ora e mezza. Recupera metà Resilienza negativa, tutto Oculum negativo, tutte le stats attuali, 50% di Cenere minimo 3 e porta gli HP ad almeno il 75% del massimale.',
         'Long rest completed: it lasts 1.5 hours. It recovers half negative Resilience, all negative Oculum, all current stats, 50% Ash minimum 3 and brings HP to at least 75% of maximum.',
+      );
+      ultimoEventoRiposo += t(
+        '\nPresa materiali ricaricata al massimo: ${formatoPesoMateriali(presaMaterialiGrammi)}; bonus temporanei rimossi.',
+        '\nMaterial capacity refilled: ${formatoPesoMateriali(presaMaterialiGrammi)}; temporary bonuses removed.',
       );
       if (rimuoveMalusEsplosione) {
         ultimoEventoRiposo += t(
@@ -1256,6 +1276,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       raccoltaVolontaSpesa = 0;
       raccoltaMateriaSpesa = 0;
       raccoltaOculumSpesa = 0;
+      presaMaterialiBonusTemporaneoGrammi = 0;
+      presaMaterialiGrammi = presaMaterialiMassimoBaseGrammi();
 
       sessioniSenzaBisogniController.text = '0';
       giorniSenzaCiboAcquaController.text = '0';
