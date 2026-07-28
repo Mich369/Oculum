@@ -1413,6 +1413,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final List<String> diarioPagine = [];
   final List<OculumSessionNote> storySessionNotes = [];
   final List<OculumRecipe> recipes = [];
+  final List<OculumRecipe> personalRecipes = [];
+  String selectedForgeTemplateId = '';
   final List<JournalEntry> journalEntries = [];
   final List<DraftNote> draftNotes = [];
   final List<HiddenEyeStat> hiddenEyeStats = [];

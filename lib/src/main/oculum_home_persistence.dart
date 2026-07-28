@@ -1062,6 +1062,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'titoli': [],
       'trattiRazziali': [],
       'inventario': [],
+      'personalRecipes': <Map<String, dynamic>>[],
+      'selectedForgeTemplateId': '',
       'skills': [],
       'arti': artiBase().map((x) => x.toJson()).toList(),
       'diarioPagine': [],
@@ -1295,6 +1297,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'titoli': titoli.map((x) => x.toJson()).toList(),
       'trattiRazziali': trattiRazziali.map((x) => x.toJson()).toList(),
       'inventario': inventario.map((x) => x.toJson()).toList(),
+      if (personalRecipes.isNotEmpty)
+        'personalRecipes': personalRecipes
+            .map((recipe) => recipe.toJson())
+            .toList(growable: false),
+      if (selectedForgeTemplateId.isNotEmpty)
+        'selectedForgeTemplateId': selectedForgeTemplateId,
       'skills': skills.map((x) => x.toJson()).toList(),
       'arti': arti.map((x) => x.toJson()).toList(),
       'diarioPagine': List<String>.from(diarioPagine),
@@ -1634,6 +1642,22 @@ extension _OculumHomePersistence on _OculumHomePageState {
           (x) => InventoryItem.fromJson(Map<String, dynamic>.from(x)),
         ),
       );
+
+    personalRecipes
+      ..clear()
+      ..addAll(
+        (((json['personalRecipes'] ?? json['personalForgeRecipes']) is List)
+                ? (json['personalRecipes'] ?? json['personalForgeRecipes'])
+                      as List
+                : const <dynamic>[])
+            .whereType<Map>()
+            .map(
+              (recipe) => OculumRecipe.fromJson(
+                Map<String, dynamic>.from(recipe),
+              ).copyWith(personal: true),
+            ),
+      );
+    selectedForgeTemplateId = '${json['selectedForgeTemplateId'] ?? ''}';
 
     final skillsRaw = json['skills'];
     skills

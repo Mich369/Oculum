@@ -2322,11 +2322,16 @@ class OculumRecipe {
     required this.visibleToPlayers,
     required this.createdAt,
     required this.updatedAt,
-    this.recipeKind = 'standard',
+    this.recipeKind = 'crafting',
     this.forgeWeightMinKg = '',
     this.forgeWeightMaxKg = '',
     this.forgeDuration = '',
     this.forgeAttributes = '',
+    this.forgeEffectText = '',
+    this.forgeTarget = 'auto',
+    this.personal = false,
+    this.ownerTag = '',
+    this.sourceRecipeId = '',
   });
 
   final String id;
@@ -2343,6 +2348,11 @@ class OculumRecipe {
   final String forgeWeightMaxKg;
   final String forgeDuration;
   final String forgeAttributes;
+  final String forgeEffectText;
+  final String forgeTarget;
+  final bool personal;
+  final String ownerTag;
+  final String sourceRecipeId;
 
   OculumRecipe copyWith({
     String? id,
@@ -2359,6 +2369,11 @@ class OculumRecipe {
     String? forgeWeightMaxKg,
     String? forgeDuration,
     String? forgeAttributes,
+    String? forgeEffectText,
+    String? forgeTarget,
+    bool? personal,
+    String? ownerTag,
+    String? sourceRecipeId,
   }) {
     return OculumRecipe(
       id: id ?? this.id,
@@ -2375,6 +2390,11 @@ class OculumRecipe {
       forgeWeightMaxKg: forgeWeightMaxKg ?? this.forgeWeightMaxKg,
       forgeDuration: forgeDuration ?? this.forgeDuration,
       forgeAttributes: forgeAttributes ?? this.forgeAttributes,
+      forgeEffectText: forgeEffectText ?? this.forgeEffectText,
+      forgeTarget: forgeTarget ?? this.forgeTarget,
+      personal: personal ?? this.personal,
+      ownerTag: ownerTag ?? this.ownerTag,
+      sourceRecipeId: sourceRecipeId ?? this.sourceRecipeId,
     );
   }
 
@@ -2393,6 +2413,11 @@ class OculumRecipe {
     'forgeWeightMaxKg': forgeWeightMaxKg,
     'forgeDuration': forgeDuration,
     'forgeAttributes': forgeAttributes,
+    'forgeEffectText': forgeEffectText,
+    'forgeTarget': forgeTarget,
+    'personal': personal,
+    'ownerTag': ownerTag,
+    'sourceRecipeId': sourceRecipeId,
   };
 
   factory OculumRecipe.fromJson(Map<String, dynamic> json) {
@@ -2428,9 +2453,13 @@ class OculumRecipe {
       createdAt: '${json['createdAt'] ?? now}',
       updatedAt: '${json['updatedAt'] ?? now}',
       recipeKind:
-          '${json['recipeKind'] ?? json['tipo'] ?? 'standard'}' == 'forge'
-          ? 'forge'
-          : 'standard',
+          <String>{
+            'forge',
+            'crafting',
+            'alchemy',
+          }.contains('${json['recipeKind'] ?? json['tipo'] ?? 'crafting'}')
+          ? '${json['recipeKind'] ?? json['tipo'] ?? 'crafting'}'
+          : 'crafting',
       forgeWeightMinKg:
           '${json['forgeWeightMinKg'] ?? json['pesoMinKg'] ?? ''}',
       forgeWeightMaxKg:
@@ -2441,6 +2470,20 @@ class OculumRecipe {
       forgeAttributes: oculumCleanMojibakeText(
         '${json['forgeAttributes'] ?? json['attributiForge'] ?? ''}',
       ).trim(),
+      forgeEffectText: oculumCleanMojibakeText(
+        '${json['forgeEffectText'] ?? json['effettiForge'] ?? ''}',
+      ).trim(),
+      forgeTarget:
+          <String>{
+            'auto',
+            'arma',
+            'protezione',
+          }.contains('${json['forgeTarget'] ?? 'auto'}')
+          ? '${json['forgeTarget'] ?? 'auto'}'
+          : 'auto',
+      personal: readBoolValue(json['personal']),
+      ownerTag: '${json['ownerTag'] ?? ''}',
+      sourceRecipeId: '${json['sourceRecipeId'] ?? ''}',
     );
   }
 }

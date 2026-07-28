@@ -71,6 +71,27 @@ void main() {
       expect(restored.forgeAttributes, contains('forgecraft'));
     });
 
+    test('categorie e copie personali restano separate nel JSON', () {
+      final legacy = OculumRecipe.fromJson(<String, dynamic>{
+        'id': 'legacy',
+        'name': 'Vecchia ricetta',
+      });
+      expect(legacy.recipeKind, 'crafting');
+
+      final personal = legacy.copyWith(
+        id: 'personal',
+        recipeKind: 'alchemy',
+        personal: true,
+        ownerTag: 'PLAYER-1',
+        sourceRecipeId: 'legacy',
+      );
+      final restored = OculumRecipe.fromJson(personal.toJson());
+      expect(restored.recipeKind, 'alchemy');
+      expect(restored.personal, isTrue);
+      expect(restored.ownerTag, 'PLAYER-1');
+      expect(restored.sourceRecipeId, 'legacy');
+    });
+
     test('ricerca per nome, ingrediente e risultato e nasconde i segreti', () {
       const visible = OculumRecipe(
         id: 'visible',

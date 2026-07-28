@@ -23,6 +23,8 @@ class OculumRealtimeService {
     'session_note',
     'session_notes_request',
     'session_notes_snapshot',
+    'recipes_request',
+    'recipes_snapshot',
     'vtt_scene_request',
     'vtt_scene_shared',
     'vtt_asset_chunk',
@@ -267,6 +269,34 @@ class OculumRealtimeService {
       'campaignId': campaignId,
       'campaignName': campaignName,
       'sentAt': _nowIso(),
+    });
+  }
+
+  Future<void> sendRecipesRequest({
+    required String requesterTag,
+    required String campaignId,
+  }) {
+    return _send('recipes_request', <String, dynamic>{
+      'playerName': _displayName,
+      'requesterTag': requesterTag,
+      'campaignId': campaignId,
+      'sentAt': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<void> sendRecipesSnapshot({
+    required List<Map<String, dynamic>> recipes,
+    required String campaignId,
+    required String campaignName,
+    String targetTag = '',
+  }) {
+    return _send('recipes_snapshot', <String, dynamic>{
+      'playerName': _displayName,
+      'campaignId': campaignId,
+      'campaignName': campaignName,
+      'targetTag': targetTag,
+      'recipes': recipes,
+      'sentAt': DateTime.now().toIso8601String(),
     });
   }
 

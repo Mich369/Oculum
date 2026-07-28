@@ -1,21 +1,89 @@
 part of '../../main.dart';
 
+// ignore_for_file: invalid_use_of_protected_member
+
 extension _OculumHomeRecipes on _OculumHomePageState {
   bool get canManageRecipes => modalitaMaster || isMasterHost;
 
   String _newRecipeId() =>
       'recipe_${DateTime.now().microsecondsSinceEpoch}_${Random().nextInt(999999)}';
 
-  void _notifyRecipesChanged() {
+  bool _recipeTargetMatches(String rawTarget) {
+    final target = rawTarget.trim().toUpperCase();
+    if (target.isEmpty) return true;
+    return localOculumTags()
+        .map((tag) => tag.trim().toUpperCase())
+        .contains(target);
+  }
+
+  bool receiveRealtimeRecipesSnapshot(Map<String, dynamic> payload) {
+    if ('${payload['campaignId'] ?? ''}'.trim() != activeCampaignId ||
+        !_recipeTargetMatches('${payload['targetTag'] ?? ''}')) {
+      return false;
+    }
+    final raw = payload['recipes'];
+    if (raw is! List) return false;
+    final incoming = raw
+        .whereType<Map>()
+        .map((item) => OculumRecipe.fromJson(Map<String, dynamic>.from(item)))
+        .where((recipe) => !recipe.personal)
+        .toList(growable: false);
+    final current = recipes
+        .map((recipe) => jsonEncode(recipe.toJson()))
+        .join('|');
+    final next = incoming
+        .map((recipe) => jsonEncode(recipe.toJson()))
+        .join('|');
+    if (current == next) return false;
+    recipes
+      ..clear()
+      ..addAll(incoming);
+    recipesRevision.value++;
+    return true;
+  }
+
+  Future<void> sendRealtimeRecipesSnapshot({String targetTag = ''}) async {
+    final service = realtimeService;
+    if (service?.isConnected != true || !realtimeIsMasterRole) return;
+    await service!.sendRecipesSnapshot(
+      recipes: recipes.map((recipe) => recipe.toJson()).toList(growable: false),
+      campaignId: activeCampaignId,
+      campaignName: activeCampaignName(),
+      targetTag: targetTag,
+    );
+  }
+
+  void syncRealtimeRecipes() {
+    final service = realtimeService;
+    if (service?.isConnected != true) return;
+    if (realtimeIsMasterRole) {
+      unawaited(sendRealtimeRecipesSnapshot());
+    } else {
+      unawaited(
+        service!.sendRecipesRequest(
+          requesterTag: storySessionAuthorTag(),
+          campaignId: activeCampaignId,
+        ),
+      );
+    }
+  }
+
+  void _notifyRecipesChanged({bool campaignShared = true}) {
     recipesRevision.value++;
     programmaSalvataggio(
       invalidateCaches: false,
       delay: const Duration(milliseconds: 450),
     );
+    if (campaignShared && realtimeIsMasterRole) {
+      unawaited(sendRealtimeRecipesSnapshot());
+    }
   }
 
   Future<void> _openRecipeEditor([OculumRecipe? existing]) async {
-    if (!canManageRecipes || recipeMutationInProgress) return;
+    final personalEdit = existing?.personal == true;
+    if ((!canManageRecipes && !personalEdit) || recipeMutationInProgress) {
+      return;
+    }
     recipeMutationInProgress = true;
     try {
       final result = await showDialog<OculumRecipe>(
@@ -29,15 +97,18 @@ extension _OculumHomeRecipes on _OculumHomePageState {
           english: linguaInglese,
         ),
       );
-      if (!mounted || result == null || !canManageRecipes) return;
-
-      final existingIndex = recipes.indexWhere((item) => item.id == result.id);
-      if (existingIndex >= 0) {
-        recipes[existingIndex] = result;
-      } else {
-        recipes.insert(0, result);
+      if (!mounted || result == null || (!canManageRecipes && !personalEdit)) {
+        return;
       }
-      _notifyRecipesChanged();
+
+      final target = result.personal ? personalRecipes : recipes;
+      final existingIndex = target.indexWhere((item) => item.id == result.id);
+      if (existingIndex >= 0) {
+        target[existingIndex] = result;
+      } else {
+        target.insert(0, result);
+      }
+      _notifyRecipesChanged(campaignShared: !result.personal);
     } finally {
       recipeMutationInProgress = false;
     }
@@ -71,7 +142,9 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   }
 
   Future<void> _deleteRecipe(OculumRecipe recipe) async {
-    if (!canManageRecipes || recipeMutationInProgress) return;
+    if ((!canManageRecipes && !recipe.personal) || recipeMutationInProgress) {
+      return;
+    }
     recipeMutationInProgress = true;
     try {
       final confirmed = await showDialog<bool>(
@@ -102,12 +175,103 @@ extension _OculumHomeRecipes on _OculumHomePageState {
           ],
         ),
       );
-      if (!mounted || confirmed != true || !canManageRecipes) return;
-      recipes.removeWhere((item) => item.id == recipe.id);
-      _notifyRecipesChanged();
+      if (!mounted || confirmed != true) return;
+      (recipe.personal ? personalRecipes : recipes).removeWhere(
+        (item) => item.id == recipe.id,
+      );
+      _notifyRecipesChanged(campaignShared: !recipe.personal);
     } finally {
       recipeMutationInProgress = false;
     }
+  }
+
+  Future<void> _createPersonalRecipe(OculumRecipe source) async {
+    final owner = storySessionAuthorTag();
+    final now = DateTime.now().toIso8601String();
+    await _openRecipeEditor(
+      source.copyWith(
+        id: _newRecipeId(),
+        name: '${source.name} ${t('(personale)', '(personal)')}',
+        personal: true,
+        ownerTag: owner,
+        sourceRecipeId: source.id,
+        visibleToPlayers: false,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
+  Future<void> _createBlankPersonalRecipe({String category = 'crafting'}) {
+    final now = DateTime.now().toIso8601String();
+    return _openRecipeEditor(
+      OculumRecipe(
+        id: _newRecipeId(),
+        name: '',
+        ingredients: const <OculumRecipeIngredient>[],
+        resultName: '',
+        resultDescription: '',
+        masterNotes: '',
+        visibleToPlayers: false,
+        createdAt: now,
+        updatedAt: now,
+        recipeKind: category,
+        personal: true,
+        ownerTag: storySessionAuthorTag(),
+      ),
+    );
+  }
+
+  Future<void> _applyPersonalForge(OculumRecipe recipe) async {
+    final candidates = inventario
+        .where((item) {
+          if (recipe.forgeTarget == 'arma') return item.arma;
+          if (recipe.forgeTarget == 'protezione') return item.protegge;
+          return item.arma || item.protegge;
+        })
+        .toList(growable: false);
+    if (candidates.isEmpty || !mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t('Nessun oggetto compatibile.', 'No compatible item.'),
+          ),
+        ),
+      );
+      return;
+    }
+    final selected = await showDialog<InventoryItem>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: Text(t('Applica Forge a…', 'Apply Forge to…')),
+        children: [
+          for (final item in candidates)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(dialogContext, item),
+              child: Text(item.nome),
+            ),
+        ],
+      ),
+    );
+    if (selected == null || !mounted) return;
+    final effect = recipe.forgeEffectText.trim();
+    setState(() {
+      if (effect.isNotEmpty && !selected.buff.contains(effect)) {
+        selected.buff = [
+          selected.buff.trim(),
+          effect,
+        ].where((part) => part.isNotEmpty).join('\n');
+      }
+      final forgeNote = 'Forge: ${recipe.name}';
+      if (!selected.note.contains(forgeNote)) {
+        selected.note = [
+          selected.note.trim(),
+          forgeNote,
+        ].where((part) => part.isNotEmpty).join('\n');
+      }
+    });
+    invalidateDerivedDataCaches();
+    programmaSalvataggio();
   }
 
   Widget recipesPage() {
@@ -147,13 +311,39 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                   ],
                 ),
               ),
-              if (isMaster)
-                FilledButton.icon(
-                  key: const ValueKey<String>('recipe_create_button'),
-                  onPressed: () => _openRecipeEditor(),
-                  icon: const Icon(Icons.add),
-                  label: Text(t('Nuova ricetta', 'New recipe')),
-                ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (isMaster)
+                    FilledButton.icon(
+                      key: const ValueKey<String>('recipe_create_button'),
+                      onPressed: () => _openRecipeEditor(),
+                      icon: const Icon(Icons.add),
+                      label: Text(t('Nuova campagna', 'New campaign recipe')),
+                    ),
+                  OutlinedButton.icon(
+                    onPressed: () => _createBlankPersonalRecipe(),
+                    icon: const Icon(Icons.person_add_alt_1),
+                    label: Text(t('Nuova personale', 'New personal recipe')),
+                  ),
+                  if (selectedForgeTemplateId.isNotEmpty)
+                    FilledButton.icon(
+                      onPressed: () {
+                        final index = recipes.indexWhere(
+                          (recipe) =>
+                              recipe.id == selectedForgeTemplateId &&
+                              recipe.recipeKind == 'forge',
+                        );
+                        if (index >= 0) {
+                          _createPersonalRecipe(recipes[index]);
+                        }
+                      },
+                      icon: const Icon(Icons.auto_fix_high),
+                      label: Text(t('Forgia selezionata', 'Forge selected')),
+                    ),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -196,12 +386,17 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                   ValueListenableBuilder<String>(
                     valueListenable: recipeSearchQuery,
                     builder: (context, query, child) {
-                      final visible = oculumVisibleRecipes(
+                      final visiblePersonal = oculumVisibleRecipes(
+                        recipes: personalRecipes,
+                        isMaster: true,
+                        query: query,
+                      );
+                      final visibleCampaign = oculumVisibleRecipes(
                         recipes: recipes,
                         isMaster: isMaster,
                         query: query,
                       );
-                      if (visible.isEmpty) {
+                      if (visiblePersonal.isEmpty && visibleCampaign.isEmpty) {
                         return Center(
                           child: Text(
                             query.trim().isNotEmpty
@@ -226,13 +421,32 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                           ),
                         );
                       }
-                      return ListView.separated(
+                      return ListView(
                         keyboardDismissBehavior:
                             ScrollViewKeyboardDismissBehavior.onDrag,
-                        itemCount: visible.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) =>
-                            _recipeCard(visible[index], isMaster: isMaster),
+                        children: [
+                          if (visibleCampaign.isNotEmpty) ...[
+                            _recipeSectionTitle(
+                              t('Ricette della campagna', 'Campaign recipes'),
+                            ),
+                            const SizedBox(height: 8),
+                            for (final recipe in visibleCampaign) ...[
+                              _recipeCard(recipe, isMaster: isMaster),
+                              const SizedBox(height: 12),
+                            ],
+                          ],
+                          if (visiblePersonal.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            _recipeSectionTitle(
+                              t('Ricette personali', 'Personal recipes'),
+                            ),
+                            const SizedBox(height: 8),
+                            for (final recipe in visiblePersonal) ...[
+                              _recipeCard(recipe, isMaster: isMaster),
+                              const SizedBox(height: 12),
+                            ],
+                          ],
+                        ],
                       );
                     },
                   ),
@@ -244,13 +458,20 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   }
 
   Widget _recipeCard(OculumRecipe recipe, {required bool isMaster}) {
+    final categoryColor = switch (recipe.recipeKind) {
+      'forge' =>
+        recipe.personal ? const Color(0xFFFFA726) : const Color(0xFFE53935),
+      'alchemy' =>
+        recipe.personal ? const Color(0xFF8BE28B) : const Color(0xFF2EAD5B),
+      _ => recipe.personal ? const Color(0xFF62C7FF) : const Color(0xFF1976D2),
+    };
     return RepaintBoundary(
       key: ValueKey<String>('recipe_card_${recipe.id}'),
       child: Card(
-        color: const Color(0xFF10121A),
+        color: Color.lerp(const Color(0xFF10121A), categoryColor, 0.12),
         elevation: 1,
         shape: RoundedRectangleBorder(
-          side: BorderSide(color: tertiaryColor.withValues(alpha: 0.35)),
+          side: BorderSide(color: categoryColor.withValues(alpha: 0.75)),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Padding(
@@ -265,11 +486,28 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                     child: Text(
                       cleanUiText(recipe.name),
                       style: TextStyle(
-                        color: primaryColor,
+                        color: categoryColor,
                         fontSize: 19,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
+                  ),
+                  if (recipe.personal)
+                    const Chip(
+                      avatar: Icon(Icons.person_outline, size: 16),
+                      label: Text('Personale'),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  const SizedBox(width: 6),
+                  Chip(
+                    label: Text(switch (recipe.recipeKind) {
+                      'forge' => t('Forgia', 'Forge'),
+                      'alchemy' => t('Alchimia', 'Alchemy'),
+                      _ => 'Crafting',
+                    }),
+                    backgroundColor: categoryColor.withValues(alpha: 0.2),
+                    side: BorderSide(color: categoryColor),
+                    visualDensity: VisualDensity.compact,
                   ),
                   if (isMaster)
                     Chip(
@@ -306,6 +544,13 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                   Text(
                     '${t('Attributi', 'Attributes')}: ${cleanUiText(recipe.forgeAttributes)}',
                     style: const TextStyle(color: Colors.white70, height: 1.35),
+                  ),
+                ],
+                if (recipe.forgeEffectText.trim().isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    '${t('Effetti/parser', 'Effects/parser')}: ${cleanUiText(recipe.forgeEffectText)}',
+                    style: TextStyle(color: primaryColor, height: 1.35),
                   ),
                 ],
                 const Divider(height: 24),
@@ -367,7 +612,42 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                   ),
                 ),
               ],
-              if (isMaster) ...[
+              if (!recipe.personal) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    if (recipe.recipeKind == 'forge')
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          selectedForgeTemplateId = recipe.id;
+                          programmaSalvataggio(invalidateCaches: false);
+                          recipesRevision.value++;
+                        },
+                        icon: Icon(
+                          selectedForgeTemplateId == recipe.id
+                              ? Icons.bookmark
+                              : Icons.bookmark_border,
+                        ),
+                        label: Text(t('Segna Forge', 'Mark Forge')),
+                      ),
+                    FilledButton.icon(
+                      onPressed: () => _createPersonalRecipe(recipe),
+                      icon: Icon(
+                        recipe.recipeKind == 'forge'
+                            ? Icons.auto_fix_high
+                            : Icons.person_add_alt_1,
+                      ),
+                      label: Text(
+                        recipe.recipeKind == 'forge'
+                            ? t('Forgia per me', 'Forge for me')
+                            : t('Copia personale', 'Personal copy'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              if (isMaster || recipe.personal) ...[
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
@@ -378,11 +658,18 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                       icon: const Icon(Icons.edit_outlined),
                       label: Text(t('Modifica', 'Edit')),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: () => _duplicateRecipe(recipe),
-                      icon: const Icon(Icons.copy_outlined),
-                      label: Text(t('Duplica', 'Duplicate')),
-                    ),
+                    if (!recipe.personal)
+                      OutlinedButton.icon(
+                        onPressed: () => _duplicateRecipe(recipe),
+                        icon: const Icon(Icons.copy_outlined),
+                        label: Text(t('Duplica', 'Duplicate')),
+                      ),
+                    if (recipe.personal && recipe.recipeKind == 'forge')
+                      FilledButton.icon(
+                        onPressed: () => _applyPersonalForge(recipe),
+                        icon: const Icon(Icons.build_circle_outlined),
+                        label: Text(t('Usa sull’oggetto', 'Use on item')),
+                      ),
                     OutlinedButton.icon(
                       onPressed: () => _deleteRecipe(recipe),
                       icon: const Icon(Icons.delete_outline),
@@ -439,9 +726,11 @@ class _OculumRecipeEditorDialogState extends State<_OculumRecipeEditorDialog> {
   late final TextEditingController _forgeMaxKgController;
   late final TextEditingController _forgeDurationController;
   late final TextEditingController _forgeAttributesController;
+  late final TextEditingController _forgeEffectController;
   final List<_RecipeIngredientControllers> _ingredients = [];
   late bool _visibleToPlayers;
-  late bool _isForge;
+  late String _recipeCategory;
+  late String _forgeTarget;
   bool _submitting = false;
 
   String _t(String italian, String english) =>
@@ -469,8 +758,12 @@ class _OculumRecipeEditorDialogState extends State<_OculumRecipeEditorDialog> {
     _forgeAttributesController = TextEditingController(
       text: existing?.forgeAttributes ?? '',
     );
+    _forgeEffectController = TextEditingController(
+      text: existing?.forgeEffectText ?? '',
+    );
     _visibleToPlayers = existing?.visibleToPlayers ?? true;
-    _isForge = existing?.recipeKind == 'forge';
+    _recipeCategory = existing?.recipeKind ?? 'crafting';
+    _forgeTarget = existing?.forgeTarget ?? 'auto';
     for (final ingredient in existing?.ingredients ?? const []) {
       _ingredients.add(
         _RecipeIngredientControllers(
@@ -492,6 +785,7 @@ class _OculumRecipeEditorDialogState extends State<_OculumRecipeEditorDialog> {
     _forgeMaxKgController.dispose();
     _forgeDurationController.dispose();
     _forgeAttributesController.dispose();
+    _forgeEffectController.dispose();
     for (final ingredient in _ingredients) {
       ingredient.dispose();
     }
@@ -552,11 +846,16 @@ class _OculumRecipeEditorDialogState extends State<_OculumRecipeEditorDialog> {
         visibleToPlayers: _visibleToPlayers,
         createdAt: widget.existing?.createdAt ?? now,
         updatedAt: now,
-        recipeKind: _isForge ? 'forge' : 'standard',
+        recipeKind: _recipeCategory,
         forgeWeightMinKg: _forgeMinKgController.text.trim(),
         forgeWeightMaxKg: _forgeMaxKgController.text.trim(),
         forgeDuration: _forgeDurationController.text.trim(),
         forgeAttributes: _forgeAttributesController.text.trim(),
+        forgeEffectText: _forgeEffectController.text.trim(),
+        forgeTarget: _forgeTarget,
+        personal: widget.existing?.personal ?? false,
+        ownerTag: widget.existing?.ownerTag ?? '',
+        sourceRecipeId: widget.existing?.sourceRecipeId ?? '',
       ),
     );
   }
@@ -588,24 +887,29 @@ class _OculumRecipeEditorDialogState extends State<_OculumRecipeEditorDialog> {
                   label: _t('Nome della ricetta', 'Recipe name'),
                 ),
                 const SizedBox(height: 12),
-                SegmentedButton<bool>(
-                  segments: <ButtonSegment<bool>>[
-                    ButtonSegment<bool>(
-                      value: false,
-                      label: Text(_t('Ricetta', 'Recipe')),
-                      icon: const Icon(Icons.menu_book_outlined),
+                SegmentedButton<String>(
+                  segments: <ButtonSegment<String>>[
+                    const ButtonSegment<String>(
+                      value: 'crafting',
+                      label: Text('Crafting'),
+                      icon: Icon(Icons.menu_book_outlined),
                     ),
-                    ButtonSegment<bool>(
-                      value: true,
-                      label: const Text('Forge'),
+                    ButtonSegment<String>(
+                      value: 'forge',
+                      label: Text(_t('Forgia', 'Forge')),
                       icon: const Icon(Icons.construction_outlined),
                     ),
+                    ButtonSegment<String>(
+                      value: 'alchemy',
+                      label: Text(_t('Alchimia', 'Alchemy')),
+                      icon: const Icon(Icons.science_outlined),
+                    ),
                   ],
-                  selected: <bool>{_isForge},
+                  selected: <String>{_recipeCategory},
                   onSelectionChanged: (selection) =>
-                      setState(() => _isForge = selection.first),
+                      setState(() => _recipeCategory = selection.first),
                 ),
-                if (_isForge) ...[
+                if (_recipeCategory == 'forge') ...[
                   const SizedBox(height: 14),
                   Text(
                     _t('Dati materiale Forge', 'Forge material data'),
@@ -657,6 +961,43 @@ class _OculumRecipeEditorDialogState extends State<_OculumRecipeEditorDialog> {
                     ),
                     minLines: 2,
                     maxLines: 5,
+                    required: false,
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
+                    initialValue: _forgeTarget,
+                    decoration: InputDecoration(
+                      labelText: _t('Oggetto compatibile', 'Compatible item'),
+                      border: const OutlineInputBorder(),
+                    ),
+                    items: <DropdownMenuItem<String>>[
+                      DropdownMenuItem(
+                        value: 'auto',
+                        child: Text(
+                          _t('Arma o protezione', 'Weapon or protection'),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'arma',
+                        child: Text(_t('Solo arma', 'Weapon only')),
+                      ),
+                      DropdownMenuItem(
+                        value: 'protezione',
+                        child: Text(_t('Scudo o armatura', 'Shield or armor')),
+                      ),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _forgeTarget = value ?? 'auto'),
+                  ),
+                  const SizedBox(height: 10),
+                  _field(
+                    controller: _forgeEffectController,
+                    label: _t(
+                      'Effetti e parser applicati all’oggetto',
+                      'Effects and parser applied to the item',
+                    ),
+                    minLines: 3,
+                    maxLines: 8,
                     required: false,
                   ),
                 ],

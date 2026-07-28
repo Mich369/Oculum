@@ -225,6 +225,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       resendRealtimeFriendSheetsForPresence();
     }
     syncStorySessionNotesRealtime();
+    syncRealtimeRecipes();
     if (modalitaMaster) {
       scheduleVttRealtimePublish(includeAsset: true);
     } else {
@@ -463,8 +464,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
     var persistRealtimeRemote = false;
     var persistStoryNotes = false;
+    var persistRecipes = false;
     var showInRealtimeEvents = true;
     var storyNotesRequesterTag = '';
+    var recipesRequesterTag = '';
     final text = realtimeEventText(event, payload);
     setState(() {
       switch (event) {
@@ -479,6 +482,17 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           showInRealtimeEvents = false;
           if (realtimeIsMasterRole) {
             storyNotesRequesterTag = '${payload['requesterTag'] ?? ''}'.trim();
+          }
+          break;
+        case 'recipes_snapshot':
+          persistRecipes = receiveRealtimeRecipesSnapshot(payload);
+          showInRealtimeEvents = false;
+          break;
+        case 'recipes_request':
+          showInRealtimeEvents = false;
+          if (realtimeIsMasterRole &&
+              '${payload['campaignId'] ?? ''}'.trim() == activeCampaignId) {
+            recipesRequesterTag = '${payload['requesterTag'] ?? ''}'.trim();
           }
           break;
         case 'vtt_scene_request':
@@ -550,7 +564,13 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         ),
       );
     }
+    if (recipesRequesterTag.isNotEmpty) {
+      unawaited(sendRealtimeRecipesSnapshot(targetTag: recipesRequesterTag));
+    }
     if (persistStoryNotes) scheduleStorySessionNotesSave();
+    if (persistRecipes) {
+      programmaSalvataggio(invalidateCaches: false);
+    }
 
     if (persistRealtimeRemote) {
       applyingRealtimeRemoteSheet = true;
