@@ -276,6 +276,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
 
   Widget recipesPage() {
     final isMaster = canManageRecipes;
+    final gatherableMaterialKg = max(0, currentStatValue('volonta') ~/ 2);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       child: Column(
@@ -345,6 +346,38 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                 ],
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFA726).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFFFA726).withValues(alpha: 0.55),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.scale_outlined, color: Color(0xFFFFA726)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    t(
+                      'Presa materiali: $gatherableMaterialKg kg '
+                          '(Volontà ${currentStatValue('volonta')} ÷ 2)',
+                      'Material capacity: $gatherableMaterialKg kg '
+                          '(Will ${currentStatValue('volonta')} ÷ 2)',
+                    ),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 14),
           TextField(
@@ -458,6 +491,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   }
 
   Widget _recipeCard(OculumRecipe recipe, {required bool isMaster}) {
+    final gatherableMaterialKg = max(0, currentStatValue('volonta') ~/ 2);
     final categoryColor = switch (recipe.recipeKind) {
       'forge' =>
         recipe.personal ? const Color(0xFFFFA726) : const Color(0xFFE53935),
@@ -531,7 +565,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                 _recipeSectionTitle('Forge'),
                 const SizedBox(height: 6),
                 Text(
-                  '${t('Peso', 'Weight')}: ${recipe.forgeWeightMinKg.isEmpty ? '?' : recipe.forgeWeightMinKg}–${recipe.forgeWeightMaxKg.isEmpty ? '?' : recipe.forgeWeightMaxKg} kg · ${t('Raccoglibile', 'Gatherable')}: ${t('Volontà', 'Will')} kg',
+                  '${t('Peso', 'Weight')}: ${recipe.forgeWeightMinKg.isEmpty ? '?' : recipe.forgeWeightMinKg}–${recipe.forgeWeightMaxKg.isEmpty ? '?' : recipe.forgeWeightMaxKg} kg · ${t('Presa', 'Capacity')}: $gatherableMaterialKg kg',
                   style: const TextStyle(color: Colors.white70),
                 ),
                 if (recipe.forgeDuration.trim().isNotEmpty)
@@ -941,8 +975,8 @@ class _OculumRecipeEditorDialogState extends State<_OculumRecipeEditorDialog> {
                   const SizedBox(height: 10),
                   Text(
                     _t(
-                      'I kg raccoglibili sono pari alla Volontà attuale del personaggio.',
-                      'Gatherable kg equal the character current Will.',
+                      'I kg raccoglibili sono pari alla Volontà attuale divisa per 2.',
+                      'Gatherable kg equal the character current Will divided by 2.',
                     ),
                     style: const TextStyle(color: Colors.white54),
                   ),
