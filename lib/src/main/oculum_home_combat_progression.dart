@@ -2524,6 +2524,23 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     return scala[indice + 1];
   }
 
+  DamageModifierOption prossimoStadioCriticoPercentualeLibera(
+    double multiplier,
+  ) {
+    final next = oculumNextCriticalDamageMultiplier(multiplier);
+    return modificatoriDanno.firstWhere(
+      (option) => (option.multiplier - next).abs() < 0.000001,
+      orElse: () => modificatoriDanno.firstWhere(
+        (option) => option.name == 'Fragilità Letale',
+      ),
+    );
+  }
+
+  String testoPercentualeDannoLibera(double multiplier) {
+    final percent = ((multiplier - 1) * 100).round();
+    return percent > 0 ? '+$percent%' : '$percent%';
+  }
+
   int applicaModificatoreDannoCon(
     int dannoBase,
     DamageModifierOption modificatore,
@@ -3022,10 +3039,18 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     if (dannoInserito == null || dannoInserito <= 0) return;
 
+    final percentualeLiberaPrima = oculumIncomingDamagePercentMultiplier(
+      dannoSubitoPercentController.text,
+    );
+    final stadioLiberoDopo = critico && percentualeLiberaPrima != null
+        ? prossimoStadioCriticoPercentualeLibera(percentualeLiberaPrima)
+        : null;
     final modificatorePrima = modificatoreDannoSelezionato;
-    final modificatoreDopo = critico
-        ? prossimoStadioCriticoDanno(modificatorePrima)
-        : modificatorePrima;
+    final modificatoreDopo =
+        stadioLiberoDopo?.name ??
+        (critico
+            ? prossimoStadioCriticoDanno(modificatorePrima)
+            : modificatorePrima);
     final riduzioneSchivata = schivataOculumRiduzionePronta;
     final schivataLabel = schivataOculumEtichettaPronta.trim();
     final dannoPrimaSchivata = dannoInserito + (critico ? 5 : 0);
@@ -3063,9 +3088,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final modificatore = critico
         ? modificatoreDannoDaNome(modificatoreDopo)
         : modificatoreDannoAttuale();
-    final modificatorePercentualeLibero = oculumIncomingDamagePercentMultiplier(
-      dannoSubitoPercentController.text,
-    );
+    final modificatorePercentualeLibero =
+        stadioLiberoDopo?.multiplier ?? percentualeLiberaPrima;
     final dannoModificatoBase = modificatorePercentualeLibero == null
         ? applicaModificatoreDannoCon(dannoDopoDifesa, modificatore)
         : applicaModificatoreDannoPercentuale(
@@ -3085,15 +3109,18 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final dannoLog = critico
         ? '$dannoInseritoLog + 5 critico = $dannoPrimaSchivata'
         : dannoInseritoLog;
+    final stadioPrimaLog = percentualeLiberaPrima == null
+        ? modificatorePrima
+        : testoPercentualeDannoLibera(percentualeLiberaPrima);
     final criticoLogIt = critico
-        ? (modificatorePrima == modificatoreDopo
+        ? (stadioPrimaLog == modificatoreDopo
               ? ' Critico: +5 danni, stadio già a $modificatoreDopo.'
-              : ' Critico: +5 danni, stadio $modificatorePrima → $modificatoreDopo.')
+              : ' Critico: +5 danni, stadio $stadioPrimaLog → $modificatoreDopo (${testoPercentualeDannoLibera(modificatore.multiplier)}).')
         : '';
     final criticoLogEn = critico
-        ? (modificatorePrima == modificatoreDopo
+        ? (stadioPrimaLog == modificatoreDopo
               ? ' Critical: +5 damage, stage already at $modificatoreDopo.'
-              : ' Critical: +5 damage, stage $modificatorePrima → $modificatoreDopo.')
+              : ' Critical: +5 damage, stage $stadioPrimaLog → $modificatoreDopo (${testoPercentualeDannoLibera(modificatore.multiplier)}).')
         : '';
 
     if (dannoModificato < 0) {
@@ -3112,6 +3139,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       setState(() {
         if (critico) {
           modificatoreDannoSelezionato = modificatoreDopo;
+          if (stadioLiberoDopo != null) {
+            dannoSubitoPercentController.text = testoPercentualeDannoLibera(
+              stadioLiberoDopo.multiplier,
+            );
+          }
         }
         schivataOculumRiduzionePronta = 0;
         schivataOculumEtichettaPronta = '';
@@ -3139,6 +3171,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       setState(() {
         if (critico) {
           modificatoreDannoSelezionato = modificatoreDopo;
+          if (stadioLiberoDopo != null) {
+            dannoSubitoPercentController.text = testoPercentualeDannoLibera(
+              stadioLiberoDopo.multiplier,
+            );
+          }
         }
         schivataOculumRiduzionePronta = 0;
         schivataOculumEtichettaPronta = '';
@@ -3260,6 +3297,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     setState(() {
       if (critico) {
         modificatoreDannoSelezionato = modificatoreDopo;
+        if (stadioLiberoDopo != null) {
+          dannoSubitoPercentController.text = testoPercentualeDannoLibera(
+            stadioLiberoDopo.multiplier,
+          );
+        }
       }
       schivataOculumRiduzionePronta = 0;
       schivataOculumEtichettaPronta = '';

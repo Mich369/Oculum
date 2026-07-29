@@ -183,6 +183,32 @@ double? oculumIncomingDamagePercentMultiplier(String raw) {
   return (1 + (percentage / 100)).clamp(0, 100).toDouble();
 }
 
+/// Porta una percentuale libera al primo gradino standard più sfavorevole.
+/// Se coincide già con un gradino, avanza a quello seguente.
+double oculumNextCriticalDamageMultiplier(double current) {
+  const stages = <double>[
+    0.0,
+    0.10,
+    0.25,
+    0.50,
+    0.75,
+    0.90,
+    1.0,
+    1.10,
+    1.25,
+    1.50,
+    1.75,
+    1.90,
+    2.0,
+    3.50,
+    6.0,
+  ];
+  for (final stage in stages) {
+    if (stage > current + 0.000001) return stage;
+  }
+  return stages.last;
+}
+
 int readIntValue(dynamic value, {int fallback = 0}) {
   if (value is int) return value;
   if (value is num) return value.toInt();

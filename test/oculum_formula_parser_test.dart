@@ -901,4 +901,11 @@ void main() {
     expect(oculumIncomingDamagePercentMultiplier('-100%'), 0);
     expect(oculumIncomingDamagePercentMultiplier('boh'), isNull);
   });
+
+  test('il critico porta la percentuale libera al gradino successivo', () {
+    expect(oculumNextCriticalDamageMultiplier(1.15), 1.25);
+    expect(oculumNextCriticalDamageMultiplier(1.25), 1.50);
+    expect(oculumNextCriticalDamageMultiplier(0.80), 0.90);
+    expect(oculumNextCriticalDamageMultiplier(6.0), 6.0);
+  });
 }
