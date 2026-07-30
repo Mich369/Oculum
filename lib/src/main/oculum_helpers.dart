@@ -209,6 +209,30 @@ double oculumNextCriticalDamageMultiplier(double current) {
   return stages.last;
 }
 
+int oculumShortRestQuarterRecovery({
+  required int current,
+  required int maximum,
+}) {
+  if (maximum <= current) return max(0, current);
+  final missing = maximum - max(0, current);
+  return min(maximum, max(0, current) + max(1, (missing / 4).ceil()));
+}
+
+/// Il riposo breve non può mai diminuire gli HP, nemmeno se nel frattempo
+/// termina un bonus temporaneo che abbassa gli HP massimi.
+int oculumShortRestHpAfter({
+  required int current,
+  required int maximum,
+  required int d100,
+}) {
+  final safeCurrent = max(0, current);
+  final healedWithinMaximum = min(
+    max(0, maximum),
+    safeCurrent + d100.clamp(1, 100),
+  );
+  return max(safeCurrent, healedWithinMaximum);
+}
+
 int readIntValue(dynamic value, {int fallback = 0}) {
   if (value is int) return value;
   if (value is num) return value.toInt();

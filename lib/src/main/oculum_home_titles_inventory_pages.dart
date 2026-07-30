@@ -88,12 +88,16 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               ],
             ),
           ),
-        sectionTitle(t('Diario', 'Diary')),
+        sectionTitle(
+          '${t('Diario di', 'Diary of')} ${nomeSchedaPersonaggio(schedaCorrente)}',
+        ),
         gothicPanel(
           borderColor: tertiaryColor,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              storyActiveDiaryMarker(),
+              const SizedBox(height: 12),
               smallInfoText(
                 t(
                   'Il diario è una parte meccanica e narrativa. Scrivere ricordi, paure, sogni, traumi, promesse e decisioni importanti può dare Ispirazioni. Non serve scrivere tanto: serve scrivere qualcosa che abbia peso.',
@@ -190,7 +194,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       (_) => storyBackgroundPanelEfficient(),
       if (modalitaMaster) (_) => storyMasterPanelEfficient(),
       (_) => storyOnlineSessionNotesPanel(),
-      (_) => sectionTitle(t('Diario', 'Diary')),
+      (_) => sectionTitle(
+        '${t('Diario di', 'Diary of')} ${nomeSchedaPersonaggio(schedaCorrente)}',
+      ),
       (_) => storyDiaryIntroPanelEfficient(),
     ];
 
@@ -298,6 +304,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          storyActiveDiaryMarker(),
+          const SizedBox(height: 12),
           smallInfoText(
             t(
               'Database permanente dei diari della scheda. Tutte le voci sono visibili e modificabili solo in questa pagina; il testo viene conservato esattamente, inclusi accenti, simboli e ritorni a capo.',
@@ -332,6 +340,75 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget storyActiveDiaryMarker() {
+    final characterName = nomeSchedaPersonaggio(schedaCorrente).trim();
+    final shownName = characterName.isEmpty
+        ? t('Personaggio senza nome', 'Unnamed character')
+        : characterName;
+    return Semantics(
+      label: t(
+        'Diario attivo di $shownName. Gli altri diari sono nascosti.',
+        'Active diary of $shownName. Other diaries are hidden.',
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        decoration: BoxDecoration(
+          color: tertiaryColor.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: tertiaryColor.withValues(alpha: 0.72),
+            width: 1.4,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: tertiaryColor.withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.menu_book_outlined, color: tertiaryColor),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    shownName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: tertiaryColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    t(
+                      'DIARIO DELLA SCHEDA IN USO • Gli altri sono nascosti',
+                      'DIARY OF THE ACTIVE SHEET • Others are hidden',
+                    ),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.visibility_off_outlined, color: tertiaryColor),
+          ],
+        ),
       ),
     );
   }

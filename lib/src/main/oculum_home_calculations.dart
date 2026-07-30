@@ -2604,21 +2604,26 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   void recuperaStatsAttualiConRiposoBreve() {
-    final beforeRes = currentResilienza();
-    recuperaStatAttuale(
+    void recoverQuarter(TextEditingController controller, int maximum) {
+      controller.text = oculumShortRestQuarterRecovery(
+        current: readIntValue(controller.text),
+        maximum: maximum,
+      ).toString();
+    }
+
+    recoverQuarter(
       currentResilienzaController,
       currentStatNaturalControllerMax('resilienza'),
     );
-    rimarginaHpDaAumentoResilienza(currentResilienza() - beforeRes);
-    recuperaStatAttuale(
+    recoverQuarter(
       currentVolontaController,
       currentStatNaturalControllerMax('volonta'),
     );
-    recuperaStatAttuale(
+    recoverQuarter(
       currentMateriaController,
       currentStatNaturalControllerMax('materia'),
     );
-    recuperaStatAttuale(
+    recoverQuarter(
       currentOculumController,
       currentStatNaturalControllerMax('oculum'),
     );

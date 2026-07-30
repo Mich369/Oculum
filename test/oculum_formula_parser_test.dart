@@ -908,4 +908,11 @@ void main() {
     expect(oculumNextCriticalDamageMultiplier(0.80), 0.90);
     expect(oculumNextCriticalDamageMultiplier(6.0), 6.0);
   });
+
+  test('il riposo breve recupera un quarto e non sottrae mai HP', () {
+    expect(oculumShortRestQuarterRecovery(current: 0, maximum: 100), 25);
+    expect(oculumShortRestQuarterRecovery(current: 99, maximum: 100), 100);
+    expect(oculumShortRestHpAfter(current: 80, maximum: 60, d100: 1), 80);
+    expect(oculumShortRestHpAfter(current: 40, maximum: 100, d100: 37), 77);
+  });
 }

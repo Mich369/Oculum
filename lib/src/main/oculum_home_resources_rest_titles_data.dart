@@ -1016,6 +1016,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     setState(() {
       final cenere = leggiNumero(cenereController);
       final rimuoveMalusEsplosione = malusTiriOculumPostEsplosione < 0;
+      final hpPrima = hpCorrenti();
+      final tiroCuraHp = Random.secure().nextInt(100) + 1;
 
       impostaCenereControllata(
         max(0, cenere - recuperoPercentuale(cenere, 0.25, 1)),
@@ -1023,19 +1025,20 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         controllaSvenimento: false,
       );
 
-      final deficitRes = tempResilienza < 0 ? -tempResilienza : 0;
-      final recuperoRes = (deficitRes / 2).ceil();
-      final deficitVol = tempVolonta < 0 ? -tempVolonta : 0;
-      final deficitMat = tempMateria < 0 ? -tempMateria : 0;
-      final deficitOcu = tempOculum < 0 ? -tempOculum : 0;
-
-      tempResilienza += recuperoRes;
-      rimarginaHpDaAumentoResilienza(recuperoRes);
-      tempVolonta += (deficitVol / 2).ceil();
-      tempMateria += (deficitMat / 2).ceil();
-      tempOculum += (deficitOcu / 2).ceil();
+      // I modificatori temporanei terminano al riposo breve. La loro rimozione
+      // non deve essere trattata come danno e quindi non sottrae mai HP.
+      tempResilienza = 0;
+      tempVolonta = 0;
+      tempMateria = 0;
+      tempOculum = 0;
 
       recuperaStatsAttualiConRiposoBreve();
+      currentHpController.text = oculumShortRestHpAfter(
+        current: hpPrima,
+        maximum: maxHp(),
+        d100: tiroCuraHp,
+      ).toString();
+      final hpRecuperati = hpCorrenti() - hpPrima;
       ricaricaScudoOculum();
 
       raccoltaResilienzaSpesa = max(0, raccoltaResilienzaSpesa ~/ 2);
@@ -1053,8 +1056,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       malusTiriOculumPostEsplosione = 0;
 
       ultimoEventoRiposo = t(
-        'Riposo breve: recuperata metà delle penalità temporanee, metà delle stats attuali mancanti e 25% di Cenere, minimo 1.',
-        'Short rest: recovered half of temporary penalties, half of missing current stats and 25% Ash, minimum 1.',
+        'Riposo breve: buff e debuff temporanei rimossi senza perdere HP; recuperato 1/4 delle stats attuali mancanti, 25% di Cenere minimo 1 e $tiroCuraHp su 1d100 HP (+$hpRecuperati effettivi).',
+        'Short rest: temporary buffs and debuffs removed without losing HP; recovered 1/4 of missing current stats, 25% Ash minimum 1 and $tiroCuraHp on 1d100 HP (+$hpRecuperati effective).',
       );
       if (recuperoPresa > 0) {
         ultimoEventoRiposo += t(
@@ -1266,7 +1269,6 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
   void resetBuffDebuffTemporanei() {
     setState(() {
-      rimarginaHpDaAumentoResilienza(-tempResilienza);
       tempResilienza = 0;
       tempVolonta = 0;
       tempMateria = 0;
