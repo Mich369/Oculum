@@ -62,5 +62,11 @@ void main() {
         0,
       );
     });
+
+    test('ogni 10 punti Nucleo sopra la media aggiunge 5 percento', () {
+      expect(oculumCoreIntegrityPercentBonus(core: 29, average: 20), 0);
+      expect(oculumCoreIntegrityPercentBonus(core: 30, average: 20), 5);
+      expect(oculumCoreIntegrityPercentBonus(core: 45, average: 20), 10);
+    });
   });
 }

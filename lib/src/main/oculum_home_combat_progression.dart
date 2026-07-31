@@ -3039,6 +3039,38 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     if (dannoInserito == null || dannoInserito <= 0) return;
 
+    int subtraitTotal(String id) {
+      for (final stat in hiddenEyeStats) {
+        if (stat.id == id && stat.unlocked) return max(0, hiddenEyeTotal(stat));
+      }
+      return 0;
+    }
+
+    final fortunaTotale = subtraitTotal('fortuna');
+    final riflessiTotali = subtraitTotal('riflessi');
+    final resistenzaTotale = subtraitTotal('resistenza');
+    final fortunaSchivataChance = oculumLuckDodgeChancePercent(
+      reflexes: riflessiTotali,
+      luck: fortunaTotale,
+    );
+    final fortunaSchivataRoll = Random.secure().nextInt(10000);
+    if (fortunaTotale > 0 &&
+        oculumPercentRollSucceeds(
+          chancePercent: fortunaSchivataChance,
+          rollBasisPoints: fortunaSchivataRoll,
+        )) {
+      setState(() {
+        risultato = t(
+          'Fortuna: danno schivato (${(fortunaSchivataRoll / 100).toStringAsFixed(2)} su ${fortunaSchivataChance.toStringAsFixed(2)}%).',
+          'Luck: damage dodged (${(fortunaSchivataRoll / 100).toStringAsFixed(2)} against ${fortunaSchivataChance.toStringAsFixed(2)}%).',
+        );
+        dannoSubitoController.clear();
+        aggiungiLog(risultato);
+      });
+      programmaSalvataggio();
+      return;
+    }
+
     final percentualeLiberaPrima = oculumIncomingDamagePercentMultiplier(
       dannoSubitoPercentController.text,
     );
@@ -3068,17 +3100,58 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final ignoraDifesa = dannoOltreDifesa;
     final ignoraScudi = dannoOltreScudi;
     final bonusScudi = bonusDannoScudiPercentuale();
-    final dannoDopoDifesa = dannoInArrivo <= 0
+    var dannoDopoDifesa = dannoInArrivo <= 0
         ? 0
         : ignoraDifesa
         ? dannoInArrivo
         : max(1, dannoInArrivo - difesa());
+    var passiveReductionLogIt = '';
+    var passiveReductionLogEn = '';
+    if (dannoDopoDifesa > 0 && fortunaTotale > 0) {
+      final chance = oculumLuckMitigationChancePercent(
+        resistance: resistenzaTotale,
+        luck: fortunaTotale,
+      );
+      final chanceRoll = Random.secure().nextInt(10000);
+      if (oculumPercentRollSucceeds(
+        chancePercent: chance,
+        rollBasisPoints: chanceRoll,
+      )) {
+        final sides = oculumLuckDieSides(fortunaTotale);
+        final reduction = Random.secure().nextInt(sides) + 1;
+        dannoDopoDifesa = oculumDamageAfterPassiveReduction(
+          damage: dannoDopoDifesa,
+          reduction: reduction,
+        );
+        passiveReductionLogIt +=
+            ' Fortuna: 1d$sides=$reduction, danno attenuato a $dannoDopoDifesa.';
+        passiveReductionLogEn +=
+            ' Luck: 1d$sides=$reduction, damage reduced to $dannoDopoDifesa.';
+      }
+    }
+    if (dannoDopoDifesa > 0 && resistenzaTotale > 0) {
+      final chance = oculumResistancePassiveChancePercent(resistenzaTotale);
+      final chanceRoll = Random.secure().nextInt(10000);
+      if (oculumPercentRollSucceeds(
+        chancePercent: chance,
+        rollBasisPoints: chanceRoll,
+      )) {
+        dannoDopoDifesa = oculumDamageAfterPassiveReduction(
+          damage: dannoDopoDifesa,
+          reduction: resistenzaTotale,
+        );
+        passiveReductionLogIt +=
+            ' Resistenza passiva: -$resistenzaTotale, minimo 1 → $dannoDopoDifesa.';
+        passiveReductionLogEn +=
+            ' Passive Resistance: -$resistenzaTotale, minimum 1 → $dannoDopoDifesa.';
+      }
+    }
     final difesaLogIt = ignoraDifesa
-        ? ' oltre Difesa = $dannoDopoDifesa'
-        : ' - Difesa ${difesa()} = $dannoDopoDifesa';
+        ? ' oltre Difesa = $dannoDopoDifesa$passiveReductionLogIt'
+        : ' - Difesa ${difesa()} = $dannoDopoDifesa$passiveReductionLogIt';
     final difesaLogEn = ignoraDifesa
-        ? ' beyond Defense = $dannoDopoDifesa'
-        : ' - Defense ${difesa()} = $dannoDopoDifesa';
+        ? ' beyond Defense = $dannoDopoDifesa$passiveReductionLogEn'
+        : ' - Defense ${difesa()} = $dannoDopoDifesa$passiveReductionLogEn';
     final opzioniImpattoIt =
         '${ignoraScudi ? " Oltre Scudi: il danno salta Scudo Oculum e Scudo." : ""}'
         '${bonusScudi > 0 && !ignoraScudi ? " Danno agli scudi +$bonusScudi%." : ""}';
@@ -3535,25 +3608,19 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   double expSourceMultiplier() {
-    switch (fonteExpSelezionata) {
-      case 'miniboss':
-        return 1.3;
-      case 'boss':
-        return 2.0;
-      default:
-        return 1.0;
-    }
+    return oculumEnemyExpMultiplier(
+      source: fonteExpSelezionata,
+      difficulty: normalizedCampaignDifficulty(),
+    );
   }
 
   String expSourceLabel() {
-    switch (fonteExpSelezionata) {
-      case 'miniboss':
-        return 'Mini-Boss x1.3';
-      case 'boss':
-        return 'Boss x2';
-      default:
-        return t('Normale x1', 'Normal x1');
-    }
+    final multiplier = expSourceMultiplier().toStringAsFixed(1);
+    return switch (fonteExpSelezionata) {
+      'miniboss' => 'Mini-Boss x$multiplier',
+      'boss' => 'Boss x$multiplier',
+      _ => t('Normale x1', 'Normal x1'),
+    };
   }
 
   String expDisplayName() {

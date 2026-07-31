@@ -1080,6 +1080,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'logEventi': [],
       'campaignDifficulty': 'normale',
       'fortuna': 0,
+      'scannerRiposiLunghi': 0,
       'fateTokens': 0,
       'userGuiScale': 1.0,
       'diarioRewardClaimedCount': 0,
@@ -1321,6 +1322,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'reputationsManuallyCleared': reputationsManuallyCleared,
       'logEventi': List<String>.from(logEventi),
       'fortuna': fortuna,
+      'scannerRiposiLunghi': scannerRiposiLunghi,
       'fateTokens': fateTokens,
       'userGuiScale': userGuiScale,
       'diarioRewardClaimedCount': diarioRewardClaimedCount,
@@ -1771,6 +1773,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       campaignDifficulty = 'normale';
     }
     fortuna = readIntValue(json['fortuna']);
+    scannerRiposiLunghi = readIntValue(json['scannerRiposiLunghi']).clamp(0, 3);
     fateTokens = readIntValue(json['fateTokens']);
     userGuiScale = readDoubleValue(
       json['userGuiScale'],

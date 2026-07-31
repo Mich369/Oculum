@@ -79,6 +79,7 @@ void main() {
     }
 
     expect(parseOne('@Mat+50%').value, 6);
+    expect(parseOne('@Mat+50 %').value, 6);
     expect(parseOne('@Mat-25%').value, -3);
     expect(parseOne('@Mat+12,5%').value, 2);
     expect(parseOne('@Danni+150%').value, 5);
@@ -914,5 +915,29 @@ void main() {
     expect(oculumShortRestQuarterRecovery(current: 99, maximum: 100), 100);
     expect(oculumShortRestHpAfter(current: 80, maximum: 60, d100: 1), 80);
     expect(oculumShortRestHpAfter(current: 40, maximum: 100, d100: 37), 77);
+  });
+
+  test('moltiplicatori EXP Boss e Mini-Boss seguono la difficoltà', () {
+    expect(
+      oculumEnemyExpMultiplier(source: 'boss', difficulty: 'normale'),
+      1.5,
+    );
+    expect(
+      oculumEnemyExpMultiplier(source: 'miniboss', difficulty: 'normale'),
+      1.3,
+    );
+    expect(
+      oculumEnemyExpMultiplier(source: 'boss', difficulty: 'difficile'),
+      closeTo(1.4, 0.000001),
+    );
+    expect(
+      oculumEnemyExpMultiplier(source: 'miniboss', difficulty: 'difficile'),
+      1.2,
+    );
+    expect(oculumEnemyExpMultiplier(source: 'boss', difficulty: 'facile'), 1.6);
+    expect(
+      oculumEnemyExpMultiplier(source: 'miniboss', difficulty: 'facile'),
+      closeTo(1.4, 0.000001),
+    );
   });
 }

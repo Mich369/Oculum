@@ -1650,11 +1650,18 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 value: 'normale',
                 child: Text(t('Nemico normale x1', 'Normal enemy x1')),
               ),
-              const DropdownMenuItem(
+              DropdownMenuItem(
                 value: 'miniboss',
-                child: Text('Mini-Boss x1.3'),
+                child: Text(
+                  'Mini-Boss x${oculumEnemyExpMultiplier(source: 'miniboss', difficulty: normalizedCampaignDifficulty()).toStringAsFixed(1)}',
+                ),
               ),
-              const DropdownMenuItem(value: 'boss', child: Text('Boss x2')),
+              DropdownMenuItem(
+                value: 'boss',
+                child: Text(
+                  'Boss x${oculumEnemyExpMultiplier(source: 'boss', difficulty: normalizedCampaignDifficulty()).toStringAsFixed(1)}',
+                ),
+              ),
             ],
             onChanged: (value) {
               setState(() => fonteExpSelezionata = value ?? 'normale');
@@ -3448,6 +3455,16 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 onPressed: tiraAiutaCompagno,
               ),
               quickCommandButton(
+                label: scannerRiposiLunghi >= 3
+                    ? 'Scanner'
+                    : 'Scanner $scannerRiposiLunghi/3',
+                icon: Icons.document_scanner_outlined,
+                color: scannerRiposiLunghi >= 3
+                    ? Colors.cyanAccent
+                    : Colors.white38,
+                onPressed: usaScannerCentroPartita,
+              ),
+              quickCommandButton(
                 label: t('Modifica', 'Edit'),
                 icon: Icons.tune,
                 color: primaryColor,
@@ -3478,6 +3495,103 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         ],
       ),
     );
+  }
+
+  void usaScannerCentroPartita() {
+    if (scannerRiposiLunghi < 3) {
+      setState(() {
+        risultato = t(
+          'Scanner non pronto: $scannerRiposiLunghi/3 riposi lunghi.',
+          'Scanner not ready: $scannerRiposiLunghi/3 long rests.',
+        );
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+    final fortunaStat = hiddenEyeStats.firstWhere(
+      (stat) => stat.id == 'fortuna',
+      orElse: () =>
+          HiddenEyeStat(id: 'fortuna', nome: 'Fortuna', descrizione: ''),
+    );
+    final fortuna = max(0, hiddenEyeTotal(fortunaStat));
+    final naturale = Random.secure().nextInt(20) + 1;
+    final totaleScanner = naturale + fortuna;
+    var obserOttenuta = 0;
+    var esito = '';
+    var creaTitoloItem = false;
+    var bonusGradoTitolo = 0;
+
+    if (naturale == 1) {
+      esito = t('scontro obbligato difficile', 'mandatory difficult encounter');
+    } else if (naturale <= 3) {
+      esito = t('scontro obbligato', 'mandatory encounter');
+    } else {
+      final (facce, bonus) = switch (naturale) {
+        <= 8 => (10, 0),
+        <= 10 => (12, 3),
+        <= 12 => (20, 5),
+        <= 16 => (50, 10),
+        <= 19 => (100, 15),
+        _ => (120, 30),
+      };
+      final tiroObser = Random.secure().nextInt(facce) + 1;
+      obserOttenuta = tiroObser + bonus;
+      esito = '1d$facce${bonus > 0 ? '+$bonus' : ''} OBSER = $obserOttenuta';
+      if (naturale >= 17) {
+        creaTitoloItem = true;
+        bonusGradoTitolo = naturale == 20 ? 1 : 0;
+      }
+    }
+
+    final gradoTitolo = max(0, leggiNumero(gradoController)) + bonusGradoTitolo;
+    final ascensionDustDaFortuna = fortuna > 0 ? max(1, fortuna ~/ 10) : 0;
+    setState(() {
+      scannerRiposiLunghi = 0;
+      if (obserOttenuta > 0) {
+        obserController.text = (leggiNumero(obserController) + obserOttenuta)
+            .toString();
+      }
+      if (creaTitoloItem) {
+        inventario.add(
+          InventoryItem(
+            nome: t(
+              'Titolo Item Scanner — Grado $gradoTitolo',
+              'Scanner Title Item — Grade $gradoTitolo',
+            ),
+            peso: 0,
+            quantita: 1,
+            note: t(
+              'Ottenuto con Scanner. Da riferire al Master.',
+              'Obtained with Scanner. Report it to the Master.',
+            ),
+            gradoOggetto: gradoTitolo,
+          ),
+        );
+      }
+      if (ascensionDustDaFortuna > 0) {
+        ascensionDustController.text =
+            (leggiNumero(ascensionDustController) + ascensionDustDaFortuna)
+                .toString();
+      }
+      dadoMostrato = '$naturale + $fortuna = $totaleScanner';
+      dadoMostratoFacce = 20;
+      risultato = t(
+        'Scanner: d20 naturale $naturale + Fortuna $fortuna = $totaleScanner. Esito sul solo dado naturale: $esito'
+            '${ascensionDustDaFortuna > 0 ? '; Fortuna non contata nell’esito: +$ascensionDustDaFortuna Ascension Dust' : ''}'
+            '${creaTitoloItem ? '; Titolo Item Grado $gradoTitolo aggiunto e da riferire al Master' : ''}.',
+        'Scanner: natural d20 $naturale + Luck $fortuna = $totaleScanner. Outcome uses only the natural die: $esito'
+            '${ascensionDustDaFortuna > 0 ? '; Luck not counted in the outcome: +$ascensionDustDaFortuna Ascension Dust' : ''}'
+            '${creaTitoloItem ? '; Grade $gradoTitolo Title Item added and to be reported to the Master' : ''}.',
+      );
+      aggiungiLog(risultato);
+    });
+    mostraDadoCentrale(
+      valore: '$naturale + $fortuna = $totaleScanner',
+      criticoUno: naturale == 1,
+      criticoVenti: naturale == 20,
+    );
+    programmaSalvataggio();
+    notifyDiceResultChanged();
   }
 
   Widget quickGlanceCell(
@@ -3858,6 +3972,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                                 'volonta',
                                 'materia',
                                 'oculum',
+                                'altro',
                               ])
                                 ChoiceChip(
                                   selected:

@@ -1522,6 +1522,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   String colorGuiPresetId = 'classic_reliquary';
   String campaignDifficulty = 'normale';
   int fortuna = 0;
+  int scannerRiposiLunghi = 0;
   int fateTokens = 0;
   int diarioRewardClaimedCount = 0;
   bool campaignDifficultyStarterClaimed = false;
@@ -1534,6 +1535,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   String dadoMostrato = '';
   int dadoMostratoFacce = 20;
   OculumAggiustaNucleoResult? ultimoRisultatoAggiustaNucleo;
+  bool ultimoDannoNucleoEvitato = false;
   final ValueNotifier<int> diceResultRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> diceOverlayRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> inputUiRevision = ValueNotifier<int>(0);

@@ -198,6 +198,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   void modificaFortuna(int delta) {
     setState(() {
       fortuna = max(0, fortuna + delta);
+      invalidateHiddenEyeDerivedCaches();
       risultato = t('Fortuna aggiornata: $fortuna.', 'Luck updated: $fortuna.');
       aggiungiLog(risultato);
     });
@@ -1122,6 +1123,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       ).toString();
       malusTiriOculumPostEsplosione = 0;
       aggiustaNucleoUsato = false;
+      scannerRiposiLunghi = min(3, scannerRiposiLunghi + 1);
 
       for (var i = 0; i < arti.length; i++) {
         final art = arti[i];

@@ -90,6 +90,8 @@ int oculumHiddenEyeDerivedBonusFor({
       return volonta ~/ 2;
     case 'nodo':
       return karma;
+    case 'fortuna':
+      return 0;
     case 'percezione':
     case 'sussurro':
     case 'canalizzazione':
@@ -127,6 +129,8 @@ String? oculumHiddenEyeStaticGroupFor(String id) {
     case 'controllo_corporeo':
       return 'materia';
     case 'nodo':
+    case 'fortuna':
+      return 'altro';
     case 'percezione':
     case 'sussurro':
     case 'canalizzazione':
@@ -3317,6 +3321,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
             'Creare legami, trattare con diplomazia e costruire alleanze. Bonus/malus: Karma totale.',
       ),
       HiddenEyeStat(
+        id: 'fortuna',
+        nome: 'Fortuna',
+        descrizione:
+            'Totale: Karma + Fortuna nelle Risorse + Livello/2. Può schivare, attenuare danni e guida i tiri drop.',
+      ),
+      HiddenEyeStat(
         id: 'crepa',
         nome: 'Crepa',
         descrizione:
@@ -3519,6 +3529,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         group = 'materia';
         break;
       case 'nodo':
+      case 'fortuna':
+        group = 'altro';
+        break;
       case 'percezione':
       case 'sussurro':
       case 'canalizzazione':
@@ -3562,6 +3575,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         return 'Oculum';
       case 'karma':
         return 'Karma';
+      case 'altro':
+        return t('Altro', 'Other');
       default:
         return group;
     }
@@ -3607,6 +3622,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final cached = hiddenEyeDerivedBonusCache[id];
     if (cached != null) return cached;
 
+    if (id == 'fortuna') {
+      final total =
+          karmaTotale() + fortuna + max(0, leggiNumero(livelloController)) ~/ 2;
+      hiddenEyeDerivedBonusCache[id] = total;
+      return total;
+    }
     final stats = hiddenEyeDerivedStatsSnapshot();
     final bonus = oculumHiddenEyeDerivedBonusFor(
       id: id,
@@ -3626,7 +3647,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final cachedValue = hiddenEyeTotalValueCache[stat.id];
     if (cachedBase == stat.valore && cachedValue != null) return cachedValue;
 
-    final total = stat.valore + hiddenEyeDerivedBonus(stat.id);
+    final total = stat.id == 'fortuna'
+        ? hiddenEyeDerivedBonus(stat.id)
+        : stat.valore + hiddenEyeDerivedBonus(stat.id);
     hiddenEyeTotalBaseCache[stat.id] = stat.valore;
     hiddenEyeTotalValueCache[stat.id] = total;
     return total;

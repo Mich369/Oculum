@@ -326,6 +326,8 @@ void main() {
       );
     }
     expect(oculumHiddenEyeStaticGroupFor('canalizzazione'), 'oculum');
+    expect(oculumHiddenEyeStaticGroupFor('nodo'), 'altro');
+    expect(oculumHiddenEyeStaticGroupFor('fortuna'), 'altro');
     expect(
       oculumHiddenEyeDerivedBonusFor(
         id: 'concentrazione',
@@ -336,6 +338,30 @@ void main() {
         karma: 0,
       ),
       5,
+    );
+  });
+
+  test(
+    'Fortuna calcola dadi, schivata e attenuazione senza superare i limiti',
+    () {
+      expect(oculumLuckDieSides(1), 2);
+      expect(oculumLuckDieSides(3), 4);
+      expect(oculumLuckDieSides(110), 120);
+      expect(oculumLuckDodgeChancePercent(reflexes: 12, luck: 12), 2);
+      expect(oculumLuckMitigationChancePercent(resistance: 20, luck: 30), 5);
+      expect(oculumDamageAfterPassiveReduction(damage: 4, reduction: 100), 1);
+    },
+  );
+
+  test('Fortuna protegge il Nucleo in base al livello Skill', () {
+    expect(oculumCoreProtectionChancePercent(luck: 30, skillLevel: 1), 1.5);
+    expect(
+      oculumCoreProtectionChancePercent(luck: 30, skillLevel: 2),
+      closeTo(0.9, 0.000001),
+    );
+    expect(
+      oculumCoreProtectionChancePercent(luck: 30, skillLevel: 3),
+      closeTo(0.3, 0.000001),
     );
   });
 

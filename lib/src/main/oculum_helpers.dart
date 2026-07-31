@@ -233,6 +233,79 @@ int oculumShortRestHpAfter({
   return max(safeCurrent, healedWithinMaximum);
 }
 
+double oculumEnemyExpMultiplier({
+  required String source,
+  required String difficulty,
+}) {
+  final delta = switch (oculumNormalizeText(difficulty)) {
+    'facile' || 'easy' => 0.1,
+    'difficile' || 'hard' => -0.1,
+    _ => 0.0,
+  };
+  return switch (oculumNormalizeText(source)) {
+    'boss' => 1.5 + delta,
+    'miniboss' || 'mini boss' => 1.3 + delta,
+    _ => 1.0,
+  };
+}
+
+int oculumLuckDieSides(int luckTotal) {
+  final safe = max(1, luckTotal);
+  for (final sides in const <int>[2, 4, 6, 8, 10, 12, 20]) {
+    if (safe <= sides) return sides;
+  }
+  return ((safe / 20).ceil() * 20).clamp(20, 1000000);
+}
+
+double oculumLuckDodgeChancePercent({
+  required int reflexes,
+  required int luck,
+}) => ((max(0, reflexes) + max(0, luck)) / 12).clamp(0.0, 100.0);
+
+double oculumLuckMitigationChancePercent({
+  required int resistance,
+  required int luck,
+}) => (max(0, resistance) / 10 + max(0, luck) / 10).clamp(0.0, 100.0);
+
+double oculumResistancePassiveChancePercent(int resistance) =>
+    (max(0, resistance) / 10).clamp(0.1, 50.0);
+
+int oculumDamageAfterPassiveReduction({
+  required int damage,
+  required int reduction,
+}) {
+  if (damage <= 0) return 0;
+  return max(1, damage - max(0, reduction));
+}
+
+bool oculumPercentRollSucceeds({
+  required double chancePercent,
+  required int rollBasisPoints,
+}) {
+  final threshold = (chancePercent.clamp(0.0, 100.0) * 100).round();
+  return rollBasisPoints.clamp(0, 9999) < threshold;
+}
+
+int oculumCoreIntegrityPercentBonus({
+  required int core,
+  required double average,
+}) {
+  final excess = max(0, core - average.floor());
+  return (excess ~/ 10) * 5;
+}
+
+double oculumCoreProtectionChancePercent({
+  required int luck,
+  required int skillLevel,
+}) {
+  final chancePerTen = switch (skillLevel.clamp(1, 3)) {
+    1 => 0.5,
+    2 => 0.3,
+    _ => 0.1,
+  };
+  return ((max(0, luck) ~/ 10) * chancePerTen).clamp(0.0, 100.0);
+}
+
 int readIntValue(dynamic value, {int fallback = 0}) {
   if (value is int) return value;
   if (value is num) return value.toInt();

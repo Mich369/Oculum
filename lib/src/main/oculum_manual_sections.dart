@@ -1486,7 +1486,7 @@ Oculum fuels Arts, Opens, Oculum Skills and magical commands.
 EXP
 
 The EXP area adds experience without manual math.
-Choose Normal enemy x1, Mini-Boss x1.3 or Boss x2.
+Choose Normal enemy x1, Mini-Boss x1.3 or Boss x1.5. Easy adds 0.1; Hard subtracts 0.1 from Mini-Boss and Boss.
 If enemy Grade is higher than yours, the app applies the expected multiplier.
 Preview helps you understand what will be added before applying it.
 
@@ -3458,7 +3458,7 @@ The 12 New Phases:
     contentIt: r'''
 Armi: semplice +5, con Titolo +10, con Titolo gradato +20 per Grado.
 
-EXP mostri: conta livello e statistiche sopra le tue. Ogni Grado sopra il tuo aggiunge x1.2. Mini-Boss x1.3, Boss x2.
+EXP mostri: conta livello e statistiche sopra le tue. Ogni Grado sopra il tuo aggiunge x1.2. Mini-Boss x1.3, Boss x1.5; Facile aggiunge 0.1 e Difficile sottrae 0.1 a entrambi.
 
 EXP NPC: conta livello e statistiche sopra le tue, va a te e a tutto il party. Ogni Grado sopra il tuo aggiunge x1.3.
 
@@ -3469,7 +3469,7 @@ Summon: massimo 5 + Grado EXP, una volta per evocazione. Una Summon tua non da E
     contentEn: r'''
 Weapons: simple +5, titled +10, graded titled +20 per Grade.
 
-Monster EXP: count levels and stats above yours. Each Grade above yours adds x1.2. Mini-Boss x1.3, Boss x2.
+Monster EXP: count levels and stats above yours. Each Grade above yours adds x1.2. Mini-Boss x1.3, Boss x1.5; Easy adds 0.1 and Hard subtracts 0.1 from both.
 
 NPC EXP: count levels and stats above yours, rewarded to you and the whole party. Each Grade above yours adds x1.3.
 

@@ -176,8 +176,33 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     );
   }
 
-  int consumeArtIntegrityAndResolveDebuff(int artIndex, int cost) {
+  int consumeArtIntegrityAndResolveDebuff(
+    int artIndex,
+    int cost, {
+    int skillLevel = 1,
+  }) {
     if (artIndex < 0 || artIndex >= arti.length || cost <= 0) return 0;
+    ultimoDannoNucleoEvitato = false;
+    HiddenEyeStat? luckStat;
+    for (final stat in hiddenEyeStats) {
+      if (stat.id == 'fortuna' && stat.unlocked) {
+        luckStat = stat;
+        break;
+      }
+    }
+    final luck = luckStat == null ? 0 : hiddenEyeTotal(luckStat);
+    final protectionChance = oculumCoreProtectionChancePercent(
+      luck: luck,
+      skillLevel: skillLevel,
+    );
+    if (protectionChance > 0 &&
+        oculumPercentRollSucceeds(
+          chancePercent: protectionChance,
+          rollBasisPoints: Random.secure().nextInt(10000),
+        )) {
+      ultimoDannoNucleoEvitato = true;
+      return 0;
+    }
     final art = arti[artIndex];
     ensureArtIntegrityValue(artIndex);
     final previous = art.integritaCorrente;
@@ -189,19 +214,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       checkArtIntegrityBreakAsh(previous, next, art.nome);
     }
 
-    final maximum = artIntegrityMaximum();
-    if (!oculumArtIsAtOrBelowLowIntegrity(current: next, maximum: maximum)) {
-      return 0;
-    }
-
-    final dt = oculumArtLowIntegrityDtForRoll(
-      roll: Random().nextInt(100),
-      difficulty: normalizedCampaignDifficulty(),
-    );
-    if (dt <= 0) return 0;
-    difficoltaTiroController.text = (difficoltaTiro() + dt).toString();
-    recordRollDifficultyProgress();
-    return dt;
+    // L'integrità viene consumata, ma non modifica più casualmente e in modo
+    // permanente la DT generale della scheda.
+    return 0;
   }
 
   void recuperaIntegritaArtTotale(int artIndex) {
@@ -225,6 +240,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     return hiddenEyeDerivedBonus('medicina');
   }
 
+  double mediaSottotrattiAggiustaNucleo() {
+    final values = hiddenEyeStats
+        .where((stat) => stat.unlocked && stat.id != 'medicina')
+        .map(hiddenEyeTotal)
+        .toList(growable: false);
+    if (values.isEmpty) return 0;
+    return values.reduce((a, b) => a + b) / values.length;
+  }
+
   String nomeArtPerAggiustaNucleo(int artIndex) {
     final name = arti[artIndex].nome.trim();
     return name.isEmpty ? '${t('Art', 'Art')} ${artIndex + 1}' : name;
@@ -245,6 +269,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final targetSheetTag = sheetTagAt(schedaCorrente);
     final artName = nomeArtPerAggiustaNucleo(artIndex);
     final medicine = medicinaAttualeAggiustaNucleo();
+    final subtraitAverage = mediaSottotrattiAggiustaNucleo();
+    final integrityPercentBonus = oculumCoreIntegrityPercentBonus(
+      core: medicine,
+      average: subtraitAverage,
+    );
 
     aggiustaNucleoInCorso = true;
     notifyAggiustaNucleoDisponibilitaChanged();
@@ -287,6 +316,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 '${t('Bonus Medicina applicato', 'Applied Medicine bonus')}: ${bonusConSegno(medicine)}',
                 color: accent,
               ),
+              if (integrityPercentBonus > 0) ...[
+                const SizedBox(height: 6),
+                smallInfoText(
+                  t(
+                    'Nucleo sopra la media: +$integrityPercentBonus% Integrità al ripristino.',
+                    'Core above average: +$integrityPercentBonus% Integrity on recovery.',
+                  ),
+                  color: Colors.greenAccent,
+                ),
+              ],
               const SizedBox(height: 12),
               smallInfoText(
                 t(
@@ -340,13 +379,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final d10 = Random().nextInt(10) + 1;
     final rawTotal = d10 + medicine;
     final roundedTotal = oculumAggiustaNucleoRoundedTotal(rawTotal);
+    final boostedTotal = (roundedTotal * (1 + integrityPercentBonus / 100))
+        .ceil();
     final before = targetArt.integritaCorrente.clamp(0, maximum).toInt();
     final effectiveRecovery = oculumAggiustaNucleoEffectiveRecovery(
       current: before,
       maximum: maximum,
-      roundedTotal: roundedTotal,
+      roundedTotal: boostedTotal,
     );
-    final lostRecovery = max(0, roundedTotal - effectiveRecovery);
+    final lostRecovery = max(0, boostedTotal - effectiveRecovery);
 
     final after = before + effectiveRecovery;
     targetArt.integritaCorrente = after;
@@ -365,12 +406,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           'Medicina: ${bonusConSegno(medicine)}\n'
           'Totale prima dell’arrotondamento: $rawTotal\n'
           'Totale arrotondato: $roundedTotal\n'
+          'Bonus Nucleo sopra la media: +$integrityPercentBonus% → $boostedTotal\n'
           'Integrità Art effettivamente recuperata: $effectiveRecovery$lossText',
       'Repair core — $artName\n'
           'd10: $d10\n'
           'Medicine: ${bonusConSegno(medicine)}\n'
           'Total before rounding: $rawTotal\n'
           'Rounded total: $roundedTotal\n'
+          'Core above-average bonus: +$integrityPercentBonus% → $boostedTotal\n'
           'Art Integrity actually recovered: $effectiveRecovery$lossText',
     );
     final completedResult = OculumAggiustaNucleoResult(
@@ -7123,7 +7166,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
 
     final dtDebuff = art.sbloccata && activationCost > 0
-        ? consumeArtIntegrityAndResolveDebuff(artIndex, activationCost)
+        ? consumeArtIntegrityAndResolveDebuff(
+            artIndex,
+            activationCost,
+            skillLevel: livelloNuovo.clamp(1, 3),
+          )
         : 0;
 
     if (art.sbloccata) {
@@ -7162,6 +7209,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       risultato += t(
         ' Debuff integritÃ  critica: +$dtDebuff DT.',
         ' Critical integrity debuff: +$dtDebuff DT.',
+      );
+    }
+    if (ultimoDannoNucleoEvitato) {
+      risultato += t(
+        ' Fortuna: il Nucleo non perde Integrità.',
+        ' Luck: the Core loses no Integrity.',
       );
     }
     if (learningTitleCreated) {
@@ -7856,6 +7909,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         dtDebuff = consumeArtIntegrityAndResolveDebuff(
           artIndex,
           activationCost,
+          skillLevel: 3,
         );
         consumedIntegrity = true;
         rimarginaHpDaAumentoResilienza(artOpenQuickResilienzaBonus(art));
@@ -7867,6 +7921,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         risultato += t(
           ' Debuff integrità critica: +$dtDebuff DT.',
           ' Critical integrity debuff: +$dtDebuff DT.',
+        );
+      }
+      if (ultimoDannoNucleoEvitato) {
+        risultato += t(
+          ' Fortuna: il Nucleo non perde Integrità.',
+          ' Luck: the Core loses no Integrity.',
         );
       }
       aggiungiLog(risultato);
