@@ -2595,6 +2595,16 @@ Armi, costumi e Oculus utilizzabili in una run devono essere trovati o acquistat
 Il tema Giorno di scuola si sblocca raggiungendo il piano 3 con Art Scolastica Moderna. Kitty Slime si sblocca con Art Hoshy o con una scheda Hoshy almeno di livello 5; quando subisce un attacco ha il 50% di probabilità di generare una copia, fino a due copie, ciascuna con metà statistiche.
 
 Dal Grado VI può comparire Occhio di Pietra e Bilancia. L'evento fonde drop e Metallo Runico Postea della run per migliorare l'arma e può generare Dust, critico run, Scudo Oculum o favore del fabbro. Se non esiste nulla da fondere, concede Scudo Oculum e non blocca la run.
+
+STATI OCULUM AL RISVEGLIO
+
+Oculum addormentato azzera immediatamente l'Oculum disponibile quando viene ottenuto. Finche resta attivo, ogni fonte che dona, recupera o rigenera Oculum concede la meta arrotondata per difetto; costi e consumi non vengono dimezzati. Il personaggio si risveglia dopo due riposi lunghi oppure dopo due riposi brevi e un riposo lungo. Il risveglio azzera l'Oculum attuale e temporaneo, ma conserva massimo, caratteristiche e potenziamenti permanenti.
+
+Consumo elevato consuma 1 punto della statistica principale collegata a ogni tiro valido. Un tiro su una statistica usa quella statistica; un tiro su un sottotratto usa la statistica principale del suo gruppo. Entrambi gli stati possono essere attivati da una Skill. Al riposo lungo possono comparire in base alla fase, alla Fortuna nelle Risorse e alla difficolta della campagna; durante le Piogge fertilizzanti la probabilita base e 50%.
+
+MODALITA GUIDATA, VELOCE E ASPETTO
+
+La modalita guidata mostra spiegazioni semplici ed esempi accanto ai comandi principali. La modalita veloce nasconde queste spiegazioni ma non elimina funzioni. In Impostazioni, Aspetto e modalita raccoglie design, temi old school e stili della Vita con anteprima. Cuori Occhio Oculum rappresenta la percentuale di HP con dieci cuori-occhio; il misuratore Oculum conserva l'occhio centrale e usa dieci fiammelle per la percentuale disponibile. Queste opzioni cambiano soltanto la presentazione e non i dati di gioco.
 ''',
   contentEn: r'''
 These rules cover Oculum time, automatic crises and exploration activities. General life, damage, critical and EXP formulas remain in the previous sections and are not repeated here.
@@ -2634,6 +2644,16 @@ Weapons, costumes and Oculus items used in a run must be found or bought during 
 The School Day theme unlocks by reaching floor 3 with Modern School Art. Kitty Slime unlocks through Hoshy Art or a level 5 or higher Hoshy sheet; when attacked, it has a 50% chance to create a copy, up to two copies, each with half its stats.
 
 From Grade VI, the Stone Eye and Scale event may appear. It fuses run drops and Postea Runic Metal to improve a weapon and may produce Dust, a run critical, Oculum Shield or blacksmith favor. If nothing can be fused, it grants Oculum Shield and never blocks the run.
+
+OCULUM STATES ON WAKING
+
+Sleeping Oculum immediately clears available Oculum when acquired. While active, every source that grants, recovers or regenerates Oculum gives half rounded down; costs and spending are not halved. The character wakes after two long rests or after two short rests and one long rest. Waking clears current and temporary Oculum but preserves the maximum, traits and permanent upgrades.
+
+High Consumption spends 1 point from the main stat linked to every valid roll. A stat roll uses that stat; a subtrait roll uses the main stat of its group. Both states can be activated by a Skill. They may appear after a long rest according to phase, Luck in Resources and campaign difficulty; during Fertilizing Rains the base chance is 50%.
+
+GUIDED MODE, FAST MODE AND APPEARANCE
+
+Guided mode shows simple explanations and examples beside the main controls. Fast mode hides these explanations without removing features. In Settings, Appearance and modes groups designs, old-school themes and Health styles with a preview. Oculum Eye Hearts represents HP percentage with ten eye-hearts; the Oculum meter keeps the central eye and uses ten flames for the available percentage. These options change presentation only, never game data.
 ''',
 );
 
