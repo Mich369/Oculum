@@ -186,7 +186,13 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     final maxHitPoints = max(1, maxHp());
     final maxOculum = max(0, oculumMassimo());
     final hp = fullStrength ? maxHitPoints : max(1, (maxHitPoints / 2).ceil());
-    final oculum = fullStrength ? maxOculum : max(0, (maxOculum / 2).ceil());
+    final requestedOculum = fullStrength
+        ? maxOculum
+        : max(0, (maxOculum / 2).ceil());
+    final oculum = oculumGainWhileSleeping(
+      requestedOculum,
+      sleeping: oculumAddormentato,
+    );
     final shield = max(
       0,
       volontaTotale() + (scudoCritico ? materiaTotale() : 0),

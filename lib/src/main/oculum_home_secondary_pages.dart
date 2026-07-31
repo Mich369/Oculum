@@ -7161,6 +7161,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
 
     skill.livello = livelloNuovo;
+    final statiOculumAttivati = livelloNuovo > livelloPrecedente
+        ? applicaStatiOculumDaTestoSkill(skill.toJson().toString())
+        : const <String>[];
     if (livelloNuovo == 0 && livelloPrecedente > 0) {
       removeActiveStructuredEffectsForSourcePrefix(
         '${art.nome} / ${skill.nome}',
@@ -7227,6 +7230,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         '\nTitolo d’Apprendimento creato e modificabile nella sezione Titoli.',
         '\nLearning Title created and editable in the Titles section.',
       );
+    }
+    if (statiOculumAttivati.isNotEmpty) {
+      risultato +=
+          '\n${t('Stati attivati dalla Skill', 'States activated by the Skill')}: ${statiOculumAttivati.join(', ')}.';
     }
     if (fatigueMessage != null) {
       risultato += '\n$fatigueMessage';

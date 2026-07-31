@@ -51,6 +51,7 @@ part 'src/main/oculum_home_damage_impact.dart';
 part 'src/main/oculum_home_image_cache.dart';
 part 'src/main/oculum_home_combat_progression.dart';
 part 'src/main/oculum_home_resources_rest_titles_data.dart';
+part 'src/main/oculum_design_system.dart';
 part 'src/main/oculum_home_colors_and_base_widgets.dart';
 part 'src/main/oculum_home_sheet_page.dart';
 part 'src/main/oculum_home_secondary_pages.dart';
@@ -1623,6 +1624,12 @@ class _OculumHomePageState extends State<OculumHomePage>
   int expHundredRegenRemainder = 0;
   int temporaryOculum = 0;
   int temporaryOculumRollsRemaining = 0;
+  bool oculumAddormentato = false;
+  int oculumAddormentatoRiposiBrevi = 0;
+  int oculumAddormentatoRiposiLunghi = 0;
+  bool consumoElevato = false;
+  int ultimoGuadagnoOculumOriginale = 0;
+  int ultimoGuadagnoOculumEffettivo = 0;
 
   int raccoltaResilienzaSpesa = 0;
   int raccoltaVolontaSpesa = 0;
@@ -1680,6 +1687,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool mostraEditorSfondoBasso = false;
 
   bool usaBarraVita = true;
+  String stileBarraVita = 'gotico_oculum';
+  bool temiOldSchool = false;
+  String nuovoDesignOculum = 'cattedrale';
   bool mostraDannoCuraScheda = true;
   bool mostraStrumentiManualeRapidi = true;
   bool mostraBorsaCompatta = true;

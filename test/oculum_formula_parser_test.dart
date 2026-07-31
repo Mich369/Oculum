@@ -940,4 +940,66 @@ void main() {
       closeTo(1.4, 0.000001),
     );
   });
+
+  test('Oculum addormentato dimezza solo i guadagni per difetto', () {
+    expect(oculumGainWhileSleeping(10, sleeping: true), 5);
+    expect(oculumGainWhileSleeping(7, sleeping: true), 3);
+    expect(oculumGainWhileSleeping(1, sleeping: true), 0);
+    expect(oculumGainWhileSleeping(7, sleeping: false), 7);
+    expect(oculumGainWhileSleeping(-2, sleeping: true), 0);
+  });
+
+  test('Oculum addormentato si risveglia con i riposi richiesti', () {
+    expect(
+      oculumSleepingAwakensAfterRests(shortRests: 0, longRests: 2),
+      isTrue,
+    );
+    expect(
+      oculumSleepingAwakensAfterRests(shortRests: 2, longRests: 1),
+      isTrue,
+    );
+    expect(
+      oculumSleepingAwakensAfterRests(shortRests: 8, longRests: 0),
+      isFalse,
+    );
+    expect(
+      oculumSleepingAwakensAfterRests(shortRests: 1, longRests: 1),
+      isFalse,
+    );
+  });
+
+  test('stati al risveglio seguono fase fortuna e difficoltà', () {
+    expect(
+      oculumRestStateChancePercent(
+        fertilizingRains: true,
+        resourceLuck: 99,
+        difficulty: 'Normale',
+      ),
+      50,
+    );
+    expect(
+      oculumRestStateChancePercent(
+        fertilizingRains: false,
+        resourceLuck: 1,
+        difficulty: 'Normale',
+      ),
+      2,
+    );
+    expect(
+      oculumRestStateChancePercent(
+        fertilizingRains: true,
+        resourceLuck: 0,
+        difficulty: 'Difficile',
+      ),
+      60,
+    );
+    expect(
+      oculumRestStateChancePercent(
+        fertilizingRains: false,
+        resourceLuck: 9,
+        difficulty: 'Facile',
+      ),
+      0,
+    );
+  });
 }

@@ -3973,7 +3973,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                t('Interfaccia Telefono', 'Phone Interface'),
+                t('Aspetto e modalita', 'Appearance and modes'),
                 style: TextStyle(
                   color: tertiaryColor,
                   fontSize: 20,
@@ -4000,6 +4000,174 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                 onChanged: (value) {
                   setState(() => modalitaVeloce = value);
                   programmaSalvataggio();
+                },
+              ),
+              SwitchListTile(
+                value: temiOldSchool,
+                activeThumbColor: tertiaryColor,
+                secondary: const Icon(Icons.history_edu),
+                title: Text(t('Temi old school', 'Old-school themes')),
+                subtitle: Text(
+                  t(
+                    'Ripristina il sistema grafico precedente senza perdere colori, temi o personalizzazioni già salvate.',
+                    'Restores the previous visual system without losing saved colors, themes or customizations.',
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    temiOldSchool = value;
+                    risultato = value
+                        ? t(
+                            'Mod Temi old school attivata.',
+                            'Old-school Themes mod enabled.',
+                          )
+                        : t(
+                            'Nuovo design Oculum attivato.',
+                            'New Oculum design enabled.',
+                          );
+                    aggiungiLog(risultato);
+                  });
+                  programmaSalvataggio();
+                },
+              ),
+              if (!temiOldSchool)
+                DropdownButtonFormField<String>(
+                  initialValue:
+                      const <String>{
+                        'cattedrale',
+                        'manoscritto',
+                        'ferro_battuto',
+                        'pergamena_nera',
+                        'vetro_arcano',
+                        'sigillo_rituale',
+                      }.contains(nuovoDesignOculum)
+                      ? nuovoDesignOculum
+                      : 'cattedrale',
+                  decoration: fieldDecoration(
+                    t('Design Oculum', 'Oculum design'),
+                    helper: t(
+                      'Sei sistemi coordinati; cambiano superfici, bordi e profondità senza modificare dati o funzioni.',
+                      'Six coordinated systems; they change surfaces, borders and depth without modifying data or features.',
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'cattedrale',
+                      child: Text('Cattedrale d’Ossidiana'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'manoscritto',
+                      child: Text('Manoscritto Proibito'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'ferro_battuto',
+                      child: Text('Ferro Battuto'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'pergamena_nera',
+                      child: Text('Pergamena Nera'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'vetro_arcano',
+                      child: Text('Vetro Arcano'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'sigillo_rituale',
+                      child: Text('Sigillo Rituale'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() => nuovoDesignOculum = value ?? 'cattedrale');
+                    programmaSalvataggio();
+                  },
+                ),
+              const SizedBox(height: 12),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final preview = gothicPanel(
+                    borderColor: eyePupilGlowColor,
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          t('Esempio immediato', 'Live example'),
+                          style: TextStyle(
+                            color: eyePupilGlowColor,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        oculumEyeHeartHealthMeter(
+                          current: max(1, (maxHp() * 0.7).round()),
+                          maximum: max(1, maxHp()),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          t(
+                            'Le scelte cambiano solo l aspetto.',
+                            'Choices change appearance only.',
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                  final selector = DropdownButtonFormField<String>(
+                    initialValue:
+                        const <String>{
+                          'gotico_oculum',
+                          'soulslike',
+                          'action_rpg',
+                          'jrpg_crystal',
+                          'survival_horror',
+                          'roguelite',
+                          'oculum_eyes',
+                          'oculum_alternativa',
+                        }.contains(stileBarraVita)
+                        ? stileBarraVita
+                        : 'gotico_oculum',
+                    decoration: fieldDecoration(
+                      t('Aspetto della Vita', 'Health appearance'),
+                      helper: t(
+                        'Scegli barre classiche, alternative o cuori con Occhi Oculum percentuali.',
+                        'Choose classic bars, alternatives, or percentage Oculum Eye hearts.',
+                      ),
+                    ),
+                    items: [
+                      for (final id in const <String>[
+                        'gotico_oculum',
+                        'soulslike',
+                        'action_rpg',
+                        'jrpg_crystal',
+                        'survival_horror',
+                        'roguelite',
+                        'oculum_eyes',
+                        'oculum_alternativa',
+                      ])
+                        DropdownMenuItem(
+                          value: id,
+                          child: Text(lifeBarStyleLabel(id)),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      setState(() => stileBarraVita = value ?? 'gotico_oculum');
+                      programmaSalvataggio();
+                    },
+                  );
+                  if (constraints.maxWidth < 700) {
+                    return Column(
+                      children: [selector, const SizedBox(height: 12), preview],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: selector),
+                      const SizedBox(width: 14),
+                      SizedBox(width: 330, child: preview),
+                    ],
+                  );
                 },
               ),
               SwitchListTile(

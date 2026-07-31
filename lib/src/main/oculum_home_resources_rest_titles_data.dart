@@ -1326,6 +1326,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         presaMaterialiGrammi + recuperoPresa,
       );
       malusTiriOculumPostEsplosione = 0;
+      final risvegliato = registraRiposoOculumAddormentato(lungo: false);
 
       ultimoEventoRiposo = t(
         'Riposo breve: buff e debuff temporanei rimossi senza perdere HP; recuperato 1/4 delle stats attuali mancanti, 25% di Cenere minimo 1 e $tiroCuraHp su 1d100 HP (+$hpRecuperati effettivi).',
@@ -1343,6 +1344,17 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
           '\nOculum Burst penalty removed.',
         );
       }
+      if (risvegliato) {
+        ultimoEventoRiposo += t(
+          '\nOculum risvegliato dopo 2 riposi brevi e 1 lungo: Oculum attuale azzerato.',
+          '\nOculum awakened after 2 short rests and 1 long rest: current Oculum cleared.',
+        );
+      } else if (oculumAddormentato) {
+        ultimoEventoRiposo += t(
+          '\nRisveglio Oculum: $oculumAddormentatoRiposiBrevi/2 riposi brevi, $oculumAddormentatoRiposiLunghi/2 riposi lunghi.',
+          '\nOculum awakening: $oculumAddormentatoRiposiBrevi/2 short rests, $oculumAddormentatoRiposiLunghi/2 long rests.',
+        );
+      }
 
       risultato = ultimoEventoRiposo;
       aggiungiLog(risultato);
@@ -1358,6 +1370,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     var limitedArtRecoveries = 0;
     final aggiustaNucleoEraUsato = aggiustaNucleoUsato;
     final potenziamentiPermanentiRivelati = <String>[];
+    var statoOculumDaRiposo = '';
+    var probabilitaStatoOculum = 0.0;
+    var oculumRisvegliatoDalRiposo = false;
     setState(() {
       final cenere = leggiNumero(cenereController);
       final rimuoveMalusEsplosione = malusTiriOculumPostEsplosione < 0;
@@ -1429,6 +1444,29 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       malusTiriOculumPostEsplosione = 0;
       aggiustaNucleoUsato = false;
       scannerRiposiLunghi = min(3, scannerRiposiLunghi + 1);
+      oculumRisvegliatoDalRiposo = registraRiposoOculumAddormentato(
+        lungo: true,
+      );
+
+      final faseCorrente = oculumPhaseForDay(oculumCurrentDay());
+      probabilitaStatoOculum = oculumRestStateChancePercent(
+        fertilizingRains: faseCorrente.id == 'piogge_fertilizzanti',
+        resourceLuck: fortuna,
+        difficulty: normalizedCampaignDifficulty(),
+      );
+      if (!oculumRisvegliatoDalRiposo &&
+          oculumPercentRollSucceeds(
+            chancePercent: probabilitaStatoOculum,
+            rollBasisPoints: Random.secure().nextInt(10000),
+          )) {
+        if (Random.secure().nextBool()) {
+          attivaStatoOculumAddormentato();
+          statoOculumDaRiposo = t('Oculum addormentato', 'Sleeping Oculum');
+        } else {
+          consumoElevato = true;
+          statoOculumDaRiposo = t('Consumo elevato', 'High consumption');
+        }
+      }
 
       for (var i = 0; i < arti.length; i++) {
         final art = arti[i];
@@ -1466,6 +1504,23 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         ultimoEventoRiposo += t(
           '\nAscension Dust rivelata: +1 permanente a ${potenziamentiPermanentiRivelati.join(', ')}.',
           '\nAscension Dust revealed: permanent +1 to ${potenziamentiPermanentiRivelati.join(', ')}.',
+        );
+      }
+      if (statoOculumDaRiposo.isNotEmpty) {
+        ultimoEventoRiposo += t(
+          '\nStato ottenuto al risveglio ($probabilitaStatoOculum%): $statoOculumDaRiposo.',
+          '\nState gained on waking ($probabilitaStatoOculum%): $statoOculumDaRiposo.',
+        );
+      }
+      if (oculumRisvegliatoDalRiposo) {
+        ultimoEventoRiposo += t(
+          '\nOculum risvegliato con i riposi richiesti: Oculum attuale azzerato.',
+          '\nOculum awakened through the required rests: current Oculum cleared.',
+        );
+      } else if (oculumAddormentato) {
+        ultimoEventoRiposo += t(
+          '\nRisveglio Oculum: $oculumAddormentatoRiposiBrevi/2 riposi brevi, $oculumAddormentatoRiposiLunghi/2 riposi lunghi.',
+          '\nOculum awakening: $oculumAddormentatoRiposiBrevi/2 short rests, $oculumAddormentatoRiposiLunghi/2 long rests.',
         );
       }
       if (rimuoveMalusEsplosione) {

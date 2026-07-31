@@ -911,6 +911,30 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
   }
 
   InputDecoration fieldDecoration(String label, {String? helper}) {
+    if (!temiOldSchool) {
+      return InputDecoration(
+        labelText: cleanUiText(label),
+        helperText: helper == null ? null : cleanUiText(helper),
+        helperMaxLines: 3,
+        filled: true,
+        fillColor: OculumDesignTokens.cathedralStone,
+        contentPadding: scaledInsets(
+          const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(OculumDesignTokens.radiusSmall),
+          borderSide: BorderSide(color: primaryColor.withValues(alpha: 0.35)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(OculumDesignTokens.radiusSmall),
+          borderSide: BorderSide(color: primaryColor.withValues(alpha: 0.32)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(OculumDesignTokens.radiusSmall),
+          borderSide: BorderSide(color: tertiaryColor, width: 1.4),
+        ),
+      );
+    }
     final light = lightweightUi;
     final radius = themeFieldRadiusValue(compact: light);
     final fill = themeFieldFillColor();
@@ -1256,6 +1280,24 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     EdgeInsets padding = const EdgeInsets.all(14),
     Color? borderColor,
   }) {
+    if (!temiOldSchool) {
+      final accent = borderColor ?? primaryColor;
+      return RepaintBoundary(
+        child: Container(
+          margin: const EdgeInsets.symmetric(
+            vertical: OculumDesignTokens.space4,
+          ),
+          padding: scaledInsets(padding),
+          decoration: OculumDesignTokens.panelDecoration(
+            accent: accent,
+            elevated: !modalitaLeggera,
+            decorationIntensity: modalitaLeggera ? 0 : 0.75,
+            style: nuovoDesignOculum,
+          ),
+          child: child,
+        ),
+      );
+    }
     final panelSurface = Color.lerp(
       backgroundMidColor,
       backgroundBottomColor,
@@ -1659,6 +1701,84 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         color: resolvedColor,
         fontSize: uiScale(12.5),
         height: lightweightUi ? 1.22 : 1.32,
+      ),
+    );
+  }
+
+  Widget guidedExplanation({
+    required String title,
+    required String explanation,
+    String? example,
+    IconData icon = Icons.menu_book_rounded,
+  }) {
+    if (modalitaVeloce) return const SizedBox.shrink();
+    return Semantics(
+      container: true,
+      label: '$title. $explanation',
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(phoneCompactUi ? 10 : 13),
+        decoration:
+            OculumDesignTokens.panelDecoration(
+              accent: tertiaryColor,
+              decorationIntensity: 0.72,
+              style: nuovoDesignOculum,
+            ).copyWith(
+              color: const Color(0xFF111523).withValues(alpha: 0.96),
+              border: Border.all(color: tertiaryColor.withValues(alpha: 0.55)),
+            ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: tertiaryColor.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: tertiaryColor.withValues(alpha: 0.5)),
+              ),
+              child: Icon(icon, color: tertiaryColor, size: 19),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    cleanUiText(title),
+                    style: TextStyle(
+                      color: tertiaryColor,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    cleanUiText(explanation),
+                    style: const TextStyle(
+                      color: Color(0xFFE8E3D8),
+                      height: 1.35,
+                      fontSize: 13,
+                    ),
+                  ),
+                  if (example != null && example.trim().isNotEmpty) ...[
+                    const SizedBox(height: 7),
+                    Text(
+                      cleanUiText(example),
+                      style: TextStyle(
+                        color: secondaryColor.withValues(alpha: 0.95),
+                        height: 1.3,
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

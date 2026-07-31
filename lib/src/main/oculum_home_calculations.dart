@@ -2255,6 +2255,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     bool deferDerivedCardNotifications = false,
   }) {
     if (amount <= 0) return 0;
+    final originalAmount = amount;
+    amount = oculumGainWhileSleeping(amount, sleeping: oculumAddormentato);
+    ultimoGuadagnoOculumOriginale = originalAmount;
+    ultimoGuadagnoOculumEffettivo = amount;
+    if (amount <= 0) return 0;
     final before = oculumTotale();
     final next = addOculumToTemporaryState(
       state: currentTemporaryOculumState(),
@@ -2309,11 +2314,114 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
   }
 
-  void registerValidRoll() {
+  String consumoElevatoStatKey(String raw, {String? subtraitGroup}) {
+    if (subtraitGroup != null && subtraitGroup.isNotEmpty) {
+      return subtraitGroup == 'altro' ? 'oculum' : subtraitGroup;
+    }
+    final normalized = oculumNormalizeText(raw);
+    if (normalized.contains('resil')) return 'resilienza';
+    if (normalized.contains('volont') || normalized == 'vc') return 'volonta';
+    if (normalized.contains('mater') ||
+        normalized == 'cm' ||
+        normalized.contains('iniziativa')) {
+      return 'materia';
+    }
+    if (normalized.contains('oculum')) return 'oculum';
+    return '';
+  }
+
+  void applicaConsumoElevatoDopoTiro(String statKey) {
+    if (!consumoElevato || statKey.isEmpty) return;
+    final spent = spendArtSkillCostResource(statKey, 1);
+    final label = switch (statKey) {
+      'resilienza' => 'Resilienza',
+      'volonta' => t('Volontà', 'Will'),
+      'materia' => 'Materia',
+      _ => 'Oculum',
+    };
+    final message = spent > 0
+        ? t(
+            'Consumo elevato: -1 $label per il tiro.',
+            'High consumption: -1 $label for the roll.',
+          )
+        : t(
+            'Consumo elevato: $label è già a 0.',
+            'High consumption: $label is already at 0.',
+          );
+    aggiungiLog(message);
+    programmaSalvataggio(
+      invalidateCaches: false,
+      delay: const Duration(milliseconds: 1800),
+    );
+  }
+
+  List<String> applicaStatiOculumDaTestoSkill(String text) {
+    final normalized = oculumNormalizeText(text);
+    final applied = <String>[];
+    if (normalized.contains('@oculumaddormentato') ||
+        normalized.contains('oculum addormentato')) {
+      attivaStatoOculumAddormentato();
+      applied.add(t('Oculum addormentato', 'Sleeping Oculum'));
+    }
+    if (normalized.contains('@consumoelevato') ||
+        normalized.contains('consumo elevato')) {
+      consumoElevato = true;
+      applied.add(t('Consumo elevato', 'High consumption'));
+    }
+    return applied;
+  }
+
+  void attivaStatoOculumAddormentato() {
+    if (!oculumAddormentato) {
+      oculumAddormentatoRiposiBrevi = 0;
+      oculumAddormentatoRiposiLunghi = 0;
+    }
+    oculumAddormentato = true;
+    applyTemporaryOculumState(
+      const TemporaryOculumState(
+        normalCurrent: 0,
+        temporary: 0,
+        rollsRemaining: 0,
+      ),
+    );
+  }
+
+  void risvegliaStatoOculumAddormentato() {
+    oculumAddormentato = false;
+    oculumAddormentatoRiposiBrevi = 0;
+    oculumAddormentatoRiposiLunghi = 0;
+    applyTemporaryOculumState(
+      const TemporaryOculumState(
+        normalCurrent: 0,
+        temporary: 0,
+        rollsRemaining: 0,
+      ),
+    );
+  }
+
+  bool registraRiposoOculumAddormentato({required bool lungo}) {
+    if (!oculumAddormentato) return false;
+    if (lungo) {
+      oculumAddormentatoRiposiLunghi++;
+    } else {
+      oculumAddormentatoRiposiBrevi++;
+    }
+    final risveglio = oculumSleepingAwakensAfterRests(
+      shortRests: oculumAddormentatoRiposiBrevi,
+      longRests: oculumAddormentatoRiposiLunghi,
+    );
+    if (risveglio) {
+      risvegliaStatoOculumAddormentato();
+    }
+    return risveglio;
+  }
+
+  void registerValidRoll({String consumoStatKey = ''}) {
     lastValidRollSnapshot = dadoMostrato.trim().isEmpty
         ? risultato.trim()
         : dadoMostrato.trim();
     lastValidRollCancelled = false;
+    applicaConsumoElevatoDopoTiro(consumoStatKey);
     final before = currentTemporaryOculumState();
     final next = registerValidTemporaryOculumRoll(before);
     if (identical(next, before)) return;
@@ -2527,13 +2635,18 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   void syncCurrentOculumToMax({bool resetToMax = false}) {
     final massimo = currentStatNaturalControllerMax('oculum');
     if (resetToMax) {
-      applyTemporaryOculumState(
-        TemporaryOculumState(
-          normalCurrent: massimo,
-          temporary: 0,
-          rollsRemaining: 0,
-        ),
-      );
+      final current = currentOculum();
+      if (current < massimo) {
+        addOculum(massimo - current, scheduleSave: false);
+      } else if (current > massimo) {
+        applyTemporaryOculumState(
+          TemporaryOculumState(
+            normalCurrent: massimo,
+            temporary: 0,
+            rollsRemaining: 0,
+          ),
+        );
+      }
     } else {
       final current = currentTemporaryOculumState();
       final minimum = currentOculumRuntimeFloor();
@@ -2597,13 +2710,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     currentMateriaController.text = currentStatNaturalControllerMax(
       'materia',
     ).toString();
-    applyTemporaryOculumState(
-      TemporaryOculumState(
-        normalCurrent: currentStatNaturalControllerMax('oculum'),
-        temporary: 0,
-        rollsRemaining: 0,
-      ),
-    );
+    final massimoOculum = currentStatNaturalControllerMax('oculum');
+    if (currentOculum() < massimoOculum) {
+      addOculum(massimoOculum - currentOculum(), scheduleSave: false);
+    }
     invalidateHiddenEyeDerivedCaches();
   }
 
@@ -3059,8 +3169,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       final controller = currentStatController(key);
       final massimo = currentStatNaturalControllerMax(key);
       final before = currentStatValue(key);
-      controller.text = massimo.toString();
-      adjustRecordedStatSpentFromDelta(key, statMassimoNaturale(key) - before);
+      if (key == 'oculum' && before < massimo) {
+        addOculum(massimo - before, scheduleSave: false);
+      } else {
+        controller.text = massimo.toString();
+      }
+      final after = currentStatValue(key);
+      adjustRecordedStatSpentFromDelta(key, after - before);
       risultato = '${statLabel(key)} attuale riportata al massimo.';
       aggiungiLog(risultato);
     });

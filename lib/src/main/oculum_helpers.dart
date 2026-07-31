@@ -249,6 +249,36 @@ double oculumEnemyExpMultiplier({
   };
 }
 
+int oculumGainWhileSleeping(int amount, {required bool sleeping}) {
+  final safeAmount = max(0, amount);
+  return sleeping ? safeAmount ~/ 2 : safeAmount;
+}
+
+bool oculumSleepingAwakensAfterRests({
+  required int shortRests,
+  required int longRests,
+}) {
+  final safeShort = max(0, shortRests);
+  final safeLong = max(0, longRests);
+  return safeLong >= 2 || (safeLong >= 1 && safeShort >= 2);
+}
+
+double oculumRestStateChancePercent({
+  required bool fertilizingRains,
+  required int resourceLuck,
+  String difficulty = 'normale',
+}) {
+  final normalized = oculumNormalizeText(difficulty);
+  final difficultyDelta = switch (normalized) {
+    'facile' || 'easy' => fertilizingRains ? -10 : -1,
+    'difficile' || 'hard' => fertilizingRains ? 10 : 2,
+    'oculum' => fertilizingRains ? 20 : 4,
+    _ => 0,
+  };
+  final base = fertilizingRains ? 50 : 3 - max(0, resourceLuck);
+  return (base + difficultyDelta).clamp(0, 100).toDouble();
+}
+
 int oculumLuckDieSides(int luckTotal) {
   final safe = max(1, luckTotal);
   for (final sides in const <int>[2, 4, 6, 8, 10, 12, 20]) {
@@ -1477,6 +1507,8 @@ const List<String> oculumCommandAutocompleteLabels = <String>[
   '@OculumSpeso',
   '@OculumImmesso',
   '@OculumSkill',
+  '@OculumAddormentato',
+  '@ConsumoElevato',
   '@ResilienzaSkill',
   '@VolontaSkill',
   '@MateriaSkill',

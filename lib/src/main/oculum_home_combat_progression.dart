@@ -501,7 +501,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     aggiungiLog(
       'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText',
     );
-    registerValidRoll();
+    registerValidRoll(consumoStatKey: consumoElevatoStatKey(nome));
     notifyDiceResultChanged();
     if (statoForzaLog.isNotEmpty) {
       scheduleCombatRollSave();
@@ -558,7 +558,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     aggiungiLog(
       'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText',
     );
-    registerValidRoll();
+    registerValidRoll(consumoStatKey: consumoElevatoStatKey(nome));
     notifyDiceResultChanged();
     if (statoForzaLog.isNotEmpty) {
       scheduleCombatRollSave();
@@ -659,7 +659,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     aggiungiLog(
       'Tiro sottotratto $label: $testoDado.${oculumTiroLogLabel(oculumSpend)}$masteryText$statoForzaLog$adaptationCriticalText$expText',
     );
-    registerValidRoll();
+    registerValidRoll(
+      consumoStatKey: consumoElevatoStatKey(
+        stat.nome,
+        subtraitGroup: hiddenEyeStatGroup(stat.id),
+      ),
+    );
     notifyDiceResultChanged();
     notifyDiceOverlayChanged();
     _scheduleDadoCentraleOverlayTimers(reduceEffects: reduceDiceEffects);

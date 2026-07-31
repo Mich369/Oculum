@@ -6,6 +6,70 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   // PANNELLI SCHEDA
   // =====================================================
 
+  String lifeBarStyleLabel(String id) {
+    return switch (id) {
+      'soulslike' => 'Soulslike',
+      'action_rpg' => 'Action RPG',
+      'jrpg_crystal' => 'JRPG Crystal',
+      'survival_horror' => 'Survival Horror',
+      'roguelite' => 'Roguelite',
+      'oculum_eyes' => t('Cuori Occhio Oculum', 'Oculum Eye Hearts'),
+      'oculum_alternativa' => t('Oculum alternativa', 'Oculum alternative'),
+      _ => t('Gotico Oculum', 'Oculum Gothic'),
+    };
+  }
+
+  Widget oculumEyeHeartHealthMeter({
+    required int current,
+    required int maximum,
+  }) {
+    final ratio = maximum <= 0 ? 0.0 : (current / maximum).clamp(0.0, 1.0);
+    final active = (ratio * 10).ceil().clamp(0, 10);
+    return Semantics(
+      label: 'HP ${(ratio * 100).round()}%',
+      child: Column(
+        children: [
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 5,
+            runSpacing: 5,
+            children: List<Widget>.generate(10, (index) {
+              final lit = index < active;
+              final color = lit ? eyePupilGlowColor : Colors.blueGrey.shade800;
+              return SizedBox(
+                width: 30,
+                height: 28,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Icon(
+                      lit ? Icons.favorite : Icons.favorite_border,
+                      color: color,
+                      size: 28,
+                    ),
+                    Icon(
+                      lit ? Icons.visibility : Icons.visibility_off,
+                      color: lit ? Colors.white : Colors.blueGrey.shade500,
+                      size: 12,
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'HP $current/$maximum · ${(ratio * 100).round()}%',
+            style: TextStyle(
+              color: eyePupilGlowColor,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget lifeBar() {
     final maxHpVal = maxHp();
     final curr = hpCorrenti();
@@ -43,12 +107,33 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       hpColor = const Color(0xFFE74C3C);
     }
 
+    final barHeight = switch (stileBarraVita) {
+      'soulslike' => 22.0,
+      'jrpg_crystal' => 28.0,
+      'survival_horror' => 18.0,
+      'roguelite' => 30.0,
+      _ => 34.0,
+    };
+    final barRadius = switch (stileBarraVita) {
+      'soulslike' || 'survival_horror' => 3.0,
+      'jrpg_crystal' => 16.0,
+      'roguelite' => 7.0,
+      _ => 12.0,
+    };
+    final emptyColor = switch (stileBarraVita) {
+      'soulslike' => const Color(0xFF140B0B),
+      'jrpg_crystal' => const Color(0xFF11172A),
+      'survival_horror' => const Color(0xFF151815),
+      'roguelite' => const Color(0xFF211329),
+      _ => const Color(0xFF240C14),
+    };
+
     return gothicPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            t('Barra della Vita', 'Health Bar'),
+            '${t('Barra della Vita', 'Health Bar')} · ${lifeBarStyleLabel(stileBarraVita)}',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -78,135 +163,86 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             ),
           ],
           const SizedBox(height: 8),
-          smallInfoText(
-            t(
-              'La barra mostra HP reali, HP temporanei, Scudo, Scudo Oculum e Scudo Critico. Lo Scudo Oculum assorbe prima degli altri scudi.',
-              'The bar shows real HP, temporary HP, Shield, Oculum Shield and Critical Shield. Oculum Shield absorbs before other shields.',
+          if (!modalitaVeloce) ...[
+            guidedExplanation(
+              title: t('Come leggere la vita', 'How to read health'),
+              explanation: t(
+                'Gli HP sono la tua vita. Gli HP temporanei sono vita in prestito. Gli scudi proteggono gli HP: quando subisci danno, l app usa prima lo Scudo Oculum e poi le altre protezioni.',
+                'HP is your life. Temporary HP is borrowed life. Shields protect HP: when you take damage, the app uses Oculum Shield first and then the other protections.',
+              ),
+              example: t(
+                'Esempio: hai 10 HP e 3 Scudo. Un colpo da 4 consuma lo Scudo e toglie soltanto 1 HP.',
+                'Example: you have 10 HP and 3 Shield. A hit for 4 uses the Shield and removes only 1 HP.',
+              ),
+              icon: Icons.favorite_outline,
             ),
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Stack(
-              children: [
-                Container(height: 34, color: const Color(0xFF240C14)),
-                FractionallySizedBox(
-                  widthFactor: hpW,
-                  child: Container(
-                    height: 34,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [hpColor.withValues(alpha: 0.75), hpColor],
-                      ),
-                    ),
-                  ),
-                ),
-                FractionallySizedBox(
-                  widthFactor: (hpW + tempW).clamp(0.0, 1.0),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: FractionallySizedBox(
-                      widthFactor: tempW <= 0 ? 0 : tempW / (hpW + tempW),
-                      child: Container(
-                        height: 34,
-                        color: Colors.greenAccent.withValues(alpha: 0.55),
-                      ),
-                    ),
-                  ),
-                ),
-                FractionallySizedBox(
-                  widthFactor: (hpW + tempW + shieldW).clamp(0.0, 1.0),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: FractionallySizedBox(
-                      widthFactor: shieldW <= 0
-                          ? 0
-                          : shieldW / (hpW + tempW + shieldW),
-                      child: Container(
-                        height: 34,
-                        color: tertiaryColor.withValues(alpha: 0.82),
-                      ),
-                    ),
-                  ),
-                ),
-                if (showOculumShield)
+            const SizedBox(height: 12),
+          ],
+          if (stileBarraVita == 'oculum_eyes')
+            oculumEyeHeartHealthMeter(current: curr, maximum: maxHpVal)
+          else
+            ClipRRect(
+              borderRadius: BorderRadius.circular(barRadius),
+              child: Stack(
+                children: [
+                  Container(height: barHeight, color: emptyColor),
                   FractionallySizedBox(
-                    widthFactor: (hpW + tempW + shieldW + oculumShieldW).clamp(
-                      0.0,
-                      1.0,
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: FractionallySizedBox(
-                        widthFactor: oculumShieldW <= 0
-                            ? 0
-                            : oculumShieldW /
-                                  (hpW + tempW + shieldW + oculumShieldW),
-                        child: Container(
-                          height: 34,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                primaryColor.withValues(alpha: 0.62),
-                                eyePupilGlowColor.withValues(alpha: 0.88),
-                              ],
-                            ),
-                          ),
+                    widthFactor: hpW,
+                    child: Container(
+                      height: 34,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [hpColor.withValues(alpha: 0.75), hpColor],
                         ),
                       ),
                     ),
                   ),
-                FractionallySizedBox(
-                  widthFactor:
-                      (hpW +
-                              tempW +
-                              shieldW +
-                              (showOculumShield ? oculumShieldW : 0) +
-                              criticalShieldW)
-                          .clamp(0.0, 1.0),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: FractionallySizedBox(
-                      widthFactor: criticalShieldW <= 0
-                          ? 0
-                          : criticalShieldW /
-                                (hpW +
-                                    tempW +
-                                    shieldW +
-                                    (showOculumShield ? oculumShieldW : 0) +
-                                    criticalShieldW),
-                      child: Container(
-                        height: 34,
-                        color: Colors.white.withValues(alpha: 0.48),
+                  FractionallySizedBox(
+                    widthFactor: (hpW + tempW).clamp(0.0, 1.0),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: FractionallySizedBox(
+                        widthFactor: tempW <= 0 ? 0 : tempW / (hpW + tempW),
+                        child: Container(
+                          height: barHeight,
+                          color: Colors.greenAccent.withValues(alpha: 0.55),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Positioned.fill(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.46),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 3,
-                            ),
-                            child: Text(
-                              showOculumShield
-                                  ? 'HP $curr/$maxHpVal  T $temp  S $shield  SO $oculumShield/$oculumShieldMax  SC $criticalShield'
-                                  : 'HP $curr/$maxHpVal  T $temp  S $shield  SC $criticalShield',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                shadows: [
-                                  Shadow(color: Colors.black, blurRadius: 5),
+                  FractionallySizedBox(
+                    widthFactor: (hpW + tempW + shieldW).clamp(0.0, 1.0),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: FractionallySizedBox(
+                        widthFactor: shieldW <= 0
+                            ? 0
+                            : shieldW / (hpW + tempW + shieldW),
+                        child: Container(
+                          height: barHeight,
+                          color: tertiaryColor.withValues(alpha: 0.82),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (showOculumShield)
+                    FractionallySizedBox(
+                      widthFactor: (hpW + tempW + shieldW + oculumShieldW)
+                          .clamp(0.0, 1.0),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: FractionallySizedBox(
+                          widthFactor: oculumShieldW <= 0
+                              ? 0
+                              : oculumShieldW /
+                                    (hpW + tempW + shieldW + oculumShieldW),
+                          child: Container(
+                            height: barHeight,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  primaryColor.withValues(alpha: 0.62),
+                                  eyePupilGlowColor.withValues(alpha: 0.88),
                                 ],
                               ),
                             ),
@@ -214,11 +250,69 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                         ),
                       ),
                     ),
+                  FractionallySizedBox(
+                    widthFactor:
+                        (hpW +
+                                tempW +
+                                shieldW +
+                                (showOculumShield ? oculumShieldW : 0) +
+                                criticalShieldW)
+                            .clamp(0.0, 1.0),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: FractionallySizedBox(
+                        widthFactor: criticalShieldW <= 0
+                            ? 0
+                            : criticalShieldW /
+                                  (hpW +
+                                      tempW +
+                                      shieldW +
+                                      (showOculumShield ? oculumShieldW : 0) +
+                                      criticalShieldW),
+                        child: Container(
+                          height: barHeight,
+                          color: Colors.white.withValues(alpha: 0.48),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  Positioned.fill(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.46),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 3,
+                              ),
+                              child: Text(
+                                showOculumShield
+                                    ? 'HP $curr/$maxHpVal  T $temp  S $shield  SO $oculumShield/$oculumShieldMax  SC $criticalShield'
+                                    : 'HP $curr/$maxHpVal  T $temp  S $shield  SC $criticalShield',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  shadows: [
+                                    Shadow(color: Colors.black, blurRadius: 5),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -882,27 +976,67 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 520;
 
-          final eye = Opacity(
-            opacity: (0.22 + ratio * 0.78).clamp(0.22, 1.0),
-            child: Image.asset(
-              'assets/icon/oculum_eye.png',
-              width: compact ? 42 : 54,
-              height: compact ? 42 : 54,
-              cacheWidth: oculumImageCacheDimension(
-                context,
-                compact ? 42 : 54,
-                max: 192,
-              ),
-              cacheHeight: oculumImageCacheDimension(
-                context,
-                compact ? 42 : 54,
-                max: 192,
-              ),
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Icon(
-                Icons.visibility,
-                color: meterColor,
-                size: compact ? 38 : 50,
+          final activeFlames = (ratio * 10).ceil().clamp(0, 10);
+          final eyeSize = compact ? 86.0 : 108.0;
+          final flameRadius = compact ? 32.0 : 42.0;
+          final eye = Semantics(
+            label:
+                'Oculum $current su $massimo, ${(ratio * 100).round()} percento',
+            child: SizedBox(
+              width: eyeSize,
+              height: eyeSize,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  for (var index = 0; index < 10; index++)
+                    Transform.translate(
+                      offset: Offset(
+                        cos(-pi / 2 + index * 2 * pi / 10) * flameRadius,
+                        sin(-pi / 2 + index * 2 * pi / 10) * flameRadius,
+                      ),
+                      child: Icon(
+                        Icons.local_fire_department_rounded,
+                        size: compact ? 15 : 18,
+                        color: index < activeFlames
+                            ? eyePupilGlowColor
+                            : Colors.blueGrey.shade800,
+                        shadows: index < activeFlames
+                            ? [
+                                Shadow(
+                                  color: eyePupilGlowColor.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                  blurRadius: 8,
+                                ),
+                              ]
+                            : null,
+                      ),
+                    ),
+                  Opacity(
+                    opacity: (0.22 + ratio * 0.78).clamp(0.22, 1.0),
+                    child: Image.asset(
+                      'assets/icon/oculum_eye.png',
+                      width: compact ? 42 : 54,
+                      height: compact ? 42 : 54,
+                      cacheWidth: oculumImageCacheDimension(
+                        context,
+                        compact ? 42 : 54,
+                        max: 192,
+                      ),
+                      cacheHeight: oculumImageCacheDimension(
+                        context,
+                        compact ? 42 : 54,
+                        max: 192,
+                      ),
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.visibility,
+                        color: meterColor,
+                        size: compact ? 38 : 50,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );
@@ -961,6 +1095,127 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 ),
               ),
               const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: oculumAddormentato
+                      ? Colors.indigo.withValues(alpha: 0.20)
+                      : Colors.black.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: oculumAddormentato
+                        ? Colors.indigoAccent
+                        : primaryColor.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      oculumAddormentato
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: oculumAddormentato
+                          ? Colors.indigoAccent
+                          : primaryColor,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        oculumAddormentato
+                            ? t(
+                                'Oculum addormentato: ogni guadagno è dimezzato per difetto.',
+                                'Sleeping Oculum: every gain is halved and rounded down.',
+                              )
+                            : t(
+                                'Oculum sveglio: i recuperi hanno valore pieno.',
+                                'Awake Oculum: recovery has full value.',
+                              ),
+                        maxLines: compact ? 4 : 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (compact)
+                      IconButton.filledTonal(
+                        tooltip: oculumAddormentato
+                            ? t('Risveglia Oculum', 'Wake Oculum')
+                            : t('Addormenta Oculum', 'Put Oculum to sleep'),
+                        onPressed: oculumAddormentato
+                            ? confermaRisvegliaOculum
+                            : attivaOculumAddormentato,
+                        icon: Icon(
+                          oculumAddormentato
+                              ? Icons.wb_sunny_outlined
+                              : Icons.bedtime_outlined,
+                        ),
+                      )
+                    else
+                      FilledButton.icon(
+                        onPressed: oculumAddormentato
+                            ? confermaRisvegliaOculum
+                            : attivaOculumAddormentato,
+                        icon: Icon(
+                          oculumAddormentato
+                              ? Icons.wb_sunny_outlined
+                              : Icons.bedtime_outlined,
+                        ),
+                        label: Text(
+                          oculumAddormentato
+                              ? t('Risveglia', 'Wake')
+                              : t('Addormenta', 'Sleep'),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              SwitchListTile.adaptive(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                value: consumoElevato,
+                secondary: const Icon(Icons.local_fire_department_outlined),
+                title: Text(t('Consumo elevato', 'High consumption')),
+                subtitle: Text(
+                  t(
+                    'Ogni tiro valido consuma 1 punto della statistica collegata.',
+                    'Every valid roll consumes 1 point from its linked stat.',
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    consumoElevato = value;
+                    risultato = value
+                        ? t(
+                            'Consumo elevato attivato.',
+                            'High consumption activated.',
+                          )
+                        : t(
+                            'Consumo elevato disattivato.',
+                            'High consumption deactivated.',
+                          );
+                    aggiungiLog(risultato);
+                  });
+                  programmaSalvataggio();
+                },
+              ),
+              if (!modalitaVeloce) ...[
+                const SizedBox(height: 6),
+                guidedExplanation(
+                  title: t(
+                    'Questi sono stati speciali',
+                    'These are special states',
+                  ),
+                  explanation: t(
+                    'Addormentato azzera subito l Oculum e dimezza soltanto quello che recuperi. Si risveglia dopo 2 riposi lunghi oppure 2 brevi e 1 lungo. Consumo elevato toglie 1 punto dalla risorsa collegata quando fai un tiro.',
+                    'Sleeping clears current Oculum immediately and halves only what you recover. It wakes after 2 long rests or 2 short rests and 1 long rest. High consumption removes 1 point from the linked resource when you roll.',
+                  ),
+                  example: t(
+                    'Esempio: recuperi 7 Oculum mentre dorme, quindi ne ricevi 3.',
+                    'Example: you recover 7 Oculum while it sleeps, so you receive 3.',
+                  ),
+                  icon: Icons.visibility_off_outlined,
+                ),
+              ],
+              const SizedBox(height: 10),
               controls,
             ],
           );
@@ -987,6 +1242,59 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         },
       ),
     );
+  }
+
+  void attivaOculumAddormentato() {
+    if (oculumAddormentato) return;
+    setState(() {
+      attivaStatoOculumAddormentato();
+      risultato = t(
+        'Oculum addormentato attivato: Oculum attuale azzerato e guadagni dimezzati per difetto.',
+        'Sleeping Oculum activated: current Oculum cleared and gains halved, rounded down.',
+      );
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  Future<void> confermaRisvegliaOculum() async {
+    if (!oculumAddormentato) return;
+    final perso = currentOculum();
+    final conferma = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF10121A),
+        title: Text(t('Risveglia Oculum', 'Wake Oculum')),
+        content: Text(
+          t(
+            'Il risveglio azzererà $perso Oculum attuale, compreso quello temporaneo. Massimo e potenziamenti permanenti resteranno invariati.',
+            'Waking will remove $perso current Oculum, including temporary Oculum. Maximum and permanent upgrades remain unchanged.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            icon: const Icon(Icons.wb_sunny_outlined),
+            label: Text(t('Risveglia e azzera', 'Wake and clear')),
+          ),
+        ],
+      ),
+    );
+    if (conferma != true || !mounted) return;
+    setState(() {
+      risvegliaStatoOculumAddormentato();
+      risultato = t(
+        'Oculum risvegliato: Oculum attuale azzerato; massimo e valori permanenti conservati.',
+        'Oculum awakened: current Oculum cleared; maximum and permanent values preserved.',
+      );
+      aggiungiLog(risultato);
+    });
+    recordCurrentOculumProgress(immediate: true);
+    programmaSalvataggio();
   }
 
   String razzaVisibile() {
@@ -3189,11 +3497,17 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           ),
           SizedBox(height: compact ? 7 : 10),
           if (!modalitaVeloce) ...[
-            smallInfoText(
-              t(
-                'Per iniziare: imposta nome e stats, tieni d occhio HP e Scudo, tira VC per attaccare e CM quando serve difenderti. Se vuoi andare rapido, attiva Veloce.',
-                'To start: set name and stats, watch HP and Shield, roll VC to attack and CM when you need defense. Turn on Fast when you want less page noise.',
+            guidedExplanation(
+              title: t('Cosa faccio adesso?', 'What do I do now?'),
+              explanation: t(
+                '1. Guarda HP e risorse. 2. Di al Master cosa vuoi fare. 3. Se serve un tiro, premi la statistica indicata. 4. Leggi il risultato e racconta cosa fa il personaggio. I pulsanti meno e piu correggono un valore a mano.',
+                '1. Check HP and resources. 2. Tell the Game Master what you want to do. 3. If a roll is needed, press the requested stat. 4. Read the result and describe what your character does. Minus and plus adjust a value by hand.',
               ),
+              example: t(
+                'Esempio: vuoi colpire un mostro. Il Master chiede VC: premi VC, poi comunica il risultato.',
+                'Example: you want to hit a monster. The Game Master asks for VC: press VC, then report the result.',
+              ),
+              icon: Icons.explore_outlined,
             ),
             SizedBox(height: compact ? 8 : 12),
           ],
@@ -4866,13 +5180,61 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               programmaSalvataggio();
             },
           ),
+          if (usaBarraVita) ...[
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              initialValue:
+                  const <String>{
+                    'gotico_oculum',
+                    'soulslike',
+                    'action_rpg',
+                    'jrpg_crystal',
+                    'survival_horror',
+                    'roguelite',
+                    'oculum_eyes',
+                    'oculum_alternativa',
+                  }.contains(stileBarraVita)
+                  ? stileBarraVita
+                  : 'gotico_oculum',
+              decoration: fieldDecoration(
+                t('Stile barra della vita', 'Health bar style'),
+                helper: t(
+                  'Sei interpretazioni ispirate ai videogiochi più la variante Oculum alternativa perfezionata.',
+                  'Six videogame-inspired interpretations plus the refined alternative Oculum variant.',
+                ),
+              ),
+              items: [
+                for (final id in const <String>[
+                  'gotico_oculum',
+                  'soulslike',
+                  'action_rpg',
+                  'jrpg_crystal',
+                  'survival_horror',
+                  'roguelite',
+                  'oculum_eyes',
+                  'oculum_alternativa',
+                ])
+                  DropdownMenuItem(
+                    value: id,
+                    child: Text(lifeBarStyleLabel(id)),
+                  ),
+              ],
+              onChanged: (value) {
+                setState(() => stileBarraVita = value ?? 'gotico_oculum');
+                programmaSalvataggio();
+              },
+            ),
+          ],
           if (usaBarraVita)
-            themeUsesStackedVitalsHud() ? stackedVitalsHudPanel() : lifeBar(),
+            stileBarraVita == 'oculum_alternativa'
+                ? stackedVitalsHudPanel()
+                : lifeBar(),
           if (usaBarraVita) ...[
             const SizedBox(height: 10),
-            savingShieldPanel(dense: themeUsesStackedVitalsHud()),
+            savingShieldPanel(dense: stileBarraVita == 'oculum_alternativa'),
           ],
-          if (usaBarraVita && !themeUsesStackedVitalsHud()) oculumShieldPanel(),
+          if (usaBarraVita && stileBarraVita != 'oculum_alternativa')
+            oculumShieldPanel(),
           if (!usaBarraVita) ...[
             LayoutBuilder(
               builder: (context, constraints) {

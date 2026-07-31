@@ -986,6 +986,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'normalCurrentOculum': tipo == 'Mostro' ? 2 : 1,
       'temporaryOculum': 0,
       'temporaryOculumRollsRemaining': 0,
+      'oculumAddormentato': false,
+      'oculumAddormentatoRiposiBrevi': 0,
+      'oculumAddormentatoRiposiLunghi': 0,
+      'consumoElevato': false,
       'maxOculum': tipo == 'Mostro' ? 2 : 1,
       'currentHp': tipo == 'Mostro' ? '60' : '30',
       'hpTemp': '0',
@@ -1119,6 +1123,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'filtroAmbiente': 'Tutti',
       'immaginePersonaggioBase64': '',
       'usaBarraVita': true,
+      'stileBarraVita': 'gotico_oculum',
+      'temiOldSchool': false,
+      'nuovoDesignOculum': 'cattedrale',
       'mostraDannoCuraScheda': true,
       'mostraStrumentiManualeRapidi': true,
       'mostraBorsaCompatta': true,
@@ -1194,6 +1201,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'currentMateria': currentMateria().toString(),
       'currentOculum': currentOculum().toString(),
       ...vitals.toJson(),
+      'oculumAddormentato': oculumAddormentato,
+      'oculumAddormentatoRiposiBrevi': oculumAddormentatoRiposiBrevi,
+      'oculumAddormentatoRiposiLunghi': oculumAddormentatoRiposiLunghi,
+      'consumoElevato': consumoElevato,
       'maxOculum': oculumMassimo(),
       'partialAwakeningHalfHpTriggered':
           schedePersonaggio.isNotEmpty &&
@@ -1369,6 +1380,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
           ? ''
           : base64Encode(immaginePersonaggio!),
       'usaBarraVita': usaBarraVita,
+      'stileBarraVita': stileBarraVita,
+      'temiOldSchool': temiOldSchool,
+      'nuovoDesignOculum': nuovoDesignOculum,
       'mostraDannoCuraScheda': mostraDannoCuraScheda,
       'mostraStrumentiManualeRapidi': mostraStrumentiManualeRapidi,
       'mostraBorsaCompatta': mostraBorsaCompatta,
@@ -1420,6 +1434,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
     oculumRepairMojibakeJsonInPlace(json);
     temporaryOculum = 0;
     temporaryOculumRollsRemaining = 0;
+    oculumAddormentato = false;
+    oculumAddormentatoRiposiBrevi = 0;
+    oculumAddormentatoRiposiLunghi = 0;
+    consumoElevato = false;
     restoreMonsterBookCustomization(json);
     nomeController.text = '${json['nome'] ?? '???'}';
     tipoSchedaController.text = '${json['tipoScheda'] ?? 'Personaggio'}';
@@ -1477,6 +1495,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
       json['currentOculum'],
       fallback: legacyOculumMax,
     ).toString();
+    oculumAddormentato = readBoolValue(json['oculumAddormentato']);
+    oculumAddormentatoRiposiBrevi = max(
+      0,
+      readIntValue(json['oculumAddormentatoRiposiBrevi']),
+    );
+    oculumAddormentatoRiposiLunghi = max(
+      0,
+      readIntValue(json['oculumAddormentatoRiposiLunghi']),
+    );
+    consumoElevato = readBoolValue(json['consumoElevato']);
 
     currentHpController.text = '${json['currentHp'] ?? '30'}';
     hpTempController.text = readIntValue(
@@ -1975,6 +2003,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
     filtroAmbiente = '${json['filtroAmbiente'] ?? 'Tutti'}';
 
     usaBarraVita = readBoolValue(json['usaBarraVita'], fallback: true);
+    stileBarraVita = '${json['stileBarraVita'] ?? 'gotico_oculum'}';
+    temiOldSchool = readBoolValue(json['temiOldSchool']);
+    nuovoDesignOculum = '${json['nuovoDesignOculum'] ?? 'cattedrale'}';
     mostraDannoCuraScheda = readBoolValue(
       json['mostraDannoCuraScheda'],
       fallback: true,
