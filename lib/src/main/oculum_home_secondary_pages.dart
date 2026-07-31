@@ -241,15 +241,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     return hiddenEyeDerivedBonus('medicina');
   }
 
-  double mediaSottotrattiAggiustaNucleo() {
-    final values = hiddenEyeStats
-        .where((stat) => stat.unlocked && stat.id != 'medicina')
-        .map(hiddenEyeTotal)
-        .toList(growable: false);
-    if (values.isEmpty) return 0;
-    return values.reduce((a, b) => a + b) / values.length;
-  }
-
   String nomeArtPerAggiustaNucleo(int artIndex) {
     final name = arti[artIndex].nome.trim();
     return name.isEmpty ? '${t('Art', 'Art')} ${artIndex + 1}' : name;
@@ -270,10 +261,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final targetSheetTag = sheetTagAt(schedaCorrente);
     final artName = nomeArtPerAggiustaNucleo(artIndex);
     final medicine = medicinaAttualeAggiustaNucleo();
-    final subtraitAverage = mediaSottotrattiAggiustaNucleo();
-    final integrityPercentBonus = oculumCoreIntegrityPercentBonus(
-      core: medicine,
-      average: subtraitAverage,
+    final maximumIntegrityBonus = oculumRepairCoreMaximumIntegrityBonus(
+      maximum,
     );
 
     aggiustaNucleoInCorso = true;
@@ -317,14 +306,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 '${t('Bonus Medicina applicato', 'Applied Medicine bonus')}: ${bonusConSegno(medicine)}',
                 color: accent,
               ),
-              if (integrityPercentBonus > 0) ...[
+              if (maximumIntegrityBonus > 0) ...[
                 const SizedBox(height: 6),
                 smallInfoText(
                   t(
-                    'Nucleo sopra la media: +$integrityPercentBonus% Integrità al ripristino.',
-                    'Core above average: +$integrityPercentBonus% Integrity on recovery.',
+                    'Integrità massima oltre 100: +$maximumIntegrityBonus recupero.',
+                    'Maximum Integrity above 100: +$maximumIntegrityBonus recovery.',
                   ),
-                  color: Colors.greenAccent,
+                  color: eyePupilGlowColor,
                 ),
               ],
               const SizedBox(height: 12),
@@ -380,8 +369,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final d10 = Random().nextInt(10) + 1;
     final rawTotal = d10 + medicine;
     final roundedTotal = oculumAggiustaNucleoRoundedTotal(rawTotal);
-    final boostedTotal = (roundedTotal * (1 + integrityPercentBonus / 100))
-        .ceil();
+    final boostedTotal = roundedTotal + maximumIntegrityBonus;
     final before = targetArt.integritaCorrente.clamp(0, maximum).toInt();
     final effectiveRecovery = oculumAggiustaNucleoEffectiveRecovery(
       current: before,
@@ -407,14 +395,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           'Medicina: ${bonusConSegno(medicine)}\n'
           'Totale prima dell’arrotondamento: $rawTotal\n'
           'Totale arrotondato: $roundedTotal\n'
-          'Bonus Nucleo sopra la media: +$integrityPercentBonus% → $boostedTotal\n'
+          'Bonus massimale Integrità oltre 100: +$maximumIntegrityBonus → $boostedTotal\n'
           'Integrità Art effettivamente recuperata: $effectiveRecovery$lossText',
       'Repair core — $artName\n'
           'd10: $d10\n'
           'Medicine: ${bonusConSegno(medicine)}\n'
           'Total before rounding: $rawTotal\n'
           'Rounded total: $roundedTotal\n'
-          'Core above-average bonus: +$integrityPercentBonus% → $boostedTotal\n'
+          'Maximum Integrity bonus above 100: +$maximumIntegrityBonus → $boostedTotal\n'
           'Art Integrity actually recovered: $effectiveRecovery$lossText',
     );
     final completedResult = OculumAggiustaNucleoResult(

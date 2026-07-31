@@ -316,11 +316,8 @@ bool oculumPercentRollSucceeds({
   return rollBasisPoints.clamp(0, 9999) < threshold;
 }
 
-int oculumCoreIntegrityPercentBonus({
-  required int core,
-  required double average,
-}) {
-  final excess = max(0, core - average.floor());
+int oculumRepairCoreMaximumIntegrityBonus(int maximumIntegrity) {
+  final excess = max(0, maximumIntegrity - 100);
   return (excess ~/ 10) * 5;
 }
 

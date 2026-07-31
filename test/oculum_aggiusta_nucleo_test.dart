@@ -63,10 +63,13 @@ void main() {
       );
     });
 
-    test('ogni 10 punti Nucleo sopra la media aggiunge 5 percento', () {
-      expect(oculumCoreIntegrityPercentBonus(core: 29, average: 20), 0);
-      expect(oculumCoreIntegrityPercentBonus(core: 30, average: 20), 5);
-      expect(oculumCoreIntegrityPercentBonus(core: 45, average: 20), 10);
+    test('ogni 10 Integrità massima oltre 100 aggiunge 5 recupero', () {
+      expect(oculumRepairCoreMaximumIntegrityBonus(90), 0);
+      expect(oculumRepairCoreMaximumIntegrityBonus(100), 0);
+      expect(oculumRepairCoreMaximumIntegrityBonus(109), 0);
+      expect(oculumRepairCoreMaximumIntegrityBonus(110), 5);
+      expect(oculumRepairCoreMaximumIntegrityBonus(130), 15);
+      expect(oculumRepairCoreMaximumIntegrityBonus(175), 35);
     });
   });
 }
