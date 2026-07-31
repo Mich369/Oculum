@@ -741,13 +741,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int tempStatBonus(String key) {
     switch (key) {
       case 'resilienza':
-        return tempResilienza;
+        return tempResilienza + ascensionDustTempResilienza;
       case 'volonta':
-        return tempVolonta;
+        return tempVolonta + ascensionDustTempVolonta;
       case 'materia':
-        return tempMateria;
+        return tempMateria + ascensionDustTempMateria;
       case 'oculum':
-        return tempOculum;
+        return tempOculum + ascensionDustTempOculum;
       default:
         return 0;
     }
@@ -3643,14 +3643,19 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int hiddenEyeTotal(HiddenEyeStat stat) {
+    final dustBonus =
+        ascensionDustSottotrattiTemporanei[hiddenEyeStatGroup(stat.id)] ?? 0;
+    final cacheBase = stat.valore + dustBonus;
     final cachedBase = hiddenEyeTotalBaseCache[stat.id];
     final cachedValue = hiddenEyeTotalValueCache[stat.id];
-    if (cachedBase == stat.valore && cachedValue != null) return cachedValue;
+    if (cachedBase == cacheBase && cachedValue != null) return cachedValue;
 
-    final total = stat.id == 'fortuna'
-        ? hiddenEyeDerivedBonus(stat.id)
-        : stat.valore + hiddenEyeDerivedBonus(stat.id);
-    hiddenEyeTotalBaseCache[stat.id] = stat.valore;
+    final total =
+        (stat.id == 'fortuna'
+            ? hiddenEyeDerivedBonus(stat.id)
+            : stat.valore + hiddenEyeDerivedBonus(stat.id)) +
+        dustBonus;
+    hiddenEyeTotalBaseCache[stat.id] = cacheBase;
     hiddenEyeTotalValueCache[stat.id] = total;
     return total;
   }

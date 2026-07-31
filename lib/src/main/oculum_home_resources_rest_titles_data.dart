@@ -973,6 +973,277 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  Future<void> mostraPotenziaAscensionDust() async {
+    final disponibile = max(0, leggiNumero(ascensionDustController));
+    if (disponibile <= 0) {
+      setState(() {
+        risultato = t(
+          'Non hai Ascension Dust da spendere.',
+          'You have no Ascension Dust to spend.',
+        );
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+
+    final controller = TextEditingController(text: '1');
+    final quantita = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF10121A),
+        title: Text(t('Potenzia', 'Empower')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              t(
+                'Disponibili: $disponibile. Ogni Dust non multipla di 3 dona +1 temporaneo a una statistica casuale fino al riposo lungo. Ogni terza Dust cumulata nel giorno prepara invece +1 permanente casuale, rivelato al riposo lungo.',
+                'Available: $disponibile. Every Dust that is not a multiple of 3 grants +1 temporary to a random stat until long rest. Every third Dust accumulated during the day instead prepares a random permanent +1, revealed at long rest.',
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: fieldDecoration(t('Quantità', 'Amount')),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = readIntValue(controller.text).clamp(1, disponibile);
+              Navigator.pop(dialogContext, value);
+            },
+            child: Text(t('Potenzia', 'Empower')),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (quantita == null || quantita <= 0 || !mounted) return;
+
+    final random = Random.secure();
+    var temporanei = 0;
+    var permanenti = 0;
+    setState(() {
+      ascensionDustController.text = (disponibile - quantita).toString();
+      for (var i = 0; i < quantita; i++) {
+        ascensionDustUsataOggi++;
+        if (ascensionDustUsataOggi % 3 == 0) {
+          ascensionDustPermanentiInAttesa++;
+          permanenti++;
+          continue;
+        }
+        switch (random.nextInt(4)) {
+          case 0:
+            ascensionDustTempResilienza++;
+            break;
+          case 1:
+            ascensionDustTempVolonta++;
+            break;
+          case 2:
+            ascensionDustTempMateria++;
+            break;
+          default:
+            ascensionDustTempOculum++;
+        }
+        temporanei++;
+      }
+      risultato = t(
+        'Potenzia: spese $quantita Ascension Dust. +$temporanei punti temporanei casuali fino al riposo lungo'
+            '${permanenti > 0 ? '; $permanenti aumento/i permanente/i nascosto/i sarà/saranno rivelato/i al riposo lungo' : ''}. Progressione giornaliera: $ascensionDustUsataOggi.',
+        'Empower: spent $quantita Ascension Dust. +$temporanei random temporary points until long rest'
+            '${permanenti > 0 ? '; $permanenti hidden permanent increase(s) will be revealed at long rest' : ''}. Daily progress: $ascensionDustUsataOggi.',
+      );
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  Future<int?> _scegliQuantitaAscensionDust(int disponibile) async {
+    final controller = TextEditingController(text: '1');
+    final value = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF10121A),
+        title: Text(t('Quantità Dust', 'Dust amount')),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: fieldDecoration(
+            t('Massimo $disponibile', 'Max $disponibile'),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(
+              dialogContext,
+              readIntValue(controller.text).clamp(1, disponibile),
+            ),
+            child: Text(t('Conferma', 'Confirm')),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return value;
+  }
+
+  Future<void> mostraPotenziaOculusAscensionDust() async {
+    final disponibile = max(0, leggiNumero(ascensionDustController));
+    if (disponibile <= 0) {
+      setState(
+        () => risultato = t(
+          'Non hai Ascension Dust da spendere.',
+          'You have no Ascension Dust to spend.',
+        ),
+      );
+      return;
+    }
+    final tipo = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF10121A),
+        title: Text(t('Potenzia Oculus', 'Empower Oculus')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.shield_outlined),
+              title: Text(t('Integrità Art', 'Art Integrity')),
+              subtitle: Text(
+                t(
+                  '+10 recupero; ogni terza Dust +10 al massimo.',
+                  '+10 recovery; every third Dust +10 maximum.',
+                ),
+              ),
+              onTap: () => Navigator.pop(dialogContext, 'integrita'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.account_tree_outlined),
+              title: Text(t('Sottotratti', 'Subtraits')),
+              subtitle: Text(
+                t(
+                  '+1 temporaneo a tutto il tipo; ogni terza Dust dà 20 + Livello×2 EXP a un sottotratto casuale.',
+                  '+1 temporary to the whole type; every third Dust gives 20 + Level×2 XP to a random subtrait.',
+                ),
+              ),
+              onTap: () => Navigator.pop(dialogContext, 'sottotratti'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (tipo == null || !mounted) return;
+
+    var gruppo = 'resilienza';
+    var artIndex = max(0, arti.indexWhere((art) => art.sbloccata));
+    if (tipo == 'integrita') {
+      if (arti.isEmpty) return;
+      final selected = await showDialog<int>(
+        context: context,
+        builder: (dialogContext) => SimpleDialog(
+          backgroundColor: const Color(0xFF10121A),
+          title: const Text('Art'),
+          children: [
+            for (var i = 0; i < arti.length; i++)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(dialogContext, i),
+                child: Text(arti[i].nome),
+              ),
+          ],
+        ),
+      );
+      if (selected == null) return;
+      artIndex = selected;
+    } else {
+      final selected = await showDialog<String>(
+        context: context,
+        builder: (dialogContext) => SimpleDialog(
+          backgroundColor: const Color(0xFF10121A),
+          title: Text(t('Tipo di sottotratti', 'Subtrait type')),
+          children: [
+            for (final entry in const <String, String>{
+              'resilienza': 'Resilienza',
+              'volonta': 'Volontà',
+              'materia': 'Materia',
+              'oculum': 'Oculum',
+              'altro': 'Altro',
+            }.entries)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(dialogContext, entry.key),
+                child: Text(entry.value),
+              ),
+          ],
+        ),
+      );
+      if (selected == null) return;
+      gruppo = selected;
+    }
+
+    final quantita = await _scegliQuantitaAscensionDust(disponibile);
+    if (quantita == null || !mounted) return;
+    final random = Random.secure();
+    var effettiTerzi = 0;
+    setState(() {
+      ascensionDustController.text = (disponibile - quantita).toString();
+      for (var i = 0; i < quantita; i++) {
+        ascensionDustUsataOggi++;
+        if (ascensionDustUsataOggi % 3 == 0) {
+          if (tipo == 'integrita') {
+            ascensionDustIntegritaMassimaBonus += 10;
+          } else {
+            final stats = hiddenEyeStatsForGroup(
+              gruppo,
+            ).where((stat) => stat.unlocked).toList(growable: false);
+            if (stats.isNotEmpty) {
+              oculusSubtraitMasteryApplyGain(
+                stats[random.nextInt(stats.length)],
+                20 + max(0, leggiNumero(livelloController)) * 2,
+              );
+            }
+          }
+          effettiTerzi++;
+          continue;
+        }
+        if (tipo == 'integrita') {
+          ensureArtIntegrityValue(artIndex);
+          arti[artIndex].integritaCorrente = min(
+            artIntegrityMaximum(),
+            arti[artIndex].integritaCorrente + 10,
+          );
+        } else {
+          ascensionDustSottotrattiTemporanei.update(
+            gruppo,
+            (value) => value + 1,
+            ifAbsent: () => 1,
+          );
+        }
+      }
+      if (tipo == 'integrita') notifyArtIntegrityChanged(artIndex);
+      if (tipo == 'sottotratti') {
+        invalidateHiddenEyeDerivedCaches();
+      }
+      risultato = t(
+        'Spese $quantita Dust su $tipo. Effetti permanenti ogni tre: $effettiTerzi. Totale giornaliero: $ascensionDustUsataOggi.',
+        'Spent $quantita Dust on $tipo. Every-third permanent effects: $effettiTerzi. Daily total: $ascensionDustUsataOggi.',
+      );
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
   void modificaConsumoRegistrato(String key, int delta) {
     setState(() {
       switch (key) {
@@ -1086,6 +1357,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     final changedArtIndexes = <int>[];
     var limitedArtRecoveries = 0;
     final aggiustaNucleoEraUsato = aggiustaNucleoUsato;
+    final potenziamentiPermanentiRivelati = <String>[];
     setState(() {
       final cenere = leggiNumero(cenereController);
       final rimuoveMalusEsplosione = malusTiriOculumPostEsplosione < 0;
@@ -1104,6 +1376,39 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       if (tempOculum < 0) {
         tempOculum = 0;
       }
+
+      final random = Random.secure();
+      for (var i = 0; i < ascensionDustPermanentiInAttesa; i++) {
+        switch (random.nextInt(4)) {
+          case 0:
+            resilienzaController.text = (leggiNumero(resilienzaController) + 1)
+                .toString();
+            potenziamentiPermanentiRivelati.add('Resilienza');
+            break;
+          case 1:
+            volontaController.text = (leggiNumero(volontaController) + 1)
+                .toString();
+            potenziamentiPermanentiRivelati.add(t('Volontà', 'Will'));
+            break;
+          case 2:
+            materiaController.text = (leggiNumero(materiaController) + 1)
+                .toString();
+            potenziamentiPermanentiRivelati.add('Materia');
+            break;
+          default:
+            oculumController.text = (leggiNumero(oculumController) + 1)
+                .toString();
+            potenziamentiPermanentiRivelati.add('Oculum');
+        }
+      }
+      ascensionDustTempResilienza = 0;
+      ascensionDustTempVolonta = 0;
+      ascensionDustTempMateria = 0;
+      ascensionDustTempOculum = 0;
+      ascensionDustSottotrattiTemporanei.clear();
+      invalidateHiddenEyeDerivedCaches();
+      ascensionDustUsataOggi = 0;
+      ascensionDustPermanentiInAttesa = 0;
 
       refullaStatsAttuali();
       ricaricaScudoOculum();
@@ -1157,6 +1462,12 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         '\nPresa materiali ricaricata al massimo: ${formatoPesoMateriali(presaMaterialiGrammi)}; bonus temporanei rimossi.',
         '\nMaterial capacity refilled: ${formatoPesoMateriali(presaMaterialiGrammi)}; temporary bonuses removed.',
       );
+      if (potenziamentiPermanentiRivelati.isNotEmpty) {
+        ultimoEventoRiposo += t(
+          '\nAscension Dust rivelata: +1 permanente a ${potenziamentiPermanentiRivelati.join(', ')}.',
+          '\nAscension Dust revealed: permanent +1 to ${potenziamentiPermanentiRivelati.join(', ')}.',
+        );
+      }
       if (rimuoveMalusEsplosione) {
         ultimoEventoRiposo += t(
           '\nMalus Esplosione di Oculum rimosso.',

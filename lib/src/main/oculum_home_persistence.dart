@@ -1044,6 +1044,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'tempVolonta': 0,
       'tempMateria': 0,
       'tempOculum': 0,
+      'ascensionDustTempResilienza': 0,
+      'ascensionDustTempVolonta': 0,
+      'ascensionDustTempMateria': 0,
+      'ascensionDustTempOculum': 0,
+      'ascensionDustUsataOggi': 0,
+      'ascensionDustPermanentiInAttesa': 0,
+      'ascensionDustIntegritaMassimaBonus': 0,
+      'ascensionDustSottotrattiTemporanei': <String, int>{},
       'playerReportedTurn': 0,
       'automaticAshLastCheckedTurn': 0,
       'activeStructuredEffects': <Map<String, dynamic>>[],
@@ -1273,6 +1281,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'tempVolonta': tempVolonta,
       'tempMateria': tempMateria,
       'tempOculum': tempOculum,
+      'ascensionDustTempResilienza': ascensionDustTempResilienza,
+      'ascensionDustTempVolonta': ascensionDustTempVolonta,
+      'ascensionDustTempMateria': ascensionDustTempMateria,
+      'ascensionDustTempOculum': ascensionDustTempOculum,
+      'ascensionDustUsataOggi': ascensionDustUsataOggi,
+      'ascensionDustPermanentiInAttesa': ascensionDustPermanentiInAttesa,
+      'ascensionDustIntegritaMassimaBonus': ascensionDustIntegritaMassimaBonus,
+      if (ascensionDustSottotrattiTemporanei.isNotEmpty)
+        'ascensionDustSottotrattiTemporanei':
+            ascensionDustSottotrattiTemporanei,
       'playerReportedTurn': playerReportedTurn,
       'automaticAshLastCheckedTurn': automaticAshLastCheckedTurn,
       if (activeStructuredEffects.isNotEmpty)
@@ -1564,6 +1582,46 @@ extension _OculumHomePersistence on _OculumHomePageState {
     tempVolonta = readIntValue(json['tempVolonta']);
     tempMateria = readIntValue(json['tempMateria']);
     tempOculum = readIntValue(json['tempOculum']);
+    ascensionDustTempResilienza = max(
+      0,
+      readIntValue(json['ascensionDustTempResilienza']),
+    );
+    ascensionDustTempVolonta = max(
+      0,
+      readIntValue(json['ascensionDustTempVolonta']),
+    );
+    ascensionDustTempMateria = max(
+      0,
+      readIntValue(json['ascensionDustTempMateria']),
+    );
+    ascensionDustTempOculum = max(
+      0,
+      readIntValue(json['ascensionDustTempOculum']),
+    );
+    ascensionDustUsataOggi = max(
+      0,
+      readIntValue(json['ascensionDustUsataOggi']),
+    );
+    ascensionDustPermanentiInAttesa = max(
+      0,
+      readIntValue(json['ascensionDustPermanentiInAttesa']),
+    );
+    ascensionDustIntegritaMassimaBonus = max(
+      0,
+      readIntValue(json['ascensionDustIntegritaMassimaBonus']),
+    );
+    ascensionDustSottotrattiTemporanei
+      ..clear()
+      ..addAll(
+        json['ascensionDustSottotrattiTemporanei'] is Map
+            ? <String, int>{
+                for (final entry
+                    in (json['ascensionDustSottotrattiTemporanei'] as Map)
+                        .entries)
+                  '${entry.key}': max(0, readIntValue(entry.value)),
+              }
+            : const <String, int>{},
+      );
     playerReportedTurn = max(0, readIntValue(json['playerReportedTurn']));
     automaticAshLastCheckedTurn = max(
       0,

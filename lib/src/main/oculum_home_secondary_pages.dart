@@ -54,9 +54,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   int artIntegrityMaximum() {
     return oculumArtMaximumValue(
-      level: leggiNumero(livelloController),
-      grade: leggiNumero(gradoController),
-    );
+          level: leggiNumero(livelloController),
+          grade: leggiNumero(gradoController),
+        ) +
+        ascensionDustIntegritaMassimaBonus;
   }
 
   void ensureArtIntegrityValue(int artIndex) {
@@ -2437,6 +2438,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           controller: ascensionDustController,
           icon: Icons.grain,
           color: primaryColor,
+          onUse: mostraPotenziaAscensionDust,
+          useLabel: t('Potenzia', 'Empower'),
+          onAltUse: mostraPotenziaOculusAscensionDust,
+          altUseLabel: t('Potenzia Oculus', 'Empower Oculus'),
         ),
         resourceCounter(
           title: t('Ispirazioni', 'Inspirations'),

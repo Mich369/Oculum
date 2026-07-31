@@ -1604,6 +1604,14 @@ class _OculumHomePageState extends State<OculumHomePage>
   int tempVolonta = 0;
   int tempMateria = 0;
   int tempOculum = 0;
+  int ascensionDustTempResilienza = 0;
+  int ascensionDustTempVolonta = 0;
+  int ascensionDustTempMateria = 0;
+  int ascensionDustTempOculum = 0;
+  int ascensionDustUsataOggi = 0;
+  int ascensionDustPermanentiInAttesa = 0;
+  int ascensionDustIntegritaMassimaBonus = 0;
+  final Map<String, int> ascensionDustSottotrattiTemporanei = <String, int>{};
   int schivateOculumConsumate = 0;
   int schivataOculumRiduzionePronta = 0;
   String schivataOculumEtichettaPronta = '';
