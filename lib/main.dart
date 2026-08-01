@@ -885,7 +885,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   }
 
   void scheduleInputUiRefresh({
-    Duration delay = const Duration(milliseconds: 140),
+    Duration delay = const Duration(milliseconds: 220),
   }) {
     if (!mounted) return;
     if (appOculumInBackground || appOculumFocusTransition) {
@@ -927,7 +927,7 @@ class _OculumHomePageState extends State<OculumHomePage>
 
       if (inputRefreshPendingAfterFocusTransition) {
         inputRefreshPendingAfterFocusTransition = false;
-        scheduleInputUiRefresh(delay: const Duration(milliseconds: 120));
+        scheduleInputUiRefresh(delay: const Duration(milliseconds: 180));
       }
 
       if (autosavePendingAfterFocusTransition) {
@@ -1689,6 +1689,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool usaBarraVita = true;
   String stileBarraVita = 'base_dinamica';
   String stileCarattereApp = 'leggibile';
+  ThemeData? _cachedAppTypographyTheme;
+  String _cachedAppTypographyStyle = '';
+  int _cachedBaseThemeIdentity = 0;
   bool temiOldSchool = false;
   String nuovoDesignOculum = 'cattedrale';
   bool mostraDannoCuraScheda = true;
@@ -3963,14 +3966,22 @@ class _OculumHomePageState extends State<OculumHomePage>
       _ => 'Segoe UI',
     };
     final inheritedTheme = Theme.of(context);
-
-    return Theme(
-      data: inheritedTheme.copyWith(
+    final inheritedThemeIdentity = identityHashCode(inheritedTheme);
+    if (_cachedAppTypographyTheme == null ||
+        _cachedAppTypographyStyle != stileCarattereApp ||
+        _cachedBaseThemeIdentity != inheritedThemeIdentity) {
+      _cachedAppTypographyStyle = stileCarattereApp;
+      _cachedBaseThemeIdentity = inheritedThemeIdentity;
+      _cachedAppTypographyTheme = inheritedTheme.copyWith(
         textTheme: inheritedTheme.textTheme.apply(fontFamily: appFontFamily),
         primaryTextTheme: inheritedTheme.primaryTextTheme.apply(
           fontFamily: appFontFamily,
         ),
-      ),
+      );
+    }
+
+    return Theme(
+      data: _cachedAppTypographyTheme!,
       child: Scaffold(
         appBar: AppBar(
           toolbarHeight: compactPhone ? 48 : null,

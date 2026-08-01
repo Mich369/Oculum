@@ -85,6 +85,56 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     );
   }
 
+  Widget oculumFlameHealthMeter({required int current, required int maximum}) {
+    final ratio = maximum <= 0 ? 0.0 : (current / maximum).clamp(0.0, 1.0);
+    final active = (ratio * 5).ceil().clamp(0, 5);
+    return Semantics(
+      label: 'HP ${(ratio * 100).round()}%',
+      child: Column(
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final iconSize = min(
+                34.0,
+                max(20.0, (constraints.maxWidth - 32) / 5),
+              );
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  final lit = index < active;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: Icon(
+                      Icons.local_fire_department_rounded,
+                      size: iconSize,
+                      color: lit ? eyePupilGlowColor : Colors.blueGrey.shade800,
+                      shadows: lit
+                          ? [
+                              Shadow(
+                                color: tertiaryColor.withValues(alpha: 0.72),
+                                blurRadius: 8,
+                              ),
+                            ]
+                          : null,
+                    ),
+                  );
+                }),
+              );
+            },
+          ),
+          const SizedBox(height: 5),
+          Text(
+            '$current / $maximum · ${(ratio * 100).round()}%',
+            style: TextStyle(
+              color: eyePupilGlowColor,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   IconData lifeBarStyleIcon(String id) {
     return switch (id) {
       'base_dinamica' => Icons.health_and_safety_outlined,
@@ -282,6 +332,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     required double height,
   }) {
     switch (style) {
+      case 'base_dinamica':
+        return const Positioned.fill(child: IgnorePointer());
       case 'soulslike':
         return Positioned.fill(
           child: IgnorePointer(
@@ -301,13 +353,14 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           child: IgnorePointer(
             child: Row(
               children: List.generate(
-                8,
+                24,
                 (index) => Expanded(
                   child: Container(
                     decoration: BoxDecoration(
                       border: Border(
                         right: BorderSide(
-                          color: Colors.black.withValues(alpha: 0.35),
+                          color: const Color(0xFF090B12),
+                          width: 1.6,
                         ),
                       ),
                     ),
@@ -464,7 +517,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
 
     final barHeight = switch (stileBarraVita) {
       'soulslike' => 22.0,
-      'action_rpg' => 26.0,
+      'action_rpg' => 14.0,
       'fiamme_oculum' => 30.0,
       'jrpg_crystal' => 28.0,
       'survival_horror' => 18.0,
@@ -473,7 +526,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     };
     final barRadius = switch (stileBarraVita) {
       'soulslike' || 'survival_horror' => 3.0,
-      'action_rpg' => 0.0,
+      'action_rpg' => 2.0,
       'jrpg_crystal' => 16.0,
       'roguelite' => 7.0,
       _ => 12.0,
@@ -542,6 +595,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           ],
           if (stileBarraVita == 'oculum_eyes')
             oculumEyeHeartHealthMeter(current: curr, maximum: maxHpVal)
+          else if (stileBarraVita == 'fiamme_oculum')
+            oculumFlameHealthMeter(current: curr, maximum: maxHpVal)
           else ...[
             if (narrowLifeBar) ...[
               Align(
