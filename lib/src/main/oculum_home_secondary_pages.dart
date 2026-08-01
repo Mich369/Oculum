@@ -6138,7 +6138,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       pageKey: 'online',
       maxColumns: 2,
       minColumnWidth: 420,
-      fullWidthIndexes: const <int>{0},
+      fullWidthIndexes: const <int>{0, 1},
       children: [
         functionAnchor('online_root', sectionTitle('Online')),
         onlineStatusPanel(),

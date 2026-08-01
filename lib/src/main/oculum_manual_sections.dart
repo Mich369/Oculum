@@ -2604,7 +2604,7 @@ Consumo elevato consuma 1 punto della statistica principale collegata a ogni tir
 
 MODALITA GUIDATA, VELOCE E ASPETTO
 
-La modalita guidata mostra spiegazioni semplici ed esempi accanto ai comandi principali. La modalita veloce nasconde queste spiegazioni ma non elimina funzioni. In Impostazioni, Aspetto e modalita raccoglie design, temi old school e stili della Vita con anteprima. Cuori Occhio Oculum rappresenta la percentuale di HP con dieci cuori-occhio; il misuratore Oculum conserva l'occhio centrale e usa dieci fiammelle per la percentuale disponibile. Queste opzioni cambiano soltanto la presentazione e non i dati di gioco.
+La modalita guidata mostra spiegazioni semplici ed esempi accanto ai comandi principali. La modalita veloce nasconde queste spiegazioni ma non elimina funzioni. In Impostazioni, Aspetto e modalita raccoglie design, temi old school, caratteri e stili della Vita con anteprima. Cuori Occhio Oculum rappresenta la percentuale di HP con cinque cuori-occhio compatti; il misuratore Oculum conserva l'occhio centrale e usa dieci fiammelle per la percentuale disponibile. Le altre barre hanno forme e segni realmente distinti. Queste opzioni cambiano soltanto la presentazione e non i dati di gioco.
 ''',
   contentEn: r'''
 These rules cover Oculum time, automatic crises and exploration activities. General life, damage, critical and EXP formulas remain in the previous sections and are not repeated here.

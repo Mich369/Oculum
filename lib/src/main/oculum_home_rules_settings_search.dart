@@ -4082,6 +4082,58 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                   },
                 ),
               const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue:
+                    const <String>{
+                      'leggibile',
+                      'gotico',
+                      'manoscritto',
+                      'pergamena',
+                      'arcano',
+                      'rune',
+                    }.contains(stileCarattereApp)
+                    ? stileCarattereApp
+                    : 'leggibile',
+                isExpanded: true,
+                decoration: fieldDecoration(
+                  t('Stile dei caratteri', 'Typeface style'),
+                  helper: t(
+                    'Cambia i caratteri in tutta l app. I numeri e i controlli restano leggibili anche nelle finestre strette.',
+                    'Changes type across the app. Numbers and controls remain readable in narrow windows.',
+                  ),
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: 'leggibile',
+                    child: Text(t('Leggibile moderno', 'Modern readable')),
+                  ),
+                  const DropdownMenuItem(
+                    value: 'gotico',
+                    child: Text('Gotico inciso'),
+                  ),
+                  const DropdownMenuItem(
+                    value: 'manoscritto',
+                    child: Text('Manoscritto antico'),
+                  ),
+                  const DropdownMenuItem(
+                    value: 'pergamena',
+                    child: Text('Pergamena classica'),
+                  ),
+                  const DropdownMenuItem(
+                    value: 'arcano',
+                    child: Text('Arcano elegante'),
+                  ),
+                  const DropdownMenuItem(
+                    value: 'rune',
+                    child: Text('Rune tecniche'),
+                  ),
+                ],
+                onChanged: (value) {
+                  setState(() => stileCarattereApp = value ?? 'leggibile');
+                  programmaSalvataggio();
+                },
+              ),
+              const SizedBox(height: 12),
               LayoutBuilder(
                 builder: (context, constraints) {
                   final preview = gothicPanel(
@@ -4113,47 +4165,44 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                       ],
                     ),
                   );
-                  final selector = DropdownButtonFormField<String>(
-                    initialValue:
-                        const <String>{
-                          'gotico_oculum',
-                          'soulslike',
-                          'action_rpg',
-                          'jrpg_crystal',
-                          'survival_horror',
-                          'roguelite',
-                          'oculum_eyes',
-                          'oculum_alternativa',
-                        }.contains(stileBarraVita)
-                        ? stileBarraVita
-                        : 'gotico_oculum',
-                    decoration: fieldDecoration(
-                      t('Aspetto della Vita', 'Health appearance'),
-                      helper: t(
-                        'Scegli barre classiche, alternative o cuori con Occhi Oculum percentuali.',
-                        'Choose classic bars, alternatives, or percentage Oculum Eye hearts.',
-                      ),
-                    ),
-                    items: [
-                      for (final id in const <String>[
-                        'gotico_oculum',
-                        'soulslike',
-                        'action_rpg',
-                        'jrpg_crystal',
-                        'survival_horror',
-                        'roguelite',
-                        'oculum_eyes',
-                        'oculum_alternativa',
-                      ])
-                        DropdownMenuItem(
-                          value: id,
-                          child: Text(lifeBarStyleLabel(id)),
+                  final selector = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t('Aspetto della Vita', 'Health appearance'),
+                        style: TextStyle(
+                          color: tertiaryColor,
+                          fontWeight: FontWeight.w900,
                         ),
+                      ),
+                      const SizedBox(height: 6),
+                      smallInfoText(
+                        t(
+                          'Scegli dai pulsanti semitrasparenti: seguono il colore della scheda e mostrano subito la citazione scelta.',
+                          'Choose from the translucent buttons: they follow the sheet color and immediately show the selected reference.',
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      lifeBarStylePicker(),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: stileBarraVita == 'gotico_oculum'
+                            ? null
+                            : () {
+                                setState(
+                                  () => stileBarraVita = 'gotico_oculum',
+                                );
+                                programmaSalvataggio();
+                              },
+                        icon: const Icon(Icons.restart_alt_rounded),
+                        label: Text(
+                          t(
+                            'Ripristina Gotico Oculum',
+                            'Restore Oculum Gothic',
+                          ),
+                        ),
+                      ),
                     ],
-                    onChanged: (value) {
-                      setState(() => stileBarraVita = value ?? 'gotico_oculum');
-                      programmaSalvataggio();
-                    },
                   );
                   if (constraints.maxWidth < 700) {
                     return Column(

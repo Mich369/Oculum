@@ -24,38 +24,51 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     required int maximum,
   }) {
     final ratio = maximum <= 0 ? 0.0 : (current / maximum).clamp(0.0, 1.0);
-    final active = (ratio * 10).ceil().clamp(0, 10);
+    final active = (ratio * 5).ceil().clamp(0, 5);
     return Semantics(
       label: 'HP ${(ratio * 100).round()}%',
       child: Column(
         children: [
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 5,
-            runSpacing: 5,
-            children: List<Widget>.generate(10, (index) {
-              final lit = index < active;
-              final color = lit ? eyePupilGlowColor : Colors.blueGrey.shade800;
-              return SizedBox(
-                width: 30,
-                height: 28,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Icon(
-                      lit ? Icons.favorite : Icons.favorite_border,
-                      color: color,
-                      size: 28,
-                    ),
-                    Icon(
-                      lit ? Icons.visibility : Icons.visibility_off,
-                      color: lit ? Colors.white : Colors.blueGrey.shade500,
-                      size: 12,
-                    ),
-                  ],
-                ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final iconSize = min(
+                32.0,
+                max(20.0, (constraints.maxWidth - 32) / 5),
               );
-            }),
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List<Widget>.generate(5, (index) {
+                  final lit = index < active;
+                  final color = lit
+                      ? eyePupilGlowColor
+                      : Colors.blueGrey.shade800;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: SizedBox(
+                      width: iconSize,
+                      height: iconSize,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(
+                            lit ? Icons.favorite : Icons.favorite_border,
+                            color: color,
+                            size: iconSize,
+                          ),
+                          Icon(
+                            lit ? Icons.visibility : Icons.visibility_off,
+                            color: lit
+                                ? Colors.white
+                                : Colors.blueGrey.shade500,
+                            size: iconSize * 0.42,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              );
+            },
           ),
           const SizedBox(height: 6),
           Text(
@@ -68,6 +81,233 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         ],
       ),
     );
+  }
+
+  IconData lifeBarStyleIcon(String id) {
+    return switch (id) {
+      'soulslike' => Icons.local_fire_department_outlined,
+      'action_rpg' => Icons.flash_on_outlined,
+      'jrpg_crystal' => Icons.diamond_outlined,
+      'survival_horror' => Icons.warning_amber_rounded,
+      'roguelite' => Icons.casino_outlined,
+      'oculum_eyes' => Icons.visibility_outlined,
+      'oculum_alternativa' => Icons.layers_outlined,
+      _ => Icons.auto_awesome_outlined,
+    };
+  }
+
+  Widget lifeBarStylePicker() {
+    const styles = <String>[
+      'gotico_oculum',
+      'soulslike',
+      'action_rpg',
+      'jrpg_crystal',
+      'survival_horror',
+      'roguelite',
+      'oculum_eyes',
+      'oculum_alternativa',
+    ];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final id in styles)
+          Tooltip(
+            message: t(
+              'Citazione grafica: ${lifeBarStyleLabel(id)}',
+              'Visual reference: ${lifeBarStyleLabel(id)}',
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                setState(() => stileBarraVita = id);
+                programmaSalvataggio();
+              },
+              child: AnimatedContainer(
+                duration: OculumDesignTokens.motionFast,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: tertiaryColor.withValues(
+                    alpha: stileBarraVita == id ? 0.28 : 0.09,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: tertiaryColor.withValues(
+                      alpha: stileBarraVita == id ? 0.95 : 0.38,
+                    ),
+                    width: stileBarraVita == id ? 1.5 : 1,
+                  ),
+                  boxShadow: stileBarraVita == id
+                      ? [
+                          BoxShadow(
+                            color: tertiaryColor.withValues(alpha: 0.18),
+                            blurRadius: 10,
+                          ),
+                        ]
+                      : const [],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(lifeBarStyleIcon(id), size: 17, color: tertiaryColor),
+                    const SizedBox(width: 7),
+                    Text(
+                      lifeBarStyleLabel(id),
+                      style: TextStyle(
+                        color: stileBarraVita == id
+                            ? Colors.white
+                            : tertiaryColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (stileBarraVita == id) ...[
+                      const SizedBox(width: 6),
+                      const Icon(Icons.check_circle, size: 15),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  List<Color> lifeBarGradient(String style, Color hpColor) {
+    return switch (style) {
+      'soulslike' => const [Color(0xFF4B0D12), Color(0xFFB7262E)],
+      'action_rpg' => const [Color(0xFF0C7F64), Color(0xFF62F2B6)],
+      'jrpg_crystal' => const [Color(0xFF2355B8), Color(0xFFA4E9FF)],
+      'survival_horror' => const [Color(0xFF5D6714), Color(0xFFCFDA38)],
+      'roguelite' => const [Color(0xFF8E296F), Color(0xFFFF7BC2)],
+      _ => [const Color(0xFF66172B), hpColor, const Color(0xFFC89B3C)],
+    };
+  }
+
+  Widget lifeBarIdentityOverlay({
+    required String style,
+    required double height,
+  }) {
+    switch (style) {
+      case 'soulslike':
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border.symmetric(
+                  horizontal: BorderSide(
+                    color: const Color(0xFFD7B36A).withValues(alpha: 0.72),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      case 'action_rpg':
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Row(
+              children: List.generate(
+                8,
+                (index) => Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        right: BorderSide(
+                          color: Colors.black.withValues(alpha: 0.35),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      case 'jrpg_crystal':
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(
+                7,
+                (_) => Transform.rotate(
+                  angle: 0.78,
+                  child: Container(
+                    width: height * 0.30,
+                    height: height * 0.30,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.38),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      case 'survival_horror':
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Center(
+              child: Row(
+                children: [
+                  const SizedBox(width: 10),
+                  Icon(
+                    Icons.monitor_heart_outlined,
+                    size: height * 0.82,
+                    color: Colors.white.withValues(alpha: 0.60),
+                  ),
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      color: Colors.white.withValues(alpha: 0.26),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      case 'roguelite':
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(
+                10,
+                (index) => Icon(
+                  index.isEven ? Icons.circle : Icons.change_history,
+                  size: height * 0.28,
+                  color: Colors.white.withValues(alpha: 0.42),
+                ),
+              ),
+            ),
+          ),
+        );
+      default:
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(Icons.church_outlined, size: height, color: primaryColor),
+                Icon(
+                  Icons.visibility_outlined,
+                  size: height * 0.72,
+                  color: Colors.white.withValues(alpha: 0.38),
+                ),
+                Icon(Icons.church_outlined, size: height, color: primaryColor),
+              ],
+            ),
+          ),
+        );
+    }
   }
 
   Widget lifeBar() {
@@ -109,6 +349,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
 
     final barHeight = switch (stileBarraVita) {
       'soulslike' => 22.0,
+      'action_rpg' => 26.0,
       'jrpg_crystal' => 28.0,
       'survival_horror' => 18.0,
       'roguelite' => 30.0,
@@ -116,6 +357,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     };
     final barRadius = switch (stileBarraVita) {
       'soulslike' || 'survival_horror' => 3.0,
+      'action_rpg' => 0.0,
       'jrpg_crystal' => 16.0,
       'roguelite' => 7.0,
       _ => 12.0,
@@ -127,6 +369,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       'roguelite' => const Color(0xFF211329),
       _ => const Color(0xFF240C14),
     };
+    final narrowLifeBar = barHeight <= 22;
+    final lifeBarValueText = showOculumShield
+        ? 'HP $curr/$maxHpVal  T $temp  S $shield  SO $oculumShield/$oculumShieldMax  SC $criticalShield'
+        : 'HP $curr/$maxHpVal  T $temp  S $shield  SC $criticalShield';
 
     return gothicPanel(
       child: Column(
@@ -180,7 +426,23 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           ],
           if (stileBarraVita == 'oculum_eyes')
             oculumEyeHeartHealthMeter(current: curr, maximum: maxHpVal)
-          else
+          else ...[
+            if (narrowLifeBar) ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  lifeBarValueText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: tertiaryColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 5),
+            ],
             ClipRRect(
               borderRadius: BorderRadius.circular(barRadius),
               child: Stack(
@@ -192,7 +454,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                       height: 34,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [hpColor.withValues(alpha: 0.75), hpColor],
+                          colors: lifeBarGradient(stileBarraVita, hpColor),
                         ),
                       ),
                     ),
@@ -276,32 +538,39 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                       ),
                     ),
                   ),
-                  Positioned.fill(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.46),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 3,
+                  lifeBarIdentityOverlay(
+                    style: stileBarraVita,
+                    height: barHeight,
+                  ),
+                  if (!narrowLifeBar)
+                    Positioned.fill(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.46),
+                                borderRadius: BorderRadius.circular(999),
                               ),
-                              child: Text(
-                                showOculumShield
-                                    ? 'HP $curr/$maxHpVal  T $temp  S $shield  SO $oculumShield/$oculumShieldMax  SC $criticalShield'
-                                    : 'HP $curr/$maxHpVal  T $temp  S $shield  SC $criticalShield',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  shadows: [
-                                    Shadow(color: Colors.black, blurRadius: 5),
-                                  ],
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 3,
+                                ),
+                                child: Text(
+                                  lifeBarValueText,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black,
+                                        blurRadius: 5,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -309,10 +578,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
+          ],
         ],
       ),
     );
@@ -3811,7 +4080,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     );
   }
 
-  void usaScannerCentroPartita() {
+  Future<void> usaScannerCentroPartita() async {
     if (scannerRiposiLunghi < 3) {
       setState(() {
         risultato = t(
@@ -3822,6 +4091,90 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       });
       return;
     }
+
+    var areaDelProprioGrado = false;
+    final confermato = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF10121A),
+          title: Row(
+            children: [
+              Icon(Icons.document_scanner_outlined, color: tertiaryColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  t('Usare lo Scanner?', 'Use the Scanner?'),
+                  style: TextStyle(
+                    color: tertiaryColor,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                t(
+                  'Sei sicuro? Lo Scanner tornerà disponibile soltanto dopo 3 riposi lunghi.',
+                  'Are you sure? The Scanner will become available again only after 3 long rests.',
+                ),
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.orangeAccent),
+                ),
+                child: Text(
+                  t(
+                    'Regola importante: puoi usare lo Scanner soltanto in un area del tuo stesso Grado.',
+                    'Important rule: you may use the Scanner only in an area of your own Grade.',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: areaDelProprioGrado,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Text(
+                  t(
+                    'Confermo di essere in un area del mio Grado.',
+                    'I confirm that I am in an area of my Grade.',
+                  ),
+                ),
+                onChanged: (value) =>
+                    setDialogState(() => areaDelProprioGrado = value ?? false),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(t('Annulla', 'Cancel')),
+            ),
+            FilledButton.icon(
+              onPressed: areaDelProprioGrado
+                  ? () => Navigator.pop(dialogContext, true)
+                  : null,
+              icon: const Icon(Icons.document_scanner_outlined),
+              label: Text(t('Usa Scanner', 'Use Scanner')),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confermato != true || !mounted) return;
+
     final fortunaStat = hiddenEyeStats.firstWhere(
       (stat) => stat.id == 'fortuna',
       orElse: () =>
@@ -5182,48 +5535,18 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           ),
           if (usaBarraVita) ...[
             const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              initialValue:
-                  const <String>{
-                    'gotico_oculum',
-                    'soulslike',
-                    'action_rpg',
-                    'jrpg_crystal',
-                    'survival_horror',
-                    'roguelite',
-                    'oculum_eyes',
-                    'oculum_alternativa',
-                  }.contains(stileBarraVita)
-                  ? stileBarraVita
-                  : 'gotico_oculum',
-              decoration: fieldDecoration(
-                t('Stile barra della vita', 'Health bar style'),
-                helper: t(
-                  'Sei interpretazioni ispirate ai videogiochi più la variante Oculum alternativa perfezionata.',
-                  'Six videogame-inspired interpretations plus the refined alternative Oculum variant.',
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                t('Citazioni della barra Vita', 'Health bar references'),
+                style: TextStyle(
+                  color: tertiaryColor,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
-              items: [
-                for (final id in const <String>[
-                  'gotico_oculum',
-                  'soulslike',
-                  'action_rpg',
-                  'jrpg_crystal',
-                  'survival_horror',
-                  'roguelite',
-                  'oculum_eyes',
-                  'oculum_alternativa',
-                ])
-                  DropdownMenuItem(
-                    value: id,
-                    child: Text(lifeBarStyleLabel(id)),
-                  ),
-              ],
-              onChanged: (value) {
-                setState(() => stileBarraVita = value ?? 'gotico_oculum');
-                programmaSalvataggio();
-              },
             ),
+            const SizedBox(height: 8),
+            lifeBarStylePicker(),
           ],
           if (usaBarraVita)
             stileBarraVita == 'oculum_alternativa'

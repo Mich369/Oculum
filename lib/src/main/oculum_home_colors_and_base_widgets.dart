@@ -1685,11 +1685,10 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
   }
 
   Widget smallInfoText(String text, {Color? color}) {
-    final surface = Color.lerp(
-      backgroundMidColor,
-      backgroundBottomColor,
-      0.42,
-    )!;
+    // Il testo informativo vive quasi sempre nelle card gotiche, non sullo
+    // sfondo pagina. Calcolare il contrasto sul fondale dorato poteva scegliere
+    // il nero e renderlo illeggibile dentro pannelli scuri.
+    const surface = Color(0xFF11131A);
     final resolvedColor = readableOnTheme(
       color ?? Colors.grey.shade300,
       background: surface,

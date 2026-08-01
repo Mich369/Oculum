@@ -1124,6 +1124,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'immaginePersonaggioBase64': '',
       'usaBarraVita': true,
       'stileBarraVita': 'gotico_oculum',
+      'stileCarattereApp': 'leggibile',
       'temiOldSchool': false,
       'nuovoDesignOculum': 'cattedrale',
       'mostraDannoCuraScheda': true,
@@ -1381,6 +1382,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
           : base64Encode(immaginePersonaggio!),
       'usaBarraVita': usaBarraVita,
       'stileBarraVita': stileBarraVita,
+      'stileCarattereApp': stileCarattereApp,
       'temiOldSchool': temiOldSchool,
       'nuovoDesignOculum': nuovoDesignOculum,
       'mostraDannoCuraScheda': mostraDannoCuraScheda,
@@ -2004,6 +2006,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
     usaBarraVita = readBoolValue(json['usaBarraVita'], fallback: true);
     stileBarraVita = '${json['stileBarraVita'] ?? 'gotico_oculum'}';
+    stileCarattereApp = '${json['stileCarattereApp'] ?? 'leggibile'}';
     temiOldSchool = readBoolValue(json['temiOldSchool']);
     nuovoDesignOculum = '${json['nuovoDesignOculum'] ?? 'cattedrale'}';
     mostraDannoCuraScheda = readBoolValue(
