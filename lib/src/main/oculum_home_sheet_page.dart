@@ -8,6 +8,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
 
   String lifeBarStyleLabel(String id) {
     return switch (id) {
+      'base_dinamica' => t('Vita dinamica', 'Dynamic health'),
+      'fiamme_oculum' => t('Fiamme Oculum', 'Oculum flames'),
       'soulslike' => 'Soulslike',
       'action_rpg' => 'Action RPG',
       'jrpg_crystal' => 'JRPG Crystal',
@@ -85,6 +87,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
 
   IconData lifeBarStyleIcon(String id) {
     return switch (id) {
+      'base_dinamica' => Icons.health_and_safety_outlined,
+      'fiamme_oculum' => Icons.local_fire_department_rounded,
       'soulslike' => Icons.local_fire_department_outlined,
       'action_rpg' => Icons.flash_on_outlined,
       'jrpg_crystal' => Icons.diamond_outlined,
@@ -98,6 +102,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
 
   Widget lifeBarStylePicker() {
     const styles = <String>[
+      'base_dinamica',
+      'fiamme_oculum',
       'gotico_oculum',
       'soulslike',
       'action_rpg',
@@ -177,13 +183,96 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     );
   }
 
+  Future<void> showLifeBarStyleGallery() async {
+    if (modalitaVeloce) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.favorite_rounded, color: tertiaryColor),
+            const SizedBox(width: 8),
+            Expanded(child: Text(t('Stile della Vita', 'Health style'))),
+          ],
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620, maxHeight: 470),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                smallInfoText(
+                  t(
+                    'Scegli una rappresentazione. Cambia soltanto l aspetto e non modifica HP, scudi o salvataggi.',
+                    'Choose a representation. It only changes appearance and does not modify HP, shields, or saves.',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                lifeBarStylePicker(),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(t('Chiudi', 'Close')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> showLifeBarContextMenu(TapDownDetails details) async {
+    if (modalitaVeloce) return;
+    final choice = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        details.globalPosition.dx,
+        details.globalPosition.dy,
+        details.globalPosition.dx,
+        details.globalPosition.dy,
+      ),
+      items: [
+        PopupMenuItem<String>(
+          value: 'style',
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.palette_outlined, color: tertiaryColor),
+            title: Text(t('Stile...', 'Style...')),
+            subtitle: Text(lifeBarStyleLabel(stileBarraVita)),
+          ),
+        ),
+      ],
+    );
+    if (choice == 'style' && mounted) await showLifeBarStyleGallery();
+  }
+
+  Widget lifeBarWithStyleContextMenu() {
+    final bar = stileBarraVita == 'oculum_alternativa'
+        ? stackedVitalsHudPanel()
+        : lifeBar();
+    if (modalitaVeloce) return bar;
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onSecondaryTapDown: showLifeBarContextMenu,
+      child: bar,
+    );
+  }
+
   List<Color> lifeBarGradient(String style, Color hpColor) {
     return switch (style) {
+      'base_dinamica' => [hpColor.withValues(alpha: 0.72), hpColor],
       'soulslike' => const [Color(0xFF4B0D12), Color(0xFFB7262E)],
       'action_rpg' => const [Color(0xFF0C7F64), Color(0xFF62F2B6)],
       'jrpg_crystal' => const [Color(0xFF2355B8), Color(0xFFA4E9FF)],
       'survival_horror' => const [Color(0xFF5D6714), Color(0xFFCFDA38)],
       'roguelite' => const [Color(0xFF8E296F), Color(0xFFFF7BC2)],
+      'fiamme_oculum' => [
+        const Color(0xFF24104A),
+        tertiaryColor,
+        eyePupilGlowColor,
+      ],
       _ => [const Color(0xFF66172B), hpColor, const Color(0xFFC89B3C)],
     };
   }
@@ -290,6 +379,28 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             ),
           ),
         );
+      case 'fiamme_oculum':
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(
+                10,
+                (_) => Icon(
+                  Icons.local_fire_department_rounded,
+                  size: height * 0.58,
+                  color: eyePupilGlowColor.withValues(alpha: 0.78),
+                  shadows: [
+                    Shadow(
+                      color: tertiaryColor.withValues(alpha: 0.72),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
       default:
         return Positioned.fill(
           child: IgnorePointer(
@@ -339,17 +450,22 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     Color hpColor;
     final pureHpRatio = maxHpVal <= 0 ? 0 : curr / maxHpVal;
 
-    if (pureHpRatio > 0.6) {
+    if (pureHpRatio > 0.75) {
       hpColor = const Color(0xFF2ECC71);
-    } else if (pureHpRatio > 0.3) {
+    } else if (pureHpRatio > 0.5) {
       hpColor = const Color(0xFFF1C40F);
+    } else if (pureHpRatio > 0.3) {
+      hpColor = const Color(0xFFFF8C22);
+    } else if (pureHpRatio > 0.15) {
+      hpColor = const Color(0xFFE53935);
     } else {
-      hpColor = const Color(0xFFE74C3C);
+      hpColor = const Color(0xFF6D1028);
     }
 
     final barHeight = switch (stileBarraVita) {
       'soulslike' => 22.0,
       'action_rpg' => 26.0,
+      'fiamme_oculum' => 30.0,
       'jrpg_crystal' => 28.0,
       'survival_horror' => 18.0,
       'roguelite' => 30.0,
@@ -5535,23 +5651,19 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           ),
           if (usaBarraVita) ...[
             const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                t('Citazioni della barra Vita', 'Health bar references'),
-                style: TextStyle(
-                  color: tertiaryColor,
-                  fontWeight: FontWeight.w900,
+            if (!modalitaVeloce)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: showLifeBarStyleGallery,
+                  icon: const Icon(Icons.palette_outlined),
+                  label: Text(
+                    '${t('Stile Vita', 'Health style')}: ${lifeBarStyleLabel(stileBarraVita)}',
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            lifeBarStylePicker(),
           ],
-          if (usaBarraVita)
-            stileBarraVita == 'oculum_alternativa'
-                ? stackedVitalsHudPanel()
-                : lifeBar(),
+          if (usaBarraVita) lifeBarWithStyleContextMenu(),
           if (usaBarraVita) ...[
             const SizedBox(height: 10),
             savingShieldPanel(dense: stileBarraVita == 'oculum_alternativa'),

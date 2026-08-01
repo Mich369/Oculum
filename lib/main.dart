@@ -1687,7 +1687,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool mostraEditorSfondoBasso = false;
 
   bool usaBarraVita = true;
-  String stileBarraVita = 'gotico_oculum';
+  String stileBarraVita = 'base_dinamica';
   String stileCarattereApp = 'leggibile';
   bool temiOldSchool = false;
   String nuovoDesignOculum = 'cattedrale';

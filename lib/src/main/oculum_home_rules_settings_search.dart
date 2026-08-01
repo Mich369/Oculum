@@ -4183,22 +4183,36 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                         ),
                       ),
                       const SizedBox(height: 10),
-                      lifeBarStylePicker(),
+                      if (!modalitaVeloce)
+                        OutlinedButton.icon(
+                          onPressed: showLifeBarStyleGallery,
+                          icon: const Icon(Icons.open_in_new_rounded),
+                          label: Text(
+                            '${t('Apri galleria Vita', 'Open health gallery')} · ${lifeBarStyleLabel(stileBarraVita)}',
+                          ),
+                        )
+                      else
+                        smallInfoText(
+                          t(
+                            'La galleria Vita è nascosta in modalità veloce.',
+                            'The health gallery is hidden in fast mode.',
+                          ),
+                        ),
                       const SizedBox(height: 8),
                       TextButton.icon(
-                        onPressed: stileBarraVita == 'gotico_oculum'
+                        onPressed: stileBarraVita == 'base_dinamica'
                             ? null
                             : () {
                                 setState(
-                                  () => stileBarraVita = 'gotico_oculum',
+                                  () => stileBarraVita = 'base_dinamica',
                                 );
                                 programmaSalvataggio();
                               },
                         icon: const Icon(Icons.restart_alt_rounded),
                         label: Text(
                           t(
-                            'Ripristina Gotico Oculum',
-                            'Restore Oculum Gothic',
+                            'Ripristina Vita dinamica',
+                            'Restore dynamic health',
                           ),
                         ),
                       ),

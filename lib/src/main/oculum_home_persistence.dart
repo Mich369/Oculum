@@ -1123,7 +1123,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'filtroAmbiente': 'Tutti',
       'immaginePersonaggioBase64': '',
       'usaBarraVita': true,
-      'stileBarraVita': 'gotico_oculum',
+      'stileBarraVita': 'base_dinamica',
       'stileCarattereApp': 'leggibile',
       'temiOldSchool': false,
       'nuovoDesignOculum': 'cattedrale',
@@ -2005,7 +2005,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     filtroAmbiente = '${json['filtroAmbiente'] ?? 'Tutti'}';
 
     usaBarraVita = readBoolValue(json['usaBarraVita'], fallback: true);
-    stileBarraVita = '${json['stileBarraVita'] ?? 'gotico_oculum'}';
+    stileBarraVita = '${json['stileBarraVita'] ?? 'base_dinamica'}';
     stileCarattereApp = '${json['stileCarattereApp'] ?? 'leggibile'}';
     temiOldSchool = readBoolValue(json['temiOldSchool']);
     nuovoDesignOculum = '${json['nuovoDesignOculum'] ?? 'cattedrale'}';
