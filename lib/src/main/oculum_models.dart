@@ -679,6 +679,12 @@ int oculusSubtraitMasteryGainForDie(int die) {
   return die == 20 ? 60 : die;
 }
 
+int oculusSubtraitMasteryGainForDieAndGrade(int die, int grade) {
+  final normalGain = oculusSubtraitMasteryGainForDie(die);
+  if (normalGain <= 0) return 0;
+  return normalGain + max(0, grade) * 20;
+}
+
 int oculusSubtraitMasteryApplyGain(HiddenEyeStat stat, int gain) {
   if (gain <= 0) return 0;
 

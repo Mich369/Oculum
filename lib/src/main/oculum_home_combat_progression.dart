@@ -597,7 +597,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
     final label =
         '${stat.nome} (${hiddenEyeGroupLabel(hiddenEyeStatGroup(stat.id))})';
-    final masteryGain = oculusSubtraitMasteryGainForDie(dado);
+    final masteryGain = oculusSubtraitMasteryGainForDieAndGrade(
+      dado,
+      leggiNumero(gradoController),
+    );
     final expGuadagnata = oculumRollExperienceGain(
       naturalRoll: dado,
       faces: 20,

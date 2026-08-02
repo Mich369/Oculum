@@ -131,6 +131,13 @@ void main() {
     expect(oculusSubtraitMasteryGainForDie(15), 15);
     expect(oculusSubtraitMasteryGainForDie(19), 19);
     expect(oculusSubtraitMasteryGainForDie(20), 60);
+
+    expect(oculusSubtraitMasteryGainForDieAndGrade(14, 5), 0);
+    expect(oculusSubtraitMasteryGainForDieAndGrade(15, 0), 15);
+    expect(oculusSubtraitMasteryGainForDieAndGrade(15, 1), 35);
+    expect(oculusSubtraitMasteryGainForDieAndGrade(19, 3), 79);
+    expect(oculusSubtraitMasteryGainForDieAndGrade(20, 5), 160);
+    expect(oculusSubtraitMasteryGainForDieAndGrade(20, -3), 60);
   });
 
   test('mantiene avanzo quando la barra maestria si completa', () {
