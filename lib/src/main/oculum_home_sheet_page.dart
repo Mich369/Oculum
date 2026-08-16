@@ -273,15 +273,15 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     );
   }
 
-  Future<void> showLifeBarContextMenu(TapDownDetails details) async {
+  Future<void> showLifeBarContextMenuAt(Offset position) async {
     if (modalitaVeloce) return;
     final choice = await showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
-        details.globalPosition.dx,
-        details.globalPosition.dy,
-        details.globalPosition.dx,
-        details.globalPosition.dy,
+        position.dx,
+        position.dy,
+        position.dx,
+        position.dy,
       ),
       items: [
         PopupMenuItem<String>(
@@ -293,19 +293,57 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             subtitle: Text(lifeBarStyleLabel(stileBarraVita)),
           ),
         ),
+        if (conditionsAffecting(OculumConditionTarget.hp).isNotEmpty)
+          PopupMenuItem<String>(
+            value: 'conditions',
+            child: ListTile(
+              dense: true,
+              leading: Icon(Icons.bolt, color: tertiaryColor),
+              title: Text(t('Effetti condizioni', 'Condition effects')),
+              subtitle: Text(
+                '${conditionsAffecting(OculumConditionTarget.hp).length}',
+              ),
+            ),
+          ),
       ],
     );
     if (choice == 'style' && mounted) await showLifeBarStyleGallery();
+    if (choice == 'conditions' && mounted) {
+      await showConditionImpactDialog(
+        target: OculumConditionTarget.hp,
+        baseValue: '${hpCorrenti()}/${maxHp()}',
+        temporaryValue: '+${hpTemp()}',
+        finalValue: '${vitaTotaleVisuale()}',
+      );
+    }
   }
 
   Widget lifeBarWithStyleContextMenu() {
-    final bar = stileBarraVita == 'oculum_alternativa'
+    final rawBar = stileBarraVita == 'oculum_alternativa'
         ? stackedVitalsHudPanel()
         : lifeBar();
+    final bar = Stack(
+      children: [
+        rawBar,
+        Positioned(
+          top: 4,
+          right: 4,
+          child: conditionImpactIndicator(
+            target: OculumConditionTarget.hp,
+            baseValue: '${hpCorrenti()}/${maxHp()}',
+            temporaryValue: '+${hpTemp()}',
+            finalValue: '${vitaTotaleVisuale()}',
+          ),
+        ),
+      ],
+    );
     if (modalitaVeloce) return bar;
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onSecondaryTapDown: showLifeBarContextMenu,
+      onSecondaryTapDown: (details) =>
+          showLifeBarContextMenuAt(details.globalPosition),
+      onLongPressStart: (details) =>
+          showLifeBarContextMenuAt(details.globalPosition),
       child: bar,
     );
   }
@@ -1028,20 +1066,29 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     if (!shouldShowScudoOculum()) return const SizedBox.shrink();
 
     Widget shieldCell({required String label, required Widget child}) {
+      final conditionTarget = conditionTargetForUiLabel(label);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 2, bottom: 4),
-            child: Text(
-              cleanUiText(label),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: eyePupilGlowColor,
-                fontSize: uiScale(11),
-                fontWeight: FontWeight.w900,
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    cleanUiText(label),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: eyePupilGlowColor,
+                      fontSize: uiScale(11),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                if (conditionTarget != null)
+                  conditionImpactIndicator(target: conditionTarget),
+              ],
             ),
           ),
           Container(
@@ -1382,12 +1429,15 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     required String key,
     required String label,
     String? helper,
+    TextEditingController? controller,
+    FocusNode? focusNode,
   }) {
     syncVisibleCurrentStatEditor(key);
     return campoTesto(
       label: label,
-      controller: visibleCurrentStatController(key),
+      controller: controller ?? visibleCurrentStatController(key),
       helper: helper,
+      focusNode: focusNode,
       onChanged: (value) => setCurrentStatFromVisibleInput(key, value),
     );
   }
@@ -1402,6 +1452,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   Widget _oculumResourcePanelContent() {
     final massimo = oculumMassimo();
     final current = oculumTotale();
+    final normalCurrent = normalCurrentOculum();
+    final temporaryCurrent = max(0, temporaryOculum);
     final ratio = oculumRatio();
     final meterColor = ratio > 0.66
         ? tertiaryColor
@@ -1508,7 +1560,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Oculum $current/$massimo',
+                temporaryCurrent > 0
+                    ? 'Oculum $current · $normalCurrent + ${temporaryCurrent}T / $massimo'
+                    : 'Oculum $current/$massimo',
                 style: TextStyle(
                   color: meterColor,
                   fontSize: compact ? 17 : 20,
@@ -1529,9 +1583,15 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               campoStatAttualeVisibile(
                 label: t('Oculum attuale', 'Current Oculum'),
                 key: 'oculum',
+                controller: oculumPanelCurrentController,
+                focusNode: oculumPanelCurrentFocusNode,
                 helper: t(
-                  'Questo campo mostra l Oculum visibile: include i buff attivi.',
-                  'This field shows visible Oculum: it includes active buffs.',
+                  temporaryCurrent > 0
+                      ? 'Totale $current: $normalCurrent normale + $temporaryCurrent temporaneo. Il temporaneo termina dopo $temporaryOculumRollsRemaining tiri validi. I buff restano separati e non modificano la base.'
+                      : 'Totale $current: $normalCurrent normale. I buff restano separati e non modificano la base.',
+                  temporaryCurrent > 0
+                      ? 'Total $current: $normalCurrent normal + $temporaryCurrent temporary. Temporary Oculum ends after $temporaryOculumRollsRemaining valid rolls. Buffs stay separate and do not change the base.'
+                      : 'Total $current: $normalCurrent normal. Buffs stay separate and do not change the base.',
                 ),
               ),
               const SizedBox(height: 10),
@@ -1616,8 +1676,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 title: Text(t('Consumo elevato', 'High consumption')),
                 subtitle: Text(
                   t(
-                    'Ogni tiro valido consuma 1 punto della statistica collegata.',
-                    'Every valid roll consumes 1 point from its linked stat.',
+                    'Solo quando è attivo, ogni tiro valido consuma 1 punto della statistica collegata.',
+                    'Only while active, every valid roll consumes 1 point from its linked stat.',
                   ),
                 ),
                 onChanged: (value) {
@@ -1645,8 +1705,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     'These are special states',
                   ),
                   explanation: t(
-                    'Addormentato azzera subito l Oculum e dimezza soltanto quello che recuperi. Si risveglia dopo 2 riposi lunghi oppure 2 brevi e 1 lungo. Consumo elevato toglie 1 punto dalla risorsa collegata quando fai un tiro.',
-                    'Sleeping clears current Oculum immediately and halves only what you recover. It wakes after 2 long rests or 2 short rests and 1 long rest. High consumption removes 1 point from the linked resource when you roll.',
+                    'Addormentato azzera subito l Oculum e dimezza soltanto quello che recuperi. Si risveglia dopo 2 riposi lunghi oppure 2 brevi e 1 lungo. I tiri non consumano statistiche salvo Consumo elevato o le eccezioni speciali indicate.',
+                    'Sleeping clears current Oculum immediately and halves only what you recover. It wakes after 2 long rests or 2 short rests and 1 long rest. Rolls do not consume stats unless High Consumption is active or a stated special exception applies.',
                   ),
                   example: t(
                     'Esempio: recuperi 7 Oculum mentre dorme, quindi ne ricevi 3.',
@@ -1694,12 +1754,15 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       );
       aggiungiLog(risultato);
     });
+    notifyConditionsChanged(<OculumConditionTarget>{
+      OculumConditionTarget.oculum,
+      OculumConditionTarget.recupero,
+    });
     programmaSalvataggio();
   }
 
   Future<void> confermaRisvegliaOculum() async {
     if (!oculumAddormentato) return;
-    final perso = currentOculum();
     final conferma = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -1707,8 +1770,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         title: Text(t('Risveglia Oculum', 'Wake Oculum')),
         content: Text(
           t(
-            'Il risveglio azzererà $perso Oculum attuale, compreso quello temporaneo. Massimo e potenziamenti permanenti resteranno invariati.',
-            'Waking will remove $perso current Oculum, including temporary Oculum. Maximum and permanent upgrades remain unchanged.',
+            'Vuoi togliere la condizione Oculum addormentato? I valori attuali, temporanei e massimi resteranno invariati.',
+            'Remove the Sleeping Oculum condition? Current, temporary, and maximum values will remain unchanged.',
           ),
         ),
         actions: [
@@ -1719,7 +1782,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           FilledButton.icon(
             onPressed: () => Navigator.pop(dialogContext, true),
             icon: const Icon(Icons.wb_sunny_outlined),
-            label: Text(t('Risveglia e azzera', 'Wake and clear')),
+            label: Text(t('Risveglia Oculum', 'Wake Oculum')),
           ),
         ],
       ),
@@ -1728,10 +1791,14 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     setState(() {
       risvegliaStatoOculumAddormentato();
       risultato = t(
-        'Oculum risvegliato: Oculum attuale azzerato; massimo e valori permanenti conservati.',
-        'Oculum awakened: current Oculum cleared; maximum and permanent values preserved.',
+        'Oculum risvegliato: valori attuali, temporanei e massimi invariati.',
+        'Oculum awakened: current, temporary, and maximum values unchanged.',
       );
       aggiungiLog(risultato);
+    });
+    notifyConditionsChanged(<OculumConditionTarget>{
+      OculumConditionTarget.oculum,
+      OculumConditionTarget.recupero,
     });
     recordCurrentOculumProgress(immediate: true);
     programmaSalvataggio();
@@ -2192,6 +2259,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               color: primaryColor,
               fontSize: 19,
               fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          smallInfoText(
+            t(
+              'Parata Oculum attuale: ${oculumCurrentParryChancePercent(currentOculum: currentOculum(), difficulty: normalizedCampaignDifficulty()).toStringAsFixed(3)}% con ${currentOculum()} Oculum. Su Normale ogni punto fino a 5 vale 0,1%; dopo 5 ogni +0,1% richiede progressivamente più punti. Solo se pari, dispersione di 1 Oculum al ${oculumCurrentParryStrainChancePercent(currentOculum: currentOculum(), difficulty: normalizedCampaignDifficulty()).toStringAsFixed(2)}%; crescita protetta fino a 20 Oculum.',
+              'Current Oculum parry: ${oculumCurrentParryChancePercent(currentOculum: currentOculum(), difficulty: normalizedCampaignDifficulty()).toStringAsFixed(3)}% with ${currentOculum()} Oculum. On Normal each point up to 5 is worth 0.1%; after 5 every +0.1% progressively requires more points. Only after a parry, 1 Oculum disperses at ${oculumCurrentParryStrainChancePercent(currentOculum: currentOculum(), difficulty: normalizedCampaignDifficulty()).toStringAsFixed(2)}%; growth is protected up to 20 Oculum.',
             ),
           ),
           const SizedBox(height: 8),
@@ -3191,13 +3265,44 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   Widget quickStatTile({
     required String label,
     required String value,
+    String Function()? valueBuilder,
     required IconData icon,
     required Color color,
     VoidCallback? onTap,
     VoidCallback? onRoll,
     VoidCallback? onDecrease,
     VoidCallback? onIncrease,
+    OculumConditionTarget? conditionTarget,
+    String? baseValue,
+    String? permanentValue,
+    String? temporaryValue,
+    bool conditionScoped = false,
   }) {
+    final effectiveConditionTarget =
+        conditionTarget ?? conditionTargetForUiLabel(label);
+    if (!conditionScoped && effectiveConditionTarget != null) {
+      return ValueListenableBuilder<int>(
+        valueListenable: conditionRevisionFor(effectiveConditionTarget),
+        builder: (context, revision, child) => quickStatTile(
+          label: label,
+          value:
+              valueBuilder?.call() ??
+              currentConditionTargetValue(effectiveConditionTarget, value),
+          valueBuilder: valueBuilder,
+          icon: icon,
+          color: color,
+          onTap: onTap,
+          onRoll: onRoll,
+          onDecrease: onDecrease,
+          onIncrease: onIncrease,
+          conditionTarget: effectiveConditionTarget,
+          baseValue: baseValue,
+          permanentValue: permanentValue,
+          temporaryValue: temporaryValue,
+          conditionScoped: true,
+        ),
+      );
+    }
     final compact = lightweightUi;
     final spec = currentThemeDecorationSpec();
     final guiStyle = currentThemeVisualIdentity().mainSheetGuiStyle.id;
@@ -3366,15 +3471,32 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: labelColor,
-                        fontSize: compact ? 9.2 : 11,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: labelColor,
+                              fontSize: compact ? 9.2 : 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        if (effectiveConditionTarget != null) ...[
+                          const SizedBox(width: 4),
+                          conditionImpactIndicator(
+                            target: effectiveConditionTarget,
+                            baseValue: baseValue,
+                            permanentValue: permanentValue,
+                            temporaryValue: temporaryValue,
+                            finalValue: value,
+                          ),
+                        ],
+                      ],
                     ),
                     SizedBox(height: compact ? 0 : 2),
                     if (hasControls)
@@ -3427,6 +3549,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       onRoll: onRoll,
       onDecrease: onDecrease,
       onIncrease: onIncrease,
+      conditionTarget: effectiveConditionTarget,
     );
 
     if (onTap == null) return contextualTile;
@@ -3449,6 +3572,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     VoidCallback? onDecrease,
     VoidCallback? onIncrease,
     String? manualQuery,
+    OculumConditionTarget? conditionTarget,
   }) {
     if (onEdit == null &&
         onRoll == null &&
@@ -3467,6 +3591,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         onDecrease: onDecrease,
         onIncrease: onIncrease,
         manualQuery: manualQuery,
+        conditionTarget: conditionTarget,
       ),
       onLongPressStart: (details) => showQuickContextMenu(
         label: label,
@@ -3476,6 +3601,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         onDecrease: onDecrease,
         onIncrease: onIncrease,
         manualQuery: manualQuery,
+        conditionTarget: conditionTarget,
       ),
       child: child,
     );
@@ -3489,6 +3615,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     VoidCallback? onDecrease,
     VoidCallback? onIncrease,
     String? manualQuery,
+    OculumConditionTarget? conditionTarget,
   }) async {
     final cleanLabel = cleanUiText(label).trim();
     final choice = await showMenu<String>(
@@ -3533,6 +3660,18 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             ],
           ),
         ),
+        if (conditionTarget != null &&
+            conditionsAffecting(conditionTarget).isNotEmpty)
+          PopupMenuItem<String>(
+            value: 'conditions',
+            child: Row(
+              children: [
+                Icon(Icons.bolt, color: tertiaryColor, size: 18),
+                const SizedBox(width: 10),
+                Text(t('Effetti condizioni', 'Condition effects')),
+              ],
+            ),
+          ),
         if (onDecrease != null || onIncrease != null) const PopupMenuDivider(),
         if (onDecrease != null)
           PopupMenuItem<String>(
@@ -3569,6 +3708,11 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         break;
       case 'manual':
         openManualForQuickTerm(manualQuery ?? cleanLabel);
+        break;
+      case 'conditions':
+        if (conditionTarget != null) {
+          showConditionImpactDialog(target: conditionTarget);
+        }
         break;
       case 'decrease':
         onDecrease?.call();
@@ -3898,6 +4042,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   ),
                 ),
               ),
+              conditionImpactIndicator(
+                target: OculumConditionTarget.combattimento,
+              ),
+              const SizedBox(width: 6),
               FilterChip(
                 selected: modalitaVeloce,
                 showCheckmark: false,
@@ -3983,6 +4131,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 quickStatTile(
                   label: t('Scudo Oculum', 'Oculum Shield'),
                   value: '${scudoOculum()}/${scudoOculumMax()}',
+                  valueBuilder: () => '${scudoOculum()}/${scudoOculumMax()}',
                   icon: Icons.visibility,
                   color: eyePupilGlowColor,
                   onTap: () => vaiAllaFunzione(
@@ -4102,6 +4251,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               quickStatTile(
                 label: t('Reazioni', 'Reactions'),
                 value: reazioniVelociTotali() > 0
+                    ? '${reazioniTotali()} +${reazioniVelociTotali()}V'
+                    : '${reazioniTotali()}',
+                valueBuilder: () => reazioniVelociTotali() > 0
                     ? '${reazioniTotali()} +${reazioniVelociTotali()}V'
                     : '${reazioniTotali()}',
                 icon: Icons.reply_all,
@@ -4833,6 +4985,20 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                               editedBaseValues = true;
                             },
                           ),
+                          if (hiddenEyeManagerSelectedGroup == 'altro' &&
+                              modalitaMaster) ...[
+                            const SizedBox(height: 10),
+                            OutlinedButton.icon(
+                              onPressed: showCreateHomebrewSubtraitDialog,
+                              icon: const Icon(Icons.add),
+                              label: Text(
+                                t(
+                                  'Crea sottotratto Homebrew',
+                                  'Create Homebrew subtrait',
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -4866,7 +5032,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       );
     }
 
-    final rowHeight = uiScale(172);
+    final rowHeight = uiScale(
+      visibleStats.any((stat) => stat.homebrew) ? 208 : 172,
+    );
     return GridView.builder(
       key: PageStorageKey<String>('hidden_eye_grid_$group'),
       primary: false,
@@ -4893,6 +5061,82 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         );
       },
     );
+  }
+
+  Future<void> showCreateHomebrewSubtraitDialog() async {
+    final name = TextEditingController();
+    final description = TextEditingController();
+    final base = TextEditingController(text: '0');
+    final created = await showDialog<HiddenEyeStat>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t('Nuovo sottotratto Homebrew', 'New Homebrew subtrait')),
+        content: SizedBox(
+          width: 480,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: name,
+                decoration: InputDecoration(labelText: t('Nome', 'Name')),
+              ),
+              TextField(
+                controller: description,
+                minLines: 2,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  labelText: t('Descrizione', 'Description'),
+                ),
+              ),
+              TextField(
+                controller: base,
+                keyboardType: const TextInputType.numberWithOptions(
+                  signed: true,
+                ),
+                decoration: InputDecoration(
+                  labelText: t('Valore base', 'Base value'),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () {
+              final visibleName = name.text.trim();
+              if (visibleName.isEmpty) return;
+              final slug = oculumNormalizeText(visibleName)
+                  .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+                  .replaceAll(RegExp(r'^_+|_+$'), '');
+              Navigator.pop(
+                context,
+                HiddenEyeStat(
+                  id: 'homebrew_${slug}_${DateTime.now().millisecondsSinceEpoch}',
+                  nome: visibleName,
+                  descrizione: description.text.trim(),
+                  valore: int.tryParse(base.text.trim()) ?? 0,
+                  category: 'altro',
+                  homebrew: true,
+                ),
+              );
+            },
+            child: Text(t('Crea', 'Create')),
+          ),
+        ],
+      ),
+    );
+    name.dispose();
+    description.dispose();
+    base.dispose();
+    if (created == null) return;
+    hiddenEyeStats.add(created);
+    hiddenEyeManagerSelectedGroup = 'altro';
+    invalidateHiddenEyeDerivedCaches();
+    programmaSalvataggio();
   }
 
   Widget hiddenEyeStatDynamic({
@@ -5019,6 +5263,14 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (stat.homebrew)
+              Align(
+                alignment: Alignment.centerRight,
+                child: Chip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text(t('Homebrew', 'Homebrew')),
+                ),
+              ),
             hiddenEyeStatRollButton(sheetContext: sheetContext, stat: stat),
             const SizedBox(height: 8),
             hiddenEyeStatProgressBar(stat),
@@ -5041,138 +5293,182 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       borderColor: const Color(0xFFC9A44C),
       sectionId: 'sheet_quick_glance',
       initiallyExpanded: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            cleanUiText(nomeController.text).trim().isEmpty
-                ? '???'
-                : cleanUiText(nomeController.text),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: primaryColor,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${razzaVisibile()} | ${t('Livello', 'Level')} ${leggiNumero(livelloController)} | Rebirth ${rebirthato ? t('si', 'yes') : t('no', 'no')}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              quickGlanceCell('RES', '${resilienzaTotale()}', Colors.redAccent),
-              quickGlanceCell('VOL', '${volontaTotale()}', tertiaryColor),
-              quickGlanceCell('MAT', '${materiaTotale()}', Colors.lightBlue),
-              quickGlanceCell('OCU', '${oculumTotale()}', eyePupilGlowColor),
-              quickGlanceCell('KARMA', karmaStateLabel(), Colors.amber),
-              quickGlanceCell('OBSER', obserController.text, Colors.orange),
-              quickGlanceCell(
-                t('Fase', 'Phase'),
-                oculumCurrentDayController.text,
-                const Color(0xFF7EE7C8),
-              ),
-              quickGlanceCell(
-                t('Fortuna', 'Luck'),
-                '$fortuna',
-                const Color(0xFF9BE564),
-                onTap: showFortunaQuickEditor,
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final difficulty in const [
-                'oculum',
-                'difficile',
-                'normale',
-                'facile',
-              ])
-                ChoiceChip(
-                  selected: normalizedCampaignDifficulty() == difficulty,
-                  label: Text(campaignDifficultyLabel(difficulty)),
-                  onSelected: (_) {
-                    setState(() {
-                      handleDifficultyChange(difficulty);
-                      campaignDifficulty = difficulty;
-                      risultato = t(
-                        'Difficolta campagna: ${campaignDifficultyLabel(difficulty)}.',
-                        'Campaign difficulty: ${campaignDifficultyLabel(difficulty)}.',
-                      );
-                      aggiungiLog(risultato);
-                    });
-                    for (var i = 0; i < arti.length; i++) {
-                      notifyArtActivationAvailableChanged(i);
-                    }
-                    programmaSalvataggio();
-                  },
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ExpansionTile(
-            tilePadding: EdgeInsets.zero,
-            childrenPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.search),
-            title: Text(
-              t('Lente GUI', 'GUI lens'),
-              style: TextStyle(
-                color: primaryColor,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            subtitle: Text(
-              '${(userGuiScale * 100).round()}%',
-              style: const TextStyle(color: Colors.white70),
-            ),
-            children: [
-              Slider(
-                min: 0.82,
-                max: 1.18,
-                divisions: 18,
-                value: userGuiScale.clamp(0.82, 1.18).toDouble(),
-                label: '${(userGuiScale * 100).round()}%',
-                onChanged: (value) {
-                  setState(
-                    () => userGuiScale = value.clamp(0.82, 1.18).toDouble(),
-                  );
-                },
-                onChangeEnd: (_) => programmaSalvataggio(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              OutlinedButton.icon(
-                onPressed: openReputationManagerSheet,
-                icon: const Icon(Icons.location_city),
-                label: Text(t('Reputazioni', 'Reputations')),
-              ),
-              OutlinedButton.icon(
-                onPressed: openHiddenEyeManagerSheet,
-                icon: const Icon(Icons.remove_red_eye),
-                label: Text(t('Sottotratti Oculus', 'Oculus subtraits')),
-              ),
-            ],
-          ),
-        ],
+      child: ValueListenableBuilder<int>(
+        valueListenable: activeSheetSummaryRevision,
+        builder: (context, revision, child) => _occhiataVeloceContent(),
       ),
+    );
+  }
+
+  Widget _occhiataVeloceContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          cleanUiText(nomeController.text).trim().isEmpty
+              ? '???'
+              : cleanUiText(nomeController.text),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: primaryColor,
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '${razzaVisibile()} | ${t('Livello', 'Level')} ${leggiNumero(livelloController)} | Rebirth ${rebirthato ? t('si', 'yes') : t('no', 'no')}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            quickGlanceCell('RES', '${resilienzaTotale()}', Colors.redAccent),
+            quickGlanceCell('VOL', '${volontaTotale()}', tertiaryColor),
+            quickGlanceCell('MAT', '${materiaTotale()}', Colors.lightBlue),
+            quickGlanceCell('OCU', '${oculumTotale()}', eyePupilGlowColor),
+            quickGlanceCell('KARMA', karmaStateLabel(), Colors.amber),
+            quickGlanceCell('OBSER', obserController.text, Colors.orange),
+            quickGlanceCell(
+              t('Fase', 'Phase'),
+              oculumCurrentDayController.text,
+              const Color(0xFF7EE7C8),
+            ),
+            quickGlanceCell(
+              t('Fortuna', 'Luck'),
+              '$fortuna',
+              const Color(0xFF9BE564),
+              onTap: showFortunaQuickEditor,
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final difficulty in const [
+              'oculum',
+              'difficile',
+              'normale',
+              'facile',
+            ])
+              ChoiceChip(
+                selected: normalizedCampaignDifficulty() == difficulty,
+                label: Text(
+                  '${campaignDifficultyLabel(difficulty)} · ${t('Crit', 'Crit')} +${oculumCriticalDamageBonusForDifficulty(difficulty)}',
+                ),
+                onSelected: (_) {
+                  setState(() {
+                    handleDifficultyChange(difficulty);
+                    campaignDifficulty = difficulty;
+                    final starterShield = applyFirstEasyDifficultyShieldReward(
+                      difficulty,
+                    );
+                    risultato = t(
+                      'Difficolta campagna: ${campaignDifficultyLabel(difficulty)}.$starterShield',
+                      'Campaign difficulty: ${campaignDifficultyLabel(difficulty)}.$starterShield',
+                    );
+                    aggiungiLog(risultato);
+                  });
+                  for (var i = 0; i < arti.length; i++) {
+                    notifyArtActivationAvailableChanged(i);
+                  }
+                  final fightDifficulty = getCondition(
+                    'aumento_difficolta',
+                  )?.metadata['enemyDifficulty'];
+                  if (fightDifficulty != null) {
+                    setFightEnemyDifficulty('$fightDifficulty');
+                  }
+                  notifyConditionsChanged(
+                    activeConditions
+                        .where(
+                          (instance) =>
+                              oculumConditionDefinition(
+                                    instance.conditionType,
+                                  )?.polarity ==
+                                  OculumConditionPolarity.positive ||
+                              instance.conditionType == 'aumento_difficolta',
+                        )
+                        .expand(conditionTargetsFor),
+                  );
+                  programmaSalvataggio();
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        smallInfoText(
+          normalizedCampaignDifficulty() == 'oculum'
+              ? t(
+                  'Sfortuna Oculum: 3% che un danno diventi critico; 5% che infligga +100% danni a Scudo e Scudo Oculum.',
+                  'Oculum Misfortune: 3% for damage to become critical; 5% for +100% damage to Shield and Oculum Shield.',
+                )
+              : normalizedCampaignDifficulty() == 'difficile'
+              ? t(
+                  'Sfortuna Difficile: 1% che un danno diventi critico; 2% che infligga +50% danni allo Scudo.',
+                  'Hard Misfortune: 1% for damage to become critical; 2% for +50% damage to Shield.',
+                )
+              : t(
+                  'La Sfortuna si attiva da Difficile in su.',
+                  'Misfortune activates from Hard difficulty onward.',
+                ),
+        ),
+        const SizedBox(height: 8),
+        ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          childrenPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.search),
+          title: Text(
+            t('Lente GUI', 'GUI lens'),
+            style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900),
+          ),
+          subtitle: Text(
+            '${(userGuiScale * 100).round()}%',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          children: [
+            Slider(
+              min: 0.82,
+              max: 1.18,
+              divisions: 18,
+              value: userGuiScale.clamp(0.82, 1.18).toDouble(),
+              label: '${(userGuiScale * 100).round()}%',
+              onChanged: (value) {
+                setState(
+                  () => userGuiScale = value.clamp(0.82, 1.18).toDouble(),
+                );
+              },
+              onChangeEnd: (_) => programmaSalvataggio(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            OutlinedButton.icon(
+              onPressed: openReputationManagerSheet,
+              icon: const Icon(Icons.location_city),
+              label: Text(t('Reputazioni', 'Reputations')),
+            ),
+            OutlinedButton.icon(
+              onPressed: openHiddenEyeManagerSheet,
+              icon: const Icon(Icons.remove_red_eye),
+              label: Text(t('Sottotratti Oculus', 'Oculus subtraits')),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -7113,6 +7409,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   ),
                 ),
               ),
+              conditionImpactIndicator(
+                target: OculumConditionTarget.combattimento,
+              ),
+              const SizedBox(width: 6),
               Text(
                 t('tocca per modificare', 'tap to edit'),
                 style: TextStyle(
@@ -7138,6 +7438,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 quickStatTile(
                   label: 'VC',
                   value: '+${vc()}',
+                  valueBuilder: () => '+${vc()}',
                   icon: Icons.flash_on,
                   color: tertiaryColor,
                   onTap: () => vaiAllaFunzione(
@@ -7174,6 +7475,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 quickStatTile(
                   label: t('Iniziativa', 'Initiative'),
                   value: '+${iniziativa()}',
+                  valueBuilder: () => '+${iniziativa()}',
                   icon: Icons.directions_run,
                   color: const Color(0xFF7EE7C8),
                   onTap: () => tiraValoreSpeciale(
@@ -7200,6 +7502,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 quickStatTile(
                   label: t('Movimento', 'Movement'),
                   value: '${movimento()}m',
+                  valueBuilder: () => '${movimento()}m',
                   icon: Icons.directions_walk,
                   color: Colors.cyanAccent,
                   onTap: () => vaiAllaFunzione(
@@ -7246,9 +7549,22 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   label: t('Schivata Oculum', 'Oculum Dodge'),
                   value:
                       '${schivateOculumDisponibili()}/${schivateOculumTotali()}',
+                  valueBuilder: () =>
+                      '${schivateOculumDisponibili()}/${schivateOculumTotali()}',
                   icon: Icons.visibility,
                   color: eyePupilGlowColor,
+                  conditionTarget: OculumConditionTarget.combattimento,
                   onTap: mostraMenuSchivataOculum,
+                  onDecrease: () => modificaBuffMalusRapido(
+                    rawKey: 'SchivataOculum',
+                    label: t('Schivata Oculum', 'Oculum Dodge'),
+                    delta: -1,
+                  ),
+                  onIncrease: () => modificaBuffMalusRapido(
+                    rawKey: 'SchivataOculum',
+                    label: t('Schivata Oculum', 'Oculum Dodge'),
+                    delta: 1,
+                  ),
                 ),
                 if (!dense || !modalitaVeloce)
                   quickStatTile(
@@ -7352,6 +7668,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   Widget statMiniTile({
     required String label,
     required int value,
+    int Function()? valueBuilder,
     required int buff,
     required int temp,
     required VoidCallback onRoll,
@@ -7359,9 +7676,34 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     required Color color,
     int? massimo,
     int bonusSkillForma = 0,
+    OculumConditionTarget? conditionTarget,
+    int? baseValue,
+    bool conditionScoped = false,
     VoidCallback? onDecrease,
     VoidCallback? onIncrease,
   }) {
+    if (!conditionScoped && conditionTarget != null) {
+      return ValueListenableBuilder<int>(
+        valueListenable: conditionRevisionFor(conditionTarget),
+        builder: (context, revision, child) => statMiniTile(
+          label: label,
+          value: valueBuilder?.call() ?? value,
+          valueBuilder: valueBuilder,
+          buff: buff,
+          temp: temp,
+          onRoll: onRoll,
+          onEdit: onEdit,
+          color: color,
+          massimo: massimo,
+          bonusSkillForma: bonusSkillForma,
+          conditionTarget: conditionTarget,
+          baseValue: baseValue,
+          conditionScoped: true,
+          onDecrease: onDecrease,
+          onIncrease: onIncrease,
+        ),
+      );
+    }
     final rollBonus = oculumStatRollBonus(
       statValue: value,
       levelGradeBonus: bonusLivelloGrado(),
@@ -7629,6 +7971,18 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                       ),
                     ),
                   ),
+                  if (conditionTarget != null) ...[
+                    const SizedBox(width: 4),
+                    conditionImpactIndicator(
+                      target: conditionTarget,
+                      baseValue: '${baseValue ?? value}',
+                      permanentValue:
+                          '${buff + bonusSkillForma >= 0 ? '+' : ''}${buff + bonusSkillForma}',
+                      temporaryValue: '${temp >= 0 ? '+' : ''}$temp',
+                      finalValue:
+                          '$value · 1d20 ${rollBonus >= 0 ? '+' : ''}$rollBonus',
+                    ),
+                  ],
                   const SizedBox(width: 6),
                   IconButton(
                     tooltip: t('Tira $label', 'Roll $label'),
@@ -7708,6 +8062,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       onRoll: onRoll,
       onDecrease: onDecrease,
       onIncrease: onIncrease,
+      conditionTarget: conditionTarget,
     );
 
     return Material(
@@ -7715,13 +8070,20 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       child: InkWell(
         borderRadius: BorderRadius.circular(tileRadius),
         onTap: onEdit,
-        onLongPress: onRoll,
         child: contextualTile,
       ),
     );
   }
 
   Widget statsOverviewPanel({bool dense = false}) {
+    return ValueListenableBuilder<int>(
+      valueListenable: activeSheetSummaryRevision,
+      builder: (context, revision, child) =>
+          _statsOverviewPanelContent(dense: dense),
+    );
+  }
+
+  Widget _statsOverviewPanelContent({required bool dense}) {
     return gothicPanel(
       borderColor: primaryColor,
       padding: EdgeInsets.all(dense ? 10 : 14),
@@ -7735,6 +8097,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             statMiniTile(
               label: t('Resilienza', 'Resilience'),
               value: resilienzaTotale(),
+              valueBuilder: resilienzaTotale,
+              baseValue: currentResilienza(),
+              conditionTarget: OculumConditionTarget.resilienza,
               buff: buffResilienza(),
               temp: tempResilienza,
               massimo: resilienzaMassimo(),
@@ -7753,7 +8118,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             statMiniTile(
               label: t('Volontà', 'Will'),
               value: volontaTotale(),
+              valueBuilder: volontaTotale,
               buff: buffVolonta(),
+              baseValue: currentVolonta(),
+              conditionTarget: OculumConditionTarget.volonta,
               temp: tempVolonta,
               massimo: volontaMassimo(),
               bonusSkillForma: skillFormaBonus('volonta'),
@@ -7770,6 +8138,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             statMiniTile(
               label: 'Materia',
               value: materiaTotale(),
+              valueBuilder: materiaTotale,
+              baseValue: currentMateria(),
+              conditionTarget: OculumConditionTarget.materia,
               buff: buffMateria(),
               temp: tempMateria,
               massimo: materiaMassimo(),
@@ -7787,8 +8158,11 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             statMiniTile(
               label: 'Oculum',
               value: oculumTotale(),
+              valueBuilder: oculumTotale,
+              baseValue: normalCurrentOculum(),
+              conditionTarget: OculumConditionTarget.oculum,
               buff: buffOculum(),
-              temp: tempOculum,
+              temp: tempOculum + temporaryOculum,
               massimo: oculumMassimo(),
               bonusSkillForma: skillFormaBonus('oculum'),
               color: oculumStatFormulaColor,
@@ -7964,6 +8338,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 quickStatTile(
                   label: t('Movimento', 'Movement'),
                   value: '${movimento()}m',
+                  valueBuilder: () => '${movimento()}m',
                   icon: Icons.directions_walk,
                   color: Colors.cyanAccent,
                   onTap: () => vaiAllaFunzione(
@@ -7975,6 +8350,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               quickStatTile(
                 label: t('Difesa', 'Defense'),
                 value:
+                    '${difesa()}${domDif.isNotEmpty ? ' ${elementDisplayName(domDif)}' : ''}',
+                valueBuilder: () =>
                     '${difesa()}${domDif.isNotEmpty ? ' ${elementDisplayName(domDif)}' : ''}',
                 icon: Icons.security,
                 color: domDif.isEmpty ? primaryColor : elementColor(domDif),
@@ -7991,6 +8368,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               quickStatTile(
                 label: t('Reazioni', 'Reactions'),
                 value: reazioniVelociTotali() > 0
+                    ? '${reazioniTotali()} +${reazioniVelociTotali()}V'
+                    : '${reazioniTotali()}',
+                valueBuilder: () => reazioniVelociTotali() > 0
                     ? '${reazioniTotali()} +${reazioniVelociTotali()}V'
                     : '${reazioniTotali()}',
                 icon: Icons.reply_all,
@@ -8014,6 +8394,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               quickStatTile(
                 label: t('Danno', 'Damage'),
                 value:
+                    '${dannoTotale()}${domDan != 'sconosciuto' ? ' ${elementDisplayName(domDan)}' : ''}',
+                valueBuilder: () =>
                     '${dannoTotale()}${domDan != 'sconosciuto' ? ' ${elementDisplayName(domDan)}' : ''}',
                 icon: Icons.close,
                 color: domDan == 'sconosciuto'
@@ -9126,10 +9508,11 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             }
         }
 
-        return ListView(
+        return ListView.builder(
           key: sheetScrollKey('sheet_desktop'),
           padding: EdgeInsets.all(modalitaVeloce ? 8 : 10),
-          children: children,
+          itemCount: children.length,
+          itemBuilder: (context, index) => children[index],
         );
       },
     );

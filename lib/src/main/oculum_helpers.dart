@@ -171,6 +171,16 @@ int oculumGradeExperienceBonus({
   return max(rebirth ? 5 : 0, (base * multiplier).round());
 }
 
+/// Danno piatto aggiunto a un colpo critico ricevuto dalla campagna.
+int oculumCriticalDamageBonusForDifficulty(String difficulty) {
+  return switch (difficulty.trim().toLowerCase()) {
+    'facile' || 'easy' => 3,
+    'difficile' || 'hard' => 8,
+    'oculum' => 12,
+    _ => 5,
+  };
+}
+
 /// Converte il testo libero del danno ricevuto in un moltiplicatore.
 /// `+25%` significa 125% del danno; `-25%` significa 75%.
 double? oculumIncomingDamagePercentMultiplier(String raw) {
@@ -1488,6 +1498,7 @@ const List<String> oculumDefaultElementIds = <String>[
 ];
 
 const List<String> oculumCommandAutocompleteLabels = <String>[
+  '@Effetto:',
   '@Difesa',
   '@Danni',
   '@HP',

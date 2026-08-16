@@ -1,5 +1,27 @@
 part of '../../main.dart';
 
+const int oculumNewSheetInspirations = 3;
+const int oculumNewSheetSuperInspirations = 2;
+const int oculumNewSheetInspirationsOculum = 1;
+
+({int shield, bool claimed, bool granted}) oculumFirstEasyShieldReward({
+  required String difficulty,
+  required bool alreadyClaimed,
+  required int currentShield,
+}) {
+  final easy =
+      difficulty.trim().toLowerCase() == 'facile' ||
+      difficulty.trim().toLowerCase() == 'easy';
+  if (!easy || alreadyClaimed) {
+    return (
+      shield: max(0, currentShield),
+      claimed: alreadyClaimed,
+      granted: false,
+    );
+  }
+  return (shield: max(0, currentShield) + 5, claimed: true, granted: true);
+}
+
 // MODELLI BASE
 // =====================================================
 
@@ -117,6 +139,8 @@ class HiddenEyeStat {
     this.valore = 0,
     this.unlocked = true,
     this.masteryProgress = 0,
+    this.category = '',
+    this.homebrew = false,
   });
 
   final String id;
@@ -125,6 +149,8 @@ class HiddenEyeStat {
   int valore;
   bool unlocked;
   int masteryProgress;
+  String category;
+  bool homebrew;
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -133,6 +159,8 @@ class HiddenEyeStat {
     'valore': valore,
     'unlocked': unlocked,
     'oculusSubtraitMasteryProgress': masteryProgress,
+    if (category.isNotEmpty) 'category': category,
+    if (homebrew) 'homebrew': true,
   };
 
   factory HiddenEyeStat.fromJson(Map<String, dynamic> json) {
@@ -147,6 +175,8 @@ class HiddenEyeStat {
       masteryProgress: readIntValue(
         json['oculusSubtraitMasteryProgress'] ?? json['maestria'],
       ),
+      category: '${json['category'] ?? ''}',
+      homebrew: readBoolValue(json['homebrew']),
     );
   }
 }
@@ -427,6 +457,37 @@ class TemporaryOculumState {
   int get total => normalCurrent + temporary;
 
   String get visibleValue => '$total';
+}
+
+TemporaryOculumState setTemporaryOculumFromManualVisibleValue({
+  required TemporaryOculumState state,
+  required int visibleValue,
+  int visibleBonus = 0,
+  int minimumNormalCurrent = 0,
+}) {
+  final targetTotal = max(
+    minimumNormalCurrent,
+    max(0, visibleValue) - visibleBonus,
+  );
+  final currentTotal = state.total;
+  var nextNormal = state.normalCurrent;
+  var nextTemporary = max(0, state.temporary);
+
+  if (targetTotal < currentTotal) {
+    var reduction = currentTotal - targetTotal;
+    final temporaryReduction = min(nextTemporary, reduction);
+    nextTemporary -= temporaryReduction;
+    reduction -= temporaryReduction;
+    nextNormal = max(minimumNormalCurrent, nextNormal - reduction);
+  } else if (targetTotal > currentTotal) {
+    nextNormal += targetTotal - currentTotal;
+  }
+
+  return TemporaryOculumState(
+    normalCurrent: nextNormal,
+    temporary: nextTemporary,
+    rollsRemaining: nextTemporary > 0 ? max(0, state.rollsRemaining) : 0,
+  );
 }
 
 TemporaryOculumState addOculumToTemporaryState({
@@ -1123,6 +1184,10 @@ class InventoryItem {
     this.bonusDanno = 0,
     this.bonusDifesa = 0,
     this.bonusScudo = 0,
+    this.bonusScudoOculum = 0,
+    this.effettoIntegritaScudo = '',
+    this.scudoIntegritaCorrente = -1,
+    this.scudoIntegritaOculumCorrente = -1,
     this.gradoOggetto = 0,
     this.gradoRichiesto = 0,
     this.elementoDanno = 'Fisico',
@@ -1144,6 +1209,10 @@ class InventoryItem {
   int bonusDanno;
   int bonusDifesa;
   int bonusScudo;
+  int bonusScudoOculum;
+  String effettoIntegritaScudo;
+  int scudoIntegritaCorrente;
+  int scudoIntegritaOculumCorrente;
   int gradoOggetto;
   int gradoRichiesto;
   String elementoDanno;
@@ -1166,6 +1235,10 @@ class InventoryItem {
       'bonusDanno': bonusDanno,
       'bonusDifesa': bonusDifesa,
       'bonusScudo': bonusScudo,
+      'bonusScudoOculum': bonusScudoOculum,
+      'effettoIntegritaScudo': effettoIntegritaScudo,
+      'scudoIntegritaCorrente': scudoIntegritaCorrente,
+      'scudoIntegritaOculumCorrente': scudoIntegritaOculumCorrente,
       'gradoOggetto': gradoOggetto,
       'gradoRichiesto': gradoRichiesto,
       'elementoDanno': elementoDanno,
@@ -1190,6 +1263,21 @@ class InventoryItem {
       bonusDanno: readIntValue(json['bonusDanno']),
       bonusDifesa: readIntValue(json['bonusDifesa']),
       bonusScudo: readIntValue(json['bonusScudo']),
+      bonusScudoOculum: readIntValue(
+        json['bonusScudoOculum'] ?? json['bonusOculumShield'],
+      ),
+      effettoIntegritaScudo: oculumCleanMojibakeText(
+        '${json['effettoIntegritaScudo'] ?? json['shieldIntegrityEffect'] ?? ''}',
+      ),
+      scudoIntegritaCorrente: readIntValue(
+        json['scudoIntegritaCorrente'] ?? json['currentIntegrityShield'],
+        fallback: -1,
+      ),
+      scudoIntegritaOculumCorrente: readIntValue(
+        json['scudoIntegritaOculumCorrente'] ??
+            json['currentIntegrityOculumShield'],
+        fallback: -1,
+      ),
       gradoOggetto: readIntValue(json['gradoOggetto']).clamp(0, 12).toInt(),
       gradoRichiesto: readIntValue(json['gradoRichiesto']).clamp(0, 12).toInt(),
       elementoDanno: oculumCleanMojibakeText(
@@ -1202,6 +1290,43 @@ class InventoryItem {
       saveShieldUsedDay: readIntValue(json['saveShieldUsedDay']),
     );
   }
+}
+
+int oculumInventoryIntegrityCurrent(int savedCurrent, int maximum) {
+  final safeMaximum = max(0, maximum);
+  if (savedCurrent < 0) return safeMaximum;
+  return savedCurrent.clamp(0, safeMaximum).toInt();
+}
+
+bool oculumInventoryIntegrityEffectActive(
+  InventoryItem item, {
+  required int normalMaximum,
+  required int oculumMaximum,
+  int? normalAvailable,
+  int? oculumAvailable,
+}) {
+  final hasNormalIntegrity =
+      oculumInventoryIntegrityCurrent(
+            item.scudoIntegritaCorrente,
+            normalMaximum,
+          ) >
+          0 &&
+      (normalAvailable == null || normalAvailable > 0);
+  final hasOculumIntegrity =
+      oculumInventoryIntegrityCurrent(
+            item.scudoIntegritaOculumCorrente,
+            oculumMaximum,
+          ) >
+          0 &&
+      (oculumAvailable == null || oculumAvailable > 0);
+  return hasNormalIntegrity || hasOculumIntegrity;
+}
+
+void oculumRechargeInventoryOculumIntegrity(
+  InventoryItem item, {
+  required int maximum,
+}) {
+  item.scudoIntegritaOculumCorrente = max(0, maximum);
 }
 
 class OculumSkillTextLimits {
@@ -2020,6 +2145,10 @@ class ArtSkill {
 
 const List<String> oculumArtSkillCostResourceKeys = <String>[
   'oculum',
+  'fortuna',
+  'hp',
+  'scudo',
+  'scudo_oculum',
   'materia',
   'volonta',
   'resilienza',
@@ -2031,7 +2160,33 @@ String oculumNormalizeArtSkillCostResource(
   bool legacyOculumDisabled = false,
 }) {
   final normalized = oculumNormalizeText('$raw').replaceAll(' ', '');
+  if (normalized.contains('+')) {
+    final parts = normalized
+        .split('+')
+        .map(oculumNormalizeArtSkillCostResource)
+        .where((part) => part != 'nessuna')
+        .toSet()
+        .toList(growable: false);
+    return parts.isEmpty ? 'nessuna' : parts.join('+');
+  }
+  if (normalized.startsWith('material:')) {
+    final material = normalized.substring('material:'.length).trim();
+    return material.isEmpty ? 'nessuna' : 'material:$material';
+  }
   switch (normalized) {
+    case 'fortuna':
+    case 'fortune':
+      return 'fortuna';
+    case 'hp':
+    case 'vita':
+      return 'hp';
+    case 'scudo':
+    case 'shield':
+      return 'scudo';
+    case 'scudooculum':
+    case 'scudo_oculum':
+    case 'oculumshield':
+      return 'scudo_oculum';
     case 'materia':
       return 'materia';
     case 'volonta':
@@ -2055,7 +2210,26 @@ String oculumArtSkillCostResourceLabel(
   String resource, {
   bool english = false,
 }) {
-  switch (oculumNormalizeArtSkillCostResource(resource)) {
+  final normalized = oculumNormalizeArtSkillCostResource(resource);
+  if (normalized.contains('+')) {
+    return normalized
+        .split('+')
+        .map((part) => oculumArtSkillCostResourceLabel(part, english: english))
+        .join(' + ');
+  }
+  if (normalized.startsWith('material:')) {
+    final material = normalized.substring('material:'.length);
+    return '${english ? 'Material' : 'Materiale'}: $material';
+  }
+  switch (normalized) {
+    case 'fortuna':
+      return english ? 'Fortune' : 'Fortuna';
+    case 'hp':
+      return 'HP';
+    case 'scudo':
+      return english ? 'Shield' : 'Scudo';
+    case 'scudo_oculum':
+      return english ? 'Oculum Shield' : 'Scudo Oculum';
     case 'materia':
       return 'Materia';
     case 'volonta':
@@ -2335,6 +2509,7 @@ class OculumRecipe {
     this.forgeAttributes = '',
     this.forgeEffectText = '',
     this.forgeTarget = 'auto',
+    this.resultGrams = '',
     this.personal = false,
     this.ownerTag = '',
     this.sourceRecipeId = '',
@@ -2356,6 +2531,9 @@ class OculumRecipe {
   final String forgeAttributes;
   final String forgeEffectText;
   final String forgeTarget;
+
+  /// Finished product mass in grams. Empty is kept for legacy recipes.
+  final String resultGrams;
   final bool personal;
   final String ownerTag;
   final String sourceRecipeId;
@@ -2377,6 +2555,7 @@ class OculumRecipe {
     String? forgeAttributes,
     String? forgeEffectText,
     String? forgeTarget,
+    String? resultGrams,
     bool? personal,
     String? ownerTag,
     String? sourceRecipeId,
@@ -2398,6 +2577,7 @@ class OculumRecipe {
       forgeAttributes: forgeAttributes ?? this.forgeAttributes,
       forgeEffectText: forgeEffectText ?? this.forgeEffectText,
       forgeTarget: forgeTarget ?? this.forgeTarget,
+      resultGrams: resultGrams ?? this.resultGrams,
       personal: personal ?? this.personal,
       ownerTag: ownerTag ?? this.ownerTag,
       sourceRecipeId: sourceRecipeId ?? this.sourceRecipeId,
@@ -2421,6 +2601,7 @@ class OculumRecipe {
     'forgeAttributes': forgeAttributes,
     'forgeEffectText': forgeEffectText,
     'forgeTarget': forgeTarget,
+    'resultGrams': resultGrams,
     'personal': personal,
     'ownerTag': ownerTag,
     'sourceRecipeId': sourceRecipeId,
@@ -2487,6 +2668,11 @@ class OculumRecipe {
           }.contains('${json['forgeTarget'] ?? 'auto'}')
           ? '${json['forgeTarget'] ?? 'auto'}'
           : 'auto',
+      resultGrams:
+          oculumNormalizePositiveGramText(
+            '${json['resultGrams'] ?? json['grammiRisultato'] ?? ''}',
+          ) ??
+          '',
       personal: readBoolValue(json['personal']),
       ownerTag: '${json['ownerTag'] ?? ''}',
       sourceRecipeId: '${json['sourceRecipeId'] ?? ''}',
@@ -2542,6 +2728,7 @@ class CharacterArt {
     this.runeBooksRead = 0,
     this.integritaCorrente = -1,
     this.esaurimentoCompleto = false,
+    this.bonusIntegritaNucleoTemporaneo = 0,
   }) : runeWordsKnown = List<String>.from(runeWordsKnown ?? const <String>[]),
        runeQuickWordIds = List<String>.from(
          runeQuickWordIds ?? const <String>[],
@@ -2589,6 +2776,9 @@ class CharacterArt {
   int runeBooksRead;
   int integritaCorrente;
   bool esaurimentoCompleto;
+  // Riserva temporanea data da Potenza del nucleo.  E' separata dal massimo
+  // normale per restare compatibile con tutte le Art e con i vecchi salvataggi.
+  int bonusIntegritaNucleoTemporaneo;
 
   Map<String, dynamic> toJson() {
     return {
@@ -2632,6 +2822,8 @@ class CharacterArt {
       'runeBooksRead': runeBooksRead,
       'integritaCorrente': integritaCorrente,
       'esaurimentoCompleto': esaurimentoCompleto,
+      if (bonusIntegritaNucleoTemporaneo > 0)
+        'bonusIntegritaNucleoTemporaneo': bonusIntegritaNucleoTemporaneo,
     };
   }
 
@@ -2686,6 +2878,9 @@ class CharacterArt {
           ? readIntValue(json['integritaCorrente'])
           : -1,
       esaurimentoCompleto: readBoolValue(json['esaurimentoCompleto']),
+      bonusIntegritaNucleoTemporaneo: readIntValue(
+        json['bonusIntegritaNucleoTemporaneo'],
+      ),
     );
   }
 }

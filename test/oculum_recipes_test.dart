@@ -71,6 +71,34 @@ void main() {
       expect(restored.forgeAttributes, contains('forgecraft'));
     });
 
+    test(
+      'la grammatura del prodotto finito resta compatibile con i salvataggi',
+      () {
+        const recipe = OculumRecipe(
+          id: 'alchemy_weight',
+          name: 'Elisir',
+          ingredients: [OculumRecipeIngredient(name: 'Erba', grams: '50')],
+          resultName: 'Elisir pronto',
+          resultDescription: '',
+          masterNotes: '',
+          visibleToPlayers: true,
+          createdAt: '',
+          updatedAt: '',
+          recipeKind: 'alchemy',
+          resultGrams: '35',
+        );
+
+        expect(OculumRecipe.fromJson(recipe.toJson()).resultGrams, '35');
+        expect(
+          OculumRecipe.fromJson({
+            'id': 'legacy_weight',
+            'name': 'Ricetta vecchia',
+          }).resultGrams,
+          isEmpty,
+        );
+      },
+    );
+
     test('categorie e copie personali restano separate nel JSON', () {
       final legacy = OculumRecipe.fromJson(<String, dynamic>{
         'id': 'legacy',

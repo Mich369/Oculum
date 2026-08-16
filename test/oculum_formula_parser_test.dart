@@ -910,6 +910,14 @@ void main() {
     expect(oculumNextCriticalDamageMultiplier(6.0), 6.0);
   });
 
+  test('il bonus danno critico segue la difficoltà della campagna', () {
+    expect(oculumCriticalDamageBonusForDifficulty('facile'), 3);
+    expect(oculumCriticalDamageBonusForDifficulty('normale'), 5);
+    expect(oculumCriticalDamageBonusForDifficulty('difficile'), 8);
+    expect(oculumCriticalDamageBonusForDifficulty('oculum'), 12);
+    expect(oculumCriticalDamageBonusForDifficulty('hard'), 8);
+  });
+
   test('il riposo breve recupera un quarto e non sottrae mai HP', () {
     expect(oculumShortRestQuarterRecovery(current: 0, maximum: 100), 25);
     expect(oculumShortRestQuarterRecovery(current: 99, maximum: 100), 100);

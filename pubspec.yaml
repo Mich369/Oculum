@@ -50,6 +50,7 @@ flutter:
     - assets/oculum_dungeon/generated_sprites/equipment/
     - assets/oculum_dungeon/generated_sprites/npc/
     - assets/fonts/
+    - assets/manuals/
 
 flutter_launcher_icons:
   android: true

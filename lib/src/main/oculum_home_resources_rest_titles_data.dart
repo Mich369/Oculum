@@ -404,6 +404,21 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     }
   }
 
+  String applyFirstEasyDifficultyShieldReward(String difficulty) {
+    final reward = oculumFirstEasyShieldReward(
+      difficulty: normalizedCampaignDifficulty(difficulty),
+      alreadyClaimed: easyDifficultyShieldClaimed,
+      currentShield: scudo(),
+    );
+    easyDifficultyShieldClaimed = reward.claimed;
+    if (!reward.granted) return '';
+    impostaScudoTotale(reward.shield);
+    return t(
+      ' Prima attivazione di Facile: +5 Scudo (${scudo()}).',
+      ' First Easy activation: +5 Shield (${scudo()}).',
+    );
+  }
+
   int inspirationCap(String type) {
     final diff = normalizedCampaignDifficulty();
     switch (type) {
@@ -1346,8 +1361,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       }
       if (risvegliato) {
         ultimoEventoRiposo += t(
-          '\nOculum risvegliato dopo 2 riposi brevi e 1 lungo: Oculum attuale azzerato.',
-          '\nOculum awakened after 2 short rests and 1 long rest: current Oculum cleared.',
+          '\nOculum risvegliato dopo 2 riposi brevi e 1 lungo: valori Oculum invariati.',
+          '\nOculum awakened after 2 short rests and 1 long rest: Oculum values unchanged.',
         );
       } else if (oculumAddormentato) {
         ultimoEventoRiposo += t(
@@ -1360,6 +1375,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    processConditionTick(OculumConditionTickTrigger.shortRest);
     programmaSalvataggio();
   }
 
@@ -1373,7 +1389,14 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     var statoOculumDaRiposo = '';
     var probabilitaStatoOculum = 0.0;
     var oculumRisvegliatoDalRiposo = false;
+    final potenzaNucleoDaRimuovere = <int>[];
     setState(() {
+      potenzaNucleoDaRimuovere.addAll(rimuoviPotenzaNucleoTemporanea());
+      if (statoForzaAttivo == 'potenza_nucleo') {
+        statoForzaAttivo = '';
+        statoForzaPronto = true;
+        statoForzaTiriRimanenti = 0;
+      }
       final cenere = leggiNumero(cenereController);
       final rimuoveMalusEsplosione = malusTiriOculumPostEsplosione < 0;
 
@@ -1514,8 +1537,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       }
       if (oculumRisvegliatoDalRiposo) {
         ultimoEventoRiposo += t(
-          '\nOculum risvegliato con i riposi richiesti: Oculum attuale azzerato.',
-          '\nOculum awakened through the required rests: current Oculum cleared.',
+          '\nOculum risvegliato con i riposi richiesti: valori Oculum invariati.',
+          '\nOculum awakened through the required rests: Oculum values unchanged.',
         );
       } else if (oculumAddormentato) {
         ultimoEventoRiposo += t(
@@ -1527,6 +1550,12 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         ultimoEventoRiposo += t(
           '\nMalus Esplosione di Oculum rimosso.',
           '\nOculum Burst penalty removed.',
+        );
+      }
+      if (potenzaNucleoDaRimuovere.isNotEmpty) {
+        ultimoEventoRiposo += t(
+          '\nPotenza del nucleo terminata: riserva temporanea e bonus danni rimossi.',
+          '\nCore Power ended: temporary reserve and damage bonus removed.',
         );
       }
       if (limitedArtRecoveries > 0) {
@@ -1549,6 +1578,14 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     for (final index in changedArtIndexes) {
       notifyArtIntegrityChanged(index);
     }
+    for (final index in potenzaNucleoDaRimuovere) {
+      if (!changedArtIndexes.contains(index)) {
+        notifyArtIntegrityChanged(index);
+      }
+    }
+    if (potenzaNucleoDaRimuovere.isNotEmpty) {
+      scheduleArtIntegritySave(potenzaNucleoDaRimuovere);
+    }
     notifyAggiustaNucleoDisponibilitaChanged();
 
     Timer(const Duration(milliseconds: 450), () {
@@ -1560,6 +1597,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       scheduleArtIntegritySave(changedArtIndexes, immediate: true);
     }
     recordAggiustaNucleoProgress(immediate: true);
+    processConditionTick(OculumConditionTickTrigger.longRest);
     programmaSalvataggio();
   }
 
@@ -2363,6 +2401,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         bonusDanno: leggiNumero(itemBonusDannoController),
         bonusDifesa: leggiNumero(itemBonusDifesaController),
         bonusScudo: leggiNumero(itemBonusScudoController),
+        bonusScudoOculum: leggiNumero(itemBonusScudoOculumController),
         gradoOggetto: leggiNumero(
           itemGradoOggettoController,
         ).clamp(0, 12).toInt(),
@@ -2398,6 +2437,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       itemBonusDannoController.text = '0';
       itemBonusDifesaController.text = '0';
       itemBonusScudoController.text = '0';
+      itemBonusScudoOculumController.text = '0';
       itemGradoOggettoController.text = '0';
       itemGradoRichiestoController.text = '0';
       itemElementoDannoController.text = 'Fisico';
@@ -2462,6 +2502,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     item.bonusDanno = 0;
     item.bonusDifesa = 0;
     item.bonusScudo = 0;
+    item.bonusScudoOculum = 0;
+    item.scudoIntegritaCorrente = 0;
+    item.scudoIntegritaOculumCorrente = 0;
     item.buff = '';
     item.elementoDanno = nomePutrefatto == 'Slime putrefatto'
         ? 'Acido'

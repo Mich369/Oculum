@@ -1,5 +1,194 @@
 part of '../../main.dart';
 
+({
+  double criticalChance,
+  double shieldChance,
+  int normalShieldBonus,
+  int oculumShieldBonus,
+})
+oculumMisfortuneProfile(String difficulty) {
+  switch (difficulty.trim().toLowerCase()) {
+    case 'difficile':
+    case 'hard':
+      return (
+        criticalChance: 1,
+        shieldChance: 2,
+        normalShieldBonus: 50,
+        oculumShieldBonus: 0,
+      );
+    case 'oculum':
+      return (
+        criticalChance: 3,
+        shieldChance: 5,
+        normalShieldBonus: 100,
+        oculumShieldBonus: 100,
+      );
+    default:
+      return (
+        criticalChance: 0,
+        shieldChance: 0,
+        normalShieldBonus: 0,
+        oculumShieldBonus: 0,
+      );
+  }
+}
+
+double oculumCurrentParryChancePercent({
+  required int currentOculum,
+  required String difficulty,
+}) {
+  var remaining = max(0, currentOculum);
+  if (remaining <= 0) return 0;
+
+  var tenths = min(5, remaining);
+  remaining -= min(5, remaining);
+  var pointsForNextTenth = 2;
+  while (remaining >= pointsForNextTenth) {
+    remaining -= pointsForNextTenth;
+    tenths++;
+    pointsForNextTenth++;
+  }
+
+  final difficultyMultiplier = switch (difficulty.trim().toLowerCase()) {
+    'facile' || 'easy' => 1.5,
+    'difficile' || 'hard' => 0.5,
+    'oculum' => 0.2,
+    _ => 1.0,
+  };
+  return double.parse((tenths * 0.1 * difficultyMultiplier).toStringAsFixed(3));
+}
+
+int oculumShieldEffectiveValueForDifficulty(int shield, String difficulty) {
+  final safeShield = max(0, shield);
+  switch (difficulty.trim().toLowerCase()) {
+    case 'facile':
+    case 'easy':
+      return (safeShield * 3) ~/ 2;
+    case 'difficile':
+    case 'hard':
+      return (safeShield + 1) ~/ 2;
+    case 'oculum':
+      return safeShield ~/ 5;
+    default:
+      return safeShield;
+  }
+}
+
+int _oculumShieldPointsForRemainingEffectiveValue({
+  required int maximumPoints,
+  required int effectiveValue,
+  required String difficulty,
+}) {
+  var low = 0;
+  var high = max(0, maximumPoints);
+  while (low < high) {
+    final middle = (low + high + 1) ~/ 2;
+    final value = oculumShieldEffectiveValueForDifficulty(middle, difficulty);
+    if (value <= effectiveValue) {
+      low = middle;
+    } else {
+      high = middle - 1;
+    }
+  }
+  return low;
+}
+
+({int layer, int remaining, int absorbed}) oculumAbsorbDamageWithShield({
+  required int layer,
+  required int remaining,
+  required int bonusPercent,
+  required String difficulty,
+}) {
+  if (layer <= 0 || remaining <= 0) {
+    return (layer: layer, remaining: remaining, absorbed: 0);
+  }
+
+  final effectiveCapacity = oculumShieldEffectiveValueForDifficulty(
+    layer,
+    difficulty,
+  );
+  if (effectiveCapacity <= 0) {
+    return (layer: 0, remaining: remaining, absorbed: 0);
+  }
+
+  final effectiveDamage = bonusPercent <= 0
+      ? remaining
+      : max(1, (remaining * (100 + bonusPercent) / 100).ceil());
+  final absorbedEffective = min(effectiveCapacity, effectiveDamage);
+  final baseAbsorbed = bonusPercent <= 0
+      ? min(remaining, absorbedEffective)
+      : min(
+          remaining,
+          max(1, (absorbedEffective * 100 / (100 + bonusPercent)).ceil()),
+        );
+  final effectiveRemaining = effectiveCapacity - absorbedEffective;
+  final pointsRemaining = effectiveRemaining <= 0
+      ? 0
+      : _oculumShieldPointsForRemainingEffectiveValue(
+          maximumPoints: layer,
+          effectiveValue: effectiveRemaining,
+          difficulty: difficulty,
+        );
+
+  return (
+    layer: pointsRemaining,
+    remaining: remaining - baseAbsorbed,
+    absorbed: layer - pointsRemaining,
+  );
+}
+
+double oculumCurrentParryStrainChancePercent({
+  required int currentOculum,
+  required String difficulty,
+}) {
+  final safeBandPoints = min(20, max(0, currentOculum));
+  final excessPoints = max(0, currentOculum - 20);
+  final rates = switch (difficulty.trim().toLowerCase()) {
+    'facile' || 'easy' => (safe: 0.10, excess: 0.25),
+    'difficile' || 'hard' => (safe: 0.35, excess: 0.80),
+    'oculum' => (safe: 0.50, excess: 1.00),
+    _ => (safe: 0.20, excess: 0.50),
+  };
+  return (safeBandPoints * rates.safe + excessPoints * rates.excess)
+      .clamp(0.0, 75.0)
+      .toDouble();
+}
+
+({double chancePercent, int currentHpDivisor}) oculumBrokenCoreDamageProfile(
+  String difficulty,
+) {
+  switch (difficulty.trim().toLowerCase()) {
+    case 'facile':
+    case 'easy':
+      return (chancePercent: 20, currentHpDivisor: 5);
+    case 'difficile':
+    case 'hard':
+      return (chancePercent: 50, currentHpDivisor: 2);
+    case 'oculum':
+      return (chancePercent: 66, currentHpDivisor: 2);
+    default:
+      return (chancePercent: 33, currentHpDivisor: 3);
+  }
+}
+
+int oculumBrokenCoreCurrentHpDamage({
+  required int currentHp,
+  required String difficulty,
+}) {
+  final safeHp = max(0, currentHp);
+  if (safeHp <= 0) return 0;
+  final profile = oculumBrokenCoreDamageProfile(difficulty);
+  return max(1, (safeHp / profile.currentHpDivisor).ceil());
+}
+
+bool oculumBrokenCoreCanRoll({
+  required bool brokenCore,
+  required int hpBeforeDamage,
+  required int hpAfterDamage,
+}) {
+  return brokenCore && hpAfterDamage > 0 && hpAfterDamage < hpBeforeDamage;
+}
+
 extension _OculumHomeDamageImpact on _OculumHomePageState {
   int bonusDannoScudiPercentuale() {
     return max(0, leggiNumero(dannoBonusScudoPercentController));
@@ -10,31 +199,11 @@ extension _OculumHomeDamageImpact on _OculumHomePageState {
     required int remaining,
     required int bonusPercent,
   }) {
-    if (layer <= 0 || remaining <= 0) {
-      return (layer: layer, remaining: remaining, absorbed: 0);
-    }
-    if (bonusPercent <= 0) {
-      final absorbed = min(layer, remaining);
-      return (
-        layer: layer - absorbed,
-        remaining: remaining - absorbed,
-        absorbed: absorbed,
-      );
-    }
-
-    final effectiveDamage = max(
-      1,
-      (remaining * (100 + bonusPercent) / 100).ceil(),
-    );
-    final absorbed = min(layer, effectiveDamage);
-    final baseConsumed = min(
-      remaining,
-      max(1, (absorbed * 100 / (100 + bonusPercent)).ceil()),
-    );
-    return (
-      layer: layer - absorbed,
-      remaining: remaining - baseConsumed,
-      absorbed: absorbed,
+    return oculumAbsorbDamageWithShield(
+      layer: layer,
+      remaining: remaining,
+      bonusPercent: bonusPercent,
+      difficulty: normalizedCampaignDifficulty(),
     );
   }
 
@@ -53,10 +222,10 @@ extension _OculumHomeDamageImpact on _OculumHomePageState {
         ? 0
         : max(1, (shieldMax / profile.milestoneShieldDivisor).ceil()) * soglie;
     if (shieldGain > 0) {
-      scudoOculumController.text = min(
-        shieldMax,
-        scudoOculum() + shieldGain,
-      ).toString();
+      final before = scudoOculum();
+      final after = min(shieldMax, before + shieldGain);
+      scudoOculumController.text = after.toString();
+      ripristinaScudoIntegritaOculum(after - before);
     }
 
     final maxOcu = max(0, oculumMassimoNaturale());

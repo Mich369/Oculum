@@ -6,7 +6,9 @@ class OculumAccountLinkService extends ChangeNotifier {
 
   static final OculumAccountLinkService instance = OculumAccountLinkService._();
 
-  Future<bool> linkExistingLocalSaveToAccount({required String accountId}) async {
+  Future<bool> linkExistingLocalSaveToAccount({
+    required String accountId,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     final hasLocal = prefs.containsKey('oculum.home.save');
     if (!hasLocal) return false;

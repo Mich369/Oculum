@@ -361,6 +361,10 @@ if (-not (Test-Path -LiteralPath $WinRelease)) {
 Write-Step "Copia Windows Release completa"
 Copy-DirectoryContents -Source $WinRelease -Destination $WinDist
 
+# Mantiene avviabile anche build\distribution\Oculum.exe: Flutter richiede
+# DLL, ICU e cartella data accanto all'eseguibile, non soltanto nello ZIP.
+Copy-DirectoryContents -Source $WinRelease -Destination $Dist
+
 $ExeSource = Join-Path $WinRelease "oculum.exe"
 if (-not (Test-Path -LiteralPath $ExeSource)) {
   $ExeSource = Get-ChildItem -LiteralPath $WinRelease -Filter "*.exe" -File |
@@ -545,4 +549,4 @@ if ($FullList) {
 
 Write-Host ""
 Write-Host "Distribuzione pronta: $Dist" -ForegroundColor Green
-Write-Host "Nota: per Windows distribuisci Oculum-Windows.zip, non solo Oculum.exe." -ForegroundColor Yellow
+Write-Host "Oculum.exe e avviabile direttamente: il runtime Windows completo e nella stessa cartella." -ForegroundColor Green

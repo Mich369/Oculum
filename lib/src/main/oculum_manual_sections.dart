@@ -494,7 +494,32 @@ Quando subisci danno, segui questo ordine:
 4. Applica eventuali moltiplicatori sommati.
 5. Se hai Scudo Critico attivo, dimezza il danno finale.
 6. Il danno colpisce in ordine:
-   Scudo → HP Temporanei → HP.
+   Scudo Oculum → Scudo → HP Temporanei → HP.
+
+Il valore effettivo di ogni riserva di Scudo dipende dalla difficoltà:
+• Facile: Scudo ×1,5, arrotondato per difetto. Il punto extra compare quindi ogni 2 punti Scudo.
+• Normale: Scudo ×1.
+• Difficile: Scudo ×0,5, arrotondato per eccesso.
+• Oculum: Scudo ×0,2, arrotondato per difetto.
+Questa conversione determina quanto danno assorbono Scudo e Scudo Oculum, senza aumentare i punti mostrati sulla scheda.
+
+Ogni nuova scheda parte con 3 Ispirazioni, 2 Super Ispirazioni e 1 Ispirazione Oculum. La prima volta che quella scheda viene impostata su Facile riceve inoltre +5 Scudo; il premio non viene ripetuto tornando nuovamente a Facile.
+
+Da Difficile si attiva la Sfortuna, controllata separatamente per ogni danno ricevuto:
+• Difficile: 1% che il danno diventi critico e 2% che infligga +50% danni allo Scudo normale.
+• Oculum: 3% che il danno diventi critico e 5% che infligga +100% danni sia allo Scudo sia allo Scudo Oculum.
+I due controlli di Sfortuna sono indipendenti e, quando si attivano, vengono dichiarati nel log del danno.
+
+Ogni danno può inoltre essere completamente parato dall'Oculum attuale. Quando accade, il log racconta che il tuo Oculum si concentra nel punto di impatto per difenderti. Su Normale ogni punto fino a 5 aggiunge 0,1%: 1 punto vale 0,1% e 5 punti valgono 0,5%. Dopo il quinto punto la crescita rallenta: il successivo +0,1% richiede 2 punti, quello dopo 3 punti, poi 4 e così via. La probabilità risultante viene moltiplicata per ×1,5 su Facile, ×1 su Normale, ×0,5 su Difficile e ×0,2 su Oculum.
+
+Solo dopo una parata riuscita viene controllata la dispersione. Può essere perso al massimo 1 Oculum attuale. La probabilità cresce con l'Oculum posseduto ed è maggiore su Difficile e Oculum, ma i primi 20 punti sono protetti da una crescita lenta: a 20 Oculum la dispersione è 2% su Facile, 4% su Normale, 7% su Difficile e 10% su Oculum. Oltre 20 cresce più rapidamente, con un limite massimo del 75%.
+
+Un danno critico aggiunge prima un bonus piatto che dipende dalla difficoltà della campagna:
+• Facile: +3 danni
+• Normale: +5 danni
+• Difficile: +8 danni
+• Oculum: +12 danni
+Poi il critico peggiora di uno stadio Resistenze, Normale o Fragilità prima di applicare Difesa e Scudi.
 
 Resistenze:
 • Leggera: -10%
@@ -531,7 +556,32 @@ When you take damage, follow this order:
 4. Apply any summed multipliers.
 5. If Critical Shield is active, halve the final damage.
 6. Damage is applied in this order:
-   Shield → Temporary HP → HP.
+   Oculum Shield → Shield → Temporary HP → HP.
+
+The effective value of each Shield pool depends on difficulty:
+• Easy: Shield ×1.5, rounded down. The extra point therefore appears every 2 Shield points.
+• Normal: Shield ×1.
+• Hard: Shield ×0.5, rounded up.
+• Oculum: Shield ×0.2, rounded down.
+This conversion determines how much damage Shield and Oculum Shield absorb without increasing the points shown on the sheet.
+
+Every new sheet starts with 3 Inspirations, 2 Super Inspirations, and 1 Oculum Inspiration. The first time that sheet is set to Easy it also receives +5 Shield; switching back to Easy later does not repeat the reward.
+
+Misfortune becomes active from Hard difficulty and is checked separately for every incoming damage event:
+• Hard: 1% for the damage to become critical and 2% for +50% damage to normal Shield.
+• Oculum: 3% for the damage to become critical and 5% for +100% damage to both Shield and Oculum Shield.
+The two Misfortune checks are independent and are declared in the damage log whenever they trigger.
+
+Every incoming damage event can also be completely parried by current Oculum. When it happens, the log describes your Oculum concentrating at the point of impact to defend you. On Normal, each point up to 5 adds 0.1%: 1 point is worth 0.1% and 5 points are worth 0.5%. Growth slows after the fifth point: the next +0.1% requires 2 points, the following one 3 points, then 4, and so on. The resulting chance is multiplied by ×1.5 on Easy, ×1 on Normal, ×0.5 on Hard, and ×0.2 on Oculum.
+
+Dispersion is checked only after a successful parry. At most 1 current Oculum can be lost. Its chance increases with current Oculum and is higher on Hard and Oculum, but the first 20 points use a protected slow growth: at 20 Oculum the chance is 2% on Easy, 4% on Normal, 7% on Hard, and 10% on Oculum. Above 20 it grows faster, up to a maximum of 75%.
+
+Before the usual damage steps, a critical hit adds a flat bonus based on campaign difficulty:
+• Easy: +3 damage
+• Normal: +5 damage
+• Hard: +8 damage
+• Oculum: +12 damage
+The critical then worsens Resistance, Normal or Fragility by one stage before Defense and Shields apply.
 
 Resistances:
 • Light: -10%
@@ -2598,9 +2648,9 @@ Dal Grado VI può comparire Occhio di Pietra e Bilancia. L'evento fonde drop e M
 
 STATI OCULUM AL RISVEGLIO
 
-Oculum addormentato azzera immediatamente l'Oculum disponibile quando viene ottenuto. Finche resta attivo, ogni fonte che dona, recupera o rigenera Oculum concede la meta arrotondata per difetto; costi e consumi non vengono dimezzati. Il personaggio si risveglia dopo due riposi lunghi oppure dopo due riposi brevi e un riposo lungo. Il risveglio azzera l'Oculum attuale e temporaneo, ma conserva massimo, caratteristiche e potenziamenti permanenti.
+Oculum addormentato azzera immediatamente l'Oculum disponibile quando viene ottenuto. Finche resta attivo, ogni fonte che dona, recupera o rigenera Oculum concede la meta arrotondata per difetto; costi e consumi non vengono dimezzati. Il personaggio si risveglia dopo due riposi lunghi oppure dopo due riposi brevi e un riposo lungo. Il risveglio rimuove soltanto la condizione: Oculum attuale, temporaneo e massimo, caratteristiche e potenziamenti permanenti restano invariati.
 
-Consumo elevato consuma 1 punto della statistica principale collegata a ogni tiro valido. Un tiro su una statistica usa quella statistica; un tiro su un sottotratto usa la statistica principale del suo gruppo. Entrambi gli stati possono essere attivati da una Skill. Al riposo lungo possono comparire in base alla fase, alla Fortuna nelle Risorse e alla difficolta della campagna; durante le Piogge fertilizzanti la probabilita base e 50%.
+I tiri non consumano statistiche quando Consumo elevato e disattivato, salvo le eccezioni speciali gia indicate: il tiro Fortuna spende Fortuna se disponibile, i costi espliciti di Skill, Art, Open e Titoli restano validi e la dispersione Oculum segue la propria regola. Quando Consumo elevato e attivo consuma 1 punto della statistica principale collegata a ogni tiro valido. Un tiro su una statistica usa quella statistica; un tiro su un sottotratto usa la statistica principale del suo gruppo. Riflessi usa Materia e Percezione usa Oculum. Resilienza e Volonta non scendono sotto 1; Materia e Oculum non scendono sotto 0. Entrambi gli stati possono essere attivati da una Skill. Al riposo lungo possono comparire in base alla fase, alla Fortuna nelle Risorse e alla difficolta della campagna; durante le Piogge fertilizzanti la probabilita base e 50%.
 
 MODALITA GUIDATA, VELOCE E ASPETTO
 
@@ -2647,9 +2697,9 @@ From Grade VI, the Stone Eye and Scale event may appear. It fuses run drops and 
 
 OCULUM STATES ON WAKING
 
-Sleeping Oculum immediately clears available Oculum when acquired. While active, every source that grants, recovers or regenerates Oculum gives half rounded down; costs and spending are not halved. The character wakes after two long rests or after two short rests and one long rest. Waking clears current and temporary Oculum but preserves the maximum, traits and permanent upgrades.
+Sleeping Oculum immediately clears available Oculum when acquired. While active, every source that grants, recovers or regenerates Oculum gives half rounded down; costs and spending are not halved. The character wakes after two long rests or after two short rests and one long rest. Waking only removes the condition: current, temporary, and maximum Oculum, traits, and permanent upgrades remain unchanged.
 
-High Consumption spends 1 point from the main stat linked to every valid roll. A stat roll uses that stat; a subtrait roll uses the main stat of its group. Both states can be activated by a Skill. They may appear after a long rest according to phase, Luck in Resources and campaign difficulty; during Fertilizing Rains the base chance is 50%.
+Rolls do not consume stats while High Consumption is disabled, except for the stated special cases: a Luck roll spends Luck when available, explicit Skill, Art, Open and Title costs still apply, and Oculum dispersion follows its own rule. While High Consumption is active it spends 1 point from the linked main stat for every valid roll. A stat roll uses that stat; a subtrait roll uses the main stat of its group. Reflexes uses Matter and Perception uses Oculum. Resilience and Will cannot fall below 1; Matter and Oculum cannot fall below 0. Both states can be activated by a Skill. They may appear after a long rest according to phase, Luck in Resources and campaign difficulty; during Fertilizing Rains the base chance is 50%.
 
 GUIDED MODE, FAST MODE AND APPEARANCE
 

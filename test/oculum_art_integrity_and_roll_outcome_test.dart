@@ -330,12 +330,15 @@ void main() {
       });
       expect(legacy.integritaCorrente, -1);
       expect(legacy.esaurimentoCompleto, isFalse);
+      expect(legacy.bonusIntegritaNucleoTemporaneo, 0);
 
       legacy.integritaCorrente = 73;
       legacy.esaurimentoCompleto = true;
+      legacy.bonusIntegritaNucleoTemporaneo = 50;
       final restored = CharacterArt.fromJson(legacy.toJson());
       expect(restored.integritaCorrente, 73);
       expect(restored.esaurimentoCompleto, isTrue);
+      expect(restored.bonusIntegritaNucleoTemporaneo, 50);
     });
   });
 

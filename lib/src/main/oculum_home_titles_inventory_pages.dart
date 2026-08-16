@@ -2038,6 +2038,16 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                                         '${skills[i].nome}: ${skills[i].equipaggiata ? "equipaggiata" : "rimossa"}.',
                                       );
                                     });
+                                    if (skills[i].equipaggiata) {
+                                      applyEffectCommandsFromText(
+                                        skills[i].toJson().toString(),
+                                        source: skills[i].nome,
+                                      );
+                                    } else {
+                                      removeConditionsFromSource(
+                                        skills[i].nome,
+                                      );
+                                    }
                                     programmaSalvataggio();
                                   },
                                   icon: Icon(
@@ -2507,6 +2517,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           '${titolo.equipaggiato ? "Equipaggiato" : "Rimosso"} $titleKind: [${titolo.nome}].',
         );
       });
+      if (titolo.equipaggiato) {
+        applyEffectCommandsFromText(
+          titolo.toJson().toString(),
+          source: titolo.nome,
+        );
+      } else {
+        removeConditionsFromSource(titolo.nome);
+      }
       programmaSalvataggio();
     }
 
@@ -3564,7 +3582,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
 
     final fullWidthIndexes = <int>{0, 3, 4, 5};
     final builders = <WidgetBuilder>[
-      (_) => functionAnchor('titles_root', sectionTitle(t('Titoli', 'Titles'))),
+      (_) => functionAnchor(
+        'titles_root',
+        Row(
+          children: [
+            Expanded(child: sectionTitle(t('Titoli', 'Titles'))),
+            conditionImpactIndicator(target: OculumConditionTarget.titoli),
+          ],
+        ),
+      ),
       (_) => titlesSummaryPanelEfficient(equipaggiati, openAttive),
       (_) => functionAnchor(
         'titles_quick_commands',
@@ -3775,7 +3801,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       minColumnWidth: 350,
       fullWidthIndexes: const <int>{0, 6},
       children: [
-        functionAnchor('titles_root', sectionTitle(t('Titoli', 'Titles'))),
+        functionAnchor(
+          'titles_root',
+          Row(
+            children: [
+              Expanded(child: sectionTitle(t('Titoli', 'Titles'))),
+              conditionImpactIndicator(target: OculumConditionTarget.titoli),
+            ],
+          ),
+        ),
         gothicPanel(
           borderColor: primaryColor,
           child: Column(
@@ -4228,6 +4262,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               controller: itemBonusScudoController,
             ),
             campoTesto(
+              label: t('Bonus Scudo Oculum', 'Oculum Shield Bonus'),
+              controller: itemBonusScudoOculumController,
+            ),
+            campoTesto(
               label: t('Grado oggetto', 'Item grade'),
               controller: itemGradoOggettoController,
             ),
@@ -4340,6 +4378,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         }
         item.equipaggiata = value;
       });
+      if (item.equipaggiata) {
+        applyEffectCommandsFromText(
+          item.toJson().toString(),
+          source: item.nome,
+        );
+      } else {
+        removeConditionsFromSource(item.nome);
+      }
       programmaSalvataggio();
     }
 
@@ -4568,6 +4614,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     color: Colors.lightBlueAccent,
                     icon: Icons.shield,
                   ),
+                if (item.protegge && itemOculumShieldBonus(item) > 0)
+                  compactInventoryChip(
+                    label: 'SO +${itemOculumShieldBonus(item)}',
+                    color: oculumStatFormulaColor,
+                    icon: Icons.visibility,
+                  ),
                 if (item.gradoOggetto > 0 || item.gradoRichiesto > 0)
                   compactInventoryChip(
                     label:
@@ -4618,6 +4670,26 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               onChanged: setItemEquipped,
             ),
             const SizedBox(height: 6),
+            if (item.protegge &&
+                (itemShieldBonus(item) > 0 ||
+                    itemOculumShieldBonus(item) > 0)) ...[
+              campoModello(
+                label: t(
+                  'Effetto di integrità dello Scudo',
+                  'Shield integrity effect',
+                ),
+                fieldKey: ObjectKey(item),
+                initialValue: item.effettoIntegritaScudo,
+                onChanged: (value) => item.effettoIntegritaScudo = value,
+                maxLines: 2,
+                helper: t(
+                  'Parser ed effetto attivi finché resta lo Scudo o lo Scudo Oculum dell oggetto. Quando viene ricaricato, il buff torna attivo.',
+                  'Parser and effect stay active while this item has Shield or Oculum Shield. Recharging it activates the buff again.',
+                ),
+                showCommandHelp: true,
+              ),
+              const SizedBox(height: 6),
+            ],
             campoModello(
               label: t('Nome Oggetto', 'Item Name'),
               initialValue: item.nome,
@@ -4759,6 +4831,23 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     ).toString();
                   }
                   item.bonusScudo = nuovo;
+                },
+                liveRefresh: true,
+              ),
+              campoModello(
+                label: t('Bonus Scudo Oculum', 'Oculum Shield Bonus'),
+                initialValue: item.bonusScudoOculum.toString(),
+                onChanged: (value) {
+                  final nuovo = max(0, int.tryParse(value.trim()) ?? 0);
+                  if (item.equipaggiata && item.protegge) {
+                    scudoOculumController.text = max(
+                      0,
+                      leggiNumero(scudoOculumController) +
+                          nuovo -
+                          itemOculumShieldBonus(item),
+                    ).toString();
+                  }
+                  item.bonusScudoOculum = nuovo;
                 },
                 liveRefresh: true,
               ),
@@ -5009,6 +5098,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   controller: itemBonusScudoController,
                 ),
                 campoTesto(
+                  label: t('Bonus Scudo Oculum', 'Oculum Shield Bonus'),
+                  controller: itemBonusScudoOculumController,
+                ),
+                campoTesto(
                   label: t('Grado oggetto', 'Item grade'),
                   controller: itemGradoOggettoController,
                 ),
@@ -5111,6 +5204,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       statChip('DIF', itemDefenseBonus(inventario[i])),
                     if (inventario[i].protegge)
                       statChip('SCU', itemShieldBonus(inventario[i])),
+                    if (inventario[i].protegge &&
+                        itemOculumShieldBonus(inventario[i]) > 0)
+                      statChip('SO', itemOculumShieldBonus(inventario[i])),
                     if (inventario[i].gradoOggetto > 0 ||
                         inventario[i].gradoRichiesto > 0)
                       Chip(
@@ -5284,6 +5380,23 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                         ).toString();
                       }
                       inventario[i].bonusScudo = nuovo;
+                    },
+                  ),
+                  campoModello(
+                    label: t('Bonus Scudo Oculum', 'Oculum Shield Bonus'),
+                    initialValue: inventario[i].bonusScudoOculum.toString(),
+                    onChanged: (value) {
+                      final item = inventario[i];
+                      final nuovo = max(0, int.tryParse(value.trim()) ?? 0);
+                      if (item.equipaggiata && item.protegge) {
+                        scudoOculumController.text = max(
+                          0,
+                          leggiNumero(scudoOculumController) +
+                              nuovo -
+                              itemOculumShieldBonus(item),
+                        ).toString();
+                      }
+                      item.bonusScudoOculum = nuovo;
                     },
                   ),
                 ]),

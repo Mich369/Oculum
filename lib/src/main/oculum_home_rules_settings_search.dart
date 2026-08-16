@@ -2653,7 +2653,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             ? t('Protezione / Inventario', 'Protection / Inventory')
             : t('Inventario', 'Inventory'),
         haystack:
-            '${item.buff} ${item.note} ${item.elementoDanno} ${item.bonusDanno} ${item.bonusDifesa} ${item.bonusScudo}',
+            '${item.buff} ${item.note} ${item.elementoDanno} ${item.bonusDanno} ${item.bonusDifesa} ${item.bonusScudo} ${item.bonusScudoOculum}',
         page: 6,
         anchorId: 'inventory_root',
       );
@@ -3850,6 +3850,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         ),
         gothicPanel(borderColor: tertiaryColor, child: pageDropdown()),
         functionAnchor('settings_hero', settingsHeroPanel()),
+        functionAnchor('settings_game_mods', oculusModSettingsPanel()),
         functionAnchor('settings_control_center', settingsControlCenterPanel()),
         functionAnchor('settings_theme_showcase', settingsThemeShowcasePanel()),
         functionAnchor('settings_gui_skins', settingsGuiSkinGalleryPanel()),
@@ -4952,17 +4953,23 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
               if (logEventi.isEmpty)
                 Text(t('Nessun evento registrato.', 'No events recorded.'))
               else
-                for (final voce in logEventi.take(120))
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Text(
-                      voce,
-                      style: TextStyle(
-                        color: Colors.grey.shade200,
-                        fontSize: 12.5,
+                SizedBox(
+                  height: min(360.0, max(72.0, logEventi.length * 30.0)),
+                  child: ListView.builder(
+                    key: const PageStorageKey<String>('event_log_lazy_list'),
+                    itemCount: min(120, logEventi.length),
+                    itemBuilder: (context, index) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(
+                        logEventi[index],
+                        style: TextStyle(
+                          color: Colors.grey.shade200,
+                          fontSize: 12.5,
+                        ),
                       ),
                     ),
                   ),
+                ),
             ],
           ),
         ),

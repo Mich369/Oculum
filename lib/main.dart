@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -46,6 +47,9 @@ part 'src/main/oculum_home_persistence.dart';
 part 'src/main/oculum_home_calculations.dart';
 part 'src/main/oculum_rune_art.dart';
 part 'src/main/oculum_home_force_state.dart';
+part 'src/main/oculum_conditions.dart';
+part 'src/main/oculum_home_quick_conditions.dart';
+part 'src/main/oculum_mod.dart';
 part 'src/main/oculum_home_death_rules.dart';
 part 'src/main/oculum_home_damage_impact.dart';
 part 'src/main/oculum_home_image_cache.dart';
@@ -559,6 +563,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   static const int onlinePageIndex = 12;
   static const int dicePageIndex = 13;
   static const int recipesPageIndex = 14;
+  static const int quickConditionsPageIndex = 15;
 
   int paginaCorrente = 0;
   int schedaCorrente = 0;
@@ -815,6 +820,12 @@ class _OculumHomePageState extends State<OculumHomePage>
   void notifyOculumResourceChanged() {
     if (!mounted) return;
     oculumResourceRevision.value++;
+    notifyActiveSheetSummaryChanged();
+  }
+
+  void notifyActiveSheetSummaryChanged() {
+    if (!mounted) return;
+    activeSheetSummaryRevision.value++;
   }
 
   ValueListenable<int> hiddenEyeStatListenable(HiddenEyeStat stat) {
@@ -1218,6 +1229,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final visibleCurrentVolontaController = TextEditingController(text: '1');
   final visibleCurrentMateriaController = TextEditingController(text: '0');
   final visibleCurrentOculumController = TextEditingController(text: '1');
+  final oculumPanelCurrentController = TextEditingController(text: '1');
+  final oculumPanelCurrentFocusNode = FocusNode();
   final List<String> _formulaTriggerSourceStack = <String>[];
   final imagePasteFocusNode = FocusNode();
 
@@ -1296,6 +1309,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final itemBonusDannoController = TextEditingController(text: '0');
   final itemBonusDifesaController = TextEditingController(text: '0');
   final itemBonusScudoController = TextEditingController(text: '0');
+  final itemBonusScudoOculumController = TextEditingController(text: '0');
   final itemGradoOggettoController = TextEditingController(text: '0');
   final itemGradoRichiestoController = TextEditingController(text: '0');
   final itemElementoDannoController = TextEditingController(text: 'Fisico');
@@ -1376,6 +1390,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   OculumVttTool vttTool = OculumVttTool.pan;
   String vttFogAudience = 'party';
   final ValueNotifier<int> vttCanvasRevision = ValueNotifier<int>(0);
+  bool vttCanvasFrameRefreshScheduled = false;
   final List<Offset> vttDraftPoints = <Offset>[];
   final List<Offset> vttMeasurePoints = <Offset>[];
   final List<String> vttUndoHistory = <String>[];
@@ -1415,6 +1430,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final List<OculumSessionNote> storySessionNotes = [];
   final List<OculumRecipe> recipes = [];
   final List<OculumRecipe> personalRecipes = [];
+  final Set<String> favoriteRecipeIds = <String>{};
+  final Map<String, int> craftingDemandQuantities = <String, int>{};
   String selectedForgeTemplateId = '';
   final List<JournalEntry> journalEntries = [];
   final List<DraftNote> draftNotes = [];
@@ -1484,8 +1501,10 @@ class _OculumHomePageState extends State<OculumHomePage>
   int derivedDataRevision = 0;
   int formulaParserCacheRevision = -1;
   Map<String, num>? formulaValueContextCache;
-  final Map<String, List<OculumFormulaCommand>> formulaCommandCache =
-      <String, List<OculumFormulaCommand>>{};
+  final LinkedHashMap<String, List<OculumFormulaCommand>> formulaCommandCache =
+      LinkedHashMap<String, List<OculumFormulaCommand>>();
+  int campaignQuickStatsCacheRevision = -1;
+  Map<String, int>? campaignQuickStatsCache;
   int activeQuickCommandTextCacheRevision = -1;
   String activeQuickCommandTextCache = '';
   final Map<String, List<({String command, String value, String element})>>
@@ -1527,6 +1546,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   int fateTokens = 0;
   int diarioRewardClaimedCount = 0;
   bool campaignDifficultyStarterClaimed = false;
+  bool easyDifficultyShieldClaimed = false;
   double themeDecorationOpacityScale = 1.0;
   double themeDecorationGlowScale = 1.0;
   double themeDecorationIntensityScale = 1.0;
@@ -1544,6 +1564,13 @@ class _OculumHomePageState extends State<OculumHomePage>
       OculumObservedValueNotifier<int>(0);
   final ValueNotifier<int> experienceRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> oculumResourceRevision = ValueNotifier<int>(0);
+  final ValueNotifier<int> activeSheetSummaryRevision = ValueNotifier<int>(0);
+  final ValueNotifier<int> conditionsRevision = ValueNotifier<int>(0);
+  final Map<OculumConditionTarget, ValueNotifier<int>>
+  conditionTargetRevisions = <OculumConditionTarget, ValueNotifier<int>>{
+    for (final target in OculumConditionTarget.values)
+      target: ValueNotifier<int>(0),
+  };
   final ValueNotifier<int> aggiustaNucleoDisponibileRevision =
       ValueNotifier<int>(0);
   final ValueNotifier<int> recipesRevision = ValueNotifier<int>(0);
@@ -1591,6 +1618,10 @@ class _OculumHomePageState extends State<OculumHomePage>
   String statoForzaAttivo = '';
   bool statoForzaPronto = true;
   int statoForzaTiriRimanenti = 0;
+  // Potere residuo nato dallo Stato di Forza "Potenza del nucleo".
+  // 0, 50 o 100: resta attivo fino al prossimo riposo lungo.
+  int nucleoPotenzaBonusDanniPercentuale = 0;
+  int nucleoPotenzaIntegritaPersa = 0;
   int malusTiriOculumPostEsplosione = 0;
   bool personaggioSvenuto = false;
   bool sottoStress = false;
@@ -1628,6 +1659,18 @@ class _OculumHomePageState extends State<OculumHomePage>
   int oculumAddormentatoRiposiBrevi = 0;
   int oculumAddormentatoRiposiLunghi = 0;
   bool consumoElevato = false;
+  final List<OculumConditionInstance> activeConditions =
+      <OculumConditionInstance>[];
+  final Map<String, Map<String, dynamic>> conditionDefinitionOverrides =
+      <String, Map<String, dynamic>>{};
+  final Map<String, int> conditionControlProtectionUntilTurn = <String, int>{};
+  String activeGameMod = '';
+  Map<String, dynamic> oculusModData = oculusDefaultCharacterData();
+  final ValueNotifier<int> gameModRevision = ValueNotifier<int>(0);
+  final List<Map<String, dynamic>> oculusLastDice = <Map<String, dynamic>>[];
+  int oculusDiceAnimationSeed = 0;
+  bool oculusDiceResultsVisible = true;
+  Timer? oculusDiceRevealTimer;
   int ultimoGuadagnoOculumOriginale = 0;
   int ultimoGuadagnoOculumEffettivo = 0;
 
@@ -1761,6 +1804,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final List<Map<String, dynamic>> sentOculumFriendRequests = [];
   final List<Map<String, dynamic>> blockedOculumFriends = [];
   final List<Map<String, dynamic>> masterInitiativeTokens = [];
+  final List<Map<String, dynamic>> masterInitiativeGroups = [];
+  String selectedMasterInitiativeGroupId = 'encounter_1';
   final masterInitiativeNameController = TextEditingController();
   final masterInitiativeTypeController = TextEditingController(text: 'Mostro');
   final masterInitiativeBonusController = TextEditingController(text: '0');
@@ -1834,6 +1879,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     'Online',
     'Sessione Dadi',
     'Ricette',
+    'Condizioni veloci',
   ];
 
   final List<String> pageNamesEn = [
@@ -1852,6 +1898,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     'Online',
     'Dice Session',
     'Recipes',
+    'Quick Conditions',
   ];
 
   final List<DamageModifierOption> modificatoriDanno = [
@@ -3067,6 +3114,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     final indexes = <int>[
       0,
       1,
+      quickConditionsPageIndex,
       2,
       3,
       4,
@@ -3242,11 +3290,16 @@ class _OculumHomePageState extends State<OculumHomePage>
   }
 
   Widget buildCurrentPage(int page) {
+    if (oculusModActive && page != settingsPageIndex) {
+      return oculusModPage();
+    }
     switch (page) {
       case 0:
         return characterPage();
       case 1:
         return restPage();
+      case quickConditionsPageIndex:
+        return quickConditionsPage();
       case 2:
         return titlesPageEfficient();
       case 3:
@@ -3376,6 +3429,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     autosaveTimer?.cancel();
     dadoOverlayTimer?.cancel();
     dadoOverlayRevealTimer?.cancel();
+    oculusDiceRevealTimer?.cancel();
     _lazyPageActivationTimer?.cancel();
     lifecycleLocalSaveTimer?.cancel();
     lifecycleFocusSettleTimer?.cancel();
@@ -3420,6 +3474,8 @@ class _OculumHomePageState extends State<OculumHomePage>
     visibleCurrentVolontaController.dispose();
     visibleCurrentMateriaController.dispose();
     visibleCurrentOculumController.dispose();
+    oculumPanelCurrentController.dispose();
+    oculumPanelCurrentFocusNode.dispose();
     imagePasteFocusNode.dispose();
 
     currentHpController.dispose();
@@ -3439,6 +3495,12 @@ class _OculumHomePageState extends State<OculumHomePage>
     diceResultRevision.dispose();
     diceOverlayRevision.dispose();
     oculumResourceRevision.dispose();
+    activeSheetSummaryRevision.dispose();
+    conditionsRevision.dispose();
+    for (final notifier in conditionTargetRevisions.values) {
+      notifier.dispose();
+    }
+    conditionTargetRevisions.clear();
     inputUiRevision.dispose();
     hiddenEyeListRevision.dispose();
     hiddenEyeManagerScrollController.dispose();
@@ -3530,6 +3592,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     itemBonusDannoController.dispose();
     itemBonusDifesaController.dispose();
     itemBonusScudoController.dispose();
+    itemBonusScudoOculumController.dispose();
     itemGradoOggettoController.dispose();
     itemGradoRichiestoController.dispose();
     itemElementoDannoController.dispose();
@@ -3594,6 +3657,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     recipeSearchController.dispose();
     recipeSearchQuery.dispose();
     recipesRevision.dispose();
+    gameModRevision.dispose();
 
     monsterPointAmountController.dispose();
 
@@ -3612,6 +3676,8 @@ class _OculumHomePageState extends State<OculumHomePage>
         return Icons.badge;
       case 1:
         return Icons.nightlight_round;
+      case quickConditionsPageIndex:
+        return Icons.bolt;
       case 2:
         return Icons.style;
       case 3:
@@ -3664,7 +3730,9 @@ class _OculumHomePageState extends State<OculumHomePage>
               ? 216.0
               : 276.0
         : 50.0;
-    final menuPages = [...visiblePages, dicePageIndex];
+    final menuPages = oculusModActive
+        ? visiblePages
+        : <int>[...visiblePages, dicePageIndex];
 
     return Row(
       children: [
@@ -3792,58 +3860,72 @@ class _OculumHomePageState extends State<OculumHomePage>
                             ),
                           ],
                         ),
-                        for (int i = 0; i < schedePersonaggio.length; i++)
-                          GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onSecondaryTapDown: (details) =>
-                                mostraMenuSchedaPersonaggio(
-                                  index: i,
-                                  position: details.globalPosition,
-                                ),
-                            onLongPressStart: (details) =>
-                                mostraMenuSchedaPersonaggio(
-                                  index: i,
-                                  position: details.globalPosition,
-                                ),
-                            child: Material(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              clipBehavior: Clip.antiAlias,
-                              child: ListTile(
-                                dense: true,
-                                visualDensity: VisualDensity.compact,
-                                selected: schedaCorrente == i,
-                                selectedTileColor: primaryColor.withValues(
-                                  alpha: 0.10,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                leading: Text(
-                                  '${i + 1}',
-                                  style: TextStyle(
-                                    color: schedaCorrente == i
-                                        ? tertiaryColor
-                                        : Colors.grey,
-                                    fontWeight: FontWeight.w900,
+                        SizedBox(
+                          height: min(
+                            420.0,
+                            max(72.0, schedePersonaggio.length * 56.0),
+                          ),
+                          child: ListView.builder(
+                            key: const PageStorageKey<String>(
+                              'desktop_sheet_menu_lazy_list',
+                            ),
+                            itemCount: schedePersonaggio.length,
+                            itemExtent: 56,
+                            itemBuilder: (context, i) => GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onSecondaryTapDown: (details) =>
+                                  mostraMenuSchedaPersonaggio(
+                                    index: i,
+                                    position: details.globalPosition,
                                   ),
+                              onLongPressStart: (details) =>
+                                  mostraMenuSchedaPersonaggio(
+                                    index: i,
+                                    position: details.globalPosition,
+                                  ),
+                              child: Material(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                                clipBehavior: Clip.antiAlias,
+                                child: ListTile(
+                                  dense: true,
+                                  visualDensity: VisualDensity.compact,
+                                  selected: schedaCorrente == i,
+                                  selectedTileColor: primaryColor.withValues(
+                                    alpha: 0.10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  leading: Text(
+                                    '${i + 1}',
+                                    style: TextStyle(
+                                      color: schedaCorrente == i
+                                          ? tertiaryColor
+                                          : Colors.grey,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    cleanUiText(nomeSchedaPersonaggio(i)),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                  subtitle: Text(
+                                    cleanUiText(tipoSchedaPersonaggio(i)),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade400,
+                                    ),
+                                  ),
+                                  onTap: () => cambiaSchedaPersonaggio(i),
                                 ),
-                                title: Text(
-                                  cleanUiText(nomeSchedaPersonaggio(i)),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                subtitle: Text(
-                                  cleanUiText(tipoSchedaPersonaggio(i)),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(color: Colors.grey.shade400),
-                                ),
-                                onTap: () => cambiaSchedaPersonaggio(i),
                               ),
                             ),
                           ),
+                        ),
                       ],
                     ),
                   )
@@ -3949,13 +4031,16 @@ class _OculumHomePageState extends State<OculumHomePage>
       'OCULUM — ONLINE',
       'OCULUM — ${t('DADI', 'DICE')}',
       'OCULUM — ${t('RICETTE', 'RECIPES')}',
+      'OCULUM - ${t('CONDIZIONI VELOCI', 'QUICK CONDITIONS')}',
     ];
 
     final int safePage = paginaVisibileSicura(
       paginaCorrente,
     ).clamp(0, titles.length - 1).toInt();
     final pageLabels = linguaInglese ? pageNamesEn : pageNamesIt;
-    final visiblePages = visiblePageIndexes();
+    final visiblePages = oculusModActive
+        ? <int>[0, settingsPageIndex]
+        : visiblePageIndexes();
     final compactPhone = MediaQuery.of(context).size.shortestSide < 600;
     final appFontFamily = switch (stileCarattereApp) {
       'gotico' => 'Copperplate Gothic Light',
@@ -3989,32 +4074,39 @@ class _OculumHomePageState extends State<OculumHomePage>
           centerTitle: true,
           backgroundColor: const Color(0xFF080911),
           elevation: 0,
-          title: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                cleanUiText(titles[safePage]),
-                style: TextStyle(
-                  color: safePage == 0 ? primaryColor : tertiaryColor,
-                  letterSpacing: 2.0,
-                  fontWeight: FontWeight.bold,
-                  fontSize: compactPhone ? 10.5 : 12,
+          title: ValueListenableBuilder<int>(
+            valueListenable: activeSheetSummaryRevision,
+            builder: (context, revision, child) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  cleanUiText(
+                    oculusModActive && safePage != settingsPageIndex
+                        ? 'OCULUS - ${t('SCHEDA LIBERA', 'FREE SHEET')}'
+                        : titles[safePage],
+                  ),
+                  style: TextStyle(
+                    color: safePage == 0 ? primaryColor : tertiaryColor,
+                    letterSpacing: 2.0,
+                    fontWeight: FontWeight.bold,
+                    fontSize: compactPhone ? 10.5 : 12,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                cleanUiText(
-                  '${schedaCorrente + 1}/${schedePersonaggio.isEmpty ? 1 : schedePersonaggio.length} • ${tipoSchedaController.text} • ${nomeSchedaPersonaggio(schedaCorrente)}',
+                const SizedBox(height: 2),
+                Text(
+                  cleanUiText(
+                    '${schedaCorrente + 1}/${schedePersonaggio.isEmpty ? 1 : schedePersonaggio.length} • ${tipoSchedaController.text} • ${nomeSchedaPersonaggio(schedaCorrente)}',
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: tertiaryColor,
+                    fontSize: compactPhone ? 8.8 : 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.1,
+                  ),
                 ),
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: tertiaryColor,
-                  fontSize: compactPhone ? 8.8 : 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.1,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
 
           actions: [
@@ -4034,29 +4126,30 @@ class _OculumHomePageState extends State<OculumHomePage>
                   pageLabel: t('Cambia pagina', 'Switch page'),
                 ),
               ),
-            OculumQuickEditEyeButton(
-              sectionsBuilder: quickEditSections,
-              primaryColor: primaryColor,
-              secondaryColor: secondaryColor,
-              tertiaryColor: tertiaryColor,
-              title: t('Modifica rapida', 'Quick edit'),
-              subtitle: t(
-                'Modifica velocemente statistiche, HP, scudi e risorse senza scendere nella scheda.',
-                'Quickly edit stats, HP, shields and resources without scrolling through the sheet.',
-              ),
-              onChanged: () {
-                setState(() {
-                  aggiornaGradoAutomatico();
-                  risultato = t(
-                    'Valori rapidi aggiornati.',
-                    'Quick values updated.',
-                  );
-                  aggiungiLog(risultato);
-                });
+            if (!oculusModActive)
+              OculumQuickEditEyeButton(
+                sectionsBuilder: quickEditSections,
+                primaryColor: primaryColor,
+                secondaryColor: secondaryColor,
+                tertiaryColor: tertiaryColor,
+                title: t('Modifica rapida', 'Quick edit'),
+                subtitle: t(
+                  'Modifica velocemente statistiche, HP, scudi e risorse senza scendere nella scheda.',
+                  'Quickly edit stats, HP, shields and resources without scrolling through the sheet.',
+                ),
+                onChanged: () {
+                  setState(() {
+                    aggiornaGradoAutomatico();
+                    risultato = t(
+                      'Valori rapidi aggiornati.',
+                      'Quick values updated.',
+                    );
+                    aggiungiLog(risultato);
+                  });
 
-                programmaSalvataggio();
-              },
-            ),
+                  programmaSalvataggio();
+                },
+              ),
             if (!compactPhone)
               IconButton(
                 tooltip: t('Annulla ultima modifica', 'Undo last change'),
@@ -4139,7 +4232,9 @@ class _OculumHomePageState extends State<OculumHomePage>
                   }
                 },
                 itemBuilder: (context) {
-                  final menuPages = [...visiblePages, dicePageIndex];
+                  final menuPages = oculusModActive
+                      ? visiblePages
+                      : <int>[...visiblePages, dicePageIndex];
                   final totale = schedePersonaggio.isEmpty
                       ? 1
                       : schedePersonaggio.length;
@@ -4291,7 +4386,9 @@ class _OculumHomePageState extends State<OculumHomePage>
                 },
                 itemBuilder: (context) {
                   final labels = pageLabels;
-                  final menuPages = [...visiblePages, dicePageIndex];
+                  final menuPages = oculusModActive
+                      ? visiblePages
+                      : <int>[...visiblePages, dicePageIndex];
 
                   return [
                     for (final i in menuPages)
@@ -4450,7 +4547,8 @@ class _OculumHomePageState extends State<OculumHomePage>
           ],
         ),
 
-        bottomNavigationBar: modalitaDesktop && !compactPhone
+        bottomNavigationBar:
+            oculusModActive || (modalitaDesktop && !compactPhone)
             ? null
             : OculumBottomNav(
                 currentIndex: paginaCorrente,

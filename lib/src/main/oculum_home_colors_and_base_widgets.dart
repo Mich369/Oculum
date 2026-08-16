@@ -1061,8 +1061,25 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
               ensureSecretThemeUnlocks(announce: true) || needsRefresh;
         }
 
+        if (identical(controller, expController)) {
+          notifyExperienceChanged();
+        }
+        final affectsOculum =
+            identical(controller, oculumController) ||
+            identical(controller, currentOculumController) ||
+            identical(controller, visibleCurrentOculumController);
+        if (affectsOculum) {
+          notifyOculumResourceChanged();
+        } else if (campoTestoAffectsActiveSheetSummary(controller)) {
+          notifyActiveSheetSummaryChanged();
+        }
+        if (campoTestoAffectsHiddenEyeDerivedStats(controller)) {
+          invalidateHiddenEyeDerivedCaches(notifyCards: false);
+          scheduleHiddenEyeDerivedCardsRefresh();
+        }
+
         if (needsRefresh) {
-          invalidateDerivedDataCaches();
+          invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
           scheduleInputUiRefresh();
           programmaSalvataggio(invalidateCaches: false);
         } else {
@@ -1094,7 +1111,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
 
           if (controller == manualSearchController) {
             manualSearchText = manualSearchController.text.trim().toLowerCase();
-            invalidateDerivedDataCaches();
+            invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
             scheduleInputUiRefresh(delay: Duration.zero);
             programmaSalvataggio(
               invalidateCaches: false,
@@ -1156,6 +1173,42 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         identical(controller, buffMalusRapidiController) ||
         identical(controller, karmaController) ||
         identical(controller, cenereController);
+  }
+
+  bool campoTestoAffectsActiveSheetSummary(TextEditingController controller) {
+    return identical(controller, nomeController) ||
+        identical(controller, tipoSchedaController) ||
+        identical(controller, razzaController) ||
+        identical(controller, livelloController) ||
+        identical(controller, gradoController) ||
+        identical(controller, resilienzaController) ||
+        identical(controller, volontaController) ||
+        identical(controller, materiaController) ||
+        identical(controller, oculumController) ||
+        identical(controller, currentResilienzaController) ||
+        identical(controller, currentVolontaController) ||
+        identical(controller, currentMateriaController) ||
+        identical(controller, currentOculumController) ||
+        isVisibleCurrentStatController(controller) ||
+        identical(controller, karmaController) ||
+        identical(controller, obserController) ||
+        identical(controller, oculumCurrentDayController);
+  }
+
+  bool campoTestoAffectsHiddenEyeDerivedStats(
+    TextEditingController controller,
+  ) {
+    return identical(controller, livelloController) ||
+        identical(controller, gradoController) ||
+        identical(controller, resilienzaController) ||
+        identical(controller, volontaController) ||
+        identical(controller, materiaController) ||
+        identical(controller, oculumController) ||
+        identical(controller, currentResilienzaController) ||
+        identical(controller, currentVolontaController) ||
+        identical(controller, currentMateriaController) ||
+        identical(controller, currentOculumController) ||
+        isVisibleCurrentStatController(controller);
   }
 
   Widget campoModello({
@@ -2443,8 +2496,8 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         const SizedBox(height: 6),
         smallInfoText(
           t(
-            'Nota: il critico aggiunge +5 danni e peggiora lo stadio di uno: Rigenerazione → Resistenze → Normale → Fragilità. Poi applica Difesa, modificatore e Scudo Critico.',
-            'Note: Critical adds +5 damage and worsens the stage by one: Regeneration → Resistances → Normal → Fragility. Then Defense, modifier and Critical Shield apply.',
+            'Nota: il critico aggiunge +${oculumCriticalDamageBonusForDifficulty(normalizedCampaignDifficulty())} danni a questa difficoltà e peggiora lo stadio di uno: Rigenerazione → Resistenze → Normale → Fragilità. Poi applica Difesa, modificatore e Scudo Critico.',
+            'Note: Critical adds +${oculumCriticalDamageBonusForDifficulty(normalizedCampaignDifficulty())} damage at this difficulty and worsens the stage by one: Regeneration → Resistances → Normal → Fragility. Then Defense, modifier and Critical Shield apply.',
           ),
           color: tertiaryColor,
         ),

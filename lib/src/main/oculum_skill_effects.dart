@@ -208,6 +208,15 @@ String oculumNormalizeEffectResource(dynamic raw) {
     case 'hp':
     case 'vita':
       return 'vita';
+    case 'fortuna':
+      return 'fortuna';
+    case 'scudo':
+    case 'shield':
+      return 'scudo';
+    case 'scudooculum':
+    case 'scudo_oculum':
+    case 'oculumshield':
+      return 'scudo_oculum';
     case 'azione':
     case 'azioni':
       return 'azioni';
@@ -311,7 +320,10 @@ bool _oculumKnownConsumableResource(String raw) {
   final key = oculumNormalizeText(raw).replaceAll(' ', '');
   return <String>{
     'oculum',
+    'fortuna',
     'hp',
+    'scudo',
+    'scudo_oculum',
     'vita',
     'azione',
     'azioni',
@@ -323,6 +335,7 @@ bool _oculumKnownConsumableResource(String raw) {
     'utilizzi',
     'utilizziskill',
     'materia',
+    'scudooculum',
     'mat',
     'volonta',
     'vol',

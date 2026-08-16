@@ -13,6 +13,7 @@ extension _OculumCampaigns on _OculumHomePageState {
   }
 
   Map<String, dynamic> currentCampaignSnapshot() {
+    captureActiveMasterInitiativeGroup();
     return <String, dynamic>{
       'id': activeCampaignId.isEmpty ? generateCampaignId() : activeCampaignId,
       'name': activeCampaignName(),
@@ -27,6 +28,10 @@ extension _OculumCampaigns on _OculumHomePageState {
       'masterInitiativeTokens': masterInitiativeTokens
           .map((x) => Map<String, dynamic>.from(x))
           .toList(),
+      'masterInitiativeGroups': masterInitiativeGroups
+          .map((group) => Map<String, dynamic>.from(group))
+          .toList(growable: false),
+      'selectedMasterInitiativeGroupId': selectedMasterInitiativeGroupId,
       'masterInitiativeManualOrder': masterInitiativeManualOrder,
       'masterInitiativePublished': masterInitiativePublished,
       'masterInitiativeRound': masterInitiativeRound,
@@ -113,6 +118,8 @@ extension _OculumCampaigns on _OculumHomePageState {
         fallback: true,
       ),
       'masterInitiativeTokens': [],
+      'masterInitiativeGroups': <Map<String, dynamic>>[],
+      'selectedMasterInitiativeGroupId': 'encounter_1',
       'masterInitiativeManualOrder': false,
       'masterInitiativePublished': false,
       'masterInitiativeRound': 1,
@@ -211,6 +218,18 @@ extension _OculumCampaigns on _OculumHomePageState {
       0,
       readIntValue(campaign['masterInitiativeManualCounter']),
     );
+    final groupsRaw = campaign['masterInitiativeGroups'];
+    masterInitiativeGroups
+      ..clear()
+      ..addAll(
+        (groupsRaw is List ? groupsRaw : const <dynamic>[])
+            .whereType<Map>()
+            .map((group) => Map<String, dynamic>.from(group)),
+      );
+    selectedMasterInitiativeGroupId =
+        '${campaign['selectedMasterInitiativeGroupId'] ?? 'encounter_1'}';
+    ensureMasterInitiativeGroups();
+    loadSelectedMasterInitiativeGroup();
     final temporaryEffectsRaw = campaign['temporaryCombatResistanceEffects'];
     temporaryCombatResistanceEffects
       ..clear()
@@ -498,6 +517,10 @@ extension _OculumCampaigns on _OculumHomePageState {
   }
 
   Map<String, int> campaignQuickStats() {
+    if (campaignQuickStatsCacheRevision == salvataggioMutazioneRevisione &&
+        campaignQuickStatsCache != null) {
+      return campaignQuickStatsCache!;
+    }
     var diaryPages = 0;
     var partySheets = 0;
     for (int i = 0; i < schedePersonaggio.length; i++) {
@@ -507,11 +530,14 @@ extension _OculumCampaigns on _OculumHomePageState {
       if (readBoolValue(sheet['inMasterParty'])) partySheets++;
     }
 
-    return <String, int>{
+    final result = <String, int>{
       'sheets': schedePersonaggio.length,
       'party': partySheets,
       'diary': diaryPages,
     };
+    campaignQuickStatsCacheRevision = salvataggioMutazioneRevisione;
+    campaignQuickStatsCache = result;
+    return result;
   }
 
   Widget campaignPanel() {

@@ -706,6 +706,9 @@ extension _OculumHomeShareContent on _OculumHomePageState {
     final bonusDanno = TextEditingController(text: '${edited.bonusDanno}');
     final bonusDifesa = TextEditingController(text: '${edited.bonusDifesa}');
     final bonusScudo = TextEditingController(text: '${edited.bonusScudo}');
+    final bonusScudoOculum = TextEditingController(
+      text: '${edited.bonusScudoOculum}',
+    );
     final elemento = TextEditingController(text: edited.elementoDanno);
     final buff = TextEditingController(text: edited.buff);
     final note = TextEditingController(text: edited.note);
@@ -756,6 +759,11 @@ extension _OculumHomeShareContent on _OculumHomePageState {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 8),
+                        campoTesto(
+                          label: t('Bonus Scudo Oculum', 'Oculum Shield Bonus'),
+                          controller: bonusScudoOculum,
                         ),
                         const SizedBox(height: 8),
                         campoTesto(
@@ -876,6 +884,10 @@ extension _OculumHomeShareContent on _OculumHomePageState {
                               ..bonusDanno = readIntValue(bonusDanno.text)
                               ..bonusDifesa = readIntValue(bonusDifesa.text)
                               ..bonusScudo = readIntValue(bonusScudo.text)
+                              ..bonusScudoOculum = max(
+                                0,
+                                readIntValue(bonusScudoOculum.text),
+                              )
                               ..elementoDanno = elemento.text.trim().isEmpty
                                   ? 'Fisico'
                                   : elemento.text.trim()
@@ -909,6 +921,7 @@ extension _OculumHomeShareContent on _OculumHomePageState {
       bonusDanno.dispose();
       bonusDifesa.dispose();
       bonusScudo.dispose();
+      bonusScudoOculum.dispose();
       elemento.dispose();
       buff.dispose();
       note.dispose();

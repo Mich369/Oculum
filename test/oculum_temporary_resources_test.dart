@@ -135,6 +135,50 @@ void main() {
       expect(state.visibleValue, isNot(contains('9')));
     });
 
+    test('la scrittura manuale Oculum imposta il valore esatto', () {
+      const state = TemporaryOculumState(
+        normalCurrent: 5,
+        temporary: 3,
+        rollsRemaining: 6,
+      );
+
+      final lowered = setTemporaryOculumFromManualVisibleValue(
+        state: state,
+        visibleValue: 6,
+      );
+      final raised = setTemporaryOculumFromManualVisibleValue(
+        state: state,
+        visibleValue: 15,
+      );
+
+      expect(lowered.total, 6);
+      expect(lowered.normalCurrent, 5);
+      expect(lowered.temporary, 1);
+      expect(lowered.rollsRemaining, 6);
+      expect(raised.total, 15);
+      expect(raised.normalCurrent, 12);
+      expect(raised.temporary, 3);
+    });
+
+    test('la scrittura manuale separa i bonus dal valore salvato', () {
+      const state = TemporaryOculumState(
+        normalCurrent: 4,
+        temporary: 2,
+        rollsRemaining: 5,
+      );
+      final next = setTemporaryOculumFromManualVisibleValue(
+        state: state,
+        visibleValue: 9,
+        visibleBonus: 5,
+        minimumNormalCurrent: -5,
+      );
+
+      expect(next.total + 5, 9);
+      expect(next.normalCurrent, 4);
+      expect(next.temporary, 0);
+      expect(next.rollsRemaining, 0);
+    });
+
     test('i vecchi salvataggi ricevono temporaneo e durata a zero', () {
       final restored = temporaryOculumStateFromJson(
         json: <String, dynamic>{'currentOculum': '8'},
@@ -146,7 +190,7 @@ void main() {
       expect(restored.rollsRemaining, 0);
     });
 
-    test('i bonus Oculum da testo possono essere consumati fino a zero', () {
+    test('i bonus Oculum da testo non sostituiscono l Oculum attuale', () {
       final spent = spendOculumFromTemporaryState(
         state: const TemporaryOculumState(
           normalCurrent: 0,
@@ -154,12 +198,11 @@ void main() {
           rollsRemaining: 0,
         ),
         amount: 5,
-        minimumNormalCurrent: -5,
+        minimumNormalCurrent: 0,
       );
 
-      expect(spent.normalCurrent, -5);
+      expect(spent.normalCurrent, 0);
       expect(spent.temporary, 0);
-      expect(spent.normalCurrent + 5, 0);
     });
 
     test('un guadagno ripristina prima il bonus testuale consumato', () {
@@ -219,6 +262,42 @@ void main() {
         contains('return min(oculumTiroLimiteRegola(), oculumTotale());'),
       );
     });
+
+    test(
+      'togliere Oculum addormentato conserva attuale temporaneo e massimo',
+      () {
+        final calculations = File(
+          'lib/src/main/oculum_home_calculations.dart',
+        ).readAsStringSync();
+        final wakeStart = calculations.indexOf(
+          'void risvegliaStatoOculumAddormentato()',
+        );
+        final wakeEnd = calculations.indexOf(
+          'bool registraRiposoOculumAddormentato',
+          wakeStart,
+        );
+        final wakeSource = calculations.substring(wakeStart, wakeEnd);
+
+        expect(wakeSource, contains('oculumAddormentato = false;'));
+        expect(wakeSource, isNot(contains('applyTemporaryOculumState')));
+        expect(wakeSource, isNot(contains('currentOculumController')));
+        expect(wakeSource, isNot(contains('maxOculum')));
+
+        final sheetPage = File(
+          'lib/src/main/oculum_home_sheet_page.dart',
+        ).readAsStringSync();
+        expect(sheetPage, isNot(contains('Risveglia e azzera')));
+        expect(sheetPage, isNot(contains('Wake and clear')));
+        expect(
+          sheetPage,
+          contains(
+            'I valori attuali, temporanei e massimi resteranno invariati.',
+          ),
+        );
+        expect(sheetPage, contains('controller: oculumPanelCurrentController'));
+        expect(sheetPage, contains('focusNode: oculumPanelCurrentFocusNode'));
+      },
+    );
   });
 
   group('HP temporanei', () {

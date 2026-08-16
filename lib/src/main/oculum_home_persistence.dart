@@ -331,16 +331,22 @@ extension _OculumHomePersistence on _OculumHomePageState {
     final exhaustionPatch = existingExhaustion is Map
         ? Map<String, dynamic>.from(existingExhaustion)
         : <String, dynamic>{};
+    final existingCorePower = sheetPatch['artCorePower'];
+    final corePowerPatch = existingCorePower is Map
+        ? Map<String, dynamic>.from(existingCorePower)
+        : <String, dynamic>{};
     var changed = false;
     for (final index in artIndexes) {
       if (index < 0 || index >= arti.length) continue;
       artPatch['$index'] = arti[index].integritaCorrente;
       exhaustionPatch['$index'] = arti[index].esaurimentoCompleto;
+      corePowerPatch['$index'] = arti[index].bonusIntegritaNucleoTemporaneo;
       changed = true;
     }
     if (!changed) return;
     sheetPatch['arts'] = artPatch;
     sheetPatch['artExhaustion'] = exhaustionPatch;
+    sheetPatch['artCorePower'] = corePowerPatch;
     _scheduleProgressJournalWrite(immediate: immediate);
   }
 
@@ -663,6 +669,18 @@ extension _OculumHomePersistence on _OculumHomePageState {
       }
     }
 
+    final artCorePower = patch['artCorePower'];
+    if (artCorePower is Map) {
+      for (final entry in artCorePower.entries) {
+        final index = int.tryParse('${entry.key}');
+        if (index == null || index < 0 || index >= sheetArts.length) continue;
+        final art = sheetArts[index];
+        if (art is Map) {
+          art['bonusIntegritaNucleoTemporaneo'] = readIntValue(entry.value);
+        }
+      }
+    }
+
     final runeArts = patch['runeArts'];
     if (runeArts is Map) {
       for (final entry in runeArts.entries) {
@@ -885,7 +903,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
 
     if (invalidateCaches && !deferCacheInvalidation) {
-      invalidateDerivedDataCaches();
+      // Il salvataggio deve invalidare i calcoli, ma non ridisegnare tutte le
+      // card Oculus: le operazioni che cambiano davvero quei valori usano i
+      // notifier mirati dedicati.
+      invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
     }
     autosaveTimer?.cancel();
 
@@ -899,7 +920,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       }
 
       if (invalidateCaches && deferCacheInvalidation) {
-        invalidateDerivedDataCaches();
+        invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
       }
       unawaited(salvaDati());
     });
@@ -990,6 +1011,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'oculumAddormentatoRiposiBrevi': 0,
       'oculumAddormentatoRiposiLunghi': 0,
       'consumoElevato': false,
+      'conditions': <Map<String, dynamic>>[],
+      'conditionDefinitionOverrides': <String, Map<String, dynamic>>{},
+      'conditionControlProtectionUntilTurn': <String, int>{},
+      'activeGameMod': '',
+      'oculusModData': oculusDefaultCharacterData(),
       'maxOculum': tipo == 'Mostro' ? 2 : 1,
       'currentHp': tipo == 'Mostro' ? '60' : '30',
       'hpTemp': '0',
@@ -1019,9 +1045,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'textAttachments': <String, List<Map<String, dynamic>>>{},
       'obser': '0',
       'ascensionDust': '0',
-      'ispirazioni': '0',
-      'superIspirazioni': '0',
-      'ispirazioniOculum': '0',
+      'ispirazioni': oculumNewSheetInspirations.toString(),
+      'superIspirazioni': oculumNewSheetSuperInspirations.toString(),
+      'ispirazioniOculum': oculumNewSheetInspirationsOculum.toString(),
       'karma': '0',
       'follia': '0',
       'folliaDaMostri': false,
@@ -1034,6 +1060,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'statoForzaAttivo': '',
       'statoForzaPronto': true,
       'statoForzaTiriRimanenti': 0,
+      'nucleoPotenzaBonusDanniPercentuale': 0,
+      'nucleoPotenzaIntegritaPersa': 0,
       'malusTiriOculumPostEsplosione': 0,
       'aggiustaNucleoUsato': false,
       'personaggioSvenuto': false,
@@ -1080,6 +1108,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'trattiRazziali': [],
       'inventario': [],
       'personalRecipes': <Map<String, dynamic>>[],
+      'favoriteRecipeIds': <String>[],
+      'craftingDemandQuantities': <String, int>{},
       'selectedForgeTemplateId': '',
       'skills': [],
       'arti': artiBase().map((x) => x.toJson()).toList(),
@@ -1097,6 +1127,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'userGuiScale': 1.0,
       'diarioRewardClaimedCount': 0,
       'campaignDifficultyStarterClaimed': false,
+      'easyDifficultyShieldClaimed': false,
       'primaryColor': _OculumHomePageState.defaultPrimaryColor.toARGB32(),
       'secondaryColor': _OculumHomePageState.defaultSecondaryColor.toARGB32(),
       'tertiaryColor': _OculumHomePageState.defaultTertiaryColor.toARGB32(),
@@ -1206,6 +1237,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'oculumAddormentatoRiposiBrevi': oculumAddormentatoRiposiBrevi,
       'oculumAddormentatoRiposiLunghi': oculumAddormentatoRiposiLunghi,
       'consumoElevato': consumoElevato,
+      if (activeConditions.isNotEmpty)
+        'conditions': activeConditions
+            .map((condition) => condition.toJson())
+            .toList(growable: false),
+      if (conditionDefinitionOverrides.isNotEmpty)
+        'conditionDefinitionOverrides': conditionDefinitionOverrides,
+      if (conditionControlProtectionUntilTurn.isNotEmpty)
+        'conditionControlProtectionUntilTurn':
+            conditionControlProtectionUntilTurn,
+      if (activeGameMod.isNotEmpty) 'activeGameMod': activeGameMod,
+      'oculusModData': oculusModData,
       'maxOculum': oculumMassimo(),
       'partialAwakeningHalfHpTriggered':
           schedePersonaggio.isNotEmpty &&
@@ -1278,6 +1320,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'statoForzaAttivo': statoForzaAttivo,
       'statoForzaPronto': statoForzaPronto,
       'statoForzaTiriRimanenti': statoForzaTiriRimanenti,
+      'nucleoPotenzaBonusDanniPercentuale': nucleoPotenzaBonusDanniPercentuale,
+      'nucleoPotenzaIntegritaPersa': nucleoPotenzaIntegritaPersa,
       'malusTiriOculumPostEsplosione': malusTiriOculumPostEsplosione,
       'aggiustaNucleoUsato': aggiustaNucleoUsato,
       'personaggioSvenuto': personaggioSvenuto,
@@ -1340,6 +1384,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
         'personalRecipes': personalRecipes
             .map((recipe) => recipe.toJson())
             .toList(growable: false),
+      if (favoriteRecipeIds.isNotEmpty)
+        'favoriteRecipeIds': favoriteRecipeIds.toList(growable: false),
+      if (craftingDemandQuantities.isNotEmpty)
+        'craftingDemandQuantities': Map<String, int>.from(
+          craftingDemandQuantities,
+        ),
       if (selectedForgeTemplateId.isNotEmpty)
         'selectedForgeTemplateId': selectedForgeTemplateId,
       'skills': skills.map((x) => x.toJson()).toList(),
@@ -1357,6 +1407,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'userGuiScale': userGuiScale,
       'diarioRewardClaimedCount': diarioRewardClaimedCount,
       'campaignDifficultyStarterClaimed': campaignDifficultyStarterClaimed,
+      'easyDifficultyShieldClaimed': easyDifficultyShieldClaimed,
       'primaryColor': primaryColor.toARGB32(),
       'secondaryColor': secondaryColor.toARGB32(),
       'tertiaryColor': tertiaryColor.toARGB32(),
@@ -1440,6 +1491,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
     oculumAddormentatoRiposiBrevi = 0;
     oculumAddormentatoRiposiLunghi = 0;
     consumoElevato = false;
+    activeConditions.clear();
+    conditionDefinitionOverrides.clear();
+    conditionControlProtectionUntilTurn.clear();
+    activeGameMod = '${json['activeGameMod'] ?? ''}'.trim().toLowerCase();
+    oculusModData = oculusNormalizeCharacterData(json['oculusModData']);
+    if (activeGameMod == 'oculus') paginaCorrente = 0;
     restoreMonsterBookCustomization(json);
     nomeController.text = '${json['nome'] ?? '???'}';
     tipoSchedaController.text = '${json['tipoScheda'] ?? 'Personaggio'}';
@@ -1506,7 +1563,60 @@ extension _OculumHomePersistence on _OculumHomePageState {
       0,
       readIntValue(json['oculumAddormentatoRiposiLunghi']),
     );
+    // I salvataggi creati prima dell'azzeramento immediato possono contenere
+    // lo stato addormentato con Oculum corrente residuo. Manteniamo tutte le
+    // chiavi legacy, ma ripristiniamo l'invariante al caricamento.
+    if (oculumAddormentato) {
+      currentOculumController.text = '0';
+      temporaryOculum = 0;
+      temporaryOculumRollsRemaining = 0;
+    }
     consumoElevato = readBoolValue(json['consumoElevato']);
+    final conditionsRaw = json['conditions'] ?? json['activeConditions'];
+    if (conditionsRaw is List) {
+      for (final raw in conditionsRaw) {
+        if (raw is! Map) continue;
+        try {
+          final condition = OculumConditionInstance.fromJson(
+            Map<String, dynamic>.from(raw),
+          );
+          final definition = oculumConditionDefinition(condition.conditionType);
+          if (definition != null) {
+            if (condition.conditionType == 'veleno_putrido' &&
+                condition.stacks > 1) {
+              condition.stage = max(condition.stage, condition.stacks);
+              condition.stacks = 1;
+            }
+            condition.stage = condition.stage.clamp(1, definition.maxStage);
+          }
+          activeConditions.add(condition);
+        } catch (_) {
+          // Un singolo elemento futuro o danneggiato non blocca il vecchio salvataggio.
+        }
+      }
+    }
+    final protectionRaw = json['conditionControlProtectionUntilTurn'];
+    if (protectionRaw is Map) {
+      for (final entry in protectionRaw.entries) {
+        final key = '${entry.key}'.trim();
+        if (key.isNotEmpty) {
+          conditionControlProtectionUntilTurn[key] = max(
+            0,
+            readIntValue(entry.value),
+          );
+        }
+      }
+    }
+    final conditionOverridesRaw = json['conditionDefinitionOverrides'];
+    if (conditionOverridesRaw is Map) {
+      for (final entry in conditionOverridesRaw.entries) {
+        final id = '${entry.key}'.trim();
+        if (id.isEmpty || entry.value is! Map) continue;
+        conditionDefinitionOverrides[id] = Map<String, dynamic>.from(
+          entry.value as Map,
+        );
+      }
+    }
 
     currentHpController.text = '${json['currentHp'] ?? '30'}';
     hpTempController.text = readIntValue(
@@ -1578,6 +1688,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
     statoForzaAttivo = '${json['statoForzaAttivo'] ?? ''}';
     statoForzaPronto = readBoolValue(json['statoForzaPronto'], fallback: true);
     statoForzaTiriRimanenti = readIntValue(json['statoForzaTiriRimanenti']);
+    nucleoPotenzaBonusDanniPercentuale = readIntValue(
+      json['nucleoPotenzaBonusDanniPercentuale'],
+    ).clamp(0, 100).toInt();
+    nucleoPotenzaIntegritaPersa = max(
+      0,
+      readIntValue(json['nucleoPotenzaIntegritaPersa']),
+    );
     malusTiriOculumPostEsplosione = readIntValue(
       json['malusTiriOculumPostEsplosione'],
     ).clamp(-1, 0).toInt();
@@ -1774,6 +1891,31 @@ extension _OculumHomePersistence on _OculumHomePageState {
               ).copyWith(personal: true),
             ),
       );
+    favoriteRecipeIds
+      ..clear()
+      ..addAll(
+        (json['favoriteRecipeIds'] is List
+                ? json['favoriteRecipeIds'] as List
+                : const <dynamic>[])
+            .map((id) => '$id'.trim())
+            .where((id) => id.isNotEmpty),
+      );
+    craftingDemandQuantities
+      ..clear()
+      ..addAll(
+        (json['craftingDemandQuantities'] is Map
+                ? Map<String, dynamic>.from(
+                    json['craftingDemandQuantities'] as Map,
+                  )
+                : const <String, dynamic>{})
+            .map(
+              (id, quantity) => MapEntry(
+                id.trim(),
+                max(1, readIntValue(quantity, fallback: 1)),
+              ),
+            )
+          ..removeWhere((id, _) => id.isEmpty),
+      );
     selectedForgeTemplateId = '${json['selectedForgeTemplateId'] ?? ''}';
 
     final skillsRaw = json['skills'];
@@ -1870,6 +2012,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
     diarioRewardClaimedCount = readIntValue(json['diarioRewardClaimedCount']);
     campaignDifficultyStarterClaimed = readBoolValue(
       json['campaignDifficultyStarterClaimed'],
+    );
+    easyDifficultyShieldClaimed = readBoolValue(
+      json['easyDifficultyShieldClaimed'],
     );
 
     final logRaw = json['logEventi'];
@@ -2098,6 +2243,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
       resetOculumToMax: !hasCurrentOculum,
     );
     restoreTemporaryOculumState(json);
+    syncVisibleCurrentStatEditors();
+
+    // Ogni scheda possiede dati e cache indipendenti. Senza questa
+    // sincronizzazione un cambio scheda poteva riutilizzare formule, riepiloghi
+    // e valori derivati calcolati per la scheda precedente.
+    invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+    notifyExperienceChanged();
+    notifyOculumResourceChanged();
+    recipesRevision.value++;
   }
 
   String get _backupSaveKey1 => '${_OculumHomePageState.saveKey}_backup_1';
@@ -3566,13 +3720,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
 
     final contentChanged =
+        salvataggioMutazioneNota ||
         jsonEncode(comparableSheet(previous)) !=
-        jsonEncode(comparableSheet(next));
+            jsonEncode(comparableSheet(next));
 
     if (contentChanged && !applyingHistorySnapshot) {
       undoHistory.add(<String, dynamic>{
         'index': schedaCorrente,
-        'sheet': jsonDecode(jsonEncode(previous)),
+        'sheetJson': _encodeOculumHistorySnapshot(previous),
       });
       if (undoHistory.length > 80) {
         undoHistory.removeAt(0);
@@ -3602,6 +3757,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
 
     schedePersonaggio[schedaCorrente] = next;
+    salvataggioMutazioneNota = false;
   }
 
   Map<String, dynamic> currentHistorySnapshot() {
@@ -4336,15 +4492,25 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
     final indexes = <int>[];
     for (int i = 0; i < schedePersonaggio.length; i++) {
-      if (sheetInMasterPartyAt(i)) indexes.add(i);
+      if (readBoolValue(schedePersonaggio[i]['inMasterParty'])) indexes.add(i);
     }
-    return indexes;
+    return List<int>.unmodifiable(indexes);
   }
 
   List<int> partyStatsCountIndexes() {
-    return masterPartyIndexes()
-        .where(sheetCountsForPartyStatsAt)
-        .toList(growable: false);
+    assicuraTagSchede();
+    final indexes = <int>[];
+    for (int i = 0; i < schedePersonaggio.length; i++) {
+      final sheet = schedePersonaggio[i];
+      if (!readBoolValue(sheet['inMasterParty']) || isEnemySheetAt(i)) {
+        continue;
+      }
+      if (!sheet.containsKey('countsForPartyStats') ||
+          readBoolValue(sheet['countsForPartyStats'])) {
+        indexes.add(i);
+      }
+    }
+    return List<int>.unmodifiable(indexes);
   }
 
   Future<void> cambiaConteggioStatsParty(int index, bool value) async {

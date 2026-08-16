@@ -975,6 +975,9 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
   String structuredEffectResourceLabel(String key) {
     return switch (oculumNormalizeEffectResource(key)) {
       'vita' => t('Vita', 'Life'),
+      'fortuna' => t('Fortuna', 'Fortune'),
+      'scudo' => t('Scudo', 'Shield'),
+      'scudo_oculum' => t('Scudo Oculum', 'Oculum Shield'),
       'azioni' => t('Azioni', 'Actions'),
       'reazioni' => t('Reazioni', 'Reactions'),
       'reazioni_rapide' => t('Reazioni rapide', 'Quick reactions'),
@@ -1125,6 +1128,10 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     final current = cost ?? OculumSkillCost(resource: 'oculum');
     const resources = <String>[
       'oculum',
+      'fortuna',
+      'hp',
+      'scudo',
+      'scudo_oculum',
       'vita',
       'azioni',
       'reazioni',

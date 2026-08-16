@@ -87,13 +87,23 @@ extension _OculumHomeForceState on _OculumHomePageState {
       weight: 8,
     ),
     _StatoForzaDef(
+      id: 'potenza_nucleo',
+      nameIt: 'Potenza del nucleo',
+      nameEn: 'Core Power',
+      descriptionIt:
+          '+50 integrita temporanea a ogni Nucleo, anche oltre il massimo. Finché non ottieni +100% danni, l’Integrità persa dona Oculum: Facile 3/10, Normale 1/10, Difficile 1/20, Oculum 1/30. Riserva esaurita: +50% danni; Nucleo distrutto: +100%, fino al riposo lungo.',
+      descriptionEn:
+          '+50 temporary integrity to every Core, even above its maximum. Until +100% damage is reached, lost Integrity grants Oculum: Easy 3/10, Normal 1/10, Hard 1/20, Oculum 1/30. Spent reserve: +50% damage; broken Core: +100%, until the next long rest.',
+      weight: 6,
+    ),
+    _StatoForzaDef(
       id: 'azzeramento_vulnerabilita',
       nameIt: 'Azzeramento delle vulnerabilita',
       nameEn: 'Vulnerability Reset',
       descriptionIt:
-          'Resistenza ai colpi, rimozione dei malus temporanei negativi e della Cenere accumulata.',
+          'Resistenza ai colpi, rimozione dei malus temporanei negativi, di tutte le condizioni negative e della Cenere accumulata.',
       descriptionEn:
-          'Resistance to hits, removal of negative temporary penalties and accumulated Ash.',
+          'Resistance to hits, removal of negative temporary penalties, all negative conditions and accumulated Ash.',
       weight: 6,
     ),
   ];
@@ -112,6 +122,70 @@ extension _OculumHomeForceState on _OculumHomePageState {
 
   bool statoForzaRimuoveMalus() {
     return statoForzaAttivo == 'azzeramento_vulnerabilita';
+  }
+
+  int nucleoPotenzaMoltiplicatoreDanniPercentuale() {
+    return nucleoPotenzaBonusDanniPercentuale.clamp(0, 100).toInt();
+  }
+
+  int applicaBonusDanniPotenzaNucleo(int damage) {
+    final bonus = nucleoPotenzaMoltiplicatoreDanniPercentuale();
+    if (damage <= 0 || bonus <= 0) return damage;
+    return (damage * (100 + bonus) / 100).ceil();
+  }
+
+  ({int threshold, int oculum}) nucleoPotenzaRicompensaProfilo() {
+    return switch (normalizedCampaignDifficulty()) {
+      'facile' => (threshold: 10, oculum: 3),
+      'difficile' => (threshold: 20, oculum: 1),
+      'oculum' => (threshold: 30, oculum: 1),
+      _ => (threshold: 10, oculum: 1),
+    };
+  }
+
+  bool nucleoPotenzaStaTracciandoIntegrita() {
+    return nucleoPotenzaBonusDanniPercentuale < 100 &&
+        (statoForzaAttivo == 'potenza_nucleo' ||
+            nucleoPotenzaBonusDanniPercentuale > 0 ||
+            arti.any((art) => art.bonusIntegritaNucleoTemporaneo > 0));
+  }
+
+  void registraIntegritaPersaPotenzaNucleo(int amount) {
+    if (amount <= 0 || !nucleoPotenzaStaTracciandoIntegrita()) return;
+    final profile = nucleoPotenzaRicompensaProfilo();
+    final previous = nucleoPotenzaIntegritaPersa;
+    final next = previous + amount;
+    nucleoPotenzaIntegritaPersa = next;
+    final milestones =
+        next ~/ profile.threshold - previous ~/ profile.threshold;
+    if (milestones <= 0) {
+      programmaSalvataggio();
+      return;
+    }
+    final requested = milestones * profile.oculum;
+    final gained = addOculum(requested, scheduleSave: false);
+    aggiungiLog(
+      t(
+        'Potenza del nucleo: $amount Integrità persa ($next/${profile.threshold} nel conteggio). +$gained Oculum per ${milestones == 1 ? '1 soglia raggiunta' : '$milestones soglie raggiunte'}.',
+        'Core Power: $amount Integrity lost ($next/${profile.threshold} tracked). +$gained Oculum for $milestones milestone${milestones == 1 ? '' : 's'} reached.',
+      ),
+    );
+    programmaSalvataggio();
+  }
+
+  List<int> rimuoviPotenzaNucleoTemporanea() {
+    final changed = <int>[];
+    for (var i = 0; i < arti.length; i++) {
+      final art = arti[i];
+      final residuo = max(0, art.bonusIntegritaNucleoTemporaneo);
+      if (residuo <= 0) continue;
+      art.integritaCorrente = max(0, art.integritaCorrente - residuo);
+      art.bonusIntegritaNucleoTemporaneo = 0;
+      changed.add(i);
+    }
+    nucleoPotenzaBonusDanniPercentuale = 0;
+    nucleoPotenzaIntegritaPersa = 0;
+    return changed;
   }
 
   int sogliaStatoForzaHp() {
@@ -198,6 +272,34 @@ extension _OculumHomeForceState on _OculumHomePageState {
           '+$hpTempApplicati HP temporanei applicati (massimo $oculumTemporaryHpLimit).',
           '+$hpTempApplicati temporary HP applied (maximum $oculumTemporaryHpLimit).',
         );
+      case 'potenza_nucleo':
+        final isFreshPower =
+            nucleoPotenzaBonusDanniPercentuale == 0 &&
+            !arti.any((art) => art.bonusIntegritaNucleoTemporaneo > 0);
+        if (isFreshPower) nucleoPotenzaIntegritaPersa = 0;
+        final boosted = <String>[];
+        for (var i = 0; i < arti.length; i++) {
+          final art = arti[i];
+          if (!art.sbloccata) continue;
+          ensureArtIntegrityValue(i);
+          if (art.bonusIntegritaNucleoTemporaneo > 0) continue;
+          art.integritaCorrente += 50;
+          art.bonusIntegritaNucleoTemporaneo = 50;
+          boosted.add(art.nome.trim().isEmpty ? 'Art ${i + 1}' : art.nome);
+          notifyArtIntegrityChanged(i);
+        }
+        if (boosted.isNotEmpty) {
+          scheduleArtIntegritySave(<int>[
+            for (var i = 0; i < arti.length; i++)
+              if (arti[i].sbloccata &&
+                  arti[i].bonusIntegritaNucleoTemporaneo > 0)
+                i,
+          ]);
+        }
+        return t(
+          '+50 integrita temporanea al Nucleo di ${boosted.isEmpty ? 'nessuna Art disponibile' : boosted.join(', ')}. Può superare il massimo e dura fino al riposo lungo.',
+          '+50 temporary integrity to the Core of ${boosted.isEmpty ? 'no available Art' : boosted.join(', ')}. It can exceed the maximum and lasts until the next long rest.',
+        );
       case 'esplosione_oculum':
         final prima = hpCorrenti();
         final hpDopo = min(maxHp(), prima + 25);
@@ -216,9 +318,11 @@ extension _OculumHomeForceState on _OculumHomePageState {
         tempOculum = max(0, tempOculum);
         cenereController.text = '0';
         cenereSvenimentoUltimoControllo = 0;
+        final condizioniRimosse =
+            removeNegativeConditionsForVulnerabilityReset();
         return t(
-          'Malus temporanei negativi rimossi e Cenere azzerata.',
-          'Negative temporary penalties removed and Ash reset.',
+          'Malus temporanei negativi rimossi, $condizioniRimosse condizioni negative eliminate e Cenere azzerata.',
+          'Negative temporary penalties removed, $condizioniRimosse negative conditions cleared and Ash reset.',
         );
       default:
         return '';
@@ -249,13 +353,27 @@ extension _OculumHomeForceState on _OculumHomePageState {
     }
   }
 
-  String terminaStatoForzaAttivo({bool applicaEsitoEsplosione = true}) {
+  String terminaStatoForzaAttivo({
+    bool applicaEsitoEsplosione = true,
+    bool potenzaNucleoTerminataNaturalmente = false,
+  }) {
     final active = statoForzaAttivo;
     statoForzaAttivo = '';
     statoForzaPronto = true;
     statoForzaTiriRimanenti = 0;
     if (active == 'esplosione_oculum' && applicaEsitoEsplosione) {
       return applicaEsitoFineEsplosioneOculum();
+    }
+    if (active == 'potenza_nucleo' && potenzaNucleoTerminataNaturalmente) {
+      if (nucleoPotenzaBonusDanniPercentuale >= 100) return '';
+      nucleoPotenzaBonusDanniPercentuale = max(
+        50,
+        nucleoPotenzaBonusDanniPercentuale,
+      );
+      return t(
+        'Ti svegli con un potere dentro di te momentaneamente maggiore.',
+        'You wake with a power inside you that is temporarily greater.',
+      );
     }
     return '';
   }
@@ -467,7 +585,9 @@ extension _OculumHomeForceState on _OculumHomePageState {
       }
       if (!statoForzaPronto || statoForzaAttivo.isNotEmpty) {
         setState(() {
-          final finale = terminaStatoForzaAttivo();
+          final finale = terminaStatoForzaAttivo(
+            potenzaNucleoTerminataNaturalmente: true,
+          );
           if (finale.isNotEmpty) {
             risultato = finale;
             ultimoEventoRiposo = risultato;

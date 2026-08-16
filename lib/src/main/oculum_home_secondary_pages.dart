@@ -60,10 +60,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         ascensionDustIntegritaMassimaBonus;
   }
 
+  int artIntegrityEffectiveMaximum(CharacterArt art) {
+    return artIntegrityMaximum() + max(0, art.bonusIntegritaNucleoTemporaneo);
+  }
+
   void ensureArtIntegrityValue(int artIndex) {
     if (artIndex < 0 || artIndex >= arti.length) return;
     final art = arti[artIndex];
-    final maximum = artIntegrityMaximum();
+    final maximum = artIntegrityEffectiveMaximum(art);
     if (art.integritaCorrente < 0) {
       art.integritaCorrente = maximum;
     } else if (art.integritaCorrente > maximum) {
@@ -89,6 +93,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       if (item is Map) {
         item['integritaCorrente'] = arti[i].integritaCorrente;
         item['esaurimentoCompleto'] = arti[i].esaurimentoCompleto;
+        item['bonusIntegritaNucleoTemporaneo'] =
+            arti[i].bonusIntegritaNucleoTemporaneo;
       }
     }
   }
@@ -139,12 +145,31 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     bool immediateSave = false,
   }) {
     if (artIndex < 0 || artIndex >= arti.length) return;
-    final maximum = artIntegrityMaximum();
-    final next = value.clamp(0, maximum).toInt();
     final art = arti[artIndex];
+    final maximum = artIntegrityEffectiveMaximum(art);
+    final next = value.clamp(0, maximum).toInt();
     final previous = art.integritaCorrente;
     if (previous == next) return;
     art.integritaCorrente = next;
+    final spent = max(0, previous - next);
+    registraIntegritaPersaPotenzaNucleo(spent);
+    final temporaryBefore = art.bonusIntegritaNucleoTemporaneo;
+    if (spent > 0 && temporaryBefore > 0) {
+      art.bonusIntegritaNucleoTemporaneo = max(0, temporaryBefore - spent);
+      aggiornaBonusDanniPotenzaNucleo(
+        previousIntegrity: previous,
+        nextIntegrity: next,
+        temporaryBefore: temporaryBefore,
+        temporaryAfter: art.bonusIntegritaNucleoTemporaneo,
+      );
+    } else if (previous > 0 && next == 0) {
+      aggiornaBonusDanniPotenzaNucleo(
+        previousIntegrity: previous,
+        nextIntegrity: next,
+        temporaryBefore: temporaryBefore,
+        temporaryAfter: temporaryBefore,
+      );
+    }
     if (previous > 0 && next == 0) {
       art.esaurimentoCompleto = true;
       checkArtIntegrityBreakAsh(previous, next, art.nome);
@@ -210,6 +235,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final next = oculumArtValueAfterActivation(previous, cost: cost);
     if (next == previous) return 0;
     art.integritaCorrente = next;
+    final temporaryBefore = art.bonusIntegritaNucleoTemporaneo;
+    registraIntegritaPersaPotenzaNucleo(max(0, previous - next));
+    art.bonusIntegritaNucleoTemporaneo = max(0, temporaryBefore - cost);
+    aggiornaBonusDanniPotenzaNucleo(
+      previousIntegrity: previous,
+      nextIntegrity: next,
+      temporaryBefore: temporaryBefore,
+      temporaryAfter: art.bonusIntegritaNucleoTemporaneo,
+    );
     if (previous > 0 && next == 0) {
       art.esaurimentoCompleto = true;
       checkArtIntegrityBreakAsh(previous, next, art.nome);
@@ -218,6 +252,35 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     // L'integrità viene consumata, ma non modifica più casualmente e in modo
     // permanente la DT generale della scheda.
     return 0;
+  }
+
+  void aggiornaBonusDanniPotenzaNucleo({
+    required int previousIntegrity,
+    required int nextIntegrity,
+    required int temporaryBefore,
+    required int temporaryAfter,
+  }) {
+    var nextBonus = nucleoPotenzaBonusDanniPercentuale;
+    if (temporaryBefore > 0 && temporaryAfter == 0) {
+      nextBonus = max(nextBonus, 50);
+    }
+    if (previousIntegrity > 0 && nextIntegrity == 0 && temporaryAfter == 0) {
+      nextBonus = max(nextBonus, 100);
+    }
+    if (nextBonus == nucleoPotenzaBonusDanniPercentuale) return;
+    nucleoPotenzaBonusDanniPercentuale = nextBonus;
+    final text = nextBonus >= 100
+        ? t(
+            'Potenza del nucleo: il Nucleo è distrutto. I danni sono +100% fino al prossimo riposo lungo.',
+            'Core Power: the Core is destroyed. Damage is +100% until the next long rest.',
+          )
+        : t(
+            'Potenza del nucleo: la riserva di +50 integrità è esaurita. I danni sono +50% fino al prossimo riposo lungo.',
+            'Core Power: the +50 integrity reserve is exhausted. Damage is +50% until the next long rest.',
+          );
+    risultato = text;
+    ultimoEventoRiposo = text;
+    aggiungiLog(text);
   }
 
   void recuperaIntegritaArtTotale(int artIndex) {
@@ -468,13 +531,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     return ValueListenableBuilder<int>(
       valueListenable: artIntegrityListenable(artIndex),
       builder: (context, value, child) {
-        final maximum = max(1, artIntegrityMaximum());
+        final maximum = max(1, artIntegrityEffectiveMaximum(arti[artIndex]));
         return ValueListenableBuilder<int>(
           valueListenable: aggiustaNucleoDisponibileRevision,
           builder: (context, revision, child) {
             final available = aggiustaNucleoDisponibile();
             final full = value >= maximum;
             final enabled = available && !full;
+            final brokenCoreProfile = oculumBrokenCoreDamageProfile(
+              normalizedCampaignDifficulty(),
+            );
             final buttonLabel = aggiustaNucleoUsato
                 ? t('Già usato fino al riposo lungo', 'Used until long rest')
                 : aggiustaNucleoInCorso
@@ -499,6 +565,33 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     ),
                   ],
                 ),
+                if (value <= 0) ...[
+                  const SizedBox(height: 7),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade900.withValues(alpha: 0.28),
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(
+                        color: Colors.redAccent.withValues(alpha: 0.65),
+                      ),
+                    ),
+                    child: Text(
+                      t(
+                        'NUCLEO ROTTO · Quando il danno raggiunge la Vita: ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}% di perdere 1/${brokenCoreProfile.currentHpDivisor} della Vita attuale.',
+                        'BROKEN CORE · When damage reaches Life: ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}% chance to lose 1/${brokenCoreProfile.currentHpDivisor} of current Life.',
+                      ),
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 7),
                 OutlinedButton.icon(
                   onPressed: enabled
@@ -612,7 +705,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       valueListenable: artIntegrityListenable(artIndex),
       builder: (context, value, child) {
         oculumProgressProfileCount('artBarRebuilds');
-        final maximum = max(1, artIntegrityMaximum());
+        final maximum = max(1, artIntegrityEffectiveMaximum(arti[artIndex]));
         final fraction = (value / maximum).clamp(0.0, 1.0);
         return Align(
           alignment: Alignment.centerLeft,
@@ -689,7 +782,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           ValueListenableBuilder<int>(
             valueListenable: artIntegrityListenable(selectedIndex),
             builder: (context, value, child) {
-              final maximum = artIntegrityMaximum();
+              final maximum = artIntegrityEffectiveMaximum(arti[selectedIndex]);
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -1126,13 +1219,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               OutlinedButton.icon(
                 onPressed: () {
                   setState(() {
-                    statoForzaAttivo = '';
-                    statoForzaPronto = true;
-                    statoForzaTiriRimanenti = 0;
-                    risultato = t(
-                      'Stato di forza resettato.',
-                      'Force state reset.',
+                    final finale = terminaStatoForzaAttivo(
+                      applicaEsitoEsplosione: false,
                     );
+                    risultato = finale.isEmpty
+                        ? t('Stato di forza resettato.', 'Force state reset.')
+                        : finale;
                     ultimoEventoRiposo = risultato;
                     aggiungiLog(risultato);
                   });
@@ -3311,6 +3403,29 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   color: tertiaryColor,
                   fontWeight: FontWeight.bold,
                 ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              for (final group in masterInitiativeGroups)
+                ChoiceChip(
+                  selected:
+                      '${group['id'] ?? ''}' == selectedMasterInitiativeGroupId,
+                  label: Text(
+                    '${group['name'] ?? t('Scontro', 'Encounter')} · R${readIntValue(group['round'], fallback: 1)}',
+                  ),
+                  onSelected: (_) =>
+                      selectMasterInitiativeGroup('${group['id'] ?? ''}'),
+                ),
+              ActionChip(
+                avatar: const Icon(Icons.add, size: 18),
+                label: Text(t('Nuovo scontro', 'New encounter')),
+                onPressed: addMasterInitiativeGroup,
               ),
             ],
           ),
@@ -5850,6 +5965,153 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     );
   }
 
+  Widget masterDashboardPartyBoardPanel() {
+    final partyIndexes = masterPartyIndexes();
+    return gothicPanel(
+      borderColor: const Color(0xFF7EE7C8),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.dashboard_customize_outlined,
+                color: Color(0xFF7EE7C8),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                t('Plancia Master della tavola', 'Table Master board'),
+                style: const TextStyle(
+                  color: Color(0xFF7EE7C8),
+                  fontSize: 19,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          smallInfoText(
+            t(
+              'Regole rapide: usa INI per l’ordine, i tiri aprono il dado della scheda scelta; gli stati e i dettagli sensibili restano nella plancia del Master.',
+              'Quick rules: use INI for order, rolls use the selected sheet; statuses and sensitive details stay on the Master board.',
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (partyIndexes.isEmpty)
+            smallInfoText(
+              t(
+                'Aggiungi schede al Party nella sezione qui sotto per popolare la plancia.',
+                'Add sheets to the Party below to populate this board.',
+              ),
+            )
+          else
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final index in partyIndexes)
+                  SizedBox(
+                    width: 320,
+                    child: _masterDashboardPartyBoardCard(index),
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _masterDashboardPartyBoardCard(int index) {
+    final side = sheetSideAt(index);
+    final sideColor = side == 'enemy'
+        ? Colors.redAccent
+        : side == 'neutral'
+        ? Colors.orangeAccent
+        : Colors.greenAccent;
+    Widget pill(String label, int value, Color color) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.11),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: color.withValues(alpha: 0.52)),
+      ),
+      child: Text(
+        '$label $value',
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: sideColor.withValues(alpha: 0.65)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              masterPartyAvatar(index, size: 34),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  nomeSchedaPersonaggio(index),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: sideColor,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Text(
+                'HP ${sheetIntValueAt(index, 'currentHp')}',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 5,
+            runSpacing: 5,
+            children: [
+              pill(
+                'RES',
+                sheetIntValueAt(index, 'resilienza'),
+                Colors.greenAccent,
+              ),
+              pill('VOL', sheetIntValueAt(index, 'volonta'), Colors.redAccent),
+              pill(
+                'MAT',
+                sheetIntValueAt(index, 'materia'),
+                Colors.lightBlueAccent,
+              ),
+              pill(
+                'OCU',
+                sheetIntValueAt(index, 'oculum'),
+                oculumStatFormulaColor,
+              ),
+              pill('VC', sheetRollBonusAt(index, 'vc'), primaryColor),
+              pill('CM', sheetRollBonusAt(index, 'cm'), primaryColor),
+              pill('INI', sheetRollBonusAt(index, 'iniziativa'), tertiaryColor),
+            ],
+          ),
+          const SizedBox(height: 8),
+          masterPartyQuickRolls(index),
+        ],
+      ),
+    );
+  }
+
   Widget masterDashboardPage() {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -5865,6 +6127,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             children: [
               title,
               masterDashboardActiveSheetPanel(),
+              masterDashboardPartyBoardPanel(),
               masterInitiativeTrackerPanel(),
               masterDashboardEnemiesPanel(compactNote: true),
               masterDashboardQuickControlsPanel(),
@@ -5898,6 +6161,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       masterInitiativeTrackerPanel(),
+                      masterDashboardPartyBoardPanel(),
                       masterDashboardEnemiesPanel(),
                       masterDashboardRosterPanel(),
                       masterDashboardMonsterBookPanel(),
@@ -7150,7 +7414,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
     skill.livello = livelloNuovo;
     final statiOculumAttivati = livelloNuovo > livelloPrecedente
-        ? applicaStatiOculumDaTestoSkill(skill.toJson().toString())
+        ? applicaStatiOculumDaTestoSkill(
+            skill.toJson().toString(),
+            source: '${art.nome} / ${skill.nome}',
+          )
         : const <String>[];
     if (livelloNuovo == 0 && livelloPrecedente > 0) {
       removeActiveStructuredEffectsForSourcePrefix(
@@ -7389,6 +7656,22 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       normalizedCostResource,
       english: linguaInglese,
     );
+    final materialResources = <String>{
+      for (final item in inventario)
+        if (item.nome.trim().isNotEmpty)
+          'material:${oculumNormalizeText(item.nome).replaceAll(' ', '')}',
+    }.toList(growable: false)..sort();
+    final costResourceOptions = <String>[
+      ...oculumArtSkillCostResourceKeys,
+      ...materialResources,
+      for (final material in materialResources) 'oculum+$material',
+      for (var index = 0; index < materialResources.length; index++)
+        for (var other = index + 1; other < materialResources.length; other++)
+          '${materialResources[index]}+${materialResources[other]}',
+    ];
+    if (!costResourceOptions.contains(normalizedCostResource)) {
+      costResourceOptions.add(normalizedCostResource);
+    }
     final quickCommands = parseTitleQuickCommands(cleanedValue).entries.toList()
       ..sort(
         (a, b) => quickCommandSortIndex(
@@ -7495,7 +7778,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               dropdownColor: const Color(0xFF10121A),
               decoration: fieldDecoration(t('Stat consumata', 'Consumed stat')),
               items: [
-                for (final resource in oculumArtSkillCostResourceKeys)
+                for (final resource in costResourceOptions)
                   DropdownMenuItem<String>(
                     value: resource,
                     child: Text(
@@ -9415,7 +9698,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       minColumnWidth: 340,
       fullWidthIndexes: const <int>{0},
       children: [
-        functionAnchor('skills_root', sectionTitle(t('Skill', 'Skills'))),
+        functionAnchor(
+          'skills_root',
+          Row(
+            children: [
+              Expanded(child: sectionTitle(t('Skill', 'Skills'))),
+              conditionImpactIndicator(target: OculumConditionTarget.skill),
+            ],
+          ),
+        ),
         freeSkillsPanel(),
       ],
     );
@@ -9493,7 +9784,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       maxColumns: 1,
       minColumnWidth: 360,
       children: [
-        functionAnchor('art_root', sectionTitle(t('Art', 'Arts'))),
+        functionAnchor(
+          'art_root',
+          Row(
+            children: [
+              Expanded(child: sectionTitle(t('Art', 'Arts'))),
+              conditionImpactIndicator(target: OculumConditionTarget.art),
+            ],
+          ),
+        ),
         artSummaryStrip(),
         artOverviewPanel(),
         for (int artIndex = 0; artIndex < arti.length; artIndex++)

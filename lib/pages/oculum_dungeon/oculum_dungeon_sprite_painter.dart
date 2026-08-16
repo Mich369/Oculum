@@ -428,9 +428,11 @@ class _OculumSpritePainter extends CustomPainter {
       ..quadraticBezierTo(cx, h * .84, w * .18, h * .68)
       ..close();
 
-    p.color = Color.lerp(color, const Color(0xFF7CEBFF), .34)!.withValues(
-      alpha: .88,
-    );
+    p.color = Color.lerp(
+      color,
+      const Color(0xFF7CEBFF),
+      .34,
+    )!.withValues(alpha: .88);
     canvas.drawPath(body, p);
 
     p
@@ -529,9 +531,11 @@ class _OculumSpritePainter extends CustomPainter {
       p,
     );
 
-    p.color = Color.lerp(color, const Color(0xFF6B4E3D), .38)!.withValues(
-      alpha: .96,
-    );
+    p.color = Color.lerp(
+      color,
+      const Color(0xFF6B4E3D),
+      .38,
+    )!.withValues(alpha: .96);
     canvas.drawOval(shell, p);
 
     p

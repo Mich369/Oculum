@@ -400,7 +400,9 @@ extension _OculumDungeonRealtimeCoop on _OculumDungeonGameDialogState {
               labelIt: 'Unisciti a ${dungeonCoop.pendingSession!['hostName']}',
               labelEn: 'Join ${dungeonCoop.pendingSession!['hostName']}',
               icon:
-                  '${dungeonCoop.pendingSession!['passwordHash'] ?? ''}'.trim().isEmpty
+                  '${dungeonCoop.pendingSession!['passwordHash'] ?? ''}'
+                      .trim()
+                      .isEmpty
                   ? Icons.group_add
                   : Icons.lock,
               color: const Color(0xFF67E8F9),

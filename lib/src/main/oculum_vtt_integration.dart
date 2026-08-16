@@ -315,7 +315,17 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
   }
 
   void notifyVttCanvasChanged({bool save = false, bool publish = false}) {
-    vttCanvasRevision.value++;
+    if (save || publish) {
+      vttCanvasRevision.value++;
+    } else if (!vttCanvasFrameRefreshScheduled) {
+      vttCanvasFrameRefreshScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        vttCanvasFrameRefreshScheduled = false;
+        if (!mounted) return;
+        vttCanvasRevision.value++;
+      });
+      WidgetsBinding.instance.scheduleFrame();
+    }
     if (save) {
       activeVttScene.tokens = localMapTokens
           .map((token) => _oculumVttDeepMap(token))
