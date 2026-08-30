@@ -27,6 +27,7 @@ import 'services/oculum_auth_service.dart';
 import 'services/oculum_auth_ui.dart';
 import 'services/oculum_cloud_save_service.dart';
 import 'services/oculum_realtime_service.dart';
+import 'services/oculum_save_profile.dart';
 import 'widgets/oculum_bottom_nav.dart';
 import 'widgets/oculum_desktop_top_menu.dart';
 import 'widgets/oculum_quick_edit_eye.dart';
@@ -77,6 +78,8 @@ part 'src/main/oculum_structured_effect_runtime.dart';
 part 'src/main/oculum_home_share_content.dart';
 part 'src/main/oculum_home_rules_settings_search.dart';
 part 'src/main/oculum_home_dialogs_quick_edit.dart';
+part 'src/main/oculum_fallen_eyes.dart';
+part 'src/main/oculum_starter_creation.dart';
 part 'src/main/oculum_painters.dart';
 
 class OculumObservedValueNotifier<T> extends ValueNotifier<T> {
@@ -159,6 +162,7 @@ Future<void> main() async {
 }
 
 Future<void> _initializeOculumOptionalStartupServices() async {
+  if (oculumUsesIsolatedSaveProfile) return;
   try {
     await OculumAuthService.instance.initialize();
   } catch (error, stackTrace) {
@@ -548,7 +552,9 @@ class OculumHomePage extends StatefulWidget {
 
 class _OculumHomePageState extends State<OculumHomePage>
     with WidgetsBindingObserver {
-  static const String saveKey = 'oculum_save_v9_manual_rgb_opacity_clean';
+  static final String saveKey = oculumProfiledStorageKey(
+    'oculum_save_v9_manual_rgb_opacity_clean',
+  );
 
   static const Color defaultPrimaryColor = Color(0xFFE6D8BD);
   static const Color defaultSecondaryColor = Color(0xFF08050B);
@@ -564,6 +570,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   static const int dicePageIndex = 13;
   static const int recipesPageIndex = 14;
   static const int quickConditionsPageIndex = 15;
+  static const int fallenEyesPageIndex = 16;
 
   int paginaCorrente = 0;
   int schedaCorrente = 0;
@@ -1121,6 +1128,13 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool tutorialDialogPending = false;
 
   final List<Map<String, dynamic>> schedePersonaggio = [];
+  // Collezione additiva: i dati sconosciuti di ogni Occhio sono mantenuti
+  // integralmente nel salvataggio per rendere le migrazioni idempotenti.
+  final List<Map<String, dynamic>> occhiCaduti = [];
+  final ValueNotifier<int> fallenEyesRevision = ValueNotifier<int>(0);
+  String fallenEyesSearch = '';
+  String fallenEyesRarityFilter = 'tutte';
+  bool? fallenEyesActiveFilter;
   final Map<String, List<Map<String, dynamic>>> textAttachments =
       <String, List<Map<String, dynamic>>>{};
   final TextEditingController sheetCodeController = TextEditingController();
@@ -1351,10 +1365,20 @@ class _OculumHomePageState extends State<OculumHomePage>
   String selectedSystemMonsterPresetId = '';
 
   final tutorialLevelController = TextEditingController(text: '0');
+  final tutorialGradeController = TextEditingController(text: '0');
   final tutorialExtraResController = TextEditingController(text: '0');
   final tutorialExtraVolController = TextEditingController(text: '0');
   final tutorialExtraMatController = TextEditingController(text: '0');
   final tutorialExtraOcuController = TextEditingController(text: '0');
+  String tutorialDifficultyId = 'normale';
+  String tutorialBackgroundId = 'contatto_naturale';
+  String tutorialRaceId = 'mhunan';
+  String tutorialFateId = 'avventura';
+  String tutorialArtName = 'Oculum Art Acquatica';
+  bool tutorialGeneraMostro = false;
+  String tutorialStatPrimaria = 'resilienza';
+  String tutorialStatSecondaria = 'volonta';
+  int tutorialMartialBonus = 0;
 
   final diceAmountController = TextEditingController(text: '1');
   final diceModifierController = TextEditingController(text: '0');
@@ -1598,6 +1622,17 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   bool tiroCriticoUno = false;
   bool tiroCriticoVenti = false;
+  // Persistente: una Ispirazione Oculum decide il prossimo dado dell'utente,
+  // anche dopo chiusura e riapertura della scheda.
+  bool ispirazioneOculumCriticoInAttesa = false;
+  final Map<String, int> esperienzaCriticaStatistiche = <String, int>{
+    'resilienza': 0,
+    'volonta': 0,
+    'materia': 0,
+    'oculum': 0,
+    'vc': 0,
+    'cm': 0,
+  };
   String lastValidRollSnapshot = '';
   bool lastValidRollCancelled = false;
 
@@ -1609,6 +1644,12 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool dadoOverlayDismissibile = false;
   bool overlayCriticoUno = false;
   bool overlayCriticoVenti = false;
+  bool slotMachineRollsEnabled = false;
+  int slotMachineSuccessChance = 50;
+  bool slotMachineLastSucceeded = false;
+  List<String> slotFortuneReels = <String>['?', '?', '?'];
+  List<bool> slotFortuneLocks = <bool>[false, false, false];
+  bool slotFortuneUsedThisLongRest = false;
 
   String ultimoEventoRiposo = 'Nessun evento di riposo registrato.';
   int artIntegrityRestIndex = 0;
@@ -1880,6 +1921,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     'Sessione Dadi',
     'Ricette',
     'Condizioni veloci',
+    'Occhi dei Caduti',
   ];
 
   final List<String> pageNamesEn = [
@@ -1899,6 +1941,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     'Dice Session',
     'Recipes',
     'Quick Conditions',
+    'Fallen Eyes',
   ];
 
   final List<DamageModifierOption> modificatoriDanno = [
@@ -3115,6 +3158,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       0,
       1,
       quickConditionsPageIndex,
+      fallenEyesPageIndex,
       2,
       3,
       4,
@@ -3300,6 +3344,8 @@ class _OculumHomePageState extends State<OculumHomePage>
         return restPage();
       case quickConditionsPageIndex:
         return quickConditionsPage();
+      case fallenEyesPageIndex:
+        return fallenEyesPage();
       case 2:
         return titlesPageEfficient();
       case 3:
@@ -3657,11 +3703,13 @@ class _OculumHomePageState extends State<OculumHomePage>
     recipeSearchController.dispose();
     recipeSearchQuery.dispose();
     recipesRevision.dispose();
+    fallenEyesRevision.dispose();
     gameModRevision.dispose();
 
     monsterPointAmountController.dispose();
 
     tutorialLevelController.dispose();
+    tutorialGradeController.dispose();
     tutorialExtraResController.dispose();
     tutorialExtraVolController.dispose();
     tutorialExtraMatController.dispose();
@@ -3678,6 +3726,8 @@ class _OculumHomePageState extends State<OculumHomePage>
         return Icons.nightlight_round;
       case quickConditionsPageIndex:
         return Icons.bolt;
+      case fallenEyesPageIndex:
+        return Icons.remove_red_eye;
       case 2:
         return Icons.style;
       case 3:
@@ -4032,6 +4082,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       'OCULUM — ${t('DADI', 'DICE')}',
       'OCULUM — ${t('RICETTE', 'RECIPES')}',
       'OCULUM - ${t('CONDIZIONI VELOCI', 'QUICK CONDITIONS')}',
+      'OCULUM - ${t('OCCHI DEI CADUTI', 'FALLEN EYES')}',
     ];
 
     final int safePage = paginaVisibileSicura(

@@ -459,6 +459,14 @@ class TemporaryOculumState {
   String get visibleValue => '$total';
 }
 
+/// Runtime buffs never bypass Sleeping Oculum. Keeping this rule separate
+/// makes it reusable by every sheet surface that renders the resource.
+int oculumVisibleTotal({
+  required int storedCurrent,
+  required int runtimeBonus,
+  required bool sleeping,
+}) => sleeping ? 0 : max(0, storedCurrent + runtimeBonus);
+
 TemporaryOculumState setTemporaryOculumFromManualVisibleValue({
   required TemporaryOculumState state,
   required int visibleValue,
@@ -539,6 +547,20 @@ TemporaryOculumState spendOculumFromTemporaryState({
     normalCurrent: nextNormal,
     temporary: nextTemporary,
     rollsRemaining: nextTemporary > 0 ? max(0, state.rollsRemaining) : 0,
+  );
+}
+
+/// A manual resource reset restores the normal pool only.  Any overflow is a
+/// separate, expiring pool, so retaining it here would make the next Skill
+/// cost consume an invisible value after the UI says the resource was reset.
+TemporaryOculumState resetTemporaryOculumState({
+  required int normalMaximum,
+  int minimumNormalCurrent = 0,
+}) {
+  return TemporaryOculumState(
+    normalCurrent: max(minimumNormalCurrent, normalMaximum),
+    temporary: 0,
+    rollsRemaining: 0,
   );
 }
 
@@ -773,6 +795,47 @@ double oculusSubtraitMasteryFraction({
   final target = oculusSubtraitMasteryTargetForGrade(grade);
   if (target <= 0) return 0;
   return (max(0, progress) / target).clamp(0.0, 1.0).toDouble();
+}
+
+/// EXP molto lenta assegnata ai soli tiri di CM, VC e quattro statistiche
+/// principali. Un critico positivo vale 100; un 18/19 riuscito vale 25. Le
+/// campagne più dure riducono ulteriormente il guadagno, senza cambiare i
+/// risultati del dado né gli EXP dei sottotratti.
+int oculumCoreRollExperienceGain({
+  required int naturalRoll,
+  required int faces,
+  required bool rollSucceeded,
+  required String difficulty,
+}) {
+  if (!rollSucceeded || faces <= 1 || naturalRoll < faces - 2) return 0;
+  // Le quattro statistiche devono avanzare in modo percepibile quando il
+  // giocatore ottiene un critico, pur restando meno frequenti delle normali
+  // fonti di crescita. 18 e 19 danno un forte anticipo, il 20 è il salto.
+  final raw = naturalRoll == faces ? 100 : 25;
+  final divisor = switch (difficulty.trim().toLowerCase()) {
+    'difficile' => 2,
+    'oculum' => 3,
+    _ => 1,
+  };
+  return max(1, raw ~/ divisor);
+}
+
+/// Crescita autonoma dei mostri d'élite sui loro tiri naturali: un Boss
+/// trasforma il 20 in uno scatto di livello, mentre Mini-Boss e 18/19
+/// ricevono molta EXP senza saltare subito di grado.
+({int levels, int experience}) oculumEliteMonsterRollProgress({
+  required bool boss,
+  required bool miniBoss,
+  required int naturalRoll,
+}) {
+  if (!boss && !miniBoss) return (levels: 0, experience: 0);
+  if (naturalRoll == 20) {
+    return boss ? (levels: 1, experience: 0) : (levels: 0, experience: 500);
+  }
+  if (naturalRoll >= 18) {
+    return boss ? (levels: 0, experience: 300) : (levels: 0, experience: 150);
+  }
+  return (levels: 0, experience: 0);
 }
 
 class ReputationEntry {
@@ -1027,6 +1090,7 @@ class OculumTitle {
     this.karma = 0,
     this.equipaggiato = false,
     this.evoluto = false,
+    this.sempreVisibile = false,
     this.openName = '',
     this.openDescription = '',
     this.openBuff = '',
@@ -1065,6 +1129,10 @@ class OculumTitle {
   bool equipaggiato;
   bool evoluto;
 
+  /// Solo un Titolo indossato può essere esposto pubblicamente. Il campo è
+  /// additivo, quindi i salvataggi precedenti restano invariati.
+  bool sempreVisibile;
+
   String openName;
   String openDescription;
   String openBuff;
@@ -1096,6 +1164,7 @@ class OculumTitle {
       'karma': karma,
       'equipaggiato': equipaggiato,
       'evoluto': evoluto,
+      'sempreVisibile': sempreVisibile,
       'openName': openName,
       'openDescription': openDescription,
       'openBuff': openBuff,
@@ -1133,6 +1202,7 @@ class OculumTitle {
       karma: readIntValue(json['karma']),
       equipaggiato: readBoolValue(json['equipaggiato']),
       evoluto: readBoolValue(json['evoluto']),
+      sempreVisibile: readBoolValue(json['sempreVisibile']),
       openName: json['openName'] ?? '',
       openDescription: json['openDescription'] ?? '',
       openBuff: json['openBuff'] ?? '',
@@ -1168,6 +1238,49 @@ class OculumTitle {
           .toList(),
       openEffects: oculumReadStructuredEffects(json['openEffects']),
     );
+  }
+}
+
+/// A title is considered evolved for public-title priority only when its Open
+/// can be used. `openAttiva` means the Open is currently running and must not
+/// be used here: a temporarily disabled Open still keeps its title priority.
+bool oculumTitleHasActivatableOpen(OculumTitle title) => title.evoluto;
+
+bool oculumTitleCanBeAlwaysVisible(
+  OculumTitle candidate,
+  Iterable<OculumTitle> titles,
+) =>
+    candidate.equipaggiato &&
+    (oculumTitleHasActivatableOpen(candidate) ||
+        !titles.any(
+          (title) => title.equipaggiato && oculumTitleHasActivatableOpen(title),
+        ));
+
+OculumTitle? oculumAlwaysVisibleTitle(Iterable<OculumTitle> titles) {
+  final eligible = titles
+      .where((title) => title.sempreVisibile && title.equipaggiato)
+      .toList(growable: false);
+  if (eligible.isEmpty) return null;
+  return eligible.where(oculumTitleHasActivatableOpen).firstOrNull ??
+      eligible.first;
+}
+
+/// Keeps legacy or manually edited JSON valid: only one equipped Title may be
+/// public, and an equipped Title with an activatable Open always takes
+/// precedence.
+void oculumNormalizeAlwaysVisibleTitles(Iterable<OculumTitle> titles) {
+  final all = titles.toList(growable: false);
+  final eligible = all
+      .where((title) => title.sempreVisibile && title.equipaggiato)
+      .toList(growable: false);
+  final evolvedEquipped = all.any(
+    (title) => title.equipaggiato && oculumTitleHasActivatableOpen(title),
+  );
+  final selected = evolvedEquipped
+      ? eligible.where(oculumTitleHasActivatableOpen).firstOrNull
+      : eligible.firstOrNull;
+  for (final title in all) {
+    title.sempreVisibile = identical(title, selected);
   }
 }
 
@@ -2883,6 +2996,19 @@ class CharacterArt {
       ),
     );
   }
+}
+
+/// L'Open nasce quando ogni Skill possiede una Forma III realmente scritta e
+/// diversa dalle altre. È intenzionalmente separato dai livelli numerici:
+/// completare le tre tecniche è la condizione narrativa richiesta.
+bool oculumArtHasDistinctThirdForms(CharacterArt art) {
+  if (art.skills.length < 3) return false;
+  final forms = art.skills
+      .map((skill) => skill.evo3.trim().toLowerCase())
+      .where((text) => text.isNotEmpty)
+      .toList(growable: false);
+  return forms.length == art.skills.length &&
+      forms.toSet().length == forms.length;
 }
 
 // =====================================================

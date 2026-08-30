@@ -21,6 +21,9 @@ extension _OculumCampaigns on _OculumHomePageState {
       'schedePersonaggio': schedePersonaggio
           .map((x) => Map<String, dynamic>.from(x))
           .toList(),
+      'occhiCaduti': occhiCaduti
+          .map((x) => Map<String, dynamic>.from(x))
+          .toList(growable: false),
       'modalitaMaster': modalitaMaster,
       'masterEnemyFullSheetVisibility': masterEnemyFullSheetVisibility,
       'masterPublicDiceVisible': masterPublicDiceVisible,
@@ -108,6 +111,11 @@ extension _OculumCampaigns on _OculumHomePageState {
       'name': '${data['campaignName'] ?? 'Campagna principale'}',
       'schedaCorrente': readIntValue(data['schedaCorrente']),
       'schedePersonaggio': sheets,
+      'occhiCaduti':
+          (data['occhiCaduti'] is List ? data['occhiCaduti'] as List : const [])
+              .whereType<Map>()
+              .map((x) => Map<String, dynamic>.from(x))
+              .toList(growable: false),
       'modalitaMaster': readBoolValue(data['modalitaMaster']),
       'masterEnemyFullSheetVisibility': readBoolValue(
         data['masterEnemyFullSheetVisibility'],
@@ -180,6 +188,15 @@ extension _OculumCampaigns on _OculumHomePageState {
     schedePersonaggio
       ..clear()
       ..addAll(sheets);
+    occhiCaduti
+      ..clear()
+      ..addAll(
+        (campaign['occhiCaduti'] is List
+                ? campaign['occhiCaduti'] as List
+                : const [])
+            .whereType<Map>()
+            .map((x) => Map<String, dynamic>.from(x)),
+      );
     schedaCorrente = readIntValue(campaign['schedaCorrente']);
     modalitaMaster = readBoolValue(campaign['modalitaMaster']);
     masterEnemyFullSheetVisibility = readBoolValue(
@@ -338,6 +355,9 @@ extension _OculumCampaigns on _OculumHomePageState {
       schedePersonaggio
         ..clear()
         ..add(emptySheet);
+      // Gli Occhi appartengono alla campagna uscente, già salvata poco sopra.
+      // Una nuova campagna parte senza portarli con sé.
+      occhiCaduti.clear();
       storySessionNotes.clear();
       recipes.clear();
       recipesRevision.value++;
@@ -543,6 +563,8 @@ extension _OculumCampaigns on _OculumHomePageState {
   Widget campaignPanel() {
     ensureCampaignsReady();
     final stats = campaignQuickStats();
+    const sheetPreviewLimit = 24;
+    final previewCount = min(sheetPreviewLimit, schedePersonaggio.length);
 
     return gothicPanel(
       borderColor: tertiaryColor,
@@ -636,13 +658,23 @@ extension _OculumCampaigns on _OculumHomePageState {
             spacing: 8,
             runSpacing: 8,
             children: [
-              for (int i = 0; i < schedePersonaggio.length; i++)
+              for (int i = 0; i < previewCount; i++)
                 campaignStatChip(
                   nomeSchedaPersonaggio(i),
                   'HP ${sheetIntValueAt(i, 'currentHp')}/${max(1, sheetIntValueAt(i, 'resilienza') * 10)} • OCU ${sheetIntValueAt(i, 'currentOculum')}',
                 ),
             ],
           ),
+          if (previewCount < schedePersonaggio.length) ...[
+            const SizedBox(height: 8),
+            smallInfoText(
+              t(
+                'Mostrate $previewCount di ${schedePersonaggio.length} schede per mantenere fluida la pagina Master. L’elenco completo è disponibile in Gestisci schede salvate.',
+                'Showing $previewCount of ${schedePersonaggio.length} sheets to keep the Master page responsive. The full list is available in Manage saved sheets.',
+              ),
+              color: Colors.white54,
+            ),
+          ],
         ],
       ),
     );

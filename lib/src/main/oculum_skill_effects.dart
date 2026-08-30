@@ -22,6 +22,7 @@ const List<String> oculumStructuredEffectTypes = <String>[
   'aggiungi_reazioni',
   'aggiungi_reazioni_rapide',
   'consumo_risorsa',
+  'conversione_risorsa',
   'stato',
 ];
 
@@ -954,6 +955,8 @@ String oculumStructuredEffectDescription(
       return 'Aggiunge $value reazioni rapide';
     case 'consumo_risorsa':
       return 'Consuma $value $resource';
+    case 'conversione_risorsa':
+      return withPeriod('Trasforma $displayedValue $resource in $target');
     case 'stato':
       return 'Applica lo stato ${effect.appliedState.isEmpty ? target : effect.appliedState}'
           '${effect.elementType.isEmpty ? '' : ' (${effect.elementType})'}';

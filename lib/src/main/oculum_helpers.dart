@@ -2408,7 +2408,10 @@ double oculumEvaluateCommandFormula(
 }) {
   final percentage = oculumStandalonePercentage(raw);
   if (percentage == null) return oculumEvaluateFormula(raw, vars);
-  final base = vars[targetKey];
+  // A naked percentage (for example `@Mat+200%`) is a bonus based on the
+  // stable, raw value of the target.  It must not scale temporary effects or
+  // other active formula bonuses again on every parser rebuild.
+  final base = vars['${targetKey}_percentage_base'] ?? vars[targetKey];
   if (base == null) {
     throw FormatException('Percentuale senza base disponibile per $targetKey.');
   }
@@ -2625,7 +2628,7 @@ List<OculumFormulaCommand> oculumParseFormulaCommands(
         key,
         triggerRaw: triggerRaw,
       )) {
-        final base = vars[targetKey];
+        final base = vars['${targetKey}_percentage_base'] ?? vars[targetKey];
         if (base == null) {
           out.add(
             OculumFormulaCommand(

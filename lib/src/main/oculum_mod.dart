@@ -159,6 +159,10 @@ extension _OculumGameModUi on _OculumHomePageState {
       activeGameMod = normalized;
       paginaCorrente = normalized == 'oculus' ? 0 : paginaCorrente;
       if (normalized == 'oculus') {
+        // Oculus è una modalità esclusiva: le mod grafiche/roulette restano
+        // configurate ma vengono spente, senza modificare dati di gioco.
+        temiOldSchool = false;
+        slotMachineRollsEnabled = false;
         oculusModData = oculusNormalizeCharacterData(oculusModData);
       }
     });

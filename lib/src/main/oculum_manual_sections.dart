@@ -1222,9 +1222,9 @@ MODALITA INTERFACCIA
 
 Puoi cambiare Mobile/Desktop e Veloce dalle Impostazioni.
 
-CENTRO PARTITA
+COMBATTIMENTO E CENTRO PARTITA
 
-Il Centro partita e il cruscotto della scheda.
+Il pannello unificato Combattimento e Centro partita e il cruscotto della scheda.
 Serve per le azioni che usi spesso durante una sessione:
 
 - HP: porta alla zona vita.
@@ -1235,7 +1235,6 @@ Serve per le azioni che usi spesso durante una sessione:
 - Danno: apre la zona Danno/Cura.
 - Difesa: porta al bonus difesa o ai valori difensivi.
 - Tira VC e Tira CM: tirano subito senza cercare la statistica.
-- +CM e +VC: aumentano velocemente Materia o Volonta secondo la regola rapida.
 - Modifica: apre Modifica rapida.
 
 Se non sai dove andare, parti dal Centro partita.
@@ -1491,9 +1490,9 @@ INTERFACE MODES
 
 You can switch Mobile/Desktop and Fast Mode from Settings.
 
-PLAY CENTER
+COMBAT AND PLAY CENTER
 
-The Play center is the sheet dashboard.
+The unified Combat and Play center is the sheet dashboard.
 It is for actions used often during a session:
 
 - HP: jumps to life.
@@ -1503,7 +1502,6 @@ It is for actions used often during a session:
 - Damage: opens Damage/Healing.
 - Defense: jumps to defense bonus or defensive values.
 - Roll VC and Roll CM: roll immediately.
-- +CM and +VC: quick increases using the rule shortcuts.
 - Edit: opens Quick edit.
 
 If you do not know where to go, start from the Play center.
@@ -2338,6 +2336,7 @@ Possibili risultati:
 - Esplosione di Oculum: +25 HP, Oculum attuale pari alla vita anche oltre il massimo, danni pari a Livello + Grado, difesa pari alla meta di Livello + Grado e durata minima 9 tiri, inclusi i sottotratti.
 - Adrenalina: +1 Reazione veloce e +5 + Livello + Grado iniziativa.
 - Azzeramento delle vulnerabilita: resistenza ai colpi, rimozione dei malus temporanei negativi e della fatica oltre soglia.
+- Tenacia: rimuove tutti i malus temporanei e tutte le condizioni negative, poi applica Rigenerazione per 3 turni.
 - Stanchezza: -2 ai tiri per colpire e difendersi, -5 - Livello - Grado ai danni.
 - Niente: nessun effetto.
 
@@ -2541,6 +2540,7 @@ Possible results:
 - Oculum Burst: +25 HP, current Oculum equal to life even above the maximum, damage equal to Level + Grade, defense equal to half Level + Grade and minimum duration 9 rolls, including subtraits.
 - Adrenaline: +1 fast Reaction and +5 + Level + Grade initiative.
 - Vulnerability Reset: resistance to hits, removal of negative temporary penalties and fatigue above threshold.
+- Tenacity: removes all temporary penalties and all negative conditions, then applies Regeneration for 3 turns.
 - Exhaustion: -2 to attack and defense rolls, -5 - Level - Grade to damage.
 - Nothing: no effect.
 
@@ -2632,7 +2632,7 @@ La pagina Riposo mostra Giorno, Nuova Fase, Tremana, Semana e Dodemana. Il ripos
 
 STATO DI FORZA
 
-Quando gli HP scendono a un quarto o meno del massimo, la scheda esegue un solo controllo di crisi. Il risultato può essere Corpo non Mollare, Occhi Attenti, Esplosione di Oculum, Adrenalina, Azzeramento delle Vulnerabilità, Stanchezza oppure nessun effetto. Esplosione di Oculum dura almeno 9 tiri, compresi quelli dei sottotratti. Al termine applica il proprio esito automatico; lo Stato di Forza si azzera soltanto quando la durata minima è conclusa e gli HP tornano sopra la soglia.
+Quando gli HP scendono a un quarto o meno del massimo, la scheda esegue un solo controllo di crisi. Il risultato può essere Corpo non Mollare, Occhi Attenti, Esplosione di Oculum, Adrenalina, Azzeramento delle Vulnerabilità, Tenacia, Stanchezza oppure nessun effetto. Tenacia rimuove i malus e applica Rigenerazione percentuale per 3 turni. Esplosione di Oculum dura almeno 9 tiri, compresi quelli dei sottotratti. Al termine applica il proprio esito automatico; lo Stato di Forza si azzera soltanto quando la durata minima è conclusa e gli HP tornano sopra la soglia.
 
 MAPPA, TOKEN E TURNISTICA
 
@@ -2681,7 +2681,7 @@ The Rest page shows Day, New Phase, Tremana, Semana and Dodemana. A long rest br
 
 FORCE STATE
 
-When HP fall to one quarter or less of maximum, the sheet makes one crisis check. The result may be Body, Do Not Give Up; Sharp Eyes; Oculum Burst; Adrenaline; Vulnerability Reset; Exhaustion; or no effect. Oculum Burst lasts at least 9 rolls, including subtrait rolls. Its automatic aftermath is resolved at the end; Force State resets only after the minimum duration ends and HP rise above the threshold.
+When HP fall to one quarter or less of maximum, the sheet makes one crisis check. The result may be Body, Do Not Give Up; Sharp Eyes; Oculum Burst; Adrenaline; Vulnerability Reset; Tenacity; Exhaustion; or no effect. Tenacity removes penalties and applies percentage Regeneration for 3 turns. Oculum Burst lasts at least 9 rolls, including subtrait rolls. Its automatic aftermath is resolved at the end; Force State resets only after the minimum duration ends and HP rise above the threshold.
 
 MAP, TOKENS AND TURN ORDER
 

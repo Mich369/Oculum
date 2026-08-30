@@ -2114,20 +2114,165 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
   // TUTORIAL
   // =====================================================
 
+  OculumStarterChoice sceltaTutorial(
+    List<OculumStarterChoice> scelte,
+    String id,
+  ) => scelte.firstWhere(
+    (scelta) => scelta.id == id,
+    orElse: () => scelte.first,
+  );
+
+  int _statPiuBassa(Map<String, int> stats) {
+    const ordine = ['resilienza', 'volonta', 'materia'];
+    return ordine.map((key) => stats[key] ?? 0).reduce(min);
+  }
+
+  void _aggiungiAllaStatPiuBassa(Map<String, int> stats, int punti) {
+    const ordine = ['resilienza', 'volonta', 'materia'];
+    for (var i = 0; i < punti; i++) {
+      final minimo = _statPiuBassa(stats);
+      final chiave = ordine.firstWhere((key) => stats[key] == minimo);
+      stats[chiave] = (stats[chiave] ?? 0) + 1;
+    }
+  }
+
+  Widget _tutorialChoiceField({
+    required String label,
+    required String value,
+    required List<OculumStarterChoice> choices,
+    required ValueChanged<String> onChanged,
+  }) {
+    final selected = sceltaTutorial(choices, value);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DropdownButtonFormField<String>(
+          initialValue: selected.id,
+          dropdownColor: const Color(0xFF202431),
+          decoration: InputDecoration(labelText: label),
+          items: choices
+              .map(
+                (choice) => DropdownMenuItem(
+                  value: choice.id,
+                  child: Text(choice.nome),
+                ),
+              )
+              .toList(),
+          onChanged: (next) => onChanged(next ?? selected.id),
+        ),
+        const SizedBox(height: 4),
+        smallInfoText(selected.descrizione),
+      ],
+    );
+  }
+
   void applicaSettaggioTutorial() {
     final livello = max(0, leggiNumero(tutorialLevelController));
+    final grado = max(0, leggiNumero(tutorialGradeController));
     final extraRes = leggiNumero(tutorialExtraResController);
     final extraVol = leggiNumero(tutorialExtraVolController);
     final extraMat = leggiNumero(tutorialExtraMatController);
     final extraOcu = leggiNumero(tutorialExtraOcuController);
+    final background = sceltaTutorial(
+      oculumStarterBackgrounds,
+      tutorialBackgroundId,
+    );
+    final razza = sceltaTutorial(oculumStarterRaces, tutorialRaceId);
+    final fato = sceltaTutorial(oculumStarterFateTitles, tutorialFateId);
+    final art = oculumStarterArtChoices().firstWhere(
+      (art) => art.nome == tutorialArtName,
+      orElse: oculumStarterWaterArt,
+    );
+    final eMartial = art.tipo == 'Martial Art';
+    if (eMartial && tutorialMartialBonus <= 0) {
+      tutorialMartialBonus = oculumStarterMartialBonus(Random());
+    }
+    final puntiLibriDisponibili =
+        oculumStarterFreeStatPoints(
+          monster: tutorialGeneraMostro,
+          level: livello,
+          grade: grado,
+        ) +
+        (eMartial ? tutorialMartialBonus : 0);
+    final puntiLivelloSpesi =
+        max(0, extraRes) +
+        max(0, extraVol) +
+        max(0, extraMat) +
+        max(0, extraOcu);
+    if (puntiLivelloSpesi > puntiLibriDisponibili) {
+      setState(() {
+        risultato =
+            'Hai distribuito $puntiLivelloSpesi punti, ma il budget disponibile è $puntiLibriDisponibili.';
+      });
+      return;
+    }
+    if (eMartial && extraOcu > 0) {
+      setState(() {
+        risultato =
+            'I punti bonus di una Martial Art non possono essere messi in Oculum.';
+      });
+      return;
+    }
+    final primaria = tutorialStatPrimaria;
+    final secondaria = tutorialStatSecondaria == primaria
+        ? const [
+            'resilienza',
+            'volonta',
+            'materia',
+            'oculum',
+          ].firstWhere((stat) => stat != primaria)
+        : tutorialStatSecondaria;
+    final stats = <String, int>{
+      'resilienza':
+          extraRes + background.resilienza + razza.resilienza + fato.resilienza,
+      'volonta': extraVol + background.volonta + razza.volonta + fato.volonta,
+      'materia': extraMat + background.materia + razza.materia + fato.materia,
+      'oculum': extraOcu + background.oculum + razza.oculum + fato.oculum,
+    };
+    if (!tutorialGeneraMostro) {
+      for (final stat in const ['resilienza', 'volonta', 'materia', 'oculum']) {
+        stats[stat] = (stats[stat] ?? 0) + 1;
+      }
+      stats[primaria] = (stats[primaria] ?? 0) + 2;
+      stats[secondaria] = (stats[secondaria] ?? 0) + 1;
+    }
+    if (eMartial) {
+      _aggiungiAllaStatPiuBassa(stats, max(0, stats['oculum'] ?? 0));
+      stats['oculum'] = 0;
+    }
+    if (tutorialDifficultyId == 'facile') {
+      _aggiungiAllaStatPiuBassa(stats, 1);
+    } else if (tutorialDifficultyId == 'difficile' ||
+        tutorialDifficultyId == 'oculum') {
+      final chiave = [
+        'resilienza',
+        'volonta',
+        'materia',
+        'oculum',
+      ].reduce((a, b) => (stats[a] ?? 0) >= (stats[b] ?? 0) ? a : b);
+      final malus = tutorialDifficultyId == 'oculum' ? 2 : 1;
+      stats[chiave] = max(0, (stats[chiave] ?? 0) - malus);
+    }
+    final obserIniziale = switch (background.id) {
+      'povero_citta' => Random().nextInt(4) + 1,
+      'benestante' => Random().nextInt(50) + 21,
+      _ => background.obser,
+    };
+    final expIniziale = oculumStarterInitialExperience(Random());
+    final difficoltaLabel = switch (tutorialDifficultyId) {
+      'facile' => 'Facile: +1 alla statistica fondamentale più bassa.',
+      'difficile' => 'Difficile: -1 alla statistica fondamentale più alta.',
+      'oculum' => 'Oculum: -2 alla statistica fondamentale più alta.',
+      _ => 'Normale: nessuna modifica aggiuntiva.',
+    };
 
     setState(() {
       livelloController.text = livello.toString();
-
-      resilienzaController.text = (3 + extraRes).toString();
-      volontaController.text = (1 + extraVol).toString();
-      materiaController.text = (0 + extraMat).toString();
-      oculumController.text = (1 + extraOcu).toString();
+      expController.text = expIniziale.toString();
+      resilienzaController.text = (stats['resilienza'] ?? 0).toString();
+      volontaController.text = (stats['volonta'] ?? 0).toString();
+      materiaController.text = (stats['materia'] ?? 0).toString();
+      oculumController.text = (stats['oculum'] ?? 0).toString();
       currentResilienzaController.text = resilienzaController.text;
       currentVolontaController.text = volontaController.text;
       currentMateriaController.text = materiaController.text;
@@ -2142,11 +2287,81 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       aggiornaGradoAutomatico();
       refullaHp();
 
+      titoli.removeWhere(
+        (titolo) => titolo.chiaveSistema.startsWith('tutorial_'),
+      );
+      trattiRazziali.removeWhere(
+        (tratto) => tratto.chiaveSistema.startsWith('tutorial_'),
+      );
+      arti.removeWhere(
+        (esistente) => oculumStarterArtChoices().any(
+          (starter) => starter.nome == esistente.nome,
+        ),
+      );
+      titoli.add(
+        OculumTitle(
+          nome: background.nome,
+          tipo: 'Titolo d’Azione',
+          ottenimento: 'Scelto durante la creazione guidata.',
+          leggenda: background.descrizione,
+          buff: background.descrizione,
+          puntoCieco: background.puntoCieco,
+          skill: 'Il tuo passato influenza le azioni e le scene sociali.',
+          richiede: background.conMaster
+              ? 'Da completare con il Master.'
+              : difficoltaLabel,
+          equipaggiato: true,
+          sempreVisibile: true,
+          chiaveSistema: 'tutorial_background_${background.id}',
+        ),
+      );
+      titoli.add(
+        OculumTitle(
+          nome: fato.nome,
+          tipo: 'Titolo del Fato',
+          ottenimento: 'Scelto durante la creazione guidata.',
+          leggenda: fato.descrizione,
+          buff: fato.descrizione,
+          puntoCieco: '',
+          skill: 'Segui il tuo Fato per far evolvere il Titolo.',
+          richiede: fato.conMaster
+              ? 'Da completare con il Master.'
+              : difficoltaLabel,
+          chiaveSistema: 'tutorial_fate_${fato.id}',
+        ),
+      );
+      trattiRazziali.add(
+        OculumTitle(
+          nome: razza.nome,
+          tipo: 'Tratto Razziale',
+          ottenimento: 'Scelto durante la creazione guidata.',
+          leggenda: razza.descrizione,
+          buff: razza.descrizione,
+          puntoCieco: '',
+          skill: 'Tratto innato della razza.',
+          richiede: razza.conMaster
+              ? 'Da completare con il Master.'
+              : difficoltaLabel,
+          equipaggiato: true,
+          chiaveSistema: 'tutorial_race_${razza.id}',
+        ),
+      );
+      razzaController.text = razza.nome;
+      tipoSchedaController.text = tutorialGeneraMostro
+          ? 'Mostro'
+          : 'Personaggio';
+      gradoController.text = grado.toString();
+      backgroundController.text =
+          '${background.nome}\n${background.descrizione}\n\n$difficoltaLabel';
+      obserController.text = (leggiNumero(obserController) + obserIniziale)
+          .toString();
+      arti.add(art);
+
       tutorialCompletato = true;
 
       risultato = t(
-        'Tutorial applicato. Scheda inizializzata dal livello $livello.',
-        'Tutorial applied. Sheet initialized from level $livello.',
+        'Tutorial applicato: ${background.nome}, ${razza.nome}, ${art.nome}. EXP iniziale: $expIniziale.',
+        'Tutorial applied: ${background.nome}, ${razza.nome}, ${art.nome}. Starting EXP: $expIniziale.',
       );
 
       aggiungiLog(risultato);
@@ -2160,133 +2375,401 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF10121A),
-          title: Text(
-            'Tutorial Oculum',
-            style: TextStyle(color: tertiaryColor, fontWeight: FontWeight.bold),
+          backgroundColor: const Color(0xFF0B0E16),
+          elevation: 24,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: tertiaryColor.withValues(alpha: 0.72)),
+          ),
+          title: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: tertiaryColor.withValues(alpha: 0.16),
+                  border: Border.all(color: tertiaryColor, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: tertiaryColor.withValues(alpha: 0.22),
+                      blurRadius: 18,
+                    ),
+                  ],
+                ),
+                child: Icon(Icons.visibility, color: tertiaryColor),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Rito di Creazione',
+                      style: TextStyle(
+                        color: tertiaryColor,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 20,
+                      ),
+                    ),
+                    Text(
+                      'O C U L U M  •  quattro sigilli',
+                      style: TextStyle(
+                        color: primaryColor.withValues(alpha: 0.85),
+                        fontSize: 11,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    t('Setup iniziale', 'Starting setup'),
-                    style: TextStyle(
-                      color: primaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  smallInfoText(
-                    t(
-                      'Il tutorial parte da livello 0. Il livello 0 serve per creare la scheda senza forzare subito il primo avanzamento. I Titoli del Fato non dipendono dal livello del personaggio, ma dal livello delle Skill nelle Art.',
-                      'The tutorial starts at level 0. Level 0 lets you create the sheet without forcing the first advancement immediately. Fate Titles do not depend on character level, but on Skill levels inside Arts.',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  campoTesto(
-                    label: t('Livello iniziale', 'Starting level'),
-                    controller: tutorialLevelController,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: campoTesto(
-                          label: 'Extra RES',
-                          controller: tutorialExtraResController,
+              child: StatefulBuilder(
+                builder: (context, setDialogState) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(13),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            primaryColor.withValues(alpha: 0.18),
+                            tertiaryColor.withValues(alpha: 0.08),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: primaryColor.withValues(alpha: 0.35),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: campoTesto(
-                          label: 'Extra VOL',
-                          controller: tutorialExtraVolController,
+                      child: const Text(
+                        'Scegli il tuo cammino. Ogni sigillo modifica la scheda reale, ma resterà sempre modificabile dopo la creazione.',
+                        style: TextStyle(color: Colors.white70, height: 1.25),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      t('1. Difficoltà', '1. Difficulty'),
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    smallInfoText(
+                      'La difficoltà modifica automaticamente la scheda finale: Facile +1 alla statistica più bassa; Difficile -1 alla più alta; Oculum -2 alla più alta.',
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: tutorialDifficultyId,
+                      dropdownColor: const Color(0xFF202431),
+                      decoration: const InputDecoration(
+                        labelText: 'Difficoltà',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'facile',
+                          child: Text('Facile'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'normale',
+                          child: Text('Normale'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'difficile',
+                          child: Text('Difficile'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'oculum',
+                          child: Text('Oculum'),
+                        ),
+                      ],
+                      onChanged: (value) => setDialogState(
+                        () => tutorialDifficultyId = value ?? 'normale',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '2. Personaggio',
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: tutorialGeneraMostro,
+                      title: const Text('Genera come Mostro'),
+                      subtitle: const Text(
+                        'Crea una scheda Mostro; Titoli, razza e Art restano modificabili.',
+                      ),
+                      onChanged: (value) =>
+                          setDialogState(() => tutorialGeneraMostro = value),
+                    ),
+                    if (!tutorialGeneraMostro) ...[
+                      smallInfoText(
+                        'Umanoide: 3 punti alla primaria, 2 alla secondaria, +1 alle altre due. Scegli qui dove vanno i 3 e i 2.',
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        initialValue: tutorialStatPrimaria,
+                        dropdownColor: const Color(0xFF202431),
+                        decoration: const InputDecoration(
+                          labelText: 'Statistica primaria — 3 punti',
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'resilienza',
+                            child: Text('RES — HP e tenuta'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'volonta',
+                            child: Text('VOL — danni, difesa, VC e peso'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'materia',
+                            child: Text('MAT — CM e Difesa'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'oculum',
+                            child: Text(
+                              'OCU — Art, cerchi, rituali e poteri oculari',
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) => setDialogState(
+                          () => tutorialStatPrimaria = value ?? 'resilienza',
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: campoTesto(
-                          label: 'Extra MAT',
-                          controller: tutorialExtraMatController,
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        initialValue: tutorialStatSecondaria,
+                        dropdownColor: const Color(0xFF202431),
+                        decoration: const InputDecoration(
+                          labelText: 'Statistica secondaria — 2 punti',
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'resilienza',
+                            child: Text('RES — HP e tenuta'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'volonta',
+                            child: Text('VOL — danni, difesa, VC e peso'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'materia',
+                            child: Text('MAT — CM e Difesa'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'oculum',
+                            child: Text(
+                              'OCU — Art, cerchi, rituali e poteri oculari',
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) => setDialogState(
+                          () => tutorialStatSecondaria = value ?? 'volonta',
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: campoTesto(
-                          label: 'Extra OCU',
-                          controller: tutorialExtraOcuController,
-                        ),
+                    ] else
+                      smallInfoText(
+                        'Mostro: 9 punti liberi per livello +10 per grado. Esempio: livello 10, grado I = 100 punti liberi.',
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    t('Regole fondamentali', 'Core rules'),
-                    style: TextStyle(
-                      color: tertiaryColor,
-                      fontWeight: FontWeight.bold,
+                    campoTesto(
+                      label: t('Livello iniziale', 'Starting level'),
+                      controller: tutorialLevelController,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    t(
-                      '• Resilienza aumenta gli HP massimi.\n'
-                          '• Volontà aumenta danno, difesa, VC e peso trasportabile.\n'
-                          '• Materia aumenta CM e Difesa.\n'
-                          '• Oculum potenzia Arti, cerchi, rituali e poteri oculari.\n'
-                          '• Lo Scudo Critico dimezza i danni finché non viene spezzato da un critico in fight.\n'
-                          '• I Titoli del Fato si ottengono dalle Skill delle Art: prima Skill livello 1, seconda Skill livello 2, terza Skill livello 3.\n'
-                          '• Le pagine diario possono dare Ispirazioni.\n'
-                          '• I Gradi vengono controllati automaticamente in base al livello e al Rebirth.',
-                      '• Resilience increases max HP.\n'
-                          '• Will increases damage, defense, VC and carrying weight.\n'
-                          '• Materia increases CM and Defense.\n'
-                          '• Oculum empowers Arts, circles, rituals and eye powers.\n'
-                          '• Critical Shield halves damage until broken by a critical during combat.\n'
-                          '• Fate Titles are gained from Art Skills: first Skill level 1, second Skill level 2, third Skill level 3.\n'
-                          '• Diary pages can grant Inspirations.\n'
-                          '• Grades are checked automatically based on level and Rebirth.',
+                    const SizedBox(height: 4),
+                    campoTesto(
+                      label: t('Grado iniziale', 'Starting grade'),
+                      controller: tutorialGradeController,
                     ),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    t('Funzioni principali', 'Main features'),
-                    style: TextStyle(
-                      color: primaryColor,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 4),
+                    smallInfoText(
+                      tutorialGeneraMostro
+                          ? 'Budget attuale: 9 × livello + 10 × grado. L’EXP iniziale viene estratta casualmente tra 0 e 120.'
+                          : 'Umanoide: distribuzione iniziale 3/2/1/1, poi +1 punto libero per livello e +10 per grado. L’EXP iniziale viene estratta casualmente tra 0 e 120.',
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    t(
-                      'Scheda: HP, danni, cura, tiri, stats, livello e grado.\n'
-                          'Riposo: bisogni, cenere, recuperi e attività pesanti.\n'
-                          'Titoli: buff, karma, Open e punti ciechi.\n'
-                          'Art: nome, tipo e descrizione delle Art.\n'
-                          'Skill: skill scritte e creazione skill.\n'
-                          'Storia: background e diario.\n'
-                          'Risorse: Obser, polveri e Ispirazioni.\n'
-                          'Impostazioni: colori avanzati, log, lingua e tutorial.',
-                      'Sheet: HP, damage, healing, rolls, stats, level and grade.\n'
-                          'Rest: needs, ash, recovery and heavy activities.\n'
-                          'Titles: buffs, Karma, Opens and blind spots.\n'
-                          'Arts: Art name, type and description.\n'
-                          'Skills: written skills and skill creation.\n'
-                          'Story: background and diary.\n'
-                          'Resources: Obser, powders and Inspirations.\n'
-                          'Settings: advanced colors, log, language and tutorial.',
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: campoTesto(
+                            label: 'RES — HP e tenuta',
+                            controller: tutorialExtraResController,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: campoTesto(
+                            label: 'VOL — danni, difesa, VC e peso',
+                            controller: tutorialExtraVolController,
+                          ),
+                        ),
+                      ],
                     ),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: campoTesto(
+                            label: 'MAT — CM e Difesa',
+                            controller: tutorialExtraMatController,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: campoTesto(
+                            label:
+                                'OCU — Art, cerchi, rituali e poteri oculari',
+                            controller: tutorialExtraOcuController,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    smallInfoText(
+                      'Senza un’Oculum Art non possiedi Oculum: con una Martial Art ogni punto OCU viene trasferito automaticamente alla statistica fondamentale più bassa.',
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '3. Origine e Fato',
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    _tutorialChoiceField(
+                      label:
+                          'Background — diventa il tuo Titolo d’Azione visibile',
+                      value: tutorialBackgroundId,
+                      choices: oculumStarterBackgrounds,
+                      onChanged: (value) =>
+                          setDialogState(() => tutorialBackgroundId = value),
+                    ),
+                    const SizedBox(height: 8),
+                    _tutorialChoiceField(
+                      label: 'Razza',
+                      value: tutorialRaceId,
+                      choices: oculumStarterRaces,
+                      onChanged: (value) =>
+                          setDialogState(() => tutorialRaceId = value),
+                    ),
+                    const SizedBox(height: 8),
+                    _tutorialChoiceField(
+                      label: 'Titolo del Fato — perché sei qui?',
+                      value: tutorialFateId,
+                      choices: oculumStarterFateTitles,
+                      onChanged: (value) =>
+                          setDialogState(() => tutorialFateId = value),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '4. Art iniziale',
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    DropdownButtonFormField<String>(
+                      initialValue: tutorialArtName,
+                      dropdownColor: const Color(0xFF202431),
+                      decoration: const InputDecoration(
+                        labelText: 'Scegli un’Art — ogni Art ha 3 Skill',
+                      ),
+                      items: oculumStarterArtChoices()
+                          .map(
+                            (art) => DropdownMenuItem(
+                              value: art.nome,
+                              child: Text('${art.nome} (${art.tipo})'),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) => setDialogState(() {
+                        tutorialArtName = value ?? tutorialArtName;
+                        final selected = oculumStarterArtChoices().firstWhere(
+                          (art) => art.nome == tutorialArtName,
+                        );
+                        tutorialMartialBonus = selected.tipo == 'Martial Art'
+                            ? oculumStarterMartialBonus(Random())
+                            : 0;
+                      }),
+                    ),
+                    const SizedBox(height: 8),
+                    smallInfoText(
+                      tutorialArtName == 'Zanna del Drago' ||
+                              tutorialArtName == 'Berserk'
+                          ? 'Martial Art: bonus estratto 1d10+2 = $tutorialMartialBonus punti liberi. Puoi metterli in RES, VOL o MAT: OCU resta 0.'
+                          : 'Con un’Oculum Art puoi investire normalmente anche in OCU.',
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      t('Regole fondamentali', 'Core rules'),
+                      style: TextStyle(
+                        color: tertiaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      t(
+                        '• Resilienza aumenta gli HP massimi.\n'
+                            '• Volontà aumenta danno, difesa, VC e peso trasportabile.\n'
+                            '• Materia aumenta CM e Difesa.\n'
+                            '• Oculum potenzia Arti, cerchi, rituali e poteri oculari.\n'
+                            '• Lo Scudo Critico dimezza i danni finché non viene spezzato da un critico in fight.\n'
+                            '• I Titoli del Fato si ottengono dalle Skill delle Art: prima Skill livello 1, seconda Skill livello 2, terza Skill livello 3.\n'
+                            '• Le pagine diario possono dare Ispirazioni.\n'
+                            '• I Gradi vengono controllati automaticamente in base al livello e al Rebirth.',
+                        '• Resilience increases max HP.\n'
+                            '• Will increases damage, defense, VC and carrying weight.\n'
+                            '• Materia increases CM and Defense.\n'
+                            '• Oculum empowers Arts, circles, rituals and eye powers.\n'
+                            '• Critical Shield halves damage until broken by a critical during combat.\n'
+                            '• Fate Titles are gained from Art Skills: first Skill level 1, second Skill level 2, third Skill level 3.\n'
+                            '• Diary pages can grant Inspirations.\n'
+                            '• Grades are checked automatically based on level and Rebirth.',
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      t('Funzioni principali', 'Main features'),
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      t(
+                        'Scheda: HP, danni, cura, tiri, stats, livello e grado.\n'
+                            'Riposo: bisogni, cenere, recuperi e attività pesanti.\n'
+                            'Titoli: buff, karma, Open e punti ciechi.\n'
+                            'Art: nome, tipo e descrizione delle Art.\n'
+                            'Skill: skill scritte e creazione skill.\n'
+                            'Storia: background e diario.\n'
+                            'Risorse: Obser, polveri e Ispirazioni.\n'
+                            'Impostazioni: colori avanzati, log, lingua e tutorial.',
+                        'Sheet: HP, damage, healing, rolls, stats, level and grade.\n'
+                            'Rest: needs, ash, recovery and heavy activities.\n'
+                            'Titles: buffs, Karma, Opens and blind spots.\n'
+                            'Arts: Art name, type and description.\n'
+                            'Skills: written skills and skill creation.\n'
+                            'Story: background and diary.\n'
+                            'Resources: Obser, powders and Inspirations.\n'
+                            'Settings: advanced colors, log, language and tutorial.',
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -3837,6 +4320,304 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     );
   }
 
+  Widget slotMachineRulesSettingsPanel() {
+    const chances = <int>[95, 80, 50, 20, 5];
+    String chanceLabel(int value) => switch (value) {
+      95 => t('Molto facile', 'Very easy'),
+      80 => t('Facile', 'Easy'),
+      50 => t('Medio', 'Medium'),
+      20 => t('Difficile', 'Hard'),
+      _ => t('Impossibile', 'Impossible'),
+    };
+    return gothicPanel(
+      borderColor: Colors.purpleAccent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.casino, color: Colors.purpleAccent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  t('Slot machine dei tiri', 'Roll slot machine'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: t('Scegli probabilita', 'Choose probability'),
+                icon: const Icon(Icons.visibility),
+                onPressed: () => showModalBottomSheet<void>(
+                  context: context,
+                  builder: (context) => SafeArea(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            t('Probabilita di riuscita', 'Success probability'),
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ),
+                        for (final chance in chances)
+                          ListTile(
+                            leading: Icon(
+                              slotMachineSuccessChance == chance
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            title: Text('${chanceLabel(chance)} · $chance%'),
+                            selected: slotMachineSuccessChance == chance,
+                            onTap: () {
+                              setState(() => slotMachineSuccessChance = chance);
+                              programmaSalvataggio();
+                              Navigator.pop(context);
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            t(
+              'Trasforma solo la visualizzazione dei tiri in tre rulli. Sottotratti inclusi: il totale reale con il bonus resta scritto sotto i rulli. Critico negativo rosso: PERICOLO. Critico positivo oro: SUCCESSO CRITICO.',
+              'Turns only the roll display into three reels. Subtraits included: the real total with bonus remains below the reels. Negative critical red: DANGER. Positive critical gold: CRITICAL SUCCESS.',
+            ),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: slotMachineRollsEnabled,
+            activeThumbColor: Colors.purpleAccent,
+            title: Text(t('Abilita slot machine', 'Enable slot machine')),
+            subtitle: Text(
+              '${chanceLabel(slotMachineSuccessChance)} · $slotMachineSuccessChance%',
+            ),
+            onChanged: oculusModActive
+                ? null
+                : (value) {
+                    setState(() => slotMachineRollsEnabled = value);
+                    programmaSalvataggio();
+                  },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void tentaFortunaSlotMachine() {
+    const symbols = <String>['BUFF', 'SCHIVATA', 'ISPIRAZIONE', 'EXP', 'VUOTO'];
+    final random = Random.secure();
+    if (slotFortuneUsedThisLongRest) return;
+    setState(() {
+      final available = symbols.toList()..shuffle(random);
+      final locked = <String>{
+        for (var i = 0; i < 3; i++)
+          if (slotFortuneLocks[i]) slotFortuneReels[i],
+      }..remove('?');
+      for (var i = 0; i < 3; i++) {
+        if (!slotFortuneLocks[i]) {
+          slotFortuneReels[i] = available.firstWhere(
+            (item) => !locked.contains(item),
+          );
+          locked.add(slotFortuneReels[i]);
+        }
+      }
+      // Fortuna non decide il risultato: può solo trasformare un rullo vuoto
+      // in una ricompensa diversa, lasciando il resto del caso intatto.
+      final emptyIndex = slotFortuneReels.indexOf('VUOTO');
+      if (emptyIndex >= 0 &&
+          random.nextInt(100) < min(55, max(0, fortuna) * 5)) {
+        final replacement = available.firstWhere(
+          (item) =>
+              item != 'VUOTO' &&
+              !slotFortuneReels
+                  .where((value) => value != 'VUOTO')
+                  .contains(item),
+          orElse: () => 'VUOTO',
+        );
+        if (replacement != 'VUOTO') slotFortuneReels[emptyIndex] = replacement;
+      }
+      final rewards = <String>[];
+      for (final reward in slotFortuneReels) {
+        switch (reward) {
+          case 'BUFF':
+            final amount = random.nextInt(2) + 1;
+            tempResilienza += amount;
+            tempVolonta += amount;
+            tempMateria += amount;
+            tempOculum += amount;
+            rewards.add('BUFF +$amount');
+            break;
+          case 'SCHIVATA':
+            schivataOculumRiduzionePronta = max(
+              schivataOculumRiduzionePronta,
+              25 + random.nextInt(51),
+            );
+            schivataOculumEtichettaPronta = t('Fortuna slot', 'Slot luck');
+            rewards.add('SCHIVATA $schivataOculumRiduzionePronta%');
+            break;
+          case 'ISPIRAZIONE':
+            ispirazioniController.text =
+                '${leggiNumero(ispirazioniController) + 1}';
+            rewards.add('ISPIRAZIONE');
+            break;
+          case 'EXP':
+            final amount = 10 + random.nextInt(66);
+            applicaEsperienzaFlat(
+              amount,
+              motivo: t('Slot fortuna', 'Luck slot'),
+            );
+            for (final stat in hiddenEyeStats.where((stat) => stat.unlocked)) {
+              oculusSubtraitMasteryApplyGain(stat, amount);
+              notifyHiddenEyeStatChanged(stat);
+            }
+            rewards.add('EXP +$amount');
+            break;
+          case 'VUOTO':
+            rewards.add(t('VUOTO', 'EMPTY'));
+            break;
+        }
+      }
+      slotFortuneUsedThisLongRest = true;
+      risultato = t(
+        'Tenta la fortuna: ${rewards.join(' · ')}. Disponibile di nuovo dopo il prossimo riposo lungo.',
+        'Try your luck: ${rewards.join(' · ')}. Available again after the next long rest.',
+      );
+      aggiungiLog(risultato);
+    });
+    invalidateDerivedDataCaches();
+    notifyOculumResourceChanged();
+    programmaSalvataggio();
+  }
+
+  Widget tentaFortunaSlotSheetCard() {
+    if (!slotMachineRollsEnabled) return const SizedBox.shrink();
+    return gothicPanel(
+      borderColor: Colors.purpleAccent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            t('Tenta la fortuna', 'Try your luck'),
+            style: const TextStyle(
+              color: Colors.purpleAccent,
+              fontWeight: FontWeight.w900,
+              fontSize: 17,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            slotFortuneUsedThisLongRest
+                ? t(
+                    'Usata: tornerà disponibile al prossimo riposo lungo.',
+                    'Used: available again after the next long rest.',
+                  )
+                : t(
+                    'Tre ricompense sempre diverse. Blocca i rulli prima di tentare.',
+                    'Three always-different rewards. Lock reels before trying.',
+                  ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (var i = 0; i < 3; i++)
+                ActionChip(
+                  avatar: Icon(
+                    slotFortuneLocks[i] ? Icons.lock : Icons.lock_open,
+                  ),
+                  label: Text(slotFortuneReels[i]),
+                  onPressed: slotFortuneUsedThisLongRest
+                      ? null
+                      : () => setState(
+                          () => slotFortuneLocks[i] = !slotFortuneLocks[i],
+                        ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            onPressed: slotFortuneUsedThisLongRest
+                ? null
+                : tentaFortunaSlotMachine,
+            icon: const Icon(Icons.casino),
+            label: Text(t('Tenta la fortuna', 'Try your luck')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget modsSettingsPanel() {
+    return dropdownSection(
+      title: 'MOD',
+      subtitle: t(
+        'Oculus, Old School e Roulette. Oculus è esclusiva.',
+        'Oculus, Old School and Roulette. Oculus is exclusive.',
+      ),
+      icon: Icons.extension,
+      borderColor: primaryColor,
+      sectionId: 'settings_mods',
+      initiallyExpanded: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          oculusModSettingsPanel(),
+          const SizedBox(height: 10),
+          gothicPanel(
+            borderColor: tertiaryColor,
+            child: SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: temiOldSchool,
+              activeThumbColor: tertiaryColor,
+              secondary: const Icon(Icons.history_edu),
+              title: Text(t('Old School Style', 'Old School Style')),
+              subtitle: Text(
+                oculusModActive
+                    ? t(
+                        'Non disponibile mentre Oculus è attiva.',
+                        'Unavailable while Oculus is active.',
+                      )
+                    : t(
+                        'Ripristina il sistema grafico precedente senza toccare dati o funzioni.',
+                        'Restores the previous visual system without touching data or features.',
+                      ),
+              ),
+              onChanged: oculusModActive
+                  ? null
+                  : (value) {
+                      setState(() {
+                        temiOldSchool = value;
+                        risultato = value
+                            ? t(
+                                'Mod Temi old school attivata.',
+                                'Old-school Themes mod enabled.',
+                              )
+                            : t(
+                                'Nuovo design Oculum attivato.',
+                                'New Oculum design enabled.',
+                              );
+                        aggiungiLog(risultato);
+                      });
+                      programmaSalvataggio();
+                    },
+            ),
+          ),
+          const SizedBox(height: 10),
+          slotMachineRulesSettingsPanel(),
+        ],
+      ),
+    );
+  }
+
   Widget settingsPage() {
     return responsivePageList(
       pageKey: 'settings',
@@ -3850,7 +4631,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         ),
         gothicPanel(borderColor: tertiaryColor, child: pageDropdown()),
         functionAnchor('settings_hero', settingsHeroPanel()),
-        functionAnchor('settings_game_mods', oculusModSettingsPanel()),
+        functionAnchor('settings_mods', modsSettingsPanel()),
         functionAnchor('settings_control_center', settingsControlCenterPanel()),
         functionAnchor('settings_theme_showcase', settingsThemeShowcasePanel()),
         functionAnchor('settings_gui_skins', settingsGuiSkinGalleryPanel()),
@@ -3988,21 +4769,25 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                   'Enable or hide repeated sections. Features remain available from dropdown menus.',
                 ),
               ),
-              SwitchListTile(
-                value: modalitaVeloce,
-                activeThumbColor: tertiaryColor,
-                title: Text(t('Modalità veloce', 'Fast mode')),
-                subtitle: Text(
-                  t(
-                    'Mostra prima azioni essenziali e nasconde dettagli duplicati nella Scheda.',
-                    'Shows essential actions first and hides duplicated details on the Sheet.',
+              if (currentThemeVisualIdentity()
+                      .mainSheetGuiStyle
+                      .sheetLayoutId ==
+                  '__legacy_old_school_toggle__')
+                SwitchListTile(
+                  value: modalitaVeloce,
+                  activeThumbColor: tertiaryColor,
+                  title: Text(t('Modalità veloce', 'Fast mode')),
+                  subtitle: Text(
+                    t(
+                      'Mostra prima azioni essenziali e nasconde dettagli duplicati nella Scheda.',
+                      'Shows essential actions first and hides duplicated details on the Sheet.',
+                    ),
                   ),
+                  onChanged: (value) {
+                    setState(() => modalitaVeloce = value);
+                    programmaSalvataggio();
+                  },
                 ),
-                onChanged: (value) {
-                  setState(() => modalitaVeloce = value);
-                  programmaSalvataggio();
-                },
-              ),
               SwitchListTile(
                 value: temiOldSchool,
                 activeThumbColor: tertiaryColor,

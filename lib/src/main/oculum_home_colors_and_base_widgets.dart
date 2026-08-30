@@ -1083,7 +1083,18 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
           scheduleInputUiRefresh();
           programmaSalvataggio(invalidateCaches: false);
         } else {
-          programmaSalvataggio(deferCacheInvalidation: true);
+          final narrativeField =
+              identical(controller, backgroundController) ||
+              identical(controller, notePersonaggioController);
+          // Le note narrative sono spesso scritte per molto tempo: una coda
+          // più breve riduce la finestra in cui un cambio app o una chiusura
+          // può arrivare prima della fotografia persistita.
+          programmaSalvataggio(
+            deferCacheInvalidation: true,
+            delay: narrativeField
+                ? const Duration(milliseconds: 420)
+                : const Duration(milliseconds: 1800),
+          );
         }
       },
       style: TextStyle(
@@ -1347,7 +1358,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
             decorationIntensity: modalitaLeggera ? 0 : 0.75,
             style: nuovoDesignOculum,
           ),
-          child: child,
+          child: Material(type: MaterialType.transparency, child: child),
         ),
       );
     }
@@ -1399,7 +1410,10 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
           ),
           child: ClipRRect(
             borderRadius: radius,
-            child: Padding(padding: scaledInsets(padding), child: child),
+            child: Padding(
+              padding: scaledInsets(padding),
+              child: Material(type: MaterialType.transparency, child: child),
+            ),
           ),
         ),
       );
@@ -1423,7 +1437,10 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
               ),
             ),
           ),
-        Padding(padding: scaledInsets(padding), child: child),
+        Padding(
+          padding: scaledInsets(padding),
+          child: Material(type: MaterialType.transparency, child: child),
+        ),
         Positioned.fill(
           child: IgnorePointer(
             child: CustomPaint(
@@ -2602,88 +2619,174 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                   scale: mostraOverlayDado ? 1.0 : 0.55,
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutBack,
-                  child: Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.20),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: overlayCriticoVenti
-                              ? tertiaryColor.withValues(alpha: 0.14)
-                              : primaryColor.withValues(alpha: 0.10),
-                          blurRadius: overlayCriticoVenti ? 12 : 7,
-                          spreadRadius: overlayCriticoVenti ? 1.5 : 0.5,
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        AnimatedRotation(
-                          turns: mostraOverlayDado
-                              ? dadoOverlaySpinSeed * 0.18
-                              : 0,
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.easeOutCubic,
-                          child: RepaintBoundary(
-                            child: D20Widget(
-                              text: '',
-                              fillColor: secondaryColor,
-                              textColor: overlayResultColor,
-                              glow: overlayCriticoVenti,
-                              tertiaryColor: tertiaryColor,
-                              faces: dadoOverlayFacce,
-                            ),
+                  child: slotMachineRollsEnabled
+                      ? _slotMachineDiceOverlay(overlayResultColor)
+                      : Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.20),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: overlayCriticoVenti
+                                    ? tertiaryColor.withValues(alpha: 0.14)
+                                    : primaryColor.withValues(alpha: 0.10),
+                                blurRadius: overlayCriticoVenti ? 12 : 7,
+                                spreadRadius: overlayCriticoVenti ? 1.5 : 0.5,
+                              ),
+                            ],
                           ),
-                        ),
-                        AnimatedOpacity(
-                          opacity: dadoOverlayMostraRisultato ? 1 : 0,
-                          duration: const Duration(milliseconds: 120),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 104),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                dadoOverlay,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                style: TextStyle(
-                                  color: overlayResultColor,
-                                  fontSize: dadoOverlay.length > 8
-                                      ? 22
-                                      : dadoOverlay.length > 4
-                                      ? 28
-                                      : 40,
-                                  fontWeight: FontWeight.w900,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.92,
-                                      ),
-                                      blurRadius: 5,
-                                    ),
-                                    Shadow(
-                                      color: tertiaryColor.withValues(
-                                        alpha: 0.32,
-                                      ),
-                                      blurRadius: 8,
-                                    ),
-                                  ],
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              AnimatedRotation(
+                                turns: mostraOverlayDado
+                                    ? dadoOverlaySpinSeed * 0.18
+                                    : 0,
+                                duration: const Duration(milliseconds: 500),
+                                curve: Curves.easeOutCubic,
+                                child: RepaintBoundary(
+                                  child: D20Widget(
+                                    text: '',
+                                    fillColor: secondaryColor,
+                                    textColor: overlayResultColor,
+                                    glow: overlayCriticoVenti,
+                                    tertiaryColor: tertiaryColor,
+                                    faces: dadoOverlayFacce,
+                                  ),
                                 ),
                               ),
-                            ),
+                              AnimatedOpacity(
+                                opacity: dadoOverlayMostraRisultato ? 1 : 0,
+                                duration: const Duration(milliseconds: 120),
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 104,
+                                  ),
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      dadoOverlay,
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        color: overlayResultColor,
+                                        fontSize: dadoOverlay.length > 8
+                                            ? 22
+                                            : dadoOverlay.length > 4
+                                            ? 28
+                                            : 40,
+                                        fontWeight: FontWeight.w900,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.92,
+                                            ),
+                                            blurRadius: 5,
+                                          ),
+                                          Shadow(
+                                            color: tertiaryColor.withValues(
+                                              alpha: 0.32,
+                                            ),
+                                            blurRadius: 8,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
                 ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _slotMachineDiceOverlay(Color resultColor) {
+    final reels = dadoOverlay
+        .split('|')
+        .map((value) => value.trim().split('\n').first)
+        .where((value) => value.isNotEmpty)
+        .toList(growable: false);
+    final shown = reels.length == 3 ? reels : const <String>['?', '?', '?'];
+    return Container(
+      width: 420,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF14111E),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: resultColor, width: 3),
+        boxShadow: <BoxShadow>[
+          BoxShadow(color: resultColor.withValues(alpha: .35), blurRadius: 22),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            'OCULUM SLOT',
+            style: TextStyle(
+              color: resultColor,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 3,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: <Widget>[
+              for (var i = 0; i < 3; i++)
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(right: i == 2 ? 0 : 8),
+                    child: AnimatedContainer(
+                      duration: Duration(milliseconds: 220 + i * 160),
+                      curve: Curves.easeOutBack,
+                      height: 104,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: .65),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: resultColor.withValues(alpha: .8),
+                          width: 2,
+                        ),
+                      ),
+                      child: AnimatedOpacity(
+                        opacity: dadoOverlayMostraRisultato ? 1 : .18,
+                        duration: const Duration(milliseconds: 180),
+                        child: Text(
+                          shown[i],
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: TextStyle(
+                            color: resultColor,
+                            fontWeight: FontWeight.w900,
+                            fontSize: shown[i].length > 10 ? 16 : 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            overlayCriticoUno
+                ? t('CRITICO NEGATIVO', 'NEGATIVE CRITICAL')
+                : overlayCriticoVenti
+                ? t('CRITICO POSITIVO', 'POSITIVE CRITICAL')
+                : t('Tocca per chiudere', 'Tap to close'),
+            style: TextStyle(color: resultColor, fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
     );
   }
 

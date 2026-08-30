@@ -21,6 +21,9 @@ enum OculumConditionStackMode {
 
 enum OculumConditionDurationType {
   turns,
+  shortRest,
+  longRest,
+  meal,
   rolls,
   actions,
   rests,
@@ -326,6 +329,18 @@ class OculumConditionInstance {
   }
 }
 
+/// Vero Bruciore dell'Anima can remain active only while its prerequisite is
+/// present at the required stage. Keeping this rule here makes activation,
+/// removal, imports, and turn processing agree on the same condition.
+bool oculumCanMaintainTrueSoulBurn(
+  Iterable<OculumConditionInstance> conditions,
+) {
+  return conditions.any(
+    (instance) =>
+        instance.conditionType == 'resilienza_in_fiamme' && instance.stage >= 2,
+  );
+}
+
 bool oculumConditionIsNegative(OculumConditionInstance instance) {
   final definition = oculumConditionDefinition(instance.conditionType);
   if (definition != null) {
@@ -588,6 +603,152 @@ OculumDifficultyIncreaseFightProfile oculumDifficultyIncreaseFightProfile(
 
 const List<OculumConditionDefinition>
 oculumConditionCatalog = <OculumConditionDefinition>[
+  OculumConditionDefinition(
+    id: 'ricordo_vitale',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.resilienza,
+      OculumConditionTarget.hp,
+      OculumConditionTarget.recupero,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Ricordo Vitale',
+    nameEn: 'Vital Memory',
+    icon: Icons.monitor_heart_outlined,
+    category: OculumConditionCategory.positive,
+    polarity: OculumConditionPolarity.neutral,
+    descriptionIt:
+        'Subisci il 25% di danni in piu. Ogni colpo che raggiunge gli HP prepara una cura pari al 50% del danno realmente subito, ricaricata a fine turno in due quote del 25%. Un nuovo colpo sostituisce la cura residua con il nuovo Ricordo Vitale.',
+    descriptionEn:
+        'You take 25% more damage. Each hit that reaches HP prepares healing equal to 50% of the actual HP damage, restored at end of turn in two 25% portions. A new hit replaces the remaining healing with a new Vital Memory.',
+    stackMode: OculumConditionStackMode.refreshDuration,
+    defaultDuration: 0,
+    durationType: OculumConditionDurationType.permanent,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
+    id: 'massima_potenza',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.resilienza,
+      OculumConditionTarget.volonta,
+      OculumConditionTarget.materia,
+      OculumConditionTarget.oculum,
+      OculumConditionTarget.hp,
+      OculumConditionTarget.recupero,
+      OculumConditionTarget.art,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Massima Potenza',
+    nameEn: 'Maximum Power',
+    icon: Icons.workspace_premium_outlined,
+    category: OculumConditionCategory.positive,
+    polarity: OculumConditionPolarity.positive,
+    descriptionIt:
+        'All attivazione spende una sola volta il 25% dell Oculum attuale (minimo 1) e dona lo stesso bonus temporaneo a Resilienza, Volonta e Materia per tutta la durata, piu un ulteriore +50% temporaneo a Resilienza, Volonta, Materia e Oculum. Senza Oculum, il costo diventa quattro danni HP che insieme fanno il 25% richiesto. Puoi forzare fino allo stadio VI: ogni stadio aggiuntivo ripete il costo e consuma anche il 15% dell Integrita corrente di ogni Art sbloccata (minimo 1).',
+    descriptionEn:
+        'On activation it spends 25% of current Oculum once (minimum 1) and grants the same temporary bonus to Resilience, Will and Matter for its whole duration, plus an additional temporary +50% to Resilience, Will, Matter and Oculum. Without Oculum, the cost becomes four HP hits whose total is the required 25%. You may force it up to stage VI: each additional stage repeats the cost and also consumes 15% of each unlocked Art current Integrity (minimum 1).',
+    maxStage: 6,
+    stackMode: OculumConditionStackMode.none,
+    defaultDuration: 0,
+    durationType: OculumConditionDurationType.permanent,
+  ),
+  OculumConditionDefinition(
+    id: 'resilienza_in_fiamme',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.oculum,
+      OculumConditionTarget.hp,
+      OculumConditionTarget.recupero,
+    },
+    nameIt: 'Resilienza in Fiamme',
+    nameEn: 'Resilience Ablaze',
+    icon: Icons.local_fire_department,
+    category: OculumConditionCategory.oculum,
+    polarity: OculumConditionPolarity.neutral,
+    descriptionIt:
+        'Tre stadi: a fine turno spende 3%, 4% o 5% dell Oculum attuale (minimo 1) e cura HP pari alla spesa moltiplicata per difficolta. Agli stadi II e III ricarica anche gli HP temporanei dello stesso valore. A 15% Oculum o meno termina.',
+    descriptionEn:
+        'Three stages: at end of turn, spends 3%, 4% or 5% of current Oculum (minimum 1) and heals HP equal to the spent amount scaled by difficulty. At stages II and III it also restores the same amount of temporary HP. It ends at 15% Oculum or less.',
+    maxStage: 3,
+    stackMode: OculumConditionStackMode.increaseStage,
+    basePercentByStage: <double>[3, 4, 5],
+    minimumByStage: <int>[1, 1, 1],
+    defaultDuration: 0,
+    durationType: OculumConditionDurationType.permanent,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
+    id: 'oculum_in_fiamme_viola',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.hp,
+      OculumConditionTarget.oculum,
+      OculumConditionTarget.volonta,
+      OculumConditionTarget.materia,
+      OculumConditionTarget.art,
+      OculumConditionTarget.recupero,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Oculum in Fiamme',
+    nameEn: 'Oculum Ablaze (Violet)',
+    icon: Icons.local_fire_department,
+    category: OculumConditionCategory.oculum,
+    polarity: OculumConditionPolarity.neutral,
+    descriptionIt:
+        'Tre stadi. A fine turno consuma il 3% degli HP attuali (minimo 1) e rigenera Oculum pari agli HP persi divisi per 10. Con probabilita crescente puo deviare il recupero a Volonta o Materia. Per il prossimo turno puoi scegliere di spendere il 3% di Oculum, Volonta o Materia: il recupero Oculum raddoppia e ripara della stessa quantita l Art sbloccata con meno Integrita.',
+    descriptionEn:
+        'Three stages. At end of turn it spends 3% of current HP (minimum 1) and regenerates Oculum equal to lost HP divided by 10. With increasing probability it can divert the recovery to Will or Matter. For the next turn you may spend 3% of Oculum, Will or Matter instead: Oculum recovery doubles and repairs the unlocked Art with the lowest Integrity by the same amount.',
+    maxStage: 3,
+    stackMode: OculumConditionStackMode.increaseStage,
+    defaultDuration: 0,
+    durationType: OculumConditionDurationType.permanent,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
+    id: 'volonta_in_fiamme',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.oculum,
+      OculumConditionTarget.volonta,
+      OculumConditionTarget.recupero,
+    },
+    nameIt: 'Volonta in Fiamme',
+    nameEn: 'Will Ablaze',
+    icon: Icons.local_fire_department,
+    category: OculumConditionCategory.oculum,
+    polarity: OculumConditionPolarity.neutral,
+    descriptionIt:
+        'Tre stadi: a fine turno spende 3%, 4% o 5% dell Oculum attuale (minimo 1), ripristina Volonta e converte l eccesso in temporanea. A 15% Oculum o meno termina.',
+    descriptionEn:
+        'Three stages: at end of turn, spends 3%, 4% or 5% of current Oculum (minimum 1), restores Will and converts overflow into temporary Will. It ends at 15% Oculum or less.',
+    maxStage: 3,
+    stackMode: OculumConditionStackMode.increaseStage,
+    basePercentByStage: <double>[3, 4, 5],
+    minimumByStage: <int>[1, 1, 1],
+    defaultDuration: 0,
+    durationType: OculumConditionDurationType.permanent,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
+    id: 'materia_in_fiamme',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.oculum,
+      OculumConditionTarget.materia,
+      OculumConditionTarget.recupero,
+    },
+    nameIt: 'Materia in Fiamme',
+    nameEn: 'Matter Ablaze',
+    icon: Icons.local_fire_department,
+    category: OculumConditionCategory.oculum,
+    polarity: OculumConditionPolarity.neutral,
+    descriptionIt:
+        'Tre stadi: a fine turno spende 3%, 4% o 5% dell Oculum attuale (minimo 1), ripristina Materia e converte l eccesso in temporanea. A 15% Oculum o meno termina.',
+    descriptionEn:
+        'Three stages: at end of turn, spends 3%, 4% or 5% of current Oculum (minimum 1), restores Matter and converts overflow into temporary Matter. It ends at 15% Oculum or less.',
+    maxStage: 3,
+    stackMode: OculumConditionStackMode.increaseStage,
+    basePercentByStage: <double>[3, 4, 5],
+    minimumByStage: <int>[1, 1, 1],
+    defaultDuration: 0,
+    durationType: OculumConditionDurationType.permanent,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
   OculumConditionDefinition(
     id: 'veleno_putrido',
     affectedTargets: <OculumConditionTarget>{
@@ -1045,6 +1206,222 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     stackMode: OculumConditionStackMode.increaseStage,
   ),
   OculumConditionDefinition(
+    id: 'corroso',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.difesa,
+      OculumConditionTarget.scudo,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Corroso',
+    nameEn: 'Corroded',
+    icon: Icons.water_drop_outlined,
+    category: OculumConditionCategory.elemental,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'Tre stadi: Difesa -10%/-20%/-30% e i danni consumano la stessa percentuale di Scudo aggiuntiva. Si rimuove con riparazione o trattamento appropriato.',
+    descriptionEn:
+        'Three stages: Defense -10%/-20%/-30% and damage consumes the same additional Shield percentage. Removed by proper repair or treatment.',
+    maxStage: 3,
+    stackMode: OculumConditionStackMode.increaseStage,
+    defaultDuration: 4,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
+    id: 'rinsecchito',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.difesa,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Rinsecchito',
+    nameEn: 'Desiccated',
+    icon: Icons.dry,
+    category: OculumConditionCategory.physical,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'La Difesa si riduce del 75%: resta disponibile soltanto un quarto del suo valore normale.',
+    descriptionEn:
+        'Defense is reduced by 75%: only one quarter of its normal value remains.',
+    stackMode: OculumConditionStackMode.refreshDuration,
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+    basePercentByStage: <double>[75],
+  ),
+  OculumConditionDefinition(
+    id: 'bagnato',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.movimento,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Bagnato',
+    nameEn: 'Wet',
+    icon: Icons.water,
+    category: OculumConditionCategory.elemental,
+    polarity: OculumConditionPolarity.neutral,
+    descriptionIt:
+        'Spegne Bruciatura. La prossima applicazione di Gelo avanza di uno stadio aggiuntivo; Elettrizzato mantiene il suo danno del 3%.',
+    descriptionEn:
+        'Extinguishes Burning. The next Frost application advances one additional stage; Electrified keeps its 3% damage.',
+    stackMode: OculumConditionStackMode.refreshDuration,
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
+    id: 'elettrizzato',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.hp,
+      OculumConditionTarget.iniziativa,
+      OculumConditionTarget.recupero,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Elettrizzato',
+    nameEn: 'Electrified',
+    icon: Icons.electric_bolt,
+    category: OculumConditionCategory.elemental,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'A fine turno infligge danni diretti pari al 3% degli HP massimi (minimo 1), riduce Iniziativa di 3 e impedisce le cure di Ricordo Vitale finche resta attivo.',
+    descriptionEn:
+        'At end of turn it deals direct damage equal to 3% maximum HP (minimum 1), reduces Initiative by 3 and prevents Vital Memory healing while active.',
+    stackMode: OculumConditionStackMode.refreshDuration,
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
+    id: 'maledetto',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.hp,
+      OculumConditionTarget.recupero,
+    },
+    nameIt: 'Maledetto',
+    nameEn: 'Cursed',
+    icon: Icons.auto_fix_off,
+    category: OculumConditionCategory.mental,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'Tre stadi: tutte le cure HP ricevute sono ridotte del 20%/35%/50%.',
+    descriptionEn:
+        'Three stages: all received HP healing is reduced by 20%/35%/50%.',
+    maxStage: 3,
+    stackMode: OculumConditionStackMode.increaseStage,
+    defaultDuration: 4,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
+    id: 'marchiato',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.difesa,
+      OculumConditionTarget.hp,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Marchiato',
+    nameEn: 'Marked',
+    icon: Icons.my_location,
+    category: OculumConditionCategory.special,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'Riduce del 20% la Difesa del bersaglio. Il Marchio viene consumato dal prossimo danno ricevuto.',
+    descriptionEn:
+        'Reduces the target Defense by 20%. The Mark is consumed by the next incoming damage.',
+    stackMode: OculumConditionStackMode.refreshDuration,
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
+    id: 'interferenza',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.tiri,
+      OculumConditionTarget.skill,
+      OculumConditionTarget.art,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Interferenza',
+    nameEn: 'Interference',
+    icon: Icons.waves,
+    category: OculumConditionCategory.oculum,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'Tre stadi: disturba Skill e Art e applica -2/-4/-6 ai tiri senza bloccarne l uso.',
+    descriptionEn:
+        'Three stages: disrupts Skills and Arts and applies -2/-4/-6 to rolls without blocking their use.',
+    maxStage: 3,
+    stackMode: OculumConditionStackMode.increaseStage,
+    rollModifierByStage: <int>[-2, -4, -6],
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
+    id: 'rigenerazione',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.hp,
+      OculumConditionTarget.recupero,
+    },
+    nameIt: 'Rigenerazione',
+    nameEn: 'Regeneration',
+    icon: Icons.healing,
+    category: OculumConditionCategory.positive,
+    polarity: OculumConditionPolarity.positive,
+    descriptionIt:
+        'Tre stadi: a fine turno cura il 3%/5%/8% degli HP massimi (minimo 1). La cura e ridotta da Maledetto.',
+    descriptionEn:
+        'Three stages: at end of turn heals 3%/5%/8% maximum HP (minimum 1). Healing is reduced by Cursed.',
+    maxStage: 3,
+    stackMode: OculumConditionStackMode.increaseStage,
+    basePercentByStage: <double>[3, 5, 8],
+    minimumByStage: <int>[1, 1, 1],
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
+    id: 'barriera_mentale',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.volonta,
+      OculumConditionTarget.tiri,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Barriera Mentale',
+    nameEn: 'Mental Barrier',
+    icon: Icons.psychology,
+    category: OculumConditionCategory.positive,
+    polarity: OculumConditionPolarity.positive,
+    descriptionIt:
+        'Annulla la prossima condizione mentale negativa applicata, poi termina.',
+    descriptionEn:
+        'Negates the next negative mental condition applied, then ends.',
+    stackMode: OculumConditionStackMode.refreshDuration,
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
+    id: 'ancorato',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.movimento,
+      OculumConditionTarget.difesa,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Ancorato',
+    nameEn: 'Anchored',
+    icon: Icons.anchor,
+    category: OculumConditionCategory.positive,
+    polarity: OculumConditionPolarity.positive,
+    descriptionIt:
+        'Non puo essere Afferrato o Atterrato e non puo essere spostato forzatamente; Movimento -25%.',
+    descriptionEn:
+        'Cannot be Grappled, knocked Prone or forcibly moved; Movement -25%.',
+    stackMode: OculumConditionStackMode.refreshDuration,
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
     id: 'fortificato',
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.difesa,
@@ -1246,6 +1623,115 @@ OculumConditionDefinition? oculumConditionDefinition(String id) {
   }
   return null;
 }
+
+/// Conversione per le tre condizioni "in Fiamme". Il livello Oculum e la
+/// difficolta piu severa riducono il ritorno del sacrificio.
+double oculumFlameRewardMultiplier(String difficulty) {
+  switch (normalizeTemporaryOculumDifficulty(difficulty)) {
+    case 'facile':
+      return 2;
+    case 'difficile':
+      return 1.3;
+    case 'oculum':
+      return 1;
+    case 'normale':
+    default:
+      return 1.5;
+  }
+}
+
+double oculumFlameTurnPercent(int stage) =>
+    const <double>[3, 4, 5][(stage.clamp(1, 3)) - 1];
+
+int oculumFlameTurnCost(int currentOculum, {int stage = 1}) {
+  if (currentOculum <= 0) return 0;
+  return max(1, (currentOculum * oculumFlameTurnPercent(stage) / 100).floor());
+}
+
+int oculumVioletFlameThreePercentCost(int current) {
+  if (current <= 0) return 0;
+  return max(1, (current * .03).floor());
+}
+
+int oculumVioletFlameRegeneration(int lostHp) {
+  if (lostHp <= 0) return 0;
+  return max(1, lostHp ~/ 10);
+}
+
+int oculumVioletFlameDiversionChance(int stage) =>
+    const <int>[10, 20, 30][(stage.clamp(1, 3)) - 1];
+
+int oculumMaximumPowerOculumCost(int currentOculum) {
+  if (currentOculum <= 0) return 0;
+  return max(1, (currentOculum * .25).floor());
+}
+
+List<int> oculumMaximumPowerHpFallbackHits(int currentHp) {
+  if (currentHp <= 0) return const <int>[0, 0, 0, 0];
+  final total = max(1, (currentHp * .25).floor());
+  final base = total ~/ 4;
+  final remainder = total % 4;
+  return List<int>.generate(
+    4,
+    (index) => base + (index < remainder ? 1 : 0),
+    growable: false,
+  );
+}
+
+int oculumMaximumPowerIntegrityCost(int currentIntegrity) {
+  if (currentIntegrity <= 0) return 0;
+  return max(1, (currentIntegrity * .15).floor());
+}
+
+bool oculumFlameEndsAtLowOculum({
+  required int currentOculum,
+  required int maximumOculum,
+}) => currentOculum <= (max(0, maximumOculum) * .15).floor();
+
+int oculumFlameReward(int oculumSpent, String difficulty) {
+  if (oculumSpent <= 0) return 0;
+  return max(
+    1,
+    (oculumSpent * oculumFlameRewardMultiplier(difficulty)).round(),
+  );
+}
+
+int oculumVitalMemoryIncomingDamage(int damage) {
+  if (damage <= 0) return 0;
+  return damage + max(1, (damage * .25).ceil());
+}
+
+({int total, int perTick}) oculumVitalMemoryRecoveryForDamage(int hpDamage) {
+  if (hpDamage <= 0) return (total: 0, perTick: 0);
+  // Ricordo Vitale never recovers the condition's 25% incoming-damage cost.
+  final recoverableBaseDamage = (hpDamage / 1.25).floor();
+  return (
+    total: max(0, (recoverableBaseDamage * .5).ceil()),
+    perTick: max(0, (recoverableBaseDamage * .25).ceil()),
+  );
+}
+
+int oculumPercentOfMaximum(int maximum, double percent) {
+  if (maximum <= 0 || percent <= 0) return 0;
+  return max(1, (maximum * percent / 100).floor());
+}
+
+int oculumElectrifiedDamage(int maximumHp) =>
+    oculumPercentOfMaximum(maximumHp, 3);
+
+int oculumRegenerationHealing(int maximumHp, int stage) {
+  final percent = const <double>[3, 5, 8][(stage.clamp(1, 3)) - 1];
+  return oculumPercentOfMaximum(maximumHp, percent);
+}
+
+int oculumCursedHealing(int requested, int stage) {
+  if (requested <= 0) return 0;
+  final reduction = const <int>[20, 35, 50][(stage.clamp(1, 3)) - 1];
+  return max(0, (requested * (100 - reduction) / 100).floor());
+}
+
+int oculumCorrosionPercent(int stage) =>
+    const <int>[10, 20, 30][(stage.clamp(1, 3)) - 1];
 
 String oculumRomanStage(int stage) => const <String>[
   'I',

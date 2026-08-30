@@ -81,6 +81,18 @@ void main() {
     expect(second, first);
   });
 
+  test('friend shares use the full-sheet receiver path for every player', () {
+    expect(oculumRealtimeFriendShareSenderRole, 'fullShare');
+    expect(
+      oculumRealtimeShouldImportSharedSheet(
+        senderRole: oculumRealtimeFriendShareSenderRole,
+        masterParty: false,
+        restrictedByMaster: false,
+      ),
+      isTrue,
+    );
+  });
+
   test('sheet share decoder accepts the portable Oculum code', () {
     final payload = <String, dynamic>{
       'kind': 'oculum_sheets',

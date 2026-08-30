@@ -88,6 +88,37 @@ void main() {
     expect(parseOne('@Mat+(Vol+Res)25%').value, 4);
   });
 
+  test('percentuale nuda usa la base fissata e non il totale gia buffato', () {
+    final varsWithRuntimeBonuses = <String, num>{
+      ..._vars,
+      'materia': 35,
+      'materia_percentage_base': 12,
+    };
+
+    final parsed = oculumParseFormulaCommands(
+      '@Mat+200%',
+      varsWithRuntimeBonuses,
+    );
+
+    expect(parsed, hasLength(1));
+    expect(parsed.single.valid, isTrue);
+    expect(parsed.single.key, 'materia');
+    expect(parsed.single.value, 24);
+  });
+
+  test('la percentuale Oculum puo usare il valore attuale disponibile', () {
+    final parsed = oculumParseFormulaCommands('@Ocu+200%', <String, num>{
+      ..._vars,
+      'oculum': 3,
+      'oculum_percentage_base': 11,
+    });
+
+    expect(parsed, hasLength(1));
+    expect(parsed.single.valid, isTrue);
+    expect(parsed.single.key, 'oculum');
+    expect(parsed.single.value, 22);
+  });
+
   test('percentuali nude si calcolano separatamente per Stats e TiroStats', () {
     final stats = oculumParseFormulaCommands('@Stats+50%', _vars);
     expect(stats.map((command) => command.key), <String>[

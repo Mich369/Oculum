@@ -219,8 +219,254 @@ void main() {
   });
 
   group('Catalogo e progressione', () {
+    test('Ricordo Vitale aumenta il danno e rigenera a quarti', () {
+      expect(oculumVitalMemoryIncomingDamage(4), 5);
+      expect(oculumVitalMemoryIncomingDamage(1), 2);
+      expect(oculumVitalMemoryRecoveryForDamage(5), (total: 2, perTick: 1));
+      expect(oculumVitalMemoryRecoveryForDamage(10), (total: 4, perTick: 2));
+      final vitalMemory = oculumConditionDefinition('ricordo_vitale')!;
+      expect(vitalMemory.category, OculumConditionCategory.positive);
+      expect(vitalMemory.tickTrigger, OculumConditionTickTrigger.endTurn);
+      expect(vitalMemory.affectedTargets, contains(OculumConditionTarget.hp));
+    });
+
+    test('nuove condizioni hanno effetti percentuali e durate operative', () {
+      expect(oculumElectrifiedDamage(100), 3);
+      expect(oculumElectrifiedDamage(1), 1);
+      expect(oculumRegenerationHealing(100, 1), 3);
+      expect(oculumRegenerationHealing(100, 2), 5);
+      expect(oculumRegenerationHealing(100, 3), 8);
+      expect(oculumCursedHealing(100, 1), 80);
+      expect(oculumCursedHealing(100, 2), 65);
+      expect(oculumCursedHealing(100, 3), 50);
+      expect(oculumCorrosionPercent(1), 10);
+      expect(oculumCorrosionPercent(3), 30);
+
+      for (final id in <String>[
+        'corroso',
+        'bagnato',
+        'elettrizzato',
+        'maledetto',
+        'marchiato',
+        'interferenza',
+        'rigenerazione',
+        'barriera_mentale',
+        'ancorato',
+      ]) {
+        final definition = oculumConditionDefinition(id);
+        expect(definition, isNotNull, reason: id);
+      }
+
+      final electrified = oculumConditionDefinition('elettrizzato')!;
+      expect(electrified.tickTrigger, OculumConditionTickTrigger.endTurn);
+      expect(electrified.defaultDuration, 3);
+      expect(
+        electrified.affectedTargets,
+        containsAll(<OculumConditionTarget>[
+          OculumConditionTarget.hp,
+          OculumConditionTarget.recupero,
+        ]),
+      );
+
+      final regeneration = oculumConditionDefinition('rigenerazione')!;
+      expect(regeneration.basePercentByStage, <double>[3, 5, 8]);
+      expect(regeneration.durationType, OculumConditionDurationType.turns);
+      expect(regeneration.polarity, OculumConditionPolarity.positive);
+
+      final interference = oculumConditionDefinition('interferenza')!;
+      expect(interference.rollModifierByStage, <int>[-2, -4, -6]);
+      expect(interference.maxStage, 3);
+    });
+
+    test(
+      'Vero Bruciore richiede Resilienza in Fiamme allo stadio II o III',
+      () {
+        final stageOne = OculumConditionInstance(
+          id: 'flame_i',
+          conditionType: 'resilienza_in_fiamme',
+          category: OculumConditionCategory.oculum,
+          stage: 1,
+        );
+        final stageTwo = OculumConditionInstance(
+          id: 'flame_ii',
+          conditionType: 'resilienza_in_fiamme',
+          category: OculumConditionCategory.oculum,
+          stage: 2,
+        );
+
+        expect(
+          oculumCanMaintainTrueSoulBurn(<OculumConditionInstance>[]),
+          isFalse,
+        );
+        expect(
+          oculumCanMaintainTrueSoulBurn(<OculumConditionInstance>[stageOne]),
+          isFalse,
+        );
+        expect(
+          oculumCanMaintainTrueSoulBurn(<OculumConditionInstance>[stageTwo]),
+          isTrue,
+        );
+      },
+    );
+
+    test('le tre condizioni Oculum in Fiamme seguono costi e difficolta', () {
+      expect(oculumFlameTurnCost(0), 0);
+      expect(oculumFlameTurnCost(1), 1);
+      expect(oculumFlameTurnCost(34), 1);
+      expect(oculumFlameTurnCost(67), 2);
+      expect(oculumFlameTurnPercent(1), 3);
+      expect(oculumFlameTurnPercent(2), 4);
+      expect(oculumFlameTurnPercent(3), 5);
+      expect(oculumFlameTurnCost(100, stage: 2), 4);
+      expect(oculumFlameTurnCost(100, stage: 3), 5);
+      expect(
+        oculumFlameEndsAtLowOculum(currentOculum: 15, maximumOculum: 100),
+        isTrue,
+      );
+      expect(
+        oculumFlameEndsAtLowOculum(currentOculum: 16, maximumOculum: 100),
+        isFalse,
+      );
+
+      expect(oculumFlameRewardMultiplier('facile'), 2);
+      expect(oculumFlameRewardMultiplier('normale'), 1.5);
+      expect(oculumFlameRewardMultiplier('difficile'), 1.3);
+      expect(oculumFlameRewardMultiplier('oculum'), 1);
+      expect(oculumFlameReward(2, 'facile'), 4);
+      expect(oculumFlameReward(2, 'normale'), 3);
+      expect(oculumFlameReward(2, 'difficile'), 3);
+      expect(oculumFlameReward(2, 'oculum'), 2);
+
+      for (final id in <String>[
+        'resilienza_in_fiamme',
+        'volonta_in_fiamme',
+        'materia_in_fiamme',
+      ]) {
+        final definition = oculumConditionDefinition(id);
+        expect(definition, isNotNull);
+        expect(definition!.tickTrigger, OculumConditionTickTrigger.endTurn);
+        expect(definition.durationType, OculumConditionDurationType.permanent);
+        expect(definition.maxStage, 3);
+        expect(definition.stackMode, OculumConditionStackMode.increaseStage);
+        expect(definition.basePercentByStage, <double>[3, 4, 5]);
+        expect(
+          definition.affectedTargets,
+          contains(OculumConditionTarget.oculum),
+        );
+      }
+      expect(
+        oculumConditionDefinition('resilienza_in_fiamme')!.affectedTargets,
+        containsAll(<OculumConditionTarget>[
+          OculumConditionTarget.hp,
+          OculumConditionTarget.recupero,
+        ]),
+      );
+      expect(
+        oculumConditionDefinition('volonta_in_fiamme')!.affectedTargets,
+        containsAll(<OculumConditionTarget>[
+          OculumConditionTarget.volonta,
+          OculumConditionTarget.recupero,
+        ]),
+      );
+      expect(
+        oculumConditionDefinition('materia_in_fiamme')!.affectedTargets,
+        containsAll(<OculumConditionTarget>[
+          OculumConditionTarget.materia,
+          OculumConditionTarget.recupero,
+        ]),
+      );
+    });
+
+    test('Oculum in Fiamme conserva tre fasi e conversione al 3 percento', () {
+      expect(oculumVioletFlameThreePercentCost(0), 0);
+      expect(oculumVioletFlameThreePercentCost(1), 1);
+      expect(oculumVioletFlameThreePercentCost(100), 3);
+      expect(oculumVioletFlameRegeneration(1), 1);
+      expect(oculumVioletFlameRegeneration(30), 3);
+      expect(oculumVioletFlameDiversionChance(1), 10);
+      expect(oculumVioletFlameDiversionChance(2), 20);
+      expect(oculumVioletFlameDiversionChance(3), 30);
+
+      final violet = oculumConditionDefinition('oculum_in_fiamme_viola')!;
+      expect(violet.maxStage, 3);
+      expect(violet.tickTrigger, OculumConditionTickTrigger.endTurn);
+      expect(violet.category, OculumConditionCategory.oculum);
+      expect(
+        violet.affectedTargets,
+        containsAll(<OculumConditionTarget>[
+          OculumConditionTarget.hp,
+          OculumConditionTarget.oculum,
+          OculumConditionTarget.volonta,
+          OculumConditionTarget.materia,
+          OculumConditionTarget.art,
+        ]),
+      );
+    });
+
+    test(
+      'Massima Potenza usa il 25 percento di Oculum e il 15 percento Art',
+      () {
+        expect(oculumMaximumPowerOculumCost(0), 0);
+        expect(oculumMaximumPowerOculumCost(1), 1);
+        expect(oculumMaximumPowerOculumCost(100), 25);
+        expect(oculumMaximumPowerHpFallbackHits(100), <int>[7, 6, 6, 6]);
+        expect(
+          oculumMaximumPowerHpFallbackHits(100).reduce((a, b) => a + b),
+          25,
+        );
+        expect(oculumMaximumPowerIntegrityCost(0), 0);
+        expect(oculumMaximumPowerIntegrityCost(1), 1);
+        expect(oculumMaximumPowerIntegrityCost(100), 15);
+
+        final maximumPower = oculumConditionDefinition('massima_potenza')!;
+        expect(maximumPower.category, OculumConditionCategory.positive);
+        expect(maximumPower.maxStage, 6);
+        expect(
+          maximumPower.durationType,
+          OculumConditionDurationType.permanent,
+        );
+        expect(
+          maximumPower.affectedTargets,
+          containsAll(<OculumConditionTarget>[
+            OculumConditionTarget.resilienza,
+            OculumConditionTarget.volonta,
+            OculumConditionTarget.materia,
+            OculumConditionTarget.art,
+          ]),
+        );
+      },
+    );
+
+    test('la cura standard conserva il valore oltre gli HP massimi', () {
+      final healed = healOculumHp(
+        current: 8,
+        maximum: 10,
+        temporary: 0,
+        amount: 5,
+      );
+
+      expect(healed.current, 10);
+      expect(healed.temporary, 3);
+    });
+
+    test(
+      'Resilienza in Fiamme indica gli HP temporanei dagli stadi II e III',
+      () {
+        final resilienceAblaze = oculumConditionDefinition(
+          'resilienza_in_fiamme',
+        )!;
+
+        expect(resilienceAblaze.descriptionIt, contains('stadi II e III'));
+        expect(resilienceAblaze.descriptionEn, contains('stages II and III'));
+      },
+    );
+
     test('contiene tutte le famiglie definitive', () {
       expect(oculumConditionCatalog.length, greaterThanOrEqualTo(30));
+      expect(
+        oculumConditionCatalog.map((item) => item.id).toSet().length,
+        oculumConditionCatalog.length,
+      );
       expect(
         oculumConditionCatalog.map((item) => item.category).toSet(),
         containsAll(OculumConditionCategory.values),
@@ -242,6 +488,20 @@ void main() {
       expect(rot.rollModifierForStage(5), -6);
       expect(rot.rollModifierForStage(99), -6);
     });
+
+    test(
+      'Rinsecchito e una condizione fisica e lascia un quarto della Difesa',
+      () {
+        final desiccated = oculumConditionDefinition('rinsecchito')!;
+        expect(desiccated.category, OculumConditionCategory.physical);
+        expect(desiccated.polarity, OculumConditionPolarity.negative);
+        expect(desiccated.basePercentByStage, <double>[75]);
+        expect(
+          desiccated.affectedTargets,
+          contains(OculumConditionTarget.difesa),
+        );
+      },
+    );
 
     test('Gelo richiede quattro applicazioni fino a Ibernato', () {
       final frost = oculumConditionDefinition('gelo')!;
@@ -317,7 +577,9 @@ void main() {
 
     test('ogni condizione automatica dannosa mantiene una via di fuga', () {
       final damaging = oculumConditionCatalog.where(
-        (condition) => condition.basePercentByStage.isNotEmpty,
+        (condition) =>
+            condition.basePercentByStage.isNotEmpty &&
+            condition.polarity == OculumConditionPolarity.negative,
       );
       expect(damaging, isNotEmpty);
       for (final condition in damaging) {

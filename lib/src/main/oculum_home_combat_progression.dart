@@ -147,11 +147,53 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   // DADO / TIRI
   // =====================================================
 
-  int tiraD20({bool countsAsCooldownRoll = true}) {
+  int tiraDado(int faces, {bool countsAsCooldownRoll = true}) {
+    final safeFaces = max(2, faces);
     if (countsAsCooldownRoll) {
       tickStructuredAbilityCooldowns('tiri');
     }
-    return Random().nextInt(20) + 1;
+    if (ispirazioneOculumCriticoInAttesa) {
+      ispirazioneOculumCriticoInAttesa = false;
+      programmaSalvataggio(invalidateCaches: false);
+      return Random.secure().nextBool() ? safeFaces : 1;
+    }
+    return Random().nextInt(safeFaces) + 1;
+  }
+
+  int tiraD20({bool countsAsCooldownRoll = true}) {
+    return tiraDado(20, countsAsCooldownRoll: countsAsCooldownRoll);
+  }
+
+  int esperienzaCriticaCore({required int dado, required int totale}) =>
+      oculumCoreRollExperienceGain(
+        naturalRoll: dado,
+        faces: 20,
+        rollSucceeded: totale > 0,
+        difficulty: normalizedCampaignDifficulty(),
+      );
+
+  String? chiaveEsperienzaCriticaStat(String label) {
+    final normalized = label.trim().toLowerCase();
+    if (normalized.startsWith('resil')) return 'resilienza';
+    if (normalized.startsWith('vol') || normalized.startsWith('will')) {
+      return 'volonta';
+    }
+    if (normalized.startsWith('mater')) return 'materia';
+    if (normalized.startsWith('oculum')) return 'oculum';
+    return null;
+  }
+
+  String registraEsperienzaCriticaStat({
+    required String key,
+    required int dado,
+    required int totale,
+  }) {
+    final gain = esperienzaCriticaCore(dado: dado, totale: totale);
+    if (gain <= 0) return '';
+    esperienzaCriticaStatistiche[key] =
+        max(0, esperienzaCriticaStatistiche[key] ?? 0) + gain;
+    notifyActiveSheetSummaryChanged();
+    return ' EXP $key +$gain';
   }
 
   void applyAutomaticAshForTurnProgress(int previous, int next) {
@@ -495,8 +537,17 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     dadoOverlayRevealTimer?.cancel();
     final reduceEffects = modalitaLeggera || modalitaVeloce || phoneCompactUi;
 
+    final slotValue = slotMachineRollsEnabled
+        ? criticoUno
+              ? 'PERICOLO | PERICOLO | PERICOLO'
+              : criticoVenti
+              ? 'SUCCESSO CRITICO | SUCCESSO CRITICO | SUCCESSO CRITICO'
+              : slotMachineLastSucceeded
+              ? 'PRESO | PRESO | PRESO'
+              : 'MANCATO | ${Random.secure().nextBool() ? 'PRESO' : 'MANCATO'} | MANCATO'
+        : valore;
     _applyDadoCentraleOverlayState(
-      valore: valore,
+      valore: slotValue,
       criticoUno: criticoUno,
       criticoVenti: criticoVenti,
       facce: facce,
@@ -505,6 +556,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     notifyDiceOverlayChanged();
 
     _scheduleDadoCentraleOverlayTimers(reduceEffects: reduceEffects);
+  }
+
+  bool resolveSlotMachineSuccess({required int naturalRoll}) {
+    if (!slotMachineRollsEnabled) return true;
+    if (naturalRoll == 1) return false;
+    if (naturalRoll == 20) return true;
+    return Random.secure().nextInt(100) < slotMachineSuccessChance;
   }
 
   void _applyDadoCentraleOverlayState({
@@ -568,10 +626,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       faces: 20,
       bonuses: [bonus],
     );
+    slotMachineLastSucceeded = resolveSlotMachineSuccess(naturalRoll: dado);
     final expGuadagnata = oculumRollExperienceGain(
       naturalRoll: dado,
       faces: 20,
-      rollSucceeded: totale > 0,
+      rollSucceeded: slotMachineRollsEnabled
+          ? slotMachineLastSucceeded
+          : totale > 0,
     );
 
     final statConsumata = consumoElevatoStatKey(nome);
@@ -580,13 +641,21 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       expGuadagnata,
       motivo: t('Tiro superato', 'Successful roll'),
     );
+    final coreKey = chiaveEsperienzaCriticaStat(nome);
+    final coreExpText = coreKey == null
+        ? ''
+        : registraEsperienzaCriticaStat(
+            key: coreKey,
+            dado: dado,
+            totale: totale,
+          );
     dadoMostrato = testoDado;
     dadoMostratoFacce = 20;
     tiroCriticoUno = dado == 1;
     tiroCriticoVenti = dado == 20;
-    risultato = '$nome: $testoDado$statoForzaLog$expText';
+    risultato = '$nome: $testoDado$statoForzaLog$expText$coreExpText';
     aggiungiLog(
-      'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText',
+      'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText$coreExpText',
     );
     registerValidRoll(consumoStatKey: statConsumata);
     notifyDiceResultChanged();
@@ -627,10 +696,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       faces: 20,
       bonuses: [bonusTotale],
     );
+    slotMachineLastSucceeded = resolveSlotMachineSuccess(naturalRoll: dado);
     final expGuadagnata = oculumRollExperienceGain(
       naturalRoll: dado,
       faces: 20,
-      rollSucceeded: totale > 0,
+      rollSucceeded: slotMachineRollsEnabled
+          ? slotMachineLastSucceeded
+          : totale > 0,
     );
 
     final statoForzaLog = registraTiroStatoForza();
@@ -638,13 +710,20 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       expGuadagnata,
       motivo: t('Tiro superato', 'Successful roll'),
     );
+    final coreExpText = nome == 'VC' || nome == 'CM'
+        ? registraEsperienzaCriticaStat(
+            key: nome.toLowerCase(),
+            dado: dado,
+            totale: totale,
+          )
+        : '';
     dadoMostrato = testoDado;
     dadoMostratoFacce = 20;
     tiroCriticoUno = dado == 1;
     tiroCriticoVenti = dado == 20;
-    risultato = '$nome: $testoDado$statoForzaLog$expText';
+    risultato = '$nome: $testoDado$statoForzaLog$expText$coreExpText';
     aggiungiLog(
-      'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText',
+      'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText$coreExpText',
     );
     registerValidRoll(consumoStatKey: consumoElevatoStatKey(nome));
     notifyDiceResultChanged();
@@ -687,12 +766,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         '${stat.nome} (${hiddenEyeGroupLabel(hiddenEyeStatGroup(stat.id))})';
     final usaFortuna = stat.id == 'fortuna';
     final karmaNonConsumabile = stat.id == 'nodo';
+    final consumptionGroup = stat.id == 'investigazione'
+        ? oculumInvestigationEffectiveStat(
+            materia: materiaTotale(),
+            volonta: volontaTotale(),
+          )
+        : hiddenEyeStatGroup(stat.id);
     final statConsumata = usaFortuna || karmaNonConsumabile
         ? ''
-        : consumoElevatoStatKey(
-            stat.nome,
-            subtraitGroup: hiddenEyeStatGroup(stat.id),
-          );
+        : consumoElevatoStatKey(stat.nome, subtraitGroup: consumptionGroup);
     final consumoFortuna = usaFortuna ? consumeFortunaForRoll() : 0;
     final consumoBaseLog = karmaNonConsumabile
         ? t(' Karma non si consuma.', ' Karma is not consumed.')
@@ -711,10 +793,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       dado,
       leggiNumero(gradoController),
     );
+    slotMachineLastSucceeded = resolveSlotMachineSuccess(naturalRoll: dado);
     final expGuadagnata = oculumRollExperienceGain(
       naturalRoll: dado,
       faces: 20,
-      rollSucceeded: totale > 0,
+      rollSucceeded: slotMachineRollsEnabled
+          ? slotMachineLastSucceeded
+          : totale > 0,
     );
     var masteryCompletedLevels = 0;
     final reduceDiceEffects =
@@ -777,6 +862,28 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     notifyDiceOverlayChanged();
     _scheduleDadoCentraleOverlayTimers(reduceEffects: reduceDiceEffects);
 
+    if (oculumFallenEyeDropCreatesOnNaturalTwenty(
+      subtraitId: stat.id,
+      naturalRoll: dado,
+    )) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _showCreateFallenEyeDialog();
+      });
+    }
+
+    // Il mantenimento non genera un secondo sistema di dadi: usa il tiro che
+    // il giocatore ha appena scelto. Oculum/Manifestazione tengono le
+    // evocazioni pagate in Oculum; Resistenza o Eco saldano i debiti nati dai
+    // danni alla Vita quando l'evocazione è stata pagata in Volontà.
+    unawaited(
+      processFallenEyeMaintenanceRoll(
+        subtraitId: stat.id,
+        naturalRoll: dado,
+        total: totale,
+      ),
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (masteryGain > 0 ||
@@ -830,7 +937,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   Future<void> tiraAiutaCompagno() async {
-    final dado = Random().nextInt(10) + 1;
+    final dado = tiraDado(10);
     final livello = max(0, leggiNumero(livelloController));
     final grado = max(0, leggiNumero(gradoController));
     final bonusGlobale = tiroGlobaleBonus();
@@ -1449,6 +1556,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
               .trim();
     final storedSprite = '${schedePersonaggio[index]['spriteAssetPath'] ?? ''}'
         .trim();
+    final titoloPubblico = titoloSempreVisibileSchedaAt(index);
     final token = <String, dynamic>{
       'id': tag,
       'sheetTag': tag,
@@ -1472,6 +1580,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'tieBreaker': Random().nextInt(1 << 31),
       'status': 'ready',
       'notes': sheetNotes,
+      'visibleTitleName': titoloPubblico?.nome ?? '',
+      'visibleTitleLegend': titoloPubblico?.leggenda ?? '',
       'reactionMax': sheetReazioniAt(index),
       'reactionFastMax': sheetReazioniVelociAt(index),
       'reactionUsed': 0,
@@ -1552,6 +1662,20 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         : masterInitiativeActiveIndex
               .clamp(0, masterInitiativeTokens.length - 1)
               .toInt();
+  }
+
+  void syncMasterInitiativeVisibleTitle(int index) {
+    if (index < 0 || index >= schedePersonaggio.length) return;
+    final tokenIndex = masterInitiativeTokens.indexWhere(
+      (token) => '${token['sheetTag'] ?? ''}' == sheetTagAt(index),
+    );
+    if (tokenIndex < 0) return;
+    final title = titoloSempreVisibileSchedaAt(index);
+    final token = masterInitiativeTokens[tokenIndex];
+    token['visibleTitleName'] = title?.nome ?? '';
+    token['visibleTitleLegend'] = title?.leggenda ?? '';
+    token['updatedAt'] = DateTime.now().toIso8601String();
+    sendRealtimeInitiativeSnapshotIfPublished();
   }
 
   void addSheetToMasterInitiative(int index, {bool rollInitiative = true}) {
@@ -2277,15 +2401,39 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
     final label = sheetRollLabel(key);
     final nome = nomeSchedaPersonaggio(index);
+    final tipo = tipoSchedaPersonaggio(index).toLowerCase();
+    final eliteProgress = oculumEliteMonsterRollProgress(
+      boss: tipo.contains('boss') && !tipo.contains('mini'),
+      miniBoss: tipo.contains('mini') && tipo.contains('boss'),
+      naturalRoll: dado,
+    );
 
     setState(() {
+      if (eliteProgress.levels > 0) {
+        final sheet = schedePersonaggio[index];
+        sheet['livello'] =
+            (readIntValue(sheet['livello']) + eliteProgress.levels).toString();
+        sheet['monsterStatPoints'] =
+            readIntValue(sheet['monsterStatPoints']) +
+            eliteProgress.levels * oculumMonsterStatPointsPerLevel(tipo);
+      }
+      if (eliteProgress.experience > 0) {
+        final sheet = schedePersonaggio[index];
+        sheet['exp'] = (readIntValue(sheet['exp']) + eliteProgress.experience)
+            .toString();
+      }
       dadoMostrato = testoDado;
       dadoMostratoFacce = 20;
       tiroCriticoUno = dado == 1;
       tiroCriticoVenti = dado == 20;
-      risultato = '$nome • $label: $testoDado';
+      final eliteText = eliteProgress.levels > 0
+          ? ' • Boss: critico, +${eliteProgress.levels} livello e +${eliteProgress.levels * oculumMonsterStatPointsPerLevel(tipo)} punti mostro.'
+          : eliteProgress.experience > 0
+          ? ' • EXP élite +${eliteProgress.experience}.'
+          : '';
+      risultato = '$nome • $label: $testoDado$eliteText';
 
-      aggiungiLog('Tiro party $nome [$label]: $testoDado.');
+      aggiungiLog('Tiro party $nome [$label]: $testoDado.$eliteText');
       if (key == 'iniziativa') {
         updateMasterInitiativeToken(
           index: index,
@@ -2410,7 +2558,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           ? sheetDifficoltaTiroAt(sheetIndex)
           : readIntValue(token['rollDifficulty']);
       difficultyForSend = difficulty;
-      dado = Random().nextInt(10) + 1;
+      dado = tiraDado(10);
       bonus = level + grade * 6;
       totale = rollTotalWithCritical(dado, 10, [
         level,
@@ -3272,11 +3420,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final ignoraDifesa = dannoOltreDifesa || difficultyBypasses.beyondDefense;
     final ignoraScudi = dannoOltreScudi || difficultyBypasses.beyondShield;
     final bonusScudiManuale = bonusDannoScudiPercentuale();
+    final bonusScudiCorrosione = conditionShieldDamageBonusPercent();
     final bonusScudoNormale =
         bonusScudiManuale +
+        bonusScudiCorrosione +
         (misfortuneShieldTriggered ? misfortune.normalShieldBonus : 0);
     final bonusScudoOculum =
         bonusScudiManuale +
+        bonusScudiCorrosione +
         (misfortuneShieldTriggered ? misfortune.oculumShieldBonus : 0);
     final shieldDifficultyValue = switch (activeDifficulty) {
       'facile' => '×1,5 ↓',
@@ -3411,7 +3562,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         current: hpPrimaCura,
         maximum: maxHp(),
         temporary: hpTempPrimaCura,
-        amount: curaDaRigenerazione,
+        amount: applyConditionHealingAmount(curaDaRigenerazione),
       );
       final hpRecuperati = healed.current - hpPrimaCura;
       final hpTempOttenuti = healed.temporary - hpTempPrimaCura;
@@ -3708,6 +3859,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       impostaScudoTotale(shield);
       impostaHpTempTotali(temp);
       currentHpController.text = hp.toString();
+      registerVitalMemoryDamage(hpPrima - hp);
       final partialAwakeningLog = applicaRisveglioParzialeMetaHpSeServe(
         hpBefore: hpPrima,
         hpAfter: hp,
@@ -3779,7 +3931,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       current: hpPrima,
       maximum: maxHp(),
       temporary: hpTempPrima,
-      amount: cura,
+      amount: applyConditionHealingAmount(cura),
     );
     final hpRecuperati = healed.current - hpPrima;
     final hpTempOttenuti = healed.temporary - hpTempPrima;
@@ -4255,7 +4407,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           (leggiNumero(livelloController) + livelliGuadagnati).toString();
       aggiornaGradoAutomatico();
       if (isMostro()) {
-        monsterStatPoints += livelliGuadagnati * 9;
+        monsterStatPoints +=
+            livelliGuadagnati *
+            oculumMonsterStatPointsPerLevel(tipoSchedaController.text);
       } else {
         levelUpDaAssegnare += livelliGuadagnati;
       }
@@ -4359,12 +4513,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiornaGradoAutomatico();
 
       if (isMostro()) {
-        monsterStatPoints += livelliGuadagnati * 9;
+        final points =
+            livelliGuadagnati *
+            oculumMonsterStatPointsPerLevel(tipoSchedaController.text);
+        monsterStatPoints += points;
         refullaHp();
 
         risultato = t(
-          'Mostro salito di $livelliGuadagnati livello/i. +${livelliGuadagnati * 9} punti mostro da distribuire. HP refullati.',
-          'Monster gained $livelliGuadagnati level(s). +${livelliGuadagnati * 9} monster points to assign. HP refilled.',
+          'Mostro salito di $livelliGuadagnati livello/i. +$points punti mostro da distribuire. HP refullati.',
+          'Monster gained $livelliGuadagnati level(s). +$points monster points to assign. HP refilled.',
         );
       } else {
         levelUpDaAssegnare += livelliGuadagnati;
@@ -4417,12 +4574,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiornaGradoAutomatico();
 
       if (isMostro()) {
-        monsterStatPoints += livelli * 9;
+        final points =
+            livelli *
+            oculumMonsterStatPointsPerLevel(tipoSchedaController.text);
+        monsterStatPoints += points;
         refullaHp();
 
         risultato = t(
-          'Mostro aumentato di $livelli livelli. +${livelli * 9} punti mostro. HP refullati.',
-          'Monster increased by $livelli levels. +${livelli * 9} monster points. HP refilled.',
+          'Mostro aumentato di $livelli livelli. +$points punti mostro. HP refullati.',
+          'Monster increased by $livelli levels. +$points monster points. HP refilled.',
         );
       } else {
         levelUpDaAssegnare += livelli;

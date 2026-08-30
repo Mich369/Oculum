@@ -288,6 +288,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
           personaggioCaduto = false;
           risultato =
               'Tiro contro la morte: terza Ferita. Il personaggio e morto.';
+          segnaFallenEyeMortoDaScheda(schedePersonaggio[schedaCorrente]);
         }
         aggiungiLog(risultato);
         salvaSchedaCorrenteInMemoria();
@@ -516,6 +517,12 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     token['updatedAt'] = DateTime.now().toIso8601String();
     aggiungiLog(risultato);
     applyMasterInitiativeTokenVitalsToSource(token);
+    if (wounds >= deathWoundLimit) {
+      final sheetIndex = masterInitiativeSheetIndexForToken(token);
+      if (sheetIndex >= 0) {
+        segnaFallenEyeMortoDaScheda(schedePersonaggio[sheetIndex]);
+      }
+    }
   }
 
   void tryRaiseMasterInitiativeCompanion(int targetIndex) {
@@ -587,6 +594,12 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
         );
         aggiungiLog(risultato);
         applyMasterInitiativeTokenVitalsToSource(target);
+        if (readIntValue(target['deathWounds']) >= deathWoundLimit) {
+          final sheetIndex = masterInitiativeSheetIndexForToken(target);
+          if (sheetIndex >= 0) {
+            segnaFallenEyeMortoDaScheda(schedePersonaggio[sheetIndex]);
+          }
+        }
       } else if (roll == 20 || total >= 20) {
         reviveMasterInitiativeToken(
           target,

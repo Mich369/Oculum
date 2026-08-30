@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
@@ -96,6 +98,20 @@ void main() {
         ),
         isTrue,
       );
+    });
+
+    test('il controllo integrita non ricalcola i parser dello scudo', () {
+      final source = File(
+        'lib/src/main/oculum_home_calculations.dart',
+      ).readAsStringSync();
+      final start = source.indexOf('bool itemIntegrityEffectActive');
+      final end = source.indexOf('bool canEquipInventoryItem', start);
+      final method = source.substring(start, end);
+
+      expect(method, contains('leggiNumero(scudoController)'));
+      expect(method, contains('leggiNumero(scudoOculumController)'));
+      expect(method, isNot(contains('normalAvailable: scudo()')));
+      expect(method, isNot(contains('oculumAvailable: scudoOculum()')));
     });
   });
 

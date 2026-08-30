@@ -346,6 +346,93 @@ void main() {
       ),
       5,
     );
+
+    for (final id in <String>['empatia', 'addestramento', 'performance']) {
+      expect(oculumHiddenEyeStaticGroupFor(id), 'volonta');
+      expect(
+        oculumHiddenEyeDerivedBonusFor(
+          id: id,
+          resilienza: 0,
+          volonta: 11,
+          materia: 0,
+          oculum: 0,
+          karma: 0,
+        ),
+        5,
+      );
+    }
+    for (final id in <String>['pilotaggio', 'demolizioni', 'valutazione']) {
+      expect(oculumHiddenEyeStaticGroupFor(id), 'materia');
+      expect(
+        oculumHiddenEyeDerivedBonusFor(
+          id: id,
+          resilienza: 0,
+          volonta: 0,
+          materia: 11,
+          oculum: 0,
+          karma: 0,
+        ),
+        5,
+      );
+    }
+    for (final id in <String>[
+      'occultismo',
+      'presagio',
+      'lettura_aura',
+      'sincronia',
+      'memoria',
+    ]) {
+      expect(oculumHiddenEyeStaticGroupFor(id), 'oculum');
+      expect(
+        oculumHiddenEyeDerivedBonusFor(
+          id: id,
+          resilienza: 0,
+          volonta: 0,
+          materia: 0,
+          oculum: 11,
+          karma: 0,
+        ),
+        5,
+      );
+    }
+    expect(oculumHiddenEyeStaticGroupFor('investigazione'), 'altro');
+    expect(
+      oculumHiddenEyeDerivedBonusFor(
+        id: 'investigazione',
+        resilienza: 0,
+        volonta: 9,
+        materia: 13,
+        oculum: 0,
+        karma: 0,
+      ),
+      6,
+    );
+    expect(
+      oculumHiddenEyeDerivedBonusFor(
+        id: 'investigazione',
+        resilienza: 0,
+        volonta: 15,
+        materia: 13,
+        oculum: 0,
+        karma: 0,
+      ),
+      7,
+    );
+    expect(
+      oculumInvestigationEffectiveStat(materia: 13, volonta: 9),
+      'materia',
+    );
+    expect(
+      oculumInvestigationEffectiveStat(materia: 9, volonta: 15),
+      'volonta',
+    );
+    expect(
+      oculumInvestigationEffectiveStat(materia: 10, volonta: 10),
+      'materia',
+    );
+    for (final excluded in <String>['acrobazia', 'comando', 'ritualistica']) {
+      expect(oculumHiddenEyeStaticGroupFor(excluded), isNull);
+    }
   });
 
   test(

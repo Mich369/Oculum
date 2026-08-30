@@ -185,6 +185,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     final nuovoValore = max(0, valoreAttuale + delta);
 
     setState(() {
+      slotFortuneUsedThisLongRest = false;
       controller.text = nuovoValore.toString();
 
       aggiungiLog(
@@ -343,11 +344,11 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
     setState(() {
       ispirazioniOculumController.text = (valore - 1).toString();
-      final cancelled = cancelPreviousRollForInspiration();
+      ispirazioneOculumCriticoInAttesa = true;
 
       risultato = t(
-        '$cancelled\nIspirazione Oculum usata: il tiro precedente non vale e puoi ritirare un critico mantenendolo critico.',
-        '$cancelled\nOculum Inspiration used: the previous roll does not count and you may reroll a critical roll while keeping it critical.',
+        'Ispirazione Oculum usata: il prossimo dado sarà 50/50 critico positivo o critico negativo.',
+        'Oculum Inspiration used: the next die will be a 50/50 positive or negative critical.',
       );
 
       aggiungiLog(risultato);
@@ -942,6 +943,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       risultato = ultimoEventoRiposo;
       aggiungiLog(risultato);
     });
+    processConditionTick(OculumConditionTickTrigger.specificEvent);
 
     programmaSalvataggio();
   }
@@ -1342,6 +1344,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       );
       malusTiriOculumPostEsplosione = 0;
       final risvegliato = registraRiposoOculumAddormentato(lungo: false);
+      final recuperoOcchiCaduti = rigeneraOcchiCadutiDelProprietarioDaRiposo(
+        lungo: false,
+      );
 
       ultimoEventoRiposo = t(
         'Riposo breve: buff e debuff temporanei rimossi senza perdere HP; recuperato 1/4 delle stats attuali mancanti, 25% di Cenere minimo 1 e $tiroCuraHp su 1d100 HP (+$hpRecuperati effettivi).',
@@ -1369,6 +1374,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
           '\nRisveglio Oculum: $oculumAddormentatoRiposiBrevi/2 riposi brevi, $oculumAddormentatoRiposiLunghi/2 riposi lunghi.',
           '\nOculum awakening: $oculumAddormentatoRiposiBrevi/2 short rests, $oculumAddormentatoRiposiLunghi/2 long rests.',
         );
+      }
+      if (recuperoOcchiCaduti.isNotEmpty) {
+        ultimoEventoRiposo += '\n$recuperoOcchiCaduti';
       }
 
       risultato = ultimoEventoRiposo;
@@ -1448,7 +1456,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       ascensionDustUsataOggi = 0;
       ascensionDustPermanentiInAttesa = 0;
 
-      refullaStatsAttuali();
+      ripristinaStatsRiposoLungo();
       ricaricaScudoOculum();
 
       raccoltaResilienzaSpesa = 0;
@@ -1514,10 +1522,13 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         }
         if (artChanged) changedArtIndexes.add(i);
       }
+      final recuperoOcchiCaduti = rigeneraOcchiCadutiDelProprietarioDaRiposo(
+        lungo: true,
+      );
 
       ultimoEventoRiposo = t(
-        'Riposo lungo completato: dura 1 ora e mezza. Recupera metà Resilienza negativa, tutto Oculum negativo, tutte le stats attuali, 50% di Cenere minimo 3 e porta gli HP ad almeno il 75% del massimale.',
-        'Long rest completed: it lasts 1.5 hours. It recovers half negative Resilience, all negative Oculum, all current stats, 50% Ash minimum 3 and brings HP to at least 75% of maximum.',
+        'Riposo lungo completato: dura 1 ora e mezza. Recupera metà della Resilienza totale mancante, ripristina tutto l’Oculum e tutte le statistiche attuali spese in raccolta o creazione, recupera il 50% di Cenere/Fatica (minimo 3) e porta gli HP ad almeno il 75% del massimale.',
+        'Long rest completed: it lasts 1.5 hours. It recovers half of missing total Resilience, restores all Oculum and current stats spent on gathering or crafting, recovers 50% Ash/Fatigue (minimum 3), and brings HP to at least 75% of maximum.',
       );
       ultimoEventoRiposo += t(
         '\nPresa materiali ricaricata al massimo: ${formatoPesoMateriali(presaMaterialiGrammi)}; bonus temporanei rimossi.',
@@ -1569,6 +1580,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
           '\nAggiusta nucleo è di nuovo disponibile: scegli un’Art per usarlo.',
           '\nRepair core is available again: choose an Art to use it.',
         );
+      }
+      if (recuperoOcchiCaduti.isNotEmpty) {
+        ultimoEventoRiposo += '\n$recuperoOcchiCaduti';
       }
 
       risultato = ultimoEventoRiposo;

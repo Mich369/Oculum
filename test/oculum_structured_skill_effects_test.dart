@@ -32,6 +32,31 @@ void main() {
     expect(source, contains("t('Anteprima completa', 'Full preview')"));
   });
 
+  test('la conversione risorsa e salvabile e pronta per Skill e Arti', () {
+    final effect = OculumStructuredEffect(
+      type: 'conversione_risorsa',
+      resource: 'oculum',
+      target: 'Resilienza',
+      valueExpression: '4',
+    );
+    final restored = OculumStructuredEffect.fromJson(effect.toJson());
+    final runtime = File(
+      'lib/src/main/oculum_structured_effect_runtime.dart',
+    ).readAsStringSync();
+
+    expect(oculumStructuredEffectTypes, contains('conversione_risorsa'));
+    expect(restored.type, 'conversione_risorsa');
+    expect(restored.resource, 'oculum');
+    expect(restored.target, 'Resilienza');
+    expect(
+      oculumStructuredEffectDescription(restored),
+      'Trasforma 4 oculum in Resilienza',
+    );
+    expect(runtime, contains("case 'conversione_risorsa':"));
+    expect(runtime, contains('final spent = sourceResource == \'oculum\''));
+    expect(runtime, contains('modificaStatAttuale(targetResource, spent'));
+  });
+
   group('riferimenti ai sottotratti', () {
     test('@Res, +1 e -1 sono valutati senza modificare il sottotratto', () {
       int value(String expression) => oculumEvaluateStructuredEffectValue(

@@ -105,6 +105,9 @@ int oculumHiddenEyeDerivedBonusFor({
     case 'meccanica':
     case 'alchimia':
     case 'controllo_corporeo':
+    case 'pilotaggio':
+    case 'demolizioni':
+    case 'valutazione':
       return materia ~/ 2;
     case 'furbizia':
     case 'strategia':
@@ -119,6 +122,9 @@ int oculumHiddenEyeDerivedBonusFor({
     case 'pressione':
     case 'concentrazione':
     case 'fermezza':
+    case 'empatia':
+    case 'addestramento':
+    case 'performance':
       return volonta ~/ 2;
     case 'nodo':
       return karma;
@@ -127,13 +133,25 @@ int oculumHiddenEyeDerivedBonusFor({
     case 'percezione':
     case 'sussurro':
     case 'canalizzazione':
+    case 'occultismo':
+    case 'presagio':
+    case 'lettura_aura':
+    case 'sincronia':
+    case 'memoria':
       return oculum ~/ 2;
+    case 'investigazione':
+      return max(materia, volonta) ~/ 2;
     case 'manifestazione_potere':
       return max(materia, oculum) ~/ 2;
     default:
       return 0;
   }
 }
+
+String oculumInvestigationEffectiveStat({
+  required int materia,
+  required int volonta,
+}) => materia >= volonta ? 'materia' : 'volonta';
 
 String? oculumHiddenEyeStaticGroupFor(String id) {
   switch (id) {
@@ -149,6 +167,9 @@ String? oculumHiddenEyeStaticGroupFor(String id) {
     case 'crepa':
     case 'pressione':
     case 'fermezza':
+    case 'empatia':
+    case 'addestramento':
+    case 'performance':
       return 'volonta';
     case 'velo':
     case 'inganno':
@@ -159,13 +180,22 @@ String? oculumHiddenEyeStaticGroupFor(String id) {
     case 'meccanica':
     case 'alchimia':
     case 'controllo_corporeo':
+    case 'pilotaggio':
+    case 'demolizioni':
+    case 'valutazione':
       return 'materia';
     case 'nodo':
     case 'fortuna':
+    case 'investigazione':
       return 'altro';
     case 'percezione':
     case 'sussurro':
     case 'canalizzazione':
+    case 'occultismo':
+    case 'presagio':
+    case 'lettura_aura':
+    case 'sincronia':
+    case 'memoria':
       return 'oculum';
     default:
       return null;
@@ -258,6 +288,22 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     yield* titoli;
     yield* trattiRazziali;
   }
+
+  OculumTitle? get titoloSempreVisibile {
+    oculumNormalizeAlwaysVisibleTitles(titoli);
+    return oculumAlwaysVisibleTitle(titoli);
+  }
+
+  OculumTitle? titoloSempreVisibileSchedaAt(int index) {
+    if (index == schedaCorrente) return titoloSempreVisibile;
+    if (index < 0 || index >= schedePersonaggio.length) return null;
+    final raw = schedePersonaggio[index]['titoli'];
+    final titles = (raw is List ? raw : const <dynamic>[]).whereType<Map>().map(
+      (json) => OculumTitle.fromJson(Map<String, dynamic>.from(json)),
+    );
+    return oculumAlwaysVisibleTitle(titles);
+  }
+
   // CALCOLI STATS / HP / DERIVATI
   // =====================================================
 
@@ -809,7 +855,14 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       currentStatWithRuntimeBuffs('volonta', currentVolonta());
   int materiaTotale() =>
       currentStatWithRuntimeBuffs('materia', currentMateria());
-  int oculumTotale() => currentStatWithRuntimeBuffs('oculum', currentOculum());
+  // Oculum addormentato blocks the whole available pool, including temporary
+  // and runtime bonuses. The raw controller value remains intact so waking
+  // does not destroy recoveries or saved bonuses.
+  int oculumTotale() => oculumVisibleTotal(
+    storedCurrent: currentOculum(),
+    runtimeBonus: runtimeCurrentStatBonus('oculum'),
+    sleeping: oculumAddormentato,
+  );
 
   String? titleQuickCommandKey(String rawCommand) {
     final command = rawCommand.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
@@ -1104,11 +1157,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         livelloGrado +
         bonusDifesaRapido() +
         bonusDifesaEquipaggiamento() +
+        fallenEyeRareAttributeBonusFor('difesa') +
         directSkillNumericBonus('difesa');
     final baseDanni =
         vol +
         bonusDannoArmi() +
         livelloGrado +
+        fallenEyeRareAttributeBonusFor('danno') +
         directSkillNumericBonus('danni');
     final baseHp = max(1, res) * moltiplicatoreHp();
     final baseMovimento = 30 + (mat ~/ 6);
@@ -1123,6 +1178,16 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       'volonta': vol,
       'materia': mat,
       'oculum': ocu,
+      // Standalone percentages intentionally use only the raw current pool.
+      // This prevents `@Mat+200%` from recursively scaling Temp, conditions,
+      // and other formula-driven bonuses that are already visible on the card.
+      'resilienza_percentage_base': max(0, currentResilienza()),
+      'volonta_percentage_base': max(0, currentVolonta()),
+      'materia_percentage_base': max(0, currentMateria()),
+      // Oculum percentages deliberately use the currently available pool,
+      // rather than its internal normal component. The sleep state still
+      // makes the resource unavailable to every formula.
+      'oculum_percentage_base': oculumAddormentato ? 0 : max(0, ocu),
       'livello': max(0, leggiNumero(livelloController)),
       'grado': grado,
       'livello_grado': livelloGrado,
@@ -1858,11 +1923,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   bool artOpenSbloccata(CharacterArt art) {
-    if (!art.sbloccata || art.skills.isEmpty) return false;
-    final requiredLevel = artMaxLevel(art);
-    return art.skills.every(
-      (skill) => artSkillBonusLevel(skill) >= requiredLevel,
-    );
+    return art.sbloccata && oculumArtHasDistinctThirdForms(art);
   }
 
   int artLivelloComune(CharacterArt art) {
@@ -2365,16 +2426,18 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       );
       return 0;
     }
-    final before = max(0, currentOculum()).toInt();
+    // Costs use the same available total shown on the sheet. A runtime bonus
+    // can make this positive while the internal controller is still zero.
+    final before = oculumTotale();
     final spendable = min(amount, before);
     if (spendable <= 0) return 0;
     final next = spendOculumFromTemporaryState(
       state: currentTemporaryOculumState(),
       amount: spendable,
-      minimumNormalCurrent: 0,
+      minimumNormalCurrent: currentOculumRuntimeFloor(),
     );
     applyTemporaryOculumState(next);
-    final spent = max(0, before - max(0, currentOculum())).toInt();
+    final spent = max(0, before - oculumTotale()).toInt();
     if (scheduleSave && spent > 0) {
       recordCurrentOculumProgress();
       programmaSalvataggio(invalidateCaches: false);
@@ -2491,9 +2554,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       oculumAddormentatoRiposiLunghi = 0;
     }
     oculumAddormentato = true;
+    // The stored value is deliberately allowed to offset runtime buffs.  A
+    // literal zero here would make every active buff reappear as available
+    // Oculum the moment the sleeping state is removed.
     applyTemporaryOculumState(
-      const TemporaryOculumState(
-        normalCurrent: 0,
+      TemporaryOculumState(
+        normalCurrent: currentOculumRuntimeFloor(),
         temporary: 0,
         rollsRemaining: 0,
       ),
@@ -2812,6 +2878,26 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     currentResilienzaController.text = currentStatNaturalControllerMax(
       'resilienza',
     ).toString();
+    currentVolontaController.text = currentStatNaturalControllerMax(
+      'volonta',
+    ).toString();
+    currentMateriaController.text = currentStatNaturalControllerMax(
+      'materia',
+    ).toString();
+    final massimoOculum = currentStatNaturalControllerMax('oculum');
+    if (currentOculum() < massimoOculum) {
+      addOculum(massimoOculum - currentOculum(), scheduleSave: false);
+    }
+    invalidateHiddenEyeDerivedCaches();
+  }
+
+  /// Regola del riposo lungo: Resilienza recupera solo metà del divario verso
+  /// il totale; Oculum, Volontà e Materia attuali tornano invece al massimo.
+  void ripristinaStatsRiposoLungo() {
+    recuperaStatAttuale(
+      currentResilienzaController,
+      currentStatNaturalControllerMax('resilienza'),
+    );
     currentVolontaController.text = currentStatNaturalControllerMax(
       'volonta',
     ).toString();
@@ -3163,7 +3249,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         return max(0, currentMateria());
       case 'oculum':
       default:
-        return max(0, currentOculum());
+        return oculumTotale();
     }
   }
 
@@ -3207,7 +3293,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         return 0;
       case 'oculum':
       default:
-        return currentSpendableStatValue('oculum');
+        return currentStatValue('oculum');
     }
   }
 
@@ -3277,6 +3363,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (normalized == 'oculum') {
       final spent = spendOculum(amount, scheduleSave: false);
       adjustRecordedStatSpentFromDelta('oculum', -spent);
+      grantTrueSoulBurnSpendBenefits(spent: spent, source: t('Skill', 'Skill'));
       return spent;
     }
 
@@ -3286,6 +3373,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     syncVisibleCurrentStatEditor(normalized);
     notifyActiveSheetSummaryChanged();
     adjustRecordedStatSpentFromDelta(normalized, -amount);
+    grantTrueSoulBurnSpendBenefits(spent: amount, source: t('Skill', 'Skill'));
     return amount;
   }
 
@@ -3338,14 +3426,23 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   void modificaStatAttuale(String key, int delta, {bool silent = false}) {
-    final controller = currentStatController(key);
-
     setState(() {
       final before = currentStatValue(key);
       final next = max(0, before + delta);
       final appliedDelta = next - before;
-      final runtimeBonus = runtimeCurrentStatBonus(key);
-      controller.text = (next - runtimeBonus).toString();
+      if (key == 'oculum') {
+        // Keep the visible total and its expiring overflow in one state.  A
+        // direct controller write desynchronised them after editing/resetting
+        // the value from the sheet.
+        setCurrentStatFromVisibleInput(
+          key,
+          next.toString(),
+          trackConsumption: false,
+        );
+      } else {
+        final runtimeBonus = runtimeCurrentStatBonus(key);
+        currentStatController(key).text = (next - runtimeBonus).toString();
+      }
       adjustRecordedStatSpentFromDelta(key, appliedDelta);
       if (key == 'resilienza') {
         rimarginaHpDaAumentoResilienza(appliedDelta);
@@ -3386,13 +3483,19 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   void resetStatAttuale(String key) {
     setState(() {
-      final controller = currentStatController(key);
       final massimo = currentStatNaturalControllerMax(key);
       final before = currentStatValue(key);
-      if (key == 'oculum' && before < massimo) {
-        addOculum(massimo - before, scheduleSave: false);
+      if (key == 'oculum') {
+        // Reset means exactly the normal maximum: it must not preserve a
+        // previously earned temporary pool hidden behind the displayed value.
+        applyTemporaryOculumState(
+          resetTemporaryOculumState(
+            normalMaximum: massimo,
+            minimumNormalCurrent: currentOculumRuntimeFloor(),
+          ),
+        );
       } else {
-        controller.text = massimo.toString();
+        currentStatController(key).text = massimo.toString();
       }
       final after = currentStatValue(key);
       adjustRecordedStatSpentFromDelta(key, after - before);
@@ -3671,6 +3774,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
             'Totale: Karma + Fortuna nelle Risorse + Livello/2. Può schivare, attenuare danni e guida i tiri drop.',
       ),
       HiddenEyeStat(
+        id: 'drop',
+        nome: 'Drop',
+        descrizione:
+            'Cercare bottino e ricompense. Con 20 naturale apre la creazione di un Occhio dei Caduti.',
+        category: 'altro',
+      ),
+      HiddenEyeStat(
         id: 'crepa',
         nome: 'Crepa',
         descrizione:
@@ -3784,6 +3894,78 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         descrizione:
             'Dirigere l\'Oculum e stabilizzare Arti prolungate e poteri complessi. Bonus: Oculum/2.',
       ),
+      HiddenEyeStat(
+        id: 'investigazione',
+        nome: 'Investigazione',
+        descrizione:
+            'Ricostruire eventi e collegare indizi gia trovati senza sostituire Percezione. Bonus: maggiore tra Materia e Volonta / 2.',
+      ),
+      HiddenEyeStat(
+        id: 'empatia',
+        nome: 'Empatia',
+        descrizione:
+            'Comprendere emozioni, tensioni e intenzioni senza persuadere come Eco. Bonus: Volonta/2.',
+      ),
+      HiddenEyeStat(
+        id: 'occultismo',
+        nome: 'Occultismo',
+        descrizione:
+            'Riconoscere anomalie, entita, maledizioni e fenomeni dell Oculum. Bonus: Oculum/2.',
+      ),
+      HiddenEyeStat(
+        id: 'presagio',
+        nome: 'Presagio',
+        descrizione:
+            'Interpretare visioni, sogni e segnali di eventi futuri. Bonus: Oculum/2.',
+      ),
+      HiddenEyeStat(
+        id: 'pilotaggio',
+        nome: 'Pilotaggio',
+        descrizione:
+            'Controllare veicoli, cavalcature e macchine in movimento. Bonus: Materia/2.',
+      ),
+      HiddenEyeStat(
+        id: 'demolizioni',
+        nome: 'Demolizioni',
+        descrizione:
+            'Usare esplosivi, provocare crolli controllati e individuare punti strutturali deboli. Bonus: Materia/2.',
+      ),
+      HiddenEyeStat(
+        id: 'addestramento',
+        nome: 'Addestramento',
+        descrizione:
+            'Calmare, guidare e comprendere creature. Bonus: Volonta/2.',
+      ),
+      HiddenEyeStat(
+        id: 'performance',
+        nome: 'Performance',
+        descrizione:
+            'Musica, recitazione, danza e intrattenimento. Bonus: Volonta/2.',
+      ),
+      HiddenEyeStat(
+        id: 'valutazione',
+        nome: 'Valutazione',
+        descrizione:
+            'Riconoscere valore, qualita, autenticita e provenienza degli oggetti. Bonus: Materia/2.',
+      ),
+      HiddenEyeStat(
+        id: 'lettura_aura',
+        nome: 'Lettura dell Aura',
+        descrizione:
+            'Percepire potere, condizioni e alterazioni soprannaturali senza identificarle automaticamente. Bonus: Oculum/2.',
+      ),
+      HiddenEyeStat(
+        id: 'sincronia',
+        nome: 'Sincronia',
+        descrizione:
+            'Coordinarsi con evocazioni, copie, compagni o entita collegate. Bonus: Oculum/2.',
+      ),
+      HiddenEyeStat(
+        id: 'memoria',
+        nome: 'Memoria',
+        descrizione:
+            'Ricordare dettagli, testi, luoghi e informazioni apprese. Bonus: Oculum/2.',
+      ),
     ];
   }
 
@@ -3864,6 +4046,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       case 'crepa':
       case 'pressione':
       case 'fermezza':
+      case 'empatia':
+      case 'addestramento':
+      case 'performance':
         group = 'volonta';
         break;
       case 'velo':
@@ -3875,15 +4060,24 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       case 'meccanica':
       case 'alchimia':
       case 'controllo_corporeo':
+      case 'pilotaggio':
+      case 'demolizioni':
+      case 'valutazione':
         group = 'materia';
         break;
       case 'nodo':
       case 'fortuna':
+      case 'investigazione':
         group = 'altro';
         break;
       case 'percezione':
       case 'sussurro':
       case 'canalizzazione':
+      case 'occultismo':
+      case 'presagio':
+      case 'lettura_aura':
+      case 'sincronia':
+      case 'memoria':
         group = 'oculum';
         break;
       case 'concentrazione':
@@ -4017,7 +4211,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int hiddenEyeStatRollQuickBonus(HiddenEyeStat stat) {
     if (stat.id == 'nodo') return 0;
-    final key = statRollQuickBonusKey(hiddenEyeStatGroup(stat.id));
+    final rollGroup = stat.id == 'investigazione'
+        ? oculumInvestigationEffectiveStat(
+            materia: materiaTotale(),
+            volonta: volontaTotale(),
+          )
+        : hiddenEyeStatGroup(stat.id);
+    final key = statRollQuickBonusKey(rollGroup);
     return key.isEmpty ? 0 : runtimeQuickBonus(key);
   }
 
@@ -4205,6 +4405,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         bonusLivelloGrado() +
         bonusDifesaRapido() +
         bonusDifesaEquipaggiamento() +
+        fallenEyeRareAttributeBonusFor('difesa') +
         titleQuickBonus('difesa') +
         artQuickBonus('difesa') +
         itemQuickBonus('difesa') +
@@ -4222,7 +4423,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final materia = materiaTotale();
     final livelloGrado = bonusLivelloGrado();
     final baseStats = (volonta + materia) ~/ 2;
-    final base = baseStats + livelloGrado;
+    final rareBonus = fallenEyeRareAttributeBonusFor('difesa');
+    final base = baseStats + livelloGrado + rareBonus;
     final bonusTitoli = titleQuickBonus('difesa');
     final bonusArt = artQuickBonus('difesa');
     final bonusItem = itemQuickBonus('difesa');
@@ -4243,7 +4445,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final conditionDelta = difesa() - beforeConditions;
     final details = quickCommandRuntimeDetails('difesa');
     final detailText = details.isEmpty ? '' : ' | ${details.join('; ')}';
-    return '(VOL $volonta + MAT $materia) / 2 = $baseStats + Lv/Gr $livelloGrado = $base + Rapido $bonusRapido + Equip $bonusEquip + Titoli $bonusTitoli + Art/Open $bonusArt + Oggetti @ $bonusItem + Buff/Malus @ $bonusGlobal + Skill/Forme $bonusSkill + Condizioni ${conditionDelta >= 0 ? '+' : ''}$conditionDelta = ${difesa()}$detailText';
+    return '(VOL $volonta + MAT $materia) / 2 = $baseStats + Lv/Gr $livelloGrado + Attributo raro $rareBonus = $base + Rapido $bonusRapido + Equip $bonusEquip + Titoli $bonusTitoli + Art/Open $bonusArt + Oggetti @ $bonusItem + Buff/Malus @ $bonusGlobal + Skill/Forme $bonusSkill + Condizioni ${conditionDelta >= 0 ? '+' : ''}$conditionDelta = ${difesa()}$detailText';
   }
 
   List<InventoryItem> armiEquipaggiate() {
@@ -4350,12 +4552,16 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   bool itemIntegrityEffectActive(InventoryItem item) {
+    // Do not call scudo()/scudoOculum() here: those totals evaluate active
+    // item parsers, including this integrity effect. A parser in the effect
+    // would otherwise re-enter this method until Flutter shows the error
+    // screen. Integrity only needs the already stored shield amounts.
     return oculumInventoryIntegrityEffectActive(
       item,
       normalMaximum: max(0, itemShieldBonus(item)),
       oculumMaximum: itemOculumShieldBonus(item),
-      normalAvailable: scudo(),
-      oculumAvailable: scudoOculum(),
+      normalAvailable: max(0, leggiNumero(scudoController)),
+      oculumAvailable: max(0, leggiNumero(scudoOculumController)),
     );
   }
 
@@ -4374,7 +4580,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int dannoTotaleBaseSenzaComandi() {
-    return volontaTotale() + bonusDannoArmi() + bonusLivelloGrado();
+    return volontaTotale() +
+        bonusDannoArmi() +
+        bonusLivelloGrado() +
+        fallenEyeRareAttributeBonusFor('danno');
   }
 
   int dannoTotale() {
@@ -4419,7 +4628,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         : ' + Potenza nucleo $corePowerBonus%';
     final details = quickCommandRuntimeDetails('danni');
     final detailText = details.isEmpty ? '' : ' | ${details.join('; ')}';
-    return 'VOL ${volontaTotale()} + Arma ${bonusDannoArmi()} + Lv/Gr ${bonusLivelloGrado()} = $base + Titoli $bonusTitoli + Art/Open $bonusArt + Oggetti @ $bonusItem + Buff/Malus @ $bonusGlobal + Skill/Forme $bonusSkill + Condizioni ${conditionDelta >= 0 ? '+' : ''}$conditionDelta$corePowerText = ${dannoTotale()}$detailText';
+    final rareBonus = fallenEyeRareAttributeBonusFor('danno');
+    return 'VOL ${volontaTotale()} + Arma ${bonusDannoArmi()} + Lv/Gr ${bonusLivelloGrado()} + Attributo raro $rareBonus = $base + Titoli $bonusTitoli + Art/Open $bonusArt + Oggetti @ $bonusItem + Buff/Malus @ $bonusGlobal + Skill/Forme $bonusSkill + Condizioni ${conditionDelta >= 0 ? '+' : ''}$conditionDelta$corePowerText = ${dannoTotale()}$detailText';
   }
 
   String activeTypeSwitchElement() {

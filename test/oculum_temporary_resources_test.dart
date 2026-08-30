@@ -205,6 +205,131 @@ void main() {
       expect(spent.temporary, 0);
     });
 
+    test(
+      'il reset elimina il temporaneo e lascia spendibile il massimo normale',
+      () {
+        final reset = resetTemporaryOculumState(normalMaximum: 10);
+        final afterSkill = spendOculumFromTemporaryState(
+          state: reset,
+          amount: 3,
+        );
+
+        expect(reset.normalCurrent, 10);
+        expect(reset.temporary, 0);
+        expect(reset.rollsRemaining, 0);
+        expect(afterSkill.total, 7);
+        expect(afterSkill.temporary, 0);
+      },
+    );
+
+    test('Oculum addormentato non rende utilizzabili i buff runtime', () {
+      expect(
+        oculumVisibleTotal(
+          storedCurrent: -14,
+          runtimeBonus: 38,
+          sleeping: true,
+        ),
+        0,
+      );
+      expect(
+        oculumVisibleTotal(
+          storedCurrent: -14,
+          runtimeBonus: 38,
+          sleeping: false,
+        ),
+        24,
+      );
+    });
+
+    test(
+      'il risveglio non fa riapparire il bonus presente prima del sonno',
+      () {
+        const runtimeBonus = 38;
+
+        // Sleeping stores the negative counterpart of an active runtime bonus.
+        // Once the condition is lifted, the visible pool therefore remains zero
+        // until it is recovered normally.
+        expect(
+          oculumVisibleTotal(
+            storedCurrent: -runtimeBonus,
+            runtimeBonus: runtimeBonus,
+            sleeping: false,
+          ),
+          0,
+        );
+
+        final calculations = File(
+          'lib/src/main/oculum_home_calculations.dart',
+        ).readAsStringSync();
+        final sleepStart = calculations.indexOf(
+          'void attivaStatoOculumAddormentato()',
+        );
+        final sleepEnd = calculations.indexOf(
+          'void risvegliaStatoOculumAddormentato()',
+          sleepStart,
+        );
+        final sleepSource = calculations.substring(sleepStart, sleepEnd);
+        expect(
+          sleepSource,
+          contains('normalCurrent: currentOculumRuntimeFloor()'),
+        );
+      },
+    );
+
+    test('un costo usa l Oculum visibile anche se il controller e zero', () {
+      const runtimeBonus = 5;
+      final afterCost = spendOculumFromTemporaryState(
+        state: const TemporaryOculumState(
+          normalCurrent: 0,
+          temporary: 0,
+          rollsRemaining: 0,
+        ),
+        amount: 1,
+        minimumNormalCurrent: -runtimeBonus,
+      );
+
+      expect(
+        oculumVisibleTotal(
+          storedCurrent: afterCost.total,
+          runtimeBonus: runtimeBonus,
+          sleeping: false,
+        ),
+        4,
+      );
+
+      final calculations = File(
+        'lib/src/main/oculum_home_calculations.dart',
+      ).readAsStringSync();
+      expect(calculations, contains('final before = oculumTotale();'));
+      expect(
+        calculations,
+        contains('minimumNormalCurrent: currentOculumRuntimeFloor(),'),
+      );
+      expect(calculations, contains("return currentStatValue('oculum');"));
+    });
+
+    test('il pannello Oculum impone zero esplicito mentre dorme', () {
+      final sheetPage = File(
+        'lib/src/main/oculum_home_sheet_page.dart',
+      ).readAsStringSync();
+
+      expect(
+        sheetPage,
+        contains('final current = sleeping ? 0 : oculumTotale();'),
+      );
+      expect(
+        sheetPage,
+        contains('final ratio = sleeping ? 0.0 : oculumRatio();'),
+      );
+      expect(
+        sheetPage,
+        contains(
+          'final normalCurrent = sleeping ? 0 : max(0, normalCurrentOculum());',
+        ),
+      );
+      expect(sheetPage, contains('Oculum dormiente 0/\$massimo'));
+    });
+
     test('un guadagno ripristina prima il bonus testuale consumato', () {
       final restored = addOculumToTemporaryState(
         state: const TemporaryOculumState(

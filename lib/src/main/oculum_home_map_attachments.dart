@@ -7313,6 +7313,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         bytes,
         fit: BoxFit.cover,
         gaplessPlayback: true,
+        cacheWidth: max(1, (size * 2).round()),
+        cacheHeight: max(1, (size * 2).round()),
         errorBuilder: (context, error, stackTrace) =>
             Icon(Icons.person_pin_circle, color: color, size: size * 0.54),
       );

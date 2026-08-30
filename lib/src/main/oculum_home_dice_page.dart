@@ -15,7 +15,6 @@ extension _OculumHomeDicePage on _OculumHomePageState {
         modificatoreManuale +
         modificatoreGlobale +
         modificatoreDifficoltaTiro();
-    final random = Random();
     final tiriConCritico = <String>[];
 
     var totale = 0;
@@ -24,7 +23,7 @@ extension _OculumHomeDicePage on _OculumHomePageState {
     var criticoMax = false;
 
     for (int i = 0; i < quantita; i++) {
-      final tiro = random.nextInt(facce) + 1;
+      final tiro = tiraDado(facce);
       final critico = criticalDieModifier(tiro, facce);
       modificatoreCritico += critico;
       totale += tiro + critico;

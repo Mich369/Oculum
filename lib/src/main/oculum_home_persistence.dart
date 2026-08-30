@@ -222,7 +222,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
     final directory = oculumPerformanceHarness
         ? await getTemporaryDirectory()
         : await getApplicationSupportDirectory();
-    final suffix = oculumPerformanceHarness ? '_profile_$pid' : '';
+    final suffix = oculumPerformanceHarness
+        ? '_profile_$pid'
+        : oculumProfileFileSuffix;
     return File(
       '${directory.path}${Platform.pathSeparator}'
       'oculum_progress_journal_v1$suffix.json',
@@ -543,6 +545,44 @@ extension _OculumHomePersistence on _OculumHomePageState {
     _scheduleProgressJournalWrite(immediate: immediate);
   }
 
+  /// Small, recoverable patch for frequent combat/resource interactions.
+  ///
+  /// The complete save is still queued for cloud sync, backups and legacy
+  /// compatibility. This journal write is deliberately tiny, so a burst of
+  /// HP/shield buttons does not have to serialize every inventory, Art and
+  /// diary before the next full checkpoint is ready.
+  void recordCurrentVitalsProgress({bool immediate = false}) {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
+    final previousHp = readIntValue(
+      schedePersonaggio[schedaCorrente]['currentHp'],
+      fallback: max(0, hpCorrenti()),
+    );
+    final values = <String, dynamic>{
+      'currentHp': currentHpController.text,
+      'hpTemp': hpTempController.text,
+      'scudo': scudoController.text,
+      'scudoCritico': scudoCriticoController.text,
+      'scudoOculum': scudoOculumController.text,
+      'currentResilienza': currentResilienzaController.text,
+      'currentVolonta': currentVolontaController.text,
+      'currentMateria': currentMateriaController.text,
+      'currentOculum': currentOculumController.text,
+      'normalCurrentOculum': normalCurrentOculum(),
+      'temporaryOculum': temporaryOculum,
+      'temporaryOculumRollsRemaining': temporaryOculumRollsRemaining,
+    };
+    schedePersonaggio[schedaCorrente].addAll(values);
+    registraPerditaVitaMantenimentoOcchiCaduti(
+      ownerSheetId: sheetTagAt(schedaCorrente),
+      previousHp: previousHp,
+      currentHp: readIntValue(values['currentHp']),
+    );
+    _progressJournalSheet(sheetTagAt(schedaCorrente))['vitals'] = values;
+    _scheduleProgressJournalWrite(immediate: immediate);
+  }
+
   void recordSkillFormOculumProgress(
     int skillIndex,
     int formIndex, {
@@ -615,6 +655,25 @@ extension _OculumHomePersistence on _OculumHomePageState {
         sheet['raccoltaOculumSpesa'] = readIntValue(
           currentOculum['raccoltaOculumSpesa'],
         );
+      }
+    }
+    final vitals = patch['vitals'];
+    if (vitals is Map) {
+      for (final key in const <String>[
+        'currentHp',
+        'hpTemp',
+        'scudo',
+        'scudoCritico',
+        'scudoOculum',
+        'currentResilienza',
+        'currentVolonta',
+        'currentMateria',
+        'currentOculum',
+        'normalCurrentOculum',
+        'temporaryOculum',
+        'temporaryOculumRollsRemaining',
+      ]) {
+        if (vitals.containsKey(key)) sheet[key] = vitals[key];
       }
     }
     final sheetSkills = sheet['skills'];
@@ -1199,6 +1258,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   Map<String, dynamic> statoCorrenteJson() {
     assicuraTagSchede();
+    final titoloPubblico = titoloSempreVisibile;
     final vitals = OculumPersistentVitalsSnapshot(
       normalCurrentOculum: normalCurrentOculum(),
       temporaryOculum: temporaryOculum,
@@ -1210,6 +1270,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
     return {
       'nome': nomeController.text,
+      'titoloSempreVisibileNome': titoloPubblico?.nome ?? '',
+      'titoloSempreVisibileLeggenda': titoloPubblico?.leggenda ?? '',
       'tipoScheda': tipoSchedaController.text,
       'razza': razzaController.text,
       'livello': livelloController.text,
@@ -1308,6 +1370,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'ispirazioni': ispirazioniController.text,
       'superIspirazioni': superIspirazioniController.text,
       'ispirazioniOculum': ispirazioniOculumController.text,
+      'ispirazioneOculumCriticoInAttesa': ispirazioneOculumCriticoInAttesa,
+      'esperienzaCriticaStatistiche': Map<String, int>.from(
+        esperienzaCriticaStatistiche,
+      ),
       'karma': karmaController.text,
       'follia': folliaController.text,
       'folliaDaMostri': folliaDaMostri,
@@ -1337,6 +1403,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'tempVolonta': tempVolonta,
       'tempMateria': tempMateria,
       'tempOculum': tempOculum,
+      'slotMachineRollsEnabled': slotMachineRollsEnabled,
+      'slotMachineSuccessChance': slotMachineSuccessChance,
+      'slotFortuneUsedThisLongRest': slotFortuneUsedThisLongRest,
       'ascensionDustTempResilienza': ascensionDustTempResilienza,
       'ascensionDustTempVolonta': ascensionDustTempVolonta,
       'ascensionDustTempMateria': ascensionDustTempMateria,
@@ -1670,6 +1739,18 @@ extension _OculumHomePersistence on _OculumHomePageState {
     ispirazioniController.text = '${json['ispirazioni'] ?? '0'}';
     superIspirazioniController.text = '${json['superIspirazioni'] ?? '0'}';
     ispirazioniOculumController.text = '${json['ispirazioniOculum'] ?? '0'}';
+    ispirazioneOculumCriticoInAttesa = readBoolValue(
+      json['ispirazioneOculumCriticoInAttesa'],
+    );
+    final esperienzaCritica = json['esperienzaCriticaStatistiche'];
+    if (esperienzaCritica is Map) {
+      for (final key in esperienzaCriticaStatistiche.keys) {
+        esperienzaCriticaStatistiche[key] = max(
+          0,
+          readIntValue(esperienzaCritica[key]),
+        );
+      }
+    }
     karmaController.text = '${json['karma'] ?? '0'}';
     folliaController.text = readIntValue(json['follia']).toString();
     folliaDaMostri = readBoolValue(json['folliaDaMostri']);
@@ -1729,6 +1810,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
     tempVolonta = readIntValue(json['tempVolonta']);
     tempMateria = readIntValue(json['tempMateria']);
     tempOculum = readIntValue(json['tempOculum']);
+    slotMachineRollsEnabled = readBoolValue(json['slotMachineRollsEnabled']);
+    slotMachineSuccessChance = readIntValue(
+      json['slotMachineSuccessChance'],
+      fallback: 50,
+    ).clamp(5, 95).toInt();
+    slotFortuneUsedThisLongRest = readBoolValue(
+      json['slotFortuneUsedThisLongRest'],
+    );
     ascensionDustTempResilienza = max(
       0,
       readIntValue(json['ascensionDustTempResilienza']),
@@ -2282,7 +2371,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       final root = oculumPerformanceHarness
           ? await getTemporaryDirectory()
           : await getApplicationSupportDirectory();
-      final suffix = oculumPerformanceHarness ? '_profile_$pid' : '';
+      final suffix = oculumPerformanceHarness
+          ? '_profile_$pid'
+          : oculumProfileFileSuffix;
       final directory = Directory(
         '${root.path}${Platform.pathSeparator}oculum_save_blobs$suffix',
       );
@@ -3489,6 +3580,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
       }
 
       for (final key in <String>[
+        // Le note libere possono essere ancora in composizione quando una
+        // fotografia precedente termina di elaborarsi. Non sostituiamo testo
+        // già salvato con un valore vuoto durante quell'intervallo.
+        'background',
+        'notePersonaggio',
         'textAttachments',
         'titoli',
         'trattiRazziali',
@@ -3612,6 +3708,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       }
 
       schedePersonaggio[schedaCorrente] = next;
+      syncFallenEyeFromSheet(next);
       salvataggioMutazioneNota = false;
       if (kDebugMode || kProfileMode) {
         debugPrint(
@@ -3642,6 +3739,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
       schedePersonaggio[schedaCorrente],
     );
     final next = <String, dynamic>{...previous, ...statoCorrenteJson()};
+    registraPerditaVitaMantenimentoOcchiCaduti(
+      ownerSheetId: '${previous['sheetTag'] ?? previous['id'] ?? ''}',
+      previousHp: readIntValue(previous['currentHp']),
+      currentHp: readIntValue(next['currentHp']),
+    );
     next['diarioPagine'] = _preserveDiaryPagesForSheetSave(next, previous);
 
     bool hasMeaningfulValue(dynamic value) {
@@ -3848,6 +3950,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'multiScheda': true,
       'schedaCorrente': schedaCorrente,
       'schedePersonaggio': schedePersonaggio,
+      'occhiCaduti': occhiCaduti,
       'activeCampaignId': activeCampaignId,
       'campaigns': campagneOculum,
       'oculumFriends': amiciOculum,
@@ -3903,7 +4006,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
     if (!saveResult.saved || soloLocale) return;
 
     final authState = OculumAuthService.instance.state;
-    if (authState.canSyncToCloud && authState.userId != null) {
+    if (!oculumUsesIsolatedSaveProfile &&
+        authState.canSyncToCloud &&
+        authState.userId != null) {
       unawaited(
         OculumCloudSaveService.instance.queueLocalSaveForSync(
           authState.userId!,
@@ -3997,6 +4102,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         schedePersonaggio
           ..clear()
           ..add(statoVuotoPersonaggio());
+        occhiCaduti.clear();
 
         schedaCorrente = 0;
         oculumUsernameController.clear();
@@ -4031,6 +4137,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
       setState(() {
         _memorizzaCampiTopLevelSconosciuti(data);
         schedePersonaggio.clear();
+        occhiCaduti
+          ..clear()
+          ..addAll(
+            (data['occhiCaduti'] is List
+                    ? data['occhiCaduti'] as List
+                    : const [])
+                .whereType<Map>()
+                .map((x) => Map<String, dynamic>.from(x)),
+          );
         campagneOculum.clear();
         activeCampaignId = '${data['activeCampaignId'] ?? ''}';
         masterKickRequiresConfirmation = readBoolValue(
@@ -4099,6 +4214,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
           final activeCampaign = campagneOculum.firstWhere(
             (x) => '${x['id'] ?? ''}' == activeCampaignId,
             orElse: () => campagneOculum.first,
+          );
+          // Le release anteriori agli Occhi per campagna avevano talvolta
+          // solo il blocco top-level aggiornato. Non lasciare che uno
+          // snapshot di campagna vecchio/vuoto li faccia sparire al riavvio.
+          activeCampaign['occhiCaduti'] = oculumFallenEyesMergeForCampaignLoad(
+            campaignEyes: activeCampaign['occhiCaduti'],
+            activeEyes: occhiCaduti,
           );
           loadCampaignSnapshot(activeCampaign);
         } else if (data['multiScheda'] == true &&
@@ -4821,8 +4943,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
               Expanded(
                 child: Text(
                   t(
-                    'Invia scheda completa realtime',
-                    'Send full realtime sheet',
+                    'Condividi con amici e Master Realtime',
+                    'Share with friends and Realtime Master',
                   ),
                 ),
               ),
@@ -4856,7 +4978,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     } else if (choice == 'rename') {
       await rinominaSchedaPersonaggio(index);
     } else if (choice == 'send_full_realtime') {
-      sendRealtimeFullSheetToFriendsAndPartyAt(index);
+      await sendRealtimeFullSheetToFriendsAndPartyAt(index);
     } else if (choice == 'delete') {
       await eliminaSchedaPersonaggio(index);
     }
@@ -5891,7 +6013,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
     bool defensive = false,
   }) {
     final label = elementDisplayName(element);
-    final power = max(4, level + grade * 6 + index * 3);
+    final power = oculumMonsterScaledPower(
+      level: level,
+      miniBoss: grade >= 2,
+      boss: grade >= 3,
+      slot: index,
+    );
     final cooldown = defensive ? 4 + index : 2 + index;
     final cost = defensive
         ? '${max(1, 2 + grade)} Materia'
@@ -5903,8 +6030,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       costo: cost,
       cooldown: '$cooldown turni',
       descrizione: defensive
-          ? 'Si chiude in una difesa $label. @Difesa+$power $element'
-          : 'Colpo $label generato dal corpo. @Danni+$power $element',
+          ? 'Raccoglie le forze e si chiude in una difesa $label. @Difesa+$power $element'
+          : 'Un colpo $label nato dal corpo. @Danni+$power $element${element.toLowerCase() == 'shadow' ? '. L ombra cresce insieme al ritmo dello scontro, senza superare il suo limite naturale.' : ''}',
       danni: defensive ? 0 : power,
       difesa: defensive ? power : 0,
       equipaggiata: true,

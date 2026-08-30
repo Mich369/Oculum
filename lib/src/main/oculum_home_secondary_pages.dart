@@ -249,6 +249,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       checkArtIntegrityBreakAsh(previous, next, art.nome);
     }
 
+    grantTrueSoulBurnSpendBenefits(
+      spent: max(0, previous - next),
+      source: t('Art', 'Art'),
+    );
+
     // L'integrità viene consumata, ma non modifica più casualmente e in modo
     // permanente la DT generale della scheda.
     return 0;
@@ -3760,6 +3765,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                                 '${masterInitiativeTokens[i]['status'] ?? 'ready'}',
                               ),
                             ),
+                            if ('${masterInitiativeTokens[i]['visibleTitleName'] ?? ''}'
+                                .trim()
+                                .isNotEmpty)
+                              smallInfoText(
+                                'TITOLO VISIBILE: ${masterInitiativeTokens[i]['visibleTitleName']}\n${masterInitiativeTokens[i]['visibleTitleLegend'] ?? ''}',
+                                color: Colors.amberAccent,
+                              ),
                           ],
                         ),
                       ),
@@ -4346,6 +4358,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   Widget masterDashboardRosterPanel({bool initiallyExpanded = false}) {
     final partyIndexes = masterPartyIndexes();
+    // The Master can own hundreds of sheets.  Keep the at-a-glance party
+    // useful without making a Wrap instantiate every avatar at once: the full
+    // roster remains available below through the virtualized list.
+    final partyPreview = partyIndexes.take(24).toList(growable: false);
 
     return gothicPanel(
       borderColor: const Color(0xFF7EE7C8),
@@ -4389,9 +4405,19 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               spacing: 8,
               runSpacing: 10,
               children: [
-                for (final index in partyIndexes) masterPartyHexBadge(index),
+                for (final index in partyPreview) masterPartyHexBadge(index),
               ],
             ),
+          if (partyPreview.length < partyIndexes.length) ...[
+            const SizedBox(height: 6),
+            smallInfoText(
+              t(
+                'Anteprima: ${partyPreview.length} di ${partyIndexes.length}. Tutte le schede restano disponibili nell’elenco qui sotto.',
+                'Preview: ${partyPreview.length} of ${partyIndexes.length}. Every sheet remains available in the list below.',
+              ),
+              color: Colors.white54,
+            ),
+          ],
           const SizedBox(height: 8),
           Theme(
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -4409,33 +4435,51 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 ),
               ),
               children: [
-                for (int i = 0; i < schedePersonaggio.length; i++)
-                  CheckboxListTile(
-                    dense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-                    value: sheetInMasterPartyAt(i),
-                    activeColor: Colors.greenAccent,
-                    checkColor: Colors.black,
-                    secondary: masterPartyAvatar(i, size: 36),
-                    title: Text(
-                      nomeSchedaPersonaggio(i),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    subtitle: Text(
-                      '${tipoSchedaPersonaggio(i)} - ${sheetTagAt(i)}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: tertiaryColor, fontSize: 11),
-                    ),
-                    onChanged: (selected) =>
-                        cambiaSchedaMasterParty(i, selected == true),
-                    controlAffinity: ListTileControlAffinity.trailing,
+                SizedBox(
+                  // A bounded inner viewport makes ListView.builder retain
+                  // only the rows around the scroll position, instead of
+                  // holding one tile/avatar per saved sheet in memory.
+                  height: min(
+                    520.0,
+                    max(56.0, schedePersonaggio.length * 64.0),
                   ),
+                  child: ListView.builder(
+                    key: const PageStorageKey<String>(
+                      'master_dashboard_saved_sheets',
+                    ),
+                    itemCount: schedePersonaggio.length,
+                    addAutomaticKeepAlives: false,
+                    addRepaintBoundaries: true,
+                    itemExtent: 64,
+                    itemBuilder: (context, i) => CheckboxListTile(
+                      key: ValueKey<String>('master_roster_${sheetTagAt(i)}'),
+                      dense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                      value: sheetInMasterPartyAt(i),
+                      activeColor: Colors.greenAccent,
+                      checkColor: Colors.black,
+                      secondary: masterPartyAvatar(i, size: 36),
+                      title: Text(
+                        nomeSchedaPersonaggio(i),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${tipoSchedaPersonaggio(i)} - ${sheetTagAt(i)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: tertiaryColor, fontSize: 11),
+                      ),
+                      onChanged: (selected) =>
+                          cambiaSchedaMasterParty(i, selected == true),
+                      controlAffinity: ListTileControlAffinity.trailing,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -4445,49 +4489,60 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }
 
   Widget monsterBookEntryPreview(MonsterBookEntry entry, {double size = 48}) {
-    final cacheSide = oculumImageCacheDimension(context, size, max: 192);
+    final color = entry.isNpc
+        ? Colors.greenAccent
+        : entry.isBoss
+        ? Colors.amberAccent
+        : entry.isMiniBoss
+        ? Colors.deepOrangeAccent
+        : Colors.redAccent;
+    final trimmedName = cleanUiText(entry.nameIt).trim();
+    final initial = trimmedName.isEmpty ? '?' : trimmedName.characters.first;
+    final icon = entry.isNpc
+        ? Icons.person_outline
+        : entry.isBoss
+        ? Icons.workspace_premium_outlined
+        : entry.isMiniBoss
+        ? Icons.shield_outlined
+        : Icons.pest_control_outlined;
 
-    Widget fallback() {
-      return Center(
-        child: Icon(
-          entry.isNpc ? Icons.person : Icons.pest_control,
-          color: entry.isNpc ? Colors.greenAccent : Colors.redAccent,
-          size: size * 0.55,
-        ),
-      );
-    }
-
-    Widget image = fallback();
-    if (entry.imageBase64.isNotEmpty) {
-      final bytes = decodedBase64ImageCached(entry.imageBase64);
-      if (bytes != null) {
-        image = Image.memory(
-          bytes,
-          fit: BoxFit.cover,
-          cacheWidth: cacheSide,
-          cacheHeight: cacheSide,
-          errorBuilder: (context, error, stackTrace) => fallback(),
-        );
-      }
-    } else if (entry.spriteAssetPath.isNotEmpty) {
-      image = Image.asset(
-        entry.spriteAssetPath,
-        fit: BoxFit.cover,
-        cacheWidth: cacheSide,
-        cacheHeight: cacheSide,
-        filterQuality: FilterQuality.medium,
-        errorBuilder: (context, error, stackTrace) => fallback(),
-      );
-    }
-
+    // The Monster Book deliberately uses a readable dossier/sigil instead of
+    // portraits. Existing image fields remain preserved in legacy saves and
+    // dungeon data, but this Master surface no longer decodes or caches them.
     return RepaintBoundary(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          width: size,
-          height: size,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
           color: const Color(0xFF090B11),
-          child: image,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color.withValues(alpha: 0.72)),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Icon(icon, color: color.withValues(alpha: 0.68), size: size * 0.5),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF090B11),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(5),
+                  ),
+                ),
+                child: Text(
+                  initial.toUpperCase(),
+                  style: TextStyle(
+                    color: color,
+                    fontSize: max(11, size * 0.24),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -4511,9 +4566,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     );
     final elementController = TextEditingController(
       text: existing?.elementId ?? 'fisico',
-    );
-    final spriteController = TextEditingController(
-      text: existing?.spriteAssetPath,
     );
     final dropsController = TextEditingController(
       text: existing?.dropIds.join(', '),
@@ -4540,7 +4592,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       text: '${existing?.stats['spd'] ?? 0}',
     );
     var presetType = existing?.presetType ?? 'Mostro';
-    var imageBase64 = existing?.imageBase64 ?? '';
     var canWieldWeapons = existing?.canWieldWeapons ?? false;
     var nullFateless = existing?.isNullFateless ?? false;
 
@@ -4567,8 +4618,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             final draft = (existing ?? defaultMonsterBookEntries.first)
                 .copyWith(
                   nameIt: nameItController.text,
-                  spriteAssetPath: spriteController.text.trim(),
-                  imageBase64: imageBase64,
                   isNpc: presetType == 'NPC',
                 );
             return monsterBookEntryPreview(draft, size: 76);
@@ -4625,43 +4674,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                                   setDialogState(() => presetType = value);
                                 },
                               ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  OutlinedButton.icon(
-                                    onPressed: () async {
-                                      final file = await _picker.pickImage(
-                                        source: ImageSource.gallery,
-                                      );
-                                      if (file == null) return;
-                                      final bytes = await file.readAsBytes();
-                                      if (!dialogContext.mounted) return;
-                                      setDialogState(() {
-                                        imageBase64 = base64Encode(bytes);
-                                      });
-                                    },
-                                    icon: const Icon(Icons.image),
-                                    label: Text(
-                                      t('Scegli immagine', 'Choose image'),
-                                    ),
-                                  ),
-                                  if (imageBase64.isNotEmpty)
-                                    IconButton(
-                                      tooltip: t(
-                                        'Rimuovi immagine',
-                                        'Remove image',
-                                      ),
-                                      onPressed: () => setDialogState(
-                                        () => imageBase64 = '',
-                                      ),
-                                      icon: const Icon(
-                                        Icons.image_not_supported,
-                                      ),
-                                    ),
-                                ],
-                              ),
                             ],
                           ),
                         ),
@@ -4696,14 +4708,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     TextField(
                       controller: elementController,
                       decoration: decoration(t('Elemento', 'Element')),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: spriteController,
-                      decoration: decoration(
-                        t('Percorso sprite asset', 'Sprite asset path'),
-                      ),
-                      onChanged: (_) => setDialogState(() {}),
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -4839,8 +4843,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                           cleanUiText(elementController.text).trim().isEmpty
                           ? 'fisico'
                           : cleanUiText(elementController.text).trim(),
-                      spriteAssetPath: spriteController.text.trim(),
-                      imageBase64: imageBase64,
+                      // Preserve legacy image fields without showing or
+                      // editing them in the human-readable Monster Book.
+                      spriteAssetPath: existing?.spriteAssetPath ?? '',
+                      imageBase64: existing?.imageBase64 ?? '',
                       isMiniBoss: isMiniBoss,
                       isBoss: isBoss,
                       isNpc: isNpc,
@@ -4874,7 +4880,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       descriptionController,
       descriptionEnController,
       elementController,
-      spriteController,
       dropsController,
       skillsController,
       weaponsController,
@@ -4935,8 +4940,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           const SizedBox(height: 6),
           smallInfoText(
             t(
-              'Il Master puo cambiare nome, immagine, categoria, stats, skill e drop inventario; puo anche aggiungere o rimuovere mostri, mini boss, boss e NPC.',
-              'The Master can change name, image, category, stats, skills and inventory drops; monsters, mini bosses, bosses and NPCs can also be added or removed.',
+              'Un registro testuale per il Master: nome, categoria, elemento, statistiche, skill e drop. Puoi aggiungere, modificare o rimuovere mostri, mini boss, boss e NPC.',
+              'A text-first Master dossier: name, category, element, stats, skills and drops. You can add, edit or remove monsters, mini bosses, bosses and NPCs.',
             ),
           ),
           const SizedBox(height: 10),
@@ -4986,56 +4991,71 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           if (filtered.isEmpty)
             smallInfoText(t('Nessun preset trovato.', 'No presets found.'))
           else
-            for (final entry in visible)
-              Container(
-                margin: const EdgeInsets.only(bottom: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0B0D13),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: (entry.isNpc ? Colors.greenAccent : Colors.redAccent)
-                        .withValues(alpha: 0.28),
-                  ),
-                ),
-                child: ListTile(
-                  dense: true,
-                  leading: monsterBookEntryPreview(entry),
-                  title: Text(
-                    entry.nameIt,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  subtitle: Text(
-                    '${entry.presetType} - ${elementDisplayName(entry.elementId)} - Drop ${entry.dropIds.length}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: tertiaryColor, fontSize: 11),
-                  ),
-                  trailing: Wrap(
-                    spacing: 2,
-                    children: [
-                      IconButton(
-                        tooltip: t('Modifica', 'Edit'),
-                        onPressed: () => showMonsterBookEditor(entry),
-                        icon: const Icon(Icons.edit, size: 19),
+            SizedBox(
+              height: min(560.0, max(72.0, visible.length * 72.0)),
+              child: ListView.builder(
+                key: const PageStorageKey<String>('master_monster_book_list'),
+                itemCount: visible.length,
+                addAutomaticKeepAlives: false,
+                addRepaintBoundaries: true,
+                itemExtent: 72,
+                itemBuilder: (context, index) {
+                  final entry = visible[index];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0B0D13),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color:
+                            (entry.isNpc
+                                    ? Colors.greenAccent
+                                    : Colors.redAccent)
+                                .withValues(alpha: 0.28),
                       ),
-                      IconButton(
-                        tooltip: t('Rimuovi', 'Remove'),
-                        onPressed: () => removeMonsterBookEntry(entry),
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.redAccent,
-                          size: 19,
+                    ),
+                    child: ListTile(
+                      dense: true,
+                      leading: monsterBookEntryPreview(entry),
+                      title: Text(
+                        entry.nameIt,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ],
-                  ),
-                ),
+                      subtitle: Text(
+                        '${entry.presetType} • ${elementDisplayName(entry.elementId)} • HP ${entry.stats['hp'] ?? 0} • ATK ${entry.stats['atk'] ?? 0} • DIF ${entry.stats['def'] ?? 0} • Skill ${entry.skillIds.length} • Drop ${entry.dropIds.length}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: tertiaryColor, fontSize: 11),
+                      ),
+                      trailing: Wrap(
+                        spacing: 2,
+                        children: [
+                          IconButton(
+                            tooltip: t('Modifica', 'Edit'),
+                            onPressed: () => showMonsterBookEditor(entry),
+                            icon: const Icon(Icons.edit, size: 19),
+                          ),
+                          IconButton(
+                            tooltip: t('Rimuovi', 'Remove'),
+                            onPressed: () => removeMonsterBookEntry(entry),
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.redAccent,
+                              size: 19,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
+            ),
           if (visible.length < filtered.length)
             smallInfoText(
               t(
@@ -6194,6 +6214,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   Widget masterPartyPanel() {
     final partyIndexes = masterPartyIndexes();
+    // La pagina Master può avere centinaia di schede: mostrare una card
+    // completa per ognuna rendeva costoso ogni setState del Master. La lista
+    // virtualizzata "Gestisci schede salvate" resta l'accesso completo.
+    final partyPreview = partyIndexes.take(24).toList(growable: false);
 
     return gothicPanel(
       borderColor: const Color(0xFF7EE7C8),
@@ -6228,9 +6252,19 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               spacing: 10,
               runSpacing: 12,
               children: [
-                for (final index in partyIndexes) masterPartyHexBadge(index),
+                for (final index in partyPreview) masterPartyHexBadge(index),
               ],
             ),
+          if (partyPreview.length < partyIndexes.length) ...[
+            const SizedBox(height: 8),
+            smallInfoText(
+              t(
+                'Anteprima party: ${partyPreview.length} di ${partyIndexes.length}. Gestisci tutte le schede nell’elenco virtualizzato qui sotto.',
+                'Party preview: ${partyPreview.length} of ${partyIndexes.length}. Manage every sheet in the virtualized list below.',
+              ),
+              color: Colors.white54,
+            ),
+          ],
           const SizedBox(height: 16),
           Text(
             t('Schede salvate', 'Saved sheets'),
@@ -6241,8 +6275,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             ),
           ),
           const SizedBox(height: 10),
-          for (int i = 0; i < schedePersonaggio.length; i++)
-            masterPartySheetCard(i),
+          smallInfoText(
+            t(
+              'Per evitare rallentamenti con molte schede, l’elenco completo usa “Gestisci schede salvate” nella dashboard Master: conserva ricerca, selezione, apertura e gestione del party senza costruire tutte le card insieme.',
+              'To avoid slowdowns with many sheets, the complete list uses “Manage saved sheets” in the Master dashboard: it keeps selection, opening and party management without building every card at once.',
+            ),
+            color: Colors.white70,
+          ),
         ],
       ),
     );

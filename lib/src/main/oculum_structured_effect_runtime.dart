@@ -76,7 +76,10 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
       recordCurrentOculumProgress();
       return;
     }
-    currentHpController.text = (hpCorrenti() + amount)
+    final effectiveAmount = amount > 0
+        ? applyConditionHealingAmount(amount)
+        : amount;
+    currentHpController.text = (hpCorrenti() + effectiveAmount)
         .clamp(0, maxHp())
         .toString();
   }
@@ -252,6 +255,45 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
               'materia',
             }.contains(resource)) {
               spendArtSkillCostResource(resource, amount);
+            }
+            break;
+          case 'conversione_risorsa':
+            final amount = roll.value.abs();
+            final sourceResource = oculumNormalizeEffectResource(
+              effect.resource,
+            );
+            final targetResource = normalizedStructuredTarget(effect.target);
+            if (amount <= 0 ||
+                sourceResource == targetResource ||
+                !const <String>{
+                  'resilienza',
+                  'volonta',
+                  'materia',
+                  'oculum',
+                }.contains(sourceResource) ||
+                !const <String>{
+                  'resilienza',
+                  'volonta',
+                  'materia',
+                  'oculum',
+                }.contains(targetResource)) {
+              break;
+            }
+            final spent = sourceResource == 'oculum'
+                ? spendOculum(amount, scheduleSave: false)
+                : spendArtSkillCostResource(sourceResource, amount);
+            if (spent <= 0) break;
+            if (sourceResource == 'oculum') {
+              adjustRecordedStatSpentFromDelta('oculum', -spent);
+              recordCurrentOculumProgress();
+              scheduleRealtimeOculumChanged();
+            }
+            if (targetResource == 'oculum') {
+              addOculum(spent, scheduleSave: false);
+              recordCurrentOculumProgress();
+              scheduleRealtimeOculumChanged();
+            } else {
+              modificaStatAttuale(targetResource, spent, silent: true);
             }
             break;
           case 'stato':

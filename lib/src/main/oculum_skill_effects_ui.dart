@@ -967,6 +967,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         'Add quick reactions',
       ),
       'consumo_risorsa' => t('Consumo risorsa', 'Consume resource'),
+      'conversione_risorsa' => t('Conversione risorsa', 'Resource conversion'),
       'stato' => t('Applica stato', 'Apply condition'),
       _ => type,
     };
@@ -1021,6 +1022,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       ]);
     } else if (type == 'forza') {
       values.addAll(<String>['Forza', 'Danni', 'VC', 'Controlli di Forza']);
+    } else if (type == 'conversione_risorsa') {
+      values.addAll(<String>['Resilienza', 'Volontà', 'Materia', 'Oculum']);
     }
     return values.toSet().where((value) => value.trim().isNotEmpty).toList();
   }
@@ -1416,6 +1419,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
               final needsTarget = targetOptions.isNotEmpty;
               final isHealing = type == 'cura';
               final isCost = type == 'consumo_risorsa';
+              final isConversion = type == 'conversione_risorsa';
               final isState = type == 'stato';
               final hasFrequency =
                   oculumStructuredEffectFrequency(frequencyController.text) > 0;
@@ -1646,6 +1650,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             decoration: fieldDecoration(
                               type == 'modifica_sottotratto'
                                   ? t('Sottotratto', 'Subtrait')
+                                  : isConversion
+                                  ? t('Risorsa ottenuta', 'Resource gained')
                                   : t('Valore modificato', 'Changed value'),
                             ),
                             items: <DropdownMenuItem<String>>[
@@ -1661,19 +1667,31 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                           ),
                           const SizedBox(height: 10),
                         ],
-                        if (isHealing || isCost) ...[
+                        if (isHealing || isCost || isConversion) ...[
                           DropdownButtonFormField<String>(
                             initialValue: resource,
                             dropdownColor: const Color(0xFF10121A),
                             decoration: fieldDecoration(
                               isCost
                                   ? t('Risorsa consumata', 'Consumed resource')
+                                  : isConversion
+                                  ? t(
+                                      'Risorsa trasformata',
+                                      'Resource converted',
+                                    )
                                   : t('Risorsa curata', 'Healed resource'),
                             ),
                             items: <DropdownMenuItem<String>>[
                               for (final value
                                   in isHealing
                                       ? const <String>['vita', 'oculum']
+                                      : isConversion
+                                      ? const <String>[
+                                          'resilienza',
+                                          'volonta',
+                                          'materia',
+                                          'oculum',
+                                        ]
                                       : oculumEffectConsumableResourceKeys)
                                 DropdownMenuItem<String>(
                                   value: value,
@@ -2045,6 +2063,17 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                           error = t(
                             'Un sottotratto non può essere consumato.',
                             'A subtrait cannot be consumed.',
+                          );
+                        });
+                        return;
+                      }
+                      if (isConversion &&
+                          normalizedStructuredTarget(effect.target) ==
+                              oculumNormalizeEffectResource(effect.resource)) {
+                        setDialogState(() {
+                          error = t(
+                            'Scegli due risorse diverse per la conversione.',
+                            'Choose two different resources for the conversion.',
                           );
                         });
                         return;

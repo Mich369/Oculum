@@ -2493,6 +2493,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     final quickBonuses = titleQuickBonuses(titolo);
     final titleSubtitleParts = <String>[
       if (titolo.tipo.trim().isNotEmpty) cleanUiText(titolo.tipo),
+      if (titolo.sempreVisibile) 'SEMPRE VISIBILE',
       if (titolo.openAttiva) t('Open attiva', 'Open active'),
       if (quickBonuses.isNotEmpty)
         '${quickBonuses.length} ${t('comandi @', '@ commands')}',
@@ -2513,6 +2514,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             open.attiva = false;
           }
         }
+        oculumNormalizeAlwaysVisibleTitles(list);
         aggiungiLog(
           '${titolo.equipaggiato ? "Equipaggiato" : "Rimosso"} $titleKind: [${titolo.nome}].',
         );
@@ -2525,6 +2527,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       } else {
         removeConditionsFromSource(titolo.nome);
       }
+      if (!trattoRazziale) syncMasterInitiativeVisibleTitle(schedaCorrente);
       programmaSalvataggio();
     }
 
@@ -2542,6 +2545,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         }
         aggiungiLog('$titleKind eliminato: [${titolo.nome}].');
         list.removeAt(currentIndex);
+        oculumNormalizeAlwaysVisibleTitles(list);
       });
       programmaSalvataggio();
     }
@@ -2742,7 +2746,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   campoModello(
                     label: t('Nome Titolo', 'Title Name'),
                     initialValue: titolo.nome,
-                    onChanged: (value) => titolo.nome = value,
+                    onChanged: (value) {
+                      titolo.nome = value;
+                      if (!trattoRazziale && titolo.sempreVisibile) {
+                        syncMasterInitiativeVisibleTitle(schedaCorrente);
+                      }
+                    },
                   ),
                   const SizedBox(height: 8),
                   campoModello(
@@ -2761,13 +2770,63 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   campoModello(
                     label: t('Leggenda', 'Legend'),
                     initialValue: titolo.leggenda,
-                    onChanged: (value) => titolo.leggenda = value,
+                    onChanged: (value) {
+                      titolo.leggenda = value;
+                      if (!trattoRazziale && titolo.sempreVisibile) {
+                        syncMasterInitiativeVisibleTitle(schedaCorrente);
+                      }
+                    },
                     maxLines: 5,
                     helper: t(
                       'Scrivi la storia, la memoria o la diceria legata a questo Titolo.',
                       'Write the story, memory, or tale connected to this Title.',
                     ),
                   ),
+                  if (!trattoRazziale) ...[
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      value: titolo.sempreVisibile,
+                      activeThumbColor: tertiaryColor,
+                      title: Text(
+                        t('Titolo sempre visibile', 'Always visible title'),
+                      ),
+                      subtitle: Text(
+                        !titolo.equipaggiato
+                            ? t(
+                                'Indossa questo Titolo per mostrarne nome e leggenda a PNG e mostri.',
+                                'Wear this Title to show its name and legend to NPCs and monsters.',
+                              )
+                            : !oculumTitleCanBeAlwaysVisible(titolo, list)
+                            ? t(
+                                'Un Titolo con Open attivabile indossato ha la priorità.',
+                                'An equipped Title with an activatable Open takes priority.',
+                              )
+                            : t(
+                                'PNG e mostri possono leggerne nome e leggenda. Se indossi un Titolo con Open attivabile, solo un Titolo con Open attivabile può essere scelto.',
+                                'NPCs and monsters can read its name and legend. If you wear a Title with an activatable Open, only a Title with an activatable Open can be chosen.',
+                              ),
+                      ),
+                      onChanged: oculumTitleCanBeAlwaysVisible(titolo, list)
+                          ? (value) {
+                              setState(() {
+                                if (value) {
+                                  for (final other in list) {
+                                    other.sempreVisibile = identical(
+                                      other,
+                                      titolo,
+                                    );
+                                  }
+                                } else {
+                                  titolo.sempreVisibile = false;
+                                }
+                                oculumNormalizeAlwaysVisibleTitles(list);
+                              });
+                              syncMasterInitiativeVisibleTitle(schedaCorrente);
+                              programmaSalvataggio();
+                            }
+                          : null,
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   campoModello(
                     label: t('Buff @ Titolo', 'Title @ Buff'),
@@ -2900,6 +2959,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       setState(() {
                         titolo.karma = value;
                       });
+                      if (!trattoRazziale) {
+                        syncMasterInitiativeVisibleTitle(schedaCorrente);
+                      }
                       programmaSalvataggio();
                     },
                   ),
@@ -2928,6 +2990,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       setState(() {
                         if (!value) disattivaOpenDelTitolo(titolo);
                         titolo.evoluto = value;
+                        oculumNormalizeAlwaysVisibleTitles(list);
                         if (value) {
                           final expText = assegnaEsperienzaOpenTitolo(titolo);
                           if (expText.isNotEmpty) {

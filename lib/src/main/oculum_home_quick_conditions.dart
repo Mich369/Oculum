@@ -295,8 +295,8 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
               finalValue: finalValue,
             ),
             child: Container(
-              constraints: const BoxConstraints(minHeight: 24),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              constraints: const BoxConstraints(minHeight: 30),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: tertiaryColor.withValues(alpha: .13),
                 borderRadius: BorderRadius.circular(999),
@@ -305,13 +305,13 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.bolt, size: 13, color: tertiaryColor),
-                  const SizedBox(width: 2),
+                  Icon(Icons.bolt, size: 15, color: tertiaryColor),
+                  const SizedBox(width: 3),
                   Text(
                     '${conditions.length + specialStates.length}',
                     style: TextStyle(
                       color: tertiaryColor,
-                      fontSize: 10,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -375,6 +375,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     OculumConditionInstance instance,
   ) async {
     final controller = TextEditingController(text: '${instance.duration}');
+    var durationType = instance.durationType;
     String? validationError;
     final result =
         await showDialog<
@@ -393,19 +394,49 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
                 title: Text(
                   '${conditionLabel(instance)} · ${t('Durata', 'Duration')}',
                 ),
-                content: TextField(
-                  controller: controller,
-                  autofocus: true,
-                  keyboardType: TextInputType.text,
-                  decoration: InputDecoration(
-                    labelText: t('Turni o dado', 'Turns or die'),
-                    hintText: '3 · 1d10 · 2d6+1 turni',
-                    errorText: validationError,
-                    helperText: t(
-                      '0 = senza scadenza. I dadi applicano anche il modificatore critico dei dadi rapidi.',
-                      '0 = no expiry. Dice also apply the quick-dice critical modifier.',
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<OculumConditionDurationType>(
+                      initialValue: durationType,
+                      items: const [
+                        DropdownMenuItem(
+                          value: OculumConditionDurationType.turns,
+                          child: Text('Turni'),
+                        ),
+                        DropdownMenuItem(
+                          value: OculumConditionDurationType.shortRest,
+                          child: Text('Riposo breve'),
+                        ),
+                        DropdownMenuItem(
+                          value: OculumConditionDurationType.longRest,
+                          child: Text('Riposo lungo'),
+                        ),
+                        DropdownMenuItem(
+                          value: OculumConditionDurationType.meal,
+                          child: Text('Dopo pasto'),
+                        ),
+                        DropdownMenuItem(
+                          value: OculumConditionDurationType.permanent,
+                          child: Text('Senza scadenza'),
+                        ),
+                      ],
+                      onChanged: (value) => setDialogState(
+                        () => durationType = value ?? durationType,
+                      ),
                     ),
-                  ),
+                    if (durationType == OculumConditionDurationType.turns)
+                      TextField(
+                        controller: controller,
+                        autofocus: true,
+                        keyboardType: TextInputType.text,
+                        decoration: InputDecoration(
+                          labelText: t('Turni o dado', 'Turns or die'),
+                          hintText: '3 · 1d10 · 2d6+1 turni',
+                          errorText: validationError,
+                        ),
+                      ),
+                  ],
                 ),
                 actions: [
                   TextButton(
@@ -415,6 +446,16 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
                   FilledButton.icon(
                     icon: const Icon(Icons.casino),
                     onPressed: () {
+                      if (durationType != OculumConditionDurationType.turns) {
+                        Navigator.pop(dialogContext, (
+                          turns: 1,
+                          formula: '',
+                          faces: 0,
+                          criticalOne: false,
+                          criticalMax: false,
+                        ));
+                        return;
+                      }
                       final parsed = rollConditionDuration(controller.text);
                       if (parsed == null) {
                         setDialogState(() {
@@ -437,7 +478,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     controller.dispose();
     if (result == null) return;
     instance.duration = result.turns;
-    instance.durationType = OculumConditionDurationType.turns;
+    instance.durationType = durationType;
     if (result.formula.isNotEmpty) {
       risultato = t(
         'Durata ${conditionLabel(instance)}: ${result.formula} = ${result.turns} turni.',
@@ -653,7 +694,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
         source: source,
         metadata: <String, dynamic>{
           if (formula.isNotEmpty) 'durationFormula': formula,
-          if (override != null) ...override,
+          ...?override,
         },
       );
     }
@@ -752,6 +793,44 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
   }) {
     final definition = oculumConditionDefinition(type);
     if (definition == null) return false;
+    final mentalBarrier = getCondition('barriera_mentale');
+    if (mentalBarrier != null &&
+        definition.category == OculumConditionCategory.mental &&
+        definition.polarity == OculumConditionPolarity.negative) {
+      removeCondition(mentalBarrier, force: true, expired: true);
+      final message = t(
+        'Barriera Mentale annulla ${definition.nameIt}.',
+        'Mental Barrier negates ${definition.nameEn}.',
+      );
+      risultato = message;
+      aggiungiLog(message);
+      return false;
+    }
+    if (hasCondition('ancorato') &&
+        (type == 'atterrato' || type == 'afferrato')) {
+      final message = t(
+        'Ancorato impedisce ${definition.nameIt}.',
+        'Anchored prevents ${definition.nameEn}.',
+      );
+      risultato = message;
+      aggiungiLog(message);
+      return false;
+    }
+    final wet = getCondition('bagnato');
+    if (wet != null && type == 'bruciatura') {
+      removeCondition(wet, force: true, expired: true);
+      final message = t(
+        'Bagnato spegne Bruciatura e viene consumato.',
+        'Wet extinguishes Burning and is consumed.',
+      );
+      risultato = message;
+      aggiungiLog(message);
+      return false;
+    }
+    final effectiveStage = wet != null && type == 'gelo'
+        ? max(1, stage) + 1
+        : stage;
+    final existing = getCondition(type);
     final override = conditionOverrideFor(type);
     if (!canApplyControlCondition(
       definition,
@@ -767,12 +846,14 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       return false;
     }
 
-    final existing = getCondition(type);
     final int targetStage = existing == null
-        ? stage.clamp(1, definition.maxStage).toInt()
+        ? effectiveStage.clamp(1, definition.maxStage).toInt()
         : definition.stackMode == OculumConditionStackMode.increaseStage
-        ? min(definition.maxStage, existing.stage + max(1, stage)).toInt()
-        : stage.clamp(1, definition.maxStage).toInt();
+        ? min(
+            definition.maxStage,
+            existing.stage + max(1, effectiveStage),
+          ).toInt()
+        : effectiveStage.clamp(1, definition.maxStage).toInt();
     final overrideFormula = duration == null
         ? conditionOverrideDurationFormula(type)
         : '';
@@ -804,12 +885,17 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
         removable: removable ?? definition.removable,
         source: source,
         metadata: <String, dynamic>{
-          if (override != null) ...override,
+          ...?override,
           if (overrideFormula.isNotEmpty) 'durationFormula': overrideFormula,
           ...?metadata,
         },
       );
       activeConditions.add(instance);
+      if (type == 'massima_potenza' &&
+          !investMaximumPower(instance, forced: false)) {
+        activeConditions.remove(instance);
+        return false;
+      }
       message = t(
         '${nomeController.text} ottiene ${conditionLabel(instance)}.',
         '${nomeController.text} gains ${conditionLabel(instance)}.',
@@ -833,7 +919,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
         case OculumConditionStackMode.replaceIfStronger:
           existing.stage = max(
             existing.stage,
-            stage.clamp(1, definition.maxStage),
+            effectiveStage.clamp(1, definition.maxStage),
           );
           existing.duration = max(existing.duration, scaledDuration);
       }
@@ -860,6 +946,13 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     final appliedInstance = getCondition(type);
     if (type == 'aumento_difficolta' && appliedInstance != null) {
       grantDifficultyIncreaseFightRewards(appliedInstance);
+    }
+    if (type == 'bagnato') {
+      final burning = getCondition('bruciatura');
+      if (burning != null) removeCondition(burning, force: true, expired: true);
+    }
+    if (type == 'gelo' && wet != null && activeConditions.contains(wet)) {
+      removeCondition(wet, force: true, expired: true);
     }
     notifyConditionsChanged(definition.affectedTargets);
     programmaSalvataggio(invalidateCaches: false);
@@ -925,6 +1018,14 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     final definition = oculumConditionDefinition(instance.conditionType);
     final affectedTargets = conditionTargetsFor(instance);
     if (!activeConditions.remove(instance)) return false;
+    if (instance.conditionType == 'massima_potenza') {
+      removeMaximumPowerBonuses(instance);
+    }
+    if (statoForzaAttivo == 'vero_bruciore_anima' &&
+        !oculumCanMaintainTrueSoulBurn(activeConditions)) {
+      final ended = terminaStatoForzaAttivo(applicaEsitoEsplosione: false);
+      if (ended.isNotEmpty) aggiungiLog(ended);
+    }
     if (definition?.control ?? false) {
       final profile = oculumConditionDifficultyProfile(
         normalizedCampaignDifficulty(),
@@ -950,12 +1051,158 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     return true;
   }
 
+  void applyMaximumPowerBonus(OculumConditionInstance instance, int bonus) {
+    if (bonus == 0) return;
+    tempResilienza += bonus;
+    tempVolonta += bonus;
+    tempMateria += bonus;
+    rimarginaHpDaAumentoResilienza(bonus);
+    instance.metadata['grantedBonus'] =
+        readIntValue(instance.metadata['grantedBonus']) + bonus;
+    invalidateDerivedDataCaches();
+    notifyOculumResourceChanged();
+  }
+
+  void removeMaximumPowerBonuses(OculumConditionInstance instance) {
+    final granted = readIntValue(instance.metadata['grantedBonus']);
+    final fiftyPercentResilience = readIntValue(
+      instance.metadata['fiftyPercentResilience'],
+    );
+    final fiftyPercentWill = readIntValue(
+      instance.metadata['fiftyPercentWill'],
+    );
+    final fiftyPercentMatter = readIntValue(
+      instance.metadata['fiftyPercentMatter'],
+    );
+    final fiftyPercentOculum = readIntValue(
+      instance.metadata['fiftyPercentOculum'],
+    );
+    tempResilienza -= granted + fiftyPercentResilience;
+    tempVolonta -= granted + fiftyPercentWill;
+    tempMateria -= granted + fiftyPercentMatter;
+    tempOculum -= fiftyPercentOculum;
+    rimarginaHpDaAumentoResilienza(-(granted + fiftyPercentResilience));
+    instance.metadata['grantedBonus'] = 0;
+    invalidateDerivedDataCaches();
+    notifyOculumResourceChanged();
+  }
+
+  void applyMaximumPowerFiftyPercentBuff(OculumConditionInstance instance) {
+    if (readBoolValue(instance.metadata['fiftyPercentApplied'])) return;
+    final resilience = max(1, (statMassimo('resilienza') * .5).floor());
+    final will = max(1, (statMassimo('volonta') * .5).floor());
+    final matter = max(1, (statMassimo('materia') * .5).floor());
+    final oculum = max(1, (oculumMassimo() * .5).floor());
+    tempResilienza += resilience;
+    tempVolonta += will;
+    tempMateria += matter;
+    tempOculum += oculum;
+    rimarginaHpDaAumentoResilienza(resilience);
+    instance.metadata.addAll(<String, dynamic>{
+      'fiftyPercentApplied': true,
+      'fiftyPercentResilience': resilience,
+      'fiftyPercentWill': will,
+      'fiftyPercentMatter': matter,
+      'fiftyPercentOculum': oculum,
+    });
+    invalidateDerivedDataCaches();
+    notifyOculumResourceChanged();
+  }
+
+  bool investMaximumPower(
+    OculumConditionInstance instance, {
+    required bool forced,
+  }) {
+    final requestedOculum = oculumMaximumPowerOculumCost(oculumTotale());
+    var spentOculum = spendOculum(requestedOculum, scheduleSave: false);
+    var hpFallbackDamage = 0;
+    final hpHits = <int>[];
+    if (spentOculum <= 0) {
+      for (final requestedHit in oculumMaximumPowerHpFallbackHits(
+        hpCorrenti(),
+      )) {
+        if (requestedHit <= 0 || hpCorrenti() <= 0) continue;
+        final beforeHp = hpCorrenti();
+        final afterHp = max(0, beforeHp - requestedHit);
+        final hit = beforeHp - afterHp;
+        if (hit <= 0) continue;
+        currentHpController.text = '$afterHp';
+        hpFallbackDamage += hit;
+        hpHits.add(hit);
+        checkAutomaticAshFromHpLoss(
+          beforeHp,
+          afterHp,
+          source: t('Massima Potenza', 'Maximum Power'),
+        );
+      }
+      if (hpFallbackDamage > 0) {
+        sendRealtimeHpChanged();
+        controllaStatoForzaDopoHp();
+      }
+    }
+    if (spentOculum <= 0 && hpFallbackDamage <= 0) {
+      risultato = t(
+        'Massima Potenza richiede Oculum attuale o HP da suddividere in quattro danni.',
+        'Maximum Power requires current Oculum or HP to split into four hits.',
+      );
+      aggiungiLog(risultato);
+      return false;
+    }
+    if (spentOculum > 0) {
+      adjustRecordedStatSpentFromDelta('oculum', -spentOculum);
+    }
+
+    var spentIntegrity = 0;
+    final changedArts = <int>[];
+    if (forced) {
+      for (var index = 0; index < arti.length; index++) {
+        final art = arti[index];
+        if (!art.sbloccata) continue;
+        ensureArtIntegrityValue(index);
+        final current = max(0, art.integritaCorrente);
+        final integrityCost = oculumMaximumPowerIntegrityCost(current);
+        if (integrityCost <= 0) continue;
+        setArtIntegrityValue(index, current - integrityCost);
+        spentIntegrity += integrityCost;
+        changedArts.add(index);
+      }
+    }
+
+    final invested = spentOculum > 0 ? spentOculum : hpFallbackDamage;
+    applyMaximumPowerBonus(instance, invested);
+    applyMaximumPowerFiftyPercentBuff(instance);
+    instance.metadata.addAll(<String, dynamic>{
+      'lastOculumSpent': spentOculum,
+      'lastHpFallbackDamage': hpFallbackDamage,
+      'lastHpFallbackHits': hpHits,
+      'lastIntegritySpent': spentIntegrity,
+      'forcedStages':
+          readIntValue(instance.metadata['forcedStages']) + (forced ? 1 : 0),
+    });
+    if (changedArts.isNotEmpty) scheduleArtIntegritySave(changedArts);
+    risultato = forced
+        ? t(
+            'Massima Potenza forzata: ${spentOculum > 0 ? '-$spentOculum Oculum' : '-$hpFallbackDamage HP in ${hpHits.length} danni'} e -$spentIntegrity Integrita Art, +$invested temporaneo a RES, VOL e MAT.',
+            'Maximum Power forced: ${spentOculum > 0 ? '-$spentOculum Oculum' : '-$hpFallbackDamage HP in ${hpHits.length} hits'} and -$spentIntegrity Art Integrity, +$invested temporary RES, WIL and MAT.',
+          )
+        : t(
+            'Massima Potenza: ${spentOculum > 0 ? '-$spentOculum Oculum' : '-$hpFallbackDamage HP in ${hpHits.length} danni'}, +$invested temporaneo a RES, VOL e MAT e +50% a RES, VOL, MAT e OCU per la durata.',
+            'Maximum Power: ${spentOculum > 0 ? '-$spentOculum Oculum' : '-$hpFallbackDamage HP in ${hpHits.length} hits'}, +$invested temporary RES, WIL and MAT and +50% RES, WIL, MAT and OCU for the duration.',
+          );
+    aggiungiLog(risultato);
+    return true;
+  }
+
   void increaseConditionStage(OculumConditionInstance instance) {
     final definition = oculumConditionDefinition(instance.conditionType);
     final maxStage =
         definition?.maxStage ??
         max(1, readIntValue(instance.metadata['maxStage'], fallback: 1));
     if (instance.stage >= maxStage) return;
+    if (instance.conditionType == 'massima_potenza' &&
+        !investMaximumPower(instance, forced: true)) {
+      return;
+    }
     final before = instance.stage;
     instance.stage++;
     if (definition != null && definition.durationByStage.isNotEmpty) {
@@ -1078,6 +1325,14 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     if (target == OculumConditionTarget.difesa && hasCondition('fortificato')) {
       percent += 15 * positiveMultiplier;
     }
+    if (target == OculumConditionTarget.difesa && !statoForzaRimuoveMalus()) {
+      final corrosion = getCondition('corroso');
+      if (corrosion != null) {
+        percent -= oculumCorrosionPercent(corrosion.stage);
+      }
+      if (hasCondition('marchiato')) percent -= 20;
+      if (hasCondition('rinsecchito')) percent -= 75;
+    }
     if (target == OculumConditionTarget.danno) {
       if (hasCondition('potenziato')) percent += 15 * positiveMultiplier;
       if (!statoForzaRimuoveMalus() && hasCondition('indebolito')) {
@@ -1090,6 +1345,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
         return 0;
       }
       if (hasCondition('accelerato')) percent += 20 * positiveMultiplier;
+      if (hasCondition('ancorato')) percent -= 25;
       if (!statoForzaRimuoveMalus() && hasCondition('rallentato')) {
         percent -= 25;
       }
@@ -1125,15 +1381,40 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       }
       result += value;
     }
+    if (target == OculumConditionTarget.iniziativa &&
+        !statoForzaRimuoveMalus() &&
+        hasCondition('elettrizzato')) {
+      result -= 3;
+    }
     return result.round();
   }
 
+  int conditionShieldDamageBonusPercent() {
+    if (statoForzaRimuoveMalus()) return 0;
+    final corrosion = getCondition('corroso');
+    return corrosion == null ? 0 : oculumCorrosionPercent(corrosion.stage);
+  }
+
+  int applyConditionHealingAmount(int requested) {
+    if (requested <= 0) return 0;
+    final cursed = getCondition('maledetto');
+    if (cursed == null || statoForzaRimuoveMalus()) return requested;
+    return oculumCursedHealing(requested, cursed.stage);
+  }
+
   int applyConditionIncomingDamage(int damage) {
-    if (damage <= 0 || statoForzaRimuoveMalus()) return damage;
+    if (damage <= 0) return damage;
     final exposed = getCondition('esposto');
     final vulnerable = hasCondition('vulnerabile');
     final difficultyIncrease = getCondition('aumento_difficolta');
-    if (exposed == null && !vulnerable && difficultyIncrease == null) {
+    final vitalMemory = hasCondition('ricordo_vitale');
+    final marked = getCondition('marchiato');
+    if (statoForzaRimuoveMalus() && !vitalMemory) return damage;
+    if (exposed == null &&
+        !vulnerable &&
+        difficultyIncrease == null &&
+        !vitalMemory &&
+        marked == null) {
       return damage;
     }
     final vulnerabilityIncrease = exposed != null || vulnerable
@@ -1144,9 +1425,62 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
           damage,
           difficultyIncrease?.stage ?? 0,
         );
-    final increase = vulnerabilityIncrease + difficultyIncreaseDamage;
+    final vitalMemoryIncrease = vitalMemory
+        ? oculumVitalMemoryIncomingDamage(damage) - damage
+        : 0;
+    final increase =
+        vulnerabilityIncrease + difficultyIncreaseDamage + vitalMemoryIncrease;
     if (exposed != null) removeCondition(exposed, force: true, expired: true);
+    if (marked != null) removeCondition(marked, force: true, expired: true);
     return damage + increase;
+  }
+
+  void registerVitalMemoryDamage(int hpDamage) {
+    final instance = getCondition('ricordo_vitale');
+    if (instance == null || hpDamage <= 0) return;
+    final recovery = oculumVitalMemoryRecoveryForDamage(hpDamage);
+    instance.metadata.addAll(<String, dynamic>{
+      'pendingHealing': recovery.total,
+      'healingChunk': recovery.perTick,
+      'sourceDamage': hpDamage,
+    });
+    notifyConditionsChanged(conditionTargetsFor(instance));
+  }
+
+  int vitalMemoryPendingHealing() => max(
+    0,
+    readIntValue(getCondition('ricordo_vitale')?.metadata['pendingHealing']),
+  );
+
+  void applyVitalMemoryTick(OculumConditionInstance instance) {
+    final pending = readIntValue(instance.metadata['pendingHealing']);
+    if (pending <= 0) return;
+    if (hasCondition('elettrizzato')) {
+      final message = t(
+        'Elettrizzato impedisce il recupero HP di Ricordo Vitale.',
+        'Electrified prevents Vital Memory HP recovery.',
+      );
+      risultato = message;
+      aggiungiLog(message);
+      notifyConditionsChanged(conditionTargetsFor(instance));
+      return;
+    }
+    final chunk = max(1, readIntValue(instance.metadata['healingChunk']));
+    final rawRequested = min(pending, chunk);
+    final requested = applyConditionHealingAmount(rawRequested);
+    final before = hpCorrenti();
+    final after = min(maxHp(), before + requested);
+    final restored = after - before;
+    instance.metadata['pendingHealing'] = max(0, pending - rawRequested);
+    currentHpController.text = '$after';
+    if (restored > 0) sendRealtimeHpChanged();
+    final message = t(
+      'Ricordo Vitale: +$restored HP, ${instance.metadata['pendingHealing']} da recuperare.',
+      'Vital Memory: +$restored HP, ${instance.metadata['pendingHealing']} left to recover.',
+    );
+    risultato = message;
+    aggiungiLog(message);
+    notifyConditionsChanged(conditionTargetsFor(instance));
   }
 
   void setFightEnemyDifficulty(String enemyDifficulty) {
@@ -1354,10 +1688,412 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     controllaStatoForzaDopoHp();
   }
 
+  void applyRegenerationTick(OculumConditionInstance instance) {
+    final rawHealing = oculumRegenerationHealing(maxHp(), instance.stage);
+    final requested = applyConditionHealingAmount(rawHealing);
+    final beforeHp = hpCorrenti();
+    final beforeTemporary = hpTemp();
+    final healed = healOculumHp(
+      current: beforeHp,
+      maximum: maxHp(),
+      temporary: beforeTemporary,
+      amount: requested,
+    );
+    final restored = healed.current - beforeHp;
+    final temporary = healed.temporary - beforeTemporary;
+    currentHpController.text = '${healed.current}';
+    impostaHpTempTotali(healed.temporary);
+    final message = t(
+      'Rigenerazione: +$restored HP${temporary > 0 ? ', +$temporary HP temporanei' : ''} (${oculumRegenerationHealing(maxHp(), instance.stage)} richiesti).',
+      'Regeneration: +$restored HP${temporary > 0 ? ', +$temporary temporary HP' : ''} (${oculumRegenerationHealing(maxHp(), instance.stage)} requested).',
+    );
+    risultato = message;
+    aggiungiLog(message);
+    if (restored > 0 || temporary > 0) sendRealtimeHpChanged();
+    controllaStatoForzaDopoHp();
+    notifyConditionsChanged(conditionTargetsFor(instance));
+  }
+
+  void applyOculumFlameTick(OculumConditionInstance instance) {
+    final availableBefore = oculumTotale();
+    final requestedCost = oculumFlameTurnCost(
+      availableBefore,
+      stage: instance.stage,
+    );
+    final spent = spendOculum(requestedCost, scheduleSave: false);
+    if (spent <= 0) {
+      final message = t(
+        '${conditionName(instance)} non trova Oculum attuale da convertire.',
+        '${conditionName(instance)} finds no current Oculum to convert.',
+      );
+      risultato = message;
+      aggiungiLog(message);
+      return;
+    }
+
+    adjustRecordedStatSpentFromDelta('oculum', -spent);
+    final multiplier = oculumFlameRewardMultiplier(
+      normalizedCampaignDifficulty(),
+    );
+    final reward = oculumFlameReward(spent, normalizedCampaignDifficulty());
+    var restored = 0;
+    var temporary = 0;
+    String rewardLabel;
+
+    if (instance.conditionType == 'resilienza_in_fiamme') {
+      final hpReward = applyConditionHealingAmount(reward);
+      final beforeHp = hpCorrenti();
+      final beforeTemporaryHp = hpTemp();
+      final afterHp = min(maxHp(), beforeHp + hpReward);
+      restored = afterHp - beforeHp;
+      currentHpController.text = '$afterHp';
+      if (instance.stage >= 2) {
+        final afterTemporaryHp = min(
+          oculumTemporaryHpLimit,
+          beforeTemporaryHp + hpReward,
+        );
+        temporary = afterTemporaryHp - beforeTemporaryHp;
+        if (temporary > 0) impostaHpTempTotali(afterTemporaryHp);
+      }
+      rewardLabel = 'HP';
+      if (restored > 0) sendRealtimeHpChanged();
+      controllaStatoForzaDopoHp();
+    } else {
+      final key = instance.conditionType == 'volonta_in_fiamme'
+          ? 'volonta'
+          : 'materia';
+      final current = currentStatValue(key);
+      final maximum = statMassimo(key);
+      restored = min(reward, max(0, maximum - current));
+      if (restored > 0) {
+        setCurrentStatFromVisibleInput(
+          key,
+          '${current + restored}',
+          trackConsumption: false,
+        );
+      }
+      temporary = reward - restored;
+      if (temporary > 0) {
+        if (key == 'volonta') {
+          tempVolonta += temporary;
+        } else {
+          tempMateria += temporary;
+        }
+        invalidateDerivedDataCaches();
+      }
+      rewardLabel = key == 'volonta' ? t('Volonta', 'Will') : 'Materia';
+    }
+
+    instance.metadata.addAll(<String, dynamic>{
+      'lastOculumSpent': spent,
+      'lastReward': reward,
+      'lastRestored': restored,
+      'lastTemporary': temporary,
+      'lastMultiplier': multiplier,
+    });
+    final message = t(
+      '${conditionName(instance)}: -$spent Oculum attuale (${oculumFlameTurnPercent(instance.stage)}%), $rewardLabel +$restored (x$multiplier${temporary > 0 ? ', +$temporary temporaneo' : ''}).',
+      '${conditionName(instance)}: -$spent current Oculum (${oculumFlameTurnPercent(instance.stage)}%), $rewardLabel +$restored (x$multiplier${temporary > 0 ? ', +$temporary temporary' : ''}).',
+    );
+    risultato = message;
+    aggiungiLog(message);
+    notifyConditionsChanged(conditionTargetsFor(instance));
+    notifyOculumResourceChanged();
+  }
+
+  int repairLowestIntegrityArtFromVioletFlame(int amount) {
+    if (amount <= 0) return 0;
+    var selectedIndex = -1;
+    var selectedIntegrity = 1 << 30;
+    for (var index = 0; index < arti.length; index++) {
+      if (!arti[index].sbloccata) continue;
+      ensureArtIntegrityValue(index);
+      final current = max(0, arti[index].integritaCorrente);
+      if (current < selectedIntegrity && current < artIntegrityMaximum()) {
+        selectedIndex = index;
+        selectedIntegrity = current;
+      }
+    }
+    if (selectedIndex < 0) return 0;
+    final repaired = min(amount, artIntegrityMaximum() - selectedIntegrity);
+    setArtIntegrityValue(selectedIndex, selectedIntegrity + repaired);
+    return repaired;
+  }
+
+  int restoreVioletFlameStat(String key, int amount) {
+    if (amount <= 0) return 0;
+    final current = currentStatValue(key);
+    final restored = min(amount, max(0, statMassimo(key) - current));
+    if (restored > 0) {
+      setCurrentStatFromVisibleInput(
+        key,
+        '${current + restored}',
+        trackConsumption: false,
+      );
+    }
+    final overflow = amount - restored;
+    if (overflow > 0) {
+      if (key == 'volonta') {
+        tempVolonta += overflow;
+      } else {
+        tempMateria += overflow;
+      }
+      invalidateDerivedDataCaches();
+    }
+    return restored + overflow;
+  }
+
+  void applyVioletOculumFlameTick(OculumConditionInstance instance) {
+    final selectedResource = oculumNormalizeEffectResource(
+      instance.metadata['nextSpendResource'] ?? 'vita',
+    );
+    final usesSelectedResource = <String>{
+      'oculum',
+      'volonta',
+      'materia',
+    }.contains(selectedResource);
+    var lostHp = 0;
+    var spentResource = 0;
+
+    if (usesSelectedResource) {
+      final available = selectedResource == 'oculum'
+          ? oculumTotale()
+          : currentSpendableStatValue(selectedResource);
+      final cost = oculumVioletFlameThreePercentCost(available);
+      spentResource = selectedResource == 'oculum'
+          ? spendOculum(cost, scheduleSave: false)
+          : spendArtSkillCostResource(selectedResource, cost);
+      if (selectedResource == 'oculum' && spentResource > 0) {
+        adjustRecordedStatSpentFromDelta('oculum', -spentResource);
+        recordCurrentOculumProgress();
+      }
+      if (spentResource <= 0) {
+        instance.metadata['nextSpendResource'] = 'vita';
+        risultato = t(
+          'Oculum in Fiamme: nessuna $selectedResource attuale spendibile; al prossimo turno torna agli HP.',
+          'Oculum Ablaze (Violet): no spendable current $selectedResource; it returns to HP next turn.',
+        );
+        aggiungiLog(risultato);
+        notifyConditionsChanged(conditionTargetsFor(instance));
+        return;
+      }
+      // The alternate payment retains the HP-based conversion scale without
+      // damaging HP, then doubles the resulting Oculum recovery.
+      lostHp = oculumVioletFlameThreePercentCost(hpCorrenti());
+    } else {
+      final beforeHp = hpCorrenti();
+      final cost = oculumVioletFlameThreePercentCost(beforeHp);
+      final afterHp = max(0, beforeHp - cost);
+      lostHp = beforeHp - afterHp;
+      currentHpController.text = '$afterHp';
+      if (lostHp > 0) {
+        checkAutomaticAshFromHpLoss(
+          beforeHp,
+          afterHp,
+          source: conditionName(instance),
+        );
+        sendRealtimeHpChanged();
+        controllaStatoForzaDopoHp();
+      }
+    }
+
+    final baseRecovery = oculumVioletFlameRegeneration(lostHp);
+    final recovery = usesSelectedResource ? baseRecovery * 2 : baseRecovery;
+    var target = 'oculum';
+    var restored = 0;
+    var repaired = 0;
+    if (usesSelectedResource) {
+      restored = addOculum(recovery, scheduleSave: false);
+      if (restored > 0) {
+        recordCurrentOculumProgress();
+        repaired = repairLowestIntegrityArtFromVioletFlame(restored);
+      }
+    } else if (Random.secure().nextInt(100) <
+        oculumVioletFlameDiversionChance(instance.stage)) {
+      target = Random.secure().nextBool() ? 'volonta' : 'materia';
+      restored = restoreVioletFlameStat(target, recovery);
+    } else {
+      restored = addOculum(recovery, scheduleSave: false);
+      if (restored > 0) recordCurrentOculumProgress();
+    }
+    instance.metadata.addAll(<String, dynamic>{
+      'nextSpendResource': 'vita',
+      'lastHpLost': lostHp,
+      'lastResourceSpent': spentResource,
+      'lastTarget': target,
+      'lastRecovery': restored,
+      'lastCoreRepair': repaired,
+    });
+    risultato = usesSelectedResource
+        ? t(
+            'Oculum in Fiamme: -$spentResource $selectedResource, Oculum +$restored doppio${repaired > 0 ? ', Integrita Art +$repaired' : ''}.',
+            'Oculum Ablaze (Violet): -$spentResource $selectedResource, double Oculum +$restored${repaired > 0 ? ', Art Integrity +$repaired' : ''}.',
+          )
+        : t(
+            'Oculum in Fiamme: -$lostHp HP, $target +$restored (stadio ${oculumRomanStage(instance.stage)}).',
+            'Oculum Ablaze (Violet): -$lostHp HP, $target +$restored (stage ${oculumRomanStage(instance.stage)}).',
+          );
+    aggiungiLog(risultato);
+    notifyConditionsChanged(conditionTargetsFor(instance));
+    notifyOculumResourceChanged();
+  }
+
+  bool removeOculumFlamesAtSafetyThreshold() {
+    if (!oculumFlameEndsAtLowOculum(
+      currentOculum: oculumTotale(),
+      maximumOculum: oculumMassimo(),
+    )) {
+      return false;
+    }
+    final flames = activeConditions
+        .where(
+          (item) => const <String>{
+            'resilienza_in_fiamme',
+            'volonta_in_fiamme',
+            'materia_in_fiamme',
+          }.contains(item.conditionType),
+        )
+        .toList(growable: false);
+    for (final flame in flames) {
+      removeCondition(flame, force: true, expired: true);
+    }
+    if (statoForzaAttivo == 'vero_bruciore_anima') {
+      final ended = terminaStatoForzaAttivo(applicaEsitoEsplosione: false);
+      if (ended.isNotEmpty) aggiungiLog(ended);
+    }
+    if (flames.isNotEmpty) {
+      final message = t(
+        'Le Fiamme terminano: l Oculum è al 15% o meno del massimo.',
+        'The Flames end: Oculum is at 15% or less of its maximum.',
+      );
+      risultato = message;
+      aggiungiLog(message);
+    }
+    return flames.isNotEmpty;
+  }
+
+  void applyTrueSoulBurnTick() {
+    final beforeOculum = oculumTotale();
+    final spentOculum = spendOculum(
+      oculumFlameTurnCost(beforeOculum, stage: 3),
+      scheduleSave: false,
+    );
+    if (spentOculum <= 0) {
+      removeOculumFlamesAtSafetyThreshold();
+      return;
+    }
+    adjustRecordedStatSpentFromDelta('oculum', -spentOculum);
+
+    var spentIntegrity = 0;
+    final changedArts = <int>[];
+    for (var index = 0; index < arti.length; index++) {
+      final art = arti[index];
+      if (!art.sbloccata) continue;
+      ensureArtIntegrityValue(index);
+      final current = max(0, art.integritaCorrente);
+      if (current <= 0) continue;
+      final cost = max(1, (current * .05).floor());
+      setArtIntegrityValue(index, current - cost);
+      spentIntegrity += cost;
+      changedArts.add(index);
+    }
+
+    final multiplier = oculumFlameRewardMultiplier(
+      normalizedCampaignDifficulty(),
+    );
+    final reward = oculumFlameReward(
+      spentOculum + spentIntegrity,
+      normalizedCampaignDifficulty(),
+    );
+    final hpBefore = hpCorrenti();
+    final hpTemporaryBefore = hpTemp();
+    final hpReward = applyConditionHealingAmount(reward);
+    final hpAfter = min(maxHp(), hpBefore + hpReward);
+    final healed = hpAfter - hpBefore;
+    final hpTemporaryAfter = min(
+      oculumTemporaryHpLimit,
+      hpTemporaryBefore + hpReward,
+    );
+    final hpTemporary = hpTemporaryAfter - hpTemporaryBefore;
+    currentHpController.text = '$hpAfter';
+    if (hpTemporary > 0) impostaHpTempTotali(hpTemporaryAfter);
+
+    var temporaryWill = 0;
+    var temporaryMatter = 0;
+    for (final key in const <String>['volonta', 'materia']) {
+      final current = currentStatValue(key);
+      final restored = min(reward, max(0, statMassimo(key) - current));
+      if (restored > 0) {
+        setCurrentStatFromVisibleInput(
+          key,
+          '${current + restored}',
+          trackConsumption: false,
+        );
+      }
+      final overflow = reward - restored;
+      if (key == 'volonta') {
+        temporaryWill = overflow;
+        tempVolonta += overflow;
+      } else {
+        temporaryMatter = overflow;
+        tempMateria += overflow;
+      }
+    }
+    invalidateDerivedDataCaches();
+    if (healed > 0) sendRealtimeHpChanged();
+    if (changedArts.isNotEmpty) scheduleArtIntegritySave(changedArts);
+    controllaStatoForzaDopoHp();
+    final message = t(
+      'Vero Bruciore dell Anima: -$spentOculum Oculum e -$spentIntegrity Integrità Art (5%). HP, Volontà e Materia +$reward (x$multiplier); HP temporanei +$hpTemporary, Volontà temporanea +$temporaryWill, Materia temporanea +$temporaryMatter.',
+      'True Soul Burn: -$spentOculum Oculum and -$spentIntegrity Art Integrity (5%). HP, Will and Matter +$reward (x$multiplier); temporary HP +$hpTemporary, temporary Will +$temporaryWill, temporary Matter +$temporaryMatter.',
+    );
+    risultato = message;
+    aggiungiLog(message);
+    notifyConditionsChanged(<OculumConditionTarget>{
+      OculumConditionTarget.oculum,
+      OculumConditionTarget.hp,
+      OculumConditionTarget.volonta,
+      OculumConditionTarget.materia,
+      OculumConditionTarget.art,
+      OculumConditionTarget.recupero,
+    });
+    notifyOculumResourceChanged();
+    removeOculumFlamesAtSafetyThreshold();
+  }
+
+  void grantTrueSoulBurnSpendBenefits({
+    required int spent,
+    required String source,
+  }) {
+    if (statoForzaAttivo != 'vero_bruciore_anima' || spent <= 0) return;
+    final multiplier = oculumFlameRewardMultiplier(
+      normalizedCampaignDifficulty(),
+    );
+    // This return intentionally rounds down, so spending Skills and Arts is
+    // rewarding but less efficient than the dedicated end-turn conversion.
+    final bonus = max(1, (spent * multiplier).floor());
+    tempResilienza += bonus;
+    tempVolonta += bonus;
+    tempMateria += bonus;
+    tempOculum += bonus;
+    rimarginaHpDaAumentoResilienza(bonus);
+    invalidateDerivedDataCaches();
+    notifyOculumResourceChanged();
+    final message = t(
+      'Vero Bruciore dell Anima: $source ha speso $spent e dona +$bonus temporaneo a RES, VOL, MAT e OCU (x$multiplier per difetto).',
+      'True Soul Burn: $source spent $spent and grants +$bonus temporary RES, WIL, MAT and OCU (x$multiplier rounded down).',
+    );
+    risultato = message;
+    aggiungiLog(message);
+  }
+
   void processConditionTick(OculumConditionTickTrigger trigger) {
     if (activeConditions.isEmpty) return;
     final snapshot = List<OculumConditionInstance>.from(activeConditions);
     var mutated = false;
+    final trueSoulBurn =
+        trigger == OculumConditionTickTrigger.endTurn &&
+        statoForzaAttivo == 'vero_bruciore_anima';
     for (final instance in snapshot) {
       if (!activeConditions.contains(instance)) continue;
       if (trigger == OculumConditionTickTrigger.startTurn &&
@@ -1386,12 +2122,45 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
         );
       }
       if (instance.tickTrigger == trigger &&
+          instance.conditionType == 'elettrizzato') {
+        applyDirectConditionDamage(instance, oculumElectrifiedDamage(maxHp()));
+      }
+      if (instance.tickTrigger == trigger &&
+          instance.conditionType == 'rigenerazione') {
+        applyRegenerationTick(instance);
+      }
+      if (instance.tickTrigger == trigger &&
           instance.conditionType == 'oculum_instabile') {
         onOculumInstabilityTriggered(instance);
       }
-      if (instance.duration > 0 &&
-          instance.durationType == OculumConditionDurationType.turns &&
-          trigger == OculumConditionTickTrigger.endTurn) {
+      if (instance.tickTrigger == trigger &&
+          instance.conditionType == 'ricordo_vitale') {
+        applyVitalMemoryTick(instance);
+      }
+      if (instance.tickTrigger == trigger &&
+          instance.conditionType == 'oculum_in_fiamme_viola') {
+        applyVioletOculumFlameTick(instance);
+      }
+      if (instance.tickTrigger == trigger &&
+          <String>{
+            'resilienza_in_fiamme',
+            'volonta_in_fiamme',
+            'materia_in_fiamme',
+          }.contains(instance.conditionType) &&
+          !trueSoulBurn) {
+        applyOculumFlameTick(instance);
+        if (removeOculumFlamesAtSafetyThreshold()) break;
+      }
+      final expiresForTrigger =
+          (instance.durationType == OculumConditionDurationType.turns &&
+              trigger == OculumConditionTickTrigger.endTurn) ||
+          (instance.durationType == OculumConditionDurationType.shortRest &&
+              trigger == OculumConditionTickTrigger.shortRest) ||
+          (instance.durationType == OculumConditionDurationType.longRest &&
+              trigger == OculumConditionTickTrigger.longRest) ||
+          (instance.durationType == OculumConditionDurationType.meal &&
+              trigger == OculumConditionTickTrigger.specificEvent);
+      if (instance.duration > 0 && expiresForTrigger) {
         instance.duration--;
         mutated = true;
         if (instance.duration <= 0) {
@@ -1399,6 +2168,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
         }
       }
     }
+    if (trueSoulBurn) applyTrueSoulBurnTick();
     if (mutated) {
       notifyConditionsChanged(snapshot.expand(conditionTargetsFor));
       programmaSalvataggio(invalidateCaches: false);
@@ -1498,6 +2268,16 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
   Future<void> applyForceStateFromQuickConditions(
     _StatoForzaDef definition,
   ) async {
+    if (definition.id == 'vero_bruciore_anima' &&
+        !puoAttivareVeroBrucioreAnima()) {
+      final message = t(
+        'Vero Bruciore dell Anima richiede Resilienza in Fiamme allo stadio II o III.',
+        'True Soul Burn requires Resilience Ablaze at stage II or III.',
+      );
+      setState(() => risultato = message);
+      aggiungiLog(message);
+      return;
+    }
     if (statoForzaAttivo.isNotEmpty && statoForzaAttivo != definition.id) {
       final replace = await showDialog<bool>(
         context: context,
@@ -1529,11 +2309,15 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       statoForzaAttivo = definition.id == 'niente' ? '' : definition.id;
       statoForzaTiriRimanenti = definition.id == 'esplosione_oculum' ? 9 : 0;
       final immediate = applicaEffettoImmediatoStatoForza(definition.id);
-      risultato = t(
-        'Stato di Forza: ${definition.nameIt}. ${definition.descriptionIt}',
-        'Force State: ${definition.nameEn}. ${definition.descriptionEn}',
-      );
-      if (immediate.isNotEmpty) risultato += '\n$immediate';
+      risultato = definition.id == 'vero_bruciore_anima'
+          ? immediate
+          : t(
+              'Stato di Forza: ${definition.nameIt}. ${definition.descriptionIt}',
+              'Force State: ${definition.nameEn}. ${definition.descriptionEn}',
+            );
+      if (definition.id != 'vero_bruciore_anima' && immediate.isNotEmpty) {
+        risultato += '\n$immediate';
+      }
       aggiungiLog(risultato);
     });
     programmaSalvataggio(invalidateCaches: false);
@@ -1554,7 +2338,11 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
-            for (final definition in statoForzaDefs())
+            for (final definition in statoForzaDefs().where(
+              (definition) =>
+                  definition.id != 'vero_bruciore_anima' ||
+                  puoAttivareVeroBrucioreAnima(),
+            ))
               ListTile(
                 leading: const Icon(Icons.bolt),
                 title: Text(t(definition.nameIt, definition.nameEn)),
@@ -2344,9 +3132,10 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     final maxStage =
         definition?.maxStage ??
         max(1, readIntValue(instance.metadata['maxStage'], fallback: 1));
-    final color =
-        (definition?.polarity ?? OculumConditionPolarity.neutral) ==
-            OculumConditionPolarity.positive
+    final color = instance.conditionType == 'oculum_in_fiamme_viola'
+        ? Colors.deepPurpleAccent
+        : (definition?.polarity ?? OculumConditionPolarity.neutral) ==
+              OculumConditionPolarity.positive
         ? Colors.greenAccent
         : Colors.redAccent;
     final overrideDescription = t(
@@ -2431,7 +3220,9 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
                     onSelectionChanged: (value) {
                       final next = value.first;
                       while (instance.stage < next) {
+                        final before = instance.stage;
                         increaseConditionStage(instance);
+                        if (instance.stage == before) break;
                       }
                       while (instance.stage > next) {
                         decreaseConditionStage(instance);
@@ -2523,6 +3314,36 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
               ],
             ),
           ],
+          if (instance.conditionType == 'oculum_in_fiamme_viola') ...[
+            const SizedBox(height: 10),
+            Text(
+              t('Costo del prossimo turno', 'Next turn cost'),
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final resource in const <String>[
+                  'oculum',
+                  'volonta',
+                  'materia',
+                ])
+                  ChoiceChip(
+                    selected:
+                        '${instance.metadata['nextSpendResource'] ?? 'vita'}' ==
+                        resource,
+                    label: Text(structuredEffectResourceLabel(resource)),
+                    onSelected: (_) {
+                      instance.metadata['nextSpendResource'] = resource;
+                      notifyConditionsChanged(conditionTargetsFor(instance));
+                      programmaSalvataggio(invalidateCaches: false);
+                    },
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -2579,6 +3400,64 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
           ),
         ),
       ),
+    );
+  }
+
+  Widget quickOculumFlameConditionCard(String type) {
+    final definition = oculumConditionDefinition(type)!;
+    final instance = getCondition(type);
+    final active = instance != null;
+    final stage = instance?.stage ?? 1;
+    final multiplier = oculumFlameRewardMultiplier(
+      normalizedCampaignDifficulty(),
+    );
+    final color = switch (type) {
+      'resilienza_in_fiamme' => Colors.greenAccent,
+      'volonta_in_fiamme' => Colors.redAccent,
+      'oculum_in_fiamme_viola' => Colors.deepPurpleAccent,
+      _ => Colors.lightBlueAccent,
+    };
+    final target = switch (type) {
+      'resilienza_in_fiamme' => t('cura gli HP', 'heals HP'),
+      'volonta_in_fiamme' => t(
+        'ripristina Volonta e l eccesso e temporaneo',
+        'restores Will and makes overflow temporary',
+      ),
+      'oculum_in_fiamme_viola' => t(
+        'consuma il 3% degli HP e rigenera Oculum; i tasti della condizione impostano una spesa alternativa per il prossimo turno',
+        'spends 3% HP and regenerates Oculum; its condition buttons set an alternate cost for the next turn',
+      ),
+      _ => t(
+        'ripristina Materia e l eccesso e temporaneo',
+        'restores Matter and makes overflow temporary',
+      ),
+    };
+    return quickSpecialStateCard(
+      color: color,
+      icon: definition.icon,
+      title: t(definition.nameIt, definition.nameEn),
+      active: active,
+      description: type == 'oculum_in_fiamme_viola'
+          ? t(
+              'Stadio ${oculumRomanStage(stage)}: $target. Deviazione Volonta/Materia: ${oculumVioletFlameDiversionChance(stage)}%.',
+              'Stage ${oculumRomanStage(stage)}: $target. Will/Matter diversion: ${oculumVioletFlameDiversionChance(stage)}%.',
+            )
+          : t(
+              'Stadio ${oculumRomanStage(stage)}: ogni turno -${oculumFlameTurnPercent(stage)}% Oculum attuale (min 1), poi $target pari alla spesa x$multiplier. Si spegne al 15% Oculum o meno.',
+              'Stage ${oculumRomanStage(stage)}: every turn -${oculumFlameTurnPercent(stage)}% current Oculum (min 1), then $target equal to spent Oculum x$multiplier. It ends at 15% Oculum or less.',
+            ),
+      onTap: () {
+        final existing = getCondition(type);
+        if (existing != null) {
+          removeCondition(existing, force: true);
+        } else {
+          applyCondition(
+            type,
+            duration: 0,
+            source: t('Condizioni veloci', 'Quick conditions'),
+          );
+        }
+      },
     );
   }
 
@@ -2747,6 +3626,10 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
                   ? confermaRisvegliaOculum
                   : attivaOculumAddormentato,
             ),
+            quickOculumFlameConditionCard('resilienza_in_fiamme'),
+            quickOculumFlameConditionCard('volonta_in_fiamme'),
+            quickOculumFlameConditionCard('materia_in_fiamme'),
+            quickOculumFlameConditionCard('oculum_in_fiamme_viola'),
             quickSpecialStateCard(
               color: Colors.deepOrangeAccent,
               icon: Icons.local_fire_department,

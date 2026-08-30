@@ -106,7 +106,31 @@ extension _OculumHomeForceState on _OculumHomePageState {
           'Resistance to hits, removal of negative temporary penalties, all negative conditions and accumulated Ash.',
       weight: 6,
     ),
+    _StatoForzaDef(
+      id: 'tenacia',
+      nameIt: 'Tenacia',
+      nameEn: 'Tenacity',
+      descriptionIt:
+          'Rimuove immediatamente tutti i malus temporanei e tutte le condizioni negative, poi applica Rigenerazione per 3 turni.',
+      descriptionEn:
+          'Immediately removes all temporary penalties and all negative conditions, then applies Regeneration for 3 turns.',
+      weight: 6,
+    ),
+    _StatoForzaDef(
+      id: 'vero_bruciore_anima',
+      nameIt: 'Vero Bruciore dell Anima',
+      nameEn: 'True Soul Burn',
+      descriptionIt:
+          'Richiede Resilienza in Fiamme II. A fine turno consuma il 5% di Oculum e Integrita di ogni Art (minimo 1), poi converte la spesa in HP, HP temporanei, Volonta e Materia potenziati.',
+      descriptionEn:
+          'Requires Resilience Ablaze II. At end of turn it spends 5% of Oculum and each Art Integrity (minimum 1), then converts the cost into empowered HP, Will and Matter; excess HP becomes temporary.',
+      weight: 0,
+    ),
   ];
+
+  bool puoAttivareVeroBrucioreAnima() {
+    return oculumCanMaintainTrueSoulBurn(activeConditions);
+  }
 
   _StatoForzaDef statoForzaDef(String id) {
     return statoForzaDefs().firstWhere(
@@ -323,6 +347,56 @@ extension _OculumHomeForceState on _OculumHomePageState {
         return t(
           'Malus temporanei negativi rimossi, $condizioniRimosse condizioni negative eliminate e Cenere azzerata.',
           'Negative temporary penalties removed, $condizioniRimosse negative conditions cleared and Ash reset.',
+        );
+      case 'tenacia':
+        tempResilienza = max(0, tempResilienza);
+        tempVolonta = max(0, tempVolonta);
+        tempMateria = max(0, tempMateria);
+        tempOculum = max(0, tempOculum);
+        malusTiriOculumPostEsplosione = 0;
+        final condizioniRimosse =
+            removeNegativeConditionsForVulnerabilityReset();
+        final regenerationApplied = applyCondition(
+          'rigenerazione',
+          stage: 1,
+          duration: 3,
+          source: t('Stato di Forza: Tenacia', 'Force State: Tenacity'),
+        );
+        return t(
+          'Tenacia: malus temporanei rimossi, $condizioniRimosse condizioni negative eliminate${regenerationApplied ? ' e Rigenerazione applicata per 3 turni' : ''}.',
+          'Tenacity: temporary penalties removed, $condizioniRimosse negative conditions cleared${regenerationApplied ? ' and Regeneration applied for 3 turns' : ''}.',
+        );
+      case 'vero_bruciore_anima':
+        final gains = <String>[];
+        for (final key in const <String>[
+          'resilienza',
+          'volonta',
+          'materia',
+          'oculum',
+        ]) {
+          final bonus = max(1, (statMassimo(key) * .15).floor());
+          switch (key) {
+            case 'resilienza':
+              tempResilienza += bonus;
+              rimarginaHpDaAumentoResilienza(bonus);
+              break;
+            case 'volonta':
+              tempVolonta += bonus;
+              break;
+            case 'materia':
+              tempMateria += bonus;
+              break;
+            case 'oculum':
+              tempOculum += bonus;
+              break;
+          }
+          gains.add('${key.toUpperCase()} +$bonus');
+        }
+        invalidateDerivedDataCaches();
+        notifyOculumResourceChanged();
+        return t(
+          'Apertura del nucleo eseguita, le fiamme si iniziano a creare, presto inizierai a consumare Oculum e riceverne vantaggi. ${gains.join(', ')} temporanei (+15%).',
+          'Core opening executed, the flames begin to form; soon you will consume Oculum and receive its benefits. Temporary ${gains.join(', ')} (+15%).',
         );
       default:
         return '';

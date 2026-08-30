@@ -73,6 +73,22 @@ const Set<String> oculumRealtimeFallbackEditableFields = <String>{
   'masterSideOverride',
 };
 
+/// Una condivisione diretta fra amici deve arrivare anche ai player, non solo
+/// a Master e Co-Master. Usiamo il formato completo, già gestito dal ricevente
+/// con import automatico e filtri per tag destinatario.
+const String oculumRealtimeFriendShareSenderRole = 'fullShare';
+
+bool oculumRealtimeShouldImportSharedSheet({
+  required String senderRole,
+  required bool masterParty,
+  required bool restrictedByMaster,
+}) {
+  return senderRole == 'fullShare' ||
+      senderRole == 'player' ||
+      senderRole == 'coMaster' ||
+      (senderRole == 'master' && masterParty && !restrictedByMaster);
+}
+
 dynamic oculumRealtimeCloneJsonValue(dynamic value) {
   return jsonDecode(jsonEncode(value));
 }
@@ -1198,6 +1214,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       orElse: () => <String, dynamic>{},
     );
 
+    final title = titoloSempreVisibileSchedaAt(index);
     return <String, dynamic>{
       'nome': nomeSchedaPersonaggio(index),
       'tipoScheda': tipoSchedaPersonaggio(index),
@@ -1210,7 +1227,17 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'publicInitiativeBase': base,
       'publicInitiativeTotal': readIntValue(token['initiativeTotal']),
       'publicInitiativeRollHidden': token.isNotEmpty,
+      'publicVisibleTitleName': title?.nome ?? '',
+      'publicVisibleTitleLegend': title?.leggenda ?? '',
     };
+  }
+
+  /// Adds only the title explicitly chosen as public. The Master receives this
+  /// compact snapshot as soon as the player shares or reconnects their sheet.
+  void addRealtimePublicTitleSnapshot(Map<String, dynamic> sheet, int index) {
+    final title = titoloSempreVisibileSchedaAt(index);
+    sheet['publicVisibleTitleName'] = title?.nome ?? '';
+    sheet['publicVisibleTitleLegend'] = title?.leggenda ?? '';
   }
 
   String realtimeSharedSheetKey({
@@ -1818,12 +1845,11 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
     final localIndex = realtimeLocalSheetIndexForKey(key);
     if (localIndex < 0) {
-      if (senderRole == 'fullShare' ||
-          senderRole == 'player' ||
-          senderRole == 'coMaster' ||
-          (senderRole == 'master' &&
-              readBoolValue(payload['masterParty']) &&
-              !readBoolValue(sheet['realtimeRestrictedByMaster']))) {
+      if (oculumRealtimeShouldImportSharedSheet(
+        senderRole: senderRole,
+        masterParty: readBoolValue(payload['masterParty']),
+        restrictedByMaster: readBoolValue(sheet['realtimeRestrictedByMaster']),
+      )) {
         final prepared = prepareRealtimeSheetForLocal(record);
         schedePersonaggio.add(prepared);
         saveActiveCampaignInMemory();
@@ -1949,7 +1975,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         tags.add(tag);
       }
     }
+    // Full sheets are deliberately shared only with explicit friends and the
+    // Master/Co-Masters of this Realtime room, never with every player merely
+    // because they happen to be online.
     for (final user in realtimeUsers) {
+      final role = '${user['role'] ?? ''}'.trim();
+      if (role != 'master' && role != 'coMaster') continue;
       final rawTags = user['localSheetTags'];
       if (rawTags is! List) continue;
       for (final raw in rawTags) {
@@ -1963,7 +1994,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     return tags.toList()..sort();
   }
 
-  void sendRealtimeFullSheetToFriendsAndPartyAt(int index) {
+  Future<bool> sendRealtimeFullSheetToFriendsAndPartyAt(
+    int index, {
+    bool force = true,
+  }) async {
     final service = realtimeService;
     if (service?.isConnected != true) {
       setState(() {
@@ -1973,9 +2007,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         );
         aggiungiLog(risultato);
       });
-      return;
+      return false;
     }
-    if (index < 0 || index >= schedePersonaggio.length) return;
+    if (index < 0 || index >= schedePersonaggio.length) return false;
     if (readBoolValue(schedePersonaggio[index]['realtimeSharedSheet'])) {
       setState(() {
         risultato = t(
@@ -1984,7 +2018,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         );
         aggiungiLog(risultato);
       });
-      return;
+      return false;
     }
 
     salvaSchedaCorrenteInMemoria();
@@ -1997,7 +2031,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         );
         aggiungiLog(risultato);
       });
-      return;
+      return false;
     }
 
     final sheet = realtimeSafeSheetJson(
@@ -2005,41 +2039,53 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       includeImage: true,
       includePartyMembers: true,
     );
+    addRealtimePublicTitleSnapshot(sheet, index);
     sheet['realtimeRestrictedByMaster'] = false;
     final sheetId = normalizeOculumFriendTag(
       '${sheet['sheetTag'] ?? sheet['id'] ?? sheetTagAt(index)}',
     );
-    if (sheetId.isEmpty) return;
-    if (!shouldSendRealtimeSheetHash(
-      'full:$sheetId:${targetTags.join(',')}',
-      sheet,
-    )) {
-      return;
+    if (sheetId.isEmpty) return false;
+    final hashKey = 'full:$sheetId:${targetTags.join(',')}';
+    final hash = jsonEncode(sheet);
+    if (!force && realtimeLastSentSheetHashes[hashKey] == hash) {
+      return true;
     }
 
-    unawaited(
-      service!.sendSharedSheet(
-        sheet: sheet,
-        campaignId: activeCampaignId,
-        campaignName: activeCampaignName(),
-        sheetId: sheetId,
-        sheetName: nomeSchedaPersonaggio(index),
-        ownerTag: sheetId,
-        senderRole: 'fullShare',
-        targetAudience: 'friends_party_full',
-        fromMaster: realtimeIsMasterRole,
-        masterParty: sheetInMasterPartyAt(index),
-        targetTags: targetTags,
-      ),
+    final sent = await service!.sendSharedSheetConfirmed(
+      sheet: sheet,
+      campaignId: activeCampaignId,
+      campaignName: activeCampaignName(),
+      sheetId: sheetId,
+      sheetName: nomeSchedaPersonaggio(index),
+      ownerTag: sheetId,
+      senderRole: 'fullShare',
+      targetAudience: 'friends_party_full',
+      fromMaster: realtimeIsMasterRole,
+      masterParty: sheetInMasterPartyAt(index),
+      targetTags: targetTags,
     );
+    // Targeted delivery is the user-controlled full share. The staff channel
+    // remains an explicit fallback for the Master in the current room.
+    if (!realtimeIsMasterRole && realtimeHasMasterOnline) {
+      sendRealtimeSheetToStaffAt(index, force: true, ensureMasterReceipt: true);
+    }
+    if (sent) rememberRealtimeSheetHash(hashKey, hash);
 
-    setState(() {
-      risultato = t(
-        'Scheda completa inviata ad amici e partecipanti realtime (${targetTags.length} tag). Le schede locali dei destinatari non vengono cancellate.',
-        'Full sheet sent to friends and realtime participants (${targetTags.length} tags). Recipient local sheets are not deleted.',
-      );
-      aggiungiLog(risultato);
-    });
+    if (mounted) {
+      setState(() {
+        risultato = sent
+            ? t(
+                'Scheda completa inviata e confermata ad amici e Master/Co-Master online (${targetTags.length} destinatari). Le loro schede locali non vengono cancellate.',
+                'Full sheet sent and confirmed to online friends and Master/Co-Masters (${targetTags.length} recipients). Their local sheets are not deleted.',
+              )
+            : t(
+                'Invio realtime non confermato: controlla stanza e connessione di entrambi i player.',
+                'Realtime delivery was not confirmed: check both players room and connection.',
+              );
+        aggiungiLog(risultato);
+      });
+    }
+    return sent;
   }
 
   void sendRealtimeCurrentSheetToFriendsIfEnabled() {
@@ -2122,6 +2168,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       schedaJsonAt(sheetIndex),
       includeImage: true,
     );
+    addRealtimePublicTitleSnapshot(sheet, sheetIndex);
     final sheetId = normalizeOculumFriendTag(
       '${sheet['sheetTag'] ?? sheet['id'] ?? sheetTagAt(sheetIndex)}',
     );
@@ -2151,7 +2198,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       sheetId: sheetId,
       sheetName: nomeSchedaPersonaggio(sheetIndex),
       ownerTag: sheetId,
-      senderRole: 'friend',
+      senderRole: oculumRealtimeFriendShareSenderRole,
       targetAudience: 'friends',
       fromMaster: false,
       masterParty: false,
@@ -2256,6 +2303,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       schedaJsonAt(index),
       includeImage: true,
     );
+    addRealtimePublicTitleSnapshot(sheet, index);
     final sheetId = normalizeOculumFriendTag(
       '${sheet['sheetTag'] ?? sheet['id'] ?? sheetTagAt(index)}',
     );
@@ -2683,6 +2731,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             final restricted = readBoolValue(
               sheet['realtimeRestrictedByMaster'],
             );
+            final publicTitleName = '${sheet['publicVisibleTitleName'] ?? ''}'
+                .trim();
+            final publicTitleLegend =
+                '${sheet['publicVisibleTitleLegend'] ?? ''}'.trim();
             final localIndex = realtimeLocalSheetIndexForKey(key);
             final dirty =
                 localIndex >= 0 &&
@@ -2737,6 +2789,21 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                     '${dirty ? ' - copia modificata localmente' : ''}',
                     color: dirty ? tertiaryColor : Colors.grey.shade300,
                   ),
+                  if (publicTitleName.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    smallInfoText(
+                      publicTitleLegend.isEmpty
+                          ? t(
+                              'Titolo pubblico: $publicTitleName',
+                              'Public title: $publicTitleName',
+                            )
+                          : t(
+                              'Titolo pubblico: $publicTitleName — $publicTitleLegend',
+                              'Public title: $publicTitleName — $publicTitleLegend',
+                            ),
+                      color: tertiaryColor,
+                    ),
+                  ],
                   if (restricted) ...[
                     const SizedBox(height: 4),
                     smallInfoText(

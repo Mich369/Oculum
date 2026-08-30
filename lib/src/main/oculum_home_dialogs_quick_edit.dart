@@ -560,50 +560,6 @@ extension _OculumHomeDialogsQuickEdit on _OculumHomePageState {
                         difesaRapidaController,
                         allowNegative: true,
                       ),
-                      SizedBox(height: compact ? 8 : 12),
-                      Wrap(
-                        spacing: compact ? 6 : 8,
-                        runSpacing: compact ? 6 : 8,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          quickCommandButton(
-                            label: '+1 VC (+3 Vol)',
-                            icon: Icons.add_circle,
-                            color: Colors.redAccent,
-                            onPressed: () {
-                              modificaVcRapido(1);
-                              setLocalState(() {});
-                            },
-                          ),
-                          quickCommandButton(
-                            label: '-1 VC (-3 Vol)',
-                            icon: Icons.remove_circle,
-                            color: Colors.redAccent,
-                            onPressed: () {
-                              modificaVcRapido(-1);
-                              setLocalState(() {});
-                            },
-                          ),
-                          quickCommandButton(
-                            label: '+1 CM (+2 Mat)',
-                            icon: Icons.add_circle_outline,
-                            color: Colors.lightBlueAccent,
-                            onPressed: () {
-                              modificaCmRapido(1);
-                              setLocalState(() {});
-                            },
-                          ),
-                          quickCommandButton(
-                            label: '-1 CM (-2 Mat)',
-                            icon: Icons.remove_circle_outline,
-                            color: Colors.lightBlueAccent,
-                            onPressed: () {
-                              modificaCmRapido(-1);
-                              setLocalState(() {});
-                            },
-                          ),
-                        ],
-                      ),
                       SizedBox(height: compact ? 8 : 14),
                       Divider(color: tertiaryColor.withValues(alpha: 0.5)),
                       SizedBox(height: compact ? 8 : 14),

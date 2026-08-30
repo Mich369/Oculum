@@ -101,10 +101,24 @@ class OculumBottomNav extends StatelessWidget {
     );
     final firstRowCount = visibleItems.length <= 5 ? visibleItems.length : 5;
     final secondRowCount = visibleItems.length - firstRowCount;
-    final compactPhone = MediaQuery.of(context).size.shortestSide < 600;
-    final barHeight = compactPhone ? 108.0 : 132.0;
-    final gap = compactPhone ? 4.0 : 6.0;
-    final outerPadding = compactPhone
+    final size = MediaQuery.of(context).size;
+    final compactPhone = size.shortestSide < 600;
+    // Keep both navigation rows reachable on short phones.  The former fixed
+    // 108 px bar could leave too little scroll viewport at the bottom.
+    final shortPhone = compactPhone && size.height < 600;
+    final barHeight = shortPhone
+        ? 92.0
+        : compactPhone
+        ? 108.0
+        : 132.0;
+    final gap = shortPhone
+        ? 2.0
+        : compactPhone
+        ? 4.0
+        : 6.0;
+    final outerPadding = shortPhone
+        ? const EdgeInsets.fromLTRB(5, 4, 5, 4)
+        : compactPhone
         ? const EdgeInsets.fromLTRB(6, 5, 6, 6)
         : const EdgeInsets.fromLTRB(8, 7, 8, 8);
 
