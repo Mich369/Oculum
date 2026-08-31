@@ -43,6 +43,34 @@ void main() {
   });
 
   test('manual monsters are present and generated creatures vary by role', () {
+    final lesserDemon = monsterById('demone_minore');
+    final intermediateDemon = monsterById('demone_intermedio');
+    final greaterDemon = monsterById('demone_maggiore');
+    expect(lesserDemon?.presetType, 'Mostro Mini Boss');
+    expect(lesserDemon?.stats['level'], 0);
+    expect(lesserDemon?.stats['defense'], 120);
+    expect(intermediateDemon?.presetType, 'Mostro Boss');
+    expect(intermediateDemon?.stats['defense'], 200);
+    expect(greaterDemon?.presetType, 'Mostro Boss');
+    expect(greaterDemon?.stats['resilienza'], 10);
+    expect(greaterDemon?.stats['shield'], 120);
+    expect(greaterDemon?.stats['defense'], 300);
+    expect(monsterById('scheletro_bombarolo')?.stats['resilienza'], 1);
+    expect(monsterById('scheletro_bombarolo')?.stats['volonta'], 5);
+    expect(monsterById('osservatore_bianco')?.presetType, 'Mostro Mini Boss');
+    expect(monsterById('osservatore_bianco')?.stats['oculum'], 30);
+    expect(monsterById('immortale')?.stats['resilienza'], 20);
+    expect(monsterBookSkillText('immortal_life_harvest'), contains('Vita'));
+    expect(monsterById('angelo_fustigatore')?.stats['criticalShield'], 1);
+    expect(monsterById('angelo_fustigatore')?.stats['resilienza'], 10);
+    expect(monsterById('angelo_protettore')?.stats['materia'], 40);
+    expect(monsterById('serafino')?.presetType, 'Mostro Boss');
+    expect(monsterById('serafino')?.stats['oculum'], 30);
+    expect(monsterById('arcangelo')?.presetType, 'Mostro Boss');
+    expect(monsterById('pinepine')?.stats['resistancePercent'], 50);
+    expect(monsterById('goblin_killer')?.stats['materia'], 10);
+    expect(monsterById('demone_glaciale_intermedio')?.stats['oculum'], 13);
+    expect(monsterById('demone_glaciale_maggiore')?.stats['materia'], 50);
     expect(monsterById('fate_golem')?.skillIds, contains('fate_fairy_awaken'));
     expect(
       monsterById('patalpa_dolce')?.dropIds,
@@ -61,6 +89,16 @@ void main() {
       monsterById('mistificatore_runico_natura')?.skillIds,
       contains('riproduzione_animalesca'),
     );
+    final putridSpider = monsterById('ragno_putrido');
+    expect(putridSpider?.presetType, 'Mostro Mini Boss');
+    expect(putridSpider?.stats, {
+      'level': 0,
+      'resilienza': 10,
+      'volonta': 10,
+      'materia': 0,
+      'oculum': 10,
+    });
+    expect(putridSpider?.skillIds, contains('rot_poison_escalation'));
 
     final generated = defaultMonsterBookEntries
         .where((entry) => entry.id.startsWith('generated_normal_'))
@@ -121,6 +159,20 @@ void main() {
     );
     expect(ushrin?.dropIds, ['sun_pin', 'black_gold_chip']);
   });
+
+  test(
+    'Putrid Spider escalates the shared Rot Poison condition to rank IX',
+    () {
+      expect(
+        monsterBookSkillText('rot_poison_escalation'),
+        contains('Veleno Putrido IX'),
+      );
+      expect(
+        monsterBookSkillText('rot_poison_escalation'),
+        contains('ignora Scudo e Difesa'),
+      );
+    },
+  );
 
   test('every default monster has a scene role and explained techniques', () {
     for (final monster in defaultMonsterBookEntries) {

@@ -5635,9 +5635,248 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         mapControlPanel(),
         vttToolbarPanel(),
         mapViewerPanel(),
+        mapSplitWorkspacePanel(),
         localMapMiniInitiativePanel(),
         mapNotesPanel(),
       ],
+    );
+  }
+
+  Widget mapSplitWorkspacePanel() {
+    while (mapSplitPanels.length < mapSplitPanelCount) {
+      mapSplitPanels.add(<String, dynamic>{
+        'kind': 'sheet',
+        'sheetTag': '',
+        'url': '',
+      });
+    }
+    final localSheets = schedePersonaggio
+        .where((sheet) => !readBoolValue(sheet['occhioCaduto']))
+        .toList(growable: false);
+    final shared = realtimeSharedSheets.toList(growable: false);
+    return gothicPanel(
+      borderColor: tertiaryColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.grid_view_rounded, color: tertiaryColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Riquadri Mappa — $mapSplitPanelCount/4',
+                  style: TextStyle(
+                    color: tertiaryColor,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              DropdownButton<int>(
+                value: mapSplitPanelCount,
+                items: const [1, 2, 3, 4]
+                    .map(
+                      (count) =>
+                          DropdownMenuItem(value: count, child: Text('$count')),
+                    )
+                    .toList(growable: false),
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() => mapSplitPanelCount = value);
+                  programmaSalvataggio();
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          smallInfoText(
+            'Fino a quattro riquadri: tue schede, schede condivise RealTime o siti web. La mappa e i token restano attivi sopra.',
+          ),
+          const SizedBox(height: 10),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: mapSplitPanelCount == 1 ? 1 : 2,
+              childAspectRatio: mapSplitPanelCount == 1 ? 2.5 : 1.35,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+            ),
+            itemCount: mapSplitPanelCount,
+            itemBuilder: (_, index) => _mapSplitPanelCard(
+              index: index,
+              panel: mapSplitPanels[index],
+              localSheets: localSheets,
+              shared: shared,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _mapSplitPanelCard({
+    required int index,
+    required Map<String, dynamic> panel,
+    required List<Map<String, dynamic>> localSheets,
+    required List<Map<String, dynamic>> shared,
+  }) {
+    final kind = '${panel['kind'] ?? 'sheet'}';
+    final selectedTag = '${panel['sheetTag'] ?? ''}';
+    final local = localSheets
+        .where((sheet) => '${sheet['sheetTag'] ?? ''}' == selectedTag)
+        .firstOrNull;
+    final remote = shared
+        .where((record) => '${record['key'] ?? ''}' == selectedTag)
+        .firstOrNull;
+    final remoteSheet = remote?['sheet'];
+    final displaySheet =
+        local ??
+        (remoteSheet is Map ? Map<String, dynamic>.from(remoteSheet) : null);
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: .22),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: tertiaryColor.withValues(alpha: .45)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DropdownButton<String>(
+            value: const {'sheet', 'shared', 'web'}.contains(kind)
+                ? kind
+                : 'sheet',
+            isExpanded: true,
+            items: const [
+              DropdownMenuItem(value: 'sheet', child: Text('Mia scheda')),
+              DropdownMenuItem(
+                value: 'shared',
+                child: Text('Scheda condivisa'),
+              ),
+              DropdownMenuItem(value: 'web', child: Text('Sito web')),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() {
+                panel['kind'] = value;
+                panel['sheetTag'] = '';
+              });
+              programmaSalvataggio();
+            },
+          ),
+          if (kind == 'sheet')
+            DropdownButton<String>(
+              value: local == null ? '' : selectedTag,
+              isExpanded: true,
+              items: [
+                const DropdownMenuItem(
+                  value: '',
+                  child: Text('Scegli la tua scheda'),
+                ),
+                ...localSheets.map(
+                  (sheet) => DropdownMenuItem(
+                    value: '${sheet['sheetTag'] ?? ''}',
+                    child: Text('${sheet['nome'] ?? '???'}'),
+                  ),
+                ),
+              ],
+              onChanged: (value) {
+                setState(() => panel['sheetTag'] = value ?? '');
+                programmaSalvataggio();
+              },
+            )
+          else if (kind == 'shared')
+            DropdownButton<String>(
+              value: remote == null ? '' : selectedTag,
+              isExpanded: true,
+              items: [
+                const DropdownMenuItem(
+                  value: '',
+                  child: Text('Scegli scheda condivisa'),
+                ),
+                ...shared.map(
+                  (record) => DropdownMenuItem(
+                    value: '${record['key'] ?? ''}',
+                    child: Text(
+                      '${record['ownerName'] ?? '???'} — ${record['sheetName'] ?? 'Scheda'}',
+                    ),
+                  ),
+                ),
+              ],
+              onChanged: (value) {
+                setState(() => panel['sheetTag'] = value ?? '');
+                programmaSalvataggio();
+              },
+            ),
+          Expanded(
+            child: kind == 'web'
+                ? _mapSplitWebPanel(panel)
+                : _mapSplitSheetSummary(displaySheet),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _mapSplitWebPanel(Map<String, dynamic> panel) {
+    final raw = '${panel['url'] ?? ''}'.trim();
+    final uri = _oculumUriFromUserText(raw);
+    return Column(
+      children: [
+        TextFormField(
+          key: ValueKey('map_split_url_$raw'),
+          initialValue: raw,
+          keyboardType: TextInputType.url,
+          decoration: const InputDecoration(labelText: 'https:// sito web'),
+          onFieldSubmitted: (value) {
+            panel['url'] = value.trim();
+            setState(() {});
+            programmaSalvataggio();
+          },
+        ),
+        const SizedBox(height: 6),
+        Expanded(
+          child: uri == null
+              ? const Center(child: Text('Inserisci un sito http/https'))
+              : ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: OculumEmbeddedBrowser(
+                    key: ValueKey('map-split-site-${uri.toString()}'),
+                    initialUrl: uri.toString(),
+                    title: uri.host,
+                    accentColor: tertiaryColor,
+                    backgroundColor: backgroundBottomColor,
+                    english: linguaInglese,
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _mapSplitSheetSummary(Map<String, dynamic>? sheet) {
+    if (sheet == null) {
+      return const Center(child: Text('Nessuna scheda selezionata'));
+    }
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.person_pin, size: 32),
+          Text(
+            '${sheet['nome'] ?? '???'}',
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+          Text(
+            '${sheet['tipoScheda'] ?? 'Scheda'} • Lv ${sheet['livello'] ?? 0}',
+          ),
+          Text(
+            'HP ${sheet['currentHp'] ?? 0} • RES ${sheet['resilienza'] ?? 0} • VOL ${sheet['volonta'] ?? 0}',
+          ),
+        ],
+      ),
     );
   }
 

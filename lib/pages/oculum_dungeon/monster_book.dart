@@ -174,6 +174,1056 @@ List<String> _monsterBookStrings(dynamic value) {
 /// presente un fallback (non crashare).
 const List<MonsterBookEntry> _craftedMonsterBookEntries = [
   MonsterBookEntry(
+    id: 'demone_minore',
+    nameIt: 'Demone Minore',
+    nameEn: 'Lesser Demon',
+    descIt:
+        'Classe Mini Boss, livello 0, Senza Grado. Privo di logica: è pura forza e difesa. Base: Resilienza 3, Volontà 20, Materia 9, Oculum 20, Difesa 120. Usa l’Oculum soltanto per corazzare il corpo o rendere più brutale il prossimo colpo. Ruolo in scena: ariete difensivo che avanza senza trattare.',
+    descEn:
+        'Mini-boss, level 0, no Grade. A mindless wall of force that spends Oculum only to harden itself or empower a blow.',
+    elementId: 'diabolico',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 3,
+      'volonta': 20,
+      'materia': 9,
+      'oculum': 20,
+      'defense': 120,
+    },
+    skillIds: [
+      'demon_lesser_harden',
+      'demon_lesser_ward',
+      'demon_lesser_crush',
+    ],
+    dropIds: ['corno_demoniaco_minore', 'frammento_oculum_corrotto'],
+  ),
+  MonsterBookEntry(
+    id: 'demone_intermedio',
+    nameIt: 'Demone Intermedio',
+    nameEn: 'Intermediate Demon',
+    descIt:
+        'Classe Boss, livello 0, Senza Grado. Privo di buon senso e divorato dalla fame, è peggiore di un Demone Minore. Base: Resilienza 3, Volontà 30, Materia 15, Oculum 30, Difesa 200. Oltre a potenziarsi e difendersi, forma sfere d’energia che possono proteggere o ferire; con un tiro su Pressione le espande. Ruolo in scena: assediante affamato che stringe la zona.',
+    descEn:
+        'Boss, level 0, no Grade. A hungry brute that protects itself, empowers its body and expands defensive or damaging energy spheres through Pressure.',
+    elementId: 'diabolico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: true,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 3,
+      'volonta': 30,
+      'materia': 15,
+      'oculum': 30,
+      'defense': 200,
+    },
+    skillIds: [
+      'demon_intermediate_harden',
+      'demon_intermediate_aegis_sphere',
+      'demon_intermediate_pressure_sphere',
+    ],
+    dropIds: ['zanna_demoniaca_intermedia', 'nucleo_sfera_pressione'],
+  ),
+  MonsterBookEntry(
+    id: 'demone_maggiore',
+    nameIt: 'Demone Maggiore',
+    nameEn: 'Greater Demon',
+    descIt:
+        'Classe Boss, livello 0, Senza Grado. Parla e ragiona in modo vicino agli umani, ma divora altri demoni per diventare più forte. A differenza delle basi comuni parte da Resilienza 10, Volontà 65, Materia 45, Oculum 50, Scudo 120 e Difesa 300. Usa l’Oculum per dominare il corpo, le barriere e i demoni minori. Ruolo in scena: predatore intelligente che spezza la linea e sceglie chi divorare.',
+    descEn:
+        'Boss, level 0, no Grade. An intelligent demon that eats weaker demons to grow; it begins with Resilience 10, Will 65, Matter 45, Oculum 50, Shield 120 and Defense 300.',
+    elementId: 'diabolico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: true,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 10,
+      'volonta': 65,
+      'materia': 45,
+      'oculum': 50,
+      'shield': 120,
+      'defense': 300,
+    },
+    skillIds: [
+      'demon_greater_dominion',
+      'demon_greater_devour',
+      'demon_greater_hell_aegis',
+    ],
+    dropIds: ['cuore_demone_maggiore', 'corona_ossea_demoniaca'],
+  ),
+  MonsterBookEntry(
+    id: 'scheletro_bombarolo',
+    nameIt: 'Scheletro Bombarolo',
+    nameEn: 'Bomber Skeleton',
+    descIt:
+        'Mostro, livello 0, Senza Grado. Base: Resilienza 1, Volontà 5, Materia 0, Oculum 0. Si spezza e rilancia ossa cariche in attacchi ad area semi-letali: la detonazione mira a dimezzare la Vita rimasta, non a cancellare il bersaglio con danno infinito. Ruolo in scena: artiglieria fragile che obbliga il gruppo a disperdersi.',
+    descEn:
+        'Level 0 monster. A fragile artillery skeleton whose area attacks deal semi-lethal damage based on remaining life.',
+    elementId: 'osso',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 1,
+      'volonta': 5,
+      'materia': 0,
+      'oculum': 0,
+    },
+    skillIds: [
+      'bomber_skeleton_bone_bomb',
+      'bomber_skeleton_shrapnel_ring',
+      'bomber_skeleton_last_blast',
+    ],
+    dropIds: ['osso_cavo', 'polvere_di_ossa'],
+  ),
+  MonsterBookEntry(
+    id: 'angelo_fustigatore',
+    nameIt: 'Angelo Fustigatore',
+    nameEn: 'Scourging Angel',
+    descIt:
+        'Classe Mini Boss, livello 0, Senza Grado. Base: Scudo Critico 1, Resilienza 10, Volontà 20, Materia 0, Oculum 1. Ogni 6 livelli ottiene +50 Danni; ogni 5 livelli +20 Difesa, oltre alla crescita normale. Ruolo in scena: cacciatore celeste che colpisce in finestre brevi e punitive.',
+    descEn:
+        'Level 0 mini-boss. Starts with one Critical Shield; gains +50 damage every 6 levels and +20 defense every 5 levels.',
+    elementId: 'angelico',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'criticalShield': 1,
+      'resilienza': 10,
+      'volonta': 20,
+      'materia': 0,
+      'oculum': 1,
+    },
+    skillIds: [
+      'scourging_angel_lash',
+      'scourging_angel_judgement',
+      'scourging_angel_wing_guard',
+    ],
+    dropIds: ['piuma_fustigatrice', 'frammento_scudo_critico'],
+  ),
+  MonsterBookEntry(
+    id: 'angelo_protettore',
+    nameIt: 'Angelo Protettore',
+    nameEn: 'Protective Angel',
+    descIt:
+        'Classe Mini Boss, livello 0, Senza Grado. Base: Resilienza 30, Volontà 1, Materia 40, Oculum 2. Può prendere su di sé il danno destinato ai compagni. Ruolo in scena: muro vivente che trasforma l ordine dei bersagli e protegge chi è più fragile.',
+    descEn:
+        'Level 0 mini-boss. Takes damage in place of its companions and guards the weakest target.',
+    elementId: 'angelico',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 30,
+      'volonta': 1,
+      'materia': 40,
+      'oculum': 2,
+    },
+    skillIds: [
+      'protective_angel_intercept',
+      'protective_angel_wing_wall',
+      'protective_angel_vow',
+    ],
+    dropIds: ['piuma_protettrice', 'sigillo_di_guardia'],
+  ),
+  MonsterBookEntry(
+    id: 'serafino',
+    nameIt: 'Serafino',
+    nameEn: 'Seraph',
+    descIt:
+        'Classe Boss, livello 0, Senza Grado. Base: Resilienza 50, Volontà 20, Materia 30, Oculum 30. Entità angelica superiore: non sostituisce il Protettore né il Fustigatore, ma domina la scena con ali, luce e giudizio. Ruolo in scena: vertice celeste che unisce pressione, difesa e comando.',
+    descEn:
+        'Level 0 boss. A superior angelic entity that combines pressure, defense and command.',
+    elementId: 'angelico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: true,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'criticalShield': 2,
+      'resistancePercent': 60,
+      'oculumShieldPerLevel': 5,
+      'resilienza': 50,
+      'volonta': 20,
+      'materia': 30,
+      'oculum': 30,
+    },
+    skillIds: [
+      'seraph_wing_lance',
+      'seraph_halo_command',
+      'seraph_six_wing_aegis',
+    ],
+    dropIds: ['piuma_serafica', 'nucleo_di_luce'],
+  ),
+  MonsterBookEntry(
+    id: 'goblin_killer',
+    nameIt: 'Goblin Killer',
+    nameEn: 'Goblin Killer',
+    descIt:
+        'Mostro, livello 0. Base: Resilienza 1, Volontà 6, Materia 10, Oculum 0. Dopo aver ucciso una creatura recupera tutta la Vita. Ruolo in scena: piccolo finitore, pericoloso solo se può chiudere un bersaglio già ferito.',
+    descEn: 'Level 0 monster. Fully heals after it kills a creature.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 1,
+      'volonta': 6,
+      'materia': 10,
+      'oculum': 0,
+    },
+    skillIds: ['goblin_killer_finish'],
+    dropIds: ['lama_goblin', 'moneta_sporca'],
+  ),
+  MonsterBookEntry(
+    id: 'arcangelo',
+    nameIt: 'Arcangelo',
+    nameEn: 'Archangel',
+    descIt:
+        'Classe Boss, livello 0. Leggermente più forte degli altri angeli e versatile: alterna attacco, protezione e comando senza sostituire il Serafino. Base: Resilienza 40, Volontà 25, Materia 25, Oculum 20.',
+    descEn:
+        'Versatile level 0 angelic boss, slightly stronger than common angels.',
+    elementId: 'angelico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: true,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 40,
+      'volonta': 25,
+      'materia': 25,
+      'oculum': 20,
+    },
+    skillIds: ['archangel_strike', 'archangel_guard', 'archangel_order'],
+    dropIds: ['piuma_arcangelo'],
+  ),
+  MonsterBookEntry(
+    id: 'pinepine',
+    nameIt: 'Pinepine',
+    nameEn: 'Pinepine',
+    descIt:
+        'Mostro intermedio, livello 0. Base: Resilienza 6, Volontà 3, Materia 10, Oculum 0, Scudo Critico 1 e Resistenza 50%. Punto debole: Ferite Aperte e Fuoco. Con critico sul drop ottieni 20 Scudo Pigna: dimezza i danni non di fuoco; contro fuoco o simili la pelle esplode, danneggiando tutte le creature entro 2 metri, alleati inclusi.',
+    descEn:
+        'Intermediate creature with 50% resistance, weak to open wounds and fire.',
+    elementId: 'natura',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'criticalShield': 1,
+      'resistancePercent': 50,
+      'resilienza': 6,
+      'volonta': 3,
+      'materia': 10,
+      'oculum': 0,
+    },
+    skillIds: ['pinepine_cone_skin'],
+    dropIds: ['scudo_pigna'],
+  ),
+  MonsterBookEntry(
+    id: 'demone_glaciale_minore',
+    nameIt: 'Demone Glaciale Minore',
+    nameEn: 'Lesser Frost Demon',
+    descIt:
+        'Mostro, livello 0. Base: Resilienza 5, Volontà 8, Materia 6, Oculum 4. Ha Ricordo Vitale di base; se lo ferisci in ravvicinato, chi ti ha colpito riceve Congelamento.',
+    descEn:
+        'Level 0 frost demon with Vital Memory; melee attackers receive Freeze.',
+    elementId: 'gelo',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 5,
+      'volonta': 8,
+      'materia': 6,
+      'oculum': 4,
+    },
+    skillIds: ['lesser_frost_demon_cold_blood'],
+    dropIds: ['scheggia_glaciale'],
+  ),
+  MonsterBookEntry(
+    id: 'demone_glaciale_intermedio',
+    nameIt: 'Demone Glaciale Intermedio',
+    nameEn: 'Intermediate Frost Demon',
+    descIt:
+        'Classe Mini Boss, livello 0. Base: Resilienza 20, Volontà 25, Materia 19, Oculum 13. Usa Oculum per raggi congelanti a distanza.',
+    descEn: 'Level 0 mini-boss with freezing Oculum rays.',
+    elementId: 'gelo',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 20,
+      'volonta': 25,
+      'materia': 19,
+      'oculum': 13,
+    },
+    skillIds: ['intermediate_frost_demon_ray'],
+    dropIds: ['occhio_glaciale'],
+  ),
+  MonsterBookEntry(
+    id: 'demone_glaciale_maggiore',
+    nameIt: 'Demone Glaciale Maggiore',
+    nameEn: 'Greater Frost Demon',
+    descIt:
+        'Classe Boss, livello 0. Base: Resilienza 30, Volontà 49, Materia 50, Oculum 39. La sua Open congela il tempo per un turno: tutti vedono e sentono ogni atrocità, ma il danno accumulato arriva insieme alla fine del turno.',
+    descEn:
+        'Level 0 boss that freezes time for one turn and delivers accumulated damage at its end.',
+    elementId: 'gelo',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: true,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 30,
+      'volonta': 49,
+      'materia': 50,
+      'oculum': 39,
+    },
+    skillIds: ['greater_frost_demon_time_freeze'],
+    dropIds: ['cuore_glaciale'],
+  ),
+  MonsterBookEntry(
+    id: 'lupo_infernale_del_ghiaccio',
+    nameIt: 'Lupo Infernale del Ghiaccio',
+    nameEn: 'Infernal Ice Wolf',
+    descIt:
+        'Mostro di un inferno fatto insieme di ghiaccio e fiamme. Non ha Skill: con 18+ naturale congela il nemico colpito. Ruolo in scena: predatore rapido da branco.',
+    descEn: 'Infernal ice-and-flame wolf; a natural 18+ freezes its target.',
+    elementId: 'gelo',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'resilienza': 6, 'volonta': 3, 'materia': 8, 'oculum': 2},
+    skillIds: [],
+    dropIds: ['zanna_ghiacciata'],
+  ),
+  MonsterBookEntry(
+    id: 'demonietto_bruciante',
+    nameIt: 'Demonietto Bruciante',
+    nameEn: 'Burning Imp',
+    descIt:
+        'Piccolo demone dei biomi infernali: un colpo riuscito può applicare Bruciore. Nessuna Skill separata: la condizione è la sua peculiarità.',
+    descEn: 'Small infernal imp that can apply Burn.',
+    elementId: 'fuoco',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'resilienza': 2, 'volonta': 5, 'materia': 3, 'oculum': 6},
+    skillIds: [],
+    dropIds: ['brace_infernale'],
+  ),
+  MonsterBookEntry(
+    id: 'demonietto_del_gelo',
+    nameIt: 'Demonietto del Gelo',
+    nameEn: 'Frost Imp',
+    descIt:
+        'Piccolo demone dei biomi infernali: un colpo critico applica Congelamento. Non possiede Skill dedicate.',
+    descEn: 'Small infernal imp that freezes on a critical hit.',
+    elementId: 'gelo',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'resilienza': 3, 'volonta': 4, 'materia': 5, 'oculum': 4},
+    skillIds: [],
+    dropIds: ['cristallo_infernale'],
+  ),
+  MonsterBookEntry(
+    id: 'coboldo_di_brina',
+    nameIt: 'Coboldo di Brina',
+    nameEn: 'Frost Kobold',
+    descIt:
+        'Coboldo comune senza Skill: usa una lancia corta e cerca copertura, con statistiche basse ma adatte a un incontro iniziale.',
+    descEn: 'Simple low-stat kobold with no Skills.',
+    elementId: 'gelo',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'resilienza': 3, 'volonta': 2, 'materia': 4, 'oculum': 0},
+    skillIds: [],
+    dropIds: ['lancia_cobolda'],
+  ),
+  MonsterBookEntry(
+    id: 'osservatore_bianco',
+    nameIt: 'L Osservatore',
+    nameEn: 'The Observer',
+    descIt:
+        'Classe Mini Boss, livello 0, Senza Grado. Figura magra, bianca e quasi scheletrica; si dice discenda da uno psicopatico con la stessa facoltà, trasformato in mostro. Base: Resilienza 6, Volontà 10, Materia 19, Oculum 30. Può copiare ogni Skill che vede, mantenendone costo, conseguenze e limiti. Ruolo in scena: adattatore che cambia piano dopo aver osservato il gruppo.',
+    descEn:
+        'Level 0 mini-boss. A thin white skeletal figure that copies every Skill it witnesses, retaining its costs and limits.',
+    elementId: 'psichico',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 6,
+      'volonta': 10,
+      'materia': 19,
+      'oculum': 30,
+    },
+    skillIds: [
+      'observer_witness_copy',
+      'observer_white_analysis',
+      'observer_replay',
+    ],
+    dropIds: ['occhio_osservatore', 'osso_bianco'],
+  ),
+  MonsterBookEntry(
+    id: 'immortale',
+    nameIt: 'L Immortale',
+    nameEn: 'The Immortal',
+    descIt:
+        'Mostro, livello 0, Senza Grado. Base: Resilienza 20, Volontà 10, Materia 5, Oculum 0. Gli Immortali recuperano Vita pari al danno realmente inflitto alla Vita del bersaglio: gli Scudi assorbiti non valgono. Ruolo in scena: duellante che diventa più difficile da abbattere se gli lasci raggiungere un bersaglio ferito.',
+    descEn:
+        'Level 0 monster. Heals for damage actually dealt to a target’s life; shield damage never counts.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 20,
+      'volonta': 10,
+      'materia': 5,
+      'oculum': 0,
+    },
+    skillIds: [
+      'immortal_life_harvest',
+      'immortal_relentless_cut',
+      'immortal_undying_stance',
+    ],
+    dropIds: ['midollo_immortale', 'filo_di_vita'],
+  ),
+  // Incontri classici: ogni profilo mantiene una funzione leggibile per il
+  // Master e tre azioni piccole, senza trasformare ogni nemico in un boss.
+  MonsterBookEntry(
+    id: 'goblin_base',
+    nameIt: 'Goblin',
+    nameEn: 'Goblin',
+    descIt:
+        'Disturbo, 8 punti extra. Stat basse: RES 2 VOL 4 MAT 5 OCU 0. Colpo Sporco +1 danno da posizione favorevole; Scappa e Ridi: piccolo movimento dopo un attacco mancato, una volta a turno; Cianfrusaglia: un oggetto improvvisato casuale una volta per scontro. Ruolo in scena: disturba e fugge, non duella.',
+    descEn: 'Low-stat disruptor goblin.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 8,
+      'resilienza': 2,
+      'volonta': 4,
+      'materia': 5,
+      'oculum': 0,
+    },
+    skillIds: ['dirty_strike', 'run_laugh', 'junk'],
+    dropIds: ['cianfrusaglia'],
+  ),
+  MonsterBookEntry(
+    id: 'kobold_base',
+    nameIt: 'Kobold',
+    nameEn: 'Kobold',
+    descIt:
+        'Trappole, 7 punti extra. RES 2 VOL 3 MAT 5 OCU 0. Filo Teso rallenta una piccola zona; Tana Conosciuta migliora il movimento in spazi stretti; Attacco di Branco +1 al tiro vicino a un alleato. Ruolo: prepara il terreno.',
+    descEn: 'Trap kobold.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 7,
+      'resilienza': 2,
+      'volonta': 3,
+      'materia': 5,
+      'oculum': 0,
+    },
+    skillIds: ['tripwire', 'den_move', 'pack_attack'],
+    dropIds: ['filo'],
+  ),
+  MonsterBookEntry(
+    id: 'scheletro_base',
+    nameIt: 'Scheletro',
+    nameEn: 'Skeleton',
+    descIt:
+        'Fanteria, 10 punti extra. RES 4 VOL 2 MAT 4 OCU 0. Ossa Sparse sostituisce un controllo pesante con perdita di movimento; Ricomporsi recupera pochi HP sacrificando l azione; Vuoto Dentro resiste leggermente a paura e mente. Ruolo: linea semplice.',
+    descEn: 'Skeleton infantry.',
+    elementId: 'osso',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 10,
+      'resilienza': 4,
+      'volonta': 2,
+      'materia': 4,
+      'oculum': 0,
+    },
+    skillIds: ['scattered_bones', 'reassemble', 'hollow'],
+    dropIds: ['osso'],
+  ),
+  MonsterBookEntry(
+    id: 'zombie_base',
+    nameIt: 'Zombie',
+    nameEn: 'Zombie',
+    descIt:
+        'Tank lento, 12 punti extra. RES 7 VOL 2 MAT 2 OCU 0. Non Cade: una volta resta a 1 HP; Morso Marcio lascia un danno continuo lieve e rimovibile; Passo Inesorabile non scende sotto metà movimento. Ruolo: occupa spazio.',
+    descEn: 'Slow zombie tank.',
+    elementId: 'necrotico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 12,
+      'resilienza': 7,
+      'volonta': 2,
+      'materia': 2,
+      'oculum': 0,
+    },
+    skillIds: ['not_down', 'rotten_bite', 'slow_step'],
+    dropIds: ['carne_marcia'],
+  ),
+  MonsterBookEntry(
+    id: 'bandito_base',
+    nameIt: 'Bandito',
+    nameEn: 'Bandit',
+    descIt:
+        'Versatile, 11 punti extra. RES 4 VOL 5 MAT 4 OCU 0. Finta rinuncia a 1 danno per il prossimo attacco; Mano Rapida usa un oggetto senza perdere il turno; Alle Spalle dà un piccolo bonus su bersagli impegnati. Ruolo: opportunista.',
+    descEn: 'Versatile bandit.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 11,
+      'resilienza': 4,
+      'volonta': 5,
+      'materia': 4,
+      'oculum': 0,
+    },
+    skillIds: ['feint', 'quick_hand', 'backstab'],
+    dropIds: ['monete'],
+  ),
+  MonsterBookEntry(
+    id: 'lupo_gigante_base',
+    nameIt: 'Lupo Gigante',
+    nameEn: 'Giant Wolf',
+    descIt:
+        'Inseguitore, 13 punti extra. RES 6 VOL 4 MAT 5 OCU 0. Morso alla Gamba riduce movimento; Predatore segue feriti; Branco +1 Difesa vicino a un lupo. Ruolo: insegue il bersaglio isolato.',
+    descEn: 'Giant wolf.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 13,
+      'resilienza': 6,
+      'volonta': 4,
+      'materia': 5,
+      'oculum': 0,
+    },
+    skillIds: ['leg_bite', 'predator', 'wolf_pack'],
+    dropIds: ['pelliccia'],
+  ),
+  MonsterBookEntry(
+    id: 'gnoll_base',
+    nameIt: 'Gnoll',
+    nameEn: 'Gnoll',
+    descIt:
+        'Cacciatore, 16 punti extra. RES 6 VOL 6 MAT 6 OCU 0. Fiuto del Sangue contro metà HP; Risata Predatoria -1 al prossimo tiro offensivo, non cumulabile; Strappo rallenta dopo due colpi nello stesso round. Ruolo: finitore.',
+    descEn: 'Gnoll hunter.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 16,
+      'resilienza': 6,
+      'volonta': 6,
+      'materia': 6,
+      'oculum': 0,
+    },
+    skillIds: ['blood_scent', 'predator_laugh', 'rend'],
+    dropIds: ['zanna'],
+  ),
+  MonsterBookEntry(
+    id: 'arpia_base',
+    nameIt: 'Arpia',
+    nameEn: 'Harpy',
+    descIt:
+        'Controllo mobile, 17 punti extra. RES 4 VOL 7 MAT 6 OCU 2. Canto Inquietante riduce movimento; Picchiata +2 danni dall alto ma perde Difesa; Battito d Ali respinge poco in area. Ruolo: sposta il gruppo.',
+    descEn: 'Mobile harpy controller.',
+    elementId: 'aria',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 17,
+      'resilienza': 4,
+      'volonta': 7,
+      'materia': 6,
+      'oculum': 2,
+    },
+    skillIds: ['harpy_song', 'dive', 'wingbeat'],
+    dropIds: ['piuma'],
+  ),
+  MonsterBookEntry(
+    id: 'orco_base',
+    nameIt: 'Orco',
+    nameEn: 'Orc',
+    descIt:
+        'Assaltatore, 18 punti extra. RES 8 VOL 5 MAT 5 OCU 0. Carica Brutale +2 danni dopo corsa ma -1 Difesa; Rabbia del Ferito +1 danno sotto metà HP; Spallata sposta rinunciando a danno. Ruolo: sfonda.',
+    descEn: 'Orc charger.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 18,
+      'resilienza': 8,
+      'volonta': 5,
+      'materia': 5,
+      'oculum': 0,
+    },
+    skillIds: ['brutal_charge', 'hurt_rage', 'shoulder'],
+    dropIds: ['ascia'],
+  ),
+  MonsterBookEntry(
+    id: 'ragno_gigante_base',
+    nameIt: 'Ragno Gigante',
+    nameEn: 'Giant Spider',
+    descIt:
+        'Controllo, 19 punti extra. RES 6 VOL 5 MAT 7 OCU 1. Ragnatela rallenta ed è distruttibile; Morso Paralizzante riduce movimento o reazioni, non blocca totalmente; Arrampicatore ignora ostacoli verticali. Ruolo: chiude passaggi.',
+    descEn: 'Giant spider.',
+    elementId: 'veleno',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 19,
+      'resilienza': 6,
+      'volonta': 5,
+      'materia': 7,
+      'oculum': 1,
+    },
+    skillIds: ['web', 'weak_paralysis', 'climb'],
+    dropIds: ['seta'],
+  ),
+  MonsterBookEntry(
+    id: 'hobgoblin_base',
+    nameIt: 'Hobgoblin',
+    nameEn: 'Hobgoblin',
+    descIt:
+        'Soldato tattico, 22 punti extra. RES 8 VOL 7 MAT 7. Formazione +1 Difesa vicino a un alleato; Ordine Breve +1 al prossimo tiro alleato una volta per round; Contrattacco infligge 1 danno dopo una difesa riuscita, una volta per round.',
+    descEn: 'Tactical soldier.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 22,
+      'resilienza': 8,
+      'volonta': 7,
+      'materia': 7,
+      'oculum': 0,
+    },
+    skillIds: ['formation', 'short_order', 'counterattack'],
+    dropIds: ['scudo'],
+  ),
+  MonsterBookEntry(
+    id: 'mimic_base',
+    nameIt: 'Mimic',
+    nameEn: 'Mimic',
+    descIt:
+        'Imboscata, 25 punti extra. RES 8 VOL 6 MAT 8 OCU 3. Oggetto Innocente migliora il primo attacco nascosto; Lingua Adesiva trascina poco; Forma Instabile cambia aspetto per un vantaggio situazionale. Ruolo: sorprende senza controllare tutto.',
+    descEn: 'Ambush mimic.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 25,
+      'resilienza': 8,
+      'volonta': 6,
+      'materia': 8,
+      'oculum': 3,
+    },
+    skillIds: ['innocent_object', 'sticky_tongue', 'unstable_form'],
+    dropIds: ['dente_mimic'],
+  ),
+  MonsterBookEntry(
+    id: 'ogre_base',
+    nameIt: 'Ogre',
+    nameEn: 'Ogre',
+    descIt:
+        'Bruto, 28 punti extra. RES 13 VOL 5 MAT 7. Mazza a Terra è area ma meno del colpo normale; Presa immobilizza rinunciando ad azioni; Testa Dura accorcia il primo controllo. Ruolo: minaccia frontale lenta.',
+    descEn: 'Ogre brute.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 28,
+      'resilienza': 13,
+      'volonta': 5,
+      'materia': 7,
+      'oculum': 0,
+    },
+    skillIds: ['ground_maul', 'grab', 'hard_head'],
+    dropIds: ['mazza'],
+  ),
+  MonsterBookEntry(
+    id: 'warg_base',
+    nameIt: 'Warg',
+    nameEn: 'Warg',
+    descIt:
+        'Predatore élite, 29 punti extra. RES 10 VOL 8 MAT 10. Assalto Coordinato +1 dopo un colpo alleato; Trascinamento muove poco un colpito; Ululato +1 movimento agli alleati vicini per un round.',
+    descEn: 'Elite predator.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 29,
+      'resilienza': 10,
+      'volonta': 8,
+      'materia': 10,
+      'oculum': 0,
+    },
+    skillIds: ['coordinated_assault', 'drag', 'howl'],
+    dropIds: ['zanna_warg'],
+  ),
+  MonsterBookEntry(
+    id: 'basilisco_base',
+    nameIt: 'Basilisco',
+    nameEn: 'Basilisk',
+    descIt:
+        'Controllo élite, 32 punti extra. RES 11 VOL 10 MAT 8 OCU 4. Sguardo Calcificante accumula pietrificazione prima di immobilizzare; Coda Rocciosa fa poco danno e -1 Difesa; Pelle Minerale riduce il primo danno ogni round.',
+    descEn: 'Elite control basilisk.',
+    elementId: 'pietra',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 32,
+      'resilienza': 11,
+      'volonta': 10,
+      'materia': 8,
+      'oculum': 4,
+    },
+    skillIds: ['calcify', 'stone_tail', 'mineral_skin'],
+    dropIds: ['occhio_basilisco'],
+  ),
+  MonsterBookEntry(
+    id: 'troll_base',
+    nameIt: 'Troll',
+    nameEn: 'Troll',
+    descIt:
+        'Rigeneratore, 35 punti extra. RES 16 VOL 7 MAT 8. Rigenerazione piccola a fine turno e bloccabile da vulnerabilità; Braccia Lunghe aumentano portata; Carne Mutante dà +1 Res temporanea dopo un colpo pesante.',
+    descEn: 'Regenerating troll.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 35,
+      'resilienza': 16,
+      'volonta': 7,
+      'materia': 8,
+      'oculum': 0,
+    },
+    skillIds: ['regen', 'long_arms', 'mutant_flesh'],
+    dropIds: ['carne_troll'],
+  ),
+  MonsterBookEntry(
+    id: 'golem_di_pietra_base',
+    nameIt: 'Golem di Pietra',
+    nameEn: 'Stone Golem',
+    descIt:
+        'Difensore élite, 38 punti extra. RES 19 VOL 4 MAT 9. Corpo Massiccio resiste agli spostamenti; Pugno Sismico è un cono corto; Crepe Strutturali gli tolgono Difesa dopo diversi colpi pesanti. Ruolo: muro con punto di rottura.',
+    descEn: 'Stone defender.',
+    elementId: 'pietra',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 38,
+      'resilienza': 19,
+      'volonta': 4,
+      'materia': 9,
+      'oculum': 0,
+    },
+    skillIds: ['massive_body', 'seismic_punch', 'cracks'],
+    dropIds: ['cuore_golem'],
+  ),
+  MonsterBookEntry(
+    id: 'necromante_base',
+    nameIt: 'Necromante',
+    nameEn: 'Necromancer',
+    descIt:
+        'Controllore élite, 40 punti extra. RES 8 VOL 14 MAT 8 OCU 10. Scheletro Effimero evoca un servo debole; Debito Vitale paga HP per magia; Eco Funebre dà un piccolo bonus non cumulabile quando muore un servo.',
+    descEn: 'Elite necromancer.',
+    elementId: 'necrotico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 40,
+      'resilienza': 8,
+      'volonta': 14,
+      'materia': 8,
+      'oculum': 10,
+    },
+    skillIds: ['temporary_skeleton', 'life_debt', 'funeral_echo'],
+    dropIds: ['focus_nero'],
+  ),
+  MonsterBookEntry(
+    id: 'grifone_base',
+    nameIt: 'Grifone',
+    nameEn: 'Griffin',
+    descIt:
+        'Predatore volante, 41 punti extra. RES 13 VOL 9 MAT 13 OCU 2. Artigliata dopo lungo volo; Afferrare trasporta un bersaglio piccolo per poco; Ali Difensive riducono un attacco a distanza con reazione.',
+    descEn: 'Flying predator.',
+    elementId: 'aria',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 41,
+      'resilienza': 13,
+      'volonta': 9,
+      'materia': 13,
+      'oculum': 2,
+    },
+    skillIds: ['dive_claw', 'carry', 'defensive_wings'],
+    dropIds: ['piuma_grifone'],
+  ),
+  MonsterBookEntry(
+    id: 'minotauro_base',
+    nameIt: 'Minotauro',
+    nameEn: 'Minotaur',
+    descIt:
+        'Miniboss, 43 punti extra. RES 20 VOL 9 MAT 12 OCU 2. Carica del Labirinto spinge ma richiede spazio; Furia Cieca aumenta danno sotto metà HP e perde Difesa; Memoria dei Corridoi ripete un tiro di movimento una volta.',
+    descEn: 'Miniboss minotaur.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 43,
+      'resilienza': 20,
+      'volonta': 9,
+      'materia': 12,
+      'oculum': 2,
+    },
+    skillIds: ['maze_charge', 'blind_fury', 'corridor_memory'],
+    dropIds: ['corno'],
+  ),
+  MonsterBookEntry(
+    id: 'vampiro_base',
+    nameIt: 'Vampiro',
+    nameEn: 'Vampire',
+    descIt:
+        'Miniboss tecnico, 46 punti extra. RES 14 VOL 15 MAT 10 OCU 8. Morso cura solo parte del danno; Forma di Nebbia è evasione breve con cooldown; Fascino applica penalità mentale temporanea senza controllo totale.',
+    descEn: 'Technical vampire miniboss.',
+    elementId: 'sangue',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 46,
+      'resilienza': 14,
+      'volonta': 15,
+      'materia': 10,
+      'oculum': 8,
+    },
+    skillIds: ['vampire_bite', 'mist_form', 'charm'],
+    dropIds: ['sangue_antico'],
+  ),
+  MonsterBookEntry(
+    id: 'elementale_maggiore_base',
+    nameIt: 'Elementale Maggiore',
+    nameEn: 'Greater Elemental',
+    descIt:
+        'Miniboss elementale, 48 punti extra. RES 17 VOL 12 MAT 11 OCU 10. Corpo Elementale punisce una mischia una volta per round; Esplosione Elementale è area con cooldown; Instabilità sotto metà HP aumenta danno ma riduce Difesa.',
+    descEn: 'Elemental miniboss.',
+    elementId: 'elementale',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 48,
+      'resilienza': 17,
+      'volonta': 12,
+      'materia': 11,
+      'oculum': 10,
+    },
+    skillIds: ['elemental_body', 'elemental_blast', 'instability'],
+    dropIds: ['nucleo_elementale'],
+  ),
+  MonsterBookEntry(
+    id: 'lich_minore_base',
+    nameIt: 'Lich Minore',
+    nameEn: 'Lesser Lich',
+    descIt:
+        'Miniboss magico, 50 punti extra. RES 12 VOL 18 MAT 8 OCU 14. Anima Vincolata lo lascia a pochi HP se il focus è integro; Raggio Sepolcrale fa danno e piccolo malus; Sigillo Mortuario riduce cure in zona, senza annullarle.',
+    descEn: 'Magic lich miniboss.',
+    elementId: 'necrotico',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 50,
+      'resilienza': 12,
+      'volonta': 18,
+      'materia': 8,
+      'oculum': 14,
+    },
+    skillIds: ['bound_soul', 'grave_ray', 'death_seal'],
+    dropIds: ['focus_lich'],
+  ),
+  MonsterBookEntry(
+    id: 'gigante_base',
+    nameIt: 'Gigante',
+    nameEn: 'Giant',
+    descIt:
+        'Boss, 52 punti extra. RES 28 VOL 10 MAT 14. Passo Distruttivo rompe piccoli ostacoli e respinge; Presa e Lancio consuma l azione; Collera Crescente +1 danno ogni 25% HP persi fino a +3.',
+    descEn: 'Giant boss.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: true,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 52,
+      'resilienza': 28,
+      'volonta': 10,
+      'materia': 14,
+      'oculum': 0,
+    },
+    skillIds: ['destroying_step', 'grab_throw', 'growing_anger'],
+    dropIds: ['osso_gigante'],
+  ),
+  MonsterBookEntry(
+    id: 'drago_giovane_base',
+    nameIt: 'Drago Giovane',
+    nameEn: 'Young Dragon',
+    descIt:
+        'Boss, 56 punti extra. RES 23 VOL 15 MAT 15 OCU 10. Soffio area con ricarica; Colpo d Ala respinge poco; Dominio Draconico sotto metà HP dà movimento aggiuntivo, non turno extra.',
+    descEn: 'Young dragon boss.',
+    elementId: 'draconico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: true,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 56,
+      'resilienza': 23,
+      'volonta': 15,
+      'materia': 15,
+      'oculum': 10,
+    },
+    skillIds: ['breath', 'wing_hit', 'dragon_domain'],
+    dropIds: ['scaglia'],
+  ),
+  MonsterBookEntry(
+    id: 'idra_base',
+    nameIt: 'Idra',
+    nameEn: 'Hydra',
+    descIt:
+        'Boss resistente, 58 punti extra. RES 30 VOL 12 MAT 13 OCU 8. Teste Coordinate divide il danno tra due bersagli senza aumentarlo; Ricrescita è limitata a due volte; Furia delle Teste aggiunge danno e reazione sotto metà HP ma toglie Difesa.',
+    descEn: 'Resilient hydra boss.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: true,
+    isNullFateless: false,
+    stats: {
+      'extraPoints': 58,
+      'resilienza': 30,
+      'volonta': 12,
+      'materia': 13,
+      'oculum': 8,
+    },
+    skillIds: ['coordinated_heads', 'controlled_regrowth', 'head_fury'],
+    dropIds: ['testa_idra'],
+  ),
+  MonsterBookEntry(
+    id: 'drago_antico_base',
+    nameIt: 'Drago Antico',
+    nameEn: 'Ancient Dragon',
+    descIt:
+        'Boss massimo livello 0, 60 punti extra. RES 34 VOL 16 MAT 16 OCU 14. Dominio Antico compie una azione minore una volta per round; Cataclisma prepara un turno un area enorme e interrompibile; Fase Furiosa sotto metà HP modifica abilità e +2 danni, senza secondo turno completo.',
+    descEn: 'Maximum level 0 ancient dragon boss.',
+    elementId: 'draconico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: true,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'extraPoints': 60,
+      'resilienza': 34,
+      'volonta': 16,
+      'materia': 16,
+      'oculum': 14,
+    },
+    skillIds: ['ancient_domain', 'cataclysm', 'furious_phase'],
+    dropIds: ['cuore_drago'],
+  ),
+  MonsterBookEntry(
     id: 'slime_blu',
     nameIt: 'Slime Blu',
     nameEn: 'Blue Slime',
@@ -1115,6 +2165,208 @@ const int targetBossMonsterCount = 36;
 /// narrative invece di ridurle a tre attacchi generici.
 const List<MonsterBookEntry> _manualMonsterBookEntries = [
   MonsterBookEntry(
+    id: 'tappo_con_zampe',
+    nameIt: 'Tappo con Zampe',
+    nameEn: 'Legged Cap',
+    descIt:
+        'Debole, livello 0. RES 1 VOL 1 MAT 0 OCU 0. Un tappo di sughero che corre via dal rumore. Ruolo: disturba e fugge.',
+    descEn: 'Weak running cork.',
+    elementId: 'terra',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 1,
+      'volonta': 1,
+      'materia': 0,
+      'oculum': 0,
+    },
+    skillIds: ['cap_bump', 'cap_roll', 'cap_squeak'],
+    dropIds: ['sughero_umido'],
+  ),
+  MonsterBookEntry(
+    id: 'pesce_scarpa',
+    nameIt: 'Pesce Scarpa',
+    nameEn: 'Shoe Fish',
+    descIt:
+        'Debole, livello 0. RES 2 VOL 1 MAT 1 OCU 0. Nuota nei fossi con una scarpa al posto della pinna. Ruolo: morde e scivola via.',
+    descEn: 'Weak shoe-finned fish.',
+    elementId: 'acqua',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 2,
+      'volonta': 1,
+      'materia': 1,
+      'oculum': 0,
+    },
+    skillIds: ['shoe_bite', 'shoe_splash', 'shoe_hide'],
+    dropIds: ['laccio_bagnato'],
+  ),
+  MonsterBookEntry(
+    id: 'gatto_ciotola',
+    nameIt: 'Gatto Ciotola',
+    nameEn: 'Bowl Cat',
+    descIt:
+        'Intermedio, livello 4. RES 7 VOL 5 MAT 8 OCU 4. Un gatto che vive dentro una ciotola di ceramica e la usa come corazza. Ruolo: controlla spazio e difende.',
+    descEn: 'Medium bowl-armored cat.',
+    elementId: 'terra',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 4,
+      'resilienza': 7,
+      'volonta': 5,
+      'materia': 8,
+      'oculum': 4,
+    },
+    skillIds: ['bowl_spin', 'bowl_guard', 'bowl_crack'],
+    dropIds: ['ciotola_incrinata', 'baffo_ceramica'],
+  ),
+  MonsterBookEntry(
+    id: 'cervo_candela',
+    nameIt: 'Cervo Candela',
+    nameEn: 'Candle Deer',
+    descIt:
+        'Intermedio, livello 6. RES 6 VOL 9 MAT 6 OCU 8. Ha candele corte sulle corna e segue chi sanguina. Ruolo: pressione a distanza.',
+    descEn: 'Medium candle-antler deer.',
+    elementId: 'fuoco',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 6,
+      'resilienza': 6,
+      'volonta': 9,
+      'materia': 6,
+      'oculum': 8,
+    },
+    skillIds: ['candle_mark', 'candle_run', 'candle_burst'],
+    dropIds: ['cera_caldo', 'corno_candela'],
+  ),
+  MonsterBookEntry(
+    id: 'toro_di_fango',
+    nameIt: 'Toro di Fango',
+    nameEn: 'Mud Bull',
+    descIt:
+        'Forte, livello 12. RES 18 VOL 10 MAT 14 OCU 10. Un toro pesante che prende forma nelle pozzanghere. Ruolo: rompe la linea e resiste.',
+    descEn: 'Strong mud bull.',
+    elementId: 'terra',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 12,
+      'resilienza': 18,
+      'volonta': 10,
+      'materia': 14,
+      'oculum': 10,
+    },
+    skillIds: ['mud_charge', 'mud_hide', 'mud_throw'],
+    dropIds: ['fango_pesante', 'corno_fango'],
+  ),
+  MonsterBookEntry(
+    id: 'serpente_finestra',
+    nameIt: 'Serpente Finestra',
+    nameEn: 'Window Snake',
+    descIt:
+        'Forte, livello 16. RES 12 VOL 16 MAT 18 OCU 16. Il corpo è vetro opaco: passa dalle finestre e guarda da angoli impossibili. Ruolo: caccia isolati.',
+    descEn: 'Strong opaque-glass snake.',
+    elementId: 'specchio',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 16,
+      'resilienza': 12,
+      'volonta': 16,
+      'materia': 18,
+      'oculum': 16,
+    },
+    skillIds: ['window_bite', 'window_pass', 'window_reflect'],
+    dropIds: ['vetro_opaco', 'dente_finestra'],
+  ),
+  MonsterBookEntry(
+    id: 'papera_ranocchio',
+    nameIt: 'Papera Ranocchio',
+    nameEn: 'Duck Frog',
+    descIt:
+        'Creatura debole per chi inizia. Una rana con zampe da papera e una testa di papera che le esce dalla bocca. RES 2, VOL 1, MAT 1, OCU 1. Sembra assurda finché non ritrae la testa e la scaglia come un ariete: usa rinculo, salti storti e una risposta rabbiosa contro chi la colpisce. Drop: Piuma Bagnata, Zampa Palmata.',
+    descEn: 'Beginner creature: a frog with duck legs and a duck head.',
+    elementId: 'acqua',
+    spriteAssetPath:
+        'assets/oculum_dungeon/generated_sprites/enemies/papera_ranocchio.png',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 2,
+      'volonta': 1,
+      'materia': 1,
+      'oculum': 1,
+    },
+    skillIds: [
+      'duckfrog_recoil_headbutt',
+      'duckfrog_frog_jump',
+      'duckfrog_wet_retort',
+    ],
+    dropIds: ['piuma_bagnata', 'zampa_palmata'],
+  ),
+  MonsterBookEntry(
+    id: 'strega_delle_fiale',
+    nameIt: 'Strega delle Fiale',
+    nameEn: 'Vial Witch',
+    descIt:
+        'Mini Boss alchimista. Materia 24, Oculum 12 e 5 Schivate Oculum. Non si ferma a lanciare magie: cura con l Oculum Art, prepara danno crescente per più turni e blocca chi prova a raggiungerla. Drop ottenibili: Fiala Veleno Putrido, Fiala Evasiva e Fiala della Creazione Goblin. Precisione usa già Materia/2 e copre mira e lancio delle fiale.',
+    descEn: 'Alchemy mini boss with healing, stacking damage and stun.',
+    elementId: 'oculum',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'materia': 24, 'oculum': 12, 'schivateOculum': 5},
+    skillIds: ['witch_oculum_mend', 'witch_brewing_ruin', 'witch_stun_vial'],
+    dropIds: [
+      'fiala_veleno_putrido',
+      'fiala_evasiva',
+      'fiala_creazione_goblin',
+    ],
+  ),
+  MonsterBookEntry(
+    id: 'ragno_putrido',
+    nameIt: 'Ragno Putrido',
+    nameEn: 'Putrid Spider',
+    descIt:
+        'Mini Boss di livello 0. RES 10, VOL 10, MAT 0, OCU 10. Il suo Oculum Art non cerca il colpo grosso: distribuisce malus, poi riapre le ferite con il veleno finché Veleno Putrido sale di grado. La condizione può arrivare al grado IX e conserva le sue regole condivise: ignora Scudo e Difesa, infligge danno a fine turno e aumenta insieme a durata e pressione. Drop: Sacca di Veleno Putrido, Seta Marcescente.',
+    descEn:
+        'Level 0 mini boss. It spreads penalties and builds Rot Poison up to rank IX.',
+    elementId: 'veleno',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 10,
+      'volonta': 10,
+      'materia': 0,
+      'oculum': 10,
+    },
+    skillIds: ['putrid_oculum_art', 'rot_poison_escalation', 'miasma_web'],
+    dropIds: ['sacca_veleno_putrido', 'seta_marcescente'],
+  ),
+  MonsterBookEntry(
     id: 'mini_fate_golem',
     nameIt: 'Mini Fate Golem',
     nameEn: 'Mini Fate Golem',
@@ -1916,12 +3168,100 @@ String monsterBookSkillText(String rawId) {
   final id = rawId.replaceAll('_', ' ').trim();
   final label = id.isEmpty ? 'Tecnica del mostro' : id;
   switch (rawId.trim().toLowerCase()) {
+    case 'goblin_killer_finish':
+      return 'finire il bersaglio — I/colpisci un nemico già ferito; II/se lo abbatti recuperi tutta la Vita; III/dopo l uccisione puoi spostarti, ma la cura non si attiva su Scudi o evocazioni già dissolte.';
+    case 'archangel_strike':
+      return 'colpo dell arcangelo — I/attacco di luce; II/linea corta; III/pressione su un bersaglio giudicato.';
+    case 'archangel_guard':
+      return 'guardia dell arcangelo — I/copertura; II/copertura di gruppo; III/risposta protettiva dopo il primo colpo.';
+    case 'archangel_order':
+      return 'ordine dell arcangelo — I/un alleato si muove o si difende; II/due alleati; III/una reazione nemica viene negata.';
+    case 'pinepine_cone_skin':
+      return 'pelle di pigna — I/dimezzi danni non di Fuoco; II/proteggi un alleato vicino; III/se Fuoco o simili ti colpiscono, esplodi entro 2 metri e ferisci anche gli alleati. Debole a Ferite Aperte e Fuoco.';
+    case 'lesser_frost_demon_cold_blood':
+      return 'sangue freddo — I/chi ti ferisce in mischia riceve Congelamento; II/Ricordo Vitale prepara la cura; III/la reazione fredda colpisce anche chi insiste a restare vicino.';
+    case 'intermediate_frost_demon_ray':
+      return 'raggio glaciale — I/spendi Oculum per un raggio congelante a distanza; II/due raggi o una linea più lunga; III/il bersaglio congelato resta esposto alla prossima pressione.';
+    case 'greater_frost_demon_time_freeze':
+      return 'open tempo ghiacciato — I/congeli il tempo per un turno: tutti vedono e sentono; II/i danni restano accumulati; III/alla fine arrivano insieme. Non cancella le difese applicate prima del congelamento.';
+    case 'scourging_angel_lash':
+      return 'frusta del giudizio — I/colpisci con una frusta di luce; II/il colpo raggiunge due nemici vicini; III/il bersaglio giudicato riceve anche la pressione dell ala. Ogni 6 livelli il Fustigatore aggiunge +50 Danni base.';
+    case 'scourging_angel_judgement':
+      return 'giudizio fustigatore — I/marchi un bersaglio e prepari il prossimo colpo; II/la marca riduce la sua difesa; III/la marca esplode se prova a ferire un alleato. Ogni 5 livelli il Fustigatore ottiene +20 Difesa base.';
+    case 'scourging_angel_wing_guard':
+      return 'guardia d ali — I/usi lo Scudo Critico per proteggerti; II/proteggi anche un alleato vicino; III/respinge chi forza la guardia.';
+    case 'protective_angel_intercept':
+      return 'intercettazione celeste — I/prendi su di te il prossimo danno diretto a un compagno; II/puoi farlo per due compagni vicini; III/il danno trasferito è ridotto dalla tua Difesa e dai tuoi Scudi normalmente.';
+    case 'protective_angel_wing_wall':
+      return 'muro d ali — I/copertura per un alleato; II/copertura per una linea; III/chi attraversa il muro perde la reazione, ma l Angelo resta esposto sul lato opposto.';
+    case 'protective_angel_vow':
+      return 'voto protettore — I/scegli un compagno da custodire; II/ottieni vantaggio quando intercetti per lui; III/se cade a 0 Vita puoi prendere il colpo che lo avrebbe abbattuto, una volta per scontro.';
+    case 'seraph_wing_lance':
+      return 'lancia delle ali — I/colpisci da lontano con luce angelica; II/attraversi una linea di bersagli; III/la lancia divide l area, ma richiede una linea visibile.';
+    case 'seraph_halo_command':
+      return 'comando dell aureola — I/ordini a un alleato di muoversi o difendersi; II/due alleati ricevono il comando; III/impedisci una reazione nemica nella zona, ma il Serafino resta il bersaglio più evidente.';
+    case 'seraph_six_wing_aegis':
+      return 'egida delle sei ali — I/crei una difesa celeste; II/la difesa copre il gruppo vicino; III/la prima offensiva contro l egida viene respinta, ma l egida termina dopo il colpo.';
+    case 'bomber_skeleton_bone_bomb':
+      return 'bomba d osso — I/lanci un osso carico in una piccola area: infligge il 35% della Vita attuale, senza ridurre sotto 1; II/45% in area media; III/50% in area ampia. È semi-letale: non può uccidere solo con questa detonazione.';
+    case 'bomber_skeleton_shrapnel_ring':
+      return 'anello di schegge — I/schegge in un area vicina: 25% della Vita attuale; II/35% e rallenta chi resta nella zona; III/45%, ma il Bombarolo si espone dopo il lancio.';
+    case 'bomber_skeleton_last_blast':
+      return 'ultima esplosione — I/quando è quasi distrutto, colpisce l area per 30% della Vita attuale; II/40%; III/50%. Ogni bersaglio resta almeno a 1 Vita.';
+    case 'observer_witness_copy':
+      return 'copia testimoniata — I/copi la prossima Skill che vedi; II/la conservi per due usi; III/copi anche una Forma scritta. Mantieni costo, limiti e conseguenze della Skill originale.';
+    case 'observer_white_analysis':
+      return 'analisi bianca — I/scopri costo e limite di una Skill vista; II/ottieni vantaggio per copiarla; III/scopri quale condizione la interrompe, ma resti fermo a osservare.';
+    case 'observer_replay':
+      return 'replica — I/usi una Skill copiata; II/ne usi due viste diverse in turni consecutivi; III/combini due copie compatibili, pagando entrambi i costi e rispettando ogni limite.';
+    case 'immortal_life_harvest':
+      return 'mietitura vitale — I/ogni danno che raggiunge davvero la Vita cura l Immortale dello stesso valore; II/la cura ripara anche una ferita recente; III/la cura eccedente crea HP temporanei. Danni assorbiti dagli Scudi non contano.';
+    case 'immortal_relentless_cut':
+      return 'taglio incessante — I/colpisci e applichi Mietitura Vitale; II/se raggiungi la Vita, insegui il bersaglio; III/se il bersaglio è già ferito, il danno alla Vita aumenta senza ignorare Scudi o Difesa.';
+    case 'immortal_undying_stance':
+      return 'posa imperitura — I/finché attiva, la prima Mietitura Vitale del turno cura anche 10 Difesa; II/20 Difesa; III/30 Difesa, ma rinunci alle reazioni mentre la mantieni.';
+    case 'demon_lesser_harden':
+      return 'corpo indurito — I/spendi Oculum per +30 Difesa fino al tuo turno; II/+60 Difesa e respingi chi ti colpisce in mischia; III/+100 Difesa e copri un alleato adiacente.';
+    case 'demon_lesser_ward':
+      return 'guardia istintiva — I/assorbi il prossimo colpo; II/la guardia copre anche un alleato; III/chi la spezza riceve una breve onda d urto.';
+    case 'demon_lesser_crush':
+      return 'schianto bruto — I/potenzi il pugno per +20 danni; II/+45 danni e sbilanci; III/+80 danni, rinunciando alla guardia nello stesso turno.';
+    case 'demon_intermediate_harden':
+      return 'fame corazzata — I/+40 Difesa; II/+75 Difesa e il primo colpo subito alimenta la prossima sfera; III/+120 Difesa e resistenza agli spostamenti.';
+    case 'demon_intermediate_aegis_sphere':
+      return 'sfera di difesa — I/assorbe 50 danni; II/100 danni e copre un alleato; III/160 danni e ferisce chi la attraversa.';
+    case 'demon_intermediate_pressure_sphere':
+      return 'sfera di pressione — I/+30 danni; II/+60 e con tiro positivo su Pressione espandi l area; III/+110, l area espansa respinge.';
+    case 'demon_greater_dominion':
+      return 'dominio demoniaco — I/+60 Difesa; II/+120 e un demone minore vicino non può sottrarsi; III/+180 e spezzi la sua guardia.';
+    case 'demon_greater_devour':
+      return 'divora il debole — I/divori un demone o evocazione sconfitto e recuperi 15 Oculum; II/30 Oculum e 60 Scudo; III/50 Oculum, 120 Scudo e +40 danni al prossimo colpo.';
+    case 'demon_greater_hell_aegis':
+      return 'egida infernale — I/barriera da 120 Scudo; II/220 e sfere alleate più resistenti; III/350 e +100 danni a chi la forza.';
     case 'solar_swarm':
       return 'solar swarm — I/dirigi un piccolo sciame solare contro un bersaglio o la casella vicina: lo pressa con più colpi leggeri e ne disturba la guardia; II/lo sciame raggiunge due bersagli vicini oppure continua a premere lo stesso bersaglio; III/chiudi il bersaglio in una corona di luce che lo colpisce ripetutamente, ma lo sciame resta esposto alle reazioni ad area fino al tuo turno successivo.';
     case 'golden_pin':
       return 'golden pin — I/lanci una spina d oro e armatura nera che ferisce e inchioda per un istante il bersaglio o un suo oggetto; II/aumenti la distanza oppure fissi due bersagli vicini, rendendo più difficile spostarsi o reagire; III/immobilizzi il bersaglio finché non si libera con un azione o un aiuto, ma la spina resta visibile e può essere spezzata.';
     case 'wing_flash':
       return 'wing flash — I/apri le ali dorate in un lampo: abbagli un bersaglio vicino e guadagni spazio per difenderti o riposizionarti; II/il lampo investe più bersagli vicini oppure protegge un alleato dalla prossima pressione; III/crei un bagliore accecante che interrompe le reazioni nella zona fino al turno successivo, ma rivela con chiarezza la tua posizione.';
+    case 'putrid_oculum_art':
+      return 'oculum art putrida — I/spendi il tuo Oculum per imporre a un bersaglio un malus breve: rallentamento, difesa incrinata o reazione negata; II/colpisci due bersagli vicini oppure applichi due malus diversi allo stesso bersaglio; III/finché il bersaglio porta almeno un malus, la prossima applicazione di Veleno Putrido non può essere convertita in un semplice danno diretto. Il Ragno rinuncia all attacco fisico mentre tesse questa pressione.';
+    case 'rot_poison_escalation':
+      return 'veleno putrido crescente — I/mordi o chiudi il bersaglio nella seta e applichi Veleno Putrido I; II/se il bersaglio ne soffre già, aumenti il grado di uno invece di duplicare la condizione; III/puoi portarlo progressivamente fino a Veleno Putrido IX. Ogni grado usa danno e durata della condizione condivisa, ignora Scudo e Difesa e agisce a fine turno: non oltrepassa mai il suo cap anti-morte istantanea.';
+    case 'miasma_web':
+      return 'ragnatela di miasma — I/ancori una ragnatela a un bersaglio o a un passaggio: rallenta e rende più difficile liberarsi dai malus; II/la ragnatela raggiunge una piccola area e chi vi resta riceve il prossimo malus del Ragno; III/chi è già avvelenato deve scegliere se uscire dalla zona o perdere una reazione, ma la seta può essere spezzata da un alleato con un azione.';
+    case 'witch_oculum_mend':
+      return 'rimedio d occhio — I/usi Oculum Art per curare te o un alleato; II/la cura rimuove anche un malus lieve; III/la fiala spezzata cura due creature vicine, ma consuma la tua reazione.';
+    case 'witch_brewing_ruin':
+      return 'infuso di rovina — I/marchi un bersaglio: riceve danno aumentato fino al tuo prossimo turno; II/riapplicando accumuli un secondo grado e prolunghi l effetto; III/il terzo grado esplode in danno maggiore, poi l infuso termina: non puoi conservarlo indefinitamente.';
+    case 'witch_stun_vial':
+      return 'fiala stordente — I/colpisci e togli una reazione; II/il bersaglio è Stordito fino al suo prossimo turno; III/la rottura investe una piccola area, ma gli alleati devono allontanarsi per non respirarla.';
+    case 'duckfrog_recoil_headbutt':
+      return 'testata con rinculo — I/ritrai la testa di papera nella gola, la allunghi e colpisci: infliggi +5 + Oculum danni (1/4); II/+12 + Oculum danni (2/4) e il rinculo ti sposta fuori dalla risposta; III/+25 + Oculum danni (3/4), respingi il bersaglio e tu rimbalzi in una zona vicina. Al quarto uso la testa resta incastrata fino al turno successivo.';
+    case 'duckfrog_frog_jump':
+      return 'salto a rana — I/salti sopra una minaccia e il nemico bersagliato aggiunge +3 a CM + Oculum fino al suo prossimo tiro; II/il salto attraversa due zone e il bonus diventa +8 + Oculum; III/atterri alle spalle, il bonus diventa +16 + Oculum e neghi una reazione, ma devi avere spazio per il rinculo.';
+    case 'duckfrog_wet_retort':
+      return 'starnazzo di risposta — I/quando una creatura ti colpisce, ottieni una reazione aggiuntiva contro di lei: le spruzzi acqua e la rallenti; II/la risposta infligge anche +8 danni e la sposta; III/+18 danni, una breve apertura per gli alleati e puoi usare la risposta anche dopo un colpo a distanza. DT 2 turni: non puoi riattivarla prima della fine del secondo turno.';
   }
   bool hasAny(Iterable<String> terms) => terms.any(id.contains);
   if (hasAny(['guard', 'shield', 'shell', 'hide', 'skin', 'armor', 'cover'])) {
@@ -2065,7 +3405,9 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
         ..._craftedMonsterBookEntries,
         ..._manualMonsterBookEntries,
         ..._generateMonsterTier(
-          count: targetNormalMonsterCount - _staticNormalMonsterCount,
+          count: targetNormalMonsterCount - _staticNormalMonsterCount < 2
+              ? 2
+              : targetNormalMonsterCount - _staticNormalMonsterCount,
           tier: _GeneratedMonsterTier.normal,
         ),
         ..._generateMonsterTier(

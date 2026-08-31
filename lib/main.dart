@@ -1353,6 +1353,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final manualSearchController = TextEditingController();
   final themeSearchController = TextEditingController();
   final monsterBookSearchController = TextEditingController();
+  String monsterBookTierFilter = 'Tutti';
   final recipeSearchController = TextEditingController();
 
   final quickSheetNameController = TextEditingController(text: '???');
@@ -1403,6 +1404,14 @@ class _OculumHomePageState extends State<OculumHomePage>
   final TransformationController mapTransformationController =
       TransformationController();
   String mapMode = 'image';
+
+  /// Pannelli ausiliari della Mappa: schede locali/condivise oppure siti web.
+  /// La mappa principale resta invariata e ogni pannello e' ricostruibile dal
+  /// salvataggio della campagna.
+  int mapSplitPanelCount = 1;
+  List<Map<String, dynamic>> mapSplitPanels = <Map<String, dynamic>>[
+    <String, dynamic>{'kind': 'sheet', 'sheetTag': '', 'url': ''},
+  ];
   String mapImagePath = '';
   String mapImageName = '';
   bool mapSaveSession = false;

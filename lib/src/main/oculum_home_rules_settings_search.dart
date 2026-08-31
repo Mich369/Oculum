@@ -2168,7 +2168,9 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
 
   void applicaSettaggioTutorial() {
     final livello = max(0, leggiNumero(tutorialLevelController));
-    final grado = max(0, leggiNumero(tutorialGradeController));
+    final gradoRichiesto = max(0, leggiNumero(tutorialGradeController));
+    final gradoMassimo = gradoAutomaticoDaLivello(livello, false);
+    final grado = min(gradoRichiesto, gradoMassimo);
     final extraRes = leggiNumero(tutorialExtraResController);
     final extraVol = leggiNumero(tutorialExtraVolController);
     final extraMat = leggiNumero(tutorialExtraMatController);
@@ -2205,6 +2207,13 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             'Hai distribuito $puntiLivelloSpesi punti, ma il budget disponibile è $puntiLibriDisponibili.';
       });
       return;
+    }
+    if (gradoRichiesto > gradoMassimo) {
+      setState(() {
+        tutorialGradeController.text = gradoMassimo.toString();
+        risultato =
+            'Il livello $livello permette al massimo il Grado $gradoMassimo: il grado richiesto è stato corretto.';
+      });
     }
     if (eMartial && extraOcu > 0) {
       setState(() {
@@ -4571,6 +4580,26 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           oculusModSettingsPanel(),
+          const SizedBox(height: 10),
+          gothicPanel(
+            borderColor: const Color(0xFFB88A3B),
+            child: SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: manuscriptLivingActive,
+              activeThumbColor: const Color(0xFFB88A3B),
+              secondary: const Icon(Icons.auto_stories),
+              title: const Text('Manoscritto Vivente'),
+              subtitle: Text(
+                oculusModActive
+                    ? 'Non disponibile mentre Oculus è attiva.'
+                    : 'Riorganizza GIOCA come manoscritto rituale, senza cambiare dati, regole o funzioni.',
+              ),
+              onChanged: oculusModActive
+                  ? null
+                  : (value) =>
+                        setActiveGameMod(value ? 'manuscript_living' : ''),
+            ),
+          ),
           const SizedBox(height: 10),
           gothicPanel(
             borderColor: tertiaryColor,

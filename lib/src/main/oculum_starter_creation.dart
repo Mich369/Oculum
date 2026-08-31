@@ -44,6 +44,25 @@ int oculumMonsterStatPointsPerLevel(String type) {
   return 9;
 }
 
+/// Il contatore di creazione usa solo le quattro statistiche reali del
+/// mostro: ogni livello vale il suo rango e ogni grado aggiunge 10×grado.
+int oculumMonsterMissingStatPoints({
+  required String type,
+  required int level,
+  required int grade,
+  required int resilienza,
+  required int volonta,
+  required int materia,
+  required int oculum,
+}) {
+  final required =
+      max(0, level) * oculumMonsterStatPointsPerLevel(type) +
+      max(0, grade) * 10;
+  final assigned =
+      max(0, resilienza) + max(0, volonta) + max(0, materia) + max(0, oculum);
+  return max(0, required - assigned).toInt();
+}
+
 /// Punti che il creatore può assegnare liberamente oltre alla distribuzione
 /// umanoide 3/2/1/1. I mostri ricevono nove punti per livello e dieci per
 /// grado: un Mostro livello 10, grado I, parte quindi da 100 punti liberi.

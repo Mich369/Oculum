@@ -619,6 +619,64 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     final lifeBarValueText = showOculumShield
         ? 'HP $curr/$maxHpVal  T $temp  S $shield  SO $oculumShield/$oculumShieldMax  SC $criticalShield'
         : 'HP $curr/$maxHpVal  T $temp  S $shield  SC $criticalShield';
+    final vitaAfona =
+        curr > 0 &&
+        activeConditions.any(
+          (condition) => condition.conditionType == 'vita_afona',
+        );
+
+    if (vitaAfona) {
+      return gothicPanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              t('Barra della Vita', 'Health Bar'),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Semantics(
+              label: t(
+                'Vita Afona attiva: HP attuali nascosti',
+                'Voiceless Life active: current HP hidden',
+              ),
+              child: Container(
+                height: 42,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: const Center(
+                  child: Text(
+                    '☠',
+                    style: TextStyle(color: Colors.white, fontSize: 27),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              t(
+                'Vita Afona: gli HP restano sconosciuti finché l effetto termina o muori.',
+                'Voiceless Life: HP remain unknown until the effect ends or you die.',
+              ),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: tertiaryColor,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return gothicPanel(
       child: Column(
@@ -2051,9 +2109,14 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     if (immaginePersonaggio != null)
                       Positioned.fill(
                         child: Center(
-                          child: FractionallySizedBox(
-                            widthFactor: compact ? 0.70 : 0.62,
-                            heightFactor: compact ? 0.68 : 0.78,
+                          // La pupilla deve restare quadrata anche nel
+                          // pannello dell'occhio, che invece e' orizzontale.
+                          // Un FractionallySizedBox qui la deformava.
+                          child: SizedBox.square(
+                            dimension: min(
+                              eyeWidth * (compact ? 0.66 : 0.58),
+                              eyeHeight * (compact ? 0.82 : 0.88),
+                            ),
                             child: GestureDetector(
                               behavior: HitTestBehavior.opaque,
                               onSecondaryTap:
@@ -2064,34 +2127,23 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                                   'Tasto destro: copia. Pressione lunga: copia o scarica.',
                                   'Right-click: copy. Long press: copy or download.',
                                 ),
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.72),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: tertiaryColor.withValues(
-                                        alpha: 0.9,
-                                      ),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(3),
-                                    child: ClipPath(
-                                      // Il ritratto torna a formare la pupilla
-                                      // dell'Occhio, invece di una card rettangolare.
-                                      clipper: const HexagonClipper(),
+                                child: ClipPath(
+                                  // Il ritratto e' solo la pupilla: niente
+                                  // cornice/card rettangolare attorno ad esso.
+                                  clipper: const HexagonClipper(),
+                                  child: SizedBox.expand(
+                                    // Il clip riceve sempre una tela quadrata
+                                    // esplicita: così non può degradare a un
+                                    // rettangolo quando cambia il layout.
+                                    child: FittedBox(
+                                      fit: BoxFit.contain,
+                                      alignment: Alignment.center,
                                       child: Image.memory(
                                         immaginePersonaggio!,
-                                        fit: BoxFit.cover,
-                                        alignment: Alignment.center,
+                                        filterQuality: FilterQuality.high,
                                         cacheWidth: max(
                                           1,
-                                          (eyeWidth * 1.3).round(),
-                                        ),
-                                        cacheHeight: max(
-                                          1,
-                                          (eyeHeight * 1.6).round(),
+                                          (eyeWidth * 1.6).round(),
                                         ),
                                       ),
                                     ),
@@ -8663,10 +8715,860 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     );
   }
 
+  Widget manuscriptLivingDesktopPage(BoxConstraints constraints) {
+    const paper = Color(0xFFE0CCA0);
+    const ink = Color(0xFF24180F);
+    const brass = Color(0xFFB88A3B);
+    const shell = Color(0xFF0B0908);
+    const moss = Color(0xFF304C27);
+    const blood = Color(0xFF7D211B);
+    const matter = Color(0xFF1E6680);
+    const oculum = Color(0xFF68406F);
+    final wide = constraints.maxWidth >= 1180;
+    final compact = constraints.maxWidth < 1500;
+
+    Widget frame(Widget child, {Color border = brass, Color color = shell}) =>
+        Container(
+          decoration: BoxDecoration(
+            color: color,
+            border: Border.all(color: border.withValues(alpha: .72)),
+            borderRadius: BorderRadius.circular(3),
+          ),
+          child: child,
+        );
+
+    Widget stat(String label, int value, int maxValue, Color color) => Expanded(
+      child: Container(
+        height: compact ? 92 : 112,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: paper,
+          border: Border.all(color: brass.withValues(alpha: .55)),
+        ),
+        child: DefaultTextStyle(
+          style: const TextStyle(color: ink, fontFamily: 'serif'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '$value / $maxValue',
+                style: const TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(1),
+                child: LinearProgressIndicator(
+                  minHeight: 6,
+                  value: maxValue <= 0 ? 0 : (value / maxValue).clamp(0.0, 1.0),
+                  color: color,
+                  backgroundColor: const Color(0xFF2B2119),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    Widget eyeHeader() => InkWell(
+      onTap: () => vaiAllaFunzione(
+        page: 0,
+        anchorId: 'sheet_image',
+        logTitle: 'Occhio Oculum',
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          const DecoratedBox(
+            decoration: BoxDecoration(color: Color(0xFFE0CCA0)),
+          ),
+          RepaintBoundary(
+            child: CustomPaint(
+              painter: OculumEyePainter(
+                primaryColor: brass,
+                secondaryColor: ink,
+                tertiaryColor: oculum,
+                pupilGlowColor: oculum,
+              ),
+            ),
+          ),
+          if (immaginePersonaggio != null)
+            Center(
+              child: ClipPath(
+                clipper: const HexagonClipper(),
+                child: SizedBox.square(
+                  dimension: compact ? 54 : 70,
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: Image.memory(
+                      immaginePersonaggio!,
+                      cacheWidth: compact ? 108 : 140,
+                      filterQuality: FilterQuality.high,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+
+    final stats = Container(
+      height: compact ? 94 : 116,
+      decoration: BoxDecoration(
+        color: paper,
+        border: Border.all(color: brass.withValues(alpha: .7)),
+      ),
+      child: Row(
+        children: [
+          stat('PV', leggiNumero(currentHpController), maxHp(), moss),
+          const SizedBox(width: 3),
+          stat(
+            'VOL',
+            leggiNumero(volontaController),
+            max(1, leggiNumero(volontaController)),
+            blood,
+          ),
+          const SizedBox(width: 3),
+          SizedBox(
+            width: compact ? 118 : 150,
+            height: compact ? 94 : 116,
+            child: eyeHeader(),
+          ),
+          const SizedBox(width: 3),
+          stat(
+            'MAT',
+            leggiNumero(materiaController),
+            max(1, leggiNumero(materiaController)),
+            matter,
+          ),
+          const SizedBox(width: 3),
+          stat('OCU', leggiNumero(oculumController), oculumMassimo(), oculum),
+        ],
+      ),
+    );
+
+    Widget manuscriptHeading(String text) => Padding(
+      padding: const EdgeInsets.fromLTRB(10, 9, 10, 6),
+      child: Row(
+        children: [
+          Text(
+            text,
+            style: const TextStyle(
+              color: brass,
+              fontFamily: 'serif',
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.15,
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Expanded(child: Divider(height: 1, color: Color(0xFF725326))),
+        ],
+      ),
+    );
+
+    Widget partyRow(int index) {
+      final current = index == schedaCorrente;
+      final hp = sheetCurrentHpForDeathAt(index);
+      final hpMax = sheetMaxHpForDeathAt(index);
+      final vol = sheetWillForDeathAt(index);
+      final mat = sheetMateriaForDeathAt(index);
+      final ocu = sheetCurrentOculumForDeathAt(index);
+      return InkWell(
+        onTap: () => cambiaSchedaPersonaggio(index),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: current ? const Color(0xFF1A1712) : const Color(0xFF0E0C09),
+            border: Border(
+              left: BorderSide(
+                color: current ? brass : Colors.transparent,
+                width: 2,
+              ),
+              bottom: const BorderSide(color: Color(0xFF4D381D)),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 46,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  border: Border.all(color: brass.withValues(alpha: .55)),
+                ),
+                child: Text(
+                  '${index + 1}',
+                  style: const TextStyle(
+                    color: brass,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nomeSchedaPersonaggio(index),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFE0CCA0),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      tipoSchedaPersonaggio(index),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFB69662),
+                        fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'PV $hp/$hpMax',
+                      style: const TextStyle(
+                        color: moss,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'VOL $vol   MAT $mat   OCU $ocu',
+                      style: const TextStyle(
+                        color: Color(0xFFC9B17E),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final left = frame(
+      Column(
+        children: [
+          manuscriptHeading('PERSONAGGI'),
+          Expanded(
+            child: ListView.builder(
+              itemCount: schedePersonaggio.length,
+              itemExtent: 82,
+              addAutomaticKeepAlives: false,
+              addRepaintBoundaries: true,
+              itemBuilder: (context, index) =>
+                  RepaintBoundary(child: partyRow(index)),
+            ),
+          ),
+          TextButton.icon(
+            onPressed: () =>
+                vaiAllaFunzione(page: 9, logTitle: 'Gestisci personaggi'),
+            icon: const Icon(Icons.groups_2_outlined, size: 16),
+            label: const Text('GESTISCI'),
+            style: TextButton.styleFrom(foregroundColor: brass),
+          ),
+        ],
+      ),
+    );
+
+    Widget manuscriptSectionTab({
+      required String label,
+      required VoidCallback onPressed,
+    }) {
+      return TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          foregroundColor: const Color(0xFFCAA85D),
+          minimumSize: Size.zero,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          shape: const RoundedRectangleBorder(),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            letterSpacing: .55,
+          ),
+        ),
+      );
+    }
+
+    Widget combatMetric(
+      String label,
+      String value,
+      Color color,
+      VoidCallback action,
+    ) => InkWell(
+      onTap: action,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: Text(
+          '$label $value',
+          style: TextStyle(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+
+    Widget actionRow(int i) => Container(
+      padding: const EdgeInsets.fromLTRB(10, 9, 10, 8),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Color(0xFF8F713A), width: .65),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.auto_awesome_outlined,
+            color: Color(0xFF6F5121),
+            size: 27,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  skills[i].nome,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  [
+                    skills[i].tipo,
+                    if (skills[i].costo.trim().isNotEmpty) skills[i].costo,
+                  ].where((value) => value.trim().isNotEmpty).join('  ·  '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (skills[i].descrizione.trim().isNotEmpty)
+                  Text(
+                    skills[i].descrizione,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF24180F),
+              side: const BorderSide(color: Color(0xFF604415)),
+              shape: const RoundedRectangleBorder(),
+            ),
+            onPressed: () => vaiAllaFunzione(
+              page: 4,
+              anchorId: 'free_skill_$i',
+              logTitle: skills[i].nome,
+            ),
+            child: const Text('USA'),
+          ),
+        ],
+      ),
+    );
+
+    final center = frame(
+      Container(
+        color: paper,
+        child: DefaultTextStyle.merge(
+          style: const TextStyle(color: ink, fontFamily: 'serif'),
+          child: Column(
+            children: [
+              Container(
+                color: const Color(0xFF110E0B),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 1,
+                  runSpacing: 1,
+                  children: [
+                    manuscriptSectionTab(
+                      label: 'AZIONI',
+                      onPressed: () => vaiAllaFunzione(
+                        page: 4,
+                        anchorId: 'skills_root',
+                        logTitle: 'Azioni',
+                      ),
+                    ),
+                    manuscriptSectionTab(
+                      label: 'ART',
+                      onPressed: () => vaiAllaFunzione(
+                        page: 3,
+                        anchorId: 'art_0',
+                        logTitle: 'Art',
+                      ),
+                    ),
+                    manuscriptSectionTab(
+                      label: 'REAZIONI',
+                      onPressed: () => vaiAllaFunzione(
+                        page: 0,
+                        anchorId: 'sheet_editable_values',
+                        logTitle: 'Reazioni',
+                      ),
+                    ),
+                    manuscriptSectionTab(
+                      label: 'OGGETTI',
+                      onPressed: () => vaiAllaFunzione(
+                        page: 6,
+                        anchorId: 'inventory_root',
+                        logTitle: 'Oggetti',
+                      ),
+                    ),
+                    manuscriptSectionTab(
+                      label: 'CONDIZIONI',
+                      onPressed: () => vaiAllaFunzione(
+                        page: _OculumHomePageState.quickConditionsPageIndex,
+                        logTitle: 'Condizioni',
+                      ),
+                    ),
+                    manuscriptSectionTab(
+                      label: 'SOTTOTRATTI',
+                      onPressed: () => vaiAllaFunzione(
+                        page: 0,
+                        anchorId: 'sheet_editable_values',
+                        logTitle: 'Sottotratti',
+                      ),
+                    ),
+                    manuscriptSectionTab(
+                      label: 'ALTRO',
+                      onPressed: () => vaiAllaFunzione(
+                        page: 5,
+                        anchorId: 'story_root',
+                        logTitle: 'Altro',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Color(0xFF6F5121))),
+                ),
+                child: Wrap(
+                  spacing: 4,
+                  runSpacing: 2,
+                  children: [
+                    combatMetric(
+                      '♥',
+                      '${hpCorrenti()}/${maxHp()}',
+                      moss,
+                      () => vaiAllaFunzione(page: 0, anchorId: 'sheet_hp'),
+                    ),
+                    combatMetric(
+                      '◇',
+                      '$scudo()',
+                      const Color(0xFF397C94),
+                      () => vaiAllaFunzione(page: 0, anchorId: 'sheet_shield'),
+                    ),
+                    combatMetric(
+                      'VC',
+                      '$vc()',
+                      brass,
+                      () => tiraValoreSpeciale('VC', vc()),
+                    ),
+                    combatMetric(
+                      'CM',
+                      '$cm()',
+                      ink,
+                      () => tiraValoreSpeciale('CM', cm()),
+                    ),
+                    combatMetric(
+                      '⚔',
+                      '${dannoTotale()}',
+                      blood,
+                      () => vaiAllaFunzione(
+                        page: 0,
+                        anchorId: 'sheet_editable_values',
+                      ),
+                    ),
+                    combatMetric(
+                      '◈',
+                      '$difesa()',
+                      moss,
+                      () => vaiAllaFunzione(
+                        page: 0,
+                        anchorId: 'sheet_defense_bonus',
+                      ),
+                    ),
+                    combatMetric(
+                      '↩',
+                      '$reazioniTotali()',
+                      brass,
+                      () => vaiAllaFunzione(
+                        page: 0,
+                        anchorId: 'sheet_editable_values',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: skills.isEmpty
+                    ? Center(
+                        child: TextButton(
+                          onPressed: () => vaiAllaFunzione(
+                            page: 4,
+                            anchorId: 'skills_root',
+                            logTitle: 'Skill',
+                          ),
+                          child: const Text('AGGIUNGI AZIONI'),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: skills.length,
+                        addAutomaticKeepAlives: false,
+                        addRepaintBoundaries: true,
+                        itemBuilder: (context, index) =>
+                            RepaintBoundary(child: actionRow(index)),
+                      ),
+              ),
+              Container(
+                color: const Color(0xFF110E0B),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 2,
+                  children: [
+                    manuscriptSectionTab(
+                      label: 'RIPOSO',
+                      onPressed: () => vaiAllaFunzione(
+                        page: 1,
+                        anchorId: 'rest_root',
+                        logTitle: 'Riposo',
+                      ),
+                    ),
+                    manuscriptSectionTab(
+                      label: 'DANNO / CURA',
+                      onPressed: () => vaiAllaFunzione(
+                        page: 0,
+                        anchorId: 'sheet_damage_heal',
+                        logTitle: 'Danno / Cura',
+                      ),
+                    ),
+                    manuscriptSectionTab(
+                      label: 'TIRA VC',
+                      onPressed: () => tiraValoreSpeciale('VC', vc()),
+                    ),
+                    manuscriptSectionTab(
+                      label: 'TIRA CM',
+                      onPressed: () => tiraValoreSpeciale('CM', cm()),
+                    ),
+                    manuscriptSectionTab(
+                      label: 'MODIFICA',
+                      onPressed: () => vaiAllaFunzione(
+                        page: 0,
+                        anchorId: 'sheet_editable_values',
+                        logTitle: 'Modifica',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      color: paper,
+    );
+    Widget initiativeRow(int index) {
+      final token = masterInitiativeTokens[index];
+      final active = index == masterInitiativeActiveIndex;
+      final enemy = '${token['side'] ?? ''}' == 'enemy';
+      final initiative = readIntValue(token['initiative']);
+      return InkWell(
+        onTap: () => setMasterInitiativeActiveIndex(index),
+        child: Container(
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: active ? const Color(0xFF2A2012) : Colors.transparent,
+            border: const Border(bottom: BorderSide(color: Color(0xFF4D381D))),
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 23,
+                child: Text(
+                  '${index + 1}',
+                  style: TextStyle(
+                    color: active ? brass : const Color(0xFF8B6C3B),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Icon(
+                active
+                    ? Icons.play_arrow
+                    : (enemy ? Icons.close : Icons.person_outline),
+                size: 15,
+                color: active ? brass : const Color(0xFFB69662),
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  '${token['name'] ?? '???'}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: active
+                        ? const Color(0xFFE6D0A1)
+                        : const Color(0xFFBDA77F),
+                    fontWeight: active ? FontWeight.w900 : FontWeight.w600,
+                  ),
+                ),
+              ),
+              Text(
+                '$initiative',
+                style: const TextStyle(color: Color(0xFF8B6C3B), fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final right = frame(
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          manuscriptHeading(
+            'TURNO ${masterInitiativeRound > 0 ? masterInitiativeRound : ''}',
+          ),
+          SizedBox(
+            height: masterInitiativeTokens.isEmpty
+                ? 45
+                : min(230.0, masterInitiativeTokens.length * 34.0),
+            child: masterInitiativeTokens.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      'Nessuna iniziativa attiva.',
+                      style: TextStyle(color: Color(0xFF9B8254)),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: masterInitiativeTokens.length,
+                    itemExtent: 34,
+                    itemBuilder: (context, index) => initiativeRow(index),
+                  ),
+          ),
+          manuscriptHeading('BERSAGLIO'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            child: Text(
+              masterInitiativeTokens.isEmpty
+                  ? 'Seleziona un bersaglio dalla turnistica o dalla mappa.'
+                  : 'Usa la turnistica o la Mappa per cambiare bersaglio.',
+              style: const TextStyle(color: Color(0xFFBDA77F), fontSize: 11),
+            ),
+          ),
+          TextButton(
+            onPressed: () => vaiAllaFunzione(
+              page: _OculumHomePageState.mapPageIndex,
+              logTitle: 'Mappa e bersaglio',
+            ),
+            style: TextButton.styleFrom(foregroundColor: brass),
+            child: const Text('CAMBIA BERSAGLIO'),
+          ),
+          manuscriptHeading('DADI RAPIDI'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Wrap(
+              spacing: 3,
+              runSpacing: 2,
+              children: [4, 6, 8, 10, 12, 20]
+                  .map(
+                    (faces) => OutlinedButton(
+                      onPressed: () => tiraDado(faces),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: Size.zero,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 5,
+                        ),
+                        foregroundColor: const Color(0xFFE0CCA0),
+                        side: const BorderSide(color: Color(0xFF725326)),
+                        shape: const RoundedRectangleBorder(),
+                      ),
+                      child: Text('d$faces'),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ),
+          TextButton(
+            onPressed: () => vaiAllaFunzione(
+              page: _OculumHomePageState.dicePageIndex,
+              logTitle: 'Tutti i dadi',
+            ),
+            style: TextButton.styleFrom(foregroundColor: brass),
+            child: const Text('TUTTI I DADI'),
+          ),
+          manuscriptHeading('FEED DEGLI EVENTI'),
+          Expanded(
+            child: logEventi.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Text(
+                      'Gli eventi di gioco appariranno qui.',
+                      style: TextStyle(color: Color(0xFF9B8254), fontSize: 11),
+                    ),
+                  )
+                : ListView.builder(
+                    reverse: true,
+                    itemCount: min(24, logEventi.length),
+                    itemBuilder: (context, index) => Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 3, 10, 3),
+                      child: Text(
+                        logEventi[logEventi.length - 1 - index],
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFBDA77F),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+
+    return Theme(
+      data: Theme.of(context).copyWith(
+        scaffoldBackgroundColor: shell,
+        colorScheme: Theme.of(
+          context,
+        ).colorScheme.copyWith(primary: brass, surface: shell),
+      ),
+      child: Container(
+        color: shell,
+        child: Column(
+          children: [
+            frame(
+              SizedBox(
+                height: 54,
+                child: Row(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        '◉  OCULUM',
+                        style: TextStyle(
+                          color: brass,
+                          fontFamily: 'serif',
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        activeCampaignName(),
+                        style: const TextStyle(
+                          color: Color(0xFFE0CCA0),
+                          fontFamily: 'serif',
+                        ),
+                      ),
+                    ),
+                    const Text(
+                      'GIOCA',
+                      style: TextStyle(
+                        color: brass,
+                        fontFamily: 'serif',
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    TextButton(
+                      onPressed: () => vaiAllaFunzione(
+                        page: 2,
+                        anchorId: 'settings_mods',
+                        logTitle: 'MOD',
+                      ),
+                      child: const Text('MODIFICA'),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            stats,
+            const SizedBox(height: 5),
+            Expanded(
+              child: wide
+                  ? Row(
+                      children: [
+                        SizedBox(
+                          width: constraints.maxWidth * .22,
+                          child: left,
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(child: center),
+                        const SizedBox(width: 5),
+                        SizedBox(
+                          width: constraints.maxWidth * .27,
+                          child: right,
+                        ),
+                      ],
+                    )
+                  : ListView(
+                      children: [
+                        SizedBox(height: 340, child: left),
+                        const SizedBox(height: 6),
+                        SizedBox(height: 680, child: center),
+                        const SizedBox(height: 6),
+                        SizedBox(height: 440, child: right),
+                      ],
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget characterDesktopPage() {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 860) return characterMobilePage();
+        if (manuscriptLivingActive) {
+          return manuscriptLivingDesktopPage(constraints);
+        }
 
         final layoutId =
             currentThemeVisualIdentity().mainSheetGuiStyle.sheetLayoutId;

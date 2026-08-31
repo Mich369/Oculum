@@ -93,16 +93,221 @@ class OculumBottomNav extends StatelessWidget {
     pageIndex: 12,
   );
 
+  /// Le quattro destinazioni che meritano spazio permanente sul telefono.
+  /// Tutto il resto vive una volta sola nel Codice, senza una seconda barra
+  /// piena di icone troppo piccole.
+  static const List<OculumBottomNavItem> mobilePrimaryItems = [
+    OculumBottomNavItem(
+      label: 'Scheda',
+      icon: Icons.visibility_outlined,
+      pageIndex: 0,
+    ),
+    OculumBottomNavItem(
+      label: 'Riposo',
+      icon: Icons.nightlight_round,
+      pageIndex: 1,
+    ),
+    OculumBottomNavItem(
+      label: 'Storia',
+      icon: Icons.menu_book_outlined,
+      pageIndex: 5,
+    ),
+    OculumBottomNavItem(
+      label: 'Borsa',
+      icon: Icons.backpack_outlined,
+      pageIndex: 6,
+    ),
+  ];
+
+  Future<void> _openMobileCodex(
+    BuildContext context,
+    List<OculumBottomNavItem> destinations,
+  ) async {
+    final primaryIndexes = mobilePrimaryItems
+        .map((item) => item.pageIndex)
+        .toSet();
+    final codexItems = destinations
+        .where((item) => !primaryIndexes.contains(item.pageIndex))
+        .toList(growable: false);
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+          decoration: const BoxDecoration(
+            color: Color(0xFF0D0C13),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(top: BorderSide(color: Color(0xFF9E6B2F))),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE6D8BD).withValues(alpha: .35),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'CODICE DI OCULUM',
+                style: TextStyle(
+                  color: Color(0xFFE6D8BD),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.4,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Ogni pagina è qui una sola volta.',
+                style: TextStyle(
+                  color: const Color(0xFFE6D8BD).withValues(alpha: .72),
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 12),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: codexItems.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 1.08,
+                ),
+                itemBuilder: (context, index) {
+                  final item = codexItems[index];
+                  final selected = item.pageIndex == currentIndex;
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        Navigator.pop(sheetContext);
+                        onChanged(item.pageIndex);
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? const Color(0xFF9E6B2F).withValues(alpha: .26)
+                              : Colors.black.withValues(alpha: .22),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: selected
+                                ? const Color(0xFF9E6B2F)
+                                : Colors.white.withValues(alpha: .08),
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              item.icon,
+                              color: selected
+                                  ? Colors.white
+                                  : const Color(0xFFE6D8BD),
+                              size: 23,
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              item.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFFE6D8BD),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final visibleItems = [...items, if (showOnline) onlineItem];
+    final size = MediaQuery.of(context).size;
+    final compactPhone = size.shortestSide < 600;
+    if (compactPhone) {
+      final primaryIndexes = mobilePrimaryItems
+          .map((item) => item.pageIndex)
+          .toSet();
+      return SafeArea(
+        top: false,
+        child: Container(
+          height: 76,
+          padding: const EdgeInsets.fromLTRB(7, 7, 7, 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF050408),
+            border: Border(
+              top: BorderSide(
+                color: const Color(0xFFE6D8BD).withValues(alpha: .14),
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: .68),
+                blurRadius: 22,
+                offset: const Offset(0, -8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              for (final item in mobilePrimaryItems)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: _BottomNavButton(
+                      label: item.label,
+                      icon: item.icon,
+                      selected: item.pageIndex == currentIndex,
+                      compact: true,
+                      onTap: () => onChanged(item.pageIndex),
+                    ),
+                  ),
+                ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: _BottomNavButton(
+                    label: 'Codice',
+                    icon: Icons.grid_view_rounded,
+                    selected: !primaryIndexes.contains(currentIndex),
+                    compact: true,
+                    onTap: () => _openMobileCodex(context, visibleItems),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     final selectedIndex = visibleItems.indexWhere(
       (item) => item.pageIndex == currentIndex,
     );
     final firstRowCount = visibleItems.length <= 5 ? visibleItems.length : 5;
     final secondRowCount = visibleItems.length - firstRowCount;
-    final size = MediaQuery.of(context).size;
-    final compactPhone = size.shortestSide < 600;
     // Keep both navigation rows reachable on short phones.  The former fixed
     // 108 px bar could leave too little scroll viewport at the bottom.
     final shortPhone = compactPhone && size.height < 600;

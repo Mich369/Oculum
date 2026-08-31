@@ -860,18 +860,26 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     final overrideDuration = overrideFormula.isEmpty
         ? null
         : rollEffectDurationFormula(overrideFormula);
-    final scaledDuration = oculumConditionScaledDuration(
-      base:
-          duration ??
-          overrideDuration ??
-          definition.durationForStage(targetStage),
-      difficulty: normalizedCampaignDifficulty(),
-      scale:
-          definition.difficultyScaling ==
-              OculumConditionDifficultyScaling.duration ||
-          definition.difficultyScaling ==
-              OculumConditionDifficultyScaling.damageAndDuration,
-    );
+    final vitaAfonaDuration = switch (normalizedCampaignDifficulty()) {
+      'facile' => 1,
+      'difficile' => 4,
+      'oculum' => 5,
+      _ => 3,
+    };
+    final scaledDuration = type == 'vita_afona' && duration == null
+        ? vitaAfonaDuration
+        : oculumConditionScaledDuration(
+            base:
+                duration ??
+                overrideDuration ??
+                definition.durationForStage(targetStage),
+            difficulty: normalizedCampaignDifficulty(),
+            scale:
+                definition.difficultyScaling ==
+                    OculumConditionDifficultyScaling.duration ||
+                definition.difficultyScaling ==
+                    OculumConditionDifficultyScaling.damageAndDuration,
+          );
     String message;
     if (existing == null) {
       final instance = OculumConditionInstance(

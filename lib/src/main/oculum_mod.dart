@@ -146,11 +146,16 @@ Map<String, dynamic> oculusNormalizeCharacterData(Object? raw) {
     ...rawMissions.map((value) => '$value'),
     ...List<String>.filled(12, ''),
   ].take(12).toList(growable: true);
+  // Oculus ha dodici soli livelli. Le vecchie schede restano leggibili, ma
+  // non possono più oltrepassare il tetto della mod.
+  result['level'] = readIntValue(result['level']).clamp(0, 12).toInt();
+  result['progress'] = readIntValue(result['progress']).clamp(0, 2).toInt();
   return result;
 }
 
 extension _OculumGameModUi on _OculumHomePageState {
   bool get oculusModActive => activeGameMod == 'oculus';
+  bool get manuscriptLivingActive => activeGameMod == 'manuscript_living';
 
   void setActiveGameMod(String id) {
     final normalized = id.trim().toLowerCase();
@@ -244,15 +249,20 @@ extension _OculumGameModUi on _OculumHomePageState {
     );
   }
 
-  Widget oculusNumberField(String key, String label, {int minimum = 0}) {
+  Widget oculusNumberField(
+    String key,
+    String label, {
+    int minimum = 0,
+    int? maximum,
+  }) {
     return TextFormField(
       key: ValueKey<String>('oculus_number_$key'),
       initialValue: '${oculusInt(key)}',
       keyboardType: const TextInputType.numberWithOptions(signed: true),
-      onChanged: (value) => setOculusData(
-        key,
-        max(minimum, int.tryParse(value.trim()) ?? minimum),
-      ),
+      onChanged: (value) {
+        final parsed = max(minimum, int.tryParse(value.trim()) ?? minimum);
+        setOculusData(key, maximum == null ? parsed : min(maximum, parsed));
+      },
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
@@ -278,52 +288,6 @@ extension _OculumGameModUi on _OculumHomePageState {
         if (value != null) setOculusData(key, value, rebuild: true);
       },
     );
-  }
-
-  void rollOculusOpposed({required bool attack}) {
-    final random = Random.secure();
-    int roll(String key) {
-      final faces = max(2, oculusInt(key, fallback: 4));
-      return random.nextInt(faces) + 1;
-    }
-
-    final playerStatKey = attack ? 'volontaDie' : 'materiaDie';
-    final enemyStatKey = attack ? 'enemyMateriaDie' : 'enemyVolontaDie';
-    final playerStat = roll(playerStatKey);
-    final playerForce = roll('forceDie');
-    final masteryKey = attack ? 'volontaMastery' : 'materiaMastery';
-    final playerBonus = oculusInt(masteryKey).clamp(0, 3).toInt();
-    final enemyStat = roll(enemyStatKey);
-    final enemyForce = roll('enemyForceDie');
-    final playerTotal = playerStat + playerForce + playerBonus;
-    final enemyTotal = enemyStat + enemyForce;
-    final outcome = playerTotal > enemyTotal
-        ? t('SUCCESSO', 'SUCCESS')
-        : playerTotal < enemyTotal
-        ? t('FALLIMENTO', 'FAILURE')
-        : t('PAREGGIO', 'TIE');
-    final label = attack ? t('Attacco', 'Attack') : t('Difesa', 'Defense');
-    final playerStatLabel = attack ? t('Volonta', 'Will') : 'Materia';
-    risultato =
-        '$label - $outcome: '
-        '$playerStatLabel $playerStat + Bonus $playerBonus + Forza $playerForce = $playerTotal. '
-        '${t('Tiro nemico nascosto.', 'Enemy roll hidden.')}';
-    dadoMostrato = '$playerTotal : ?';
-    showOculusDice(<Map<String, dynamic>>[
-      <String, dynamic>{
-        'label': playerStatLabel,
-        'faces': oculusInt(playerStatKey, fallback: 4),
-        'value': playerStat,
-        'bonus': playerBonus,
-      },
-      <String, dynamic>{
-        'label': t('Forza', 'Force'),
-        'faces': oculusInt('forceDie', fallback: 4),
-        'value': playerForce,
-      },
-    ]);
-    aggiungiLog(risultato);
-    notifyDiceResultChanged();
   }
 
   void rollOculusStat(String key, String label) {
@@ -464,6 +428,9 @@ extension _OculumGameModUi on _OculumHomePageState {
     );
   }
 
+  // I dati e l'editor legacy restano qui per leggere le vecchie schede; la
+  // schermata Oculus essenziale non li espone più.
+  // ignore: unused_element
   Future<void> showOculusArtPicker() async {
     var selectedArt = oculusArtSkillCatalog.containsKey(oculusText('art'))
         ? oculusText('art')
@@ -579,6 +546,7 @@ extension _OculumGameModUi on _OculumHomePageState {
     programmaSalvataggio(invalidateCaches: false);
   }
 
+  // ignore: unused_element
   Future<void> saveOculusManualPdf() async {
     const assetPath = 'assets/manuals/oculus_manuale_libero_gotico_horror.pdf';
     const fileName = 'Oculus_Manuale_Libero_Gotico_Horror.pdf';
@@ -651,8 +619,6 @@ extension _OculumGameModUi on _OculumHomePageState {
     return ValueListenableBuilder<int>(
       valueListenable: gameModRevision,
       builder: (context, revision, child) {
-        final skills = oculusModData['skills'] as List<String>;
-        final missions = oculusModData['missions'] as List<String>;
         final help = readBoolValue(
           oculusModData['helpEnabled'],
           fallback: true,
@@ -722,49 +688,13 @@ extension _OculumGameModUi on _OculumHomePageState {
                 ],
               ),
             ),
-            oculusSection(t('Identita e storia', 'Identity and story'), [
-              oculusTextField(
-                'name',
-                t('Nome', 'Name'),
-                helper: t(
-                  'Come ti chiama il mondo?',
-                  'What does the world call you?',
-                ),
-              ),
-              const SizedBox(height: 8),
-              oculusTextField('race', t('Razza', 'Race')),
-              const SizedBox(height: 8),
-              oculusTextField('title', t('Titolo', 'Title')),
-              const SizedBox(height: 8),
-              oculusTextField('art', 'Art'),
-              const SizedBox(height: 8),
-              oculusTextField(
-                'appearance',
-                t('Aspetto', 'Appearance'),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 8),
-              oculusTextField(
-                'forbiddenSight',
-                t(
-                  'Cosa il tuo occhio non sopporta vedere',
-                  'What your eye cannot bear to see',
-                ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 8),
+            oculusSection(t('Ferita e missione', 'Wound and mission'), [
               oculusTextField('wound', t('Ferita', 'Wound')),
-              const SizedBox(height: 8),
-              oculusTextField('desire', t('Desiderio', 'Desire')),
-              const SizedBox(height: 8),
-              oculusTextField(
-                'protectedPerson',
-                t('Persona da proteggere', 'Person to protect'),
-              ),
               const SizedBox(height: 8),
               oculusTextField(
                 'activeMission',
                 t('Missione attiva', 'Active mission'),
+                maxLines: 3,
               ),
             ]),
             oculusSection(t('Dadi e valori', 'Dice and values'), [
@@ -835,13 +765,18 @@ extension _OculumGameModUi on _OculumHomePageState {
                 children: [
                   SizedBox(
                     width: 120,
-                    child: oculusNumberField('level', t('Livello', 'Level')),
+                    child: oculusNumberField(
+                      'level',
+                      t('Livello /12', 'Level /12'),
+                      maximum: 12,
+                    ),
                   ),
                   SizedBox(
                     width: 120,
                     child: oculusNumberField(
                       'progress',
                       t('Progresso /3', 'Progress /3'),
+                      maximum: 2,
                     ),
                   ),
                   SizedBox(
@@ -913,189 +848,21 @@ extension _OculumGameModUi on _OculumHomePageState {
                 ),
               ],
             ]),
-            oculusSection(t('Contrasto rapido', 'Quick opposition'), [
-              Text(
-                t(
-                  'Quattro dadi in contrasto: ai tuoi dadi Volonta o Materia si somma il relativo bonus Maestria.',
-                  'Four opposed dice: the matching Mastery bonus is added to your Will or Materia die.',
-                ),
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  SizedBox(
-                    width: 170,
-                    child: oculusDieSelector(
-                      'enemyVolontaDie',
-                      t('Volonta nemica', 'Enemy Will'),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 170,
-                    child: oculusDieSelector(
-                      'enemyMateriaDie',
-                      t('Materia nemica', 'Enemy Materia'),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 170,
-                    child: oculusDieSelector(
-                      'enemyForceDie',
-                      t('Forza nemica', 'Enemy Force'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  FilledButton.icon(
-                    onPressed: () => rollOculusOpposed(attack: true),
-                    icon: const Icon(Icons.gps_fixed),
-                    label: Text(
-                      t(
-                        'Attacco: Volonta + bonus + Forza',
-                        'Attack: Will + bonus + Force',
-                      ),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () => rollOculusOpposed(attack: false),
-                    icon: const Icon(Icons.shield_outlined),
-                    label: Text(
-                      t(
-                        'Difesa: Materia + bonus + Forza',
-                        'Defense: Materia + bonus + Force',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              if (risultato.trim().isNotEmpty) ...[
-                const SizedBox(height: 10),
-                SelectableText(risultato),
-              ],
-            ]),
-            oculusSection(t('Tratti e Skill', 'Traits and Skills'), [
-              FilledButton.icon(
-                onPressed: showOculusArtPicker,
-                icon: const Icon(Icons.auto_awesome),
-                label: Text(
-                  t('Scegli Art e 3 Skill', 'Choose Art and 3 Skills'),
-                ),
-              ),
-              const SizedBox(height: 10),
-              oculusTextField(
-                'racialTraits',
-                t('Tratti razziali', 'Racial traits'),
-                minLines: 3,
-                maxLines: 6,
-              ),
-              const SizedBox(height: 10),
-              for (var i = 0; i < 3; i++) ...[
-                TextFormField(
-                  key: ValueKey<String>('oculus_skill_$i'),
-                  initialValue: skills[i],
-                  minLines: 2,
-                  maxLines: 4,
-                  onChanged: (value) {
-                    skills[i] = value;
-                    setOculusData('skills', skills);
-                  },
-                  decoration: InputDecoration(
-                    labelText: '${t('Skill', 'Skill')} ${i + 1}',
-                    helperText: help
-                        ? t(
-                            'Si sblocca soltanto tramite Quest del Master.',
-                            'Unlocked only through a Master Quest.',
-                          )
-                        : null,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ]),
-            oculusSection(
-              t('Dodici missioni del Titolo', 'Twelve Title missions'),
-              [
-                for (var i = 0; i < 12; i++) ...[
-                  TextFormField(
-                    key: ValueKey<String>('oculus_mission_$i'),
-                    initialValue: missions[i],
-                    onChanged: (value) {
-                      missions[i] = value;
-                      setOculusData('missions', missions);
-                    },
-                    decoration: InputDecoration(
-                      labelText: '${i + 1}',
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                ],
-              ],
-            ),
-            oculusSection(t('Horror e note', 'Horror and notes'), [
-              Row(
-                children: [
-                  Expanded(
-                    child: oculusNumberField(
-                      'madness',
-                      t('Follia 0-6', 'Madness 0-6'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: oculusNumberField(
-                      'corruption',
-                      t('Corruzione 0-6', 'Corruption 0-6'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              oculusTextField(
-                'notes',
-                t('Note', 'Notes'),
-                minLines: 5,
-                maxLines: 12,
-              ),
-            ]),
             oculusSection(t('Regole essenziali', 'Essential rules'), [
-              OutlinedButton.icon(
-                onPressed: saveOculusManualPdf,
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: Text(
-                  t('Salva il manuale completo', 'Save the full manual'),
-                ),
-              ),
-              const SizedBox(height: 10),
               SelectableText(
                 t(
-                  'TIRO: dado Stat + dado Forza. DT 5 / 7 / 9 / 11 / 14.\n'
-                      'VANTAGGIO / SVANTAGGIO: +3 / -3 quando la situazione lo giustifica.\n'
-                      'VITA: 3 + tiro Resilienza; quando Resilienza cresce, la Vita MAX sale solo se il nuovo tiro e migliore.\n'
-                      'CRITICO: massimo naturale del dado Stat, +1 danno oppure un effetto coerente.\n'
-                      'DANNO: lieve 1, normale 2, pesante 3, Skill 2-4.\n'
-                      'EFFETTI BASE: Brucia, Legato, Esposto, Velato, Fratturato; lo stesso effetto si rinnova e non si somma.\n'
-                      'CRESCITA: 3 Progresso = +1 livello, massimo 12; ogni livello aumenta una Stat di un grado.\n'
-                      'SKILL: solo tramite Missione/Quest del Master. Una Skill usa un solo effetto ricorrente.\n'
-                      'SICUREZZA: concordate temi da evitare e un segnale semplice per fermare una scena.',
-                  'ROLL: Stat die + Force die. DT 5 / 7 / 9 / 11 / 14.\n'
-                      'ADVANTAGE / DISADVANTAGE: +3 / -3 when the situation warrants it.\n'
-                      'LIFE: 3 + Resilience roll; when Resilience grows, max Life rises only if the new roll is better.\n'
-                      'CRITICAL: natural maximum on the Stat die, +1 damage or a coherent effect.\n'
-                      'DAMAGE: light 1, normal 2, heavy 3, Skill 2-4.\n'
-                      'BASE EFFECTS: Burn, Bound, Exposed, Veiled, Fractured; the same effect refreshes and never stacks.\n'
-                      'GROWTH: 3 Progress = +1 level, maximum 12; each level raises one Stat by one die step.\n'
-                      'SKILLS: only through a Master Mission/Quest. A Skill uses one recurring effect.\n'
-                      'SAFETY: agree on avoided themes and a simple signal to stop a scene.',
+                  'LIVELLI: esistono solo 12 livelli, da 0 a 12. A 3 Progresso il Master assegna +1 livello; il contatore torna a 0 e al livello 12 non cresce più.\n'
+                      'DADI STAT: quando sali di livello scegli una sola Stat tra RES, VOL, MAT e OCU e falla avanzare di un gradino: d4 → d6 → d8 → d10 → d12 → d20. Il Master conferma la scelta e aggiorni il selettore corrispondente.\n'
+                      'POTERE / FORZA: il dado Forza è il Potere della scena. Sale sulla stessa scala solo come ricompensa esplicita del Master, normalmente dopo una Missione attiva conclusa; poi aggiorni “Forza attiva”.\n'
+                      'MAESTRIA: spendi Punti Bonus per aggiungere da +1 a +3 a una Stat; i costi sono 3, poi 6, poi 9 Punti Bonus.\n'
+                      'TIRO: dado Stat + dado Forza + eventuale Maestria. DT 5 / 7 / 9 / 11 / 14; vantaggio/svantaggio vale +3/-3 quando il Master lo stabilisce.\n'
+                      'VITA: 3 + tiro Resilienza; quando RES cresce, la Vita MAX aumenta solo se il nuovo tiro è più alto. Critico = massimo naturale del dado Stat: +1 danno o un effetto coerente.',
+                  'LEVELS: there are only 12 levels, from 0 to 12. At 3 Progress the Master grants +1 level; progress returns to 0 and level 12 cannot increase further.\n'
+                      'STAT DICE: on a level up choose one Stat—RES, WILL, MAT or OCU—and move it one step: d4 → d6 → d8 → d10 → d12 → d20. The Master confirms the choice, then update that selector.\n'
+                      'POWER / FORCE: the Force die is the scene Power. It rises on the same ladder only as an explicit Master reward, normally after the active Mission is completed; then update Active Force.\n'
+                      'MASTERY: spend Bonus Points for +1 to +3 on a Stat; costs are 3, then 6, then 9 Bonus Points.\n'
+                      'ROLL: Stat die + Force die + optional Mastery. DT 5 / 7 / 9 / 11 / 14; advantage/disadvantage is +3/-3 when the Master establishes it.\n'
+                      'LIFE: 3 + a Resilience roll; when RES rises, max Life rises only if the new roll is higher. Critical = natural maximum on the Stat die: +1 damage or a coherent effect.',
                 ),
               ),
             ]),

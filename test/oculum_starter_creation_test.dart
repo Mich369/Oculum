@@ -10,6 +10,33 @@ void main() {
     expect(oculumMonsterStatPointsPerLevel('Mostro Boss'), 18);
   });
 
+  test('monster creation counter includes rank points and grade points', () {
+    expect(
+      oculumMonsterMissingStatPoints(
+        type: 'Mostro Boss',
+        level: 10,
+        grade: 1,
+        resilienza: 80,
+        volonta: 40,
+        materia: 40,
+        oculum: 20,
+      ),
+      10,
+    );
+    expect(
+      oculumMonsterMissingStatPoints(
+        type: 'Mostro Mini Boss',
+        level: 1,
+        grade: 1,
+        resilienza: 5,
+        volonta: 5,
+        materia: 5,
+        oculum: 0,
+      ),
+      7,
+    );
+  });
+
   test('every guided starter Art has exactly three skills', () {
     for (final art in oculumStarterArtChoices()) {
       expect(art.skills, hasLength(3), reason: art.nome);

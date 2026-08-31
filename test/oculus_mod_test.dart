@@ -19,10 +19,16 @@ void main() {
       final data = oculusNormalizeCharacterData(<String, dynamic>{
         'name': 'Iris',
         'skills': <String>['Una'],
+        'level': 99,
+        'progress': 8,
+        'desire': 'Dato legacy da conservare',
         'futureField': 7,
       });
       expect(data['name'], 'Iris');
       expect(data['skills'], hasLength(3));
+      expect(data['level'], 12);
+      expect(data['progress'], 2);
+      expect(data['desire'], 'Dato legacy da conservare');
       expect(data['futureField'], 7);
     });
 

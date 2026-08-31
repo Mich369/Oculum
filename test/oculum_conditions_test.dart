@@ -77,6 +77,14 @@ void main() {
   });
 
   group('Percentuale minimo cap e rounding', () {
+    test('Vita Afona e registrata come condizione HP negativa', () {
+      final vitaAfona = oculumConditionDefinition('vita_afona');
+      expect(vitaAfona?.nameIt, 'Vita Afona');
+      expect(vitaAfona?.affectedTargets, contains(OculumConditionTarget.hp));
+      expect(vitaAfona?.defaultDuration, 3);
+      expect(vitaAfona?.tickTrigger, OculumConditionTickTrigger.endTurn);
+    });
+
     test('Veleno Putrido scala sulle quattro difficolta', () {
       expect(
         oculumConditionScaledValue(

@@ -56,6 +56,10 @@ extension _OculumCampaigns on _OculumHomePageState {
       'mapImagePath': mapImagePath,
       'mapImageName': mapImageName,
       'mapUrl': mapUrlController.text,
+      'mapSplitPanelCount': mapSplitPanelCount,
+      'mapSplitPanels': mapSplitPanels
+          .map((panel) => Map<String, dynamic>.from(panel))
+          .toList(growable: false),
       'mapNotes': mapNotesController.text,
       'mapSaveSession': mapSaveSession,
       'mapSessionChoiceAsked': mapSessionChoiceAsked,
@@ -289,6 +293,25 @@ extension _OculumCampaigns on _OculumHomePageState {
     mapImagePath = '${campaign['mapImagePath'] ?? ''}';
     mapImageName = '${campaign['mapImageName'] ?? ''}';
     mapUrlController.text = '${campaign['mapUrl'] ?? ''}';
+    mapSplitPanelCount = readIntValue(
+      campaign['mapSplitPanelCount'],
+      fallback: 1,
+    ).clamp(1, 4).toInt();
+    final splitRaw = campaign['mapSplitPanels'];
+    mapSplitPanels = splitRaw is List
+        ? splitRaw
+              .whereType<Map>()
+              .take(4)
+              .map((panel) => Map<String, dynamic>.from(panel))
+              .toList(growable: true)
+        : <Map<String, dynamic>>[];
+    while (mapSplitPanels.length < mapSplitPanelCount) {
+      mapSplitPanels.add(<String, dynamic>{
+        'kind': 'sheet',
+        'sheetTag': '',
+        'url': '',
+      });
+    }
     mapNotesController.text = '${campaign['mapNotes'] ?? ''}';
     mapSaveSession = readBoolValue(campaign['mapSaveSession']);
     mapSessionChoiceAsked = readBoolValue(campaign['mapSessionChoiceAsked']);

@@ -4896,10 +4896,270 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
   }
 
+  String monsterBookQuickStatsLabel(MonsterBookEntry entry) {
+    final stats = entry.stats;
+    if (stats.containsKey('resilienza') || stats.containsKey('defense')) {
+      return 'Lv ${stats['level'] ?? 0} • RES ${stats['resilienza'] ?? 3} • VOL ${stats['volonta'] ?? 1} • MAT ${stats['materia'] ?? 0} • OCU ${stats['oculum'] ?? 1} • DIF ${stats['defense'] ?? stats['def'] ?? 0}${(stats['shield'] ?? 0) > 0 ? ' • SCU ${stats['shield']}' : ''}';
+    }
+    return 'HP ${stats['hp'] ?? 0} • ATK ${stats['atk'] ?? 0} • DIF ${stats['def'] ?? 0}';
+  }
+
+  Future<void> showMonsterBookQuickSpawnDialog(MonsterBookEntry entry) async {
+    final level = TextEditingController(text: '${entry.stats['level'] ?? 1}');
+    final grade = TextEditingController(text: '0');
+    final resilience = TextEditingController(
+      text: '${entry.stats['resilienza'] ?? 0}',
+    );
+    final will = TextEditingController(text: '${entry.stats['volonta'] ?? 0}');
+    final matter = TextEditingController(
+      text: '${entry.stats['materia'] ?? 0}',
+    );
+    final oculum = TextEditingController(text: '${entry.stats['oculum'] ?? 0}');
+    final fixedLevelZero = entry.stats['level'] == 0;
+    var selectedVariant = 'base';
+
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (context, setDialogState) {
+            final selectedLevel = max(0, readIntValue(level.text));
+            final selectedGrade = max(0, readIntValue(grade.text));
+            final budget = quickMonsterStatBudget(
+              entry.presetType,
+              selectedLevel,
+              selectedGrade,
+            );
+            final assigned =
+                max(0, readIntValue(resilience.text)) +
+                max(0, readIntValue(will.text)) +
+                max(0, readIntValue(matter.text)) +
+                max(0, readIntValue(oculum.text));
+            final resilienceValue = max(0, readIntValue(resilience.text));
+            final highestOther = max(
+              max(0, readIntValue(will.text)),
+              max(0, readIntValue(matter.text)),
+            );
+            final lifeIsHighest =
+                resilienceValue >=
+                max(highestOther, max(0, readIntValue(oculum.text)));
+            final usesFixedBase = fixedLevelZero && selectedLevel == 0;
+            final canCreate =
+                usesFixedBase ||
+                (assigned == budget && lifeIsHighest && budget > 0);
+
+            Widget statField(String label, TextEditingController controller) =>
+                TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => setDialogState(() {}),
+                  decoration: InputDecoration(
+                    labelText: label,
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                );
+
+            return AlertDialog(
+              backgroundColor: backgroundMidColor,
+              title: Text('Genera ${entry.nameIt}'),
+              content: SizedBox(
+                width: 460,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      smallInfoText(
+                        usesFixedBase
+                            ? 'Preset di livello 0: conserva le statistiche base del Bestiario.'
+                            : 'Punti effettivi: $budget = livello × ${oculumMonsterStatPointsPerLevel(entry.presetType) + 3} (base + compensazione Titoli) + grado × 10. Resilienza/Vita deve essere il tratto più alto.',
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedVariant,
+                        decoration: const InputDecoration(
+                          labelText: 'Variante del mostro',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'base',
+                            child: Text('Base — Bestiario'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'predatore',
+                            child: Text(
+                              'Predatore — più forte, Ombra e imboscate',
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'elite',
+                            child: Text(
+                              'Élite — molto più forte, Fulmine e attacchi nuovi',
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) => setDialogState(
+                          () => selectedVariant = value ?? 'base',
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final levelField = statField('Livello', level);
+                          final gradeField = statField('Grado', grade);
+                          if (constraints.maxWidth < 340) {
+                            return Column(
+                              children: [
+                                levelField,
+                                const SizedBox(height: 8),
+                                gradeField,
+                              ],
+                            );
+                          }
+                          return Row(
+                            children: [
+                              Expanded(child: levelField),
+                              const SizedBox(width: 8),
+                              Expanded(child: gradeField),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final fields = [
+                            statField('Vita / Resilienza', resilience),
+                            statField('Volontà', will),
+                            statField('Materia', matter),
+                            statField('Oculum', oculum),
+                          ];
+                          if (constraints.maxWidth < 340) {
+                            return Column(
+                              children: [
+                                for (final field in fields) ...[
+                                  field,
+                                  const SizedBox(height: 8),
+                                ],
+                              ],
+                            );
+                          }
+                          return Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final field in fields)
+                                SizedBox(width: 205, child: field),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        usesFixedBase
+                            ? 'Base fissa livello 0'
+                            : 'Assegnati $assigned / $budget${lifeIsHighest ? '' : ' — Vita deve essere la più alta'}',
+                        style: TextStyle(
+                          color: canCreate
+                              ? Colors.greenAccent
+                              : Colors.amberAccent,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: usesFixedBase
+                            ? null
+                            : () {
+                                final rolled = randomQuickMonsterStats(
+                                  budget,
+                                  hint: '${entry.nameIt} ${entry.descIt}',
+                                );
+                                resilience.text = '${rolled['resilienza']}';
+                                will.text = '${rolled['volonta']}';
+                                matter.text = '${rolled['materia']}';
+                                oculum.text = '${rolled['oculum']}';
+                                setDialogState(() {});
+                              },
+                        icon: const Icon(Icons.casino),
+                        label: const Text('Randomizza punti effettivi'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Annulla'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: !canCreate
+                      ? null
+                      : () async {
+                          await creaSchedaRapidaMaster(
+                            forcedType: entry.presetType,
+                            fallbackName: entry.nameIt,
+                            sideOverride: entry.isNpc ? 'ally' : 'enemy',
+                            forceEnemyProfile: !entry.isNpc,
+                            livelloForzato: selectedLevel,
+                            gradoForzato: selectedGrade,
+                            statsMostroForzate: {
+                              'resilienza': resilienceValue,
+                              'volonta': max(0, readIntValue(will.text)),
+                              'materia': max(0, readIntValue(matter.text)),
+                              'oculum': max(0, readIntValue(oculum.text)),
+                            },
+                            monsterVariant: selectedVariant,
+                            monsterBookSource: entry,
+                          );
+                          if (dialogContext.mounted) {
+                            Navigator.pop(dialogContext);
+                          }
+                        },
+                  icon: const Icon(Icons.add_circle),
+                  label: const Text('Genera nella mia scheda'),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    } finally {
+      level.dispose();
+      grade.dispose();
+      resilience.dispose();
+      will.dispose();
+      matter.dispose();
+      oculum.dispose();
+    }
+  }
+
   Widget masterDashboardMonsterBookPanel() {
     final query = oculumNormalizeText(monsterBookSearchController.text);
+    String tierFor(MonsterBookEntry entry) {
+      if (entry.isBoss) return 'Boss';
+      if (entry.isMiniBoss) return 'Mini Boss';
+      final total = [
+        'resilienza',
+        'volonta',
+        'materia',
+        'oculum',
+      ].fold<int>(0, (sum, key) => sum + (entry.stats[key] ?? 0));
+      if (total <= 8) return 'Facili';
+      if (total <= 18) return 'Medi';
+      return 'Difficili';
+    }
+
     final filtered = monsterBookEntries
         .where((entry) {
+          if (monsterBookTierFilter != 'Tutti' &&
+              tierFor(entry) != monsterBookTierFilter) {
+            return false;
+          }
           if (query.isEmpty) return true;
           return oculumNormalizeText(
             '${entry.nameIt} ${entry.nameEn} ${entry.id} ${entry.elementId} ${entry.presetType}',
@@ -4940,8 +5200,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           const SizedBox(height: 6),
           smallInfoText(
             t(
-              'Un registro testuale per il Master: nome, categoria, elemento, statistiche, skill e drop. Puoi aggiungere, modificare o rimuovere mostri, mini boss, boss e NPC.',
-              'A text-first Master dossier: name, category, element, stats, skills and drops. You can add, edit or remove monsters, mini bosses, bosses and NPCs.',
+              'Un registro testuale per il Master: tieni premuto un mostro (o clic destro su desktop) per impostare livello e statistiche, poi generarlo tra le tue schede.',
+              'Master dossier: long-press a monster (or right-click on desktop) to set level and stats, then generate it among your sheets.',
             ),
           ),
           const SizedBox(height: 10),
@@ -4965,6 +5225,27 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               border: const OutlineInputBorder(),
             ),
             onChanged: (_) => scheduleInputUiRefresh(),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final tier in const [
+                'Tutti',
+                'Facili',
+                'Medi',
+                'Difficili',
+                'Mini Boss',
+                'Boss',
+              ])
+                ChoiceChip(
+                  label: Text(tier),
+                  selected: monsterBookTierFilter == tier,
+                  onSelected: (_) =>
+                      setState(() => monsterBookTierFilter = tier),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -5001,55 +5282,70 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 itemExtent: 72,
                 itemBuilder: (context, index) {
                   final entry = visible[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0B0D13),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color:
-                            (entry.isNpc
-                                    ? Colors.greenAccent
-                                    : Colors.redAccent)
-                                .withValues(alpha: 0.28),
-                      ),
-                    ),
-                    child: ListTile(
-                      dense: true,
-                      leading: monsterBookEntryPreview(entry),
-                      title: Text(
-                        entry.nameIt,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onLongPress: () => showMonsterBookQuickSpawnDialog(entry),
+                    onSecondaryTap: () =>
+                        showMonsterBookQuickSpawnDialog(entry),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0B0D13),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color:
+                              (entry.isNpc
+                                      ? Colors.greenAccent
+                                      : Colors.redAccent)
+                                  .withValues(alpha: 0.28),
                         ),
                       ),
-                      subtitle: Text(
-                        '${entry.presetType} • ${elementDisplayName(entry.elementId)} • HP ${entry.stats['hp'] ?? 0} • ATK ${entry.stats['atk'] ?? 0} • DIF ${entry.stats['def'] ?? 0} • Skill ${entry.skillIds.length} • Drop ${entry.dropIds.length}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: tertiaryColor, fontSize: 11),
-                      ),
-                      trailing: Wrap(
-                        spacing: 2,
-                        children: [
-                          IconButton(
-                            tooltip: t('Modifica', 'Edit'),
-                            onPressed: () => showMonsterBookEditor(entry),
-                            icon: const Icon(Icons.edit, size: 19),
+                      child: ListTile(
+                        dense: true,
+                        leading: monsterBookEntryPreview(entry),
+                        title: Text(
+                          entry.nameIt,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
                           ),
-                          IconButton(
-                            tooltip: t('Rimuovi', 'Remove'),
-                            onPressed: () => removeMonsterBookEntry(entry),
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              color: Colors.redAccent,
-                              size: 19,
+                        ),
+                        subtitle: Text(
+                          '${entry.presetType} • ${elementDisplayName(entry.elementId)} • ${monsterBookQuickStatsLabel(entry)} • Skill ${entry.skillIds.length} • Drop ${entry.dropIds.length}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: tertiaryColor, fontSize: 11),
+                        ),
+                        trailing: Wrap(
+                          spacing: 2,
+                          children: [
+                            IconButton(
+                              tooltip: t('Genera', 'Generate'),
+                              onPressed: () =>
+                                  showMonsterBookQuickSpawnDialog(entry),
+                              icon: const Icon(
+                                Icons.add_circle_outline,
+                                size: 19,
+                              ),
                             ),
-                          ),
-                        ],
+                            IconButton(
+                              tooltip: t('Modifica', 'Edit'),
+                              onPressed: () => showMonsterBookEditor(entry),
+                              icon: const Icon(Icons.edit, size: 19),
+                            ),
+                            IconButton(
+                              tooltip: t('Rimuovi', 'Remove'),
+                              onPressed: () => removeMonsterBookEntry(entry),
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
+                                size: 19,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -5584,58 +5880,56 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             },
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: campoTesto(
-                  label: t('Quantita', 'Amount'),
-                  controller: quickSheetCountController,
-                  helper: '1-10',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: quickSheetArtMode,
-                  dropdownColor: const Color(0xFF11131A),
-                  decoration: fieldDecoration('Art'),
-                  items: const [
-                    DropdownMenuItem(value: 'random', child: Text('Random')),
-                    DropdownMenuItem(value: 'none', child: Text('Solo skill')),
-                    DropdownMenuItem(
-                      value: 'martial',
-                      child: Text('Martial Art'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'oculum',
-                      child: Text('Oculum Art'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'emblem',
-                      child: Text('Emblem Art'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'illness',
-                      child: Text('Illness Art'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'grimorio',
-                      child: Text('Grimorio'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'defiled',
-                      child: Text('Defiled Art'),
-                    ),
-                    DropdownMenuItem(value: 'null', child: Text('Null Art')),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => quickSheetArtMode = value);
-                    }
-                  },
-                ),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final quantity = campoTesto(
+                label: t('Quantita', 'Amount'),
+                controller: quickSheetCountController,
+                helper: '1-10',
+              );
+              final art = DropdownButtonFormField<String>(
+                initialValue: quickSheetArtMode,
+                dropdownColor: const Color(0xFF11131A),
+                decoration: fieldDecoration('Art'),
+                items: const [
+                  DropdownMenuItem(value: 'random', child: Text('Random')),
+                  DropdownMenuItem(value: 'none', child: Text('Solo skill')),
+                  DropdownMenuItem(
+                    value: 'martial',
+                    child: Text('Martial Art'),
+                  ),
+                  DropdownMenuItem(value: 'oculum', child: Text('Oculum Art')),
+                  DropdownMenuItem(value: 'emblem', child: Text('Emblem Art')),
+                  DropdownMenuItem(
+                    value: 'illness',
+                    child: Text('Illness Art'),
+                  ),
+                  DropdownMenuItem(value: 'grimorio', child: Text('Grimorio')),
+                  DropdownMenuItem(
+                    value: 'defiled',
+                    child: Text('Defiled Art'),
+                  ),
+                  DropdownMenuItem(value: 'null', child: Text('Null Art')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => quickSheetArtMode = value);
+                  }
+                },
+              );
+              if (constraints.maxWidth < 420) {
+                return Column(
+                  children: [quantity, const SizedBox(height: 8), art],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: quantity),
+                  const SizedBox(width: 8),
+                  Expanded(child: art),
+                ],
+              );
+            },
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
@@ -5906,17 +6200,72 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             },
           ),
           const SizedBox(height: 12),
-          ElevatedButton.icon(
-            onPressed: () => creaSchedaRapidaMaster(),
-            icon: const Icon(Icons.add_circle),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: tertiaryColor,
-              foregroundColor: tertiaryColor.computeLuminance() > 0.45
-                  ? Colors.black
-                  : Colors.white,
-              minimumSize: const Size.fromHeight(44),
-            ),
-            label: Text(t('Crea scheda', 'Create sheet')),
+          Builder(
+            builder: (context) {
+              final typeIsMonster = quickSheetType.toLowerCase().contains(
+                'mostro',
+              );
+              final enteredLevel = max(
+                0,
+                leggiNumero(quickSheetLevelController),
+              );
+              final enteredGrade = max(
+                0,
+                leggiNumero(quickSheetGradeController),
+              );
+              final pointBudget = typeIsMonster
+                  ? quickMonsterStatBudget(
+                      quickSheetType,
+                      enteredLevel,
+                      enteredGrade,
+                    )
+                  : 0;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (typeIsMonster)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: smallInfoText(
+                        t(
+                          'Punti effettivi da assegnare: $pointBudget (livello × ${oculumMonsterStatPointsPerLevel(quickSheetType) + 3}, inclusa compensazione Titoli, + grado × 10). Vita/Resilienza deve restare il tratto più alto.',
+                          'Effective points to assign: $pointBudget (level × ${oculumMonsterStatPointsPerLevel(quickSheetType)} + grade × 10). Health/Resilience remains the highest trait.',
+                        ),
+                      ),
+                    ),
+                  ElevatedButton.icon(
+                    onPressed: () => creaSchedaRapidaMaster(),
+                    icon: const Icon(Icons.add_circle),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: tertiaryColor,
+                      foregroundColor: tertiaryColor.computeLuminance() > 0.45
+                          ? Colors.black
+                          : Colors.white,
+                      minimumSize: const Size.fromHeight(44),
+                    ),
+                    label: Text(t('Crea scheda', 'Create sheet')),
+                  ),
+                  if (typeIsMonster) ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          creaSchedaRapidaMaster(randomizzaPuntiMostro: true),
+                      icon: const Icon(Icons.casino),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: secondaryColor,
+                        minimumSize: const Size.fromHeight(44),
+                      ),
+                      label: Text(
+                        t(
+                          'Crea e assegna punti casualmente',
+                          'Create and randomly assign points',
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
         ],
       ),

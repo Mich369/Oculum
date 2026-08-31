@@ -456,6 +456,51 @@ extension _OculumFallenEyes on _OculumHomePageState {
   Map<String, dynamic> _cloneJsonMap(Map<String, dynamic> value) =>
       Map<String, dynamic>.from(jsonDecode(jsonEncode(value)) as Map);
 
+  /// Un Occhio conserva soltanto il corpo della fonte. Inventario, quest,
+  /// condizioni, Art, Skill, Titoli, note e dati online dell'avversario non
+  /// possono mai entrare nella nuova creatura.
+  Map<String, dynamic> _fallenEyeBodyFromSource(Map<String, dynamic> source) {
+    final level = max(0, readIntValue(source['livello']));
+    final grade = max(0, readIntValue(source['grado']));
+    final body = statoVuotoPersonaggio(
+      nome: '${source['nome'] ?? 'Occhio Caduto'}',
+      tipo: 'Mostro',
+      livello: level,
+      grado: grade,
+    );
+    for (final key in const <String>[
+      'currentHp',
+      'resilienza',
+      'currentResilienza',
+      'volonta',
+      'currentVolonta',
+      'materia',
+      'currentMateria',
+      'oculum',
+      'currentOculum',
+      'maxOculum',
+      'cmRapido',
+      'attaccoRapido',
+      'immaginePersonaggioBase64',
+      'spriteAssetPath',
+      'primaryColor',
+      'secondaryColor',
+      'tertiaryColor',
+      'eyePupilGlowColor',
+      'colorPreset',
+      'colorDecorationPresetId',
+      'colorGuiPresetId',
+      'themeDecorationIntensityScale',
+    ]) {
+      if (source.containsKey(key)) body[key] = source[key];
+    }
+    body['arti'] = <dynamic>[];
+    body['skills'] = <dynamic>[];
+    body['titoli'] = <dynamic>[];
+    body['fallenEyeOriginalArts'] = <dynamic>[];
+    return body;
+  }
+
   Map<String, dynamic> _newFallenEye(
     Map<String, dynamic> source, {
     String? name,
@@ -466,13 +511,13 @@ extension _OculumFallenEyes on _OculumHomePageState {
         : oculumFallenEyeRollRarity(Random.secure());
     final id =
         'fallen_eye_${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(999999)}';
-    final current = _cloneJsonMap(source);
+    final current = _fallenEyeBodyFromSource(source);
+    current['currentHp'] = max(
+      readIntValue(current['currentHp'], fallback: 0),
+      max(1, readIntValue(current['resilienza'], fallback: 1) * 10),
+    ).toString();
     // Un Occhio dei Perduti è una creatura indipendente: eredita soltanto
     // corpo, immagine e statistiche della fonte, mai le sue conoscenze.
-    current['arti'] = <dynamic>[];
-    current['skills'] = <dynamic>[];
-    current['titoli'] = <dynamic>[];
-    current['fallenEyeOriginalArts'] = <dynamic>[];
     final commonEffect = selectedRarity == 'comune'
         ? oculumFallenEyeCommonMalusEffectForRoll(
             malusRoll: Random.secure().nextInt(5),
@@ -525,6 +570,8 @@ extension _OculumFallenEyes on _OculumHomePageState {
         (readIntValue(current['currentHp'], fallback: 1) * .35).round(),
       ),
       'active': false,
+      // L'Occhio viene creato integro e con il suo corpo già al massimo.
+      'createdFull': true,
       'perdutoPerSempre': false,
       'perdutoIl': '',
       'reforgeHistory': <Map<String, dynamic>>[],
@@ -705,6 +752,111 @@ extension _OculumFallenEyes on _OculumHomePageState {
     await createFallenEyeFromSource(
       source,
       name: '${source['nome'] ?? 'Creatura'} — Occhio Caduto',
+    );
+  }
+
+  Future<void> copyFallenEyeToAllOwnSheets(Map<String, dynamic> eye) async {
+    final targets = schedePersonaggio
+        .where(
+          (sheet) =>
+              !readBoolValue(sheet['realtimeSharedSheet']) &&
+              !readBoolValue(sheet['occhioCaduto']) &&
+              '${sheet['sheetTag'] ?? ''}'.trim().isNotEmpty,
+        )
+        .toList(growable: false);
+    if (targets.isEmpty) {
+      _fallenEyeMessage('Non ci sono schede personali a cui copiare l’Occhio.');
+      return;
+    }
+    final selectedTags = <String>{};
+    final chosen = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Copia Occhio Caduto'),
+          content: SizedBox(
+            width: 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Scegli le altre schede che riceveranno una copia. Nessuna è selezionata inizialmente.',
+                ),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (final target in targets)
+                        CheckboxListTile(
+                          value: selectedTags.contains('${target['sheetTag']}'),
+                          title: Text('${target['nome'] ?? 'Scheda'}'),
+                          onChanged: (value) => setDialogState(() {
+                            final tag = '${target['sheetTag']}';
+                            if (value == true) {
+                              selectedTags.add(tag);
+                            } else {
+                              selectedTags.remove(tag);
+                            }
+                          }),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Annulla'),
+            ),
+            FilledButton(
+              onPressed: selectedTags.isEmpty
+                  ? null
+                  : () => Navigator.pop(dialogContext, true),
+              child: const Text('Copia selezionate'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (chosen != true || selectedTags.isEmpty) return;
+    final created = <Map<String, dynamic>>[];
+    setState(() {
+      for (final target in targets.where(
+        (target) => selectedTags.contains('${target['sheetTag']}'),
+      )) {
+        final copy = _cloneJsonMap(eye);
+        final id =
+            'fallen_eye_${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(999999)}';
+        copy['id'] = id;
+        copy['ownerSheetId'] = '${target['sheetTag']}';
+        copy['active'] = false;
+        copy['summonedSheetTag'] = '';
+        copy['perdutoPerSempre'] = false;
+        copy['perdutoIl'] = '';
+        copy['createdAt'] = DateTime.now().toIso8601String();
+        final data = _fallenEyeBodyFromSource(
+          Map<String, dynamic>.from(copy['sheetData'] as Map? ?? const {}),
+        );
+        data['nome'] = '${copy['name'] ?? 'Occhio Caduto'}';
+        data['occhioCadutoId'] = id;
+        data['occhioCaduto'] = true;
+        data['fallenEyeRareAttribute'] = '${copy['rareAttribute'] ?? ''}';
+        data['fallenEyeRareAttributeBonus'] = readIntValue(
+          copy['rareAttributeBonus'],
+        );
+        copy['sheetData'] = data;
+        created.add(copy);
+      }
+      occhiCaduti.addAll(created);
+      _touchFallenEyes();
+    });
+    await salvaDati();
+    _fallenEyeMessage(
+      'Occhio copiato come Occhio Caduto in ${created.length} schede personali, senza modificare l’originale.',
     );
   }
 
@@ -1310,6 +1462,17 @@ extension _OculumFallenEyes on _OculumHomePageState {
       eye.remove('portraitBase64');
       eye.remove('portraitUpdatedAt');
       _touchFallenEyes();
+    });
+    await salvaDati();
+  }
+
+  Future<void> eliminaOcchioCaduto(Map<String, dynamic> eye) async {
+    final name = '${eye['name'] ?? 'Occhio Caduto'}';
+    setState(() {
+      occhiCaduti.remove(eye);
+      _touchFallenEyes();
+      risultato = 'Occhio Caduto rimosso: $name.';
+      aggiungiLog(risultato);
     });
     await salvaDati();
   }
@@ -1962,6 +2125,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                         child: TextField(
                           controller: res,
                           keyboardType: TextInputType.number,
+                          onChanged: (_) => dialogSetState(() {}),
                           decoration: const InputDecoration(
                             labelText: 'Resilienza',
                           ),
@@ -1972,6 +2136,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                         child: TextField(
                           controller: vol,
                           keyboardType: TextInputType.number,
+                          onChanged: (_) => dialogSetState(() {}),
                           decoration: const InputDecoration(
                             labelText: 'Volontà',
                           ),
@@ -1982,6 +2147,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                         child: TextField(
                           controller: mat,
                           keyboardType: TextInputType.number,
+                          onChanged: (_) => dialogSetState(() {}),
                           decoration: const InputDecoration(
                             labelText: 'Materia',
                           ),
@@ -1992,6 +2158,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                         child: TextField(
                           controller: ocu,
                           keyboardType: TextInputType.number,
+                          onChanged: (_) => dialogSetState(() {}),
                           decoration: const InputDecoration(
                             labelText: 'Oculum',
                           ),
@@ -2014,6 +2181,36 @@ extension _OculumFallenEyes on _OculumHomePageState {
                         ),
                       ),
                     ],
+                  ),
+                  Builder(
+                    builder: (_) {
+                      final levelValue = max(0, int.tryParse(level.text) ?? 0);
+                      final gradeValue = gradoAutomaticoDaLivello(
+                        levelValue,
+                        false,
+                      );
+                      final missing = oculumMonsterMissingStatPoints(
+                        type: '${draft['tipoScheda'] ?? 'Mostro'}',
+                        level: levelValue,
+                        grade: gradeValue,
+                        resilienza: int.tryParse(res.text) ?? 0,
+                        volonta: int.tryParse(vol.text) ?? 0,
+                        materia: int.tryParse(mat.text) ?? 0,
+                        oculum: int.tryParse(ocu.text) ?? 0,
+                      );
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          'Contatore Mostro — livello $levelValue, grado $gradeValue: mancano $missing punti statistica per il valore richiesto.',
+                          style: TextStyle(
+                            color: missing == 0
+                                ? Colors.lightGreen
+                                : Colors.amberAccent,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -2142,12 +2339,13 @@ extension _OculumFallenEyes on _OculumHomePageState {
     final image = decodedBase64ImageCached(
       '${eye['portraitBase64'] ?? data['immaginePersonaggioBase64'] ?? ''}',
     );
+    final dead = oculumFallenEyeIsDead(eye);
     return GestureDetector(
       onTap: () => _showFallenEyeDetail(eye),
       onSecondaryTap: () => _showFallenEyeMenu(eye),
       onLongPress: () => _showFallenEyeMenu(eye),
       child: Card(
-        color: const Color(0xFF12141C),
+        color: dead ? const Color(0xFF25262B) : const Color(0xFF12141C),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(color: color, width: 1.5),
@@ -2161,22 +2359,37 @@ extension _OculumFallenEyes on _OculumHomePageState {
                 children: [
                   Stack(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: image == null
-                            ? Image.asset(
-                                'assets/icon/oculum_eye.png',
-                                width: 76,
-                                height: 76,
-                                fit: BoxFit.cover,
-                              )
-                            : Image.memory(
-                                image,
-                                width: 76,
-                                height: 76,
-                                fit: BoxFit.cover,
-                                cacheWidth: 152,
+                      // Il ritratto è la pupilla: l'Occhio Oculum rimane
+                      // disegnato dietro e la foto resta esagonale, come nella
+                      // scheda principale, senza creare una miniatura quadrata.
+                      SizedBox(
+                        width: 76,
+                        height: 76,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/icon/oculum_eye.png',
+                              width: 76,
+                              height: 76,
+                              fit: BoxFit.contain,
+                            ),
+                            if (image != null)
+                              ClipPath(
+                                clipper: const HexagonClipper(),
+                                child: Image.memory(
+                                  image,
+                                  width: 54,
+                                  height: 54,
+                                  // Mostra tutto il ritratto senza zoomarlo o
+                                  // degradarlo dopo il salvataggio.
+                                  fit: BoxFit.contain,
+                                  filterQuality: FilterQuality.high,
+                                  cacheWidth: 152,
+                                ),
                               ),
+                          ],
+                        ),
                       ),
                       Positioned(
                         right: -4,
@@ -2236,7 +2449,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                             ),
                           ),
                         Text(
-                          oculumFallenEyeIsDead(eye)
+                          dead
                               ? 'MORTO — NON EVOCABILE'
                               : readBoolValue(eye['active'])
                               ? 'EVOCATO'
@@ -2364,6 +2577,17 @@ extension _OculumFallenEyes on _OculumHomePageState {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.copy_all_outlined),
+            title: const Text('Copia in ogni mia scheda'),
+            subtitle: const Text(
+              'Crea una custodia separata per ogni tua scheda locale; gli Occhi restano indipendenti e disevocati.',
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              copyFallenEyeToAllOwnSheets(eye);
+            },
+          ),
+          ListTile(
             leading: Icon(
               readBoolValue(eye['active'])
                   ? Icons.visibility_off
@@ -2484,6 +2708,21 @@ extension _OculumFallenEyes on _OculumHomePageState {
                 rimuoviImmagineOcchioCaduto(eye);
               },
             ),
+          ListTile(
+            leading: const Icon(Icons.delete_forever, color: Colors.redAccent),
+            title: Text(
+              oculumFallenEyeIsDead(eye)
+                  ? 'Rimuovi Occhio morto'
+                  : 'Elimina Occhio Caduto',
+            ),
+            subtitle: const Text(
+              'Rimuove soltanto questo Occhio, non la scheda sorgente.',
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              eliminaOcchioCaduto(eye);
+            },
+          ),
         ],
       ),
     ),

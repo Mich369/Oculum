@@ -1588,6 +1588,23 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     control: true,
   ),
   OculumConditionDefinition(
+    id: 'vita_afona',
+    affectedTargets: <OculumConditionTarget>{OculumConditionTarget.hp},
+    nameIt: 'Vita Afona',
+    nameEn: 'Voiceless Life',
+    icon: Icons.warning_rounded,
+    category: OculumConditionCategory.mental,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'Non puoi conoscere i tuoi HP attuali: la barra Vita diventa nera e mostra soltanto un teschio. Dura 1 turno Facile, 3 Medio, 4 Difficile, 5 Oculum; termina anche se muori o viene rimossa.',
+    descriptionEn:
+        'You cannot know your current HP: the health bar turns black and shows only a skull. It lasts 1 turn Easy, 3 Normal, 4 Hard, 5 Oculum; it also ends on death or removal.',
+    stackMode: OculumConditionStackMode.refreshDuration,
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
     id: 'aumento_difficolta',
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.hp,

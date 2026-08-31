@@ -1162,7 +1162,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'raccoltaMateriaSpesa': 0,
       'raccoltaOculumSpesa': 0,
       'levelUpDaAssegnare': 0,
-      'monsterStatPoints': tipo == 'Mostro' ? livello * 9 : 0,
+      'monsterStatPoints': tipo.toLowerCase().contains('mostro')
+          ? livello * oculumMonsterStatPointsPerLevel(tipo) + grado * 10
+          : 0,
       'titoli': [],
       'trattiRazziali': [],
       'inventario': [],
@@ -5196,9 +5198,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
     const keys = ['resilienza', 'volonta', 'materia', 'oculum'];
     final rng = Random();
     final rareRoll = rng.nextInt(100);
-    final mode = rareRoll < 8
+    final mode = rareRoll < 18
         ? 'strongest'
-        : rareRoll >= 92
+        : rareRoll >= 98
         ? 'weakest'
         : 'average';
     final diff = normalizedCampaignDifficulty();
@@ -5347,6 +5349,108 @@ extension _OculumHomePersistence on _OculumHomePageState {
         lower.contains('nemic');
   }
 
+  /// Piccoli tratti con cui una creatura generata si distingue senza alterare
+  /// le sue statistiche base. I bonus ai sottotratti usano la stessa sintassi
+  /// del parser delle schede e quindi entrano davvero nel tiro corrispondente.
+  /// Il +5 e' deliberatamente riservato ai soli sottotratti.
+  List<String> generatedMonsterRoleTraits({
+    required String description,
+    required String name,
+    required int profile,
+    bool monsterBookSpawn = false,
+  }) {
+    final text = oculumNormalizeText('$name $description');
+    final rng = Random();
+    // Un profilo forte ha sempre una particolarita'; negli altri casi resta
+    // una scoperta occasionale. Il Bestiario e' l'eccezione esplicita: le
+    // sue creature ricevono sempre cinque lanci mirati sui sottotratti.
+    if (!monsterBookSpawn && profile <= 0 && rng.nextInt(100) >= 18) {
+      return const <String>[];
+    }
+
+    final arcane =
+        text.contains('oculum') ||
+        text.contains('mag') ||
+        text.contains('raggio') ||
+        text.contains('elemental');
+    final ice = text.contains('ghiaccio') || text.contains('glacial');
+    final stealth =
+        text.contains('ombra') ||
+        text.contains('assassin') ||
+        text.contains('ragno') ||
+        text.contains('bandit');
+    final brute =
+        text.contains('orco') ||
+        text.contains('ogre') ||
+        text.contains('gigante') ||
+        text.contains('minotauro') ||
+        text.contains('troll') ||
+        text.contains('demone');
+    final guardian =
+        text.contains('golem') ||
+        text.contains('protett') ||
+        text.contains('corazz') ||
+        text.contains('pietra') ||
+        text.contains('pinepine');
+    final undead =
+        text.contains('scheletr') ||
+        text.contains('zombi') ||
+        text.contains('lich') ||
+        text.contains('vampir') ||
+        text.contains('immortale');
+
+    final subtraits = arcane
+        ? const ['Manifestazione del Potere', 'Canalizzazione', 'Occultismo']
+        : ice
+        ? const ['Resistenza', 'Riflessi', 'Sopravvivenza']
+        : stealth
+        ? const ['Velo', 'Precisione', 'Percezione']
+        : brute
+        ? const ['Forza', 'Pressione', 'Resistenza']
+        : guardian
+        ? const ['Resistenza', 'Fermezza', 'Strategia']
+        : undead
+        ? const ['Fermezza', 'Crepa', 'Concentrazione']
+        : const ['Percezione', 'Riflessi', 'Adattamento'];
+    final subtraitTotals = <String, int>{};
+    final subtraitRolls = monsterBookSpawn ? 5 : 1;
+    for (var roll = 0; roll < subtraitRolls; roll++) {
+      final subtrait = subtraits[rng.nextInt(subtraits.length)];
+      // Il +1..+6 appartiene al singolo lancio del Bestiario. Le ripetizioni
+      // si sommano sullo stesso sottotratto: meno affinità, più peso su
+      // ciascuna di esse, senza inventare capacità non pertinenti.
+      final amount = monsterBookSpawn ? 1 + rng.nextInt(6) : 1 + rng.nextInt(5);
+      subtraitTotals.update(
+        subtrait,
+        (value) => value + amount,
+        ifAbsent: () => amount,
+      );
+    }
+    final effectRoll = rng.nextInt(4);
+    final effect = switch (effectRoll) {
+      0 => '@VC+${1 + rng.nextInt(3)}',
+      1 => '@CM+${1 + rng.nextInt(3)}',
+      // Reazione e Reazione veloce sono azioni bonus reali della scheda.
+      2 => rng.nextBool() ? '@Reazione+1' : '@ReazioneVeloce+1',
+      _ =>
+        ice
+            ? '@effetto:Resistenze(1d3)'
+            : guardian
+            ? '@effetto:Tenacia(1d3)'
+            : undead
+            ? '@effetto:Rigenerazione(1d3)'
+            : '@effetto:Adrenalina(1d3)',
+    };
+    final traits = <String>[
+      for (final entry in subtraitTotals.entries)
+        '@${entry.key}+${entry.value}',
+    ];
+    // Oltre ai cinque lanci garantiti del Bestiario, condizioni e bonus di
+    // combattimento restano una variazione rara e indipendente.
+    if (profile > 0 || rng.nextInt(100) < 18) traits.add(effect);
+    return traits;
+  }
+
   int quickPartyAverageValue(String key, {int fallback = 0}) {
     final party = partyStatsCountIndexes();
     final source = party.isEmpty ? <int>[schedaCorrente] : party;
@@ -5386,6 +5490,83 @@ extension _OculumHomePersistence on _OculumHomePageState {
       return max(base, base + 1);
     }
     return base;
+  }
+
+  int quickMonsterStatBudget(String tipo, int livello, int grado) {
+    if (!tipo.toLowerCase().contains('mostro')) return 0;
+    // Tre punti per livello compensano i Titoli che una creatura generata non
+    // possiede; i dieci per Grado restano invece un singolo blocco assegnabile.
+    return max(
+      0,
+      livello * (oculumMonsterStatPointsPerLevel(tipo) + 3) + grado * 10,
+    );
+  }
+
+  Map<String, int> randomQuickMonsterStats(int points, {String hint = ''}) {
+    final result = <String, int>{
+      'resilienza': 0,
+      'volonta': 0,
+      'materia': 0,
+      'oculum': 0,
+    };
+    if (points <= 0) return result;
+
+    // Distribuzione guidata dal ruolo, non da un lancio cieco: Vita resta
+    // dominante, mentre chi controlla usa più Volontà/Oculum e chi insegue o
+    // assalta più Materia. È ricostruibile dai dati del preset.
+    final text = oculumNormalizeText(hint);
+    final defensive =
+        text.contains('tank') ||
+        text.contains('difens') ||
+        text.contains('guard') ||
+        text.contains('protett');
+    final control =
+        text.contains('controll') ||
+        text.contains('trappol') ||
+        text.contains('mag') ||
+        text.contains('psich');
+    final hunter =
+        text.contains('predator') ||
+        text.contains('cacciator') ||
+        text.contains('assalt') ||
+        text.contains('inseguit');
+    final rng = Random();
+    result['resilienza'] = max(1, (points * (defensive ? .52 : .42)).ceil());
+    for (var i = result['resilienza']!; i < points; i++) {
+      final options = <String>[
+        if (control) ...['volonta', 'volonta', 'oculum', 'oculum'],
+        if (hunter) ...['materia', 'materia', 'volonta'],
+        if (!control && !hunter) ...['volonta', 'materia', 'oculum'],
+      ];
+      final key = options[rng.nextInt(options.length)];
+      result[key] = result[key]! + 1;
+    }
+    // Materia non può sparire dalla distribuzione rapida: anche controllori
+    // e maghi devono poter agire fisicamente. Per budget molto piccoli non
+    // forziamo il punto e preserviamo il totale esatto.
+    if (points >= 4 && result['materia'] == 0) {
+      final donor = ['resilienza', 'volonta', 'oculum']
+          .where((key) => (result[key] ?? 0) > 1)
+          .reduce((a, b) => result[a]! >= result[b]! ? a : b);
+      result[donor] = result[donor]! - 1;
+      result['materia'] = 1;
+    }
+    final largestOther = [
+      'volonta',
+      'materia',
+      'oculum',
+    ].map((key) => result[key]!).reduce(max);
+    if (largestOther > result['resilienza']!) {
+      final key = [
+        'volonta',
+        'materia',
+        'oculum',
+      ].firstWhere((entry) => result[entry] == largestOther);
+      final savedResilience = result['resilienza']!;
+      result['resilienza'] = result[key]!;
+      result[key] = savedResilience;
+    }
+    return result;
   }
 
   List<
@@ -6518,6 +6699,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
     String? fallbackName,
     String sideOverride = '',
     bool forceEnemyProfile = false,
+    bool randomizzaPuntiMostro = false,
+    int? livelloForzato,
+    int? gradoForzato,
+    Map<String, int>? statsMostroForzate,
+    String monsterVariant = 'base',
+    MonsterBookEntry? monsterBookSource,
   }) async {
     final selectedType = forcedType ?? quickSheetType;
     final baseName = quickSheetNameController.text.trim().isEmpty
@@ -6546,25 +6733,122 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
     final createdNames = <String>[];
 
+    String nextGeneratedSheetName(String requested) {
+      final clean = requested.trim().isEmpty ? 'Mostro' : requested.trim();
+      final used = <String>{
+        for (final sheet in schedePersonaggio)
+          '${sheet['nome'] ?? ''}'.trim().toLowerCase(),
+      };
+      if (!used.contains(clean.toLowerCase())) return clean;
+      var suffix = 2;
+      while (used.contains('$clean $suffix'.toLowerCase())) {
+        suffix++;
+      }
+      return '$clean $suffix';
+    }
+
     for (var i = 0; i < count; i++) {
-      final nome = count == 1 ? baseName : '$baseName ${i + 1}';
-      final livello = suggestedQuickSheetLevel(enemyProfile);
-      final grado = suggestedQuickSheetGrade(selectedType);
-      final generatedStats = balancedQuickSheetStats(
+      final requestedName = count == 1 ? baseName : '$baseName ${i + 1}';
+      final nome = nextGeneratedSheetName(requestedName);
+      final matchedMonster =
+          monsterBookSource ??
+          monsterBookEntryForGeneratedEntity(description, nome);
+      // I preset che dichiarano il livello 0 non sono proposte casuali del
+      // generatore: il Bestiario ne conserva esattamente la base richiesta.
+      final levelZeroPreset = matchedMonster?.stats['level'] == 0;
+      final livello =
+          livelloForzato ??
+          (levelZeroPreset ? 0 : suggestedQuickSheetLevel(enemyProfile));
+      final grado =
+          gradoForzato ??
+          (levelZeroPreset ? 0 : suggestedQuickSheetGrade(selectedType));
+      final generatedStats =
+          statsMostroForzate ??
+          (levelZeroPreset
+              ? <String, int>{
+                  'resilienza': matchedMonster?.stats['resilienza'] ?? 3,
+                  'volonta': matchedMonster?.stats['volonta'] ?? 1,
+                  'materia': matchedMonster?.stats['materia'] ?? 0,
+                  'oculum': matchedMonster?.stats['oculum'] ?? 1,
+                }
+              : balancedQuickSheetStats(
+                  selectedType,
+                  forceEnemyProfile: forceEnemyProfile,
+                  level: livello,
+                  grade: grado,
+                  description: '$description $nome',
+                ));
+      final monsterPointBudget = quickMonsterStatBudget(
         selectedType,
-        forceEnemyProfile: forceEnemyProfile,
-        level: livello,
-        grade: grado,
-        description: '$description $nome',
+        livello,
+        grado,
       );
-      final elements = generatedEntityElements(description, nome);
+      final usesFixedLevelZeroBase = levelZeroPreset && livello == 0;
+      final randomizedMonsterStats =
+          randomizzaPuntiMostro &&
+              !usesFixedLevelZeroBase &&
+              monsterPointBudget > 0
+          ? randomQuickMonsterStats(
+              monsterPointBudget,
+              hint: '$description $nome',
+            )
+          : null;
+      final normalizedVariant = switch (monsterVariant.trim().toLowerCase()) {
+        'predatore' => 'predatore',
+        'elite' => 'elite',
+        _ => 'base',
+      };
+      final variantMultiplier = switch (normalizedVariant) {
+        'predatore' => 1.45,
+        'elite' => 2.05,
+        _ => 1.0,
+      };
+      final variantLabel = switch (normalizedVariant) {
+        'predatore' => 'Variante Predatore',
+        'elite' => 'Variante Élite',
+        _ => 'Variante Base',
+      };
+      // Ogni voce del Bestiario porta una firma differente nelle sue varianti:
+      // niente tre copie identiche con un semplice moltiplicatore di numeri.
+      final variantSeed = (matchedMonster?.id ?? baseName).hashCode.abs();
+      const variantElements = [
+        'fuoco',
+        'ghiaccio',
+        'fulmine',
+        'ombra',
+        'terra',
+      ];
+      const predatoryStyles = [
+        'assalto in caccia',
+        'imboscata laterale',
+        'balzo spezzadifesa',
+        'inseguimento feroce',
+        'morsa di pressione',
+      ];
+      const eliteStyles = [
+        'scarica concentrata',
+        'onda di rottura',
+        'campo persecutorio',
+        'colpo a catena',
+        'guardia offensiva',
+      ];
+      final variantStyle = normalizedVariant == 'predatore'
+          ? predatoryStyles[variantSeed % predatoryStyles.length]
+          : normalizedVariant == 'elite'
+          ? eliteStyles[variantSeed % eliteStyles.length]
+          : '';
+      final variantElement = switch (normalizedVariant) {
+        'predatore' => variantElements[variantSeed % variantElements.length],
+        'elite' => variantElements[(variantSeed + 2) % variantElements.length],
+        _ => '',
+      };
+      final elements = <String>{
+        ...generatedEntityElements(description, nome),
+        if (variantElement.isNotEmpty) variantElement,
+      }.toList(growable: false);
       final defenseElement = elements.length > 1
           ? elements.last
           : elements.first;
-      final matchedMonster = monsterBookEntryForGeneratedEntity(
-        description,
-        nome,
-      );
       final kind =
           matchedMonster?.nameIt ??
           generatedEntityKind(description, nome, selectedType);
@@ -6580,10 +6864,56 @@ extension _OculumHomePersistence on _OculumHomePageState {
       );
 
       setState(() {
-        resilienzaController.text = '${generatedStats['resilienza'] ?? 0}';
-        volontaController.text = '${generatedStats['volonta'] ?? 0}';
-        materiaController.text = '${generatedStats['materia'] ?? 0}';
-        oculumController.text = '${generatedStats['oculum'] ?? 0}';
+        final effectiveStats = randomizedMonsterStats ?? generatedStats;
+        int variantStat(String key) =>
+            max(0, ((effectiveStats[key] ?? 0) * variantMultiplier).round());
+        resilienzaController.text = '${variantStat('resilienza')}';
+        volontaController.text = '${variantStat('volonta')}';
+        materiaController.text = '${variantStat('materia')}';
+        oculumController.text = '${variantStat('oculum')}';
+        monsterStatPoints =
+            randomizedMonsterStats == null && statsMostroForzate == null
+            ? monsterPointBudget
+            : 0;
+        if (usesFixedLevelZeroBase) {
+          difesaRapidaController.text =
+              '${((matchedMonster?.stats['defense'] ?? 0) * variantMultiplier).round()}';
+          scudoController.text =
+              '${((matchedMonster?.stats['shield'] ?? 0) * variantMultiplier).round()}';
+          scudoCriticoController.text =
+              '${matchedMonster?.stats['criticalShield'] ?? 0}';
+          final fixedResistance = readIntValue(
+            matchedMonster?.stats['resistancePercent'],
+          );
+          if (fixedResistance > 0) {
+            buffMalusRapidiController.text =
+                '@Resistenza+$fixedResistance% Colpi';
+          }
+          if (kind == 'Serafino') {
+            scudoOculumMaxController.text = '0';
+            scudoOculumController.text = '0';
+          }
+        } else if (selectedType.toLowerCase().contains('mostro')) {
+          // Crescita intrinseca: danno, difesa e punti extra sono separati
+          // dalle Art e dai Titoli, perciò non alterano le loro formule.
+          attaccoRapidoController.text =
+              '${(max(0, livello * 5) * variantMultiplier).round()}';
+          difesaRapidaController.text =
+              '${(max(0, livello * 3) * variantMultiplier).round()}';
+          if (kind == 'Angelo Fustigatore') {
+            attaccoRapidoController.text =
+                '${max(0, livello * 5 + (livello ~/ 6) * 50)}';
+            difesaRapidaController.text =
+                '${max(0, livello * 3 + (livello ~/ 5) * 20)}';
+          }
+          if (kind == 'Serafino') {
+            scudoCriticoController.text = '2';
+            scudoOculumMaxController.text = '${livello * 5}';
+            scudoOculumController.text = '${livello * 5}';
+            buffMalusRapidiController.text =
+                '${buffMalusRapidiController.text} @Resistenza+60% Colpi';
+          }
+        }
         quickSheetType = selectedType;
         final normalizedSide = sideOverride.trim().toLowerCase();
         if (normalizedSide == 'enemy' ||
@@ -6603,6 +6933,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
           artMode: artMode,
           monster: matchedMonster,
         );
+        if (normalizedVariant != 'base') {
+          backgroundController.text =
+              '$variantLabel — $variantStyle: creatura rinforzata del Bestiario con affinità ${elementDisplayName(variantElement)}.\n${backgroundController.text}';
+        }
         notePersonaggioController.text = backgroundController.text;
         if (matchedMonster != null) {
           inventario
@@ -6626,6 +6960,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
           for (var e = 0; e < elements.length; e++)
             '@Danni+${max(1, livello + grado * 6 + e * 3)} ${elementDisplayName(elements[e])}',
           '@Difesa+${max(1, livello ~/ 2 + grado * 6)} ${elementDisplayName(defenseElement)}',
+          if (normalizedVariant == 'predatore')
+            '@VC+3 @ReazioneVeloce+1 @Danni+${max(8, livello * 3 + 8)} ${elementDisplayName(variantElement)}',
+          if (normalizedVariant == 'elite')
+            '@VC+5 @CM+4 @Reazione+1 @ReazioneVeloce+1 @Danni+${max(18, livello * 6 + 18)} ${elementDisplayName(variantElement)} @Difesa+${max(12, livello * 3 + 12)} ${elementDisplayName(variantElement)}',
         ].join(' ');
 
         skills
@@ -6641,6 +6979,416 @@ extension _OculumHomePersistence on _OculumHomePageState {
                 defensive: s == 1,
               ),
           ]);
+
+        if (kind == 'Arcangelo') {
+          skills
+            ..clear()
+            ..addAll([
+              CharacterSkill(
+                nome: 'Colpo Arcangelo',
+                tipo: 'Skill angelica',
+                costo: '4 Oculum',
+                cooldown: '2 turni',
+                descrizione:
+                    'I/colpo di luce; II/linea corta; III/pressione su un bersaglio giudicato.',
+                danni: 25,
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Guardia Arcangelo',
+                tipo: 'Skill angelica',
+                costo: '3 Oculum',
+                cooldown: '3 turni',
+                descrizione:
+                    'I/copertura; II/copertura del gruppo vicino; III/risposta protettiva dopo il primo colpo.',
+                difesa: 45,
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Ordine Arcangelo',
+                tipo: 'Skill angelica',
+                costo: '2 Volontà',
+                cooldown: '3 turni',
+                descrizione:
+                    'I/un alleato si muove o si difende; II/due alleati; III/neghi una reazione nemica.',
+                equipaggiata: true,
+              ),
+            ]);
+        } else if (kind == 'Pinepine') {
+          skills
+            ..clear()
+            ..add(
+              CharacterSkill(
+                nome: 'Pelle di Pigna',
+                tipo: 'Passiva mostro',
+                costo: 'Passivo',
+                cooldown: 'Sempre',
+                descrizione:
+                    'Dimezza i danni non di Fuoco. Fuoco e simili fanno esplodere la pelle: danno a tutte le creature entro 2 metri, alleati inclusi. Debole a Ferite Aperte e Fuoco. Con critico sul drop: Scudo Pigna +20.',
+                equipaggiata: true,
+              ),
+            );
+        } else if (kind == 'Demone Glaciale Minore') {
+          skills
+            ..clear()
+            ..add(
+              CharacterSkill(
+                nome: 'Sangue Freddo',
+                tipo: 'Passiva mostro',
+                costo: 'Passivo',
+                cooldown: 'Sempre',
+                descrizione:
+                    'Ricordo Vitale base. Chi lo ferisce in ravvicinato riceve Congelamento.',
+                equipaggiata: true,
+              ),
+            );
+        } else if (kind == 'Demone Glaciale Intermedio') {
+          skills
+            ..clear()
+            ..add(
+              CharacterSkill(
+                nome: 'Raggio Congelante',
+                tipo: 'Skill Oculum',
+                costo: '4 Oculum',
+                cooldown: '2 turni',
+                descrizione:
+                    'I/raggio a distanza e Congelamento; II/due raggi; III/linea lunga che rende il bersaglio esposto.',
+                danni: 30,
+                equipaggiata: true,
+              ),
+            );
+        } else if (kind == 'Demone Glaciale Maggiore') {
+          skills
+            ..clear()
+            ..add(
+              CharacterSkill(
+                nome: 'Open: Tempo Ghiacciato',
+                tipo: 'Open mostro',
+                costo: '15 Oculum',
+                cooldown: '6 turni',
+                descrizione:
+                    'Congela il tempo per un turno: tutti vedono e sentono tutto; il danno accumulato arriva insieme alla fine. Le difese attivate prima restano valide.',
+                equipaggiata: true,
+              ),
+            );
+        } else if (kind == 'Goblin Killer') {
+          skills
+            ..clear()
+            ..add(
+              CharacterSkill(
+                nome: 'Finitore',
+                tipo: 'Passiva mostro',
+                costo: 'Passivo',
+                cooldown: 'Dopo un uccisione',
+                descrizione:
+                    'Dopo aver abbattuto una creatura, recupera tutta la Vita.',
+                equipaggiata: true,
+              ),
+            );
+        } else if (kind == 'Angelo Fustigatore') {
+          skills
+            ..clear()
+            ..addAll([
+              CharacterSkill(
+                nome: 'Frusta del Giudizio',
+                tipo: 'Skill angelica',
+                costo: '1 azione',
+                cooldown: '2 turni',
+                descrizione:
+                    'I/colpo di frusta di luce; II/raggiunge due nemici vicini; III/il giudicato subisce anche la pressione dell ala. Ogni 6 livelli: +50 Danni base.',
+                danni: 10,
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Giudizio Fustigatore',
+                tipo: 'Skill angelica',
+                costo: '1 Volontà',
+                cooldown: '3 turni',
+                descrizione:
+                    'I/marchi un bersaglio; II/la marca riduce Difesa; III/esplode se ferisce un alleato. Ogni 5 livelli: +20 Difesa base.',
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Guardia d Ali',
+                tipo: 'Reazione angelica',
+                costo: '1 Scudo Critico',
+                cooldown: '1 turno',
+                descrizione:
+                    'I/consumi lo Scudo Critico per proteggerti; II/proteggi anche un alleato vicino; III/respingi chi forza la guardia.',
+                equipaggiata: true,
+              ),
+            ]);
+        } else if (kind == 'Angelo Protettore') {
+          skills
+            ..clear()
+            ..addAll([
+              CharacterSkill(
+                nome: 'Intercettazione Celeste',
+                tipo: 'Reazione angelica',
+                costo: '1 reazione',
+                cooldown: '1 turno',
+                descrizione:
+                    'I/prendi su di te il prossimo danno diretto a un compagno; II/per due compagni vicini; III/il danno trasferito usa normalmente la tua Difesa e i tuoi Scudi.',
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Muro d Ali',
+                tipo: 'Skill angelica',
+                costo: '2 Materia',
+                cooldown: '3 turni',
+                descrizione:
+                    'I/copertura per un alleato; II/per una linea; III/chi attraversa perde la reazione, ma l Angelo resta esposto sul lato opposto.',
+                difesa: 30,
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Voto Protettore',
+                tipo: 'Passiva angelica',
+                costo: 'Passivo',
+                cooldown: 'Sempre',
+                descrizione:
+                    'I/scegli un compagno da custodire; II/ottieni vantaggio quando intercetti per lui; III/una volta per scontro puoi prendere il colpo che lo abbatterebbe.',
+                equipaggiata: true,
+              ),
+            ]);
+        } else if (kind == 'Serafino') {
+          skills
+            ..clear()
+            ..addAll([
+              CharacterSkill(
+                nome: 'Lancia delle Ali',
+                tipo: 'Skill angelica',
+                costo: '5 Oculum',
+                cooldown: '2 turni',
+                descrizione:
+                    'I/colpo di luce a distanza; II/attraversa una linea; III/divide l area, ma richiede una linea visibile.',
+                danni: 35,
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Comando dell Aureola',
+                tipo: 'Skill angelica',
+                costo: '4 Oculum',
+                cooldown: '3 turni',
+                descrizione:
+                    'I/ordini a un alleato di muoversi o difendersi; II/due alleati; III/annulli una reazione nemica nella zona, ma diventi il bersaglio evidente.',
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Egida delle Sei Ali',
+                tipo: 'Skill angelica',
+                costo: '8 Oculum',
+                cooldown: '5 turni',
+                descrizione:
+                    'I/crei una difesa celeste; II/copre il gruppo vicino; III/la prima offensiva contro l egida viene respinta e l egida termina.',
+                difesa: 80,
+                equipaggiata: true,
+              ),
+            ]);
+        } else if (kind == 'Scheletro Bombarolo') {
+          skills
+            ..clear()
+            ..addAll([
+              CharacterSkill(
+                nome: 'Bomba d Osso',
+                tipo: 'Skill mostro',
+                costo: '1 azione',
+                cooldown: '2 turni',
+                descrizione:
+                    'I/lanci una bomba in una piccola area: danno semi-letale pari al 35% della Vita attuale; II/45%; III/50% in area media. Non riduce mai un bersaglio sotto 1 Vita.',
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Anello di Schegge',
+                tipo: 'Skill mostro',
+                costo: '1 azione',
+                cooldown: '3 turni',
+                descrizione:
+                    'I/schegge in area: 25% della Vita attuale; II/35% e rallenta; III/45%, lasciandoti scoperto dopo il lancio. Ogni bersaglio resta almeno a 1 Vita.',
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Ultima Esplosione',
+                tipo: 'Reazione mostro',
+                costo: 'Quando sei quasi distrutto',
+                cooldown: '1 volta',
+                descrizione:
+                    'I/detonazione 30% Vita attuale nell area; II/40%; III/50%. È sempre semi-letale e non può abbattere direttamente.',
+                equipaggiata: true,
+              ),
+            ]);
+        } else if (kind == 'L Osservatore') {
+          skills
+            ..clear()
+            ..addAll([
+              CharacterSkill(
+                nome: 'Copia Testimoniata',
+                tipo: 'Skill mostro',
+                costo: '1 azione dopo aver visto una Skill',
+                cooldown: '1 turno',
+                descrizione:
+                    'I/copi la Skill vista più recente; II/la conservi per due usi; III/copi anche una Forma. Usa Copia / invia Skill sulla Skill osservata per conservarne testo, costo e limiti nella scheda dell Osservatore.',
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Analisi Bianca',
+                tipo: 'Skill mostro',
+                costo: '1 azione',
+                cooldown: '2 turni',
+                descrizione:
+                    'I/scopri costo e limite di una Skill vista; II/ottieni vantaggio per copiarla; III/scopri anche la condizione che la interrompe, restando fermo a osservare.',
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Replica',
+                tipo: 'Skill mostro',
+                costo: 'Costo della Skill copiata',
+                cooldown: 'come la Skill copiata',
+                descrizione:
+                    'I/usi una Skill copiata; II/ne alterni due viste diverse; III/combini due copie compatibili, pagando entrambi i costi e rispettando tutti i limiti originali.',
+                equipaggiata: true,
+              ),
+            ]);
+        } else if (kind == 'L Immortale') {
+          skills
+            ..clear()
+            ..addAll([
+              CharacterSkill(
+                nome: 'Mietitura Vitale',
+                tipo: 'Passiva mostro',
+                costo: 'Passivo',
+                cooldown: 'Sempre',
+                descrizione:
+                    'Ogni danno realmente arrivato alla Vita del bersaglio cura l Immortale dello stesso valore. Il danno assorbito da Scudo, Scudo Oculum o HP temporanei non conta. Registra il danno alla Vita e usa Cura per lo stesso totale.',
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Taglio Incessante',
+                tipo: 'Skill mostro',
+                costo: '1 azione',
+                cooldown: '2 turni',
+                descrizione:
+                    'I/colpisci e attivi Mietitura Vitale sul danno alla Vita; II/se raggiungi la Vita insegui il bersaglio; III/contro un bersaglio già ferito aumenti la pressione senza ignorare Scudi o Difesa.',
+                danni: max(8, livello * 5 + 8),
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Posa Imperitura',
+                tipo: 'Skill mostro',
+                costo: '1 azione',
+                cooldown: '3 turni',
+                descrizione:
+                    'I/la prima Mietitura del turno concede +10 Difesa; II/+20; III/+30, ma rinunci alle reazioni mentre la mantieni.',
+                difesa: 10,
+                equipaggiata: true,
+              ),
+            ]);
+        } else if (kind == 'Demone Minore') {
+          skills
+            ..clear()
+            ..addAll([
+              CharacterSkill(
+                nome: 'Corpo Indurito',
+                tipo: 'Skill Oculum',
+                costo: '3 Oculum',
+                cooldown: '2 turni',
+                descrizione:
+                    'I/ricopri il corpo di Oculum: +30 Difesa fino al tuo prossimo turno; II/+60 Difesa e respingi chi ti colpisce in mischia; III/+100 Difesa e proteggi un alleato adiacente.',
+                difesa: 30,
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Guardia Istintiva',
+                tipo: 'Skill Oculum',
+                costo: '2 Oculum',
+                cooldown: '3 turni',
+                descrizione:
+                    'I/crei una guardia che assorbe il prossimo colpo; II/la guardia copre anche un alleato; III/la guardia restituisce una breve onda d urto a chi la rompe.',
+                difesa: 40,
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Schianto Bruto',
+                tipo: 'Skill Oculum',
+                costo: '4 Oculum',
+                cooldown: '2 turni',
+                descrizione:
+                    'I/potenzi il pugno e infliggi +20 danni; II/+45 danni e sbilanci; III/+80 danni, ma dopo il colpo non puoi mantenere Corpo Indurito nello stesso turno.',
+                danni: 20,
+                equipaggiata: true,
+              ),
+            ]);
+        } else if (kind == 'Demone Intermedio') {
+          skills
+            ..clear()
+            ..addAll([
+              CharacterSkill(
+                nome: 'Fame Corazzata',
+                tipo: 'Skill Oculum',
+                costo: '4 Oculum',
+                cooldown: '2 turni',
+                descrizione:
+                    'I/+40 Difesa; II/+75 Difesa e il primo colpo subito alimenta la tua prossima sfera; III/+120 Difesa e non puoi essere spostato facilmente.',
+                difesa: 40,
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Sfera di Difesa',
+                tipo: 'Skill Oculum',
+                costo: '6 Oculum',
+                cooldown: '3 turni',
+                descrizione:
+                    'I/crei una sfera che assorbe 50 danni; II/assorbe 100 e copre un alleato; III/assorbe 160 e ferisce chi la attraversa.',
+                difesa: 50,
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Sfera di Pressione',
+                tipo: 'Skill Oculum',
+                costo: '7 Oculum',
+                cooldown: '3 turni',
+                descrizione:
+                    'I/lanci una sfera: +30 danni; II/+60 danni e, con tiro positivo su Pressione, espandi l area; III/+110 danni e la sfera espansa respinge.',
+                danni: 30,
+                equipaggiata: true,
+              ),
+            ]);
+        } else if (kind == 'Demone Maggiore') {
+          skills
+            ..clear()
+            ..addAll([
+              CharacterSkill(
+                nome: 'Dominio Demoniaco',
+                tipo: 'Skill Oculum',
+                costo: '7 Oculum',
+                cooldown: '3 turni',
+                descrizione:
+                    'I/+60 Difesa e imponi la tua presenza; II/+120 Difesa e un demone minore vicino non può sottrarsi; III/+180 Difesa e spezzi la sua guardia.',
+                difesa: 60,
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Divora il Debole',
+                tipo: 'Skill Oculum',
+                costo: '1 azione',
+                cooldown: '5 turni',
+                descrizione:
+                    'I/divori un demone o evocazione già sconfitto: recuperi 15 Oculum; II/recuperi 30 Oculum e 60 Scudo; III/recuperi 50 Oculum, 120 Scudo e ottieni +40 danni al prossimo colpo.',
+                difesa: 60,
+                equipaggiata: true,
+              ),
+              CharacterSkill(
+                nome: 'Egida Infernale',
+                tipo: 'Skill Oculum',
+                costo: '10 Oculum',
+                cooldown: '5 turni',
+                descrizione:
+                    'I/crei una barriera da 120 Scudo; II/da 220 Scudo e le sfere alleate resistono di più; III/da 350 Scudo e ogni nemico che la forza subisce +100 danni.',
+                difesa: 120,
+                equipaggiata: true,
+              ),
+            ]);
+        }
 
         if (oculumNormalizeText('$description $nome').contains('patalpa')) {
           skills
@@ -6829,18 +7577,21 @@ extension _OculumHomePersistence on _OculumHomePageState {
           ].where((value) => value.trim().isNotEmpty).join(' ');
         }
 
-        final generatedArt = generatedEntityArt(
-          mode: artMode,
-          elements: elements,
-          level: livello,
-          grade: grado,
-          kind: kind,
-        );
+        final generatedArt =
+            matchedMonster != null && matchedMonster.skillIds.isEmpty
+            ? null
+            : generatedEntityArt(
+                mode: artMode,
+                elements: elements,
+                level: livello,
+                grade: grado,
+                kind: kind,
+              );
         if (generatedArt != null) {
           arti
             ..clear()
             ..add(generatedArt);
-        } else if (skills.isEmpty) {
+        } else if (skills.isEmpty && matchedMonster == null) {
           skills.add(
             generatedEntitySkill(
               name: nome,
@@ -6864,14 +7615,48 @@ extension _OculumHomePersistence on _OculumHomePageState {
         currentHpController.text = maxHp().toString();
         final countedMembers = max(1, generatedStats['countedMembers'] ?? 1);
         final enemyShieldBonus = enemyProfile ? livello * countedMembers : 0;
-        scudoController.text = (scudoRefullTarget() + enemyShieldBonus)
-            .toString();
+        scudoController.text = max(
+          leggiNumero(scudoController),
+          scudoRefullTarget() + enemyShieldBonus,
+        ).toString();
+        if (kind == 'Serafino') {
+          scudoCriticoController.text = '2';
+          scudoOculumMaxController.text = '${livello * 5}';
+          scudoOculumController.text = '${livello * 5}';
+        }
         final profile = generatedStats['profile'] ?? 0;
         final profileLabel = profile > 0
-            ? t('profilo raro forte', 'rare strong profile')
+            ? t('buff positivo raro', 'rare positive buff')
             : profile < 0
-            ? t('profilo raro fragile', 'rare fragile profile')
+            ? t('malus raro', 'rare negative malus')
             : t('media party', 'party average');
+        if (profile > 0) {
+          final bonus = max(2, livello + grado * 3);
+          buffMalusRapidiController.text = [
+            buffMalusRapidiController.text,
+            '@Danni+$bonus ${elementDisplayName(elements.first)}',
+            '@Difesa+$bonus ${elementDisplayName(defenseElement)}',
+          ].where((value) => value.trim().isNotEmpty).join(' ');
+        } else if (profile < 0) {
+          buffMalusRapidiController.text = [
+            buffMalusRapidiController.text,
+            '@Danni-1 ${elementDisplayName(elements.first)}',
+          ].where((value) => value.trim().isNotEmpty).join(' ');
+        }
+        if (enemyProfile) {
+          final roleTraits = generatedMonsterRoleTraits(
+            description: description,
+            name: nome,
+            profile: profile,
+            monsterBookSpawn: matchedMonster != null,
+          );
+          if (roleTraits.isNotEmpty) {
+            buffMalusRapidiController.text = [
+              buffMalusRapidiController.text,
+              ...roleTraits,
+            ].where((value) => value.trim().isNotEmpty).join(' ');
+          }
+        }
         risultato = t(
           'Scheda rapida $nome creata: $selectedType, $kind, $profileLabel (${campaignDifficultyLabel()}).',
           'Quick sheet $nome created: $selectedType, $kind, $profileLabel (${campaignDifficultyLabel()}).',
