@@ -1003,27 +1003,54 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       return;
     }
 
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        backgroundColor: const Color(0xFF10121A),
+        title: Text(t('Potenzia una caratteristica', 'Empower a stat')),
+        children: [
+          for (final entry in const <String, String>{
+            'resilienza': 'Resilienza',
+            'volonta': 'Volontà',
+            'materia': 'Materia',
+            'oculum': 'Oculum',
+          }.entries)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(dialogContext, entry.key),
+              child: Text(entry.value),
+            ),
+        ],
+      ),
+    );
+    if (selected == null || !mounted) return;
     final controller = TextEditingController(text: '1');
     final quantita = await showDialog<int>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF10121A),
-        title: Text(t('Potenzia', 'Empower')),
+        title: Text(
+          t(
+            'Ascension Dust: ${selected.toUpperCase()}',
+            'Ascension Dust: ${selected.toUpperCase()}',
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               t(
-                'Disponibili: $disponibile. Ogni Dust non multipla di 3 dona +1 temporaneo a una statistica casuale fino al riposo lungo. Ogni terza Dust cumulata nel giorno prepara invece +1 permanente casuale, rivelato al riposo lungo.',
-                'Available: $disponibile. Every Dust that is not a multiple of 3 grants +1 temporary to a random stat until long rest. Every third Dust accumulated during the day instead prepares a random permanent +1, revealed at long rest.',
+                'Ogni Dust dà da +3 a +9 temporanei a questa caratteristica. Alla terza Dust della stessa caratteristica, tutti i bonus Dust temporanei di quella caratteristica diventano reali.',
+                'Each Dust grants +3 to +9 temporary points to this stat. On the third Dust for that same stat, all its temporary Dust bonuses become permanent.',
               ),
             ),
             const SizedBox(height: 14),
             TextField(
               controller: controller,
               keyboardType: TextInputType.number,
-              decoration: fieldDecoration(t('Quantità', 'Amount')),
+              decoration: fieldDecoration(
+                t('Quantità (max $disponibile)', 'Amount (max $disponibile)'),
+              ),
               autofocus: true,
             ),
           ],
@@ -1034,10 +1061,10 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
             child: Text(t('Annulla', 'Cancel')),
           ),
           FilledButton(
-            onPressed: () {
-              final value = readIntValue(controller.text).clamp(1, disponibile);
-              Navigator.pop(dialogContext, value);
-            },
+            onPressed: () => Navigator.pop(
+              dialogContext,
+              readIntValue(controller.text).clamp(1, disponibile),
+            ),
             child: Text(t('Potenzia', 'Empower')),
           ),
         ],
@@ -1047,38 +1074,60 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     if (quantita == null || quantita <= 0 || !mounted) return;
 
     final random = Random.secure();
-    var temporanei = 0;
-    var permanenti = 0;
+    var gained = 0;
+    var madePermanent = 0;
     setState(() {
       ascensionDustController.text = (disponibile - quantita).toString();
       for (var i = 0; i < quantita; i++) {
+        final bonus = 3 + random.nextInt(7);
+        gained += bonus;
         ascensionDustUsataOggi++;
-        if (ascensionDustUsataOggi % 3 == 0) {
-          ascensionDustPermanentiInAttesa++;
-          permanenti++;
+        switch (selected) {
+          case 'resilienza':
+            ascensionDustTempResilienza += bonus;
+          case 'volonta':
+            ascensionDustTempVolonta += bonus;
+          case 'materia':
+            ascensionDustTempMateria += bonus;
+          case 'oculum':
+            ascensionDustTempOculum += bonus;
+        }
+        final progress = (ascensionDustStatProgress[selected] ?? 0) + 1;
+        if (progress < 3) {
+          ascensionDustStatProgress[selected] = progress;
           continue;
         }
-        switch (random.nextInt(4)) {
-          case 0:
-            ascensionDustTempResilienza++;
-            break;
-          case 1:
-            ascensionDustTempVolonta++;
-            break;
-          case 2:
-            ascensionDustTempMateria++;
-            break;
-          default:
-            ascensionDustTempOculum++;
+        final temporary = switch (selected) {
+          'resilienza' => ascensionDustTempResilienza,
+          'volonta' => ascensionDustTempVolonta,
+          'materia' => ascensionDustTempMateria,
+          _ => ascensionDustTempOculum,
+        };
+        switch (selected) {
+          case 'resilienza':
+            resilienzaController.text =
+                (leggiNumero(resilienzaController) + temporary).toString();
+            ascensionDustTempResilienza = 0;
+          case 'volonta':
+            volontaController.text =
+                (leggiNumero(volontaController) + temporary).toString();
+            ascensionDustTempVolonta = 0;
+          case 'materia':
+            materiaController.text =
+                (leggiNumero(materiaController) + temporary).toString();
+            ascensionDustTempMateria = 0;
+          case 'oculum':
+            oculumController.text = (leggiNumero(oculumController) + temporary)
+                .toString();
+            ascensionDustTempOculum = 0;
         }
-        temporanei++;
+        madePermanent += temporary;
+        ascensionDustStatProgress[selected] = 0;
       }
-      risultato = t(
-        'Potenzia: spese $quantita Ascension Dust. +$temporanei punti temporanei casuali fino al riposo lungo'
-            '${permanenti > 0 ? '; $permanenti aumento/i permanente/i nascosto/i sarà/saranno rivelato/i al riposo lungo' : ''}. Progressione giornaliera: $ascensionDustUsataOggi.',
-        'Empower: spent $quantita Ascension Dust. +$temporanei random temporary points until long rest'
-            '${permanenti > 0 ? '; $permanenti hidden permanent increase(s) will be revealed at long rest' : ''}. Daily progress: $ascensionDustUsataOggi.',
-      );
+      risultato =
+          'Ascension Dust: $selected +$gained temporaneo'
+          '${madePermanent > 0 ? '; +$madePermanent diventa reale' : ''}. '
+          'Progresso ${ascensionDustStatProgress[selected] ?? 0}/3.';
       aggiungiLog(risultato);
     });
     programmaSalvataggio();
@@ -1452,6 +1501,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       ascensionDustTempMateria = 0;
       ascensionDustTempOculum = 0;
       ascensionDustSottotrattiTemporanei.clear();
+      // Le Dust non consolidate restano temporanee solo fino al riposo lungo.
+      // Azzerare anche il contatore evita di rendere reale un bonus già perso.
+      ascensionDustStatProgress.clear();
       invalidateHiddenEyeDerivedCaches();
       ascensionDustUsataOggi = 0;
       ascensionDustPermanentiInAttesa = 0;

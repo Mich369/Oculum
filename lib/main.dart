@@ -73,6 +73,7 @@ part 'src/main/oculum_campaigns.dart';
 part 'src/main/oculum_story_session_notes.dart';
 part 'src/main/oculum_home_recipes.dart';
 part 'src/main/oculum_home_titles_inventory_pages.dart';
+part 'src/main/oculum_home_merchant.dart';
 part 'src/main/oculum_skill_effects_ui.dart';
 part 'src/main/oculum_structured_effect_runtime.dart';
 part 'src/main/oculum_home_share_content.dart';
@@ -1337,6 +1338,11 @@ class _OculumHomePageState extends State<OculumHomePage>
   final masterSessionController = TextEditingController();
 
   final obserController = TextEditingController(text: '0');
+  final String merchantRuntimeSessionId =
+      'merchant_${DateTime.now().microsecondsSinceEpoch}';
+  List<Map<String, dynamic>> merchantStock = <Map<String, dynamic>>[];
+  String merchantStockSessionId = '';
+  bool merchantIsOpen = false;
   final ascensionDustController = TextEditingController(text: '0');
   final ispirazioniController = TextEditingController(text: '0');
   final superIspirazioniController = TextEditingController(text: '0');
@@ -1377,6 +1383,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   String tutorialFateId = 'avventura';
   String tutorialArtName = 'Oculum Art Acquatica';
   bool tutorialGeneraMostro = false;
+  String tutorialMonsterTier = 'Mostro';
+  String tutorialMonsterPresetId = '';
   String tutorialStatPrimaria = 'resilienza';
   String tutorialStatSecondaria = 'volonta';
   int tutorialMartialBonus = 0;
@@ -1477,6 +1485,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final List<Map<String, dynamic>> partyMembri = [];
   final List<MonsterBookEntry> monsterBookCustomEntries = [];
   final Set<String> monsterBookRemovedIds = <String>{};
+  String monsterBookFilterCacheKey = '';
+  List<MonsterBookEntry> monsterBookFilterCache = const <MonsterBookEntry>[];
   final List<Map<String, dynamic>> amiciOculum = [];
   final List<Map<String, dynamic>> campagneOculum = [];
 
@@ -1692,6 +1702,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   int ascensionDustTempOculum = 0;
   int ascensionDustUsataOggi = 0;
   int ascensionDustPermanentiInAttesa = 0;
+  final Map<String, int> ascensionDustStatProgress = <String, int>{};
   int ascensionDustIntegritaMassimaBonus = 0;
   final Map<String, int> ascensionDustSottotrattiTemporanei = <String, int>{};
   int schivateOculumConsumate = 0;
@@ -3407,9 +3418,14 @@ class _OculumHomePageState extends State<OculumHomePage>
     unawaited(
       caricaDati().then((_) {
         if (!mounted) return;
+        var coreRecipesAdded = false;
         setState(() {
           modalitaMaster = oculumStartupRole == OculumStartupRole.master;
+          coreRecipesAdded = ensureCoreOculumRecipes();
         });
+        if (coreRecipesAdded) {
+          programmaSalvataggio();
+        }
       }),
     );
     avviaControlloConnessioneOnline();

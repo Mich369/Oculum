@@ -239,6 +239,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     sendRealtimeCurrentSheetToStaff(immediate: true);
     if (!realtimeIsMasterRole) {
       resendRealtimeFriendSheetsForPresence();
+    } else {
+      sendRealtimeMonsterBookSnapshot();
     }
     syncStorySessionNotesRealtime();
     syncRealtimeRecipes();
@@ -502,6 +504,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           break;
         case 'recipes_snapshot':
           persistRecipes = receiveRealtimeRecipesSnapshot(payload);
+          showInRealtimeEvents = false;
+          break;
+        case 'monster_book_snapshot':
+          persistRealtimeRemote = receiveRealtimeMonsterBookSnapshot(payload);
           showInRealtimeEvents = false;
           break;
         case 'recipes_request':
@@ -771,6 +777,11 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         return t('$player richiede gli appunti.', '$player requests notes.');
       case 'session_notes_snapshot':
         return t('$player sincronizza gli appunti.', '$player syncs notes.');
+      case 'monster_book_snapshot':
+        return t(
+          '$player sincronizza il Monster Book.',
+          '$player syncs the Monster Book.',
+        );
       case 'vtt_scene_request':
         return t(
           '$player richiede la scena attiva.',
@@ -2492,6 +2503,23 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     for (final index in masterPartyIndexes()) {
       sendRealtimeMasterVisibleTokenAt(index);
     }
+  }
+
+  void sendRealtimeMonsterBookSnapshot() {
+    final service = realtimeService;
+    if (service?.isConnected != true || !realtimeIsMasterRole) return;
+    final entries = monsterBookCustomEntries
+        .map((entry) => entry.toJson())
+        .toList(growable: false);
+    final removed = monsterBookRemovedIds.toList()..sort();
+    unawaited(
+      service!.sendMonsterBookSnapshot(
+        campaignId: activeCampaignId,
+        campaignName: activeCampaignName(),
+        entries: entries,
+        removedIds: removed,
+      ),
+    );
   }
 
   void sendRealtimeMasterVisibleTokenAt(int index) {

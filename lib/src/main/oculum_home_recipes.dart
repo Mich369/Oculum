@@ -5,6 +5,37 @@ part of '../../main.dart';
 extension _OculumHomeRecipes on _OculumHomePageState {
   bool get canManageRecipes => modalitaMaster || isMasterHost;
 
+  /// Seeds only the authored base recipe. It uses a stable id, so older
+  /// campaigns and Master-made recipes retain their exact data and ordering.
+  bool ensureCoreOculumRecipes() {
+    const id = 'core_pinna_pesce_alato';
+    if (recipes.any((recipe) => recipe.id == id)) return false;
+    final now = DateTime.now().toIso8601String();
+    recipes.add(
+      OculumRecipe(
+        id: id,
+        name: 'Pinna di Pesce Alato',
+        ingredients: const <OculumRecipeIngredient>[
+          OculumRecipeIngredient(name: 'Polvere del Pesce Alato', grams: '1000'),
+          OculumRecipeIngredient(name: 'Acqua contaminata dalle schegge', grams: '1000'),
+        ],
+        resultName: 'Pinna di Pesce Alato',
+        resultDescription:
+            'Usa: nuoti nell’aria per 3 turni. Creata spendendo automaticamente 3 Oculum.',
+        masterNotes:
+            'Si ricava dalla preda Pesce Alato o polverizzando le sue schegge nell’acqua contaminata.',
+        visibleToPlayers: true,
+        createdAt: now,
+        updatedAt: now,
+        recipeKind: 'alchemy',
+        resultGrams: '250',
+        oculumCost: 3,
+      ),
+    );
+    recipesRevision.value++;
+    return true;
+  }
+
   int presaMaterialiMassimoBaseGrammi() =>
       max(0, currentStatValue('volonta')) * 500;
 
@@ -532,6 +563,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   Future<void> _craftRecipe(OculumRecipe recipe, {int quantity = 1}) async {
     final safeQuantity = max(1, quantity);
     final missing = _missingRecipeIngredients(recipe, quantity: safeQuantity);
+    final oculumRequired = max(0, recipe.oculumCost) * safeQuantity;
     if (missing.isNotEmpty) {
       await showDialog<void>(
         context: context,
@@ -566,12 +598,40 @@ extension _OculumHomeRecipes on _OculumHomePageState {
       return;
     }
 
+    if (leggiNumero(currentOculumController) < oculumRequired) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(t('Oculum insufficiente', 'Insufficient Oculum')),
+          content: Text(
+            t(
+              'Per ${recipe.name} ×$safeQuantity servono $oculumRequired Oculum.',
+              '${recipe.name} ×$safeQuantity requires $oculumRequired Oculum.',
+            ),
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(t('Va bene', 'OK')),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     setState(() {
       for (final ingredient in recipe.ingredients) {
         _consumeRecipeMaterial(
           ingredient.name,
           _recipeGrams(ingredient.grams) * safeQuantity,
         );
+      }
+      if (oculumRequired > 0) {
+        currentOculumController.text = max(
+          0,
+          leggiNumero(currentOculumController) - oculumRequired,
+        ).toString();
       }
       inventario.add(
         InventoryItem(
@@ -582,8 +642,8 @@ extension _OculumHomeRecipes on _OculumHomePageState {
         ),
       );
       risultato = t(
-        '${recipe.resultName} ×$safeQuantity creato: ${formatoPesoMateriali(_finishedProductGrams(recipe) * safeQuantity)}.',
-        '${recipe.resultName} ×$safeQuantity crafted: ${formatoPesoMateriali(_finishedProductGrams(recipe) * safeQuantity)}.',
+        '${recipe.resultName} ×$safeQuantity creato: ${formatoPesoMateriali(_finishedProductGrams(recipe) * safeQuantity)}${oculumRequired > 0 ? ', -$oculumRequired Oculum' : ''}.',
+        '${recipe.resultName} ×$safeQuantity crafted: ${formatoPesoMateriali(_finishedProductGrams(recipe) * safeQuantity)}${oculumRequired > 0 ? ', -$oculumRequired Oculum' : ''}.',
       );
       aggiungiLog(risultato);
     });
@@ -601,7 +661,9 @@ extension _OculumHomeRecipes on _OculumHomePageState {
           final requirements = _recipeRequirements(recipe, quantity: quantity);
           final available = _availableRecipeMaterialGrams();
           final missing = _missingRecipeIngredients(recipe, quantity: quantity);
-          final canCraft = missing.isEmpty;
+          final oculumRequired = max(0, recipe.oculumCost) * quantity;
+          final currentOculum = leggiNumero(currentOculumController);
+          final canCraft = missing.isEmpty && currentOculum >= oculumRequired;
           return AlertDialog(
             title: Text(t('Anteprima crafting', 'Crafting preview')),
             content: SizedBox(
@@ -628,6 +690,21 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                     '${cleanUiText(recipe.resultName)} ×$quantity · ${formatoPesoMateriali(_finishedProductGrams(recipe) * quantity)}',
                     style: const TextStyle(fontWeight: FontWeight.w900),
                   ),
+                  if (oculumRequired > 0) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      t(
+                        'Oculum: $oculumRequired / $currentOculum',
+                        'Oculum: $oculumRequired / $currentOculum',
+                      ),
+                      style: TextStyle(
+                        color: currentOculum >= oculumRequired
+                            ? Colors.lightBlueAccent
+                            : Colors.redAccent,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   Text(t('Materiali richiesti', 'Required materials')),
                   const SizedBox(height: 6),

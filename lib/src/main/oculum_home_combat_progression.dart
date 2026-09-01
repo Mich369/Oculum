@@ -3707,6 +3707,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       _ => false,
     };
     final integrityBroken = <String>{};
+    var combatArmorBreakLog = '';
 
     void noteBrokenIntegrity(InventoryItem item) {
       if (itemIntegrityShieldCurrent(item) <= 0 &&
@@ -3886,10 +3887,31 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         scudoCriticoController.text = max(0, scudoCriticoPrima - 1).toString();
       }
       if (integrityBroken.isNotEmpty) {
-        risultato += t(
-          '\nScudo d\'integrità spezzato: ${integrityBroken.join(', ')}. I suoi parser/effetti non sono più attivi fino alla ricarica.',
-          '\nIntegrity shield broken: ${integrityBroken.join(', ')}. Its parser/effects stay disabled until it is recharged.',
+        final brokenText = t(
+          'Scudo d\'integrità spezzato: ${integrityBroken.join(', ')}. I suoi parser/effetti non sono più attivi fino alla ricarica.',
+          'Integrity shield broken: ${integrityBroken.join(', ')}. Its parser/effects stay disabled until it is recharged.',
         );
+        combatArmorBreakLog = '\n$brokenText';
+        if (integrityBroken.contains('Armatura del Combattente') &&
+            !activeStructuredEffects.any(
+              (effect) => effect['source'] == 'Armatura del Combattente',
+            )) {
+          final surge = max(1, dannoTotale()) * 2;
+          activeStructuredEffects.add(<String, dynamic>{
+            'source': 'Armatura del Combattente',
+            'target': 'danni',
+            'value': surge,
+            'remaining': 2,
+            'unit': 'turn',
+            'frequency': '',
+            'type': 'bonus',
+            'stackable': false,
+          });
+          combatArmorBreakLog += t(
+            '\nArmatura del Combattente spezzata: +200% danni per 2 turni (+$surge).',
+            '\nCombatant Armor broken: +200% damage for 2 turns (+$surge).',
+          );
+        }
       }
 
       risultato = t(
@@ -3899,6 +3921,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       risultato += partialAwakeningLog;
       risultato += lowHpLog;
       risultato += brokenCoreLog;
+      risultato += combatArmorBreakLog;
 
       if (scudoCriticoSpezzato) {
         risultato += t(

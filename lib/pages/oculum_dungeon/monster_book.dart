@@ -1,3 +1,5 @@
+import 'dart:math';
+
 class MonsterBookEntry {
   final String id;
   final String nameIt;
@@ -18,6 +20,10 @@ class MonsterBookEntry {
   final List<String> weaponTags;
   final List<String> armorTags;
 
+  /// Oggetti reali ottenuti quando questo mostro viene creato come scheda.
+  /// Restano dati del Book, non cambiano il formato dei salvataggi esistenti.
+  final List<Map<String, dynamic>> inventoryItems;
+
   const MonsterBookEntry({
     required this.id,
     required this.nameIt,
@@ -37,6 +43,7 @@ class MonsterBookEntry {
     this.canWieldWeapons = false,
     this.weaponTags = const [],
     this.armorTags = const [],
+    this.inventoryItems = const [],
   });
 
   String get presetType {
@@ -65,6 +72,7 @@ class MonsterBookEntry {
     bool? canWieldWeapons,
     List<String>? weaponTags,
     List<String>? armorTags,
+    List<Map<String, dynamic>>? inventoryItems,
   }) {
     return MonsterBookEntry(
       id: id ?? this.id,
@@ -85,6 +93,7 @@ class MonsterBookEntry {
       canWieldWeapons: canWieldWeapons ?? this.canWieldWeapons,
       weaponTags: weaponTags ?? this.weaponTags,
       armorTags: armorTags ?? this.armorTags,
+      inventoryItems: inventoryItems ?? this.inventoryItems,
     );
   }
 
@@ -108,6 +117,9 @@ class MonsterBookEntry {
       'canWieldWeapons': canWieldWeapons,
       'weaponTags': List<String>.from(weaponTags),
       'armorTags': List<String>.from(armorTags),
+      'inventoryItems': inventoryItems
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(growable: false),
     };
   }
 
@@ -144,6 +156,9 @@ class MonsterBookEntry {
       canWieldWeapons: _monsterBookBool(json['canWieldWeapons']),
       weaponTags: _monsterBookStrings(json['weaponTags']),
       armorTags: _monsterBookStrings(json['armorTags']),
+      inventoryItems: _monsterBookMaps(
+        json['inventoryItems'] ?? json['inventory'],
+      ),
     );
   }
 }
@@ -165,6 +180,14 @@ List<String> _monsterBookStrings(dynamic value) {
   return value
       .map((entry) => '$entry'.trim())
       .where((entry) => entry.isNotEmpty)
+      .toList(growable: false);
+}
+
+List<Map<String, dynamic>> _monsterBookMaps(dynamic value) {
+  if (value is! List) return const <Map<String, dynamic>>[];
+  return value
+      .whereType<Map>()
+      .map((entry) => Map<String, dynamic>.from(entry))
       .toList(growable: false);
 }
 
@@ -2165,6 +2188,190 @@ const int targetBossMonsterCount = 36;
 /// narrative invece di ridurle a tre attacchi generici.
 const List<MonsterBookEntry> _manualMonsterBookEntries = [
   MonsterBookEntry(
+    id: 'lumaca_assassina',
+    nameIt: 'Lumaca Assassina',
+    nameEn: 'Assassin Snail',
+    descIt:
+        'Mostro debole. Lumacone lungo due metri e largo uno e mezzo, con enorme guscio borchiato. Ruolo in scena: lascia una bava che toglie Reazioni a chi la attraversa; possiede Ricordo Vitale.',
+    descEn: 'Weak giant spiked-shell snail.',
+    elementId: 'acido',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 1,
+      'resilienza': 4,
+      'volonta': 2,
+      'materia': 2,
+      'oculum': 3,
+    },
+    skillIds: [
+      'assassin_snail_slime',
+      'assassin_snail_shell',
+      'assassin_snail_memory',
+    ],
+    dropIds: ['bava_reattiva', 'spina_di_guscio', 'frammento_ricordo_vitale'],
+  ),
+  MonsterBookEntry(
+    id: 'errante_con_la_sedia',
+    nameIt: 'Errante con la Sedia',
+    nameEn: 'Chair Wanderer',
+    descIt:
+        'Intermedio errante. Cammina piegato con una sedia fissata alla schiena; le gambe della sedia cercano i corridoi prima di lui. RES 8 VOL 7 MAT 6 OCU 5. Ruolo: blocca passaggi.',
+    descEn: 'Medium chair-backed wanderer.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 5,
+      'resilienza': 8,
+      'volonta': 7,
+      'materia': 6,
+      'oculum': 5,
+    },
+    skillIds: ['chairram_block', 'chairram_pin', 'chairram_fall'],
+    dropIds: ['gamba_sedia', 'cintura_strappata'],
+  ),
+  MonsterBookEntry(
+    id: 'errante_bocca_cucita',
+    nameIt: 'Errante Bocca Cucita',
+    nameEn: 'Sewn Mouth Wanderer',
+    descIt:
+        'Intermedio errante. Non parla: sotto i fili della bocca qualcosa preme e canta. RES 6 VOL 10 MAT 7 OCU 8. Ruolo: interrompe e confonde.',
+    descEn: 'Medium sewn-mouth wanderer.',
+    elementId: 'mentale',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 7,
+      'resilienza': 6,
+      'volonta': 10,
+      'materia': 7,
+      'oculum': 8,
+    },
+    skillIds: ['sewn_hum', 'sewn_thread', 'sewn_open'],
+    dropIds: ['filo_nero', 'dente_senza_radice'],
+  ),
+  MonsterBookEntry(
+    id: 'errante_specchio',
+    nameIt: 'Errante Specchio',
+    nameEn: 'Mirror Wanderer',
+    descIt:
+        'Intermedio errante. Ha un piccolo specchio al posto del volto e mani troppo lunghe. RES 7 VOL 8 MAT 10 OCU 8. Ruolo: copia posizione e devia colpi.',
+    descEn: 'Medium mirror-faced wanderer.',
+    elementId: 'specchio',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 8,
+      'resilienza': 7,
+      'volonta': 8,
+      'materia': 10,
+      'oculum': 8,
+    },
+    skillIds: ['mirror_hand', 'mirror_step', 'mirror_crack'],
+    dropIds: ['vetro_di_volto', 'dito_lungo'],
+  ),
+  MonsterBookEntry(
+    id: 'errante_bambola_bagnata',
+    nameIt: 'Errante Bambola Bagnata',
+    nameEn: 'Wet Doll Wanderer',
+    descIt:
+        'Intermedio errante. Una bambola alta quanto una persona, gonfia d acqua scura e con capelli incollati al viso. RES 9 VOL 6 MAT 8 OCU 9. Ruolo: rallenta e consuma spazio.',
+    descEn: 'Medium waterlogged doll wanderer.',
+    elementId: 'acqua',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 9,
+      'resilienza': 9,
+      'volonta': 6,
+      'materia': 8,
+      'oculum': 9,
+    },
+    skillIds: ['wetdoll_drip', 'wetdoll_grab', 'wetdoll_spill'],
+    dropIds: ['stoffa_bagnata', 'occhio_vetro_opaco'],
+  ),
+  MonsterBookEntry(
+    id: 'errante_con_ombrello',
+    nameIt: 'Errante con Ombrello',
+    nameEn: 'Umbrella Wanderer',
+    descIt:
+        'Intermedio errante. Tiene un ombrello chiuso sopra la testa anche sottoterra; sotto la stoffa qualcosa respira. RES 7 VOL 9 MAT 9 OCU 10. Ruolo: entra, colpisce e sparisce.',
+    descEn: 'Medium umbrella-bearing wanderer.',
+    elementId: 'ombra',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 10,
+      'resilienza': 7,
+      'volonta': 9,
+      'materia': 9,
+      'oculum': 10,
+    },
+    skillIds: ['umbrella_thrust', 'umbrella_cover', 'umbrella_depart'],
+    dropIds: ['tela_ombrello', 'manico_freddo'],
+  ),
+  MonsterBookEntry(
+    id: 'topo_con_mani',
+    nameIt: 'Topo con Mani',
+    nameEn: 'Hand Rat',
+    descIt:
+        'Mostro debole ma fastidioso. Ratto grande come un gatto, con due piccole mani umane e unghie nere al posto delle zampe anteriori. RES 1 VOL 2 MAT 2 OCU 1. Ruolo: apre ferite e scappa.',
+    descEn: 'Weak but irritating hand-rat.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 1,
+      'volonta': 2,
+      'materia': 2,
+      'oculum': 1,
+    },
+    skillIds: [
+      'handrat_face_pull',
+      'handrat_fingers_inside',
+      'handrat_skin_leave',
+    ],
+    dropIds: ['unghia_nera', 'pelle_di_topo', 'filo_nervoso'],
+  ),
+  MonsterBookEntry(
+    id: 'occhio_millepiedi',
+    nameIt: 'Occhio Millepiedi',
+    nameEn: 'Centipede Eye',
+    descIt:
+        'Mostro debole e inquieto. Un occhio umano grande quanto un pugno; dal nervo ottico crescono decine di piccole zampe. RES 1 VOL 1 MAT 2 OCU 2. Ruolo: disturba tiri e difesa.',
+    descEn: 'Weak centipede-eyed nuisance.',
+    elementId: 'oculum',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 1,
+      'volonta': 1,
+      'materia': 2,
+      'oculum': 2,
+    },
+    skillIds: ['centieye_lid_bite', 'centieye_stare', 'centieye_under_clothes'],
+    dropIds: ['nervo_oculare', 'zampa_sottile', 'palpebra_dentata'],
+  ),
+  MonsterBookEntry(
     id: 'tappo_con_zampe',
     nameIt: 'Tappo con Zampe',
     nameEn: 'Legged Cap',
@@ -2335,7 +2542,7 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     isMiniBoss: true,
     isBoss: false,
     isNullFateless: false,
-    stats: {'materia': 24, 'oculum': 12, 'schivateOculum': 5},
+    stats: {'materia': 24, 'oculum': 12, 'schivateOculum': 5, 'precisione': 6},
     skillIds: ['witch_oculum_mend', 'witch_brewing_ruin', 'witch_stun_vial'],
     dropIds: [
       'fiala_veleno_putrido',
@@ -3086,6 +3293,384 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     skillIds: ['paffer_inflate', 'spiked_shell', 'water_rest'],
     dropIds: ['guscio_paffer'],
   ),
+  MonsterBookEntry(
+    id: 'raccoglitore_di_chiodi',
+    nameIt: 'Raccoglitore di Chiodi',
+    nameEn: 'Nail Gatherer',
+    descIt:
+        'Umanoide debole, livello 1. Un uomo magro con un sacco pieno di chiodi piegati e un martello da banco. Ruolo: infastidisce la prima linea e recupera i propri chiodi. Inventario: martello da banco (+4 danni), cappotto cucito (+1 Difesa).',
+    descEn: 'Weak humanoid nail gatherer.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 1,
+      'resilienza': 3,
+      'volonta': 2,
+      'materia': 2,
+      'oculum': 0,
+    },
+    skillIds: [
+      'nailgatherer_throw',
+      'nailgatherer_hammer',
+      'nailgatherer_scramble',
+    ],
+    dropIds: ['chiodi_piegati', 'martello_da_banco'],
+    canWieldWeapons: true,
+    weaponTags: ['martello da banco'],
+    armorTags: ['cappotto cucito'],
+    inventoryItems: [
+      {
+        'nome': 'Martello da banco',
+        'peso': 1.4,
+        'quantita': 1,
+        'note': 'Arma del Raccoglitore di Chiodi.',
+        'arma': true,
+        'equipaggiata': true,
+        'bonusDanno': 4,
+        'elementoDanno': 'Fisico',
+      },
+      {
+        'nome': 'Cappotto cucito',
+        'peso': 1.0,
+        'quantita': 1,
+        'note': 'Armatura leggera recuperata.',
+        'protegge': true,
+        'equipaggiata': true,
+        'bonusDifesa': 1,
+      },
+    ],
+  ),
+  MonsterBookEntry(
+    id: 'guardia_del_pozzo',
+    nameIt: 'Guardia del Pozzo',
+    nameEn: 'Well Guard',
+    descIt:
+        'Umanoide semplice, livello 6. Indossa una maschera di rame e custodisce un pozzo asciutto con una lancia smussata. Ruolo: tiene distanza e richiama chi prova a passare. Inventario: lancia da pozzo (+12 danni), scudo di tavole (+8 Scudo).',
+    descEn: 'Low-tier humanoid well guard.',
+    elementId: 'terra',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 6,
+      'resilienza': 9,
+      'volonta': 5,
+      'materia': 5,
+      'oculum': 2,
+    },
+    skillIds: ['wellguard_thrust', 'wellguard_hook', 'wellguard_wall'],
+    dropIds: ['maschera_rame', 'punta_lancia_pozzo', 'corda_consunta'],
+    canWieldWeapons: true,
+    weaponTags: ['lancia da pozzo'],
+    armorTags: ['scudo di tavole'],
+    inventoryItems: [
+      {
+        'nome': 'Lancia da pozzo',
+        'peso': 2.1,
+        'quantita': 1,
+        'note': 'Arma della Guardia del Pozzo.',
+        'arma': true,
+        'equipaggiata': true,
+        'bonusDanno': 12,
+        'elementoDanno': 'Fisico',
+      },
+      {
+        'nome': 'Scudo di tavole',
+        'peso': 2.5,
+        'quantita': 1,
+        'note': 'Scudo legato con corda.',
+        'protegge': true,
+        'equipaggiata': true,
+        'bonusDifesa': 2,
+        'bonusScudo': 8,
+      },
+    ],
+  ),
+  MonsterBookEntry(
+    id: 'duellante_senza_palpebre',
+    nameIt: 'Duellante Senza Palpebre',
+    nameEn: 'Eyelidless Duelist',
+    descIt:
+        'Umanoide intermedio, livello 24. Non batte mai gli occhi e tiene due lame corte troppo lucide. Ruolo: sceglie un bersaglio isolato, lo legge e lo costringe a consumare reazioni. Inventario: coppia di lame lucide (+34 danni), giubba di cuoio nero (+7 Difesa).',
+    descEn: 'Intermediate eyelidless humanoid duelist.',
+    elementId: 'tagliente',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 24,
+      'resilienza': 27,
+      'volonta': 21,
+      'materia': 24,
+      'oculum': 17,
+    },
+    skillIds: ['eyelidless_read', 'eyelidless_crosscut', 'eyelidless_riposte'],
+    dropIds: ['lama_lucida', 'pelle_oculare_secca', 'giubba_nera'],
+    canWieldWeapons: true,
+    weaponTags: ['coppia di lame lucide'],
+    armorTags: ['giubba di cuoio nero'],
+    inventoryItems: [
+      {
+        'nome': 'Coppia di lame lucide',
+        'peso': 1.7,
+        'quantita': 1,
+        'note': 'Armi del Duellante Senza Palpebre.',
+        'arma': true,
+        'equipaggiata': true,
+        'bonusDanno': 34,
+        'elementoDanno': 'Tagliente',
+      },
+      {
+        'nome': 'Giubba di cuoio nero',
+        'peso': 2.3,
+        'quantita': 1,
+        'note': 'Armatura del duellante.',
+        'protegge': true,
+        'equipaggiata': true,
+        'bonusDifesa': 7,
+      },
+    ],
+  ),
+  MonsterBookEntry(
+    id: 'capitano_della_ruggine',
+    nameIt: 'Capitano della Ruggine',
+    nameEn: 'Rust Captain',
+    descIt:
+        'Umanoide potente, livello 58. Una corazza ossidata cresce direttamente nelle sue costole; usa una sciabola larga come una pala. Ruolo: comanda il centro, spezza scudi e non insegue chi fugge. Inventario: sciabola arrugginita (+62 danni), corazza costolare (+22 Difesa, +30 Scudo).',
+    descEn: 'Powerful rust-armored humanoid captain.',
+    elementId: 'ruggine',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: true,
+    isNullFateless: false,
+    stats: {
+      'level': 58,
+      'resilienza': 70,
+      'volonta': 54,
+      'materia': 49,
+      'oculum': 42,
+    },
+    skillIds: ['rustcaptain_order', 'rustcaptain_cleave', 'rustcaptain_plate'],
+    dropIds: ['scaglia_ruggine', 'elsa_capitano', 'costola_corazzata'],
+    canWieldWeapons: true,
+    weaponTags: ['sciabola arrugginita'],
+    armorTags: ['corazza costolare'],
+    inventoryItems: [
+      {
+        'nome': 'Sciabola arrugginita',
+        'peso': 4.2,
+        'quantita': 1,
+        'note': 'Arma del Capitano della Ruggine.',
+        'arma': true,
+        'equipaggiata': true,
+        'bonusDanno': 62,
+        'elementoDanno': 'Ruggine',
+        'gradoOggetto': 7,
+        'gradoRichiesto': 7,
+      },
+      {
+        'nome': 'Corazza costolare',
+        'peso': 7.0,
+        'quantita': 1,
+        'note': 'Corazza cresciuta sulle costole.',
+        'protegge': true,
+        'equipaggiata': true,
+        'bonusDifesa': 22,
+        'bonusScudo': 30,
+        'gradoOggetto': 7,
+        'gradoRichiesto': 7,
+      },
+    ],
+  ),
+  MonsterBookEntry(
+    id: 'uomo_del_martello_lungo',
+    nameIt: 'Uomo del Martello Lungo',
+    nameEn: 'Long Hammer Man',
+    descIt:
+        'Umanoide davvero potente, livello 100. È alto e magro ma il braccio destro termina in un martello telescopico; nessuno sa dove finisca il suo gomito. Ruolo: boss da corridoio, controlla distanza, rompe pareti e punisce chi resta vicino. Inventario: Martello Lungo (+90 danni), mantello di placche (+34 Difesa, +55 Scudo).',
+    descEn: 'Level 100 humanoid with a telescopic hammer.',
+    elementId: 'impatto',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: true,
+    isNullFateless: false,
+    stats: {
+      'level': 100,
+      'resilienza': 120,
+      'volonta': 92,
+      'materia': 86,
+      'oculum': 78,
+    },
+    skillIds: ['longhammer_reach', 'longhammer_recoil', 'longhammer_wall'],
+    dropIds: ['asta_telescopica', 'testa_martello_lunga', 'placca_fredda'],
+    canWieldWeapons: true,
+    weaponTags: ['Martello Lungo'],
+    armorTags: ['mantello di placche'],
+    inventoryItems: [
+      {
+        'nome': 'Martello Lungo',
+        'peso': 9.0,
+        'quantita': 1,
+        'note': 'Arma del livello 100 Uomo del Martello Lungo.',
+        'arma': true,
+        'equipaggiata': true,
+        'bonusDanno': 90,
+        'elementoDanno': 'Impatto',
+        'gradoOggetto': 12,
+        'gradoRichiesto': 12,
+      },
+      {
+        'nome': 'Mantello di placche',
+        'peso': 10.0,
+        'quantita': 1,
+        'note': 'Difesa a placche del livello 100.',
+        'protegge': true,
+        'equipaggiata': true,
+        'bonusDifesa': 34,
+        'bonusScudo': 55,
+        'gradoOggetto': 12,
+        'gradoRichiesto': 12,
+      },
+    ],
+  ),
+  MonsterBookEntry(
+    id: 'armaiolo_della_fila_lunga',
+    nameIt: 'Armaiolo della Fila Lunga',
+    nameEn: 'Long Rank Armorer',
+    descIt:
+        'Boss umanoide della stessa stirpe dei raccoglitori e delle guardie, livello 82. La sua pelle sembra una sala d armi: ganci, foderi e piastre si aprono lungo braccia e schiena. Comanda la Fila Lunga scegliendo stile a ogni turno: picca e lancia per tenere distanza, spada e scudo per il duello, alabarda per il controllo, balestra per punire da lontano, enormi guanti d arme per spezzare Difesa e Scudi. Inventario completo: ogni arma è reale e trasferibile quando lo crei come scheda.',
+    descEn:
+        'Level 82 humanoid commander with shifting medieval and fantasy weapons.',
+    elementId: 'acciaio',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: true,
+    isNullFateless: false,
+    stats: {
+      'level': 82,
+      'resilienza': 98,
+      'volonta': 78,
+      'materia': 74,
+      'oculum': 66,
+    },
+    skillIds: ['longrank_style', 'longrank_gauntlets', 'longrank_command'],
+    dropIds: [
+      'chiave_fonderia',
+      'guanto_d_arme_gigante',
+      'manuale_della_fila_lunga',
+    ],
+    canWieldWeapons: true,
+    weaponTags: [
+      'spada lunga',
+      'lancia',
+      'picca',
+      'alabarda',
+      'mazza ferrata',
+      'ascia bipenne',
+      'balestra',
+      'guanti d arme enormi',
+    ],
+    armorTags: ['scudo torre', 'corazza a piastre'],
+    inventoryItems: [
+      {
+        'nome': 'Spada lunga della Fila',
+        'peso': 2.8,
+        'quantita': 1,
+        'note': 'Stile duello: taglio affidabile.',
+        'arma': true,
+        'equipaggiata': true,
+        'bonusDanno': 48,
+        'elementoDanno': 'Tagliente',
+        'gradoOggetto': 10,
+        'gradoRichiesto': 10,
+      },
+      {
+        'nome': 'Lancia da fila',
+        'peso': 3.1,
+        'quantita': 1,
+        'note': 'Stile portata: colpisce oltre la prima linea.',
+        'arma': true,
+        'bonusDanno': 44,
+        'elementoDanno': 'Perforante',
+        'gradoOggetto': 10,
+        'gradoRichiesto': 10,
+      },
+      {
+        'nome': 'Picca a ganci',
+        'peso': 4.5,
+        'quantita': 1,
+        'note': 'Stile tenuta: aggancia e sposta.',
+        'arma': true,
+        'bonusDanno': 50,
+        'elementoDanno': 'Perforante',
+        'gradoOggetto': 10,
+        'gradoRichiesto': 10,
+      },
+      {
+        'nome': 'Alabarda di ferro freddo',
+        'peso': 5.0,
+        'quantita': 1,
+        'note': 'Stile controllo: taglio, punta e aggancio.',
+        'arma': true,
+        'bonusDanno': 56,
+        'elementoDanno': 'Acciaio',
+        'gradoOggetto': 10,
+        'gradoRichiesto': 10,
+      },
+      {
+        'nome': 'Balestra di fonderia',
+        'peso': 4.0,
+        'quantita': 1,
+        'note': 'Stile distanza: punisce chi fugge.',
+        'arma': true,
+        'bonusDanno': 52,
+        'elementoDanno': 'Perforante',
+        'gradoOggetto': 10,
+        'gradoRichiesto': 10,
+      },
+      {
+        'nome': 'Guanti d arme enormi',
+        'peso': 8.0,
+        'quantita': 1,
+        'note':
+            'Stile spezzascudi: enormi guanti fantasy per urtare corazze e Scudi.',
+        'arma': true,
+        'bonusDanno': 68,
+        'elementoDanno': 'Impatto',
+        'gradoOggetto': 11,
+        'gradoRichiesto': 11,
+      },
+      {
+        'nome': 'Scudo torre della Fila',
+        'peso': 9.0,
+        'quantita': 1,
+        'note': 'Scudo da comando.',
+        'protegge': true,
+        'equipaggiata': true,
+        'bonusDifesa': 28,
+        'bonusScudo': 48,
+        'gradoOggetto': 10,
+        'gradoRichiesto': 10,
+      },
+      {
+        'nome': 'Corazza a piastre di fonderia',
+        'peso': 13.0,
+        'quantita': 1,
+        'note': 'Armatura del comandante.',
+        'protegge': true,
+        'equipaggiata': true,
+        'bonusDifesa': 30,
+        'bonusScudo': 36,
+        'gradoOggetto': 10,
+        'gradoRichiesto': 10,
+      },
+    ],
+  ),
 ];
 
 /// Porta il roster storico allo stile del manuale senza cambiare gli ID che
@@ -3155,9 +3740,9 @@ List<MonsterBookEntry> _withMonsterSkillNarration(
     .map(
       (entry) => entry.copyWith(
         descIt:
-            '${entry.descIt}\n\nSkill per il giocatore:\n${entry.skillIds.map(monsterBookSkillText).join('\n')}',
+            '${entry.descIt}\n\nSkill per il giocatore:\n${entry.skillIds.asMap().entries.map((skill) => 'Livello richiesto ${monsterBookSkillRequiredLevel(entry, skill.key)} — ${monsterBookSkillText(skill.value)}').join('\n')}',
         descEn:
-            '${entry.descEn}\n\nSkill per il giocatore:\n${entry.skillIds.map(monsterBookSkillText).join('\n')}',
+            '${entry.descEn}\n\nPlayer skills:\n${entry.skillIds.asMap().entries.map((skill) => 'Required level ${monsterBookSkillRequiredLevel(entry, skill.key)} — ${monsterBookSkillText(skill.value)}').join('\n')}',
       ),
     )
     .toList(growable: false);
@@ -3167,7 +3752,11 @@ List<MonsterBookEntry> _withMonsterSkillNarration(
 String monsterBookSkillText(String rawId) {
   final id = rawId.replaceAll('_', ' ').trim();
   final label = id.isEmpty ? 'Tecnica del mostro' : id;
-  switch (rawId.trim().toLowerCase()) {
+  final baseId = rawId.trim().toLowerCase().replaceFirst(
+    RegExp(r'_variante_[a-z]+$'),
+    '',
+  );
+  switch (baseId) {
     case 'goblin_killer_finish':
       return 'finire il bersaglio — I/colpisci un nemico già ferito; II/se lo abbatti recuperi tutta la Vita; III/dopo l uccisione puoi spostarti, ma la cura non si attiva su Scudi o evocazioni già dissolte.';
     case 'archangel_strike':
@@ -3246,6 +3835,12 @@ String monsterBookSkillText(String rawId) {
       return 'wing flash — I/apri le ali dorate in un lampo: abbagli un bersaglio vicino e guadagni spazio per difenderti o riposizionarti; II/il lampo investe più bersagli vicini oppure protegge un alleato dalla prossima pressione; III/crei un bagliore accecante che interrompe le reazioni nella zona fino al turno successivo, ma rivela con chiarezza la tua posizione.';
     case 'putrid_oculum_art':
       return 'oculum art putrida — I/spendi il tuo Oculum per imporre a un bersaglio un malus breve: rallentamento, difesa incrinata o reazione negata; II/colpisci due bersagli vicini oppure applichi due malus diversi allo stesso bersaglio; III/finché il bersaglio porta almeno un malus, la prossima applicazione di Veleno Putrido non può essere convertita in un semplice danno diretto. Il Ragno rinuncia all attacco fisico mentre tesse questa pressione.';
+    case 'assassin_snail_slime':
+      return 'bava assassina — I/sputi saliva: chi colpisci perde una Reazione; II/la scia dietro di te infligge Senza Reazioni a chi la attraversa fino al turno successivo; III/la bava resta in una zona e chi vi entra perde anche una Reazione veloce.';
+    case 'assassin_snail_shell':
+      return 'guscio roteante borchiato — I/ti chiudi e ruoti: +6 danni e +2 Difesa; II/+14 danni e +5 Difesa mentre avanzi; III/+26 danni, +9 Difesa e respingi chi tenta di fermarti, ma non puoi sputare bava nello stesso turno.';
+    case 'assassin_snail_memory':
+      return 'ricordo vitale nel guscio — I/reazione, spendi 2 Oculum: inserisci un ricordo nel guscio, +5 Vita e +2 Difesa cumulabili; II/dal livello successivo costa 3 Oculum e il ricordo protegge anche la Lumaca da un malus lieve; III/costa 5 Oculum, conserva due ricordi e alla rottura del guscio restituisce una Reazione. Ricordo Vitale: ogni carica resta finché il guscio non viene spezzato.';
     case 'rot_poison_escalation':
       return 'veleno putrido crescente — I/mordi o chiudi il bersaglio nella seta e applichi Veleno Putrido I; II/se il bersaglio ne soffre già, aumenti il grado di uno invece di duplicare la condizione; III/puoi portarlo progressivamente fino a Veleno Putrido IX. Ogni grado usa danno e durata della condizione condivisa, ignora Scudo e Difesa e agisce a fine turno: non oltrepassa mai il suo cap anti-morte istantanea.';
     case 'miasma_web':
@@ -3262,6 +3857,54 @@ String monsterBookSkillText(String rawId) {
       return 'salto a rana — I/salti sopra una minaccia e il nemico bersagliato aggiunge +3 a CM + Oculum fino al suo prossimo tiro; II/il salto attraversa due zone e il bonus diventa +8 + Oculum; III/atterri alle spalle, il bonus diventa +16 + Oculum e neghi una reazione, ma devi avere spazio per il rinculo.';
     case 'duckfrog_wet_retort':
       return 'starnazzo di risposta — I/quando una creatura ti colpisce, ottieni una reazione aggiuntiva contro di lei: le spruzzi acqua e la rallenti; II/la risposta infligge anche +8 danni e la sposta; III/+18 danni, una breve apertura per gli alleati e puoi usare la risposta anche dopo un colpo a distanza. DT 2 turni: non puoi riattivarla prima della fine del secondo turno.';
+    case 'handrat_face_pull':
+      return 'tira il viso — I/salti sul bersaglio, afferri pelle e palpebre: @VC+3 e +4 danni taglienti; II/+7 danni e se colpisci applichi Precisione -2; III/+12 danni e il bersaglio perde una reazione finché si libera.';
+    case 'handrat_fingers_inside':
+      return 'dita dentro — I/DT 2: infili le dita in una ferita aperta, @VC+2 e +6 danni perforanti; II/contro un ferito aggiungi +3 danni; III/+12 danni contro chi ha due condizioni fisiche, ma resti esposto se fallisci.';
+    case 'handrat_skin_leave':
+      return 'lascia la pelle — I/DT 3: quando sei afferrato strappi pelle e scivoli via, @CM+5; II/attraversi anche una zona minacciata; III/lasci una falsa sagoma che assorbe il prossimo colpo. Subisci sempre +2 danni a te stesso.';
+    case 'centieye_lid_bite':
+      return 'morso delle palpebre — I/le palpebre si aprono verticalmente: @VC+2 e +3 danni perforanti; II/+7 danni e impedisci una reazione; III/+12 danni e il bersaglio resta Esposto fino al turno successivo.';
+    case 'centieye_stare':
+      return 'fissa — I/(1/4) la pupilla segue ogni gesto: DT 9 + OCU; II/il fallimento infligge VC -3 per 1 turno; III/il fallimento nega anche il prossimo tiro di precisione, ma lo sguardo termina se vieni colpito.';
+    case 'centieye_under_clothes':
+      return 'sotto i vestiti — I/reazione, DT 2: corri sotto gambe, stoffa e armature prima del colpo, @CM+4; II/il colpo manca e ti sposti; III/puoi anche applicare una breve distrazione al bersaglio che ti ha attaccato.';
+    case 'nailgatherer_throw':
+      return 'pioggia di chiodi — I/Livello 1: lanci chiodi piegati, +4 danni e rallenti un passo; II/+8 danni su una piccola zona; III/chi entra nella zona perde una Reazione per estrarli.';
+    case 'nailgatherer_hammer':
+      return 'martello da banco — I/Livello 1: +4 danni; II/+8 e incrini uno Scudo; III/+12 contro chi è già rallentato.';
+    case 'nailgatherer_scramble':
+      return 'raccogli e scappa — I/Livello 1: recuperi un chiodo e @CM+2; II/recuperi due chiodi; III/lasci il sacco come esca, ma perdi la prossima offensiva.';
+    case 'wellguard_thrust':
+      return 'punta del pozzo — I/Livello 6: la lancia infligge +12 danni a portata; II/+20 e spingi indietro; III/+28 se il bersaglio attraversa il cordone della Guardia.';
+    case 'wellguard_hook':
+      return 'gancio di corda — I/Livello 6: agganci e tiri un bersaglio; II/nega una Reazione; III/lo trascini vicino al bordo senza farlo cadere automaticamente.';
+    case 'wellguard_wall':
+      return 'muro di tavole — I/Livello 6: +8 Scudo; II/copre un alleato; III/chi lo rompe riceve una spinta e resta Esposto.';
+    case 'eyelidless_read':
+      return 'lettura senza palpebre — I/Livello 24: osservi un bersaglio, +4 Precisione contro di lui; II/prevedi una Reazione; III/il suo primo fallimento nel turno lascia Difesa -4.';
+    case 'eyelidless_crosscut':
+      return 'taglio incrociato — I/Livello 24: +34 danni taglienti; II/+48 e consumi una Reazione; III/+66 se il bersaglio è isolato.';
+    case 'eyelidless_riposte':
+      return 'risposta lucida — I/Livello 24, reazione: dopo un mancato colpo contro di te, attacchi; II/+20 danni; III/sposti il duello di una zona.';
+    case 'rustcaptain_order':
+      return 'ordine della ruggine — I/Livello 58: un alleato umanoide ottiene +10 Difesa; II/due alleati ottengono +20; III/uno può reagire subito, ma il Capitano resta esposto al tiro a distanza.';
+    case 'rustcaptain_cleave':
+      return 'sciabola da pala — I/Livello 58: +62 danni; II/+78 su una linea corta; III/+96 e spezza 20 Scudo prima della Difesa.';
+    case 'rustcaptain_plate':
+      return 'costole di ruggine — I/Livello 58: +22 Difesa e 30 Scudo; II/chi ti colpisce in mischia ottiene Ruggine lieve; III/resisti a una spinta, ma perdi mobilità.';
+    case 'longhammer_reach':
+      return 'martello telescopico — I/Livello 100: +90 danni a distanza insolita; II/+120 e respingi; III/+160 contro una parete o una linea, ma il martello deve rientrare nel turno successivo.';
+    case 'longhammer_recoil':
+      return 'rinculo di gomito — I/Livello 100, reazione: dopo un colpo subito spingi l attaccante; II/+45 danni; III/rompi anche 30 Scudo e cambi posizione.';
+    case 'longhammer_wall':
+      return 'colpo al corridoio — I/Livello 100: danneggi una copertura o blocchi un passaggio; II/la zona diventa difficile; III/una parete fragile cede, senza cancellare automaticamente chi ci sta dietro.';
+    case 'longrank_style':
+      return 'stile della Fila Lunga — I/Livello 82: scegli spada, lancia, picca, alabarda, balestra o mazza per il turno; II/l arma scelta guadagna +18 danni nel suo ruolo; III/cambi stile come reazione dopo aver visto il bersaglio, ma non puoi usare due armi nello stesso colpo.';
+    case 'longrank_gauntlets':
+      return 'guanti d arme enormi — I/Livello 82: +68 danni da impatto e -12 Scudo al bersaglio; II/+88 danni e lo sposti; III/+112, incrini anche la Difesa, ma perdi l uso della balestra fino al turno successivo.';
+    case 'longrank_command':
+      return 'comando dell armaiolo — I/Livello 82: un umanoide alleato cambia stile o ottiene una Reazione; II/due alleati ricevono +12 Difesa; III/la Fila Lunga avanza insieme e controlla una zona, ma il comandante è il bersaglio evidente.';
   }
   bool hasAny(Iterable<String> terms) => terms.any(id.contains);
   if (hasAny(['guard', 'shield', 'shell', 'hide', 'skin', 'armor', 'cover'])) {
@@ -3399,29 +4042,115 @@ String monsterBookSkillText(String rawId) {
 }
 
 final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
-  _withMonsterSkillNarration(
-    _withFallbackMonsterSkills(
-      _humanizeLegacyMonsterEntries([
-        ..._craftedMonsterBookEntries,
-        ..._manualMonsterBookEntries,
-        ..._generateMonsterTier(
-          count: targetNormalMonsterCount - _staticNormalMonsterCount < 2
-              ? 2
-              : targetNormalMonsterCount - _staticNormalMonsterCount,
-          tier: _GeneratedMonsterTier.normal,
+  _withoutDefaultMonsterImages(
+    _withMonsterSkillNarration(
+      _withMonsterVariants(
+        _withFallbackMonsterSkills(
+          _humanizeLegacyMonsterEntries([
+            ..._craftedMonsterBookEntries,
+            ..._manualMonsterBookEntries,
+            ..._generateMonsterTier(
+              count: targetNormalMonsterCount - _staticNormalMonsterCount < 2
+                  ? 2
+                  : targetNormalMonsterCount - _staticNormalMonsterCount,
+              tier: _GeneratedMonsterTier.normal,
+            ),
+            ..._generateMonsterTier(
+              count: targetMiniBossMonsterCount - _staticMiniBossMonsterCount,
+              tier: _GeneratedMonsterTier.miniBoss,
+            ),
+            ..._generateMonsterTier(
+              count: targetBossMonsterCount - _staticBossMonsterCount,
+              tier: _GeneratedMonsterTier.boss,
+            ),
+          ]),
         ),
-        ..._generateMonsterTier(
-          count: targetMiniBossMonsterCount - _staticMiniBossMonsterCount,
-          tier: _GeneratedMonsterTier.miniBoss,
-        ),
-        ..._generateMonsterTier(
-          count: targetBossMonsterCount - _staticBossMonsterCount,
-          tier: _GeneratedMonsterTier.boss,
-        ),
-      ]),
+      ),
     ),
   ),
 );
+
+/// I mostri forniti dall'app nascono come descrizioni visive, non come
+/// ritratti imposti. Un Master o un giocatore puo aggiungere in seguito una
+/// propria immagine alla singola voce personalizzata, senza toccarne l'ID.
+List<MonsterBookEntry> _withoutDefaultMonsterImages(
+  Iterable<MonsterBookEntry> entries,
+) => List<MonsterBookEntry>.unmodifiable(
+  entries.map((entry) => entry.copyWith(spriteAssetPath: '', imageBase64: '')),
+);
+
+/// Ogni mostro possiede anche una variante stabile, non un doppione grafico.
+/// La variante conserva ID, drop, armi e compatibilità del capostipite,
+/// aumentando solo ciò che serve a cambiare davvero il ruolo nello scontro.
+List<MonsterBookEntry> _withMonsterVariants(
+  Iterable<MonsterBookEntry> entries,
+) {
+  const styles = <({String id, String label, String role})>[
+    (
+      id: 'errante',
+      label: 'Errante',
+      role: 'si muove tra le linee e punisce chi resta isolato',
+    ),
+    (
+      id: 'corazzata',
+      label: 'Corazzata',
+      role: 'protegge un passaggio e forza il gruppo a consumare Difesa',
+    ),
+    (
+      id: 'rituale',
+      label: 'Rituale',
+      role: 'prepara il terreno con Oculum prima di colpire',
+    ),
+    (
+      id: 'veterana',
+      label: 'Veterana',
+      role: 'alterna le sue tecniche senza ripetere la stessa apertura',
+    ),
+  ];
+  final result = <MonsterBookEntry>[];
+  for (final entry in entries) {
+    result.add(entry);
+    if (entry.id.contains('_variante_')) continue;
+    final score = entry.id.codeUnits.fold<int>(0, (sum, code) => sum + code);
+    final style = styles[score % styles.length];
+    final level = entry.stats['level'] ?? 0;
+    final bonus = entry.isBoss
+        ? 16
+        : entry.isMiniBoss
+        ? 9
+        : 4;
+    final stats = <String, int>{
+      for (final pair in entry.stats.entries)
+        pair.key: switch (pair.key) {
+          'level' => min(100, max(0, pair.value + (entry.isBoss ? 8 : 3))),
+          'resilienza' ||
+          'volonta' ||
+          'materia' ||
+          'oculum' => pair.value + bonus,
+          'hp' => pair.value + bonus * 12,
+          'atk' => pair.value + bonus * 2,
+          'def' => pair.value + bonus * 2,
+          _ => pair.value,
+        },
+    };
+    result.add(
+      entry.copyWith(
+        id: '${entry.id}_variante_${style.id}',
+        nameIt: '${entry.nameIt} ${style.label}',
+        nameEn: '${entry.nameEn} ${style.label}',
+        descIt:
+            'Variante ${style.label.toLowerCase()} (dal livello $level): ${style.role}. ${entry.descIt}',
+        descEn: '${style.label} variant of ${entry.nameEn}. ${entry.descEn}',
+        stats: stats,
+        skillIds: entry.skillIds
+            .map((skill) => '${skill}_variante_${style.id}')
+            .toList(growable: false),
+        dropIds: [...entry.dropIds, 'frammento_variante_${style.id}'],
+      ),
+    );
+  }
+  return result;
+}
 
 List<MonsterBookEntry> _activeMonsterBookEntries = defaultMonsterBookEntries;
 Map<String, MonsterBookEntry> _monsterBookEntriesById =
@@ -3653,6 +4382,7 @@ List<MonsterBookEntry> _withFallbackMonsterSkills(
               canWieldWeapons: monster.canWieldWeapons,
               weaponTags: monster.weaponTags,
               armorTags: monster.armorTags,
+              inventoryItems: monster.inventoryItems,
             ),
   ];
 }
@@ -3787,6 +4517,21 @@ MonsterBookEntry? monsterById(String id) {
   } catch (_) {
     return null;
   }
+}
+
+/// Le Art dei mostri non sono tutte disponibili al livello zero. La soglia
+/// usa potenza e tenuta della creatura, senza alterare le Skill legacy.
+int monsterBookSkillRequiredLevel(MonsterBookEntry monster, int skillIndex) {
+  final stats = monster.stats;
+  final power = max(
+    stats['atk'] ?? stats['danno'] ?? 0,
+    (stats['oculum'] ?? 0) * 2 + (stats['materia'] ?? 0),
+  );
+  final defense = stats['defense'] ?? stats['def'] ?? 0;
+  final base = stats['level'] ?? 0;
+  final weight = power ~/ 25 + defense ~/ 60;
+  final stage = skillIndex.clamp(0, 2);
+  return max(base, base + weight + stage * max(1, 1 + weight ~/ 3));
 }
 
 int monsterSpriteStableSeed(String text) {

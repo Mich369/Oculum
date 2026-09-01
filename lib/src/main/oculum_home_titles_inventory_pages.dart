@@ -4121,6 +4121,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         sectionTitle(t('Inventario', 'Inventory')),
       ),
       (_) => inventoryQuickDropdownPanel(),
+      (_) => merchantQuickPanel(),
       (_) => inventoryCapacityPanelEfficient(),
       (_) => inventoryAddItemPanelEfficient(),
     ];
@@ -4478,6 +4479,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       programmaSalvataggio();
     }
 
+    void sellItemToMerchant() {
+      if (!merchantIsOpen || !inventario.contains(item)) return;
+      sellInventoryItemToMerchant(item);
+    }
+
     Future<void> showInventoryContextMenu(Offset position) async {
       final choice = await showMenu<String>(
         context: context,
@@ -4489,6 +4495,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           position.dy,
         ),
         items: <PopupMenuEntry<String>>[
+          if (isMerchantConsumable(item))
+            PopupMenuItem<String>(
+              value: 'use',
+              child: ListTile(
+                leading: const Icon(Icons.bolt_outlined),
+                title: Text(t('Usa', 'Use')),
+              ),
+            ),
           PopupMenuItem<String>(
             value: 'equip',
             child: ListTile(
@@ -4540,6 +4554,17 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               title: Text(t('Cerca nel manuale', 'Search in manual')),
             ),
           ),
+          if (merchantIsOpen)
+            PopupMenuItem<String>(
+              value: 'sell',
+              child: ListTile(
+                leading: const Icon(Icons.sell_outlined),
+                title: Text(
+                  '${t('Vendi al Negoziante', 'Sell to Merchant')} '
+                  '(${merchantSaleValue(item)} Obser)',
+                ),
+              ),
+            ),
           const PopupMenuDivider(),
           PopupMenuItem<String>(
             value: 'delete',
@@ -4552,6 +4577,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       );
       if (!mounted || choice == null || !inventario.contains(item)) return;
       switch (choice) {
+        case 'use':
+          await useMerchantConsumable(item);
+          break;
         case 'equip':
           setItemEquipped(!item.equipaggiata);
           break;
@@ -4571,6 +4599,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           break;
         case 'manual':
           openManualForQuickTerm(item.nome);
+          break;
+        case 'sell':
+          sellItemToMerchant();
           break;
         case 'delete':
           deleteItem();

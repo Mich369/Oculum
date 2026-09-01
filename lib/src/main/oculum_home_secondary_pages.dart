@@ -4591,6 +4591,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final speedController = TextEditingController(
       text: '${existing?.stats['spd'] ?? 0}',
     );
+    var previewImageBase64 = existing?.imageBase64 ?? '';
     var presetType = existing?.presetType ?? 'Mostro';
     var canWieldWeapons = existing?.canWieldWeapons ?? false;
     var nullFateless = existing?.isNullFateless ?? false;
@@ -4618,8 +4619,24 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             final draft = (existing ?? defaultMonsterBookEntries.first)
                 .copyWith(
                   nameIt: nameItController.text,
+                  imageBase64: previewImageBase64,
                   isNpc: presetType == 'NPC',
                 );
+            final imageBytes = decodedBase64ImageCached(previewImageBase64);
+            if (imageBytes != null && imageBytes.isNotEmpty) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.memory(
+                  imageBytes,
+                  width: 76,
+                  height: 76,
+                  fit: BoxFit.cover,
+                  filterQuality: FilterQuality.medium,
+                  errorBuilder: (_, _, _) =>
+                      monsterBookEntryPreview(draft, size: 76),
+                ),
+              );
+            }
             return monsterBookEntryPreview(draft, size: 76);
           }
 
@@ -4674,6 +4691,41 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                                   setDialogState(() => presetType = value);
                                 },
                               ),
+                              const SizedBox(height: 8),
+                              OutlinedButton.icon(
+                                onPressed: () async {
+                                  final bytes =
+                                      await readMapTokenImageFromClipboard();
+                                  if (!mounted) return;
+                                  if (bytes == null || bytes.isEmpty) {
+                                    setState(() {
+                                      risultato = t(
+                                        'Copia un immagine negli appunti, poi riprova.',
+                                        'Copy an image to the clipboard, then try again.',
+                                      );
+                                      aggiungiLog(risultato);
+                                    });
+                                    return;
+                                  }
+                                  setDialogState(() {
+                                    previewImageBase64 = base64Encode(bytes);
+                                  });
+                                },
+                                icon: const Icon(Icons.image_outlined),
+                                label: Text(
+                                  t('Incolla immagine', 'Paste image'),
+                                ),
+                              ),
+                              if (previewImageBase64.trim().isNotEmpty)
+                                TextButton.icon(
+                                  onPressed: () => setDialogState(
+                                    () => previewImageBase64 = '',
+                                  ),
+                                  icon: const Icon(Icons.hide_image_outlined),
+                                  label: Text(
+                                    t('Rimuovi immagine', 'Remove image'),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -4843,10 +4895,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                           cleanUiText(elementController.text).trim().isEmpty
                           ? 'fisico'
                           : cleanUiText(elementController.text).trim(),
-                      // Preserve legacy image fields without showing or
-                      // editing them in the human-readable Monster Book.
+                      // Le immagini sono opzionali e personali: i preset di
+                      // default non ne assegnano mai una automaticamente.
                       spriteAssetPath: existing?.spriteAssetPath ?? '',
-                      imageBase64: existing?.imageBase64 ?? '',
+                      imageBase64: previewImageBase64,
                       isMiniBoss: isMiniBoss,
                       isBoss: isBoss,
                       isNpc: isNpc,
@@ -5154,18 +5206,28 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       return 'Difficili';
     }
 
-    final filtered = monsterBookEntries
-        .where((entry) {
-          if (monsterBookTierFilter != 'Tutti' &&
-              tierFor(entry) != monsterBookTierFilter) {
-            return false;
-          }
-          if (query.isEmpty) return true;
-          return oculumNormalizeText(
-            '${entry.nameIt} ${entry.nameEn} ${entry.id} ${entry.elementId} ${entry.presetType}',
-          ).contains(query);
-        })
-        .toList(growable: false);
+    // Il Book può contenere centinaia di mostri e varianti: la scansione è
+    // riusata finché non cambiano query, filtro o la lista configurata.
+    final filterCacheKey =
+        '${identityHashCode(monsterBookEntries)}|$query|$monsterBookTierFilter';
+    final filtered = monsterBookFilterCacheKey == filterCacheKey
+        ? monsterBookFilterCache
+        : monsterBookEntries
+              .where((entry) {
+                if (monsterBookTierFilter != 'Tutti' &&
+                    tierFor(entry) != monsterBookTierFilter) {
+                  return false;
+                }
+                if (query.isEmpty) return true;
+                return oculumNormalizeText(
+                  '${entry.nameIt} ${entry.nameEn} ${entry.id} ${entry.elementId} ${entry.presetType}',
+                ).contains(query);
+              })
+              .toList(growable: false);
+    if (monsterBookFilterCacheKey != filterCacheKey) {
+      monsterBookFilterCacheKey = filterCacheKey;
+      monsterBookFilterCache = filtered;
+    }
     final visible = filtered.take(query.isEmpty ? 24 : 80).toList();
 
     return gothicPanel(

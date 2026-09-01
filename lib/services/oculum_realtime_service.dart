@@ -25,6 +25,7 @@ class OculumRealtimeService {
     'session_notes_snapshot',
     'recipes_request',
     'recipes_snapshot',
+    'monster_book_snapshot',
     'vtt_scene_request',
     'vtt_scene_shared',
     'vtt_asset_chunk',
@@ -471,6 +472,24 @@ class OculumRealtimeService {
     return _send('dungeon_shared', <String, dynamic>{
       'playerName': _displayName,
       ...message,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  Future<void> sendMonsterBookSnapshot({
+    required String campaignId,
+    required String campaignName,
+    required List<Map<String, dynamic>> entries,
+    required List<String> removedIds,
+  }) {
+    return _send('monster_book_snapshot', <String, dynamic>{
+      'playerName': _displayName,
+      'senderRole': 'master',
+      'fromMaster': true,
+      'campaignId': campaignId,
+      'campaignName': campaignName,
+      'entries': entries,
+      'removedIds': removedIds,
       'sentAt': _nowIso(),
     });
   }

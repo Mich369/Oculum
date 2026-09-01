@@ -3,6 +3,19 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 const String oculumSheetShareCodePrefix = 'OCULUM-SHEETS-v1:';
+const String oculumSheetShareCodePrefixV2 = 'OC2:';
+
+/// FNV-1a a 32 bit: breve, deterministico e sufficiente per riconoscere un
+/// codice copiato male. Non è una firma crittografica e non sostituisce il
+/// decoder legacy, che continua a essere accettato.
+String oculumShareChecksum(Iterable<int> bytes) {
+  var hash = 0x811c9dc5;
+  for (final byte in bytes) {
+    hash ^= byte & 0xff;
+    hash = (hash * 0x01000193) & 0xffffffff;
+  }
+  return hash.toRadixString(16).padLeft(8, '0');
+}
 
 List<Map<String, dynamic>> oculumDecodeSheetShareText(String rawText) {
   List<Map<String, dynamic>> sheetsFromPayload(dynamic decoded) {
@@ -28,17 +41,45 @@ List<Map<String, dynamic>> oculumDecodeSheetShareText(String rawText) {
   final codeParts = text
       .split(RegExp(r'[\s,;]+'))
       .map((part) => part.trim())
-      .where((part) => part.startsWith(oculumSheetShareCodePrefix))
+      .where(
+        (part) =>
+            part.startsWith(oculumSheetShareCodePrefix) ||
+            part.startsWith(oculumSheetShareCodePrefixV2),
+      )
       .toList();
   if (codeParts.isEmpty) return sheetsFromPayload(jsonDecode(text));
 
   final sheets = <Map<String, dynamic>>[];
   for (final code in codeParts) {
-    var encoded = code.substring(oculumSheetShareCodePrefix.length).trim();
+    final isV2 = code.startsWith(oculumSheetShareCodePrefixV2);
+    var encoded = code
+        .substring(
+          isV2
+              ? oculumSheetShareCodePrefixV2.length
+              : oculumSheetShareCodePrefix.length,
+        )
+        .trim();
+    String? checksum;
+    if (isV2) {
+      final separator = encoded.indexOf(':');
+      // OC2 originale era "OC2:<payload>". OC2 nuovo è
+      // "OC2:<checksum>:<payload>": entrambe le forme restano importabili.
+      if (separator == 8 &&
+          RegExp(r'^[0-9a-fA-F]{8}$').hasMatch(encoded.substring(0, 8))) {
+        checksum = encoded.substring(0, 8).toLowerCase();
+        encoded = encoded.substring(separator + 1);
+      }
+    }
     while (encoded.length % 4 != 0) {
       encoded += '=';
     }
-    final decodedText = utf8.decode(base64Url.decode(encoded));
+    final bytes = base64Url.decode(encoded);
+    if (checksum != null && oculumShareChecksum(bytes) != checksum) {
+      throw const FormatException(
+        'Codice OC2 corrotto o copiato incompleto: controllo integrità non valido.',
+      );
+    }
+    final decodedText = utf8.decode(isV2 ? gzip.decode(bytes) : bytes);
     sheets.addAll(sheetsFromPayload(jsonDecode(decodedText)));
   }
   if (sheets.isEmpty) {
@@ -894,12 +935,14 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
 
     final payload = <String, dynamic>{
       'kind': 'oculum_sheets',
-      'version': 1,
+      'version': 2,
       'createdAt': DateTime.now().toIso8601String(),
       'sheets': indexes.map(schedaPerCodiceCondivisione).toList(),
     };
 
-    return '$sheetShareCodePrefix${base64UrlEncode(utf8.encode(jsonEncode(payload)))}';
+    final encoded = gzip.encode(utf8.encode(jsonEncode(payload)));
+    final compact = base64UrlEncode(encoded).replaceAll('=', '');
+    return '$oculumSheetShareCodePrefixV2${oculumShareChecksum(encoded)}:$compact';
   }
 
   List<Map<String, dynamic>> schedeDaPayloadCodice(dynamic decoded) {
@@ -2185,6 +2228,10 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       (art) => art.nome == tutorialArtName,
       orElse: oculumStarterWaterArt,
     );
+    final selectedMonster =
+        tutorialGeneraMostro && tutorialMonsterPresetId.trim().isNotEmpty
+        ? monsterBookEntryById(tutorialMonsterPresetId)
+        : null;
     final eMartial = art.tipo == 'Martial Art';
     if (eMartial && tutorialMartialBonus <= 0) {
       tutorialMartialBonus = oculumStarterMartialBonus(Random());
@@ -2238,6 +2285,11 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       'materia': extraMat + background.materia + razza.materia + fato.materia,
       'oculum': extraOcu + background.oculum + razza.oculum + fato.oculum,
     };
+    if (selectedMonster != null) {
+      for (final stat in const ['resilienza', 'volonta', 'materia', 'oculum']) {
+        stats[stat] = selectedMonster.stats[stat] ?? stats[stat] ?? 0;
+      }
+    }
     if (!tutorialGeneraMostro) {
       for (final stat in const ['resilienza', 'volonta', 'materia', 'oculum']) {
         stats[stat] = (stats[stat] ?? 0) + 1;
@@ -2307,6 +2359,18 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
           (starter) => starter.nome == esistente.nome,
         ),
       );
+      // Gli equipaggiamenti dati dal Book al mostro sono marcati: riapplicare
+      // il tutorial li sostituisce senza toccare l'inventario normale del player.
+      inventario.removeWhere(
+        (item) => item.note.contains('[Inventario tutorial mostro]'),
+      );
+      if (selectedMonster != null) {
+        for (final rawItem in selectedMonster.inventoryItems) {
+          final data = Map<String, dynamic>.from(rawItem);
+          data['note'] = '${data['note'] ?? ''} [Inventario tutorial mostro]';
+          inventario.add(InventoryItem.fromJson(data));
+        }
+      }
       titoli.add(
         OculumTitle(
           nome: background.nome,
@@ -2345,8 +2409,12 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
           tipo: 'Tratto Razziale',
           ottenimento: 'Scelto durante la creazione guidata.',
           leggenda: razza.descrizione,
-          buff: razza.descrizione,
-          puntoCieco: '',
+          buff:
+              '${razza.descrizione}'
+              '${razza.id == 'hideniano' ? '\n@Difesa+2 Fuoco\n@Danni+3 Fuoco' : ''}',
+          puntoCieco: razza.id == 'hideniano'
+              ? '@DanniSubiti+100% Acqua Magica\n${razza.puntoCieco}'
+              : razza.puntoCieco,
           skill: 'Tratto innato della razza.',
           richiede: razza.conMaster
               ? 'Da completare con il Master.'
@@ -2357,8 +2425,12 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       );
       razzaController.text = razza.nome;
       tipoSchedaController.text = tutorialGeneraMostro
-          ? 'Mostro'
+          ? (selectedMonster?.presetType ?? tutorialMonsterTier)
           : 'Personaggio';
+      if (selectedMonster != null) {
+        nomeController.text = selectedMonster.nameIt;
+        notePersonaggioController.text = selectedMonster.descIt;
+      }
       gradoController.text = grado.toString();
       backgroundController.text =
           '${background.nome}\n${background.descrizione}\n\n$difficoltaLabel';
@@ -2587,8 +2659,60 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                         ),
                       ),
                     ] else
-                      smallInfoText(
-                        'Mostro: 9 punti liberi per livello +10 per grado. Esempio: livello 10, grado I = 100 punti liberi.',
+                      Column(
+                        children: [
+                          DropdownButtonFormField<String>(
+                            initialValue: tutorialMonsterTier,
+                            decoration: const InputDecoration(
+                              labelText: 'Tipo di creatura',
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'Mostro',
+                                child: Text('Mostro'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Mostro Mini Boss',
+                                child: Text('Mini Boss'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Mostro Boss',
+                                child: Text('Boss'),
+                              ),
+                            ],
+                            onChanged: (value) => setDialogState(() {
+                              tutorialMonsterTier = value ?? 'Mostro';
+                              tutorialMonsterPresetId = '';
+                            }),
+                          ),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            initialValue: tutorialMonsterPresetId.isEmpty
+                                ? null
+                                : tutorialMonsterPresetId,
+                            decoration: const InputDecoration(
+                              labelText:
+                                  'Occhio: scegli dal Monster Book (oppure crea tu)',
+                            ),
+                            items: [
+                              for (final entry in monsterBookEntries.where(
+                                (entry) =>
+                                    entry.presetType == tutorialMonsterTier,
+                              ))
+                                DropdownMenuItem(
+                                  value: entry.id,
+                                  child: Text(entry.nameIt),
+                                ),
+                            ],
+                            onChanged: (value) => setDialogState(
+                              () => tutorialMonsterPresetId = value ?? '',
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          smallInfoText(
+                            'Se non scegli un Occhio, crei liberamente la creatura; altrimenti usa statistiche, descrizione e tipo del Mostro scelto.',
+                          ),
+                        ],
                       ),
                     campoTesto(
                       label: t('Livello iniziale', 'Starting level'),

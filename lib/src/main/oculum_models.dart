@@ -2623,6 +2623,7 @@ class OculumRecipe {
     this.forgeEffectText = '',
     this.forgeTarget = 'auto',
     this.resultGrams = '',
+    this.oculumCost = 0,
     this.personal = false,
     this.ownerTag = '',
     this.sourceRecipeId = '',
@@ -2647,6 +2648,9 @@ class OculumRecipe {
 
   /// Finished product mass in grams. Empty is kept for legacy recipes.
   final String resultGrams;
+
+  /// Optional Oculum paid when crafting. Missing in legacy recipes means zero.
+  final int oculumCost;
   final bool personal;
   final String ownerTag;
   final String sourceRecipeId;
@@ -2669,6 +2673,7 @@ class OculumRecipe {
     String? forgeEffectText,
     String? forgeTarget,
     String? resultGrams,
+    int? oculumCost,
     bool? personal,
     String? ownerTag,
     String? sourceRecipeId,
@@ -2691,6 +2696,7 @@ class OculumRecipe {
       forgeEffectText: forgeEffectText ?? this.forgeEffectText,
       forgeTarget: forgeTarget ?? this.forgeTarget,
       resultGrams: resultGrams ?? this.resultGrams,
+      oculumCost: oculumCost ?? this.oculumCost,
       personal: personal ?? this.personal,
       ownerTag: ownerTag ?? this.ownerTag,
       sourceRecipeId: sourceRecipeId ?? this.sourceRecipeId,
@@ -2715,6 +2721,7 @@ class OculumRecipe {
     'forgeEffectText': forgeEffectText,
     'forgeTarget': forgeTarget,
     'resultGrams': resultGrams,
+    if (oculumCost > 0) 'oculumCost': oculumCost,
     'personal': personal,
     'ownerTag': ownerTag,
     'sourceRecipeId': sourceRecipeId,
@@ -2786,6 +2793,10 @@ class OculumRecipe {
             '${json['resultGrams'] ?? json['grammiRisultato'] ?? ''}',
           ) ??
           '',
+      oculumCost: max(
+        0,
+        readIntValue(json['oculumCost'] ?? json['costoOculum']),
+      ),
       personal: readBoolValue(json['personal']),
       ownerTag: '${json['ownerTag'] ?? ''}',
       sourceRecipeId: '${json['sourceRecipeId'] ?? ''}',

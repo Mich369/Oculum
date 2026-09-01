@@ -1605,6 +1605,26 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     tickTrigger: OculumConditionTickTrigger.endTurn,
   ),
   OculumConditionDefinition(
+    id: 'nuoto_aria',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.movimento,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Nuoto nell’Aria',
+    nameEn: 'Air Swimming',
+    icon: Icons.air_rounded,
+    category: OculumConditionCategory.positive,
+    polarity: OculumConditionPolarity.positive,
+    descriptionIt:
+        'Puoi attraversare l’aria come acqua: ignori il terreno sotto di te e scegli liberamente l’altezza, finché la condizione resta attiva.',
+    descriptionEn:
+        'You can cross air as if it were water: ignore terrain beneath you and choose your height while the condition remains active.',
+    stackMode: OculumConditionStackMode.refreshDuration,
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
     id: 'aumento_difficolta',
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.hp,

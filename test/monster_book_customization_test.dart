@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
+import 'package:oculum/main.dart' show oculumStarterRaces;
 
 void main() {
   tearDown(resetMonsterBookEntries);
@@ -27,6 +28,34 @@ void main() {
     expect(restored.imageBase64, entry.imageBase64);
     expect(restored.presetType, 'NPC');
     expect(restored.dropIds, entry.dropIds);
+  });
+
+  test('default monsters are visual descriptions without imposed images', () {
+    for (final entry in defaultMonsterBookEntries) {
+      expect(entry.spriteAssetPath, isEmpty, reason: entry.id);
+      expect(entry.imageBase64, isEmpty, reason: entry.id);
+      expect(entry.descIt.trim(), isNotEmpty, reason: entry.id);
+    }
+    expect(monsterById('papera_ranocchio')?.imageBase64, isEmpty);
+  });
+
+  test('monster Art requirements scale with the creature power', () {
+    final weak = monsterById('topo_con_mani')!;
+    final strong = monsterById('demone_maggiore')!;
+    expect(monsterBookSkillRequiredLevel(weak, 0), greaterThanOrEqualTo(0));
+    expect(
+      monsterBookSkillRequiredLevel(strong, 2),
+      greaterThan(monsterBookSkillRequiredLevel(weak, 2)),
+    );
+    expect(strong.descIt, contains('Livello richiesto'));
+  });
+
+  test('Hideniano remains available in tutorial races', () {
+    final hideniano = oculumStarterRaces.firstWhere(
+      (race) => race.id == 'hideniano',
+    );
+    expect(hideniano.descrizione, contains('+2 Difesa Fuoco'));
+    expect(hideniano.puntoCieco, contains('x2 danni'));
   });
 
   test('Monster Book overrides built-ins and hides removed presets', () {
@@ -99,6 +128,13 @@ void main() {
       'oculum': 10,
     });
     expect(putridSpider?.skillIds, contains('rot_poison_escalation'));
+    final assassinSnail = monsterById('lumaca_assassina');
+    expect(assassinSnail?.stats['level'], 1);
+    expect(assassinSnail?.skillIds, contains('assassin_snail_memory'));
+    expect(
+      monsterBookSkillText('assassin_snail_slime'),
+      contains('Senza Reazioni'),
+    );
 
     final generated = defaultMonsterBookEntries
         .where((entry) => entry.id.startsWith('generated_normal_'))
@@ -111,6 +147,41 @@ void main() {
   test('default roster keeps unique ids after manual additions', () {
     final ids = defaultMonsterBookEntries.map((entry) => entry.id).toList();
     expect(ids.toSet(), hasLength(ids.length));
+  });
+
+  test('every base monster has a stable combat variant', () {
+    final bases = defaultMonsterBookEntries
+        .where((entry) => !entry.id.contains('_variante_'))
+        .toList(growable: false);
+    for (final base in bases) {
+      expect(
+        monsterById('${base.id}_variante_errante') ??
+            monsterById('${base.id}_variante_corazzata') ??
+            monsterById('${base.id}_variante_rituale') ??
+            monsterById('${base.id}_variante_veterana'),
+        isNotNull,
+        reason: base.id,
+      );
+    }
+  });
+
+  test('armed humanoids retain their real inventory through the Book', () {
+    final hammerMan = monsterById('uomo_del_martello_lungo');
+    final commander = monsterById('armaiolo_della_fila_lunga');
+    expect(hammerMan?.stats['level'], 100);
+    expect(
+      hammerMan?.inventoryItems.firstWhere(
+        (item) => item['nome'] == 'Martello Lungo',
+      )['bonusDanno'],
+      90,
+    );
+    expect(commander?.isBoss, isTrue);
+    expect(
+      commander?.inventoryItems
+          .map((item) => item['nome'])
+          .contains('Guanti d arme enormi'),
+      isTrue,
+    );
   });
 
   test(

@@ -1141,6 +1141,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'ascensionDustTempOculum': 0,
       'ascensionDustUsataOggi': 0,
       'ascensionDustPermanentiInAttesa': 0,
+      'ascensionDustStatProgress': <String, int>{},
       'ascensionDustIntegritaMassimaBonus': 0,
       'ascensionDustSottotrattiTemporanei': <String, int>{},
       'playerReportedTurn': 0,
@@ -1368,6 +1369,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
         ),
       ),
       'obser': obserController.text,
+      if (merchantStock.isNotEmpty) 'merchantStock': merchantStock,
+      'merchantStockSessionId': merchantStockSessionId,
       'ascensionDust': ascensionDustController.text,
       'ispirazioni': ispirazioniController.text,
       'superIspirazioni': superIspirazioniController.text,
@@ -1414,6 +1417,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'ascensionDustTempOculum': ascensionDustTempOculum,
       'ascensionDustUsataOggi': ascensionDustUsataOggi,
       'ascensionDustPermanentiInAttesa': ascensionDustPermanentiInAttesa,
+      if (ascensionDustStatProgress.isNotEmpty)
+        'ascensionDustStatProgress': ascensionDustStatProgress,
       'ascensionDustIntegritaMassimaBonus': ascensionDustIntegritaMassimaBonus,
       if (ascensionDustSottotrattiTemporanei.isNotEmpty)
         'ascensionDustSottotrattiTemporanei':
@@ -1737,6 +1742,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
 
     obserController.text = '${json['obser'] ?? '0'}';
+    merchantStock = json['merchantStock'] is List
+        ? (json['merchantStock'] as List)
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(growable: true)
+        : <Map<String, dynamic>>[];
+    merchantStockSessionId = '${json['merchantStockSessionId'] ?? ''}'.trim();
+    if (merchantStockSessionId != merchantRuntimeSessionId) {
+      merchantStock.clear();
+      merchantStockSessionId = '';
+    }
     ascensionDustController.text = '${json['ascensionDust'] ?? '0'}';
     ispirazioniController.text = '${json['ispirazioni'] ?? '0'}';
     superIspirazioniController.text = '${json['superIspirazioni'] ?? '0'}';
@@ -1844,6 +1860,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
       0,
       readIntValue(json['ascensionDustPermanentiInAttesa']),
     );
+    ascensionDustStatProgress
+      ..clear()
+      ..addAll(
+        json['ascensionDustStatProgress'] is Map
+            ? <String, int>{
+                for (final entry
+                    in (json['ascensionDustStatProgress'] as Map).entries)
+                  '${entry.key}': readIntValue(entry.value).clamp(0, 2),
+              }
+            : const <String, int>{},
+      );
     ascensionDustIntegritaMassimaBonus = max(
       0,
       readIntValue(json['ascensionDustIntegritaMassimaBonus']),
@@ -4850,6 +4877,42 @@ extension _OculumHomePersistence on _OculumHomePageState {
   // SCHEDE MULTIPLE
   // =====================================================
 
+  InventoryItem? starterArmorForNewSheet(Random random) {
+    // È una possibilità, non un equipaggiamento obbligatorio: le nuove
+    // schede restano giocabili anche senza tutorial e senza oggetti iniziali.
+    if (random.nextInt(3) != 0) return null;
+    if (random.nextBool()) {
+      return InventoryItem(
+        nome: 'Armatura del Combattente',
+        peso: 4.5,
+        quantita: 1,
+        note:
+            'Iniziale: +2 Difesa, +1 Danno, +5 Scudo. Quando il suo Scudo d integrità si spezza ottieni +200% danni per 2 turni.',
+        protegge: true,
+        equipaggiata: true,
+        bonusDanno: 1,
+        bonusDifesa: 2,
+        bonusScudo: 5,
+        // Attiva il tracciamento dell'integrità senza aggiungere bonus fissi.
+        effettoIntegritaScudo: '@Difesa+0',
+        scudoIntegritaCorrente: 5,
+      );
+    }
+    return InventoryItem(
+      nome: 'Armatura Protettiva',
+      peso: 5.5,
+      quantita: 1,
+      note: 'Iniziale: +3 Difesa, +6 Scudo e Scudo di Salvataggio.',
+      protegge: true,
+      equipaggiata: true,
+      bonusDifesa: 3,
+      bonusScudo: 6,
+      buff: '@saveShield+6',
+      effettoIntegritaScudo: '@Difesa+0',
+      scudoIntegritaCorrente: 6,
+    );
+  }
+
   Future<void> creaNuovaSchedaPersonaggio({
     String nome = '???',
     String tipo = 'Personaggio',
@@ -4859,6 +4922,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }) async {
     salvaSchedaCorrenteInMemoria();
     final globali = catturaImpostazioniGlobali();
+    var starterName = '';
 
     setState(() {
       final nuovaScheda = statoVuotoPersonaggio(
@@ -4876,18 +4940,35 @@ extension _OculumHomePersistence on _OculumHomePageState {
       caricaStatoDaJson(schedePersonaggio[schedaCorrente]);
       ripristinaImpostazioniGlobali(globali);
 
+      if (tipo.toLowerCase() == 'personaggio') {
+        final starter = starterArmorForNewSheet(Random.secure());
+        if (starter != null) {
+          inventario.add(starter);
+          applicaScudoItemAttuale(starter, 1);
+          starterName = starter.nome;
+          if (starter.nome == 'Armatura Protettiva') {
+            scudoSalvataggioAttivo = true;
+          }
+        }
+      }
+
       if (isMostro()) {
         currentHpController.text = maxHp().toString();
       }
 
       aggiornaGradoAutomatico();
 
-      risultato = t(
-        'Nuova scheda creata: $nome ($tipo).',
-        'New sheet created: $nome ($tipo).',
-      );
+      risultato = starterName.isEmpty
+          ? t(
+              'Nuova scheda creata: $nome ($tipo).',
+              'New sheet created: $nome ($tipo).',
+            )
+          : t(
+              'Nuova scheda creata: $nome ($tipo). Hai ricevuto $starterName.',
+              'New sheet created: $nome ($tipo). You received $starterName.',
+            );
 
-      aggiungiLog('Nuova scheda creata: $nome ($tipo).');
+      aggiungiLog(risultato);
     });
 
     await salvaDati();
@@ -5767,6 +5848,49 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
   }
 
+  bool receiveRealtimeMonsterBookSnapshot(Map<String, dynamic> payload) {
+    if (realtimeIsMasterRole ||
+        !readBoolValue(payload['fromMaster']) ||
+        '${payload['campaignId'] ?? ''}'.trim() != activeCampaignId) {
+      return false;
+    }
+    final entriesRaw = payload['entries'];
+    final byId = <String, MonsterBookEntry>{};
+    if (entriesRaw is List) {
+      for (final raw in entriesRaw.whereType<Map>()) {
+        try {
+          final entry = MonsterBookEntry.fromJson(
+            Map<String, dynamic>.from(raw),
+          );
+          if (entry.id.trim().isNotEmpty && entry.nameIt.trim().isNotEmpty) {
+            byId[entry.id.trim()] = entry;
+          }
+        } catch (_) {
+          // Un record corrotto non invalida l'intero aggiornamento del Master.
+        }
+      }
+    }
+    final removed = <String>{
+      if (payload['removedIds'] is List)
+        for (final raw in payload['removedIds'] as List)
+          if ('$raw'.trim().isNotEmpty) '$raw'.trim(),
+    };
+    monsterBookCustomEntries
+      ..clear()
+      ..addAll(byId.values);
+    monsterBookRemovedIds
+      ..clear()
+      ..addAll(removed);
+    syncMonsterBookCustomizationToSheets();
+    aggiungiLog(
+      t(
+        'Monster Book aggiornato dal Master.',
+        'Monster Book updated by the Master.',
+      ),
+    );
+    return true;
+  }
+
   String newMonsterBookEntryId(String name) {
     final base = oculumNormalizeText(
       name,
@@ -5806,6 +5930,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     await salvaDati();
     if (realtimeIsMasterRole) {
       sendRealtimeMasterVisiblePartyTokens();
+      sendRealtimeMonsterBookSnapshot();
     }
   }
 
@@ -5821,6 +5946,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       aggiungiLog(risultato);
     });
     await salvaDati();
+    if (realtimeIsMasterRole) sendRealtimeMonsterBookSnapshot();
   }
 
   Future<void> resetMonsterBookCustomization() async {
@@ -5835,6 +5961,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       aggiungiLog(risultato);
     });
     await salvaDati();
+    if (realtimeIsMasterRole) sendRealtimeMonsterBookSnapshot();
   }
 
   List<

@@ -1,9 +1,38 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('OC2 compatto e legacy v1 si decodificano senza perdita', () {
+    final payload = <String, dynamic>{
+      'kind': 'oculum_sheets',
+      'version': 2,
+      'sheets': [
+        {'nome': 'Ève 🕯️', 'tipoScheda': 'Personaggio', 'inventario': []},
+      ],
+    };
+    final v2 =
+        'OC2:${base64UrlEncode(gzip.encode(utf8.encode(jsonEncode(payload)))).replaceAll('=', '')}';
+    final v2Bytes = gzip.encode(utf8.encode(jsonEncode(payload)));
+    final v2Checked =
+        'OC2:${oculumShareChecksum(v2Bytes)}:${base64UrlEncode(v2Bytes).replaceAll('=', '')}';
+    final v1 =
+        'OCULUM-SHEETS-v1:${base64UrlEncode(utf8.encode(jsonEncode(payload)))}';
+    expect(oculumDecodeSheetShareText(v2), oculumDecodeSheetShareText(v1));
+    expect(
+      oculumDecodeSheetShareText(v2Checked),
+      oculumDecodeSheetShareText(v1),
+    );
+    expect(
+      () => oculumDecodeSheetShareText(
+        v2Checked.replaceFirst('OC2:', 'OC2:00000000:'),
+      ),
+      throwsFormatException,
+    );
+  });
+
   test('il prefab ChatGPT rispetta il contratto import Oculum', () {
     final raw = File(
       'docs/chatgpt_handoff/prefab_character_generator/example_prefab_character.json',

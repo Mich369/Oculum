@@ -182,6 +182,13 @@ const List<OculumStarterChoice> oculumStarterRaces = [
     materia: 1,
   ),
   OculumStarterChoice(
+    id: 'hideniano',
+    nome: 'Hideniano',
+    descrizione:
+        'Sangue che trattiene la brace: +2 Difesa Fuoco, +3 Attacco Fuoco. Punto cieco: Acqua Magica infligge x2 danni.',
+    puntoCieco: 'Acqua Magica: subisci x2 danni.',
+  ),
+  OculumStarterChoice(
     id: 'ceneride',
     nome: 'Ceneride',
     descrizione:

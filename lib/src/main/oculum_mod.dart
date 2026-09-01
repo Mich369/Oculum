@@ -156,6 +156,9 @@ Map<String, dynamic> oculusNormalizeCharacterData(Object? raw) {
 extension _OculumGameModUi on _OculumHomePageState {
   bool get oculusModActive => activeGameMod == 'oculus';
   bool get manuscriptLivingActive => activeGameMod == 'manuscript_living';
+  // I valori legacy rimangono leggibili nei salvataggi, ma non fanno più
+  // parte della schermata Oculus essenziale.
+  bool get oculusShowLegacyControls => false;
 
   void setActiveGameMod(String id) {
     final normalized = id.trim().toLowerCase();
@@ -320,6 +323,41 @@ extension _OculumGameModUi on _OculumHomePageState {
     notifyDiceResultChanged();
   }
 
+  void rollOculusMasterClash({required bool attack}) {
+    final random = Random.secure();
+    final playerKey = attack ? 'volonta' : 'materia';
+    final masterKey = attack ? 'enemyVolontaDie' : 'enemyMateriaDie';
+    final playerFaces = max(2, oculusInt('${playerKey}Die', fallback: 4));
+    final masterFaces = max(2, oculusInt(masterKey, fallback: 4));
+    final playerRoll = random.nextInt(playerFaces) + 1;
+    final masterRoll = random.nextInt(masterFaces) + 1;
+    final mastery = oculusInt('${playerKey}Mastery').clamp(0, 3).toInt();
+    final playerTotal = playerRoll + mastery;
+    final label = attack ? 'Volontà / attacco' : 'Materia / difesa';
+    final outcome = playerTotal >= masterRoll
+        ? t('Giocatore prevale', 'Player prevails')
+        : t('Master prevale', 'Master prevails');
+    risultato =
+        '$label: Giocatore $playerRoll + $mastery = $playerTotal '
+        'contro Master $masterRoll. $outcome.';
+    dadoMostrato = '$playerTotal / $masterRoll';
+    showOculusDice(<Map<String, dynamic>>[
+      <String, dynamic>{
+        'label': t('Giocatore', 'Player'),
+        'faces': playerFaces,
+        'value': playerRoll,
+        'bonus': mastery,
+      },
+      <String, dynamic>{
+        'label': 'Master',
+        'faces': masterFaces,
+        'value': masterRoll,
+      },
+    ]);
+    aggiungiLog(risultato);
+    notifyDiceResultChanged();
+  }
+
   void showOculusDice(List<Map<String, dynamic>> dice) {
     oculusDiceRevealTimer?.cancel();
     oculusLastDice
@@ -386,6 +424,72 @@ extension _OculumGameModUi on _OculumHomePageState {
                   ),
                 ],
               ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget oculusMasterClashPanel() {
+    return oculusSection(
+      t('Contrasto dadi: Master e giocatore', 'Dice clash: Master and player'),
+      [
+        smallInfoText(
+          t(
+            'Il giocatore tira Volontà per attaccare o Materia per difendersi; il Master tira il dado contrapposto. Pareggio al giocatore. La Forza resta una ricompensa narrata dal Master, non un tiro automatico separato.',
+            'The player rolls Will to attack or Matter to defend; the Master rolls the opposing die. Ties go to the player. Force remains a Master-narrated reward, not an automatic separate roll.',
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            SizedBox(
+              width: 150,
+              child: oculusDieSelector(
+                'volontaDie',
+                t('Giocatore VOL', 'Player WILL'),
+              ),
+            ),
+            SizedBox(
+              width: 150,
+              child: oculusDieSelector(
+                'enemyVolontaDie',
+                t('Master VOL', 'Master WILL'),
+              ),
+            ),
+            SizedBox(
+              width: 150,
+              child: oculusDieSelector(
+                'materiaDie',
+                t('Giocatore MAT', 'Player MAT'),
+              ),
+            ),
+            SizedBox(
+              width: 150,
+              child: oculusDieSelector(
+                'enemyMateriaDie',
+                t('Master MAT', 'Master MAT'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilledButton.icon(
+              onPressed: () => rollOculusMasterClash(attack: true),
+              icon: const Icon(Icons.bolt_outlined),
+              label: Text(t('Contrasto attacco', 'Attack clash')),
+            ),
+            FilledButton.tonalIcon(
+              onPressed: () => rollOculusMasterClash(attack: false),
+              icon: const Icon(Icons.shield_outlined),
+              label: Text(t('Contrasto difesa', 'Defense clash')),
+            ),
           ],
         ),
       ],
@@ -697,157 +801,162 @@ extension _OculumGameModUi on _OculumHomePageState {
                 maxLines: 3,
               ),
             ]),
-            oculusSection(t('Dadi e valori', 'Dice and values'), [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  SizedBox(
-                    width: 155,
-                    child: oculusDieSelector('resilienzaDie', 'Resilienza'),
-                  ),
-                  SizedBox(
-                    width: 155,
-                    child: oculusDieSelector(
-                      'volontaDie',
-                      t('Volonta', 'Will'),
+            oculusMasterClashPanel(),
+            if (oculusShowLegacyControls)
+              oculusSection(t('Dadi e valori', 'Dice and values'), [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    SizedBox(
+                      width: 155,
+                      child: oculusDieSelector('resilienzaDie', 'Resilienza'),
                     ),
-                  ),
-                  SizedBox(
-                    width: 155,
-                    child: oculusDieSelector('materiaDie', 'Materia'),
-                  ),
-                  SizedBox(
-                    width: 155,
-                    child: oculusDieSelector('oculumDie', 'Oculum'),
-                  ),
-                  SizedBox(
-                    width: 155,
-                    child: oculusDieSelector(
-                      'forceDie',
-                      t('Forza attiva', 'Active Force'),
+                    SizedBox(
+                      width: 155,
+                      child: oculusDieSelector(
+                        'volontaDie',
+                        t('Volonta', 'Will'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                key: ValueKey<String>(
-                  'oculus_force_${oculusText('activeForce')}',
+                    SizedBox(
+                      width: 155,
+                      child: oculusDieSelector('materiaDie', 'Materia'),
+                    ),
+                    SizedBox(
+                      width: 155,
+                      child: oculusDieSelector('oculumDie', 'Oculum'),
+                    ),
+                    SizedBox(
+                      width: 155,
+                      child: oculusDieSelector(
+                        'forceDie',
+                        t('Forza attiva', 'Active Force'),
+                      ),
+                    ),
+                  ],
                 ),
-                initialValue:
-                    const <String>{
-                      'fato',
-                      'chaos',
-                      'oblio',
-                    }.contains(oculusText('activeForce'))
-                    ? oculusText('activeForce')
-                    : 'fato',
-                decoration: InputDecoration(
-                  labelText: t('Forza della scena', 'Scene Force'),
-                  border: const OutlineInputBorder(),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'fato', child: Text('Fato')),
-                  DropdownMenuItem(value: 'chaos', child: Text('Chaos')),
-                  DropdownMenuItem(value: 'oblio', child: Text('Oblio')),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    setOculusData('activeForce', value, rebuild: true);
-                  }
-                },
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  SizedBox(
-                    width: 120,
-                    child: oculusNumberField(
-                      'level',
-                      t('Livello /12', 'Level /12'),
-                      maximum: 12,
-                    ),
-                  ),
-                  SizedBox(
-                    width: 120,
-                    child: oculusNumberField(
-                      'progress',
-                      t('Progresso /3', 'Progress /3'),
-                      maximum: 2,
-                    ),
-                  ),
-                  SizedBox(
-                    width: 120,
-                    child: oculusNumberField('life', t('Vita', 'Life')),
-                  ),
-                  SizedBox(
-                    width: 120,
-                    child: oculusNumberField(
-                      'maxLife',
-                      t('Vita MAX', 'Max life'),
-                      minimum: 1,
-                    ),
-                  ),
-                  SizedBox(
-                    width: 120,
-                    child: oculusNumberField('defense', t('Difesa', 'Defense')),
-                  ),
-                  SizedBox(
-                    width: 140,
-                    child: oculusNumberField(
-                      'bonusPoints',
-                      t('Punti Bonus', 'Bonus points'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '${t('Maestria acquistabile', 'Purchasable Mastery')} - ${t('massimo +3 per Stat', 'maximum +3 per Stat')}',
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  oculusMasteryControl('resilienza', 'RES'),
-                  oculusMasteryControl('volonta', 'VOL'),
-                  oculusMasteryControl('materia', 'MAT'),
-                  oculusMasteryControl('oculum', 'OCU'),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final entry in const <(String, String)>[
-                    ('resilienza', 'Resilienza'),
-                    ('volonta', 'Volonta'),
-                    ('materia', 'Materia'),
-                    ('oculum', 'Oculum'),
-                  ])
-                    FilledButton.tonalIcon(
-                      onPressed: () => rollOculusStat(entry.$1, entry.$2),
-                      icon: const Icon(Icons.casino_outlined),
-                      label: Text('${t('Tira', 'Roll')} ${entry.$2}'),
-                    ),
-                ],
-              ),
-              if (help) ...[
                 const SizedBox(height: 10),
-                smallInfoText(
-                  t(
-                    'Scala dadi: d4, d6, d8, d10, d12, d20. Vita iniziale: 3 + tiro reale di Resilienza. Difesa iniziale: 5.',
-                    'Dice ladder: d4, d6, d8, d10, d12, d20. Starting life: 3 + a real Resilience roll. Starting defense: 5.',
+                DropdownButtonFormField<String>(
+                  key: ValueKey<String>(
+                    'oculus_force_${oculusText('activeForce')}',
                   ),
+                  initialValue:
+                      const <String>{
+                        'fato',
+                        'chaos',
+                        'oblio',
+                      }.contains(oculusText('activeForce'))
+                      ? oculusText('activeForce')
+                      : 'fato',
+                  decoration: InputDecoration(
+                    labelText: t('Forza della scena', 'Scene Force'),
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'fato', child: Text('Fato')),
+                    DropdownMenuItem(value: 'chaos', child: Text('Chaos')),
+                    DropdownMenuItem(value: 'oblio', child: Text('Oblio')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setOculusData('activeForce', value, rebuild: true);
+                    }
+                  },
                 ),
-              ],
-            ]),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      child: oculusNumberField(
+                        'level',
+                        t('Livello /12', 'Level /12'),
+                        maximum: 12,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 120,
+                      child: oculusNumberField(
+                        'progress',
+                        t('Progresso /3', 'Progress /3'),
+                        maximum: 2,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 120,
+                      child: oculusNumberField('life', t('Vita', 'Life')),
+                    ),
+                    SizedBox(
+                      width: 120,
+                      child: oculusNumberField(
+                        'maxLife',
+                        t('Vita MAX', 'Max life'),
+                        minimum: 1,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 120,
+                      child: oculusNumberField(
+                        'defense',
+                        t('Difesa', 'Defense'),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 140,
+                      child: oculusNumberField(
+                        'bonusPoints',
+                        t('Punti Bonus', 'Bonus points'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '${t('Maestria acquistabile', 'Purchasable Mastery')} - ${t('massimo +3 per Stat', 'maximum +3 per Stat')}',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    oculusMasteryControl('resilienza', 'RES'),
+                    oculusMasteryControl('volonta', 'VOL'),
+                    oculusMasteryControl('materia', 'MAT'),
+                    oculusMasteryControl('oculum', 'OCU'),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final entry in const <(String, String)>[
+                      ('resilienza', 'Resilienza'),
+                      ('volonta', 'Volonta'),
+                      ('materia', 'Materia'),
+                      ('oculum', 'Oculum'),
+                    ])
+                      FilledButton.tonalIcon(
+                        onPressed: () => rollOculusStat(entry.$1, entry.$2),
+                        icon: const Icon(Icons.casino_outlined),
+                        label: Text('${t('Tira', 'Roll')} ${entry.$2}'),
+                      ),
+                  ],
+                ),
+                if (help) ...[
+                  const SizedBox(height: 10),
+                  smallInfoText(
+                    t(
+                      'Scala dadi: d4, d6, d8, d10, d12, d20. Vita iniziale: 3 + tiro reale di Resilienza. Difesa iniziale: 5.',
+                      'Dice ladder: d4, d6, d8, d10, d12, d20. Starting life: 3 + a real Resilience roll. Starting defense: 5.',
+                    ),
+                  ),
+                ],
+              ]),
             oculusSection(t('Regole essenziali', 'Essential rules'), [
               SelectableText(
                 t(
