@@ -165,6 +165,41 @@ void main() {
     }
   });
 
+  test('Papero Ranocchio groups its base form and selectable variants', () {
+    const baseId = 'papera_ranocchio';
+    final forms = monsterBookEntries
+        .where(
+          (entry) =>
+              entry.id == baseId || entry.id.startsWith('${baseId}_variante_'),
+        )
+        .toList(growable: false);
+
+    expect(forms.first.id, baseId);
+    expect(forms.length, greaterThan(1));
+    expect(
+      forms
+          .skip(1)
+          .every((entry) => entry.id.startsWith('${baseId}_variante_')),
+      isTrue,
+    );
+  });
+
+  test('starter smalllings stay weak and intentionally have no Art', () {
+    for (final id in const <String>[
+      'mostricciattolo_di_carta',
+      'mostricciattolo_di_sugo',
+      'mostricciattolo_del_tubo',
+      'mostricciattolo_con_un_dente',
+      'mostricciattolo_di_lana',
+    ]) {
+      final entry = monsterById(id)!;
+      expect(entry.stats['hp'], inInclusiveRange(5, 10), reason: id);
+      expect(entry.stats['atk'], inInclusiveRange(4, 6), reason: id);
+      expect(entry.stats['def'], inInclusiveRange(3, 4), reason: id);
+      expect(entry.skillIds, isEmpty, reason: id);
+    }
+  });
+
   test('armed humanoids retain their real inventory through the Book', () {
     final hammerMan = monsterById('uomo_del_martello_lungo');
     final commander = monsterById('armaiolo_della_fila_lunga');

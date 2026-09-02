@@ -1,5 +1,36 @@
 part of '../../main.dart';
 
+/// Tiro automatico del Vitalium Grezzo. Un 1 naturale e' un critico negativo:
+/// puo' ridurre la cura, ma chi usa il risultato la limita sempre a zero.
+int oculumRawVitaliumMedicineRoll({required int die, required int medicine}) {
+  final total = die + medicine;
+  return die == 1 ? -max(1, total.abs()) : total;
+}
+
+/// Gradi I-II: meta' del tiro; dal III: tiro intero. Mantiene il segno del
+/// critico negativo, cosi' puo' annullare una cura ma non generare danno.
+int oculumRawVitaliumMedicineBonus({
+  required int grade,
+  required int medicineRoll,
+}) {
+  if (grade >= 3) return medicineRoll;
+  if (grade >= 1) return medicineRoll ~/ 2;
+  return 0;
+}
+
+String oculumRawVitaliumRuleForGrade(int grade) {
+  if (grade >= 3) {
+    return 'Grado III+: attivo d30 + Medicina, tiro intero. Un 1 naturale può annullare la cura, mai fare danno.';
+  }
+  if (grade >= 2) {
+    return 'Grado II: attivo d20 + Medicina, metà tiro. Al Grado III diventa d30 + tiro intero.';
+  }
+  if (grade >= 1) {
+    return 'Grado I: attivo d10 + Medicina, metà tiro. Al Grado II diventa d20 + metà tiro.';
+  }
+  return 'Dal Grado I il Vitalium userà automaticamente d10 + Medicina, metà tiro.';
+}
+
 /// Negoziante locale della scheda. Lo stock usa il salvataggio della scheda,
 /// ma il suo identificatore di sessione lo rinnova solo dopo la chiusura e
 /// riapertura dell'app: non cambia ad ogni rebuild o apertura del pannello.
@@ -13,13 +44,17 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       monsterSpriteStableSeed(currentSheetScrollId()) ^
           DateTime.now().microsecondsSinceEpoch,
     );
+    final rawVitaliumRule = oculumRawVitaliumRuleForGrade(
+      max(0, leggiNumero(gradoController)),
+    );
     merchantStock = <Map<String, dynamic>>[
       {
         'id': 'raw_vitalium',
         'name': 'Vitalium Grezzo',
         'cost': 13 + random.nextInt(7),
         'kind': 'raw_vitalium',
-        'desc': 'Consumabile: cura HP pari all Oculum che scegli di immettere.',
+        'desc':
+            'Consumabile: cura HP pari all Oculum immesso. $rawVitaliumRule',
       },
       {
         'id': 'refined_vitalium',
@@ -145,6 +180,13 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     return merchantStock;
   }
 
+  String merchantOfferDescription(Map<String, dynamic> offer) {
+    if ('${offer['kind'] ?? ''}' == 'raw_vitalium') {
+      return 'Consumabile: cura HP pari all Oculum immesso. ${oculumRawVitaliumRuleForGrade(max(0, leggiNumero(gradoController)))}';
+    }
+    return '${offer['desc'] ?? ''}';
+  }
+
   Widget merchantQuickPanel() {
     final stock = ensureMerchantStock();
     return gothicPanel(
@@ -153,27 +195,59 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
+          collapsedBackgroundColor: const Color(0xFF151019),
+          backgroundColor: const Color(0xFF0D1017),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          collapsedShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           onExpansionChanged: (open) {
             // ignore: invalid_use_of_protected_member
             setState(() => merchantIsOpen = open);
           },
           tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
           childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-          leading: const Icon(
-            Icons.storefront_outlined,
-            color: Color(0xFFE6D8BD),
-          ),
-          title: Text(
-            t('Mercante in vista', 'Merchant in sight'),
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
+          leading: Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [Color(0xFFC4863C), Color(0xFF442315)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(color: const Color(0xFFE6D8BD)),
             ),
+            child: const Icon(Icons.storefront_outlined, color: Colors.white),
+          ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  t('Mercante in vista', 'Merchant in sight'),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: .4,
+                  ),
+                ),
+              ),
+              Text(
+                '${leggiNumero(obserController)} O',
+                style: const TextStyle(
+                  color: Color(0xFFFFD977),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
           ),
           subtitle: Text(
             t(
-              'Stock fisso fino alla prossima apertura dell app.',
-              'Fixed stock until the next app launch.',
+              'Bancarella personale · stock fisso fino alla prossima apertura dell app.',
+              'Personal stall · fixed stock until the next app launch.',
             ),
             style: const TextStyle(color: Colors.white70, fontSize: 11),
           ),
@@ -189,22 +263,35 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               ),
             ),
             for (final offer in stock)
-              ListTile(
-                dense: true,
-                title: Text(
-                  '${offer['name']}',
-                  style: const TextStyle(color: Colors.white),
+              Container(
+                margin: const EdgeInsets.only(top: 7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF18151C),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: readIntValue(offer['grade']) > 0
+                        ? const Color(0xFFFFC35B).withValues(alpha: .72)
+                        : Colors.white24,
+                  ),
                 ),
-                subtitle: Text(
-                  '${offer['desc']}',
-                  style: const TextStyle(color: Colors.white70, fontSize: 11),
-                ),
-                trailing: FilledButton(
-                  onPressed:
-                      leggiNumero(obserController) < readIntValue(offer['cost'])
-                      ? null
-                      : () => buyMerchantOffer(offer),
-                  child: Text('${offer['cost']} O'),
+                child: ListTile(
+                  dense: true,
+                  title: Text(
+                    '${offer['name']}',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  subtitle: Text(
+                    merchantOfferDescription(offer),
+                    style: const TextStyle(color: Colors.white70, fontSize: 11),
+                  ),
+                  trailing: FilledButton(
+                    onPressed:
+                        leggiNumero(obserController) <
+                            readIntValue(offer['cost'])
+                        ? null
+                        : () => buyMerchantOffer(offer),
+                    child: Text('${offer['cost']} O'),
+                  ),
                 ),
               ),
           ],
@@ -236,7 +323,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                     style: const TextStyle(color: Colors.white),
                   ),
                   subtitle: Text(
-                    '${offer['desc']}',
+                    merchantOfferDescription(offer),
                     style: const TextStyle(color: Colors.white70),
                   ),
                   trailing: FilledButton(
@@ -359,7 +446,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         nome: 'Vitalium Grezzo',
         peso: .1,
         quantita: 1,
-        note: 'Consumabile: cura HP pari all Oculum immesso.',
+        note:
+            'Consumabile: cura HP pari all Oculum immesso. ${oculumRawVitaliumRuleForGrade(max(0, leggiNumero(gradoController)))}',
       );
     }
     if (kind == 'refined_vitalium') {
@@ -425,6 +513,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     'Vitalium Ridefinito',
     'Fiala di Oculum',
     'Pergamena della Prigione d Ossa',
+    'Pinna di Pesce Alato',
   }.contains(item.nome.trim());
 
   Future<void> useMerchantConsumable(InventoryItem item) async {
@@ -474,15 +563,37 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     setState(() {
       switch (item.nome.trim()) {
         case 'Vitalium Grezzo':
+          final grade = max(0, leggiNumero(gradoController));
+          final medicineDieFaces = grade >= 3
+              ? 30
+              : grade >= 2
+              ? 20
+              : 10;
+          final medicineDie = Random().nextInt(medicineDieFaces) + 1;
+          final medicineRoll = oculumRawVitaliumMedicineRoll(
+            die: medicineDie,
+            medicine: medicinaAttualeAggiustaNucleo(),
+          );
+          final medicineBonus = oculumRawVitaliumMedicineBonus(
+            grade: grade,
+            medicineRoll: medicineRoll,
+          );
+          final heal = max(0, amount + medicineBonus);
           currentOculumController.text = max(
             0,
             leggiNumero(currentOculumController) - amount,
           ).toString();
           currentHpController.text = min(
             maxHp(),
-            leggiNumero(currentHpController) + amount,
+            leggiNumero(currentHpController) + heal,
           ).toString();
-          risultato = 'Vitalium Grezzo: -$amount Oculum, +$amount HP.';
+          final medicineDetails = grade < 1
+              ? ' d$medicineDieFaces Medicina: $medicineDie, tiro $medicineRoll: nessun bonus prima del Grado I.'
+              : grade >= 3
+              ? ' d$medicineDieFaces Medicina: $medicineDie, tiro $medicineRoll: ${medicineBonus >= 0 ? '+' : ''}$medicineBonus HP.'
+              : ' d$medicineDieFaces Medicina: $medicineDie, tiro $medicineRoll, metà: ${medicineBonus >= 0 ? '+' : ''}$medicineBonus HP.';
+          risultato =
+              'Vitalium Grezzo: -$amount Oculum, +$heal HP.$medicineDetails${heal == 0 && medicineBonus < 0 ? ' Il critico negativo ha annullato la cura, senza infliggere danno.' : ''}';
           break;
         case 'Vitalium Ridefinito':
           currentHpController.text = maxHp().toString();
@@ -514,6 +625,15 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           );
           risultato =
               'Pergamena della Prigione d Ossa: 12 danni perforanti e Stordito per 1 turno.';
+          break;
+        case 'Pinna di Pesce Alato':
+          applyCondition(
+            'nuoto_aria',
+            duration: 3,
+            source: 'Pinna di Pesce Alato',
+          );
+          risultato =
+              'Pinna di Pesce Alato: Nuoto nell’Aria attivo per 3 turni.';
           break;
       }
       if (item.quantita > 1) {

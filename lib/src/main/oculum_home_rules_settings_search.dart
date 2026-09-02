@@ -2165,6 +2165,133 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     orElse: () => scelte.first,
   );
 
+  bool _isTutorialMonsterVariant(MonsterBookEntry entry) =>
+      RegExp(r'_variante_[a-z]+$').hasMatch(entry.id);
+
+  String _tutorialMonsterBaseId(String id) => id.replaceFirst(
+    RegExp(r'_variante_[a-z]+$'),
+    '',
+  );
+
+  List<MonsterBookEntry> _tutorialMonsterForms(String baseId) {
+    final cleanBaseId = _tutorialMonsterBaseId(baseId.trim());
+    final base = monsterBookEntryById(cleanBaseId);
+    if (base == null) return const <MonsterBookEntry>[];
+    return <MonsterBookEntry>[
+      base,
+      ...monsterBookEntries.where(
+        (entry) => entry.id.startsWith('${base.id}_variante_'),
+      ),
+    ];
+  }
+
+  int tutorialMonsterVariantChance(String difficulty) => switch (difficulty) {
+    'facile' => 10,
+    'difficile' => 45,
+    'oculum' => 65,
+    _ => 25,
+  };
+
+  MonsterBookEntry? _resolveTutorialMonsterPreset() {
+    if (!tutorialGeneraMostro || tutorialMonsterPresetId.trim().isEmpty) {
+      return null;
+    }
+    final forms = _tutorialMonsterForms(tutorialMonsterPresetId);
+    if (forms.isEmpty) return monsterBookEntryById(tutorialMonsterPresetId);
+    final requested = tutorialMonsterVariantId.trim();
+    if (requested.isNotEmpty) {
+      return forms.firstWhere(
+        (entry) => entry.id == requested,
+        orElse: () => forms.first,
+      );
+    }
+    final variants = forms.skip(1).toList(growable: false);
+    if (variants.isEmpty ||
+        Random().nextInt(100) >=
+            tutorialMonsterVariantChance(tutorialDifficultyId)) {
+      return forms.first;
+    }
+    return variants[Random().nextInt(variants.length)];
+  }
+
+  int _tutorialMonsterLevel(MonsterBookEntry monster) =>
+      max(0, monster.stats['level'] ?? 0);
+
+  Map<String, int> _tutorialMonsterStats(MonsterBookEntry monster) {
+    final stats = monster.stats;
+    // Le voci nuove del Bestiario espongono già le quattro statistiche. Per
+    // quelle storiche ricaviamo una base stabile dai loro valori originali,
+    // senza riscrivere né perdere il blocco stats legacy.
+    return <String, int>{
+      'resilienza': max(
+        0,
+        stats['resilienza'] ?? max(1, (stats['hp'] ?? 10) ~/ 10),
+      ),
+      'volonta': max(
+        0,
+        stats['volonta'] ?? max(1, (stats['atk'] ?? stats['danno'] ?? 1) ~/ 4),
+      ),
+      'materia': max(
+        0,
+        stats['materia'] ??
+            max(1, (stats['def'] ?? stats['defense'] ?? 1) ~/ 3),
+      ),
+      'oculum': max(0, stats['oculum'] ?? max(0, (stats['spd'] ?? 0) ~/ 8)),
+    };
+  }
+
+  OculumTitle _tutorialMonsterRacialTrait(MonsterBookEntry monster) {
+    final choices = <String>[
+      '@Difesa+1 ${elementDisplayName(monster.elementId)}',
+      '@VC+1',
+      '@CM+1',
+      '@Danni+1 ${elementDisplayName(monster.elementId)}',
+    ];
+    // Ogni creatura riceve una manifestazione razziale propria. Il risultato
+    // entra nel tratto salvato della scheda, quindi non cambia a ogni rebuild.
+    final buff = choices[Random().nextInt(choices.length)];
+    final lower = monster.nameIt.toLowerCase();
+    final skill = lower.contains('lupo')
+        ? 'Lupo Solitario\nI/Se combatti senza alleati, ottieni +1 a ogni statistica per ogni nemico presente.\nII/+1 aggiuntivo a VC e CM.\nIII/La prima reazione del turno non costa Reazioni.'
+        : 'Istinto di ${monster.nameIt}\nI/Una volta per turno ottieni +1 VC oppure +1 CM in una scena coerente con il tuo corpo.\nII/Il bonus diventa +2.\nIII/Dopo averlo usato, una Reazione rapida può seguire l’azione.';
+    return OculumTitle(
+      nome: monster.nameIt,
+      tipo: 'Tratto Razziale Mostro',
+      ottenimento: 'Tratto innato dal Monster Book.',
+      leggenda: monster.descIt,
+      buff: buff,
+      puntoCieco: '',
+      skill: skill,
+      richiede: 'I disponibile dal livello 0; rinnova fino a III.',
+      equipaggiato: true,
+      chiaveSistema: 'tutorial_monster_trait_${monster.id}',
+    );
+  }
+
+  CharacterArt _tutorialMonsterArt(MonsterBookEntry monster, int level) {
+    return CharacterArt(
+      nome: 'Peculiarità: ${monster.nameIt}',
+      tipo: 'Art Mostro',
+      descrizione:
+          'Peculiarità del Monster Book. Ogni Skill resta bloccata finché il livello del mostro non raggiunge la soglia indicata.',
+      skills: [
+        for (var index = 0; index < monster.skillIds.length; index++)
+          ArtSkill(
+            nome: monsterBookSkillText(
+              monster.skillIds[index],
+            ).split('\n').first.replaceFirst(RegExp(r'^I/\\s*'), ''),
+            livello: level >= monsterBookSkillRequiredLevel(monster, index)
+                ? 1
+                : 0,
+            evo1:
+                'Richiede livello ${monsterBookSkillRequiredLevel(monster, index)}\n${monsterBookSkillText(monster.skillIds[index])}',
+            evo2: 'II/Versione evoluta: il Master approva l’effetto coerente.',
+            evo3: 'III/Versione evoluta: il Master approva l’effetto coerente.',
+          ),
+      ],
+    );
+  }
+
   int _statPiuBassa(Map<String, int> stats) {
     const ordine = ['resilienza', 'volonta', 'materia'];
     return ordine.map((key) => stats[key] ?? 0).reduce(min);
@@ -2210,7 +2337,13 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
   }
 
   void applicaSettaggioTutorial() {
-    final livello = max(0, leggiNumero(tutorialLevelController));
+    final selectedMonster = _resolveTutorialMonsterPreset();
+    // Un preset del Monster Book e' una creatura gia' definita: non gli si
+    // applicano razza, background, Art iniziale, difficolta' o bonus umani.
+    final isMonsterBookPreset = selectedMonster != null;
+    final livello = selectedMonster == null
+        ? max(0, leggiNumero(tutorialLevelController))
+        : _tutorialMonsterLevel(selectedMonster);
     final gradoRichiesto = max(0, leggiNumero(tutorialGradeController));
     final gradoMassimo = gradoAutomaticoDaLivello(livello, false);
     final grado = min(gradoRichiesto, gradoMassimo);
@@ -2228,11 +2361,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       (art) => art.nome == tutorialArtName,
       orElse: oculumStarterWaterArt,
     );
-    final selectedMonster =
-        tutorialGeneraMostro && tutorialMonsterPresetId.trim().isNotEmpty
-        ? monsterBookEntryById(tutorialMonsterPresetId)
-        : null;
-    final eMartial = art.tipo == 'Martial Art';
+    final eMartial = !isMonsterBookPreset && art.tipo == 'Martial Art';
     if (eMartial && tutorialMartialBonus <= 0) {
       tutorialMartialBonus = oculumStarterMartialBonus(Random());
     }
@@ -2248,7 +2377,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         max(0, extraVol) +
         max(0, extraMat) +
         max(0, extraOcu);
-    if (puntiLivelloSpesi > puntiLibriDisponibili) {
+    if (selectedMonster == null && puntiLivelloSpesi > puntiLibriDisponibili) {
       setState(() {
         risultato =
             'Hai distribuito $puntiLivelloSpesi punti, ma il budget disponibile è $puntiLibriDisponibili.';
@@ -2262,7 +2391,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             'Il livello $livello permette al massimo il Grado $gradoMassimo: il grado richiesto è stato corretto.';
       });
     }
-    if (eMartial && extraOcu > 0) {
+    if (!isMonsterBookPreset && eMartial && extraOcu > 0) {
       setState(() {
         risultato =
             'I punti bonus di una Martial Art non possono essere messi in Oculum.';
@@ -2286,9 +2415,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       'oculum': extraOcu + background.oculum + razza.oculum + fato.oculum,
     };
     if (selectedMonster != null) {
-      for (final stat in const ['resilienza', 'volonta', 'materia', 'oculum']) {
-        stats[stat] = selectedMonster.stats[stat] ?? stats[stat] ?? 0;
-      }
+      stats.addAll(_tutorialMonsterStats(selectedMonster));
     }
     if (!tutorialGeneraMostro) {
       for (final stat in const ['resilienza', 'volonta', 'materia', 'oculum']) {
@@ -2297,14 +2424,15 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       stats[primaria] = (stats[primaria] ?? 0) + 2;
       stats[secondaria] = (stats[secondaria] ?? 0) + 1;
     }
-    if (eMartial) {
+    if (!isMonsterBookPreset && eMartial) {
       _aggiungiAllaStatPiuBassa(stats, max(0, stats['oculum'] ?? 0));
       stats['oculum'] = 0;
     }
-    if (tutorialDifficultyId == 'facile') {
+    if (!isMonsterBookPreset && tutorialDifficultyId == 'facile') {
       _aggiungiAllaStatPiuBassa(stats, 1);
-    } else if (tutorialDifficultyId == 'difficile' ||
-        tutorialDifficultyId == 'oculum') {
+    } else if (!isMonsterBookPreset &&
+        (tutorialDifficultyId == 'difficile' ||
+            tutorialDifficultyId == 'oculum')) {
       final chiave = [
         'resilienza',
         'volonta',
@@ -2359,6 +2487,14 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
           (starter) => starter.nome == esistente.nome,
         ),
       );
+      // Cambiare preset nel tutorial sostituisce solo la precedente Art
+      // generata dal Monster Book: nessuna Art personale o legacy viene
+      // eliminata, ma la nuova creatura non accumula peculiarita' duplicate.
+      arti.removeWhere(
+        (esistente) =>
+            esistente.tipo == 'Art Mostro' &&
+            esistente.descrizione.startsWith('Peculiarità del Monster Book.'),
+      );
       // Gli equipaggiamenti dati dal Book al mostro sono marcati: riapplicare
       // il tutorial li sostituisce senza toccare l'inventario normale del player.
       inventario.removeWhere(
@@ -2371,79 +2507,113 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
           inventario.add(InventoryItem.fromJson(data));
         }
       }
-      titoli.add(
-        OculumTitle(
-          nome: background.nome,
-          tipo: 'Titolo d’Azione',
-          ottenimento: 'Scelto durante la creazione guidata.',
-          leggenda: background.descrizione,
-          buff: background.descrizione,
-          puntoCieco: background.puntoCieco,
-          skill: 'Il tuo passato influenza le azioni e le scene sociali.',
-          richiede: background.conMaster
-              ? 'Da completare con il Master.'
-              : difficoltaLabel,
-          equipaggiato: true,
-          sempreVisibile: true,
-          chiaveSistema: 'tutorial_background_${background.id}',
-        ),
-      );
-      titoli.add(
-        OculumTitle(
-          nome: fato.nome,
-          tipo: 'Titolo del Fato',
-          ottenimento: 'Scelto durante la creazione guidata.',
-          leggenda: fato.descrizione,
-          buff: fato.descrizione,
-          puntoCieco: '',
-          skill: 'Segui il tuo Fato per far evolvere il Titolo.',
-          richiede: fato.conMaster
-              ? 'Da completare con il Master.'
-              : difficoltaLabel,
-          chiaveSistema: 'tutorial_fate_${fato.id}',
-        ),
-      );
-      trattiRazziali.add(
-        OculumTitle(
-          nome: razza.nome,
-          tipo: 'Tratto Razziale',
-          ottenimento: 'Scelto durante la creazione guidata.',
-          leggenda: razza.descrizione,
-          buff:
-              '${razza.descrizione}'
-              '${razza.id == 'hideniano' ? '\n@Difesa+2 Fuoco\n@Danni+3 Fuoco' : ''}',
-          puntoCieco: razza.id == 'hideniano'
-              ? '@DanniSubiti+100% Acqua Magica\n${razza.puntoCieco}'
-              : razza.puntoCieco,
-          skill: 'Tratto innato della razza.',
-          richiede: razza.conMaster
-              ? 'Da completare con il Master.'
-              : difficoltaLabel,
-          equipaggiato: true,
-          chiaveSistema: 'tutorial_race_${razza.id}',
-        ),
-      );
-      razzaController.text = razza.nome;
+      if (!tutorialGeneraMostro) {
+        titoli.add(
+          OculumTitle(
+            nome: background.nome,
+            tipo: 'Titolo d’Azione',
+            ottenimento: 'Scelto durante la creazione guidata.',
+            leggenda: background.descrizione,
+            buff: background.descrizione,
+            puntoCieco: background.puntoCieco,
+            skill: 'Il tuo passato influenza le azioni e le scene sociali.',
+            richiede: background.conMaster
+                ? 'Da completare con il Master.'
+                : difficoltaLabel,
+            equipaggiato: true,
+            sempreVisibile: true,
+            chiaveSistema: 'tutorial_background_${background.id}',
+          ),
+        );
+        titoli.add(
+          OculumTitle(
+            nome: fato.nome,
+            tipo: 'Titolo del Fato',
+            ottenimento: 'Scelto durante la creazione guidata.',
+            leggenda: fato.descrizione,
+            buff: fato.descrizione,
+            puntoCieco: '',
+            skill: 'Segui il tuo Fato per far evolvere il Titolo.',
+            richiede: fato.conMaster
+                ? 'Da completare con il Master.'
+                : difficoltaLabel,
+            chiaveSistema: 'tutorial_fate_${fato.id}',
+          ),
+        );
+        trattiRazziali.add(
+          OculumTitle(
+            nome: razza.nome,
+            tipo: 'Tratto Razziale',
+            ottenimento: 'Scelto durante la creazione guidata.',
+            leggenda: razza.descrizione,
+            buff:
+                '${razza.descrizione}'
+                '${razza.id == 'hideniano' ? '\n@Difesa+2 Fuoco\n@Danni+3 Fuoco' : ''}',
+            puntoCieco: razza.id == 'hideniano'
+                ? '@DanniSubiti+100% Acqua Magica\n${razza.puntoCieco}'
+                : razza.puntoCieco,
+            skill: 'Tratto innato della razza.',
+            richiede: razza.conMaster
+                ? 'Da completare con il Master.'
+                : difficoltaLabel,
+            equipaggiato: true,
+            chiaveSistema: 'tutorial_race_${razza.id}',
+          ),
+        );
+        razzaController.text = razza.nome;
+      } else if (selectedMonster != null) {
+        trattiRazziali.add(_tutorialMonsterRacialTrait(selectedMonster));
+        arti.add(_tutorialMonsterArt(selectedMonster, livello));
+        razzaController.clear();
+        backgroundController.text =
+            'Creatura del Monster Book: richiede approvazione del Master prima di entrare nella campagna.';
+      } else {
+        razzaController.clear();
+        backgroundController.text =
+            'Mostro creato liberamente: il Master definisce origine e comportamento.';
+      }
       tipoSchedaController.text = tutorialGeneraMostro
           ? (selectedMonster?.presetType ?? tutorialMonsterTier)
           : 'Personaggio';
       if (selectedMonster != null) {
         nomeController.text = selectedMonster.nameIt;
         notePersonaggioController.text = selectedMonster.descIt;
+        schedePersonaggio[schedaCorrente]['monsterBookSourceId'] =
+            selectedMonster.id;
+        schedePersonaggio[schedaCorrente]['monsterBookApprovalRequired'] = true;
+        schedePersonaggio[schedaCorrente]['monsterBookApproved'] =
+            isMasterHost || modalitaMaster;
+      } else if (tutorialGeneraMostro) {
+        schedePersonaggio[schedaCorrente].remove('monsterBookSourceId');
+        schedePersonaggio[schedaCorrente].remove('monsterBookApprovalRequired');
+        schedePersonaggio[schedaCorrente].remove('monsterBookApproved');
       }
       gradoController.text = grado.toString();
-      backgroundController.text =
-          '${background.nome}\n${background.descrizione}\n\n$difficoltaLabel';
-      obserController.text = (leggiNumero(obserController) + obserIniziale)
-          .toString();
-      arti.add(art);
+      if (!tutorialGeneraMostro) {
+        backgroundController.text =
+            '${background.nome}\n${background.descrizione}\n\n$difficoltaLabel';
+        obserController.text = (leggiNumero(obserController) + obserIniziale)
+            .toString();
+        arti.add(art);
+      }
+      monsterStatPoints = tutorialGeneraMostro
+          ? (tutorialMonsterStatsRandomized && selectedMonster == null
+                ? 0
+                : quickMonsterStatBudget(
+                    selectedMonster?.presetType ?? tutorialMonsterTier,
+                    livello,
+                    grado,
+                  ))
+          : 0;
 
       tutorialCompletato = true;
 
-      risultato = t(
-        'Tutorial applicato: ${background.nome}, ${razza.nome}, ${art.nome}. EXP iniziale: $expIniziale.',
-        'Tutorial applied: ${background.nome}, ${razza.nome}, ${art.nome}. Starting EXP: $expIniziale.',
-      );
+      risultato = tutorialGeneraMostro
+          ? 'Tutorial mostro applicato: ${selectedMonster?.nameIt ?? 'creatura libera'}, livello $livello. ${selectedMonster == null && tutorialMonsterStatsRandomized ? 'Punti distribuiti casualmente.' : 'Punti mostro disponibili: $monsterStatPoints.'}'
+          : t(
+              'Tutorial applicato: ${background.nome}, ${razza.nome}, ${art.nome}. EXP iniziale: $expIniziale.',
+              'Tutorial applied: ${background.nome}, ${razza.nome}, ${art.nome}. Starting EXP: $expIniziale.',
+            );
 
       aggiungiLog(risultato);
     });
@@ -2683,6 +2853,8 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                             onChanged: (value) => setDialogState(() {
                               tutorialMonsterTier = value ?? 'Mostro';
                               tutorialMonsterPresetId = '';
+                              tutorialMonsterVariantId = '';
+                              tutorialMonsterStatsRandomized = false;
                             }),
                           ),
                           const SizedBox(height: 8),
@@ -2697,21 +2869,109 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                             items: [
                               for (final entry in monsterBookEntries.where(
                                 (entry) =>
-                                    entry.presetType == tutorialMonsterTier,
+                                    entry.presetType == tutorialMonsterTier &&
+                                    !_isTutorialMonsterVariant(entry),
                               ))
                                 DropdownMenuItem(
                                   value: entry.id,
                                   child: Text(entry.nameIt),
                                 ),
                             ],
-                            onChanged: (value) => setDialogState(
-                              () => tutorialMonsterPresetId = value ?? '',
-                            ),
+                            onChanged: (value) => setDialogState(() {
+                              tutorialMonsterPresetId = value ?? '';
+                              tutorialMonsterVariantId = '';
+                              tutorialMonsterStatsRandomized = false;
+                            }),
                           ),
+                          if (tutorialMonsterPresetId.isNotEmpty)
+                            Builder(
+                              builder: (context) {
+                                final forms = _tutorialMonsterForms(
+                                  tutorialMonsterPresetId,
+                                );
+                                if (forms.length <= 1) {
+                                  return const SizedBox.shrink();
+                                }
+                                final chosen = forms.any(
+                                  (entry) =>
+                                      entry.id == tutorialMonsterVariantId,
+                                )
+                                    ? tutorialMonsterVariantId
+                                    : null;
+                                final chance = tutorialMonsterVariantChance(
+                                  tutorialDifficultyId,
+                                );
+                                return Column(
+                                  children: [
+                                    const SizedBox(height: 8),
+                                    DropdownButtonFormField<String>(
+                                initialValue: chosen ?? '',
+                                      decoration: const InputDecoration(
+                                        labelText:
+                                            'Forma del mostro — casuale o scelta',
+                                      ),
+                                      items: [
+                                        DropdownMenuItem(
+                                          value: '',
+                                          child: Text(
+                                            'Casuale — variante $chance%',
+                                          ),
+                                        ),
+                                        for (final form in forms)
+                                          DropdownMenuItem(
+                                            value: form.id,
+                                            child: Text(
+                                              form.id == forms.first.id
+                                                  ? '${form.nameIt} — forma base'
+                                                  : form.nameIt,
+                                            ),
+                                          ),
+                                      ],
+                                      onChanged: (value) => setDialogState(() {
+                                        tutorialMonsterVariantId = value ?? '';
+                                      }),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    smallInfoText(
+                                      'Casuale: Facile 10%, Normale 25%, Difficile 45%, Oculum 65%. La forma viene estratta una sola volta quando crei la scheda.',
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
                           const SizedBox(height: 6),
                           smallInfoText(
                             'Se non scegli un Occhio, crei liberamente la creatura; altrimenti usa statistiche, descrizione e tipo del Mostro scelto.',
                           ),
+                          if (tutorialMonsterPresetId.isEmpty) ...[
+                            const SizedBox(height: 8),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                final budget = quickMonsterStatBudget(
+                                  tutorialMonsterTier,
+                                  max(0, leggiNumero(tutorialLevelController)),
+                                  max(0, leggiNumero(tutorialGradeController)),
+                                );
+                                final stats = randomQuickMonsterStats(
+                                  budget,
+                                  hint: tutorialMonsterTier,
+                                );
+                                setDialogState(() {
+                                  tutorialExtraResController.text =
+                                      '${stats['resilienza'] ?? 0}';
+                                  tutorialExtraVolController.text =
+                                      '${stats['volonta'] ?? 0}';
+                                  tutorialExtraMatController.text =
+                                      '${stats['materia'] ?? 0}';
+                                  tutorialExtraOcuController.text =
+                                      '${stats['oculum'] ?? 0}';
+                                  tutorialMonsterStatsRandomized = true;
+                                });
+                              },
+                              icon: const Icon(Icons.casino_outlined),
+                              label: const Text('Randomizza punti mostro'),
+                            ),
+                          ],
                         ],
                       ),
                     campoTesto(
@@ -4771,6 +5031,56 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     );
   }
 
+  Widget settingsAppearanceControlPanel() {
+    return gothicPanel(
+      borderColor: tertiaryColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.palette_outlined, color: tertiaryColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  t('Aspetto Oculum', 'Oculum appearance'),
+                  style: TextStyle(
+                    color: tertiaryColor,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 7),
+          smallInfoText(
+            t(
+              'I controlli grafici sono raccolti qui: aprili solo quando vuoi modificare tema, pelle, colori e decorazioni.',
+              'Visual controls are collected here: open them only when you want to edit theme, skin, colors and decorations.',
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.tonalIcon(
+            onPressed: () => setState(
+              () => settingsAppearanceExpanded = !settingsAppearanceExpanded,
+            ),
+            icon: Icon(
+              settingsAppearanceExpanded
+                  ? Icons.visibility_off_outlined
+                  : Icons.palette_outlined,
+            ),
+            label: Text(
+              settingsAppearanceExpanded
+                  ? t('Chiudi modifiche aspetto', 'Close appearance controls')
+                  : t('Modifica aspetto', 'Edit appearance'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget settingsPage() {
     return responsivePageList(
       pageKey: 'settings',
@@ -4786,16 +5096,25 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         functionAnchor('settings_hero', settingsHeroPanel()),
         functionAnchor('settings_mods', modsSettingsPanel()),
         functionAnchor('settings_control_center', settingsControlCenterPanel()),
-        functionAnchor('settings_theme_showcase', settingsThemeShowcasePanel()),
-        functionAnchor('settings_gui_skins', settingsGuiSkinGalleryPanel()),
         functionAnchor(
-          'settings_skin_customization',
-          themeCustomizationSlidersPanel(),
+          'settings_appearance_control',
+          settingsAppearanceControlPanel(),
         ),
-        functionAnchor(
-          'settings_decorations_gallery',
-          settingsDecorationsGalleryPanel(),
-        ),
+        if (settingsAppearanceExpanded) ...[
+          functionAnchor(
+            'settings_theme_showcase',
+            settingsThemeShowcasePanel(),
+          ),
+          functionAnchor('settings_gui_skins', settingsGuiSkinGalleryPanel()),
+          functionAnchor(
+            'settings_skin_customization',
+            themeCustomizationSlidersPanel(),
+          ),
+          functionAnchor(
+            'settings_decorations_gallery',
+            settingsDecorationsGalleryPanel(),
+          ),
+        ],
         functionAnchor(
           'settings_management_layout',
           settingsSectionBanner(

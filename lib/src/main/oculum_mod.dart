@@ -323,41 +323,6 @@ extension _OculumGameModUi on _OculumHomePageState {
     notifyDiceResultChanged();
   }
 
-  void rollOculusMasterClash({required bool attack}) {
-    final random = Random.secure();
-    final playerKey = attack ? 'volonta' : 'materia';
-    final masterKey = attack ? 'enemyVolontaDie' : 'enemyMateriaDie';
-    final playerFaces = max(2, oculusInt('${playerKey}Die', fallback: 4));
-    final masterFaces = max(2, oculusInt(masterKey, fallback: 4));
-    final playerRoll = random.nextInt(playerFaces) + 1;
-    final masterRoll = random.nextInt(masterFaces) + 1;
-    final mastery = oculusInt('${playerKey}Mastery').clamp(0, 3).toInt();
-    final playerTotal = playerRoll + mastery;
-    final label = attack ? 'Volontà / attacco' : 'Materia / difesa';
-    final outcome = playerTotal >= masterRoll
-        ? t('Giocatore prevale', 'Player prevails')
-        : t('Master prevale', 'Master prevails');
-    risultato =
-        '$label: Giocatore $playerRoll + $mastery = $playerTotal '
-        'contro Master $masterRoll. $outcome.';
-    dadoMostrato = '$playerTotal / $masterRoll';
-    showOculusDice(<Map<String, dynamic>>[
-      <String, dynamic>{
-        'label': t('Giocatore', 'Player'),
-        'faces': playerFaces,
-        'value': playerRoll,
-        'bonus': mastery,
-      },
-      <String, dynamic>{
-        'label': 'Master',
-        'faces': masterFaces,
-        'value': masterRoll,
-      },
-    ]);
-    aggiungiLog(risultato);
-    notifyDiceResultChanged();
-  }
-
   void showOculusDice(List<Map<String, dynamic>> dice) {
     oculusDiceRevealTimer?.cancel();
     oculusLastDice
@@ -424,72 +389,6 @@ extension _OculumGameModUi on _OculumHomePageState {
                   ),
                 ],
               ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget oculusMasterClashPanel() {
-    return oculusSection(
-      t('Contrasto dadi: Master e giocatore', 'Dice clash: Master and player'),
-      [
-        smallInfoText(
-          t(
-            'Il giocatore tira Volontà per attaccare o Materia per difendersi; il Master tira il dado contrapposto. Pareggio al giocatore. La Forza resta una ricompensa narrata dal Master, non un tiro automatico separato.',
-            'The player rolls Will to attack or Matter to defend; the Master rolls the opposing die. Ties go to the player. Force remains a Master-narrated reward, not an automatic separate roll.',
-          ),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            SizedBox(
-              width: 150,
-              child: oculusDieSelector(
-                'volontaDie',
-                t('Giocatore VOL', 'Player WILL'),
-              ),
-            ),
-            SizedBox(
-              width: 150,
-              child: oculusDieSelector(
-                'enemyVolontaDie',
-                t('Master VOL', 'Master WILL'),
-              ),
-            ),
-            SizedBox(
-              width: 150,
-              child: oculusDieSelector(
-                'materiaDie',
-                t('Giocatore MAT', 'Player MAT'),
-              ),
-            ),
-            SizedBox(
-              width: 150,
-              child: oculusDieSelector(
-                'enemyMateriaDie',
-                t('Master MAT', 'Master MAT'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            FilledButton.icon(
-              onPressed: () => rollOculusMasterClash(attack: true),
-              icon: const Icon(Icons.bolt_outlined),
-              label: Text(t('Contrasto attacco', 'Attack clash')),
-            ),
-            FilledButton.tonalIcon(
-              onPressed: () => rollOculusMasterClash(attack: false),
-              icon: const Icon(Icons.shield_outlined),
-              label: Text(t('Contrasto difesa', 'Defense clash')),
-            ),
           ],
         ),
       ],
@@ -801,7 +700,6 @@ extension _OculumGameModUi on _OculumHomePageState {
                 maxLines: 3,
               ),
             ]),
-            oculusMasterClashPanel(),
             if (oculusShowLegacyControls)
               oculusSection(t('Dadi e valori', 'Dice and values'), [
                 Wrap(

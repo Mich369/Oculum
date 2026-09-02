@@ -2,6 +2,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  group('Vitalium Grezzo', () {
+    test('usa il tiro di Medicina per grado senza alterare la cura base', () {
+      expect(oculumRawVitaliumMedicineBonus(grade: 0, medicineRoll: 15), 0);
+      expect(oculumRawVitaliumMedicineBonus(grade: 1, medicineRoll: 15), 7);
+      expect(oculumRawVitaliumMedicineBonus(grade: 2, medicineRoll: 15), 7);
+      expect(oculumRawVitaliumMedicineBonus(grade: 3, medicineRoll: 15), 15);
+      expect(oculumRawVitaliumMedicineRoll(die: 1, medicine: 8), -9);
+      expect(oculumRawVitaliumMedicineBonus(grade: 2, medicineRoll: -9), -4);
+      expect(oculumRawVitaliumRuleForGrade(1), contains('d10'));
+      expect(oculumRawVitaliumRuleForGrade(2), contains('d20'));
+      expect(oculumRawVitaliumRuleForGrade(3), contains('d30'));
+    });
+  });
+
   group('Ricette', () {
     test('accetta grammi interi e decimali positivi senza perdere cifre', () {
       expect(oculumNormalizePositiveGramText('25'), '25');
@@ -98,6 +112,29 @@ void main() {
         );
       },
     );
+
+    test('il costo Oculum della ricetta è additivo e legacy-safe', () {
+      const recipe = OculumRecipe(
+        id: 'pinna_alata',
+        name: 'Pinna di Pesce Alato',
+        ingredients: [
+          OculumRecipeIngredient(
+            name: 'Polvere del Pesce Alato',
+            grams: '1000',
+          ),
+        ],
+        resultName: 'Pinna di Pesce Alato',
+        resultDescription: 'Nuoto nell’aria.',
+        masterNotes: '',
+        visibleToPlayers: true,
+        createdAt: '',
+        updatedAt: '',
+        recipeKind: 'alchemy',
+        oculumCost: 3,
+      );
+      expect(OculumRecipe.fromJson(recipe.toJson()).oculumCost, 3);
+      expect(OculumRecipe.fromJson({'id': 'legacy_recipe'}).oculumCost, 0);
+    });
 
     test('categorie e copie personali restano separate nel JSON', () {
       final legacy = OculumRecipe.fromJson(<String, dynamic>{

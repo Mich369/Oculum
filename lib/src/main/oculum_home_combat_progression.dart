@@ -114,6 +114,66 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  Future<void> removeMasterInitiativeGroup(String id) async {
+    ensureMasterInitiativeGroups();
+    final index = masterInitiativeGroups.indexWhere(
+      (group) => '${group['id'] ?? ''}' == id,
+    );
+    if (index < 0) return;
+    final name =
+        '${masterInitiativeGroups[index]['name'] ?? t('Scontro', 'Encounter')}';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(t('Eliminare lo scontro?', 'Delete encounter?')),
+        content: Text(
+          t(
+            '“$name” e la sua turnistica saranno eliminati definitivamente. Le schede personaggio non verranno toccate.',
+            '“$name” and its initiative tracker will be permanently deleted. Character sheets will not be changed.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(t('Elimina per sempre', 'Delete permanently')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() {
+      masterInitiativeGroups.removeAt(index);
+      if (masterInitiativeGroups.isEmpty) {
+        masterInitiativeTokens.clear();
+        masterInitiativeRound = 1;
+        masterInitiativeActiveIndex = 0;
+        masterInitiativeManualOrder = false;
+        masterInitiativePublished = false;
+        masterInitiativeManualCounter = 0;
+        selectedMasterInitiativeGroupId = 'encounter_1';
+        // Il tracker richiede sempre un contenitore attivo: questo e' nuovo e
+        // vuoto, non conserva dati dello scontro eliminato.
+        ensureMasterInitiativeGroups();
+      } else {
+        selectedMasterInitiativeGroupId =
+            '${masterInitiativeGroups[max(0, index - 1)]['id']}';
+        loadSelectedMasterInitiativeGroup();
+      }
+      risultato = t(
+        'Scontro eliminato definitivamente: $name.',
+        'Encounter permanently deleted: $name.',
+      );
+      aggiungiLog(risultato);
+    });
+    await salvaDati();
+  }
+
   bool currentCombatIsActive() {
     final realtimeTokens = realtimeVisibleInitiativeSnapshot['tokens'];
     return masterInitiativePublished ||
@@ -2821,13 +2881,28 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   int applicaModificatoreDanno(int dannoBase) {
+    final damageType = elementoDannoDominante().trim().toLowerCase();
+    final configuredPercent = configuredIncomingDamagePercentForType(
+      damageType,
+    );
     final percentMultiplier = oculumIncomingDamagePercentMultiplier(
-      dannoSubitoPercentController.text,
+      configuredPercent,
     );
     if (percentMultiplier != null) {
       return applicaModificatoreDannoPercentuale(dannoBase, percentMultiplier);
     }
     return applicaModificatoreDannoCon(dannoBase, modificatoreDannoAttuale());
+  }
+
+  /// Le vecchie schede avevano un solo campo percentuale. Appena esiste una
+  /// configurazione per tipo, l'assenza di un tipo significa nessun bonus e
+  /// non l'eredita' involontaria del valore di un altro elemento.
+  String configuredIncomingDamagePercentForType(String damageType) {
+    final normalized = damageType.trim().toLowerCase();
+    if (dannoSubitoPercentPerTipo.isEmpty) {
+      return dannoSubitoPercentController.text;
+    }
+    return dannoSubitoPercentPerTipo[normalized] ?? '';
   }
 
   int applicaModificatoreDannoPercentuale(int dannoBase, double multiplier) {
@@ -3387,8 +3462,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       rollBasisPoints: misfortuneShieldRoll,
     );
 
+    final activePercentDamageType = elementoDannoDominante()
+        .trim()
+        .toLowerCase();
     final percentualeLiberaPrima = oculumIncomingDamagePercentMultiplier(
-      dannoSubitoPercentController.text,
+      configuredIncomingDamagePercentForType(activePercentDamageType),
     );
     final stadioLiberoDopo = critico && percentualeLiberaPrima != null
         ? prossimoStadioCriticoPercentualeLibera(percentualeLiberaPrima)

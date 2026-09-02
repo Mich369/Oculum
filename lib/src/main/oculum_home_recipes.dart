@@ -16,8 +16,14 @@ extension _OculumHomeRecipes on _OculumHomePageState {
         id: id,
         name: 'Pinna di Pesce Alato',
         ingredients: const <OculumRecipeIngredient>[
-          OculumRecipeIngredient(name: 'Polvere del Pesce Alato', grams: '1000'),
-          OculumRecipeIngredient(name: 'Acqua contaminata dalle schegge', grams: '1000'),
+          OculumRecipeIngredient(
+            name: 'Polvere del Pesce Alato',
+            grams: '1000',
+          ),
+          OculumRecipeIngredient(
+            name: 'Acqua contaminata dalle schegge',
+            grams: '1000',
+          ),
         ],
         resultName: 'Pinna di Pesce Alato',
         resultDescription:

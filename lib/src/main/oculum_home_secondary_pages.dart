@@ -3432,6 +3432,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 label: Text(t('Nuovo scontro', 'New encounter')),
                 onPressed: addMasterInitiativeGroup,
               ),
+              if (masterInitiativeGroups.isNotEmpty)
+                ActionChip(
+                  avatar: const Icon(Icons.delete_outline, size: 18),
+                  label: Text(t('Elimina scontro', 'Delete encounter')),
+                  onPressed: () => removeMasterInitiativeGroup(
+                    selectedMasterInitiativeGroupId,
+                  ),
+                ),
             ],
           ),
           SizedBox(height: compact ? 8 : 10),
@@ -4451,33 +4459,71 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     addAutomaticKeepAlives: false,
                     addRepaintBoundaries: true,
                     itemExtent: 64,
-                    itemBuilder: (context, i) => CheckboxListTile(
-                      key: ValueKey<String>('master_roster_${sheetTagAt(i)}'),
-                      dense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-                      value: sheetInMasterPartyAt(i),
-                      activeColor: Colors.greenAccent,
-                      checkColor: Colors.black,
-                      secondary: masterPartyAvatar(i, size: 36),
-                      title: Text(
-                        nomeSchedaPersonaggio(i),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
+                    itemBuilder: (context, i) {
+                      final sheet = schedaJsonAt(i);
+                      final pendingApproval =
+                          readBoolValue(sheet['monsterBookApprovalRequired']) &&
+                          !readBoolValue(sheet['monsterBookApproved']);
+                      return GestureDetector(
+                        onLongPress: pendingApproval
+                            ? () {
+                                setState(() {
+                                  sheet['monsterBookApproved'] = true;
+                                  risultato =
+                                      'Mostro approvato dal Master: ${nomeSchedaPersonaggio(i)}.';
+                                  aggiungiLog(risultato);
+                                });
+                                programmaSalvataggio();
+                              }
+                            : null,
+                        child: CheckboxListTile(
+                          key: ValueKey<String>(
+                            'master_roster_${sheetTagAt(i)}',
+                          ),
+                          dense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                          ),
+                          value: sheetInMasterPartyAt(i),
+                          activeColor: Colors.greenAccent,
+                          checkColor: Colors.black,
+                          secondary: masterPartyAvatar(i, size: 36),
+                          title: Text(
+                            nomeSchedaPersonaggio(i),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${tipoSchedaPersonaggio(i)} - ${sheetTagAt(i)}${pendingApproval ? ' · In attesa Master (tieni premuto per approvare)' : ''}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: pendingApproval
+                                  ? Colors.amberAccent
+                                  : tertiaryColor,
+                              fontSize: 11,
+                            ),
+                          ),
+                          onChanged: pendingApproval
+                              ? (_) {
+                                  setState(() {
+                                    risultato =
+                                        'Prima approva ${nomeSchedaPersonaggio(i)} tenendo premuta la sua riga.';
+                                    aggiungiLog(risultato);
+                                  });
+                                }
+                              : (selected) => cambiaSchedaMasterParty(
+                                  i,
+                                  selected == true,
+                                ),
+                          controlAffinity: ListTileControlAffinity.trailing,
                         ),
-                      ),
-                      subtitle: Text(
-                        '${tipoSchedaPersonaggio(i)} - ${sheetTagAt(i)}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: tertiaryColor, fontSize: 11),
-                      ),
-                      onChanged: (selected) =>
-                          cambiaSchedaMasterParty(i, selected == true),
-                      controlAffinity: ListTileControlAffinity.trailing,
-                    ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -6124,14 +6170,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           const SizedBox(height: 6),
           smallInfoText(
             t(
-              'Preset con immagine bitmap gia caricata, skill, Art e note modificabili dal Master.',
-              'Presets with preloaded bitmap image, skills, Art and editable Master notes.',
+              'Preset senza immagini imposte: puoi aggiungerle dal Monster Book. Skill, Art e note restano modificabili dal Master.',
+              'Presets have no forced images: add them from the Monster Book. Skills, Art and notes remain editable by the Master.',
             ),
           ),
           const SizedBox(height: 8),
           Builder(
             builder: (context) {
-              final presets = systemMonsterGeneratorPresets();
+              final presets = systemMonsterGeneratorPresets()
+                  .where((preset) => !systemMonsterPresetIsVariantId(preset.id))
+                  .toList(growable: false);
               final selected =
                   presets.any(
                     (preset) => preset.id == selectedSystemMonsterPresetId,
@@ -6143,46 +6191,110 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               if (selected != null &&
                   selectedSystemMonsterPresetId != selected) {
                 selectedSystemMonsterPresetId = selected;
+                selectedSystemMonsterVariantId = '';
               }
-              return Row(
+              final forms = selected == null
+                  ? const <MonsterBookEntry>[]
+                  : systemMonsterPresetForms(selected);
+              final selectedVariant =
+                  forms.any(
+                    (entry) => entry.id == selectedSystemMonsterVariantId,
+                  )
+                  ? selectedSystemMonsterVariantId
+                  : '';
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: selected,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          initialValue: selected,
+                          isExpanded: true,
+                          dropdownColor: backgroundMidColor,
+                          decoration: InputDecoration(
+                            labelText: t(
+                              'Preset Monster Book',
+                              'Monster Book preset',
+                            ),
+                            border: const OutlineInputBorder(),
+                          ),
+                          items: [
+                            for (final preset in presets)
+                              DropdownMenuItem(
+                                value: preset.id,
+                                child: Text(
+                                  '${preset.name} - ${preset.type}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() {
+                              selectedSystemMonsterPresetId = value;
+                              selectedSystemMonsterVariantId = '';
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        tooltip: t('Crea dal preset', 'Create from preset'),
+                        onPressed: selected == null
+                            ? null
+                            : () => creaSchedaRapidaMostroSistema(
+                                selected,
+                                requestedVariantId: selectedVariant,
+                              ),
+                        icon: const Icon(Icons.add_circle),
+                      ),
+                    ],
+                  ),
+                  if (forms.length > 1) ...[
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedVariant,
                       isExpanded: true,
                       dropdownColor: backgroundMidColor,
                       decoration: InputDecoration(
                         labelText: t(
-                          'Preset Monster Book',
-                          'Monster Book preset',
+                          'Forma — casuale o scelta',
+                          'Form — random or selected',
                         ),
                         border: const OutlineInputBorder(),
                       ),
                       items: [
-                        for (final preset in presets)
+                        DropdownMenuItem(
+                          value: '',
+                          child: Text(t('Casuale fra le forme', 'Random form')),
+                        ),
+                        for (final form in forms)
                           DropdownMenuItem(
-                            value: preset.id,
+                            value: form.id,
                             child: Text(
-                              '${preset.name} - ${preset.type}',
+                              form.id == forms.first.id
+                                  ? '${form.nameIt} — ${t('base', 'base')}'
+                                  : form.nameIt,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                       ],
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() => selectedSystemMonsterPresetId = value);
-                      },
+                      onChanged: (value) => setState(
+                        () => selectedSystemMonsterVariantId = value ?? '',
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filled(
-                    tooltip: t('Crea dal preset', 'Create from preset'),
-                    onPressed: selected == null
-                        ? null
-                        : () => creaSchedaRapidaMostroSistema(selected),
-                    icon: const Icon(Icons.add_circle),
-                  ),
+                    const SizedBox(height: 5),
+                    smallInfoText(
+                      t(
+                        'Casuale estrae una sola forma del mostro quando crei la scheda.',
+                        'Random chooses one monster form when the sheet is created.',
+                      ),
+                      color: Colors.white54,
+                    ),
+                  ],
                 ],
               );
             },
@@ -7688,6 +7800,25 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final livelloPrecedente = skill.livello;
     final livelloNuovo = nuovoLivello.clamp(0, artMaxLevel(art)).toInt();
     if (livelloNuovo == livelloPrecedente) return;
+    if (art.tipo == 'Art Mostro' && livelloNuovo > livelloPrecedente) {
+      final required = int.tryParse(
+        RegExp(
+              r'Richiede livello\s+(\d+)',
+              caseSensitive: false,
+            ).firstMatch(skill.evo1)?.group(1) ??
+            '',
+      );
+      final monsterLevel = leggiNumero(livelloController);
+      if (required != null && monsterLevel < required) {
+        risultato = t(
+          'Peculiarità mostro bloccata: ${skill.nome} richiede livello $required, la creatura è livello $monsterLevel.',
+          'Monster trait locked: ${skill.nome} requires level $required, the creature is level $monsterLevel.',
+        );
+        aggiungiLog(risultato);
+        notifyDiceResultChanged();
+        return;
+      }
+    }
     final structuredCooldown = livelloNuovo > 0
         ? skill.cooldownPerLivello[livelloNuovo - 1]
         : null;
@@ -9624,7 +9755,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         skill.oculum != 0 ||
         skill.danni != 0 ||
         skill.difesa != 0;
-    final initiallyExpanded = false;
+    final initiallyExpanded =
+        _expandedFunctionSections.contains(
+          'art_${artIndex}_skill_$skillIndex',
+        ) ||
+        _expandedFunctionSections.contains('art_$artIndex');
     final fateText = artFateThresholdText(artIndex, skillIndex);
 
     return functionAnchor(

@@ -2446,6 +2446,9 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                       option.name,
                     );
                     dannoSubitoPercentController.clear();
+                    dannoSubitoPercentPerTipo.remove(
+                      elementoDannoDominante().trim().toLowerCase(),
+                    );
                     aggiungiLog(
                       'Modificatore danno selezionato: ${option.name}.',
                     );
@@ -2462,6 +2465,20 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
 
   Widget damageModifierDropdown() {
     final safeValue = canonicalDamageModifierName(modificatoreDannoSelezionato);
+    final activeDamageType = elementoDannoDominante().trim().toLowerCase();
+    final activePercent = configuredIncomingDamagePercentForType(
+      activeDamageType,
+    );
+
+    // Se cambia il tipo dominante (per esempio cambiando arma), il campo
+    // mostra il valore del nuovo tipo invece di trascinare quello precedente.
+    if (dannoSubitoPercentController.text != activePercent) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && dannoSubitoPercentController.text != activePercent) {
+          dannoSubitoPercentController.text = activePercent;
+        }
+      });
+    }
 
     final selected = modificatoriDanno.firstWhere(
       (x) => x.name == safeValue,
@@ -2477,8 +2494,10 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
             signed: true,
             decimal: true,
           ),
-          decoration: fieldDecoration('Danno subito in più / meno (%)')
-              .copyWith(
+          decoration:
+              fieldDecoration(
+                'Danno subito in più / meno (%) — ${elementDisplayName(elementoDannoDominante())}',
+              ).copyWith(
                 hintText: '+25% oppure -20%',
                 suffixIcon: IconButton(
                   tooltip: 'Apri resistenze, fragilità e rigenerazione',
@@ -2486,7 +2505,13 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                   onPressed: mostraMenuModificatoriDanno,
                 ),
               ),
-          onChanged: (_) => programmaSalvataggio(invalidateCaches: false),
+          onChanged: (value) {
+            dannoSubitoPercentPerTipo[activeDamageType] = value.trim();
+            dannoSubitoPercentPerTipo.removeWhere(
+              (type, configured) => type.isEmpty || configured.isEmpty,
+            );
+            programmaSalvataggio(invalidateCaches: false);
+          },
         ),
         const SizedBox(height: 8),
         ValueListenableBuilder<TextEditingValue>(

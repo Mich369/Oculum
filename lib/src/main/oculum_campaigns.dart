@@ -397,6 +397,69 @@ extension _OculumCampaigns on _OculumHomePageState {
     await salvaDatiSoloLocale();
   }
 
+  Future<void> deleteActiveCampaignPermanently() async {
+    ensureCampaignsReady();
+    final name = activeCampaignName();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF10121A),
+        title: Text(
+          t('Eliminare campagna per sempre?', 'Permanently delete campaign?'),
+          style: const TextStyle(color: Colors.redAccent),
+        ),
+        content: Text(
+          t(
+            '“$name”, tutte le sue schede, diari, ricette, gruppi e token saranno rimossi definitivamente dal salvataggio locale. Questa azione non modifica altre campagne.',
+            '“$name”, all its sheets, diaries, recipes, groups and tokens will be permanently removed from the local save. Other campaigns are untouched.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            icon: const Icon(Icons.delete_forever),
+            label: Text(t('Elimina per sempre', 'Delete forever')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    salvaSchedaCorrenteInMemoria();
+    saveActiveCampaignInMemory();
+    setState(() {
+      campagneOculum.removeWhere(
+        (campaign) => '${campaign['id'] ?? ''}' == activeCampaignId,
+      );
+      if (campagneOculum.isEmpty) {
+        activeCampaignId = generateCampaignId();
+        campaignNameController.text = t('Campagna principale', 'Main campaign');
+        schedePersonaggio
+          ..clear()
+          ..add(statoVuotoPersonaggio());
+        occhiCaduti.clear();
+        storySessionNotes.clear();
+        recipes.clear();
+        schedaCorrente = 0;
+        caricaStatoDaJson(schedePersonaggio.first);
+        saveActiveCampaignInMemory();
+      } else {
+        loadCampaignSnapshot(campagneOculum.first);
+      }
+      risultato = t(
+        'Campagna eliminata definitivamente: $name.',
+        'Campaign permanently deleted: $name.',
+      );
+      aggiungiLog(risultato);
+    });
+    await salvaDatiSoloLocale();
+  }
+
   Future<void> switchCampaign(String campaignId) async {
     if (campaignId == activeCampaignId) return;
 
@@ -670,6 +733,18 @@ extension _OculumCampaigns on _OculumHomePageState {
                 label: Text(t('Crea', 'Create')),
               ),
             ],
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: deleteActiveCampaignPermanently,
+            icon: const Icon(Icons.delete_forever_outlined),
+            label: Text(
+              t(
+                'Elimina campagna attiva per sempre',
+                'Delete active campaign forever',
+              ),
+            ),
+            style: OutlinedButton.styleFrom(foregroundColor: Colors.redAccent),
           ),
           const SizedBox(height: 14),
           Text(

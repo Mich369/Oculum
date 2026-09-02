@@ -959,6 +959,14 @@ class _OculumHomePageState extends State<OculumHomePage>
   void _prepareFunctionNavigation(String? anchorId) {
     if (anchorId == null || anchorId.trim().isEmpty) return;
 
+    if (anchorId.startsWith('art_')) {
+      _expandedFunctionSections.add(anchorId);
+      final skillMarker = anchorId.indexOf('_skill_');
+      if (skillMarker > 0) {
+        _expandedFunctionSections.add(anchorId.substring(0, skillMarker));
+      }
+    }
+
     switch (anchorId) {
       case 'sheet_damage':
       case 'sheet_heal':
@@ -992,6 +1000,12 @@ class _OculumHomePageState extends State<OculumHomePage>
         break;
       case 'sheet_dice_quick':
         _expandedFunctionSections.add('sheet_dice_quick');
+        break;
+      case 'settings_theme_showcase':
+      case 'settings_gui_skins':
+      case 'settings_skin_customization':
+      case 'settings_decorations_gallery':
+        settingsAppearanceExpanded = true;
         break;
     }
   }
@@ -1265,6 +1279,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final buffMalusRapidiController = TextEditingController();
   final dannoSubitoController = TextEditingController();
   final dannoSubitoPercentController = TextEditingController();
+  final Map<String, String> dannoSubitoPercentPerTipo = <String, String>{};
   final dannoBonusScudoPercentController = TextEditingController(text: '0');
   final OculumDecodedImageCache decodedImageBase64Cache =
       OculumDecodedImageCache();
@@ -1370,6 +1385,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   String quickSheetArtMode = 'random';
   bool quickSheetAddToInitiative = true;
   String selectedSystemMonsterPresetId = '';
+  // Forma specifica del preset Monster Book nel generatore del Master.
+  // Vuoto significa che la forma viene estratta alla creazione.
+  String selectedSystemMonsterVariantId = '';
 
   final tutorialLevelController = TextEditingController(text: '0');
   final tutorialGradeController = TextEditingController(text: '0');
@@ -1385,6 +1403,10 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool tutorialGeneraMostro = false;
   String tutorialMonsterTier = 'Mostro';
   String tutorialMonsterPresetId = '';
+  // Vuoto = estrazione casuale. L'ID resta separato dal mostro base così il
+  // tutorial può offrire tutte le sue varianti senza duplicare preset.
+  String tutorialMonsterVariantId = '';
+  bool tutorialMonsterStatsRandomized = false;
   String tutorialStatPrimaria = 'resilienza';
   String tutorialStatSecondaria = 'volonta';
   int tutorialMartialBonus = 0;
@@ -1800,6 +1822,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   String nuovoDesignOculum = 'cattedrale';
   bool mostraDannoCuraScheda = true;
   bool mostraStrumentiManualeRapidi = true;
+  bool settingsAppearanceExpanded = false;
   bool mostraBorsaCompatta = true;
   bool mostraPartyScheda = true;
   bool mostraTastiRapidiIndice = true;

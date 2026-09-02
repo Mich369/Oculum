@@ -1553,6 +1553,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'fonteExpSelezionata': fonteExpSelezionata,
       'enemyGradeExp': enemyGradeExpController.text,
       'dannoSubitoPercentuale': dannoSubitoPercentController.text,
+      if (dannoSubitoPercentPerTipo.isNotEmpty)
+        'dannoSubitoPercentualePerTipo': Map<String, String>.from(
+          dannoSubitoPercentPerTipo,
+        ),
       'elementColorOverrides': Map<String, int>.from(elementColorOverrides),
       'customDamageTypes': List<String>.from(customDamageTypes),
       'oculumStatFormulaColor': oculumStatFormulaColor.toARGB32(),
@@ -2335,6 +2339,20 @@ extension _OculumHomePersistence on _OculumHomePageState {
         '${json['enemyGradeExp'] ?? gradoController.text}';
     dannoSubitoPercentController.text =
         '${json['dannoSubitoPercentuale'] ?? ''}';
+    dannoSubitoPercentPerTipo
+      ..clear()
+      ..addAll(
+        (json['dannoSubitoPercentualePerTipo'] is Map
+                ? Map<String, dynamic>.from(
+                    json['dannoSubitoPercentualePerTipo'] as Map,
+                  )
+                : const <String, dynamic>{})
+            .map(
+              (type, value) =>
+                  MapEntry(type.trim().toLowerCase(), '$value'.trim()),
+            )
+          ..removeWhere((type, value) => type.isEmpty || value.isEmpty),
+      );
 
     final imageRaw = '${json['immaginePersonaggioBase64'] ?? ''}';
     if (imageRaw.isNotEmpty) {
@@ -5990,6 +6008,37 @@ extension _OculumHomePersistence on _OculumHomePageState {
       ),
   ];
 
+  bool systemMonsterPresetIsVariantId(String id) =>
+      RegExp(r'_variante_[a-z]+$').hasMatch(id);
+
+  String systemMonsterPresetBaseId(String id) =>
+      id.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
+
+  List<MonsterBookEntry> systemMonsterPresetForms(String id) {
+    final baseId = systemMonsterPresetBaseId(id.trim());
+    final base = monsterBookEntryById(baseId);
+    if (base == null) return const <MonsterBookEntry>[];
+    return <MonsterBookEntry>[
+      base,
+      ...monsterBookEntries.where(
+        (entry) => entry.id.startsWith('${base.id}_variante_'),
+      ),
+    ];
+  }
+
+  String resolveSystemMonsterPresetId(
+    String baseId, {
+    String requestedVariantId = '',
+  }) {
+    final forms = systemMonsterPresetForms(baseId);
+    if (forms.isEmpty) return baseId;
+    if (requestedVariantId.isNotEmpty &&
+        forms.any((entry) => entry.id == requestedVariantId)) {
+      return requestedVariantId;
+    }
+    return forms[Random().nextInt(forms.length)].id;
+  }
+
   String systemMonsterGeneratorDescription(MonsterBookEntry monster) {
     final variants = monsterSpriteAssetPaths(monster).length;
     final weaponLine = monster.canWieldWeapons
@@ -6081,8 +6130,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
     return null;
   }
 
-  Future<void> creaSchedaRapidaMostroSistema(String presetId) async {
-    final preset = systemMonsterPresetById(presetId);
+  Future<void> creaSchedaRapidaMostroSistema(
+    String presetId, {
+    String requestedVariantId = '',
+  }) async {
+    final resolvedPresetId = resolveSystemMonsterPresetId(
+      presetId,
+      requestedVariantId: requestedVariantId,
+    );
+    final preset = systemMonsterPresetById(resolvedPresetId);
+    final source = monsterBookEntryById(resolvedPresetId);
     if (preset == null) return;
     quickSheetNameController.text = preset.name;
     quickSheetDescriptionController.text = preset.description;
@@ -6093,6 +6150,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       fallbackName: preset.name,
       sideOverride: preset.side,
       forceEnemyProfile: preset.enemy,
+      monsterBookSource: source,
     );
   }
 

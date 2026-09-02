@@ -2188,6 +2188,81 @@ const int targetBossMonsterCount = 36;
 /// narrative invece di ridurle a tre attacchi generici.
 const List<MonsterBookEntry> _manualMonsterBookEntries = [
   MonsterBookEntry(
+    id: 'mostricciattolo_di_carta',
+    nameIt: 'Mostricciattolo di Carta',
+    nameEn: 'Paper Smallling',
+    descIt:
+        'Creatura iniziale: cinque HP, una faccia piegata e nessuna Art. Si strappa con facilità ma il fruscio rivela i passaggi stretti.',
+    descEn: 'Starter paper creature with no Art.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'level': 0, 'hp': 5, 'atk': 4, 'def': 3},
+    dropIds: ['carta_umida'],
+  ),
+  MonsterBookEntry(
+    id: 'mostricciattolo_di_sugo',
+    nameIt: 'Mostricciattolo di Sugo',
+    nameEn: 'Sauce Smallling',
+    descIt:
+        'Creatura iniziale: sei HP, danno basso e nessuna Art. Lascia una goccia rossa su qualunque cosa provi a nascondersi.',
+    descEn: 'Starter sauce creature with no Art.',
+    elementId: 'acido',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'level': 0, 'hp': 6, 'atk': 5, 'def': 3},
+    dropIds: ['gelatina_acida'],
+  ),
+  MonsterBookEntry(
+    id: 'mostricciattolo_del_tubo',
+    nameIt: 'Mostricciattolo del Tubo',
+    nameEn: 'Pipe Smallling',
+    descIt:
+        'Creatura iniziale: sette HP e nessuna Art. Sbatte una testa di rame contro le caviglie, poi resta immobile se sente passi pesanti.',
+    descEn: 'Starter pipe creature with no Art.',
+    elementId: 'metallo',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'level': 0, 'hp': 7, 'atk': 5, 'def': 4},
+    dropIds: ['vite_ottusa'],
+  ),
+  MonsterBookEntry(
+    id: 'mostricciattolo_con_un_dente',
+    nameIt: 'Mostricciattolo con un Dente',
+    nameEn: 'One-Tooth Smallling',
+    descIt:
+        'Creatura iniziale: otto HP, danno 6, difesa 3 e nessuna Art. Ha un solo dente enorme: morde una volta e fugge dietro il primo angolo.',
+    descEn: 'Starter one-tooth creature with no Art.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'level': 0, 'hp': 8, 'atk': 6, 'def': 3},
+    dropIds: ['dente_spuntato'],
+  ),
+  MonsterBookEntry(
+    id: 'mostricciattolo_di_lana',
+    nameIt: 'Mostricciattolo di Lana',
+    nameEn: 'Wool Smallling',
+    descIt:
+        'Creatura iniziale: dieci HP, danno 4, difesa 4 e nessuna Art. Rotola lentamente; l’unico pericolo è inciampare nella lana bagnata.',
+    descEn: 'Starter wool creature with no Art.',
+    elementId: 'natura',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'level': 0, 'hp': 10, 'atk': 4, 'def': 4},
+    dropIds: ['gomitolo_bagnato'],
+  ),
+  MonsterBookEntry(
     id: 'lumaca_assassina',
     nameIt: 'Lumaca Assassina',
     nameEn: 'Assassin Snail',
@@ -4354,9 +4429,11 @@ const List<String> _monsterElements = [
 List<MonsterBookEntry> _withFallbackMonsterSkills(
   List<MonsterBookEntry> entries,
 ) {
+  bool hasNoArtByDesign(MonsterBookEntry monster) =>
+      monster.id.startsWith('mostricciattolo_');
   return [
     for (final monster in entries)
-      monster.skillIds.isNotEmpty
+      monster.skillIds.isNotEmpty || hasNoArtByDesign(monster)
           ? monster
           : MonsterBookEntry(
               id: monster.id,
