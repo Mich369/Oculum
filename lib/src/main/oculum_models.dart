@@ -1056,19 +1056,32 @@ class TitleOpenEntry {
 }
 
 class TitleExtraSkillEntry {
-  TitleExtraSkillEntry({this.nome = '', this.descrizione = ''});
+  TitleExtraSkillEntry({
+    this.nome = '',
+    this.descrizione = '',
+    List<OculumStructuredEffect>? effects,
+  }) : effects = List<OculumStructuredEffect>.from(
+         effects ?? const <OculumStructuredEffect>[],
+       );
 
   String nome;
   String descrizione;
+  List<OculumStructuredEffect> effects;
 
   Map<String, dynamic> toJson() {
-    return {'nome': nome, 'descrizione': descrizione};
+    return {
+      'nome': nome,
+      'descrizione': descrizione,
+      if (effects.isNotEmpty)
+        'effects': effects.map((effect) => effect.toJson()).toList(),
+    };
   }
 
   factory TitleExtraSkillEntry.fromJson(Map<String, dynamic> json) {
     return TitleExtraSkillEntry(
       nome: json['nome'] ?? '',
       descrizione: json['descrizione'] ?? '',
+      effects: oculumReadStructuredEffects(json['effects']),
     );
   }
 }
@@ -1103,12 +1116,14 @@ class OculumTitle {
     List<ConditionalBuffEntry>? titleConditionalBuffs,
     List<ConditionalBuffEntry>? openConditionalBuffs,
     List<OculumStructuredEffect>? openEffects,
+    List<OculumStructuredEffect>? skillEffects,
   }) {
     this.openExtra = openExtra ?? [];
     this.skillExtra = skillExtra ?? [];
     this.titleConditionalBuffs = titleConditionalBuffs ?? [];
     this.openConditionalBuffs = openConditionalBuffs ?? [];
     this.openEffects = openEffects ?? [];
+    this.skillEffects = skillEffects ?? [];
   }
 
   String nome;
@@ -1146,6 +1161,7 @@ class OculumTitle {
   late List<ConditionalBuffEntry> titleConditionalBuffs;
   late List<ConditionalBuffEntry> openConditionalBuffs;
   late List<OculumStructuredEffect> openEffects;
+  late List<OculumStructuredEffect> skillEffects;
 
   Map<String, dynamic> toJson() {
     return {
@@ -1182,6 +1198,8 @@ class OculumTitle {
           .toList(),
       if (openEffects.isNotEmpty)
         'openEffects': openEffects.map((effect) => effect.toJson()).toList(),
+      if (skillEffects.isNotEmpty)
+        'skillEffects': skillEffects.map((effect) => effect.toJson()).toList(),
     };
   }
 
@@ -1237,6 +1255,7 @@ class OculumTitle {
           )
           .toList(),
       openEffects: oculumReadStructuredEffects(json['openEffects']),
+      skillEffects: oculumReadStructuredEffects(json['skillEffects']),
     );
   }
 }
@@ -2853,6 +2872,7 @@ class CharacterArt {
     this.integritaCorrente = -1,
     this.esaurimentoCompleto = false,
     this.bonusIntegritaNucleoTemporaneo = 0,
+    this.hasIntegrity = true,
   }) : runeWordsKnown = List<String>.from(runeWordsKnown ?? const <String>[]),
        runeQuickWordIds = List<String>.from(
          runeQuickWordIds ?? const <String>[],
@@ -2903,6 +2923,7 @@ class CharacterArt {
   // Riserva temporanea data da Potenza del nucleo.  E' separata dal massimo
   // normale per restare compatibile con tutte le Art e con i vecchi salvataggi.
   int bonusIntegritaNucleoTemporaneo;
+  bool hasIntegrity;
 
   Map<String, dynamic> toJson() {
     return {
@@ -2946,6 +2967,7 @@ class CharacterArt {
       'runeBooksRead': runeBooksRead,
       'integritaCorrente': integritaCorrente,
       'esaurimentoCompleto': esaurimentoCompleto,
+      'hasIntegrity': hasIntegrity,
       if (bonusIntegritaNucleoTemporaneo > 0)
         'bonusIntegritaNucleoTemporaneo': bonusIntegritaNucleoTemporaneo,
     };
@@ -3002,6 +3024,9 @@ class CharacterArt {
           ? readIntValue(json['integritaCorrente'])
           : -1,
       esaurimentoCompleto: readBoolValue(json['esaurimentoCompleto']),
+      hasIntegrity: json.containsKey('hasIntegrity')
+          ? readBoolValue(json['hasIntegrity'], fallback: true)
+          : true,
       bonusIntegritaNucleoTemporaneo: readIntValue(
         json['bonusIntegritaNucleoTemporaneo'],
       ),

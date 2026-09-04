@@ -2844,6 +2844,20 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     maxLines: 3,
                   ),
                   const SizedBox(height: 8),
+                  structuredEffectsEditor(
+                    effects: titolo.skillEffects,
+                    freeText: titolo.skill,
+                    storageId:
+                        'title_${titolo.chiaveSistema.isEmpty ? index : titolo.chiaveSistema}_skill',
+                    onChanged: invalidateDerivedDataCaches,
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    onPressed: () => usaSkillTitolo(titolo),
+                    icon: const Icon(Icons.play_arrow),
+                    label: Text(t('Usa Skill del Titolo', 'Use Title Skill')),
+                  ),
+                  const SizedBox(height: 8),
                   campoModello(
                     label: t('Punto Cieco', 'Blind Spot'),
                     initialValue: titolo.puntoCieco,
@@ -3250,6 +3264,25 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                                 titolo.skillExtra[i].descrizione = value;
                               },
                               maxLines: 3,
+                            ),
+                            const SizedBox(height: 8),
+                            structuredEffectsEditor(
+                              effects: titolo.skillExtra[i].effects,
+                              freeText: titolo.skillExtra[i].descrizione,
+                              storageId:
+                                  'title_${titolo.chiaveSistema.isEmpty ? index : titolo.chiaveSistema}_extra_skill_$i',
+                              onChanged: invalidateDerivedDataCaches,
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              onPressed: () => usaSkillTitolo(
+                                titolo,
+                                skillExtra: titolo.skillExtra[i],
+                              ),
+                              icon: const Icon(Icons.play_arrow),
+                              label: Text(
+                                t('Usa Skill del Titolo', 'Use Title Skill'),
+                              ),
                             ),
                             Align(
                               alignment: Alignment.centerRight,

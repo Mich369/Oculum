@@ -2168,10 +2168,8 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
   bool _isTutorialMonsterVariant(MonsterBookEntry entry) =>
       RegExp(r'_variante_[a-z]+$').hasMatch(entry.id);
 
-  String _tutorialMonsterBaseId(String id) => id.replaceFirst(
-    RegExp(r'_variante_[a-z]+$'),
-    '',
-  );
+  String _tutorialMonsterBaseId(String id) =>
+      id.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
 
   List<MonsterBookEntry> _tutorialMonsterForms(String baseId) {
     final cleanBaseId = _tutorialMonsterBaseId(baseId.trim());
@@ -2249,7 +2247,14 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     ];
     // Ogni creatura riceve una manifestazione razziale propria. Il risultato
     // entra nel tratto salvato della scheda, quindi non cambia a ogni rebuild.
-    final buff = choices[Random().nextInt(choices.length)];
+    final baseBuff = choices[Random().nextInt(choices.length)];
+    // Le statistiche non fondamentali del Bestiario diventano sottotratti
+    // reali della scheda generata. La Strega delle Fiale non perde quindi il
+    // suo +6 Precisione quando passa dal Book al tutorial.
+    final precisionBonus = monster.stats['precisione'] ?? 0;
+    final buff = precisionBonus == 0
+        ? baseBuff
+        : '$baseBuff\n@Precisione${precisionBonus >= 0 ? '+' : ''}$precisionBonus';
     final lower = monster.nameIt.toLowerCase();
     final skill = lower.contains('lupo')
         ? 'Lupo Solitario\nI/Se combatti senza alleati, ottieni +1 a ogni statistica per ogni nemico presente.\nII/+1 aggiuntivo a VC e CM.\nIII/La prima reazione del turno non costa Reazioni.'
@@ -2270,24 +2275,26 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
 
   CharacterArt _tutorialMonsterArt(MonsterBookEntry monster, int level) {
     return CharacterArt(
-      nome: 'Peculiarità: ${monster.nameIt}',
+      nome: 'Prima Art — ${monster.nameIt}',
       tipo: 'Art Mostro',
       descrizione:
-          'Peculiarità del Monster Book. Ogni Skill resta bloccata finché il livello del mostro non raggiunge la soglia indicata.',
+          'Peculiarità del Monster Book: tre Skill nelle forme I, II e III. Consuma l’Integrità della Prima Art come ogni altra Oculum Art.',
       skills: [
         for (var index = 0; index < monster.skillIds.length; index++)
-          ArtSkill(
-            nome: monsterBookSkillText(
+          () {
+            final forms = monsterBookSkillForms(monster.skillIds[index]);
+            final requiredI = monsterBookSkillRequiredLevel(monster, index);
+            final name = monsterBookSkillText(
               monster.skillIds[index],
-            ).split('\n').first.replaceFirst(RegExp(r'^I/\\s*'), ''),
-            livello: level >= monsterBookSkillRequiredLevel(monster, index)
-                ? 1
-                : 0,
-            evo1:
-                'Richiede livello ${monsterBookSkillRequiredLevel(monster, index)}\n${monsterBookSkillText(monster.skillIds[index])}',
-            evo2: 'II/Versione evoluta: il Master approva l’effetto coerente.',
-            evo3: 'III/Versione evoluta: il Master approva l’effetto coerente.',
-          ),
+            ).split('—').first.trim();
+            return ArtSkill(
+              nome: name.isEmpty ? 'Tecnica del mostro' : name,
+              livello: level >= requiredI ? 1 : 0,
+              evo1: 'Richiede livello $requiredI\n${forms[0]}',
+              evo2: 'Richiede livello ${requiredI + 1}\n${forms[1]}',
+              evo3: 'Richiede livello ${requiredI + 3}\n${forms[2]}',
+            );
+          }(),
       ],
     );
   }
@@ -2563,7 +2570,23 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         razzaController.text = razza.nome;
       } else if (selectedMonster != null) {
         trattiRazziali.add(_tutorialMonsterRacialTrait(selectedMonster));
-        arti.add(_tutorialMonsterArt(selectedMonster, livello));
+        final monsterArt = _tutorialMonsterArt(selectedMonster, livello);
+        // Il Book usa la Prima Art già presente nella scheda: non aggiunge una
+        // quarta sezione. Una Prima Art personalizzata resta intatta e la
+        // peculiarità viene inserita davanti, così la nuova creatura continua
+        // ad avere la sua Art leggibile nella prima sezione.
+        final firstBaseIndex = arti.indexWhere(
+          (candidate) =>
+              candidate.nome == 'Prima Art' &&
+              candidate.tipo == 'Oculum Art' &&
+              candidate.descrizione ==
+                  'La prima manifestazione del potere personale.',
+        );
+        if (firstBaseIndex >= 0) {
+          arti[firstBaseIndex] = monsterArt;
+        } else {
+          arti.insert(0, monsterArt);
+        }
         razzaController.clear();
         backgroundController.text =
             'Creatura del Monster Book: richiede approvazione del Master prima di entrare nella campagna.';
@@ -2892,10 +2915,11 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                                 if (forms.length <= 1) {
                                   return const SizedBox.shrink();
                                 }
-                                final chosen = forms.any(
-                                  (entry) =>
-                                      entry.id == tutorialMonsterVariantId,
-                                )
+                                final chosen =
+                                    forms.any(
+                                      (entry) =>
+                                          entry.id == tutorialMonsterVariantId,
+                                    )
                                     ? tutorialMonsterVariantId
                                     : null;
                                 final chance = tutorialMonsterVariantChance(
@@ -2905,7 +2929,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                                   children: [
                                     const SizedBox(height: 8),
                                     DropdownButtonFormField<String>(
-                                initialValue: chosen ?? '',
+                                      initialValue: chosen ?? '',
                                       decoration: const InputDecoration(
                                         labelText:
                                             'Forma del mostro — casuale o scelta',

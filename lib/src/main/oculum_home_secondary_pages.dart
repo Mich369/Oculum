@@ -67,6 +67,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   void ensureArtIntegrityValue(int artIndex) {
     if (artIndex < 0 || artIndex >= arti.length) return;
     final art = arti[artIndex];
+    if (!art.hasIntegrity) return;
     final maximum = artIntegrityEffectiveMaximum(art);
     if (art.integritaCorrente < 0) {
       art.integritaCorrente = maximum;
@@ -146,6 +147,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }) {
     if (artIndex < 0 || artIndex >= arti.length) return;
     final art = arti[artIndex];
+    if (!art.hasIntegrity) return;
     final maximum = artIntegrityEffectiveMaximum(art);
     final next = value.clamp(0, maximum).toInt();
     final previous = art.integritaCorrente;
@@ -208,6 +210,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     int skillLevel = 1,
   }) {
     if (artIndex < 0 || artIndex >= arti.length || cost <= 0) return 0;
+    if (!arti[artIndex].hasIntegrity) return 0;
     ultimoDannoNucleoEvitato = false;
     HiddenEyeStat? luckStat;
     for (final stat in hiddenEyeStats) {
@@ -7805,7 +7808,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         RegExp(
               r'Richiede livello\s+(\d+)',
               caseSensitive: false,
-            ).firstMatch(skill.evo1)?.group(1) ??
+            ).firstMatch(skill.testoEvoluzione(livelloNuovo))?.group(1) ??
             '',
       );
       final monsterLevel = leggiNumero(livelloController);
@@ -7848,7 +7851,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     );
     final openEraAttiva = art.openAttiva && artOpenSbloccata(art);
 
-    if (art.sbloccata && activationCost > 0) {
+    if (art.hasIntegrity && art.sbloccata && activationCost > 0) {
       ensureArtIntegrityValue(artIndex);
       if (!oculumArtCanActivate(art.integritaCorrente, cost: activationCost)) {
         risultato = t(
@@ -7880,7 +7883,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           skill.livello != livelloPrecedente) {
         return;
       }
-      if (art.sbloccata) {
+      if (art.hasIntegrity && art.sbloccata) {
         ensureArtIntegrityValue(artIndex);
         if (!oculumArtCanActivate(
           art.integritaCorrente,

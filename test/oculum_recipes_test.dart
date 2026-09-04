@@ -13,6 +13,28 @@ void main() {
       expect(oculumRawVitaliumRuleForGrade(1), contains('d10'));
       expect(oculumRawVitaliumRuleForGrade(2), contains('d20'));
       expect(oculumRawVitaliumRuleForGrade(3), contains('d30'));
+      expect(oculumRawVitaliumRuleForGrade(1), isNot(contains('Grado II')));
+      expect(oculumRawVitaliumRuleForGrade(2), isNot(contains('Grado III')));
+    });
+  });
+
+  group('Skill delle armi del Negoziante', () {
+    test('parte da +5 e cresce di +10 per ogni grado', () {
+      expect(oculumMerchantWeaponSkillDamage(0), 5);
+      expect(oculumMerchantWeaponSkillDamage(1), 15);
+      expect(oculumMerchantWeaponSkillDamage(4), 45);
+      expect(
+        oculumMerchantWeaponSkillName('Arco di bronzo'),
+        startsWith('Tiro'),
+      );
+      expect(
+        oculumMerchantWeaponSkillName('Martello rovinato'),
+        startsWith('Schianto'),
+      );
+      expect(
+        oculumMerchantWeaponSkillText('Lancia scheggiata', 2),
+        contains('@Danni+25'),
+      );
     });
   });
 

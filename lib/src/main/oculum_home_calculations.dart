@@ -1,5 +1,31 @@
 part of '../../main.dart';
 
+int oculumDirectSubtraitQuickBonus({
+  required String subtraitId,
+  required String subtraitName,
+  required Iterable<String> texts,
+}) {
+  final targets = <String>{
+    oculumDynamicFormulaKey(subtraitId),
+    oculumDynamicFormulaKey(subtraitName),
+  }..remove('');
+  if (targets.isEmpty) return 0;
+  var total = 0;
+  final command = RegExp(
+    r'@\s*([A-Za-zÀ-ÖØ-öø-ÿ_]+)\s*([+-])\s*(\d+)(?![A-Za-z0-9_])',
+  );
+  for (final text in texts) {
+    for (final match in command.allMatches(text)) {
+      if (!targets.contains(oculumDynamicFormulaKey(match.group(1) ?? ''))) {
+        continue;
+      }
+      final amount = int.tryParse(match.group(3) ?? '') ?? 0;
+      total += match.group(2) == '-' ? -amount : amount;
+    }
+  }
+  return total;
+}
+
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 String oculumRollConsumedStatKey(String raw, {String? subtraitGroup}) {
@@ -1794,6 +1820,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     for (final titolo in titoli) {
       if (!titolo.equipaggiato) continue;
       parts.addAll(activeTitleQuickTexts(titolo));
+    }
+    // I tratti razziali sono Titoli innati: i loro comandi devono entrare
+    // nella medesima sorgente dei bonus effettivi. Senza questo passaggio un
+    // tratto del Monster Book come @Riflessi+5 rimaneva soltanto descrittivo.
+    for (final tratto in trattiRazziali) {
+      if (!tratto.equipaggiato) continue;
+      parts.addAll(activeTitleQuickTexts(tratto));
     }
     for (final art in arti) {
       if (!art.sbloccata) continue;
@@ -4188,7 +4221,14 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int hiddenEyeTotal(HiddenEyeStat stat) {
     final dustBonus =
         ascensionDustSottotrattiTemporanei[hiddenEyeStatGroup(stat.id)] ?? 0;
-    final cacheBase = stat.valore + dustBonus;
+    // I comandi rapidi dei Titoli, Art, oggetti e Skill possono rivolgersi
+    // direttamente a un sottotratto (@Riflessi+5). Non passiamo dal parser
+    // completo qui: quello legge il contesto dei sottotratti e ricorserebbe
+    // dentro hiddenEyeTotal. I bonus numerici diretti sono invece sicuri e
+    // diventano parte del totale effettivamente tirato e mostrato.
+    final quickBonus = directSubtraitQuickBonus(stat);
+    final structuredBonus = activeStructuredEffectBonus(stat.id);
+    final cacheBase = stat.valore + dustBonus + quickBonus + structuredBonus;
     final cachedBase = hiddenEyeTotalBaseCache[stat.id];
     final cachedValue = hiddenEyeTotalValueCache[stat.id];
     if (cachedBase == cacheBase && cachedValue != null) {
@@ -4201,12 +4241,22 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         (stat.id == 'fortuna'
             ? hiddenEyeDerivedBonus(stat.id)
             : stat.valore + hiddenEyeDerivedBonus(stat.id)) +
-        dustBonus;
+        dustBonus +
+        quickBonus +
+        structuredBonus;
     hiddenEyeTotalBaseCache[stat.id] = cacheBase;
     hiddenEyeTotalValueCache[stat.id] = total;
     return stat.id == 'fortuna'
         ? total + difficultyIncreaseFortunaBonus(total)
         : total;
+  }
+
+  int directSubtraitQuickBonus(HiddenEyeStat stat) {
+    return oculumDirectSubtraitQuickBonus(
+      subtraitId: stat.id,
+      subtraitName: stat.nome,
+      texts: <String>[activeQuickCommandText()],
+    );
   }
 
   int hiddenEyeStatRollQuickBonus(HiddenEyeStat stat) {

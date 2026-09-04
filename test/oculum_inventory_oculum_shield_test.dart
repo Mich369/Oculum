@@ -166,6 +166,27 @@ void main() {
         expect((oculum.layer, oculum.remaining), (0, 2));
       },
     );
+
+    test('lo Scudo Oculum e lo Scudo assorbono prima degli HP', () {
+      final dopoScudoOculum = oculumAbsorbDamageWithShield(
+        layer: 2,
+        remaining: 4,
+        bonusPercent: 0,
+        difficulty: 'facile',
+      );
+      final dopoScudo = oculumAbsorbDamageWithShield(
+        layer: 5,
+        remaining: dopoScudoOculum.remaining,
+        bonusPercent: 0,
+        difficulty: 'facile',
+      );
+
+      expect(dopoScudoOculum.layer, 0);
+      // In Facile ogni punto di Scudo vale 1,5: lo Scudo Oculum assorbe 3
+      // danni, poi lo Scudo normale assorbe soltanto l'ultimo punto.
+      expect(dopoScudo.layer, 4);
+      expect(dopoScudo.remaining, 0);
+    });
   });
 
   group('Risorse iniziali e Sfortuna', () {

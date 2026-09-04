@@ -78,6 +78,26 @@ void main() {
       expect(oculumNormalizeSubtraitReferences('@res +1', subtraits), '@Res+1');
     });
 
+    test('bonus rapidi dei Titoli aumentano davvero Riflessi', () {
+      expect(
+        oculumDirectSubtraitQuickBonus(
+          subtraitId: 'riflessi',
+          subtraitName: 'Riflessi',
+          texts: const ['@Difesa+3 @Riflessi+5 @Adattamento+2', '@riflessi-1'],
+        ),
+        4,
+      );
+    });
+
+    test('i tratti razziali entrano nei comandi attivi dei sottotratti', () {
+      final source = File(
+        'lib/src/main/oculum_home_calculations.dart',
+      ).readAsStringSync();
+
+      expect(source, contains('for (final tratto in trattiRazziali)'));
+      expect(source, contains('parts.addAll(activeTitleQuickTexts(tratto))'));
+    });
+
     test('funziona allo stesso modo in danno, difesa, cura e scudo', () {
       for (final type in <String>['danno', 'difesa', 'cura', 'scudo']) {
         final effect = OculumStructuredEffect(
@@ -567,6 +587,33 @@ void main() {
       final restored = OculumTitle.fromJson(title.toJson());
       expect(restored.openEffects.single.valueExpression, '30');
       expect(restored.openExtra.single.effects.single.target, 'Oculum');
+    });
+
+    test('le Skill dei Titoli conservano gli effetti attivabili', () {
+      final title = OculumTitle(
+        nome: 'Titolo del Fato',
+        tipo: 'Fato',
+        ottenimento: '',
+        buff: '',
+        puntoCieco: '',
+        skill: 'Colpo scritto.',
+        richiede: '',
+        skillEffects: <OculumStructuredEffect>[
+          OculumStructuredEffect(type: 'cura', valueExpression: '8'),
+        ],
+        skillExtra: <TitleExtraSkillEntry>[
+          TitleExtraSkillEntry(
+            nome: 'Replica',
+            descrizione: 'Difendi.',
+            effects: <OculumStructuredEffect>[
+              OculumStructuredEffect(type: 'difesa', valueExpression: '4'),
+            ],
+          ),
+        ],
+      );
+      final restored = OculumTitle.fromJson(title.toJson());
+      expect(restored.skillEffects.single.type, 'cura');
+      expect(restored.skillExtra.single.effects.single.type, 'difesa');
     });
 
     test('riconosce il testo naturale del Titolo del Chaos', () {

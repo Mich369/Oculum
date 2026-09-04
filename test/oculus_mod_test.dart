@@ -12,7 +12,10 @@ void main() {
       expect(data['forceDie'], 4);
       expect(data['activeForce'], 'fato');
       expect(data['skills'], hasLength(3));
+      expect(data['artSkills'], hasLength(3));
       expect(data['missions'], hasLength(12));
+      expect(data['inspirations'], 3);
+      expect(data['growthPoints'], 0);
     });
 
     test('normalizza dati legacy senza perdere campi sconosciuti', () {
@@ -30,6 +33,33 @@ void main() {
       expect(data['progress'], 2);
       expect(data['desire'], 'Dato legacy da conservare');
       expect(data['futureField'], 7);
+    });
+
+    test('aggiunge Forme Art senza perdere le Skill dei salvataggi vecchi', () {
+      final data = oculusNormalizeCharacterData(<String, dynamic>{
+        'skills': <String>['Filo di Brace\n3 danni', 'Muro', 'Eco'],
+        'artSkills': <Map<String, dynamic>>[
+          <String, dynamic>{'name': 'Filo di Brace', 'formI': 'Tre danni'},
+        ],
+      });
+      final artSkills = (data['artSkills'] as List).cast<Map>();
+
+      expect(data['skills'], <String>['Filo di Brace\n3 danni', 'Muro', 'Eco']);
+      expect(artSkills, hasLength(3));
+      expect(artSkills[0]['name'], 'Filo di Brace');
+      expect(artSkills[0]['formI'], 'Tre danni');
+      expect(artSkills[1]['name'], 'Muro');
+      expect(artSkills[2]['name'], 'Eco');
+    });
+
+    test('il dado Potere segue i livelli del Titolo del manuale', () {
+      expect(oculusPowerDieForTitleLevel(0), 4);
+      expect(oculusPowerDieForTitleLevel(2), 6);
+      expect(oculusPowerDieForTitleLevel(4), 8);
+      expect(oculusPowerDieForTitleLevel(7), 10);
+      expect(oculusPowerDieForTitleLevel(10), 12);
+      expect(oculusPowerDieForTitleLevel(12), 20);
+      expect(oculusPowerDieForTitleLevel(99), 20);
     });
 
     test('ogni Art predefinita offre sei Skill e se ne scelgono tre', () {

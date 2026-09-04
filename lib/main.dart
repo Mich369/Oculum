@@ -1615,6 +1615,12 @@ class _OculumHomePageState extends State<OculumHomePage>
   double themeDecorationOpacityScale = 1.0;
   double themeDecorationGlowScale = 1.0;
   double themeDecorationIntensityScale = 1.0;
+  // I temi vengono richiesti da molte card nella stessa build. Le spec sono
+  // immutabili e vengono invalidate dal fingerprint, non da ogni rebuild.
+  String _themeDecorationSpecCacheKey = '';
+  OculumThemeDecorationSpec? _themeDecorationSpecCache;
+  String _themeVisualIdentityCacheKey = '';
+  OculumThemeVisualIdentity? _themeVisualIdentityCache;
   final Set<String> unlockedColorThemeIds = {'classic_reliquary'};
 
   String risultato = 'Scegli una statistica e tira il dado.';

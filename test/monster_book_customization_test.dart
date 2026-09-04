@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
-import 'package:oculum/main.dart' show oculumStarterRaces;
+import 'package:oculum/main.dart' show CharacterArt, oculumStarterRaces;
 
 void main() {
   tearDown(resetMonsterBookEntries);
@@ -50,12 +50,38 @@ void main() {
     expect(strong.descIt, contains('Livello richiesto'));
   });
 
+  test('Papera Ranocchio keeps three separate Art forms', () {
+    final forms = monsterBookSkillForms('duckfrog_recoil_headbutt');
+    expect(forms, hasLength(3));
+    expect(forms[0], allOf(startsWith('I/'), contains('(1/4)')));
+    expect(forms[1], allOf(startsWith('II/'), contains('(2/4)')));
+    expect(forms[2], allOf(startsWith('III/'), contains('(3/4)')));
+  });
+
+  test('legacy monster Art keeps integrity enabled', () {
+    final art = CharacterArt.fromJson({
+      'nome': 'Prima Art — Papera Ranocchio',
+      'tipo': 'Art Mostro',
+      'descrizione': 'Peculiarità del Book.',
+      'skills': const [],
+    });
+    expect(art.hasIntegrity, isTrue);
+  });
+
   test('Hideniano remains available in tutorial races', () {
     final hideniano = oculumStarterRaces.firstWhere(
       (race) => race.id == 'hideniano',
     );
     expect(hideniano.descrizione, contains('+2 Difesa Fuoco'));
     expect(hideniano.puntoCieco, contains('x2 danni'));
+  });
+
+  test('Strega delle Fiale keeps the requested +6 Precisione', () {
+    final witch = monsterById('strega_delle_fiale');
+    expect(witch, isNotNull);
+    expect(witch!.stats['precisione'], 6);
+    expect(witch.stats['materia'], 24);
+    expect(witch.stats['schivateOculum'], 5);
   });
 
   test('Monster Book overrides built-ins and hides removed presets', () {

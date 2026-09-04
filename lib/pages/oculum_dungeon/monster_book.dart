@@ -4116,6 +4116,21 @@ String monsterBookSkillText(String rawId) {
   return '$label — I/canalizzi il tema della creatura per creare un vantaggio concreto contro il bersaglio vicino; II/trasformi quel vantaggio in pressione su più bersagli o in controllo della zona; III/ottieni una svolta forte nello scontro, ma devi dichiarare l’apertura che lasci agli avversari.';
 }
 
+/// Le tre forme sono conservate nei campi I/II/III della stessa Skill Art.
+/// Il Book resta l'unica fonte del testo, così non vengono duplicati effetti.
+List<String> monsterBookSkillForms(String rawId) {
+  final text = monsterBookSkillText(rawId).trim();
+  final matches = RegExp(r'\b(III|II|I)/').allMatches(text).toList();
+  if (matches.isEmpty) return <String>[text, '', ''];
+  return List<String>.generate(3, (index) {
+    if (index >= matches.length) return '';
+    final end = index + 1 < matches.length
+        ? matches[index + 1].start
+        : text.length;
+    return text.substring(matches[index].start, end).trim();
+  });
+}
+
 final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
   _withoutDefaultMonsterImages(
     _withMonsterSkillNarration(

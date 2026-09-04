@@ -2390,6 +2390,53 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  void usaSkillTitolo(OculumTitle titolo, {TitleExtraSkillEntry? skillExtra}) {
+    final displayName = (skillExtra?.nome.trim().isNotEmpty ?? false)
+        ? skillExtra!.nome.trim()
+        : titolo.nome.trim().isEmpty
+        ? t('Skill del Titolo', 'Title Skill')
+        : titolo.nome.trim();
+    final text = skillExtra?.descrizione ?? titolo.skill;
+    final configured = skillExtra?.effects ?? titolo.skillEffects;
+    final effects = configured.isNotEmpty
+        ? List<OculumStructuredEffect>.from(configured)
+        : oculumParseStructuredEffectsFromText(
+            text,
+            subtraits: hiddenEyeStats,
+          ).effects;
+    if (text.trim().isEmpty && effects.isEmpty) {
+      setState(() {
+        risultato = t(
+          'Skill del Titolo vuota: scrivi una descrizione o aggiungi un effetto.',
+          'Empty Title Skill: write a description or add an effect.',
+        );
+      });
+      return;
+    }
+    setState(() {
+      equipaggiaTitoloPerOpen(titolo);
+      risultato = t(
+        'Skill del Titolo attivata: $displayName.',
+        'Title Skill activated: $displayName.',
+      );
+      aggiungiLog(risultato);
+    });
+    if (effects.isNotEmpty) {
+      final messages = applyStructuredEffectsOnActivation(
+        effects,
+        source: '$displayName — Skill del Titolo',
+      );
+      if (messages.isNotEmpty) {
+        setState(() {
+          risultato += '\n${messages.join('\n')}';
+          aggiungiLog('$displayName: ${messages.join(' | ')}');
+        });
+      }
+    }
+    scheduleRealtimeOculumChanged();
+    programmaSalvataggio();
+  }
+
   void aggiungiOpenExtra(OculumTitle titolo) {
     if (titolo.openExtra.length >= 12) {
       setState(() {

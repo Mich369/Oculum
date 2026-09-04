@@ -23,12 +23,38 @@ String oculumRawVitaliumRuleForGrade(int grade) {
     return 'Grado III+: attivo d30 + Medicina, tiro intero. Un 1 naturale può annullare la cura, mai fare danno.';
   }
   if (grade >= 2) {
-    return 'Grado II: attivo d20 + Medicina, metà tiro. Al Grado III diventa d30 + tiro intero.';
+    return 'Grado II: attivo d20 + Medicina, metà tiro. Un 1 naturale può annullare la cura, mai fare danno.';
   }
   if (grade >= 1) {
-    return 'Grado I: attivo d10 + Medicina, metà tiro. Al Grado II diventa d20 + metà tiro.';
+    return 'Grado I: attivo d10 + Medicina, metà tiro. Un 1 naturale può annullare la cura, mai fare danno.';
   }
-  return 'Dal Grado I il Vitalium userà automaticamente d10 + Medicina, metà tiro.';
+  return 'Richiede Grado I per applicare il tiro automatico di Medicina.';
+}
+
+int oculumMerchantWeaponSkillDamage(int grade) => 5 + max(0, grade) * 10;
+
+String oculumMerchantWeaponSkillName(String weaponName) {
+  final lower = weaponName.toLowerCase();
+  if (lower.contains('arco') || lower.contains('balestra')) {
+    return 'Tiro di $weaponName';
+  }
+  if (lower.contains('martello') || lower.contains('mazza')) {
+    return 'Schianto di $weaponName';
+  }
+  if (lower.contains('lancia') || lower.contains('picca')) {
+    return 'Affondo di $weaponName';
+  }
+  if (lower.contains('ascia')) return 'Fendente di $weaponName';
+  return 'Taglio di $weaponName';
+}
+
+String oculumMerchantWeaponSkillText(String weaponName, int grade) {
+  final damage = oculumMerchantWeaponSkillDamage(grade);
+  final nextDamage = damage + 5;
+  return 'I/usi $weaponName: @Danni+$damage (1/4).\n'
+      'II/@Danni+$nextDamage (2/4), scegli se spostare o esporre il bersaglio.\n'
+      'III/@Danni+${nextDamage + 10} (3/4), il Master applica la conseguenza coerente con l arma.\n'
+      'Al quarto uso la Skill va in recupero fino al turno successivo.';
 }
 
 /// Negoziante locale della scheda. Lo stock usa il salvataggio della scheda,
@@ -184,7 +210,35 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if ('${offer['kind'] ?? ''}' == 'raw_vitalium') {
       return 'Consumabile: cura HP pari all Oculum immesso. ${oculumRawVitaliumRuleForGrade(max(0, leggiNumero(gradoController)))}';
     }
+    if ('${offer['kind'] ?? ''}' == 'gear' && readBoolValue(offer['weapon'])) {
+      final grade = readIntValue(offer['grade']);
+      return '${offer['desc'] ?? ''}\nSkill: ${oculumMerchantWeaponSkillName('${offer['name'] ?? ''}')} — +${oculumMerchantWeaponSkillDamage(grade)} danni${grade > 0 ? ' (scala +10 per Grado)' : ''}.';
+    }
     return '${offer['desc'] ?? ''}';
+  }
+
+  CharacterSkill merchantWeaponSkill(InventoryItem item) {
+    final grade = max(item.gradoOggetto, item.gradoRichiesto);
+    final name = oculumMerchantWeaponSkillName(item.nome);
+    final text = oculumMerchantWeaponSkillText(item.nome, grade);
+    return CharacterSkill(
+      nome: name,
+      tipo: 'Skill arma del Negoziante',
+      costo: '1 azione',
+      cooldown: 'Recupero dopo 4 usi',
+      descrizione: text,
+      danni: oculumMerchantWeaponSkillDamage(grade),
+      equipaggiata: true,
+      forme: <CharacterSkillForm>[
+        CharacterSkillForm(
+          nome: 'Forma I',
+          tipo: 'Skill arma del Negoziante',
+          costo: '1 azione',
+          cooldown: 'Recupero dopo 4 usi',
+          descrizione: text,
+        ),
+      ],
+    );
   }
 
   Widget merchantQuickPanel() {
@@ -386,6 +440,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       obserController.text = (leggiNumero(obserController) - cost).toString();
       final item = merchantItemFromOffer(offer, titleType: titleType);
       inventario.add(item);
+      if (item.arma) {
+        final weaponSkill = merchantWeaponSkill(item);
+        if (!skills.any((skill) => skill.nome == weaponSkill.nome)) {
+          skills.add(weaponSkill);
+        }
+      }
       risultato = 'Negoziante: hai speso $cost Obser per ${item.nome}.';
       aggiungiLog(risultato);
     });
@@ -486,7 +546,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       nome: isTitle ? 'Item Titolo — $titleType' : '${offer['name']}',
       peso: 1.2,
       quantita: 1,
-      note: isTitle ? 'Oggetto scelto dal Negoziante.' : '${offer['desc']}',
+      note: isTitle
+          ? 'Oggetto scelto dal Negoziante.'
+          : weapon
+          ? '${offer['desc']}\nSkill: ${oculumMerchantWeaponSkillName('${offer['name'] ?? ''}')}. ${oculumMerchantWeaponSkillText('${offer['name'] ?? ''}', grade)}'
+          : '${offer['desc']}',
       arma: weapon,
       protegge: !weapon,
       bonusDanno: weapon

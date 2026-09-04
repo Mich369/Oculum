@@ -2093,6 +2093,24 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     final style = themeDecorationStyleForPreset(decorationId);
     final light = modalitaLeggera || modalitaVeloce;
     final kingiWorn = kingiEquippedVisualEffect();
+    final cacheKey = <Object>[
+      decorationId,
+      style,
+      light,
+      kingiWorn,
+      primaryColor.toARGB32(),
+      tertiaryColor.toARGB32(),
+      eyePupilGlowColor.toARGB32(),
+      backgroundTopColor.toARGB32(),
+      backgroundMidColor.toARGB32(),
+      backgroundBottomColor.toARGB32(),
+      themeDecorationOpacityScale,
+      themeDecorationIntensityScale,
+    ].join('|');
+    final cached = _themeDecorationSpecCache;
+    if (_themeDecorationSpecCacheKey == cacheKey && cached != null) {
+      return cached;
+    }
     final usesBaseColors = themeDecorationUsesBaseColors(decorationId);
     final fixedPreset = usesBaseColors ? null : colorPresetById(decorationId);
     final sourcePrimary = fixedPreset?.primary ?? primaryColor;
@@ -2137,7 +2155,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       const Color(0xFF020611),
       kingiColorTint ? 0.52 : 0.0,
     )!;
-    return OculumThemeDecorationSpec(
+    final spec = OculumThemeDecorationSpec(
       presetId: kingiWorn ? '${decorationId}_worn' : decorationId,
       style: style,
       primary: metalPrimary,
@@ -2149,13 +2167,31 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       opacity: style == 'none' ? 0 : opacity.clamp(0.080, 0.68).toDouble(),
       usesBaseColors: usesBaseColors,
     );
+    _themeDecorationSpecCacheKey = cacheKey;
+    _themeDecorationSpecCache = spec;
+    return spec;
   }
 
   OculumThemeVisualIdentity currentThemeVisualIdentity() {
     final light = modalitaLeggera || modalitaVeloce;
     final decorationId = visualThemeDecorationPresetId();
     final kingiWorn = kingiEquippedVisualEffect();
-    return OculumThemeVisualIdentity(
+    final cacheKey = <Object>[
+      colorPresetSelezionato,
+      decorationId,
+      colorGuiPresetId,
+      activeThemeGuiPresetId(),
+      light,
+      kingiWorn,
+      eyePupilGlowColor.toARGB32(),
+      themeDecorationOpacityScale,
+      themeDecorationGlowScale,
+    ].join('|');
+    final cached = _themeVisualIdentityCache;
+    if (_themeVisualIdentityCacheKey == cacheKey && cached != null) {
+      return cached;
+    }
+    final identity = OculumThemeVisualIdentity(
       colorPaletteId: colorPresetSelezionato,
       decorationIdentityId: kingiWorn ? '${decorationId}_worn' : decorationId,
       mainSheetGuiStyle: guiStyleForPreset(visualThemeGuiPresetId()),
@@ -2174,6 +2210,9 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
               .clamp(0.0, 2.5)
               .toDouble(),
     );
+    _themeVisualIdentityCacheKey = cacheKey;
+    _themeVisualIdentityCache = identity;
+    return identity;
   }
 
   bool kingiEquippedVisualEffect() {
@@ -2819,6 +2858,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                   spec,
                   desktop: desktopPainting,
                 ),
+                isComplex: true,
+                willChange: false,
                 child: const SizedBox.expand(),
               ),
             ),
@@ -2875,6 +2916,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
           modalitaLeggera || modalitaVeloce,
           desktop: themeUsesDesktopPainting(),
         ),
+        isComplex: true,
+        willChange: false,
         child: const SizedBox.expand(),
       ),
     );
