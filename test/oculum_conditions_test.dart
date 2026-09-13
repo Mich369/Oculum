@@ -238,6 +238,15 @@ void main() {
       expect(vitalMemory.affectedTargets, contains(OculumConditionTarget.hp));
     });
 
+    test('Vampirismo is a twelve-stage positive condition', () {
+      final vampirism = oculumConditionDefinition('vampirismo');
+      expect(vampirism, isNotNull);
+      expect(vampirism!.polarity, OculumConditionPolarity.positive);
+      expect(vampirism.maxStage, 12);
+      expect(vampirism.tickTrigger, OculumConditionTickTrigger.startTurn);
+      expect(vampirism.descriptionIt, contains('3%'));
+    });
+
     test('nuove condizioni hanno effetti percentuali e durate operative', () {
       expect(oculumElectrifiedDamage(100), 3);
       expect(oculumElectrifiedDamage(1), 1);

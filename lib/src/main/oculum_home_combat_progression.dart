@@ -3373,8 +3373,39 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     programmaSalvataggio();
   }
 
-  void applicaDannoSubito({bool critico = false}) {
-    final dannoInserito = leggiValoreDannoCura();
+  bool get hasPinepineExplosion =>
+      nomeController.text.trim().toLowerCase() == 'pinepine' ||
+      skills.any(
+        (skill) => skill.nome.trim().toLowerCase() == 'pelle di pigna',
+      ) ||
+      arti.any(
+        (art) =>
+            art.sbloccata &&
+            art.skills.any(
+              (skill) => skill.nome.trim().toLowerCase() == 'pelle di pigna',
+            ),
+      );
+
+  void applicaEsplosionePinepine() {
+    if (!hasPinepineExplosion || hpCorrenti() <= 0) return;
+    final damage = oculumPinepineExplosionDamage(
+      remainingHp: hpCorrenti(),
+      damage: dannoTotale(),
+    );
+    applicaDannoSubito(dannoEsplicito: damage);
+    setState(() {
+      final message = t(
+        'Esplosione Pinepine: $damage danni (Vita rimanente + Danni). Autodanno risolto con le protezioni e il modificatore selezionati. Risolvi anche $damage danni su ogni creatura entro 2 metri, alleati inclusi.',
+        'Pinepine explosion: $damage damage (remaining Life + Damage). Self-damage resolved using the selected protections and modifier. Also resolve $damage damage against every creature within 2 metres, including allies.',
+      );
+      risultato = '$message\n$risultato';
+      aggiungiLog(message);
+    });
+    programmaSalvataggio();
+  }
+
+  void applicaDannoSubito({bool critico = false, int? dannoEsplicito}) {
+    final dannoInserito = dannoEsplicito ?? leggiValoreDannoCura();
 
     if (dannoInserito == null || dannoInserito <= 0) return;
 
@@ -3487,7 +3518,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       dannoPrimaSchivata,
     );
     final dannoInArrivo = dannoDopoSchivata;
-    final dannoInseritoLog = dettaglioValoreDannoCura(dannoInserito);
+    final dannoInseritoLog = dannoEsplicito == null
+        ? dettaglioValoreDannoCura(dannoInserito)
+        : '$dannoInserito';
     final schivataLogIt = riduzioneSchivata > 0
         ? ' Schivata Oculum${schivataLabel.isEmpty ? "" : " $schivataLabel"}: -$riduzioneSchivata%, danno $dannoPrimaSchivata -> $dannoDopoSchivata.'
         : '';
@@ -4109,49 +4142,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   // EXP / LEVEL UP / GRADI / REBIRTH
   // =====================================================
 
-  int gradoAutomaticoDaLivello(int livello, bool rebirth) {
-    final soglieNormali = {
-      1: 10,
-      2: 30,
-      3: 40,
-      4: 50,
-      5: 60,
-      6: 70,
-      7: 80,
-      8: 90,
-      9: 100,
-      10: 120,
-      11: 150,
-      12: 200,
-    };
-
-    final soglieRebirth = {
-      1: 8,
-      2: 20,
-      3: 30,
-      4: 40,
-      5: 50,
-      6: 60,
-      7: 70,
-      8: 80,
-      9: 90,
-      10: 110,
-      11: 130,
-      12: 190,
-    };
-
-    final soglie = rebirth ? soglieRebirth : soglieNormali;
-
-    int grado = 0;
-
-    for (final entry in soglie.entries) {
-      if (livello >= entry.value) {
-        grado = entry.key;
-      }
-    }
-
-    return grado;
-  }
+  int gradoAutomaticoDaLivello(int livello, bool rebirth) =>
+      oculumGradeForLevel(livello, rebirth: rebirth);
 
   void aggiornaGradoAutomatico() {
     final livello = leggiNumero(livelloController);
@@ -4160,6 +4152,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     if (nuovoGrado > gradoAttuale) {
       final gradiGuadagnati = nuovoGrado - gradoAttuale;
+      if (isMostro()) {
+        monsterStatPoints +=
+            gradiGuadagnati *
+            oculumMonsterStatPointsPerGrade(tipoSchedaController.text);
+      }
       gradoController.text = nuovoGrado.toString();
       scudoController.text =
           (leggiNumero(scudoController) + gradiGuadagnati * 36).toString();
@@ -4951,7 +4948,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
 
     final grado = leggiNumero(gradoController);
-    final bonus = grado * 10;
+    final bonus =
+        grado * oculumMonsterStatPointsPerGrade(tipoSchedaController.text);
 
     if (bonus <= 0) {
       setState(() {

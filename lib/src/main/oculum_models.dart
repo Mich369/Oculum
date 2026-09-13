@@ -1276,8 +1276,13 @@ bool oculumTitleCanBeAlwaysVisible(
         ));
 
 OculumTitle? oculumAlwaysVisibleTitle(Iterable<OculumTitle> titles) {
+  final equippedOpen = titles.where(
+    (title) => title.equipaggiato && oculumTitleHasActivatableOpen(title),
+  ).toList(growable: false);
+  if (equippedOpen.length == 1) return equippedOpen.single;
   final eligible = titles
-      .where((title) => title.sempreVisibile && title.equipaggiato)
+      .where((title) => title.sempreVisibile && title.equipaggiato &&
+          (equippedOpen.isEmpty || oculumTitleHasActivatableOpen(title)))
       .toList(growable: false);
   if (eligible.isEmpty) return null;
   return eligible.where(oculumTitleHasActivatableOpen).firstOrNull ??
@@ -1292,10 +1297,12 @@ void oculumNormalizeAlwaysVisibleTitles(Iterable<OculumTitle> titles) {
   final eligible = all
       .where((title) => title.sempreVisibile && title.equipaggiato)
       .toList(growable: false);
-  final evolvedEquipped = all.any(
+  final evolvedEquipped = all.where(
     (title) => title.equipaggiato && oculumTitleHasActivatableOpen(title),
-  );
-  final selected = evolvedEquipped
+  ).toList(growable: false);
+  final selected = evolvedEquipped.length == 1
+      ? evolvedEquipped.single
+      : evolvedEquipped.isNotEmpty
       ? eligible.where(oculumTitleHasActivatableOpen).firstOrNull
       : eligible.firstOrNull;
   for (final title in all) {
@@ -1800,9 +1807,10 @@ class CharacterSkill {
     this.oculum = 0,
     this.danni = 0,
     this.difesa = 0,
-    this.equipaggiata = false,
+    bool equipaggiata = false,
     List<CharacterSkillForm>? forme,
-  }) : forme = (forme ?? <CharacterSkillForm>[]).toList() {
+  }) : _equipaggiata = equipaggiata,
+       forme = (forme ?? <CharacterSkillForm>[]).toList() {
     ensureForms();
   }
 
@@ -1817,7 +1825,10 @@ class CharacterSkill {
   int oculum;
   int danni;
   int difesa;
-  bool equipaggiata;
+  bool _equipaggiata;
+  bool get passiva => tipo.toLowerCase().contains('passiv');
+  bool get equipaggiata => passiva || _equipaggiata;
+  set equipaggiata(bool value) => _equipaggiata = value;
   List<CharacterSkillForm> forme;
 
   void ensureForms() {
@@ -2854,6 +2865,7 @@ class CharacterArt {
     this.openBuff = '',
     this.openSkill = '',
     this.openAttiva = false,
+    this.monsterOpenSkill = false,
     this.openDescriptionType = '',
     this.openSkillType = '',
     this.openBuffType = '',
@@ -2903,6 +2915,7 @@ class CharacterArt {
   String openBuff;
   String openSkill;
   bool openAttiva;
+  bool monsterOpenSkill;
   String openDescriptionType;
   String openSkillType;
   String openBuffType;
@@ -2937,6 +2950,7 @@ class CharacterArt {
       'openBuff': openBuff,
       'openSkill': openSkill,
       'openAttiva': openAttiva,
+      if (monsterOpenSkill) 'monsterOpenSkill': true,
       if (openDescriptionType.trim().isNotEmpty)
         'openDescriptionType': openDescriptionType,
       if (openSkillType.trim().isNotEmpty) 'openSkillType': openSkillType,
@@ -2989,6 +3003,7 @@ class CharacterArt {
       openBuff: oculumCleanMojibakeText('${json['openBuff'] ?? ''}'),
       openSkill: oculumCleanMojibakeText('${json['openSkill'] ?? ''}'),
       openAttiva: readBoolValue(json['openAttiva']),
+      monsterOpenSkill: readBoolValue(json['monsterOpenSkill']),
       openDescriptionType: '${json['openDescriptionType'] ?? ''}',
       openSkillType: '${json['openSkillType'] ?? ''}',
       openBuffType: '${json['openBuffType'] ?? ''}',

@@ -21,7 +21,7 @@ void main() {
         materia: 40,
         oculum: 20,
       ),
-      10,
+      25,
     );
     expect(
       oculumMonsterMissingStatPoints(
@@ -33,7 +33,7 @@ void main() {
         materia: 5,
         oculum: 0,
       ),
-      7,
+      12,
     );
   });
 

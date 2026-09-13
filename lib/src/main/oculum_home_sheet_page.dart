@@ -6,6 +6,11 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   // PANNELLI SCHEDA
   // =====================================================
 
+  bool vitaAfonaAttiva() => hpCorrenti() > 0 && hasCondition('vita_afona');
+
+  String hpReadoutProtetto() =>
+      vitaAfonaAttiva() ? '☠' : '${hpCorrenti()}/${maxHp()}';
+
   String lifeBarStyleLabel(String id) {
     return switch (id) {
       'base_dinamica' => t('Vita dinamica', 'Dynamic health'),
@@ -335,7 +340,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       ],
     );
     if (choice == 'style' && mounted) await showLifeBarStyleGallery();
-    if (choice == 'conditions' && mounted) {
+    if (choice == 'conditions' && mounted && !vitaAfonaAttiva()) {
       await showConditionImpactDialog(
         target: OculumConditionTarget.hp,
         baseValue: '${hpCorrenti()}/${maxHp()}',
@@ -352,19 +357,21 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         final rawBar = stileBarraVita == 'oculum_alternativa'
             ? stackedVitalsHudPanel()
             : lifeBar();
+        final vitaAfona = vitaAfonaAttiva();
         final bar = Stack(
           children: [
             rawBar,
-            Positioned(
-              top: 4,
-              right: 4,
-              child: conditionImpactIndicator(
-                target: OculumConditionTarget.hp,
-                baseValue: '${hpCorrenti()}/${maxHp()}',
-                temporaryValue: '+${hpTemp()}',
-                finalValue: '${vitaTotaleVisuale()}',
+            if (!vitaAfona)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: conditionImpactIndicator(
+                  target: OculumConditionTarget.hp,
+                  baseValue: '${hpCorrenti()}/${maxHp()}',
+                  temporaryValue: '+${hpTemp()}',
+                  finalValue: '${vitaTotaleVisuale()}',
+                ),
               ),
-            ),
           ],
         );
         if (modalitaVeloce) return bar;
@@ -994,6 +1001,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     final oculumShieldDisplayTarget = max(oculumShield, oculumShieldMax);
     final oculumShieldRatioTarget = max(1, oculumShieldDisplayTarget);
     final lines = <Widget>[];
+    final vitaAfona = vitaAfonaAttiva();
 
     Widget gaugeLine({
       required String label,
@@ -1054,10 +1062,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     lines.add(
       gaugeLine(
         label: 'HP',
-        value: '$currentHp/${max(1, maxHpVal)}',
-        ratio: currentHp / max(1, maxHpVal),
-        color: Colors.redAccent,
-        icon: Icons.favorite,
+        value: vitaAfona ? '☠' : '$currentHp/${max(1, maxHpVal)}',
+        ratio: vitaAfona ? 0 : currentHp / max(1, maxHpVal),
+        color: vitaAfona ? Colors.black : Colors.redAccent,
+        icon: vitaAfona ? Icons.dangerous_rounded : Icons.favorite,
       ),
     );
     if (tempHp > 0) {
@@ -4273,13 +4281,28 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             children: [
               quickStatTile(
                 label: 'HP',
-                value: '${hpCorrenti()}/${maxHp()}',
-                icon: Icons.favorite,
-                color: Colors.redAccent,
-                onTap: () => apriDannoCuraDalCentroPartita(target: 'hp'),
-                onRoll: () => tiraValoreSpeciale('HP', hpCorrenti()),
-                onDecrease: () => modificaHpRapido(-1),
-                onIncrease: () => modificaHpRapido(1),
+                value: hpReadoutProtetto(),
+                icon: vitaAfonaAttiva()
+                    ? Icons.dangerous_rounded
+                    : Icons.favorite,
+                color: vitaAfonaAttiva() ? Colors.black : Colors.redAccent,
+                onTap: vitaAfonaAttiva()
+                    ? () => showConditionImpactDialog(
+                        target: OculumConditionTarget.hp,
+                        baseValue: '☠',
+                        temporaryValue: '☠',
+                        finalValue: '☠',
+                      )
+                    : () => apriDannoCuraDalCentroPartita(target: 'hp'),
+                onRoll: vitaAfonaAttiva()
+                    ? null
+                    : () => tiraValoreSpeciale('HP', hpCorrenti()),
+                onDecrease: vitaAfonaAttiva()
+                    ? null
+                    : () => modificaHpRapido(-1),
+                onIncrease: vitaAfonaAttiva()
+                    ? null
+                    : () => modificaHpRapido(1),
               ),
               quickStatTile(
                 label: t('Scudo', 'Shield'),
@@ -6586,6 +6609,24 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           rollDifficultyField(),
           const SizedBox(height: 12),
           damageModifierDropdown(),
+          if (mostraSempreColpito || hasCondition('vampirismo')) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: showReportedHitDialog,
+                icon: const Icon(Icons.bloodtype_rounded),
+                label: Text(
+                  hasCondition('vampirismo')
+                      ? t(
+                          'Colpito • cura Vampirismo',
+                          'Hit • Vampirism healing',
+                        )
+                      : t('Colpito • invia al Master', 'Hit • send to Master'),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -6612,6 +6653,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               }
 
               final buttons = [
+                if (hasPinepineExplosion)
+                  actionButton(
+                    label: t('Esplosione Pinepine', 'Pinepine explosion'),
+                    backgroundColor: Colors.deepOrange.shade800,
+                    foregroundColor: Colors.white,
+                    onPressed: applicaEsplosionePinepine,
+                  ),
                 functionAnchor(
                   'sheet_damage',
                   actionButton(
@@ -8221,13 +8269,23 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               else ...[
                 quickStatTile(
                   label: 'HP',
-                  value: '${hpCorrenti()}/${maxHp()}',
-                  icon: Icons.favorite,
-                  color: Colors.redAccent,
-                  onTap: () => apriDannoCuraDalCentroPartita(target: 'hp'),
-                  onRoll: () => tiraValoreSpeciale('HP', hpCorrenti()),
-                  onDecrease: () => modificaHpRapido(-1),
-                  onIncrease: () => modificaHpRapido(1),
+                  value: hpReadoutProtetto(),
+                  icon: vitaAfonaAttiva()
+                      ? Icons.dangerous_rounded
+                      : Icons.favorite,
+                  color: vitaAfonaAttiva() ? Colors.black : Colors.redAccent,
+                  onTap: vitaAfonaAttiva()
+                      ? null
+                      : () => apriDannoCuraDalCentroPartita(target: 'hp'),
+                  onRoll: vitaAfonaAttiva()
+                      ? null
+                      : () => tiraValoreSpeciale('HP', hpCorrenti()),
+                  onDecrease: vitaAfonaAttiva()
+                      ? null
+                      : () => modificaHpRapido(-1),
+                  onIncrease: vitaAfonaAttiva()
+                      ? null
+                      : () => modificaHpRapido(1),
                 ),
                 quickStatTile(
                   label: 'Temp',
@@ -8444,7 +8502,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   }
 
   Widget characterMobilePage() {
-    final dense = lightweightUi;
+    final dense = lightweightUi || MediaQuery.sizeOf(context).width < 600;
     final layoutId =
         currentThemeVisualIdentity().mainSheetGuiStyle.sheetLayoutId;
     final builders = <Widget Function()>[];
@@ -8685,13 +8743,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       case 'classic':
       default:
         builders.addAll([
+          stats,
           command,
           combat,
           values,
           hp,
           damage,
           dice,
-          stats,
           editable,
           eye,
           identity,
@@ -8702,16 +8760,64 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     }
     addTrailingTools();
 
-    return ListView.builder(
+    final sections = ListView.builder(
       key: sheetScrollKey('sheet_mobile'),
-      padding: EdgeInsets.all(dense ? 7 : 12),
+      padding: EdgeInsets.fromLTRB(dense ? 8 : 12, 8, dense ? 8 : 12, 24),
       // Compatibilità Flutter 3.41/3.44: rinominato in scrollCacheExtent
       // solo nelle versioni più recenti.
       // ignore: deprecated_member_use
       cacheExtent: 420,
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       itemCount: builders.length,
-      itemBuilder: (context, index) => builders[index](),
+      itemBuilder: (context, index) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: builders[index](),
+      ),
+    );
+    return Column(
+      children: [
+        Material(
+          color: Theme.of(context).colorScheme.surface,
+          child: SizedBox(
+            height: 52,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              children: [
+                TextButton.icon(
+                  onPressed: mostraModificaRapida,
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  label: const Text('Modifica'),
+                ),
+                TextButton.icon(
+                  onPressed: () =>
+                      vaiAllaFunzione(page: 0, anchorId: 'sheet_damage_heal'),
+                  icon: const Icon(Icons.favorite_outline, size: 18),
+                  label: const Text('Danno / Cura'),
+                ),
+                TextButton.icon(
+                  onPressed: () =>
+                      vaiAllaFunzione(page: 4, anchorId: 'skills_root'),
+                  icon: const Icon(Icons.bolt_outlined, size: 18),
+                  label: const Text('Skill'),
+                ),
+                TextButton.icon(
+                  onPressed: () => vaiAllaFunzione(page: 3, anchorId: 'art_0'),
+                  icon: const Icon(Icons.visibility_outlined, size: 18),
+                  label: const Text('Art'),
+                ),
+                TextButton.icon(
+                  onPressed: () =>
+                      vaiAllaFunzione(page: 0, anchorId: 'sheet_exp'),
+                  icon: const Icon(Icons.auto_graph, size: 18),
+                  label: const Text('EXP'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Expanded(child: sections),
+      ],
     );
   }
 
@@ -8720,11 +8826,11 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     const ink = Color(0xFF24180F);
     const brass = Color(0xFFB88A3B);
     const shell = Color(0xFF0B0908);
-    const moss = Color(0xFF304C27);
-    const blood = Color(0xFF7D211B);
-    const matter = Color(0xFF1E6680);
-    const oculum = Color(0xFF68406F);
-    final wide = constraints.maxWidth >= 1180;
+    final moss = statFormulaColor('resilienza');
+    final blood = statFormulaColor('volonta');
+    final matter = statFormulaColor('materia');
+    final oculum = statFormulaColor('oculum');
+    final wide = constraints.maxWidth >= 760;
     final compact = constraints.maxWidth < 1500;
 
     Widget frame(Widget child, {Color border = brass, Color color = shell}) =>
@@ -8734,19 +8840,31 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             border: Border.all(color: border.withValues(alpha: .72)),
             borderRadius: BorderRadius.circular(3),
           ),
-          child: child,
+          child: Stack(
+            children: [
+              Padding(padding: const EdgeInsets.all(5), child: child),
+              const Positioned.fill(
+                child: IgnorePointer(child: OculumManuscriptFrameOverlay()),
+              ),
+            ],
+          ),
         );
 
     Widget stat(String label, int value, int maxValue, Color color) => Expanded(
       child: Container(
-        height: compact ? 92 : 112,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        height: compact ? 72 : 82,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: paper,
           border: Border.all(color: brass.withValues(alpha: .55)),
         ),
         child: DefaultTextStyle(
-          style: const TextStyle(color: ink, fontFamily: 'serif'),
+          style: const TextStyle(
+            color: ink,
+            fontFamily: 'serif',
+            fontSize: 11,
+            height: 1.2,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -8760,22 +8878,28 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               ),
               const SizedBox(height: 3),
               Text(
-                '$value / $maxValue',
+                label == 'VITA' && vitaAfonaAttiva()
+                    ? '???'
+                    : '$value / $maxValue',
                 style: const TextStyle(
-                  fontSize: 25,
+                  fontSize: 24,
+                  height: 1.2,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const Spacer(),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(1),
-                child: LinearProgressIndicator(
-                  minHeight: 6,
-                  value: maxValue <= 0 ? 0 : (value / maxValue).clamp(0.0, 1.0),
-                  color: color,
-                  backgroundColor: const Color(0xFF2B2119),
+              if (!(label == 'VITA' && vitaAfonaAttiva()))
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(1),
+                  child: LinearProgressIndicator(
+                    minHeight: 3,
+                    value: maxValue <= 0
+                        ? 0
+                        : (value / maxValue).clamp(0.0, 1.0),
+                    color: color,
+                    backgroundColor: const Color(0xFF2B2119),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -8794,70 +8918,74 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           const DecoratedBox(
             decoration: BoxDecoration(color: Color(0xFFE0CCA0)),
           ),
-          RepaintBoundary(
-            child: CustomPaint(
-              painter: OculumEyePainter(
-                primaryColor: brass,
-                secondaryColor: ink,
-                tertiaryColor: oculum,
-                pupilGlowColor: oculum,
-              ),
-            ),
+          const OculumManuscriptReferenceCrop(
+            source: Rect.fromLTWH(154, 30, 56, 38),
           ),
-          if (immaginePersonaggio != null)
-            Center(
-              child: ClipPath(
-                clipper: const HexagonClipper(),
-                child: SizedBox.square(
-                  dimension: compact ? 54 : 70,
-                  child: FittedBox(
-                    fit: BoxFit.cover,
-                    child: Image.memory(
-                      immaginePersonaggio!,
-                      cacheWidth: compact ? 108 : 140,
-                      filterQuality: FilterQuality.high,
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
 
     final stats = Container(
-      height: compact ? 94 : 116,
+      height: constraints.maxWidth < 500 ? 150 : (compact ? 74 : 84),
       decoration: BoxDecoration(
         color: paper,
         border: Border.all(color: brass.withValues(alpha: .7)),
       ),
-      child: Row(
-        children: [
-          stat('PV', leggiNumero(currentHpController), maxHp(), moss),
-          const SizedBox(width: 3),
-          stat(
-            'VOL',
-            leggiNumero(volontaController),
-            max(1, leggiNumero(volontaController)),
-            blood,
-          ),
-          const SizedBox(width: 3),
-          SizedBox(
-            width: compact ? 118 : 150,
-            height: compact ? 94 : 116,
-            child: eyeHeader(),
-          ),
-          const SizedBox(width: 3),
-          stat(
-            'MAT',
-            leggiNumero(materiaController),
-            max(1, leggiNumero(materiaController)),
-            matter,
-          ),
-          const SizedBox(width: 3),
-          stat('OCU', leggiNumero(oculumController), oculumMassimo(), oculum),
-        ],
-      ),
+      child: constraints.maxWidth < 500
+          ? Column(
+              children: [
+                Row(
+                  children: [
+                    stat('VITA', hpCorrenti(), maxHp(), moss),
+                    stat(
+                      'VOL',
+                      currentVolonta(),
+                      max(1, leggiNumero(volontaController)),
+                      blood,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    stat(
+                      'MAT',
+                      currentMateria(),
+                      max(1, leggiNumero(materiaController)),
+                      matter,
+                    ),
+                    stat('OCU', oculumTotale(), oculumMassimo(), oculum),
+                  ],
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                stat('VITA', hpCorrenti(), maxHp(), moss),
+                const SizedBox(width: 3),
+                stat(
+                  'VOL',
+                  currentSpendableStatValue('volonta'),
+                  max(1, leggiNumero(volontaController)),
+                  blood,
+                ),
+                const SizedBox(width: 3),
+                SizedBox(
+                  width: compact ? 96 : 122,
+                  height: compact ? 74 : 84,
+                  child: eyeHeader(),
+                ),
+                const SizedBox(width: 3),
+                stat(
+                  'MAT',
+                  currentSpendableStatValue('materia'),
+                  max(1, leggiNumero(materiaController)),
+                  matter,
+                ),
+                const SizedBox(width: 3),
+                stat('OCU', oculumTotale(), oculumMassimo(), oculum),
+              ],
+            ),
     );
 
     Widget manuscriptHeading(String text) => Padding(
@@ -8879,114 +9007,43 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       ),
     );
 
-    Widget partyRow(int index) {
-      final current = index == schedaCorrente;
-      final hp = sheetCurrentHpForDeathAt(index);
-      final hpMax = sheetMaxHpForDeathAt(index);
-      final vol = sheetWillForDeathAt(index);
-      final mat = sheetMateriaForDeathAt(index);
-      final ocu = sheetCurrentOculumForDeathAt(index);
-      return InkWell(
+    Widget partyRow(int index) => Tooltip(
+      message:
+          '${nomeSchedaPersonaggio(index)} · ${tipoSchedaPersonaggio(index)}',
+      child: InkWell(
         onTap: () => cambiaSchedaPersonaggio(index),
         child: Container(
-          padding: const EdgeInsets.all(8),
+          margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
           decoration: BoxDecoration(
-            color: current ? const Color(0xFF1A1712) : const Color(0xFF0E0C09),
-            border: Border(
-              left: BorderSide(
-                color: current ? brass : Colors.transparent,
-                width: 2,
-              ),
-              bottom: const BorderSide(color: Color(0xFF4D381D)),
+            color: index == schedaCorrente ? const Color(0xFF302419) : shell,
+            border: Border.all(
+              color: index == schedaCorrente ? brass : const Color(0xFF483820),
             ),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 38,
-                height: 46,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  border: Border.all(color: brass.withValues(alpha: .55)),
-                ),
-                child: Text(
-                  '${index + 1}',
-                  style: const TextStyle(
-                    color: brass,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      nomeSchedaPersonaggio(index),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFFE0CCA0),
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    Text(
-                      tipoSchedaPersonaggio(index),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFFB69662),
-                        fontSize: 11,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'PV $hp/$hpMax',
-                      style: const TextStyle(
-                        color: moss,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'VOL $vol   MAT $mat   OCU $ocu',
-                      style: const TextStyle(
-                        color: Color(0xFFC9B17E),
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          child: Center(child: masterPartyAvatar(index, size: 42)),
         ),
-      );
-    }
-
+      ),
+    );
     final left = frame(
       Column(
         children: [
-          manuscriptHeading('PERSONAGGI'),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Icon(Icons.people_outline, color: brass, size: 18),
+          ),
           Expanded(
             child: ListView.builder(
               itemCount: schedePersonaggio.length,
-              itemExtent: 82,
+              itemExtent: 60,
               addAutomaticKeepAlives: false,
-              addRepaintBoundaries: true,
-              itemBuilder: (context, index) =>
-                  RepaintBoundary(child: partyRow(index)),
+              itemBuilder: (context, index) => partyRow(index),
             ),
           ),
-          TextButton.icon(
+          IconButton(
+            tooltip: 'Gestisci personaggi',
             onPressed: () =>
                 vaiAllaFunzione(page: 9, logTitle: 'Gestisci personaggi'),
-            icon: const Icon(Icons.groups_2_outlined, size: 16),
-            label: const Text('GESTISCI'),
-            style: TextButton.styleFrom(foregroundColor: brass),
+            icon: const Icon(Icons.group_add_outlined, color: brass, size: 18),
           ),
         ],
       ),
@@ -9086,16 +9143,103 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               side: const BorderSide(color: Color(0xFF604415)),
               shape: const RoundedRectangleBorder(),
             ),
-            onPressed: () => vaiAllaFunzione(
-              page: 4,
-              anchorId: 'free_skill_$i',
-              logTitle: skills[i].nome,
-            ),
+            onPressed: () => usaFormaSkill(skills[i], i, 0),
             child: const Text('USA'),
           ),
         ],
       ),
     );
+
+    Widget basicAction(
+      String title,
+      String detail,
+      IconData icon,
+      VoidCallback use,
+    ) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFF947747), width: .6)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: ink, size: 23),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: ink,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  detail,
+                  style: const TextStyle(
+                    color: Color(0xFF584632),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          OutlinedButton(
+            onPressed: use,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: ink,
+              minimumSize: const Size(48, 32),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              side: const BorderSide(color: Color(0xFF795C32)),
+              shape: const RoundedRectangleBorder(),
+            ),
+            child: const Text('USA', style: TextStyle(fontSize: 10)),
+          ),
+        ],
+      ),
+    );
+    final basicActions = <Widget>[
+      basicAction(
+        'Attacco · VC',
+        '1d20 + ${vc()} · Danno ${dannoTotale()}',
+        Icons.gps_fixed,
+        () => tiraValoreSpeciale('VC', vc()),
+      ),
+      basicAction(
+        'Difesa · CM',
+        '1d20 + ${cm()} · Difesa ${difesa()}',
+        Icons.shield_outlined,
+        () => tiraValoreSpeciale('CM', cm()),
+      ),
+      basicAction(
+        'Iniziativa',
+        'Determina il tuo posto nel turno',
+        Icons.hourglass_bottom,
+        () => tiraValoreSpeciale('Iniziativa', iniziativa()),
+      ),
+      basicAction(
+        'Danno / Cura',
+        'Applica un danno o recupera Vita',
+        Icons.favorite_border,
+        () => vaiAllaFunzione(
+          page: 0,
+          anchorId: 'sheet_damage_heal',
+          logTitle: 'Danno / Cura',
+        ),
+      ),
+      basicAction(
+        'Sottotratti',
+        'Scegli la prova adatta alla scena',
+        Icons.auto_stories_outlined,
+        () => vaiAllaFunzione(
+          page: 0,
+          anchorId: 'sheet_editable_values',
+          logTitle: 'Sottotratti',
+        ),
+      ),
+    ];
 
     final center = frame(
       Container(
@@ -9181,25 +9325,25 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   children: [
                     combatMetric(
                       '♥',
-                      '${hpCorrenti()}/${maxHp()}',
-                      moss,
+                      hpReadoutProtetto(),
+                      vitaAfonaAttiva() ? Colors.black : moss,
                       () => vaiAllaFunzione(page: 0, anchorId: 'sheet_hp'),
                     ),
                     combatMetric(
                       '◇',
-                      '$scudo()',
+                      '${scudo()}',
                       const Color(0xFF397C94),
                       () => vaiAllaFunzione(page: 0, anchorId: 'sheet_shield'),
                     ),
                     combatMetric(
                       'VC',
-                      '$vc()',
+                      '${vc()}',
                       brass,
                       () => tiraValoreSpeciale('VC', vc()),
                     ),
                     combatMetric(
                       'CM',
-                      '$cm()',
+                      '${cm()}',
                       ink,
                       () => tiraValoreSpeciale('CM', cm()),
                     ),
@@ -9214,7 +9358,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     ),
                     combatMetric(
                       '◈',
-                      '$difesa()',
+                      '${difesa()}',
                       moss,
                       () => vaiAllaFunzione(
                         page: 0,
@@ -9223,7 +9367,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     ),
                     combatMetric(
                       '↩',
-                      '$reazioniTotali()',
+                      '${reazioniTotali()}',
                       brass,
                       () => vaiAllaFunzione(
                         page: 0,
@@ -9234,24 +9378,19 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 ),
               ),
               Expanded(
-                child: skills.isEmpty
-                    ? Center(
-                        child: TextButton(
-                          onPressed: () => vaiAllaFunzione(
-                            page: 4,
-                            anchorId: 'skills_root',
-                            logTitle: 'Skill',
-                          ),
-                          child: const Text('AGGIUNGI AZIONI'),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: skills.length,
-                        addAutomaticKeepAlives: false,
-                        addRepaintBoundaries: true,
-                        itemBuilder: (context, index) =>
-                            RepaintBoundary(child: actionRow(index)),
-                      ),
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: const OculumManuscriptPaperPainter(),
+                    child: ListView.builder(
+                      itemCount: basicActions.length + skills.length,
+                      addAutomaticKeepAlives: false,
+                      itemBuilder: (context, index) =>
+                          index < basicActions.length
+                          ? basicActions[index]
+                          : actionRow(index - basicActions.length),
+                    ),
+                  ),
+                ),
               ),
               Container(
                 color: const Color(0xFF110E0B),
@@ -9359,110 +9498,134 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     }
 
     final right = frame(
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          manuscriptHeading(
-            'TURNO ${masterInitiativeRound > 0 ? masterInitiativeRound : ''}',
-          ),
-          SizedBox(
-            height: masterInitiativeTokens.isEmpty
-                ? 45
-                : min(230.0, masterInitiativeTokens.length * 34.0),
-            child: masterInitiativeTokens.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text(
-                      'Nessuna iniziativa attiva.',
-                      style: TextStyle(color: Color(0xFF9B8254)),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: masterInitiativeTokens.length,
-                    itemExtent: 34,
-                    itemBuilder: (context, index) => initiativeRow(index),
+      LayoutBuilder(
+        builder: (context, pane) => SingleChildScrollView(
+          child: SizedBox(
+            height: max(640.0, pane.maxHeight),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                manuscriptHeading(
+                  'TURNO ${masterInitiativeRound > 0 ? masterInitiativeRound : ''}',
+                ),
+                SizedBox(
+                  height: masterInitiativeTokens.isEmpty
+                      ? 45
+                      : min(230.0, masterInitiativeTokens.length * 34.0),
+                  child: masterInitiativeTokens.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(
+                            'Nessuna iniziativa attiva.',
+                            style: TextStyle(color: Color(0xFF9B8254)),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: masterInitiativeTokens.length,
+                          itemExtent: 34,
+                          itemBuilder: (context, index) => initiativeRow(index),
+                        ),
+                ),
+                TextButton.icon(
+                  onPressed: masterInitiativeTokens.isEmpty
+                      ? null
+                      : () => nextMasterInitiativeTurn(),
+                  icon: const Icon(Icons.skip_next, size: 16),
+                  label: const Text('TURNO SUCCESSIVO'),
+                  style: TextButton.styleFrom(foregroundColor: brass),
+                ),
+                manuscriptHeading('BERSAGLIO'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 3,
                   ),
-          ),
-          manuscriptHeading('BERSAGLIO'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-            child: Text(
-              masterInitiativeTokens.isEmpty
-                  ? 'Seleziona un bersaglio dalla turnistica o dalla mappa.'
-                  : 'Usa la turnistica o la Mappa per cambiare bersaglio.',
-              style: const TextStyle(color: Color(0xFFBDA77F), fontSize: 11),
-            ),
-          ),
-          TextButton(
-            onPressed: () => vaiAllaFunzione(
-              page: _OculumHomePageState.mapPageIndex,
-              logTitle: 'Mappa e bersaglio',
-            ),
-            style: TextButton.styleFrom(foregroundColor: brass),
-            child: const Text('CAMBIA BERSAGLIO'),
-          ),
-          manuscriptHeading('DADI RAPIDI'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Wrap(
-              spacing: 3,
-              runSpacing: 2,
-              children: [4, 6, 8, 10, 12, 20]
-                  .map(
-                    (faces) => OutlinedButton(
-                      onPressed: () => tiraDado(faces),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: Size.zero,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 5,
-                        ),
-                        foregroundColor: const Color(0xFFE0CCA0),
-                        side: const BorderSide(color: Color(0xFF725326)),
-                        shape: const RoundedRectangleBorder(),
-                      ),
-                      child: Text('d$faces'),
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-          ),
-          TextButton(
-            onPressed: () => vaiAllaFunzione(
-              page: _OculumHomePageState.dicePageIndex,
-              logTitle: 'Tutti i dadi',
-            ),
-            style: TextButton.styleFrom(foregroundColor: brass),
-            child: const Text('TUTTI I DADI'),
-          ),
-          manuscriptHeading('FEED DEGLI EVENTI'),
-          Expanded(
-            child: logEventi.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(10),
-                    child: Text(
-                      'Gli eventi di gioco appariranno qui.',
-                      style: TextStyle(color: Color(0xFF9B8254), fontSize: 11),
-                    ),
-                  )
-                : ListView.builder(
-                    reverse: true,
-                    itemCount: min(24, logEventi.length),
-                    itemBuilder: (context, index) => Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 3, 10, 3),
-                      child: Text(
-                        logEventi[logEventi.length - 1 - index],
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFFBDA77F),
-                          fontSize: 11,
-                        ),
-                      ),
+                  child: Text(
+                    masterInitiativeTokens.isEmpty
+                        ? 'Seleziona un bersaglio dalla turnistica o dalla mappa.'
+                        : 'Usa la turnistica o la Mappa per cambiare bersaglio.',
+                    style: const TextStyle(
+                      color: Color(0xFFBDA77F),
+                      fontSize: 11,
                     ),
                   ),
+                ),
+                TextButton(
+                  onPressed: () => vaiAllaFunzione(
+                    page: _OculumHomePageState.mapPageIndex,
+                    logTitle: 'Mappa e bersaglio',
+                  ),
+                  style: TextButton.styleFrom(foregroundColor: brass),
+                  child: const Text('CAMBIA BERSAGLIO'),
+                ),
+                manuscriptHeading('DADI RAPIDI'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Wrap(
+                    spacing: 3,
+                    runSpacing: 2,
+                    children: [4, 6, 8, 10, 12, 20]
+                        .map(
+                          (faces) => OutlinedButton(
+                            onPressed: () => tiraDado(faces),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: Size.zero,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 5,
+                              ),
+                              foregroundColor: const Color(0xFFE0CCA0),
+                              side: const BorderSide(color: Color(0xFF725326)),
+                              shape: const RoundedRectangleBorder(),
+                            ),
+                            child: Text('d$faces'),
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => vaiAllaFunzione(
+                    page: _OculumHomePageState.dicePageIndex,
+                    logTitle: 'Tutti i dadi',
+                  ),
+                  style: TextButton.styleFrom(foregroundColor: brass),
+                  child: const Text('TUTTI I DADI'),
+                ),
+                manuscriptHeading('FEED DEGLI EVENTI'),
+                Expanded(
+                  child: logEventi.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.all(10),
+                          child: Text(
+                            'Gli eventi di gioco appariranno qui.',
+                            style: TextStyle(
+                              color: Color(0xFF9B8254),
+                              fontSize: 11,
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          reverse: true,
+                          itemCount: min(24, logEventi.length),
+                          itemBuilder: (context, index) => Padding(
+                            padding: const EdgeInsets.fromLTRB(10, 3, 10, 3),
+                            child: Text(
+                              logEventi[logEventi.length - 1 - index],
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFFBDA77F),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
 
@@ -9479,25 +9642,30 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           children: [
             frame(
               SizedBox(
-                height: 54,
+                height: 40,
                 child: Row(
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        '◉  OCULUM',
-                        style: TextStyle(
-                          color: brass,
-                          fontFamily: 'serif',
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2,
+                    if (!wide)
+                      SizedBox(width: 60, height: 40, child: eyeHeader()),
+                    if (wide)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          '◉  OCULUM',
+                          style: TextStyle(
+                            color: brass,
+                            fontFamily: 'serif',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                          ),
                         ),
                       ),
-                    ),
                     Expanded(
                       child: Text(
-                        activeCampaignName(),
+                        wide ? activeCampaignName() : nomeController.text,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFFE0CCA0),
                           fontFamily: 'serif',
@@ -9512,13 +9680,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(width: 24),
+                    SizedBox(width: wide ? 24 : 4),
                     TextButton(
-                      onPressed: () => vaiAllaFunzione(
-                        page: 2,
-                        anchorId: 'settings_mods',
-                        logTitle: 'MOD',
-                      ),
+                      onPressed: mostraModificaRapida,
                       child: const Text('MODIFICA'),
                     ),
                     const SizedBox(width: 10),
@@ -9533,27 +9697,40 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               child: wide
                   ? Row(
                       children: [
-                        SizedBox(
-                          width: constraints.maxWidth * .22,
-                          child: left,
-                        ),
+                        SizedBox(width: 66, child: left),
                         const SizedBox(width: 5),
                         Expanded(child: center),
                         const SizedBox(width: 5),
-                        SizedBox(
-                          width: constraints.maxWidth * .27,
-                          child: right,
-                        ),
+                        SizedBox(width: compact ? 200 : 248, child: right),
                       ],
                     )
-                  : ListView(
-                      children: [
-                        SizedBox(height: 340, child: left),
-                        const SizedBox(height: 6),
-                        SizedBox(height: 680, child: center),
-                        const SizedBox(height: 6),
-                        SizedBox(height: 440, child: right),
-                      ],
+                  : DefaultTabController(
+                      length: 2,
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            height: 68,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: schedePersonaggio.length,
+                              itemExtent: 62,
+                              itemBuilder: (context, index) => partyRow(index),
+                            ),
+                          ),
+                          const TabBar(
+                            labelColor: brass,
+                            unselectedLabelColor: paper,
+                            indicatorColor: brass,
+                            tabs: [
+                              Tab(text: 'AZIONI E ART'),
+                              Tab(text: 'TURNO E DADI'),
+                            ],
+                          ),
+                          Expanded(
+                            child: TabBarView(children: [center, right]),
+                          ),
+                        ],
+                      ),
                     ),
             ),
           ],
@@ -9566,7 +9743,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 860) return characterMobilePage();
-        if (manuscriptLivingActive) {
+        if (manuscriptLivingActive && !manuscriptEditing) {
           return manuscriptLivingDesktopPage(constraints);
         }
 
@@ -10317,12 +10494,165 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   }
 
   Widget characterPage() {
-    final viewportWidth = MediaQuery.maybeOf(context)?.size.width ?? 1200;
-    if (!modalitaDesktop || phoneCompactUi || viewportWidth < 700) {
-      return characterMobilePage();
+    if (manuscriptLivingActive && !manuscriptEditing) {
+      return LayoutBuilder(
+        builder: (context, constraints) =>
+            manuscriptLivingDesktopPage(constraints),
+      );
     }
-    return characterDesktopPage();
+    final viewportWidth = MediaQuery.maybeOf(context)?.size.width ?? 1200;
+    final content = !modalitaDesktop || phoneCompactUi || viewportWidth < 700
+        ? characterMobilePage()
+        : characterDesktopPage();
+    if (!manuscriptLivingActive) return content;
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () =>
+                updateOculumHomeUi(() => manuscriptEditing = false),
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('Torna a Gioca'),
+          ),
+        ),
+        Expanded(child: content),
+      ],
+    );
   }
 
   // =====================================================
+}
+
+/// A fixed seed keeps the engraving still across rebuilds. No image decoding
+/// or generated bitmap is needed for the parchment surface.
+class OculumManuscriptReferenceCrop extends StatelessWidget {
+  const OculumManuscriptReferenceCrop({super.key, required this.source});
+  final Rect source;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final scale = max(
+        constraints.maxWidth / source.width,
+        constraints.maxHeight / source.height,
+      );
+      return ClipRect(
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          children: [
+            Positioned(
+              left:
+                  (constraints.maxWidth - source.width * scale) / 2 -
+                  source.left * scale,
+              top:
+                  (constraints.maxHeight - source.height * scale) / 2 -
+                  source.top * scale,
+              width: 364 * scale,
+              height: 253 * scale,
+              child: Image.asset(
+                'assets/oculum/manuscript_reference.png',
+                fit: BoxFit.fill,
+                filterQuality: FilterQuality.high,
+                excludeFromSemantics: true,
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+/// Decorative strips from the user's reference; all controls remain native.
+class OculumManuscriptFrameOverlay extends StatelessWidget {
+  const OculumManuscriptFrameOverlay({super.key});
+  @override
+  Widget build(BuildContext context) => const Stack(
+    children: [
+      Positioned(
+        left: 0,
+        right: 0,
+        top: 0,
+        height: 5,
+        child: OculumManuscriptReferenceCrop(
+          source: Rect.fromLTWH(45, 73, 213, 5),
+        ),
+      ),
+      Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: 5,
+        child: OculumManuscriptReferenceCrop(
+          source: Rect.fromLTWH(45, 235, 213, 5),
+        ),
+      ),
+      Positioned(
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 5,
+        child: OculumManuscriptReferenceCrop(
+          source: Rect.fromLTWH(40, 80, 5, 150),
+        ),
+      ),
+      Positioned(
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: 5,
+        child: OculumManuscriptReferenceCrop(
+          source: Rect.fromLTWH(261, 80, 5, 150),
+        ),
+      ),
+    ],
+  );
+}
+
+class OculumManuscriptPaperPainter extends CustomPainter {
+  const OculumManuscriptPaperPainter();
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFFC6AD7C), Color(0xFFE7D6AF), Color(0xFFD9C397)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ).createShader(rect),
+    );
+    final random = Random(91);
+    final grain = Paint()
+      ..color = const Color(0xFF513B21).withValues(alpha: .075);
+    for (var i = 0; i < 750; i++) {
+      final x = random.nextDouble() * size.width;
+      final y = random.nextDouble() * size.height;
+      canvas.drawLine(
+        Offset(x, y),
+        Offset(x + random.nextDouble() * 5, y),
+        grain,
+      );
+    }
+    final edge = Paint()
+      ..color = const Color(0xFF846536).withValues(alpha: .4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    canvas.drawRect(rect.deflate(4), edge);
+    for (final corner in [
+      rect.topLeft,
+      rect.topRight,
+      rect.bottomLeft,
+      rect.bottomRight,
+    ]) {
+      canvas.drawCircle(corner, 15, edge);
+      canvas.drawCircle(corner, 19, edge);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant OculumManuscriptPaperPainter oldDelegate) =>
+      false;
 }

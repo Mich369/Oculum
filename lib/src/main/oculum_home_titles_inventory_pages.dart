@@ -2014,6 +2014,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                               children: [
                                 IconButton(
                                   onPressed: () {
+                                    if (skills[i].passiva) return;
                                     setState(() {
                                       final quickRes =
                                           skillQuickResilienzaBonus(skills[i]);

@@ -84,6 +84,34 @@ void main() {
     expect(witch.stats['schivateOculum'], 5);
   });
 
+  test(
+    'Erranti requested by the Master keep their real stats, Art and drops',
+    () {
+      final mass = monsterById('ammasso_carne_ossa_errante');
+      final ghoul = monsterById('ghoul_errante');
+      expect(mass, isNotNull);
+      expect(mass!.stats['resilienza'], 1);
+      expect(mass.stats['volonta'], 0);
+      expect(mass.stats['materia'], 0);
+      expect(mass.stats['oculum'], 0);
+      expect(mass.spriteAssetPath, isEmpty);
+      expect(
+        monsterBookSkillText('fleshbone_weeping'),
+        contains('Indebolimento'),
+      );
+      expect(
+        monsterBookSkillText('fleshbone_total_hp_burst'),
+        contains('HP massimi'),
+      );
+      expect(ghoul, isNotNull);
+      expect(ghoul!.stats['materia'], 15);
+      expect(ghoul.stats['oculum'], 10);
+      expect(ghoul.skillIds, contains('ghoul_bone_breaker'));
+      expect(monsterBookSkillText('ghoul_vital_life'), contains('Vampirismo'));
+      expect(ghoul.dropIds, contains('frammento_chaos'));
+    },
+  );
+
   test('Monster Book overrides built-ins and hides removed presets', () {
     final original = defaultMonsterBookEntries.first;
     final renamed = original.copyWith(nameIt: 'Nome Rispettato');
@@ -123,6 +151,18 @@ void main() {
     expect(monsterById('serafino')?.stats['oculum'], 30);
     expect(monsterById('arcangelo')?.presetType, 'Mostro Boss');
     expect(monsterById('pinepine')?.stats['resistancePercent'], 50);
+    expect(
+      monsterById('pinepine')?.descIt,
+      contains('Pinepine subisce i danni della propria esplosione'),
+    );
+    expect(
+      monsterBookSkillForms('pinepine_cone_skin')[0],
+      contains('danneggia anche te'),
+    );
+    expect(
+      monsterBookSkillForms('pinepine_cone_skin')[2],
+      contains('subisci anche tu'),
+    );
     expect(monsterById('goblin_killer')?.stats['materia'], 10);
     expect(monsterById('demone_glaciale_intermedio')?.stats['oculum'], 13);
     expect(monsterById('demone_glaciale_maggiore')?.stats['materia'], 50);

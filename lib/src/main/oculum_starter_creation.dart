@@ -44,6 +44,184 @@ int oculumMonsterStatPointsPerLevel(String type) {
   return 9;
 }
 
+int oculumMonsterStatPointsPerGrade(String type) {
+  final normalized = type.toLowerCase();
+  if (normalized.contains('mini') && normalized.contains('boss')) return 15;
+  if (normalized.contains('boss')) return 25;
+  return 10;
+}
+
+CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) => CharacterArt(
+  nome: 'Peculiarità — ${monster.nameIt}',
+  tipo: 'Art Mostro',
+  descrizione:
+      'Le tecniche di ${monster.nameIt}. La forma 0 indica che la Skill non è in uso; scegli I, II o III quando la attivi.',
+  skills: [
+    for (final id in monster.skillIds)
+      ArtSkill(
+        nome: monsterBookSkillText(id).split('—').first.trim(),
+        livello: 0,
+        evo1: 'Richiede livello 0\n${monsterBookSkillForms(id)[0]}',
+        evo2: 'Richiede livello 0\n${monsterBookSkillForms(id)[1]}',
+        evo3: 'Richiede livello 0\n${monsterBookSkillForms(id)[2]}',
+      ),
+  ],
+);
+
+String oculumMonsterTechniqueName(String element, int index) {
+  final names = switch (element.toLowerCase()) {
+    'natura' ||
+    'nature' => ['Radici serrate', 'Frusta di rovi', 'Spine a ventaglio'],
+    'fuoco' || 'fire' => [
+      'Soffio di brace',
+      'Artiglio incandescente',
+      'Esplosione di cenere',
+    ],
+    'gelo' || 'ice' => ['Morso di brina', 'Lancia di ghiaccio', 'Morsa gelida'],
+    'fulmine' || 'lightning' => [
+      'Scatto folgorante',
+      'Scarica a catena',
+      'Ruggito del tuono',
+    ],
+    'sangue' ||
+    'blood' => ['Artiglio emorragico', 'Richiamo del sangue', 'Morso drenante'],
+    'sonoro' ||
+    'sound' => ['Urlo assordante', 'Colpo risonante', 'Onda di pressione'],
+    'vuoto' ||
+    'void' ||
+    'shadow' => ['Squarcio oscuro', 'Presa dell’ombra', 'Morso del vuoto'],
+    _ => ['Testata con rinculo', 'Spazzata dirompente', 'Carica travolgente'],
+  };
+  return names[index % names.length];
+}
+
+bool oculumArtHasUsableSkills(CharacterArt art) => art.skills.any(
+  (skill) =>
+      skill.livello > 0 ||
+      skill.evo1.trim().isNotEmpty ||
+      skill.evo2.trim().isNotEmpty ||
+      skill.evo3.trim().isNotEmpty,
+);
+
+CharacterArt oculumCompleteMonsterOpen(
+  CharacterArt art, {
+  required String name,
+  required int level,
+  required int grade,
+}) {
+  if (!oculumArtHasUsableSkills(art)) return art;
+  art.monsterOpenSkill = true;
+  final defensive = RegExp(
+    'guard|protett|golem|corazz',
+    caseSensitive: false,
+  ).hasMatch(name);
+  final power = max(3, level ~/ 2 + grade * 3);
+  if (art.openName.trim().isEmpty) art.openName = 'Open — $name';
+  if (art.openDescription.trim().isEmpty) {
+    art.openDescription =
+        'Richiami il potere di $name. Il Buff Open dura finché l’Open rimane attiva; la Skill Open si usa separatamente.';
+  }
+  if (art.openBuff.trim().isEmpty) {
+    art.openBuff = defensive ? '@Difesa+$power' : '@Danni+$power';
+  }
+  if (art.openSkill.trim().isEmpty ||
+      art.openSkill == 'Combo naturale fra skill generate.') {
+    art.openSkill = defensive
+        ? 'Guardia di $name: rinforzi la tua difesa di $power per 1 turno. Cooldown: 3 turni.'
+        : 'Affondo di $name: i tuoi colpi ottengono +${power * 2} danni per 1 turno. Cooldown: 3 turni.';
+    art.openSkillEffects = [
+      OculumStructuredEffect(
+        id: 'monster_open_skill_${art.nome}',
+        type: defensive ? 'difesa' : 'danno',
+        target: defensive ? 'difesa' : 'danni',
+        valueExpression: '${defensive ? power : power * 2}',
+        duration: '1',
+        recipient: 'se_stesso',
+      ),
+    ];
+  }
+  art.openSkillCooldown ??= OculumAbilityCooldown(amount: 3, unit: 'turni');
+  return art;
+}
+
+int oculumGradeForLevel(int level, {bool rebirth = false}) {
+  final thresholds = rebirth
+      ? const [8, 20, 30, 40, 50, 60, 70, 80, 90, 110, 130, 190]
+      : const [10, 30, 40, 50, 60, 70, 80, 90, 100, 120, 150, 200];
+  return thresholds.where((threshold) => level >= threshold).length;
+}
+
+/// Comprende la compensazione dei Titoli già prevista per i mostri generati.
+int oculumGeneratedMonsterBudget(String type, int level) =>
+    max(0, level) * (oculumMonsterStatPointsPerLevel(type) + 3) +
+    oculumGradeForLevel(level) * oculumMonsterStatPointsPerGrade(type);
+
+/// Assegna ogni punto una sola volta. VOL e MAT raggiungono soglie utili
+/// (multipli di 3 e 2); Oculum sostiene le tecniche e RES mantiene la tenuta.
+Map<String, int> oculumDistributeMonsterStats(
+  int points, {
+  required bool hasSkills,
+  required bool hasOculumArt,
+  String role = '',
+}) {
+  final total = max(0, points);
+  final usesOculum = hasSkills || hasOculumArt;
+  final stats = <String, int>{
+    'resilienza': 0,
+    'volonta': 0,
+    'materia': 0,
+    'oculum': 0,
+  };
+  final keys = ['resilienza', 'volonta', 'materia', if (usesOculum) 'oculum'];
+  if (total < keys.length) {
+    final smallOrder = [
+      if (usesOculum) 'oculum',
+      'resilienza',
+      'volonta',
+      'materia',
+    ];
+    for (var i = 0; i < total; i++) {
+      stats[smallOrder[i]] = 1;
+    }
+    return stats;
+  }
+  final text = role.toLowerCase();
+  final defensive = RegExp('tank|difens|guard|protett').hasMatch(text);
+  final hunter = RegExp('predator|cacciator|assalt|inseguit').hasMatch(text);
+  if (usesOculum) {
+    stats['volonta'] = max(1, (total * .15).floor() ~/ 3 * 3);
+    stats['materia'] = max(1, (total * .15).floor() ~/ 2 * 2);
+    stats['resilienza'] = max(1, (total * (defensive ? .42 : .38)).floor());
+    stats['oculum'] =
+        total - stats['resilienza']! - stats['volonta']! - stats['materia']!;
+  } else {
+    stats['volonta'] = max(1, (total * (hunter ? .36 : .30)).floor());
+    stats['materia'] = max(1, (total * (defensive ? .25 : .30)).floor());
+    stats['resilienza'] = total - stats['volonta']! - stats['materia']!;
+  }
+  return stats;
+}
+
+Map<String, int> oculumMonsterCreationStats(
+  MonsterBookEntry monster,
+  int level,
+) {
+  final base = monster.stats;
+  final baseTotal =
+      max(0, base['resilienza'] ?? max(1, (base['hp'] ?? 10) ~/ 10)) +
+      max(0, base['volonta'] ?? max(1, (base['atk'] ?? 1) ~/ 4)) +
+      max(0, base['materia'] ?? max(1, (base['def'] ?? 1) ~/ 3)) +
+      max(0, base['oculum'] ?? 0);
+  return oculumDistributeMonsterStats(
+    level == 0
+        ? max(monster.skillIds.isEmpty ? 3 : 4, baseTotal).toInt()
+        : oculumGeneratedMonsterBudget(monster.presetType, level),
+    hasSkills: monster.skillIds.isNotEmpty,
+    hasOculumArt: monster.skillIds.isNotEmpty,
+    role: '${monster.nameIt} ${monster.descIt}',
+  );
+}
+
 /// Il contatore di creazione usa solo le quattro statistiche reali del
 /// mostro: ogni livello vale il suo rango e ogni grado aggiunge 10×grado.
 int oculumMonsterMissingStatPoints({
@@ -57,7 +235,7 @@ int oculumMonsterMissingStatPoints({
 }) {
   final required =
       max(0, level) * oculumMonsterStatPointsPerLevel(type) +
-      max(0, grade) * 10;
+      max(0, grade) * oculumMonsterStatPointsPerGrade(type);
   final assigned =
       max(0, resilienza) + max(0, volonta) + max(0, materia) + max(0, oculum);
   return max(0, required - assigned).toInt();

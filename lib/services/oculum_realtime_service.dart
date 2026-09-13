@@ -20,6 +20,7 @@ class OculumRealtimeService {
     'oculum_changed',
     'dice_roll',
     'party_log',
+    'damage_report',
     'session_note',
     'session_notes_request',
     'session_notes_snapshot',
@@ -221,6 +222,24 @@ class OculumRealtimeService {
     return _send('party_log', <String, dynamic>{
       'playerName': _displayName,
       'message': message,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  Future<void> sendDamageReport({
+    required int baseDamage,
+    required int bonusDamage,
+    required int totalDamage,
+    required String damageType,
+    required String formula,
+  }) {
+    return _send('damage_report', <String, dynamic>{
+      'playerName': _displayName,
+      'baseDamage': baseDamage,
+      'bonusDamage': bonusDamage,
+      'totalDamage': totalDamage,
+      'damageType': damageType,
+      'formula': formula,
       'sentAt': _nowIso(),
     });
   }

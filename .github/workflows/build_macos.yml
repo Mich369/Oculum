@@ -43,11 +43,6 @@ jobs:
           xcodebuild -version
           sw_vers
 
-      - name: Verifica dipendenza compatibile macOS
-        run: |
-          test -f pubspec_overrides.yaml
-          grep -q "connectivity_plus: 6.1.5" pubspec_overrides.yaml
-
       - name: Prepara progetto macOS e dipendenze
         run: |
           flutter config --enable-macos-desktop
@@ -55,6 +50,9 @@ jobs:
             flutter create --platforms=macos .
           fi
           flutter pub get
+
+      - name: Verifica dipendenza compatibile macOS
+        run: flutter pub deps | grep -q "connectivity_plus 6.1.5"
 
       - name: Analisi statica
         run: flutter analyze

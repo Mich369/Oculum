@@ -1605,6 +1605,27 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     tickTrigger: OculumConditionTickTrigger.endTurn,
   ),
   OculumConditionDefinition(
+    id: 'vampirismo',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.hp,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Vampirismo',
+    nameEn: 'Vampirism',
+    icon: Icons.bloodtype_rounded,
+    category: OculumConditionCategory.positive,
+    polarity: OculumConditionPolarity.positive,
+    descriptionIt:
+        'Dodici stadi. A ogni nuovo turno recuperi HP pari allo stadio. Quando dichiari Colpito, recuperi il 3% dei danni dichiarati per stadio (minimo 3 HP): gli Scudi del bersaglio non cambiano il valore dichiarato.',
+    descriptionEn:
+        'Twelve stages. At every new turn recover HP equal to the stage. When you report a Hit, recover 3% of the declared damage per stage (minimum 3 HP): target shields do not change the declared value.',
+    maxStage: 12,
+    stackMode: OculumConditionStackMode.increaseStage,
+    defaultDuration: 0,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.startTurn,
+  ),
+  OculumConditionDefinition(
     id: 'nuoto_aria',
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.movimento,

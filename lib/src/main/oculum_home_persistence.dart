@@ -1164,7 +1164,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'raccoltaOculumSpesa': 0,
       'levelUpDaAssegnare': 0,
       'monsterStatPoints': tipo.toLowerCase().contains('mostro')
-          ? livello * oculumMonsterStatPointsPerLevel(tipo) + grado * 10
+          ? livello * oculumMonsterStatPointsPerLevel(tipo) +
+                grado * oculumMonsterStatPointsPerGrade(tipo)
           : 0,
       'titoli': [],
       'trattiRazziali': [],
@@ -1221,6 +1222,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'temiOldSchool': false,
       'nuovoDesignOculum': 'cattedrale',
       'mostraDannoCuraScheda': true,
+      'mostraSempreColpito': false,
       'mostraStrumentiManualeRapidi': true,
       'mostraBorsaCompatta': true,
       'mostraPartyScheda': true,
@@ -1371,6 +1373,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'obser': obserController.text,
       if (merchantStock.isNotEmpty) 'merchantStock': merchantStock,
       'merchantStockSessionId': merchantStockSessionId,
+      'merchantDustPurchasedSinceLongRest': merchantDustPurchasedSinceLongRest,
       'ascensionDust': ascensionDustController.text,
       'ispirazioni': ispirazioniController.text,
       'superIspirazioni': superIspirazioniController.text,
@@ -1513,6 +1516,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'temiOldSchool': temiOldSchool,
       'nuovoDesignOculum': nuovoDesignOculum,
       'mostraDannoCuraScheda': mostraDannoCuraScheda,
+      'mostraSempreColpito': mostraSempreColpito,
       'mostraStrumentiManualeRapidi': mostraStrumentiManualeRapidi,
       'mostraBorsaCompatta': mostraBorsaCompatta,
       'mostraPartyScheda': mostraPartyScheda,
@@ -1578,6 +1582,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     oculusModData = oculusNormalizeCharacterData(json['oculusModData']);
     if (activeGameMod == 'oculus') paginaCorrente = 0;
     restoreMonsterBookCustomization(json);
+    prepareFallenEyeSheet(json);
     nomeController.text = '${json['nome'] ?? '???'}';
     tipoSchedaController.text = '${json['tipoScheda'] ?? 'Personaggio'}';
     razzaController.text = '${json['razza'] ?? ''}';
@@ -1753,6 +1758,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
               .toList(growable: true)
         : <Map<String, dynamic>>[];
     merchantStockSessionId = '${json['merchantStockSessionId'] ?? ''}'.trim();
+    merchantDustPurchasedSinceLongRest = readBoolValue(
+      json['merchantDustPurchasedSinceLongRest'],
+      fallback: false,
+    );
     if (merchantStockSessionId != merchantRuntimeSessionId) {
       merchantStock.clear();
       merchantStockSessionId = '';
@@ -2058,6 +2067,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
         ),
       );
     assicuraArtiBase();
+    if (tipoSchedaController.text.toLowerCase().contains('mostro')) {
+      for (final art in arti) {
+        oculumCompleteMonsterOpen(
+          art,
+          name: nomeController.text,
+          level: leggiNumero(livelloController),
+          grade: leggiNumero(gradoController),
+        );
+      }
+    }
     ensureArtIntegrityValues();
     syncArtIntegrityNotifiers();
     syncArtSkillLevelNotifiers();
@@ -2280,6 +2299,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       json['mostraDannoCuraScheda'],
       fallback: true,
     );
+    mostraSempreColpito = readBoolValue(json['mostraSempreColpito']);
     mostraStrumentiManualeRapidi = readBoolValue(
       json['mostraStrumentiManualeRapidi'],
       fallback: true,
@@ -3686,33 +3706,18 @@ extension _OculumHomePersistence on _OculumHomePageState {
       snapshotWatch.stop();
 
       final workerWatch = Stopwatch()..start();
-      bool contentChanged;
-      String previousSnapshot;
-      if (mutationKnown) {
-        previousSnapshot = kIsWeb
-            ? _encodeOculumHistorySnapshot(previous)
-            : await compute(
-                _encodeOculumHistorySnapshot,
-                previous,
-                debugLabel: 'oculum-save-history',
-              );
-        contentChanged = true;
-      } else {
-        final comparisonMessage = <String, dynamic>{
-          'previous': previous,
-          'next': next,
-          'realtimeKeys': realtimeKeys,
-        };
-        final comparison = kIsWeb
-            ? _compareOculumSheetSnapshots(comparisonMessage)
-            : await compute(
-                _compareOculumSheetSnapshots,
-                comparisonMessage,
-                debugLabel: 'oculum-save-compare',
-              );
-        contentChanged = comparison['changed'] == true;
-        previousSnapshot = '${comparison['previousSnapshot'] ?? ''}';
+      final beforeComparable = Map<String, dynamic>.from(previous);
+      final afterComparable = Map<String, dynamic>.from(next);
+      for (final key in realtimeKeys) {
+        beforeComparable.remove(key);
+        afterComparable.remove(key);
       }
+      final contentChanged =
+          mutationKnown ||
+          !oculumJsonContentEquals(beforeComparable, afterComparable);
+      final previousSnapshot = contentChanged && !applyingHistorySnapshot
+          ? oculumCopyJsonTree(previous)
+          : null;
       workerWatch.stop();
 
       // Se l'utente ha cambiato ancora qualcosa mentre l'isolate lavorava,
@@ -3724,7 +3729,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       if (contentChanged && !applyingHistorySnapshot) {
         undoHistory.add(<String, dynamic>{
           'index': schedaCorrente,
-          'sheetJson': previousSnapshot,
+          'sheet': previousSnapshot,
         });
         if (undoHistory.length > 80) {
           undoHistory.removeAt(0);
@@ -3755,7 +3760,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       }
 
       schedePersonaggio[schedaCorrente] = next;
-      syncFallenEyeFromSheet(next);
+      if (contentChanged) syncFallenEyeFromSheet(next);
       salvataggioMutazioneNota = false;
       if (kDebugMode || kProfileMode) {
         debugPrint(
@@ -3870,13 +3875,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
     final contentChanged =
         salvataggioMutazioneNota ||
-        jsonEncode(comparableSheet(previous)) !=
-            jsonEncode(comparableSheet(next));
+        !oculumJsonContentEquals(
+          comparableSheet(previous),
+          comparableSheet(next),
+        );
 
     if (contentChanged && !applyingHistorySnapshot) {
       undoHistory.add(<String, dynamic>{
         'index': schedaCorrente,
-        'sheetJson': _encodeOculumHistorySnapshot(previous),
+        'sheet': oculumCopyJsonTree(previous),
       });
       if (undoHistory.length > 80) {
         undoHistory.removeAt(0);
@@ -3912,7 +3919,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   Map<String, dynamic> currentHistorySnapshot() {
     return <String, dynamic>{
       'index': schedaCorrente,
-      'sheet': jsonDecode(jsonEncode(statoCorrenteJson())),
+      'sheet': oculumCopyJsonTree(statoCorrenteJson()),
     };
   }
 
@@ -3932,7 +3939,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     if (rawSheet is! Map) return;
     if (index < 0 || index >= schedePersonaggio.length) return;
 
-    final sheet = Map<String, dynamic>.from(rawSheet);
+    final sheet = oculumCopyJsonTree(rawSheet) as Map<String, dynamic>;
     applyingHistorySnapshot = true;
     try {
       schedePersonaggio[index] = sheet;
@@ -5577,96 +5584,22 @@ extension _OculumHomePersistence on _OculumHomePageState {
     return max(1, base + diffBonus + (enemyProfile ? 1 : 0));
   }
 
-  int suggestedQuickSheetGrade(String tipo) {
-    final written = max(0, leggiNumero(quickSheetGradeController));
-    if (written > 0) return written;
-    final base = quickPartyAverageValue(
-      'grado',
-      fallback: leggiNumero(gradoController),
-    );
-    if (tipo.toLowerCase().contains('boss') &&
-        !tipo.toLowerCase().contains('mini')) {
-      return max(base, base + 1);
-    }
-    return base;
-  }
-
   int quickMonsterStatBudget(String tipo, int livello, int grado) {
     if (!tipo.toLowerCase().contains('mostro')) return 0;
-    // Tre punti per livello compensano i Titoli che una creatura generata non
-    // possiede; i dieci per Grado restano invece un singolo blocco assegnabile.
-    return max(
-      0,
-      livello * (oculumMonsterStatPointsPerLevel(tipo) + 3) + grado * 10,
-    );
+    return oculumGeneratedMonsterBudget(tipo, livello);
   }
 
-  Map<String, int> randomQuickMonsterStats(int points, {String hint = ''}) {
-    final result = <String, int>{
-      'resilienza': 0,
-      'volonta': 0,
-      'materia': 0,
-      'oculum': 0,
-    };
-    if (points <= 0) return result;
-
-    // Distribuzione guidata dal ruolo, non da un lancio cieco: Vita resta
-    // dominante, mentre chi controlla usa più Volontà/Oculum e chi insegue o
-    // assalta più Materia. È ricostruibile dai dati del preset.
-    final text = oculumNormalizeText(hint);
-    final defensive =
-        text.contains('tank') ||
-        text.contains('difens') ||
-        text.contains('guard') ||
-        text.contains('protett');
-    final control =
-        text.contains('controll') ||
-        text.contains('trappol') ||
-        text.contains('mag') ||
-        text.contains('psich');
-    final hunter =
-        text.contains('predator') ||
-        text.contains('cacciator') ||
-        text.contains('assalt') ||
-        text.contains('inseguit');
-    final rng = Random();
-    result['resilienza'] = max(1, (points * (defensive ? .52 : .42)).ceil());
-    for (var i = result['resilienza']!; i < points; i++) {
-      final options = <String>[
-        if (control) ...['volonta', 'volonta', 'oculum', 'oculum'],
-        if (hunter) ...['materia', 'materia', 'volonta'],
-        if (!control && !hunter) ...['volonta', 'materia', 'oculum'],
-      ];
-      final key = options[rng.nextInt(options.length)];
-      result[key] = result[key]! + 1;
-    }
-    // Materia non può sparire dalla distribuzione rapida: anche controllori
-    // e maghi devono poter agire fisicamente. Per budget molto piccoli non
-    // forziamo il punto e preserviamo il totale esatto.
-    if (points >= 4 && result['materia'] == 0) {
-      final donor = ['resilienza', 'volonta', 'oculum']
-          .where((key) => (result[key] ?? 0) > 1)
-          .reduce((a, b) => result[a]! >= result[b]! ? a : b);
-      result[donor] = result[donor]! - 1;
-      result['materia'] = 1;
-    }
-    final largestOther = [
-      'volonta',
-      'materia',
-      'oculum',
-    ].map((key) => result[key]!).reduce(max);
-    if (largestOther > result['resilienza']!) {
-      final key = [
-        'volonta',
-        'materia',
-        'oculum',
-      ].firstWhere((entry) => result[entry] == largestOther);
-      final savedResilience = result['resilienza']!;
-      result['resilienza'] = result[key]!;
-      result[key] = savedResilience;
-    }
-    return result;
-  }
+  Map<String, int> randomQuickMonsterStats(
+    int points, {
+    String hint = '',
+    bool hasSkills = true,
+    bool hasOculumArt = false,
+  }) => oculumDistributeMonsterStats(
+    points,
+    hasSkills: hasSkills,
+    hasOculumArt: hasOculumArt,
+    role: hint,
+  );
 
   List<
     ({
@@ -6696,7 +6629,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         skills: [
           ArtSkill(
             nome: 'Spuntoni',
-            livello: level,
+            livello: 0,
             evo1:
                 'I/ Il suolo fa spuntoni. Somma danni normali. @Danni+${power + 8} Fisico',
             evo2:
@@ -6707,7 +6640,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
           ),
           ArtSkill(
             nome: 'Buchi',
-            livello: level,
+            livello: 0,
             evo1: 'I/ Buchi nel suolo: svantaggio agli avversari.',
             evo2:
                 'II/ Vero Svantaggio se il bersaglio corre, carica o difende male.',
@@ -6716,7 +6649,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
           ),
           ArtSkill(
             nome: 'Muro difensivo',
-            livello: level,
+            livello: 0,
             evo1: 'I/ Muro di suolo trasparente. @Difesa+${power + 12} Fisico',
             evo2:
                 'II/ Il muro spinge e copre una testa. @CM+${max(3, grade + 3)}',
@@ -6741,7 +6674,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       skills: [
         ArtSkill(
           nome: 'Pensiero pesante',
-          livello: level,
+          livello: 0,
           evo1:
               'I/ Connessione mentale: se falliscono prendono 1 Follia e @Danni+10 Psichico, sommando sempre i danni normali.',
           evo2:
@@ -6803,14 +6736,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
       skills: [
         for (var i = 0; i < skillCount; i++)
           ArtSkill(
-            nome: 'Pagina ${i + 1} - ${elementDisplayName(artElements[i])}',
-            livello: min(3, max(1, level ~/ 5 + 1)),
+            nome: oculumMonsterTechniqueName(artElements[i], i),
+            livello: 0,
             evo1:
-                'I/ @Danni+${max(5, level + i * 2)} ${artElements[i]} - costo ${i + 1} Oculum - CD ${2 + i} turni.',
+                'Richiede livello 0\nI · ${oculumMonsterTechniqueName(artElements[i], i)}: concentri il colpo su un bersaglio a portata. @Danni+${max(5, level + i * 2)} ${artElements[i]} (1/4)',
             evo2:
-                'II/ @Danni+${max(8, level * 2 + i * 3)} ${artElements[i]} - combo se usata dopo una skill diversa.',
+                'Richiede livello 0\nII · Segui il primo affondo e costringi il bersaglio a cederti spazio; puoi avanzare nella posizione che lascia libera. @Danni+${max(8, level * 2 + i * 3)} ${artElements[i]} (2/6)',
             evo3:
-                'III/ @Danni+${max(12, level * 3 + grade * 6 + i * 4)} ${artElements[i]} - effetto forte, CD ${4 + i} turni.',
+                'Richiede livello 0\nIII · Scarichi tutta la forza della tecnica: il bersaglio colpito deve scegliere se arretrare o cadere a terra. @Danni+${max(12, level * 3 + grade * 6 + i * 4)} ${artElements[i]} (3/8)',
             danni: max(1, level + grade * 6 + i),
           ),
       ],
@@ -6945,8 +6878,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
           livelloForzato ??
           (levelZeroPreset ? 0 : suggestedQuickSheetLevel(enemyProfile));
       final grado =
-          gradoForzato ??
-          (levelZeroPreset ? 0 : suggestedQuickSheetGrade(selectedType));
+          selectedType.toLowerCase().contains('mostro') ||
+              matchedMonster != null
+          ? oculumGradeForLevel(livello)
+          : (gradoForzato ?? max(0, leggiNumero(quickSheetGradeController)));
       final generatedStats =
           statsMostroForzate ??
           (levelZeroPreset
@@ -7209,7 +7144,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
                 costo: 'Passivo',
                 cooldown: 'Sempre',
                 descrizione:
-                    'Dimezza i danni non di Fuoco. Fuoco e simili fanno esplodere la pelle: danno a tutte le creature entro 2 metri, alleati inclusi. Debole a Ferite Aperte e Fuoco. Con critico sul drop: Scudo Pigna +20.',
+                    'Dimezza i danni non di Fuoco. Se il Fuoco colpisce il Pinepine, la pelle esplode: anche il Pinepine subisce i danni dell’esplosione, pari alla sua Vita rimanente + Danni, insieme a tutte le creature entro 2 metri, alleati inclusi. Debole a Ferite Aperte e Fuoco. Con critico sul drop: Scudo Pigna +20.',
                 equipaggiata: true,
               ),
             );
@@ -7762,9 +7697,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
           ].where((value) => value.trim().isNotEmpty).join(' ');
         }
 
-        final generatedArt =
-            matchedMonster != null && matchedMonster.skillIds.isEmpty
-            ? null
+        final generatedArt = matchedMonster != null
+            ? (matchedMonster.skillIds.isEmpty
+                  ? null
+                  : oculumMonsterBookArt(matchedMonster))
             : generatedEntityArt(
                 mode: artMode,
                 elements: elements,
@@ -7773,6 +7709,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
                 kind: kind,
               );
         if (generatedArt != null) {
+          if (selectedType.toLowerCase().contains('mostro') ||
+              matchedMonster != null) {
+            oculumCompleteMonsterOpen(
+              generatedArt,
+              name: kind,
+              level: livello,
+              grade: grado,
+            );
+          }
           arti
             ..clear()
             ..add(generatedArt);
@@ -7788,6 +7733,63 @@ extension _OculumHomePersistence on _OculumHomePageState {
           );
         }
 
+        if (matchedMonster != null && matchedMonster.skillIds.isEmpty) {
+          skills.clear();
+          arti.clear();
+        }
+        if (selectedType.toLowerCase().contains('mostro') ||
+            matchedMonster != null) {
+          final hasSkills =
+              skills.isNotEmpty ||
+              (matchedMonster?.skillIds.isNotEmpty ?? false) ||
+              arti.any(oculumArtHasUsableSkills);
+          final hasArt = arti.any(
+            (art) => art.tipo == 'Oculum Art' || art.tipo == 'Art Mostro',
+          );
+          final allocated =
+              statsMostroForzate ??
+              (usesFixedLevelZeroBase
+                  ? oculumMonsterCreationStats(matchedMonster!, livello)
+                  : oculumDistributeMonsterStats(
+                      monsterPointBudget,
+                      hasSkills: hasSkills,
+                      hasOculumArt: hasArt,
+                      role: '$kind $description',
+                    ));
+          final total = allocated.values.fold<int>(
+            0,
+            (sum, value) => sum + max(0, value),
+          );
+          final requiresOculum = hasSkills || hasArt;
+          final corrected =
+              (requiresOculum && (allocated['oculum'] ?? 0) <= 0) ||
+                  (!requiresOculum && (allocated['oculum'] ?? 0) > 0)
+              ? oculumDistributeMonsterStats(
+                  max(requiresOculum ? 4 : 3, total),
+                  hasSkills: hasSkills,
+                  hasOculumArt: hasArt,
+                  role: kind,
+                )
+              : allocated;
+          int assigned(String key) =>
+              max(0, ((corrected[key] ?? 0) * variantMultiplier).round());
+          resilienzaController.text = '${assigned('resilienza')}';
+          volontaController.text = '${assigned('volonta')}';
+          materiaController.text = '${assigned('materia')}';
+          oculumController.text = '${assigned('oculum')}';
+          currentResilienzaController.text = resilienzaController.text;
+          currentVolontaController.text = volontaController.text;
+          currentMateriaController.text = materiaController.text;
+          applyTemporaryOculumState(
+            TemporaryOculumState(
+              normalCurrent: assigned('oculum'),
+              temporary: 0,
+              rollsRemaining: 0,
+            ),
+          );
+          monsterStatPoints = 0;
+        }
+
         if (enemyProfile) {
           for (final skill in skills) {
             skill.equipaggiata = false;
@@ -7798,6 +7800,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
         }
 
         currentHpController.text = maxHp().toString();
+        // Una scheda mostro nasce pronta allo scontro: come per una nuova
+        // scheda personaggio, le risorse correnti coincidono con i massimali.
+        // Non muta i valori del Book e non tocca schede già salvate.
+        if (enemyProfile) {
+          for (final art in arti) {
+            if (art.hasIntegrity) {
+              art.integritaCorrente = artIntegrityEffectiveMaximum(art);
+            }
+          }
+          scudoOculumController.text = scudoOculumMax().toString();
+        }
         final countedMembers = max(1, generatedStats['countedMembers'] ?? 1);
         final enemyShieldBonus = enemyProfile ? livello * countedMembers : 0;
         scudoController.text = max(

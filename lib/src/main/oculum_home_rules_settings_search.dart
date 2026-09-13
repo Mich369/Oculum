@@ -2215,28 +2215,8 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
   int _tutorialMonsterLevel(MonsterBookEntry monster) =>
       max(0, monster.stats['level'] ?? 0);
 
-  Map<String, int> _tutorialMonsterStats(MonsterBookEntry monster) {
-    final stats = monster.stats;
-    // Le voci nuove del Bestiario espongono già le quattro statistiche. Per
-    // quelle storiche ricaviamo una base stabile dai loro valori originali,
-    // senza riscrivere né perdere il blocco stats legacy.
-    return <String, int>{
-      'resilienza': max(
-        0,
-        stats['resilienza'] ?? max(1, (stats['hp'] ?? 10) ~/ 10),
-      ),
-      'volonta': max(
-        0,
-        stats['volonta'] ?? max(1, (stats['atk'] ?? stats['danno'] ?? 1) ~/ 4),
-      ),
-      'materia': max(
-        0,
-        stats['materia'] ??
-            max(1, (stats['def'] ?? stats['defense'] ?? 1) ~/ 3),
-      ),
-      'oculum': max(0, stats['oculum'] ?? max(0, (stats['spd'] ?? 0) ~/ 8)),
-    };
-  }
+  Map<String, int> _tutorialMonsterStats(MonsterBookEntry monster) =>
+      oculumMonsterCreationStats(monster, _tutorialMonsterLevel(monster));
 
   OculumTitle _tutorialMonsterRacialTrait(MonsterBookEntry monster) {
     final choices = <String>[
@@ -2273,31 +2253,8 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     );
   }
 
-  CharacterArt _tutorialMonsterArt(MonsterBookEntry monster, int level) {
-    return CharacterArt(
-      nome: 'Prima Art — ${monster.nameIt}',
-      tipo: 'Art Mostro',
-      descrizione:
-          'Peculiarità del Monster Book: tre Skill nelle forme I, II e III. Consuma l’Integrità della Prima Art come ogni altra Oculum Art.',
-      skills: [
-        for (var index = 0; index < monster.skillIds.length; index++)
-          () {
-            final forms = monsterBookSkillForms(monster.skillIds[index]);
-            final requiredI = monsterBookSkillRequiredLevel(monster, index);
-            final name = monsterBookSkillText(
-              monster.skillIds[index],
-            ).split('—').first.trim();
-            return ArtSkill(
-              nome: name.isEmpty ? 'Tecnica del mostro' : name,
-              livello: level >= requiredI ? 1 : 0,
-              evo1: 'Richiede livello $requiredI\n${forms[0]}',
-              evo2: 'Richiede livello ${requiredI + 1}\n${forms[1]}',
-              evo3: 'Richiede livello ${requiredI + 3}\n${forms[2]}',
-            );
-          }(),
-      ],
-    );
-  }
+  CharacterArt _tutorialMonsterArt(MonsterBookEntry monster, int level) =>
+      oculumMonsterBookArt(monster);
 
   int _statPiuBassa(Map<String, int> stats) {
     const ordine = ['resilienza', 'volonta', 'materia'];
@@ -2353,7 +2310,9 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         : _tutorialMonsterLevel(selectedMonster);
     final gradoRichiesto = max(0, leggiNumero(tutorialGradeController));
     final gradoMassimo = gradoAutomaticoDaLivello(livello, false);
-    final grado = min(gradoRichiesto, gradoMassimo);
+    final grado = tutorialGeneraMostro
+        ? gradoMassimo
+        : min(gradoRichiesto, gradoMassimo);
     final extraRes = leggiNumero(tutorialExtraResController);
     final extraVol = leggiNumero(tutorialExtraVolController);
     final extraMat = leggiNumero(tutorialExtraMatController);
@@ -2384,7 +2343,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         max(0, extraVol) +
         max(0, extraMat) +
         max(0, extraOcu);
-    if (selectedMonster == null && puntiLivelloSpesi > puntiLibriDisponibili) {
+    if (!tutorialGeneraMostro && puntiLivelloSpesi > puntiLibriDisponibili) {
       setState(() {
         risultato =
             'Hai distribuito $puntiLivelloSpesi punti, ma il budget disponibile è $puntiLibriDisponibili.';
@@ -2398,7 +2357,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             'Il livello $livello permette al massimo il Grado $gradoMassimo: il grado richiesto è stato corretto.';
       });
     }
-    if (!isMonsterBookPreset && eMartial && extraOcu > 0) {
+    if (!tutorialGeneraMostro && eMartial && extraOcu > 0) {
       setState(() {
         risultato =
             'I punti bonus di una Martial Art non possono essere messi in Oculum.';
@@ -2448,6 +2407,31 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       ].reduce((a, b) => (stats[a] ?? 0) >= (stats[b] ?? 0) ? a : b);
       final malus = tutorialDifficultyId == 'oculum' ? 2 : 1;
       stats[chiave] = max(0, (stats[chiave] ?? 0) - malus);
+    }
+    if (tutorialGeneraMostro) {
+      final personalArts = arti.where(
+        (candidate) =>
+            oculumArtHasUsableSkills(candidate) &&
+            candidate.tipo != 'Art Mostro' &&
+            !oculumStarterArtChoices().any(
+              (starter) => starter.nome == candidate.nome,
+            ),
+      );
+      stats.addAll(
+        selectedMonster != null
+            ? _tutorialMonsterStats(selectedMonster)
+            : oculumDistributeMonsterStats(
+                max(
+                  3,
+                  oculumGeneratedMonsterBudget(tutorialMonsterTier, livello),
+                ),
+                hasSkills: skills.isNotEmpty || personalArts.isNotEmpty,
+                hasOculumArt: personalArts.any(
+                  (candidate) => candidate.tipo == 'Oculum Art',
+                ),
+                role: tutorialMonsterTier,
+              ),
+      );
     }
     final obserIniziale = switch (background.id) {
       'povero_citta' => Random().nextInt(4) + 1,
@@ -2500,7 +2484,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       arti.removeWhere(
         (esistente) =>
             esistente.tipo == 'Art Mostro' &&
-            esistente.descrizione.startsWith('Peculiarità del Monster Book.'),
+            esistente.descrizione.startsWith('Peculiarità del Monster Book'),
       );
       // Gli equipaggiamenti dati dal Book al mostro sono marcati: riapplicare
       // il tutorial li sostituisce senza toccare l'inventario normale del player.
@@ -2570,7 +2554,12 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         razzaController.text = razza.nome;
       } else if (selectedMonster != null) {
         trattiRazziali.add(_tutorialMonsterRacialTrait(selectedMonster));
-        final monsterArt = _tutorialMonsterArt(selectedMonster, livello);
+        final monsterArt = oculumCompleteMonsterOpen(
+          _tutorialMonsterArt(selectedMonster, livello),
+          name: selectedMonster.nameIt,
+          level: livello,
+          grade: grado,
+        );
         // Il Book usa la Prima Art già presente nella scheda: non aggiunge una
         // quarta sezione. Una Prima Art personalizzata resta intatta e la
         // peculiarità viene inserita davanti, così la nuova creatura continua
@@ -2582,10 +2571,12 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
               candidate.descrizione ==
                   'La prima manifestazione del potere personale.',
         );
-        if (firstBaseIndex >= 0) {
-          arti[firstBaseIndex] = monsterArt;
-        } else {
-          arti.insert(0, monsterArt);
+        if (selectedMonster.skillIds.isNotEmpty) {
+          if (firstBaseIndex >= 0) {
+            arti[firstBaseIndex] = monsterArt;
+          } else {
+            arti.insert(0, monsterArt);
+          }
         }
         razzaController.clear();
         backgroundController.text =
@@ -2619,20 +2610,13 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             .toString();
         arti.add(art);
       }
-      monsterStatPoints = tutorialGeneraMostro
-          ? (tutorialMonsterStatsRandomized && selectedMonster == null
-                ? 0
-                : quickMonsterStatBudget(
-                    selectedMonster?.presetType ?? tutorialMonsterTier,
-                    livello,
-                    grado,
-                  ))
-          : 0;
+      monsterStatPoints = 0;
+      refullaHp();
 
       tutorialCompletato = true;
 
       risultato = tutorialGeneraMostro
-          ? 'Tutorial mostro applicato: ${selectedMonster?.nameIt ?? 'creatura libera'}, livello $livello. ${selectedMonster == null && tutorialMonsterStatsRandomized ? 'Punti distribuiti casualmente.' : 'Punti mostro disponibili: $monsterStatPoints.'}'
+          ? 'Tutorial mostro applicato: ${selectedMonster?.nameIt ?? 'creatura libera'}, livello $livello. Grado $grado calcolato dal livello. Statistiche assegnate in base alle Skill e alle Art.'
           : t(
               'Tutorial applicato: ${background.nome}, ${razza.nome}, ${art.nome}. EXP iniziale: $expIniziale.',
               'Tutorial applied: ${background.nome}, ${razza.nome}, ${art.nome}. Starting EXP: $expIniziale.',
@@ -2792,6 +2776,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         initialValue: tutorialStatPrimaria,
+                        isExpanded: true,
                         dropdownColor: const Color(0xFF202431),
                         decoration: const InputDecoration(
                           labelText: 'Statistica primaria — 3 punti',
@@ -2823,6 +2808,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         initialValue: tutorialStatSecondaria,
+                        isExpanded: true,
                         dropdownColor: const Color(0xFF202431),
                         decoration: const InputDecoration(
                           labelText: 'Statistica secondaria — 2 punti',
@@ -2979,6 +2965,9 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                                 final stats = randomQuickMonsterStats(
                                   budget,
                                   hint: tutorialMonsterTier,
+                                  hasSkills:
+                                      skills.isNotEmpty ||
+                                      arti.any(oculumArtHasUsableSkills),
                                 );
                                 setDialogState(() {
                                   tutorialExtraResController.text =
@@ -3003,14 +2992,22 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                       controller: tutorialLevelController,
                     ),
                     const SizedBox(height: 4),
-                    campoTesto(
-                      label: t('Grado iniziale', 'Starting grade'),
-                      controller: tutorialGradeController,
-                    ),
+                    if (!tutorialGeneraMostro)
+                      campoTesto(
+                        label: t('Grado iniziale', 'Starting grade'),
+                        controller: tutorialGradeController,
+                      )
+                    else
+                      ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: tutorialLevelController,
+                        builder: (context, value, _) => smallInfoText(
+                          'Grado automatico: ${oculumGradeForLevel(max(0, int.tryParse(value.text) ?? 0))}. Per le forme del Book si usa il loro livello.',
+                        ),
+                      ),
                     const SizedBox(height: 4),
                     smallInfoText(
                       tutorialGeneraMostro
-                          ? 'Budget attuale: 9 × livello + 10 × grado. L’EXP iniziale viene estratta casualmente tra 0 e 120.'
+                          ? 'Grado dal livello: +10 punti per Mostro, +15 per Mini-Boss, +25 per Boss a ogni Grado. Le Skill e le Oculum Art ricevono una riserva di Oculum; senza entrambe i punti vanno a RES, VOL e MAT. L’EXP iniziale viene estratta casualmente tra 0 e 120.'
                           : 'Umanoide: distribuzione iniziale 3/2/1/1, poi +1 punto libero per livello e +10 per grado. L’EXP iniziale viene estratta casualmente tra 0 e 120.',
                     ),
                     const SizedBox(height: 8),
@@ -3096,6 +3093,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                     ),
                     DropdownButtonFormField<String>(
                       initialValue: tutorialArtName,
+                      isExpanded: true,
                       dropdownColor: const Color(0xFF202431),
                       decoration: const InputDecoration(
                         labelText: 'Scegli un’Art — ogni Art ha 3 Skill',
@@ -5586,6 +5584,21 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                 title: Text(t('Mostra Danno / Cura', 'Show Damage / Healing')),
                 onChanged: (value) {
                   setState(() => mostraDannoCuraScheda = value);
+                  programmaSalvataggio();
+                },
+              ),
+              SwitchListTile(
+                value: mostraSempreColpito,
+                activeThumbColor: tertiaryColor,
+                title: Text(t('Mostra sempre Colpito', 'Always show Hit')),
+                subtitle: Text(
+                  t(
+                    'Invia al Master formula, totale e tipo danno; Vampirismo cura solo se la condizione e attiva.',
+                    'Sends formula, total and damage type to the Master; Vampirism heals only while the condition is active.',
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() => mostraSempreColpito = value);
                   programmaSalvataggio();
                 },
               ),

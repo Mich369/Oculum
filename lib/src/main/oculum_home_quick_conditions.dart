@@ -3,6 +3,124 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 extension _OculumHomeQuickConditions on _OculumHomePageState {
+  Future<void> showReportedHitDialog() async {
+    final baseController = TextEditingController(text: '0');
+    final bonusController = TextEditingController(text: '0');
+    final typeController = TextEditingController(
+      text: elementDisplayName(elementoDannoDominante()),
+    );
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setLocalState) {
+          final base = readIntValue(baseController.text).clamp(0, 999999);
+          final bonus = readIntValue(bonusController.text);
+          final total = max(0, base + bonus);
+          return AlertDialog(
+            backgroundColor: const Color(0xFF17151D),
+            title: Text(t('Colpito', 'Hit reported')),
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 390),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      t(
+                        'Il Master riceve la formula in piccolo e il totale grande. Il danno resta nei log online.',
+                        'The Master receives the small formula and the large total. The damage remains in online logs.',
+                      ),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: baseController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: t('Danno base', 'Base damage'),
+                      ),
+                      onChanged: (_) => setLocalState(() {}),
+                    ),
+                    TextField(
+                      controller: bonusController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        signed: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: t('Bonus / malus', 'Bonus / penalty'),
+                      ),
+                      onChanged: (_) => setLocalState(() {}),
+                    ),
+                    TextField(
+                      controller: typeController,
+                      decoration: InputDecoration(
+                        labelText: t('Tipo danno', 'Damage type'),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      '$base ${bonus >= 0 ? '+' : '-'} ${bonus.abs()} = $total',
+                      style: TextStyle(
+                        color: Colors.redAccent.shade100,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(t('Annulla', 'Cancel')),
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.send_rounded),
+                label: Text(t('Invia al Master', 'Send to Master')),
+                onPressed: total <= 0
+                    ? null
+                    : () {
+                        final type =
+                            cleanUiText(typeController.text).trim().isEmpty
+                            ? t('Normale', 'Normal')
+                            : cleanUiText(typeController.text).trim();
+                        final formula =
+                            '$base ${bonus >= 0 ? '+' : '-'} ${bonus.abs()}';
+                        final message = t(
+                          'Colpito: $formula $type = $total.',
+                          'Hit reported: $formula $type = $total.',
+                        );
+                        setState(() {
+                          risultato = message;
+                          aggiungiLog(message);
+                          sendRealtimeDamageReport(
+                            baseDamage: base,
+                            bonusDamage: bonus,
+                            totalDamage: total,
+                            damageType: type,
+                          );
+                          applyVampirismHealing(
+                            damage: total,
+                            source: '$formula $type',
+                          );
+                        });
+                        Navigator.pop(dialogContext);
+                      },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    baseController.dispose();
+    bonusController.dispose();
+    typeController.dispose();
+  }
+
   Set<OculumConditionTarget> conditionTargetsFor(
     OculumConditionInstance instance,
   ) {
@@ -1460,6 +1578,51 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     readIntValue(getCondition('ricordo_vitale')?.metadata['pendingHealing']),
   );
 
+  int vampirismHealingForReportedDamage(int damage, int stage) {
+    if (damage <= 0 || stage <= 0) return 0;
+    return max(3, (damage * (stage.clamp(1, 12) * 3) / 100).ceil());
+  }
+
+  int applyVampirismHealing({required int damage, required String source}) {
+    final instance = getCondition('vampirismo');
+    if (instance == null || damage <= 0) return 0;
+    final requested = applyConditionHealingAmount(
+      vampirismHealingForReportedDamage(damage, instance.stage),
+    );
+    final before = hpCorrenti();
+    final after = min(maxHp(), before + requested);
+    final restored = after - before;
+    currentHpController.text = '$after';
+    if (restored > 0) sendRealtimeHpChanged();
+    final message = t(
+      'Vampirismo ${oculumRomanStage(instance.stage)}: +$restored HP ($source).',
+      'Vampirism ${oculumRomanStage(instance.stage)}: +$restored HP ($source).',
+    );
+    risultato = message;
+    aggiungiLog(message);
+    notifyConditionsChanged(conditionTargetsFor(instance));
+    programmaSalvataggio(invalidateCaches: false);
+    return restored;
+  }
+
+  void applyVampirismTurnTick(OculumConditionInstance instance) {
+    final requested = applyConditionHealingAmount(instance.stage.clamp(1, 12));
+    final before = hpCorrenti();
+    final after = min(maxHp(), before + requested);
+    final restored = after - before;
+    currentHpController.text = '$after';
+    if (restored > 0) sendRealtimeHpChanged();
+    if (restored > 0) {
+      final message = t(
+        'Vampirismo ${oculumRomanStage(instance.stage)}: +$restored HP a inizio turno.',
+        'Vampirism ${oculumRomanStage(instance.stage)}: +$restored HP at turn start.',
+      );
+      risultato = message;
+      aggiungiLog(message);
+    }
+    notifyConditionsChanged(conditionTargetsFor(instance));
+  }
+
   void applyVitalMemoryTick(OculumConditionInstance instance) {
     final pending = readIntValue(instance.metadata['pendingHealing']);
     if (pending <= 0) return;
@@ -2136,6 +2299,10 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       if (instance.tickTrigger == trigger &&
           instance.conditionType == 'rigenerazione') {
         applyRegenerationTick(instance);
+      }
+      if (instance.tickTrigger == trigger &&
+          instance.conditionType == 'vampirismo') {
+        applyVampirismTurnTick(instance);
       }
       if (instance.tickTrigger == trigger &&
           instance.conditionType == 'oculum_instabile') {

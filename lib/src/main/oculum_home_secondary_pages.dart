@@ -3379,6 +3379,383 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               masterInitiativeTokens.length]
         : <String, dynamic>{};
 
+    Widget tokenRow(int i) => Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: i == masterInitiativeActiveIndex
+            ? tertiaryColor.withValues(alpha: 0.14)
+            : Colors.black.withValues(alpha: 0.24),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: i == masterInitiativeActiveIndex
+              ? tertiaryColor
+              : '${masterInitiativeTokens[i]['side'] ?? 'ally'}' == 'enemy'
+              ? Colors.redAccent.withValues(alpha: 0.6)
+              : '${masterInitiativeTokens[i]['side'] ?? 'ally'}' == 'neutral'
+              ? Colors.orangeAccent.withValues(alpha: 0.6)
+              : Colors.greenAccent.withValues(alpha: 0.6),
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 28,
+                child: Text(
+                  '${i + 1}',
+                  style: TextStyle(
+                    color: tertiaryColor,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              initiativeTokenAvatar(masterInitiativeTokens[i]),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${masterInitiativeTokens[i]['name'] ?? '???'}',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    smallInfoText(
+                      '${masterInitiativeSideLabel('${masterInitiativeTokens[i]['side'] ?? 'ally'}')} - ${masterInitiativeTokens[i]['type'] ?? '???'} - Base ${masterInitiativeTokens[i]['initiativeBase'] ?? 0}',
+                    ),
+                    smallInfoText(
+                      '${t('Tiro', 'Roll')} ${masterInitiativeTokens[i]['initiativeRoll'] ?? 0} - ${masterInitiativeStatusLabel('${masterInitiativeTokens[i]['status'] ?? 'ready'}')}',
+                      color: masterInitiativeStatusColor(
+                        '${masterInitiativeTokens[i]['status'] ?? 'ready'}',
+                      ),
+                    ),
+                    if ('${masterInitiativeTokens[i]['visibleTitleName'] ?? ''}'
+                        .trim()
+                        .isNotEmpty)
+                      smallInfoText(
+                        'TITOLO VISIBILE: ${masterInitiativeTokens[i]['visibleTitleName']}\n${masterInitiativeTokens[i]['visibleTitleLegend'] ?? ''}',
+                        color: Colors.amberAccent,
+                      ),
+                  ],
+                ),
+              ),
+              Text(
+                '${masterInitiativeTokens[i]['initiativeTotal'] ?? 0}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              PopupMenuButton<String>(
+                tooltip: t('Stato turno', 'Turn state'),
+                color: const Color(0xFF10121A),
+                icon: Icon(Icons.more_vert, color: tertiaryColor),
+                onSelected: (value) {
+                  if (value == 'remove') {
+                    removeMasterInitiativeTokenAt(i);
+                    return;
+                  }
+                  if (value == 'up') {
+                    moveMasterInitiativeToken(i, -1);
+                    return;
+                  }
+                  if (value == 'down') {
+                    moveMasterInitiativeToken(i, 1);
+                    return;
+                  }
+                  if (value == 'active') {
+                    setMasterInitiativeActiveIndex(i);
+                    return;
+                  }
+                  setState(() {
+                    masterInitiativeTokens[i]['status'] = value;
+                    if (value == 'active') {
+                      masterInitiativeActiveIndex = i;
+                    }
+                  });
+                  programmaSalvataggio();
+                  sendRealtimeInitiativeSnapshotIfPublished();
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'active',
+                    child: Text(masterInitiativeStatusLabel('active')),
+                  ),
+                  PopupMenuItem(
+                    value: 'ready',
+                    child: Text(masterInitiativeStatusLabel('ready')),
+                  ),
+                  PopupMenuItem(
+                    value: 'acted',
+                    child: Text(masterInitiativeStatusLabel('acted')),
+                  ),
+                  PopupMenuItem(
+                    value: 'skipped',
+                    child: Text(masterInitiativeStatusLabel('skipped')),
+                  ),
+                  PopupMenuItem(
+                    value: 'downed',
+                    child: Text(masterInitiativeStatusLabel('downed')),
+                  ),
+                  PopupMenuItem(
+                    value: 'dead',
+                    child: Text(masterInitiativeStatusLabel('dead')),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'up',
+                    child: Text(t('Sposta su', 'Move up')),
+                  ),
+                  PopupMenuItem(
+                    value: 'down',
+                    child: Text(t('Sposta giu', 'Move down')),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'remove',
+                    child: Text(t('Rimuovi', 'Remove')),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: reportedTurnCard(masterTokenIndex: i, compact: true),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Builder(
+                builder: (context) {
+                  final token = masterInitiativeTokens[i];
+                  final actionUsed = masterInitiativeActionUsed(token);
+                  return OutlinedButton.icon(
+                    onPressed: masterInitiativeCanToggleAction(i)
+                        ? () => toggleMasterInitiativeActionUsed(i)
+                        : null,
+                    icon: Icon(
+                      actionUsed
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
+                      size: 18,
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(44, 38),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      foregroundColor: actionUsed
+                          ? Colors.greenAccent
+                          : primaryColor,
+                      side: BorderSide(
+                        color: actionUsed ? Colors.greenAccent : primaryColor,
+                      ),
+                    ),
+                    label: Text(
+                      compact
+                          ? t('Azione', 'Action')
+                          : actionUsed
+                          ? t('Azione fatta', 'Action used')
+                          : t('Azione pronta', 'Action ready'),
+                    ),
+                  );
+                },
+              ),
+              Builder(
+                builder: (context) {
+                  final token = masterInitiativeTokens[i];
+                  final available = masterInitiativeReactionAvailable(token);
+                  final capacity = masterInitiativeReactionCapacity(token);
+                  final exhausted = capacity > 0 && available <= 0;
+                  return OutlinedButton.icon(
+                    onPressed: masterInitiativeCanUseReaction(i)
+                        ? () => toggleMasterInitiativeReaction(i)
+                        : null,
+                    icon: Icon(
+                      exhausted ? Icons.replay : Icons.reply,
+                      size: 18,
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(44, 38),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      foregroundColor: exhausted
+                          ? Colors.orangeAccent
+                          : tertiaryColor,
+                      side: BorderSide(
+                        color: exhausted ? Colors.orangeAccent : tertiaryColor,
+                      ),
+                    ),
+                    label: Text(
+                      exhausted
+                          ? compact
+                                ? t('Reaz. OK', 'React OK')
+                                : t('Ripristina reazioni', 'Restore reactions')
+                          : compact
+                          ? 'R $available/$capacity'
+                          : '${t('Usa reazione', 'Use reaction')} $available/$capacity',
+                    ),
+                  );
+                },
+              ),
+              masterInitiativeReactionCounterControl(i, compact: compact),
+              masterInitiativeTokenSizeControl(i, compact: compact),
+              OutlinedButton.icon(
+                onPressed: () => tiraMasterInitiativeTokenQuickRoll(i, 'vc'),
+                icon: const Icon(Icons.flash_on, size: 18),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(44, 38),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  foregroundColor: primaryColor,
+                  side: BorderSide(color: primaryColor),
+                ),
+                label: const Text('VC'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => tiraMasterInitiativeTokenQuickRoll(i, 'cm'),
+                icon: const Icon(Icons.shield, size: 18),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(44, 38),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  foregroundColor: tertiaryColor,
+                  side: BorderSide(color: tertiaryColor),
+                ),
+                label: const Text('CM'),
+              ),
+              if (masterInitiativeTokenIsDowned(masterInitiativeTokens[i]))
+                ElevatedButton.icon(
+                  onPressed: () => tryRaiseMasterInitiativeCompanion(i),
+                  icon: const Icon(Icons.volunteer_activism),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(44, 38),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    backgroundColor: const Color(0xFF7DD3FC),
+                    foregroundColor: Colors.black,
+                  ),
+                  label: Text(
+                    compact
+                        ? t('Rialza', 'Raise')
+                        : t('Rialza compagno', 'Raise companion'),
+                  ),
+                )
+              else ...[
+                ElevatedButton.icon(
+                  onPressed: () => tiraMasterInitiativeHelp(i),
+                  icon: const Icon(Icons.handshake),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(44, 38),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    backgroundColor: const Color(0xFF7EE7C8),
+                    foregroundColor: Colors.black,
+                  ),
+                  label: Text(
+                    compact
+                        ? t('Aiuta', 'Help')
+                        : t('Aiuta compagno', 'Help ally'),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => tiraMasterInitiativeHelp(i, reaction: true),
+                  icon: const Icon(Icons.reply, size: 18),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(44, 38),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    foregroundColor: const Color(0xFF7EE7C8),
+                    side: const BorderSide(color: Color(0xFF7EE7C8)),
+                  ),
+                  label: Text(compact ? 'AR' : t('Aiuta R', 'Help R')),
+                ),
+              ],
+              ElevatedButton.icon(
+                onPressed: masterInitiativeCanDuplicateAction(i)
+                    ? () => duplicateMasterInitiativeActionNow(i)
+                    : null,
+                icon: const Icon(Icons.control_point_duplicate),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(44, 38),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  backgroundColor: secondaryColor,
+                  foregroundColor: primaryColor,
+                ),
+                label: Text(
+                  compact
+                      ? t('Duplica', 'Duplicate')
+                      : t('Duplica azione', 'Duplicate action'),
+                ),
+              ),
+              if (masterInitiativeTokenIsTemporary(masterInitiativeTokens[i]))
+                Chip(
+                  avatar: const Icon(Icons.flash_on, size: 16),
+                  label: Text(
+                    '${t('Azione extra', 'Extra action')} R${masterInitiativeTokens[i]['expiresRound'] ?? masterInitiativeRound}',
+                  ),
+                  backgroundColor: Colors.orangeAccent.withValues(alpha: 0.18),
+                  side: const BorderSide(color: Colors.orangeAccent),
+                  labelStyle: const TextStyle(
+                    color: Colors.orangeAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              if (masterInitiativeReactionUsedThisRound(
+                masterInitiativeTokens[i],
+              ))
+                Builder(
+                  builder: (context) {
+                    final token = masterInitiativeTokens[i];
+                    final used = masterInitiativeReactionUsedTotal(token);
+                    final capacity = masterInitiativeReactionCapacity(token);
+                    return Chip(
+                      avatar: const Icon(Icons.reply, size: 16),
+                      label: Text(
+                        '${t('Reazioni usate', 'Reactions used')} $used/$capacity',
+                      ),
+                      backgroundColor: tertiaryColor.withValues(alpha: 0.14),
+                      side: BorderSide(color: tertiaryColor),
+                      labelStyle: TextStyle(
+                        color: tertiaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
+          if (compact &&
+              '${masterInitiativeTokens[i]['notes'] ?? ''}'
+                  .trim()
+                  .isNotEmpty) ...[
+            const SizedBox(height: 5),
+            smallInfoText(
+              '${masterInitiativeTokens[i]['notes'] ?? ''}',
+              color: Colors.grey.shade400,
+            ),
+          ],
+          if (!compact) ...[
+            const SizedBox(height: 8),
+            campoModello(
+              fieldKey: ValueKey(
+                'master_init_note_${masterInitiativeTokens[i]['id'] ?? i}',
+              ),
+              label: t('Note', 'Notes'),
+              initialValue: '${masterInitiativeTokens[i]['notes'] ?? ''}',
+              onChanged: (value) {
+                masterInitiativeTokens[i]['notes'] = value;
+              },
+              maxLines: 2,
+            ),
+          ],
+        ],
+      ),
+    );
+
     return gothicPanel(
       borderColor: tertiaryColor,
       padding: EdgeInsets.all(compact ? 10 : 14),
@@ -3717,417 +4094,20 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 'No participant. Add one manually or roll initiative from Master party sheets.',
               ),
             ),
-          for (int i = 0; i < masterInitiativeTokens.length; i++)
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: i == masterInitiativeActiveIndex
-                    ? tertiaryColor.withValues(alpha: 0.14)
-                    : Colors.black.withValues(alpha: 0.24),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: i == masterInitiativeActiveIndex
-                      ? tertiaryColor
-                      : '${masterInitiativeTokens[i]['side'] ?? 'ally'}' ==
-                            'enemy'
-                      ? Colors.redAccent.withValues(alpha: 0.6)
-                      : '${masterInitiativeTokens[i]['side'] ?? 'ally'}' ==
-                            'neutral'
-                      ? Colors.orangeAccent.withValues(alpha: 0.6)
-                      : Colors.greenAccent.withValues(alpha: 0.6),
-                ),
+          if (masterInitiativeTokens.length <= 6)
+            for (var i = 0; i < masterInitiativeTokens.length; i++) tokenRow(i)
+          else
+            SizedBox(
+              height: min(
+                720.0,
+                max(260.0, MediaQuery.sizeOf(context).height * .65),
               ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 28,
-                        child: Text(
-                          '${i + 1}',
-                          style: TextStyle(
-                            color: tertiaryColor,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                      initiativeTokenAvatar(masterInitiativeTokens[i]),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${masterInitiativeTokens[i]['name'] ?? '???'}',
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            smallInfoText(
-                              '${masterInitiativeSideLabel('${masterInitiativeTokens[i]['side'] ?? 'ally'}')} - ${masterInitiativeTokens[i]['type'] ?? '???'} - Base ${masterInitiativeTokens[i]['initiativeBase'] ?? 0}',
-                            ),
-                            smallInfoText(
-                              '${t('Tiro', 'Roll')} ${masterInitiativeTokens[i]['initiativeRoll'] ?? 0} - ${masterInitiativeStatusLabel('${masterInitiativeTokens[i]['status'] ?? 'ready'}')}',
-                              color: masterInitiativeStatusColor(
-                                '${masterInitiativeTokens[i]['status'] ?? 'ready'}',
-                              ),
-                            ),
-                            if ('${masterInitiativeTokens[i]['visibleTitleName'] ?? ''}'
-                                .trim()
-                                .isNotEmpty)
-                              smallInfoText(
-                                'TITOLO VISIBILE: ${masterInitiativeTokens[i]['visibleTitleName']}\n${masterInitiativeTokens[i]['visibleTitleLegend'] ?? ''}',
-                                color: Colors.amberAccent,
-                              ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        '${masterInitiativeTokens[i]['initiativeTotal'] ?? 0}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      PopupMenuButton<String>(
-                        tooltip: t('Stato turno', 'Turn state'),
-                        color: const Color(0xFF10121A),
-                        icon: Icon(Icons.more_vert, color: tertiaryColor),
-                        onSelected: (value) {
-                          if (value == 'remove') {
-                            removeMasterInitiativeTokenAt(i);
-                            return;
-                          }
-                          if (value == 'up') {
-                            moveMasterInitiativeToken(i, -1);
-                            return;
-                          }
-                          if (value == 'down') {
-                            moveMasterInitiativeToken(i, 1);
-                            return;
-                          }
-                          if (value == 'active') {
-                            setMasterInitiativeActiveIndex(i);
-                            return;
-                          }
-                          setState(() {
-                            masterInitiativeTokens[i]['status'] = value;
-                            if (value == 'active') {
-                              masterInitiativeActiveIndex = i;
-                            }
-                          });
-                          programmaSalvataggio();
-                          sendRealtimeInitiativeSnapshotIfPublished();
-                        },
-                        itemBuilder: (context) => [
-                          PopupMenuItem(
-                            value: 'active',
-                            child: Text(masterInitiativeStatusLabel('active')),
-                          ),
-                          PopupMenuItem(
-                            value: 'ready',
-                            child: Text(masterInitiativeStatusLabel('ready')),
-                          ),
-                          PopupMenuItem(
-                            value: 'acted',
-                            child: Text(masterInitiativeStatusLabel('acted')),
-                          ),
-                          PopupMenuItem(
-                            value: 'skipped',
-                            child: Text(masterInitiativeStatusLabel('skipped')),
-                          ),
-                          PopupMenuItem(
-                            value: 'downed',
-                            child: Text(masterInitiativeStatusLabel('downed')),
-                          ),
-                          PopupMenuItem(
-                            value: 'dead',
-                            child: Text(masterInitiativeStatusLabel('dead')),
-                          ),
-                          const PopupMenuDivider(),
-                          PopupMenuItem(
-                            value: 'up',
-                            child: Text(t('Sposta su', 'Move up')),
-                          ),
-                          PopupMenuItem(
-                            value: 'down',
-                            child: Text(t('Sposta giu', 'Move down')),
-                          ),
-                          const PopupMenuDivider(),
-                          PopupMenuItem(
-                            value: 'remove',
-                            child: Text(t('Rimuovi', 'Remove')),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: reportedTurnCard(masterTokenIndex: i, compact: true),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Builder(
-                        builder: (context) {
-                          final token = masterInitiativeTokens[i];
-                          final actionUsed = masterInitiativeActionUsed(token);
-                          return OutlinedButton.icon(
-                            onPressed: masterInitiativeCanToggleAction(i)
-                                ? () => toggleMasterInitiativeActionUsed(i)
-                                : null,
-                            icon: Icon(
-                              actionUsed
-                                  ? Icons.check_circle
-                                  : Icons.radio_button_unchecked,
-                              size: 18,
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(44, 38),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                              ),
-                              foregroundColor: actionUsed
-                                  ? Colors.greenAccent
-                                  : primaryColor,
-                              side: BorderSide(
-                                color: actionUsed
-                                    ? Colors.greenAccent
-                                    : primaryColor,
-                              ),
-                            ),
-                            label: Text(
-                              compact
-                                  ? t('Azione', 'Action')
-                                  : actionUsed
-                                  ? t('Azione fatta', 'Action used')
-                                  : t('Azione pronta', 'Action ready'),
-                            ),
-                          );
-                        },
-                      ),
-                      Builder(
-                        builder: (context) {
-                          final token = masterInitiativeTokens[i];
-                          final available = masterInitiativeReactionAvailable(
-                            token,
-                          );
-                          final capacity = masterInitiativeReactionCapacity(
-                            token,
-                          );
-                          final exhausted = capacity > 0 && available <= 0;
-                          return OutlinedButton.icon(
-                            onPressed: masterInitiativeCanUseReaction(i)
-                                ? () => toggleMasterInitiativeReaction(i)
-                                : null,
-                            icon: Icon(
-                              exhausted ? Icons.replay : Icons.reply,
-                              size: 18,
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(44, 38),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                              ),
-                              foregroundColor: exhausted
-                                  ? Colors.orangeAccent
-                                  : tertiaryColor,
-                              side: BorderSide(
-                                color: exhausted
-                                    ? Colors.orangeAccent
-                                    : tertiaryColor,
-                              ),
-                            ),
-                            label: Text(
-                              exhausted
-                                  ? compact
-                                        ? t('Reaz. OK', 'React OK')
-                                        : t(
-                                            'Ripristina reazioni',
-                                            'Restore reactions',
-                                          )
-                                  : compact
-                                  ? 'R $available/$capacity'
-                                  : '${t('Usa reazione', 'Use reaction')} $available/$capacity',
-                            ),
-                          );
-                        },
-                      ),
-                      masterInitiativeReactionCounterControl(
-                        i,
-                        compact: compact,
-                      ),
-                      masterInitiativeTokenSizeControl(i, compact: compact),
-                      OutlinedButton.icon(
-                        onPressed: () =>
-                            tiraMasterInitiativeTokenQuickRoll(i, 'vc'),
-                        icon: const Icon(Icons.flash_on, size: 18),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(44, 38),
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          foregroundColor: primaryColor,
-                          side: BorderSide(color: primaryColor),
-                        ),
-                        label: const Text('VC'),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () =>
-                            tiraMasterInitiativeTokenQuickRoll(i, 'cm'),
-                        icon: const Icon(Icons.shield, size: 18),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(44, 38),
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          foregroundColor: tertiaryColor,
-                          side: BorderSide(color: tertiaryColor),
-                        ),
-                        label: const Text('CM'),
-                      ),
-                      if (masterInitiativeTokenIsDowned(
-                        masterInitiativeTokens[i],
-                      ))
-                        ElevatedButton.icon(
-                          onPressed: () => tryRaiseMasterInitiativeCompanion(i),
-                          icon: const Icon(Icons.volunteer_activism),
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(44, 38),
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            backgroundColor: const Color(0xFF7DD3FC),
-                            foregroundColor: Colors.black,
-                          ),
-                          label: Text(
-                            compact
-                                ? t('Rialza', 'Raise')
-                                : t('Rialza compagno', 'Raise companion'),
-                          ),
-                        )
-                      else ...[
-                        ElevatedButton.icon(
-                          onPressed: () => tiraMasterInitiativeHelp(i),
-                          icon: const Icon(Icons.handshake),
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(44, 38),
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            backgroundColor: const Color(0xFF7EE7C8),
-                            foregroundColor: Colors.black,
-                          ),
-                          label: Text(
-                            compact
-                                ? t('Aiuta', 'Help')
-                                : t('Aiuta compagno', 'Help ally'),
-                          ),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: () =>
-                              tiraMasterInitiativeHelp(i, reaction: true),
-                          icon: const Icon(Icons.reply, size: 18),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size(44, 38),
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            foregroundColor: const Color(0xFF7EE7C8),
-                            side: const BorderSide(color: Color(0xFF7EE7C8)),
-                          ),
-                          label: Text(compact ? 'AR' : t('Aiuta R', 'Help R')),
-                        ),
-                      ],
-                      ElevatedButton.icon(
-                        onPressed: masterInitiativeCanDuplicateAction(i)
-                            ? () => duplicateMasterInitiativeActionNow(i)
-                            : null,
-                        icon: const Icon(Icons.control_point_duplicate),
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(44, 38),
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          backgroundColor: secondaryColor,
-                          foregroundColor: primaryColor,
-                        ),
-                        label: Text(
-                          compact
-                              ? t('Duplica', 'Duplicate')
-                              : t('Duplica azione', 'Duplicate action'),
-                        ),
-                      ),
-                      if (masterInitiativeTokenIsTemporary(
-                        masterInitiativeTokens[i],
-                      ))
-                        Chip(
-                          avatar: const Icon(Icons.flash_on, size: 16),
-                          label: Text(
-                            '${t('Azione extra', 'Extra action')} R${masterInitiativeTokens[i]['expiresRound'] ?? masterInitiativeRound}',
-                          ),
-                          backgroundColor: Colors.orangeAccent.withValues(
-                            alpha: 0.18,
-                          ),
-                          side: const BorderSide(color: Colors.orangeAccent),
-                          labelStyle: const TextStyle(
-                            color: Colors.orangeAccent,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      if (masterInitiativeReactionUsedThisRound(
-                        masterInitiativeTokens[i],
-                      ))
-                        Builder(
-                          builder: (context) {
-                            final token = masterInitiativeTokens[i];
-                            final used = masterInitiativeReactionUsedTotal(
-                              token,
-                            );
-                            final capacity = masterInitiativeReactionCapacity(
-                              token,
-                            );
-                            return Chip(
-                              avatar: const Icon(Icons.reply, size: 16),
-                              label: Text(
-                                '${t('Reazioni usate', 'Reactions used')} $used/$capacity',
-                              ),
-                              backgroundColor: tertiaryColor.withValues(
-                                alpha: 0.14,
-                              ),
-                              side: BorderSide(color: tertiaryColor),
-                              labelStyle: TextStyle(
-                                color: tertiaryColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            );
-                          },
-                        ),
-                    ],
-                  ),
-                  if (compact &&
-                      '${masterInitiativeTokens[i]['notes'] ?? ''}'
-                          .trim()
-                          .isNotEmpty) ...[
-                    const SizedBox(height: 5),
-                    smallInfoText(
-                      '${masterInitiativeTokens[i]['notes'] ?? ''}',
-                      color: Colors.grey.shade400,
-                    ),
-                  ],
-                  if (!compact) ...[
-                    const SizedBox(height: 8),
-                    campoModello(
-                      fieldKey: ValueKey(
-                        'master_init_note_${masterInitiativeTokens[i]['id'] ?? i}',
-                      ),
-                      label: t('Note', 'Notes'),
-                      initialValue:
-                          '${masterInitiativeTokens[i]['notes'] ?? ''}',
-                      onChanged: (value) {
-                        masterInitiativeTokens[i]['notes'] = value;
-                      },
-                      maxLines: 2,
-                    ),
-                  ],
-                ],
+              child: ListView.builder(
+                key: sheetScrollKey('master_initiative_participants'),
+                primary: false,
+                cacheExtent: 180,
+                itemCount: masterInitiativeTokens.length,
+                itemBuilder: (context, index) => tokenRow(index),
               ),
             ),
         ],
@@ -5007,60 +4987,46 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   Future<void> showMonsterBookQuickSpawnDialog(MonsterBookEntry entry) async {
     final level = TextEditingController(text: '${entry.stats['level'] ?? 1}');
-    final grade = TextEditingController(text: '0');
-    final resilience = TextEditingController(
-      text: '${entry.stats['resilienza'] ?? 0}',
+    final initial = oculumMonsterCreationStats(
+      entry,
+      max(0, int.tryParse(level.text) ?? 0),
     );
-    final will = TextEditingController(text: '${entry.stats['volonta'] ?? 0}');
-    final matter = TextEditingController(
-      text: '${entry.stats['materia'] ?? 0}',
-    );
-    final oculum = TextEditingController(text: '${entry.stats['oculum'] ?? 0}');
-    final fixedLevelZero = entry.stats['level'] == 0;
-    var selectedVariant = 'base';
+    final controllers = {
+      for (final key in initial.keys)
+        key: TextEditingController(text: '${initial[key]}'),
+    };
+    var variant = 'base';
+    void distribute() {
+      final allocated = oculumMonsterCreationStats(
+        entry,
+        max(0, int.tryParse(level.text) ?? 0),
+      );
+      for (final key in controllers.keys) {
+        controllers[key]!.text = '${allocated[key]}';
+      }
+    }
 
     try {
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => StatefulBuilder(
-          builder: (context, setDialogState) {
-            final selectedLevel = max(0, readIntValue(level.text));
-            final selectedGrade = max(0, readIntValue(grade.text));
-            final budget = quickMonsterStatBudget(
-              entry.presetType,
+          builder: (context, refresh) {
+            final selectedLevel = max(0, int.tryParse(level.text) ?? 0);
+            final selectedGrade = oculumGradeForLevel(selectedLevel);
+            final expected = oculumMonsterCreationStats(
+              entry,
               selectedLevel,
-              selectedGrade,
+            ).values.fold<int>(0, (a, b) => a + b);
+            final assigned = controllers.values.fold<int>(
+              0,
+              (a, c) => a + max(0, int.tryParse(c.text) ?? 0),
             );
-            final assigned =
-                max(0, readIntValue(resilience.text)) +
-                max(0, readIntValue(will.text)) +
-                max(0, readIntValue(matter.text)) +
-                max(0, readIntValue(oculum.text));
-            final resilienceValue = max(0, readIntValue(resilience.text));
-            final highestOther = max(
-              max(0, readIntValue(will.text)),
-              max(0, readIntValue(matter.text)),
+            final ocu = max(0, int.tryParse(controllers['oculum']!.text) ?? 0);
+            final validOculum = entry.skillIds.isNotEmpty ? ocu > 0 : ocu == 0;
+            final validNumbers = controllers.values.every(
+              (c) => int.tryParse(c.text) != null && int.parse(c.text) >= 0,
             );
-            final lifeIsHighest =
-                resilienceValue >=
-                max(highestOther, max(0, readIntValue(oculum.text)));
-            final usesFixedBase = fixedLevelZero && selectedLevel == 0;
-            final canCreate =
-                usesFixedBase ||
-                (assigned == budget && lifeIsHighest && budget > 0);
-
-            Widget statField(String label, TextEditingController controller) =>
-                TextField(
-                  controller: controller,
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => setDialogState(() {}),
-                  decoration: InputDecoration(
-                    labelText: label,
-                    border: const OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                );
-
+            final valid = validNumbers && assigned == expected && validOculum;
             return AlertDialog(
               backgroundColor: backgroundMidColor,
               title: Text('Genera ${entry.nameIt}'),
@@ -5071,122 +5037,81 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      smallInfoText(
-                        usesFixedBase
-                            ? 'Preset di livello 0: conserva le statistiche base del Bestiario.'
-                            : 'Punti effettivi: $budget = livello × ${oculumMonsterStatPointsPerLevel(entry.presetType) + 3} (base + compensazione Titoli) + grado × 10. Resilienza/Vita deve essere il tratto più alto.',
+                      TextField(
+                        controller: level,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Livello'),
+                        onChanged: (_) => refresh(distribute),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Grado $selectedGrade · +${oculumMonsterStatPointsPerGrade(entry.presetType)} punti per Grado',
+                      ),
+                      const SizedBox(height: 8),
+                      smallInfoText(
+                        entry.skillIds.isNotEmpty
+                            ? 'Volontà e Materia sostengono attacco e difesa; la riserva più ampia va a Oculum per le tecniche. Puoi rifinire i valori qui sotto.'
+                            : 'Questa creatura non ha Skill né Oculum Art: i punti vanno a Resilienza, Volontà e Materia.',
+                      ),
+                      if (selectedLevel == 0)
+                        smallInfoText(
+                          'Livello 0: redistribuisce il totale della base del Book, senza bonus di Grado.',
+                        ),
+                      const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        initialValue: selectedVariant,
+                        initialValue: variant,
                         decoration: const InputDecoration(
-                          labelText: 'Variante del mostro',
-                          border: OutlineInputBorder(),
-                          isDense: true,
+                          labelText: 'Variante',
                         ),
                         items: const [
-                          DropdownMenuItem(
-                            value: 'base',
-                            child: Text('Base — Bestiario'),
-                          ),
+                          DropdownMenuItem(value: 'base', child: Text('Base')),
                           DropdownMenuItem(
                             value: 'predatore',
-                            child: Text(
-                              'Predatore — più forte, Ombra e imboscate',
-                            ),
+                            child: Text('Predatore · assalto e inseguimento'),
                           ),
                           DropdownMenuItem(
                             value: 'elite',
                             child: Text(
-                              'Élite — molto più forte, Fulmine e attacchi nuovi',
+                              'Élite · poteri e statistiche superiori',
                             ),
                           ),
                         ],
-                        onChanged: (value) => setDialogState(
-                          () => selectedVariant = value ?? 'base',
+                        onChanged: (value) =>
+                            refresh(() => variant = value ?? 'base'),
+                      ),
+                      for (final key in controllers.keys)
+                        TextField(
+                          controller: controllers[key],
+                          keyboardType: TextInputType.number,
+                          onChanged: (_) => refresh(() {}),
+                          decoration: InputDecoration(
+                            labelText: switch (key) {
+                              'resilienza' => 'Resilienza',
+                              'volonta' => 'Volontà',
+                              'materia' => 'Materia',
+                              _ => 'Oculum',
+                            },
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final levelField = statField('Livello', level);
-                          final gradeField = statField('Grado', grade);
-                          if (constraints.maxWidth < 340) {
-                            return Column(
-                              children: [
-                                levelField,
-                                const SizedBox(height: 8),
-                                gradeField,
-                              ],
-                            );
-                          }
-                          return Row(
-                            children: [
-                              Expanded(child: levelField),
-                              const SizedBox(width: 8),
-                              Expanded(child: gradeField),
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final fields = [
-                            statField('Vita / Resilienza', resilience),
-                            statField('Volontà', will),
-                            statField('Materia', matter),
-                            statField('Oculum', oculum),
-                          ];
-                          if (constraints.maxWidth < 340) {
-                            return Column(
-                              children: [
-                                for (final field in fields) ...[
-                                  field,
-                                  const SizedBox(height: 8),
-                                ],
-                              ],
-                            );
-                          }
-                          return Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              for (final field in fields)
-                                SizedBox(width: 205, child: field),
-                            ],
-                          );
-                        },
-                      ),
                       const SizedBox(height: 10),
                       Text(
-                        usesFixedBase
-                            ? 'Base fissa livello 0'
-                            : 'Assegnati $assigned / $budget${lifeIsHighest ? '' : ' — Vita deve essere la più alta'}',
+                        'Punti assegnati: $assigned / $expected',
                         style: TextStyle(
-                          color: canCreate
+                          color: valid
                               ? Colors.greenAccent
                               : Colors.amberAccent,
-                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: usesFixedBase
-                            ? null
-                            : () {
-                                final rolled = randomQuickMonsterStats(
-                                  budget,
-                                  hint: '${entry.nameIt} ${entry.descIt}',
-                                );
-                                resilience.text = '${rolled['resilienza']}';
-                                will.text = '${rolled['volonta']}';
-                                matter.text = '${rolled['materia']}';
-                                oculum.text = '${rolled['oculum']}';
-                                setDialogState(() {});
-                              },
-                        icon: const Icon(Icons.casino),
-                        label: const Text('Randomizza punti effettivi'),
+                      if (!validOculum)
+                        Text(
+                          entry.skillIds.isNotEmpty
+                              ? 'Con almeno una Skill serve Oculum maggiore di zero.'
+                              : 'Senza Skill e Oculum Art, Oculum deve restare a zero.',
+                        ),
+                      TextButton.icon(
+                        onPressed: () => refresh(distribute),
+                        icon: const Icon(Icons.balance),
+                        label: const Text('Distribuisci in base alle tecniche'),
                       ),
                     ],
                   ),
@@ -5197,32 +5122,32 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   onPressed: () => Navigator.pop(dialogContext),
                   child: const Text('Annulla'),
                 ),
-                ElevatedButton.icon(
-                  onPressed: !canCreate
+                FilledButton(
+                  onPressed: !valid
                       ? null
                       : () async {
+                          quickSheetNameController.text = entry.nameIt;
+                          quickSheetDescriptionController.text =
+                              systemMonsterGeneratorDescription(entry);
+                          quickSheetCountController.text = '1';
                           await creaSchedaRapidaMaster(
                             forcedType: entry.presetType,
                             fallbackName: entry.nameIt,
                             sideOverride: entry.isNpc ? 'ally' : 'enemy',
                             forceEnemyProfile: !entry.isNpc,
                             livelloForzato: selectedLevel,
-                            gradoForzato: selectedGrade,
                             statsMostroForzate: {
-                              'resilienza': resilienceValue,
-                              'volonta': max(0, readIntValue(will.text)),
-                              'materia': max(0, readIntValue(matter.text)),
-                              'oculum': max(0, readIntValue(oculum.text)),
+                              for (final key in controllers.keys)
+                                key: int.parse(controllers[key]!.text),
                             },
-                            monsterVariant: selectedVariant,
+                            monsterVariant: variant,
                             monsterBookSource: entry,
                           );
                           if (dialogContext.mounted) {
                             Navigator.pop(dialogContext);
                           }
                         },
-                  icon: const Icon(Icons.add_circle),
-                  label: const Text('Genera nella mia scheda'),
+                  child: const Text('Genera nella mia scheda'),
                 ),
               ],
             );
@@ -5231,11 +5156,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       );
     } finally {
       level.dispose();
-      grade.dispose();
-      resilience.dispose();
-      will.dispose();
-      matter.dispose();
-      oculum.dispose();
+      for (final controller in controllers.values) {
+        controller.dispose();
+      }
     }
   }
 
@@ -5851,6 +5774,43 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 final itemWidth =
                     (constraints.maxWidth - gap * (columns - 1)) / columns;
 
+                if (enemies.length > 8) {
+                  return SizedBox(
+                    height: min(
+                      720.0,
+                      max(260.0, MediaQuery.sizeOf(context).height * .65),
+                    ),
+                    child: ListView.builder(
+                      key: sheetScrollKey('master_enemy_cards'),
+                      primary: false,
+                      cacheExtent: 180,
+                      itemCount: (enemies.length / columns).ceil(),
+                      itemBuilder: (context, row) => Padding(
+                        padding: const EdgeInsets.only(bottom: gap),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (
+                              var column = 0;
+                              column < columns;
+                              column++
+                            ) ...[
+                              if (column > 0) const SizedBox(width: gap),
+                              SizedBox(
+                                width: itemWidth,
+                                child: row * columns + column < enemies.length
+                                    ? masterDashboardEnemyCard(
+                                        enemies[row * columns + column],
+                                      )
+                                    : null,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
                 return Wrap(
                   spacing: gap,
                   runSpacing: gap,
@@ -6356,10 +6316,17 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 label: t('Livello iniziale', 'Starting level'),
                 controller: quickSheetLevelController,
               );
-              final grade = campoTesto(
-                label: t('Grado iniziale', 'Starting grade'),
-                controller: quickSheetGradeController,
-              );
+              final grade = quickSheetType.toLowerCase().contains('mostro')
+                  ? ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: quickSheetLevelController,
+                      builder: (context, value, _) => Text(
+                        'Grado automatico: ${oculumGradeForLevel(max(0, int.tryParse(value.text) ?? 0))}',
+                      ),
+                    )
+                  : campoTesto(
+                      label: t('Grado iniziale', 'Starting grade'),
+                      controller: quickSheetGradeController,
+                    );
 
               if (narrow) {
                 return Column(
@@ -6405,8 +6372,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: smallInfoText(
                         t(
-                          'Punti effettivi da assegnare: $pointBudget (livello × ${oculumMonsterStatPointsPerLevel(quickSheetType) + 3}, inclusa compensazione Titoli, + grado × 10). Vita/Resilienza deve restare il tratto più alto.',
-                          'Effective points to assign: $pointBudget (level × ${oculumMonsterStatPointsPerLevel(quickSheetType)} + grade × 10). Health/Resilience remains the highest trait.',
+                          'Punti effettivi da assegnare: $pointBudget (livello × ${oculumMonsterStatPointsPerLevel(quickSheetType) + 3}, inclusa compensazione Titoli, + grado × ${oculumMonsterStatPointsPerGrade(quickSheetType)}). Distribuzione automatica in base alle Skill e alle Art.',
+                          'Effective points to assign: $pointBudget (level × ${oculumMonsterStatPointsPerLevel(quickSheetType)} + grade × ${oculumMonsterStatPointsPerGrade(quickSheetType)}). Stats are assigned from Skills and Arts.',
                         ),
                       ),
                     ),
@@ -8716,7 +8683,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     if (!targetArt.openAttiva) {
       final blockedCooldowns = <OculumAbilityCooldown>[
         ?targetArt.openDescriptionCooldown,
-        ?targetArt.openSkillCooldown,
+        if (!targetArt.monsterOpenSkill) ?targetArt.openSkillCooldown,
         ?targetArt.openBuffCooldown,
       ].where((cooldown) => !cooldown.ready).toList();
       if (blockedCooldowns.isNotEmpty) {
@@ -8771,7 +8738,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         }
         art.openAttiva = true;
         art.openDescriptionCooldown?.activate();
-        art.openSkillCooldown?.activate();
+        if (!art.monsterOpenSkill) art.openSkillCooldown?.activate();
         art.openBuffCooldown?.activate();
         dtDebuff = consumeArtIntegrityAndResolveDebuff(
           artIndex,
@@ -8804,7 +8771,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       final structuredMessages =
           applyStructuredEffectsOnActivation(<OculumStructuredEffect>[
             ...art.openDescriptionEffects,
-            ...art.openSkillEffects,
+            if (!art.monsterOpenSkill) ...art.openSkillEffects,
             ...art.openBuffEffects,
           ], source: artOpenDisplayName(art, artIndex));
       if (structuredMessages.isNotEmpty) {
@@ -8821,6 +8788,31 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
     scheduleRealtimeOculumChanged();
     if (!consumedIntegrity) programmaSalvataggio();
+  }
+
+  void usaSkillOpenMostro(int artIndex) {
+    if (artIndex < 0 || artIndex >= arti.length) return;
+    final art = arti[artIndex];
+    if (!art.monsterOpenSkill ||
+        !art.sbloccata ||
+        !art.openAttiva ||
+        !artOpenSbloccata(art)) {
+      return;
+    }
+    final cooldown = art.openSkillCooldown;
+    if (cooldown != null && !cooldown.ready) return;
+    setState(() {
+      cooldown?.activate();
+      final messages = applyStructuredEffectsOnActivation(
+        art.openSkillEffects,
+        source: '${artOpenDisplayName(art, artIndex)} · Skill Open',
+      );
+      risultato = '${art.openSkill}\n${messages.join('\n')}';
+      aggiungiLog(risultato);
+      invalidateDerivedDataCaches();
+    });
+    programmaSalvataggio();
+    scheduleRealtimeOculumChanged();
   }
 
   Widget artQuickCommandChips(CharacterArt art) {
@@ -9222,6 +9214,26 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               initialValue: art.openSkillType,
               onChanged: (value) => art.openSkillType = value,
             ),
+            if (art.monsterOpenSkill) ...[
+              FilledButton.icon(
+                onPressed:
+                    art.sbloccata &&
+                        art.openAttiva &&
+                        artOpenSbloccata(art) &&
+                        (art.openSkillCooldown?.ready ?? true)
+                    ? () => usaSkillOpenMostro(artIndex)
+                    : null,
+                icon: const Icon(Icons.flash_on),
+                label: const Text('Usa Skill Open'),
+              ),
+              Text(
+                !art.openAttiva
+                    ? 'Attiva prima l’Open.'
+                    : !(art.openSkillCooldown?.ready ?? true)
+                    ? 'Recupero: ${art.openSkillCooldown!.remaining} ${art.openSkillCooldown!.unit}.'
+                    : 'Skill pronta. Il cooldown parte quando la usi.',
+              ),
+            ],
             structuredCooldownEditor(
               cooldown: art.openSkillCooldown,
               storageId: 'art_${artIndex}_open_skill',
@@ -9308,6 +9320,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   void cambiaSbloccoArt(int artIndex, bool sbloccata) {
     if (artIndex < 0 || artIndex >= arti.length) return;
+    if (sbloccata && !fallenEyeArtAllowed(artIndex)) {
+      risultato =
+          'La rarità di questo Occhio non permette ancora di usare questa Art.';
+      notifyDiceResultChanged();
+      return;
+    }
 
     final art = arti[artIndex];
     if (art.sbloccata == sbloccata) return;

@@ -430,7 +430,121 @@ String oculumFallenEyeLabel(String rarity) => switch (rarity) {
   _ => 'Comune',
 };
 
+dynamic oculumCopyJsonTree(dynamic value) {
+  if (value is Map) {
+    return value.map(
+      (key, child) => MapEntry('$key', oculumCopyJsonTree(child)),
+    );
+  }
+  if (value is List) return value.map(oculumCopyJsonTree).toList();
+  // Strings, including original portraits, are immutable and can be shared.
+  return value;
+}
+
+void oculumFallenEyeApplyInheritedPowers(Map<String, dynamic> eye) {
+  final data = eye['sheetData'] as Map<String, dynamic>;
+  final limit = oculumFallenEyeArtLimit('${eye['rarity']}');
+  final previousLimit = oculumFallenEyeArtLimit(
+    '${data['fallenEyeRarity'] ?? 'comune'}',
+  );
+  final original = (eye['originalArts'] as List? ?? const [])
+      .whereType<Map>()
+      .toList();
+  final existing = (data['arti'] as List? ?? const [])
+      .whereType<Map>()
+      .toList();
+  final hasTechniques = existing.any(
+    (art) => (art['skills'] as List? ?? const []).whereType<Map>().any(
+      (skill) =>
+          '${skill['evo1'] ?? ''}${skill['evo2'] ?? ''}${skill['evo3'] ?? ''}'
+              .trim()
+              .isNotEmpty,
+    ),
+  );
+  if (!hasTechniques && original.isNotEmpty) {
+    eye['artsBeforeInheritance'] ??= oculumCopyJsonTree(existing);
+    final custom = existing.where(
+      (art) => !RegExp(
+        r'^(Prima Art|Seconda Art|Terza Art|Art [123])?$',
+      ).hasMatch('${art['nome'] ?? ''}'),
+    );
+    data['arti'] = oculumCopyJsonTree([...original, ...custom]);
+    for (final art in data['arti'] as List) {
+      art['openAttiva'] = false;
+      for (final skill in art['skills'] as List? ?? const []) {
+        if (skill is Map) skill['livello'] = 0;
+      }
+    }
+  }
+  final arts = data['arti'] as List? ?? const [];
+  for (var i = 0; i < arts.length; i++) {
+    if (arts[i] is! Map) continue;
+    final art = arts[i] as Map;
+    if (i >= limit) {
+      art['sbloccata'] = false;
+    } else if (i >= previousLimit || !art.containsKey('sbloccata')) {
+      art['sbloccata'] = true;
+    }
+    if (i >= limit) art['openAttiva'] = false;
+  }
+  eye['activeArts'] = arts.take(limit).map(oculumCopyJsonTree).toList();
+  final known = <String, dynamic>{};
+  for (final skill in eye['originalSkills'] as List? ?? const []) {
+    if (skill is Map) known['${skill['nome']}'] = skill;
+  }
+  for (final skill in data['skills'] as List? ?? const []) {
+    if (skill is Map) known['${skill['nome']}'] = skill;
+  }
+  eye['originalSkills'] = oculumCopyJsonTree(known.values.toList());
+  data['skills'] = oculumCopyJsonTree(known.values.take(limit).toList());
+  data['fallenEyeRarity'] = eye['rarity'];
+  eye['inheritedPowersVersion'] = 1;
+}
+
 extension _OculumFallenEyes on _OculumHomePageState {
+  void _restoreFallenEyeMonsterPowers(Map<String, dynamic> eye) {
+    if (readIntValue(eye['inheritedPowersVersion']) >= 1) return;
+    final sourceId = '${eye['sourceMonsterId'] ?? ''}';
+    if (sourceId.isEmpty) return;
+    final monster = monsterBookEntryById(sourceId);
+    if (monster != null && monster.skillIds.isNotEmpty) {
+      final data = eye['sheetData'] as Map;
+      final art = oculumCompleteMonsterOpen(
+        oculumMonsterBookArt(monster),
+        name: monster.nameIt,
+        level: readIntValue(data['livello']),
+        grade: readIntValue(data['grado']),
+      );
+      final originals = eye['originalArts'] as List? ?? const [];
+      if (!originals.whereType<Map>().any(
+        (item) => (item['skills'] as List? ?? const []).isNotEmpty,
+      )) {
+        eye['originalArts'] = [art.toJson()];
+      }
+    }
+  }
+
+  void prepareFallenEyeSheet(Map<String, dynamic> sheet) {
+    final id = '${sheet['occhioCadutoId'] ?? ''}';
+    if (id.isEmpty) return;
+    final eye = fallenEyeForId(id);
+    if (eye == null) return;
+    _restoreFallenEyeMonsterPowers(eye);
+    eye['sheetData'] = sheet;
+    oculumFallenEyeApplyInheritedPowers(eye);
+  }
+
+  bool fallenEyeArtAllowed(int artIndex) {
+    final sheet = schedePersonaggio[schedaCorrente];
+    final id = '${sheet['occhioCadutoId'] ?? ''}';
+    if (id.isEmpty) return true;
+    final eye = fallenEyeForId(id);
+    return artIndex <
+        oculumFallenEyeArtLimit(
+          '${eye?['rarity'] ?? sheet['fallenEyeRarity'] ?? 'comune'}',
+        );
+  }
+
   void _touchFallenEyes() => fallenEyesRevision.value++;
   Map<String, dynamic>? fallenEyeForId(String id) {
     for (final eye in occhiCaduti) {
@@ -454,11 +568,11 @@ extension _OculumFallenEyes on _OculumHomePageState {
   }
 
   Map<String, dynamic> _cloneJsonMap(Map<String, dynamic> value) =>
-      Map<String, dynamic>.from(jsonDecode(jsonEncode(value)) as Map);
+      oculumCopyJsonTree(value) as Map<String, dynamic>;
 
   /// Un Occhio conserva soltanto il corpo della fonte. Inventario, quest,
-  /// condizioni, Art, Skill, Titoli, note e dati online dell'avversario non
-  /// possono mai entrare nella nuova creatura.
+  /// condizioni, Titoli, note e dati online restano separati. Le tecniche
+  /// vengono ereditate a parte e rese disponibili secondo la rarità.
   Map<String, dynamic> _fallenEyeBodyFromSource(Map<String, dynamic> source) {
     final level = max(0, readIntValue(source['livello']));
     final grade = max(0, readIntValue(source['grado']));
@@ -516,8 +630,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
       readIntValue(current['currentHp'], fallback: 0),
       max(1, readIntValue(current['resilienza'], fallback: 1) * 10),
     ).toString();
-    // Un Occhio dei Perduti è una creatura indipendente: eredita soltanto
-    // corpo, immagine e statistiche della fonte, mai le sue conoscenze.
+    // La creatura eredita il corpo e le tecniche, con i limiti della rarità.
     final commonEffect = selectedRarity == 'comune'
         ? oculumFallenEyeCommonMalusEffectForRoll(
             malusRoll: Random.secure().nextInt(5),
@@ -559,7 +672,10 @@ extension _OculumFallenEyes on _OculumHomePageState {
       'commonMalusApplied': commonEffect.isNotEmpty,
       'oculumBuffEffect': oculumBuffEffect,
       'oculumBuffApplied': oculumBuffEffect.isNotEmpty,
-      'originalArts': <dynamic>[],
+      'originalArts': oculumCopyJsonTree(
+        source['fallenEyeOriginalArts'] ?? source['arti'] ?? const [],
+      ),
+      'originalSkills': oculumCopyJsonTree(source['skills'] ?? const []),
       'activeArts': <dynamic>[],
       'integrityCurrent': max(
         1,
@@ -613,13 +729,9 @@ extension _OculumFallenEyes on _OculumHomePageState {
       nome: name.trim().isEmpty ? monster.nameIt : name.trim(),
       tipo: monster.presetType,
       livello: max(0, level),
-      grado: monster.isBoss
-          ? 3
-          : monster.isMiniBoss
-          ? 2
-          : 1,
+      grado: oculumGradeForLevel(level),
     );
-    final stats = monster.stats;
+    final stats = oculumMonsterCreationStats(monster, level);
     final res = max(1, stats['resilienza'] ?? 6);
     final vol = max(0, stats['volonta'] ?? 3);
     final mat = max(0, stats['materia'] ?? 3);
@@ -634,7 +746,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
       'oculum': '$ocu',
       'currentOculum': '$ocu',
       'maxOculum': ocu,
-      'currentHp': '${max(1, stats['hp'] ?? (res * 10))}',
+      'currentHp': '${max(1, res * (10 + oculumGradeForLevel(level) * 5))}',
       'spriteAssetPath': monster.spriteAssetPath,
       'immaginePersonaggioBase64': monster.imageBase64,
       'background': monster.descIt,
@@ -644,6 +756,17 @@ extension _OculumFallenEyes on _OculumHomePageState {
       'shadowScaling': monster.elementId.toLowerCase() == 'shadow',
     });
     source['skills'] = <dynamic>[];
+    source['arti'] = monster.skillIds.isEmpty
+        ? <dynamic>[]
+        : [
+            oculumCompleteMonsterOpen(
+              oculumMonsterBookArt(monster),
+              name: monster.nameIt,
+              level: level,
+              grade: oculumGradeForLevel(level),
+            ).toJson(),
+          ];
+    source['fallenEyeOriginalArts'] = source['arti'];
     return source;
   }
 
@@ -733,6 +856,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
     String? rarity,
   }) async {
     final eye = _newFallenEye(source, name: name, rarity: rarity);
+    oculumFallenEyeApplyInheritedPowers(eye);
     setState(() {
       occhiCaduti.add(eye);
       _touchFallenEyes();
@@ -1261,6 +1385,8 @@ extension _OculumFallenEyes on _OculumHomePageState {
       _fallenEyeMessage('Questo Occhio è morto e non può più essere evocato.');
       return;
     }
+    _restoreFallenEyeMonsterPowers(eye);
+    oculumFallenEyeApplyInheritedPowers(eye);
     _ensureCommonEyeMalusApplied(eye);
     _ensureOculumEyeBuffApplied(eye);
     final sheet = _cloneJsonMap(
@@ -1729,6 +1855,8 @@ extension _OculumFallenEyes on _OculumHomePageState {
       });
       if (success) {
         eye['rarity'] = target;
+        _restoreFallenEyeMonsterPowers(eye);
+        oculumFallenEyeApplyInheritedPowers(eye);
         eye['reforgeFailureStreak'] = 0;
         if (current == 'comune') {
           final effect = '${eye['commonMalusEffect'] ?? ''}';
@@ -1853,10 +1981,19 @@ extension _OculumFallenEyes on _OculumHomePageState {
   Widget fallenEyesPage() => ValueListenableBuilder<int>(
     valueListenable: fallenEyesRevision,
     builder: (context, _, _) {
-      final eyes = occhiCaduti.where((eye) {
+      final owner = sheetTagAt(schedaCorrente);
+      final ownerEyes = occhiCaduti
+          .where((eye) => '${eye['ownerSheetId'] ?? ''}' == owner)
+          .toList();
+      final activeOwnerCount = ownerEyes
+          .where(
+            (eye) =>
+                readBoolValue(eye['active']) && !oculumFallenEyeIsDead(eye),
+          )
+          .length;
+      final eyes = ownerEyes.where((eye) {
         final name = '${eye['name'] ?? ''}'.toLowerCase();
-        return '${eye['ownerSheetId'] ?? ''}' == sheetTagAt(schedaCorrente) &&
-            (fallenEyesSearch.isEmpty ||
+        return (fallenEyesSearch.isEmpty ||
                 name.contains(fallenEyesSearch.toLowerCase())) &&
             (fallenEyesRarityFilter == 'tutte' ||
                 eye['rarity'] == fallenEyesRarityFilter) &&
@@ -1867,9 +2004,13 @@ extension _OculumFallenEyes on _OculumHomePageState {
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: Row(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Expanded(
+                SizedBox(
+                  width: 220,
                   child: Text(
                     'OCCHI DEI CADUTI',
                     style: TextStyle(
@@ -1902,9 +2043,10 @@ extension _OculumFallenEyes on _OculumHomePageState {
                 SizedBox(
                   width: 250,
                   child: TextField(
-                    onChanged: (v) => setState(() {
+                    onChanged: (v) {
                       fallenEyesSearch = v;
-                    }),
+                      _touchFallenEyes();
+                    },
                     decoration: const InputDecoration(
                       prefixIcon: Icon(Icons.search),
                       hintText: 'Cerca Occhio',
@@ -1954,7 +2096,8 @@ extension _OculumFallenEyes on _OculumHomePageState {
                 mainAxisSpacing: 10,
               ),
               itemCount: eyes.length,
-              itemBuilder: (_, i) => _fallenEyeCard(eyes[i]),
+              itemBuilder: (_, i) =>
+                  _fallenEyeCard(eyes[i], activeOwnerEyes: activeOwnerCount),
             ),
           ),
         ],
@@ -2267,10 +2410,12 @@ extension _OculumFallenEyes on _OculumHomePageState {
         'cmRapido': cm.text,
         'attaccoRapido': vc.text,
         'fallenEyeOriginalArts': [
-          for (final controller in artNames)
+          for (var i = 0; i < artNames.length; i++)
             {
-              'nome': controller.text.trim(),
-              'known': controller.text.trim().isNotEmpty,
+              if (i < (draft['arti'] as List? ?? const []).length)
+                ...Map<String, dynamic>.from((draft['arti'] as List)[i] as Map),
+              'nome': artNames[i].text.trim(),
+              'known': artNames[i].text.trim().isNotEmpty,
             },
         ],
       });
@@ -2286,6 +2431,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
             .whereType<Map>()
             .map((art) => Map<String, dynamic>.from(art))
             .toList();
+        draft['arti'] = originalArts;
         draft['occhioCadutoId'] = editingEye['id'];
         draft['occhioCaduto'] = true;
         setState(() {
@@ -2296,12 +2442,15 @@ extension _OculumFallenEyes on _OculumHomePageState {
               .take(oculumFallenEyeArtLimit(rarity))
               .toList();
           editingEye['sheetData'] = _cloneJsonMap(draft);
+          oculumFallenEyeApplyInheritedPowers(editingEye);
           final activeIndex = schedePersonaggio.indexWhere(
             (sheet) =>
                 '${sheet['occhioCadutoId'] ?? ''}' == '${editingEye['id']}',
           );
           if (activeIndex >= 0) {
-            schedePersonaggio[activeIndex] = _cloneJsonMap(draft);
+            schedePersonaggio[activeIndex] = _cloneJsonMap(
+              editingEye['sheetData'] as Map<String, dynamic>,
+            );
           }
           _touchFallenEyes();
         });
@@ -2323,10 +2472,12 @@ extension _OculumFallenEyes on _OculumHomePageState {
     }
   }
 
-  Widget _fallenEyeCard(Map<String, dynamic> eye) {
+  Widget _fallenEyeCard(
+    Map<String, dynamic> eye, {
+    required int activeOwnerEyes,
+  }) {
     final rarity = '${eye['rarity'] ?? 'comune'}';
     final color = oculumFallenEyeColor(rarity);
-    final activeOwnerEyes = _activeFallenEyeOwnerCount(eye);
     final needsMaintenance = oculumFallenEyeNeedsMaintenance(activeOwnerEyes);
     final maintenanceDifficulty = oculumFallenEyeMaintenanceDifficulty(
       ownerEyeCount: activeOwnerEyes,
@@ -2352,200 +2503,202 @@ extension _OculumFallenEyes on _OculumHomePageState {
         ),
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Stack(
-                    children: [
-                      // Il ritratto è la pupilla: l'Occhio Oculum rimane
-                      // disegnato dietro e la foto resta esagonale, come nella
-                      // scheda principale, senza creare una miniatura quadrata.
-                      SizedBox(
-                        width: 76,
-                        height: 76,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Image.asset(
-                              'assets/icon/oculum_eye.png',
-                              width: 76,
-                              height: 76,
-                              fit: BoxFit.contain,
-                            ),
-                            if (image != null)
-                              ClipPath(
-                                clipper: const HexagonClipper(),
-                                child: Image.memory(
-                                  image,
-                                  width: 54,
-                                  height: 54,
-                                  // Mostra tutto il ritratto senza zoomarlo o
-                                  // degradarlo dopo il salvataggio.
-                                  fit: BoxFit.contain,
-                                  filterQuality: FilterQuality.high,
-                                  cacheWidth: 152,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      Positioned(
-                        right: -4,
-                        bottom: -4,
-                        child: IconButton.filledTonal(
-                          tooltip: 'Sostituisci immagine',
-                          icon: const Icon(Icons.add_a_photo, size: 17),
-                          onPressed: () => scegliImmagineOcchioCaduto(eye),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${eye['name']}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          oculumFallenEyeLabel(rarity),
-                          style: TextStyle(
-                            color: color,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Origine: ${eye['sourceClass'] ?? oculumFallenEyeSourceClass(data)}',
-                        ),
-                        Text('Difficoltà: ${fallenEyeDifficulty(eye)}'),
-                        Text(
-                          'Vita ${data['currentHp'] ?? 0}  •  Integrità ${eye['integrityCurrent']}/${eye['integrityMax']}',
-                        ),
-                        if ('${eye['oculumBuffEffect'] ?? ''}'.isNotEmpty)
-                          Text(
-                            'RISVEGLIO OCULUM: ${oculumFallenEyeOculumBuffLabel('${eye['oculumBuffEffect']}')}',
-                            style: const TextStyle(
-                              color: Color(0xFFB58CFF),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          ),
-                        if ('${eye['rareAttribute'] ?? ''}'.isNotEmpty)
-                          Text(
-                            'ATTRIBUTO RARO: ${oculumFallenEyeRareAttributeLabel('${eye['rareAttribute']}')} +${readIntValue(eye['rareAttributeBonus'])}',
-                            style: const TextStyle(
-                              color: Colors.amberAccent,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                            ),
-                          ),
-                        Text(
-                          dead
-                              ? 'MORTO — NON EVOCABILE'
-                              : readBoolValue(eye['active'])
-                              ? 'EVOCATO'
-                              : 'DISEVOCATO',
-                          style: TextStyle(
-                            color: oculumFallenEyeIsDead(eye)
-                                ? Colors.redAccent
-                                : readBoolValue(eye['active'])
-                                ? Colors.lightGreen
-                                : Colors.grey,
-                          ),
-                        ),
-                        if (needsMaintenance)
-                          Text(
-                            paidWithWill
-                                ? 'TENUTA: ${readIntValue(eye['willMaintenanceDebt'])} tiro Vita • DT $maintenanceDifficulty'
-                                : 'TENUTA: Oculum/Manifestazione • DT $maintenanceDifficulty',
-                            style: TextStyle(
-                              color: readBoolValue(eye['active'])
-                                  ? Colors.amberAccent
-                                  : Colors.grey,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          )
-                        else
-                          const Text(
-                            'TENUTA STABILE — un solo Occhio',
-                            style: TextStyle(
-                              color: Colors.lightGreen,
-                              fontSize: 12,
-                            ),
-                          ),
-                        const Spacer(),
-                        Text(
-                          'Art ${(eye['activeArts'] as List? ?? []).length}/${oculumFallenEyeArtLimit(rarity)}',
-                        ),
-                        if (oculumFallenEyeCanLevel(rarity))
-                          Text(
-                            'Lv ${data['livello'] ?? 0} • EXP ${data['exp'] ?? 0}',
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(10, 7, 10, 9),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: .10),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: color.withValues(alpha: .55)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
                   children: [
-                    Row(
+                    Stack(
                       children: [
-                        Icon(Icons.auto_awesome, size: 17, color: color),
-                        const SizedBox(width: 6),
-                        const Expanded(
-                          child: Text(
-                            'QUEST REFORGE',
-                            style: TextStyle(fontWeight: FontWeight.w900),
+                        // Il ritratto è la pupilla: l'Occhio Oculum rimane
+                        // disegnato dietro e la foto resta esagonale, come nella
+                        // scheda principale, senza creare una miniatura quadrata.
+                        SizedBox(
+                          width: 76,
+                          height: 76,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Image.asset(
+                                'assets/icon/oculum_eye.png',
+                                width: 76,
+                                height: 76,
+                                fit: BoxFit.contain,
+                              ),
+                              if (image != null)
+                                ClipPath(
+                                  clipper: const HexagonClipper(),
+                                  child: Image.memory(
+                                    image,
+                                    width: 54,
+                                    height: 54,
+                                    // Mostra tutto il ritratto senza zoomarlo o
+                                    // degradarlo dopo il salvataggio.
+                                    fit: BoxFit.contain,
+                                    filterQuality: FilterQuality.high,
+                                    cacheWidth: 152,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
-                        Text(
-                          'Tentativi: ${readIntValue(eye['reforgeQuestCredits'])}',
-                          style: TextStyle(color: color, fontSize: 12),
+                        Positioned(
+                          right: -4,
+                          bottom: -4,
+                          child: IconButton.filledTonal(
+                            tooltip: 'Sostituisci immagine',
+                            icon: const Icon(Icons.add_a_photo, size: 17),
+                            onPressed: () => scegliImmagineOcchioCaduto(eye),
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    TextFormField(
-                      key: ValueKey('fallen_eye_reforge_quest_${eye['id']}'),
-                      initialValue: '${eye['reforgeQuestNote'] ?? ''}',
-                      minLines: 1,
-                      maxLines: 2,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        border: InputBorder.none,
-                        hintText:
-                            'Scrivi qui cosa serve per tentare il Reforge',
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${eye['name']}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            oculumFallenEyeLabel(rarity),
+                            style: TextStyle(
+                              color: color,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Origine: ${eye['sourceClass'] ?? oculumFallenEyeSourceClass(data)}',
+                          ),
+                          Text('Difficoltà: ${fallenEyeDifficulty(eye)}'),
+                          Text(
+                            'Vita ${data['currentHp'] ?? 0}  •  Integrità ${eye['integrityCurrent']}/${eye['integrityMax']}',
+                          ),
+                          if ('${eye['oculumBuffEffect'] ?? ''}'.isNotEmpty)
+                            Text(
+                              'RISVEGLIO OCULUM: ${oculumFallenEyeOculumBuffLabel('${eye['oculumBuffEffect']}')}',
+                              style: const TextStyle(
+                                color: Color(0xFFB58CFF),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                              ),
+                            ),
+                          if ('${eye['rareAttribute'] ?? ''}'.isNotEmpty)
+                            Text(
+                              'ATTRIBUTO RARO: ${oculumFallenEyeRareAttributeLabel('${eye['rareAttribute']}')} +${readIntValue(eye['rareAttributeBonus'])}',
+                              style: const TextStyle(
+                                color: Colors.amberAccent,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
+                          Text(
+                            dead
+                                ? 'MORTO — NON EVOCABILE'
+                                : readBoolValue(eye['active'])
+                                ? 'EVOCATO'
+                                : 'DISEVOCATO',
+                            style: TextStyle(
+                              color: oculumFallenEyeIsDead(eye)
+                                  ? Colors.redAccent
+                                  : readBoolValue(eye['active'])
+                                  ? Colors.lightGreen
+                                  : Colors.grey,
+                            ),
+                          ),
+                          if (needsMaintenance)
+                            Text(
+                              paidWithWill
+                                  ? 'TENUTA: ${readIntValue(eye['willMaintenanceDebt'])} tiro Vita • DT $maintenanceDifficulty'
+                                  : 'TENUTA: Oculum/Manifestazione • DT $maintenanceDifficulty',
+                              style: TextStyle(
+                                color: readBoolValue(eye['active'])
+                                    ? Colors.amberAccent
+                                    : Colors.grey,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                              ),
+                            )
+                          else
+                            const Text(
+                              'TENUTA STABILE — un solo Occhio',
+                              style: TextStyle(
+                                color: Colors.lightGreen,
+                                fontSize: 12,
+                              ),
+                            ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Art ${(eye['activeArts'] as List? ?? []).length}/${oculumFallenEyeArtLimit(rarity)}',
+                          ),
+                          if (oculumFallenEyeCanLevel(rarity))
+                            Text(
+                              'Lv ${data['livello'] ?? 0} • EXP ${data['exp'] ?? 0}',
+                            ),
+                        ],
                       ),
-                      onChanged: (value) {
-                        eye['reforgeQuestNote'] = value;
-                        programmaSalvataggio();
-                      },
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(10, 7, 10, 9),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: .10),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: color.withValues(alpha: .55)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.auto_awesome, size: 17, color: color),
+                          const SizedBox(width: 6),
+                          const Expanded(
+                            child: Text(
+                              'QUEST REFORGE',
+                              style: TextStyle(fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                          Text(
+                            'Tentativi: ${readIntValue(eye['reforgeQuestCredits'])}',
+                            style: TextStyle(color: color, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      TextFormField(
+                        key: ValueKey('fallen_eye_reforge_quest_${eye['id']}'),
+                        initialValue: '${eye['reforgeQuestNote'] ?? ''}',
+                        minLines: 1,
+                        maxLines: 2,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          border: InputBorder.none,
+                          hintText:
+                              'Scrivi qui cosa serve per tentare il Reforge',
+                        ),
+                        onChanged: (value) {
+                          eye['reforgeQuestNote'] = value;
+                          programmaSalvataggio();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -2743,7 +2896,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
               : 'Disevocato'}\nEvoca/Disevoca: usa 1 azione solo se disponibile\nDifficoltà proprietaria: ${fallenEyeDifficulty(eye)}\nRigenerazione: ${oculumFallenEyeCanRegenerate(rarity) ? '✓' : '🔒'}\nArt: ${(eye['activeArts'] as List? ?? []).length}/${oculumFallenEyeArtLimit(rarity)}\nArt originali: ${((eye['originalArts'] as List? ?? []).map((art) {
             final item = art is Map ? art : const <String, dynamic>{};
             return item['known'] == false || '${item['nome'] ?? ''}'.trim().isEmpty ? '???' : '${item['nome']}';
-          }).join(', '))}\nConoscenze ereditate: nessuna (Art, Skill e Titoli restano separati dall’evocatore).\nLivelli: ${oculumFallenEyeCanLevel(rarity) ? '✓' : '🔒'}\nTitoli: ${oculumFallenEyeCanHaveTitles(rarity) ? '✓' : '🔒'}\nTema: ${(eye['theme'] as Map?)?['colorPreset'] ?? 'tema scheda'}${oculumFallenEyeCanLevel(rarity) ? '\nEXP: ${(eye['sheetData'] as Map?)?['exp'] ?? 0} • ultima evocazione +${eye['lastSummonXp'] ?? 0}' : ''}${target == null ? '\nReforge Oculum (Epico): +$oculumFallenEyeEpicReforgeXp EXP per tentativo Quest.' : '\nReforge $rarity → $target: ${oculumFallenEyeReforgeChanceWithFailures(difficulty: fallenEyeDifficulty(eye), targetRarity: target, failureStreak: readIntValue(eye['reforgeFailureStreak']))}% (base ${oculumFallenEyeReforgeChance(fallenEyeDifficulty(eye), target)}% + ${oculumFallenEyeReforgeFailureBonus(readIntValue(eye['reforgeFailureStreak']))}% fallimenti)'}',
+          }).join(', '))}\nTecniche ereditate dal mostro: la rarità sblocca 0/1/2/3 Art. I Titoli del proprietario restano separati.\nLivelli: ${oculumFallenEyeCanLevel(rarity) ? '✓' : '🔒'}\nTitoli: ${oculumFallenEyeCanHaveTitles(rarity) ? '✓' : '🔒'}\nTema: ${(eye['theme'] as Map?)?['colorPreset'] ?? 'tema scheda'}${oculumFallenEyeCanLevel(rarity) ? '\nEXP: ${(eye['sheetData'] as Map?)?['exp'] ?? 0} • ultima evocazione +${eye['lastSummonXp'] ?? 0}' : ''}${target == null ? '\nReforge Oculum (Epico): +$oculumFallenEyeEpicReforgeXp EXP per tentativo Quest.' : '\nReforge $rarity → $target: ${oculumFallenEyeReforgeChanceWithFailures(difficulty: fallenEyeDifficulty(eye), targetRarity: target, failureStreak: readIntValue(eye['reforgeFailureStreak']))}% (base ${oculumFallenEyeReforgeChance(fallenEyeDifficulty(eye), target)}% + ${oculumFallenEyeReforgeFailureBonus(readIntValue(eye['reforgeFailureStreak']))}% fallimenti)'}',
         ),
         actions: [
           TextButton(

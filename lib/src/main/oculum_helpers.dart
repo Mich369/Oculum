@@ -1,5 +1,58 @@
 part of '../../main.dart';
 
+/// Exact comparison of JSON trees without materializing two encoded strings.
+/// Shared immutable strings (notably images) are compared by identity first.
+bool oculumJsonContentEquals(dynamic a, dynamic b) {
+  if (identical(a, b)) return true;
+  if (a is Map && b is Map) {
+    if (a.length != b.length) return false;
+    for (final key in a.keys) {
+      if (!b.containsKey(key) || !oculumJsonContentEquals(a[key], b[key]))
+        return false;
+    }
+    return true;
+  }
+  if (a is List && b is List) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (!oculumJsonContentEquals(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  if (a is num && b is num && a.runtimeType != b.runtimeType) return false;
+  return a == b;
+}
+
+/// Exact comparison of JSON trees without materializing two encoded strings.
+/// Shared immutable strings (notably images) are compared by identity first.
+bool oculumJsonContentEquals(dynamic a, dynamic b) {
+  if (identical(a, b)) return true;
+  if (a is Map && b is Map) {
+    if (a.length != b.length) return false;
+    for (final key in a.keys) {
+      if (!b.containsKey(key) || !oculumJsonContentEquals(a[key], b[key]))
+        return false;
+    }
+    return true;
+  }
+  if (a is List && b is List) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (!oculumJsonContentEquals(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  if (a is num && b is num && a.runtimeType != b.runtimeType) return false;
+  return a == b;
+}
+
+int oculumPinepineExplosionDamage({
+  required int remainingHp,
+  required int damage,
+}) {
+  return max(0, remainingHp) + max(0, damage);
+}
+
 int? _oculumWindows1252Byte(int codePoint) {
   if (codePoint <= 0xFF) return codePoint;
 
@@ -81,14 +134,29 @@ String _oculumDecodeMojibakePass(String value) {
   return output.toString();
 }
 
+final _oculumTextRepairCache = <String, String>{};
+final _oculumPossibleUtf8Lead = RegExp(r'[\u00C2-\u00F4]');
+
 String oculumCleanMojibakeText(String value) {
+  final cached = _oculumTextRepairCache[value];
+  if (cached != null) return cached;
+  if (!_oculumPossibleUtf8Lead.hasMatch(value)) {
+    return value.contains('\u00A0') ? value.replaceAll('\u00A0', ' ') : value;
+  }
   var cleaned = value;
   for (var i = 0; i < 5; i++) {
     final decoded = _oculumDecodeMojibakePass(cleaned);
     if (decoded == cleaned) break;
     cleaned = decoded;
   }
-  return cleaned.replaceAll('\u00A0', ' ');
+  cleaned = cleaned.replaceAll('\u00A0', ' ');
+  if (value.length <= 4096) {
+    if (_oculumTextRepairCache.length >= 1024) {
+      _oculumTextRepairCache.remove(_oculumTextRepairCache.keys.first);
+    }
+    _oculumTextRepairCache[value] = cleaned;
+  }
+  return cleaned;
 }
 
 int oculumRepairMojibakeJsonInPlace(dynamic value, {String parentKey = ''}) {
@@ -1233,7 +1301,7 @@ String oculumElementDisplayIt(String idOrName) {
     case 'vuoto':
       return 'Vuoto';
     case 'caos':
-      return 'Caos';
+      return 'Chaos';
     case 'natura':
       return 'Natura';
     case 'pianta':

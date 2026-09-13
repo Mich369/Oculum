@@ -359,6 +359,11 @@ if (-not (Test-Path -LiteralPath $WinRelease)) {
 }
 
 Write-Step "Copia Windows Release completa"
+foreach ($runtimeDll in @('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll')) {
+  if (-not (Test-Path -LiteralPath (Join-Path $WinRelease $runtimeDll))) {
+    throw "Runtime Visual C++ mancante nella release: $runtimeDll"
+  }
+}
 Copy-DirectoryContents -Source $WinRelease -Destination $WinDist
 
 # Mantiene avviabile anche build\distribution\Oculum.exe: Flutter richiede

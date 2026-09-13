@@ -309,11 +309,23 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             Align(
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
-                onPressed: leggiNumero(obserController) < 20
+                onPressed:
+                    merchantDustPurchasedSinceLongRest ||
+                        leggiNumero(obserController) < 20
                     ? null
                     : buyAscensionDustFromMerchant,
                 icon: const Icon(Icons.auto_awesome_outlined),
-                label: const Text('20 Obser → 1 Ascension Dust'),
+                label: Text(
+                  merchantDustPurchasedSinceLongRest
+                      ? t(
+                          'Dust acquistata · disponibile dopo il Riposo Lungo',
+                          'Dust purchased · available after a Long Rest',
+                        )
+                      : t(
+                          '20 Obser → 1 Ascension Dust · 1 per Riposo Lungo',
+                          '20 Obser → 1 Ascension Dust · 1 per Long Rest',
+                        ),
+                ),
               ),
             ),
             for (final offer in stock)
@@ -484,12 +496,15 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void buyAscensionDustFromMerchant() {
-    if (leggiNumero(obserController) < 20) return;
+    if (merchantDustPurchasedSinceLongRest || leggiNumero(obserController) < 20) {
+      return;
+    }
     // ignore: invalid_use_of_protected_member
     setState(() {
       obserController.text = (leggiNumero(obserController) - 20).toString();
       ascensionDustController.text = (leggiNumero(ascensionDustController) + 1)
           .toString();
+      merchantDustPurchasedSinceLongRest = true;
       risultato = 'Negoziante: 20 Obser convertiti in 1 Ascension Dust.';
       aggiungiLog(risultato);
     });

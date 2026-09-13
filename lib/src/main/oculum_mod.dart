@@ -2020,12 +2020,14 @@ extension _OculumGameModUi on _OculumHomePageState {
           children: [
             oculusHeader(page: page, help: help),
             const SizedBox(height: 10),
-            switch (page) {
-              0 => oculusIdentityAndStatsPage(),
-              1 => oculusTitlePage(),
-              2 => oculusArtPage(),
-              _ => oculusRulesPage(),
-            },
+            Expanded(
+              child: switch (page) {
+                0 => oculusIdentityAndStatsPage(),
+                1 => oculusTitlePage(),
+                2 => oculusArtPage(),
+                _ => oculusRulesPage(),
+              },
+            ),
           ],
         );
       },

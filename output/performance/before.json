@@ -1,0 +1,18 @@
+{
+  "sheets": 120,
+  "eyes": 300,
+  "tokens": 120,
+  "mode": "Flutter debug widget test; CPU pump wall time is not GPU frame time",
+  "load_sheet_ms": 85.406,
+  "campaign_bytes": 59023106,
+  "campaign_decode_ms": 411.796,
+  "master_open_ms": 3953.887,
+  "hp_10_ms": 10185.532,
+  "hp_rebuilds": 0,
+  "turn_10_ms": 6530.978,
+  "turn_rebuilds": 0,
+  "history_20_ms": 160.64,
+  "history_entries": 20,
+  "book_lookup_1000_ms": 0.311,
+  "eyes_open_ms": 406.651
+}

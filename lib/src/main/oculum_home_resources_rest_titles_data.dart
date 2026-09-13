@@ -1448,6 +1448,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     var oculumRisvegliatoDalRiposo = false;
     final potenzaNucleoDaRimuovere = <int>[];
     setState(() {
+      merchantDustPurchasedSinceLongRest = false;
       potenzaNucleoDaRimuovere.addAll(rimuoviPotenzaNucleoTemporanea());
       if (statoForzaAttivo == 'potenza_nucleo') {
         statoForzaAttivo = '';

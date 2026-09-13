@@ -41,6 +41,7 @@ import 'src/main/oculum_web_save_store_stub.dart'
 
 part 'src/main/oculum_app.dart';
 part 'src/main/oculum_helpers.dart';
+part 'src/main/oculum_performance_probe.dart';
 part 'src/main/oculum_models.dart';
 part 'src/main/oculum_skill_effects.dart';
 part 'src/main/oculum_manual_sections.dart';
@@ -1050,6 +1051,9 @@ class _OculumHomePageState extends State<OculumHomePage>
 
     setState(() {
       paginaCorrente = page;
+      if (manuscriptLivingActive && page == 0) {
+        manuscriptEditing = anchorId?.trim().isNotEmpty ?? false;
+      }
       _prepareFunctionNavigation(anchorId);
 
       if (manualIndex != null) {
@@ -1138,6 +1142,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool modalitaVeloce = false;
   bool modalitaLeggera = false;
   bool desktopSideMenuOpen = false;
+  bool manuscriptEditing = false;
   bool modalitaMaster = false;
   bool sceltaRuoloSessioneMostrata = false;
   bool tutorialDialogPending = false;
@@ -1358,6 +1363,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   List<Map<String, dynamic>> merchantStock = <Map<String, dynamic>>[];
   String merchantStockSessionId = '';
   bool merchantIsOpen = false;
+  bool merchantDustPurchasedSinceLongRest = false;
   final ascensionDustController = TextEditingController(text: '0');
   final ispirazioniController = TextEditingController(text: '0');
   final superIspirazioniController = TextEditingController(text: '0');
@@ -1827,6 +1833,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool temiOldSchool = false;
   String nuovoDesignOculum = 'cattedrale';
   bool mostraDannoCuraScheda = true;
+  bool mostraSempreColpito = false;
   bool mostraStrumentiManualeRapidi = true;
   bool settingsAppearanceExpanded = false;
   bool mostraBorsaCompatta = true;
@@ -1915,6 +1922,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       <String, Map<String, dynamic>>{};
   final Set<String> realtimeCoMasterTags = <String>{};
   List<String> realtimeEvents = [];
+  Map<String, dynamic>? realtimeDamageReportPopup;
   final Set<String> realtimeSeenEventKeys = <String>{};
   final Map<String, DateTime> realtimeRoleUpdateTimestamps =
       <String, DateTime>{};
@@ -3826,7 +3834,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       return child;
     }
 
-    final forceIconRail = viewportWidth < 980;
+    final forceIconRail = viewportWidth < 980 || manuscriptLivingActive;
     final expandedMenu = desktopSideMenuOpen && !forceIconRail;
     final tabletDesktop = viewportWidth < 1280;
     final menuWidth = expandedMenu
@@ -4649,6 +4657,7 @@ class _OculumHomePageState extends State<OculumHomePage>
               ),
             ),
             dadoOverlayCentrale(),
+            realtimeDamageReportOverlay(),
           ],
         ),
 

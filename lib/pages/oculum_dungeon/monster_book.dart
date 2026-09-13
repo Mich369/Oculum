@@ -443,9 +443,9 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     nameIt: 'Pinepine',
     nameEn: 'Pinepine',
     descIt:
-        'Mostro intermedio, livello 0. Base: Resilienza 6, Volontà 3, Materia 10, Oculum 0, Scudo Critico 1 e Resistenza 50%. Punto debole: Ferite Aperte e Fuoco. Con critico sul drop ottieni 20 Scudo Pigna: dimezza i danni non di fuoco; contro fuoco o simili la pelle esplode, danneggiando tutte le creature entro 2 metri, alleati inclusi.',
+        'Mostro intermedio, livello 0. Base: Resilienza 6, Volontà 3, Materia 10, Oculum 0, Scudo Critico 1 e Resistenza 50%. Punto debole: Ferite Aperte e Fuoco. Se viene colpito dal Fuoco, la pelle esplode: il Pinepine subisce i danni della propria esplosione, pari alla sua Vita rimanente + Danni, insieme a tutte le creature entro 2 metri, alleati inclusi. Con critico sul drop ottieni 20 Scudo Pigna: dimezza i danni non di fuoco; contro fuoco o simili esplode, coinvolgendo anche chi lo indossa.',
     descEn:
-        'Intermediate creature with 50% resistance, weak to open wounds and fire.',
+        'Intermediate creature with 50% resistance, weak to open wounds and fire. Fire detonates its cone skin, dealing its remaining Life + Damage to Pinepine itself and every creature within 2 metres, including allies.',
     elementId: 'natura',
     spriteAssetPath: '',
     isMiniBoss: true,
@@ -2177,6 +2177,64 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     skillIds: ['memory_erase', 'existence_cut', 'null_rebirth'],
     dropIds: ['null_memory_ash'],
   ),
+  MonsterBookEntry(
+    id: 'ammasso_carne_ossa_errante',
+    nameIt: 'Ammasso di Carne ed Ossa',
+    nameEn: 'Wandering Mass of Flesh and Bones',
+    descIt:
+        'Errante debole, livello 0. Una massa che cammina trascinando mascelle e costole senza ordine. Tutti i suoi punti statistica restano in Resilienza: RES 1, VOL 0, MAT 0, OCU 0. Ruolo in scena: disturbo fragile che costringe a decidere se tacitare il pianto o allontanarsi prima della morte.',
+    descEn: 'Level 0 weak wanderer made of flesh and bone.',
+    elementId: 'osso',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'resilienza': 1,
+      'volonta': 0,
+      'materia': 0,
+      'oculum': 0,
+      'hp': 10,
+      'atk': 4,
+      'def': 3,
+      'spd': 1,
+    },
+    skillIds: [
+      'fleshbone_weeping',
+      'fleshbone_total_hp_burst',
+      'fleshbone_resilience_only',
+    ],
+    dropIds: ['midollo_umido', 'scheggia_ossea_errante', 'carne_rammendata'],
+  ),
+  MonsterBookEntry(
+    id: 'ghoul_errante',
+    nameIt: 'Ghoul Errante',
+    nameEn: 'Wandering Ghoul',
+    descIt:
+        'Errante di Chaos, livello 0. Si piega dove il mondo sembra piu corto: RES 5, VOL 10, MAT 15, OCU 10. Ruolo in scena: predatore deformato che entra nella linea, rovina gli Scudi e si nutre dei danni che infligge.',
+    descEn: 'Level 0 Chaos wanderer that bends the distance around its prey.',
+    elementId: 'chaos',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'resilienza': 5,
+      'volonta': 10,
+      'materia': 15,
+      'oculum': 10,
+      'hp': 75,
+      'atk': 22,
+      'def': 12,
+      'spd': 14,
+    },
+    skillIds: [
+      'ghoul_wandering_dash',
+      'ghoul_bone_breaker',
+      'ghoul_vital_life',
+    ],
+    dropIds: ['unghia_di_ghoul', 'sangue_errante', 'frammento_chaos'],
+  ),
 ];
 
 const int targetNormalMonsterCount = 96;
@@ -3841,7 +3899,7 @@ String monsterBookSkillText(String rawId) {
     case 'archangel_order':
       return 'ordine dell arcangelo — I/un alleato si muove o si difende; II/due alleati; III/una reazione nemica viene negata.';
     case 'pinepine_cone_skin':
-      return 'pelle di pigna — I/dimezzi danni non di Fuoco; II/proteggi un alleato vicino; III/se Fuoco o simili ti colpiscono, esplodi entro 2 metri e ferisci anche gli alleati. Debole a Ferite Aperte e Fuoco.';
+      return 'Pelle di Pigna — I/dimezzi i danni non di Fuoco. Se il Fuoco ti colpisce, la pelle esplode e danneggia anche te: infligge Vita rimanente + Danni, anche a tutte le creature entro 2 metri; II/proteggi un alleato vicino, ma il Fuoco fa esplodere la pelle e infligge la tua Vita rimanente + Danni a entrambi e alle altre creature entro 2 metri; III/quando Fuoco o simili ti colpiscono, esplodi entro 2 metri e subisci anche tu i danni dell’esplosione, pari alla tua Vita rimanente + Danni, insieme agli alleati e ai nemici vicini. Debole a Ferite Aperte e Fuoco.';
     case 'lesser_frost_demon_cold_blood':
       return 'sangue freddo — I/chi ti ferisce in mischia riceve Congelamento; II/Ricordo Vitale prepara la cura; III/la reazione fredda colpisce anche chi insiste a restare vicino.';
     case 'intermediate_frost_demon_ray':
@@ -3928,6 +3986,18 @@ String monsterBookSkillText(String rawId) {
       return 'fiala stordente — I/colpisci e togli una reazione; II/il bersaglio è Stordito fino al suo prossimo turno; III/la rottura investe una piccola area, ma gli alleati devono allontanarsi per non respirarla.';
     case 'duckfrog_recoil_headbutt':
       return 'testata con rinculo — I/ritrai la testa di papera nella gola, la allunghi e colpisci: infliggi +5 + Oculum danni (1/4); II/+12 + Oculum danni (2/4) e il rinculo ti sposta fuori dalla risposta; III/+25 + Oculum danni (3/4), respingi il bersaglio e tu rimbalzi in una zona vicina. Al quarto uso la testa resta incastrata fino al turno successivo.';
+    case 'fleshbone_weeping':
+      return 'pianto — I/all inizio dello scontro ogni nemico fa un tiro: se fallisce ottiene Indebolimento fino alla fine dello scontro; II/il tiro torna ogni 3 turni e un nuovo fallimento aumenta Indebolimento; III/ogni turno il pianto magico indebolisce senza tiro chi ha meno statistiche dell Ammasso: tutti gli altri devono almeno raddoppiare il risultato richiesto per resistere.';
+    case 'fleshbone_total_hp_burst':
+      return 'esplosione di fine — I/quando muori esplodi: infliggi danni pari ai tuoi HP massimi nell area vicina; II/le ossa raggiungono anche chi si nasconde dietro un alleato; III/dopo la detonazione restano schegge che rendono pericoloso attraversare la zona. La morte resta reale: non evita la rimozione del mostro.';
+    case 'fleshbone_resilience_only':
+      return 'carne che ricresce — I/ogni punto ottenuto da questa creatura puo entrare solo in Resilienza; II/la Resilienza aggiunta aumenta anche la massa del prossimo Pianto; III/se supera un tiro di Resilienza, non subisce spostamento forzato fino al turno successivo.';
+    case 'ghoul_wandering_dash':
+      return 'scatto errante — I/il mondo taglia la distanza: il bersaglio tira Adattamento con svantaggio solo la prima volta (1/4); II/il mondo gira finche il bersaglio non abbatte il tiro con Adattamento: subisce super svantaggio (5/8); III/con critico negativo ottiene 1 Follia, altrimenti per quell azione vede gli altri e tira Oculum con svantaggio (10/16).';
+    case 'ghoul_bone_breaker':
+      return 'colpo distruggi ossa — I/il colpo usa Oltre Difesa e applica -6% Resistenza ai danni fisici fino a fine scontro (3/6); II/se colpisci dai Fragilita +1 e infliggi il 200% dei danni allo Scudo (7/12); III/mantieni Oltre Difesa, dai Fragilita +2 e infliggi il 250% dei danni allo Scudo (14/24).';
+    case 'ghoul_vital_life':
+      return 'vita da ghoul — I/ottieni Vampirismo pari al tuo Grado e Ricordo Vitale; II/il primo danno che raggiunge gli HP in un turno alimenta entrambi; III/la cura in eccesso non oltrepassa il massimo, ma Ricordo Vitale conserva la parte prevista dal suo runtime.';
     case 'duckfrog_frog_jump':
       return 'salto a rana — I/salti sopra una minaccia e il nemico bersagliato aggiunge +3 a CM + Oculum fino al suo prossimo tiro; II/il salto attraversa due zone e il bonus diventa +8 + Oculum; III/atterri alle spalle, il bonus diventa +16 + Oculum e neghi una reazione, ma devi avere spazio per il rinculo.';
     case 'duckfrog_wet_retort':
@@ -4614,6 +4684,15 @@ MonsterBookEntry? monsterById(String id) {
 /// Le Art dei mostri non sono tutte disponibili al livello zero. La soglia
 /// usa potenza e tenuta della creatura, senza alterare le Skill legacy.
 int monsterBookSkillRequiredLevel(MonsterBookEntry monster, int skillIndex) {
+  // Le Art introduttive dichiarate dal Book sono disponibili dalla creazione;
+  // le forme II e III restano nel loro slot Art e seguono i relativi livelli.
+  if (<String>{
+        'ghoul_errante',
+        'ammasso_carne_ossa_errante',
+      }.contains(monster.id) &&
+      skillIndex == 0) {
+    return 0;
+  }
   final stats = monster.stats;
   final power = max(
     stats['atk'] ?? stats['danno'] ?? 0,

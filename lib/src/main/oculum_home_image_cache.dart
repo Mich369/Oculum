@@ -49,7 +49,9 @@ class OculumDecodedImageCache {
 
   String? _cacheKey(String clean) {
     if (clean.isEmpty) return null;
-    return _oculumRawSampleSignature(clean);
+    // Full content equality prevents unrelated images with identical sampled
+    // prefixes/middles/suffixes from sharing an entry. The original is retained.
+    return clean;
   }
 
   void _store(String key, Uint8List bytes) {

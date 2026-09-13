@@ -8,23 +8,14 @@ const List<ManualSection> oculumManualSections = [
     titleIt: '1. Fondamento di Oculum',
     titleEn: '1. Core of Oculum',
     contentIt: r'''
-Oculum e un mondo dove la forza non si misura nei muscoli o nel numero di alleati, ma nella potenza degli occhi.
+In Oculum il potere passa dagli occhi. Un occhio può custodire un ricordo, portare i segni di un trauma o dare forma a ciò che desideri. Le sue capacità si intrecciano con la storia di chi lo possiede.
 
-La vera forza nasce dagli occhi.
-
-Gli occhi sono identità, potere, memoria, trauma, volontà e destino. Ogni individuo viene definito da quattro statistiche principali:
-
-• Resilienza
-• Volontà
-• Materia
-• Oculum
-
-Ogni statistica può essere usata anche in modo creativo nel roleplay, se la scena lo giustifica.
+La scheda descrive il personaggio attraverso quattro statistiche: Resilienza, Volontà, Materia e Oculum. Le usi in combattimento e nelle altre scene. Prima di tirare, racconta che cosa vuoi fare: se il modo in cui agisci lo giustifica, puoi proporre un uso diverso dal solito della tua statistica.
 ''',
     contentEn: r'''
 Oculum is a world where strength is not measured by muscles or by the number of allies, but by the power of the eyes.
 
-True strength comes from the eyes.
+Your eye carries traces of what you have lived through.
 
 Eyes are identity, power, memory, trauma, will, and fate. Every individual is defined by four main stats:
 
@@ -41,18 +32,14 @@ Each stat can also be used creatively in roleplay, if the scene justifies it.
     titleIt: '2. Resilienza',
     titleEn: '2. Resilience',
     contentIt: r'''
-Resilienza rappresenta la tenuta fisica, mentale e spirituale.
+La Resilienza misura quanto riesci a sopportare: una ferita, la fatica di un viaggio, uno sforzo mentale o spirituale. Da questa statistica dipende la tua Vita massima.
 
-Effetto principale:
-• la vita massima è Resilienza x (10 + Grado x5).
+Vita massima = Resilienza × (10 + Grado ×5).
 
-Scala superiore della Resilienza:
-• 100 Resilienza = 1 Vera Resilienza
-• 10 Vera Resilienza = 1 Resilius
-• 10 Resilius = 1 Resilium
-
-La Resilienza non è solo “quanta vita hai”.
-È quanto riesci a restare in piedi quando il corpo, la mente o l’anima vengono messi sotto pressione.
+Quando la Resilienza raggiunge valori molto alti, usa queste equivalenze:
+• 100 Resilienza = 1 Vera Resilienza;
+• 10 Vera Resilienza = 1 Resilius;
+• 10 Resilius = 1 Resilium.
 ''',
     contentEn: r'''
 Resilience represents physical, mental, and spiritual endurance.
@@ -74,18 +61,9 @@ It is how much you can remain standing when body, mind, or soul are under pressu
     titleIt: '3. Volontà',
     titleEn: '3. Will',
     contentIt: r'''
-Volontà rappresenta determinazione, pressione offensiva, forza d’animo e capacità di imporsi.
+Usi Volontà per sostenere un attacco, imporre la tua presenza e continuare ad agire sotto pressione. In una scena può esprimersi come determinazione, forza d’animo o capacità di affrontare qualcuno.
 
-Effetti principali:
-• potenzia l’attacco;
-• contribuisce a metà Difesa;
-• ogni 3 punti aumenta il tiro d’attacco;
-• ogni 1 punto di Volontà equivale a 3 kg di inventario trasportabile.
-
-La Volontà è la statistica di chi continua anche quando dovrebbe fermarsi.
-In combattimento diventa pressione.
-Nel roleplay diventa presenza.
-Nel dolore diventa resistenza interiore.
+In scheda, Volontà potenzia l’attacco e contribuisce alla Difesa insieme a Materia. Ogni 3 punti aumentano il tiro d’attacco; ogni punto permette inoltre di trasportare 3 kg di inventario.
 ''',
     contentEn: r'''
 Will represents determination, offensive pressure, inner strength, and the ability to impose yourself.
@@ -107,22 +85,9 @@ In pain, it becomes inner resistance.
     titleIt: '4. Materia',
     titleEn: '4. Materia',
     contentIt: r'''
-Materia rappresenta corpo, tecnica, struttura, precisione e capacità di dare forma alle cose.
+Materia entra in gioco quando contano il corpo, la precisione e il lavoro delle mani. La usi per forgiare, costruire, maneggiare un oggetto, reggere un impatto o eseguire un gesto tecnico.
 
-Effetti principali:
-• contribuisce a metà Difesa;
-• ogni 2 punti aumenta la CM;
-• ogni 5 punti aumenta l’Iniziativa.
-
-Materia è utile per:
-• resistere fisicamente;
-• forgiare;
-• creare;
-• manipolare oggetti;
-• reggere impatti;
-• compiere azioni tecniche o materiali.
-
-La Materia è ciò che rende reale una volontà.
+Contribuisce alla Difesa insieme a Volontà. Ogni 2 punti aumentano la CM e ogni 5 punti aumentano l’Iniziativa.
 ''',
     contentEn: r'''
 Materia represents body, technique, structure, precision, and the ability to give shape to things.
@@ -148,23 +113,9 @@ Materia is what makes will become real.
     titleIt: '5. Oculum',
     titleEn: '5. Oculum',
     contentIt: r'''
-Oculum rappresenta il potere magico personale dell’occhio.
+Oculum è il potere magico del tuo occhio. Alimenta le Arti e può manifestarsi attraverso magia, percezione, ricordi, rituali o trasformazioni, secondo le capacità del personaggio.
 
-Effetti principali:
-• ogni punto aumenta di +2 la potenza delle Arti;
-• può essere usato nei tiri per aumentarne il “+”, se la scena lo giustifica.
-
-Oculum è la statistica più personale.
-Non indica solo quanta magia possiedi, ma quanto il tuo occhio riesce a imporre la tua esistenza sul mondo.
-
-Può manifestarsi come:
-• potere oculare;
-• magia;
-• percezione;
-• destino;
-• memoria;
-• rituale;
-• trasformazione.
+Ogni punto aumenta di +2 la potenza delle Arti. Puoi anche usare Oculum per aumentare il bonus di un tiro, quando riesci a spiegare come il tuo potere interviene nella scena.
 ''',
     contentEn: r'''
 Oculum represents the personal magical power of the eye.
@@ -191,23 +142,28 @@ It can manifest as:
     titleIt: '6. Crescita delle Statistiche',
     titleEn: '6. Stat Growth',
     contentIt: r'''
-Quando un personaggio sale di livello, la crescita segue ciò che ha davvero usato nella storia.
-
-A ogni level up:
+Quando sali di livello, guarda quali statistiche hai usato durante la storia. La crescita segue quelle azioni:
 • +3 alla statistica più utilizzata;
-• +2 alla seconda statistica più utilizzata;
-• +1 a tutte le altre statistiche;
+• +2 alla seconda;
+• +1 a ciascuna delle altre;
 • +6 Scudo.
 
-Questa regola rende la crescita narrativa:
-non diventi forte “a caso”, diventi forte dove hai vissuto, lottato, fallito, resistito o insistito.
+Per i tiri che non sono attacco o difesa, il bonus è Statistica / 2 + Livello + Grado ×6.
 
-Nei tiri che non sono attacco o difesa:
-• il bonus al tiro è Statistica / 2 + Livello + Grado x6.
+Per esempio, con Resilienza 20, livello 10 e Grado I tiri 1d20 + 26: 10 dalla statistica, 10 dal livello e 6 dal Grado.
 
-Esempio:
-Se tiri Resilienza con 20 Resilienza, livello 2 e Grado I:
-• 1d20 + 18.
+CREARE UN MOSTRO
+
+Nel tutorial e nel Monster Book scegli il livello: il Grado viene calcolato automaticamente con le soglie del capitolo 9. Ogni Grado raggiunto aggiunge punti al totale da distribuire:
+• Mostro comune: +10;
+• Mini-Boss: +15;
+• Boss: +25.
+
+La crescita per livello resta di 9, 12 o 18 punti, rispettivamente. La generazione aggiunge i 3 punti per livello di compensazione dei Titoli già previsti. Un Boss di livello 30, Grado II, ha quindi 30 ×21 + 2 ×25 = 680 punti.
+
+Se il mostro ha almeno una Skill o una Oculum Art, riceve Oculum: Volontà e Materia vengono portate a soglie utili, Resilienza e Oculum ricevono le quote principali: la prima sostiene la Vita, il secondo alimenta le tecniche. Solo una creatura senza entrambe distribuisce tutto fra Resilienza, Volontà e Materia, con Oculum a zero.
+
+Al livello 0 si redistribuisce il totale delle statistiche base del Book, senza bonus di Grado. Per una creatura con poteri, la base minima è di 4 punti; senza poteri è di 3. I mostri già salvati conservano i propri valori.
 ''',
     contentEn: r'''
 When a character levels up, growth follows what they truly used in the story.
@@ -225,8 +181,11 @@ For rolls that are not attack or defense:
 • the roll bonus is Stat / 2 + Level + Grade x6.
 
 Example:
-If you roll Resilience with 20 Resilience, level 2 and Grade I:
-• 1d20 + 18.
+With 20 Resilience, level 10 and Grade I, roll 1d20 + 26.
+
+Monster creation derives Grade from level. Each Grade adds 10 stat points for a common monster, 15 for a Mini-Boss and 25 for a Boss. Level growth remains 9/12/18 points respectively, plus the existing 3-point Title compensation. A level 30, Grade II Boss therefore receives 680 points.
+
+A creature with any Skill or Oculum Art receives Oculum. Resilience and Oculum take priority, with Will and Matter brought to useful thresholds. Without either power, distribute points among Resilience, Will and Matter only. Existing saved stats are preserved.
 ''',
   ),
 
@@ -234,35 +193,20 @@ If you roll Resilience with 20 Resilience, level 2 and Grade I:
     titleIt: '7. Valori di Combattimento',
     titleEn: '7. Combat Values',
     contentIt: r'''
-DT = Difficoltà Tiro.
-È la soglia da superare per riuscire in un’azione difficile.
+Quando risolvi un’azione, questi valori ti dicono cosa tirare e quale soglia superare.
 
-CM = Classe Materia.
-È la soglia da superare per colpire un bersaglio.
+• DT, Difficoltà Tiro: la soglia di un’azione difficile.
+• CM, Classe Materia: la soglia da superare per colpire un bersaglio.
+• VC, Volontà Combattiva: il bonus principale al tiro d’attacco.
 
-VC = Volontà Combattiva.
-È il “+” principale all’attacco.
+DT, CM, VC, Danno, Difesa, Iniziativa e tiri di statistica contano anche Livello + Grado ×6.
 
-In DT, CM, VC, Danno, Difesa, Iniziativa e tiri statistica vanno contati anche:
-• Livello;
-• Grado x6.
+Iniziativa: 1d20 + Materia / 5 + Livello + Grado ×6.
+Movimento: 30 + Materia / 6 metri, più gli eventuali bonus @Movimento.
 
-Iniziativa:
-• 1d20 + Materia / 5 + Livello + Grado x6.
+Per il Danno totale somma danno base, bonus dell’arma equipaggiata e Livello + Grado ×6. Se impugni più armi, conta soltanto il bonus della più forte.
 
-Movimento:
-• 30 + Materia / 6 metri;
-• i bonus @Movimento si sommano al risultato finale.
-
-Danno totale:
-• conta il danno base;
-• conta il bonus dell’arma equipaggiata;
-• conta Livello + Grado x6;
-• se più armi sono equipaggiate, si usa solo il bonus dell’arma più forte.
-
-Difesa:
-• (Volontà + Materia) / 2 + Livello + Grado x6;
-• aggiunge anche bonus Difesa e Scudo degli oggetti equipaggiati che proteggono.
+La Difesa parte da (Volontà + Materia) / 2 + Livello + Grado ×6. Si aggiungono i bonus Difesa e Scudo degli oggetti equipaggiati che proteggono.
 ''',
     contentEn: r'''
 DT = Roll Difficulty.
@@ -300,24 +244,11 @@ Defense:
     titleIt: '8. Gradi',
     titleEn: '8. Grades',
     contentIt: r'''
-Il Grado rappresenta un salto di scala.
+Raggiungi un nuovo Grado quando arrivi alla soglia di livello indicata nel capitolo seguente. A ogni passaggio ottieni +36 Scudo e +1 Scudo Critico.
 
-Quando raggiungi un nuovo Grado:
-• ottieni +36 Scudo;
-• ottieni +1 Scudo Critico;
-• puoi livellare un numero di Titoli pari al Grado raggiunto;
-• puoi livellare solo Titoli già evoluti.
+Puoi inoltre livellare un numero di Titoli pari al Grado raggiunto, scegliendo soltanto quelli già evoluti. Questo passaggio è la riforgiatura: il Titolo riceve una nuova quest, può sviluppare nuove Skill e prosegue in una forma legata alle tue azioni e a ciò che vuoi ottenere.
 
-Livellare un Titolo già evoluto significa riforgiarlo.
-
-Un Titolo riforgiato:
-• riceve una nuova quest;
-• prosegue oltre la sua forma precedente;
-• può ottenere nuove skill;
-• evolve in base al tuo volere e alle tue azioni.
-
-Il Titolo non cresce solo perché “spendi qualcosa”.
-Cresce perché la storia dimostra che quel potere ha ancora qualcosa da dire.
+Per i punti statistica dei mostri usa il bonus del loro tipo: +10 per comune, +15 per Mini-Boss e +25 per Boss a ogni Grado.
 ''',
     contentEn: r'''
 Grade represents a jump in scale.
@@ -336,8 +267,7 @@ A reforged Title:
 • may gain new skills;
 • evolves based on your will and your actions.
 
-A Title does not grow only because you “spend something”.
-It grows because the story proves that this power still has something to say.
+The new quest ties this growth to what your character does next.
 ''',
   ),
 
@@ -345,7 +275,7 @@ It grows because the story proves that this power still has something to say.
     titleIt: '9. Soglie dei Gradi',
     titleEn: '9. Grade Thresholds',
     contentIt: r'''
-Soglie normali e soglie con Rebirth:
+Leggi la colonna normale per un personaggio o un mostro senza Rebirth. Se hai effettuato il Rebirth, usa la seconda soglia. Sotto la prima soglia sei Senza Grado.
 
 • Grado I — livello 10 / Rebirth 8
 • Grado II — livello 30 / Rebirth 20
@@ -359,6 +289,8 @@ Soglie normali e soglie con Rebirth:
 • Grado X — livello 120 / Rebirth 110
 • Grado XI — livello 150 / Rebirth 130
 • Grado XII — livello 200 / Rebirth 190
+
+Per esempio, un mostro di livello 29 è di Grado I. Al livello 30 passa al Grado II; il Grado III arriva al livello 40.
 ''',
     contentEn: r'''
 Normal thresholds and Rebirth thresholds:
@@ -382,29 +314,13 @@ Normal thresholds and Rebirth thresholds:
     titleIt: '10. Titoli del Fato Evoluti',
     titleEn: '10. Evolved Fate Titles',
     contentIt: r'''
-Ogni giorno puoi usare un Titolo del Fato evoluto.
+Una volta al giorno puoi richiamare il potere di un Titolo del Fato evoluto. Scegli un momento in cui il significato di quel Titolo riguarda ciò che stai facendo.
 
-Quando lo usi:
-• per 9 ore perde momentaneamente la sua evoluzione;
-• rimane comunque fissato al personaggio;
-• l’uso deve essere contestualizzato nella scena.
+Puoi aumentare il tiro di +1d10 oppure ottenere un Critico spirituale: dopo aver completato un tiro molto difficile, lo trasformi in un critico assicurato con ritiro.
 
-Puoi usarlo per uno di questi effetti:
+Il Titolo resta fissato al personaggio, ma perde temporaneamente l’evoluzione per 9 ore.
 
-1. Spingere il tiro
-• aumenti il tiro di +1d10.
-
-2. Critico spirituale
-• se completi un tiro molto difficile, puoi trasformarlo in un critico assicurato con ritiro.
-
-Questa regola non è solo tecnica.
-Il Titolo deve avere senso in quel momento.
-
-Esempio:
-[Saikai, L’Ultima Risorsa] è un Titolo del Fato legato alla dedizione nel finire le cose.
-
-Può essere usato per compiere un ultimo atto anche da morto:
-portare a termine il proprio compito e raccoglierne i frutti.
+Per esempio, [Saikai, L’Ultima Risorsa] riguarda la dedizione a finire ciò che si è iniziato. Può sostenere un ultimo atto anche da morto, per portare a termine il compito e raccoglierne i frutti.
 ''',
     contentEn: r'''
 Each day you may use one evolved Fate Title.
@@ -422,8 +338,7 @@ You may use it for one of these effects:
 2. Spiritual critical
 • if you complete a very difficult roll, you may turn it into a guaranteed critical with reroll.
 
-This rule is not only technical.
-The Title must make sense in that moment.
+Choose a moment that fits the meaning of the Title.
 
 Example:
 [Saikai, The Last Resource] is a Fate Title tied to dedication in finishing things.
@@ -437,26 +352,9 @@ complete the task and collect its fruits.
     titleIt: '11. Moltiplicatori',
     titleEn: '11. Multipliers',
     contentIt: r'''
-Regola generale dei moltiplicatori:
+Somma i bonus percentuali prima di applicarli al valore di partenza.
 
-• tutti i moltiplicatori si sommano;
-• il risultato si aggiunge alla fine.
-
-Questo evita calcoli troppo rotti o moltiplicazioni infinite.
-
-Esempio semplice:
-Se hai due bonus moltiplicativi:
-• +50%
-• +25%
-
-Non fai:
-danno × 1.5 × 1.25
-
-Fai:
-danno +75%
-
-Quindi:
-100 danni diventano 175 danni.
+Con +50% e +25% ottieni un unico bonus del 75%: 100 danni diventano 175. Non moltiplicare prima per 1,5 e poi per 1,25.
 ''',
     contentEn: r'''
 General multiplier rule:
@@ -464,7 +362,7 @@ General multiplier rule:
 • all multipliers are added together;
 • the result is applied at the end.
 
-This avoids broken calculations or infinite multiplication chains.
+Apply the combined percentage once to the starting value.
 
 Simple example:
 If you have two multiplier bonuses:
@@ -486,7 +384,7 @@ So:
     titleIt: '12. Danni, Resistenze e Fragilità',
     titleEn: '12. Damage, Resistances and Fragilities',
     contentIt: r'''
-Quando subisci danno, segui questo ordine:
+Risolvi il danno in questo ordine. Le capacità che ignorano Difesa o Scudi saltano soltanto il passaggio indicato dal loro effetto:
 
 1. Parti dal danno in arrivo.
 2. Applica la Difesa.
@@ -615,24 +513,17 @@ Regenerations:
     titleIt: '13. Arti, Skill e Titoli del Fato',
     titleEn: '13. Arts, Skills and Fate Titles',
     contentIt: r'''
-Le Arti sono il modo in cui il potere dell’Oculum prende forma.
+Le Arti danno forma al potere dell’Oculum. La Prima Art è legata ai Titoli del Fato: li ottieni raggiungendo queste soglie con le sue Skill.
 
-La prima Art è speciale perché è collegata ai Titoli del Fato.
+• Primo Titolo del Fato: prima Skill della Prima Art al livello 1.
+• Secondo Titolo del Fato: seconda Skill della Prima Art al livello 2.
+• Terzo Titolo del Fato: terza Skill della Prima Art al livello 3.
 
-Soglie dei Titoli del Fato:
-• Primo Titolo del Fato:
-  prima Skill della prima Art al livello 1.
+Conta la crescita dell’Art, quindi puoi ottenere un Titolo del Fato anche quando il livello del personaggio è ancora basso.
 
-• Secondo Titolo del Fato:
-  seconda Skill della prima Art al livello 2.
+Le tecniche dei mostri vengono create sulla forma 0: nessuna forma è ancora in uso. Il nome descrive ciò che fai, per esempio «Testata con rinculo». Selezioni I, II o III quando vuoi attivare quella versione. Una Skill passiva rimane sempre equipaggiata.
 
-• Terzo Titolo del Fato:
-  terza Skill della prima Art al livello 3.
-
-Questi Titoli non dipendono direttamente dal livello del personaggio.
-Dipendono dalla crescita dell’Art.
-
-Un personaggio può essere ancora basso di livello, ma ottenere un Titolo del Fato se la sua Art si risveglia davvero.
+Gli Occhi dei Caduti conservano le tecniche della creatura selezionata. La rarità permette di usare 0 Art per Comune, 1 per Non Comune, 2 per Raro e 3 per Oculum. Le altre rimangono conservate e diventano disponibili con il Reforge. Gli oggetti e i Titoli del proprietario non vengono copiati.
 ''',
     contentEn: r'''
 Arts are the way Oculum power takes shape.
@@ -660,36 +551,11 @@ A character may still be low level, but gain a Fate Title if their Art truly awa
     titleIt: '14. Risorse e Diario',
     titleEn: '14. Resources and Diary',
     contentIt: r'''
-Obser:
-non sono semplici soldi.
-Sono pietre o monete con inciso un occhio.
+Gli Obser sono pietre o monete con inciso un occhio. Li spendi come valuta, ma possono anche essere un pegno, una ricompensa o un oggetto dal valore rituale, secondo lo scambio che rappresentano.
 
-Possono rappresentare:
-• valuta;
-• pegno;
-• ricompensa;
-• memoria di scambio;
-• valore rituale.
+L’Ascension Dust è una polvere usata nella forgia, nei potenziamenti, nei rituali e nei cerchi magici. Può far ascendere oggetti, armi o poteri.
 
-Ascension Dust:
-è una polvere usata per:
-• forgiare;
-• potenziare;
-• ritualizzare;
-• creare cerchi;
-• far ascendere oggetti, armi o poteri.
-
-Diario:
-scrivere una pagina può dare Ispirazione se ha peso narrativo.
-
-Una pagina può essere:
-• un ricordo;
-• una promessa;
-• una paura;
-• una confessione;
-• un sogno;
-• una ferita;
-• un pensiero dopo una sessione.
+Nel Diario puoi annotare un ricordo, una promessa, una paura, un sogno o ciò che ti è rimasto di una sessione. Una pagina può dare Ispirazione quando racconta qualcosa che conta per il personaggio.
 ''',
     contentEn: r'''
 Obser:
@@ -729,7 +595,7 @@ A page can be:
     titleIt: '15. Riposo, Bisogni e Cenere',
     titleEn: '15. Rest, Needs and Ash',
     contentIt: r'''
-La Cenere rappresenta consumo fisico, mentale e spirituale.
+La Cenere si accumula quando ti affatichi o trascuri i tuoi bisogni. Segnala in scheda per sapere quando lo sforzo comincia a pesare sui tiri e sulla coscienza.
 
 Fatica:
 • i primi 3 + Grado stati di Cenere non danno malus ai tiri;
@@ -821,7 +687,7 @@ Long rest:
     titleIt: '16. Armi, EXP e Villaggi',
     titleEn: '16. Weapons, EXP and Villages',
     contentIt: r'''
-Armi:
+Il bonus dell’arma dipende dal suo tipo:
 - arma semplice: +5 danni;
 - arma con Titolo: +10 danni;
 - arma con Titolo gradato: +20 danni per Grado dell'arma.
@@ -889,7 +755,7 @@ Summons:
     titleIt: '17. Critici, Fragilità ed EXP dei tiri',
     titleEn: '17. Criticals, Fragility and Roll EXP',
     contentIt: r'''
-Regola base:
+Guarda prima il risultato naturale del dado, poi applica il modificatore critico:
 - ogni dado può crittare sul suo massimo naturale;
 - 1 naturale è critico negativo;
 - critico positivo: aggiungi metà dado + Livello + Grado x6 al tiro;
@@ -917,7 +783,7 @@ Critico in Iniziativa:
 Catena di Fragilità:
 - si parte da Fragilità Leggera al primo critico;
 - ogni critico successivo nello stesso fight aumenta lo stadio;
-- lo stadio massimo e Fragilità Letale;
+- lo stadio massimo è Fragilità Letale;
 - un colpo di sorpresa al punto debole può partire direttamente da stadi più alti.
 
 Danno letale:
@@ -962,7 +828,7 @@ Lethal damage:
     titleIt: '18. Cerchi Magici',
     titleEn: '18. Magic Circles',
     contentIt: r'''
-I cerchi magici si attivano con polveri, Materia, Oculum o Varianti.
+Per tracciare un cerchio magico decidi a cosa serve, quale emozione lo sostiene e quale energia sei disposto a cedere. Lo attivi con polveri, Materia, Oculum o Varianti.
 
 Creazione in 3 fasi:
 1. Tipo: Difesa, Attacco, Alterazione, Potenziamento, Sigillo, Rito complesso.
@@ -996,12 +862,14 @@ Example: a scroll that grants +3 Will for a few turns can create a self-regenera
     titleIt: '19. Open, Oculum e Sistema Plus',
     titleEn: '19. Opens, Oculum and Plus System',
     contentIt: r'''
-Open:
-- un'Open si può usare una volta ogni 3 ore;
+Un’Open richiama il potere del personaggio per un effetto più ampio. Tieni conto dei suoi tempi di recupero:
+- un’Open si può usare una volta ogni 3 ore;
 - ogni nuova sessione riduce il tempo di 1 ora se sei alleato del Fato;
 - il buff dell'Open rimane fino al recupero dell'Open;
 - le Open Skill sono versioni ridotte usabili con pochi limiti;
 - dopo l'uso dell'Open, le Open Skill collegate restano potenziate per 1 ora.
+
+Ogni Open dei mostri comprende due capacità distinte. Quando attivi l’Open, il Buff Open si applica subito. La Skill Open ha un proprio pulsante e un proprio Cooldown: usarla non riattiva il buff né azzera il recupero dell’Open. Le nuove Skill Open dei mostri hanno un recupero iniziale di 3 turni; puoi modificarne effetto e durata nella scheda. Le capacità già personalizzate conservano i propri testi e tempi.
 
 EXP di evoluzione:
 - quando un Titolo sblocca la prima Open ricevi 25 EXP, una sola volta;
@@ -1010,7 +878,7 @@ EXP di evoluzione:
 - disattivare l'evoluzione, eliminare una Open o duplicare il Titolo non permette di riscuotere di nuovo l'EXP già assegnata.
 
 Oculum:
-- e l'energia dell'oculus, l'Occhio;
+- è l'energia dell'oculus, l'Occhio;
 - serve per Oculum Art, cerchi magici e item specifici;
 - si ricarica dormendo, riposando o con oggetti.
 
@@ -1028,6 +896,8 @@ Opens:
 - the Open buff lasts until the Open is recovered;
 - Open Skills are reduced versions usable with few limits;
 - after using the Open, linked Open Skills stay empowered for 1 hour.
+
+Each monster Open has a Buff Open applied upon activation and a separate Skill Open with its own cooldown. New monster Open Skills start with a three-turn cooldown. Their effects and recovery times remain editable; existing custom abilities are preserved.
 
 Evolution EXP:
 - when a Title unlocks its first Open, you gain 25 EXP once;
@@ -1052,13 +922,13 @@ Plus System:
     titleIt: '20. Titoli, Razze e Art',
     titleEn: '20. Titles, Races and Arts',
     contentIt: r'''
-Titoli:
+Un Titolo racconta ciò che hai fatto o ciò che ti è accaduto. Per usarlo in scheda, scegli la categoria e compila benefici e limiti:
 - categorie: Azione, Item, Fato, Apprendimento, Malanno/Benessere, Alchimia/Magia, Chaos, Attributo;
 - ogni Titolo ha buff, Punto Cieco, Leggenda e possibile Titolo Evoluto;
-- ogni 3 Titoli indossati se ne mostra uno, con priorita agli Evoluti;
+- ogni 3 Titoli indossati se ne mostra uno, con priorità agli Evoluti;
 - al Grado III, VI e IX ottieni uno slot Titolo aggiuntivo;
 - i Titoli Evoluti possono essere livellati quando sali di Grado.
-- in fight i Titoli non possono essere cambiati; cio che e stato consumato o attivato resta comunque contato fino alla fine del fight.
+- in fight i Titoli non possono essere cambiati; ciò che e stato consumato o attivato resta comunque contato fino alla fine del fight.
 
 Titoli del Fato:
 - prima forma della prima skill: primo Titolo del Fato;
@@ -1075,7 +945,7 @@ Razze:
 - la razza iniziale non occupa slot;
 - in storia puoi ottenere altre 3 razze;
 - ogni razza può avere 3 sottorazze;
-- completare 12 Razze/Sottorazze rivela la vera identita e permette una terza Art.
+- completare 12 Razze/Sottorazze rivela la vera identità e permette una terza Art.
 
 Tipi di Art:
 - Oculum, Illness, Emblem, Martial, Null, Rune, Defiled;
@@ -1086,12 +956,12 @@ Tipi di Art:
 - le Defiled Art hanno 5 stadi e la loro Open non esclude le altre.
 
 Rune Art:
-- una formula nasce scegliendo parole di Target, Verbo, Aspetto, Mod, Intensita, Durata e Trigger;
-- Self / Ally e Pulse sono le prime parole obbligatorie; Intensita I e 1 azione sono sempre parole base;
+- una formula nasce scegliendo parole di Target, Verbo, Aspetto, Mod, Intensità, Durata e Trigger;
+- Self / Ally e Pulse sono le prime parole obbligatorie; Intensità I e 1 azione sono sempre parole base;
 - ogni Libro Runico insegna esattamente sei parole nuove e non viene consumato se non ce ne sono abbastanza;
-- Intensita e Durata sono sequenziali: devi conoscere il grado precedente prima del successivo;
+- Intensità e Durata sono sequenziali: devi conoscere il grado precedente prima del successivo;
 - il costo e la DT della formula sono la somma delle parole scelte;
-- il master puo aggiungere parole custom, con costo e DT propri, senza cancellare le parole ufficiali.
+- il master può aggiungere parole custom, con costo e DT propri, senza cancellare le parole ufficiali.
 ''',
     contentEn: r'''
 Titles:
@@ -1140,7 +1010,7 @@ Rune Art:
     titleIt: '21. Minigioco, Skin e Shortcut',
     titleEn: '21. Minigame, Skins and Shortcuts',
     contentIt: r'''
-Azioni stile fight:
+Durante uno scontro in Oculum Dungeon, parti da questi comandi:
 - Attacca apre Azioni Attacco: VC, CM, AoE e Tecnica Art;
 - Difenditi apre Azioni Difesa: Difesa, Counter, Fuga e Riposo fuori fight;
 - Azioni Art apre Skill Oculum, Skill Reliquia, Open Reliquia e Titoli Run;
@@ -1206,30 +1076,28 @@ Compact version:
     titleIt: '22. Guida app: scheda, zone e click',
     titleEn: '22. App guide: sheet, areas and taps',
     contentIt: r'''
-Questa sezione spiega l'app come se fosse la prima volta che tocchi una scheda.
-L'obiettivo e semplice: capire dove guardare, dove modificare e cosa succede quando tocchi un riquadro.
+Apri la Scheda per leggere le risorse e agire. Usa Modifica rapida per correggere un valore durante la sessione; le pagine dedicate raccolgono invece Titoli, Art, Skill e inventario.
 
 MODALITA INTERFACCIA
 
-- Modalita Mobile:
-  usa una colonna compatta. Le cose piu importanti stanno prima: Centro partita, immagine, identita, razza, Oculum, EXP, Vita, Danno/Cura, Combattimento, riepilogo, statistiche e valori modificabili.
+- Modalità Mobile:
+  usa una colonna compatta. Le cose più importanti stanno prima: Centro partita, immagine, identità, razza, Oculum, EXP, Vita, Danno/Cura, Combattimento, riepilogo, statistiche e valori modificabili.
 
-- Modalita Desktop:
-  usa colonne diverse. A sinistra trovi identita, immagine, razza, Oculum ed EXP. Al centro trovi comandi, combattimento, vita, danno, statistiche e modifiche. A destra trovi borsa rapida, Art/Skill modificate, party e risultato dadi.
+- Modalità Desktop:
+  usa colonne diverse. A sinistra trovi identità, immagine, razza, Oculum ed EXP. Al centro trovi comandi, combattimento, vita, danno, statistiche e modifiche. A destra trovi borsa rapida, Art/Skill modificate, party e risultato dadi.
 
-- Modalita Veloce:
+- Modalità Veloce:
   nasconde spiegazioni e blocchi ripetuti. Le funzioni non spariscono: restano raggiungibili da Modifica rapida, Cerca, menu pagina e tendine.
 
 Puoi cambiare Mobile/Desktop e Veloce dalle Impostazioni.
 
 COMBATTIMENTO E CENTRO PARTITA
 
-Il pannello unificato Combattimento e Centro partita e il cruscotto della scheda.
-Serve per le azioni che usi spesso durante una sessione:
+Nel Centro partita trovi le azioni più frequenti:
 
 - HP: porta alla zona vita.
 - Scudo: porta al campo Scudo.
-- VC: porta ai valori legati a Volonta e attacco.
+- VC: porta ai valori legati a Volontà e attacco.
 - CM: porta ai valori legati a Materia e soglia per colpirti.
 - Movimento: indica quanti metri puoi muovere, pari a 30 + Materia / 6.
 - Danno: apre la zona Danno/Cura.
@@ -1237,7 +1105,7 @@ Serve per le azioni che usi spesso durante una sessione:
 - Tira VC e Tira CM: tirano subito senza cercare la statistica.
 - Modifica: apre Modifica rapida.
 
-Se non sai dove andare, parti dal Centro partita.
+Puoi tornare al Centro partita dalla pagina Scheda.
 
 IMMAGINE E ASPETTO
 
@@ -1267,7 +1135,7 @@ Livello e Grado sono importanti per quasi tutto: VC, CM, tiri statistica, danni,
 RAZZA E TRATTI RAZZIALI
 
 La zona Razza mostra la razza visibile.
-Se il campo Razza e vuoto, l'app usa il primo Tratto Razziale creato nella pagina Titoli.
+Se il campo Razza è vuoto, l'app usa il primo Tratto Razziale creato nella pagina Titoli.
 
 Nella creazione Titoli:
 
@@ -1299,7 +1167,7 @@ Scegli la fonte:
 - Boss: x2.
 
 Se il nemico ha Grado superiore al tuo, l'app applica il moltiplicatore previsto.
-L'anteprima ti fa capire cosa verra aggiunto prima di applicarlo.
+L'anteprima ti fa capire cosa verrà aggiunto prima di applicarlo.
 
 VITA, SCUDO E DANNO/CURA
 
@@ -1309,7 +1177,7 @@ L'ordine pratico e:
 1. Lo Scudo assorbe prima.
 2. Gli HP temporanei proteggono gli HP reali.
 3. Gli HP reali sono la vita effettiva.
-4. Lo Scudo Critico dimezza il danno finale mentre e attivo.
+4. Lo Scudo Critico dimezza il danno finale mentre è attivo.
 
 Danno/Cura serve per inserire un numero e applicarlo.
 Il danno usa il tipo dominante: Fuoco, Gelo, Taglio, Maledizione, Malanno o qualunque tipo scritto nei comandi.
@@ -1319,8 +1187,8 @@ Il pulsante Refull Vita riporta gli HP attuali al massimo, rimargina HP Temp din
 TIPI DANNO LIBERI
 
 Nel campo Tipo danno / protezione puoi scrivere liberamente.
-Esempi validi: Cenere, Malanno, Maledizione, Gravita, Sangue Antico.
-Premendo Tab l'app prova a completare un tipo noto, ma un tipo nuovo resta comunque valido e viene mostrato nei colori finche esiste in arma, protezione, titolo, art o skill.
+Esempi validi: Cenere, Malanno, Maledizione, Gravità, Sangue Antico.
+Premendo Tab l'app prova a completare un tipo noto, ma un tipo nuovo resta comunque valido e viene mostrato nei colori finché esiste in arma, protezione, titolo, art o skill.
 
 SKILL E COMANDI @
 
@@ -1331,18 +1199,18 @@ Esempi:
 
 - @Danni+15 Malanno aggiunge danno Malanno.
 - @Difesa+10 Cenere aggiunge difesa Cenere.
-- @Volonta+3 modifica Volonta mentre la skill resta equipaggiata.
+- @Volonta+3 modifica Volontà mentre la skill resta equipaggiata.
 - @Materia+2 modifica Materia mentre la skill resta equipaggiata.
 - @VC+1 e @CM+1 aggiungono bonus diretti a VC e CM.
 - @Movimento+3 aggiunge metri al movimento.
-- @Stats+1 o @AllStats+1 aumentano Resilienza, Volonta, Materia e Oculum.
+- @Stats+1 o @AllStats+1 aumentano Resilienza, Volontà, Materia e Oculum.
 - @OtherStats+1 o @AltreStats+1 aumentano le altre statistiche rispetto alla risorsa/stat consumata dal trigger.
-- @Difesa-¼ applica un malus minimo di 1 anche se la frazione e piccola.
+- @Difesa-¼ applica un malus minimo di 1 anche se la frazione è piccola.
 - @Danni+1OnHit si attiva quando sei stato colpito e hai HP sotto il massimo.
-- @Vol+1=-10HP aggiunge +1 Volonta per ogni 10 HP persi.
-- @HP+1=Vol-1 aggiunge HP quando la Volonta attuale scende rispetto al valore base.
-- @HP-10=Stats+1 significa: ogni 10 HP persi, +1 a Volonta, Materia e Oculum, ma non a Resilienza per evitare loop sugli HP.
-- @Vol-1=AltreStats+1 significa: ogni Volonta persa, +1 a Resilienza, Materia e Oculum, ma non a Volonta.
+- @Vol+1=-10HP aggiunge +1 Volontà per ogni 10 HP persi.
+- @HP+1=Vol-1 aggiunge HP quando la Volontà attuale scende rispetto al valore base.
+- @HP-10=Stats+1 significa: ogni 10 HP persi, +1 a Volontà, Materia e Oculum, ma non a Resilienza per evitare loop sugli HP.
+- @Vol-1=AltreStats+1 significa: ogni Volontà persa, +1 a Resilienza, Materia e Oculum, ma non a Volontà.
 - La sezione Buff/Malus @ in Riposo/Stati accetta questi stessi comandi senza creare un Titolo.
 
 COMBATTIMENTO
@@ -1364,7 +1232,7 @@ RIEPILOGO RAPIDO
 
 Il Riepilogo rapido serve per leggere la scheda in pochi secondi.
 Mostra HP, Temp, Scudo, Scudo Critico, Karma, Difesa, Danno e formula difesa.
-In modalita non compressa mostra anche Movimento quando serve.
+In modalità non compressa mostra anche Movimento quando serve.
 
 Toccare i riquadri porta alla zona utile:
 
@@ -1376,7 +1244,7 @@ Toccare i riquadri porta alla zona utile:
 
 STATISTICHE
 
-Le quattro statistiche sono Resilienza, Volonta, Materia e Oculum.
+Le quattro statistiche sono Resilienza, Volontà, Materia e Oculum.
 Nella nuova scheda compatta:
 
 - tocca una statistica per modificarla;
@@ -1385,7 +1253,7 @@ Nella nuova scheda compatta:
 - il numero grande mostra attuale/massimo quando esiste un massimo;
 - il badge 1d20 mostra il bonus usato nel tiro.
 
-Questo evita il vecchio problema: i riquadri sembravano solo informativi, ora sono strumenti.
+Il numero mostra la risorsa; il dado accanto esegue il tiro.
 
 VALORI MODIFICABILI
 
@@ -1403,7 +1271,7 @@ Se un riquadro della scheda ti manda in modifica, di solito finisci qui.
 BORSA RAPIDA
 
 Su desktop la borsa rapida sta a lato.
-Mostra i primi oggetti e permette di aumentare o ridurre la quantita senza aprire tutto l'inventario.
+Mostra i primi oggetti e permette di aumentare o ridurre la quantità senza aprire tutto l'inventario.
 Per modifiche complete usa Apri borsa completa.
 
 ART E SKILL MODIFICATE
@@ -1426,20 +1294,20 @@ Usalo quando vuoi cambiare valori senza scorrere:
 - CM;
 - risorse.
 
-E il modo migliore per correggere qualcosa durante il gioco.
+Chiudi la modifica per tornare alla scena.
 
 RICERCA
 
 Il pulsante Cerca trova pagine, funzioni, regole, titoli, skill, art, inventario e testo.
 La ricerca prova a ignorare accenti, maiuscole e piccoli errori.
-Ora cerca anche tratti razziali, tipi danno rilevati, note, descrizioni, partecipanti dell'iniziativa Master e note turno.
+Puoi cercare anche tratti razziali, tipi danno rilevati, note, descrizioni, partecipanti dell'iniziativa Master e note turno.
 
 INIZIATIVA MASTER
 
 Nella pagina Master trovi il tracker iniziativa.
-Puoi aggiungere partecipanti manuali o usare schede gia salvate nel party Master.
+Puoi aggiungere partecipanti manuali o usare schede già salvate nel party Master.
 Durante un fight usa prima il riquadro Turno attivo: mostra chi agisce ora, totale iniziativa e round.
-Il pulsante Pubblica invia ai player la turnistica compatta; resta visibile finche premi Chiudi player o invii un nuovo aggiornamento.
+Il pulsante Pubblica invia ai player la turnistica compatta; resta visibile finché premi Chiudi player o invii un nuovo aggiornamento.
 Se la turnistica e pubblicata, cambi turno, roll, riordino e rimozioni vengono reinviati automaticamente.
 L'aggiunta manuale e a scomparsa per non occupare spazio mentre combatti.
 Ogni partecipante ha:
@@ -1452,13 +1320,13 @@ Ogni partecipante ha:
 - stato: da agire, attivo, agito, saltato, morto/KO;
 - note.
 
-Rolla tutti ordina dal totale piu alto al piu basso.
+Rolla tutti ordina dal totale più alto al più basso.
 Rolla mostri/NPC tira solo nemici, neutrali e NPC.
 Prossimo e Precedente cambiano turno, Nuovo round resetta chi non e KO, Sposta su/giu blocca l'ordine manuale.
 
 MENU LATERALE DESKTOP
 
-In Modalita Desktop una piccola freccia a sinistra apre il menu laterale.
+In Modalità Desktop una piccola freccia a sinistra apre il menu laterale.
 Da li puoi cambiare pagina e scheda senza coprire il contenuto: il menu spinge la scheda verso destra.
 Il reset layout nelle Impostazioni chiude il menu e ripristina le tendine principali.
 
@@ -1657,10 +1525,10 @@ The extra color does not change the eye sprite: it is a fallback for new or dete
   ),
 
   ManualSection(
-    titleIt: '23. Nuove funzioni operative',
-    titleEn: '23. New operative functions',
+    titleIt: '23. Dadi, riserve, oggetti e condivisione',
+    titleEn: '23. Dice, resources, equipment and sharing',
     contentIt: r'''
-Questa sezione raccoglie le funzioni nuove e come usarle durante una sessione.
+Qui trovi le procedure per dadi, riserve temporanee, Schivata Oculum, oggetti e condivisione. Consulta il paragrafo che riguarda ciò che stai facendo.
 
 DADI SU TELEFONO E PC
 
@@ -1669,23 +1537,23 @@ Su telefono la schermata Dadi e organizzata a tendina:
 - Dadi classici: d4, d6, d8, d10, d12, d20, d100.
 - Set extra: d2, d3, d5, d7, d16, d24, d30, d50, d60.
 
-Le tendine servono a tenere la pagina corta e piu leggera su schermi piccoli. Su PC resta una griglia piu larga, pensata per mouse e schermo grande.
+Le tendine servono a tenere la pagina corta e più leggera su schermi piccoli. Su PC resta una griglia più larga, pensata per mouse e schermo grande.
 Nella pagina Scheda anche "Dadi rapidi" e una tendina: puoi aprirla solo quando ti serve e richiuderla per liberare spazio.
 
 Critici dei dadi:
-- se tiri un solo dado e fai 1, il risultato e critico negativo e diventa rosso;
-- se tiri un solo dado e fai il massimo di quel dado, il risultato e critico positivo brillante;
+- se tiri un solo dado e fai 1, il risultato è critico negativo e diventa rosso;
+- se tiri un solo dado e fai il massimo di quel dado, il risultato è critico positivo brillante;
 - il critico positivo vale per tutti i dadi: d2, d3, d4, d5, d6, d7, d8, d10, d12, d16, d20, d24, d30, d50, d60 e d100;
 - critico positivo: aggiungi metà dado + Livello + Grado x6;
 - critico negativo: togli metà dado + Livello + Grado x3;
 - se il tiro nemico viene raddoppiato, quel tiro conta come critico positivo;
-- se tiri piu dadi insieme, ogni dado puo aggiungere o togliere il proprio modificatore critico.
+- se tiri più dadi insieme, ogni dado può aggiungere o togliere il proprio modificatore critico.
 
-Per evitare blocchi accidentali, la quantita di dadi viene limitata a un massimo gestibile. I dadi vengono disegnati in modo piu leggero e isolato, cosi il resto della schermata non deve ridisegnarsi inutilmente.
+Il lanciatore pone un limite alla quantità di dadi. Per un tiro di gioco usa il comando della statistica o della capacità interessata.
 
 SCUDO OCULUM
 
-Lo Scudo Oculum e una barriera legata all'occhio. Compare solo quando serve:
+Lo Scudo Oculum è una barriera legata all'occhio. Compare solo quando serve:
 - se hai Scudo Oculum attuale maggiore di 0;
 - se hai massimo Scudo Oculum maggiore di 0;
 - se un comando attivo come @ScudoOculum+5 lo concede;
@@ -1694,7 +1562,7 @@ Lo Scudo Oculum e una barriera legata all'occhio. Compare solo quando serve:
 Dove compare:
 - nella Barra della Vita, insieme a HP, HP temporanei, Scudo e Scudo Critico;
 - sotto Vita, in una piccola tabella a tendina chiamata Scudo Oculum;
-- nella Modifica rapida, cosi puoi cambiarlo senza scorrere tutta la scheda.
+- nella Modifica rapida, così puoi cambiarlo senza scorrere tutta la scheda.
 
 Colori:
 - nella barra vita usa una sfumatura tra colore dell'occhio e colore Oculum/formula;
@@ -1713,12 +1581,12 @@ Pulsanti disponibili:
 Ricarica automatica:
 - si ricarica con il riposo breve;
 - si ricarica con il riposo lungo;
-- con l'EXP recupera soltanto la quota ridotta prevista dalla difficolta; non viene ricaricato completamente.
+- con l'EXP recupera soltanto la quota ridotta prevista dalla difficoltà; non viene ricaricato completamente.
 - il pulsante Refull Vita ricarica HP, HP temporanei dinamici e Scudo Oculum. Lo Scudo normale consumato non torna.
 
 OCULUM TEMPORANEO E HP TEMPORANEI
 
-Quando ottieni Oculum oltre il massimo normale, l'eccesso diventa temporaneo entro il limite della difficolta: +6 in Facile, +5 in Normale, +3 in Difficile e +3 in Oculum. Il massimo normale non cambia. La durata viene gestita internamente attraverso i tiri validi del personaggio: dado, durata e tiri residui non vengono mostrati. Un cambio di difficolta riduce subito l'eccesso se il nuovo limite e inferiore, ma non regala Oculum se il limite aumenta.
+Quando ottieni Oculum oltre il massimo normale, l'eccesso diventa temporaneo entro il limite della difficoltà: +6 in Facile, +5 in Normale, +3 in Difficile e +3 in Oculum. Il massimo normale non cambia. La durata viene gestita internamente attraverso i tiri validi del personaggio: dado, durata e tiri residui non vengono mostrati. Un cambio di difficoltà riduce subito l'eccesso se il nuovo limite e inferiore, ma non regala Oculum se il limite aumenta.
 
 Le cure riempiono prima gli HP normali; l'eccesso diventa HP temporanei fino a un massimo di 20. Il danno consuma prima Scudo Oculum, Scudo normale, HP temporanei e infine HP normali, salvo le opzioni che ignorano gli scudi.
 
@@ -1728,37 +1596,37 @@ Ordine dei danni:
 3. HP temporanei
 4. HP reali
 
-Questo significa che, se subisci danno, viene consumato prima lo Scudo Oculum. Solo quando finisce si passa allo Scudo normale, poi agli HP temporanei, poi agli HP veri.
+Passa alla riserva successiva soltanto quando quella precedente è esaurita.
 
 SCHIVATA OCULUM
 
-La Schivata Oculum e una difesa gratuita, limitata e consumabile. Ne ottieni una ogni terzo Grado:
+La Schivata Oculum è una difesa gratuita, limitata e consumabile. Ne ottieni una ogni terzo Grado:
 - Grado III: 1 Schivata Oculum.
 - Grado VI: 2 Schivate Oculum.
 - Grado IX: 3 Schivate Oculum.
 - Grado XII: 4 Schivate Oculum.
 
 Puoi aggiungere cariche extra con il parser, per esempio @SchivataOculum+1.
-Le cariche non si rigenerano con il turno, con il riposo o con il Refull: quando ne spendi una resta consumata finche non ottieni una nuova carica.
+Le cariche non si rigenerano con il turno, con il riposo o con il Refull: quando ne spendi una resta consumata finché non ottieni una nuova carica.
 
 Quando la usi, scegli dal menu rapido:
-- Inferiore: immunita ai danni dell'azione.
+- Inferiore: immunità ai danni dell'azione.
 - Al tuo pari: riduzione del 90%.
 - Forte: riduzione del 75%, pensata per minacce fino a tre Gradi sopra di te.
 - Impossibile: riduzione del 50% contro minacce oltre quel limite.
 
 La riduzione si applica al prossimo danno subito, dopo avere contato eventuali bonus critici del danno in arrivo e prima di Difesa, Scudo Oculum, Scudo, HP temporanei e HP. La carica viene consumata quando prepari la Schivata Oculum e le cariche usate restano tracciate nella scheda.
 
-COMANDI @ NUOVI E DINAMICI
+SCRIVERE UN EFFETTO CON @
 
-I nuovi comandi funzionano dentro Titoli, Open, Art, Skill, Buff @ Oggetto e testi supportati dal parser.
-Sono dinamici: valgono solo mentre la cosa che li contiene e equipaggiata o attiva.
+Puoi scrivere questi comandi dentro Titoli, Open, Art, Skill, Buff @ Oggetto e testi supportati dal parser.
+Sono dinamici: valgono solo mentre la cosa che li contiene è equipaggiata o attiva.
 
 Comandi principali:
 - @Iniziativa+5: aggiunge +5 all'Iniziativa.
 - @HP+5: aumenta la vita massima di +5.
 - @Vita+5: uguale a @HP+5.
-- @HPTemp+Vol1/6: aggiunge HP temporanei pari a un sesto della Volonta.
+- @HPTemp+Vol1/6: aggiunge HP temporanei pari a un sesto della Volontà.
 - @ScudoOculum+5: aggiunge +5 al massimo Scudo Oculum.
 - @SchivataOculum+1: aggiunge una Schivata Oculum extra.
 - @TiroAttacco+1: aggiunge +1 ai tiri d'attacco.
@@ -1767,12 +1635,7 @@ Comandi principali:
 - @TiroStats+1: aggiunge +1 ai tiri di Resilienza, Volontà, Materia e Oculum.
 - @TiroVC+1 e @TiroCM+1: alias diretti dei bonus tiro di VC e CM.
 
-Regola anti-duplicati:
-- il comando non scrive per sempre nella statistica base;
-- se equipaggi un Titolo, il bonus appare;
-- se togli quel Titolo, il bonus sparisce;
-- se lo rimetti, il bonus torna una sola volta;
-- questo evita duplicati di statistiche o rimozioni eccessive.
+Un bonus equipaggiato dura finché tieni attivo ciò che lo concede. Togliendo il Titolo perdi il bonus; rimettendolo lo recuperi una sola volta. La statistica base rimane quella della scheda.
 
 Oggetti con buff @:
 - in Inventario ogni oggetto ha un campo "Buff @ Oggetto";
@@ -1782,7 +1645,7 @@ Oggetti con buff @:
 
 Grado oggetto:
 - ogni grado aggiunto ad armi o armature aumenta di +5 Attacco, +5 Scudo e +2 Difesa;
-- il massimo e Grado XII;
+- il massimo è Grado XII;
 - se un oggetto richiede un grado superiore al tuo, non puoi equipaggiarlo.
 
 Putrefazione oggetti:
@@ -1792,18 +1655,18 @@ Putrefazione oggetti:
 - materiali e metalli diventano "Materiale putrefatto";
 - lo Slime diventa "Slime putrefatto";
 - gli altri oggetti diventano "Oggetto putrefatto";
-- piu oggetti putrefatti dello stesso tipo si uniscono nello stesso stack.
+- più oggetti putrefatti dello stesso tipo si uniscono nello stesso stack.
 
 HP temporanei dinamici:
-- @HPTemp+Vol1/6 puo dipendere dalla Volonta attuale;
-- se la Volonta cambia, il bonus si aggiorna;
+- @HPTemp+Vol1/6 può dipendere dalla Volontà attuale;
+- se la Volontà cambia, il bonus si aggiorna;
 - se il danno consuma quegli HP temporanei, l'app tiene memoria della parte consumata;
-- quando il bonus non e piu attivo, non resta appiccicato come valore permanente.
+- quando il bonus non e più attivo, non resta appiccicato come valore permanente.
 
 Scudo dinamico:
 - @Scudo+X funziona come riserva dinamica;
 - se il danno lo consuma, la parte consumata resta consumata;
-- Refull Vita non azzera il consumo dello Scudo normale: se lo perdi, resta perso finche non ottieni nuovo Scudo da una regola, oggetto o bonus.
+- Refull Vita non azzera il consumo dello Scudo normale: se lo perdi, resta perso finché non ottieni nuovo Scudo da una regola, oggetto o bonus.
 
 FORMULE E ALIAS UTILI
 
@@ -1822,7 +1685,7 @@ Esempi:
 - @HPTemp+Vol1/6 usa una formula;
 - @ScudoOculum+5 crea o aumenta la barriera dell'occhio;
 - @SchivataOculum+1 aggiunge una carica extra di Schivata Oculum;
-- @TiroAttacco+1, @TiroDifesa+1, @TiroVolontà+1 e @TiroStats+1 si sommano ai bonus rapidi gia presenti, ma non modificano le statistiche base.
+- @TiroAttacco+1, @TiroDifesa+1, @TiroVolontà+1 e @TiroStats+1 si sommano ai bonus rapidi già presenti, ma non modificano le statistiche base.
 
 PERMESSI SCHEDA AGLI AMICI
 
@@ -1862,7 +1725,7 @@ Limiti:
 MODIFICA RAPIDA
 
 Il pulsante con l'occhio nella barra in alto apre Modifica rapida.
-Ora include anche:
+Da qui puoi cambiare:
 - Scudo Oculum attuale;
 - Massimo Scudo Oculum;
 - HP, HP temporanei, Scudo e Scudo Critico;
@@ -1877,13 +1740,13 @@ Mostra sempre Scudo Oculum:
 - se spento, Scudo Oculum compare solo quando hai valore, massimo o comando attivo;
 - se acceso, la sezione resta visibile anche a 0, utile per preparare una build o controllare la regola.
 
-Modalita Desktop:
-- su PC puoi usare menu laterale e layout piu largo;
-- su telefono l'app privilegia tendine, pannelli compatti e ombre piu leggere.
+Modalità Desktop:
+- su PC puoi usare menu laterale e layout più largo;
+- su telefono l'app privilegia tendine, pannelli compatti e ombre più leggere.
 
 MINIGIOCO OCULUM DUNGEON
 
-Nel minigioco sono stati aggiunti:
+In Oculum Dungeon trovi:
 - indicatore Karma nella HUD;
 - Scudo Oculum della run, mostrato come SO attuale/massimo;
 - eventi rari dello Scudo Oculum;
@@ -1914,19 +1777,12 @@ Reliquia Occhio dello Scudo Oculum:
 - la vita massima viene ridotta del 60%;
 - lo Scudo Oculum assorbe prima dello Scudo normale.
 
-PRESTAZIONI
+LEGGERE E MODIFICARE I VALORI
 
-L'app e stata alleggerita per telefono e PC:
-- i pannelli su telefono usano ombre piu leggere;
-- nei pannelli Vita e Scudo Oculum i valori compatti si modificano da dialog, evitando errori di TextField nelle tendine;
-- i dadi sono isolati graficamente per ridurre ridisegni inutili;
-- la barra vita calcola i segmenti una volta sola invece di richiamare piu funzioni ripetute;
-- i set di dadi su telefono sono in tendine chiudibili;
-- i tiri enormi accidentali vengono limitati per non bloccare la UI;
-- il critico brillante viene calcolato in modo semplice: risultato naturale uguale al massimo del dado.
+Tocca un valore compatto di Vita o Scudo Oculum per aprirne la modifica. Sul telefono puoi richiudere i gruppi di dadi quando hai finito. Il risultato naturale massimo del dado viene evidenziato come critico positivo.
 ''',
     contentEn: r'''
-This section collects the new functions and how to use them during play.
+Use these procedures when rolling dice, managing temporary resources, editing equipment or sharing a sheet.
 
 DICE ON PHONE AND PC
 
@@ -2189,7 +2045,7 @@ Questa sezione riassume le regole automatizzate nell'app.
 
 VITA E GRADO
 
-La vita massima non usa piu un x10 fisso.
+La vita massima non usa più un x10 fisso.
 Formula:
 - Vita massima = Resilienza x (10 + Grado x5).
 
@@ -2200,11 +2056,11 @@ Esempi:
 
 DADI E CRITICI
 
-Ogni dado puo generare un critico:
+Ogni dado può generare un critico:
 - 1 naturale: critico negativo;
 - massimo naturale del dado: critico positivo.
 
-Il modificatore critico si applica a ogni dado, anche quando tiri piu dadi insieme.
+Il modificatore critico si applica a ogni dado, anche quando tiri più dadi insieme.
 - Critico positivo: aggiungi meta del dado + Livello + Grado x6.
 - Critico negativo: togli meta del dado + Livello + Grado x3.
 - Se il tiro nemico viene raddoppiato, quel tiro conta come critico positivo.
@@ -2224,13 +2080,13 @@ Dopo il calcolo restano attive tutte le altre regole: Difesa, Scudo Oculum, Scud
 
 VANTAGGIO E SVANTAGGIO
 
-La scheda puo applicare un modificatore globale ai tiri senza cambiare le statistiche base.
+La scheda può applicare un modificatore globale ai tiri senza cambiare le statistiche base.
 La scala va da Svantaggio Oculum (-12) a Vantaggio Oculum (+12), passando per svantaggi e vantaggi minori, normali, veri, super e ultra.
 Il valore scelto si somma ai tiri di statistica, VC, CM e Iniziativa. Serve per condizioni temporanee, terreno, posizione, aiuti narrativi o pressione della scena.
 
 DT - DIFFICOLTA TIRO
 
-Ogni scheda ha un campo DT modificabile scrivendo un numero. Il valore 0 e neutro. Un DT positivo viene sottratto dal totale di tutti i tiri della scheda, rendendoli piu difficili; un DT negativo facilita i tiri. La formula visualizzata mostra sempre la DT applicata. Un 1 o il massimo naturale del dado restano comunque critici naturali.
+Ogni scheda ha un campo DT modificabile scrivendo un numero. Il valore 0 e neutro. Un DT positivo viene sottratto dal totale di tutti i tiri della scheda, rendendoli più difficili; un DT negativo facilita i tiri. La formula visualizzata mostra sempre la DT applicata. Un 1 o il massimo naturale del dado restano comunque critici naturali.
 
 MODIFICATORI DI DANNO E CURA
 
@@ -2262,7 +2118,7 @@ Opzioni impatto nel pannello Danno / Cura:
 - Oltre scudi: il danno salta Scudo Oculum e Scudo, ma continua a rispettare HP temporanei, HP e le altre regole.
 - Bonus danno agli scudi %: aumenta solo il danno consumato dagli scudi. L'eccesso non diventa danno extra alla vita.
 
-I recuperi EXP dipendono dalla difficolta e non superano mai i massimali naturali. Facile: ogni 100 EXP recuperi fino a 4 HP e 1 Oculum; alla soglia 369 recuperi un quinto degli HP massimi, un quarto dell'Oculum massimo e un decimo dello Scudo Oculum. Normale: ogni 150 EXP recuperi fino a 3 HP e 1 Oculum; alla soglia 369 recuperi un sesto HP, un quinto Oculum e un quindicesimo dello Scudo Oculum. Difficile: ogni 200 EXP recuperi fino a 2 HP e 1 Oculum; alla soglia 369 recuperi un ottavo HP, un sesto Oculum e un ventesimo dello Scudo Oculum. Oculum: ogni 300 EXP recuperi fino a 1 HP e 1 Oculum; alla soglia 369 recuperi un decimo HP, un ottavo Oculum e un trentesimo dello Scudo Oculum. Il resto di EXP viene conservato verso il recupero successivo.
+I recuperi EXP dipendono dalla difficoltà e non superano mai i massimali naturali. Facile: ogni 100 EXP recuperi fino a 4 HP e 1 Oculum; alla soglia 369 recuperi un quinto degli HP massimi, un quarto dell'Oculum massimo è un decimo dello Scudo Oculum. Normale: ogni 150 EXP recuperi fino a 3 HP e 1 Oculum; alla soglia 369 recuperi un sesto HP, un quinto Oculum e un quindicesimo dello Scudo Oculum. Difficile: ogni 200 EXP recuperi fino a 2 HP e 1 Oculum; alla soglia 369 recuperi un ottavo HP, un sesto Oculum e un ventesimo dello Scudo Oculum. Oculum: ogni 300 EXP recuperi fino a 1 HP e 1 Oculum; alla soglia 369 recuperi un decimo HP, un ottavo Oculum e un trentesimo dello Scudo Oculum. Il resto di EXP viene conservato verso il recupero successivo.
 
 SCUDO DI SALVATAGGIO
 
@@ -2284,16 +2140,16 @@ Unita del calendario:
 
 Le 12 Nuove Fasi del Ciclo Pieno:
 - Safe Monster, giorni 1-36: molti mostri perdono il Grado, diventano pacifici, danno karma negativo se uccisi e non hanno drop oltre quelli base o rari.
-- Illness, giorni 37-72: la Follia ricevuta raddoppia, gli "altri" diventano visibili e si puo ottenere Illness Art.
-- Little Breath, giorni 73-108: il Fato concede piu Titoli, soprattutto ai rebirthati; clima e sentore delle aree sono piu deboli.
-- Piogge Fertilizzanti, giorni 109-144: piove fango nauseante, i malanni sono piu facili e il cibo puo causare Nausea.
+- Illness, giorni 37-72: la Follia ricevuta raddoppia, gli "altri" diventano visibili e si può ottenere Illness Art.
+- Little Breath, giorni 73-108: il Fato concede più Titoli, soprattutto ai rebirthati; clima e sentore delle aree sono più deboli.
+- Piogge Fertilizzanti, giorni 109-144: piove fango nauseante, i malanni sono più facili e il cibo può causare Nausea.
 - The Sun, giorni 145-150: i Solari ricevono +25% alle stats, non piove e il cibo sotto Grado VI marcisce entro massimo 2 giorni.
 - Mezzo Ciclo, giorni 151-183: il meteo diventa reggibile quasi ovunque e le piogge tornano principalmente non magiche.
 - The Moon, giorni 184-189: si festeggia l'accettazione di ogni razza; i Lunari ricevono +10%.
 - The Fate, giorni 190-225: chi possiede un Fato e potenziato contro chi non ne possiede uno.
-- Caldo Infernale, giorni 226-261: il caldo pesa molto di piu; senza bere si subiscono debuff a Volonta in base alla fatica.
+- Caldo Infernale, giorni 226-261: il caldo pesa molto di più; senza bere si subiscono debuff a Volontà in base alla fatica.
 - The Null, giorni 262-297: il vuoto prende parte dei caduti e li fa rinascere Senza Fato, con ricordi assenti o falsati.
-- Ghiaccio Imponente, giorni 298-333: il freddo pesa molto di piu; senza calore si perde Materia e si rischia il congelamento.
+- Ghiaccio Imponente, giorni 298-333: il freddo pesa molto di più; senza calore si perde Materia e si rischia il congelamento.
 - Ultimo Ciclo, giorni 334-369: si festeggia il ciclo passato, senza peculiarita meccaniche forti.
 
 RIPOSO
@@ -2328,10 +2184,10 @@ Oggetti putrefatti dello stesso tipo si uniscono nello stesso stack.
 STATO DI FORZA
 
 Lo Stato di Forza si controlla automaticamente quando gli HP scendono a un quarto o meno della vita massima.
-L'app pesca uno stato casuale. Gli stati piu forti sono piu rari, ma non impossibili.
+L'app pesca uno stato casuale. Gli stati più forti sono più rari, ma non impossibili.
 
 Possibili risultati:
-- Corpo non Mollare: +20 + Livello + Grado HP temporanei, +3 Volonta, +2 Materia.
+- Corpo non Mollare: +20 + Livello + Grado HP temporanei, +3 Volontà, +2 Materia.
 - Occhi Attenti: +5 + Livello + Grado ai tiri di attacco e difesa.
 - Esplosione di Oculum: +25 HP, Oculum attuale pari alla vita anche oltre il massimo, danni pari a Livello + Grado, difesa pari alla meta di Livello + Grado e durata minima 9 tiri, inclusi i sottotratti.
 - Adrenalina: +1 Reazione veloce e +5 + Livello + Grado iniziativa.
@@ -2344,8 +2200,8 @@ Lo stato si applica da solo quando subisci danni o modifichi gli HP. Quando Espl
 
 MAPPA E TOKEN
 
-Nella mappa non online puoi usare token derivati dalle schede o creati da immagini gia generate.
-Il token puo essere ridimensionato rapidamente con i pulsanti + e - direttamente sulla mappa.
+Nella mappa non online puoi usare token derivati dalle schede o creati da immagini già generate.
+Il token può essere ridimensionato rapidamente con i pulsanti + e - direttamente sulla mappa.
 Con tasto destro o pressione lunga puoi gestire opzioni e turnistica.
 
 I token collegati alla turnistica riprendono le loro statistiche. A ogni nuovo turno il movimento disponibile viene resettato.
@@ -2354,27 +2210,27 @@ Gli utenti possono muovere solo i propri token, salvo permessi del Master.
 DUNGEON
 
 Il tema "Giorno di scuola" si sblocca automaticamente se arrivi al piano 3 con l'Art Scolastica Moderna scelta nella run.
-Il tema resta anche acquistabile dagli sblocchi del dungeon, cosi le progressioni piu vecchie possono recuperarlo.
+Il tema resta anche acquistabile dagli sblocchi del dungeon, così le progressioni più vecchie possono recuperarlo.
 
 Kitty Slime si sblocca selezionando l'Art Hoshy o avendo una scheda chiamata Hoshy almeno di livello 5.
-Ha moltissima vita e pochi danni. Quando subisce un attacco ha il 50% di probabilita di generare una copia, fino a due copie.
-Le copie hanno meta delle sue statistiche, sono piu facili da colpire rispetto al personaggio principale e attaccano insieme a lui.
+Ha moltissima vita e pochi danni. Quando subisce un attacco ha il 50% di probabilità di generare una copia, fino a due copie.
+Le copie hanno meta delle sue statistiche, sono più facili da colpire rispetto al personaggio principale e attaccano insieme a lui.
 
 EQUIPAGGIAMENTO DELLA RUN
 
 Nel dungeon puoi cambiare arma, costume e Oculus solo con cose trovate o comprate nella run corrente.
-Le armi possono apparire negli eventi e nei negozi. Alcune armi bloccate possono comparire raramente, ma quelle sbloccate sono piu comuni.
-I costumi seguono la stessa regola: li puoi indossare solo dopo averli trovati nella run, anche quando appartengono a contenuti gia sbloccati.
+Le armi possono apparire negli eventi e nei negozi. Alcune armi bloccate possono comparire raramente, ma quelle sbloccate sono più comuni.
+I costumi seguono la stessa regola: li puoi indossare solo dopo averli trovati nella run, anche quando appartengono a contenuti già sbloccati.
 
 Gli Oculus permettono di aggiungere Skill Oculum da altre Art Oculum, fino a un massimo di 9 skill attive nella run.
-Quando installi un Oculus, la scena viene descritta cosi: "Togli un tuo occhio, fa male, lo sostituisci con un oculus pieno di potere."
-Gli Oculus delle Art gia sbloccate sono piu frequenti; quelli non sbloccati sono rari.
+Quando installi un Oculus, la scena viene descritta così: "Togli un tuo occhio, fa male, lo sostituisci con un oculus pieno di potere."
+Gli Oculus delle Art già sbloccate sono più frequenti; quelli non sbloccati sono rari.
 
 NPC EVOCABILI
 
 Gli NPC trovati nella run non entrano nel party permanente.
 Vanno in una coda di evocazione e possono sostituire automaticamente un alleato quando qualcuno muore o sparisce.
-Se li rimuovi manualmente, non vengono evocati di nuovo automaticamente finche non li riaggiungi.
+Se li rimuovi manualmente, non vengono evocati di nuovo automaticamente finché non li riaggiungi.
 
 COSTUME: CUORE DI RICAMBIO SBAGLIATO
 
@@ -2382,20 +2238,20 @@ Cuore di Ricambio Sbagliato e un costume rischioso.
 Quando lo indossi, riduce molto la vita massima, concede una Rinascita e rigenera tra 20 e 150 HP a ogni turno di combattimento.
 Il bonus e forte, ma il taglio alla vita rende pericolosi i colpi grossi e le stanze con danni improvvisi.
 
-Dal Grado VI puo comparire l'evento Occhio di Pietra e Bilancia.
+Dal Grado VI può comparire l'evento Occhio di Pietra e Bilancia.
 L'occhio di pietra osserva una bilancia vuota. Puoi appoggiare tutti i drop e tutto il Metallo Runico Postea posseduto nella run.
-La stanza fonde tutto in una volta come un fabbro piu forte:
+La stanza fonde tutto in una volta come un fabbro più forte:
 - aumenta danno arma;
 - aumenta difesa arma;
 - aggiunge resistenze dagli elementi dei drop;
-- puo generare Dust, critico run, Scudo Oculum e favore del fabbro.
+- può generare Dust, critico run, Scudo Oculum e favore del fabbro.
 
 Se non hai oggetti da fondere, l'evento non blocca la run e concede Scudo Oculum.
 
 PRESTAZIONI
 
 L'app deve restare fluida su telefono, desktop e macOS.
-Le ottimizzazioni devono alleggerire calcoli e ridisegni senza rimuovere decorazioni, painter, temi o funzioni gia presenti.
+Le ottimizzazioni devono alleggerire calcoli e ridisegni senza rimuovere decorazioni, painter, temi o funzioni già presenti.
 ''',
     contentEn: r'''
 This section summarizes the rules automated by the app.
@@ -2650,11 +2506,11 @@ STATI OCULUM AL RISVEGLIO
 
 Oculum addormentato azzera immediatamente l'Oculum disponibile quando viene ottenuto. Finche resta attivo, ogni fonte che dona, recupera o rigenera Oculum concede la meta arrotondata per difetto; costi e consumi non vengono dimezzati. Il personaggio si risveglia dopo due riposi lunghi oppure dopo due riposi brevi e un riposo lungo. Il risveglio rimuove soltanto la condizione: Oculum attuale, temporaneo e massimo, caratteristiche e potenziamenti permanenti restano invariati.
 
-I tiri non consumano statistiche quando Consumo elevato e disattivato, salvo le eccezioni speciali gia indicate: il tiro Fortuna spende Fortuna se disponibile, i costi espliciti di Skill, Art, Open e Titoli restano validi e la dispersione Oculum segue la propria regola. Quando Consumo elevato e attivo consuma 1 punto della statistica principale collegata a ogni tiro valido. Un tiro su una statistica usa quella statistica; un tiro su un sottotratto usa la statistica principale del suo gruppo. Riflessi usa Materia e Percezione usa Oculum. Resilienza e Volonta non scendono sotto 1; Materia e Oculum non scendono sotto 0. Entrambi gli stati possono essere attivati da una Skill. Al riposo lungo possono comparire in base alla fase, alla Fortuna nelle Risorse e alla difficolta della campagna; durante le Piogge fertilizzanti la probabilita base e 50%.
+I tiri non consumano statistiche quando Consumo elevato è disattivato, salvo le eccezioni speciali già indicate: il tiro Fortuna spende Fortuna se disponibile, i costi espliciti di Skill, Art, Open e Titoli restano validi e la dispersione Oculum segue la propria regola. Quando Consumo elevato è attivo consuma 1 punto della statistica principale collegata a ogni tiro valido. Un tiro su una statistica usa quella statistica; un tiro su un sottotratto usa la statistica principale del suo gruppo. Riflessi usa Materia e Percezione usa Oculum. Resilienza e Volontà non scendono sotto 1; Materia e Oculum non scendono sotto 0. Entrambi gli stati possono essere attivati da una Skill. Al riposo lungo possono comparire in base alla fase, alla Fortuna nelle Risorse e alla difficoltà della campagna; durante le Piogge fertilizzanti la probabilità base è 50%.
 
 MODALITA GUIDATA, VELOCE E ASPETTO
 
-La modalita guidata mostra spiegazioni semplici ed esempi accanto ai comandi principali. La modalita veloce nasconde queste spiegazioni ma non elimina funzioni. In Impostazioni, Aspetto e modalita raccoglie design, temi old school, caratteri e stili della Vita con anteprima. Cuori Occhio Oculum rappresenta la percentuale di HP con cinque cuori-occhio compatti; il misuratore Oculum conserva l'occhio centrale e usa dieci fiammelle per la percentuale disponibile. Le altre barre hanno forme e segni realmente distinti. Queste opzioni cambiano soltanto la presentazione e non i dati di gioco.
+La modalità guidata mostra spiegazioni semplici ed esempi accanto ai comandi principali. La modalità veloce nasconde queste spiegazioni ma non elimina funzioni. In Impostazioni, Aspetto e modalità raccoglie design, temi old school, caratteri e stili della Vita con anteprima. Cuori Occhio Oculum rappresenta la percentuale di HP con cinque cuori-occhio compatti; il misuratore Oculum conserva l'occhio centrale e usa dieci fiammelle per la percentuale disponibile. Le altre barre hanno forme e segni realmente distinti. Queste opzioni cambiano soltanto la presentazione e non i dati di gioco.
 ''',
   contentEn: r'''
 These rules cover Oculum time, automatic crises and exploration activities. General life, damage, critical and EXP formulas remain in the previous sections and are not repeated here.
@@ -2789,7 +2645,7 @@ List<pw.Widget> _oculumManualPdfBodyWidgets(
                   child: pw.Text(
                     line.substring(2).trim(),
                     style: bodyStyle,
-                    textAlign: pw.TextAlign.justify,
+                    textAlign: pw.TextAlign.left,
                   ),
                 ),
               ],
@@ -2803,7 +2659,7 @@ List<pw.Widget> _oculumManualPdfBodyWidgets(
             child: pw.Text(
               line,
               style: bodyStyle,
-              textAlign: pw.TextAlign.justify,
+              textAlign: pw.TextAlign.left,
             ),
           ),
         );
@@ -2840,17 +2696,17 @@ Future<Uint8List> oculumBuildManualPdf({required bool english}) async {
   final titleStyle = pw.TextStyle(
     font: boldFont,
     fontSize: 29,
-    color: PdfColors.deepPurple800,
+    color: PdfColor.fromHex('#392719'),
   );
   final sectionStyle = pw.TextStyle(
     font: boldFont,
     fontSize: 17,
-    color: PdfColors.deepPurple800,
+    color: PdfColor.fromHex('#392719'),
   );
   final subheadingStyle = pw.TextStyle(
     font: boldFont,
     fontSize: 11.5,
-    color: PdfColors.deepPurple700,
+    color: PdfColor.fromHex('#85602D'),
   );
   final bodyStyle = pw.TextStyle(
     font: baseFont,
@@ -2873,7 +2729,11 @@ Future<Uint8List> oculumBuildManualPdf({required bool english}) async {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Spacer(flex: 2),
-          pw.Container(width: 58, height: 5, color: PdfColors.deepPurple700),
+          pw.Container(
+            width: 58,
+            height: 5,
+            color: PdfColor.fromHex('#85602D'),
+          ),
           pw.SizedBox(height: 18),
           pw.Text(
             english ? 'OCULUM RULEBOOK' : 'MANUALE DI OCULUM',
@@ -2887,16 +2747,16 @@ Future<Uint8List> oculumBuildManualPdf({required bool english}) async {
             style: pw.TextStyle(
               font: italicFont,
               fontSize: 15,
-              color: PdfColors.deepPurple600,
+              color: PdfColor.fromHex('#705634'),
             ),
           ),
           pw.SizedBox(height: 24),
           pw.Text(
             english
                 ? 'A complete reference generated from the same manual used by the app. Read the core chapters in order, then use the operational chapters during play.'
-                : 'Un riferimento completo generato dallo stesso manuale usato dall app. Leggi i capitoli fondamentali in ordine e consulta quelli operativi durante la sessione.',
+                : 'Per cominciare, leggi le statistiche, i tiri e la crescita. Durante la partita torna ai capitoli su danni, risorse e poteri; la guida alla scheda ti aiuta a trovare i comandi.',
             style: bodyStyle,
-            textAlign: pw.TextAlign.justify,
+            textAlign: pw.TextAlign.left,
           ),
           pw.Spacer(flex: 3),
           pw.Text(
@@ -2912,6 +2772,7 @@ Future<Uint8List> oculumBuildManualPdf({required bool english}) async {
 
   document.addPage(
     pw.MultiPage(
+      maxPages: 100,
       theme: theme,
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.fromLTRB(38, 42, 38, 40),
@@ -2951,7 +2812,12 @@ Future<Uint8List> oculumBuildManualPdf({required bool english}) async {
         ];
 
         for (final section in activeManualSections) {
-          widgets.add(pw.NewPage());
+          widgets.add(
+            section == activeManualSections.first
+                ? pw.NewPage()
+                : pw.NewPage(freeSpace: 140),
+          );
+          widgets.add(pw.SizedBox(height: 16));
           widgets.add(
             pw.Text(
               oculumManualPdfText(english ? section.titleEn : section.titleIt),

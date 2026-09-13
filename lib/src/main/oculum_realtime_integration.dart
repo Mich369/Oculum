@@ -552,6 +552,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         case 'initiative_turn_adjusted':
           receiveRealtimeReportedTurn(payload);
           break;
+        case 'damage_report':
+          if (realtimeIsMasterRole) {
+            realtimeDamageReportPopup = Map<String, dynamic>.from(payload);
+          }
+          aggiungiLog('[Realtime] $text');
+          break;
         case 'dungeon_shared':
           realtimeDungeonMessage.value = Map<String, dynamic>.from(payload);
           rememberRealtimeDungeonHost(payload);
@@ -768,6 +774,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             ' = ${payload['total'] ?? '?'}';
       case 'party_log':
         return '$player: ${payload['message'] ?? ''}';
+      case 'damage_report':
+        return '$player dichiara ${payload['formula'] ?? payload['totalDamage'] ?? '?'} '
+            '${payload['damageType'] ?? 'Normale'}';
       case 'session_note':
         final note = OculumSessionNote.tryParse(payload);
         if (note == null) return '$player: ${payload['message'] ?? ''}';
@@ -887,6 +896,97 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         maxHp: maxHp(),
         tempHp: hpTemp(),
         shield: scudo(),
+      ),
+    );
+  }
+
+  void sendRealtimeDamageReport({
+    required int baseDamage,
+    required int bonusDamage,
+    required int totalDamage,
+    required String damageType,
+  }) {
+    final service = realtimeService;
+    final formula = bonusDamage == 0
+        ? '$baseDamage'
+        : '$baseDamage ${bonusDamage >= 0 ? '+' : '-'} ${bonusDamage.abs()}';
+    if (service?.isConnected == true) {
+      unawaited(
+        service!.sendDamageReport(
+          baseDamage: baseDamage,
+          bonusDamage: bonusDamage,
+          totalDamage: totalDamage,
+          damageType: damageType,
+          formula: formula,
+        ),
+      );
+    }
+  }
+
+  Widget realtimeDamageReportOverlay() {
+    final report = realtimeDamageReportPopup;
+    if (report == null || !realtimeIsMasterRole) return const SizedBox.shrink();
+    final player = cleanUiText('${report['playerName'] ?? 'Giocatore'}');
+    final formula = cleanUiText(
+      '${report['formula'] ?? report['totalDamage'] ?? '?'}',
+    );
+    final type = cleanUiText('${report['damageType'] ?? 'Normale'}');
+    final total = readIntValue(report['totalDamage']);
+    return Positioned(
+      top: 18,
+      right: 18,
+      child: SafeArea(
+        child: GestureDetector(
+          onTap: () => setState(() => realtimeDamageReportPopup = null),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 300),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF15131B).withValues(alpha: .97),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Colors.redAccent.withValues(alpha: .85),
+                ),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black54, blurRadius: 16),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$player • COLPITO',
+                    style: TextStyle(
+                      color: tertiaryColor,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '$formula  •  $type',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  Text(
+                    '$total',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 38,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const Text(
+                    'Tocca il riquadro per chiuderlo.',
+                    style: TextStyle(color: Colors.white54, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
