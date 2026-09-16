@@ -433,7 +433,9 @@ class _BottomNavButton extends StatelessWidget {
         highlightColor: selectedColor.withValues(alpha: 0.14),
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 160),
           curve: Curves.easeOutCubic,
           padding: EdgeInsets.symmetric(
             horizontal: compact ? 3 : 4,

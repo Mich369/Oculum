@@ -777,7 +777,13 @@ extension _OculumDungeonRealtimeCoop on _OculumDungeonGameDialogState {
           gainPlayerShield(shield);
           totalShield += shield;
         }
-        if (shouldAttack && target.hp > 0) {
+        if (shouldAttack && parts.contains('postea_chain') && target.hp > 0) {
+          final shots = _random.nextInt(6) + 1;
+          for (var shot = 0; shot < shots && target.hp > 0; shot++) {
+            applyDamageToEnemy(target, 5);
+          }
+          totalDamage += shots * 5;
+        } else if (shouldAttack && target.hp > 0) {
           final raw =
               member.damage + member.vc ~/ 2 + member.level + member.grade * 2;
           final damage = max(1, raw - target.defense ~/ 2);

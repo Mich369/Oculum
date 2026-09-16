@@ -67,8 +67,8 @@ function Assert-DistributionNotRunning {
     [switch]$ForceClose
   )
 
-  $normalizedPath = [System.IO.Path]::GetFullPath($WindowsDistribution).TrimEnd('\\')
-  $runningDistribution = Get-Process -Name "oculum" -ErrorAction SilentlyContinue |
+  $normalizedPath = [System.IO.Path]::GetFullPath($WindowsDistribution).TrimEnd('\\') + '\'
+  $runningDistribution = Get-Process -ErrorAction SilentlyContinue |
     Where-Object {
       $processPath = $_.Path
       $null -ne $processPath -and
@@ -83,7 +83,7 @@ function Assert-DistributionNotRunning {
       Start-Sleep -Milliseconds 600
       return
     }
-    throw "Oculum e in esecuzione dalla distribution (PID: $processIds). Chiudi build\\distribution\\windows\\oculum.exe e rilancia lo script: i file non vengono toccati."
+    throw "Un'app e in esecuzione dalla distribution (PID: $processIds). Chiudila dopo aver salvato e rilancia lo script: i file non vengono toccati."
   }
 }
 
@@ -343,7 +343,7 @@ if (-not (Test-Path -LiteralPath (Join-Path $Root "pubspec_overrides.yaml"))) {
   throw "pubspec_overrides.yaml non trovato. Serve per mantenere connectivity_plus 6.1.5 e non rompere macOS."
 }
 
-Assert-DistributionNotRunning -WindowsDistribution $WinDist -ForceClose:$ForceCloseRunningDistribution
+Assert-DistributionNotRunning -WindowsDistribution $Dist -ForceClose:$ForceCloseRunningDistribution
 Assert-DistributionPath -Root $Root -Distribution $Dist
 Reset-Directory -Path $Dist
 New-Item -ItemType Directory -Path $WinDist, $AndroidDist, $WebDist, $MacDist, $IosDist -Force | Out-Null

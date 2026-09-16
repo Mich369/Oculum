@@ -306,7 +306,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     OculumConditionTarget.volonta => '${volontaTotale()}',
     OculumConditionTarget.materia => '${materiaTotale()}',
     OculumConditionTarget.oculum => '${oculumTotale()}/${oculumMassimo()}',
-    OculumConditionTarget.hp => '${hpCorrenti()}/${maxHp()}',
+    OculumConditionTarget.hp => hpReadoutProtetto(),
     OculumConditionTarget.scudo => '${scudo()}',
     OculumConditionTarget.scudoOculum => '${scudoOculum()}',
     OculumConditionTarget.danno => '${dannoTotale()}',
@@ -911,6 +911,15 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
   }) {
     final definition = oculumConditionDefinition(type);
     if (definition == null) return false;
+    if (conditionImmunities.contains(type.trim().toLowerCase())) {
+      final message = t(
+        'Immunità: ${definition.nameIt} non si applica.',
+        'Immunity: ${definition.nameEn} does not apply.',
+      );
+      risultato = message;
+      aggiungiLog(message);
+      return false;
+    }
     final mentalBarrier = getCondition('barriera_mentale');
     if (mentalBarrier != null &&
         definition.category == OculumConditionCategory.mental &&
@@ -1457,7 +1466,12 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
         percent -= oculumCorrosionPercent(corrosion.stage);
       }
       if (hasCondition('marchiato')) percent -= 20;
-      if (hasCondition('rinsecchito')) percent -= 75;
+      final desiccated = getCondition('rinsecchito');
+      if (desiccated != null) {
+        percent -= oculumConditionDefinition(
+          'rinsecchito',
+        )!.percentForStage(desiccated.stage);
+      }
     }
     if (target == OculumConditionTarget.danno) {
       if (hasCondition('potenziato')) percent += 15 * positiveMultiplier;

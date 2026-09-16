@@ -7,31 +7,9 @@ bool oculumJsonContentEquals(dynamic a, dynamic b) {
   if (a is Map && b is Map) {
     if (a.length != b.length) return false;
     for (final key in a.keys) {
-      if (!b.containsKey(key) || !oculumJsonContentEquals(a[key], b[key]))
+      if (!b.containsKey(key) || !oculumJsonContentEquals(a[key], b[key])) {
         return false;
-    }
-    return true;
-  }
-  if (a is List && b is List) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (!oculumJsonContentEquals(a[i], b[i])) return false;
-    }
-    return true;
-  }
-  if (a is num && b is num && a.runtimeType != b.runtimeType) return false;
-  return a == b;
-}
-
-/// Exact comparison of JSON trees without materializing two encoded strings.
-/// Shared immutable strings (notably images) are compared by identity first.
-bool oculumJsonContentEquals(dynamic a, dynamic b) {
-  if (identical(a, b)) return true;
-  if (a is Map && b is Map) {
-    if (a.length != b.length) return false;
-    for (final key in a.keys) {
-      if (!b.containsKey(key) || !oculumJsonContentEquals(a[key], b[key]))
-        return false;
+      }
     }
     return true;
   }

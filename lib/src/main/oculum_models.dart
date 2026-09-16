@@ -1276,13 +1276,19 @@ bool oculumTitleCanBeAlwaysVisible(
         ));
 
 OculumTitle? oculumAlwaysVisibleTitle(Iterable<OculumTitle> titles) {
-  final equippedOpen = titles.where(
-    (title) => title.equipaggiato && oculumTitleHasActivatableOpen(title),
-  ).toList(growable: false);
+  final equippedOpen = titles
+      .where(
+        (title) => title.equipaggiato && oculumTitleHasActivatableOpen(title),
+      )
+      .toList(growable: false);
   if (equippedOpen.length == 1) return equippedOpen.single;
   final eligible = titles
-      .where((title) => title.sempreVisibile && title.equipaggiato &&
-          (equippedOpen.isEmpty || oculumTitleHasActivatableOpen(title)))
+      .where(
+        (title) =>
+            title.sempreVisibile &&
+            title.equipaggiato &&
+            (equippedOpen.isEmpty || oculumTitleHasActivatableOpen(title)),
+      )
       .toList(growable: false);
   if (eligible.isEmpty) return null;
   return eligible.where(oculumTitleHasActivatableOpen).firstOrNull ??
@@ -1297,9 +1303,11 @@ void oculumNormalizeAlwaysVisibleTitles(Iterable<OculumTitle> titles) {
   final eligible = all
       .where((title) => title.sempreVisibile && title.equipaggiato)
       .toList(growable: false);
-  final evolvedEquipped = all.where(
-    (title) => title.equipaggiato && oculumTitleHasActivatableOpen(title),
-  ).toList(growable: false);
+  final evolvedEquipped = all
+      .where(
+        (title) => title.equipaggiato && oculumTitleHasActivatableOpen(title),
+      )
+      .toList(growable: false);
   final selected = evolvedEquipped.length == 1
       ? evolvedEquipped.single
       : evolvedEquipped.isNotEmpty

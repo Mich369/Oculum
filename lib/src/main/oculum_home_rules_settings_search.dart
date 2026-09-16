@@ -5540,6 +5540,29 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                   programmaSalvataggio();
                 },
               ),
+              ValueListenableBuilder<bool>(
+                valueListenable: oculumGraphicsEnabled,
+                builder: (context, enabled, _) => SwitchListTile(
+                  value: enabled,
+                  secondary: const Icon(Icons.animation),
+                  title: Text(
+                    t(
+                      'Animazioni ed effetti grafici',
+                      'Animations and visual effects',
+                    ),
+                  ),
+                  subtitle: Text(
+                    t(
+                      'Disattiva per ridurre transizioni, sfondi decorativi e memoria grafica. Le funzioni restano disponibili.',
+                      'Turn off to reduce transitions, decorative backgrounds and graphics memory. All features remain available.',
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() => oculumGraphicsEnabled.value = value);
+                    unawaited(setOculumGraphicsPreference(value));
+                  },
+                ),
+              ),
               SwitchListTile(
                 value: modalitaMaster,
                 activeThumbColor: tertiaryColor,

@@ -158,6 +158,7 @@ Future<void> main() async {
   if (kIsWeb) {
     await BrowserContextMenu.disableContextMenu();
   }
+  await loadOculumGraphicsPreference();
   _configureOculumRuntimeCaches();
   await _initializeOculumOptionalStartupServices();
   runApp(const OculumApp());
@@ -437,8 +438,13 @@ void _configureOculumRuntimeCaches() {
   final imageCache = PaintingBinding.instance.imageCache;
   final desktopRuntime =
       !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
-  imageCache.maximumSize = desktopRuntime ? 240 : 120;
-  imageCache.maximumSizeBytes = (desktopRuntime ? 128 : 64) * 1024 * 1024;
+  imageCache.maximumSize = oculumGraphicsEnabled.value
+      ? (desktopRuntime ? 240 : 120)
+      : 80;
+  imageCache.maximumSizeBytes =
+      (oculumGraphicsEnabled.value ? (desktopRuntime ? 96 : 64) : 40) *
+      1024 *
+      1024;
 }
 
 int oculumImageCacheDimension(
@@ -1153,6 +1159,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final List<Map<String, dynamic>> occhiCaduti = [];
   final ValueNotifier<int> fallenEyesRevision = ValueNotifier<int>(0);
   String fallenEyesSearch = '';
+  String fallenEyesLifeFilter = 'tutti';
+  bool fallenEyesBondSort = false;
   String fallenEyesRarityFilter = 'tutte';
   bool? fallenEyesActiveFilter;
   final Map<String, List<Map<String, dynamic>>> textAttachments =
@@ -1735,6 +1743,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   int ascensionDustTempMateria = 0;
   int ascensionDustTempOculum = 0;
   int ascensionDustUsataOggi = 0;
+  OculumDustCombatBoost ascensionDustCombat = OculumDustCombatBoost();
+  int ascensionDustDropSinceLongRest = 0;
   int ascensionDustPermanentiInAttesa = 0;
   final Map<String, int> ascensionDustStatProgress = <String, int>{};
   int ascensionDustIntegritaMassimaBonus = 0;
@@ -1756,6 +1766,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool consumoElevato = false;
   final List<OculumConditionInstance> activeConditions =
       <OculumConditionInstance>[];
+  final Set<String> conditionImmunities = <String>{};
   final Map<String, Map<String, dynamic>> conditionDefinitionOverrides =
       <String, Map<String, dynamic>>{};
   final Map<String, int> conditionControlProtectionUntilTurn = <String, int>{};
@@ -4628,7 +4639,9 @@ class _OculumHomePageState extends State<OculumHomePage>
                 children: [
                   Positioned.fill(
                     child: IgnorePointer(
-                      child: RepaintBoundary(child: themeDecorationBackdrop()),
+                      child: oculumGraphicsEnabled.value
+                          ? RepaintBoundary(child: themeDecorationBackdrop())
+                          : const SizedBox.shrink(),
                     ),
                   ),
                   desktopSideMenuShell(
@@ -4637,7 +4650,9 @@ class _OculumHomePageState extends State<OculumHomePage>
                     safePage: safePage,
                     child: datiCaricati
                         ? AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 160),
+                            duration: oculumGraphicsEnabled.value
+                                ? const Duration(milliseconds: 160)
+                                : Duration.zero,
                             switchInCurve: Curves.easeOutCubic,
                             switchOutCurve: Curves.easeInCubic,
                             child: RepaintBoundary(

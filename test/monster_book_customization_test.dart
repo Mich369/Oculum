@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
-import 'package:oculum/main.dart' show CharacterArt, oculumStarterRaces;
+import 'package:oculum/main.dart'
+    show CharacterArt, oculumMonsterBookArt, oculumStarterRaces;
 
 void main() {
   tearDown(resetMonsterBookEntries);
@@ -250,7 +251,7 @@ void main() {
     );
   });
 
-  test('starter smalllings stay weak and intentionally have no Art', () {
+  test('starter smalllings stay weak but can become characters', () {
     for (final id in const <String>[
       'mostricciattolo_di_carta',
       'mostricciattolo_di_sugo',
@@ -262,7 +263,15 @@ void main() {
       expect(entry.stats['hp'], inInclusiveRange(5, 10), reason: id);
       expect(entry.stats['atk'], inInclusiveRange(4, 6), reason: id);
       expect(entry.stats['def'], inInclusiveRange(3, 4), reason: id);
-      expect(entry.skillIds, isEmpty, reason: id);
+      expect(monsterBookUsableSkillIds(entry), hasLength(3), reason: id);
+      expect(oculumMonsterBookArt(entry).skills, hasLength(3), reason: id);
+    }
+  });
+
+  test('every Monster Book entry exposes usable character techniques', () {
+    for (final entry in defaultMonsterBookEntries) {
+      expect(monsterBookUsableSkillIds(entry), isNotEmpty, reason: entry.id);
+      expect(oculumMonsterBookArt(entry).skills, isNotEmpty, reason: entry.id);
     }
   });
 

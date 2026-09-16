@@ -1140,6 +1140,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'ascensionDustTempMateria': 0,
       'ascensionDustTempOculum': 0,
       'ascensionDustUsataOggi': 0,
+      'ascensionDustCombat': <String, dynamic>{},
+      'ascensionDustDropSinceLongRest': 0,
       'ascensionDustPermanentiInAttesa': 0,
       'ascensionDustStatProgress': <String, int>{},
       'ascensionDustIntegritaMassimaBonus': 0,
@@ -1308,6 +1310,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
         'conditions': activeConditions
             .map((condition) => condition.toJson())
             .toList(growable: false),
+      if (conditionImmunities.isNotEmpty)
+        'conditionImmunities': conditionImmunities.toList(growable: false),
       if (conditionDefinitionOverrides.isNotEmpty)
         'conditionDefinitionOverrides': conditionDefinitionOverrides,
       if (conditionControlProtectionUntilTurn.isNotEmpty)
@@ -1419,6 +1423,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'ascensionDustTempMateria': ascensionDustTempMateria,
       'ascensionDustTempOculum': ascensionDustTempOculum,
       'ascensionDustUsataOggi': ascensionDustUsataOggi,
+      'ascensionDustCombat': ascensionDustCombat.toJson(),
+      'ascensionDustDropSinceLongRest': ascensionDustDropSinceLongRest,
       'ascensionDustPermanentiInAttesa': ascensionDustPermanentiInAttesa,
       if (ascensionDustStatProgress.isNotEmpty)
         'ascensionDustStatProgress': ascensionDustStatProgress,
@@ -1576,6 +1582,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
     oculumAddormentatoRiposiLunghi = 0;
     consumoElevato = false;
     activeConditions.clear();
+    conditionImmunities
+      ..clear()
+      ..addAll(
+        readStringListValue(json['conditionImmunities'])
+            .map((value) => value.trim().toLowerCase())
+            .where((value) => value.isNotEmpty),
+      );
     conditionDefinitionOverrides.clear();
     conditionControlProtectionUntilTurn.clear();
     activeGameMod = '${json['activeGameMod'] ?? ''}'.trim().toLowerCase();
@@ -1869,6 +1882,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
       0,
       readIntValue(json['ascensionDustUsataOggi']),
     );
+    ascensionDustCombat = OculumDustCombatBoost.fromJson(
+      json['ascensionDustCombat'],
+    );
+    ascensionDustDropSinceLongRest = readIntValue(
+      json['ascensionDustDropSinceLongRest'],
+    ).clamp(0, 3);
     ascensionDustPermanentiInAttesa = max(
       0,
       readIntValue(json['ascensionDustPermanentiInAttesa']),
@@ -6985,6 +7004,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
       setState(() {
         final effectiveStats = randomizedMonsterStats ?? generatedStats;
+        conditionImmunities
+          ..clear()
+          ..addAll(
+        matchedMonster?.id == 'legno_marcio' ||
+                    matchedMonster?.id.startsWith('legno_marcio_variante_') ==
+                        true
+                ? const ['rinsecchito']
+                : const <String>[],
+          );
         int variantStat(String key) =>
             max(0, ((effectiveStats[key] ?? 0) * variantMultiplier).round());
         resilienzaController.text = '${variantStat('resilienza')}';
@@ -7748,8 +7776,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
           );
           final allocated =
               statsMostroForzate ??
-              (usesFixedLevelZeroBase
-                  ? oculumMonsterCreationStats(matchedMonster!, livello)
+              (matchedMonster != null
+                  ? oculumMonsterCreationStats(matchedMonster, livello)
                   : oculumDistributeMonsterStats(
                       monsterPointBudget,
                       hasSkills: hasSkills,
@@ -7762,8 +7790,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
           );
           final requiresOculum = hasSkills || hasArt;
           final corrected =
-              (requiresOculum && (allocated['oculum'] ?? 0) <= 0) ||
-                  (!requiresOculum && (allocated['oculum'] ?? 0) > 0)
+              matchedMonster == null &&
+                  ((requiresOculum && (allocated['oculum'] ?? 0) <= 0) ||
+                      (!requiresOculum && (allocated['oculum'] ?? 0) > 0))
               ? oculumDistributeMonsterStats(
                   max(requiresOculum ? 4 : 3, total),
                   hasSkills: hasSkills,

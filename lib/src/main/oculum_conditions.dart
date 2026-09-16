@@ -1239,14 +1239,15 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     category: OculumConditionCategory.physical,
     polarity: OculumConditionPolarity.negative,
     descriptionIt:
-        'La Difesa si riduce del 75%: resta disponibile soltanto un quarto del suo valore normale.',
+        'Tre stadi: Difesa -25%/-50%/-75%; al terzo stadio resta disponibile soltanto un quarto del valore normale.',
     descriptionEn:
-        'Defense is reduced by 75%: only one quarter of its normal value remains.',
-    stackMode: OculumConditionStackMode.refreshDuration,
+        'Three stages: Defense -25%/-50%/-75%; at stage three only one quarter of the normal value remains.',
+    maxStage: 3,
+    stackMode: OculumConditionStackMode.increaseStage,
     defaultDuration: 3,
     durationType: OculumConditionDurationType.turns,
     tickTrigger: OculumConditionTickTrigger.endTurn,
-    basePercentByStage: <double>[75],
+    basePercentByStage: <double>[25, 50, 75],
   ),
   OculumConditionDefinition(
     id: 'bagnato',

@@ -901,12 +901,27 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             : '\n${t('CRITICO DI ADATTAMENTO: nessun combattimento attivo, effetto temporaneo non applicato.', 'ADAPTATION CRITICAL: no active combat, temporary effect not applied.')}';
       }
     }
+    final dustAwarded = oculumCanReceiveDustFromDrop(
+      subtraitId: stat.id,
+      naturalRoll: dado,
+      earnedSinceLongRest: ascensionDustDropSinceLongRest,
+    );
+    if (dustAwarded) {
+      ascensionDustDropSinceLongRest++;
+      ascensionDustController.text =
+          '${max(0, leggiNumero(ascensionDustController)) + 1}';
+    }
+    final dustText = dustAwarded
+        ? '\nDrop: +1 Ascension Dust ($ascensionDustDropSinceLongRest/3 fino al Riposo Lungo).'
+        : stat.id == 'drop' && dado > 15 && ascensionDustDropSinceLongRest >= 3
+        ? '\nDrop: limite di 3 Ascension Dust raggiunto; si rinnova al Riposo Lungo.'
+        : '';
     dadoMostrato = testoDado;
     dadoMostratoFacce = 20;
     tiroCriticoUno = dado == 1;
     tiroCriticoVenti = dado == 20;
     risultato =
-        '$label: $testoDado$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText';
+        '$label: $testoDado$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText';
     _applyDadoCentraleOverlayState(
       valore: testoDado,
       criticoUno: dado == 1,
@@ -915,7 +930,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       reduceEffects: reduceDiceEffects,
     );
     aggiungiLog(
-      'Tiro sottotratto $label: $testoDado.${oculumTiroLogLabel(oculumSpend)}$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText',
+      'Tiro sottotratto $label: $testoDado.${oculumTiroLogLabel(oculumSpend)}$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText',
     );
     registerValidRoll(consumoStatKey: statConsumata);
     notifyDiceResultChanged();
@@ -946,7 +961,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (masteryGain > 0 ||
+      if (dustAwarded ||
+          masteryGain > 0 ||
           statoForzaLog.isNotEmpty ||
           consumoFortuna > 0 ||
           (consumoElevato && statConsumata.isNotEmpty)) {
@@ -1110,7 +1126,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   int sheetAttaccoRapidoAt(int index) {
     if (index < 0 || index >= schedePersonaggio.length) return 0;
     if (index == schedaCorrente) return bonusAttaccoRapido();
-    return readIntValue(schedePersonaggio[index]['attaccoRapido']);
+    return readIntValue(schedePersonaggio[index]['attaccoRapido']) +
+        OculumDustCombatBoost.fromJson(
+          schedePersonaggio[index]['ascensionDustCombat'],
+        ).attackBonus;
   }
 
   int sheetCmRapidoAt(int index) {
@@ -4752,7 +4771,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (delta == 0) return;
 
     setState(() {
-      attaccoRapidoController.text = (bonusAttaccoRapido() + delta).toString();
+      attaccoRapidoController.text =
+          (leggiNumero(attaccoRapidoController) + delta).toString();
       risultato = t(
         'Bonus Attacco rapido ${delta > 0 ? '+' : ''}$delta. Totale: ${attaccoRapidoController.text}.',
         'Quick Attack bonus ${delta > 0 ? '+' : ''}$delta. Total: ${attaccoRapidoController.text}.',
@@ -4767,7 +4787,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (delta == 0) return;
 
     setState(() {
-      difesaRapidaController.text = (bonusDifesaRapido() + delta).toString();
+      difesaRapidaController.text =
+          (leggiNumero(difesaRapidaController) + delta).toString();
       risultato = t(
         'Bonus Difesa rapido ${delta > 0 ? '+' : ''}$delta. Totale: ${difesaRapidaController.text}.',
         'Quick Defense bonus ${delta > 0 ? '+' : ''}$delta. Total: ${difesaRapidaController.text}.',

@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -102,9 +101,14 @@ void main() {
       await run();
       report[label] = watch.elapsedMicroseconds / 1000;
       debugPrint('$label: ${report[label]}');
-      const runLabel = String.fromEnvironment('OculumBenchmarkLabel', defaultValue: 'latest');
+      const runLabel = String.fromEnvironment(
+        'OculumBenchmarkLabel',
+        defaultValue: 'latest',
+      );
       Directory('output/performance').createSync(recursive: true);
-      File('output/performance/$runLabel.json').writeAsStringSync(const JsonEncoder.withIndent('  ').convert(report));
+      File(
+        'output/performance/$runLabel.json',
+      ).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(report));
     }
 
     await measure('load_sheet_ms', () async {
@@ -173,7 +177,7 @@ void main() {
     });
     var rebuilds = 0;
     debugOnRebuildDirtyWidget = (element, built) {
-      if (built) rebuilds++;
+      rebuilds++;
     };
     await measure('hp_10_ms', () async {
       for (var i = 0; i < 10; i++) {
@@ -220,6 +224,7 @@ void main() {
       await tester.runAsync(() async {
         state.sharedPreferencesFuture = SharedPreferences.getInstance();
         state.saveBlobDirectoryFuture = Future<Directory>.value(directory);
+        state.progressJournalWriteChain = Future<void>.value();
         await probe.save();
       });
     });

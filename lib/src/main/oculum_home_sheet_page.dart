@@ -9,7 +9,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   bool vitaAfonaAttiva() => hpCorrenti() > 0 && hasCondition('vita_afona');
 
   String hpReadoutProtetto() =>
-      vitaAfonaAttiva() ? '☠' : '${hpCorrenti()}/${maxHp()}';
+      vitaAfonaAttiva() ? '???/${maxHp()}' : '${hpCorrenti()}/${maxHp()}';
 
   String lifeBarStyleLabel(String id) {
     return switch (id) {
@@ -660,10 +660,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.white24),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    '☠',
-                    style: TextStyle(color: Colors.white, fontSize: 27),
+                    '???/$maxHpVal',
+                    style: const TextStyle(color: Colors.white, fontSize: 27),
                   ),
                 ),
               ),
@@ -1062,7 +1062,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     lines.add(
       gaugeLine(
         label: 'HP',
-        value: vitaAfona ? '☠' : '$currentHp/${max(1, maxHpVal)}',
+        value: vitaAfona
+            ? '???/${max(1, maxHpVal)}'
+            : '$currentHp/${max(1, maxHpVal)}',
         ratio: vitaAfona ? 0 : currentHp / max(1, maxHpVal),
         color: vitaAfona ? Colors.black : Colors.redAccent,
         icon: vitaAfona ? Icons.dangerous_rounded : Icons.favorite,
@@ -8879,7 +8881,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               const SizedBox(height: 3),
               Text(
                 label == 'VITA' && vitaAfonaAttiva()
-                    ? '???'
+                    ? '??? / $maxValue'
                     : '$value / $maxValue',
                 style: const TextStyle(
                   fontSize: 24,

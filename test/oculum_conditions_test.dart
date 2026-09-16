@@ -507,12 +507,13 @@ void main() {
     });
 
     test(
-      'Rinsecchito e una condizione fisica e lascia un quarto della Difesa',
+      'Rinsecchito e una condizione fisica a tre stadi',
       () {
         final desiccated = oculumConditionDefinition('rinsecchito')!;
         expect(desiccated.category, OculumConditionCategory.physical);
         expect(desiccated.polarity, OculumConditionPolarity.negative);
-        expect(desiccated.basePercentByStage, <double>[75]);
+        expect(desiccated.maxStage, 3);
+        expect(desiccated.basePercentByStage, <double>[25, 50, 75]);
         expect(
           desiccated.affectedTargets,
           contains(OculumConditionTarget.difesa),

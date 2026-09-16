@@ -54,17 +54,28 @@ void main() {
     () {
       for (final monster in defaultMonsterBookEntries) {
         final before = monster.toJson();
+        final base = oculumMonsterCreationStats(monster, 0);
         for (final level in [0, 1, 10, 30, 200]) {
           final stats = oculumMonsterCreationStats(monster, level);
-          expect(
-            stats['oculum'],
-            monster.skillIds.isEmpty ? 0 : greaterThan(0),
-            reason: monster.id,
-          );
+          for (final key in base.keys) {
+            expect(
+              stats[key],
+              greaterThanOrEqualTo(base[key]!),
+              reason: '${monster.id}: $key',
+            );
+            if (monster.stats.containsKey(key)) {
+              expect(
+                base[key],
+                monster.stats[key],
+                reason: '${monster.id}: base $key',
+              );
+            }
+          }
           if (level > 0) {
             expect(
               stats.values.fold<int>(0, (a, b) => a + b),
-              oculumGeneratedMonsterBudget(monster.presetType, level),
+              base.values.fold<int>(0, (a, b) => a + b) +
+                  oculumGeneratedMonsterBudget(monster.presetType, level),
             );
           }
         }

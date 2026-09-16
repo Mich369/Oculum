@@ -2833,6 +2833,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   }
 
   Widget themeDecorationBackdrop() {
+    if (!oculumGraphicsEnabled.value) return const SizedBox.expand();
     final spec = currentThemeDecorationSpec();
     if (spec.opacity <= 0) {
       return const SizedBox.expand();

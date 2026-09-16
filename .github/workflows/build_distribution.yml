@@ -67,7 +67,7 @@ jobs:
           name: Oculum-Windows
           path: build/distribution/Oculum-Windows.zip
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30
 
   # ── macOS (unsigned) ───────────────────────────────────────────────────────
   build-macos:
@@ -131,7 +131,7 @@ jobs:
           name: Oculum-macOS
           path: build/distribution/Oculum-macOS.zip
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30
 
   # ── iOS (unsigned) ─────────────────────────────────────────────────────────
   build-ios-unsigned:
@@ -184,7 +184,7 @@ jobs:
           name: Oculum-iOS-unsigned
           path: build/distribution/Oculum-iOS-unsigned.ipa
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30
 
   # ── Linux ──────────────────────────────────────────────────────────────────
   build-linux:
@@ -270,7 +270,7 @@ jobs:
           name: Oculum-Linux
           path: build/distribution/Oculum-Linux-x64.tar.gz
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30
 
   # ── Android ────────────────────────────────────────────────────────────────
   build-android:
@@ -317,4 +317,4 @@ jobs:
           name: Oculum-Android
           path: build/distribution/Oculum-Android-release.apk
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30

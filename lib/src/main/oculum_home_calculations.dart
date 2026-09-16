@@ -243,6 +243,9 @@ String oculumConcentrationGroupForStatIds(Iterable<String> ids) {
 bool oculumHiddenEyeHasLegacyDefaultDescription(String id, String description) {
   final normalized = description.trim();
   const legacyDescriptions = <String, Set<String>>{
+    'drop': {
+      'Cercare bottino e ricompense. Con 20 naturale apre la creazione di un Occhio dei Caduti.',
+    },
     'velo': {
       'Furtivita, rapidita di mano, nascondersi, borseggio. Bonus base: Materia/2.',
     },
@@ -3810,7 +3813,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         id: 'drop',
         nome: 'Drop',
         descrizione:
-            'Cercare bottino e ricompense. Con 20 naturale apre la creazione di un Occhio dei Caduti.',
+            'Cercare bottino e ricompense. Con un dado naturale maggiore di 15 ottieni 1 Ascension Dust, massimo 3 fino al Riposo Lungo. Con 20 naturale apre anche la creazione di un Occhio dei Caduti.',
         category: 'altro',
       ),
       HiddenEyeStat(
@@ -4404,11 +4407,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int bonusAttaccoRapido() {
-    return leggiNumero(attaccoRapidoController);
+    return leggiNumero(attaccoRapidoController) +
+        ascensionDustCombat.attackBonus;
   }
 
   int bonusDifesaRapido() {
-    return leggiNumero(difesaRapidaController);
+    return leggiNumero(difesaRapidaController) +
+        ascensionDustCombat.defenseBonus;
   }
 
   int bonusCmRapido() {
@@ -4970,6 +4975,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int cm() {
     return bonusLivelloGrado() +
         (materiaTotale() ~/ 2) +
+        activeStructuredEffectBonus('cm') +
         bonusCmRapido() +
         titleQuickBonus('cm') +
         artQuickBonus('cm') +

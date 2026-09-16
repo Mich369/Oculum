@@ -2520,8 +2520,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         resourceCounter(
           title: 'Ascension Dust',
           subtitle: t(
-            'Polvere magica usata per forgiare, potenziare, ritualizzare e far ascendere oggetti o poteri. Può servire anche come costo narrativo per evoluzioni importanti.',
-            'Magical dust used to forge, empower, ritualize and ascend items or powers. It can also serve as a narrative cost for important evolutions.',
+            'Polvere magica per forgiare e potenziare oggetti o poteri. Drop naturale 16–20: +1 Dust, massimo 3 per Riposo Lungo. Ottenute: $ascensionDustDropSinceLongRest/3.',
+            'Magical dust for forging and empowering items or powers. Natural Drop 16–20: +1 Dust, up to 3 per Long Rest. Earned: $ascensionDustDropSinceLongRest/3.',
           ),
           controller: ascensionDustController,
           icon: Icons.grain,
@@ -2530,6 +2530,41 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           useLabel: t('Potenzia', 'Empower'),
           onAltUse: mostraPotenziaOculusAscensionDust,
           altUseLabel: t('Potenzia Oculus', 'Empower Oculus'),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                t(
+                  'Combattimento: ${ascensionDustCombat.used}/3 Dust per sessione. Scegli solo Attacco (VC) o Difesa: +2 per Dust, di cui +1 permanente. Il resto termina al Riposo Lungo.',
+                  'Combat: ${ascensionDustCombat.used}/3 Dust per session. Choose only Attack (VC) or Defense: +2 per Dust, including +1 permanent. The rest ends on Long Rest.',
+                ),
+              ),
+              Text(
+                'Dust · ATK +${ascensionDustCombat.attackBonus} (${ascensionDustCombat.permanentAttack} permanente) · DIF +${ascensionDustCombat.defenseBonus} (${ascensionDustCombat.permanentDefense} permanente)',
+              ),
+              Wrap(
+                spacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed:
+                        ascensionDustCombat.remaining > 0 &&
+                            leggiNumero(ascensionDustController) > 0
+                        ? mostraPotenziaCombattimentoDust
+                        : null,
+                    icon: const Icon(Icons.upgrade),
+                    label: Text(t('Potenzia combattimento', 'Empower combat')),
+                  ),
+                  TextButton(
+                    onPressed: mostraNuovaSessioneDust,
+                    child: Text(t('Nuova sessione Dust', 'New Dust session')),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
         resourceCounter(
           title: t('Ispirazioni', 'Inspirations'),
@@ -4105,6 +4140,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               child: ListView.builder(
                 key: sheetScrollKey('master_initiative_participants'),
                 primary: false,
+                // Retain compatibility with Flutter versions before scrollCacheExtent.
+                // ignore: deprecated_member_use
                 cacheExtent: 180,
                 itemCount: masterInitiativeTokens.length,
                 itemBuilder: (context, index) => tokenRow(index),
@@ -5022,7 +5059,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               (a, c) => a + max(0, int.tryParse(c.text) ?? 0),
             );
             final ocu = max(0, int.tryParse(controllers['oculum']!.text) ?? 0);
-            final validOculum = entry.skillIds.isNotEmpty ? ocu > 0 : ocu == 0;
+            final validOculum = ocu >= (entry.stats['oculum'] ?? 0);
             final validNumbers = controllers.values.every(
               (c) => int.tryParse(c.text) != null && int.parse(c.text) >= 0,
             );
@@ -5164,6 +5201,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   Widget masterDashboardMonsterBookPanel() {
     final query = oculumNormalizeText(monsterBookSearchController.text);
+    String categoryFor(MonsterBookEntry entry) {
+      if (entry.isBoss) return 'Boss';
+      if (entry.isMiniBoss) return 'Mini Boss';
+      return 'Mostro';
+    }
+
     String tierFor(MonsterBookEntry entry) {
       if (entry.isBoss) return 'Boss';
       if (entry.isMiniBoss) return 'Mini Boss';
@@ -5186,13 +5229,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         ? monsterBookFilterCache
         : monsterBookEntries
               .where((entry) {
-                if (monsterBookTierFilter != 'Tutti' &&
-                    tierFor(entry) != monsterBookTierFilter) {
+                final categoryMatches =
+                    monsterBookTierFilter == 'Tutti' ||
+                    categoryFor(entry) == monsterBookTierFilter ||
+                    tierFor(entry) == monsterBookTierFilter;
+                if (!categoryMatches) {
                   return false;
                 }
                 if (query.isEmpty) return true;
                 return oculumNormalizeText(
-                  '${entry.nameIt} ${entry.nameEn} ${entry.id} ${entry.elementId} ${entry.presetType}',
+                  '${entry.nameIt} ${entry.nameEn} ${entry.id} ${entry.elementId} ${entry.presetType} ${entry.descIt} ${monsterBookUsableSkillIds(entry).join(' ')} ${entry.dropIds.join(' ')} ${entry.weaponTags.join(' ')} ${entry.armorTags.join(' ')}',
                 ).contains(query);
               })
               .toList(growable: false);
@@ -5242,7 +5288,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           TextField(
             controller: monsterBookSearchController,
             decoration: InputDecoration(
-              hintText: t('Cerca preset...', 'Search presets...'),
+              hintText: t(
+                'Cerca nome, elemento, tecnica o drop...',
+                'Search presets...',
+              ),
               prefixIcon: const Icon(Icons.search),
               suffixIcon: monsterBookSearchController.text.isEmpty
                   ? null
@@ -5267,6 +5316,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             children: [
               for (final tier in const [
                 'Tutti',
+                'Mostro',
                 'Facili',
                 'Medi',
                 'Difficili',
@@ -5783,6 +5833,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     child: ListView.builder(
                       key: sheetScrollKey('master_enemy_cards'),
                       primary: false,
+                      // Retain compatibility with Flutter versions before scrollCacheExtent.
+                      // ignore: deprecated_member_use
                       cacheExtent: 180,
                       itemCount: (enemies.length / columns).ceil(),
                       itemBuilder: (context, row) => Padding(

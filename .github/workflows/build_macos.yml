@@ -52,7 +52,10 @@ jobs:
           flutter pub get
 
       - name: Verifica dipendenza compatibile macOS
-        run: flutter pub deps | grep -q "connectivity_plus 6.1.5"
+        run: |
+          mkdir -p build
+          flutter pub deps > build/flutter-dependencies.txt
+          grep -q "connectivity_plus 6.1.5" build/flutter-dependencies.txt
 
       - name: Analisi statica
         run: flutter analyze
@@ -125,10 +128,10 @@ jobs:
             build/distribution/Oculum-macOS.zip
             build/distribution/Oculum-macOS.sha256
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30
 
       - name: Aggiorna release macOS latest
-        if: ${{ inputs.publish_release }}
+        if: ${{ github.event_name == 'push' || inputs.publish_release }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

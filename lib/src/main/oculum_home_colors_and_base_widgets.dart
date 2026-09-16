@@ -869,7 +869,8 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
   bool get lowCostVisuals {
     final size = MediaQuery.maybeOf(context)?.size;
     final wideDesktopSurface = (size?.width ?? 0) >= 1000;
-    return modalitaVeloce ||
+    return !oculumGraphicsEnabled.value ||
+        modalitaVeloce ||
         modalitaLeggera ||
         phoneCompactUi ||
         tabletCompactUi ||
@@ -2642,11 +2643,15 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                 : null,
             child: AnimatedOpacity(
               opacity: mostraOverlayDado ? 1 : 0,
-              duration: const Duration(milliseconds: 180),
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 180),
               child: Center(
                 child: AnimatedScale(
                   scale: mostraOverlayDado ? 1.0 : 0.55,
-                  duration: const Duration(milliseconds: 220),
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : const Duration(milliseconds: 220),
                   curve: Curves.easeOutBack,
                   child: slotMachineRollsEnabled
                       ? _slotMachineDiceOverlay(overlayResultColor)
@@ -2672,7 +2677,10 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                                 turns: mostraOverlayDado
                                     ? dadoOverlaySpinSeed * 0.18
                                     : 0,
-                                duration: const Duration(milliseconds: 500),
+                                duration:
+                                    MediaQuery.disableAnimationsOf(context)
+                                    ? Duration.zero
+                                    : const Duration(milliseconds: 500),
                                 curve: Curves.easeOutCubic,
                                 child: RepaintBoundary(
                                   child: D20Widget(
@@ -2687,7 +2695,10 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                               ),
                               AnimatedOpacity(
                                 opacity: dadoOverlayMostraRisultato ? 1 : 0,
-                                duration: const Duration(milliseconds: 120),
+                                duration:
+                                    MediaQuery.disableAnimationsOf(context)
+                                    ? Duration.zero
+                                    : const Duration(milliseconds: 120),
                                 child: ConstrainedBox(
                                   constraints: const BoxConstraints(
                                     maxWidth: 104,
@@ -2774,7 +2785,9 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                   child: Padding(
                     padding: EdgeInsets.only(right: i == 2 ? 0 : 8),
                     child: AnimatedContainer(
-                      duration: Duration(milliseconds: 220 + i * 160),
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : Duration(milliseconds: 220 + i * 160),
                       curve: Curves.easeOutBack,
                       height: 104,
                       alignment: Alignment.center,
@@ -2788,7 +2801,9 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                       ),
                       child: AnimatedOpacity(
                         opacity: dadoOverlayMostraRisultato ? 1 : .18,
-                        duration: const Duration(milliseconds: 180),
+                        duration: MediaQuery.disableAnimationsOf(context)
+                            ? Duration.zero
+                            : const Duration(milliseconds: 180),
                         child: Text(
                           shown[i],
                           textAlign: TextAlign.center,

@@ -1,88 +1,132 @@
 part of '../../main.dart';
 
+final ValueNotifier<bool> oculumGraphicsEnabled = ValueNotifier(false);
+
+Future<void> loadOculumGraphicsPreference() async {
+  final prefs = await SharedPreferences.getInstance();
+  oculumGraphicsEnabled.value =
+      prefs.getBool('oculum.graphicsEnabled') ?? false;
+}
+
+Future<void> setOculumGraphicsPreference(bool enabled) async {
+  oculumGraphicsEnabled.value = enabled;
+  PaintingBinding.instance.imageCache.maximumSizeBytes =
+      (enabled ? 96 : 40) * 1024 * 1024;
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool('oculum.graphicsEnabled', enabled);
+}
+
 class OculumApp extends StatelessWidget {
   const OculumApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Oculum',
-      debugShowCheckedModeBanner: false,
-      scrollBehavior: const _OculumAdaptiveScrollBehavior(),
-      builder: (context, child) {
-        final media = MediaQuery.of(context);
-        final compactPhone = media.size.shortestSide < 600;
-        final tablet =
-            media.size.shortestSide >= 600 && media.size.width < 1100;
-        return MediaQuery(
-          data: media.copyWith(
-            textScaler: TextScaler.linear(
-              compactPhone
-                  ? 0.84
-                  : tablet
-                  ? 0.92
-                  : 0.95,
+    return ValueListenableBuilder<bool>(
+      valueListenable: oculumGraphicsEnabled,
+      builder: (context, graphics, _) => MaterialApp(
+        title: 'Oculum',
+        debugShowCheckedModeBanner: false,
+        scrollBehavior: const _OculumAdaptiveScrollBehavior(),
+        builder: (context, child) {
+          final media = MediaQuery.of(context);
+          final compactPhone = media.size.shortestSide < 600;
+          final tablet =
+              media.size.shortestSide >= 600 && media.size.width < 1100;
+          return MediaQuery(
+            data: media.copyWith(
+              disableAnimations: media.disableAnimations || !graphics,
+              textScaler: TextScaler.linear(
+                compactPhone
+                    ? 0.84
+                    : tablet
+                    ? 0.92
+                    : 0.95,
+              ),
+            ),
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          visualDensity: VisualDensity.compact,
+          scaffoldBackgroundColor: const Color(0xFF050408),
+          colorScheme: const ColorScheme.dark(
+            surface: Color(0xFF09070D),
+            primary: Color(0xFFE6D8BD),
+            secondary: Color(0xFF9E6B2F),
+            tertiary: Color(0xFF8F1D2C),
+          ),
+          useMaterial3: true,
+          splashFactory: NoSplash.splashFactory,
+          cardTheme: const CardThemeData(
+            elevation: 0,
+            margin: EdgeInsets.symmetric(vertical: 6),
+          ),
+          dividerTheme: const DividerThemeData(
+            thickness: 1,
+            space: 24,
+            color: Color(0xFF302D37),
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: const Color(0xFF131118),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF36313D)),
             ),
           ),
-          child: child ?? const SizedBox.shrink(),
-        );
-      },
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        visualDensity: VisualDensity.compact,
-        scaffoldBackgroundColor: const Color(0xFF050408),
-        colorScheme: const ColorScheme.dark(
-          surface: Color(0xFF09070D),
-          primary: Color(0xFFE6D8BD),
-          secondary: Color(0xFF9E6B2F),
-          tertiary: Color(0xFF8F1D2C),
-        ),
-        useMaterial3: true,
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(36, 36),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(36, 36),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          outlinedButtonTheme: OutlinedButtonThemeData(
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(34, 34),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(32, 32),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          chipTheme: ChipThemeData(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+            side: const BorderSide(color: Color(0x669E6B2F)),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(9),
             ),
           ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size(34, 34),
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-            textStyle: const TextStyle(fontWeight: FontWeight.w800),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+          listTileTheme: const ListTileThemeData(
+            dense: true,
+            minLeadingWidth: 24,
+            horizontalTitleGap: 8,
+            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          ),
+          expansionTileTheme: const ExpansionTileThemeData(
+            tilePadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+            childrenPadding: EdgeInsets.fromLTRB(10, 0, 10, 8),
           ),
         ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            minimumSize: const Size(32, 32),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            textStyle: const TextStyle(fontWeight: FontWeight.w800),
-          ),
-        ),
-        chipTheme: ChipThemeData(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-          side: const BorderSide(color: Color(0x669E6B2F)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
-        ),
-        listTileTheme: const ListTileThemeData(
-          dense: true,
-          minLeadingWidth: 24,
-          horizontalTitleGap: 8,
-          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-        ),
-        expansionTileTheme: const ExpansionTileThemeData(
-          tilePadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-          childrenPadding: EdgeInsets.fromLTRB(10, 0, 10, 8),
-        ),
+        home: const OculumStartupPreloader(),
       ),
-      home: const OculumStartupPreloader(),
     );
   }
 }

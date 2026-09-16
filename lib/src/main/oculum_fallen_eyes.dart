@@ -194,13 +194,93 @@ int oculumFallenEyeSummonCostForDifficulty(String difficulty) =>
     )] ??
     2;
 
-/// Un Occhio morto non torna disponibile, nemmeno dopo il riavvio. I vecchi
-/// salvataggi non hanno questo campo e quindi restano evocabili finché non
-/// subiscono una morte reale.
+/// La morte resta persistente fino a una Rinascita valida al Riposo Lungo.
 bool oculumFallenEyeIsDead(Map<String, dynamic> eye) =>
     readBoolValue(eye['perdutoPerSempre']) ||
     (readIntValue(eye['deathWounds']) >= 3 &&
         readIntValue(eye['currentHp']) <= 0);
+
+int oculumFallenEyeBond(Map<String, dynamic> eye) =>
+    readIntValue(eye['bond']).clamp(0, 1000);
+
+String oculumFallenEyeOriginalRarity(Map<String, dynamic> eye) {
+  if (eye['originalRarity'] != null) return '${eye['originalRarity']}';
+  final history = eye['reforgeHistory'] as List? ?? const [];
+  for (final entry in history) {
+    if (entry is Map && entry['from'] != null) return '${entry['from']}';
+  }
+  return '${eye['rarity'] ?? 'comune'}';
+}
+
+bool oculumFallenEyeAwakened(Map<String, dynamic> eye) =>
+    oculumFallenEyeOriginalRarity(eye) == 'oculum' &&
+    oculumFallenEyeBond(eye) == 1000;
+
+int oculumFallenEyeRebirthsAvailable(Map<String, dynamic> eye) => max(
+  0,
+  min(3, oculumFallenEyeBond(eye) ~/ 300) - readIntValue(eye['rebirthsUsed']),
+);
+
+bool oculumFallenEyeNaturalAwakening(String rarity, int roll) =>
+    rarity == 'oculum' && roll == 0;
+
+void oculumFallenEyeGrantSummonBond(Map<String, dynamic> eye) {
+  if (oculumFallenEyeIsDead(eye)) return;
+  eye.putIfAbsent('originalRarity', () => oculumFallenEyeOriginalRarity(eye));
+  final data = eye['sheetData'] as Map? ?? const {};
+  eye['bond'] = min(
+    1000,
+    oculumFallenEyeBond(eye) + 10 + max(0, readIntValue(data['livello'])),
+  );
+  eye['awakened'] = oculumFallenEyeAwakened(eye);
+}
+
+String oculumFallenEyeLifeStatus(Map<String, dynamic> eye) {
+  final awakened = oculumFallenEyeAwakened(eye);
+  if (!oculumFallenEyeIsDead(eye)) {
+    return '${awakened ? 'RISVEGLIATO • ' : ''}${readBoolValue(eye['active']) ? 'EVOCATO' : 'DISEVOCATO'}';
+  }
+  return '${awakened ? 'RISVEGLIATO\n' : ''}MORTO — ${awakened || oculumFallenEyeRebirthsAvailable(eye) > 0 ? 'RINASCITA AL PROSSIMO RIPOSO LUNGO' : 'NESSUNA RINASCITA DISPONIBILE'}';
+}
+
+/// Only this owner-rest transition clears death. The persisted event prevents
+/// replay even if another death occurs before an old event is delivered again.
+bool oculumFallenEyeRebirthOnOwnerRest(
+  Map<String, dynamic> eye, {
+  required String ownerSheetId,
+  required String restEventId,
+  required int maximumHp,
+}) {
+  if (ownerSheetId.isEmpty ||
+      restEventId.isEmpty ||
+      eye['ownerSheetId'] != ownerSheetId ||
+      eye['lastRebirthRestId'] == restEventId ||
+      (eye['processedRebirthRestIds'] as List? ?? const []).contains(
+        restEventId,
+      ) ||
+      !oculumFallenEyeIsDead(eye)) {
+    return false;
+  }
+  final awakened = oculumFallenEyeAwakened(eye);
+  if (!awakened && oculumFallenEyeRebirthsAvailable(eye) == 0) return false;
+  if (!awakened) eye['rebirthsUsed'] = readIntValue(eye['rebirthsUsed']) + 1;
+  eye['lastRebirthRestId'] = restEventId;
+  eye['processedRebirthRestIds'] = [
+    ...eye['processedRebirthRestIds'] as List? ?? const [],
+    restEventId,
+  ];
+  eye['perdutoPerSempre'] = false;
+  eye['perdutoIl'] = '';
+  eye['deathWounds'] = 0;
+  eye['active'] = false;
+  eye['currentHp'] = max(1, (max(1, maximumHp) * .1).ceil());
+  final data = Map<String, dynamic>.from(eye['sheetData'] as Map? ?? const {});
+  data['currentHp'] = '${eye['currentHp']}';
+  data['feriteMorte'] = 0;
+  data['personaggioCaduto'] = false;
+  eye['sheetData'] = data;
+  return true;
+}
 
 /// Il salvataggio conserva gli Occhi sia nel blocco attivo sia nello snapshot
 /// della campagna. Le versioni precedenti potevano avere lo snapshot più
@@ -507,7 +587,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
     final sourceId = '${eye['sourceMonsterId'] ?? ''}';
     if (sourceId.isEmpty) return;
     final monster = monsterBookEntryById(sourceId);
-    if (monster != null && monster.skillIds.isNotEmpty) {
+    if (monster != null) {
       final data = eye['sheetData'] as Map;
       final art = oculumCompleteMonsterOpen(
         oculumMonsterBookArt(monster),
@@ -584,6 +664,8 @@ extension _OculumFallenEyes on _OculumHomePageState {
     );
     for (final key in const <String>[
       'currentHp',
+      'derivedMaxHp',
+      'conditionImmunities',
       'resilienza',
       'currentResilienza',
       'volonta',
@@ -623,6 +705,12 @@ extension _OculumFallenEyes on _OculumHomePageState {
     final selectedRarity = oculumFallenEyeRarities.contains(rarity)
         ? rarity!
         : oculumFallenEyeRollRarity(Random.secure());
+    final naturalAwakening =
+        selectedRarity == 'oculum' &&
+        oculumFallenEyeNaturalAwakening(
+          selectedRarity,
+          Random.secure().nextInt(1000),
+        );
     final id =
         'fallen_eye_${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(999999)}';
     final current = _fallenEyeBodyFromSource(source);
@@ -666,6 +754,10 @@ extension _OculumFallenEyes on _OculumHomePageState {
       'sourceClass': oculumFallenEyeSourceClass(source),
       'name': '${current['nome'] ?? 'Occhio Caduto'}',
       'rarity': selectedRarity,
+      'originalRarity': selectedRarity,
+      'bond': naturalAwakening ? 1000 : 0,
+      'awakened': naturalAwakening,
+      'rebirthsUsed': 0,
       'commonMalus': malus,
       'commonMalusHistorical': malus,
       'commonMalusEffect': commonEffect,
@@ -753,19 +845,20 @@ extension _OculumFallenEyes on _OculumHomePageState {
       'notePersonaggio':
           'Monster Book: ${monster.nameIt} • Elemento: ${monster.elementId}',
       'monsterBookSourceId': monster.id,
+      if (monster.id == 'legno_marcio' ||
+          monster.id.startsWith('legno_marcio_variante_'))
+        'conditionImmunities': ['rinsecchito'],
       'shadowScaling': monster.elementId.toLowerCase() == 'shadow',
     });
     source['skills'] = <dynamic>[];
-    source['arti'] = monster.skillIds.isEmpty
-        ? <dynamic>[]
-        : [
-            oculumCompleteMonsterOpen(
-              oculumMonsterBookArt(monster),
-              name: monster.nameIt,
-              level: level,
-              grade: oculumGradeForLevel(level),
-            ).toJson(),
-          ];
+    source['arti'] = [
+      oculumCompleteMonsterOpen(
+        oculumMonsterBookArt(monster),
+        name: monster.nameIt,
+        level: level,
+        grade: oculumGradeForLevel(level),
+      ).toJson(),
+    ];
     source['fallenEyeOriginalArts'] = source['arti'];
     return source;
   }
@@ -773,6 +866,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
   Future<MonsterBookEntry?> _pickMonsterBookForFallenEye() async {
     final search = TextEditingController();
     MonsterBookEntry? result;
+    var selectedCategory = 'Tutti';
     await showDialog<void>(
       context: context,
       builder: (dialog) => StatefulBuilder(
@@ -780,10 +874,19 @@ extension _OculumFallenEyes on _OculumHomePageState {
           final query = oculumNormalizeText(search.text);
           final entries = monsterBookEntries
               .where((entry) {
-                return query.isEmpty ||
-                    oculumNormalizeText(
-                      '${entry.nameIt} ${entry.nameEn} ${entry.presetType} ${entry.elementId}',
-                    ).contains(query);
+                final category = entry.isBoss
+                    ? 'Boss'
+                    : entry.isMiniBoss
+                    ? 'Mini Boss'
+                    : 'Mostro';
+                if (selectedCategory != 'Tutti' &&
+                    category != selectedCategory) {
+                  return false;
+                }
+                if (query.isEmpty) return true;
+                return oculumNormalizeText(
+                  '${entry.nameIt} ${entry.nameEn} ${entry.id} ${entry.presetType} ${entry.elementId} ${entry.descIt} ${monsterBookUsableSkillIds(entry).join(' ')} ${entry.dropIds.join(' ')} ${entry.weaponTags.join(' ')} ${entry.armorTags.join(' ')}',
+                ).contains(query);
               })
               .toList(growable: false);
           return AlertDialog(
@@ -809,6 +912,29 @@ extension _OculumFallenEyes on _OculumHomePageState {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (final category in const [
+                          'Tutti',
+                          'Mostro',
+                          'Mini Boss',
+                          'Boss',
+                        ]) ...[
+                          ChoiceChip(
+                            label: Text(category),
+                            selected: selectedCategory == category,
+                            onSelected: (_) => setDialogState(
+                              () => selectedCategory = category,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Expanded(
                     child: ListView.builder(
                       itemCount: entries.length,
@@ -823,7 +949,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                             overflow: TextOverflow.ellipsis,
                           ),
                           subtitle: Text(
-                            '${entry.presetType} • ${elementDisplayName(entry.elementId)} • HP ${entry.stats['hp'] ?? 0} • Skill ${entry.skillIds.length}',
+                            '${entry.presetType} • ${elementDisplayName(entry.elementId)} • HP ${entry.stats['hp'] ?? 0} • Skill ${monsterBookUsableSkillIds(entry).length}',
                           ),
                           onTap: () {
                             result = entry;
@@ -959,8 +1085,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
         copy['ownerSheetId'] = '${target['sheetTag']}';
         copy['active'] = false;
         copy['summonedSheetTag'] = '';
-        copy['perdutoPerSempre'] = false;
-        copy['perdutoIl'] = '';
+        // Copy preserves death, bond and spent rebirths.
         copy['createdAt'] = DateTime.now().toIso8601String();
         final data = _fallenEyeBodyFromSource(
           Map<String, dynamic>.from(copy['sheetData'] as Map? ?? const {}),
@@ -1382,7 +1507,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
   Future<void> activateFallenEye(Map<String, dynamic> eye) async {
     if (readBoolValue(eye['active'])) return;
     if (oculumFallenEyeIsDead(eye)) {
-      _fallenEyeMessage('Questo Occhio è morto e non può più essere evocato.');
+      _fallenEyeMessage(oculumFallenEyeLifeStatus(eye));
       return;
     }
     _restoreFallenEyeMonsterPowers(eye);
@@ -1395,11 +1520,16 @@ extension _OculumFallenEyes on _OculumHomePageState {
     sheet['occhioCadutoId'] = eye['id'];
     sheet['occhioCaduto'] = true;
     final ownerId = '${eye['ownerSheetId'] ?? ''}';
-    final blankIndex = schedePersonaggio.indexWhere(
-      (candidate) =>
-          '${candidate['sheetTag'] ?? ''}' != ownerId &&
-          oculumFallenEyeIsBlankSummonSheet(candidate),
+    final existingIndex = schedePersonaggio.indexWhere(
+      (candidate) => candidate['occhioCadutoId'] == eye['id'],
     );
+    final blankIndex = existingIndex >= 0
+        ? existingIndex
+        : schedePersonaggio.indexWhere(
+            (candidate) =>
+                '${candidate['sheetTag'] ?? ''}' != ownerId &&
+                oculumFallenEyeIsBlankSummonSheet(candidate),
+          );
     setState(() {
       // La prima evocazione occupa una scheda vuota; se l'utente non ne ha
       // lasciata una, ne creiamo una vuota e la riempiamo nello stesso gesto.
@@ -1434,8 +1564,9 @@ extension _OculumFallenEyes on _OculumHomePageState {
   /// Evento di gioco esplicito. L'attivazione della scheda e i rebuild non lo
   /// chiamano: ogni invocazione reale può assegnare una sola volta il premio.
   Future<void> summonFallenEye(Map<String, dynamic> eye) async {
+    if (readBoolValue(eye['active'])) return;
     if (oculumFallenEyeIsDead(eye)) {
-      _fallenEyeMessage('Questo Occhio è morto e non può più essere evocato.');
+      _fallenEyeMessage(oculumFallenEyeLifeStatus(eye));
       return;
     }
     // Puoi evocare più Occhi. Il primo non costa nulla; una spesa e il
@@ -1446,6 +1577,10 @@ extension _OculumFallenEyes on _OculumHomePageState {
     if (!hasAnotherActiveEye) eye['summonPayment'] = 'nessuno';
     if (!_spendFallenEyeSummonAction(eye, 'evocare')) return;
     await activateFallenEye(eye);
+    if (!readBoolValue(eye['active'])) return;
+    oculumFallenEyeGrantSummonBond(eye);
+    _touchFallenEyes();
+    await salvaDati();
     final rarity = '${eye['rarity'] ?? 'comune'}';
     if (!oculumFallenEyeCanLevel(rarity)) {
       _showFallenEyeSummonNotice(
@@ -1665,7 +1800,45 @@ extension _OculumFallenEyes on _OculumHomePageState {
   String rigeneraOcchiCadutiDelProprietarioDaRiposo({required bool lungo}) {
     final ownerId = sheetTagAt(schedaCorrente);
     final recovered = <String>[];
+    final restId = '${ownerId}_${DateTime.now().microsecondsSinceEpoch}';
     for (final eye in occhiCaduti) {
+      if (lungo &&
+          eye['ownerSheetId'] == ownerId &&
+          oculumFallenEyeIsDead(eye)) {
+        final data = eye['sheetData'] as Map? ?? const {};
+        final maximumHp = max(
+          1,
+          readIntValue(
+            data['derivedMaxHp'],
+            fallback: readIntValue(
+              eye['deathMaxHp'],
+              fallback:
+                  max(1, readIntValue(data['resilienza'])) *
+                  10 *
+                  max(1, readIntValue(data['grado']) * 5),
+            ),
+          ),
+        );
+        if (oculumFallenEyeRebirthOnOwnerRest(
+          eye,
+          ownerSheetId: ownerId,
+          restEventId: restId,
+          maximumHp: maximumHp,
+        )) {
+          for (var index = 0; index < schedePersonaggio.length; index++) {
+            if (schedePersonaggio[index]['occhioCadutoId'] == eye['id']) {
+              schedePersonaggio[index] = {
+                ...schedePersonaggio[index],
+                'currentHp': '${eye['currentHp']}',
+                'feriteMorte': 0,
+                'personaggioCaduto': false,
+              };
+            }
+          }
+          recovered.add('${eye['name']}: Rinascita al 10% Vita');
+        }
+        continue;
+      }
       if ('${eye['ownerSheetId'] ?? ''}' != ownerId ||
           readBoolValue(eye['active']) ||
           oculumFallenEyeIsDead(eye) ||
@@ -1704,6 +1877,18 @@ extension _OculumFallenEyes on _OculumHomePageState {
     if (id.isEmpty) return;
     final eye = fallenEyeForId(id);
     if (eye == null || oculumFallenEyeIsDead(eye)) return;
+    final sheetIndex = schedePersonaggio.indexWhere(
+      (item) => item['occhioCadutoId'] == id,
+    );
+    eye['deathMaxHp'] = sheetIndex >= 0
+        ? sheetMaxHpForDeathAt(sheetIndex)
+        : max(
+            1,
+            readIntValue(
+              sheet['derivedMaxHp'],
+              fallback: readIntValue(sheet['resilienza']) * 10,
+            ),
+          );
     eye['perdutoPerSempre'] = true;
     eye['perdutoIl'] = DateTime.now().toIso8601String();
     eye['deathWounds'] = 3;
@@ -1725,6 +1910,10 @@ extension _OculumFallenEyes on _OculumHomePageState {
     if (id.isEmpty) return;
     final eye = fallenEyeForId(id);
     if (eye == null) return;
+    if (oculumFallenEyeIsDead(eye)) {
+      sheet['currentHp'] = '0';
+      sheet['feriteMorte'] = 3;
+    }
     eye['sheetData'] = _cloneJsonMap(sheet);
     eye['name'] = '${sheet['nome'] ?? eye['name']}';
     if (readIntValue(sheet['feriteMorte']) >= 3 &&
@@ -1854,6 +2043,10 @@ extension _OculumFallenEyes on _OculumHomePageState {
         'success': success,
       });
       if (success) {
+        eye.putIfAbsent(
+          'originalRarity',
+          () => oculumFallenEyeOriginalRarity(eye),
+        );
         eye['rarity'] = target;
         _restoreFallenEyeMonsterPowers(eye);
         oculumFallenEyeApplyInheritedPowers(eye);
@@ -1992,15 +2185,37 @@ extension _OculumFallenEyes on _OculumHomePageState {
           )
           .length;
       final eyes = ownerEyes.where((eye) {
-        final name = '${eye['name'] ?? ''}'.toLowerCase();
-        return (fallenEyesSearch.isEmpty ||
+        final name =
+            '${eye['name'] ?? ''} ${eye['rarity'] ?? ''} ${eye['sourceClass'] ?? ''} ${oculumFallenEyeLifeStatus(eye)}'
+                .toLowerCase();
+        final dead = oculumFallenEyeIsDead(eye);
+        final waiting =
+            dead &&
+            (oculumFallenEyeAwakened(eye) ||
+                oculumFallenEyeRebirthsAvailable(eye) > 0);
+        final lifeMatches = switch (fallenEyesLifeFilter) {
+          'vivi' => !dead,
+          'morti' => dead,
+          'attesa' => waiting,
+          'risvegliati' => oculumFallenEyeAwakened(eye),
+          _ => true,
+        };
+        return lifeMatches &&
+            (fallenEyesSearch.isEmpty ||
                 name.contains(fallenEyesSearch.toLowerCase())) &&
             (fallenEyesRarityFilter == 'tutte' ||
                 eye['rarity'] == fallenEyesRarityFilter) &&
             (fallenEyesActiveFilter == null ||
                 readBoolValue(eye['active']) == fallenEyesActiveFilter);
       }).toList();
+      if (fallenEyesBondSort) {
+        eyes.sort(
+          (a, b) => oculumFallenEyeBond(b).compareTo(oculumFallenEyeBond(a)),
+        );
+      }
+      final deadCount = ownerEyes.where(oculumFallenEyeIsDead).length;
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
@@ -2012,7 +2227,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                 SizedBox(
                   width: 220,
                   child: Text(
-                    'OCCHI DEI CADUTI',
+                    'Occhi dei Caduti',
                     style: TextStyle(
                       color: primaryColor,
                       fontSize: 21,
@@ -2049,7 +2264,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                     },
                     decoration: const InputDecoration(
                       prefixIcon: Icon(Icons.search),
-                      hintText: 'Cerca Occhio',
+                      hintText: 'Nome, rarità o stato',
                     ),
                   ),
                 ),
@@ -2081,7 +2296,58 @@ extension _OculumFallenEyes on _OculumHomePageState {
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '${ownerEyes.length} Occhi · $activeOwnerCount evocati · $deadCount morti',
+                style: TextStyle(
+                  color: primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                for (final entry in const {
+                  'tutti': 'Tutti',
+                  'vivi': 'Vivi',
+                  'attesa': 'In attesa di Rinascita',
+                  'morti': 'Morti',
+                  'risvegliati': 'Risvegliati',
+                }.entries)
+                  ChoiceChip(
+                    label: Text(entry.value),
+                    selected: fallenEyesLifeFilter == entry.key,
+                    onSelected: (_) {
+                      fallenEyesLifeFilter = entry.key;
+                      _touchFallenEyes();
+                    },
+                  ),
+                FilterChip(
+                  label: const Text('Legame più alto'),
+                  selected: fallenEyesBondSort,
+                  onSelected: (value) {
+                    fallenEyesBondSort = value;
+                    _touchFallenEyes();
+                  },
+                ),
+              ],
+            ),
+          ),
+          if (eyes.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Nessun Occhio corrisponde ai filtri. Cambia ricerca o crea un nuovo Occhio.',
+              ),
+            ),
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.all(12),
@@ -2090,8 +2356,8 @@ extension _OculumFallenEyes on _OculumHomePageState {
               // precostruire una seconda schermata di carte.
               addAutomaticKeepAlives: false,
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 330,
-                mainAxisExtent: 285,
+                maxCrossAxisExtent: 440,
+                mainAxisExtent: 430,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
               ),
@@ -2601,11 +2867,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                               ),
                             ),
                           Text(
-                            dead
-                                ? 'MORTO — NON EVOCABILE'
-                                : readBoolValue(eye['active'])
-                                ? 'EVOCATO'
-                                : 'DISEVOCATO',
+                            dead ? 'MORTO${oculumFallenEyeAwakened(eye) ? ' · RISVEGLIATO' : ''}' : readBoolValue(eye['active']) ? 'EVOCATO' : 'DISEVOCATO',
                             style: TextStyle(
                               color: oculumFallenEyeIsDead(eye)
                                   ? Colors.redAccent
@@ -2649,6 +2911,45 @@ extension _OculumFallenEyes on _OculumHomePageState {
                   ],
                 ),
                 const SizedBox(height: 10),
+                Text('Legame ${oculumFallenEyeBond(eye)} / 1000', style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                LinearProgressIndicator(
+                  value: oculumFallenEyeBond(eye) / 1000,
+                  color: color,
+                  backgroundColor: color.withValues(alpha: .12),
+                  minHeight: 6,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  dead ? (oculumFallenEyeAwakened(eye) || oculumFallenEyeRebirthsAvailable(eye) > 0 ? 'RINASCITA AL PROSSIMO RIPOSO LUNGO' : 'NESSUNA RINASCITA DISPONIBILE') : oculumFallenEyeAwakened(eye)
+                      ? 'Rinascite illimitate · al Riposo Lungo del proprietario'
+                      : 'Soglie Legame 300 / 600 / 900 · Rinascite disponibili: ${oculumFallenEyeRebirthsAvailable(eye)}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    if (!dead)
+                      OutlinedButton.icon(
+                        onPressed: () => readBoolValue(eye['active'])
+                            ? dismissFallenEye(eye)
+                            : summonFallenEye(eye),
+                        icon: Icon(
+                          readBoolValue(eye['active'])
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        label: Text(
+                          readBoolValue(eye['active']) ? 'Disevoca' : 'Evoca',
+                        ),
+                      ),
+                    TextButton.icon(
+                      onPressed: () => _showFallenEyeMenu(eye),
+                      icon: const Icon(Icons.more_horiz),
+                      label: const Text('Gestisci'),
+                    ),
+                  ],
+                ),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(10, 7, 10, 9),
@@ -2889,11 +3190,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
       return AlertDialog(
         title: Text('${eye['name']} — OCCHIO CADUTO'),
         content: Text(
-          'Origine: ${eye['sourceClass'] ?? oculumFallenEyeSourceClass(Map<String, dynamic>.from(eye['sheetData'] as Map? ?? const {}))}\nRarità: ${oculumFallenEyeLabel(rarity)}\nStato: ${oculumFallenEyeIsDead(eye)
-              ? 'Morto — non evocabile'
-              : readBoolValue(eye['active'])
-              ? 'Evocato'
-              : 'Disevocato'}\nEvoca/Disevoca: usa 1 azione solo se disponibile\nDifficoltà proprietaria: ${fallenEyeDifficulty(eye)}\nRigenerazione: ${oculumFallenEyeCanRegenerate(rarity) ? '✓' : '🔒'}\nArt: ${(eye['activeArts'] as List? ?? []).length}/${oculumFallenEyeArtLimit(rarity)}\nArt originali: ${((eye['originalArts'] as List? ?? []).map((art) {
+          'Origine: ${eye['sourceClass'] ?? oculumFallenEyeSourceClass(Map<String, dynamic>.from(eye['sheetData'] as Map? ?? const {}))}\nRarità: ${oculumFallenEyeLabel(rarity)}\nStato: ${oculumFallenEyeLifeStatus(eye)}\nLegame: ${oculumFallenEyeBond(eye)}/1000\nRinascite: ${oculumFallenEyeAwakened(eye) ? 'illimitate' : oculumFallenEyeRebirthsAvailable(eye)}\nEvoca/Disevoca: usa 1 azione solo se disponibile\nDifficoltà proprietaria: ${fallenEyeDifficulty(eye)}\nRigenerazione: ${oculumFallenEyeCanRegenerate(rarity) ? '✓' : '🔒'}\nArt: ${(eye['activeArts'] as List? ?? []).length}/${oculumFallenEyeArtLimit(rarity)}\nArt originali: ${((eye['originalArts'] as List? ?? []).map((art) {
             final item = art is Map ? art : const <String, dynamic>{};
             return item['known'] == false || '${item['nome'] ?? ''}'.trim().isEmpty ? '???' : '${item['nome']}';
           }).join(', '))}\nTecniche ereditate dal mostro: la rarità sblocca 0/1/2/3 Art. I Titoli del proprietario restano separati.\nLivelli: ${oculumFallenEyeCanLevel(rarity) ? '✓' : '🔒'}\nTitoli: ${oculumFallenEyeCanHaveTitles(rarity) ? '✓' : '🔒'}\nTema: ${(eye['theme'] as Map?)?['colorPreset'] ?? 'tema scheda'}${oculumFallenEyeCanLevel(rarity) ? '\nEXP: ${(eye['sheetData'] as Map?)?['exp'] ?? 0} • ultima evocazione +${eye['lastSummonXp'] ?? 0}' : ''}${target == null ? '\nReforge Oculum (Epico): +$oculumFallenEyeEpicReforgeXp EXP per tentativo Quest.' : '\nReforge $rarity → $target: ${oculumFallenEyeReforgeChanceWithFailures(difficulty: fallenEyeDifficulty(eye), targetRarity: target, failureStreak: readIntValue(eye['reforgeFailureStreak']))}% (base ${oculumFallenEyeReforgeChance(fallenEyeDifficulty(eye), target)}% + ${oculumFallenEyeReforgeFailureBonus(readIntValue(eye['reforgeFailureStreak']))}% fallimenti)'}',

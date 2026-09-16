@@ -7,8 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'oculum_dungeon/monster_book.dart';
+import 'oculum_dungeon/run_evolution.dart';
+import 'oculum_dungeon/fallen_companion.dart';
 
 part 'oculum_dungeon/oculum_dungeon_models.dart';
+part 'oculum_dungeon/oculum_dungeon_text_rpg.dart';
 part 'oculum_dungeon/oculum_dungeon_sprite_painter.dart';
 part 'oculum_dungeon/oculum_dungeon_skin_system.dart';
 part 'oculum_dungeon/oculum_dungeon_realtime_coop.dart';
@@ -612,6 +615,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   int playerHp = 30;
   int playerMaxHp = 30;
   int playerShield = 0;
+  int posteaArmorShieldRemaining = 0;
+  int posteaSetShieldRemaining = 0;
+  int posteaShieldApplied = 0;
   int playerOculumShield = 0;
   int playerOculumShieldMax = 0;
   bool playerPartialAwakeningTriggered = false;
@@ -836,6 +842,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   _DungeonArt? activeArt;
   _RelicDef? activeRelic;
   _CharacterOrigin? activeCharacterOrigin;
+  MonsterBookEntry? dungeonMonster;
+  int monsterSkillCooldown = 0;
+  final Set<String> masteredOrigins = {};
+  final List<DungeonFallenCompanion> fallenCompanions = [];
 
   final Set<String> unlockedArtIds = {};
   final Set<String> unlockedWeaponIds = {};
@@ -870,6 +880,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   final List<_DungeonChoice> eventChoices = [];
   final List<String> purchasedRelics = [];
   final List<String> runBoons = [];
+  DungeonEvolutionProgress runEvolution = DungeonEvolutionProgress();
   final List<String> log = [];
   final Set<int> floorSaveEventsClaimed = {};
   final Map<String, int> smallNpcActions = {};
@@ -1303,13 +1314,13 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       nameIt: 'Armatura Elite Postea',
       nameEn: 'Postea Elite Armor',
       descIt:
-          'Armatura avanzata dei soldati elite di Postea. +25 HP, +50 Scudo, +4 Difesa, +3 Danno. Attiva Scudo Critico a inizio run.',
+          'Armatura avanzata dei soldati elite di Postea. +13 Difesa, +20 Danno, +20 Scudo. Ti mantiene sospeso pochi centimetri dal suolo e attiva Scudo Critico a inizio run.',
       descEn:
-          'Advanced armor worn by Postea elite soldiers. +25 HP, +50 Shield, +4 Defense, +3 Damage. Activates Critical Shield at run start.',
-      hpBonus: 25,
-      shieldBonus: 50,
-      defenseBonus: 4,
-      damageBonus: 3,
+          'Advanced armor worn by Postea elite soldiers. +13 Defense, +20 Damage, +20 Shield. It keeps you hovering a few centimetres above the ground and activates Critical Shield at run start.',
+      hpBonus: 0,
+      shieldBonus: 20,
+      defenseBonus: 13,
+      damageBonus: 20,
       oculumBonus: 0,
       critBonus: 4,
       elementId: 'postea',
@@ -1734,12 +1745,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       nameIt: 'Fucile Automatico di Postea',
       nameEn: 'Postea Automatic Rifle',
       descIt:
-          '+7 danni Postea, +3 critico. Arma automatica del futuro chiuso: spara prima che il domani abbia il permesso di esistere.',
+          '+15 Attacco, +3 critico. Skill: Concatenazione armata — tira 1d6 colpi, ognuno infligge 5 Danni. Arma automatica del futuro chiuso.',
       descEn:
-          '+7 Postea damage, +3 critical. Automatic weapon from the sealed future: it fires before tomorrow has permission to exist.',
-      damageBonus: 7,
+          '+15 Attack, +3 critical. Skill: Armed Chain — roll 1d6 shots, each dealing 5 Damage. Automatic weapon from the sealed future.',
+      damageBonus: 15,
       defenseBonus: 0,
-      shieldBonus: 12,
+      shieldBonus: 0,
       oculumBonus: 0,
       oculumCharges: 0,
       elementId: 'postea',
@@ -2324,6 +2335,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       unlockedCostumeIds.addAll(savedCostumes);
       unlockedNpcIds.addAll(savedNpcs);
       unlockedRelicIds.addAll(savedRelics);
+      masteredOrigins.addAll(
+        prefs.getStringList('oculumDungeon.masteredOrigins') ?? const [],
+      );
       unlockedTitleIds.addAll(savedTitles);
       equippedTitleIds.addAll(savedEquippedTitles);
       unlockedThemePresetIds.addAll(savedThemes);
@@ -2460,6 +2474,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       unlockedRelicIds.toList()..sort(),
     );
     await prefs.setStringList(
+      'oculumDungeon.masteredOrigins',
+      masteredOrigins.toList(),
+    );
+    await prefs.setStringList(
       'oculumDungeon.unlockedTitleIds',
       unlockedTitleIds.toList()..sort(),
     );
@@ -2545,6 +2563,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     'oculumDungeon.unlockedRelicIds',
     'oculumDungeon.unlockedTitleIds',
     'oculumDungeon.equippedTitleIds',
+    'oculumDungeon.masteredOrigins',
     'oculumDungeon.unlockedThemePresetIds',
     'oculumDungeon.titleLevels',
     'oculumDungeon.completedAchievementIds',
@@ -2656,6 +2675,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       selectedAllyIds.clear();
       unlockedRelicIds.clear();
       unlockedTitleIds.clear();
+      masteredOrigins.clear();
       equippedTitleIds.clear();
       unlockedThemePresetIds.clear();
       completedAchievementIds.clear();
@@ -2808,6 +2828,54 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   List<_TitleDef> _generateTitles() {
     return const [
+      _TitleDef(
+        id: 'rpg_other_skin',
+        nameIt: 'Sotto un’altra pelle',
+        nameEn: 'Another skin',
+        descIt:
+            'Vinci un combattimento dalla stanza 3 in poi usando un mostro. +2 Danno.',
+        descEn: 'Win a fight from room 3 onward as a monster. +2 Damage.',
+        blindSpotIt: 'Occupa uno slot Titolo quando equipaggiato.',
+        blindSpotEn: 'Uses a Title slot while equipped.',
+        res: 0,
+        vol: 0,
+        mat: 0,
+        ocu: 0,
+        damage: 2,
+        defense: 0,
+      ),
+      _TitleDef(
+        id: 'rpg_many_lives',
+        nameIt: 'Tre vite nel buio',
+        nameEn: 'Three lives in darkness',
+        descIt: 'Vinci dalla stanza 3 con tre personaggi diversi. +2 Difesa.',
+        descEn: 'Win from room 3 with three different characters. +2 Defense.',
+        blindSpotIt: 'Occupa uno slot Titolo quando equipaggiato.',
+        blindSpotEn: 'Uses a Title slot while equipped.',
+        res: 0,
+        vol: 0,
+        mat: 0,
+        ocu: 0,
+        damage: 0,
+        defense: 2,
+      ),
+      _TitleDef(
+        id: 'rpg_changeling',
+        nameIt: 'Senza un solo volto',
+        nameEn: 'Many-faced',
+        descIt:
+            'Vinci dalla stanza 3 con sei personaggi diversi. +3 Danno e +3 Difesa.',
+        descEn:
+            'Win from room 3 with six different characters. +3 Damage and +3 Defense.',
+        blindSpotIt: 'Occupa uno slot Titolo quando equipaggiato.',
+        blindSpotEn: 'Uses a Title slot while equipped.',
+        res: 0,
+        vol: 0,
+        mat: 0,
+        ocu: 0,
+        damage: 3,
+        defense: 3,
+      ),
       _TitleDef(
         id: 'principiante',
         nameIt: 'Principiante',
@@ -3923,14 +3991,14 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         nameIt: 'Set Elite di Postea - Fucile',
         nameEn: 'Postea Elite Set - Rifle',
         descIt:
-            'Fucile Automatico di Postea e Armatura Elite Postea. Il futuro chiuso ti copre con protocolli militari.',
+            'Fucile Automatico di Postea e Armatura Elite Postea. Il set completo porta il totale a +40 Danno, +15 Difesa e 25 Scudo.',
         descEn:
-            'Postea Automatic Rifle and Postea Elite Armor. The sealed future covers you with military protocols.',
+            'Postea Automatic Rifle and Postea Elite Armor. Full Postea set: +40 Damage, +15 Defense and 25 Shield in total.',
         weaponIds: {'postea_auto_rifle'},
         costumeIds: {'postea_elite_armor'},
         damageBonus: 5,
-        defenseBonus: 3,
-        shieldBonus: 20,
+        defenseBonus: 2,
+        shieldBonus: 5,
         critBonus: 5,
         victoryChanceBonus: 6,
       ),
@@ -6454,10 +6522,23 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       max(0, widget.playerLevel) + max(0, widget.playerGrade) * 6;
 
   int get activeRelicRollBonus => cipoSerpentHp > 0 ? 5 : 0;
-  int get totalVc =>
-      widget.playerVc + dungeonVolonta ~/ 3 + activeRelicRollBonus;
-  int get totalCm =>
-      widget.playerCm + dungeonMateria ~/ 2 + activeRelicRollBonus;
+  int get totalVc => max(
+    0,
+    widget.playerVc +
+        dungeonVolonta ~/ 3 +
+        activeRelicRollBonus +
+        runEvolution.rank('duelist') * 4 -
+        runEvolution.rank('oracle') * 2,
+  );
+  int get totalCm => max(
+    0,
+    widget.playerCm +
+        dungeonMateria ~/ 2 +
+        activeRelicRollBonus +
+        runEvolution.rank('oracle') * 4 -
+        runEvolution.rank('duelist') * 2 +
+        (runEvolution.synergy('occulto') ? 4 : 0),
+  );
   int get totalInitiative =>
       widget.playerInitiative + dungeonMateria ~/ 5 + activeRelicRollBonus;
   int get willMateriaDefense => (dungeonVolonta + dungeonMateria) ~/ 2;
@@ -7112,6 +7193,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       widget.playerDefense +
       titleDefenseBonus +
       runDefenseBonus +
+      runEvolution.rank('stone') * 5 -
+      runEvolution.rank('fury') * 2 +
+      (runEvolution.synergy('baluardo') ? 4 : 0) +
+      (activeCostume?.id == 'postea_elite_armor' ? 13 : 0) +
       willMateriaDefense +
       artDefenseBonus() +
       activeArtSkillDefenseBonus() +
@@ -7126,6 +7211,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         widget.playerDamage +
         titleDamageBonus +
         runDamageBonus +
+        evolutionDamageBonus +
+        (activeCostume?.id == 'postea_elite_armor' ? 20 : 0) +
         dungeonVolonta +
         artDamageBonus() +
         activeArtSkillDamageBonus() +
@@ -7518,6 +7605,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'playerHp': playerHp,
       'playerPartialAwakeningTriggered': playerPartialAwakeningTriggered,
       'playerShield': playerShield,
+      'posteaArmorShieldRemaining': posteaArmorShieldRemaining,
+      'posteaSetShieldRemaining': posteaSetShieldRemaining,
+      'posteaShieldApplied': posteaShieldApplied,
       'playerOculumShield': playerOculumShield,
       'playerOculumShieldMax': playerOculumShieldMax,
       'dungeonKarma': dungeonKarma,
@@ -7697,10 +7787,14 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'posteaScientistEnhanced': posteaScientistEnhanced,
       'activeRelicId': activeRelic?.id,
       'activeCharacterOriginId': activeCharacterOrigin?.id,
+      'dungeonMonster': dungeonMonster?.toJson(),
+      'monsterSkillCooldown': monsterSkillCooldown,
       'equippedTitleIds': equippedTitleIds.toList(),
       'activeAllyIds': activeAllies.map((npc) => npc.id).toList(),
       'purchasedRelics': purchasedRelics,
       'runBoons': runBoons,
+      'runEvolution': runEvolution.toJson(),
+      'fallenCompanions': fallenCompanions.map((eye) => eye.toJson()).toList(),
       'smallNpcActions': smallNpcActions,
       'weakNpcRunEncounteredIds': weakNpcRunEncounteredIds.toList(),
       'hiresEncounteredThisRun': hiresEncounteredThisRun,
@@ -7834,6 +7928,11 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       data['playerPartialAwakeningTriggered'],
     );
     playerShield = (data['playerShield'] as num?)?.toInt() ?? playerShield;
+    posteaArmorShieldRemaining =
+        (data['posteaArmorShieldRemaining'] as num?)?.toInt() ?? 0;
+    posteaSetShieldRemaining =
+        (data['posteaSetShieldRemaining'] as num?)?.toInt() ?? 0;
+    posteaShieldApplied = (data['posteaShieldApplied'] as num?)?.toInt() ?? 0;
     playerOculumShield =
         (data['playerOculumShield'] as num?)?.toInt() ?? playerOculumShield;
     playerOculumShieldMax =
@@ -8198,6 +8297,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
               .cast<_RelicDef?>()
               .firstWhere((r) => r != null, orElse: () => null);
 
+    dungeonMonster = data['dungeonMonster'] is Map
+        ? MonsterBookEntry.fromJson(
+            Map<String, dynamic>.from(data['dungeonMonster'] as Map),
+          )
+        : null;
+    monsterSkillCooldown = readSavedInt(data['monsterSkillCooldown']);
     final originId = data['activeCharacterOriginId'] as String?;
     activeCharacterOrigin = originId == null
         ? null
@@ -8205,6 +8310,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
               .where((origin) => origin.id == originId)
               .cast<_CharacterOrigin?>()
               .firstWhere((origin) => origin != null, orElse: () => null);
+    if (dungeonMonster != null) {
+      activeCharacterOrigin = monsterOrigin(dungeonMonster!);
+    }
     if (activeCharacterOrigin?.id == 'male_oculian_cultist' ||
         activeCharacterOrigin?.id == 'female_oculian_cultist') {
       oculianAllianceActive = true;
@@ -8234,6 +8342,22 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       ..clear()
       ..addAll(readSavedStringList(data['purchasedRelics']));
 
+    fallenCompanions
+      ..clear()
+      ..addAll(
+        (data['fallenCompanions'] as List? ?? const [])
+            .whereType<Map>()
+            .map(
+              (item) => DungeonFallenCompanion.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
+            )
+            .take(3),
+      );
+    runEvolution = DungeonEvolutionProgress.fromJson(
+      data['runEvolution'],
+      legacyRoom: room,
+    );
     runBoons
       ..clear()
       ..addAll(readSavedStringList(data['runBoons']));
@@ -8874,6 +8998,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
     if (!ignoreShields && !ignoreNormalShield && playerShield > 0) {
       shieldAbsorbed = min(playerShield, remaining);
+      consumePosteaEquipmentShield(shieldAbsorbed);
       playerShield -= shieldAbsorbed;
       remaining -= shieldAbsorbed;
     }
@@ -9093,6 +9218,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   void equipRunWeapon(_StarterWeapon weapon) {
     runWeaponIds.add(weapon.id);
     starterWeapon = weapon;
+    grantPosteaEquipmentShield();
   }
 
   List<_StarterWeapon> randomStartingWeaponChoices() {
@@ -10670,6 +10796,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       }
       activeRelic = null;
       activeCharacterOrigin = null;
+      dungeonMonster = null;
+      monsterSkillCooldown = 0;
       unlockedTitleIds.add('principiante');
       equippedTitleIds
         ..clear()
@@ -10870,6 +10998,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
       purchasedRelics.clear();
       runBoons.clear();
+      runEvolution = DungeonEvolutionProgress();
+      fallenCompanions.clear();
       weakNpcRunEncounteredIds.clear();
       earlyDustRoomsClaimed.clear();
       clearChoices();
@@ -10906,6 +11036,15 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           'First blacksmith reforge: free.\n'
           'Permanent Spent Oculum: $oculumSpento.';
 
+      eventChoices.add(
+        _DungeonChoice(
+          labelIt: 'Gioca come mostro del Book',
+          labelEn: 'Play as a Book monster',
+          icon: Icons.menu_book,
+          color: Colors.tealAccent,
+          onPressed: showPlayableMonsterPicker,
+        ),
+      );
       final visibleOrigins = _characterOrigins
           .where(isCharacterOriginUnlocked)
           .toList(growable: false);
@@ -11046,6 +11185,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         );
       }
     });
+  }
+
+  void chooseDungeonMonster(MonsterBookEntry monster) {
+    if (activeCharacterOrigin != null) return;
+    dungeonMonster = MonsterBookEntry.fromJson(monster.toJson());
+    chooseCharacterOrigin(monsterOrigin(dungeonMonster!));
   }
 
   void chooseStartingRelic(_RelicDef relic) {
@@ -11223,6 +11368,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   void equipRunCostume(_RunCostume costume) {
     runCostumeIds.add(costume.id);
     activeCostume = costume;
+    grantPosteaEquipmentShield();
     applyWrongSpareHeartCostumeEffect();
   }
 
@@ -11236,9 +11382,13 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     activeCostume = costume;
     runCostumeIds.add(costume.id);
     addMaxHp(costume.hpBonus);
-    gainPlayerShield(costume.shieldBonus);
-    runDefenseBonus += costume.defenseBonus;
-    runDamageBonus += costume.damageBonus;
+    if (costume.id == 'postea_elite_armor') {
+      grantPosteaEquipmentShield();
+    } else {
+      gainPlayerShield(costume.shieldBonus);
+      runDefenseBonus += costume.defenseBonus;
+      runDamageBonus += costume.damageBonus;
+    }
     runCritBonus += costume.critBonus;
     dungeonOculum += costume.oculumBonus;
 
@@ -11278,6 +11428,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     if (costume.id == 'postea_elite_armor') {
       criticalShieldActive = true;
       criticalShieldBlocks = 0;
+      if (!runBoons.contains('postea_low_flight')) {
+        runBoons.add('postea_low_flight');
+      }
     }
 
     if (costume.id == 'moonhills_lunium_veil') {
@@ -11347,6 +11500,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       if (weapon.id == 'bike_chain_whip') dodgeCharges += 1;
       if (weapon.id.contains('blood')) runLifesteal += 1;
       if (weapon.id == 'postea_auto_rifle') runCritBonus += 3;
+      grantPosteaEquipmentShield();
       if (weapon.id == 'postea_grenades') runBoons.add('postea_free_vc_aoe');
       if (weapon.id == 'combattimento_mani_nude') {
         runCritBonus += 2;
@@ -13013,6 +13167,15 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   void exploreRoom() {
     if (!runActive || inCombat || gameOver) return;
+    if (runEvolution.due(room)) {
+      if (isDungeonCoopClient) return;
+      setState(() {
+        autoModeEnabled = false;
+        runEvolution.prepare(room, _random);
+      });
+      unawaited(saveRunCheckpoint());
+      return;
+    }
     recordAutoModePreference('explore');
     if (posteaGufusEventActive) {
       setState(() {
@@ -13035,6 +13198,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       }
 
       room++;
+      applyEvolutionRoomRewards();
       merchantActionUsedThisRoom = false;
       merchantGearsSoldThisRoom = false;
       peacefulMonstersMet = false;
@@ -13235,6 +13399,241 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       }
     });
     scheduleAutoModeStep();
+  }
+
+  int get evolutionDamageBonus =>
+      runEvolution.rank('fury') * 6 -
+      runEvolution.rank('stone') * 2 -
+      runEvolution.rank('vital') -
+      runEvolution.rank('collector') +
+      (runEvolution.synergy('assalto') ? 4 : 0) +
+      (playerHp * 100 <= playerMaxHp * 35
+          ? runEvolution.rank('last_spark') * 10
+          : 0);
+
+  void applyEvolutionRoomRewards() {
+    playerHp = min(
+      playerMaxHp,
+      playerHp +
+          runEvolution.rank('pilgrim') * 3 +
+          (runEvolution.synergy('sopravvivenza') ? 3 : 0),
+    );
+    gainPlayerShield(runEvolution.rank('aegis') * 6);
+  }
+
+  void applyEvolutionAttackEffects(_EnemyInstance target) {
+    if (target.hp <= 0) return;
+    final ember = runEvolution.rank('ember');
+    final razor = runEvolution.rank('razor');
+    if (ember > 0) {
+      target.burnTurns = max(target.burnTurns, 2);
+      target.burnPotency = max(target.burnPotency, ember * 2);
+    }
+    if (razor > 0) {
+      target.bleedTurns = max(target.bleedTurns, 2);
+      target.bleedPotency = max(target.bleedPotency, razor * 2);
+    }
+  }
+
+  void chooseRunEvolution(String id) {
+    if (!runActive || gameOver || inCombat || isDungeonCoopClient) return;
+    setState(() {
+      if (!runEvolution.choose(id)) return;
+      final evolution = dungeonEvolutions.firstWhere((item) => item.id == id);
+      if (id == 'vital') addMaxHp(20);
+      final description = t(evolution.descriptionIt, evolution.descriptionEn);
+      addLog(
+        '${t(evolution.nameIt, evolution.nameEn)} ${runEvolution.rank(id)}/3: $description',
+      );
+      textIt +=
+          '\n\nEvoluzione: ${evolution.nameIt}. ${evolution.descriptionIt}';
+      textEn +=
+          '\n\nEvolution: ${evolution.nameEn}. ${evolution.descriptionEn}';
+      unawaited(saveRunCheckpoint());
+    });
+  }
+
+  Color evolutionColor(String family) => switch (family) {
+    'assalto' => const Color(0xFFFFA078),
+    'baluardo' => const Color(0xFF79C9EE),
+    'occulto' => const Color(0xFFC4A0FF),
+    _ => const Color(0xFF97D8AD),
+  };
+
+  String evolutionFamily(String family) => switch (family) {
+    'assalto' => t('Assalto', 'Assault'),
+    'baluardo' => t('Baluardo', 'Bulwark'),
+    'occulto' => t('Occulto', 'Occult'),
+    _ => t('Sopravvivenza', 'Survival'),
+  };
+
+  String evolutionSynergy(String family) => switch (family) {
+    'assalto' => t('+4 Danno', '+4 Damage'),
+    'baluardo' => t('+4 Difesa', '+4 Defense'),
+    'occulto' => '+4 CM',
+    _ => t('+3 Vita entrando in stanza', '+3 HP on room entry'),
+  };
+
+  Widget buildEvolutionPanel() {
+    if (!runActive && runEvolution.history.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final ready = !inCombat && !gameOver && runEvolution.due(room);
+    final pending = runEvolution.offers.isNotEmpty;
+    return Card(
+      color: const Color(0xFF171421),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              t('IL TUO CAMMINO', 'YOUR PATH'),
+              style: const TextStyle(
+                color: Color(0xFFE8CCA0),
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              gameOver
+                  ? t('La build di questa run', 'This run’s build')
+                  : ready
+                  ? t(
+                      'Tre stanze attraversate. Scegli come cambiare.',
+                      'Three rooms crossed. Choose how to change.',
+                    )
+                  : t(
+                      'Prossima evoluzione tra ${runEvolution.roomsUntilChoice(room)} stanze.',
+                      'Next evolution in ${runEvolution.roomsUntilChoice(room)} rooms.',
+                    ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                for (final family in [
+                  'assalto',
+                  'baluardo',
+                  'occulto',
+                  'sopravvivenza',
+                ])
+                  Tooltip(
+                    message:
+                        '${t('Sinergia a 3 scelte', 'Synergy at 3 picks')}: ${evolutionSynergy(family)}',
+                    child: Chip(
+                      avatar: Icon(
+                        runEvolution.synergy(family)
+                            ? Icons.auto_awesome
+                            : Icons.trip_origin,
+                        color: evolutionColor(family),
+                        size: 16,
+                      ),
+                      label: Text(
+                        '${evolutionFamily(family)} ${runEvolution.familyRank(family)}/3',
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            if (ready && !pending)
+              FilledButton.icon(
+                onPressed: isDungeonCoopClient ? null : exploreRoom,
+                icon: const Icon(Icons.alt_route),
+                label: Text(t('Rivela le tre scelte', 'Reveal three choices')),
+              ),
+            if (pending && !inCombat && !gameOver)
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth >= 680
+                      ? (constraints.maxWidth - 20) / 3
+                      : constraints.maxWidth;
+                  return Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      for (final id in runEvolution.offers)
+                        SizedBox(
+                          width: width,
+                          child: Builder(
+                            builder: (context) {
+                              final item = dungeonEvolutions.firstWhere(
+                                (item) => item.id == id,
+                              );
+                              final color = evolutionColor(item.family);
+                              return Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: color.withValues(alpha: .08),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: color.withValues(alpha: .5),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${evolutionFamily(item.family)} · ${runEvolution.rank(id) + 1}/3',
+                                      style: TextStyle(color: color),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      t(item.nameIt, item.nameEn),
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      t(item.descriptionIt, item.descriptionEn),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    FilledButton(
+                                      onPressed: isDungeonCoopClient
+                                          ? null
+                                          : () => chooseRunEvolution(id),
+                                      child: Text(t('Scegli', 'Choose')),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            if (runEvolution.history.isNotEmpty)
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Text(
+                  t(
+                    'Evoluzioni acquisite (${runEvolution.history.length})',
+                    'Acquired evolutions (${runEvolution.history.length})',
+                  ),
+                ),
+                children: [
+                  for (final item in dungeonEvolutions.where(
+                    (item) => runEvolution.rank(item.id) > 0,
+                  ))
+                    ListTile(
+                      dense: true,
+                      title: Text(
+                        '${t(item.nameIt, item.nameEn)} ${runEvolution.rank(item.id)}/3',
+                      ),
+                      subtitle: Text(t(item.descriptionIt, item.descriptionEn)),
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   bool tryHiresEncounter() {
@@ -15031,6 +15430,91 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     }
   }
 
+  void consumePosteaEquipmentShield(int damage) {
+    final consumed = min(max(0, damage), posteaShieldApplied);
+    final armorLoss = min(consumed, posteaArmorShieldRemaining);
+    posteaArmorShieldRemaining -= armorLoss;
+    posteaSetShieldRemaining = max(
+      0,
+      posteaSetShieldRemaining - (consumed - armorLoss),
+    );
+    posteaShieldApplied -= consumed;
+  }
+
+  bool get posteaLowFlight => activeCostume?.id == 'postea_elite_armor';
+
+  void grantPosteaEquipmentShield() {
+    if (!runBoons.contains('postea_armor_shield_granted')) {
+      posteaArmorShieldRemaining = 0;
+      posteaSetShieldRemaining = 0;
+      posteaShieldApplied = 0;
+    }
+    // Reconcile other effects that directly remove the shared shield.
+    if (posteaShieldApplied > playerShield) {
+      consumePosteaEquipmentShield(posteaShieldApplied - playerShield);
+    }
+    playerShield = max(0, playerShield - posteaShieldApplied);
+    posteaShieldApplied = 0;
+    if (!posteaLowFlight) return;
+    if (!runBoons.contains('postea_armor_shield_granted')) {
+      runBoons.add('postea_armor_shield_granted');
+      posteaArmorShieldRemaining = 20;
+    }
+    final complete = starterWeapon?.id == 'postea_auto_rifle';
+    if (complete && !runBoons.contains('postea_set_shield_granted')) {
+      runBoons.add('postea_set_shield_granted');
+      posteaSetShieldRemaining = 5;
+    }
+    posteaShieldApplied =
+        posteaArmorShieldRemaining + (complete ? posteaSetShieldRemaining : 0);
+    playerShield += posteaShieldApplied;
+  }
+
+  void posteaArmedChain() {
+    if (!canUseCombatInput || starterWeapon?.id != 'postea_auto_rifle') return;
+    oculumSkillActionsThisTurn = 0;
+    oculumSkillTurnScheduleToken++;
+    if (isDungeonCoopTurnOpen && !dungeonCoop.resolvingTurn) {
+      submitDungeonCoopAction('attack|postea_chain');
+      return;
+    }
+    setState(() {
+      clearChoices();
+      if (playerStunTurns > 0) {
+        playerStunTurns--;
+        textIt = 'Sei stordito: perdi questa azione.';
+        textEn = 'You are stunned: you lose this action.';
+        enemyTurn();
+        return;
+      }
+      final target = firstAliveEnemy();
+      if (target == null) {
+        completeCombatVictory();
+        return;
+      }
+      final shots = _random.nextInt(6) + 1;
+      for (var i = 0; i < shots && target.hp > 0; i++) {
+        applyDamageToEnemy(target, 5);
+      }
+      textIt =
+          'Concatenazione armata: 1d6 = $shots colpi da 5 Danni (${shots * 5} totali prima dello Scudo).';
+      textEn =
+          'Armed Chain: 1d6 = $shots shots for 5 Damage (${shots * 5} total before Shield).';
+      defeatDeadEnemiesFromParty();
+      if (enemyParty.isEmpty) {
+        completeCombatVictory();
+        return;
+      }
+      syncPrimaryEnemyFromParty();
+      alliesAct();
+      if (enemyParty.isEmpty) {
+        completeCombatVictory();
+        return;
+      }
+      enemyTurn();
+    });
+  }
+
   void attack({required bool useVc}) {
     if (!canUseCombatInput) return;
     recordAutoModePreference(useVc ? 'attack_vc' : 'attack_cm');
@@ -15133,14 +15617,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         ).toInt();
         applyDamageToEnemy(target, kittyCopyDamage);
       }
-      var rifleBurstDamage = 0;
       var unarmedChainDamage = 0;
       var unarmedCritEffectIt = '';
       var unarmedCritEffectEn = '';
-      if (starterWeapon?.id == 'postea_auto_rifle' && target.hp > 0) {
-        rifleBurstDamage = max(1, 3 + totalVc ~/ 4 - target.defense ~/ 5);
-        applyDamageToEnemy(target, rifleBurstDamage);
-      }
       if (starterWeapon?.id == 'combattimento_mani_nude' && target.hp > 0) {
         unarmedChainDamage = max(
           2,
@@ -15164,6 +15643,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       // IMPORTANTE: non riscrivere enemyParty.first.hp = enemyHp [BUG EVITATO],
       // altrimenti in fight multipli il primo nemico può "rinascere"
       // copiando gli HP del secondo.
+      applyEvolutionAttackEffects(target);
       applyElementalHitEffects(target);
       applyElementalComboBonus();
       syncPrimaryEnemyFromParty();
@@ -15175,7 +15655,6 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           'Danni: $damage${consumedRelicRollBonus > 0 ? ' (+$consumedRelicRollBonus benedizione)' : ''}${crit ? ' CRITICO 20: +5 danni, ${playerCritFragilityNameIt(consecutivePlayerCritsThisFight)}' : ''}.'
           '${mrmrOneShot ? '\nMrmr: la maledizione da lumaca trasforma il colpo in esecuzione.' : ''}'
           '${kittyCopyDamage > 0 ? '\nCopie Kitty Slime: +$kittyCopyDamage danni morbidi.' : ''}'
-          '${rifleBurstDamage > 0 ? '\nFucile Automatico di Postea: raffica +$rifleBurstDamage danni.' : ''}'
           '${unarmedChainDamage > 0 ? '\nCombattimento a Mani Nude: colpo concatenato +$unarmedChainDamage danni.$unarmedCritEffectIt' : ''}'
           '$adaptationIt';
       textEn =
@@ -15185,7 +15664,6 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           'Damage: $damage${consumedRelicRollBonus > 0 ? ' (+$consumedRelicRollBonus blessing)' : ''}${crit ? ' NATURAL 20 CRITICAL: +5 damage, ${playerCritFragilityNameEn(consecutivePlayerCritsThisFight)}' : ''}.'
           '${mrmrOneShot ? '\nMrmr: the snail curse turns the strike into an execution.' : ''}'
           '${kittyCopyDamage > 0 ? '\nKitty Slime copies: +$kittyCopyDamage soft damage.' : ''}'
-          '${rifleBurstDamage > 0 ? '\nPostea Automatic Rifle: burst +$rifleBurstDamage damage.' : ''}'
           '${unarmedChainDamage > 0 ? '\nBare-Hand Combat: chained hit +$unarmedChainDamage damage.$unarmedCritEffectEn' : ''}'
           '${adaptationIt.isEmpty ? '' : '\n${target.boss ? 'Boss adapts to this attack type.' : 'Mini-boss adapts to this attack.'}'}';
 
@@ -16883,6 +17361,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   void _resolveEnemyTurn() {
     if (!inCombat || gameOver) return;
+    monsterSkillCooldown = max(0, monsterSkillCooldown - 1);
     tickEnemySkillCooldowns();
 
     final attackers = enemyParty.where((enemy) => enemy.hp > 0).toList();
@@ -17003,6 +17482,19 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       }
       enemyActionResolved = true;
 
+      final followers = fallenCompanions.where((eye) => !eye.dead).toList();
+      if (followers.isNotEmpty && chance(20)) {
+        final follower = followers[_random.nextInt(followers.length)];
+        final hit = max(1, incoming - follower.defense);
+        follower.hp = max(0, follower.hp - hit);
+        reportIt.add(
+          '${follower.name} intercetta il colpo: -$hit Vita.${follower.dead ? ' MORTO: attende il Riposo Lungo se ha Rinascite.' : ''}',
+        );
+        reportEn.add(
+          '${follower.name} intercepts: -$hit HP.${follower.dead ? ' DEAD: waits for a Long Rest if rebirth is available.' : ''}',
+        );
+        continue;
+      }
       var playerCriticalShieldApplied = false;
       if (criticalShieldActive && !posteaEliteGuardInParty) {
         final beforeCriticalShield = incoming;
@@ -20580,6 +21072,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   void monsterVillageSleep() {
     setState(() {
+      restDungeonFallenEyes();
       clearChoices();
       final restoredStats = restoreSpentRunStats(full: true);
       final oldOculumShield = playerOculumShield;
@@ -21118,7 +21611,29 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       ),
     );
 
-    if (weaponOffer != null) {
+    final posteaWeapon = _starterWeapons.firstWhere(
+      (weapon) => weapon.id == 'postea_auto_rifle',
+    );
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: '${posteaWeapon.nameIt} (112 Obser)',
+        labelEn: '${posteaWeapon.nameEn} (112 Obser)',
+        icon: Icons.hardware,
+        color: elementColor('postea'),
+        onPressed: () => buyRunWeaponFromMerchant(posteaWeapon, 112),
+      ),
+    );
+    eventChoices.add(
+      _DungeonChoice(
+        labelIt: 'Armatura Elite Postea (96 Obser)',
+        labelEn: 'Postea Elite Armor (96 Obser)',
+        icon: Icons.shield,
+        color: elementColor('postea'),
+        onPressed: () => buyPosteaArmorFromMerchant(96),
+      ),
+    );
+
+    if (weaponOffer != null && weaponOffer.id != 'postea_auto_rifle') {
       final cost = tavernDiscountedObserCost(26 + currentFloor * 3);
       eventChoices.add(
         _DungeonChoice(
@@ -21131,7 +21646,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       );
     }
 
-    if (costumeOffer != null) {
+    if (costumeOffer != null && costumeOffer.id != 'postea_elite_armor') {
       final cost = tavernDiscountedObserCost(28 + currentFloor * 3);
       eventChoices.add(
         _DungeonChoice(
@@ -21193,6 +21708,11 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         merchantEvent();
         return;
       }
+      if (runWeaponIds.contains(weapon.id)) {
+        textIt = 'Possiedi già ${weapon.nameIt} in questa run.';
+        textEn = 'You already own ${weapon.nameEn} this run.';
+        return;
+      }
       if (obserInRun < cost) {
         textIt = 'Ti mancano Obser per comprare ${weapon.nameIt}.';
         textEn = 'You lack Obser to buy ${weapon.nameEn}.';
@@ -21245,6 +21765,48 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       saveRunCheckpoint(
         reasonIt: 'Costume comprato nella run.',
         reasonEn: 'Run costume bought.',
+      );
+    });
+  }
+
+  void buyPosteaArmorFromMerchant(int cost) {
+    setState(() {
+      if (merchantActionUsedThisRoom) {
+        merchantEvent();
+        return;
+      }
+      if (runCostumeIds.contains('postea_elite_armor')) {
+        textIt = 'Possiedi già l’Armatura Elite Postea in questa run.';
+        textEn = 'You already own the Postea Elite Armor this run.';
+        return;
+      }
+      if (obserInRun < cost) {
+        textIt = 'Ti mancano Obser per comprare l’Armatura Elite Postea.';
+        textEn = 'You lack Obser to buy the Postea Elite Armor.';
+        return;
+      }
+      final armor = _runCostumes.firstWhere(
+        (costume) => costume.id == 'postea_elite_armor',
+      );
+      obserInRun -= cost;
+      merchantActionUsedThisRoom = true;
+      merchantBuys++;
+      activeCostume = armor;
+      runCostumeIds.add(armor.id);
+      addMaxHp(armor.hpBonus);
+      grantPosteaEquipmentShield();
+      runCritBonus += armor.critBonus;
+      criticalShieldActive = true;
+      criticalShieldBlocks = 0;
+      if (!runBoons.contains('postea_low_flight')) {
+        runBoons.add('postea_low_flight');
+      }
+      clearChoices();
+      textIt = 'Compri e indossi l’Armatura Elite Postea.\n\n${armor.descIt}';
+      textEn = 'You buy and wear the Postea Elite Armor.\n\n${armor.descEn}';
+      saveRunCheckpoint(
+        reasonIt: 'Armatura di Postea comprata nella run.',
+        reasonEn: 'Postea armor bought in the run.',
       );
     });
   }
@@ -21404,6 +21966,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         textEn = 'You do not have enough resources.';
         return;
       }
+      if (item.effectId == 'postea_elite_armor' &&
+          runCostumeIds.contains('postea_elite_armor')) {
+        textIt = 'Possiedi già l’Armatura Elite Postea in questa run.';
+        textEn = 'You already own the Postea Elite Armor this run.';
+        return;
+      }
 
       obserInRun -= costObser;
       ascensionDustInRun -= costDust;
@@ -21426,6 +21994,18 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           break;
         case 'second_chance':
           moonSecondChance = true;
+          break;
+        case 'postea_elite_armor':
+          final armor = _runCostumes.firstWhere(
+            (costume) => costume.id == 'postea_elite_armor',
+          );
+          activeCostume = armor;
+          runCostumeIds.add(armor.id);
+          addMaxHp(armor.hpBonus);
+          grantPosteaEquipmentShield();
+          runCritBonus += armor.critBonus;
+          criticalShieldActive = true;
+          criticalShieldBlocks = 0;
           break;
         case 'oculum_charge_1':
           gainOculumCharges(1);
@@ -22189,6 +22769,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
       obserInRun -= cost;
       tavernSleepUsedThisRoom = true;
+      restDungeonFallenEyes();
       restActionUsedThisRoom = true;
       fightsSinceTavernRest = 0;
       completeAchievement('tavern_sleep');
@@ -26925,6 +27506,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   void alliesAct() {
     if (!inCombat || enemyParty.where((enemy) => enemy.hp > 0).isEmpty) return;
+    dungeonFallenCompanionsAct();
     if (!hasAnyCombatSupportActor) return;
 
     var aliveEnemies = enemyParty.where((enemy) => enemy.hp > 0).toList();
@@ -27287,6 +27869,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     if (dead.isEmpty) return;
 
     for (final enemy in dead) {
+      tryCaptureDungeonFallenEye(enemy);
       registerSkinKill(enemy);
       defeatedEnemyNamesIt.add(enemy.nameIt);
       defeatedEnemyNamesEn.add(enemy.nameEn);
@@ -27893,6 +28476,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     }
     final mourningMotherReward = mourningMotherMinibossActive ? 50 : 0;
 
+    recordOriginMastery();
+    rewardObser += runEvolution.rank('collector') * 8;
+    playerHp = min(playerMaxHp, playerHp + runEvolution.rank('hunger') * 6);
     obserInRun += rewardObser;
     obserInRun += mourningMotherReward;
     ascensionDustInRun += rewardDust;
@@ -28357,7 +28943,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                   ],
                   AnimatedRotation(
                     turns: expanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 180),
+                    duration: MediaQuery.disableAnimationsOf(context)
+                        ? Duration.zero
+                        : const Duration(milliseconds: 180),
                     child: Icon(Icons.keyboard_arrow_down, color: c),
                   ),
                 ],
@@ -28373,7 +28961,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             crossFadeState: expanded
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 180),
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : const Duration(milliseconds: 180),
           ),
         ],
       ),
@@ -29182,7 +29772,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             borderRadius: BorderRadius.circular(10),
             onTap: onTap,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 160),
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
@@ -29197,7 +29789,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           );
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: turnNudge),
-      duration: const Duration(milliseconds: 260),
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
       child: selectableActor,
       builder: (context, value, child) {
@@ -31157,7 +31751,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         constraints: const BoxConstraints(minHeight: 120, maxHeight: 235),
         child: SingleChildScrollView(
           child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 180),
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : const Duration(milliseconds: 180),
             switchInCurve: Curves.easeOutCubic,
             switchOutCurve: Curves.easeInCubic,
             child: Text(
@@ -31782,7 +32378,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                 ),
               if (runActive && !inCombat && !gameOver)
                 modernActionButton(
-                  label: t('Esplora', 'Explore'),
+                  label: runEvolution.due(room)
+                      ? t('Scegli evoluzione', 'Choose evolution')
+                      : t('Esplora', 'Explore'),
                   icon: Icons.explore,
                   color: elementColor(activeElementId),
                   onPressed: exploreRoom,
@@ -31797,6 +32395,14 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                   icon: Icons.nightlight,
                   color: const Color(0xFFC4B5FD),
                   onPressed: restShort,
+                  compact: compact,
+                ),
+              if (canUseCombatInput && starterWeapon?.id == 'postea_auto_rifle')
+                modernActionButton(
+                  label: t('Concatenazione armata', 'Armed Chain'),
+                  icon: Icons.track_changes,
+                  color: c,
+                  onPressed: posteaArmedChain,
                   compact: compact,
                 ),
               if (canUseCombatInput)
@@ -32156,7 +32762,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
           clipBehavior: Clip.none,
           children: [
             AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 120),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: highlighted
@@ -32544,7 +33152,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         ],
       ),
       child: AnimatedSize(
-        duration: const Duration(milliseconds: 180),
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -32852,10 +33462,12 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
             (_) => buildTopStatus(c),
             (_) => const SizedBox(height: 10),
             (_) => buildMainBars(c),
+            (_) => buildEvolutionPanel(),
             (_) => const SizedBox(height: 10),
-            (_) => buildSpriteStage(c),
+            (_) => buildTextRpgPanel(),
+            if (showSpritePanel) (_) => buildSpriteStage(c),
             if (showSpritePanel) (_) => const SizedBox(height: 10),
-            if (inCombat || showSpritePanel) ...[
+            if (showSpritePanel) ...[
               (_) =>
                   _OculumDungeonSkinSystem(this).buildDefinitiveCombatAddon(),
               (_) => const SizedBox(height: 10),

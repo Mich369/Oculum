@@ -238,7 +238,7 @@ void main() {
     expect(oculumFallenEyeCoreIntegrityLossForFailure(3), 2);
   });
 
-  test('a permanently lost Fallen Eye can never be summoned again', () {
+  test('a dead Fallen Eye remains unavailable until a valid owner rest', () {
     expect(oculumFallenEyeIsDead({'perdutoPerSempre': true}), isTrue);
     expect(oculumFallenEyeIsDead({'deathWounds': 3, 'currentHp': 0}), isTrue);
     expect(oculumFallenEyeIsDead({'deathWounds': 2, 'currentHp': 0}), isFalse);

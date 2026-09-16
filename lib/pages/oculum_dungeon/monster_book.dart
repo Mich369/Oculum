@@ -197,6 +197,133 @@ List<Map<String, dynamic>> _monsterBookMaps(dynamic value) {
 /// presente un fallback (non crashare).
 const List<MonsterBookEntry> _craftedMonsterBookEntries = [
   MonsterBookEntry(
+    id: 'legno_marcio',
+    nameIt: 'Legno Marcio',
+    nameEn: 'Rotwood',
+    descIt:
+        'Mostro di legno marcio, immune a Rinsecchito. Se il tiro della sua Skill fallisce infligge soltanto metà Danni; se riesce infligge Danni totali e applica Rinsecchito I. Applicazioni riuscite successive fanno salire Rinsecchito fino allo stadio III. Ruolo: bruto vegetale che occupa il passaggio.',
+    descEn:
+        'Rotten wood monster, immune to Desiccated. A failed Skill roll deals only half damage; a successful roll deals full damage and applies Desiccated I. Further successful applications raise it to stage III.',
+    elementId: 'natura',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 9,
+      'volonta': 4,
+      'materia': 7,
+      'oculum': 6,
+    },
+    skillIds: ['legno_marcio_rami_secchi'],
+    dropIds: ['scheggia_marcia', 'linfa_nera'],
+  ),
+  MonsterBookEntry(
+    id: 'larva_del_vespro',
+    nameIt: 'Larva del Vespro',
+    nameEn: 'Vesper Larva',
+    descIt:
+        'Un predatore pallido cammina su dita troppo lunghe e porta sulla schiena una membrana di ombre. Attende sotto i corpi abbandonati e caccia chi si allontana dalla luce. Ruolo in scena: assalitore furtivo che colpisce una preda isolata e si ritrae. Punto debole: in piena luce non può usare il Velo del Vespro. Base di livello 0: RES 6, VOL 7, MAT 8, OCU 8.',
+    descEn:
+        'A pale predator with finger-like legs and a mantle of shadows. It stalks isolated prey beneath abandoned bodies. Ambusher; its veil cannot be used in full light.',
+    elementId: 'vuoto',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 6,
+      'volonta': 7,
+      'materia': 8,
+      'oculum': 8,
+    },
+    skillIds: [
+      'incubo_vespro_taglio',
+      'incubo_vespro_velo',
+      'incubo_vespro_scarta',
+    ],
+    dropIds: ['membrana_del_vespro', 'artiglio_pallido'],
+  ),
+  MonsterBookEntry(
+    id: 'custode_campana_cieca',
+    nameIt: 'Custode della Campana Cieca',
+    nameEn: 'Keeper of the Blind Bell',
+    descIt:
+        'Una campana incrinata sostituisce la testa di questo cavaliere; dentro non esiste un volto, soltanto cenere che respira. Sorveglia porte murate e riconosce i passi dal tremore della pietra. Ruolo in scena: Mini Boss guardiano che presidia un passaggio e alterna rintocchi e corazza. Punto debole: chi si muove senza toccare il suolo elude il suo ascolto. Base di livello 0: RES 12, VOL 10, MAT 8, OCU 14.',
+    descEn:
+        'A cracked bell replaces the head of an ash-filled knight. A guardian mini-boss that hears footsteps through stone; creatures off the ground evade that sense.',
+    elementId: 'sonoro',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 12,
+      'volonta': 10,
+      'materia': 8,
+      'oculum': 14,
+    },
+    skillIds: [
+      'incubo_campana_rintocco',
+      'incubo_campana_corazza',
+      'incubo_campana_ascolto',
+    ],
+    dropIds: ['bronzo_senza_voce', 'cenere_del_guardiano'],
+  ),
+  MonsterBookEntry(
+    id: 'sposa_marea_nera',
+    nameIt: 'Sposa della Marea Nera',
+    nameEn: 'Bride of the Black Tide',
+    descIt:
+        'Una figura velata affiora da acqua immobile; il suo strascico è cucito con mani di annegati. Non parla: lascia che il riflesso della vittima risponda al suo posto. Ruolo in scena: Boss che costringe il gruppo a muoversi tra rive sicure e acqua ostile. Punto debole: le sue tecniche richiedono acqua visibile, che il gruppo può drenare o separare con barriere. Base di livello 0: RES 16, VOL 15, MAT 12, OCU 22.',
+    descEn:
+        'A veiled figure rises from still water, trailing the hands of the drowned. A battlefield-controlling boss whose techniques require visible water; draining or isolating it creates safe ground.',
+    elementId: 'acqua',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: true,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 16,
+      'volonta': 15,
+      'materia': 12,
+      'oculum': 22,
+    },
+    skillIds: [
+      'incubo_marea_mani',
+      'incubo_marea_velo',
+      'incubo_marea_riflesso',
+    ],
+    dropIds: ['velo_della_marea', 'perla_senza_riflesso'],
+  ),
+  MonsterBookEntry(
+    id: 'snorlo',
+    nameIt: 'Snorlo',
+    nameEn: 'Snorlo',
+    descIt:
+        'Mostro a quattro braccia, livello 0. Base: Resilienza 5, Volontà 4, Materia 4, Oculum 10. Converti Oculum in potenza fisica, CM o Volontà per un turno. Ruolo in scena: combattente che alterna colpi potenziati e difesa spendendo la propria riserva.',
+    descEn:
+        'Four-armed monster, level 0. Base: Resilience 5, Will 4, Matter 4, Oculum 10. Spend Oculum to empower your body, CM or Will for one turn.',
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 5,
+      'volonta': 4,
+      'materia': 4,
+      'oculum': 10,
+    },
+    skillIds: ['snorlo_body', 'snorlo_cm', 'snorlo_will'],
+    dropIds: [],
+  ),
+  MonsterBookEntry(
     id: 'demone_minore',
     nameIt: 'Demone Minore',
     nameEn: 'Lesser Demon',
@@ -2237,9 +2364,9 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
   ),
 ];
 
-const int targetNormalMonsterCount = 96;
-const int targetMiniBossMonsterCount = 69;
-const int targetBossMonsterCount = 36;
+const int targetNormalMonsterCount = 98;
+const int targetMiniBossMonsterCount = 70;
+const int targetBossMonsterCount = 37;
 
 /// Creature consegnate dal manuale. Le descrizioni restano volutamente
 /// leggibili e modificabili dal Monster Book: conservano soglie, drop e parti
@@ -3890,6 +4017,44 @@ String monsterBookSkillText(String rawId) {
     '',
   );
   switch (baseId) {
+    case 'legno_marcio_rami_secchi':
+      return 'Rami secchi — I/tira contro la difesa del bersaglio: se fallisci infliggi soltanto metà Danni; se riesci infliggi Danni totali e applichi Rinsecchito I (1–4 Oculum). II/Con una nuova applicazione riuscita, Rinsecchito sale di uno stadio fino a II (5–10 Oculum). III/Una nuova applicazione riuscita può portare Rinsecchito a III; un tiro fallito resta soltanto metà Danni e non aumenta lo stato (11–30 Oculum).';
+    case 'incubo_vespro_taglio':
+      return 'Taglio sotto la pelle — I/Allunghi gli artigli contro una preda in mischia: infliggi Danni + Oculum speso di Vuoto, con difese normali (1–4 Oculum). II/La stessa tecnica ammette un investimento maggiore (5–10 Oculum). III/Concentri tutta la carica nello stesso bersaglio, senza ignorare Scudi o Difesa (11–30 Oculum).';
+    case 'incubo_vespro_velo':
+      return 'Velo del Vespro — I/Avvolgi il corpo nella penombra: Velo + Oculum speso per 1 turno; richiede ombra e termina in piena luce (1–4 Oculum). II/Infittisci il velo con la stessa formula (5–10 Oculum). III/Concentri più oscurità, senza diventare invisibile in piena luce (11–30 Oculum).';
+    case 'incubo_vespro_scarta':
+      return 'Scarto disarticolato — I/Pieghi le membra fuori asse: CM + Oculum speso per 1 turno (1–4 Oculum). II/Rafforzi lo scarto con la stessa formula (5–10 Oculum). III/Immetti più potere senza ottenere attacchi o azioni extra (11–30 Oculum).';
+    case 'incubo_campana_rintocco':
+      return 'Rintocco del sepolto — I/Dirigi un rintocco su una creatura visibile: Danni + Oculum speso di Sonoro, con difese normali (1–4 Oculum). II/Alimenti il rintocco con la stessa formula (5–10 Oculum). III/Concentri il rintocco sul bersaglio, senza colpire automaticamente tutta la zona (11–30 Oculum).';
+    case 'incubo_campana_corazza':
+      return 'Bronzo funerario — I/Riempi le crepe della corazza con cenere: Difesa + 2×Oculum speso per 1 turno (1–4 Oculum). II/Addensi la cenere con la stessa formula (5–10 Oculum). III/Immetti più potere nella corazza, senza creare uno Scudo separato (11–30 Oculum).';
+    case 'incubo_campana_ascolto':
+      return 'Ascolto della pietra — I/Appoggi la campana al suolo: Percezione + Oculum speso per 1 turno contro creature che toccano la stessa superficie (1–4 Oculum). II/Amplifichi le vibrazioni con la stessa formula (5–10 Oculum). III/Investi più potere, ma non percepisci chi vola o è separato dalla superficie (11–30 Oculum).';
+    case 'incubo_marea_mani':
+      return 'Mani degli annegati — I/Fai affiorare mani dall’acqua visibile contro una creatura a contatto con essa: Danni + 2×Oculum speso di Acqua, con difese normali (1–4 Oculum). II/Alimenti la presa con la stessa formula (5–10 Oculum). III/Concentri la marea sulla stessa preda; chi raggiunge terreno asciutto esce dalla portata (11–30 Oculum).';
+    case 'incubo_marea_velo':
+      return 'Strascico sommerso — I/Ti avvolgi in acqua visibile: Difesa + 2×Oculum speso per 1 turno (1–4 Oculum). II/Addensi lo strascico con la stessa formula (5–10 Oculum). III/Investi più potere nella difesa senza proteggere automaticamente altre creature (11–30 Oculum).';
+    case 'incubo_marea_riflesso':
+      return 'Passo nel riflesso — I/Spezzi la tua sagoma sull’acqua visibile: CM + Oculum speso per 1 turno, senza teletrasportarti (1–4 Oculum). II/Frantumi il riflesso con la stessa formula (5–10 Oculum). III/Alimenti più riflessi, senza generare copie capaci di attaccare (11–30 Oculum).';
+    case 'snorlo_body':
+    case 'snorlo_cm':
+    case 'snorlo_will':
+      final (name, action) = switch (baseId) {
+        'snorlo_body' => (
+          'Quattro braccia potenziate',
+          'Aumenti insieme Resilienza, Volontà e Materia di 1 per ogni Oculum speso, potenziando anche i danni derivati. Oculum non aumenta',
+        ),
+        'snorlo_cm' => (
+          'Guardia quadruplice',
+          'Aumenti la CM del doppio dell’Oculum speso',
+        ),
+        _ => (
+          'Volontà di Snorlo',
+          'Aumenti la Volontà del 150% dell’Oculum speso, con il normale arrotondamento delle formule',
+        ),
+      };
+      return '$name — I/$action per 1 turno; non cumuli riattivazioni della stessa Skill (1–4 Oculum). II/$action per 1 turno; non cumuli riattivazioni della stessa Skill (5–10 Oculum). III/$action per 1 turno; non cumuli riattivazioni della stessa Skill (11–30 Oculum).';
     case 'goblin_killer_finish':
       return 'finire il bersaglio — I/colpisci un nemico già ferito; II/se lo abbatti recuperi tutta la Vita; III/dopo l uccisione puoi spostarti, ma la cura non si attiva su Scudi o evocazioni già dissolte.';
     case 'archangel_strike':
@@ -4514,18 +4679,19 @@ const List<String> _monsterElements = [
 List<MonsterBookEntry> _withFallbackMonsterSkills(
   List<MonsterBookEntry> entries,
 ) {
-  bool hasNoArtByDesign(MonsterBookEntry monster) =>
-      monster.id.startsWith('mostricciattolo_');
   return [
     for (final monster in entries)
-      monster.skillIds.isNotEmpty || hasNoArtByDesign(monster)
+      monster.skillIds.isNotEmpty
           ? monster
           : MonsterBookEntry(
               id: monster.id,
               nameIt: monster.nameIt,
               nameEn: monster.nameEn,
-              descIt: monster.descIt,
-              descEn: monster.descEn,
+              descIt: monster.descIt.replaceAll(
+                'nessuna Art',
+                'una Art semplice',
+              ),
+              descEn: monster.descEn.replaceAll('no Art', 'one basic Art'),
               elementId: monster.elementId,
               spriteAssetPath: monster.spriteAssetPath,
               imageBase64: monster.imageBase64,
@@ -4534,10 +4700,7 @@ List<MonsterBookEntry> _withFallbackMonsterSkills(
               isNpc: monster.isNpc,
               isNullFateless: monster.isNullFateless,
               stats: monster.stats,
-              skillIds: _skillIdsForGeneratedMonster(
-                monster.id,
-                monster.elementId,
-              ),
+              skillIds: monsterBookUsableSkillIds(monster),
               dropIds: monster.dropIds.isEmpty
                   ? _dropIdsForGeneratedMonster(monster.id, monster.elementId)
                   : monster.dropIds,
@@ -4547,6 +4710,14 @@ List<MonsterBookEntry> _withFallbackMonsterSkills(
               inventoryItems: monster.inventoryItems,
             ),
   ];
+}
+
+/// Ogni creatura del Monster Book può diventare un personaggio. Se una voce
+/// legacy o personalizzata non dichiara Skill, riceve tre tecniche generiche
+/// legate al suo elemento senza alterare statistiche, drop o identità.
+List<String> monsterBookUsableSkillIds(MonsterBookEntry monster) {
+  if (monster.skillIds.isNotEmpty) return monster.skillIds;
+  return _skillIdsForGeneratedMonster(monster.id, monster.elementId);
 }
 
 List<MonsterBookEntry> _generateMonsterTier({

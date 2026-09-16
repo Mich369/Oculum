@@ -57,16 +57,137 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) => CharacterArt(
   descrizione:
       'Le tecniche di ${monster.nameIt}. La forma 0 indica che la Skill non è in uso; scegli I, II o III quando la attivi.',
   skills: [
-    for (final id in monster.skillIds)
+    for (final id in monsterBookUsableSkillIds(monster))
       ArtSkill(
         nome: monsterBookSkillText(id).split('—').first.trim(),
         livello: 0,
         evo1: 'Richiede livello 0\n${monsterBookSkillForms(id)[0]}',
         evo2: 'Richiede livello 0\n${monsterBookSkillForms(id)[1]}',
         evo3: 'Richiede livello 0\n${monsterBookSkillForms(id)[2]}',
+        oculumMinimiPerLivello:
+            id.startsWith('snorlo_') ||
+                id.startsWith('incubo_') ||
+                id.startsWith('legno_marcio_')
+            ? [1, 5, 11]
+            : null,
+        oculumMassimiPerLivello:
+            id.startsWith('snorlo_') ||
+                id.startsWith('incubo_') ||
+                id.startsWith('legno_marcio_')
+            ? [4, 10, 30]
+            : null,
+        effettiPerLivello:
+            id.startsWith('snorlo_') ||
+                id.startsWith('incubo_') ||
+                id.startsWith('legno_marcio_')
+            ? List.generate(
+                3,
+                (_) => id.startsWith('snorlo_')
+                    ? oculumSnorloSkillEffects(id)
+                    : id.startsWith('incubo_')
+                    ? oculumNightmareSkillEffects(id)
+                    : oculumRotwoodSkillEffects(id),
+              )
+            : null,
       ),
   ],
 );
+
+List<OculumStructuredEffect> oculumSnorloSkillEffects(String id) {
+  final baseId = id.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
+  final targets = switch (baseId) {
+    'snorlo_body' => ['Resilienza', 'Volontà', 'Materia'],
+    'snorlo_cm' => ['CM'],
+    'snorlo_will' => ['Volontà'],
+    _ => <String>[],
+  };
+  return [
+    for (final target in targets)
+      OculumStructuredEffect(
+        id: '${baseId}_$target',
+        type: 'modifica_statistica',
+        target: target,
+        valueExpression: switch (baseId) {
+          'snorlo_cm' => 'oculum_spent*2',
+          'snorlo_will' => 'oculum_spent*1.5',
+          _ => 'oculum_spent',
+        },
+        mode: 'aumento',
+        duration: '1',
+      ),
+  ];
+}
+
+List<OculumStructuredEffect> oculumNightmareSkillEffects(String id) {
+  final baseId = id.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
+  final (type, target, formula, element) = switch (baseId) {
+    'incubo_vespro_taglio' => ('danno', '', 'danni+oculum_spent', 'Vuoto'),
+    'incubo_vespro_velo' => (
+      'modifica_sottotratto',
+      'Velo',
+      'oculum_spent',
+      '',
+    ),
+    'incubo_vespro_scarta' => ('modifica_statistica', 'CM', 'oculum_spent', ''),
+    'incubo_campana_rintocco' => ('danno', '', 'danni+oculum_spent', 'Sonoro'),
+    'incubo_campana_corazza' => ('difesa', '', 'oculum_spent*2', ''),
+    'incubo_campana_ascolto' => (
+      'modifica_sottotratto',
+      'Percezione',
+      'oculum_spent',
+      '',
+    ),
+    'incubo_marea_mani' => ('danno', '', 'danni+oculum_spent*2', 'Acqua'),
+    'incubo_marea_velo' => ('difesa', '', 'oculum_spent*2', ''),
+    'incubo_marea_riflesso' => (
+      'modifica_statistica',
+      'CM',
+      'oculum_spent',
+      '',
+    ),
+    _ => ('', '', '', ''),
+  };
+  if (type.isEmpty) return [];
+  return [
+    OculumStructuredEffect(
+      id: baseId,
+      type: type,
+      target: target,
+      valueExpression: formula,
+      elementType: element,
+      recipient: type == 'danno' ? 'bersaglio' : 'se_stesso',
+      mode: type == 'danno'
+          ? 'immediato'
+          : type == 'difesa'
+          ? 'finche_attivo'
+          : 'aumento',
+      duration: type == 'danno' ? '' : '1',
+      narrativeText:
+          'Rispetta i requisiti ambientali e i limiti descritti nella Skill.',
+    ),
+  ];
+}
+
+int oculumRotwoodSkillDamage(int damage, {required bool rollSucceeded}) =>
+    rollSucceeded ? max(0, damage) : max(0, (damage / 2).floor());
+
+int oculumRotwoodSkillStage(int currentStage, {required bool rollSucceeded}) =>
+    rollSucceeded ? min(3, max(0, currentStage) + 1) : max(0, currentStage);
+
+List<OculumStructuredEffect> oculumRotwoodSkillEffects(String id) => [
+  OculumStructuredEffect(
+    id: id,
+    type: 'danno',
+    target: 'danni',
+    valueExpression: 'danni',
+    recipient: 'bersaglio',
+    elementType: 'Natura',
+    narrativeText:
+        'Tiro fallito: soltanto metà dei Danni. Tiro riuscito: Danni totali e Rinsecchito I; applicazioni successive aumentano lo stadio fino a III.',
+    customDisplayText:
+        'Fallimento: 50% Danni; successo: Danni totali + Rinsecchito I, fino a Rinsecchito III',
+  ),
+];
 
 String oculumMonsterTechniqueName(String element, int index) {
   final names = switch (element.toLowerCase()) {
@@ -207,19 +328,26 @@ Map<String, int> oculumMonsterCreationStats(
   int level,
 ) {
   final base = monster.stats;
-  final baseTotal =
-      max(0, base['resilienza'] ?? max(1, (base['hp'] ?? 10) ~/ 10)) +
-      max(0, base['volonta'] ?? max(1, (base['atk'] ?? 1) ~/ 4)) +
-      max(0, base['materia'] ?? max(1, (base['def'] ?? 1) ~/ 3)) +
-      max(0, base['oculum'] ?? 0);
-  return oculumDistributeMonsterStats(
-    level == 0
-        ? max(monster.skillIds.isEmpty ? 3 : 4, baseTotal).toInt()
-        : oculumGeneratedMonsterBudget(monster.presetType, level),
-    hasSkills: monster.skillIds.isNotEmpty,
-    hasOculumArt: monster.skillIds.isNotEmpty,
+  // Il budget di crescita si aggiunge alla base; non la ridistribuisce.
+  final startingStats = <String, int>{
+    'resilienza': max(
+      0,
+      base['resilienza'] ?? max(1, (base['hp'] ?? 10) ~/ 10),
+    ),
+    'volonta': max(0, base['volonta'] ?? max(1, (base['atk'] ?? 1) ~/ 4)),
+    'materia': max(0, base['materia'] ?? max(1, (base['def'] ?? 1) ~/ 3)),
+    'oculum': max(0, base['oculum'] ?? 0),
+  };
+  final growth = oculumDistributeMonsterStats(
+    oculumGeneratedMonsterBudget(monster.presetType, level),
+    hasSkills: monsterBookUsableSkillIds(monster).isNotEmpty,
+    hasOculumArt: monsterBookUsableSkillIds(monster).isNotEmpty,
     role: '${monster.nameIt} ${monster.descIt}',
   );
+  return {
+    for (final key in startingStats.keys)
+      key: startingStats[key]! + growth[key]!,
+  };
 }
 
 /// Il contatore di creazione usa solo le quattro statistiche reali del

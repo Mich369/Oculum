@@ -2,6 +2,83 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+bool oculumCanReceiveDustFromDrop({
+  required String subtraitId,
+  required int naturalRoll,
+  required int earnedSinceLongRest,
+}) =>
+    subtraitId == 'drop' &&
+    naturalRoll > 15 &&
+    naturalRoll <= 20 &&
+    earnedSinceLongRest < 3;
+
+class OculumDustCombatBoost {
+  int used = 0;
+  String choice = '';
+  int permanentAttack = 0;
+  int permanentDefense = 0;
+  int temporaryAttack = 0;
+  int temporaryDefense = 0;
+
+  int get remaining => max(0, 3 - used);
+  int get attackBonus => permanentAttack + temporaryAttack;
+  int get defenseBonus => permanentDefense + temporaryDefense;
+
+  bool consume(String target, int amount, {required int available}) {
+    if (!['attacco', 'difesa'].contains(target) ||
+        amount <= 0 ||
+        amount > remaining ||
+        amount > available ||
+        (choice.isNotEmpty && choice != target)) {
+      return false;
+    }
+    choice = target;
+    used += amount;
+    if (target == 'attacco') {
+      permanentAttack += amount;
+      temporaryAttack += amount;
+    } else {
+      permanentDefense += amount;
+      temporaryDefense += amount;
+    }
+    return true;
+  }
+
+  void longRest() {
+    temporaryAttack = 0;
+    temporaryDefense = 0;
+  }
+
+  void newSession() {
+    used = 0;
+    choice = '';
+  }
+
+  Map<String, dynamic> toJson() => {
+    'used': used,
+    'choice': choice,
+    'permanentAttack': permanentAttack,
+    'permanentDefense': permanentDefense,
+    'temporaryAttack': temporaryAttack,
+    'temporaryDefense': temporaryDefense,
+  };
+
+  static OculumDustCombatBoost fromJson(dynamic raw) {
+    final result = OculumDustCombatBoost();
+    if (raw is! Map) return result;
+    int number(String key) => max(0, int.tryParse('${raw[key]}') ?? 0);
+    result.used = number('used').clamp(0, 3);
+    result.choice = ['attacco', 'difesa'].contains(raw['choice'])
+        ? '${raw['choice']}'
+        : '';
+    result.permanentAttack = number('permanentAttack');
+    result.permanentDefense = number('permanentDefense');
+    result.temporaryAttack = number('temporaryAttack');
+    result.temporaryDefense = number('temporaryDefense');
+    return result;
+  }
+}
+
 class _OculumCalendarPhase {
   const _OculumCalendarPhase({
     required this.id,
@@ -1133,6 +1210,81 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  Future<void> mostraPotenziaCombattimentoDust() async {
+    final maximum = min(
+      max(0, leggiNumero(ascensionDustController)),
+      ascensionDustCombat.remaining,
+    );
+    if (maximum <= 0) return;
+    final choice = ascensionDustCombat.choice.isNotEmpty
+        ? ascensionDustCombat.choice
+        : await showDialog<String>(
+            context: context,
+            builder: (dialogContext) => SimpleDialog(
+              title: Text(
+                t('Scegli per questa sessione', 'Choose for this session'),
+              ),
+              children: [
+                for (final entry in {
+                  'attacco': 'Attacco · VC',
+                  'difesa': 'Difesa',
+                }.entries)
+                  SimpleDialogOption(
+                    onPressed: () => Navigator.pop(dialogContext, entry.key),
+                    child: Text(entry.value),
+                  ),
+              ],
+            ),
+          );
+    if (choice == null || !mounted) return;
+    final amount = await _scegliQuantitaAscensionDust(maximum);
+    if (amount == null || !mounted) return;
+    setState(() {
+      final available = max(0, leggiNumero(ascensionDustController));
+      if (!ascensionDustCombat.consume(choice, amount, available: available)) {
+        return;
+      }
+      ascensionDustController.text = '${available - amount}';
+      risultato =
+          'Ascension Dust: $choice +${amount * 2} (+$amount permanente, +$amount fino al Riposo Lungo). Sessione: ${ascensionDustCombat.used}/3.';
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  Future<void> mostraNuovaSessioneDust() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(t('Nuova sessione Dust', 'New Dust session')),
+        content: Text(
+          t(
+            'Azzera il limite di 3 Dust e la scelta Attacco/Difesa per la nuova sessione di gioco. I bonus temporanei durano ancora fino al Riposo Lungo.',
+            'Reset the three-Dust limit and Attack/Defense choice for a new game session. Temporary bonuses still last until Long Rest.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(t('Nuova sessione', 'New session')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() {
+      ascensionDustCombat.newSession();
+      aggiungiLog(
+        'Nuova sessione: potenziamento combattimento Ascension Dust 0/3.',
+      );
+    });
+    programmaSalvataggio();
+  }
+
   Future<int?> _scegliQuantitaAscensionDust(int disponibile) async {
     final controller = TextEditingController(text: '1');
     final value = await showDialog<int>(
@@ -1351,6 +1503,13 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void riposoBreve() {
+    final eye = fallenEyeForId(
+      '${schedePersonaggio[schedaCorrente]['occhioCadutoId'] ?? ''}',
+    );
+    if (eye != null && oculumFallenEyeIsDead(eye)) {
+      setState(() => risultato = oculumFallenEyeLifeStatus(eye));
+      return;
+    }
     setState(() {
       final cenere = leggiNumero(cenereController);
       final rimuoveMalusEsplosione = malusTiriOculumPostEsplosione < 0;
@@ -1437,6 +1596,13 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void riposoLungo() {
+    final eye = fallenEyeForId(
+      '${schedePersonaggio[schedaCorrente]['occhioCadutoId'] ?? ''}',
+    );
+    if (eye != null && oculumFallenEyeIsDead(eye)) {
+      setState(() => risultato = oculumFallenEyeLifeStatus(eye));
+      return;
+    }
     if (longRestInProgress) return;
     longRestInProgress = true;
     final changedArtIndexes = <int>[];
@@ -1501,6 +1667,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       ascensionDustTempVolonta = 0;
       ascensionDustTempMateria = 0;
       ascensionDustTempOculum = 0;
+      ascensionDustCombat.longRest();
+      ascensionDustDropSinceLongRest = 0;
       ascensionDustSottotrattiTemporanei.clear();
       // Le Dust non consolidate restano temporanee solo fino al riposo lungo.
       // Azzerare anche il contatore evita di rendere reale un bonus già perso.
@@ -1665,7 +1833,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     }
     recordAggiustaNucleoProgress(immediate: true);
     processConditionTick(OculumConditionTickTrigger.longRest);
-    programmaSalvataggio();
+    unawaited(salvaDati());
   }
 
   void attivitaRaccoltaPescaCaccia() {
