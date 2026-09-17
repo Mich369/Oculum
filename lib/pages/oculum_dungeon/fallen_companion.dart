@@ -31,8 +31,9 @@ class DungeonFallenCompanion {
   }
 
   bool ownerLongRest(String event) {
-    if (!dead || restEvents.contains(event) || (!awakened && rebirths == 0))
+    if (!dead || restEvents.contains(event) || (!awakened && rebirths == 0)) {
       return false;
+    }
     restEvents.add(event);
     if (!awakened) rebirthsUsed++;
     hp = max(1, (maxHp * .1).ceil());

@@ -343,6 +343,33 @@ extension _DungeonTextRpg on _OculumDungeonGameDialogState {
               'Room $room · Floor $currentFloor · ${inCombat ? 'Turn-based combat' : 'Exploration'}',
             ),
           ),
+          if (equippedTitleIds.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            DropdownButton<String>(
+              isExpanded: true,
+              value: publicRunTitle?.id,
+              hint: Text(t('Scegli il Titolo pubblico', 'Choose public Title')),
+              items: [
+                for (final title in publicRunTitleCandidates)
+                  DropdownMenuItem(
+                    value: title.id,
+                    child: Text(
+                      '${t(titleNameIt(title), titleNameEn(title))} · ×1,3',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+              onChanged: inCombat || isDungeonCoopClient
+                  ? null
+                  : selectPublicRunTitle,
+            ),
+            Text(
+              t(
+                'Titolo della run visibile anche agli alleati online. Bonus statistici ×1,3; precedenza ai Titoli di livello superiore a 1.',
+                'Run Title also visible to online allies. Stat bonuses ×1.3; Titles above level 1 take priority.',
+              ),
+            ),
+          ],
           if (dungeonMonster != null) ...[
             const SizedBox(height: 8),
             Text(

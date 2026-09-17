@@ -17,6 +17,9 @@ class OculumPerformanceProbe {
   void shortRest() => _state.riposoBreve();
   String ownerTag() => _state.sheetTagAt(_state.schedaCorrente);
   Widget fallenEyesPage() => _state.fallenEyesPage();
+  Map<String, int> titleBonuses(OculumTitle title) =>
+      _state.titleQuickBonuses(title);
+  Future<Uint8List> oculusFilledPdf() => _state.buildOculusFilledSheetPdf();
   MonsterBookEntry? lookup(String id) => monsterBookEntryById(id);
   void undo() => _state.annullaUltimaModifica();
   void redo() => _state.ripristinaModificaAnnullata();

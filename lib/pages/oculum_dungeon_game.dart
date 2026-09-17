@@ -853,6 +853,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   final Set<String> unlockedRelicIds = {};
   final Set<String> unlockedTitleIds = {};
   final Set<String> equippedTitleIds = {};
+  String publicRunTitleId = '';
   final Set<String> unlockedThemePresetIds = {};
   final Map<String, int> titleLevels = {};
   final Set<int> randomTitleFloorRewardsClaimed = {};
@@ -6877,10 +6878,34 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   int get titleSlotLimit => (1 + room ~/ 2).clamp(1, 18).toInt();
 
+  List<_TitleDef> get publicRunTitleCandidates {
+    final active = equippedTitles.toList();
+    final evolved = active.where((title) => titleLevel(title.id) > 1).toList();
+    return evolved.isEmpty ? active : evolved;
+  }
+
+  _TitleDef? get publicRunTitle {
+    final candidates = publicRunTitleCandidates;
+    for (final title in candidates) {
+      if (title.id == publicRunTitleId) return title;
+    }
+    return candidates.where((title) => titleLevel(title.id) > 1).firstOrNull;
+  }
+
+  void selectPublicRunTitle(String? id) {
+    if (inCombat || isDungeonCoopClient) return;
+    if (id != null && !publicRunTitleCandidates.any((title) => title.id == id))
+      return;
+    setState(() => publicRunTitleId = id ?? '');
+    unawaited(saveRunCheckpoint());
+    _broadcastDungeonCoopState();
+  }
+
   int titleScaled(String id, int value) {
     if (value == 0) return 0;
     final lvl = titleLevel(id).clamp(1, 12).toInt();
-    return value * lvl;
+    final base = value * lvl;
+    return id == publicRunTitle?.id && base > 0 ? (base * 1.3).round() : base;
   }
 
   int get titleResBonus => equippedTitles.fold(
@@ -7790,6 +7815,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'dungeonMonster': dungeonMonster?.toJson(),
       'monsterSkillCooldown': monsterSkillCooldown,
       'equippedTitleIds': equippedTitleIds.toList(),
+      'publicRunTitleId': publicRunTitleId,
       'activeAllyIds': activeAllies.map((npc) => npc.id).toList(),
       'purchasedRelics': purchasedRelics,
       'runBoons': runBoons,
@@ -8318,6 +8344,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       oculianAllianceActive = true;
     }
 
+    publicRunTitleId = '${data['publicRunTitleId'] ?? ''}';
     equippedTitleIds
       ..clear()
       ..addAll(readSavedStringList(data['equippedTitleIds']));
@@ -10798,6 +10825,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       activeCharacterOrigin = null;
       dungeonMonster = null;
       monsterSkillCooldown = 0;
+      publicRunTitleId = '';
       unlockedTitleIds.add('principiante');
       equippedTitleIds
         ..clear()
@@ -26235,6 +26263,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   void levelPrincipianteWithSpent() {
     setState(() {
+      publicRunTitleId = '';
       unlockedTitleIds.add('principiante');
       equippedTitleIds.add('principiante');
 

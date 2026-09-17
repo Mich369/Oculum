@@ -859,54 +859,45 @@ extension _OculumGameModUi on _OculumHomePageState {
       await rootBundle.load('assets/fonts/Poppins-SemiBold.ttf'),
     );
     final theme = pw.ThemeData.withFont(base: regular, bold: bold);
-    final dark = PdfColor.fromInt(0xFF151825);
-    final cyan = PdfColor.fromInt(0xFF65C9DF);
-    final pale = PdfColor.fromInt(0xFFEAF5F7);
-    pw.Widget field(String label, String value) => pw.Container(
-      padding: const pw.EdgeInsets.all(6),
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: cyan, width: .65),
-        borderRadius: pw.BorderRadius.circular(4),
-      ),
-      child: pw.Column(
+    final cyan = PdfColor.fromInt(0xFF263D47);
+    final pale = PdfColor.fromInt(0xFF303030);
+    pw.Widget field(String label, String value) {
+      final text = value.trim().isEmpty ? '—' : value.trim();
+      // Small paragraphs keep even long player notes printable across pages.
+      final paragraphs = <String>[];
+      for (var start = 0; start < text.length; start += 500) {
+        paragraphs.add(text.substring(start, min(start + 500, text.length)));
+      }
+      return pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
+          pw.SizedBox(height: 5),
           pw.Text(
             label,
-            style: pw.TextStyle(font: bold, fontSize: 7.5, color: cyan),
+            style: pw.TextStyle(font: bold, fontSize: 8, color: cyan),
           ),
-          pw.SizedBox(height: 3),
-          pw.Text(
-            value.trim().isEmpty ? '—' : value.trim(),
-            style: pw.TextStyle(font: regular, fontSize: 9.5),
-          ),
-        ],
-      ),
-    );
-    pw.Widget section(String title, List<pw.Widget> children) => pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 10),
-      padding: const pw.EdgeInsets.all(9),
-      decoration: pw.BoxDecoration(
-        color: PdfColor.fromInt(0xFF202536),
-        border: pw.Border.all(color: cyan, width: .7),
-        borderRadius: pw.BorderRadius.circular(5),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            title.toUpperCase(),
-            style: pw.TextStyle(
-              font: bold,
-              fontSize: 11,
-              color: cyan,
-              letterSpacing: 1.2,
+          for (final paragraph in paragraphs)
+            pw.Text(
+              paragraph,
+              style: pw.TextStyle(font: regular, fontSize: 9.5),
             ),
-          ),
-          pw.SizedBox(height: 7),
-          ...children,
+          pw.SizedBox(height: 4),
         ],
-      ),
+      );
+    }
+
+    pw.Widget section(String title, List<pw.Widget> children) => pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.SizedBox(height: 12),
+        pw.Divider(color: cyan, thickness: .7),
+        pw.Text(
+          title.toUpperCase(),
+          style: pw.TextStyle(font: bold, fontSize: 11, color: cyan),
+        ),
+        pw.SizedBox(height: 5),
+        ...children,
+      ],
     );
     final stats = <(String, String)>[
       ('RES', 'resilienza'),
@@ -932,11 +923,12 @@ extension _OculumGameModUi on _OculumHomePageState {
         theme: theme,
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(28),
-        pageTheme: pw.PageTheme(
-          theme: theme,
-          buildBackground: (_) => pw.FullPage(
-            ignoreMargins: true,
-            child: pw.Container(color: dark),
+        maxPages: 100,
+        footer: (context) => pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text(
+            '${context.pageNumber} / ${context.pagesCount}',
+            style: const pw.TextStyle(fontSize: 8),
           ),
         ),
         build: (_) => [
@@ -1060,6 +1052,24 @@ extension _OculumGameModUi on _OculumHomePageState {
             ),
             pw.SizedBox(height: 7),
             field('Crescita', '${oculusInt('growthPoints')}/36 punti'),
+          ]),
+          section('Identità e Titolo', [
+            field('Sguardo proibito', oculusText('forbiddenSight')),
+            field('Desiderio', oculusText('desire')),
+            field('Persona protetta', oculusText('protectedPerson')),
+            field('Tratti razziali', oculusText('racialTraits')),
+            field('Ricompensa del Titolo', oculusText('titleReward')),
+            field('Skill del Titolo', oculusText('titleSkill')),
+            field('OPEN I', oculusText('titleOpenI')),
+            field('OPEN II', oculusText('titleOpenII')),
+            field(
+              'Follia / Corruzione',
+              '${oculusInt('madness')} / ${oculusInt('corruption')}',
+            ),
+            field('Punti bonus disponibili', '${oculusInt('bonusPoints')}'),
+          ]),
+          section('Inventario e note', [
+            field('Oggetti e appunti del PG', oculusText('notes')),
           ]),
           section('Ferita e Missione', [
             field('Ferita', oculusText('wound')),
@@ -1981,7 +1991,7 @@ extension _OculumGameModUi on _OculumHomePageState {
                 onPressed: saveOculusFilledSheetPdf,
                 icon: const Icon(Icons.download_for_offline_outlined),
                 label: Text(
-                  t('Scarica scheda compilata', 'Download filled sheet'),
+                  t('PDF del PG per stampa', 'Printable character PDF'),
                 ),
               ),
             ],

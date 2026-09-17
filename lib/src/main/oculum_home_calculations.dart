@@ -499,6 +499,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       if (titolo.equipaggiato) {
         totale += titolo.karma;
         totale += buffCondizionaleKarma(titolo);
+        if (identical(titolo, oculumAlwaysVisibleTitle(titoli))) {
+          totale += oculumPublicTitleStatBonus(
+            titolo.karma + buffCondizionaleKarma(titolo),
+          );
+        }
       }
     }
 
@@ -1810,6 +1815,48 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     for (final text in activeTitleQuickTexts(titolo)) {
       addTitleQuickCommands(bonuses, text);
+    }
+
+    if (identical(titolo, oculumAlwaysVisibleTitle(titoli))) {
+      final structured = <String, int>{
+        'resilienza': titolo.resilienza + buffCondizionaleResilienza(titolo),
+        'volonta': titolo.volonta + buffCondizionaleVolonta(titolo),
+        'materia': titolo.materia + buffCondizionaleMateria(titolo),
+        'oculum': titolo.oculum + buffCondizionaleOculum(titolo),
+      };
+      for (final key in {...bonuses.keys, ...structured.keys}) {
+        // Only numeric stat bonuses, never resources, costs or multipliers.
+        if (!const {
+          'resilienza',
+          'volonta',
+          'materia',
+          'oculum',
+          'danni',
+          'difesa',
+          'vc',
+          'cm',
+          'hp',
+          'hp_temp',
+          'iniziativa',
+          'riflessi',
+          'movimento',
+          'scudo',
+          'scudo_oculum',
+          'reazione',
+          'reazione_veloce',
+          'tiro_attacco',
+          'tiro_difesa',
+          'tiro_resilienza',
+          'tiro_volonta',
+          'tiro_materia',
+          'tiro_oculum',
+          'schivata_oculum',
+        }.contains(key))
+          continue;
+        final raw = bonuses[key] ?? 0;
+        bonuses[key] =
+            raw + oculumPublicTitleStatBonus(raw + (structured[key] ?? 0));
+      }
     }
 
     return bonuses;

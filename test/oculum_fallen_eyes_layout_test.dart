@@ -61,7 +61,7 @@ void main() {
         body: Stack(
           children: [
             Offstage(child: OculumHomePage(key: homeKey)),
-            if (page != null) RepaintBoundary(key: boundaryKey, child: page!),
+          if (page != null) RepaintBoundary(key: boundaryKey, child: page),
           ],
         ),
       ),

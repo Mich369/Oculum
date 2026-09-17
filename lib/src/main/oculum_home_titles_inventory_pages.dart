@@ -2803,8 +2803,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                                 'An equipped Title with an activatable Open takes priority.',
                               )
                             : t(
-                                'PNG e mostri possono leggerne nome e leggenda. Se indossi un Titolo con Open attivabile, solo un Titolo con Open attivabile può essere scelto.',
-                                'NPCs and monsters can read its name and legend. If you wear a Title with an activatable Open, only a Title with an activatable Open can be chosen.',
+                                'Nome e leggenda sono pubblici. I bonus statistici di questo Titolo valgono ×1,3, arrotondati all’intero più vicino. I malus restano invariati. Precedenza ai Titoli evoluti indossati.',
+                                'Name and legend are public. This Title’s stat bonuses are ×1.3, rounded to the nearest integer. Penalties stay unchanged. Equipped evolved Titles take priority.',
                               ),
                       ),
                       onChanged: oculumTitleCanBeAlwaysVisible(titolo, list)

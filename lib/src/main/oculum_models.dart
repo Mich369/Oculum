@@ -1265,6 +1265,11 @@ class OculumTitle {
 /// be used here: a temporarily disabled Open still keeps its title priority.
 bool oculumTitleHasActivatableOpen(OculumTitle title) => title.evoluto;
 
+/// Public-title bonuses use integer stats: round once after summing sources.
+/// Penalties remain unchanged, and the stored title is never multiplied.
+int oculumPublicTitleStatBonus(int value) =>
+    value > 0 ? (value * 1.3).round() - value : 0;
+
 bool oculumTitleCanBeAlwaysVisible(
   OculumTitle candidate,
   Iterable<OculumTitle> titles,
