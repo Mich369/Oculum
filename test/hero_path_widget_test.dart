@@ -35,8 +35,51 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Cammino dell’Eroe'), findsOneWidget);
       expect(find.text('Nome'), findsOneWidget);
+      expect(find.textContaining('(0/3)'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Inizia il Cammino'),
+        400,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Inizia il Cammino'),
+            )
+            .onPressed,
+        isNull,
+      );
+      tester
+          .state<ScrollableState>(find.byType(Scrollable).first)
+          .position
+          .jumpTo(0);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Fuoco'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Fuoco'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<CheckboxListTile>(
+              find.widgetWithText(CheckboxListTile, 'Filo di Brace'),
+            )
+            .value,
+        false,
+      );
+      expect(
+        tester
+            .widget<CheckboxListTile>(
+              find.widgetWithText(CheckboxListTile, 'Cuore di Fornace'),
+            )
+            .onChanged,
+        isNull,
+      );
       expect(tester.takeException(), isNull);
-      final run = HeroRun(seed: 7, name: 'Iris');
+      final run = HeroRun(
+        seed: 7,
+        name: 'Iris',
+        art: ['brace', 'gelo', 'aurora'],
+      );
       run.encounter(forced: 'lupo');
       final capture = GlobalKey();
       await tester.pumpWidget(

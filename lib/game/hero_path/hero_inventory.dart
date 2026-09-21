@@ -2,7 +2,14 @@ part of 'hero_engine.dart';
 
 extension HeroInventory on HeroRun {
   void offerCards() {
-    final pool = heroSkills.where((s) => !cards.containsKey(s.id)).toList();
+    refreshSkillAchievements();
+    final pool = heroSkills
+        .where(
+          (s) =>
+              !cards.containsKey(s.id) &&
+              heroSkillAvailable(s.id, achievements),
+        )
+        .toList();
     cardOffers.clear();
     while (cardOffers.length < 3 && pool.isNotEmpty) {
       cardOffers.add(pool.removeAt(rng.nextInt(pool.length)).id);
@@ -10,7 +17,12 @@ extension HeroInventory on HeroRun {
   }
 
   bool chooseCard(String id) {
-    if (finished || pendingDeath || !cardOffers.contains(id)) return false;
+    if (finished ||
+        pendingDeath ||
+        !cardOffers.contains(id) ||
+        !heroSkillAvailable(id, achievements)) {
+      return false;
+    }
     cards[id] = 0;
     cardOffers.clear();
     return true;
@@ -185,6 +197,7 @@ extension HeroInventory on HeroRun {
     }
     inventory[mineral] = inventory[mineral]! - OculusRules.mineralCost;
     weaponBonus += heroMinerals[mineral]!;
+    refreshSkillAchievements();
     return true;
   }
 
@@ -199,6 +212,7 @@ extension HeroInventory on HeroRun {
     }
     dust -= OculusRules.upgradeCost;
     cards[id] = cards[id]! + 1;
+    refreshSkillAchievements();
     return true;
   }
 
@@ -216,6 +230,7 @@ extension HeroInventory on HeroRun {
     titleOffers.clear();
     if (hasTitle('path')) flags.add('landa_aperta');
     if (hasTitle('dream')) flags.add('sogno_aperto');
+    refreshSkillAchievements();
     return true;
   }
 

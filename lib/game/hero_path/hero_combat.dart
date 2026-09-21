@@ -509,6 +509,7 @@ extension HeroCombat on HeroRun {
     hunt = '';
     pendingVictory = false;
     pendingEscape = false;
+    refreshSkillAchievements();
   }
 
   bool resolveDeath() {

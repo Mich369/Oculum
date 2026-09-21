@@ -80,6 +80,8 @@ HeroRun restoreHeroRun(Map<String, dynamic> d) {
     art: heroStrings(d['artSkills']),
   );
   r.legacy = {...d}..remove('actionSnapshot');
+  // Saved Art and owned cards predate unlock requirements and remain usable.
+  r.artSkills = heroStrings(d['artSkills']);
   r.rng.state = heroInt(d['rng'], r.seed);
   if (r.rng.state <= 0 || r.rng.state >= 2147483647) r.rng = HeroRandom(r.seed);
   if (d['player'] is Map) r.player = HeroActor.fromJson(heroMap(d['player']));
@@ -166,5 +168,7 @@ HeroRun restoreHeroRun(Map<String, dynamic> d) {
       .map(heroMap)
       .toList();
   r.reconcileQuests();
+  r.refreshSkillAchievements();
+  r.cardOffers.removeWhere((id) => !heroSkillAvailable(id, r.achievements));
   return r;
 }

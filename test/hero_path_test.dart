@@ -6,7 +6,12 @@ HeroRun battle({
   int seed = 42,
   List<String> art = const ['brace', 'argilla', 'aurora'],
 }) {
-  final r = HeroRun(seed: seed, name: 'Iris', art: art);
+  final r = HeroRun(
+    seed: seed,
+    name: 'Iris',
+    art: art,
+    meta: heroSkillAchievements.map((a) => a.id).toSet(),
+  );
   r.encounter(forced: 'lupo');
   r.enemies.first.hp = 1000;
   r.player.hp = 1000;
@@ -219,7 +224,7 @@ void main() {
     expect(r.obser, loot);
   });
   test('upgrade massimo tre e variazione costo/cooldown', () {
-    final r = HeroRun(seed: 1, name: 'Iris')..dust = 20;
+    final r = HeroRun(seed: 1, name: 'Iris', art: ['brace'])..dust = 20;
     for (var i = 0; i < 3; i++) {
       expect(r.upgradeCard('brace'), true);
     }

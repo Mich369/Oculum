@@ -17,17 +17,13 @@ class HeroRun {
     required String name,
     this.difficulty = HeroDifficulty.medium,
     this.mode = HeroMode.normal,
-    List<String> art = const ['brace', 'argilla', 'aurora'],
+    List<String> art = const [],
     Set<String> meta = const {},
   }) : rng = HeroRandom(seed),
        player = HeroActor(id: 'player', name: name) {
     artSkills.addAll(
-      art.where((id) => heroSkills.any((s) => s.id == id)).toSet().take(3),
+      art.where((id) => heroSkillAvailable(id, meta)).toSet().take(3),
     );
-    for (final skill in heroSkills) {
-      if (artSkills.length >= 3) break;
-      if (!artSkills.contains(skill.id)) artSkills.add(skill.id);
-    }
     for (final id in ['attack', 'defend', ...artSkills]) {
       cards[id] = 0;
     }
@@ -112,10 +108,49 @@ class HeroRun {
   );
   bool hasTitle(String effect) =>
       heroTitles.any((t) => titles.contains(t.id) && t.effect == effect);
+
+  void refreshSkillAchievements() {
+    // Combat outcomes must be confirmed before they can unlock permanent Art.
+    if (inCombat || pendingDeath || actionSnapshot != null) return;
+    for (final achievement in heroSkillAchievements) {
+      final earned = switch (achievement.skillId) {
+        'istante' => kills >= 3,
+        'fornace' => kills >= 6,
+        'brina' => scene >= 6,
+        'scatto' => avoided >= 1,
+        'soffio' => avoided >= 3,
+        'argilla' => completedQuests.isNotEmpty,
+        'pioggia' => completedQuests.length >= 2,
+        'parassita' => eyes.isNotEmpty,
+        'specchio' => player.level >= 2,
+        'filo' => destiny >= 2,
+        'schegge' => player.level >= 4,
+        'antidoto' => adaptation.values.any((value) => value > 0),
+        'linfa' => forestSurvival,
+        'sfaccetta' => titles.isNotEmpty,
+        'magnete' => weaponBonus > 0,
+        'coro' => locations.contains('Città'),
+        'risveglio' => locations.contains('Giardino del Sogno'),
+        'ultima' => achievements.contains('rinato'),
+        'umido' => scene >= 12,
+        'caduta' => locations.contains('Landa Nera'),
+        'fenditura' => cards.values.any((level) => level >= 1),
+        _ => false,
+      };
+      if (earned && achievements.add(achievement.id)) {
+        final skill = heroSkills.firstWhere((s) => s.id == achievement.skillId);
+        journal.add(
+          'Achievement: ${achievement.name}. Skill sbloccata: ${skill.name}.',
+        );
+      }
+    }
+  }
+
   void note(String value) {
     text = value;
     journal.add(value);
     if (journal.length > 60) journal.removeAt(0);
+    refreshSkillAchievements();
   }
 
   int bonus(String stat) =>
@@ -546,6 +581,7 @@ class HeroRun {
     player.titleLevel = min(12, titleMissions);
     dust += hasTitle('quest') ? 2 : 1;
     achievements.add('prima_quest');
+    refreshSkillAchievements();
   }
 
   HeroMonster monster(String id) => heroMonsters.firstWhere(

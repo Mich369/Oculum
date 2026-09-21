@@ -16,6 +16,16 @@ Accesso: aprire il gioco dalla scheda. Il percorso singolo apre il Cammino dell�
 
 ## Carte per turno
 
+### Scelta Art e nuovi Achievement
+
+Le nuove run non hanno Skill Art preselezionate: il giocatore sceglie le 3 Skill iniziali. Il motore non aggiunge più Skill predefinite e non riempie automaticamente le scelte mancanti. Il pulsante di avvio resta disabilitato finché la scelta non è completa.
+
+Il catalogo contiene 42 Skill: 21 disponibili subito e 21 bloccate da altrettanti nuovi Achievement. Il pannello **Achievement Art** mostra nome, requisito e Skill sbloccata sia alla creazione sia durante la run. Gli Achievement sono memorie permanenti: sbloccano la Skill per la selezione iniziale delle run successive e per le ricompense della run corrente, senza aggiungerla gratuitamente al mazzo. Le ricompense escludono le Skill ancora bloccate.
+
+I nuovi traguardi riguardano vittorie confermate, fughe, scene raggiunte, Quest, livelli, Destino, Occhi dei Caduti, adattamento, sopravvivenza della Foresta, Titoli, armi, luoghi sbloccati, rinascita e potenziamenti delle carte. Una vittoria ancora annullabile con Ispirazione non assegna sblocchi. Le carte e l’Art già possedute nei salvataggi precedenti restano utilizzabili.
+
+Per modificare l’associazione Achievement/Skill e i testi: `heroSkillAchievements` in `lib/game/hero_path/hero_content.dart`. Per modificare le condizioni effettive: `refreshSkillAchievements` in `lib/game/hero_path/hero_engine.dart`. I blocchi sono applicati dal motore, dalle ricompense e dall’interfaccia. Test dedicati: `test/hero_path_unlocks_test.dart`.
+
 Si parte con 2 azioni. Ogni carta normale ne consuma una. Esaurire le azioni o premere **Termina turno** attiva gli Occhi evocati e i nemici; poi il budget torna a 2. Gli oggetti in combattimento concludono il turno, impedendo consumi gratuiti infiniti.
 
 **Slancio Oltre il Limite** costa 2 Volontà e concede 2 azioni: il guadagno netto è una carta. È utilizzabile una volta per turno. **Istante Rubato** costa 3 Oculum e concede 3 azioni, con cooldown. I potenziamenti modificano anche costo e azioni. Slancio è disponibile dopo la prima vittoria se non è già nel mazzo; altre carte arrivano dalle scelte ricompensa.
@@ -44,7 +54,9 @@ I nuovi salvataggi usano `oculus.heroPath.run.v1` e `oculus.heroPath.meta.v1`, c
 
 Test dedicati: `test/hero_path_test.dart`, `test/hero_path_quests_test.dart`, `test/hero_path_regressions_test.dart`, `test/hero_path_widget_test.dart`. Coprono regole, risorse, soglie naturali, critici, raggio, rarità, Reforge, rollback, turni e carte extra, upgrade, ferite, adattamento, seed, migrazione, ramificazioni, luoghi, difficoltà e invecchiamento. I widget vengono controllati a 360 e 1440 pixel; immagini in `output/ui/hero-path-combat-*.png`.
 
-Verifica del 21 settembre 2026: suite completa `flutter test --no-pub`, 538 test superati e 1 saltato, nessun fallimento. Controllate le immagini dei widget a 360 e 1440 pixel.
+Verifica della versione iniziale del 21 settembre 2026: suite completa `flutter test --no-pub`, 538 test superati e 1 saltato, nessun fallimento. Controllate le immagini dei widget a 360 e 1440 pixel.
+
+Aggiornamento Art/Achievement: 41 test dedicati superati, inclusi i 7 nuovi test su catalogo 21/21, selezione vuota, ricompense bloccate, sblocco permanente, vittorie annullabili e vecchi salvataggi. Verificata l’interfaccia a 360 e 1440 pixel. Analisi statica senza errori o warning introdotti; restano i 2 suggerimenti di stile preesistenti.
 
 Dopo l’ultima correzione dei testi, ripetuti e superati i 2 test widget. Analisi `flutter analyze --no-pub --no-fatal-infos`: nessun errore o warning; restano 2 suggerimenti di stile preesistenti in `oculum_dungeon_game.dart` e `oculum_home_calculations.dart`.
 

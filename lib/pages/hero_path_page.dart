@@ -29,7 +29,7 @@ class _HeroPathPageState extends State<HeroPathPage> {
   final seed = TextEditingController();
   HeroDifficulty difficulty = HeroDifficulty.medium;
   HeroMode mode = HeroMode.normal;
-  final Set<String> selectedSkills = {'brace', 'argilla', 'aurora'};
+  final Set<String> selectedSkills = {};
   Set<String> meta = {};
   Future<void> saveQueue = Future.value();
   static const difficultyNames = ['Facile', 'Medio', 'Difficile', 'Oculum'];
@@ -68,6 +68,8 @@ class _HeroPathPageState extends State<HeroPathPage> {
           );
         }
         run = HeroRun.fromJson(data);
+        run!.achievements.addAll(meta);
+        meta.addAll(run!.achievements);
       }
     } catch (e) {
       saveError = 'Salvataggio conservato, caricamento non riuscito: $e';
@@ -99,6 +101,7 @@ class _HeroPathPageState extends State<HeroPathPage> {
     if (busy) return;
     setState(() {
       action();
+      run?.refreshSkillAchievements();
       selectedTarget = run == null
           ? 0
           : max(0, run!.enemies.indexWhere((e) => e.hp > 0));
@@ -143,6 +146,27 @@ class _HeroPathPageState extends State<HeroPathPage> {
           label: Text(label),
         ),
       );
+  Widget skillAchievementsPanel(Set<String> earned) => panel(
+    'Achievement Art · ${heroSkillAchievements.where((a) => earned.contains(a.id)).length}/21',
+    [
+      const Text(
+        '21 Skill sono disponibili da subito. Le altre 21 si sbloccano con questi Achievement e restano disponibili nelle run successive. Lo sblocco le aggiunge al catalogo e alle ricompense, non direttamente al mazzo.',
+      ),
+      for (final achievement in heroSkillAchievements)
+        ListTile(
+          leading: Icon(
+            earned.contains(achievement.id)
+                ? Icons.check_circle_outline
+                : Icons.lock_outline,
+          ),
+          title: Text(achievement.name),
+          subtitle: Text(
+            '${achievement.requirement}\nSblocca: ${cardName(achievement.skillId)}',
+          ),
+        ),
+    ],
+  );
+
   Widget panel(String title, List<Widget> children, {bool open = false}) =>
       Card(
         child: ExpansionTile(
@@ -272,33 +296,35 @@ class _HeroPathPageState extends State<HeroPathPage> {
       const Text(
         'Titoli e carte ricompensa più frequenti; lo stesso combattimento Oculus.',
       ),
-    panel(
-      'Oculum Art · scegli esattamente 3 Skill (${selectedSkills.length}/3)',
-      [
-        for (final element in heroSkills.map((s) => s.element).toSet())
-          ExpansionTile(
-            title: Text(element),
-            children: [
-              for (final s in heroSkills.where((s) => s.element == element))
-                CheckboxListTile(
-                  value: selectedSkills.contains(s.id),
-                  title: Text(s.name),
-                  subtitle: Text(
-                    '${s.description(0)}\n${s.cost} ${s.resource} · CD ${s.cooldown}',
-                  ),
-                  onChanged: (value) => setState(() {
-                    if (value == true && selectedSkills.length < 3) {
-                      selectedSkills.add(s.id);
-                    } else if (value != true) {
-                      selectedSkills.remove(s.id);
-                    }
-                  }),
+    panel('Oculum Art · scegli esattamente 3 Skill (${selectedSkills.length}/3)', [
+      for (final element in heroSkills.map((s) => s.element).toSet())
+        ExpansionTile(
+          title: Text(element),
+          children: [
+            for (final s in heroSkills.where((s) => s.element == element))
+              CheckboxListTile(
+                value: selectedSkills.contains(s.id),
+                title: Text(s.name),
+                subtitle: Text(
+                  '${s.description(0)}\n${s.cost} ${s.resource} · CD ${s.cooldown}'
+                  '${heroSkillAvailable(s.id, meta) ? '' : '\nBloccata · ${heroSkillUnlock(s.id)!.name}: ${heroSkillUnlock(s.id)!.requirement}'}',
                 ),
-            ],
-          ),
-      ],
-      open: true,
-    ),
+                secondary: heroSkillAvailable(s.id, meta)
+                    ? null
+                    : const Icon(Icons.lock_outline),
+                onChanged: !heroSkillAvailable(s.id, meta)
+                    ? null
+                    : (value) => setState(() {
+                        if (value == true && selectedSkills.length < 3) {
+                          selectedSkills.add(s.id);
+                        } else if (value != true) {
+                          selectedSkills.remove(s.id);
+                        }
+                      }),
+              ),
+          ],
+        ),
+    ], open: true),
     panel('Seed e memorie', [
       TextField(
         controller: seed,
@@ -307,6 +333,7 @@ class _HeroPathPageState extends State<HeroPathPage> {
       ),
       Text('Memorie sbloccate: ${meta.length}'),
     ]),
+    skillAchievementsPanel(meta),
     FilledButton(
       onPressed: selectedSkills.length == 3 && saveError == null
           ? () => act(() {
@@ -394,6 +421,7 @@ class _HeroPathPageState extends State<HeroPathPage> {
             if (mounted) {
               setState(() {
                 run = null;
+                selectedSkills.clear();
               });
             }
           },
@@ -495,9 +523,11 @@ class _HeroPathPageState extends State<HeroPathPage> {
           ),
         for (final q in r.completedQuests.values)
           ListTile(leading: const Icon(Icons.check), title: Text(q)),
-        for (final a in r.achievements) Text(a.replaceAll('_', ' ')),
+        for (final a in r.achievements.where((a) => !a.startsWith('art_')))
+          Text(a.replaceAll('_', ' ')),
         for (final npc in r.npcs.entries) Text('${npc.key}: ${npc.value}'),
       ]),
+      skillAchievementsPanel(r.achievements),
       panel('Mazzo · potenziamenti', [
         for (final id in r.cards.keys)
           ListTile(

@@ -322,6 +322,106 @@ const heroSkills = <HeroSkill>[
   ),
 ];
 
+class HeroSkillAchievement {
+  const HeroSkillAchievement(this.skillId, this.name, this.requirement);
+  final String skillId, name, requirement;
+  String get id => 'art_$skillId';
+}
+
+// One unlock per locked Skill: exactly half of the 42-card catalogue.
+const heroSkillAchievements = <HeroSkillAchievement>[
+  HeroSkillAchievement(
+    'istante',
+    'Padrone del ritmo',
+    'Conferma 3 nemici sconfitti in una run.',
+  ),
+  HeroSkillAchievement(
+    'fornace',
+    'Fuoco paziente',
+    'Conferma 6 nemici sconfitti in una run.',
+  ),
+  HeroSkillAchievement('brina', 'Primo inverno', 'Raggiungi la scena 6.'),
+  HeroSkillAchievement(
+    'scatto',
+    'Passo salvo',
+    'Evita o fuggi da un incontro.',
+  ),
+  HeroSkillAchievement(
+    'soffio',
+    'Tre vie di fuga',
+    'Evita o fuggi da 3 incontri in una run.',
+  ),
+  HeroSkillAchievement('argilla', 'Promessa mantenuta', 'Completa una Quest.'),
+  HeroSkillAchievement(
+    'pioggia',
+    'Due promesse',
+    'Completa 2 Quest in una run.',
+  ),
+  HeroSkillAchievement(
+    'parassita',
+    'Sussurro raccolto',
+    'Ottieni un Occhio dei Caduti.',
+  ),
+  HeroSkillAchievement('specchio', 'Prima ascesa', 'Raggiungi il livello 2.'),
+  HeroSkillAchievement(
+    'filo',
+    'Filo del destino',
+    'Raggiungi 2 punti Destino.',
+  ),
+  HeroSkillAchievement(
+    'schegge',
+    'Oltre la frattura',
+    'Raggiungi il livello 4.',
+  ),
+  HeroSkillAchievement(
+    'antidoto',
+    'Pelle che ricorda',
+    'Ottieni adattamento contro un danno.',
+  ),
+  HeroSkillAchievement(
+    'linfa',
+    'Radici profonde',
+    'In modalità Invecchiamento, sblocca la sopravvivenza della Foresta.',
+  ),
+  HeroSkillAchievement('sfaccetta', 'Nome conquistato', 'Scegli un Titolo.'),
+  HeroSkillAchievement('magnete', 'Ferro nuovo', 'Migliora la tua arma.'),
+  HeroSkillAchievement(
+    'coro',
+    'Voci della città',
+    'Sblocca l’accesso alla Città.',
+  ),
+  HeroSkillAchievement(
+    'risveglio',
+    'Soglia del sogno',
+    'Sblocca il Giardino del Sogno.',
+  ),
+  HeroSkillAchievement(
+    'ultima',
+    'Secondo respiro',
+    'Sopravvivi a un tiro contro la morte.',
+  ),
+  HeroSkillAchievement('umido', 'Lunga veglia', 'Raggiungi la scena 12.'),
+  HeroSkillAchievement('caduta', 'Passo nella Landa', 'Sblocca la Landa Nera.'),
+  HeroSkillAchievement(
+    'fenditura',
+    'Arte affinata',
+    'Potenzia una carta al livello 1.',
+  ),
+];
+
+HeroSkillAchievement? heroSkillUnlock(String id) {
+  for (final achievement in heroSkillAchievements) {
+    if (achievement.skillId == id) return achievement;
+  }
+  return null;
+}
+
+bool heroSkillAvailable(String id, Set<String> achievements) {
+  if (!heroSkills.any((skill) => skill.id == id)) return false;
+  final unlock = heroSkillUnlock(id);
+  return unlock == null || achievements.contains(unlock.id);
+}
+
 class HeroTitle {
   const HeroTitle(this.id, this.name, this.effect, this.description);
   final String id, name, effect, description;
