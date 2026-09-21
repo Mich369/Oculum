@@ -296,6 +296,27 @@ class _HeroPathPageState extends State<HeroPathPage> {
       const Text(
         'Titoli e carte ricompensa più frequenti; lo stesso combattimento Oculus.',
       ),
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Skill Art selezionate'),
+        if (selectedSkills.isEmpty)
+          const Text('Nessuna Skill selezionata.')
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final id in selectedSkills)
+                InputChip(
+                  label: Text(cardName(id)),
+                  deleteButtonTooltipMessage: 'Deseleziona ${cardName(id)}',
+                  onDeleted: () => setState(() => selectedSkills.remove(id)),
+                ),
+            ],
+          ),
+      ],
+    ),
     panel('Oculum Art · scegli esattamente 3 Skill (${selectedSkills.length}/3)', [
       for (final element in heroSkills.map((s) => s.element).toSet())
         ExpansionTile(

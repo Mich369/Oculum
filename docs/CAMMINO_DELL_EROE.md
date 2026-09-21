@@ -20,6 +20,8 @@ Accesso: aprire il gioco dalla scheda. Il percorso singolo apre il Cammino dell�
 
 Le nuove run non hanno Skill Art preselezionate: il giocatore sceglie le 3 Skill iniziali. Il motore non aggiunge più Skill predefinite e non riempie automaticamente le scelte mancanti. Il pulsante di avvio resta disabilitato finché la scelta non è completa.
 
+Le Skill selezionate restano visibili sopra il catalogo, anche quando le tendine degli elementi o dell’intera Art sono chiuse. La croce accanto al nome permette di deselezionarle direttamente. Il riepilogo si modifica in `lib/pages/hero_path_page.dart`.
+
 Il catalogo contiene 42 Skill: 21 disponibili subito e 21 bloccate da altrettanti nuovi Achievement. Il pannello **Achievement Art** mostra nome, requisito e Skill sbloccata sia alla creazione sia durante la run. Gli Achievement sono memorie permanenti: sbloccano la Skill per la selezione iniziale delle run successive e per le ricompense della run corrente, senza aggiungerla gratuitamente al mazzo. Le ricompense escludono le Skill ancora bloccate.
 
 I nuovi traguardi riguardano vittorie confermate, fughe, scene raggiunte, Quest, livelli, Destino, Occhi dei Caduti, adattamento, sopravvivenza della Foresta, Titoli, armi, luoghi sbloccati, rinascita e potenziamenti delle carte. Una vittoria ancora annullabile con Ispirazione non assegna sblocchi. Le carte e l’Art già possedute nei salvataggi precedenti restano utilizzabili.
