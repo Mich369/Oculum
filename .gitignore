@@ -52,3 +52,6 @@ app.*.map.json
 .codex/
 .venv/
 .vscode/
+
+# Local checkpoint exceeds GitHub's file size limit; retain it on disk only.
+/output/checkpoints/2026-09-05-manual-mod/shared_preferences.json
