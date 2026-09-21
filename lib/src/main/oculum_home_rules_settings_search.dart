@@ -3405,8 +3405,8 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       },
       {
         'key':
-            'dungeon minigioco run pawn mostri boss reward drop exp null fateless',
-        'title': 'Dungeon',
+            'cammino eroe oculus carte quest dungeon minigioco run pawn mostri boss reward drop exp null fateless',
+        'title': 'Cammino dell’Eroe',
         'page': 0,
         'action': 'dungeon',
       },

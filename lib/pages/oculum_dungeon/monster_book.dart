@@ -1,4 +1,5 @@
 import 'dart:math';
+import '../../game/hero_path/hero_content.dart';
 
 class MonsterBookEntry {
   final String id;
@@ -4010,6 +4011,18 @@ List<MonsterBookEntry> _withMonsterSkillNarration(
 /// Il Book non mostra più sigle tecniche come skill: ogni forma parla a chi la
 /// usa. Le schede create dal giocatore possono comunque sostituire il testo.
 String monsterBookSkillText(String rawId) {
+  if (rawId.startsWith('hero_path:')) {
+    final parts = rawId.split('_variante_').first.split(':');
+    final techniques = heroMonsterTechniques[parts.length > 1 ? parts[1] : ''];
+    final index = parts.length > 2 ? int.tryParse(parts[2]) : null;
+    if (techniques != null &&
+        index != null &&
+        index >= 0 &&
+        index < techniques.length) {
+      final technique = techniques[index];
+      return '${technique.$1} — I/${technique.$2} II/Combini la tecnica con una condizione già inflitta. III/Coordini la tecnica con gli alleati senza aumentare le soglie naturali.';
+    }
+  }
   final id = rawId.replaceAll('_', ' ').trim();
   final label = id.isEmpty ? 'Tecnica del mostro' : id;
   final baseId = rawId.trim().toLowerCase().replaceFirst(
@@ -4366,6 +4379,46 @@ List<String> monsterBookSkillForms(String rawId) {
   });
 }
 
+List<MonsterBookEntry> _heroPathMonsterBookEntries() => [
+  for (final monster in heroMonsters)
+    MonsterBookEntry(
+      id: 'hero_path_${monster.id}',
+      nameIt: monster.name,
+      nameEn: monster.name,
+      descIt:
+          '${monster.description} Ruolo in scena: ${monster.role}. Regole Oculus.',
+      descEn: '${monster.description} Oculus encounter role: ${monster.role}.',
+      elementId: monster.family == 'Fuoco'
+          ? 'fire'
+          : monster.family == 'Veleno'
+          ? 'poison'
+          : 'shadow',
+      spriteAssetPath: '',
+      isMiniBoss: monster.mini,
+      isBoss: monster.boss,
+      isNullFateless: false,
+      stats: {
+        'level': 0,
+        'resilienza': 4,
+        'volonta': 4,
+        'materia': 4,
+        'oculum': 4,
+      },
+      skillIds: [for (var i = 0; i < 3; i++) 'hero_path:${monster.role}:$i'],
+      dropIds: monster.id == 'alce' ? ['corna_alce_cieco'] : [],
+      canWieldWeapons: monster.weapon.isNotEmpty,
+      weaponTags: monster.weapon.isEmpty ? [] : [monster.weapon],
+      inventoryItems: [
+        if (monster.id == 'alce')
+          {
+            'nome': 'Corna dell’Alce Cieco',
+            'quantita': 1,
+            'note': 'Componente arma Oculus: +15 danno.',
+          },
+      ],
+    ),
+];
+
 final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
   _withoutDefaultMonsterImages(
     _withMonsterSkillNarration(
@@ -4374,6 +4427,7 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
           _humanizeLegacyMonsterEntries([
             ..._craftedMonsterBookEntries,
             ..._manualMonsterBookEntries,
+            ..._heroPathMonsterBookEntries(),
             ..._generateMonsterTier(
               count: targetNormalMonsterCount - _staticNormalMonsterCount < 2
                   ? 2

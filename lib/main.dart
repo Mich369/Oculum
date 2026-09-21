@@ -33,6 +33,9 @@ import 'widgets/oculum_desktop_top_menu.dart';
 import 'widgets/oculum_quick_edit_eye.dart';
 import 'pages/oculum_dungeon/monster_book.dart';
 import 'pages/oculum_dungeon_game.dart';
+import 'pages/hero_path_page.dart';
+import 'game/hero_path/oculus_rules.dart';
+export 'game/hero_path/oculus_rules.dart' show oculusPowerDieForTitleLevel;
 import 'src/main/oculum_network_probe.dart';
 import 'src/main/oculum_web_download_stub.dart'
     if (dart.library.js_interop) 'src/main/oculum_web_download_web.dart';
@@ -4376,7 +4379,7 @@ class _OculumHomePageState extends State<OculumHomePage>
                         children: [
                           Icon(Icons.visibility, color: primaryColor, size: 18),
                           const SizedBox(width: 8),
-                          Text(t('Dungeon', 'Dungeon')),
+                          Text(t('Cammino dell’Eroe', 'Hero’s Path')),
                         ],
                       ),
                     ),

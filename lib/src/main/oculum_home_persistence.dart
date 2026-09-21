@@ -1593,6 +1593,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
     conditionControlProtectionUntilTurn.clear();
     activeGameMod = '${json['activeGameMod'] ?? ''}'.trim().toLowerCase();
     oculusModData = oculusNormalizeCharacterData(json['oculusModData']);
+    if (json['oculusModData'] is! Map || !(json['oculusModData'] as Map).containsKey('entityKind')) {
+      final type = '${json['tipoScheda'] ?? ''}'.toLowerCase();
+      oculusModData['entityKind'] = type.contains('mostro') ? 'monster' : type.contains('npc') ? 'npc' : 'player';
+      oculusModData['monsterRank'] = type.contains('mini') ? 'miniBoss' : type.contains('boss') ? 'boss' : 'normal';
+    }
     if (activeGameMod == 'oculus') paginaCorrente = 0;
     restoreMonsterBookCustomization(json);
     prepareFallenEyeSheet(json);
@@ -6844,6 +6849,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     MonsterBookEntry? monsterBookSource,
   }) async {
     final selectedType = forcedType ?? quickSheetType;
+    final createWithOculusRules = oculusModActive;
     final baseName = quickSheetNameController.text.trim().isEmpty
         ? (fallbackName?.trim().isNotEmpty == true
               ? fallbackName!.trim()
@@ -7883,6 +7889,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
               ...roleTraits,
             ].where((value) => value.trim().isNotEmpty).join(' ');
           }
+        }
+        oculusModData['entityKind'] = selectedType.toLowerCase().contains('mostro') ? 'monster' : selectedType.toLowerCase().contains('npc') ? 'npc' : 'player';
+        oculusModData['monsterRank'] = selectedType.toLowerCase().contains('mini') ? 'miniBoss' : selectedType.toLowerCase().contains('boss') ? 'boss' : 'normal';
+        if (createWithOculusRules) {
+          activeGameMod = 'oculus';
+          oculusModData['name'] = nome;
+          oculusModData['level'] = livello.clamp(0, 12);
+          oculusAwardGrowth(oculusModData, livello);
         }
         risultato = t(
           'Scheda rapida $nome creata: $selectedType, $kind, $profileLabel (${campaignDifficultyLabel()}).',

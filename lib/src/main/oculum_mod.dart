@@ -43,6 +43,13 @@ Map<String, dynamic> oculusDefaultCharacterData() => <String, dynamic>{
   'defense': 5,
   'bonusPoints': 0,
   'inspirations': 3,
+  'superInspirations': 2,
+  'oculumInspirations': 1,
+  'entityKind': 'player',
+  'monsterRank': 'normal',
+  'growthAwardedLevel': 0,
+  'unspentGrowth': 0,
+  'unspentDice': 0,
   'ascensionDust': 0,
   'absorbedDust': 0,
   'growthPoints': 0,
@@ -178,6 +185,13 @@ oculusArtSkillCatalog = <String, List<(String, String)>>{
 Map<String, dynamic> oculusNormalizeCharacterData(Object? raw) {
   final result = oculusDefaultCharacterData();
   if (raw is Map) result.addAll(Map<String, dynamic>.from(raw));
+  // Old sheets already spent their existing levels: never award them twice.
+  if (raw is Map && !raw.containsKey('growthAwardedLevel')) {
+    result['growthAwardedLevel'] = readIntValue(raw['level']).clamp(0, 12);
+  }
+  if (!['player', 'npc', 'monster'].contains(result['entityKind'])) {
+    result['entityKind'] = 'player';
+  }
   final rawSkills = result['skills'] is List
       ? List<dynamic>.from(result['skills'] as List)
       : <dynamic>[];
@@ -235,14 +249,18 @@ Map<String, dynamic> oculusNormalizeCharacterData(Object? raw) {
   return result;
 }
 
-int oculusPowerDieForTitleLevel(int level) {
-  final safeLevel = level.clamp(0, 12).toInt();
-  if (safeLevel >= 12) return 20;
-  if (safeLevel >= 10) return 12;
-  if (safeLevel >= 7) return 10;
-  if (safeLevel >= 4) return 8;
-  if (safeLevel >= 2) return 6;
-  return 4;
+void oculusAwardGrowth(Map<String, dynamic> data, int targetLevel) {
+  final previous = readIntValue(data['growthAwardedLevel']).clamp(0, 12);
+  final target = targetLevel.clamp(0, 12);
+  if (target <= previous) return;
+  final boss = data['monsterRank'] == 'boss';
+  final mini = data['monsterRank'] == 'miniBoss';
+  data['unspentGrowth'] =
+      readIntValue(data['unspentGrowth']) +
+      OculusRules.growthAt(target, boss: boss, miniBoss: mini) -
+      OculusRules.growthAt(previous, boss: boss, miniBoss: mini);
+  data['unspentDice'] = readIntValue(data['unspentDice']) + target - previous;
+  data['growthAwardedLevel'] = target;
 }
 
 extension _OculumGameModUi on _OculumHomePageState {
@@ -368,6 +386,10 @@ extension _OculumGameModUi on _OculumHomePageState {
   }
 
   void setOculusData(String key, Object value, {bool rebuild = false}) {
+    if (key == 'level') {
+      oculusAwardGrowth(oculusModData, readIntValue(value));
+      gameModRevision.value++;
+    }
     oculusModData[key] = value;
     if (rebuild) gameModRevision.value++;
     programmaSalvataggio(
@@ -1425,13 +1447,13 @@ extension _OculumGameModUi on _OculumHomePageState {
                       'POTERE: Fato, Chaos o Oblio parte da d4. Il dado Potere cresce completando le Missioni del Titolo: livello Titolo 0-1 d4, 2-3 d6, 4-6 d8, 7-9 d10, 10-11 d12, 12 d20.\n'
                       'TIRO: dado Potere + dado della Stat + bonus della Stat. Di norma è sempre uno scontro tra giocatore e Master; si usa una DT solo se viene dichiarata.\n'
                       'VITA / OCULUM / SCUDO: Vita massima = massimo dado RES + Potere + bonus RES; Oculum massimo = massimo dado OCU + Potere + bonus OCU; Scudo = massimo dado MAT + bonus MAT e assorbe sempre prima della Vita.\n'
-                      'ISPIRAZIONI: alla creazione scegli da 0 a 3 Ispirazioni. Spenderne una ritenta qualsiasi tiro; il Master ne assegna altre fino al massimo di 3.\n'
+                      'CRITICO CONTRO: il tuo tiro contrapposto raggiunge almeno il doppio del tiro nemico (14 contro 7). ISPIRAZIONI: tutti iniziano con 3 normali, 2 Super e 1 Oculum. Spenderne una ritenta qualsiasi tiro; il Master ne assegna altre fino al massimo di 3.\n'
                       'OCULUM ART: ha esattamente tre Skill. Ogni Skill ha forme I, II e III e un proprio costo; le forme crescono con le missioni Art dedicate.',
                   'LEVELS: there are only 12 levels, from 0 to 12. Each level grants 3 Growth points: raise one Stat by 1 and choose one Stat die to advance by one step (d4 → d6 → d8 → d10 → d12 → d20). Reroll Life and Oculum, keeping the highest result.\n'
                       'POWER: Fate, Chaos or Oblivion starts at d4. The Power die grows by completing Title Missions: Title levels 0-1 d4, 2-3 d6, 4-6 d8, 7-9 d10, 10-11 d12, 12 d20.\n'
                       'ROLL: Power die + Stat die + Stat bonus. Normally every roll is contested by player and Master; use a DT only when declared.\n'
                       'LIFE / OCULUM / SHIELD: maximum Life = highest RES die + Power + RES bonus; maximum Oculum = highest OCU die + Power + OCU bonus; Shield = highest MAT die + MAT bonus and always absorbs before Life.\n'
-                      'INSPIRATIONS: at creation choose 0 to 3 Inspirations. Spend one to retry any roll; the Master can grant more up to a maximum of 3.\n'
+                      'CRITICAL AGAINST: your opposed result is at least twice the enemy result (14 versus 7). INSPIRATIONS: everyone starts with 3 normal, 2 Super and 1 Oculum. Spend one to retry any roll; the Master can grant more up to a maximum of 3.\n'
                       'OCULUM ART: has exactly three Skills. Each Skill has forms I, II and III and its own cost; forms grow through dedicated Art missions.',
                 ),
               ),
@@ -1615,6 +1637,73 @@ extension _OculumGameModUi on _OculumHomePageState {
           ),
         ]),
         oculusSection(t('Dadi delle Stat', 'Stat dice'), [
+          Text(
+            '${oculusInt('unspentGrowth')} punti disponibili · ${oculusInt('unspentDice')} aumenti dado',
+          ),
+          Wrap(
+            children: [
+              for (final key in OculusRules.stats)
+                TextButton(
+                  onPressed: oculusInt('unspentGrowth') > 0
+                      ? () {
+                          oculusModData['${key}Mastery'] =
+                              oculusInt('${key}Mastery') + 1;
+                          setOculusData(
+                            'unspentGrowth',
+                            oculusInt('unspentGrowth') - 1,
+                            rebuild: true,
+                          );
+                        }
+                      : null,
+                  child: Text('+1 $key'),
+                ),
+              TextButton(
+                onPressed:
+                    oculusInt('unspentGrowth') + oculusInt('unspentDice') > 0
+                    ? () {
+                        while (oculusInt('unspentGrowth') > 0) {
+                          final key = OculusRules.stats.reduce(
+                            (a, b) =>
+                                oculusInt('${a}Mastery') <=
+                                    oculusInt('${b}Mastery')
+                                ? a
+                                : b,
+                          );
+                          oculusModData['${key}Mastery'] =
+                              oculusInt('${key}Mastery') + 1;
+                          oculusModData['unspentGrowth'] =
+                              oculusInt('unspentGrowth') - 1;
+                        }
+                        while (oculusInt('unspentDice') > 0) {
+                          final key = OculusRules.stats.reduce(
+                            (a, b) =>
+                                oculusInt('${a}Die', fallback: 4) <=
+                                    oculusInt('${b}Die', fallback: 4)
+                                ? a
+                                : b,
+                          );
+                          final index = OculusRules.dice.indexOf(
+                            oculusInt('${key}Die', fallback: 4),
+                          );
+                          if (index < 0 || index == OculusRules.dice.length - 1) {
+                            break;
+                          }
+                          oculusModData['${key}Die'] =
+                              OculusRules.dice[index + 1];
+                          oculusModData['unspentDice'] =
+                              oculusInt('unspentDice') - 1;
+                        }
+                        setOculusData(
+                          'unspentGrowth',
+                          oculusInt('unspentGrowth'),
+                          rebuild: true,
+                        );
+                      }
+                    : null,
+                child: Text(t('Assegnazione rapida', 'Quick allocation')),
+              ),
+            ],
+          ),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -1711,6 +1800,22 @@ extension _OculumGameModUi on _OculumHomePageState {
                   'inspirations',
                   t('Ispirazioni max 3', 'Inspirations max 3'),
                   maximum: 3,
+                ),
+              ),
+              SizedBox(
+                width: 170,
+                child: oculusNumberField(
+                  'superInspirations',
+                  'Super Ispirazioni',
+                  maximum: 2,
+                ),
+              ),
+              SizedBox(
+                width: 170,
+                child: oculusNumberField(
+                  'oculumInspirations',
+                  'Ispirazioni Oculum',
+                  maximum: 1,
                 ),
               ),
               SizedBox(

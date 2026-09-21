@@ -6,7 +6,19 @@ extension _OculumHomeDialogsQuickEdit on _OculumHomePageState {
   void _openDungeonMiniGame({
     bool openOnlinePanel = false,
     Map<String, dynamic>? initialOnlineSession,
+    bool legacyArchive = false,
   }) {
+    if (!legacyArchive && !openOnlinePanel && initialOnlineSession == null) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => HeroPathPage(
+            initialName: nomeController.text.trim(),
+            onLegacy: () => _openDungeonMiniGame(legacyArchive: true),
+          ),
+        ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (dialogContext) {

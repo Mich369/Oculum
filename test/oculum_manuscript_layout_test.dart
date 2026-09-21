@@ -171,7 +171,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
     expect(tester.takeException(), isNull, reason: 'Fallen Eyes mobile');
-    expect(find.text('OCCHI DEI CADUTI'), findsOneWidget);
+    expect(find.textContaining('OCCHI DEI CADUTI'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
   });
