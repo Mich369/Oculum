@@ -2214,156 +2214,165 @@ extension _OculumFallenEyes on _OculumHomePageState {
         );
       }
       final deadCount = ownerEyes.where(oculumFallenEyeIsDead).length;
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
+      return CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(
-                  width: 220,
-                  child: Text(
-                    'Occhi dei Caduti',
-                    style: TextStyle(
-                      color: primaryColor,
-                      fontSize: 21,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                FilledButton.icon(
-                  onPressed: () => _showCreateFallenEyeDialog(),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Crea Occhio Caduto'),
-                ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: copyCurrentSheetAsFallenEye,
-                  icon: const Icon(Icons.copy_outlined),
-                  label: const Text('Copia come Occhio'),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                SizedBox(
-                  width: 250,
-                  child: TextField(
-                    onChanged: (v) {
-                      fallenEyesSearch = v;
-                      _touchFallenEyes();
-                    },
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.search),
-                      hintText: 'Nome, rarità o stato',
-                    ),
-                  ),
-                ),
-                DropdownButton<String>(
-                  value: fallenEyesRarityFilter,
-                  items: ['tutte', ...oculumFallenEyeRarities]
-                      .map(
-                        (x) => DropdownMenuItem(
-                          value: x,
-                          child: Text(
-                            x == 'tutte'
-                                ? 'Tutte le rarità'
-                                : oculumFallenEyeLabel(x),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 220,
+                        child: Text(
+                          'Occhi dei Caduti',
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontSize: 21,
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
-                      )
-                      .toList(),
-                  onChanged: (v) => setState(() {
-                    fallenEyesRarityFilter = v ?? 'tutte';
-                  }),
-                ),
-                FilterChip(
-                  label: const Text('Attivi'),
-                  selected: fallenEyesActiveFilter == true,
-                  onSelected: (v) => setState(() {
-                    fallenEyesActiveFilter = v ? true : null;
-                  }),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '${ownerEyes.length} Occhi · $activeOwnerCount evocati · $deadCount morti',
-                style: TextStyle(
-                  color: primaryColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                for (final entry in const {
-                  'tutti': 'Tutti',
-                  'vivi': 'Vivi',
-                  'attesa': 'In attesa di Rinascita',
-                  'morti': 'Morti',
-                  'risvegliati': 'Risvegliati',
-                }.entries)
-                  ChoiceChip(
-                    label: Text(entry.value),
-                    selected: fallenEyesLifeFilter == entry.key,
-                    onSelected: (_) {
-                      fallenEyesLifeFilter = entry.key;
-                      _touchFallenEyes();
-                    },
+                      ),
+                      FilledButton.icon(
+                        onPressed: () => _showCreateFallenEyeDialog(),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Crea Occhio Caduto'),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: copyCurrentSheetAsFallenEye,
+                        icon: const Icon(Icons.copy_outlined),
+                        label: const Text('Copia come Occhio'),
+                      ),
+                    ],
                   ),
-                FilterChip(
-                  label: const Text('Legame più alto'),
-                  selected: fallenEyesBondSort,
-                  onSelected: (value) {
-                    fallenEyesBondSort = value;
-                    _touchFallenEyes();
-                  },
                 ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      SizedBox(
+                        width: 250,
+                        child: TextField(
+                          onChanged: (v) {
+                            fallenEyesSearch = v;
+                            _touchFallenEyes();
+                          },
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.search),
+                            hintText: 'Nome, rarità o stato',
+                          ),
+                        ),
+                      ),
+                      DropdownButton<String>(
+                        value: fallenEyesRarityFilter,
+                        items: ['tutte', ...oculumFallenEyeRarities]
+                            .map(
+                              (x) => DropdownMenuItem(
+                                value: x,
+                                child: Text(
+                                  x == 'tutte'
+                                      ? 'Tutte le rarità'
+                                      : oculumFallenEyeLabel(x),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) => setState(() {
+                          fallenEyesRarityFilter = v ?? 'tutte';
+                        }),
+                      ),
+                      FilterChip(
+                        label: const Text('Attivi'),
+                        selected: fallenEyesActiveFilter == true,
+                        onSelected: (v) => setState(() {
+                          fallenEyesActiveFilter = v ? true : null;
+                        }),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '${ownerEyes.length} Occhi · $activeOwnerCount evocati · $deadCount morti',
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      for (final entry in const {
+                        'tutti': 'Tutti',
+                        'vivi': 'Vivi',
+                        'attesa': 'In attesa di Rinascita',
+                        'morti': 'Morti',
+                        'risvegliati': 'Risvegliati',
+                      }.entries)
+                        ChoiceChip(
+                          label: Text(entry.value),
+                          selected: fallenEyesLifeFilter == entry.key,
+                          onSelected: (_) {
+                            fallenEyesLifeFilter = entry.key;
+                            _touchFallenEyes();
+                          },
+                        ),
+                      FilterChip(
+                        label: const Text('Legame più alto'),
+                        selected: fallenEyesBondSort,
+                        onSelected: (value) {
+                          fallenEyesBondSort = value;
+                          _touchFallenEyes();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                if (eyes.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      'Nessun Occhio corrisponde ai filtri. Cambia ricerca o crea un nuovo Occhio.',
+                    ),
+                  ),
               ],
             ),
           ),
-          if (eyes.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'Nessun Occhio corrisponde ai filtri. Cambia ricerca o crea un nuovo Occhio.',
-              ),
-            ),
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(12),
-              // Ogni carta contiene la Quest sempre scrivibile: non tenere
-              // vivi tutti i TextFormField fuori dallo schermo e non
-              // precostruire una seconda schermata di carte.
-              addAutomaticKeepAlives: false,
+          SliverPadding(
+            padding: const EdgeInsets.all(12),
+            sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 440,
                 mainAxisExtent: 430,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
               ),
-              itemCount: eyes.length,
-              itemBuilder: (_, i) =>
-                  _fallenEyeCard(eyes[i], activeOwnerEyes: activeOwnerCount),
+              delegate: SliverChildBuilderDelegate(
+                (_, i) =>
+                    _fallenEyeCard(eyes[i], activeOwnerEyes: activeOwnerCount),
+                childCount: eyes.length,
+                // Keep the editable Quest cards lazy, including on mobile.
+                addAutomaticKeepAlives: false,
+              ),
             ),
           ),
         ],
@@ -2867,7 +2876,11 @@ extension _OculumFallenEyes on _OculumHomePageState {
                               ),
                             ),
                           Text(
-                            dead ? 'MORTO${oculumFallenEyeAwakened(eye) ? ' · RISVEGLIATO' : ''}' : readBoolValue(eye['active']) ? 'EVOCATO' : 'DISEVOCATO',
+                            dead
+                                ? 'MORTO${oculumFallenEyeAwakened(eye) ? ' · RISVEGLIATO' : ''}'
+                                : readBoolValue(eye['active'])
+                                ? 'EVOCATO'
+                                : 'DISEVOCATO',
                             style: TextStyle(
                               color: oculumFallenEyeIsDead(eye)
                                   ? Colors.redAccent
@@ -2911,7 +2924,10 @@ extension _OculumFallenEyes on _OculumHomePageState {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Text('Legame ${oculumFallenEyeBond(eye)} / 1000', style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  'Legame ${oculumFallenEyeBond(eye)} / 1000',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 4),
                 LinearProgressIndicator(
                   value: oculumFallenEyeBond(eye) / 1000,
@@ -2921,7 +2937,12 @@ extension _OculumFallenEyes on _OculumHomePageState {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  dead ? (oculumFallenEyeAwakened(eye) || oculumFallenEyeRebirthsAvailable(eye) > 0 ? 'RINASCITA AL PROSSIMO RIPOSO LUNGO' : 'NESSUNA RINASCITA DISPONIBILE') : oculumFallenEyeAwakened(eye)
+                  dead
+                      ? (oculumFallenEyeAwakened(eye) ||
+                                oculumFallenEyeRebirthsAvailable(eye) > 0
+                            ? 'RINASCITA AL PROSSIMO RIPOSO LUNGO'
+                            : 'NESSUNA RINASCITA DISPONIBILE')
+                      : oculumFallenEyeAwakened(eye)
                       ? 'Rinascite illimitate · al Riposo Lungo del proprietario'
                       : 'Soglie Legame 300 / 600 / 900 · Rinascite disponibili: ${oculumFallenEyeRebirthsAvailable(eye)}',
                   style: const TextStyle(fontSize: 12),

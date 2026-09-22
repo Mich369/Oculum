@@ -2282,13 +2282,14 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       children: [
         DropdownButtonFormField<String>(
           initialValue: selected.id,
+          isExpanded: true,
           dropdownColor: const Color(0xFF202431),
           decoration: InputDecoration(labelText: label),
           items: choices
               .map(
                 (choice) => DropdownMenuItem(
                   value: choice.id,
-                  child: Text(choice.nome),
+                  child: Text(choice.nome, maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
               )
               .toList(),
