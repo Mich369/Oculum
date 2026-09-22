@@ -6894,8 +6894,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   void selectPublicRunTitle(String? id) {
     if (inCombat || isDungeonCoopClient) return;
-    if (id != null && !publicRunTitleCandidates.any((title) => title.id == id))
+    if (id != null && !publicRunTitleCandidates.any((title) => title.id == id)) {
       return;
+    }
     setState(() => publicRunTitleId = id ?? '');
     unawaited(saveRunCheckpoint());
     _broadcastDungeonCoopState();

@@ -1851,8 +1851,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           'tiro_materia',
           'tiro_oculum',
           'schivata_oculum',
-        }.contains(key))
+        }.contains(key)) {
           continue;
+        }
         final raw = bonuses[key] ?? 0;
         bonuses[key] =
             raw + oculumPublicTitleStatBonus(raw + (structured[key] ?? 0));
