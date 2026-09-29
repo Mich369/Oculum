@@ -4,6 +4,8 @@ param(
   [switch]$All,
   [string[]]$Path = @(),
   [switch]$SkipChecks,
+  [switch]$SubmitActions,
+  [switch]$WaitForActions,
   [switch]$BuildLocalDistribution,
   [switch]$WaitForAppleArtifacts,
   [switch]$ForceCloseRunningDistribution,
@@ -51,7 +53,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Root = (Resolve-Path -LiteralPath (Join-Path $ScriptDir "..")).Path
 Set-Location -LiteralPath $Root
 
-if (-not $All -and $Path.Count -eq 0) {
+if (-not $All -and $Path.Count -eq 0 -and -not $SubmitActions) {
   throw "Scegli cosa pubblicare: usa -All oppure passa uno o piu -Path. Questo evita push accidentali di modifiche non legate alla patch."
 }
 
@@ -60,6 +62,22 @@ if ([string]::IsNullOrWhiteSpace($Branch)) {
 }
 if ([string]::IsNullOrWhiteSpace($Branch)) {
   throw "Branch Git non determinato."
+}
+$currentBranch = Get-GitText -Arguments @("branch", "--show-current")
+if ($currentBranch -ne $Branch) {
+  throw "Il branch richiesto ($Branch) non coincide con quello aperto ($currentBranch)."
+}
+if ($WaitForActions -and -not $SubmitActions) {
+  throw "-WaitForActions richiede -SubmitActions."
+}
+if ($SubmitActions) {
+  Invoke-CheckedCommand "Verifica accesso GitHub" "gh" "api" "repos/$GitHubRepo" "--jq" ".full_name"
+}
+# Never include previously staged unrelated work in a selective publication.
+$staged = @(& git diff --cached --name-only)
+if ($LASTEXITCODE -ne 0) { throw "Impossibile verificare lo stage Git." }
+if ($staged.Count -gt 0) {
+  throw "Sono presenti modifiche gia staged. Completa quel commit prima di pubblicare questa patch."
 }
 
 if (-not $SkipChecks) {
@@ -72,7 +90,7 @@ if (-not $SkipChecks) {
 Write-Step "Stage patch"
 if ($All) {
   & git add -A
-} else {
+} elseif ($Path.Count -gt 0) {
   & git add -- @Path
 }
 $exitCode = if ($null -eq $global:LASTEXITCODE) { 0 } else { $global:LASTEXITCODE }
@@ -82,13 +100,37 @@ if ($exitCode -ne 0) {
 
 & git diff --cached --quiet
 $diffExit = if ($null -eq $global:LASTEXITCODE) { 0 } else { $global:LASTEXITCODE }
-if ($diffExit -eq 0) {
-  throw "Nessuna modifica staged da committare."
+if ($diffExit -gt 1) { throw "Impossibile controllare le modifiche staged." }
+if ($diffExit -eq 1) {
+  Invoke-CheckedCommand "git commit" "git" "commit" "-m" $Message
+} else {
+  Write-Host "Nessuna nuova modifica: pubblico il commit corrente."
 }
-
-Invoke-CheckedCommand "git commit" "git" "commit" "-m" $Message
 $commit = Get-GitText -Arguments @("rev-parse", "HEAD")
 Invoke-CheckedCommand "git push $Remote $Branch" "git" "push" $Remote $Branch
+
+if ($SubmitActions) {
+  foreach ($workflow in @("build_distribution.yml", "build_macos.yml")) {
+    # Reuse the push run for this exact commit; avoid cancelling it with a duplicate.
+    $runsJson = & gh run list --repo $GitHubRepo --workflow $workflow --branch $Branch --commit $commit --limit 10 --json databaseId,status,conclusion,url
+    if ($LASTEXITCODE -ne 0) { throw "Impossibile leggere le Actions per $workflow." }
+    $run = @($runsJson | ConvertFrom-Json) | Where-Object { $_.status -ne 'completed' -or $_.conclusion -eq 'success' } | Select-Object -First 1
+    if ($null -eq $run) {
+      Invoke-CheckedCommand "Avvia $workflow" "gh" "workflow" "run" $workflow "--repo" $GitHubRepo "--ref" $Branch
+      for ($attempt = 0; $attempt -lt 12 -and $null -eq $run; $attempt++) {
+        Start-Sleep -Seconds 5
+        $runsJson = & gh run list --repo $GitHubRepo --workflow $workflow --branch $Branch --commit $commit --event workflow_dispatch --limit 10 --json databaseId,status,conclusion,url
+        if ($LASTEXITCODE -ne 0) { throw "Impossibile trovare la nuova Action." }
+        $run = @($runsJson | ConvertFrom-Json) | Where-Object { $_.status -ne 'completed' -or $_.conclusion -eq 'success' } | Select-Object -First 1
+      }
+    }
+    if ($null -eq $run) { throw "Action avviata ma non individuata per ${commit}: controlla GitHub." }
+    Write-Host "Action: $($run.url)"
+    if ($WaitForActions) {
+      Invoke-CheckedCommand "Attendi $workflow" "gh" "run" "watch" "$($run.databaseId)" "--repo" $GitHubRepo "--exit-status" "--interval" "30"
+    }
+  }
+}
 
 if ($BuildLocalDistribution) {
   $distributionArgs = @(
