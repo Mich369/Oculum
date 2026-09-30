@@ -344,7 +344,13 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk build/distribution/Oculum-Android-release.apk
 
       - name: Build Android App Bundle
-        run: flutter build appbundle --release
+        env:
+          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          flutter build appbundle --release \
+            "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
       - name: Package Android App Bundle
         run: cp build/app/outputs/bundle/release/app-release.aab build/distribution/Oculum-Android-release.aab
@@ -370,7 +376,14 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build web --release --base-href ./
+      - name: Build Web release
+        env:
+          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          flutter build web --release --base-href ./ \
+            "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
       - name: Package Web release
         run: |
           mkdir -p build/distribution
