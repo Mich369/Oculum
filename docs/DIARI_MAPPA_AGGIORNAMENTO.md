@@ -16,6 +16,8 @@
 - Test grafici: output separati per piattaforma per evitare collisioni tra screenshot.
 - GitHub Actions: controllo codice e test prima delle build; Windows normale/test, macOS, Linux, Android APK/AAB, iOS senza firma e Web. Artifact conservati 30 giorni.
 
+- Correzione del lag nella scrittura: i campi dei Diari non invalidano i calcoli di gioco a ogni carattere. Anteprime dei comandi dopo 320 ms di pausa, autosave dopo 2600 ms; testo e cursore restano immediati. Test su testo lungo e digitazione ripetuta.
+
 ## Parametri modificabili
 
 | Parametro | Dove modificarlo |
@@ -23,6 +25,7 @@
 | Nomi delle quattro gemme, costo iniziale (3 Obser), scatto (+3 ogni 10), dado (statistica / 3, minimo d1), apparizione (25% per tipo) | `lib/src/main/oculum_home_merchant.dart`: `oculumStatGemNames`, `oculumStatGemBaseCost`, `oculumStatGemPrice`, `oculumStatGemDieFaces`, `oculumStatGemAvailable` |
 | Nuovi stati e riconoscitori del testo | `lib/services/oculum_diary_memory.dart`: `diaryStateLabels`, `additionalStates`, regole del builder |
 | Alias delle creature | Catalogo Monster Book passato al builder e collegamenti espliciti nel testo |
+| Pausa prima delle anteprime (320 ms) e del salvataggio dei Diari (2600 ms) | `campoModello` in `lib/src/main/oculum_home_colors_and_base_widgets.dart`, opzione `narrativeText` |
 | Colori, occhi, distanze, pagine del grafo e cronologia | `lib/pages/oculum_eye_memory_page.dart` |
 | Punti iniziali e limite di assegnazione | `lib/src/main/oculum_starter_creation.dart` e interfacce di tutorial/scheda |
 | Origine dei mostri | Helper di creazione e selezione nel tutorial |
@@ -36,7 +39,7 @@ La lettura è locale e usa riconoscitori conservativi, non comprende arbitrariam
 
 ## Verifiche e limiti
 
-Suite completa locale: 571 test passati, uno saltato. Controlli successivi mirati su tutte le gemme, salvataggio, riposi e assegnazione iniziale: 19 passati. Profilo test compilato verificato separatamente. Analizzatore senza problemi dopo le correzioni.
+Suite completa locale dopo la correzione del lag: 572 test passati, uno saltato. Controlli successivi mirati su tutte le gemme, salvataggio, riposi e assegnazione iniziale: 19 passati. Profilo test compilato verificato separatamente. Analizzatore senza problemi dopo le correzioni.
 
 Layout desktop/mobile e trasporto realtime verificati automaticamente; non costituiscono una prova su due dispositivi fisici. L’autenticazione Supabase live è stata verificata separatamente. Le build iOS/macOS senza firma richiedono le rispettive procedure di installazione/firma.
 

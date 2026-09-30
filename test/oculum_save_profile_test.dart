@@ -6,7 +6,8 @@ void main() {
     final profile = oculumSaveProfile.trim();
     expect(
       oculumProfiledStorageKey('oculum_save_v9_manual_rgb_opacity_clean'),
-      profile.isEmpty ? 'oculum_save_v9_manual_rgb_opacity_clean'
+      profile.isEmpty
+          ? 'oculum_save_v9_manual_rgb_opacity_clean'
           : 'oculum_save_v9_manual_rgb_opacity_clean__$profile',
     );
     expect(oculumProfileFileSuffix, profile.isEmpty ? '' : '_$profile');

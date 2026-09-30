@@ -33,6 +33,7 @@ class OculumPerformanceProbe {
   void shortRest() => _state.riposoBreve();
   String ownerTag() => _state.sheetTagAt(_state.schedaCorrente);
   Widget fallenEyesPage() => _state.fallenEyesPage();
+  Widget diaryEntryTile(int index) => _state.storyDiaryDatabaseTile(index);
   Map<String, int> titleBonuses(OculumTitle title) =>
       _state.titleQuickBonuses(title);
   Future<Uint8List> oculusFilledPdf() => _state.buildOculusFilledSheetPdf();

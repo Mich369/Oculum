@@ -253,6 +253,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     initialValue: diarioPagine[i],
                     onChanged: (value) => diarioPagine[i] = value,
                     maxLines: 7,
+                    narrativeText: true,
                   ),
                   smallInfoText(
                     t(
@@ -550,6 +551,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               ),
               label: t('Nome del Diario / raccolta', 'Diary / collection name'),
               initialValue: entry.diaryName,
+              narrativeText: true,
               onChanged: (value) => entry.diaryName = value,
             ),
             const SizedBox(height: 10),
@@ -559,6 +561,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               ),
               label: t('Titolo', 'Title'),
               initialValue: entry.title,
+              narrativeText: true,
               onChanged: (value) => entry.title = value,
             ),
             const SizedBox(height: 10),
@@ -578,6 +581,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                 }
               },
               maxLines: 7,
+              narrativeText: true,
             ),
             const SizedBox(height: 10),
             LayoutBuilder(
@@ -589,6 +593,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     ),
                     label: t('Giorno ciclo', 'Cycle day'),
                     initialValue: '${entry.cycleDay}',
+                    narrativeText: true,
                     onChanged: (value) {
                       entry.cycleDay = int.tryParse(value) ?? entry.cycleDay;
                     },
@@ -603,6 +608,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     ),
                     label: t('Fase', 'Phase'),
                     initialValue: entry.phase,
+                    narrativeText: true,
                     onChanged: (value) => entry.phase = value,
                   ),
                   campoModello(
@@ -611,6 +617,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     ),
                     label: t('Luogo', 'Location'),
                     initialValue: entry.location,
+                    narrativeText: true,
                     onChanged: (value) => entry.location = value,
                   ),
                 ];
@@ -700,6 +707,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               initialValue: diarioPagine[i],
               onChanged: (value) => diarioPagine[i] = value,
               maxLines: 7,
+              narrativeText: true,
             ),
             smallInfoText(
               t(

@@ -65,6 +65,7 @@ class _OculumModelTextField extends StatefulWidget {
     this.onCommandHelpRequested,
     this.commandPreviewBuilder,
     this.commandSuggestionBuilder,
+    this.previewDelay = Duration.zero,
   });
 
   final String initialValue;
@@ -82,6 +83,7 @@ class _OculumModelTextField extends StatefulWidget {
   final Future<String?> Function(String currentText)? onCommandHelpRequested;
   final String Function(String text)? commandPreviewBuilder;
   final List<String> Function(String text)? commandSuggestionBuilder;
+  final Duration previewDelay;
 
   @override
   State<_OculumModelTextField> createState() => _OculumModelTextFieldState();
@@ -100,6 +102,7 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
   bool _dirtySinceRefresh = false;
+  Timer? _previewTimer;
 
   @override
   void initState() {
@@ -119,6 +122,7 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
 
   @override
   void dispose() {
+    _previewTimer?.cancel();
     _focusNode.removeListener(_handleFocusChanged);
     _controller.dispose();
     _focusNode.dispose();
@@ -143,7 +147,14 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
     if (mounted &&
         (widget.commandPreviewBuilder != null ||
             widget.commandSuggestionBuilder != null)) {
-      setState(() {});
+      _previewTimer?.cancel();
+      if (widget.previewDelay == Duration.zero) {
+        setState(() {});
+      } else {
+        _previewTimer = Timer(widget.previewDelay, () {
+          if (mounted) setState(() {});
+        });
+      }
     }
     if (widget.liveRefresh) {
       _refreshParent();
@@ -1235,6 +1246,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     bool showCommandHelp = false,
+    bool narrativeText = false,
   }) {
     final field = _OculumModelTextField(
       key: fieldKey,
@@ -1242,7 +1254,10 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       maxLines: maxLines,
       onChanged: onChanged,
       onEdited: () {
-        programmaSalvataggio();
+        programmaSalvataggio(
+          invalidateCaches: !narrativeText,
+          delay: Duration(milliseconds: narrativeText ? 2600 : 1800),
+        );
       },
       onRefreshRequested: () {
         scheduleInputUiRefresh();
@@ -1250,6 +1265,9 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       linguaInglese: linguaInglese,
       enableCommandAutocomplete: enableCommandAutocomplete,
       liveRefresh: liveRefresh,
+      previewDelay: narrativeText
+          ? const Duration(milliseconds: 320)
+          : Duration.zero,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       onCommandHelpRequested: showCommandHelp
