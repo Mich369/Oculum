@@ -433,6 +433,15 @@ Copy-Item -LiteralPath $ApkSource -Destination (Join-Path $Dist "Oculum-Android-
 Copy-Item -LiteralPath $ApkSource -Destination (Join-Path $AndroidDist "Oculum-Android-release.apk") -Force
 Add-DistributionArtifact -Label "Android apk" -Path (Join-Path $Dist "Oculum-Android-release.apk") -Required
 
+Invoke-CheckedCommand "flutter build appbundle --release" "flutter" "build" "appbundle" "--release"
+$AabSource = Join-Path $Root "build\app\outputs\bundle\release\app-release.aab"
+if (-not (Test-Path -LiteralPath $AabSource)) {
+  throw "App Bundle release non trovato: $AabSource"
+}
+Copy-Item -LiteralPath $AabSource -Destination (Join-Path $Dist "Oculum-Android-release.aab") -Force
+Copy-Item -LiteralPath $AabSource -Destination (Join-Path $AndroidDist "Oculum-Android-release.aab") -Force
+Add-DistributionArtifact -Label "Android aab" -Path (Join-Path $Dist "Oculum-Android-release.aab") -Required
+
 Invoke-CheckedCommand "flutter build web --release" "flutter" "build" "web" "--release"
 
 $WebRelease = Join-Path $Root "build\web"
@@ -548,7 +557,7 @@ if ($AppleArtifactsSource -ne "None") {
 
 # Always ship a Windows test edition with its own save profile and runtime.
 Invoke-CheckedCommand "flutter build windows profilo test" "flutter" "build" "windows" "--release" "--dart-define=OculumSaveProfile=test"
-$TestDist = Join-Path $Dist "test"
+$TestDist = Join-Path $Dist "test\windows"
 Copy-DirectoryContents -Source $WinRelease -Destination $TestDist
 Copy-Item -LiteralPath (Join-Path $WinRelease "oculum.exe") -Destination (Join-Path $TestDist "Oculum-Test.exe") -Force
 $TestZip = Join-Path $Dist "Oculum-Test-Windows.zip"
