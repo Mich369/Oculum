@@ -1,7 +1,25 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/services/oculum_diary_memory.dart';
+import 'package:oculum/services/oculum_diary_links.dart';
 
 void main() {
+  test('diary bracket suggestions complete typed memory links', () {
+    final catalogue = [
+      const DiaryEntity('m:forest', 'Forest Demon', 'creature', ['Demone']),
+      const DiaryEntity('p:black', 'Bosco Nero', 'place'),
+    ];
+    const draft = 'Nel [[cre';
+    expect(
+      diaryLinkCompletions(draft, draft.length, catalogue),
+      contains('[[creatura:Forest Demon]]'),
+    );
+    final inserted = diaryInsertLink(
+      draft,
+      draft.length,
+      '[[creatura:Forest Demon]]',
+    );
+    expect(inserted?.text, 'Nel [[creatura:Forest Demon]]');
+  });
   const demon = DiaryEntity('demon', 'Forest Demon', 'creature');
   DiaryMemory read(String text) => DiaryMemoryBuilder().build(
     [

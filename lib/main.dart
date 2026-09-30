@@ -29,6 +29,7 @@ import 'services/oculum_cloud_save_service.dart';
 import 'services/oculum_realtime_service.dart';
 import 'services/oculum_save_profile.dart';
 import 'services/oculum_diary_memory.dart';
+import 'services/oculum_diary_links.dart';
 import 'pages/oculum_eye_memory_page.dart';
 import 'widgets/oculum_bottom_nav.dart';
 import 'widgets/oculum_desktop_top_menu.dart';

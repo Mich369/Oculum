@@ -3,6 +3,18 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
+  List<DiaryEntity> diarySuggestionCatalogue() => [
+    for (final monster in monsterBookEntries)
+      DiaryEntity(
+        'monster:${monster.id}',
+        monster.nameIt,
+        monster.isNpc ? 'npc' : 'creature',
+        [monster.nameEn],
+      ),
+    for (var i = 0; i < schedePersonaggio.length; i++)
+      DiaryEntity('character:$i', nomeSchedaPersonaggio(i), 'character'),
+  ];
+
   void openEyeMemory({bool campaign = false}) {
     final documents = <DiaryDocument>[];
     final count = campaign ? max(1, schedePersonaggio.length) : 1;
@@ -582,6 +594,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               },
               maxLines: 7,
               narrativeText: true,
+              diaryCatalogue: diarySuggestionCatalogue(),
             ),
             const SizedBox(height: 10),
             LayoutBuilder(
@@ -708,6 +721,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               onChanged: (value) => diarioPagine[i] = value,
               maxLines: 7,
               narrativeText: true,
+              diaryCatalogue: diarySuggestionCatalogue(),
             ),
             smallInfoText(
               t(

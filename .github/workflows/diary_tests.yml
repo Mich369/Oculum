@@ -1,0 +1,44 @@
+name: Diari and Mappa tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oculum-diari-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  diary-tests:
+    name: Analyze and test Diari
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-pub
+
+      - name: Test memory parser and link suggestions
+        run: flutter test --no-pub test/oculum_diary_memory_test.dart
+
+      - name: Test Eye Map layout
+        run: flutter test --no-pub test/oculum_eye_memory_widget_test.dart
+
+      - name: Test fluent diary typing
+        run: flutter test --no-pub test/oculum_diary_typing_test.dart

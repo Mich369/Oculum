@@ -66,6 +66,7 @@ class _OculumModelTextField extends StatefulWidget {
     this.commandPreviewBuilder,
     this.commandSuggestionBuilder,
     this.previewDelay = Duration.zero,
+    this.diaryCatalogue = const [],
   });
 
   final String initialValue;
@@ -84,6 +85,7 @@ class _OculumModelTextField extends StatefulWidget {
   final String Function(String text)? commandPreviewBuilder;
   final List<String> Function(String text)? commandSuggestionBuilder;
   final Duration previewDelay;
+  final List<DiaryEntity> diaryCatalogue;
 
   @override
   State<_OculumModelTextField> createState() => _OculumModelTextFieldState();
@@ -177,6 +179,20 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
     _notifyEdited();
   }
 
+  void _insertDiarySuggestion(String suggestion) {
+    final inserted = diaryInsertLink(
+      _controller.text,
+      _controller.selection.baseOffset,
+      suggestion,
+    );
+    if (inserted == null) return;
+    _controller.value = TextEditingValue(
+      text: inserted.text,
+      selection: TextSelection.collapsed(offset: inserted.cursor),
+    );
+    _notifyEdited();
+  }
+
   KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
     if (!widget.enableCommandAutocomplete ||
         event is! KeyDownEvent ||
@@ -232,15 +248,37 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
         decoration: decorated,
       ),
     );
+    final diarySuggestions = diaryLinkCompletions(
+      _controller.text,
+      _controller.selection.baseOffset,
+      widget.diaryCatalogue,
+    );
     final suggestions =
         widget.commandSuggestionBuilder?.call(_controller.text) ??
         const <String>[];
     final preview = widget.commandPreviewBuilder?.call(_controller.text) ?? '';
-    if (suggestions.isEmpty && preview.isEmpty) return field;
+    if (diarySuggestions.isEmpty && suggestions.isEmpty && preview.isEmpty) {
+      return field;
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         field,
+        if (diarySuggestions.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final suggestion in diarySuggestions)
+                ActionChip(
+                  avatar: const Icon(Icons.link, size: 15),
+                  label: Text(suggestion),
+                  onPressed: () => _insertDiarySuggestion(suggestion),
+                ),
+            ],
+          ),
+        ],
         if (suggestions.isNotEmpty) ...[
           const SizedBox(height: 6),
           Wrap(
@@ -1247,6 +1285,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     List<TextInputFormatter>? inputFormatters,
     bool showCommandHelp = false,
     bool narrativeText = false,
+    List<DiaryEntity> diaryCatalogue = const [],
   }) {
     final field = _OculumModelTextField(
       key: fieldKey,
@@ -1268,6 +1307,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       previewDelay: narrativeText
           ? const Duration(milliseconds: 320)
           : Duration.zero,
+      diaryCatalogue: diaryCatalogue,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       onCommandHelpRequested: showCommandHelp

@@ -1,0 +1,75 @@
+name: Oculum Test Windows distribution
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oculum-test-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-windows:
+    name: Oculum Test Windows EXE and tests
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-pub
+
+      - name: Test diary, tutorial and save isolation
+        shell: pwsh
+        run: |
+          flutter test --no-pub test/oculum_diary_memory_test.dart
+          flutter test --no-pub test/oculum_diary_typing_test.dart
+          flutter test --no-pub test/oculum_starter_creation_test.dart
+          flutter test --no-pub test/oculum_save_profile_test.dart --dart-define=OculumSaveProfile=test
+
+      - name: Build isolated test app
+        shell: pwsh
+        env:
+          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          flutter build windows --release `
+            "--dart-define=OculumSaveProfile=test" `
+            "--dart-define=OculumSupabaseUrl=$env:OCULUM_SUPABASE_URL" `
+            "--dart-define=OculumSupabasePublishableKey=$env:OCULUM_SUPABASE_PUBLISHABLE_KEY"
+
+      - name: Package Oculum Test Windows
+        shell: pwsh
+        run: |
+          $dist = "build/distribution/test/windows"
+          New-Item -ItemType Directory -Force -Path $dist | Out-Null
+          Copy-Item -Recurse -Force "build/windows/x64/runner/Release/*" $dist
+          Rename-Item -LiteralPath "$dist/oculum.exe" -NewName "Oculum-Test.exe"
+          if (!(Test-Path "$dist/Oculum-Test.exe")) { throw "Oculum-Test.exe mancante" }
+          if (!(Test-Path "$dist/data/app.so")) { throw "Runtime data/app.so mancante" }
+          Compress-Archive -Path "$dist/*" -DestinationPath "Oculum-Test-Windows.zip" -Force
+
+      - name: Upload Oculum Test artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: Oculum-Test-Windows
+          path: Oculum-Test-Windows.zip
+          if-no-files-found: error
+          retention-days: 30
