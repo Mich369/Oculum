@@ -37,12 +37,10 @@ jobs:
         run: flutter analyze --no-pub
 
       - name: Test diary, tutorial and save isolation
-        shell: pwsh
-        run: |
-          flutter test --no-pub test/oculum_diary_memory_test.dart
-          flutter test --no-pub test/oculum_diary_typing_test.dart
-          flutter test --no-pub test/oculum_starter_creation_test.dart
-          flutter test --no-pub test/oculum_save_profile_test.dart --dart-define=OculumSaveProfile=test
+        run: flutter test --no-pub test/oculum_diary_memory_test.dart test/oculum_diary_typing_test.dart test/oculum_starter_creation_test.dart
+
+      - name: Verify compiled test save isolation
+        run: flutter test --no-pub test/oculum_save_profile_test.dart --dart-define=OculumSaveProfile=test
 
       - name: Build isolated test app
         shell: pwsh
@@ -64,12 +62,12 @@ jobs:
           Rename-Item -LiteralPath "$dist/oculum.exe" -NewName "Oculum-Test.exe"
           if (!(Test-Path "$dist/Oculum-Test.exe")) { throw "Oculum-Test.exe mancante" }
           if (!(Test-Path "$dist/data/app.so")) { throw "Runtime data/app.so mancante" }
-          Compress-Archive -Path "$dist/*" -DestinationPath "Oculum-Test-Windows.zip" -Force
+          Compress-Archive -Path "$dist/*" -DestinationPath "build/distribution/Oculum-Test-Windows.zip" -Force
 
       - name: Upload Oculum Test artifact
         uses: actions/upload-artifact@v6
         with:
           name: Oculum-Test-Windows
-          path: Oculum-Test-Windows.zip
+          path: build/distribution/Oculum-Test-Windows.zip
           if-no-files-found: error
           retention-days: 30

@@ -85,7 +85,7 @@ jobs:
       - name: Package Windows release
         shell: pwsh
         run: |
-          $dist = "build/distribution/windows"
+          $dist = if ('${{ matrix.edition }}' -eq 'test') { "build/distribution/test/windows" } else { "build/distribution/windows" }
           New-Item -ItemType Directory -Force -Path $dist
           Copy-Item -Recurse -Force "build/windows/x64/runner/Release/*" $dist
           if ('${{ matrix.edition }}' -eq 'test') {

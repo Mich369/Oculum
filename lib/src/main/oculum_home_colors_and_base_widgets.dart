@@ -1294,11 +1294,15 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       onChanged: onChanged,
       onEdited: () {
         programmaSalvataggio(
-          invalidateCaches: !narrativeText,
+          invalidateCaches: liveRefresh,
+          deferCacheInvalidation: !liveRefresh,
           delay: Duration(milliseconds: narrativeText ? 2600 : 1800),
         );
       },
       onRefreshRequested: () {
+        if (!liveRefresh) {
+          invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+        }
         scheduleInputUiRefresh();
       },
       linguaInglese: linguaInglese,

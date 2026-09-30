@@ -60,6 +60,7 @@ const diaryStateLabels = <String, String>{
   'mentioned': 'Menzionato',
   'discovered': 'Scoperto',
   'died': 'Morto',
+  'resonates': 'Risuona con',
 };
 
 class DiaryMemory {
@@ -71,6 +72,20 @@ class DiaryMemory {
   Set<String> diariesFor(String id) => backlinks(id)
       .map((r) => '${r.evidence.document.author}/${r.evidence.document.diary}')
       .toSet();
+
+  /// Number of source-backed mentions and links. Repeated mentions deliberately
+  /// increase the weight: the map reflects the living memory of the campaign.
+  int mentionCount(String id) =>
+      relations.where((r) => r.from == id || r.to == id).length;
+
+  int uniqueConnectionCount(String id) => backlinks(id)
+      .map((r) => r.from == id ? r.to : r.from)
+      .where((other) => other != id)
+      .toSet()
+      .length;
+
+  double importance(String id) =>
+      1 + mentionCount(id) * .55 + uniqueConnectionCount(id) * 1.25;
 }
 
 String diaryKey(String value) => value.trim().toLowerCase();
@@ -259,6 +274,16 @@ class DiaryMemoryBuilder {
           if (place != null &&
               states.any((s) => ['seen', 'met', 'fought'].contains(s))) {
             add(target, place, 'observed_at', evidence);
+          }
+        }
+        // Co-mentioned entities form a source-backed resonance. This adds
+        // structure without inventing an outcome or changing the diary text.
+        final coMentioned = <DiaryEntity>[...places, ...targets];
+        if (coMentioned.length > 1) {
+          for (var left = 0; left < coMentioned.length; left++) {
+            for (var right = left + 1; right < coMentioned.length; right++) {
+              add(coMentioned[left], coMentioned[right], 'resonates', evidence);
+            }
           }
         }
         previousTarget = targets.length == 1 ? targets.single : null;

@@ -111,7 +111,12 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                   e.name.toLowerCase().contains(query.toLowerCase()),
             )
             .toList()
-          ..sort((a, b) => a.name.compareTo(b.name));
+          ..sort((a, b) {
+            final byWeight = memory
+                .importance(b.id)
+                .compareTo(memory.importance(a.id));
+            return byWeight == 0 ? a.name.compareTo(b.name) : byWeight;
+          });
     final related = selected == null
         ? <DiaryRelation>[]
         : memory.backlinks(selected!);
@@ -270,9 +275,11 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                           ),
                           for (final entry in positions.entries)
                             Positioned(
-                              left: entry.value.dx - 60,
+                              left:
+                                  entry.value.dx -
+                                  (58 + memory.importance(entry.key) * 2),
                               top: entry.value.dy - 35,
-                              width: 120,
+                              width: 116 + memory.importance(entry.key) * 4,
                               child: Semantics(
                                 button: true,
                                 label: memory.entities[entry.key]!.name,
@@ -285,8 +292,29 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                                   child: Column(
                                     children: [
                                       Container(
-                                        width: entry.key == selected ? 54 : 40,
-                                        height: 32,
+                                        width: entry.key == selected
+                                            ? 54 +
+                                                  min(
+                                                    30.0,
+                                                    memory.importance(
+                                                          entry.key,
+                                                        ) *
+                                                        2,
+                                                  )
+                                            : 40 +
+                                                  min(
+                                                    30.0,
+                                                    memory.importance(
+                                                          entry.key,
+                                                        ) *
+                                                        2,
+                                                  ),
+                                        height:
+                                            32 +
+                                            min(
+                                              18.0,
+                                              memory.importance(entry.key),
+                                            ),
                                         decoration: BoxDecoration(
                                           border: Border.all(color: gold),
                                           borderRadius: BorderRadius.circular(
@@ -306,7 +334,7 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                                         ),
                                       ),
                                       Text(
-                                        memory.entities[entry.key]!.name,
+                                        '${memory.entities[entry.key]!.name} · ${memory.mentionCount(entry.key)}',
                                         textAlign: TextAlign.center,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,

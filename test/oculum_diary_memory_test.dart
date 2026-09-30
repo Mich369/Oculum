@@ -20,6 +20,36 @@ void main() {
     );
     expect(inserted?.text, 'Nel [[creatura:Forest Demon]]');
   });
+
+  test('repeatedly named memories grow and gain resonance links', () {
+    final memory = DiaryMemoryBuilder().build(
+      [
+        const DiaryDocument(
+          id: 'one',
+          author: 'Hoshy',
+          diary: 'Diario',
+          title: 'Bosco',
+          day: 1,
+          text: 'Nel Bosco Nero ho incontrato Forest Demon.',
+        ),
+        const DiaryDocument(
+          id: 'two',
+          author: 'Hoshy',
+          diary: 'Diario',
+          title: 'Scontro',
+          day: 2,
+          text: 'Nel Bosco Nero ho combattuto Forest Demon.',
+        ),
+      ],
+      const [
+        DiaryEntity('place:black', 'Bosco Nero', 'place'),
+        DiaryEntity('monster:forest', 'Forest Demon', 'creature'),
+      ],
+    );
+    expect(memory.mentionCount('monster:forest'), greaterThan(2));
+    expect(memory.uniqueConnectionCount('monster:forest'), greaterThan(1));
+    expect(memory.importance('monster:forest'), greaterThan(2));
+  });
   const demon = DiaryEntity('demon', 'Forest Demon', 'creature');
   DiaryMemory read(String text) => DiaryMemoryBuilder().build(
     [

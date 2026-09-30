@@ -8,6 +8,7 @@ Set-Location -LiteralPath $projectRoot
 New-Item -ItemType Directory -Force -Path $distRoot | Out-Null
 
 function Build-Edition([string]$Platform, [string]$Profile, [string]$LogName) {
+  Write-Output "Compilazione $Platform (profilo '$Profile')"
   & $dartRuntime $flutterTool build $Platform --release --no-pub "--dart-define=OculumSaveProfile=$Profile" *> (Join-Path $projectRoot "output\$LogName.log")
   if ($LASTEXITCODE -ne 0) { throw "Build $Platform ($Profile) fallita: output\$LogName.log" }
 }
@@ -21,6 +22,7 @@ function Package-Windows([string]$Folder, [string]$ExeName, [string]$ZipName) {
   if ($running) { throw "App aperta in $target; salva e chiudila prima del packaging." }
   New-Item -ItemType Directory -Force -Path $target | Out-Null
   Copy-Item -Path 'build\windows\x64\runner\Release\*' -Destination $target -Recurse -Force
+  Copy-Item -LiteralPath 'docs\DIARI_MAPPA_AGGIORNAMENTO.md' -Destination (Join-Path $target 'LEGGIMI-MODIFICHE.md') -Force
   if ($ExeName -ne 'oculum.exe') {
     Move-Item -LiteralPath (Join-Path $target 'oculum.exe') -Destination (Join-Path $target $ExeName) -Force
   }
@@ -32,12 +34,14 @@ function Package-Windows([string]$Folder, [string]$ExeName, [string]$ZipName) {
   Add-Type -AssemblyName System.IO.Compression.FileSystem
   $zip = [IO.Compression.ZipFile]::OpenRead($archive)
   try {
-    $entry = $zip.Entries | Where-Object { $_.FullName -eq $ExeName } | Select-Object -First 1
-    if (!$entry) { throw 'EXE assente dallo ZIP' }
+    foreach ($payload in @($ExeName, 'data/app.so')) {
+    $entry = $zip.Entries | Where-Object { $_.FullName.Replace('\', '/') -eq $payload } | Select-Object -First 1
+    if (!$entry) { throw "$payload assente dallo ZIP" }
     $stream = $entry.Open()
     $sha = [Security.Cryptography.SHA256]::Create()
     try { $zipHash = [Convert]::ToHexString($sha.ComputeHash($stream)) } finally { $stream.Dispose(); $sha.Dispose() }
-    if ($zipHash -ne (Get-FileHash -LiteralPath (Join-Path $target $ExeName)).Hash) { throw 'EXE ZIP diverso dalla build' }
+    if ($zipHash -ne (Get-FileHash -LiteralPath (Join-Path $target $payload)).Hash) { throw "$payload ZIP diverso dalla build" }
+    }
   } finally { $zip.Dispose() }
 }
 
@@ -45,16 +49,34 @@ Build-Edition 'windows' '' 'diary-build-windows'
 Package-Windows 'windows' 'oculum.exe' 'Oculum-Windows.zip'
 Build-Edition 'windows' 'test' 'diary-build-windows-test'
 Package-Windows 'test\windows' 'Oculum-Test.exe' 'Oculum-Test-Windows.zip'
+if ((Get-FileHash 'build\distribution\windows\data\app.so').Hash -eq
+    (Get-FileHash 'build\distribution\test\windows\data\app.so').Hash) {
+  throw 'Le edizioni normale e test devono avere profili compilati distinti.'
+}
 Build-Edition 'apk' '' 'diary-build-apk'
 $apk = Join-Path $distRoot 'Oculum-Android-release.apk'
 Copy-Item -LiteralPath 'build\app\outputs\flutter-apk\app-release.apk' -Destination $apk -Force
 if ((Get-FileHash -LiteralPath $apk).Hash -ne (Get-FileHash 'build\app\outputs\flutter-apk\app-release.apk').Hash) { throw 'APK diverso dalla build' }
+Build-Edition 'appbundle' '' 'diary-build-aab'
+$aab = Join-Path $distRoot 'Oculum-Android-release.aab'
+Copy-Item -LiteralPath 'build\app\outputs\bundle\release\app-release.aab' -Destination $aab -Force
+Build-Edition 'web' '' 'diary-build-web'
+$webFolder = Join-Path $distRoot 'web'
+New-Item -ItemType Directory -Force -Path $webFolder | Out-Null
+Copy-Item -Path 'build\web\*' -Destination $webFolder -Recurse -Force
+$webArchive = Join-Path $distRoot 'Oculum-Web.zip'
+Compress-Archive -Path (Join-Path $webFolder '*') -DestinationPath $webArchive -Force
+Copy-Item -LiteralPath 'docs\DIARI_MAPPA_AGGIORNAMENTO.md' -Destination (Join-Path $distRoot 'LEGGIMI-MODIFICHE.md') -Force
 $artifacts = @(
   (Join-Path $distRoot 'windows\oculum.exe'),
   (Join-Path $distRoot 'Oculum-Windows.zip'),
   (Join-Path $distRoot 'test\windows\Oculum-Test.exe'),
   (Join-Path $distRoot 'Oculum-Test-Windows.zip'),
-  $apk
+  (Join-Path $distRoot 'windows\data\app.so'),
+  (Join-Path $distRoot 'test\windows\data\app.so'),
+  $apk,
+  $aab,
+  $webArchive
 )
 $report = [ordered]@{
   generatedAt = (Get-Date).ToString('o')
@@ -66,4 +88,4 @@ $report = [ordered]@{
   })
 }
 $report | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $distRoot 'diari-verifica-distribuzione.json') -Encoding utf8
-Write-Output 'Distribution verificata: Windows normale e test con runtime, ZIP, APK e SHA256.'
+Write-Output 'Distribution verificata: Windows normale e test con runtime, ZIP, APK, AAB, Web e SHA256.'
