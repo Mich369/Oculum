@@ -3031,9 +3031,6 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   void recuperaStatsAttualiConRiposoBreve() {
     void recoverQuarter(TextEditingController controller, int maximum) {
-      if (readIntValue(controller.text) > maximum &&
-          statGemOverflow.values.any((value) => value > 0))
-        return;
       controller.text = oculumShortRestQuarterRecovery(
         current: readIntValue(controller.text),
         maximum: maximum,

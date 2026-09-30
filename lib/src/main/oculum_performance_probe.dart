@@ -13,7 +13,8 @@ class OculumPerformanceProbe {
     String titleType = '',
   }) => _state.merchantItemFromOffer(offer, titleType: titleType);
   int shieldBonus(InventoryItem item) => _state.itemShieldBonus(item);
-  Future<void> useMerchantItem(InventoryItem item) => _state.useMerchantConsumable(item);
+  Future<void> useMerchantItem(InventoryItem item) =>
+      _state.useMerchantConsumable(item);
   void load(Map<String, dynamic> sheet) => _state.caricaStatoDaJson(sheet);
   void saveSheet() => _state.salvaSchedaCorrenteInMemoria();
   Future<void> save() => _state.salvaDatiSoloLocale();
@@ -21,6 +22,14 @@ class OculumPerformanceProbe {
   void turn() => _state.nextMasterInitiativeTurn();
   void longRest() => _state.riposoLungo();
   void recoverLongRestStats() => _state.ripristinaStatsRiposoLungo();
+  void recoverShortRestStats() => _state.recuperaStatsAttualiConRiposoBreve();
+  int resourceMaximum(String key) =>
+      _state.currentStatNaturalControllerMax(key);
+  int resourceCurrent(String key) =>
+      readIntValue(_state.currentStatController(key).text);
+  void setResourceCurrent(String key, int value) =>
+      _state.currentStatController(key).text = '$value';
+  int recoverOculum(int value) => _state.addOculum(value, scheduleSave: false);
   void shortRest() => _state.riposoBreve();
   String ownerTag() => _state.sheetTagAt(_state.schedaCorrente);
   Widget fallenEyesPage() => _state.fallenEyesPage();

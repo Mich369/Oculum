@@ -101,6 +101,30 @@ void main() {
     expect(int.parse(state.currentVolontaController.text), afterGem);
     probe.recoverLongRestStats();
     expect(int.parse(state.currentVolontaController.text), 9);
+    for (final key in ['resilienza', 'materia', 'oculum']) {
+      final maximum = probe.resourceMaximum(key);
+      probe.setResourceCurrent(key, maximum);
+      final resourceGem = probe.merchantItem({
+        'kind': 'stat_gem',
+        'stat': key,
+        'dieFaces': 1,
+      });
+      state.inventario.add(resourceGem);
+      await probe.useMerchantItem(resourceGem);
+      expect(probe.resourceCurrent(key), maximum + 1);
+      probe.load(probe.snapshot());
+      expect(probe.resourceCurrent(key), maximum + 1);
+      probe.recoverShortRestStats();
+      expect(probe.resourceCurrent(key), maximum + 1);
+      if (key == 'oculum') {
+        probe.recoverOculum(1);
+        expect(probe.resourceCurrent(key), greaterThanOrEqualTo(maximum + 1));
+      }
+      probe.recoverLongRestStats();
+      // Other temporary Oculum bonuses retain their existing expiry rules.
+      expect(probe.snapshot()['statGemOverflow'], isEmpty);
+      if (key != 'oculum') expect(probe.resourceCurrent(key), maximum);
+    }
     state.volontaController.text = '10';
     final weapon = probe.merchantItem({'kind': 'gear', 'weapon': true});
     expect(weapon.bonusDanno, 11);

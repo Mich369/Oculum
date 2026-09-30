@@ -1,0 +1,47 @@
+# Aggiornamento Oculum: Diari, Mappa degli Occhi e recuperi
+
+## Funzioni aggiunte e corrette
+
+- Diari multipli per personaggio tramite nome del diario; editor e testo originale conservati. Vecchi salvataggi senza nome usano «Diario».
+- Memoria personale e di campagna: cronologia, creature, luoghi, PNG, oggetti, missioni, eventi, relazioni e risonanze tra diari.
+- Mappa degli Occhi: nodi a occhio, collegamenti con stato, centro selezionabile, ricerca, filtri, zoom, movimento e visualizzazione adattata a desktop e mobile.
+- Ogni relazione derivata apre il diario originale e mette in evidenza la frase sorgente. Le modifiche al diario ricostruiscono la memoria, evitando fatti rimasti da testi eliminati.
+- Esiti distinti per incontro, combattimento, sconfitta, abbattimento, uccisione, fuga del nemico, fuga del gruppo e incertezza. Negazioni, intenzioni e dubbi non diventano vittorie automatiche.
+- Tutorial: nove punti iniziali liberamente distribuibili, massimo tre assegnati a ciascun sottotratto. Se salti, puoi assegnarli in seguito dalla scheda. Il registro salvato evita assegnazioni duplicate.
+- Mostri: niente scelte iniziali di razza, background umano, titolo del Fato o Oculum Art del personaggio. Origine dalla terra per Fato/Chaos, dal nulla per Oblio/Errante. Peculiarità della creatura conservate.
+- Shop: quattro gemme occasionali, una per tipo quando compare; prezzo e dado dipendono dalla rispettiva statistica. Il dado viene fissato all’acquisto. Le gemme recuperano punti attuali; l’eccesso sopravvive al salvataggio e al riposo breve e termina al riposo lungo, senza aumentare la statistica base.
+- Realtime: conferma del trasporto prima di registrare gli hash, reinvio alle variazioni di presenza/ruolo, conservazione dei diari nei merge protetti e gestione delle schede al Master.
+- Mappa esistente: aggiornamenti leggeri conservano le immagini della stessa scena; cambio scena/immagine invalida quelle precedenti. Richieste concorrenti e invii falliti non vengono ignorati.
+- Ricerca delle creature nel tutorial e miglioramenti delle schede/Occhi Caduti già presenti inclusi nella distribuzione.
+- Test grafici: output separati per piattaforma per evitare collisioni tra screenshot.
+- GitHub Actions: controllo codice e test prima delle build; Windows normale/test, macOS, Linux, Android APK/AAB, iOS senza firma e Web. Artifact conservati 30 giorni.
+
+## Parametri modificabili
+
+| Parametro | Dove modificarlo |
+| --- | --- |
+| Nomi delle quattro gemme, costo iniziale (3 Obser), scatto (+3 ogni 10), dado (statistica / 3, minimo d1), apparizione (25% per tipo) | `lib/src/main/oculum_home_merchant.dart`: `oculumStatGemNames`, `oculumStatGemBaseCost`, `oculumStatGemPrice`, `oculumStatGemDieFaces`, `oculumStatGemAvailable` |
+| Nuovi stati e riconoscitori del testo | `lib/services/oculum_diary_memory.dart`: `diaryStateLabels`, `additionalStates`, regole del builder |
+| Alias delle creature | Catalogo Monster Book passato al builder e collegamenti espliciti nel testo |
+| Colori, occhi, distanze, pagine del grafo e cronologia | `lib/pages/oculum_eye_memory_page.dart` |
+| Punti iniziali e limite di assegnazione | `lib/src/main/oculum_starter_creation.dart` e interfacce di tutorial/scheda |
+| Origine dei mostri | Helper di creazione e selezione nel tutorial |
+| Profili separati e chiavi di salvataggio | `lib/services/oculum_save_profile.dart`, definizione compilata `OculumSaveProfile=test` |
+| Piattaforme, nomi artifact e giorni di conservazione | `.github/workflows/build_distribution.yml` |
+| Percorsi di SDK e packaging locale | `scripts/build_diary_distribution.ps1` |
+
+## Come rendere espliciti nomi ambigui nei Diari
+
+La lettura è locale e usa riconoscitori conservativi, non comprende arbitrariamente tutta la lingua naturale. Le creature del catalogo e diversi nomi di luogo vengono riconosciuti automaticamente. Per un nome nuovo o ambiguo, usa `[[luogo:Bosco Nero]]`, `[[png:Arven]]`, `[[creatura:Forest Demon]]`, `[[oggetto:Chiave d’Ossa]]`, `[[missione:La Torre]]`, `[[evento:Eclisse]]` oppure `[[personaggio:Hoshy]]`. Il testo resta la fonte; questi collegamenti migliorano la classificazione.
+
+## Verifiche e limiti
+
+Suite completa locale: 571 test passati, uno saltato. Controlli successivi mirati su tutte le gemme, salvataggio, riposi e assegnazione iniziale: 19 passati. Profilo test compilato verificato separatamente. Analizzatore senza problemi dopo le correzioni.
+
+Layout desktop/mobile e trasporto realtime verificati automaticamente; non costituiscono una prova su due dispositivi fisici. L’autenticazione Supabase live è stata verificata separatamente. Le build iOS/macOS senza firma richiedono le rispettive procedure di installazione/firma.
+
+## Distribuzione locale
+
+`build/distribution/windows/oculum.exe` con runtime completo, `Oculum-Windows.zip`, `test/windows/Oculum-Test.exe` con runtime completo, `Oculum-Test-Windows.zip`, `Oculum-Android-release.apk`.
+
+La versione Windows test usa salvataggi separati e salta l’avvio cloud automatico. Avvia l’EXE dentro la sua cartella, senza separarlo da DLL e directory `data`. Il report `diari-verifica-distribuzione.json` registra dimensioni e SHA256 degli artifact creati.

@@ -631,8 +631,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     final kind = '${offer['kind'] ?? ''}';
     if (kind == 'stat_gem') {
       final stat = '${offer['stat']}';
-      if (!oculumStatGemNames.containsKey(stat))
+      if (!oculumStatGemNames.containsKey(stat)) {
         throw ArgumentError('Statistica della gemma sconosciuta');
+      }
       final faces = max(
         1,
         readIntValue(
@@ -768,11 +769,13 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   Future<void> useMerchantConsumable(InventoryItem item) async {
     if (!inventario.contains(item) ||
         !isMerchantConsumable(item) ||
-        item.quantita <= 0)
+        item.quantita <= 0) {
       return;
+    }
     if (oculumStatGemNames.containsKey(item.statGemStat)) {
       final faces = max(1, item.statGemDieFaces);
       final roll = Random().nextInt(faces) + 1;
+      // ignore: invalid_use_of_protected_member
       setState(() {
         final key = item.statGemStat;
         final controller = currentStatController(key);
