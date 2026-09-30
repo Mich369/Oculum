@@ -2476,6 +2476,14 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     ultimoGuadagnoOculumEffettivo = amount;
     if (amount <= 0) return 0;
     final before = oculumTotale();
+    final gemReserve = min(
+      statGemOverflow['oculum'] ?? 0,
+      max(
+        0,
+        currentTemporaryOculumState().normalCurrent -
+            currentStatNaturalControllerMax('oculum'),
+      ),
+    );
     final next = addOculumToTemporaryState(
       state: currentTemporaryOculumState(),
       normalMaximum: currentStatNaturalControllerMax('oculum'),
@@ -2485,7 +2493,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       minimumNormalCurrent: currentOculumRuntimeFloor(),
     );
     applyTemporaryOculumState(
-      next,
+      TemporaryOculumState(
+        normalCurrent: next.normalCurrent + gemReserve,
+        temporary: next.temporary,
+        rollsRemaining: next.rollsRemaining,
+      ),
       deferDerivedCardNotifications: deferDerivedCardNotifications,
     );
     final applied = max(0, oculumTotale() - before);
@@ -2718,7 +2730,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   void restoreTemporaryOculumState(Map<String, dynamic> json) {
-    final normalMaximum = currentStatNaturalControllerMax('oculum');
+    final normalMaximum =
+        currentStatNaturalControllerMax('oculum') +
+        (statGemOverflow['oculum'] ?? 0);
     final restored = temporaryOculumStateFromJson(
       json: json,
       normalMaximum: normalMaximum,
@@ -2910,7 +2924,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       final minimum = currentOculumRuntimeFloor();
       applyTemporaryOculumState(
         TemporaryOculumState(
-          normalCurrent: current.normalCurrent.clamp(minimum, massimo).toInt(),
+          normalCurrent: current.normalCurrent
+              .clamp(minimum, massimo + (statGemOverflow['oculum'] ?? 0))
+              .toInt(),
           temporary: current.temporary,
           rollsRemaining: current.rollsRemaining,
         ),
@@ -2978,6 +2994,24 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   /// Regola del riposo lungo: Resilienza recupera solo metà del divario verso
   /// il totale; Oculum, Volontà e Materia attuali tornano invece al massimo.
   void ripristinaStatsRiposoLungo() {
+    for (final key in statGemOverflow.keys.toList()) {
+      if ((statGemOverflow[key] ?? 0) <= 0) continue;
+      final controller = currentStatController(key);
+      final maximum = currentStatNaturalControllerMax(key);
+      if (key == 'oculum') {
+        final current = currentTemporaryOculumState();
+        applyTemporaryOculumState(
+          TemporaryOculumState(
+            normalCurrent: min(current.normalCurrent, maximum),
+            temporary: current.temporary,
+            rollsRemaining: current.rollsRemaining,
+          ),
+        );
+      } else if (readIntValue(controller.text) > maximum) {
+        controller.text = maximum.toString();
+      }
+    }
+    statGemOverflow.clear();
     recuperaStatAttuale(
       currentResilienzaController,
       currentStatNaturalControllerMax('resilienza'),
@@ -2997,6 +3031,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   void recuperaStatsAttualiConRiposoBreve() {
     void recoverQuarter(TextEditingController controller, int maximum) {
+      if (readIntValue(controller.text) > maximum &&
+          statGemOverflow.values.any((value) => value > 0))
+        return;
       controller.text = oculumShortRestQuarterRecovery(
         current: readIntValue(controller.text),
         maximum: maximum,
@@ -4633,7 +4670,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       item.bonusDifesa + itemGrade(item) * 2;
 
   int itemShieldBonus(InventoryItem item) =>
-      item.bonusScudo + itemGrade(item) * 5;
+      item.bonusScudo + (item.bonusScudoIncludeGrado ? 0 : itemGrade(item) * 5);
 
   int itemOculumShieldBonus(InventoryItem item) =>
       max(0, item.bonusScudoOculum);

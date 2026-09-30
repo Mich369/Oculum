@@ -28,9 +28,12 @@ import 'services/oculum_auth_ui.dart';
 import 'services/oculum_cloud_save_service.dart';
 import 'services/oculum_realtime_service.dart';
 import 'services/oculum_save_profile.dart';
+import 'services/oculum_diary_memory.dart';
+import 'pages/oculum_eye_memory_page.dart';
 import 'widgets/oculum_bottom_nav.dart';
 import 'widgets/oculum_desktop_top_menu.dart';
 import 'widgets/oculum_quick_edit_eye.dart';
+import 'widgets/oculum_monster_picker.dart';
 import 'pages/oculum_dungeon/monster_book.dart';
 import 'pages/oculum_dungeon_game.dart';
 import 'pages/hero_path_page.dart';
@@ -1427,6 +1430,10 @@ class _OculumHomePageState extends State<OculumHomePage>
   String tutorialStatPrimaria = 'resilienza';
   String tutorialStatSecondaria = 'volonta';
   int tutorialMartialBonus = 0;
+  final Map<String, int> tutorialSubtraitPoints = {};
+  final Map<String, int> appliedTutorialSubtraitPoints = {};
+  final Map<String, int> statGemOverflow = {};
+  String tutorialMonsterOrigin = 'fato';
 
   final diceAmountController = TextEditingController(text: '1');
   final diceModifierController = TextEditingController(text: '0');
@@ -1480,6 +1487,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   String vttSelectedElementId = '';
   bool vttPublishing = false;
   bool vttRealtimeAssetPending = false;
+  final Set<String> vttPendingSceneRequesters = {};
   Map<String, dynamic> realtimeVisibleVttSnapshot = <String, dynamic>{};
   OculumVttScene? realtimeVisibleVttScene;
   Uint8List? realtimeVisibleVttImageBytes;
@@ -4482,6 +4490,13 @@ class _OculumHomePageState extends State<OculumHomePage>
                       ),
                   ];
                 },
+              ),
+            if (!compactPhone)
+              TextButton.icon(
+                key: const ValueKey('desktop_hero_path'),
+                onPressed: _openDungeonMiniGame,
+                icon: Icon(Icons.visibility, color: primaryColor),
+                label: Text(t('Cammino dell’Eroe', 'Hero’s Path')),
               ),
             if (!compactPhone)
               IconButton(

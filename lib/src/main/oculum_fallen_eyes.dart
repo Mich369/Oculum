@@ -352,6 +352,44 @@ const List<String> oculumFallenEyeCommonStatKeys = [
   'oculum',
 ];
 
+/// Bonus granted only while an Eye of the Fallen is actually summoned.
+/// Ties are resolved in the stable order used by the character sheet.
+const List<String> oculumFallenEyeSummonStatKeys = [
+  'resilienza',
+  'volonta',
+  'materia',
+  'oculum',
+];
+
+Map<String, int> oculumFallenEyeSummonStatBonuses(Map<String, dynamic> sheet) {
+  final ranked =
+      oculumFallenEyeSummonStatKeys
+          .asMap()
+          .entries
+          .map((entry) => MapEntry(entry.key, readIntValue(sheet[entry.value])))
+          .toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+  final bonuses = <String, int>{};
+  if (ranked.isNotEmpty) {
+    bonuses[oculumFallenEyeSummonStatKeys[ranked[0].key]] = 3;
+  }
+  if (ranked.length > 1) {
+    bonuses[oculumFallenEyeSummonStatKeys[ranked[1].key]] = 2;
+  }
+  return bonuses;
+}
+
+void oculumFallenEyeApplySummonStatBonuses(
+  Map<String, dynamic> sheet,
+  Map<String, int> bonuses, {
+  int multiplier = 1,
+}) {
+  for (final entry in bonuses.entries) {
+    sheet[entry.key] =
+        (readIntValue(sheet[entry.key]) + entry.value * multiplier).toString();
+  }
+}
+
 /// Gli Occhi Oculum hanno un solo risveglio percentuale, volutamente basso:
 /// dal 3% al 7%. L'effetto è memorizzato per non riassegnarlo a ogni evocazione.
 const List<String> oculumFallenEyeOculumBuffTargets = [
@@ -575,6 +613,14 @@ void oculumFallenEyeApplyInheritedPowers(Map<String, dynamic> eye) {
   for (final skill in data['skills'] as List? ?? const []) {
     if (skill is Map) known['${skill['nome']}'] = skill;
   }
+  // Monster Book creatures define their real techniques inside the first
+  // monster Art. Keep those same Skill objects in the sheet Skill list too,
+  // so an Eye learns exactly the monster's opening techniques.
+  for (final art in original) {
+    for (final skill in (art['skills'] as List? ?? const [])) {
+      if (skill is Map) known['${skill['nome']}'] = skill;
+    }
+  }
   eye['originalSkills'] = oculumCopyJsonTree(known.values.toList());
   data['skills'] = oculumCopyJsonTree(known.values.take(limit).toList());
   data['fallenEyeRarity'] = eye['rarity'];
@@ -767,7 +813,13 @@ extension _OculumFallenEyes on _OculumHomePageState {
       'originalArts': oculumCopyJsonTree(
         source['fallenEyeOriginalArts'] ?? source['arti'] ?? const [],
       ),
-      'originalSkills': oculumCopyJsonTree(source['skills'] ?? const []),
+      'originalSkills': oculumCopyJsonTree([
+        ...(source['skills'] as List? ?? const []),
+        for (final art
+            in (source['fallenEyeOriginalArts'] ?? source['arti'] ?? const [])
+                as List)
+          ...(art is Map ? (art['skills'] as List? ?? const []) : const []),
+      ]),
       'activeArts': <dynamic>[],
       'integrityCurrent': max(
         1,
@@ -1514,9 +1566,23 @@ extension _OculumFallenEyes on _OculumHomePageState {
     oculumFallenEyeApplyInheritedPowers(eye);
     _ensureCommonEyeMalusApplied(eye);
     _ensureOculumEyeBuffApplied(eye);
+    final ownerIndex = schedePersonaggio.indexWhere(
+      (candidate) =>
+          '${candidate['sheetTag'] ?? ''}' == '${eye['ownerSheetId'] ?? ''}',
+    );
     final sheet = _cloneJsonMap(
       Map<String, dynamic>.from(eye['sheetData'] as Map),
     );
+    final ownerBonuses = ownerIndex >= 0
+        ? oculumFallenEyeSummonStatBonuses(schedePersonaggio[ownerIndex])
+        : <String, int>{};
+    if (ownerIndex >= 0) {
+      oculumFallenEyeApplySummonStatBonuses(
+        schedePersonaggio[ownerIndex],
+        ownerBonuses,
+      );
+    }
+    eye['summonStatBonuses'] = ownerBonuses;
     sheet['occhioCadutoId'] = eye['id'];
     sheet['occhioCaduto'] = true;
     final ownerId = '${eye['ownerSheetId'] ?? ''}';
@@ -1762,7 +1828,9 @@ extension _OculumFallenEyes on _OculumHomePageState {
       }
       setState(() {
         // Conserva ogni modifica fatta all'Occhio prima di liberare lo slot.
-        eye['sheetData'] = _cloneJsonMap(schedePersonaggio[index]);
+        final releasedSheet = _cloneJsonMap(schedePersonaggio[index]);
+        eye['sheetData'] = releasedSheet;
+        eye.remove('summonStatBonuses');
         if (readBoolValue(eye['usesBlankSummonSlot'])) {
           final previous = schedePersonaggio[index];
           final blank = statoVuotoPersonaggio();
@@ -1773,6 +1841,20 @@ extension _OculumFallenEyes on _OculumHomePageState {
           schedePersonaggio.removeAt(index);
         }
       });
+    }
+    final ownerIndex = schedePersonaggio.indexWhere(
+      (candidate) =>
+          '${candidate['sheetTag'] ?? ''}' == '${eye['ownerSheetId'] ?? ''}',
+    );
+    if (ownerIndex >= 0) {
+      final summonBonuses = (eye['summonStatBonuses'] as Map? ?? const {}).map(
+        (key, value) => MapEntry('$key', readIntValue(value)),
+      );
+      oculumFallenEyeApplySummonStatBonuses(
+        schedePersonaggio[ownerIndex],
+        Map<String, int>.from(summonBonuses),
+        multiplier: -1,
+      );
     }
     // Anche se lo slot è stato già rimosso (vecchio salvataggio/sync), lo
     // stato persistente deve sempre passare a disevocato.

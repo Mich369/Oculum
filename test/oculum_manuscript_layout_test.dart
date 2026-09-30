@@ -2,11 +2,13 @@ import 'dart:io';
 import 'dart:convert';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
+import 'package:oculum/pages/hero_path_page.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -114,12 +116,23 @@ void main() {
           );
           final out = Directory('output/ui')..createSync(recursive: true);
           File(
-            '${out.path}/manuscript-${size.width.toInt()}.png',
+            '${out.path}/manuscript-${defaultTargetPlatform.name}-${size.width.toInt()}.png',
           ).writeAsBytesSync(bytes!.buffer.asUint8List());
           picture.dispose();
         });
         if (size.width >= 760) {
           expect(find.text('Attacco · VC'), findsOneWidget);
+          final heroPathButton = find.byKey(
+            const ValueKey('desktop_hero_path'),
+          );
+          expect(heroPathButton, findsOneWidget);
+          await tester.tap(heroPathButton);
+          await tester.pumpAndSettle();
+          expect(find.byType(HeroPathPage), findsOneWidget);
+          expect(find.text('Nome'), findsOneWidget);
+          expect(tester.takeException(), isNull);
+          Navigator.of(tester.element(find.byType(HeroPathPage))).pop();
+          await tester.pumpAndSettle();
         }
         expect(find.textContaining('Closure:'), findsNothing);
       }

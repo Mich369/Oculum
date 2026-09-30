@@ -888,6 +888,7 @@ class JournalEntry {
     required this.location,
     DateTime? createdAt,
     this.legacyPageIndex,
+    this.diaryName = 'Diario',
   }) : createdAt = createdAt ?? DateTime.now();
 
   String title;
@@ -897,9 +898,11 @@ class JournalEntry {
   String location;
   DateTime createdAt;
   int? legacyPageIndex;
+  String diaryName;
 
   Map<String, dynamic> toJson() => {
     'title': title,
+    'diaryName': diaryName,
     'description': description,
     'cycleDay': cycleDay,
     'phase': phase,
@@ -910,6 +913,7 @@ class JournalEntry {
 
   factory JournalEntry.fromJson(Map<String, dynamic> json) {
     return JournalEntry(
+      diaryName: '${json['diaryName'] ?? 'Diario'}',
       title: '${json['title'] ?? ''}',
       description: '${json['description'] ?? ''}',
       cycleDay: readIntValue(json['cycleDay']),
@@ -1336,6 +1340,7 @@ class InventoryItem {
     this.bonusDanno = 0,
     this.bonusDifesa = 0,
     this.bonusScudo = 0,
+    this.bonusScudoIncludeGrado = false,
     this.bonusScudoOculum = 0,
     this.effettoIntegritaScudo = '',
     this.scudoIntegritaCorrente = -1,
@@ -1348,6 +1353,8 @@ class InventoryItem {
     this.putrefazioneGiornoInizio = 0,
     this.safeHpUsedDay = 0,
     this.saveShieldUsedDay = 0,
+    this.statGemStat = '',
+    this.statGemDieFaces = 0,
   });
 
   String nome;
@@ -1361,6 +1368,7 @@ class InventoryItem {
   int bonusDanno;
   int bonusDifesa;
   int bonusScudo;
+  bool bonusScudoIncludeGrado;
   int bonusScudoOculum;
   String effettoIntegritaScudo;
   int scudoIntegritaCorrente;
@@ -1373,6 +1381,8 @@ class InventoryItem {
   int putrefazioneGiornoInizio;
   int safeHpUsedDay;
   int saveShieldUsedDay;
+  String statGemStat;
+  int statGemDieFaces;
 
   Map<String, dynamic> toJson() {
     return {
@@ -1387,6 +1397,7 @@ class InventoryItem {
       'bonusDanno': bonusDanno,
       'bonusDifesa': bonusDifesa,
       'bonusScudo': bonusScudo,
+      'bonusScudoIncludeGrado': bonusScudoIncludeGrado,
       'bonusScudoOculum': bonusScudoOculum,
       'effettoIntegritaScudo': effettoIntegritaScudo,
       'scudoIntegritaCorrente': scudoIntegritaCorrente,
@@ -1399,11 +1410,15 @@ class InventoryItem {
       'putrefazioneGiornoInizio': putrefazioneGiornoInizio,
       'safeHpUsedDay': safeHpUsedDay,
       'saveShieldUsedDay': saveShieldUsedDay,
+      if (statGemStat.isNotEmpty) 'statGemStat': statGemStat,
+      if (statGemDieFaces > 0) 'statGemDieFaces': statGemDieFaces,
     };
   }
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) {
     return InventoryItem(
+      statGemStat: '${json['statGemStat'] ?? ''}',
+      statGemDieFaces: readIntValue(json['statGemDieFaces']),
       nome: oculumCleanMojibakeText('${json['nome'] ?? ''}'),
       peso: readDoubleValue(json['peso']),
       quantita: readIntValue(json['quantita'], fallback: 1),
@@ -1415,6 +1430,7 @@ class InventoryItem {
       bonusDanno: readIntValue(json['bonusDanno']),
       bonusDifesa: readIntValue(json['bonusDifesa']),
       bonusScudo: readIntValue(json['bonusScudo']),
+      bonusScudoIncludeGrado: readBoolValue(json['bonusScudoIncludeGrado']),
       bonusScudoOculum: readIntValue(
         json['bonusScudoOculum'] ?? json['bonusOculumShield'],
       ),

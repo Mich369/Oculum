@@ -8,12 +8,19 @@ class OculumPerformanceProbe {
   final _OculumHomePageState _state;
 
   Map<String, dynamic> snapshot() => _state.statoCorrenteJson();
+  InventoryItem merchantItem(
+    Map<String, dynamic> offer, {
+    String titleType = '',
+  }) => _state.merchantItemFromOffer(offer, titleType: titleType);
+  int shieldBonus(InventoryItem item) => _state.itemShieldBonus(item);
+  Future<void> useMerchantItem(InventoryItem item) => _state.useMerchantConsumable(item);
   void load(Map<String, dynamic> sheet) => _state.caricaStatoDaJson(sheet);
   void saveSheet() => _state.salvaSchedaCorrenteInMemoria();
   Future<void> save() => _state.salvaDatiSoloLocale();
   void hp(int index) => _state.applyMasterEnemyQuickHpAction(index, damage: 1);
   void turn() => _state.nextMasterInitiativeTurn();
   void longRest() => _state.riposoLungo();
+  void recoverLongRestStats() => _state.ripristinaStatsRiposoLungo();
   void shortRest() => _state.riposoBreve();
   String ownerTag() => _state.sheetTagAt(_state.schedaCorrente);
   Widget fallenEyesPage() => _state.fallenEyesPage();

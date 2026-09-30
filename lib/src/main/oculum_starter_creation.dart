@@ -35,6 +35,42 @@ int oculumStarterInitialExperience(Random random) => random.nextInt(121);
 
 int oculumStarterMartialBonus(Random random) => random.nextInt(10) + 3;
 
+bool oculumStarterSubtraitAllocationValid(
+  Map<String, int> points,
+  Iterable<String> allowed,
+) {
+  final ids = allowed.toSet();
+  return points.entries.every(
+        (e) => ids.contains(e.key) && e.value >= 0 && e.value <= 3,
+      ) &&
+      points.values.fold<int>(0, (sum, value) => sum + value) == 9;
+}
+
+String oculumMonsterBirthplace(String origin) =>
+    const ['oblio', 'errante'].contains(origin.toLowerCase())
+    ? 'dal nulla'
+    : 'dalla terra';
+
+int oculumStarterSubtraitPointsRemaining(Map<String, int> allocation) =>
+    max(0, 9 - allocation.values.fold<int>(0, (sum, value) => sum + value));
+
+void oculumApplyStarterSubtraits(
+  List<HiddenEyeStat> stats,
+  Map<String, int> previous,
+  Map<String, int> next,
+) {
+  if (!oculumStarterSubtraitAllocationValid(next, stats.map((s) => s.id))) {
+    throw ArgumentError('Distribuisci 9 punti, massimo 3 per sottotratto.');
+  }
+  for (final stat in stats) {
+    stat.valore += (next[stat.id] ?? 0) - (previous[stat.id] ?? 0);
+  }
+  final savedNext = Map<String, int>.from(next);
+  previous
+    ..clear()
+    ..addAll(savedNext);
+}
+
 /// Ogni creatura cresce con il suo rango: Mostro 9, Mini-Boss 12 e Boss 18
 /// punti statistica liberamente distribuibili per livello.
 int oculumMonsterStatPointsPerLevel(String type) {

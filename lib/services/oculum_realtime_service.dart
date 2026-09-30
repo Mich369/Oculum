@@ -10,7 +10,10 @@ class OculumRealtimeService {
     required this.onPresenceChanged,
     required this.onStatusChanged,
     this.presenceDataProvider,
-  }) : _presenceKey = 'presence_${DateTime.now().microsecondsSinceEpoch}';
+    this.onConnected,
+    SupabaseClient? client,
+  }) : _client = client,
+       _presenceKey = 'presence_${DateTime.now().microsecondsSinceEpoch}';
 
   static bool supabaseAvailable = false;
   static String startupStatus = 'Supabase non inizializzato.';
@@ -51,11 +54,15 @@ class OculumRealtimeService {
   final void Function(List<Map<String, dynamic>> users) onPresenceChanged;
   final void Function(String status) onStatusChanged;
   final Map<String, dynamic> Function()? presenceDataProvider;
+  final void Function()? onConnected;
 
   final String _presenceKey;
+  final SupabaseClient? _client;
   RealtimeChannel? _channel;
   bool _connected = false;
   bool _disposed = false;
+  Future<void>? _connecting;
+  int _generation = 0;
 
   bool get isConnected => _connected && !_disposed && _channel != null;
 
@@ -67,7 +74,12 @@ class OculumRealtimeService {
 
   String get channelName => 'oculum_room_$normalizedRoomId';
 
-  Future<void> connect() async {
+  Future<void> connect() {
+    if (_disposed || isConnected) return Future<void>.value();
+    return _connecting ??= _connect().whenComplete(() => _connecting = null);
+  }
+
+  Future<void> _connect() async {
     if (_disposed) return;
 
     if (!supabaseAvailable) {
@@ -75,10 +87,12 @@ class OculumRealtimeService {
       return;
     }
 
+    final generation = _generation + 1;
     await disconnect(notify: false);
+    if (_disposed || generation != _generation) return;
 
     try {
-      final client = Supabase.instance.client;
+      final client = _client ?? Supabase.instance.client;
       final channel = client.channel(
         channelName,
         opts: RealtimeChannelConfig(
@@ -94,7 +108,9 @@ class OculumRealtimeService {
       for (final eventName in supportedEvents) {
         channel.onBroadcast(
           event: eventName,
-          callback: (payload) => _handleBroadcast(eventName, payload),
+          callback: (payload) {
+            if (_channel == channel) _handleBroadcast(eventName, payload);
+          },
         );
       }
 
@@ -108,10 +124,12 @@ class OculumRealtimeService {
 
         switch (status) {
           case RealtimeSubscribeStatus.subscribed:
+            final wasConnected = _connected;
             _connected = true;
             _safeStatus('Connesso a $channelName');
             unawaited(_trackPresence());
             if (!subscribed.isCompleted) subscribed.complete();
+            if (!wasConnected) onConnected?.call();
             break;
           case RealtimeSubscribeStatus.channelError:
             _connected = false;
@@ -140,6 +158,7 @@ class OculumRealtimeService {
 
       await subscribed.future.timeout(const Duration(seconds: 12));
     } catch (error) {
+      if (_disposed || generation != _generation) return;
       _connected = false;
       _safeStatus('Realtime non connesso: $error');
       await disconnect(notify: false);
@@ -147,6 +166,7 @@ class OculumRealtimeService {
   }
 
   Future<void> disconnect({bool notify = true}) async {
+    _generation++;
     final channel = _channel;
     _channel = null;
     _connected = false;
@@ -157,7 +177,7 @@ class OculumRealtimeService {
       } catch (_) {}
 
       try {
-        await Supabase.instance.client
+        await (_client ?? Supabase.instance.client)
             .removeChannel(channel)
             .timeout(const Duration(seconds: 5));
       } catch (_) {}
@@ -328,7 +348,7 @@ class OculumRealtimeService {
     });
   }
 
-  Future<void> sendVttSceneSnapshot({
+  Future<bool> sendVttSceneSnapshot({
     required Map<String, dynamic> snapshot,
     required String campaignId,
     required String campaignName,
@@ -336,7 +356,7 @@ class OculumRealtimeService {
     required int assetChunkCount,
     String targetTag = '',
   }) {
-    return _send('vtt_scene_shared', <String, dynamic>{
+    return _sendConfirmed('vtt_scene_shared', <String, dynamic>{
       'playerName': _displayName,
       'senderRole': 'master',
       'campaignId': campaignId,
@@ -349,14 +369,14 @@ class OculumRealtimeService {
     });
   }
 
-  Future<void> sendVttAssetChunk({
+  Future<bool> sendVttAssetChunk({
     required String assetId,
     required int chunkIndex,
     required int chunkCount,
     required String data,
     String targetTag = '',
   }) {
-    return _send('vtt_asset_chunk', <String, dynamic>{
+    return _sendConfirmed('vtt_asset_chunk', <String, dynamic>{
       'playerName': _displayName,
       'senderRole': 'master',
       'assetId': assetId,
@@ -670,10 +690,13 @@ class OculumRealtimeService {
     }
 
     try {
-      await channel
+      final response = await channel
           .sendBroadcastMessage(event: event, payload: payload)
           .timeout(const Duration(seconds: 6));
-      return true;
+      if (_channel != channel || !isConnected) return false;
+      if (response == ChannelResponse.ok) return true;
+      _safeStatus('Invio realtime fallito: ${response.name}');
+      return false;
     } catch (error) {
       _safeStatus('Invio realtime fallito: $error');
       return false;
@@ -689,6 +712,7 @@ class OculumRealtimeService {
         'playerName': _displayName,
         'roomId': normalizedRoomId,
         'joinedAt': _nowIso(),
+        'sessionId': _presenceKey,
       };
 
       final extra = presenceDataProvider?.call();

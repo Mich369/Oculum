@@ -4,6 +4,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('summoned Fallen Eye boosts highest and second highest stats', () {
+    final sheet = <String, dynamic>{
+      'resilienza': '12',
+      'volonta': '18',
+      'materia': '15',
+      'oculum': '3',
+    };
+    final bonuses = oculumFallenEyeSummonStatBonuses(sheet);
+    expect(bonuses, {'volonta': 3, 'materia': 2});
+    oculumFallenEyeApplySummonStatBonuses(sheet, bonuses);
+    expect(sheet['volonta'], '21');
+    expect(sheet['materia'], '17');
+    oculumFallenEyeApplySummonStatBonuses(sheet, bonuses, multiplier: -1);
+    expect(sheet['volonta'], '18');
+    expect(sheet['materia'], '15');
+  });
+
+  test('summon stat tie follows stable sheet order', () {
+    expect(
+      oculumFallenEyeSummonStatBonuses(const {'resilienza': 10, 'volonta': 10}),
+      {'resilienza': 3, 'volonta': 2},
+    );
+  });
+
   test('rarity thresholds cover 60/25/10/5 without gaps', () {
     final random = Random(42);
     final counts = <String, int>{};

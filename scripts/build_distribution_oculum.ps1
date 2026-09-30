@@ -7,6 +7,7 @@ param(
   [string]$GitHubBranch = "",
   [string]$GitHubCommit = "",
   [switch]$WaitForGitHubAppleArtifacts,
+  [switch]$SkipPubGet,
   [int]$GitHubArtifactTimeoutMinutes = 45
 )
 
@@ -27,8 +28,11 @@ function Invoke-CheckedCommand {
   )
 
   Write-Step $Description
-  & $FilePath @Arguments
-  $exitCode = if ($null -eq $global:LASTEXITCODE) { 0 } else { $global:LASTEXITCODE }
+  # Start-Process evita il deadlock del wrapper PowerShell quando Flutter
+  # eredita lo stream PTY del builder (il comando diretto `flutter build`
+  # invece termina correttamente).
+  $process = Start-Process -FilePath "cmd.exe" -ArgumentList (@('/d', '/c', $FilePath) + $Arguments) -NoNewWindow -Wait -PassThru
+  $exitCode = $process.ExitCode
   if ($exitCode -ne 0) {
     throw "$Description fallito con exit code $exitCode."
   }
@@ -348,7 +352,11 @@ Assert-DistributionPath -Root $Root -Distribution $Dist
 Reset-Directory -Path $Dist
 New-Item -ItemType Directory -Path $WinDist, $AndroidDist, $WebDist, $MacDist, $IosDist -Force | Out-Null
 
-Invoke-CheckedCommand "flutter pub get" "flutter" "pub" "get"
+if (-not $SkipPubGet) {
+  Invoke-CheckedCommand "flutter pub get" "flutter" "pub" "get"
+} else {
+  Write-Host "flutter pub get saltato: dipendenze già risolte." -ForegroundColor DarkGray
+}
 
 Ensure-LocalNuGet -Root $Root
 Invoke-CheckedCommand "flutter build windows --release" "flutter" "build" "windows" "--release"
@@ -537,6 +545,16 @@ if ($AppleArtifactsSource -ne "None") {
     }
   }
 }
+
+# Always ship a Windows test edition with its own save profile and runtime.
+Invoke-CheckedCommand "flutter build windows profilo test" "flutter" "build" "windows" "--release" "--dart-define=OculumSaveProfile=test"
+$TestDist = Join-Path $Dist "test"
+Copy-DirectoryContents -Source $WinRelease -Destination $TestDist
+Copy-Item -LiteralPath (Join-Path $WinRelease "oculum.exe") -Destination (Join-Path $TestDist "Oculum-Test.exe") -Force
+$TestZip = Join-Path $Dist "Oculum-Test-Windows.zip"
+Compress-Archive -Path (Join-Path $TestDist "*") -DestinationPath $TestZip -Force
+Add-DistributionArtifact -Label "Windows test exe" -Path (Join-Path $TestDist "Oculum-Test.exe") -Required
+Add-DistributionArtifact -Label "Windows test zip" -Path $TestZip -Required
 
 Write-Step "Artefatti verificati"
 Write-DistributionArtifactSummary

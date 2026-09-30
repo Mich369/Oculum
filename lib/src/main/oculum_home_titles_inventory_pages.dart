@@ -3,6 +3,86 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
+  void openEyeMemory({bool campaign = false}) {
+    final documents = <DiaryDocument>[];
+    final count = campaign ? max(1, schedePersonaggio.length) : 1;
+    for (int index = 0; index < count; index++) {
+      final sheetIndex = campaign ? index : schedaCorrente;
+      final current = sheetIndex == schedaCorrente;
+      final sheet = sheetIndex >= 0 && sheetIndex < schedePersonaggio.length
+          ? schedePersonaggio[sheetIndex]
+          : <String, dynamic>{};
+      final entries = current
+          ? journalEntries
+          : (sheet['journalEntries'] is List
+                    ? sheet['journalEntries'] as List
+                    : const [])
+                .whereType<Map>()
+                .map((e) => JournalEntry.fromJson(Map<String, dynamic>.from(e)))
+                .toList();
+      final legacy = (sheet['diarioPagine'] is List
+          ? sheet['diarioPagine'] as List
+          : const []);
+      final texts = <JournalEntry>[...entries];
+      if (!current) {
+        final linked = entries.map((e) => e.legacyPageIndex).toSet();
+        for (int j = 0; j < legacy.length; j++) {
+          if (!linked.contains(j)) {
+            texts.add(
+              JournalEntry(
+                title: 'Pagina Diario ${j + 1}',
+                description: '${legacy[j]}',
+                cycleDay: 0,
+                phase: '',
+                location: '',
+              ),
+            );
+          }
+        }
+      }
+      for (int j = 0; j < texts.length; j++) {
+        final e = texts[j];
+        documents.add(
+          DiaryDocument(
+            id: '$sheetIndex:$j',
+            author: nomeSchedaPersonaggio(sheetIndex),
+            diary: e.diaryName,
+            title: e.title,
+            text: e.description,
+            day: e.cycleDay,
+          ),
+        );
+      }
+    }
+    final catalogue = <DiaryEntity>[
+      for (final m in monsterBookEntries)
+        DiaryEntity('monster:${m.id}', m.nameIt, m.isNpc ? 'npc' : 'creature', [
+          m.nameEn,
+        ]),
+      for (int i = 0; i < schedePersonaggio.length; i++)
+        if (nomeSchedaPersonaggio(i).trim().isNotEmpty)
+          DiaryEntity(
+            'character:${diaryKey(nomeSchedaPersonaggio(i))}',
+            nomeSchedaPersonaggio(i),
+            'character',
+          ),
+    ];
+    final memory = DiaryMemoryBuilder().build(
+      documents,
+      catalogue,
+      campaign: campaign ? activeCampaignName() : null,
+    );
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => OculumEyeMemoryPage(
+          memory: memory,
+          author: campaign
+              ? activeCampaignName()
+              : nomeSchedaPersonaggio(schedaCorrente),
+        ),
+      ),
+    );
+  }
   // STORIA / DIARIO
   // =====================================================
 
@@ -97,6 +177,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               storyActiveDiaryMarker(),
+              OutlinedButton.icon(
+                onPressed: () => openEyeMemory(),
+                icon: const Icon(Icons.visibility),
+                label: const Text('Mappa degli Occhi'),
+              ),
               const SizedBox(height: 12),
               smallInfoText(
                 t(
@@ -337,7 +422,21 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   t('Nuova voce senza ricompensa', 'New entry without reward'),
                 ),
               ),
+              OutlinedButton.icon(
+                onPressed: () => openEyeMemory(),
+                icon: const Icon(Icons.visibility),
+                label: const Text('Mappa degli Occhi'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => openEyeMemory(campaign: true),
+                icon: const Icon(Icons.hub_outlined),
+                label: const Text('Memoria della campagna'),
+              ),
             ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Collega nomi con [[nome]] o [[luogo:Bosco Nero]], [[png:Arven]], [[oggetto:Sigillo]], [[missione:La torre]]. Le memorie vengono ricavate dal testo; gli esiti ambigui restano incerti.',
           ),
         ],
       ),
@@ -445,6 +544,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           ),
           childrenPadding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
           children: [
+            campoModello(
+              fieldKey: ValueKey(
+                'journal_${currentSheetScrollId()}_${i}_diary',
+              ),
+              label: t('Nome del Diario / raccolta', 'Diary / collection name'),
+              initialValue: entry.diaryName,
+              onChanged: (value) => entry.diaryName = value,
+            ),
+            const SizedBox(height: 10),
             campoModello(
               fieldKey: ValueKey(
                 'journal_${currentSheetScrollId()}_${i}_title',

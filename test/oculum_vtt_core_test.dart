@@ -7,6 +7,55 @@ import 'package:image/image.dart' as img;
 import 'package:oculum/main.dart';
 
 void main() {
+  test(
+    'token updates retain received map, changed maps and scenes clear it',
+    () {
+      final previous = OculumVttScene.fromJson({
+        'id': 'a',
+        'imagePath': 'forest.png',
+      });
+      expect(
+        oculumVttKeepReceivedImage(
+          previous: previous,
+          incoming: OculumVttScene.fromJson({
+            'id': 'a',
+            'imagePath': 'forest.png',
+            'tokens': [
+              {'id': 'hero', 'x': .4},
+            ],
+          }),
+          preserveAsset: true,
+        ),
+        isTrue,
+      );
+      for (final incoming in [
+        OculumVttScene.fromJson({'id': 'b', 'imagePath': 'forest.png'}),
+        OculumVttScene.fromJson({'id': 'a', 'imagePath': 'cave.png'}),
+        OculumVttScene.fromJson({
+          'id': 'a',
+          'imagePath': 'forest.png',
+          'mapUrl': 'https://example.test/new',
+        }),
+      ]) {
+        expect(
+          oculumVttKeepReceivedImage(
+            previous: previous,
+            incoming: incoming,
+            preserveAsset: true,
+          ),
+          isFalse,
+        );
+      }
+      expect(
+        oculumVttKeepReceivedImage(
+          previous: previous,
+          incoming: previous,
+          preserveAsset: false,
+        ),
+        isFalse,
+      );
+    },
+  );
   group('Oculum VTT persistence', () {
     test('migrates the legacy single map without losing tokens', () {
       final state = OculumVttState.fromJson(

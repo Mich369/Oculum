@@ -57,6 +57,7 @@ extension _OculumHomeShareContent on _OculumHomePageState {
                   );
                   aggiungiLog(risultato);
                 });
+                refreshRealtimeRolePresence();
                 programmaSalvataggio();
                 Navigator.pop(context);
               },
@@ -74,6 +75,7 @@ extension _OculumHomeShareContent on _OculumHomePageState {
                   );
                   aggiungiLog(risultato);
                 });
+                refreshRealtimeRolePresence();
                 programmaSalvataggio();
                 Navigator.pop(context);
               },

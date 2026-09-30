@@ -7,6 +7,21 @@ const int oculumVttMaxScenes = 200;
 const int oculumVttMaxSceneElements = 5000;
 const int oculumVttMaxFogOperations = 2000;
 
+/// Lightweight scene updates reuse an already transferred image. A new scene,
+/// URL, file or embedded image must never retain the previous map by accident.
+bool oculumVttKeepReceivedImage({
+  required OculumVttScene? previous,
+  required OculumVttScene? incoming,
+  required bool preserveAsset,
+}) =>
+    preserveAsset &&
+    previous != null &&
+    incoming != null &&
+    previous.id == incoming.id &&
+    previous.imagePath == incoming.imagePath &&
+    previous.mapUrl == incoming.mapUrl &&
+    previous.imageDataBase64 == incoming.imageDataBase64;
+
 enum OculumVttTool {
   pan,
   select,

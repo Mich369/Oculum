@@ -1,5 +1,7 @@
 # Cammino dell’Eroe — modifiche e valori modificabili
 
+Su desktop, premere **Cammino dell’Eroe** nella barra superiore dell’app. Su telefono, aprire **Azioni → Cammino dell’Eroe**. Il pulsante desktop (testo, icona e apertura) si modifica in `lib/main.dart`; la destinazione condivisa è in `lib/src/main/oculum_home_dialogs_quick_edit.dart`.
+
 Accesso: aprire il gioco dalla scheda. Il percorso singolo apre il Cammino dell’Eroe; l’archivio conserva il gioco precedente e i suoi checkpoint. Le funzioni online precedenti mantengono il loro ingresso. Il Cammino usa le regole Oculus e non importa valori numerici dalle schede Oculum classiche.
 
 ## Regole, configurazione e contenuti

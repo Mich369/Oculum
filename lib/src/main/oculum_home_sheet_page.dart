@@ -5124,6 +5124,20 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                               style: const TextStyle(color: Colors.white70),
                             ),
                           ),
+                          if (oculumStarterSubtraitPointsRemaining(
+                                appliedTutorialSubtraitPoints,
+                              ) >
+                              0)
+                            OutlinedButton.icon(
+                              icon: const Icon(Icons.auto_awesome),
+                              label: Text(
+                                '${oculumStarterSubtraitPointsRemaining(appliedTutorialSubtraitPoints)} punti iniziali da assegnare · massimo 3',
+                              ),
+                              onPressed: () async {
+                                await showStarterSubtraitPointsDialog();
+                                if (mounted) setSheetState(() {});
+                              },
+                            ),
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
@@ -5186,6 +5200,98 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       scheduleInputUiRefresh(delay: const Duration(milliseconds: 80));
       programmaSalvataggio();
     });
+  }
+
+  Future<void> showStarterSubtraitPointsDialog() async {
+    final sheetId = currentSheetScrollId();
+    final allocation = Map<String, int>.from(appliedTutorialSubtraitPoints);
+    final selectedPoints = await showDialog<Map<String, int>>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, refresh) {
+          final remaining = oculumStarterSubtraitPointsRemaining(allocation);
+          return AlertDialog(
+            title: Text('Sottotratti iniziali · $remaining punti rimasti'),
+            content: SizedBox(
+              width: 520,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Hai 9 punti anche se hai saltato il tutorial. Il limite di 3 riguarda i punti iniziali, non i progressi già conquistati.',
+                    ),
+                    for (final stat in hiddenEyeStats)
+                      Row(
+                        children: [
+                          Expanded(child: Text(stat.nome)),
+                          IconButton(
+                            tooltip: 'Togli un punto',
+                            onPressed: (allocation[stat.id] ?? 0) > 0
+                                ? () => refresh(() {
+                                    allocation[stat.id] =
+                                        (allocation[stat.id] ?? 0) - 1;
+                                  })
+                                : null,
+                            icon: const Icon(Icons.remove),
+                          ),
+                          Text('${allocation[stat.id] ?? 0}/3'),
+                          IconButton(
+                            tooltip: 'Assegna un punto',
+                            onPressed:
+                                remaining > 0 && (allocation[stat.id] ?? 0) < 3
+                                ? () => refresh(() {
+                                    allocation[stat.id] =
+                                        (allocation[stat.id] ?? 0) + 1;
+                                  })
+                                : null,
+                            icon: const Icon(Icons.add),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Più tardi'),
+              ),
+              ElevatedButton(
+                onPressed:
+                    oculumStarterSubtraitAllocationValid(
+                      allocation,
+                      hiddenEyeStats.map((s) => s.id),
+                    )
+                    ? () => Navigator.pop(dialogContext, allocation)
+                    : null,
+                child: const Text('Assegna i 9 punti'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    if (!mounted ||
+        selectedPoints == null ||
+        currentSheetScrollId() != sheetId) {
+      return;
+    }
+    setState(() {
+      oculumApplyStarterSubtraits(
+        hiddenEyeStats,
+        appliedTutorialSubtraitPoints,
+        selectedPoints,
+      );
+      tutorialSubtraitPoints
+        ..clear()
+        ..addAll(selectedPoints);
+      for (final stat in hiddenEyeStats) {
+        notifyHiddenEyeStatChanged(stat);
+      }
+    });
+    programmaSalvataggio();
   }
 
   Widget hiddenEyeStatsGrid({

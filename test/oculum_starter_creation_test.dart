@@ -4,6 +4,80 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test(
+    'skipping keeps all nine points; grant and reload never duplicate progression',
+    () {
+      final stats = [
+        HiddenEyeStat(id: 'velo', nome: 'Velo', descrizione: '', valore: 7),
+        HiddenEyeStat(id: 'forza', nome: 'Forza', descrizione: ''),
+        HiddenEyeStat(id: 'riflessi', nome: 'Riflessi', descrizione: ''),
+      ];
+      final ledger = <String, int>{};
+      expect(oculumStarterSubtraitPointsRemaining(ledger), 9);
+      const points = {'velo': 3, 'forza': 3, 'riflessi': 3};
+      oculumApplyStarterSubtraits(stats, ledger, points);
+      expect(stats.map((s) => s.valore), [10, 3, 3]);
+      expect(oculumStarterSubtraitPointsRemaining(ledger), 0);
+      final loaded = stats
+          .map((s) => HiddenEyeStat.fromJson(s.toJson()))
+          .toList();
+      oculumApplyStarterSubtraits(
+        loaded,
+        Map<String, int>.from(ledger),
+        points,
+      );
+      expect(loaded.map((s) => s.valore), [10, 3, 3]);
+    },
+  );
+  test(
+    'starter subtraits require exactly nine points, max three, valid ids',
+    () {
+      const ids = ['velo', 'forza', 'riflessi', 'eco'];
+      expect(
+        oculumStarterSubtraitAllocationValid({
+          'velo': 3,
+          'forza': 3,
+          'riflessi': 3,
+        }, ids),
+        isTrue,
+      );
+      expect(
+        oculumStarterSubtraitAllocationValid({
+          'velo': 4,
+          'forza': 3,
+          'riflessi': 2,
+        }, ids),
+        isFalse,
+      );
+      expect(
+        oculumStarterSubtraitAllocationValid({'velo': 3, 'forza': 3}, ids),
+        isFalse,
+      );
+      expect(
+        oculumStarterSubtraitAllocationValid({
+          'velo': 3,
+          'forza': 3,
+          'unknown': 3,
+        }, ids),
+        isFalse,
+      );
+      expect(
+        oculumStarterSubtraitAllocationValid({
+          'velo': 3,
+          'forza': 3,
+          'riflessi': 3,
+          'eco': -1,
+        }, ids),
+        isFalse,
+      );
+    },
+  );
+  test('monster origins follow Oculum birth rules', () {
+    expect(oculumMonsterBirthplace('fato'), 'dalla terra');
+    expect(oculumMonsterBirthplace('chaos'), 'dalla terra');
+    expect(oculumMonsterBirthplace('oblio'), 'dal nulla');
+    expect(oculumMonsterBirthplace('errante'), 'dal nulla');
+  });
   test('monster rank changes stat points earned per level', () {
     expect(oculumMonsterStatPointsPerLevel('Mostro'), 9);
     expect(oculumMonsterStatPointsPerLevel('Mostro Mini Boss'), 12);

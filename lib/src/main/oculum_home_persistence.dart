@@ -1481,6 +1481,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'arti': arti.map((x) => x.toJson()).toList(),
       'diarioPagine': List<String>.from(diarioPagine),
       'journalEntries': journalEntries.map((x) => x.toJson()).toList(),
+      'statGemOverflow': Map<String, int>.from(statGemOverflow),
+      'tutorialSubtraitAllocation': Map<String, int>.from(
+        appliedTutorialSubtraitPoints,
+      ),
+      'tutorialMonsterOrigin': tutorialMonsterOrigin,
       'draftNotes': draftNotes.map((x) => x.toJson()).toList(),
       'hiddenEyeStats': hiddenEyeStats.map((x) => x.toJson()).toList(),
       'reputations': reputations.map((x) => x.toJson()).toList(),
@@ -1593,10 +1598,19 @@ extension _OculumHomePersistence on _OculumHomePageState {
     conditionControlProtectionUntilTurn.clear();
     activeGameMod = '${json['activeGameMod'] ?? ''}'.trim().toLowerCase();
     oculusModData = oculusNormalizeCharacterData(json['oculusModData']);
-    if (json['oculusModData'] is! Map || !(json['oculusModData'] as Map).containsKey('entityKind')) {
+    if (json['oculusModData'] is! Map ||
+        !(json['oculusModData'] as Map).containsKey('entityKind')) {
       final type = '${json['tipoScheda'] ?? ''}'.toLowerCase();
-      oculusModData['entityKind'] = type.contains('mostro') ? 'monster' : type.contains('npc') ? 'npc' : 'player';
-      oculusModData['monsterRank'] = type.contains('mini') ? 'miniBoss' : type.contains('boss') ? 'boss' : 'normal';
+      oculusModData['entityKind'] = type.contains('mostro')
+          ? 'monster'
+          : type.contains('npc')
+          ? 'npc'
+          : 'player';
+      oculusModData['monsterRank'] = type.contains('mini')
+          ? 'miniBoss'
+          : type.contains('boss')
+          ? 'boss'
+          : 'normal';
     }
     if (activeGameMod == 'oculus') paginaCorrente = 0;
     restoreMonsterBookCustomization(json);
@@ -2121,6 +2135,34 @@ extension _OculumHomePersistence on _OculumHomePageState {
         ),
       );
     assicuraDatabaseDiariCompleto();
+    statGemOverflow.clear();
+    final savedGemOverflow = json['statGemOverflow'];
+    if (savedGemOverflow is Map) {
+      for (final key in oculumStatGemNames.keys) {
+        statGemOverflow[key] = max(0, readIntValue(savedGemOverflow[key]));
+      }
+    }
+    appliedTutorialSubtraitPoints.clear();
+    final allocation = json['tutorialSubtraitAllocation'];
+    if (allocation is Map) {
+      for (final entry in allocation.entries) {
+        appliedTutorialSubtraitPoints['${entry.key}'] = readIntValue(
+          entry.value,
+        );
+      }
+    }
+    tutorialSubtraitPoints
+      ..clear()
+      ..addAll(appliedTutorialSubtraitPoints);
+    tutorialMonsterOrigin = '${json['tutorialMonsterOrigin'] ?? 'fato'}';
+    if (!const [
+      'fato',
+      'chaos',
+      'oblio',
+      'errante',
+    ].contains(tutorialMonsterOrigin)) {
+      tutorialMonsterOrigin = 'fato';
+    }
 
     final draftRaw = json['draftNotes'];
     draftNotes
@@ -7013,7 +7055,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         conditionImmunities
           ..clear()
           ..addAll(
-        matchedMonster?.id == 'legno_marcio' ||
+            matchedMonster?.id == 'legno_marcio' ||
                     matchedMonster?.id.startsWith('legno_marcio_variante_') ==
                         true
                 ? const ['rinsecchito']
@@ -7890,8 +7932,18 @@ extension _OculumHomePersistence on _OculumHomePageState {
             ].where((value) => value.trim().isNotEmpty).join(' ');
           }
         }
-        oculusModData['entityKind'] = selectedType.toLowerCase().contains('mostro') ? 'monster' : selectedType.toLowerCase().contains('npc') ? 'npc' : 'player';
-        oculusModData['monsterRank'] = selectedType.toLowerCase().contains('mini') ? 'miniBoss' : selectedType.toLowerCase().contains('boss') ? 'boss' : 'normal';
+        oculusModData['entityKind'] =
+            selectedType.toLowerCase().contains('mostro')
+            ? 'monster'
+            : selectedType.toLowerCase().contains('npc')
+            ? 'npc'
+            : 'player';
+        oculusModData['monsterRank'] =
+            selectedType.toLowerCase().contains('mini')
+            ? 'miniBoss'
+            : selectedType.toLowerCase().contains('boss')
+            ? 'boss'
+            : 'normal';
         if (createWithOculusRules) {
           activeGameMod = 'oculus';
           oculusModData['name'] = nome;

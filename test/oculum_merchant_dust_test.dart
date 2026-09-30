@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('stat gems scale only with their own stat and are occasional', () {
+    expect(oculumStatGemDieFaces(9), 3);
+    expect(oculumStatGemDieFaces(90), 30);
+    expect(oculumStatGemDieFaces(0), 1);
+    expect(oculumStatGemPrice(10) - oculumStatGemPrice(9), 3);
+    expect(oculumStatGemPrice(90) - oculumStatGemPrice(0), 27);
+    final random = Random(42);
+    final appearances = List.generate(
+      100,
+      (_) => oculumStatGemAvailable(random),
+    );
+    expect(appearances.every((v) => v), isFalse);
+  });
   TestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('Merchant Dust purchase is limited until Long Rest', (
     tester,
@@ -61,6 +75,56 @@ void main() {
     );
     await tester.pump(const Duration(seconds: 1));
     final dynamic state = tester.state(find.byType(OculumHomePage));
+    final probe = OculumPerformanceProbe(state);
+    state.volontaController.text = '10';
+    state.materiaController.text = '7';
+    state.volontaController.text = '9';
+    state.currentVolontaController.text = '9';
+    final gem = InventoryItem.fromJson(
+      probe.merchantItem({
+        'kind': 'stat_gem',
+        'stat': 'volonta',
+        'dieFaces': 3,
+      }).toJson(),
+    );
+    expect(gem.statGemDieFaces, 3);
+    state.inventario.add(gem);
+    await probe.useMerchantItem(gem);
+    final afterGem = int.parse(state.currentVolontaController.text);
+    expect(afterGem, inInclusiveRange(10, 12));
+    expect(state.inventario.contains(gem), isFalse);
+    await probe.useMerchantItem(gem);
+    expect(int.parse(state.currentVolontaController.text), afterGem);
+    expect(state.volontaController.text, '9');
+    final gemSave = probe.snapshot();
+    probe.load(gemSave);
+    expect(int.parse(state.currentVolontaController.text), afterGem);
+    probe.recoverLongRestStats();
+    expect(int.parse(state.currentVolontaController.text), 9);
+    state.volontaController.text = '10';
+    final weapon = probe.merchantItem({'kind': 'gear', 'weapon': true});
+    expect(weapon.bonusDanno, 11);
+    final shield = probe.merchantItem({
+      'kind': 'gear',
+      'weapon': true,
+      'protection': true,
+      'damage': 2,
+      'shield': 40,
+      'grade': 3,
+    });
+    expect(shield.arma && shield.protegge, isTrue);
+    expect(shield.bonusDanno, 2);
+    expect(shield.bonusDifesa, 19);
+    final restored = InventoryItem.fromJson(shield.toJson());
+    expect(probe.shieldBonus(restored), 40);
+    final titleShield = probe.merchantItem({
+      'kind': 'title_item',
+      'damage': 11,
+    }, titleType: 'scudo_offensivo');
+    expect(titleShield.bonusDanno, 2);
+    expect(titleShield.nome, 'Item Titolo — scudo offensivo');
+    expect(oculumMerchantShieldValue(100, 35), 35);
+    expect(oculumMerchantShieldValue(100, 50), 50);
     state.updateOculumHomeUi(() {
       state.activeGameMod = '';
       state.modalitaDesktop = true;

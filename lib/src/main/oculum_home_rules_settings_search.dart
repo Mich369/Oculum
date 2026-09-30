@@ -2289,7 +2289,11 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
               .map(
                 (choice) => DropdownMenuItem(
                   value: choice.id,
-                  child: Text(choice.nome, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  child: Text(
+                    choice.nome,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               )
               .toList(),
@@ -2301,7 +2305,16 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     );
   }
 
-  void applicaSettaggioTutorial() {
+  bool applicaSettaggioTutorial() {
+    if (!oculumStarterSubtraitAllocationValid(
+      tutorialSubtraitPoints,
+      hiddenEyeStats.map((s) => s.id),
+    )) {
+      setState(() {
+        risultato = 'Distribuisci 9 punti nei sottotratti, massimo 3 ciascuno.';
+      });
+      return false;
+    }
     final selectedMonster = _resolveTutorialMonsterPreset();
     // Un preset del Monster Book e' una creatura gia' definita: non gli si
     // applicano razza, background, Art iniziale, difficolta' o bonus umani.
@@ -2349,7 +2362,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         risultato =
             'Hai distribuito $puntiLivelloSpesi punti, ma il budget disponibile è $puntiLibriDisponibili.';
       });
-      return;
+      return false;
     }
     if (gradoRichiesto > gradoMassimo) {
       setState(() {
@@ -2363,7 +2376,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         risultato =
             'I punti bonus di una Martial Art non possono essere messi in Oculum.';
       });
-      return;
+      return false;
     }
     final primaria = tutorialStatPrimaria;
     final secondaria = tutorialStatSecondaria == primaria
@@ -2448,6 +2461,8 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     };
 
     setState(() {
+      oculumApplyStarterSubtraits(hiddenEyeStats,
+        appliedTutorialSubtraitPoints, tutorialSubtraitPoints);
       livelloController.text = livello.toString();
       expController.text = expIniziale.toString();
       resilienzaController.text = (stats['resilienza'] ?? 0).toString();
@@ -2581,11 +2596,11 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         }
         razzaController.clear();
         backgroundController.text =
-            'Creatura del Monster Book: richiede approvazione del Master prima di entrare nella campagna.';
+            'Nasci ${oculumMonsterBirthplace(tutorialMonsterOrigin)}. Origine: $tutorialMonsterOrigin. Richiedi approvazione del Master prima di entrare nella campagna.';
       } else {
         razzaController.clear();
         backgroundController.text =
-            'Mostro creato liberamente: il Master definisce origine e comportamento.';
+            'Nasci ${oculumMonsterBirthplace(tutorialMonsterOrigin)}. Origine: $tutorialMonsterOrigin.';
       }
       tipoSchedaController.text = tutorialGeneraMostro
           ? (selectedMonster?.presetType ?? tutorialMonsterTier)
@@ -2627,6 +2642,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     });
 
     programmaSalvataggio();
+    return true;
   }
 
   void mostraTutorial() {
@@ -2868,27 +2884,17 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                             }),
                           ),
                           const SizedBox(height: 8),
-                          DropdownButtonFormField<String>(
-                            initialValue: tutorialMonsterPresetId.isEmpty
-                                ? null
-                                : tutorialMonsterPresetId,
-                            decoration: const InputDecoration(
-                              labelText:
-                                  'Occhio: scegli dal Monster Book (oppure crea tu)',
-                            ),
-                            items: [
-                              for (final entry in monsterBookEntries.where(
-                                (entry) =>
-                                    entry.presetType == tutorialMonsterTier &&
-                                    !_isTutorialMonsterVariant(entry),
-                              ))
-                                DropdownMenuItem(
-                                  value: entry.id,
-                                  child: Text(entry.nameIt),
-                                ),
-                            ],
-                            onChanged: (value) => setDialogState(() {
-                              tutorialMonsterPresetId = value ?? '';
+                          OculumMonsterPicker(
+                            selectedId: tutorialMonsterPresetId,
+                            entries: monsterBookEntries
+                                .where(
+                                  (entry) =>
+                                      entry.presetType == tutorialMonsterTier &&
+                                      !_isTutorialMonsterVariant(entry),
+                                )
+                                .toList(),
+                            onSelected: (value) => setDialogState(() {
+                              tutorialMonsterPresetId = value;
                               tutorialMonsterVariantId = '';
                               tutorialMonsterStatsRandomized = false;
                             }),
@@ -3053,78 +3059,159 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                       'Senza un’Oculum Art non possiedi Oculum: con una Martial Art ogni punto OCU viene trasferito automaticamente alla statistica fondamentale più bassa.',
                     ),
                     const SizedBox(height: 16),
+                    if (tutorialGeneraMostro) ...[
+                      DropdownButtonFormField<String>(
+                        initialValue: tutorialMonsterOrigin,
+                        decoration: const InputDecoration(
+                          labelText: 'Origine della creatura',
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'fato',
+                            child: Text('Fato — dalla terra'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'chaos',
+                            child: Text('Chaos — dalla terra'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'oblio',
+                            child: Text('Oblio — dal nulla'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'errante',
+                            child: Text('Errante — dal nulla'),
+                          ),
+                        ],
+                        onChanged: (value) => setDialogState(
+                          () => tutorialMonsterOrigin = value ?? 'fato',
+                        ),
+                      ),
+                      const Text(
+                        'La creatura conserva le proprie peculiarità. Non sceglie background, razza, Titolo del Fato o Art iniziale da personaggio.',
+                      ),
+                    ],
                     Text(
-                      '3. Origine e Fato',
+                      'Punti sottotratti: ${tutorialSubtraitPoints.values.fold<int>(0, (sum, value) => sum + value)}/9',
                       style: TextStyle(
-                        color: primaryColor,
+                        color: tertiaryColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    _tutorialChoiceField(
-                      label:
-                          'Background — diventa il tuo Titolo d’Azione visibile',
-                      value: tutorialBackgroundId,
-                      choices: oculumStarterBackgrounds,
-                      onChanged: (value) =>
-                          setDialogState(() => tutorialBackgroundId = value),
+                    const Text(
+                      'Distribuisci 9 punti dove vuoi. Massimo 3 per sottotratto.',
                     ),
-                    const SizedBox(height: 8),
-                    _tutorialChoiceField(
-                      label: 'Razza',
-                      value: tutorialRaceId,
-                      choices: oculumStarterRaces,
-                      onChanged: (value) =>
-                          setDialogState(() => tutorialRaceId = value),
-                    ),
-                    const SizedBox(height: 8),
-                    _tutorialChoiceField(
-                      label: 'Titolo del Fato — perché sei qui?',
-                      value: tutorialFateId,
-                      choices: oculumStarterFateTitles,
-                      onChanged: (value) =>
-                          setDialogState(() => tutorialFateId = value),
-                    ),
+                    for (final stat in hiddenEyeStats)
+                      Row(
+                        children: [
+                          Expanded(child: Text(stat.nome)),
+                          IconButton(
+                            tooltip: 'Togli un punto',
+                            onPressed:
+                                (tutorialSubtraitPoints[stat.id] ?? 0) > 0
+                                ? () => setDialogState(() {
+                                    tutorialSubtraitPoints[stat.id] =
+                                        (tutorialSubtraitPoints[stat.id] ?? 0) -
+                                        1;
+                                  })
+                                : null,
+                            icon: const Icon(Icons.remove),
+                          ),
+                          Text('${tutorialSubtraitPoints[stat.id] ?? 0}'),
+                          IconButton(
+                            tooltip: 'Assegna un punto',
+                            onPressed:
+                                (tutorialSubtraitPoints[stat.id] ?? 0) < 3 &&
+                                    tutorialSubtraitPoints.values.fold<int>(
+                                          0,
+                                          (sum, value) => sum + value,
+                                        ) <
+                                        9
+                                ? () => setDialogState(() {
+                                    tutorialSubtraitPoints[stat.id] =
+                                        (tutorialSubtraitPoints[stat.id] ?? 0) +
+                                        1;
+                                  })
+                                : null,
+                            icon: const Icon(Icons.add),
+                          ),
+                        ],
+                      ),
                     const SizedBox(height: 16),
-                    Text(
-                      '4. Art iniziale',
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.bold,
+                    if (!tutorialGeneraMostro) ...[
+                      Text(
+                        '3. Origine e Fato',
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    DropdownButtonFormField<String>(
-                      initialValue: tutorialArtName,
-                      isExpanded: true,
-                      dropdownColor: const Color(0xFF202431),
-                      decoration: const InputDecoration(
-                        labelText: 'Scegli un’Art — ogni Art ha 3 Skill',
+                      _tutorialChoiceField(
+                        label:
+                            'Background — diventa il tuo Titolo d’Azione visibile',
+                        value: tutorialBackgroundId,
+                        choices: oculumStarterBackgrounds,
+                        onChanged: (value) =>
+                            setDialogState(() => tutorialBackgroundId = value),
                       ),
-                      items: oculumStarterArtChoices()
-                          .map(
-                            (art) => DropdownMenuItem(
-                              value: art.nome,
-                              child: Text('${art.nome} (${art.tipo})'),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) => setDialogState(() {
-                        tutorialArtName = value ?? tutorialArtName;
-                        final selected = oculumStarterArtChoices().firstWhere(
-                          (art) => art.nome == tutorialArtName,
-                        );
-                        tutorialMartialBonus = selected.tipo == 'Martial Art'
-                            ? oculumStarterMartialBonus(Random())
-                            : 0;
-                      }),
-                    ),
-                    const SizedBox(height: 8),
-                    smallInfoText(
-                      tutorialArtName == 'Zanna del Drago' ||
-                              tutorialArtName == 'Berserk'
-                          ? 'Martial Art: bonus estratto 1d10+2 = $tutorialMartialBonus punti liberi. Puoi metterli in RES, VOL o MAT: OCU resta 0.'
-                          : 'Con un’Oculum Art puoi investire normalmente anche in OCU.',
-                    ),
-                    const SizedBox(height: 14),
+                      const SizedBox(height: 8),
+                      _tutorialChoiceField(
+                        label: 'Razza',
+                        value: tutorialRaceId,
+                        choices: oculumStarterRaces,
+                        onChanged: (value) =>
+                            setDialogState(() => tutorialRaceId = value),
+                      ),
+                      const SizedBox(height: 8),
+                      _tutorialChoiceField(
+                        label: 'Titolo del Fato — perché sei qui?',
+                        value: tutorialFateId,
+                        choices: oculumStarterFateTitles,
+                        onChanged: (value) =>
+                            setDialogState(() => tutorialFateId = value),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        '4. Art iniziale',
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      DropdownButtonFormField<String>(
+                        initialValue: tutorialArtName,
+                        isExpanded: true,
+                        dropdownColor: const Color(0xFF202431),
+                        decoration: const InputDecoration(
+                          labelText: 'Scegli un’Art — ogni Art ha 3 Skill',
+                        ),
+                        items: oculumStarterArtChoices()
+                            .map(
+                              (art) => DropdownMenuItem(
+                                value: art.nome,
+                                child: Text('${art.nome} (${art.tipo})'),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) => setDialogState(() {
+                          tutorialArtName = value ?? tutorialArtName;
+                          final selected = oculumStarterArtChoices().firstWhere(
+                            (art) => art.nome == tutorialArtName,
+                          );
+                          tutorialMartialBonus = selected.tipo == 'Martial Art'
+                              ? oculumStarterMartialBonus(Random())
+                              : 0;
+                        }),
+                      ),
+                      const SizedBox(height: 8),
+                      smallInfoText(
+                        tutorialArtName == 'Zanna del Drago' ||
+                                tutorialArtName == 'Berserk'
+                            ? 'Martial Art: bonus estratto 1d10+2 = $tutorialMartialBonus punti liberi. Puoi metterli in RES, VOL o MAT: OCU resta 0.'
+                            : 'Con un’Oculum Art puoi investire normalmente anche in OCU.',
+                      ),
+                      const SizedBox(height: 14),
+                    ],
                     Text(
                       t('Regole fondamentali', 'Core rules'),
                       style: TextStyle(
@@ -3203,8 +3290,13 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             ),
             ElevatedButton(
               onPressed: () {
-                applicaSettaggioTutorial();
-                Navigator.pop(context);
+                if (applicaSettaggioTutorial()) {
+                  Navigator.pop(context);
+                } else {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(risultato)));
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: tertiaryColor,
@@ -5590,6 +5682,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                                 );
                           aggiungiLog(risultato);
                         });
+                        refreshRealtimeRolePresence();
                         programmaSalvataggio();
                       },
               ),

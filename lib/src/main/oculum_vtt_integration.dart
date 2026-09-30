@@ -512,9 +512,12 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
     final service = realtimeService;
     if (service?.isConnected != true || !modalitaMaster) return;
     if (vttPublishing) {
+      if (targetTag.isNotEmpty) vttPendingSceneRequesters.add(targetTag);
       vttRealtimeAssetPending = vttRealtimeAssetPending || includeAsset;
       return;
     }
+    final sourceSceneId = activeVttScene.id;
+    final sourceCampaignId = activeCampaignId;
     vttPublishing = true;
     try {
       var assetId = '';
@@ -541,11 +544,17 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
           service?.isConnected != true) {
         return;
       }
+      if (activeVttScene.id != sourceSceneId ||
+          activeCampaignId != sourceCampaignId) {
+        vttRealtimeAssetPending = true;
+        return;
+      }
       final snapshot = buildSharedVttSceneSnapshot(targetTag: targetTag);
+      snapshot['preserveAsset'] = !includeAsset;
       snapshot['assetMime'] = assetMime;
       snapshot['assetWidth'] = assetWidth;
       snapshot['assetHeight'] = assetHeight;
-      await service!.sendVttSceneSnapshot(
+      final delivered = await service!.sendVttSceneSnapshot(
         snapshot: snapshot,
         campaignId: activeCampaignId,
         campaignName: activeCampaignName(),
@@ -553,19 +562,25 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
         assetChunkCount: chunks.length,
         targetTag: targetTag,
       );
+      if (!delivered) throw StateError('Invio della scena non confermato');
       for (var i = 0; i < chunks.length; i++) {
         if (!mounted ||
             realtimeService != service ||
             service.isConnected != true) {
           break;
         }
-        await service.sendVttAssetChunk(
+        final chunkDelivered = await service.sendVttAssetChunk(
           assetId: assetId,
           chunkIndex: i,
           chunkCount: chunks.length,
           data: chunks[i],
           targetTag: targetTag,
         );
+        if (!chunkDelivered) {
+          throw StateError(
+            'Invio immagine non confermato: blocco ${i + 1}/${chunks.length}',
+          );
+        }
         if (i % 8 == 7) {
           await Future<void>.delayed(const Duration(milliseconds: 12));
         }
@@ -580,6 +595,13 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
       }
     } finally {
       vttPublishing = false;
+      if (vttPendingSceneRequesters.isNotEmpty && mounted) {
+        final requester = vttPendingSceneRequesters.first;
+        vttPendingSceneRequesters.remove(requester);
+        unawaited(
+          publishActiveVttScene(includeAsset: true, targetTag: requester),
+        );
+      }
       if (vttRealtimeAssetPending && mounted) {
         scheduleVttRealtimePublish(includeAsset: true);
       }
@@ -615,6 +637,7 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
       vttCanvasRevision.value++;
       return;
     }
+    final previousScene = realtimeVisibleVttScene;
     realtimeVisibleVttSnapshot = snapshot;
     final sceneRaw = snapshot['scene'];
     realtimeVisibleVttScene = sceneRaw is Map
@@ -622,6 +645,16 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
         : null;
     final assetId = '${payload['assetId'] ?? ''}';
     final chunkCount = _oculumVttInt(payload['assetChunkCount']);
+    if (assetId.isEmpty &&
+        chunkCount <= 0 &&
+        oculumVttKeepReceivedImage(
+          previous: previousScene,
+          incoming: realtimeVisibleVttScene,
+          preserveAsset: snapshot['preserveAsset'] == true,
+        )) {
+      vttCanvasRevision.value++;
+      return;
+    }
     if (assetId.isEmpty || chunkCount <= 0) {
       if (assetId != realtimeVisibleVttAssetId) {
         realtimeVisibleVttImageBytes = null;

@@ -1,5 +1,25 @@
 part of '../../main.dart';
 
+const oculumStatGemNames = <String, String>{
+  'resilienza': 'Gemma di Resilienza',
+  'volonta': 'Gemma di Volontà',
+  'materia': 'Gemma di Materia',
+  'oculum': 'Gemma di Oculum',
+};
+const int oculumStatGemBaseCost = 3;
+int oculumStatGemDieFaces(int stat) => max(1, max(0, stat) ~/ 3);
+int oculumStatGemPrice(int stat) =>
+    oculumStatGemBaseCost + 3 * (max(0, stat) ~/ 10);
+bool oculumStatGemAvailable(Random random) => random.nextInt(4) == 0;
+
+int oculumMerchantShieldValue(int hp, int percent) =>
+    (max(0, hp) * percent.clamp(35, 50) / 100).round();
+
+int oculumMerchantDefenseValue(int materia) => 5 + 2 * max(0, materia);
+
+int oculumMerchantAttackValue(int base, int will) =>
+    max(0, base) + max(0, will) ~/ 2;
+
 /// Tiro automatico del Vitalium Grezzo. Un 1 naturale e' un critico negativo:
 /// puo' ridurre la cura, ma chi usa il risultato la limita sempre a zero.
 int oculumRawVitaliumMedicineRoll({required int die, required int medicine}) {
@@ -61,9 +81,49 @@ String oculumMerchantWeaponSkillText(String weaponName, int grade) {
 /// ma il suo identificatore di sessione lo rinnova solo dopo la chiusura e
 /// riapertura dell'app: non cambia ad ogni rebuild o apertura del pannello.
 extension _OculumHomeMerchant on _OculumHomePageState {
+  int merchantGemStatValue(String key) => max(
+    0,
+    leggiNumero(switch (key) {
+      'resilienza' => resilienzaController,
+      'volonta' => volontaController,
+      'materia' => materiaController,
+      _ => oculumController,
+    }),
+  );
+
+  void updateMerchantGemOffers() {
+    for (final offer in merchantStock.where((o) => o['kind'] == 'stat_gem')) {
+      final stat = merchantGemStatValue('${offer['stat']}');
+      offer['cost'] = oculumStatGemPrice(stat);
+      offer['dieFaces'] = oculumStatGemDieFaces(stat);
+      offer['baseStat'] = stat;
+    }
+  }
+
+  int merchantCharacterPower() {
+    final stats = [
+      leggiNumero(resilienzaController),
+      leggiNumero(volontaController),
+      leggiNumero(materiaController),
+      leggiNumero(oculumController),
+    ];
+    return stats.fold<int>(0, (sum, value) => sum + max(0, value));
+  }
+
+  int merchantScaledValue(int base, {double strength = 1, int level = 0}) {
+    final power = merchantCharacterPower();
+    final tenStatSteps = power ~/ 10;
+    final factor = 1 + tenStatSteps * 0.05 * strength;
+    return max(1, (base * factor).round() + max(0, level) * 25);
+  }
+
+  int merchantTitleCost(int baseCost, {int level = 0}) =>
+      merchantScaledValue(baseCost, level: level);
+
   List<Map<String, dynamic>> ensureMerchantStock() {
     if (merchantStockSessionId == merchantRuntimeSessionId &&
         merchantStock.isNotEmpty) {
+      updateMerchantGemOffers();
       return merchantStock;
     }
     final random = Random(
@@ -99,11 +159,27 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       {
         'id': 'title_item',
         'name': 'Item Titolo',
-        'cost': 75 + random.nextInt(46),
+        'cost': merchantTitleCost(75 + random.nextInt(46)),
         'kind': 'title_item',
+        'damage': oculumMerchantAttackValue(6, leggiNumero(volontaController)),
+        'defence': oculumMerchantDefenseValue(leggiNumero(materiaController)),
+        'shield': oculumMerchantShieldValue(maxHp(), 35 + random.nextInt(16)),
         'desc': 'Scegli tu se diventa arma, armatura o scudo.',
       },
     ];
+    for (final gem in oculumStatGemNames.entries) {
+      if (!oculumStatGemAvailable(random)) continue;
+      merchantStock.add(<String, dynamic>{
+        'id': 'stat_gem_${gem.key}',
+        'name': gem.value,
+        'kind': 'stat_gem',
+        'stat': gem.key,
+        'remaining': 1,
+        'desc':
+            'Una gemma rara, consumabile. La sua forza è fissata quando la acquisti.',
+      });
+    }
+    updateMerchantGemOffers();
     if (random.nextInt(12) == 0) {
       merchantStock.add(<String, dynamic>{
         'id': 'scroll_bone_prison',
@@ -178,27 +254,44 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     for (var i = 0; i < 8; i++) {
       final source = catalog[random.nextInt(catalog.length)];
       final grade = random.nextInt(40) == 0 ? 1 + random.nextInt(12) : 0;
-      final weapon = source.weapon;
-      final damage = grade == 0
-          ? 2 + random.nextInt(5)
-          : 12 + grade * 8 + random.nextInt(7);
-      final defence = grade == 0
-          ? 1 + random.nextInt(3)
-          : 3 + grade * 4 + random.nextInt(4);
+      final protection = !source.weapon;
+      final offensiveShield =
+          protection &&
+          (source.name.startsWith('scudo ') ||
+              source.name.startsWith('brocchiere ')) &&
+          random.nextBool();
+      final weapon = source.weapon || offensiveShield;
+      final damage = offensiveShield
+          ? 2 + grade * 8
+          : oculumMerchantAttackValue(6, leggiNumero(volontaController));
+      final defence = oculumMerchantDefenseValue(
+        leggiNumero(materiaController),
+      );
+      final shieldValue = oculumMerchantShieldValue(
+        maxHp(),
+        35 + random.nextInt(16),
+      );
       merchantStock.add(<String, dynamic>{
         'id': 'merchant_${i}_${random.nextInt(1 << 31)}',
         'name': source.name,
-        'cost': grade == 0
-            ? 25 + random.nextInt(51)
-            : grade * (100 + random.nextInt(101)),
+        'cost': merchantTitleCost(
+          grade == 0
+              ? 25 + random.nextInt(51)
+              : grade * (100 + random.nextInt(101)),
+          level: grade,
+        ),
         'kind': 'gear',
         'grade': grade,
         'weapon': weapon,
+        'protection': protection,
+        'shield': shieldValue,
         'damage': damage,
         'defence': defence,
         'quickReaction': grade > 0 && random.nextInt(9) == 0,
         'desc': grade == 0
-            ? 'Reliquia minuta: bonus difensivo o offensivo contenuto.'
+            ? (offensiveShield
+                  ? 'Scudo offensivo.'
+                  : 'Equipaggiamento del mercante.')
             : 'Oggetto graduato molto raro: richiede Grado $grade per essere equipaggiato.',
       });
     }
@@ -207,6 +300,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   String merchantOfferDescription(Map<String, dynamic> offer) {
+    if (offer['kind'] == 'stat_gem') {
+      final stat = '${offer['stat']}';
+      final faces = readIntValue(offer['dieFaces'], fallback: 1);
+      return '${readIntValue(offer['remaining']) > 0 ? 'Disponibile: 1' : 'Esaurita'} · Consumabile: recupera punti attuali di ${oculumStatGemNames[stat]?.replaceFirst('Gemma di ', '') ?? stat} di 1d$faces. Eccesso fino al riposo lungo. Potenza fissata all acquisto. Prezzo: 3 Obser +3 ogni 10 punti di questa statistica.';
+    }
     if ('${offer['kind'] ?? ''}' == 'raw_vitalium') {
       return 'Consumabile: cura HP pari all Oculum immesso. ${oculumRawVitaliumRuleForGrade(max(0, leggiNumero(gradoController)))}';
     }
@@ -352,8 +450,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                   ),
                   trailing: FilledButton(
                     onPressed:
-                        leggiNumero(obserController) <
-                            readIntValue(offer['cost'])
+                        (offer['kind'] == 'stat_gem' &&
+                                readIntValue(offer['remaining']) <= 0) ||
+                            leggiNumero(obserController) <
+                                readIntValue(offer['cost'])
                         ? null
                         : () => buyMerchantOffer(offer),
                     child: Text('${offer['cost']} O'),
@@ -393,7 +493,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                     style: const TextStyle(color: Colors.white70),
                   ),
                   trailing: FilledButton(
-                    onPressed: leggiNumero(obserController) < cost
+                    onPressed:
+                        (offer['kind'] == 'stat_gem' &&
+                                readIntValue(offer['remaining']) <= 0) ||
+                            leggiNumero(obserController) < cost
                         ? null
                         : () async {
                             await buyMerchantOffer(offer);
@@ -417,6 +520,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   Future<void> buyMerchantOffer(Map<String, dynamic> offer) async {
+    if (offer['kind'] == 'stat_gem') {
+      updateMerchantGemOffers();
+      if (readIntValue(offer['remaining']) <= 0) return;
+    }
     final cost = readIntValue(offer['cost']);
     if (leggiNumero(obserController) < cost) return;
     final kind = '${offer['kind'] ?? ''}';
@@ -440,6 +547,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                   onPressed: () => Navigator.pop(context, 'scudo'),
                   child: const Text('Scudo'),
                 ),
+                SimpleDialogOption(
+                  onPressed: () => Navigator.pop(context, 'scudo_offensivo'),
+                  child: const Text('Scudo offensivo'),
+                ),
               ],
             ),
           ) ??
@@ -452,6 +563,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       obserController.text = (leggiNumero(obserController) - cost).toString();
       final item = merchantItemFromOffer(offer, titleType: titleType);
       inventario.add(item);
+      if (kind == 'stat_gem') offer['remaining'] = 0;
       if (item.arma) {
         final weaponSkill = merchantWeaponSkill(item);
         if (!skills.any((skill) => skill.nome == weaponSkill.nome)) {
@@ -496,7 +608,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void buyAscensionDustFromMerchant() {
-    if (merchantDustPurchasedSinceLongRest || leggiNumero(obserController) < 20) {
+    if (merchantDustPurchasedSinceLongRest ||
+        leggiNumero(obserController) < 20) {
       return;
     }
     // ignore: invalid_use_of_protected_member
@@ -516,6 +629,27 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     String titleType = '',
   }) {
     final kind = '${offer['kind'] ?? ''}';
+    if (kind == 'stat_gem') {
+      final stat = '${offer['stat']}';
+      if (!oculumStatGemNames.containsKey(stat))
+        throw ArgumentError('Statistica della gemma sconosciuta');
+      final faces = max(
+        1,
+        readIntValue(
+          offer['dieFaces'],
+          fallback: oculumStatGemDieFaces(merchantGemStatValue(stat)),
+        ),
+      );
+      return InventoryItem(
+        nome: oculumStatGemNames[stat]!,
+        peso: .1,
+        quantita: 1,
+        statGemStat: stat,
+        statGemDieFaces: faces,
+        note:
+            'Consumabile: recupera punti attuali di ${oculumStatGemNames[stat]!.replaceFirst('Gemma di ', '')} di 1d$faces. Una gemma, un solo tiro. Eccesso fino al riposo lungo.',
+      );
+    }
     if (kind == 'raw_vitalium') {
       return InventoryItem(
         nome: 'Vitalium Grezzo',
@@ -554,11 +688,18 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     final grade = readIntValue(offer['grade']);
     final isTitle = kind == 'title_item';
     final weapon = isTitle
-        ? titleType == 'arma'
+        ? titleType == 'arma' || titleType == 'scudo_offensivo'
         : readBoolValue(offer['weapon']);
-    final shield = isTitle ? titleType == 'scudo' : !weapon && grade > 0;
+    final protects = isTitle
+        ? titleType != 'arma'
+        : readBoolValue(offer['protection'], fallback: !weapon);
+    final shield = isTitle
+        ? titleType == 'scudo' || titleType == 'scudo_offensivo'
+        : protects;
     return InventoryItem(
-      nome: isTitle ? 'Item Titolo — $titleType' : '${offer['name']}',
+      nome: isTitle
+          ? 'Item Titolo — ${titleType.replaceAll('_', ' ')}'
+          : '${offer['name']}',
       peso: 1.2,
       quantita: 1,
       note: isTitle
@@ -567,14 +708,41 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           ? '${offer['desc']}\nSkill: ${oculumMerchantWeaponSkillName('${offer['name'] ?? ''}')}. ${oculumMerchantWeaponSkillText('${offer['name'] ?? ''}', grade)}'
           : '${offer['desc']}',
       arma: weapon,
-      protegge: !weapon,
-      bonusDanno: weapon
-          ? max(0, readIntValue(offer['damage'], fallback: 2 + grade * 8))
+      protegge: protects,
+      bonusDanno: weapon && protects
+          ? (isTitle
+                ? 2
+                : readIntValue(offer['damage'], fallback: 2 + grade * 8))
+          : weapon
+          ? max(
+              6,
+              readIntValue(
+                offer['damage'],
+                fallback: oculumMerchantAttackValue(
+                  6,
+                  leggiNumero(volontaController),
+                ),
+              ),
+            )
           : 0,
-      bonusDifesa: weapon
+      bonusDifesa: !protects
           ? 0
-          : max(0, readIntValue(offer['defence'], fallback: 1 + grade * 4)),
-      bonusScudo: shield ? 4 + grade * 10 : (weapon ? 0 : 2 + grade * 4),
+          : max(
+              5,
+              readIntValue(
+                offer['defence'],
+                fallback: oculumMerchantDefenseValue(
+                  leggiNumero(materiaController),
+                ),
+              ),
+            ),
+      bonusScudo: protects
+          ? readIntValue(
+              offer['shield'],
+              fallback: oculumMerchantShieldValue(maxHp(), 40),
+            )
+          : 0,
+      bonusScudoIncludeGrado: true,
       bonusScudoOculum: grade >= 3 && shield ? 4 + grade * 3 : 0,
       gradoOggetto: grade,
       gradoRichiesto: grade,
@@ -587,16 +755,56 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     );
   }
 
-  bool isMerchantConsumable(InventoryItem item) => const <String>{
-    'Vitalium Grezzo',
-    'Vitalium Ridefinito',
-    'Fiala di Oculum',
-    'Pergamena della Prigione d Ossa',
-    'Pinna di Pesce Alato',
-  }.contains(item.nome.trim());
+  bool isMerchantConsumable(InventoryItem item) =>
+      oculumStatGemNames.containsKey(item.statGemStat) ||
+      const <String>{
+        'Vitalium Grezzo',
+        'Vitalium Ridefinito',
+        'Fiala di Oculum',
+        'Pergamena della Prigione d Ossa',
+        'Pinna di Pesce Alato',
+      }.contains(item.nome.trim());
 
   Future<void> useMerchantConsumable(InventoryItem item) async {
-    if (!inventario.contains(item) || !isMerchantConsumable(item)) return;
+    if (!inventario.contains(item) ||
+        !isMerchantConsumable(item) ||
+        item.quantita <= 0)
+      return;
+    if (oculumStatGemNames.containsKey(item.statGemStat)) {
+      final faces = max(1, item.statGemDieFaces);
+      final roll = Random().nextInt(faces) + 1;
+      setState(() {
+        final key = item.statGemStat;
+        final controller = currentStatController(key);
+        final maximum = currentStatNaturalControllerMax(key);
+        final normal = key == 'oculum'
+            ? currentTemporaryOculumState().normalCurrent
+            : readIntValue(controller.text);
+        final next = normal + roll;
+        statGemOverflow[key] = max(statGemOverflow[key] ?? 0, next - maximum);
+        if (key == 'oculum') {
+          final current = currentTemporaryOculumState();
+          applyTemporaryOculumState(
+            TemporaryOculumState(
+              normalCurrent: next,
+              temporary: current.temporary,
+              rollsRemaining: current.rollsRemaining,
+            ),
+          );
+        } else {
+          controller.text = next.toString();
+          syncVisibleCurrentStatEditor(key);
+          invalidateHiddenEyeDerivedCaches();
+        }
+        item.quantita--;
+        if (item.quantita <= 0) inventario.remove(item);
+        risultato =
+            '${item.nome}: 1d$faces = $roll. Recuperati $roll punti; l’eccesso dura fino al riposo lungo.';
+        aggiungiLog(risultato);
+      });
+      programmaSalvataggio();
+      return;
+    }
     var amount = 0;
     if (item.nome.trim() == 'Vitalium Grezzo') {
       final available = max(0, leggiNumero(currentOculumController));
