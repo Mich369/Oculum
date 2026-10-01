@@ -24,6 +24,9 @@ class MonsterBookEntry {
   /// Oggetti reali ottenuti quando questo mostro viene creato come scheda.
   /// Restano dati del Book, non cambiano il formato dei salvataggi esistenti.
   final List<Map<String, dynamic>> inventoryItems;
+  final List<String> classificationTags;
+  List<String> get formTags => classificationTags.isNotEmpty
+      ? classificationTags : oculumCreatureFormTags(id, nameIt, nameEn, descIt, isNpc: isNpc);
 
   const MonsterBookEntry({
     required this.id,
@@ -45,6 +48,7 @@ class MonsterBookEntry {
     this.weaponTags = const [],
     this.armorTags = const [],
     this.inventoryItems = const [],
+    this.classificationTags = const [],
   });
 
   String get presetType {
@@ -74,6 +78,7 @@ class MonsterBookEntry {
     List<String>? weaponTags,
     List<String>? armorTags,
     List<Map<String, dynamic>>? inventoryItems,
+    List<String>? classificationTags,
   }) {
     return MonsterBookEntry(
       id: id ?? this.id,
@@ -95,12 +100,14 @@ class MonsterBookEntry {
       weaponTags: weaponTags ?? this.weaponTags,
       armorTags: armorTags ?? this.armorTags,
       inventoryItems: inventoryItems ?? this.inventoryItems,
+      classificationTags: classificationTags ?? this.classificationTags,
     );
   }
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'id': id,
+      'classificationTags': formTags,
       'nameIt': nameIt,
       'nameEn': nameEn,
       'descIt': descIt,
@@ -135,6 +142,7 @@ class MonsterBookEntry {
     }
     return MonsterBookEntry(
       id: '${json['id'] ?? ''}'.trim(),
+      classificationTags: _monsterBookStrings(json['classificationTags']),
       nameIt: '${json['nameIt'] ?? json['name'] ?? ''}'.trim(),
       nameEn: '${json['nameEn'] ?? json['nameIt'] ?? json['name'] ?? ''}'
           .trim(),
@@ -162,6 +170,50 @@ class MonsterBookEntry {
       ),
     );
   }
+}
+
+/// Physical family first, profession and condition as additional labels.
+/// A name such as Forest Demon does not make its body a Demon.
+List<String> oculumCreatureFormTags(String id, String name, String english, String description, {bool isNpc = false}) {
+  final text = '$id $name $english'.toLowerCase();
+  final tags = <String>[];
+  bool has(String pattern) => RegExp(pattern, caseSensitive: false).hasMatch(text);
+  if (has(r'forest.?demon|demone.?della.?foresta')) { tags.addAll(['Rettile gigante', 'Rettile']); }
+  else if (has(r'angel|angelo|serafin|seraph')) { tags.add('Angelo'); }
+  else if (has(r'demon|demone|demonietto|diavol')) { tags.add('Demone'); }
+  else if (has(r'slime')) { tags.add('Slime'); }
+  else if (has(r'drag[oa]n|drago|drake')) { tags.add('Drago'); }
+  else if (has(r'scheletr|skeleton|ossa')) { tags.addAll(['Non morto', 'Scheletro']); }
+  else if (has(r'zombie|lich|vampir|immortal|decapitat|decomposizione')) {
+    tags.add('Non morto');
+    if (has(r'mammuth|mammoth')) { tags.add('Mammifero'); }
+  }
+  else if (has(r'golem|costrutt|autom|campana')) { tags.add('Costrutto'); }
+  else if (has(r'basilis|idra|hydra|serpent|rettil|coccodr')) { tags.add('Rettile'); }
+  else if (has(r'ragno|spider|scorpion')) { tags.add('Aracnide'); }
+  else if (has(r'larva|insett|insect|scarab')) { tags.add('Insetto'); }
+  else if (has(r'legno|tree|pinepine|pigna|quercia|grofix')) { tags.add('Vegetale'); }
+  else if (has(r'elemental')) { tags.add('Elementale'); }
+  else if (has(r'ombra|shadow|spettr|spectr|fantasm|ghost|spirit')) { tags.add('Spirito'); }
+  else if (has(r'incubo|nightmare|osservatore|mimic|follia|fetale|null|fateless')) { tags.add('Aberrazione'); }
+  else if (has(r'grifon|griffin|chimera|arpia|harpy|minotaur')) { tags.add('Chimera'); }
+  else if (has(r'lupo|wolf|warg|mammuth|mammoth|orso|bear|felin|kitty|patalpa|snorlo')) { tags.add('Mammifero'); }
+  else if (has(r'gigante|giant|ogre|troll')) { tags.add('Gigante'); }
+  else if (isNpc || has(r'goblin|kobold|cobold|gnoll|orco|orc|bandit|cultist|necroman|cavalier|soldat|umano|human|elf|nano|dwarf|custode|sposa|uomo')) { tags.add('Umanoide'); }
+  else {
+    final body = description.toLowerCase();
+    if (RegExp(r'umanoide|bipede|umano').hasMatch(body)) { tags.add('Umanoide'); }
+    else if (RegExp(r'quadrupede|pelliccia|mammifero').hasMatch(body)) { tags.add('Mammifero'); }
+    else if (RegExp(r'ali|piume|uccello').hasMatch(body)) { tags.add('Aviano'); }
+    else { tags.add('Forma sconosciuta'); }
+  }
+  if (has(r'goblin|orco|orc|kobold|cobold|gnoll|gigante|giant|ogre|troll|angel|angelo|serafin|seraph')) { tags.add('Umanoide'); }
+  if (has(r'gigante|giant') && !tags.contains('Gigante')) { tags.add('Gigante'); }
+  for (final entry in {'Guerriero': r'guerrier|warrior|soldat|cavalier|knight', 'Mago': r'mago|mage|necroman|lich',
+    'Assassino': r'assassin|killer', 'Cultista': r'cultist', 'Mutante': r'mutant|corrott', 'Infestante': r'grofix|infest'}.entries) {
+    if (has(entry.value)) { tags.add(entry.key); }
+  }
+  return tags.toSet().toList(growable: false);
 }
 
 int _monsterBookInt(dynamic value) {
@@ -323,6 +375,33 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     },
     skillIds: ['snorlo_body', 'snorlo_cm', 'snorlo_will'],
     dropIds: [],
+  ),
+  MonsterBookEntry(
+    id: 'mammuth_in_decomposizione',
+    nameIt: 'Mammuth in decomposizione',
+    nameEn: 'Decaying Mammoth',
+    descIt:
+        'Un mammuth putrido che fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede. Ruolo in scena: controlla la fuga con le ossa, recupera Vita dal terreno e carica il bersaglio. Drop all’uccisione: Ossa di mammuth putrido, materiale dello stesso grado del mammuth.',
+    descEn:
+        'A rotting mammoth that raises pursuing bones, feeds on decaying ground and charges its prey. Drops Putrid Mammoth Bones on death, matching its Grade.',
+    elementId: 'necrotico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 4,
+      'volonta': 4,
+      'materia': 4,
+      'oculum': 4,
+    },
+    skillIds: [
+      'mammuth_pestone_ossa',
+      'mammuth_terra_decomposizione',
+      'mammuth_carica',
+    ],
+    dropIds: ['ossa_mammuth_putrido'],
   ),
   MonsterBookEntry(
     id: 'demone_minore',
@@ -2212,7 +2291,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     isBoss: true,
     isNullFateless: false,
     stats: {'hp': 420, 'atk': 48, 'def': 33, 'spd': 9},
-    skillIds: ['slime_army', 'royal_absorb', 'crown_slam'],
+    skillIds: ['slime_tornado', 'king_crash', 'slime_sword'],
     dropIds: ['king_slime_crown'],
   ),
   MonsterBookEntry(
@@ -4030,6 +4109,18 @@ String monsterBookSkillText(String rawId) {
     '',
   );
   switch (baseId) {
+    case 'slime_tornado':
+      return 'Tornado Slime — I/Dalla sfera slime volante scateni un tornado: +1 energia Reazione e Svantaggio ai nemici. Richiede livello 9. (3/10 Oculum). II/Il tornado concede +1 energia Reazione, dà Svantaggio ai nemici e infligge Oculum danni ad area. Richiede livello 20. (11/20 Oculum). III/Il tornado concede +1 energia Reazione, dà Doppio Svantaggio ai nemici e infligge Oculum danni ad area. Richiede livello 30. (21/30 Oculum).';
+    case 'king_crash':
+      return 'Schianto del Re — I/Ti schianti al terreno e infliggi Oculum danni ad area. Richiede livello 9. (1/10 Oculum). II/Lo schianto infligge 2×Oculum danni ad area. Richiede livello 20. (11/20 Oculum). III/Lo schianto infligge 2×Oculum danni e Stun per Oculum/10 azioni (arrotondato per difetto). Richiede livello 30. (21/30 Oculum).';
+    case 'slime_sword':
+      return 'Spadata del Re Slime — I/La spada fluttua e tira 1d3 colpi: danno totale = numero di colpi × Danni + Oculum. Richiede livello 10. (1/10 Oculum). II/La spada tira 1d4 colpi con la stessa formula. Richiede livello 20. (11/20 Oculum). III/La spada tira 1d6 colpi; il 6 può esplodere una sola volta, aggiungendo un altro d6. Danno totale = colpi × Danni + Oculum. Richiede livello 30. (21/30 Oculum).';
+    case 'mammuth_pestone_ossa':
+      return 'Pestone d’ossa — I/Crei un’ondata di ossa che segue il bersaglio e gli dà Svantaggio. Richiede livello 0. (1/4 Oculum). II/L’ondata segue il bersaglio, gli dà Vero Svantaggio e infligge 2×Oculum. Richiede livello 3. (5/10 Oculum). III/Ossa affilate circondano il bersaglio e impediscono la fuga veloce; tre linee d’ossa emergono dal terreno, danno Svantaggio Oculum e infliggono 2×Oculum. Richiede livello 6. (11/30 Oculum).';
+    case 'mammuth_terra_decomposizione':
+      return 'Terra in decomposizione — I/Decomponi il terreno e recuperi 1d6 + Medicina Vita. Richiede livello 0. (2/2 Oculum). II/Decomponi il terreno, recuperi 1d20 Vita e indebolisci le entità viventi: -2 a tutte le statistiche. Richiede livello 1. (5/5 Oculum). III/Decomponi il terreno e recuperi 1d60 Vita; togli 3 punti a tutte le statistiche delle creature viventi e ottieni i punti sottratti. Richiede livello 6. (12/12 Oculum).';
+    case 'mammuth_carica':
+      return 'Carica del mammuth — I/Carichi e infliggi Danni +10 + Oculum. Richiede livello 0. (1/10 Oculum). II/Carichi e infliggi Danni +20 +2×Oculum. Richiede livello 2. (11/20 Oculum). III/Carichi e infliggi Danni +50 +2×Oculum. Richiede livello 5. (21/30 Oculum).';
     case 'legno_marcio_rami_secchi':
       return 'Rami secchi — I/tira contro la difesa del bersaglio: se fallisci infliggi soltanto metà Danni; se riesci infliggi Danni totali e applichi Rinsecchito I (1–4 Oculum). II/Con una nuova applicazione riuscita, Rinsecchito sale di uno stadio fino a II (5–10 Oculum). III/Una nuova applicazione riuscita può portare Rinsecchito a III; un tiro fallito resta soltanto metà Danni e non aumenta lo stato (11–30 Oculum).';
     case 'incubo_vespro_taglio':

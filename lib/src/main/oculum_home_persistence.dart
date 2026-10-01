@@ -1181,6 +1181,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'diarioPagine': [],
       'journalEntries': [],
       'diaryEntityRoles': [],
+      'diaryKnowledgeSync': <String, dynamic>{},
       'draftNotes': [],
       'hiddenEyeStats': defaultHiddenEyeStats().map((x) => x.toJson()).toList(),
       'reputations': defaultReputations().map((x) => x.toJson()).toList(),
@@ -1483,6 +1484,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'diarioPagine': List<String>.from(diarioPagine),
       'journalEntries': journalEntries.map((x) => x.toJson()).toList(),
       'diaryEntityRoles': diaryRoleLedger.toJson(),
+      'diaryKnowledgeSync': diaryKnowledgeSync.toJson(),
       'statGemOverflow': Map<String, int>.from(statGemOverflow),
       'tutorialSubtraitAllocation': Map<String, int>.from(
         appliedTutorialSubtraitPoints,
@@ -1560,6 +1562,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
           .map((entry) => entry.toJson())
           .toList(),
       'monsterBookRemovedIds': monsterBookRemovedIds.toList()..sort(),
+      if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length)
+        for (final key in [
+          'monsterBookSourceId',
+          'humanoidRole',
+          'monsterLootGenerated',
+          'monsterLootGeneratedAt',
+        ])
+          if (schedePersonaggio[schedaCorrente].containsKey(key))
+            key: schedePersonaggio[schedaCorrente][key],
       'realtimeRevokedAccessTags':
           schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
           ? currentSheetRevokedAccessTags().toList()
@@ -2130,6 +2141,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
     final journalRaw = json['journalEntries'];
     diaryRoleLedger = DiaryRoleLedger.fromJson(json['diaryEntityRoles']);
+    diaryKnowledgeSync.mergeFrom(
+      DiaryKnowledgeSync.fromJson(json['diaryKnowledgeSync']),
+    );
     diarySuggestionCacheKey = '';
     journalEntries
       ..clear()
@@ -6925,6 +6939,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
       return;
     }
     final createdNames = <String>[];
+    final humanoidSource = monsterBookSource ?? monsterBookEntryForGeneratedEntity(description, baseName);
+    OculumHumanoidChoice? humanoidChoice;
+    if (!createWithOculusRules && oculumIsHumanoid(selectedType, description, humanoidSource)) {
+      final previewLevel = livelloForzato ?? max(0, leggiNumero(quickSheetLevelController));
+      final previewGrade = gradoForzato ?? max(0, leggiNumero(quickSheetGradeController));
+      final previewStats = balancedQuickSheetStats(selectedType, forceEnemyProfile: forceEnemyProfile,
+        level: previewLevel, grade: previewGrade, description: '$description $baseName');
+      final budget = ['resilienza', 'volonta', 'materia', 'oculum'].fold<int>(0, (sum, key) => sum + (previewStats[key] ?? 0));
+      humanoidChoice = await askHumanoidRole(budget);
+      if (humanoidChoice == null || !mounted) return;
+    }
 
     String nextGeneratedSheetName(String requested) {
       final clean = requested.trim().isEmpty ? 'Mostro' : requested.trim();
@@ -7143,18 +7168,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
         }
         notePersonaggioController.text = backgroundController.text;
         if (matchedMonster != null) {
+          schedePersonaggio[schedaCorrente]['monsterBookSourceId'] =
+              matchedMonster.id;
           inventario
             ..clear()
             ..addAll([
-              for (final dropId in matchedMonster.dropIds)
-                InventoryItem(
-                  nome: systemMonsterReadableId(dropId),
-                  peso: 0,
-                  quantita: 1,
-                  note:
-                      'Drop preset Monster Book: ${matchedMonster.nameIt}. Modificabile dal Master.',
-                  elementoDanno: elementDisplayName(matchedMonster.elementId),
-                ),
+              for (final item in matchedMonster.inventoryItems)
+                InventoryItem.fromJson(Map<String, dynamic>.from(item)),
             ]);
         }
         buffMalusRapidiController.text = [
@@ -7939,6 +7959,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
               ...roleTraits,
             ].where((value) => value.trim().isNotEmpty).join(' ');
           }
+        }
+        if (humanoidChoice != null) {
+          final roleBudget = ['resilienza', 'volonta', 'materia', 'oculum'].fold<int>(0,
+            (sum, key) => sum + (generatedStats[key] ?? 0));
+          applyHumanoidRole(humanoidChoice!, roleBudget, livello, grado, elementDisplayName(elements.first));
+          currentHpController.text = maxHp().toString();
         }
         oculusModData['entityKind'] =
             selectedType.toLowerCase().contains('mostro')

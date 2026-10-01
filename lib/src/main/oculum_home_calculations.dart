@@ -114,6 +114,26 @@ Iterable<String> oculumActiveTitleFormulaTexts(OculumTitle title) sync* {
 }
 
 int oculumHiddenEyeDerivedBonusFor({
+  int level = 0,
+  required String id,
+  required int resilienza,
+  required int volonta,
+  required int materia,
+  required int oculum,
+  required int karma,
+}) {
+  return _oculumHiddenEyeBaseBonusFor(
+        id: id,
+        resilienza: resilienza,
+        volonta: volonta,
+        materia: materia,
+        oculum: oculum,
+        karma: karma,
+      ) +
+      (id == 'fortuna' ? 0 : max(0, level));
+}
+
+int _oculumHiddenEyeBaseBonusFor({
   required String id,
   required int resilienza,
   required int volonta,
@@ -143,6 +163,7 @@ int oculumHiddenEyeDerivedBonusFor({
     case 'adattamento':
       return resilienza ~/ 2;
     case 'forza':
+    case 'schianto':
     case 'eco':
     case 'crepa':
     case 'pressione':
@@ -190,6 +211,7 @@ String? oculumHiddenEyeStaticGroupFor(String id) {
       return 'resilienza';
     case 'eco':
     case 'forza':
+    case 'schianto':
     case 'crepa':
     case 'pressione':
     case 'fermezza':
@@ -1134,6 +1156,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       final safeTotal =
           stat.valore +
           oculumHiddenEyeDerivedBonusFor(
+            level: leggiNumero(livelloController),
             id: stat.id,
             resilienza: resilienza,
             volonta: volonta,
@@ -2204,6 +2227,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   Iterable<String> activeArtQuickTexts(CharacterArt art) sync* {
+    if (!monsterLootArtCanUse(art)) return;
     if (!art.sbloccata) return;
 
     for (final skill in art.skills) {
@@ -2255,7 +2279,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   Iterable<String> activeItemQuickTexts(InventoryItem item) sync* {
     if (!item.equipaggiata) return;
+    if (!canEquipInventoryItem(item)) return;
     yield item.buff;
+    if (item.craftData['active'] == true) {
+      yield '${item.craftData['activeBuff'] ?? ''}';
+    }
     if (item.protegge &&
         item.effettoIntegritaScudo.trim().isNotEmpty &&
         itemIntegrityEffectActive(item)) {
@@ -3844,6 +3872,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   List<HiddenEyeStat> defaultHiddenEyeStats() {
     return [
       HiddenEyeStat(
+        id: 'schianto',
+        nome: 'Schianto',
+        descrizione:
+            'Scagliare un nemico contro una parete o da un’altura. Bonus: Volonta/2. La distanza di volo è la differenza di Volontà, salvo Skill che la aumentano.',
+      ),
+      HiddenEyeStat(
         id: 'velo',
         nome: 'Velo',
         descrizione:
@@ -4161,6 +4195,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         break;
       case 'eco':
       case 'forza':
+      case 'schianto':
       case 'crepa':
       case 'pressione':
       case 'fermezza':
@@ -4291,6 +4326,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     }
     final stats = hiddenEyeDerivedStatsSnapshot();
     final bonus = oculumHiddenEyeDerivedBonusFor(
+      level: leggiNumero(livelloController),
       id: id,
       resilienza: stats['resilienza'] ?? 0,
       volonta: stats['volonta'] ?? 0,
@@ -4312,7 +4348,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     // dentro hiddenEyeTotal. I bonus numerici diretti sono invece sicuri e
     // diventano parte del totale effettivamente tirato e mostrato.
     final quickBonus = directSubtraitQuickBonus(stat);
-    final structuredBonus = activeStructuredEffectBonus(stat.id);
+    final structuredBonus = activeStructuredEffectBonus(stat.id) + roleSubtraitBonus(stat.id);
     final cacheBase = stat.valore + dustBonus + quickBonus + structuredBonus;
     final cachedBase = hiddenEyeTotalBaseCache[stat.id];
     final cachedValue = hiddenEyeTotalValueCache[stat.id];
@@ -4489,8 +4525,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int bonusAttaccoRapido() {
-    return leggiNumero(attaccoRapidoController) +
-        ascensionDustCombat.attackBonus;
+    final base = leggiNumero(attaccoRapidoController) + ascensionDustCombat.attackBonus;
+    return base + oculumGlassCannonBonus(
+      role: '${schedePersonaggio.isEmpty ? '' : schedePersonaggio[schedaCorrente]['humanoidRole'] ?? ''}',
+      hp: leggiNumero(currentHpController), maximum: maxHp(), baseAttack: base);
   }
 
   int bonusDifesaRapido() {

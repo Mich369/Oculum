@@ -1590,6 +1590,26 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 maxLines: 4,
                 enableCommandAutocomplete: true,
               ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.flash_on, size: 16),
+                label: const Text('Aggiungi solo danno rapido'),
+                onPressed: () async {
+                  final controller = TextEditingController();
+                  final value = await showDialog<int>(context: context, builder: (dialogContext) => AlertDialog(
+                    title: const Text('Modifica rapida: danno'),
+                    content: TextField(controller: controller, autofocus: true, keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Danno da aggiungere', hintText: 'Esempio: 10')),
+                    actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Annulla')),
+                      FilledButton(onPressed: () => Navigator.pop(dialogContext, int.tryParse(controller.text.trim())), child: const Text('Aggiungi'))],
+                  ));
+                  controller.dispose();
+                  if (value == null || value == 0 || !mounted) return;
+                  final command = '@Danni${value > 0 ? '+' : ''}$value';
+                  setState(() => buffMalusRapidiController.text = '${buffMalusRapidiController.text.trim()} $command'.trim());
+                  programmaSalvataggio();
+                },
+              ),
               const SizedBox(height: 10),
               smallInfoText(
                 t(
@@ -3643,6 +3663,21 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               ),
               masterInitiativeReactionCounterControl(i, compact: compact),
               masterInitiativeTokenSizeControl(i, compact: compact),
+              if (masterInitiativeSheetIndexForToken(
+                        masterInitiativeTokens[i],
+                      ) >=
+                      0 &&
+                  monsterLootSourceForSheet(
+                        schedePersonaggio[masterInitiativeSheetIndexForToken(
+                          masterInitiativeTokens[i],
+                        )],
+                      ) !=
+                      null)
+                OutlinedButton.icon(
+                  onPressed: () => confirmMonsterKill(i),
+                  icon: const Icon(Icons.inventory_2_outlined),
+                  label: const Text('Uccisione / Drop'),
+                ),
               OutlinedButton.icon(
                 onPressed: () => tiraMasterInitiativeTokenQuickRoll(i, 'vc'),
                 icon: const Icon(Icons.flash_on, size: 18),
@@ -4627,6 +4662,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final nameItController = TextEditingController(text: existing?.nameIt);
     final nameEnController = TextEditingController(text: existing?.nameEn);
     final descriptionController = TextEditingController(text: existing?.descIt);
+    final formsController = TextEditingController(
+      text: existing?.formTags.join(', '),
+    );
     final descriptionEnController = TextEditingController(
       text: existing?.descEn,
     );
@@ -4814,6 +4852,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       maxLines: 3,
                       decoration: decoration(t('Descrizione', 'Description')),
                     ),
+                    TextField(
+                      controller: formsController,
+                      decoration: decoration(
+                        'Forme ed etichette (separate da virgole)',
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: descriptionEnController,
@@ -4980,6 +5024,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       canWieldWeapons: canWieldWeapons,
                       weaponTags: parseMonsterBookList(weaponsController.text),
                       armorTags: parseMonsterBookList(armorController.text),
+                      classificationTags: parseMonsterBookList(
+                        formsController.text,
+                      ),
                     ),
                   );
                 },
@@ -4996,6 +5043,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       nameItController,
       nameEnController,
       descriptionController,
+      formsController,
       descriptionEnController,
       elementController,
       dropsController,
@@ -5232,13 +5280,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 final categoryMatches =
                     monsterBookTierFilter == 'Tutti' ||
                     categoryFor(entry) == monsterBookTierFilter ||
+                    entry.formTags.contains(monsterBookTierFilter) ||
                     tierFor(entry) == monsterBookTierFilter;
                 if (!categoryMatches) {
                   return false;
                 }
                 if (query.isEmpty) return true;
                 return oculumNormalizeText(
-                  '${entry.nameIt} ${entry.nameEn} ${entry.id} ${entry.elementId} ${entry.presetType} ${entry.descIt} ${monsterBookUsableSkillIds(entry).join(' ')} ${entry.dropIds.join(' ')} ${entry.weaponTags.join(' ')} ${entry.armorTags.join(' ')}',
+                  '${entry.nameIt} ${entry.nameEn} ${entry.formTags.join(' ')} ${entry.id} ${entry.elementId} ${entry.presetType} ${entry.descIt} ${monsterBookUsableSkillIds(entry).join(' ')} ${entry.dropIds.join(' ')} ${entry.weaponTags.join(' ')} ${entry.armorTags.join(' ')}',
                 ).contains(query);
               })
               .toList(growable: false);
@@ -5246,7 +5295,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       monsterBookFilterCacheKey = filterCacheKey;
       monsterBookFilterCache = filtered;
     }
-    final visible = filtered.take(query.isEmpty ? 24 : 80).toList();
+    final visible = filtered;
+    final forms =
+        monsterBookEntries.expand((entry) => entry.formTags).toSet().toList()
+          ..sort();
 
     return gothicPanel(
       borderColor: Colors.greenAccent.shade100,
@@ -5332,6 +5384,23 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             ],
           ),
           const SizedBox(height: 8),
+          // Barra di orientamento rapida: mantiene il Master dentro lo stesso
+          // contesto anche con centinaia di preset, senza aprire altre schermate.
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              Chip(avatar: const Icon(Icons.visibility, size: 16), label: Text('${filtered.length} visibili')),
+              Chip(avatar: const Icon(Icons.category, size: 16), label: Text('${forms.length} forme')),
+              for (final quickForm in forms.take(6))
+                FilterChip(
+                  label: Text(quickForm),
+                  selected: monsterBookTierFilter == quickForm,
+                  onSelected: (_) => setState(() => monsterBookTierFilter = monsterBookTierFilter == quickForm ? 'Tutti' : quickForm),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -5353,11 +5422,36 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             ],
           ),
           const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            key: ValueKey('creature-form-$monsterBookTierFilter'),
+            initialValue: forms.contains(monsterBookTierFilter)
+                ? monsterBookTierFilter
+                : 'Tutte le forme',
+            decoration: const InputDecoration(
+              labelText: 'Forma della creatura',
+            ),
+            items: [
+              const DropdownMenuItem(
+                value: 'Tutte le forme',
+                child: Text('Tutte le forme'),
+              ),
+              for (final form in forms)
+                DropdownMenuItem(value: form, child: Text(form)),
+            ],
+            onChanged: (value) => setState(
+              () => monsterBookTierFilter = value == 'Tutte le forme'
+                  ? 'Tutti'
+                  : value ?? 'Tutti',
+            ),
+          ),
+          smallInfoText(
+            '${filtered.length} creature — scorri l’elenco o cerca forma, nome, elemento, Skill e drop.',
+          ),
           if (filtered.isEmpty)
             smallInfoText(t('Nessun preset trovato.', 'No presets found.'))
           else
             SizedBox(
-              height: min(560.0, max(72.0, visible.length * 72.0)),
+              height: min(620.0, max(72.0, visible.length * 72.0)),
               child: ListView.builder(
                 key: const PageStorageKey<String>('master_monster_book_list'),
                 itemCount: visible.length,
@@ -5397,7 +5491,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                           ),
                         ),
                         subtitle: Text(
-                          '${entry.presetType} • ${elementDisplayName(entry.elementId)} • ${monsterBookQuickStatsLabel(entry)} • Skill ${entry.skillIds.length} • Drop ${entry.dropIds.length}',
+                          '${entry.formTags.join(' / ')} • ${entry.presetType} • ${elementDisplayName(entry.elementId)} • ${monsterBookQuickStatsLabel(entry)}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(color: tertiaryColor, fontSize: 11),
@@ -7489,6 +7583,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     required String costResource,
   }) async {
     if (skillOculumUseDialogOpen || !mounted) return null;
+    if (skill.oculumMinimoPerLivello(targetLevel) ==
+            skill.oculumMassimoPerLivello(targetLevel) &&
+        oculumSkillStatStealAmount(skill.testoEvoluzione(targetLevel)) > 0) {
+      return askFixedStatTheftTargets(skill, targetLevel);
+    }
     final normalizedResource = oculumNormalizeArtSkillCostResource(
       costResource,
     );
@@ -7819,10 +7918,19 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     if (skillIndex < 0 || skillIndex >= arti[artIndex].skills.length) return;
     final art = arti[artIndex];
     final skill = arti[artIndex].skills[skillIndex];
+    if (nuovoLivello > 0 && !monsterLootArtCanUse(art)) {
+      risultato =
+          'Skill del drop bloccata: equipaggia l’oggetto e raggiungi il suo grado richiesto.';
+      aggiungiLog(risultato);
+      notifyDiceResultChanged();
+      return;
+    }
     final livelloPrecedente = skill.livello;
     final livelloNuovo = nuovoLivello.clamp(0, artMaxLevel(art)).toInt();
     if (livelloNuovo == livelloPrecedente) return;
-    if (art.tipo == 'Art Mostro' && livelloNuovo > livelloPrecedente) {
+    if ((art.tipo == 'Art Mostro' ||
+            art.tipo.startsWith('Art Oggetto Drop:')) &&
+        livelloNuovo > livelloPrecedente) {
       final required = int.tryParse(
         RegExp(
               r'Richiede livello\s+(\d+)',
@@ -8114,6 +8222,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         source: '${art.nome} / ${skill.nome} ${artLevelRoman(livelloNuovo)}',
         level: livelloNuovo,
         spentResources: <String, num>{costResource: resourceSpent},
+      );
+      structuredMessages.addAll(
+        applyAutomaticStatTheft(
+          skill,
+          livelloNuovo,
+          resourceUse,
+          '${art.nome} / ${skill.nome} ${artLevelRoman(livelloNuovo)}',
+        ),
       );
       if (structuredMessages.isNotEmpty) {
         risultato +=

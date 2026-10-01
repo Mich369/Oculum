@@ -31,6 +31,8 @@ import 'services/oculum_save_profile.dart';
 import 'services/oculum_diary_memory.dart';
 import 'services/oculum_diary_links.dart';
 import 'services/oculum_diary_roles.dart';
+import 'services/oculum_diary_knowledge_sync.dart';
+import 'widgets/oculum_diary_context_menu.dart';
 import 'pages/oculum_eye_memory_page.dart';
 import 'widgets/oculum_bottom_nav.dart';
 import 'widgets/oculum_desktop_top_menu.dart';
@@ -77,6 +79,12 @@ part 'src/main/oculum_home_map_attachments.dart';
 part 'src/main/oculum_home_dice_page.dart';
 part 'src/main/oculum_p2p_network.dart';
 part 'src/main/oculum_realtime_integration.dart';
+part 'src/main/oculum_diary_knowledge_integration.dart';
+part 'src/main/oculum_monster_loot.dart';
+part 'src/main/oculum_authored_materials.dart';
+part 'src/main/oculum_skill_target_automation.dart';
+part 'src/main/oculum_humanoid_roles.dart';
+part 'src/main/oculum_global_search.dart';
 part 'src/main/oculum_friends.dart';
 part 'src/main/oculum_campaigns.dart';
 part 'src/main/oculum_story_session_notes.dart';
@@ -1525,6 +1533,12 @@ class _OculumHomePageState extends State<OculumHomePage>
   String selectedForgeTemplateId = '';
   final List<JournalEntry> journalEntries = [];
   DiaryRoleLedger diaryRoleLedger = DiaryRoleLedger();
+  final DiaryKnowledgeSync diaryKnowledgeSync = DiaryKnowledgeSync();
+  final ValueNotifier<int> diaryKnowledgeRevision = ValueNotifier(0);
+  DiaryMemory? openedEyeMemory;
+  Timer? diaryKnowledgeRetryTimer;
+  bool diaryKnowledgeSending = false;
+  Future<void>? diaryKnowledgeReceiving;
   String diarySuggestionCacheKey = '';
   List<DiaryEntity> diarySuggestionCache = const [];
   final List<DraftNote> draftNotes = [];
@@ -3577,6 +3591,8 @@ class _OculumHomePageState extends State<OculumHomePage>
     realtimeOculumDebounceTimer?.cancel();
     realtimeSheetShareDebounceTimer?.cancel();
     realtimeReconnectTimer?.cancel();
+    diaryKnowledgeRetryTimer?.cancel();
+    diaryKnowledgeRevision.dispose();
     hiddenEyeProgressSaveTimer?.cancel();
     progressJournalSaveTimer?.cancel();
     storySessionNotesSaveTimer?.cancel();
@@ -4210,7 +4226,11 @@ class _OculumHomePageState extends State<OculumHomePage>
 
     return Theme(
       data: _cachedAppTypographyTheme!,
-      child: Scaffold(
+      child: CallbackShortcuts(
+        bindings: <ShortcutActivator, VoidCallback>{
+          const SingleActivator(LogicalKeyboardKey.keyF, control: true): openOculumGlobalSearch,
+        },
+        child: Scaffold(
         appBar: AppBar(
           toolbarHeight: compactPhone ? 48 : null,
           actionsIconTheme: IconThemeData(size: compactPhone ? 20 : 24),
@@ -4712,6 +4732,7 @@ class _OculumHomePageState extends State<OculumHomePage>
                   vaiAllaFunzione(page: index, logTitle: pageLabels[index]);
                 },
               ),
+        ),
       ),
     );
   }
