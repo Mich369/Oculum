@@ -68,6 +68,8 @@ Nella Mappa seleziona il nodo e premi «Cambia ruolo». Può passare da Party a 
 
 La vista campagna completa è riservata al Master; la vista Player usa i propri testi. Il catalogo dei suggerimenti personali non legge i diari degli altri personaggi.
 
+Il registro personale `diaryEntityRoles` viene escluso dalle schede realtime e dalle patch al proprietario: modificare un ruolo nella propria memoria non sovrascrive la conoscenza di un altro utente. Rimane nei salvataggi e nei backup locali.
+
 | File | Cosa puoi modificare |
 | --- | --- |
 | `lib/services/oculum_diary_links.dart` | Categorie proposte, alias ricordati, ricerca entro 256 caratteri, limite 8 suggerimenti di nomi e inserimento del collegamento. Tutte le categorie di un nome nuovo rimangono disponibili. |

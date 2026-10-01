@@ -2,6 +2,34 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('private Eye roles never propagate through owner sheet edits', () {
+    final original = <String, dynamic>{
+      'currentHp': '100',
+      'diaryEntityRoles': [],
+    };
+    final edited = <String, dynamic>{
+      'currentHp': '90',
+      'diaryEntityRoles': [
+        {'entityId': 'one', 'role': 'enemy', 'history': []},
+      ],
+    };
+    expect(oculumRealtimeBuildSheetPatch(original, edited), {
+      'currentHp': '90',
+    });
+    expect(
+      oculumRealtimeFallbackEditablePatch(
+        edited,
+      ).containsKey('diaryEntityRoles'),
+      isFalse,
+    );
+    expect(
+      oculumRealtimeMergeSheetPatch(edited, {
+        'currentHp': '80',
+        'diaryEntityRoles': [],
+      })['diaryEntityRoles'],
+      edited['diaryEntityRoles'],
+    );
+  });
   test('patch realtime cambia solo il campo modificato', () {
     final original = <String, dynamic>{
       'nome': 'Hoshy',

@@ -26,6 +26,7 @@ const Set<String> oculumRealtimeMetadataKeys = <String>{
   'publicInitiativeRollHidden',
   'realtimeCoMaster',
   'realtimeShareWithFriends',
+  'diaryEntityRoles',
 };
 
 const Set<String> oculumRealtimeProtectedEmptyFields = <String>{
@@ -1364,6 +1365,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'oculumSentFriendRequests',
       'blockedOculumFriends',
       'realtimeRevokedAccessTags',
+      'diaryEntityRoles',
     ]) {
       safe.remove(key);
     }
