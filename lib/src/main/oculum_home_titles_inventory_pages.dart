@@ -28,7 +28,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
   void openEyeMemory({bool campaign = false}) {
     final wholeCampaign =
         campaign && (modalitaMaster || isMasterHost || realtimeIsMasterRole);
-    final documents = <DiaryDocument>[];
+    final documents = <DiaryDocument>[
+      ...diaryKnowledgeSync.documentsFor(
+        diaryKnowledgeRoom(),
+        sheetTagAt(schedaCorrente),
+      ),
+    ];
     final count = wholeCampaign ? max(1, schedePersonaggio.length) : 1;
     for (int index = 0; index < count; index++) {
       final sheetIndex = wholeCampaign ? index : schedaCorrente;
@@ -98,6 +103,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     );
     final roleLedger = diaryRoleLedger;
     roleLedger.apply(memory);
+    diaryKnowledgeSync.apply(
+      memory,
+      room: diaryKnowledgeRoom(),
+      recipientTag: sheetTagAt(schedaCorrente),
+      personal: roleLedger,
+    );
+    openedEyeMemory = memory;
+    final masterCanEditKnowledge =
+        modalitaMaster || isMasterHost || realtimeIsMasterRole;
     final sourceSheetIndex = schedaCorrente;
     final canEditRoles =
         sourceSheetIndex < 0 ||
@@ -108,29 +122,54 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             !readBoolValue(
               schedePersonaggio[sourceSheetIndex]['realtimeRestrictedByMaster'],
             ));
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => OculumEyeMemoryPage(
-          memory: memory,
-          author: wholeCampaign
-              ? activeCampaignName()
-              : nomeSchedaPersonaggio(schedaCorrente),
-          roleHistory: roleLedger.historyFor,
-          onRoleChanged: canEditRoles
-              ? (entity, role) async {
-                  if (!roleLedger.change(entity, role, DateTime.now())) return;
-                  roleLedger.apply(memory);
-                  if (sourceSheetIndex >= 0 &&
-                      sourceSheetIndex < schedePersonaggio.length) {
-                    schedePersonaggio[sourceSheetIndex]['diaryEntityRoles'] =
-                        roleLedger.toJson();
-                  }
-                  await forzaSalvataggioImmediato(soloLocale: true);
-                }
-              : null,
-        ),
-      ),
-    );
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute<void>(
+            builder: (_) => OculumEyeMemoryPage(
+              memory: memory,
+              author: wholeCampaign
+                  ? activeCampaignName()
+                  : nomeSchedaPersonaggio(schedaCorrente),
+              roleHistory: roleLedger.historyFor,
+              nameHistory: roleLedger.nameHistoryFor,
+              knowledgeChanges: diaryKnowledgeRevision,
+              onShareKnowledge: masterCanEditKnowledge
+                  ? chooseDiaryKnowledgeRecipients
+                  : null,
+              onNameChanged: masterCanEditKnowledge
+                  ? (entity, name) async {
+                      if (!roleLedger.rename(entity, name, DateTime.now())) {
+                        return;
+                      }
+                      roleLedger.apply(memory);
+                      if (sourceSheetIndex >= 0 &&
+                          sourceSheetIndex < schedePersonaggio.length) {
+                        schedePersonaggio[sourceSheetIndex]['diaryEntityRoles'] =
+                            roleLedger.toJson();
+                      }
+                      await forzaSalvataggioImmediato(soloLocale: true);
+                    }
+                  : null,
+              onRoleChanged: canEditRoles || masterCanEditKnowledge
+                  ? (entity, role) async {
+                      if (!roleLedger.change(entity, role, DateTime.now())) {
+                        return;
+                      }
+                      roleLedger.apply(memory);
+                      if (sourceSheetIndex >= 0 &&
+                          sourceSheetIndex < schedePersonaggio.length) {
+                        schedePersonaggio[sourceSheetIndex]['diaryEntityRoles'] =
+                            roleLedger.toJson();
+                      }
+                      await forzaSalvataggioImmediato(soloLocale: true);
+                    }
+                  : null,
+            ),
+          ),
+        )
+        .whenComplete(() {
+          if (identical(openedEyeMemory, memory)) openedEyeMemory = null;
+        });
   }
   // STORIA / DIARIO
   // =====================================================
@@ -1209,7 +1248,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       <String, num>{'oculum': oculumImmesso},
     );
     final structuredMessages = applyStructuredEffectsOnActivation(
-      form.effettiStrutturati,
+      form.effettiStrutturati.map((effect) => effect.id == 'role:Bastione:defense'
+          ? (OculumStructuredEffect.fromJson(effect.toJson())..valueExpression = '${difesa()}') : effect),
       source:
           '${skill.nome.trim().isEmpty ? t('Skill senza nome', 'Unnamed skill') : skill.nome.trim()} - $formName',
       spentResources: <String, num>{'oculum': oculumImmesso},
@@ -4696,6 +4736,19 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           position.dy,
         ),
         items: <PopupMenuEntry<String>>[
+          if (item.craftData.isNotEmpty)
+            PopupMenuItem<String>(value: 'material_active', child: Text(item.craftData['active'] == true ? 'Disattiva materiale' : 'Attiva materiale')),
+          if (item.monsterLoot['material'] == true)
+            const PopupMenuItem<String>(
+              value: 'combine_monster',
+              child: Text('Combina materiale del mostro'),
+            ),
+          if (item.monsterLoot['material'] != true &&
+              item.monsterLoot['skill'] is Map)
+            const PopupMenuItem<String>(
+              value: 'monster_skill',
+              child: Text('Skill ereditata dal mostro'),
+            ),
           if (isMerchantConsumable(item))
             PopupMenuItem<String>(
               value: 'use',
@@ -4778,6 +4831,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       );
       if (!mounted || choice == null || !inventario.contains(item)) return;
       switch (choice) {
+        case 'combine_monster':
+          await combineMonsterMaterial(item);
+          break;
+        case 'material_active':
+          toggleAuthoredMaterial(item);
+          break;
+        case 'monster_skill':
+          openMonsterLootSkill(item);
+          break;
         case 'use':
           await useMerchantConsumable(item);
           break;

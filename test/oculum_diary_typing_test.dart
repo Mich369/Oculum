@@ -62,6 +62,22 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
       final dynamic state = tester.state(find.byType(OculumHomePage));
       final probe = OculumPerformanceProbe(state);
+      final sheet = probe.snapshot();
+      state.schedePersonaggio
+        ..clear()
+        ..addAll(
+          List.generate(
+            300,
+            (i) => <String, dynamic>{
+              ...sheet,
+              'nome': 'Scheda $i',
+              'sheetTag':
+                  'TypingOcu:${i < 3 ? 3690 : 410 + i}X${i.toString().padLeft(3, '0')}',
+            },
+          ),
+        );
+      state.schedaCorrente = 0;
+      probe.load(state.schedePersonaggio.first);
 
       state.journalEntries.add(
         JournalEntry(
@@ -116,6 +132,7 @@ void main() {
         expect(controller.selection.baseOffset, controller.text.length);
       }
       expect(state.journalEntries.first.description, controller.text);
+      expect(state.schedePersonaggio.length, 300);
       await tester.pump(const Duration(milliseconds: 350));
       expect(state.derivedDataRevision, revision);
       expect(

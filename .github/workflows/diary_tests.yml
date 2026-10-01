@@ -41,13 +41,24 @@ jobs:
         run: flutter analyze --no-pub
 
       - name: Test memory parser and link suggestions
-        run: flutter test --no-pub test/oculum_diary_memory_test.dart test/oculum_diary_roles_links_test.dart
+        run: flutter test --no-pub test/oculum_diary_memory_test.dart test/oculum_diary_roles_links_test.dart test/oculum_diary_context_menu_test.dart test/oculum_diary_knowledge_sync_test.dart test/oculum_subtrait_level_test.dart
 
       - name: Test Eye Map layout
         run: flutter test --no-pub test/oculum_eye_memory_widget_test.dart test/oculum_memory_eye_test.dart
 
       - name: Test fluent diary typing
         run: flutter test --no-pub test/oculum_diary_typing_test.dart
+
+      - name: Verify Master with 300 sheets and safe save loading
+        run: flutter test --no-pub test/oculum_large_campaign_benchmark_test.dart test/oculum_save_load_role_regression_test.dart --dart-define=OculumBenchmarkSheets=300 --dart-define=OculumBenchmarkLabel=master-300-ci
+
+      - name: Upload Master performance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oculum-master-300-performance
+          path: output/performance/master-300-ci.json
+          if-no-files-found: ignore
 
       - name: Optional live Supabase delivery verification
         if: github.event_name == 'workflow_dispatch' && inputs.live_realtime

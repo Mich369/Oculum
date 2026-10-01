@@ -263,6 +263,21 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
         inputFormatters: widget.inputFormatters,
         textInputAction: multiline ? TextInputAction.newline : null,
         maxLines: widget.maxLines,
+        contextMenuBuilder: (context, editable) => widget.diaryCatalogue == null
+            ? AdaptiveTextSelectionToolbar.editableText(
+                editableTextState: editable,
+              )
+            : oculumDiaryContextMenu(
+                context,
+                editable,
+                english: widget.linguaInglese,
+                onAssigned: (value) {
+                  if (!mounted) return;
+                  _controller.value = value;
+                  _focusNode.requestFocus();
+                  _notifyEdited();
+                },
+              ),
         onChanged: (_) => _notifyEdited(),
         style: widget.style,
         decoration: decorated,

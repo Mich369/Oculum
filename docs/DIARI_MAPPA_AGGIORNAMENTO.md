@@ -1,5 +1,15 @@
 # Aggiornamento Oculum: Diari, Mappa degli Occhi e recuperi
 
+## Correzione caricamento e Attacco — 1 ottobre 2026
+
+Eliminata la dipendenza circolare fra formula Attacco, Vita massima e formule rapide. Un errore di interpretazione dell'app non deve più sostituire un JSON valido con un backup precedente. I salvataggi normali e Test mantengono le chiavi originali e la loro separazione.
+
+Il campo «Bonus Attacco (danni inflitti)» aggiunge danni senza aumentare VC. La VC contribuisce ai danni inflitti. Il campo Danno/Cura applica danni subiti o cure. Le formule per elemento e i fallback delle schede Master/connesse seguono la stessa separazione. La regola esistente dei comandi `@VC` (Volontà ×3) rimane valida.
+
+Modificabile: formule in `oculum_home_calculations.dart`; etichette in `oculum_home_sheet_page.dart` e `oculum_home_dialogs_quick_edit.dart`; fallback Master/connessi in `oculum_home_combat_progression.dart` e `oculum_home_share_content.dart`; protezione dal recupero di una revisione precedente in `oculum_home_persistence.dart`. Test: `oculum_save_load_role_regression_test.dart`, con copie private opzionali tramite `OculumRecoveryFixture`.
+
+Le copie locali di recupero in `output/save-recovery-20261001` sono escluse da Git. Non vengono distribuite con l'app.
+
 ## Funzioni aggiunte e corrette
 
 - Diari multipli per personaggio tramite nome del diario; editor e testo originale conservati. Vecchi salvataggi senza nome usano «Diario».
@@ -20,6 +30,26 @@
 - Correzione del lag nella scrittura: i campi dei Diari non invalidano i calcoli di gioco a ogni carattere. Anteprime dei comandi dopo 320 ms di pausa, autosave dopo 2600 ms; testo e cursore restano immediati. Test su testo lungo e digitazione ripetuta.
 
 ## Parametri modificabili
+
+### Master con 300 schede — 1 ottobre 2026
+
+- La plancia Party usa un elenco a righe costruite quando entrano nel viewport: tutte le schede restano disponibili scorrendo, senza montare centinaia di schede insieme. Lo stesso principio è applicato ai turni riportati delle campagne.
+- Il riepilogo dei turni legge solo identificativo, nome e token: non duplica diari, inventari o immagini della campagna a ogni aggiornamento.
+- Gli identificativi già normalizzati vengono letti senza riattraversare l'intero elenco. Caricamento, importazione, creazione e salvataggio mantengono la normalizzazione completa e la verifica di unicità.
+- La ricerca delle schede durante la normalizzazione dei token usa un indice locale, ricreato a ogni chiamata per evitare dati obsoleti.
+- Il test di campagna supporta 300 schede, tutte nel Party, 300 token collegati, 300 Occhi e immagini originali. Controlla anche che l'autosave conservi ogni scheda e il ritratto. Il test di scrittura dei Diari mantiene 300 schede e verifica testo, cursore e assenza di invalidazione dei calcoli a ogni carattere.
+- Le misure sono test CPU in modalità debug, non una certificazione di frame rate su ogni dispositivo. I salvataggi molto grandi richiedono ancora tempo per completare la scrittura protetta; autosave e backup rimangono attivi.
+
+| Cosa si può modificare | File e punto |
+| --- | --- |
+| Soglia della plancia Party (6), larghezza di colonna (330), altezza (280–620), precaricamento (100) | `lib/src/main/oculum_home_secondary_pages.dart`, `masterDashboardPartyBoardPanel` |
+| Soglia e viewport dei nemici (8, massimo 720), iniziativa (6, massimo 720), anteprima Party (24), righe elenco salvato (64) | `lib/src/main/oculum_home_secondary_pages.dart`, pannelli Master |
+| Altezza del riepilogo turni (massimo 320) e righe (48) | `lib/src/main/oculum_skill_effects_ui.dart`, `masterAllBattlesTurnDashboard` |
+| Lettura rapida degli identificativi e normalizzazione dei salvataggi | `lib/src/main/oculum_home_persistence.dart`, `sheetTagAt`, `sheetInMasterPartyAt`, `assicuraTagSchede` |
+| Indice temporaneo token/schede | `lib/src/main/oculum_home_combat_progression.dart`, `normalizeMasterInitiativeTokens` |
+| Numero di schede e nome del rapporto | `test/oculum_large_campaign_benchmark_test.dart`: definizioni `OculumBenchmarkSheets` e `OculumBenchmarkLabel` |
+| Campagna di prova durante la digitazione | `test/oculum_diary_typing_test.dart`: elenco di 300 schede |
+| Test automatico GitHub con 300 schede e rapporto scaricabile | `.github/workflows/diary_tests.yml` |
 
 | Parametro | Dove modificarlo |
 | --- | --- |
@@ -108,4 +138,35 @@ Cambiare ruolo nell'Occhio cambia subito l'icona, conserva identità, fonti e cr
 
 Verifica dei pixel finali: 53.124 pixel visibili dell'NPC, 342.872 dei Morti e 21.219 degli Obliterati confrontati con gli originali, senza differenze RGB. La prova controlla anche le dimensioni. La suite usa screenshot del Manoscritto separati per piattaforma e, con `OculumBenchmarkLabel`, per esecuzione: evita collisioni e blocchi Windows sui PNG aperti.
 
-Verifica finale di questa modifica: 588 test superati, 2 prove live facoltative saltate; log `output/eye-icons-final-regression-20261001.log`. I test dei layout includono desktop e mobile simulati. Il test live Supabase descritto nelle sezioni precedenti resta una verifica separata svolta con due client sullo stesso computer.
+Verifica della modifica alle icone: 588 test superati, 2 prove live facoltative saltate; log `output/eye-icons-final-regression-20261001.log`. I test dei layout includono desktop e mobile simulati. Il test live Supabase descritto nelle sezioni precedenti resta una verifica separata svolta con due client sullo stesso computer.
+
+## Sottotratti, Schianto e correzioni della memoria — 1 ottobre 2026
+
+Ogni sottotratto aggiunge il Livello al bonus esistente, una volta sola. Anche i sottotratti personalizzati ricevono questo bonus. Fortuna mantiene la sua formula precedente: non riceve il nuovo bonus di Livello intero. Base, maestria, bonus temporanei e valori salvati restano distinti dal bonus calcolato.
+
+Schianto è nel gruppo Volontà, con bonus metà Volontà + Livello oltre ai punti base e agli altri bonus esistenti. I salvataggi precedenti ricevono il nuovo sottotratto a base zero conservando gli altri valori. Le metà intere seguono la convenzione esistente dell'app (31 / 2 → 15).
+
+Il manuale descrive la distanza di volo come differenza positiva fra Volontà dell'attaccante e del bersaglio, aumentabile dalle Skill. Schianto può scagliare contro pareti o da alture: Danno + metà Volontà + durezza della superficie. Il recupero dal volo è possibile fino al proprio Livello in metri. Restano descritte le precedenti proporzioni per l'impatto (fragile ÷2, muro ×1, rinforzato ×2). Il valore numerico della durezza nella nuova formula additiva è ancora da chiarire con l'autore: non è stato inventato un automatismo di danno.
+
+Nei Diari, seleziona un nome e usa il tasto destro su desktop o la pressione prolungata su mobile: «Assegna ruolo» conserva Copia/Incolla e inserisce un collegamento esplicito. Se la selezione è dentro un link già esistente, riclassifica il collegamento senza annidarlo. Solo questa azione esplicita modifica il testo selezionato.
+
+Il Master può rinominare un'entità nella propria mappa, cambiarne il ruolo privatamente e consultare la cronologia di nomi e ruoli. L'identità, gli alias originali e le citazioni dei Diari restano invariati. «Condividi con il party» consente di scegliere separatamente nome e ruolo, con destinatari singoli o tutti i membri disponibili. Per segnare un morto per tutti: cambia il ruolo in Morto, apri Condividi e seleziona tutto il party.
+
+Questa condivisione usa il realtime esistente: le comunicazioni selettive sono cifrate per destinatario, salvate prima dell'invio e mantenute nella coda fino alla conferma del destinatario, anche dopo riconnessione. Il ricevente conserva una comunicazione del Master cliccabile come fonte, senza alterare i suoi Diari. Al momento il nuovo invio selettivo è integrato nel realtime Supabase; il trasporto LAN/relay continua a funzionare per le funzioni precedenti e non trasmette il registro privato né l'identità crittografica. La nuova condivisione selettiva su LAN/relay e la verifica su due dispositivi fisici restano da completare.
+
+| Cosa puoi modificare | File / parametro |
+| --- | --- |
+| Bonus di Livello e basi dei sottotratti, Schianto e gruppo | `lib/src/main/oculum_home_calculations.dart`, `oculumHiddenEyeDerivedBonusFor`, `defaultHiddenEyeStats` |
+| Descrizione del bonus nelle schede | `lib/src/main/oculum_home_sheet_page.dart`, `hiddenEyeStatDescription` |
+| Test bonus, Fortuna e migrazione | `test/oculum_subtrait_level_test.dart` |
+| Regole Schianto italiane e inglesi | `lib/src/main/oculum_manual_sections.dart`, sezione 12 |
+| Menu destro / pressione prolungata | `lib/widgets/oculum_diary_context_menu.dart` e `lib/services/oculum_diary_links.dart` |
+| Cronologia dei nomi, alias e ruoli privati | `lib/services/oculum_diary_roles.dart` |
+| Pulsanti Master, ricerca alias e cronologie | `lib/pages/oculum_eye_memory_page.dart` |
+| Campi condivisi e destinatari, tentativi ogni 30 secondi | `lib/src/main/oculum_diary_knowledge_integration.dart` |
+| Coda persistente, revisioni, ACK, cifratura e limiti dei messaggi | `lib/services/oculum_diary_knowledge_sync.dart` |
+| Presenza e nuovi eventi nel realtime esistente | `lib/services/oculum_realtime_service.dart`, `lib/src/main/oculum_realtime_integration.dart` |
+| Esclusione dei metadati privati da LAN/relay | `lib/src/main/oculum_p2p_network.dart`, `diaryPublicSheet` |
+| Campo aggiuntivo locale `diaryKnowledgeSync` e lettura retrocompatibile | `lib/src/main/oculum_home_persistence.dart` |
+| Verifiche menu, cifratura, coda, rinomina e protezione patch | `test/oculum_diary_context_menu_test.dart`, `test/oculum_diary_knowledge_sync_test.dart`, `test/oculum_realtime_patch_test.dart` |
+| Test nelle Actions e schermate separate per esecuzione | `.github/workflows/diary_tests.yml`, `.github/workflows/test_windows_distribution.yml`, `test/oculum_eye_memory_widget_test.dart` |

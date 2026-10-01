@@ -8,6 +8,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  const sheetCount = int.fromEnvironment(
+    'OculumBenchmarkSheets',
+    defaultValue: 120,
+  );
+  String fixtureTag(int i) =>
+      'BenchmarkOcu:${i < 3 ? 3690 : 410 + (i % 470)}X${i.toString().padLeft(3, '0')}';
   TestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('large campaign reproducible performance', (tester) async {
     SharedPreferences.setMockInitialValues({});
@@ -79,18 +85,20 @@ void main() {
     fixture['currentHp'] = '300';
     fixture['immaginePersonaggioBase64'] = portrait;
     final sheets = List.generate(
-      120,
+      sheetCount,
       (i) => <String, dynamic>{
         ...oculumCopyJsonTree(fixture) as Map<String, dynamic>,
         'nome': 'Creature $i',
-        'sheetTag': 'perf_$i',
+        'sheetTag': fixtureTag(i),
+        'id': fixtureTag(i),
+        'inMasterParty': true,
         'tipoScheda': i == 0 ? 'Personaggio' : 'Mostro',
       },
     );
     final report = <String, dynamic>{
-      'sheets': 120,
+      'sheets': sheetCount,
       'eyes': 300,
-      'tokens': 120,
+      'tokens': sheetCount,
       'mode':
           'Flutter debug widget test; CPU pump wall time is not GPU frame time',
     };
@@ -126,17 +134,17 @@ void main() {
       state.masterInitiativeTokens.clear();
       state.masterInitiativeTokens.addAll(
         List.generate(
-          120,
+          sheetCount,
           (i) => <String, dynamic>{
             'id': 'token_$i',
             'name': 'Creature $i',
-            'sheetTag': 'perf_$i',
+            'sheetTag': fixtureTag(i),
             'sheetIndex': i,
             'currentHp': 300,
             'maxHp': 300,
             'status': 'ready',
             'side': 'enemy',
-            'initiative': 120 - i,
+            'initiative': sheetCount - i,
           },
         ),
       );
@@ -146,7 +154,7 @@ void main() {
           300,
           (i) => <String, dynamic>{
             'id': 'eye_$i',
-            'ownerSheetId': 'perf_0',
+            'ownerSheetId': fixtureTag(0),
             'name': 'Eye $i',
             'rarity': 'non_comune',
             'active': false,
@@ -166,7 +174,7 @@ void main() {
       final raw = jsonEncode(sheets);
       report['campaign_bytes'] = raw.length;
       final decoded = jsonDecode(raw) as List;
-      expect(decoded.length, 120);
+      expect(decoded.length, sheetCount);
     });
     await measure('master_open_ms', () async {
       state.updateOculumHomeUi(() {
@@ -175,6 +183,23 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
     });
+    final mountedPartyCards = find
+        .byWidgetPredicate(
+          (widget) =>
+              widget.key is ValueKey<String> &&
+              (widget.key as ValueKey<String>).value.startsWith(
+                'master_party_card_',
+              ),
+        )
+        .evaluate()
+        .length;
+    report['mounted_party_cards'] = mountedPartyCards;
+    expect(mountedPartyCards, greaterThan(0));
+    expect(
+      mountedPartyCards,
+      lessThan(50),
+      reason: 'Offscreen sheets must stay lazy',
+    );
     var rebuilds = 0;
     debugOnRebuildDirtyWidget = (element, built) {
       rebuilds++;
@@ -228,6 +253,20 @@ void main() {
         await probe.save();
       });
     });
+    final prefs = await SharedPreferences.getInstance();
+    final stored =
+        jsonDecode(prefs.getString('oculum_save_v9_manual_rgb_opacity_clean')!)
+            as Map;
+    expect((stored['schedePersonaggio'] as List).length, sheetCount);
+    expect(
+      stored['schedePersonaggio'][sheetCount - 1]['nome'],
+      'Creature ${sheetCount - 1}',
+    );
+    expect(
+      stored['schedePersonaggio'][sheetCount - 1]['immaginePersonaggioBase64'],
+      portrait,
+    );
+    expect(state.salvataggioBloccatoPerErrore, isFalse);
     expect(tester.takeException(), isNull);
     await tester.runAsync(() async {
       final dir = Directory('output/performance')..createSync(recursive: true);

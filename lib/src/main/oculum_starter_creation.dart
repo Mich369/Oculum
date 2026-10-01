@@ -97,9 +97,9 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) => CharacterArt(
       ArtSkill(
         nome: monsterBookSkillText(id).split('—').first.trim(),
         livello: 0,
-        evo1: 'Richiede livello 0\n${monsterBookSkillForms(id)[0]}',
-        evo2: 'Richiede livello 0\n${monsterBookSkillForms(id)[1]}',
-        evo3: 'Richiede livello 0\n${monsterBookSkillForms(id)[2]}',
+        evo1: _monsterBookSkillEvolution(id, 0),
+        evo2: _monsterBookSkillEvolution(id, 1),
+        evo3: _monsterBookSkillEvolution(id, 2),
         oculumMinimiPerLivello:
             id.startsWith('snorlo_') ||
                 id.startsWith('incubo_') ||
@@ -128,6 +128,13 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) => CharacterArt(
       ),
   ],
 );
+
+String _monsterBookSkillEvolution(String id, int form) {
+  final text = monsterBookSkillForms(id)[form];
+  return text.contains(RegExp(r'Richiede livello\s+\d+', caseSensitive: false))
+      ? text
+      : 'Richiede livello 0\n$text';
+}
 
 List<OculumStructuredEffect> oculumSnorloSkillEffects(String id) {
   final baseId = id.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');

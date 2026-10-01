@@ -5523,7 +5523,16 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   }
 
   Widget hiddenEyeStatDescription(HiddenEyeStat stat) {
-    return smallInfoText(stat.descrizione, color: Colors.grey.shade400);
+    final levelBonus = stat.id == 'fortuna'
+        ? ''
+        : t(
+            ' + Livello (${max(0, leggiNumero(livelloController))}).',
+            ' + Level (${max(0, leggiNumero(livelloController))}).',
+          );
+    return smallInfoText(
+      '${stat.descrizione}$levelBonus',
+      color: Colors.grey.shade400,
+    );
   }
 
   Widget hiddenEyeStatManagerCard({
@@ -5849,12 +5858,12 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 child: functionAnchor(
                   'sheet_attack_bonus',
                   campoTesto(
-                    label: t('Bonus VC', 'VC Bonus'),
+                    label: t('Bonus Attacco (danni inflitti)', 'Attack bonus (damage dealt)'),
                     controller: attaccoRapidoController,
                     focusNode: attaccoRapidoFocusNode,
                     helper: t(
-                      'Modifica soltanto VC; i bonus danno restano separati.',
-                      'Changes VC only; damage bonuses stay separate.',
+                      'Aumenta i tuoi danni, senza aumentare VC. La VC contribuisce ai danni inflitti.',
+                      'Increases your damage without increasing VC. VC contributes to damage dealt.',
                     ),
                   ),
                 ),

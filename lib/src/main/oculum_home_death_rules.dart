@@ -289,6 +289,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
           risultato =
               'Tiro contro la morte: terza Ferita. Il personaggio e morto.';
           segnaFallenEyeMortoDaScheda(schedePersonaggio[schedaCorrente]);
+          generateMonsterLootForDeath(schedaCorrente);
         }
         aggiungiLog(risultato);
         salvaSchedaCorrenteInMemoria();
@@ -344,6 +345,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     final downed = masterInitiativeTokenIsDowned(token);
     final sheet = schedePersonaggio[index];
     final hp = max(0, readIntValue(token['currentHp']));
+    if (token['status'] == 'dead') generateMonsterLootForDeath(index);
     final oculum = max(0, readIntValue(token['currentOculum']));
     final shield = max(0, readIntValue(token['shield']));
     final temporaryHp = readIntValue(

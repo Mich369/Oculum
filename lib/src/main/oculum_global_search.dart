@@ -27,9 +27,13 @@ extension _OculumGlobalSearch on _OculumHomePageState {
     void scan(dynamic value, String path) {
       if (hits.length >= 80) return;
       if (value is Map) {
-        for (final item in value.entries) scan(item.value, '$path/${item.key}');
+        for (final item in value.entries) {
+          scan(item.value, '$path/${item.key}');
+        }
       } else if (value is Iterable) {
-        var index = 0; for (final item in value) scan(item, '$path[$index++]');
+        var index = 0; for (final item in value) {
+          scan(item, '$path[$index++]');
+        }
       } else if (oculumNormalizeText('$value').contains(needle)) {
         hits.add(OculumSearchHit(title: path.split('/').last, preview: '$value', page: 0, anchor: _anchorForSearchPath(path)));
       }

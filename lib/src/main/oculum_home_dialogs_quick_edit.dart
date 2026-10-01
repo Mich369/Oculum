@@ -231,7 +231,7 @@ extension _OculumHomeDialogsQuickEdit on _OculumHomePageState {
         title: t('Attacco e Difesa', 'Attack and Defense'),
         entries: [
           OculumQuickEditEntry(
-            label: t('Bonus Attacco / VC', 'Attack / VC Bonus'),
+            label: t('Bonus Attacco (danni inflitti)', 'Attack bonus (damage dealt)'),
             controller: attaccoRapidoController,
           ),
           OculumQuickEditEntry(
@@ -556,7 +556,7 @@ extension _OculumHomeDialogsQuickEdit on _OculumHomePageState {
                       ),
                       SizedBox(height: compact ? 6 : 10),
                       quickField(
-                        t('Bonus Attacco / VC', 'Attack / VC Bonus'),
+                        t('Bonus Attacco (danni inflitti)', 'Attack bonus (damage dealt)'),
                         attaccoRapidoController,
                         allowNegative: true,
                       ),

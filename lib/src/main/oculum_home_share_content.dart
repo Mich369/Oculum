@@ -1244,11 +1244,7 @@ extension _OculumHomeShareContent on _OculumHomePageState {
     switch (key) {
       case 'vc':
         return levelGrade +
-            connectedSheetIntValue(sheet, 'volonta') ~/ 3 +
-            readIntValue(sheet['attaccoRapido']) +
-            OculumDustCombatBoost.fromJson(
-              sheet['ascensionDustCombat'],
-            ).attackBonus;
+            connectedSheetIntValue(sheet, 'volonta') ~/ 3;
       case 'cm':
         return levelGrade +
             connectedSheetIntValue(sheet, 'materia') ~/ 2 +

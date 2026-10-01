@@ -4456,7 +4456,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       debugPrint('Errore caricamento salvataggio Oculum: $error');
       debugPrint('$stackTrace');
 
-      if (allowBackupRecovery) {
+      // A valid JSON save can fail because of an application regression.
+      // Keep that save intact rather than replacing it with an older backup.
+      if (allowBackupRecovery && !primaryDecodedSuccessfully) {
         loadedPrefs ??= await prefsFuture;
         final recovery = await _firstMeaningfulBackupRaw(
           loadedPrefs,
@@ -4732,14 +4734,24 @@ extension _OculumHomePersistence on _OculumHomePageState {
   String sheetTagAt(int index) {
     if (index < 0 || index >= schedePersonaggio.length) return '---';
 
-    assicuraTagSchede();
+    // Whole-roster uniqueness is checked at load/import/create/save. Reading
+    // a normalized identity must not scan hundreds of other sheets per tile.
+    final sheet = schedePersonaggio[index];
+    final tag = '${sheet['sheetTag'] ?? ''}';
+    if (tag.isEmpty ||
+        '${sheet['id'] ?? ''}' != tag ||
+        shouldReplaceSheetTag(tag, index, const <String>{})) {
+      assicuraTagSchede();
+    }
     return '${schedePersonaggio[index]['sheetTag'] ?? '---'}';
   }
 
   bool sheetInMasterPartyAt(int index) {
     if (index < 0 || index >= schedePersonaggio.length) return false;
 
-    assicuraTagSchede();
+    if (schedePersonaggio[index]['inMasterParty'] is! bool) {
+      assicuraTagSchede();
+    }
     return readBoolValue(schedePersonaggio[index]['inMasterParty']);
   }
 
@@ -6939,14 +6951,29 @@ extension _OculumHomePersistence on _OculumHomePageState {
       return;
     }
     final createdNames = <String>[];
-    final humanoidSource = monsterBookSource ?? monsterBookEntryForGeneratedEntity(description, baseName);
+    final humanoidSource =
+        monsterBookSource ??
+        monsterBookEntryForGeneratedEntity(description, baseName);
     OculumHumanoidChoice? humanoidChoice;
-    if (!createWithOculusRules && oculumIsHumanoid(selectedType, description, humanoidSource)) {
-      final previewLevel = livelloForzato ?? max(0, leggiNumero(quickSheetLevelController));
-      final previewGrade = gradoForzato ?? max(0, leggiNumero(quickSheetGradeController));
-      final previewStats = balancedQuickSheetStats(selectedType, forceEnemyProfile: forceEnemyProfile,
-        level: previewLevel, grade: previewGrade, description: '$description $baseName');
-      final budget = ['resilienza', 'volonta', 'materia', 'oculum'].fold<int>(0, (sum, key) => sum + (previewStats[key] ?? 0));
+    if (!createWithOculusRules &&
+        oculumIsHumanoid(selectedType, description, humanoidSource)) {
+      final previewLevel =
+          livelloForzato ?? max(0, leggiNumero(quickSheetLevelController));
+      final previewGrade =
+          gradoForzato ?? max(0, leggiNumero(quickSheetGradeController));
+      final previewStats = balancedQuickSheetStats(
+        selectedType,
+        forceEnemyProfile: forceEnemyProfile,
+        level: previewLevel,
+        grade: previewGrade,
+        description: '$description $baseName',
+      );
+      final budget = [
+        'resilienza',
+        'volonta',
+        'materia',
+        'oculum',
+      ].fold<int>(0, (sum, key) => sum + (previewStats[key] ?? 0));
       humanoidChoice = await askHumanoidRole(budget);
       if (humanoidChoice == null || !mounted) return;
     }
@@ -7961,9 +7988,19 @@ extension _OculumHomePersistence on _OculumHomePageState {
           }
         }
         if (humanoidChoice != null) {
-          final roleBudget = ['resilienza', 'volonta', 'materia', 'oculum'].fold<int>(0,
-            (sum, key) => sum + (generatedStats[key] ?? 0));
-          applyHumanoidRole(humanoidChoice!, roleBudget, livello, grado, elementDisplayName(elements.first));
+          final roleBudget = [
+            'resilienza',
+            'volonta',
+            'materia',
+            'oculum',
+          ].fold<int>(0, (sum, key) => sum + (generatedStats[key] ?? 0));
+          applyHumanoidRole(
+            humanoidChoice,
+            roleBudget,
+            livello,
+            grado,
+            elementDisplayName(elements.first),
+          );
           currentHpController.text = maxHp().toString();
         }
         oculusModData['entityKind'] =

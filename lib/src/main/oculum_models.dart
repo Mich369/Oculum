@@ -1355,6 +1355,8 @@ class InventoryItem {
     this.saveShieldUsedDay = 0,
     this.statGemStat = '',
     this.statGemDieFaces = 0,
+    this.monsterLoot = const {},
+    this.craftData = const {},
   });
 
   String nome;
@@ -1383,6 +1385,8 @@ class InventoryItem {
   int saveShieldUsedDay;
   String statGemStat;
   int statGemDieFaces;
+  Map<String, dynamic> monsterLoot;
+  Map<String, dynamic> craftData;
 
   Map<String, dynamic> toJson() {
     return {
@@ -1412,11 +1416,19 @@ class InventoryItem {
       'saveShieldUsedDay': saveShieldUsedDay,
       if (statGemStat.isNotEmpty) 'statGemStat': statGemStat,
       if (statGemDieFaces > 0) 'statGemDieFaces': statGemDieFaces,
+        if (monsterLoot.isNotEmpty) 'monsterLoot': monsterLoot,
+        if (craftData.isNotEmpty) 'craftData': craftData,
     };
   }
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) {
     return InventoryItem(
+        monsterLoot: json['monsterLoot'] is Map
+          ? Map<String, dynamic>.from(json['monsterLoot'])
+            : <String, dynamic>{},
+        craftData: json['craftData'] is Map
+            ? Map<String, dynamic>.from(json['craftData'])
+            : <String, dynamic>{},
       statGemStat: '${json['statGemStat'] ?? ''}',
       statGemDieFaces: readIntValue(json['statGemDieFaces']),
       nome: oculumCleanMojibakeText('${json['nome'] ?? ''}'),
@@ -2562,12 +2574,16 @@ class OculumSkillUseDialogResult {
     required this.minimum,
     required this.maximum,
     required this.limitsChanged,
+    this.targetCount = 1,
+    this.targetSheetTags = const [],
   });
 
   final int selected;
   final int minimum;
   final int maximum;
   final bool limitsChanged;
+  final int targetCount;
+  final List<String> targetSheetTags;
 }
 
 class RuneArtCustomWord {

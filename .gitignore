@@ -55,3 +55,4 @@ app.*.map.json
 
 # Local checkpoint exceeds GitHub's file size limit; retain it on disk only.
 /output/checkpoints/2026-09-05-manual-mod/shared_preferences.json
+/output/save-recovery-*/

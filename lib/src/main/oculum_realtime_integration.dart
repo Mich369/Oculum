@@ -27,6 +27,7 @@ const Set<String> oculumRealtimeMetadataKeys = <String>{
   'realtimeCoMaster',
   'realtimeShareWithFriends',
   'diaryEntityRoles',
+  'diaryKnowledgeSync',
 };
 
 const Set<String> oculumRealtimeProtectedEmptyFields = <String>{
@@ -260,6 +261,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
   void publishRealtimeStateAfterConnection() {
     if (realtimeService?.isConnected != true) return;
+    unawaited(flushDiaryKnowledge());
     sendRealtimeSheetPreview();
     sendRealtimeCurrentSheetToStaff(immediate: true);
     if (!realtimeIsMasterRole) {
@@ -355,6 +357,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     await realtimeService?.dispose();
 
     late final OculumRealtimeService service;
+    diaryKnowledgeSync.ensureIdentity();
+    await forzaSalvataggioImmediato(soloLocale: true);
+    if (!mounted) return;
     service = OculumRealtimeService(
       roomId: room,
       playerName: realtimeDisplayName(),
@@ -374,6 +379,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         'masterClaimId': realtimeMasterClaimId,
         'platform': oculumClientPlatformLabel(),
         'protocolVersion': 3,
+        'knowledgePublicKey': diaryKnowledgeSync.publicKey,
+        'knowledgeSenderTag': diaryKnowledgeSenderTag(),
       },
       onEvent: (event, payload) {
         if (!mounted || realtimeService != service) return;
@@ -410,6 +417,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           sendRealtimeCurrentSheetToStaff(immediate: true);
         }
         if (service.isConnected && friendPresenceChanged) {
+          unawaited(flushDiaryKnowledge());
           realtimeLastSentSheetHashes.removeWhere(
             (key, _) => key.startsWith('friend:'),
           );
@@ -507,6 +515,13 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   void handleRealtimeEvent(String event, Map<String, dynamic> payload) {
+    if (event == 'diary_knowledge' || event == 'diary_knowledge_ack') {
+      diaryKnowledgeReceiving =
+          (diaryKnowledgeReceiving ?? Future<void>.value())
+              .then((_) => receiveDiaryKnowledge(event, payload))
+              .catchError((Object error) {});
+      return;
+    }
     final eventKey =
         '$event|${payload['playerName'] ?? ''}'
         '|${payload['id'] ?? payload['noteId'] ?? payload['syncId'] ?? ''}'
@@ -1366,6 +1381,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'blockedOculumFriends',
       'realtimeRevokedAccessTags',
       'diaryEntityRoles',
+      'diaryKnowledgeSync',
     ]) {
       safe.remove(key);
     }

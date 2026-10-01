@@ -50,6 +50,8 @@ class OculumRealtimeService {
     'friend_response',
     'role_update',
     'sheet_received_ack',
+    'diary_knowledge',
+    'diary_knowledge_ack',
   };
 
   final String roomId;
@@ -681,6 +683,7 @@ class OculumRealtimeService {
   }
 
   Future<void> refreshPresence() => _trackPresence();
+  Future<bool> sendDiaryKnowledge(Map<String,dynamic> envelope,{bool acknowledgement=false}) => _sendConfirmed(acknowledgement?'diary_knowledge_ack':'diary_knowledge',envelope);
 
   Future<void> requestSharedSheets() => _send('sheet_ping', {
     'playerName': _displayName,

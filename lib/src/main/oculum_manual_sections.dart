@@ -444,6 +444,19 @@ Rigenerazioni:
 • Molto Forte: cura 75%
 • Semi Perfetta: cura 90%
 • Perfetta: cura 100%
+
+LO SCHIANTO
+
+I metri di volo sono pari alla differenza positiva tra la Volontà di chi attacca e quella del bersaglio. Una Skill può aumentare questa distanza. Schianto è un sottotratto di Volontà: il suo bonus è metà Volontà + Livello. Può essere usato per scagliare un nemico contro una parete o gettarlo da un’altura. Quando usi Schianto, il danno è il tuo Danno + metà Volontà + durezza della superficie.
+
+Quando un attacco ti scaglia in volo e colpisci una parete o un ostacolo, il danno da schianto dipende dai metri percorsi e dalla solidità della superficie:
+• Muri e strutture fragili: danno = metri percorsi ÷ 2.
+• Muri ordinari: danno = metri percorsi.
+• Muri rinforzati o armati: danno = metri percorsi × 2.
+
+Puoi riprendere il controllo da un volo forzato lungo fino a un numero di metri pari al tuo Livello, anche all'ultimo istante prima dell'urto. A Livello 50 puoi liberarti da un volo di 50 metri. Se la distanza supera il tuo Livello, non basta questa capacità a fermare lo schianto: più lontano vieni scagliato, maggiore è la forza dell'attacco subito e più alto deve essere il Livello necessario a contrastarla.
+
+Se l'impatto avviene, usa tutta la distanza percorsa, senza sottrarre il Livello. Un volo di 60 metri infligge 30 danni contro una struttura fragile, 60 contro un muro ordinario e 120 contro un muro rinforzato o armato.
 ''',
     contentEn: r'''
 When you take damage, follow this order:
@@ -506,6 +519,19 @@ Regenerations:
 • Very Strong: heals 75%
 • Semi-Perfect: heals 90%
 • Perfect: heals 100%
+
+THE CRASH
+
+Flight distance equals the positive difference between the attacker’s Will and the target’s Will. A Skill may increase this distance. Crash is a Will subtrait: its bonus is half Will + Level. Use it to throw an enemy against a wall or off a height. When using Crash, damage equals your Damage + half Will + surface hardness.
+
+When an attack launches you through the air and you strike a wall or obstacle, crash damage depends on the distance travelled and the strength of the surface:
+• Fragile walls and structures: damage = metres travelled ÷ 2.
+• Ordinary walls: damage = metres travelled.
+• Reinforced or armoured walls: damage = metres travelled × 2.
+
+You can recover control from forced flight over a distance up to your Level in metres, even at the last moment before impact. At Level 50 you can break free from a 50-metre flight. If the distance exceeds your Level, this ability alone cannot prevent the crash: being thrown farther represents a stronger attack, requiring a higher Level to counter it.
+
+If impact occurs, use the entire distance travelled without subtracting Level. A 60-metre flight causes 30 damage against a fragile structure, 60 against an ordinary wall, and 120 against a reinforced or armoured wall.
 ''',
   ),
 

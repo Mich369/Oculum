@@ -323,7 +323,13 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     final activeIndex = campaigns.indexWhere(
       (campaign) => '${campaign['id'] ?? ''}' == activeCampaignId,
     );
-    final activeSnapshot = currentCampaignSnapshot();
+    // This view only needs turn data. Avoid copying every sheet, diary and
+    // portrait in the active campaign on each HP/turn update.
+    final activeSnapshot = <String, dynamic>{
+      'id': activeCampaignId,
+      'name': campaignNameController.text,
+      'masterInitiativeTokens': masterInitiativeTokens,
+    };
     if (activeIndex >= 0) {
       campaigns[activeIndex] = activeSnapshot;
     } else {
@@ -397,76 +403,85 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                           'No player in the saved turn tracker.',
                         ),
                       ),
-                    for (final token in tokens)
-                      Builder(
-                        builder: (context) {
-                          final current = max(
-                            0,
-                            readIntValue(token['reportedTurn']),
-                          );
-                          final liveIndex = isActive
-                              ? masterInitiativeTokens.indexWhere(
-                                  (item) =>
-                                      '${item['id'] ?? ''}' ==
-                                          '${token['id'] ?? ''}' ||
-                                      ('${token['sheetTag'] ?? ''}'
-                                              .trim()
-                                              .isNotEmpty &&
-                                          '${item['sheetTag'] ?? ''}' ==
-                                              '${token['sheetTag'] ?? ''}'),
-                                )
-                              : -1;
-                          void update(int value) {
-                            if (isActive && liveIndex >= 0) {
-                              setMasterTokenReportedTurn(liveIndex, value);
-                            } else if (storedCampaignIndex >= 0) {
-                              final storedRaw =
-                                  campagneOculum[storedCampaignIndex]['masterInitiativeTokens'];
-                              final storedTokens = storedRaw is List
-                                  ? storedRaw
-                                  : const [];
-                              final storedIndex = storedTokens.indexWhere(
-                                (item) =>
-                                    item is Map &&
-                                    ('${item['id'] ?? ''}' ==
+                    if (tokens.isNotEmpty)
+                      SizedBox(
+                        height: min(320.0, tokens.length * 48.0),
+                        child: ListView.builder(
+                          key: PageStorageKey('reported_turns_$campaignId'),
+                          primary: false,
+                          itemExtent: 48,
+                          addAutomaticKeepAlives: false,
+                          itemCount: tokens.length,
+                          itemBuilder: (context, tokenIndex) {
+                            final token = tokens[tokenIndex];
+                            final current = max(
+                              0,
+                              readIntValue(token['reportedTurn']),
+                            );
+                            final liveIndex = isActive
+                                ? masterInitiativeTokens.indexWhere(
+                                    (item) =>
+                                        '${item['id'] ?? ''}' ==
                                             '${token['id'] ?? ''}' ||
                                         ('${token['sheetTag'] ?? ''}'
                                                 .trim()
                                                 .isNotEmpty &&
                                             '${item['sheetTag'] ?? ''}' ==
-                                                '${token['sheetTag'] ?? ''}')),
-                              );
-                              setStoredCampaignTokenReportedTurn(
-                                storedCampaignIndex,
-                                storedIndex,
-                                value,
-                              );
+                                                '${token['sheetTag'] ?? ''}'),
+                                  )
+                                : -1;
+                            void update(int value) {
+                              if (isActive && liveIndex >= 0) {
+                                setMasterTokenReportedTurn(liveIndex, value);
+                              } else if (storedCampaignIndex >= 0) {
+                                final storedRaw =
+                                    campagneOculum[storedCampaignIndex]['masterInitiativeTokens'];
+                                final storedTokens = storedRaw is List
+                                    ? storedRaw
+                                    : const [];
+                                final storedIndex = storedTokens.indexWhere(
+                                  (item) =>
+                                      item is Map &&
+                                      ('${item['id'] ?? ''}' ==
+                                              '${token['id'] ?? ''}' ||
+                                          ('${token['sheetTag'] ?? ''}'
+                                                  .trim()
+                                                  .isNotEmpty &&
+                                              '${item['sheetTag'] ?? ''}' ==
+                                                  '${token['sheetTag'] ?? ''}')),
+                                );
+                                setStoredCampaignTokenReportedTurn(
+                                  storedCampaignIndex,
+                                  storedIndex,
+                                  value,
+                                );
+                              }
                             }
-                          }
 
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '${token['name'] ?? 'Player'}: ${t('turno', 'turn')} $current - ${t('seguente', 'next')} ${current + 1}',
-                                  overflow: TextOverflow.ellipsis,
+                            return Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${token['name'] ?? 'Player'}: ${t('turno', 'turn')} $current - ${t('seguente', 'next')} ${current + 1}',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
-                              IconButton(
-                                visualDensity: VisualDensity.compact,
-                                onPressed: current > 0
-                                    ? () => update(current - 1)
-                                    : null,
-                                icon: const Icon(Icons.remove),
-                              ),
-                              IconButton(
-                                visualDensity: VisualDensity.compact,
-                                onPressed: () => update(current + 1),
-                                icon: const Icon(Icons.add),
-                              ),
-                            ],
-                          );
-                        },
+                                IconButton(
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: current > 0
+                                      ? () => update(current - 1)
+                                      : null,
+                                  icon: const Icon(Icons.remove),
+                                ),
+                                IconButton(
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () => update(current + 1),
+                                  icon: const Icon(Icons.add),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                   ],
                 ),

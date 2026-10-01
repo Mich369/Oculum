@@ -40,6 +40,16 @@ class DiaryRoleLedger {
             'entityId': id,
             'name': '${record['name'] ?? ''}',
             'role': role,
+            if (record['displayName'] is String)
+              'displayName': record['displayName'],
+            'nameHistory': [
+              for (final change
+                  in (record['nameHistory'] is List
+                          ? record['nameHistory'] as List
+                          : const [])
+                      .whereType<Map>())
+                Map<String, dynamic>.from(change),
+            ],
             'history': [
               for (final change
                   in (record['history'] is List
@@ -59,6 +69,11 @@ class DiaryRoleLedger {
     for (final record in _records.values)
       {
         ...record,
+        'nameHistory': [
+          for (final change
+              in (record['nameHistory'] as List? ?? const []).whereType<Map>())
+            Map<String, dynamic>.from(change),
+        ],
         'history': [
           for (final change in record['history'] as List)
             Map<String, dynamic>.from(change as Map),
@@ -91,10 +106,48 @@ class DiaryRoleLedger {
       ..add({'from': previous, 'to': role, 'at': now.toIso8601String()});
     final identity = '${_record(entity)?['entityId'] ?? entity.id}';
     _records[identity] = {
+      ...?_record(entity),
       'entityId': identity,
-      'name': entity.name,
+      'name': _record(entity)?['name'] ?? entity.name,
       'role': role,
       'history': history,
+    };
+    return true;
+  }
+
+  String nameOf(DiaryEntity entity) =>
+      '${_record(entity)?['displayName'] ?? entity.name}';
+  String originalNameOf(DiaryEntity entity) =>
+      '${_record(entity)?['name'] ?? entity.name}';
+
+  List<Map<String, dynamic>> nameHistoryFor(DiaryEntity entity) => [
+    for (final change
+        in (_record(entity)?['nameHistory'] as List? ?? const [])
+            .whereType<Map>())
+      Map<String, dynamic>.from(change),
+  ];
+
+  bool rename(DiaryEntity entity, String name, DateTime now) {
+    name = name.trim();
+    if (name.isEmpty ||
+        name.length > 120 ||
+        name.contains(RegExp(r'[\n\r\[\]|]')) ||
+        name == nameOf(entity)) {
+      return false;
+    }
+    final record = _record(entity);
+    final identity = '${record?['entityId'] ?? entity.id}';
+    _records[identity] = {
+      ...?record,
+      'entityId': identity,
+      'name': record?['name'] ?? entity.name,
+      'displayName': name,
+      'role': roleOf(entity),
+      'history': historyFor(entity),
+      'nameHistory': [
+        ...nameHistoryFor(entity),
+        {'from': nameOf(entity), 'to': name, 'at': now.toIso8601String()},
+      ],
     };
     return true;
   }
@@ -104,12 +157,17 @@ class DiaryRoleLedger {
       final entity = entry.value;
       if (entity.kind == 'diary' || entity.kind == 'campaign') continue;
       final role = roleOf(entity);
-      if (role != entity.kind) {
+      final name = nameOf(entity);
+      if (role != entity.kind || name != entity.name) {
         memory.entities[entry.key] = DiaryEntity(
           entity.id,
-          entity.name,
+          name,
           role,
-          entity.aliases,
+          {
+            ...entity.aliases,
+            if (name != entity.name) entity.name,
+            for (final change in nameHistoryFor(entity)) '${change['from']}',
+          }.toList(),
           entity.linkType,
         );
       }

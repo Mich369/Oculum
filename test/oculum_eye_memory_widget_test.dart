@@ -62,9 +62,13 @@ void main() {
                 as RenderRepaintBoundary;
         final picture = await boundary.toImage();
         final bytes = await picture.toByteData(format: ui.ImageByteFormat.png);
-        Directory('output/ui').createSync(recursive: true);
+        const captureLabel = String.fromEnvironment('OculumBenchmarkLabel');
+        final capturePath = captureLabel.isEmpty
+            ? 'output/ui'
+            : 'output/ui/${captureLabel.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_')}';
+        Directory(capturePath).createSync(recursive: true);
         File(
-          'output/ui/diari-${size.width.toInt()}.png',
+          '$capturePath/diari-${size.width.toInt()}.png',
         ).writeAsBytesSync(bytes!.buffer.asUint8List());
         picture.dispose();
       });

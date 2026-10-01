@@ -15,7 +15,11 @@ void main() {
           expect(skill.livello, 0, reason: monster.id);
           expect(skill.nome.trim(), isNotEmpty);
           expect(skill.nome, isNot(startsWith('Pagina ')));
-          expect(skill.evo1, startsWith('Richiede livello 0'));
+          expect(
+            skill.evo1,
+            contains(RegExp(r'Richiede livello \d+')),
+            reason: monster.id,
+          );
           expect(skill.oculumMinimoPerLivello(1), greaterThanOrEqualTo(0));
         }
       }

@@ -6,12 +6,14 @@ void main() {
     final original = <String, dynamic>{
       'currentHp': '100',
       'diaryEntityRoles': [],
+      'diaryKnowledgeSync': {'privateKey': 'original'},
     };
     final edited = <String, dynamic>{
       'currentHp': '90',
       'diaryEntityRoles': [
         {'entityId': 'one', 'role': 'enemy', 'history': []},
       ],
+      'diaryKnowledgeSync': {'privateKey': 'edited'},
     };
     expect(oculumRealtimeBuildSheetPatch(original, edited), {
       'currentHp': '90',
@@ -21,6 +23,18 @@ void main() {
         edited,
       ).containsKey('diaryEntityRoles'),
       isFalse,
+    );
+    expect(
+      oculumRealtimeFallbackEditablePatch(
+        edited,
+      ).containsKey('diaryKnowledgeSync'),
+      isFalse,
+    );
+    expect(
+      oculumRealtimeMergeSheetPatch(edited, {
+        'diaryKnowledgeSync': {'privateKey': 'remote'},
+      })['diaryKnowledgeSync'],
+      edited['diaryKnowledgeSync'],
     );
     expect(
       oculumRealtimeMergeSheetPatch(edited, {

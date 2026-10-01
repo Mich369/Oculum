@@ -1,0 +1,69 @@
+Al livello uno puoi mantenere tre materiali, uno del tuo grado e due di almeno un grado inferiore, attivi, ogni 3 Gradi puoi tenere Oculum su un materiale in più, un item, dev'essere fuso in modo intelligente, difatti se dai tu l'idea al fabbro in base all'idea di fusione puoi avere un buff in più o un punto cieco in più o addirittura entrambi, se lasci fare al fabbro non avrà effetti aggiuntivi oltre quelli dati dal materiale
+
+Senza Grado 
+Roccia: L'item di base fa 1/6 di Materia danni e, se il materiale è attivo, aumenta la tua difesa di 1/5 di Oculum, se fatta con 10kg la proporzione diminuisce di uno nel secondo numero
+Tempo Necessario: 50 Minuti
+
+Carbone Magico: L'item se il materiale è attivo diventa infiammabile facendo, se accesa, Oculum Totale diviso 3 danni da fuoco aggiuntivi, con un critico il danno continuerà per 1d3 turni perdendo sempre un po' di potenza in base il grado dado, ogni 5Kg in più compressati nell'item il dado aumenta di un grado fino ad 1d12, il calcolo dei danni in meno è: se per 1d3 turni attivo ogni turno perderà 1/3 della forza originale che a differenza del solito potrebbe addirittura essere completamente parato come danno (Min 3kg/Max 28kg) 
+Tempo Necessario: 40 Minuti
+
+Vitalium Grezzo: L'item se il materiale è attivo ad ogni utilizzo a buon segno ti ricarica Oculum Totale diviso 3 vita, Se lo fai con un kg in più sarà diviso 2 anziché 3, trasforma l'energia degli impatti subiti in Oculum Vitali (Min 2kg/Max 3kg)
+Tempo Necessario: 20 Minuti
+
+Ossa: L'item di base fa 1/4 di Materia danni e, se il materiale è attivo, aumenta la tua difesa di 1/4 di Oculum, se fatta con 10kg sarà anziché "1/4" "1/3" (Min 5kg/Max 10kg)
+Tempo Necessario: 30 Minuti
+
+Vapium: [Minerale Mutabile] si presenta come un vapore che se schiacciato diventa solido e durissimo fuori esce nel [Reame Dimenticato] sostenuto dal [Quinto Lucifero]
+ogni 10kg in più sono +9 resistenza sua e 6 difesa sua, si possono anche creare pozioni che aumentano la tua materia di 1 per ogni tre chili per un ora facendoti avere molto più controllo sul "vaporizzarti" e "indurirti"
+[Senza Grado]
+
+Lunium: [Minerale Lunare] si presenta di un rosato pastello molto luminoso, ha potere diabolico all'interno, può sprigionare potenti attacchi in base alla luna di quel che rimane del suo reame
+ogni 5kg oltre i 15kg aumenta i danni di 2 ogni 15 ti aumenta di uno la volontà quando attivi il materiale come se la luna e le stelle ti accettassero e fossero in parte con te in quel combattimento, ciò però accade solo se hai una buona reputazione nelle MoonHills, è davvero raro soprattutto dopo la scomparsa della luna e delle stelle nel mondo reale
+[Senza Grado]
+
+
+Grado I 
+Metallo Slime: L'item, se il materiale è attivo, è capace di indurirsi e liquefarsi, cambiare forma e colore, l'item diventa altamente incendiabile, se acceso fa Oculum Totale diviso 2 danni da fuoco aggiuntivi, con un critico il danno continuerà per 1d3 turni perdendo sempre un po' di potenza in base il grado dado, ogni 3Kg in più compressati nell'item il dado aumenta di un grado fino ad 1d12, il calcolo dei danni in meno è: se per 1d3 turni attivo ogni turno perderà 1/3 della forza originale che a differenza del solito potrebbe addirittura essere completamente parato come danno, l'item se fatto con 15kg o più di slime si auto aggiusterà (Min 10kg/Max 25kg)
+Tempo Necessario: 10 Minuti
+
+Ossa Dure: L'item di base fa 1/3 di Materia danni e, se il materiale è attivo, aumenta la tua difesa di 1/3 di Oculum, se fatta con 20kg sarà anziché "1/3" "1/2" (Min 10kg/Max 20kg)
+Tempo Necessario: 50 Minuti
+
+Resilenzium: 
+L'item di base fa 1/3 di Resilienza danni e, se il materiale è attivo, aumenta il tuo scudo di 1/3 di Resilienza, se fatta con 20kg sarà anziché "1/3" "1/2" (Min 10kg/Max 20kg)
+Tempo Necessario: 50 Minuti
+
+Grado II 
+Slime Corrotto: L'item, se il materiale è attivo, con un tiro molto difficile (18 o più) può mettere l'effetto [Veleno] con danni di tipo [1/2 Oscuro e 1/2 Demoniaco], i danni si ripeteranno per Oculum diviso 3 azioni e non possono essere curati, in ogni caso 1/4 dei tuoi danni non può essere curato, se fatto con 10kg anziché "1/4" sarà "1/3" (5kg)
+Tempo Necessario: 15 Minuti
+
+Flamirion: L'item fa +10 danni da fuoco, con un critico positivo, se il materiale è attivo, dai l'effetto di scottatura 
+Tempo Necessario: 30 Minuti
+
+Aqualatis: L'item fa +10 danni d'acqua, con un critico positivo, se il materiale è attivo, puoi donare una reazione a te o agli altri contro il nemico colpito
+Tempo Necessario: 20 Minuti
+
+Corallo: [Materiale Da Forgiatura] [Grado II] un materiale molto utile in ambito difensivo ma anche nel danno perforante, si può trovare negli abissi là dove vivono i Geosgaeono ogni 5 kg in più compressati nell'item aumenta di uno la sua difesa e di tre la sua resistenza, avrà difatti la sua vita e la sua difesa che agiranno prima delle tue o insieme in caso di rottura che va oltre la tua, si può rigenerare lentamente immergendolo completamente nell'acqua, la riparazione avverrà in minimo due ore se rotta, in caso contrario ogni quaranta cinque minuti si recupera il 25% della resistenza, questo materiale ha resistenza a danni d'acqua ma è estremamente debole contro i corpi di puro ghiaccio e il suo effetto è dimezzato se si è in un luogo arido e caldo o non viene immersa da almeno sei ore
+
+Grado III 
+Rame Fatato: L'item, se il materiale è attivo, ti ritira fino un doppio critico negativo o maggiore a riforgiatura (25kg)
+Tempo Necessario: 20 Minuti
+
+Pietra Focolare: L'item se il materiale è attivo diventa infiammabile a comando, quando accesa Oculum Totale diviso 3 danni da fuoco aggiuntivi, con un critico il danno continuerà per 1d6 turni perdendo sempre un po' di potenza in base il grado dado, ogni 5Kg in più compressati nell'item il dado aumenta di un grado fino ad 1d20, il calcolo dei danni in meno è: se per 1d3 turni attivo ogni turno perderà 1/3 della forza originale  (Min 20/Max 45)
+Tempo Necessario: 50 Minuti
+
+Metallo Slime Corrotto: L'item, se il materiale è attivo, è capace di indurirsi e infiammarsi di viola, cambiare forma e colore, se acceso fa Oculum Totale danni aggiuntivi, con un critico il danno continuerà per 1d3 turni perdendo sempre un po' di potenza in base il grado dado, ogni 3Kg in più compressati nell'item il dado aumenta di un grado fino ad 1d12, il calcolo dei danni in meno è: se per 1d3 turni attivo ogni turno perderà 1/3 della forza originale che a differenza del solito potrebbe addirittura essere completamente parato come danno, l'item se fatto con 16kg o più di slime si auto aggiusterà  (Min 15/Max 33)
+Tempo Necessario: 15 Minuti
+
+Virelion: L'item aumenta di Materia danni e difesa x Grado Titolo + Grado Materiale,  se attiva oltre ciò dà Volontà diviso cinque svantaggio al nemico con massimo di cinque volte, per ogni 20kg di Virelion il diviso diminuisce fino massimo diviso due
+
+Tarium [Minerale Roccioso] il Tarium è di un marrone bronzato e viene in genere utilizzato per assorbire danni di più entità, è molto resistente, un minerale di Grado III trovabile soprattutto nelle cime delle montagne, esistono varianti di questo materiale che arrivano fino al grado IX in cima alla montagna più grande e nel territorio di Virelion, è molto limitato
+ogni 3 chili aggiunti ha 30 di resistenza+Grado (vita) e 10 difesa+Grado
+è fragile agli attacchi contundenti e estremamente fragile contro i danni frantumanti
+
+Eclisium
++10 danni e difesa se la Luna è visibile ogni 100kg, questa difesa e danno provengono dalla luna distruggendo i moltiplicatori dei gradi più alti, 1 grado ignorato ogni 60kg massimo 180. Potenzia gli effetti lunari dei materiali di Grado inferiore o pari al tuo
+
+Urgalite (Cristallo di Gravità)
+Effetto: +Materia danni di base se aggiunto, se attivo, rallenta del 1 la velocità nemica per ogni 50 kg, ogni 60 diminuisce l'iniziativa di 1
+Bonus peso: se supera 100 kg, può generare un’area gravitazionale (-5 movimento per i nemici e -3 Iniziativa).

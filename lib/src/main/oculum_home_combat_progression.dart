@@ -1189,9 +1189,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     switch (key) {
       case 'vc':
-        return levelGrade +
-            sheetIntValueAt(index, 'volonta') ~/ 3 +
-            sheetAttaccoRapidoAt(index);
+        return levelGrade + sheetIntValueAt(index, 'volonta') ~/ 3;
       case 'cm':
         return levelGrade +
             sheetIntValueAt(index, 'materia') ~/ 2 +
@@ -1497,6 +1495,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   void normalizeMasterInitiativeTokens() {
     removeExpiredTemporaryInitiativeTurns();
+    final sheetIndexesByTag = <String, int>{
+      for (var i = 0; i < schedePersonaggio.length; i++)
+        '${schedePersonaggio[i]['sheetTag'] ?? ''}': i,
+    };
 
     for (int i = 0; i < masterInitiativeTokens.length; i++) {
       final token = masterInitiativeTokens[i];
@@ -1520,9 +1522,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final sheetTag = '${token['sheetTag'] ?? ''}';
       final sheetIndex = sheetTag.isEmpty
           ? -1
-          : schedePersonaggio.indexWhere(
-              (sheet) => '${sheet['sheetTag'] ?? ''}' == sheetTag,
-            );
+          : sheetIndexesByTag[sheetTag] ?? -1;
       token['level'] = sheetIndex >= 0
           ? sheetCriticalLevelAt(sheetIndex)
           : max(0, readIntValue(token['level']));

@@ -1030,7 +1030,7 @@ extension _OculumP2PNetwork on _OculumHomePageState {
   void registraSchedaRemota(dynamic sheetData) {
     if (sheetData is! Map) return;
 
-    final sheetCopy = Map<String, dynamic>.from(sheetData);
+    final sheetCopy = diaryPublicSheet(Map<String, dynamic>.from(sheetData));
     final sheetId = '${sheetCopy['id'] ?? sheetCopy['sheetTag'] ?? ''}'.trim();
     if (sheetId.isEmpty) return;
     if (sheetId == sheetTagAt(schedaCorrente)) return;
@@ -1063,15 +1063,13 @@ extension _OculumP2PNetwork on _OculumHomePageState {
       final sheetId = sheetTagAt(schedaCorrente);
       schedePersonaggio[schedaCorrente]['id'] = sheetId;
       schedePersonaggio[schedaCorrente]['sheetTag'] = sheetId;
-      final payloadHash = jsonEncode(schedePersonaggio[schedaCorrente]);
+      final sharedSheet = diaryPublicSheet(schedePersonaggio[schedaCorrente]);
+      final payloadHash = jsonEncode(sharedSheet);
       final hashKey = 'p2p_master:$sheetId';
       if (realtimeLastSentSheetHashes[hashKey] == payloadHash) return;
       realtimeLastSentSheetHashes[hashKey] = payloadHash;
 
-      final msg = jsonEncode({
-        'type': 'SHEET_UPDATE',
-        'sheet': schedePersonaggio[schedaCorrente],
-      });
+      final msg = jsonEncode({'type': 'SHEET_UPDATE', 'sheet': sharedSheet});
       _myClientSocket?.add(msg);
     }
   }
@@ -1086,7 +1084,8 @@ extension _OculumP2PNetwork on _OculumHomePageState {
       final sheetId = sheetTagAt(schedaCorrente);
       schedePersonaggio[schedaCorrente]['id'] = sheetId;
       schedePersonaggio[schedaCorrente]['sheetTag'] = sheetId;
-      final payloadHash = jsonEncode(schedePersonaggio[schedaCorrente]);
+      final sharedSheet = diaryPublicSheet(schedePersonaggio[schedaCorrente]);
+      final payloadHash = jsonEncode(sharedSheet);
       final hashKey = 'relay:$sheetId';
       if (realtimeLastSentSheetHashes[hashKey] == payloadHash) return;
       realtimeLastSentSheetHashes[hashKey] = payloadHash;
@@ -1095,7 +1094,7 @@ extension _OculumP2PNetwork on _OculumHomePageState {
         'type': 'SHEET_UPDATE',
         'room': relayRoomCode,
         'fromId': sheetId,
-        'sheet': schedePersonaggio[schedaCorrente],
+        'sheet': sharedSheet,
       });
     }
   }

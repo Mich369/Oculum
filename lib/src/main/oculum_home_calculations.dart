@@ -1220,6 +1220,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         vol +
         bonusDannoArmi() +
         livelloGrado +
+        bonusAttaccoRapidoBase() +
+        livelloGrado + (vol ~/ 3) + malusFatica + vantaggio +
         fallenEyeRareAttributeBonusFor('danno') +
         directSkillNumericBonus('danni');
     final baseHp = max(1, res) * moltiplicatoreHp();
@@ -1280,7 +1282,6 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         0,
         livelloGrado +
             (vol ~/ 3) +
-            bonusAttaccoRapido() +
             malusFatica +
             vantaggio,
       ),
@@ -1294,7 +1295,6 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         0,
         livelloGrado +
             (vol ~/ 3) +
-            bonusAttaccoRapido() +
             malusFatica +
             vantaggio,
       ),
@@ -4524,10 +4524,15 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     }
   }
 
+  // Formula contexts must not read maxHp: HP itself resolves these formulas.
+  int bonusAttaccoRapidoBase() =>
+      leggiNumero(attaccoRapidoController) + ascensionDustCombat.attackBonus;
+
   int bonusAttaccoRapido() {
-    final base = leggiNumero(attaccoRapidoController) + ascensionDustCombat.attackBonus;
+    final base = bonusAttaccoRapidoBase();
+    if (currentHumanoidRole != 'Glass cannon') return base;
     return base + oculumGlassCannonBonus(
-      role: '${schedePersonaggio.isEmpty ? '' : schedePersonaggio[schedaCorrente]['humanoidRole'] ?? ''}',
+      role: currentHumanoidRole,
       hp: leggiNumero(currentHpController), maximum: maxHp(), baseAttack: base);
   }
 
@@ -4758,6 +4763,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return volontaTotale() +
         bonusDannoArmi() +
         bonusLivelloGrado() +
+        bonusAttaccoRapido() + vc() +
         fallenEyeRareAttributeBonusFor('danno');
   }
 
@@ -4804,7 +4810,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final details = quickCommandRuntimeDetails('danni');
     final detailText = details.isEmpty ? '' : ' | ${details.join('; ')}';
     final rareBonus = fallenEyeRareAttributeBonusFor('danno');
-    return 'VOL ${volontaTotale()} + Arma ${bonusDannoArmi()} + Lv/Gr ${bonusLivelloGrado()} + Attributo raro $rareBonus = $base + Titoli $bonusTitoli + Art/Open $bonusArt + Oggetti @ $bonusItem + Buff/Malus @ $bonusGlobal + Skill/Forme $bonusSkill + Condizioni ${conditionDelta >= 0 ? '+' : ''}$conditionDelta$corePowerText = ${dannoTotale()}$detailText';
+    return 'VOL ${volontaTotale()} + Arma ${bonusDannoArmi()} + Lv/Gr ${bonusLivelloGrado()} + Bonus Attacco ${bonusAttaccoRapido()} + VC ${vc()} + Attributo raro $rareBonus = $base + Titoli $bonusTitoli + Art/Open $bonusArt + Oggetti @ $bonusItem + Buff/Malus @ $bonusGlobal + Skill/Forme $bonusSkill + Condizioni ${conditionDelta >= 0 ? '+' : ''}$conditionDelta$corePowerText = ${dannoTotale()}$detailText';
   }
 
   String activeTypeSwitchElement() {
@@ -4834,7 +4840,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     add(
       armaPiuForteEquipaggiata()?.elementoDanno ?? 'Fisico',
-      volontaTotale() + bonusDannoArmi() + bonusLivelloGrado(),
+      volontaTotale() + bonusDannoArmi() + bonusLivelloGrado() + bonusAttaccoRapido() + vc(),
     );
 
     for (final titolo in titoliCalcolabili) {
@@ -5081,7 +5087,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int vc() {
     return bonusLivelloGrado() +
         (volontaTotale() ~/ 3) +
-        bonusAttaccoRapido() +
+        activeStructuredEffectBonus('vc') +
         titleQuickBonus('vc') +
         artQuickBonus('vc') +
         globalQuickBonus('vc') +

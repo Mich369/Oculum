@@ -8,8 +8,9 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   /// Seeds only the authored base recipe. It uses a stable id, so older
   /// campaigns and Master-made recipes retain their exact data and ordering.
   bool ensureCoreOculumRecipes() {
+    final authoredAdded = ensureAuthoredCraftingRecipes();
     const id = 'core_pinna_pesce_alato';
-    if (recipes.any((recipe) => recipe.id == id)) return false;
+    if (recipes.any((recipe) => recipe.id == id)) return authoredAdded;
     final now = DateTime.now().toIso8601String();
     recipes.add(
       OculumRecipe(
@@ -640,7 +641,9 @@ extension _OculumHomeRecipes on _OculumHomePageState {
         ).toString();
       }
       inventario.add(
-        InventoryItem(
+        authoredMaterialForRecipe(recipe) != null
+            ? authoredCraftedItem(recipe, safeQuantity)
+            : InventoryItem(
           nome: recipe.resultName,
           peso: _finishedProductGrams(recipe) / 1000,
           quantita: safeQuantity,

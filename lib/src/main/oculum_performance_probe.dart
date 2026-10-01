@@ -8,6 +8,12 @@ class OculumPerformanceProbe {
   final _OculumHomePageState _state;
 
   Map<String, dynamic> snapshot() => _state.statoCorrenteJson();
+  int attackBonus() => _state.bonusAttaccoRapido();
+  int attackVc() => _state.vc();
+  int outgoingDamage() => _state.dannoTotale();
+  String damageFormula() => _state.formulaDannoDettagliata();
+  int maximumHp() => _state.maxHp();
+  Map<String, num> formulaContext() => _state.formulaValueContext();
   InventoryItem merchantItem(
     Map<String, dynamic> offer, {
     String titleType = '',
@@ -16,6 +22,7 @@ class OculumPerformanceProbe {
   Future<void> useMerchantItem(InventoryItem item) =>
       _state.useMerchantConsumable(item);
   void load(Map<String, dynamic> sheet) => _state.caricaStatoDaJson(sheet);
+  Future<void> reloadSave() => _state.caricaDati();
   void saveSheet() => _state.salvaSchedaCorrenteInMemoria();
   Future<void> save() => _state.salvaDatiSoloLocale();
   void hp(int index) => _state.applyMasterEnemyQuickHpAction(index, damage: 1);

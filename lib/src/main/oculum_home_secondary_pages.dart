@@ -1596,17 +1596,42 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 label: const Text('Aggiungi solo danno rapido'),
                 onPressed: () async {
                   final controller = TextEditingController();
-                  final value = await showDialog<int>(context: context, builder: (dialogContext) => AlertDialog(
-                    title: const Text('Modifica rapida: danno'),
-                    content: TextField(controller: controller, autofocus: true, keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Danno da aggiungere', hintText: 'Esempio: 10')),
-                    actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Annulla')),
-                      FilledButton(onPressed: () => Navigator.pop(dialogContext, int.tryParse(controller.text.trim())), child: const Text('Aggiungi'))],
-                  ));
+                  final value = await showDialog<int>(
+                    context: context,
+                    builder: (dialogContext) => AlertDialog(
+                      title: const Text('Modifica rapida: danno'),
+                      content: TextField(
+                        controller: controller,
+                        autofocus: true,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Danno da aggiungere',
+                          hintText: 'Esempio: 10',
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          child: const Text('Annulla'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(
+                            dialogContext,
+                            int.tryParse(controller.text.trim()),
+                          ),
+                          child: const Text('Aggiungi'),
+                        ),
+                      ],
+                    ),
+                  );
                   controller.dispose();
                   if (value == null || value == 0 || !mounted) return;
                   final command = '@Danni${value > 0 ? '+' : ''}$value';
-                  setState(() => buffMalusRapidiController.text = '${buffMalusRapidiController.text.trim()} $command'.trim());
+                  setState(
+                    () => buffMalusRapidiController.text =
+                        '${buffMalusRapidiController.text.trim()} $command'
+                            .trim(),
+                  );
                   programmaSalvataggio();
                 },
               ),
@@ -5390,13 +5415,24 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             spacing: 6,
             runSpacing: 6,
             children: [
-              Chip(avatar: const Icon(Icons.visibility, size: 16), label: Text('${filtered.length} visibili')),
-              Chip(avatar: const Icon(Icons.category, size: 16), label: Text('${forms.length} forme')),
+              Chip(
+                avatar: const Icon(Icons.visibility, size: 16),
+                label: Text('${filtered.length} visibili'),
+              ),
+              Chip(
+                avatar: const Icon(Icons.category, size: 16),
+                label: Text('${forms.length} forme'),
+              ),
               for (final quickForm in forms.take(6))
                 FilterChip(
                   label: Text(quickForm),
                   selected: monsterBookTierFilter == quickForm,
-                  onSelected: (_) => setState(() => monsterBookTierFilter = monsterBookTierFilter == quickForm ? 'Tutti' : quickForm),
+                  onSelected: (_) => setState(
+                    () => monsterBookTierFilter =
+                        monsterBookTierFilter == quickForm
+                        ? 'Tutti'
+                        : quickForm,
+                  ),
                 ),
             ],
           ),
@@ -5813,6 +5849,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   Widget masterDashboardEnemyCard(int index) {
     return Container(
+      key: ValueKey('master_enemy_card_${sheetTagAt(index)}'),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.redAccent.withValues(alpha: 0.07),
@@ -6664,7 +6701,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 'Add sheets to the Party below to populate this board.',
               ),
             )
-          else
+          else if (partyIndexes.length <= 6)
             Wrap(
               spacing: 10,
               runSpacing: 10,
@@ -6675,6 +6712,48 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     child: _masterDashboardPartyBoardCard(index),
                   ),
               ],
+            )
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = max(1, (constraints.maxWidth / 330).floor());
+                final width =
+                    (constraints.maxWidth - 10 * (columns - 1)) / columns;
+                return SizedBox(
+                  height: min(
+                    620.0,
+                    max(280.0, MediaQuery.sizeOf(context).height * .55),
+                  ),
+                  child: ListView.builder(
+                    key: sheetScrollKey('master_party_board'),
+                    primary: false,
+                    addAutomaticKeepAlives: false,
+                    // ignore: deprecated_member_use
+                    cacheExtent: 100,
+                    itemCount: (partyIndexes.length / columns).ceil(),
+                    itemBuilder: (context, row) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (var column = 0; column < columns; column++) ...[
+                            if (column > 0) const SizedBox(width: 10),
+                            SizedBox(
+                              width: width,
+                              child:
+                                  row * columns + column < partyIndexes.length
+                                  ? _masterDashboardPartyBoardCard(
+                                      partyIndexes[row * columns + column],
+                                    )
+                                  : null,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
         ],
       ),
@@ -6705,6 +6784,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       ),
     );
     return Container(
+      key: ValueKey('master_party_card_${sheetTagAt(index)}'),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.16),

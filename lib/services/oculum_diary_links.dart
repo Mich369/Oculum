@@ -46,6 +46,67 @@ const diaryCreationLinkTypes = [
 
 final _diarySavedLinks = RegExp(r'\[\[([^\]\n]+)\]\]');
 
+/// A deliberate selection action: it changes only the chosen words/link.
+({int start, int end, String name, String? alias})? diarySelectedName(
+  String text,
+  int start,
+  int end,
+) {
+  if (start < 0 || end <= start || end > text.length || end - start > 512) {
+    return null;
+  }
+  final windowStart = (start - 256).clamp(0, text.length);
+  final windowEnd = (end + 256).clamp(0, text.length);
+  for (final match in _diarySavedLinks.allMatches(
+    text.substring(windowStart, windowEnd),
+  )) {
+    final linkStart = windowStart + match.start;
+    final linkEnd = windowStart + match.end;
+    if (start >= linkStart && end <= linkEnd) {
+      final raw = match[1]!;
+      final pipe = raw.indexOf('|');
+      final identity = pipe < 0 ? raw : raw.substring(0, pipe);
+      final colon = identity.indexOf(':');
+      final name = (colon < 0 ? identity : identity.substring(colon + 1))
+          .trim();
+      if (name.isEmpty) return null;
+      return (
+        start: linkStart,
+        end: linkEnd,
+        name: name,
+        alias: pipe < 0 ? null : raw.substring(pipe + 1),
+      );
+    }
+  }
+  final selected = text.substring(start, end);
+  final name = selected.trim();
+  if (name.isEmpty || name.contains(RegExp(r'[\[\]\n\r|]'))) return null;
+  final leading = selected.length - selected.trimLeft().length;
+  return (
+    start: start + leading,
+    end: start + leading + name.length,
+    name: name,
+    alias: null,
+  );
+}
+
+({String text, int cursor})? diaryAssignSelectionRole(
+  String text,
+  int start,
+  int end,
+  String role,
+) {
+  final target = diarySelectedName(text, start, end);
+  final type = diaryLinkTypes[role];
+  if (target == null || type == null) return null;
+  final link =
+      '[[$type:${target.name}${target.alias == null ? '' : '|${target.alias}'}]]';
+  return (
+    text: text.replaceRange(target.start, target.end, link),
+    cursor: target.start + link.length,
+  );
+}
+
 List<DiaryEntity> diaryEntitiesFromLinks(Iterable<String> texts) {
   final learned = <String, DiaryEntity>{};
   for (final text in texts) {

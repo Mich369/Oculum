@@ -11,11 +11,19 @@ class OculumEyeMemoryPage extends StatefulWidget {
     required this.author,
     this.onRoleChanged,
     this.roleHistory,
+    this.onNameChanged,
+    this.onShareKnowledge,
+    this.nameHistory,
+    this.knowledgeChanges,
   });
   final DiaryMemory memory;
   final String author;
   final Future<void> Function(DiaryEntity entity, String role)? onRoleChanged;
   final List<Map<String, dynamic>> Function(DiaryEntity entity)? roleHistory;
+  final Future<void> Function(DiaryEntity entity, String name)? onNameChanged;
+  final Future<void> Function(DiaryEntity entity)? onShareKnowledge;
+  final List<Map<String, dynamic>> Function(DiaryEntity entity)? nameHistory;
+  final Listenable? knowledgeChanges;
   @override
   State<OculumEyeMemoryPage> createState() => _OculumEyeMemoryPageState();
 }
@@ -53,6 +61,7 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
   @override
   void initState() {
     super.initState();
+    widget.knowledgeChanges?.addListener(_knowledgeChanged);
     selected = 'character:${diaryKey(widget.author)}';
     if (widget.memory.entities.containsKey(
       'campaign:${diaryKey(widget.author)}',
@@ -60,6 +69,16 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
       selected = 'campaign:${diaryKey(widget.author)}';
     }
     if (!widget.memory.entities.containsKey(selected)) selected = null;
+  }
+
+  void _knowledgeChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.knowledgeChanges?.removeListener(_knowledgeChanged);
+    super.dispose();
   }
 
   void showSource(DiaryEvidence evidence) {
@@ -125,7 +144,11 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
             .where(
               (e) =>
                   (kind == 'all' || kind == e.kind) &&
-                  e.name.toLowerCase().contains(query.toLowerCase()),
+                  (e.name.toLowerCase().contains(query.toLowerCase()) ||
+                      e.aliases.any(
+                        (alias) =>
+                            alias.toLowerCase().contains(query.toLowerCase()),
+                      )),
             )
             .toList()
           ..sort((a, b) {
@@ -281,6 +304,74 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                       });
                     },
                   ),
+                if (widget.onNameChanged != null &&
+                    center.kind != 'campaign' &&
+                    center.kind != 'diary')
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Rinomina'),
+                    onPressed: () async {
+                      var draft = center.name;
+                      final form = GlobalKey<FormState>();
+                      final name = await showDialog<String>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Correggi il nome nella tua mappa'),
+                          content: Form(
+                            key: form,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  'La frase originale del Diario resta la fonte. Il nome precedente rimane un alias.',
+                                ),
+                                TextFormField(
+                                  initialValue: center.name,
+                                  onChanged: (value) => draft = value,
+                                  maxLength: 120,
+                                  autofocus: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Nome corretto',
+                                  ),
+                                  validator: (value) =>
+                                      value == null ||
+                                          value.trim().isEmpty ||
+                                          value.contains(RegExp(r'[\n\r\[\]|]'))
+                                      ? 'Inserisci un nome valido'
+                                      : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Annulla'),
+                            ),
+                            FilledButton(
+                              onPressed: () {
+                                if (form.currentState!.validate()) {
+                                  Navigator.pop(context, draft.trim());
+                                }
+                              },
+                              child: const Text('Salva solo per me'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (!mounted || name == null) return;
+                      await widget.onNameChanged!(center, name);
+                      if (mounted) setState(() {});
+                    },
+                  ),
+                if (widget.onShareKnowledge != null &&
+                    center.kind != 'campaign' &&
+                    center.kind != 'diary')
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.share_outlined),
+                    label: const Text('Condividi con il party'),
+                    onPressed: () => widget.onShareKnowledge!(center),
+                  ),
               ],
             ),
             if ((widget.roleHistory?.call(center) ?? const []).isNotEmpty)
@@ -293,6 +384,18 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                       title: Text(
                         '${diaryEditableRoles[change['from']] ?? change['from']} → ${diaryEditableRoles[change['to']] ?? change['to']}',
                       ),
+                      subtitle: Text('${change['at'] ?? ''}'),
+                    ),
+                ],
+              ),
+            if ((widget.nameHistory?.call(center) ?? const []).isNotEmpty)
+              ExpansionTile(
+                title: const Text('Evoluzione del nome'),
+                children: [
+                  for (final change in widget.nameHistory!(center))
+                    ListTile(
+                      dense: true,
+                      title: Text('${change['from']} → ${change['to']}'),
                       subtitle: Text('${change['at'] ?? ''}'),
                     ),
                 ],
