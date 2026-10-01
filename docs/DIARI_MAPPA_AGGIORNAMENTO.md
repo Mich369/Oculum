@@ -40,7 +40,7 @@ La lettura è locale e usa riconoscitori conservativi, non comprende arbitrariam
 
 ## Verifiche e limiti
 
-Suite completa locale aggiornata: 574 test passati, uno saltato. Controlli successivi mirati su tutte le gemme, salvataggio, riposi e assegnazione iniziale: 19 passati. Profilo test compilato verificato separatamente. Analizzatore senza problemi dopo le correzioni.
+Suite completa locale aggiornata al 1 ottobre 2026: 578 test passati, uno saltato. I test comprendono gemme, salvataggio, riposi, assegnazione iniziale e nuovo trasferimento delle schede a blocchi. Profilo test compilato verificato separatamente. Analizzatore senza problemi dopo le correzioni.
 
 Layout desktop/mobile e trasporto realtime verificati automaticamente; non costituiscono una prova su due dispositivi fisici. L’autenticazione Supabase live è stata verificata separatamente. Le build iOS/macOS senza firma richiedono le rispettive procedure di installazione/firma.
 
@@ -49,3 +49,11 @@ Layout desktop/mobile e trasporto realtime verificati automaticamente; non costi
 Tutti gli artifact vengono raccolti in `build/distribution`: `windows/oculum.exe` con runtime completo, `Oculum-Windows.zip`, `test/windows/Oculum-Test.exe` con runtime completo, `Oculum-Test-Windows.zip`, `Oculum-Android-release.apk`, `Oculum-Android-release.aab`, `web/` e `Oculum-Web.zip`. Le Actions macOS, iOS e Linux usano la stessa cartella nei rispettivi runner; i relativi artifact devono essere scaricati nella distribution locale quando disponibili.
 
 La versione Windows test usa salvataggi separati e salta l’avvio cloud automatico. Avvia l’EXE dentro la sua cartella, senza separarlo da DLL e directory `data`. Il report `diari-verifica-distribuzione.json` registra dimensioni e SHA256 degli artifact creati.
+
+## Ricezione schede — 1 ottobre 2026
+
+Schede grandi e immagini vengono trasferite a blocchi, con importazione solo a messaggio completo. Il reinvio al Master continua ogni 30 secondi dopo i primi tentativi; il Master richiede le schede all'ingresso e dispone di «Richiedi schede ai Player». Le conferme Master sono distinte dall'ACK del server. Invii concorrenti della stessa scheda vengono accorpati e una conferma precedente non chiude una consegna nuova. Il salvataggio locale precede gli invii delle modifiche ai proprietari.
+
+Per il trasferimento a blocchi aggiorna sia Master sia Player. Salvataggi e immagini restano nello stesso formato. I test di consegna utilizzano un canale simulato; la prova live su due dispositivi resta da eseguire.
+
+Tutti i parametri modificabili sono elencati in `docs/REALTIME_AFFIDABILITA.md`: blocchi 64 KiB, memoria complessiva 64 MiB, massimo 8 trasferimenti incompleti e scadenza 3 minuti in `oculum_sheet_transfer.dart`; timeout canale/invio in `oculum_realtime_service.dart`; reinvio, accorpamento e richieste in `oculum_realtime_integration.dart`; ordine di salvataggio in `oculum_home_persistence.dart`; registri temporanei in `main.dart`; test di trasferimento e workflow Windows test nei rispettivi file.

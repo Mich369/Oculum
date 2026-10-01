@@ -42,6 +42,9 @@ jobs:
       - name: Verify compiled test save isolation
         run: flutter test --no-pub test/oculum_save_profile_test.dart --dart-define=OculumSaveProfile=test
 
+      - name: Test reliable sheet delivery
+        run: flutter test --no-pub test/oculum_realtime_delivery_test.dart test/oculum_sheet_transfer_test.dart test/oculum_realtime_patch_test.dart
+
       - name: Build isolated test app
         shell: pwsh
         env:

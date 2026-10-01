@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+import 'oculum_sheet_transfer.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OculumRealtimeService {
@@ -39,6 +42,7 @@ class OculumRealtimeService {
     'sheet_ping',
     'sheet_sync_preview',
     'sheet_shared',
+    'sheet_shared_chunk',
     'initiative_shared',
     'initiative_turn_adjusted',
     'dungeon_shared',
@@ -63,6 +67,8 @@ class OculumRealtimeService {
   bool _disposed = false;
   Future<void>? _connecting;
   int _generation = 0;
+  final _sheetTransfers = OculumSheetTransferAssembler();
+  int _sheetTransferSequence = 0;
 
   bool get isConnected => _connected && !_disposed && _channel != null;
 
@@ -167,6 +173,7 @@ class OculumRealtimeService {
 
   Future<void> disconnect({bool notify = true}) async {
     _generation++;
+    _sheetTransfers.clear();
     final channel = _channel;
     _channel = null;
     _connected = false;
@@ -675,6 +682,13 @@ class OculumRealtimeService {
 
   Future<void> refreshPresence() => _trackPresence();
 
+  Future<void> requestSharedSheets() => _send('sheet_ping', {
+    'playerName': _displayName,
+    'senderRole': presenceDataProvider?.call()['role'] ?? 'player',
+    'requestSharedSheets': true,
+    'sentAt': _nowIso(),
+  });
+
   Future<void> _send(String event, Map<String, dynamic> payload) async {
     await _sendConfirmed(event, payload);
   }
@@ -690,6 +704,47 @@ class OculumRealtimeService {
     }
 
     try {
+      if (event == 'sheet_shared') {
+        final generation = _generation;
+        final encoded = await compute(oculumEncodeSheetTransfer, payload);
+        if (_channel != channel || !isConnected || generation != _generation) {
+          return false;
+        }
+        if (encoded.length > OculumSheetTransferAssembler.chunkSize) {
+          final count =
+              (encoded.length / OculumSheetTransferAssembler.chunkSize).ceil();
+          if (count > OculumSheetTransferAssembler.maxChunks) {
+            _safeStatus(
+              'Scheda troppo grande per il trasferimento realtime. Salvataggio locale conservato.',
+            );
+            return false;
+          }
+          final transferId = '${_presenceKey}_${++_sheetTransferSequence}';
+          for (var i = 0; i < count; i++) {
+            if (generation != _generation ||
+                _channel != channel ||
+                !isConnected) {
+              return false;
+            }
+            final start = i * OculumSheetTransferAssembler.chunkSize;
+            final end = (start + OculumSheetTransferAssembler.chunkSize).clamp(
+              0,
+              encoded.length,
+            );
+            if (!await _sendConfirmed('sheet_shared_chunk', {
+              'transferId': transferId,
+              'chunkIndex': i,
+              'chunkCount': count,
+              'data': encoded.substring(start, end),
+            })) {
+              return false;
+            }
+          }
+          return generation == _generation &&
+              _channel == channel &&
+              isConnected;
+        }
+      }
       final response = await channel
           .sendBroadcastMessage(event: event, payload: payload)
           .timeout(const Duration(seconds: 6));
@@ -735,6 +790,11 @@ class OculumRealtimeService {
         ? Map<String, dynamic>.from(nestedPayload)
         : Map<String, dynamic>.from(payload);
 
+    if (event == 'sheet_shared_chunk') {
+      final assembled = _sheetTransfers.accept(normalized, DateTime.now());
+      if (assembled != null) onEvent('sheet_shared', assembled);
+      return;
+    }
     onEvent(event, normalized);
   }
 

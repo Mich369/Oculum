@@ -4109,9 +4109,6 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
     if (!salvataggioInChiusura) {
       await salvaSchedaCorrenteInMemoriaNonBloccante();
-      if (!soloLocale) {
-        await sendRealtimeEditedSharedSheetBack();
-      }
       saveActiveCampaignInMemory();
     }
 
@@ -4124,6 +4121,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
       await _clearProgressJournalIfCurrent(progressRevisionAtSnapshot);
     }
     if (!saveResult.saved || soloLocale) return;
+
+    // Commit locally before any peer/network operation can stall or fail.
+    unawaited(
+      sendRealtimeEditedSharedSheetBack().then((sent) {
+        if (sent && mounted) unawaited(salvaDatiSoloLocale());
+      }),
+    );
 
     final authState = OculumAuthService.instance.state;
     if (!oculumUsesIsolatedSaveProfile &&

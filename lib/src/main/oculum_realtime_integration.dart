@@ -267,6 +267,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       sendRealtimeMonsterBookSnapshot();
       sendRealtimeMasterVisiblePartyTokens();
       sendRealtimeInitiativeSnapshotIfPublished();
+      unawaited(realtimeService!.requestSharedSheets());
     }
     syncStorySessionNotesRealtime();
     syncRealtimeRecipes();
@@ -358,6 +359,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       playerName: realtimeDisplayName(),
       onConnected: () {
         if (!mounted || realtimeService != service) return;
+        realtimeStaffTransfersInFlight.clear();
         clearRealtimeMasterAckTracking();
         realtimeLastSentSheetHashes.clear();
         publishRealtimeStateAfterConnection();
@@ -370,7 +372,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         'campaignName': activeCampaignName(),
         'masterClaimId': realtimeMasterClaimId,
         'platform': oculumClientPlatformLabel(),
-        'protocolVersion': 2,
+        'protocolVersion': 3,
       },
       onEvent: (event, payload) {
         if (!mounted || realtimeService != service) return;
@@ -579,6 +581,14 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           break;
         case 'sheet_shared':
           persistRealtimeRemote = receiveRealtimeSharedSheet(payload);
+          break;
+        case 'sheet_ping':
+          if (payload['requestSharedSheets'] == true &&
+              (payload['senderRole'] == 'master' ||
+                  payload['senderRole'] == 'coMaster') &&
+              !realtimeIsMasterRole) {
+            sendRealtimeCurrentSheetToStaff(immediate: true);
+          }
           break;
         case 'sheet_received_ack':
           receiveRealtimeSheetReceivedAck(payload);
@@ -1166,6 +1176,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     realtimePendingMasterAckTimers.clear();
     realtimePendingMasterAckSheetIds.clear();
     realtimePendingMasterAckAttempts.clear();
+    realtimePendingMasterAckHashes.clear();
   }
 
   String newRealtimeSheetDeliveryId(String sheetId) {
@@ -1176,6 +1187,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     realtimePendingMasterAckTimers.remove(deliveryId)?.cancel();
     realtimePendingMasterAckSheetIds.remove(deliveryId);
     realtimePendingMasterAckAttempts.remove(deliveryId);
+    realtimePendingMasterAckHashes.remove(deliveryId);
   }
 
   void watchRealtimeMasterAck({
@@ -1188,7 +1200,13 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     realtimePendingMasterAckAttempts[deliveryId] = attempt;
     realtimePendingMasterAckTimers.remove(deliveryId)?.cancel();
     realtimePendingMasterAckTimers[deliveryId] = Timer(
-      Duration(seconds: attempt <= 1 ? 3 : 5),
+      Duration(
+        seconds: attempt <= 1
+            ? 3
+            : attempt < 5
+            ? 5
+            : 30,
+      ),
       () {
         realtimePendingMasterAckTimers.remove(deliveryId);
         if (!mounted) return;
@@ -1200,22 +1218,6 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           cancelRealtimeMasterAckWatch(deliveryId);
           return;
         }
-        if (attempt >= 5) {
-          final sheetIndex = localSheetIndexForOculumTag(sheetId);
-          final sheetName = sheetIndex >= 0
-              ? nomeSchedaPersonaggio(sheetIndex)
-              : sheetId;
-          setState(() {
-            risultato = t(
-              'Conferma Master non ricevuta per $sheetName: ritenta manualmente o attendi il prossimo aggiornamento della Presence.',
-              'Master receipt was not confirmed for $sheetName: retry manually or wait for the next Presence update.',
-            );
-            aggiungiLog(risultato);
-          });
-          cancelRealtimeMasterAckWatch(deliveryId);
-          return;
-        }
-
         final sheetIndex = localSheetIndexForOculumTag(sheetId);
         if (sheetIndex < 0) {
           cancelRealtimeMasterAckWatch(deliveryId);
@@ -1248,6 +1250,13 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       return;
     }
 
+    final acknowledgedHash = realtimePendingMasterAckHashes[deliveryId];
+    if (acknowledgedHash != null) {
+      rememberRealtimeSheetHash(
+        'staff:${realtimePendingMasterAckSheetIds[deliveryId]}',
+        acknowledgedHash,
+      );
+    }
     cancelRealtimeMasterAckWatch(deliveryId);
     final sheetName = '${payload['sheetName'] ?? '???'}';
     risultato = t(
@@ -1942,12 +1951,6 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       '${payload['sheetId'] ?? sheet['sheetTag'] ?? sheet['id'] ?? ''}',
     );
     if (sheetId.isEmpty) return false;
-    sendRealtimeMasterSheetAck(
-      payload: payload,
-      senderRole: senderRole,
-      sheetId: sheetId,
-    );
-
     if (senderRole == 'sheetEdit') {
       return receiveRealtimeSheetEdit(sheet, sheetId, payload);
     }
@@ -2005,6 +2008,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     } else {
       realtimeSharedSheets.add(record);
     }
+    // Confirm only after validation and storage in the receiving sheet registry.
+    sendRealtimeMasterSheetAck(
+      payload: payload,
+      senderRole: senderRole,
+      sheetId: sheetId,
+    );
 
     final localIndex = realtimeLocalSheetIndexForKey(key);
     if (localIndex < 0) {
@@ -2476,11 +2485,23 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (sheetId.isEmpty) return;
     final hashKey = 'staff:$sheetId';
     final hash = jsonEncode(sheet);
+    if (realtimeStaffTransfersInFlight[sheetId] == service) return;
     if (!force && realtimeLastSentSheetHashes[hashKey] == hash) return;
+    if (!force &&
+        realtimePendingMasterAckSheetIds.entries.any(
+          (entry) =>
+              entry.value == sheetId &&
+              realtimePendingMasterAckHashes[entry.key] == hash,
+        )) {
+      return;
+    }
 
     final waitForMasterAck = ensureMasterReceipt || realtimeHasMasterOnline;
     final activeDeliveryId = waitForMasterAck
-        ? (deliveryId ?? newRealtimeSheetDeliveryId(sheetId))
+        ? (deliveryId != null &&
+                  realtimePendingMasterAckHashes[deliveryId] == hash
+              ? deliveryId
+              : newRealtimeSheetDeliveryId(sheetId))
         : '';
     if (waitForMasterAck && activeDeliveryId.isNotEmpty) {
       // Keep one receipt per sheet; an older retry must not supersede new edits.
@@ -2496,10 +2517,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimePendingMasterAckTimers.remove(activeDeliveryId)?.cancel();
       // Register before sending: the receiver may answer before the server.
       realtimePendingMasterAckSheetIds[activeDeliveryId] = sheetId;
+      realtimePendingMasterAckHashes[activeDeliveryId] = hash;
     }
 
+    realtimeStaffTransfersInFlight[sheetId] = service!;
     unawaited(
-      service!
+      service
           .sendSharedSheetConfirmed(
             sheet: sheet,
             campaignId: activeCampaignId,
@@ -2514,8 +2537,13 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             deliveryId: activeDeliveryId,
           )
           .then((sent) {
+            if (realtimeStaffTransfersInFlight[sheetId] == service) {
+              realtimeStaffTransfersInFlight.remove(sheetId);
+            }
             if (!mounted || realtimeService != service) return;
-            if (sent) rememberRealtimeSheetHash(hashKey, hash);
+            if (sent && !waitForMasterAck) {
+              rememberRealtimeSheetHash(hashKey, hash);
+            }
             if (!sent) realtimeLastSentSheetHashes.remove(hashKey);
             // Start the receipt timeout only after the transport has finished.
             // Never resurrect a receipt already acknowledged or superseded.
@@ -2526,18 +2554,48 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                 attempt: attempt,
               );
             }
+            // Coalesce edits made during a large transfer into one fresh send.
+            final latestIndex = localSheetIndexForOculumTag(sheetId);
+            if (latestIndex >= 0 && canShareRealtimeSheetToStaff) {
+              final latest = realtimeSafeSheetJson(
+                schedaJsonAt(latestIndex),
+                includeImage: true,
+              );
+              addRealtimePublicTitleSnapshot(latest, latestIndex);
+              if (jsonEncode(latest) != hash) {
+                sendRealtimeSheetToStaffAt(
+                  latestIndex,
+                  ensureMasterReceipt: true,
+                );
+              }
+            }
           }),
     );
   }
 
   Future<bool> sendRealtimeEditedSharedSheetBack() async {
+    final pending = realtimeEditedSheetSend;
+    if (pending != null) return pending;
+    final operation = _sendRealtimeEditedSharedSheetBack();
+    realtimeEditedSheetSend = operation;
+    try {
+      return await operation;
+    } finally {
+      if (identical(realtimeEditedSheetSend, operation)) {
+        realtimeEditedSheetSend = null;
+      }
+    }
+  }
+
+  Future<bool> _sendRealtimeEditedSharedSheetBack() async {
     final service = realtimeService;
     if (service?.isConnected != true) return false;
     if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
       return false;
     }
 
-    final current = schedePersonaggio[schedaCorrente];
+    final editedIndex = schedaCorrente;
+    final current = schedePersonaggio[editedIndex];
     if (!readBoolValue(current['realtimeSharedSheet'])) return false;
     if (!readBoolValue(current['realtimeDirtyLocal'])) return false;
     if (readBoolValue(current['realtimeRestrictedByMaster'])) return false;
@@ -2591,7 +2649,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       masterParty: false,
       targetTags: <String>[sourceTag],
     );
-    if (!sent) return false;
+    if (!sent || !mounted || realtimeService != service) return false;
 
     rememberRealtimeSheetHash('edit:$sourceTag', jsonEncode(patch));
 
@@ -2599,8 +2657,34 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       sourceRecord['sheet'] = oculumRealtimeMergeSheetPatch(baseSheet, patch);
       sourceRecord['sentAt'] = DateTime.now().toIso8601String();
     }
-    current['realtimeDirtyLocal'] = false;
-    current.remove('realtimeDirtyAt');
+    // A new local edit made during the send must remain pending.
+    final latestIndex = sourceKey.isNotEmpty
+        ? realtimeLocalSheetIndexForKey(sourceKey)
+        : editedIndex;
+    if (latestIndex >= 0 &&
+        latestIndex < schedePersonaggio.length &&
+        '${schedePersonaggio[latestIndex]['realtimeSourceSheetTag'] ?? schedePersonaggio[latestIndex]['realtimeOwnerTag'] ?? ''}' ==
+            sourceTag &&
+        jsonEncode(
+              realtimeSafeSheetJson(
+                schedaJsonAt(latestIndex),
+                includeImage: true,
+              ),
+            ) ==
+            jsonEncode(fullSheet)) {
+      schedePersonaggio[latestIndex]['realtimeDirtyLocal'] = false;
+      schedePersonaggio[latestIndex].remove('realtimeDirtyAt');
+    }
+    if (schedaCorrente >= 0 &&
+        schedaCorrente < schedePersonaggio.length &&
+        readBoolValue(
+          schedePersonaggio[schedaCorrente]['realtimeDirtyLocal'],
+        )) {
+      programmaSalvataggio(
+        invalidateCaches: false,
+        delay: const Duration(milliseconds: 500),
+      );
+    }
     saveActiveCampaignInMemory();
     aggiungiLog(
       t(
@@ -2907,6 +2991,11 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         Text(
           t('Schede online condivise', 'Shared online sheets'),
           style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+        ),
+        TextButton.icon(
+          onPressed: () => unawaited(realtimeService!.requestSharedSheets()),
+          icon: const Icon(Icons.sync),
+          label: Text(t('Richiedi schede ai Player', 'Request player sheets')),
         ),
         const SizedBox(height: 8),
         if (realtimeSharedSheets.isEmpty)

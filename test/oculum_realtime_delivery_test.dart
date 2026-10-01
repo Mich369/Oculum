@@ -9,6 +9,8 @@ class _Channel implements RealtimeChannel {
   ChannelResponse response = ChannelResponse.ok;
   Function? subscription;
   Completer<ChannelResponse>? pendingSend;
+  final broadcasts = <Map<String, dynamic>>[];
+  final callbacks = <String, Function>{};
 
   @override
   dynamic noSuchMethod(Invocation invocation) {
@@ -22,10 +24,17 @@ class _Channel implements RealtimeChannel {
       case #untrack:
         return Future.value(ChannelResponse.ok);
       case #sendBroadcastMessage:
+        broadcasts.add({
+          'event': invocation.namedArguments[#event],
+          'payload': invocation.namedArguments[#payload],
+        });
         return pendingSend?.future ?? Future.value(response);
       case #presenceState:
         return <SinglePresenceState>[];
       case #onBroadcast:
+        callbacks[invocation.namedArguments[#event] as String] =
+            invocation.namedArguments[#callback] as Function;
+        return this;
       case #onPresenceSync:
       case #onPresenceJoin:
       case #onPresenceLeave:
@@ -51,6 +60,76 @@ class _Client implements SupabaseClient {
 }
 
 void main() {
+  test(
+    'large sheets travel in bounded chunks and import only when complete',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+      final client = _Client();
+      final received = <Map<String, dynamic>>[];
+      final service = OculumRealtimeService(
+        client: client,
+        roomId: 'large',
+        playerName: 'Hoshy',
+        onEvent: (event, payload) {
+          if (event == 'sheet_shared') received.add(payload);
+        },
+        onPresenceChanged: (_) {},
+        onStatusChanged: (_) {},
+      );
+      addTearDown(service.dispose);
+      await service.connect();
+      final sheet = {'nome': 'Hoshy', 'imageBase64': 'x' * 300000};
+      expect(
+        await service.sendSharedSheetConfirmed(
+          sheet: sheet,
+          campaignId: 'campaign',
+          campaignName: 'Campaign',
+          sheetId: 'OWNER',
+          sheetName: 'Hoshy',
+          ownerTag: 'OWNER',
+          senderRole: 'player',
+          targetAudience: 'master_coMaster',
+          fromMaster: false,
+          masterParty: false,
+          deliveryId: 'receipt',
+        ),
+        isTrue,
+      );
+      final parts = client.testChannel.broadcasts;
+      expect(parts.length, greaterThan(1));
+      expect(
+        parts.every((part) => part['event'] == 'sheet_shared_chunk'),
+        isTrue,
+      );
+      for (final part in parts.skip(1).toList().reversed) {
+        client.testChannel.callbacks['sheet_shared_chunk']!(part['payload']);
+        expect(received, isEmpty);
+      }
+      client.testChannel.callbacks['sheet_shared_chunk']!(
+        parts.first['payload'],
+      );
+      expect(received.single['sheet'], sheet);
+      expect(received.single['deliveryId'], 'receipt');
+      client.testChannel.response = ChannelResponse.error;
+      expect(
+        await service.sendSharedSheetConfirmed(
+          sheet: sheet,
+          campaignId: 'campaign',
+          campaignName: 'Campaign',
+          sheetId: 'OWNER',
+          sheetName: 'Hoshy',
+          ownerTag: 'OWNER',
+          senderRole: 'player',
+          targetAudience: 'master_coMaster',
+          fromMaster: false,
+          masterParty: false,
+        ),
+        isFalse,
+      );
+    },
+  );
   test('friend reconnect changes signature without presence refresh churn', () {
     const user = {
       'localSheetTags': ['ABC'],

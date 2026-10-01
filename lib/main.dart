@@ -1954,6 +1954,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   final Map<String, String> realtimePendingMasterAckSheetIds =
       <String, String>{};
   final Map<String, int> realtimePendingMasterAckAttempts = <String, int>{};
+  final Map<String, String> realtimePendingMasterAckHashes = <String, String>{};
+  final Map<String, OculumRealtimeService> realtimeStaffTransfersInFlight = {};
+  Future<bool>? realtimeEditedSheetSend;
   final Map<String, Timer> realtimePendingMasterAckTimers = <String, Timer>{};
   OculumRealtimeService? realtimeService;
   bool applyingRealtimeRemoteSheet = false;
