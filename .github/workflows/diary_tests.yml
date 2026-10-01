@@ -44,7 +44,7 @@ jobs:
         run: flutter test --no-pub test/oculum_diary_memory_test.dart test/oculum_diary_roles_links_test.dart
 
       - name: Test Eye Map layout
-        run: flutter test --no-pub test/oculum_eye_memory_widget_test.dart
+        run: flutter test --no-pub test/oculum_eye_memory_widget_test.dart test/oculum_memory_eye_test.dart
 
       - name: Test fluent diary typing
         run: flutter test --no-pub test/oculum_diary_typing_test.dart

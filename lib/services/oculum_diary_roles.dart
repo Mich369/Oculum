@@ -7,6 +7,7 @@ const diaryEditableRoles = <String, String>{
   'enemy': 'Nemico',
   'creature': 'Mostro',
   'dead': 'Morto',
+  'obliterated': 'Obliterato / Oblio',
   'fallen_eye': 'Occhio dei Caduti',
   'place': 'Ambiente / Luogo',
   'weapon': 'Arma',

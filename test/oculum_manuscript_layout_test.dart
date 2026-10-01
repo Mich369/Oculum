@@ -11,6 +11,10 @@ import 'package:oculum/main.dart';
 import 'package:oculum/pages/hero_path_page.dart';
 
 void main() {
+  const captureLabel = String.fromEnvironment('OculumBenchmarkLabel');
+  final capturePath = captureLabel.isEmpty
+      ? 'output/ui'
+      : 'output/ui/${captureLabel.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_')}';
   TestWidgetsFlutterBinding.ensureInitialized();
   testWidgets(
     'Manuscript real screen fits desktop, short windows and phone',
@@ -114,7 +118,7 @@ void main() {
           final bytes = await picture.toByteData(
             format: ui.ImageByteFormat.png,
           );
-          final out = Directory('output/ui')..createSync(recursive: true);
+          final out = Directory(capturePath)..createSync(recursive: true);
           File(
             '${out.path}/manuscript-${defaultTargetPlatform.name}-${size.width.toInt()}.png',
           ).writeAsBytesSync(bytes!.buffer.asUint8List());
@@ -158,7 +162,7 @@ void main() {
             format: ui.ImageByteFormat.png,
           );
           File(
-            'output/ui/classic-${size.width.toInt()}.png',
+            '$capturePath/classic-${defaultTargetPlatform.name}-${size.width.toInt()}.png',
           ).writeAsBytesSync(bytes!.buffer.asUint8List());
           picture.dispose();
         });

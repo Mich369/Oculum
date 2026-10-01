@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../services/oculum_diary_memory.dart';
 import '../services/oculum_diary_roles.dart';
+import '../widgets/oculum_memory_eye.dart';
 
 class OculumEyeMemoryPage extends StatefulWidget {
   const OculumEyeMemoryPage({
@@ -40,6 +41,7 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
     'party': 'Party / Alleati',
     'enemy': 'Nemici',
     'dead': 'Morti',
+    'obliterated': 'Obliterati / Oblio',
     'fallen_eye': 'Occhi dei Caduti',
     'weapon': 'Armi',
     'armor': 'Armature',
@@ -227,7 +229,7 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                 final e = matches[index];
                 return Center(
                   child: ActionChip(
-                    avatar: const Icon(Icons.visibility, size: 18),
+                    avatar: OculumMemoryEye(role: e.kind, size: 24),
                     label: Text(e.name),
                     onPressed: () => setState(() {
                       selected = e.id;
@@ -347,9 +349,18 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                             Positioned(
                               left:
                                   entry.value.dx -
-                                  (58 + memory.importance(entry.key) * 2),
-                              top: entry.value.dy - 35,
-                              width: 116 + memory.importance(entry.key) * 4,
+                                  (58 +
+                                      min(
+                                        30.0,
+                                        memory.importance(entry.key) * 2,
+                                      )),
+                              top:
+                                  entry.value.dy -
+                                  (entry.key == selected ? 42 : 32) -
+                                  min(15.0, memory.importance(entry.key)),
+                              width:
+                                  116 +
+                                  min(60.0, memory.importance(entry.key) * 4),
                               child: Semantics(
                                 button: true,
                                 label: memory.entities[entry.key]!.name,
@@ -361,47 +372,16 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                                   }),
                                   child: Column(
                                     children: [
-                                      Container(
-                                        width: entry.key == selected
-                                            ? 54 +
-                                                  min(
-                                                    30.0,
-                                                    memory.importance(
-                                                          entry.key,
-                                                        ) *
-                                                        2,
-                                                  )
-                                            : 40 +
-                                                  min(
-                                                    30.0,
-                                                    memory.importance(
-                                                          entry.key,
-                                                        ) *
-                                                        2,
-                                                  ),
-                                        height:
-                                            32 +
+                                      OculumMemoryEye(
+                                        role: memory.entities[entry.key]!.kind,
+                                        size:
+                                            (entry.key == selected
+                                                ? 84.0
+                                                : 64.0) +
                                             min(
-                                              18.0,
-                                              memory.importance(entry.key),
+                                              30.0,
+                                              memory.importance(entry.key) * 2,
                                             ),
-                                        decoration: BoxDecoration(
-                                          border: Border.all(color: gold),
-                                          borderRadius: BorderRadius.circular(
-                                            24,
-                                          ),
-                                          color: const Color(0xff23162c),
-                                          boxShadow: const [
-                                            BoxShadow(
-                                              color: Color(0x665f397a),
-                                              blurRadius: 20,
-                                            ),
-                                          ],
-                                        ),
-                                        child: const Icon(
-                                          Icons.visibility,
-                                          color: gold,
-                                        ),
                                       ),
                                       Text(
                                         '${memory.entities[entry.key]!.name} · ${memory.mentionCount(entry.key)}',

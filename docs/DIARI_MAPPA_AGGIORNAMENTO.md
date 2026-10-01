@@ -83,3 +83,29 @@ Il registro personale `diaryEntityRoles` viene escluso dalle schede realtime e d
 | `.github/workflows/diary_tests.yml`, `.github/workflows/test_windows_distribution.yml` | Test di ruoli e suggerimenti nelle Actions; prova realtime live opzionale con input `live_realtime`. |
 
 La prova realtime live del 1 ottobre è passata: due client Supabase reali nella stessa macchina, stanza temporanea e dati sintetici, immagine test di 500.000 caratteri, confronto completo, ACK del destinatario distinto dal server e riconnessione. Non equivale a una prova delle interfacce Player/Master su due dispositivi fisici.
+
+## Icone trasparenti e Obliterati — 1 ottobre 2026
+
+Le immagini finali sono estratte direttamente dai pixel originali, su autorizzazione dell'utente. Le prove con ImageGen sono state scartate perché alteravano il disegno. Nessun originale viene sovrascritto; dimensioni e RGB dei pixel conservati restano identici. La rimozione agisce sul canale alpha.
+
+| Cosa modificare | File / parametro |
+| --- | --- |
+| NPC vivi e Party / Alleati: occhio viola | `assets/oculum/icons/oculum_npc_eye.png` (512×512) |
+| Nemici e Mostri: occhio rosso originale già trasparente | `assets/icon/oculum_eye.png` (512×512, invariato) |
+| Morti: occhio grigio infranto | `assets/oculum/icons/oculum_dead_eye.png` (1254×1254) |
+| Obliterati / Oblio: Reliquia senza bianco | `assets/oculum/icons/oculum_obliterated_eye.png` (256×256) |
+| Associazione fra ruolo e immagine | `lib/widgets/oculum_memory_eye.dart`, `oculumMemoryEyeAsset` |
+| Dimensione nodo: 84 centrale, 64 periferico, crescita massima +30 | `lib/pages/oculum_eye_memory_page.dart` |
+| Soglia del bianco: minimo RGB 225, neutralità massima 18 | `scripts/remove_eye_background.ps1` |
+| Pulizia del bordo bianco: soglia 190, un passaggio sui bordi | `EdgeWhiteThreshold` nello stesso script |
+| Riflessi interni protetti per NPC/Morti | `EyeCenterX/Y`, `EyeRadiusX/Y`; NPC: .5/.46/.29/.13, Morti: .5/.44/.25/.13 |
+| Rimozione anche del bianco interno della Reliquia | `-RemoveAllWhite`; conserva grigi, neri e trasparenza già presente |
+| Nuovo ruolo persistente e cronologia | `lib/services/oculum_diary_roles.dart`, chiave `obliterated` |
+| Link manuali e suggerimenti | `[[Obliterato:Nome]]`, alias Oblio/Obliterata/Obliterati, servizi Diari |
+| Test trasparenza, dimensioni, cambio icona, persistenza ruolo | `test/oculum_memory_eye_test.dart` |
+
+Cambiare ruolo nell'Occhio cambia subito l'icona, conserva identità, fonti e cronologia. La classificazione personale non modifica automaticamente stirpe o statistiche della scheda. Gli altri tipi di nodo conservano il sigillo generico. I ritratti caricati nelle schede restano disponibili.
+
+Verifica dei pixel finali: 53.124 pixel visibili dell'NPC, 342.872 dei Morti e 21.219 degli Obliterati confrontati con gli originali, senza differenze RGB. La prova controlla anche le dimensioni. La suite usa screenshot del Manoscritto separati per piattaforma e, con `OculumBenchmarkLabel`, per esecuzione: evita collisioni e blocchi Windows sui PNG aperti.
+
+Verifica finale di questa modifica: 588 test superati, 2 prove live facoltative saltate; log `output/eye-icons-final-regression-20261001.log`. I test dei layout includono desktop e mobile simulati. Il test live Supabase descritto nelle sezioni precedenti resta una verifica separata svolta con due client sullo stesso computer.
