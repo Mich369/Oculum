@@ -25,6 +25,13 @@ class OculumPerformanceProbe {
   Future<void> reloadSave() => _state.caricaDati();
   void saveSheet() => _state.salvaSchedaCorrenteInMemoria();
   Future<void> save() => _state.salvaDatiSoloLocale();
+  Future<String?> savedRaw() async =>
+      _state._readSaveBlob(await _state._prefs(), _OculumHomePageState.saveKey);
+  Future<bool> writeBlob(String key, String value) async =>
+      _state._writeSaveBlob(await _state._prefs(), key, value);
+  Future<String?> readBlob(String key) async =>
+      _state._readSaveBlob(await _state._prefs(), key);
+  Widget storyPage() => _state.backgroundAndSkillsPageEfficient();
   void hp(int index) => _state.applyMasterEnemyQuickHpAction(index, damage: 1);
   void turn() => _state.nextMasterInitiativeTurn();
   void longRest() => _state.riposoLungo();

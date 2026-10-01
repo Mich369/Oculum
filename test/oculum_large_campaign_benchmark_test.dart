@@ -75,6 +75,11 @@ void main() {
       'assets/oculum/manuscript_reference.png',
     )).buffer.asUint8List();
     final portrait = base64Encode(bytes);
+    final portraits = List.generate(
+      sheetCount,
+      (i) =>
+          base64Encode(<int>[...bytes, ...utf8.encode('Oculum portrait $i')]),
+    );
     fixture['textAttachments'] = {
       'notes': List.generate(
         1,
@@ -92,6 +97,7 @@ void main() {
         'sheetTag': fixtureTag(i),
         'id': fixtureTag(i),
         'inMasterParty': true,
+        'immaginePersonaggioBase64': portraits[i],
         'tipoScheda': i == 0 ? 'Personaggio' : 'Mostro',
       },
     );
@@ -140,6 +146,7 @@ void main() {
             'name': 'Creature $i',
             'sheetTag': fixtureTag(i),
             'sheetIndex': i,
+            'imageBase64': portraits[i],
             'currentHp': 300,
             'maxHp': 300,
             'status': 'ready',
@@ -254,9 +261,16 @@ void main() {
       });
     });
     final prefs = await SharedPreferences.getInstance();
-    final stored =
-        jsonDecode(prefs.getString('oculum_save_v9_manual_rgb_opacity_clean')!)
-            as Map;
+    String? savedRaw;
+    await tester.runAsync(() async {
+      savedRaw = await probe.savedRaw();
+    });
+    final stored = jsonDecode(savedRaw!) as Map;
+    expect(
+      prefs.getString('oculum_save_v9_manual_rgb_opacity_clean'),
+      isNull,
+      reason: 'Large image saves must not be mirrored in preferences',
+    );
     expect((stored['schedePersonaggio'] as List).length, sheetCount);
     expect(
       stored['schedePersonaggio'][sheetCount - 1]['nome'],
@@ -264,7 +278,7 @@ void main() {
     );
     expect(
       stored['schedePersonaggio'][sheetCount - 1]['immaginePersonaggioBase64'],
-      portrait,
+      portraits.last,
     );
     expect(state.salvataggioBloccatoPerErrore, isFalse);
     expect(tester.takeException(), isNull);

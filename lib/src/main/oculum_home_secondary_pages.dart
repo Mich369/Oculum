@@ -2728,7 +2728,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }
 
   Widget masterPartyAvatar(int index, {double size = 58}) {
-    final image = immagineSchedaAt(index);
+    final raw = index >= 0 && index < schedePersonaggio.length
+        ? '${schedePersonaggio[index]['immaginePersonaggioBase64'] ?? ''}'
+        : '';
     final name = nomeSchedaPersonaggio(index);
     final initial = name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase();
 
@@ -2754,7 +2756,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             clipper: const HexagonClipper(),
             child: Container(
               color: const Color(0xFF0B0D14),
-              child: image == null
+              child: raw.isEmpty
                   ? Center(
                       child: Text(
                         initial,
@@ -2765,15 +2767,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         ),
                       ),
                     )
-                  : Image.memory(
-                      image,
-                      fit: BoxFit.cover,
-                      cacheWidth: oculumImageCacheDimension(
-                        context,
-                        size,
-                        max: 256,
+                  : OculumAsyncPortrait(
+                      raw: raw,
+                      cache: decodedImageBase64Cache,
+                      fallback: Center(
+                        child: Text(
+                          initial,
+                          style: TextStyle(color: primaryColor),
+                        ),
                       ),
-                      cacheHeight: oculumImageCacheDimension(
+                      cacheSide: oculumImageCacheDimension(
                         context,
                         size,
                         max: 256,
@@ -3038,7 +3041,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   Widget initiativeTokenAvatar(Map<String, dynamic> token) {
     final imageRaw = '${token['imageBase64'] ?? ''}';
-    final image = decodedBase64ImageCached(imageRaw);
     final spriteAssetPath = masterInitiativeTokenSpriteAsset(token);
     final size = masterInitiativeTokenSize(token).toDouble();
     final cacheSide = oculumImageCacheDimension(context, size, max: 320);
@@ -3059,7 +3061,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       color: color,
       size: max(20, size * 0.48),
     );
-    final content = image == null
+    final content = imageRaw.isEmpty
         ? spriteAssetPath.isEmpty
               ? Center(child: fallbackIcon)
               : Image.asset(
@@ -3071,11 +3073,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   errorBuilder: (context, error, stackTrace) =>
                       Center(child: fallbackIcon),
                 )
-        : Image.memory(
-            image,
-            fit: BoxFit.cover,
-            cacheWidth: cacheSide,
-            cacheHeight: cacheSide,
+        : OculumAsyncPortrait(
+            raw: imageRaw,
+            cache: decodedImageBase64Cache,
+            fallback: Center(child: fallbackIcon),
+            cacheSide: cacheSide,
           );
 
     if (hexToken) {

@@ -38,6 +38,21 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     final dynamic state = tester.state(find.byType(OculumHomePage));
     final probe = OculumPerformanceProbe(state);
+    await tester.runAsync(() async {
+      final prefs = await SharedPreferences.getInstance();
+      state.sharedPreferencesFuture = Future<SharedPreferences>.value(prefs);
+      state.saveBlobDirectoryFuture = Future<Directory>.value(fixtureDirectory);
+      final old = jsonEncode({'notes': 'x' * (1024 * 1024), 'unknown': 'old'});
+      final updated = jsonEncode({
+        'notes': 'y' * (1024 * 1024),
+        'unknown': 'new',
+      });
+      await prefs.setString('large_fixture', old);
+      expect(await probe.writeBlob('large_fixture', updated), isTrue);
+      expect(prefs.getString('large_fixture'), isNull);
+      expect(await probe.readBlob('large_fixture'), updated);
+      expect(await probe.readBlob('large_fixture_legacy_preferences'), old);
+    });
     final legacySheet = probe.snapshot()
       ..['resilienza'] = '20'
       ..['currentResilienza'] = '20'

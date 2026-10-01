@@ -169,6 +169,44 @@ void main() {
       probe.cancelPendingSave();
       Navigator.of(tester.element(field)).pop();
       await tester.pump(const Duration(milliseconds: 500));
+      state.journalEntries.first.description =
+          'Nel [[Luogo:Bosco Nero]] ho incontrato [[NPC:Arven]].';
+      showDialog<void>(
+        context: tester.element(find.byType(OculumHomePage)),
+        builder: (_) => Dialog(
+          child: SizedBox(width: 900, height: 700, child: probe.storyPage()),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Costellazione degli Occhi'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('story_eye_constellation')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const ValueKey('story_eye_constellation')));
+      await tester.runAsync(
+        () async => Future<void>.delayed(const Duration(milliseconds: 300)),
+      );
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('MAPPA DEGLI OCCHI'), findsOneWidget);
+      for (
+        var attempt = 0;
+        attempt < 40 &&
+            find
+                .text('Le parole restano. Gli Occhi ricordano.')
+                .evaluate()
+                .isEmpty;
+        attempt++
+      ) {
+        await tester.runAsync(
+          () async => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(
+        find.text('Le parole restano. Gli Occhi ricordano.'),
+        findsOneWidget,
+      );
       await tester.pumpWidget(const SizedBox());
       expect(tester.takeException(), isNull);
     },

@@ -4,6 +4,7 @@ part of '../../main.dart';
 
 const String oculumSheetShareCodePrefix = 'OCULUM-SHEETS-v1:';
 const String oculumSheetShareCodePrefixV2 = 'OC2:';
+const String oculumSheetShareCodePrefixV3 = 'OC3:';
 
 /// FNV-1a a 32 bit: breve, deterministico e sufficiente per riconoscere un
 /// codice copiato male. Non è una firma crittografica e non sostituisce il
@@ -44,23 +45,27 @@ List<Map<String, dynamic>> oculumDecodeSheetShareText(String rawText) {
       .where(
         (part) =>
             part.startsWith(oculumSheetShareCodePrefix) ||
-            part.startsWith(oculumSheetShareCodePrefixV2),
+            part.startsWith(oculumSheetShareCodePrefixV2) ||
+            part.startsWith(oculumSheetShareCodePrefixV3),
       )
       .toList();
   if (codeParts.isEmpty) return sheetsFromPayload(jsonDecode(text));
 
   final sheets = <Map<String, dynamic>>[];
   for (final code in codeParts) {
+    final isV3 = code.startsWith(oculumSheetShareCodePrefixV3);
     final isV2 = code.startsWith(oculumSheetShareCodePrefixV2);
     var encoded = code
         .substring(
-          isV2
+          isV3
+              ? oculumSheetShareCodePrefixV3.length
+              : isV2
               ? oculumSheetShareCodePrefixV2.length
               : oculumSheetShareCodePrefix.length,
         )
         .trim();
     String? checksum;
-    if (isV2) {
+    if (isV2 || isV3) {
       final separator = encoded.indexOf(':');
       // OC2 originale era "OC2:<payload>". OC2 nuovo è
       // "OC2:<checksum>:<payload>": entrambe le forme restano importabili.
@@ -79,8 +84,13 @@ List<Map<String, dynamic>> oculumDecodeSheetShareText(String rawText) {
         'Codice OC2 corrotto o copiato incompleto: controllo integrità non valido.',
       );
     }
-    final decodedText = utf8.decode(isV2 ? gzip.decode(bytes) : bytes);
-    sheets.addAll(sheetsFromPayload(jsonDecode(decodedText)));
+    final decodedText = utf8.decode(isV2 || isV3 ? gzip.decode(bytes) : bytes);
+    final decoded = jsonDecode(decodedText);
+    if (isV3 && decoded is Map && decoded['sheet'] is Map) {
+      sheets.add(Map<String, dynamic>.from(decoded['sheet'] as Map));
+    } else {
+      sheets.addAll(sheetsFromPayload(decoded));
+    }
   }
   if (sheets.isEmpty) {
     throw const FormatException('Nessuna scheda trovata.');
@@ -933,6 +943,11 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       indexes.add(schedaCorrente.clamp(0, schedePersonaggio.length - 1));
     }
 
+    if (indexes.length == 1) {
+      final sheet = _schedaPerCodiceCompatto(indexes.single);
+      final bytes = gzip.encode(utf8.encode(jsonEncode({'sheet': sheet})));
+      return '$oculumSheetShareCodePrefixV3${oculumShareChecksum(bytes)}:${base64UrlEncode(bytes).replaceAll('=', '')}';
+    }
     final payload = <String, dynamic>{
       'kind': 'oculum_sheets',
       'version': 2,
@@ -943,6 +958,46 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     final encoded = gzip.encode(utf8.encode(jsonEncode(payload)));
     final compact = base64UrlEncode(encoded).replaceAll('=', '');
     return '$oculumSheetShareCodePrefixV2${oculumShareChecksum(encoded)}:$compact';
+  }
+
+  Map<String, dynamic> _schedaPerCodiceCompatto(int index) {
+    final source = schedaPerCodiceCondivisione(index);
+    const privateKeys = <String>{
+      'id',
+      'sheetTag',
+      'inMasterParty',
+      'masterSideOverride',
+      'realtimeSharedSheet',
+      'realtimeSourceKey',
+      'realtimeSourceSheetTag',
+      'realtimeOwnerTag',
+      'realtimeOwnerName',
+      'realtimeCampaignId',
+      'realtimeCampaignName',
+      'realtimeSharedAt',
+      'realtimeReceivedAt',
+      'realtimeLocalSheetTag',
+      'realtimeDirtyLocal',
+      'realtimeDirtyAt',
+      'realtimeRestrictedByMaster',
+      'realtimeReadOnlyByMaster',
+      'publicTokenSide',
+      'publicInitiativeBase',
+      'publicInitiativeTotal',
+      'publicInitiativeRollHidden',
+      'realtimeCoMaster',
+      'realtimeShareWithFriends',
+    };
+    final compact = <String, dynamic>{};
+    for (final entry in source.entries) {
+      final value = entry.value;
+      if (privateKeys.contains(entry.key) || value == null) continue;
+      if (value is String && value.isEmpty) continue;
+      if (value is List && value.isEmpty) continue;
+      if (value is Map && value.isEmpty) continue;
+      compact[entry.key] = value;
+    }
+    return compact;
   }
 
   List<Map<String, dynamic>> schedeDaPayloadCodice(dynamic decoded) {
@@ -2461,8 +2516,11 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     };
 
     setState(() {
-      oculumApplyStarterSubtraits(hiddenEyeStats,
-        appliedTutorialSubtraitPoints, tutorialSubtraitPoints);
+      oculumApplyStarterSubtraits(
+        hiddenEyeStats,
+        appliedTutorialSubtraitPoints,
+        tutorialSubtraitPoints,
+      );
       livelloController.text = livello.toString();
       expController.text = expIniziale.toString();
       resilienzaController.text = (stats['resilienza'] ?? 0).toString();

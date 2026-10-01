@@ -33,6 +33,43 @@ void main() {
     );
   });
 
+  test('OC3 singola scheda resta corto e compatibile col normalizzatore', () {
+    final source = <String, dynamic>{
+      'nome': 'Hoshy',
+      'tipoScheda': 'Personaggio',
+      'livello': '12',
+      'grado': '2',
+      'currentHp': '88',
+      'background': 'Bosco Nero',
+      'inventario': <dynamic>[],
+      'diarioPagine': <dynamic>[],
+      'realtimeOwnerTag': 'privato',
+      'sheetTag': 'privato',
+    };
+    final bytes = gzip.encode(
+      utf8.encode(
+        jsonEncode({
+          'sheet': {
+            'nome': source['nome'],
+            'tipoScheda': source['tipoScheda'],
+            'livello': source['livello'],
+            'grado': source['grado'],
+            'currentHp': source['currentHp'],
+            'background': source['background'],
+          },
+        }),
+      ),
+    );
+    final code =
+        'OC3:${oculumShareChecksum(bytes)}:${base64UrlEncode(bytes).replaceAll('=', '')}';
+    final decoded = oculumDecodeSheetShareText(code);
+    expect(decoded, hasLength(1));
+    expect(decoded.single['nome'], 'Hoshy');
+    expect(decoded.single['currentHp'], '88');
+    expect(decoded.single.containsKey('realtimeOwnerTag'), isFalse);
+    expect(code.length, lessThan(260));
+  });
+
   test('il prefab ChatGPT rispetta il contratto import Oculum', () {
     final raw = File(
       'docs/chatgpt_handoff/prefab_character_generator/example_prefab_character.json',

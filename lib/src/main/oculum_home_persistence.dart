@@ -2699,6 +2699,47 @@ extension _OculumHomePersistence on _OculumHomePageState {
     return legacy;
   }
 
+  Future<bool> _archiveLegacyPreferenceMirror(
+    SharedPreferences prefs,
+    String key,
+  ) async {
+    final legacy = prefs.getString(key);
+    if (legacy == null) return true;
+    var archive = await _saveBlobFileForKey('${key}_legacy_preferences');
+    if (await archive.exists() && await archive.readAsString() != legacy) {
+      archive = await _saveBlobFileForKey(
+        '${key}_legacy_preferences_${DateTime.now().microsecondsSinceEpoch}',
+      );
+    }
+    if (!await archive.exists() && !await _writeFileAtomically(archive, legacy)) {
+      return false;
+    }
+    return prefs.remove(key);
+  }
+
+  Future<void> _migrateMatchingLargePreferenceMirrors(
+    SharedPreferences prefs,
+  ) async {
+    if (kIsWeb) return;
+    for (final key in [
+      _OculumHomePageState.saveKey,
+      _verifiedSaveKey,
+      _pendingSaveKey,
+      _backupSaveKey1,
+      _backupSaveKey2,
+      _backupSaveKey3,
+      _diaryArchiveSaveKey,
+    ]) {
+      final legacy = prefs.getString(key);
+      if (legacy == null || legacy.length < 1024 * 1024) continue;
+      final file = await _saveBlobFileForKey(key);
+      if (await file.exists() && await file.readAsString() == legacy) {
+        await _archiveLegacyPreferenceMirror(prefs, key);
+      }
+      await Future<void>.delayed(Duration.zero);
+    }
+  }
+
   Future<bool> _writeSaveBlob(
     SharedPreferences prefs,
     String key,
@@ -2722,6 +2763,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
       }
     }
 
+    // Large portraits belong in the existing protected blob store. Mirroring
+    // them in preferences makes each small preference update re-encode the
+    // entire campaign on desktop. Keep the previous mirror recoverable before
+    // removing it, and retain the legacy fallback if the file write failed.
+    if (wroteFile && value.length >= 1024 * 1024) {
+      if (!await _archiveLegacyPreferenceMirror(prefs, key)) return true;
+      await _writeSaveBlobSignature(prefs, key, value);
+      return true;
+    }
     final legacySaved = await prefs.setString(key, value);
     final saved = wroteFile || legacySaved;
     if (saved) {
@@ -3478,6 +3528,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
         try {
           final prefs = await prefsFuture;
+          await _migrateMatchingLargePreferenceMirrors(prefs);
           var restored = 0;
           if (!await _diaryArchiveCoversCurrentData(prefs, data)) {
             restored = await _recoverDiariesFromRecentSaves(

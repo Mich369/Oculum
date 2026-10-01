@@ -3,6 +3,36 @@ import 'package:oculum/services/oculum_diary_memory.dart';
 import 'package:oculum/services/oculum_diary_links.dart';
 
 void main() {
+  test('indexed graph retains every source and tracks appended relations', () {
+    const document = DiaryDocument(
+      id: 'large',
+      author: 'Hoshy',
+      diary: 'D',
+      title: 'S',
+      text: 'source',
+      day: 1,
+    );
+    const evidence = DiaryEvidence(document, 0, 6);
+    final relations = List.generate(
+      10000,
+      (i) => DiaryRelation('center', 'node:${i % 300}', 'met', evidence),
+    );
+    final memory = DiaryMemory({}, relations);
+    expect(memory.mentionCount('center'), 10000);
+    expect(memory.uniqueConnectionCount('center'), 300);
+    expect(memory.backlinks('node:0').length, 34);
+    relations.add(const DiaryRelation('center', 'new', 'met', evidence));
+    expect(memory.uniqueConnectionCount('center'), 301);
+    expect(memory.backlinks('new').single.evidence.quote, 'source');
+    relations[0] = const DiaryRelation(
+      'center',
+      'replacement',
+      'met',
+      evidence,
+    );
+    memory.invalidateRelationIndex();
+    expect(memory.backlinks('replacement'), hasLength(1));
+  });
   test('diary bracket suggestions complete typed memory links', () {
     final catalogue = [
       const DiaryEntity('m:forest', 'Forest Demon', 'creature', ['Demone']),

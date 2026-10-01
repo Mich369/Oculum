@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/oculum_diary_memory.dart';
 import '../services/oculum_diary_roles.dart';
@@ -33,6 +34,8 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
   String query = '', kind = 'all';
   int page = 0;
   int timelineLimit = 60;
+  List<DiaryEntity>? _matchingEntities;
+  String _matchingQuery = '', _matchingKind = '';
   static const gold = Color(0xffc3a46b);
   static const kinds = {
     'all': 'Tutte le memorie',
@@ -72,6 +75,7 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
   }
 
   void _knowledgeChanged() {
+    _matchingEntities = null;
     if (mounted) setState(() {});
   }
 
@@ -140,23 +144,30 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
   Widget build(BuildContext context) {
     final memory = widget.memory;
     final matches =
-        memory.entities.values
-            .where(
-              (e) =>
-                  (kind == 'all' || kind == e.kind) &&
-                  (e.name.toLowerCase().contains(query.toLowerCase()) ||
-                      e.aliases.any(
-                        (alias) =>
-                            alias.toLowerCase().contains(query.toLowerCase()),
-                      )),
-            )
-            .toList()
-          ..sort((a, b) {
-            final byWeight = memory
-                .importance(b.id)
-                .compareTo(memory.importance(a.id));
-            return byWeight == 0 ? a.name.compareTo(b.name) : byWeight;
-          });
+        _matchingEntities != null &&
+            _matchingQuery == query &&
+            _matchingKind == kind
+        ? _matchingEntities!
+        : (memory.entities.values
+              .where(
+                (e) =>
+                    (kind == 'all' || kind == e.kind) &&
+                    (e.name.toLowerCase().contains(query.toLowerCase()) ||
+                        e.aliases.any(
+                          (alias) =>
+                              alias.toLowerCase().contains(query.toLowerCase()),
+                        )),
+              )
+              .toList()
+            ..sort((a, b) {
+              final byWeight = memory
+                  .importance(b.id)
+                  .compareTo(memory.importance(a.id));
+              return byWeight == 0 ? a.name.compareTo(b.name) : byWeight;
+            }));
+    _matchingEntities = matches;
+    _matchingQuery = query;
+    _matchingKind = kind;
     final related = selected == null
         ? <DiaryRelation>[]
         : memory.backlinks(selected!);
@@ -300,6 +311,7 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                       await widget.onRoleChanged!(center, role);
                       if (!mounted) return;
                       setState(() {
+                        _matchingEntities = null;
                         kind = 'all';
                       });
                     },
@@ -361,6 +373,7 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                       );
                       if (!mounted || name == null) return;
                       await widget.onNameChanged!(center, name);
+                      _matchingEntities = null;
                       if (mounted) setState(() {});
                     },
                   ),
@@ -633,5 +646,8 @@ class _ConstellationPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ConstellationPainter oldDelegate) =>
-      oldDelegate.positions != positions;
+      oldDelegate.center != center ||
+      oldDelegate.fontFamily != fontFamily ||
+      !mapEquals(oldDelegate.positions, positions) ||
+      !mapEquals(oldDelegate.labels, labels);
 }

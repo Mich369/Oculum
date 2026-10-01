@@ -31,6 +31,25 @@ Le copie locali di recupero in `output/save-recovery-20261001` sono escluse da G
 
 ## Parametri modificabili
 
+### Immagini e Costellazione — 1 ottobre 2026
+
+- Le miniature del Party e dei token vengono decodificate fuori dal thread dell'interfaccia, con massimo due worker e richieste duplicate accorpate. Originali, esportazioni e immagini salvate conservano tutti i byte.
+- I salvataggi di almeno 1 MiB usano i file protetti già presenti senza duplicare enormi JSON nelle preferenze. Prima di togliere una vecchia copia dalle preferenze, viene conservata in un file `*_legacy_preferences*.json`. All'avvio vengono migrate solo copie esattamente uguali al file protetto; le versioni differenti restano recuperabili. Il fallback nelle preferenze rimane quando il file non si può scrivere. Backup, verifiche e autosave restano attivi.
+- La Costellazione è visibile all'inizio di Storia, con un'anteprima dei collegamenti scritti nei Diari. Premere la costellazione o «Apri la Costellazione degli Occhi» apre la mappa completa; il Master può aprire anche quella della campagna.
+- La costruzione della Mappa viene differita al microtask successivo e la pagina si apre subito, senza trasferire oggetti Dart complessi tra isolate desktop/mobile. Backlink, conteggi e connessioni usano l'indice invece di riscorrere tutte le relazioni durante ogni confronto di ordinamento. Il filtro viene riutilizzato durante il cambio del nodo; rinomina, ruoli e comunicazioni invalidano la cache. Fonti e permessi rimangono quelli esistenti.
+- Il benchmark di 300 schede usa ora ritratti con contenuti base64 distinti e immagini nei token. Non riutilizza una sola immagine in tutte le schede. Il test delle relazioni verifica 10.000 collegamenti e tutte le fonti.
+
+| Parametro modificabile | Dove |
+| --- | --- |
+| Cache miniature: 64 immagini / 24 MiB; massimo 2 worker | `lib/src/main/oculum_home_image_cache.dart`, `OculumDecodedImageCache` |
+| Qualità/dimensioni miniature, forme e fallback | `lib/src/main/oculum_home_secondary_pages.dart`, `masterPartyAvatar`, `initiativeTokenAvatar` |
+| Soglia file protetti (1 MiB), archivio delle copie precedenti e migrazione | `lib/src/main/oculum_home_persistence.dart`, `_writeSaveBlob`, `_archiveLegacyPreferenceMirror`, `_migrateMatchingLargePreferenceMirrors` |
+| Anteprima in Storia: 6 collegamenti, altezza 190, apertura personale/campagna | `lib/src/main/oculum_home_titles_inventory_pages.dart`, `storyConstellationPanel`, `openEyeMemory` |
+| Costruzione differita e indice della mappa | `lib/src/main/oculum_home_titles_inventory_pages.dart`, `openEyeMemory` |
+| Indice di backlink, menzioni e connessioni, invalidazione esplicita dopo sostituzioni di relazioni | `lib/services/oculum_diary_memory.dart`, `DiaryMemory` |
+| Filtro memorie e ridisegno della costellazione | `lib/pages/oculum_eye_memory_page.dart` |
+| Prove di immagini originali, migrazione, 300 ritratti e apertura da Storia | `test/oculum_performance_safety_test.dart`, `test/oculum_save_load_role_regression_test.dart`, `test/oculum_large_campaign_benchmark_test.dart`, `test/oculum_diary_typing_test.dart` |
+
 ### Master con 300 schede — 1 ottobre 2026
 
 - La plancia Party usa un elenco a righe costruite quando entrano nel viewport: tutte le schede restano disponibili scorrendo, senza montare centinaia di schede insieme. Lo stesso principio è applicato ai turni riportati delle campagne.

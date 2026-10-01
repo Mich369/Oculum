@@ -109,22 +109,45 @@ class DiaryMemory {
   DiaryMemory(this.entities, this.relations);
   final Map<String, DiaryEntity> entities;
   final List<DiaryRelation> relations;
-  List<DiaryRelation> backlinks(String id) =>
-      relations.where((r) => r.from == id || r.to == id).toList();
+  int _indexedLength = -1;
+  final Map<String, List<DiaryRelation>> _backlinks = {};
+  final Map<String, Set<String>> _connections = {};
+  void invalidateRelationIndex() => _indexedLength = -1;
+  void _ensureRelationIndex() {
+    if (_indexedLength == relations.length) return;
+    _backlinks.clear();
+    _connections.clear();
+    for (final relation in relations) {
+      (_backlinks[relation.from] ??= []).add(relation);
+      if (relation.from != relation.to) {
+        (_backlinks[relation.to] ??= []).add(relation);
+        (_connections[relation.from] ??= {}).add(relation.to);
+        (_connections[relation.to] ??= {}).add(relation.from);
+      }
+    }
+    _indexedLength = relations.length;
+  }
+
+  List<DiaryRelation> backlinks(String id) {
+    _ensureRelationIndex();
+    return List.of(_backlinks[id] ?? const <DiaryRelation>[]);
+  }
+
   Set<String> diariesFor(String id) => backlinks(id)
       .map((r) => '${r.evidence.document.author}/${r.evidence.document.diary}')
       .toSet();
 
   /// Number of source-backed mentions and links. Repeated mentions deliberately
   /// increase the weight: the map reflects the living memory of the campaign.
-  int mentionCount(String id) =>
-      relations.where((r) => r.from == id || r.to == id).length;
+  int mentionCount(String id) {
+    _ensureRelationIndex();
+    return _backlinks[id]?.length ?? 0;
+  }
 
-  int uniqueConnectionCount(String id) => backlinks(id)
-      .map((r) => r.from == id ? r.to : r.from)
-      .where((other) => other != id)
-      .toSet()
-      .length;
+  int uniqueConnectionCount(String id) {
+    _ensureRelationIndex();
+    return _connections[id]?.length ?? 0;
+  }
 
   double importance(String id) =>
       1 + mentionCount(id) * .55 + uniqueConnectionCount(id) * 1.25;

@@ -5,6 +5,23 @@ import 'package:oculum/main.dart';
 
 void main() {
   test(
+    'async portrait decoding coalesces work and preserves original bytes',
+    () async {
+      final original = Uint8List.fromList(
+        List.generate(1024 * 1024, (i) => i % 256),
+      );
+      final raw = base64Encode(original);
+      final cache = OculumDecodedImageCache();
+      final first = cache.decodeAsync(raw);
+      expect(identical(first, cache.decodeAsync(raw)), isTrue);
+      final bytes = await first;
+      expect(bytes, original);
+      expect(identical(await cache.decodeAsync(raw), bytes), isTrue);
+      cache.clear();
+      expect(cache.sizeBytes, 0);
+    },
+  );
+  test(
     'JSON snapshots detach mutable children and preserve original images',
     () {
       final original = base64Encode(Uint8List(1024 * 1024));

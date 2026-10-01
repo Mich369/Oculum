@@ -2,7 +2,138 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+class _StoryConstellationPainter extends CustomPainter {
+  _StoryConstellationPainter(this.center, this.points);
+  final Offset center;
+  final List<Offset> points;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xffc3a46b)
+      ..strokeWidth = 1;
+    for (final point in points) {
+      canvas.drawLine(center, point, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_StoryConstellationPainter old) =>
+      old.center != center || !listEquals(old.points, points);
+}
+
 extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
+  Widget storyConstellationPanel() {
+    final linked = diaryEntitiesFromLinks([
+      for (final entry in journalEntries) entry.description,
+      ...diarioPagine,
+    ]).take(6).toList(growable: false);
+    return gothicPanel(
+      borderColor: tertiaryColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Costellazione degli Occhi',
+            style: TextStyle(
+              color: tertiaryColor,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 190,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final center = Offset(constraints.maxWidth / 2, 90);
+                final positions = List.generate(linked.length, (i) {
+                  final angle = -pi / 2 + i * 2 * pi / max(1, linked.length);
+                  return center +
+                      Offset(
+                        cos(angle) * min(140.0, constraints.maxWidth * .34),
+                        sin(angle) * 66,
+                      );
+                });
+                return InkWell(
+                  key: const ValueKey('story_eye_constellation'),
+                  onTap: () => openEyeMemory(),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _StoryConstellationPainter(
+                            center,
+                            positions,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: center.dx - 45,
+                        top: center.dy - 34,
+                        width: 90,
+                        child: Column(
+                          children: [
+                            const OculumMemoryEye(role: 'party', size: 42),
+                            Text(
+                              nomeSchedaPersonaggio(schedaCorrente),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      for (var i = 0; i < linked.length; i++)
+                        Positioned(
+                          left: positions[i].dx - 45,
+                          top: positions[i].dy - 24,
+                          width: 90,
+                          child: Column(
+                            children: [
+                              OculumMemoryEye(
+                                role: diaryRoleLedger.roleOf(linked[i]),
+                                size: 30,
+                              ),
+                              Text(
+                                linked[i].name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          if (linked.isEmpty)
+            const Text(
+              'Gli Occhi si collegano quando scrivi nomi nei Diari, per esempio [[Luogo:Bosco Nero]].',
+            ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => openEyeMemory(),
+                icon: const Icon(Icons.hub),
+                label: const Text('Apri la Costellazione degli Occhi'),
+              ),
+              if (modalitaMaster || isMasterHost || realtimeIsMasterRole)
+                OutlinedButton.icon(
+                  onPressed: () => openEyeMemory(campaign: true),
+                  icon: const Icon(Icons.public),
+                  label: const Text('Costellazione della campagna'),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   List<DiaryEntity> diarySuggestionCatalogue() {
     final key =
         '$activeCampaignId:$schedaCorrente:$salvataggioMutazioneRevisione:${journalEntries.length}:${diarioPagine.length}:${monsterBookEntries.length}:${schedePersonaggio.length}';
@@ -96,20 +227,35 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             'character',
           ),
     ];
-    final memory = DiaryMemoryBuilder().build(
-      documents,
-      catalogue,
-      campaign: wholeCampaign ? activeCampaignName() : null,
-    );
     final roleLedger = diaryRoleLedger;
-    roleLedger.apply(memory);
-    diaryKnowledgeSync.apply(
-      memory,
-      room: diaryKnowledgeRoom(),
-      recipientTag: sheetTagAt(schedaCorrente),
-      personal: roleLedger,
-    );
-    openedEyeMemory = memory;
+    final room = diaryKnowledgeRoom();
+    final recipientTag = sheetTagAt(schedaCorrente);
+    final author = wholeCampaign
+        ? activeCampaignName()
+        : nomeSchedaPersonaggio(schedaCorrente);
+    DiaryMemory? routeMemory;
+    var routeClosed = false;
+    final memoryFuture =
+        Future<DiaryMemory>.microtask(() {
+          final memory = DiaryMemoryBuilder().build(
+            documents,
+            catalogue,
+            campaign: wholeCampaign ? author : null,
+          );
+          memory.mentionCount('');
+          return memory;
+        }).then((memory) {
+          roleLedger.apply(memory);
+          diaryKnowledgeSync.apply(
+            memory,
+            room: room,
+            recipientTag: recipientTag,
+            personal: roleLedger,
+          );
+          routeMemory = memory;
+          if (!routeClosed && mounted) openedEyeMemory = memory;
+          return memory;
+        });
     final masterCanEditKnowledge =
         modalitaMaster || isMasterHost || realtimeIsMasterRole;
     final sourceSheetIndex = schedaCorrente;
@@ -125,50 +271,75 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     Navigator.of(context)
         .push(
           MaterialPageRoute<void>(
-            builder: (_) => OculumEyeMemoryPage(
-              memory: memory,
-              author: wholeCampaign
-                  ? activeCampaignName()
-                  : nomeSchedaPersonaggio(schedaCorrente),
-              roleHistory: roleLedger.historyFor,
-              nameHistory: roleLedger.nameHistoryFor,
-              knowledgeChanges: diaryKnowledgeRevision,
-              onShareKnowledge: masterCanEditKnowledge
-                  ? chooseDiaryKnowledgeRecipients
-                  : null,
-              onNameChanged: masterCanEditKnowledge
-                  ? (entity, name) async {
-                      if (!roleLedger.rename(entity, name, DateTime.now())) {
-                        return;
-                      }
-                      roleLedger.apply(memory);
-                      if (sourceSheetIndex >= 0 &&
-                          sourceSheetIndex < schedePersonaggio.length) {
-                        schedePersonaggio[sourceSheetIndex]['diaryEntityRoles'] =
-                            roleLedger.toJson();
-                      }
-                      await forzaSalvataggioImmediato(soloLocale: true);
-                    }
-                  : null,
-              onRoleChanged: canEditRoles || masterCanEditKnowledge
-                  ? (entity, role) async {
-                      if (!roleLedger.change(entity, role, DateTime.now())) {
-                        return;
-                      }
-                      roleLedger.apply(memory);
-                      if (sourceSheetIndex >= 0 &&
-                          sourceSheetIndex < schedePersonaggio.length) {
-                        schedePersonaggio[sourceSheetIndex]['diaryEntityRoles'] =
-                            roleLedger.toJson();
-                      }
-                      await forzaSalvataggioImmediato(soloLocale: true);
-                    }
-                  : null,
+            builder: (_) => FutureBuilder<DiaryMemory>(
+              future: memoryFuture,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Scaffold(
+                    appBar: AppBar(title: const Text('MAPPA DEGLI OCCHI')),
+                    body: Center(
+                      child: snapshot.hasError
+                          ? const Text(
+                              'Impossibile costruire la mappa. I Diari restano conservati.',
+                            )
+                          : const CircularProgressIndicator(),
+                    ),
+                  );
+                }
+                final memory = snapshot.requireData;
+                return OculumEyeMemoryPage(
+                  memory: memory,
+                  author: author,
+                  roleHistory: roleLedger.historyFor,
+                  nameHistory: roleLedger.nameHistoryFor,
+                  knowledgeChanges: diaryKnowledgeRevision,
+                  onShareKnowledge: masterCanEditKnowledge
+                      ? chooseDiaryKnowledgeRecipients
+                      : null,
+                  onNameChanged: masterCanEditKnowledge
+                      ? (entity, name) async {
+                          if (!roleLedger.rename(
+                            entity,
+                            name,
+                            DateTime.now(),
+                          )) {
+                            return;
+                          }
+                          roleLedger.apply(memory);
+                          if (sourceSheetIndex >= 0 &&
+                              sourceSheetIndex < schedePersonaggio.length) {
+                            schedePersonaggio[sourceSheetIndex]['diaryEntityRoles'] =
+                                roleLedger.toJson();
+                          }
+                          await forzaSalvataggioImmediato(soloLocale: true);
+                        }
+                      : null,
+                  onRoleChanged: canEditRoles || masterCanEditKnowledge
+                      ? (entity, role) async {
+                          if (!roleLedger.change(
+                            entity,
+                            role,
+                            DateTime.now(),
+                          )) {
+                            return;
+                          }
+                          roleLedger.apply(memory);
+                          if (sourceSheetIndex >= 0 &&
+                              sourceSheetIndex < schedePersonaggio.length) {
+                            schedePersonaggio[sourceSheetIndex]['diaryEntityRoles'] =
+                                roleLedger.toJson();
+                          }
+                          await forzaSalvataggioImmediato(soloLocale: true);
+                        }
+                      : null,
+                );
+              },
             ),
           ),
         )
         .whenComplete(() {
-          if (identical(openedEyeMemory, memory)) openedEyeMemory = null;
+          routeClosed = true;
+          if (identical(openedEyeMemory, routeMemory)) openedEyeMemory = null;
         });
   }
   // STORIA / DIARIO
@@ -359,12 +530,13 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
   }
 
   Widget backgroundAndSkillsPageEfficient() {
-    final diaryTitleIndex = modalitaMaster ? 4 : 3;
+    final diaryTitleIndex = modalitaMaster ? 5 : 4;
     final headerBuilders = <WidgetBuilder>[
       (_) => functionAnchor(
         'story_root',
         sectionTitle(t('Background', 'Background')),
       ),
+      (_) => storyConstellationPanel(),
       (_) => storyBackgroundPanelEfficient(),
       if (modalitaMaster) (_) => storyMasterPanelEfficient(),
       (_) => storyOnlineSessionNotesPanel(),
@@ -389,7 +561,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     return responsivePageBuilder(
       pageKey: 'story',
       builders: builders,
-      fullWidthIndexes: <int>{0, diaryTitleIndex},
+      fullWidthIndexes: <int>{0, 1, diaryTitleIndex},
       maxColumns: 2,
       minColumnWidth: 340,
       cacheExtent: 420,
@@ -1248,8 +1420,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       <String, num>{'oculum': oculumImmesso},
     );
     final structuredMessages = applyStructuredEffectsOnActivation(
-      form.effettiStrutturati.map((effect) => effect.id == 'role:Bastione:defense'
-          ? (OculumStructuredEffect.fromJson(effect.toJson())..valueExpression = '${difesa()}') : effect),
+      form.effettiStrutturati.map(
+        (effect) => effect.id == 'role:Bastione:defense'
+            ? (OculumStructuredEffect.fromJson(effect.toJson())
+                ..valueExpression = '${difesa()}')
+            : effect,
+      ),
       source:
           '${skill.nome.trim().isEmpty ? t('Skill senza nome', 'Unnamed skill') : skill.nome.trim()} - $formName',
       spentResources: <String, num>{'oculum': oculumImmesso},
@@ -4737,7 +4913,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         ),
         items: <PopupMenuEntry<String>>[
           if (item.craftData.isNotEmpty)
-            PopupMenuItem<String>(value: 'material_active', child: Text(item.craftData['active'] == true ? 'Disattiva materiale' : 'Attiva materiale')),
+            PopupMenuItem<String>(
+              value: 'material_active',
+              child: Text(
+                item.craftData['active'] == true
+                    ? 'Disattiva materiale'
+                    : 'Attiva materiale',
+              ),
+            ),
           if (item.monsterLoot['material'] == true)
             const PopupMenuItem<String>(
               value: 'combine_monster',
