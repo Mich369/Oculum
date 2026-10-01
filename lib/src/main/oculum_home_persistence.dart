@@ -1180,6 +1180,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'arti': artiBase().map((x) => x.toJson()).toList(),
       'diarioPagine': [],
       'journalEntries': [],
+      'diaryEntityRoles': [],
       'draftNotes': [],
       'hiddenEyeStats': defaultHiddenEyeStats().map((x) => x.toJson()).toList(),
       'reputations': defaultReputations().map((x) => x.toJson()).toList(),
@@ -1481,6 +1482,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'arti': arti.map((x) => x.toJson()).toList(),
       'diarioPagine': List<String>.from(diarioPagine),
       'journalEntries': journalEntries.map((x) => x.toJson()).toList(),
+      'diaryEntityRoles': diaryRoleLedger.toJson(),
       'statGemOverflow': Map<String, int>.from(statGemOverflow),
       'tutorialSubtraitAllocation': Map<String, int>.from(
         appliedTutorialSubtraitPoints,
@@ -2127,6 +2129,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       ..addAll((diarioRaw is List ? diarioRaw : const []).map((x) => '$x'));
 
     final journalRaw = json['journalEntries'];
+    diaryRoleLedger = DiaryRoleLedger.fromJson(json['diaryEntityRoles']);
+    diarySuggestionCacheKey = '';
     journalEntries
       ..clear()
       ..addAll(

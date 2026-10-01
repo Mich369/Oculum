@@ -8,20 +8,87 @@ const diaryLinkTypes = <String, String>{
   'item': 'oggetto',
   'quest': 'missione',
   'event': 'evento',
+  'party': 'Party',
+  'enemy': 'Nemico',
+  'dead': 'Morto',
+  'weapon': 'Arma',
+  'armor': 'Armatura',
+  'shield': 'Scudo',
+  'fallen_eye': 'Occhio dei Caduti',
+  'art': 'Art',
+  'title': 'Titolo',
+  'faction': 'Fazione',
 };
+
+const diaryCreationLinkTypes = [
+  'Party',
+  'Alleato',
+  'Personaggio',
+  'NPC',
+  'Mostro',
+  'Nemico',
+  'Morto',
+  'Ambiente',
+  'Luogo',
+  'Arma',
+  'Armatura',
+  'Scudo',
+  'Oggetto',
+  'Occhio dei Caduti',
+  'Art',
+  'Titolo',
+  'Fazione',
+  'Missione',
+  'Evento',
+];
+
+final _diarySavedLinks = RegExp(r'\[\[([^\]\n]+)\]\]');
+
+List<DiaryEntity> diaryEntitiesFromLinks(Iterable<String> texts) {
+  final learned = <String, DiaryEntity>{};
+  for (final text in texts) {
+    for (final match in _diarySavedLinks.allMatches(text)) {
+      final raw = match[1]!.split('|').first.trim();
+      final colon = raw.indexOf(':');
+      final name = (colon < 0 ? raw : raw.substring(colon + 1)).trim();
+      final type = colon < 0 ? null : raw.substring(0, colon).trim();
+      if (name.isEmpty) continue;
+      final kind = type == null
+          ? 'unknown'
+          : diaryLinkKindByType[diaryKey(type)] ?? 'unknown';
+      final key = '${type?.toLowerCase() ?? ''}:${diaryKey(name)}';
+      learned[key] = DiaryEntity('link:$key', name, kind, const [], type);
+    }
+  }
+  return learned.values.toList();
+}
 
 ({int start, String query})? diaryLinkQuery(String text, int cursor) {
   if (cursor < 0 || cursor > text.length) return null;
   final windowStart = (cursor - 256).clamp(0, cursor);
   final before = text.substring(windowStart, cursor);
-  final bracket = before.lastIndexOf('[');
+  var bracket = before.lastIndexOf('[[');
+  final singleBracket = before.lastIndexOf('[');
+  if (bracket < 0 ||
+      (singleBracket > bracket + 1 &&
+          before.substring(bracket + 2, singleBracket).contains(']'))) {
+    bracket = singleBracket;
+  }
   if (bracket < 0) return null;
-  final query = before.substring(bracket + 1);
+  var query = before.substring(
+    bracket + (before.startsWith('[[', bracket) ? 2 : 1),
+  );
+  // Accept a completed, untyped link and the optional classification marker [].
+  if (query.endsWith(']]') && !query.contains(':')) {
+    query = query.substring(0, query.length - 2);
+  }
+  if (query.endsWith('[]')) query = query.substring(0, query.length - 2);
+  if (query.endsWith('[')) query = query.substring(0, query.length - 1);
   if (query.contains(']') || query.contains('\n')) return null;
   final start = windowStart + bracket;
   return (
     start: start > 0 && text[start - 1] == '[' ? start - 1 : start,
-    query: query.trim().toLowerCase(),
+    query: query.trim(),
   );
 }
 
@@ -34,20 +101,51 @@ List<String> diaryLinkCompletions(
   final active = diaryLinkQuery(text, cursor);
   if (active == null) return const [];
   final matches = <String>{};
+  final untyped = <String>{};
+  String? untypedName;
+  final colon = active.query.indexOf(':');
+  final requestedType = colon < 0
+      ? null
+      : active.query.substring(0, colon).trim();
+  final requestedKind = requestedType == null
+      ? null
+      : diaryLinkKindByType[requestedType.toLowerCase()];
+  final requestedName = colon < 0
+      ? ''
+      : active.query.substring(colon + 1).trim().toLowerCase();
   for (final entity in catalogue) {
-    final type = diaryLinkTypes[entity.kind];
-    if (type == null) continue;
-    final typed = '$type:${entity.name}';
-    final query = active.query;
+    final type = entity.linkType ?? diaryLinkTypes[entity.kind];
+    final typed = type == null ? entity.name : '$type:${entity.name}';
+    final query = active.query.toLowerCase();
     if (query.isEmpty ||
         typed.toLowerCase().contains(query) ||
+        (requestedKind != null &&
+            entity.kind == requestedKind &&
+            (entity.name.toLowerCase().contains(requestedName) ||
+                entity.aliases.any(
+                  (alias) => alias.toLowerCase().contains(requestedName),
+                ))) ||
         entity.aliases.any((alias) => alias.toLowerCase().contains(query))) {
-      matches.add('[[$typed]]');
+      if (type == null) {
+        untyped.add('[[$typed]]');
+        untypedName ??= entity.name;
+        continue;
+      }
+      matches.add(
+        requestedKind == entity.kind && requestedType != null
+            ? '[[$requestedType:${entity.name}]]'
+            : '[[$typed]]',
+      );
       if (matches.length >= limit) break;
     }
   }
-  if (matches.isEmpty && active.query.isEmpty) {
-    matches.addAll(diaryLinkTypes.values.take(limit).map((t) => '[[$t:]]'));
+  if (matches.isEmpty && !active.query.contains(':')) {
+    matches.addAll(untyped);
+    matches.addAll(
+      diaryCreationLinkTypes.map(
+        (t) => '[[$t:${untypedName ?? active.query}]]',
+      ),
+    );
   }
   return matches.toList();
 }

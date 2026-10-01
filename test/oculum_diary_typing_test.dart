@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
+import 'package:oculum/services/oculum_diary_memory.dart';
 
 void main() {
   testWidgets(
@@ -71,6 +72,15 @@ void main() {
           location: '',
         ),
       );
+      state.journalEntries.add(
+        JournalEntry(
+          title: 'Ricordo precedente',
+          description: '[[Nemico:Quercia Sepolta]]',
+          cycleDay: 0,
+          phase: '',
+          location: '',
+        ),
+      );
       showDialog<void>(
         context: tester.element(find.byType(OculumHomePage)),
         builder: (_) => Dialog(
@@ -111,6 +121,33 @@ void main() {
       expect(
         probe.snapshot()['journalEntries'][0]['description'],
         controller.text,
+      );
+      await tester.enterText(field, 'Ora [[querci');
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(find.text('[[Nemico:Quercia Sepolta]]'), findsOneWidget);
+      await tester.tap(find.text('[[Nemico:Quercia Sepolta]]'));
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(controller.text, 'Ora [[Nemico:Quercia Sepolta]]');
+      await tester.enterText(field, '[[Alleato:Soldato Forte]] e [[sold');
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(find.text('[[Alleato:Soldato Forte]]'), findsOneWidget);
+      await tester.enterText(field, '[[Soldato Nuovo');
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(find.text('[[Party:Soldato Nuovo]]'), findsOneWidget);
+      expect(find.text('[[Armatura:Soldato Nuovo]]'), findsOneWidget);
+      const entity = DiaryEntity(
+        'party:soldato forte',
+        'Soldato Forte',
+        'party',
+      );
+      state.diaryRoleLedger.change(entity, 'enemy', DateTime(2026, 10, 1));
+      final saved = probe.snapshot();
+      probe.load(saved);
+      expect(state.diaryRoleLedger.roleOf(entity), 'enemy');
+      expect(state.diaryRoleLedger.historyFor(entity), hasLength(1));
+      expect(
+        probe.snapshot()['journalEntries'][0]['description'],
+        '[[Soldato Nuovo',
       );
       probe.cancelPendingSave();
       Navigator.of(tester.element(field)).pop();

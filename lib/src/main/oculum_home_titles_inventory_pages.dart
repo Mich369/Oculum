@@ -3,23 +3,35 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
-  List<DiaryEntity> diarySuggestionCatalogue() => [
-    for (final monster in monsterBookEntries)
-      DiaryEntity(
-        'monster:${monster.id}',
-        monster.nameIt,
-        monster.isNpc ? 'npc' : 'creature',
-        [monster.nameEn],
-      ),
-    for (var i = 0; i < schedePersonaggio.length; i++)
-      DiaryEntity('character:$i', nomeSchedaPersonaggio(i), 'character'),
-  ];
+  List<DiaryEntity> diarySuggestionCatalogue() {
+    final key =
+        '$activeCampaignId:$schedaCorrente:$salvataggioMutazioneRevisione:${journalEntries.length}:${diarioPagine.length}:${monsterBookEntries.length}:${schedePersonaggio.length}';
+    if (key == diarySuggestionCacheKey) return diarySuggestionCache;
+    diarySuggestionCacheKey = key;
+    return diarySuggestionCache = [
+      ...diaryEntitiesFromLinks([
+        for (final entry in journalEntries) entry.description,
+        ...diarioPagine,
+      ]),
+      for (final monster in monsterBookEntries)
+        DiaryEntity(
+          'monster:${monster.id}',
+          monster.nameIt,
+          monster.isNpc ? 'npc' : 'creature',
+          [monster.nameEn],
+        ),
+      for (var i = 0; i < schedePersonaggio.length; i++)
+        DiaryEntity('character:$i', nomeSchedaPersonaggio(i), 'character'),
+    ];
+  }
 
   void openEyeMemory({bool campaign = false}) {
+    final wholeCampaign =
+        campaign && (modalitaMaster || isMasterHost || realtimeIsMasterRole);
     final documents = <DiaryDocument>[];
-    final count = campaign ? max(1, schedePersonaggio.length) : 1;
+    final count = wholeCampaign ? max(1, schedePersonaggio.length) : 1;
     for (int index = 0; index < count; index++) {
-      final sheetIndex = campaign ? index : schedaCorrente;
+      final sheetIndex = wholeCampaign ? index : schedaCorrente;
       final current = sheetIndex == schedaCorrente;
       final sheet = sheetIndex >= 0 && sheetIndex < schedePersonaggio.length
           ? schedePersonaggio[sheetIndex]
@@ -82,15 +94,40 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     final memory = DiaryMemoryBuilder().build(
       documents,
       catalogue,
-      campaign: campaign ? activeCampaignName() : null,
+      campaign: wholeCampaign ? activeCampaignName() : null,
     );
+    final roleLedger = diaryRoleLedger;
+    roleLedger.apply(memory);
+    final sourceSheetIndex = schedaCorrente;
+    final canEditRoles =
+        sourceSheetIndex < 0 ||
+        sourceSheetIndex >= schedePersonaggio.length ||
+        (!readBoolValue(
+              schedePersonaggio[sourceSheetIndex]['realtimeReadOnlyByMaster'],
+            ) &&
+            !readBoolValue(
+              schedePersonaggio[sourceSheetIndex]['realtimeRestrictedByMaster'],
+            ));
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => OculumEyeMemoryPage(
           memory: memory,
-          author: campaign
+          author: wholeCampaign
               ? activeCampaignName()
               : nomeSchedaPersonaggio(schedaCorrente),
+          roleHistory: roleLedger.historyFor,
+          onRoleChanged: canEditRoles
+              ? (entity, role) async {
+                  if (!roleLedger.change(entity, role, DateTime.now())) return;
+                  roleLedger.apply(memory);
+                  if (sourceSheetIndex >= 0 &&
+                      sourceSheetIndex < schedePersonaggio.length) {
+                    schedePersonaggio[sourceSheetIndex]['diaryEntityRoles'] =
+                        roleLedger.toJson();
+                  }
+                  await forzaSalvataggioImmediato(soloLocale: true);
+                }
+              : null,
         ),
       ),
     );

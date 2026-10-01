@@ -13,10 +13,48 @@ class DiaryDocument {
 }
 
 class DiaryEntity {
-  const DiaryEntity(this.id, this.name, this.kind, [this.aliases = const []]);
+  const DiaryEntity(
+    this.id,
+    this.name,
+    this.kind, [
+    this.aliases = const [],
+    this.linkType,
+  ]);
   final String id, name, kind;
   final List<String> aliases;
+  final String? linkType;
 }
+
+/// Accepted aliases preserve old diary links and classify new explicit choices.
+const diaryLinkKindByType = <String, String>{
+  'personaggio': 'character',
+  'pg': 'character',
+  'party': 'party',
+  'creatura': 'creature',
+  'mostro': 'creature',
+  'nemico': 'enemy',
+  'alleato': 'party',
+  'alleata': 'party',
+  'alleati': 'party',
+  'morto': 'dead',
+  'morta': 'dead',
+  'png': 'npc',
+  'npc': 'npc',
+  'luogo': 'place',
+  'ambiente': 'place',
+  'oggetto': 'item',
+  'arma': 'weapon',
+  'armatura': 'armor',
+  'scudo': 'shield',
+  'missione': 'quest',
+  'quest': 'quest',
+  'evento': 'event',
+  'art': 'art',
+  'titolo': 'title',
+  'fazione': 'faction',
+  'occhio dei caduti': 'fallen_eye',
+  'occhio': 'fallen_eye',
+};
 
 class DiaryEvidence {
   const DiaryEvidence(this.document, this.start, this.end);
@@ -101,15 +139,6 @@ class DiaryMemoryBuilder {
   }) {
     final known = <String, DiaryEntity>{for (final e in catalogue) e.id: e};
     // Explicit links accept a type: [[luogo:Bosco Nero]], [[png:Arven]].
-    const types = {
-      'luogo': 'place',
-      'creatura': 'creature',
-      'png': 'npc',
-      'oggetto': 'item',
-      'missione': 'quest',
-      'evento': 'event',
-      'personaggio': 'character',
-    };
     for (final d in documents) {
       for (final m in RegExp(r'\[\[([^\]\n]+)\]\]').allMatches(d.text)) {
         final raw = m[1]!.split('|').first;
@@ -118,7 +147,8 @@ class DiaryMemoryBuilder {
         if (name.isEmpty) continue;
         final kind = split < 0
             ? 'unknown'
-            : types[diaryKey(raw.substring(0, split))] ?? 'unknown';
+            : diaryLinkKindByType[diaryKey(raw.substring(0, split))] ??
+                  'unknown';
         final existing = known.values.where(
           (e) =>
               diaryKey(e.name) == diaryKey(name) ||
@@ -129,6 +159,17 @@ class DiaryMemoryBuilder {
             '$kind:${diaryKey(name)}',
             name,
             kind,
+            const [],
+            split < 0 ? null : raw.substring(0, split).trim(),
+          );
+        } else if (kind != 'unknown' && existing.length == 1) {
+          final entity = existing.single;
+          known[entity.id] = DiaryEntity(
+            entity.id,
+            entity.name,
+            kind,
+            entity.aliases,
+            split < 0 ? entity.linkType : raw.substring(0, split).trim(),
           );
         }
       }

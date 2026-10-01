@@ -66,7 +66,7 @@ class _OculumModelTextField extends StatefulWidget {
     this.commandPreviewBuilder,
     this.commandSuggestionBuilder,
     this.previewDelay = Duration.zero,
-    this.diaryCatalogue = const [],
+    this.diaryCatalogue,
   });
 
   final String initialValue;
@@ -85,7 +85,7 @@ class _OculumModelTextField extends StatefulWidget {
   final String Function(String text)? commandPreviewBuilder;
   final List<String> Function(String text)? commandSuggestionBuilder;
   final Duration previewDelay;
-  final List<DiaryEntity> diaryCatalogue;
+  final List<DiaryEntity>? diaryCatalogue;
 
   @override
   State<_OculumModelTextField> createState() => _OculumModelTextFieldState();
@@ -105,11 +105,13 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
   late final FocusNode _focusNode;
   bool _dirtySinceRefresh = false;
   Timer? _previewTimer;
+  final Map<String, DiaryEntity> _rememberedDiaryLinks = {};
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.initialValue);
+    _rememberDiaryLinks(widget.initialValue);
     _focusNode = FocusNode();
     _focusNode.addListener(_handleFocusChanged);
   }
@@ -143,12 +145,22 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
   }
 
   void _notifyEdited() {
+    if (widget.diaryCatalogue != null) {
+      final cursor = _controller.selection.baseOffset.clamp(
+        0,
+        _controller.text.length,
+      );
+      _rememberDiaryLinks(
+        _controller.text.substring((cursor - 512).clamp(0, cursor), cursor),
+      );
+    }
     widget.onChanged(_controller.text);
     widget.onEdited();
     _dirtySinceRefresh = true;
     if (mounted &&
         (widget.commandPreviewBuilder != null ||
-            widget.commandSuggestionBuilder != null)) {
+            widget.commandSuggestionBuilder != null ||
+            widget.diaryCatalogue != null)) {
       _previewTimer?.cancel();
       if (widget.previewDelay == Duration.zero) {
         setState(() {});
@@ -180,6 +192,7 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
   }
 
   void _insertDiarySuggestion(String suggestion) {
+    _rememberDiaryLinks(suggestion);
     final inserted = diaryInsertLink(
       _controller.text,
       _controller.selection.baseOffset,
@@ -208,6 +221,13 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
 
     _notifyEdited();
     return KeyEventResult.handled;
+  }
+
+  void _rememberDiaryLinks(String text) {
+    if (widget.diaryCatalogue == null) return;
+    for (final entity in diaryEntitiesFromLinks([text])) {
+      _rememberedDiaryLinks[entity.id] = entity;
+    }
   }
 
   @override
@@ -248,11 +268,13 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
         decoration: decorated,
       ),
     );
-    final diarySuggestions = diaryLinkCompletions(
-      _controller.text,
-      _controller.selection.baseOffset,
-      widget.diaryCatalogue,
-    );
+    final diarySuggestions = widget.diaryCatalogue == null
+        ? const <String>[]
+        : diaryLinkCompletions(
+            _controller.text,
+            _controller.selection.baseOffset,
+            [..._rememberedDiaryLinks.values, ...widget.diaryCatalogue!],
+          );
     final suggestions =
         widget.commandSuggestionBuilder?.call(_controller.text) ??
         const <String>[];
@@ -266,6 +288,13 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
         field,
         if (diarySuggestions.isNotEmpty) ...[
           const SizedBox(height: 6),
+          if (diarySuggestions.length >= diaryCreationLinkTypes.length)
+            Text(
+              widget.linguaInglese
+                  ? 'Choose a role for this name'
+                  : 'Scegli il ruolo di questo nome',
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
           Wrap(
             spacing: 6,
             runSpacing: 6,
@@ -1285,7 +1314,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     List<TextInputFormatter>? inputFormatters,
     bool showCommandHelp = false,
     bool narrativeText = false,
-    List<DiaryEntity> diaryCatalogue = const [],
+    List<DiaryEntity>? diaryCatalogue,
   }) {
     final field = _OculumModelTextField(
       key: fieldKey,

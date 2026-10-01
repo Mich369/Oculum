@@ -1,15 +1,20 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../services/oculum_diary_memory.dart';
+import '../services/oculum_diary_roles.dart';
 
 class OculumEyeMemoryPage extends StatefulWidget {
   const OculumEyeMemoryPage({
     super.key,
     required this.memory,
     required this.author,
+    this.onRoleChanged,
+    this.roleHistory,
   });
   final DiaryMemory memory;
   final String author;
+  final Future<void> Function(DiaryEntity entity, String role)? onRoleChanged;
+  final List<Map<String, dynamic>> Function(DiaryEntity entity)? roleHistory;
   @override
   State<OculumEyeMemoryPage> createState() => _OculumEyeMemoryPageState();
 }
@@ -32,6 +37,16 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
     'event': 'Eventi',
     'diary': 'Diari',
     'unknown': 'Nomi da classificare',
+    'party': 'Party / Alleati',
+    'enemy': 'Nemici',
+    'dead': 'Morti',
+    'fallen_eye': 'Occhi dei Caduti',
+    'weapon': 'Armi',
+    'armor': 'Armature',
+    'shield': 'Scudi',
+    'art': 'Art',
+    'title': 'Titoli',
+    'faction': 'Fazioni',
   };
   @override
   void initState() {
@@ -225,6 +240,61 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
             ),
           ),
           if (center != null) ...[
+            Wrap(
+              spacing: 10,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  '${center.name} · ${diaryEditableRoles[center.kind] ?? kinds[center.kind] ?? center.kind}',
+                  style: const TextStyle(color: gold),
+                ),
+                if (widget.onRoleChanged != null &&
+                    center.kind != 'campaign' &&
+                    center.kind != 'diary')
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.swap_horiz),
+                    label: const Text('Cambia ruolo'),
+                    onPressed: () async {
+                      final role = await showDialog<String>(
+                        context: context,
+                        builder: (context) => SimpleDialog(
+                          title: Text('Ruolo di ${center.name}'),
+                          children: [
+                            for (final entry in diaryEditableRoles.entries)
+                              SimpleDialogOption(
+                                onPressed: () =>
+                                    Navigator.pop(context, entry.key),
+                                child: Text(
+                                  '${entry.value}${entry.key == center.kind ? ' ✓' : ''}',
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                      if (role == null || role == center.kind) return;
+                      await widget.onRoleChanged!(center, role);
+                      if (!mounted) return;
+                      setState(() {
+                        kind = 'all';
+                      });
+                    },
+                  ),
+              ],
+            ),
+            if ((widget.roleHistory?.call(center) ?? const []).isNotEmpty)
+              ExpansionTile(
+                title: const Text('Evoluzione del ruolo'),
+                children: [
+                  for (final change in widget.roleHistory!(center))
+                    ListTile(
+                      dense: true,
+                      title: Text(
+                        '${diaryEditableRoles[change['from']] ?? change['from']} → ${diaryEditableRoles[change['to']] ?? change['to']}',
+                      ),
+                      subtitle: Text('${change['at'] ?? ''}'),
+                    ),
+                ],
+              ),
             SizedBox(
               height: 500,
               child: LayoutBuilder(

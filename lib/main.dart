@@ -30,6 +30,7 @@ import 'services/oculum_realtime_service.dart';
 import 'services/oculum_save_profile.dart';
 import 'services/oculum_diary_memory.dart';
 import 'services/oculum_diary_links.dart';
+import 'services/oculum_diary_roles.dart';
 import 'pages/oculum_eye_memory_page.dart';
 import 'widgets/oculum_bottom_nav.dart';
 import 'widgets/oculum_desktop_top_menu.dart';
@@ -1523,6 +1524,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   final Map<String, int> craftingDemandQuantities = <String, int>{};
   String selectedForgeTemplateId = '';
   final List<JournalEntry> journalEntries = [];
+  DiaryRoleLedger diaryRoleLedger = DiaryRoleLedger();
+  String diarySuggestionCacheKey = '';
+  List<DiaryEntity> diarySuggestionCache = const [];
   final List<DraftNote> draftNotes = [];
   final List<HiddenEyeStat> hiddenEyeStats = [];
   final List<OculumTemporaryResistanceEffect> temporaryCombatResistanceEffects =

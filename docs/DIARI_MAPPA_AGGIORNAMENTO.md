@@ -40,7 +40,7 @@ La lettura è locale e usa riconoscitori conservativi, non comprende arbitrariam
 
 ## Verifiche e limiti
 
-Suite completa locale aggiornata al 1 ottobre 2026: 578 test passati, uno saltato. I test comprendono gemme, salvataggio, riposi, assegnazione iniziale e nuovo trasferimento delle schede a blocchi. Profilo test compilato verificato separatamente. Analizzatore senza problemi dopo le correzioni.
+Suite completa locale aggiornata al 1 ottobre 2026: 584 test passati, due prove di rete opzionali saltate. I test comprendono gemme, salvataggio, riposi, assegnazione iniziale, trasferimento delle schede a blocchi, suggerimenti e cambi di ruolo dall'Occhio. La prova realtime live è stata eseguita separatamente ed è passata. Profilo test compilato verificato separatamente. Analizzatore senza problemi dopo le correzioni.
 
 Layout desktop/mobile e trasporto realtime verificati automaticamente; non costituiscono una prova su due dispositivi fisici. L’autenticazione Supabase live è stata verificata separatamente. Le build iOS/macOS senza firma richiedono le rispettive procedure di installazione/firma.
 
@@ -57,3 +57,27 @@ Schede grandi e immagini vengono trasferite a blocchi, con importazione solo a m
 Per il trasferimento a blocchi aggiorna sia Master sia Player. Salvataggi e immagini restano nello stesso formato. I test di consegna utilizzano un canale simulato; la prova live su due dispositivi resta da eseguire.
 
 Tutti i parametri modificabili sono elencati in `docs/REALTIME_AFFIDABILITA.md`: blocchi 64 KiB, memoria complessiva 64 MiB, massimo 8 trasferimenti incompleti e scadenza 3 minuti in `oculum_sheet_transfer.dart`; timeout canale/invio in `oculum_realtime_service.dart`; reinvio, accorpamento e richieste in `oculum_realtime_integration.dart`; ordine di salvataggio in `oculum_home_persistence.dart`; registri temporanei in `main.dart`; test di trasferimento e workflow Windows test nei rispettivi file.
+
+## Nomi ricordati e ruoli modificabili dall'Occhio
+
+Scrivendo `[[querci` viene proposto anche `[[Nemico:Quercia Sepolta]]` se compare in una pagina precedente dello stesso personaggio. Funziona fra raccolte e dopo il ripristino del salvataggio. I collegamenti appena completati vengono ricordati anche durante la stessa scrittura; l'input non rilegge tutte le pagine a ogni tasto.
+
+Un nome nuovo come `[[Soldato Forte`, `[[Soldato Forte]]` o `[[Soldato Forte[]]` propone tutte le categorie: Party, Alleato, Personaggio, NPC, Mostro, Nemico, Morto, Ambiente, Luogo, Arma, Armatura, Scudo, Oggetto, Occhio dei Caduti, Art, Titolo, Fazione, Missione ed Evento. Il giocatore sceglie il collegamento; nessun testo viene classificato o riscritto senza il clic. `Alleato` appartiene al Party, mantenendo il termine originale nel suggerimento.
+
+Nella Mappa seleziona il nodo e premi «Cambia ruolo». Può passare da Party a Nemico, Morto, Mostro, Occhio dei Caduti o alle altre categorie disponibili. «Evoluzione del ruolo» conserva i passaggi con data. L'identità del nodo, i collegamenti e le citazioni originali restano; il cambio riguarda la memoria, non modifica statistiche, inventario o schede di gioco. Il registro è locale alla scheda ed è salvato nel campo aggiuntivo `diaryEntityRoles`; vecchi salvataggi senza il campo si aprono con registro vuoto. Le copie online limitate o in sola lettura non consentono il cambio.
+
+La vista campagna completa è riservata al Master; la vista Player usa i propri testi. Il catalogo dei suggerimenti personali non legge i diari degli altri personaggi.
+
+| File | Cosa puoi modificare |
+| --- | --- |
+| `lib/services/oculum_diary_links.dart` | Categorie proposte, alias ricordati, ricerca entro 256 caratteri, limite 8 suggerimenti di nomi e inserimento del collegamento. Tutte le categorie di un nome nuovo rimangono disponibili. |
+| `lib/services/oculum_diary_memory.dart` | Sinonimi come Alleato/Party, Nemico, Mostro, NPC, categorie ed estrazione conservativa. |
+| `lib/services/oculum_diary_roles.dart` | Ruoli disponibili, registro dei passaggi, ripristino e identità persistente. |
+| `lib/pages/oculum_eye_memory_page.dart` | Filtri, pulsante cambio ruolo, dialogo ed evoluzione del nodo. |
+| `lib/src/main/oculum_home_colors_and_base_widgets.dart` | Suggerimenti nel testo, finestra locale di 512 caratteri per ricordare link appena completati e aggiornamento differito di 320 ms. |
+| `lib/src/main/oculum_home_titles_inventory_pages.dart` | Catalogo della scheda, cache, apertura della Mappa, permessi e salvataggio del cambio ruolo. |
+| `lib/src/main/oculum_home_persistence.dart` e `lib/main.dart` | Campo `diaryEntityRoles`, migrazione per assenza del campo e stato della scheda. |
+| `test/oculum_diary_roles_links_test.dart`, `test/oculum_diary_typing_test.dart` | Esempi richiesti, interfaccia, cronologia, identità, salvataggi e assenza di invalidazioni globali durante la scrittura. |
+| `.github/workflows/diary_tests.yml`, `.github/workflows/test_windows_distribution.yml` | Test di ruoli e suggerimenti nelle Actions; prova realtime live opzionale con input `live_realtime`. |
+
+La prova realtime live del 1 ottobre è passata: due client Supabase reali nella stessa macchina, stanza temporanea e dati sintetici, immagine test di 500.000 caratteri, confronto completo, ACK del destinatario distinto dal server e riconnessione. Non equivale a una prova delle interfacce Player/Master su due dispositivi fisici.
