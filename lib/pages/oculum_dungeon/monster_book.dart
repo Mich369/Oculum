@@ -4930,6 +4930,7 @@ List<MonsterBookEntry> _withFallbackMonsterSkills(
 /// statistiche, drop o identità; le Creature Minori restano senza Art.
 List<String> monsterBookUsableSkillIds(MonsterBookEntry monster) {
   if (monster.skillIds.isNotEmpty) return monster.skillIds;
+  if (monster.formTags.contains('Creatura Minore')) return const [];
   return _skillIdsForGeneratedMonster(monster.id, monster.elementId);
 }
 

@@ -10,7 +10,12 @@ void main() {
     () {
       for (final monster in defaultMonsterBookEntries) {
         final art = oculumMonsterBookArt(monster);
-        expect(art.skills.length, monster.skillIds.length);
+        expect(
+          art.skills.length,
+          monster.skillIds.length,
+          reason:
+              '${monster.id}: le tecniche generate devono rispettare il Book',
+        );
         for (final skill in art.skills) {
           expect(skill.livello, 0, reason: monster.id);
           expect(skill.nome.trim(), isNotEmpty);

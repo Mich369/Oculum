@@ -150,7 +150,12 @@ void main() {
         'volonta': '30',
         'materia': '18',
         'oculum': '24',
-        'currentHp': '100',
+        'currentResilienza': '20',
+        'currentVolonta': '30',
+        'currentMateria': '18',
+        'currentOculum': '24',
+        // Keep this elemental-damage fixture above the random awakening at 50%.
+        'currentHp': '200',
         'livello': '6',
         'grado': '1',
         'vcRapido': '0',
@@ -248,7 +253,12 @@ void main() {
       expect(probe.currentHp(), hp);
       state.incomingDamageElement = 'ghiaccio';
       probe.damage(10);
-      expect(probe.currentHp(), lessThan(hp));
+      expect(
+        probe.currentHp(),
+        lessThan(hp),
+        reason:
+            'Il danno da ghiaccio deve diminuire gli HP: stats=${probe.coreStats()}, stato=${state.statoForzaAttivo}, log=${state.risultato}',
+      );
       // The legacy armor effect used singular English "turn" and never expired.
       state.activeStructuredEffects.add({
         'source': 'Armatura del Combattente',
@@ -443,6 +453,9 @@ void main() {
           reason: '${pair.$1} must appear before ${pair.$2} in dice order',
         );
       }
+      // This is a new encounter, independent of the earlier turn/removal checks.
+      state.masterInitiativeTokens.clear();
+      state.masterInitiativeGroups.clear();
       state.masterInitiativeTokens.add({
         'id': 'manual_test',
         'name': 'Hoshy',
@@ -453,6 +466,7 @@ void main() {
       });
       probe.setTurn(round: 7, activeIndex: 0);
       expect(probe.masterRound(), 7);
+      expect(state.masterInitiativeTokens, hasLength(1));
       expect(state.masterInitiativeTokens.single['status'], 'active');
       probe.cancelPendingSave();
       await tester.pumpWidget(const SizedBox());

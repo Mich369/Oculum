@@ -52,6 +52,8 @@ void main() {
       expect(entry.stats['level'], 0, reason: id);
       expect(entry.stats['resilienza'], 1, reason: id);
       expect(entry.skillIds, isEmpty, reason: id);
+      expect(monsterBookUsableSkillIds(entry), isEmpty, reason: id);
+      expect(oculumMonsterBookArt(entry).skills, isEmpty, reason: id);
       expect(entry.imageBase64, isEmpty, reason: id);
       // Oculum derives HP from Resilienza x 10, so these start at 10 HP.
       expect((entry.stats['resilienza'] as int) * 10, lessThan(16), reason: id);
@@ -286,12 +288,29 @@ void main() {
     }
   });
 
-  test('every Monster Book entry exposes usable character techniques', () {
-    for (final entry in defaultMonsterBookEntries) {
-      expect(monsterBookUsableSkillIds(entry), isNotEmpty, reason: entry.id);
-      expect(oculumMonsterBookArt(entry).skills, isNotEmpty, reason: entry.id);
-    }
-  });
+  test(
+    'Book keeps minor creatures without Art and legacy techniques usable',
+    () {
+      for (final entry in defaultMonsterBookEntries) {
+        if (entry.formTags.contains('Creatura Minore') &&
+            entry.skillIds.isEmpty) {
+          expect(monsterBookUsableSkillIds(entry), isEmpty, reason: entry.id);
+          expect(oculumMonsterBookArt(entry).skills, isEmpty, reason: entry.id);
+        } else {
+          expect(
+            monsterBookUsableSkillIds(entry),
+            isNotEmpty,
+            reason: entry.id,
+          );
+          expect(
+            oculumMonsterBookArt(entry).skills,
+            isNotEmpty,
+            reason: entry.id,
+          );
+        }
+      }
+    },
+  );
 
   test('armed humanoids retain their real inventory through the Book', () {
     final hammerMan = monsterById('uomo_del_martello_lungo');
