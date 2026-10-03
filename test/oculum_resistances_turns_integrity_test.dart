@@ -194,18 +194,6 @@ void main() {
       expect(probe.dodgeTotal(), 1);
       probe.load(base);
       expect(probe.dodgeTotal(), 0);
-      state.masterInitiativeTokens.add({
-        'id': 'manual_test',
-        'name': 'Hoshy',
-        'status': 'ready',
-        'side': 'ally',
-        'currentHp': 10,
-        'maxHp': 10,
-      });
-      probe.setTurn(round: 7, activeIndex: 0);
-      expect(probe.masterRound(), 7);
-      expect(state.masterInitiativeTokens.single['status'], 'active');
-      state.masterInitiativeTokens.clear();
       final inventory = probe.snapshot()['inventario'];
       final stats = probe.coreStats();
       final vc = probe.attackVc();
@@ -450,6 +438,17 @@ void main() {
           reason: '${pair.$1} must appear before ${pair.$2} in dice order',
         );
       }
+      state.masterInitiativeTokens.add({
+        'id': 'manual_test',
+        'name': 'Hoshy',
+        'status': 'ready',
+        'side': 'ally',
+        'currentHp': 10,
+        'maxHp': 10,
+      });
+      probe.setTurn(round: 7, activeIndex: 0);
+      expect(probe.masterRound(), 7);
+      expect(state.masterInitiativeTokens.single['status'], 'active');
       probe.cancelPendingSave();
       await tester.pumpWidget(const SizedBox());
     },
