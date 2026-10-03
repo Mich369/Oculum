@@ -40,6 +40,32 @@ void main() {
       expect(restored.effettoIntegritaScudo, '@Difesa+3');
     });
 
+    test('salva gli effetti temporanei attivati alla rottura', () {
+      final item = InventoryItem(
+        nome: 'Corazza del Battito',
+        peso: 2,
+        quantita: 1,
+        note: 'Effetto temporaneo alla rottura dello scudo.',
+        protegge: true,
+        effettoRotturaScudo: {
+          'duration': 3,
+          'buffTarget': 'difesa',
+          'buffValue': 6,
+          'condition': 'fortificato',
+          'element': 'cenere',
+          'resistance': 'Resistenza',
+        },
+      );
+
+      final restored = InventoryItem.fromJson(item.toJson());
+
+      expect(restored.effettoRotturaScudo['duration'], 3);
+      expect(restored.effettoRotturaScudo['buffTarget'], 'difesa');
+      expect(restored.effettoRotturaScudo['condition'], 'fortificato');
+      expect(restored.effettoRotturaScudo['element'], 'cenere');
+      expect(restored.effettoRotturaScudo['resistance'], 'Resistenza');
+    });
+
     test('il buff si spegne alla rottura e torna con la ricarica', () {
       final item = InventoryItem(
         nome: 'Egida Oculum',
@@ -247,70 +273,66 @@ void main() {
       expect(profile.oculumShieldBonus, 100);
     });
 
-    test('la parata Oculum normale vale 0.1 per punto fino a 5', () {
+    test('la probabilita della parata usa Oculum su 1000 senza consumarlo', () {
+      expect(oculumParryChanceThresholdPerThousand(20), 20);
+      expect(oculumParryChanceThresholdPerThousand(1200), 1000);
+      expect(oculumParryChanceThresholdPerThousand(-2), 0);
       expect(
-        oculumCurrentParryChancePercent(
-          currentOculum: 1,
-          difficulty: 'normale',
-        ),
-        0.1,
+        oculumParryChanceRollSucceeds(currentOculum: 20, roll: 19),
+        isTrue,
       );
       expect(
-        oculumCurrentParryChancePercent(
-          currentOculum: 5,
-          difficulty: 'normale',
-        ),
-        0.5,
+        oculumParryChanceRollSucceeds(currentOculum: 20, roll: 20),
+        isFalse,
+      );
+      expect(oculumParryChanceRollSucceeds(currentOculum: 0, roll: 0), isFalse);
+    });
+
+    test('la parata riduce prima della difesa fino a Oculum x 1.5', () {
+      expect(
+        oculumParryDamageReduction(currentOculum: 10, incomingDamage: 30),
+        15,
+      );
+      expect(
+        oculumParryDamageReduction(currentOculum: 9, incomingDamage: 14),
+        13,
+      );
+      expect(
+        oculumParryDamageReduction(currentOculum: 7, incomingDamage: 10),
+        10,
       );
     });
 
-    test('dopo 5 ogni decimo richiede progressivamente più punti', () {
+    test('la prova di manifestazione scala con livello e grado', () {
+      expect(oculumParryDifficulty(level: 0, grade: 0), 8);
+      expect(oculumParryDifficulty(level: 10, grade: 2), 22);
       expect(
-        oculumCurrentParryChancePercent(
-          currentOculum: 6,
-          difficulty: 'normale',
-        ),
-        0.5,
+        oculumParryManifestationCheckSucceeds(total: 22, difficulty: 22),
+        isTrue,
       );
       expect(
-        oculumCurrentParryChancePercent(
-          currentOculum: 7,
-          difficulty: 'normale',
-        ),
-        0.6,
-      );
-      expect(
-        oculumCurrentParryChancePercent(
-          currentOculum: 10,
-          difficulty: 'normale',
-        ),
-        0.7,
-      );
-      expect(
-        oculumCurrentParryChancePercent(
-          currentOculum: 14,
-          difficulty: 'normale',
-        ),
-        0.8,
+        oculumParryManifestationCheckSucceeds(total: 21, difficulty: 22),
+        isFalse,
       );
     });
 
-    test('la difficoltà scala progressivamente la parata', () {
+    test('un critico della parata assegna una Schivata Oculum', () {
       expect(
-        oculumCurrentParryChancePercent(currentOculum: 5, difficulty: 'facile'),
-        0.75,
+        oculumParryCriticalAwardsDodge(parrySucceeded: true, naturalRoll: 20),
+        isTrue,
       );
       expect(
-        oculumCurrentParryChancePercent(
-          currentOculum: 5,
-          difficulty: 'difficile',
-        ),
-        0.25,
+        oculumParryCriticalAwardsDodge(parrySucceeded: false, naturalRoll: 20),
+        isFalse,
       );
       expect(
-        oculumCurrentParryChancePercent(currentOculum: 5, difficulty: 'oculum'),
-        0.1,
+        oculumParryCriticalAwardsDodge(parrySucceeded: true, naturalRoll: 19),
+        isFalse,
       );
+    });
+
+    test('la schivata di Fortuna assegna 1d3 risorsa Fortuna', () {
+      expect([0, 1, 2].map(oculumFortuneDodgeResourceReward), [1, 2, 3]);
     });
 
     test('la soglia percentuale usa correttamente i basis point', () {

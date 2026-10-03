@@ -1127,11 +1127,33 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
         : incomingDamageElement,
   );
 
-  String configuredIncomingDamagePreset([String? element]) =>
-      canonicalDamageModifierName(
-        incomingDamagePresets[element ?? selectedIncomingDamageElement()] ??
-            'Normale',
-      );
+  String configuredIncomingDamagePreset([String? element]) {
+    final elementId = element ?? selectedIncomingDamageElement();
+    final saved = canonicalDamageModifierName(
+      incomingDamagePresets[elementId] ?? 'Normale',
+    );
+    final temporary = activeStructuredEffects
+        .where(
+          (effect) =>
+              effect['type'] == 'elemental_resistance' &&
+              effect['element'] == elementId &&
+              readIntValue(effect['remaining']) > 0,
+        )
+        .map((effect) => canonicalDamageModifierName('${effect['preset']}'))
+        .toList();
+    if (temporary.isEmpty) return saved;
+    final temporaryPreset = temporary.reduce(
+      (strongest, candidate) =>
+          modificatoreDannoDaNome(candidate).multiplier <
+              modificatoreDannoDaNome(strongest).multiplier
+          ? candidate
+          : strongest,
+    );
+    return modificatoreDannoDaNome(temporaryPreset).multiplier <
+            modificatoreDannoDaNome(saved).multiplier
+        ? temporaryPreset
+        : saved;
+  }
 
   void openResistanceDetails() => openReferenceDetail(
     'Resistenze',

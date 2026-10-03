@@ -2453,6 +2453,74 @@ const int targetBossMonsterCount = 37;
 /// narrative invece di ridurle a tre attacchi generici.
 const List<MonsterBookEntry> _manualMonsterBookEntries = [
   MonsterBookEntry(
+    id: 'koboldo_delle_braci',
+    nameIt: 'Koboldo delle Braci',
+    nameEn: 'Ember Kobold',
+    descIt:
+        'Creatura minore di folklore, alta quanto un bambino e coperta di fuliggine. Livello 0: 10 HP (Resilienza 1). Ruba brace dai focolari e la lancia per distrarre; una spruzzata d’acqua spegne il sacchetto e gli fa perdere il turno. Nessuna Art: è un fastidio da branco, non un avversario da duello.',
+    descEn:
+        'A child-sized folklore nuisance covered in soot. Level 0: 10 HP (Resilience 1). It steals embers and throws them to distract; water puts out its pouch and costs it a turn. No Art: a small-pack nuisance, not a duelist.',
+    elementId: 'fuoco',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'level': 0, 'resilienza': 1, 'volonta': 1, 'materia': 1, 'oculum': 0},
+    classificationTags: ['Creatura Minore', 'Demone'],
+    dropIds: ['carbone_spento'],
+  ),
+  MonsterBookEntry(
+    id: 'fuoco_fatuo_affamato',
+    nameIt: 'Fuoco Fatuo Affamato',
+    nameEn: 'Hungry Will-o-Wisp',
+    descIt:
+        'Piccolo spirito ingannatore delle paludi, ispirato ai fuochi fatui delle leggende. Livello 0: 10 HP (Resilienza 1). Si allontana se illuminato da una fiamma stabile; il suo bagliore può attirare una creatura di pochi passi fuori dal sentiero. Non possiede Oculum Art e non sa sostenere uno scontro prolungato.',
+    descEn:
+        'A tiny marsh spirit inspired by will-o-wisps of folklore. Level 0: 10 HP (Resilience 1). It retreats from a steady flame and can lure someone a few steps off the path. It has no Oculum Art and cannot sustain a fight.',
+    elementId: 'natura',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'level': 0, 'resilienza': 1, 'volonta': 2, 'materia': 1, 'oculum': 0},
+    classificationTags: ['Creatura Minore', 'Spirito'],
+    dropIds: ['polvere_di_luce_fioca'],
+  ),
+  MonsterBookEntry(
+    id: 'strige_del_fienile',
+    nameIt: 'Strige del Fienile',
+    nameEn: 'Barn Strix',
+    descIt:
+        'Una strige minuscola, tratta dalle leggende notturne, con ali impolverate e un becco scheggiato. Livello 0: 10 HP (Resilienza 1). Becca le mani e fugge tra le travi; se le si toglie un riparo alto non riesce più a sorprendere nessuno. Nessuna Art.',
+    descEn:
+        'A tiny night-strix from old legends, with dusty wings and a chipped beak. Level 0: 10 HP (Resilience 1). It pecks at hands and flees into rafters; remove its high perch and it cannot surprise anyone. No Art.',
+    elementId: 'aria',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'level': 0, 'resilienza': 1, 'volonta': 1, 'materia': 2, 'oculum': 0},
+    classificationTags: ['Creatura Minore', 'Volatile'],
+    dropIds: ['piuma_di_strige'],
+  ),
+  MonsterBookEntry(
+    id: 'larva_del_grimorio',
+    nameIt: 'Larva del Grimorio',
+    nameEn: 'Grimoire Grub',
+    descIt:
+        'Una larva nera che rosicchia libri maledetti e porta sul dorso una sola lettera ancora viva. Livello 0: 10 HP (Resilienza 1). Se lasciata sola mangia una parola da una pagina; luce intensa e rumore secco la fanno ritrarre. Nessuna Art: è una minaccia da indagine e da scena, non un mostro da combattimento.',
+    descEn:
+        'A black grub that nibbles cursed books and carries one living letter on its back. Level 0: 10 HP (Resilience 1). Left alone, it eats a word from a page; bright light and a sharp sound make it retreat. No Art: a scene and investigation hazard, not a combat monster.',
+    elementId: 'oblio',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {'level': 0, 'resilienza': 1, 'volonta': 1, 'materia': 1, 'oculum': 0},
+    classificationTags: ['Creatura Minore', 'Parassita'],
+    dropIds: ['inchiostro_morto'],
+  ),
+  MonsterBookEntry(
     id: 'mostricciattolo_di_carta',
     nameIt: 'Mostricciattolo di Carta',
     nameEn: 'Paper Smallling',
@@ -4826,7 +4894,8 @@ List<MonsterBookEntry> _withFallbackMonsterSkills(
 ) {
   return [
     for (final monster in entries)
-      monster.skillIds.isNotEmpty
+      monster.skillIds.isNotEmpty ||
+              monster.formTags.contains('Creatura Minore')
           ? monster
           : MonsterBookEntry(
               id: monster.id,
@@ -4857,9 +4926,8 @@ List<MonsterBookEntry> _withFallbackMonsterSkills(
   ];
 }
 
-/// Ogni creatura del Monster Book può diventare un personaggio. Se una voce
-/// legacy o personalizzata non dichiara Skill, riceve tre tecniche generiche
-/// legate al suo elemento senza alterare statistiche, drop o identità.
+/// Le voci legacy prive di Skill ricevono tecniche generiche senza alterare
+/// statistiche, drop o identità; le Creature Minori restano senza Art.
 List<String> monsterBookUsableSkillIds(MonsterBookEntry monster) {
   if (monster.skillIds.isNotEmpty) return monster.skillIds;
   return _skillIdsForGeneratedMonster(monster.id, monster.elementId);

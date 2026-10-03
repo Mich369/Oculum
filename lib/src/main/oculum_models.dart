@@ -1343,6 +1343,7 @@ class InventoryItem {
     this.bonusScudoIncludeGrado = false,
     this.bonusScudoOculum = 0,
     this.effettoIntegritaScudo = '',
+    this.effettoRotturaScudo = const {},
     this.scudoIntegritaCorrente = -1,
     this.scudoIntegritaOculumCorrente = -1,
     this.gradoOggetto = 0,
@@ -1373,6 +1374,7 @@ class InventoryItem {
   bool bonusScudoIncludeGrado;
   int bonusScudoOculum;
   String effettoIntegritaScudo;
+  Map<String, dynamic> effettoRotturaScudo;
   int scudoIntegritaCorrente;
   int scudoIntegritaOculumCorrente;
   int gradoOggetto;
@@ -1404,6 +1406,8 @@ class InventoryItem {
       'bonusScudoIncludeGrado': bonusScudoIncludeGrado,
       'bonusScudoOculum': bonusScudoOculum,
       'effettoIntegritaScudo': effettoIntegritaScudo,
+      if (effettoRotturaScudo.isNotEmpty)
+        'effettoRotturaScudo': effettoRotturaScudo,
       'scudoIntegritaCorrente': scudoIntegritaCorrente,
       'scudoIntegritaOculumCorrente': scudoIntegritaOculumCorrente,
       'gradoOggetto': gradoOggetto,
@@ -1449,6 +1453,9 @@ class InventoryItem {
       effettoIntegritaScudo: oculumCleanMojibakeText(
         '${json['effettoIntegritaScudo'] ?? json['shieldIntegrityEffect'] ?? ''}',
       ),
+      effettoRotturaScudo: json['effettoRotturaScudo'] is Map
+          ? Map<String, dynamic>.from(json['effettoRotturaScudo'])
+          : <String, dynamic>{},
       scudoIntegritaCorrente: readIntValue(
         json['scudoIntegritaCorrente'] ?? json['currentIntegrityShield'],
         fallback: -1,

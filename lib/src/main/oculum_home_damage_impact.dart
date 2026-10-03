@@ -33,30 +33,44 @@ oculumMisfortuneProfile(String difficulty) {
   }
 }
 
-double oculumCurrentParryChancePercent({
+int oculumParryChanceThresholdPerThousand(int currentOculum) =>
+    max(0, currentOculum).clamp(0, 1000).toInt();
+
+bool oculumParryChanceRollSucceeds({
   required int currentOculum,
-  required String difficulty,
+  required int roll,
+}) =>
+    roll >= 0 &&
+    roll < 1000 &&
+    roll < oculumParryChanceThresholdPerThousand(currentOculum);
+
+int oculumParryDamageReduction({
+  required int currentOculum,
+  required int incomingDamage,
 }) {
-  var remaining = max(0, currentOculum);
-  if (remaining <= 0) return 0;
-
-  var tenths = min(5, remaining);
-  remaining -= min(5, remaining);
-  var pointsForNextTenth = 2;
-  while (remaining >= pointsForNextTenth) {
-    remaining -= pointsForNextTenth;
-    tenths++;
-    pointsForNextTenth++;
-  }
-
-  final difficultyMultiplier = switch (difficulty.trim().toLowerCase()) {
-    'facile' || 'easy' => 1.5,
-    'difficile' || 'hard' => 0.5,
-    'oculum' => 0.2,
-    _ => 1.0,
-  };
-  return double.parse((tenths * 0.1 * difficultyMultiplier).toStringAsFixed(3));
+  final damage = max(0, incomingDamage);
+  final parryPower = max(0, currentOculum) * 1.5;
+  if (damage == 0) return 0;
+  if (parryPower > damage) return damage;
+  return min(damage, parryPower.floor());
 }
+
+int oculumParryDifficulty({required int level, required int grade}) =>
+    8 + max(0, level).toInt() + 2 * max(0, grade).toInt();
+
+bool oculumParryManifestationCheckSucceeds({
+  required int total,
+  required int difficulty,
+}) => total >= difficulty;
+
+bool oculumParryCriticalAwardsDodge({
+  required bool parrySucceeded,
+  required int naturalRoll,
+}) =>
+    parrySucceeded && naturalRoll == 20;
+
+int oculumFortuneDodgeResourceReward(int dieRoll) =>
+    dieRoll.clamp(0, 2).toInt() + 1;
 
 int oculumShieldEffectiveValueForDifficulty(int shield, String difficulty) {
   final safeShield = max(0, shield);

@@ -4734,12 +4734,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }
 
   Widget monsterBookEntryPreview(MonsterBookEntry entry, {double size = 48}) {
+    final weakMinor = entry.formTags.contains('Creatura Minore');
     final color = entry.isNpc
         ? Colors.greenAccent
         : entry.isBoss
         ? Colors.amberAccent
         : entry.isMiniBoss
         ? Colors.deepOrangeAccent
+        : weakMinor
+        ? Colors.lightBlueAccent
         : Colors.redAccent;
     final trimmedName = cleanUiText(entry.nameIt).trim();
     final initial = trimmedName.isEmpty ? '?' : trimmedName.characters.first;
@@ -4749,6 +4752,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         ? Icons.workspace_premium_outlined
         : entry.isMiniBoss
         ? Icons.shield_outlined
+        : weakMinor
+        ? Icons.bug_report_outlined
         : Icons.pest_control_outlined;
 
     // The Monster Book deliberately uses a readable dossier/sigil instead of
@@ -5401,6 +5406,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     String categoryFor(MonsterBookEntry entry) {
       if (entry.isBoss) return 'Boss';
       if (entry.isMiniBoss) return 'Mini Boss';
+      if (entry.formTags.contains('Creatura Minore')) return 'Creature Minori';
       return 'Mostro';
     }
 
@@ -5523,6 +5529,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 'Difficili',
                 'Mini Boss',
                 'Boss',
+                'Creature Minori',
               ])
                 ChoiceChip(
                   label: Text(tier),

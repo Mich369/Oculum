@@ -236,6 +236,11 @@ void main() {
         'Rigenerazione',
       );
       expect(state.assignableSubtraitPoints, 4);
+      state.masterInitiativeTokens.clear();
+      state.masterInitiativeGroups.clear();
+      state.masterInitiativeActiveIndex = 0;
+      state.masterInitiativeRound = 0;
+      state.currentOculumController.text = '0';
       final hp = probe.currentHp();
       state.dannoOltreDifesa = true;
       state.dannoOltreScudi = true;

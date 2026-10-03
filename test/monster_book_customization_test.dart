@@ -40,6 +40,24 @@ void main() {
     expect(monsterById('papera_ranocchio')?.imageBase64, isEmpty);
   });
 
+  test('weak minor creatures have level-zero life under sixteen', () {
+    for (final id in [
+      'koboldo_delle_braci',
+      'fuoco_fatuo_affamato',
+      'strige_del_fienile',
+      'larva_del_grimorio',
+    ]) {
+      final entry = monsterById(id)!;
+      expect(entry.formTags, contains('Creatura Minore'), reason: id);
+      expect(entry.stats['level'], 0, reason: id);
+      expect(entry.stats['resilienza'], 1, reason: id);
+      expect(entry.skillIds, isEmpty, reason: id);
+      expect(entry.imageBase64, isEmpty, reason: id);
+      // Oculum derives HP from Resilienza x 10, so these start at 10 HP.
+      expect((entry.stats['resilienza'] as int) * 10, lessThan(16), reason: id);
+    }
+  });
+
   test('monster Art requirements scale with the creature power', () {
     final weak = monsterById('topo_con_mani')!;
     final strong = monsterById('demone_maggiore')!;

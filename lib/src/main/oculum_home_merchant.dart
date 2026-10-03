@@ -273,6 +273,18 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         maxHp(),
         35 + random.nextInt(16),
       );
+      final breakEffect = protection && random.nextInt(4) == 0
+          ? <String, dynamic>{
+              'duration': 2 + random.nextInt(2),
+              'buffTarget': random.nextBool() ? 'difesa' : 'danni',
+              'buffValue': 4 + grade * 2,
+              'condition': random.nextBool() ? 'fortificato' : 'concentrato',
+              'element': const ['fuoco', 'cenere', 'ghiaccio', 'oblio'][
+                random.nextInt(4)
+              ],
+              'resistance': 'Resistenza',
+            }
+          : <String, dynamic>{};
       merchantStock.add(<String, dynamic>{
         'id': 'merchant_${i}_${random.nextInt(1 << 31)}',
         'name': source.name,
@@ -290,8 +302,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'damage': damage,
         'defence': defence,
         'quickReaction': grade > 0 && random.nextInt(9) == 0,
+        if (breakEffect.isNotEmpty) 'shieldBreakEffect': breakEffect,
         'desc': grade == 0
-            ? (offensiveShield
+            ? (breakEffect.isNotEmpty
+                  ? 'Alla rottura dello scudo: ${breakEffect['condition']} e ${breakEffect['resistance']} a ${breakEffect['element']} per ${breakEffect['duration']} turni.'
+                  : offensiveShield
                   ? 'Scudo offensivo.'
                   : 'Equipaggiamento del mercante.')
             : 'Oggetto graduato molto raro: richiede Grado $grade per essere equipaggiato.',
@@ -832,6 +847,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           : grade >= 3 && shield
           ? '@SchivateOculum+1'
           : '',
+      effettoRotturaScudo: offer['shieldBreakEffect'] is Map
+          ? Map<String, dynamic>.from(offer['shieldBreakEffect'])
+          : <String, dynamic>{},
     );
   }
 
