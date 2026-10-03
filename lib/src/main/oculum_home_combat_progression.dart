@@ -29,6 +29,17 @@ String oculumRollZeroOutcomeText({
   return difficulty != 0 && total == 0 ? '\nRiesci ma...' : '';
 }
 
+@visibleForTesting
+bool oculumReflexCriticalAwardsDodge({
+  required String subtraitId,
+  required int naturalRoll,
+  required int percentileRoll,
+}) =>
+    subtraitId == 'riflessi' &&
+    naturalRoll == 20 &&
+    percentileRoll >= 0 &&
+    percentileRoll < 25;
+
 extension _OculumHomeCombatProgression on _OculumHomePageState {
   void ensureMasterInitiativeGroups() {
     if (masterInitiativeGroups.isEmpty) {
@@ -841,6 +852,18 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   Future<void> tiraSottotrattoOcchio(HiddenEyeStat stat) async {
     oculumProfileMark('roll_subtrait');
     final dado = tiraD20();
+    final schivataOculumOttenuta =
+        stat.id == 'riflessi' &&
+        dado == 20 &&
+        oculumReflexCriticalAwardsDodge(
+          subtraitId: stat.id,
+          naturalRoll: dado,
+          percentileRoll: Random.secure().nextInt(100),
+        );
+    if (schivataOculumOttenuta) {
+      setState(() => schivateOculumBonus++);
+      programmaSalvataggio();
+    }
     final oculumSpend = consumaOculumTiro();
     final bonus =
         hiddenEyeTotal(stat) +
@@ -947,12 +970,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         : stat.id == 'drop' && dado > 15 && ascensionDustDropSinceLongRest >= 3
         ? '\nDrop: limite di 3 Ascension Dust raggiunto; si rinnova al Riposo Lungo.'
         : '';
+    final dodgeText = schivataOculumOttenuta
+        ? '\nCRITICO RIFLESSI: +1 Schivata Oculum.'
+        : '';
     dadoMostrato = testoDado;
     dadoMostratoFacce = 20;
     tiroCriticoUno = dado == 1;
     tiroCriticoVenti = dado == 20;
     risultato =
-        '$label: $testoDado$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText';
+        '$label: $testoDado$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText$dodgeText';
     _applyDadoCentraleOverlayState(
       valore: testoDado,
       criticoUno: dado == 1,
@@ -961,7 +987,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       reduceEffects: reduceDiceEffects,
     );
     aggiungiLog(
-      'Tiro sottotratto $label: $testoDado.${oculumTiroLogLabel(oculumSpend)}$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText',
+      'Tiro sottotratto $label: $testoDado.${oculumTiroLogLabel(oculumSpend)}$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText$dodgeText',
     );
     registerValidRoll(consumoStatKey: statConsumata);
     notifyDiceResultChanged();
@@ -993,6 +1019,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (dustAwarded ||
+          schivataOculumOttenuta ||
           masteryGain > 0 ||
           statoForzaLog.isNotEmpty ||
           consumoFortuna > 0 ||
@@ -2285,6 +2312,143 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     programmaSalvataggio();
     notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
+  }
+
+  void setMasterInitiativeTurn({required int round, int? activeIndex}) {
+    if (masterInitiativeTokens.isEmpty) return;
+    setState(() {
+      normalizeMasterInitiativeTokens();
+      masterInitiativeRound = max(0, round);
+      final requestedIndex = activeIndex ?? masterInitiativeActiveIndex;
+      final safeIndex = requestedIndex
+          .clamp(0, masterInitiativeTokens.length - 1)
+          .toInt();
+      if (masterInitiativeTokenCanAct(masterInitiativeTokens[safeIndex])) {
+        for (final token in masterInitiativeTokens) {
+          if ('${token['status'] ?? ''}' == 'active') token['status'] = 'ready';
+        }
+        masterInitiativeActiveIndex = safeIndex;
+        masterInitiativeTokens[safeIndex]['status'] = 'active';
+        restoreMasterInitiativeTurnResources(masterInitiativeTokens[safeIndex]);
+      }
+      risultato = t(
+        'Turnistica aggiornata: round $masterInitiativeRound.',
+        'Initiative updated: round $masterInitiativeRound.',
+      );
+      aggiungiLog(risultato);
+      captureActiveMasterInitiativeGroup();
+    });
+    programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
+    sendRealtimeInitiativeSnapshotIfPublished();
+  }
+
+  Future<void> showMasterInitiativeTurnEditor() async {
+    if (masterInitiativeTokens.isEmpty) return;
+    final roundController = TextEditingController(
+      text: '$masterInitiativeRound',
+    );
+    final eligible = <int>[
+      for (var i = 0; i < masterInitiativeTokens.length; i++)
+        if (masterInitiativeTokenCanAct(masterInitiativeTokens[i])) i,
+    ];
+    var activeIndex = eligible.contains(masterInitiativeActiveIndex)
+        ? masterInitiativeActiveIndex
+        : eligible.firstOrNull ?? 0;
+    final result = await showDialog<Map<String, int>>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text(t('Imposta turno dello scontro', 'Set encounter turn')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: roundController,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: t('Round', 'Round'),
+                  helperText: t(
+                    'Il conteggio parte da 0.',
+                    'Counting starts at 0.',
+                  ),
+                ),
+              ),
+              if (eligible.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                DropdownButtonFormField<int>(
+                  initialValue: activeIndex,
+                  decoration: InputDecoration(
+                    labelText: t('Partecipante attivo', 'Active participant'),
+                  ),
+                  items: [
+                    for (final index in eligible)
+                      DropdownMenuItem(
+                        value: index,
+                        child: Text(
+                          '${masterInitiativeTokens[index]['name'] ?? '???'}',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() => activeIndex = value);
+                    }
+                  },
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(t('Annulla', 'Cancel')),
+            ),
+            FilledButton.icon(
+              onPressed: () {
+                final round = int.tryParse(roundController.text.trim());
+                if (round == null || round < 0) return;
+                Navigator.pop(dialogContext, {
+                  'round': round,
+                  'activeIndex': activeIndex,
+                });
+              },
+              icon: const Icon(Icons.check),
+              label: Text(t('Applica', 'Apply')),
+            ),
+          ],
+        ),
+      ),
+    );
+    roundController.dispose();
+    if (result == null || !mounted) return;
+    setMasterInitiativeTurn(
+      round: result['round'] ?? masterInitiativeRound,
+      activeIndex: result['activeIndex'],
+    );
+  }
+
+  void modificaSchivateOculumRapide(int delta) {
+    if (delta == 0) return;
+    setState(() {
+      final baseWithoutManualBonus = max(
+        0,
+        schivataOculumBase() +
+            runtimeQuickBonus('schivata_oculum') +
+            difficultyIncreaseOculumDodgeBonus(),
+      );
+      final minimumBonusForSpentDodges = max(
+        0,
+        schivateOculumConsumate - baseWithoutManualBonus,
+      );
+      schivateOculumBonus = max(
+        minimumBonusForSpentDodges,
+        schivateOculumBonus + delta,
+      );
+    });
+    programmaSalvataggio();
   }
 
   void nextMasterInitiativeTurn({int delta = 1}) {

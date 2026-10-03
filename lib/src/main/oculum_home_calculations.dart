@@ -3884,6 +3884,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return max(
       0,
       schivataOculumBase() +
+          schivateOculumBonus +
           runtimeQuickBonus('schivata_oculum') +
           difficultyIncreaseOculumDodgeBonus(),
     );

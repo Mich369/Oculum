@@ -2188,6 +2188,41 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             ),
           ),
           const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: smallInfoText(
+                  t('Modifica rapida', 'Quick edit'),
+                  color: eyePupilGlowColor,
+                ),
+              ),
+              IconButton.filledTonal(
+                tooltip: t(
+                  'Rimuovi una schivata extra',
+                  'Remove one extra dodge',
+                ),
+                onPressed: schivateOculumBonus > 0
+                    ? () => modificaSchivateOculumRapide(-1)
+                    : null,
+                icon: const Icon(Icons.remove),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                tooltip: t('Aggiungi una schivata', 'Add one dodge'),
+                onPressed: () => modificaSchivateOculumRapide(1),
+                icon: const Icon(Icons.add),
+              ),
+            ],
+          ),
+          if (schivateOculumBonus > 0)
+            smallInfoText(
+              t(
+                'Schivate extra: $schivateOculumBonus',
+                'Extra dodges: $schivateOculumBonus',
+              ),
+              color: eyePupilGlowColor,
+            ),
+          const SizedBox(height: 10),
           ElevatedButton.icon(
             onPressed: available > 0 ? mostraMenuSchivataOculum : null,
             icon: const Icon(Icons.visibility),
@@ -3944,6 +3979,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   ),
                 ),
               ),
+              if (masterInitiativeTokens.isNotEmpty)
+                IconButton(
+                  tooltip: t(
+                    'Imposta round e turno attivo',
+                    'Set round and active turn',
+                  ),
+                  onPressed: showMasterInitiativeTurnEditor,
+                  icon: Icon(Icons.edit_calendar, color: tertiaryColor),
+                ),
               Chip(
                 label: Text(
                   masterInitiativePublished

@@ -1833,6 +1833,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   int ascensionDustIntegritaMassimaBonus = 0;
   final Map<String, int> ascensionDustSottotrattiTemporanei = <String, int>{};
   int schivateOculumConsumate = 0;
+  int schivateOculumBonus = 0;
   int schivataOculumRiduzionePronta = 0;
   String schivataOculumEtichettaPronta = '';
   bool scudoSalvataggioAttivo = false;

@@ -103,6 +103,11 @@ class OculumPerformanceProbe {
   Widget storyPage() => _state.backgroundAndSkillsPageEfficient();
   void hp(int index) => _state.applyMasterEnemyQuickHpAction(index, damage: 1);
   void turn() => _state.nextMasterInitiativeTurn();
+  void setTurn({required int round, int? activeIndex}) =>
+      _state.setMasterInitiativeTurn(round: round, activeIndex: activeIndex);
+  int masterRound() => _state.masterInitiativeRound;
+  int dodgeTotal() => _state.schivateOculumTotali();
+  void quickEditDodge(int delta) => _state.modificaSchivateOculumRapide(delta);
   void activateInitiative(int index) =>
       _state.setMasterInitiativeActiveIndex(index);
   void normalizeInitiative() => _state.normalizeMasterInitiativeTokens();

@@ -21,6 +21,49 @@ void main() {
     expect(oculumAvailableDisplayMaximum(available: 2, naturalMaximum: 7), 7);
   });
 
+  test('Only a natural Reflexes 20 can earn an Oculum dodge, at 25%', () {
+    expect(
+      oculumReflexCriticalAwardsDodge(
+        subtraitId: 'riflessi',
+        naturalRoll: 20,
+        percentileRoll: 0,
+      ),
+      isTrue,
+    );
+    expect(
+      oculumReflexCriticalAwardsDodge(
+        subtraitId: 'riflessi',
+        naturalRoll: 20,
+        percentileRoll: 24,
+      ),
+      isTrue,
+    );
+    expect(
+      oculumReflexCriticalAwardsDodge(
+        subtraitId: 'riflessi',
+        naturalRoll: 20,
+        percentileRoll: 25,
+      ),
+      isFalse,
+    );
+    expect(
+      oculumReflexCriticalAwardsDodge(
+        subtraitId: 'forza',
+        naturalRoll: 20,
+        percentileRoll: 0,
+      ),
+      isFalse,
+    );
+    expect(
+      oculumReflexCriticalAwardsDodge(
+        subtraitId: 'riflessi',
+        naturalRoll: 19,
+        percentileRoll: 0,
+      ),
+      isFalse,
+    );
+  });
+
   test('Legacy turn unit aliases use the same personal duration', () {
     for (final unit in ['turn', 'turns', 'turno', 'turni', 'TURN']) {
       expect(oculumTurnUnit(unit), 'turni');
@@ -143,6 +186,26 @@ void main() {
         2,
       );
       probe.load(base);
+      probe.quickEditDodge(1);
+      expect(probe.dodgeTotal(), 1);
+      final savedDodge = probe.snapshot();
+      expect(savedDodge['schivateOculumBonus'], 1);
+      probe.load(savedDodge);
+      expect(probe.dodgeTotal(), 1);
+      probe.load(base);
+      expect(probe.dodgeTotal(), 0);
+      state.masterInitiativeTokens.add({
+        'id': 'manual_test',
+        'name': 'Hoshy',
+        'status': 'ready',
+        'side': 'ally',
+        'currentHp': 10,
+        'maxHp': 10,
+      });
+      probe.setTurn(round: 7, activeIndex: 0);
+      expect(probe.masterRound(), 7);
+      expect(state.masterInitiativeTokens.single['status'], 'active');
+      state.masterInitiativeTokens.clear();
       final inventory = probe.snapshot()['inventario'];
       final stats = probe.coreStats();
       final vc = probe.attackVc();
