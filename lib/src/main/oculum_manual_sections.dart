@@ -156,12 +156,12 @@ CREARE UN MOSTRO
 
 Nel tutorial e nel Monster Book scegli il livello: il Grado viene calcolato automaticamente con le soglie del capitolo 9. Ogni Grado raggiunto aggiunge punti al totale da distribuire:
 • Mostro comune: +10;
-• Mini-Boss: +15;
-• Boss: +25.
+• Mini-Boss: +12;
+• Boss: +15.
 
-La crescita per livello resta di 9, 12 o 18 punti, rispettivamente. La generazione aggiunge i 3 punti per livello di compensazione dei Titoli già previsti. Un Boss di livello 30, Grado II, ha quindi 30 ×21 + 2 ×25 = 680 punti.
+La crescita per livello è di 9, 11 o 13 punti, rispettivamente. La generazione aggiunge i 3 punti per livello di compensazione dei Titoli già previsti. Un Boss di livello 30, Grado II, ha quindi 30 ×16 + 2 ×15 = 510 punti.
 
-Se il mostro ha almeno una Skill o una Oculum Art, riceve Oculum: Volontà e Materia vengono portate a soglie utili, Resilienza e Oculum ricevono le quote principali: la prima sostiene la Vita, il secondo alimenta le tecniche. Solo una creatura senza entrambe distribuisce tutto fra Resilienza, Volontà e Materia, con Oculum a zero.
+Senza peculiarità la distribuzione segue Resilienza, Volontà, Oculum, Materia in ordine decrescente. Senza Oculum Art i punti di Oculum vanno alle altre tre statistiche. Redistribuisci punti posseduti conserva il totale e varia le proporzioni della creatura senza inventare punti.
 
 Al livello 0 si redistribuisce il totale delle statistiche base del Book, senza bonus di Grado. Per una creatura con poteri, la base minima è di 4 punti; senza poteri è di 3. I mostri già salvati conservano i propri valori.
 ''',
@@ -183,7 +183,7 @@ For rolls that are not attack or defense:
 Example:
 With 20 Resilience, level 10 and Grade I, roll 1d20 + 26.
 
-Monster creation derives Grade from level. Each Grade adds 10 stat points for a common monster, 15 for a Mini-Boss and 25 for a Boss. Level growth remains 9/12/18 points respectively, plus the existing 3-point Title compensation. A level 30, Grade II Boss therefore receives 680 points.
+Monster creation derives Grade from level. Each Grade adds 10 stat points for a common monster, 12 for a Mini-Boss and 15 for a Boss. Level growth is 9/11/13 points respectively, plus the existing 3-point Title compensation. A level 30, Grade II Boss therefore receives 510 points.
 
 A creature with any Skill or Oculum Art receives Oculum. Resilience and Oculum take priority, with Will and Matter brought to useful thresholds. Without either power, distribute points among Resilience, Will and Matter only. Existing saved stats are preserved.
 ''',
@@ -248,7 +248,7 @@ Raggiungi un nuovo Grado quando arrivi alla soglia di livello indicata nel capit
 
 Puoi inoltre livellare un numero di Titoli pari al Grado raggiunto, scegliendo soltanto quelli già evoluti. Questo passaggio è la riforgiatura: il Titolo riceve una nuova quest, può sviluppare nuove Skill e prosegue in una forma legata alle tue azioni e a ciò che vuoi ottenere.
 
-Per i punti statistica dei mostri usa il bonus del loro tipo: +10 per comune, +15 per Mini-Boss e +25 per Boss a ogni Grado.
+Per i punti statistica dei mostri usa il bonus del loro tipo: +10 per comune, +12 per Mini-Boss e +15 per Boss a ogni Grado.
 ''',
     contentEn: r'''
 Grade represents a jump in scale.

@@ -347,6 +347,113 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  Future<void> useFatePact() async {
+    if (fatePactUsed) return;
+    final ownerTag = sheetTagAt(schedaCorrente);
+    final roll = lastValidRollSnapshot.trim();
+    if (roll.isEmpty || lastValidRollCancelled) {
+      setState(
+        () => risultato = 'Esegui prima il tiro da ritirare con l’Accordo.',
+      );
+      return;
+    }
+    final negative = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Accordo col Fato — scegli il tiro'),
+        content: Text(
+          '$roll\n\nL’Accordo si consuma una sola volta. Conferma se il tiro selezionato è un critico negativo.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Annulla'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Tiro normale'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Critico negativo'),
+          ),
+        ],
+      ),
+    );
+    if (negative == null ||
+        !mounted ||
+        fatePactUsed ||
+        sheetTagAt(schedaCorrente) != ownerTag ||
+        lastValidRollSnapshot.trim() != roll ||
+        lastValidRollCancelled) {
+      return;
+    }
+    final outcome = oculumFatePactOutcome(
+      negativeCritical: negative,
+      percentile: Random.secure().nextInt(100),
+    );
+    // Persist the one-time consumption before presenting the Oculum choice.
+    setState(() {
+      fatePactUsed = true;
+      if (outcome == OculumFatePactOutcome.oculumChoice) {
+        // Safe fallback survives closing the app while the choice is open.
+        ispirazioniController.text =
+            '${leggiNumero(ispirazioniController) + 1}';
+      } else {
+        cancelPreviousRollForInspiration();
+      }
+    });
+    await forzaSalvataggioImmediato(soloLocale: true);
+    if (!mounted || sheetTagAt(schedaCorrente) != ownerTag) return;
+    var acceptsOculum = false;
+    if (outcome == OculumFatePactOutcome.oculumChoice) {
+      acceptsOculum =
+          await showDialog<bool>(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogContext) => AlertDialog(
+              title: const Text('Il Fato risponde — Ispirazione Oculum'),
+              content: const Text(
+                'Puoi ritirare mantenendo il critico: 50% positivo e 50% negativo. Se rinunci ricevi un’Ispirazione base.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('Ricevi Ispirazione base'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: const Text('Ritira come critico'),
+                ),
+              ],
+            ),
+          ) ??
+          false;
+    }
+    if (!mounted || sheetTagAt(schedaCorrente) != ownerTag) return;
+    setState(() {
+      if (outcome == OculumFatePactOutcome.oculumChoice && !acceptsOculum) {
+        risultato =
+            'Accordo col Fato consumato: ricevuta un’Ispirazione base; il tiro resta valido.';
+      } else {
+        final cancelled = cancelPreviousRollForInspiration();
+        if (acceptsOculum) {
+          ispirazioniController.text =
+              '${max(0, leggiNumero(ispirazioniController) - 1)}';
+          ispirazioneOculumCriticoInAttesa = true;
+        }
+        risultato =
+            '$cancelled\nAccordo col Fato consumato: ${acceptsOculum
+                ? 'il prossimo dado sarà un critico positivo o negativo'
+                : outcome == OculumFatePactOutcome.superInspiration
+                ? 'puoi ritirare il critico come Super Ispirazione'
+                : 'puoi ritirare come Ispirazione base'}.';
+      }
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
   void usaIspirazioneBase() {
     final valore = leggiNumero(ispirazioniController);
 
@@ -1515,6 +1622,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       final rimuoveMalusEsplosione = malusTiriOculumPostEsplosione < 0;
       final hpPrima = hpCorrenti();
       final tiroCuraHp = Random.secure().nextInt(100) + 1;
+      progressionSurge.shortRest();
+      consumedFoodBonuses.clear();
 
       impostaCenereControllata(
         max(0, cenere - recuperoPercentuale(cenere, 0.25, 1)),
@@ -1615,6 +1724,22 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     final potenzaNucleoDaRimuovere = <int>[];
     setState(() {
       merchantDustPurchasedSinceLongRest = false;
+      tempResilienza -= consumedFoodBonuses['resilienza'] ?? 0;
+      tempVolonta -= consumedFoodBonuses['volonta'] ?? 0;
+      tempMateria -= consumedFoodBonuses['materia'] ?? 0;
+      tempOculum -= consumedFoodBonuses['oculum'] ?? 0;
+      consumedFoodBonuses.clear();
+      final earnedShield = min(
+        progressionSurge.shield,
+        max(0, leggiNumero(scudoController)),
+      );
+      progressionSurge.shield = earnedShield;
+      progressionSurge.longRest();
+      scudoController.text =
+          (max(0, leggiNumero(scudoController)) -
+                  earnedShield +
+                  progressionSurge.shield)
+              .toString();
       potenzaNucleoDaRimuovere.addAll(rimuoviPotenzaNucleoTemporanea());
       if (statoForzaAttivo == 'potenza_nucleo') {
         statoForzaAttivo = '';

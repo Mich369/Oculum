@@ -13,8 +13,8 @@ void main() {
       }
       expect(oculumGradeForLevel(20), 1);
       expect(oculumGeneratedMonsterBudget('Mostro', 30), 380);
-      expect(oculumGeneratedMonsterBudget('Mostro Mini Boss', 30), 480);
-      expect(oculumGeneratedMonsterBudget('Mostro Boss', 30), 680);
+      expect(oculumGeneratedMonsterBudget('Mostro Mini Boss', 30), 444);
+      expect(oculumGeneratedMonsterBudget('Mostro Boss', 30), 510);
     },
   );
   test('allocation conserves every point and powers decide Oculum', () {
@@ -32,12 +32,12 @@ void main() {
         );
         expect(stats.values.fold<int>(0, (a, b) => a + b), budget);
         expect(stats.values.every((value) => value >= 0), isTrue);
-        if (powers.$1 || powers.$2) {
+        if (powers.$2) {
           if (budget > 0) expect(stats['oculum'], greaterThan(0));
           if (budget >= 20) {
             expect(stats['resilienza'], greaterThan(stats['volonta']!));
             expect(stats['resilienza'], greaterThan(stats['materia']!));
-            expect(stats['oculum'], greaterThan(stats['volonta']!));
+            expect(stats['volonta'], greaterThan(stats['oculum']!));
             expect(stats['oculum'], greaterThan(stats['materia']!));
           }
         } else {

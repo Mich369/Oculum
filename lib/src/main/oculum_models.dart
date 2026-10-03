@@ -1416,19 +1416,19 @@ class InventoryItem {
       'saveShieldUsedDay': saveShieldUsedDay,
       if (statGemStat.isNotEmpty) 'statGemStat': statGemStat,
       if (statGemDieFaces > 0) 'statGemDieFaces': statGemDieFaces,
-        if (monsterLoot.isNotEmpty) 'monsterLoot': monsterLoot,
-        if (craftData.isNotEmpty) 'craftData': craftData,
+      if (monsterLoot.isNotEmpty) 'monsterLoot': monsterLoot,
+      if (craftData.isNotEmpty) 'craftData': craftData,
     };
   }
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) {
     return InventoryItem(
-        monsterLoot: json['monsterLoot'] is Map
+      monsterLoot: json['monsterLoot'] is Map
           ? Map<String, dynamic>.from(json['monsterLoot'])
-            : <String, dynamic>{},
-        craftData: json['craftData'] is Map
-            ? Map<String, dynamic>.from(json['craftData'])
-            : <String, dynamic>{},
+          : <String, dynamic>{},
+      craftData: json['craftData'] is Map
+          ? Map<String, dynamic>.from(json['craftData'])
+          : <String, dynamic>{},
       statGemStat: '${json['statGemStat'] ?? ''}',
       statGemDieFaces: readIntValue(json['statGemDieFaces']),
       nome: oculumCleanMojibakeText('${json['nome'] ?? ''}'),
@@ -1527,6 +1527,44 @@ OculumSkillTextLimits? oculumSkillTextLimitsAtEnd(String text) {
   return OculumSkillTextLimits(minimum: minimum, maximum: maximum);
 }
 
+// Recognize cost notation independently of the position of the effects.
+// Unlabelled fractions inside prose remain ordinary player-authored text.
+OculumSkillTextLimits? oculumSkillTextCostLimits(String text) {
+  final legacy = oculumSkillTextLimitsAtEnd(text);
+  final matches = RegExp(
+    r'(?:\bcosto\s*[:=]?\s*(?:oculum\s*)?|^\s*(?:[IVX]+\s*/\s*)?)\(?\s*(\d+)\s*/\s*(\d+)\s*\)?',
+    caseSensitive: false,
+  ).allMatches(text).toList();
+  if (matches.length > 1) return null;
+  if (matches.isNotEmpty) {
+    final minimum = int.tryParse(matches.single.group(1)!);
+    final maximum = int.tryParse(matches.single.group(2)!);
+    if (minimum == null || maximum == null || minimum > maximum) return null;
+    if (legacy != null &&
+        (legacy.minimum != minimum || legacy.maximum != maximum)) {
+      return null;
+    }
+    return OculumSkillTextLimits(minimum: minimum, maximum: maximum);
+  }
+  final suffix = RegExp(
+    r'\(\s*(\d+)\s*/\s*(\d+)\s*\)\s*oculum\b',
+    caseSensitive: false,
+  ).allMatches(text).toList();
+  if (suffix.length != 1) return legacy;
+  final minimum = int.parse(suffix.single.group(1)!);
+  final maximum = int.parse(suffix.single.group(2)!);
+  if (minimum > maximum) return null;
+  return OculumSkillTextLimits(minimum: minimum, maximum: maximum);
+}
+
+int? oculumSkillTextGrowthCap(String text) {
+  final matches = RegExp(
+    r'\b(?:massimo\s+crescita|limite\s+maestria)\s*[:=]\s*(\d+)\b',
+    caseSensitive: false,
+  ).allMatches(text).toList();
+  return matches.length == 1 ? int.tryParse(matches.single.group(1)!) : null;
+}
+
 class CharacterSkillForm {
   CharacterSkillForm({
     this.nome = '',
@@ -1588,7 +1626,9 @@ class CharacterSkillForm {
 
   bool aggiornaLimitiOculumDaDescrizione() {
     if (oculumLimitiConfiguratiManualmente) return false;
-    final parsed = oculumSkillTextLimitsAtEnd(descrizione);
+    final parsed =
+        oculumSkillTextCostLimits(costo) ??
+        oculumSkillTextCostLimits(descrizione);
     if (parsed == null) return false;
     final masteryGrowth = max(
       0,
@@ -1999,7 +2039,10 @@ int oculumSkillMasteryGrowthLimit(CharacterSkill skill, int formIndex) {
           : nextForm.oculumMassimoUtilizzabile,
     );
   }
-  final rawLimit = configuredLimit > 0 ? configuredLimit : initialMaximum + 10;
+  final rawLimit =
+      oculumSkillTextGrowthCap(form.costo) ??
+      oculumSkillTextGrowthCap(form.descrizione) ??
+      (configuredLimit > 0 ? configuredLimit : initialMaximum + 10);
   return max(currentMaximum, rawLimit);
 }
 
@@ -2137,7 +2180,7 @@ class ArtSkill {
     if (index < 0 || index >= 5 || oculumLimitiManualiPerLivello[index]) {
       return false;
     }
-    final parsed = oculumSkillTextLimitsAtEnd(text);
+    final parsed = oculumSkillTextCostLimits(text);
     if (parsed == null) return false;
     final masteryGrowth = max(
       0,
@@ -2328,6 +2371,8 @@ class ArtSkill {
 }
 
 const List<String> oculumArtSkillCostResourceKeys = <String>[
+  'obser',
+  'follia',
   'oculum',
   'fortuna',
   'hp',
@@ -2357,7 +2402,16 @@ String oculumNormalizeArtSkillCostResource(
     final material = normalized.substring('material:'.length).trim();
     return material.isEmpty ? 'nessuna' : 'material:$material';
   }
+  if (normalized.startsWith('item:')) {
+    final item = normalized.substring('item:'.length).trim();
+    return item.isEmpty ? 'nessuna' : 'item:$item';
+  }
   switch (normalized) {
+    case 'obser':
+      return 'obser';
+    case 'follia':
+    case 'madness':
+      return 'follia';
     case 'fortuna':
     case 'fortune':
       return 'fortuna';
@@ -2405,7 +2459,14 @@ String oculumArtSkillCostResourceLabel(
     final material = normalized.substring('material:'.length);
     return '${english ? 'Material' : 'Materiale'}: $material';
   }
+  if (normalized.startsWith('item:')) {
+    return '${english ? 'Item' : 'Oggetto'}: ${normalized.substring(5)}';
+  }
   switch (normalized) {
+    case 'obser':
+      return 'Obser';
+    case 'follia':
+      return english ? 'Madness' : 'Follia';
     case 'fortuna':
       return english ? 'Fortune' : 'Fortuna';
     case 'hp':
@@ -2564,7 +2625,9 @@ int oculumArtSkillMasteryGrowthLimit(
       nextInitial = skill.oculumMassimoPerLivello(level + 1);
     }
   }
-  final rawLimit = nextInitial > 0 ? nextInitial : initialMaximum + 10;
+  final rawLimit =
+      oculumSkillTextGrowthCap(skill.testoEvoluzione(level)) ??
+      (nextInitial > 0 ? nextInitial : initialMaximum + 10);
   return max(currentMaximum, rawLimit);
 }
 
@@ -2930,6 +2993,9 @@ class CharacterArt {
     this.esaurimentoCompleto = false,
     this.bonusIntegritaNucleoTemporaneo = 0,
     this.hasIntegrity = true,
+    this.incorporata = false,
+    this.switchPhase = '',
+    this.occhiCoinvolti = '',
   }) : runeWordsKnown = List<String>.from(runeWordsKnown ?? const <String>[]),
        runeQuickWordIds = List<String>.from(
          runeQuickWordIds ?? const <String>[],
@@ -2982,6 +3048,10 @@ class CharacterArt {
   // normale per restare compatibile con tutte le Art e con i vecchi salvataggi.
   int bonusIntegritaNucleoTemporaneo;
   bool hasIntegrity;
+  bool incorporata;
+  String switchPhase;
+  String occhiCoinvolti;
+  bool get inUso => !incorporata && switchPhase != 'visione';
 
   Map<String, dynamic> toJson() {
     return {
@@ -3027,6 +3097,9 @@ class CharacterArt {
       'integritaCorrente': integritaCorrente,
       'esaurimentoCompleto': esaurimentoCompleto,
       'hasIntegrity': hasIntegrity,
+      'incorporata': incorporata,
+      'switchPhase': switchPhase,
+      'occhiCoinvolti': occhiCoinvolti,
       if (bonusIntegritaNucleoTemporaneo > 0)
         'bonusIntegritaNucleoTemporaneo': bonusIntegritaNucleoTemporaneo,
     };
@@ -3090,6 +3163,9 @@ class CharacterArt {
       bonusIntegritaNucleoTemporaneo: readIntValue(
         json['bonusIntegritaNucleoTemporaneo'],
       ),
+      incorporata: readBoolValue(json['incorporata']),
+      switchPhase: '${json['switchPhase'] ?? ''}',
+      occhiCoinvolti: '${json['occhiCoinvolti'] ?? ''}',
     );
   }
 }

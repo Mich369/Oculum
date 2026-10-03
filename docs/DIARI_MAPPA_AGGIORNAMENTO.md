@@ -189,3 +189,191 @@ Questa condivisione usa il realtime esistente: le comunicazioni selettive sono c
 | Campo aggiuntivo locale `diaryKnowledgeSync` e lettura retrocompatibile | `lib/src/main/oculum_home_persistence.dart` |
 | Verifiche menu, cifratura, coda, rinomina e protezione patch | `test/oculum_diary_context_menu_test.dart`, `test/oculum_diary_knowledge_sync_test.dart`, `test/oculum_realtime_patch_test.dart` |
 | Test nelle Actions e schermate separate per esecuzione | `.github/workflows/diary_tests.yml`, `.github/workflows/test_windows_distribution.yml`, `test/oculum_eye_memory_widget_test.dart` |
+
+## Identità visiva della campagna — 1 ottobre 2026
+
+Il guscio dell'app espone un **sigillo vivo** che apre direttamente la Mappa degli Occhi. La variante estesa mostra campagna, scheda, pagina e numero di pagine del Diario; la barra superiore usa il sigillo compatto. La memoria resta raggiungibile anche dalle schede, dal Master e dagli inventari.
+
+La barra superiore usa inoltre una sfumatura cattedrale e un indicatore discreto della connessione. È una modifica solo visiva: navigazione, dati, autosave, modalità offline e compatibilità mobile restano invariati.
+
+| Cosa puoi modificare | File / parametro |
+| --- | --- |
+| Sigillo, anello, tacche delle pagine e accessibilità | `lib/widgets/oculum_living_seal.dart` |
+| Associazione campagna/scheda/pagina e apertura Mappa degli Occhi | `lib/main.dart`, `OculumLivingSeal` nell'AppBar |
+| Colori della sfumatura superiore | `backgroundMidColor` e `primaryColor` in `lib/main.dart` |
+
+## Schede, Master e regole aggiuntive — 1 ottobre 2026
+
+Sei nuovi preset modificabili sono disponibili nelle Impostazioni: Originale, Cenere, Sangue, Aurora, Natura e Lume. Mantengono il sistema dei colori esistente e si aggiungono ai temi precedenti. Campi e pulsanti condivisi seguono subito la palette attiva, con contrasto leggibile. Ogni pagina principale mostra una breve indicazione del primo passo; si può nasconderla e riattivarla da Impostazioni → Indicazioni per iniziare.
+
+I pannelli condivisi usano cornici incise e titoli con sigillo: la modifica si estende alle pagine che li usano (schede, combattimento, Master, inventario, mercato e risorse). I colori seguono la personalizzazione della scheda; le immagini non vengono tinte. Le incisioni sono statiche e si disattivano in modalità leggera. Il riferimento visivo inviato dall’autore orienta il restyle: le illustrazioni e la disposizione completa del mockup non sono state sostituite automaticamente alle schermate esistenti. Aiuta compagno conserva i propri comandi e regole.
+
+La pagina Master costruisce i pannelli quando entrano nell’area visibile. Su desktop le due colonne scorrono indipendentemente. La generazione permette nome, elemento e livello; risorse e vita iniziano piene. La redistribuzione conserva i punti posseduti e varia di circa ±10% le proporzioni della creatura. Senza peculiarità: Resilienza > Volontà > Oculum > Materia. Senza Oculum Art, Oculum va alle altre tre. Crescita per livello: 9 comune, 11 Mini-Boss, 13 Boss; per Grado: 10, 12, 15. La compensazione dei Titoli (+3 per livello) resta inclusa nella generazione.
+
+**Punto Cieco:** nei controlli danni del nemico il Master può indicare la parte colpita, il danno base e la fragilità per colpo. Il primo colpo ha già +10%, poi +20%, +30% e così via; il valore percentuale è modificabile. L’anteprima mostra il danno prima della conferma. Il danno attraversa scudo, armatura e vita esistenti. Riduci contatore corregge solo il contatore, senza ripristinare la vita. Nomi, fragilità e contatori sono salvati separatamente dalla scheda condivisa: i Player ricevono solo i normali effetti dei danni.
+
+**Accordo col Fato:** una volta per scheda, anche per quelle precedenti prive del nuovo campo. Da Risorse scegli il tiro attivo: normale usa l’effetto dell’Ispirazione base; critico negativo ha 80% effetto Super Ispirazione e 20% scelta Oculum (nuovo critico 50% positivo/50% negativo). Rinunciare all’opzione Oculum concede un’Ispirazione base e conserva il tiro. L’Accordo non torna ai riposi. La scelta Oculum salva prima una ricompensa base di sicurezza, evitando di perderla chiudendo l’app durante la scelta.
+
+Livelli guadagnati: +3 temporaneo alle quattro statistiche per livello, +2 dopo riposo breve, zero dopo lungo. Gradi guadagnati: +5 statistiche e +100 scudo; il breve dimezza solo il bonus statistico, il lungo azzera quel bonus e dimezza lo scudo residuo ottenuto dai Gradi. Nessun premio retroattivo sui livelli dei salvataggi precedenti.
+
+Il mercato include carni di mostri, erbe e alcolici consumabili. Carne di Forest Demon: +2 Volontà e +1 Materia. Liquore di Cenere: ogni dose -2 Volontà, +1 Materia e +1 Oculum; nessun bonus Resilienza. Gli effetti si sommano e terminano al prossimo riposo; il loro registro è separato dagli altri buff temporanei.
+
+Le nuove menzioni negli Occhi della Memoria alimentano un registro persistente: ogni tre menzioni si tenta 10%, aumentando di dieci punti dopo ogni insuccesso e tornando al 10% dopo la ricompensa. Il controllo avviene alla costruzione della memoria, senza analisi aggiuntiva a ogni battuta. Riaprire lo stesso grafo non genera nuovi premi. Il legame dell’Occhio dei Caduti concede 10 EXP ogni 30 punti guadagnati. Le Open offensive generate usano un dado da d60 a d120 più Attacco; i poteri già scritti conservano la propria descrizione.
+
+La DT del Master può essere applicata a più schede Player ricevute. Salvataggio prima dell’invio e modifiche rimaste locali vengono ritentate alla connessione tramite il protocollo patch esistente. I test locali non equivalgono alla verifica su due dispositivi fisici.
+
+| Cosa puoi modificare | Dove |
+| --- | --- |
+| Cornici, spaziature, incisioni e colori dei pannelli | `lib/src/main/oculum_design_system.dart`, `oculum_home_colors_and_base_widgets.dart` |
+| Layout Master e Aiuta compagno | `oculum_home_secondary_pages.dart`, `oculum_home_sheet_page.dart` |
+| Punti per livello/Grado e proporzioni dei mostri | `oculum_starter_creation.dart` |
+| Nome, elemento, livello e risorse della generazione | `oculum_home_persistence.dart` |
+| Fragilità, nomi e contatori dei Punti Ciechi | Pulsante Punti Ciechi · Master; formula in `lib/services/oculum_blind_spot.dart` |
+| Probabilità Accordo col Fato | `lib/services/oculum_fate_pact.dart`; azione in `oculum_home_resources_rest_titles_data.dart` |
+| Bonus di progressione e riposi | `lib/services/oculum_progression_surge.dart`, `oculum_home_resources_rest_titles_data.dart` |
+| Carni, erbe, alcolici: prezzi e bonus | `oculum_home_merchant.dart`, `ensureMerchantFoodOffers` |
+| Menzioni e probabilità d’Ispirazione | `lib/services/oculum_memory_inspiration.dart` |
+| Legame ed esperienza degli Occhi dei Caduti | `oculum_fallen_eyes.dart` |
+| DT multipla e ritentativi | `oculum_home_secondary_pages.dart`, `oculum_realtime_integration.dart` |
+| Compilazioni e verifica ZIP/runtime | `scripts/build_diary_distribution.ps1` |
+
+### Scheda compatta e modalità desktop
+La scheda Cattedrale presenta ritratto, Vita e Oculum, quattro statistiche compatte e azioni immediate. I pannelli completi restano nelle sezioni espandibili. Modifica e ricerca aprono il pannello necessario. Su desktop è disponibile il menu laterale; sui telefoni la scheda si adatta fino a 320 px. Il pulsante «Oculum: usa le fiammelle» ripristina il pannello precedente e conserva la scelta nel salvataggio della scheda.
+
+| Cosa puoi modificare | Dove |
+| --- | --- |
+| Composizione della scheda, dimensioni ritratto, statistiche e sezioni | `lib/src/main/oculum_reference_sheet.dart` |
+| Barra oppure fiammelle | Pulsante nella scheda; campo `referenceOculumFlames` |
+| Modalità desktop e menu laterale | Impostazioni e freccia del menu |
+Avvio Windows: `oculum.exe --desktop` attiva la modalità desktop e apre il menu laterale, conservando i dati delle schede.
+
+## Layout della campagna — aggiornamento finale 1 ottobre 2026
+
+La versione Cattedrale usa le illustrazioni e le cornici dell'immagine originale dell'autore, conservata senza alterazioni in assets/oculum/campaign_reference.png. I controlli rimangono widget interattivi: l'immagine di riferimento non sostituisce l'app.
+
+Su desktop il menu esterno serve le pagine dell'app; Art, Diario, Inventario e Occhi sono nel menu interno della scheda, evitando doppioni. Impostazioni rimane nel menu esterno. I pulsanti compatti aprono pagine dedicate con i controlli completi. La scelta Player/Master rimane disponibile dalla barra superiore e dalla Home. Su mobile restano i collegamenti adattati alla larghezza.
+
+| Cosa puoi modificare nell'app | Dove |
+| --- | --- |
+| Tornare al vecchio design, senza cambiare i salvataggi | Impostazioni → Torna al vecchio design; disattiva per ritornare al nuovo |
+| Barra Oculum oppure fiammelle precedenti | Scheda → Oculum: usa le fiammelle/barra |
+| Statistiche attuali e massimali separati | Scheda → Statistiche |
+| Vita attuale e massimale, oppure massimale automatico | Scheda → Statistiche; i valori restano nascosti con Vita Afona |
+| Colori delle statistiche e delle risorse | Personalizzazioni esistenti della scheda |
+| Sfondo a tinta unita, sfumature verticali/orizzontali/diagonali/radiali o scacchi | Impostazioni → Disegno dello sfondo; colori alto/centro/basso |
+| Nome, identità e ritratto | Scheda → Modifica |
+| Immagine assegnata a un partecipante e informazioni rivelate | Controlli dell'incontro; i mostri non usano ritratti generici automatici |
+| Nome e immagine riconosciuti personalmente | Incontro Player → Assegna nome e immagine |
+| Quantità, uso dei consumabili, donazione locale e vendita ridotta | Inventario; vendita subordinata al mercato aperto |
+| Diari, collegamenti, ruoli e fonti della memoria | Diario e Mappa degli Occhi |
+| Menu e composizione delle pagine, per lo sviluppo | lib/src/main/oculum_reference_campaign.dart e oculum_reference_sheet.dart |
+| Cornici e porzioni dell'illustrazione originale, per lo sviluppo | lib/widgets/oculum_reference_frame.dart e oculum_reference_art.dart |
+
+La donazione descritta qui trasferisce oggetti fra schede locali autorizzate. Gli scambi online esistenti conservano il proprio percorso. I test di widget generano anteprime desktop/mobile con dati dimostrativi; non certificano la ricezione fra due dispositivi fisici né le prestazioni GPU di ciascun telefono. I log precedenti in questo documento sono verifiche storiche: per questa distribuzione usare output/restyle-package-tests.log, output/restyle-package-analyze.log e il rapporto distribution/diari-verifica-distribuzione.json.
+
+Verifica finale: 611 test di regressione superati, 2 prove live facoltative saltate. Verifica aggiuntiva: swipe fra 300 partecipanti a 320 px superato; navigare non avanza il turno. Analisi statica: nessun problema. Anteprime Home, Statistiche, NPC, Mostro, Mini-Boss e Boss prodotte dai widget reali con dati dimostrativi in output/ui/campaign-desktop-final-20261001. Le anteprime Windows/macOS sono test di layout, non build macOS.
+
+
+## Aggiornamento Art, comandi e creazione — 1 ottobre 2026
+
+- Sottotratti apribili da un pulsante compatto sotto Tiri e azioni, cliccabili per il tiro; controlli di turno accanto al titolo.
+- Attacco, difesa e bonus apre VC, CM, danni inflitti, difesa e modifica bonus, mantenendo iniziativa, movimento e schivata.
+- Difficoltà nella pagina Identità; Ritratto e Occhio limitato a 390 pixel anche sul desktop.
+- Art incorporate conservate ed editabili. Oculum: azione senza visione dagli occhi indicati, poi un turno senza subire colpi per risvegliare il potere. Martial, Defiled ed Emblem istantanee. Illness: debito di 1 azione e 2 reazioni, +5 statistiche durante l'uso; Skill pagate in Follia. Emblem: Skill a cooldown, +3 VOL e +2 MAT per ogni Emblem incorporata oltre la prima. Defiled: cinque evoluzioni, risorse Obser, oggetti o statistiche selezionabili.
+- Tipi Art riconosciuti anche dal nome, indipendentemente da maiuscole e posizione della parola Art. Le Art dei vecchi salvataggi restano disponibili: nessuna viene archiviata automaticamente.
+- Libri runici: scegli sei parole aggiuntive, rispettando i prerequisiti; le parole obbligatorie restano tali.
+- NPC e nemici umanoidi: Nome, Livello, Ruolo, tipo Art, bonus e numero di Titoli del Fato nella stessa finestra. Anteprima statistiche e sottotratti aggiornata col livello. Le creature non umanoidi conservano i preset del Bestiario.
+- Nuove Art di ruolo situazionali: evoluzioni ai livelli 0/3/6, Defiled anche 9/12. Costi crescenti 2/5/9/14/20; Martial ed Emblem usano cooldown. Apertura al livello 15, Defiled 20, dopo tutte le Skill alla massima evoluzione. Le Art già salvate non vengono sostituite.
+- Art glaciale: Apertura con 1d100 ghiaccio e Gelo III; Buff +5 statistiche finché attiva; Spine glaciali con 1d30, Gelo I su critico dichiarato, cooldown 2 turni. Apertura riutilizzabile dopo 10 turni. Il Master sceglie i bersagli validi, senza colpire automaticamente tutte le schede; senza bersagli locali il risultato viene registrato per la sessione.
+- Titoli generati con nomi narrativi distinti e bonus esplicito nell'ottenimento. I titoli esistenti mantengono nomi e dati, modificabili manualmente.
+- Risorse: intestazione a larghezza intera, colonne indipendenti senza righe con vuoti enormi. Recupero dell'Art e bonus temporanei hanno intestazioni unite ai rispettivi pannelli.
+
+### Cosa puoi modificare
+Nome, livello, grado, difficoltà, statistiche massime e attuali, Vita, Oculum e stile barra/fiamme; immagini manuali; sfondo e sfumature; sottotratti; ruoli, elementi, equipaggiamento e Titoli; nomi, descrizioni, evoluzioni, requisiti testuali, costi, risorse e cooldown delle Art; Apertura, Buff e Skill Open; Art in uso/incorporate e occhi coinvolti; parole runiche aggiuntive; bonus danni e difesa; turni, risorse, condizioni e tutte le precedenti funzioni di diario, inventario e mappe.
+
+I profili normale e Test restano separati. I test automatici non costituiscono una verifica online tra due dispositivi reali.
+
+
+### Cinque turnistiche
+Sotto Tiri e azioni compaiono due pulsanti compatti, Sottotratti e Turnistica, come gli altri comandi. Turnistica apre cinque scontri a tendina. Entrando con la propria scheda in un nuovo scontro, l’iniziativa viene tirata automaticamente; riaprire lo stesso scontro non la ritira. Il contatore mostra round e turno della stessa turnistica del combattimento, anche online. Estendono i gruppi già esistenti: turni, round, partecipanti e ordine sono salvati separatamente nella campagna. Il Master può selezionare uno scontro, aggiungervi PG/NPC/mostri, gestirlo e pubblicarlo. I Player online possono entrare in uno scontro pubblicato; quelli privati non vengono condivisi. Eventuali gruppi oltre i primi cinque restano accessibili nel centro combattimento. Nome e partecipanti sono modificabili nella gestione completa. Strumenti autorizzati: misure e aree VTT, condizioni a durata e Aiuta compagno erano già presenti e sono conservati. Prova di gruppo rimossa su richiesta; nessun nuovo sistema di prove di gruppo.
+
+
+Verifica: strumenti Supabase Broadcast controllati sulla documentazione ufficiale, senza cambiare SDK o infrastruttura. La verifica fra due dispositivi collegati a Internet rimane da svolgere; i test automatici coprono i percorsi locali e il contenuto dei messaggi.
+
+
+Verifiche del 1 ottobre: suite completa 617 test superati, 2 test live opzionali saltati perché richiedono ambiente esterno. Catture di widget reali a larghezze desktop e telefono con dati sintetici; le ultime correzioni di layout e alias online sono verificate nuovamente con test mirati. Le modifiche ai titoli generati riguardano solo le nuove schede.
+
+Verifica finale dei menu compatti: 16 test mirati superati, incluse le varianti Windows, macOS e Android, ingresso con iniziativa senza duplicazione, Art e messaggi online. Analisi di tutta lib senza problemi. Il layout telefono è verificato a 320×640 con widget reali e dati sintetici; non è una prova su un dispositivo fisico. Il nome di ciascuno dei cinque scontri è modificabile direttamente nella sua tendina dal Master.
+
+
+### Ultime correzioni — desktop e mobile
+- Categorie compatte centrate, testo allineato al centro.
+- Occhi dei Caduti attivi: numero della scheda corrente e accesso alla custodia, escludendo i morti.
+- Bonus danno numerico separato dalla difesa, spazio corretto fra i campi; i pulsanti +1/-1 restano disponibili.
+- HP Attuali modificabili direttamente anche mentre la barra Vita è visibile; Vita Afona mantiene gli HP nascosti.
+- Aggiunta PG/NPC/mostri disponibile negli scontri locali anche da Player; online restano i permessi esistenti.
+- Nuovi scontri e riavvio iniziativa da turno zero; i turni dei salvataggi esistenti non vengono azzerati.
+- Le pagine di dettaglio si aggiornano dopo l’aggiunta e consentono la navigazione nella gestione dello scontro.
+- Anche l’EXE nella radice distribution viene aggiornato insieme al runtime completo.
+
+
+Verifica dopo le ultime correzioni: 618 test superati, 2 prove live opzionali saltate; analisi lib senza problemi. Il test dell’interfaccia aggiunge realmente un personaggio dalla tendina locale nelle varianti Windows, macOS e Android, controlla HP Attuali con barra visibile e Bonus danno. Catture aggiornate in output/ui/centered-actions-final-20261001.
+
+
+### Ricerca e ritorno a Generale
+- Ctrl+F e Cmd+F funzionano nella scheda e nei dettagli, usando lo stesso catalogo del pulsante Cerca: pagine, funzioni, manuale, Titoli, Skill, Art, inventario e testi già indicizzati.
+- Aggiunti i risultati diretti Sottotratti e Turnistica: aprono le relative pagine e tendine.
+- Selezionando un risultato da un dettaglio si chiudono le pagine sovrapposte prima di raggiungere la destinazione.
+- Corretto il controller della ricerca eliminato troppo presto durante la chiusura.
+- Esc o clic/tocco fuori dal riquadro riportano a Generale; i controlli dentro il riquadro continuano a funzionare.
+- Verifica aggiuntiva: 3 test di interfaccia completi superati nelle varianti Windows, macOS e Android, includendo Ctrl+F dalla scheda e dai dettagli, apertura del risultato, Esc e clic esterno. Analisi lib senza problemi.
+
+
+### Iniziativa e Riflessi
+- L’iniziativa mantiene il tiro più il bonus Iniziativa della scheda e le regole già presenti per critici e difficoltà.
+- A parità di totale precede Riflessi più alto. Con Riflessi uguali resta l’ordine stabile, salvo l’ordinamento manuale del Master.
+- Spareggio vinto con Riflessi: 3 × grado × 2 EXP Riflessi (6 × grado), usando la progressione dei sottotratti esistente. Grado 0: zero EXP secondo la formula.
+- La ricompensa è memorizzata nella turnistica e non si ripete riordinando, riaprendo o cambiando scontro. I turni extra temporanei non generano ricompense.
+- Per partecipanti collegati a schede l’EXP va al sottotratto della scheda; per token senza scheda il totale resta registrato sul token. Le schede online modificate passano dai controlli e dalla coda di invio già presenti; prova reale fra dispositivi ancora da effettuare.
+
+
+Verifica conclusiva di tutte le ultime modifiche, compresa EXP Riflessi: 618 test superati, 2 test live opzionali saltati. Analisi di tutta lib senza problemi. Le catture desktop e telefono usano widget reali con dati sintetici; non attestano una prova su telefono fisico o una sessione online fra due dispositivi.
+
+
+### Tutorial, avvio Windows e costi delle Skill
+- Il tutorial usa cornice e colori della scheda, una guida compatta alle azioni, turnistica, aiuto compagni, memoria, ricerca e salvataggi. I 9 punti dei sottotratti, massimo 3 ciascuno, restano disponibili anche saltandolo.
+- Per le nuove Art iniziali, evoluzioni Skill, Open e Titoli compare [Richiede: ???], da definire con il Master. I poteri e costi dei preset restano conservati; i requisiti già definiti del Monster Book non vengono sostituiti.
+- L’EXE Windows parte in modalità desktop al primo avvio e per vecchi dati privi della preferenza. Una scelta esplicita salvata viene rispettata. Gli altri dispositivi mantengono la loro modalità.
+- Nelle evoluzioni Art il costo è mostrato prima degli effetti e bonus. Il consumo della risorsa avviene prima dell’applicazione dei bonus.
+- Costi dal testo: Costo: (1/10) Oculum; massimo crescita: 20. Sono riconosciuti anche (1/10) prima degli effetti, il precedente costo in fondo e (1/10)oculum. Il testo del giocatore non viene riscritto.
+- Le Skill libere leggono il range nel campo Costo o nella descrizione. Le Art lo leggono nel testo della singola evoluzione. I limiti numerici configurati manualmente mantengono la precedenza.
+- Massimo crescita: 20 oppure limite maestria: 20 imposta il limite della crescita. Senza limite esplicito resta la soglia della forma successiva, o +10 rispetto al massimo iniziale. La maestria già guadagnata non viene cancellata. L’interruttore Aumento massimo Oculum continua a bloccare la crescita.
+- Cose modificabili aggiuntive: requisiti del Master, range Min/Max, risorsa consumata, limite di crescita testuale, crescita attiva/disattiva, testo degli effetti, bonus, cooldown, stile della scheda e modalità desktop. L’elenco delle altre impostazioni è riportato sopra.
+- Costo dal testo è selezionabile per ogni evoluzione Art e ogni Forma Skill libera. Attivandolo si leggono i costi senza azzerare il progresso; modificando Min/Max si ritorna alla configurazione manuale. Anche le schede precedenti possono attivarlo.
+
+Verifica finale di tutorial, avvio desktop, riconoscimento automatico costi e selettore Costo dal testo: 621 test superati, 2 test live opzionali saltati; analisi di lib senza problemi. Catture di widget reali con dati sintetici a desktop e 320 pixel, varianti Windows/macOS/Android, in output/ui/cost-automation-release-20261001. Non è una verifica online fra dispositivi fisici.
+
+### Correzioni della turnistica — 1 ottobre 2026
+- I comandi di turnistica aggiornano anche le pagine di dettaglio aperte: avanzamento, cambio partecipante, azioni, reazioni e riordino.
+- Riordinare l’iniziativa conserva il partecipante già attivo tramite la sua identità, invece di mantenere soltanto la posizione nella lista.
+- Reselezionare il partecipante già attivo non gli restituisce gratuitamente azione e reazioni.
+- I turni extra creati al round 0 conservano la scadenza 0 e vengono rimossi al passaggio al round successivo.
+- Restano modificabili: partecipanti PG/NPC/mostri, nomi dei cinque scontri, iniziativa, ordine manuale, partecipante attivo, avanzamento e reset dei round, azioni, reazioni e turni extra. Le altre impostazioni modificabili sono elencate sopra. Nessun azzeramento degli scontri salvati.
+
+### Note e scelta dell’occhio nei Ricordi
+- Seleziona un nodo, scegli **Cambia ruolo**, il nuovo ruolo e aggiungi una **Nota facoltativa**. Conferma salva ruolo e nota; Annulla lascia entrambi invariati.
+- Esempio: Quercia Sepolta → Morto, nota **Ucciso da [[Hoshy]] nel [[Luogo:Bosco Nero]].**. La Mappa collega Hoshy al nemico ucciso e il nemico al luogo citato. Sono riconosciuti anche i nomi già conosciuti senza parentesi.
+- Le nuove relazioni hanno come fonte cliccabile la nota originale, separata dal Diario. Le note rimangono nella cronologia del ruolo, con data e autore. La riapertura ricostruisce i legami senza duplicarli.
+- «Forse ucciso da Hoshy» conserva l’incertezza. La presenza di un personaggio nella nota non lo rende automaticamente l’uccisore. Le frasi che attribuiscono un’uccisione a un altro bersaglio non vengono assegnate al nodo selezionato.
+- Le note del Master e le preferenze degli occhi restano personali: i metadati della memoria sono esclusi dalla normale condivisione della scheda. Il comando di comunicazione mirata esistente non diffonde automaticamente queste note.
+- **Scegli occhio** cambia l’icona del singolo nodo fra alleato/NPC, nemico/mostro, morto e obliterato. La scelta è grafica e non cambia il ruolo né la storia; **Automatico dal ruolo** ripristina l’icona dello stato corrente. La scelta vale anche nella Costellazione della pagina Storia ed è salvata per scheda.
+- I salvataggi precedenti senza note o preferenze degli occhi continuano a usare il comportamento originale. I dettagli coperti da un’altra pagina vengono ricostruiti dallo stato salvato quando si torna indietro; i controlli del turno si adattano anche agli schermi stretti.
+
+### Ritratto della scheda e PNG trasparenti
+- Il ritratto in cima alla scheda è cliccabile e apre **Ritratto e Occhio**. Restano disponibili caricamento, trascinamento, appunti, ritaglio, copia e rimozione.
+- **Occhio nel ritratto** permette di scegliere l’occhio originale o una delle quattro immagini: alleato, nemico, morto e obliterato. La scelta è salvata nella singola scheda.
+- **Mantieni l’occhio dietro il ritratto** mostra o nasconde l’occhio di sfondo. Con un PNG trasparente, l’occhio è visibile attraverso le parti trasparenti soltanto quando l’opzione è attiva. Disattivandola rimane il solo ritratto.
+- Anteprima e ritaglio dei PNG con alpha conservano la trasparenza usando PNG; le immagini opache mantengono il percorso JPEG esistente. Il ritratto compatto contiene l’immagine senza tagliarla per riempire il riquadro.
+- Per salvataggi precedenti: occhio originale e sfondo attivo, senza modificare o ricodificare le immagini già salvate.
+
+Verifica finale: 626 test superati, 2 test online opzionali saltati; analisi completa di lib senza problemi. Verificati note, attribuzione dell’uccisore e incertezza, ricostruzione dei legami, scelta degli occhi, PNG con alpha, impostazioni del ritratto salvate e ripristinate, turnistica e interfacce Windows/macOS/Android. Le foto in output/ui/oculum-eyes-final-20261001 provengono dai widget reali con dati sintetici; non attestano una sessione online fra dispositivi fisici.

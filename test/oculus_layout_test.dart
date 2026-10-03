@@ -103,7 +103,12 @@ void main() {
             final bytes = await picture.toByteData(
               format: ui.ImageByteFormat.png,
             );
-            final out = Directory('output/ui')..createSync(recursive: true);
+            const label = String.fromEnvironment('OculumBenchmarkLabel');
+            final out = Directory(
+              label.isEmpty
+                  ? 'output/ui'
+                  : 'output/ui/${label.replaceAll(RegExp(r"[^a-zA-Z0-9_-]"), "_")}',
+            )..createSync(recursive: true);
             File(
               '${out.path}/oculus-page$page-${size.width.toInt()}.png',
             ).writeAsBytesSync(bytes!.buffer.asUint8List());

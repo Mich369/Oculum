@@ -31,19 +31,37 @@ String oculumRollZeroOutcomeText({
 
 extension _OculumHomeCombatProgression on _OculumHomePageState {
   void ensureMasterInitiativeGroups() {
-    if (masterInitiativeGroups.isNotEmpty) return;
-    masterInitiativeGroups.add(<String, dynamic>{
-      'id': 'encounter_1',
-      'name': t('Scontro 1', 'Encounter 1'),
-      'tokens': masterInitiativeTokens
-          .map((token) => Map<String, dynamic>.from(token))
-          .toList(growable: false),
-      'round': masterInitiativeRound,
-      'activeIndex': masterInitiativeActiveIndex,
-      'manualOrder': masterInitiativeManualOrder,
-      'published': masterInitiativePublished,
-      'manualCounter': masterInitiativeManualCounter,
-    });
+    if (masterInitiativeGroups.isEmpty) {
+      masterInitiativeGroups.add(<String, dynamic>{
+        'id': 'encounter_1',
+        'name': t('Scontro 1', 'Encounter 1'),
+        'tokens': masterInitiativeTokens
+            .map((token) => Map<String, dynamic>.from(token))
+            .toList(growable: false),
+        'round': masterInitiativeRound,
+        'activeIndex': masterInitiativeActiveIndex,
+        'manualOrder': masterInitiativeManualOrder,
+        'published': masterInitiativePublished,
+        'manualCounter': masterInitiativeManualCounter,
+      });
+    }
+    while (masterInitiativeGroups.length < 5) {
+      final number = masterInitiativeGroups.length + 1;
+      var id = 'encounter_$number';
+      if (masterInitiativeGroups.any((group) => group['id'] == id)) {
+        id = '${id}_${DateTime.now().microsecondsSinceEpoch}';
+      }
+      masterInitiativeGroups.add({
+        'id': id,
+        'name': 'Scontro $number',
+        'tokens': <Map<String, dynamic>>[],
+        'round': 0,
+        'activeIndex': 0,
+        'manualOrder': false,
+        'published': false,
+        'manualCounter': 0,
+      });
+    }
   }
 
   void captureActiveMasterInitiativeGroup() {
@@ -77,7 +95,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             .whereType<Map>()
             .map((token) => Map<String, dynamic>.from(token))),
       );
-    masterInitiativeRound = max(1, readIntValue(group['round'], fallback: 1));
+    masterInitiativeRound = max(0, readIntValue(group['round'], fallback: 1));
     masterInitiativeActiveIndex = max(0, readIntValue(group['activeIndex']));
     masterInitiativeManualOrder = readBoolValue(group['manualOrder']);
     masterInitiativePublished = readBoolValue(group['published']);
@@ -92,6 +110,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     captureActiveMasterInitiativeGroup();
     selectedMasterInitiativeGroupId = id;
     loadSelectedMasterInitiativeGroup();
+    notifyActiveSheetSummaryChanged();
     programmaSalvataggio();
   }
 
@@ -103,7 +122,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'name':
           '${t('Scontro', 'Encounter')} ${masterInitiativeGroups.length + 1}',
       'tokens': <Map<String, dynamic>>[],
-      'round': 1,
+      'round': 0,
       'activeIndex': 0,
       'manualOrder': false,
       'published': false,
@@ -151,7 +170,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       masterInitiativeGroups.removeAt(index);
       if (masterInitiativeGroups.isEmpty) {
         masterInitiativeTokens.clear();
-        masterInitiativeRound = 1;
+        masterInitiativeRound = 0;
         masterInitiativeActiveIndex = 0;
         masterInitiativeManualOrder = false;
         masterInitiativePublished = false;
@@ -328,7 +347,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
   }
 
-  void setPlayerReportedTurn(int value, {bool broadcast = true}) {
+  void setPlayerReportedTurn(
+    int value, {
+    bool broadcast = true,
+    bool advanceArt = true,
+  }) {
     final safe = max(0, value);
     if (safe == playerReportedTurn) return;
     final previous = playerReportedTurn;
@@ -344,12 +367,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
     if (safe > previous) {
       for (var turn = previous; turn < safe; turn++) {
+        if (advanceArt) advanceArtSwitchTurn();
         processConditionTick(OculumConditionTickTrigger.endTurn);
         processConditionTick(OculumConditionTickTrigger.startTurn);
         tickStructuredAbilityCooldowns('turni', scheduleSave: false);
       }
     }
     applyAutomaticAshForTurnProgress(previous, safe);
+    notifyActiveSheetSummaryChanged();
     programmaSalvataggio(invalidateCaches: false);
     if (broadcast) {
       sendRealtimeReportedTurn(
@@ -365,6 +390,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (index < 0 || index >= masterInitiativeTokens.length) return;
     final safe = max(0, value);
     final token = masterInitiativeTokens[index];
+    if ('${token['sheetTag'] ?? token['id'] ?? ''}' ==
+        sheetTagAt(schedaCorrente)) {
+      setPlayerReportedTurn(safe, broadcast: false);
+    }
     setState(() {
       token['reportedTurn'] = safe;
       token['updatedAt'] = DateTime.now().toIso8601String();
@@ -379,6 +408,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       turn: safe,
       senderRole: 'master',
     );
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -516,6 +546,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (sheetInMasterPartyAt(index)) {
       sendRealtimeSharedSheetAt(index);
     }
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -1089,10 +1120,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       _ => key,
     };
 
-    return readIntValue(
+    final savedValue = readIntValue(
       json[currentKey],
       fallback: readIntValue(json[key], fallback: fallback),
     );
+    return savedValue +
+        (const ['resilienza', 'volonta', 'materia', 'oculum'].contains(key)
+            ? OculumProgressionSurge.fromJson(
+                json['progressionSurge'],
+              ).statBonus
+            : 0);
   }
 
   int sheetBonusLivelloGradoAt(int index) {
@@ -1189,7 +1226,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     switch (key) {
       case 'vc':
-        return levelGrade + sheetIntValueAt(index, 'volonta') ~/ 3;
+        return levelGrade +
+            sheetIntValueAt(index, 'volonta') ~/ 3 +
+            readIntValue(schedePersonaggio[index]['vcRapido']);
       case 'cm':
         return levelGrade +
             sheetIntValueAt(index, 'materia') ~/ 2 +
@@ -1199,6 +1238,41 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       default:
         return sheetIntValueAt(index, key) ~/ 2 + levelGrade;
     }
+  }
+
+  int sheetReflexesAt(int index) {
+    if (index < 0 || index >= schedePersonaggio.length) return 0;
+    if (index == schedaCorrente) {
+      for (final stat in hiddenEyeStats) {
+        if (stat.id == 'riflessi') return hiddenEyeTotal(stat);
+      }
+      return 0;
+    }
+    final sheet = schedePersonaggio[index];
+    if (sheet.containsKey('derivedRiflessi')) {
+      return readIntValue(sheet['derivedRiflessi']);
+    }
+    final level = readIntValue(sheet['livello']);
+    var allocated = 0;
+    for (final stat
+        in (sheet['hiddenEyeStats'] as List? ?? const []).whereType<Map>()) {
+      if (stat['id'] == 'riflessi') allocated = readIntValue(stat['valore']);
+    }
+    return allocated +
+        oculumHiddenEyeDerivedBonusFor(
+          level: level,
+          id: 'riflessi',
+          resilienza: sheetIntValueAt(index, 'resilienza'),
+          volonta: sheetIntValueAt(index, 'volonta'),
+          materia: sheetIntValueAt(index, 'materia'),
+          oculum: sheetIntValueAt(index, 'oculum'),
+          karma: readIntValue(sheet['karma']),
+        ) +
+        (oculumRoleSubtraitBonuses(
+              '${sheet['humanoidRole'] ?? ''}',
+              level,
+            )['riflessi'] ??
+            0);
   }
 
   String sheetRollLabel(String key) {
@@ -1328,6 +1402,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       token['updatedAt'] = DateTime.now().toIso8601String();
     });
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -1352,7 +1427,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   int masterInitiativeReactionUsed(Map<String, dynamic> token) {
     final maxReactions = masterInitiativeReactionMax(token);
     final legacyUsed =
-        readIntValue(token['reactionUsedRound']) == masterInitiativeRound
+        !token.containsKey('reactionUsed') &&
+            masterInitiativeRound > 0 &&
+            readIntValue(token['reactionUsedRound']) == masterInitiativeRound
         ? 1
         : 0;
     final used = max(readIntValue(token['reactionUsed']), legacyUsed);
@@ -1378,7 +1455,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       masterInitiativeReactionMax(token) -
           masterInitiativeReactionUsed(token) +
           masterInitiativeFastReactionMax(token) -
-          masterInitiativeFastReactionUsedThisTurn(token),
+          masterInitiativeFastReactionUsedThisTurn(token) -
+          artDebtForToken(token, 'reaction'),
     );
   }
 
@@ -1412,13 +1490,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   bool masterInitiativeCanToggleAction(int index) {
     if (index < 0 || index >= masterInitiativeTokens.length) return false;
-    return masterInitiativeTokenCanAct(masterInitiativeTokens[index]);
+    return masterInitiativeTokenCanAct(masterInitiativeTokens[index]) &&
+        artDebtForToken(masterInitiativeTokens[index], 'action') < 1;
   }
 
   bool masterInitiativeCanUseReaction(int index) {
     if (index < 0 || index >= masterInitiativeTokens.length) return false;
     final token = masterInitiativeTokens[index];
     return masterInitiativeTokenCanAct(token) &&
+        masterInitiativeReactionAvailable(token) > 0 &&
         !masterInitiativeTokenIsTemporary(token);
   }
 
@@ -1523,6 +1603,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final sheetIndex = sheetTag.isEmpty
           ? -1
           : sheetIndexesByTag[sheetTag] ?? -1;
+      if (sheetIndex >= 0) token['reflexes'] = sheetReflexesAt(sheetIndex);
       token['level'] = sheetIndex >= 0
           ? sheetCriticalLevelAt(sheetIndex)
           : max(0, readIntValue(token['level']));
@@ -1540,7 +1621,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           ? max(0, readIntValue(token['reactionFastMax']))
           : sheetReazioniVelociAt(sheetIndex);
       final legacyUsedRound = readIntValue(token['reactionUsedRound']);
-      final legacyUsed = legacyUsedRound == masterInitiativeRound ? 1 : 0;
+      final legacyUsed =
+          !token.containsKey('reactionUsed') &&
+              masterInitiativeRound > 0 &&
+              legacyUsedRound == masterInitiativeRound
+          ? 1
+          : 0;
       token['reactionUsed'] = max(
         0,
         max(readIntValue(token['reactionUsed']), legacyUsed),
@@ -1565,7 +1651,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         token['sourceTokenId'] =
             '${token['sourceTokenId'] ?? token['id'] ?? token['sheetTag'] ?? ''}';
         token['expiresRound'] = max(
-          1,
+          0,
           readIntValue(token['expiresRound'], fallback: masterInitiativeRound),
         );
       } else {
@@ -1585,12 +1671,24 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   void sortMasterInitiativeTokens({bool forceInitiative = false}) {
     normalizeMasterInitiativeTokens();
+    final activeId = masterInitiativeTokens
+        .where((token) => token['status'] == 'active')
+        .map((token) => '${token['id']}')
+        .firstOrNull;
+    void preserveActiveParticipant() {
+      final index = masterInitiativeTokens.indexWhere(
+        (token) => '${token['id']}' == activeId,
+      );
+      masterInitiativeActiveIndex = index >= 0 ? index : 0;
+    }
+
     if (masterInitiativeManualOrder && !forceInitiative) {
       masterInitiativeTokens.sort(
         (a, b) => readIntValue(
           a['manualOrder'],
         ).compareTo(readIntValue(b['manualOrder'])),
       );
+      preserveActiveParticipant();
       return;
     }
 
@@ -1600,20 +1698,108 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       ).compareTo(readIntValue(a['initiativeTotal']));
       if (totalCompare != 0) return totalCompare;
 
-      final baseCompare = readIntValue(
-        b['initiativeBase'],
-      ).compareTo(readIntValue(a['initiativeBase']));
-      if (baseCompare != 0) return baseCompare;
+      final reflexCompare = readIntValue(
+        b['reflexes'],
+      ).compareTo(readIntValue(a['reflexes']));
+      if (reflexCompare != 0) return reflexCompare;
 
-      return readIntValue(
-        b['tieBreaker'],
-      ).compareTo(readIntValue(a['tieBreaker']));
+      final stableOrder = readIntValue(
+        a['manualOrder'],
+      ).compareTo(readIntValue(b['manualOrder']));
+      return stableOrder != 0
+          ? stableOrder
+          : '${a['id'] ?? ''}'.compareTo('${b['id'] ?? ''}');
     });
 
     for (int i = 0; i < masterInitiativeTokens.length; i++) {
       masterInitiativeTokens[i]['manualOrder'] = i;
     }
     masterInitiativeManualOrder = false;
+    preserveActiveParticipant();
+    awardInitiativeReflexExperience();
+  }
+
+  void awardInitiativeReflexExperience() {
+    final contests = <int, List<Map<String, dynamic>>>{};
+    for (final token in masterInitiativeTokens) {
+      if (readBoolValue(token['temporaryTurn'])) continue;
+      contests
+          .putIfAbsent(readIntValue(token['initiativeTotal']), () => [])
+          .add(token);
+    }
+    for (final tied in contests.values) {
+      if (tied.length < 2) continue;
+      final winner = tied.first;
+      if (readIntValue(winner['reflexes']) <=
+          readIntValue(tied[1]['reflexes'])) {
+        continue;
+      }
+      final parts =
+          tied
+              .map(
+                (token) =>
+                    '${token['id']}:${token['initiativeRevision'] ?? ''}:${token['initiativeRoll']}:${token['initiativeTotal']}',
+              )
+              .toList()
+            ..sort();
+      final awardKey = '$selectedMasterInitiativeGroupId:${parts.join('|')}';
+      if (tied.any((token) => token['reflexTieAwardKey'] == awardKey)) continue;
+      for (final token in tied) {
+        token['reflexTieAwardKey'] = awardKey;
+      }
+      final gain = 6 * max(0, readIntValue(winner['grade'])).toInt();
+      if (gain == 0) continue;
+      winner['reflexExperience'] =
+          readIntValue(winner['reflexExperience']) + gain;
+      final tag = '${winner['sheetTag'] ?? ''}';
+      final index = schedePersonaggio.indexWhere(
+        (sheet) => '${sheet['sheetTag'] ?? sheet['id'] ?? ''}' == tag,
+      );
+      if (tag.isNotEmpty && index >= 0) {
+        if (index == schedaCorrente) {
+          for (final stat in hiddenEyeStats) {
+            if (stat.id == 'riflessi') {
+              oculusSubtraitMasteryApplyGain(stat, gain);
+              notifyHiddenEyeStatChanged(stat);
+              break;
+            }
+          }
+        } else {
+          final sheet = schedePersonaggio[index];
+          final stats = (sheet['hiddenEyeStats'] as List? ?? const [])
+              .whereType<Map>()
+              .map((stat) => Map<String, dynamic>.from(stat))
+              .toList();
+          var row = stats.indexWhere((stat) => stat['id'] == 'riflessi');
+          if (row < 0) {
+            stats.add(
+              HiddenEyeStat(
+                id: 'riflessi',
+                nome: 'Riflessi',
+                descrizione: '',
+              ).toJson(),
+            );
+            row = stats.length - 1;
+          }
+          final stat = HiddenEyeStat.fromJson(stats[row]);
+          final levels = oculusSubtraitMasteryApplyGain(stat, gain);
+          stats[row] = {...stats[row], ...stat.toJson()};
+          sheet['hiddenEyeStats'] = stats;
+          if (sheet.containsKey('derivedRiflessi')) {
+            sheet['derivedRiflessi'] =
+                readIntValue(sheet['derivedRiflessi']) + levels;
+          }
+        }
+        if (readBoolValue(schedePersonaggio[index]['realtimeSharedSheet'])) {
+          schedePersonaggio[index]['realtimeDirtyLocal'] = true;
+          unawaited(_sendRealtimeEditedSharedSheetBack(sheetIndex: index));
+        }
+      }
+      aggiungiLog(
+        '${winner['name']}: spareggio vinto con Riflessi, +$gain EXP Riflessi (3 × grado × 2).',
+      );
+      programmaSalvataggio();
+    }
   }
 
   String monsterBookSpriteAssetForText(String raw, {int variantSeed = 0}) {
@@ -1656,6 +1842,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'initiativeRoll': roll,
       'initiativeBase': base,
       'initiativeTotal': total,
+      'initiativeRevision': DateTime.now().microsecondsSinceEpoch.toString(),
       'tieBreaker': Random().nextInt(1 << 31),
       'status': 'ready',
       'notes': sheetNotes,
@@ -1730,6 +1917,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       token['vitalWills'] = previous['vitalWills'] ?? token['vitalWills'];
       token['downed'] = previous['downed'] ?? token['downed'];
       token['reportedTurn'] = previous['reportedTurn'] ?? token['reportedTurn'];
+      token['reflexExperience'] = previous['reflexExperience'] ?? 0;
+      token['reflexTieAwardKey'] = previous['reflexTieAwardKey'];
       masterInitiativeTokens[existingIndex] = token;
     } else {
       masterInitiativeTokens.add(token);
@@ -1754,6 +1943,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     token['visibleTitleName'] = title?.nome ?? '';
     token['visibleTitleLegend'] = title?.leggenda ?? '';
     token['updatedAt'] = DateTime.now().toIso8601String();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -1818,6 +2008,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
 
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeMasterVisibleTokenAt(index);
     sendRealtimeInitiativeSnapshotIfPublished();
   }
@@ -1899,6 +2090,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
 
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -1936,6 +2128,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         final grade = readIntValue(token['grade']);
         final difficulty = readIntValue(token['rollDifficulty']);
         token['initiativeRoll'] = roll;
+        token['initiativeRevision'] = DateTime.now().microsecondsSinceEpoch
+            .toString();
         token['initiativeTotal'] = rollTotalWithCritical(
           roll,
           20,
@@ -1955,7 +2149,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         rolled++;
       }
       sortMasterInitiativeTokens(forceInitiative: true);
-      masterInitiativeRound = 1;
+      masterInitiativeRound = 0;
       masterInitiativeActiveIndex = masterInitiativeTokens.isEmpty ? 0 : 0;
       if (masterInitiativeTokens.isNotEmpty) {
         masterInitiativeTokens.first['status'] = 'active';
@@ -1974,6 +2168,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
 
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -2003,6 +2198,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
 
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -2055,6 +2251,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
 
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -2062,6 +2259,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (index < 0 || index >= masterInitiativeTokens.length) return;
     setState(() {
       normalizeMasterInitiativeTokens();
+      if (index >= masterInitiativeTokens.length) return;
+      if (index == masterInitiativeActiveIndex &&
+          masterInitiativeTokens[index]['status'] == 'active') {
+        return;
+      }
       if (!masterInitiativeTokenCanAct(masterInitiativeTokens[index])) {
         risultato = t(
           'Un partecipante a terra o morto non puo ricevere il turno attivo.',
@@ -2081,6 +2283,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(risultato);
     });
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -2107,6 +2310,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final current = masterInitiativeActiveIndex
           .clamp(0, masterInitiativeTokens.length - 1)
           .toInt();
+      if (delta > 0) advanceEncounterParticipantTurn(current);
       if (masterInitiativeTokenCanAct(masterInitiativeTokens[current])) {
         masterInitiativeTokens[current]['status'] = delta > 0
             ? 'acted'
@@ -2142,19 +2346,34 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
       masterInitiativeActiveIndex = next;
       masterInitiativeTokens[next]['status'] = 'active';
+      if (delta > 0) advanceArtSwitchForToken(masterInitiativeTokens[next]);
       restoreMasterInitiativeTurnResources(masterInitiativeTokens[next]);
       risultato =
           '${t('Turno', 'Turn')} $masterInitiativeRound: ${masterInitiativeTokens[next]['name']}.';
       aggiungiLog(risultato);
     });
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
   void resetMasterInitiativeRound({bool increment = false}) {
     setState(() {
       normalizeMasterInitiativeTokens();
-      if (increment) masterInitiativeRound++;
+      if (increment) {
+        masterInitiativeRound++;
+      } else {
+        masterInitiativeRound = 0;
+        playerReportedTurn = 0;
+        for (final token in masterInitiativeTokens) {
+          token['reportedTurn'] = 0;
+          final tag = '${token['sheetTag'] ?? token['id'] ?? ''}';
+          final sheet = schedePersonaggio
+              .where((s) => s['sheetTag'] == tag)
+              .firstOrNull;
+          if (sheet != null) sheet['playerReportedTurn'] = 0;
+        }
+      }
       removeExpiredTemporaryInitiativeTurns(all: !increment);
       for (final token in masterInitiativeTokens) {
         if (masterInitiativeTokenCanAct(token)) token['status'] = 'ready';
@@ -2171,6 +2390,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(risultato);
     });
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -2223,6 +2443,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
 
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -2262,6 +2483,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
 
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -2289,6 +2511,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
 
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -2309,6 +2532,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
 
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -2386,6 +2610,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
 
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -2393,13 +2618,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     setState(() {
       masterInitiativeTokens.clear();
       clearTemporaryCombatResistanceEffects();
-      masterInitiativeRound = 1;
+      masterInitiativeRound = 0;
       masterInitiativeActiveIndex = 0;
       masterInitiativeManualOrder = false;
       risultato = t('Iniziativa pulita.', 'Initiative cleared.');
       aggiungiLog(risultato);
     });
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -2531,6 +2757,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     if (key == 'iniziativa') {
       sendRealtimeMasterVisibleTokenAt(index);
+      notifyActiveSheetSummaryChanged();
       sendRealtimeInitiativeSnapshotIfPublished();
       await salvaDatiSoloLocale();
       return;
@@ -2660,6 +2887,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
 
     programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
     if (!ok) return;
 
@@ -2816,7 +3044,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   DamageModifierOption modificatoreDannoAttuale() {
-    final canonical = canonicalDamageModifierName(modificatoreDannoSelezionato);
+    final canonical = configuredIncomingDamagePreset();
     return modificatoriDanno.firstWhere(
       (x) => x.name == canonical,
       orElse: () => modificatoriDanno.firstWhere((x) => x.name == 'Normale'),
@@ -2917,8 +3145,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   /// configurazione per tipo, l'assenza di un tipo significa nessun bonus e
   /// non l'eredita' involontaria del valore di un altro elemento.
   String configuredIncomingDamagePercentForType(String damageType) {
-    final normalized = damageType.trim().toLowerCase();
-    if (dannoSubitoPercentPerTipo.isEmpty) {
+    final normalized = oculumNormalizeElementId(damageType);
+    if (dannoSubitoPercentPerTipo.isEmpty && incomingDamagePresets.isEmpty) {
       return dannoSubitoPercentController.text;
     }
     return dannoSubitoPercentPerTipo[normalized] ?? '';
@@ -3512,7 +3740,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       rollBasisPoints: misfortuneShieldRoll,
     );
 
-    final activePercentDamageType = elementoDannoDominante()
+    final activePercentDamageType = selectedIncomingDamageElement()
         .trim()
         .toLowerCase();
     final percentualeLiberaPrima = oculumIncomingDamagePercentMultiplier(
@@ -3521,7 +3749,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final stadioLiberoDopo = critico && percentualeLiberaPrima != null
         ? prossimoStadioCriticoPercentualeLibera(percentualeLiberaPrima)
         : null;
-    final modificatorePrima = modificatoreDannoSelezionato;
+    final modificatorePrima = configuredIncomingDamagePreset();
     final modificatoreDopo =
         stadioLiberoDopo?.name ??
         (critico
@@ -3653,7 +3881,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final modificatoreNome = modificatorePercentualeLibero == null
         ? modificatore.name
         : '${((modificatorePercentualeLibero - 1) * 100).toStringAsFixed(0)}% danno ricevuto';
-    final elementoAttivo = elementoDannoDominante();
+    final elementoAttivo = selectedIncomingDamageElement();
     var dannoModificato = dannoModificatoBase > 0
         ? applicaParserDanniSubiti(dannoModificatoBase, elementoAttivo)
         : dannoModificatoBase;
@@ -3699,7 +3927,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
       setState(() {
         if (critico) {
-          modificatoreDannoSelezionato = modificatoreDopo;
+          incomingDamagePresets[activePercentDamageType] = modificatoreDopo;
           if (stadioLiberoDopo != null) {
             dannoSubitoPercentController.text = testoPercentualeDannoLibera(
               stadioLiberoDopo.multiplier,
@@ -3731,7 +3959,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (dannoModificato == 0) {
       setState(() {
         if (critico) {
-          modificatoreDannoSelezionato = modificatoreDopo;
+          incomingDamagePresets[activePercentDamageType] = modificatoreDopo;
           if (stadioLiberoDopo != null) {
             dannoSubitoPercentController.text = testoPercentualeDannoLibera(
               stadioLiberoDopo.multiplier,
@@ -3973,7 +4201,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     setState(() {
       if (critico) {
-        modificatoreDannoSelezionato = modificatoreDopo;
+        incomingDamagePresets[activePercentDamageType] = modificatoreDopo;
         if (stadioLiberoDopo != null) {
           dannoSubitoPercentController.text = testoPercentualeDannoLibera(
             stadioLiberoDopo.multiplier,
@@ -3990,6 +4218,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       impostaScudoTotale(shield);
       impostaHpTempTotali(temp);
       currentHpController.text = hp.toString();
+      if (dannoModificato > 0) interruptArtAwakening();
       registerVitalMemoryDamage(hpPrima - hp);
       final partialAwakeningLog = applicaRisveglioParzialeMetaHpSeServe(
         hpBefore: hpPrima,
@@ -4171,6 +4400,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     if (nuovoGrado > gradoAttuale) {
       final gradiGuadagnati = nuovoGrado - gradoAttuale;
+      progressionSurge.gainGrades(gradiGuadagnati);
       if (isMostro()) {
         monsterStatPoints +=
             gradiGuadagnati *
@@ -4178,17 +4408,17 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
       gradoController.text = nuovoGrado.toString();
       scudoController.text =
-          (leggiNumero(scudoController) + gradiGuadagnati * 36).toString();
+          (leggiNumero(scudoController) + gradiGuadagnati * 100).toString();
       scudoCriticoController.text =
           (leggiNumero(scudoCriticoController) + gradiGuadagnati).toString();
 
       risultato = t(
-        'Grado aggiornato automaticamente a Grado $nuovoGrado. +${gradiGuadagnati * 36} Scudo, +$gradiGuadagnati Scudo Critico.',
-        'Grade automatically updated to Grade $nuovoGrado. +${gradiGuadagnati * 36} Shield, +$gradiGuadagnati Critical Shield.',
+        'Grado $nuovoGrado: +${gradiGuadagnati * 100} Scudo temporaneo, +${gradiGuadagnati * 5} a tutte le stats e +$gradiGuadagnati Scudo Critico.',
+        'Grade $nuovoGrado: +${gradiGuadagnati * 100} temporary Shield, +${gradiGuadagnati * 5} to all stats and +$gradiGuadagnati Critical Shield.',
       );
 
       aggiungiLog(
-        'Grado automatico: $gradoAttuale -> $nuovoGrado. +${gradiGuadagnati * 36} Scudo, +$gradiGuadagnati Scudo Critico.',
+        'Grado automatico: $gradoAttuale -> $nuovoGrado. +${gradiGuadagnati * 100} Scudo temporaneo, +${gradiGuadagnati * 5} stats, +$gradiGuadagnati Scudo Critico.',
       );
       invalidateHiddenEyeDerivedCaches(notifyCards: false);
       scheduleHiddenEyeDerivedCardsRefresh();
@@ -4520,6 +4750,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     var livelloText = '';
     if (livelliGuadagnati > 0) {
+      progressionSurge.gainLevels(livelliGuadagnati);
       livelloController.text =
           (leggiNumero(livelloController) + livelliGuadagnati).toString();
       aggiornaGradoAutomatico();
@@ -4624,6 +4855,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final recuperoExpLog = applicaRecuperoSogliaExp(soglieRecupero);
 
     if (livelliGuadagnati > 0) {
+      progressionSurge.gainLevels(livelliGuadagnati);
       livelloController.text =
           (leggiNumero(livelloController) + livelliGuadagnati).toString();
 
@@ -4687,6 +4919,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     setState(() {
       livelloController.text = (leggiNumero(livelloController) + livelli)
           .toString();
+      progressionSurge.gainLevels(livelli);
 
       aggiornaGradoAutomatico();
 
@@ -5042,59 +5275,21 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   void randomizzaStatsBilanciate() {
-    final random = Random();
-
-    final livello = max(0, leggiNumero(livelloController));
-    final grado = max(0, leggiNumero(gradoController));
-
-    final punti = 5 + livello * 6 + grado * 8;
-
-    int res = 3;
-    int vol = 1;
-    int mat = 0;
-    int ocu = 1;
-
-    final stats = ['Resilienza', 'Volontà', 'Materia', 'Oculum'];
-
-    int remaining = punti;
-
-    while (remaining > 0) {
-      stats.shuffle(random);
-
-      for (final stat in stats) {
-        if (remaining <= 0) break;
-
-        final valori = {
-          'Resilienza': res,
-          'Volontà': vol,
-          'Materia': mat,
-          'Oculum': ocu,
-        };
-
-        final minVal = valori.values.reduce(min);
-        final isLow = valori[stat] == minVal;
-
-        final incremento = isLow
-            ? 1 + random.nextInt(2)
-            : random.nextDouble() < 0.75
-            ? 1
-            : 0;
-
-        if (incremento <= 0) continue;
-
-        if (stat == 'Resilienza') {
-          res += incremento;
-        } else if (stat == 'Volontà') {
-          vol += incremento;
-        } else if (stat == 'Materia') {
-          mat += incremento;
-        } else {
-          ocu += incremento;
-        }
-
-        remaining -= incremento;
-      }
-    }
+    final base = <String, int>{
+      'resilienza': max(0, leggiNumero(resilienzaController)),
+      'volonta': max(0, leggiNumero(volontaController)),
+      'materia': max(0, leggiNumero(materiaController)),
+      'oculum': max(0, leggiNumero(oculumController)),
+    };
+    final hasArt = arti.any(oculumArtHasUsableSkills);
+    final values = oculumVaryMonsterStats(
+      base,
+      hasOculumArt: !isMostro() || hasArt,
+    );
+    final res = values['resilienza']!;
+    final vol = values['volonta']!;
+    final mat = values['materia']!;
+    final ocu = values['oculum']!;
 
     setState(() {
       resilienzaController.text = res.toString();
@@ -5115,7 +5310,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       refullaHp();
 
       risultato =
-          'Stats randomizzate in modo bilanciato: RES $res, VOL $vol, MAT $mat, OCU $ocu.';
+          'Punti posseduti redistribuiti secondo il profilo: RES $res, VOL $vol, MAT $mat, OCU $ocu. Totale invariato.';
 
       aggiungiLog(
         'Stats randomizzate: RES $res, VOL $vol, MAT $mat, OCU $ocu.',

@@ -698,7 +698,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     }
 
     for (final art in arti) {
-      if (!art.sbloccata) continue;
+      if (!art.sbloccata || !art.inUso) continue;
 
       for (final skill in art.skills) {
         final livello = artSkillBonusLevel(skill);
@@ -758,6 +758,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       resilienzaBase() +
           buffResilienza() +
           tempResilienza +
+          progressionSurge.statBonus +
           skillFormaBonus('resilienza') +
           itemQuickBonus('resilienza') +
           globalQuickBonus('resilienza') +
@@ -771,6 +772,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       volontaBase() +
           buffVolonta() +
           tempVolonta +
+          progressionSurge.statBonus +
           skillFormaBonus('volonta') +
           itemQuickBonus('volonta') +
           globalQuickBonus('volonta') +
@@ -784,6 +786,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       materiaBase() +
           buffMateria() +
           tempMateria +
+          progressionSurge.statBonus +
           skillFormaBonus('materia') +
           itemQuickBonus('materia') +
           globalQuickBonus('materia') +
@@ -797,6 +800,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       oculumBase() +
           buffOculum() +
           tempOculum +
+          progressionSurge.statBonus +
           skillFormaBonus('oculum') +
           itemQuickBonus('oculum') +
           globalQuickBonus('oculum') +
@@ -875,13 +879,21 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int tempStatBonus(String key) {
     switch (key) {
       case 'resilienza':
-        return tempResilienza + ascensionDustTempResilienza;
+        return tempResilienza +
+            ascensionDustTempResilienza +
+            progressionSurge.statBonus;
       case 'volonta':
-        return tempVolonta + ascensionDustTempVolonta;
+        return tempVolonta +
+            ascensionDustTempVolonta +
+            progressionSurge.statBonus;
       case 'materia':
-        return tempMateria + ascensionDustTempMateria;
+        return tempMateria +
+            ascensionDustTempMateria +
+            progressionSurge.statBonus;
       case 'oculum':
-        return tempOculum + ascensionDustTempOculum;
+        return tempOculum +
+            ascensionDustTempOculum +
+            progressionSurge.statBonus;
       default:
         return 0;
     }
@@ -1129,6 +1141,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       current +
           conditionalBuffStatBonus(key) +
           temp +
+          progressionSurge.statBonus +
           activeStructuredEffectBonus(key),
     );
   }
@@ -1174,7 +1187,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
     for (var i = 0; i < arti.length; i++) {
       final art = arti[i];
-      if (!art.sbloccata) continue;
+      if (!art.sbloccata || !art.inUso) continue;
       final value = art.integritaCorrente < 0
           ? artMaximum
           : art.integritaCorrente.clamp(0, artMaximum).toInt();
@@ -1221,7 +1234,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         bonusDannoArmi() +
         livelloGrado +
         bonusAttaccoRapidoBase() +
-        livelloGrado + (vol ~/ 3) + malusFatica + vantaggio +
+        livelloGrado +
+        (vol ~/ 3) +
+        malusFatica +
+        vantaggio +
         fallenEyeRareAttributeBonusFor('danno') +
         directSkillNumericBonus('danni');
     final baseHp = max(1, res) * moltiplicatoreHp();
@@ -1282,6 +1298,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         0,
         livelloGrado +
             (vol ~/ 3) +
+            leggiNumero(vcRapidoController) +
             malusFatica +
             vantaggio,
       ),
@@ -1295,6 +1312,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         0,
         livelloGrado +
             (vol ~/ 3) +
+            leggiNumero(vcRapidoController) +
             malusFatica +
             vantaggio,
       ),
@@ -1801,7 +1819,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     }
 
     for (final art in arti) {
-      if (!art.sbloccata) continue;
+      if (!art.sbloccata || !art.inUso) continue;
       addDetails(
         art.nome.trim().isEmpty ? 'Art' : art.nome,
         activeArtQuickTexts(art),
@@ -1903,7 +1921,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       parts.addAll(activeTitleQuickTexts(tratto));
     }
     for (final art in arti) {
-      if (!art.sbloccata) continue;
+      if (!art.sbloccata || !art.inUso) continue;
       parts.addAll(activeArtQuickTexts(art));
     }
     for (final item in inventario) {
@@ -1975,8 +1993,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   bool isDefiledArt(CharacterArt art) {
-    final normalized = oculumNormalizeText(cleanUiText(art.tipo));
-    return normalized.contains('defiled');
+    return oculumRecognizedArtKind(art) == 'defiled';
   }
 
   bool isRuneArt(CharacterArt art) {
@@ -2217,10 +2234,15 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   Map<String, int> artQuickBonuses(CharacterArt art) {
     final bonuses = <String, int>{};
-    if (!art.sbloccata) return bonuses;
+    if (!art.sbloccata || !art.inUso) return bonuses;
 
     for (final text in activeArtQuickTexts(art)) {
       addTitleQuickCommands(bonuses, text);
+    }
+    if (oculumRecognizedArtKind(art) == 'illness') {
+      for (final key in ['resilienza', 'volonta', 'materia', 'oculum']) {
+        bonuses[key] = (bonuses[key] ?? 0) + 5;
+      }
     }
 
     return bonuses;
@@ -2228,7 +2250,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   Iterable<String> activeArtQuickTexts(CharacterArt art) sync* {
     if (!monsterLootArtCanUse(art)) return;
-    if (!art.sbloccata) return;
+    if (!art.sbloccata || !art.inUso) return;
 
     for (final skill in art.skills) {
       if (artSkillBonusLevel(skill) <= 0) continue;
@@ -2271,6 +2293,18 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int artQuickBonus(String key) {
     int total = 0;
+    final additionalEmblems = max(
+      0,
+      arti
+              .where(
+                (art) =>
+                    art.sbloccata && oculumRecognizedArtKind(art) == 'emblem',
+              )
+              .length -
+          1,
+    );
+    if (key == 'volonta') total += additionalEmblems * 3;
+    if (key == 'materia') total += additionalEmblems * 2;
     for (final art in arti) {
       total += artQuickBonuses(art)[key] ?? 0;
     }
@@ -3136,8 +3170,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (delta == 0) return;
 
     final hpDelta = delta * moltiplicatoreHp();
-    final nextHp = (leggiNumero(currentHpController) + hpDelta).clamp(
-      0,
+    final hpBefore = leggiNumero(currentHpController);
+    final nextHp = (hpBefore + hpDelta).clamp(
+      delta < 0 && hpBefore > 0 ? 1 : 0,
       maxHp(),
     );
     currentHpController.text = nextHp.toString();
@@ -3401,6 +3436,15 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int artSkillCostResourceAvailable(String resource) {
     final normalized = oculumNormalizeArtSkillCostResource(resource);
+    if (normalized.startsWith('item:')) {
+      final name = normalized.substring(5);
+      return inventario
+          .where(
+            (item) =>
+                oculumNormalizeText(item.nome).replaceAll(' ', '') == name,
+          )
+          .fold(0, (total, item) => total + max(0, item.quantita));
+    }
     if (normalized.contains('+')) {
       return normalized
           .split('+')
@@ -3421,6 +3465,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           );
     }
     switch (normalized) {
+      case 'obser':
+        return max(0, leggiNumero(obserController));
+      case 'follia':
+        return max(0, follia());
       case 'fortuna':
         return max(0, fortuna);
       case 'hp':
@@ -3446,6 +3494,31 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int spendArtSkillCostResource(String resource, int amount) {
     final normalized = oculumNormalizeArtSkillCostResource(resource);
     if (amount <= 0 || normalized == 'nessuna') return 0;
+    if (normalized.startsWith('item:')) {
+      if (artSkillCostResourceAvailable(normalized) < amount) return 0;
+      var remaining = amount;
+      for (final item in inventario.toList().reversed) {
+        if (remaining <= 0) break;
+        if (oculumNormalizeText(item.nome).replaceAll(' ', '') !=
+            normalized.substring(5)) {
+          continue;
+        }
+        final take = min(remaining, max(0, item.quantita));
+        item.quantita -= take;
+        remaining -= take;
+        if (item.quantita == 0) inventario.remove(item);
+      }
+      return amount;
+    }
+    if (normalized == 'obser' || normalized == 'follia') {
+      final controller = normalized == 'obser'
+          ? obserController
+          : folliaController;
+      final available = leggiNumero(controller);
+      if (available < amount) return 0;
+      controller.text = '${available - amount}';
+      return amount;
+    }
     if (normalized.contains('+')) {
       final parts = normalized.split('+');
       if (parts.any((part) => artSkillCostResourceAvailable(part) < amount)) {
@@ -3817,7 +3890,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int maxHp() {
     return max(
       1,
-      max(1, resilienzaTotale()) * moltiplicatoreHp() + runtimeQuickBonus('hp'),
+      max(1, resilienzaTotale()) * moltiplicatoreHp() +
+          runtimeQuickBonus('hp') +
+          manualHpMaximumAdjustment,
     );
   }
 
@@ -4348,7 +4423,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     // dentro hiddenEyeTotal. I bonus numerici diretti sono invece sicuri e
     // diventano parte del totale effettivamente tirato e mostrato.
     final quickBonus = directSubtraitQuickBonus(stat);
-    final structuredBonus = activeStructuredEffectBonus(stat.id) + roleSubtraitBonus(stat.id);
+    final structuredBonus =
+        activeStructuredEffectBonus(stat.id) + roleSubtraitBonus(stat.id);
     final cacheBase = stat.valore + dustBonus + quickBonus + structuredBonus;
     final cachedBase = hiddenEyeTotalBaseCache[stat.id];
     final cachedValue = hiddenEyeTotalValueCache[stat.id];
@@ -4444,6 +4520,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     }
 
     scudoController.text = target.toString();
+    progressionSurge.shield = max(
+      0,
+      progressionSurge.shield - (manual - target),
+    );
     scudoBonusConsumati = bonus;
   }
 
@@ -4531,9 +4611,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int bonusAttaccoRapido() {
     final base = bonusAttaccoRapidoBase();
     if (currentHumanoidRole != 'Glass cannon') return base;
-    return base + oculumGlassCannonBonus(
-      role: currentHumanoidRole,
-      hp: leggiNumero(currentHpController), maximum: maxHp(), baseAttack: base);
+    return base +
+        oculumGlassCannonBonus(
+          role: currentHumanoidRole,
+          hp: leggiNumero(currentHpController),
+          maximum: maxHp(),
+          baseAttack: base,
+        );
   }
 
   int bonusDifesaRapido() {
@@ -4763,7 +4847,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return volontaTotale() +
         bonusDannoArmi() +
         bonusLivelloGrado() +
-        bonusAttaccoRapido() + vc() +
+        bonusAttaccoRapido() +
+        vc() +
         fallenEyeRareAttributeBonusFor('danno');
   }
 
@@ -4840,7 +4925,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     add(
       armaPiuForteEquipaggiata()?.elementoDanno ?? 'Fisico',
-      volontaTotale() + bonusDannoArmi() + bonusLivelloGrado() + bonusAttaccoRapido() + vc(),
+      volontaTotale() +
+          bonusDannoArmi() +
+          bonusLivelloGrado() +
+          bonusAttaccoRapido() +
+          vc(),
     );
 
     for (final titolo in titoliCalcolabili) {
@@ -5086,6 +5175,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int vc() {
     return bonusLivelloGrado() +
+        leggiNumero(vcRapidoController) +
         (volontaTotale() ~/ 3) +
         activeStructuredEffectBonus('vc') +
         titleQuickBonus('vc') +

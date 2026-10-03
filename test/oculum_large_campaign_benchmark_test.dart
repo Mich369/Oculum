@@ -190,6 +190,35 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
     });
+    // The board itself is now lazy: scroll it into the viewport before counting
+    // its mounted rows, just as a Master does to inspect the party.
+    for (var attempt = 0; attempt < 12; attempt++) {
+      final cards = find.byWidgetPredicate(
+        (widget) =>
+            widget.key is ValueKey<String> &&
+            (widget.key as ValueKey<String>).value.startsWith(
+              'master_party_card_',
+            ),
+      );
+      if (cards.evaluate().isNotEmpty) break;
+      final outer = find.byWidgetPredicate(
+        (widget) =>
+            widget is ListView &&
+            widget.key is ValueKey<String> &&
+            (widget.key as ValueKey<String>).value.endsWith('_master'),
+      );
+      final scrollable = find
+          .descendant(of: outer, matching: find.byType(Scrollable))
+          .first;
+      final position = tester.state<ScrollableState>(scrollable).position;
+      position.jumpTo(
+        (position.pixels + 400).clamp(
+          position.minScrollExtent,
+          position.maxScrollExtent,
+        ),
+      );
+      await tester.pump();
+    }
     final mountedPartyCards = find
         .byWidgetPredicate(
           (widget) =>

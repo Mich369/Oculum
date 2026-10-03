@@ -56,7 +56,9 @@ Map<String, dynamic> oculumPreparePortraitEditorPreview(
       interpolation: img.Interpolation.average,
     );
   }
-  final encoded = img.encodeJpg(preview, quality: 86);
+  final encoded = preview.hasAlpha
+      ? img.encodePng(preview)
+      : img.encodeJpg(preview, quality: 86);
   if (encoded.isEmpty) return <String, dynamic>{};
   return <String, dynamic>{
     'bytes': Uint8List.fromList(encoded),
@@ -139,7 +141,9 @@ Uint8List oculumRenderPortraitEditorCrop(Map<String, dynamic> input) {
     height: outputSize,
     interpolation: img.Interpolation.cubic,
   );
-  final encoded = img.encodeJpg(resized, quality: outputQuality);
+  final encoded = resized.hasAlpha
+      ? img.encodePng(resized)
+      : img.encodeJpg(resized, quality: outputQuality);
   return encoded.isEmpty ? Uint8List(0) : Uint8List.fromList(encoded);
 }
 
@@ -1093,10 +1097,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'rebirthato': false,
       'linguaInglese': false,
       'tutorialCompletato': false,
-      'modalitaDesktop': false,
+      'modalitaDesktop':
+          !kIsWeb && defaultTargetPlatform == TargetPlatform.windows,
       'modalitaVeloce': false,
       'modalitaLeggera': false,
-      'desktopSideMenuOpen': false,
+      'desktopSideMenuOpen':
+          !kIsWeb && defaultTargetPlatform == TargetPlatform.windows,
       'background':
           'Scrivi qui il passato, lo scopo, i legami, le paure e il destino del personaggio.',
       'notePersonaggio': '',
@@ -1338,6 +1344,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'scudoOculumMax': scudoOculumMaxController.text,
       'attaccoRapido': attaccoRapidoController.text,
       'cmRapido': cmRapidoController.text,
+      'vcRapido': vcRapidoController.text,
+      'incomingDamageElement': incomingDamageElement,
+      'incomingDamagePresets': Map<String, String>.from(incomingDamagePresets),
+      'assignableSubtraitPoints': assignableSubtraitPoints,
       'difesaRapida': difesaRapidaController.text,
       'reazioni': reazioniController.text,
       'reazioniVeloci': reazioniVelociController.text,
@@ -1352,6 +1362,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'derivedVC': vc(),
       'derivedCM': cm(),
       'derivedIniziativa': iniziativa(),
+      'derivedRiflessi': sheetReflexesAt(schedaCorrente),
       'derivedMovimento': movimento(),
       'derivedScudoOculum': scudoOculum(),
       'derivedScudoOculumMax': scudoOculumMax(),
@@ -1414,6 +1425,18 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'feriteMorte': feriteMorte,
       'volontaVitale': volontaVitale,
       'tempResilienza': tempResilienza,
+      'progressionSurge': progressionSurge.toJson(),
+      'memoryInspiration': memoryInspiration.toJson(),
+      'consumedFoodBonuses': consumedFoodBonuses,
+      'fatePactUsed': fatePactUsed,
+      'showPageGuidance': showPageGuidance,
+      'referenceOculumFlames': referenceOculumFlames,
+      'campaignBackgroundMode': campaignBackgroundMode,
+      'manualHpMaximumAdjustment': manualHpMaximumAdjustment,
+      'artSwitchActionDebt': artSwitchActionDebt,
+      'artSwitchReactionDebt': artSwitchReactionDebt,
+      'realtimeVisibleInitiativeSnapshot': realtimeVisibleInitiativeSnapshot,
+      'encounterPlayerIdentities': encounterPlayerIdentities,
       'tempVolonta': tempVolonta,
       'tempMateria': tempMateria,
       'tempOculum': tempOculum,
@@ -1526,6 +1549,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
           ? ''
           : base64Encode(immaginePersonaggio!),
       'usaBarraVita': usaBarraVita,
+      'portraitShowEyeBehind': portraitShowEyeBehind,
+      'portraitEyeRole': portraitEyeRole,
       'stileBarraVita': stileBarraVita,
       'stileCarattereApp': stileCarattereApp,
       'temiOldSchool': temiOldSchool,
@@ -1760,6 +1785,28 @@ extension _OculumHomePersistence on _OculumHomePageState {
     scudoOculumMaxController.text = '${json['scudoOculumMax'] ?? '0'}';
     attaccoRapidoController.text = '${json['attaccoRapido'] ?? '0'}';
     cmRapidoController.text = '${json['cmRapido'] ?? '0'}';
+    vcRapidoController.text = '${json['vcRapido'] ?? '0'}';
+    incomingDamageElement = '${json['incomingDamageElement'] ?? ''}';
+    assignableSubtraitPoints = max(
+      0,
+      readIntValue(json['assignableSubtraitPoints']),
+    );
+    incomingDamagePresets
+      ..clear()
+      ..addAll(
+        (json['incomingDamagePresets'] is Map
+                ? Map<String, dynamic>.from(
+                    json['incomingDamagePresets'] as Map,
+                  )
+                : <String, dynamic>{})
+            .map(
+              (key, value) => MapEntry(
+                oculumNormalizeElementId(key),
+                canonicalDamageModifierName('$value'),
+              ),
+            ),
+      );
+    modificatoreDannoSelezionato = 'Normale';
     difesaRapidaController.text = '${json['difesaRapida'] ?? '0'}';
     reazioniController.text = '${json['reazioni'] ?? '1'}';
     reazioniVelociController.text = '${json['reazioniVeloci'] ?? '0'}';
@@ -1768,10 +1815,18 @@ extension _OculumHomePersistence on _OculumHomePageState {
     rebirthato = readBoolValue(json['rebirthato']);
     linguaInglese = readBoolValue(json['linguaInglese']);
     tutorialCompletato = readBoolValue(json['tutorialCompletato']);
-    modalitaDesktop = readBoolValue(json['modalitaDesktop']);
+    modalitaDesktop =
+        oculumDesktopRequestedAtLaunch ||
+        (json.containsKey('modalitaDesktop')
+            ? readBoolValue(json['modalitaDesktop'])
+            : !kIsWeb && defaultTargetPlatform == TargetPlatform.windows);
     modalitaVeloce = readBoolValue(json['modalitaVeloce']);
     modalitaLeggera = readBoolValue(json['modalitaLeggera']);
-    desktopSideMenuOpen = readBoolValue(json['desktopSideMenuOpen']);
+    desktopSideMenuOpen =
+        oculumDesktopRequestedAtLaunch ||
+        (json.containsKey('desktopSideMenuOpen')
+            ? readBoolValue(json['desktopSideMenuOpen'])
+            : !kIsWeb && defaultTargetPlatform == TargetPlatform.windows);
     backgroundController.text =
         '${json['background'] ?? 'Scrivi qui il passato, lo scopo, i legami, le paure e il destino del personaggio.'}';
     notePersonaggioController.text = '${json['notePersonaggio'] ?? ''}';
@@ -1883,6 +1938,42 @@ extension _OculumHomePersistence on _OculumHomePageState {
     volontaVitale = readIntValue(json['volontaVitale']).clamp(0, 3).toInt();
 
     tempResilienza = readIntValue(json['tempResilienza']);
+    fatePactUsed = readBoolValue(json['fatePactUsed']);
+    showPageGuidance = readBoolValue(json['showPageGuidance'], fallback: true);
+    referenceOculumFlames = readBoolValue(json['referenceOculumFlames']);
+    manualHpMaximumAdjustment = readIntValue(json['manualHpMaximumAdjustment']);
+    artSwitchActionDebt = max(0, readIntValue(json['artSwitchActionDebt']));
+    artSwitchReactionDebt = max(0, readIntValue(json['artSwitchReactionDebt']));
+    realtimeVisibleInitiativeSnapshot =
+        json['realtimeVisibleInitiativeSnapshot'] is Map
+        ? Map<String, dynamic>.from(json['realtimeVisibleInitiativeSnapshot'])
+        : <String, dynamic>{};
+    final backgroundMode = '${json['campaignBackgroundMode'] ?? 'vertical'}';
+    campaignBackgroundMode = oculumBackgroundModes.containsKey(backgroundMode)
+        ? backgroundMode
+        : 'vertical';
+    encounterPlayerIdentities.clear();
+    final identities = json['encounterPlayerIdentities'];
+    if (identities is Map) {
+      for (final entry in identities.entries) {
+        if (entry.value is Map) {
+          encounterPlayerIdentities['${entry.key}'] = Map<String, dynamic>.from(
+            entry.value,
+          );
+        }
+      }
+    }
+    consumedFoodBonuses = {
+      if (json['consumedFoodBonuses'] is Map)
+        for (final entry in (json['consumedFoodBonuses'] as Map).entries)
+          '${entry.key}': readIntValue(entry.value),
+    };
+    progressionSurge = OculumProgressionSurge.fromJson(
+      json['progressionSurge'],
+    );
+    memoryInspiration = OculumMemoryInspiration.fromJson(
+      json['memoryInspiration'],
+    );
     tempVolonta = readIntValue(json['tempVolonta']);
     tempMateria = readIntValue(json['tempMateria']);
     tempOculum = readIntValue(json['tempOculum']);
@@ -2453,12 +2544,20 @@ extension _OculumHomePersistence on _OculumHomePageState {
                 : const <String, dynamic>{})
             .map(
               (type, value) =>
-                  MapEntry(type.trim().toLowerCase(), '$value'.trim()),
+                  MapEntry(oculumNormalizeElementId(type), '$value'.trim()),
             )
           ..removeWhere((type, value) => type.isEmpty || value.isEmpty),
       );
 
     final imageRaw = '${json['immaginePersonaggioBase64'] ?? ''}';
+    portraitShowEyeBehind = readBoolValue(
+      json['portraitShowEyeBehind'],
+      fallback: true,
+    );
+    final savedPortraitEyeRole = '${json['portraitEyeRole'] ?? ''}';
+    portraitEyeRole = diaryEyeChoices.containsKey(savedPortraitEyeRole)
+        ? savedPortraitEyeRole
+        : '';
     if (imageRaw.isNotEmpty) {
       immaginePersonaggio = decodedBase64ImageCached(imageRaw);
     } else {
@@ -2711,7 +2810,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
         '${key}_legacy_preferences_${DateTime.now().microsecondsSinceEpoch}',
       );
     }
-    if (!await archive.exists() && !await _writeFileAtomically(archive, legacy)) {
+    if (!await archive.exists() &&
+        !await _writeFileAtomically(archive, legacy)) {
       return false;
     }
     return prefs.remove(key);
@@ -4134,6 +4234,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     return {
       ...extraTopLevelSaveFields,
       'saveVersion': 11,
+      'masterBlindSpots': masterBlindSpots,
       'saveRevision': revision,
       'savedAt': DateTime.now().toIso8601String(),
       'multiScheda': true,
@@ -4329,6 +4430,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
       if (!mounted) return;
       setState(() {
         _memorizzaCampiTopLevelSconosciuti(data);
+        masterBlindSpots.clear();
+        if (data['masterBlindSpots'] is Map) {
+          for (final entry in (data['masterBlindSpots'] as Map).entries) {
+            if (entry.value is Map) {
+              masterBlindSpots['${entry.key}'] = Map<String, dynamic>.from(
+                entry.value,
+              );
+            }
+          }
+        }
         schedePersonaggio.clear();
         occhiCaduti
           ..clear()
@@ -4975,7 +5086,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
   void ripristinaImpostazioniGlobali(Map<String, dynamic> globali) {
     linguaInglese = readBoolValue(globali['linguaInglese']);
     tutorialCompletato = readBoolValue(globali['tutorialCompletato']);
-    modalitaDesktop = readBoolValue(globali['modalitaDesktop']);
+    modalitaDesktop =
+        oculumDesktopRequestedAtLaunch ||
+        (globali.containsKey('modalitaDesktop')
+            ? readBoolValue(globali['modalitaDesktop'])
+            : !kIsWeb && defaultTargetPlatform == TargetPlatform.windows);
     modalitaMaster = readBoolValue(globali['modalitaMaster']);
     coMasterCanSetCoMaster = readBoolValue(globali['coMasterCanSetCoMaster']);
     coMasterCanEditSheets = readBoolValue(globali['coMasterCanEditSheets']);
@@ -6890,11 +7005,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
             nome: oculumMonsterTechniqueName(artElements[i], i),
             livello: 0,
             evo1:
-                'Richiede livello 0\nI · ${oculumMonsterTechniqueName(artElements[i], i)}: concentri il colpo su un bersaglio a portata. @Danni+${max(5, level + i * 2)} ${artElements[i]} (1/4)',
+                'Richiede livello ${max(0, level ~/ 3)}\nI · ${oculumMonsterTechniqueName(artElements[i], i)}: concentri il colpo su un bersaglio a portata. @Danni+${max(5, level + i * 2)} ${artElements[i]} (${1 + level ~/ 10 + i}/${4 + level ~/ 10 + i} Oculum)',
             evo2:
-                'Richiede livello 0\nII · Segui il primo affondo e costringi il bersaglio a cederti spazio; puoi avanzare nella posizione che lascia libera. @Danni+${max(8, level * 2 + i * 3)} ${artElements[i]} (2/6)',
+                'Richiede livello ${max(3, level ~/ 3 + 3)}\nII · Segui il primo affondo e costringi il bersaglio a cederti spazio; puoi avanzare nella posizione che lascia libera. @Danni+${max(8, level * 2 + i * 3)} ${artElements[i]} (${3 + level ~/ 10 + i}/${7 + level ~/ 10 + i} Oculum)',
             evo3:
-                'Richiede livello 0\nIII · Scarichi tutta la forza della tecnica: il bersaglio colpito deve scegliere se arretrare o cadere a terra. @Danni+${max(12, level * 3 + grade * 6 + i * 4)} ${artElements[i]} (3/8)',
+                'Richiede livello ${max(6, level ~/ 3 + 6)}\nIII · Scarichi tutta la forza della tecnica: il bersaglio colpito deve scegliere se arretrare o cadere a terra. @Danni+${max(12, level * 3 + grade * 6 + i * 4)} ${artElements[i]} (${6 + level ~/ 10 + i}/${12 + level ~/ 10 + i} Oculum)',
             danni: max(1, level + grade * 6 + i),
           ),
       ],
@@ -7025,7 +7140,27 @@ extension _OculumHomePersistence on _OculumHomePageState {
         'materia',
         'oculum',
       ].fold<int>(0, (sum, key) => sum + (previewStats[key] ?? 0));
-      humanoidChoice = await askHumanoidRole(budget);
+      humanoidChoice = await askHumanoidRole(
+        budget,
+        initialName: baseName,
+        initialLevel: previewLevel,
+        initialArtMode: generatedArtModeForDescription(description),
+        budgetAtLevel: (level) {
+          final stats = balancedQuickSheetStats(
+            selectedType,
+            forceEnemyProfile: forceEnemyProfile,
+            level: level,
+            grade: previewGrade,
+            description: '$description $baseName',
+          );
+          return [
+            'resilienza',
+            'volonta',
+            'materia',
+            'oculum',
+          ].fold<int>(0, (sum, key) => sum + (stats[key] ?? 0));
+        },
+      );
       if (humanoidChoice == null || !mounted) return;
     }
 
@@ -7044,7 +7179,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
 
     for (var i = 0; i < count; i++) {
-      final requestedName = count == 1 ? baseName : '$baseName ${i + 1}';
+      final chosenName = humanoidChoice?.name.isNotEmpty == true
+          ? humanoidChoice!.name
+          : baseName;
+      final requestedName = count == 1 ? chosenName : '$chosenName ${i + 1}';
       final nome = nextGeneratedSheetName(requestedName);
       final matchedMonster =
           monsterBookSource ??
@@ -7053,8 +7191,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
       // generatore: il Bestiario ne conserva esattamente la base richiesta.
       final levelZeroPreset = matchedMonster?.stats['level'] == 0;
       final livello =
+          humanoidChoice?.level ??
           livelloForzato ??
-          (levelZeroPreset ? 0 : suggestedQuickSheetLevel(enemyProfile));
+          (quickSheetLevelController.text.trim().isNotEmpty
+              ? max(0, leggiNumero(quickSheetLevelController))
+              : (levelZeroPreset ? 0 : suggestedQuickSheetLevel(enemyProfile)));
       final grado =
           selectedType.toLowerCase().contains('mostro') ||
               matchedMonster != null
@@ -7141,7 +7282,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
         _ => '',
       };
       final elements = <String>{
-        ...generatedEntityElements(description, nome),
+        if (quickSheetElementController.text.trim().isNotEmpty)
+          quickSheetElementController.text.trim()
+        else
+          ...generatedEntityElements(description, nome),
         if (variantElement.isNotEmpty) variantElement,
       }.toList(growable: false);
       final defenseElement = elements.length > 1
@@ -7151,7 +7295,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
           matchedMonster?.nameIt ??
           generatedEntityKind(description, nome, selectedType);
       final artMode = matchedMonster == null
-          ? generatedArtModeForDescription(description)
+          ? (humanoidChoice?.artMode ??
+                generatedArtModeForDescription(description))
           : systemMonsterPresetArtMode(matchedMonster);
       await creaNuovaSchedaPersonaggio(
         nome: nome,
@@ -7883,6 +8028,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
             ? (matchedMonster.skillIds.isEmpty
                   ? null
                   : oculumMonsterBookArt(matchedMonster))
+            : humanoidChoice != null && artMode != 'none'
+            ? oculumBalancedHumanoidArt(
+                mode: artMode,
+                role: humanoidChoice.role,
+                element: elements.first,
+              )
             : generatedEntityArt(
                 mode: artMode,
                 elements: elements,
@@ -7926,9 +8077,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
               (matchedMonster?.skillIds.isNotEmpty ?? false) ||
               arti.any(oculumArtHasUsableSkills);
           final hasArt = arti.any(
-            (art) => art.tipo == 'Oculum Art' || art.tipo == 'Art Mostro',
+            (art) =>
+                const [
+                  'oculum',
+                  'oculum art',
+                  'art mostro',
+                ].contains(art.tipo.toLowerCase()) &&
+                oculumArtHasUsableSkills(art),
           );
-          final allocated =
+          final allocatedBase =
               statsMostroForzate ??
               (matchedMonster != null
                   ? oculumMonsterCreationStats(matchedMonster, livello)
@@ -7938,15 +8095,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
                       hasOculumArt: hasArt,
                       role: '$kind $description',
                     ));
+          final allocated = randomizzaPuntiMostro
+              ? oculumVaryMonsterStats(allocatedBase, hasOculumArt: hasArt)
+              : allocatedBase;
           final total = allocated.values.fold<int>(
             0,
             (sum, value) => sum + max(0, value),
           );
-          final requiresOculum = hasSkills || hasArt;
+          final requiresOculum = hasArt;
           final corrected =
-              matchedMonster == null &&
-                  ((requiresOculum && (allocated['oculum'] ?? 0) <= 0) ||
-                      (!requiresOculum && (allocated['oculum'] ?? 0) > 0))
+              ((requiresOculum && (allocated['oculum'] ?? 0) <= 0) ||
+                  (!requiresOculum && (allocated['oculum'] ?? 0) > 0))
               ? oculumDistributeMonsterStats(
                   max(requiresOculum ? 4 : 3, total),
                   hasSkills: hasSkills,
@@ -7982,6 +8141,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
           }
         }
 
+        currentResilienzaController.text = resilienzaController.text;
+        currentVolontaController.text = volontaController.text;
+        currentMateriaController.text = materiaController.text;
+        applyTemporaryOculumState(
+          TemporaryOculumState(
+            normalCurrent: oculumBase(),
+            temporary: 0,
+            rollsRemaining: 0,
+          ),
+        );
         currentHpController.text = maxHp().toString();
         // Una scheda mostro nasce pronta allo scontro: come per una nuova
         // scheda personaggio, le risorse correnti coincidono con i massimali.
@@ -8487,7 +8656,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
                 height: targetSize,
                 interpolation: img.Interpolation.linear,
               );
-              final encoded = img.encodeJpg(resized, quality: 72);
+              final encoded = resized.hasAlpha
+                  ? img.encodePng(resized)
+                  : img.encodeJpg(resized, quality: 72);
               if (encoded.isEmpty) return Uint8List(0);
               previewCacheKey = cacheKey;
               previewCache = Uint8List.fromList(encoded);

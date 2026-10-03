@@ -504,6 +504,9 @@ class OculumRealtimeService {
     required String campaignName,
     required String sheetTag,
     required int turn,
+    String encounterId = '',
+    bool joinEncounter = false,
+    bool leaveEncounter = false,
   }) {
     return _send('initiative_turn_adjusted', <String, dynamic>{
       'playerName': _displayName,
@@ -512,6 +515,9 @@ class OculumRealtimeService {
       'campaignName': campaignName,
       'sheetTag': sheetTag,
       'turn': turn,
+      if (encounterId.isNotEmpty) 'encounterId': encounterId,
+      if (joinEncounter) 'joinEncounter': true,
+      if (leaveEncounter) 'leaveEncounter': true,
       'sentAt': _nowIso(),
     });
   }
@@ -683,7 +689,13 @@ class OculumRealtimeService {
   }
 
   Future<void> refreshPresence() => _trackPresence();
-  Future<bool> sendDiaryKnowledge(Map<String,dynamic> envelope,{bool acknowledgement=false}) => _sendConfirmed(acknowledgement?'diary_knowledge_ack':'diary_knowledge',envelope);
+  Future<bool> sendDiaryKnowledge(
+    Map<String, dynamic> envelope, {
+    bool acknowledgement = false,
+  }) => _sendConfirmed(
+    acknowledgement ? 'diary_knowledge_ack' : 'diary_knowledge',
+    envelope,
+  );
 
   Future<void> requestSharedSheets() => _send('sheet_ping', {
     'playerName': _displayName,

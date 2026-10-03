@@ -1,5 +1,17 @@
 part of '../../main.dart';
 
+CharacterArt oculumStarterArtForMaster(CharacterArt preset) {
+  final art = CharacterArt.fromJson(preset.toJson());
+  art.descrizione = '[Richiede: ???]\n${art.descrizione}';
+  art.openDescription = '[Richiede: ???]\n${art.openDescription}';
+  for (final skill in art.skills) {
+    skill.evo1 = '[Richiede: ???]\n${skill.evo1}';
+    skill.evo2 = '[Richiede: ???]\n${skill.evo2}';
+    skill.evo3 = '[Richiede: ???]\n${skill.evo3}';
+  }
+  return art;
+}
+
 /// A fully saved starting choice. The four core bonuses are applied when the
 /// tutorial is confirmed; the prose is also retained on the generated title
 /// or racial trait so the Master can always inspect its origin.
@@ -71,19 +83,19 @@ void oculumApplyStarterSubtraits(
     ..addAll(savedNext);
 }
 
-/// Ogni creatura cresce con il suo rango: Mostro 9, Mini-Boss 12 e Boss 18
+/// Ogni creatura cresce con il suo rango: Mostro 9, Mini-Boss 11 e Boss 13
 /// punti statistica liberamente distribuibili per livello.
 int oculumMonsterStatPointsPerLevel(String type) {
   final normalized = type.toLowerCase();
-  if (normalized.contains('mini') && normalized.contains('boss')) return 12;
-  if (normalized.contains('boss')) return 18;
+  if (normalized.contains('mini') && normalized.contains('boss')) return 11;
+  if (normalized.contains('boss')) return 13;
   return 9;
 }
 
 int oculumMonsterStatPointsPerGrade(String type) {
   final normalized = type.toLowerCase();
-  if (normalized.contains('mini') && normalized.contains('boss')) return 15;
-  if (normalized.contains('boss')) return 25;
+  if (normalized.contains('mini') && normalized.contains('boss')) return 12;
+  if (normalized.contains('boss')) return 15;
   return 10;
 }
 
@@ -329,7 +341,7 @@ Map<String, int> oculumDistributeMonsterStats(
   String role = '',
 }) {
   final total = max(0, points);
-  final usesOculum = hasSkills || hasOculumArt;
+  final usesOculum = hasOculumArt;
   final stats = <String, int>{
     'resilienza': 0,
     'volonta': 0,
@@ -353,17 +365,61 @@ Map<String, int> oculumDistributeMonsterStats(
   final defensive = RegExp('tank|difens|guard|protett').hasMatch(text);
   final hunter = RegExp('predator|cacciator|assalt|inseguit').hasMatch(text);
   if (usesOculum) {
-    stats['volonta'] = max(1, (total * .15).floor() ~/ 3 * 3);
-    stats['materia'] = max(1, (total * .15).floor() ~/ 2 * 2);
-    stats['resilienza'] = max(1, (total * (defensive ? .42 : .38)).floor());
+    stats['volonta'] = max(1, (total * (hunter ? .32 : .30)).floor());
+    stats['materia'] = max(1, (total * .10).floor());
+    stats['resilienza'] = max(1, (total * (defensive ? .48 : .42)).floor());
     stats['oculum'] =
         total - stats['resilienza']! - stats['volonta']! - stats['materia']!;
+    if (total >= 20 && stats['oculum']! >= stats['volonta']!) {
+      stats['oculum'] = stats['oculum']! - 1;
+      stats['volonta'] = stats['volonta']! + 1;
+    }
   } else {
     stats['volonta'] = max(1, (total * (hunter ? .36 : .30)).floor());
-    stats['materia'] = max(1, (total * (defensive ? .25 : .30)).floor());
+    stats['materia'] = max(1, (total * (defensive ? .18 : .20)).floor());
     stats['resilienza'] = total - stats['volonta']! - stats['materia']!;
   }
   return stats;
+}
+
+/// A bounded variation of an existing creature's allocation. The total is exact.
+Map<String, int> oculumVaryMonsterStats(
+  Map<String, int> base, {
+  required bool hasOculumArt,
+  Random? random,
+}) {
+  final rng = random ?? Random.secure();
+  const keys = ['resilienza', 'volonta', 'oculum', 'materia'];
+  final total = keys.fold<int>(0, (sum, key) => sum + max(0, base[key] ?? 0));
+  final reference = {...base};
+  if (!hasOculumArt) {
+    final excess = max(0, reference['oculum'] ?? 0);
+    reference['oculum'] = 0;
+    final shares = oculumDistributeMonsterStats(
+      excess,
+      hasSkills: false,
+      hasOculumArt: false,
+    );
+    for (final key in ['resilienza', 'volonta', 'materia']) {
+      reference[key] = max(0, reference[key] ?? 0) + shares[key]!;
+    }
+  }
+  final weights = {
+    for (final key in keys)
+      key: max(0, reference[key] ?? 0) * (.9 + rng.nextDouble() * .2),
+  };
+  final weightSum = weights.values.fold<double>(0, (a, b) => a + b);
+  if (weightSum == 0) return {for (final key in keys) key: 0};
+  final result = {
+    for (final key in keys) key: (total * weights[key]! / weightSum).floor(),
+  };
+  var remainder = total - result.values.fold<int>(0, (a, b) => a + b);
+  final ranked = keys.toList()
+    ..sort((a, b) => weights[b]!.compareTo(weights[a]!));
+  for (var i = 0; i < remainder; i++) {
+    result[ranked[i % ranked.length]] = result[ranked[i % ranked.length]]! + 1;
+  }
+  return result;
 }
 
 Map<String, int> oculumMonsterCreationStats(

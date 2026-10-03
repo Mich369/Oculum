@@ -26,6 +26,8 @@ const Set<String> oculumRealtimeMetadataKeys = <String>{
   'publicInitiativeRollHidden',
   'realtimeCoMaster',
   'realtimeShareWithFriends',
+  'realtimeVisibleInitiativeSnapshot',
+  'encounterPlayerIdentities',
   'diaryEntityRoles',
   'diaryKnowledgeSync',
 };
@@ -62,6 +64,11 @@ const Set<String> oculumRealtimeFallbackEditableFields = <String>{
   'currentOculum',
   'attaccoRapido',
   'cmRapido',
+  'vcRapido',
+  'incomingDamagePresets',
+  'incomingDamageElement',
+  'dannoSubitoPercentualePerTipo',
+  'assignableSubtraitPoints',
   'difesaRapida',
   'reazioni',
   'reazioniVeloci',
@@ -831,7 +838,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         return '$player Oculum ${payload['currentOculum'] ?? '?'}'
             '/${payload['maxOculum'] ?? '?'}';
       case 'dice_roll':
-        return '$player ${payload['label'] ?? 'tiro'}: '
+        return '[DADO] $player ${payload['label'] ?? 'tiro'}: '
             '${payload['roll'] ?? '?'}'
             '${readIntValue(payload['bonus']) == 0 ? '' : ' + ${payload['bonus']}'}'
             ' = ${payload['total'] ?? '?'}';
@@ -903,7 +910,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           '$player confirmed sheet receipt: ${payload['sheetName'] ?? '???'}.',
         );
       case 'initiative_shared':
-        if (readBoolValue(payload['closed'])) {
+        if (readBoolValue(payload['closed']) &&
+            (payload['snapshot'] is! Map ||
+                (payload['snapshot'] as Map)['encounters'] is! List)) {
           return t(
             '$player ha chiuso la Fight visibile.',
             '$player closed the visible Fight.',
@@ -1380,6 +1389,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'oculumSentFriendRequests',
       'blockedOculumFriends',
       'realtimeRevokedAccessTags',
+      'realtimeVisibleInitiativeSnapshot',
+      'encounterPlayerIdentities',
       'diaryEntityRoles',
       'diaryKnowledgeSync',
     ]) {
@@ -1658,6 +1669,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'currentOculum': currentOculumController,
       'attaccoRapido': attaccoRapidoController,
       'cmRapido': cmRapidoController,
+      'vcRapido': vcRapidoController,
       'difesaRapida': difesaRapidaController,
       'reazioni': reazioniController,
       'reazioniVeloci': reazioniVelociController,
@@ -1725,44 +1737,79 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
   Map<String, dynamic> buildRealtimeInitiativeSnapshot() {
     normalizeMasterInitiativeTokens();
-    final safeActive = masterInitiativeTokens.isEmpty
-        ? 0
-        : masterInitiativeActiveIndex
-              .clamp(0, masterInitiativeTokens.length - 1)
-              .toInt();
-
-    return <String, dynamic>{
+    captureActiveMasterInitiativeGroup();
+    final published = masterInitiativeGroups
+        .where((group) => readBoolValue(group['published']))
+        .map((group) => publicEncounterSnapshot(group))
+        .toList();
+    final root = published.firstWhere(
+      (group) => group['encounterId'] == selectedMasterInitiativeGroupId,
+      orElse: () => published.isNotEmpty
+          ? published.first
+          : <String, dynamic>{
+              'tokens': [],
+              'round': 1,
+              'activeIndex': 0,
+              'turnCount': 0,
+            },
+    );
+    return {
+      ...root,
       'campaignId': activeCampaignId,
       'campaignName': activeCampaignName(),
-      'round': masterInitiativeRound,
-      'activeIndex': safeActive,
-      'turnCount': masterInitiativeTokens.length,
-      'manualOrder': masterInitiativeManualOrder,
+      'encounters': published,
       'sentAt': DateTime.now().toIso8601String(),
+    };
+  }
+
+  String publicInitiativeSourceTag(Map<String, dynamic> token) {
+    final tag = '${token['sheetTag'] ?? token['id'] ?? ''}';
+    final index = schedePersonaggio.indexWhere(
+      (sheet) => '${sheet['sheetTag'] ?? sheet['id'] ?? ''}' == tag,
+    );
+    if (index >= 0) {
+      final source =
+          '${schedePersonaggio[index]['realtimeSourceSheetTag'] ?? ''}';
+      if (source.isNotEmpty) return source;
+    }
+    return tag;
+  }
+
+  Map<String, dynamic> publicEncounterSnapshot(Map<String, dynamic> group) {
+    final tokens = (group['tokens'] as List? ?? const [])
+        .whereType<Map>()
+        .map((token) => Map<String, dynamic>.from(token))
+        .toList();
+    final active = tokens.isEmpty
+        ? 0
+        : readIntValue(group['activeIndex']).clamp(0, tokens.length - 1);
+    return {
+      'campaignId': activeCampaignId,
+      'campaignName': activeCampaignName(),
+      'encounterId': group['id'],
+      'name': group['name'],
+      'round': group['round'],
+      'activeIndex': active,
+      'turnCount': tokens.length,
+      'manualOrder': group['manualOrder'],
       'tokens': [
-        for (int i = 0; i < masterInitiativeTokens.length; i++)
+        for (int i = 0; i < tokens.length; i++)
           <String, dynamic>{
             'index': i + 1,
             'turnNumber': i + 1,
-            'turnCount': masterInitiativeTokens.length,
-            'id': '${masterInitiativeTokens[i]['id'] ?? i}',
-            'name': '${masterInitiativeTokens[i]['name'] ?? '???'}',
-            'type': '${masterInitiativeTokens[i]['type'] ?? 'Partecipante'}',
-            'side': '${masterInitiativeTokens[i]['side'] ?? 'ally'}',
-            'status': '${masterInitiativeTokens[i]['status'] ?? 'ready'}',
-            'imageBase64': '${masterInitiativeTokens[i]['imageBase64'] ?? ''}',
-            'spriteAssetPath': masterInitiativeTokenSpriteAsset(
-              masterInitiativeTokens[i],
-            ),
-            'tokenSize': masterInitiativeTokenSize(masterInitiativeTokens[i]),
-            'initiativeTotal': readIntValue(
-              masterInitiativeTokens[i]['initiativeTotal'],
-            ),
-            'reportedTurn': max(
-              0,
-              readIntValue(masterInitiativeTokens[i]['reportedTurn']),
-            ),
-            'active': i == safeActive,
+            'turnCount': tokens.length,
+            'id': publicInitiativeSourceTag(tokens[i]),
+            'name': '${tokens[i]['name'] ?? '???'}',
+            'type': '${tokens[i]['type'] ?? 'Partecipante'}',
+            'side': '${tokens[i]['side'] ?? 'ally'}',
+            'status': '${tokens[i]['status'] ?? 'ready'}',
+            'imageBase64': '${tokens[i]['imageBase64'] ?? ''}',
+            'spriteAssetPath': masterInitiativeTokenSpriteAsset(tokens[i]),
+            'tokenSize': masterInitiativeTokenSize(tokens[i]),
+            'initiativeTotal': readIntValue(tokens[i]['initiativeTotal']),
+            'reportedTurn': max(0, readIntValue(tokens[i]['reportedTurn'])),
+            'active': i == active,
+            ...oculumPublicEncounterIdentity(tokens[i]),
           },
       ],
     };
@@ -1772,7 +1819,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final senderRole = '${payload['senderRole'] ?? ''}';
     if (realtimeIsMasterRole || senderRole != 'master') return;
 
-    if (readBoolValue(payload['closed'])) {
+    if (readBoolValue(payload['closed']) &&
+        (payload['snapshot'] is! Map ||
+            (payload['snapshot'] as Map)['encounters'] is! List)) {
       realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
       clearTemporaryCombatResistanceEffects();
       risultato = t('Fight chiusa dal Master.', 'Fight closed by the Master.');
@@ -1782,19 +1831,55 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
     final snapshotRaw = payload['snapshot'];
     if (snapshotRaw is! Map) return;
+    final encountersRaw = snapshotRaw['encounters'];
+    var selectedSnapshot = Map<String, dynamic>.from(snapshotRaw);
+    if (encountersRaw is List) {
+      realtimeEncounterSnapshots = encountersRaw
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+      selectedSnapshot = realtimeEncounterSnapshots.firstWhere(
+        (item) => item['encounterId'] == realtimeSelectedEncounterId,
+        orElse: () => realtimeEncounterSnapshots.isNotEmpty
+            ? realtimeEncounterSnapshots.first
+            : <String, dynamic>{'tokens': [], 'round': 1, 'activeIndex': 0},
+      );
+      realtimeSelectedEncounterId = '${selectedSnapshot['encounterId'] ?? ''}';
+    }
+    final previous = realtimeVisibleInitiativeSnapshot['tokens'];
+    final deadBefore = previous is List
+        ? previous
+              .whereType<Map>()
+              .where((t) => t['status'] == 'dead')
+              .map((t) => '${t['id']}')
+              .toSet()
+        : <String>{};
+    final incoming = selectedSnapshot['tokens'];
+    if (incoming is List) {
+      for (final token in incoming.whereType<Map>()) {
+        if (token['status'] == 'dead' &&
+            !deadBefore.contains('${token['id']}')) {
+          aggiungiLog(
+            '[MORTE] '
+            '${token['name'] ?? '???'} · segnata dal Master.',
+          );
+        }
+      }
+    }
     realtimeVisibleInitiativeSnapshot =
-        jsonDecode(jsonEncode(snapshotRaw)) as Map<String, dynamic>;
+        jsonDecode(jsonEncode(selectedSnapshot)) as Map<String, dynamic>;
     final currentTag = sheetTagAt(schedaCorrente);
     final snapshotTokens = realtimeVisibleInitiativeSnapshot['tokens'];
     if (snapshotTokens is List) {
       for (final raw in snapshotTokens.whereType<Map>()) {
         final token = Map<String, dynamic>.from(raw);
-        if ('${token['id'] ?? token['sheetTag'] ?? ''}' != currentTag) {
+        if ('${token['sheetTag'] ?? token['id'] ?? ''}' != currentTag) {
           continue;
         }
         final reported = max(0, readIntValue(token['reportedTurn']));
         if (reported > playerReportedTurn) {
           for (var i = playerReportedTurn; i < reported; i++) {
+            advanceArtSwitchTurn();
             tickStructuredAbilityCooldowns('turni', scheduleSave: false);
           }
         }
@@ -1826,6 +1911,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         campaignId: activeCampaignId,
         campaignName: activeCampaignName(),
         sheetTag: sheetTag,
+        encounterId: realtimeIsMasterRole
+            ? selectedMasterInitiativeGroupId
+            : realtimeSelectedEncounterId,
         turn: max(0, turn),
       ),
     );
@@ -1837,14 +1925,70 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final turn = max(0, readIntValue(payload['turn']));
     final senderRole = '${payload['senderRole'] ?? 'player'}';
     if (realtimeIsMasterRole && senderRole != 'master') {
+      final requestedId = '${payload['encounterId'] ?? ''}';
+      final previousGroup = selectedMasterInitiativeGroupId;
+      if (requestedId.isNotEmpty) {
+        final group = masterInitiativeGroups
+            .where(
+              (item) =>
+                  item['id'] == requestedId && readBoolValue(item['published']),
+            )
+            .firstOrNull;
+        if (group == null) return;
+        selectMasterInitiativeGroup(requestedId);
+      }
+
+      if (readBoolValue(payload['leaveEncounter'])) {
+        final ownedSheet = schedePersonaggio
+            .where(
+              (sheet) =>
+                  sheet['realtimeSourceSheetTag'] == targetTag &&
+                  '${sheet['realtimeOwnerName'] ?? ''}' ==
+                      '${payload['playerName'] ?? ''}' &&
+                  '${sheet['realtimeOwnerName'] ?? ''}'.isNotEmpty,
+            )
+            .firstOrNull;
+        if (ownedSheet != null) {
+          final index = masterInitiativeTokens.indexWhere(
+            (token) => publicInitiativeSourceTag(token) == targetTag,
+          );
+          if (index >= 0) removeMasterInitiativeTokenAt(index);
+        }
+        if (requestedId.isNotEmpty) selectMasterInitiativeGroup(previousGroup);
+        notifyActiveSheetSummaryChanged();
+        return;
+      }
+      if (readBoolValue(payload['joinEncounter'])) {
+        final sheetIndex = schedePersonaggio.indexWhere(
+          (sheet) =>
+              sheet['realtimeSourceSheetTag'] == targetTag ||
+              sheet['sheetTag'] == targetTag,
+        );
+        if (sheetIndex >= 0 &&
+            !masterInitiativeTokens.any(
+              (token) =>
+                  token['id'] == sheetTagAt(sheetIndex) ||
+                  token['sheetTag'] == sheetTagAt(sheetIndex),
+            )) {
+          addSheetToMasterInitiative(sheetIndex);
+        }
+        captureActiveMasterInitiativeGroup();
+        if (requestedId.isNotEmpty) selectMasterInitiativeGroup(previousGroup);
+        sendRealtimeInitiativeSnapshotIfPublished();
+        return;
+      }
       final index = masterInitiativeTokens.indexWhere(
-        (token) =>
-            '${token['sheetTag'] ?? token['id'] ?? ''}'.trim() == targetTag,
+        (token) => publicInitiativeSourceTag(token).trim() == targetTag,
       );
-      if (index < 0) return;
+      if (index < 0) {
+        if (requestedId.isNotEmpty) selectMasterInitiativeGroup(previousGroup);
+        return;
+      }
       masterInitiativeTokens[index]['reportedTurn'] = turn;
       masterInitiativeTokens[index]['updatedAt'] = DateTime.now()
           .toIso8601String();
+      captureActiveMasterInitiativeGroup();
+      if (requestedId.isNotEmpty) selectMasterInitiativeGroup(previousGroup);
       programmaSalvataggio(invalidateCaches: false);
       sendRealtimeInitiativeSnapshotIfPublished();
       return;
@@ -1870,9 +2014,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
     unawaited(
       service!.sendInitiativeSnapshot(
-        snapshot: close
-            ? <String, dynamic>{}
-            : buildRealtimeInitiativeSnapshot(),
+        snapshot: buildRealtimeInitiativeSnapshot(),
         campaignId: activeCampaignId,
         campaignName: activeCampaignName(),
         closed: close,
@@ -1925,7 +2067,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   void sendRealtimeInitiativeSnapshotIfPublished() {
-    if (!masterInitiativePublished) return;
+    captureActiveMasterInitiativeGroup();
+    if (!masterInitiativeGroups.any(
+      (group) => readBoolValue(group['published']),
+    )) {
+      return;
+    }
     sendRealtimeInitiativeSnapshot();
   }
 
@@ -2110,7 +2257,32 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
   }
 
+  Future<void> drainRealtimeDirtySheets() async {
+    if (realtimeDirtySheetsDrainRunning || !realtimeIsMasterRole) return;
+    realtimeDirtySheetsDrainRunning = true;
+    try {
+      final tags = [
+        for (var i = 0; i < schedePersonaggio.length; i++)
+          if (i != schedaCorrente &&
+              schedePersonaggio[i]['realtimeDirtyLocal'] == true)
+            sheetTagAt(i),
+      ];
+      for (final tag in tags) {
+        if (!mounted || !realtimeIsMasterRole) break;
+        final index = schedePersonaggio.indexWhere(
+          (sheet) => '${sheet['sheetTag'] ?? sheet['id']}' == tag,
+        );
+        if (index >= 0) {
+          await _sendRealtimeEditedSharedSheetBack(sheetIndex: index);
+        }
+      }
+    } finally {
+      realtimeDirtySheetsDrainRunning = false;
+    }
+  }
+
   void sendRealtimeCurrentSheetToStaff({bool immediate = false}) {
+    if (realtimeIsMasterRole) unawaited(drainRealtimeDirtySheets());
     if (!canShareRealtimeSheetToStaff) return;
 
     if (immediate) {
@@ -2605,14 +2777,14 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
   }
 
-  Future<bool> _sendRealtimeEditedSharedSheetBack() async {
+  Future<bool> _sendRealtimeEditedSharedSheetBack({int? sheetIndex}) async {
     final service = realtimeService;
     if (service?.isConnected != true) return false;
-    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+    final editedIndex = sheetIndex ?? schedaCorrente;
+    if (editedIndex < 0 || editedIndex >= schedePersonaggio.length) {
       return false;
     }
 
-    final editedIndex = schedaCorrente;
     final current = schedePersonaggio[editedIndex];
     if (!readBoolValue(current['realtimeSharedSheet'])) return false;
     if (!readBoolValue(current['realtimeDirtyLocal'])) return false;
@@ -2625,7 +2797,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (sourceTag.isEmpty) return false;
 
     final fullSheet = realtimeSafeSheetJson(
-      schedaJsonAt(schedaCorrente),
+      schedaJsonAt(editedIndex),
       includeImage: true,
     );
     final sourceKey = '${current['realtimeSourceKey'] ?? ''}';
@@ -2659,7 +2831,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       campaignName:
           '${current['realtimeCampaignName'] ?? activeCampaignName()}',
       sheetId: sourceTag,
-      sheetName: nomeSchedaPersonaggio(schedaCorrente),
+      sheetName: nomeSchedaPersonaggio(editedIndex),
       ownerTag: sourceTag,
       senderRole: 'sheetEdit',
       targetAudience: 'owner',
@@ -3170,7 +3342,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   Widget realtimeVisibleInitiativePanel() {
-    if (!realtimeConnected || realtimeIsMasterRole) {
+    if (realtimeIsMasterRole) {
       return const SizedBox.shrink();
     }
     if (realtimeVisibleInitiativeSnapshot.isEmpty) {
@@ -3195,6 +3367,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeVisibleInitiativeSnapshot['turnCount'],
       fallback: tokens.length,
     );
+
+    if (referenceCampaignStyle) {
+      return referenceEncounterPanel(tokens: tokens, activeIndex: activeIndex);
+    }
 
     return gothicPanel(
       borderColor: tertiaryColor,

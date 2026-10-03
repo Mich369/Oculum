@@ -1172,7 +1172,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final hp = hpCorrenti();
 
     return gothicPanel(
-      borderColor: active ? Colors.orangeAccent : secondaryColor,
+      borderColor: active ? Colors.orangeAccent : const Color(0xffbda889),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1180,7 +1180,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             children: [
               Icon(
                 active ? Icons.local_fire_department : Icons.bolt,
-                color: active ? Colors.orangeAccent : secondaryColor,
+                color: active ? Colors.orangeAccent : const Color(0xffbda889),
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -1188,7 +1188,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 child: Text(
                   t('Stato di Forza', 'Force State'),
                   style: TextStyle(
-                    color: active ? Colors.orangeAccent : secondaryColor,
+                    color: active
+                        ? Colors.orangeAccent
+                        : const Color(0xffbda889),
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1490,67 +1492,80 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         restForceStatePanel(),
         restSurvivalOverviewPanel(),
         restStressStatePanel(),
-        sectionTitle('Danneggiamento dell’Art'),
-        artDamageRestPanel(),
-        sectionTitle(
-          t('Buff e Debuff Temporanei', 'Temporary Buffs and Debuffs'),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            sectionTitle('Recupero e integrità dell’Art'),
+            artDamageRestPanel(),
+          ],
         ),
-        restEditableGrid([
-          restEditableTile(
-            label: 'RES',
-            value: tempResilienza,
-            color: const Color(0xFF2ECC71),
-            icon: Icons.favorite,
-            onMinus: () =>
-                impostaBuffTemporaneo('resilienza', tempResilienza - 1),
-            onPlus: () =>
-                impostaBuffTemporaneo('resilienza', tempResilienza + 1),
-            onTap: () => mostraDialogValoreRiposo(
-              label: t('Resilienza temporanea', 'Temporary Resilience'),
-              value: tempResilienza,
-              onChanged: (value) => impostaBuffTemporaneo('resilienza', value),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            sectionTitle(
+              t('Bonus temporanei delle statistiche', 'Temporary stat bonuses'),
             ),
-          ),
-          restEditableTile(
-            label: 'VOL',
-            value: tempVolonta,
-            color: const Color(0xFFE74C3C),
-            icon: Icons.psychology,
-            onMinus: () => impostaBuffTemporaneo('volonta', tempVolonta - 1),
-            onPlus: () => impostaBuffTemporaneo('volonta', tempVolonta + 1),
-            onTap: () => mostraDialogValoreRiposo(
-              label: t('Volonta temporanea', 'Temporary Will'),
-              value: tempVolonta,
-              onChanged: (value) => impostaBuffTemporaneo('volonta', value),
-            ),
-          ),
-          restEditableTile(
-            label: 'MAT',
-            value: tempMateria,
-            color: const Color(0xFF44A7FF),
-            icon: Icons.diamond,
-            onMinus: () => impostaBuffTemporaneo('materia', tempMateria - 1),
-            onPlus: () => impostaBuffTemporaneo('materia', tempMateria + 1),
-            onTap: () => mostraDialogValoreRiposo(
-              label: t('Materia temporanea', 'Temporary Materia'),
-              value: tempMateria,
-              onChanged: (value) => impostaBuffTemporaneo('materia', value),
-            ),
-          ),
-          restEditableTile(
-            label: 'OCU',
-            value: tempOculum,
-            color: oculumStatFormulaColor,
-            icon: Icons.visibility,
-            onMinus: () => impostaBuffTemporaneo('oculum', tempOculum - 1),
-            onPlus: () => impostaBuffTemporaneo('oculum', tempOculum + 1),
-            onTap: () => mostraDialogValoreRiposo(
-              label: t('Oculum temporaneo', 'Temporary Oculum'),
-              value: tempOculum,
-              onChanged: (value) => impostaBuffTemporaneo('oculum', value),
-            ),
-          ),
-        ]),
+            restEditableGrid([
+              restEditableTile(
+                label: 'RES',
+                value: tempResilienza,
+                color: const Color(0xFF2ECC71),
+                icon: Icons.favorite,
+                onMinus: () =>
+                    impostaBuffTemporaneo('resilienza', tempResilienza - 1),
+                onPlus: () =>
+                    impostaBuffTemporaneo('resilienza', tempResilienza + 1),
+                onTap: () => mostraDialogValoreRiposo(
+                  label: t('Resilienza temporanea', 'Temporary Resilience'),
+                  value: tempResilienza,
+                  onChanged: (value) =>
+                      impostaBuffTemporaneo('resilienza', value),
+                ),
+              ),
+              restEditableTile(
+                label: 'VOL',
+                value: tempVolonta,
+                color: const Color(0xFFE74C3C),
+                icon: Icons.psychology,
+                onMinus: () =>
+                    impostaBuffTemporaneo('volonta', tempVolonta - 1),
+                onPlus: () => impostaBuffTemporaneo('volonta', tempVolonta + 1),
+                onTap: () => mostraDialogValoreRiposo(
+                  label: t('Volonta temporanea', 'Temporary Will'),
+                  value: tempVolonta,
+                  onChanged: (value) => impostaBuffTemporaneo('volonta', value),
+                ),
+              ),
+              restEditableTile(
+                label: 'MAT',
+                value: tempMateria,
+                color: const Color(0xFF44A7FF),
+                icon: Icons.diamond,
+                onMinus: () =>
+                    impostaBuffTemporaneo('materia', tempMateria - 1),
+                onPlus: () => impostaBuffTemporaneo('materia', tempMateria + 1),
+                onTap: () => mostraDialogValoreRiposo(
+                  label: t('Materia temporanea', 'Temporary Materia'),
+                  value: tempMateria,
+                  onChanged: (value) => impostaBuffTemporaneo('materia', value),
+                ),
+              ),
+              restEditableTile(
+                label: 'OCU',
+                value: tempOculum,
+                color: oculumStatFormulaColor,
+                icon: Icons.visibility,
+                onMinus: () => impostaBuffTemporaneo('oculum', tempOculum - 1),
+                onPlus: () => impostaBuffTemporaneo('oculum', tempOculum + 1),
+                onTap: () => mostraDialogValoreRiposo(
+                  label: t('Oculum temporaneo', 'Temporary Oculum'),
+                  value: tempOculum,
+                  onChanged: (value) => impostaBuffTemporaneo('oculum', value),
+                ),
+              ),
+            ]),
+          ],
+        ),
         gothicPanel(
           borderColor: primaryColor,
           child: Column(
@@ -2546,6 +2561,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       pageKey: 'resources',
       maxColumns: 3,
       minColumnWidth: 290,
+      masonryColumns: true,
+      fullWidthIndexes: const <int>{0},
       children: [
         functionAnchor(
           'resources_root',
@@ -2562,54 +2579,63 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           color: tertiaryColor,
           customIcon: obserStoneIcon(),
         ),
-        resourceCounter(
-          title: 'Ascension Dust',
-          subtitle: t(
-            'Polvere magica per forgiare e potenziare oggetti o poteri. Drop naturale 16–20: +1 Dust, massimo 3 per Riposo Lungo. Ottenute: $ascensionDustDropSinceLongRest/3.',
-            'Magical dust for forging and empowering items or powers. Natural Drop 16–20: +1 Dust, up to 3 per Long Rest. Earned: $ascensionDustDropSinceLongRest/3.',
-          ),
-          controller: ascensionDustController,
-          icon: Icons.grain,
-          color: primaryColor,
-          onUse: mostraPotenziaAscensionDust,
-          useLabel: t('Potenzia', 'Empower'),
-          onAltUse: mostraPotenziaOculusAscensionDust,
-          altUseLabel: t('Potenzia Oculus', 'Empower Oculus'),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                t(
-                  'Combattimento: ${ascensionDustCombat.used}/3 Dust per sessione. Scegli solo Attacco (VC) o Difesa: +2 per Dust, di cui +1 permanente. Il resto termina al Riposo Lungo.',
-                  'Combat: ${ascensionDustCombat.used}/3 Dust per session. Choose only Attack (VC) or Defense: +2 per Dust, including +1 permanent. The rest ends on Long Rest.',
-                ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            resourceCounter(
+              title: 'Ascension Dust',
+              subtitle: t(
+                'Polvere magica per forgiare e potenziare oggetti o poteri. Drop naturale 16–20: +1 Dust, massimo 3 per Riposo Lungo. Ottenute: $ascensionDustDropSinceLongRest/3.',
+                'Magical dust for forging and empowering items or powers. Natural Drop 16–20: +1 Dust, up to 3 per Long Rest. Earned: $ascensionDustDropSinceLongRest/3.',
               ),
-              Text(
-                'Dust · ATK +${ascensionDustCombat.attackBonus} (${ascensionDustCombat.permanentAttack} permanente) · DIF +${ascensionDustCombat.defenseBonus} (${ascensionDustCombat.permanentDefense} permanente)',
-              ),
-              Wrap(
-                spacing: 8,
+              controller: ascensionDustController,
+              icon: Icons.grain,
+              color: primaryColor,
+              onUse: mostraPotenziaAscensionDust,
+              useLabel: t('Potenzia', 'Empower'),
+              onAltUse: mostraPotenziaOculusAscensionDust,
+              altUseLabel: t('Potenzia Oculus', 'Empower Oculus'),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  OutlinedButton.icon(
-                    onPressed:
-                        ascensionDustCombat.remaining > 0 &&
-                            leggiNumero(ascensionDustController) > 0
-                        ? mostraPotenziaCombattimentoDust
-                        : null,
-                    icon: const Icon(Icons.upgrade),
-                    label: Text(t('Potenzia combattimento', 'Empower combat')),
+                  Text(
+                    t(
+                      'Combattimento: ${ascensionDustCombat.used}/3 Dust per sessione. Scegli solo Attacco (VC) o Difesa: +2 per Dust, di cui +1 permanente. Il resto termina al Riposo Lungo.',
+                      'Combat: ${ascensionDustCombat.used}/3 Dust per session. Choose only Attack (VC) or Defense: +2 per Dust, including +1 permanent. The rest ends on Long Rest.',
+                    ),
                   ),
-                  TextButton(
-                    onPressed: mostraNuovaSessioneDust,
-                    child: Text(t('Nuova sessione Dust', 'New Dust session')),
+                  Text(
+                    'Dust · ATK +${ascensionDustCombat.attackBonus} (${ascensionDustCombat.permanentAttack} permanente) · DIF +${ascensionDustCombat.defenseBonus} (${ascensionDustCombat.permanentDefense} permanente)',
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed:
+                            ascensionDustCombat.remaining > 0 &&
+                                leggiNumero(ascensionDustController) > 0
+                            ? mostraPotenziaCombattimentoDust
+                            : null,
+                        icon: const Icon(Icons.upgrade),
+                        label: Text(
+                          t('Potenzia combattimento', 'Empower combat'),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: mostraNuovaSessioneDust,
+                        child: Text(
+                          t('Nuova sessione Dust', 'New Dust session'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         resourceCounter(
           title: t('Ispirazioni', 'Inspirations'),
@@ -2651,6 +2677,21 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           useLabel: t('Usa come critico mantenuto', 'Use as kept critical'),
           onAltUse: convertiIspirazioneOculum,
           altUseLabel: t('Converti in 2 base', 'Convert into 2 base'),
+        ),
+        gothicPanel(
+          child: ListTile(
+            leading: Icon(Icons.auto_awesome, color: primaryColor),
+            title: Text(t('Accordo col Fato', 'Pact with Fate')),
+            subtitle: Text(
+              fatePactUsed
+                  ? 'Accordo consumato: una sola volta per personaggio.'
+                  : 'Un solo tiro. Sul critico negativo: 20% opzione Oculum, 80% Super Ispirazione.',
+            ),
+            trailing: FilledButton(
+              onPressed: fatePactUsed ? null : useFatePact,
+              child: Text(t('Usa', 'Use')),
+            ),
+          ),
         ),
         inspirationLimitsPanel(),
         fortunaResourcePanel(),
@@ -3445,6 +3486,29 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }
 
   Widget masterInitiativeTrackerPanel() {
+    if (referenceCampaignStyle && masterInitiativeTokens.isNotEmpty) {
+      normalizeMasterInitiativeTokens();
+      return Column(
+        children: [
+          referenceEncounterPanel(
+            tokens: masterInitiativeTokens,
+            activeIndex: masterInitiativeActiveIndex,
+            master: true,
+          ),
+          dropdownSection(
+            borderColor: tertiaryColor,
+            title: t('Gestione dello scontro', 'Encounter management'),
+            sectionId: 'reference_encounter_management',
+            icon: Icons.tune,
+            child: masterInitiativeTrackerControls(),
+          ),
+        ],
+      );
+    }
+    return masterInitiativeTrackerControls();
+  }
+
+  Widget masterInitiativeTrackerControls() {
     normalizeMasterInitiativeTokens();
     final compact = lightweightUi;
     final hasTokens = masterInitiativeTokens.isNotEmpty;
@@ -3558,6 +3622,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   }
                   setState(() {
                     masterInitiativeTokens[i]['status'] = value;
+                    if (value == 'dead') {
+                      aggiungiLog(
+                        '[MORTE] '
+                        '${masterInitiativeTokens[i]['name'] ?? '???'}'
+                        ' · segnata dal Master.',
+                      );
+                    }
                     if (value == 'active') {
                       masterInitiativeActiveIndex = i;
                     }
@@ -3862,12 +3933,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  '${t('Iniziativa Master', 'Master Initiative')} - ${t('Round', 'Round')} $masterInitiativeRound',
-                  style: TextStyle(
-                    color: tertiaryColor,
-                    fontSize: compact ? 17 : 22,
-                    fontWeight: FontWeight.w900,
+                child: turnResetGesture(
+                  Text(
+                    '${t('Iniziativa Master', 'Master Initiative')} - ${t('Round', 'Round')} $masterInitiativeRound',
+                    style: TextStyle(
+                      color: tertiaryColor,
+                      fontSize: compact ? 17 : 22,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ),
@@ -5594,6 +5667,18 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         ? value.clamp(0, oculumTemporaryHpLimit).toInt()
         : max(0, value);
     final clean = cleanValue.toString();
+    if (key == 'scudo') {
+      final previous = index == schedaCorrente
+          ? leggiNumero(scudoController)
+          : readIntValue(schedePersonaggio[index][key]);
+      final surge = index == schedaCorrente
+          ? progressionSurge
+          : OculumProgressionSurge.fromJson(
+              schedePersonaggio[index]['progressionSurge'],
+            );
+      surge.shield = max(0, surge.shield - max(0, previous - cleanValue));
+      schedePersonaggio[index]['progressionSurge'] = surge.toJson();
+    }
     schedePersonaggio[index][key] = clean;
     if (index == schedaCorrente) {
       switch (key) {
@@ -5628,6 +5713,18 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     var oculumShield = sheetIntValueAt(index, 'scudoOculum');
     final originalHp = hp;
     final totalDamage = max(0, damage + (critical ? 5 : 0));
+    if (totalDamage > 0 || ko) {
+      if (index == schedaCorrente) {
+        interruptArtAwakening();
+      } else {
+        for (final raw
+            in schedePersonaggio[index]['arti'] as List? ?? const []) {
+          if (raw is Map && raw['switchPhase'] == 'risveglio') {
+            raw['switchPhase'] = 'interrotto';
+          }
+        }
+      }
+    }
     var remaining = totalDamage;
 
     if (ko) {
@@ -5672,6 +5769,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     });
     if (index == schedaCorrente) salvaSchedaCorrenteInMemoria();
     aggiungiLog(risultato);
+    programmaSalvataggio();
   }
 
   Widget masterEnemyVitalBar(int index) {
@@ -5845,8 +5943,126 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           color: Colors.white70,
           onPressed: () => applyMasterEnemyQuickHpAction(index, ko: true),
         ),
+        if (modalitaMaster || isMasterHost || realtimeIsMasterRole)
+          actionButton(
+            label: t('Punti Ciechi · Master', 'Blind spots · Master'),
+            icon: Icons.visibility_off,
+            color: tertiaryColor,
+            onPressed: () => openMasterBlindSpot(index),
+          ),
       ],
     );
+  }
+
+  Future<void> openMasterBlindSpot(int index) async {
+    if (!modalitaMaster && !isMasterHost && !realtimeIsMasterRole) return;
+    final key = '$activeCampaignId:${sheetTagAt(index)}';
+    final data = masterBlindSpots.putIfAbsent(key, () {
+      final text = oculumNormalizeText(
+        '${schedePersonaggio[index]['nome']} ${schedePersonaggio[index]['background']}',
+      );
+      final point = text.contains('slime')
+          ? 'Nucleo gelatinoso'
+          : text.contains('mammuth')
+          ? 'Articolazione sotto la zanna'
+          : text.contains('forest') || text.contains('legno')
+          ? 'Giuntura scoperta fra le placche del tronco'
+          : text.contains('golem')
+          ? 'Giunto che protegge il nucleo'
+          : text.contains('angel')
+          ? 'Attaccatura delle ali'
+          : 'Articolazione esposta durante l’attacco';
+      return {'name': point, 'hits': 0, 'fragilityPerHit': 10};
+    });
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, refresh) => AlertDialog(
+          title: Text('Punto Cieco — ${nomeSchedaPersonaggio(index)}'),
+          content: SizedBox(
+            width: 380,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Riservato al Master. Il bonus si applica soltanto ai colpi dichiarati su questo punto.',
+                ),
+                TextFormField(
+                  initialValue: '${data['name']}',
+                  decoration: const InputDecoration(labelText: 'Punto Cieco'),
+                  onChanged: (value) => data['name'] = value,
+                ),
+                TextFormField(
+                  initialValue: '${data['fragilityPerHit']}',
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Fragilità aggiunta per colpo (%)',
+                  ),
+                  onChanged: (value) => data['fragilityPerHit'] = max(
+                    0,
+                    int.tryParse(value) ?? 10,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  initialValue: masterEnemyDamageController.text,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Danno del colpo prima della fragilità',
+                    helperText:
+                        'Il danno segue scudo, armatura e vita esistenti.',
+                  ),
+                  onChanged: (value) => refresh(() {
+                    masterEnemyDamageController.text = value;
+                  }),
+                ),
+                Text(
+                  '${data['hits']} colpi · +${(readIntValue(data['hits']) + 1) * readIntValue(data['fragilityPerHit'])}% al prossimo colpo localizzato',
+                ),
+                Text(
+                  'Danno prossimo colpo: ${oculumBlindSpotDamage(readIntValue(masterEnemyDamageController.text), readIntValue(data['hits']), readIntValue(data['fragilityPerHit']))}',
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => refresh(() {
+                data['hits'] = max(0, readIntValue(data['hits']) - 1);
+                programmaSalvataggio();
+              }),
+              child: const Text('Riduci contatore'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final base = max(
+                  0,
+                  readIntValue(masterEnemyDamageController.text),
+                );
+                if (base <= 0) return;
+                final damage = oculumBlindSpotDamage(
+                  base,
+                  readIntValue(data['hits']),
+                  readIntValue(data['fragilityPerHit']),
+                );
+                applyMasterEnemyQuickHpAction(index, damage: damage);
+                refresh(() => data['hits'] = readIntValue(data['hits']) + 1);
+                programmaSalvataggio();
+              },
+              child: const Text('Colpisci il Punto Cieco'),
+            ),
+            TextButton(
+              onPressed: () {
+                programmaSalvataggio();
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Chiudi'),
+            ),
+          ],
+        ),
+      ),
+    );
+    programmaSalvataggio();
   }
 
   Widget masterDashboardEnemyCard(int index) {
@@ -6101,6 +6317,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           campoTesto(
             label: t('Nome nuova scheda', 'New sheet name'),
             controller: quickSheetNameController,
+            numero: false,
+          ),
+          const SizedBox(height: 10),
+          campoTesto(
+            label: t(
+              'Elemento (vuoto: dalla creatura)',
+              'Element (empty: from creature)',
+            ),
+            controller: quickSheetElementController,
             numero: false,
           ),
           const SizedBox(height: 10),
@@ -6635,6 +6860,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             ),
           ),
           const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: setMasterOnlineDifficulty,
+            icon: const Icon(Icons.rule),
+            label: const Text('Imposta DT a uno o più Player'),
+          ),
+          const SizedBox(height: 8),
           ElevatedButton.icon(
             onPressed: randomizzaStatsBilanciate,
             icon: const Icon(Icons.casino),
@@ -6643,11 +6874,115 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               foregroundColor: Colors.white,
               minimumSize: const Size.fromHeight(44),
             ),
-            label: Text(t('Randomizza stats', 'Randomize stats')),
+            label: Text(
+              t('Redistribuisci punti posseduti', 'Redistribute owned points'),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> setMasterOnlineDifficulty() async {
+    if (!modalitaMaster && !realtimeIsMasterRole && !isMasterHost) return;
+    final candidates = schedePersonaggio
+        .asMap()
+        .entries
+        .where((entry) => entry.value['realtimeSharedSheet'] == true)
+        .toList();
+    final selected = <String>{};
+    final input = TextEditingController(text: '0');
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => StatefulBuilder(
+          builder: (context, refresh) => AlertDialog(
+            title: const Text('DT dei Player'),
+            content: SizedBox(
+              width: 420,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: input,
+                      onChanged: (_) => refresh(() {}),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        signed: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'DT: positiva rende il tiro più difficile',
+                      ),
+                    ),
+                    if (candidates.isEmpty)
+                      const Text('Nessuna scheda Player ricevuta.'),
+                    TextButton(
+                      onPressed: () => refresh(
+                        () => selected.addAll(
+                          candidates.map((entry) => sheetTagAt(entry.key)),
+                        ),
+                      ),
+                      child: const Text('Seleziona tutti'),
+                    ),
+                    for (final entry in candidates)
+                      CheckboxListTile(
+                        title: Text(nomeSchedaPersonaggio(entry.key)),
+                        value: selected.contains(sheetTagAt(entry.key)),
+                        onChanged: (value) => refresh(() {
+                          final tag = sheetTagAt(entry.key);
+                          if (value == true) {
+                            selected.add(tag);
+                          } else {
+                            selected.remove(tag);
+                          }
+                        }),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Annulla'),
+              ),
+              FilledButton(
+                onPressed:
+                    selected.isEmpty || int.tryParse(input.text.trim()) == null
+                    ? null
+                    : () => Navigator.pop(context, true),
+                child: const Text('Applica DT'),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+      final dt = int.tryParse(input.text.trim());
+      if (dt == null) return;
+      final indexes = <int>[];
+      setState(() {
+        for (final tag in selected) {
+          final index = schedePersonaggio.indexWhere(
+            (sheet) => '${sheet['sheetTag'] ?? sheet['id']}' == tag,
+          );
+          if (index < 0) continue;
+          schedePersonaggio[index]['difficoltaTiro'] = '$dt';
+          schedePersonaggio[index]['realtimeDirtyLocal'] = true;
+          schedePersonaggio[index]['realtimeDirtyAt'] = DateTime.now()
+              .toIso8601String();
+          if (index == schedaCorrente) difficoltaTiroController.text = '$dt';
+          indexes.add(index);
+        }
+      });
+      await forzaSalvataggioImmediato(soloLocale: true);
+      for (final index in indexes) {
+        await _sendRealtimeEditedSharedSheetBack(sheetIndex: index);
+      }
+      programmaSalvataggio();
+    } finally {
+      input.dispose();
+    }
   }
 
   Widget masterDashboardNotePanel() {
@@ -6861,25 +7196,28 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         final title = functionAnchor('master_root', sectionTitle('Master'));
 
         if (narrow) {
-          return ListView(
+          final panels = <Widget Function()>[
+            () => title,
+            masterDashboardActiveSheetPanel,
+            masterDashboardPartyBoardPanel,
+            masterInitiativeTrackerPanel,
+            () => masterDashboardEnemiesPanel(compactNote: true),
+            masterDashboardQuickControlsPanel,
+            masterDashboardQuickSheetPanel,
+            () => onlineStatusPanel(compatto: true),
+            campaignPanel,
+            connectedSheetsPanel,
+            masterDashboardRosterPanel,
+            masterDashboardMonsterBookPanel,
+            masterDashboardNotePanel,
+          ];
+          return ListView.builder(
             key: sheetScrollKey('master'),
             padding: padding,
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            children: [
-              title,
-              masterDashboardActiveSheetPanel(),
-              masterDashboardPartyBoardPanel(),
-              masterInitiativeTrackerPanel(),
-              masterDashboardEnemiesPanel(compactNote: true),
-              masterDashboardQuickControlsPanel(),
-              masterDashboardQuickSheetPanel(),
-              onlineStatusPanel(compatto: true),
-              campaignPanel(),
-              connectedSheetsPanel(),
-              masterDashboardRosterPanel(),
-              masterDashboardMonsterBookPanel(),
-              masterDashboardNotePanel(),
-            ],
+            itemCount: panels.length,
+            itemBuilder: (context, index) =>
+                RepaintBoundary(child: panels[index]()),
           );
         }
 
@@ -6888,44 +7226,38 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           max(320.0, constraints.maxWidth * 0.33),
         );
 
-        return ListView(
-          key: sheetScrollKey('master'),
-          padding: padding,
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        Widget lazyColumn(String key, List<Widget Function()> panels) =>
+            ListView.builder(
+              key: sheetScrollKey(key),
+              padding: padding,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              itemCount: panels.length,
+              itemBuilder: (context, index) =>
+                  RepaintBoundary(child: panels[index]()),
+            );
+        return Row(
           children: [
-            title,
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      masterInitiativeTrackerPanel(),
-                      masterDashboardPartyBoardPanel(),
-                      masterDashboardEnemiesPanel(),
-                      masterDashboardRosterPanel(),
-                      masterDashboardMonsterBookPanel(),
-                      connectedSheetsPanel(),
-                      masterDashboardNotePanel(),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: sideWidth,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      masterDashboardActiveSheetPanel(),
-                      masterDashboardQuickControlsPanel(),
-                      masterDashboardQuickSheetPanel(),
-                      onlineStatusPanel(compatto: true),
-                      campaignPanel(),
-                    ],
-                  ),
-                ),
-              ],
+            Expanded(
+              child: lazyColumn('master', [
+                () => title,
+                masterInitiativeTrackerPanel,
+                masterDashboardPartyBoardPanel,
+                masterDashboardEnemiesPanel,
+                masterDashboardRosterPanel,
+                masterDashboardMonsterBookPanel,
+                connectedSheetsPanel,
+                masterDashboardNotePanel,
+              ]),
+            ),
+            SizedBox(
+              width: sideWidth,
+              child: lazyColumn('master_tools', [
+                masterDashboardActiveSheetPanel,
+                masterDashboardQuickControlsPanel,
+                masterDashboardQuickSheetPanel,
+                () => onlineStatusPanel(compatto: true),
+                campaignPanel,
+              ]),
             ),
           ],
         );
@@ -7148,7 +7480,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   foregroundColor: Colors.white,
                   minimumSize: const Size.fromHeight(48),
                 ),
-                label: Text(t('Randomizza stats', 'Randomize stats')),
+                label: Text(
+                  t(
+                    'Redistribuisci punti posseduti',
+                    'Redistribute owned points',
+                  ),
+                ),
               ),
             ],
           ),
@@ -8000,6 +8337,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     if (skillIndex < 0 || skillIndex >= arti[artIndex].skills.length) return;
     final art = arti[artIndex];
     final skill = arti[artIndex].skills[skillIndex];
+    if (nuovoLivello > 0 && !art.inUso) {
+      risultato =
+          'Art incorporata non in uso: selezionala prima di usare le Skill.';
+      aggiungiLog(risultato);
+      notifyDiceResultChanged();
+      return;
+    }
     if (nuovoLivello > 0 && !monsterLootArtCanUse(art)) {
       risultato =
           'Skill del drop bloccata: equipaggia l’oggetto e raggiungi il suo grado richiesto.';
@@ -8010,9 +8354,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final livelloPrecedente = skill.livello;
     final livelloNuovo = nuovoLivello.clamp(0, artMaxLevel(art)).toInt();
     if (livelloNuovo == livelloPrecedente) return;
-    if ((art.tipo == 'Art Mostro' ||
-            art.tipo.startsWith('Art Oggetto Drop:')) &&
-        livelloNuovo > livelloPrecedente) {
+    if (livelloNuovo > livelloPrecedente) {
       final required = int.tryParse(
         RegExp(
               r'Richiede livello\s+(\d+)',
@@ -8034,6 +8376,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final structuredCooldown = livelloNuovo > 0
         ? skill.cooldownPerLivello[livelloNuovo - 1]
         : null;
+    if (oculumRecognizedArtKind(art) == 'emblem' &&
+        structuredCooldown != null &&
+        structuredCooldown.amount == 0) {
+      structuredCooldown.amount = 1;
+    }
     if (livelloNuovo > livelloPrecedente &&
         structuredCooldown != null &&
         !structuredCooldown.ready) {
@@ -8044,14 +8391,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       notifyDiceResultChanged();
       return;
     }
-    final activationCost = artUseCost(
-      oculumArtSkillLevelChangeCost(
-        previousLevel: livelloPrecedente,
-        nextLevel: livelloNuovo,
-      ),
-    );
+    final activationCost = oculumRecognizedArtKind(art) == 'emblem'
+        ? 0
+        : artUseCost(
+            oculumArtSkillLevelChangeCost(
+              previousLevel: livelloPrecedente,
+              nextLevel: livelloNuovo,
+            ),
+          );
     final costResource = livelloNuovo > 0
-        ? skill.risorsaCostoPerLivello(livelloNuovo)
+        ? effectiveArtCostResource(art, skill, livelloNuovo)
         : 'nessuna';
     final hasStatCost = costResource != 'nessuna';
     final costResourceLabel = oculumArtSkillCostResourceLabel(
@@ -8446,6 +8795,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     ValueChanged<bool>? onMasteryGrowthEnabledChanged,
     String costResource = 'oculum',
     ValueChanged<String>? onCostResourceChanged,
+    bool automaticCost = false,
+    ValueChanged<bool>? onAutomaticCostChanged,
     Widget? structuredEffects,
   }) {
     final cleanedValue = cleanUiText(value);
@@ -8464,6 +8815,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }.toList(growable: false)..sort();
     final costResourceOptions = <String>[
       ...oculumArtSkillCostResourceKeys,
+      for (final item in inventario)
+        'item:${oculumNormalizeText(item.nome).replaceAll(' ', '')}',
       ...materialResources,
       for (final material in materialResources) 'oculum+$material',
       for (var index = 0; index < materialResources.length; index++)
@@ -8496,88 +8849,35 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '$livello / $cleanedValue',
-                  style: TextStyle(
-                    color: active ? tertiaryColor : colore,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
+          if (onAutomaticCostChanged != null)
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              value: automaticCost,
+              onChanged: onAutomaticCostChanged,
+              title: Text(t('Costo dal testo', 'Cost from text')),
+              subtitle: Text(
+                t(
+                  'Costo: (1/10) Oculum; massimo crescita: 20. I bonus seguono il costo.',
+                  'Cost: (1/10) Oculum; massimo crescita: 20. Bonuses follow the cost.',
                 ),
               ),
-              if (active)
-                Tooltip(
-                  message: t(
-                    'Forma attiva: i tag rapidi qui scritti sono nei calcoli.',
-                    'Active form: quick tags written here are counted.',
-                  ),
-                  child: Icon(Icons.bolt, color: tertiaryColor, size: 18),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: campoModello(
-                  fieldKey: textFieldKey,
-                  label: '$livello / ???',
-                  initialValue: cleanedValue,
-                  onChanged: onChanged,
-                  maxLines: 3,
-                  helper: t(
-                    'Descrivi l’evoluzione e usa comandi reali. Esempio: @VC+10 @Difesa+15',
-                    'Describe the evolution and use real commands. Example: @VC+10 @Difesa+15',
-                  ),
-                  showCommandHelp: true,
-                ),
-              ),
-              if (oculumMinimum != null &&
-                  oculumMaximum != null &&
-                  onOculumMinimumChanged != null &&
-                  onOculumMaximumChanged != null) ...[
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 68,
-                  child: campoModello(
-                    fieldKey: ValueKey('${textFieldKey}_oculum_min'),
-                    label: 'Min',
-                    initialValue: '$oculumMinimum',
-                    onChanged: (value) =>
-                        onOculumMinimumChanged(readIntValue(value)),
-                    enableCommandAutocomplete: false,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: oculumNonNegativeIntegerFormatters,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                SizedBox(
-                  width: 68,
-                  child: campoModello(
-                    fieldKey: ValueKey('${textFieldKey}_oculum_max'),
-                    label: 'Max',
-                    initialValue: '$oculumMaximum',
-                    onChanged: (value) =>
-                        onOculumMaximumChanged(readIntValue(value)),
-                    enableCommandAutocomplete: false,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: oculumNonNegativeIntegerFormatters,
-                  ),
-                ),
-              ],
-            ],
-          ),
+            ),
           if (onCostResourceChanged != null) ...[
+            Text(
+              normalizedCostResource == 'nessuna'
+                  ? t('Costo: nessuno', 'Cost: none')
+                  : '${t('Costo', 'Cost')}: $oculumMinimum/$oculumMaximum $costResourceLabel',
+              style: TextStyle(color: colore, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: normalizedCostResource,
               dropdownColor: const Color(0xFF10121A),
-              decoration: fieldDecoration(t('Stat consumata', 'Consumed stat')),
+              isExpanded: true,
+              decoration: fieldDecoration(
+                t('Costo — risorsa consumata', 'Cost — consumed resource'),
+              ),
               items: [
                 for (final resource in costResourceOptions)
                   DropdownMenuItem<String>(
@@ -8658,6 +8958,82 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               ),
             ),
           ],
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '$livello / $cleanedValue',
+                  style: TextStyle(
+                    color: active ? tertiaryColor : colore,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              if (active)
+                Tooltip(
+                  message: t(
+                    'Forma attiva: i tag rapidi qui scritti sono nei calcoli.',
+                    'Active form: quick tags written here are counted.',
+                  ),
+                  child: Icon(Icons.bolt, color: tertiaryColor, size: 18),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: campoModello(
+                  fieldKey: textFieldKey,
+                  label: '$livello / ???',
+                  initialValue: cleanedValue,
+                  onChanged: onChanged,
+                  maxLines: 3,
+                  helper: t(
+                    'Costo: (1/10) Oculum; massimo crescita: 20. Poi descrivi i bonus: @VC+10 @Difesa+15',
+                    'Describe the evolution and use real commands. Example: @VC+10 @Difesa+15',
+                  ),
+                  showCommandHelp: true,
+                ),
+              ),
+              if (oculumMinimum != null &&
+                  oculumMaximum != null &&
+                  onOculumMinimumChanged != null &&
+                  onOculumMaximumChanged != null) ...[
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 68,
+                  child: campoModello(
+                    fieldKey: ValueKey('${textFieldKey}_oculum_min'),
+                    label: 'Min',
+                    initialValue: '$oculumMinimum',
+                    onChanged: (value) =>
+                        onOculumMinimumChanged(readIntValue(value)),
+                    enableCommandAutocomplete: false,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: oculumNonNegativeIntegerFormatters,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                SizedBox(
+                  width: 68,
+                  child: campoModello(
+                    fieldKey: ValueKey('${textFieldKey}_oculum_max'),
+                    label: 'Max',
+                    initialValue: '$oculumMaximum',
+                    onChanged: (value) =>
+                        onOculumMaximumChanged(readIntValue(value)),
+                    enableCommandAutocomplete: false,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: oculumNonNegativeIntegerFormatters,
+                  ),
+                ),
+              ],
+            ],
+          ),
           if (quickCommands.isNotEmpty) ...[
             const SizedBox(height: 8),
             Wrap(
@@ -8784,7 +9160,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   int artSkillLivelloAttivo(ArtSkill target) {
     for (final art in arti) {
-      if (!art.sbloccata) continue;
+      if (!art.sbloccata || !art.inUso) continue;
       for (final skill in art.skills) {
         if (identical(skill, target)) return artSkillBonusLevel(skill);
       }
@@ -8927,10 +9303,31 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     return clean.isEmpty ? artOpenDefaultName(artIndex) : clean;
   }
 
-  void usaOpenArt(int artIndex) {
+  Future<void> usaOpenArt(int artIndex) async {
     if (artIndex < 0 || artIndex >= arti.length) return;
     final targetArt = arti[artIndex];
+    if (!targetArt.openAttiva &&
+        (!targetArt.inUso || targetArt.switchPhase.isNotEmpty)) {
+      risultato =
+          'Potere risvegliato non disponibile: seleziona l’Art e completa il turno senza essere colpito.';
+      aggiungiLog(risultato);
+      notifyDiceResultChanged();
+      return;
+    }
     if (!targetArt.openAttiva) {
+      final required = int.tryParse(
+        RegExp(
+              r'Richiede livello\s+(\d+)',
+              caseSensitive: false,
+            ).firstMatch(targetArt.openDescription)?.group(1) ??
+            '',
+      );
+      if (required != null && leggiNumero(livelloController) < required) {
+        risultato = 'Apertura bloccata: richiede livello $required.';
+        aggiungiLog(risultato);
+        notifyDiceResultChanged();
+        return;
+      }
       final blockedCooldowns = <OculumAbilityCooldown>[
         ?targetArt.openDescriptionCooldown,
         if (!targetArt.monsterOpenSkill) ?targetArt.openSkillCooldown,
@@ -8946,7 +9343,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         return;
       }
     }
-    final activationCost = artUseCost(oculumArtActivationCost);
+    final activationCost = oculumRecognizedArtKind(targetArt) == 'emblem'
+        ? 0
+        : artUseCost(oculumArtActivationCost);
     if (artOpenSbloccata(targetArt) && !targetArt.openAttiva) {
       ensureArtIntegrityValue(artIndex);
       if (!oculumArtCanActivate(
@@ -8959,6 +9358,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         );
         aggiungiLog(risultato);
         notifyDiceResultChanged();
+        return;
+      }
+    }
+    if (!targetArt.openAttiva &&
+        artOpenSbloccata(targetArt) &&
+        targetArt.descrizione.startsWith('Art del ')) {
+      if (!await resolveBalancedOpen(targetArt, activation: true)) return;
+      if (!mounted ||
+          artIndex >= arti.length ||
+          !identical(arti[artIndex], targetArt)) {
         return;
       }
     }
@@ -9040,7 +9449,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     if (!consumedIntegrity) programmaSalvataggio();
   }
 
-  void usaSkillOpenMostro(int artIndex) {
+  Future<void> usaSkillOpenMostro(int artIndex) async {
     if (artIndex < 0 || artIndex >= arti.length) return;
     final art = arti[artIndex];
     if (!art.monsterOpenSkill ||
@@ -9051,13 +9460,73 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
     final cooldown = art.openSkillCooldown;
     if (cooldown != null && !cooldown.ready) return;
+    if (art.descrizione.startsWith('Art del ')) {
+      await resolveBalancedOpen(art, activation: false);
+      return;
+    }
+    final sourceTag = sheetTagAt(schedaCorrente);
+    final candidates = masterPartyIndexes()
+        .where((index) => index != schedaCorrente)
+        .toList();
+    int? target;
+    if ((modalitaMaster || isMasterHost || realtimeIsMasterRole) &&
+        candidates.isNotEmpty) {
+      target = await showDialog<int>(
+        context: context,
+        builder: (context) => SimpleDialog(
+          title: const Text('Bersaglio della Skill Open'),
+          children: [
+            for (final index in candidates)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(context, index),
+                child: Text(nomeSchedaPersonaggio(index)),
+              ),
+          ],
+        ),
+      );
+      if (target == null) return;
+    }
+    if (!mounted ||
+        sheetTagAt(schedaCorrente) != sourceTag ||
+        artIndex >= arti.length ||
+        !identical(arti[artIndex], art) ||
+        !art.openAttiva ||
+        (cooldown != null && !cooldown.ready)) {
+      return;
+    }
+    final type = tipoSchedaController.text.toLowerCase();
+    final authoredFaces = art.descrizione.startsWith('Art del ')
+        ? int.tryParse(
+            RegExp(
+                  r'1d(\d+)',
+                  caseSensitive: false,
+                ).firstMatch(art.openSkill)?.group(1) ??
+                '',
+          )
+        : null;
+    final faces =
+        authoredFaces ??
+        (60 +
+                max(0, leggiNumero(livelloController)) ~/ 2 +
+                max(0, leggiNumero(gradoController)) * 3 +
+                (type.contains('mini')
+                    ? 15
+                    : type.contains('boss')
+                    ? 30
+                    : 0))
+            .clamp(60, 120);
+    final roll = Random.secure().nextInt(faces) + 1;
+    final attack = authoredFaces != null ? 0 : dannoTotale();
+    final damage = roll + attack;
+    if (target != null) applyMasterEnemyQuickHpAction(target, damage: damage);
     setState(() {
       cooldown?.activate();
       final messages = applyStructuredEffectsOnActivation(
         art.openSkillEffects,
         source: '${artOpenDisplayName(art, artIndex)} · Skill Open',
       );
-      risultato = '${art.openSkill}\n${messages.join('\n')}';
+      risultato =
+          '${art.openSkill}\nSkill Open: 1d$faces = $roll + Attacco $attack = $damage danni.\n${messages.join('\n')}';
       aggiungiLog(risultato);
       invalidateDerivedDataCaches();
     });
@@ -9687,7 +10156,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       final skill = art.skills[i];
       final newLevel = artSkillBonusLevel(skill);
       final diff = newLevel - oldLevels[i];
-      if (diff != 0 && art.sbloccata) {
+      if (diff != 0 && art.sbloccata && art.inUso) {
         applicaBonusArtSkillAttuali(skill, diff);
         rimarginaHpDaAumentoResilienza(
           artSkillQuickResilienzaBonusAtLevel(skill, newLevel) -
@@ -9808,7 +10277,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               fieldKey: ValueKey('art_${artIndex}_name'),
               label: t('Nome Art', 'Art Name'),
               initialValue: art.nome,
-              onChanged: (value) => art.nome = value,
+              liveRefresh: true,
+              onChanged: (value) {
+                art.nome = value;
+                invalidateDerivedDataCaches();
+              },
             ),
             const SizedBox(height: 12),
             campoModello(
@@ -9854,6 +10327,24 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       'Soglia Fato: questa Skill crea il terzo Titolo del Fato quando arriva al livello 3.',
       'Fate threshold: this Skill creates the third Fate Title when it reaches level 3.',
     );
+  }
+
+  void aggiornaCostoAutomaticoArtSkill(
+    int artIndex,
+    int skillIndex,
+    int level,
+    bool enabled,
+  ) {
+    final skill = arti[artIndex].skills[skillIndex];
+    skill.oculumLimitiManualiPerLivello[level - 1] = !enabled;
+    if (enabled) {
+      skill.aggiornaLimitiOculumDalTestoPerLivello(
+        level,
+        skill.testoEvoluzione(level),
+      );
+    }
+    notifyArtSkillUiChanged(artIndex, skillIndex);
+    programmaSalvataggio();
   }
 
   void aggiornaTestoEvoluzioneArtSkill(
@@ -10012,7 +10503,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final displayedOculumMaximum = skill.oculumMassimoPerLivello(
       displayedOculumLevel,
     );
-    final displayedCostResource = skill.risorsaCostoPerLivello(
+    final displayedCostResource = effectiveArtCostResource(
+      art,
+      skill,
       displayedOculumLevel,
     );
     final displayedCostResourceLabel = oculumArtSkillCostResourceLabel(
@@ -10191,6 +10684,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 textFieldKey: ValueKey(
                   'art_${artIndex}_skill_${skillIndex}_evo_1',
                 ),
+                automaticCost: !skill.oculumLimitiManualiPerLivello[0],
+                onAutomaticCostChanged: (value) =>
+                    aggiornaCostoAutomaticoArtSkill(
+                      artIndex,
+                      skillIndex,
+                      1,
+                      value,
+                    ),
                 oculumMinimum: skill.oculumMinimoPerLivello(1),
                 oculumMaximum: skill.oculumMassimoPerLivello(1),
                 onChanged: (value) => aggiornaTestoEvoluzioneArtSkill(
@@ -10219,7 +10720,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       1,
                       value,
                     ),
-                costResource: skill.risorsaCostoPerLivello(1),
+                costResource: effectiveArtCostResource(art, skill, 1),
                 onCostResourceChanged: (value) => aggiornaRisorsaCostoArtSkill(
                   artIndex,
                   skillIndex,
@@ -10250,6 +10751,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 textFieldKey: ValueKey(
                   'art_${artIndex}_skill_${skillIndex}_evo_2',
                 ),
+                automaticCost: !skill.oculumLimitiManualiPerLivello[1],
+                onAutomaticCostChanged: (value) =>
+                    aggiornaCostoAutomaticoArtSkill(
+                      artIndex,
+                      skillIndex,
+                      2,
+                      value,
+                    ),
                 oculumMinimum: skill.oculumMinimoPerLivello(2),
                 oculumMaximum: skill.oculumMassimoPerLivello(2),
                 onChanged: (value) => aggiornaTestoEvoluzioneArtSkill(
@@ -10278,7 +10787,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       2,
                       value,
                     ),
-                costResource: skill.risorsaCostoPerLivello(2),
+                costResource: effectiveArtCostResource(art, skill, 2),
                 onCostResourceChanged: (value) => aggiornaRisorsaCostoArtSkill(
                   artIndex,
                   skillIndex,
@@ -10309,6 +10818,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 textFieldKey: ValueKey(
                   'art_${artIndex}_skill_${skillIndex}_evo_3',
                 ),
+                automaticCost: !skill.oculumLimitiManualiPerLivello[2],
+                onAutomaticCostChanged: (value) =>
+                    aggiornaCostoAutomaticoArtSkill(
+                      artIndex,
+                      skillIndex,
+                      3,
+                      value,
+                    ),
                 oculumMinimum: skill.oculumMinimoPerLivello(3),
                 oculumMaximum: skill.oculumMassimoPerLivello(3),
                 onChanged: (value) => aggiornaTestoEvoluzioneArtSkill(
@@ -10337,7 +10854,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       3,
                       value,
                     ),
-                costResource: skill.risorsaCostoPerLivello(3),
+                costResource: effectiveArtCostResource(art, skill, 3),
                 onCostResourceChanged: (value) => aggiornaRisorsaCostoArtSkill(
                   artIndex,
                   skillIndex,
@@ -10369,6 +10886,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   textFieldKey: ValueKey(
                     'art_${artIndex}_skill_${skillIndex}_evo_4',
                   ),
+                  automaticCost: !skill.oculumLimitiManualiPerLivello[3],
+                  onAutomaticCostChanged: (value) =>
+                      aggiornaCostoAutomaticoArtSkill(
+                        artIndex,
+                        skillIndex,
+                        4,
+                        value,
+                      ),
                   oculumMinimum: skill.oculumMinimoPerLivello(4),
                   oculumMaximum: skill.oculumMassimoPerLivello(4),
                   onChanged: (value) => aggiornaTestoEvoluzioneArtSkill(
@@ -10399,7 +10924,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         4,
                         value,
                       ),
-                  costResource: skill.risorsaCostoPerLivello(4),
+                  costResource: effectiveArtCostResource(art, skill, 4),
                   onCostResourceChanged: (value) =>
                       aggiornaRisorsaCostoArtSkill(
                         artIndex,
@@ -10431,6 +10956,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   textFieldKey: ValueKey(
                     'art_${artIndex}_skill_${skillIndex}_evo_5',
                   ),
+                  automaticCost: !skill.oculumLimitiManualiPerLivello[4],
+                  onAutomaticCostChanged: (value) =>
+                      aggiornaCostoAutomaticoArtSkill(
+                        artIndex,
+                        skillIndex,
+                        5,
+                        value,
+                      ),
                   oculumMinimum: skill.oculumMinimoPerLivello(5),
                   oculumMaximum: skill.oculumMassimoPerLivello(5),
                   onChanged: (value) => aggiornaTestoEvoluzioneArtSkill(
@@ -10461,7 +10994,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         5,
                         value,
                       ),
-                  costResource: skill.risorsaCostoPerLivello(5),
+                  costResource: effectiveArtCostResource(art, skill, 5),
                   onCostResourceChanged: (value) =>
                       aggiornaRisorsaCostoArtSkill(
                         artIndex,
@@ -10574,8 +11107,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       padding: const EdgeInsets.all(12),
       child: smallInfoText(
         t(
-          'Tre Art sbloccabili, con nome, tipo, descrizione e Skill/Forme evolutive come nella vecchia sezione Forme.',
-          'Three unlockable Arts, with name, type, description and evolving Skills/Forms like the old Forms section.',
+          'Art in uso e Art incorporate. Il tipo riconosciuto determina cambio, costi e bonus; le descrizioni originali restano modificabili.',
+          'Active and incorporated Arts. Recognized type determines switching, costs and bonuses; original descriptions remain editable.',
         ),
         color: tertiaryColor,
       ),
@@ -10652,7 +11185,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         artSummaryStrip(),
         artOverviewPanel(),
         for (int artIndex = 0; artIndex < arti.length; artIndex++)
-          artDashboardPanel(artIndex),
+          if (!arti[artIndex].incorporata) artDashboardPanel(artIndex),
+        artLoadoutPanel(),
       ],
     );
   }

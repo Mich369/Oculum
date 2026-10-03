@@ -6,6 +6,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
   bool removeActiveStructuredEffectsForSourcePrefix(String rawPrefix) {
     final prefix = rawPrefix.trim();
     if (prefix.isEmpty) return false;
+    final hpBeforeBuffRemoval = hpCorrenti();
     final before = activeStructuredEffects.length;
     activeStructuredEffects.removeWhere((effect) {
       final source = '${effect['source'] ?? ''}'.trim();
@@ -25,8 +26,17 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
       if (!sottoStress) stressStatConsumptionProgress.clear();
     }
     invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+    preserveLivingHpAfterBuffRemoval(hpBeforeBuffRemoval);
     scheduleHiddenEyeDerivedCardsRefresh();
     return true;
+  }
+
+  void preserveLivingHpAfterBuffRemoval(int hpBefore) {
+    if (hpBefore <= 0) return;
+    currentHpController.text = max(
+      1,
+      min(leggiNumero(currentHpController), maxHp()),
+    ).toString();
   }
 
   String normalizedStructuredTarget(String raw) {
@@ -85,7 +95,8 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
   }
 
   bool tickActiveStructuredEffects(String unit) {
-    final normalizedUnit = oculumNormalizeText(unit);
+    final hpBeforeBuffRemoval = hpCorrenti();
+    final normalizedUnit = oculumTurnUnit(unit);
     var changed = false;
     final hadTimedStressEffect = activeStructuredEffects.any(
       (effect) =>
@@ -93,7 +104,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           '${effect['target'] ?? ''}' == 'sotto_stress',
     );
     for (final effect in activeStructuredEffects) {
-      if (oculumNormalizeText('${effect['unit'] ?? ''}') != normalizedUnit) {
+      if (oculumTurnUnit('${effect['unit'] ?? ''}') != normalizedUnit) {
         continue;
       }
       final remaining = readIntValue(effect['remaining']);
@@ -139,6 +150,14 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     }
     if (changed) {
       invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+      preserveLivingHpAfterBuffRemoval(hpBeforeBuffRemoval);
+      if ((statoForzaAttivo == 'ricordo_vitale' ||
+              statoForzaAttivo == 'duecento_percento') &&
+          !activeStructuredEffects.any(
+            (e) => '${e['source']}'.startsWith('Stato di Forza:'),
+          )) {
+        terminaStatoForzaAttivo(applicaEsitoEsplosione: false);
+      }
       scheduleHiddenEyeDerivedCardsRefresh();
     }
     return changed;
@@ -387,7 +406,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
   String activeStructuredEffectTiming(Map<String, dynamic> effect) {
     final frequency = oculumStructuredEffectFrequency(effect['frequency']);
     final remaining = readIntValue(effect['remaining']);
-    final unit = '${effect['unit'] ?? 'turni'}';
+    final unit = oculumTurnUnit('${effect['unit'] ?? 'turni'}');
     if (frequency > 0) {
       final elapsed = max(0, readIntValue(effect['frequencyElapsed']));
       final untilNext = max(1, frequency - elapsed);

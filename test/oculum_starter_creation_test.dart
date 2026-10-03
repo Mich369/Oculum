@@ -4,6 +4,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('tutorial requirements belong to Master without altering preset powers', () {
+    final original = oculumStarterWaterArt();
+    final guided = oculumStarterArtForMaster(original);
+    expect(guided.descrizione, startsWith('[Richiede: ???]'));
+    expect(guided.openDescription, startsWith('[Richiede: ???]'));
+    for (var i = 0; i < guided.skills.length; i++) {
+      expect(guided.skills[i].evo1, startsWith('[Richiede: ???]'));
+      expect(guided.skills[i].evo2, startsWith('[Richiede: ???]'));
+      expect(guided.skills[i].evo3, startsWith('[Richiede: ???]'));
+      expect(guided.skills[i].oculumMinimiPerLivello, original.skills[i].oculumMinimiPerLivello);
+    }
+    expect(original.descrizione, isNot(startsWith('[Richiede: ???]')));
+  });
   test(
     'skipping keeps all nine points; grant and reload never duplicate progression',
     () {
@@ -80,8 +93,8 @@ void main() {
   });
   test('monster rank changes stat points earned per level', () {
     expect(oculumMonsterStatPointsPerLevel('Mostro'), 9);
-    expect(oculumMonsterStatPointsPerLevel('Mostro Mini Boss'), 12);
-    expect(oculumMonsterStatPointsPerLevel('Mostro Boss'), 18);
+    expect(oculumMonsterStatPointsPerLevel('Mostro Mini Boss'), 11);
+    expect(oculumMonsterStatPointsPerLevel('Mostro Boss'), 13);
   });
 
   test('monster creation counter includes rank points and grade points', () {
@@ -95,7 +108,7 @@ void main() {
         materia: 40,
         oculum: 20,
       ),
-      25,
+      0,
     );
     expect(
       oculumMonsterMissingStatPoints(
@@ -107,7 +120,7 @@ void main() {
         materia: 5,
         oculum: 0,
       ),
-      12,
+      8,
     );
   });
 

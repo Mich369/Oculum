@@ -1,5 +1,6 @@
 part of '../../main.dart';
 
+
 const oculumStatGemNames = <String, String>{
   'resilienza': 'Gemma di Resilienza',
   'volonta': 'Gemma di Volontà',
@@ -124,6 +125,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (merchantStockSessionId == merchantRuntimeSessionId &&
         merchantStock.isNotEmpty) {
       updateMerchantGemOffers();
+      ensureMerchantFoodOffers();
       return merchantStock;
     }
     final random = Random(
@@ -296,7 +298,69 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       });
     }
     merchantStockSessionId = merchantRuntimeSessionId;
+    ensureMerchantFoodOffers();
     return merchantStock;
+  }
+
+  void ensureMerchantFoodOffers() {
+    const foods = [
+      {
+        'id': 'food_forest_demon',
+        'name': 'Carne di Forest Demon',
+        'cost': 12,
+        'volonta': 2,
+        'materia': 1,
+      },
+      {
+        'id': 'food_mammuth',
+        'name': 'Carne cotta di Mammuth',
+        'cost': 15,
+        'resilienza': 2,
+        'materia': 1,
+      },
+      {
+        'id': 'food_patalpa',
+        'name': 'Patalpa Dolce',
+        'cost': 10,
+        'resilienza': 1,
+        'volonta': 1,
+        'materia': 1,
+        'oculum': 1,
+      },
+      {
+        'id': 'herb_lunar',
+        'name': 'Erba Lunare',
+        'cost': 8,
+        'oculum': 2,
+        'volonta': 1,
+      },
+      {
+        'id': 'herb_iron',
+        'name': 'Erba di Ferro',
+        'cost': 8,
+        'resilienza': 2,
+        'materia': 1,
+      },
+      {
+        'id': 'alcohol_ash',
+        'name': 'Liquore di Cenere',
+        'cost': 6,
+        'volonta': -2,
+        'materia': 1,
+        'oculum': 1,
+        'alcohol': true,
+      },
+    ];
+    final present = merchantStock.map((offer) => offer['id']).toSet();
+    for (final food in foods) {
+      if (present.contains(food['id'])) continue;
+      merchantStock.add({
+        ...food,
+        'kind': 'food',
+        'desc':
+            '${food['alcohol'] == true ? 'Alcolico: ogni dose somma il malus di Volontà e i bonus.' : 'Cibo o erba magica consumabile.'} Bonus fino al prossimo riposo. ${['resilienza', 'volonta', 'materia', 'oculum'].where((key) => food.containsKey(key)).map((key) => '$key ${readIntValue(food[key]) >= 0 ? '+' : ''}${food[key]}').join(', ')}.',
+      });
+    }
   }
 
   String merchantOfferDescription(Map<String, dynamic> offer) {
@@ -629,6 +693,21 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     String titleType = '',
   }) {
     final kind = '${offer['kind'] ?? ''}';
+    if (kind == 'food') {
+      return InventoryItem(
+        nome: '${offer['name']}',
+        peso: .25,
+        quantita: 1,
+        note: '${offer['desc']}',
+        monsterLoot: {
+          'food': {
+            for (final key in ['resilienza', 'volonta', 'materia', 'oculum'])
+              key: readIntValue(offer[key]),
+            'alcohol': offer['alcohol'] == true,
+          },
+        },
+      );
+    }
     if (kind == 'stat_gem') {
       final stat = '${offer['stat']}';
       if (!oculumStatGemNames.containsKey(stat)) {
@@ -757,6 +836,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool isMerchantConsumable(InventoryItem item) =>
+      item.monsterLoot['food'] is Map ||
       oculumStatGemNames.containsKey(item.statGemStat) ||
       const <String>{
         'Vitalium Grezzo',
@@ -770,6 +850,27 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (!inventario.contains(item) ||
         !isMerchantConsumable(item) ||
         item.quantita <= 0) {
+      return;
+    }
+    if (item.monsterLoot['food'] is Map) {
+      final food = item.monsterLoot['food'] as Map;
+      // ignore: invalid_use_of_protected_member
+      setState(() {
+        tempResilienza += readIntValue(food['resilienza']);
+        tempVolonta += readIntValue(food['volonta']);
+        tempMateria += readIntValue(food['materia']);
+        tempOculum += readIntValue(food['oculum']);
+        for (final key in ['resilienza', 'volonta', 'materia', 'oculum']) {
+          consumedFoodBonuses[key] = (consumedFoodBonuses[key] ?? 0) + readIntValue(food[key]);
+        }
+        item.quantita--;
+        if (item.quantita <= 0) inventario.remove(item);
+        invalidateDerivedDataCaches();
+        risultato =
+            '${item.nome}: bonus consumabile applicato; dura fino al prossimo riposo.';
+        aggiungiLog(risultato);
+      });
+      programmaSalvataggio();
       return;
     }
     if (oculumStatGemNames.containsKey(item.statGemStat)) {

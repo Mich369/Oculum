@@ -747,14 +747,91 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
     );
   }
 
-  void learnRuneBookForSheet() {
+  Future<void> learnRuneBookForSheet() async {
+    final currentArt = ensureRuneArtOnSheet();
+    final options = runeWordsForArt(currentArt);
+    final previousKnown = runeKnownWordSet(currentArt);
+    final chosen = <String>[];
+    bool validChoice() {
+      if (chosen.length != runeArtWordsPerBook) return false;
+      final known = {...previousKnown};
+      for (final id in chosen) {
+        final word = options.firstWhere((word) => word.id == id);
+        if (!runeArtCanLearnWordFromKnown(known, word)) return false;
+        known.add(id);
+      }
+      return true;
+    }
+
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, update) {
+          final selectableKnown = {...previousKnown, ...chosen};
+          return AlertDialog(
+            title: Text(
+              'Scegli $runeArtWordsPerBook parole · ${chosen.length}/$runeArtWordsPerBook',
+            ),
+            content: SizedBox(
+              width: 520,
+              height: 420,
+              child: ListView(
+                children: [
+                  const Text(
+                    'Le parole obbligatorie restano note. Intensità e Durata si apprendono in ordine; le altre parole le scegli tu.',
+                  ),
+                  for (final word in options.where(
+                    (word) => !previousKnown.contains(word.id),
+                  ))
+                    CheckboxListTile(
+                      title: Text(runeWordLabel(word)),
+                      subtitle: Text(runeWordEffect(word)),
+                      value: chosen.contains(word.id),
+                      onChanged:
+                          chosen.contains(word.id) ||
+                              chosen.length < runeArtWordsPerBook &&
+                                  runeArtCanLearnWordFromKnown(
+                                    selectableKnown,
+                                    word,
+                                  )
+                          ? (value) => update(() {
+                              value == true
+                                  ? chosen.add(word.id)
+                                  : chosen.remove(word.id);
+                            })
+                          : null,
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Annulla'),
+              ),
+              FilledButton(
+                onPressed: validChoice()
+                    ? () => Navigator.pop(context, true)
+                    : null,
+                child: const Text('Apprendi le parole'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    if (approved != true ||
+        !mounted ||
+        !arti.contains(currentArt) ||
+        !validChoice()) {
+      return;
+    }
     var bookConsumed = false;
     refreshOculumHome(() {
-      final art = ensureRuneArtOnSheet();
-      final learned = runeArtBookLearningPlan(
-        words: runeWordsForArt(art),
-        knownWordIds: runeKnownWordSet(art),
-      );
+      final art = currentArt;
+      final learned = [
+        for (final id in chosen) options.firstWhere((word) => word.id == id),
+      ];
       if (learned.length < runeArtWordsPerBook) {
         risultato = t(
           'Libro Runico non consumato: servono sei parole nuove disponibili.',

@@ -228,7 +228,7 @@ extension _OculumCampaigns on _OculumHomePageState {
       campaign['masterInitiativePublished'],
     );
     masterInitiativeRound = max(
-      1,
+      0,
       readIntValue(campaign['masterInitiativeRound'], fallback: 1),
     );
     masterInitiativeActiveIndex = max(

@@ -11,20 +11,28 @@ class OculumEyeMemoryPage extends StatefulWidget {
     required this.memory,
     required this.author,
     this.onRoleChanged,
+    this.onRoleChangedWithNote,
     this.roleHistory,
     this.onNameChanged,
     this.onShareKnowledge,
     this.nameHistory,
     this.knowledgeChanges,
+    this.eyeRole,
+    this.onEyeChanged,
   });
   final DiaryMemory memory;
   final String author;
   final Future<void> Function(DiaryEntity entity, String role)? onRoleChanged;
+  final Future<void> Function(DiaryEntity entity, String role, String note)?
+  onRoleChangedWithNote;
   final List<Map<String, dynamic>> Function(DiaryEntity entity)? roleHistory;
   final Future<void> Function(DiaryEntity entity, String name)? onNameChanged;
   final Future<void> Function(DiaryEntity entity)? onShareKnowledge;
   final List<Map<String, dynamic>> Function(DiaryEntity entity)? nameHistory;
   final Listenable? knowledgeChanges;
+  final String Function(DiaryEntity entity)? eyeRole;
+  final Future<void> Function(DiaryEntity entity, String? eyeRole)?
+  onEyeChanged;
   @override
   State<OculumEyeMemoryPage> createState() => _OculumEyeMemoryPageState();
 }
@@ -263,7 +271,10 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                 final e = matches[index];
                 return Center(
                   child: ActionChip(
-                    avatar: OculumMemoryEye(role: e.kind, size: 24),
+                    avatar: OculumMemoryEye(
+                      role: widget.eyeRole?.call(e) ?? e.kind,
+                      size: 24,
+                    ),
                     label: Text(e.name),
                     onPressed: () => setState(() {
                       selected = e.id;
@@ -284,7 +295,48 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                   '${center.name} · ${diaryEditableRoles[center.kind] ?? kinds[center.kind] ?? center.kind}',
                   style: const TextStyle(color: gold),
                 ),
-                if (widget.onRoleChanged != null &&
+                if (widget.onEyeChanged != null &&
+                    center.kind != 'campaign' &&
+                    center.kind != 'diary')
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.visibility_outlined),
+                    label: const Text('Scegli occhio'),
+                    onPressed: () async {
+                      final choice = await showDialog<String>(
+                        context: context,
+                        builder: (context) => SimpleDialog(
+                          title: Text('Occhio di ${center.name}'),
+                          children: [
+                            for (final eye in diaryEyeChoices.entries)
+                              SimpleDialogOption(
+                                onPressed: () =>
+                                    Navigator.pop(context, eye.key),
+                                child: Row(
+                                  children: [
+                                    OculumMemoryEye(role: eye.key, size: 40),
+                                    const SizedBox(width: 12),
+                                    Expanded(child: Text(eye.value)),
+                                  ],
+                                ),
+                              ),
+                            SimpleDialogOption(
+                              onPressed: () =>
+                                  Navigator.pop(context, 'automatic'),
+                              child: const Text('Automatico dal ruolo'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (choice == null || !mounted) return;
+                      await widget.onEyeChanged!(
+                        center,
+                        choice == 'automatic' ? null : choice,
+                      );
+                      if (mounted) setState(() {});
+                    },
+                  ),
+                if ((widget.onRoleChanged != null ||
+                        widget.onRoleChangedWithNote != null) &&
                     center.kind != 'campaign' &&
                     center.kind != 'diary')
                   OutlinedButton.icon(
@@ -308,7 +360,60 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                         ),
                       );
                       if (role == null || role == center.kind) return;
-                      await widget.onRoleChanged!(center, role);
+                      if (!mounted || !context.mounted) return;
+                      if (widget.onRoleChangedWithNote != null) {
+                        var draft = '';
+                        final note = await showDialog<String>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Nota del cambiamento'),
+                            content: SizedBox(
+                              width: 480,
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${center.name}: ${diaryEditableRoles[center.kind] ?? center.kind} → ${diaryEditableRoles[role] ?? role}',
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TextFormField(
+                                      minLines: 3,
+                                      maxLines: 6,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Nota facoltativa',
+                                        hintText:
+                                            'Ucciso da [[Hoshy]] nel [[Bosco Nero]].',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      onChanged: (value) => draft = value,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'Nomi conosciuti e collegamenti [[Nome]] creano legami con questa nota come fonte. Per indicare chi lo ha ucciso, scrivi «Ucciso da Nome». La nota resta nella cronologia dell’Occhio; il Diario originale resta intatto.',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Annulla'),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.pop(context, draft),
+                                child: const Text('Conferma cambiamento'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (note == null || !mounted) return;
+                        await widget.onRoleChangedWithNote!(center, role, note);
+                      } else {
+                        await widget.onRoleChanged!(center, role);
+                      }
                       if (!mounted) return;
                       setState(() {
                         _matchingEntities = null;
@@ -397,7 +502,14 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                       title: Text(
                         '${diaryEditableRoles[change['from']] ?? change['from']} → ${diaryEditableRoles[change['to']] ?? change['to']}',
                       ),
-                      subtitle: Text('${change['at'] ?? ''}'),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${change['at'] ?? ''}'),
+                          if ('${change['note'] ?? ''}'.isNotEmpty)
+                            SelectableText('${change['note']}'),
+                        ],
+                      ),
                     ),
                 ],
               ),
@@ -489,7 +601,11 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                                   child: Column(
                                     children: [
                                       OculumMemoryEye(
-                                        role: memory.entities[entry.key]!.kind,
+                                        role:
+                                            widget.eyeRole?.call(
+                                              memory.entities[entry.key]!,
+                                            ) ??
+                                            memory.entities[entry.key]!.kind,
                                         size:
                                             (entry.key == selected
                                                 ? 84.0

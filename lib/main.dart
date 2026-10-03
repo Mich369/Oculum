@@ -8,6 +8,7 @@ import 'dart:ui' show FrameTiming;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'widgets/oculum_living_seal.dart';
 import 'widgets/oculum_memory_eye.dart';
 import 'package:flutter/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -25,6 +26,10 @@ import 'package:webview_flutter/webview_flutter.dart' as mobile_webview;
 import 'package:webview_windows/webview_windows.dart' as windows_webview;
 
 import 'services/oculum_auth_service.dart';
+import 'services/oculum_progression_surge.dart';
+import 'services/oculum_blind_spot.dart';
+import 'services/oculum_fate_pact.dart';
+import 'services/oculum_memory_inspiration.dart';
 import 'services/oculum_auth_ui.dart';
 import 'services/oculum_cloud_save_service.dart';
 import 'services/oculum_realtime_service.dart';
@@ -37,6 +42,11 @@ import 'widgets/oculum_diary_context_menu.dart';
 import 'pages/oculum_eye_memory_page.dart';
 import 'widgets/oculum_bottom_nav.dart';
 import 'widgets/oculum_desktop_top_menu.dart';
+import 'widgets/oculum_campaign_background.dart';
+import 'widgets/oculum_encounter_stage.dart';
+import 'widgets/oculum_reference_art.dart';
+import 'widgets/oculum_reference_frame.dart';
+import 'services/oculum_encounter_visibility.dart';
 import 'widgets/oculum_quick_edit_eye.dart';
 import 'widgets/oculum_monster_picker.dart';
 import 'pages/oculum_dungeon/monster_book.dart';
@@ -69,6 +79,9 @@ part 'src/main/oculum_home_image_cache.dart';
 part 'src/main/oculum_home_combat_progression.dart';
 part 'src/main/oculum_home_resources_rest_titles_data.dart';
 part 'src/main/oculum_design_system.dart';
+part 'src/main/oculum_reference_sheet.dart';
+part 'src/main/oculum_reference_campaign.dart';
+part 'src/main/oculum_art_loadout.dart';
 part 'src/main/oculum_home_colors_and_base_widgets.dart';
 part 'src/main/oculum_home_sheet_page.dart';
 part 'src/main/oculum_home_secondary_pages.dart';
@@ -162,7 +175,10 @@ bool oculumSupabaseConfigurationIsValid({
   return validUrl && (validPublishableKey || validLegacyAnonKey);
 }
 
-Future<void> main() async {
+bool oculumDesktopRequestedAtLaunch = false;
+
+Future<void> main([List<String> arguments = const []]) async {
+  oculumDesktopRequestedAtLaunch = arguments.contains('--desktop');
   WidgetsFlutterBinding.ensureInitialized();
   if (oculumPerformanceHarness) {
     // Profile harness only: keeps automated stress tests away from real saves.
@@ -596,6 +612,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   static const int recipesPageIndex = 14;
   static const int quickConditionsPageIndex = 15;
   static const int fallenEyesPageIndex = 16;
+  static const int homePageIndex = 17;
 
   int paginaCorrente = 0;
   int schedaCorrente = 0;
@@ -1078,6 +1095,15 @@ class _OculumHomePageState extends State<OculumHomePage>
         manuscriptEditing = anchorId?.trim().isNotEmpty ?? false;
       }
       _prepareFunctionNavigation(anchorId);
+      if (page == 0) {
+        referenceRequestedAnchor = anchorId ?? '';
+        referenceSheetSection =
+            (anchorId?.startsWith('sheet_editable') == true ||
+                anchorId == 'sheet_stats' ||
+                anchorId == 'sheet_values')
+            ? 'statistics'
+            : 'general';
+      }
 
       if (manualIndex != null) {
         manualSectionIndex = manualIndex;
@@ -1161,10 +1187,12 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool datiCaricati = false;
   bool tutorialCompletato = false;
   bool rebirthato = false;
-  bool modalitaDesktop = false;
+  bool modalitaDesktop =
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
   bool modalitaVeloce = false;
   bool modalitaLeggera = false;
-  bool desktopSideMenuOpen = false;
+  bool desktopSideMenuOpen =
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
   bool manuscriptEditing = false;
   bool modalitaMaster = false;
   bool sceltaRuoloSessioneMostrata = false;
@@ -1300,6 +1328,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final scudoOculumController = TextEditingController(text: '0');
   final scudoOculumMaxController = TextEditingController(text: '0');
   final attaccoRapidoController = TextEditingController(text: '0');
+  final vcRapidoController = TextEditingController(text: '0');
   final cmRapidoController = TextEditingController(text: '0');
   final difesaRapidaController = TextEditingController(text: '0');
   final reazioniController = TextEditingController(text: '1');
@@ -1309,6 +1338,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   final buffMalusRapidiController = TextEditingController();
   final dannoSubitoController = TextEditingController();
   final dannoSubitoPercentController = TextEditingController();
+  String incomingDamageElement = '';
+  final Map<String, String> incomingDamagePresets = {};
+  int assignableSubtraitPoints = 0;
   final Map<String, String> dannoSubitoPercentPerTipo = <String, String>{};
   final dannoBonusScudoPercentController = TextEditingController(text: '0');
   final OculumDecodedImageCache decodedImageBase64Cache =
@@ -1409,6 +1441,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final recipeSearchController = TextEditingController();
 
   final quickSheetNameController = TextEditingController(text: '???');
+  final quickSheetElementController = TextEditingController();
   final quickSheetLevelController = TextEditingController(text: '0');
   final quickSheetGradeController = TextEditingController(text: '0');
   final quickSheetCountController = TextEditingController(text: '1');
@@ -1537,6 +1570,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final DiaryKnowledgeSync diaryKnowledgeSync = DiaryKnowledgeSync();
   final ValueNotifier<int> diaryKnowledgeRevision = ValueNotifier(0);
   DiaryMemory? openedEyeMemory;
+  OculumMemoryInspiration memoryInspiration = OculumMemoryInspiration();
+  final Map<String, Map<String, dynamic>> masterBlindSpots = {};
   Timer? diaryKnowledgeRetryTimer;
   bool diaryKnowledgeSending = false;
   Future<void>? diaryKnowledgeReceiving;
@@ -1766,6 +1801,23 @@ class _OculumHomePageState extends State<OculumHomePage>
   int volontaVitale = 0;
 
   int tempResilienza = 0;
+  OculumProgressionSurge progressionSurge = OculumProgressionSurge();
+  Map<String, int> consumedFoodBonuses = {};
+  bool realtimeDirtySheetsDrainRunning = false;
+  bool fatePactUsed = false;
+  bool showPageGuidance = true;
+  String referenceRequestedAnchor = '';
+  bool referenceOculumFlames = false;
+  String referenceSheetSection = 'general';
+  String referenceStoryTab = 'diaries';
+  bool referenceDetailRouteActive = false;
+  bool referenceDetailRouteQueued = false;
+  int manualHpMaximumAdjustment = 0;
+  int artSwitchActionDebt = 0;
+  int artSwitchReactionDebt = 0;
+  String campaignBackgroundMode = 'vertical';
+  InventoryItem? referenceSelectedItem;
+  final Map<String, Map<String, dynamic>> encounterPlayerIdentities = {};
   int tempVolonta = 0;
   int tempMateria = 0;
   int tempOculum = 0;
@@ -1867,11 +1919,14 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool mostraEditorSfondoBasso = false;
 
   bool usaBarraVita = true;
+  bool portraitShowEyeBehind = true;
+  String portraitEyeRole = '';
   String stileBarraVita = 'base_dinamica';
   String stileCarattereApp = 'leggibile';
   ThemeData? _cachedAppTypographyTheme;
   String _cachedAppTypographyStyle = '';
   int _cachedBaseThemeIdentity = 0;
+  int _cachedAppPaletteHash = 0;
   bool temiOldSchool = false;
   String nuovoDesignOculum = 'cattedrale';
   bool mostraDannoCuraScheda = true;
@@ -1945,13 +2000,15 @@ class _OculumHomePageState extends State<OculumHomePage>
   final List<Map<String, dynamic>> masterInitiativeTokens = [];
   final List<Map<String, dynamic>> masterInitiativeGroups = [];
   String selectedMasterInitiativeGroupId = 'encounter_1';
+  String realtimeSelectedEncounterId = '';
+  List<Map<String, dynamic>> realtimeEncounterSnapshots = [];
   final masterInitiativeNameController = TextEditingController();
   final masterInitiativeTypeController = TextEditingController(text: 'Mostro');
   final masterInitiativeBonusController = TextEditingController(text: '0');
   final masterInitiativeNotesController = TextEditingController();
   bool masterInitiativeManualOrder = false;
   bool masterInitiativePublished = false;
-  int masterInitiativeRound = 1;
+  int masterInitiativeRound = 0;
   int masterInitiativeActiveIndex = 0;
   int masterInitiativeManualCounter = 0;
   int playerReportedTurn = 0;
@@ -2024,6 +2081,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     'Ricette',
     'Condizioni veloci',
     'Occhi dei Caduti',
+    'Home',
   ];
 
   final List<String> pageNamesEn = [
@@ -2044,6 +2102,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     'Recipes',
     'Quick Conditions',
     'Fallen Eyes',
+    'Home',
   ];
 
   final List<DamageModifierOption> modificatoriDanno = [
@@ -2229,6 +2288,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   ];
 
   final List<OculumColorPreset> colorPresets = const [
+    ...oculumRestylePresets,
     OculumColorPreset(
       id: 'classic_reliquary',
       nameIt: 'Classic Oculum',
@@ -3257,6 +3317,7 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   List<int> visiblePageIndexes({bool includeSettings = true}) {
     final indexes = <int>[
+      if (referenceCampaignStyle) homePageIndex,
       0,
       1,
       quickConditionsPageIndex,
@@ -3431,7 +3492,26 @@ class _OculumHomePageState extends State<OculumHomePage>
 
     return KeyedSubtree(
       key: ValueKey<String>('page_ready_${currentSheetScrollId()}_$page'),
-      child: buildCurrentPage(page),
+      child: Column(
+        children: [
+          if (showPageGuidance && !oculusModActive) pageGuidancePanel(page),
+          Expanded(
+            child:
+                referenceCampaignStyle &&
+                    modalitaDesktop &&
+                    !phoneCompactUi &&
+                    {0, 1, 2, 3, 4, 5, 6, 7, 15, 16}.contains(page)
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      referenceSheetSideMenu(page),
+                      Expanded(child: buildCurrentPage(page)),
+                    ],
+                  )
+                : buildCurrentPage(page),
+          ),
+        ],
+      ),
     );
   }
 
@@ -3440,6 +3520,8 @@ class _OculumHomePageState extends State<OculumHomePage>
       return oculusModPage();
     }
     switch (page) {
+      case homePageIndex:
+        return referenceHomePage();
       case 0:
         return characterPage();
       case 1:
@@ -3455,9 +3537,13 @@ class _OculumHomePageState extends State<OculumHomePage>
       case 4:
         return skillsPage();
       case 5:
-        return backgroundAndSkillsPageEfficient();
+        return referenceCampaignStyle
+            ? referenceDiaryPage()
+            : backgroundAndSkillsPageEfficient();
       case 6:
-        return inventoryPageEfficient();
+        return referenceCampaignStyle
+            ? referenceInventoryPage()
+            : inventoryPageEfficient();
       case 7:
         return resourcesPage();
       case 8:
@@ -3640,6 +3726,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     scudoOculumController.dispose();
     scudoOculumMaxController.dispose();
     attaccoRapidoController.dispose();
+    vcRapidoController.dispose();
     cmRapidoController.dispose();
     difesaRapidaController.dispose();
     reazioniController.dispose();
@@ -3780,6 +3867,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     monsterBookSearchController.dispose();
 
     quickSheetNameController.dispose();
+    quickSheetElementController.dispose();
     quickSheetLevelController.dispose();
     quickSheetGradeController.dispose();
     quickSheetCountController.dispose();
@@ -3829,6 +3917,8 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   IconData desktopPageIcon(int page) {
     switch (page) {
+      case homePageIndex:
+        return Icons.home_outlined;
       case 0:
         return Icons.badge;
       case 1:
@@ -3886,12 +3976,18 @@ class _OculumHomePageState extends State<OculumHomePage>
     final tabletDesktop = viewportWidth < 1280;
     final menuWidth = expandedMenu
         ? tabletDesktop
-              ? 216.0
-              : 276.0
+              ? (referenceCampaignStyle ? 184.0 : 216.0)
+              : (referenceCampaignStyle ? 200.0 : 276.0)
         : 50.0;
     final menuPages = oculusModActive
         ? visiblePages
-        : <int>[...visiblePages, dicePageIndex];
+        : <int>[...visiblePages, dicePageIndex]
+              .where(
+                (page) =>
+                    !referenceCampaignStyle ||
+                    !{3, 5, 6, fallenEyesPageIndex}.contains(page),
+              )
+              .toList();
 
     return Row(
       children: [
@@ -3915,6 +4011,11 @@ class _OculumHomePageState extends State<OculumHomePage>
             top: false,
             child: Column(
               children: [
+                if (expandedMenu && referenceCampaignStyle)
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(14, 12, 14, 0),
+                    child: OculumReferenceArt(logo: true, height: 42),
+                  ),
                 Align(
                   alignment: expandedMenu
                       ? Alignment.centerRight
@@ -3965,25 +4066,36 @@ class _OculumHomePageState extends State<OculumHomePage>
                               dense: true,
                               visualDensity: VisualDensity.compact,
                               selected: safePage == page,
-                              selectedTileColor: tertiaryColor.withValues(
-                                alpha: 0.12,
-                              ),
+                              selectedTileColor: referenceCampaignStyle
+                                  ? const Color(0xff25161a)
+                                  : tertiaryColor.withValues(alpha: 0.12),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(
+                                  referenceCampaignStyle ? 3 : 10,
+                                ),
                               ),
                               leading: Icon(
                                 desktopPageIcon(page),
                                 color: page == safePage
-                                    ? tertiaryColor
+                                    ? (referenceCampaignStyle
+                                          ? const Color(0xffd5a29a)
+                                          : tertiaryColor)
                                     : primaryColor,
                                 size: 18,
                               ),
                               title: Text(
-                                cleanUiText(pageLabels[page]),
+                                cleanUiText(
+                                  referenceCampaignStyle &&
+                                          page == quickConditionsPageIndex
+                                      ? t('Condizioni', 'Conditions')
+                                      : pageLabels[page],
+                                ),
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: page == safePage
-                                      ? tertiaryColor
+                                      ? (referenceCampaignStyle
+                                            ? const Color(0xffd5a29a)
+                                            : tertiaryColor)
                                       : Colors.white,
                                   fontWeight: page == safePage
                                       ? FontWeight.bold
@@ -4192,6 +4304,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       'OCULUM — ${t('RICETTE', 'RECIPES')}',
       'OCULUM - ${t('CONDIZIONI VELOCI', 'QUICK CONDITIONS')}',
       'OCULUM - ${t('OCCHI DEI CADUTI', 'FALLEN EYES')}',
+      'OCULUM — HOME',
     ];
 
     final int safePage = paginaVisibileSicura(
@@ -4212,12 +4325,71 @@ class _OculumHomePageState extends State<OculumHomePage>
     };
     final inheritedTheme = Theme.of(context);
     final inheritedThemeIdentity = identityHashCode(inheritedTheme);
+    final paletteHash = Object.hash(
+      primaryColor,
+      secondaryColor,
+      tertiaryColor,
+      backgroundTopColor,
+      backgroundMidColor,
+      backgroundBottomColor,
+      modalitaLeggera,
+    );
     if (_cachedAppTypographyTheme == null ||
         _cachedAppTypographyStyle != stileCarattereApp ||
-        _cachedBaseThemeIdentity != inheritedThemeIdentity) {
+        _cachedBaseThemeIdentity != inheritedThemeIdentity ||
+        _cachedAppPaletteHash != paletteHash) {
       _cachedAppTypographyStyle = stileCarattereApp;
       _cachedBaseThemeIdentity = inheritedThemeIdentity;
+      _cachedAppPaletteHash = paletteHash;
       _cachedAppTypographyTheme = inheritedTheme.copyWith(
+        scaffoldBackgroundColor: backgroundBottomColor,
+        dividerColor: tertiaryColor.withValues(alpha: .25),
+        inputDecorationTheme: inheritedTheme.inputDecorationTheme.copyWith(
+          filled: true,
+          fillColor: backgroundMidColor,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: tertiaryColor.withValues(alpha: .35)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: tertiaryColor.withValues(alpha: .35)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: primaryColor, width: 1.5),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: readableOnTheme(
+              primaryColor,
+              background: backgroundMidColor,
+            ),
+            side: BorderSide(color: tertiaryColor.withValues(alpha: .55)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            minimumSize: const Size(44, 40),
+          ),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: tertiaryColor,
+            foregroundColor: oculumReadableThemeColor(
+              primaryColor,
+              tertiaryColor,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            minimumSize: const Size(44, 40),
+          ),
+        ),
         textTheme: inheritedTheme.textTheme.apply(fontFamily: appFontFamily),
         primaryTextTheme: inheritedTheme.primaryTextTheme.apply(
           fontFamily: appFontFamily,
@@ -4231,454 +4403,15 @@ class _OculumHomePageState extends State<OculumHomePage>
         bindings: <ShortcutActivator, VoidCallback>{
           const SingleActivator(LogicalKeyboardKey.keyF, control: true):
               openOculumGlobalSearch,
+          const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
+              openOculumGlobalSearch,
         },
-        child: Scaffold(
-          appBar: AppBar(
-            toolbarHeight: compactPhone ? 48 : null,
-            actionsIconTheme: IconThemeData(size: compactPhone ? 20 : 24),
-            centerTitle: true,
-            backgroundColor: const Color(0xFF080911),
-            elevation: 0,
-            title: ValueListenableBuilder<int>(
-              valueListenable: activeSheetSummaryRevision,
-              builder: (context, revision, child) => Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    cleanUiText(
-                      oculusModActive && safePage != settingsPageIndex
-                          ? 'OCULUS - ${t('SCHEDA LIBERA', 'FREE SHEET')}'
-                          : titles[safePage],
-                    ),
-                    style: TextStyle(
-                      color: safePage == 0 ? primaryColor : tertiaryColor,
-                      letterSpacing: 2.0,
-                      fontWeight: FontWeight.bold,
-                      fontSize: compactPhone ? 10.5 : 12,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    cleanUiText(
-                      '${schedaCorrente + 1}/${schedePersonaggio.isEmpty ? 1 : schedePersonaggio.length} • ${tipoSchedaController.text} • ${nomeSchedaPersonaggio(schedaCorrente)}',
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: tertiaryColor,
-                      fontSize: compactPhone ? 8.8 : 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.1,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            actions: [
-              if (!compactPhone && modalitaDesktop)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: OculumDesktopTopMenu(
-                    currentIndex: max(0, visiblePages.indexOf(safePage)),
-                    labels: visiblePages.map((i) => pageLabels[i]).toList(),
-                    onChanged: (index) {
-                      final page = visiblePages[index];
-                      vaiAllaFunzione(page: page, logTitle: pageLabels[page]);
-                    },
-                    primaryColor: primaryColor,
-                    tertiaryColor: tertiaryColor,
-                    searchLabel: t('Cerca pagina', 'Search page'),
-                    pageLabel: t('Cambia pagina', 'Switch page'),
-                  ),
-                ),
-              if (!oculusModActive)
-                OculumQuickEditEyeButton(
-                  sectionsBuilder: quickEditSections,
-                  primaryColor: primaryColor,
-                  secondaryColor: secondaryColor,
-                  tertiaryColor: tertiaryColor,
-                  title: t('Modifica rapida', 'Quick edit'),
-                  subtitle: t(
-                    'Modifica velocemente statistiche, HP, scudi e risorse senza scendere nella scheda.',
-                    'Quickly edit stats, HP, shields and resources without scrolling through the sheet.',
-                  ),
-                  onChanged: () {
-                    setState(() {
-                      aggiornaGradoAutomatico();
-                      risultato = t(
-                        'Valori rapidi aggiornati.',
-                        'Quick values updated.',
-                      );
-                      aggiungiLog(risultato);
-                    });
-
-                    programmaSalvataggio();
-                  },
-                ),
-              if (!compactPhone)
-                IconButton(
-                  tooltip: t('Annulla ultima modifica', 'Undo last change'),
-                  onPressed: annullaUltimaModifica,
-                  icon: Icon(
-                    Icons.undo,
-                    color: primaryColor,
-                    size: compactPhone ? 20 : 24,
-                  ),
-                ),
-              if (!compactPhone)
-                IconButton(
-                  tooltip: t('Torna avanti', 'Redo'),
-                  onPressed: ripristinaModificaAnnullata,
-                  icon: Icon(
-                    Icons.redo,
-                    color: tertiaryColor,
-                    size: compactPhone ? 20 : 24,
-                  ),
-                ),
-              IconButton(
-                tooltip: t('Cerca', 'Search'),
-                onPressed: mostraCerca,
-                icon: Icon(
-                  Icons.search,
-                  color: primaryColor,
-                  size: compactPhone ? 20 : 24,
-                ),
-              ),
-              if (compactPhone)
-                PopupMenuButton<String>(
-                  tooltip: t('Azioni', 'Actions'),
-                  color: const Color(0xFF10121A),
-                  icon: Icon(Icons.more_vert, color: primaryColor, size: 20),
-                  onSelected: (value) {
-                    if (value == 'dungeon') {
-                      _openDungeonMiniGame();
-                      return;
-                    }
-                    if (value == 'undo') {
-                      annullaUltimaModifica();
-                      return;
-                    }
-                    if (value == 'redo') {
-                      ripristinaModificaAnnullata();
-                      return;
-                    }
-                    if (value == 'settings') {
-                      vaiAllaFunzione(
-                        page: settingsPageIndex,
-                        anchorId: 'settings_root',
-                        logTitle: t('Impostazioni', 'Settings'),
-                      );
-                      return;
-                    }
-                    if (value == 'new_sheet') {
-                      if (paginaCorrente != onlinePageIndex ||
-                          realtimeCanBrowseOtherSheets) {
-                        creaNuovaSchedaPersonaggio();
-                      }
-                      return;
-                    }
-                    if (value == 'delete_sheet') {
-                      if (schedePersonaggio.length > 1 &&
-                          (paginaCorrente != onlinePageIndex ||
-                              realtimeCanBrowseOtherSheets)) {
-                        eliminaSchedaCorrente();
-                      }
-                      return;
-                    }
-                    if (value.startsWith('page_')) {
-                      final page = int.tryParse(value.substring(5));
-                      if (page == null) return;
-                      vaiAllaFunzione(page: page, logTitle: pageLabels[page]);
-                      return;
-                    }
-                    if (value.startsWith('sheet_')) {
-                      final index = int.tryParse(value.substring(6));
-                      if (index != null) cambiaSchedaPersonaggio(index);
-                    }
-                  },
-                  itemBuilder: (context) {
-                    final menuPages = oculusModActive
-                        ? visiblePages
-                        : <int>[...visiblePages, dicePageIndex];
-                    final totale = schedePersonaggio.isEmpty
-                        ? 1
-                        : schedePersonaggio.length;
-                    final canSeeOtherSheets =
-                        paginaCorrente != onlinePageIndex ||
-                        realtimeCanBrowseOtherSheets;
-                    final sheetIndexes = canSeeOtherSheets
-                        ? List<int>.generate(totale, (i) => i)
-                        : <int>[schedaCorrente.clamp(0, totale - 1).toInt()];
-
-                    return [
-                      PopupMenuItem<String>(
-                        value: 'dungeon',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.visibility,
-                              color: primaryColor,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(t('Cammino dell’Eroe', 'Hero’s Path')),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'undo',
-                        child: Text(
-                          t('Annulla ultima modifica', 'Undo last change'),
-                        ),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'redo',
-                        child: Text(t('Torna avanti', 'Redo')),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'settings',
-                        child: Text(t('Impostazioni', 'Settings')),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'new_sheet',
-                        child: Text(t('Nuova scheda', 'New sheet')),
-                      ),
-                      if (schedePersonaggio.length > 1 &&
-                          (paginaCorrente != onlinePageIndex ||
-                              realtimeCanBrowseOtherSheets))
-                        PopupMenuItem<String>(
-                          value: 'delete_sheet',
-                          child: Text(
-                            t(
-                              'Elimina scheda corrente',
-                              'Delete current sheet',
-                            ),
-                          ),
-                        ),
-                      const PopupMenuDivider(),
-                      PopupMenuItem<String>(
-                        enabled: false,
-                        child: Text(
-                          t('Pagine', 'Pages'),
-                          style: TextStyle(
-                            color: tertiaryColor,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                      for (final i in menuPages)
-                        PopupMenuItem<String>(
-                          value: 'page_$i',
-                          child: Row(
-                            children: [
-                              Icon(
-                                desktopPageIcon(i),
-                                color: i == safePage
-                                    ? tertiaryColor
-                                    : primaryColor,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  cleanUiText(pageLabels[i]),
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: i == safePage
-                                        ? tertiaryColor
-                                        : Colors.white,
-                                    fontWeight: i == safePage
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      const PopupMenuDivider(),
-                      PopupMenuItem<String>(
-                        enabled: false,
-                        child: Text(
-                          t('Schede', 'Sheets'),
-                          style: TextStyle(
-                            color: tertiaryColor,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                      for (final i in sheetIndexes)
-                        PopupMenuItem<String>(
-                          value: 'sheet_$i',
-                          child: Text(
-                            cleanUiText(
-                              '${i + 1}. ${tipoSchedaPersonaggio(i)} - ${nomeSchedaPersonaggio(i)}',
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: i == schedaCorrente
-                                  ? tertiaryColor
-                                  : Colors.white,
-                              fontWeight: i == schedaCorrente
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                    ];
-                  },
-                ),
-              if (!compactPhone)
-                TextButton.icon(
-                  key: const ValueKey('desktop_hero_path'),
-                  onPressed: _openDungeonMiniGame,
-                  icon: Icon(Icons.visibility, color: primaryColor),
-                  label: Text(t('Cammino dell’Eroe', 'Hero’s Path')),
-                ),
-              if (!compactPhone)
-                IconButton(
-                  tooltip: t('Impostazioni', 'Settings'),
-                  onPressed: () {
-                    vaiAllaFunzione(
-                      page: settingsPageIndex,
-                      anchorId: 'settings_root',
-                      logTitle: t('Impostazioni', 'Settings'),
-                    );
-                  },
-                  icon: Icon(
-                    Icons.settings,
-                    color: tertiaryColor,
-                    size: compactPhone ? 20 : 24,
-                  ),
-                ),
-              if (!compactPhone)
-                PopupMenuButton<int>(
-                  tooltip: t('Cambia pagina', 'Switch page'),
-                  color: const Color(0xFF10121A),
-                  icon: Icon(
-                    Icons.menu_open,
-                    color: primaryColor,
-                    size: compactPhone ? 20 : 24,
-                  ),
-                  onSelected: (index) {
-                    vaiAllaFunzione(page: index, logTitle: pageLabels[index]);
-                  },
-                  itemBuilder: (context) {
-                    final labels = pageLabels;
-                    final menuPages = oculusModActive
-                        ? visiblePages
-                        : <int>[...visiblePages, dicePageIndex];
-
-                    return [
-                      for (final i in menuPages)
-                        PopupMenuItem<int>(
-                          value: i,
-                          child: Text(
-                            cleanUiText(labels[i]),
-                            style: TextStyle(
-                              color: i == paginaCorrente
-                                  ? tertiaryColor
-                                  : Colors.white,
-                              fontWeight: i == paginaCorrente
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                    ];
-                  },
-                ),
-              if (!compactPhone)
-                IconButton(
-                  tooltip: t('Nuova scheda', 'New sheet'),
-                  onPressed:
-                      paginaCorrente == onlinePageIndex &&
-                          !realtimeCanBrowseOtherSheets
-                      ? null
-                      : () => creaNuovaSchedaPersonaggio(),
-                  icon: Icon(
-                    Icons.add_circle,
-                    color: tertiaryColor,
-                    size: compactPhone ? 20 : 24,
-                  ),
-                ),
-              if (!compactPhone)
-                PopupMenuButton<int>(
-                  tooltip: t('Cambia scheda', 'Switch sheet'),
-                  color: const Color(0xFF10121A),
-                  icon: Icon(
-                    Icons.groups,
-                    color: primaryColor,
-                    size: compactPhone ? 20 : 24,
-                  ),
-                  onSelected: cambiaSchedaPersonaggio,
-                  itemBuilder: (context) {
-                    final totale = schedePersonaggio.isEmpty
-                        ? 1
-                        : schedePersonaggio.length;
-                    final canSeeOtherSheets =
-                        paginaCorrente != onlinePageIndex ||
-                        realtimeCanBrowseOtherSheets;
-                    final indexes = canSeeOtherSheets
-                        ? List<int>.generate(totale, (i) => i)
-                        : <int>[schedaCorrente.clamp(0, totale - 1).toInt()];
-
-                    return [
-                      for (final i in indexes)
-                        PopupMenuItem<int>(
-                          value: i,
-                          child: Row(
-                            children: [
-                              Icon(
-                                i == schedaCorrente
-                                    ? Icons.visibility
-                                    : Icons.radio_button_unchecked,
-                                color: i == schedaCorrente
-                                    ? tertiaryColor
-                                    : Colors.grey,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  cleanUiText(
-                                    '${i + 1}. ${tipoSchedaPersonaggio(i)} — ${nomeSchedaPersonaggio(i)}',
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: i == schedaCorrente
-                                        ? tertiaryColor
-                                        : Colors.white,
-                                    fontWeight: i == schedaCorrente
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ];
-                  },
-                ),
-              if (!compactPhone &&
-                  schedePersonaggio.length > 1 &&
-                  (paginaCorrente != onlinePageIndex ||
-                      realtimeCanBrowseOtherSheets))
-                IconButton(
-                  tooltip: t('Elimina scheda corrente', 'Delete current sheet'),
-                  onPressed: eliminaSchedaCorrente,
-                  icon: Icon(
-                    Icons.delete_outline,
-                    color: Colors.redAccent,
-                    size: compactPhone ? 20 : 24,
-                  ),
-                ),
-            ],
-          ),
-          body: Stack(
-            children: [
-              Container(
+        child: Focus(
+          autofocus: true,
+          child: Scaffold(
+            appBar: AppBar(
+              toolbarHeight: compactPhone ? 48 : null,
+              flexibleSpace: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -4686,61 +4419,565 @@ class _OculumHomePageState extends State<OculumHomePage>
                       backgroundMidColor,
                       backgroundBottomColor,
                     ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
                   ),
                 ),
-                child: Stack(
+              ),
+              leading: Padding(
+                padding: EdgeInsets.only(
+                  left: compactPhone ? 5 : 9,
+                  top: compactPhone ? 6 : 8,
+                  bottom: compactPhone ? 6 : 8,
+                ),
+                child: OculumLivingSeal(
+                  pageLabel: cleanUiText(titles[safePage]),
+                  campaignLabel: cleanUiText(activeCampaignName()),
+                  sheetLabel: cleanUiText(
+                    nomeSchedaPersonaggio(schedaCorrente),
+                  ),
+                  entryCount: journalEntries.length,
+                  online: onlineDisponibile && !onlineCheckInCorso,
+                  compact: true,
+                  iconOnly: true,
+                  accent: primaryColor,
+                  secondary: tertiaryColor,
+                  onPressed: () => openEyeMemory(campaign: haPermessiMaster),
+                ),
+              ),
+              actionsIconTheme: IconThemeData(size: compactPhone ? 20 : 24),
+              centerTitle: true,
+              backgroundColor: backgroundTopColor,
+              elevation: 0,
+              title: ValueListenableBuilder<int>(
+                valueListenable: activeSheetSummaryRevision,
+                builder: (context, revision, child) => Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: oculumGraphicsEnabled.value
-                            ? RepaintBoundary(child: themeDecorationBackdrop())
-                            : const SizedBox.shrink(),
+                    Text(
+                      cleanUiText(
+                        oculusModActive && safePage != settingsPageIndex
+                            ? 'OCULUS - ${t('SCHEDA LIBERA', 'FREE SHEET')}'
+                            : titles[safePage],
+                      ),
+                      style: TextStyle(
+                        color: safePage == 0 ? primaryColor : tertiaryColor,
+                        letterSpacing: 2.0,
+                        fontWeight: FontWeight.bold,
+                        fontSize: compactPhone ? 10.5 : 12,
                       ),
                     ),
-                    desktopSideMenuShell(
-                      visiblePages: visiblePages,
-                      pageLabels: pageLabels,
-                      safePage: safePage,
-                      child: datiCaricati
-                          ? AnimatedSwitcher(
-                              duration: oculumGraphicsEnabled.value
-                                  ? const Duration(milliseconds: 160)
-                                  : Duration.zero,
-                              switchInCurve: Curves.easeOutCubic,
-                              switchOutCurve: Curves.easeInCubic,
-                              child: RepaintBoundary(
-                                key: ValueKey<String>(
-                                  'page_shell_${safePage}_${_isPagePreparedForDisplay(safePage)}',
-                                ),
-                                child: ValueListenableBuilder<int>(
-                                  valueListenable: inputUiRevision,
-                                  builder: (context, revision, child) =>
-                                      buildCurrentPageLazy(safePage),
-                                ),
-                              ),
-                            )
-                          : homeDataLoadingPlaceholder(),
+                    const SizedBox(height: 2),
+                    Text(
+                      cleanUiText(
+                        '${schedaCorrente + 1}/${schedePersonaggio.isEmpty ? 1 : schedePersonaggio.length} • ${tipoSchedaController.text} • ${nomeSchedaPersonaggio(schedaCorrente)}',
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: tertiaryColor,
+                        fontSize: compactPhone ? 8.8 : 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
+                      ),
                     ),
                   ],
                 ),
               ),
-              dadoOverlayCentrale(),
-              realtimeDamageReportOverlay(),
-            ],
-          ),
 
-          bottomNavigationBar:
-              oculusModActive || (modalitaDesktop && !compactPhone)
-              ? null
-              : OculumBottomNav(
-                  currentIndex: paginaCorrente,
-                  showOnline: true,
-                  onChanged: (index) {
-                    vaiAllaFunzione(page: index, logTitle: pageLabels[index]);
-                  },
+              actions: [
+                IconButton(
+                  tooltip: t('Player / Master', 'Player / Master'),
+                  onPressed: mostraDialogSceltaRuolo,
+                  icon: Icon(
+                    modalitaMaster
+                        ? Icons.admin_panel_settings_outlined
+                        : Icons.person_outline,
+                    color: primaryColor,
+                  ),
                 ),
+                if (!compactPhone &&
+                    modalitaDesktop &&
+                    (manuscriptLivingActive ||
+                        nuovoDesignOculum != 'cattedrale'))
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: OculumDesktopTopMenu(
+                      currentIndex: max(0, visiblePages.indexOf(safePage)),
+                      labels: visiblePages.map((i) => pageLabels[i]).toList(),
+                      onChanged: (index) {
+                        final page = visiblePages[index];
+                        vaiAllaFunzione(page: page, logTitle: pageLabels[page]);
+                      },
+                      primaryColor: primaryColor,
+                      tertiaryColor: tertiaryColor,
+                      searchLabel: t('Cerca pagina', 'Search page'),
+                      pageLabel: t('Cambia pagina', 'Switch page'),
+                    ),
+                  ),
+                if (!oculusModActive)
+                  OculumQuickEditEyeButton(
+                    sectionsBuilder: quickEditSections,
+                    primaryColor: primaryColor,
+                    secondaryColor: secondaryColor,
+                    tertiaryColor: tertiaryColor,
+                    title: t('Modifica rapida', 'Quick edit'),
+                    subtitle: t(
+                      'Modifica velocemente statistiche, HP, scudi e risorse senza scendere nella scheda.',
+                      'Quickly edit stats, HP, shields and resources without scrolling through the sheet.',
+                    ),
+                    onChanged: () {
+                      setState(() {
+                        aggiornaGradoAutomatico();
+                        risultato = t(
+                          'Valori rapidi aggiornati.',
+                          'Quick values updated.',
+                        );
+                        aggiungiLog(risultato);
+                      });
+
+                      programmaSalvataggio();
+                    },
+                  ),
+                if (!compactPhone)
+                  IconButton(
+                    tooltip: t('Annulla ultima modifica', 'Undo last change'),
+                    onPressed: annullaUltimaModifica,
+                    icon: Icon(
+                      Icons.undo,
+                      color: primaryColor,
+                      size: compactPhone ? 20 : 24,
+                    ),
+                  ),
+                if (!compactPhone)
+                  IconButton(
+                    tooltip: t('Torna avanti', 'Redo'),
+                    onPressed: ripristinaModificaAnnullata,
+                    icon: Icon(
+                      Icons.redo,
+                      color: tertiaryColor,
+                      size: compactPhone ? 20 : 24,
+                    ),
+                  ),
+                IconButton(
+                  tooltip: t('Cerca', 'Search'),
+                  onPressed: mostraCerca,
+                  icon: Icon(
+                    Icons.search,
+                    color: primaryColor,
+                    size: compactPhone ? 20 : 24,
+                  ),
+                ),
+                if (compactPhone)
+                  PopupMenuButton<String>(
+                    tooltip: t('Azioni', 'Actions'),
+                    color: const Color(0xFF10121A),
+                    icon: Icon(Icons.more_vert, color: primaryColor, size: 20),
+                    onSelected: (value) {
+                      if (value == 'dungeon') {
+                        _openDungeonMiniGame();
+                        return;
+                      }
+                      if (value == 'undo') {
+                        annullaUltimaModifica();
+                        return;
+                      }
+                      if (value == 'redo') {
+                        ripristinaModificaAnnullata();
+                        return;
+                      }
+                      if (value == 'settings') {
+                        vaiAllaFunzione(
+                          page: settingsPageIndex,
+                          anchorId: 'settings_root',
+                          logTitle: t('Impostazioni', 'Settings'),
+                        );
+                        return;
+                      }
+                      if (value == 'new_sheet') {
+                        if (paginaCorrente != onlinePageIndex ||
+                            realtimeCanBrowseOtherSheets) {
+                          creaNuovaSchedaPersonaggio();
+                        }
+                        return;
+                      }
+                      if (value == 'delete_sheet') {
+                        if (schedePersonaggio.length > 1 &&
+                            (paginaCorrente != onlinePageIndex ||
+                                realtimeCanBrowseOtherSheets)) {
+                          eliminaSchedaCorrente();
+                        }
+                        return;
+                      }
+                      if (value.startsWith('page_')) {
+                        final page = int.tryParse(value.substring(5));
+                        if (page == null) return;
+                        vaiAllaFunzione(page: page, logTitle: pageLabels[page]);
+                        return;
+                      }
+                      if (value.startsWith('sheet_')) {
+                        final index = int.tryParse(value.substring(6));
+                        if (index != null) cambiaSchedaPersonaggio(index);
+                      }
+                    },
+                    itemBuilder: (context) {
+                      final menuPages = oculusModActive
+                          ? visiblePages
+                          : <int>[...visiblePages, dicePageIndex];
+                      final totale = schedePersonaggio.isEmpty
+                          ? 1
+                          : schedePersonaggio.length;
+                      final canSeeOtherSheets =
+                          paginaCorrente != onlinePageIndex ||
+                          realtimeCanBrowseOtherSheets;
+                      final sheetIndexes = canSeeOtherSheets
+                          ? List<int>.generate(totale, (i) => i)
+                          : <int>[schedaCorrente.clamp(0, totale - 1).toInt()];
+
+                      return [
+                        PopupMenuItem<String>(
+                          value: 'dungeon',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.visibility,
+                                color: primaryColor,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(t('Cammino dell’Eroe', 'Hero’s Path')),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'undo',
+                          child: Text(
+                            t('Annulla ultima modifica', 'Undo last change'),
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'redo',
+                          child: Text(t('Torna avanti', 'Redo')),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'settings',
+                          child: Text(t('Impostazioni', 'Settings')),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'new_sheet',
+                          child: Text(t('Nuova scheda', 'New sheet')),
+                        ),
+                        if (schedePersonaggio.length > 1 &&
+                            (paginaCorrente != onlinePageIndex ||
+                                realtimeCanBrowseOtherSheets))
+                          PopupMenuItem<String>(
+                            value: 'delete_sheet',
+                            child: Text(
+                              t(
+                                'Elimina scheda corrente',
+                                'Delete current sheet',
+                              ),
+                            ),
+                          ),
+                        const PopupMenuDivider(),
+                        PopupMenuItem<String>(
+                          enabled: false,
+                          child: Text(
+                            t('Pagine', 'Pages'),
+                            style: TextStyle(
+                              color: tertiaryColor,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        for (final i in menuPages)
+                          PopupMenuItem<String>(
+                            value: 'page_$i',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  desktopPageIcon(i),
+                                  color: i == safePage
+                                      ? tertiaryColor
+                                      : primaryColor,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    cleanUiText(pageLabels[i]),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: i == safePage
+                                          ? tertiaryColor
+                                          : Colors.white,
+                                      fontWeight: i == safePage
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        const PopupMenuDivider(),
+                        PopupMenuItem<String>(
+                          enabled: false,
+                          child: Text(
+                            t('Schede', 'Sheets'),
+                            style: TextStyle(
+                              color: tertiaryColor,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        for (final i in sheetIndexes)
+                          PopupMenuItem<String>(
+                            value: 'sheet_$i',
+                            child: Text(
+                              cleanUiText(
+                                '${i + 1}. ${tipoSchedaPersonaggio(i)} - ${nomeSchedaPersonaggio(i)}',
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: i == schedaCorrente
+                                    ? tertiaryColor
+                                    : Colors.white,
+                                fontWeight: i == schedaCorrente
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                      ];
+                    },
+                  ),
+                if (!compactPhone)
+                  TextButton.icon(
+                    key: const ValueKey('desktop_hero_path'),
+                    onPressed: _openDungeonMiniGame,
+                    icon: Icon(Icons.visibility, color: primaryColor),
+                    label: Text(t('Cammino dell’Eroe', 'Hero’s Path')),
+                  ),
+                if (!compactPhone)
+                  IconButton(
+                    tooltip: t('Impostazioni', 'Settings'),
+                    onPressed: () {
+                      vaiAllaFunzione(
+                        page: settingsPageIndex,
+                        anchorId: 'settings_root',
+                        logTitle: t('Impostazioni', 'Settings'),
+                      );
+                    },
+                    icon: Icon(
+                      Icons.settings,
+                      color: tertiaryColor,
+                      size: compactPhone ? 20 : 24,
+                    ),
+                  ),
+                if (!compactPhone)
+                  PopupMenuButton<int>(
+                    tooltip: t('Cambia pagina', 'Switch page'),
+                    color: const Color(0xFF10121A),
+                    icon: Icon(
+                      Icons.menu_open,
+                      color: primaryColor,
+                      size: compactPhone ? 20 : 24,
+                    ),
+                    onSelected: (index) {
+                      vaiAllaFunzione(page: index, logTitle: pageLabels[index]);
+                    },
+                    itemBuilder: (context) {
+                      final labels = pageLabels;
+                      final menuPages = oculusModActive
+                          ? visiblePages
+                          : <int>[...visiblePages, dicePageIndex];
+
+                      return [
+                        for (final i in menuPages)
+                          PopupMenuItem<int>(
+                            value: i,
+                            child: Text(
+                              cleanUiText(labels[i]),
+                              style: TextStyle(
+                                color: i == paginaCorrente
+                                    ? tertiaryColor
+                                    : Colors.white,
+                                fontWeight: i == paginaCorrente
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                      ];
+                    },
+                  ),
+                if (!compactPhone)
+                  IconButton(
+                    tooltip: t('Nuova scheda', 'New sheet'),
+                    onPressed:
+                        paginaCorrente == onlinePageIndex &&
+                            !realtimeCanBrowseOtherSheets
+                        ? null
+                        : () => creaNuovaSchedaPersonaggio(),
+                    icon: Icon(
+                      Icons.add_circle,
+                      color: tertiaryColor,
+                      size: compactPhone ? 20 : 24,
+                    ),
+                  ),
+                if (!compactPhone)
+                  PopupMenuButton<int>(
+                    tooltip: t('Cambia scheda', 'Switch sheet'),
+                    color: const Color(0xFF10121A),
+                    icon: Icon(
+                      Icons.groups,
+                      color: primaryColor,
+                      size: compactPhone ? 20 : 24,
+                    ),
+                    onSelected: cambiaSchedaPersonaggio,
+                    itemBuilder: (context) {
+                      final totale = schedePersonaggio.isEmpty
+                          ? 1
+                          : schedePersonaggio.length;
+                      final canSeeOtherSheets =
+                          paginaCorrente != onlinePageIndex ||
+                          realtimeCanBrowseOtherSheets;
+                      final indexes = canSeeOtherSheets
+                          ? List<int>.generate(totale, (i) => i)
+                          : <int>[schedaCorrente.clamp(0, totale - 1).toInt()];
+
+                      return [
+                        for (final i in indexes)
+                          PopupMenuItem<int>(
+                            value: i,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  i == schedaCorrente
+                                      ? Icons.visibility
+                                      : Icons.radio_button_unchecked,
+                                  color: i == schedaCorrente
+                                      ? tertiaryColor
+                                      : Colors.grey,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    cleanUiText(
+                                      '${i + 1}. ${tipoSchedaPersonaggio(i)} — ${nomeSchedaPersonaggio(i)}',
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: i == schedaCorrente
+                                          ? tertiaryColor
+                                          : Colors.white,
+                                      fontWeight: i == schedaCorrente
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ];
+                    },
+                  ),
+                if (!compactPhone &&
+                    schedePersonaggio.length > 1 &&
+                    (paginaCorrente != onlinePageIndex ||
+                        realtimeCanBrowseOtherSheets))
+                  IconButton(
+                    tooltip: t(
+                      'Elimina scheda corrente',
+                      'Delete current sheet',
+                    ),
+                    onPressed: eliminaSchedaCorrente,
+                    icon: Icon(
+                      Icons.delete_outline,
+                      color: Colors.redAccent,
+                      size: compactPhone ? 20 : 24,
+                    ),
+                  ),
+              ],
+            ),
+            body: Stack(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: campaignBackgroundMode == 'checker'
+                        ? null
+                        : oculumBackgroundGradient(campaignBackgroundMode, [
+                            backgroundTopColor,
+                            backgroundMidColor,
+                            backgroundBottomColor,
+                          ]),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child:
+                              (oculumGraphicsEnabled.value ||
+                                  campaignBackgroundMode == 'checker')
+                              ? RepaintBoundary(
+                                  child: campaignBackgroundMode == 'checker'
+                                      ? CustomPaint(
+                                          painter: OculumCheckerBackground(
+                                            backgroundTopColor,
+                                            backgroundBottomColor,
+                                          ),
+                                          child: const SizedBox.expand(),
+                                        )
+                                      : themeDecorationBackdrop(),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      ),
+                      desktopSideMenuShell(
+                        visiblePages: visiblePages,
+                        pageLabels: pageLabels,
+                        safePage: safePage,
+                        child: datiCaricati
+                            ? AnimatedSwitcher(
+                                duration: oculumGraphicsEnabled.value
+                                    ? const Duration(milliseconds: 160)
+                                    : Duration.zero,
+                                switchInCurve: Curves.easeOutCubic,
+                                switchOutCurve: Curves.easeInCubic,
+                                child: RepaintBoundary(
+                                  key: ValueKey<String>(
+                                    'page_shell_${safePage}_${_isPagePreparedForDisplay(safePage)}',
+                                  ),
+                                  child: ValueListenableBuilder<int>(
+                                    valueListenable: inputUiRevision,
+                                    builder: (context, revision, child) =>
+                                        buildCurrentPageLazy(safePage),
+                                  ),
+                                ),
+                              )
+                            : homeDataLoadingPlaceholder(),
+                      ),
+                    ],
+                  ),
+                ),
+                dadoOverlayCentrale(),
+                realtimeDamageReportOverlay(),
+              ],
+            ),
+
+            bottomNavigationBar:
+                oculusModActive || (modalitaDesktop && !compactPhone)
+                ? null
+                : OculumBottomNav(
+                    currentIndex: paginaCorrente,
+                    showOnline: true,
+                    onChanged: (index) {
+                      vaiAllaFunzione(page: index, logTitle: pageLabels[index]);
+                    },
+                  ),
+          ),
         ),
       ),
     );

@@ -2067,93 +2067,105 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   Widget oculumEyeBox() {
     return gothicPanel(
       padding: const EdgeInsets.all(10),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth.isFinite
-              ? constraints.maxWidth
-              : MediaQuery.of(context).size.width;
-          final compact = width < 520 || lightweightUi;
-          final eyeWidth = compact ? width : min(width, 380.0);
-          final eyeHeight = (eyeWidth * 0.56).clamp(
-            compact ? 128.0 : 210.0,
-            compact ? 205.0 : 280.0,
-          );
-          final radius = compact ? 18.0 : 22.0;
+      child: Column(
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth.isFinite
+                  ? constraints.maxWidth
+                  : MediaQuery.of(context).size.width;
+              final compact = width < 520 || lightweightUi;
+              final eyeWidth = compact ? width : min(width, 380.0);
+              final eyeHeight = (eyeWidth * 0.56).clamp(
+                compact ? 128.0 : 210.0,
+                compact ? 205.0 : 280.0,
+              );
+              final radius = compact ? 18.0 : 22.0;
 
-          final imageCard = SizedBox(
-            width: eyeWidth,
-            height: eyeHeight,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(radius),
-                color: Colors.black,
-                border: Border.all(
-                  color: primaryColor.withValues(alpha: 0.70),
-                  width: 1.4,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: tertiaryColor.withValues(alpha: 0.12),
-                    blurRadius: compact ? 8 : 14,
-                    spreadRadius: 0.5,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(radius - 2),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: RepaintBoundary(
-                        child: CustomPaint(
-                          painter: OculumEyePainter(
-                            primaryColor: primaryColor,
-                            secondaryColor: secondaryColor,
-                            tertiaryColor: tertiaryColor,
-                            pupilGlowColor: eyePupilGlowColor,
-                          ),
-                        ),
-                      ),
+              final imageCard = SizedBox(
+                width: eyeWidth,
+                height: eyeHeight,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(radius),
+                    color: Colors.black,
+                    border: Border.all(
+                      color: primaryColor.withValues(alpha: 0.70),
+                      width: 1.4,
                     ),
-                    if (immaginePersonaggio != null)
-                      Positioned.fill(
-                        child: Center(
-                          // La pupilla deve restare quadrata anche nel
-                          // pannello dell'occhio, che invece e' orizzontale.
-                          // Un FractionallySizedBox qui la deformava.
-                          child: SizedBox.square(
-                            dimension: min(
-                              eyeWidth * (compact ? 0.66 : 0.58),
-                              eyeHeight * (compact ? 0.82 : 0.88),
+                    boxShadow: [
+                      BoxShadow(
+                        color: tertiaryColor.withValues(alpha: 0.12),
+                        blurRadius: compact ? 8 : 14,
+                        spreadRadius: 0.5,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(radius - 2),
+                    child: Stack(
+                      children: [
+                        if (portraitShowEyeBehind)
+                          Positioned.fill(
+                            child: RepaintBoundary(
+                              child: portraitEyeRole.isNotEmpty
+                                  ? Center(
+                                      child: OculumMemoryEye(
+                                        role: portraitEyeRole,
+                                        size: eyeHeight * .85,
+                                      ),
+                                    )
+                                  : CustomPaint(
+                                      painter: OculumEyePainter(
+                                        primaryColor: primaryColor,
+                                        secondaryColor: secondaryColor,
+                                        tertiaryColor: tertiaryColor,
+                                        pupilGlowColor: eyePupilGlowColor,
+                                      ),
+                                    ),
                             ),
-                            child: GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onSecondaryTap:
-                                  copiaImmaginePersonaggioNegliAppunti,
-                              onLongPress: mostraAzioniImmaginePersonaggio,
-                              child: Tooltip(
-                                message: t(
-                                  'Tasto destro: copia. Pressione lunga: copia o scarica.',
-                                  'Right-click: copy. Long press: copy or download.',
+                          ),
+                        if (immaginePersonaggio != null)
+                          Positioned.fill(
+                            child: Center(
+                              // La pupilla deve restare quadrata anche nel
+                              // pannello dell'occhio, che invece e' orizzontale.
+                              // Un FractionallySizedBox qui la deformava.
+                              child: SizedBox.square(
+                                dimension: min(
+                                  eyeWidth * (compact ? 0.66 : 0.58),
+                                  eyeHeight * (compact ? 0.82 : 0.88),
                                 ),
-                                child: ClipPath(
-                                  // Il ritratto e' solo la pupilla: niente
-                                  // cornice/card rettangolare attorno ad esso.
-                                  clipper: const HexagonClipper(),
-                                  child: SizedBox.expand(
-                                    // Il clip riceve sempre una tela quadrata
-                                    // esplicita: così non può degradare a un
-                                    // rettangolo quando cambia il layout.
-                                    child: FittedBox(
-                                      fit: BoxFit.contain,
-                                      alignment: Alignment.center,
-                                      child: Image.memory(
-                                        immaginePersonaggio!,
-                                        filterQuality: FilterQuality.high,
-                                        cacheWidth: max(
-                                          1,
-                                          (eyeWidth * 1.6).round(),
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onSecondaryTap:
+                                      copiaImmaginePersonaggioNegliAppunti,
+                                  onLongPress: mostraAzioniImmaginePersonaggio,
+                                  child: Tooltip(
+                                    message: t(
+                                      'Tasto destro: copia. Pressione lunga: copia o scarica.',
+                                      'Right-click: copy. Long press: copy or download.',
+                                    ),
+                                    child: ClipPath(
+                                      // Il ritratto e' solo la pupilla: niente
+                                      // cornice/card rettangolare attorno ad esso.
+                                      clipper: const HexagonClipper(),
+                                      child: SizedBox.expand(
+                                        // Il clip riceve sempre una tela quadrata
+                                        // esplicita: così non può degradare a un
+                                        // rettangolo quando cambia il layout.
+                                        child: FittedBox(
+                                          fit: BoxFit.contain,
+                                          alignment: Alignment.center,
+                                          child: Image.memory(
+                                            immaginePersonaggio!,
+                                            filterQuality: FilterQuality.high,
+                                            cacheWidth: max(
+                                              1,
+                                              (eyeWidth * 1.6).round(),
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -2162,258 +2174,322 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                    Positioned(
-                      top: compact ? 8 : 12,
-                      right: compact ? 8 : 12,
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: scegliImmagine,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black.withValues(
-                                alpha: 0.72,
-                              ),
-                              foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: compact ? 7 : 14,
-                                vertical: compact ? 5 : 10,
-                              ),
-                            ),
-                            icon: Icon(Icons.image, size: compact ? 15 : 20),
-                            label: Text(compact ? '+' : t('Aggiungi', 'Add')),
-                          ),
-                          ElevatedButton.icon(
-                            onPressed: incollaImmaginePersonaggioDaClipboard,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black.withValues(
-                                alpha: 0.72,
-                              ),
-                              foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: compact ? 7 : 14,
-                                vertical: compact ? 5 : 10,
-                              ),
-                            ),
-                            icon: Icon(
-                              Icons.content_paste,
-                              size: compact ? 15 : 20,
-                            ),
-                            label: Text(
-                              compact
-                                  ? t('Incolla', 'Paste')
-                                  : t('Incolla', 'Paste'),
-                            ),
-                          ),
-                          if (immaginePersonaggio != null)
-                            ElevatedButton.icon(
-                              onPressed: copiaImmaginePersonaggioNegliAppunti,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black.withValues(
-                                  alpha: 0.72,
-                                ),
-                                foregroundColor: Colors.white,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: compact ? 7 : 14,
-                                  vertical: compact ? 5 : 10,
-                                ),
-                              ),
-                              icon: Icon(
-                                Icons.content_copy,
-                                size: compact ? 15 : 20,
-                              ),
-                              label: Text(compact ? '' : t('Copia', 'Copy')),
-                            ),
-                          if (immaginePersonaggio != null)
-                            ElevatedButton.icon(
-                              onPressed: rimuoviImmagine,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.redAccent.withValues(
-                                  alpha: 0.88,
-                                ),
-                                foregroundColor: Colors.white,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: compact ? 7 : 14,
-                                  vertical: compact ? 5 : 10,
-                                ),
-                              ),
-                              icon: Icon(Icons.delete, size: compact ? 15 : 20),
-                              label: Text(
-                                compact ? 'X' : t('Rimuovi', 'Remove'),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      left: compact ? 10 : 0,
-                      right: compact ? 10 : 0,
-                      bottom: compact ? 10 : 14,
-                      child: Center(
-                        child: Container(
-                          constraints: BoxConstraints(
-                            maxWidth: max(180, eyeWidth - (compact ? 20 : 80)),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: compact ? 12 : 16,
-                            vertical: compact ? 7 : 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.62),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: tertiaryColor.withValues(alpha: 0.22),
-                            ),
-                          ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              cleanUiText(
-                                '${tipoSchedaController.text.toUpperCase()} • ${razzaVisibile()} • ${t('SCHEDA ${schedaCorrente + 1}/${schedePersonaggio.isEmpty ? 1 : schedePersonaggio.length}', 'SHEET ${schedaCorrente + 1}/${schedePersonaggio.isEmpty ? 1 : schedePersonaggio.length}')}',
-                              ),
-                              maxLines: 1,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: compact ? 11 : 12,
-                                letterSpacing: compact ? 1.3 : 2,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-
-          return Focus(
-            focusNode: imagePasteFocusNode,
-            autofocus: true,
-            onKeyEvent: (node, event) {
-              if (event is! KeyDownEvent ||
-                  event.logicalKey != LogicalKeyboardKey.keyV ||
-                  (!HardwareKeyboard.instance.isControlPressed &&
-                      !HardwareKeyboard.instance.isMetaPressed)) {
-                return KeyEventResult.ignored;
-              }
-
-              unawaited(incollaImmaginePersonaggioDaClipboard());
-              return KeyEventResult.handled;
-            },
-            child: DropTarget(
-              onDragEntered: (_) {
-                if (!mounted) return;
-                imagePasteFocusNode.requestFocus();
-                setState(() => imageDropActive = true);
-              },
-              onDragExited: (_) {
-                if (!mounted) return;
-                setState(() => imageDropActive = false);
-              },
-              onDragDone: (detail) async {
-                if (!mounted) return;
-                imagePasteFocusNode.requestFocus();
-                setState(() => imageDropActive = false);
-
-                if (detail.files.isEmpty) return;
-
-                final file = detail.files.first;
-                final fileName = file.name.trim();
-
-                try {
-                  final bytes = await file.readAsBytes();
-                  await importaImmaginePersonaggioDaBytes(
-                    bytes,
-                    sourceName: fileName.isEmpty ? 'drop Windows' : fileName,
-                  );
-                } catch (error) {
-                  if (!mounted) return;
-                  setState(() {
-                    risultato = t(
-                      'File non importato: non ha sostituito l’immagine attuale.',
-                      'File not imported: current image was not replaced.',
-                    );
-                    aggiungiLog('$risultato ($error)');
-                  });
-                }
-              },
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: imagePasteFocusNode.requestFocus,
-                child: Center(
-                  child: SizedBox(
-                    width: eyeWidth,
-                    height: eyeHeight,
-                    child: Stack(
-                      children: [
-                        imageCard,
-                        if (imageDropActive)
-                          Positioned.fill(
-                            child: IgnorePointer(
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.62),
-                                  borderRadius: BorderRadius.circular(radius),
-                                  border: Border.all(
-                                    color: tertiaryColor,
-                                    width: 2.2,
+                        Positioned(
+                          top: compact ? 8 : 12,
+                          right: compact ? 8 : 12,
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: scegliImmagine,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black.withValues(
+                                    alpha: 0.72,
+                                  ),
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: compact ? 7 : 14,
+                                    vertical: compact ? 5 : 10,
                                   ),
                                 ),
-                                child: Center(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.file_upload,
-                                        color: tertiaryColor,
-                                        size: compact ? 34 : 46,
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        t(
-                                          'Rilascia qui l’immagine',
-                                          'Drop the image here',
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: compact ? 15 : 18,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        t(
-                                          'Il crop si aprirà senza cancellare quella precedente.',
-                                          'Crop opens without deleting the previous image.',
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: primaryColor,
-                                          fontSize: compact ? 11 : 13,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ],
+                                icon: Icon(
+                                  Icons.image,
+                                  size: compact ? 15 : 20,
+                                ),
+                                label: Text(
+                                  compact ? '+' : t('Aggiungi', 'Add'),
+                                ),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed:
+                                    incollaImmaginePersonaggioDaClipboard,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black.withValues(
+                                    alpha: 0.72,
+                                  ),
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: compact ? 7 : 14,
+                                    vertical: compact ? 5 : 10,
+                                  ),
+                                ),
+                                icon: Icon(
+                                  Icons.content_paste,
+                                  size: compact ? 15 : 20,
+                                ),
+                                label: Text(
+                                  compact
+                                      ? t('Incolla', 'Paste')
+                                      : t('Incolla', 'Paste'),
+                                ),
+                              ),
+                              if (immaginePersonaggio != null)
+                                ElevatedButton.icon(
+                                  onPressed:
+                                      copiaImmaginePersonaggioNegliAppunti,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.black.withValues(
+                                      alpha: 0.72,
+                                    ),
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: compact ? 7 : 14,
+                                      vertical: compact ? 5 : 10,
+                                    ),
+                                  ),
+                                  icon: Icon(
+                                    Icons.content_copy,
+                                    size: compact ? 15 : 20,
+                                  ),
+                                  label: Text(
+                                    compact ? '' : t('Copia', 'Copy'),
+                                  ),
+                                ),
+                              if (immaginePersonaggio != null)
+                                ElevatedButton.icon(
+                                  onPressed: rimuoviImmagine,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.redAccent
+                                        .withValues(alpha: 0.88),
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: compact ? 7 : 14,
+                                      vertical: compact ? 5 : 10,
+                                    ),
+                                  ),
+                                  icon: Icon(
+                                    Icons.delete,
+                                    size: compact ? 15 : 20,
+                                  ),
+                                  label: Text(
+                                    compact ? 'X' : t('Rimuovi', 'Remove'),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Positioned(
+                          left: compact ? 10 : 0,
+                          right: compact ? 10 : 0,
+                          bottom: compact ? 10 : 14,
+                          child: Center(
+                            child: Container(
+                              constraints: BoxConstraints(
+                                maxWidth: max(
+                                  180,
+                                  eyeWidth - (compact ? 20 : 80),
+                                ),
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: compact ? 12 : 16,
+                                vertical: compact ? 7 : 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.62),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: tertiaryColor.withValues(alpha: 0.22),
+                                ),
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  cleanUiText(
+                                    '${tipoSchedaController.text.toUpperCase()} • ${razzaVisibile()} • ${t('SCHEDA ${schedaCorrente + 1}/${schedePersonaggio.isEmpty ? 1 : schedePersonaggio.length}', 'SHEET ${schedaCorrente + 1}/${schedePersonaggio.isEmpty ? 1 : schedePersonaggio.length}')}',
+                                  ),
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: compact ? 11 : 12,
+                                    letterSpacing: compact ? 1.3 : 2,
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
                               ),
                             ),
                           ),
+                        ),
                       ],
                     ),
                   ),
                 ),
+              );
+
+              return Focus(
+                focusNode: imagePasteFocusNode,
+                autofocus: true,
+                onKeyEvent: (node, event) {
+                  if (event is! KeyDownEvent ||
+                      event.logicalKey != LogicalKeyboardKey.keyV ||
+                      (!HardwareKeyboard.instance.isControlPressed &&
+                          !HardwareKeyboard.instance.isMetaPressed)) {
+                    return KeyEventResult.ignored;
+                  }
+
+                  unawaited(incollaImmaginePersonaggioDaClipboard());
+                  return KeyEventResult.handled;
+                },
+                child: DropTarget(
+                  onDragEntered: (_) {
+                    if (!mounted) return;
+                    imagePasteFocusNode.requestFocus();
+                    setState(() => imageDropActive = true);
+                  },
+                  onDragExited: (_) {
+                    if (!mounted) return;
+                    setState(() => imageDropActive = false);
+                  },
+                  onDragDone: (detail) async {
+                    if (!mounted) return;
+                    imagePasteFocusNode.requestFocus();
+                    setState(() => imageDropActive = false);
+
+                    if (detail.files.isEmpty) return;
+
+                    final file = detail.files.first;
+                    final fileName = file.name.trim();
+
+                    try {
+                      final bytes = await file.readAsBytes();
+                      await importaImmaginePersonaggioDaBytes(
+                        bytes,
+                        sourceName: fileName.isEmpty
+                            ? 'drop Windows'
+                            : fileName,
+                      );
+                    } catch (error) {
+                      if (!mounted) return;
+                      setState(() {
+                        risultato = t(
+                          'File non importato: non ha sostituito l’immagine attuale.',
+                          'File not imported: current image was not replaced.',
+                        );
+                        aggiungiLog('$risultato ($error)');
+                      });
+                    }
+                  },
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: imagePasteFocusNode.requestFocus,
+                    child: Center(
+                      child: SizedBox(
+                        width: eyeWidth,
+                        height: eyeHeight,
+                        child: Stack(
+                          children: [
+                            imageCard,
+                            if (imageDropActive)
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.62,
+                                      ),
+                                      borderRadius: BorderRadius.circular(
+                                        radius,
+                                      ),
+                                      border: Border.all(
+                                        color: tertiaryColor,
+                                        width: 2.2,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.file_upload,
+                                            color: tertiaryColor,
+                                            size: compact ? 34 : 46,
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            t(
+                                              'Rilascia qui l’immagine',
+                                              'Drop the image here',
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: compact ? 15 : 18,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            t(
+                                              'Il crop si aprirà senza cancellare quella precedente.',
+                                              'Crop opens without deleting the previous image.',
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: primaryColor,
+                                              fontSize: compact ? 11 : 13,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            key: ValueKey('portrait_eye_choice_$portraitEyeRole'),
+            initialValue: portraitEyeRole,
+            isExpanded: true,
+            decoration: fieldDecoration(
+              t('Occhio nel ritratto', 'Portrait eye'),
+            ),
+            items: [
+              DropdownMenuItem(
+                value: '',
+                child: Text(t('Occhio originale', 'Original eye')),
+              ),
+              for (final eye in diaryEyeChoices.entries)
+                DropdownMenuItem(value: eye.key, child: Text(eye.value)),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => portraitEyeRole = value);
+              notifyActiveSheetSummaryChanged();
+              programmaSalvataggio();
+            },
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(
+              t(
+                'Mantieni l’occhio dietro il ritratto',
+                'Keep the eye behind the portrait',
               ),
             ),
-          );
-        },
+            subtitle: Text(
+              t(
+                'I PNG trasparenti lasciano vedere lo sfondo. Disattiva per mostrare solo il ritratto.',
+                'Transparent PNGs reveal the background. Turn off to show only the portrait.',
+              ),
+            ),
+            value: portraitShowEyeBehind,
+            onChanged: (value) {
+              setState(() => portraitShowEyeBehind = value);
+              notifyActiveSheetSummaryChanged();
+              programmaSalvataggio();
+            },
+          ),
+        ],
       ),
     );
   }
@@ -2752,7 +2828,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               minimumSize: const Size.fromHeight(48),
             ),
             label: Text(
-              t('Randomizza stats bilanciate', 'Randomize balanced stats'),
+              t('Redistribuisci punti posseduti', 'Redistribute owned points'),
             ),
           ),
           if (!isMostro() && levelUpDaAssegnare > 0) ...[
@@ -5284,6 +5360,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         appliedTutorialSubtraitPoints,
         selectedPoints,
       );
+      notifyActiveSheetSummaryChanged();
       tutorialSubtraitPoints
         ..clear()
         ..addAll(selectedPoints);
@@ -5858,7 +5935,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 child: functionAnchor(
                   'sheet_attack_bonus',
                   campoTesto(
-                    label: t('Bonus Attacco (danni inflitti)', 'Attack bonus (damage dealt)'),
+                    label: t(
+                      'Bonus Attacco (danni inflitti)',
+                      'Attack bonus (damage dealt)',
+                    ),
                     controller: attaccoRapidoController,
                     focusNode: attaccoRapidoFocusNode,
                     helper: t(
@@ -6262,6 +6342,18 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               programmaSalvataggio();
             },
           ),
+          if (usaBarraVita && !vitaAfonaAttiva()) ...[
+            const SizedBox(height: 12),
+            compactNumericEditField(
+              label: t('HP Attuali', 'Current HP'),
+              controller: currentHpController,
+              color: Colors.redAccent,
+              helper: t(
+                'Modifica la Vita senza nascondere la barra.',
+                'Edit HP while keeping the bar visible.',
+              ),
+            ),
+          ],
           if (usaBarraVita) ...[
             const SizedBox(height: 8),
             if (!modalitaVeloce)
@@ -6365,8 +6457,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             savingShieldPanel(),
           ],
           const SizedBox(height: 10),
-          impactOptionsPanel(),
-          const SizedBox(height: 10),
+
           Align(
             alignment: Alignment.centerLeft,
             child: ElevatedButton.icon(
@@ -6462,10 +6553,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           ),
           const SizedBox(height: 8),
           campoTesto(
-            label: t('Bonus danno agli scudi %', 'Shield damage bonus %'),
+            label: t(
+              'Danno subito dagli scudi (+%)',
+              'Incoming shield damage (+%)',
+            ),
             controller: dannoBonusScudoPercentController,
             helper: t(
-              'Solo per colpi che danneggiano meglio gli scudi. 0 = nessun bonus.',
+              'Percentuale aggiuntiva sul danno subito da Scudo e Scudo Oculum. 0 = normale; 50 = +50%. Non aumenta il danno diretto agli HP.',
               'Only for hits that damage shields better. 0 = no bonus.',
             ),
           ),
@@ -6667,6 +6761,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       initiallyExpanded: true,
       child: Column(
         children: [
+          impactOptionsPanel(),
+          const SizedBox(height: 12),
+          incomingElementSelector(),
           functionAnchor(
             'sheet_damage_heal_input',
             campoTesto(
@@ -7613,6 +7710,52 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           tipoSchedaDropdown(
             value: tipoSchedaController.text,
             onChanged: cambiaTipoScheda,
+          ),
+          DropdownButtonFormField<String>(
+            initialValue: normalizedCampaignDifficulty(),
+            decoration: fieldDecoration(t('Difficoltà', 'Difficulty')),
+            items: [
+              for (final difficulty in [
+                'oculum',
+                'difficile',
+                'normale',
+                'facile',
+              ])
+                DropdownMenuItem(
+                  value: difficulty,
+                  child: Text(campaignDifficultyLabel(difficulty)),
+                ),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() {
+                handleDifficultyChange(value);
+                campaignDifficulty = value;
+                applyFirstEasyDifficultyShieldReward(value);
+              });
+              for (var i = 0; i < arti.length; i++) {
+                notifyArtActivationAvailableChanged(i);
+              }
+              final fightDifficulty = getCondition(
+                'aumento_difficolta',
+              )?.metadata['enemyDifficulty'];
+              if (fightDifficulty != null) {
+                setFightEnemyDifficulty('$fightDifficulty');
+              }
+              notifyConditionsChanged(
+                activeConditions
+                    .where(
+                      (instance) =>
+                          oculumConditionDefinition(
+                                instance.conditionType,
+                              )?.polarity ==
+                              OculumConditionPolarity.positive ||
+                          instance.conditionType == 'aumento_difficolta',
+                    )
+                    .expand(conditionTargetsFor),
+              );
+              programmaSalvataggio();
+            },
           ),
           SizedBox(height: spacing),
           campoTesto(
@@ -10611,6 +10754,11 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   }
 
   Widget characterPage() {
+    if (!manuscriptLivingActive &&
+        !temiOldSchool &&
+        nuovoDesignOculum == 'cattedrale') {
+      return referenceCharacterPage();
+    }
     if (manuscriptLivingActive && !manuscriptEditing) {
       return LayoutBuilder(
         builder: (context, constraints) =>

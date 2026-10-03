@@ -265,11 +265,15 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                 ),
               )
             else
-              Text(
-                '${t('Turno', 'Turn')} $current → ${current + 1}',
-                style: TextStyle(
-                  color: tertiaryColor,
-                  fontWeight: FontWeight.bold,
+              Flexible(
+                child: Text(
+                  '${t('Turno', 'Turn')} $current → ${current + 1}',
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  style: TextStyle(
+                    color: tertiaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             IconButton(

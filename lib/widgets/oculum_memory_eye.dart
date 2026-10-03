@@ -9,9 +9,15 @@ String? oculumMemoryEyeAsset(String role) => switch (role) {
 };
 
 class OculumMemoryEye extends StatelessWidget {
-  const OculumMemoryEye({super.key, required this.role, this.size = 24});
+  const OculumMemoryEye({
+    super.key,
+    required this.role,
+    this.size = 24,
+    this.color = const Color(0xffc3a46b),
+  });
   final String role;
   final double size;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +25,7 @@ class OculumMemoryEye extends StatelessWidget {
     return SizedBox.square(
       dimension: size,
       child: asset == null
-          ? const Icon(Icons.visibility, color: Color(0xffc3a46b))
+          ? Icon(Icons.visibility, color: color)
           : Image.asset(
               asset,
               fit: BoxFit.contain,

@@ -1483,7 +1483,8 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
   }
 
   bool isColorThemeUnlocked(String id) {
-    return id == 'classic_reliquary' ||
+    return oculumRestylePresets.any((preset) => preset.id == id) ||
+        id == 'classic_reliquary' ||
         id == 'classic_rpg' ||
         oculumThemeStartsUnlocked(id) ||
         (id == 'hoshy_cosmic_cat' && hoshySecretThemeCondition()) ||
@@ -2392,9 +2393,11 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     );
     final razza = sceltaTutorial(oculumStarterRaces, tutorialRaceId);
     final fato = sceltaTutorial(oculumStarterFateTitles, tutorialFateId);
-    final art = oculumStarterArtChoices().firstWhere(
-      (art) => art.nome == tutorialArtName,
-      orElse: oculumStarterWaterArt,
+    final art = oculumStarterArtForMaster(
+      oculumStarterArtChoices().firstWhere(
+        (art) => art.nome == tutorialArtName,
+        orElse: oculumStarterWaterArt,
+      ),
     );
     final eMartial = !isMonsterBookPreset && art.tipo == 'Martial Art';
     if (eMartial && tutorialMartialBonus <= 0) {
@@ -2582,9 +2585,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             buff: background.descrizione,
             puntoCieco: background.puntoCieco,
             skill: 'Il tuo passato influenza le azioni e le scene sociali.',
-            richiede: background.conMaster
-                ? 'Da completare con il Master.'
-                : difficoltaLabel,
+            richiede: '[Richiede: ???]',
             equipaggiato: true,
             sempreVisibile: true,
             chiaveSistema: 'tutorial_background_${background.id}',
@@ -2599,9 +2600,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             buff: fato.descrizione,
             puntoCieco: '',
             skill: 'Segui il tuo Fato per far evolvere il Titolo.',
-            richiede: fato.conMaster
-                ? 'Da completare con il Master.'
-                : difficoltaLabel,
+            richiede: '[Richiede: ???]',
             chiaveSistema: 'tutorial_fate_${fato.id}',
           ),
         );
@@ -2618,9 +2617,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                 ? '@DanniSubiti+100% Acqua Magica\n${razza.puntoCieco}'
                 : razza.puntoCieco,
             skill: 'Tratto innato della razza.',
-            richiede: razza.conMaster
-                ? 'Da completare con il Master.'
-                : difficoltaLabel,
+            richiede: '[Richiede: ???]',
             equipaggiato: true,
             chiaveSistema: 'tutorial_race_${razza.id}',
           ),
@@ -2708,10 +2705,15 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF0B0E16),
+          backgroundColor: backgroundBottomColor,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 16,
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
           elevation: 24,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(6),
             side: BorderSide(color: tertiaryColor.withValues(alpha: 0.72)),
           ),
           title: Row(
@@ -2746,7 +2748,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                       ),
                     ),
                     Text(
-                      'O C U L U M  •  quattro sigilli',
+                      'La tua prima scheda • passo dopo passo',
                       style: TextStyle(
                         color: primaryColor.withValues(alpha: 0.85),
                         fontSize: 11,
@@ -2759,577 +2761,651 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             ],
           ),
           content: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: StatefulBuilder(
-                builder: (context, setDialogState) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(13),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            primaryColor.withValues(alpha: 0.18),
-                            tertiaryColor.withValues(alpha: 0.08),
+            width: 680,
+            child: OculumReferenceFrame(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: SingleChildScrollView(
+                  child: StatefulBuilder(
+                    builder: (context, setDialogState) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(13),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                primaryColor.withValues(alpha: 0.18),
+                                tertiaryColor.withValues(alpha: 0.08),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: primaryColor.withValues(alpha: 0.35),
+                            ),
+                          ),
+                          child: const Text(
+                            'Scegli il tuo cammino. Ogni sigillo modifica la scheda reale, ma resterà sempre modificabile dopo la creazione.',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              height: 1.25,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        ExpansionTile(
+                          tilePadding: EdgeInsets.zero,
+                          leading: Icon(
+                            Icons.auto_stories_outlined,
+                            color: tertiaryColor,
+                          ),
+                          title: const Text('Come giocare con questa scheda'),
+                          subtitle: const Text(
+                            'Tiri, combattimenti, memoria e Master',
+                          ),
+                          children: const [
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 14),
+                              child: Text(
+                                'Generale raccoglie i comandi utili. Clicca una statistica per 1d20 + statistica; VC tira l’attacco, CM la difesa. Il Bonus danno indica ciò che infliggi, Danni subiti ciò che ricevi.\n\n'
+                                'Sottotratti e Turnistica sono piccoli menu sotto Tiri e azioni. Entrando in uno scontro tiri l’iniziativa; si parte da turno 0. A parità di totale vince Riflessi più alto: ottiene 6 × grado EXP Riflessi. Usa Aiuta compagno per sostenere un alleato.\n\n'
+                                'Scrivi nel Diario e collega nomi con [[Nome]]: suggerimenti e fonti alimentano la Mappa degli Occhi. Gli Occhi dei Caduti attivi mostrano un contatore; i segreti del Master restano privati.\n\n'
+                                'L’app salva localmente anche offline. Online estende la campagna. Ctrl+F cerca funzioni e testi; Esc o un tocco fuori dai dettagli torna a Generale.\n\n'
+                                'Art e Titoli iniziali riportano [Richiede: ???]. Il Master stabilisce i requisiti: il punto interrogativo non è un livello suggerito.',
+                                style: TextStyle(height: 1.4),
+                              ),
+                            ),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: primaryColor.withValues(alpha: 0.35),
-                        ),
-                      ),
-                      child: const Text(
-                        'Scegli il tuo cammino. Ogni sigillo modifica la scheda reale, ma resterà sempre modificabile dopo la creazione.',
-                        style: TextStyle(color: Colors.white70, height: 1.25),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Text(
-                      t('1. Difficoltà', '1. Difficulty'),
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    smallInfoText(
-                      'La difficoltà modifica automaticamente la scheda finale: Facile +1 alla statistica più bassa; Difficile -1 alla più alta; Oculum -2 alla più alta.',
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: tutorialDifficultyId,
-                      dropdownColor: const Color(0xFF202431),
-                      decoration: const InputDecoration(
-                        labelText: 'Difficoltà',
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'facile',
-                          child: Text('Facile'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'normale',
-                          child: Text('Normale'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'difficile',
-                          child: Text('Difficile'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'oculum',
-                          child: Text('Oculum'),
-                        ),
-                      ],
-                      onChanged: (value) => setDialogState(
-                        () => tutorialDifficultyId = value ?? 'normale',
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      '2. Personaggio',
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      value: tutorialGeneraMostro,
-                      title: const Text('Genera come Mostro'),
-                      subtitle: const Text(
-                        'Crea una scheda Mostro; Titoli, razza e Art restano modificabili.',
-                      ),
-                      onChanged: (value) =>
-                          setDialogState(() => tutorialGeneraMostro = value),
-                    ),
-                    if (!tutorialGeneraMostro) ...[
-                      smallInfoText(
-                        'Umanoide: 3 punti alla primaria, 2 alla secondaria, +1 alle altre due. Scegli qui dove vanno i 3 e i 2.',
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        initialValue: tutorialStatPrimaria,
-                        isExpanded: true,
-                        dropdownColor: const Color(0xFF202431),
-                        decoration: const InputDecoration(
-                          labelText: 'Statistica primaria — 3 punti',
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'resilienza',
-                            child: Text('RES — HP e tenuta'),
+                        const SizedBox(height: 12),
+                        Text(
+                          t('1. Difficoltà', '1. Difficulty'),
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
                           ),
-                          DropdownMenuItem(
-                            value: 'volonta',
-                            child: Text('VOL — danni, difesa, VC e peso'),
+                        ),
+                        const SizedBox(height: 8),
+                        smallInfoText(
+                          'La difficoltà modifica automaticamente la scheda finale: Facile +1 alla statistica più bassa; Difficile -1 alla più alta; Oculum -2 alla più alta.',
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          initialValue: tutorialDifficultyId,
+                          dropdownColor: const Color(0xFF202431),
+                          decoration: const InputDecoration(
+                            labelText: 'Difficoltà',
                           ),
-                          DropdownMenuItem(
-                            value: 'materia',
-                            child: Text('MAT — CM e Difesa'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'oculum',
-                            child: Text(
-                              'OCU — Art, cerchi, rituali e poteri oculari',
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'facile',
+                              child: Text('Facile'),
                             ),
-                          ),
-                        ],
-                        onChanged: (value) => setDialogState(
-                          () => tutorialStatPrimaria = value ?? 'resilienza',
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        initialValue: tutorialStatSecondaria,
-                        isExpanded: true,
-                        dropdownColor: const Color(0xFF202431),
-                        decoration: const InputDecoration(
-                          labelText: 'Statistica secondaria — 2 punti',
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'resilienza',
-                            child: Text('RES — HP e tenuta'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'volonta',
-                            child: Text('VOL — danni, difesa, VC e peso'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'materia',
-                            child: Text('MAT — CM e Difesa'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'oculum',
-                            child: Text(
-                              'OCU — Art, cerchi, rituali e poteri oculari',
+                            DropdownMenuItem(
+                              value: 'normale',
+                              child: Text('Normale'),
                             ),
+                            DropdownMenuItem(
+                              value: 'difficile',
+                              child: Text('Difficile'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'oculum',
+                              child: Text('Oculum'),
+                            ),
+                          ],
+                          onChanged: (value) => setDialogState(
+                            () => tutorialDifficultyId = value ?? 'normale',
                           ),
-                        ],
-                        onChanged: (value) => setDialogState(
-                          () => tutorialStatSecondaria = value ?? 'volonta',
                         ),
-                      ),
-                    ] else
-                      Column(
-                        children: [
+                        const SizedBox(height: 16),
+                        Text(
+                          '2. Personaggio',
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          value: tutorialGeneraMostro,
+                          title: const Text('Genera come Mostro'),
+                          subtitle: const Text(
+                            'Crea una scheda Mostro; Titoli, razza e Art restano modificabili.',
+                          ),
+                          onChanged: (value) => setDialogState(
+                            () => tutorialGeneraMostro = value,
+                          ),
+                        ),
+                        if (!tutorialGeneraMostro) ...[
+                          smallInfoText(
+                            'Umanoide: 3 punti alla primaria, 2 alla secondaria, +1 alle altre due. Scegli qui dove vanno i 3 e i 2.',
+                          ),
+                          const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
-                            initialValue: tutorialMonsterTier,
+                            isExpanded: true,
+                            initialValue: tutorialStatPrimaria,
+
+                            dropdownColor: const Color(0xFF202431),
                             decoration: const InputDecoration(
-                              labelText: 'Tipo di creatura',
+                              labelText: 'Statistica primaria — 3 punti',
                             ),
                             items: const [
                               DropdownMenuItem(
-                                value: 'Mostro',
-                                child: Text('Mostro'),
+                                value: 'resilienza',
+                                child: Text('RES — HP e tenuta'),
                               ),
                               DropdownMenuItem(
-                                value: 'Mostro Mini Boss',
-                                child: Text('Mini Boss'),
+                                value: 'volonta',
+                                child: Text('VOL — danni, difesa, VC e peso'),
                               ),
                               DropdownMenuItem(
-                                value: 'Mostro Boss',
-                                child: Text('Boss'),
+                                value: 'materia',
+                                child: Text('MAT — CM e Difesa'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'oculum',
+                                child: Text(
+                                  'OCU — Art, cerchi, rituali e poteri oculari',
+                                ),
                               ),
                             ],
+                            onChanged: (value) => setDialogState(
+                              () =>
+                                  tutorialStatPrimaria = value ?? 'resilienza',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            initialValue: tutorialStatSecondaria,
+
+                            dropdownColor: const Color(0xFF202431),
+                            decoration: const InputDecoration(
+                              labelText: 'Statistica secondaria — 2 punti',
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'resilienza',
+                                child: Text('RES — HP e tenuta'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'volonta',
+                                child: Text('VOL — danni, difesa, VC e peso'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'materia',
+                                child: Text('MAT — CM e Difesa'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'oculum',
+                                child: Text(
+                                  'OCU — Art, cerchi, rituali e poteri oculari',
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) => setDialogState(
+                              () => tutorialStatSecondaria = value ?? 'volonta',
+                            ),
+                          ),
+                        ] else
+                          Column(
+                            children: [
+                              DropdownButtonFormField<String>(
+                                isExpanded: true,
+                                initialValue: tutorialMonsterTier,
+                                decoration: const InputDecoration(
+                                  labelText: 'Tipo di creatura',
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'Mostro',
+                                    child: Text('Mostro'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Mostro Mini Boss',
+                                    child: Text('Mini Boss'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Mostro Boss',
+                                    child: Text('Boss'),
+                                  ),
+                                ],
+                                onChanged: (value) => setDialogState(() {
+                                  tutorialMonsterTier = value ?? 'Mostro';
+                                  tutorialMonsterPresetId = '';
+                                  tutorialMonsterVariantId = '';
+                                  tutorialMonsterStatsRandomized = false;
+                                }),
+                              ),
+                              const SizedBox(height: 8),
+                              OculumMonsterPicker(
+                                selectedId: tutorialMonsterPresetId,
+                                entries: monsterBookEntries
+                                    .where(
+                                      (entry) =>
+                                          entry.presetType ==
+                                              tutorialMonsterTier &&
+                                          !_isTutorialMonsterVariant(entry),
+                                    )
+                                    .toList(),
+                                onSelected: (value) => setDialogState(() {
+                                  tutorialMonsterPresetId = value;
+                                  tutorialMonsterVariantId = '';
+                                  tutorialMonsterStatsRandomized = false;
+                                }),
+                              ),
+                              if (tutorialMonsterPresetId.isNotEmpty)
+                                Builder(
+                                  builder: (context) {
+                                    final forms = _tutorialMonsterForms(
+                                      tutorialMonsterPresetId,
+                                    );
+                                    if (forms.length <= 1) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    final chosen =
+                                        forms.any(
+                                          (entry) =>
+                                              entry.id ==
+                                              tutorialMonsterVariantId,
+                                        )
+                                        ? tutorialMonsterVariantId
+                                        : null;
+                                    final chance = tutorialMonsterVariantChance(
+                                      tutorialDifficultyId,
+                                    );
+                                    return Column(
+                                      children: [
+                                        const SizedBox(height: 8),
+                                        DropdownButtonFormField<String>(
+                                          isExpanded: true,
+                                          initialValue: chosen ?? '',
+                                          decoration: const InputDecoration(
+                                            labelText:
+                                                'Forma del mostro — casuale o scelta',
+                                          ),
+                                          items: [
+                                            DropdownMenuItem(
+                                              value: '',
+                                              child: Text(
+                                                'Casuale — variante $chance%',
+                                              ),
+                                            ),
+                                            for (final form in forms)
+                                              DropdownMenuItem(
+                                                value: form.id,
+                                                child: Text(
+                                                  form.id == forms.first.id
+                                                      ? '${form.nameIt} — forma base'
+                                                      : form.nameIt,
+                                                ),
+                                              ),
+                                          ],
+                                          onChanged: (value) =>
+                                              setDialogState(() {
+                                                tutorialMonsterVariantId =
+                                                    value ?? '';
+                                              }),
+                                        ),
+                                        const SizedBox(height: 5),
+                                        smallInfoText(
+                                          'Casuale: Facile 10%, Normale 25%, Difficile 45%, Oculum 65%. La forma viene estratta una sola volta quando crei la scheda.',
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              const SizedBox(height: 6),
+                              smallInfoText(
+                                'Se non scegli un Occhio, crei liberamente la creatura; altrimenti usa statistiche, descrizione e tipo del Mostro scelto.',
+                              ),
+                              if (tutorialMonsterPresetId.isEmpty) ...[
+                                const SizedBox(height: 8),
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    final budget = quickMonsterStatBudget(
+                                      tutorialMonsterTier,
+                                      max(
+                                        0,
+                                        leggiNumero(tutorialLevelController),
+                                      ),
+                                      max(
+                                        0,
+                                        leggiNumero(tutorialGradeController),
+                                      ),
+                                    );
+                                    final stats = randomQuickMonsterStats(
+                                      budget,
+                                      hint: tutorialMonsterTier,
+                                      hasSkills:
+                                          skills.isNotEmpty ||
+                                          arti.any(oculumArtHasUsableSkills),
+                                    );
+                                    setDialogState(() {
+                                      tutorialExtraResController.text =
+                                          '${stats['resilienza'] ?? 0}';
+                                      tutorialExtraVolController.text =
+                                          '${stats['volonta'] ?? 0}';
+                                      tutorialExtraMatController.text =
+                                          '${stats['materia'] ?? 0}';
+                                      tutorialExtraOcuController.text =
+                                          '${stats['oculum'] ?? 0}';
+                                      tutorialMonsterStatsRandomized = true;
+                                    });
+                                  },
+                                  icon: const Icon(Icons.casino_outlined),
+                                  label: const Text('Randomizza punti mostro'),
+                                ),
+                              ],
+                            ],
+                          ),
+                        campoTesto(
+                          label: t('Livello iniziale', 'Starting level'),
+                          controller: tutorialLevelController,
+                        ),
+                        const SizedBox(height: 4),
+                        if (!tutorialGeneraMostro)
+                          campoTesto(
+                            label: t('Grado iniziale', 'Starting grade'),
+                            controller: tutorialGradeController,
+                          )
+                        else
+                          ValueListenableBuilder<TextEditingValue>(
+                            valueListenable: tutorialLevelController,
+                            builder: (context, value, _) => smallInfoText(
+                              'Grado automatico: ${oculumGradeForLevel(max(0, int.tryParse(value.text) ?? 0))}. Per le forme del Book si usa il loro livello.',
+                            ),
+                          ),
+                        const SizedBox(height: 4),
+                        smallInfoText(
+                          tutorialGeneraMostro
+                              ? 'Grado dal livello: +10 punti per Mostro, +15 per Mini-Boss, +25 per Boss a ogni Grado. Le Skill e le Oculum Art ricevono una riserva di Oculum; senza entrambe i punti vanno a RES, VOL e MAT. L’EXP iniziale viene estratta casualmente tra 0 e 120.'
+                              : 'Umanoide: distribuzione iniziale 3/2/1/1, poi +1 punto libero per livello e +10 per grado. L’EXP iniziale viene estratta casualmente tra 0 e 120.',
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: campoTesto(
+                                label: 'RES — HP e tenuta',
+                                controller: tutorialExtraResController,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: campoTesto(
+                                label: 'VOL — danni, difesa, VC e peso',
+                                controller: tutorialExtraVolController,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: campoTesto(
+                                label: 'MAT — CM e Difesa',
+                                controller: tutorialExtraMatController,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: campoTesto(
+                                label:
+                                    'OCU — Art, cerchi, rituali e poteri oculari',
+                                controller: tutorialExtraOcuController,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        smallInfoText(
+                          'Senza un’Oculum Art non possiedi Oculum: con una Martial Art ogni punto OCU viene trasferito automaticamente alla statistica fondamentale più bassa.',
+                        ),
+                        const SizedBox(height: 16),
+                        if (tutorialGeneraMostro) ...[
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            initialValue: tutorialMonsterOrigin,
+                            decoration: const InputDecoration(
+                              labelText: 'Origine della creatura',
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'fato',
+                                child: Text('Fato — dalla terra'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'chaos',
+                                child: Text('Chaos — dalla terra'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'oblio',
+                                child: Text('Oblio — dal nulla'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'errante',
+                                child: Text('Errante — dal nulla'),
+                              ),
+                            ],
+                            onChanged: (value) => setDialogState(
+                              () => tutorialMonsterOrigin = value ?? 'fato',
+                            ),
+                          ),
+                          const Text(
+                            'La creatura conserva le proprie peculiarità. Non sceglie background, razza, Titolo del Fato o Art iniziale da personaggio.',
+                          ),
+                        ],
+                        ExpansionTile(
+                          tilePadding: EdgeInsets.zero,
+                          leading: Icon(
+                            Icons.visibility_outlined,
+                            color: tertiaryColor,
+                          ),
+                          title: Text(
+                            'Sottotratti · ${tutorialSubtraitPoints.values.fold<int>(0, (sum, value) => sum + value)}/9 punti',
+                          ),
+                          subtitle: const Text(
+                            'Distribuisci 9 punti, massimo 3 ciascuno. Se salti restano disponibili.',
+                          ),
+                          children: [
+                            for (final stat in hiddenEyeStats)
+                              Row(
+                                children: [
+                                  Expanded(child: Text(stat.nome, maxLines: 2)),
+                                  IconButton(
+                                    tooltip: 'Togli un punto',
+                                    onPressed:
+                                        (tutorialSubtraitPoints[stat.id] ?? 0) >
+                                            0
+                                        ? () => setDialogState(() {
+                                            tutorialSubtraitPoints[stat.id] =
+                                                (tutorialSubtraitPoints[stat
+                                                        .id] ??
+                                                    0) -
+                                                1;
+                                          })
+                                        : null,
+                                    icon: const Icon(Icons.remove),
+                                  ),
+                                  Text(
+                                    '${tutorialSubtraitPoints[stat.id] ?? 0}',
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Assegna un punto',
+                                    onPressed:
+                                        (tutorialSubtraitPoints[stat.id] ?? 0) <
+                                                3 &&
+                                            tutorialSubtraitPoints.values
+                                                    .fold<int>(
+                                                      0,
+                                                      (sum, value) =>
+                                                          sum + value,
+                                                    ) <
+                                                9
+                                        ? () => setDialogState(() {
+                                            tutorialSubtraitPoints[stat.id] =
+                                                (tutorialSubtraitPoints[stat
+                                                        .id] ??
+                                                    0) +
+                                                1;
+                                          })
+                                        : null,
+                                    icon: const Icon(Icons.add),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        if (!tutorialGeneraMostro) ...[
+                          Text(
+                            '3. Origine e Fato',
+                            style: TextStyle(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          _tutorialChoiceField(
+                            label:
+                                'Background — diventa il tuo Titolo d’Azione visibile',
+                            value: tutorialBackgroundId,
+                            choices: oculumStarterBackgrounds,
+                            onChanged: (value) => setDialogState(
+                              () => tutorialBackgroundId = value,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _tutorialChoiceField(
+                            label: 'Razza',
+                            value: tutorialRaceId,
+                            choices: oculumStarterRaces,
+                            onChanged: (value) =>
+                                setDialogState(() => tutorialRaceId = value),
+                          ),
+                          const SizedBox(height: 8),
+                          _tutorialChoiceField(
+                            label: 'Titolo del Fato — perché sei qui?',
+                            value: tutorialFateId,
+                            choices: oculumStarterFateTitles,
+                            onChanged: (value) =>
+                                setDialogState(() => tutorialFateId = value),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            '4. Art iniziale',
+                            style: TextStyle(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            initialValue: tutorialArtName,
+
+                            dropdownColor: const Color(0xFF202431),
+                            decoration: const InputDecoration(
+                              labelText: 'Scegli un’Art — ogni Art ha 3 Skill',
+                            ),
+                            items: oculumStarterArtChoices()
+                                .map(
+                                  (art) => DropdownMenuItem(
+                                    value: art.nome,
+                                    child: Text('${art.nome} (${art.tipo})'),
+                                  ),
+                                )
+                                .toList(),
                             onChanged: (value) => setDialogState(() {
-                              tutorialMonsterTier = value ?? 'Mostro';
-                              tutorialMonsterPresetId = '';
-                              tutorialMonsterVariantId = '';
-                              tutorialMonsterStatsRandomized = false;
+                              tutorialArtName = value ?? tutorialArtName;
+                              final selected = oculumStarterArtChoices()
+                                  .firstWhere(
+                                    (art) => art.nome == tutorialArtName,
+                                  );
+                              tutorialMartialBonus =
+                                  selected.tipo == 'Martial Art'
+                                  ? oculumStarterMartialBonus(Random())
+                                  : 0;
                             }),
                           ),
                           const SizedBox(height: 8),
-                          OculumMonsterPicker(
-                            selectedId: tutorialMonsterPresetId,
-                            entries: monsterBookEntries
-                                .where(
-                                  (entry) =>
-                                      entry.presetType == tutorialMonsterTier &&
-                                      !_isTutorialMonsterVariant(entry),
-                                )
-                                .toList(),
-                            onSelected: (value) => setDialogState(() {
-                              tutorialMonsterPresetId = value;
-                              tutorialMonsterVariantId = '';
-                              tutorialMonsterStatsRandomized = false;
-                            }),
-                          ),
-                          if (tutorialMonsterPresetId.isNotEmpty)
-                            Builder(
-                              builder: (context) {
-                                final forms = _tutorialMonsterForms(
-                                  tutorialMonsterPresetId,
-                                );
-                                if (forms.length <= 1) {
-                                  return const SizedBox.shrink();
-                                }
-                                final chosen =
-                                    forms.any(
-                                      (entry) =>
-                                          entry.id == tutorialMonsterVariantId,
-                                    )
-                                    ? tutorialMonsterVariantId
-                                    : null;
-                                final chance = tutorialMonsterVariantChance(
-                                  tutorialDifficultyId,
-                                );
-                                return Column(
-                                  children: [
-                                    const SizedBox(height: 8),
-                                    DropdownButtonFormField<String>(
-                                      initialValue: chosen ?? '',
-                                      decoration: const InputDecoration(
-                                        labelText:
-                                            'Forma del mostro — casuale o scelta',
-                                      ),
-                                      items: [
-                                        DropdownMenuItem(
-                                          value: '',
-                                          child: Text(
-                                            'Casuale — variante $chance%',
-                                          ),
-                                        ),
-                                        for (final form in forms)
-                                          DropdownMenuItem(
-                                            value: form.id,
-                                            child: Text(
-                                              form.id == forms.first.id
-                                                  ? '${form.nameIt} — forma base'
-                                                  : form.nameIt,
-                                            ),
-                                          ),
-                                      ],
-                                      onChanged: (value) => setDialogState(() {
-                                        tutorialMonsterVariantId = value ?? '';
-                                      }),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    smallInfoText(
-                                      'Casuale: Facile 10%, Normale 25%, Difficile 45%, Oculum 65%. La forma viene estratta una sola volta quando crei la scheda.',
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          const SizedBox(height: 6),
                           smallInfoText(
-                            'Se non scegli un Occhio, crei liberamente la creatura; altrimenti usa statistiche, descrizione e tipo del Mostro scelto.',
+                            tutorialArtName == 'Zanna del Drago' ||
+                                    tutorialArtName == 'Berserk'
+                                ? 'Martial Art: bonus estratto 1d10+2 = $tutorialMartialBonus punti liberi. Puoi metterli in RES, VOL o MAT: OCU resta 0.'
+                                : 'Con un’Oculum Art puoi investire normalmente anche in OCU.',
                           ),
-                          if (tutorialMonsterPresetId.isEmpty) ...[
-                            const SizedBox(height: 8),
-                            OutlinedButton.icon(
-                              onPressed: () {
-                                final budget = quickMonsterStatBudget(
-                                  tutorialMonsterTier,
-                                  max(0, leggiNumero(tutorialLevelController)),
-                                  max(0, leggiNumero(tutorialGradeController)),
-                                );
-                                final stats = randomQuickMonsterStats(
-                                  budget,
-                                  hint: tutorialMonsterTier,
-                                  hasSkills:
-                                      skills.isNotEmpty ||
-                                      arti.any(oculumArtHasUsableSkills),
-                                );
-                                setDialogState(() {
-                                  tutorialExtraResController.text =
-                                      '${stats['resilienza'] ?? 0}';
-                                  tutorialExtraVolController.text =
-                                      '${stats['volonta'] ?? 0}';
-                                  tutorialExtraMatController.text =
-                                      '${stats['materia'] ?? 0}';
-                                  tutorialExtraOcuController.text =
-                                      '${stats['oculum'] ?? 0}';
-                                  tutorialMonsterStatsRandomized = true;
-                                });
-                              },
-                              icon: const Icon(Icons.casino_outlined),
-                              label: const Text('Randomizza punti mostro'),
-                            ),
-                          ],
+                          const SizedBox(height: 8),
+                          const Text(
+                            '[Richiede: ???] — requisiti di Art, Skill, Open e Titoli da definire con il Master.',
+                          ),
+                          const SizedBox(height: 14),
                         ],
-                      ),
-                    campoTesto(
-                      label: t('Livello iniziale', 'Starting level'),
-                      controller: tutorialLevelController,
-                    ),
-                    const SizedBox(height: 4),
-                    if (!tutorialGeneraMostro)
-                      campoTesto(
-                        label: t('Grado iniziale', 'Starting grade'),
-                        controller: tutorialGradeController,
-                      )
-                    else
-                      ValueListenableBuilder<TextEditingValue>(
-                        valueListenable: tutorialLevelController,
-                        builder: (context, value, _) => smallInfoText(
-                          'Grado automatico: ${oculumGradeForLevel(max(0, int.tryParse(value.text) ?? 0))}. Per le forme del Book si usa il loro livello.',
-                        ),
-                      ),
-                    const SizedBox(height: 4),
-                    smallInfoText(
-                      tutorialGeneraMostro
-                          ? 'Grado dal livello: +10 punti per Mostro, +15 per Mini-Boss, +25 per Boss a ogni Grado. Le Skill e le Oculum Art ricevono una riserva di Oculum; senza entrambe i punti vanno a RES, VOL e MAT. L’EXP iniziale viene estratta casualmente tra 0 e 120.'
-                          : 'Umanoide: distribuzione iniziale 3/2/1/1, poi +1 punto libero per livello e +10 per grado. L’EXP iniziale viene estratta casualmente tra 0 e 120.',
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: campoTesto(
-                            label: 'RES — HP e tenuta',
-                            controller: tutorialExtraResController,
+                        Text(
+                          t('Regole fondamentali', 'Core rules'),
+                          style: TextStyle(
+                            color: tertiaryColor,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: campoTesto(
-                            label: 'VOL — danni, difesa, VC e peso',
-                            controller: tutorialExtraVolController,
+                        const SizedBox(height: 8),
+                        Text(
+                          t(
+                            '• Resilienza aumenta gli HP massimi.\n'
+                                '• Volontà aumenta danno, difesa, VC e peso trasportabile.\n'
+                                '• Materia aumenta CM e Difesa.\n'
+                                '• Oculum potenzia Arti, cerchi, rituali e poteri oculari.\n'
+                                '• Lo Scudo Critico dimezza i danni finché non viene spezzato da un critico in fight.\n'
+                                '• Requisiti di Art e Titoli: [Richiede: ???], li stabilisce il Master.\n'
+                                '• Le pagine diario possono dare Ispirazioni.\n'
+                                '• I Gradi vengono controllati automaticamente in base al livello e al Rebirth.',
+                            '• Resilience increases max HP.\n'
+                                '• Will increases damage, defense, VC and carrying weight.\n'
+                                '• Materia increases CM and Defense.\n'
+                                '• Oculum empowers Arts, circles, rituals and eye powers.\n'
+                                '• Critical Shield halves damage until broken by a critical during combat.\n'
+                                '• Art and Title requirements: [Richiede: ???], set by the Master.\n'
+                                '• Diary pages can grant Inspirations.\n'
+                                '• Grades are checked automatically based on level and Rebirth.',
                           ),
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          t('Funzioni principali', 'Main features'),
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          t(
+                            'Scheda: HP, danni, cura, tiri, stats, livello e grado.\n'
+                                'Riposo: bisogni, cenere, recuperi e attività pesanti.\n'
+                                'Titoli: buff, karma, Open e punti ciechi.\n'
+                                'Art: nome, tipo e descrizione delle Art.\n'
+                                'Skill: skill scritte e creazione skill.\n'
+                                'Storia: background e diario.\n'
+                                'Risorse: Obser, polveri e Ispirazioni.\n'
+                                'Impostazioni: colori avanzati, log, lingua e tutorial.',
+                            'Sheet: HP, damage, healing, rolls, stats, level and grade.\n'
+                                'Rest: needs, ash, recovery and heavy activities.\n'
+                                'Titles: buffs, Karma, Opens and blind spots.\n'
+                                'Arts: Art name, type and description.\n'
+                                'Skills: written skills and skill creation.\n'
+                                'Story: background and diary.\n'
+                                'Resources: Obser, powders and Inspirations.\n'
+                                'Settings: advanced colors, log, language and tutorial.',
+                          ),
+                          style: const TextStyle(color: Colors.white),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: campoTesto(
-                            label: 'MAT — CM e Difesa',
-                            controller: tutorialExtraMatController,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: campoTesto(
-                            label:
-                                'OCU — Art, cerchi, rituali e poteri oculari',
-                            controller: tutorialExtraOcuController,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    smallInfoText(
-                      'Senza un’Oculum Art non possiedi Oculum: con una Martial Art ogni punto OCU viene trasferito automaticamente alla statistica fondamentale più bassa.',
-                    ),
-                    const SizedBox(height: 16),
-                    if (tutorialGeneraMostro) ...[
-                      DropdownButtonFormField<String>(
-                        initialValue: tutorialMonsterOrigin,
-                        decoration: const InputDecoration(
-                          labelText: 'Origine della creatura',
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'fato',
-                            child: Text('Fato — dalla terra'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'chaos',
-                            child: Text('Chaos — dalla terra'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'oblio',
-                            child: Text('Oblio — dal nulla'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'errante',
-                            child: Text('Errante — dal nulla'),
-                          ),
-                        ],
-                        onChanged: (value) => setDialogState(
-                          () => tutorialMonsterOrigin = value ?? 'fato',
-                        ),
-                      ),
-                      const Text(
-                        'La creatura conserva le proprie peculiarità. Non sceglie background, razza, Titolo del Fato o Art iniziale da personaggio.',
-                      ),
-                    ],
-                    Text(
-                      'Punti sottotratti: ${tutorialSubtraitPoints.values.fold<int>(0, (sum, value) => sum + value)}/9',
-                      style: TextStyle(
-                        color: tertiaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Text(
-                      'Distribuisci 9 punti dove vuoi. Massimo 3 per sottotratto.',
-                    ),
-                    for (final stat in hiddenEyeStats)
-                      Row(
-                        children: [
-                          Expanded(child: Text(stat.nome)),
-                          IconButton(
-                            tooltip: 'Togli un punto',
-                            onPressed:
-                                (tutorialSubtraitPoints[stat.id] ?? 0) > 0
-                                ? () => setDialogState(() {
-                                    tutorialSubtraitPoints[stat.id] =
-                                        (tutorialSubtraitPoints[stat.id] ?? 0) -
-                                        1;
-                                  })
-                                : null,
-                            icon: const Icon(Icons.remove),
-                          ),
-                          Text('${tutorialSubtraitPoints[stat.id] ?? 0}'),
-                          IconButton(
-                            tooltip: 'Assegna un punto',
-                            onPressed:
-                                (tutorialSubtraitPoints[stat.id] ?? 0) < 3 &&
-                                    tutorialSubtraitPoints.values.fold<int>(
-                                          0,
-                                          (sum, value) => sum + value,
-                                        ) <
-                                        9
-                                ? () => setDialogState(() {
-                                    tutorialSubtraitPoints[stat.id] =
-                                        (tutorialSubtraitPoints[stat.id] ?? 0) +
-                                        1;
-                                  })
-                                : null,
-                            icon: const Icon(Icons.add),
-                          ),
-                        ],
-                      ),
-                    const SizedBox(height: 16),
-                    if (!tutorialGeneraMostro) ...[
-                      Text(
-                        '3. Origine e Fato',
-                        style: TextStyle(
-                          color: primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      _tutorialChoiceField(
-                        label:
-                            'Background — diventa il tuo Titolo d’Azione visibile',
-                        value: tutorialBackgroundId,
-                        choices: oculumStarterBackgrounds,
-                        onChanged: (value) =>
-                            setDialogState(() => tutorialBackgroundId = value),
-                      ),
-                      const SizedBox(height: 8),
-                      _tutorialChoiceField(
-                        label: 'Razza',
-                        value: tutorialRaceId,
-                        choices: oculumStarterRaces,
-                        onChanged: (value) =>
-                            setDialogState(() => tutorialRaceId = value),
-                      ),
-                      const SizedBox(height: 8),
-                      _tutorialChoiceField(
-                        label: 'Titolo del Fato — perché sei qui?',
-                        value: tutorialFateId,
-                        choices: oculumStarterFateTitles,
-                        onChanged: (value) =>
-                            setDialogState(() => tutorialFateId = value),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '4. Art iniziale',
-                        style: TextStyle(
-                          color: primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      DropdownButtonFormField<String>(
-                        initialValue: tutorialArtName,
-                        isExpanded: true,
-                        dropdownColor: const Color(0xFF202431),
-                        decoration: const InputDecoration(
-                          labelText: 'Scegli un’Art — ogni Art ha 3 Skill',
-                        ),
-                        items: oculumStarterArtChoices()
-                            .map(
-                              (art) => DropdownMenuItem(
-                                value: art.nome,
-                                child: Text('${art.nome} (${art.tipo})'),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) => setDialogState(() {
-                          tutorialArtName = value ?? tutorialArtName;
-                          final selected = oculumStarterArtChoices().firstWhere(
-                            (art) => art.nome == tutorialArtName,
-                          );
-                          tutorialMartialBonus = selected.tipo == 'Martial Art'
-                              ? oculumStarterMartialBonus(Random())
-                              : 0;
-                        }),
-                      ),
-                      const SizedBox(height: 8),
-                      smallInfoText(
-                        tutorialArtName == 'Zanna del Drago' ||
-                                tutorialArtName == 'Berserk'
-                            ? 'Martial Art: bonus estratto 1d10+2 = $tutorialMartialBonus punti liberi. Puoi metterli in RES, VOL o MAT: OCU resta 0.'
-                            : 'Con un’Oculum Art puoi investire normalmente anche in OCU.',
-                      ),
-                      const SizedBox(height: 14),
-                    ],
-                    Text(
-                      t('Regole fondamentali', 'Core rules'),
-                      style: TextStyle(
-                        color: tertiaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      t(
-                        '• Resilienza aumenta gli HP massimi.\n'
-                            '• Volontà aumenta danno, difesa, VC e peso trasportabile.\n'
-                            '• Materia aumenta CM e Difesa.\n'
-                            '• Oculum potenzia Arti, cerchi, rituali e poteri oculari.\n'
-                            '• Lo Scudo Critico dimezza i danni finché non viene spezzato da un critico in fight.\n'
-                            '• I Titoli del Fato si ottengono dalle Skill delle Art: prima Skill livello 1, seconda Skill livello 2, terza Skill livello 3.\n'
-                            '• Le pagine diario possono dare Ispirazioni.\n'
-                            '• I Gradi vengono controllati automaticamente in base al livello e al Rebirth.',
-                        '• Resilience increases max HP.\n'
-                            '• Will increases damage, defense, VC and carrying weight.\n'
-                            '• Materia increases CM and Defense.\n'
-                            '• Oculum empowers Arts, circles, rituals and eye powers.\n'
-                            '• Critical Shield halves damage until broken by a critical during combat.\n'
-                            '• Fate Titles are gained from Art Skills: first Skill level 1, second Skill level 2, third Skill level 3.\n'
-                            '• Diary pages can grant Inspirations.\n'
-                            '• Grades are checked automatically based on level and Rebirth.',
-                      ),
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      t('Funzioni principali', 'Main features'),
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      t(
-                        'Scheda: HP, danni, cura, tiri, stats, livello e grado.\n'
-                            'Riposo: bisogni, cenere, recuperi e attività pesanti.\n'
-                            'Titoli: buff, karma, Open e punti ciechi.\n'
-                            'Art: nome, tipo e descrizione delle Art.\n'
-                            'Skill: skill scritte e creazione skill.\n'
-                            'Storia: background e diario.\n'
-                            'Risorse: Obser, polveri e Ispirazioni.\n'
-                            'Impostazioni: colori avanzati, log, lingua e tutorial.',
-                        'Sheet: HP, damage, healing, rolls, stats, level and grade.\n'
-                            'Rest: needs, ash, recovery and heavy activities.\n'
-                            'Titles: buffs, Karma, Opens and blind spots.\n'
-                            'Arts: Art name, type and description.\n'
-                            'Skills: written skills and skill creation.\n'
-                            'Story: background and diary.\n'
-                            'Resources: Obser, powders and Inspirations.\n'
-                            'Settings: advanced colors, log, language and tutorial.',
-                      ),
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -3404,6 +3480,18 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     }
 
     final funzioni = <Map<String, dynamic>>[
+      {
+        'key': 'sottotratti abilita abilità tiri alternativi',
+        'title': t('Sottotratti', 'Subtraits'),
+        'page': 0,
+        'anchorId': 'sheet_subtraits',
+      },
+      {
+        'key': 'turnistica turnistiche scontri combattimenti turno iniziativa',
+        'title': t('Turnistica', 'Turn order'),
+        'page': 0,
+        'anchorId': 'sheet_initiative',
+      },
       {
         'key': 'danno damage subito ferita subisci colpo',
         'title': t('Danno', 'Damage'),
@@ -3757,7 +3845,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
   void mostraCerca() {
     final controller = TextEditingController();
 
-    showDialog(
+    final searchRoute = DialogRoute<void>(
       context: context,
       builder: (context) {
         return StatefulBuilder(
@@ -3819,10 +3907,19 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                                         color: Colors.grey.shade400,
                                       ),
                                     ),
-                                    onTap: () {
+                                    onTap: () async {
                                       Navigator.pop(context);
                                       FocusManager.instance.primaryFocus
                                           ?.unfocus();
+                                      if (referenceDetailRouteActive) {
+                                        Navigator.of(
+                                          this.context,
+                                        ).popUntil((route) => route.isFirst);
+                                        await Future<void>.delayed(
+                                          Duration.zero,
+                                        );
+                                        if (!mounted) return;
+                                      }
 
                                       if (r['action'] == 'dungeon') {
                                         _openDungeonMiniGame();
@@ -3857,7 +3954,9 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
           },
         );
       },
-    ).whenComplete(controller.dispose);
+    );
+    unawaited(Navigator.of(context).push(searchRoute));
+    unawaited(searchRoute.completed.whenComplete(controller.dispose));
   }
 
   // =====================================================
@@ -5265,7 +5364,30 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
           'settings_root',
           sectionTitle(t('Impostazioni', 'Settings')),
         ),
-        gothicPanel(borderColor: tertiaryColor, child: pageDropdown()),
+        gothicPanel(
+          borderColor: tertiaryColor,
+          child: Column(
+            children: [
+              pageDropdown(),
+              SwitchListTile.adaptive(
+                title: Text(
+                  t('Indicazioni per iniziare', 'Getting started guidance'),
+                ),
+                subtitle: Text(
+                  t(
+                    'Una frase pratica all’ingresso di ogni pagina.',
+                    'A practical sentence at the top of each page.',
+                  ),
+                ),
+                value: showPageGuidance,
+                onChanged: (value) {
+                  setState(() => showPageGuidance = value);
+                  programmaSalvataggio();
+                },
+              ),
+            ],
+          ),
+        ),
         functionAnchor('settings_hero', settingsHeroPanel()),
         functionAnchor('settings_mods', modsSettingsPanel()),
         functionAnchor('settings_control_center', settingsControlCenterPanel()),
@@ -5437,7 +5559,9 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                 value: temiOldSchool,
                 activeThumbColor: tertiaryColor,
                 secondary: const Icon(Icons.history_edu),
-                title: Text(t('Temi old school', 'Old-school themes')),
+                title: Text(
+                  t('Torna al vecchio design', 'Return to the previous design'),
+                ),
                 subtitle: Text(
                   t(
                     'Ripristina il sistema grafico precedente senza perdere colori, temi o personalizzazioni già salvate.',
@@ -5447,6 +5571,10 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                 onChanged: (value) {
                   setState(() {
                     temiOldSchool = value;
+                    if (value &&
+                        paginaCorrente == _OculumHomePageState.homePageIndex) {
+                      paginaCorrente = 0;
+                    }
                     risultato = value
                         ? t(
                             'Mod Temi old school attivata.',
@@ -6232,6 +6360,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             currentColor: eyePupilGlowColor,
             onSelected: (color) => eyePupilGlowColor = color,
           ),
+        referenceBackgroundSelector(),
         colorPicker(
           titolo: t('Sfondo Alto', 'Background Top'),
           selectedColor: backgroundTopColor,

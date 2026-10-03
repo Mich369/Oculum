@@ -117,6 +117,26 @@ extension _OculumHomeForceState on _OculumHomePageState {
       weight: 6,
     ),
     _StatoForzaDef(
+      id: 'ricordo_vitale',
+      nameIt: 'Ricordo vitale',
+      nameEn: 'Vital Memory',
+      descriptionIt:
+          'Molto raro: recuperi il 75% della Vita massima e ottieni Ricordo Vitale per 9 tuoi turni. La cura non viene sottratta alla scadenza.',
+      descriptionEn:
+          'Very rare: restore 75% of maximum HP and gain Vital Memory for 9 personal turns. Healing is retained after expiry.',
+      weight: 1,
+    ),
+    _StatoForzaDef(
+      id: 'duecento_percento',
+      nameIt: '200%',
+      nameEn: '200%',
+      descriptionIt:
+          'Raddoppia Resilienza, Volontà, Materia e Oculum per 3 tuoi turni, usando i valori all’attivazione. Non accumulabile. La scadenza non può ucciderti.',
+      descriptionEn:
+          'Doubles Resilience, Will, Matter and Oculum for 3 personal turns, using activation values. Does not stack. Expiry cannot kill you.',
+      weight: 3,
+    ),
+    _StatoForzaDef(
       id: 'vero_bruciore_anima',
       nameIt: 'Vero Bruciore dell Anima',
       nameEn: 'True Soul Burn',
@@ -285,6 +305,56 @@ extension _OculumHomeForceState on _OculumHomePageState {
   String applicaEffettoImmediatoStatoForza(String id) {
     final livelloGrado = statoForzaLivelloGrado();
     switch (id) {
+      case 'ricordo_vitale':
+        if (activeStructuredEffects.any(
+          (e) => e['source'] == 'Stato di Forza: Ricordo vitale',
+        )) {
+          return 'Già attivo: nessuna cura aggiuntiva.';
+        }
+        final recovered = (maxHp() * 3 / 4).ceil();
+        currentHpController.text = min(
+          maxHp(),
+          hpCorrenti() + recovered,
+        ).toString();
+        applyCondition(
+          'ricordo_vitale',
+          duration: 9,
+          source: 'Stato di Forza: Ricordo vitale',
+        );
+        activeStructuredEffects.add({
+          'source': 'Stato di Forza: Ricordo vitale',
+          'target': 'durata_stato',
+          'type': 'bonus',
+          'value': 0,
+          'remaining': 9,
+          'unit': 'turni',
+        });
+        invalidateDerivedDataCaches();
+        return 'Cura +$recovered HP, entro il massimo. Ricordo Vitale: 9 turni personali.';
+      case 'duecento_percento':
+        if (activeStructuredEffects.any(
+          (e) => e['source'] == 'Stato di Forza: 200%',
+        )) {
+          return '200% già attivo.';
+        }
+        final values = {
+          'resilienza': resilienzaTotale(),
+          'volonta': volontaTotale(),
+          'materia': materiaTotale(),
+          'oculum': oculumTotale(),
+        };
+        for (final entry in values.entries) {
+          activeStructuredEffects.add({
+            'source': 'Stato di Forza: 200%',
+            'target': entry.key,
+            'type': 'bonus',
+            'value': max(0, entry.value),
+            'remaining': 3,
+            'unit': 'turni',
+          });
+        }
+        invalidateDerivedDataCaches();
+        return 'Statistiche raddoppiate per 3 turni personali.';
       case 'corpo_non_mollare':
         final hpTempBonus = 20 + livelloGrado;
         final hpTempPrima = hpTemp();
@@ -432,7 +502,22 @@ extension _OculumHomeForceState on _OculumHomePageState {
     bool potenzaNucleoTerminataNaturalmente = false,
   }) {
     final active = statoForzaAttivo;
+    final hpBeforeBuffRemoval = hpCorrenti();
+    if (active == 'ricordo_vitale' || active == 'duecento_percento') {
+      final source = active == 'ricordo_vitale'
+          ? 'Stato di Forza: Ricordo vitale'
+          : 'Stato di Forza: 200%';
+      activeStructuredEffects.removeWhere((e) => e['source'] == source);
+      if (active == 'ricordo_vitale') {
+        final condition = getCondition('ricordo_vitale');
+        if (condition?.source == source) {
+          removeCondition(condition!, force: true);
+        }
+      }
+    }
     statoForzaAttivo = '';
+    invalidateDerivedDataCaches();
+    preserveLivingHpAfterBuffRemoval(hpBeforeBuffRemoval);
     statoForzaPronto = true;
     statoForzaTiriRimanenti = 0;
     if (active == 'esplosione_oculum' && applicaEsitoEsplosione) {
@@ -652,6 +737,13 @@ extension _OculumHomeForceState on _OculumHomePageState {
     final hp = hpCorrenti();
     final soglia = sogliaStatoForzaHp();
 
+    if ((statoForzaAttivo == 'ricordo_vitale' ||
+            statoForzaAttivo == 'duecento_percento') &&
+        activeStructuredEffects.any(
+          (e) => '${e['source']}'.startsWith('Stato di Forza:'),
+        )) {
+      return;
+    }
     if (hp > soglia) {
       if (statoForzaAttivo == 'esplosione_oculum' &&
           statoForzaTiriRimanenti > 0) {

@@ -1644,7 +1644,31 @@ extension _OculumFallenEyes on _OculumHomePageState {
     if (!_spendFallenEyeSummonAction(eye, 'evocare')) return;
     await activateFallenEye(eye);
     if (!readBoolValue(eye['active'])) return;
+    final bondBefore = oculumFallenEyeBond(eye);
     oculumFallenEyeGrantSummonBond(eye);
+    if (oculumFallenEyeOriginalRarity(eye) == 'oculum') {
+      final previousMilestone = max(
+        bondBefore ~/ 30,
+        readIntValue(eye['bondXpMilestone']),
+      );
+      final milestone = oculumFallenEyeBond(eye) ~/ 30;
+      final reward = max(0, milestone - previousMilestone) * 10;
+      eye['bondXpMilestone'] = max(previousMilestone, milestone);
+      if (reward > 0) {
+        final ownerIndex = schedePersonaggio.indexWhere(
+          (sheet) =>
+              '${sheet['sheetTag'] ?? ''}' == '${eye['ownerSheetId'] ?? ''}',
+        );
+        if (ownerIndex == schedaCorrente) {
+          aggiungiLog(
+            applicaEsperienzaFlat(reward, motivo: 'Legame Occhio Oculum'),
+          );
+        } else if (ownerIndex >= 0) {
+          final owner = schedePersonaggio[ownerIndex];
+          owner['exp'] = '${readIntValue(owner['exp']) + reward}';
+        }
+      }
+    }
     _touchFallenEyes();
     await salvaDati();
     final rarity = '${eye['rarity'] ?? 'comune'}';

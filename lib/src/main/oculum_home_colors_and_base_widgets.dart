@@ -1011,7 +1011,16 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         helperText: helper == null ? null : cleanUiText(helper),
         helperMaxLines: 3,
         filled: true,
-        fillColor: OculumDesignTokens.cathedralStone,
+        fillColor: Color.lerp(backgroundMidColor, backgroundBottomColor, .25),
+        labelStyle: TextStyle(color: primaryColor, fontWeight: FontWeight.w600),
+        floatingLabelStyle: TextStyle(
+          color: tertiaryColor,
+          fontWeight: FontWeight.w700,
+        ),
+        helperStyle: TextStyle(
+          color: primaryColor.withValues(alpha: .8),
+          height: 1.35,
+        ),
         contentPadding: scaledInsets(
           const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         ),
@@ -1272,6 +1281,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         identical(controller, scudoOculumController) ||
         identical(controller, scudoOculumMaxController) ||
         identical(controller, attaccoRapidoController) ||
+        identical(controller, vcRapidoController) ||
         identical(controller, cmRapidoController) ||
         identical(controller, difesaRapidaController) ||
         identical(controller, difficoltaTiroController) ||
@@ -1413,13 +1423,10 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         ),
         child: Row(
           children: [
-            Container(
-              width: uiScale(4),
-              height: uiScale(light ? 18 : 22),
-              decoration: BoxDecoration(
-                color: markerColor,
-                borderRadius: BorderRadius.circular(4),
-              ),
+            OculumMemoryEye(
+              role: 'unknown',
+              size: uiScale(light ? 18 : 22),
+              color: markerColor,
             ),
             SizedBox(width: uiScale(10)),
             Expanded(
@@ -1452,21 +1459,51 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     Color? borderColor,
   }) {
     if (!temiOldSchool) {
-      final accent = borderColor ?? primaryColor;
-      return RepaintBoundary(
-        child: Container(
-          margin: const EdgeInsets.symmetric(
-            vertical: OculumDesignTokens.space4,
-          ),
-          padding: scaledInsets(padding),
-          decoration: OculumDesignTokens.panelDecoration(
-            accent: accent,
-            elevated: !modalitaLeggera,
-            decorationIntensity: modalitaLeggera ? 0 : 0.75,
-            style: nuovoDesignOculum,
-          ),
-          child: Material(type: MaterialType.transparency, child: child),
+      final reference = referenceCampaignStyle;
+      final accent =
+          reference &&
+              (borderColor == null ||
+                  borderColor == primaryColor ||
+                  borderColor == tertiaryColor)
+          ? const Color(0xff946b64)
+          : borderColor ?? primaryColor;
+      final surface = reference ? const Color(0xff0b0b0e) : backgroundMidColor;
+      final panel = Container(
+        margin: const EdgeInsets.symmetric(vertical: OculumDesignTokens.space4),
+        padding: scaledInsets(padding),
+        decoration: OculumDesignTokens.panelDecoration(
+          accent: accent,
+          background: surface,
+          elevated: !modalitaLeggera,
+          decorationIntensity: modalitaLeggera ? 0 : 0.75,
+          style: nuovoDesignOculum,
         ),
+        child: CustomPaint(
+          foregroundPainter: modalitaLeggera || reference
+              ? null
+              : OculumPanelEngraving(accent: accent),
+          child: Material(
+            type: MaterialType.transparency,
+            child: DefaultTextStyle.merge(
+              style: TextStyle(
+                color: reference
+                    ? const Color(0xffe6dfd7)
+                    : readableOnTheme(
+                        primaryColor,
+                        background: surface,
+                        minRatio: 4.5,
+                      ),
+                height: 1.3,
+              ),
+              child: child,
+            ),
+          ),
+        ),
+      );
+      return RepaintBoundary(
+        child: reference && !modalitaLeggera
+            ? OculumReferenceFrame(child: panel)
+            : panel,
       );
     }
     final panelSurface = Color.lerp(
@@ -2486,6 +2523,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
 
     return DropdownButtonFormField<String>(
       initialValue: safeValue,
+      isExpanded: true,
       dropdownColor: const Color(0xFF11131A),
       decoration: fieldDecoration(t('Tipo Scheda', 'Sheet Type')),
       items: tipiScheda
@@ -2512,6 +2550,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
 
     return DropdownButtonFormField<int>(
       initialValue: safeValue,
+      isExpanded: true,
       dropdownColor: const Color(0xFF11131A),
       decoration: fieldDecoration(t('Pagina', 'Page')),
       items: [
@@ -2547,7 +2586,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                 trailing:
                     option.name ==
                         canonicalDamageModifierName(
-                          modificatoreDannoSelezionato,
+                          configuredIncomingDamagePreset(),
                         )
                     ? const Icon(Icons.check, color: Colors.lightBlueAccent)
                     : null,
@@ -2556,9 +2595,11 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                     modificatoreDannoSelezionato = canonicalDamageModifierName(
                       option.name,
                     );
+                    incomingDamagePresets[selectedIncomingDamageElement()] =
+                        modificatoreDannoSelezionato;
                     dannoSubitoPercentController.clear();
                     dannoSubitoPercentPerTipo.remove(
-                      elementoDannoDominante().trim().toLowerCase(),
+                      selectedIncomingDamageElement(),
                     );
                     aggiungiLog(
                       'Modificatore danno selezionato: ${option.name}.',
@@ -2575,8 +2616,8 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
   }
 
   Widget damageModifierDropdown() {
-    final safeValue = canonicalDamageModifierName(modificatoreDannoSelezionato);
-    final activeDamageType = elementoDannoDominante().trim().toLowerCase();
+    final safeValue = configuredIncomingDamagePreset();
+    final activeDamageType = selectedIncomingDamageElement();
     final activePercent = configuredIncomingDamagePercentForType(
       activeDamageType,
     );
@@ -2607,7 +2648,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
           ),
           decoration:
               fieldDecoration(
-                'Danno subito in più / meno (%) — ${elementDisplayName(elementoDannoDominante())}',
+                'Danno subito in più / meno (%) — ${elementDisplayName(selectedIncomingDamageElement())}',
               ).copyWith(
                 hintText: '+25% oppure -20%',
                 suffixIcon: IconButton(

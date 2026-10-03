@@ -9,8 +9,16 @@ New-Item -ItemType Directory -Force -Path $distRoot | Out-Null
 
 function Build-Edition([string]$Platform, [string]$Profile, [string]$LogName) {
   Write-Output "Compilazione $Platform (profilo '$Profile')"
-  & $dartRuntime $flutterTool build $Platform --release --no-pub "--dart-define=OculumSaveProfile=$Profile" *> (Join-Path $projectRoot "output\$LogName.log")
-  if ($LASTEXITCODE -ne 0) { throw "Build $Platform ($Profile) fallita: output\$LogName.log" }
+  $logPath = Join-Path $projectRoot "output\$LogName.log"
+  $previousErrorAction = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try {
+    & $dartRuntime $flutterTool build $Platform --release --no-pub "--dart-define=OculumSaveProfile=$Profile" *> $logPath
+    $exitCode = $LASTEXITCODE
+  } finally {
+    $ErrorActionPreference = $previousErrorAction
+  }
+  if ($exitCode -ne 0) { throw "Build $Platform ($Profile) fallita: output\$LogName.log" }
 }
 
 function Package-Windows([string]$Folder, [string]$ExeName, [string]$ZipName) {
@@ -39,7 +47,7 @@ function Package-Windows([string]$Folder, [string]$ExeName, [string]$ZipName) {
     if (!$entry) { throw "$payload assente dallo ZIP" }
     $stream = $entry.Open()
     $sha = [Security.Cryptography.SHA256]::Create()
-    try { $zipHash = [Convert]::ToHexString($sha.ComputeHash($stream)) } finally { $stream.Dispose(); $sha.Dispose() }
+    try { $zipHash = [BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '') } finally { $stream.Dispose(); $sha.Dispose() }
     if ($zipHash -ne (Get-FileHash -LiteralPath (Join-Path $target $payload)).Hash) { throw "$payload ZIP diverso dalla build" }
     }
   } finally { $zip.Dispose() }
@@ -47,6 +55,7 @@ function Package-Windows([string]$Folder, [string]$ExeName, [string]$ZipName) {
 
 Build-Edition 'windows' '' 'diary-build-windows'
 Package-Windows 'windows' 'oculum.exe' 'Oculum-Windows.zip'
+Copy-Item -Path (Join-Path $distRoot 'windows\*') -Destination $distRoot -Recurse -Force
 Build-Edition 'windows' 'test' 'diary-build-windows-test'
 Package-Windows 'test\windows' 'Oculum-Test.exe' 'Oculum-Test-Windows.zip'
 if ((Get-FileHash 'build\distribution\windows\data\app.so').Hash -eq
@@ -68,6 +77,8 @@ $webArchive = Join-Path $distRoot 'Oculum-Web.zip'
 Compress-Archive -Path (Join-Path $webFolder '*') -DestinationPath $webArchive -Force
 Copy-Item -LiteralPath 'docs\DIARI_MAPPA_AGGIORNAMENTO.md' -Destination (Join-Path $distRoot 'LEGGIMI-MODIFICHE.md') -Force
 $artifacts = @(
+  (Join-Path $distRoot 'oculum.exe'),
+  (Join-Path $distRoot 'data\app.so'),
   (Join-Path $distRoot 'windows\oculum.exe'),
   (Join-Path $distRoot 'Oculum-Windows.zip'),
   (Join-Path $distRoot 'test\windows\Oculum-Test.exe'),

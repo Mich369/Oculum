@@ -90,7 +90,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                           child: Column(
                             children: [
                               OculumMemoryEye(
-                                role: diaryRoleLedger.roleOf(linked[i]),
+                                role: diaryRoleLedger.eyeOf(linked[i]),
                                 size: 30,
                               ),
                               Text(
@@ -235,6 +235,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         : nomeSchedaPersonaggio(schedaCorrente);
     DiaryMemory? routeMemory;
     var routeClosed = false;
+    final inspirationLedger = memoryInspiration;
+    final inspirationSheet = schedaCorrente;
     final memoryFuture =
         Future<DiaryMemory>.microtask(() {
           final memory = DiaryMemoryBuilder().build(
@@ -245,7 +247,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           memory.mentionCount('');
           return memory;
         }).then((memory) {
-          roleLedger.apply(memory);
+          roleLedger.apply(memory, catalogue: catalogue);
           diaryKnowledgeSync.apply(
             memory,
             room: room,
@@ -254,6 +256,30 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           );
           routeMemory = memory;
           if (!routeClosed && mounted) openedEyeMemory = memory;
+          if (!wholeCampaign &&
+              mounted &&
+              identical(inspirationLedger, memoryInspiration)) {
+            final personalIds = documents
+                .where((doc) => doc.id.startsWith('$inspirationSheet:'))
+                .map((doc) => doc.id)
+                .toSet();
+            final personalMemory = DiaryMemory(
+              memory.entities,
+              memory.relations
+                  .where(
+                    (relation) =>
+                        personalIds.contains(relation.evidence.document.id),
+                  )
+                  .toList(),
+            );
+            final rewards = inspirationLedger.observe(personalMemory);
+            if (rewards > 0) {
+              final rewardLog = <String>[];
+              grantInspirationWithCap('base', rewards, rewardLog);
+              aggiungiLog('Occhi della Memoria: ${rewardLog.join(', ')}');
+            }
+            programmaSalvataggio();
+          }
           return memory;
         });
     final masterCanEditKnowledge =
@@ -292,6 +318,18 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   author: author,
                   roleHistory: roleLedger.historyFor,
                   nameHistory: roleLedger.nameHistoryFor,
+                  eyeRole: roleLedger.eyeOf,
+                  onEyeChanged: canEditRoles || masterCanEditKnowledge
+                      ? (entity, eyeRole) async {
+                          if (!roleLedger.changeEye(entity, eyeRole)) return;
+                          if (sourceSheetIndex >= 0 &&
+                              sourceSheetIndex < schedePersonaggio.length) {
+                            schedePersonaggio[sourceSheetIndex]['diaryEntityRoles'] =
+                                roleLedger.toJson();
+                          }
+                          await forzaSalvataggioImmediato(soloLocale: true);
+                        }
+                      : null,
                   knowledgeChanges: diaryKnowledgeRevision,
                   onShareKnowledge: masterCanEditKnowledge
                       ? chooseDiaryKnowledgeRecipients
@@ -305,7 +343,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                           )) {
                             return;
                           }
-                          roleLedger.apply(memory);
+                          roleLedger.apply(memory, catalogue: catalogue);
                           if (sourceSheetIndex >= 0 &&
                               sourceSheetIndex < schedePersonaggio.length) {
                             schedePersonaggio[sourceSheetIndex]['diaryEntityRoles'] =
@@ -314,16 +352,20 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                           await forzaSalvataggioImmediato(soloLocale: true);
                         }
                       : null,
-                  onRoleChanged: canEditRoles || masterCanEditKnowledge
-                      ? (entity, role) async {
+                  onRoleChangedWithNote: canEditRoles || masterCanEditKnowledge
+                      ? (entity, role, note) async {
                           if (!roleLedger.change(
                             entity,
                             role,
                             DateTime.now(),
+                            note: note,
+                            noteAuthor: masterCanEditKnowledge
+                                ? 'Master'
+                                : author,
                           )) {
                             return;
                           }
-                          roleLedger.apply(memory);
+                          roleLedger.apply(memory, catalogue: catalogue);
                           if (sourceSheetIndex >= 0 &&
                               sourceSheetIndex < schedePersonaggio.length) {
                             schedePersonaggio[sourceSheetIndex]['diaryEntityRoles'] =
@@ -1957,7 +1999,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     formIndex: formIndex,
                     label: t('Costo', 'Cost'),
                     value: form.costo,
-                    onChanged: (value) => form.costo = value,
+                    onChanged: (value) {
+                      form.costo = value;
+                      if (form.aggiornaLimitiOculumDaDescrizione()) {
+                        scheduleInputUiRefresh();
+                      }
+                    },
                     helper: t(
                       'Descrivi il costo. Esempio: @OculumSpeso+5',
                       'Describe the cost. Example: @OculumSpeso+5',
@@ -2026,6 +2073,22 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   ),
                 ),
               ],
+            ),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              value: !form.oculumLimitiConfiguratiManualmente,
+              title: Text(t('Costo dal testo', 'Cost from text')),
+              subtitle: const Text(
+                'Costo: (1/10) Oculum; massimo crescita: 20',
+              ),
+              onChanged: (value) {
+                setState(() {
+                  form.oculumLimitiConfiguratiManualmente = !value;
+                  if (value) form.aggiornaLimitiOculumDaDescrizione();
+                  syncSkillLegacyFromForm(skill, formIndex);
+                });
+                programmaSalvataggio(invalidateCaches: false);
+              },
             ),
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,

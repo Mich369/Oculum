@@ -25,6 +25,60 @@ const _vars = <String, num>{
 };
 
 void main() {
+  test('Cost before bonuses and legacy suffix both configure Art limits', () {
+    final skill = ArtSkill(
+      nome: 'Spine',
+      evo1: 'Costo: (1/10) Oculum; massimo crescita: 20. @VC+5',
+      evo2: 'Spine di ghiaccio (11/30)oculum',
+    );
+    expect(skill.oculumMinimoPerLivello(1), 1);
+    expect(skill.oculumMassimoPerLivello(1), 10);
+    expect(oculumArtSkillMasteryGrowthLimit(skill, 1), 20);
+    expect(skill.oculumMinimoPerLivello(2), 11);
+    expect(skill.oculumMassimoPerLivello(2), 30);
+    skill.oculumMassimiPerLivello[0] = 12;
+    skill.aggiornaLimitiOculumDalTestoPerLivello(1, skill.evo1);
+    expect(skill.oculumMassimoPerLivello(1), 12);
+    final restored = ArtSkill.fromJson(skill.toJson());
+    expect(restored.oculumMassimoPerLivello(1), 12);
+    expect(oculumArtSkillMasteryGrowthLimit(restored, 1), 20);
+    expect(oculumSkillTextCostLimits('Colpisci 1/3 bersagli'), isNull);
+    expect(oculumSkillTextCostLimits('Costo: (4/2) @VC+2'), isNull);
+    expect(oculumSkillTextCostLimits('Costo: (1/3); Costo: (2/4)'), isNull);
+    final manual = ArtSkill(
+      nome: 'Manuale',
+      evo1: 'Costo: (1/10)',
+      oculumMinimiPerLivello: [3],
+      oculumMassimiPerLivello: [9],
+    );
+    expect(manual.oculumMinimoPerLivello(1), 3);
+    expect(manual.oculumMassimoPerLivello(1), 9);
+  });
+  test(
+    'Free skill cost field configures limits before its bonus description',
+    () {
+      final form = CharacterSkillForm(
+        costo: 'Costo: (2/8) Oculum',
+        descrizione: '@VC+4; massimo crescita: 18',
+      );
+      expect(form.oculumMinimoUtilizzabile, 2);
+      expect(form.oculumMassimoUtilizzabile, 8);
+      expect(
+        oculumSkillMasteryGrowthLimit(
+          CharacterSkill(
+            nome: 'Test',
+            tipo: '',
+            costo: '',
+            cooldown: '',
+            descrizione: '',
+            forme: [form],
+          ),
+          0,
+        ),
+        18,
+      );
+    },
+  );
   test('Skill vecchia senza forme viene caricata come Forma 1', () {
     final skill = CharacterSkill.fromJson({
       'nome': 'Lama antica',

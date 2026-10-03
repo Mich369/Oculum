@@ -278,6 +278,9 @@ extension _OculumHomeDicePage on _OculumHomePageState {
       80,
       90,
       120,
+      15,
+      25,
+      200,
     ];
 
     return LayoutBuilder(
@@ -286,7 +289,7 @@ extension _OculumHomeDicePage on _OculumHomePageState {
             ? constraints.maxWidth
             : 360.0;
         final columns = availableWidth >= 760
-            ? 7
+            ? 9
             : availableWidth >= 560
             ? 5
             : availableWidth >= 380
@@ -295,25 +298,25 @@ extension _OculumHomeDicePage on _OculumHomePageState {
         final spacing = dense ? 8.0 : 10.0;
         final rawItemWidth =
             (availableWidth - spacing * (columns - 1)) / columns;
-        final itemWidth = rawItemWidth
-            .clamp(dense ? 72.0 : 84.0, dense ? 104.0 : 120.0)
-            .toDouble();
+        final itemWidth = max(1.0, rawItemWidth);
         final itemHeight = dense ? 88.0 : 102.0;
 
-        Widget diceGrid(List<int> dice, {required bool extra}) {
-          return Wrap(
-            spacing: spacing,
-            runSpacing: spacing,
-            children: [
-              for (final facce in dice)
-                SizedBox(
-                  width: itemWidth,
-                  height: itemHeight,
-                  child: sheetDiceButton(facce, extra: extra, dense: dense),
+        Widget diceGrid() => Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final facce in [...classicDice, ...extraDice])
+              SizedBox(
+                width: itemWidth,
+                height: itemHeight,
+                child: sheetDiceButton(
+                  facce,
+                  extra: !classicDice.contains(facce),
+                  dense: dense,
                 ),
-            ],
-          );
-        }
+              ),
+          ],
+        );
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,9 +362,7 @@ extension _OculumHomeDicePage on _OculumHomePageState {
             const SizedBox(height: 8),
             rollDifficultyField(compact: true),
             const SizedBox(height: 12),
-            diceGrid(classicDice, extra: false),
-            const SizedBox(height: 10),
-            diceGrid(extraDice, extra: true),
+            diceGrid(),
           ],
         );
       },

@@ -5,6 +5,29 @@ import 'package:image/image.dart' as img;
 import 'package:oculum/main.dart';
 
 void main() {
+  test('transparent PNG alpha survives preview and final portrait editing', () {
+    final source = img.Image(width: 64, height: 64, numChannels: 4);
+    img.fill(source, color: img.ColorRgba8(20, 80, 140, 0));
+    source.setPixelRgba(32, 32, 255, 80, 30, 255);
+    final bytes = Uint8List.fromList(img.encodePng(source));
+    final preview =
+        oculumPreparePortraitEditorPreview({'bytes': bytes})['bytes']
+            as Uint8List;
+    final result = oculumRenderPortraitEditorCrop({
+      'bytes': bytes,
+      'outputSize': 256,
+    });
+    for (final encoded in [preview, result]) {
+      expect(encoded.take(8), [137, 80, 78, 71, 13, 10, 26, 10]);
+      final decoded = img.decodeImage(encoded)!;
+      expect(decoded.hasAlpha, isTrue);
+      expect(decoded.getPixel(0, 0).a, 0);
+      expect(
+        decoded.getPixel(decoded.width ~/ 2, decoded.height ~/ 2).a,
+        greaterThan(0),
+      );
+    }
+  });
   Uint8List sourceImage({int width = 1600, int height = 900}) {
     final image = img.Image(width: width, height: height);
     img.fill(image, color: img.ColorRgb8(32, 96, 180));
