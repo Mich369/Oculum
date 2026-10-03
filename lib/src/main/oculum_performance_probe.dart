@@ -19,6 +19,7 @@ class OculumPerformanceProbe {
     _state.referenceSubtraitsPanel,
   );
   Widget resistancePanel() => _state.resistanceDetailsPanel();
+  Widget dicePanel() => _state.sheetDiceRollPanel(dense: true);
   Widget subtraitsPanel() => _state.referenceSubtraitsPanel();
   void resetEncounter() => _state.resetMasterInitiativeRound();
   void reportedTurn(int value) =>

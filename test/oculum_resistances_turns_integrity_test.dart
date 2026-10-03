@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -296,11 +297,45 @@ void main() {
       tester.state<NavigatorState>(find.byType(Navigator).first).pop();
       await tester.pump(const Duration(milliseconds: 600));
       tester.view.physicalSize = const Size(1440, 1100);
-      probe.openDice();
+      final diceNavigator = tester.state<NavigatorState>(
+        find.byType(Navigator).first,
+      );
+      unawaited(
+        diceNavigator.push<void>(
+          MaterialPageRoute<void>(
+            builder: (_) => Scaffold(body: probe.dicePanel()),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 600));
       await photo('dadi-desktop');
-      expect(find.text('d15'), findsOneWidget);
-      expect(find.text('d25'), findsOneWidget);
-      expect(find.text('d200'), findsOneWidget);
+      for (final die in ['d15', 'd25', 'd200']) {
+        expect(
+          find.byWidgetPredicate(
+            (widget) => widget is D20Widget && widget.text == die,
+          ),
+          findsOneWidget,
+          reason: '$die must be rendered in the quick dice panel',
+        );
+      }
+      final diceLabels = find
+          .byType(D20Widget)
+          .evaluate()
+          .map((element) => (element.widget as D20Widget).text)
+          .toList();
+      for (final pair in [
+        ('d14', 'd15'),
+        ('d15', 'd16'),
+        ('d24', 'd25'),
+        ('d25', 'd26'),
+        ('d120', 'd200'),
+      ]) {
+        expect(
+          diceLabels.indexOf(pair.$1),
+          lessThan(diceLabels.indexOf(pair.$2)),
+          reason: '${pair.$1} must appear before ${pair.$2} in dice order',
+        );
+      }
       probe.cancelPendingSave();
       await tester.pumpWidget(const SizedBox());
     },

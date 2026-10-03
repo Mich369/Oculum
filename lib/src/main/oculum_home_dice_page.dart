@@ -259,10 +259,12 @@ extension _OculumHomeDicePage on _OculumHomePageState {
       7,
       9,
       14,
+      15,
       16,
       18,
       22,
       24,
+      25,
       26,
       28,
       30,
@@ -278,8 +280,6 @@ extension _OculumHomeDicePage on _OculumHomePageState {
       80,
       90,
       120,
-      15,
-      25,
       200,
     ];
 
