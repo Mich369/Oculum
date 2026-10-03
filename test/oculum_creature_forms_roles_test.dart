@@ -100,8 +100,9 @@ void main() {
         expect(skill.evo1, contains('Richiede livello 0'));
         expect(skill.evo2, contains('Richiede livello 3'));
         expect(skill.evo3, contains('Richiede livello 6'));
-        if (mode == 'defiled')
+        if (mode == 'defiled') {
           expect(skill.evo5, contains('Richiede livello 12'));
+        }
       }
       expect(art.openDescription, contains('1d100'));
       expect(art.openSkill, contains('1d30'));

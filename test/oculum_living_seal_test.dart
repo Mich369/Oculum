@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../lib/widgets/oculum_living_seal.dart';
+import 'package:oculum/widgets/oculum_living_seal.dart';
 
 void main() {
   testWidgets('il sigillo mostra campagna e pagine e apre la mappa', (

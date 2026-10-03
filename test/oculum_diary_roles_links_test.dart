@@ -25,11 +25,12 @@ void main() {
       final icons = File(
         'build/unit_test_assets/fonts/MaterialIcons-Regular.otf',
       );
-      if (icons.existsSync())
+      if (icons.existsSync()) {
         await (FontLoader('MaterialIcons')..addFont(
               Future.value(ByteData.sublistView(icons.readAsBytesSync())),
             ))
             .load();
+      }
       final memory = DiaryMemoryBuilder().build([
         const DiaryDocument(
           id: 'demo',
@@ -228,11 +229,12 @@ void main() {
           memory.relations.where((r) => r.state == 'killed').length,
           note == 'Hoshy lo ha ucciso.' ? 1 : 0,
         );
-        if (note.startsWith('Forse'))
+        if (note.startsWith('Forse')) {
           expect(
             memory.relations.where((r) => r.state == 'uncertain'),
             hasLength(1),
           );
+        }
       }
     },
   );
