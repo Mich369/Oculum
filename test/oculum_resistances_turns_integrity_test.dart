@@ -289,11 +289,11 @@ void main() {
       await photo('resistenze-desktop');
       tester.view.physicalSize = const Size(390, 844);
       await photo('resistenze-mobile');
-      Navigator.of(capture.currentContext!).pop();
+      tester.state<NavigatorState>(find.byType(Navigator).first).pop();
       await tester.pump(const Duration(milliseconds: 600));
       probe.openSubtraits();
       await photo('sottotratti-mobile');
-      Navigator.of(capture.currentContext!).pop();
+      tester.state<NavigatorState>(find.byType(Navigator).first).pop();
       await tester.pump(const Duration(milliseconds: 600));
       tester.view.physicalSize = const Size(1440, 1100);
       probe.openDice();
