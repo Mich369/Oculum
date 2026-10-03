@@ -135,8 +135,13 @@ void main() {
       };
       probe.load(base);
       probe.load({...base, 'grado': '6', 'schivateOculumConsumate': -5});
-      expect(state.schivateOculumDisponibili(), 2);
-      expect(probe.snapshot()['schivateOculumConsumate'], 0);
+      final normalizedDodges =
+          probe.snapshot()['schivateOculumConsumate'] as int;
+      expect(normalizedDodges, 0);
+      expect(
+        oculumAvailableDodgeCount(total: 2, consumed: normalizedDodges),
+        2,
+      );
       probe.load(base);
       final inventory = probe.snapshot()['inventario'];
       final stats = probe.coreStats();
@@ -144,12 +149,12 @@ void main() {
       final damage = probe.outgoingDamage();
       expect(
         probe.attackVc(),
-        state.bonusLivelloGrado() + (state.volontaTotale() ~/ 3),
+        probe.levelGradeBonus() + (probe.coreStats()['volonta']! ~/ 3),
         reason: 'VC includes the level and grade bonus',
       );
       expect(
-        state.cm(),
-        state.bonusLivelloGrado() + (state.materiaTotale() ~/ 2),
+        probe.defenseCm(),
+        probe.levelGradeBonus() + (probe.coreStats()['materia']! ~/ 2),
         reason: 'CM includes the level and grade bonus',
       );
       state.vcRapidoController.text = '11';
@@ -313,6 +318,7 @@ void main() {
       state.updateOculumHomeUi(() => state.referenceOculumFlames = true);
       await photo('fiammelle-desktop');
       probe.openResistances();
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 600));
       final ashCard = tester.widget<Container>(
         find.byKey(const ValueKey('resistance_element_cenere')),
@@ -323,10 +329,10 @@ void main() {
         const Color(0xFF8D8A82).withValues(alpha: .82),
         reason: 'Cenere must use its own element color as its card border',
       );
-      expect(state.moltiplicatoreHp(), 10);
+      expect(probe.hpMultiplier(), 10);
       state.gradoController.text = '50';
       expect(
-        state.moltiplicatoreHp(),
+        probe.hpMultiplier(),
         10,
         reason: 'each Resilienza point provides exactly 10 maximum HP',
       );

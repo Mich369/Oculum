@@ -76,6 +76,9 @@ class OculumPerformanceProbe {
   int spendArtResource(String resource, int amount) =>
       _state.spendArtSkillCostResource(resource, amount);
   int attackVc() => _state.vc();
+  int levelGradeBonus() => _state.bonusLivelloGrado();
+  int defenseCm() => _state.cm();
+  int hpMultiplier() => _state.moltiplicatoreHp();
   int outgoingDamage() => _state.dannoTotale();
   String damageFormula() => _state.formulaDannoDettagliata();
   int maximumHp() => _state.maxHp();
