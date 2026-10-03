@@ -240,10 +240,41 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                       ],
                     ),
                     triggerMode: TooltipTriggerMode.longPress,
-                    child: OutlinedButton(
-                      onPressed: () => tiraSottotrattoOcchio(stat),
-                      child: Text(
-                        '${stat.nome} · ${hiddenEyeTotal(stat) >= 0 ? '+' : ''}${hiddenEyeTotal(stat)}',
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xff100f13),
+                        borderRadius: BorderRadius.circular(9),
+                        border: Border.all(
+                          color: statFormulaColor(group).withValues(alpha: .62),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: statFormulaColor(
+                              group,
+                            ).withValues(alpha: .10),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 7,
+                          ),
+                          minimumSize: const Size(0, 34),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        onPressed: () => tiraSottotrattoOcchio(stat),
+                        child: Text(
+                          '${stat.nome} · ${hiddenEyeTotal(stat) >= 0 ? '+' : ''}${hiddenEyeTotal(stat)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -446,9 +477,9 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                     if (!referenceOculumFlames)
                       meter(
                         'Oculum',
-                        '${oculumTotale()}/${oculumMassimo()}',
+                        '${oculumTotale()}/${oculumDisplayMassimo()}',
                         oculumTotale(),
-                        oculumMassimo(),
+                        oculumDisplayMassimo(),
                         statFormulaColor('oculum'),
                       ),
                   ],
@@ -589,6 +620,25 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                         ),
                         icon: const Icon(Icons.shield_outlined),
                         label: Text('CM ${cm()} · ${t('Difesa', 'Defense')}'),
+                      ),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: eyePupilGlowColor.withValues(
+                            alpha: .12,
+                          ),
+                          foregroundColor: eyePupilGlowColor,
+                          side: BorderSide(
+                            color: eyePupilGlowColor.withValues(alpha: .72),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
+                        onPressed: mostraMenuSchivataOculum,
+                        icon: const Icon(Icons.visibility_outlined),
+                        label: Text(
+                          '${t('Schivata', 'Dodge')} ${schivateOculumDisponibili()}/${schivateOculumTotali()}',
+                        ),
                       ),
                       OutlinedButton.icon(
                         onPressed: tiraAiutaCompagno,
@@ -955,8 +1005,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                             return ListTile(
                               dense: true,
                               title: Text('${token['name'] ?? "???"}'),
-                              trailing:
-                                  canRemoveOwnEncounterToken(token)
+                              trailing: canRemoveOwnEncounterToken(token)
                                   ? IconButton(
                                       tooltip: 'Esci dallo scontro',
                                       icon: const Icon(
@@ -1125,87 +1174,125 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
             'Fragilità, resistenze, immunità e rigenerazione sono salvate per elemento. Una percentuale libera sostituisce il preset di quell’elemento.',
           ),
           const SizedBox(height: 12),
-          for (final id in {
-            ...allDamageElementIds(),
-            ...incomingDamagePresets.keys,
-            ...dannoSubitoPercentPerTipo.keys,
-          })
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const gap = 10.0;
+              final columns = max(
+                1,
+                min(3, ((constraints.maxWidth + gap) / 260).floor()),
+              );
+              final cardWidth =
+                  (constraints.maxWidth - gap * (columns - 1)) / columns;
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
                 children: [
-                  DropdownButtonFormField<String>(
-                    key: ValueKey(
-                      'resistance_${id}_${configuredIncomingDamagePreset(id)}',
+                  for (final id in {
+                    ...allDamageElementIds(),
+                    ...incomingDamagePresets.keys,
+                    ...dannoSubitoPercentPerTipo.keys,
+                  })
+                    SizedBox(
+                      width: cardWidth,
+                      child: _resistanceElementCard(id),
                     ),
-                    initialValue: configuredIncomingDamagePreset(id),
-                    isExpanded: true,
-                    decoration: fieldDecoration(elementDisplayName(id)),
-                    items: [
-                      for (final option in modificatoriDanno)
-                        DropdownMenuItem(
-                          value: option.name,
-                          child: Text(option.name),
-                        ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() {
-                        incomingDamagePresets[id] = value;
-                        dannoSubitoPercentPerTipo.remove(id);
-                        if (id == selectedIncomingDamageElement()) {
-                          dannoSubitoPercentController.clear();
-                        }
-                      });
-                      programmaSalvataggio();
-                      notifyActiveSheetSummaryChanged();
-                    },
-                  ),
-                  const SizedBox(height: 6),
-                  TextFormField(
-                    key: ValueKey(
-                      'resistance_percent_${id}_${configuredIncomingDamagePreset(id)}',
-                    ),
-                    initialValue: dannoSubitoPercentPerTipo[id] ?? '',
-                    decoration: fieldDecoration(
-                      'Modifica libera (%)',
-                    ).copyWith(hintText: '+25% fragilità · −20% resistenza'),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      signed: true,
-                      decimal: true,
-                    ),
-                    onChanged: (value) {
-                      if (value.trim().isEmpty) {
-                        dannoSubitoPercentPerTipo.remove(id);
-                      } else {
-                        dannoSubitoPercentPerTipo[id] = value.trim();
-                      }
-                      programmaSalvataggio(invalidateCaches: false);
-                    },
-                    validator: (value) =>
-                        (value ?? '').trim().isEmpty ||
-                            oculumIncomingDamagePercentMultiplier(
-                                  value ?? '',
-                                ) !=
-                                null
-                        ? null
-                        : 'Percentuale non valida',
-                  ),
-                  Text(
-                    damageDescription(
-                      modificatoreDannoDaNome(
-                        configuredIncomingDamagePreset(id),
-                      ),
-                    ),
-                  ),
                 ],
-              ),
-            ),
+              );
+            },
+          ),
         ],
       ),
     ),
   );
+
+  Widget _resistanceElementCard(String id) {
+    final color = elementColor(id);
+    final preset = configuredIncomingDamagePreset(id);
+    return Container(
+      key: ValueKey('resistance_element_$id'),
+      padding: const EdgeInsets.all(9),
+      decoration: BoxDecoration(
+        color: const Color(0xff111014),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: .82), width: 1.25),
+        boxShadow: [
+          BoxShadow(color: color.withValues(alpha: .10), blurRadius: 9),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.remove_red_eye_outlined, color: color, size: 16),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  elementDisplayName(id),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: color, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 7),
+          DropdownButtonFormField<String>(
+            key: ValueKey('resistance_${id}_$preset'),
+            initialValue: preset,
+            isExpanded: true,
+            decoration: fieldDecoration('Stato'),
+            items: [
+              for (final option in modificatoriDanno)
+                DropdownMenuItem(value: option.name, child: Text(option.name)),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() {
+                incomingDamagePresets[id] = value;
+                dannoSubitoPercentPerTipo.remove(id);
+                if (id == selectedIncomingDamageElement()) {
+                  dannoSubitoPercentController.clear();
+                }
+              });
+              programmaSalvataggio();
+              notifyActiveSheetSummaryChanged();
+            },
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            key: ValueKey('resistance_percent_${id}_$preset'),
+            initialValue: dannoSubitoPercentPerTipo[id] ?? '',
+            decoration: fieldDecoration(
+              'Modifica libera (%)',
+            ).copyWith(hintText: '+25% fragilità · −20% resistenza'),
+            keyboardType: const TextInputType.numberWithOptions(
+              signed: true,
+              decimal: true,
+            ),
+            onChanged: (value) {
+              if (value.trim().isEmpty) {
+                dannoSubitoPercentPerTipo.remove(id);
+              } else {
+                dannoSubitoPercentPerTipo[id] = value.trim();
+              }
+              programmaSalvataggio(invalidateCaches: false);
+            },
+            validator: (value) =>
+                (value ?? '').trim().isEmpty ||
+                    oculumIncomingDamagePercentMultiplier(value ?? '') != null
+                ? null
+                : 'Percentuale non valida',
+          ),
+          const SizedBox(height: 4),
+          Text(
+            damageDescription(modificatoreDannoDaNome(preset)),
+            style: const TextStyle(fontSize: 11, height: 1.2),
+          ),
+        ],
+      ),
+    );
+  }
 
   String subtraitFormulaHelp(HiddenEyeStat stat) {
     final group = hiddenEyeStatGroup(stat.id);

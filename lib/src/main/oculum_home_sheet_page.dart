@@ -1600,12 +1600,16 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   }
 
   Widget _oculumResourcePanelContent() {
-    final massimo = oculumMassimo();
+    final massimoNaturale = oculumMassimo();
     // This panel is the player-facing source of truth.  Keep its sleep lock
     // explicit instead of relying on a derived value that can be rebuilt by a
     // parser/cache while the state is toggled.
     final sleeping = oculumAddormentato;
     final current = sleeping ? 0 : oculumTotale();
+    final massimo = oculumAvailableDisplayMaximum(
+      available: current,
+      naturalMaximum: massimoNaturale,
+    );
     // `normalCurrentOculum` may be negative internally to account for an
     // already-consumed runtime bonus. It is never a meaningful player-facing
     // resource amount.
@@ -1731,6 +1735,17 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   fontWeight: FontWeight.w900,
                 ),
               ),
+              if (!sleeping && current > massimoNaturale) ...[
+                const SizedBox(height: 3),
+                Text(
+                  '+${current - massimoNaturale} riserva disponibile oltre il massimo base ($massimoNaturale)',
+                  style: TextStyle(
+                    color: meterColor.withValues(alpha: .9),
+                    fontSize: compact ? 10.5 : 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
               const SizedBox(height: 8),
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
@@ -8414,7 +8429,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               conditionTarget: OculumConditionTarget.oculum,
               buff: buffOculum(),
               temp: tempOculum + temporaryOculum,
-              massimo: oculumMassimo(),
+              massimo: oculumDisplayMassimo(),
               bonusSkillForma: skillFormaBonus('oculum'),
               color: oculumStatFormulaColor,
               onRoll: () => tiraStat('Oculum', oculumTotale()),
@@ -9214,7 +9229,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                       max(1, leggiNumero(materiaController)),
                       matter,
                     ),
-                    stat('OCU', oculumTotale(), oculumMassimo(), oculum),
+                    stat('OCU', oculumTotale(), oculumDisplayMassimo(), oculum),
                   ],
                 ),
               ],
@@ -9243,7 +9258,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   matter,
                 ),
                 const SizedBox(width: 3),
-                stat('OCU', oculumTotale(), oculumMassimo(), oculum),
+                stat('OCU', oculumTotale(), oculumDisplayMassimo(), oculum),
               ],
             ),
     );

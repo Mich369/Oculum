@@ -644,11 +644,11 @@ extension _OculumHomeRecipes on _OculumHomePageState {
         authoredMaterialForRecipe(recipe) != null
             ? authoredCraftedItem(recipe, safeQuantity)
             : InventoryItem(
-          nome: recipe.resultName,
-          peso: _finishedProductGrams(recipe) / 1000,
-          quantita: safeQuantity,
-          note: recipe.resultDescription,
-        ),
+                nome: recipe.resultName,
+                peso: _finishedProductGrams(recipe) / 1000,
+                quantita: safeQuantity,
+                note: recipe.resultDescription,
+              ),
       );
       risultato = t(
         '${recipe.resultName} ×$safeQuantity creato: ${formatoPesoMateriali(_finishedProductGrams(recipe) * safeQuantity)}${oculumRequired > 0 ? ', -$oculumRequired Oculum' : ''}.',
@@ -1454,6 +1454,10 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   );
 
   int _sortRecipesForCrafting(OculumRecipe left, OculumRecipe right) {
+    final gradeOrder = oculumRecipeGradeSortValue(
+      left,
+    ).compareTo(oculumRecipeGradeSortValue(right));
+    if (gradeOrder != 0) return gradeOrder;
     final leftFavorite = favoriteRecipeIds.contains(left.id);
     final rightFavorite = favoriteRecipeIds.contains(right.id);
     if (leftFavorite != rightFavorite) return leftFavorite ? -1 : 1;

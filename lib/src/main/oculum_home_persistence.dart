@@ -2057,7 +2057,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
             .map((effect) => Map<String, dynamic>.from(effect))
             .where(oculumShouldRestoreActiveStructuredEffect),
       );
-    schivateOculumConsumate = readIntValue(json['schivateOculumConsumate']);
+    schivateOculumConsumate = max(
+      0,
+      readIntValue(json['schivateOculumConsumate']),
+    );
     schivataOculumRiduzionePronta = readIntValue(
       json['schivataOculumRiduzionePronta'],
     );

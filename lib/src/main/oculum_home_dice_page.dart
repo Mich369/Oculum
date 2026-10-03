@@ -281,6 +281,7 @@ extension _OculumHomeDicePage on _OculumHomePageState {
       90,
       120,
       200,
+      250,
     ];
 
     return LayoutBuilder(

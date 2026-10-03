@@ -9,6 +9,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('Oculum dodge display cannot exceed its total', () {
+    expect(oculumAvailableDodgeCount(total: 2, consumed: -5), 2);
+    expect(oculumAvailableDodgeCount(total: 2, consumed: 0), 2);
+    expect(oculumAvailableDodgeCount(total: 2, consumed: 1), 1);
+    expect(oculumAvailableDodgeCount(total: 2, consumed: 8), 0);
+  });
+
+  test('Oculum overfill stays usable and displays its actual cap', () {
+    expect(oculumAvailableDisplayMaximum(available: 7, naturalMaximum: 2), 7);
+    expect(oculumAvailableDisplayMaximum(available: 2, naturalMaximum: 7), 7);
+  });
+
   test('Legacy turn unit aliases use the same personal duration', () {
     for (final unit in ['turn', 'turns', 'turno', 'turni', 'TURN']) {
       expect(oculumTurnUnit(unit), 'turni');
@@ -122,10 +134,24 @@ void main() {
         },
       };
       probe.load(base);
+      probe.load({...base, 'grado': '6', 'schivateOculumConsumate': -5});
+      expect(state.schivateOculumDisponibili(), 2);
+      expect(probe.snapshot()['schivateOculumConsumate'], 0);
+      probe.load(base);
       final inventory = probe.snapshot()['inventario'];
       final stats = probe.coreStats();
       final vc = probe.attackVc();
       final damage = probe.outgoingDamage();
+      expect(
+        probe.attackVc(),
+        state.bonusLivelloGrado() + (state.volontaTotale() ~/ 3),
+        reason: 'VC includes the level and grade bonus',
+      );
+      expect(
+        state.cm(),
+        state.bonusLivelloGrado() + (state.materiaTotale() ~/ 2),
+        reason: 'CM includes the level and grade bonus',
+      );
       state.vcRapidoController.text = '11';
       state.updateOculumHomeUi(() {});
       expect(probe.attackVc(), vc + 11);
@@ -287,6 +313,24 @@ void main() {
       state.updateOculumHomeUi(() => state.referenceOculumFlames = true);
       await photo('fiammelle-desktop');
       probe.openResistances();
+      await tester.pump(const Duration(milliseconds: 600));
+      final ashCard = tester.widget<Container>(
+        find.byKey(const ValueKey('resistance_element_cenere')),
+      );
+      final ashDecoration = ashCard.decoration! as BoxDecoration;
+      expect(
+        (ashDecoration.border! as Border).top.color,
+        const Color(0xFF8D8A82).withValues(alpha: .82),
+        reason: 'Cenere must use its own element color as its card border',
+      );
+      expect(state.moltiplicatoreHp(), 10);
+      state.gradoController.text = '50';
+      expect(
+        state.moltiplicatoreHp(),
+        10,
+        reason: 'each Resilienza point provides exactly 10 maximum HP',
+      );
+      state.gradoController.text = '1';
       await photo('resistenze-desktop');
       tester.view.physicalSize = const Size(390, 844);
       await photo('resistenze-mobile');
@@ -309,7 +353,7 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 600));
       await photo('dadi-desktop');
-      for (final die in ['d15', 'd25', 'd200']) {
+      for (final die in ['d15', 'd25', 'd200', 'd250']) {
         expect(
           find.byWidgetPredicate(
             (widget) => widget is D20Widget && widget.text == die,
@@ -329,6 +373,7 @@ void main() {
         ('d24', 'd25'),
         ('d25', 'd26'),
         ('d120', 'd200'),
+        ('d200', 'd250'),
       ]) {
         expect(
           diceLabels.indexOf(pair.$1),

@@ -2457,6 +2457,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int oculumMassimo() => oculumMassimoNaturale();
 
+  /// The active resource may exceed its natural cap through temporary gains.
+  /// Keep the displayed denominator truthful without changing the game cap.
+  int oculumDisplayMassimo() => oculumAvailableDisplayMaximum(
+    available: oculumTotale(),
+    naturalMaximum: oculumMassimo(),
+  );
+
   int statsMassimeTotali() {
     return resilienzaMassimo() +
         volontaMassimo() +
@@ -3804,8 +3811,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int moltiplicatoreHp() {
-    final grado = max(0, leggiNumero(gradoController));
-    return 10 + grado * 5;
+    return 10;
   }
 
   int globalQuickBonus(String key) {
@@ -3884,7 +3890,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int schivateOculumDisponibili() {
-    return max(0, schivateOculumTotali() - schivateOculumConsumate);
+    return oculumAvailableDodgeCount(
+      total: schivateOculumTotali(),
+      consumed: schivateOculumConsumate,
+    );
   }
 
   int maxHp() {

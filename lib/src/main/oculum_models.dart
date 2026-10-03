@@ -2961,6 +2961,55 @@ List<OculumRecipe> oculumVisibleRecipes({
       .toList(growable: false);
 }
 
+/// Sorts recipes by the lowest explicitly mentioned grade first. Recipes
+/// without a grade remain after graded recipes; "Indefinito" is the base tier.
+int oculumRecipeGradeSortValue(OculumRecipe recipe) {
+  final searchable = <String>[
+    recipe.name,
+    recipe.resultName,
+    recipe.resultDescription,
+    recipe.masterNotes,
+    recipe.forgeAttributes,
+    recipe.forgeEffectText,
+    for (final ingredient in recipe.ingredients) ingredient.name,
+  ].join(' ');
+  final match = RegExp(
+    r'\bgrado\s+(indefinito|[ivxlcdm]+|\d+)\b',
+    caseSensitive: false,
+  ).firstMatch(searchable);
+  if (match == null) return 1 << 30;
+  final raw = match.group(1)!.toLowerCase();
+  if (raw == 'indefinito') return 0;
+  final numeric = int.tryParse(raw);
+  if (numeric != null) return numeric;
+  const romanValues = <String, int>{
+    'i': 1,
+    'v': 5,
+    'x': 10,
+    'l': 50,
+    'c': 100,
+    'd': 500,
+    'm': 1000,
+  };
+  var total = 0;
+  for (var index = 0; index < raw.length; index++) {
+    final value = romanValues[raw[index]] ?? 0;
+    final next = index + 1 < raw.length ? romanValues[raw[index + 1]] ?? 0 : 0;
+    total += value < next ? -value : value;
+  }
+  return total;
+}
+
+int oculumAvailableDodgeCount({required int total, required int consumed}) {
+  final safeTotal = max(0, total);
+  return (safeTotal - max(0, consumed)).clamp(0, safeTotal).toInt();
+}
+
+int oculumAvailableDisplayMaximum({
+  required int available,
+  required int naturalMaximum,
+}) => max(max(0, available), max(0, naturalMaximum));
+
 class CharacterArt {
   CharacterArt({
     required this.nome,

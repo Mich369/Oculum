@@ -2901,7 +2901,7 @@ Stats may also be used creatively in roleplay when the scene allows it.
     titleEn: '2. Stats',
     contentIt: r'''
 Resilienza:
-- aumenta la vita con formula Resilienza x (10 + Grado x5);
+- ogni punto di Resilienza aumenta la vita massima di 10 HP, a ogni Grado;
 - rappresenta tenuta fisica e mentale;
 - 100 Resilienza = 1 Vera Resilienza;
 - 10 Vera Resilienza = 1 Resilius;
@@ -2920,12 +2920,13 @@ Materia:
 
 Oculum:
 - e il potere magico personale;
+- ogni punto di Oculum ottenuto aggiunge 1 Oculum utilizzabile;
 - ogni punto aumenta di +2 la potenza delle Arti;
 - può essere usato nei tiri per aumentare il bonus, se contestualizzato.
 ''',
     contentEn: r'''
 Resilience:
-- increases health with the formula Resilience x (10 + Grade x5);
+- each Resilience point adds 10 maximum HP at every Grade;
 - represents physical and mental endurance;
 - 100 Resilience = 1 True Resilience;
 - 10 True Resilience = 1 Resilius;
@@ -2944,6 +2945,7 @@ Materia:
 
 Oculum:
 - is personal magical power;
+- each Oculum point gained adds 1 usable Oculum;
 - each point increases Art power by +2;
 - it can be used in rolls to increase the bonus, if contextualized.
 ''',

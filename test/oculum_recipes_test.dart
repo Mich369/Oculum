@@ -227,5 +227,39 @@ void main() {
         'visible',
       );
     });
+
+    test('ordina prima il grado più basso, poi i gradi superiori', () {
+      OculumRecipe recipe(String id, String grade) => OculumRecipe(
+        id: id,
+        name: 'Ricetta $grade',
+        ingredients: const [],
+        resultName: 'Risultato $grade',
+        resultDescription: 'Materiale di Grado $grade',
+        masterNotes: '',
+        visibleToPlayers: true,
+        createdAt: '',
+        updatedAt: '',
+      );
+      final recipes =
+          [
+            recipe('ix', 'IX'),
+            recipe('ii', 'II'),
+            recipe('i', 'I'),
+            recipe('ungraded', 'senza grado'),
+            recipe('indefinito', 'Indefinito'),
+          ]..sort(
+            (left, right) => oculumRecipeGradeSortValue(
+              left,
+            ).compareTo(oculumRecipeGradeSortValue(right)),
+          );
+
+      expect(recipes.map((item) => item.id), [
+        'indefinito',
+        'i',
+        'ii',
+        'ix',
+        'ungraded',
+      ]);
+    });
   });
 }
