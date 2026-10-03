@@ -377,3 +377,13 @@ Verifica finale di tutorial, avvio desktop, riconoscimento automatico costi e se
 - Per salvataggi precedenti: occhio originale e sfondo attivo, senza modificare o ricodificare le immagini già salvate.
 
 Verifica finale: 626 test superati, 2 test online opzionali saltati; analisi completa di lib senza problemi. Verificati note, attribuzione dell’uccisore e incertezza, ricostruzione dei legami, scelta degli occhi, PNG con alpha, impostazioni del ritratto salvate e ripristinate, turnistica e interfacce Windows/macOS/Android. Le foto in output/ui/oculum-eyes-final-20261001 provengono dai widget reali con dati sintetici; non attestano una sessione online fra dispositivi fisici.
+
+### Punti del grado, resistenze e controlli rapidi — 3 ottobre 2026
+- L’assegnazione automatica delle statistiche dei mostri legge tipo, nome, descrizione, elemento, classificazione, tecniche e statistiche base del Monster Book. Riconosce profili difensivi, predatori, assassini, glass cannon e supporto; adatta i punti alle statistiche carenti della creatura mantenendo la sua specializzazione.
+- Il budget automatico comprende livello e grado e la distribuzione intera conserva esattamente il totale: non aggiunge né perde punti. L’assegnazione manuale resta disponibile; ogni campo deve essere non negativo e la somma deve coincidere col budget prima di generare la scheda. Senza Art, Oculum resta escluso.
+- Nella pagina rapida di generazione mostro il Master può quindi scegliere una distribuzione automatica oppure modificare manualmente i quattro valori. Sono modificabili livello, variante e ogni statistica; il totale resta vincolato al budget mostrato.
+- Il comando «Tiri e azioni» mostra anche il Bonus VC insieme a Bonus danno, Bonus CM e Bonus difesa. Cura/Danno contiene le opzioni d’impatto e la percentuale di danno aggiuntivo assorbito da Scudo e Scudo Oculum.
+- La pagina Resistenze, immediatamente sotto Diario, mantiene per ogni elemento fragilità/resistenza/immunità/rigenerazione e modifica libera; selezione dell’elemento e regole del danno restano modificabili e salvate in modo compatibile.
+- In turnistica, il giocatore può lasciare soltanto uno scontro che contiene una sua scheda riconosciuta; il Master può rimuovere i partecipanti. Il turno mostrato è quello personale della scheda.
+- La workflow Windows Test esegue anche `oculum_resistances_turns_integrity_test.dart`; la workflow principale già esegue l’intera suite prima di compilare le distribuzioni.
+- Le build locali di questa revisione e nuove catture desktop/telefono restano da rigenerare: il runner Flutter locale non ha prodotto output e il tentativo di approvazione della build è stato rifiutato per esaurimento della quota. Non usare le vecchie catture come anteprima di questa revisione.

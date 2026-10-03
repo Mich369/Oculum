@@ -6560,7 +6560,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             controller: dannoBonusScudoPercentController,
             helper: t(
               'Percentuale aggiuntiva sul danno subito da Scudo e Scudo Oculum. 0 = normale; 50 = +50%. Non aumenta il danno diretto agli HP.',
-              'Only for hits that damage shields better. 0 = no bonus.',
+              'Extra percentage applied to Shield and Oculum Shield damage taken. 0 = normal; 50 = +50%. It does not increase damage dealt directly to HP.',
             ),
           ),
         ],

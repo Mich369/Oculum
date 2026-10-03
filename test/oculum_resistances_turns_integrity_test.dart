@@ -79,6 +79,7 @@ void main() {
       state.updateOculumHomeUi(() {
         state.datiCaricati = true;
         state.tutorialCompletato = true;
+        state.modalitaDesktop = true;
         state.activeGameMod = '';
         state.nuovoDesignOculum = 'cattedrale';
         state.statoForzaAttivo = '';
@@ -288,11 +289,11 @@ void main() {
       await photo('resistenze-desktop');
       tester.view.physicalSize = const Size(390, 844);
       await photo('resistenze-mobile');
-      await tester.pageBack();
+      Navigator.of(capture.currentContext!).pop();
       await tester.pump(const Duration(milliseconds: 600));
       probe.openSubtraits();
       await photo('sottotratti-mobile');
-      await tester.pageBack();
+      Navigator.of(capture.currentContext!).pop();
       await tester.pump(const Duration(milliseconds: 600));
       tester.view.physicalSize = const Size(1440, 1100);
       probe.openDice();

@@ -5198,6 +5198,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           builder: (context, refresh) {
             final selectedLevel = max(0, int.tryParse(level.text) ?? 0);
             final selectedGrade = oculumGradeForLevel(selectedLevel);
+            final hasOculumArt = oculumMonsterHasOculumArt(entry);
             final expected = oculumMonsterCreationStats(
               entry,
               selectedLevel,
@@ -5207,7 +5208,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               (a, c) => a + max(0, int.tryParse(c.text) ?? 0),
             );
             final ocu = max(0, int.tryParse(controllers['oculum']!.text) ?? 0);
-            final validOculum = ocu >= (entry.stats['oculum'] ?? 0);
+            final validOculum = hasOculumArt
+                ? ocu >= (entry.stats['oculum'] ?? 0)
+                : ocu == 0;
             final validNumbers = controllers.values.every(
               (c) => int.tryParse(c.text) != null && int.parse(c.text) >= 0,
             );
@@ -5234,9 +5237,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       ),
                       const SizedBox(height: 8),
                       smallInfoText(
-                        entry.skillIds.isNotEmpty
-                            ? 'Volontà e Materia sostengono attacco e difesa; la riserva più ampia va a Oculum per le tecniche. Puoi rifinire i valori qui sotto.'
-                            : 'Questa creatura non ha Skill né Oculum Art: i punti vanno a Resilienza, Volontà e Materia.',
+                        hasOculumArt
+                            ? 'L’assegnazione automatica legge categoria, nome, descrizione e tecniche, poi distribuisce i punti di livello e grado rispettando i punti forti e colmando le statistiche più carenti. Puoi sempre correggere ogni valore.'
+                            : 'L’assegnazione automatica legge la creatura e distribuisce i punti di livello e grado fra Resilienza, Volontà e Materia, senza assegnare Oculum in assenza di un Art. Puoi sempre correggere ogni valore.',
                       ),
                       if (selectedLevel == 0)
                         smallInfoText(
@@ -5289,14 +5292,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       ),
                       if (!validOculum)
                         Text(
-                          entry.skillIds.isNotEmpty
-                              ? 'Con almeno una Skill serve Oculum maggiore di zero.'
-                              : 'Senza Skill e Oculum Art, Oculum deve restare a zero.',
+                          hasOculumArt
+                              ? 'L’Oculum assegnato non può essere inferiore al valore base del Monster Book.'
+                              : 'Senza Oculum Art, Oculum deve restare a zero.',
                         ),
                       TextButton.icon(
                         onPressed: () => refresh(distribute),
                         icon: const Icon(Icons.balance),
-                        label: const Text('Distribuisci in base alle tecniche'),
+                        label: const Text(
+                          'Assegna automaticamente in base alla build',
+                        ),
                       ),
                     ],
                   ),

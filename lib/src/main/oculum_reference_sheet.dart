@@ -64,9 +64,6 @@ extension _OculumReferenceSheet on _OculumHomePageState {
     final hasFight = remote
         ? (realtimeVisibleInitiativeSnapshot['tokens'] as List).isNotEmpty
         : masterInitiativeTokens.isNotEmpty;
-    final active = remote
-        ? readIntValue(realtimeVisibleInitiativeSnapshot['activeIndex'])
-        : masterInitiativeActiveIndex;
     final round = remote
         ? readIntValue(realtimeVisibleInitiativeSnapshot['round'], fallback: 0)
         : masterInitiativeRound;
@@ -95,7 +92,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
           turnResetGesture(
             Text(
               hasFight
-                  ? 'Round $round · Turno ${active + 1}'
+                  ? 'Round $round · Tuo turno $playerReportedTurn'
                   : 'Turno $playerReportedTurn',
             ),
           ),
@@ -959,9 +956,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                               dense: true,
                               title: Text('${token['name'] ?? "???"}'),
                               trailing:
-                                  (haPermessiMaster ||
-                                      '${token['sheetTag'] ?? token['id'] ?? ''}' ==
-                                          sheetTagAt(schedaCorrente))
+                                  canRemoveOwnEncounterToken(token)
                                   ? IconButton(
                                       tooltip: 'Esci dallo scontro',
                                       icon: const Icon(
@@ -1240,6 +1235,22 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
     ),
   );
 
+  bool canRemoveOwnEncounterToken(Map token) {
+    if (haPermessiMaster) return true;
+    final tokenTag = '${token['sheetTag'] ?? token['id'] ?? ''}'.trim();
+    if (tokenTag == sheetTagAt(schedaCorrente)) return true;
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return false;
+    }
+    final ownSheet = schedePersonaggio[schedaCorrente];
+    final ownTags = <String>{
+      '${ownSheet['sheetTag'] ?? ownSheet['id'] ?? ''}'.trim(),
+      '${ownSheet['realtimeSourceSheetTag'] ?? ''}'.trim(),
+      '${ownSheet['realtimeLocalSheetTag'] ?? ''}'.trim(),
+    }..remove('');
+    return ownTags.contains(tokenTag);
+  }
+
   Future<void> requestEncounterReset() async {
     if (!haPermessiMaster && realtimeService?.isConnected == true) {
       await showReportedTurnEditor();
@@ -1273,7 +1284,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
     required bool local,
   }) {
     final tag = '${token['sheetTag'] ?? token['id'] ?? ''}';
-    if (!haPermessiMaster && tag != sheetTagAt(schedaCorrente)) return;
+    if (!canRemoveOwnEncounterToken(token)) return;
     if (local) {
       final previous = selectedMasterInitiativeGroupId;
       selectMasterInitiativeGroup(id);

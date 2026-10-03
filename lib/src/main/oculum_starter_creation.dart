@@ -99,6 +99,21 @@ int oculumMonsterStatPointsPerGrade(String type) {
   return 10;
 }
 
+/// Le Skill generiche del Monster Book non implicano un’Oculum Art: la
+/// descrizione esplicita e i dati di creazione determinano se la creatura
+/// usa davvero Oculum.
+bool oculumMonsterHasOculumArt(MonsterBookEntry monster) {
+  if ((monster.stats['oculumArt'] ?? 0) > 0) return true;
+  final text = '${monster.descIt} ${monster.descEn}'.toLowerCase();
+  if (RegExp(
+    r'\b(nessuna?\s+(oculum\s+)?art|senza\s+(oculum\s+)?art|no\s+(oculum\s+)?art|without\s+(an?\s+)?(oculum\s+)?art)\b',
+  ).hasMatch(text)) {
+    return false;
+  }
+  return RegExp(r'\b(oculum\s+art|art\s+oculum)\b').hasMatch(text) ||
+      (monster.stats['oculum'] ?? 0) > 0;
+}
+
 CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) => CharacterArt(
   nome: 'Peculiarità — ${monster.nameIt}',
   tipo: 'Art Mostro',
@@ -339,6 +354,7 @@ Map<String, int> oculumDistributeMonsterStats(
   required bool hasSkills,
   required bool hasOculumArt,
   String role = '',
+  Map<String, int> buildStats = const {},
 }) {
   final total = max(0, points);
   final usesOculum = hasOculumArt;
@@ -362,22 +378,80 @@ Map<String, int> oculumDistributeMonsterStats(
     return stats;
   }
   final text = role.toLowerCase();
-  final defensive = RegExp('tank|difens|guard|protett').hasMatch(text);
-  final hunter = RegExp('predator|cacciator|assalt|inseguit').hasMatch(text);
-  if (usesOculum) {
-    stats['volonta'] = max(1, (total * (hunter ? .32 : .30)).floor());
-    stats['materia'] = max(1, (total * .10).floor());
-    stats['resilienza'] = max(1, (total * (defensive ? .48 : .42)).floor());
-    stats['oculum'] =
-        total - stats['resilienza']! - stats['volonta']! - stats['materia']!;
-    if (total >= 20 && stats['oculum']! >= stats['volonta']!) {
-      stats['oculum'] = stats['oculum']! - 1;
-      stats['volonta'] = stats['volonta']! + 1;
+  final tank = RegExp('tank|difens|guard|protett').hasMatch(text);
+  final glass = RegExp('glass|cannone|fragile|berserker').hasMatch(text);
+  final support = RegExp('support|sostegno|curator|guarit').hasMatch(text);
+  final assassin = RegExp(
+    'assassin|assassino|ladro|predator|cacciator|assalt|inseguit',
+  ).hasMatch(text);
+  final weights = <String, double>{
+    'resilienza': tank
+        ? .56
+        : glass
+        ? .16
+        : support
+        ? .24
+        : .38,
+    'volonta': glass
+        ? .40
+        : assassin
+        ? .40
+        : tank
+        ? .18
+        : support
+        ? .14
+        : .30,
+    'materia': glass
+        ? .29
+        : assassin
+        ? .30
+        : tank
+        ? .12
+        : support
+        ? .25
+        : .20,
+    'oculum': usesOculum
+        ? (support
+              ? .37
+              : glass
+              ? .15
+              : tank
+              ? .14
+              : .12)
+        : 0,
+  };
+  // La distribuzione automatica mantiene la specializzazione riconosciuta
+  // (nome, descrizione e tecniche), ma corregge le statistiche carenti nella
+  // scheda base: la build resta riconoscibile senza lasciare un punto debole
+  // accidentale dovuto a una scheda incompleta.
+  final recognizedStats = weights.keys
+      .map((key) => max(0, buildStats[key] ?? 0))
+      .toList();
+  if (recognizedStats.any((value) => value > 0)) {
+    final strongest = recognizedStats.reduce(
+      (a, b) => a > b ? a : b,
+    );
+    for (final key in weights.keys) {
+      final value = max(0, buildStats[key] ?? 0);
+      final deficit = strongest - value;
+      weights[key] = weights[key]! * (1 + deficit / max(1, strongest));
     }
-  } else {
-    stats['volonta'] = max(1, (total * (hunter ? .36 : .30)).floor());
-    stats['materia'] = max(1, (total * (defensive ? .18 : .20)).floor());
-    stats['resilienza'] = total - stats['volonta']! - stats['materia']!;
+  }
+  if (!usesOculum) weights.remove('oculum');
+  final weightSum = weights.values.fold<double>(0, (sum, value) => sum + value);
+  final remainders = <String, double>{};
+  for (final key in weights.keys) {
+    final exact = total * weights[key]! / weightSum;
+    stats[key] = exact.floor();
+    remainders[key] = exact - exact.floor();
+  }
+  final remaining =
+      total - stats.values.fold<int>(0, (sum, value) => sum + value);
+  final priority = weights.keys.toList()
+    ..sort((a, b) => remainders[b]!.compareTo(remainders[a]!));
+  for (var index = 0; index < remaining; index++) {
+    final key = priority[index % priority.length];
+    stats[key] = stats[key]! + 1;
   }
   return stats;
 }
@@ -440,8 +514,10 @@ Map<String, int> oculumMonsterCreationStats(
   final growth = oculumDistributeMonsterStats(
     oculumGeneratedMonsterBudget(monster.presetType, level),
     hasSkills: monsterBookUsableSkillIds(monster).isNotEmpty,
-    hasOculumArt: monsterBookUsableSkillIds(monster).isNotEmpty,
-    role: '${monster.nameIt} ${monster.descIt}',
+    hasOculumArt: oculumMonsterHasOculumArt(monster),
+    role:
+        '${monster.nameIt} ${monster.nameEn} ${monster.presetType} ${monster.elementId} ${monster.descIt} ${monster.descEn} ${monster.formTags.join(' ')} ${monster.skillIds.join(' ')}',
+    buildStats: startingStats,
   );
   return {
     for (final key in startingStats.keys)

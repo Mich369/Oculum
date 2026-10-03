@@ -1,22 +1,29 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:oculum/main.dart';
 
 void main() {
-  test('tutorial requirements belong to Master without altering preset powers', () {
-    final original = oculumStarterWaterArt();
-    final guided = oculumStarterArtForMaster(original);
-    expect(guided.descrizione, startsWith('[Richiede: ???]'));
-    expect(guided.openDescription, startsWith('[Richiede: ???]'));
-    for (var i = 0; i < guided.skills.length; i++) {
-      expect(guided.skills[i].evo1, startsWith('[Richiede: ???]'));
-      expect(guided.skills[i].evo2, startsWith('[Richiede: ???]'));
-      expect(guided.skills[i].evo3, startsWith('[Richiede: ???]'));
-      expect(guided.skills[i].oculumMinimiPerLivello, original.skills[i].oculumMinimiPerLivello);
-    }
-    expect(original.descrizione, isNot(startsWith('[Richiede: ???]')));
-  });
+  test(
+    'tutorial requirements belong to Master without altering preset powers',
+    () {
+      final original = oculumStarterWaterArt();
+      final guided = oculumStarterArtForMaster(original);
+      expect(guided.descrizione, startsWith('[Richiede: ???]'));
+      expect(guided.openDescription, startsWith('[Richiede: ???]'));
+      for (var i = 0; i < guided.skills.length; i++) {
+        expect(guided.skills[i].evo1, startsWith('[Richiede: ???]'));
+        expect(guided.skills[i].evo2, startsWith('[Richiede: ???]'));
+        expect(guided.skills[i].evo3, startsWith('[Richiede: ???]'));
+        expect(
+          guided.skills[i].oculumMinimiPerLivello,
+          original.skills[i].oculumMinimiPerLivello,
+        );
+      }
+      expect(original.descrizione, isNot(startsWith('[Richiede: ???]')));
+    },
+  );
   test(
     'skipping keeps all nine points; grant and reload never duplicate progression',
     () {
@@ -95,6 +102,61 @@ void main() {
     expect(oculumMonsterStatPointsPerLevel('Mostro'), 9);
     expect(oculumMonsterStatPointsPerLevel('Mostro Mini Boss'), 11);
     expect(oculumMonsterStatPointsPerLevel('Mostro Boss'), 13);
+  });
+
+  test(
+    'automatic monster allocation recognizes build and patches weaknesses',
+    () {
+      final tank = oculumDistributeMonsterStats(
+        100,
+        hasSkills: true,
+        hasOculumArt: true,
+        role: 'Tank guardiano',
+        buildStats: const {
+          'resilienza': 30,
+          'volonta': 2,
+          'materia': 5,
+          'oculum': 4,
+        },
+      );
+      final predator = oculumDistributeMonsterStats(
+        100,
+        hasSkills: true,
+        hasOculumArt: true,
+        role: 'Predatore assaltatore',
+      );
+      expect(tank.values.fold<int>(0, (sum, value) => sum + value), 100);
+      expect(predator.values.fold<int>(0, (sum, value) => sum + value), 100);
+      expect(tank['resilienza']!, greaterThan(tank['volonta']!));
+      expect(tank['volonta']!, greaterThan(0));
+      expect(predator['volonta']!, greaterThan(predator['resilienza']!));
+      expect(tank['oculum']!, greaterThan(0));
+    },
+  );
+
+  test('generic monster skills do not falsely grant Oculum Art or points', () {
+    const noArt = MonsterBookEntry(
+      id: 'no_art',
+      nameIt: 'Bestia senza Arte',
+      nameEn: 'Artless Beast',
+      descIt: 'Creatura senza Art.',
+      descEn: 'Creature with no Art.',
+      elementId: 'terra',
+      spriteAssetPath: '',
+      isMiniBoss: false,
+      isBoss: false,
+      isNullFateless: false,
+      stats: {'resilienza': 9, 'volonta': 4, 'materia': 2, 'oculum': 0},
+    );
+    expect(monsterBookUsableSkillIds(noArt), isNotEmpty);
+    expect(oculumMonsterHasOculumArt(noArt), isFalse);
+    final generated = oculumMonsterCreationStats(noArt, 10);
+    expect(generated['oculum'], 0);
+    expect(
+      generated.values.fold<int>(0, (sum, value) => sum + value),
+      noArt.stats.values.fold<int>(0, (sum, value) => sum + value) +
+          oculumGeneratedMonsterBudget(noArt.presetType, 10),
+    );
   });
 
   test('monster creation counter includes rank points and grade points', () {

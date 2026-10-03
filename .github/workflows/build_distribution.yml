@@ -31,6 +31,13 @@ jobs:
         run: flutter test --no-pub test/oculum_diary_memory_test.dart
       - name: Verify diary typing latency regression
         run: flutter test --no-pub test/oculum_diary_typing_test.dart
+      - name: Publish fresh desktop and phone captures
+        uses: actions/upload-artifact@v6
+        with:
+          name: Oculum-UI-Catture
+          path: output/ui/resistances-turns-20261003/*.png
+          if-no-files-found: error
+          retention-days: 30
 
   # ── Windows ────────────────────────────────────────────────────────────────
   build-windows:
