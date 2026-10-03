@@ -409,7 +409,7 @@ Map<String, int> oculumDistributeMonsterStats(
         ? .12
         : support
         ? .25
-        : .20,
+        : .10,
     'oculum': usesOculum
         ? (support
               ? .37
@@ -417,7 +417,7 @@ Map<String, int> oculumDistributeMonsterStats(
               ? .15
               : tank
               ? .14
-              : .12)
+              : .22)
         : 0,
   };
   // La distribuzione automatica mantiene la specializzazione riconosciuta
@@ -438,11 +438,17 @@ Map<String, int> oculumDistributeMonsterStats(
     }
   }
   if (!usesOculum) weights.remove('oculum');
+  // Ogni statistica attiva parte da un punto: un'Arte che usa Oculum non
+  // può ricevere una quota nulla per effetto dell'arrotondamento.
+  for (final key in weights.keys) {
+    stats[key] = 1;
+  }
+  final distributable = total - weights.length;
   final weightSum = weights.values.fold<double>(0, (sum, value) => sum + value);
   final remainders = <String, double>{};
   for (final key in weights.keys) {
-    final exact = total * weights[key]! / weightSum;
-    stats[key] = exact.floor();
+    final exact = distributable * weights[key]! / weightSum;
+    stats[key] = stats[key]! + exact.floor();
     remainders[key] = exact - exact.floor();
   }
   final remaining =

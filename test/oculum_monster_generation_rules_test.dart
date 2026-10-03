@@ -30,20 +30,61 @@ void main() {
           hasSkills: powers.$1,
           hasOculumArt: powers.$2,
         );
-        expect(stats.values.fold<int>(0, (a, b) => a + b), budget);
-        expect(stats.values.every((value) => value >= 0), isTrue);
+        final context =
+            'budget=$budget, hasSkills=${powers.$1}, '
+            'hasOculumArt=${powers.$2}, stats=$stats';
+        expect(
+          stats.values.fold<int>(0, (a, b) => a + b),
+          budget,
+          reason: 'Monster allocation must conserve every point: $context',
+        );
+        expect(
+          stats.values.every((value) => value >= 0),
+          isTrue,
+          reason: 'Monster stats cannot be negative: $context',
+        );
         if (powers.$2) {
-          if (budget > 0) expect(stats['oculum'], greaterThan(0));
+          if (budget > 0) {
+            expect(
+              stats['oculum'],
+              greaterThan(0),
+              reason: 'Oculum Art needs Oculum points: $context',
+            );
+          }
           if (budget >= 20) {
-            expect(stats['resilienza'], greaterThan(stats['volonta']!));
-            expect(stats['resilienza'], greaterThan(stats['materia']!));
-            expect(stats['volonta'], greaterThan(stats['oculum']!));
-            expect(stats['oculum'], greaterThan(stats['materia']!));
+            expect(
+              stats['resilienza'],
+              greaterThan(stats['volonta']!),
+              reason: 'Expected Resilienza > Volontà: $context',
+            );
+            expect(
+              stats['resilienza'],
+              greaterThan(stats['materia']!),
+              reason: 'Expected Resilienza > Materia: $context',
+            );
+            expect(
+              stats['volonta'],
+              greaterThan(stats['oculum']!),
+              reason: 'Expected Volontà > Oculum: $context',
+            );
+            expect(
+              stats['oculum'],
+              greaterThan(stats['materia']!),
+              reason: 'Expected Oculum > Materia: $context',
+            );
           }
         } else {
-          expect(stats['oculum'], 0);
+          expect(
+            stats['oculum'],
+            0,
+            reason: 'Without Oculum Art, Oculum must stay unused: $context',
+          );
           if (budget >= 3) {
-            expect(stats.values.take(3).every((value) => value > 0), isTrue);
+            expect(
+              stats.values.take(3).every((value) => value > 0),
+              isTrue,
+              reason: 'Each core stat needs points at budget >= 3: $context',
+            );
           }
         }
       }
