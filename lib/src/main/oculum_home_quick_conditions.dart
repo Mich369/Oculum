@@ -903,6 +903,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     String type, {
     int stage = 1,
     int? duration,
+    OculumConditionDurationType? durationType,
     String source = '',
     bool? removable,
     OculumConditionTickTrigger? tickTrigger,
@@ -1015,7 +1016,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
         category: definition.category,
         stage: targetStage,
         duration: scaledDuration,
-        durationType: definition.durationType,
+        durationType: durationType ?? definition.durationType,
         tickTrigger: tickTrigger ?? definition.tickTrigger,
         removable: removable ?? definition.removable,
         source: source,
@@ -1059,6 +1060,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
           existing.duration = max(existing.duration, scaledDuration);
       }
       if (source.trim().isNotEmpty) existing.source = source.trim();
+      if (durationType != null) existing.durationType = durationType;
       if (metadata != null) existing.metadata.addAll(metadata);
       message = definition.stackMode == OculumConditionStackMode.increaseStacks
           ? t(
@@ -2348,9 +2350,16 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
           (instance.durationType == OculumConditionDurationType.longRest &&
               trigger == OculumConditionTickTrigger.longRest) ||
           (instance.durationType == OculumConditionDurationType.meal &&
-              trigger == OculumConditionTickTrigger.specificEvent);
+              trigger == OculumConditionTickTrigger.specificEvent) ||
+          (instance.durationType == OculumConditionDurationType.rests &&
+              (trigger == OculumConditionTickTrigger.shortRest ||
+                  trigger == OculumConditionTickTrigger.longRest));
       if (instance.duration > 0 && expiresForTrigger) {
-        instance.duration--;
+        instance.duration =
+            instance.durationType == OculumConditionDurationType.rests &&
+                trigger == OculumConditionTickTrigger.longRest
+            ? 0
+            : instance.duration - 1;
         mutated = true;
         if (instance.duration <= 0) {
           removeCondition(instance, force: true, expired: true);

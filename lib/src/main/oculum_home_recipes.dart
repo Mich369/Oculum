@@ -10,37 +10,101 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   bool ensureCoreOculumRecipes() {
     final authoredAdded = ensureAuthoredCraftingRecipes();
     const id = 'core_pinna_pesce_alato';
-    if (recipes.any((recipe) => recipe.id == id)) return authoredAdded;
     final now = DateTime.now().toIso8601String();
-    recipes.add(
+    var added = authoredAdded;
+    if (!recipes.any((recipe) => recipe.id == id)) {
+      recipes.add(
+        OculumRecipe(
+          id: id,
+          name: 'Pinna di Pesce Alato',
+          ingredients: const <OculumRecipeIngredient>[
+            OculumRecipeIngredient(
+              name: 'Polvere del Pesce Alato',
+              grams: '1000',
+            ),
+            OculumRecipeIngredient(
+              name: 'Acqua contaminata dalle schegge',
+              grams: '1000',
+            ),
+          ],
+          resultName: 'Pinna di Pesce Alato',
+          resultDescription:
+              'Usa: nuoti nell’aria per 3 turni. Creata spendendo automaticamente 3 Oculum.',
+          masterNotes:
+              'Si ricava dalla preda Pesce Alato o polverizzando le sue schegge nell’acqua contaminata.',
+          visibleToPlayers: true,
+          createdAt: now,
+          updatedAt: now,
+          recipeKind: 'alchemy',
+          resultGrams: '250',
+          oculumCost: 3,
+        ),
+      );
+      added = true;
+    }
+    final herbalRecipes = <OculumRecipe>[
       OculumRecipe(
-        id: id,
-        name: 'Pinna di Pesce Alato',
+        id: 'core_herbal_fourfold_root',
+        name: 'Distillato delle Quattro Vene',
         ingredients: const <OculumRecipeIngredient>[
-          OculumRecipeIngredient(
-            name: 'Polvere del Pesce Alato',
-            grams: '1000',
-          ),
-          OculumRecipeIngredient(
-            name: 'Acqua contaminata dalle schegge',
-            grams: '1000',
-          ),
+          OculumRecipeIngredient(name: 'Erba Lunare', grams: '50'),
+          OculumRecipeIngredient(name: 'Erba di Ferro', grams: '50'),
         ],
-        resultName: 'Pinna di Pesce Alato',
+        resultName: 'Radice delle Quattro Vene',
         resultDescription:
-            'Usa: nuoti nell’aria per 3 turni. Creata spendendo automaticamente 3 Oculum.',
+            'Consumabile: ripristina le statistiche attuali ai massimali; non assegna Oculum a chi non lo possiede.',
         masterNotes:
-            'Si ricava dalla preda Pesce Alato o polverizzando le sue schegge nell’acqua contaminata.',
+            'Gli ingredienti sono utilizzabili direttamente anche quando fanno parte di una ricetta.',
         visibleToPlayers: true,
         createdAt: now,
         updatedAt: now,
         recipeKind: 'alchemy',
-        resultGrams: '250',
-        oculumCost: 3,
+        resultGrams: '100',
       ),
-    );
-    recipesRevision.value++;
-    return true;
+      OculumRecipe(
+        id: 'core_herbal_millefoglie',
+        name: 'Unguento di Millefoglie',
+        ingredients: const <OculumRecipeIngredient>[
+          OculumRecipeIngredient(name: 'Erba di Ferro', grams: '50'),
+          OculumRecipeIngredient(name: 'Patalpa Dolce', grams: '50'),
+        ],
+        resultName: 'Unguento di Millefoglie',
+        resultDescription:
+            'Consumabile: cura il 25% degli HP massimi e rimuove le condizioni negative.',
+        masterNotes:
+            'Gli ingredienti si consumano nel crafting e si possono anche usare direttamente dall’inventario.',
+        visibleToPlayers: true,
+        createdAt: now,
+        updatedAt: now,
+        recipeKind: 'alchemy',
+        resultGrams: '100',
+      ),
+      OculumRecipe(
+        id: 'core_herbal_blue_bark',
+        name: 'Balsamo di Corteccia Azzurra',
+        ingredients: const <OculumRecipeIngredient>[
+          OculumRecipeIngredient(name: 'Erba Lunare', grams: '75'),
+          OculumRecipeIngredient(name: 'Polline dei Riflessi', grams: '25'),
+        ],
+        resultName: 'Balsamo di Corteccia Azzurra',
+        resultDescription:
+            'Consumabile: Resistenza al Ghiaccio e Fortificato fino al Riposo Lungo o dopo 2 Riposi Brevi.',
+        masterNotes:
+            'Il polline resta usabile anche come consumabile se non viene destinato al crafting.',
+        visibleToPlayers: true,
+        createdAt: now,
+        updatedAt: now,
+        recipeKind: 'alchemy',
+        resultGrams: '100',
+      ),
+    ];
+    for (final recipe in herbalRecipes) {
+      if (recipes.any((existing) => existing.id == recipe.id)) continue;
+      recipes.add(recipe);
+      added = true;
+    }
+    if (added) recipesRevision.value++;
+    return added;
   }
 
   int presaMaterialiMassimoBaseGrammi() =>
@@ -640,15 +704,23 @@ extension _OculumHomeRecipes on _OculumHomePageState {
           leggiNumero(currentOculumController) - oculumRequired,
         ).toString();
       }
+      final herbalOffer = merchantCraftedHerbalOffer(recipe.resultName);
+      InventoryItem? craftedHerbal;
+      if (herbalOffer != null) {
+        craftedHerbal = merchantItemFromOffer(herbalOffer)
+          ..peso = _finishedProductGrams(recipe) / 1000
+          ..quantita = safeQuantity;
+      }
       inventario.add(
-        authoredMaterialForRecipe(recipe) != null
-            ? authoredCraftedItem(recipe, safeQuantity)
-            : InventoryItem(
-                nome: recipe.resultName,
-                peso: _finishedProductGrams(recipe) / 1000,
-                quantita: safeQuantity,
-                note: recipe.resultDescription,
-              ),
+        craftedHerbal ??
+            (authoredMaterialForRecipe(recipe) != null
+                ? authoredCraftedItem(recipe, safeQuantity)
+                : InventoryItem(
+                    nome: recipe.resultName,
+                    peso: _finishedProductGrams(recipe) / 1000,
+                    quantita: safeQuantity,
+                    note: recipe.resultDescription,
+                  )),
       );
       risultato = t(
         '${recipe.resultName} ×$safeQuantity creato: ${formatoPesoMateriali(_finishedProductGrams(recipe) * safeQuantity)}${oculumRequired > 0 ? ', -$oculumRequired Oculum' : ''}.',

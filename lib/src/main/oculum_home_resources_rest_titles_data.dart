@@ -8,7 +8,7 @@ bool oculumCanReceiveDustFromDrop({
   required int earnedSinceLongRest,
 }) =>
     subtraitId == 'drop' &&
-    naturalRoll > 15 &&
+    naturalRoll >= 18 &&
     naturalRoll <= 20 &&
     earnedSinceLongRest < 3;
 
@@ -1624,6 +1624,16 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       final tiroCuraHp = Random.secure().nextInt(100) + 1;
       progressionSurge.shortRest();
       consumedFoodBonuses.clear();
+      for (final effect in merchantHerbalEffects) {
+        effect['shortRestsRemaining'] = max(
+          0,
+          readIntValue(effect['shortRestsRemaining']) - 1,
+        );
+      }
+      merchantHerbalEffects.removeWhere(
+        (effect) => readIntValue(effect['shortRestsRemaining']) <= 0,
+      );
+      invalidateHiddenEyeDerivedCaches();
 
       impostaCenereControllata(
         max(0, cenere - recuperoPercentuale(cenere, 0.25, 1)),
@@ -1724,6 +1734,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     final potenzaNucleoDaRimuovere = <int>[];
     setState(() {
       merchantDustPurchasedSinceLongRest = false;
+      merchantHerbalEffects.clear();
+      invalidateHiddenEyeDerivedCaches();
       tempResilienza -= consumedFoodBonuses['resilienza'] ?? 0;
       tempVolonta -= consumedFoodBonuses['volonta'] ?? 0;
       tempMateria -= consumedFoodBonuses['materia'] ?? 0;

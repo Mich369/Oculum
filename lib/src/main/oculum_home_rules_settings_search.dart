@@ -18,6 +18,27 @@ String oculumShareChecksum(Iterable<int> bytes) {
   return hash.toRadixString(16).padLeft(8, '0');
 }
 
+/// Keeps the existing wire formats, without redundant transport metadata.
+/// All sheet fields are retained; importing still accepts older wrappers.
+String oculumEncodeSheetShareText(List<Map<String, dynamic>> sheets) {
+  final single = sheets.length == 1;
+  final Map<String, dynamic> payload;
+  if (single) {
+    final sheet = sheets.single;
+    final needsWrapper = sheet.keys.any(
+      (key) => const {'sheet', 'sheets', 'schedePersonaggio'}.contains(key),
+    );
+    payload = needsWrapper ? <String, dynamic>{'sheet': sheet} : sheet;
+  } else {
+    payload = <String, dynamic>{'sheets': sheets};
+  }
+  final bytes = GZipCodec(level: 9).encode(utf8.encode(jsonEncode(payload)));
+  final prefix = single
+      ? oculumSheetShareCodePrefixV3
+      : oculumSheetShareCodePrefixV2;
+  return '$prefix${oculumShareChecksum(bytes)}:${base64UrlEncode(bytes).replaceAll('=', '')}';
+}
+
 List<Map<String, dynamic>> oculumDecodeSheetShareText(String rawText) {
   List<Map<String, dynamic>> sheetsFromPayload(dynamic decoded) {
     if (decoded is! Map) {
@@ -945,19 +966,11 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
 
     if (indexes.length == 1) {
       final sheet = _schedaPerCodiceCompatto(indexes.single);
-      final bytes = gzip.encode(utf8.encode(jsonEncode({'sheet': sheet})));
-      return '$oculumSheetShareCodePrefixV3${oculumShareChecksum(bytes)}:${base64UrlEncode(bytes).replaceAll('=', '')}';
+      return oculumEncodeSheetShareText([sheet]);
     }
-    final payload = <String, dynamic>{
-      'kind': 'oculum_sheets',
-      'version': 2,
-      'createdAt': DateTime.now().toIso8601String(),
-      'sheets': indexes.map(schedaPerCodiceCondivisione).toList(),
-    };
-
-    final encoded = gzip.encode(utf8.encode(jsonEncode(payload)));
-    final compact = base64UrlEncode(encoded).replaceAll('=', '');
-    return '$oculumSheetShareCodePrefixV2${oculumShareChecksum(encoded)}:$compact';
+    return oculumEncodeSheetShareText(
+      indexes.map(schedaPerCodiceCondivisione).toList(),
+    );
   }
 
   Map<String, dynamic> _schedaPerCodiceCompatto(int index) {

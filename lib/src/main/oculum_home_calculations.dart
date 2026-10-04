@@ -871,6 +871,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         conditionalBuffStatBonus(key) +
         skillTextQuickBonus(key) +
         tempStatBonus(key) +
+        merchantHerbalStatBonus(key) +
         statoForzaQuickBonus(key) +
         rebirthLevelBonus() +
         activeStructuredEffectBonus(key);
@@ -4434,7 +4435,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     // diventano parte del totale effettivamente tirato e mostrato.
     final quickBonus = directSubtraitQuickBonus(stat);
     final structuredBonus =
-        activeStructuredEffectBonus(stat.id) + roleSubtraitBonus(stat.id);
+        activeStructuredEffectBonus(stat.id) +
+        roleSubtraitBonus(stat.id) +
+        merchantHerbalSubtraitBonus(stat.id);
     final cacheBase = stat.valore + dustBonus + quickBonus + structuredBonus;
     final cachedBase = hiddenEyeTotalBaseCache[stat.id];
     final cachedValue = hiddenEyeTotalValueCache[stat.id];

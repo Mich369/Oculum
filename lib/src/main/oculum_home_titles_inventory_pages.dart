@@ -4604,6 +4604,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       (_) => merchantQuickPanel(),
       (_) => inventoryCapacityPanelEfficient(),
       (_) => inventoryAddItemPanelEfficient(),
+      if (haPermessiMaster) (_) => masterItemGiftPanel(),
     ];
 
     for (int i = 0; i < inventario.length; i++) {
@@ -4624,6 +4625,230 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       minColumnWidth: 360,
       cacheExtent: 420,
     );
+  }
+
+  List<InventoryItem> _masterGiftCatalog() {
+    final unique = <String, InventoryItem>{};
+    void add(InventoryItem item) {
+      if (item.nome.trim().isEmpty) return;
+      final normalized = item.toJson()
+        ..['quantita'] = 1
+        ..['equipaggiata'] = false;
+      final key = jsonEncode(normalized);
+      unique.putIfAbsent(
+        key,
+        () => InventoryItem.fromJson(item.toJson())
+          ..quantita = 1
+          ..equipaggiata = false,
+      );
+    }
+
+    for (var sheet = 0; sheet < schedePersonaggio.length; sheet++) {
+      for (final raw in _sheetMapList(sheet, 'inventario')) {
+        try {
+          add(InventoryItem.fromJson(raw));
+        } catch (_) {
+          /* Ignore malformed legacy entries. */
+        }
+      }
+    }
+    for (final offer in ensureMerchantStock()) {
+      if (readIntValue(offer['remaining'], fallback: 1) <= 0) continue;
+      if ('${offer['kind'] ?? ''}' == 'title_item') {
+        for (final type in ['arma', 'armatura', 'scudo', 'scudo_offensivo']) {
+          try {
+            add(merchantItemFromOffer(offer, titleType: type));
+          } catch (_) {
+            /* Ignore invalid offer variants. */
+          }
+        }
+      } else {
+        try {
+          add(merchantItemFromOffer(offer));
+        } catch (_) {
+          /* Ignore unsupported offers. */
+        }
+      }
+    }
+    for (final recipe in [...recipes, ...personalRecipes]) {
+      if (recipe.resultName.trim().isEmpty) continue;
+      final grams =
+          double.tryParse(recipe.resultGrams.replaceAll(',', '.')) ?? 0;
+      add(
+        InventoryItem(
+          nome: recipe.resultName,
+          peso: grams / 1000,
+          quantita: 1,
+          note: recipe.resultDescription,
+        ),
+      );
+    }
+    final needle = masterItemSearchController.text.trim().toLowerCase();
+    final items = unique.values.toList()
+      ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
+    if (needle.isEmpty) return items;
+    return items
+        .where(
+          (item) =>
+              '${item.nome} ${item.note} ${item.buff} ${item.elementoDanno}'
+                  .toLowerCase()
+                  .contains(needle),
+        )
+        .toList();
+  }
+
+  List<Map<String, dynamic>> _masterOnlinePlayers() => realtimeUsers
+      .where(
+        (user) =>
+            '${user['role'] ?? ''}'.toLowerCase() == 'player' &&
+            '${user['campaignId'] ?? ''}' == activeCampaignId &&
+            '${user['activeSheetTag'] ?? ''}'.trim().isNotEmpty,
+      )
+      .toList();
+
+  Widget masterItemGiftPanel() => dropdownSection(
+    title: t('Dona oggetti ai giocatori', 'Give items to players'),
+    subtitle: t(
+      'Cerca nell’inventario delle schede, nel mercante, nelle ricette e negli oggetti homebrew. Puoi donare ai giocatori online della campagna attiva.',
+      'Search sheet inventories, merchant stock, recipes and homebrew items. Give items to online players in the active campaign.',
+    ),
+    icon: Icons.card_giftcard,
+    borderColor: tertiaryColor,
+    sectionId: 'master_item_gifts',
+    initiallyExpanded: false,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: masterItemSearchController,
+          onChanged: (_) => setState(() {}),
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search),
+            hintText: t(
+              'Cerca oggetti e homebrew',
+              'Search items and homebrew',
+            ),
+            hintStyle: const TextStyle(color: Colors.white54),
+            filled: true,
+            fillColor: const Color(0xFF10121A),
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 10),
+        if (_masterOnlinePlayers().isEmpty)
+          smallInfoText(
+            t(
+              'Nessun giocatore online nella campagna attiva.',
+              'No players online in the active campaign.',
+            ),
+            color: Colors.orangeAccent,
+          ),
+        ..._masterGiftCatalog().map(
+          (item) => Card(
+            color: const Color(0xFF11131A),
+            child: ListTile(
+              title: Text(
+                item.nome,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                [
+                  if (item.note.isNotEmpty) item.note,
+                  if (item.buff.isNotEmpty) item.buff,
+                  if (item.arma) t('Offensivo', 'Offensive'),
+                  if (item.protegge) t('Protettivo', 'Defensive'),
+                ].join(' · '),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white70),
+              ),
+              trailing: IconButton(
+                tooltip: t(
+                  'Dona a un giocatore online',
+                  'Give to an online player',
+                ),
+                icon: Icon(Icons.card_giftcard, color: tertiaryColor),
+                onPressed: _masterOnlinePlayers().isEmpty
+                    ? null
+                    : () => _chooseOnlineGiftRecipient(item),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Future<void> _chooseOnlineGiftRecipient(InventoryItem item) async {
+    final players = _masterOnlinePlayers();
+    if (players.isEmpty || realtimeService?.isConnected != true) return;
+    final target = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF121018),
+        title: Text(
+          t('Dona ${item.nome}', 'Give ${item.nome}'),
+          style: TextStyle(color: tertiaryColor),
+        ),
+        content: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: players
+                .map(
+                  (user) => ListTile(
+                    leading: const Icon(Icons.person, color: Colors.tealAccent),
+                    title: Text(
+                      '${user['playerName'] ?? 'Giocatore'}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    subtitle: Text(
+                      '${user['activeSheetTag']}',
+                      style: const TextStyle(color: Colors.white60),
+                    ),
+                    onTap: () => Navigator.pop(ctx, user),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+        ],
+      ),
+    );
+    if (target == null) return;
+    final service = realtimeService;
+    final targetTag = '${target['activeSheetTag'] ?? ''}'.trim();
+    if (service?.isConnected != true || targetTag.isEmpty) return;
+    final gift = InventoryItem.fromJson(item.toJson())
+      ..quantita = 1
+      ..equipaggiata = false;
+    final sent = await service!.sendItemGift({
+      'deliveryId': 'item_${DateTime.now().microsecondsSinceEpoch}',
+      'campaignId': activeCampaignId,
+      'senderTag': sheetTagAt(schedaCorrente),
+      'senderName': realtimeDisplayName(),
+      'senderRole': realtimeLocalRole(),
+      'receiverTag': targetTag,
+      'item': gift.toJson(),
+    });
+    if (sent && mounted) {
+      setState(() {
+        risultato = t(
+          'Oggetto inviato a ${target['playerName'] ?? 'giocatore'}.',
+          'Item sent to ${target['playerName'] ?? 'player'}.',
+        );
+        aggiungiLog(risultato);
+      });
+    }
   }
 
   Widget inventoryCapacityPanelEfficient() {
@@ -5164,6 +5389,19 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                 padding: EdgeInsets.zero,
                 icon: Icon(Icons.send, color: primaryColor),
               ),
+              if (isMerchantConsumable(item))
+                IconButton(
+                  tooltip: t('Usa', 'Use'),
+                  onPressed: item.quantita > 0
+                      ? () => useMerchantConsumable(item)
+                      : null,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 34,
+                    height: 30,
+                  ),
+                  padding: EdgeInsets.zero,
+                  icon: Icon(Icons.bolt_outlined, color: tertiaryColor),
+                ),
               IconButton(
                 constraints: const BoxConstraints.tightFor(
                   width: 30,

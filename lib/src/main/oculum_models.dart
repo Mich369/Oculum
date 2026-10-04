@@ -820,6 +820,23 @@ int oculumCoreRollExperienceGain({
   return max(1, raw ~/ divisor);
 }
 
+/// EXP required to advance the separate VC/CM critical-roll experience bar.
+/// Other core stats retain their existing 1000-point bar.
+int oculumCoreRollExperienceTarget({
+  required String key,
+  required String difficulty,
+}) {
+  if (key.trim().toLowerCase() != 'vc' && key.trim().toLowerCase() != 'cm') {
+    return 1000;
+  }
+  return switch (difficulty.trim().toLowerCase()) {
+    'oculum' => 2500,
+    'difficile' || 'hard' => 1500,
+    'facile' || 'easy' => 1000,
+    _ => 1250,
+  };
+}
+
 /// Crescita autonoma dei mostri d'élite sui loro tiri naturali: un Boss
 /// trasforma il 20 in uno scatto di livello, mentre Mini-Boss e 18/19
 /// ricevono molta EXP senza saltare subito di grado.
@@ -1537,9 +1554,20 @@ OculumSkillTextLimits? oculumSkillTextLimitsAtEnd(String text) {
 // Recognize cost notation independently of the position of the effects.
 // Unlabelled fractions inside prose remain ordinary player-authored text.
 OculumSkillTextLimits? oculumSkillTextCostLimits(String text) {
+  final explicitOculumCosts = RegExp(
+    r'\(\s*(\d+)\s*/\s*(\d+)\s*oculum\s*\)',
+    caseSensitive: false,
+  ).allMatches(text).toList();
+  if (explicitOculumCosts.length == 1) {
+    final minimum = int.tryParse(explicitOculumCosts.single.group(1)!);
+    final maximum = int.tryParse(explicitOculumCosts.single.group(2)!);
+    if (minimum == null || maximum == null || minimum > maximum) return null;
+    return OculumSkillTextLimits(minimum: minimum, maximum: maximum);
+  }
+  if (explicitOculumCosts.length > 1) return null;
   final legacy = oculumSkillTextLimitsAtEnd(text);
   final matches = RegExp(
-    r'(?:\bcosto\s*[:=]?\s*(?:oculum\s*)?|^\s*(?:[IVX]+\s*/\s*)?)\(?\s*(\d+)\s*/\s*(\d+)\s*\)?',
+    r'(?:\bcosto\s*[:=]?\s*(?:oculum\s*)?|^\s*(?:[IVX]+\s*/\s*)?)\(?\s*(\d+)\s*/\s*(\d+)(?:\s*oculum)?\s*\)?',
     caseSensitive: false,
   ).allMatches(text).toList();
   if (matches.length > 1) return null;

@@ -2499,6 +2499,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
           .map(
             (stat) => DropdownMenuItem<String>(
               value: stat,
+              enabled: stat != 'Oculum' || oculumTotale() > 0,
               child: Text(cleanUiText(stat)),
             ),
           )

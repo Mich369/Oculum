@@ -1391,6 +1391,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'obser': obserController.text,
       if (merchantStock.isNotEmpty) 'merchantStock': merchantStock,
       'merchantStockSessionId': merchantStockSessionId,
+      if (merchantProfiles.isNotEmpty) 'merchantProfiles': merchantProfiles,
+      'merchantActiveProfileId': merchantActiveProfileId,
+      if (merchantHerbalEffects.isNotEmpty)
+        'merchantHerbalEffects': merchantHerbalEffects,
       'merchantDustPurchasedSinceLongRest': merchantDustPurchasedSinceLongRest,
       'ascensionDust': ascensionDustController.text,
       'ispirazioni': ispirazioniController.text,
@@ -1860,6 +1864,21 @@ extension _OculumHomePersistence on _OculumHomePageState {
               .toList(growable: true)
         : <Map<String, dynamic>>[];
     merchantStockSessionId = '${json['merchantStockSessionId'] ?? ''}'.trim();
+    merchantProfiles = json['merchantProfiles'] is List
+        ? (json['merchantProfiles'] as List)
+              .whereType<Map>()
+              .map((entry) => Map<String, dynamic>.from(entry))
+              .toList(growable: true)
+        : <Map<String, dynamic>>[];
+    merchantActiveProfileId =
+        '${json['merchantActiveProfileId'] ?? 'merchant_default'}'.trim();
+    merchantHerbalEffects = json['merchantHerbalEffects'] is List
+        ? (json['merchantHerbalEffects'] as List)
+              .whereType<Map>()
+              .map((entry) => Map<String, dynamic>.from(entry))
+              .where((entry) => readIntValue(entry['shortRestsRemaining']) > 0)
+              .toList(growable: true)
+        : <Map<String, dynamic>>[];
     merchantDustPurchasedSinceLongRest = readBoolValue(
       json['merchantDustPurchasedSinceLongRest'],
       fallback: false,
@@ -1867,6 +1886,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
     if (merchantStockSessionId != merchantRuntimeSessionId) {
       merchantStock.clear();
       merchantStockSessionId = '';
+    }
+    final activeMerchant = merchantProfiles
+        .where((profile) => '${profile['id'] ?? ''}' == merchantActiveProfileId)
+        .firstOrNull;
+    final activeStock = activeMerchant?['stock'];
+    if (activeStock is List && activeStock.isNotEmpty) {
+      merchantStock = activeStock
+          .whereType<Map>()
+          .map((offer) => Map<String, dynamic>.from(offer))
+          .toList(growable: true);
+      merchantStockSessionId = merchantRuntimeSessionId;
     }
     ascensionDustController.text = '${json['ascensionDust'] ?? '0'}';
     ispirazioniController.text = '${json['ispirazioni'] ?? '0'}';

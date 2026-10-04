@@ -3,7 +3,7 @@ import 'package:oculum/main.dart';
 
 void main() {
   test(
-    'Drop rewards natural 16 to 20 only, at most three before Long Rest',
+    'Drop rewards natural 18 to 20 only, at most three before Long Rest',
     () {
       var earned = 0;
       for (final roll in [1, 15, 16, 18, 20, 19, 20]) {
@@ -38,8 +38,19 @@ void main() {
           naturalRoll: 16,
           earnedSinceLongRest: 0,
         ),
-        isTrue,
+        isFalse,
       );
+      for (var roll = 1; roll <= 20; roll++) {
+        expect(
+          oculumCanReceiveDustFromDrop(
+            subtraitId: 'drop',
+            naturalRoll: roll,
+            earnedSinceLongRest: 0,
+          ),
+          roll >= 18,
+          reason: 'Natural Drop $roll',
+        );
+      }
       expect(
         oculumFallenEyeDropCreatesOnNaturalTwenty(
           subtraitId: 'drop',

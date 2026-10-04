@@ -1334,6 +1334,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final reazioniController = TextEditingController(text: '1');
   final reazioniVelociController = TextEditingController(text: '0');
   final realtimeChatController = TextEditingController();
+  final masterItemSearchController = TextEditingController();
   final storySessionNoteController = TextEditingController();
   final buffMalusRapidiController = TextEditingController();
   final dannoSubitoController = TextEditingController();
@@ -1419,6 +1420,9 @@ class _OculumHomePageState extends State<OculumHomePage>
       'merchant_${DateTime.now().microsecondsSinceEpoch}';
   List<Map<String, dynamic>> merchantStock = <Map<String, dynamic>>[];
   String merchantStockSessionId = '';
+  List<Map<String, dynamic>> merchantProfiles = <Map<String, dynamic>>[];
+  String merchantActiveProfileId = 'merchant_default';
+  List<Map<String, dynamic>> merchantHerbalEffects = <Map<String, dynamic>>[];
   bool merchantIsOpen = false;
   bool merchantDustPurchasedSinceLongRest = false;
   final ascensionDustController = TextEditingController(text: '0');
@@ -3733,6 +3737,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     reazioniController.dispose();
     reazioniVelociController.dispose();
     realtimeChatController.dispose();
+    masterItemSearchController.dispose();
     storySessionNoteController.dispose();
     realtimeDungeonMessage.dispose();
     diceResultRevision.dispose();

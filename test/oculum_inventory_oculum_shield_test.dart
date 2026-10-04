@@ -275,11 +275,31 @@ void main() {
 
     test('la probabilita della parata usa Oculum su 1000 senza consumarlo', () {
       expect(oculumParryChanceThresholdPerThousand(20), 20);
+      expect(
+        oculumParryChanceThresholdPerThousand(20, difficulty: 'facile'),
+        30,
+      );
+      expect(
+        oculumParryChanceThresholdPerThousand(20, difficulty: 'difficile'),
+        10,
+      );
+      expect(
+        oculumParryChanceThresholdPerThousand(20, difficulty: 'oculum'),
+        4,
+      );
       expect(oculumParryChanceThresholdPerThousand(1200), 1000);
       expect(oculumParryChanceThresholdPerThousand(-2), 0);
       expect(
         oculumParryChanceRollSucceeds(currentOculum: 20, roll: 19),
         isTrue,
+      );
+      expect(
+        oculumParryChanceRollSucceeds(
+          currentOculum: 20,
+          roll: 10,
+          difficulty: 'difficile',
+        ),
+        isFalse,
       );
       expect(
         oculumParryChanceRollSucceeds(currentOculum: 20, roll: 20),

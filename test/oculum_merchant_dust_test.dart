@@ -76,6 +76,22 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     final dynamic state = tester.state(find.byType(OculumHomePage));
     final probe = OculumPerformanceProbe(state);
+    state.updateOculumHomeUi(() {
+      state.merchantProfiles.clear();
+      state.merchantStock.clear();
+      state.merchantStockSessionId = '';
+      state.merchantActiveProfileId = 'merchant_default';
+    });
+    final firstMerchantId = state.merchantActiveProfileId as String;
+    final firstMerchantStock = probe.merchantOfferIds();
+    probe.createMerchantProfile();
+    final secondMerchantId = state.merchantActiveProfileId as String;
+    expect(secondMerchantId, isNot(firstMerchantId));
+    expect(state.merchantProfiles.length, 2);
+    probe.switchMerchantProfile(firstMerchantId);
+    expect(state.merchantActiveProfileId, firstMerchantId);
+    expect(probe.merchantOfferIds(), firstMerchantStock);
+    probe.switchMerchantProfile(secondMerchantId);
     state.volontaController.text = '10';
     state.materiaController.text = '7';
     state.volontaController.text = '9';
@@ -101,6 +117,43 @@ void main() {
     expect(int.parse(state.currentVolontaController.text), afterGem);
     probe.recoverLongRestStats();
     expect(int.parse(state.currentVolontaController.text), 9);
+    final pollen = probe.merchantItem({
+      'kind': 'food',
+      'name': 'Polline dei Riflessi',
+      'isMaterial': true,
+      'subtraitId': 'riflessi',
+      'subtraitBonus': 2,
+      'desc': 'Materiale da crafting e consumabile.',
+    });
+    expect(pollen.monsterLoot['material'], isTrue);
+    state.inventario.add(pollen);
+    await probe.useMerchantItem(pollen);
+    expect(
+      state.merchantHerbalEffects
+          .where((effect) => effect['type'] == 'subtrait_bonus')
+          .map((effect) => effect['value']),
+      contains(2),
+    );
+    expect(state.inventario.contains(pollen), isFalse);
+    probe.shortRest();
+    expect(
+      state.merchantHerbalEffects
+          .where((effect) => effect['type'] == 'subtrait_bonus')
+          .single['shortRestsRemaining'],
+      1,
+    );
+    probe.shortRest();
+    expect(
+      state.merchantHerbalEffects.where(
+        (effect) => effect['type'] == 'subtrait_bonus',
+      ),
+      isEmpty,
+    );
+    expect(
+      state.recipes.any((recipe) => recipe.id == 'core_herbal_millefoglie'),
+      isTrue,
+      reason: 'Herb and ointment crafting recipes are seeded for the sheet',
+    );
     for (final key in ['resilienza', 'materia', 'oculum']) {
       final maximum = probe.resourceMaximum(key);
       probe.setResourceCurrent(key, maximum);
@@ -160,7 +213,10 @@ void main() {
     });
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.text('Mercante in vista'));
+    final activeMerchantName = state.merchantProfiles.firstWhere(
+      (profile) => profile['id'] == secondMerchantId,
+    )['name'];
+    await tester.tap(find.text(activeMerchantName as String));
     await tester.pumpAndSettle();
     final buy = find.widgetWithText(
       OutlinedButton,
@@ -196,7 +252,27 @@ void main() {
       ElevatedButton,
       'Riposo Lungo — 1 ora e mezza',
     );
+    final dropGem = oculumCreateTemporaryDropGem(
+      subtraitId: 'drop',
+      naturalRoll: 19,
+      usesOculum: false,
+      stats: const {'resilienza': 9, 'volonta': 9, 'materia': 9},
+      random: Random(42),
+    )!;
+    state.inventario.add(dropGem);
     tester.widget<ElevatedButton>(longRest).onPressed!();
+    expect(
+      state.inventario.contains(dropGem),
+      isTrue,
+      reason: 'Unused Drop gems remain in inventory after long rest',
+    );
+    expect(dropGem.quantita, 1);
+    await probe.useMerchantItem(dropGem);
+    expect(
+      state.inventario.contains(dropGem),
+      isFalse,
+      reason: 'Drop gems are consumed only when used',
+    );
     expect(state.merchantDustPurchasedSinceLongRest, isFalse);
     callback();
     expect(state.obserController.text, '60');

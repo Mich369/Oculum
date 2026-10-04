@@ -967,9 +967,37 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
     final dustText = dustAwarded
         ? '\nDrop: +1 Ascension Dust ($ascensionDustDropSinceLongRest/3 fino al Riposo Lungo).'
-        : stat.id == 'drop' && dado > 15 && ascensionDustDropSinceLongRest >= 3
+        : stat.id == 'drop' && dado >= 18 && ascensionDustDropSinceLongRest >= 3
         ? '\nDrop: limite di 3 Ascension Dust raggiunto; si rinnova al Riposo Lungo.'
         : '';
+    final dropGem = oculumCreateTemporaryDropGem(
+      subtraitId: stat.id,
+      naturalRoll: dado,
+      usesOculum: oculumTotale() > 0,
+      stats: {
+        for (final key in oculumStatGemNames.keys)
+          key: merchantGemStatValue(key),
+      },
+      random: Random.secure(),
+    );
+    if (dropGem != null) {
+      inventario.add(dropGem);
+      invalidateDerivedDataCaches();
+    }
+    final dropGemText = dropGem == null
+        ? ''
+        : '\nDrop $dado naturale: ottenuta ${dropGem.nome} (1d${dropGem.statGemDieFaces}). Resta nell’inventario fino all’uso; solo l’eccesso termina al riposo lungo.';
+    final dropObser = oculumDropObserReward(
+      subtraitId: stat.id,
+      rollTotal: totale,
+      level: leggiNumero(livelloController),
+      dropBonus: hiddenEyeTotal(stat) + hiddenEyeStatRollQuickBonus(stat),
+      random: Random.secure(),
+    );
+    if (dropObser > 0) {
+      obserController.text = '${leggiNumero(obserController) + dropObser}';
+    }
+    final dropObserText = dropObser > 0 ? '\nDrop: +$dropObser Obser.' : '';
     final dodgeText = schivataOculumOttenuta
         ? '\nCRITICO RIFLESSI: +1 Schivata Oculum.'
         : '';
@@ -978,7 +1006,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     tiroCriticoUno = dado == 1;
     tiroCriticoVenti = dado == 20;
     risultato =
-        '$label: $testoDado$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText$dodgeText';
+        '$label: $testoDado$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText$dropGemText$dropObserText$dodgeText';
     _applyDadoCentraleOverlayState(
       valore: testoDado,
       criticoUno: dado == 1,
@@ -987,7 +1015,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       reduceEffects: reduceDiceEffects,
     );
     aggiungiLog(
-      'Tiro sottotratto $label: $testoDado.${oculumTiroLogLabel(oculumSpend)}$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText$dodgeText',
+      'Tiro sottotratto $label: $testoDado.${oculumTiroLogLabel(oculumSpend)}$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText$dropGemText$dropObserText$dodgeText',
     );
     registerValidRoll(consumoStatKey: statConsumata);
     notifyDiceResultChanged();
@@ -1019,6 +1047,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (dustAwarded ||
+          dropObser > 0 ||
+          dropGem != null ||
           schivataOculumOttenuta ||
           masteryGain > 0 ||
           statoForzaLog.isNotEmpty ||
@@ -3857,10 +3887,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
 
     final currentOculumForParry = max(0, currentOculum());
+    final parryChanceThreshold = oculumParryChanceThresholdPerThousand(
+      currentOculumForParry,
+      difficulty: normalizedCampaignDifficulty(),
+    );
     final currentOculumParryRoll = Random.secure().nextInt(1000);
     final parryChanceTriggered = oculumParryChanceRollSucceeds(
       currentOculum: currentOculumForParry,
       roll: currentOculumParryRoll,
+      difficulty: normalizedCampaignDifficulty(),
     );
     final manifestationStat = hiddenEyeStats.firstWhere(
       (stat) => stat.id == 'manifestazione_potere',
@@ -3970,10 +4005,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         ? ' Oculum Dodge${schivataLabel.isEmpty ? "" : " $schivataLabel"}: -$riduzioneSchivata%, damage $dannoPrimaSchivata -> $dannoDopoSchivata.'
         : '';
     final parataOculumLogIt = parryChanceTriggered
-        ? ' il tuo oculum si è concentrato per indebolire il colpo: prova $parrySubtraitLabel 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal contro DT $parryDifficulty; ${parryCheckSucceeded ? "danno $dannoPrimaParata → $dannoDopoParataOculum (riduzione $riduzioneParataOculum, gratuita)." : "prova fallita, il colpo non viene indebolito."}${parryCriticalAwardsDodge ? " Critico: +1 Schivata Oculum." : ""}'
+        ? ' il tuo oculum si è concentrato per indebolire il colpo (probabilità $parryChanceThreshold/1000, ${campaignDifficultyLabel()}): prova $parrySubtraitLabel 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal contro DT $parryDifficulty; ${parryCheckSucceeded ? "danno $dannoPrimaParata → $dannoDopoParataOculum (riduzione $riduzioneParataOculum, gratuita)." : "prova fallita, il colpo non viene indebolito."}${parryCriticalAwardsDodge ? " Critico: +1 Schivata Oculum." : ""}'
         : '';
     final parataOculumLogEn = parryChanceTriggered
-        ? ' Your Oculum concentrated to weaken the blow: $parrySubtraitLabel check 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal against DT $parryDifficulty; ${parryCheckSucceeded ? "damage $dannoPrimaParata → $dannoDopoParataOculum (reduction $riduzioneParataOculum, free)." : "check failed; the blow is not weakened."}${parryCriticalAwardsDodge ? " Critical: +1 Oculum Dodge." : ""}'
+        ? ' Your Oculum concentrated to weaken the blow (chance $parryChanceThreshold/1000, ${campaignDifficultyLabel()}): $parrySubtraitLabel check 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal against DT $parryDifficulty; ${parryCheckSucceeded ? "damage $dannoPrimaParata → $dannoDopoParataOculum (reduction $riduzioneParataOculum, free)." : "check failed; the blow is not weakened."}${parryCriticalAwardsDodge ? " Critical: +1 Oculum Dodge." : ""}'
         : '';
     final difficultyBypasses = rollDifficultyIncreaseDamageBypasses();
     final ignoraDifesa = dannoOltreDifesa || difficultyBypasses.beyondDefense;
@@ -5214,10 +5249,27 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   int bonusLevelUpPerStat(String stat) {
-    if (stat == levelUpStatTre) return 3;
-    if (stat == levelUpStatDue) return 2;
-
-    return 1;
+    final bonuses = <String, int>{
+      for (final name in statsLevelUp)
+        name: name == levelUpStatTre ? 3 : (name == levelUpStatDue ? 2 : 1),
+    };
+    if (oculumTotale() <= 0) {
+      var remaining = bonuses['Oculum'] ?? 0;
+      bonuses['Oculum'] = 0;
+      final totals = <String, int>{
+        'Resilienza': resilienzaMassimoNaturale(),
+        'Volontà': volontaMassimoNaturale(),
+        'Materia': materiaMassimoNaturale(),
+      };
+      while (remaining-- > 0) {
+        final weakest = totals.keys.reduce(
+          (a, b) =>
+              totals[a]! + bonuses[a]! <= totals[b]! + bonuses[b]! ? a : b,
+        );
+        bonuses[weakest] = bonuses[weakest]! + 1;
+      }
+    }
+    return bonuses[stat] ?? 0;
   }
 
   void modificaCmRapido(int delta) {
@@ -5399,6 +5451,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       return;
     }
 
+    if (monsterSelectedStat == 'Oculum' && oculumTotale() <= 0) {
+      setState(
+        () => risultato = 'Oculum totale pari a 0: scegli un’altra statistica.',
+      );
+      return;
+    }
     final quantita = leggiNumero(monsterPointAmountController);
 
     if (quantita <= 0) {
@@ -5460,6 +5518,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       return;
     }
 
+    if (monsterGradeStat == 'Oculum' && oculumTotale() <= 0) {
+      setState(
+        () => risultato = 'Oculum totale pari a 0: scegli un’altra statistica.',
+      );
+      return;
+    }
     final grado = leggiNumero(gradoController);
     final bonus =
         grado * oculumMonsterStatPointsPerGrade(tipoSchedaController.text);

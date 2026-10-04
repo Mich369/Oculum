@@ -697,6 +697,12 @@ class OculumRealtimeService {
     envelope,
   );
 
+  Future<bool> sendItemGift(
+    Map<String, dynamic> envelope, {
+    bool acknowledgement = false,
+  }) =>
+      _sendConfirmed(acknowledgement ? 'item_gift_ack' : 'item_gift', envelope);
+
   Future<void> requestSharedSheets() => _send('sheet_ping', {
     'playerName': _displayName,
     'senderRole': presenceDataProvider?.call()['role'] ?? 'player',

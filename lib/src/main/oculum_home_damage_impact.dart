@@ -33,16 +33,30 @@ oculumMisfortuneProfile(String difficulty) {
   }
 }
 
-int oculumParryChanceThresholdPerThousand(int currentOculum) =>
-    max(0, currentOculum).clamp(0, 1000).toInt();
+int oculumParryChanceThresholdPerThousand(
+  int currentOculum, {
+  String difficulty = 'normale',
+}) {
+  final multiplier = switch (difficulty.trim().toLowerCase()) {
+    'facile' || 'easy' => 1.5,
+    'difficile' || 'hard' => 0.5,
+    'oculum' => 0.2,
+    _ => 1.0,
+  };
+  return (max(0, currentOculum) * multiplier).round().clamp(0, 1000).toInt();
+}
 
 bool oculumParryChanceRollSucceeds({
   required int currentOculum,
   required int roll,
+  String difficulty = 'normale',
 }) =>
     roll >= 0 &&
     roll < 1000 &&
-    roll < oculumParryChanceThresholdPerThousand(currentOculum);
+    roll < oculumParryChanceThresholdPerThousand(
+      currentOculum,
+      difficulty: difficulty,
+    );
 
 int oculumParryDamageReduction({
   required int currentOculum,

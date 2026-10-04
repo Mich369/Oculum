@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart'
+    show debugDefaultTargetPlatformOverride;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -73,6 +75,10 @@ void main() {
   testWidgets(
     'Per-element saves, inventory integrity, VC, personal turns and timed force states',
     (tester) async {
+      final previousTargetPlatform = debugDefaultTargetPlatformOverride;
+      addTearDown(() {
+        debugDefaultTargetPlatformOverride = previousTargetPlatform;
+      });
       SharedPreferences.setMockInitialValues({});
       final font = await rootBundle.load('assets/fonts/Poppins-Regular.ttf');
       for (final family in [
@@ -249,16 +255,26 @@ void main() {
       final hp = probe.currentHp();
       state.dannoOltreDifesa = true;
       state.dannoOltreScudi = true;
-      probe.damage(10);
-      expect(probe.currentHp(), hp);
-      state.incomingDamageElement = 'ghiaccio';
-      probe.damage(10);
-      expect(
-        probe.currentHp(),
-        lessThan(hp),
-        reason:
-            'Il danno da ghiaccio deve diminuire gli HP: stats=${probe.coreStats()}, stato=${state.statoForzaAttivo}, log=${state.risultato}',
+      // Test elemental damage independently of the random Luck dodge.
+      final luck = (state.hiddenEyeStats as List<HiddenEyeStat>).firstWhere(
+        (stat) => stat.id == 'fortuna',
       );
+      final luckUnlocked = luck.unlocked;
+      luck.unlocked = false;
+      try {
+        probe.damage(10);
+        expect(probe.currentHp(), hp);
+        state.incomingDamageElement = 'ghiaccio';
+        probe.damage(10);
+        expect(
+          probe.currentHp(),
+          lessThan(hp),
+          reason:
+              'Il danno da ghiaccio deve diminuire gli HP: stats=${probe.coreStats()}, stato=${state.statoForzaAttivo}, log=${state.risultato}',
+        );
+      } finally {
+        luck.unlocked = luckUnlocked;
+      }
       // The legacy armor effect used singular English "turn" and never expired.
       state.activeStructuredEffects.add({
         'source': 'Armatura del Combattente',
@@ -403,12 +419,96 @@ void main() {
         reason: 'each Resilienza point provides exactly 10 maximum HP',
       );
       state.gradoController.text = '1';
+      final beforeGrowth = probe.coreStats();
+      final hpBeforeGrowth = probe.currentHp();
+      for (final key in beforeGrowth.keys) {
+        probe.increaseBaseStat(key, 2);
+      }
+      for (final key in beforeGrowth.keys) {
+        expect(
+          probe.coreStats()[key],
+          beforeGrowth[key]! + 2,
+          reason: '$key growth must be immediately usable',
+        );
+      }
+      expect(
+        probe.currentHp(),
+        hpBeforeGrowth + 20,
+        reason: '+2 Resilienza must also grant 20 current HP',
+      );
+      state.oculumController.text = '0';
+      state.currentOculumController.text = '0';
+      probe.invalidateDerivedCaches();
+      // This fixture may still have Art or title bonuses: remove those
+      // through its normal collections to exercise a truly zero total.
+      state.arti.clear();
+      state.titoli.clear();
+      state.skills.clear();
+      probe.invalidateDerivedCaches();
+      final noOculumGrowth = probe.levelUpBonuses();
+      expect(noOculumGrowth['Oculum'], 0);
+      expect(
+        noOculumGrowth.values.fold<int>(0, (a, b) => a + b),
+        7,
+        reason: 'excluding Oculum must preserve all seven level-up points',
+      );
       await photo('resistenze-desktop');
       tester.view.physicalSize = const Size(390, 844);
       await photo('resistenze-mobile');
       tester.state<NavigatorState>(find.byType(Navigator).first).pop();
       await tester.pump(const Duration(milliseconds: 600));
       probe.openSubtraits();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+      final help = find.byWidgetPredicate(
+        (widget) =>
+            widget is Tooltip &&
+            widget.richMessage?.toPlainText().contains('A cosa serve') == true,
+      );
+      expect(help, findsWidgets);
+      final helpWidget = tester.widget<Tooltip>(help.first);
+      final helpDecoration = helpWidget.decoration! as BoxDecoration;
+      expect(
+        helpDecoration.gradient!.colors.every(
+          (color) => color.computeLuminance() < .05,
+        ),
+        isTrue,
+      );
+      expect(helpDecoration.border, isNotNull);
+      expect(helpWidget.textStyle!.color, const Color(0xffeadfc8));
+      expect(helpWidget.richMessage!.toPlainText(), contains('A cosa serve'));
+      expect(helpWidget.richMessage!.toPlainText(), isNot(contains('⌊')));
+      expect(helpWidget.richMessage!.toPlainText(), isNot(contains('⌋')));
+      expect(helpWidget.richMessage!.toPlainText(), contains('Formula'));
+      tester.view.physicalSize = const Size(1440, 900);
+      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+      final mouse = await tester.createGesture(
+        kind: ui.PointerDeviceKind.mouse,
+      );
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(tester.getCenter(help.first));
+      await tester.pump(const Duration(milliseconds: 800));
+      await photo('sottotratti-tooltip-desktop');
+      expect(
+        tester.widgetList<RichText>(find.byType(RichText)).any(
+          (richText) => richText.text.toPlainText().contains('A cosa serve'),
+        ),
+        isTrue,
+        reason: 'Desktop hover must open the themed subtrait explanation',
+      );
+      await mouse.removePointer();
+      Tooltip.dismissAllToolTips();
+      tester.view.physicalSize = const Size(390, 844);
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.ensureVisible(help.first);
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.longPress(help.first);
+      await photo('sottotratti-tooltip-mobile');
+      Tooltip.dismissAllToolTips();
       await photo('sottotratti-mobile');
       tester.state<NavigatorState>(find.byType(Navigator).first).pop();
       await tester.pump(const Duration(milliseconds: 600));

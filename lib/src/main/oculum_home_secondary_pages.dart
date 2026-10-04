@@ -2620,8 +2620,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             resourceCounter(
               title: 'Ascension Dust',
               subtitle: t(
-                'Polvere magica per forgiare e potenziare oggetti o poteri. Drop naturale 16–20: +1 Dust, massimo 3 per Riposo Lungo. Ottenute: $ascensionDustDropSinceLongRest/3.',
-                'Magical dust for forging and empowering items or powers. Natural Drop 16–20: +1 Dust, up to 3 per Long Rest. Earned: $ascensionDustDropSinceLongRest/3.',
+                'Polvere magica per forgiare e potenziare oggetti o poteri. Drop naturale 18–20: +1 Dust, massimo 3 per Riposo Lungo. Ottenute: $ascensionDustDropSinceLongRest/3.',
+                'Magical dust for forging and empowering items or powers. Natural Drop 18–20: +1 Dust, up to 3 per Long Rest. Earned: $ascensionDustDropSinceLongRest/3.',
               ),
               controller: ascensionDustController,
               icon: Icons.grain,

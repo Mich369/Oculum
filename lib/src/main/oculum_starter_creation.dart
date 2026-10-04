@@ -120,21 +120,25 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) => CharacterArt(
   descrizione:
       'Le tecniche di ${monster.nameIt}. La forma 0 indica che la Skill non è in uso; scegli I, II o III quando la attivi.',
   skills: [
-    for (final id in monsterBookUsableSkillIds(monster))
+    for (final (index, id) in monsterBookUsableSkillIds(monster).indexed)
       ArtSkill(
         nome: monsterBookSkillText(id).split('—').first.trim(),
         livello: 0,
-        evo1: _monsterBookSkillEvolution(id, 0),
-        evo2: _monsterBookSkillEvolution(id, 1),
-        evo3: _monsterBookSkillEvolution(id, 2),
+        evo1: _monsterBookSkillEvolution(monster, id, index, 0),
+        evo2: _monsterBookSkillEvolution(monster, id, index, 1),
+        evo3: _monsterBookSkillEvolution(monster, id, index, 2),
         oculumMinimiPerLivello:
-            id.startsWith('snorlo_') ||
+            id.startsWith('inspired_')
+            ? [1, 5, 11]
+            : id.startsWith('snorlo_') ||
                 id.startsWith('incubo_') ||
                 id.startsWith('legno_marcio_')
             ? [1, 5, 11]
             : null,
         oculumMassimiPerLivello:
-            id.startsWith('snorlo_') ||
+            id.startsWith('inspired_')
+            ? [4, 10, 30]
+            : id.startsWith('snorlo_') ||
                 id.startsWith('incubo_') ||
                 id.startsWith('legno_marcio_')
             ? [4, 10, 30]
@@ -145,22 +149,104 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) => CharacterArt(
                 id.startsWith('legno_marcio_')
             ? List.generate(
                 3,
-                (_) => id.startsWith('snorlo_')
+                (form) => id.startsWith('snorlo_')
                     ? oculumSnorloSkillEffects(id)
                     : id.startsWith('incubo_')
-                    ? oculumNightmareSkillEffects(id)
+                    ? oculumNightmareSkillEffects(id, form: form)
                     : oculumRotwoodSkillEffects(id),
               )
-            : null,
+            : _monsterBookGenericEffects(id),
       ),
   ],
 );
 
-String _monsterBookSkillEvolution(String id, int form) {
+String _monsterBookSkillEvolution(
+  MonsterBookEntry monster,
+  String id,
+  int index,
+  int form,
+) {
   final text = monsterBookSkillForms(id)[form];
-  return text.contains(RegExp(r'Richiede livello\s+\d+', caseSensitive: false))
-      ? text
-      : 'Richiede livello 0\n$text';
+  final authoredRequirement = RegExp(
+    r'Richiede livello\s+\d+',
+    caseSensitive: false,
+  );
+  final explicitLevel = RegExp(
+    r'Livello\s+(\d+)',
+    caseSensitive: false,
+  ).firstMatch(monsterBookSkillForms(id).first);
+  final baseLevel = explicitLevel == null
+      ? monsterBookSkillRequiredLevel(monster, index)
+      : int.parse(explicitLevel.group(1)!);
+  final requirement = text.contains(authoredRequirement)
+      ? ''
+      : 'Richiede livello ${baseLevel + form * 3}\n';
+  final hasCost = RegExp(
+    r'(?:costo\s*[:=]?.{0,24}oculum|\d+\s*[/–-]\s*\d+\s*oculum)',
+    caseSensitive: false,
+  ).hasMatch(text);
+  final cost = id.startsWith('hero_path:') || hasCost
+      ? ''
+      : 'Costo: ${const ['I (1/4)', 'II (5/10)', 'III (11/30)'][form]} Oculum.\n';
+  final effects = _monsterBookGenericEffects(id);
+  if (effects == null) {
+    if (id.startsWith('incubo_')) {
+      final effect = oculumNightmareSkillEffects(id, form: form).firstOrNull;
+      if (effect != null) {
+        final formula = effect.valueExpression
+            .replaceAll('oculum_spent', 'Oculum speso')
+            .replaceAll('danni', 'Danni')
+            .replaceAll('*', ' × ');
+        return '$cost$requirement${text.replaceAll('stessa formula', 'formula della forma')}\n'
+            'Valore ${effect.target.isEmpty ? effect.type : effect.target}: $formula.';
+      }
+    }
+    return '$cost$requirement$text';
+  }
+  final effect = effects[form].single;
+  final multiplier = const ['1', '1,5', '2'][form];
+  final bonus = effect.type == 'danno'
+      ? 'Danni + $multiplier × Oculum speso'
+      : 'Difesa + $multiplier × Oculum speso per 1 turno';
+  return '$cost$requirement$text\n$bonus.';
+}
+
+/// Only fills narrative-only techniques. Authored numeric powers and Oculus
+/// techniques keep their own formulas instead of receiving a second effect.
+List<List<OculumStructuredEffect>>? _monsterBookGenericEffects(String id) {
+  if (id.startsWith('hero_path:')) return null;
+  final inspired = id.startsWith('inspired_');
+  final text = monsterBookSkillText(id);
+  if (!inspired && RegExp(r'\d|@|Oculum', caseSensitive: false).hasMatch(text)) {
+    return null;
+  }
+  final defensive = RegExp(
+    r'guard|shield|shell|hide|skin|armor|cover|dash|step|hop|sprint|flight|escape|vanish|illusion|mirror|fake|reflect|invisible',
+    caseSensitive: false,
+  ).hasMatch(id);
+  final offense =
+      (inspired && !id.endsWith('_guard')) ||
+      (!defensive &&
+      RegExp(
+        r'dann|attacc|colpis|caric|ferisc|morso|artigl|esplos|colpo',
+        caseSensitive: false,
+      ).hasMatch(text));
+  return List.generate(
+    3,
+    (form) => [
+      OculumStructuredEffect(
+        id: '${id}_forma_${form + 1}',
+        type: offense ? 'danno' : 'difesa',
+        valueExpression:
+            '${offense ? 'danni+' : ''}oculum_spent*${const ['1', '1.5', '2'][form]}',
+        recipient: offense ? 'bersaglio' : 'se_stesso',
+        mode: offense ? 'immediato' : 'finche_attivo',
+        duration: offense ? '' : '1',
+        narrativeText:
+            'Restano validi bersagli, limiti e condizioni della tecnica.',
+      ),
+    ],
+  );
 }
 
 List<OculumStructuredEffect> oculumSnorloSkillEffects(String id) {
@@ -188,7 +274,10 @@ List<OculumStructuredEffect> oculumSnorloSkillEffects(String id) {
   ];
 }
 
-List<OculumStructuredEffect> oculumNightmareSkillEffects(String id) {
+List<OculumStructuredEffect> oculumNightmareSkillEffects(
+  String id, {
+  int form = 0,
+}) {
   final baseId = id.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
   final (type, target, formula, element) = switch (baseId) {
     'incubo_vespro_taglio' => ('danno', '', 'danni+oculum_spent', 'Vuoto'),
@@ -223,7 +312,12 @@ List<OculumStructuredEffect> oculumNightmareSkillEffects(String id) {
       id: baseId,
       type: type,
       target: target,
-      valueExpression: formula,
+      valueExpression: form == 0
+          ? formula
+          : formula.replaceAll(
+              'oculum_spent',
+              '(oculum_spent*${form == 1 ? 1.5 : 2})',
+            ),
       elementType: element,
       recipient: type == 'danno' ? 'bersaglio' : 'se_stesso',
       mode: type == 'danno'
@@ -428,9 +522,7 @@ Map<String, int> oculumDistributeMonsterStats(
       .map((key) => max(0, buildStats[key] ?? 0))
       .toList();
   if (recognizedStats.any((value) => value > 0)) {
-    final strongest = recognizedStats.reduce(
-      (a, b) => a > b ? a : b,
-    );
+    final strongest = recognizedStats.reduce((a, b) => a > b ? a : b);
     for (final key in weights.keys) {
       final value = max(0, buildStats[key] ?? 0);
       final deficit = strongest - value;

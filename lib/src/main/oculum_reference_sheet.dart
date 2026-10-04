@@ -222,11 +222,39 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                   (stat) => hiddenEyeStatGroup(stat.id) == group,
                 ))
                   Tooltip(
+                    constraints: BoxConstraints(
+                      maxWidth: min(360, MediaQuery.sizeOf(context).width - 32),
+                    ),
+                    padding: const EdgeInsets.all(14),
+                    margin: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xff19131b), Color(0xff0b0a0e)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: statFormulaColor(group).withValues(alpha: .72),
+                      ),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black87, blurRadius: 16),
+                      ],
+                    ),
+                    textStyle: const TextStyle(
+                      fontFamily: 'Poppins',
+                      color: Color(0xffeadfc8),
+                      fontSize: 12.5,
+                      height: 1.4,
+                    ),
                     richMessage: TextSpan(
                       children: [
                         TextSpan(
                           text: '${stat.nome} — A cosa serve\n',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: statFormulaColor(group),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         TextSpan(
                           text:
@@ -234,12 +262,14 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                         ),
                         const TextSpan(
                           text: 'Formula\n',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Color(0xffcda86c),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         TextSpan(text: subtraitFormulaHelp(stat)),
                       ],
                     ),
-                    triggerMode: TooltipTriggerMode.longPress,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         color: const Color(0xff100f13),
@@ -1141,6 +1171,16 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
         )
         .map((effect) => canonicalDamageModifierName('${effect['preset']}'))
         .toList();
+    temporary.addAll(
+      merchantHerbalEffects
+          .where(
+            (effect) =>
+                effect['type'] == 'resistance' &&
+                effect['element'] == elementId &&
+                readIntValue(effect['shortRestsRemaining']) > 0,
+          )
+          .map((effect) => canonicalDamageModifierName('${effect['preset']}')),
+    );
     if (temporary.isEmpty) return saved;
     final temporaryPreset = temporary.reduce(
       (strongest, candidate) =>
@@ -1319,15 +1359,15 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
   String subtraitFormulaHelp(HiddenEyeStat stat) {
     final group = hiddenEyeStatGroup(stat.id);
     final baseFormula = switch (stat.id) {
-      'fortuna' => 'Karma + Fortuna nelle Risorse + ⌊Livello/2⌋',
+      'fortuna' => 'Karma + Fortuna nelle Risorse + floor(Livello/2)',
       'nodo' => 'Karma + Livello',
-      'investigazione' => '⌊max(Materia, Volontà)/2⌋ + Livello',
-      'manifestazione_potere' => '⌊max(Materia, Oculum)/2⌋ + Livello',
-      'concentrazione' => '⌊Volontà/2⌋ + Livello',
+      'investigazione' => 'floor(max(Materia, Volontà)/2) + Livello',
+      'manifestazione_potere' => 'floor(max(Materia, Oculum)/2) + Livello',
+      'concentrazione' => 'floor(Volontà/2) + Livello',
       _ =>
         group == 'altro'
             ? 'Livello'
-            : '⌊${hiddenEyeGroupLabel(group)}/2⌋ + Livello',
+            : 'floor(${hiddenEyeGroupLabel(group)}/2) + Livello',
     };
     final total = hiddenEyeTotal(stat);
     final derived = hiddenEyeDerivedBonus(stat.id);

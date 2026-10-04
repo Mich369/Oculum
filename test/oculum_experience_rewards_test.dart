@@ -2,6 +2,82 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  group('Soglia EXP dei tiri VC e CM', () {
+    test(
+      'usa la difficolta corrente e lascia inalterata la soglia statistiche',
+      () {
+        expect(
+          oculumCoreRollExperienceTarget(key: 'vc', difficulty: 'oculum'),
+          2500,
+        );
+        expect(
+          oculumCoreRollExperienceTarget(key: 'cm', difficulty: 'difficile'),
+          1500,
+        );
+        expect(
+          oculumCoreRollExperienceTarget(key: 'vc', difficulty: 'normale'),
+          1250,
+        );
+        expect(
+          oculumCoreRollExperienceTarget(key: 'cm', difficulty: 'facile'),
+          1000,
+        );
+        expect(
+          oculumCoreRollExperienceTarget(
+            key: 'resilienza',
+            difficulty: 'oculum',
+          ),
+          1000,
+        );
+      },
+    );
+
+    test('VC e CM ricevono la stessa EXP dei tiri delle statistiche', () {
+      for (final difficulty in ['facile', 'normale', 'difficile', 'oculum']) {
+        for (final roll in [18, 19, 20]) {
+          final gain = oculumCoreRollExperienceGain(
+            naturalRoll: roll,
+            faces: 20,
+            rollSucceeded: true,
+            difficulty: difficulty,
+          );
+          expect(
+            gain,
+            greaterThan(0),
+            reason: '$difficulty con $roll naturale',
+          );
+        }
+      }
+      expect(
+        oculumCoreRollExperienceGain(
+          naturalRoll: 20,
+          faces: 20,
+          rollSucceeded: true,
+          difficulty: 'normale',
+        ),
+        100,
+      );
+      expect(
+        oculumCoreRollExperienceGain(
+          naturalRoll: 20,
+          faces: 20,
+          rollSucceeded: true,
+          difficulty: 'difficile',
+        ),
+        50,
+      );
+      expect(
+        oculumCoreRollExperienceGain(
+          naturalRoll: 20,
+          faces: 20,
+          rollSucceeded: true,
+          difficulty: 'oculum',
+        ),
+        33,
+      );
+    });
+  });
+
   group('EXP minima per difficolta', () {
     test('Facile garantisce almeno 1 EXP se il guadagno era positivo', () {
       expect(

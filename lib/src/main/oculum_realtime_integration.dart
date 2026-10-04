@@ -605,6 +605,54 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         case 'sheet_shared':
           persistRealtimeRemote = receiveRealtimeSharedSheet(payload);
           break;
+        case 'item_gift':
+          if (!realtimeIsMasterRole &&
+              !realtimeIsCoMasterRole &&
+              (payload['senderRole'] == 'master' ||
+                  payload['senderRole'] == 'coMaster') &&
+              realtimeUsers.any(
+                (user) =>
+                    '${user['activeSheetTag'] ?? ''}' ==
+                        '${payload['senderTag'] ?? ''}' &&
+                    '${user['campaignId'] ?? ''}' == activeCampaignId &&
+                    '${user['role'] ?? ''}'.toLowerCase() ==
+                        '${payload['senderRole'] ?? ''}'.toLowerCase(),
+              ) &&
+              '${payload['campaignId'] ?? ''}' == activeCampaignId &&
+              '${payload['receiverTag'] ?? ''}' == sheetTagAt(schedaCorrente) &&
+              payload['item'] is Map) {
+            final item = InventoryItem.fromJson(
+              Map<String, dynamic>.from(payload['item'] as Map),
+            )..equipaggiata = false;
+            if (item.nome.trim().isNotEmpty) {
+              inventario.add(item);
+              persistRealtimeRemote = true;
+              final giftService = realtimeService;
+              if (giftService != null) {
+                unawaited(
+                  giftService
+                      .sendItemGift({
+                        'deliveryId': payload['deliveryId'],
+                        'campaignId': activeCampaignId,
+                        'receiverTag': sheetTagAt(schedaCorrente),
+                        'receiverName': realtimeDisplayName(),
+                        'itemName': item.nome,
+                      }, acknowledgement: true)
+                      .then<void>((_) {}),
+                );
+              }
+              aggiungiLog('Hai ricevuto ${item.nome} dal Master.');
+            }
+          }
+          break;
+        case 'item_gift_ack':
+          if (realtimeIsMasterRole &&
+              '${payload['campaignId'] ?? ''}' == activeCampaignId) {
+            aggiungiLog(
+              'Il giocatore ${payload['receiverName'] ?? ''} ha ricevuto ${payload['itemName'] ?? 'un oggetto'}.',
+            );
+          }
+          break;
         case 'sheet_ping':
           if (payload['requestSharedSheets'] == true &&
               (payload['senderRole'] == 'master' ||

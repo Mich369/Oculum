@@ -483,7 +483,7 @@ Misfortune becomes active from Hard difficulty and is checked separately for eve
 • Oculum: 3% for the damage to become critical and 5% for +100% damage to both Shield and Oculum Shield.
 The two Misfortune checks are independent and are declared in the damage log whenever they trigger.
 
-Every incoming damage event can also be completely parried by current Oculum. When it happens, the log describes your Oculum concentrating at the point of impact to defend you. On Normal, each point up to 5 adds 0.1%: 1 point is worth 0.1% and 5 points are worth 0.5%. Growth slows after the fifth point: the next +0.1% requires 2 points, the following one 3 points, then 4, and so on. The resulting chance is multiplied by ×1.5 on Easy, ×1 on Normal, ×0.5 on Hard, and ×0.2 on Oculum.
+Each incoming damage event rolls 1d1000 against the character's current Oculum: on Normal, current Oculum is the success threshold (for example, 20 Oculum gives 20/1000). Difficulty modifies that threshold, rounded to the nearest whole result: Easy ×1.5, Normal ×1, Hard ×0.5, and Oculum ×0.2. The threshold is capped at 1000. When the check succeeds, the log says that your Oculum concentrated to weaken the blow and reports the difficulty-adjusted chance. A separate 1d20 manifestation/control check still determines whether the parry reduces damage.
 
 Dispersion is checked only after a successful parry. At most 1 current Oculum can be lost. Its chance increases with current Oculum and is higher on Hard and Oculum, but the first 20 points use a protected slow growth: at 20 Oculum the chance is 2% on Easy, 4% on Normal, 7% on Hard, and 10% on Oculum. Above 20 it grows faster, up to a maximum of 75%.
 

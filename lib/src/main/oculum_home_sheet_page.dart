@@ -2526,8 +2526,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           const SizedBox(height: 8),
           smallInfoText(
             t(
-              'Parata Oculum: probabilità ${oculumParryChanceThresholdPerThousand(currentOculum())}/1000. Se si attiva, superi una prova 1d20 + il sottotratto più alto tra Manifestazione del Potere e Controllo corporeo (a pari valore prevale Manifestazione del Potere) contro DT ${oculumParryDifficulty(level: leggiNumero(livelloController), grade: leggiNumero(gradoController))}. Se riesci, riduce il danno di Oculum × 1,5 prima della Difesa; è gratuita. La schivata di Fortuna resta separata.',
-              'Oculum parry: ${oculumParryChanceThresholdPerThousand(currentOculum())}/1000 chance. If it triggers, pass 1d20 + the higher of Manifestazione del Potere and Controllo corporeo (ties favor Manifestazione del Potere) against DT ${oculumParryDifficulty(level: leggiNumero(livelloController), grade: leggiNumero(gradoController))}. On success, it reduces damage by Oculum × 1.5 before Defense; it is free. The Luck dodge remains separate.',
+              'Parata Oculum: probabilità ${oculumParryChanceThresholdPerThousand(currentOculum(), difficulty: normalizedCampaignDifficulty())}/1000 (${campaignDifficultyLabel()}). La difficoltà la rende più rara: Facile ×1,5, Normale ×1, Difficile ×0,5, Oculum ×0,2. Se si attiva, superi una prova 1d20 + il sottotratto più alto tra Manifestazione del Potere e Controllo corporeo (a pari valore prevale Manifestazione del Potere) contro DT ${oculumParryDifficulty(level: leggiNumero(livelloController), grade: leggiNumero(gradoController))}. Se riesci, riduce il danno di Oculum × 1,5 prima della Difesa; è gratuita. La schivata di Fortuna resta separata.',
+              'Oculum parry: ${oculumParryChanceThresholdPerThousand(currentOculum(), difficulty: normalizedCampaignDifficulty())}/1000 chance (${campaignDifficultyLabel()}). Difficulty changes its rarity: Easy ×1.5, Normal ×1, Hard ×0.5, Oculum ×0.2. If it triggers, pass 1d20 + the higher of Manifestazione del Potere and Controllo corporeo (ties favor Manifestazione del Potere) against DT ${oculumParryDifficulty(level: leggiNumero(livelloController), grade: leggiNumero(gradoController))}. On success, it reduces damage by Oculum ×1.5 before Defense; it is free. The Luck dodge remains separate.',
             ),
           ),
           const SizedBox(height: 8),
@@ -3031,8 +3031,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           const SizedBox(height: 10),
           smallInfoText(
             t(
-              'Scegli una statistica da +3 e una diversa da +2. Le altre due prendono +1. Ogni livello dà anche +6 Scudo e refulla gli HP.',
-              'Choose one stat for +3 and a different one for +2. The other two get +1. Each level also gives +6 Shield and refills HP.',
+              'Scegli una statistica da +3 e una diversa da +2. Le altre prendono +1. Senza Oculum, i suoi punti vanno alle altre statistiche più basse. Ogni livello dà anche +6 Scudo e refulla gli HP.',
+              'Choose one stat for +3 and a different one for +2. The others get +1. Without Oculum, its points go to the lowest other stats. Each level also gives +6 Shield and refills HP.',
             ),
           ),
           const SizedBox(height: 14),
@@ -7953,9 +7953,16 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     final criticalExperience = criticalExperienceKey == null
         ? 0
         : max(0, esperienzaCriticaStatistiche[criticalExperienceKey] ?? 0);
-    final criticalExperienceProgress = (criticalExperience / 1000)
-        .clamp(0.0, 1.0)
-        .toDouble();
+    final criticalExperienceTarget = criticalExperienceKey == null
+        ? 1000
+        : oculumCoreRollExperienceTarget(
+            key: criticalExperienceKey,
+            difficulty: normalizedCampaignDifficulty(),
+          );
+    final criticalExperienceProgress =
+        (criticalExperience / criticalExperienceTarget)
+            .clamp(0.0, 1.0)
+            .toDouble();
     final hasExtra = buff != 0 || temp != 0 || bonusSkillForma != 0;
     final compact = lightweightUi;
     final diceButtonSize = compact ? 38.0 : 44.0;
@@ -8269,7 +8276,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               if (criticalExperienceKey != null) ...[
                 SizedBox(height: compact ? 4 : 6),
                 Tooltip(
-                  message: 'EXP critica: $criticalExperience / 1000',
+                  message:
+                      'EXP critica: $criticalExperience / $criticalExperienceTarget',
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(99),
                     child: LinearProgressIndicator(
@@ -9352,20 +9360,37 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       String value,
       Color color,
       VoidCallback action,
-    ) => InkWell(
-      onTap: action,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        child: Text(
-          '$label $value',
-          style: TextStyle(
-            color: color,
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
+    ) {
+      final coreKey = label == 'VC' || label == 'CM'
+          ? label.toLowerCase()
+          : null;
+      final expNow = coreKey == null
+          ? 0
+          : max(0, esperienzaCriticaStatistiche[coreKey] ?? 0);
+      final expTarget = coreKey == null
+          ? 1000
+          : oculumCoreRollExperienceTarget(
+              key: coreKey,
+              difficulty: normalizedCampaignDifficulty(),
+            );
+      return InkWell(
+        onTap: action,
+        child: Tooltip(
+          message: coreKey == null ? label : '$label · EXP $expNow/$expTarget',
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            child: Text(
+              '$label $value',
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ),
         ),
-      ),
-    );
+      );
+    }
 
     Widget actionRow(int i) => Container(
       padding: const EdgeInsets.fromLTRB(10, 9, 10, 8),
@@ -9478,13 +9503,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     final basicActions = <Widget>[
       basicAction(
         'Attacco · VC',
-        '1d20 + ${vc()} · Danno ${dannoTotale()}',
+        '1d20 + ${vc()} · Danno ${dannoTotale()} · EXP ${esperienzaCriticaStatistiche['vc'] ?? 0}/${oculumCoreRollExperienceTarget(key: 'vc', difficulty: normalizedCampaignDifficulty())}',
         Icons.gps_fixed,
         () => tiraValoreSpeciale('VC', vc()),
       ),
       basicAction(
         'Difesa · CM',
-        '1d20 + ${cm()} · Difesa ${difesa()}',
+        '1d20 + ${cm()} · Difesa ${difesa()} · EXP ${esperienzaCriticaStatistiche['cm'] ?? 0}/${oculumCoreRollExperienceTarget(key: 'cm', difficulty: normalizedCampaignDifficulty())}',
         Icons.shield_outlined,
         () => tiraValoreSpeciale('CM', cm()),
       ),

@@ -37,6 +37,13 @@ class OculumPerformanceProbe {
   void loseResilienceBuff(int amount) =>
       _state.rimarginaHpDaAumentoResilienza(-amount);
   int currentHp() => _state.hpCorrenti();
+  void increaseBaseStat(String key, int amount) =>
+      _state.aumentaStatBaseEAttuale(key, amount);
+  void invalidateDerivedCaches() => _state.invalidateDerivedDataCaches();
+  Map<String, int> levelUpBonuses() => {
+    for (final name in _state.statsLevelUp)
+      name: _state.bonusLevelUpPerStat(name),
+  };
   Map<String, int> coreStats() => {
     'resilienza': _state.resilienzaTotale(),
     'volonta': _state.volontaTotale(),
@@ -90,6 +97,10 @@ class OculumPerformanceProbe {
   int shieldBonus(InventoryItem item) => _state.itemShieldBonus(item);
   Future<void> useMerchantItem(InventoryItem item) =>
       _state.useMerchantConsumable(item);
+  void createMerchantProfile() => _state.createRandomMerchantProfile();
+  void switchMerchantProfile(String id) => _state.switchMerchantProfile(id);
+  List<String> merchantOfferIds() =>
+      _state.ensureMerchantStock().map((offer) => '${offer['id']}').toList();
   void load(Map<String, dynamic> sheet) => _state.caricaStatoDaJson(sheet);
   Future<void> reloadSave() => _state.caricaDati();
   void saveSheet() => _state.salvaSchedaCorrenteInMemoria();

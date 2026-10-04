@@ -1,6 +1,5 @@
 part of '../../main.dart';
 
-
 const oculumStatGemNames = <String, String>{
   'resilienza': 'Gemma di Resilienza',
   'volonta': 'Gemma di Volontà',
@@ -12,6 +11,52 @@ int oculumStatGemDieFaces(int stat) => max(1, max(0, stat) ~/ 3);
 int oculumStatGemPrice(int stat) =>
     oculumStatGemBaseCost + 3 * (max(0, stat) ~/ 10);
 bool oculumStatGemAvailable(Random random) => random.nextInt(4) == 0;
+
+int oculumDropObserReward({
+  required String subtraitId,
+  required int rollTotal,
+  required int level,
+  required int dropBonus,
+  required Random random,
+}) {
+  if (subtraitId != 'drop' || rollTotal <= 15) return 0;
+  // Weights 26, 25, ... 1: low amounts are progressively more common.
+  var ticket = random.nextInt(26 * 27 ~/ 2);
+  for (var amount = 1; amount <= 26; amount++) {
+    final weight = 27 - amount;
+    if (ticket < weight) {
+      return max(0, level).toInt() + max(0, dropBonus).toInt() + amount;
+    }
+    ticket -= weight;
+  }
+  throw StateError('Drop reward ticket outside its weighted range');
+}
+
+InventoryItem? oculumCreateTemporaryDropGem({
+  required String subtraitId,
+  required int naturalRoll,
+  required bool usesOculum,
+  required Map<String, int> stats,
+  required Random random,
+}) {
+  if (subtraitId != 'drop' || naturalRoll < 19 || naturalRoll > 20) return null;
+  final eligible = oculumStatGemNames.keys
+      .where((key) => key != 'oculum' || usesOculum)
+      .toList();
+  final stat = eligible[random.nextInt(eligible.length)];
+  final faces = oculumStatGemDieFaces(stats[stat] ?? 0);
+  return InventoryItem(
+    nome: '${oculumStatGemNames[stat]} temporanea',
+    quantita: 1,
+    peso: .1,
+    statGemStat: stat,
+    statGemDieFaces: faces,
+    note:
+        'Consumabile: recupera 1d$faces punti attuali. '
+        'L’eccesso dura fino al riposo lungo. '
+        'Resta nell’inventario finché non la usi.',
+  );
+}
 
 int oculumMerchantShieldValue(int hp, int percent) =>
     (max(0, hp) * percent.clamp(35, 50) / 100).round();
@@ -121,11 +166,114 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   int merchantTitleCost(int baseCost, {int level = 0}) =>
       merchantScaledValue(baseCost, level: level);
 
+  Map<String, dynamic> _activeMerchantProfile() {
+    for (final profile in merchantProfiles) {
+      if ('${profile['id'] ?? ''}' == merchantActiveProfileId) return profile;
+    }
+    final profile = <String, dynamic>{
+      'id': merchantActiveProfileId,
+      'name': 'Mercante di fiducia',
+      'stock': <Map<String, dynamic>>[],
+    };
+    merchantProfiles.add(profile);
+    return profile;
+  }
+
+  void _saveActiveMerchantProfileStock() {
+    _activeMerchantProfile()['stock'] = merchantStock
+        .map((offer) => Map<String, dynamic>.from(offer))
+        .toList(growable: true);
+  }
+
+  String get activeMerchantName => '${_activeMerchantProfile()['name']}';
+
+  void switchMerchantProfile(String profileId) {
+    if (profileId == merchantActiveProfileId) return;
+    _saveActiveMerchantProfileStock();
+    Map<String, dynamic>? target;
+    for (final profile in merchantProfiles) {
+      if ('${profile['id'] ?? ''}' == profileId) {
+        target = profile;
+        break;
+      }
+    }
+    if (target == null) return;
+    merchantActiveProfileId = profileId;
+    final stock = target['stock'];
+    merchantStock = stock is List
+        ? stock
+              .whereType<Map>()
+              .map((offer) => Map<String, dynamic>.from(offer))
+              .toList(growable: true)
+        : <Map<String, dynamic>>[];
+    merchantStockSessionId = merchantStock.isEmpty
+        ? ''
+        : merchantRuntimeSessionId;
+    ensureMerchantStock();
+    _saveActiveMerchantProfileStock();
+    // ignore: invalid_use_of_protected_member
+    setState(() {});
+    programmaSalvataggio();
+  }
+
+  void createRandomMerchantProfile() {
+    _saveActiveMerchantProfileStock();
+    final profileId = 'merchant_${DateTime.now().microsecondsSinceEpoch}';
+    merchantActiveProfileId = profileId;
+    merchantStock = <Map<String, dynamic>>[];
+    merchantStockSessionId = '';
+    merchantProfiles.add(<String, dynamic>{
+      'id': profileId,
+      'name': 'Mercante ${merchantProfiles.length + 1}',
+      'stock': <Map<String, dynamic>>[],
+    });
+    ensureMerchantStock();
+    _saveActiveMerchantProfileStock();
+    // ignore: invalid_use_of_protected_member
+    setState(() {});
+    programmaSalvataggio();
+  }
+
+  Widget merchantProfileControls() => Wrap(
+    spacing: 8,
+    runSpacing: 6,
+    children: [
+      PopupMenuButton<String>(
+        tooltip: 'Torna da un mercante già incontrato',
+        onSelected: switchMerchantProfile,
+        itemBuilder: (context) => [
+          for (final profile in merchantProfiles)
+            PopupMenuItem<String>(
+              value: '${profile['id']}',
+              child: Text('${profile['name'] ?? 'Mercante'}'),
+            ),
+        ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.swap_horiz),
+              const SizedBox(width: 7),
+              Text('Cambia mercante · ${merchantProfiles.length} salvati'),
+            ],
+          ),
+        ),
+      ),
+      OutlinedButton.icon(
+        onPressed: createRandomMerchantProfile,
+        icon: const Icon(Icons.casino_outlined),
+        label: const Text('Nuovo mercante'),
+      ),
+    ],
+  );
+
   List<Map<String, dynamic>> ensureMerchantStock() {
     if (merchantStockSessionId == merchantRuntimeSessionId &&
         merchantStock.isNotEmpty) {
       updateMerchantGemOffers();
       ensureMerchantFoodOffers();
+      _saveActiveMerchantProfileStock();
       return merchantStock;
     }
     final random = Random(
@@ -142,14 +290,15 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'cost': 13 + random.nextInt(7),
         'kind': 'raw_vitalium',
         'desc':
-            'Consumabile: cura HP pari all Oculum immesso. $rawVitaliumRule',
+            'Consumabile: scegli quanto Oculum immettere e recuperi altrettanti HP. Se non hai Oculum, puoi alimentarlo spendendo 2 Materia e 2 Volontà per ogni punto. $rawVitaliumRule',
       },
       {
         'id': 'refined_vitalium',
         'name': 'Vitalium Ridefinito',
         'cost': 100 + random.nextInt(61),
         'kind': 'refined_vitalium',
-        'desc': 'Refulla HP, integrita, Oculum e statistiche temporanee.',
+        'desc':
+            'Ripristina HP, integrità delle Art e statistiche attuali fino ai massimali; non crea Oculum se il massimale è zero.',
       },
       {
         'id': 'oculum_vial',
@@ -279,9 +428,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               'buffTarget': random.nextBool() ? 'difesa' : 'danni',
               'buffValue': 4 + grade * 2,
               'condition': random.nextBool() ? 'fortificato' : 'concentrato',
-              'element': const ['fuoco', 'cenere', 'ghiaccio', 'oblio'][
-                random.nextInt(4)
-              ],
+              'element': const [
+                'fuoco',
+                'cenere',
+                'ghiaccio',
+                'oblio',
+              ][random.nextInt(4)],
               'resistance': 'Resistenza',
             }
           : <String, dynamic>{};
@@ -314,11 +466,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     merchantStockSessionId = merchantRuntimeSessionId;
     ensureMerchantFoodOffers();
+    _saveActiveMerchantProfileStock();
     return merchantStock;
   }
 
   void ensureMerchantFoodOffers() {
-    const foods = [
+    const foods = <Map<String, dynamic>>[
       {
         'id': 'food_forest_demon',
         'name': 'Carne di Forest Demon',
@@ -341,6 +494,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'volonta': 1,
         'materia': 1,
         'oculum': 1,
+        'isMaterial': true,
       },
       {
         'id': 'herb_lunar',
@@ -348,6 +502,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'cost': 8,
         'oculum': 2,
         'volonta': 1,
+        'isMaterial': true,
       },
       {
         'id': 'herb_iron',
@@ -355,6 +510,58 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'cost': 8,
         'resilienza': 2,
         'materia': 1,
+        'isMaterial': true,
+      },
+      {
+        'id': 'herb_fourfold_root',
+        'name': 'Radice delle Quattro Vene',
+        'cost': 42,
+        'restoreAllStats': true,
+        'isMaterial': true,
+        'desc':
+            'Ripristina Resilienza, Volontà, Materia e Oculum attuali fino ai massimali della scheda. Non assegna Oculum a chi non lo possiede.',
+      },
+      {
+        'id': 'ointment_millefoglie',
+        'name': 'Unguento di Millefoglie',
+        'cost': 30,
+        'healHpPercent': 25,
+        'cleanseNegativeConditions': true,
+        'isMaterial': true,
+        'desc':
+            'Cura HP pari al 25% del massimale e rimuove le condizioni negative attive.',
+      },
+      {
+        'id': 'balm_blue_bark',
+        'name': 'Balsamo di Corteccia Azzurra',
+        'cost': 24,
+        'resistanceElement': 'ghiaccio',
+        'resistancePreset': 'Resistenza',
+        'condition': 'fortificato',
+        'isMaterial': true,
+        'desc':
+            'Resistenza al Ghiaccio e Fortificato fino al Riposo Lungo o dopo 2 Riposi Brevi.',
+      },
+      {
+        'id': 'pollen_reflexes',
+        'name': 'Polline dei Riflessi',
+        'cost': 18,
+        'subtraitId': 'riflessi',
+        'subtraitBonus': 2,
+        'isMaterial': true,
+        'desc':
+            'Materiale da crafting utilizzabile: +2 Riflessi fino al Riposo Lungo o dopo 2 Riposi Brevi.',
+      },
+      {
+        'id': 'ointment_focus',
+        'name': 'Unguento della Concentrazione',
+        'cost': 20,
+        'subtraitId': 'concentrazione',
+        'subtraitBonus': 2,
+        'condition': 'concentrato',
+        'isMaterial': true,
+        'desc':
+            'Materiale da crafting utilizzabile: +2 Concentrazione e Concentrato fino al Riposo Lungo o dopo 2 Riposi Brevi.',
       },
       {
         'id': 'alcohol_ash',
@@ -366,16 +573,38 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'alcohol': true,
       },
     ];
-    final present = merchantStock.map((offer) => offer['id']).toSet();
     for (final food in foods) {
-      if (present.contains(food['id'])) continue;
-      merchantStock.add({
-        ...food,
-        'kind': 'food',
-        'desc':
-            '${food['alcohol'] == true ? 'Alcolico: ogni dose somma il malus di Volontà e i bonus.' : 'Cibo o erba magica consumabile.'} Bonus fino al prossimo riposo. ${['resilienza', 'volonta', 'materia', 'oculum'].where((key) => food.containsKey(key)).map((key) => '$key ${readIntValue(food[key]) >= 0 ? '+' : ''}${food[key]}').join(', ')}.',
-      });
+      Map<String, dynamic>? existing;
+      for (final candidate in merchantStock) {
+        if (candidate['id'] == food['id']) {
+          existing = candidate;
+          break;
+        }
+      }
+      final offer = existing ?? <String, dynamic>{};
+      offer.addAll(food);
+      offer['kind'] = 'food';
+      offer['desc'] = merchantFoodOfferDescription(food);
+      if (existing == null) merchantStock.add(offer);
     }
+  }
+
+  String merchantFoodOfferDescription(Map<String, dynamic> food) {
+    final authored = '${food['desc'] ?? ''}'.trim();
+    if (authored.isNotEmpty) return authored;
+    final effect = food['isMaterial'] == true
+        ? 'Materiale da crafting utilizzabile dall’inventario: gli effetti durano fino al Riposo Lungo o dopo 2 Riposi Brevi.'
+        : food['alcohol'] == true
+        ? 'Alcolico: ogni dose somma il malus di Volontà e i bonus fino al prossimo riposo.'
+        : 'Cibo consumabile: bonus fino al prossimo riposo.';
+    final bonuses = ['resilienza', 'volonta', 'materia', 'oculum']
+        .where(food.containsKey)
+        .map(
+          (key) =>
+              '$key ${readIntValue(food[key]) >= 0 ? '+' : ''}${food[key]}',
+        )
+        .join(', ');
+    return '$effect${bonuses.isEmpty ? '' : ' $bonuses.'}';
   }
 
   String merchantOfferDescription(Map<String, dynamic> offer) {
@@ -385,7 +614,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       return '${readIntValue(offer['remaining']) > 0 ? 'Disponibile: 1' : 'Esaurita'} · Consumabile: recupera punti attuali di ${oculumStatGemNames[stat]?.replaceFirst('Gemma di ', '') ?? stat} di 1d$faces. Eccesso fino al riposo lungo. Potenza fissata all acquisto. Prezzo: 3 Obser +3 ogni 10 punti di questa statistica.';
     }
     if ('${offer['kind'] ?? ''}' == 'raw_vitalium') {
-      return 'Consumabile: cura HP pari all Oculum immesso. ${oculumRawVitaliumRuleForGrade(max(0, leggiNumero(gradoController)))}';
+      return 'Consumabile: scegli quanto Oculum immettere; recuperi altrettanti HP. Se non hai Oculum, paghi 2 Materia e 2 Volontà per punto. ${oculumRawVitaliumRuleForGrade(max(0, leggiNumero(gradoController)))}';
     }
     if ('${offer['kind'] ?? ''}' == 'gear' && readBoolValue(offer['weapon'])) {
       final grade = readIntValue(offer['grade']);
@@ -458,7 +687,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             children: [
               Expanded(
                 child: Text(
-                  t('Mercante in vista', 'Merchant in sight'),
+                  activeMerchantName,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -477,12 +706,13 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           ),
           subtitle: Text(
             t(
-              'Bancarella personale · stock fisso fino alla prossima apertura dell app.',
-              'Personal stall · fixed stock until the next app launch.',
+              'Bancarella personale · puoi tornare ai mercanti già incontrati.',
+              'Personal stall · revisit merchants you have already met.',
             ),
             style: const TextStyle(color: Colors.white70, fontSize: 11),
           ),
           children: [
+            merchantProfileControls(),
             Align(
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
@@ -652,6 +882,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       risultato = 'Negoziante: hai speso $cost Obser per ${item.nome}.';
       aggiungiLog(risultato);
     });
+    _saveActiveMerchantProfileStock();
     programmaSalvataggio();
   }
 
@@ -683,6 +914,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       risultato = 'Negoziante: hai venduto ${item.nome} per $payment Obser.';
       aggiungiLog(risultato);
     });
+    _saveActiveMerchantProfileStock();
     programmaSalvataggio();
   }
 
@@ -709,17 +941,32 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }) {
     final kind = '${offer['kind'] ?? ''}';
     if (kind == 'food') {
+      final effects = <String, dynamic>{
+        for (final key in [
+          'resilienza',
+          'volonta',
+          'materia',
+          'oculum',
+          'alcohol',
+          'restoreAllStats',
+          'healHpPercent',
+          'cleanseNegativeConditions',
+          'resistanceElement',
+          'resistancePreset',
+          'subtraitId',
+          'subtraitBonus',
+          'condition',
+        ])
+          if (offer.containsKey(key)) key: offer[key],
+      };
       return InventoryItem(
         nome: '${offer['name']}',
-        peso: .25,
+        peso: offer['isMaterial'] == true ? .05 : .25,
         quantita: 1,
         note: '${offer['desc']}',
-        monsterLoot: {
-          'food': {
-            for (final key in ['resilienza', 'volonta', 'materia', 'oculum'])
-              key: readIntValue(offer[key]),
-            'alcohol': offer['alcohol'] == true,
-          },
+        monsterLoot: <String, dynamic>{
+          'food': effects,
+          if (offer['isMaterial'] == true) 'material': true,
         },
       );
     }
@@ -751,7 +998,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         peso: .1,
         quantita: 1,
         note:
-            'Consumabile: cura HP pari all Oculum immesso. ${oculumRawVitaliumRuleForGrade(max(0, leggiNumero(gradoController)))}',
+            'Consumabile: scegli quanto Oculum immettere e recuperi altrettanti HP. Se non hai Oculum, paghi 2 Materia e 2 Volontà per punto. ${oculumRawVitaliumRuleForGrade(max(0, leggiNumero(gradoController)))}',
       );
     }
     if (kind == 'refined_vitalium') {
@@ -760,7 +1007,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         peso: .2,
         quantita: 1,
         note:
-            'Consumabile: refulla HP, integrita, Oculum e statistiche temporanee.',
+            'Consumabile: ripristina HP, Resilienza, Volontà, Materia e Oculum attuali fino ai massimali e l’integrità delle Art. Non crea Oculum se il massimale è zero.',
       );
     }
     if (kind == 'oculum_vial') {
@@ -853,6 +1100,40 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     );
   }
 
+  int merchantHerbalSubtraitBonus(String subtraitId) => merchantHerbalEffects
+      .where(
+        (effect) =>
+            effect['type'] == 'subtrait_bonus' &&
+            effect['subtraitId'] == subtraitId &&
+            readIntValue(effect['shortRestsRemaining']) > 0,
+      )
+      .fold<int>(0, (sum, effect) => sum + readIntValue(effect['value']));
+
+  int merchantHerbalStatBonus(String statId) => merchantHerbalEffects
+      .where(
+        (effect) =>
+            effect['type'] == 'stat_bonus' &&
+            effect['statId'] == statId &&
+            readIntValue(effect['shortRestsRemaining']) > 0,
+      )
+      .fold<int>(0, (sum, effect) => sum + readIntValue(effect['value']));
+
+  Map<String, dynamic>? merchantCraftedHerbalOffer(String itemName) {
+    final offerId = switch (itemName.trim()) {
+      'Radice delle Quattro Vene' => 'herb_fourfold_root',
+      'Unguento di Millefoglie' => 'ointment_millefoglie',
+      'Balsamo di Corteccia Azzurra' => 'balm_blue_bark',
+      'Polline dei Riflessi' => 'pollen_reflexes',
+      'Unguento della Concentrazione' => 'ointment_focus',
+      _ => '',
+    };
+    if (offerId.isEmpty) return null;
+    for (final offer in ensureMerchantStock()) {
+      if (offer['id'] == offerId) return offer;
+    }
+    return null;
+  }
+
   bool isMerchantConsumable(InventoryItem item) =>
       item.monsterLoot['food'] is Map ||
       oculumStatGemNames.containsKey(item.statGemStat) ||
@@ -872,14 +1153,114 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     if (item.monsterLoot['food'] is Map) {
       final food = item.monsterLoot['food'] as Map;
+      final hasTimedHerbalEffect =
+          food['resistanceElement'] != null ||
+          food['subtraitId'] != null ||
+          food['condition'] != null ||
+          food['isMaterial'] == true ||
+          item.nome.startsWith('Erba ') ||
+          item.nome.startsWith('Polline ') ||
+          item.nome.startsWith('Unguento ') ||
+          item.nome.startsWith('Balsamo ');
+      if (food['restoreAllStats'] == true ||
+          readIntValue(food['healHpPercent']) > 0 ||
+          food['cleanseNegativeConditions'] == true ||
+          hasTimedHerbalEffect) {
+        final effects = <String>[];
+        // ignore: invalid_use_of_protected_member
+        setState(() {
+          if (food['restoreAllStats'] == true) {
+            refullaStatsAttuali();
+            effects.add('statistiche attuali ripristinate');
+          }
+          final healPercent = readIntValue(food['healHpPercent']);
+          if (healPercent > 0) {
+            final hp = hpCorrenti();
+            final recovery = (maxHp() * healPercent / 100).ceil();
+            currentHpController.text = min(maxHp(), hp + recovery).toString();
+            effects.add('+$recovery HP');
+          }
+          if (food['cleanseNegativeConditions'] == true) {
+            final removed = removeNegativeConditionsForVulnerabilityReset();
+            effects.add('$removed condizioni negative rimosse');
+          }
+          if (food['resistanceElement'] != null) {
+            merchantHerbalEffects.add(<String, dynamic>{
+              'type': 'resistance',
+              'element': oculumNormalizeElementId(
+                '${food['resistanceElement']}',
+              ),
+              'preset': canonicalDamageModifierName(
+                '${food['resistancePreset'] ?? 'Resistenza'}',
+              ),
+              'shortRestsRemaining': 2,
+              'source': item.nome,
+            });
+            effects.add(
+              'resistenza a ${elementDisplayName('${food['resistanceElement']}')}',
+            );
+          }
+          for (final statId in ['resilienza', 'volonta', 'materia', 'oculum']) {
+            final value = readIntValue(food[statId]);
+            if (value == 0 || (statId == 'oculum' && oculumTotale() <= 0)) {
+              continue;
+            }
+            merchantHerbalEffects.add(<String, dynamic>{
+              'type': 'stat_bonus',
+              'statId': statId,
+              'value': value,
+              'shortRestsRemaining': 2,
+              'source': item.nome,
+            });
+            effects.add('$statId ${value >= 0 ? '+' : ''}$value');
+          }
+          final subtraitId = '${food['subtraitId'] ?? ''}'.trim();
+          final subtraitBonus = readIntValue(food['subtraitBonus']);
+          if (subtraitId.isNotEmpty && subtraitBonus != 0) {
+            merchantHerbalEffects.add(<String, dynamic>{
+              'type': 'subtrait_bonus',
+              'subtraitId': subtraitId,
+              'value': subtraitBonus,
+              'shortRestsRemaining': 2,
+              'source': item.nome,
+            });
+            effects.add('+$subtraitBonus $subtraitId');
+            invalidateHiddenEyeDerivedCaches();
+          }
+          final condition = '${food['condition'] ?? ''}'.trim();
+          if (condition.isNotEmpty) {
+            applyCondition(
+              condition,
+              duration: 2,
+              durationType: OculumConditionDurationType.rests,
+              tickTrigger: OculumConditionTickTrigger.none,
+              source: 'Erba ${item.nome}',
+            );
+            effects.add(condition);
+          }
+          item.quantita--;
+          if (item.quantita <= 0) inventario.remove(item);
+          invalidateDerivedDataCaches();
+          risultato =
+              '${item.nome}: ${effects.join(', ')}. Gli effetti temporanei durano fino al Riposo Lungo o dopo 2 Riposi Brevi.';
+          aggiungiLog(risultato);
+        });
+        programmaSalvataggio();
+        return;
+      }
       // ignore: invalid_use_of_protected_member
       setState(() {
         tempResilienza += readIntValue(food['resilienza']);
         tempVolonta += readIntValue(food['volonta']);
         tempMateria += readIntValue(food['materia']);
-        tempOculum += readIntValue(food['oculum']);
+        final oculumBonus = oculumTotale() > 0
+            ? readIntValue(food['oculum'])
+            : 0;
+        tempOculum += oculumBonus;
         for (final key in ['resilienza', 'volonta', 'materia', 'oculum']) {
-          consumedFoodBonuses[key] = (consumedFoodBonuses[key] ?? 0) + readIntValue(food[key]);
+          consumedFoodBonuses[key] =
+              (consumedFoodBonuses[key] ?? 0) +
+              (key == 'oculum' ? oculumBonus : readIntValue(food[key]));
         }
         item.quantita--;
         if (item.quantita <= 0) inventario.remove(item);
@@ -928,10 +1309,21 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       return;
     }
     var amount = 0;
+    var payWithCoreStats = false;
     if (item.nome.trim() == 'Vitalium Grezzo') {
       final available = max(0, leggiNumero(currentOculumController));
-      if (available <= 0) {
-        risultato = 'Vitalium Grezzo: non hai Oculum da immettere.';
+      payWithCoreStats = available <= 0;
+      final affordable = payWithCoreStats
+          ? min(
+                  leggiNumero(currentMateriaController),
+                  leggiNumero(currentVolontaController),
+                ) ~/
+                2
+          : available;
+      if (affordable <= 0) {
+        risultato = payWithCoreStats
+            ? 'Vitalium Grezzo: servono almeno 2 Materia e 2 Volontà per usarlo senza Oculum.'
+            : 'Vitalium Grezzo: non hai Oculum da immettere.';
         aggiungiLog(risultato);
         return;
       }
@@ -946,7 +1338,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                 autofocus: true,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: 'Oculum da immettere (1–$available)',
+                  labelText: payWithCoreStats
+                      ? 'Unità da alimentare · costo 2 Materia + 2 Volontà ciascuna (1–$affordable)'
+                      : 'Oculum da immettere (1–$available)',
                 ),
               ),
               actions: [
@@ -957,7 +1351,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                 FilledButton(
                   onPressed: () => Navigator.pop(
                     dialogContext,
-                    readIntValue(input.text).clamp(1, available),
+                    readIntValue(input.text).clamp(1, affordable),
                   ),
                   child: const Text('Usa'),
                 ),
@@ -988,10 +1382,21 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             medicineRoll: medicineRoll,
           );
           final heal = max(0, amount + medicineBonus);
-          currentOculumController.text = max(
-            0,
-            leggiNumero(currentOculumController) - amount,
-          ).toString();
+          if (payWithCoreStats) {
+            currentMateriaController.text = max(
+              0,
+              leggiNumero(currentMateriaController) - amount * 2,
+            ).toString();
+            currentVolontaController.text = max(
+              0,
+              leggiNumero(currentVolontaController) - amount * 2,
+            ).toString();
+          } else {
+            currentOculumController.text = max(
+              0,
+              leggiNumero(currentOculumController) - amount,
+            ).toString();
+          }
           currentHpController.text = min(
             maxHp(),
             leggiNumero(currentHpController) + heal,
@@ -1002,19 +1407,16 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               ? ' d$medicineDieFaces Medicina: $medicineDie, tiro $medicineRoll: ${medicineBonus >= 0 ? '+' : ''}$medicineBonus HP.'
               : ' d$medicineDieFaces Medicina: $medicineDie, tiro $medicineRoll, metà: ${medicineBonus >= 0 ? '+' : ''}$medicineBonus HP.';
           risultato =
-              'Vitalium Grezzo: -$amount Oculum, +$heal HP.$medicineDetails${heal == 0 && medicineBonus < 0 ? ' Il critico negativo ha annullato la cura, senza infliggere danno.' : ''}';
+              'Vitalium Grezzo: ${payWithCoreStats ? '-${amount * 2} Materia e -${amount * 2} Volontà' : '-$amount Oculum'}, +$heal HP.$medicineDetails${heal == 0 && medicineBonus < 0 ? ' Il critico negativo ha annullato la cura, senza infliggere danno.' : ''}';
           break;
         case 'Vitalium Ridefinito':
           currentHpController.text = maxHp().toString();
-          currentOculumController.text = oculumTotale().toString();
           for (final art in arti) {
             art.integritaCorrente = artIntegrityEffectiveMaximum(art);
           }
-          currentResilienzaController.text = resilienzaTotale().toString();
-          currentVolontaController.text = volontaTotale().toString();
-          currentMateriaController.text = materiaTotale().toString();
-          currentOculumController.text = oculumTotale().toString();
-          risultato = 'Vitalium Ridefinito: risorse e integrita ripristinate.';
+          refullaStatsAttuali();
+          risultato =
+              'Vitalium Ridefinito: HP, statistiche attuali e integrità delle Art ripristinati ai massimali.';
           break;
         case 'Fiala di Oculum':
           amount = Random().nextInt(4) + 1;

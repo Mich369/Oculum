@@ -5,6 +5,108 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('shorter codes preserve full sheets and all previous formats', () {
+    final sheet = oculumDecodeSheetShareText(
+      File(
+        'docs/chatgpt_handoff/prefab_character_generator/example_prefab_character.json',
+      ).readAsStringSync(),
+    ).single;
+    sheet.addAll({
+      'nome': 'Ève 🕯️',
+      'campoFuturo': {'vuoto': '', 'zero': 0, 'falso': false, 'null': null},
+      'ritrattoBase64': base64Encode(List.generate(4096, (i) => i % 256)),
+      'diarioPagine': [
+        {'testo': '[[Bosco Nero]] — esito incerto.'},
+      ],
+    });
+    final previousV3Bytes = gzip.encode(
+      utf8.encode(jsonEncode({'sheet': sheet})),
+    );
+    final previousV3 =
+        'OC3:${oculumShareChecksum(previousV3Bytes)}:${base64UrlEncode(previousV3Bytes).replaceAll('=', '')}';
+    final previousPayload = {
+      'kind': 'oculum_sheets',
+      'version': 2,
+      'sheets': [sheet],
+    };
+    final previousV2Bytes = gzip.encode(
+      utf8.encode(jsonEncode(previousPayload)),
+    );
+    final previousV2 =
+        'OC2:${base64UrlEncode(previousV2Bytes).replaceAll('=', '')}';
+    final previousV2Checked =
+        'OC2:${oculumShareChecksum(previousV2Bytes)}:${base64UrlEncode(previousV2Bytes).replaceAll('=', '')}';
+    final previousV1 =
+        'OCULUM-SHEETS-v1:${base64UrlEncode(utf8.encode(jsonEncode(previousPayload)))}';
+    final current = oculumEncodeSheetShareText([sheet]);
+    expect(
+      current.length,
+      lessThan(previousV3.length),
+      reason: 'The representative full sheet must shrink without losing data',
+    );
+    for (final code in [
+      current,
+      previousV3,
+      previousV2,
+      previousV2Checked,
+      previousV1,
+      jsonEncode(sheet),
+    ]) {
+      expect(oculumDecodeSheetShareText(code), [
+        sheet,
+      ], reason: 'Full data must survive new and legacy imports');
+    }
+    expect(oculumDecodeSheetShareText('$previousV1\n$current'), [sheet, sheet]);
+    final damaged = current.replaceRange(
+      4,
+      12,
+      current.substring(4, 12) == '00000000' ? 'ffffffff' : '00000000',
+    );
+    expect(() => oculumDecodeSheetShareText(damaged), throwsFormatException);
+  });
+
+  test('multi-sheet codes remove only transport metadata', () {
+    final sheets = <Map<String, dynamic>>[
+      {
+        'nome': 'Hoshy',
+        'inventario': [
+          {'nome': 'Reliquia', 'quantita': 2},
+        ],
+      },
+      {'nome': 'Elyra', 'currentHp': '0', 'diarioPagine': [], 'extra': null},
+    ];
+    final oldBytes = gzip.encode(
+      utf8.encode(
+        jsonEncode({
+          'kind': 'oculum_sheets',
+          'version': 2,
+          'createdAt': '2026-10-03T18:00:00.000',
+          'sheets': sheets,
+        }),
+      ),
+    );
+    final oldCode =
+        'OC2:${oculumShareChecksum(oldBytes)}:${base64UrlEncode(oldBytes).replaceAll('=', '')}';
+    final code = oculumEncodeSheetShareText(sheets);
+    expect(code.length, lessThan(oldCode.length));
+    expect(oculumDecodeSheetShareText(code), sheets);
+    expect(oculumDecodeSheetShareText(oldCode), sheets);
+  });
+
+  test('future sheet fields cannot be mistaken for transport wrappers', () {
+    final sheet = <String, dynamic>{
+      'nome': 'Hoshy',
+      'sheet': {'nome': 'Nota'},
+      'sheets': [
+        {'nome': 'Ricordo'},
+      ],
+      'schedePersonaggio': [],
+    };
+    expect(oculumDecodeSheetShareText(oculumEncodeSheetShareText([sheet])), [
+      sheet,
+    ]);
+  });
+
   test('OC2 compatto e legacy v1 si decodificano senza perdita', () {
     final payload = <String, dynamic>{
       'kind': 'oculum_sheets',

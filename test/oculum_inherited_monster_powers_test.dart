@@ -6,6 +6,98 @@ import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 
 void main() {
   test(
+    'Book Art forms have usable costs and increasing level requirements',
+    () {
+      for (final monster in defaultMonsterBookEntries) {
+        if (monster.id.startsWith('hero_path_')) continue;
+        final art = CharacterArt.fromJson(
+          oculumMonsterBookArt(monster).toJson(),
+        );
+        for (final skill in art.skills) {
+          var previousRequirement = -1;
+          for (var form = 1; form <= 3; form++) {
+            final text = skill.testoEvoluzione(form);
+            final requirement = int.parse(
+              RegExp(
+                r'Richiede livello (\d+)',
+                caseSensitive: false,
+              ).firstMatch(text)!.group(1)!,
+            );
+            expect(
+              requirement,
+              greaterThanOrEqualTo(previousRequirement),
+              reason: '${monster.id}/${skill.nome}: form $form level',
+            );
+            previousRequirement = requirement;
+            expect(
+              skill.oculumMinimoPerLivello(form),
+              greaterThan(0),
+              reason: '${monster.id}/${skill.nome}: form $form cost; $text',
+            );
+            expect(
+              skill.oculumMassimoPerLivello(form),
+              greaterThanOrEqualTo(skill.oculumMinimoPerLivello(form)),
+              reason: '${monster.id}/${skill.nome}: form $form maximum',
+            );
+          }
+        }
+      }
+    },
+  );
+  test('Generated offense and defense become stronger at each evolution', () {
+    for (final monster in defaultMonsterBookEntries.where(
+      (monster) => monster.id.startsWith('generated_'),
+    )) {
+      final art = oculumMonsterBookArt(monster);
+      for (final skill in art.skills) {
+        if (skill.effettiPerLivello.first.isEmpty) continue;
+        var previous = -1;
+        for (var form = 0; form < 3; form++) {
+          final value = oculumEvaluateStructuredEffectValue(
+            skill.effettiPerLivello[form].single,
+            variables: {'danni': 10},
+            spentResources: {'oculum': 4},
+          );
+          expect(
+            value,
+            greaterThan(previous),
+            reason: '${monster.id}/${skill.nome}: evolution ${form + 1}',
+          );
+          previous = value;
+        }
+      }
+    }
+  });
+  test(
+    'Reference creatures have level zero descriptions, stats and three Arts',
+    () {
+      final entries = defaultMonsterBookEntries
+          .where(
+            (monster) =>
+                monster.id.startsWith('inspired_') &&
+                !monster.id.contains('_variante_'),
+          )
+          .toList();
+      expect(entries, hasLength(11));
+      for (final monster in entries) {
+        expect(monster.stats['level'], 0, reason: monster.id);
+        expect(monster.spriteAssetPath, isEmpty, reason: monster.id);
+        expect(monster.imageBase64, isEmpty, reason: monster.id);
+        expect(monster.descIt, contains('Base di livello 0'), reason: monster.id);
+        expect(monster.skillIds, hasLength(3), reason: monster.id);
+        final art = oculumMonsterBookArt(monster);
+        expect(art.skills, hasLength(3), reason: monster.id);
+        for (final skill in art.skills) {
+          expect(
+            skill.effettiPerLivello.take(3).every((effects) => effects.isNotEmpty),
+            isTrue,
+            reason: '${monster.id}/${skill.nome}',
+          );
+        }
+      }
+    },
+  );
+  test(
     'Book techniques have descriptive names and start inactive at form zero',
     () {
       for (final monster in defaultMonsterBookEntries) {
