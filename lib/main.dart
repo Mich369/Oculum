@@ -3588,6 +3588,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     assicuraArtiBase();
+    ensureCoreOculumRecipes();
     unawaited(
       caricaDati().then((_) {
         if (!mounted) return;

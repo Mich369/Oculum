@@ -1610,9 +1610,11 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void riposoBreve() {
-    final eye = fallenEyeForId(
-      '${schedePersonaggio[schedaCorrente]['occhioCadutoId'] ?? ''}',
-    );
+    final activeSheet =
+        schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
+        ? schedePersonaggio[schedaCorrente]
+        : null;
+    final eye = fallenEyeForId('${activeSheet?['occhioCadutoId'] ?? ''}');
     if (eye != null && oculumFallenEyeIsDead(eye)) {
       setState(() => risultato = oculumFallenEyeLifeStatus(eye));
       return;

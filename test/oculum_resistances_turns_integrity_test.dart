@@ -456,10 +456,11 @@ void main() {
       tester.view.physicalSize = const Size(390, 844);
       await photo('resistenze-mobile');
       tester.state<NavigatorState>(find.byType(Navigator).first).pop();
-      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pumpAndSettle();
+      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
       probe.openSubtraits();
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pumpAndSettle();
       final help = find.byWidgetPredicate(
         (widget) =>
             widget is Tooltip &&
@@ -481,20 +482,25 @@ void main() {
       expect(helpWidget.richMessage!.toPlainText(), isNot(contains('⌋')));
       expect(helpWidget.richMessage!.toPlainText(), contains('Formula'));
       tester.view.physicalSize = const Size(1440, 900);
-      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 600));
+      final desktopHelp = help;
       final mouse = await tester.createGesture(
         kind: ui.PointerDeviceKind.mouse,
       );
+      await tester.ensureVisible(desktopHelp.first);
+      await tester.pump(const Duration(milliseconds: 100));
       await mouse.addPointer(location: Offset.zero);
-      await mouse.moveTo(tester.getCenter(help.first));
+      await mouse.moveTo(tester.getCenter(desktopHelp.first));
       await tester.pump(const Duration(milliseconds: 800));
       await photo('sottotratti-tooltip-desktop');
       expect(
-        tester.widgetList<RichText>(find.byType(RichText)).any(
-          (richText) => richText.text.toPlainText().contains('A cosa serve'),
-        ),
+        tester
+            .widgetList<RichText>(find.byType(RichText))
+            .any(
+              (richText) =>
+                  richText.text.toPlainText().contains('A cosa serve'),
+            ),
         isTrue,
         reason: 'Desktop hover must open the themed subtrait explanation',
       );
@@ -504,9 +510,19 @@ void main() {
       debugDefaultTargetPlatformOverride = TargetPlatform.android;
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 600));
-      await tester.ensureVisible(help.first);
+      tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+      await tester.pumpAndSettle();
+      probe.openSubtraits();
+      await tester.pump();
+      await tester.pumpAndSettle();
+      final mobileHelp = find.byWidgetPredicate(
+        (widget) =>
+            widget is Tooltip &&
+            widget.richMessage?.toPlainText().contains('A cosa serve') == true,
+      );
+      await tester.ensureVisible(mobileHelp.first);
       await tester.pump(const Duration(milliseconds: 600));
-      await tester.longPress(help.first);
+      await tester.longPress(mobileHelp.first);
       await photo('sottotratti-tooltip-mobile');
       Tooltip.dismissAllToolTips();
       await photo('sottotratti-mobile');
@@ -569,6 +585,7 @@ void main() {
       expect(state.masterInitiativeTokens, hasLength(1));
       expect(state.masterInitiativeTokens.single['status'], 'active');
       probe.cancelPendingSave();
+      debugDefaultTargetPlatformOverride = previousTargetPlatform;
       await tester.pumpWidget(const SizedBox());
     },
   );
