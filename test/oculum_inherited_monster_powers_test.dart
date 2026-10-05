@@ -78,18 +78,24 @@ void main() {
                 !monster.id.contains('_variante_'),
           )
           .toList();
-      expect(entries, hasLength(11));
+      expect(entries, hasLength(16));
       for (final monster in entries) {
         expect(monster.stats['level'], 0, reason: monster.id);
         expect(monster.spriteAssetPath, isEmpty, reason: monster.id);
         expect(monster.imageBase64, isEmpty, reason: monster.id);
-        expect(monster.descIt, contains('Base di livello 0'), reason: monster.id);
+        expect(
+          monster.descIt,
+          contains('Base di livello 0'),
+          reason: monster.id,
+        );
         expect(monster.skillIds, hasLength(3), reason: monster.id);
         final art = oculumMonsterBookArt(monster);
         expect(art.skills, hasLength(3), reason: monster.id);
         for (final skill in art.skills) {
           expect(
-            skill.effettiPerLivello.take(3).every((effects) => effects.isNotEmpty),
+            skill.effettiPerLivello
+                .take(3)
+                .every((effects) => effects.isNotEmpty),
             isTrue,
             reason: '${monster.id}/${skill.nome}',
           );

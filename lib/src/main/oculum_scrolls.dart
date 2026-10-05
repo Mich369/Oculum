@@ -137,15 +137,19 @@ extension _OculumScrolls on _OculumHomePageState {
       );
       return;
     }
-    final targetKind = const {
-      'attack',
-      'heal',
-      'imprison',
-      'control',
-      'ward',
-      'weaken',
-      'stun',
-    }.contains('${data['kind']}');
+    final targetKind =
+        const {
+          'attack',
+          'heal',
+          'imprison',
+          'control',
+          'weaken',
+          'stun',
+        }.contains('${data['kind']}') ||
+        ('${data['kind']}' == 'ward' &&
+            masterInitiativeTokens.any(
+              (token) => masterInitiativeSheetIndexForToken(token) >= 0,
+            ));
     final targets = targetKind
         ? await _selectScrollTargets('${data['kind']}', g)
         : <int>[];

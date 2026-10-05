@@ -220,7 +220,13 @@ void main() {
       expect(state.dadoMostrato, state.dadoOverlay);
       expect(state.tiroCriticoUno, state.overlayCriticoUno);
       expect(state.tiroCriticoVenti, state.overlayCriticoVenti);
-      expect(probe.coreStats(), coreBeforeScroll);
+      final expectedCoreAfterScroll = {
+        'resilienza': coreBeforeScroll['resilienza'],
+        'volonta': coreBeforeScroll['volonta']! - oculumScrollWillCost(0),
+        'materia': coreBeforeScroll['materia'],
+        'oculum': coreBeforeScroll['oculum'],
+      };
+      expect(probe.coreStats(), expectedCoreAfterScroll);
       expect(
         probe.defense(),
         defenseBeforeScroll + (state.overlayCriticoUno ? 0 : 3),
@@ -232,7 +238,7 @@ void main() {
       probe.reportedTurn(turn + 1);
       probe.reportedTurn(turn + 2);
       expect(probe.defense(), defenseBeforeScroll);
-      expect(probe.coreStats(), coreBeforeScroll);
+      expect(probe.coreStats(), expectedCoreAfterScroll);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 3));
