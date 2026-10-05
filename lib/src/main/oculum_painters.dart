@@ -72,6 +72,7 @@ class D20Widget extends StatelessWidget {
                   color: textColor,
                   fontSize: dimensioneTesto(),
                   fontWeight: FontWeight.w900,
+                  decoration: TextDecoration.none,
                   shadows: [
                     Shadow(
                       color: Colors.black.withValues(alpha: 0.85),
@@ -174,6 +175,11 @@ class D20Painter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.1;
 
+    final innerPaint = Paint()
+      ..color = lineColor.withValues(alpha: 0.36)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
     if (glow) {
       final glowPaint = Paint()
         ..color = tertiaryColor.withValues(alpha: 0.13)
@@ -186,6 +192,25 @@ class D20Painter extends CustomPainter {
 
     canvas.drawPath(outerPath, fillPaint);
     canvas.drawPath(outerPath, borderPaint);
+
+    for (int i = 0; i < points.length; i += spiky ? 2 : 1) {
+      canvas.drawLine(center, points[i], innerPaint);
+    }
+
+    final triangle1 = Path()
+      ..moveTo(center.dx, center.dy - radius * 0.58)
+      ..lineTo(center.dx - radius * 0.52, center.dy + radius * 0.34)
+      ..moveTo(center.dx, center.dy - radius * 0.58)
+      ..lineTo(center.dx + radius * 0.52, center.dy + radius * 0.34);
+
+    final triangle2 = Path()
+      ..moveTo(center.dx, center.dy + radius * 0.58)
+      ..lineTo(center.dx - radius * 0.52, center.dy - radius * 0.34)
+      ..moveTo(center.dx, center.dy + radius * 0.58)
+      ..lineTo(center.dx + radius * 0.52, center.dy - radius * 0.34);
+
+    canvas.drawPath(triangle1, innerPaint);
+    canvas.drawPath(triangle2, innerPaint);
 
     canvas.drawCircle(
       Offset(center.dx - radius * 0.22, center.dy - radius * 0.26),

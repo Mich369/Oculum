@@ -2865,6 +2865,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                                             ? 28
                                             : 40,
                                         fontWeight: FontWeight.w900,
+                                        decoration: TextDecoration.none,
                                         shadows: [
                                           Shadow(
                                             color: Colors.black.withValues(
