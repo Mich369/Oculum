@@ -61,3 +61,30 @@ Le Skill apprese conservano `scrollData`, aggiunto senza cambiare i campi dei ve
 Le verifiche automatiche coprono soglie, copertura elementi/gradi, compatibilità JSON,
 consumo, annullamento, scadenza dei buff e stabilità delle statistiche durante la ricerca.
 Non costituiscono una verifica su due dispositivi collegati.
+
+## Pawn
+
+Pawn è acquistabile dal Master nel Catalogo completo per 100 Obser. Parte al livello 0
+con 3 Resilienza, 3 Volontà, 5 Materia, 0 Oculum e 30 HP. Si possono selezionare una o più
+schede locali o online da proteggere. Il danno viene deviato dopo che il bersaglio ha
+consumato i propri scudi, Scudo Oculum, Scudo di Salvataggio e HP temporanei: Pawn interviene
+solo sulla quota che altrimenti raggiungerebbe gli HP. I danni diretti da condizioni sono
+anch'essi deviati, ma conservano le regole proprie della condizione.
+
+Alla fine di ogni turno Pawn recupera 10 HP fino al massimo di 30; se era già al massimo,
+ottiene 5 Scudo. Raggiunti 20 Scudo ottiene uno Scudo di Salvataggio, che si consuma quando
+il suo Scudo viene esaurito da un colpo e annulla l'eccedenza di quel colpo. Un turno già
+conteggiato non può essere ripetuto; Pawn a 0 HP è inattivo. I dati e i bersagli sono salvati
+nella campagna e le richieste online hanno un ID stabile per i tentativi ripetuti.
+
+I valori regolabili di Pawn sono centralizzati in `lib/src/main/oculum_pawn.dart`:
+
+| Parametro | Valore |
+| --- | --- |
+| Prezzo | 100 Obser |
+| Livello iniziale | 0 |
+| Resilienza / Volontà / Materia / Oculum | 3 / 3 / 5 / 0 |
+| HP iniziali e massimi | 30 |
+| Cura per turno | 10 HP |
+| Scudo per turno a vita piena | 5 |
+| Soglia Scudo di Salvataggio | 20 Scudo |

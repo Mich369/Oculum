@@ -22,6 +22,10 @@ class OculumRealtimeService {
   static String startupStatus = 'Supabase non inizializzato.';
 
   static const Set<String> supportedEvents = <String>{
+    'pawn_snapshot',
+    'pawn_command',
+    'pawn_intercept_request',
+    'pawn_intercept_result',
     'hp_changed',
     'oculum_changed',
     'dice_roll',
@@ -243,6 +247,17 @@ class OculumRealtimeService {
       'roll': roll,
       'bonus': bonus,
       'total': total,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  Future<void> sendPawnEvent(String event, Map<String, dynamic> payload) {
+    if (!event.startsWith('pawn_') || !supportedEvents.contains(event)) {
+      throw ArgumentError('Evento Pawn non supportato');
+    }
+    return _send(event, {
+      ...payload,
+      'playerName': _displayName,
       'sentAt': _nowIso(),
     });
   }

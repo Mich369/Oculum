@@ -471,6 +471,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void ensureMerchantFoodOffers() {
+    if (!merchantStock.any((offer) => offer['id'] == 'pawn')) {
+      merchantStock.add(oculumPawnMerchantOffer());
+    }
     const foods = <Map<String, dynamic>>[
       {
         'id': 'food_forest_demon',
@@ -837,6 +840,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (leggiNumero(obserController) < cost) return;
     final kind = '${offer['kind'] ?? ''}';
     String titleType = '';
+    InventoryItem? purchasedPawn;
     if (kind == 'title_item') {
       titleType =
           await showDialog<String>(
@@ -871,6 +875,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     setState(() {
       obserController.text = (leggiNumero(obserController) - cost).toString();
       final item = merchantItemFromOffer(offer, titleType: titleType);
+      if (kind == 'pawn') purchasedPawn = item;
       inventario.add(item);
       if (kind == 'stat_gem') offer['remaining'] = 0;
       if (item.arma) {
@@ -884,6 +889,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     });
     _saveActiveMerchantProfileStock();
     programmaSalvataggio();
+    if (purchasedPawn != null) await activatePawnItem(purchasedPawn!);
   }
 
   /// Il mercante paga circa un sesto del valore stimato: utile, ma spilorcio.
@@ -944,6 +950,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     Map<String, dynamic> offer, {
     String titleType = '',
   }) {
+    if (offer['kind'] == 'pawn') return oculumPawnInventoryItem();
     final kind = '${offer['kind'] ?? ''}';
     if (kind == 'food') {
       final effects = <String, dynamic>{
@@ -1140,6 +1147,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool isMerchantConsumable(InventoryItem item) =>
+      item.craftData['pawn'] == true ||
       item.craftData['scroll'] is Map ||
       item.monsterLoot['food'] is Map ||
       oculumStatGemNames.containsKey(item.statGemStat) ||
@@ -1155,6 +1163,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (!inventario.contains(item) ||
         !isMerchantConsumable(item) ||
         item.quantita <= 0) {
+      return;
+    }
+    if (item.craftData['pawn'] == true) {
+      await activatePawnItem(item);
       return;
     }
     if (item.craftData['scroll'] is Map) {

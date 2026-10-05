@@ -1851,17 +1851,27 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     });
   }
 
-  void applyDirectConditionDamage(
+  Future<void> applyDirectConditionDamage(
     OculumConditionInstance instance,
     int amount,
-  ) {
+  ) async {
     if (amount <= 0) return;
     final before = hpCorrenti();
-    final after = max(0, before - amount);
+    var remaining = amount;
+    final tag = pawnSenderTag;
+    if (pawnProtects(tag)) {
+      if (pawnRemoteAuthority) {
+        remaining = await requestPawnHpInterception(amount);
+      } else {
+        remaining = redirectPawnHpDamage(tag, amount);
+      }
+    }
+    if (!mounted) return;
+    final after = max(0, before - remaining);
     currentHpController.text = after.toString();
     final message = t(
-      '${conditionName(instance)} infligge $amount danni diretti (ignora Scudo e Difesa).',
-      '${conditionName(instance)} deals $amount direct damage (ignores Shield and Defense).',
+      '${conditionName(instance)} infligge $remaining danni diretti${remaining < amount ? ' (Pawn ne intercetta ${amount - remaining})' : ''} (ignora Scudo e Difesa).',
+      '${conditionName(instance)} deals $remaining direct damage${remaining < amount ? ' (Pawn intercepts ${amount - remaining})' : ''} (ignores Shield and Defense).',
     );
     risultato = message;
     aggiungiLog(message);

@@ -376,6 +376,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         clearRealtimeMasterAckTracking();
         realtimeLastSentSheetHashes.clear();
         publishRealtimeStateAfterConnection();
+        syncPawnPresence();
       },
       presenceDataProvider: () => <String, dynamic>{
         'role': realtimeLocalRole(),
@@ -422,6 +423,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             !realtimeIsMasterRole &&
             (friendPresenceChanged || staffPresenceChanged)) {
           sendRealtimeCurrentSheetToStaff(immediate: true);
+        }
+        if (service.isConnected &&
+            (friendPresenceChanged || staffPresenceChanged)) {
+          syncPawnPresence();
         }
         if (service.isConnected && friendPresenceChanged) {
           unawaited(flushDiaryKnowledge());
@@ -522,6 +527,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   void handleRealtimeEvent(String event, Map<String, dynamic> payload) {
+    if (event.startsWith('pawn_')) {
+      receivePawnEvent(event, payload);
+      return;
+    }
     if (event == 'diary_knowledge' || event == 'diary_knowledge_ack') {
       diaryKnowledgeReceiving =
           (diaryKnowledgeReceiving ?? Future<void>.value())

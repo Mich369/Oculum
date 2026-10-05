@@ -106,6 +106,7 @@ part 'src/main/oculum_home_recipes.dart';
 part 'src/main/oculum_home_titles_inventory_pages.dart';
 part 'src/main/oculum_home_merchant.dart';
 part 'src/main/oculum_scrolls.dart';
+part 'src/main/oculum_pawn.dart';
 part 'src/main/oculum_skill_effects_ui.dart';
 part 'src/main/oculum_structured_effect_runtime.dart';
 part 'src/main/oculum_home_share_content.dart';
@@ -1364,6 +1365,11 @@ class _OculumHomePageState extends State<OculumHomePage>
   final masterItemSearchController = TextEditingController();
   final resistanceElementSearchController = TextEditingController();
   OverlayEntry? currentScreenDiceOverlay;
+  final List<OculumPawnGuardian> pawnGuardians = [];
+  final Map<String, Map<String, dynamic>> pawnDamageReceipts = {};
+  final Map<String, Completer<int>> pawnDamageWaiters = {};
+  final Map<String, Timer> pawnDamageRetryTimers = {};
+  Map<String, dynamic> pawnPendingDamage = {};
   final storySessionNoteController = TextEditingController();
   final buffMalusRapidiController = TextEditingController();
   final dannoSubitoController = TextEditingController();
@@ -3693,6 +3699,9 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   @override
   void dispose() {
+    for (final timer in pawnDamageRetryTimers.values) {
+      timer.cancel();
+    }
     currentScreenDiceOverlay?.remove();
     currentScreenDiceOverlay?.dispose();
     currentScreenDiceOverlay = null;

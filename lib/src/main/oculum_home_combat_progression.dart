@@ -3865,7 +3865,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     programmaSalvataggio();
   }
 
-  void applicaDannoSubito({bool critico = false, int? dannoEsplicito}) {
+  Future<void> applicaDannoSubito({
+    bool critico = false,
+    int? dannoEsplicito,
+  }) async {
+    if (pawnPendingDamage.isNotEmpty) {
+      risultato =
+          'Danno precedente in attesa del Master: Pawn sta risolvendo la protezione.';
+      notifyDiceResultChanged();
+      return;
+    }
     final dannoInserito = dannoEsplicito ?? leggiValoreDannoCura();
 
     if (dannoInserito == null || dannoInserito <= 0) return;
@@ -4280,7 +4289,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int shield = scudo();
     int temp = hpTemp();
     int hp = hpCorrenti();
-    final hpPrima = hp;
+    var hpPrima = hp;
+    var pawnDamageLog = '';
     final safeHpPronto = hasSafeHpParserCommand();
     final saveShieldValue = saveShieldParserValue();
     final scudoSalvataggioPronto =
@@ -4413,6 +4423,38 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       rimanente -= assorbito;
     }
 
+    if (rimanente > 0 && pawnProtects(sheetTagAt(schedaCorrente))) {
+      final beforePawn = rimanente;
+      if (pawnRemoteAuthority) {
+        // Commit the target's own shields before requesting only the HP
+        // overflow. Retries reuse one persisted ID at the Master.
+        setState(() {
+          scudoOculumController.text = '$oculumShield';
+          impostaScudoTotale(shield);
+          impostaHpTempTotali(temp);
+        });
+        try {
+          rimanente = await requestPawnHpInterception(rimanente);
+        } catch (error) {
+          if (mounted) {
+            risultato = 'Protezione Pawn in sospeso: $error';
+            notifyDiceResultChanged();
+          }
+          return;
+        }
+        if (!mounted) return;
+        // Preserve changes received while waiting for the authoritative reply.
+        hp = hpCorrenti();
+        hpPrima = hp;
+        oculumShield = scudoOculum();
+        shield = scudo();
+        temp = hpTemp();
+      } else {
+        rimanente = redirectPawnHpDamage(sheetTagAt(schedaCorrente), rimanente);
+      }
+      pawnDamageLog =
+          '\nPawn intercetta ${beforePawn - rimanente} danni destinati agli HP; $rimanente raggiungono la scheda.';
+    }
     if (rimanente > 0) {
       hp = max(0, hp - rimanente);
     }
@@ -4476,6 +4518,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       impostaScudoTotale(shield);
       impostaHpTempTotali(temp);
       currentHpController.text = hp.toString();
+      pawnPendingDamage = {};
       if (dannoModificato > 0) interruptArtAwakening();
       registerVitalMemoryDamage(hpPrima - hp);
       final partialAwakeningLog = applicaRisveglioParzialeMetaHpSeServe(
@@ -4595,6 +4638,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       risultato += lowHpLog;
       risultato += brokenCoreLog;
       risultato += combatArmorBreakLog;
+      risultato += pawnDamageLog;
 
       if (scudoCriticoSpezzato) {
         risultato += t(

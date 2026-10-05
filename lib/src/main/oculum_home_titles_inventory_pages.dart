@@ -4611,6 +4611,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       (_) => inventoryCapacityPanelEfficient(),
       (_) => inventoryAddItemPanelEfficient(),
       if (haPermessiMaster) (_) => masterItemGiftPanel(),
+      (_) => pawnGuardiansPanel(),
     ];
 
     for (int i = 0; i < inventario.length; i++) {

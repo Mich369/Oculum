@@ -17,6 +17,9 @@ extension _OculumCampaigns on _OculumHomePageState {
     return <String, dynamic>{
       'id': activeCampaignId.isEmpty ? generateCampaignId() : activeCampaignId,
       'name': activeCampaignName(),
+      'pawnGuardians': pawnGuardians.map((pawn) => pawn.toJson()).toList(),
+      'pawnDamageReceipts': pawnDamageReceipts,
+      'pawnPendingDamage': pawnPendingDamage,
       'schedaCorrente': schedaCorrente,
       'schedePersonaggio': schedePersonaggio
           .map((x) => Map<String, dynamic>.from(x))
@@ -187,6 +190,7 @@ extension _OculumCampaigns on _OculumHomePageState {
     }
 
     activeCampaignId = '${campaign['id'] ?? generateCampaignId()}';
+    loadPawnCampaignState(campaign);
     campaignNameController.text =
         '${campaign['name'] ?? 'Campagna principale'}';
     schedePersonaggio

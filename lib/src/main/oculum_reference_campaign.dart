@@ -856,6 +856,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
               const SizedBox(height: 12),
               if (haPermessiMaster)
                 masterItemGiftPanel(initiallyExpanded: true),
+              pawnGuardiansPanel(),
               if (inventario.isEmpty)
                 Text(
                   t(

@@ -1499,6 +1499,11 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
   void advanceEncounterParticipantTurn(int index) {
     final token = masterInitiativeTokens[index];
     final next = max(0, readIntValue(token['reportedTurn'])) + 1;
+    if (token['pawnId'] != null) {
+      advancePawnTurn('${token['pawnId']}', next);
+      token['reportedTurn'] = next;
+      return;
+    }
     final tag = '${token['sheetTag'] ?? token['id'] ?? ''}';
     if (tag == sheetTagAt(schedaCorrente)) {
       setPlayerReportedTurn(next, broadcast: false, advanceArt: false);

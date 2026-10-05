@@ -7255,6 +7255,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           final panels = <Widget Function()>[
             () => title,
             if (haPermessiMaster) () => masterItemGiftPanel(),
+            pawnGuardiansPanel,
             masterDashboardActiveSheetPanel,
             masterDashboardPartyBoardPanel,
             masterInitiativeTrackerPanel,
@@ -7298,6 +7299,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               child: lazyColumn('master', [
                 () => title,
                 if (haPermessiMaster) () => masterItemGiftPanel(),
+                pawnGuardiansPanel,
                 masterInitiativeTrackerPanel,
                 masterDashboardPartyBoardPanel,
                 masterDashboardEnemiesPanel,
@@ -7483,6 +7485,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       children: [
         functionAnchor('master_root', sectionTitle('Master')),
         if (haPermessiMaster) masterItemGiftPanel(),
+        pawnGuardiansPanel(),
         onlineStatusPanel(),
         campaignPanel(),
         masterPartyPanel(),
