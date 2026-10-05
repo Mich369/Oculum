@@ -59,6 +59,47 @@ void main() {
     expect(pawn.savingShield, isTrue);
   });
 
+  test('Pawn earns levels at half standard XP with monster stat points', () {
+    final pawn = OculumPawnGuardian(id: 'pawn_test', ownerTag: 'sheet_a');
+
+    expect(oculumPawnExperienceForLevel('normale'), 500);
+    expect(oculumPawnExperienceForLevel('oculum'), 685);
+    expect(oculumPawnExperiencePerTurn, 100);
+    expect(oculumPawnStatPointsPerLevel, 9);
+    expect(pawn.advanceTo(5), isTrue);
+    expect(pawn.level, 1);
+    expect(pawn.experience, 0);
+    expect(pawn.unspentStatPoints, 9);
+  });
+
+  test('Allocating Pawn points grows stats and Resilience grows HP', () {
+    final pawn = OculumPawnGuardian(
+      id: 'pawn_test',
+      ownerTag: 'sheet_a',
+      hp: 20,
+      unspentStatPoints: 9,
+    );
+
+    expect(
+      pawn.allocateStatPoints({
+        'resilienza': 2,
+        'volonta': 2,
+        'materia': 3,
+        'oculum': 2,
+      }),
+      isTrue,
+    );
+    expect(pawn.stats, {
+      'resilienza': 5,
+      'volonta': 5,
+      'materia': 8,
+      'oculum': 2,
+    });
+    expect(pawn.maxHp, 50);
+    expect(pawn.hp, 40);
+    expect(pawn.unspentStatPoints, 0);
+  });
+
   test('Dead or unregistered Pawns cannot intercept or advance', () {
     final unregistered = OculumPawnGuardian(
       id: 'pawn_pending',
@@ -94,5 +135,25 @@ void main() {
     expect(restored.savingShield, isTrue);
     expect(restored.turn, 3);
     expect(restored.targets, ['sheet_a', 'sheet_b']);
+    final grown = OculumPawnGuardian.fromJson({
+      ...original.toJson(),
+      'level': 2,
+      'experience': 250,
+      'unspentStatPoints': 4,
+      'stats': {'resilienza': 4, 'volonta': 4, 'materia': 7, 'oculum': 1},
+    });
+    expect(grown.level, 2);
+    expect(grown.experience, 250);
+    expect(grown.unspentStatPoints, 4);
+    expect(grown.stats['materia'], 7);
+    expect(grown.maxHp, 40);
+    final legacy = OculumPawnGuardian.fromJson({'id': 'old', 'ownerTag': 'a'});
+    expect(legacy.stats, {
+      'resilienza': 3,
+      'volonta': 3,
+      'materia': 5,
+      'oculum': 0,
+    });
+    expect(legacy.level, 0);
   });
 }

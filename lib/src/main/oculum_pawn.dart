@@ -3,8 +3,31 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 const oculumPawnPrice = 100;
+const oculumPawnExperiencePerTurn = 100;
+const oculumPawnStatPointsPerLevel = 9;
+
+int oculumPawnExperienceForLevel(String difficulty) {
+  final standard = difficulty.trim().toLowerCase() == 'oculum' ? 1369 : 1000;
+  return (standard / 2).ceil();
+}
+
+Map<String, int> oculumPawnStats([Map<String, int>? values]) {
+  final stats = <String, int>{
+    'resilienza': 3,
+    'volonta': 3,
+    'materia': 5,
+    'oculum': 0,
+  };
+  if (values != null) {
+    for (final key in stats.keys) {
+      if (values.containsKey(key)) stats[key] = max(0, values[key]!);
+    }
+  }
+  return stats;
+}
+
 const oculumPawnDescription =
-    'Livello 0 · Resilienza 3 · Volontà 3 · Materia 5 · Oculum 0 · 30 HP. '
+    'Livello 0 · Resilienza 3 · Volontà 3 · Materia 5 · Oculum 0 · 30 HP iniziali. '
     'Protegge una o più schede selezionate, intercettando solo il danno che raggiungerebbe gli HP. '
     'Gli scudi dei bersagli si consumano normalmente. Alla fine del proprio turno: cura 10 HP oppure, '
     'se già a vita piena, +5 Scudo. Da 20 Scudo ottiene Scudo di Salvataggio.';
@@ -33,12 +56,20 @@ class OculumPawnGuardian {
     this.shield = 0,
     this.savingShield = false,
     this.turn = 0,
+    this.level = 0,
+    this.experience = 0,
+    this.unspentStatPoints = 0,
     this.pendingRegistration = false,
+    Map<String, int>? stats,
     List<String>? targets,
-  }) : targets = List.of(targets ?? const []) {
-    hp = hp.clamp(0, 30);
+  }) : stats = oculumPawnStats(stats),
+       targets = List.of(targets ?? const []) {
+    hp = hp.clamp(0, maxHp);
     shield = max(0, shield);
     turn = max(0, turn);
+    level = max(0, level);
+    experience = max(0, experience);
+    unspentStatPoints = max(0, unspentStatPoints);
   }
   final String id;
   final String ownerTag;
@@ -46,9 +77,42 @@ class OculumPawnGuardian {
   int shield;
   bool savingShield;
   int turn;
+  int level;
+  int experience;
+  int unspentStatPoints;
+  final Map<String, int> stats;
   bool pendingRegistration;
   List<String> targets;
   bool get alive => hp > 0;
+  int get maxHp => max(1, stats['resilienza'] ?? 3) * 10;
+
+  int gainTurnExperience(String difficulty) {
+    final threshold = oculumPawnExperienceForLevel(difficulty);
+    experience += oculumPawnExperiencePerTurn;
+    var gainedLevels = 0;
+    while (experience >= threshold) {
+      experience -= threshold;
+      level++;
+      unspentStatPoints += oculumPawnStatPointsPerLevel;
+      gainedLevels++;
+    }
+    return gainedLevels;
+  }
+
+  bool allocateStatPoints(Map<String, int> allocation) {
+    const keys = <String>{'resilienza', 'volonta', 'materia', 'oculum'};
+    if (allocation.keys.any((key) => !keys.contains(key)) ||
+        allocation.values.any((value) => value < 0)) {
+      return false;
+    }
+    final spent = allocation.values.fold<int>(0, (sum, value) => sum + value);
+    if (spent <= 0 || spent > unspentStatPoints) return false;
+    final resilience = allocation['resilienza'] ?? 0;
+    stats.updateAll((key, value) => value + (allocation[key] ?? 0));
+    unspentStatPoints -= spent;
+    if (resilience > 0 && alive) hp = min(maxHp, hp + 10 * resilience);
+    return true;
+  }
 
   /// Returns HP damage still reaching the protected target. This amount has
   /// already passed the target's defense and shields: never reduce it twice.
@@ -69,11 +133,12 @@ class OculumPawnGuardian {
     return remaining;
   }
 
-  bool advanceTo(int nextTurn) {
+  bool advanceTo(int nextTurn, {String difficulty = 'normale'}) {
     if (nextTurn <= turn || !alive || pendingRegistration) return false;
     while (turn < nextTurn) {
-      if (hp < 30) {
-        hp = min(30, hp + 10);
+      gainTurnExperience(difficulty);
+      if (hp < maxHp) {
+        hp = min(maxHp, hp + 10);
       } else {
         shield += 5;
         if (shield >= 20) savingShield = true;
@@ -90,6 +155,10 @@ class OculumPawnGuardian {
     'shield': shield,
     'savingShield': savingShield,
     'turn': turn,
+    'level': level,
+    'experience': experience,
+    'unspentStatPoints': unspentStatPoints,
+    'stats': Map<String, int>.from(stats),
     'targets': targets.toList(),
     'pendingRegistration': pendingRegistration,
   };
@@ -101,6 +170,16 @@ class OculumPawnGuardian {
         shield: readIntValue(data['shield']),
         savingShield: readBoolValue(data['savingShield']),
         turn: readIntValue(data['turn']),
+        level: readIntValue(data['level']),
+        experience: readIntValue(data['experience']),
+        unspentStatPoints: readIntValue(data['unspentStatPoints']),
+        stats: data['stats'] is Map
+            ? oculumPawnStats(
+                (data['stats'] as Map).map(
+                  (key, value) => MapEntry('$key', readIntValue(value)),
+                ),
+              )
+            : null,
         pendingRegistration: readBoolValue(data['pendingRegistration']),
         targets: (data['targets'] is List ? data['targets'] as List : const [])
             .whereType<String>()
@@ -327,24 +406,110 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       (token) => token['pawnId'] == pawn.id,
     )) {
       token['hp'] = pawn.hp;
-      token['maxHp'] = 30;
+      token['maxHp'] = pawn.maxHp;
+      token['resilienza'] = pawn.stats['resilienza'];
+      token['volonta'] = pawn.stats['volonta'];
+      token['materia'] = pawn.stats['materia'];
+      token['oculum'] = pawn.stats['oculum'];
+      token['level'] = pawn.level;
       token['reportedTurn'] = pawn.turn;
       token['status'] = pawn.alive ? 'ready' : 'dead';
       token['dead'] = !pawn.alive;
     }
   }
 
-  void advancePawnTurn(String id, int turn) {
+  Future<void> advancePawnTurn(String id, int turn) async {
     if (pawnRemoteAuthority) return;
     final pawn = pawnGuardians.where((pawn) => pawn.id == id).firstOrNull;
-    if (pawn == null || !pawn.advanceTo(turn)) return;
+    if (pawn == null) return;
+    final previousLevel = pawn.level;
+    final threshold = oculumPawnExperienceForLevel(
+      normalizedCampaignDifficulty(),
+    );
+    if (!pawn.advanceTo(turn, difficulty: normalizedCampaignDifficulty())) {
+      return;
+    }
     updatePawnInitiativeToken(pawn);
     aggiungiLog(
-      'Pawn: turno ${pawn.turn}, ${pawn.hp}/30 HP, ${pawn.shield} Scudo${pawn.savingShield ? ', Scudo di Salvataggio pronto' : ''}.',
+      'Pawn: turno ${pawn.turn}, ${pawn.hp}/${pawn.maxHp} HP, ${pawn.shield} Scudo. EXP ${pawn.experience}/$threshold, livello ${pawn.level}${pawn.level > previousLevel ? ', +${(pawn.level - previousLevel) * oculumPawnStatPointsPerLevel} punti statistica da assegnare' : ''}${pawn.savingShield ? ', Scudo di Salvataggio pronto' : ''}.',
     );
     notifyActiveSheetSummaryChanged();
     programmaSalvataggio();
     sendPawnSnapshot();
+    if (pawn.level > previousLevel) {
+      await showPawnStatAllocationIfNeeded(pawn);
+    }
+  }
+
+  Future<void> showPawnStatAllocationIfNeeded(OculumPawnGuardian pawn) async {
+    if (pawn.unspentStatPoints <= 0 || !mounted) return;
+    final controllers = <String, TextEditingController>{
+      for (final stat in const ['resilienza', 'volonta', 'materia', 'oculum'])
+        stat: TextEditingController(text: '0'),
+    };
+    try {
+      final allocation = await showDialog<Map<String, int>>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text('Pawn livello ${pawn.level}: assegna punti'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Punti disponibili: ${pawn.unspentStatPoints}'),
+              for (final entry in controllers.entries)
+                TextField(
+                  controller: entry.value,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: switch (entry.key) {
+                      'resilienza' => 'Resilienza',
+                      'volonta' => 'Volontà',
+                      'materia' => 'Materia',
+                      _ => 'Oculum',
+                    },
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Dopo'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(
+                dialogContext,
+                controllers.map(
+                  (key, controller) => MapEntry(
+                    key,
+                    max(0, int.tryParse(controller.text.trim()) ?? 0),
+                  ),
+                ),
+              ),
+              child: const Text('Assegna'),
+            ),
+          ],
+        ),
+      );
+      if (allocation == null || !mounted) return;
+      if (!pawn.allocateStatPoints(allocation)) {
+        risultato =
+            'Punti Pawn non assegnati: distribuisci al massimo ${pawn.unspentStatPoints} punti disponibili.';
+        notifyDiceResultChanged();
+        return;
+      }
+      updatePawnInitiativeToken(pawn);
+      aggiungiLog(
+        'Pawn livello ${pawn.level}: statistiche ${pawn.stats.entries.map((entry) => '${entry.key} ${entry.value}').join(', ')}; ${pawn.unspentStatPoints} punti restanti.',
+      );
+      programmaSalvataggio();
+      sendPawnSnapshot();
+      notifyActiveSheetSummaryChanged();
+    } finally {
+      for (final controller in controllers.values) {
+        controller.dispose();
+      }
+    }
   }
 
   int redirectPawnHpDamage(String tag, int damage) {
@@ -358,7 +523,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       remaining = pawn.intercept(remaining);
       updatePawnInitiativeToken(pawn);
       aggiungiLog(
-        'Pawn intercetta ${before - remaining} danni agli HP di $tag: ${pawn.hp}/30 HP, ${pawn.shield} Scudo.',
+        'Pawn intercetta ${before - remaining} danni agli HP di $tag: ${pawn.hp}/${pawn.maxHp} HP, ${pawn.shield} Scudo.',
       );
     }
     if (remaining != damage) {
@@ -560,7 +725,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Pawn · Lv 0 · 3 Res · 3 Vol · 5 Mat · 0 Ocu\n${pawn.hp}/30 HP · ${pawn.shield} Scudo · Turno ${pawn.turn}${pawn.savingShield ? ' · Scudo di Salvataggio' : ''}${pawn.pendingRegistration ? ' · Registrazione in attesa del Master' : ''}',
+                          'Pawn · Lv ${pawn.level} · ${pawn.stats['resilienza']} Res · ${pawn.stats['volonta']} Vol · ${pawn.stats['materia']} Mat · ${pawn.stats['oculum']} Ocu\n${pawn.hp}/${pawn.maxHp} HP · ${pawn.shield} Scudo · EXP ${pawn.experience}/${oculumPawnExperienceForLevel(normalizedCampaignDifficulty())} · Turno ${pawn.turn}${pawn.unspentStatPoints > 0 ? ' · ${pawn.unspentStatPoints} punti da assegnare' : ''}${pawn.savingShield ? ' · Scudo di Salvataggio' : ''}${pawn.pendingRegistration ? ' · Registrazione in attesa del Master' : ''}',
                         ),
                         Text(
                           '${pawn.targets.length} schede protette${pawn.alive ? '' : ' · Inattivo a 0 HP'}',
@@ -575,6 +740,14 @@ extension _OculumPawnRuntime on _OculumHomePageState {
                                 onPressed: () => choosePawnTargets(pawn),
                                 icon: const Icon(Icons.shield_outlined),
                                 label: const Text('Scegli bersagli'),
+                              ),
+                            if (pawn.unspentStatPoints > 0 &&
+                                !pawnRemoteAuthority)
+                              OutlinedButton.icon(
+                                onPressed: () =>
+                                    showPawnStatAllocationIfNeeded(pawn),
+                                icon: const Icon(Icons.upgrade),
+                                label: const Text('Assegna punti Pawn'),
                               ),
                             OutlinedButton(
                               onPressed: pawnRemoteAuthority || !pawn.alive
@@ -599,12 +772,12 @@ extension _OculumPawnRuntime on _OculumHomePageState {
                                       'name': 'Pawn',
                                       'role': 'pawn',
                                       'hp': pawn.hp,
-                                      'maxHp': 30,
-                                      'volonta': 3,
-                                      'materia': 5,
-                                      'oculum': 0,
-                                      'resilienza': 3,
-                                      'level': 0,
+                                      'maxHp': pawn.maxHp,
+                                      'volonta': pawn.stats['volonta'],
+                                      'materia': pawn.stats['materia'],
+                                      'oculum': pawn.stats['oculum'],
+                                      'resilienza': pawn.stats['resilienza'],
+                                      'level': pawn.level,
                                       'initiativeTotal': 0,
                                       'reportedTurn': pawn.turn,
                                       'status': pawn.alive ? 'ready' : 'dead',

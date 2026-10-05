@@ -199,8 +199,7 @@ class D20Painter extends CustomPainter {
     final triangle1 = Path()
       ..moveTo(center.dx, center.dy - radius * 0.58)
       ..lineTo(center.dx - radius * 0.52, center.dy + radius * 0.34)
-      ..lineTo(center.dx + radius * 0.52, center.dy + radius * 0.34)
-      ..close();
+      ..lineTo(center.dx + radius * 0.52, center.dy + radius * 0.34);
 
     final triangle2 = Path()
       ..moveTo(center.dx, center.dy + radius * 0.58)
