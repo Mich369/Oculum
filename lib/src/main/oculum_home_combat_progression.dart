@@ -682,6 +682,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     mostraOverlayDado = true;
     dadoOverlayMostraRisultato = reduceEffects;
     dadoOverlayDismissibile = false;
+    showDiceAboveCurrentRoute();
   }
 
   void _scheduleDadoCentraleOverlayTimers({required bool reduceEffects}) {
@@ -998,6 +999,24 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       obserController.text = '${leggiNumero(obserController) + dropObser}';
     }
     final dropObserText = dropObser > 0 ? '\nDrop: +$dropObser Obser.' : '';
+    final scrollGrade = oculumScrollDropGrade(stat.id, totale);
+    InventoryItem? dropScroll;
+    if (scrollGrade != null) {
+      final elements = allDamageElementIds();
+      final random = Random.secure();
+      final element = elements[random.nextInt(elements.length)];
+      dropScroll = oculumScrollItem(
+        element,
+        elementDisplayName(element),
+        scrollGrade,
+        ['attack', 'control', 'ward'][random.nextInt(3)],
+      );
+      inventario.add(dropScroll);
+      invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+    }
+    final dropScrollText = dropScroll == null
+        ? ''
+        : '\nDrop: ottenuta ${dropScroll.nome}, valore ${oculumScrollValue(scrollGrade!)} Obser.';
     final dodgeText = schivataOculumOttenuta
         ? '\nCRITICO RIFLESSI: +1 Schivata Oculum.'
         : '';
@@ -1006,7 +1025,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     tiroCriticoUno = dado == 1;
     tiroCriticoVenti = dado == 20;
     risultato =
-        '$label: $testoDado$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText$dropGemText$dropObserText$dodgeText';
+        '$label: $testoDado$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText$dropGemText$dropObserText$dropScrollText$dodgeText';
     _applyDadoCentraleOverlayState(
       valore: testoDado,
       criticoUno: dado == 1,
@@ -1015,7 +1034,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       reduceEffects: reduceDiceEffects,
     );
     aggiungiLog(
-      'Tiro sottotratto $label: $testoDado.${oculumTiroLogLabel(oculumSpend)}$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText$dropGemText$dropObserText$dodgeText',
+      'Tiro sottotratto $label: $testoDado.${oculumTiroLogLabel(oculumSpend)}$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText$dropGemText$dropObserText$dropScrollText$dodgeText',
     );
     registerValidRoll(consumoStatKey: statConsumata);
     notifyDiceResultChanged();
@@ -1049,6 +1068,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       if (dustAwarded ||
           dropObser > 0 ||
           dropGem != null ||
+          dropScroll != null ||
           schivataOculumOttenuta ||
           masteryGain > 0 ||
           statoForzaLog.isNotEmpty ||

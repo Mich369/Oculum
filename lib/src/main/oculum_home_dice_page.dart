@@ -3,6 +3,80 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 extension _OculumHomeDicePage on _OculumHomePageState {
+  Future<void> openDiceInCurrentScreen() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: const Color(0xFF10121A),
+      constraints: const BoxConstraints(maxWidth: 900),
+      builder: (sheetContext) {
+        final media = MediaQuery.of(sheetContext);
+        final availableHeight = max(
+          0.0,
+          media.size.height - media.viewInsets.bottom - media.padding.vertical,
+        );
+        return Padding(
+          padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+          child: SizedBox(
+            key: const ValueKey('current_screen_dice_panel'),
+            height: availableHeight * .9,
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              t(
+                                'Dadi nella schermata attuale',
+                                'Dice in the current screen',
+                              ),
+                              style: TextStyle(
+                                color: tertiaryColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            key: const ValueKey('close_current_screen_dice'),
+                            tooltip: t('Chiudi', 'Close'),
+                            onPressed: () => Navigator.pop(sheetContext),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.all(12),
+                        children: [
+                          diceResultPanel(),
+                          const SizedBox(height: 12),
+                          sheetDiceRollPanel(dense: true),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (!mounted) return;
+    dadoOverlayTimer?.cancel();
+    dadoOverlayRevealTimer?.cancel();
+    mostraOverlayDado = false;
+    dadoOverlayMostraRisultato = false;
+    dadoOverlayDismissibile = false;
+    notifyDiceOverlayChanged();
+  }
+
   void tiraDadoCustom(int facce) {
     final quantita = min(
       1000,
@@ -72,6 +146,7 @@ extension _OculumHomeDicePage on _OculumHomePageState {
           '${t('Lancio', 'Roll')} ${quantita}d$facce: $formulaDadi$testoMod = $finale$testoCritico$testoGlobale$testoDt$zeroOutcome';
       aggiungiLog(risultato);
     });
+    notifyDiceResultChanged();
     registerValidRoll();
 
     mostraDadoCentrale(

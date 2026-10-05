@@ -888,6 +888,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
 
   /// Il mercante paga circa un sesto del valore stimato: utile, ma spilorcio.
   int merchantSaleValue(InventoryItem item) {
+    if (item.craftData['scroll'] is Map) {
+      final data = item.craftData['scroll'] as Map;
+      return max(1, oculumScrollValue(readIntValue(data['grade'])) ~/ 6) *
+          max(1, item.quantita);
+    }
     final grade = max(item.gradoOggetto, item.gradoRichiesto);
     final rawValue =
         18 +
@@ -1135,6 +1140,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool isMerchantConsumable(InventoryItem item) =>
+      item.craftData['scroll'] is Map ||
       item.monsterLoot['food'] is Map ||
       oculumStatGemNames.containsKey(item.statGemStat) ||
       const <String>{
@@ -1149,6 +1155,13 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (!inventario.contains(item) ||
         !isMerchantConsumable(item) ||
         item.quantita <= 0) {
+      return;
+    }
+    if (item.craftData['scroll'] is Map) {
+      await useScrollAbility(
+        Map<String, dynamic>.from(item.craftData['scroll'] as Map),
+        item: item,
+      );
       return;
     }
     if (item.monsterLoot['food'] is Map) {

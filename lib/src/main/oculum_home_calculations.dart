@@ -3797,6 +3797,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int tiroGlobaleBonus() {
     return vantaggioTiroBonus() +
+        activeStructuredEffectBonus('tiro_globale') +
         malusFaticaTiri() +
         conditionGlobalRollModifier();
   }

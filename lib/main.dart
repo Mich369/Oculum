@@ -105,6 +105,7 @@ part 'src/main/oculum_story_session_notes.dart';
 part 'src/main/oculum_home_recipes.dart';
 part 'src/main/oculum_home_titles_inventory_pages.dart';
 part 'src/main/oculum_home_merchant.dart';
+part 'src/main/oculum_scrolls.dart';
 part 'src/main/oculum_skill_effects_ui.dart';
 part 'src/main/oculum_structured_effect_runtime.dart';
 part 'src/main/oculum_home_share_content.dart';
@@ -673,7 +674,28 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   void notifyDiceOverlayChanged() {
     if (!mounted) return;
+    if (!mostraOverlayDado) {
+      currentScreenDiceOverlay?.remove();
+      currentScreenDiceOverlay?.dispose();
+      currentScreenDiceOverlay = null;
+    }
     diceOverlayRevision.value++;
+  }
+
+  void showDiceAboveCurrentRoute() {
+    currentScreenDiceOverlay?.remove();
+    currentScreenDiceOverlay?.dispose();
+    currentScreenDiceOverlay = OverlayEntry(
+      builder: (_) => Positioned.fill(
+        child: SafeArea(
+          child: KeyedSubtree(
+            key: const ValueKey('current_route_dice_overlay'),
+            child: dadoOverlayCentrale(),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context, rootOverlay: true).insert(currentScreenDiceOverlay!);
   }
 
   bool aggiustaNucleoDisponibile() {
@@ -1085,6 +1107,11 @@ class _OculumHomePageState extends State<OculumHomePage>
   }) async {
     if (!mounted) return;
 
+    if (page == dicePageIndex) {
+      await openDiceInCurrentScreen();
+      return;
+    }
+
     final targetPage = paginaVisibileSicura(page);
     oculumProfileMark('navigation_page_$targetPage');
     final needsLazyActivation = !_isPagePreparedForDisplay(targetPage);
@@ -1335,6 +1362,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final reazioniVelociController = TextEditingController(text: '0');
   final realtimeChatController = TextEditingController();
   final masterItemSearchController = TextEditingController();
+  final resistanceElementSearchController = TextEditingController();
+  OverlayEntry? currentScreenDiceOverlay;
   final storySessionNoteController = TextEditingController();
   final buffMalusRapidiController = TextEditingController();
   final dannoSubitoController = TextEditingController();
@@ -3664,6 +3693,9 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   @override
   void dispose() {
+    currentScreenDiceOverlay?.remove();
+    currentScreenDiceOverlay?.dispose();
+    currentScreenDiceOverlay = null;
     WidgetsBinding.instance.removeObserver(this);
     salvataggioInChiusura = true;
     if (datiCaricati) {
@@ -3739,6 +3771,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     reazioniVelociController.dispose();
     realtimeChatController.dispose();
     masterItemSearchController.dispose();
+    resistanceElementSearchController.dispose();
     storySessionNoteController.dispose();
     realtimeDungeonMessage.dispose();
     diceResultRevision.dispose();
@@ -4492,6 +4525,13 @@ class _OculumHomePageState extends State<OculumHomePage>
               ),
 
               actions: [
+                if (!oculusModActive)
+                  IconButton(
+                    key: const ValueKey('current_screen_dice'),
+                    tooltip: t('Tira dadi qui', 'Roll dice here'),
+                    onPressed: openDiceInCurrentScreen,
+                    icon: Icon(Icons.casino_outlined, color: tertiaryColor),
+                  ),
                 IconButton(
                   tooltip: t('Player / Master', 'Player / Master'),
                   onPressed: mostraDialogSceltaRuolo,
@@ -4969,7 +5009,6 @@ class _OculumHomePageState extends State<OculumHomePage>
                     ],
                   ),
                 ),
-                dadoOverlayCentrale(),
                 realtimeDamageReportOverlay(),
               ],
             ),

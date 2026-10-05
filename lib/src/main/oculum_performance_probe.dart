@@ -18,7 +18,13 @@ class OculumPerformanceProbe {
     'sheet_subtraits',
     _state.referenceSubtraitsPanel,
   );
+  Future<void> rollSubtrait(String id) => _state.tiraSottotrattoOcchio(
+    _state.hiddenEyeStats.firstWhere((stat) => stat.id == id),
+  );
   Widget resistancePanel() => _state.resistanceDetailsPanel();
+  Future<void> useScroll(InventoryItem item) =>
+      _state.useMerchantConsumable(item);
+  int defense() => _state.difesa();
   Widget dicePanel() => _state.sheetDiceRollPanel(dense: true);
   Widget subtraitsPanel() => _state.referenceSubtraitsPanel();
   void resetEncounter() => _state.resetMasterInitiativeRound();

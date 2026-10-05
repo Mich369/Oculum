@@ -1925,12 +1925,15 @@ class CharacterSkill {
     this.difesa = 0,
     bool equipaggiata = false,
     List<CharacterSkillForm>? forme,
+    this.scrollData = const {},
   }) : _equipaggiata = equipaggiata,
        forme = (forme ?? <CharacterSkillForm>[]).toList() {
     ensureForms();
   }
 
   String nome;
+  final Map<String, dynamic> scrollData;
+  bool get nonEvolvibile => scrollData.isNotEmpty;
   String tipo;
   String costo;
   String cooldown;
@@ -1948,6 +1951,7 @@ class CharacterSkill {
   List<CharacterSkillForm> forme;
 
   void ensureForms() {
+    if (nonEvolvibile && forme.length > 1) forme = forme.take(1).toList();
     if (forme.isEmpty) {
       forme = [
         CharacterSkillForm.fromLegacy(
@@ -1998,6 +2002,7 @@ class CharacterSkill {
       'danni': danni,
       'difesa': difesa,
       'equipaggiata': equipaggiata,
+      if (scrollData.isNotEmpty) 'scrollData': scrollData,
     };
   }
 
@@ -2047,6 +2052,9 @@ class CharacterSkill {
       difesa: readIntValue(json['difesa']),
       equipaggiata: readBoolValue(json['equipaggiata']),
       forme: forms,
+      scrollData: json['scrollData'] is Map
+          ? Map<String, dynamic>.from(json['scrollData'])
+          : const {},
     );
   }
 }
@@ -2057,6 +2065,7 @@ int oculumSkillMasteryGrowthLimit(CharacterSkill skill, int formIndex) {
   final form = skill.forme[formIndex];
   form.aggiornaLimitiOculumDaDescrizione();
   final currentMaximum = max(0, form.oculumMassimoUtilizzabile);
+  if (skill.nonEvolvibile) return currentMaximum;
   final initialMaximum = max(
     0,
     form.oculumMassimoMaestriaIniziale > 0

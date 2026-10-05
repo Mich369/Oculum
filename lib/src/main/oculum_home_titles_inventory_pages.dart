@@ -1525,6 +1525,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     int formIndex,
   ) async {
     skill.ensureForms();
+    if (skill.nonEvolvibile) {
+      await useScrollAbility(skill.scrollData);
+      return;
+    }
     if (formIndex < 0 || formIndex >= skill.forme.length) return;
     final form = skill.forme[formIndex];
     final structuredCooldown = form.cooldownStrutturato;
@@ -2295,7 +2299,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
   Widget skillFormsEditor(CharacterSkill skill, int skillIndex) {
     skill.ensureForms();
     const maxSkillForms = 12;
-    final canAdd = skill.forme.length < maxSkillForms;
+    final canAdd = !skill.nonEvolvibile && skill.forme.length < maxSkillForms;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2313,7 +2317,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               ),
             ),
             Text(
-              '${skill.forme.length}/$maxSkillForms',
+              skill.nonEvolvibile
+                  ? 'Non evolvibile'
+                  : '${skill.forme.length}/$maxSkillForms',
               style: TextStyle(
                 color: canAdd ? tertiaryColor : Colors.grey.shade400,
                 fontWeight: FontWeight.bold,
@@ -4643,6 +4649,16 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       );
     }
 
+    for (final element in allDamageElementIds()) {
+      for (var grade = 0; grade <= 12; grade++) {
+        for (final kind in ['attack', 'control', 'ward']) {
+          add(
+            oculumScrollItem(element, elementDisplayName(element), grade, kind),
+          );
+        }
+      }
+    }
+
     for (var sheet = 0; sheet < schedePersonaggio.length; sheet++) {
       for (final raw in _sheetMapList(sheet, 'inventario')) {
         try {
@@ -4683,6 +4699,72 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         ),
       );
     }
+    for (final material in oculumAuthoredMaterials) {
+      add(
+        InventoryItem(
+          nome: material.name,
+          peso: material.minKg,
+          quantita: 1,
+          note:
+              '${material.effect} Grado: ${material.grade < 0 ? 'variabile' : material.grade}. '
+              'Peso configurabile: ${material.minKg}–${material.maxKg} kg.',
+          gradoOggetto: max(0, material.grade),
+          gradoRichiesto: max(0, material.grade),
+          craftData: {
+            'material': material.id,
+            'materialGrade': max(0, material.grade),
+            'active': false,
+            'activeBuff': material.active,
+            'effect': material.effect,
+            'grams': (material.minKg * 1000).round(),
+          },
+        ),
+      );
+    }
+    for (final monster in monsterBookEntries) {
+      for (final raw in monster.inventoryItems) {
+        try {
+          add(InventoryItem.fromJson(Map<String, dynamic>.from(raw)));
+        } catch (_) {
+          /* Ignore malformed legacy monster equipment. */
+        }
+      }
+      final mammuth = monster.id.startsWith('mammuth_in_decomposizione');
+      final drops = mammuth
+          ? const <String>['Ossa di mammuth putrido']
+          : monster.dropIds.map(systemMonsterReadableId);
+      for (final drop in drops) {
+        if (drop.trim().isEmpty) continue;
+        add(
+          InventoryItem(
+            nome: drop,
+            peso: 0,
+            quantita: 1,
+            note: 'Materiale/drop canonico di ${monster.nameIt}.',
+            monsterLoot: {
+              'monsterId': monster.id,
+              'monsterName': monster.nameIt,
+              'material': true,
+              'weaponBonus': 0,
+              'armorBonus': 0,
+            },
+          ),
+        );
+      }
+    }
+    for (final entry in oculumStatGemNames.entries) {
+      add(
+        InventoryItem(
+          nome: entry.value,
+          peso: .1,
+          quantita: 1,
+          statGemStat: entry.key,
+          statGemDieFaces: 1,
+          note:
+              'Gemma consumabile di ${entry.key}. Il Master può configurarne quantità e dado.',
+        ),
+      );
+    }
     final needle = masterItemSearchController.text.trim().toLowerCase();
     final items = unique.values.toList()
       ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
@@ -4706,16 +4788,18 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       )
       .toList();
 
-  Widget masterItemGiftPanel() => dropdownSection(
-    title: t('Dona oggetti ai giocatori', 'Give items to players'),
+  Widget masterItemGiftPanel({
+    bool initiallyExpanded = false,
+  }) => dropdownSection(
+    title: t('Catalogo completo del Master', 'Complete Master catalog'),
     subtitle: t(
-      'Cerca nell’inventario delle schede, nel mercante, nelle ricette e negli oggetti homebrew. Puoi donare ai giocatori online della campagna attiva.',
-      'Search sheet inventories, merchant stock, recipes and homebrew items. Give items to online players in the active campaign.',
+      'Oggetti delle schede, mercante, ricette, materiali canonici, gemme e drop del Manuale dei Mostri. Aggiungi una quantità a qualsiasi scheda locale o inviala a un giocatore online.',
+      'Sheet items, merchant stock, recipes, canonical materials, gems and Monster Book drops. Add a quantity to any local sheet or send it to an online player.',
     ),
     icon: Icons.card_giftcard,
     borderColor: tertiaryColor,
     sectionId: 'master_item_gifts',
-    initiallyExpanded: false,
+    initiallyExpanded: initiallyExpanded,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -4736,7 +4820,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           ),
         ),
         const SizedBox(height: 10),
-        if (_masterOnlinePlayers().isEmpty)
+        if (schedePersonaggio.isEmpty && _masterOnlinePlayers().isEmpty)
           smallInfoText(
             t(
               'Nessun giocatore online nella campagna attiva.',
@@ -4744,76 +4828,163 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             ),
             color: Colors.orangeAccent,
           ),
-        ..._masterGiftCatalog().map(
-          (item) => Card(
-            color: const Color(0xFF11131A),
-            child: ListTile(
-              title: Text(
-                item.nome,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+        Builder(
+          builder: (context) {
+            final items = _masterGiftCatalog();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                smallInfoText(
+                  '${items.length} ${t('oggetti nel catalogo', 'catalog items')}',
                 ),
-              ),
-              subtitle: Text(
-                [
-                  if (item.note.isNotEmpty) item.note,
-                  if (item.buff.isNotEmpty) item.buff,
-                  if (item.arma) t('Offensivo', 'Offensive'),
-                  if (item.protegge) t('Protettivo', 'Defensive'),
-                ].join(' · '),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white70),
-              ),
-              trailing: IconButton(
-                tooltip: t(
-                  'Dona a un giocatore online',
-                  'Give to an online player',
-                ),
-                icon: Icon(Icons.card_giftcard, color: tertiaryColor),
-                onPressed: _masterOnlinePlayers().isEmpty
-                    ? null
-                    : () => _chooseOnlineGiftRecipient(item),
-              ),
-            ),
-          ),
+                if (items.isEmpty)
+                  smallInfoText(t('Nessun oggetto trovato.', 'No items found.'))
+                else
+                  SizedBox(
+                    height: min(560.0, max(180.0, items.length * 88.0)),
+                    child: ListView.builder(
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        return Card(
+                          color: const Color(0xFF11131A),
+                          child: ListTile(
+                            title: Text(
+                              item.nome,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              [
+                                if (item.note.isNotEmpty) item.note,
+                                if (item.buff.isNotEmpty) item.buff,
+                                if (item.arma) t('Offensivo', 'Offensive'),
+                                if (item.protegge) t('Protettivo', 'Defensive'),
+                              ].join(' · '),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                            trailing: IconButton(
+                              tooltip: t(
+                                'Aggiungi a una scheda locale o online',
+                                'Add to a local or online sheet',
+                              ),
+                              icon: Icon(
+                                Icons.add_circle_outline,
+                                color: tertiaryColor,
+                              ),
+                              onPressed: () => _chooseCatalogDestination(item),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ],
     ),
   );
 
-  Future<void> _chooseOnlineGiftRecipient(InventoryItem item) async {
-    final players = _masterOnlinePlayers();
-    if (players.isEmpty || realtimeService?.isConnected != true) return;
-    final target = await showDialog<Map<String, dynamic>>(
+  Future<void> _chooseCatalogDestination(InventoryItem item) async {
+    final quantityController = TextEditingController(text: '1');
+    final quantity = await showDialog<int>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF121018),
+        title: Text(t('Quantità: ${item.nome}', 'Quantity: ${item.nome}')),
+        content: TextField(
+          controller: quantityController,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            labelText: t('Quantità da aggiungere', 'Quantity to add'),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () {
+              final parsed = int.tryParse(quantityController.text.trim());
+              if (parsed != null && parsed > 0 && parsed <= 1000000) {
+                Navigator.pop(ctx, parsed);
+              }
+            },
+            child: Text(t('Continua', 'Continue')),
+          ),
+        ],
+      ),
+    );
+    quantityController.dispose();
+    if (!mounted || quantity == null) return;
+    final players = realtimeService?.isConnected == true
+        ? _masterOnlinePlayers()
+        : <Map<String, dynamic>>[];
+    final destination = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF121018),
         title: Text(
-          t('Dona ${item.nome}', 'Give ${item.nome}'),
+          t('Destinazione: ${item.nome}', 'Destination: ${item.nome}'),
           style: TextStyle(color: tertiaryColor),
         ),
         content: SizedBox(
-          width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: players
-                .map(
-                  (user) => ListTile(
-                    leading: const Icon(Icons.person, color: Colors.tealAccent),
-                    title: Text(
-                      '${user['playerName'] ?? 'Giocatore'}',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    subtitle: Text(
-                      '${user['activeSheetTag']}',
-                      style: const TextStyle(color: Colors.white60),
-                    ),
-                    onTap: () => Navigator.pop(ctx, user),
+          width: 440,
+          height: 480,
+          child: ListView(
+            children: [
+              for (var i = 0; i < schedePersonaggio.length; i++)
+                ListTile(
+                  leading: const Icon(
+                    Icons.description,
+                    color: Colors.amberAccent,
                   ),
-                )
-                .toList(),
+                  title: Text(
+                    nomeSchedaPersonaggio(i),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  subtitle: Text(
+                    t('Scheda locale', 'Local sheet'),
+                    style: const TextStyle(color: Colors.white60),
+                  ),
+                  onTap: () =>
+                      Navigator.pop(ctx, {'type': 'local', 'index': i}),
+                ),
+              if (players.isNotEmpty) const Divider(color: Colors.white24),
+              for (final user in players)
+                ListTile(
+                  leading: const Icon(Icons.person, color: Colors.tealAccent),
+                  title: Text(
+                    '${user['playerName'] ?? 'Giocatore'}',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  subtitle: Text(
+                    '${user['activeSheetTag']}',
+                    style: const TextStyle(color: Colors.white60),
+                  ),
+                  onTap: () =>
+                      Navigator.pop(ctx, {'type': 'online', 'user': user}),
+                ),
+              if (players.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: smallInfoText(
+                    t(
+                      'Nessun giocatore online al momento. Puoi comunque scegliere una scheda locale.',
+                      'No players online right now. You can still choose a local sheet.',
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
         actions: [
@@ -4824,12 +4995,21 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         ],
       ),
     );
-    if (target == null) return;
+    if (destination == null) return;
+    if (destination['type'] == 'local') {
+      await _addCatalogItemToLocalSheet(
+        item,
+        destination['index'] as int,
+        quantity,
+      );
+      return;
+    }
+    final target = destination['user'] as Map<String, dynamic>;
     final service = realtimeService;
     final targetTag = '${target['activeSheetTag'] ?? ''}'.trim();
     if (service?.isConnected != true || targetTag.isEmpty) return;
     final gift = InventoryItem.fromJson(item.toJson())
-      ..quantita = 1
+      ..quantita = quantity
       ..equipaggiata = false;
     final sent = await service!.sendItemGift({
       'deliveryId': 'item_${DateTime.now().microsecondsSinceEpoch}',
@@ -4848,6 +5028,43 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         );
         aggiungiLog(risultato);
       });
+    }
+  }
+
+  Future<void> _addCatalogItemToLocalSheet(
+    InventoryItem item,
+    int sheetIndex,
+    int quantity,
+  ) async {
+    if (sheetIndex < 0 || sheetIndex >= schedePersonaggio.length) return;
+    final gift = InventoryItem.fromJson(item.toJson())
+      ..quantita = quantity
+      ..equipaggiata = false;
+    if (sheetIndex == schedaCorrente) {
+      inventario.add(gift);
+    } else {
+      final sheet = schedePersonaggio[sheetIndex];
+      sheet['inventario'] = _updatedRawList(sheet, 'inventario')
+        ..add(gift.toJson());
+      if (sheet['realtimeSharedSheet'] == true) {
+        sheet['realtimeDirtyLocal'] = true;
+        sheet['realtimeDirtyAt'] = DateTime.now().toIso8601String();
+      }
+    }
+    await salvaDati();
+    if (mounted) {
+      setState(() {
+        risultato = t(
+          'Aggiunti $quantity × ${item.nome} a ${nomeSchedaPersonaggio(sheetIndex)}.',
+          'Added $quantity × ${item.nome} to ${nomeSchedaPersonaggio(sheetIndex)}.',
+        );
+        aggiungiLog(risultato);
+      });
+    }
+    if (sheetIndex != schedaCorrente &&
+        schedePersonaggio[sheetIndex]['realtimeSharedSheet'] == true &&
+        (modalitaMaster || isMasterHost || realtimeIsMasterRole)) {
+      await drainRealtimeDirtySheets();
     }
   }
 

@@ -244,6 +244,10 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
     Widget Function() content,
   ) async {
     if (!mounted) return;
+    if (anchor == 'sheet_dice' || anchor == 'sheet_dice_quick') {
+      await openDiceInCurrentScreen();
+      return;
+    }
     final parentDetailActive = referenceDetailRouteActive;
     _expandedFunctionSections.add(anchor);
     if (anchor == 'sheet_editable_values') mostraValoriEditabiliScheda = true;
@@ -850,6 +854,8 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                 ],
               ),
               const SizedBox(height: 12),
+              if (haPermessiMaster)
+                masterItemGiftPanel(initiallyExpanded: true),
               if (inventario.isEmpty)
                 Text(
                   t(

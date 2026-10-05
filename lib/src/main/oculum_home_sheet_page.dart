@@ -9867,7 +9867,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     children: [4, 6, 8, 10, 12, 20]
                         .map(
                           (faces) => OutlinedButton(
-                            onPressed: () => tiraDado(faces),
+                            onPressed: () => tiraDadoCustom(faces),
                             style: OutlinedButton.styleFrom(
                               minimumSize: Size.zero,
                               padding: const EdgeInsets.symmetric(

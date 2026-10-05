@@ -1236,36 +1236,71 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
             'Fragilità, resistenze, immunità e rigenerazione sono salvate per elemento. Una percentuale libera sostituisce il preset di quell’elemento.',
           ),
           const SizedBox(height: 12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              const gap = 10.0;
-              final columns = max(
-                1,
-                min(3, ((constraints.maxWidth + gap) / 260).floor()),
-              );
-              final cardWidth =
-                  (constraints.maxWidth - gap * (columns - 1)) / columns;
-              return Wrap(
-                spacing: gap,
-                runSpacing: gap,
-                children: [
-                  for (final id in {
-                    ...allDamageElementIds(),
-                    ...incomingDamagePresets.keys,
-                    ...dannoSubitoPercentPerTipo.keys,
-                  })
-                    SizedBox(
-                      width: cardWidth,
-                      child: _resistanceElementCard(id),
-                    ),
-                ],
-              );
-            },
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: resistanceElementSearchController,
+            builder: (context, search, _) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  key: const ValueKey('resistance_element_search'),
+                  controller: resistanceElementSearchController,
+                  decoration: fieldDecoration('Cerca elemento').copyWith(
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: search.text.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: 'Cancella ricerca',
+                            onPressed: resistanceElementSearchController.clear,
+                            icon: const Icon(Icons.clear),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _filteredResistanceCards(search.text),
+              ],
+            ),
           ),
         ],
       ),
     ),
   );
+
+  Widget _filteredResistanceCards(String search) {
+    final needle = search.trim().toLowerCase();
+    final ids =
+        {
+              ...allDamageElementIds(),
+              ...incomingDamagePresets.keys,
+              ...dannoSubitoPercentPerTipo.keys,
+            }
+            .where(
+              (id) =>
+                  needle.isEmpty ||
+                  elementDisplayName(id).toLowerCase().contains(needle) ||
+                  id.toLowerCase().contains(needle),
+            )
+            .toList();
+    if (ids.isEmpty) return const Text('Nessun elemento trovato.');
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 10.0;
+        final columns = max(
+          1,
+          min(3, ((constraints.maxWidth + gap) / 260).floor()),
+        );
+        final cardWidth =
+            (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final id in ids)
+              SizedBox(width: cardWidth, child: _resistanceElementCard(id)),
+          ],
+        );
+      },
+    );
+  }
 
   Widget _resistanceElementCard(String id) {
     final color = elementColor(id);
