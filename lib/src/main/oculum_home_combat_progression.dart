@@ -637,7 +637,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }) {
     dadoOverlayTimer?.cancel();
     dadoOverlayRevealTimer?.cancel();
-    final reduceEffects = modalitaLeggera || modalitaVeloce || phoneCompactUi;
+    final reduceEffects = MediaQuery.disableAnimationsOf(context);
 
     final slotValue = slotMachineRollsEnabled
         ? criticoUno
@@ -676,7 +676,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }) {
     dadoOverlay = valore;
     dadoOverlayFacce = facce;
-    if (!reduceEffects) dadoOverlaySpinSeed++;
+    dadoOverlaySpinSeed++;
     overlayCriticoUno = criticoUno;
     overlayCriticoVenti = criticoVenti;
     mostraOverlayDado = true;
@@ -687,7 +687,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   void _scheduleDadoCentraleOverlayTimers({required bool reduceEffects}) {
     if (!reduceEffects) {
-      dadoOverlayRevealTimer = Timer(const Duration(milliseconds: 500), () {
+      dadoOverlayRevealTimer = Timer(const Duration(milliseconds: 900), () {
         if (!mounted) return;
 
         dadoOverlayMostraRisultato = true;
@@ -696,7 +696,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
 
     dadoOverlayTimer = Timer(
-      Duration(milliseconds: reduceEffects ? 300 : 1000),
+      Duration(milliseconds: reduceEffects ? 300 : 900),
       () {
         if (!mounted) return;
 
@@ -917,8 +917,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           : totale > 0,
     );
     var masteryCompletedLevels = 0;
-    final reduceDiceEffects =
-        modalitaLeggera || modalitaVeloce || phoneCompactUi;
+    final reduceDiceEffects = MediaQuery.disableAnimationsOf(context);
     var statoForzaLog = '';
 
     dadoOverlayTimer?.cancel();

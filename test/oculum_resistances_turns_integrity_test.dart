@@ -468,6 +468,7 @@ void main() {
       );
       expect(help, findsWidgets);
       final helpWidget = tester.widget<Tooltip>(help.first);
+      expect(helpWidget.waitDuration, const Duration(milliseconds: 450));
       final helpDecoration = helpWidget.decoration! as BoxDecoration;
       expect(
         helpDecoration.gradient!.colors.every(

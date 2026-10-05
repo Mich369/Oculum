@@ -222,6 +222,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                   (stat) => hiddenEyeStatGroup(stat.id) == group,
                 ))
                   Tooltip(
+                    waitDuration: const Duration(milliseconds: 450),
                     constraints: BoxConstraints(
                       maxWidth: min(360, MediaQuery.sizeOf(context).width - 32),
                     ),

@@ -72,6 +72,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 150));
       }
       expect(die.hitTestable(), findsOneWidget);
+      final spinSeedBeforeRoll = state.dadoOverlaySpinSeed as int;
       await tester.tap(die);
       await tester.pump(const Duration(seconds: 1));
       expect(state.risultato, contains('2d4'));
@@ -81,6 +82,14 @@ void main() {
       );
       expect(state.paginaCorrente, 8);
       expect(state.mostraOverlayDado, isTrue);
+      expect(state.dadoOverlaySpinSeed, spinSeedBeforeRoll + 1);
+      final overlay = find.byKey(const ValueKey('current_route_dice_overlay'));
+      final rotation = tester.widget<AnimatedRotation>(
+        find
+            .descendant(of: overlay, matching: find.byType(AnimatedRotation))
+            .first,
+      );
+      expect(rotation.turns, (spinSeedBeforeRoll + 1).toDouble());
       await tester.tapAt(tester.getCenter(panel));
       await tester.pump(const Duration(milliseconds: 250));
       await tester.tap(find.byKey(const ValueKey('close_current_screen_dice')));
@@ -106,7 +115,6 @@ void main() {
       expect(state.referenceDetailRouteActive, isTrue);
       await probe.rollSubtrait('nodo');
       await tester.pump(const Duration(seconds: 1));
-      final overlay = find.byKey(const ValueKey('current_route_dice_overlay'));
       expect(overlay.hitTestable(), findsOneWidget);
       expect(state.referenceDetailRouteActive, isTrue);
       await tester.tapAt(tester.getCenter(overlay));

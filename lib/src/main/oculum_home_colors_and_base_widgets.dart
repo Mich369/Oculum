@@ -2823,12 +2823,12 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                             children: [
                               AnimatedRotation(
                                 turns: mostraOverlayDado
-                                    ? dadoOverlaySpinSeed * 0.18
+                                    ? dadoOverlaySpinSeed.toDouble()
                                     : 0,
                                 duration:
                                     MediaQuery.disableAnimationsOf(context)
                                     ? Duration.zero
-                                    : const Duration(milliseconds: 500),
+                                    : const Duration(milliseconds: 900),
                                 curve: Curves.easeOutCubic,
                                 child: RepaintBoundary(
                                   child: D20Widget(
