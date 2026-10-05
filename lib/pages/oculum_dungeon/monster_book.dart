@@ -17,6 +17,10 @@ class MonsterBookEntry {
   final Map<String, int> stats;
   final List<String> skillIds;
   final List<String> dropIds;
+
+  /// Probability (0–100) for each optional material drop. Unlisted drops keep
+  /// the legacy guaranteed behavior so existing campaigns retain their rules.
+  final Map<String, int> dropChances;
   final bool canWieldWeapons;
   final List<String> weaponTags;
   final List<String> armorTags;
@@ -26,7 +30,8 @@ class MonsterBookEntry {
   final List<Map<String, dynamic>> inventoryItems;
   final List<String> classificationTags;
   List<String> get formTags => classificationTags.isNotEmpty
-      ? classificationTags : oculumCreatureFormTags(id, nameIt, nameEn, descIt, isNpc: isNpc);
+      ? classificationTags
+      : oculumCreatureFormTags(id, nameIt, nameEn, descIt, isNpc: isNpc);
 
   const MonsterBookEntry({
     required this.id,
@@ -44,6 +49,7 @@ class MonsterBookEntry {
     this.stats = const {},
     this.skillIds = const [],
     this.dropIds = const [],
+    this.dropChances = const {},
     this.canWieldWeapons = false,
     this.weaponTags = const [],
     this.armorTags = const [],
@@ -74,6 +80,7 @@ class MonsterBookEntry {
     Map<String, int>? stats,
     List<String>? skillIds,
     List<String>? dropIds,
+    Map<String, int>? dropChances,
     bool? canWieldWeapons,
     List<String>? weaponTags,
     List<String>? armorTags,
@@ -96,6 +103,7 @@ class MonsterBookEntry {
       stats: stats ?? this.stats,
       skillIds: skillIds ?? this.skillIds,
       dropIds: dropIds ?? this.dropIds,
+      dropChances: dropChances ?? this.dropChances,
       canWieldWeapons: canWieldWeapons ?? this.canWieldWeapons,
       weaponTags: weaponTags ?? this.weaponTags,
       armorTags: armorTags ?? this.armorTags,
@@ -122,6 +130,7 @@ class MonsterBookEntry {
       'stats': Map<String, int>.from(stats),
       'skillIds': List<String>.from(skillIds),
       'dropIds': List<String>.from(dropIds),
+      'dropChances': Map<String, int>.from(dropChances),
       'canWieldWeapons': canWieldWeapons,
       'weaponTags': List<String>.from(weaponTags),
       'armorTags': List<String>.from(armorTags),
@@ -162,6 +171,7 @@ class MonsterBookEntry {
       stats: stats,
       skillIds: _monsterBookStrings(json['skillIds']),
       dropIds: _monsterBookStrings(json['dropIds']),
+      dropChances: _monsterBookIntMap(json['dropChances']),
       canWieldWeapons: _monsterBookBool(json['canWieldWeapons']),
       weaponTags: _monsterBookStrings(json['weaponTags']),
       armorTags: _monsterBookStrings(json['armorTags']),
@@ -174,45 +184,98 @@ class MonsterBookEntry {
 
 /// Physical family first, profession and condition as additional labels.
 /// A name such as Forest Demon does not make its body a Demon.
-List<String> oculumCreatureFormTags(String id, String name, String english, String description, {bool isNpc = false}) {
+List<String> oculumCreatureFormTags(
+  String id,
+  String name,
+  String english,
+  String description, {
+  bool isNpc = false,
+}) {
   final text = '$id $name $english'.toLowerCase();
   final tags = <String>[];
-  bool has(String pattern) => RegExp(pattern, caseSensitive: false).hasMatch(text);
-  if (has(r'forest.?demon|demone.?della.?foresta')) { tags.addAll(['Rettile gigante', 'Rettile']); }
-  else if (has(r'angel|angelo|serafin|seraph')) { tags.add('Angelo'); }
-  else if (has(r'demon|demone|demonietto|diavol')) { tags.add('Demone'); }
-  else if (has(r'slime')) { tags.add('Slime'); }
-  else if (has(r'drag[oa]n|drago|drake')) { tags.add('Drago'); }
-  else if (has(r'scheletr|skeleton|ossa|teschio')) { tags.addAll(['Non morto', 'Scheletro']); }
-  else if (has(r'zombie|lich|vampir|immortal|decapitat|decomposizione')) {
+  bool has(String pattern) =>
+      RegExp(pattern, caseSensitive: false).hasMatch(text);
+  if (has(r'forest.?demon|demone.?della.?foresta')) {
+    tags.addAll(['Rettile gigante', 'Rettile']);
+  } else if (has(r'angel|angelo|serafin|seraph')) {
+    tags.add('Angelo');
+  } else if (has(r'demon|demone|demonietto|diavol')) {
+    tags.add('Demone');
+  } else if (has(r'slime')) {
+    tags.add('Slime');
+  } else if (has(r'drag[oa]n|drago|drake')) {
+    tags.add('Drago');
+  } else if (has(r'scheletr|skeleton|ossa|teschio')) {
+    tags.addAll(['Non morto', 'Scheletro']);
+  } else if (has(r'zombie|lich|vampir|immortal|decapitat|decomposizione')) {
     tags.add('Non morto');
-    if (has(r'mammuth|mammoth')) { tags.add('Mammifero'); }
-  }
-  else if (has(r'golem|costrutt|autom|campana|sentinella.?a.?spirali')) { tags.add('Costrutto'); }
-  else if (has(r'basilis|idra|hydra|serpent|rettil|coccodr')) { tags.add('Rettile'); }
-  else if (has(r'ragno|spider|scorpion')) { tags.add('Aracnide'); }
-  else if (has(r'larva|insett|insect|scarab|vespa|falena|moth')) { tags.add('Insetto'); }
-  else if (has(r'rosp|rana|ranocchio|anfib')) { tags.add('Anfibio'); }
-  else if (has(r'legno|tree|pinepine|pigna|quercia|grofix')) { tags.add('Vegetale'); }
-  else if (has(r'elemental')) { tags.add('Elementale'); }
-  else if (has(r'ombra|shadow|spettr|spectr|fantasm|ghost|spirit')) { tags.add('Spirito'); }
-  else if (has(r'incubo|nightmare|osservatore|mimic|follia|fetale|null|fateless')) { tags.add('Aberrazione'); }
-  else if (has(r'grifon|griffin|chimera|arpia|harpy|minotaur')) { tags.add('Chimera'); }
-  else if (has(r'lupo|wolf|warg|mammuth|mammoth|orso|bear|felin|kitty|patalpa|snorlo|pipistrello|bat')) { tags.add('Mammifero'); }
-  else if (has(r'gigante|giant|ogre|troll')) { tags.add('Gigante'); }
-  else if (isNpc || has(r'goblin|kobold|cobold|gnoll|orco|orc|bandit|cultist|necroman|cavalier|soldat|umano|human|elf|nano|dwarf|custode|sposa|uomo')) { tags.add('Umanoide'); }
-  else {
+    if (has(r'mammuth|mammoth')) {
+      tags.add('Mammifero');
+    }
+  } else if (has(r'golem|costrutt|autom|campana|sentinella.?a.?spirali')) {
+    tags.add('Costrutto');
+  } else if (has(r'basilis|idra|hydra|serpent|rettil|coccodr')) {
+    tags.add('Rettile');
+  } else if (has(r'ragno|spider|scorpion')) {
+    tags.add('Aracnide');
+  } else if (has(r'larva|insett|insect|scarab|vespa|falena|moth')) {
+    tags.add('Insetto');
+  } else if (has(r'rosp|rana|ranocchio|anfib')) {
+    tags.add('Anfibio');
+  } else if (has(r'legno|tree|pinepine|pigna|quercia|grofix')) {
+    tags.add('Vegetale');
+  } else if (has(r'elemental')) {
+    tags.add('Elementale');
+  } else if (has(r'ombra|shadow|spettr|spectr|fantasm|ghost|spirit')) {
+    tags.add('Spirito');
+  } else if (has(
+    r'incubo|nightmare|osservatore|mimic|follia|fetale|null|fateless',
+  )) {
+    tags.add('Aberrazione');
+  } else if (has(r'grifon|griffin|chimera|arpia|harpy|minotaur')) {
+    tags.add('Chimera');
+  } else if (has(
+    r'lupo|wolf|warg|mammuth|mammoth|orso|bear|felin|kitty|patalpa|snorlo|pipistrello|bat',
+  )) {
+    tags.add('Mammifero');
+  } else if (has(r'gigante|giant|ogre|troll')) {
+    tags.add('Gigante');
+  } else if (isNpc ||
+      has(
+        r'goblin|kobold|cobold|gnoll|orco|orc|bandit|cultist|necroman|cavalier|soldat|umano|human|elf|nano|dwarf|custode|sposa|uomo',
+      )) {
+    tags.add('Umanoide');
+  } else {
     final body = description.toLowerCase();
-    if (RegExp(r'umanoide|bipede|umano').hasMatch(body)) { tags.add('Umanoide'); }
-    else if (RegExp(r'quadrupede|pelliccia|mammifero').hasMatch(body)) { tags.add('Mammifero'); }
-    else if (RegExp(r'ali|piume|uccello').hasMatch(body)) { tags.add('Aviano'); }
-    else { tags.add('Forma sconosciuta'); }
+    if (RegExp(r'umanoide|bipede|umano').hasMatch(body)) {
+      tags.add('Umanoide');
+    } else if (RegExp(r'quadrupede|pelliccia|mammifero').hasMatch(body)) {
+      tags.add('Mammifero');
+    } else if (RegExp(r'ali|piume|uccello').hasMatch(body)) {
+      tags.add('Aviano');
+    } else {
+      tags.add('Forma sconosciuta');
+    }
   }
-  if (has(r'goblin|orco|orc|kobold|cobold|gnoll|gigante|giant|ogre|troll|angel|angelo|serafin|seraph')) { tags.add('Umanoide'); }
-  if (has(r'gigante|giant') && !tags.contains('Gigante')) { tags.add('Gigante'); }
-  for (final entry in {'Guerriero': r'guerrier|warrior|soldat|cavalier|knight', 'Mago': r'mago|mage|necroman|lich',
-    'Assassino': r'assassin|killer', 'Cultista': r'cultist', 'Mutante': r'mutant|corrott', 'Infestante': r'grofix|infest'}.entries) {
-    if (has(entry.value)) { tags.add(entry.key); }
+  if (has(
+    r'goblin|orco|orc|kobold|cobold|gnoll|gigante|giant|ogre|troll|angel|angelo|serafin|seraph',
+  )) {
+    tags.add('Umanoide');
+  }
+  if (has(r'gigante|giant') && !tags.contains('Gigante')) {
+    tags.add('Gigante');
+  }
+  for (final entry in {
+    'Guerriero': r'guerrier|warrior|soldat|cavalier|knight',
+    'Mago': r'mago|mage|necroman|lich',
+    'Assassino': r'assassin|killer',
+    'Cultista': r'cultist',
+    'Mutante': r'mutant|corrott',
+    'Infestante': r'grofix|infest',
+  }.entries) {
+    if (has(entry.value)) {
+      tags.add(entry.key);
+    }
   }
   return tags.toSet().toList(growable: false);
 }
@@ -227,6 +290,14 @@ bool _monsterBookBool(dynamic value) {
   if (value is bool) return value;
   final normalized = '$value'.trim().toLowerCase();
   return normalized == 'true' || normalized == '1' || normalized == 'yes';
+}
+
+Map<String, int> _monsterBookIntMap(dynamic value) {
+  if (value is! Map) return const <String, int>{};
+  return <String, int>{
+    for (final entry in value.entries)
+      '${entry.key}': _monsterBookInt(entry.value).clamp(0, 100).toInt(),
+  };
 }
 
 List<String> _monsterBookStrings(dynamic value) {
@@ -879,7 +950,8 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'oculum': 0,
     },
     skillIds: ['dirty_strike', 'run_laugh', 'junk'],
-    dropIds: ['cianfrusaglia'],
+    dropIds: ['cianfrusaglia', 'zanne_goblin', 'pelle_mostro'],
+    dropChances: {'zanne_goblin': 70, 'pelle_mostro': 45},
   ),
   MonsterBookEntry(
     id: 'kobold_base',
@@ -1033,7 +1105,8 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'oculum': 2,
     },
     skillIds: ['harpy_song', 'dive', 'wingbeat'],
-    dropIds: ['piuma'],
+    dropIds: ['piuma', 'piume_arpia'],
+    dropChances: {'piume_arpia': 65},
   ),
   MonsterBookEntry(
     id: 'orco_base',
@@ -1828,7 +1901,15 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     isNullFateless: false,
     stats: {'hp': 190, 'atk': 34, 'def': 18, 'spd': 12},
     skillIds: ['devastating_charge', 'backward_dash', 'immaterial_dash'],
-    dropIds: ['carne_forest_demon', 'scarti_carne', 'ossa_dure', 'heavy_horn'],
+    dropIds: [
+      'carne_forest_demon',
+      'scarti_carne',
+      'ossa_dure',
+      'heavy_horn',
+      'corno_forest_demon',
+      'metallo_runico',
+    ],
+    dropChances: {'corno_forest_demon': 35, 'metallo_runico': 20},
   ),
   MonsterBookEntry(
     id: 'plomp_piccolo',
@@ -2461,11 +2542,14 @@ MonsterBookEntry _inspiredMonster({
   required int will,
   required int matter,
   required int oculum,
+  List<String> drops = const [],
+  Map<String, int> dropChances = const {},
 }) => MonsterBookEntry(
   id: 'inspired_$id',
   nameIt: name,
   nameEn: name,
-  descIt: '$description Base di livello 0: RES $resilience, VOL $will, '
+  descIt:
+      '$description Base di livello 0: RES $resilience, VOL $will, '
       'MAT $matter, OCU $oculum. Le tre tecniche crescono con il livello '
       'e con le forme I–III.',
   descEn: description,
@@ -2481,33 +2565,202 @@ MonsterBookEntry _inspiredMonster({
     'materia': matter,
     'oculum': oculum,
   },
-  skillIds: ['inspired_${id}_attack', 'inspired_${id}_guard', 'inspired_${id}_field'],
-  dropIds: [],
+  skillIds: [
+    'inspired_${id}_attack',
+    'inspired_${id}_guard',
+    'inspired_${id}_field',
+  ],
+  dropIds: drops,
+  dropChances: dropChances,
 );
 
 final List<MonsterBookEntry> _inspiredMonsterBookEntries = [
-  _inspiredMonster(id: 'vespa_rovinata', name: 'Vespa di Rovina', element: 'veleno', resilience: 3, will: 4, matter: 5, oculum: 3,
-    description: 'Insetto predatore dal torace bruno e dagli occhi rosso vivo; dalle zampe anteriori cola una secrezione rosata che si rapprende in filamenti pungenti.'),
-  _inspiredMonster(id: 'goblin_scacciamorte', name: 'Goblin Scacciamorte', element: 'cenere', resilience: 5, will: 4, matter: 4, oculum: 3,
-    description: 'Piccolo sciamano dalla pelle pallida, con cappuccio osseo, amuleto appuntito e una mazza ferrata troppo grande per il suo corpo.'),
-  _inspiredMonster(id: 'sentinella_spirale', name: 'Sentinella a Spirali', element: 'materia', resilience: 7, will: 4, matter: 6, oculum: 4,
-    description: 'Costrutto scuro coperto da anelli concentrici color rame e turchese; la pupilla centrale si contrae quando registra un movimento.'),
-  _inspiredMonster(id: 'rospaccio_rosso', name: 'Rospaccio Rosso', element: 'veleno', resilience: 6, will: 3, matter: 4, oculum: 2,
-    description: 'Anfibio largo e rosso cupo, con sorriso dentato, zampe pendenti e una sacca luminosa sul ventre che pulsa prima dello spruzzo.'),
-  _inspiredMonster(id: 'bruto_sorriso_cavo', name: 'Bruto dal Sorriso Cavo', element: 'vuoto', resilience: 8, will: 2, matter: 3, oculum: 1,
-    description: 'Bestia bassa e sbilenca, coperta da pelo scuro arruffato; una bocca smisurata attraversa il volto e una spirale pallida segna la tempia.'),
-  _inspiredMonster(id: 'ranocchio_fango', name: 'Ranocchio del Fango Verde', element: 'natura', resilience: 4, will: 4, matter: 5, oculum: 3,
-    description: 'Creatura verde dagli occhi semichiusi e dalla gola nera; membrane laterali le consentono balzi improvvisi tra acqua e terreno.'),
-  _inspiredMonster(id: 'teschio_brina', name: 'Teschio della Brina Cieca', element: 'gelo', resilience: 5, will: 5, matter: 3, oculum: 5,
-    description: 'Un cranio avvolto in un mantello di ghiaccio, con mani azzurre che spuntano dall’ombra e cercano calore attraverso le fessure.'),
-  _inspiredMonster(id: 'occhio_vapore', name: 'Occhio del Vapore Nero', element: 'vuoto', resilience: 4, will: 6, matter: 3, oculum: 6,
-    description: 'Spettro privo di volto, formato da lingue di fumo verde petrolio; due occhi pallidi restano sospesi fra i tentacoli.'),
-  _inspiredMonster(id: 'falena_sepolcro', name: 'Falena del Sepolcro', element: 'vuoto', resilience: 4, will: 5, matter: 4, oculum: 5,
-    description: 'Scheletro alato con grandi ali nere bordate d’indaco, macchie iridescenti e orbite dipinte che confondono la distanza.'),
-  _inspiredMonster(id: 'pipistrello_iride', name: 'Pipistrello dell’Iride Vuota', element: 'vuoto', resilience: 4, will: 4, matter: 5, oculum: 6,
-    description: 'Pipistrello pallido con un’unica pupilla al posto del muso; membrane lacere e piccoli occhi alati lo seguono dall’alto.'),
-  _inspiredMonster(id: 'corvo_becco_orologio', name: 'Corvo dal Becco d’Orologio', element: 'cenere', resilience: 5, will: 5, matter: 6, oculum: 4,
-    description: 'Umanoide piumato dal mantello viola, maschera a becco lungo e disco metallico al posto dell’occhio; le piume si aprono come lancette.'),
+  _inspiredMonster(
+    id: 'vespa_rovinata',
+    name: 'Vespa di Rovina',
+    element: 'veleno',
+    resilience: 3,
+    will: 4,
+    matter: 5,
+    oculum: 3,
+    description:
+        'Insetto predatore dal torace bruno e dagli occhi rosso vivo; dalle zampe anteriori cola una secrezione rosata che si rapprende in filamenti pungenti.',
+  ),
+  _inspiredMonster(
+    id: 'goblin_scacciamorte',
+    name: 'Goblin Scacciamorte',
+    element: 'cenere',
+    resilience: 5,
+    will: 4,
+    matter: 4,
+    oculum: 3,
+    description:
+        'Piccolo sciamano dalla pelle pallida, con cappuccio osseo, amuleto appuntito e una mazza ferrata troppo grande per il suo corpo.',
+  ),
+  _inspiredMonster(
+    id: 'sentinella_spirale',
+    name: 'Sentinella a Spirali',
+    element: 'materia',
+    resilience: 7,
+    will: 4,
+    matter: 6,
+    oculum: 4,
+    description:
+        'Costrutto scuro coperto da anelli concentrici color rame e turchese; la pupilla centrale si contrae quando registra un movimento.',
+  ),
+  _inspiredMonster(
+    id: 'rospaccio_rosso',
+    name: 'Rospaccio Rosso',
+    element: 'veleno',
+    resilience: 6,
+    will: 3,
+    matter: 4,
+    oculum: 2,
+    description:
+        'Anfibio largo e rosso cupo, con sorriso dentato, zampe pendenti e una sacca luminosa sul ventre che pulsa prima dello spruzzo.',
+  ),
+  _inspiredMonster(
+    id: 'bruto_sorriso_cavo',
+    name: 'Bruto dal Sorriso Cavo',
+    element: 'vuoto',
+    resilience: 8,
+    will: 2,
+    matter: 3,
+    oculum: 1,
+    description:
+        'Bestia bassa e sbilenca, coperta da pelo scuro arruffato; una bocca smisurata attraversa il volto e una spirale pallida segna la tempia.',
+  ),
+  _inspiredMonster(
+    id: 'ranocchio_fango',
+    name: 'Ranocchio del Fango Verde',
+    element: 'natura',
+    resilience: 4,
+    will: 4,
+    matter: 5,
+    oculum: 3,
+    description:
+        'Creatura verde dagli occhi semichiusi e dalla gola nera; membrane laterali le consentono balzi improvvisi tra acqua e terreno.',
+  ),
+  _inspiredMonster(
+    id: 'teschio_brina',
+    name: 'Teschio della Brina Cieca',
+    element: 'gelo',
+    resilience: 5,
+    will: 5,
+    matter: 3,
+    oculum: 5,
+    description:
+        'Un cranio avvolto in un mantello di ghiaccio, con mani azzurre che spuntano dall’ombra e cercano calore attraverso le fessure.',
+  ),
+  _inspiredMonster(
+    id: 'occhio_vapore',
+    name: 'Occhio del Vapore Nero',
+    element: 'vuoto',
+    resilience: 4,
+    will: 6,
+    matter: 3,
+    oculum: 6,
+    description:
+        'Spettro privo di volto, formato da lingue di fumo verde petrolio; due occhi pallidi restano sospesi fra i tentacoli.',
+  ),
+  _inspiredMonster(
+    id: 'falena_sepolcro',
+    name: 'Falena del Sepolcro',
+    element: 'vuoto',
+    resilience: 4,
+    will: 5,
+    matter: 4,
+    oculum: 5,
+    description:
+        'Scheletro alato con grandi ali nere bordate d’indaco, macchie iridescenti e orbite dipinte che confondono la distanza.',
+  ),
+  _inspiredMonster(
+    id: 'pipistrello_iride',
+    name: 'Pipistrello dell’Iride Vuota',
+    element: 'vuoto',
+    resilience: 4,
+    will: 4,
+    matter: 5,
+    oculum: 6,
+    description:
+        'Pipistrello pallido con un’unica pupilla al posto del muso; membrane lacere e piccoli occhi alati lo seguono dall’alto.',
+  ),
+  _inspiredMonster(
+    id: 'corvo_becco_orologio',
+    name: 'Corvo dal Becco d’Orologio',
+    element: 'cenere',
+    resilience: 5,
+    will: 5,
+    matter: 6,
+    oculum: 4,
+    description:
+        'Umanoide piumato dal mantello viola, maschera a becco lungo e disco metallico al posto dell’occhio; le piume si aprono come lancette.',
+  ),
+  _inspiredMonster(
+    id: 'lupo_di_bruma',
+    name: 'Lupo di Bruma',
+    element: 'natura',
+    resilience: 5,
+    will: 3,
+    matter: 6,
+    oculum: 1,
+    description:
+        'Predatore comune dei boschi freddi. Attacca in branco e arretra se resta isolato; i suoi artigli servono per lame leggere.',
+    drops: ['artigli_lupo'],
+    dropChances: {'artigli_lupo': 60},
+  ),
+  _inspiredMonster(
+    id: 'scarabeo_di_basalto',
+    name: 'Scarabeo di Basalto',
+    element: 'materia',
+    resilience: 8,
+    will: 2,
+    matter: 7,
+    oculum: 1,
+    description:
+        'Insetto corazzato lento, vulnerabile quando rovesciato. Il carapace integro è un buon materiale da scudo.',
+    drops: ['carapace_scarabeo'],
+    dropChances: {'carapace_scarabeo': 55},
+  ),
+  _inspiredMonster(
+    id: 'troll_delle_caverne',
+    name: 'Troll delle Caverne',
+    element: 'fisico',
+    resilience: 11,
+    will: 3,
+    matter: 8,
+    oculum: 0,
+    description:
+        'Bruto lento con rigenerazione limitata: il fuoco interrompe la cura per un turno. I denti robusti sono ricercati dai fabbri.',
+    drops: ['denti_troll'],
+    dropChances: {'denti_troll': 65},
+  ),
+  _inspiredMonster(
+    id: 'basilisco_delle_rovine',
+    name: 'Basilisco delle Rovine',
+    element: 'natura',
+    resilience: 9,
+    will: 8,
+    matter: 10,
+    oculum: 5,
+    description:
+        'Rettilo di grado III che deve vedere il bersaglio per pietrificarlo; coprirgli gli occhi interrompe la tecnica. Il suo occhio è un catalizzatore raro.',
+    drops: ['occhio_basilisco'],
+    dropChances: {'occhio_basilisco': 35},
+  ),
+  _inspiredMonster(
+    id: 'pipistrello_cavernicolo',
+    name: 'Pipistrello Cavernicolo',
+    element: 'aria',
+    resilience: 3,
+    will: 4,
+    matter: 5,
+    oculum: 1,
+    description:
+        'Creatura minore che fugge dalle luci intense. La sua membrana elastica viene usata per guanti e fasciature.',
+    drops: ['membrana_pipistrello'],
+    dropChances: {'membrana_pipistrello': 55},
+  ),
 ];
 
 const List<MonsterBookEntry> _manualMonsterBookEntries = [
@@ -2524,7 +2777,13 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     isMiniBoss: false,
     isBoss: false,
     isNullFateless: false,
-    stats: {'level': 0, 'resilienza': 1, 'volonta': 1, 'materia': 1, 'oculum': 0},
+    stats: {
+      'level': 0,
+      'resilienza': 1,
+      'volonta': 1,
+      'materia': 1,
+      'oculum': 0,
+    },
     classificationTags: ['Creatura Minore', 'Demone'],
     dropIds: ['carbone_spento'],
   ),
@@ -2541,7 +2800,13 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     isMiniBoss: false,
     isBoss: false,
     isNullFateless: false,
-    stats: {'level': 0, 'resilienza': 1, 'volonta': 2, 'materia': 1, 'oculum': 0},
+    stats: {
+      'level': 0,
+      'resilienza': 1,
+      'volonta': 2,
+      'materia': 1,
+      'oculum': 0,
+    },
     classificationTags: ['Creatura Minore', 'Spirito'],
     dropIds: ['polvere_di_luce_fioca'],
   ),
@@ -2558,7 +2823,13 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     isMiniBoss: false,
     isBoss: false,
     isNullFateless: false,
-    stats: {'level': 0, 'resilienza': 1, 'volonta': 1, 'materia': 2, 'oculum': 0},
+    stats: {
+      'level': 0,
+      'resilienza': 1,
+      'volonta': 1,
+      'materia': 2,
+      'oculum': 0,
+    },
     classificationTags: ['Creatura Minore', 'Volatile'],
     dropIds: ['piuma_di_strige'],
   ),
@@ -2575,7 +2846,13 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     isMiniBoss: false,
     isBoss: false,
     isNullFateless: false,
-    stats: {'level': 0, 'resilienza': 1, 'volonta': 1, 'materia': 1, 'oculum': 0},
+    stats: {
+      'level': 0,
+      'resilienza': 1,
+      'volonta': 1,
+      'materia': 1,
+      'oculum': 0,
+    },
     classificationTags: ['Creatura Minore', 'Parassita'],
     dropIds: ['inchiostro_morto'],
   ),
@@ -4217,26 +4494,109 @@ List<MonsterBookEntry> _withMonsterSkillNarration(
 /// Il Book non mostra più sigle tecniche come skill: ogni forma parla a chi la
 /// usa. Le schede create dal giocatore possono comunque sostituire il testo.
 String _inspiredMonsterSkillText(String rawId) {
-  final match = RegExp(r'^inspired_(.+)_(attack|guard|field)$').firstMatch(rawId);
+  final match = RegExp(
+    r'^inspired_(.+)_(attack|guard|field)$',
+  ).firstMatch(rawId);
   if (match == null) return '';
   final creature = match.group(1)!;
   final role = match.group(2)!;
   final profile = <String, ({String name, List<String> actions})>{
-    'vespa_rovinata': (name: 'Secrezione della Vespa', actions: ['Scagli una goccia urticante contro un bersaglio vicino', 'La secrezione si divide e punge due volte', 'Il getto si apre a ventaglio e brucia chi attraversa la nube']),
-    'goblin_scacciamorte': (name: 'Mazza del Becchino', actions: ['Colpisci con la mazza ferrata', 'Il colpo scheggia la guardia e spinge il bersaglio', 'Un fendente pesante abbatte la difesa e apre la linea']),
-    'sentinella_spirale': (name: 'Risonanza Concentrica', actions: ['Emetti un impulso dalla pupilla centrale', 'Due cerchi d’urto colpiscono in successione', 'Un’onda concentrica investe tutta la linea visibile']),
-    'rospaccio_rosso': (name: 'Sputo Cremisi', actions: ['Sputi una goccia corrosiva a breve distanza', 'Lo spruzzo si allarga e raggiunge chi sta dietro', 'Una scarica viscosa travolge l’area davanti a te']),
-    'bruto_sorriso_cavo': (name: 'Morso del Sorriso Cavo', actions: ['Mordi il bersaglio con la bocca smisurata', 'Il morso resta serrato e lacera la guardia', 'La mascella si chiude con tutta la forza del corpo']),
-    'ranocchio_fango': (name: 'Balzo delle Membrane', actions: ['Balzi oltre il bersaglio e lo colpisci all’atterraggio', 'Il salto copre una seconda creatura vicina', 'Atterri con una botta che scuote il terreno attorno']),
-    'teschio_brina': (name: 'Mani sotto il Gelo', actions: ['Le mani azzurre afferrano e gelano un avversario', 'Il gelo corre lungo il corpo e irrigidisce la presa', 'Una morsa di brina rallenta chi resta nella zona']),
-    'occhio_vapore': (name: 'Vapore Avvolgente', actions: ['Un tentacolo di fumo devia il prossimo colpo', 'Il vapore si chiude attorno a te e protegge un alleato vicino', 'Una coltre mobile respinge i nemici che tentano di attraversarla']),
-    'falena_sepolcro': (name: 'Polvere delle Ali Funebri', actions: ['Batti le ali e lanci polvere contro un bersaglio', 'Le macchie oculari confondono due avversari vicini', 'La polvere iridescente copre l’area e colpisce chi vi resta']),
-    'pipistrello_iride': (name: 'Pupilla Predatrice', actions: ['L’occhio scatta sul bersaglio e lo colpisce con un impulso', 'La pupilla segue il movimento e sferra un secondo colpo', 'Un fascio concentrato raggiunge chi si trova sulla traiettoria']),
-    'corvo_becco_orologio': (name: 'Becco a Scatto', actions: ['Affondi con il becco metallico', 'Il disco oculare anticipa la risposta e rinforza il colpo', 'Le piume a lancetta si aprono in una raffica precisa']),
+    'vespa_rovinata': (
+      name: 'Secrezione della Vespa',
+      actions: [
+        'Scagli una goccia urticante contro un bersaglio vicino',
+        'La secrezione si divide e punge due volte',
+        'Il getto si apre a ventaglio e brucia chi attraversa la nube',
+      ],
+    ),
+    'goblin_scacciamorte': (
+      name: 'Mazza del Becchino',
+      actions: [
+        'Colpisci con la mazza ferrata',
+        'Il colpo scheggia la guardia e spinge il bersaglio',
+        'Un fendente pesante abbatte la difesa e apre la linea',
+      ],
+    ),
+    'sentinella_spirale': (
+      name: 'Risonanza Concentrica',
+      actions: [
+        'Emetti un impulso dalla pupilla centrale',
+        'Due cerchi d’urto colpiscono in successione',
+        'Un’onda concentrica investe tutta la linea visibile',
+      ],
+    ),
+    'rospaccio_rosso': (
+      name: 'Sputo Cremisi',
+      actions: [
+        'Sputi una goccia corrosiva a breve distanza',
+        'Lo spruzzo si allarga e raggiunge chi sta dietro',
+        'Una scarica viscosa travolge l’area davanti a te',
+      ],
+    ),
+    'bruto_sorriso_cavo': (
+      name: 'Morso del Sorriso Cavo',
+      actions: [
+        'Mordi il bersaglio con la bocca smisurata',
+        'Il morso resta serrato e lacera la guardia',
+        'La mascella si chiude con tutta la forza del corpo',
+      ],
+    ),
+    'ranocchio_fango': (
+      name: 'Balzo delle Membrane',
+      actions: [
+        'Balzi oltre il bersaglio e lo colpisci all’atterraggio',
+        'Il salto copre una seconda creatura vicina',
+        'Atterri con una botta che scuote il terreno attorno',
+      ],
+    ),
+    'teschio_brina': (
+      name: 'Mani sotto il Gelo',
+      actions: [
+        'Le mani azzurre afferrano e gelano un avversario',
+        'Il gelo corre lungo il corpo e irrigidisce la presa',
+        'Una morsa di brina rallenta chi resta nella zona',
+      ],
+    ),
+    'occhio_vapore': (
+      name: 'Vapore Avvolgente',
+      actions: [
+        'Un tentacolo di fumo devia il prossimo colpo',
+        'Il vapore si chiude attorno a te e protegge un alleato vicino',
+        'Una coltre mobile respinge i nemici che tentano di attraversarla',
+      ],
+    ),
+    'falena_sepolcro': (
+      name: 'Polvere delle Ali Funebri',
+      actions: [
+        'Batti le ali e lanci polvere contro un bersaglio',
+        'Le macchie oculari confondono due avversari vicini',
+        'La polvere iridescente copre l’area e colpisce chi vi resta',
+      ],
+    ),
+    'pipistrello_iride': (
+      name: 'Pupilla Predatrice',
+      actions: [
+        'L’occhio scatta sul bersaglio e lo colpisce con un impulso',
+        'La pupilla segue il movimento e sferra un secondo colpo',
+        'Un fascio concentrato raggiunge chi si trova sulla traiettoria',
+      ],
+    ),
+    'corvo_becco_orologio': (
+      name: 'Becco a Scatto',
+      actions: [
+        'Affondi con il becco metallico',
+        'Il disco oculare anticipa la risposta e rinforza il colpo',
+        'Le piume a lancetta si aprono in una raffica precisa',
+      ],
+    ),
   };
   final selected = profile[creature];
   if (selected == null) return '';
-  final index = role == 'attack' ? 0 : role == 'guard' ? 1 : 2;
+  final index = role == 'attack'
+      ? 0
+      : role == 'guard'
+      ? 1
+      : 2;
   final title = role == 'attack'
       ? selected.name
       : role == 'guard'

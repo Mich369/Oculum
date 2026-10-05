@@ -718,6 +718,7 @@ List<OculumRecipe> oculumAdditionalCraftingRecipes(String now) {
       'Guanto a lame di goblin',
       {'Zanne di goblin': 200, 'Pelle di mostro': 300},
       500,
+      kind: 'forge',
       target: 'weapon',
       description:
           'Versione debole, Grado 0: +5 Danni perforanti quando equipaggiato.',
@@ -727,6 +728,7 @@ List<OculumRecipe> oculumAdditionalCraftingRecipes(String now) {
       'Guanto runico del Forest Demon',
       {'Corno di Forest Demon': 300, 'Metallo runico': 700},
       1000,
+      kind: 'forge',
       target: 'weapon',
       description:
           'Versione forte, Grado I: +10 Danni perforanti quando equipaggiato.',
@@ -740,6 +742,7 @@ List<OculumRecipe> oculumAdditionalCraftingRecipes(String now) {
         'Cuoio conciato': 100,
       },
       1300,
+      kind: 'forge',
       target: 'weapon',
       description: 'Arma: +3 Danni taglienti quando equipaggiata.',
     ),
@@ -752,6 +755,7 @@ List<OculumRecipe> oculumAdditionalCraftingRecipes(String now) {
         'Tendine bestiale': 200,
       },
       2200,
+      kind: 'forge',
       target: 'armor',
       description: 'Scudo: +3 Difesa quando equipaggiato.',
     ),
@@ -760,6 +764,7 @@ List<OculumRecipe> oculumAdditionalCraftingRecipes(String now) {
       'Mazza dentata di troll',
       {'Denti di troll': 500, 'Legno di frassino': 1500},
       2000,
+      kind: 'forge',
       target: 'weapon',
       description: 'Arma: +4 Danni contundenti quando equipaggiata.',
     ),
@@ -768,6 +773,7 @@ List<OculumRecipe> oculumAdditionalCraftingRecipes(String now) {
       'Mantello di arpia',
       {'Piume di arpia': 300, 'Tessuto di lino': 500},
       800,
+      kind: 'forge',
       target: 'armor',
       description: 'Protezione: +1 Difesa quando equipaggiata.',
     ),
@@ -776,6 +782,7 @@ List<OculumRecipe> oculumAdditionalCraftingRecipes(String now) {
       'Guanti di membrana',
       {'Membrana di pipistrello gigante': 200, 'Cuoio conciato': 200},
       400,
+      kind: 'forge',
       target: 'armor',
       description: 'Protezione: +1 Difesa quando equipaggiata.',
     ),
@@ -817,8 +824,9 @@ List<OculumRecipe> oculumAdditionalCraftingRecipes(String now) {
         {'Legante di ${material.name}': 200, 'Lingotto di ferro': 100},
         300,
         kind: 'forge',
+        effect: '@Ocu+${(1 + material.grade ~/ 4).clamp(1, 4)}',
         description:
-            'Applica il materiale a un’arma, armatura o scudo. ${material.effect}',
+            'Applica a un’arma, armatura o scudo. Da equipaggiato aumenta di ${((1 + material.grade ~/ 4).clamp(1, 4))} il massimale Oculum; il valore scala ogni 4 gradi. ${material.effect}',
       ),
     make('ferro', 'Lingotto di ferro', {
       'Ferro grezzo': 1200,
@@ -850,6 +858,7 @@ List<OculumRecipe> oculumAdditionalCraftingRecipes(String now) {
       'Lama d’acciaio',
       {'Lingotto di acciaio': 1500, 'Cuoio conciato': 200},
       1700,
+      kind: 'forge',
       target: 'weapon',
       description: 'Arma d’acciaio. Statistiche configurabili dal Master.',
     ),
@@ -862,6 +871,7 @@ List<OculumRecipe> oculumAdditionalCraftingRecipes(String now) {
         'Cuoio conciato': 200,
       },
       3200,
+      kind: 'forge',
       target: 'armor',
       description:
           'Scudo con anima di legno e superficie di bronzo. Statistiche configurabili dal Master.',
@@ -875,6 +885,7 @@ List<OculumRecipe> oculumAdditionalCraftingRecipes(String now) {
         'Tendine bestiale': 200,
       },
       3200,
+      kind: 'forge',
       target: 'armor',
       description:
           'Armatura di scaglie draconiche. Statistiche configurabili dal Master.',
@@ -974,8 +985,114 @@ oculumCraftedEquipmentBonuses(OculumRecipe recipe) => switch (recipe.id) {
     element: 'Fisico',
     grade: 0,
   ),
+  'expansion_lama_acciaio' => (
+    damage: 6,
+    defense: 0,
+    element: 'tagliente',
+    grade: 1,
+  ),
+  'expansion_scudo_bronzo' => (
+    damage: 0,
+    defense: 3,
+    element: 'Fisico',
+    grade: 0,
+  ),
+  'expansion_corazza_draconica' => (
+    damage: 0,
+    defense: 8,
+    element: 'Fuoco',
+    grade: 3,
+  ),
   _ => (damage: 0, defense: 0, element: 'Fisico', grade: 0),
 };
+
+@visibleForTesting
+int oculumGerinResonanceGain({
+  required int grade,
+  required int attackTotal,
+  required int previousTriggers,
+}) {
+  if (attackTotal <= 20 || previousTriggers < 0 || previousTriggers >= 3) {
+    return 0;
+  }
+  final startingGain = (1 + max(0, grade) ~/ 4).clamp(1, 4).toInt();
+  return max(0, startingGain - previousTriggers);
+}
+
+int? oculumGerinResonanceGradeForRecipe(OculumRecipe recipe) {
+  for (final material in oculumFantasyCraftingMaterials) {
+    if (material.id.startsWith('gerin') &&
+        recipe.id == 'expansion_intarsio_${material.id}') {
+      return material.grade;
+    }
+  }
+  return null;
+}
+
+Map<String, dynamic> oculumGerinResonanceData(OculumRecipe recipe) {
+  final grade = oculumGerinResonanceGradeForRecipe(recipe);
+  return grade == null ? const {} : {'gerinResonanceGrade': grade};
+}
+
+@visibleForTesting
+String oculumCraftingSubtraitId(OculumRecipe recipe) =>
+    switch (recipe.recipeKind.trim().toLowerCase()) {
+      'alchemy' || 'alchimia' => 'alchimia',
+      'forge' || 'forgiatura' => 'riparazioni',
+      _ => 'crafting',
+    };
+
+@visibleForTesting
+int oculumCraftingGradeForRecipe(OculumRecipe recipe) {
+  final materials = <OculumAuthoredMaterial>[
+    ...oculumAuthoredMaterials,
+    ...oculumAdditionalCraftingMaterials,
+  ];
+  var grade = 0;
+  for (final material in materials) {
+    if (recipe.id == 'expansion_intarsio_${material.id}' ||
+        recipe.id == 'expansion_legante_${material.id}') {
+      grade = max(grade, material.grade);
+    }
+  }
+  for (final ingredient in recipe.ingredients) {
+    for (final material in materials) {
+      if (material.name.trim().toLowerCase() ==
+          ingredient.name.trim().toLowerCase()) {
+        grade = max(grade, material.grade);
+      }
+    }
+  }
+  return max(0, grade);
+}
+
+@visibleForTesting
+int oculumCraftingDifficulty(
+  OculumRecipe recipe, {
+  int quantity = 1,
+  int? inputGrade,
+}) {
+  final kind = recipe.recipeKind.trim().toLowerCase();
+  final base = switch (kind) {
+    'alchemy' || 'alchimia' => 14,
+    'forge' || 'forgiatura' => 13,
+    _ => 12,
+  };
+  final grade = max(inputGrade ?? oculumCraftingGradeForRecipe(recipe), 0);
+  final batchPenalty = ((max(1, quantity) - 1) / 2).floor().clamp(0, 6).toInt();
+  return base + grade * 2 + batchPenalty;
+}
+
+@visibleForTesting
+bool oculumCraftingCheckSucceeds({
+  required int naturalRoll,
+  required int total,
+  required int difficulty,
+}) => naturalRoll == 20 || (naturalRoll != 1 && total >= difficulty);
+
+@visibleForTesting
+int oculumCraftingFailureLossGrams(int requiredGrams) =>
+    max(1, (max(0, requiredGrams) * .25).ceil());
 
 /// Validates everything before consuming anything. Returns an Italian error,
 /// or null on success. Only one copy of a stacked target is modified.
@@ -1079,12 +1196,14 @@ String? oculumApplyForgeToItem(
   forged.craftData = {
     ...forged.craftData,
     'forgedRecipes': [...applied, key],
+    ...oculumGerinResonanceData(recipe),
   };
   return null;
 }
 
 extension _OculumGerin on _OculumHomePageState {
-  Future<void> useGerin() async {
+  Future<void> useGerin([InventoryItem? selected]) async {
+    if (selected != null && !inventario.contains(selected)) return;
     final fragments = inventario
         .where((item) => item.nome.trim().toLowerCase() == 'gerin')
         .fold<int>(0, (count, item) => count + max(0, item.quantita));
@@ -1127,6 +1246,7 @@ extension _OculumGerin on _OculumHomePageState {
     if (!mounted || harmful == null) return;
     await tiraSottotrattoOcchio(stats.first);
     if (!mounted) return;
+    _exhaustGerinFragments(2);
     final rules = harmful
         ? 'I bersagli tirano CM contro questo tiro; se falliscono subiscono i tuoi Danni. Il Master applica elemento, resistenze e danni.'
         : 'I bersagli devono superare questo tiro per vederti. Il Master risolve il confronto.';
@@ -1134,6 +1254,80 @@ extension _OculumGerin on _OculumHomePageState {
     aggiungiLog(risultato);
     notifyDiceResultChanged();
     programmaSalvataggio();
+  }
+
+  void _exhaustGerinFragments(int amount) {
+    var remaining = amount;
+    for (final item in inventario.toList()) {
+      if (remaining <= 0) break;
+      if (item.nome.trim().toLowerCase() != 'gerin') continue;
+      final used = min(remaining, item.quantita);
+      item.quantita -= used;
+      remaining -= used;
+      if (item.quantita <= 0) inventario.remove(item);
+      inventario.add(
+        InventoryItem(
+          nome: 'Gerin Esausto',
+          peso: item.peso,
+          quantita: used,
+          gradoOggetto: item.gradoOggetto,
+          note: 'Si riattiva soltanto con un Cristallo di Oculum.',
+          craftData: {
+            'material': 'gerin_esausto',
+            'materialGrade': 0,
+            'active': false,
+          },
+        ),
+      );
+    }
+  }
+
+  bool reviveGerinWithOculumCrystal(InventoryItem crystal) {
+    if (!inventario.contains(crystal) || crystal.quantita <= 0) return false;
+    if (crystal.craftData['material'] != 'cristallo_oculum' &&
+        crystal.nome.trim().toLowerCase() != 'cristallo di oculum grezzo') {
+      return false;
+    }
+    final exhausted = inventario
+        .where(
+          (item) =>
+              item.craftData['material'] == 'gerin_esausto' ||
+              item.nome.trim().toLowerCase() == 'gerin esausto',
+        )
+        .firstOrNull;
+    if (exhausted == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t(
+              'Non hai Gerin Esausto da riattivare.',
+              'You have no Exhausted Gerin to restore.',
+            ),
+          ),
+        ),
+      );
+      return false;
+    }
+    crystal.quantita--;
+    if (crystal.quantita <= 0) inventario.remove(crystal);
+    exhausted.quantita--;
+    final weight = exhausted.peso;
+    if (exhausted.quantita <= 0) inventario.remove(exhausted);
+    inventario.add(
+      InventoryItem(
+        nome: 'Gerin',
+        peso: weight,
+        quantita: 1,
+        note: 'Riattivato con un Cristallo di Oculum.',
+        craftData: {'material': 'gerin', 'materialGrade': 0, 'active': false},
+      ),
+    );
+    aggiungiLog(
+      'Un Cristallo di Oculum ha riattivato un frammento di Gerin Esausto.',
+    );
+    programmaSalvataggio();
+    refreshOculumHome(() {});
+    return true;
   }
 }
 

@@ -1374,8 +1374,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           const SizedBox(height: 10),
           smallInfoText(
             t(
-              'Da 3 Cenere in poi ogni aumento controlla lo svenimento. Il tiro resta nei log completi; qui vedi solo lo stato e la soglia.',
-              'From 3 Ash onward every increase checks fainting. The roll stays in the full logs; here you only see state and threshold.',
+              'Fuori dal combattimento ogni aumento da 3 Cenere controlla lo svenimento. In combattimento il controllo avviene solo a 6, 9, 12… Cenere: se fallisce dà Vista appannata (-1 ai tiri per un turno); lo svenimento ha solo l’1% di probabilità da 12 Cenere. Il tiro resta nei log.',
+              'Outside combat, each increase from 3 Ash checks for fainting. In combat checks happen only at 6, 9, 12… Ash: failure gives Blurred vision (-1 to rolls for one turn); fainting has only a 1% chance from 12 Ash. Rolls remain in the log.',
             ),
           ),
           if (cenere >= 3 && cenere > cenereSvenimentoUltimoControllo) ...[

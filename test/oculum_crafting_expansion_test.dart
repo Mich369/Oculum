@@ -1,10 +1,152 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
+import 'package:oculum/pages/oculum_dungeon/monster_book.dart' as monster_book;
 import 'package:oculum/services/oculum_diary_links.dart';
 import 'package:oculum/services/oculum_diary_memory.dart';
 import 'package:oculum/services/oculum_diary_roles.dart';
 
 void main() {
+  test(
+    'Crafting checks use the matching skill and scale by material grade',
+    () {
+      final recipes = oculumAdditionalCraftingRecipes('now');
+      final alchemy = recipes.firstWhere(
+        (recipe) => recipe.recipeKind == 'alchemy',
+      );
+      final forge = recipes.firstWhere(
+        (recipe) => recipe.id == 'expansion_guanto_forest_demon',
+      );
+      final intarsioZero = recipes.firstWhere(
+        (recipe) => recipe.id == 'expansion_intarsio_gerin',
+      );
+      final intarsioFour = recipes.firstWhere(
+        (recipe) => recipe.id == 'expansion_intarsio_crisol_astrale',
+      );
+      expect(oculumCraftingSubtraitId(alchemy), 'alchimia');
+      expect(oculumCraftingSubtraitId(forge), 'riparazioni');
+      expect(oculumCraftingSubtraitId(intarsioZero), 'riparazioni');
+      expect(oculumCraftingDifficulty(intarsioZero), 13);
+      expect(oculumCraftingDifficulty(intarsioFour), 21);
+      expect(oculumCraftingDifficulty(forge), 15);
+      expect(
+        oculumCraftingDifficulty(intarsioZero, quantity: 8),
+        oculumCraftingDifficulty(intarsioZero) + 3,
+      );
+      expect(
+        oculumCraftingCheckSucceeds(naturalRoll: 20, total: 1, difficulty: 30),
+        isTrue,
+      );
+      expect(
+        oculumCraftingCheckSucceeds(naturalRoll: 1, total: 100, difficulty: 1),
+        isFalse,
+      );
+      expect(
+        oculumCraftingCheckSucceeds(naturalRoll: 10, total: 13, difficulty: 13),
+        isTrue,
+      );
+      expect(oculumCraftingFailureLossGrams(100), 25);
+      expect(oculumCraftingFailureLossGrams(1), 1);
+      for (final material in oculumFantasyCraftingMaterials) {
+        final recipe = recipes.firstWhere(
+          (entry) => entry.id == 'expansion_intarsio_${material.id}',
+        );
+        expect(recipe.forgeEffectText, contains('@Ocu+'));
+        expect(oculumCraftingDifficulty(recipe), 13 + 2 * material.grade);
+      }
+    },
+  );
+
+  test(
+    'Gerin resonance replenishes Oculum with diminishing bounded yields',
+    () {
+      expect(
+        [
+          for (var previous = 0; previous < 4; previous++)
+            oculumGerinResonanceGain(
+              grade: 0,
+              attackTotal: 21,
+              previousTriggers: previous,
+            ),
+        ],
+        [1, 0, 0, 0],
+      );
+      expect(
+        [
+          for (var previous = 0; previous < 3; previous++)
+            oculumGerinResonanceGain(
+              grade: 8,
+              attackTotal: 21,
+              previousTriggers: previous,
+            ),
+        ],
+        [3, 2, 1],
+      );
+      expect(
+        oculumGerinResonanceGain(
+          grade: 12,
+          attackTotal: 20,
+          previousTriggers: 0,
+        ),
+        0,
+      );
+    },
+  );
+
+  test('Combat Ash checks are rare and prefer a one-turn light penalty', () {
+    expect(oculumCombatAshTriggersCheck(3), isFalse);
+    expect(oculumCombatAshTriggersCheck(6), isTrue);
+    expect(oculumCombatAshTriggersCheck(8), isFalse);
+    expect(oculumCombatAshTriggersCheck(9), isTrue);
+    expect(
+      oculumCombatAshCausesUnconscious(ash: 11, percentileRoll: 0),
+      isFalse,
+    );
+    expect(
+      oculumCombatAshCausesUnconscious(ash: 12, percentileRoll: 0),
+      isTrue,
+    );
+    expect(
+      oculumCombatAshCausesUnconscious(ash: 20, percentileRoll: 1),
+      isFalse,
+    );
+    final blurred = oculumConditionDefinition('vista_appannata')!;
+    expect(blurred.rollModifierForStage(1), -1);
+    expect(blurred.durationForStage(1), 1);
+  });
+
+  test(
+    'Crafting drops map to recipes and optional monster materials have odds',
+    () {
+      final monsters = monster_book.defaultMonsterBookEntries;
+      for (final entry in [
+        ('arpia_base', 'piume_arpia', 65),
+        ('forest_demon', 'corno_forest_demon', 35),
+        ('goblin_base', 'zanne_goblin', 70),
+        ('lupo_di_bruma', 'artigli_lupo', 60),
+        ('scarabeo_di_basalto', 'carapace_scarabeo', 55),
+        ('troll_delle_caverne', 'denti_troll', 65),
+        ('basilisco_delle_rovine', 'occhio_basilisco', 35),
+        ('pipistrello_cavernicolo', 'membrana_pipistrello', 55),
+      ]) {
+        final monster = monsters.firstWhere(
+          (m) =>
+              m.id == entry.$1 ||
+              m.id.startsWith('${entry.$1}_') ||
+              m.id == 'inspired_${entry.$1}',
+        );
+        expect(monster.dropIds, contains(entry.$2));
+        expect(monster.dropChances[entry.$2], entry.$3);
+        expect(
+          monster_book.MonsterBookEntry.fromJson(
+            monster.toJson(),
+          ).dropChances[entry.$2],
+          entry.$3,
+        );
+      }
+      expect(oculumMonsterDropName('piume_arpia'), 'Piume di arpia');
+    },
+  );
+
   test(
     'Fantasy materials cover 20 grade-zero names and every higher grade',
     () {

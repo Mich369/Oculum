@@ -1499,6 +1499,29 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
   // their live effects; snapshots carry the same monotonic personal counter.
   void advanceEncounterParticipantTurn(int index) {
     final token = masterInitiativeTokens[index];
+    final scrollEffects = (token['scrollEffects'] as List? ?? const [])
+        .whereType<Map>()
+        .map((effect) => Map<String, dynamic>.from(effect))
+        .toList();
+    final remainingScrollEffects = <Map<String, dynamic>>[];
+    final expiredScrollNotes = <String>{};
+    for (final effect in scrollEffects) {
+      final turns = max(0, readIntValue(effect['remainingTurns']) - 1);
+      if (turns > 0) {
+        effect['remainingTurns'] = turns;
+        remainingScrollEffects.add(effect);
+      } else if ('${effect['note'] ?? ''}'.isNotEmpty) {
+        expiredScrollNotes.add('${effect['note']}');
+      }
+    }
+    token['scrollEffects'] = remainingScrollEffects;
+    if (expiredScrollNotes.isNotEmpty) {
+      token['notes'] = '${token['notes'] ?? ''}'
+          .split('\n')
+          .where((line) => !expiredScrollNotes.contains(line))
+          .join('\n')
+          .trim();
+    }
     final next = max(0, readIntValue(token['reportedTurn'])) + 1;
     if (token['pawnId'] != null) {
       advancePawnTurn('${token['pawnId']}', next);

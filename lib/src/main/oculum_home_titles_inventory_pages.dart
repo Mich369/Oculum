@@ -4722,11 +4722,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
 
     for (final element in allDamageElementIds()) {
       for (var grade = 0; grade <= 12; grade++) {
-        for (final kind in ['attack', 'control', 'ward']) {
-          add(
-            oculumScrollItem(element, elementDisplayName(element), grade, kind),
-          );
-        }
+        add(
+          oculumScrollItem(element, elementDisplayName(element), grade, 'auto'),
+        );
       }
     }
 
@@ -4816,7 +4814,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       final mammuth = monster.id.startsWith('mammuth_in_decomposizione');
       final drops = mammuth
           ? const <String>['Ossa di mammuth putrido']
-          : monster.dropIds.map(systemMonsterReadableId);
+          : monster.dropIds.map(oculumMonsterDropName);
       for (final drop in drops) {
         if (drop.trim().isEmpty) continue;
         add(
@@ -5501,7 +5499,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           position.dy,
         ),
         items: <PopupMenuEntry<String>>[
-          if (item.craftData['material'] != null)
+          if (item.craftData['material'] != null &&
+              item.craftData['material'] != 'gerin_esausto')
             PopupMenuItem<String>(
               value: 'material_active',
               child: Text(
@@ -5514,6 +5513,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             const PopupMenuItem(
               value: 'gerin',
               child: Text('Vampata di Gerin'),
+            ),
+          if (item.craftData['material'] == 'cristallo_oculum' ||
+              item.nome.trim().toLowerCase() == 'cristallo di oculum grezzo')
+            const PopupMenuItem<String>(
+              value: 'revive_gerin',
+              child: Text('Riattiva Gerin Esausto'),
             ),
           if (item.monsterLoot['material'] == true)
             const PopupMenuItem<String>(
@@ -5612,7 +5617,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           await combineMonsterMaterial(item);
           break;
         case 'gerin':
-          await useGerin();
+          await useGerin(item);
+          break;
+        case 'revive_gerin':
+          reviveGerinWithOculumCrystal(item);
           break;
         case 'material_active':
           toggleAuthoredMaterial(item);

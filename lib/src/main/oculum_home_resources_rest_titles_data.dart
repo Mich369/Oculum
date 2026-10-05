@@ -1733,10 +1733,19 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     var statoOculumDaRiposo = '';
     var probabilitaStatoOculum = 0.0;
     var oculumRisvegliatoDalRiposo = false;
+    var risonanzeGerinRicaricate = 0;
     final potenzaNucleoDaRimuovere = <int>[];
     setState(() {
       merchantDustPurchasedSinceLongRest = false;
       merchantHerbalEffects.clear();
+      for (final item in inventario) {
+        if (item.craftData['gerinResonanceGrade'] == null ||
+            readIntValue(item.craftData['gerinResonanceTriggers']) <= 0) {
+          continue;
+        }
+        item.craftData = {...item.craftData, 'gerinResonanceTriggers': 0};
+        risonanzeGerinRicaricate++;
+      }
       invalidateHiddenEyeDerivedCaches();
       tempResilienza -= consumedFoodBonuses['resilienza'] ?? 0;
       tempVolonta -= consumedFoodBonuses['volonta'] ?? 0;
@@ -1933,6 +1942,12 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         ultimoEventoRiposo += t(
           '\n$limitedArtRecoveries Art completamente esaurite hanno recuperato solo il 10%; dai prossimi riposi torneranno al recupero normale.',
           '\n$limitedArtRecoveries fully exhausted Arts recovered only 10%; normal recovery resumes from the next rests.',
+        );
+      }
+      if (risonanzeGerinRicaricate > 0) {
+        ultimoEventoRiposo += t(
+          '\nRicaricate $risonanzeGerinRicaricate risonanze di Gerin.',
+          '\nRecharged $risonanzeGerinRicaricate Gerin resonance(s).',
         );
       }
       if (aggiustaNucleoEraUsato) {

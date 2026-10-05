@@ -916,6 +916,25 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     control: true,
   ),
   OculumConditionDefinition(
+    id: 'vista_appannata',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.tiri,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Vista appannata',
+    nameEn: 'Blurred vision',
+    icon: Icons.blur_on,
+    category: OculumConditionCategory.physical,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt: '-1 ai tiri fino alla fine del prossimo turno.',
+    descriptionEn: '-1 to rolls until the end of your next turn.',
+    stackMode: OculumConditionStackMode.refreshDuration,
+    rollModifierByStage: <int>[-1],
+    defaultDuration: 1,
+    durationType: OculumConditionDurationType.turns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
     id: 'accecato',
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.tiri,

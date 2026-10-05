@@ -54,6 +54,24 @@ void main() {
       );
     },
   );
+  test(
+    'Elemental scrolls have distinct roles and stronger grades cost more',
+    () {
+      expect(oculumScrollKindForElement('terra'), 'imprison');
+      expect(oculumScrollKindForElement('acqua'), 'heal');
+      expect(oculumScrollKindForElement('luce'), 'ward');
+      expect(oculumScrollKindForElement('ombra'), 'weaken');
+      expect(oculumScrollKindForElement('fulmine'), 'stun');
+      final cage = oculumScrollItem('terra', 'Terra', 0, 'auto');
+      final improvedCage = oculumScrollItem('terra', 'Terra', 3, 'auto');
+      expect(cage.nome, contains('Gabbia d’Ossa'));
+      expect(cage.note, contains('un turno'));
+      expect(improvedCage.note, contains('20 danni'));
+      expect(oculumScrollDifficulty(3), greaterThan(oculumScrollDifficulty(0)));
+      expect(oculumScrollWillCost(3), greaterThan(oculumScrollWillCost(0)));
+      expect(oculumScrollCooldown(3), greaterThan(oculumScrollCooldown(0)));
+    },
+  );
   test('Learned scroll data survives saves and cannot add an evolution', () {
     final item = oculumScrollItem('gelo', 'Ghiaccio', 1, 'attack');
     final skill = CharacterSkill(

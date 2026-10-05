@@ -628,11 +628,13 @@ Fatica:
 • ogni stato di Cenere oltre quella soglia dà -1 a VC, CM, Iniziativa e tiri di statistica.
 
 Svenimento da Cenere:
-• da 3 Cenere in poi, ogni aumento di Cenere impone un tiro automatico per restare cosciente;
+• fuori dal combattimento, da 3 Cenere in poi ogni aumento impone un tiro per restare cosciente;
+• durante un combattimento i controlli avvengono solo a 6, 9, 12… Cenere; una prova fallita applica Vista appannata (-1 ai tiri fino alla fine del prossimo turno);
+• solo da 12 Cenere in combattimento, dopo una prova fallita, c'è l'1% di probabilità di svenire;
 • il tiro parte da 1d120 + Resilienza/3 + Livello + Grado x6;
 • a ogni nuovo controllo il dado scende lungo la scala dei dadi dell'app, mentre la difficoltà è 20 + Cenere x3;
 • se il tiro supera la difficoltà, resti cosciente e il log riporta che riesci a non svenire nonostante la fatica;
-• se il tiro fallisce, diventi Incosciente finché non usi Sveglia o una regola esplicita ti rimette cosciente;
+• fuori dal combattimento, se il tiro fallisce diventi Incosciente finché non usi Sveglia o una regola esplicita ti rimette cosciente;
 • il dettaglio del tiro resta nei log completi e non appare come tiro centrale.
 
 Puoi ottenere Cenere quando:
@@ -672,11 +674,13 @@ Fatigue:
 • each Ash state beyond that threshold gives -1 to VC, CM, Initiative and stat rolls.
 
 Ash fainting:
-• from 3 Ash onward, each Ash increase automatically forces a roll to remain conscious;
+• outside combat, each increase from 3 Ash onward checks whether you remain conscious;
+• in combat, checks happen only at 6, 9, 12… Ash; failure applies Blurred vision (-1 to rolls until the end of your next turn);
+• only from 12 Ash in combat, a failed check has a 1% chance to cause unconsciousness;
 • the roll starts at 1d120 + Resilience/3 + Level + Grade x6;
 • at each new check the die moves down the app's die scale, while difficulty is 20 + Ash x3;
 • if the roll beats the difficulty, you remain conscious and the log says you manage not to faint despite the fatigue;
-• if the roll fails, you become Unconscious until Wake Up or an explicit rule restores consciousness;
+• outside combat, a failed roll makes you Unconscious until Wake Up or an explicit rule restores consciousness;
 • the roll detail stays in the full logs and does not appear as the central die roll.
 
 You may gain Ash when:

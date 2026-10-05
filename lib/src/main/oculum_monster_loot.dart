@@ -1,5 +1,28 @@
 part of '../../main.dart';
 
+String oculumMonsterDropName(String id) => switch (id) {
+  'zanne_goblin' => 'Zanne di goblin',
+  'pelle_mostro' => 'Pelle di mostro',
+  'corno_forest_demon' || 'heavy_horn' => 'Corno di Forest Demon',
+  'metallo_runico' => 'Metallo runico',
+  'artigli_lupo' => 'Artigli di lupo',
+  'carapace_scarabeo' => 'Carapace di scarabeo gigante',
+  'denti_troll' => 'Denti di troll',
+  'piume_arpia' => 'Piume di arpia',
+  'occhio_basilisco' => 'Occhio di basilisco',
+  'membrana_pipistrello' => 'Membrana di pipistrello gigante',
+  _ =>
+    id
+        .replaceAll('_', ' ')
+        .replaceAll('-', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim()
+        .split(' ')
+        .where((part) => part.isNotEmpty)
+        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+        .join(' '),
+};
+
 /// Generated once for a confirmed kill; no loot is awarded for a mere KO.
 List<InventoryItem> oculumGenerateMonsterLoot({
   required MonsterBookEntry monster,
@@ -55,7 +78,12 @@ List<InventoryItem> oculumGenerateMonsterLoot({
   final material = monster.id.startsWith('mammuth_in_decomposizione');
   final dropNames = material
       ? ['Ossa di mammuth putrido']
-      : monster.dropIds.map((id) => id.replaceAll('_', ' ')).toList();
+      : [
+          for (final id in monster.dropIds)
+            if (random.nextInt(100) <
+                (monster.dropChances[id]?.clamp(0, 100) ?? 100))
+              oculumMonsterDropName(id),
+        ];
   final drops = <InventoryItem>[
     for (var i = 0; i < dropNames.length; i++)
       InventoryItem(

@@ -519,6 +519,71 @@ extension _OculumHomeRecipes on _OculumHomePageState {
       ),
     );
     if (selected == null || !mounted) return;
+    if (recipe.ingredients.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t(
+              'La forgiatura richiede una ricetta con ingredienti.',
+              'Forging requires a recipe with ingredients.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+    final missing = _missingRecipeIngredients(recipe);
+    if (missing.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t(
+              'Materiali mancanti: ${missing.map((item) => item.name).join(', ')}.',
+              'Missing materials: ${missing.map((item) => item.name).join(', ')}.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+    if (leggiNumero(currentOculumController) < max(0, recipe.oculumCost)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(t('Oculum insufficiente.', 'Insufficient Oculum.')),
+        ),
+      );
+      return;
+    }
+    final check = await _resolveRecipeCheck(recipe, 1);
+    if (check == null || !mounted) return;
+    final succeeded = oculumCraftingCheckSucceeds(
+      naturalRoll: check.natural,
+      total: check.total,
+      difficulty: check.difficulty,
+    );
+    if (!succeeded) {
+      setState(() {
+        for (final ingredient in recipe.ingredients) {
+          _consumeRecipeMaterial(
+            ingredient.name,
+            oculumCraftingFailureLossGrams(_recipeGrams(ingredient.grams)),
+          );
+        }
+        if (recipe.oculumCost > 0) {
+          currentOculumController.text = max(
+            0,
+            leggiNumero(currentOculumController) - recipe.oculumCost,
+          ).toString();
+        }
+        risultato = t(
+          'Forgiatura fallita: ${check.stat.nome} ${check.total} contro DT ${check.difficulty}. Nessun bonus applicato; perso il 25% dei materiali${recipe.oculumCost > 0 ? ' e ${recipe.oculumCost} Oculum' : ''}.',
+          'Forge failed: ${check.stat.nome} ${check.total} against DT ${check.difficulty}. No bonus applied; 25% of materials${recipe.oculumCost > 0 ? ' and ${recipe.oculumCost} Oculum' : ''} lost.',
+        );
+        aggiungiLog(risultato);
+      });
+      programmaSalvataggio();
+      return;
+    }
     String? error;
     setState(() {
       error = oculumApplyForgeToItem(
@@ -532,7 +597,11 @@ extension _OculumHomeRecipes on _OculumHomePageState {
             (leggiNumero(currentOculumController) - max(0, recipe.oculumCost))
                 .toString();
         aggiungiLog(
-          'Forgiatura ${recipe.name} su ${selected.nome}: materiali della ricetta consumati.',
+          'Forgiatura ${recipe.name} su ${selected.nome}: ${check.stat.nome} ${check.total} contro DT ${check.difficulty}, superata; materiali della ricetta consumati.',
+        );
+        risultato = t(
+          'Forgiatura ${recipe.name} su ${selected.nome}: ${check.total} contro DT ${check.difficulty}, riuscita.',
+          'Forged ${recipe.name} onto ${selected.nome}: ${check.total} against DT ${check.difficulty}, success.',
         );
       }
     });
@@ -626,6 +695,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
     ) {
       final item = inventario[index];
       if (_recipeMaterialKey(item.nome) != key) continue;
+      final isGerin = item.nome.trim().toLowerCase() == 'gerin';
       final itemGrams = (item.peso * 1000 * max(0, item.quantita)).round();
       final consumed = min(itemGrams, remaining);
       final left = itemGrams - consumed;
@@ -638,7 +708,68 @@ extension _OculumHomeRecipes on _OculumHomePageState {
           ..quantita = 1
           ..peso = left / 1000;
       }
+      if (isGerin && consumed > 0) {
+        inventario.add(
+          InventoryItem(
+            nome: 'Gerin Esausto',
+            peso: consumed / 1000,
+            quantita: 1,
+            gradoOggetto: item.gradoOggetto,
+            note: 'Si riattiva soltanto con un Cristallo di Oculum.',
+            craftData: {
+              'material': 'gerin_esausto',
+              'materialGrade': 0,
+              'active': false,
+            },
+          ),
+        );
+      }
     }
+  }
+
+  Future<({int natural, int total, int difficulty, HiddenEyeStat stat})?>
+  _resolveRecipeCheck(OculumRecipe recipe, int quantity) async {
+    ensureHiddenEyeDefaults();
+    final subtraitId = oculumCraftingSubtraitId(recipe);
+    final stat = hiddenEyeStats.firstWhere(
+      (candidate) => candidate.id == subtraitId,
+      orElse: () =>
+          hiddenEyeStats.firstWhere((candidate) => candidate.id == 'materia'),
+    );
+    var inputGrade = oculumCraftingGradeForRecipe(recipe);
+    for (final ingredient in recipe.ingredients) {
+      final key = _recipeMaterialKey(ingredient.name);
+      for (final item in inventario) {
+        if (_recipeMaterialKey(item.nome) == key) {
+          inputGrade = max(
+            inputGrade,
+            max(item.gradoOggetto, item.gradoRichiesto),
+          );
+        }
+      }
+    }
+    final difficulty = oculumCraftingDifficulty(
+      recipe,
+      quantity: quantity,
+      inputGrade: inputGrade,
+    );
+    var naturalRoll = 0;
+    var total = 0;
+    await tiraSottotrattoOcchio(
+      stat,
+      actionLabel: '${recipe.name} · DT $difficulty',
+      onResolved: (natural, sum) {
+        naturalRoll = natural;
+        total = sum;
+      },
+    );
+    if (!mounted || naturalRoll <= 0) return null;
+    return (
+      natural: naturalRoll,
+      total: total,
+      difficulty: difficulty,
+      stat: stat,
+    );
   }
 
   Future<void> _craftRecipe(OculumRecipe recipe, {int quantity = 1}) async {
@@ -701,11 +832,23 @@ extension _OculumHomeRecipes on _OculumHomePageState {
       return;
     }
 
+    final check = await _resolveRecipeCheck(recipe, safeQuantity);
+    if (check == null) return;
+    final succeeded = oculumCraftingCheckSucceeds(
+      naturalRoll: check.natural,
+      total: check.total,
+      difficulty: check.difficulty,
+    );
+
     setState(() {
       for (final ingredient in recipe.ingredients) {
         _consumeRecipeMaterial(
           ingredient.name,
-          _recipeGrams(ingredient.grams) * safeQuantity,
+          succeeded
+              ? _recipeGrams(ingredient.grams) * safeQuantity
+              : oculumCraftingFailureLossGrams(
+                  _recipeGrams(ingredient.grams) * safeQuantity,
+                ),
         );
       }
       if (oculumRequired > 0) {
@@ -721,35 +864,47 @@ extension _OculumHomeRecipes on _OculumHomePageState {
           ..peso = _finishedProductGrams(recipe) / 1000
           ..quantita = safeQuantity;
       }
-      inventario.add(
-        craftedHerbal ??
-            (authoredMaterialForRecipe(recipe) != null
-                ? authoredCraftedItem(recipe, safeQuantity)
-                : InventoryItem(
-                    nome: recipe.resultName,
-                    peso: _finishedProductGrams(recipe) / 1000,
-                    quantita: safeQuantity,
-                    note: recipe.resultDescription,
-                    bonusDanno: oculumCraftedEquipmentBonuses(recipe).damage,
-                    bonusDifesa: oculumCraftedEquipmentBonuses(recipe).defense,
-                    elementoDanno: oculumCraftedEquipmentBonuses(
-                      recipe,
-                    ).element,
-                    gradoOggetto: oculumCraftedEquipmentBonuses(recipe).grade,
-                    gradoRichiesto: oculumCraftedEquipmentBonuses(recipe).grade,
-                    monsterLoot: oculumCraftedEquipmentSkillData(recipe),
-                    arma:
-                        recipe.forgeTarget == 'weapon' ||
-                        recipe.forgeTarget == 'arma',
-                    protegge:
-                        recipe.forgeTarget == 'armor' ||
-                        recipe.forgeTarget == 'protezione',
-                  )),
-      );
-      risultato = t(
-        '${recipe.resultName} ×$safeQuantity creato: ${formatoPesoMateriali(_finishedProductGrams(recipe) * safeQuantity)}${oculumRequired > 0 ? ', -$oculumRequired Oculum' : ''}.',
-        '${recipe.resultName} ×$safeQuantity crafted: ${formatoPesoMateriali(_finishedProductGrams(recipe) * safeQuantity)}${oculumRequired > 0 ? ', -$oculumRequired Oculum' : ''}.',
-      );
+      if (succeeded) {
+        inventario.add(
+          craftedHerbal ??
+              (authoredMaterialForRecipe(recipe) != null
+                  ? authoredCraftedItem(recipe, safeQuantity)
+                  : InventoryItem(
+                      nome: recipe.resultName,
+                      peso: _finishedProductGrams(recipe) / 1000,
+                      quantita: safeQuantity,
+                      note: recipe.resultDescription,
+                      bonusDanno: oculumCraftedEquipmentBonuses(recipe).damage,
+                      bonusDifesa: oculumCraftedEquipmentBonuses(
+                        recipe,
+                      ).defense,
+                      elementoDanno: oculumCraftedEquipmentBonuses(
+                        recipe,
+                      ).element,
+                      gradoOggetto: oculumCraftedEquipmentBonuses(recipe).grade,
+                      gradoRichiesto: oculumCraftedEquipmentBonuses(
+                        recipe,
+                      ).grade,
+                      monsterLoot: oculumCraftedEquipmentSkillData(recipe),
+                      arma:
+                          recipe.forgeTarget == 'weapon' ||
+                          recipe.forgeTarget == 'arma',
+                      protegge:
+                          recipe.forgeTarget == 'armor' ||
+                          recipe.forgeTarget == 'protezione',
+                    )),
+        );
+      }
+      final checkResult = '${check.total} vs DT ${check.difficulty}';
+      risultato = succeeded
+          ? t(
+              '${recipe.resultName} ×$safeQuantity creato: ${formatoPesoMateriali(_finishedProductGrams(recipe) * safeQuantity)}. Prova ${check.stat.nome}: $checkResult${oculumRequired > 0 ? ', -$oculumRequired Oculum' : ''}.',
+              '${recipe.resultName} ×$safeQuantity crafted: ${formatoPesoMateriali(_finishedProductGrams(recipe) * safeQuantity)}. ${check.stat.nome} check: $checkResult${oculumRequired > 0 ? ', -$oculumRequired Oculum' : ''}.',
+            )
+          : t(
+              'Fallimento ${recipe.name}: ${check.stat.nome} $checkResult. Nessun oggetto creato; consumato il 25% dei materiali${oculumRequired > 0 ? ' e $oculumRequired Oculum' : ''}.',
+              '${recipe.name} failed: ${check.stat.nome} $checkResult. No item crafted; 25% of materials${oculumRequired > 0 ? ' and $oculumRequired Oculum' : ''} consumed.',
+            );
       aggiungiLog(risultato);
     });
     invalidateDerivedDataCaches();

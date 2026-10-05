@@ -799,6 +799,55 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       faces: 20,
       bonuses: [bonusTotale],
     );
+    var gerinResonanceText = '';
+    if ((nome.trim().toLowerCase() == 'danno' ||
+            nome.trim().toLowerCase() == 'damage' ||
+            nome.trim().toLowerCase() == 'vc') &&
+        totale > 20) {
+      final resonanceWeapons =
+          inventario
+              .where(
+                (item) =>
+                    item.arma &&
+                    item.equipaggiata &&
+                    canEquipInventoryItem(item) &&
+                    item.craftData['gerinResonanceGrade'] != null &&
+                    readIntValue(item.craftData['gerinResonanceTriggers']) < 3,
+              )
+              .toList()
+            ..sort(
+              (a, b) => readIntValue(
+                b.craftData['gerinResonanceGrade'],
+              ).compareTo(readIntValue(a.craftData['gerinResonanceGrade'])),
+            );
+      for (final weapon in resonanceWeapons) {
+        final grade = max(
+          0,
+          readIntValue(weapon.craftData['gerinResonanceGrade']),
+        );
+        final previous = max(
+          0,
+          readIntValue(weapon.craftData['gerinResonanceTriggers']),
+        );
+        final gain = oculumGerinResonanceGain(
+          grade: grade,
+          attackTotal: totale,
+          previousTriggers: previous,
+        );
+        if (gain <= 0 || oculumTotale() >= oculumMassimo()) continue;
+        final applied = addOculum(gain, scheduleSave: false);
+        if (applied <= 0) continue;
+        weapon.craftData = {
+          ...weapon.craftData,
+          'gerinResonanceTriggers': previous + 1,
+        };
+        gerinResonanceText = t(
+          '\nRisonanza di Gerin: +$applied Oculum ($previous/3 scariche, resa decrescente; si ricarica al Riposo Lungo).',
+          '\nGerin resonance: +$applied Oculum ($previous/3 charges, diminishing yield; recharges on Long Rest).',
+        );
+        break;
+      }
+    }
     slotMachineLastSucceeded = resolveSlotMachineSuccess(naturalRoll: dado);
     final expGuadagnata = oculumRollExperienceGain(
       naturalRoll: dado,
@@ -824,13 +873,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     dadoMostratoFacce = 20;
     tiroCriticoUno = dado == 1;
     tiroCriticoVenti = dado == 20;
-    risultato = '$nome: $testoDado$statoForzaLog$expText$coreExpText';
+    risultato =
+        '$nome: $testoDado$statoForzaLog$expText$coreExpText$gerinResonanceText';
     aggiungiLog(
-      'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText$coreExpText',
+      'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText$coreExpText$gerinResonanceText',
     );
     registerValidRoll(consumoStatKey: consumoElevatoStatKey(nome));
     notifyDiceResultChanged();
-    if (statoForzaLog.isNotEmpty) {
+    if (statoForzaLog.isNotEmpty || gerinResonanceText.isNotEmpty) {
       scheduleCombatRollSave();
     }
 
@@ -850,7 +900,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
   }
 
-  Future<void> tiraSottotrattoOcchio(HiddenEyeStat stat) async {
+  Future<void> tiraSottotrattoOcchio(
+    HiddenEyeStat stat, {
+    String? actionLabel,
+    void Function(int naturalRoll, int total)? onResolved,
+  }) async {
     oculumProfileMark('roll_subtrait');
     final dado = tiraD20();
     final schivataOculumOttenuta =
@@ -872,13 +926,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         tiroGlobaleBonus() +
         oculumSpend.bonus;
     final totale = rollTotalWithCritical(dado, 20, [bonus]);
+    onResolved?.call(dado, totale);
     final testoDado = rollFormulaWithCritical(
       roll: dado,
       faces: 20,
       bonuses: [bonus],
     );
-    final label =
-        '${stat.nome} (${hiddenEyeGroupLabel(hiddenEyeStatGroup(stat.id))})';
+    final label = actionLabel == null
+        ? '${stat.nome} (${hiddenEyeGroupLabel(hiddenEyeStatGroup(stat.id))})'
+        : '$actionLabel · ${stat.nome}';
     final usaFortuna = stat.id == 'fortuna';
     final karmaNonConsumabile = stat.id == 'nodo';
     final consumptionGroup = stat.id == 'investigazione'
@@ -1008,7 +1064,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         element,
         elementDisplayName(element),
         scrollGrade,
-        ['attack', 'control', 'ward'][random.nextInt(3)],
+        'auto',
       );
       inventario.add(dropScroll);
       invalidateDerivedDataCaches(notifyHiddenEyeCards: false);

@@ -1,5 +1,14 @@
 part of '../../main.dart';
 
+@visibleForTesting
+bool oculumCombatAshTriggersCheck(int ash) => ash >= 6 && ash % 3 == 0;
+
+@visibleForTesting
+bool oculumCombatAshCausesUnconscious({
+  required int ash,
+  required int percentileRoll,
+}) => ash >= 12 && percentileRoll == 0;
+
 // ignore_for_file: invalid_use_of_protected_member
 
 class _StatoForzaDef {
@@ -666,8 +675,13 @@ extension _OculumHomeForceState on _OculumHomePageState {
     var mainMessage = '';
     final start = max(3, previous + 1);
     final random = Random();
+    final inCombat = currentCombatIsActive();
     var checkedUntil = current;
     for (var cenere = start; cenere <= current; cenere++) {
+      if (inCombat && !oculumCombatAshTriggersCheck(cenere)) {
+        checkedUntil = cenere;
+        continue;
+      }
       final faces = dadoSvenimentoCenere(cenere);
       final roll = random.nextInt(faces) + 1;
       final resilienzaBonus = resilienzaTotale() ~/ 3;
@@ -700,14 +714,37 @@ extension _OculumHomeForceState on _OculumHomePageState {
               'Incosciente: la Cenere supera il corpo e la vista si spegne.',
               'Unconscious: the Ash overwhelms the body and vision fades.',
             );
+      if (inCombat && !success) {
+        if (oculumCombatAshCausesUnconscious(
+          ash: cenere,
+          percentileRoll: Random.secure().nextInt(100),
+        )) {
+          mainMessage = t(
+            'Incosciente: 1% di collasso dopo una prova di Cenere fallita ad alta fatica.',
+            'Unconscious: 1% chance of collapse after a failed high-Ash check.',
+          );
+          personaggioSvenuto = true;
+        } else {
+          applyCondition(
+            'vista_appannata',
+            duration: 1,
+            source: 'Cenere in combattimento',
+          );
+          mainMessage = t(
+            'Cedi alla fatica: Vista appannata, -1 ai tiri fino alla fine del prossimo turno.',
+            'Fatigue catches up: Blurred vision, -1 to rolls until the end of your next turn.',
+          );
+        }
+      } else if (!inCombat && !success) {
+        personaggioSvenuto = true;
+      }
       aggiungiLog(
         t(
-          'Tiro svenimento Cenere $cenere: 1d$faces=$roll${critical == 0 ? '' : ' ${critical > 0 ? '+' : ''}$critical critico'} + Resilienza/3 $resilienzaBonus + Livello $livello + Grado x6 $gradoBonus ${signedRollPart(cenerePenalty)} Cenere = $total contro $difficulty. $mainMessage',
-          'Ash fainting roll $cenere: 1d$faces=$roll${critical == 0 ? '' : ' ${critical > 0 ? '+' : ''}$critical critical'} + Resilience/3 $resilienzaBonus + Level $livello + Grade x6 $gradoBonus ${signedRollPart(cenerePenalty)} Ash = $total against $difficulty. $mainMessage',
+          'Controllo Cenere $cenere: 1d$faces=$roll${critical == 0 ? '' : ' ${critical > 0 ? '+' : ''}$critical critico'} + Resilienza/3 $resilienzaBonus + Livello $livello + Grado x6 $gradoBonus ${signedRollPart(cenerePenalty)} Cenere = $total contro $difficulty. $mainMessage',
+          'Ash check $cenere: 1d$faces=$roll${critical == 0 ? '' : ' ${critical > 0 ? '+' : ''}$critical critical'} + Resilience/3 $resilienzaBonus + Level $livello + Grade x6 $gradoBonus ${signedRollPart(cenerePenalty)} Ash = $total against $difficulty. $mainMessage',
         ),
       );
-      if (!success) {
-        personaggioSvenuto = true;
+      if (!success && personaggioSvenuto) {
         checkedUntil = current;
         break;
       }
