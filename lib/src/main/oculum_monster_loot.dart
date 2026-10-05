@@ -345,7 +345,7 @@ extension _OculumMonsterLoot on _OculumHomePageState {
             tipo: type,
             hasIntegrity: false,
             descrizione:
-                'Skill ereditata dal mostro. Richiede questo oggetto equipaggiato e il grado ${item.gradoRichiesto}.',
+                'Skill dell’oggetto. Richiede questo oggetto equipaggiato e il grado ${item.gradoRichiesto}.',
             skills: [
               ArtSkill.fromJson(
                 Map<String, dynamic>.from(item.monsterLoot['skill']),

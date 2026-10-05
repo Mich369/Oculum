@@ -96,6 +96,7 @@ part 'src/main/oculum_realtime_integration.dart';
 part 'src/main/oculum_diary_knowledge_integration.dart';
 part 'src/main/oculum_monster_loot.dart';
 part 'src/main/oculum_authored_materials.dart';
+part 'src/main/oculum_crafting_expansion.dart';
 part 'src/main/oculum_skill_target_automation.dart';
 part 'src/main/oculum_humanoid_roles.dart';
 part 'src/main/oculum_global_search.dart';

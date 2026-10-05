@@ -12,6 +12,11 @@ extension _OculumHomeRecipes on _OculumHomePageState {
     const id = 'core_pinna_pesce_alato';
     final now = DateTime.now().toIso8601String();
     var added = authoredAdded;
+    for (final recipe in oculumAdditionalCraftingRecipes(now)) {
+      if (recipes.any((existing) => existing.id == recipe.id)) continue;
+      recipes.add(recipe);
+      added = true;
+    }
     if (!recipes.any((recipe) => recipe.id == id)) {
       recipes.add(
         OculumRecipe(
@@ -487,8 +492,6 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   Future<void> _applyPersonalForge(OculumRecipe recipe) async {
     final candidates = inventario
         .where((item) {
-          if (recipe.forgeTarget == 'arma') return item.arma;
-          if (recipe.forgeTarget == 'protezione') return item.protegge;
           return item.arma || item.protegge;
         })
         .toList(growable: false);
@@ -516,22 +519,29 @@ extension _OculumHomeRecipes on _OculumHomePageState {
       ),
     );
     if (selected == null || !mounted) return;
-    final effect = recipe.forgeEffectText.trim();
+    String? error;
     setState(() {
-      if (effect.isNotEmpty && !selected.buff.contains(effect)) {
-        selected.buff = [
-          selected.buff.trim(),
-          effect,
-        ].where((part) => part.isNotEmpty).join('\n');
-      }
-      final forgeNote = 'Forge: ${recipe.name}';
-      if (!selected.note.contains(forgeNote)) {
-        selected.note = [
-          selected.note.trim(),
-          forgeNote,
-        ].where((part) => part.isNotEmpty).join('\n');
+      error = oculumApplyForgeToItem(
+        inventario,
+        selected,
+        recipe,
+        currentOculum: leggiNumero(currentOculumController),
+      );
+      if (error == null) {
+        currentOculumController.text =
+            (leggiNumero(currentOculumController) - max(0, recipe.oculumCost))
+                .toString();
+        aggiungiLog(
+          'Forgiatura ${recipe.name} su ${selected.nome}: materiali della ricetta consumati.',
+        );
       }
     });
+    if (error != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error!)));
+      return;
+    }
     invalidateDerivedDataCaches();
     programmaSalvataggio();
   }
@@ -720,6 +730,20 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                     peso: _finishedProductGrams(recipe) / 1000,
                     quantita: safeQuantity,
                     note: recipe.resultDescription,
+                    bonusDanno: oculumCraftedEquipmentBonuses(recipe).damage,
+                    bonusDifesa: oculumCraftedEquipmentBonuses(recipe).defense,
+                    elementoDanno: oculumCraftedEquipmentBonuses(
+                      recipe,
+                    ).element,
+                    gradoOggetto: oculumCraftedEquipmentBonuses(recipe).grade,
+                    gradoRichiesto: oculumCraftedEquipmentBonuses(recipe).grade,
+                    monsterLoot: oculumCraftedEquipmentSkillData(recipe),
+                    arma:
+                        recipe.forgeTarget == 'weapon' ||
+                        recipe.forgeTarget == 'arma',
+                    protegge:
+                        recipe.forgeTarget == 'armor' ||
+                        recipe.forgeTarget == 'protezione',
                   )),
       );
       risultato = t(

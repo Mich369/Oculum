@@ -74,7 +74,33 @@ void main() {
       expect(die.hitTestable(), findsOneWidget);
       final spinSeedBeforeRoll = state.dadoOverlaySpinSeed as int;
       await tester.tap(die);
-      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      final overlay = find.byKey(const ValueKey('current_route_dice_overlay'));
+      final silhouette = find.descendant(
+        of: overlay,
+        matching: find.byKey(const ValueKey('dice_silhouette_rotation')),
+      );
+      final startTransform = tester
+          .widget<Transform>(silhouette)
+          .transform
+          .clone();
+      await tester.pump(const Duration(milliseconds: 300));
+      final movingTransform = tester
+          .widget<Transform>(silhouette)
+          .transform
+          .clone();
+      expect(
+        movingTransform,
+        isNot(startTransform),
+        reason:
+            'The newly inserted dice silhouette must rotate during the roll',
+      );
+      expect(state.dadoOverlayMostraRisultato, isFalse);
+      await tester.pump(const Duration(milliseconds: 600));
+      final endTransform = tester.widget<Transform>(silhouette).transform;
+      expect(endTransform.entry(0, 0), closeTo(1, 0.00001));
+      expect(endTransform.entry(1, 0), closeTo(0, 0.00001));
+      expect(state.dadoOverlayMostraRisultato, isTrue);
       expect(state.risultato, contains('2d4'));
       expect(
         find.descendant(of: panel, matching: find.text(state.risultato)),
@@ -83,13 +109,6 @@ void main() {
       expect(state.paginaCorrente, 8);
       expect(state.mostraOverlayDado, isTrue);
       expect(state.dadoOverlaySpinSeed, spinSeedBeforeRoll + 1);
-      final overlay = find.byKey(const ValueKey('current_route_dice_overlay'));
-      final rotation = tester.widget<AnimatedRotation>(
-        find
-            .descendant(of: overlay, matching: find.byType(AnimatedRotation))
-            .first,
-      );
-      expect(rotation.turns, (spinSeedBeforeRoll + 1).toDouble());
       await tester.tapAt(tester.getCenter(panel));
       await tester.pump(const Duration(milliseconds: 250));
       await tester.tap(find.byKey(const ValueKey('close_current_screen_dice')));
@@ -114,7 +133,18 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       expect(state.referenceDetailRouteActive, isTrue);
       await probe.rollSubtrait('nodo');
-      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      final nextStartTransform = tester
+          .widget<Transform>(silhouette)
+          .transform
+          .clone();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(
+        tester.widget<Transform>(silhouette).transform,
+        isNot(nextStartTransform),
+        reason: 'A subsequent subtrait roll must start a new rotation',
+      );
+      await tester.pump(const Duration(milliseconds: 600));
       expect(overlay.hitTestable(), findsOneWidget);
       expect(state.referenceDetailRouteActive, isTrue);
       await tester.tapAt(tester.getCenter(overlay));

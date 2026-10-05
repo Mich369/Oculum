@@ -19,6 +19,10 @@ const diaryLinkTypes = <String, String>{
   'art': 'Art',
   'title': 'Titolo',
   'faction': 'Fazione',
+  'upgrade': 'Potenziamento',
+  'skill': 'Skill',
+  'forge': 'Forgiatura',
+  'crafting': 'Crafting',
 };
 
 const diaryCreationLinkTypes = [
@@ -42,6 +46,10 @@ const diaryCreationLinkTypes = [
   'Fazione',
   'Missione',
   'Evento',
+  'Potenziamento',
+  'Skill',
+  'Forgiatura',
+  'Crafting',
 ];
 
 final _diarySavedLinks = RegExp(r'\[\[([^\]\n]+)\]\]');

@@ -271,6 +271,7 @@ class _OculumModelTextFieldState extends State<_OculumModelTextField> {
                 context,
                 editable,
                 english: widget.linguaInglese,
+                catalogue: widget.diaryCatalogue ?? const [],
                 onAssigned: (value) {
                   if (!mounted) return;
                   _controller.value = value;
@@ -2821,15 +2822,22 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              AnimatedRotation(
-                                turns: mostraOverlayDado
-                                    ? dadoOverlaySpinSeed.toDouble()
-                                    : 0,
+                              TweenAnimationBuilder<double>(
+                                key: ValueKey('dice_spin_$dadoOverlaySpinSeed'),
+                                tween: Tween<double>(begin: 0, end: 2 * pi),
                                 duration:
                                     MediaQuery.disableAnimationsOf(context)
                                     ? Duration.zero
                                     : const Duration(milliseconds: 900),
                                 curve: Curves.easeOutCubic,
+                                builder: (context, angle, child) =>
+                                    Transform.rotate(
+                                      key: const ValueKey(
+                                        'dice_silhouette_rotation',
+                                      ),
+                                      angle: angle,
+                                      child: child,
+                                    ),
                                 child: RepaintBoundary(
                                   child: D20Widget(
                                     text: '',

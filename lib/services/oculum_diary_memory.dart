@@ -56,6 +56,11 @@ const diaryLinkKindByType = <String, String>{
   'art': 'art',
   'titolo': 'title',
   'fazione': 'faction',
+  'potenziamento': 'upgrade',
+  'skill': 'skill',
+  'abilità': 'skill',
+  'forgiatura': 'forge',
+  'crafting': 'crafting',
   'occhio dei caduti': 'fallen_eye',
   'occhio': 'fallen_eye',
 };

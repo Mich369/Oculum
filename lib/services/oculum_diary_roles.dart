@@ -19,6 +19,10 @@ const diaryEditableRoles = <String, String>{
   'faction': 'Fazione',
   'quest': 'Missione',
   'event': 'Evento',
+  'upgrade': 'Potenziamento',
+  'skill': 'Skill',
+  'forge': 'Forgiatura',
+  'crafting': 'Crafting',
   'unknown': 'Da classificare',
 };
 
@@ -27,6 +31,19 @@ const diaryEyeChoices = <String, String>{
   'enemy': 'Occhio dei nemici',
   'dead': 'Occhio dei morti',
   'obliterated': 'Occhio dell’Oblio',
+};
+
+const diaryProgressStates = <String, String>{
+  'suggested': 'Suggerito',
+  'discovered': 'Scoperto',
+  'planned': 'Da realizzare',
+  'in_progress': 'In corso',
+  'completed': 'Completato',
+  'learned': 'Appreso',
+  'upgraded': 'Potenziato',
+  'used': 'Usato',
+  'lost': 'Perso',
+  'abandoned': 'Abbandonato',
 };
 
 /// Personal knowledge metadata. It never transforms the underlying game sheet.
@@ -47,6 +64,14 @@ class DiaryRoleLedger {
             'entityId': id,
             'name': '${record['name'] ?? ''}',
             'role': role,
+            if (diaryProgressStates.containsKey(record['status']))
+              'status': record['status'],
+            'statusHistory': [
+              for (final change
+                  in (record['statusHistory'] as List? ?? const [])
+                      .whereType<Map>())
+                Map<String, dynamic>.from(change),
+            ],
             if (diaryEyeChoices.containsKey(record['eyeRole']))
               'eyeRole': record['eyeRole'],
             if (record['displayName'] is String)
@@ -100,6 +125,35 @@ class DiaryRoleLedger {
 
   String roleOf(DiaryEntity entity) =>
       '${_record(entity)?['role'] ?? entity.kind}';
+
+  String statusOf(DiaryEntity entity) =>
+      '${_record(entity)?['status'] ?? 'suggested'}';
+  List<Map<String, dynamic>> statusHistoryFor(DiaryEntity entity) => [
+    for (final change
+        in (_record(entity)?['statusHistory'] as List? ?? const [])
+            .whereType<Map>())
+      Map<String, dynamic>.from(change),
+  ];
+  bool changeStatus(DiaryEntity entity, String status, DateTime now) {
+    if (!diaryProgressStates.containsKey(status) || statusOf(entity) == status) {
+      return false;
+    }
+    final record = _record(entity);
+    final identity = '${record?['entityId'] ?? entity.id}';
+    _records[identity] = {
+      ...?record,
+      'entityId': identity,
+      'name': record?['name'] ?? entity.name,
+      'role': roleOf(entity),
+      'history': historyFor(entity),
+      'status': status,
+      'statusHistory': [
+        ...statusHistoryFor(entity),
+        {'from': statusOf(entity), 'to': status, 'at': now.toIso8601String()},
+      ],
+    };
+    return true;
+  }
 
   String eyeOf(DiaryEntity entity) =>
       '${_record(entity)?['eyeRole'] ?? roleOf(entity)}';

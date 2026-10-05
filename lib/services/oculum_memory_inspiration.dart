@@ -1,70 +1,101 @@
 import 'dart:math';
 import 'oculum_diary_memory.dart';
 
-/// New source-backed mentions count once; graph rebuilds never grant rewards.
+/// Count explicitly classified links once; rebuilding the map grants nothing.
 class OculumMemoryInspiration {
   final Map<String, int> highWater = {};
   int remainder = 0;
-  int chance = 10;
+  int chance = 50;
+  bool failed = false;
+  String difficulty = 'normale';
+  int get baseChance => difficulty == 'oculum' ? 25 : 50;
+  int get maximumChance => switch (difficulty) {
+    'facile' => 95,
+    'difficile' => 60,
+    'oculum' => 50,
+    _ => 75,
+  };
   OculumMemoryInspiration();
 
-  int observe(DiaryMemory memory, {Random? random}) {
-    final mentions = <String, Set<String>>{};
-    final scanned = <String>{};
+  int observe(DiaryMemory memory, {Random? random}) =>
+      observeRewards(memory, random: random).length;
+
+  List<String> observeRewards(
+    DiaryMemory memory, {
+    Random? random,
+    String? difficulty,
+  }) {
+    if (difficulty != null && difficulty != this.difficulty) {
+      this.difficulty = difficulty;
+      chance = failed ? chance.clamp(baseChance, maximumChance) : baseChance;
+    }
+    final documents = <String, DiaryDocument>{};
     for (final relation in memory.relations) {
-      final e = relation.evidence;
-      final target = memory.entities[relation.to];
-      final entity = target?.kind == 'diary'
-          ? memory.entities[relation.from]
-          : target;
-      if (entity == null || entity.kind == 'diary' || entity.kind == 'campaign') {
-        continue;
-      }
-      if (!scanned.add('${e.document.id}:${entity.id}:${e.start}:${e.end}')) {
-        continue;
-      }
-      final names =
-          {
-              entity.name,
-              ...entity.aliases,
-            }.where((name) => name.trim().isNotEmpty).toList()
-            ..sort((a, b) => b.length.compareTo(a.length));
-      if (names.isEmpty) continue;
-      final pattern = RegExp(
-        '(?<![A-Za-zÀ-ÖØ-öø-ÿ0-9_])(?:${names.map(RegExp.escape).join('|')})(?![A-Za-zÀ-ÖØ-öø-ÿ0-9_])',
-        caseSensitive: false,
-      );
-      for (final match in pattern.allMatches(e.quote)) {
-        mentions
-            .putIfAbsent(e.document.id, () => {})
-            .add(
-              '${entity.id}:${e.start + match.start}:${e.start + match.end}',
-            );
-      }
+      final doc = relation.evidence.document;
+      if (!doc.id.startsWith('eye_note:')) documents[doc.id] = doc;
     }
-    for (final entry in mentions.entries) {
-      final previous = highWater[entry.key] ?? 0;
-      remainder += max(0, entry.value.length - previous);
-      highWater[entry.key] = max(previous, entry.value.length);
+    return observeDocuments(
+      documents.values,
+      random: random,
+      difficulty: difficulty,
+    );
+  }
+
+  List<String> observeDocuments(
+    Iterable<DiaryDocument> documents, {
+    Random? random,
+    String? difficulty,
+  }) {
+    if (difficulty != null && difficulty != this.difficulty) {
+      this.difficulty = difficulty;
+      chance = failed ? chance.clamp(baseChance, maximumChance) : baseChance;
     }
-    var rewards = 0;
+    var newMarks = 0;
+    for (final doc in documents) {
+      final count = RegExp(r'\[\[([^:\]\n]+):([^\]\n]+)\]\]')
+          .allMatches(doc.text)
+          .where(
+            (match) =>
+                diaryLinkKindByType.containsKey(diaryKey(match[1]!)) &&
+                match[2]!.split('|').first.trim().isNotEmpty,
+          )
+          .length;
+      final previous = highWater[doc.id] ?? 0;
+      newMarks += max(0, count - previous);
+      highWater[doc.id] = max(previous, count);
+    }
+    final rewards = <String>[];
     final rng = random ?? Random.secure();
-    while (remainder >= 3) {
-      remainder -= 3;
+    for (var mark = 0; mark < newMarks; mark++) {
+      if (failed) chance = min(maximumChance, chance + 5);
+      remainder++;
+      if (remainder < 10) continue;
+      remainder -= 10;
       if (rng.nextInt(100) < chance) {
-        rewards++;
-        chance = 10;
+        final type = rng.nextInt(100);
+        rewards.add(
+          type < 70
+              ? 'base'
+              : type < 90
+              ? 'super'
+              : 'oculum',
+        );
+        chance = baseChance;
+        failed = false;
       } else {
-        chance = min(100, chance + 10);
+        failed = true;
       }
     }
     return rewards;
   }
 
   Map<String, dynamic> toJson() => {
+    'version': 2,
     'highWater': highWater,
     'remainder': remainder,
     'chance': chance,
+    'failed': failed,
+    'difficulty': difficulty,
   };
   factory OculumMemoryInspiration.fromJson(dynamic value) {
     final result = OculumMemoryInspiration();
@@ -77,8 +108,13 @@ class OculumMemoryInspiration {
         );
       }
     }
-    result.remainder = (int.tryParse('${value['remainder']}') ?? 0).clamp(0, 2);
-    result.chance = (int.tryParse('${value['chance']}') ?? 10).clamp(10, 100);
+    result.remainder = (int.tryParse('${value['remainder']}') ?? 0).clamp(0, 9);
+    if (value['version'] == 2) {
+      result.difficulty = '${value['difficulty'] ?? 'normale'}';
+      result.chance = (int.tryParse('${value['chance']}') ?? result.baseChance)
+          .clamp(result.baseChance, result.maximumChance);
+      result.failed = value['failed'] == true;
+    }
     return result;
   }
 }

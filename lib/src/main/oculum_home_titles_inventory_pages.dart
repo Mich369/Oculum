@@ -153,7 +153,51 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         ),
       for (var i = 0; i < schedePersonaggio.length; i++)
         DiaryEntity('character:$i', nomeSchedaPersonaggio(i), 'character'),
+      for (final item in inventario)
+        if (item.nome.trim().isNotEmpty)
+          DiaryEntity(
+            'inventory:${diaryKey(item.nome)}',
+            item.nome,
+            item.arma
+                ? 'weapon'
+                : item.protegge
+                ? 'armor'
+                : 'item',
+          ),
+      for (final skill in skills)
+        if (skill.nome.trim().isNotEmpty)
+          DiaryEntity('skill:${diaryKey(skill.nome)}', skill.nome, 'skill'),
+      for (final title in titoli)
+        if (title.nome.trim().isNotEmpty)
+          DiaryEntity('title:${diaryKey(title.nome)}', title.nome, 'title'),
+      for (final recipe in [...recipes, ...personalRecipes])
+        if (recipe.name.trim().isNotEmpty)
+          DiaryEntity(
+            'recipe:${recipe.id}',
+            recipe.name,
+            recipe.recipeKind == 'forge' ? 'forge' : 'crafting',
+          ),
     ];
+  }
+
+  void awardDiaryLinkInspiration() {
+    final rewards = memoryInspiration.observeDocuments([
+      for (var i = 0; i < journalEntries.length; i++)
+        DiaryDocument(
+          id: '$schedaCorrente:$i',
+          author: nomeSchedaPersonaggio(schedaCorrente),
+          diary: journalEntries[i].diaryName,
+          title: journalEntries[i].title,
+          text: journalEntries[i].description,
+          day: journalEntries[i].cycleDay,
+        ),
+    ], difficulty: normalizedCampaignDifficulty());
+    if (rewards.isEmpty) return;
+    final log = <String>[];
+    for (final type in rewards) {
+      grantInspirationWithCap(type, 1, log);
+    }
+    aggiungiLog('Occhi della Memoria: ${log.join(', ')}');
   }
 
   void openEyeMemory({bool campaign = false}) {
@@ -215,6 +259,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       }
     }
     final catalogue = <DiaryEntity>[
+      ...diarySuggestionCatalogue(),
       for (final m in monsterBookEntries)
         DiaryEntity('monster:${m.id}', m.nameIt, m.isNpc ? 'npc' : 'creature', [
           m.nameEn,
@@ -272,10 +317,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   )
                   .toList(),
             );
-            final rewards = inspirationLedger.observe(personalMemory);
-            if (rewards > 0) {
+            final rewards = inspirationLedger.observeRewards(
+              personalMemory,
+              difficulty: normalizedCampaignDifficulty(),
+            );
+            if (rewards.isNotEmpty) {
               final rewardLog = <String>[];
-              grantInspirationWithCap('base', rewards, rewardLog);
+              for (final type in rewards) {
+                grantInspirationWithCap(type, 1, rewardLog);
+              }
               aggiungiLog('Occhi della Memoria: ${rewardLog.join(', ')}');
             }
             programmaSalvataggio();
@@ -315,6 +365,25 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                 final memory = snapshot.requireData;
                 return OculumEyeMemoryPage(
                   memory: memory,
+                  statusOf: roleLedger.statusOf,
+                  statusHistory: roleLedger.statusHistoryFor,
+                  onStatusChanged: canEditRoles || masterCanEditKnowledge
+                      ? (entity, status) async {
+                          if (!roleLedger.changeStatus(
+                            entity,
+                            status,
+                            DateTime.now(),
+                          )) {
+                            return;
+                          }
+                          if (sourceSheetIndex >= 0 &&
+                              sourceSheetIndex < schedePersonaggio.length) {
+                            schedePersonaggio[sourceSheetIndex]['diaryEntityRoles'] =
+                                roleLedger.toJson();
+                          }
+                          await forzaSalvataggioImmediato(soloLocale: true);
+                        }
+                      : null,
                   author: author,
                   roleHistory: roleLedger.historyFor,
                   nameHistory: roleLedger.nameHistoryFor,
@@ -881,6 +950,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     legacyIndex < diarioPagine.length) {
                   diarioPagine[legacyIndex] = value;
                 }
+                awardDiaryLinkInspiration();
               },
               maxLines: 7,
               narrativeText: true,
@@ -4697,10 +4767,23 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           peso: grams / 1000,
           quantita: 1,
           note: recipe.resultDescription,
+          arma: recipe.forgeTarget == 'weapon' || recipe.forgeTarget == 'arma',
+          protegge:
+              recipe.forgeTarget == 'armor' ||
+              recipe.forgeTarget == 'protezione',
+          bonusDanno: oculumCraftedEquipmentBonuses(recipe).damage,
+          bonusDifesa: oculumCraftedEquipmentBonuses(recipe).defense,
+          elementoDanno: oculumCraftedEquipmentBonuses(recipe).element,
+          gradoOggetto: oculumCraftedEquipmentBonuses(recipe).grade,
+          gradoRichiesto: oculumCraftedEquipmentBonuses(recipe).grade,
+          monsterLoot: oculumCraftedEquipmentSkillData(recipe),
         ),
       );
     }
-    for (final material in oculumAuthoredMaterials) {
+    for (final material in [
+      ...oculumAuthoredMaterials,
+      ...oculumAdditionalCraftingMaterials,
+    ]) {
       add(
         InventoryItem(
           nome: material.name,
@@ -5418,7 +5501,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           position.dy,
         ),
         items: <PopupMenuEntry<String>>[
-          if (item.craftData.isNotEmpty)
+          if (item.craftData['material'] != null)
             PopupMenuItem<String>(
               value: 'material_active',
               child: Text(
@@ -5426,6 +5509,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     ? 'Disattiva materiale'
                     : 'Attiva materiale',
               ),
+            ),
+          if (item.nome.trim().toLowerCase() == 'gerin')
+            const PopupMenuItem(
+              value: 'gerin',
+              child: Text('Vampata di Gerin'),
             ),
           if (item.monsterLoot['material'] == true)
             const PopupMenuItem<String>(
@@ -5436,7 +5524,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               item.monsterLoot['skill'] is Map)
             const PopupMenuItem<String>(
               value: 'monster_skill',
-              child: Text('Skill ereditata dal mostro'),
+              child: Text('Skill dell’oggetto'),
             ),
           if (isMerchantConsumable(item))
             PopupMenuItem<String>(
@@ -5522,6 +5610,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       switch (choice) {
         case 'combine_monster':
           await combineMonsterMaterial(item);
+          break;
+        case 'gerin':
+          await useGerin();
           break;
         case 'material_active':
           toggleAuthoredMaterial(item);

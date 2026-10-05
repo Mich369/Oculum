@@ -19,9 +19,16 @@ class OculumEyeMemoryPage extends StatefulWidget {
     this.knowledgeChanges,
     this.eyeRole,
     this.onEyeChanged,
+    this.statusOf,
+    this.statusHistory,
+    this.onStatusChanged,
   });
   final DiaryMemory memory;
   final String author;
+  final String Function(DiaryEntity entity)? statusOf;
+  final List<Map<String, dynamic>> Function(DiaryEntity entity)? statusHistory;
+  final Future<void> Function(DiaryEntity entity, String status)?
+  onStatusChanged;
   final Future<void> Function(DiaryEntity entity, String role)? onRoleChanged;
   final Future<void> Function(DiaryEntity entity, String role, String note)?
   onRoleChangedWithNote;
@@ -68,7 +75,139 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
     'art': 'Art',
     'title': 'Titoli',
     'faction': 'Fazioni',
+    'upgrade': 'Potenziamenti',
+    'skill': 'Skill',
+    'forge': 'Forgiature',
+    'crafting': 'Crafting',
   };
+
+  Future<void> _changeState(DiaryEntity entity) async {
+    if (widget.onStatusChanged == null ||
+        entity.kind == 'diary' ||
+        entity.kind == 'campaign') {
+      return;
+    }
+    final next = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text('Stato di ${entity.name}'),
+        children: [
+          for (final entry in diaryProgressStates.entries)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, entry.key),
+              child: Text(
+                '${entry.value}${widget.statusOf?.call(entity) == entry.key ? ' ✓' : ''}',
+              ),
+            ),
+        ],
+      ),
+    );
+    if (!mounted || next == null) return;
+    await widget.onStatusChanged!(entity, next);
+    if (mounted) {
+      setState(() {
+        selected = entity.id;
+      });
+    }
+  }
+
+  Future<void> _nodeMenu(DiaryEntity entity, Offset position) async {
+    if (entity.kind == 'diary' || entity.kind == 'campaign') return;
+    final action = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(position.dx, position.dy, 1, 1),
+        Offset.zero & MediaQuery.sizeOf(context),
+      ),
+      items: [
+        if (widget.onStatusChanged != null)
+          const PopupMenuItem(value: 'state', child: Text('Cambia stato')),
+        if (widget.onRoleChangedWithNote != null ||
+            widget.onRoleChanged != null)
+          const PopupMenuItem(value: 'role', child: Text('Cambia categoria')),
+        const PopupMenuItem(value: 'history', child: Text('Cronologia')),
+      ],
+    );
+    if (!mounted || action == null) return;
+    setState(() {
+      selected = entity.id;
+    });
+    if (action == 'state') {
+      await _changeState(entity);
+      return;
+    }
+    if (action == 'role') {
+      final role = await showDialog<String>(
+        context: context,
+        builder: (context) => SimpleDialog(
+          title: Text('Categoria di ${entity.name}'),
+          children: [
+            for (final entry in diaryEditableRoles.entries)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(context, entry.key),
+                child: Text(entry.value),
+              ),
+          ],
+        ),
+      );
+      if (!mounted || role == null) return;
+      if (widget.onRoleChangedWithNote != null) {
+        await widget.onRoleChangedWithNote!(entity, role, '');
+      } else {
+        await widget.onRoleChanged!(entity, role);
+      }
+      if (mounted) {
+        setState(() {
+          _matchingEntities = null;
+          kind = 'all';
+        });
+      }
+      return;
+    }
+    if (action == 'history') {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Cronologia di ${entity.name}'),
+          content: SizedBox(
+            width: 460,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final entry
+                      in widget.statusHistory?.call(entity) ??
+                          const <Map<String, dynamic>>[])
+                    ListTile(
+                      title: Text(
+                        '${diaryProgressStates[entry['from']] ?? entry['from']} → ${diaryProgressStates[entry['to']] ?? entry['to']}',
+                      ),
+                      subtitle: Text('${entry['at']}'),
+                    ),
+                  for (final entry
+                      in widget.roleHistory?.call(entity) ??
+                          const <Map<String, dynamic>>[])
+                    ListTile(
+                      title: Text(
+                        '${diaryEditableRoles[entry['from']] ?? entry['from']} → ${diaryEditableRoles[entry['to']] ?? entry['to']}',
+                      ),
+                      subtitle: Text('${entry['at']}'),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Chiudi'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -270,23 +409,56 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
               itemBuilder: (_, index) {
                 final e = matches[index];
                 return Center(
-                  child: ActionChip(
-                    avatar: OculumMemoryEye(
-                      role: widget.eyeRole?.call(e) ?? e.kind,
-                      size: 24,
+                  child: GestureDetector(
+                    onSecondaryTapDown: (details) =>
+                        _nodeMenu(e, details.globalPosition),
+                    onLongPress: () => _changeState(e),
+                    child: ActionChip(
+                      avatar: OculumMemoryEye(
+                        role: widget.eyeRole?.call(e) ?? e.kind,
+                        size: 24,
+                      ),
+                      label: Text(e.name),
+                      onPressed: () => setState(() {
+                        selected = e.id;
+                        page = 0;
+                        timelineLimit = 60;
+                      }),
                     ),
-                    label: Text(e.name),
-                    onPressed: () => setState(() {
-                      selected = e.id;
-                      page = 0;
-                      timelineLimit = 60;
-                    }),
                   ),
                 );
               },
             ),
           ),
           if (center != null) ...[
+            if (widget.statusOf != null &&
+                center.kind != 'diary' &&
+                center.kind != 'campaign')
+              ListTile(
+                title: Text(
+                  'Stato: ${diaryProgressStates[widget.statusOf!(center)] ?? widget.statusOf!(center)}',
+                ),
+                trailing: widget.onStatusChanged == null
+                    ? null
+                    : IconButton(
+                        tooltip: 'Cambia stato',
+                        icon: const Icon(Icons.edit_note),
+                        onPressed: () => _changeState(center),
+                      ),
+              ),
+            if ((widget.statusHistory?.call(center) ?? const []).isNotEmpty)
+              ExpansionTile(
+                title: const Text('Cronologia degli stati'),
+                children: [
+                  for (final entry in widget.statusHistory!(center))
+                    ListTile(
+                      title: Text(
+                        '${diaryProgressStates[entry['from']] ?? entry['from']} → ${diaryProgressStates[entry['to']] ?? entry['to']}',
+                      ),
+                      subtitle: Text('${entry['at']}'),
+                    ),
+                ],
+              ),
             Wrap(
               spacing: 10,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -593,6 +765,12 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                                 button: true,
                                 label: memory.entities[entry.key]!.name,
                                 child: InkWell(
+                                  onSecondaryTapDown: (details) => _nodeMenu(
+                                    memory.entities[entry.key]!,
+                                    details.globalPosition,
+                                  ),
+                                  onLongPress: () =>
+                                      _changeState(memory.entities[entry.key]!),
                                   onTap: () => setState(() {
                                     selected = entry.key;
                                     page = 0;

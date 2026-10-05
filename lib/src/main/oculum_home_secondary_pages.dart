@@ -1812,22 +1812,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               const SizedBox(height: 10),
               restButton(
                 label: t(
-                  'Forgiatura con Materia: -1 Materia, +1 Cenere',
-                  'Forging with Materia: -1 Materia, +1 Ash',
+                  'Forgiatura: scegli ricetta e materiali',
+                  'Forging: choose recipe and materials',
                 ),
                 icon: Icons.hardware,
                 color: primaryColor,
-                onPressed: forgiaturaConMateria,
-              ),
-              const SizedBox(height: 10),
-              restButton(
-                label: t(
-                  'Forgiatura con Oculum: -1 Oculum, +1 Cenere',
-                  'Forging with Oculum: -1 Oculum, +1 Ash',
+                onPressed: () => refreshOculumHome(
+                  () => paginaCorrente = _OculumHomePageState.recipesPageIndex,
                 ),
-                icon: Icons.visibility,
-                color: tertiaryColor,
-                onPressed: forgiaturaConOculum,
               ),
             ],
           ),
