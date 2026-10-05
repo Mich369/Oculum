@@ -64,9 +64,12 @@ void main() {
 
     expect(oculumPawnExperienceForLevel('normale'), 500);
     expect(oculumPawnExperienceForLevel('oculum'), 685);
-    expect(oculumPawnExperiencePerTurn, 100);
+    expect(oculumPawnExperiencePerTurn, 25);
     expect(oculumPawnStatPointsPerLevel, 9);
-    expect(pawn.advanceTo(5), isTrue);
+    expect(pawn.advanceTo(19), isTrue);
+    expect(pawn.experience, 475);
+    expect(pawn.level, 0);
+    expect(pawn.advanceTo(20), isTrue);
     expect(pawn.level, 1);
     expect(pawn.experience, 0);
     expect(pawn.unspentStatPoints, 9);

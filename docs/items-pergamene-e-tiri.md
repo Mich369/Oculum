@@ -91,7 +91,7 @@ I valori regolabili di Pawn sono centralizzati in `lib/src/main/oculum_pawn.dart
 
 ### Progressione di Pawn
 
-Ogni turno completato concede 100 EXP a Pawn. Ogni livello richiede metà dell'EXP
+Ogni turno completato concede 25 EXP a Pawn. Ogni livello richiede metà dell'EXP
 standard della difficoltà attiva: 500 in Normale (anziché 1000) e 685 in Oculum
 (anziché 1369). Ogni livello concede 9 punti statistica, come un Mostro standard;
 quindi Pawn raggiunge la stessa crescita statistica con metà EXP. I punti si

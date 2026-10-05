@@ -3,7 +3,7 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 const oculumPawnPrice = 100;
-const oculumPawnExperiencePerTurn = 100;
+const oculumPawnExperiencePerTurn = 25;
 const oculumPawnStatPointsPerLevel = 9;
 
 int oculumPawnExperienceForLevel(String difficulty) {
