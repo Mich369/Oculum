@@ -474,6 +474,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (!merchantStock.any((offer) => offer['id'] == 'pawn')) {
       merchantStock.add(oculumPawnMerchantOffer());
     }
+    if (!merchantStock.any((offer) => offer['id'] == 'pawn_v2')) {
+      merchantStock.add(oculumPawnV2MerchantOffer());
+    }
     const foods = <Map<String, dynamic>>[
       {
         'id': 'food_forest_demon',
@@ -875,7 +878,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     setState(() {
       obserController.text = (leggiNumero(obserController) - cost).toString();
       final item = merchantItemFromOffer(offer, titleType: titleType);
-      if (kind == 'pawn') purchasedPawn = item;
+      if (kind == 'pawn' || kind == 'pawn_v2') purchasedPawn = item;
       inventario.add(item);
       if (kind == 'stat_gem') offer['remaining'] = 0;
       if (item.arma) {
@@ -951,6 +954,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     String titleType = '',
   }) {
     if (offer['kind'] == 'pawn') return oculumPawnInventoryItem();
+    if (offer['kind'] == 'pawn_v2') return oculumPawnV2InventoryItem();
     final kind = '${offer['kind'] ?? ''}';
     if (kind == 'food') {
       final effects = <String, dynamic>{
