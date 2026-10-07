@@ -2103,7 +2103,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(radius),
-                    color: Colors.black,
+                    color: Colors.transparent,
                     border: Border.all(
                       color: primaryColor.withValues(alpha: 0.70),
                       width: 1.4,
@@ -5683,9 +5683,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          cleanUiText(nomeController.text).trim().isEmpty
-              ? '???'
-              : cleanUiText(nomeController.text),
+          visibleSheetDisplayName(schedaCorrente),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
@@ -5742,7 +5740,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               ChoiceChip(
                 selected: normalizedCampaignDifficulty() == difficulty,
                 label: Text(
-                  '${campaignDifficultyLabel(difficulty)} · ${t('Crit', 'Crit')} +${oculumCriticalDamageBonusForDifficulty(difficulty)}',
+                  '${campaignDifficultyLabel(difficulty)} · ${t('Crit', 'Crit')} ${difficulty == 'oculum' ? '+1/2' : '+${oculumCriticalDamageBonusForDifficulty(difficulty, 1)}/'}${t('livello', 'level')}',
                 ),
                 onSelected: (_) {
                   setState(() {
@@ -6476,13 +6474,18 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           Align(
             alignment: Alignment.centerLeft,
             child: ElevatedButton.icon(
-              onPressed: refullVita,
+              onPressed: ripristinaStatisticheEVita,
               icon: const Icon(Icons.favorite),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent.shade700,
                 foregroundColor: Colors.white,
               ),
-              label: Text(t('Refull Vita', 'Refill HP')),
+              label: Text(
+                t(
+                  'Ripristina tutto · Stats e HP',
+                  'Restore all · Stats and HP',
+                ),
+              ),
             ),
           ),
         ],
@@ -6904,7 +6907,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   foregroundColor: tertiaryColor.computeLuminance() > 0.45
                       ? Colors.black
                       : Colors.white,
-                  onPressed: () => applicaDannoSubito(critico: true),
+                  onPressed: mostraCriticoControNemico,
                 ),
                 functionAnchor(
                   'sheet_heal',
@@ -6922,6 +6925,12 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                       ? Colors.black
                       : Colors.white,
                   onPressed: refullVita,
+                ),
+                actionButton(
+                  label: t('Ripristina tutto', 'Restore all'),
+                  backgroundColor: Colors.teal.shade800,
+                  foregroundColor: Colors.white,
+                  onPressed: ripristinaStatisticheEVita,
                 ),
               ];
 
@@ -8490,6 +8499,17 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   logTitle: t('Statistiche totali', 'Total stats'),
                 ),
               ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: ripristinaStatisticheEVita,
+                icon: const Icon(Icons.restore),
+                label: Text(
+                  t(
+                    'Ripristina tutto · Stats e HP',
+                    'Restore all · Stats and HP',
+                  ),
+                ),
+              ),
               SizedBox(height: dense ? 8 : 12),
               Wrap(
                 spacing: spacing,
@@ -9963,7 +9983,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                       ),
                     Expanded(
                       child: Text(
-                        wide ? activeCampaignName() : nomeController.text,
+                        wide
+                            ? activeCampaignName()
+                            : visibleSheetDisplayName(schedaCorrente),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(

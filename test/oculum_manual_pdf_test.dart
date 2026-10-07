@@ -21,7 +21,12 @@ void main() {
     expect(bytes.length, greaterThan(10000));
     expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
 
-    final output = Directory('output/pdf');
+    const captureLabel = String.fromEnvironment('OculumBenchmarkLabel');
+    final output = Directory(
+      captureLabel.isEmpty
+          ? 'output/pdf'
+          : 'output/pdf/${captureLabel.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_')}',
+    );
     await output.create(recursive: true);
     final dated = File(
       '${output.path}${Platform.pathSeparator}Oculum_Manuale_Regole_2026-09-05.pdf',

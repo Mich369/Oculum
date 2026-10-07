@@ -3175,8 +3175,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           value: 'local:$i',
           child: Text(
             readBoolValue(schedePersonaggio[i]['realtimeSharedSheet'])
-                ? 'Online copia - ${schedePersonaggio[i]['realtimeOwnerName'] ?? '???'} - ${nomeSchedaPersonaggio(i)}'
-                : '${i + 1}. ${nomeSchedaPersonaggio(i)}',
+                ? 'Online copia - ${schedePersonaggio[i]['realtimeOwnerName'] ?? '???'} - ${visibleSheetDisplayName(i)}'
+                : '${i + 1}. ${visibleSheetDisplayName(i)}',
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -3308,7 +3308,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${record['sheetName'] ?? '???'}',
+                    oculumNameWithVisibleTitle(
+                      '${record['sheetName'] ?? '???'}',
+                      publicTitleName,
+                    ),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,

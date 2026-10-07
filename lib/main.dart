@@ -4484,7 +4484,7 @@ class _OculumHomePageState extends State<OculumHomePage>
                   pageLabel: cleanUiText(titles[safePage]),
                   campaignLabel: cleanUiText(activeCampaignName()),
                   sheetLabel: cleanUiText(
-                    nomeSchedaPersonaggio(schedaCorrente),
+                    visibleSheetDisplayName(schedaCorrente),
                   ),
                   entryCount: journalEntries.length,
                   online: onlineDisponibile && !onlineCheckInCorso,
@@ -4520,7 +4520,7 @@ class _OculumHomePageState extends State<OculumHomePage>
                     const SizedBox(height: 2),
                     Text(
                       cleanUiText(
-                        '${schedaCorrente + 1}/${schedePersonaggio.isEmpty ? 1 : schedePersonaggio.length} • ${tipoSchedaController.text} • ${nomeSchedaPersonaggio(schedaCorrente)}',
+                        '${schedaCorrente + 1}/${schedePersonaggio.isEmpty ? 1 : schedePersonaggio.length} • ${tipoSchedaController.text} • ${visibleSheetDisplayName(schedaCorrente)}',
                       ),
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(

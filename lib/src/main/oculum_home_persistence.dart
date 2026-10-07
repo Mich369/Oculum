@@ -8810,7 +8810,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
                               child: ClipPath(
                                 clipper: const HexagonClipper(),
                                 child: ColoredBox(
-                                  color: Colors.black,
+                                  color: backgroundTopColor,
                                   child: previewBytes.isEmpty
                                       ? Image.memory(
                                           bytes,

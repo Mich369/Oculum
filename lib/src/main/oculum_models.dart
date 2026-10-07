@@ -1125,6 +1125,9 @@ class OculumTitle {
     this.equipaggiato = false,
     this.evoluto = false,
     this.sempreVisibile = false,
+    this.evolvedVisibleBonusClaimed = false,
+    this.evolvedVisibleBonusActive = false,
+    this.visibleSelectionManual = false,
     this.openName = '',
     this.openDescription = '',
     this.openBuff = '',
@@ -1169,6 +1172,11 @@ class OculumTitle {
   /// additivo, quindi i salvataggi precedenti restano invariati.
   bool sempreVisibile;
 
+  /// Prevents the one-time evolved-title award from being claimed again.
+  bool evolvedVisibleBonusClaimed;
+  bool evolvedVisibleBonusActive;
+  bool visibleSelectionManual;
+
   String openName;
   String openDescription;
   String openBuff;
@@ -1202,6 +1210,9 @@ class OculumTitle {
       'equipaggiato': equipaggiato,
       'evoluto': evoluto,
       'sempreVisibile': sempreVisibile,
+      'evolvedVisibleBonusClaimed': evolvedVisibleBonusClaimed,
+      'evolvedVisibleBonusActive': evolvedVisibleBonusActive,
+      'visibleSelectionManual': visibleSelectionManual,
       'openName': openName,
       'openDescription': openDescription,
       'openBuff': openBuff,
@@ -1242,6 +1253,15 @@ class OculumTitle {
       equipaggiato: readBoolValue(json['equipaggiato']),
       evoluto: readBoolValue(json['evoluto']),
       sempreVisibile: readBoolValue(json['sempreVisibile']),
+      evolvedVisibleBonusClaimed: readBoolValue(
+        json['evolvedVisibleBonusClaimed'],
+      ),
+      evolvedVisibleBonusActive: readBoolValue(
+        json['evolvedVisibleBonusActive'],
+      ),
+      visibleSelectionManual: json.containsKey('visibleSelectionManual')
+          ? readBoolValue(json['visibleSelectionManual'])
+          : readBoolValue(json['sempreVisibile']),
       openName: json['openName'] ?? '',
       openDescription: json['openDescription'] ?? '',
       openBuff: json['openBuff'] ?? '',
@@ -1286,10 +1306,36 @@ class OculumTitle {
 /// be used here: a temporarily disabled Open still keeps its title priority.
 bool oculumTitleHasActivatableOpen(OculumTitle title) => title.evoluto;
 
+String oculumNameWithVisibleTitle(String name, String title) {
+  final visibleName = name.trim().isEmpty ? '???' : name.trim();
+  final visibleTitle = title.trim();
+  return visibleTitle.isEmpty ? visibleName : '$visibleName | $visibleTitle';
+}
+
 /// Public-title bonuses use integer stats: round once after summing sources.
 /// Penalties remain unchanged, and the stored title is never multiplied.
 int oculumPublicTitleStatBonus(int value) =>
     value > 0 ? (value * 1.3).round() - value : 0;
+
+/// Six evenly distributed stat points at grade zero, then six more per grade.
+Map<String, int> oculumVisibleTitleStatBonus({
+  required int grade,
+  required bool evolvedFirstClaim,
+}) {
+  final points = 6 * (max(0, grade) + 1);
+  const keys = ['resilienza', 'volonta', 'materia', 'oculum'];
+  final result = <String, int>{for (final key in keys) key: points ~/ 4};
+  for (var i = 0; i < points % 4; i++) {
+    result[keys[i]] = result[keys[i]]! + 1;
+  }
+  if (evolvedFirstClaim) {
+    result['resilienza'] = result['resilienza']! + 3;
+    for (final key in const ['volonta', 'materia', 'oculum']) {
+      result[key] = result[key]! + 2;
+    }
+  }
+  return result;
+}
 
 bool oculumTitleCanBeAlwaysVisible(
   OculumTitle candidate,
@@ -1324,8 +1370,13 @@ OculumTitle? oculumAlwaysVisibleTitle(Iterable<OculumTitle> titles) {
 /// Keeps legacy or manually edited JSON valid: only one equipped Title may be
 /// public, and an equipped Title with an activatable Open always takes
 /// precedence.
-void oculumNormalizeAlwaysVisibleTitles(Iterable<OculumTitle> titles) {
+void oculumNormalizeAlwaysVisibleTitles(
+  Iterable<OculumTitle> titles, {
+  Iterable<OculumTitle> racialTraits = const [],
+  int Function(int)? chooseIndex,
+}) {
   final all = titles.toList(growable: false);
+  final racial = racialTraits.toList(growable: false);
   final eligible = all
       .where((title) => title.sempreVisibile && title.equipaggiato)
       .toList(growable: false);
@@ -1334,13 +1385,33 @@ void oculumNormalizeAlwaysVisibleTitles(Iterable<OculumTitle> titles) {
         (title) => title.equipaggiato && oculumTitleHasActivatableOpen(title),
       )
       .toList(growable: false);
-  final selected = evolvedEquipped.length == 1
-      ? evolvedEquipped.single
-      : evolvedEquipped.isNotEmpty
-      ? eligible.where(oculumTitleHasActivatableOpen).firstOrNull
-      : eligible.firstOrNull;
+  final manual = eligible
+      .where(
+        (title) =>
+            title.visibleSelectionManual &&
+            (evolvedEquipped.isEmpty || title.evoluto),
+      )
+      .firstOrNull;
+  final evolvedRacial = evolvedEquipped.where(racial.contains).toList();
+  final candidates = evolvedRacial.isNotEmpty ? evolvedRacial : evolvedEquipped;
+  final selected =
+      manual ??
+      (evolvedEquipped.length == 1
+          ? evolvedEquipped.single
+          : evolvedEquipped.isNotEmpty
+          ? eligible.where(candidates.contains).firstOrNull ??
+                candidates[(chooseIndex ?? Random().nextInt)(candidates.length)]
+          : eligible.firstOrNull ??
+                racial.where((title) => title.equipaggiato).firstOrNull ??
+                all.where((title) => title.equipaggiato).firstOrNull);
   for (final title in all) {
     title.sempreVisibile = identical(title, selected);
+    if (!title.sempreVisibile || !title.evoluto) {
+      title.evolvedVisibleBonusActive = false;
+    } else if (!title.evolvedVisibleBonusClaimed) {
+      title.evolvedVisibleBonusClaimed = true;
+      title.evolvedVisibleBonusActive = true;
+    }
   }
 }
 

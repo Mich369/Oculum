@@ -3592,7 +3592,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${masterInitiativeTokens[i]['name'] ?? '???'}',
+                      oculumNameWithVisibleTitle(
+                        '${masterInitiativeTokens[i]['name'] ?? '???'}',
+                        '${masterInitiativeTokens[i]['visibleTitleName'] ?? ''}',
+                      ),
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white,

@@ -621,7 +621,25 @@ extension _OculumHomeForceState on _OculumHomePageState {
   }) {
     final before = max(0, precedente ?? leggiNumero(cenereController));
     final next = max(0, value);
+    final penaltyBefore = oculumFatigueRollPenalty(
+      ash: before,
+      grade: leggiNumero(gradoController),
+      suppressPenalty: statoForzaRimuoveMalus(),
+    );
     cenereController.text = next.toString();
+    if (next != before) {
+      final penaltyAfter = oculumFatigueRollPenalty(
+        ash: next,
+        grade: leggiNumero(gradoController),
+        suppressPenalty: statoForzaRimuoveMalus(),
+      );
+      final threshold = sogliaFaticaSenzaMalus();
+      aggiungiLog(
+        'Cenere ${next > before ? '+' : ''}${next - before}: $before → $next. '
+        'Malus ai tiri ${penaltyBefore == penaltyAfter ? 'invariato ($penaltyAfter)' : '$penaltyBefore → $penaltyAfter'}; '
+        'soglia senza malus $threshold. Il nuovo malus decorre dal turno $playerReportedTurn; non sottrae statistiche attuali.',
+      );
+    }
     if (next < 3) {
       cenereSvenimentoUltimoControllo = next;
       if (personaggioSvenuto) {
@@ -731,8 +749,8 @@ extension _OculumHomeForceState on _OculumHomePageState {
             source: 'Cenere in combattimento',
           );
           mainMessage = t(
-            'Cedi alla fatica: Vista appannata, -1 ai tiri fino alla fine del prossimo turno.',
-            'Fatigue catches up: Blurred vision, -1 to rolls until the end of your next turn.',
+            'Cedi alla fatica al turno $playerReportedTurn: Vista appannata, -1 ai tiri da adesso fino alla fine del turno.',
+            'Fatigue catches up on turn $playerReportedTurn: Blurred vision, -1 to rolls from now until the end of the turn.',
           );
         }
       } else if (!inCombat && !success) {

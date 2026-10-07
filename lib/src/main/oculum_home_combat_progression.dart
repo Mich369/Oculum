@@ -3920,9 +3920,85 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  Future<void> mostraCriticoControNemico() async {
+    var enemyLevelText = '1';
+    var difficulty = normalizedCampaignDifficulty();
+    final profile = await showDialog<(String, int)>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text(t('Critico contro nemico', 'Critical against enemy')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                initialValue: difficulty,
+                decoration: InputDecoration(
+                  labelText: t('Difficoltà nemico', 'Enemy difficulty'),
+                ),
+                items: [
+                  for (final value in const [
+                    'facile',
+                    'normale',
+                    'difficile',
+                    'oculum',
+                  ])
+                    DropdownMenuItem(
+                      value: value,
+                      child: Text(campaignDifficultyLabel(value)),
+                    ),
+                ],
+                onChanged: (value) {
+                  if (value != null) setDialogState(() => difficulty = value);
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                initialValue: enemyLevelText,
+                onChanged: (value) => enemyLevelText = value,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: t('Livello nemico', 'Enemy level'),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                t(
+                  'Bonus critico: Facile +3/livello, Normale +2, Difficile +1, Oculum +1 ogni 2 livelli.',
+                  'Critical bonus: Easy +3/level, Normal +2, Hard +1, Oculum +1 per 2 levels.',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(t('Annulla', 'Cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, (
+                difficulty,
+                max(0, int.tryParse(enemyLevelText) ?? 0),
+              )),
+              child: Text(t('Applica critico', 'Apply critical')),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (profile == null) return;
+    await applicaDannoSubito(
+      critico: true,
+      enemyDifficulty: profile.$1,
+      enemyLevel: profile.$2,
+    );
+  }
+
   Future<void> applicaDannoSubito({
     bool critico = false,
     int? dannoEsplicito,
+    String? enemyDifficulty,
+    int? enemyLevel,
   }) async {
     if (pawnPendingDamage.isNotEmpty) {
       risultato =
@@ -4060,8 +4136,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             : modificatorePrima);
     final riduzioneSchivata = schivataOculumRiduzionePronta;
     final schivataLabel = schivataOculumEtichettaPronta.trim();
+    final criticalDifficulty =
+        enemyDifficulty ?? normalizedCampaignDifficulty();
+    final criticalEnemyLevel = max(0, enemyLevel ?? 1);
     final bonusCritico = oculumCriticalDamageBonusForDifficulty(
-      normalizedCampaignDifficulty(),
+      criticalDifficulty,
+      criticalEnemyLevel,
     );
     final dannoPrimaParata = dannoInserito + (critico ? bonusCritico : 0);
     final riduzioneParataOculum = parryCheckSucceeded
@@ -4217,8 +4297,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         : testoPercentualeDannoLibera(percentualeLiberaPrima);
     final criticoLogIt = critico
         ? (stadioPrimaLog == modificatoreDopo
-              ? ' Critico: +$bonusCritico danni, stadio già a $modificatoreDopo.'
-              : ' Critico: +$bonusCritico danni, stadio $stadioPrimaLog → $modificatoreDopo (${testoPercentualeDannoLibera(modificatore.multiplier)}).')
+              ? ' Critico nemico ${campaignDifficultyLabel(criticalDifficulty)} livello $criticalEnemyLevel: +$bonusCritico danni, stadio già a $modificatoreDopo.'
+              : ' Critico nemico ${campaignDifficultyLabel(criticalDifficulty)} livello $criticalEnemyLevel: +$bonusCritico danni, stadio $stadioPrimaLog → $modificatoreDopo (${testoPercentualeDannoLibera(modificatore.multiplier)}).')
         : '';
     final sfortunaCriticoLogIt = misfortuneCriticalTriggered
         ? ' Sfortuna: il danno è diventato critico (tiro ${(misfortuneCriticalRoll / 100).toStringAsFixed(2)}%).'
@@ -4228,8 +4308,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         : '';
     final criticoLogEn = critico
         ? (stadioPrimaLog == modificatoreDopo
-              ? ' Critical: +$bonusCritico damage, stage already at $modificatoreDopo.'
-              : ' Critical: +$bonusCritico damage, stage $stadioPrimaLog → $modificatoreDopo (${testoPercentualeDannoLibera(modificatore.multiplier)}).')
+              ? ' Enemy critical ${campaignDifficultyLabel(criticalDifficulty)} level $criticalEnemyLevel: +$bonusCritico damage, stage already at $modificatoreDopo.'
+              : ' Enemy critical ${campaignDifficultyLabel(criticalDifficulty)} level $criticalEnemyLevel: +$bonusCritico damage, stage $stadioPrimaLog → $modificatoreDopo (${testoPercentualeDannoLibera(modificatore.multiplier)}).')
         : '';
 
     if (dannoModificato < 0) {
@@ -4772,6 +4852,51 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    programmaSalvataggio();
+    sendRealtimeHpChanged();
+  }
+
+  void ripristinaStatisticheEVita() {
+    final before = <String, int>{
+      'RES': currentResilienza(),
+      'VOL': currentVolonta(),
+      'MAT': currentMateria(),
+      'OCU': currentOculum(),
+      'HP': hpCorrenti(),
+    };
+    setState(() {
+      statoForzaAttivo = '';
+      statoForzaPronto = true;
+      statoForzaTiriRimanenti = 0;
+      hpTempBonusConsumati = 0;
+      refullaStatsAttuali(forceMaximum: true);
+      currentHpController.text = maxHp().toString();
+      if (scudoOculumMax() > 0) ricaricaScudoOculum();
+    });
+    final after = <String, int>{
+      'RES': currentResilienza(),
+      'VOL': currentVolonta(),
+      'MAT': currentMateria(),
+      'OCU': currentOculum(),
+      'HP': hpCorrenti(),
+    };
+    final changes = [
+      for (final key in before.keys)
+        if (before[key] != after[key]) '$key ${before[key]} → ${after[key]}',
+    ];
+    setState(() {
+      final summary = changes.isEmpty
+          ? t(
+              'Statistiche e HP erano già al massimo.',
+              'Stats and HP were already full.',
+            )
+          : t(
+              'Ripristino completo: ${changes.join(', ')}.',
+              'Full restore: ${changes.join(', ')}.',
+            );
+      risultato = summary;
+      aggiungiLog(summary);
+    });
     programmaSalvataggio();
     sendRealtimeHpChanged();
   }

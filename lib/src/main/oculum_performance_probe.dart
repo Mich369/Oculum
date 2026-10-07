@@ -133,6 +133,29 @@ class OculumPerformanceProbe {
       _state.sortMasterInitiativeTokens(forceInitiative: true);
   void longRest() => _state.riposoLungo();
   void recoverLongRestStats() => _state.ripristinaStatsRiposoLungo();
+  void restoreStatsAndHp() => _state.ripristinaStatisticheEVita();
+  String? changeAsh(int delta, {bool checkFainting = true}) => _state
+      .modificaCenereControllata(delta, controllaSvenimento: checkFainting);
+  int fatigueRollPenalty() => _state.malusFaticaTiri();
+  Future<void> showEnemyCriticalDialog() => _state.mostraCriticoControNemico();
+  OculumTitle? visibleTitle() => _state.titoloSempreVisibile;
+  int visibleTitleBonus(String stat) => _state.visibleTitleStatBonus(stat);
+  int visibleResourceCurrent(String key) => key == 'oculum'
+      ? _state.oculumTotale()
+      : _state.currentStatWithRuntimeBuffs(key, resourceCurrent(key));
+  int visibleResourceMaximum(String key) => _state.statMassimoNaturale(key);
+  void selectVisibleTitle(OculumTitle? selected) {
+    if (selected != null &&
+        !oculumTitleCanBeAlwaysVisible(selected, _state.titoliCalcolabili)) {
+      return;
+    }
+    for (final title in _state.titoliCalcolabili) {
+      title.sempreVisibile = identical(title, selected);
+      title.visibleSelectionManual = identical(title, selected);
+    }
+    _state.titoloSempreVisibile;
+  }
+
   void recoverShortRestStats() => _state.recuperaStatsAttualiConRiposoBreve();
   int resourceMaximum(String key) =>
       _state.currentStatNaturalControllerMax(key);

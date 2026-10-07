@@ -341,19 +341,75 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   OculumTitle? get titoloSempreVisibile {
-    oculumNormalizeAlwaysVisibleTitles(titoli);
-    return oculumAlwaysVisibleTitle(titoli);
+    final all = [...titoli, ...trattiRazziali];
+    oculumNormalizeAlwaysVisibleTitles(all, racialTraits: trattiRazziali);
+    return oculumAlwaysVisibleTitle(all);
   }
 
   OculumTitle? titoloSempreVisibileSchedaAt(int index) {
     if (index == schedaCorrente) return titoloSempreVisibile;
     if (index < 0 || index >= schedePersonaggio.length) return null;
-    final raw = schedePersonaggio[index]['titoli'];
-    final titles = (raw is List ? raw : const <dynamic>[]).whereType<Map>().map(
-      (json) => OculumTitle.fromJson(Map<String, dynamic>.from(json)),
-    );
-    return oculumAlwaysVisibleTitle(titles);
+    final sheet = schedePersonaggio[index];
+    final raw = sheet['titoli'];
+    final titleSources = (raw is List ? raw : const <dynamic>[])
+        .whereType<Map>()
+        .toList();
+    final titles = titleSources
+        .map((json) => OculumTitle.fromJson(Map<String, dynamic>.from(json)))
+        .toList();
+    final racialRaw = sheet['trattiRazziali'];
+    final racialSources = (racialRaw is List ? racialRaw : const <dynamic>[])
+        .whereType<Map>()
+        .toList();
+    final racial = racialSources
+        .map((json) => OculumTitle.fromJson(Map<String, dynamic>.from(json)))
+        .toList();
+    final all = [...titles, ...racial];
+    oculumNormalizeAlwaysVisibleTitles(all, racialTraits: racial);
+    void persistSelection(
+      String key,
+      dynamic originals,
+      List<OculumTitle> parsed,
+    ) {
+      if (originals is! List) return;
+      var i = 0;
+      sheet[key] = originals.map((entry) {
+        if (entry is! Map) return entry;
+        final title = parsed[i++];
+        return <String, dynamic>{
+          ...Map<String, dynamic>.from(entry),
+          'sempreVisibile': title.sempreVisibile,
+          'visibleSelectionManual': title.visibleSelectionManual,
+          'evolvedVisibleBonusClaimed': title.evolvedVisibleBonusClaimed,
+          'evolvedVisibleBonusActive': title.evolvedVisibleBonusActive,
+        };
+      }).toList();
+    }
+
+    // Keep automatic selection stable when viewing a sheet without loading it.
+    persistSelection('titoli', raw, titles);
+    persistSelection('trattiRazziali', racialRaw, racial);
+    return oculumAlwaysVisibleTitle(all) ??
+        racial.where((x) => x.equipaggiato).firstOrNull;
   }
+
+  int visibleTitleStatBonus(String stat) {
+    final title = titoloSempreVisibile;
+    if (title == null) return 0;
+    return oculumVisibleTitleStatBonus(
+          grade: leggiNumero(gradoController),
+          evolvedFirstClaim: title.evoluto && title.evolvedVisibleBonusActive,
+        )[stat] ??
+        0;
+  }
+
+  String visibleSheetDisplayName(int index) => oculumNameWithVisibleTitle(
+    nomeSchedaPersonaggio(index),
+    titoloSempreVisibileSchedaAt(index)?.nome ??
+        (index >= 0 && index < schedePersonaggio.length
+            ? '${schedePersonaggio[index]['publicVisibleTitleName'] ?? ''}'
+            : ''),
+  );
 
   // CALCOLI STATS / HP / DERIVATI
   // =====================================================
@@ -472,7 +528,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       }
     }
 
-    return totale + titleQuickBonus('resilienza') + artQuickBonus('resilienza');
+    return totale +
+        visibleTitleStatBonus('resilienza') +
+        titleQuickBonus('resilienza') +
+        artQuickBonus('resilienza');
   }
 
   int buffVolonta() {
@@ -485,7 +544,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       }
     }
 
-    return totale + titleQuickBonus('volonta') + artQuickBonus('volonta');
+    return totale +
+        visibleTitleStatBonus('volonta') +
+        titleQuickBonus('volonta') +
+        artQuickBonus('volonta');
   }
 
   int buffMateria() {
@@ -498,7 +560,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       }
     }
 
-    return totale + titleQuickBonus('materia') + artQuickBonus('materia');
+    return totale +
+        visibleTitleStatBonus('materia') +
+        titleQuickBonus('materia') +
+        artQuickBonus('materia');
   }
 
   int buffOculum() {
@@ -511,7 +576,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       }
     }
 
-    return totale + titleQuickBonus('oculum') + artQuickBonus('oculum');
+    return totale +
+        visibleTitleStatBonus('oculum') +
+        titleQuickBonus('oculum') +
+        artQuickBonus('oculum');
   }
 
   int karmaTitoli() {
@@ -521,7 +589,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       if (titolo.equipaggiato) {
         totale += titolo.karma;
         totale += buffCondizionaleKarma(titolo);
-        if (identical(titolo, oculumAlwaysVisibleTitle(titoli))) {
+        if (identical(titolo, titoloSempreVisibile)) {
           totale += oculumPublicTitleStatBonus(
             titolo.karma + buffCondizionaleKarma(titolo),
           );
@@ -864,7 +932,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int runtimeCurrentStatBonus(String key) {
-    return titleQuickBonus(key) +
+    return visibleTitleStatBonus(key) +
+        titleQuickBonus(key) +
         artQuickBonus(key) +
         itemQuickBonus(key) +
         globalQuickBonus(key) +
@@ -1859,7 +1928,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       addTitleQuickCommands(bonuses, text);
     }
 
-    if (identical(titolo, oculumAlwaysVisibleTitle(titoli))) {
+    if (identical(titolo, titoloSempreVisibile)) {
       final structured = <String, int>{
         'resilienza': titolo.resilienza + buffCondizionaleResilienza(titolo),
         'volonta': titolo.volonta + buffCondizionaleVolonta(titolo),
@@ -3044,7 +3113,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     controller.text = min(massimo, current + recupero).toString();
   }
 
-  void refullaStatsAttuali() {
+  void refullaStatsAttuali({bool forceMaximum = false}) {
     currentResilienzaController.text = currentStatNaturalControllerMax(
       'resilienza',
     ).toString();
@@ -3055,7 +3124,16 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       'materia',
     ).toString();
     final massimoOculum = currentStatNaturalControllerMax('oculum');
-    if (currentOculum() < massimoOculum) {
+    if (forceMaximum) {
+      final state = currentTemporaryOculumState();
+      applyTemporaryOculumState(
+        TemporaryOculumState(
+          normalCurrent: massimoOculum,
+          temporary: state.temporary,
+          rollsRemaining: state.rollsRemaining,
+        ),
+      );
+    } else if (currentOculum() < massimoOculum) {
       addOculum(massimoOculum - currentOculum(), scheduleSave: false);
     }
     invalidateHiddenEyeDerivedCaches();
@@ -3161,11 +3239,19 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (oculum != 0) {
       final before = currentOculum();
       final delta = oculum * segno;
-      if (delta > 0) {
-        addOculum(delta, scheduleSave: false);
-      } else {
-        spendOculum(-delta, scheduleSave: false);
-      }
+      // Structural stat bonuses are not healing: grant/remove their full
+      // amount while preserving consumed resources and temporary Oculum.
+      final state = currentTemporaryOculumState();
+      applyTemporaryOculumState(
+        TemporaryOculumState(
+          normalCurrent: max(
+            currentOculumRuntimeFloor(),
+            state.normalCurrent + delta,
+          ),
+          temporary: state.temporary,
+          rollsRemaining: state.rollsRemaining,
+        ),
+      );
       changed = changed || before != currentOculum();
     }
 

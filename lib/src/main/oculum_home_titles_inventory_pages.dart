@@ -3037,7 +3037,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             open.attiva = false;
           }
         }
-        oculumNormalizeAlwaysVisibleTitles(list);
+        oculumNormalizeAlwaysVisibleTitles([
+          ...titoli,
+          ...trattiRazziali,
+        ], racialTraits: trattiRazziali);
         aggiungiLog(
           '${titolo.equipaggiato ? "Equipaggiato" : "Rimosso"} $titleKind: [${titolo.nome}].',
         );
@@ -3050,7 +3053,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       } else {
         removeConditionsFromSource(titolo.nome);
       }
-      if (!trattoRazziale) syncMasterInitiativeVisibleTitle(schedaCorrente);
+      syncMasterInitiativeVisibleTitle(schedaCorrente);
       programmaSalvataggio();
     }
 
@@ -3068,7 +3071,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         }
         aggiungiLog('$titleKind eliminato: [${titolo.nome}].');
         list.removeAt(currentIndex);
-        oculumNormalizeAlwaysVisibleTitles(list);
+        oculumNormalizeAlwaysVisibleTitles([
+          ...titoli,
+          ...trattiRazziali,
+        ], racialTraits: trattiRazziali);
       });
       programmaSalvataggio();
     }
@@ -3271,7 +3277,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     initialValue: titolo.nome,
                     onChanged: (value) {
                       titolo.nome = value;
-                      if (!trattoRazziale && titolo.sempreVisibile) {
+                      if (titolo.sempreVisibile) {
                         syncMasterInitiativeVisibleTitle(schedaCorrente);
                       }
                     },
@@ -3295,7 +3301,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     initialValue: titolo.leggenda,
                     onChanged: (value) {
                       titolo.leggenda = value;
-                      if (!trattoRazziale && titolo.sempreVisibile) {
+                      if (titolo.sempreVisibile) {
                         syncMasterInitiativeVisibleTitle(schedaCorrente);
                       }
                     },
@@ -3305,7 +3311,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       'Write the story, memory, or tale connected to this Title.',
                     ),
                   ),
-                  if (!trattoRazziale) ...[
+                  ...[
                     const SizedBox(height: 8),
                     SwitchListTile(
                       value: titolo.sempreVisibile,
@@ -3319,36 +3325,74 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                                 'Indossa questo Titolo per mostrarne nome e leggenda a PNG e mostri.',
                                 'Wear this Title to show its name and legend to NPCs and monsters.',
                               )
-                            : !oculumTitleCanBeAlwaysVisible(titolo, list)
+                            : !oculumTitleCanBeAlwaysVisible(titolo, [
+                                ...titoli,
+                                ...trattiRazziali,
+                              ])
                             ? t(
                                 'Un Titolo con Open attivabile indossato ha la priorità.',
                                 'An equipped Title with an activatable Open takes priority.',
                               )
                             : t(
-                                'Nome e leggenda sono pubblici. I bonus statistici di questo Titolo valgono ×1,3, arrotondati all’intero più vicino. I malus restano invariati. Precedenza ai Titoli evoluti indossati.',
-                                'Name and legend are public. This Title’s stat bonuses are ×1.3, rounded to the nearest integer. Penalties stay unchanged. Equipped evolved Titles take priority.',
+                                'Nome e leggenda sono pubblici. +6 punti bilanciati a grado 0, +6 per grado; +9 punti alla prima selezione evoluta, rimossi al cambio. Il precedente bonus ×1,3 resta sui bonus propri del titolo. Precedenza ai titoli evoluti, poi al tratto razziale primario.',
+                                'Public name and legend. +6 balanced points at grade 0, +6 per grade; +9 on first evolved selection, removed on change. Existing ×1.3 applies to authored title bonuses. Evolved titles take priority, then the primary racial trait.',
                               ),
                       ),
-                      onChanged: oculumTitleCanBeAlwaysVisible(titolo, list)
+                      onChanged:
+                          oculumTitleCanBeAlwaysVisible(titolo, [
+                            ...titoli,
+                            ...trattiRazziali,
+                          ])
                           ? (value) {
                               setState(() {
+                                final previousVisible = titoloSempreVisibile;
+                                final previousInitialBonusActive =
+                                    previousVisible
+                                        ?.evolvedVisibleBonusActive ==
+                                    true;
+                                final allTitles = [
+                                  ...titoli,
+                                  ...trattiRazziali,
+                                ];
                                 if (value) {
-                                  for (final other in list) {
+                                  for (final other in allTitles) {
                                     other.sempreVisibile = identical(
+                                      other,
+                                      titolo,
+                                    );
+                                  }
+                                  for (final other in allTitles) {
+                                    other.visibleSelectionManual = identical(
                                       other,
                                       titolo,
                                     );
                                   }
                                 } else {
                                   titolo.sempreVisibile = false;
+                                  titolo.visibleSelectionManual = false;
                                 }
-                                oculumNormalizeAlwaysVisibleTitles(list);
+                                oculumNormalizeAlwaysVisibleTitles(
+                                  allTitles,
+                                  racialTraits: trattiRazziali,
+                                );
+                                final selected = titoloSempreVisibile;
+                                aggiungiLog(
+                                  'Titolo visibile: [${previousVisible?.nome ?? "nessuno"}] → [${selected?.nome ?? "nessuno"}]. '
+                                  '${previousVisible != selected && previousInitialBonusActive ? "Il bonus iniziale +9 del titolo precedente è rimosso. " : ""}'
+                                  'Bonus bilanciato: ${6 * (max(0, leggiNumero(gradoController)) + 1)} punti'
+                                  '${selected?.evolvedVisibleBonusActive == true ? " +9 iniziali evoluti" : ""}.',
+                                );
                               });
                               syncMasterInitiativeVisibleTitle(schedaCorrente);
                               programmaSalvataggio();
                             }
                           : null,
                     ),
+                    if (titolo.sempreVisibile)
+                      smallInfoText(
+                        'Bonus titolo visibile: RES +${visibleTitleStatBonus('resilienza')} · VOL +${visibleTitleStatBonus('volonta')} · MAT +${visibleTitleStatBonus('materia')} · OCU +${visibleTitleStatBonus('oculum')}',
+                        color: tertiaryColor,
+                      ),
                   ],
                   const SizedBox(height: 8),
                   campoModello(
@@ -3527,7 +3571,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       setState(() {
                         if (!value) disattivaOpenDelTitolo(titolo);
                         titolo.evoluto = value;
-                        oculumNormalizeAlwaysVisibleTitles(list);
+                        oculumNormalizeAlwaysVisibleTitles([
+                          ...titoli,
+                          ...trattiRazziali,
+                        ], racialTraits: trattiRazziali);
                         if (value) {
                           final expText = assegnaEsperienzaOpenTitolo(titolo);
                           if (expText.isNotEmpty) {
@@ -3535,7 +3582,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                             aggiungiLog(risultato);
                           }
                         }
+                        aggiungiLog(
+                          'Evoluzione titolo [${titolo.nome}]: ${value ? "attiva" : "disattivata"}. Titolo visibile: [${titoloSempreVisibile?.nome ?? "nessuno"}].',
+                        );
                       });
+                      syncMasterInitiativeVisibleTitle(schedaCorrente);
                       programmaSalvataggio();
                     },
                   ),

@@ -217,13 +217,17 @@ int oculumGradeExperienceBonus({
   return max(rebirth ? 5 : 0, (base * multiplier).round());
 }
 
-/// Danno piatto aggiunto a un colpo critico ricevuto dalla campagna.
-int oculumCriticalDamageBonusForDifficulty(String difficulty) {
+/// Bonus ai danni critici in base a difficoltà e livello del nemico.
+int oculumCriticalDamageBonusForDifficulty(
+  String difficulty, [
+  int enemyLevel = 1,
+]) {
+  final level = max(0, enemyLevel);
   return switch (difficulty.trim().toLowerCase()) {
-    'facile' || 'easy' => 3,
-    'difficile' || 'hard' => 8,
-    'oculum' => 12,
-    _ => 5,
+    'facile' || 'easy' => level * 3,
+    'difficile' || 'hard' => level,
+    'oculum' => level ~/ 2,
+    _ => level * 2,
   };
 }
 

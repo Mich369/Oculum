@@ -33,9 +33,8 @@ if ((Test-Path -LiteralPath $stagingRoot) -or (Test-Path -LiteralPath $downloadR
   throw 'Fresh staging path already exists; inspect it before retrying'
 }
 New-Item -ItemType Directory -Path $stagingRoot, $downloadRoot | Out-Null
-$artifacts = @('Oculum-Windows', 'Oculum-Test-Windows', 'Oculum-Android', 'Oculum-macOS', 'Oculum-iOS-unsigned', 'Oculum-Linux', 'Oculum-Web')
+# Download every artifact of this successful run, including UI evidence.
 $downloadArgs = @('run', 'download', "$RunId", '--repo', $GitHubRepo, '--dir', $downloadRoot)
-foreach ($artifact in $artifacts) { $downloadArgs += @('--name', $artifact) }
 & gh @downloadArgs
 if ($LASTEXITCODE -ne 0) { throw 'GitHub artifact download failed' }
 $packages = @('Oculum-Windows.zip', 'Oculum-Test-Windows.zip', 'Oculum-Android-release.apk', 'Oculum-Android-release.aab', 'Oculum-macOS.zip', 'Oculum-iOS-unsigned.ipa', 'Oculum-Linux-x64.tar.gz', 'Oculum-Web.zip')
@@ -59,7 +58,10 @@ if ((Get-FileHash (Join-Path $stagingRoot 'windows/data/app.so')).Hash -eq
 }
 # The standalone EXE needs the full Flutter runtime alongside it.
 Get-ChildItem -LiteralPath (Join-Path $stagingRoot 'windows') | Copy-Item -Destination $stagingRoot -Recurse
-Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/items-pergamene-e-tiri.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-MODIFICHE.md')
+Get-ChildItem -LiteralPath $downloadRoot -Directory | Where-Object Name -NotIn @('Oculum-Windows', 'Oculum-Test-Windows', 'Oculum-Android', 'Oculum-macOS', 'Oculum-iOS-unsigned', 'Oculum-Linux', 'Oculum-Web') | ForEach-Object {
+  Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $stagingRoot $_.Name) -Recurse
+}
+Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/titoli-statistiche-critici.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-MODIFICHE.md')
 $manifest = [ordered]@{
   commit = $commit
   githubRun = $run.html_url
