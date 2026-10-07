@@ -5150,10 +5150,12 @@ List<MonsterBookEntry> _withMonsterVariants(
   for (final entry in entries) {
     result.add(entry);
     if (entry.id.contains('_variante_') ||
-        entry.id.startsWith(oculumSpineHedgehogId) ||
-        entry.id.startsWith('pack_leader_') && false) {
+        entry.id.startsWith(oculumSpineHedgehogId)) {
       continue;
     }
+    final includeGeneratedVariant =
+        !entry.id.startsWith('weak_horror_') &&
+        !entry.id.startsWith('pack_leader_');
     final score = entry.id.codeUnits.fold<int>(0, (sum, code) => sum + code);
     final style = styles[score % styles.length];
     final level = entry.stats['level'] ?? 0;
@@ -5176,23 +5178,92 @@ List<MonsterBookEntry> _withMonsterVariants(
           _ => pair.value,
         },
     };
-    result.add(
-      entry.copyWith(
-        id: '${entry.id}_variante_${style.id}',
-        nameIt: '${entry.nameIt} ${style.label}',
-        nameEn: '${entry.nameEn} ${style.label}',
-        descIt:
-            'Variante ${style.label.toLowerCase()} (dal livello $level): ${style.role}. ${entry.descIt}',
-        descEn: '${style.label} variant of ${entry.nameEn}. ${entry.descEn}',
-        stats: stats,
-        skillIds: entry.skillIds
-            .map((skill) => '${skill}_variante_${style.id}')
-            .toList(growable: false),
-        dropIds: [...entry.dropIds, 'frammento_variante_${style.id}'],
-      ),
+    final variant = entry.copyWith(
+      id: '${entry.id}_variante_${style.id}',
+      nameIt: '${entry.nameIt} ${style.label}',
+      nameEn: '${entry.nameEn} ${style.label}',
+      descIt:
+          'Variante ${style.label.toLowerCase()} (dal livello $level): ${style.role}. ${entry.descIt}',
+      descEn: '${style.label} variant of ${entry.nameEn}. ${entry.descEn}',
+      stats: stats,
+      skillIds: entry.skillIds
+          .map((skill) => '${skill}_variante_${style.id}')
+          .toList(growable: false),
+      dropIds: [...entry.dropIds, 'frammento_variante_${style.id}'],
     );
+    if (includeGeneratedVariant) result.add(variant);
   }
   return result;
+}
+
+MonsterBookEntry? _generatedVariantForHiddenBase(String id) {
+  final marker = id.indexOf('_variante_');
+  if (marker <= 0) return null;
+  final baseId = id.substring(0, marker);
+  final styleId = id.substring(marker + '_variante_'.length);
+  if (!const {
+    'errante',
+    'corazzata',
+    'rituale',
+    'veterana',
+  }.contains(styleId)) {
+    return null;
+  }
+  if (!baseId.startsWith('weak_horror_') &&
+      !baseId.startsWith('pack_leader_')) {
+    return null;
+  }
+  MonsterBookEntry? base;
+  for (final entry in defaultMonsterBookEntries) {
+    if (entry.id == baseId) {
+      base = entry;
+      break;
+    }
+  }
+  if (base == null) return null;
+  const roles = <String, String>{
+    'errante': 'si muove tra le linee e punisce chi resta isolato',
+    'corazzata': 'protegge un passaggio e forza il gruppo a consumare Difesa',
+    'rituale': 'prepara il terreno con Oculum prima di colpire',
+    'veterana': 'alterna le sue tecniche senza ripetere la stessa apertura',
+  };
+  const labels = <String, String>{
+    'errante': 'Errante',
+    'corazzata': 'Corazzata',
+    'rituale': 'Rituale',
+    'veterana': 'Veterana',
+  };
+  final bonus = base.isBoss
+      ? 16
+      : base.isMiniBoss
+      ? 9
+      : 4;
+  final stats = <String, int>{
+    for (final pair in base.stats.entries)
+      pair.key: switch (pair.key) {
+        'level' => min(100, max(0, pair.value + (base.isBoss ? 8 : 3))),
+        'resilienza' ||
+        'volonta' ||
+        'materia' ||
+        'oculum' => pair.value + bonus,
+        'hp' => pair.value + bonus * 12,
+        'atk' || 'def' => pair.value + bonus * 2,
+        _ => pair.value,
+      },
+  };
+  return base.copyWith(
+    id: id,
+    nameIt: '${base.nameIt} ${labels[styleId]}',
+    nameEn: '${base.nameEn} ${labels[styleId]}',
+    descIt:
+        'Variante ${styleId.toLowerCase()}: ${roles[styleId]}. ${base.descIt}',
+    descEn: '${labels[styleId]} variant of ${base.nameEn}. ${base.descEn}',
+    stats: stats,
+    skillIds: base.skillIds
+        .map((skill) => '${skill}_variante_$styleId')
+        .toList(growable: false),
+    dropIds: [...base.dropIds, 'frammento_variante_$styleId'],
+  );
 }
 
 List<MonsterBookEntry> _activeMonsterBookEntries = defaultMonsterBookEntries;
@@ -5574,7 +5645,7 @@ MonsterBookEntry? monsterById(String id) {
   try {
     return monsterBookEntries.firstWhere((e) => e.id == id);
   } catch (_) {
-    return null;
+    return _generatedVariantForHiddenBase(id);
   }
 }
 
