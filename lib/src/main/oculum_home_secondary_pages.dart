@@ -8402,6 +8402,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     if (skillIndex < 0 || skillIndex >= arti[artIndex].skills.length) return;
     final art = arti[artIndex];
     final skill = arti[artIndex].skills[skillIndex];
+    if (art.skills.any((s) => s.nome == 'Armatura sottopelle') && skill.nome == 'Armatura sottopelle') {
+      risultato = 'Armatura sottopelle è automatica: ${spineArmorPreset().isEmpty ? 'richiede livello 2' : spineArmorPreset()}. Nessun costo o attivazione.';
+      aggiungiLog(risultato);
+      notifyDiceResultChanged();
+      return;
+    }
     if (nuovoLivello > 0 && !art.inUso) {
       risultato =
           'Art incorporata non in uso: selezionala prima di usare le Skill.';
@@ -8417,6 +8423,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       return;
     }
     final livelloPrecedente = skill.livello;
+    final spineOculumBefore = oculumTotale();
     final livelloNuovo = nuovoLivello.clamp(0, artMaxLevel(art)).toInt();
     if (livelloNuovo == livelloPrecedente) return;
     if (livelloNuovo > livelloPrecedente) {
@@ -8727,6 +8734,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           '${art.nome} / ${skill.nome} ${artLevelRoman(livelloNuovo)}',
         ),
       );
+      structuredMessages.addAll(await activateSpineHedgehogSkill(art, skill, livelloNuovo, spineOculumBefore, spent: resourceSpent));
       if (structuredMessages.isNotEmpty) {
         risultato +=
             '\n${t('Effetti attivati', 'Activated effects')}:\n'
@@ -8736,6 +8744,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
     aggiungiLog(risultato);
     // Ogni cambio di livello modifica i bonus calcolati da Art/Skill. Anche
+    if (art.skills.any((s) => s.nome == 'Armatura sottopelle')) {
+      sendRealtimeDiceRoll(label: risultato, roll: 0, bonus: 0, total: 0, forceMasterVisible: true);
+    }
     // quando non viene spesa una risorsa (soprattutto nella disattivazione),
     // la Scheda deve ricalcolare subito Danno, Difesa e statistiche: prima
     // rimaneva visualizzato il valore precedente fino al Riposo.
@@ -9525,6 +9536,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
     final cooldown = art.openSkillCooldown;
     if (cooldown != null && !cooldown.ready) return;
+    if (art.openName == 'Pioggia di aculei') {
+      await useSpineHedgehogOpen(art);
+      return;
+    }
     if (art.descrizione.startsWith('Art del ')) {
       await resolveBalancedOpen(art, activation: false);
       return;

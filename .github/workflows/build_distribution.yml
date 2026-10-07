@@ -400,6 +400,7 @@ jobs:
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
       - name: Package Web release
         run: |
+          python3 -c "from pathlib import Path; import os; [p.write_text(p.read_text().replace('__OCULUM_BUILD__', os.environ['GITHUB_SHA'])) for p in [Path('build/web/index.html'), Path('build/web/flutter_bootstrap.js')]]"
           mkdir -p build/distribution
           cd build/web
           zip -qry ../distribution/Oculum-Web.zip .

@@ -2,6 +2,7 @@ import 'dart:math';
 import '../../game/hero_path/hero_content.dart';
 
 part 'weak_horror_monsters.dart';
+part 'spine_hedgehog.dart';
 part 'pack_leader_monsters.dart';
 
 class MonsterBookEntry {
@@ -4622,6 +4623,7 @@ String _inspiredMonsterSkillText(String rawId) {
 }
 
 String monsterBookSkillText(String rawId) {
+  if (rawId.startsWith('riccio_aculeo_')) return oculumSpineHedgehogSkillText(rawId);
   if (rawId.startsWith('weak_horror_')) {
     return oculumWeakHorrorSkillText(rawId);
   }
@@ -5058,6 +5060,8 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
             ..._craftedMonsterBookEntries,
             ..._inspiredMonsterBookEntries,
             ..._weakHorrorMonsterBookEntries,
+            ..._spineHedgehogEntries,
+            ..._spineHedgehogVariantEntries,
             ..._packLeaderMonsterBookEntries,
             ..._manualMonsterBookEntries,
             ..._heroPathMonsterBookEntries(),
@@ -5124,6 +5128,7 @@ List<MonsterBookEntry> _withMonsterVariants(
     result.add(entry);
     if (entry.id.contains('_variante_') ||
         entry.id.startsWith('weak_horror_') ||
+        entry.id.startsWith(oculumSpineHedgehogId) ||
         entry.id.startsWith('pack_leader_')) {
       continue;
     }
@@ -5223,6 +5228,8 @@ Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
   yield* _craftedMonsterBookEntries;
   yield* _inspiredMonsterBookEntries;
   yield* _weakHorrorMonsterBookEntries;
+  yield* _spineHedgehogEntries;
+  yield* _spineHedgehogVariantEntries;
   yield* _packLeaderMonsterBookEntries;
   yield* _manualMonsterBookEntries;
 }
@@ -5550,6 +5557,7 @@ MonsterBookEntry? monsterById(String id) {
 /// Le Art dei mostri non sono tutte disponibili al livello zero. La soglia
 /// usa potenza e tenuta della creatura, senza alterare le Skill legacy.
 int monsterBookSkillRequiredLevel(MonsterBookEntry monster, int skillIndex) {
+  if (monster.id.startsWith(oculumSpineHedgehogId)) return [0, 2, 1][skillIndex.clamp(0, 2)];
   if (monster.id.startsWith('weak_horror_')) return 0;
   // Le Art introduttive dichiarate dal Book sono disponibili dalla creazione;
   // le forme II e III restano nel loro slot Art e seguono i relativi livelli.

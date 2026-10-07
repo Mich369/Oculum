@@ -4771,6 +4771,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       );
     }
 
+    for (final echo in oculumMonsterEchoScrolls) {
+      for (var grade = 0; grade <= 12; grade++) { add(oculumMonsterEchoScrollItem(echo.id, grade)); }
+    }
     for (final element in allDamageElementIds()) {
       for (var grade = 0; grade <= 12; grade++) {
         add(

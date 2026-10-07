@@ -1182,6 +1182,13 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
           )
           .map((effect) => canonicalDamageModifierName('${effect['preset']}')),
     );
+    final spineArmor = spineArmorPreset();
+    if (spineVariant == 'legno' && oculumNormalizeElementId(elementId) == 'fuoco') { return 'Fragilità'; }
+    if (spineArmor.isNotEmpty) temporary.add(spineArmor);
+    // A precise volley exposes the caster even when the passive armor is on.
+    if (oculumNormalizeElementId(elementId) == 'perforante' && activeStructuredEffects.any((effect) {
+      return effect['effectId'] == 'spine_piercing_weakness' && readIntValue(effect['remaining']) > 0;
+    })) { return 'Fragilità'; }
     if (temporary.isEmpty) return saved;
     final temporaryPreset = temporary.reduce(
       (strongest, candidate) =>

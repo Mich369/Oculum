@@ -2117,6 +2117,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   bool artOpenSbloccata(CharacterArt art) {
+    if (art.openName == 'Pioggia di aculei' && art.skills.any((s) => s.nome == 'Armatura sottopelle')) {
+      return art.sbloccata && leggiNumero(livelloController) >= 10;
+    }
     return art.sbloccata && oculumArtHasDistinctThirdForms(art);
   }
 
@@ -4765,6 +4768,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int difesa() {
     final beforeConditions =
+        spineMaterialDefense +
         ((volontaTotale() + materiaTotale()) ~/ 2) +
         bonusLivelloGrado() +
         bonusDifesaRapido() +

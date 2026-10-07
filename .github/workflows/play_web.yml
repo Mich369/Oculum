@@ -38,6 +38,8 @@ jobs:
           flutter build web --release --base-href "${BASE_PATH}/" \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
+      - name: Version published scripts
+        run: python3 -c "from pathlib import Path; import os; [p.write_text(p.read_text().replace('__OCULUM_BUILD__', os.environ['GITHUB_SHA'])) for p in [Path('build/web/index.html'), Path('build/web/flutter_bootstrap.js')]]"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web

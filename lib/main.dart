@@ -64,6 +64,7 @@ import 'src/main/oculum_web_save_store_stub.dart'
 part 'src/main/oculum_app.dart';
 part 'src/main/oculum_helpers.dart';
 part 'src/main/oculum_pack_leaders.dart';
+part 'src/main/oculum_spine_hedgehog.dart';
 part 'src/main/oculum_performance_probe.dart';
 part 'src/main/oculum_models.dart';
 part 'src/main/oculum_skill_effects.dart';

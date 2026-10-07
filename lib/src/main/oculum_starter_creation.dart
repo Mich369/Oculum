@@ -115,10 +115,14 @@ bool oculumMonsterHasOculumArt(MonsterBookEntry monster) {
 }
 
 CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) => CharacterArt(
-  nome: 'Peculiarità — ${monster.nameIt}',
+  nome: monster.id.startsWith(oculumSpineHedgehogId) ? 'L’aculeo' : 'Peculiarità — ${monster.nameIt}',
   tipo: 'Art Mostro',
   descrizione:
-      'Le tecniche di ${monster.nameIt}. La forma 0 indica che la Skill non è in uso; scegli I, II o III quando la attivi.',
+      'Le tecniche di ${monster.nameIt}. La forma 0 indica che la Skill non è in uso; scegli I, II o III quando la attivi.${monster.id.startsWith(oculumSpineHedgehogId) ? '\n${monster.descIt}' : ''}',
+  openName: monster.id == oculumSpineHedgehogId ? 'Pioggia di aculei' : '',
+  openDescription: monster.id == oculumSpineHedgehogId ? 'Richiede livello 10. Apri tutti gli aculei: Skill Open Pioggia di aculei.' : '',
+  openSkill: monster.id == oculumSpineHedgehogId ? '1d200 aculei da 1 danno: 1d200 + Danni normali totali. Se CM del bersaglio supera il tuo VC, dimezza l’intero totale, arrotondando per eccesso. Difesa e Scudi si applicano normalmente.' : '',
+  monsterOpenSkill: monster.id == oculumSpineHedgehogId,
   skills: [
     for (final (index, id) in monsterBookUsableSkillIds(monster).indexed)
       ArtSkill(
@@ -130,7 +134,9 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) => CharacterArt(
         evo1: _monsterBookSkillEvolution(monster, id, index, 0),
         evo2: _monsterBookSkillEvolution(monster, id, index, 1),
         evo3: _monsterBookSkillEvolution(monster, id, index, 2),
-        oculumMinimiPerLivello: id.startsWith('weak_horror_')
+        oculumMinimiPerLivello: id.startsWith('riccio_aculeo_')
+            ? id.endsWith('_armatura') ? [0, 0, 0] : id.endsWith('_precisi') ? [2, 5, 10] : [1, 5, 11]
+            : id.startsWith('weak_horror_')
             ? [1, 2, 3]
             : id.startsWith('inspired_')
             ? [1, 5, 11]
@@ -139,7 +145,9 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) => CharacterArt(
                   id.startsWith('legno_marcio_')
             ? [1, 5, 11]
             : null,
-        oculumMassimiPerLivello: id.startsWith('weak_horror_')
+        oculumMassimiPerLivello: id.startsWith('riccio_aculeo_')
+            ? id.endsWith('_armatura') ? [0, 0, 0] : id.endsWith('_precisi') ? [2, 5, 11] : [4, 10, 40]
+            : id.startsWith('weak_horror_')
             ? [1, 2, 3]
             : id.startsWith('inspired_')
             ? [4, 10, 30]
@@ -172,6 +180,10 @@ String _monsterBookSkillEvolution(
   int form,
 ) {
   final text = monsterBookSkillForms(id)[form];
+  if (id.startsWith('riccio_aculeo_')) {
+    final variant = oculumSpineVariants.where((v) => id.startsWith('riccio_aculeo_${v.id}_')).firstOrNull;
+    return '$text${variant == null ? '' : '\n${variant.effect}'}';
+  }
   final authoredRequirement = RegExp(
     r'Richiede livello\s+\d+',
     caseSensitive: false,
@@ -220,6 +232,7 @@ String _monsterBookSkillEvolution(
 /// Only fills narrative-only techniques. Authored numeric powers and Oculus
 /// techniques keep their own formulas instead of receiving a second effect.
 List<List<OculumStructuredEffect>>? _monsterBookGenericEffects(String id) {
+  if (id.startsWith('riccio_aculeo_')) return List.generate(3, (_) => []);
   if (id.startsWith('weak_horror_')) {
     final guard = id.endsWith('_guard');
     return List.generate(

@@ -28,6 +28,31 @@ int oculumScrollCooldown(int grade) => 3 + grade.clamp(0, 12) ~/ 3;
 
 int oculumScrollEffectMagnitude(int grade) => 1 + grade.clamp(0, 12);
 
+const oculumMonsterEchoScrolls = [
+  (id: 'spine_volley', name: 'L’ultima Orma del lancio di aculei', monster: 'Riccio Aculeo', element: 'perforante', asset: '', condition: ''),
+  (id: 'spine_precise', name: 'L’ultima Orma degli aculei precisi', monster: 'Riccio Aculeo', element: 'perforante', asset: '', condition: 'privo_reazioni'),
+  (id: 'spine_rain', name: 'L’ultima Orma della pioggia di aculei', monster: 'Riccio Aculeo', element: 'perforante', asset: '', condition: ''),
+  (id: 'spine_poison', name: 'L’ultima Orma degli aculei velenosi', monster: 'Riccio Aculeo Velenoso', element: 'veleno', asset: '', condition: 'veleno_putrido'),
+  (id: 'spine_ice', name: 'L’ultima Orma degli aculei di ghiaccio', monster: 'Riccio Aculeo di Ghiaccio', element: 'ghiaccio', asset: '', condition: 'gelo'),
+  (id: 'forest_slam', name: 'L’ultima Orma dello schianto del Forest Demon', monster: 'Forest Demon', element: 'natura', asset: 'assets/oculum_dungeon/generated_sprites/enemies/forest_demon.png', condition: 'privo_reazioni'),
+];
+
+InventoryItem oculumMonsterEchoScrollItem(String id, int grade) {
+  final profile = oculumMonsterEchoScrolls.firstWhere((p) => p.id == id);
+  final g = grade.clamp(0, 12);
+  final rule = switch (id) {
+    'spine_precise' => 'Tira automaticamente Precisione: Danni +tiro +Oculum ×${1 + g ~/ 3}. Fragilità perforante sul lanciatore per un turno; bersaglio senza reazioni per ${1 + g ~/ 6} turni.',
+    'spine_rain' => 'Pioggia di 1d${20 + 15 * g} aculei da un danno + Danni normali. Se CM del bersaglio supera il tiro della pergamena, dimezza l’intero totale.',
+    'forest_slam' => 'Lo schianto infligge Danni +${6 + 5 * g}; il bersaglio colpito perde le reazioni per ${1 + g ~/ 6} turni.',
+    _ => 'Lancio di aculei: Danni +${2 + 4 * g}.${profile.condition.isEmpty ? '' : ' Applica ${profile.condition} I per un turno, soltanto se colpisce.'}',
+  };
+  final description = 'L’orma trasparente di ${profile.monster} compare, compie l’attacco e scompare. $rule Difesa e Scudi restano validi; nessuna evocazione permanente.';
+  return InventoryItem(nome: '[${profile.name}] [Pergamena] [Grado $g]', peso: .1, quantita: 1, gradoOggetto: g,
+    elementoDanno: profile.element, note: '$description\nMonouso. Valore ${oculumScrollValue(g)} Obser. Apprendimento con le regole delle pergamene; non evolvibile.',
+    craftData: {'scroll': {'id': 'echo/$id/$g', 'echoId': id, 'echoMonster': profile.monster, 'echoAsset': profile.asset,
+      'condition': profile.condition, 'grade': g, 'kind': 'attack', 'element': profile.element, 'name': profile.name, 'description': description}});
+}
+
 bool oculumScrollCanLearn(int natural, int total, int grade, int percentile) =>
     natural == 20 &&
     total >= 30 + 10 * grade.clamp(0, 12) &&
@@ -99,6 +124,36 @@ InventoryItem oculumScrollItem(
 }
 
 extension _OculumScrolls on _OculumHomePageState {
+  void showMonsterScrollEcho(String monster, String asset) {
+    final assetText = asset.trim().isEmpty ? '' : ' ($asset)';
+    aggiungiLog('Orma trasparente evocata: $monster$assetText compie l’attacco e scompare.');
+    mostraDadoCentrale(valore: monster, facce: 20, criticoUno: false, criticoVenti: false);
+  }
+
+  void applyMonsterEchoScrollCondition(
+    Map<String, dynamic> data,
+    int sheetIndex,
+    int grade,
+    String source,
+  ) {
+    final condition = '${data['condition'] ?? ''}'.trim();
+    if (condition.isEmpty || sheetIndex < 0 || sheetIndex >= schedePersonaggio.length) return;
+    final sheet = schedePersonaggio[sheetIndex];
+    final conditions = List<dynamic>.from(sheet['conditions'] as List? ?? const []);
+    conditions.removeWhere((raw) => raw is Map && raw['conditionType'] == condition && raw['source'] == source);
+    conditions.add(OculumConditionInstance(
+      id: 'echo_${condition}_${DateTime.now().microsecondsSinceEpoch}',
+      conditionType: condition,
+      category: OculumConditionCategory.special,
+      duration: max(1, 1 + grade ~/ 4),
+      tickTrigger: OculumConditionTickTrigger.endTurn,
+      source: source,
+    ).toJson());
+    sheet['conditions'] = conditions;
+    aggiungiLog('$source: ${condition.toUpperCase()} applicato a ${nomeSchedaPersonaggio(sheetIndex)} per ${max(1, 1 + grade ~/ 4)} turni.');
+    if (modalitaMaster || isMasterHost || realtimeIsMasterRole) sendRealtimeMasterVisibleTokenAt(sheetIndex);
+  }
+
   Future<void> useScrollAbility(
     Map<String, dynamic> data, {
     InventoryItem? item,
@@ -207,11 +262,27 @@ extension _OculumScrolls on _OculumHomePageState {
     var outcome = success
         ? '${data['description']}'
         : 'Tiro fallito: nessun effetto.';
+    var resolvedAttackDamage = 0;
     if (success && kind == 'attack') {
       final faces = 8 + 6 * g;
       final damage = Random.secure().nextInt(faces) + 1;
+      resolvedAttackDamage = damage + dannoTotale();
+      if (data['echoId'] != null) {
+        final echo = '${data['echoId']}';
+        if (echo == 'spine_precise') {
+          var precision = 0;
+          await tiraSottotrattoOcchio(hiddenEyeStats.firstWhere((s) => s.id == 'precisione'), actionLabel: '${data['name']}', onResolved: (_, value) => precision = value);
+          resolvedAttackDamage = dannoTotale() + precision + oculumTotale() * (1 + g ~/ 3);
+          activeStructuredEffects.add({'effectId': 'spine_piercing_weakness', 'source': source, 'type': 'elemental_resistance', 'element': 'perforante', 'preset': 'Fragilità', 'remaining': 1, 'unit': 'turni'});
+        } else if (echo == 'spine_rain') {
+          resolvedAttackDamage = dannoTotale() + Random.secure().nextInt(20 + 15 * g) + 1;
+        } else {
+          resolvedAttackDamage = dannoTotale() + (echo == 'forest_slam' ? 6 + 5 * g : 2 + 4 * g);
+        }
+        showMonsterScrollEcho('${data['echoMonster']}', '${data['echoAsset']}');
+      }
       outcome +=
-          '\nDanni: $damage + ${dannoTotale()} = ${damage + dannoTotale()} '
+          '\nDanni risolti: $resolvedAttackDamage '
           '(${elementDisplayName('${data['element']}')}).';
       if (natural == 20 && g > 0) {
         outcome +=
@@ -282,8 +353,9 @@ extension _OculumScrolls on _OculumHomePageState {
           case 'attack':
             applyMasterEnemyQuickHpAction(
               sheetIndex,
-              damage: 8 + 6 * g + dannoTotale(),
+              damage: resolvedAttackDamage,
             );
+            if (data['echoId'] != null) applyMonsterEchoScrollCondition(data, sheetIndex, g, source);
             break;
           case 'heal':
             applyMasterEnemyQuickHpAction(sheetIndex, heal: 8 + 4 * g);

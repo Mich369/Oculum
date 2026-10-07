@@ -1,6 +1,13 @@
 {{flutter_js}}
 {{flutter_build_config}}
 
+// Version both scripts so an already open browser receives the published build.
+for (const build of _flutter.buildConfig.builds) {
+  if (build.compileTarget === 'dart2js') {
+    build.mainJsPath = `${build.mainJsPath || 'main.dart.js'}?v=__OCULUM_BUILD__`;
+  }
+}
+
 const loading = document.getElementById('oculum-loading');
 const loadingMessage = document.getElementById('oculum-loading-message');
 const showStartupError = () => {
