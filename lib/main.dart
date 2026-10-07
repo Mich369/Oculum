@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'widgets/oculum_living_seal.dart';
+import 'widgets/oculum_web_layout.dart';
 import 'widgets/oculum_memory_eye.dart';
 import 'package:flutter/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -62,6 +63,7 @@ import 'src/main/oculum_web_save_store_stub.dart'
 
 part 'src/main/oculum_app.dart';
 part 'src/main/oculum_helpers.dart';
+part 'src/main/oculum_pack_leaders.dart';
 part 'src/main/oculum_performance_probe.dart';
 part 'src/main/oculum_models.dart';
 part 'src/main/oculum_skill_effects.dart';
@@ -193,6 +195,7 @@ Future<void> main([List<String> arguments = const []]) async {
   }
   if (kIsWeb) {
     await BrowserContextMenu.disableContextMenu();
+    await loadOculumWebViewMode();
   }
   await loadOculumGraphicsPreference();
   _configureOculumRuntimeCaches();
@@ -4331,6 +4334,7 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) modalitaDesktop = OculumWebLayoutScope.desktopOf(context);
     if (datiCaricati) {
       mostraTutorialSeNecessario();
       mostraSceltaRuoloSeNecessaria();
@@ -4535,6 +4539,41 @@ class _OculumHomePageState extends State<OculumHomePage>
               ),
 
               actions: [
+                if (kIsWeb)
+                  PopupMenuButton<OculumWebViewMode>(
+                    tooltip: t(
+                      'Vista Web: automatica, desktop o mobile',
+                      'Web view: automatic, desktop or mobile',
+                    ),
+                    color: backgroundMidColor,
+                    icon: Icon(
+                      modalitaDesktop
+                          ? Icons.desktop_windows_outlined
+                          : Icons.phone_iphone,
+                      color: primaryColor,
+                    ),
+                    onSelected: setOculumWebViewMode,
+                    itemBuilder: (_) => [
+                      for (final mode in OculumWebViewMode.values)
+                        PopupMenuItem(
+                          value: mode,
+                          child: Text(switch (mode) {
+                            OculumWebViewMode.automatic => t(
+                              'Automatica · ruota lo schermo',
+                              'Automatic · rotate the screen',
+                            ),
+                            OculumWebViewMode.desktop => t(
+                              'Vista desktop',
+                              'Desktop view',
+                            ),
+                            OculumWebViewMode.mobile => t(
+                              'Vista mobile',
+                              'Mobile view',
+                            ),
+                          }),
+                        ),
+                    ],
+                  ),
                 if (!oculusModActive)
                   IconButton(
                     key: const ValueKey('current_screen_dice'),

@@ -1,6 +1,9 @@
 import 'dart:math';
 import '../../game/hero_path/hero_content.dart';
 
+part 'weak_horror_monsters.dart';
+part 'pack_leader_monsters.dart';
+
 class MonsterBookEntry {
   final String id;
   final String nameIt;
@@ -4619,6 +4622,9 @@ String _inspiredMonsterSkillText(String rawId) {
 }
 
 String monsterBookSkillText(String rawId) {
+  if (rawId.startsWith('weak_horror_')) {
+    return oculumWeakHorrorSkillText(rawId);
+  }
   if (rawId.startsWith('inspired_')) {
     final inspired = _inspiredMonsterSkillText(rawId);
     if (inspired.isNotEmpty) return inspired;
@@ -5051,6 +5057,8 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
           _humanizeLegacyMonsterEntries([
             ..._craftedMonsterBookEntries,
             ..._inspiredMonsterBookEntries,
+            ..._weakHorrorMonsterBookEntries,
+            ..._packLeaderMonsterBookEntries,
             ..._manualMonsterBookEntries,
             ..._heroPathMonsterBookEntries(),
             ..._generateMonsterTier(
@@ -5114,7 +5122,11 @@ List<MonsterBookEntry> _withMonsterVariants(
   final result = <MonsterBookEntry>[];
   for (final entry in entries) {
     result.add(entry);
-    if (entry.id.contains('_variante_')) continue;
+    if (entry.id.contains('_variante_') ||
+        entry.id.startsWith('weak_horror_') ||
+        entry.id.startsWith('pack_leader_')) {
+      continue;
+    }
     final score = entry.id.codeUnits.fold<int>(0, (sum, code) => sum + code);
     final style = styles[score % styles.length];
     final level = entry.stats['level'] ?? 0;
@@ -5210,6 +5222,8 @@ void resetMonsterBookEntries() {
 Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
   yield* _craftedMonsterBookEntries;
   yield* _inspiredMonsterBookEntries;
+  yield* _weakHorrorMonsterBookEntries;
+  yield* _packLeaderMonsterBookEntries;
   yield* _manualMonsterBookEntries;
 }
 
@@ -5536,6 +5550,7 @@ MonsterBookEntry? monsterById(String id) {
 /// Le Art dei mostri non sono tutte disponibili al livello zero. La soglia
 /// usa potenza e tenuta della creatura, senza alterare le Skill legacy.
 int monsterBookSkillRequiredLevel(MonsterBookEntry monster, int skillIndex) {
+  if (monster.id.startsWith('weak_horror_')) return 0;
   // Le Art introduttive dichiarate dal Book sono disponibili dalla creazione;
   // le forme II e III restano nel loro slot Art e seguono i relativi livelli.
   if (<String>{

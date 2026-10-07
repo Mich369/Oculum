@@ -124,23 +124,28 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) => CharacterArt(
       ArtSkill(
         nome: monsterBookSkillText(id).split('—').first.trim(),
         livello: 0,
+        cooldownPerLivello: id.startsWith('weak_horror_')
+            ? [for (var i = 0; i < 3; i++) OculumAbilityCooldown(amount: 3)]
+            : null,
         evo1: _monsterBookSkillEvolution(monster, id, index, 0),
         evo2: _monsterBookSkillEvolution(monster, id, index, 1),
         evo3: _monsterBookSkillEvolution(monster, id, index, 2),
-        oculumMinimiPerLivello:
-            id.startsWith('inspired_')
+        oculumMinimiPerLivello: id.startsWith('weak_horror_')
+            ? [1, 2, 3]
+            : id.startsWith('inspired_')
             ? [1, 5, 11]
             : id.startsWith('snorlo_') ||
-                id.startsWith('incubo_') ||
-                id.startsWith('legno_marcio_')
+                  id.startsWith('incubo_') ||
+                  id.startsWith('legno_marcio_')
             ? [1, 5, 11]
             : null,
-        oculumMassimiPerLivello:
-            id.startsWith('inspired_')
+        oculumMassimiPerLivello: id.startsWith('weak_horror_')
+            ? [1, 2, 3]
+            : id.startsWith('inspired_')
             ? [4, 10, 30]
             : id.startsWith('snorlo_') ||
-                id.startsWith('incubo_') ||
-                id.startsWith('legno_marcio_')
+                  id.startsWith('incubo_') ||
+                  id.startsWith('legno_marcio_')
             ? [4, 10, 30]
             : null,
         effettiPerLivello:
@@ -189,6 +194,7 @@ String _monsterBookSkillEvolution(
       ? ''
       : 'Costo: ${const ['I (1/4)', 'II (5/10)', 'III (11/30)'][form]} Oculum.\n';
   final effects = _monsterBookGenericEffects(id);
+  if (id.startsWith('weak_horror_')) return '$cost$requirement$text';
   if (effects == null) {
     if (id.startsWith('incubo_')) {
       final effect = oculumNightmareSkillEffects(id, form: form).firstOrNull;
@@ -214,10 +220,30 @@ String _monsterBookSkillEvolution(
 /// Only fills narrative-only techniques. Authored numeric powers and Oculus
 /// techniques keep their own formulas instead of receiving a second effect.
 List<List<OculumStructuredEffect>>? _monsterBookGenericEffects(String id) {
+  if (id.startsWith('weak_horror_')) {
+    final guard = id.endsWith('_guard');
+    return List.generate(
+      3,
+      (form) => [
+        OculumStructuredEffect(
+          id: '${id}_forma_${form + 1}',
+          type: guard ? 'difesa' : 'danno',
+          valueExpression: guard ? '${form + 1}' : 'danni+${form + 1}',
+          recipient: guard ? 'se_stesso' : 'bersaglio',
+          mode: guard ? 'finche_attivo' : 'immediato',
+          duration: guard ? '1' : '',
+          narrativeText: guard
+              ? 'Difesa personale per un turno; stessa tecnica non cumulabile.'
+              : 'Un bersaglio, soltanto dopo un tiro per colpire riuscito; rispetta Scudi e Difesa.',
+        ),
+      ],
+    );
+  }
   if (id.startsWith('hero_path:')) return null;
   final inspired = id.startsWith('inspired_');
   final text = monsterBookSkillText(id);
-  if (!inspired && RegExp(r'\d|@|Oculum', caseSensitive: false).hasMatch(text)) {
+  if (!inspired &&
+      RegExp(r'\d|@|Oculum', caseSensitive: false).hasMatch(text)) {
     return null;
   }
   final defensive = RegExp(
@@ -227,10 +253,10 @@ List<List<OculumStructuredEffect>>? _monsterBookGenericEffects(String id) {
   final offense =
       (inspired && !id.endsWith('_guard')) ||
       (!defensive &&
-      RegExp(
-        r'dann|attacc|colpis|caric|ferisc|morso|artigl|esplos|colpo',
-        caseSensitive: false,
-      ).hasMatch(text));
+          RegExp(
+            r'dann|attacc|colpis|caric|ferisc|morso|artigl|esplos|colpo',
+            caseSensitive: false,
+          ).hasMatch(text));
   return List.generate(
     3,
     (form) => [

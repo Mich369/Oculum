@@ -57,6 +57,9 @@ class OculumPerformanceProbe {
     'oculum': _state.oculumTotale(),
   };
   Map<String, dynamic> snapshot() => _state.statoCorrenteJson();
+  bool triggerPackLeaderPhase() => _state.applicaFaseCapobrancoSeServe();
+  Map<String, dynamic> fallenEyeBodyFromSource(Map<String, dynamic> source) =>
+      _state._fallenEyeBodyFromSource(source);
   Future<OculumHumanoidChoice?> humanoidCreationDialog() =>
       _state.askHumanoidRole(
         4,

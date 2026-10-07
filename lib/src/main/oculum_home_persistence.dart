@@ -1596,6 +1596,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length)
         for (final key in [
           'monsterBookSourceId',
+          'packLeaderPhaseTriggered',
+          'packLeaderPhaseBaseMaxHp',
           'humanoidRole',
           'monsterLootGenerated',
           'monsterLootGeneratedAt',

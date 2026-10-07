@@ -28,23 +28,29 @@ class OculumApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         scrollBehavior: const _OculumAdaptiveScrollBehavior(),
         builder: (context, child) {
-          final media = MediaQuery.of(context);
-          final compactPhone = media.size.shortestSide < 600;
-          final tablet =
-              media.size.shortestSide >= 600 && media.size.width < 1100;
-          return MediaQuery(
-            data: media.copyWith(
-              disableAnimations: media.disableAnimations || !graphics,
-              textScaler: TextScaler.linear(
-                compactPhone
-                    ? 0.84
-                    : tablet
-                    ? 0.92
-                    : 0.95,
+          Widget typographyContent(BuildContext contentContext) {
+            final media = MediaQuery.of(contentContext);
+            final compactPhone = media.size.shortestSide < 600;
+            final tablet =
+                media.size.shortestSide >= 600 && media.size.width < 1100;
+            return MediaQuery(
+              data: media.copyWith(
+                disableAnimations: media.disableAnimations || !graphics,
+                textScaler: TextScaler.linear(
+                  compactPhone
+                      ? 0.84
+                      : tablet
+                      ? 0.92
+                      : 0.95,
+                ),
               ),
-            ),
-            child: child ?? const SizedBox.shrink(),
-          );
+              child: child ?? const SizedBox.shrink(),
+            );
+          }
+
+          return kIsWeb
+              ? OculumWebLayout(child: Builder(builder: typographyContent))
+              : typographyContent(context);
         },
         theme: ThemeData(
           brightness: Brightness.dark,

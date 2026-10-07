@@ -158,6 +158,20 @@ int oculumFallenEyeArtLimit(String rarity) => switch (rarity) {
   _ => 0,
 };
 bool oculumFallenEyeCanRegenerate(String rarity) => rarity != 'comune';
+
+int oculumFallenEyeEffectiveArtLimit(
+  Map<String, dynamic>? eye, [
+  String fallbackRarity = 'comune',
+]) {
+  final data = eye?['sheetData'] as Map?;
+  final nativeSource =
+      '${eye?['sourceMonsterId'] ?? data?['monsterBookSourceId'] ?? ''}';
+  return max(
+    nativeSource.isNotEmpty ? 1 : 0,
+    oculumFallenEyeArtLimit('${eye?['rarity'] ?? fallbackRarity}'),
+  );
+}
+
 bool oculumFallenEyeCanLevel(String rarity) =>
     rarity == 'raro' || rarity == 'oculum';
 bool oculumFallenEyeCanHaveTitles(String rarity) => rarity == 'oculum';
@@ -561,7 +575,10 @@ dynamic oculumCopyJsonTree(dynamic value) {
 
 void oculumFallenEyeApplyInheritedPowers(Map<String, dynamic> eye) {
   final data = eye['sheetData'] as Map<String, dynamic>;
-  final limit = oculumFallenEyeArtLimit('${eye['rarity']}');
+  final nativeMonster =
+      '${eye['sourceMonsterId'] ?? data['monsterBookSourceId'] ?? ''}'
+          .isNotEmpty;
+  final limit = oculumFallenEyeEffectiveArtLimit(eye);
   final previousLimit = oculumFallenEyeArtLimit(
     '${data['fallenEyeRarity'] ?? 'comune'}',
   );
@@ -622,13 +639,22 @@ void oculumFallenEyeApplyInheritedPowers(Map<String, dynamic> eye) {
     }
   }
   eye['originalSkills'] = oculumCopyJsonTree(known.values.toList());
-  data['skills'] = oculumCopyJsonTree(known.values.take(limit).toList());
+  final nativeSkillCount = nativeMonster && original.isNotEmpty
+      ? (original.first['skills'] as List? ?? const []).length
+      : 0;
+  data['skills'] = oculumCopyJsonTree(
+    known.values.take(max(limit, nativeSkillCount)).toList(),
+  );
   data['fallenEyeRarity'] = eye['rarity'];
   eye['inheritedPowersVersion'] = 1;
 }
 
 extension _OculumFallenEyes on _OculumHomePageState {
   void _restoreFallenEyeMonsterPowers(Map<String, dynamic> eye) {
+    final body = eye['sheetData'];
+    if (body is Map && '${eye['sourceMonsterId'] ?? ''}'.isNotEmpty) {
+      body['monsterBookSourceId'] ??= eye['sourceMonsterId'];
+    }
     if (readIntValue(eye['inheritedPowersVersion']) >= 1) return;
     final sourceId = '${eye['sourceMonsterId'] ?? ''}';
     if (sourceId.isEmpty) return;
@@ -666,8 +692,12 @@ extension _OculumFallenEyes on _OculumHomePageState {
     if (id.isEmpty) return true;
     final eye = fallenEyeForId(id);
     return artIndex <
-        oculumFallenEyeArtLimit(
-          '${eye?['rarity'] ?? sheet['fallenEyeRarity'] ?? 'comune'}',
+        oculumFallenEyeEffectiveArtLimit(
+          eye ??
+              {
+                'sheetData': sheet,
+                'rarity': sheet['fallenEyeRarity'] ?? 'comune',
+              },
         );
   }
 
@@ -710,6 +740,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
     );
     for (final key in const <String>[
       'currentHp',
+      'monsterBookSourceId',
       'derivedMaxHp',
       'conditionImmunities',
       'resilienza',
@@ -738,6 +769,23 @@ extension _OculumFallenEyes on _OculumHomePageState {
     }
     body['arti'] = <dynamic>[];
     body['skills'] = <dynamic>[];
+    if (readIntValue(source['currentHp']) > 0 &&
+        readBoolValue(source['packLeaderPhaseTriggered'])) {
+      body['packLeaderPhaseTriggered'] = true;
+      body['packLeaderPhaseBaseMaxHp'] = source['packLeaderPhaseBaseMaxHp'];
+      body['activeStructuredEffects'] = [
+        for (final effect
+            in source['activeStructuredEffects'] as List? ?? const [])
+          if (effect is Map && '${effect['source']}'.startsWith('Capobranco:'))
+            oculumCopyJsonTree(effect),
+      ];
+      body['conditions'] = [
+        for (final condition in source['conditions'] as List? ?? const [])
+          if (condition is Map &&
+              '${condition['source']}'.startsWith('Capobranco:'))
+            oculumCopyJsonTree(condition),
+      ];
+    }
     body['titoli'] = <dynamic>[];
     body['fallenEyeOriginalArts'] = <dynamic>[];
     return body;
@@ -2820,7 +2868,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
           editingEye['rarity'] = rarity;
           editingEye['originalArts'] = originalArts;
           editingEye['activeArts'] = originalArts
-              .take(oculumFallenEyeArtLimit(rarity))
+              .take(oculumFallenEyeEffectiveArtLimit(editingEye, rarity))
               .toList();
           editingEye['sheetData'] = _cloneJsonMap(draft);
           oculumFallenEyeApplyInheritedPowers(editingEye);
@@ -3018,7 +3066,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                             ),
                           const SizedBox(height: 6),
                           Text(
-                            'Art ${(eye['activeArts'] as List? ?? []).length}/${oculumFallenEyeArtLimit(rarity)}',
+                            'Art ${(eye['activeArts'] as List? ?? []).length}/${oculumFallenEyeEffectiveArtLimit(eye, rarity)}',
                           ),
                           if (oculumFallenEyeCanLevel(rarity))
                             Text(
@@ -3317,7 +3365,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
       return AlertDialog(
         title: Text('${eye['name']} — OCCHIO CADUTO'),
         content: Text(
-          'Origine: ${eye['sourceClass'] ?? oculumFallenEyeSourceClass(Map<String, dynamic>.from(eye['sheetData'] as Map? ?? const {}))}\nRarità: ${oculumFallenEyeLabel(rarity)}\nStato: ${oculumFallenEyeLifeStatus(eye)}\nLegame: ${oculumFallenEyeBond(eye)}/1000\nRinascite: ${oculumFallenEyeAwakened(eye) ? 'illimitate' : oculumFallenEyeRebirthsAvailable(eye)}\nEvoca/Disevoca: usa 1 azione solo se disponibile\nDifficoltà proprietaria: ${fallenEyeDifficulty(eye)}\nRigenerazione: ${oculumFallenEyeCanRegenerate(rarity) ? '✓' : '🔒'}\nArt: ${(eye['activeArts'] as List? ?? []).length}/${oculumFallenEyeArtLimit(rarity)}\nArt originali: ${((eye['originalArts'] as List? ?? []).map((art) {
+          'Origine: ${eye['sourceClass'] ?? oculumFallenEyeSourceClass(Map<String, dynamic>.from(eye['sheetData'] as Map? ?? const {}))}\nRarità: ${oculumFallenEyeLabel(rarity)}\nStato: ${oculumFallenEyeLifeStatus(eye)}\nLegame: ${oculumFallenEyeBond(eye)}/1000\nRinascite: ${oculumFallenEyeAwakened(eye) ? 'illimitate' : oculumFallenEyeRebirthsAvailable(eye)}\nEvoca/Disevoca: usa 1 azione solo se disponibile\nDifficoltà proprietaria: ${fallenEyeDifficulty(eye)}\nRigenerazione: ${oculumFallenEyeCanRegenerate(rarity) ? '✓' : '🔒'}\nArt: ${(eye['activeArts'] as List? ?? []).length}/${oculumFallenEyeEffectiveArtLimit(eye, rarity)}\nArt originali: ${((eye['originalArts'] as List? ?? []).map((art) {
             final item = art is Map ? art : const <String, dynamic>{};
             return item['known'] == false || '${item['nome'] ?? ''}'.trim().isEmpty ? '???' : '${item['nome']}';
           }).join(', '))}\nTecniche ereditate dal mostro: la rarità sblocca 0/1/2/3 Art. I Titoli del proprietario restano separati.\nLivelli: ${oculumFallenEyeCanLevel(rarity) ? '✓' : '🔒'}\nTitoli: ${oculumFallenEyeCanHaveTitles(rarity) ? '✓' : '🔒'}\nTema: ${(eye['theme'] as Map?)?['colorPreset'] ?? 'tema scheda'}${oculumFallenEyeCanLevel(rarity) ? '\nEXP: ${(eye['sheetData'] as Map?)?['exp'] ?? 0} • ultima evocazione +${eye['lastSummonXp'] ?? 0}' : ''}${target == null ? '\nReforge Oculum (Epico): +$oculumFallenEyeEpicReforgeXp EXP per tentativo Quest.' : '\nReforge $rarity → $target: ${oculumFallenEyeReforgeChanceWithFailures(difficulty: fallenEyeDifficulty(eye), targetRarity: target, failureStreak: readIntValue(eye['reforgeFailureStreak']))}% (base ${oculumFallenEyeReforgeChance(fallenEyeDifficulty(eye), target)}% + ${oculumFallenEyeReforgeFailureBonus(readIntValue(eye['reforgeFailureStreak']))}% fallimenti)'}',

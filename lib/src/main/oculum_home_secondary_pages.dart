@@ -5818,7 +5818,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               '${nomeSchedaPersonaggio(index)}: quick heal +$heal, HP $originalHp -> $hp.',
             );
     });
-    if (index == schedaCorrente) salvaSchedaCorrenteInMemoria();
+    if (index == schedaCorrente) {
+      applicaFaseCapobrancoSeServe();
+      salvaSchedaCorrenteInMemoria();
+    } else {
+      oculumApplyPackLeaderPhase(
+        schedePersonaggio[index],
+        maximumHp: maxHpEnemy,
+      );
+    }
     aggiungiLog(risultato);
     programmaSalvataggio();
   }
