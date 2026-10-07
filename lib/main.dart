@@ -197,12 +197,21 @@ Future<void> main([List<String> arguments = const []]) async {
   }
   if (kIsWeb) {
     await BrowserContextMenu.disableContextMenu();
-    await loadOculumWebViewMode();
+    // Browser storage must never prevent Flutter from mounting the app.
+    await loadOculumWebViewMode().timeout(
+      const Duration(seconds: 3),
+      onTimeout: () => null,
+    );
   }
-  await loadOculumGraphicsPreference();
+  await loadOculumGraphicsPreference().timeout(
+    const Duration(seconds: 3),
+    onTimeout: () => null,
+  );
   _configureOculumRuntimeCaches();
-  await _initializeOculumOptionalStartupServices();
   runApp(const OculumApp());
+  // Auth/cloud startup is optional and must not leave the web loader visible
+  // when a hosted browser cannot reach the backend immediately.
+  unawaited(_initializeOculumOptionalStartupServices());
 }
 
 Future<void> _initializeOculumOptionalStartupServices() async {
