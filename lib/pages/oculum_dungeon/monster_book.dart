@@ -4634,12 +4634,15 @@ String _inspiredMonsterSkillText(String rawId) {
 }
 
 String monsterBookSkillText(String rawId) {
-  if (rawId.startsWith('riccio_aculeo_'))
+  if (rawId.startsWith('riccio_aculeo_')) {
     return oculumSpineHedgehogSkillText(rawId);
-  if (rawId.startsWith('necromancer_'))
+  }
+  if (rawId.startsWith('necromancer_')) {
     return oculumNecromancerSkillText(rawId);
-  if (rawId == 'inferno_in_corpo')
+  }
+  if (rawId == 'inferno_in_corpo') {
     return 'Inferno in corpo — I/Passiva automatica: Alta Resistenza a fuoco, cenere e magma. II/La stessa protezione resta attiva contro gli effetti persistenti. III/La protezione resta automatica anche come Occhio dei Caduti. Nessun tiro e nessun costo.';
+  }
   final lava = oculumLavaSkillText(rawId);
   if (lava.isNotEmpty) return lava;
   if (rawId.startsWith('weak_horror_')) {
@@ -5578,8 +5581,9 @@ MonsterBookEntry? monsterById(String id) {
 /// Le Art dei mostri non sono tutte disponibili al livello zero. La soglia
 /// usa potenza e tenuta della creatura, senza alterare le Skill legacy.
 int monsterBookSkillRequiredLevel(MonsterBookEntry monster, int skillIndex) {
-  if (monster.id.startsWith(oculumSpineHedgehogId))
+  if (monster.id.startsWith(oculumSpineHedgehogId)) {
     return [0, 2, 1][skillIndex.clamp(0, 2)];
+  }
   if (monster.id.startsWith('weak_horror_')) return 0;
   // Le Art introduttive dichiarate dal Book sono disponibili dalla creazione;
   // le forme II e III restano nel loro slot Art e seguono i relativi livelli.
