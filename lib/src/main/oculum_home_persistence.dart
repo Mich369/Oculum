@@ -127,11 +127,11 @@ Uint8List oculumRenderPortraitEditorCrop(Map<String, dynamic> input) {
     width: cropSide,
     height: cropSide,
   );
-  final outputSize = ((input['outputSize'] as num?)?.toInt() ?? 960).clamp(
-    256,
-    1600,
-  );
-  final outputQuality = ((input['outputQuality'] as num?)?.toInt() ?? 92).clamp(
+  final requestedOutputSize = (input['outputSize'] as num?)?.toInt() ?? 0;
+  final outputSize = requestedOutputSize > 0
+      ? requestedOutputSize.clamp(1, 4096)
+      : min(cropSide, 4096);
+  final outputQuality = ((input['outputQuality'] as num?)?.toInt() ?? 96).clamp(
     72,
     96,
   );
@@ -8609,8 +8609,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
     double contrast = 1.0;
     double saturation = 1.0;
     double brightness = 1.0;
-    int outputSize = 960;
-    int outputQuality = 92;
+    int outputSize = 0;
+    int outputQuality = 96;
     bool renderingFinal = false;
     String workingCacheKey = '';
     img.Image? workingCache;
@@ -8945,8 +8945,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
                                     contrast = 1.0;
                                     saturation = 1.0;
                                     brightness = 1.0;
-                                    outputSize = 960;
-                                    outputQuality = 92;
+                                    outputSize = 0;
+                                    outputQuality = 96;
                                   });
                                 },
                                 icon: const Icon(Icons.restart_alt),

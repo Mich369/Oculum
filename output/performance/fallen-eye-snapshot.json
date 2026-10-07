@@ -1,1 +1,1 @@
-{"fixture":"13 references to a 1 MiB portrait, debug test","jsonRoundTripMicroseconds":67952,"treeCopyMicroseconds":63,"note":"Snapshot benchmark only; not overall app FPS."}
+{"fixture":"13 references to a 1 MiB portrait, debug test","jsonRoundTripMicroseconds":64019,"treeCopyMicroseconds":35,"note":"Snapshot benchmark only; not overall app FPS."}
