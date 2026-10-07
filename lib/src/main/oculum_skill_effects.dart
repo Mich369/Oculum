@@ -985,6 +985,34 @@ OculumFreeTextEffectParseResult oculumParseStructuredEffectsFromText(
     oculumCleanMojibakeText(raw),
     subtraits,
   );
+  // Passive elemental protections are kept as structured, always-on effects.
+  // They are parsed before the prose splitter so a list such as
+  // "fuoco, cenere e magma" remains one declaration.
+  final passiveResistance = RegExp(
+    r'((?:resistenza\s+alta|alta\s+resistenza|resistenza\s+leggera|resistenza))\s+(?:a|agli|ai)\s+([^.;\n]+)',
+    caseSensitive: false,
+  ).firstMatch(normalized);
+  if (passiveResistance != null) {
+    final preset = passiveResistance.group(1)!.trim();
+    final elements = passiveResistance.group(2)!
+        .replaceAll(RegExp(r'\s+e\s+', caseSensitive: false), ',')
+        .split(',')
+        .map((value) => oculumNormalizeElementId(value.trim()))
+        .where((value) => value.isNotEmpty)
+        .toSet();
+    for (final element in elements) {
+      effects.add(OculumStructuredEffect(
+        id: 'passive_resistance_${element}_${preset.hashCode}',
+        type: 'elemental_resistance',
+        elementType: element,
+        valueExpression: '0',
+        mode: 'finche_attivo',
+        duration: '-1',
+        narrativeText: normalized,
+        customDisplayText: preset,
+      ));
+    }
+  }
   final pieces = normalized
       .split(RegExp(r'\s+(?:e|and)\s+|[;\n]+', caseSensitive: false))
       .map((part) => part.trim())

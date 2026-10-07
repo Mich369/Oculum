@@ -119,6 +119,7 @@ part 'src/main/oculum_home_dialogs_quick_edit.dart';
 part 'src/main/oculum_fallen_eyes.dart';
 part 'src/main/oculum_starter_creation.dart';
 part 'src/main/oculum_painters.dart';
+part 'src/main/oculum_necromancers.dart';
 
 class OculumObservedValueNotifier<T> extends ValueNotifier<T> {
   OculumObservedValueNotifier(super.value);

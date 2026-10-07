@@ -2953,7 +2953,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       return;
     }
     final dado = tiraD20();
-    final bonus = sheetRollBonusAt(index, key);
+    final baseBonus = sheetRollBonusAt(index, key);
+    final aid = max(
+      0,
+      readIntValue(schedePersonaggio[index]['companionAidPending']),
+    );
+    final bonus = baseBonus + aid;
+    schedePersonaggio[index]['companionAidPending'] = 0;
     final level = sheetCriticalLevelAt(index);
     final grade = max(0, sheetIntValueAt(index, 'grado'));
     final difficulty = sheetDifficoltaTiroAt(index);
@@ -3005,9 +3011,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           : eliteProgress.experience > 0
           ? ' • EXP élite +${eliteProgress.experience}.'
           : '';
-      risultato = '$nome • $label: $testoDado$eliteText';
+      risultato =
+          '$nome • $label: $testoDado${aid > 0 ? ' · aiuto compagno +$aid' : ''}$eliteText';
 
-      aggiungiLog('Tiro party $nome [$label]: $testoDado.$eliteText');
+      aggiungiLog(
+        'Tiro party $nome [$label]: $testoDado${aid > 0 ? ' · aiuto compagno +$aid' : ''}.$eliteText',
+      );
       if (key == 'iniziativa') {
         updateMasterInitiativeToken(
           index: index,

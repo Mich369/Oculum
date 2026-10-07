@@ -2836,6 +2836,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       ),
                     )
                   : OculumAsyncPortrait(
+                      key: ValueKey('portrait_$raw'),
                       raw: raw,
                       cache: decodedImageBase64Cache,
                       fallback: Center(
@@ -2925,10 +2926,23 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       ('iniziativa', 'INI'),
     ];
 
+    final aid = companionAidCountAt(index);
     return Wrap(
       spacing: 6,
       runSpacing: 6,
       children: [
+        if (aid > 0)
+          OutlinedButton.icon(
+            onPressed: () => armCompanionAid(index),
+            icon: const Icon(Icons.handshake, size: 16),
+            label: Text('Aiuto +$aid'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(44, 34),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              foregroundColor: tertiaryColor,
+              side: BorderSide(color: tertiaryColor.withValues(alpha: 0.65)),
+            ),
+          ),
         for (final roll in rolls)
           OutlinedButton(
             onPressed: () => tiraSchedaMasterParty(index, roll.$1),
@@ -3142,6 +3156,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       Center(child: fallbackIcon),
                 )
         : OculumAsyncPortrait(
+            key: ValueKey('token_portrait_$imageRaw'),
             raw: imageRaw,
             cache: decodedImageBase64Cache,
             fallback: Center(child: fallbackIcon),
@@ -5763,7 +5778,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     var shield = sheetIntValueAt(index, 'scudo');
     var oculumShield = sheetIntValueAt(index, 'scudoOculum');
     final originalHp = hp;
-    final totalDamage = max(0, damage + (critical ? 5 : 0));
+    final incomingDamage = max(0, damage + (critical ? 5 : 0));
+    final totalDamage = redirectNecromancerDamage(index, incomingDamage);
+    final necromancerAbsorbed = incomingDamage - totalDamage;
     if (totalDamage > 0 || ko) {
       if (index == schedaCorrente) {
         interruptArtAwakening();
@@ -5810,8 +5827,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             )
           : totalDamage > 0
           ? t(
-              '${nomeSchedaPersonaggio(index)}: $totalDamage danni rapidi${critical ? ' (critico)' : ''}, HP $originalHp -> $hp.',
-              '${nomeSchedaPersonaggio(index)}: $totalDamage quick damage${critical ? ' (critical)' : ''}, HP $originalHp -> $hp.',
+              '${nomeSchedaPersonaggio(index)}: $incomingDamage danni rapidi${critical ? ' (critico)' : ''}${necromancerAbsorbed > 0 ? ', $necromancerAbsorbed assorbiti dai servitori' : ''}, HP $originalHp -> $hp.',
+              '${nomeSchedaPersonaggio(index)}: $incomingDamage quick damage${critical ? ' (critical)' : ''}${necromancerAbsorbed > 0 ? ', $necromancerAbsorbed absorbed by thralls' : ''}, HP $originalHp -> $hp.',
             )
           : t(
               '${nomeSchedaPersonaggio(index)}: cura rapida +$heal, HP $originalHp -> $hp.',
@@ -6158,6 +6175,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 ),
                 const SizedBox(height: 7),
                 masterEnemyVitalBar(index),
+                necromancerServantsStatus(index),
                 const SizedBox(height: 7),
                 masterPartyQuickRolls(index),
                 const SizedBox(height: 7),
@@ -8402,8 +8420,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     if (skillIndex < 0 || skillIndex >= arti[artIndex].skills.length) return;
     final art = arti[artIndex];
     final skill = arti[artIndex].skills[skillIndex];
-    if (art.skills.any((s) => s.nome == 'Armatura sottopelle') && skill.nome == 'Armatura sottopelle') {
-      risultato = 'Armatura sottopelle è automatica: ${spineArmorPreset().isEmpty ? 'richiede livello 2' : spineArmorPreset()}. Nessun costo o attivazione.';
+    if (art.skills.any((s) => s.nome == 'Armatura sottopelle') &&
+        skill.nome == 'Armatura sottopelle') {
+      risultato =
+          'Armatura sottopelle è automatica: ${spineArmorPreset().isEmpty ? 'richiede livello 2' : spineArmorPreset()}. Nessun costo o attivazione.';
       aggiungiLog(risultato);
       notifyDiceResultChanged();
       return;
@@ -8626,6 +8646,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       }
     }
 
+    if (skill.nome.trim().toLowerCase() == 'richiamo dei servitori' &&
+        schedaCorrente >= 0 &&
+        schedaCorrente < schedePersonaggio.length) {
+      final sheet = schedePersonaggio[schedaCorrente];
+      sheet['necromancerRaiseDeadLevel'] = livelloNuovo;
+      sheet['necromancerRaiseDeadOculum'] =
+          resourceUse?.selected ??
+          skill.oculumMinimoPerLivello(livelloNuovo).clamp(0, 999);
+    }
+
     skill.livello = livelloNuovo;
     final statiOculumAttivati = livelloNuovo > livelloPrecedente
         ? applicaStatiOculumDaTestoSkill(
@@ -8734,7 +8764,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           '${art.nome} / ${skill.nome} ${artLevelRoman(livelloNuovo)}',
         ),
       );
-      structuredMessages.addAll(await activateSpineHedgehogSkill(art, skill, livelloNuovo, spineOculumBefore, spent: resourceSpent));
+      structuredMessages.addAll(
+        await activateSpineHedgehogSkill(
+          art,
+          skill,
+          livelloNuovo,
+          spineOculumBefore,
+          spent: resourceSpent,
+        ),
+      );
       if (structuredMessages.isNotEmpty) {
         risultato +=
             '\n${t('Effetti attivati', 'Activated effects')}:\n'
@@ -8745,7 +8783,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     aggiungiLog(risultato);
     // Ogni cambio di livello modifica i bonus calcolati da Art/Skill. Anche
     if (art.skills.any((s) => s.nome == 'Armatura sottopelle')) {
-      sendRealtimeDiceRoll(label: risultato, roll: 0, bonus: 0, total: 0, forceMasterVisible: true);
+      sendRealtimeDiceRoll(
+        label: risultato,
+        roll: 0,
+        bonus: 0,
+        total: 0,
+        forceMasterVisible: true,
+      );
     }
     // quando non viene spesa una risorsa (soprattutto nella disattivazione),
     // la Scheda deve ricalcolare subito Danno, Difesa e statistiche: prima

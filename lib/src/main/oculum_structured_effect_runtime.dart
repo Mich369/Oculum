@@ -332,6 +332,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           'rimuovi_reazioni_rapide',
           'aggiungi_reazioni',
           'aggiungi_reazioni_rapide',
+          'elemental_resistance',
         }.contains(effect.type);
         final isRegeneration =
             effect.type == 'cura' && effect.mode == 'rigenerazione';
@@ -363,6 +364,10 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             'mode': effect.mode,
             'target': target,
             'resource': effect.resource,
+            if (effect.type == 'elemental_resistance') ...<String, dynamic>{
+              'element': oculumNormalizeElementId(effect.elementType),
+              'preset': canonicalDamageModifierName(effect.customDisplayText),
+            },
             'value': value,
             'stackable': effect.stackable,
             // -1 rappresenta una periodicità senza scadenza. I vecchi

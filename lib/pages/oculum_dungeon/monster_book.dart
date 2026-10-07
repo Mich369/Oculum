@@ -4,6 +4,8 @@ import '../../game/hero_path/hero_content.dart';
 part 'weak_horror_monsters.dart';
 part 'spine_hedgehog.dart';
 part 'pack_leader_monsters.dart';
+part 'lava_monsters.dart';
+part 'necromancer_monsters.dart';
 
 class MonsterBookEntry {
   final String id;
@@ -500,11 +502,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'oculum': 20,
       'defense': 120,
     },
-    skillIds: [
-      'demon_lesser_harden',
-      'demon_lesser_ward',
-      'demon_lesser_crush',
-    ],
+    skillIds: ['inferno_in_corpo', 'demon_lesser_ward', 'demon_lesser_crush'],
     dropIds: ['corno_demoniaco_minore', 'frammento_oculum_corrotto'],
   ),
   MonsterBookEntry(
@@ -529,7 +527,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'defense': 200,
     },
     skillIds: [
-      'demon_intermediate_harden',
+      'inferno_in_corpo',
       'demon_intermediate_aegis_sphere',
       'demon_intermediate_pressure_sphere',
     ],
@@ -558,7 +556,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'defense': 300,
     },
     skillIds: [
-      'demon_greater_dominion',
+      'inferno_in_corpo',
       'demon_greater_devour',
       'demon_greater_hell_aegis',
     ],
@@ -766,7 +764,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'materia': 6,
       'oculum': 4,
     },
-    skillIds: ['lesser_frost_demon_cold_blood'],
+    skillIds: ['inferno_in_corpo'],
     dropIds: ['scheggia_glaciale'],
   ),
   MonsterBookEntry(
@@ -788,7 +786,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'materia': 19,
       'oculum': 13,
     },
-    skillIds: ['intermediate_frost_demon_ray'],
+    skillIds: ['inferno_in_corpo'],
     dropIds: ['occhio_glaciale'],
   ),
   MonsterBookEntry(
@@ -811,7 +809,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'materia': 50,
       'oculum': 39,
     },
-    skillIds: ['greater_frost_demon_time_freeze'],
+    skillIds: ['inferno_in_corpo'],
     dropIds: ['cuore_glaciale'],
   ),
   MonsterBookEntry(
@@ -1904,7 +1902,12 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     isBoss: false,
     isNullFateless: false,
     stats: {'hp': 190, 'atk': 34, 'def': 18, 'spd': 12},
-    skillIds: ['devastating_charge', 'backward_dash', 'immaterial_dash'],
+    skillIds: [
+      'devastating_charge',
+      'backward_dash',
+      'immaterial_dash',
+      'inferno_in_corpo',
+    ],
     dropIds: [
       'carne_forest_demon',
       'scarti_carne',
@@ -4617,13 +4620,28 @@ String _inspiredMonsterSkillText(String rawId) {
       : role == 'field'
       ? 'L’effetto investe l’intera zona e costringe i nemici a riposizionarsi'
       : 'Concentri la tecnica in un colpo più pesante che apre la guardia';
-  return '$title — I/$base. Richiede livello 0. (1/4 Oculum). '
-      'II/$mid. Richiede livello 3. (5/10 Oculum). '
-      'III/$finisher. Richiede livello 6. (11/30 Oculum).';
+  final scalesWithOculum = '$base $mid $finisher'.contains('Oculum');
+  final costI = scalesWithOculum ? '(1/4 Oculum)' : '(1/1 Oculum, costo fisso)';
+  final costII = scalesWithOculum
+      ? '(5/10 Oculum)'
+      : '(5/5 Oculum, costo fisso)';
+  final costIII = scalesWithOculum
+      ? '(11/30 Oculum)'
+      : '(11/11 Oculum, costo fisso)';
+  return '$title — I/$base. Richiede livello 0. $costI '
+      'II/$mid. Richiede livello 3. $costII '
+      'III/$finisher. Richiede livello 6. $costIII.';
 }
 
 String monsterBookSkillText(String rawId) {
-  if (rawId.startsWith('riccio_aculeo_')) return oculumSpineHedgehogSkillText(rawId);
+  if (rawId.startsWith('riccio_aculeo_'))
+    return oculumSpineHedgehogSkillText(rawId);
+  if (rawId.startsWith('necromancer_'))
+    return oculumNecromancerSkillText(rawId);
+  if (rawId == 'inferno_in_corpo')
+    return 'Inferno in corpo — I/Passiva automatica: Alta Resistenza a fuoco, cenere e magma. II/La stessa protezione resta attiva contro gli effetti persistenti. III/La protezione resta automatica anche come Occhio dei Caduti. Nessun tiro e nessun costo.';
+  final lava = oculumLavaSkillText(rawId);
+  if (lava.isNotEmpty) return lava;
   if (rawId.startsWith('weak_horror_')) {
     return oculumWeakHorrorSkillText(rawId);
   }
@@ -4663,7 +4681,7 @@ String monsterBookSkillText(String rawId) {
     case 'mammuth_carica':
       return 'Carica del mammuth — I/Carichi e infliggi Danni +10 + Oculum. Richiede livello 0. (1/10 Oculum). II/Carichi e infliggi Danni +20 +2×Oculum. Richiede livello 2. (11/20 Oculum). III/Carichi e infliggi Danni +50 +2×Oculum. Richiede livello 5. (21/30 Oculum).';
     case 'legno_marcio_rami_secchi':
-      return 'Rami secchi — I/tira contro la difesa del bersaglio: se fallisci infliggi soltanto metà Danni; se riesci infliggi Danni totali e applichi Rinsecchito I (1–4 Oculum). II/Con una nuova applicazione riuscita, Rinsecchito sale di uno stadio fino a II (5–10 Oculum). III/Una nuova applicazione riuscita può portare Rinsecchito a III; un tiro fallito resta soltanto metà Danni e non aumenta lo stato (11–30 Oculum).';
+      return 'Rami secchi — I/tira contro la difesa del bersaglio: se fallisci infliggi soltanto metà Danni; se riesci infliggi Danni totali e applichi Rinsecchito I (1/1 Oculum fisso). II/Con una nuova applicazione riuscita, Rinsecchito sale di uno stadio fino a II (5/5 Oculum fisso). III/Una nuova applicazione riuscita può portare Rinsecchito a III; un tiro fallito resta soltanto metà Danni e non aumenta lo stato (11/11 Oculum fisso). L’Oculum non modifica danni, durata o stadio.';
     case 'incubo_vespro_taglio':
       return 'Taglio sotto la pelle — I/Allunghi gli artigli contro una preda in mischia: infliggi Danni + Oculum speso di Vuoto, con difese normali (1–4 Oculum). II/La stessa tecnica ammette un investimento maggiore (5–10 Oculum). III/Concentri tutta la carica nello stesso bersaglio, senza ignorare Scudi o Difesa (11–30 Oculum).';
     case 'incubo_vespro_velo':
@@ -5063,6 +5081,8 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
             ..._spineHedgehogEntries,
             ..._spineHedgehogVariantEntries,
             ..._packLeaderMonsterBookEntries,
+            ..._lavaMonsterEntries,
+            ..._necromancerMonsterEntries,
             ..._manualMonsterBookEntries,
             ..._heroPathMonsterBookEntries(),
             ..._generateMonsterTier(
@@ -5127,9 +5147,8 @@ List<MonsterBookEntry> _withMonsterVariants(
   for (final entry in entries) {
     result.add(entry);
     if (entry.id.contains('_variante_') ||
-        entry.id.startsWith('weak_horror_') ||
         entry.id.startsWith(oculumSpineHedgehogId) ||
-        entry.id.startsWith('pack_leader_')) {
+        entry.id.startsWith('pack_leader_') && false) {
       continue;
     }
     final score = entry.id.codeUnits.fold<int>(0, (sum, code) => sum + code);
@@ -5231,6 +5250,8 @@ Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
   yield* _spineHedgehogEntries;
   yield* _spineHedgehogVariantEntries;
   yield* _packLeaderMonsterBookEntries;
+  yield* _lavaMonsterEntries;
+  yield* _necromancerMonsterEntries;
   yield* _manualMonsterBookEntries;
 }
 
@@ -5557,7 +5578,8 @@ MonsterBookEntry? monsterById(String id) {
 /// Le Art dei mostri non sono tutte disponibili al livello zero. La soglia
 /// usa potenza e tenuta della creatura, senza alterare le Skill legacy.
 int monsterBookSkillRequiredLevel(MonsterBookEntry monster, int skillIndex) {
-  if (monster.id.startsWith(oculumSpineHedgehogId)) return [0, 2, 1][skillIndex.clamp(0, 2)];
+  if (monster.id.startsWith(oculumSpineHedgehogId))
+    return [0, 2, 1][skillIndex.clamp(0, 2)];
   if (monster.id.startsWith('weak_horror_')) return 0;
   // Le Art introduttive dichiarate dal Book sono disponibili dalla creazione;
   // le forme II e III restano nel loro slot Art e seguono i relativi livelli.

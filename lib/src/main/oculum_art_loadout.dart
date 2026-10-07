@@ -36,6 +36,21 @@ extension _OculumArtLoadout on _OculumHomePageState {
           notifyHiddenEyeCards: false,
         );
       }
+      if (active) {
+        for (final skill in art.skills.where((skill) =>
+            skill.tipoPerLivello(1).toLowerCase().contains('passiv'))) {
+          final passiveEffects = skill.effettiEvoluzione(1);
+          if (passiveEffects.isNotEmpty) {
+            applyStructuredEffectsOnActivation(
+              passiveEffects,
+              source: '${art.nome} / ${skill.nome} (passiva)',
+              level: 1,
+            );
+          }
+        }
+      } else {
+        removeActiveStructuredEffectsForSourcePrefix('${art.nome} /');
+      }
     }
   }
 

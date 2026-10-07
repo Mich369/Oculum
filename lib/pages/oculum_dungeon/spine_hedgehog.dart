@@ -27,6 +27,14 @@ const oculumSpineVariants = [
 ];
 
 final _spineHedgehogVariantEntries = [
+  MonsterBookEntry(
+    id: 'riccio_aculeo_variante_errante', nameIt: 'Riccio Aculeo Errante', nameEn: 'Wandering Spine Hedgehog',
+    descIt: 'Variante di combattimento stabile del Riccio Aculeo: alterna lancio, armatura e aculei precisi.', descEn: 'Stable combat variant of the Spine Hedgehog.',
+    elementId: 'perforante', spriteAssetPath: '', isMiniBoss: false, isBoss: false, isNullFateless: false,
+    stats: const {'level': 3, 'resilienza': 5, 'volonta': 3, 'materia': 4, 'oculum': 5, 'oculumArt': 1},
+    skillIds: const ['riccio_aculeo_lancio_variante_errante', 'riccio_aculeo_armatura_variante_errante', 'riccio_aculeo_precisi_variante_errante'],
+    dropIds: const ['osserin', 'pelle_mostro'], dropChances: const {'osserin': 60, 'pelle_mostro': 35},
+  ),
   for (final variant in oculumSpineVariants)
     MonsterBookEntry(
       id: 'riccio_aculeo_${variant.id}', nameIt: variant.name, nameEn: variant.name,
@@ -35,6 +43,15 @@ final _spineHedgehogVariantEntries = [
       isMiniBoss: false, isBoss: false, isNullFateless: false,
       stats: {'level': 0, 'resilienza': 3, 'volonta': 1, 'materia': 2 + variant.bonus, 'oculum': 3, 'oculumArt': 1},
       skillIds: [for (final suffix in ['lancio', 'armatura', 'precisi']) 'riccio_aculeo_${variant.id}_$suffix'],
+      dropIds: [variant.drop, 'pelle_mostro'], dropChances: {variant.drop: 60, 'pelle_mostro': 35},
+    ),
+  for (final variant in oculumSpineVariants)
+    MonsterBookEntry(
+      id: 'riccio_aculeo_${variant.id}_variante_errante', nameIt: '${variant.name} Errante', nameEn: '${variant.name} Wandering',
+      descIt: 'Variante di combattimento stabile di ${variant.name}: mantiene il materiale e alterna le tre tecniche.', descEn: 'Stable combat variant of ${variant.name}.',
+      elementId: variant.element, spriteAssetPath: '', isMiniBoss: false, isBoss: false, isNullFateless: false,
+      stats: {'level': 3, 'resilienza': 5, 'volonta': 3, 'materia': 4 + variant.bonus, 'oculum': 5, 'oculumArt': 1},
+      skillIds: [for (final suffix in ['lancio', 'armatura', 'precisi']) 'riccio_aculeo_${variant.id}_${suffix}_variante_errante'],
       dropIds: [variant.drop, 'pelle_mostro'], dropChances: {variant.drop: 60, 'pelle_mostro': 35},
     ),
 ];
@@ -47,6 +64,8 @@ String oculumSpineVariantKey(String text) {
 }
 
 String oculumSpineHedgehogSkillText(String id) {
+  final combatVariant = id.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
+  if (combatVariant != id) return '${oculumSpineHedgehogSkillText(combatVariant)} Variante di combattimento stabile: valori adattati alla variante.';
   final variant = oculumSpineVariants.where((v) => id.startsWith('riccio_aculeo_${v.id}_')).firstOrNull;
   if (variant != null) {
     final base = 'riccio_aculeo_${id.split('_').last}';
