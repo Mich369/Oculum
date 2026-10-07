@@ -412,11 +412,11 @@ Ogni danno può inoltre essere completamente parato dall'Oculum attuale. Quando 
 
 Solo dopo una parata riuscita viene controllata la dispersione. Può essere perso al massimo 1 Oculum attuale. La probabilità cresce con l'Oculum posseduto ed è maggiore su Difficile e Oculum, ma i primi 20 punti sono protetti da una crescita lenta: a 20 Oculum la dispersione è 2% su Facile, 4% su Normale, 7% su Difficile e 10% su Oculum. Oltre 20 cresce più rapidamente, con un limite massimo del 75%.
 
-Un danno critico aggiunge prima un bonus piatto che dipende dalla difficoltà della campagna:
-• Facile: +3 danni
-• Normale: +5 danni
-• Difficile: +8 danni
-• Oculum: +12 danni
+Un danno critico aggiunge prima un bonus che dipende dalla difficoltà e dal livello del nemico, selezionati nella finestra aperta dal pulsante Critico:
+• Facile: +3 danni per livello del nemico
+• Normale/Medio: +2 danni per livello del nemico
+• Difficile: +1 danno per livello del nemico
+• Oculum: +1 danno ogni due livelli del nemico, arrotondato per difetto
 Poi il critico peggiora di uno stadio Resistenze, Normale o Fragilità prima di applicare Difesa e Scudi.
 
 Resistenze:

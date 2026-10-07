@@ -2692,8 +2692,8 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         const SizedBox(height: 6),
         smallInfoText(
           t(
-            'Nota: il critico aggiunge +${oculumCriticalDamageBonusForDifficulty(normalizedCampaignDifficulty())} danni a questa difficoltà e peggiora lo stadio di uno: Rigenerazione → Resistenze → Normale → Fragilità. Poi applica Difesa, modificatore e Scudo Critico.',
-            'Note: Critical adds +${oculumCriticalDamageBonusForDifficulty(normalizedCampaignDifficulty())} damage at this difficulty and worsens the stage by one: Regeneration → Resistances → Normal → Fragility. Then Defense, modifier and Critical Shield apply.',
+            'Critico: scegli difficoltà e livello del nemico. Bonus per livello: Facile +3, Normale +2, Difficile +1; Oculum +1 ogni due livelli. Peggiora lo stadio di uno: Rigenerazione → Resistenze → Normale → Fragilità. Poi applica Difesa, modificatore e Scudo Critico.',
+            'Critical: choose enemy difficulty and level. Bonus per level: Easy +3, Normal +2, Hard +1; Oculum +1 per two levels. Worsens the stage by one: Regeneration → Resistances → Normal → Fragility. Then Defense, modifier and Critical Shield apply.',
           ),
           color: tertiaryColor,
         ),
