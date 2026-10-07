@@ -3925,64 +3925,87 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     var difficulty = normalizedCampaignDifficulty();
     final profile = await showDialog<(String, int)>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) => AlertDialog(
-          title: Text(t('Critico contro nemico', 'Critical against enemy')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                initialValue: difficulty,
-                decoration: InputDecoration(
-                  labelText: t('Difficoltà nemico', 'Enemy difficulty'),
+      builder: (dialogContext) => Theme(
+        data: (_cachedAppTypographyTheme ?? Theme.of(context)).copyWith(
+          colorScheme: Theme.of(context).colorScheme.copyWith(
+            primary: primaryColor,
+            secondary: secondaryColor,
+            surface: backgroundMidColor,
+            onSurface: readableOnTheme(
+              primaryColor,
+              background: backgroundMidColor,
+            ),
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(foregroundColor: primaryColor),
+          ),
+        ),
+        child: StatefulBuilder(
+          builder: (dialogContext, setDialogState) => AlertDialog(
+            backgroundColor: backgroundMidColor,
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: tertiaryColor.withValues(alpha: .55)),
+            ),
+            title: Text(t('Critico contro nemico', 'Critical against enemy')),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  initialValue: difficulty,
+                  dropdownColor: backgroundMidColor,
+                  decoration: InputDecoration(
+                    labelText: t('Difficoltà nemico', 'Enemy difficulty'),
+                  ),
+                  items: [
+                    for (final value in const [
+                      'facile',
+                      'normale',
+                      'difficile',
+                      'oculum',
+                    ])
+                      DropdownMenuItem(
+                        value: value,
+                        child: Text(campaignDifficultyLabel(value)),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) setDialogState(() => difficulty = value);
+                  },
                 ),
-                items: [
-                  for (final value in const [
-                    'facile',
-                    'normale',
-                    'difficile',
-                    'oculum',
-                  ])
-                    DropdownMenuItem(
-                      value: value,
-                      child: Text(campaignDifficultyLabel(value)),
-                    ),
-                ],
-                onChanged: (value) {
-                  if (value != null) setDialogState(() => difficulty = value);
-                },
+                const SizedBox(height: 12),
+                TextFormField(
+                  initialValue: enemyLevelText,
+                  onChanged: (value) => enemyLevelText = value,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: t('Livello nemico', 'Enemy level'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  t(
+                    'Bonus critico: Facile +3/livello, Normale +2, Difficile +1, Oculum +1 ogni 2 livelli.',
+                    'Critical bonus: Easy +3/level, Normal +2, Hard +1, Oculum +1 per 2 levels.',
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(t('Annulla', 'Cancel')),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                initialValue: enemyLevelText,
-                onChanged: (value) => enemyLevelText = value,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: t('Livello nemico', 'Enemy level'),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                t(
-                  'Bonus critico: Facile +3/livello, Normale +2, Difficile +1, Oculum +1 ogni 2 livelli.',
-                  'Critical bonus: Easy +3/level, Normal +2, Hard +1, Oculum +1 per 2 levels.',
-                ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, (
+                  difficulty,
+                  max(0, int.tryParse(enemyLevelText) ?? 0),
+                )),
+                child: Text(t('Applica critico', 'Apply critical')),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(t('Annulla', 'Cancel')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, (
-                difficulty,
-                max(0, int.tryParse(enemyLevelText) ?? 0),
-              )),
-              child: Text(t('Applica critico', 'Apply critical')),
-            ),
-          ],
         ),
       ),
     );
