@@ -12,7 +12,10 @@ permissions:
 
 concurrency:
   group: oculum-distribution-${{ github.ref }}
-  cancel-in-progress: true
+  # A second push must queue behind a distribution build. Flutter's Windows
+  # toolchain runs through cmd.exe; cancelling that run can surface as
+  # "Terminate batch job (Y/N)?" and makes Package Windows release skip.
+  cancel-in-progress: false
 
 jobs:
   validate:
@@ -44,6 +47,7 @@ jobs:
     needs: validate
     name: Build Windows ${{ matrix.edition }}
     runs-on: windows-latest
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -80,6 +84,7 @@ jobs:
 
       - name: Build Windows release
         shell: pwsh
+        timeout-minutes: 45
         env:
           OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
@@ -88,6 +93,10 @@ jobs:
             "--dart-define=OculumSaveProfile=${{ matrix.save_profile }}" `
             "--dart-define=OculumSupabaseUrl=$env:OCULUM_SUPABASE_URL" `
             "--dart-define=OculumSupabasePublishableKey=$env:OCULUM_SUPABASE_PUBLISHABLE_KEY"
+
+          if (!(Test-Path "build/windows/x64/runner/Release")) {
+            throw "Flutter Windows build completed without build/windows/x64/runner/Release."
+          }
 
       - name: Package Windows release
         shell: pwsh
