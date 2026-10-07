@@ -387,6 +387,9 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Verify browser save storage
+        timeout-minutes: 5
+        run: flutter test --no-pub --platform chrome test/oculum_web_save_store_test.dart
       - name: Build Web release
         env:
           OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}

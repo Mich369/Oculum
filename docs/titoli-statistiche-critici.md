@@ -17,4 +17,6 @@
 
 ## Distribuzione
 
+La pagina Web `https://mich369.github.io/Oculum/` viene ricostruita e pubblicata automaticamente a ogni push su `main`, con la stessa configurazione Supabase delle app. I salvataggi locali del browser restano nel suo archivio IndexedDB; l'online usa il progetto Supabase esistente. La schermata di caricamento segue lo stile Oculum e permette di riprovare se il caricamento fallisce.
+
 `build/distribution` contiene esclusivamente artefatti GitHub del commit indicato in `BUILD-VERIFICATE.json`, i runtime Windows completi nelle cartelle `windows` e `windows-test`, e questo riepilogo. La versione Windows Test usa il profilo salvataggi isolato `test`. Nessun APK Test.

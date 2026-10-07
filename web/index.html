@@ -33,8 +33,25 @@
 
   <title>Oculum</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    html, body { margin: 0; background: #07080d; color: #e9dcc2; }
+    #oculum-loading { position: fixed; inset: 0; z-index: 9999; display: grid;
+      place-content: center; text-align: center; gap: 18px;
+      background: radial-gradient(ellipse, #21182e, #07080d 70%);
+      font-family: Georgia, 'Palatino Linotype', serif; }
+    #oculum-loading h1 { margin: 0; letter-spacing: .18em; color: #c8a56a; }
+    #oculum-loading p { margin: 0; padding: 0 24px; }
+    #oculum-loading button { margin: auto; padding: 10px 22px; color: #e9dcc2;
+      background: #21182e; border: 1px solid #c8a56a; border-radius: 8px;
+      font: inherit; cursor: pointer; }
+  </style>
 </head>
 <body>
+  <div id="oculum-loading" role="status" aria-live="polite">
+    <h1>OCULUM</h1>
+    <p id="oculum-loading-message">L'Occhio si apre…</p>
+    <button id="oculum-retry" hidden onclick="location.reload()">Riprova</button>
+  </div>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader

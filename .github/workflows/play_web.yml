@@ -1,6 +1,9 @@
 name: Play Oculum on GitHub Pages
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 permissions:
   contents: read
   pages: write
@@ -21,12 +24,20 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Verify browser save storage
+        timeout-minutes: 5
+        run: flutter test --no-pub --platform chrome test/oculum_web_save_store_test.dart
       - uses: actions/configure-pages@v5
         id: pages
       - name: Build browser game
         env:
           BASE_PATH: ${{ steps.pages.outputs.base_path }}
-        run: flutter build web --release --base-href "${BASE_PATH}/"
+          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          flutter build web --release --base-href "${BASE_PATH}/" \
+            "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web

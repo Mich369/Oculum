@@ -36,7 +36,43 @@ New-Item -ItemType Directory -Path $stagingRoot, $downloadRoot | Out-Null
 # Download every artifact of this successful run, including UI evidence.
 $downloadArgs = @('run', 'download', "$RunId", '--repo', $GitHubRepo, '--dir', $downloadRoot)
 & gh @downloadArgs
-if ($LASTEXITCODE -ne 0) { throw 'GitHub artifact download failed' }
+if ($LASTEXITCODE -ne 0) {
+  # Some Windows TLS intermediaries reject the Go client's artifact download.
+  # Obtain a signed redirect from GitHub, then download with curl over TLS 1.2.
+  # Authentication remains only in process memory.
+  $artifactsJson = & gh api "repos/$GitHubRepo/actions/runs/$RunId/artifacts" --paginate
+  if ($LASTEXITCODE -ne 0) { throw 'Cannot list GitHub artifacts' }
+  $artifacts = ($artifactsJson | ConvertFrom-Json).artifacts
+  $taskToken = (& gh auth token).Trim()
+  if (!$taskToken) { throw 'GitHub artifact authentication unavailable' }
+  try {
+    foreach ($artifact in $artifacts) {
+      if ($artifact.expired -or $artifact.name -notmatch '^[A-Za-z0-9_-]+$') {
+        throw 'Invalid or expired artifact'
+      }
+      $archivePath = Join-Path $downloadRoot "$($artifact.name).download.zip"
+      $taskHandler = [System.Net.Http.HttpClientHandler]::new()
+      $taskHandler.AllowAutoRedirect = $false
+      $taskClient = [System.Net.Http.HttpClient]::new($taskHandler)
+      try {
+        $taskClient.DefaultRequestHeaders.Add('Authorization', "Bearer $taskToken")
+        $taskClient.DefaultRequestHeaders.Add('User-Agent', 'Oculum-distribution')
+        $taskResponse = $taskClient.GetAsync($artifact.archive_download_url).GetAwaiter().GetResult()
+        $taskDownloadUri = $taskResponse.Headers.Location.AbsoluteUri
+        if (!$taskDownloadUri) { throw 'Artifact download redirect missing' }
+        & curl.exe --fail --silent --show-error --location --http1.1 --tls-max 1.2 --retry 3 --output $archivePath $taskDownloadUri
+        if ($LASTEXITCODE -ne 0) { throw 'Artifact download failed' }
+      } finally {
+        $taskClient.Dispose()
+        $taskHandler.Dispose()
+      }
+      Expand-Archive -LiteralPath $archivePath -DestinationPath (Join-Path $downloadRoot $artifact.name) -Force
+      Remove-Item -LiteralPath $archivePath -Force
+    }
+  } finally {
+    $taskToken = $null
+  }
+}
 $packages = @('Oculum-Windows.zip', 'Oculum-Test-Windows.zip', 'Oculum-Android-release.apk', 'Oculum-Android-release.aab', 'Oculum-macOS.zip', 'Oculum-iOS-unsigned.ipa', 'Oculum-Linux-x64.tar.gz', 'Oculum-Web.zip')
 foreach ($package in $packages) {
   $matches = @(Get-ChildItem -LiteralPath $downloadRoot -Recurse -File | Where-Object Name -eq $package)
