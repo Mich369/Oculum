@@ -111,6 +111,7 @@ part 'src/main/oculum_home_titles_inventory_pages.dart';
 part 'src/main/oculum_home_merchant.dart';
 part 'src/main/oculum_scrolls.dart';
 part 'src/main/oculum_pawn.dart';
+part 'src/main/oculum_pawn_cores.dart';
 part 'src/main/oculum_skill_effects_ui.dart';
 part 'src/main/oculum_structured_effect_runtime.dart';
 part 'src/main/oculum_home_share_content.dart';

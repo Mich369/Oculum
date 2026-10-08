@@ -4249,10 +4249,14 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               size: compact ? 15 : 17,
               color: entry.key.openAttiva ? Colors.black : tertiaryColor,
             ),
-            label: Text(
-              cleanUiText(entry.key.nome),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            label: GestureDetector(
+              onSecondaryTap: () => openVisibleTitleIdentity(entry.key),
+              onLongPress: () => openVisibleTitleIdentity(entry.key),
+              child: Text(
+                cleanUiText(entry.key.nome),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             tooltip: cleanUiText(
               entry.key.openAttiva
@@ -7731,6 +7735,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             ],
           ),
           SizedBox(height: spacing),
+          visibleTitleIdentitySelector(includeName: false, compact: dense),
+          const SizedBox(height: 8),
           tipoSchedaDropdown(
             value: tipoSchedaController.text,
             onChanged: cambiaTipoScheda,

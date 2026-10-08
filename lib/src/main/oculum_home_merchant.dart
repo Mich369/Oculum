@@ -471,6 +471,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void ensureMerchantFoodOffers() {
+    for (final offer in oculumCreatureCoreOffers()) {
+      if (!merchantStock.any((existing) => existing['id'] == offer['id'])) {
+        merchantStock.add(offer);
+      }
+    }
     if (!merchantStock.any((offer) => offer['id'] == 'pawn')) {
       merchantStock.add(oculumPawnMerchantOffer());
     }
@@ -953,6 +958,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     Map<String, dynamic> offer, {
     String titleType = '',
   }) {
+    if (offer['kind'] == 'creature_core') {
+      return oculumCreatureCore(readIntValue(offer['coreTier']));
+    }
     if (offer['kind'] == 'pawn') return oculumPawnInventoryItem();
     if (offer['kind'] == 'pawn_v2') return oculumPawnV2InventoryItem();
     final kind = '${offer['kind'] ?? ''}';
@@ -1151,6 +1159,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool isMerchantConsumable(InventoryItem item) =>
+      item.craftData['creatureCore'] == true ||
       item.craftData['pawn'] == true ||
       item.craftData['scroll'] is Map ||
       item.monsterLoot['food'] is Map ||
@@ -1167,6 +1176,14 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (!inventario.contains(item) ||
         !isMerchantConsumable(item) ||
         item.quantita <= 0) {
+      return;
+    }
+    if (item.craftData['creatureCore'] == true) {
+      if (item.craftData['brokenCore'] == true) {
+        await repairCreatureCore(item);
+      } else {
+        await summonCreatureCore(item);
+      }
       return;
     }
     if (item.craftData['pawn'] == true) {

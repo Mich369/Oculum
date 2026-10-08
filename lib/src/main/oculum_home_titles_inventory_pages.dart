@@ -4772,7 +4772,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     }
 
     for (final echo in oculumMonsterEchoScrolls) {
-      for (var grade = 0; grade <= 12; grade++) { add(oculumMonsterEchoScrollItem(echo.id, grade)); }
+      for (var grade = 0; grade <= 12; grade++) {
+        add(oculumMonsterEchoScrollItem(echo.id, grade));
+      }
     }
     for (final element in allDamageElementIds()) {
       for (var grade = 0; grade <= 12; grade++) {
@@ -5553,6 +5555,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           position.dy,
         ),
         items: <PopupMenuEntry<String>>[
+          if (item.craftData['brokenCore'] == true)
+            const PopupMenuItem<String>(
+              value: 'restore_pawn_core',
+              child: Text('Rievoca Pawn Lv 10 · 6 kg Metallo runico'),
+            ),
           if (item.craftData['material'] != null &&
               item.craftData['material'] != 'gerin_esausto')
             PopupMenuItem<String>(
@@ -5684,6 +5691,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           break;
         case 'use':
           await useMerchantConsumable(item);
+          break;
+        case 'restore_pawn_core':
+          await restorePawnCore(item);
           break;
         case 'equip':
           setItemEquipped(!item.equipaggiata);

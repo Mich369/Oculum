@@ -2,6 +2,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('Saving shield is consumed on an exact hit and not reused', () {
+    final pawn = OculumPawnGuardian(
+      id: 'pawn_exact',
+      ownerTag: 'sheet_a',
+      shield: 20,
+      savingShield: true,
+    );
+    expect(pawn.intercept(20), 0);
+    expect(pawn.hp, 30);
+    expect(pawn.shield, 0);
+    expect(pawn.savingShield, isFalse);
+    expect(pawn.intercept(5), 0);
+    expect(pawn.hp, 25);
+  });
   test('Pawn starts at level zero with fixed stats and full health', () {
     final pawn = OculumPawnGuardian(id: 'pawn_test', ownerTag: 'sheet_a');
 

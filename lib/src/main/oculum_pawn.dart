@@ -116,6 +116,7 @@ class OculumPawnGuardian {
     this.ownerLevel = 0,
     this.ownerGrade = 0,
     this.pendingRegistration = false,
+    this.conscious = false,
     Map<String, int>? stats,
     Map<String, int>? baseStats,
     Map<String, int>? allocatedStats,
@@ -151,6 +152,7 @@ class OculumPawnGuardian {
   final Map<String, int> baseStats;
   final Map<String, int> allocatedStats;
   bool pendingRegistration;
+  bool conscious;
   List<String> targets;
   bool get alive => hp > 0;
   int get maxHp => max(1, stats['resilienza'] ?? 3) * 10;
@@ -221,7 +223,7 @@ class OculumPawnGuardian {
     final absorbedShield = min(shield, incoming);
     shield -= absorbedShield;
     var remaining = incoming - absorbedShield;
-    if (savingShield && shieldBefore > 0 && shield == 0 && remaining > 0) {
+    if (savingShield && shieldBefore > 0 && shield == 0) {
       savingShield = false;
       return 0;
     }
@@ -265,6 +267,7 @@ class OculumPawnGuardian {
     'allocatedStats': Map<String, int>.from(allocatedStats),
     'targets': targets.toList(),
     'pendingRegistration': pendingRegistration,
+    'conscious': conscious,
   };
   factory OculumPawnGuardian.fromJson(Map<String, dynamic> data) =>
       OculumPawnGuardian(
@@ -289,6 +292,7 @@ class OculumPawnGuardian {
               )
             : null,
         pendingRegistration: readBoolValue(data['pendingRegistration']),
+        conscious: readBoolValue(data['conscious']),
         baseStats: data['baseStats'] is Map
             ? (data['baseStats'] as Map).map(
                 (key, value) => MapEntry('$key', readIntValue(value)),
@@ -479,6 +483,15 @@ extension _OculumPawnRuntime on _OculumHomePageState {
   Future<void> activatePawnItem(InventoryItem item) async {
     if (!inventario.contains(item) || item.quantita <= 0) return;
     final isV2 = item.craftData['pawnV2'] == true;
+    final recoveryLevel = max(0, readIntValue(item.craftData['recoveryLevel']));
+    final recoveryGrade = oculumGradeForLevel(recoveryLevel);
+    final recoveryAllocation = oculumPawnProportionalStatAllocation(
+      (recoveryLevel + recoveryGrade) * oculumPawnStatPointsPerLevel,
+    );
+    final recoveryStats = {
+      for (final entry in oculumPawnStats(null).entries)
+        entry.key: entry.value + (recoveryAllocation[entry.key] ?? 0),
+    };
     final ownerLevel = pawnOwnerValue(
       pawnSenderTag,
       'livello',
@@ -496,13 +509,24 @@ extension _OculumPawnRuntime on _OculumHomePageState {
     final pawn = OculumPawnGuardian(
       id: 'pawn_${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(1000000)}',
       ownerTag: pawnSenderTag,
-      hp: isV2 ? max(1, inherited['resilienza'] ?? 0) * 10 : 30,
+      hp: isV2
+          ? max(1, inherited['resilienza'] ?? 0) * 10
+          : recoveryLevel > 0
+          ? recoveryStats['resilienza']! * 10
+          : 30,
+      level: recoveryLevel,
+      conscious: item.craftData['conscious'] == true,
       isV2: isV2,
-      grade: isV2 ? ownerGrade : 0,
+      grade: isV2 ? ownerGrade : recoveryGrade,
       ownerLevel: isV2 ? ownerLevel : 0,
       ownerGrade: isV2 ? ownerGrade : 0,
-      stats: isV2 ? inherited : null,
+      stats: isV2
+          ? inherited
+          : recoveryLevel > 0
+          ? recoveryStats
+          : null,
       baseStats: isV2 ? inherited : null,
+      allocatedStats: recoveryLevel > 0 ? recoveryAllocation : null,
       unspentStatPoints: isV2
           ? (ownerLevel + ownerGrade) * oculumPawnStatPointsPerLevel
           : 0,
@@ -513,7 +537,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       if (item.quantita == 0) inventario.remove(item);
       pawnGuardians.add(pawn);
       risultato =
-          '${pawn.displayName} attivato: ${pawn.hp} HP, livello 0${isV2 ? ' · grado ${pawn.grade} · statistiche pari alla metà della scheda proprietaria' : ''}. Seleziona le schede da proteggere.';
+          '${pawn.displayName} attivato: ${pawn.hp} HP, livello ${pawn.level}${isV2 ? ' · grado ${pawn.grade} · statistiche pari alla metà della scheda proprietaria' : ''}${pawn.conscious ? ' · coscienza originale conservata' : ''}. Seleziona le schede da proteggere.';
       aggiungiLog(risultato);
     });
     notifyActiveSheetSummaryChanged();
@@ -836,10 +860,14 @@ extension _OculumPawnRuntime on _OculumHomePageState {
     )) {
       if (remaining == 0) break;
       final before = remaining;
+      final hpBefore = pawn.hp;
+      final shieldBefore = pawn.shield;
+      final savingShieldBefore = pawn.savingShield;
       remaining = pawn.intercept(remaining);
+      claimBrokenPawnCore(pawn);
       updatePawnInitiativeToken(pawn);
       aggiungiLog(
-        'Pawn intercetta ${before - remaining} danni agli HP di $tag: ${pawn.hp}/${pawn.maxHp} HP, ${pawn.shield} Scudo.',
+        '${pawn.displayName} subisce al posto di $tag ${before - remaining} danni destinati alla Vita: perde ${hpBefore - pawn.hp} HP ($hpBefore → ${pawn.hp}/${pawn.maxHp}) e ${shieldBefore - pawn.shield} Scudo ($shieldBefore → ${pawn.shield}).${savingShieldBefore && !pawn.savingShield ? " Scudo di Salvataggio consumato: la Vita è protetta dal colpo che esaurisce lo Scudo." : ""}',
       );
     }
     if (remaining != damage) {
@@ -931,6 +959,11 @@ extension _OculumPawnRuntime on _OculumHomePageState {
           ..clear()
           ..addAll(received)
           ..addAll(pending);
+        for (final pawn in received.where(
+          (p) => p.ownerTag == pawnSenderTag && !p.alive,
+        )) {
+          claimBrokenPawnCore(pawn);
+        }
       });
       notifyActiveSheetSummaryChanged();
       programmaSalvataggio();

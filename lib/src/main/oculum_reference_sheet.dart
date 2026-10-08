@@ -3,6 +3,140 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 extension _OculumReferenceSheet on _OculumHomePageState {
+  Widget visibleTitleIdentitySelector({
+    bool compact = true,
+    bool includeName = true,
+  }) {
+    return PopupMenuButton<OculumTitle>(
+      tooltip: t('Scegli titolo visibile', 'Choose visible title'),
+      color: secondaryColor,
+      onSelected: (title) {
+        setState(() {
+          final previous = titoloSempreVisibile?.nome ?? '';
+          final all = [...titoli, ...trattiRazziali];
+          for (final other in all) {
+            other.sempreVisibile = identical(other, title);
+            other.visibleSelectionManual = identical(other, title);
+          }
+          oculumNormalizeAlwaysVisibleTitles(all, racialTraits: trattiRazziali);
+          aggiungiLog(
+            'Titolo visibile: [$previous] → [${titoloSempreVisibile?.nome ?? ""}].',
+          );
+          invalidateDerivedDataCaches();
+        });
+        syncMasterInitiativeVisibleTitle(schedaCorrente);
+        programmaSalvataggio();
+      },
+      itemBuilder: (_) {
+        final all = [...titoli, ...trattiRazziali]
+          ..sort((a, b) => (b.evoluto ? 1 : 0).compareTo(a.evoluto ? 1 : 0));
+        final hasEvolved = all.any((title) => title.evoluto);
+        return [
+          for (final title in all)
+            PopupMenuItem<OculumTitle>(
+              value: title,
+              enabled:
+                  (!hasEvolved || title.evoluto) &&
+                  oculumTitleCanBeAlwaysVisible(title, all),
+              child: Text(
+                '${title.nome}${hasEvolved && !title.evoluto
+                    ? " · ${t('evoluzione necessaria', 'evolution required')}"
+                    : !title.equipaggiato
+                    ? " · ${t('da equipaggiare', 'equip first')}"
+                    : ""}',
+                style: TextStyle(
+                  color: hasEvolved && !title.evoluto || !title.equipaggiato
+                      ? primaryColor.withValues(alpha: .35)
+                      : primaryColor,
+                ),
+              ),
+            ),
+        ];
+      },
+      child: GestureDetector(
+        onSecondaryTap: openVisibleTitleIdentity,
+        onLongPress: openVisibleTitleIdentity,
+        child: Text(
+          '${includeName ? "${nomeController.text.trim().isEmpty ? t('Il tuo personaggio', 'Your character') : nomeController.text} | " : ""}${titoloSempreVisibile?.nome ?? t('Scegli titolo', 'Choose title')}',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: compact ? 22 : 30,
+            fontFamily: 'serif',
+            fontWeight: FontWeight.w600,
+            color: primaryColor,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> openVisibleTitleIdentity([OculumTitle? selected]) async {
+    final title = selected ?? titoloSempreVisibile;
+    if (title == null) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: secondaryColor,
+        title: Text(title.nome, style: TextStyle(color: primaryColor)),
+        content: SizedBox(
+          width: 440,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                campoModello(
+                  label: t('Nome Titolo', 'Title name'),
+                  initialValue: title.nome,
+                  onChanged: (value) {
+                    setState(() => title.nome = value);
+                    syncMasterInitiativeVisibleTitle(schedaCorrente);
+                    programmaSalvataggio();
+                  },
+                ),
+                const SizedBox(height: 12),
+                campoModello(
+                  label: t('Leggenda', 'Legend'),
+                  initialValue: title.leggenda,
+                  maxLines: 5,
+                  onChanged: (value) {
+                    setState(() => title.leggenda = value);
+                    syncMasterInitiativeVisibleTitle(schedaCorrente);
+                    programmaSalvataggio();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              final racial = trattiRazziali.any(
+                (item) => identical(item, title),
+              );
+              final index = (racial ? trattiRazziali : titoli).indexOf(title);
+              _expandedFunctionSections.add(
+                '${racial ? "racial_trait" : "title"}_${currentSheetScrollId()}_$index',
+              );
+              vaiAllaFunzione(
+                page: 2,
+                anchorId: titleEditorAnchorId(title, trattoRazziale: racial),
+                logTitle: title.nome,
+              );
+            },
+            child: Text(t('Apri scheda', 'Open entry')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(t('Chiudi', 'Close')),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget referenceCombatDetails() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
@@ -466,90 +600,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                     Row(
                       children: [
                         Expanded(
-                          child: PopupMenuButton<OculumTitle>(
-                            tooltip: t(
-                              'Scegli titolo visibile',
-                              'Choose visible title',
-                            ),
-                            color: secondaryColor,
-                            onSelected: (title) {
-                              setState(() {
-                                final previous =
-                                    titoloSempreVisibile?.nome ?? '';
-                                final all = [...titoli, ...trattiRazziali];
-                                for (final other in all) {
-                                  other.sempreVisibile = identical(
-                                    other,
-                                    title,
-                                  );
-                                  other.visibleSelectionManual = identical(
-                                    other,
-                                    title,
-                                  );
-                                }
-                                oculumNormalizeAlwaysVisibleTitles(
-                                  all,
-                                  racialTraits: trattiRazziali,
-                                );
-                                aggiungiLog(
-                                  'Titolo visibile: [$previous] → [${titoloSempreVisibile?.nome ?? ""}].',
-                                );
-                                invalidateDerivedDataCaches();
-                              });
-                              syncMasterInitiativeVisibleTitle(schedaCorrente);
-                              programmaSalvataggio();
-                            },
-                            itemBuilder: (_) {
-                              final all = [...titoli, ...trattiRazziali]
-                                ..sort(
-                                  (a, b) => (b.evoluto ? 1 : 0).compareTo(
-                                    a.evoluto ? 1 : 0,
-                                  ),
-                                );
-                              final hasEvolved = all.any(
-                                (title) => title.evoluto,
-                              );
-                              return [
-                                for (final title in all)
-                                  PopupMenuItem<OculumTitle>(
-                                    value: title,
-                                    enabled:
-                                        (!hasEvolved || title.evoluto) &&
-                                        oculumTitleCanBeAlwaysVisible(
-                                          title,
-                                          all,
-                                        ),
-                                    child: Text(
-                                      '${title.nome}${hasEvolved && !title.evoluto
-                                          ? " · ${t('evoluzione necessaria', 'evolution required')}"
-                                          : !title.equipaggiato
-                                          ? " · ${t('da equipaggiare', 'equip first')}"
-                                          : ""}',
-                                      style: TextStyle(
-                                        color:
-                                            hasEvolved && !title.evoluto ||
-                                                !title.equipaggiato
-                                            ? primaryColor.withValues(
-                                                alpha: .35,
-                                              )
-                                            : primaryColor,
-                                      ),
-                                    ),
-                                  ),
-                              ];
-                            },
-                            child: Text(
-                              '${nomeController.text.trim().isEmpty ? t('Il tuo personaggio', 'Your character') : nomeController.text} | ${titoloSempreVisibile?.nome ?? t('Scegli titolo', 'Choose title')}',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: compact ? 22 : 30,
-                                fontFamily: 'serif',
-                                fontWeight: FontWeight.w600,
-                                color: primaryColor,
-                              ),
-                            ),
-                          ),
+                          child: visibleTitleIdentitySelector(compact: compact),
                         ),
                         TextButton(
                           onPressed: () => vaiAllaFunzione(

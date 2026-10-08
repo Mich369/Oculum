@@ -95,7 +95,7 @@ extension _OculumNecromancerRuntime on _OculumHomePageState {
       if (absorbed > 0) {
         aggiungiLog(
           '${servant['name'] ?? 'Servitore scheletrico'} perde $absorbed HP '
-          '(${servant['currentHp']}/${servant['maxHp']}): aiuta il necromante.',
+          '(${servant['currentHp']}/${servant['maxHp']}): subisce il danno al posto di ${nomeSchedaPersonaggio(index)}, proteggendone la Vita.',
         );
       }
     }

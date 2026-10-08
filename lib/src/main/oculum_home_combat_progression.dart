@@ -4576,10 +4576,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
     }
 
-    if (scudoSalvataggioPronto &&
-        rimanente > 0 &&
-        oculumShield <= 0 &&
-        shield <= 0) {
+    if (scudoSalvataggioPronto && oculumShield <= 0 && shield <= 0) {
       rimanente = 0;
       scudoSalvataggioAttivato = true;
     }
