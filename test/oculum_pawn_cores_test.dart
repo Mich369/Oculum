@@ -11,9 +11,9 @@ void main() {
     ]);
     expect(oculumCreatureCoreOffers().map((o) => o['cost']), [
       200,
-      500,
-      800,
-      1200,
+      600,
+      1000,
+      2500,
     ]);
   });
 

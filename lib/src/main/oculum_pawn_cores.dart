@@ -45,15 +45,20 @@ InventoryItem oculumCreatureCore(
 }
 
 List<Map<String, dynamic>> oculumCreatureCoreOffers() => [
-  for (var i = 0; i < oculumCoreTiers.length; i++)
+  for (final entry in <(int, String, int)>[
+    (0, 'Debole', 200),
+    (1, 'Medio', 600),
+    (2, 'Forte', 1000),
+    (3, 'Oculum', 2500),
+  ])
     {
-      'id': 'creature_core_$i',
-      'name': 'Nucleo ${oculumCoreTiers[i].$1}',
+      'id': 'creature_core_${entry.$1}',
+      'name': 'Nucleo ${entry.$2}',
       'kind': 'creature_core',
-      'coreTier': i,
-      'cost': 100 * oculumCoreTiers[i].$3,
+      'coreTier': entry.$1,
+      'cost': entry.$3,
       'description':
-          'Nucleo riparato: evoca una creatura di grado ${oculumCoreTiers[i].$2}/${oculumCoreTiers[i].$3}.',
+          'Nucleo riparato: evoca una creatura della fascia ${entry.$2}.',
     },
 ];
 
