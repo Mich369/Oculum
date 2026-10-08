@@ -641,16 +641,18 @@ OculumHpState healOculumHp({
   required int maximum,
   required int temporary,
   required int amount,
+  int temporaryLimit = oculumTemporaryHpLimit,
 }) {
   final safeMaximum = max(1, maximum);
   final safeCurrent = current.clamp(0, safeMaximum).toInt();
-  final safeTemporary = temporary.clamp(0, oculumTemporaryHpLimit).toInt();
+  final limit = max(0, temporaryLimit);
+  final safeTemporary = temporary.clamp(0, limit).toInt();
   final safeAmount = max(0, amount);
   final toNormal = min(safeAmount, safeMaximum - safeCurrent);
   final overflow = safeAmount - toNormal;
   return OculumHpState(
     current: safeCurrent + toNormal,
-    temporary: min(oculumTemporaryHpLimit, safeTemporary + overflow),
+    temporary: min(limit, safeTemporary + overflow),
   );
 }
 
@@ -2012,6 +2014,7 @@ class CharacterSkill {
     bool equipaggiata = false,
     List<CharacterSkillForm>? forme,
     this.scrollData = const {},
+    this.thresholdData = const {},
   }) : _equipaggiata = equipaggiata,
        forme = (forme ?? <CharacterSkillForm>[]).toList() {
     ensureForms();
@@ -2019,6 +2022,7 @@ class CharacterSkill {
 
   String nome;
   final Map<String, dynamic> scrollData;
+  final Map<String, dynamic> thresholdData;
   bool get nonEvolvibile => scrollData.isNotEmpty;
   String tipo;
   String costo;
@@ -2032,7 +2036,7 @@ class CharacterSkill {
   int difesa;
   bool _equipaggiata;
   bool get passiva => tipo.toLowerCase().contains('passiv');
-  bool get equipaggiata => passiva || _equipaggiata;
+  bool get equipaggiata => thresholdData.isNotEmpty || passiva || _equipaggiata;
   set equipaggiata(bool value) => _equipaggiata = value;
   List<CharacterSkillForm> forme;
 
@@ -2089,6 +2093,7 @@ class CharacterSkill {
       'difesa': difesa,
       'equipaggiata': equipaggiata,
       if (scrollData.isNotEmpty) 'scrollData': scrollData,
+      if (thresholdData.isNotEmpty) 'thresholdData': thresholdData,
     };
   }
 
@@ -2126,6 +2131,9 @@ class CharacterSkill {
 
     return CharacterSkill(
       nome: json['nome'] ?? '',
+      thresholdData: json['thresholdData'] is Map
+          ? Map<String, dynamic>.from(json['thresholdData'] as Map)
+          : const {},
       tipo: json['tipo'] ?? '',
       costo: json['costo'] ?? '',
       cooldown: json['cooldown'] ?? '',

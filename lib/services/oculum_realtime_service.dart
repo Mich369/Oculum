@@ -53,6 +53,8 @@ class OculumRealtimeService {
     'friend_request',
     'friend_response',
     'role_update',
+    'permission_request',
+    'permission_decision',
     'sheet_received_ack',
     'diary_knowledge',
     'diary_knowledge_ack',
@@ -691,12 +693,20 @@ class OculumRealtimeService {
     required bool coMaster,
     required String campaignId,
     required String campaignName,
+    bool trusted = false,
+    String senderTag = '',
+    String senderRole = 'master',
+    String scope = '',
   }) {
     return _send('role_update', <String, dynamic>{
       'playerName': _displayName,
       'targetTag': targetTag,
       'targetName': targetName,
       'coMaster': coMaster,
+      'trusted': trusted,
+      'senderTag': senderTag,
+      'senderRole': senderRole,
+      'scope': scope,
       'campaignId': campaignId,
       'campaignName': campaignName,
       'sentAt': _nowIso(),
@@ -704,6 +714,14 @@ class OculumRealtimeService {
   }
 
   Future<void> refreshPresence() => _trackPresence();
+
+  Future<bool> sendPermissionEvent(String event, Map<String, dynamic> payload) {
+    if (event != 'permission_request' && event != 'permission_decision') {
+      throw ArgumentError('Evento autorizzazione non supportato');
+    }
+    return _sendConfirmed(event, {...payload, 'playerName': _displayName});
+  }
+
   Future<bool> sendDiaryKnowledge(
     Map<String, dynamic> envelope, {
     bool acknowledgement = false,

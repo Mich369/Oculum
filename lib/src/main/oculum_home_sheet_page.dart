@@ -325,22 +325,59 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             subtitle: Text(lifeBarStyleLabel(stileBarraVita)),
           ),
         ),
-        if (conditionsAffecting(OculumConditionTarget.hp).isNotEmpty)
-          PopupMenuItem<String>(
-            value: 'conditions',
-            child: ListTile(
-              dense: true,
-              leading: Icon(Icons.bolt, color: tertiaryColor),
-              title: Text(t('Effetti condizioni', 'Condition effects')),
-              subtitle: Text(
-                '${conditionsAffecting(OculumConditionTarget.hp).length}',
-              ),
+        PopupMenuItem<String>(
+          value: 'hp',
+          child: ListTile(
+            dense: true,
+            leading: const Icon(Icons.favorite, color: Colors.redAccent),
+            title: Text(t('Vita e HP temporanei', 'Life and temporary HP')),
+            subtitle: Text('${hpCorrenti()}/${maxHp()} · +${hpTemp()} HP temp'),
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'shields',
+          child: ListTile(
+            dense: true,
+            leading: const Icon(Icons.shield, color: Colors.lightBlueAccent),
+            title: Text(t('Scudi', 'Shields')),
+            subtitle: Text(
+              '${scudo()} Scudo · ${scudoOculum()}/${scudoOculumMax()} Oculum',
             ),
           ),
+        ),
+        PopupMenuItem<String>(
+          value: 'conditions',
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.bolt, color: tertiaryColor),
+            title: Text(t('Condizioni', 'Conditions')),
+            subtitle: Text(
+              '${conditionsAffecting(OculumConditionTarget.hp).length} ${t('attive sulla Vita', 'affecting Life')}',
+            ),
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'damage-heal',
+          child: ListTile(
+            dense: true,
+            leading: const Icon(Icons.healing, color: Colors.greenAccent),
+            title: Text(t('Danni subiti e cura', 'Damage taken and healing')),
+            subtitle: Text(t('Apri le azioni Vita', 'Open Life actions')),
+          ),
+        ),
       ],
     );
     if (choice == 'style' && mounted) await showLifeBarStyleGallery();
-    if (choice == 'conditions' && mounted && !vitaAfonaAttiva()) {
+    if (choice == 'hp' && mounted) {
+      vaiAllaFunzione(page: 0, anchorId: 'sheet_hp');
+    }
+    if (choice == 'shields' && mounted) {
+      vaiAllaFunzione(page: 0, anchorId: 'sheet_shield');
+    }
+    if (choice == 'damage-heal' && mounted) {
+      vaiAllaFunzione(page: 0, anchorId: 'sheet_damage_heal');
+    }
+    if (choice == 'conditions' && mounted) {
       await showConditionImpactDialog(
         target: OculumConditionTarget.hp,
         baseValue: '${hpCorrenti()}/${maxHp()}',
@@ -375,13 +412,24 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           ],
         );
         if (modalitaVeloce) return bar;
-        return GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onSecondaryTapDown: (details) =>
-              showLifeBarContextMenuAt(details.globalPosition),
-          onLongPressStart: (details) =>
-              showLifeBarContextMenuAt(details.globalPosition),
-          child: bar,
+        return Builder(
+          builder: (barContext) => GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onSecondaryTapDown: (details) =>
+                showLifeBarContextMenuAt(details.globalPosition),
+            onLongPressStart: (details) =>
+                showLifeBarContextMenuAt(details.globalPosition),
+            onDoubleTap: () {
+              final renderObject = barContext.findRenderObject();
+              final position = renderObject is RenderBox
+                  ? renderObject.localToGlobal(
+                      renderObject.size.center(Offset.zero),
+                    )
+                  : Offset.zero;
+              showLifeBarContextMenuAt(position);
+            },
+            child: bar,
+          ),
         );
       },
     );
@@ -551,6 +599,12 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     }
   }
 
+  String healthShieldLabel() => [
+    t('Vita', 'Health'),
+    if (scudo() > 0) t('scudo', 'shield'),
+    if (scudoOculum() > 0) t('scudo Oculum', 'Oculum shield'),
+  ].join(t(' e ', ' and '));
+
   Widget lifeBar() {
     final maxHpVal = maxHp();
     final curr = hpCorrenti();
@@ -560,10 +614,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     final oculumShield = scudoOculum();
     final oculumShieldMax = scudoOculumMax();
     final criticalShield = scudoCritico();
-    final totalVisual = max(
-      0,
-      maxHpVal + temp + shield + oculumShield + criticalShield,
-    );
+    final totalVisual = max(0, maxHpVal);
 
     final hpW = totalVisual <= 0 ? 0.0 : (curr / totalVisual).clamp(0.0, 1.0);
     final incomingW = totalVisual <= 0
@@ -690,7 +741,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${t('Barra della Vita', 'Health Bar')} · ${lifeBarStyleLabel(stileBarraVita)}',
+            '${healthShieldLabel()} · ${lifeBarStyleLabel(stileBarraVita)}',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -812,41 +863,28 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     ),
                   ),
                   FractionallySizedBox(
-                    widthFactor: (hpW + tempW + shieldW).clamp(0.0, 1.0),
+                    widthFactor: shieldW,
                     child: Align(
                       alignment: Alignment.centerRight,
                       child: FractionallySizedBox(
-                        widthFactor: shieldW <= 0
-                            ? 0
-                            : shieldW / (hpW + tempW + shieldW),
+                        widthFactor: shieldW <= 0 ? 0 : 1,
                         child: Container(
                           height: barHeight,
-                          color: tertiaryColor.withValues(alpha: 0.82),
+                          color: const Color(0xFF44A7FF),
                         ),
                       ),
                     ),
                   ),
                   if (showOculumShield)
                     FractionallySizedBox(
-                      widthFactor: (hpW + tempW + shieldW + oculumShieldW)
-                          .clamp(0.0, 1.0),
+                      widthFactor: oculumShieldW,
                       child: Align(
                         alignment: Alignment.centerRight,
                         child: FractionallySizedBox(
-                          widthFactor: oculumShieldW <= 0
-                              ? 0
-                              : oculumShieldW /
-                                    (hpW + tempW + shieldW + oculumShieldW),
+                          widthFactor: oculumShieldW <= 0 ? 0 : 1,
                           child: Container(
                             height: barHeight,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  primaryColor.withValues(alpha: 0.62),
-                                  eyePupilGlowColor.withValues(alpha: 0.88),
-                                ],
-                              ),
-                            ),
+                            color: eyePupilGlowColor,
                           ),
                         ),
                       ),
@@ -3814,6 +3852,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     final contextualTile = quickContextMenuAnchor(
       label: label,
       child: tile,
+      onActivate: onTap,
       onEdit: onTap,
       onRoll: onRoll,
       onDecrease: onDecrease,
@@ -3823,19 +3862,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
 
     if (onTap == null) return contextualTile;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(tileRadius),
-        onTap: onTap,
-        child: contextualTile,
-      ),
-    );
+    return Material(color: Colors.transparent, child: contextualTile);
   }
 
   Widget quickContextMenuAnchor({
     required String label,
     required Widget child,
+    VoidCallback? onActivate,
     VoidCallback? onEdit,
     VoidCallback? onRoll,
     VoidCallback? onDecrease,
@@ -3843,36 +3876,62 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     String? manualQuery,
     OculumConditionTarget? conditionTarget,
   }) {
-    if (onEdit == null &&
+    if (onActivate == null &&
+        onEdit == null &&
         onRoll == null &&
         onDecrease == null &&
         onIncrease == null) {
       return child;
     }
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onSecondaryTapDown: (details) => showQuickContextMenu(
+    Timer? pendingSingleTap;
+    void cancelPendingTap() {
+      pendingSingleTap?.cancel();
+      pendingSingleTap = null;
+    }
+
+    void openAt(Offset position) {
+      cancelPendingTap();
+      showQuickContextMenu(
         label: label,
-        position: details.globalPosition,
+        position: position,
         onEdit: onEdit,
         onRoll: onRoll,
         onDecrease: onDecrease,
         onIncrease: onIncrease,
         manualQuery: manualQuery,
         conditionTarget: conditionTarget,
+      );
+    }
+
+    return Builder(
+      builder: (anchorContext) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onSecondaryTapDown: (details) => openAt(details.globalPosition),
+        onLongPressStart: (details) => openAt(details.globalPosition),
+        onTap: onActivate == null
+            ? null
+            : () {
+                cancelPendingTap();
+                pendingSingleTap = Timer(
+                  const Duration(milliseconds: 250),
+                  () {
+                    pendingSingleTap = null;
+                    onActivate();
+                  },
+                );
+              },
+        onDoubleTap: () {
+          final renderObject = anchorContext.findRenderObject();
+          final position = renderObject is RenderBox
+              ? renderObject.localToGlobal(
+                  renderObject.size.center(Offset.zero),
+                )
+              : Offset.zero;
+          openAt(position);
+        },
+        child: child,
       ),
-      onLongPressStart: (details) => showQuickContextMenu(
-        label: label,
-        position: details.globalPosition,
-        onEdit: onEdit,
-        onRoll: onRoll,
-        onDecrease: onDecrease,
-        onIncrease: onIncrease,
-        manualQuery: manualQuery,
-        conditionTarget: conditionTarget,
-      ),
-      child: child,
     );
   }
 
@@ -7735,7 +7794,49 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             ],
           ),
           SizedBox(height: spacing),
-          visibleTitleIdentitySelector(includeName: false, compact: dense),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(dense ? 8 : 10),
+            decoration: BoxDecoration(
+              color: secondaryColor.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: tertiaryColor.withValues(alpha: 0.8)),
+              boxShadow: [
+                BoxShadow(
+                  color: tertiaryColor.withValues(alpha: 0.12),
+                  blurRadius: 8,
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.workspace_premium_outlined,
+                      color: tertiaryColor,
+                      size: dense ? 17 : 20,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      t('Titolo visibile', 'Visible title'),
+                      style: TextStyle(
+                        color: tertiaryColor,
+                        fontWeight: FontWeight.w900,
+                        fontSize: dense ? 12 : 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                visibleTitleIdentitySelector(
+                  includeName: false,
+                  compact: dense,
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 8),
           tipoSchedaDropdown(
             value: tipoSchedaController.text,

@@ -218,7 +218,7 @@ extension _OculumMonsterLoot on _OculumHomePageState {
   }
 
   Future<void> confirmMonsterKill(int tokenIndex) async {
-    if (!modalitaMaster && !isMasterHost && !realtimeIsMasterRole) return;
+    if (!canActWithoutMasterApproval) return;
     final token = masterInitiativeTokens[tokenIndex];
     final index = masterInitiativeSheetIndexForToken(token);
     if (index < 0 ||

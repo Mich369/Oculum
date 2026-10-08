@@ -88,7 +88,44 @@ void main() {
       expect(title.leggenda, 'Nuova leggenda');
       expect(find.text('Rose | Nuovo titolo'), findsOneWidget);
       expect(title.sempreVisibile, isTrue);
+      state.updateOculumHomeUi(() {
+        state.scudoController.text = '9999';
+        state.scudoOculumController.text = '0';
+      });
+      await tester.pumpAndSettle();
+      expect(find.text('Vita e scudo'), findsWidgets);
+      expect(
+        tester
+            .widget<LinearProgressIndicator>(
+              find.byKey(const ValueKey('reference_shield_bar')),
+            )
+            .value,
+        1,
+      );
       expect(tester.takeException(), isNull);
+      final probe = OculumPerformanceProbe(state);
+      final tag = '${probe.snapshot()['sheetTag']}';
+      final pawn = OculumPawnGuardian(
+        id: 'damage_test_pawn',
+        ownerTag: tag,
+        targets: [tag],
+      );
+      state.updateOculumHomeUi(() {
+        state.currentHpController.text = '5000';
+        state.scudoController.text = '10';
+        state.scudoOculumMaxController.text = '5';
+        state.scudoOculumController.text = '5';
+        state.pawnGuardians.add(pawn);
+      });
+      await probe.damageResolved(1000, critical: true);
+      await tester.pump();
+      expect(
+        pawn.hp,
+        0,
+        reason: 'Pawn must receive the HP overflow from a critical hit',
+      );
+      expect(int.parse(state.currentHpController.text), lessThan(5000));
+      expect(int.parse(state.scudoOculumController.text), 0);
       await tester.pumpWidget(const SizedBox.shrink());
     });
   }

@@ -4041,6 +4041,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final dannoInserito = dannoEsplicito ?? leggiValoreDannoCura();
 
     if (dannoInserito == null || dannoInserito <= 0) return;
+    ensureHiddenEyeDefaults();
 
     int subtraitTotal(String id) {
       for (final stat in hiddenEyeStats) {
@@ -4353,6 +4354,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         maximum: maxHp(),
         temporary: hpTempPrimaCura,
         amount: applyConditionHealingAmount(curaDaRigenerazione),
+        temporaryLimit: thresholdTemporaryHpLimit(),
       );
       final hpRecuperati = healed.current - hpPrimaCura;
       final hpTempOttenuti = healed.temporary - hpTempPrimaCura;
@@ -4836,6 +4838,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       maximum: maxHp(),
       temporary: hpTempPrima,
       amount: applyConditionHealingAmount(cura),
+      temporaryLimit: thresholdTemporaryHpLimit(),
     );
     final hpRecuperati = healed.current - hpPrima;
     final hpTempOttenuti = healed.temporary - hpTempPrima;

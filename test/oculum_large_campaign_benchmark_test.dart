@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
+import 'support/test_output_writer.dart';
 
 void main() {
   const sheetCount = int.fromEnvironment(
@@ -120,9 +121,10 @@ void main() {
         defaultValue: 'latest',
       );
       Directory('output/performance').createSync(recursive: true);
-      File(
-        'output/performance/$runLabel.json',
-      ).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(report));
+      writeTestOutputString(
+        File('output/performance/$runLabel.json'),
+        const JsonEncoder.withIndent('  ').convert(report),
+      );
     }
 
     await measure('load_sheet_ms', () async {
@@ -317,9 +319,10 @@ void main() {
         'OculumBenchmarkLabel',
         defaultValue: 'latest',
       );
-      File(
-        '${dir.path}/$label.json',
-      ).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(report));
+      writeTestOutputString(
+        File('${dir.path}/$label.json'),
+        const JsonEncoder.withIndent('  ').convert(report),
+      );
     });
     probe.cancelPendingSave();
     await tester.pumpWidget(const SizedBox.shrink());

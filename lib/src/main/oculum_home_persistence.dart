@@ -956,6 +956,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     bool deferCacheInvalidation = false,
     Duration delay = const Duration(milliseconds: 1800),
   }) {
+    grantFirstStatThresholdSkill();
     salvataggioMutazioneRevisione++;
     salvataggioMutazioneNota = true;
     if (appOculumInBackground || appOculumFocusTransition) {
@@ -1286,6 +1287,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
     return {
       'nome': nomeController.text,
+      'statThresholdReward': statThresholdReward,
       'titoloSempreVisibileNome': titoloPubblico?.nome ?? '',
       'titoloSempreVisibileLeggenda': titoloPubblico?.leggenda ?? '',
       'tipoScheda': tipoSchedaController.text,
@@ -1596,6 +1598,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length)
         for (final key in [
           'monsterBookSourceId',
+          'monsterBookApprovalRequired',
+          'monsterBookApproved',
+          'monsterBookApprovedScope',
           'packLeaderPhaseTriggered',
           'packLeaderPhaseBaseMaxHp',
           'humanoidRole',
@@ -1625,6 +1630,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   void caricaStatoDaJson(Map<String, dynamic> json) {
+    loadingThresholdSheet = true;
+    try {
+      _caricaStatoDaJsonConSoglia(json);
+    } finally {
+      loadingThresholdSheet = false;
+    }
+  }
+
+  void _caricaStatoDaJsonConSoglia(Map<String, dynamic> json) {
+    statThresholdReward = '${json['statThresholdReward'] ?? ''}';
     oculumRepairMojibakeJsonInPlace(json);
     temporaryOculum = 0;
     temporaryOculumRollsRemaining = 0;
@@ -5086,6 +5101,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   Map<String, dynamic> catturaImpostazioniGlobali() {
     return <String, dynamic>{
+      'onlinePermissionRequests': onlinePermissionRequests,
+      'trustedCoMasterTags': trustedCoMasterTags.toList(),
       'linguaInglese': linguaInglese,
       'tutorialCompletato': tutorialCompletato,
       'modalitaDesktop': modalitaDesktop,
@@ -5133,6 +5150,22 @@ extension _OculumHomePersistence on _OculumHomePageState {
             ? readBoolValue(globali['modalitaDesktop'])
             : !kIsWeb && defaultTargetPlatform == TargetPlatform.windows);
     modalitaMaster = readBoolValue(globali['modalitaMaster']);
+    onlinePermissionRequests.clear();
+    final savedRequests = globali['onlinePermissionRequests'];
+    if (savedRequests is Map) {
+      for (final entry in savedRequests.entries) {
+        if (entry.value is Map) {
+          onlinePermissionRequests['${entry.key}'] = Map<String, dynamic>.from(
+            entry.value as Map,
+          );
+        }
+      }
+    }
+    trustedCoMasterTags.clear();
+    final savedTrusted = globali['trustedCoMasterTags'];
+    if (savedTrusted is List) {
+      trustedCoMasterTags.addAll(savedTrusted.whereType<String>());
+    }
     coMasterCanSetCoMaster = readBoolValue(globali['coMasterCanSetCoMaster']);
     coMasterCanEditSheets = readBoolValue(globali['coMasterCanEditSheets']);
     masterKickRequiresConfirmation = readBoolValue(

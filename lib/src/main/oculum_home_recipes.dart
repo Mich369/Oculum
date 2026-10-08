@@ -3,7 +3,7 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 extension _OculumHomeRecipes on _OculumHomePageState {
-  bool get canManageRecipes => modalitaMaster || isMasterHost;
+  bool get canManageRecipes => canActWithoutMasterApproval;
 
   /// Seeds only the authored base recipe. It uses a stable id, so older
   /// campaigns and Master-made recipes retain their exact data and ordering.
@@ -311,7 +311,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
 
   Future<void> sendRealtimeRecipesSnapshot({String targetTag = ''}) async {
     final service = realtimeService;
-    if (service?.isConnected != true || !realtimeIsMasterRole) return;
+    if (service?.isConnected != true || !haPermessiMaster) return;
     await service!.sendRecipesSnapshot(
       recipes: recipes.map((recipe) => recipe.toJson()).toList(growable: false),
       campaignId: activeCampaignId,
@@ -323,7 +323,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   void syncRealtimeRecipes() {
     final service = realtimeService;
     if (service?.isConnected != true) return;
-    if (realtimeIsMasterRole) {
+    if (haPermessiMaster) {
       unawaited(sendRealtimeRecipesSnapshot());
     } else {
       unawaited(
@@ -341,7 +341,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
       invalidateCaches: false,
       delay: const Duration(milliseconds: 450),
     );
-    if (campaignShared && realtimeIsMasterRole) {
+    if (campaignShared && haPermessiMaster) {
       unawaited(sendRealtimeRecipesSnapshot());
     }
   }

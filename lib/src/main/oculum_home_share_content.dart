@@ -3,12 +3,16 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 extension _OculumHomeShareContent on _OculumHomePageState {
-  bool get haPermessiMaster =>
-      realtimeIsMasterRole ||
-      realtimeIsCoMasterRole ||
-      modalitaMaster ||
-      isMasterHost ||
-      sonoCoMaster;
+  bool get haPermessiMaster => realtimeService?.isConnected == true
+      ? realtimeIsMasterRole || realtimeIsCoMasterRole
+      : realtimeIsMasterRole ||
+            realtimeIsCoMasterRole ||
+            modalitaMaster ||
+            isMasterHost ||
+            sonoCoMaster;
+
+  bool get canActWithoutMasterApproval =>
+      !onlineMasterApprovalRequired || haPermessiMaster;
 
   void mostraSceltaRuoloSeNecessaria() {
     sceltaRuoloSessioneMostrata = true;

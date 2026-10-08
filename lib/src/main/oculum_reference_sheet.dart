@@ -514,6 +514,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
       int maximum,
       Color color, {
       bool hidden = false,
+      bool shields = false,
     }) => Padding(
       padding: const EdgeInsets.only(top: 10),
       child: Column(
@@ -529,11 +530,37 @@ extension _OculumReferenceSheet on _OculumHomePageState {
           if (!hidden)
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: maximum > 0 ? (current / maximum).clamp(0.0, 1.0) : 0,
-                minHeight: 8,
-                color: color,
-                backgroundColor: color.withValues(alpha: .15),
+              child: Stack(
+                children: [
+                  LinearProgressIndicator(
+                    value: maximum > 0
+                        ? (current / maximum).clamp(0.0, 1.0)
+                        : 0,
+                    minHeight: 8,
+                    color: color,
+                    backgroundColor: color.withValues(alpha: .15),
+                  ),
+                  if (shields && scudo() > 0)
+                    LinearProgressIndicator(
+                      key: const ValueKey('reference_shield_bar'),
+                      value: maximum > 0
+                          ? (scudo() / maximum).clamp(0.0, 1.0)
+                          : 0,
+                      minHeight: 8,
+                      color: const Color(0xFF44A7FF),
+                      backgroundColor: Colors.transparent,
+                    ),
+                  if (shields && scudoOculum() > 0)
+                    LinearProgressIndicator(
+                      key: const ValueKey('reference_oculum_shield_bar'),
+                      value: maximum > 0
+                          ? (scudoOculum() / maximum).clamp(0.0, 1.0)
+                          : 0,
+                      minHeight: 8,
+                      color: eyePupilGlowColor,
+                      backgroundColor: Colors.transparent,
+                    ),
+                ],
               ),
             ),
         ],
@@ -619,12 +646,13 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                       ),
                     ),
                     meter(
-                      t('Vita', 'HP'),
+                      healthShieldLabel(),
                       hpReadoutProtetto(),
                       hpCorrenti(),
                       maxHp(),
                       statFormulaColor('resilienza'),
                       hidden: vitaAfonaAttiva(),
+                      shields: true,
                     ),
                     if (referenceOculumFlames) referenceOculumFlameBar(),
                     if (!referenceOculumFlames)
@@ -824,7 +852,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${t('Danni inflitti', 'Damage dealt')}: ${dannoTotale()} · ${t('I Sottotratti sono tiri alternativi', 'Subtraits are alternative rolls')}',
+                    '${t('Danni inflitti', 'Damage dealt')}: ${dannoTotale()} · ${t('Difesa totale', 'Total defense')}: ${difesa()} · ${t('I Sottotratti sono tiri alternativi', 'Subtraits are alternative rolls')}',
                     style: const TextStyle(fontSize: 12),
                   ),
                 ],
@@ -1572,7 +1600,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
   );
 
   bool canRemoveOwnEncounterToken(Map token) {
-    if (haPermessiMaster) return true;
+    if (canActWithoutMasterApproval) return true;
     final tokenTag = '${token['sheetTag'] ?? token['id'] ?? ''}'.trim();
     if (tokenTag == sheetTagAt(schedaCorrente)) return true;
     if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
@@ -1589,7 +1617,10 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
 
   Future<void> requestEncounterReset() async {
     if (!haPermessiMaster && realtimeService?.isConnected == true) {
-      await showReportedTurnEditor();
+      requestMasterAction(
+        'encounter_reset',
+        'Reset round e turni dello scontro',
+      );
       return;
     }
     final confirmed = await showDialog<bool>(

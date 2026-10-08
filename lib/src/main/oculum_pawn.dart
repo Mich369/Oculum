@@ -653,7 +653,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
 
   void addPawnToInitiative(OculumPawnGuardian pawn) {
     if (pawnRemoteAuthority) {
-      if (pawn.ownerTag == pawnSenderTag) {
+      if (pawn.ownerTag == pawnSenderTag || realtimeIsCoMasterRole) {
         unawaited(
           sendPawnMessage('pawn_command', {
             'action': 'initiative',
@@ -696,7 +696,8 @@ extension _OculumPawnRuntime on _OculumHomePageState {
     final pawn = pawnGuardians.where((pawn) => pawn.id == id).firstOrNull;
     if (pawn == null) return;
     if (pawnRemoteAuthority) {
-      if (pawn.ownerTag == pawnSenderTag && pawn.alive) {
+      if ((pawn.ownerTag == pawnSenderTag || realtimeIsCoMasterRole) &&
+          pawn.alive) {
         unawaited(
           sendPawnMessage('pawn_command', {
             'action': 'advance',
@@ -810,7 +811,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       );
       if (allocation == null || !mounted) return;
       if (pawnRemoteAuthority) {
-        if (pawn.ownerTag != pawnSenderTag) return;
+        if (pawn.ownerTag != pawnSenderTag && !realtimeIsCoMasterRole) return;
         final requested = allocation.values.fold<int>(
           0,
           (sum, value) => sum + value,
@@ -913,7 +914,18 @@ extension _OculumPawnRuntime on _OculumHomePageState {
     await forzaSalvataggioImmediato(soloLocale: true);
     retryPawnDamage(pawnPendingDamage);
     notifyActiveSheetSummaryChanged();
-    return waiter.future;
+    aggiungiLog(
+      'Danno alla Vita in attesa del Master: $amount HP, protezione Pawn da risolvere.',
+    );
+    return waiter.future.timeout(
+      const Duration(seconds: 12),
+      onTimeout: () {
+        pawnDamageWaiters.remove(id);
+        throw TimeoutException(
+          'Il Master non ha ancora confermato il danno. La richiesta resta in attesa e verrà applicata alla risposta.',
+        );
+      },
+    );
   }
 
   bool validPawnSender(
@@ -1014,7 +1026,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         pawn.targets = targets;
       } else if (action == 'allocate' &&
           pawn != null &&
-          pawn.ownerTag == sender &&
+          (pawn.ownerTag == sender || payload['senderRole'] == 'coMaster') &&
           payload['allocation'] is Map) {
         final allocation = (payload['allocation'] as Map).map(
           (key, value) => MapEntry('$key', readIntValue(value)),
@@ -1024,13 +1036,13 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         }
       } else if (action == 'advance' &&
           pawn != null &&
-          pawn.ownerTag == sender &&
+          (pawn.ownerTag == sender || payload['senderRole'] == 'coMaster') &&
           pawn.alive) {
         if (pawn.isV2) {
           pawn.syncOwnerProgress(
-            level: pawnOwnerValue(sender, 'livello', 0),
-            grade: pawnOwnerValue(sender, 'grado', 0),
-            ownerStats: pawnOwnerStats(sender),
+            level: pawnOwnerValue(pawn.ownerTag, 'livello', 0),
+            grade: pawnOwnerValue(pawn.ownerTag, 'grado', 0),
+            ownerStats: pawnOwnerStats(pawn.ownerTag),
           );
         }
         final requestedTurn = readIntValue(payload['turn']);
@@ -1043,7 +1055,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         }
       } else if (action == 'initiative' &&
           pawn != null &&
-          pawn.ownerTag == sender) {
+          (pawn.ownerTag == sender || payload['senderRole'] == 'coMaster')) {
         addPawnToInitiative(pawn);
       }
       notifyActiveSheetSummaryChanged();

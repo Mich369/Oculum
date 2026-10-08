@@ -4021,13 +4021,18 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int hpTemp() {
     final bonus = runtimeQuickBonus('hp_temp');
     final spent = hpTempBonusConsumati.clamp(0, max(0, bonus)).toInt();
-    return (leggiNumero(hpTempController) + bonus - spent)
-        .clamp(0, oculumTemporaryHpLimit)
+    return (leggiNumero(hpTempController) +
+            bonus -
+            spent +
+            thresholdTemporaryHp())
+        .clamp(0, thresholdTemporaryHpLimit())
         .toInt();
   }
 
   void impostaHpTempTotali(int value) {
-    final target = value.clamp(0, oculumTemporaryHpLimit).toInt();
+    final requested = value.clamp(0, thresholdTemporaryHpLimit()).toInt();
+    consumeThresholdTemporaryHp(max(0, hpTemp() - requested));
+    final target = max(0, requested - thresholdTemporaryHp());
     final manual = max(0, leggiNumero(hpTempController));
     final bonus = runtimeQuickBonus('hp_temp');
     final positiveBonus = max(0, bonus);

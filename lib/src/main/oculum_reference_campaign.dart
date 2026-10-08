@@ -696,6 +696,37 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
             ),
           ),
         ],
+        const SizedBox(height: 12),
+        Text(
+          t('Scudo Oculum', 'Oculum shield'),
+          style: TextStyle(
+            color: eyePupilGlowColor,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(child: compactScudoOculumMaxEditField()),
+            const SizedBox(width: 8),
+            Expanded(child: compactScudoOculumEditField()),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 280),
+            child: compactNumericEditField(
+              label: t('Scudo · attuale', 'Shield · current'),
+              controller: scudoController,
+              displayValue: '${scudo()}',
+              color: const Color(0xFF44A7FF),
+              onSaved: () => impostaScudoTotale(
+                max(0, readIntValue(scudoController.text)),
+              ),
+            ),
+          ),
+        ),
       ],
     ),
   );
@@ -1160,7 +1191,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
   Future<void> revealEncounterParticipant(
     Map<String, dynamic> displayed,
   ) async {
-    if (!haPermessiMaster) return;
+    if (!canActWithoutMasterApproval) return;
     final i = masterInitiativeTokens.indexWhere(
       (token) => token['id'] == displayed['id'],
     );

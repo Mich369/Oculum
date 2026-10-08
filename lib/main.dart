@@ -96,6 +96,8 @@ part 'src/main/oculum_home_map_attachments.dart';
 part 'src/main/oculum_home_dice_page.dart';
 part 'src/main/oculum_p2p_network.dart';
 part 'src/main/oculum_realtime_integration.dart';
+part 'src/main/oculum_online_permissions.dart';
+part 'src/main/oculum_stat_threshold_skills.dart';
 part 'src/main/oculum_diary_knowledge_integration.dart';
 part 'src/main/oculum_monster_loot.dart';
 part 'src/main/oculum_authored_materials.dart';
@@ -2022,6 +2024,12 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool isConnectedToMaster = false;
   bool sonoCoMaster = false;
   bool coMasterCanSetCoMaster = false;
+  final Map<String, Map<String, dynamic>> onlinePermissionRequests = {};
+  final Set<String> trustedCoMasterTags = {};
+  final ValueNotifier<int> onlinePermissionRevision = ValueNotifier(0);
+  Timer? onlinePermissionRetryTimer;
+  String statThresholdReward = '';
+  bool loadingThresholdSheet = false;
   bool coMasterCanEditSheets = false;
   bool usingInternetRelay = false;
   bool relayConnected = false;
@@ -3795,6 +3803,8 @@ class _OculumHomePageState extends State<OculumHomePage>
     reazioniController.dispose();
     reazioniVelociController.dispose();
     realtimeChatController.dispose();
+    onlinePermissionRevision.dispose();
+    onlinePermissionRetryTimer?.cancel();
     masterItemSearchController.dispose();
     resistanceElementSearchController.dispose();
     storySessionNoteController.dispose();
@@ -4551,6 +4561,7 @@ class _OculumHomePageState extends State<OculumHomePage>
               ),
 
               actions: [
+                if (haPermessiMaster) onlinePermissionButton(),
                 if (kIsWeb)
                   PopupMenuButton<OculumWebViewMode>(
                     tooltip: t(

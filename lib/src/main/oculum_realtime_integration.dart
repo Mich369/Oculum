@@ -427,6 +427,18 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         if (service.isConnected &&
             (friendPresenceChanged || staffPresenceChanged)) {
           syncPawnPresence();
+          startPermissionRetry();
+          if (realtimeIsMasterRole) {
+            for (final record in realtimeSharedSheets) {
+              if (realtimeCoMasterTags.contains(
+                normalizeOculumFriendTag(
+                  '${record['sheetId'] ?? ''}',
+                ).toUpperCase(),
+              )) {
+                setRealtimeCoMasterForRecord(record, true);
+              }
+            }
+          }
         }
         if (service.isConnected && friendPresenceChanged) {
           unawaited(flushDiaryKnowledge());
@@ -489,6 +501,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   Future<void> disconnectRealtimeOculum() async {
+    onlinePermissionRetryTimer?.cancel();
     final service = realtimeService;
     realtimeAutoReconnectEnabled = false;
     realtimeReconnectAttempt = 0;
@@ -527,6 +540,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   void handleRealtimeEvent(String event, Map<String, dynamic> payload) {
+    if (event == 'permission_request' || event == 'permission_decision') {
+      receivePermissionEvent(event, payload);
+      return;
+    }
     if (event.startsWith('pawn_')) {
       receivePawnEvent(event, payload);
       return;
@@ -583,7 +600,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           break;
         case 'recipes_request':
           showInRealtimeEvents = false;
-          if (realtimeIsMasterRole &&
+          if (haPermessiMaster &&
               '${payload['campaignId'] ?? ''}'.trim() == activeCampaignId) {
             recipesRequesterTag = '${payload['requesterTag'] ?? ''}'.trim();
           }
@@ -680,7 +697,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           receiveRealtimeReportedTurn(payload);
           break;
         case 'damage_report':
-          if (realtimeIsMasterRole) {
+          if (haPermessiMaster) {
             realtimeDamageReportPopup = Map<String, dynamic>.from(payload);
           }
           aggiungiLog('[Realtime] $text');
@@ -1054,7 +1071,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
   Widget realtimeDamageReportOverlay() {
     final report = realtimeDamageReportPopup;
-    if (report == null || !realtimeIsMasterRole) return const SizedBox.shrink();
+    if (report == null || !haPermessiMaster) return const SizedBox.shrink();
     final player = cleanUiText('${report['playerName'] ?? 'Giocatore'}');
     final formula = cleanUiText(
       '${report['formula'] ?? report['totalDamage'] ?? '?'}',
@@ -1326,7 +1343,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     ).toUpperCase();
     final localTags = localOculumTags().map((tag) => tag.toUpperCase()).toSet();
     if (!localTags.contains(ownerTag)) return;
-    if (payload['receiverRole'] != 'master' ||
+    if ((payload['receiverRole'] != 'master' &&
+            payload['receiverRole'] != 'coMaster') ||
         realtimePendingMasterAckSheetIds[deliveryId]?.toUpperCase() !=
             ownerTag) {
       return;
@@ -1740,10 +1758,29 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   void applyRealtimeRoleUpdate(Map<String, dynamic> payload) {
+    final senderRole = '${payload['senderRole'] ?? ''}';
+    if (!validPermissionSender(payload, staff: true) ||
+        (senderRole != 'master' &&
+            !trustedCoMasterTags.contains(
+              '$permissionScope:${payload['senderTag']}',
+            ))) {
+      return;
+    }
     final targetTag = normalizeOculumFriendTag('${payload['targetTag'] ?? ''}');
     if (targetTag.isEmpty) return;
 
-    final matchesLocal = localOculumTags()
+    final trustKey = '$permissionScope:$targetTag';
+    // Only the Master can grant or revoke the trusted delegation.
+    if (senderRole == 'master') {
+      if (readBoolValue(payload['trusted']) &&
+          readBoolValue(payload['coMaster'])) {
+        trustedCoMasterTags.add(trustKey);
+      } else {
+        trustedCoMasterTags.remove(trustKey);
+      }
+    }
+
+    final matchesLocal = ownPermissionTags
         .map((tag) => tag.toUpperCase())
         .contains(targetTag.toUpperCase());
     if (!matchesLocal) return;
@@ -1758,6 +1795,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
     final coMaster = readBoolValue(payload['coMaster']);
     sonoCoMaster = coMaster;
+    coMasterCanSetCoMaster = coMaster && trustedCoMasterTags.contains(trustKey);
+    coMasterCanEditSheets = coMaster;
     if (coMaster && realtimeWantsMasterRole) {
       realtimeMasterBlockedByPresence = realtimeShouldYieldMaster(
         realtimeUsers,
@@ -2482,7 +2521,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       ownerTag: sheetId,
       senderRole: 'fullShare',
       targetAudience: 'friends_party_full',
-      fromMaster: realtimeIsMasterRole,
+      fromMaster: haPermessiMaster,
       masterParty: sheetInMasterPartyAt(index),
       targetTags: targetTags,
     );
@@ -2718,6 +2757,21 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (service?.isConnected != true || !canShareRealtimeSheetToStaff) return;
     if (index < 0 || index >= schedePersonaggio.length) return;
     if (readBoolValue(schedePersonaggio[index]['realtimeSharedSheet'])) return;
+    final approvalSheet = schedePersonaggio[index];
+    if ('${approvalSheet['monsterBookSourceId'] ?? ''}'.isNotEmpty &&
+        approvalSheet['monsterBookApprovedScope'] != permissionScope &&
+        !haPermessiMaster) {
+      approvalSheet['monsterBookApprovalRequired'] = true;
+      approvalSheet['monsterBookApproved'] = false;
+    }
+    if (readBoolValue(approvalSheet['monsterBookApprovalRequired']) &&
+        !readBoolValue(approvalSheet['monsterBookApproved'])) {
+      requestMasterAction(
+        'monster_entry',
+        'Ingresso mostro: ${nomeSchedaPersonaggio(index)}',
+        sheetTag: sheetTagAt(index),
+      );
+    }
 
     salvaSchedaCorrenteInMemoria();
     final role = realtimeLocalRole();
@@ -2949,7 +3003,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final service = realtimeService;
     final canAssignCoMaster =
         realtimeIsMasterRole ||
-        (realtimeIsCoMasterRole && coMasterCanSetCoMaster);
+        (realtimeIsCoMasterRole &&
+            trustedCoMasterTags.contains(
+              '$permissionScope:${sheetTagAt(schedaCorrente)}',
+            ));
     if (service?.isConnected != true || !canAssignCoMaster) return;
 
     final targetTag = normalizeOculumFriendTag('${record['sheetId'] ?? ''}');
@@ -2988,15 +3045,21 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         targetTag: targetTag,
         targetName: targetName,
         coMaster: coMaster,
-        campaignId: activeCampaignId,
+        campaignId: permissionCampaignId,
         campaignName: activeCampaignName(),
+        senderTag: sheetTagAt(schedaCorrente),
+        senderRole: realtimeLocalRole(),
+        scope: permissionScope,
+        trusted:
+            coMaster &&
+            trustedCoMasterTags.contains('$permissionScope:$targetTag'),
       ),
     );
     unawaited(salvaDatiSoloLocale());
   }
 
   void sendRealtimeMasterVisiblePartyTokens() {
-    if (realtimeService?.isConnected != true || !realtimeIsMasterRole) return;
+    if (realtimeService?.isConnected != true || !haPermessiMaster) return;
 
     salvaSchedaCorrenteInMemoria();
     for (final index in masterPartyIndexes()) {
@@ -3023,7 +3086,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
   void sendRealtimeMasterVisibleTokenAt(int index) {
     final service = realtimeService;
-    if (service?.isConnected != true || !realtimeIsMasterRole) return;
+    if (service?.isConnected != true || !haPermessiMaster) return;
     if (index < 0 || index >= schedePersonaggio.length) return;
     if (!sheetInMasterPartyAt(index)) return;
 
@@ -3285,7 +3348,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                     ));
             final canManageCoMaster =
                 (realtimeIsMasterRole ||
-                    (realtimeIsCoMasterRole && coMasterCanSetCoMaster)) &&
+                    (realtimeIsCoMasterRole &&
+                        trustedCoMasterTags.contains(
+                          '$permissionScope:${sheetTagAt(schedaCorrente)}',
+                        ))) &&
                 !restricted &&
                 sheetId.isNotEmpty &&
                 ('${record['senderRole'] ?? ''}' == 'player' ||
@@ -3382,6 +3448,20 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                               coMasterMarked
                                   ? t('Revoca Co-Master', 'Revoke Co-Master')
                                   : t('Nomina Co-Master', 'Make Co-Master'),
+                            ),
+                          ),
+                        if (realtimeIsMasterRole && coMasterMarked)
+                          TextButton(
+                            onPressed: () => setTrustedCoMaster(record),
+                            child: Text(
+                              trustedCoMasterTags.contains(
+                                    '$permissionScope:$sheetId',
+                                  )
+                                  ? 'Fidato · attivo'
+                                  : 'Fidato',
+                              style: const TextStyle(
+                                color: Colors.lightBlueAccent,
+                              ),
                             ),
                           ),
                       ],
@@ -3579,6 +3659,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                   ),
                 ),
               ),
+              if (haPermessiMaster) onlinePermissionButton(),
               PopupMenuButton<String>(
                 tooltip: t('Azioni dungeon online', 'Online Dungeon actions'),
                 color: backgroundMidColor,

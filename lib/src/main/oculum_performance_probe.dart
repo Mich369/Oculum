@@ -33,6 +33,30 @@ class OculumPerformanceProbe {
   void removeParticipant(int index) =>
       _state.removeMasterInitiativeTokenAt(index);
   void damage(int amount) => _state.applicaDannoSubito(dannoEsplicito: amount);
+  Future<void> damageResolved(int amount, {bool critical = false}) =>
+      _state.applicaDannoSubito(
+        dannoEsplicito: amount,
+        critico: critical,
+        enemyDifficulty: 'normale',
+        enemyLevel: 0,
+      );
+
+  bool get masterPermissions => _state.haPermessiMaster;
+  bool get canActWithoutApproval => _state.canActWithoutMasterApproval;
+  String get permissionScope => _state.permissionScope;
+  void receivePermission(String event, Map<String, dynamic> payload) =>
+      _state.receivePermissionEvent(event, payload);
+  void receiveRole(Map<String, dynamic> payload) =>
+      _state.applyRealtimeRoleUpdate(payload);
+  void requestAction(String action, String description) =>
+      _state.requestMasterAction(action, description);
+  Future<void> showRequests() => _state.showMasterRequests();
+  Future<void> decideRequest(Map<String, dynamic> request, bool allowed) =>
+      _state.decideMasterRequest(request, allowed);
+  bool grantThreshold({String? stat, int? variant}) =>
+      _state.grantFirstStatThresholdSkill(changedStat: stat, variant: variant);
+  Future<void> useThreshold(CharacterSkill skill) =>
+      _state.useStatThresholdSkill(skill);
   String activateForce(String id) {
     _state.statoForzaAttivo = id;
     return _state.applicaEffettoImmediatoStatoForza(id);
@@ -43,6 +67,7 @@ class OculumPerformanceProbe {
   void loseResilienceBuff(int amount) =>
       _state.rimarginaHpDaAumentoResilienza(-amount);
   int currentHp() => _state.hpCorrenti();
+  int currentTemporaryHp() => _state.hpTemp();
   void increaseBaseStat(String key, int amount) =>
       _state.aumentaStatBaseEAttuale(key, amount);
   void invalidateDerivedCaches() => _state.invalidateDerivedDataCaches();

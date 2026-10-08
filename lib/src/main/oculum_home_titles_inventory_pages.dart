@@ -1594,6 +1594,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     int skillIndex,
     int formIndex,
   ) async {
+    if (skill.thresholdData.isNotEmpty) {
+      await useStatThresholdSkill(skill);
+      return;
+    }
     skill.ensureForms();
     if (skill.nonEvolvibile) {
       await useScrollAbility(skill.scrollData);

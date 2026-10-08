@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/pages/hero_path_page.dart';
+import 'support/test_output_writer.dart';
 
 void main() {
   const captureLabel = String.fromEnvironment('OculumBenchmarkLabel');
@@ -130,9 +131,12 @@ void main() {
             format: ui.ImageByteFormat.png,
           );
           final out = Directory(capturePath)..createSync(recursive: true);
-          File(
-            '${out.path}/manuscript-${defaultTargetPlatform.name}-${size.width.toInt()}.png',
-          ).writeAsBytesSync(bytes!.buffer.asUint8List());
+          writeTestOutputBytes(
+            File(
+              '${out.path}/manuscript-${defaultTargetPlatform.name}-${size.width.toInt()}.png',
+            ),
+            bytes!.buffer.asUint8List(),
+          );
           picture.dispose();
         });
         if (size.width >= 760) {
@@ -185,9 +189,12 @@ void main() {
           final bytes = await picture.toByteData(
             format: ui.ImageByteFormat.png,
           );
-          File(
-            '$capturePath/classic-${defaultTargetPlatform.name}-${size.width.toInt()}.png',
-          ).writeAsBytesSync(bytes!.buffer.asUint8List());
+          writeTestOutputBytes(
+            File(
+              '$capturePath/classic-${defaultTargetPlatform.name}-${size.width.toInt()}.png',
+            ),
+            bytes!.buffer.asUint8List(),
+          );
           picture.dispose();
         });
       }
@@ -228,9 +235,12 @@ void main() {
           final bytes = await picture.toByteData(
             format: ui.ImageByteFormat.png,
           );
-          File(
-            '$capturePath/reference-${sample.$1}-${defaultTargetPlatform.name}.png',
-          ).writeAsBytesSync(bytes!.buffer.asUint8List());
+          writeTestOutputBytes(
+            File(
+              '$capturePath/reference-${sample.$1}-${defaultTargetPlatform.name}.png',
+            ),
+            bytes!.buffer.asUint8List(),
+          );
           picture.dispose();
         });
       }
@@ -244,9 +254,12 @@ void main() {
                 as RenderRepaintBoundary;
         final picture = await boundary.toImage(pixelRatio: 1);
         final bytes = await picture.toByteData(format: ui.ImageByteFormat.png);
-        File(
-          '$capturePath/reference-actions-${defaultTargetPlatform.name}.png',
-        ).writeAsBytesSync(bytes!.buffer.asUint8List());
+        writeTestOutputBytes(
+          File(
+            '$capturePath/reference-actions-${defaultTargetPlatform.name}.png',
+          ),
+          bytes!.buffer.asUint8List(),
+        );
         picture.dispose();
       });
       state.updateOculumHomeUi(() {
@@ -269,9 +282,12 @@ void main() {
                 as RenderRepaintBoundary;
         final picture = await boundary.toImage(pixelRatio: 1);
         final bytes = await picture.toByteData(format: ui.ImageByteFormat.png);
-        File(
-          '$capturePath/reference-actions-phone-${defaultTargetPlatform.name}.png',
-        ).writeAsBytesSync(bytes!.buffer.asUint8List());
+        writeTestOutputBytes(
+          File(
+            '$capturePath/reference-actions-phone-${defaultTargetPlatform.name}.png',
+          ),
+          bytes!.buffer.asUint8List(),
+        );
         picture.dispose();
       });
       await tester.ensureVisible(turnMenu);
@@ -334,9 +350,12 @@ void main() {
           final bytes = await picture.toByteData(
             format: ui.ImageByteFormat.png,
           );
-          File(
-            '$capturePath/turn-order-${defaultTargetPlatform.name}-${width.toInt()}.png',
-          ).writeAsBytesSync(bytes!.buffer.asUint8List());
+          writeTestOutputBytes(
+            File(
+              '$capturePath/turn-order-${defaultTargetPlatform.name}-${width.toInt()}.png',
+            ),
+            bytes!.buffer.asUint8List(),
+          );
           picture.dispose();
         });
       }
@@ -429,9 +448,12 @@ void main() {
                   as RenderRepaintBoundary;
           final image = await boundary.toImage(pixelRatio: 1);
           final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-          File(
-            '$capturePath/portrait-eye-${defaultTargetPlatform.name}-${width.toInt()}.png',
-          ).writeAsBytesSync(bytes!.buffer.asUint8List());
+          writeTestOutputBytes(
+            File(
+              '$capturePath/portrait-eye-${defaultTargetPlatform.name}-${width.toInt()}.png',
+            ),
+            bytes!.buffer.asUint8List(),
+          );
           image.dispose();
         });
       }
@@ -544,9 +566,12 @@ void main() {
           final bytes = await picture.toByteData(
             format: ui.ImageByteFormat.png,
           );
-          File(
-            '$capturePath/tutorial-${defaultTargetPlatform.name}-${width.toInt()}.png',
-          ).writeAsBytesSync(bytes!.buffer.asUint8List());
+          writeTestOutputBytes(
+            File(
+              '$capturePath/tutorial-${defaultTargetPlatform.name}-${width.toInt()}.png',
+            ),
+            bytes!.buffer.asUint8List(),
+          );
           picture.dispose();
         });
         await tester.tap(find.text('Skippa'));

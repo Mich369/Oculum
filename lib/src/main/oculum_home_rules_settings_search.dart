@@ -2664,7 +2664,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         }
         razzaController.clear();
         backgroundController.text =
-            'Nasci ${oculumMonsterBirthplace(tutorialMonsterOrigin)}. Origine: $tutorialMonsterOrigin. Richiedi approvazione del Master prima di entrare nella campagna.';
+            'Nasci ${oculumMonsterBirthplace(tutorialMonsterOrigin)}. Origine: $tutorialMonsterOrigin.${onlineMasterApprovalRequired ? ' Richiedi approvazione del Master prima di entrare nella campagna.' : ''}';
       } else {
         razzaController.clear();
         backgroundController.text =
@@ -2678,9 +2678,10 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         notePersonaggioController.text = selectedMonster.descIt;
         schedePersonaggio[schedaCorrente]['monsterBookSourceId'] =
             selectedMonster.id;
-        schedePersonaggio[schedaCorrente]['monsterBookApprovalRequired'] = true;
+        schedePersonaggio[schedaCorrente]['monsterBookApprovalRequired'] =
+            onlineMasterApprovalRequired;
         schedePersonaggio[schedaCorrente]['monsterBookApproved'] =
-            isMasterHost || modalitaMaster;
+            canActWithoutMasterApproval;
       } else if (tutorialGeneraMostro) {
         schedePersonaggio[schedaCorrente].remove('monsterBookSourceId');
         schedePersonaggio[schedaCorrente].remove('monsterBookApprovalRequired');
@@ -5961,10 +5962,12 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                     'If enabled, Co-Masters can promote other players to Co-Master from the Online page.',
                   ),
                 ),
-                onChanged: (value) {
-                  setState(() => coMasterCanSetCoMaster = value);
-                  programmaSalvataggio();
-                },
+                onChanged: onlineMasterApprovalRequired
+                    ? null
+                    : (value) {
+                        setState(() => coMasterCanSetCoMaster = value);
+                        programmaSalvataggio();
+                      },
               ),
               SwitchListTile(
                 value: masterKickRequiresConfirmation,
@@ -6353,8 +6356,8 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
           ),
         colorPicker(
           titolo: t(
-            'Bagliore Pupilla / Centro Occhio',
-            'Pupil Glow / Eye Center',
+            'Colore Oculum · pupilla e Scudo Oculum',
+            'Oculum color · pupil and Oculum shield',
           ),
           selectedColor: eyePupilGlowColor,
           filtro: filtroAmbiente,

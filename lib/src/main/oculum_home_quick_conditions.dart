@@ -1895,6 +1895,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       maximum: maxHp(),
       temporary: beforeTemporary,
       amount: requested,
+      temporaryLimit: thresholdTemporaryHpLimit(),
     );
     final restored = healed.current - beforeHp;
     final temporary = healed.temporary - beforeTemporary;

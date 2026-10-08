@@ -1737,6 +1737,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     final potenzaNucleoDaRimuovere = <int>[];
     setState(() {
       merchantDustPurchasedSinceLongRest = false;
+      restThresholdTemporaryHp();
       schedePersonaggio[schedaCorrente]['packLeaderPhaseTriggered'] = false;
       merchantHerbalEffects.clear();
       for (final item in inventario) {

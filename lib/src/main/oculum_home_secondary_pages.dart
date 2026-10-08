@@ -4671,19 +4671,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     itemBuilder: (context, i) {
                       final sheet = schedaJsonAt(i);
                       final pendingApproval =
+                          onlineMasterApprovalRequired &&
                           readBoolValue(sheet['monsterBookApprovalRequired']) &&
                           !readBoolValue(sheet['monsterBookApproved']);
                       return GestureDetector(
                         onLongPress: pendingApproval
-                            ? () {
-                                setState(() {
-                                  sheet['monsterBookApproved'] = true;
-                                  risultato =
-                                      'Mostro approvato dal Master: ${nomeSchedaPersonaggio(i)}.';
-                                  aggiungiLog(risultato);
-                                });
-                                programmaSalvataggio();
-                              }
+                            ? showMasterRequests
                             : null,
                         child: CheckboxListTile(
                           key: ValueKey<String>(
