@@ -466,17 +466,88 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            nomeController.text.trim().isEmpty
-                                ? t('Il tuo personaggio', 'Your character')
-                                : nomeController.text,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: compact ? 22 : 30,
-                              fontFamily: 'serif',
-                              fontWeight: FontWeight.w600,
-                              color: primaryColor,
+                          child: PopupMenuButton<OculumTitle>(
+                            tooltip: t(
+                              'Scegli titolo visibile',
+                              'Choose visible title',
+                            ),
+                            color: secondaryColor,
+                            onSelected: (title) {
+                              setState(() {
+                                final previous =
+                                    titoloSempreVisibile?.nome ?? '';
+                                final all = [...titoli, ...trattiRazziali];
+                                for (final other in all) {
+                                  other.sempreVisibile = identical(
+                                    other,
+                                    title,
+                                  );
+                                  other.visibleSelectionManual = identical(
+                                    other,
+                                    title,
+                                  );
+                                }
+                                oculumNormalizeAlwaysVisibleTitles(
+                                  all,
+                                  racialTraits: trattiRazziali,
+                                );
+                                aggiungiLog(
+                                  'Titolo visibile: [$previous] → [${titoloSempreVisibile?.nome ?? ""}].',
+                                );
+                                invalidateDerivedDataCaches();
+                              });
+                              syncMasterInitiativeVisibleTitle(schedaCorrente);
+                              programmaSalvataggio();
+                            },
+                            itemBuilder: (_) {
+                              final all = [...titoli, ...trattiRazziali]
+                                ..sort(
+                                  (a, b) => (b.evoluto ? 1 : 0).compareTo(
+                                    a.evoluto ? 1 : 0,
+                                  ),
+                                );
+                              final hasEvolved = all.any(
+                                (title) => title.evoluto,
+                              );
+                              return [
+                                for (final title in all)
+                                  PopupMenuItem<OculumTitle>(
+                                    value: title,
+                                    enabled:
+                                        (!hasEvolved || title.evoluto) &&
+                                        oculumTitleCanBeAlwaysVisible(
+                                          title,
+                                          all,
+                                        ),
+                                    child: Text(
+                                      '${title.nome}${hasEvolved && !title.evoluto
+                                          ? " · ${t('evoluzione necessaria', 'evolution required')}"
+                                          : !title.equipaggiato
+                                          ? " · ${t('da equipaggiare', 'equip first')}"
+                                          : ""}',
+                                      style: TextStyle(
+                                        color:
+                                            hasEvolved && !title.evoluto ||
+                                                !title.equipaggiato
+                                            ? primaryColor.withValues(
+                                                alpha: .35,
+                                              )
+                                            : primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                              ];
+                            },
+                            child: Text(
+                              '${nomeController.text.trim().isEmpty ? t('Il tuo personaggio', 'Your character') : nomeController.text} | ${titoloSempreVisibile?.nome ?? t('Scegli titolo', 'Choose title')}',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: compact ? 22 : 30,
+                                fontFamily: 'serif',
+                                fontWeight: FontWeight.w600,
+                                color: primaryColor,
+                              ),
                             ),
                           ),
                         ),
@@ -675,6 +746,21 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                         onPressed: tiraAiutaCompagno,
                         icon: const Icon(Icons.volunteer_activism_outlined),
                         label: Text(t('Aiuta compagno', 'Help ally')),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => tiraValoreSpeciale(
+                          'Iniziativa',
+                          iniziativa(),
+                          applyGlobalRollModifier: false,
+                        ),
+                        icon: const Icon(Icons.bolt_outlined),
+                        label: Text(
+                          '${t('Iniziativa', 'Initiative')} +${iniziativa()}',
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: tertiaryColor,
+                          side: BorderSide(color: tertiaryColor),
+                        ),
                       ),
                       OutlinedButton.icon(
                         onPressed: () => apriDannoCuraDalCentroPartita(),
@@ -1183,12 +1269,19 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
           .map((effect) => canonicalDamageModifierName('${effect['preset']}')),
     );
     final spineArmor = spineArmorPreset();
-    if (spineVariant == 'legno' && oculumNormalizeElementId(elementId) == 'fuoco') { return 'Fragilità'; }
+    if (spineVariant == 'legno' &&
+        oculumNormalizeElementId(elementId) == 'fuoco') {
+      return 'Fragilità';
+    }
     if (spineArmor.isNotEmpty) temporary.add(spineArmor);
     // A precise volley exposes the caster even when the passive armor is on.
-    if (oculumNormalizeElementId(elementId) == 'perforante' && activeStructuredEffects.any((effect) {
-      return effect['effectId'] == 'spine_piercing_weakness' && readIntValue(effect['remaining']) > 0;
-    })) { return 'Fragilità'; }
+    if (oculumNormalizeElementId(elementId) == 'perforante' &&
+        activeStructuredEffects.any((effect) {
+          return effect['effectId'] == 'spine_piercing_weakness' &&
+              readIntValue(effect['remaining']) > 0;
+        })) {
+      return 'Fragilità';
+    }
     if (temporary.isEmpty) return saved;
     final temporaryPreset = temporary.reduce(
       (strongest, candidate) =>

@@ -1321,17 +1321,32 @@ int oculumPublicTitleStatBonus(int value) =>
 Map<String, int> oculumVisibleTitleStatBonus({
   required int grade,
   required bool evolvedFirstClaim,
+  bool includeOculum = true,
 }) {
   final points = 6 * (max(0, grade) + 1);
-  const keys = ['resilienza', 'volonta', 'materia', 'oculum'];
-  final result = <String, int>{for (final key in keys) key: points ~/ 4};
-  for (var i = 0; i < points % 4; i++) {
+  final keys = [
+    'resilienza',
+    'volonta',
+    'materia',
+    if (includeOculum) 'oculum',
+  ];
+  final result = <String, int>{
+    'oculum': 0,
+    for (final key in keys) key: points ~/ keys.length,
+  };
+  for (var i = 0; i < points % keys.length; i++) {
     result[keys[i]] = result[keys[i]]! + 1;
   }
   if (evolvedFirstClaim) {
-    result['resilienza'] = result['resilienza']! + 3;
-    for (final key in const ['volonta', 'materia', 'oculum']) {
-      result[key] = result[key]! + 2;
+    if (includeOculum) {
+      result['resilienza'] = result['resilienza']! + 3;
+      for (final key in const ['volonta', 'materia', 'oculum']) {
+        result[key] = result[key]! + 2;
+      }
+    } else {
+      for (final key in keys) {
+        result[key] = result[key]! + 3;
+      }
     }
   }
   return result;

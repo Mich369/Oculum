@@ -6,6 +6,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('visible title preserves zero Oculum and all awarded points', () {
+    for (final grade in [0, 1, 3]) {
+      for (final evolved in [false, true]) {
+        final bonuses = oculumVisibleTitleStatBonus(
+          grade: grade,
+          evolvedFirstClaim: evolved,
+          includeOculum: false,
+        );
+        expect(bonuses['oculum'], 0);
+        expect(
+          bonuses.values.reduce((a, b) => a + b),
+          6 * (grade + 1) + (evolved ? 9 : 0),
+        );
+        expect(bonuses['resilienza'], bonuses['volonta']);
+        expect(bonuses['volonta'], bonuses['materia']);
+      }
+    }
+  });
   test(
     'visible title switches exclusively and evolved award cannot be reclaimed',
     () {

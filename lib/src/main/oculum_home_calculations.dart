@@ -399,6 +399,16 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return oculumVisibleTitleStatBonus(
           grade: leggiNumero(gradoController),
           evolvedFirstClaim: title.evoluto && title.evolvedVisibleBonusActive,
+          includeOculum:
+              oculumBase() +
+                  buffOculum(includeVisibleTitle: false) +
+                  tempOculum +
+                  progressionSurge.statBonus +
+                  skillFormaBonus('oculum') +
+                  itemQuickBonus('oculum') +
+                  globalQuickBonus('oculum') +
+                  rebirthLevelBonus() >
+              0,
         )[stat] ??
         0;
   }
@@ -566,7 +576,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         artQuickBonus('materia');
   }
 
-  int buffOculum() {
+  int buffOculum({bool includeVisibleTitle = true}) {
     int totale = 0;
 
     for (final titolo in titoliCalcolabili) {
@@ -577,7 +587,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     }
 
     return totale +
-        visibleTitleStatBonus('oculum') +
+        (includeVisibleTitle ? visibleTitleStatBonus('oculum') : 0) +
         titleQuickBonus('oculum') +
         artQuickBonus('oculum');
   }
@@ -2117,7 +2127,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   bool artOpenSbloccata(CharacterArt art) {
-    if (art.openName == 'Pioggia di aculei' && art.skills.any((s) => s.nome == 'Armatura sottopelle')) {
+    if (art.openName == 'Pioggia di aculei' &&
+        art.skills.any((s) => s.nome == 'Armatura sottopelle')) {
       return art.sbloccata && leggiNumero(livelloController) >= 10;
     }
     return art.sbloccata && oculumArtHasDistinctThirdForms(art);
