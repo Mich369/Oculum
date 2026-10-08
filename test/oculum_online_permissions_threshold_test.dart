@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,6 +31,21 @@ class PermissionTestService extends OculumRealtimeService {
   }
 }
 
+class _FixedThresholdRandom implements Random {
+  const _FixedThresholdRandom(this.value);
+
+  final int value;
+
+  @override
+  bool nextBool() => false;
+
+  @override
+  double nextDouble() => 0;
+
+  @override
+  int nextInt(int max) => value.clamp(0, max - 1).toInt();
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   test(
@@ -55,6 +71,22 @@ void main() {
       expect(
         oculumFirstThresholdStat({'volonta': 6, 'resilienza': 3}),
         'volonta',
+      );
+      expect(
+        oculumCreateThresholdSkill(
+          'resilienza',
+          0,
+          random: const _FixedThresholdRandom(0),
+        ).thresholdData['longRestsRemaining'],
+        4,
+      );
+      expect(
+        oculumCreateThresholdSkill(
+          'resilienza',
+          0,
+          random: const _FixedThresholdRandom(8),
+        ).thresholdData['longRestsRemaining'],
+        12,
       );
       for (final stat in oculumStatThresholdSkills.keys) {
         for (var variant = 0; variant < 3; variant++) {

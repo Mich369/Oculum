@@ -127,7 +127,7 @@ CharacterSkill oculumCreateThresholdSkill(
   final rng = random ?? Random();
   final damageBonus = stat == 'volonta' ? 16 + rng.nextInt(10) : 0;
   final defenseBonus = stat == 'materia' ? 15 + rng.nextInt(6) : 0;
-  final temporaryHpRests = stat == 'resilienza' ? 3 + rng.nextInt(9) : 0;
+  final temporaryHpRests = stat == 'resilienza' ? 4 + rng.nextInt(9) : 0;
   final rewardText = stat == 'volonta'
       ? 'Bonus possesso: +3 Volontà e +$damageBonus Danni.'
       : stat == 'materia'
