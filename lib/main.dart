@@ -2030,6 +2030,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   Timer? onlinePermissionRetryTimer;
   String statThresholdReward = '';
   bool loadingThresholdSheet = false;
+  final Set<CharacterSkill> thresholdSkillsInUse = <CharacterSkill>{};
   bool coMasterCanEditSheets = false;
   bool usingInternetRelay = false;
   bool relayConnected = false;

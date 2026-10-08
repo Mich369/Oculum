@@ -17,6 +17,14 @@
 
 ## Distribuzione
 
+### Miglioramenti delle skill di soglia e dei menu (8 ottobre 2026)
+
+- Una skill di soglia può avere una sola attivazione in corso: premere ripetutamente Cura magica mentre si sceglie il costo non apre finestre aggiuntive e non consuma altre risorse. Il blocco viene rilasciato anche dopo Annulla.
+- La conferma della cura resta legata alla scheda e alla campagna di partenza. Se passi da Rose a un altro personaggio mentre la finestra è aperta, la conferma non applica la cura, il costo o il cooldown al secondo personaggio.
+- I costi modificati nell'editor vengono verificati sulla risorsa effettivamente configurata. Gli effetti strutturati personalizzati ricevono anche la quantità realmente spesa, per le formule basate sul consumo.
+- Click e doppio click dei menu contestuali vengono distinti dai riconoscitori Flutter; rimuovere una tessera o chiudere la schermata annulla il gesto pendente. Tasto destro e pressione prolungata mantengono l'apertura del menu.
+- Lo script di installazione degli artifact supporta `-UseRangeDownload`: scarica blocchi da 4 MB, riprova i blocchi falliti, verifica confini, dimensioni e SHA256 pubblicato da GitHub, quando disponibile. Funziona anche con Windows PowerShell 5.1 e usa il token solo verso l'API GitHub. La distribuzione viene sostituita dopo i controlli su commit, pacchetti e runtime Windows normale/test.
+
 La pagina Web `https://mich369.github.io/Oculum/` viene ricostruita e pubblicata automaticamente a ogni push su `main`, con la stessa configurazione Supabase delle app. I salvataggi locali del browser restano nel suo archivio IndexedDB; l'online usa il progetto Supabase esistente. La schermata di caricamento segue lo stile Oculum e permette di riprovare se il caricamento fallisce.
 
 Il comando Vista Web nella barra superiore permette di scegliere Automatica, Desktop o Mobile. La scelta viene conservata nel browser. Automatica mostra la pagina mobile in verticale (anche 9:16 e iPad) e la pagina desktop in orizzontale; ruotando lo schermo cambia la vista senza cambiare scheda o salvataggio. Desktop resta selezionabile su un telefono e Mobile su un computer. Le aree sicure e la tastiera vengono adattate alla scala della pagina.

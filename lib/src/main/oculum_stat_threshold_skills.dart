@@ -270,8 +270,20 @@ extension _OculumStatThresholdSkills on _OculumHomePageState {
   }
 
   Future<void> useStatThresholdSkill(CharacterSkill skill) async {
+    if (!mounted || !thresholdSkillsInUse.add(skill)) return;
+    try {
+      await _useStatThresholdSkill(skill);
+    } finally {
+      thresholdSkillsInUse.remove(skill);
+    }
+  }
+
+  Future<void> _useStatThresholdSkill(CharacterSkill skill) async {
     final data = skill.thresholdData;
     if (data.isEmpty) return;
+    final startingSheetTag = sheetTagAt(schedaCorrente);
+    final startingCampaignId = activeCampaignId;
+    skill.ensureForms();
     final stat = '${data['stat']}';
     final form = skill.forme.first;
     final cooldown = form.cooldownStrutturato;
@@ -279,7 +291,7 @@ extension _OculumStatThresholdSkills on _OculumHomePageState {
       aggiungiLog('${skill.nome}: CD ${cooldown.remaining} ${cooldown.unit}.');
       return;
     }
-    var cost = data['cost'] as int;
+    var cost = max(0, readIntValue(data['cost']));
     var resource = stat;
     final configuredCost = form.costoStrutturato;
     if (configuredCost != null && !configuredCost.variable) {
@@ -325,16 +337,19 @@ extension _OculumStatThresholdSkills on _OculumHomePageState {
         ),
       );
       if (selected == null || !mounted) return;
+      // A cost dialog can outlive the sheet it was opened for. Never spend
+      // resources or apply its result to a different character or campaign.
+      if (startingSheetTag != sheetTagAt(schedaCorrente) ||
+          startingCampaignId != activeCampaignId ||
+          !skills.contains(skill)) {
+        return;
+      }
       cost = selected;
       resource = 'oculum';
     }
     final available = resource == 'oculum'
         ? oculumTotale()
-        : resource == 'volonta'
-        ? currentVolonta()
-        : resource == 'materia'
-        ? currentMateria()
-        : currentResilienza();
+        : artSkillCostResourceAvailable(resource);
     if (available < cost) {
       aggiungiLog('${skill.nome}: $resource insufficiente, servono $cost.');
       return;
@@ -396,10 +411,11 @@ extension _OculumStatThresholdSkills on _OculumHomePageState {
     }
     if (spendArtSkillCostResource(resource, cost) != cost) return;
     cooldown?.activate();
-    final messages = applyStructuredEffectsOnActivation([
-      ...effects,
-      ...form.effettiStrutturati,
-    ], source: skill.nome);
+    final messages = applyStructuredEffectsOnActivation(
+      [...effects, ...form.effettiStrutturati],
+      source: skill.nome,
+      spentResources: {resource: cost},
+    );
     setState(() {
       risultato =
           '${skill.nome}: $details\nCosto: $cost $resource · CD ${cooldown?.amount ?? 0} ${cooldown?.unit ?? 'turni'}.${messages.isEmpty ? '' : '\n${messages.join('\n')}'}';

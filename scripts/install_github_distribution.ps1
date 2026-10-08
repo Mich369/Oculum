@@ -1,6 +1,7 @@
 param(
   [Parameter(Mandatory = $true)][long]$RunId,
-  [string]$GitHubRepo = 'Mich369/Oculum'
+  [string]$GitHubRepo = 'Mich369/Oculum',
+  [switch]$UseRangeDownload
 )
 
 $ErrorActionPreference = 'Stop'
@@ -35,11 +36,12 @@ if ((Test-Path -LiteralPath $stagingRoot) -or (Test-Path -LiteralPath $downloadR
 New-Item -ItemType Directory -Path $stagingRoot, $downloadRoot | Out-Null
 # Download every artifact of this successful run, including UI evidence.
 $downloadArgs = @('run', 'download', "$RunId", '--repo', $GitHubRepo, '--dir', $downloadRoot)
-& gh @downloadArgs
-if ($LASTEXITCODE -ne 0) {
+if (!$UseRangeDownload) { & gh @downloadArgs }
+if ($UseRangeDownload -or $LASTEXITCODE -ne 0) {
   # Some Windows TLS intermediaries reject the Go client's artifact download.
-  # Obtain a signed redirect from GitHub, then download with curl over TLS 1.2.
+  # Download smaller ranges from signed URLs to avoid interrupted TLS streams.
   # Authentication remains only in process memory.
+  Add-Type -AssemblyName System.Net.Http
   $artifactsJson = & gh api "repos/$GitHubRepo/actions/runs/$RunId/artifacts" --paginate
   if ($LASTEXITCODE -ne 0) { throw 'Cannot list GitHub artifacts' }
   $artifacts = ($artifactsJson | ConvertFrom-Json).artifacts
@@ -55,13 +57,55 @@ if ($LASTEXITCODE -ne 0) {
       $taskHandler.AllowAutoRedirect = $false
       $taskClient = [System.Net.Http.HttpClient]::new($taskHandler)
       try {
-        $taskClient.DefaultRequestHeaders.Add('Authorization', "Bearer $taskToken")
+        $taskClient.Timeout = [TimeSpan]::FromMinutes(5)
         $taskClient.DefaultRequestHeaders.Add('User-Agent', 'Oculum-distribution')
-        $taskResponse = $taskClient.GetAsync($artifact.archive_download_url).GetAwaiter().GetResult()
+        $taskRequest = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, $artifact.archive_download_url)
+        $taskRequest.Headers.Authorization = [System.Net.Http.Headers.AuthenticationHeaderValue]::new('Bearer', $taskToken)
+        try {
+          $taskResponse = $taskClient.SendAsync($taskRequest).GetAwaiter().GetResult()
+          if ([int]$taskResponse.StatusCode -ne 302) { throw 'Artifact download redirect failed' }
+        } finally { $taskRequest.Dispose() }
         $taskDownloadUri = $taskResponse.Headers.Location.AbsoluteUri
+        $taskResponse.Dispose()
         if (!$taskDownloadUri) { throw 'Artifact download redirect missing' }
-        & curl.exe --fail --silent --show-error --location --http1.1 --tls-max 1.2 --retry 3 --output $archivePath $taskDownloadUri
-        if ($LASTEXITCODE -ne 0) { throw 'Artifact download failed' }
+        Write-Host "Downloading $($artifact.name) with verified ranges"
+        $taskTotal = [long]$artifact.size_in_bytes
+        $taskArchive = [IO.File]::Open($archivePath, [IO.FileMode]::Create, [IO.FileAccess]::Write, [IO.FileShare]::None)
+        try {
+          for ($taskStart = 0L; $taskStart -lt $taskTotal; $taskStart += 4MB) {
+            $taskEnd = [Math]::Min($taskTotal - 1, $taskStart + 4MB - 1)
+            for ($taskAttempt = 1; $taskAttempt -le 4; $taskAttempt++) {
+              $taskRangeRequest = $null
+              $taskRangeResponse = $null
+              try {
+                # The GitHub token is used only for the API redirect, never
+                # sent to the artifact storage host.
+                $taskRangeRequest = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, $taskDownloadUri)
+                $taskRangeRequest.Headers.Range = [System.Net.Http.Headers.RangeHeaderValue]::new($taskStart, $taskEnd)
+                $taskRangeResponse = $taskClient.SendAsync($taskRangeRequest).GetAwaiter().GetResult()
+                if ([int]$taskRangeResponse.StatusCode -ne 206) { throw 'Artifact range request failed' }
+                $taskContentRange = $taskRangeResponse.Content.Headers.ContentRange
+                if ($taskContentRange.From -ne $taskStart -or $taskContentRange.To -ne $taskEnd -or $taskContentRange.Length -ne $taskTotal) {
+                  throw 'Artifact range boundaries mismatch'
+                }
+                $taskBytes = $taskRangeResponse.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult()
+                if ($taskBytes.LongLength -ne $taskEnd - $taskStart + 1) { throw 'Artifact range length mismatch' }
+                $taskArchive.Write($taskBytes, 0, $taskBytes.Length)
+                break
+              } catch {
+                if ($taskAttempt -eq 4) { throw }
+                Start-Sleep -Seconds (2 * $taskAttempt)
+              } finally {
+                if ($taskRangeResponse) { $taskRangeResponse.Dispose() }
+                if ($taskRangeRequest) { $taskRangeRequest.Dispose() }
+              }
+            }
+          }
+        } finally { $taskArchive.Dispose() }
+        if ((Get-Item -LiteralPath $archivePath).Length -ne $taskTotal) { throw 'Artifact archive size mismatch' }
+        if ($artifact.digest -match '^sha256:([0-9a-fA-F]{64})$') {
+          if ((Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash -ne $Matches[1]) { throw 'Artifact SHA256 mismatch' }
+        }
       } finally {
         $taskClient.Dispose()
         $taskHandler.Dispose()

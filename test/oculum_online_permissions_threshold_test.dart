@@ -126,6 +126,113 @@ void main() {
   );
 
   testWidgets(
+    'Threshold costs, cooldowns and healing dialogs remain tied to their character',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final directory = Directory(
+        'build/threshold-actions-${DateTime.now().microsecondsSinceEpoch}',
+      )..createSync(recursive: true);
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('plugins.flutter.io/path_provider'),
+        (_) async => directory.absolute.path,
+      );
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('dev.fluttercommunity.plus/connectivity'),
+        (_) async => ['none'],
+      );
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('dev.fluttercommunity.plus/connectivity_status'),
+        (_) async => null,
+      );
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(theme: ThemeData.dark(), home: const OculumHomePage()),
+      );
+      final dynamic state = tester.state(find.byType(OculumHomePage));
+      state.tutorialDialogPending = true;
+      await tester.runAsync(() async {
+        for (var i = 0; i < 100 && !state.datiCaricati; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        }
+      });
+      state.updateOculumHomeUi(() {
+        state.tutorialCompletato = true;
+        state.statThresholdReward = 'test:existing';
+        state.skills.clear();
+        state.schedePersonaggio
+          ..clear()
+          ..add(<String, dynamic>{
+            'id': 'ROSE-1234',
+            'sheetTag': 'ROSE-1234',
+            'nome': 'Rose',
+          })
+          ..add(<String, dynamic>{
+            'id': 'OTHER-1234',
+            'sheetTag': 'OTHER-1234',
+            'nome': 'Other',
+          });
+        state.schedaCorrente = 0;
+        state.volontaController.text = '5';
+        state.currentVolontaController.text = '5';
+        state.oculumController.text = '5';
+        state.currentOculumController.text = '5';
+        state.currentHpController.text = '1';
+      });
+      final probe = OculumPerformanceProbe(state);
+      final shield = oculumCreateThresholdSkill('volonta', 1);
+      state.skills.add(shield);
+      probe.invalidateDerivedCaches();
+      final willBefore = probe.coreStats()['volonta']!;
+      final shieldBefore = readIntValue(probe.snapshot()['scudo']);
+      await probe.useThreshold(shield);
+      expect(probe.coreStats()['volonta'], willBefore - 1);
+      expect(readIntValue(probe.snapshot()['scudo']), shieldBefore + 20);
+      expect(shield.forme.single.cooldownStrutturato!.remaining, 6);
+      await probe.useThreshold(shield);
+      expect(probe.coreStats()['volonta'], willBefore - 1);
+      expect(readIntValue(probe.snapshot()['scudo']), shieldBefore + 20);
+
+      final healing = oculumCreateThresholdSkill('resilienza', 0);
+      state.skills.add(healing);
+      probe.invalidateDerivedCaches();
+      final oculumBefore = probe.coreStats()['oculum'];
+      final hpBefore = probe.currentHp();
+      final firstUse = probe.useThreshold(healing);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      await probe.useThreshold(healing);
+      await tester.pump();
+      expect(find.byType(AlertDialog), findsOneWidget);
+      state.schedaCorrente = 1;
+      await tester.tap(find.text('1 Oculum'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      await firstUse;
+      expect(probe.coreStats()['oculum'], oculumBefore);
+      expect(probe.currentHp(), hpBefore);
+      expect(healing.forme.single.cooldownStrutturato!.ready, isTrue);
+
+      // Cancelling or switching sheets must release the activation guard.
+      state.schedaCorrente = 0;
+      final secondUse = probe.useThreshold(healing);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.tap(find.text('1 Oculum'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      await secondUse;
+      expect(probe.coreStats()['oculum'], oculumBefore! - 1);
+      expect(probe.currentHp(), greaterThan(hpBefore));
+      expect(probe.currentHp(), lessThanOrEqualTo(probe.maximumHp()));
+      expect(healing.forme.single.cooldownStrutturato!.remaining, 4);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
     'Permissions validate the sender, log decisions, and remain pending on failed sends',
     (tester) async {
       SharedPreferences.setMockInitialValues({});

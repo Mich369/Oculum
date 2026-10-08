@@ -3884,14 +3884,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       return child;
     }
 
-    Timer? pendingSingleTap;
-    void cancelPendingTap() {
-      pendingSingleTap?.cancel();
-      pendingSingleTap = null;
-    }
-
     void openAt(Offset position) {
-      cancelPendingTap();
+      if (!mounted) return;
       showQuickContextMenu(
         label: label,
         position: position,
@@ -3909,18 +3903,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         behavior: HitTestBehavior.opaque,
         onSecondaryTapDown: (details) => openAt(details.globalPosition),
         onLongPressStart: (details) => openAt(details.globalPosition),
-        onTap: onActivate == null
-            ? null
-            : () {
-                cancelPendingTap();
-                pendingSingleTap = Timer(
-                  const Duration(milliseconds: 250),
-                  () {
-                    pendingSingleTap = null;
-                    onActivate();
-                  },
-                );
-              },
+        // Flutter resolves single versus double taps and cancels pending
+        // gestures when this tile is removed from the screen.
+        onTap: onActivate,
         onDoubleTap: () {
           final renderObject = anchorContext.findRenderObject();
           final position = renderObject is RenderBox
