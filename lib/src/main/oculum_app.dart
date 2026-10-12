@@ -1,5 +1,90 @@
 part of '../../main.dart';
 
+final ThemeData oculumBaseTheme = ThemeData(
+  brightness: Brightness.dark,
+  visualDensity: VisualDensity.compact,
+  scaffoldBackgroundColor: const Color(0xFF050408),
+  colorScheme: const ColorScheme.dark(
+    surface: Color(0xFF09070D),
+    primary: Color(0xFFE6D8BD),
+    secondary: Color(0xFF9E6B2F),
+    tertiary: Color(0xFF8F1D2C),
+  ),
+  useMaterial3: true,
+  splashFactory: NoSplash.splashFactory,
+  cardTheme: const CardThemeData(
+    elevation: 0,
+    margin: EdgeInsets.symmetric(vertical: 6),
+  ),
+  dividerTheme: const DividerThemeData(
+    thickness: 1,
+    space: 24,
+    color: Color(0xFF302D37),
+  ),
+  inputDecorationTheme: InputDecorationTheme(
+    filled: true,
+    fillColor: const Color(0xFF131118),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Color(0xFF36313D)),
+    ),
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      minimumSize: const Size(36, 36),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      textStyle: const TextStyle(fontWeight: FontWeight.w600),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    ),
+  ),
+  outlinedButtonTheme: OutlinedButtonThemeData(
+    style: OutlinedButton.styleFrom(
+      minimumSize: const Size(34, 34),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      textStyle: const TextStyle(fontWeight: FontWeight.w600),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    ),
+  ),
+  textButtonTheme: TextButtonThemeData(
+    style: TextButton.styleFrom(
+      minimumSize: const Size(32, 32),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      textStyle: const TextStyle(fontWeight: FontWeight.w600),
+    ),
+  ),
+  chipTheme: ChipThemeData(
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+    side: const BorderSide(color: Color(0x669E6B2F)),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+  ),
+  listTileTheme: const ListTileThemeData(
+    dense: true,
+    minLeadingWidth: 24,
+    horizontalTitleGap: 8,
+    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+  ),
+  expansionTileTheme: const ExpansionTileThemeData(
+    tilePadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+    childrenPadding: EdgeInsets.fromLTRB(10, 0, 10, 8),
+  ),
+);
+final ValueNotifier<ThemeData?> oculumActiveTheme = ValueNotifier(null);
+
+class OculumThemeScope extends StatelessWidget {
+  const OculumThemeScope({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder<ThemeData?>(
+    valueListenable: oculumActiveTheme,
+    child: child,
+    builder: (context, activeTheme, child) =>
+        Theme(data: activeTheme ?? oculumBaseTheme, child: child!),
+  );
+}
+
 final ValueNotifier<bool> oculumGraphicsEnabled = ValueNotifier(false);
 
 Future<void> loadOculumGraphicsPreference() async {
@@ -48,89 +133,12 @@ class OculumApp extends StatelessWidget {
             );
           }
 
-          return kIsWeb
+          final content = kIsWeb
               ? OculumWebLayout(child: Builder(builder: typographyContent))
               : typographyContent(context);
+          return OculumThemeScope(child: content);
         },
-        theme: ThemeData(
-          brightness: Brightness.dark,
-          visualDensity: VisualDensity.compact,
-          scaffoldBackgroundColor: const Color(0xFF050408),
-          colorScheme: const ColorScheme.dark(
-            surface: Color(0xFF09070D),
-            primary: Color(0xFFE6D8BD),
-            secondary: Color(0xFF9E6B2F),
-            tertiary: Color(0xFF8F1D2C),
-          ),
-          useMaterial3: true,
-          splashFactory: NoSplash.splashFactory,
-          cardTheme: const CardThemeData(
-            elevation: 0,
-            margin: EdgeInsets.symmetric(vertical: 6),
-          ),
-          dividerTheme: const DividerThemeData(
-            thickness: 1,
-            space: 24,
-            color: Color(0xFF302D37),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: const Color(0xFF131118),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF36313D)),
-            ),
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(36, 36),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              textStyle: const TextStyle(fontWeight: FontWeight.w600),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-          outlinedButtonTheme: OutlinedButtonThemeData(
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(34, 34),
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-              textStyle: const TextStyle(fontWeight: FontWeight.w600),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-          textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(
-              minimumSize: const Size(32, 32),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-              textStyle: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          chipTheme: ChipThemeData(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-            side: const BorderSide(color: Color(0x669E6B2F)),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(9),
-            ),
-          ),
-          listTileTheme: const ListTileThemeData(
-            dense: true,
-            minLeadingWidth: 24,
-            horizontalTitleGap: 8,
-            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-          ),
-          expansionTileTheme: const ExpansionTileThemeData(
-            tilePadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-            childrenPadding: EdgeInsets.fromLTRB(10, 0, 10, 8),
-          ),
-        ),
+        theme: oculumBaseTheme,
         home: const OculumStartupPreloader(),
       ),
     );

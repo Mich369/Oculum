@@ -7,6 +7,9 @@ class OculumPerformanceProbe {
   OculumPerformanceProbe(State state) : _state = state as _OculumHomePageState;
   final _OculumHomePageState _state;
 
+  List<OculumColorPreset> get themes => List.unmodifiable(_state.colorPresets);
+  void applyTheme(String id) => _state.applicaColorPreset(id);
+
   void openDice() => _state.openReferenceDetail(
     'Sessione Dadi',
     'sheet_dice',

@@ -23,7 +23,11 @@ Color oculumReadableThemeColor(
   double minRatio = 4.5,
 }) {
   var candidate = color.withValues(alpha: 1);
-  if (oculumThemeContrastRatio(candidate, background) >= minRatio) {
+  if (oculumThemeContrastRatio(
+        Color.alphaBlend(color, background),
+        background,
+      ) >=
+      minRatio) {
     return color;
   }
 
@@ -36,14 +40,189 @@ Color oculumReadableThemeColor(
     hsl = hsl.withLightness(nextLightness);
     candidate = hsl.toColor();
     if (oculumThemeContrastRatio(candidate, background) >= minRatio) {
-      return candidate.withValues(alpha: color.a);
+      return candidate;
     }
   }
 
   final blackRatio = oculumThemeContrastRatio(Colors.black, background);
   final whiteRatio = oculumThemeContrastRatio(Colors.white, background);
-  return (whiteRatio >= blackRatio ? Colors.white : Colors.black).withValues(
-    alpha: color.a,
+  return whiteRatio >= blackRatio ? Colors.white : Colors.black;
+}
+
+/// Shared by the sheet and the navigator, including dialogs and popup routes.
+ThemeData oculumBuildPaletteTheme({
+  required ThemeData base,
+  required Color primary,
+  required Color secondary,
+  required Color accent,
+  required Color surface,
+  required Color background,
+  required String fontFamily,
+}) {
+  final text = oculumReadableThemeColor(primary, surface);
+  final highlight = oculumReadableThemeColor(accent, surface);
+  final onHighlight = oculumReadableThemeColor(primary, highlight);
+  final error = oculumReadableThemeColor(base.colorScheme.error, surface);
+  final scheme = base.colorScheme.copyWith(
+    surface: surface,
+    surfaceContainerLowest: background,
+    surfaceContainerLow: surface,
+    surfaceContainer: surface,
+    surfaceContainerHigh: surface,
+    surfaceContainerHighest: surface,
+    onSurface: text,
+    onSurfaceVariant: text,
+    primary: highlight,
+    onPrimary: onHighlight,
+    primaryContainer: secondary,
+    onPrimaryContainer: oculumReadableThemeColor(primary, secondary),
+    secondary: highlight,
+    onSecondary: onHighlight,
+    secondaryContainer: secondary,
+    onSecondaryContainer: oculumReadableThemeColor(primary, secondary),
+    tertiary: highlight,
+    onTertiary: onHighlight,
+    outline: highlight,
+    outlineVariant: highlight.withValues(alpha: .35),
+    surfaceTint: Colors.transparent,
+    error: error,
+    onError: oculumReadableThemeColor(primary, error),
+  );
+  final textTheme = base.textTheme.apply(
+    fontFamily: fontFamily,
+    bodyColor: text,
+    displayColor: text,
+  );
+  return base.copyWith(
+    colorScheme: scheme,
+    primaryColor: highlight,
+    primaryColorLight: highlight,
+    primaryColorDark: secondary,
+    secondaryHeaderColor: secondary,
+    unselectedWidgetColor: text.withValues(alpha: .7),
+    tabBarTheme: base.tabBarTheme.copyWith(
+      indicatorColor: highlight,
+      labelColor: highlight,
+      unselectedLabelColor: text,
+      labelStyle: textTheme.labelLarge,
+      unselectedLabelStyle: textTheme.labelLarge,
+    ),
+    scaffoldBackgroundColor: background,
+    canvasColor: surface,
+    cardColor: surface,
+    disabledColor: text.withValues(alpha: .38),
+    focusColor: highlight.withValues(alpha: .12),
+    hoverColor: highlight.withValues(alpha: .08),
+    dividerColor: highlight.withValues(alpha: .25),
+    textTheme: textTheme,
+    primaryTextTheme: textTheme,
+    iconTheme: IconThemeData(color: text),
+    dialogTheme: base.dialogTheme.copyWith(
+      backgroundColor: surface,
+      surfaceTintColor: Colors.transparent,
+      titleTextStyle: textTheme.titleLarge,
+      contentTextStyle: textTheme.bodyMedium,
+    ),
+    popupMenuTheme: base.popupMenuTheme.copyWith(
+      color: surface,
+      surfaceTintColor: Colors.transparent,
+      textStyle: textTheme.bodyMedium,
+    ),
+    bottomSheetTheme: base.bottomSheetTheme.copyWith(
+      backgroundColor: surface,
+      modalBackgroundColor: surface,
+      surfaceTintColor: Colors.transparent,
+    ),
+    tooltipTheme: base.tooltipTheme.copyWith(
+      decoration: BoxDecoration(
+        color: surface,
+        border: Border.all(color: highlight),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      textStyle: textTheme.bodySmall,
+    ),
+    snackBarTheme: base.snackBarTheme.copyWith(
+      backgroundColor: surface,
+      contentTextStyle: textTheme.bodyMedium,
+      actionTextColor: highlight,
+    ),
+    inputDecorationTheme: base.inputDecorationTheme.copyWith(
+      filled: true,
+      fillColor: surface,
+      labelStyle: textTheme.bodyMedium,
+      hintStyle: textTheme.bodyMedium?.copyWith(
+        color: text.withValues(alpha: .7),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: highlight.withValues(alpha: .35)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: highlight, width: 1.5),
+      ),
+    ),
+    textSelectionTheme: TextSelectionThemeData(
+      cursorColor: highlight,
+      selectionColor: highlight.withValues(alpha: .3),
+      selectionHandleColor: highlight,
+    ),
+    dividerTheme: base.dividerTheme.copyWith(
+      color: highlight.withValues(alpha: .25),
+    ),
+    cardTheme: base.cardTheme.copyWith(
+      color: surface,
+      surfaceTintColor: Colors.transparent,
+    ),
+    listTileTheme: base.listTileTheme.copyWith(
+      textColor: text,
+      iconColor: highlight,
+    ),
+    expansionTileTheme: base.expansionTileTheme.copyWith(
+      textColor: text,
+      collapsedTextColor: text,
+      iconColor: highlight,
+      collapsedIconColor: highlight,
+    ),
+    chipTheme: base.chipTheme.copyWith(
+      backgroundColor: surface,
+      selectedColor: secondary,
+      labelStyle: textTheme.bodyMedium,
+      side: BorderSide(color: highlight.withValues(alpha: .55)),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: (base.elevatedButtonTheme.style ?? const ButtonStyle()).merge(
+        ElevatedButton.styleFrom(
+          foregroundColor: text,
+          backgroundColor: surface,
+          textStyle: textTheme.labelLarge,
+        ),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: (base.textButtonTheme.style ?? const ButtonStyle()).merge(
+        TextButton.styleFrom(
+          foregroundColor: highlight,
+          textStyle: textTheme.labelLarge,
+        ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: text,
+        side: BorderSide(color: highlight.withValues(alpha: .55)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        minimumSize: const Size(44, 40),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: highlight,
+        foregroundColor: onHighlight,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        minimumSize: const Size(44, 40),
+      ),
+    ),
   );
 }
 

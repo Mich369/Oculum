@@ -142,6 +142,7 @@ Get-ChildItem -LiteralPath $downloadRoot -Directory | Where-Object Name -NotIn @
   Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $stagingRoot $_.Name) -Recurse
 }
 Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/titoli-statistiche-critici.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-MODIFICHE.md')
+Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/temi-oculum.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-TEMI.md')
 $manifest = [ordered]@{
   commit = $commit
   githubRun = $run.html_url

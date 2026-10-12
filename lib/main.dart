@@ -4257,7 +4257,9 @@ class _OculumHomePageState extends State<OculumHomePage>
                                     cleanUiText(nomeSchedaPersonaggio(i)),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: TextStyle(
+                                      color: readableOnTheme(primaryColor),
+                                    ),
                                   ),
                                   subtitle: Text(
                                     cleanUiText(tipoSchedaPersonaggio(i)),
@@ -4319,7 +4321,7 @@ class _OculumHomePageState extends State<OculumHomePage>
                         ),
                         PopupMenuButton<int>(
                           tooltip: t('Cambia scheda', 'Switch sheet'),
-                          color: const Color(0xFF10121A),
+                          color: backgroundMidColor,
                           icon: Icon(Icons.groups, color: primaryColor),
                           onSelected: cambiaSchedaPersonaggio,
                           itemBuilder: (context) => [
@@ -4333,8 +4335,8 @@ class _OculumHomePageState extends State<OculumHomePage>
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     color: i == schedaCorrente
-                                        ? tertiaryColor
-                                        : Colors.white,
+                                        ? readableOnTheme(tertiaryColor)
+                                        : readableOnTheme(primaryColor),
                                     fontWeight: i == schedaCorrente
                                         ? FontWeight.bold
                                         : FontWeight.normal,
@@ -4400,7 +4402,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       'rune' => 'Consolas',
       _ => 'Segoe UI',
     };
-    final inheritedTheme = Theme.of(context);
+    final inheritedTheme = oculumBaseTheme;
     final inheritedThemeIdentity = identityHashCode(inheritedTheme);
     final paletteHash = Object.hash(
       primaryColor,
@@ -4418,60 +4420,21 @@ class _OculumHomePageState extends State<OculumHomePage>
       _cachedAppTypographyStyle = stileCarattereApp;
       _cachedBaseThemeIdentity = inheritedThemeIdentity;
       _cachedAppPaletteHash = paletteHash;
-      _cachedAppTypographyTheme = inheritedTheme.copyWith(
-        scaffoldBackgroundColor: backgroundBottomColor,
-        dividerColor: tertiaryColor.withValues(alpha: .25),
-        inputDecorationTheme: inheritedTheme.inputDecorationTheme.copyWith(
-          filled: true,
-          fillColor: backgroundMidColor,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 12,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: tertiaryColor.withValues(alpha: .35)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: tertiaryColor.withValues(alpha: .35)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: primaryColor, width: 1.5),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: readableOnTheme(
-              primaryColor,
-              background: backgroundMidColor,
-            ),
-            side: BorderSide(color: tertiaryColor.withValues(alpha: .55)),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            minimumSize: const Size(44, 40),
-          ),
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            backgroundColor: tertiaryColor,
-            foregroundColor: oculumReadableThemeColor(
-              primaryColor,
-              tertiaryColor,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            minimumSize: const Size(44, 40),
-          ),
-        ),
-        textTheme: inheritedTheme.textTheme.apply(fontFamily: appFontFamily),
-        primaryTextTheme: inheritedTheme.primaryTextTheme.apply(
-          fontFamily: appFontFamily,
-        ),
+      _cachedAppTypographyTheme = oculumBuildPaletteTheme(
+        base: inheritedTheme,
+        primary: primaryColor,
+        secondary: secondaryColor,
+        accent: tertiaryColor,
+        surface: backgroundMidColor,
+        background: backgroundBottomColor,
+        fontFamily: appFontFamily,
       );
+      final nextTheme = _cachedAppTypographyTheme!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && identical(_cachedAppTypographyTheme, nextTheme)) {
+          oculumActiveTheme.value = nextTheme;
+        }
+      });
     }
 
     return Theme(
@@ -4690,7 +4653,7 @@ class _OculumHomePageState extends State<OculumHomePage>
                 if (compactPhone)
                   PopupMenuButton<String>(
                     tooltip: t('Azioni', 'Actions'),
-                    color: const Color(0xFF10121A),
+                    color: backgroundMidColor,
                     icon: Icon(Icons.more_vert, color: primaryColor, size: 20),
                     onSelected: (value) {
                       if (value == 'dungeon') {
@@ -4828,8 +4791,8 @@ class _OculumHomePageState extends State<OculumHomePage>
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: i == safePage
-                                          ? tertiaryColor
-                                          : Colors.white,
+                                          ? readableOnTheme(tertiaryColor)
+                                          : readableOnTheme(primaryColor),
                                       fontWeight: i == safePage
                                           ? FontWeight.bold
                                           : FontWeight.normal,
@@ -4860,8 +4823,8 @@ class _OculumHomePageState extends State<OculumHomePage>
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: i == schedaCorrente
-                                    ? tertiaryColor
-                                    : Colors.white,
+                                    ? readableOnTheme(tertiaryColor)
+                                    : readableOnTheme(primaryColor),
                                 fontWeight: i == schedaCorrente
                                     ? FontWeight.bold
                                     : FontWeight.normal,
@@ -4897,7 +4860,7 @@ class _OculumHomePageState extends State<OculumHomePage>
                 if (!compactPhone)
                   PopupMenuButton<int>(
                     tooltip: t('Cambia pagina', 'Switch page'),
-                    color: const Color(0xFF10121A),
+                    color: backgroundMidColor,
                     icon: Icon(
                       Icons.menu_open,
                       color: primaryColor,
@@ -4920,8 +4883,8 @@ class _OculumHomePageState extends State<OculumHomePage>
                               cleanUiText(labels[i]),
                               style: TextStyle(
                                 color: i == paginaCorrente
-                                    ? tertiaryColor
-                                    : Colors.white,
+                                    ? readableOnTheme(tertiaryColor)
+                                    : readableOnTheme(primaryColor),
                                 fontWeight: i == paginaCorrente
                                     ? FontWeight.bold
                                     : FontWeight.normal,
@@ -4948,7 +4911,7 @@ class _OculumHomePageState extends State<OculumHomePage>
                 if (!compactPhone)
                   PopupMenuButton<int>(
                     tooltip: t('Cambia scheda', 'Switch sheet'),
-                    color: const Color(0xFF10121A),
+                    color: backgroundMidColor,
                     icon: Icon(
                       Icons.groups,
                       color: primaryColor,
@@ -4990,8 +4953,8 @@ class _OculumHomePageState extends State<OculumHomePage>
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: i == schedaCorrente
-                                          ? tertiaryColor
-                                          : Colors.white,
+                                          ? readableOnTheme(tertiaryColor)
+                                          : readableOnTheme(primaryColor),
                                       fontWeight: i == schedaCorrente
                                           ? FontWeight.bold
                                           : FontWeight.normal,
