@@ -102,20 +102,25 @@ void main() {
           'oculum': 0,
         });
         expect(pawn.creatureSheetTag, isNotEmpty);
+        expect(pawn.hp, 30);
+        expect(pawn.defense, probe.defense());
         final restored = OculumPawnGuardian.fromJson(pawn.toJson());
         expect(restored.creatureSheetTag, pawn.creatureSheetTag);
         expect(restored.maxHp, pawn.maxHp);
         state.scudoController.text = '0';
         pawn.targets = ['PG00000'];
         final hpBefore = int.parse(state.currentHpController.text);
-        expect(probe.interceptPawnDamage('PG00000', 7), 0);
+        expect(probe.interceptPawnDamage('PG00000', 7 + pawn.defense), 0);
         expect(pawn.hp, hpBefore - 7);
         expect(int.parse(state.currentHpController.text), pawn.hp);
         await probe.advancePawn(pawn.id, 1);
         expect(pawn.hp, hpBefore);
         expect(int.parse(state.currentHpController.text), hpBefore);
         expect(pawn.experience, 25);
-        expect(probe.interceptPawnDamage('PG00000', pawn.hp + 1), 1);
+        expect(
+          probe.interceptPawnDamage('PG00000', pawn.hp + pawn.defense + 1),
+          1,
+        );
         expect(int.parse(state.currentHpController.text), 0);
         expect(state.schedePersonaggio[0]['pawnCoreClaims'], hasLength(1));
         expect(probe.interceptPawnDamage('PG00000', 1), 1);

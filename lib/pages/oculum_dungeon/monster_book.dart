@@ -4664,7 +4664,7 @@ String _inspiredMonsterSkillText(String rawId) {
 String monsterBookSkillText(String rawId) {
   if (rawId.startsWith('pawn_guardiano_')) {
     if (rawId.contains('protezione')) {
-      return 'Protezione Pawn — I/Passiva: seleziona le schede nel pannello Pawn · Guardiani. Intercetta solo danni alla Vita, dopo gli Scudi del bersaglio. II/La protezione mantiene queste regole. III/La protezione mantiene queste regole. Nessun costo.';
+      return 'Protezione Pawn — I/Passiva: seleziona le schede nel pannello Pawn · Guardiani. Intercetta solo danni alla Vita, dopo gli Scudi del bersaglio; poi applica Difesa e Scudo del Pawn. II/La protezione mantiene queste regole. III/La protezione mantiene queste regole. Nessun costo.';
     }
     if (rawId.contains('riparazione')) {
       return 'Riparazione Pawn — I/Passiva: a fine turno cura 10 Vita; se già al massimo ottiene 5 Scudo. +25 EXP per turno e 6 punti per livello. II/La riparazione mantiene queste regole. III/La riparazione mantiene queste regole. Nessun costo.';

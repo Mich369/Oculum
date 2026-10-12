@@ -2,6 +2,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('Pawn applies its own defense before its own shield and HP', () {
+    final pawn = OculumPawnGuardian(id: 'pawn_defense', ownerTag: 'owner');
+    expect(pawn.defense, 4);
+    expect(pawn.intercept(4), 0);
+    expect(pawn.hp, 30);
+    pawn.shield = 5;
+    expect(pawn.intercept(11), 0);
+    expect(pawn.shield, 0);
+    expect(pawn.hp, 28);
+    expect(pawn.intercept(40), 8);
+    expect(pawn.hp, 0);
+    expect(pawn.intercept(7), 7);
+  });
+  test(
+    'Pawn defense grows with stats, level, grade and saved sheet bonuses',
+    () {
+      final pawn = OculumPawnGuardian(
+        id: 'pawn_defense',
+        ownerTag: 'owner',
+        creatureSheetTag: 'pawn_sheet',
+        creatureDefenseBonus: 3,
+        level: 2,
+        grade: 1,
+        stats: {'resilienza': 3, 'volonta': 5, 'materia': 7, 'oculum': 0},
+      );
+      expect(pawn.defense, 17);
+      expect(OculumPawnGuardian.fromJson(pawn.toJson()).defense, 17);
+    },
+  );
   test('Saving shield is consumed on an exact hit and not reused', () {
     final pawn = OculumPawnGuardian(
       id: 'pawn_exact',
@@ -9,11 +38,11 @@ void main() {
       shield: 20,
       savingShield: true,
     );
-    expect(pawn.intercept(20), 0);
+    expect(pawn.intercept(20 + pawn.defense), 0);
     expect(pawn.hp, 30);
     expect(pawn.shield, 0);
     expect(pawn.savingShield, isFalse);
-    expect(pawn.intercept(5), 0);
+    expect(pawn.intercept(5 + pawn.defense), 0);
     expect(pawn.hp, 25);
   });
   test('Pawn starts at level zero with fixed stats and full health', () {
@@ -34,7 +63,7 @@ void main() {
     final pawn = OculumPawnGuardian(id: 'pawn_test', ownerTag: 'sheet_a');
     pawn.shield = 5;
 
-    expect(pawn.intercept(8), 0);
+    expect(pawn.intercept(8 + pawn.defense), 0);
     expect(pawn.shield, 0);
     expect(pawn.hp, 27);
   });
@@ -47,7 +76,7 @@ void main() {
       savingShield: true,
     );
 
-    expect(pawn.intercept(25), 0);
+    expect(pawn.intercept(25 + pawn.defense), 0);
     expect(pawn.shield, 0);
     expect(pawn.hp, 30);
     expect(pawn.savingShield, isFalse);

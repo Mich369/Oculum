@@ -15,8 +15,11 @@ Nel pannello **Pawn · Guardiani** puoi:
 
 La scheda della creatura e il guardiano condividono Vita e Scudo. Il Pawn non può proteggere se stesso.
 Intercetta soltanto il danno che raggiungerebbe la Vita, dopo Difesa e Scudi del bersaglio.
-Esempio: se 7 danni raggiungono una scheda protetta, il Pawn perde 7 Vita e la scheda protetta non li subisce.
-Il log indica il bersaglio protetto, Vita e Scudo persi e l’eventuale consumo dello Scudo di Salvataggio.
+Poi applica la **propria Difesa**, quindi il proprio Scudo e infine la propria Vita.
+Per Pawn e Pawn V2, la base è `(Volontà + Materia) / 2`, arrotondata per difetto, più livello e grado × 6.
+Il Pawn creatura usa la Difesa totale della sua scheda, inclusi i suoi bonus e malus.
+Esempio: Pawn base di livello 0 ha Difesa 4. Se intercetta 11 danni senza Scudo, ne assorbe 4 con Difesa e perde 7 Vita; la scheda protetta non li subisce.
+Il pannello mostra la Difesa. Il log indica il bersaglio protetto, danni assorbiti dalla Difesa, Vita e Scudo persi e l’eventuale consumo dello Scudo di Salvataggio.
 
 Ogni turno proprio guadagna 25 EXP e cura 10 Vita; se già al massimo guadagna invece 5 Scudo.
 A 20 Scudo ottiene Scudo di Salvataggio: il colpo che esaurisce lo Scudo non intacca la Vita, poi il salvataggio si disattiva.

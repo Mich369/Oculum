@@ -58,7 +58,7 @@ Map<String, int> oculumPawnStats([Map<String, int>? values]) {
 const oculumPawnDescription =
     'Livello 0 · Resilienza 3 · Volontà 3 · Materia 5 · Oculum 0 · 30 HP iniziali. '
     'Protegge una o più schede selezionate, intercettando solo il danno che raggiungerebbe gli HP. '
-    'Gli scudi dei bersagli si consumano normalmente. Alla fine del proprio turno: cura 10 HP oppure, '
+    'Gli scudi dei bersagli si consumano normalmente; poi si applicano Difesa e Scudo del Pawn. Alla fine del proprio turno: cura 10 HP oppure, '
     'se già a vita piena, +5 Scudo. Da 20 Scudo ottiene Scudo di Salvataggio.';
 
 Map<String, dynamic> oculumPawnMerchantOffer() => {
@@ -106,6 +106,7 @@ class OculumPawnGuardian {
     required this.ownerTag,
     this.creatureSheetTag = '',
     this.creatureMaxHp = 0,
+    this.creatureDefenseBonus = 0,
     this.hp = 30,
     this.shield = 0,
     this.savingShield = false,
@@ -141,6 +142,7 @@ class OculumPawnGuardian {
   final String ownerTag;
   final String creatureSheetTag;
   int creatureMaxHp;
+  int creatureDefenseBonus;
   int hp;
   int shield;
   bool savingShield;
@@ -166,6 +168,9 @@ class OculumPawnGuardian {
       isV2 ? oculumPawnV2ExperiencePerTurn : oculumPawnExperiencePerTurn;
   int get statPointsPerLevel => oculumPawnStatPointsPerLevel;
   String get displayName => isV2 ? 'Pawn V2' : 'Pawn';
+  int get baseDefense =>
+      ((stats['volonta']! + stats['materia']!) ~/ 2) + level + grade * 6;
+  int get defense => max(0, baseDefense + creatureDefenseBonus);
 
   void syncOwnerProgress({
     required int level,
@@ -224,14 +229,16 @@ class OculumPawnGuardian {
   }
 
   /// Returns HP damage still reaching the protected target. This amount has
-  /// already passed the target's defense and shields: never reduce it twice.
+  /// already passed the target's defense and shields. Apply the Pawn's own
+  /// defense once, followed by its shield and HP.
   int intercept(int damage) {
     final incoming = max(0, damage);
     if (!alive || pendingRegistration || incoming == 0) return incoming;
     final shieldBefore = shield;
-    final absorbedShield = min(shield, incoming);
+    final afterDefense = max(0, incoming - defense);
+    final absorbedShield = min(shield, afterDefense);
     shield -= absorbedShield;
-    var remaining = incoming - absorbedShield;
+    var remaining = afterDefense - absorbedShield;
     if (savingShield && shieldBefore > 0 && shield == 0) {
       savingShield = false;
       return 0;
@@ -262,6 +269,8 @@ class OculumPawnGuardian {
     'ownerTag': ownerTag,
     if (creatureSheetTag.isNotEmpty) 'creatureSheetTag': creatureSheetTag,
     if (creatureSheetTag.isNotEmpty) 'creatureMaxHp': creatureMaxHp,
+    if (creatureSheetTag.isNotEmpty)
+      'creatureDefenseBonus': creatureDefenseBonus,
     'hp': hp,
     'shield': shield,
     'savingShield': savingShield,
@@ -286,6 +295,7 @@ class OculumPawnGuardian {
         ownerTag: '${data['ownerTag'] ?? ''}',
         creatureSheetTag: '${data['creatureSheetTag'] ?? ''}',
         creatureMaxHp: readIntValue(data['creatureMaxHp']),
+        creatureDefenseBonus: readIntValue(data['creatureDefenseBonus']),
         hp: readIntValue(data['hp'], fallback: 30),
         shield: readIntValue(data['shield']),
         savingShield: readBoolValue(data['savingShield']),
@@ -350,6 +360,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       pendingRegistration: pawnRemoteAuthority,
     );
     pawnGuardians.add(pawn);
+    pawn.creatureDefenseBonus = difesa() - pawn.baseDefense;
     aggiungiLog(
       'Pawn creatura collegato alla scheda $tag. Seleziona le schede da proteggere nel pannello Pawn · Guardiani.',
     );
@@ -418,6 +429,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         'materia': materiaBase(),
         'oculum': oculumBase(),
       });
+      pawn.creatureDefenseBonus = difesa() - pawn.baseDefense;
       claimBrokenPawnCore(pawn);
     }
   }
@@ -466,6 +478,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       oculumController.text = '${pawn.stats['oculum']}';
       currentOculumController.text = '${max(0, currentOculum() + oculumDelta)}';
       invalidateDerivedDataCaches();
+      pawn.creatureDefenseBonus = difesa() - pawn.baseDefense;
     }
   }
 
@@ -1047,11 +1060,12 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       final hpBefore = pawn.hp;
       final shieldBefore = pawn.shield;
       final savingShieldBefore = pawn.savingShield;
+      final absorbedDefense = min(before, pawn.defense);
       remaining = pawn.intercept(remaining);
       claimBrokenPawnCore(pawn);
       updatePawnInitiativeToken(pawn);
       aggiungiLog(
-        '${pawn.displayName} subisce al posto di $tag ${before - remaining} danni destinati alla Vita: perde ${hpBefore - pawn.hp} HP ($hpBefore → ${pawn.hp}/${pawn.maxHp}) e ${shieldBefore - pawn.shield} Scudo ($shieldBefore → ${pawn.shield}).${savingShieldBefore && !pawn.savingShield ? " Scudo di Salvataggio consumato: la Vita è protetta dal colpo che esaurisce lo Scudo." : ""}',
+        '${pawn.displayName} intercetta al posto di $tag ${before - remaining} danni destinati alla Vita: la sua Difesa assorbe $absorbedDefense danni; perde ${hpBefore - pawn.hp} HP ($hpBefore → ${pawn.hp}/${pawn.maxHp}) e ${shieldBefore - pawn.shield} Scudo ($shieldBefore → ${pawn.shield}).${savingShieldBefore && !pawn.savingShield ? " Scudo di Salvataggio consumato: la Vita è protetta dal colpo che esaurisce lo Scudo." : ""}',
       );
     }
     if (remaining != damage) {
@@ -1190,6 +1204,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
             '${raw['creatureSheetTag'] ?? ''}' != sender) {
           raw.remove('creatureSheetTag');
           raw.remove('creatureMaxHp');
+          raw.remove('creatureDefenseBonus');
         }
         raw['targets'] = targets;
         raw['pendingRegistration'] = false;
@@ -1346,7 +1361,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${pawn.displayName} · Lv ${pawn.level} · Gr ${pawn.grade} · ${pawn.stats['resilienza']} Res · ${pawn.stats['volonta']} Vol · ${pawn.stats['materia']} Mat · ${pawn.stats['oculum']} Ocu\n${pawn.hp}/${pawn.maxHp} HP · ${pawn.shield} Scudo · EXP ${pawn.experience}/${oculumPawnExperienceForLevel(normalizedCampaignDifficulty())} · +${pawn.experiencePerTurn} EXP/turno · Turno ${pawn.turn}${pawn.isV2 ? ' · Proprietario Lv ${pawn.ownerLevel} / Gr ${pawn.ownerGrade}' : ''}${pawn.unspentStatPoints > 0 ? ' · ${pawn.unspentStatPoints} punti da assegnare' : ''}${pawn.savingShield ? ' · Scudo di Salvataggio' : ''}${pawn.pendingRegistration ? ' · Registrazione in attesa del Master' : ''}',
+                          '${pawn.displayName} · Lv ${pawn.level} · Gr ${pawn.grade} · ${pawn.stats['resilienza']} Res · ${pawn.stats['volonta']} Vol · ${pawn.stats['materia']} Mat · ${pawn.stats['oculum']} Ocu\n${pawn.hp}/${pawn.maxHp} HP · ${pawn.shield} Scudo · ${pawn.defense} Difesa · EXP ${pawn.experience}/${oculumPawnExperienceForLevel(normalizedCampaignDifficulty())} · +${pawn.experiencePerTurn} EXP/turno · Turno ${pawn.turn}${pawn.isV2 ? ' · Proprietario Lv ${pawn.ownerLevel} / Gr ${pawn.ownerGrade}' : ''}${pawn.unspentStatPoints > 0 ? ' · ${pawn.unspentStatPoints} punti da assegnare' : ''}${pawn.savingShield ? ' · Scudo di Salvataggio' : ''}${pawn.pendingRegistration ? ' · Registrazione in attesa del Master' : ''}',
                         ),
                         if (pawn.isV2)
                           Text(
