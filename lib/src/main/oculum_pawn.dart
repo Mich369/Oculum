@@ -104,6 +104,8 @@ class OculumPawnGuardian {
   OculumPawnGuardian({
     required this.id,
     required this.ownerTag,
+    this.creatureSheetTag = '',
+    this.creatureMaxHp = 0,
     this.hp = 30,
     this.shield = 0,
     this.savingShield = false,
@@ -137,6 +139,8 @@ class OculumPawnGuardian {
   }
   final String id;
   final String ownerTag;
+  final String creatureSheetTag;
+  int creatureMaxHp;
   int hp;
   int shield;
   bool savingShield;
@@ -155,7 +159,9 @@ class OculumPawnGuardian {
   bool conscious;
   List<String> targets;
   bool get alive => hp > 0;
-  int get maxHp => max(1, stats['resilienza'] ?? 3) * 10;
+  int get maxHp => creatureSheetTag.isNotEmpty && creatureMaxHp > 0
+      ? creatureMaxHp
+      : max(1, stats['resilienza'] ?? 3) * 10;
   int get experiencePerTurn =>
       isV2 ? oculumPawnV2ExperiencePerTurn : oculumPawnExperiencePerTurn;
   int get statPointsPerLevel => oculumPawnStatPointsPerLevel;
@@ -210,6 +216,9 @@ class OculumPawnGuardian {
     stats.updateAll((key, value) => value + (allocation[key] ?? 0));
     allocatedStats.updateAll((key, value) => value + (allocation[key] ?? 0));
     unspentStatPoints -= spent;
+    if (creatureSheetTag.isNotEmpty && creatureMaxHp > 0) {
+      creatureMaxHp += 10 * resilience;
+    }
     if (resilience > 0 && alive) hp = min(maxHp, hp + 10 * resilience);
     return true;
   }
@@ -251,6 +260,8 @@ class OculumPawnGuardian {
   Map<String, dynamic> toJson() => {
     'id': id,
     'ownerTag': ownerTag,
+    if (creatureSheetTag.isNotEmpty) 'creatureSheetTag': creatureSheetTag,
+    if (creatureSheetTag.isNotEmpty) 'creatureMaxHp': creatureMaxHp,
     'hp': hp,
     'shield': shield,
     'savingShield': savingShield,
@@ -273,6 +284,8 @@ class OculumPawnGuardian {
       OculumPawnGuardian(
         id: '${data['id'] ?? ''}',
         ownerTag: '${data['ownerTag'] ?? ''}',
+        creatureSheetTag: '${data['creatureSheetTag'] ?? ''}',
+        creatureMaxHp: readIntValue(data['creatureMaxHp']),
         hp: readIntValue(data['hp'], fallback: 30),
         shield: readIntValue(data['shield']),
         savingShield: readBoolValue(data['savingShield']),
@@ -312,6 +325,150 @@ class OculumPawnGuardian {
 }
 
 extension _OculumPawnRuntime on _OculumHomePageState {
+  bool pawnControlledBy(OculumPawnGuardian pawn, String tag) =>
+      pawn.ownerTag == tag ||
+      (pawn.creatureSheetTag.isNotEmpty && pawn.creatureSheetTag == tag);
+  void registerPawnCreature(String ownerTag) {
+    final tag = pawnSenderTag;
+    if (pawnGuardians.any((pawn) => pawn.creatureSheetTag == tag)) return;
+    final pawn = OculumPawnGuardian(
+      id: 'pawn_creature_${DateTime.now().microsecondsSinceEpoch}',
+      ownerTag: ownerTag,
+      creatureSheetTag: tag,
+      creatureMaxHp: maxHp(),
+      hp: hpCorrenti(),
+      shield: leggiNumero(scudoController),
+      savingShield: scudoSalvataggioAttivo,
+      level: leggiNumero(livelloController),
+      grade: leggiNumero(gradoController),
+      stats: {
+        'resilienza': resilienzaBase(),
+        'volonta': volontaBase(),
+        'materia': materiaBase(),
+        'oculum': oculumBase(),
+      },
+      pendingRegistration: pawnRemoteAuthority,
+    );
+    pawnGuardians.add(pawn);
+    aggiungiLog(
+      'Pawn creatura collegato alla scheda $tag. Seleziona le schede da proteggere nel pannello Pawn · Guardiani.',
+    );
+    if (pawn.pendingRegistration) {
+      unawaited(
+        sendPawnMessage('pawn_command', {
+          'action': 'create',
+          'pawnId': pawn.id,
+          'targets': pawn.targets,
+          'pawnData': pawn.toJson(),
+        }),
+      );
+    } else {
+      sendPawnSnapshot();
+    }
+    notifyActiveSheetSummaryChanged();
+  }
+
+  void syncPawnCreatureFromCurrentSheet() {
+    if (schedePersonaggio.isEmpty) return;
+    for (final pawn in pawnGuardians.where(
+      (p) =>
+          p.creatureSheetTag.isNotEmpty && p.creatureSheetTag != pawnSenderTag,
+    )) {
+      final index = List.generate(
+        schedePersonaggio.length,
+        (i) => i,
+      ).where((i) => sheetTagAt(i) == pawn.creatureSheetTag).firstOrNull;
+      if (index == null) continue;
+      final sheet = schedePersonaggio[index];
+      final resilience = readIntValue(
+        sheet['resilienza'],
+        fallback: pawn.stats['resilienza']!,
+      );
+      if (pawn.creatureMaxHp > 0) {
+        pawn.creatureMaxHp = max(
+          1,
+          pawn.creatureMaxHp + (resilience - pawn.stats['resilienza']!) * 10,
+        );
+      }
+      for (final key in pawn.stats.keys.toList()) {
+        pawn.stats[key] = readIntValue(sheet[key], fallback: pawn.stats[key]!);
+      }
+      pawn.hp = readIntValue(
+        sheet['currentHp'],
+        fallback: pawn.hp,
+      ).clamp(0, pawn.maxHp);
+      pawn.shield = max(0, readIntValue(sheet['scudo'], fallback: pawn.shield));
+      pawn.savingShield = readBoolValue(sheet['scudoSalvataggioAttivo']);
+      pawn.level = readIntValue(sheet['livello'], fallback: pawn.level);
+      pawn.grade = readIntValue(sheet['grado'], fallback: pawn.grade);
+      claimBrokenPawnCore(pawn);
+    }
+    for (final pawn in pawnGuardians.where(
+      (p) => p.creatureSheetTag == pawnSenderTag,
+    )) {
+      pawn.creatureMaxHp = maxHp();
+      pawn.hp = hpCorrenti().clamp(0, pawn.maxHp);
+      pawn.shield = max(0, leggiNumero(scudoController));
+      pawn.savingShield = scudoSalvataggioAttivo;
+      pawn.level = leggiNumero(livelloController);
+      pawn.grade = leggiNumero(gradoController);
+      pawn.stats.addAll({
+        'resilienza': resilienzaBase(),
+        'volonta': volontaBase(),
+        'materia': materiaBase(),
+        'oculum': oculumBase(),
+      });
+      claimBrokenPawnCore(pawn);
+    }
+  }
+
+  void syncPawnCreatureToSheet(OculumPawnGuardian pawn) {
+    if (pawn.creatureSheetTag.isEmpty) return;
+    final index = List.generate(
+      schedePersonaggio.length,
+      (i) => i,
+    ).where((i) => sheetTagAt(i) == pawn.creatureSheetTag).firstOrNull;
+    if (index == null) return;
+    final sheet = schedePersonaggio[index];
+    sheet['currentHp'] = '${pawn.hp}';
+    sheet['scudo'] = '${pawn.shield}';
+    sheet['scudoSalvataggioAttivo'] = pawn.savingShield;
+    sheet['livello'] = '${pawn.level}';
+    sheet['grado'] = '${pawn.grade}';
+    for (final entry in pawn.stats.entries) {
+      final previous = readIntValue(sheet[entry.key]);
+      final currentKey = switch (entry.key) {
+        'resilienza' => 'currentResilienza',
+        'volonta' => 'currentVolonta',
+        'materia' => 'currentMateria',
+        _ => 'currentOculum',
+      };
+      final current = readIntValue(sheet[currentKey]);
+      sheet[entry.key] = '${entry.value}';
+      sheet[currentKey] = '${max(0, current + entry.value - previous)}';
+    }
+    if (index == schedaCorrente) {
+      currentHpController.text = '${pawn.hp}';
+      scudoController.text = '${pawn.shield}';
+      scudoSalvataggioAttivo = pawn.savingShield;
+      livelloController.text = '${pawn.level}';
+      gradoController.text = '${pawn.grade}';
+      for (final (key, base, current) in [
+        ('resilienza', resilienzaController, currentResilienzaController),
+        ('volonta', volontaController, currentVolontaController),
+        ('materia', materiaController, currentMateriaController),
+      ]) {
+        final delta = pawn.stats[key]! - leggiNumero(base);
+        base.text = '${pawn.stats[key]}';
+        current.text = '${max(0, leggiNumero(current) + delta)}';
+      }
+      final oculumDelta = pawn.stats['oculum']! - oculumBase();
+      oculumController.text = '${pawn.stats['oculum']}';
+      currentOculumController.text = '${max(0, currentOculum() + oculumDelta)}';
+      invalidateDerivedDataCaches();
+    }
+  }
+
   bool get pawnRemoteAuthority =>
       realtimeService?.isConnected == true && !realtimeIsMasterRole;
   String get pawnSenderTag => sheetTagAt(schedaCorrente);
@@ -465,7 +622,8 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       return;
     }
     for (final pawn in pawnGuardians.where(
-      (pawn) => pawn.pendingRegistration && pawn.ownerTag == pawnSenderTag,
+      (pawn) =>
+          pawn.pendingRegistration && pawnControlledBy(pawn, pawnSenderTag),
     )) {
       unawaited(
         sendPawnMessage('pawn_command', {
@@ -574,6 +732,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
     for (final tag in pawn.targets) {
       choices.putIfAbsent(tag, () => '$tag (salvato)');
     }
+    choices.remove(pawn.creatureSheetTag);
     final selected = pawn.targets.toSet();
     final result = await showDialog<List<String>>(
       context: context,
@@ -634,6 +793,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
   }
 
   void updatePawnInitiativeToken(OculumPawnGuardian pawn) {
+    syncPawnCreatureToSheet(pawn);
     for (final token in masterInitiativeTokens.where(
       (token) => token['pawnId'] == pawn.id,
     )) {
@@ -653,7 +813,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
 
   void addPawnToInitiative(OculumPawnGuardian pawn) {
     if (pawnRemoteAuthority) {
-      if (pawn.ownerTag == pawnSenderTag || realtimeIsCoMasterRole) {
+      if (pawnControlledBy(pawn, pawnSenderTag) || realtimeIsCoMasterRole) {
         unawaited(
           sendPawnMessage('pawn_command', {
             'action': 'initiative',
@@ -666,10 +826,26 @@ extension _OculumPawnRuntime on _OculumHomePageState {
     if (masterInitiativeTokens.any((token) => token['pawnId'] == pawn.id)) {
       return;
     }
+    final existing = pawn.creatureSheetTag.isEmpty
+        ? null
+        : masterInitiativeTokens
+              .where((token) => token['sheetTag'] == pawn.creatureSheetTag)
+              .firstOrNull;
+    if (existing != null) {
+      existing['pawnId'] = pawn.id;
+      existing['role'] = 'pawn';
+      updatePawnInitiativeToken(pawn);
+      notifyActiveSheetSummaryChanged();
+      programmaSalvataggio();
+      sendRealtimeInitiativeSnapshotIfPublished();
+      return;
+    }
     setState(
       () => masterInitiativeTokens.add({
         'id': pawn.id,
-        'sheetTag': pawn.id,
+        'sheetTag': pawn.creatureSheetTag.isNotEmpty
+            ? pawn.creatureSheetTag
+            : pawn.id,
         'pawnId': pawn.id,
         'name': pawn.displayName,
         'role': 'pawn',
@@ -693,10 +869,11 @@ extension _OculumPawnRuntime on _OculumHomePageState {
   }
 
   Future<void> advancePawnTurn(String id, int turn) async {
+    syncPawnCreatureFromCurrentSheet();
     final pawn = pawnGuardians.where((pawn) => pawn.id == id).firstOrNull;
     if (pawn == null) return;
     if (pawnRemoteAuthority) {
-      if ((pawn.ownerTag == pawnSenderTag || realtimeIsCoMasterRole) &&
+      if ((pawnControlledBy(pawn, pawnSenderTag) || realtimeIsCoMasterRole) &&
           pawn.alive) {
         unawaited(
           sendPawnMessage('pawn_command', {
@@ -746,7 +923,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         stat: TextEditingController(text: '0'),
     };
     try {
-      final allocation = await showDialog<Map<String, int>>(
+      final allocation = await oculumShowDialogUntilClosed<Map<String, int>>(
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: Text(
@@ -811,7 +988,9 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       );
       if (allocation == null || !mounted) return;
       if (pawnRemoteAuthority) {
-        if (pawn.ownerTag != pawnSenderTag && !realtimeIsCoMasterRole) return;
+        if (!pawnControlledBy(pawn, pawnSenderTag) && !realtimeIsCoMasterRole) {
+          return;
+        }
         final requested = allocation.values.fold<int>(
           0,
           (sum, value) => sum + value,
@@ -854,10 +1033,14 @@ extension _OculumPawnRuntime on _OculumHomePageState {
   }
 
   int redirectPawnHpDamage(String tag, int damage) {
+    syncPawnCreatureFromCurrentSheet();
     var remaining = max(0, damage);
     for (final pawn in pawnGuardians.where(
       (pawn) =>
-          pawn.alive && !pawn.pendingRegistration && pawn.targets.contains(tag),
+          pawn.alive &&
+          !pawn.pendingRegistration &&
+          pawn.creatureSheetTag != tag &&
+          pawn.targets.contains(tag),
     )) {
       if (remaining == 0) break;
       final before = remaining;
@@ -881,7 +1064,10 @@ extension _OculumPawnRuntime on _OculumHomePageState {
 
   bool pawnProtects(String tag) => pawnGuardians.any(
     (pawn) =>
-        pawn.alive && !pawn.pendingRegistration && pawn.targets.contains(tag),
+        pawn.alive &&
+        !pawn.pendingRegistration &&
+        pawn.creatureSheetTag != tag &&
+        pawn.targets.contains(tag),
   );
 
   void retryPawnDamage(Map<String, dynamic> request) {
@@ -971,6 +1157,9 @@ extension _OculumPawnRuntime on _OculumHomePageState {
           ..clear()
           ..addAll(received)
           ..addAll(pending);
+        for (final pawn in received) {
+          syncPawnCreatureToSheet(pawn);
+        }
         for (final pawn in received.where(
           (p) => p.ownerTag == pawnSenderTag && !p.alive,
         )) {
@@ -1022,11 +1211,13 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         pawnGuardians.add(created);
       } else if (action == 'targets' &&
           pawn != null &&
-          (pawn.ownerTag == sender || payload['senderRole'] == 'coMaster')) {
+          (pawnControlledBy(pawn, sender) ||
+              payload['senderRole'] == 'coMaster')) {
         pawn.targets = targets;
       } else if (action == 'allocate' &&
           pawn != null &&
-          (pawn.ownerTag == sender || payload['senderRole'] == 'coMaster') &&
+          (pawnControlledBy(pawn, sender) ||
+              payload['senderRole'] == 'coMaster') &&
           payload['allocation'] is Map) {
         final allocation = (payload['allocation'] as Map).map(
           (key, value) => MapEntry('$key', readIntValue(value)),
@@ -1036,7 +1227,8 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         }
       } else if (action == 'advance' &&
           pawn != null &&
-          (pawn.ownerTag == sender || payload['senderRole'] == 'coMaster') &&
+          (pawnControlledBy(pawn, sender) ||
+              payload['senderRole'] == 'coMaster') &&
           pawn.alive) {
         if (pawn.isV2) {
           pawn.syncOwnerProgress(
@@ -1055,7 +1247,8 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         }
       } else if (action == 'initiative' &&
           pawn != null &&
-          (pawn.ownerTag == sender || payload['senderRole'] == 'coMaster')) {
+          (pawnControlledBy(pawn, sender) ||
+              payload['senderRole'] == 'coMaster')) {
         addPawnToInitiative(pawn);
       }
       notifyActiveSheetSummaryChanged();
@@ -1160,7 +1353,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
                           children: [
                             if (!pawnRemoteAuthority ||
                                 haPermessiMaster ||
-                                pawn.ownerTag == pawnSenderTag)
+                                pawnControlledBy(pawn, pawnSenderTag))
                               OutlinedButton.icon(
                                 onPressed: () => choosePawnTargets(pawn),
                                 icon: const Icon(Icons.shield_outlined),
@@ -1168,7 +1361,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
                               ),
                             if (pawn.unspentStatPoints > 0 &&
                                 (!pawnRemoteAuthority ||
-                                    pawn.ownerTag == pawnSenderTag ||
+                                    pawnControlledBy(pawn, pawnSenderTag) ||
                                     haPermessiMaster ||
                                     realtimeIsCoMasterRole))
                               OutlinedButton.icon(
@@ -1181,7 +1374,10 @@ extension _OculumPawnRuntime on _OculumHomePageState {
                               onPressed:
                                   !pawn.alive ||
                                       (pawnRemoteAuthority &&
-                                          pawn.ownerTag != pawnSenderTag &&
+                                          !pawnControlledBy(
+                                            pawn,
+                                            pawnSenderTag,
+                                          ) &&
                                           !haPermessiMaster &&
                                           !realtimeIsCoMasterRole)
                                   ? null
@@ -1190,7 +1386,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
                               child: Text('Termina turno ${pawn.displayName}'),
                             ),
                             if (!pawnRemoteAuthority ||
-                                pawn.ownerTag == pawnSenderTag ||
+                                pawnControlledBy(pawn, pawnSenderTag) ||
                                 haPermessiMaster ||
                                 realtimeIsCoMasterRole)
                               OutlinedButton(

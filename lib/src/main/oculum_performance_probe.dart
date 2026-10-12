@@ -14,6 +14,16 @@ class OculumPerformanceProbe {
   Future<OculumStructuredEffect?> editEffect(OculumStructuredEffect effect) =>
       _state.showStructuredEffectDialog(initial: effect);
   bool tickEffects(String unit) => _state.tickActiveStructuredEffects(unit);
+  int subtraitValue(String id) => _state.hiddenEyeTotal(
+    _state.hiddenEyeStats.firstWhere((stat) => stat.id == id),
+  );
+  Future<void> spawnBookCreature(String id) =>
+      _state.showMonsterBookQuickSpawnDialog(monsterById(id)!);
+  List<OculumPawnGuardian> get pawns => List.unmodifiable(_state.pawnGuardians);
+  int interceptPawnDamage(String tag, int amount) =>
+      _state.redirectPawnHpDamage(tag, amount);
+  Future<void> advancePawn(String id, int turn) =>
+      _state.advancePawnTurn(id, turn);
 
   void openDice() => _state.openReferenceDetail(
     'Sessione Dadi',

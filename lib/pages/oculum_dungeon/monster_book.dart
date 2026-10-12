@@ -328,6 +328,34 @@ List<Map<String, dynamic>> _monsterBookMaps(dynamic value) {
 /// presente un fallback (non crashare).
 const List<MonsterBookEntry> _craftedMonsterBookEntries = [
   MonsterBookEntry(
+    id: 'pawn_guardiano',
+    nameIt: 'Pawn',
+    nameEn: 'Pawn',
+    descIt:
+        'Creatura meccanica senza Oculum Art. Base livello 0: Resilienza 3, Volontà 3, Materia 5, Oculum 0. Protegge una o più schede selezionate: intercetta solo i danni che raggiungerebbero la Vita, dopo Difesa e Scudi del bersaglio. A fine turno cura 10 Vita oppure, se già al massimo, ottiene 5 Scudo. A 20 Scudo attiva Scudo di Salvataggio. Guadagna 25 EXP per turno e 6 punti per livello. Usa il pannello Pawn · Guardiani per bersagli, turni e crescita. Alla morte lascia un Nucleo rotto di Pawn.',
+    descEn:
+        'Mechanical creature without Oculum Art. Level 0: Resilience 3, Will 3, Matter 5, Oculum 0. Intercepts HP damage for selected sheets after their defenses and shields. Each own turn heals 10 HP or gains 5 shield when already full; 20 shield activates Saving Shield. Gains 25 XP per turn and six points per level. Use the Pawn guardian panel. Leaves a broken Pawn core on death.',
+    elementId: 'metallo',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 3,
+      'volonta': 3,
+      'materia': 5,
+      'oculum': 0,
+    },
+    skillIds: [
+      'pawn_guardiano_protezione',
+      'pawn_guardiano_riparazione',
+      'pawn_guardiano_salvataggio',
+    ],
+    dropIds: ['nucleo_rotto_pawn'],
+    classificationTags: ['Costrutto', 'Meccanico'],
+  ),
+  MonsterBookEntry(
     id: 'legno_marcio',
     nameIt: 'Legno Marcio',
     nameEn: 'Rotwood',
@@ -4634,6 +4662,15 @@ String _inspiredMonsterSkillText(String rawId) {
 }
 
 String monsterBookSkillText(String rawId) {
+  if (rawId.startsWith('pawn_guardiano_')) {
+    if (rawId.contains('protezione')) {
+      return 'Protezione Pawn — I/Passiva: seleziona le schede nel pannello Pawn · Guardiani. Intercetta solo danni alla Vita, dopo gli Scudi del bersaglio. II/La protezione mantiene queste regole. III/La protezione mantiene queste regole. Nessun costo.';
+    }
+    if (rawId.contains('riparazione')) {
+      return 'Riparazione Pawn — I/Passiva: a fine turno cura 10 Vita; se già al massimo ottiene 5 Scudo. +25 EXP per turno e 6 punti per livello. II/La riparazione mantiene queste regole. III/La riparazione mantiene queste regole. Nessun costo.';
+    }
+    return 'Scudo di Salvataggio — I/Passiva: a 20 Scudo si attiva; il colpo che esaurisce lo Scudo non raggiunge la Vita, poi si disattiva. II/La protezione mantiene queste regole. III/La protezione mantiene queste regole. Nessun costo.';
+  }
   if (rawId.startsWith('riccio_aculeo_')) {
     return oculumSpineHedgehogSkillText(rawId);
   }
@@ -5168,10 +5205,8 @@ List<MonsterBookEntry> _withMonsterVariants(
       for (final pair in entry.stats.entries)
         pair.key: switch (pair.key) {
           'level' => min(100, max(0, pair.value + (entry.isBoss ? 8 : 3))),
-          'resilienza' ||
-          'volonta' ||
-          'materia' ||
-          'oculum' => pair.value + bonus,
+          'resilienza' || 'volonta' || 'materia' || 'oculum' =>
+            entry.id.startsWith('pawn_guardiano') ? 0 : pair.value + bonus,
           'hp' => pair.value + bonus * 12,
           'atk' => pair.value + bonus * 2,
           'def' => pair.value + bonus * 2,

@@ -4062,6 +4062,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   void salvaSchedaCorrenteInMemoria() {
+    syncPawnCreatureFromCurrentSheet();
     if (schedePersonaggio.isEmpty) {
       final next = statoCorrenteJson();
       next['localUpdatedAt'] = DateTime.now().toIso8601String();
@@ -6057,7 +6058,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     final preset = folliaPresetById(presetId);
     if (preset == null) return;
 
-    if (!folliaGeneratoreSbloccato()) {
+    if (!haPermessiMaster && !folliaGeneratoreSbloccato()) {
       setState(() {
         risultato = t(
           'Generatore Follia bloccato: serve almeno 1 Follia nel party.',
@@ -7165,6 +7166,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     MonsterBookEntry? monsterBookSource,
   }) async {
     final selectedType = forcedType ?? quickSheetType;
+    final pawnCreatureOwner = pawnSenderTag;
     final createWithOculusRules = oculusModActive;
     final baseName = quickSheetNameController.text.trim().isEmpty
         ? (fallbackName?.trim().isNotEmpty == true
@@ -7179,7 +7181,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       quickSheetCountController.text,
       fallback: 1,
     ).clamp(1, 10).toInt();
-    if (isFolliaGhostText('$description $baseName') &&
+    if (!haPermessiMaster &&
+        isFolliaGhostText('$description $baseName') &&
         !folliaGeneratoreSbloccato()) {
       setState(() {
         risultato = t(
@@ -8116,8 +8119,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
                 kind: kind,
               );
         if (generatedArt != null) {
-          if (selectedType.toLowerCase().contains('mostro') ||
-              matchedMonster != null) {
+          if (!(matchedMonster?.id.startsWith('pawn_guardiano') ?? false) &&
+              (selectedType.toLowerCase().contains('mostro') ||
+                  matchedMonster != null)) {
             oculumCompleteMonsterOpen(
               generatedArt,
               name: kind,
@@ -8324,6 +8328,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
       salvaSchedaCorrenteInMemoria();
       createdNames.add(nome);
+      if (monsterBookSource?.id.startsWith('pawn_guardiano') ?? false) {
+        registerPawnCreature(pawnCreatureOwner);
+      }
       if (quickSheetAddToInitiative && enemyProfile) {
         addSheetToMasterInitiative(schedaCorrente, rollInitiative: true);
       }

@@ -256,11 +256,19 @@ void main() {
       state.dannoOltreDifesa = true;
       state.dannoOltreScudi = true;
       // Test elemental damage independently of the random Luck dodge.
-      final luck = (state.hiddenEyeStats as List<HiddenEyeStat>).firstWhere(
-        (stat) => stat.id == 'fortuna',
-      );
-      final luckUnlocked = luck.unlocked;
-      luck.unlocked = false;
+      // Default subtraits are re-enabled by the damage path. Cancel the real
+      // total instead of toggling unlocked, so Luck cannot mask this assertion.
+      const luckIsolationSource = 'test:elemental_damage_without_luck';
+      state.activeStructuredEffects.add(<String, dynamic>{
+        'source': luckIsolationSource,
+        'type': 'modifica_sottotratto',
+        'target': 'fortuna',
+        'value': -probe.subtraitValue('fortuna'),
+        'remaining': -1,
+        'unit': 'turni',
+      });
+      probe.invalidateDerivedCaches();
+      expect(probe.subtraitValue('fortuna'), lessThanOrEqualTo(0));
       try {
         probe.damage(10);
         expect(probe.currentHp(), hp);
@@ -273,7 +281,10 @@ void main() {
               'Il danno da ghiaccio deve diminuire gli HP: stats=${probe.coreStats()}, stato=${state.statoForzaAttivo}, log=${state.risultato}',
         );
       } finally {
-        luck.unlocked = luckUnlocked;
+        state.activeStructuredEffects.removeWhere(
+          (effect) => effect['source'] == luckIsolationSource,
+        );
+        probe.invalidateDerivedCaches();
       }
       // The legacy armor effect used singular English "turn" and never expired.
       state.activeStructuredEffects.add({

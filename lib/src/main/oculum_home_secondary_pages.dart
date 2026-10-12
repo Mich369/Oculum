@@ -5244,7 +5244,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
 
     try {
-      await showDialog<void>(
+      await oculumShowDialogUntilClosed<void>(
         context: context,
         builder: (dialogContext) => StatefulBuilder(
           builder: (context, refresh) {
@@ -5266,6 +5266,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             final validNumbers = controllers.values.every(
               (c) => int.tryParse(c.text) != null && int.parse(c.text) >= 0,
             );
+            final madnessBlocked =
+                !haPermessiMaster &&
+                isFolliaGhostText(
+                  '${systemMonsterGeneratorDescription(entry)} ${entry.nameIt}',
+                ) &&
+                !folliaGeneratoreSbloccato();
             final valid = validNumbers && assigned == expected && validOculum;
             return AlertDialog(
               backgroundColor: backgroundMidColor,
@@ -5300,6 +5306,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         initialValue: variant,
+                        isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'Variante',
                         ),
@@ -5334,6 +5341,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                           ),
                         ),
                       const SizedBox(height: 10),
+                      if (madnessBlocked)
+                        smallInfoText(
+                          'Serve almeno 1 Follia nel party. Master e co-Master possono oltrepassare questo requisito.',
+                        ),
                       Text(
                         'Punti assegnati: $assigned / $expected',
                         style: TextStyle(
@@ -5365,7 +5376,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   child: const Text('Annulla'),
                 ),
                 FilledButton(
-                  onPressed: !valid
+                  onPressed: !valid || madnessBlocked
                       ? null
                       : () async {
                           quickSheetNameController.text = entry.nameIt;
@@ -6358,7 +6369,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             color: tertiaryColor,
           ),
         ];
-    final folliaUnlocked = folliaGeneratoreSbloccato();
+    final folliaUnlocked = haPermessiMaster || folliaGeneratoreSbloccato();
     final folliaTotal = folliaPartyTotale();
     final folliaChance = folliaIncontroPercentuale();
 
