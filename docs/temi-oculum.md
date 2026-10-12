@@ -19,3 +19,14 @@ Esempio: applicando Vetro strega, una nuova finestra usa la superficie verde scu
 `test/oculum_all_themes_test.dart` attraversa tutte le palette disponibili nella scheda a 1440×900 e 390×844, verifica la propagazione al navigatore, apre e chiude finestre, menu e pannelli inferiori, controlla il contrasto del testo e dei pulsanti e verifica anche una palette personalizzata chiara e il caso del testo trasparente.
 
 Questi controlli non sostituiscono una prova manuale su tutti i dispositivi o una verifica online fra due persone.
+
+## Skill con effetti che usano dadi
+
+- Nel valore dell'effetto puoi scrivere `1d6+@Danni`, `2*(1d6+1d4)` oppure `1d6+OculumSpeso*2`. Puoi continuare a usare il campo Dadi separato.
+- Un effetto composto soltanto dal campo Dadi può essere salvato senza aggiungere un valore manuale: la base viene impostata a zero.
+- Anche la durata accetta formule come `1d4+2`. Il campo Dadi può continuare ad aumentare la durata invece del valore.
+- I dadi vengono tirati all'attivazione. Valore e durata risolti sono conservati per i turni successivi: i tick non effettuano altri tiri. I risultati sono riportati nei log degli effetti.
+- I gruppi di dadi mantengono i limiti esistenti: da 1 a 20 dadi, da 2 a 1000 facce per dado.
+- Conferma della skill ed editor degli effetti mantengono i controller dei campi di testo fino alla fine della chiusura del dialogo, evitando l'errore di utilizzo di un controller già liberato.
+
+Esempio: un bonus a Riflessi con valore `1d6` e durata `1d4+2`, se ottiene 4 e 2, applica +4 Riflessi per 4 turni. Al turno seguente resta +4 e la durata scende a 3: non vengono ritirati i dadi.

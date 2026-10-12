@@ -188,20 +188,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         final negative =
             effect.mode == 'diminuzione' || effect.type.startsWith('rimuovi_');
         final value = negative ? -roll.value.abs() : roll.value;
-        final durationEffect = OculumStructuredEffect(
-          valueExpression: effect.duration.trim().isEmpty
-              ? '0'
-              : effect.duration,
-        );
-        final baseDuration = effect.duration.trim().isEmpty
-            ? 0
-            : oculumEvaluateStructuredEffectValue(
-                durationEffect,
-                variables: variables,
-                subtraits: hiddenEyeStats,
-                spentResources: spentResources,
-              );
-        final duration = max(0, baseDuration + roll.durationBonus);
+        final duration = max(0, roll.baseDuration + roll.durationBonus);
         final effectTarget = oculumStructuredEffectTargetKey(effect);
         final target = effect.type == 'stato'
             ? (effect.appliedState.isEmpty

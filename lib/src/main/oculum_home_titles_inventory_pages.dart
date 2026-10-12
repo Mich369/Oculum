@@ -1289,7 +1289,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF120D18),
+        backgroundColor: backgroundMidColor,
         title: Text(t('Elimina forma?', 'Delete form?')),
         content: Text(
           t(
@@ -1626,7 +1626,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     final confirmationGuard = OculumSingleConfirmationGuard();
     String transientError = '';
     try {
-      await showDialog<void>(
+      await oculumShowDialogUntilClosed<void>(
         context: context,
         barrierDismissible: true,
         builder: (dialogContext) => StatefulBuilder(
@@ -1706,7 +1706,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               }
 
               return AlertDialog(
-                backgroundColor: const Color(0xFF120D18),
+                backgroundColor: backgroundMidColor,
                 title: Text(
                   skill.nome.trim().isEmpty
                       ? t('Usa Skill', 'Use Skill')

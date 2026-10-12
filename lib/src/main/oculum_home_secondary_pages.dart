@@ -8218,7 +8218,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               }
 
               return AlertDialog(
-                backgroundColor: const Color(0xFF120D18),
+                backgroundColor: backgroundMidColor,
                 title: Text(
                   '${skill.nome.trim().isEmpty ? t('Skill', 'Skill') : skill.nome.trim()} '
                   '— ${t('livello', 'level')} ${artLevelRoman(targetLevel)}',

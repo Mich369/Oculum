@@ -48,7 +48,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       final result = await showDialog<int>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          backgroundColor: const Color(0xFF120D18),
+          backgroundColor: backgroundMidColor,
           title: Text(t('Riscrivi turno', 'Rewrite turn')),
           content: TextField(
             controller: controller,
@@ -97,7 +97,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF120D18),
+        backgroundColor: backgroundMidColor,
         title: Text(
           t('Cenere dopo il turno $freeTurns', 'Ash after turn $freeTurns'),
         ),
@@ -858,7 +858,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                     haystack.contains(oculumNormalizeText(query)));
           }).toList();
           return AlertDialog(
-            backgroundColor: const Color(0xFF120D18),
+            backgroundColor: backgroundMidColor,
             title: Row(
               children: [
                 const Icon(Icons.menu_book_outlined),
@@ -1427,7 +1427,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     }
 
     try {
-      return await showDialog<OculumStructuredEffect>(
+      return await oculumShowDialogUntilClosed<OculumStructuredEffect>(
         context: context,
         builder: (dialogContext) {
           return StatefulBuilder(
@@ -1457,7 +1457,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
               );
 
               return AlertDialog(
-                backgroundColor: const Color(0xFF120D18),
+                backgroundColor: backgroundMidColor,
                 title: Text(
                   initial == null
                       ? t('Aggiungi effetto', 'Add effect')
@@ -1733,7 +1733,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                 t('Valore o formula', 'Value or formula'),
                               ).copyWith(
                                 helperText:
-                                    '10, @Res+1, 25% Forza, OculumSpeso x 1.3',
+                                    '10, 1d6+@Danni, @Res+1, OculumSpeso*2',
                               ),
                           onChanged: (_) =>
                               scheduleDialogRefresh(setDialogState),
@@ -2055,6 +2055,10 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                   ElevatedButton.icon(
                     onPressed: () {
                       final effect = currentEffect();
+                      if (effect.valueExpression.trim().isEmpty &&
+                          effect.diceExpression.trim().isNotEmpty) {
+                        effect.valueExpression = '0';
+                      }
                       if (effect.valueExpression.trim().isEmpty) {
                         setDialogState(() {
                           error = t(

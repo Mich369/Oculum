@@ -133,6 +133,103 @@ void main() {
   });
 
   group('dadi, livello, grado e durata', () {
+    test('i tick non consumano tiri delle formule a dado', () {
+      final rng = Random(11);
+      final untouched = Random(11);
+      final resolved = oculumResolveStructuredEffectRoll(
+        OculumStructuredEffect(valueExpression: '1d6+2', duration: '1d4+3'),
+        variables: variables,
+        isTick: true,
+        random: rng,
+      );
+      expect(resolved.dice.rolls, isEmpty);
+      expect(resolved.value, 2);
+      expect(resolved.baseDuration, 3);
+      expect(rng.nextInt(1000), untouched.nextInt(1000));
+    });
+    test(
+      'dadi nella formula funzionano insieme a sottotratti e Oculum speso',
+      () {
+        final expectedDice = Random(7).nextInt(6) + 1;
+        final resolved = oculumResolveStructuredEffectRoll(
+          OculumStructuredEffect(valueExpression: '1d6+@Velo+OculumSpeso*2'),
+          variables: variables,
+          subtraits: subtraits,
+          spentResources: {'oculum': 3},
+          random: Random(7),
+        );
+        expect(resolved.value, expectedDice + 4 + 6);
+        expect(resolved.dice.rolls, [expectedDice]);
+      },
+    );
+
+    test(
+      'formula, dado aggiuntivo e durata si tirano una volta senza doppio conteggio',
+      () {
+        final rng = Random(9);
+        final a = rng.nextInt(6) + 1;
+        final b = rng.nextInt(4) + 1;
+        final c = rng.nextInt(8) + 1;
+        final d = rng.nextInt(3) + 1;
+        final resolved = oculumResolveStructuredEffectRoll(
+          OculumStructuredEffect(
+            valueExpression: '2*(1d6+1d4)',
+            diceExpression: '1d8+2',
+            duration: '1d3+1',
+          ),
+          variables: variables,
+          random: Random(9),
+        );
+        expect(resolved.value, 2 * (a + b) + c + 2);
+        expect(resolved.baseDuration, d + 1);
+        expect(resolved.dice.rolls, [a, b, c, d]);
+        expect(resolved.dice.modifier, 2);
+      },
+    );
+
+    test(
+      'un effetto composto soltanto dal dado non richiede un valore aggiuntivo',
+      () {
+        final resolved = oculumResolveStructuredEffectRoll(
+          OculumStructuredEffect(valueExpression: '', diceExpression: '1d6'),
+          variables: variables,
+          random: Random(2),
+        );
+        expect(resolved.value, resolved.dice.rolls.single);
+      },
+    );
+
+    test(
+      'dadi in durata e nel campo dedicato si sommano alla durata corretta',
+      () {
+        final resolved = oculumResolveStructuredEffectRoll(
+          OculumStructuredEffect(
+            valueExpression: '5',
+            duration: '1d6+3',
+            diceExpression: '1d4',
+            diceDestination: 'durata',
+          ),
+          variables: variables,
+          random: Random(3),
+        );
+        expect(resolved.value, 5);
+        expect(resolved.baseDuration, resolved.dice.rolls.last + 3);
+        expect(resolved.durationBonus, resolved.dice.rolls.first);
+      },
+    );
+
+    test('i dadi nella formula mantengono i limiti consentiti', () {
+      for (final expression in ['1d1', '21d6', '1d1001']) {
+        expect(
+          () => oculumResolveStructuredEffectRoll(
+            OculumStructuredEffect(valueExpression: expression),
+            variables: variables,
+          ),
+          throwsFormatException,
+        );
+      }
+    });
+
     test('i dadi si tirano in attivazione e non durante i tick', () {
       final effect = OculumStructuredEffect(
         valueExpression: '2',

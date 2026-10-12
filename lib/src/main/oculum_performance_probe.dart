@@ -9,6 +9,11 @@ class OculumPerformanceProbe {
 
   List<OculumColorPreset> get themes => List.unmodifiable(_state.colorPresets);
   void applyTheme(String id) => _state.applicaColorPreset(id);
+  Future<void> useCharacterSkill(CharacterSkill skill) =>
+      _state.usaFormaSkill(skill, _state.skills.indexOf(skill), 0);
+  Future<OculumStructuredEffect?> editEffect(OculumStructuredEffect effect) =>
+      _state.showStructuredEffectDialog(initial: effect);
+  bool tickEffects(String unit) => _state.tickActiveStructuredEffects(unit);
 
   void openDice() => _state.openReferenceDetail(
     'Sessione Dadi',

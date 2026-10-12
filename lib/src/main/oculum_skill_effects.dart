@@ -772,6 +772,7 @@ class OculumStructuredEffectRoll {
     required this.gradeBonus,
     required this.value,
     required this.durationBonus,
+    this.baseDuration = 0,
   });
 
   final int baseValue;
@@ -780,6 +781,24 @@ class OculumStructuredEffectRoll {
   final int gradeBonus;
   final int value;
   final int durationBonus;
+  final int baseDuration;
+}
+
+String _oculumResolveEffectFormulaDice(
+  String expression, {
+  required List<OculumDiceRollResult> rolls,
+  required bool isTick,
+  Random? random,
+}) {
+  return expression.replaceAllMapped(RegExp(r'\b(\d*)\s*[dD]\s*(\d+)\b'), (
+    match,
+  ) {
+    final term = '${match.group(1)}d${match.group(2)}';
+    if (isTick) return '0';
+    final result = oculumRollEffectDice(term, random: random);
+    rolls.add(result);
+    return '(${result.total})';
+  });
 }
 
 OculumStructuredEffectRoll oculumResolveStructuredEffectRoll(
@@ -792,15 +811,55 @@ OculumStructuredEffectRoll oculumResolveStructuredEffectRoll(
   bool isTick = false,
   Random? random,
 }) {
+  final valueDice = <OculumDiceRollResult>[];
+  final durationDice = <OculumDiceRollResult>[];
+  final valueExpression = _oculumResolveEffectFormulaDice(
+    oculumEffectFormulaExpression(effect.valueExpression, subtraits),
+    rolls: valueDice,
+    isTick: isTick,
+    random: random,
+  );
   final baseValue = oculumEvaluateStructuredEffectValue(
-    effect,
+    OculumStructuredEffect(
+      valueExpression:
+          valueExpression.trim().isEmpty &&
+              effect.diceExpression.trim().isNotEmpty
+          ? '0'
+          : valueExpression,
+      minimum: effect.minimum,
+      maximum: effect.maximum,
+    ),
     variables: variables,
     subtraits: subtraits,
     spentResources: spentResources,
   );
-  final dice = isTick
+  final additionalDice = isTick
       ? const OculumDiceRollResult(expression: '', rolls: <int>[], modifier: 0)
       : oculumRollEffectDice(effect.diceExpression, random: random);
+  final durationExpression = _oculumResolveEffectFormulaDice(
+    oculumEffectFormulaExpression(effect.duration, subtraits),
+    rolls: durationDice,
+    isTick: isTick,
+    random: random,
+  );
+  final baseDuration = durationExpression.trim().isEmpty
+      ? 0
+      : oculumEvaluateStructuredEffectValue(
+          OculumStructuredEffect(valueExpression: durationExpression),
+          variables: variables,
+          subtraits: subtraits,
+          spentResources: spentResources,
+        );
+  final allDice = [
+    ...valueDice,
+    additionalDice,
+    ...durationDice,
+  ].where((roll) => roll.rolls.isNotEmpty).toList(growable: false);
+  final dice = OculumDiceRollResult(
+    expression: allDice.map((roll) => roll.expression).join('; '),
+    rolls: [for (final roll in allDice) ...roll.rolls],
+    modifier: allDice.fold<int>(0, (total, roll) => total + roll.modifier),
+  );
   final levelBonus = effect.includeLevel ? max(0, level) : 0;
   final gradeBonus = effect.includeGrade
       ? oculumRoundFormulaResult(max(0, grade) * effect.gradeValue)
@@ -812,8 +871,10 @@ OculumStructuredEffectRoll oculumResolveStructuredEffectRoll(
     dice: dice,
     levelBonus: levelBonus,
     gradeBonus: gradeBonus,
-    value: baseValue + sharedBonus + (diceForDuration ? 0 : dice.total),
-    durationBonus: diceForDuration ? dice.total : 0,
+    value:
+        baseValue + sharedBonus + (diceForDuration ? 0 : additionalDice.total),
+    durationBonus: diceForDuration ? additionalDice.total : 0,
+    baseDuration: baseDuration,
   );
 }
 
@@ -994,23 +1055,26 @@ OculumFreeTextEffectParseResult oculumParseStructuredEffectsFromText(
   ).firstMatch(normalized);
   if (passiveResistance != null) {
     final preset = passiveResistance.group(1)!.trim();
-    final elements = passiveResistance.group(2)!
+    final elements = passiveResistance
+        .group(2)!
         .replaceAll(RegExp(r'\s+e\s+', caseSensitive: false), ',')
         .split(',')
         .map((value) => oculumNormalizeElementId(value.trim()))
         .where((value) => value.isNotEmpty)
         .toSet();
     for (final element in elements) {
-      effects.add(OculumStructuredEffect(
-        id: 'passive_resistance_${element}_${preset.hashCode}',
-        type: 'elemental_resistance',
-        elementType: element,
-        valueExpression: '0',
-        mode: 'finche_attivo',
-        duration: '-1',
-        narrativeText: normalized,
-        customDisplayText: preset,
-      ));
+      effects.add(
+        OculumStructuredEffect(
+          id: 'passive_resistance_${element}_${preset.hashCode}',
+          type: 'elemental_resistance',
+          elementType: element,
+          valueExpression: '0',
+          mode: 'finche_attivo',
+          duration: '-1',
+          narrativeText: normalized,
+          customDisplayText: preset,
+        ),
+      );
     }
   }
   final pieces = normalized

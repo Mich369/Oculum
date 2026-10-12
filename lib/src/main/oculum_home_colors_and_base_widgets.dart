@@ -2,6 +2,26 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+/// Keeps a dialog's controllers alive until its exit transition has finished.
+Future<T?> oculumShowDialogUntilClosed<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  bool barrierDismissible = true,
+}) async {
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final route = DialogRoute<T>(
+    context: context,
+    builder: builder,
+    barrierDismissible: barrierDismissible,
+    barrierColor: Theme.of(context).dialogTheme.barrierColor ?? Colors.black54,
+    themes: InheritedTheme.capture(from: context, to: navigator.context),
+    traversalEdgeBehavior: TraversalEdgeBehavior.closedLoop,
+  );
+  final result = await navigator.push<T>(route);
+  await route.completed;
+  return result;
+}
+
 double oculumThemeContrastRatio(Color a, Color b) {
   final l1 = a.computeLuminance();
   final l2 = b.computeLuminance();
