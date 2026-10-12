@@ -1665,9 +1665,13 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
               (borderColor == null ||
                   borderColor == primaryColor ||
                   borderColor == tertiaryColor)
-          ? const Color(0xff946b64)
+          ? readableOnTheme(
+              tertiaryColor,
+              background: backgroundMidColor,
+              minRatio: 3,
+            )
           : borderColor ?? primaryColor;
-      final surface = reference ? const Color(0xff0b0b0e) : backgroundMidColor;
+      final surface = backgroundMidColor;
       final panel = Container(
         margin: const EdgeInsets.symmetric(vertical: OculumDesignTokens.space4),
         padding: scaledInsets(padding),
@@ -1686,13 +1690,11 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
             type: MaterialType.transparency,
             child: DefaultTextStyle.merge(
               style: TextStyle(
-                color: reference
-                    ? const Color(0xffe6dfd7)
-                    : readableOnTheme(
-                        primaryColor,
-                        background: surface,
-                        minRatio: 4.5,
-                      ),
+                color: readableOnTheme(
+                  primaryColor,
+                  background: surface,
+                  minRatio: 4.5,
+                ),
                 height: 1.3,
               ),
               child: child,

@@ -94,7 +94,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                     programmaSalvataggio();
                   },
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 campoModello(
                   label: t('Leggenda', 'Legend'),
                   initialValue: title.leggenda,
@@ -172,7 +172,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                   ),
               ],
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             for (final entry in <(String, TextEditingController)>[
               ('Bonus danno', attaccoRapidoController),
               ('Bonus VC', vcRapidoController),
@@ -204,8 +204,8 @@ extension _OculumReferenceSheet on _OculumHomePageState {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
-        color: const Color(0xff14212e),
-        border: Border.all(color: const Color(0xff51718f)),
+        color: Color(0xff14212e),
+        border: Border.all(color: Color(0xff51718f)),
         borderRadius: BorderRadius.circular(5),
       ),
       child: Wrap(
@@ -221,7 +221,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                 : () => hasFight
                       ? nextMasterInitiativeTurn(delta: -1)
                       : setPlayerReportedTurn(playerReportedTurn - 1),
-            icon: const Icon(Icons.chevron_left),
+            icon: Icon(Icons.chevron_left),
           ),
           turnResetGesture(
             Text(
@@ -240,7 +240,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                 : () => hasFight
                       ? nextMasterInitiativeTurn()
                       : setPlayerReportedTurn(playerReportedTurn + 1),
-            icon: const Icon(Icons.chevron_right),
+            icon: Icon(Icons.chevron_right),
           ),
         ],
       ),
@@ -260,7 +260,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
               0)
             OutlinedButton.icon(
               onPressed: showStarterSubtraitPointsDialog,
-              icon: const Icon(Icons.add_circle_outline),
+              icon: Icon(Icons.add_circle_outline),
               label: Text(
                 'Punti iniziali disponibili: ${oculumStarterSubtraitPointsRemaining(appliedTutorialSubtraitPoints)} · massimo 3 per sottotratto',
               ),
@@ -272,7 +272,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                 title: Text(stat.nome),
                 trailing: IconButton(
                   tooltip: 'Assegna un punto',
-                  icon: const Icon(Icons.add),
+                  icon: Icon(Icons.add),
                   onPressed: () {
                     setState(() {
                       stat.valore++;
@@ -292,25 +292,25 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                 final amount = await showDialog<int>(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('Assegna punti sottotratti'),
+                    title: Text('Assegna punti sottotratti'),
                     content: TextField(
                       controller: controller,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Punti concessi dal Master',
                       ),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Annulla'),
+                        child: Text('Annulla'),
                       ),
                       FilledButton(
                         onPressed: () => Navigator.pop(
                           ctx,
                           max(0, readIntValue(controller.text)),
                         ),
-                        child: const Text('Aggiungi'),
+                        child: Text('Aggiungi'),
                       ),
                     ],
                   ),
@@ -324,8 +324,8 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                   (_) => controller.dispose(),
                 );
               },
-              icon: const Icon(Icons.stars_outlined),
-              label: const Text('Concedi punti'),
+              icon: Icon(Icons.stars_outlined),
+              label: Text('Concedi punti'),
             ),
 
           for (final group in [
@@ -356,14 +356,14 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                   (stat) => hiddenEyeStatGroup(stat.id) == group,
                 ))
                   Tooltip(
-                    waitDuration: const Duration(milliseconds: 450),
+                    waitDuration: Duration(milliseconds: 450),
                     constraints: BoxConstraints(
                       maxWidth: min(360, MediaQuery.sizeOf(context).width - 32),
                     ),
                     padding: const EdgeInsets.all(14),
                     margin: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         colors: [Color(0xff19131b), Color(0xff0b0a0e)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -372,11 +372,11 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                       border: Border.all(
                         color: statFormulaColor(group).withValues(alpha: .72),
                       ),
-                      boxShadow: const [
+                      boxShadow: [
                         BoxShadow(color: Colors.black87, blurRadius: 16),
                       ],
                     ),
-                    textStyle: const TextStyle(
+                    textStyle: TextStyle(
                       fontFamily: 'Poppins',
                       color: Color(0xffeadfc8),
                       fontSize: 12.5,
@@ -395,7 +395,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                           text:
                               '${stat.descrizione.split('Bonus:').first.trim()}\n\n',
                         ),
-                        const TextSpan(
+                        TextSpan(
                           text: 'Formula\n',
                           style: TextStyle(
                             color: Color(0xffcda86c),
@@ -407,7 +407,9 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                     ),
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: const Color(0xff100f13),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(9),
                         border: Border.all(
                           color: statFormulaColor(group).withValues(alpha: .62),
@@ -428,14 +430,14 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                             horizontal: 10,
                             vertical: 7,
                           ),
-                          minimumSize: const Size(0, 34),
+                          minimumSize: Size(0, 34),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
                         ),
                         onPressed: () => tiraSottotrattoOcchio(stat),
                         child: Text(
                           '${stat.nome} · ${hiddenEyeTotal(stat) >= 0 ? '+' : ''}${hiddenEyeTotal(stat)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -523,10 +525,10 @@ extension _OculumReferenceSheet on _OculumHomePageState {
           Row(
             children: [
               Expanded(child: Text(name)),
-              Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(label, style: TextStyle(fontWeight: FontWeight.w700)),
             ],
           ),
-          const SizedBox(height: 5),
+          SizedBox(height: 5),
           if (!hidden)
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
@@ -542,17 +544,17 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                   ),
                   if (shields && scudo() > 0)
                     LinearProgressIndicator(
-                      key: const ValueKey('reference_shield_bar'),
+                      key: ValueKey('reference_shield_bar'),
                       value: maximum > 0
                           ? (scudo() / maximum).clamp(0.0, 1.0)
                           : 0,
                       minHeight: 8,
-                      color: const Color(0xFF44A7FF),
+                      color: Color(0xFF44A7FF),
                       backgroundColor: Colors.transparent,
                     ),
                   if (shields && scudoOculum() > 0)
                     LinearProgressIndicator(
-                      key: const ValueKey('reference_oculum_shield_bar'),
+                      key: ValueKey('reference_oculum_shield_bar'),
                       value: maximum > 0
                           ? (scudoOculum() / maximum).clamp(0.0, 1.0)
                           : 0,
@@ -699,23 +701,23 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                     ),
                   TextButton.icon(
                     onPressed: () => vaiAllaFunzione(page: 3),
-                    icon: const Icon(Icons.auto_awesome_outlined),
-                    label: const Text('Oculum Art'),
+                    icon: Icon(Icons.auto_awesome_outlined),
+                    label: Text('Oculum Art'),
                   ),
                   TextButton.icon(
                     onPressed: () => vaiAllaFunzione(page: 6),
-                    icon: const Icon(Icons.inventory_2_outlined),
+                    icon: Icon(Icons.inventory_2_outlined),
                     label: Text(t('Inventario', 'Inventory')),
                   ),
                   TextButton.icon(
                     onPressed: () => vaiAllaFunzione(page: 5),
-                    icon: const Icon(Icons.menu_book_outlined),
+                    icon: Icon(Icons.menu_book_outlined),
                     label: Text(t('Diario', 'Diary')),
                   ),
                   TextButton.icon(
                     onPressed: openResistanceDetails,
-                    icon: const Icon(Icons.shield_outlined),
-                    label: const Text('Resistenze'),
+                    icon: Icon(Icons.shield_outlined),
+                    label: Text('Resistenze'),
                   ),
                 ],
               ),
@@ -763,18 +765,18 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                       referenceTurnControls(),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Wrap(
                     spacing: 10,
                     runSpacing: 10,
                     children: [
                       FilledButton.icon(
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xff491c24),
-                          foregroundColor: const Color(0xffffddd4),
+                          backgroundColor: Color(0xff491c24),
+                          foregroundColor: Color(0xffffddd4),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5),
-                            side: const BorderSide(color: Color(0xffad5559)),
+                            side: BorderSide(color: Color(0xffad5559)),
                           ),
                         ),
                         onPressed: () => tiraValoreSpeciale(
@@ -782,14 +784,14 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                           vc(),
                           applyGlobalRollModifier: false,
                         ),
-                        icon: const Icon(Icons.casino_outlined),
+                        icon: Icon(Icons.casino_outlined),
                         label: Text('VC ${vc()} · ${t('Attacco', 'Attack')}'),
                       ),
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          backgroundColor: const Color(0xff142a40),
-                          foregroundColor: const Color(0xffd6eaff),
-                          side: const BorderSide(color: Color(0xff517dab)),
+                          backgroundColor: Color(0xff142a40),
+                          foregroundColor: Color(0xffd6eaff),
+                          side: BorderSide(color: Color(0xff517dab)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5),
                           ),
@@ -799,7 +801,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                           cm(),
                           applyGlobalRollModifier: false,
                         ),
-                        icon: const Icon(Icons.shield_outlined),
+                        icon: Icon(Icons.shield_outlined),
                         label: Text('CM ${cm()} · ${t('Difesa', 'Defense')}'),
                       ),
                       OutlinedButton.icon(
@@ -816,14 +818,14 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                           ),
                         ),
                         onPressed: mostraMenuSchivataOculum,
-                        icon: const Icon(Icons.visibility_outlined),
+                        icon: Icon(Icons.visibility_outlined),
                         label: Text(
                           '${t('Schivata', 'Dodge')} ${schivateOculumDisponibili()}/${schivateOculumTotali()}',
                         ),
                       ),
                       OutlinedButton.icon(
                         onPressed: tiraAiutaCompagno,
-                        icon: const Icon(Icons.volunteer_activism_outlined),
+                        icon: Icon(Icons.volunteer_activism_outlined),
                         label: Text(t('Aiuta compagno', 'Help ally')),
                       ),
                       OutlinedButton.icon(
@@ -832,7 +834,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                           iniziativa(),
                           applyGlobalRollModifier: false,
                         ),
-                        icon: const Icon(Icons.bolt_outlined),
+                        icon: Icon(Icons.bolt_outlined),
                         label: Text(
                           '${t('Iniziativa', 'Initiative')} +${iniziativa()}',
                         ),
@@ -843,17 +845,17 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                       ),
                       OutlinedButton.icon(
                         onPressed: () => apriDannoCuraDalCentroPartita(),
-                        icon: const Icon(Icons.favorite_outline),
+                        icon: Icon(Icons.favorite_outline),
                         label: Text(
                           t('Danni subiti e cura', 'Damage taken and healing'),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     '${t('Danni inflitti', 'Damage dealt')}: ${dannoTotale()} · ${t('Difesa totale', 'Total defense')}: ${difesa()} · ${t('I Sottotratti sono tiri alternativi', 'Subtraits are alternative rolls')}',
-                    style: const TextStyle(fontSize: 12),
+                    style: TextStyle(fontSize: 12),
                   ),
                 ],
               ),
@@ -961,8 +963,8 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                 Icons.portrait_outlined,
                 () => Center(
                   child: ConstrainedBox(
-                    key: const ValueKey('reference_portrait_preview'),
-                    constraints: const BoxConstraints(maxWidth: 390),
+                    key: ValueKey('reference_portrait_preview'),
+                    constraints: BoxConstraints(maxWidth: 390),
                     child: oculumEyeBox(),
                   ),
                 ),
@@ -1039,7 +1041,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
           child: Row(
             children: [
               for (var i = 0; i < stats.length; i++) ...[
-                if (i > 0) const SizedBox(width: 6),
+                if (i > 0) SizedBox(width: 6),
                 Expanded(
                   child: Material(
                     color: backgroundBottomColor,
@@ -1078,7 +1080,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                                   color: primaryColor,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text(
                                 '${stats[i].$3}',
                                 style: TextStyle(
@@ -1138,7 +1140,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           sectionTitle('Turnistiche'),
-          const Text(
+          Text(
             'Cinque scontri indipendenti. Apri una tendina per vedere i partecipanti.',
           ),
           for (var index = 0; index < 5; index++)
@@ -1151,7 +1153,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                         'tokens': [],
                       };
                 final id = '${group[local ? 'id' : 'encounterId'] ?? ''}';
-                final tokens = (group['tokens'] as List? ?? const [])
+                final tokens = (group['tokens'] as List? ?? [])
                     .whereType<Map>()
                     .toList();
                 final selected =
@@ -1181,7 +1183,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                       TextFormField(
                         initialValue:
                             '${group['name'] ?? "Scontro ${index + 1}"}',
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Nome dello scontro',
                         ),
                         onChanged: (value) {
@@ -1204,9 +1206,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                               trailing: canRemoveOwnEncounterToken(token)
                                   ? IconButton(
                                       tooltip: 'Esci dallo scontro',
-                                      icon: const Icon(
-                                        Icons.person_remove_outlined,
-                                      ),
+                                      icon: Icon(Icons.person_remove_outlined),
                                       onPressed: () =>
                                           removeReferenceEncounterMember(
                                             id,
@@ -1223,7 +1223,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                         ),
                       ),
                     if (tokens.isEmpty)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.all(8),
                         child: Text('Nessun partecipante assegnato.'),
                       ),
@@ -1232,7 +1232,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                         alignment: Alignment.centerLeft,
                         child: FilledButton(
                           onPressed: () => enterLocalReferenceEncounter(id),
-                          child: const Text('Entra con questa scheda'),
+                          child: Text('Entra con questa scheda'),
                         ),
                       ),
                     if (local)
@@ -1244,14 +1244,14 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                             onPressed: () {
                               setState(() => selectMasterInitiativeGroup(id));
                             },
-                            child: const Text('Seleziona'),
+                            child: Text('Seleziona'),
                           ),
                           OutlinedButton(
                             onPressed: () async {
                               setState(() => selectMasterInitiativeGroup(id));
                               await mostraAggiungiSchedaIniziativa();
                             },
-                            child: const Text('Aggiungi PG / NPC / mostro'),
+                            child: Text('Aggiungi PG / NPC / mostro'),
                           ),
                           OutlinedButton(
                             onPressed: () {
@@ -1262,7 +1262,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                                 masterInitiativeTrackerPanel,
                               );
                             },
-                            child: const Text('Gestisci turni'),
+                            child: Text('Gestisci turni'),
                           ),
                           if (realtimeService?.isConnected == true)
                             OutlinedButton(
@@ -1270,7 +1270,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                                 setState(() => selectMasterInitiativeGroup(id));
                                 publishRealtimeInitiativeSnapshot();
                               },
-                              child: const Text('Pubblica online'),
+                              child: Text('Pubblica online'),
                             ),
                         ],
                       )
@@ -1305,7 +1305,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                               : 'Online non connesso',
                         ),
                       ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                   ],
                 );
               },
@@ -1412,30 +1412,30 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           sectionTitle('Resistenze'),
-          const Text(
+          Text(
             'Fragilità, resistenze, immunità e rigenerazione sono salvate per elemento. Una percentuale libera sostituisce il preset di quell’elemento.',
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: resistanceElementSearchController,
             builder: (context, search, _) => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 TextField(
-                  key: const ValueKey('resistance_element_search'),
+                  key: ValueKey('resistance_element_search'),
                   controller: resistanceElementSearchController,
                   decoration: fieldDecoration('Cerca elemento').copyWith(
-                    prefixIcon: const Icon(Icons.search),
+                    prefixIcon: Icon(Icons.search),
                     suffixIcon: search.text.isEmpty
                         ? null
                         : IconButton(
                             tooltip: 'Cancella ricerca',
                             onPressed: resistanceElementSearchController.clear,
-                            icon: const Icon(Icons.clear),
+                            icon: Icon(Icons.clear),
                           ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 _filteredResistanceCards(search.text),
               ],
             ),
@@ -1460,7 +1460,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
                   id.toLowerCase().contains(needle),
             )
             .toList();
-    if (ids.isEmpty) return const Text('Nessun elemento trovato.');
+    if (ids.isEmpty) return Text('Nessun elemento trovato.');
     return LayoutBuilder(
       builder: (context, constraints) {
         const gap = 10.0;
@@ -1489,7 +1489,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
       key: ValueKey('resistance_element_$id'),
       padding: const EdgeInsets.all(9),
       decoration: BoxDecoration(
-        color: const Color(0xff111014),
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withValues(alpha: .82), width: 1.25),
         boxShadow: [
@@ -1502,7 +1502,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
           Row(
             children: [
               Icon(Icons.remove_red_eye_outlined, color: color, size: 16),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Expanded(
                 child: Text(
                   elementDisplayName(id),
@@ -1513,7 +1513,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
               ),
             ],
           ),
-          const SizedBox(height: 7),
+          SizedBox(height: 7),
           DropdownButtonFormField<String>(
             key: ValueKey('resistance_${id}_$preset'),
             initialValue: preset,
@@ -1536,7 +1536,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
               notifyActiveSheetSummaryChanged();
             },
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           TextFormField(
             key: ValueKey('resistance_percent_${id}_$preset'),
             initialValue: dannoSubitoPercentPerTipo[id] ?? '',
@@ -1561,10 +1561,10 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
                 ? null
                 : 'Percentuale non valida',
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             damageDescription(modificatoreDannoDaNome(preset)),
-            style: const TextStyle(fontSize: 11, height: 1.2),
+            style: TextStyle(fontSize: 11, height: 1.2),
           ),
         ],
       ),
@@ -1626,18 +1626,18 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reset round e turni'),
-        content: const Text(
+        title: Text('Reset round e turni'),
+        content: Text(
           'Riporta lo scontro al round 0 e i contatori personali a 0. Le schede rimangono nello scontro.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annulla'),
+            child: Text('Annulla'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Reset'),
+            child: Text('Reset'),
           ),
         ],
       ),
@@ -1681,7 +1681,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
   // their live effects; snapshots carry the same monotonic personal counter.
   void advanceEncounterParticipantTurn(int index) {
     final token = masterInitiativeTokens[index];
-    final scrollEffects = (token['scrollEffects'] as List? ?? const [])
+    final scrollEffects = (token['scrollEffects'] as List? ?? [])
         .whereType<Map>()
         .map((effect) => Map<String, dynamic>.from(effect))
         .toList();
@@ -1721,7 +1721,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
       if (sheet != null) {
         sheet['playerReportedTurn'] = next;
         for (final raw
-            in (sheet['activeStructuredEffects'] as List? ?? const [])
+            in (sheet['activeStructuredEffects'] as List? ?? [])
                 .whereType<Map>()) {
           if (oculumTurnUnit('${raw['unit']}') != 'turni') continue;
           final remaining = readIntValue(raw['remaining']);
@@ -1756,9 +1756,9 @@ extension _OculumReferenceFlameBar on _OculumHomePageState {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [const Text('Oculum'), Text('$current/$maximum')],
+            children: [Text('Oculum'), Text('$current/$maximum')],
           ),
-          const SizedBox(height: 3),
+          SizedBox(height: 3),
           Semantics(
             label: 'Oculum $current di $maximum',
             child: SizedBox(

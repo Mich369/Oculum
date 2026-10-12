@@ -5,6 +5,39 @@ part of '../../main.dart';
 extension _OculumSkillEffectsUi on _OculumHomePageState {
   bool tickStructuredAbilityCooldowns(String unit, {bool scheduleSave = true}) {
     var changed = false;
+    if (oculumTurnUnit(unit) == 'turni') {
+      for (var artIndex = 0; artIndex < arti.length; artIndex++) {
+        final art = arti[artIndex];
+        for (var skillIndex = 0; skillIndex < art.skills.length; skillIndex++) {
+          final skill = art.skills[skillIndex];
+          if (skill.livello <= 0 ||
+              skill.activeTurnsRemaining <= 0 ||
+              skill
+                  .tipoPerLivello(skill.livello)
+                  .toLowerCase()
+                  .contains('passiv')) {
+            continue;
+          }
+          skill.activeTurnsRemaining--;
+          changed = true;
+          if (skill.activeTurnsRemaining == 0) {
+            unawaited(
+              impostaLivelloSkillArt(
+                artIndex: artIndex,
+                skillIndex: skillIndex,
+                nuovoLivello: 0,
+              ),
+            );
+            aggiungiLog(
+              '${art.nome} / ${skill.nome}: durata di 6 turni terminata, Skill disattivata (livello 0).',
+            );
+          } else {
+            notifyArtSkillLevelChanged(artIndex, skillIndex);
+            scheduleArtSkillLevelSave(artIndex, skillIndex);
+          }
+        }
+      }
+    }
     for (final skill in skills) {
       skill.ensureForms();
       for (final form in skill.forme) {

@@ -128,6 +128,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final skill = skills[skillIndex];
     if (skill is Map) {
       skill['livello'] = arti[artIndex].skills[skillIndex].livello;
+      skill['activeTurnsRemaining'] =
+          arti[artIndex].skills[skillIndex].activeTurnsRemaining;
     }
   }
 
@@ -8109,7 +8111,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final confirmationGuard = OculumSingleConfirmationGuard();
     skillOculumUseDialogOpen = true;
     try {
-      return await showDialog<OculumSkillUseDialogResult>(
+      return await oculumShowDialogUntilClosed<OculumSkillUseDialogResult>(
         context: context,
         barrierDismissible: true,
         builder: (dialogContext) => StatefulBuilder(
@@ -8419,6 +8421,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     required int artIndex,
     required int skillIndex,
     required int nuovoLivello,
+    bool riutilizza = false,
   }) async {
     if (artIndex < 0 || artIndex >= arti.length) return;
     if (skillIndex < 0 || skillIndex >= arti[artIndex].skills.length) return;
@@ -8449,8 +8452,17 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final livelloPrecedente = skill.livello;
     final spineOculumBefore = oculumTotale();
     final livelloNuovo = nuovoLivello.clamp(0, artMaxLevel(art)).toInt();
-    if (livelloNuovo == livelloPrecedente) return;
-    if (livelloNuovo > livelloPrecedente) {
+    final activating =
+        livelloNuovo > livelloPrecedente ||
+        (riutilizza &&
+            livelloNuovo > 0 &&
+            livelloNuovo == livelloPrecedente &&
+            !skill
+                .tipoPerLivello(livelloNuovo)
+                .toLowerCase()
+                .contains('passiv'));
+    if (livelloNuovo == livelloPrecedente && !activating) return;
+    if (activating) {
       final required = int.tryParse(
         RegExp(
               r'Richiede livello\s+(\d+)',
@@ -8477,9 +8489,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         structuredCooldown.amount == 0) {
       structuredCooldown.amount = 1;
     }
-    if (livelloNuovo > livelloPrecedente &&
-        structuredCooldown != null &&
-        !structuredCooldown.ready) {
+    if (activating && structuredCooldown != null && !structuredCooldown.ready) {
       risultato =
           '${t('Skill Art in cooldown', 'Art Skill on cooldown')}: '
           '${structuredCooldown.remaining} ${structuredCooldown.unit}.';
@@ -8491,7 +8501,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         ? 0
         : artUseCost(
             oculumArtSkillLevelChangeCost(
-              previousLevel: livelloPrecedente,
+              previousLevel: riutilizza ? 0 : livelloPrecedente,
               nextLevel: livelloNuovo,
             ),
           );
@@ -8522,6 +8532,64 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     OculumSkillMasteryPreview? masteryPreview;
     var masteryLimit = 0;
     var learningTitleCreated = false;
+    if (activating &&
+        !hasStatCost &&
+        skill
+            .effettiEvoluzione(livelloNuovo)
+            .any(
+              (effect) =>
+                  effect.enabled &&
+                  (effect.diceExpression.trim().isNotEmpty ||
+                      RegExp(r'\b\d*\s*[dD]\s*\d+\b').hasMatch(
+                        '${effect.valueExpression} ${effect.duration}',
+                      )),
+            )) {
+      if (skillOculumUseDialogOpen) return;
+      skillOculumUseDialogOpen = true;
+      final freeConfirmationGuard = OculumSingleConfirmationGuard();
+      bool? confirmed;
+      try {
+        confirmed = await oculumShowDialogUntilClosed<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: backgroundMidColor,
+            title: Text('${art.nome} / ${skill.nome}'),
+            content: Text(
+              'Conferma l’attivazione. Gli effetti con dadi vengono tirati una sola volta.\n${skill.effettiEvoluzione(livelloNuovo).where((e) => e.enabled).map(oculumStructuredEffectDescription).join('\n')}',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  if (freeConfirmationGuard.tryStart()) {
+                    Navigator.pop(ctx, false);
+                  }
+                },
+                child: Text(t('Annulla', 'Cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (freeConfirmationGuard.tryStart()) {
+                    Navigator.pop(ctx, true);
+                  }
+                },
+                child: Text(t('Conferma', 'Confirm')),
+              ),
+            ],
+          ),
+        );
+      } finally {
+        skillOculumUseDialogOpen = false;
+      }
+      if (confirmed != true ||
+          !mounted ||
+          artIndex >= arti.length ||
+          !identical(arti[artIndex], art) ||
+          !art.skills.contains(skill) ||
+          skill.livello != livelloPrecedente ||
+          !art.inUso) {
+        return;
+      }
+    }
     if (activationCost > 0 && hasStatCost) {
       resourceUse = await mostraDialogUsoOculumSkillArt(
         art: art,
@@ -8661,7 +8729,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
 
     skill.livello = livelloNuovo;
-    final statiOculumAttivati = livelloNuovo > livelloPrecedente
+    skill.activeTurnsRemaining =
+        livelloNuovo > 0 &&
+            !skill.tipoPerLivello(livelloNuovo).toLowerCase().contains('passiv')
+        ? 6
+        : 0;
+    final statiOculumAttivati = activating
         ? applicaStatiOculumDaTestoSkill(
             skill.toJson().toString(),
             source: '${art.nome} / ${skill.nome}',
@@ -8672,7 +8745,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         '${art.nome} / ${skill.nome}',
       );
     }
-    if (livelloNuovo > livelloPrecedente) {
+    if (activating) {
       structuredCooldown?.activate();
     }
 
@@ -8749,7 +8822,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         '\nMastery maximum reached.',
       );
     }
-    if (livelloNuovo > livelloPrecedente && livelloNuovo > 0) {
+    if (activating && livelloNuovo > 0) {
       recordSkillActivationSpent(
         artSkillActivationKey(art, skill),
         <String, num>{costResource: resourceSpent},
@@ -10791,6 +10864,28 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 skillIndex: skillIndex,
                 livelloAttuale: level,
               ),
+              if (level > 0 &&
+                  !skill.tipoPerLivello(level).toLowerCase().contains('passiv'))
+                OutlinedButton.icon(
+                  onPressed: () => unawaited(
+                    impostaLivelloSkillArt(
+                      artIndex: artIndex,
+                      skillIndex: skillIndex,
+                      nuovoLivello: level,
+                      riutilizza: true,
+                    ),
+                  ),
+                  icon: const Icon(Icons.play_arrow),
+                  label: Text(
+                    t('Usa di nuovo la forma attiva', 'Use active form again'),
+                  ),
+                ),
+              if (level > 0 &&
+                  skill.activeTurnsRemaining > 0 &&
+                  !skill.tipoPerLivello(level).toLowerCase().contains('passiv'))
+                smallInfoText(
+                  'Attiva: ${skill.activeTurnsRemaining} turni rimanenti. Alla scadenza torna al livello 0.',
+                ),
               if (fateText.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 smallInfoText(fateText, color: tertiaryColor),

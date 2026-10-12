@@ -119,6 +119,7 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
     ? CharacterArt(
         nome: 'Capacità — ${monster.nameIt}',
         tipo: 'Capacità Pawn',
+        hasIntegrity: false,
         descrizione: monster.descIt,
         skills: [
           for (final id in monsterBookUsableSkillIds(monster))
@@ -138,6 +139,7 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
               ],
               oculumMinimiPerLivello: const [0, 0, 0],
               oculumMassimiPerLivello: const [0, 0, 0],
+              risorseCostoPerLivello: const ['nessuna', 'nessuna', 'nessuna'],
             ),
         ],
       )

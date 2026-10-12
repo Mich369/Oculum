@@ -20,7 +20,29 @@ Esempio: applicando Vetro strega, una nuova finestra usa la superficie verde scu
 
 Questi controlli non sostituiscono una prova manuale su tutti i dispositivi o una verifica online fra due persone.
 
-## Skill con effetti che usano dadi
+## Revisione goth della nuova visuale
+
+I pannelli della nuova scheda seguono la palette scelta: superfici, colori del testo, accenti e selezioni non restano fissati alla vecchia combinazione scura.
+Anche le cornici cambiano insieme al tema. La cornice originale resta disponibile nei temi senza decorazioni.
+
+Le decorazioni seguono l’identità del tema:
+
+- Botanici e Vervain: liane curve, foglie con nervature, fiori a cinque petali e petali cadenti nelle tonalità del tema, viola per Vervain.
+- Ghiaccio e tempesta: cristalli sfaccettati.
+- Metallo, Kingi, Postea e fortezze: incisioni, rivetti e montanti metallici.
+- Luna, sigilli e astrale: stelle, costellazioni e segni luminosi.
+- Mare: onde, riccioli e perle.
+- Brace: candele rituali e scintille.
+- Altri temi goth: archi a sesto acuto e rosoni.
+
+I dettagli sono confinati ai margini, non ricevono clic e non alterano il contenuto o le dimensioni dei controlli.
+Le parti statiche sono separate dalle particelle animate, così l’animazione non ricostruisce la scheda.
+Le animazioni richiedono la grafica attiva; modalità leggera, modalità veloce e riduzione delle animazioni le fermano. Le decorazioni restano disponibili anche statiche.
+Opacità e intensità usano le impostazioni delle decorazioni già presenti.
+
+Le catture desktop e telefono sono incluse nell’artefatto GitHub `Oculum-UI-Catture`, nella cartella `temi-goth`.
+
+## Dadi degli effetti
 
 - Nel valore dell'effetto puoi scrivere `1d6+@Danni`, `2*(1d6+1d4)` oppure `1d6+OculumSpeso*2`. Puoi continuare a usare il campo Dadi separato.
 - Un effetto composto soltanto dal campo Dadi può essere salvato senza aggiungere un valore manuale: la base viene impostata a zero.

@@ -2188,6 +2188,7 @@ class ArtSkill {
   ArtSkill({
     required this.nome,
     this.livello = 0,
+    this.activeTurnsRemaining = 0,
     this.evo1 = '???',
     this.evo2 = '???',
     this.evo3 = '???',
@@ -2258,6 +2259,7 @@ class ArtSkill {
   /// seconda Skill livello 2 = secondo Titolo del Fato
   /// terza Skill livello 3 = terzo Titolo del Fato
   int livello;
+  int activeTurnsRemaining;
 
   String evo1;
   String evo2;
@@ -2409,6 +2411,7 @@ class ArtSkill {
     return {
       'nome': nome,
       'livello': livello,
+      'activeTurnsRemaining': activeTurnsRemaining,
       'evo1': evo1,
       'evo2': evo2,
       'evo3': evo3,
@@ -2462,6 +2465,13 @@ class ArtSkill {
     return ArtSkill(
       nome: oculumCleanMojibakeText('${json['nome'] ?? ''}'),
       livello: readIntValue(json['livello']),
+      activeTurnsRemaining: max(
+        0,
+        readIntValue(
+          json['activeTurnsRemaining'],
+          fallback: readIntValue(json['livello']) > 0 ? 6 : 0,
+        ),
+      ),
       evo1: oculumCleanMojibakeText('${json['evo1'] ?? '???'}'),
       evo2: oculumCleanMojibakeText('${json['evo2'] ?? '???'}'),
       evo3: oculumCleanMojibakeText('${json['evo3'] ?? '???'}'),

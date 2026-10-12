@@ -1,12 +1,29 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
+import 'package:oculum/widgets/oculum_goth_ornaments.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    final font = await rootBundle.load('assets/fonts/Poppins-Regular.ttf');
+    await (FontLoader('Segoe UI')..addFont(Future.value(font))).load();
+    final icons = File(
+      'build/unit_test_assets/fonts/MaterialIcons-Regular.otf',
+    );
+    if (icons.existsSync()) {
+      await (FontLoader('MaterialIcons')..addFont(
+            Future.value(ByteData.sublistView(icons.readAsBytesSync())),
+          ))
+          .load();
+    }
+  });
   test('readability uses the visible translucent color', () {
     const background = Color(0xFF10121A);
     const faint = Color(0x20FFFFFF);
@@ -50,10 +67,13 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       oculumActiveTheme.value = null;
       await tester.pumpWidget(
-        MaterialApp(
-          theme: oculumBaseTheme,
-          builder: (_, child) => OculumThemeScope(child: child!),
-          home: const OculumHomePage(),
+        RepaintBoundary(
+          key: const ValueKey('real-themed-screen'),
+          child: MaterialApp(
+            theme: oculumBaseTheme,
+            builder: (_, child) => OculumThemeScope(child: child!),
+            home: const OculumHomePage(),
+          ),
         ),
       );
       final dynamic state = tester.state(find.byType(OculumHomePage));
@@ -65,6 +85,7 @@ void main() {
       });
       state.updateOculumHomeUi(() {
         state.tutorialCompletato = true;
+        state.datiCaricati = true;
         state.modalitaLeggera = size.width < 600;
       });
       final probe = OculumPerformanceProbe(state);
@@ -75,6 +96,32 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
         final context = tester.element(find.byType(OculumHomePage));
         final theme = Theme.of(context);
+        expect(
+          theme.extension<OculumGothOrnaments>(),
+          isNotNull,
+          reason: preset.id,
+        );
+        if ([
+          'vervain_gothic',
+          'frost_chapel',
+          'bolted_black_iron',
+        ].contains(preset.id)) {
+          final boundary = tester.renderObject<RenderRepaintBoundary>(
+            find.byKey(const ValueKey('real-themed-screen')),
+          );
+          await tester.runAsync(() async {
+            final image = await boundary.toImage(pixelRatio: 1);
+            final bytes = await image.toByteData(
+              format: ui.ImageByteFormat.png,
+            );
+            image.dispose();
+            final file = File(
+              'output/ui/temi-goth/real-${preset.id}-${size.width.toInt()}.png',
+            );
+            await file.parent.create(recursive: true);
+            await file.writeAsBytes(bytes!.buffer.asUint8List());
+          });
+        }
         expect(
           theme.colorScheme.surface,
           preset.backgroundMid,

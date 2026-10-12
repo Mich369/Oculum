@@ -80,8 +80,24 @@ class OculumThemeScope extends StatelessWidget {
   Widget build(BuildContext context) => ValueListenableBuilder<ThemeData?>(
     valueListenable: oculumActiveTheme,
     child: child,
-    builder: (context, activeTheme, child) =>
-        Theme(data: activeTheme ?? oculumBaseTheme, child: child!),
+    builder: (context, activeTheme, child) {
+      final theme = activeTheme ?? oculumBaseTheme;
+      final ornaments = theme.extension<OculumGothOrnaments>();
+      return Theme(
+        data: theme,
+        child: OculumGothAmbience(
+          spec:
+              ornaments ??
+              const OculumGothOrnaments(
+                family: OculumGothFamily.none,
+                ink: Colors.transparent,
+                accent: Colors.transparent,
+                opacity: 0,
+              ),
+          child: child!,
+        ),
+      );
+    },
   );
 }
 

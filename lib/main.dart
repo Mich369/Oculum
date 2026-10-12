@@ -47,6 +47,7 @@ import 'widgets/oculum_campaign_background.dart';
 import 'widgets/oculum_encounter_stage.dart';
 import 'widgets/oculum_reference_art.dart';
 import 'widgets/oculum_reference_frame.dart';
+import 'widgets/oculum_goth_ornaments.dart';
 import 'services/oculum_encounter_visibility.dart';
 import 'widgets/oculum_quick_edit_eye.dart';
 import 'widgets/oculum_monster_picker.dart';
@@ -4404,6 +4405,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     };
     final inheritedTheme = oculumBaseTheme;
     final inheritedThemeIdentity = identityHashCode(inheritedTheme);
+    final decoration = currentThemeDecorationSpec();
     final paletteHash = Object.hash(
       primaryColor,
       secondaryColor,
@@ -4412,6 +4414,13 @@ class _OculumHomePageState extends State<OculumHomePage>
       backgroundMidColor,
       backgroundBottomColor,
       modalitaLeggera,
+      modalitaVeloce,
+      decoration.style,
+      decoration.primary,
+      decoration.secondary,
+      decoration.accent,
+      decoration.opacity,
+      oculumGraphicsEnabled.value,
     );
     if (_cachedAppTypographyTheme == null ||
         _cachedAppTypographyStyle != stileCarattereApp ||
@@ -4420,15 +4429,30 @@ class _OculumHomePageState extends State<OculumHomePage>
       _cachedAppTypographyStyle = stileCarattereApp;
       _cachedBaseThemeIdentity = inheritedThemeIdentity;
       _cachedAppPaletteHash = paletteHash;
-      _cachedAppTypographyTheme = oculumBuildPaletteTheme(
-        base: inheritedTheme,
-        primary: primaryColor,
-        secondary: secondaryColor,
-        accent: tertiaryColor,
-        surface: backgroundMidColor,
-        background: backgroundBottomColor,
-        fontFamily: appFontFamily,
-      );
+      _cachedAppTypographyTheme =
+          oculumBuildPaletteTheme(
+            base: inheritedTheme,
+            primary: primaryColor,
+            secondary: secondaryColor,
+            accent: tertiaryColor,
+            surface: backgroundMidColor,
+            background: backgroundBottomColor,
+            fontFamily: appFontFamily,
+          ).copyWith(
+            extensions: [
+              ...inheritedTheme.extensions.values,
+              OculumGothOrnaments(
+                family: oculumGothFamily(decoration.style),
+                ink: Color.lerp(decoration.primary, decoration.secondary, .55)!,
+                accent: decoration.accent,
+                opacity: decoration.opacity,
+                motion:
+                    oculumGraphicsEnabled.value &&
+                    !modalitaLeggera &&
+                    !modalitaVeloce,
+              ),
+            ],
+          );
       final nextTheme = _cachedAppTypographyTheme!;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && identical(_cachedAppTypographyTheme, nextTheme)) {

@@ -38,7 +38,9 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: Oculum-UI-Catture
-          path: output/ui/resistances-turns-20261003/*.png
+          path: |
+            output/ui/resistances-turns-20261003/*.png
+            output/ui/temi-goth/*.png
           if-no-files-found: error
           retention-days: 30
 

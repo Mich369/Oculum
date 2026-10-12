@@ -391,6 +391,18 @@ extension _OculumHomePersistence on _OculumHomePageState {
     skillPatch['$skillIndex'] = arti[artIndex].skills[skillIndex].livello;
     artSkillPatch['$artIndex'] = skillPatch;
     sheetPatch['artSkillLevels'] = artSkillPatch;
+    final existingTimers = sheetPatch['artSkillActiveTurns'];
+    final timerArts = existingTimers is Map
+        ? Map<String, dynamic>.from(existingTimers)
+        : <String, dynamic>{};
+    final oldTimerSkills = timerArts['$artIndex'];
+    final timerSkills = oldTimerSkills is Map
+        ? Map<String, dynamic>.from(oldTimerSkills)
+        : <String, dynamic>{};
+    timerSkills['$skillIndex'] =
+        arti[artIndex].skills[skillIndex].activeTurnsRemaining;
+    timerArts['$artIndex'] = timerSkills;
+    sheetPatch['artSkillActiveTurns'] = timerArts;
     _scheduleProgressJournalWrite(immediate: immediate);
   }
 
@@ -807,7 +819,19 @@ extension _OculumHomePersistence on _OculumHomePageState {
           continue;
         }
         final skill = skills[skillIndex];
-        if (skill is Map) skill['livello'] = readIntValue(skillEntry.value);
+        if (skill is Map) {
+          skill['livello'] = readIntValue(skillEntry.value);
+          final timerArts = patch['artSkillActiveTurns'];
+          final timerSkills = timerArts is Map ? timerArts['$artIndex'] : null;
+          if (timerSkills is Map && timerSkills.containsKey('$skillIndex')) {
+            skill['activeTurnsRemaining'] = max(
+              0,
+              readIntValue(timerSkills['$skillIndex']),
+            );
+          } else if (readIntValue(skillEntry.value) == 0) {
+            skill['activeTurnsRemaining'] = 0;
+          }
+        }
       }
     }
   }

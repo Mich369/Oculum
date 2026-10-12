@@ -11,6 +11,17 @@ class OculumPerformanceProbe {
   void applyTheme(String id) => _state.applicaColorPreset(id);
   Future<void> useCharacterSkill(CharacterSkill skill) =>
       _state.usaFormaSkill(skill, _state.skills.indexOf(skill), 0);
+  Future<void> useArtSkill(
+    int artIndex,
+    int skillIndex,
+    int form, {
+    bool again = false,
+  }) => _state.impostaLivelloSkillArt(
+    artIndex: artIndex,
+    skillIndex: skillIndex,
+    nuovoLivello: form,
+    riutilizza: again,
+  );
   Future<OculumStructuredEffect?> editEffect(OculumStructuredEffect effect) =>
       _state.showStructuredEffectDialog(initial: effect);
   bool tickEffects(String unit) => _state.tickActiveStructuredEffects(unit);

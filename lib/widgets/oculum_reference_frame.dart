@@ -1,21 +1,31 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'oculum_reference_art.dart';
+import 'oculum_goth_ornaments.dart';
 
 /// The author's frame artwork is drawn around live controls, with open center.
 class OculumReferenceFrame extends StatelessWidget {
   const OculumReferenceFrame({super.key, required this.child});
   final Widget child;
   @override
-  Widget build(BuildContext context) => FutureBuilder<ui.Image>(
-    future: OculumReferenceArt.loadArtwork(),
-    builder: (context, snapshot) => CustomPaint(
-      foregroundPainter: snapshot.hasData
-          ? _ReferenceFramePainter(snapshot.data!)
-          : null,
-      child: child,
-    ),
-  );
+  Widget build(BuildContext context) {
+    final ornaments = Theme.of(context).extension<OculumGothOrnaments>();
+    if (ornaments != null && ornaments.family != OculumGothFamily.none) {
+      return CustomPaint(
+        foregroundPainter: OculumGothPainter(ornaments, panel: true),
+        child: child,
+      );
+    }
+    return FutureBuilder<ui.Image>(
+      future: OculumReferenceArt.loadArtwork(),
+      builder: (context, snapshot) => CustomPaint(
+        foregroundPainter: snapshot.hasData
+            ? _ReferenceFramePainter(snapshot.data!)
+            : null,
+        child: child,
+      ),
+    );
+  }
 }
 
 class _ReferenceFramePainter extends CustomPainter {

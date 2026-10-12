@@ -20,13 +20,13 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
     padding: responsivePagePadding(),
     child: Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 880),
+        constraints: BoxConstraints(maxWidth: 880),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             sectionTitle('Home'),
             Text(t('Benvenuto in Oculum', 'Welcome to Oculum')),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             LayoutBuilder(
               builder: (context, constraints) => gothicPanel(
                 padding: const EdgeInsets.all(8),
@@ -35,37 +35,37 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => selectReferenceRole(false),
-                    icon: const Icon(Icons.person_outline),
+                    icon: Icon(Icons.person_outline),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xffc5d5ec),
-                      backgroundColor: const Color(0xff101b2c),
-                      side: const BorderSide(color: Color(0xff6485ad)),
+                      foregroundColor: Color(0xffc5d5ec),
+                      backgroundColor: Color(0xff101b2c),
+                      side: BorderSide(color: Color(0xff6485ad)),
                       padding: const EdgeInsets.symmetric(vertical: 20),
                     ),
-                    label: const Text(
+                    label: Text(
                       'PLAYER',
                       style: TextStyle(fontFamily: 'Georgia', fontSize: 21),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => selectReferenceRole(true),
-                    icon: const Icon(Icons.admin_panel_settings_outlined),
+                    icon: Icon(Icons.admin_panel_settings_outlined),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xffeed7d1),
-                      backgroundColor: const Color(0xff301416),
-                      side: const BorderSide(color: Color(0xffa4625a)),
+                      foregroundColor: Color(0xffeed7d1),
+                      backgroundColor: Color(0xff301416),
+                      side: BorderSide(color: Color(0xffa4625a)),
                       padding: const EdgeInsets.symmetric(vertical: 20),
                     ),
-                    label: const Text(
+                    label: Text(
                       'MASTER',
                       style: TextStyle(fontFamily: 'Georgia', fontSize: 21),
                     ),
@@ -73,26 +73,23 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             gothicPanel(
               child: Row(
                 children: [
-                  const OculumMemoryEye(role: 'party', size: 36),
-                  const SizedBox(width: 12),
+                  OculumMemoryEye(role: 'party', size: 36),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           t('CAMPAGNA ATTIVA', 'ACTIVE CAMPAIGN'),
-                          style: const TextStyle(fontSize: 10),
+                          style: TextStyle(fontSize: 10),
                         ),
                         Text(
                           activeCampaignName(),
-                          style: const TextStyle(
-                            fontFamily: 'Georgia',
-                            fontSize: 20,
-                          ),
+                          style: TextStyle(fontFamily: 'Georgia', fontSize: 20),
                         ),
                         Text(
                           '${schedePersonaggio.length} ${t('schede', 'sheets')} · ${realtimeConnected ? 'Online' : 'Offline'}',
@@ -175,7 +172,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
     ];
     return Container(
       width: 142,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Color(0xff09090c),
         border: Border(right: BorderSide(color: Color(0xff594447))),
       ),
@@ -190,7 +187,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                   : nomeController.text,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Georgia',
                 fontSize: 16,
                 color: Color(0xffded5cb),
@@ -199,7 +196,9 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
           ),
           for (final entry in entries)
             Material(
-              color: entry.$3 ? const Color(0xff25161a) : Colors.transparent,
+              color: entry.$3
+                  ? Theme.of(context).colorScheme.secondaryContainer
+                  : Colors.transparent,
               child: InkWell(
                 onTap: entry.$4,
                 child: Padding(
@@ -213,18 +212,20 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                         entry.$2,
                         size: 16,
                         color: entry.$3
-                            ? const Color(0xffd5a29a)
-                            : const Color(0xffada69e),
+                            ? Theme.of(context).colorScheme.secondary
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           entry.$1,
                           style: TextStyle(
                             fontSize: 11,
                             color: entry.$3
-                                ? const Color(0xffeee3dc)
-                                : const Color(0xffbcb5ae),
+                                ? Theme.of(context).colorScheme.onSurface
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -269,10 +270,10 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
           maintainState: false,
           builder: (context) => CallbackShortcuts(
             bindings: {
-              const SingleActivator(LogicalKeyboardKey.escape): returnToGeneral,
-              const SingleActivator(LogicalKeyboardKey.keyF, control: true):
+              SingleActivator(LogicalKeyboardKey.escape): returnToGeneral,
+              SingleActivator(LogicalKeyboardKey.keyF, control: true):
                   openOculumGlobalSearch,
-              const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
+              SingleActivator(LogicalKeyboardKey.keyF, meta: true):
                   openOculumGlobalSearch,
             },
             child: Focus(
@@ -280,10 +281,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
               child: Scaffold(
                 backgroundColor: backgroundBottomColor,
                 appBar: AppBar(
-                  title: Text(
-                    title,
-                    style: const TextStyle(fontFamily: 'Georgia'),
-                  ),
+                  title: Text(title, style: TextStyle(fontFamily: 'Georgia')),
                   backgroundColor: backgroundTopColor,
                 ),
                 body: ValueListenableBuilder<int>(
@@ -322,9 +320,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                                 behavior: HitTestBehavior.opaque,
                                 onTap: () {},
                                 child: ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    maxWidth: 820,
-                                  ),
+                                  constraints: BoxConstraints(maxWidth: 820),
                                   child: functionAnchor(anchor, content()),
                                 ),
                               ),
@@ -366,10 +362,10 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
     return SizedBox(
       width: min(270.0, MediaQuery.sizeOf(context).width - 32),
       child: Material(
-        color: const Color(0xff0e0e12),
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(5),
-          side: const BorderSide(color: Color(0xff594447)),
+          side: BorderSide(color: Color(0xff594447)),
         ),
         child: InkWell(
           onTap: () => openReferenceDetail(title, anchor, content),
@@ -378,25 +374,22 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Row(
               children: [
-                Icon(icon, size: 17, color: const Color(0xffb79386)),
-                const SizedBox(width: 8),
+                Icon(
+                  icon,
+                  size: 17,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     title,
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xffe6ddd4),
-                    ),
+                    style: TextStyle(fontSize: 12, color: Color(0xffe6ddd4)),
                   ),
                 ),
-                const Icon(
-                  Icons.chevron_right,
-                  size: 17,
-                  color: Color(0xffb79386),
-                ),
+                Icon(Icons.chevron_right, size: 17, color: Color(0xffb79386)),
               ],
             ),
           ),
@@ -428,7 +421,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
           IconButton(
             tooltip: t('Mappa degli Occhi completa', 'Full Eyes Map'),
             onPressed: () => openEyeMemory(campaign: haPermessiMaster),
-            icon: const OculumMemoryEye(role: 'party', size: 32),
+            icon: OculumMemoryEye(role: 'party', size: 32),
           ),
         ],
       ),
@@ -437,7 +430,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
         (_) => OutlinedButton.icon(
           onPressed: () =>
               vaiAllaFunzione(page: _OculumHomePageState.mapPageIndex),
-          icon: const Icon(Icons.map_outlined),
+          icon: Icon(Icons.map_outlined),
           label: Text(t('Apri mappa dei luoghi', 'Open location map')),
         ),
       if (referenceStoryTab == 'links')
@@ -478,9 +471,9 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
             children: [
               Text(
                 t('La memoria della tua campagna', 'Your campaign memory'),
-                style: const TextStyle(fontFamily: 'Georgia', fontSize: 18),
+                style: TextStyle(fontFamily: 'Georgia', fontSize: 18),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 t(
                   'Scrivi [[ per collegare un nome. Ogni ricordo conserva la sua fonte.',
@@ -492,12 +485,12 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                 children: [
                   TextButton.icon(
                     onPressed: aggiungiVoceDatabaseDiario,
-                    icon: const Icon(Icons.edit_note),
+                    icon: Icon(Icons.edit_note),
                     label: Text(t('Nuova nota', 'New note')),
                   ),
                   TextButton.icon(
                     onPressed: aggiungiPaginaDiario,
-                    icon: const Icon(Icons.auto_stories_outlined),
+                    icon: Icon(Icons.auto_stories_outlined),
                     label: Text(t('Pagina con ricompensa', 'Rewarded page')),
                   ),
                 ],
@@ -574,7 +567,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
             programmaSalvataggio();
           },
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           t(
             'Le sfumature usano i colori alto, centro e basso. Gli scacchi usano alto e basso: scegli i due colori qui sotto.',
@@ -598,7 +591,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
             'Maximum and current are separate. Editing maximum adjusts the base stat and preserves active bonuses; it does not restore spent points.',
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         for (final entry in <(String, String, TextEditingController)>[
           ('resilienza', t('Resilienza', 'Resilience'), resilienzaController),
           ('volonta', t('Volontà', 'Will'), volontaController),
@@ -617,7 +610,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 Row(
                   children: [
                     Expanded(
@@ -641,7 +634,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                         },
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Expanded(
                       child: campoStatAttualeVisibile(
                         label: t('Attuale', 'Current'),
@@ -656,7 +649,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
         if (!vitaAfonaAttiva()) ...[
           Text(
             t('Vita', 'Health'),
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: TextStyle(fontWeight: FontWeight.w700),
           ),
           Row(
             children: [
@@ -677,7 +670,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                   },
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Expanded(
                 child: campoTesto(
                   label: t('Vita attuale', 'Current HP'),
@@ -696,7 +689,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
             ),
           ),
         ],
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Text(
           t('Scudo Oculum', 'Oculum shield'),
           style: TextStyle(
@@ -704,23 +697,23 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
         Row(
           children: [
             Expanded(child: compactScudoOculumMaxEditField()),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(child: compactScudoOculumEditField()),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 280),
+            constraints: BoxConstraints(maxWidth: 280),
             child: compactNumericEditField(
               label: t('Scudo · attuale', 'Shield · current'),
               controller: scudoController,
               displayValue: '${scudo()}',
-              color: const Color(0xFF44A7FF),
+              color: Color(0xFF44A7FF),
               onSaved: () => impostaScudoTotale(
                 max(0, readIntValue(scudoController.text)),
               ),
@@ -779,7 +772,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                     if (i != null) update(() => target = i);
                   },
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 TextFormField(
                   initialValue: '1',
                   keyboardType: TextInputType.number,
@@ -789,7 +782,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                   onChanged: (value) =>
                       update(() => amount = int.tryParse(value) ?? 0),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   t(
                     'Gli oggetti donati vengono rimossi dal tuo inventario.',
@@ -872,19 +865,19 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                 children: [
                   OutlinedButton.icon(
                     onPressed: showMerchantDialog,
-                    icon: const Icon(Icons.storefront),
+                    icon: Icon(Icons.storefront),
                     label: Text(t('Mercato', 'Market')),
                   ),
                   OutlinedButton.icon(
                     onPressed: () => vaiAllaFunzione(
                       page: _OculumHomePageState.recipesPageIndex,
                     ),
-                    icon: const Icon(Icons.handyman),
+                    icon: Icon(Icons.handyman),
                     label: Text(t('Ricette', 'Recipes')),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               if (haPermessiMaster)
                 masterItemGiftPanel(initiallyExpanded: true),
               pawnGuardiansPanel(),
@@ -902,7 +895,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           sliver: SliverGrid.builder(
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 116,
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
@@ -914,7 +907,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
               return Tooltip(
                 message: item.nome,
                 child: Material(
-                  color: const Color(0xff101116),
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(7),
                     side: BorderSide(
@@ -948,7 +941,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                             item.nome,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 11),
+                            style: TextStyle(fontSize: 11),
                           ),
                           Text(
                             '×${item.quantita}',
@@ -977,7 +970,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                     children: [
                       sectionTitle(selected.nome),
                       if (selected.note.isNotEmpty) Text(selected.note),
-                      const SizedBox(height: 10),
+                      SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
@@ -1016,7 +1009,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                           'La vendita usa il prezzo ridotto del Negoziante.',
                           'Selling uses the merchant’s reduced price.',
                         ),
-                        style: const TextStyle(fontSize: 11),
+                        style: TextStyle(fontSize: 11),
                       ),
                     ],
                   ),
@@ -1079,8 +1072,8 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
     return gothicPanel(
       child: Column(
         children: [
-          const OculumReferenceArt(combat: true, height: 96),
-          const SizedBox(height: 12),
+          OculumReferenceArt(combat: true, height: 96),
+          SizedBox(height: 12),
           OculumEncounterStage(
             key: ValueKey(
               'encounter_stage_${master ? selectedMasterInitiativeGroupId : activeCampaignId}',
@@ -1095,7 +1088,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
             portraitBuilder: (token) =>
                 '${token['imageBase64'] ?? ''}'.isEmpty &&
                     '${token['spriteAssetPath'] ?? ''}'.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       '?',
                       style: TextStyle(fontSize: 32, color: Color(0xffb5a390)),
@@ -1133,7 +1126,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                     t('Nome conosciuto', 'Known name'),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: () async {
                     final file = await _picker.pickImage(
@@ -1144,7 +1137,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                     if (!context.mounted) return;
                     update(() => image = base64Encode(bytes));
                   },
-                  icon: const Icon(Icons.image_outlined),
+                  icon: Icon(Icons.image_outlined),
                   label: Text(
                     image == null
                         ? t('Scegli immagine', 'Choose image')
