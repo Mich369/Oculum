@@ -1184,6 +1184,13 @@ extension _OculumPawnRuntime on _OculumHomePageState {
             : <String, dynamic>{};
         raw['id'] = id;
         raw['ownerTag'] = sender;
+        // A player's request may link only its authenticated active sheet.
+        // Staff permissions are validated by validPawnSender above.
+        if (payload['senderRole'] != 'coMaster' &&
+            '${raw['creatureSheetTag'] ?? ''}' != sender) {
+          raw.remove('creatureSheetTag');
+          raw.remove('creatureMaxHp');
+        }
         raw['targets'] = targets;
         raw['pendingRegistration'] = false;
         final created = OculumPawnGuardian.fromJson(raw);
