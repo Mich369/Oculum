@@ -52,3 +52,14 @@ Le catture desktop e telefono sono incluse nell’artefatto GitHub `Oculum-UI-Ca
 - Conferma della skill ed editor degli effetti mantengono i controller dei campi di testo fino alla fine della chiusura del dialogo, evitando l'errore di utilizzo di un controller già liberato.
 
 Esempio: un bonus a Riflessi con valore `1d6` e durata `1d4+2`, se ottiene 4 e 2, applica +4 Riflessi per 4 turni. Al turno seguente resta +4 e la durata scende a 3: non vengono ritirati i dadi.
+
+## HUD dark: seconda revisione estetica
+
+- Pannelli con sfumature discrete, bordi meno invadenti e sigilli agli angoli; il centro resta libero.
+- Le liane esterne hanno foglie più distanziate e lati asimmetrici. Le cornici dei pannelli non ripetono l'intera liana.
+- Le quattro statistiche hanno icone coerenti con il significato: cuore, fiamma, scudo e occhio. Il colore segue la statistica e la palette attiva.
+- Vita e Oculum hanno indicatori incorniciati con valori invariati; Vita mantiene la sovrapposizione degli scudi.
+- Pulsanti, menu e conferme condividono cornici e stati di pressione, focus e hover.
+- Nessuna modifica a costi, statistiche, danni, salvataggi o durata delle abilità.
+
+Restano modificabili tema, colori della palette, colore Oculum, intensità delle decorazioni e modalità grafica. Gli accenti di combattimento distinguono le azioni senza sostituire testo e icone.

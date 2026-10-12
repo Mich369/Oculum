@@ -195,6 +195,30 @@ class OculumGothPainter extends CustomPainter {
         Offset(size.width - 20, 5),
         _paint(spec.accent, stroke: true, width: .5),
       );
+      // Corner seals leave the center clear, even in short combat panels.
+      for (final right in [false, true]) {
+        for (final bottom in [false, true]) {
+          canvas.save();
+          canvas.translate(right ? size.width : 0, bottom ? size.height : 0);
+          canvas.scale(right ? -1 : 1, bottom ? -1 : 1);
+          final corner = Path()
+            ..moveTo(6, 24)
+            ..lineTo(6, 12)
+            ..quadraticBezierTo(6, 6, 12, 6)
+            ..lineTo(24, 6);
+          canvas.drawPath(corner, _paint(spec.accent, stroke: true));
+          final seal = Path()
+            ..moveTo(12, 8)
+            ..lineTo(16, 12)
+            ..lineTo(12, 16)
+            ..lineTo(8, 12)
+            ..close();
+          canvas.drawPath(seal, _paint(spec.ink));
+          canvas.restore();
+        }
+      }
+      canvas.restore();
+      return;
     }
     final band = panel ? 12.0 : (size.width < 600 ? 10.0 : 18.0);
     for (final right in [false, true]) {
@@ -202,6 +226,7 @@ class OculumGothPainter extends CustomPainter {
       if (right) {
         canvas.translate(size.width, 0);
         canvas.scale(-1, 1);
+        canvas.translate(0, -17);
       }
       canvas.clipRect(Rect.fromLTWH(0, 0, band, size.height));
       if (particles) {
@@ -265,16 +290,16 @@ class OculumGothPainter extends CustomPainter {
 
   void _vine(Canvas c, double w, double h) {
     final path = Path()..moveTo(w * .5, 0);
-    for (var y = 0.0; y < h; y += 44) {
-      path.cubicTo(w * 1.1, y + 13, -w * .2, y + 31, w * .5, y + 44);
+    for (var y = 0.0; y < h; y += 64) {
+      path.cubicTo(w * 1.1, y + 19, -w * .2, y + 45, w * .5, y + 64);
     }
     c.drawPath(path, _paint(spec.ink, stroke: true, width: 2.1));
     c.drawPath(
       path.shift(const Offset(1, 0)),
       _paint(spec.accent, stroke: true, width: .5),
     );
-    for (var i = 0; i * 27 < h; i++) {
-      final y = i * 27.0 + 13;
+    for (var i = 0; i * 39 < h; i++) {
+      final y = i * 39.0 + 13;
       final side = i.isEven ? 1.0 : -1.0;
       final leaf = Path()
         ..moveTo(w * .5, y)

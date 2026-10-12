@@ -524,45 +524,59 @@ extension _OculumReferenceSheet on _OculumHomePageState {
         children: [
           Row(
             children: [
+              Icon(
+                shields ? Icons.favorite_outline : Icons.visibility_outlined,
+                size: 15,
+                color: color,
+              ),
+              const SizedBox(width: 6),
               Expanded(child: Text(name)),
               Text(label, style: TextStyle(fontWeight: FontWeight.w700)),
             ],
           ),
           SizedBox(height: 5),
           if (!hidden)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: Stack(
-                children: [
-                  LinearProgressIndicator(
-                    value: maximum > 0
-                        ? (current / maximum).clamp(0.0, 1.0)
-                        : 0,
-                    minHeight: 8,
-                    color: color,
-                    backgroundColor: color.withValues(alpha: .15),
-                  ),
-                  if (shields && scudo() > 0)
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: backgroundBottomColor,
+                border: Border.all(color: color.withValues(alpha: .35)),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Stack(
+                  children: [
                     LinearProgressIndicator(
-                      key: ValueKey('reference_shield_bar'),
                       value: maximum > 0
-                          ? (scudo() / maximum).clamp(0.0, 1.0)
+                          ? (current / maximum).clamp(0.0, 1.0)
                           : 0,
                       minHeight: 8,
-                      color: Color(0xFF44A7FF),
-                      backgroundColor: Colors.transparent,
+                      color: color,
+                      backgroundColor: color.withValues(alpha: .15),
                     ),
-                  if (shields && scudoOculum() > 0)
-                    LinearProgressIndicator(
-                      key: ValueKey('reference_oculum_shield_bar'),
-                      value: maximum > 0
-                          ? (scudoOculum() / maximum).clamp(0.0, 1.0)
-                          : 0,
-                      minHeight: 8,
-                      color: eyePupilGlowColor,
-                      backgroundColor: Colors.transparent,
-                    ),
-                ],
+                    if (shields && scudo() > 0)
+                      LinearProgressIndicator(
+                        key: ValueKey('reference_shield_bar'),
+                        value: maximum > 0
+                            ? (scudo() / maximum).clamp(0.0, 1.0)
+                            : 0,
+                        minHeight: 8,
+                        color: Color(0xFF44A7FF),
+                        backgroundColor: Colors.transparent,
+                      ),
+                    if (shields && scudoOculum() > 0)
+                      LinearProgressIndicator(
+                        key: ValueKey('reference_oculum_shield_bar'),
+                        value: maximum > 0
+                            ? (scudoOculum() / maximum).clamp(0.0, 1.0)
+                            : 0,
+                        minHeight: 8,
+                        color: eyePupilGlowColor,
+                        backgroundColor: Colors.transparent,
+                      ),
+                  ],
+                ),
               ),
             ),
         ],
@@ -1053,50 +1067,85 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                         ).withValues(alpha: .55),
                       ),
                     ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: () => tiraStat(stats[i].$2, stats[i].$3),
-                      onLongPress: () => vaiAllaFunzione(
-                        page: 0,
-                        anchorId: 'sheet_editable_values_${stats[i].$1}',
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color.lerp(
+                              backgroundBottomColor,
+                              statFormulaColor(stats[i].$1),
+                              .09,
+                            )!,
+                            backgroundBottomColor,
+                          ],
+                        ),
                       ),
-                      child: Semantics(
-                        button: true,
-                        label:
-                            '${stats[i].$2} ${stats[i].$3}. ${t('Tocca per tirare; tieni premuto per modificare.', 'Tap to roll; hold to edit.')}',
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: compact ? 4 : 12,
-                            vertical: compact ? 9 : 10,
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                stats[i].$2,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: compact ? 10 : 13,
-                                  color: primaryColor,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                '${stats[i].$3}',
-                                style: TextStyle(
-                                  fontSize: compact ? 21 : 28,
-                                  fontWeight: FontWeight.w700,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        hoverColor: statFormulaColor(
+                          stats[i].$1,
+                        ).withValues(alpha: .09),
+                        splashColor: statFormulaColor(
+                          stats[i].$1,
+                        ).withValues(alpha: .18),
+                        onTap: () => tiraStat(stats[i].$2, stats[i].$3),
+                        onLongPress: () => vaiAllaFunzione(
+                          page: 0,
+                          anchorId: 'sheet_editable_values_${stats[i].$1}',
+                        ),
+                        child: Semantics(
+                          button: true,
+                          label:
+                              '${stats[i].$2} ${stats[i].$3}. ${t('Tocca per tirare; tieni premuto per modificare.', 'Tap to roll; hold to edit.')}',
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: compact ? 4 : 12,
+                              vertical: compact ? 9 : 10,
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  switch (stats[i].$1) {
+                                    'resilienza' => Icons.favorite_outline,
+                                    'volonta' =>
+                                      Icons.local_fire_department_outlined,
+                                    'materia' => Icons.shield_outlined,
+                                    _ => Icons.visibility_outlined,
+                                  },
+                                  size: compact ? 15 : 18,
                                   color: statFormulaColor(stats[i].$1),
                                 ),
-                              ),
-                              Text(
-                                t('Tira', 'Roll'),
-                                style: TextStyle(
-                                  fontSize: compact ? 10 : 11,
-                                  color: primaryColor.withValues(alpha: .7),
+                                const SizedBox(height: 4),
+                                Text(
+                                  stats[i].$2,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: compact ? 10 : 13,
+                                    color: primaryColor,
+                                  ),
                                 ),
-                              ),
-                            ],
+                                SizedBox(height: 4),
+                                Text(
+                                  '${stats[i].$3}',
+                                  style: TextStyle(
+                                    fontSize: compact ? 21 : 28,
+                                    fontWeight: FontWeight.w700,
+                                    color: statFormulaColor(stats[i].$1),
+                                  ),
+                                ),
+                                Text(
+                                  t('Tira', 'Roll'),
+                                  style: TextStyle(
+                                    fontSize: compact ? 10 : 11,
+                                    color: primaryColor.withValues(alpha: .7),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

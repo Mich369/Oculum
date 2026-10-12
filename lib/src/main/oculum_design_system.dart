@@ -161,13 +161,26 @@ abstract final class OculumDesignTokens {
       'sigillo_rituale' => radiusLarge,
       _ => radiusMedium,
     };
+    final baseSurface =
+        background ??
+        Color.lerp(cathedralStone, surface, elevated ? 0.56 : 0.24)!;
+    final crown = Color.lerp(baseSurface, accent, .045 * intensity)!;
+    final foot = Color.lerp(baseSurface, Colors.black, .035 * intensity)!;
     return BoxDecoration(
       color: background == null
           ? Color.lerp(cathedralStone, surface, elevated ? 0.56 : 0.24)
           : Color.lerp(background, accent, elevated ? .035 : .015),
       borderRadius: BorderRadius.circular(radius),
+      gradient: elevated && intensity > 0
+          ? LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [crown, baseSurface, foot],
+              stops: const [0, .38, 1],
+            )
+          : null,
       border: Border.all(
-        color: accent.withValues(alpha: 0.30 + 0.30 * intensity),
+        color: accent.withValues(alpha: 0.22 + 0.20 * intensity),
         width: 1,
       ),
       boxShadow: elevated && intensity > 0
@@ -216,17 +229,33 @@ class OculumPanelEngraving extends CustomPainter {
       // Small hooked tendrils and a diamond echo the author's etched frame.
       final vine = Path()
         ..moveTo(origin.dx + dx * 4, origin.dy + dy * 31)
-        ..cubicTo(origin.dx + dx * 12, origin.dy + dy * 28,
-          origin.dx + dx * 7, origin.dy + dy * 20,
-          origin.dx + dx * 18, origin.dy + dy * 13)
-        ..cubicTo(origin.dx + dx * 25, origin.dy + dy * 7,
-          origin.dx + dx * 29, origin.dy + dy * 13,
-          origin.dx + dx * 34, origin.dy + dy * 4);
+        ..cubicTo(
+          origin.dx + dx * 12,
+          origin.dy + dy * 28,
+          origin.dx + dx * 7,
+          origin.dy + dy * 20,
+          origin.dx + dx * 18,
+          origin.dy + dy * 13,
+        )
+        ..cubicTo(
+          origin.dx + dx * 25,
+          origin.dy + dy * 7,
+          origin.dx + dx * 29,
+          origin.dy + dy * 13,
+          origin.dx + dx * 34,
+          origin.dy + dy * 4,
+        );
       canvas.drawPath(vine, ink);
       final point = Offset(origin.dx + dx * 12, origin.dy + dy * 12);
-      canvas.drawPath(Path()..moveTo(point.dx, point.dy - 3)
-        ..lineTo(point.dx + 3, point.dy)..lineTo(point.dx, point.dy + 3)
-        ..lineTo(point.dx - 3, point.dy)..close(), ink);
+      canvas.drawPath(
+        Path()
+          ..moveTo(point.dx, point.dy - 3)
+          ..lineTo(point.dx + 3, point.dy)
+          ..lineTo(point.dx, point.dy + 3)
+          ..lineTo(point.dx - 3, point.dy)
+          ..close(),
+        ink,
+      );
     }
   }
 

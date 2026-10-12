@@ -82,14 +82,29 @@ ThemeData oculumBuildPaletteTheme({
   final text = oculumReadableThemeColor(primary, surface);
   final highlight = oculumReadableThemeColor(accent, surface);
   final onHighlight = oculumReadableThemeColor(primary, highlight);
+  final raisedSurface = Color.lerp(surface, primary, .035)!;
+  final controlShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(10),
+  );
+  final controlOverlay = WidgetStateProperty.resolveWith<Color?>((states) {
+    if (states.contains(WidgetState.disabled)) return Colors.transparent;
+    if (states.contains(WidgetState.pressed)) {
+      return highlight.withValues(alpha: .18);
+    }
+    if (states.contains(WidgetState.hovered) ||
+        states.contains(WidgetState.focused)) {
+      return highlight.withValues(alpha: .10);
+    }
+    return Colors.transparent;
+  });
   final error = oculumReadableThemeColor(base.colorScheme.error, surface);
   final scheme = base.colorScheme.copyWith(
     surface: surface,
     surfaceContainerLowest: background,
     surfaceContainerLow: surface,
     surfaceContainer: surface,
-    surfaceContainerHigh: surface,
-    surfaceContainerHighest: surface,
+    surfaceContainerHigh: raisedSurface,
+    surfaceContainerHighest: raisedSurface,
     onSurface: text,
     onSurfaceVariant: text,
     primary: highlight,
@@ -142,11 +157,19 @@ ThemeData oculumBuildPaletteTheme({
       surfaceTintColor: Colors.transparent,
       titleTextStyle: textTheme.titleLarge,
       contentTextStyle: textTheme.bodyMedium,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: highlight.withValues(alpha: .4)),
+      ),
     ),
     popupMenuTheme: base.popupMenuTheme.copyWith(
       color: surface,
       surfaceTintColor: Colors.transparent,
       textStyle: textTheme.bodyMedium,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: highlight.withValues(alpha: .35)),
+      ),
     ),
     bottomSheetTheme: base.bottomSheetTheme.copyWith(
       backgroundColor: surface,
@@ -214,8 +237,12 @@ ThemeData oculumBuildPaletteTheme({
       style: (base.elevatedButtonTheme.style ?? const ButtonStyle()).merge(
         ElevatedButton.styleFrom(
           foregroundColor: text,
-          backgroundColor: surface,
+          backgroundColor: raisedSurface,
           textStyle: textTheme.labelLarge,
+          shape: controlShape,
+          side: BorderSide(color: highlight.withValues(alpha: .4)),
+          overlayColor: highlight.withValues(alpha: .12),
+          animationDuration: const Duration(milliseconds: 140),
         ),
       ),
     ),
@@ -231,16 +258,21 @@ ThemeData oculumBuildPaletteTheme({
       style: OutlinedButton.styleFrom(
         foregroundColor: text,
         side: BorderSide(color: highlight.withValues(alpha: .55)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: controlShape,
         minimumSize: const Size(44, 40),
-      ),
+        backgroundColor: raisedSurface,
+        textStyle: textTheme.labelLarge,
+        animationDuration: const Duration(milliseconds: 140),
+      ).copyWith(overlayColor: controlOverlay),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: highlight,
         foregroundColor: onHighlight,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: controlShape,
         minimumSize: const Size(44, 40),
+        textStyle: textTheme.labelLarge,
+        animationDuration: const Duration(milliseconds: 140),
       ),
     ),
   );
