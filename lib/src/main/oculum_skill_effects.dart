@@ -6,6 +6,8 @@ part of '../../main.dart';
 /// non dipendono dalla lingua visualizzata nell'interfaccia.
 const List<String> oculumStructuredEffectTypes = <String>[
   'danno',
+  'danno_percentuale',
+  'costrutto',
   'difesa',
   'cura',
   'modifica_statistica',
@@ -25,6 +27,9 @@ const List<String> oculumStructuredEffectTypes = <String>[
   'conversione_risorsa',
   'stato',
 ];
+
+int oculumDamageWithPercentage(int damage, int percent) =>
+    max(0, (max(0, damage) * (100 + max(-100, percent)) / 100).round());
 
 /// Solo queste chiavi possono rappresentare un costo strutturato.
 ///
@@ -871,8 +876,11 @@ OculumStructuredEffectRoll oculumResolveStructuredEffectRoll(
     dice: dice,
     levelBonus: levelBonus,
     gradeBonus: gradeBonus,
-    value:
-        baseValue + sharedBonus + (diceForDuration ? 0 : additionalDice.total),
+    value: effect.diceDestination == 'moltiplicatore'
+        ? (baseValue + sharedBonus) * (isTick ? 1 : additionalDice.total)
+        : baseValue +
+              sharedBonus +
+              (diceForDuration ? 0 : additionalDice.total),
     durationBonus: diceForDuration ? additionalDice.total : 0,
     baseDuration: baseDuration,
   );
@@ -882,6 +890,8 @@ String oculumStructuredEffectTargetKey(OculumStructuredEffect effect) {
   switch (effect.type) {
     case 'danno':
       return 'danni';
+    case 'danno_percentuale':
+      return 'danni_percentuale';
     case 'difesa':
       return 'difesa';
     case 'scudo':
@@ -913,6 +923,7 @@ String oculumStructuredEffectQuickCommand(
   Iterable<HiddenEyeStat> subtraits = const <HiddenEyeStat>[],
 }) {
   if (!effect.enabled) return '';
+  if (effect.type == 'danno_percentuale') return '';
   final key = oculumStructuredEffectTargetKey(effect);
   if (key.isEmpty) return '';
   final expression = oculumEffectFormulaExpression(
@@ -975,6 +986,15 @@ String oculumStructuredEffectDescription(
         effect.mode == 'finche_attivo'
             ? 'Danni + $displayedValue finché l’effetto è attivo'
             : 'Infligge $displayedValue danni',
+      );
+    case 'danno_percentuale':
+      return withPeriod(
+        'Danni ${effect.mode == 'diminuzione' ? '-' : '+'}$displayedValue%'
+        '${effect.mode == 'prossima_azione' ? ' al prossimo attacco' : ''}',
+      );
+    case 'costrutto':
+      return withPeriod(
+        '${effect.target.isEmpty ? 'Costrutto' : effect.target}: $displayedValue Vita',
       );
     case 'difesa':
       return withPeriod('Difesa + $displayedValue');

@@ -4708,6 +4708,12 @@ String monsterBookSkillText(String rawId) {
     '',
   );
   switch (baseId) {
+    case 'rock_slime_ball':
+      return 'Palla di Roccia Slime — I/Infliggi Oculum immesso danni. Richiede livello 0. (1/4 Oculum). II/Infliggi Oculum immesso +3 danni oppure crei un blocco indurito con Oculum immesso ×3 Vita che concede una Reazione contro il bersaglio. Richiede livello 5. (5/10 Oculum). III/Infliggi Oculum immesso +10 danni oppure crei un blocco indurito con Oculum immesso ×5 Vita che concede una Reazione contro il bersaglio. Richiede livello 13. (11/20 Oculum).';
+    case 'rock_slime_bounce':
+      return 'Rimbalzo — I/Ottieni una Reazione e +25% danni al prossimo attacco. Richiede livello 1. (1/3 Oculum). II/Ottieni una Reazione e +50% danni al prossimo attacco. Richiede livello 6. (4/6 Oculum). III/Tira 1d3 rimbalzi: una Reazione e +50% danni per ciascuno, per tutto il turno. Richiede livello 12. (7/10 Oculum).';
+    case 'rock_slime_harden':
+      return 'Indurimento — I/Resilienza +10 + Oculum immesso e Difesa +5 + Oculum immesso. Richiede livello 0. (1/2 Oculum). II/Resilienza +15 + Oculum immesso e Difesa +6 + Oculum immesso. Richiede livello 3. (3/4 Oculum). III/Resilienza +25 + Oculum immesso e Difesa +15 + Oculum immesso. Richiede livello 10. (5/10 Oculum).';
     case 'slime_tornado':
       return 'Tornado Slime — I/Dalla sfera slime volante scateni un tornado: +1 energia Reazione e Svantaggio ai nemici. Richiede livello 9. (3/10 Oculum). II/Il tornado concede +1 energia Reazione, dà Svantaggio ai nemici e infligge Oculum danni ad area. Richiede livello 20. (11/20 Oculum). III/Il tornado concede +1 energia Reazione, dà Doppio Svantaggio ai nemici e infligge Oculum danni ad area. Richiede livello 30. (21/30 Oculum).';
     case 'king_crash':

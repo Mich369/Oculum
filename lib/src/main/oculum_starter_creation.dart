@@ -115,7 +115,9 @@ bool oculumMonsterHasOculumArt(MonsterBookEntry monster) {
 }
 
 CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
-    monster.id.startsWith('pawn_guardiano')
+    monster.id == 'slime_roccioso'
+    ? oculumRockSlimeArt(monster)
+    : monster.id.startsWith('pawn_guardiano')
     ? CharacterArt(
         nome: 'Capacità — ${monster.nameIt}',
         tipo: 'Capacità Pawn',
@@ -231,6 +233,128 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
             ),
         ],
       );
+
+CharacterArt oculumRockSlimeArt(MonsterBookEntry monster) => CharacterArt(
+  nome: 'Il cuore della roccia slime',
+  tipo: 'Art Mostro',
+  descrizione:
+      '${monster.descIt}\nTecniche dello Slime Roccioso. Le forme richiedono il livello indicato; ogni attivazione sceglie il proprio investimento di Oculum.',
+  openName: 'Masso Slime',
+  openDescription:
+      'Richiede livello 15. Ti trasformi in Masso Slime: +5 a tutte le statistiche e +9 ai tiri mentre l’Open è attiva. La Skill Open infligge Oculum immesso ×5 danni, aumentati del 100%.',
+  openBuff:
+      '+5 Resilienza, Volontà, Materia e Oculum; +9 a tutti i tiri. Termina quando l’Open si disattiva.',
+  openBuffEffects: [
+    for (final stat in ['Resilienza', 'Volontà', 'Materia', 'Oculum'])
+      OculumStructuredEffect(
+        id: 'rock_slime_open_$stat',
+        type: 'modifica_statistica',
+        target: stat,
+        valueExpression: '5',
+      ),
+    OculumStructuredEffect(
+      id: 'rock_slime_open_rolls',
+      type: 'modifica_statistica',
+      target: 'tiro_globale',
+      valueExpression: '9',
+    ),
+  ],
+  openSkill:
+      'Schiaccio — Oculum immesso ×5 danni, +100% danni Open. Il raddoppio si applica una sola volta; Difesa e Scudi restano validi.',
+  monsterOpenSkill: true,
+  skills: [
+    for (final id in monster.skillIds)
+      ArtSkill(
+        nome: monsterBookSkillText(id).split('—').first.trim(),
+        livello: 0,
+        evo1: monsterBookSkillForms(id)[0],
+        evo2: monsterBookSkillForms(id)[1],
+        evo3: monsterBookSkillForms(id)[2],
+        oculumMinimiPerLivello: switch (id) {
+          'rock_slime_ball' => [1, 5, 11],
+          'rock_slime_bounce' => [1, 4, 7],
+          _ => [1, 3, 5],
+        },
+        oculumMassimiPerLivello: switch (id) {
+          'rock_slime_ball' => [4, 10, 20],
+          'rock_slime_bounce' => [3, 6, 10],
+          _ => [2, 4, 10],
+        },
+        effettiPerLivello: List.generate(
+          3,
+          (form) => oculumRockSlimeEffects(id, form),
+        ),
+      ),
+  ],
+);
+
+List<OculumStructuredEffect> oculumRockSlimeEffects(
+  String id,
+  int form, {
+  bool block = false,
+}) {
+  if (id == 'rock_slime_ball') {
+    return [
+      OculumStructuredEffect(
+        id: '${id}_${form + 1}_${block ? 'block' : 'attack'}',
+        type: block ? 'costrutto' : 'danno',
+        target: block ? 'Blocco di Roccia Slime' : '',
+        valueExpression: block
+            ? 'oculum_spent*${form == 1 ? 3 : 5}'
+            : 'oculum_spent+${const [0, 3, 10][form]}',
+        recipient: block ? 'se_stesso' : 'bersaglio',
+        mode: block ? 'immediato' : 'prossima_azione',
+        customDisplayText: block
+            ? 'Blocco con Vita propria; concede una Reazione contro il bersaglio.'
+            : '',
+      ),
+      if (block)
+        OculumStructuredEffect(
+          id: '${id}_reaction',
+          type: 'aggiungi_reazioni',
+          valueExpression: '1',
+          duration: '1',
+        ),
+    ];
+  }
+  if (id == 'rock_slime_bounce') {
+    return [
+      OculumStructuredEffect(
+        id: '${id}_reaction',
+        type: 'aggiungi_reazioni',
+        valueExpression: '1',
+        duration: '1',
+        diceExpression: form == 2 ? '1d3' : '',
+        diceDestination: form == 2 ? 'moltiplicatore' : 'valore',
+      ),
+      OculumStructuredEffect(
+        id: '${id}_damage',
+        type: 'danno_percentuale',
+        valueExpression: form == 0 ? '25' : '50',
+        mode: form == 2 ? 'finche_attivo' : 'prossima_azione',
+        duration: form == 2 ? '1' : '',
+        diceExpression: form == 2 ? '1d3' : '',
+        diceDestination: form == 2 ? 'moltiplicatore' : 'valore',
+      ),
+    ];
+  }
+  return [
+    OculumStructuredEffect(
+      id: '${id}_res',
+      type: 'modifica_statistica',
+      target: 'Resilienza',
+      valueExpression: '${const [10, 15, 25][form]}+oculum_spent',
+      mode: 'aumento',
+      duration: '6',
+    ),
+    OculumStructuredEffect(
+      id: '${id}_def',
+      type: 'difesa',
+      valueExpression: '${const [5, 6, 15][form]}+oculum_spent',
+      duration: '6',
+    ),
+  ];
+}
 
 String _monsterBookSkillEvolution(
   MonsterBookEntry monster,

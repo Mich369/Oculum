@@ -2128,12 +2128,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   ? constraints.maxWidth
                   : MediaQuery.of(context).size.width;
               final compact = width < 520 || lightweightUi;
-              final eyeWidth = compact ? width : min(width, 380.0);
-              final eyeHeight = (eyeWidth * 0.56).clamp(
-                compact ? 128.0 : 210.0,
-                compact ? 205.0 : 280.0,
-              );
-              final radius = compact ? 18.0 : 22.0;
+              final eyeWidth = min(width, compact ? 160.0 : 200.0);
+              final eyeHeight = eyeWidth;
+              final radius = compact ? 12.0 : 14.0;
 
               final imageCard = SizedBox(
                 width: eyeWidth,
@@ -2169,12 +2166,15 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                                         size: eyeHeight * .85,
                                       ),
                                     )
-                                  : CustomPaint(
-                                      painter: OculumEyePainter(
-                                        primaryColor: primaryColor,
-                                        secondaryColor: secondaryColor,
-                                        tertiaryColor: tertiaryColor,
-                                        pupilGlowColor: eyePupilGlowColor,
+                                  : Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: CustomPaint(
+                                        painter: OculumEyePainter(
+                                          primaryColor: primaryColor,
+                                          secondaryColor: secondaryColor,
+                                          tertiaryColor: tertiaryColor,
+                                          pupilGlowColor: eyePupilGlowColor,
+                                        ),
                                       ),
                                     ),
                             ),
@@ -2228,98 +2228,58 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                             ),
                           ),
                         Positioned(
-                          top: compact ? 8 : 12,
-                          right: compact ? 8 : 12,
-                          child: Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: scegliImmagine,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black.withValues(
-                                    alpha: 0.72,
-                                  ),
-                                  foregroundColor: Colors.white,
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: compact ? 7 : 14,
-                                    vertical: compact ? 5 : 10,
-                                  ),
-                                ),
-                                icon: Icon(
-                                  Icons.image,
-                                  size: compact ? 15 : 20,
-                                ),
-                                label: Text(
-                                  compact ? '+' : t('Aggiungi', 'Add'),
-                                ),
-                              ),
-                              ElevatedButton.icon(
-                                onPressed:
-                                    incollaImmaginePersonaggioDaClipboard,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black.withValues(
-                                    alpha: 0.72,
-                                  ),
-                                  foregroundColor: Colors.white,
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: compact ? 7 : 14,
-                                    vertical: compact ? 5 : 10,
-                                  ),
-                                ),
-                                icon: Icon(
-                                  Icons.content_paste,
-                                  size: compact ? 15 : 20,
-                                ),
-                                label: Text(
-                                  compact
-                                      ? t('Incolla', 'Paste')
-                                      : t('Incolla', 'Paste'),
+                          top: 2,
+                          right: 2,
+                          child: PopupMenuButton<String>(
+                            tooltip: t('Azioni immagine', 'Image actions'),
+                            icon: const Icon(Icons.more_horiz, size: 18),
+                            onSelected: (value) {
+                              switch (value) {
+                                case 'add':
+                                  unawaited(scegliImmagine());
+                                case 'paste':
+                                  unawaited(
+                                    incollaImmaginePersonaggioDaClipboard(),
+                                  );
+                                case 'copy':
+                                  unawaited(
+                                    copiaImmaginePersonaggioNegliAppunti(),
+                                  );
+                                case 'remove':
+                                  rimuoviImmagine();
+                              }
+                            },
+                            itemBuilder: (_) => [
+                              PopupMenuItem(
+                                value: 'add',
+                                child: Text(
+                                  t('Aggiungi immagine', 'Add image'),
                                 ),
                               ),
+                              PopupMenuItem(
+                                value: 'paste',
+                                child: Text(t('Incolla', 'Paste')),
+                              ),
                               if (immaginePersonaggio != null)
-                                ElevatedButton.icon(
-                                  onPressed:
-                                      copiaImmaginePersonaggioNegliAppunti,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black.withValues(
-                                      alpha: 0.72,
-                                    ),
-                                    foregroundColor: Colors.white,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: compact ? 7 : 14,
-                                      vertical: compact ? 5 : 10,
-                                    ),
-                                  ),
-                                  icon: Icon(
-                                    Icons.content_copy,
-                                    size: compact ? 15 : 20,
-                                  ),
-                                  label: Text(
-                                    compact ? '' : t('Copia', 'Copy'),
-                                  ),
+                                PopupMenuItem(
+                                  value: 'copy',
+                                  child: Text(t('Copia', 'Copy')),
                                 ),
                               if (immaginePersonaggio != null)
-                                ElevatedButton.icon(
-                                  onPressed: rimuoviImmagine,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.redAccent
-                                        .withValues(alpha: 0.88),
-                                    foregroundColor: Colors.white,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: compact ? 7 : 14,
-                                      vertical: compact ? 5 : 10,
-                                    ),
-                                  ),
-                                  icon: Icon(
-                                    Icons.delete,
-                                    size: compact ? 15 : 20,
-                                  ),
-                                  label: Text(
-                                    compact ? 'X' : t('Rimuovi', 'Remove'),
-                                  ),
+                                PopupMenuItem(
+                                  value: 'remove',
+                                  child: Text(t('Rimuovi', 'Remove')),
                                 ),
                             ],
+                          ),
+                        ),
+                        Positioned(
+                          top: 2,
+                          left: 2,
+                          child: IconButton(
+                            tooltip: t('Ingrandisci immagine', 'Enlarge image'),
+                            icon: const Icon(Icons.open_in_full, size: 16),
+                            onPressed: mostraRitrattoIngrandito,
                           ),
                         ),
                         Positioned(
@@ -2329,8 +2289,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                           child: Center(
                             child: Container(
                               constraints: BoxConstraints(
-                                maxWidth: max(
-                                  180,
+                                maxWidth: min(
+                                  eyeWidth - 16,
                                   eyeWidth - (compact ? 20 : 80),
                                 ),
                               ),

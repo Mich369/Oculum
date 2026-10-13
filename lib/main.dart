@@ -48,6 +48,8 @@ import 'widgets/oculum_encounter_stage.dart';
 import 'widgets/oculum_reference_art.dart';
 import 'widgets/oculum_reference_frame.dart';
 import 'widgets/oculum_goth_ornaments.dart';
+import 'widgets/oculum_theme_presentation.dart';
+import 'widgets/oculum_theme_relic.dart';
 import 'services/oculum_encounter_visibility.dart';
 import 'widgets/oculum_quick_edit_eye.dart';
 import 'widgets/oculum_monster_picker.dart';
@@ -4416,6 +4418,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       modalitaLeggera,
       modalitaVeloce,
       decoration.style,
+      colorPresetSelezionato,
       decoration.primary,
       decoration.secondary,
       decoration.accent,
@@ -4442,6 +4445,7 @@ class _OculumHomePageState extends State<OculumHomePage>
             extensions: [
               ...inheritedTheme.extensions.values,
               OculumGothOrnaments(
+                themeId: colorPresetSelezionato,
                 family: oculumGothFamily(decoration.style),
                 ink: Color.lerp(decoration.primary, decoration.secondary, .55)!,
                 accent: decoration.accent,
@@ -5059,8 +5063,26 @@ class _OculumHomePageState extends State<OculumHomePage>
                                   ),
                                   child: ValueListenableBuilder<int>(
                                     valueListenable: inputUiRevision,
-                                    builder: (context, revision, child) =>
-                                        buildCurrentPageLazy(safePage),
+                                    builder: (context, revision, child) {
+                                      final page = buildCurrentPageLazy(
+                                        safePage,
+                                      );
+                                      if ((safePage == 0 &&
+                                              referenceCampaignStyle) ||
+                                          oculusModActive ||
+                                          MediaQuery.sizeOf(context).height <
+                                              480) {
+                                        return page;
+                                      }
+                                      return Column(
+                                        children: [
+                                          const OculumThemeRelicBanner(
+                                            dense: true,
+                                          ),
+                                          Expanded(child: page),
+                                        ],
+                                      );
+                                    },
                                   ),
                                 ),
                               )

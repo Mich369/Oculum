@@ -991,6 +991,11 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
   String structuredEffectTypeLabel(String type) {
     return switch (type) {
       'danno' => t('Danno', 'Damage'),
+      'danno_percentuale' => t('Danni in percentuale', 'Damage percentage'),
+      'costrutto' => t(
+        'Costrutto con Vita propria',
+        'Construct with its own HP',
+      ),
       'difesa' => t('Difesa', 'Defense'),
       'cura' => t('Cura / rigenerazione', 'Healing / regeneration'),
       'modifica_statistica' => t(
@@ -1360,7 +1365,12 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     List<String> modesFor(String effectType) {
       return switch (effectType) {
         'cura' => <String>['immediato', 'rigenerazione'],
-        'danno' || 'difesa' => <String>['immediato', 'finche_attivo'],
+        'danno' || 'danno_percentuale' => <String>[
+          'immediato',
+          'finche_attivo',
+          'prossima_azione',
+        ],
+        'difesa' => <String>['immediato', 'finche_attivo'],
         'modifica_statistica' ||
         'modifica_sottotratto' ||
         'velocita' ||
@@ -1610,6 +1620,11 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                   child: Text(
                                     value == 'rigenerazione'
                                         ? t('Rigenerazione', 'Regeneration')
+                                        : value == 'prossima_azione'
+                                        ? t(
+                                            'Prossimo attacco (una volta)',
+                                            'Next attack (once)',
+                                          )
                                         : value == 'finche_attivo'
                                         ? t('Finché attivo', 'While active')
                                         : value == 'diminuzione'
@@ -1685,6 +1700,16 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                 value: 'sotto_stress',
                                 child: Text(t('Sotto stress', 'Under stress')),
                               ),
+                              for (final condition
+                                  in oculumConditionCatalog.where(
+                                    (item) => item.id != 'sotto_stress',
+                                  ))
+                                DropdownMenuItem(
+                                  value: condition.id,
+                                  child: Text(
+                                    t(condition.nameIt, condition.nameEn),
+                                  ),
+                                ),
                             ],
                             onChanged: (value) => setDialogState(() {
                               appliedState = value ?? 'sotto_stress';
@@ -1763,7 +1788,9 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                           controller: valueController,
                           decoration:
                               fieldDecoration(
-                                t('Valore o formula', 'Value or formula'),
+                                isState
+                                    ? t('Stadio o formula', 'Stage or formula')
+                                    : t('Valore o formula', 'Value or formula'),
                               ).copyWith(
                                 helperText:
                                     '10, 1d6+@Danni, @Res+1, OculumSpeso*2',
@@ -1913,6 +1940,15 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                 DropdownMenuItem(
                                   value: 'durata',
                                   child: Text(t('La durata', 'Duration')),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'moltiplicatore',
+                                  child: Text(
+                                    t(
+                                      'Moltiplica il valore',
+                                      'Multiply the value',
+                                    ),
+                                  ),
                                 ),
                               ],
                               onChanged: (value) => setDialogState(() {

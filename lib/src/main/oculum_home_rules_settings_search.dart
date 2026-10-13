@@ -5856,6 +5856,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                   },
                 ),
               ),
+              OculumThemePresentationControls(english: linguaInglese),
               SwitchListTile(
                 value: modalitaMaster,
                 activeThumbColor: tertiaryColor,

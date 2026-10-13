@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'oculum_theme_presentation.dart';
 
 enum OculumGothFamily {
   none,
@@ -39,11 +40,13 @@ class OculumGothOrnaments extends ThemeExtension<OculumGothOrnaments> {
     required this.accent,
     required this.opacity,
     this.motion = false,
+    this.themeId = '',
   });
   final OculumGothFamily family;
   final Color ink, accent;
   final double opacity;
   final bool motion;
+  final String themeId;
   @override
   OculumGothOrnaments copyWith({
     OculumGothFamily? family,
@@ -51,12 +54,14 @@ class OculumGothOrnaments extends ThemeExtension<OculumGothOrnaments> {
     Color? accent,
     double? opacity,
     bool? motion,
+    String? themeId,
   }) => OculumGothOrnaments(
     family: family ?? this.family,
     ink: ink ?? this.ink,
     accent: accent ?? this.accent,
     opacity: opacity ?? this.opacity,
     motion: motion ?? this.motion,
+    themeId: themeId ?? this.themeId,
   );
   @override
   OculumGothOrnaments lerp(covariant OculumGothOrnaments? other, double t) =>
@@ -68,6 +73,7 @@ class OculumGothOrnaments extends ThemeExtension<OculumGothOrnaments> {
           accent: Color.lerp(accent, other.accent, t)!,
           opacity: opacity + (other.opacity - opacity) * t,
           motion: other.motion,
+          themeId: other.themeId,
         );
 }
 
@@ -85,11 +91,24 @@ class OculumGothAmbience extends StatefulWidget {
 }
 
 class _OculumGothAmbienceState extends State<OculumGothAmbience>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  bool foreground = true;
   late final AnimationController clock = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 24),
   );
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    foreground = state == AppLifecycleState.resumed;
+    _motion();
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -105,6 +124,9 @@ class _OculumGothAmbienceState extends State<OculumGothAmbience>
   void _motion() {
     final enabled =
         widget.spec.motion &&
+        foreground &&
+        TickerMode.valuesOf(context).enabled &&
+        oculumThemePresentation.value.motion == OculumThemeMotion.complete &&
         !MediaQuery.disableAnimationsOf(context) &&
         widget.spec.family != OculumGothFamily.none;
     if (enabled && !clock.isAnimating) {
@@ -117,6 +139,7 @@ class _OculumGothAmbienceState extends State<OculumGothAmbience>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     clock.dispose();
     super.dispose();
   }

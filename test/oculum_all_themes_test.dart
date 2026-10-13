@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -12,8 +13,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(() async {
-    final font = await rootBundle.load('assets/fonts/Poppins-Regular.ttf');
-    await (FontLoader('Segoe UI')..addFont(Future.value(font))).load();
+    final manifest =
+        jsonDecode(await rootBundle.loadString('FontManifest.json')) as List;
+    for (final entry in manifest.where(
+      (item) => item['family'] != 'MaterialIcons',
+    )) {
+      final loader = FontLoader(entry['family'] as String);
+      for (final font in entry['fonts'] as List) {
+        loader.addFont(rootBundle.load(font['asset'] as String));
+      }
+      await loader.load();
+    }
     final icons = File(
       'build/unit_test_assets/fonts/MaterialIcons-Regular.otf',
     );
@@ -38,7 +48,11 @@ void main() {
     expect(oculumReadableThemeColor(Colors.white, background), Colors.white);
   });
 
-  for (final size in [const Size(1440, 900), const Size(390, 844)]) {
+  for (final size in [
+    const Size(1440, 900),
+    const Size(834, 1194),
+    const Size(390, 844),
+  ]) {
     testWidgets('Every theme reaches the navigator and dialogs at $size', (
       tester,
     ) async {

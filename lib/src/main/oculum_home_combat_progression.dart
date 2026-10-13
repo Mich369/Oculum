@@ -787,6 +787,18 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     bool applyGlobalRollModifier = true,
   }) async {
     oculumProfileMark('roll_special');
+    final attack = {
+      'vc',
+      'danno',
+      'damage',
+    }.contains(nome.trim().toLowerCase());
+    final preparedDamage =
+        attack &&
+            activeStructuredEffects.any(
+              (effect) => effect['mode'] == 'prossima_azione',
+            )
+        ? dannoTotale()
+        : null;
     final dado = tiraD20();
     final oculumSpend = consumaOculumTiro();
     final bonusTotale =
@@ -869,14 +881,21 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             totale: totale,
           )
         : '';
+    final preparedDamageText =
+        preparedDamage != null && consumeNextAttackStructuredEffects()
+        ? t(
+            '\nDanno inflitto nell’azione precedente: $preparedDamage. Bonus consumato con questo attacco.',
+            '\nDamage from the previous action: $preparedDamage. Bonus consumed by this attack.',
+          )
+        : '';
     dadoMostrato = testoDado;
     dadoMostratoFacce = 20;
     tiroCriticoUno = dado == 1;
     tiroCriticoVenti = dado == 20;
     risultato =
-        '$nome: $testoDado$statoForzaLog$expText$coreExpText$gerinResonanceText';
+        '$nome: $testoDado$statoForzaLog$expText$coreExpText$gerinResonanceText$preparedDamageText';
     aggiungiLog(
-      'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText$coreExpText$gerinResonanceText',
+      'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText$coreExpText$gerinResonanceText$preparedDamageText',
     );
     registerValidRoll(consumoStatKey: consumoElevatoStatKey(nome));
     notifyDiceResultChanged();
@@ -890,7 +909,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       criticoVenti: dado == 20,
     );
     scheduleCombatRollRealtime(
-      label: nome,
+      label: preparedDamageText.isEmpty
+          ? nome
+          : '$nome · Danno azione precedente $preparedDamage',
       roll: dado,
       bonus:
           bonusTotale +

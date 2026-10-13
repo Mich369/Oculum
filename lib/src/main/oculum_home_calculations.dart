@@ -2127,6 +2127,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   bool artOpenSbloccata(CharacterArt art) {
+    if (art.openName == 'Masso Slime' &&
+        art.skills.any((skill) => skill.nome == 'Palla di Roccia Slime')) {
+      return art.sbloccata && leggiNumero(livelloController) >= 15;
+    }
     if (art.openName == 'Pioggia di aculei' &&
         art.skills.any((s) => s.nome == 'Armatura sottopelle')) {
       return art.sbloccata && leggiNumero(livelloController) >= 10;
@@ -2257,6 +2261,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     for (final art in arti) {
       if (isDefiledArt(art)) continue;
       if (art.openAttiva && !identical(art, exceptArt)) {
+        final artIndex = arti.indexOf(art);
+        if (artIndex >= 0) {
+          removeActiveStructuredEffectsForSourcePrefix(
+            artOpenDisplayName(art, artIndex),
+          );
+        }
         if (art.sbloccata && artOpenSbloccata(art)) {
           rimarginaHpDaAumentoResilienza(-artOpenQuickResilienzaBonus(art));
         }
@@ -2302,6 +2312,17 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     for (final art in arti) {
       if (!art.sbloccata || !artOpenSbloccata(art)) {
+        if (art.openAttiva) {
+          if (art.sbloccata) {
+            rimarginaHpDaAumentoResilienza(-artOpenQuickResilienzaBonus(art));
+          }
+          final artIndex = arti.indexOf(art);
+          if (artIndex >= 0) {
+            removeActiveStructuredEffectsForSourcePrefix(
+              artOpenDisplayName(art, artIndex),
+            );
+          }
+        }
         art.openAttiva = false;
         continue;
       }
@@ -2310,6 +2331,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       if (isDefiledArt(art)) continue;
       if (activeFound) {
         art.openAttiva = false;
+        final artIndex = arti.indexOf(art);
+        if (artIndex >= 0) {
+          removeActiveStructuredEffectsForSourcePrefix(
+            artOpenDisplayName(art, artIndex),
+          );
+        }
       } else {
         activeFound = true;
       }
@@ -4985,7 +5012,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       OculumConditionTarget.danno,
       beforeConditions,
     );
-    return applicaBonusDanniPotenzaNucleo(conditioned);
+    return oculumDamageWithPercentage(
+      applicaBonusDanniPotenzaNucleo(conditioned),
+      activeStructuredEffectBonus('danni_percentuale'),
+    );
   }
 
   String formulaDannoDettagliata() {

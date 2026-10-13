@@ -25,6 +25,23 @@ class OculumPerformanceProbe {
   Future<OculumStructuredEffect?> editEffect(OculumStructuredEffect effect) =>
       _state.showStructuredEffectDialog(initial: effect);
   bool tickEffects(String unit) => _state.tickActiveStructuredEffects(unit);
+  List<String> applyEffects(
+    Iterable<OculumStructuredEffect> effects, {
+    String source = 'Test effetto',
+    Map<String, num> spentResources = const {},
+  }) => _state.applyStructuredEffectsOnActivation(
+    effects,
+    source: source,
+    spentResources: spentResources,
+  );
+  int movement() => _state.movimento();
+  int damageTotal() => _state.dannoTotale();
+  bool consumeNextAttackEffects() =>
+      _state.consumeNextAttackStructuredEffects();
+  Future<void> rollSpecial(String name, int bonus) =>
+      _state.tiraValoreSpeciale(name, bonus);
+  List<OculumConditionInstance> get conditions =>
+      List.unmodifiable(_state.activeConditions);
   int subtraitValue(String id) => _state.hiddenEyeTotal(
     _state.hiddenEyeStats.firstWhere((stat) => stat.id == id),
   );

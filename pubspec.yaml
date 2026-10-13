@@ -52,8 +52,110 @@ flutter:
     - assets/oculum_dungeon/generated_sprites/enemies/
     - assets/oculum_dungeon/generated_sprites/equipment/
     - assets/oculum_dungeon/generated_sprites/npc/
+    - assets/themes/classic_reliquary/overlays/
+    - assets/themes/classic_rpg/overlays/
+    - assets/themes/classic_low_detail/overlays/
+    - assets/themes/blood_court/overlays/
+    - assets/themes/witch_glass/overlays/
+    - assets/themes/moon_iron/overlays/
+    - assets/themes/lunar_eclipse/overlays/
+    - assets/themes/cathedral_rose/overlays/
+    - assets/themes/thorn_vigil/overlays/
+    - assets/themes/frost_chapel/overlays/
+    - assets/themes/obsidian_sigil/overlays/
+    - assets/themes/solar_reliquary/overlays/
+    - assets/themes/storm_cathedral/overlays/
+    - assets/themes/abyssal_tide/overlays/
+    - assets/themes/ember_rite/overlays/
+    - assets/themes/ivory_archive/overlays/
+    - assets/themes/vervain_gothic/overlays/
+    - assets/themes/kingi_wrong_future/overlays/
+    - assets/themes/blood_chapel/overlays/
+    - assets/themes/null_crown/overlays/
+    - assets/themes/phobia_dark/overlays/
+    - assets/themes/whispering_reliquary/overlays/
+    - assets/themes/black_briar_kingdom/overlays/
+    - assets/themes/slime_prince/overlays/
+    - assets/themes/moon_rot/overlays/
+    - assets/themes/obser_relic/overlays/
+    - assets/themes/deep_forest_demon/overlays/
+    - assets/themes/astral_ink/overlays/
+    - assets/themes/bone_saint/overlays/
+    - assets/themes/medieval_keep/overlays/
+    - assets/themes/fortezza_oculum/overlays/
+    - assets/themes/hoshy_cosmic_cat/overlays/
+    - assets/themes/ash_oracle/overlays/
+    - assets/themes/void_liturgy/overlays/
+    - assets/themes/shadow_gate_rank/overlays/
+    - assets/themes/postea_bloom/overlays/
+    - assets/themes/karma_duality/overlays/
+    - assets/themes/monster_lantern/overlays/
+    - assets/themes/jrpg_legend/overlays/
+    - assets/themes/rogue_mutation/overlays/
+    - assets/themes/cell_crimson_run/overlays/
+    - assets/themes/darkest_stagecoach/overlays/
+    - assets/themes/ashen_covenant/overlays/
+    - assets/themes/eclipse_bonfire/overlays/
+    - assets/themes/bolted_black_iron/overlays/
+    - assets/themes/bolted_gold_plate/overlays/
+    - assets/themes/bolted_copper_oxide/overlays/
+    - assets/themes/bolted_silver_plate/overlays/
+    - assets/themes/meadow_sprite/overlays/
+    - assets/themes/aurora_moth/overlays/
+    - assets/themes/modern_school_day/overlays/
+    - assets/themes/vtt_arcane_table/overlays/
+    - assets/themes/vtt_obsidian_grid/overlays/
+    - assets/themes/vtt_parchment_layers/overlays/
+    - assets/themes/vtt_master_overlay/overlays/
+    - assets/themes/verdigris_mourning/overlays/
+    - assets/themes/restyle_originale/overlays/
+    - assets/themes/restyle_cenere/overlays/
+    - assets/themes/restyle_sangue/overlays/
+    - assets/themes/restyle_aurora/overlays/
+    - assets/themes/restyle_natura/overlays/
+    - assets/themes/restyle_lume/overlays/
     - assets/fonts/
+    - assets/fonts/licenses/
     - assets/manuals/
+
+  fonts:
+    - family: Segoe UI
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Italic.ttf
+          style: italic
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Italic.ttf
+          style: italic
+    - family: Copperplate Gothic Light
+      fonts:
+        - asset: assets/fonts/Cinzel.ttf
+    - family: Garamond
+      fonts:
+        - asset: assets/fonts/EBGaramond.ttf
+        - asset: assets/fonts/EBGaramond-Italic.ttf
+          style: italic
+    - family: Georgia
+      fonts:
+        - asset: assets/fonts/LibreBaskerville.ttf
+        - asset: assets/fonts/LibreBaskerville-Italic.ttf
+          style: italic
+    - family: Palatino Linotype
+      fonts:
+        - asset: assets/fonts/CormorantGaramond.ttf
+        - asset: assets/fonts/CormorantGaramond-Italic.ttf
+          style: italic
+    - family: Consolas
+      fonts:
+        - asset: assets/fonts/IBMPlexMono-Regular.ttf
+        - asset: assets/fonts/IBMPlexMono-Bold.ttf
+          weight: 700
 
 flutter_launcher_icons:
   android: true

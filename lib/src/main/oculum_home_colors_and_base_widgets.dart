@@ -1714,22 +1714,24 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
           decorationIntensity: modalitaLeggera ? 0 : 0.75,
           style: nuovoDesignOculum,
         ),
-        child: CustomPaint(
-          foregroundPainter: modalitaLeggera || reference
-              ? null
-              : OculumPanelEngraving(accent: accent),
-          child: Material(
-            type: MaterialType.transparency,
-            child: DefaultTextStyle.merge(
-              style: TextStyle(
-                color: readableOnTheme(
-                  primaryColor,
-                  background: surface,
-                  minRatio: 4.5,
+        child: OculumThemePanelArtwork(
+          child: CustomPaint(
+            foregroundPainter: modalitaLeggera || reference
+                ? null
+                : OculumPanelEngraving(accent: accent),
+            child: Material(
+              type: MaterialType.transparency,
+              child: DefaultTextStyle.merge(
+                style: TextStyle(
+                  color: readableOnTheme(
+                    primaryColor,
+                    background: surface,
+                    minRatio: 4.5,
+                  ),
+                  height: 1.3,
                 ),
-                height: 1.3,
+                child: child,
               ),
-              child: child,
             ),
           ),
         ),

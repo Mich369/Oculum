@@ -453,6 +453,46 @@ extension _OculumReferenceSheet on _OculumHomePageState {
     ),
   );
 
+  Future<void> mostraRitrattoIngrandito() async {
+    final bytes = immaginePersonaggio;
+    final asset =
+        oculumMemoryEyeAsset(portraitEyeRole) ?? 'assets/icon/oculum_eye.png';
+    await oculumShowDialogUntilClosed<void>(
+      context: context,
+      builder: (dialogContext) {
+        final size = MediaQuery.sizeOf(dialogContext);
+        final side = max(
+          80.0,
+          min(600.0, min(size.width - 64, size.height - 180)),
+        );
+        return AlertDialog(
+          key: const ValueKey('portrait-enlarged-dialog'),
+          title: Text(t('Ritratto ingrandito', 'Enlarged portrait')),
+          content: SizedBox.square(
+            dimension: side,
+            child: InteractiveViewer(
+              minScale: 1,
+              maxScale: 5,
+              child: bytes == null
+                  ? Image.asset(asset, fit: BoxFit.contain)
+                  : Image.memory(
+                      bytes,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
+                    ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(t('Chiudi', 'Close')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget referenceCharacterPage() {
     final requested = referenceRequestedAnchor;
     String groupFor(String anchor) => switch (anchor) {
@@ -587,8 +627,9 @@ extension _OculumReferenceSheet on _OculumHomePageState {
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 500;
           final portrait = SizedBox(
-            width: compact ? 86 : 136,
-            height: compact ? 112 : 160,
+            key: const ValueKey('reference_portrait_frame'),
+            width: compact ? 72 : 104,
+            height: compact ? 72 : 104,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 border: Border.all(color: tertiaryColor.withValues(alpha: .65)),
@@ -597,11 +638,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(7),
                 child: GestureDetector(
-                  onTap: () => openReferenceDetail(
-                    t('Ritratto e Occhio', 'Portrait and Eye'),
-                    'sheet_image',
-                    oculumEyeBox,
-                  ),
+                  onTap: mostraRitrattoIngrandito,
                   onLongPress: immaginePersonaggio == null
                       ? null
                       : mostraAzioniImmaginePersonaggio,
@@ -611,12 +648,12 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      if (portraitShowEyeBehind)
+                      if (portraitShowEyeBehind || immaginePersonaggio == null)
                         Center(
                           child: Image.asset(
                             oculumMemoryEyeAsset(portraitEyeRole) ??
                                 'assets/icon/oculum_eye.png',
-                            width: compact ? 72 : 112,
+                            width: compact ? 48 : 72,
                           ),
                         ),
                       if (immaginePersonaggio != null)
@@ -625,6 +662,21 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                           fit: BoxFit.contain,
                           cacheWidth: 320,
                         ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: IconButton(
+                          key: const ValueKey('portrait-enlarge'),
+                          tooltip: t('Ingrandisci immagine', 'Enlarge image'),
+                          visualDensity: VisualDensity.compact,
+                          constraints: const BoxConstraints(
+                            minWidth: 32,
+                            minHeight: 32,
+                          ),
+                          icon: const Icon(Icons.open_in_full, size: 15),
+                          onPressed: mostraRitrattoIngrandito,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -737,6 +789,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
               ),
             ),
           hero,
+          const OculumThemeRelicBanner(),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton.icon(

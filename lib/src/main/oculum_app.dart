@@ -11,6 +11,7 @@ final ThemeData oculumBaseTheme = ThemeData(
     tertiary: Color(0xFF8F1D2C),
   ),
   useMaterial3: true,
+  fontFamily: 'Segoe UI',
   splashFactory: NoSplash.splashFactory,
   cardTheme: const CardThemeData(
     elevation: 0,
@@ -85,16 +86,24 @@ class OculumThemeScope extends StatelessWidget {
       final ornaments = theme.extension<OculumGothOrnaments>();
       return Theme(
         data: theme,
-        child: OculumGothAmbience(
-          spec:
-              ornaments ??
-              const OculumGothOrnaments(
-                family: OculumGothFamily.none,
-                ink: Colors.transparent,
-                accent: Colors.transparent,
-                opacity: 0,
-              ),
-          child: child!,
+        child: ValueListenableBuilder<OculumThemePresentation>(
+          valueListenable: oculumThemePresentation,
+          child: child,
+          builder: (context, presentation, child) => OculumGothAmbience(
+            spec:
+                ornaments?.copyWith(
+                  motion:
+                      ornaments.motion &&
+                      presentation.motion != OculumThemeMotion.disabled,
+                ) ??
+                const OculumGothOrnaments(
+                  family: OculumGothFamily.none,
+                  ink: Colors.transparent,
+                  accent: Colors.transparent,
+                  opacity: 0,
+                ),
+            child: child!,
+          ),
         ),
       );
     },
@@ -104,6 +113,7 @@ class OculumThemeScope extends StatelessWidget {
 final ValueNotifier<bool> oculumGraphicsEnabled = ValueNotifier(false);
 
 Future<void> loadOculumGraphicsPreference() async {
+  await loadOculumThemePresentation();
   final prefs = await SharedPreferences.getInstance();
   oculumGraphicsEnabled.value =
       prefs.getBool('oculum.graphicsEnabled') ?? false;

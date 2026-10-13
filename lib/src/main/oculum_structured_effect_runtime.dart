@@ -104,6 +104,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           '${effect['target'] ?? ''}' == 'sotto_stress',
     );
     for (final effect in activeStructuredEffects) {
+      if (effect['mode'] == 'prossima_azione') continue;
       if (oculumTurnUnit('${effect['unit'] ?? ''}') != normalizedUnit) {
         continue;
       }
@@ -174,11 +175,26 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     final variables = formulaValueContext();
     final resolvedLevel = max(0, level ?? activeCriticalLevel());
     final resolvedGrade = max(0, grade ?? activeCriticalGrade());
+    int? slimeBounces;
 
     for (final effect in effects.where((item) => item.enabled)) {
       try {
+        var resolvedEffect = effect;
+        if (effect.id.startsWith('rock_slime_bounce_') &&
+            effect.diceExpression == '1d3') {
+          if (slimeBounces == null) {
+            slimeBounces = Random().nextInt(3) + 1;
+            messages.add(
+              'Rimbalzo: 1d3 = $slimeBounces; lo stesso tiro determina Reazioni e bonus danni.',
+            );
+          }
+          resolvedEffect = OculumStructuredEffect.fromJson(effect.toJson())
+            ..diceExpression = ''
+            ..diceDestination = 'valore'
+            ..valueExpression = '(${effect.valueExpression})*$slimeBounces';
+        }
         final roll = oculumResolveStructuredEffectRoll(
-          effect,
+          resolvedEffect,
           variables: variables,
           subtraits: hiddenEyeStats,
           spentResources: spentResources,
@@ -197,10 +213,46 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             : normalizedStructuredTarget(
                 effectTarget.isNotEmpty ? effectTarget : effect.target,
               );
-        final frequency = oculumStructuredEffectFrequency(effect.frequency);
+        final frequency = effect.mode == 'prossima_azione'
+            ? 0
+            : oculumStructuredEffectFrequency(effect.frequency);
         final isPeriodic = frequency > 0;
+        if (effect.type == 'danno' &&
+            effect.id.startsWith('rock_slime_ball_') &&
+            effect.mode != 'prossima_azione') {
+          messages.add(
+            'Palla di Roccia Slime: $value danni al bersaglio dopo un attacco riuscito. Difesa e Scudi si applicano normalmente.',
+          );
+          continue;
+        }
 
         switch (effect.type) {
+          case 'costrutto':
+            if (value <= 0) {
+              messages.add(
+                'Costrutto non creato: Vita deve essere maggiore di zero.',
+              );
+              continue;
+            }
+            if (!effect.stackable) {
+              activeStructuredEffects.removeWhere(
+                (active) => active['effectId'] == effect.id,
+              );
+            }
+            activeStructuredEffects.add(<String, dynamic>{
+              'effectId': effect.id,
+              'source': source,
+              'type': 'costrutto',
+              'mode': effect.mode,
+              'target': effect.target.isEmpty ? 'Costrutto' : effect.target,
+              'value': 0,
+              'hp': value,
+              'maxHp': value,
+              'remaining': duration > 0 ? duration : -1,
+              'unit': effect.durationUnit,
+              'stackable': effect.stackable,
+            });
+            break;
           case 'cura':
             if (!isPeriodic && effect.mode != 'rigenerazione') {
               applyStructuredHealing(effect.resource, value);
@@ -303,12 +355,34 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             }
             break;
           case 'stato':
-            if (target == 'sotto_stress') sottoStress = true;
+            if (target == 'sotto_stress') {
+              sottoStress = true;
+            } else {
+              final applied = applyCondition(
+                target,
+                stage: max(1, value.abs()),
+                duration: duration > 0 ? duration : null,
+                durationType: switch (oculumTurnUnit(effect.durationUnit)) {
+                  'tiri' => OculumConditionDurationType.rolls,
+                  'riposi_brevi' => OculumConditionDurationType.shortRest,
+                  'riposi_lunghi' => OculumConditionDurationType.longRest,
+                  _ => OculumConditionDurationType.turns,
+                },
+                source: source,
+              );
+              if (!applied) {
+                messages.add(
+                  '${t('Stato non applicato', 'Condition not applied')}: $target',
+                );
+                continue;
+              }
+            }
             break;
         }
 
         final isOngoingBonus = <String>{
           'danno',
+          'danno_percentuale',
           'difesa',
           'modifica_statistica',
           'modifica_sottotratto',
@@ -323,17 +397,19 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         }.contains(effect.type);
         final isRegeneration =
             effect.type == 'cura' && effect.mode == 'rigenerazione';
-        final effectiveDuration =
-            <String>{
-                  'rimuovi_reazioni',
-                  'rimuovi_reazioni_rapide',
-                  'aggiungi_reazioni',
-                  'aggiungi_reazioni_rapide',
-                }.contains(effect.type) &&
-                duration <= 0
+        final effectiveDuration = effect.mode == 'prossima_azione'
+            ? 0
+            : <String>{
+                    'rimuovi_reazioni',
+                    'rimuovi_reazioni_rapide',
+                    'aggiungi_reazioni',
+                    'aggiungi_reazioni_rapide',
+                  }.contains(effect.type) &&
+                  duration <= 0
             ? 1
             : duration;
-        if ((isOngoingBonus || isRegeneration || isPeriodic) &&
+        if (!(effect.type == 'stato' && target != 'sotto_stress') &&
+            (isOngoingBonus || isRegeneration || isPeriodic) &&
             (effectiveDuration > 0 || isPeriodic || isOngoingBonus)) {
           if (!effect.stackable) {
             activeStructuredEffects.removeWhere(
@@ -396,6 +472,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
   }
 
   String activeStructuredEffectTiming(Map<String, dynamic> effect) {
+    if (effect['mode'] == 'prossima_azione') {
+      return t('prossimo attacco', 'next attack');
+    }
     final frequency = oculumStructuredEffectFrequency(effect['frequency']);
     final remaining = readIntValue(effect['remaining']);
     final unit = oculumTurnUnit('${effect['unit'] ?? 'turni'}');
@@ -406,6 +485,18 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
       return 'ogni $frequency $unit · prossimo tra $untilNext$expiry';
     }
     return '$remaining $unit';
+  }
+
+  bool consumeNextAttackStructuredEffects() {
+    final before = activeStructuredEffects.length;
+    activeStructuredEffects.removeWhere(
+      (effect) => effect['mode'] == 'prossima_azione',
+    );
+    if (before == activeStructuredEffects.length) return false;
+    invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+    scheduleHiddenEyeDerivedCardsRefresh();
+    scheduleCombatRollSave();
+    return true;
   }
 
   Widget activeStructuredEffectsCard() {
@@ -432,11 +523,21 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
                   child: Text(
                     '${activeStructuredEffects[index]['source']}: '
                     '${activeStructuredEffects[index]['target']} '
+                    '${activeStructuredEffects[index]['type'] == 'costrutto' ? '${activeStructuredEffects[index]['hp']}/${activeStructuredEffects[index]['maxHp']} Vita · ' : ''}'
                     '${readIntValue(activeStructuredEffects[index]['value']) >= 0 ? '+' : ''}'
-                    '${activeStructuredEffects[index]['value']} - '
+                    '${activeStructuredEffects[index]['value']}'
+                    '${activeStructuredEffects[index]['type'] == 'danno_percentuale' ? '%' : ''} - '
                     '${activeStructuredEffectTiming(activeStructuredEffects[index])}',
                   ),
                 ),
+                if (activeStructuredEffects[index]['type'] == 'costrutto')
+                  IconButton(
+                    tooltip: t('Danni al costrutto', 'Damage to construct'),
+                    icon: const Icon(Icons.heart_broken_outlined, size: 18),
+                    onPressed: () => damageStructuredConstruct(
+                      activeStructuredEffects[index],
+                    ),
+                  ),
                 IconButton(
                   tooltip: t('Termina effetto', 'End effect'),
                   onPressed: () {
@@ -467,5 +568,65 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         ],
       ),
     );
+  }
+
+  Future<void> damageStructuredConstruct(Map<String, dynamic> construct) async {
+    final controller = TextEditingController();
+    final damage = await oculumShowDialogUntilClosed<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          '${construct['target']} — ${t('Danni subiti', 'Damage taken')}',
+        ),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: t(
+              'Danni alla Vita del costrutto',
+              'Damage to construct HP',
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(
+              context,
+              max(0, int.tryParse(controller.text) ?? 0),
+            ),
+            child: Text(t('Applica', 'Apply')),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (!mounted ||
+        damage == null ||
+        damage <= 0 ||
+        !activeStructuredEffects.contains(construct)) {
+      return;
+    }
+    final before = readIntValue(construct['hp']);
+    final after = max(0, before - damage);
+    setState(() {
+      construct['hp'] = after;
+      if (after == 0) activeStructuredEffects.remove(construct);
+    });
+    final message =
+        '${construct['target']}: perde ${before - after} Vita ($before → $after/${construct['maxHp']}).${after == 0 ? ' Costrutto distrutto.' : ''}';
+    aggiungiLog(message);
+    sendRealtimeDiceRoll(
+      label: message,
+      roll: 0,
+      bonus: 0,
+      total: before - after,
+      forceMasterVisible: true,
+    );
+    invalidateDerivedDataCaches();
+    programmaSalvataggio(invalidateCaches: false);
   }
 }

@@ -8528,6 +8528,41 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       }
     }
 
+    var rockSlimeBlock = false;
+    if (activating &&
+        skill.nome == 'Palla di Roccia Slime' &&
+        livelloNuovo >= 2) {
+      final selectedBlock = await oculumShowDialogUntilClosed<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(
+            '${skill.nome} — ${t('scegli la forma', 'choose the form')}',
+          ),
+          content: Text(
+            t(
+              'Scegli un solo effetto: attacco oppure blocco indurito con Vita propria. Il costo Oculum viene scelto nella conferma successiva.',
+              'Choose one effect: attack or hardened block with its own HP. Choose the Oculum investment in the next confirmation.',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(t('Annulla', 'Cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(t('Attacco', 'Attack')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(t('Blocco', 'Block')),
+            ),
+          ],
+        ),
+      );
+      if (!mounted || selectedBlock == null) return;
+      rockSlimeBlock = selectedBlock;
+    }
     OculumSkillUseDialogResult? resourceUse;
     OculumSkillMasteryPreview? masteryPreview;
     var masteryLimit = 0;
@@ -8828,7 +8863,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         <String, num>{costResource: resourceSpent},
       );
       final structuredMessages = applyStructuredEffectsOnActivation(
-        skill.effettiPerLivello[livelloNuovo - 1],
+        rockSlimeBlock
+            ? oculumRockSlimeEffects(
+                'rock_slime_ball',
+                livelloNuovo - 1,
+                block: true,
+              )
+            : skill.effettiPerLivello[livelloNuovo - 1],
         source: '${art.nome} / ${skill.nome} ${artLevelRoman(livelloNuovo)}',
         level: livelloNuovo,
         spentResources: <String, num>{costResource: resourceSpent},
@@ -9577,6 +9618,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       final requiredRoman = artLevelRoman(requiredLevel);
       if (!artOpenSbloccata(art)) {
         art.openAttiva = false;
+        removeActiveStructuredEffectsForSourcePrefix(
+          artOpenDisplayName(art, artIndex),
+        );
         risultato = t(
           'Open Art bloccata: completa tutte le Skill di ${art.nome} al livello $requiredRoman.',
           'Art Open locked: complete every Skill of ${art.nome} to level $requiredRoman.',
@@ -9588,6 +9632,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       if (art.openAttiva) {
         rimarginaHpDaAumentoResilienza(-artOpenQuickResilienzaBonus(art));
         art.openAttiva = false;
+        removeActiveStructuredEffectsForSourcePrefix(
+          artOpenDisplayName(art, artIndex),
+        );
+        art.openBuffCooldown?.remaining = 0;
       } else {
         if (!isDefiledArt(art)) {
           disattivaTutteLeOpen(exceptArt: art);
@@ -9657,6 +9705,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
     final cooldown = art.openSkillCooldown;
     if (cooldown != null && !cooldown.ready) return;
+    if (art.openName == 'Masso Slime' &&
+        art.skills.any((skill) => skill.nome == 'Palla di Roccia Slime')) {
+      await useRockSlimeOpen(art);
+      return;
+    }
     if (art.openName == 'Pioggia di aculei') {
       await useSpineHedgehogOpen(art);
       return;
@@ -9731,6 +9784,117 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       aggiungiLog(risultato);
       invalidateDerivedDataCaches();
     });
+    programmaSalvataggio();
+    scheduleRealtimeOculumChanged();
+  }
+
+  Future<void> useRockSlimeOpen(CharacterArt art) async {
+    if (skillOculumUseDialogOpen) return;
+    final sourceTag = sheetTagAt(schedaCorrente);
+    final controller = TextEditingController(text: '1');
+    int? target;
+    final candidates =
+        onlineMasterApprovalRequired &&
+            (modalitaMaster || isMasterHost || realtimeIsMasterRole)
+        ? masterPartyIndexes()
+              .where((index) => index != schedaCorrente)
+              .toList()
+        : <int>[];
+    skillOculumUseDialogOpen = true;
+    int? selected;
+    try {
+      selected = await oculumShowDialogUntilClosed<int>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (context, refresh) => AlertDialog(
+            title: const Text('Masso Slime — Schiaccio'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Danni = Oculum immesso ×5 ×2. Disponibile: ${oculumTotale()}. Difesa e Scudi si applicano normalmente.',
+                  ),
+                  TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Oculum da immettere',
+                    ),
+                    onChanged: (_) => refresh(() {}),
+                  ),
+                  if (candidates.isNotEmpty)
+                    DropdownButtonFormField<int>(
+                      initialValue: target,
+                      decoration: const InputDecoration(
+                        labelText: 'Un bersaglio',
+                      ),
+                      items: [
+                        for (final index in candidates)
+                          DropdownMenuItem(
+                            value: index,
+                            child: Text(nomeSchedaPersonaggio(index)),
+                          ),
+                      ],
+                      onChanged: (value) => refresh(() => target = value),
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Annulla'),
+              ),
+              FilledButton(
+                onPressed:
+                    (int.tryParse(controller.text) ?? 0) < 1 ||
+                        (int.tryParse(controller.text) ?? 0) > oculumTotale() ||
+                        (candidates.isNotEmpty && target == null)
+                    ? null
+                    : () => Navigator.pop(
+                        dialogContext,
+                        int.parse(controller.text),
+                      ),
+                child: const Text('Attiva e spendi'),
+              ),
+            ],
+          ),
+        ),
+      );
+    } finally {
+      skillOculumUseDialogOpen = false;
+      controller.dispose();
+    }
+    if (!mounted ||
+        selected == null ||
+        selected < 1 ||
+        selected > oculumTotale() ||
+        sheetTagAt(schedaCorrente) != sourceTag ||
+        !art.openAttiva ||
+        !artOpenSbloccata(art) ||
+        (art.openSkillCooldown != null && !art.openSkillCooldown!.ready)) {
+      return;
+    }
+    final spent = spendOculum(selected, scheduleSave: false);
+    adjustRecordedStatSpentFromDelta('oculum', -spent);
+    recordCurrentOculumProgress();
+    final damage = spent * 10;
+    if (target != null) applyMasterEnemyQuickHpAction(target!, damage: damage);
+    setState(() {
+      art.openSkillCooldown?.activate();
+      risultato =
+          'Masso Slime — Schiaccio: $spent Oculum ×5 ×2 = $damage danni.${target == null ? ' Da risolvere contro Difesa e Scudi del bersaglio.' : ' Bersaglio: ${nomeSchedaPersonaggio(target!)}.'}';
+      aggiungiLog(risultato);
+      invalidateDerivedDataCaches();
+    });
+    sendRealtimeDiceRoll(
+      label: risultato,
+      roll: 0,
+      bonus: damage,
+      total: damage,
+      forceMasterVisible: true,
+    );
     programmaSalvataggio();
     scheduleRealtimeOculumChanged();
   }
