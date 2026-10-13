@@ -1,0 +1,13 @@
+{
+  "id": "verdigris_mourning",
+  "name": "Rame sepolto",
+  "materials": "rame sepolto e catene floreali corrose",
+  "family": "botanical",
+  "signature": "422f42e00e5e530c8d0f2dfa3a99ecced2c3919cb00bb5ada7dda36c88d59a51",
+  "motion": "polvere sull'incisione",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

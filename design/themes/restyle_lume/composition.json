@@ -1,0 +1,13 @@
+{
+  "id": "restyle_lume",
+  "name": "Lume",
+  "materials": "occhio di cera e candelabro antico",
+  "family": "ember",
+  "signature": "0e5ef0fa3f9d8ab1e67ff4306712a2872ba3264182bbf5819e3a22b20f7a6aea",
+  "motion": "fiamma della candela",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

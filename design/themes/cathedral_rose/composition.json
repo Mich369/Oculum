@@ -1,0 +1,13 @@
+{
+  "id": "cathedral_rose",
+  "name": "Rosa cattedrale",
+  "materials": "rosone a petali e vetro piombato",
+  "family": "botanical",
+  "signature": "dc9f3b8d486d716460cf5e9ab5801156556906724b376ee45101668011503533",
+  "motion": "luce attraverso il rosone",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

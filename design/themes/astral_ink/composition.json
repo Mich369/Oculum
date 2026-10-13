@@ -1,0 +1,13 @@
+{
+  "id": "astral_ink",
+  "name": "Inchiostro astrale",
+  "materials": "calamaio cosmico e scie calligrafiche",
+  "family": "astral",
+  "signature": "0477961d5924600e943c4d12e415b2be4cbee36df8ad24324370d4533d5dfff7",
+  "motion": "inchiostro ascendente",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

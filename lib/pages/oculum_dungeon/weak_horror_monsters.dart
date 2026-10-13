@@ -163,7 +163,7 @@ String oculumWeakHorrorSkillText(String id) {
     final name = guard ? p.guard : p.attack;
     final action = guard ? p.defense : p.action;
     return '$name — ${[
-      for (var form = 0; form < 3; form++) '${['I', 'II', 'III'][form]}/$action. ${guard ? '+${form + 1} Difesa per un turno, solo su te stesso; non cumulabile con la stessa tecnica' : 'Tiro per colpire normale: Danni +${form + 1}, un solo bersaglio; nessun danno se il tiro fallisce'}. Richiede livello ${form * 3}. (${[1, 5, 11][form]}/${[1, 5, 11][form]} Oculum fisso: l’Oculum non modifica questo effetto). CD 3 turni.',
+      for (var form = 0; form < 3; form++) '${['I', 'II', 'III'][form]}/$action. ${guard ? '+${form + 1} Difesa per un turno, solo su te stesso; non cumulabile con la stessa tecnica' : 'Tiro per colpire normale: Danni +${form + 1}, un solo bersaglio; nessun danno se il tiro fallisce'}. Richiede livello ${form * 3}. (${form + 1}/${form + 1} Oculum fisso: l’Oculum non modifica questo effetto). CD 3 turni.',
     ].join(' ')}${id == baseId ? '' : ' Variante di combattimento: conserva la stessa regola con i valori della variante.'}';
   }
   return '';

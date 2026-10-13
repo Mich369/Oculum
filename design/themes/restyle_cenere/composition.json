@@ -1,0 +1,13 @@
+{
+  "id": "restyle_cenere",
+  "name": "Cenere",
+  "materials": "occhio di pietra e strati di cenere",
+  "family": "ember",
+  "signature": "55c45824163dfdd6276be67a280ffa0332973eb48c6be7eb2ae579adc4a46a83",
+  "motion": "particella di cenere",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

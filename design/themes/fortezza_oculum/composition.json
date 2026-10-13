@@ -1,0 +1,13 @@
+{
+  "id": "fortezza_oculum",
+  "name": "Fortezza Oculum",
+  "materials": "bastione oculare e cancelli runici",
+  "family": "forged",
+  "signature": "d7ca0e07a7e42372f83f5c85208dada29fd76541d93fe76198b0b6ae22723d5f",
+  "motion": "sigilli del cancello",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "restyle_aurora",
+  "name": "Aurora",
+  "materials": "occhio ametista e veli aurorali",
+  "family": "crystal",
+  "signature": "050ddbbe8749854dad86c2239a01dc009a3e64b702c46079fadcfcef250a20b9",
+  "motion": "velo aurorale",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "obser_relic",
+  "name": "Reliquia Obser",
+  "materials": "moneta perforata e bilancia rituale",
+  "family": "forged",
+  "signature": "b9148e69f48fccab8219796dac7839d154c6e6f1f8cb3dbd8426ddb15a97a505",
+  "motion": "riflesso sulla moneta",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

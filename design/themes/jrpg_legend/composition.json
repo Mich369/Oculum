@@ -1,0 +1,13 @@
+{
+  "id": "jrpg_legend",
+  "name": "Leggenda JRPG",
+  "materials": "lama cerimoniale e cristallo custodito",
+  "family": "cathedral",
+  "signature": "bf809000d2f29aa50f65a360d87eee51a1b97863d2db6715d7c176ad75b267e0",
+  "motion": "scintilla sul cristallo",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

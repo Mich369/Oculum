@@ -1,0 +1,13 @@
+{
+  "id": "bolted_copper_oxide",
+  "name": "Rame ossidato bullonato",
+  "materials": "rame ossidato e tubi rituali",
+  "family": "forged",
+  "signature": "87253040aefe9c94ddd74d3f04b374c882949aa79a802dad428ce697949530c5",
+  "motion": "vapore dal tubo",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "void_liturgy",
+  "name": "Liturgia del vuoto",
+  "materials": "cerchio liturgico incompleto e velario",
+  "family": "astral",
+  "signature": "3465842e4724d0334f8887ede9c4d2758232fb940408c2a5ace60f568448290a",
+  "motion": "velario in ombra",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

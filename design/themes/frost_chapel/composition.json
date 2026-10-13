@@ -1,0 +1,13 @@
+{
+  "id": "frost_chapel",
+  "name": "Cappella di brina",
+  "materials": "occhio congelato e schegge di cappella",
+  "family": "crystal",
+  "signature": "78a02b5620b391a483a01ee4a4d6aafbb2df9c8f88ff120054bc17e9287b3f1a",
+  "motion": "bagliore del cristallo",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

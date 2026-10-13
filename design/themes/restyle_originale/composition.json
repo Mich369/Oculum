@@ -1,0 +1,13 @@
+{
+  "id": "restyle_originale",
+  "name": "Originale",
+  "materials": "occhio cesellato e pergamena annerita",
+  "family": "cathedral",
+  "signature": "4afe94ea779d5f16bfa334d5fa2436f211a01b3f871e324636b1c0c52ae2f1e2",
+  "motion": "luce sul rame",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

@@ -1,0 +1,3040 @@
+[
+  {
+    "theme": "classic_reliquary",
+    "role": "panel",
+    "path": "assets/themes/classic_reliquary/frames/panel.png",
+    "bytes": 7486,
+    "sha256": "459db840355447126b224e0be99f267ef321f6719ecb4135e4fd4600ca20ac73"
+  },
+  {
+    "theme": "classic_reliquary",
+    "role": "mobile",
+    "path": "assets/themes/classic_reliquary/frames/mobile.png",
+    "bytes": 6091,
+    "sha256": "ac5e70d3ff5adee8c19bd21b4a89234219562266780e4accad88bd739b0ee809"
+  },
+  {
+    "theme": "classic_reliquary",
+    "role": "portrait",
+    "path": "assets/themes/classic_reliquary/frames/portrait.png",
+    "bytes": 5318,
+    "sha256": "25b1a900810643f4c92e2fce2509c1df27d15cc43a75ab3a8f84a12cdad17117"
+  },
+  {
+    "theme": "classic_reliquary",
+    "role": "statistics",
+    "path": "assets/themes/classic_reliquary/frames/statistics.png",
+    "bytes": 5203,
+    "sha256": "5e9272bffb05f8d2d90b507b6d5d67927d8ec9385d0443c282ad8a77af911526"
+  },
+  {
+    "theme": "classic_reliquary",
+    "role": "separator",
+    "path": "assets/themes/classic_reliquary/frames/separator.png",
+    "bytes": 4889,
+    "sha256": "507fc7e81cb1182eed36b936f8a2fc01d0ce2cbaf553e9709a04ebee27caadf8"
+  },
+  {
+    "theme": "classic_reliquary",
+    "role": "scene",
+    "path": "assets/themes/classic_reliquary/decorations/scene.png",
+    "bytes": 6159,
+    "sha256": "329972d1246f00ce038de27ac2cdefa309a907a571a15cf667d84f43df4d4915"
+  },
+  {
+    "theme": "classic_reliquary",
+    "role": "scene-mobile",
+    "path": "assets/themes/classic_reliquary/decorations/scene-mobile.png",
+    "bytes": 5397,
+    "sha256": "ca21b5aa9d7c17430f6dcf623d5068dbc149e1767c3349434b078fb22248bf41"
+  },
+  {
+    "theme": "classic_rpg",
+    "role": "panel",
+    "path": "assets/themes/classic_rpg/frames/panel.png",
+    "bytes": 6493,
+    "sha256": "5a87d35ab92a14af3aaa50b187379ca06125b117fb504b9d5c4192d47eed0cb3"
+  },
+  {
+    "theme": "classic_rpg",
+    "role": "mobile",
+    "path": "assets/themes/classic_rpg/frames/mobile.png",
+    "bytes": 5156,
+    "sha256": "ce1b2164aed56e01d4aef2bbfc79668d18d89fd247b95be9d3ec616afb47261c"
+  },
+  {
+    "theme": "classic_rpg",
+    "role": "portrait",
+    "path": "assets/themes/classic_rpg/frames/portrait.png",
+    "bytes": 4410,
+    "sha256": "46a9956d46c03fdd0169ac54a97c5b389654e132ab8fb9d72d5fae0bdbdb916e"
+  },
+  {
+    "theme": "classic_rpg",
+    "role": "statistics",
+    "path": "assets/themes/classic_rpg/frames/statistics.png",
+    "bytes": 4313,
+    "sha256": "d2c7baada1ce140b7891bfe78c208f2ba6880c16ae2440cfec21c8aab0bf0ae9"
+  },
+  {
+    "theme": "classic_rpg",
+    "role": "separator",
+    "path": "assets/themes/classic_rpg/frames/separator.png",
+    "bytes": 4392,
+    "sha256": "ebecc3fdaffd485e6aba754e033385e232831ac77ee765b7c4664e7a9a87f77e"
+  },
+  {
+    "theme": "classic_rpg",
+    "role": "scene",
+    "path": "assets/themes/classic_rpg/decorations/scene.png",
+    "bytes": 138067,
+    "sha256": "9d7905bd853ade14c1b89f0cb6522ea1da2a33c1cf1aeabb89f52bd9eae178fa"
+  },
+  {
+    "theme": "classic_rpg",
+    "role": "scene-mobile",
+    "path": "assets/themes/classic_rpg/decorations/scene-mobile.png",
+    "bytes": 47888,
+    "sha256": "1d83a1660f9f51dc7f5de5105c1d5914ef0412ee7da61c76ebcaabc86e24e501"
+  },
+  {
+    "theme": "classic_low_detail",
+    "role": "panel",
+    "path": "assets/themes/classic_low_detail/frames/panel.png",
+    "bytes": 7505,
+    "sha256": "4a2e13aacb7fd09f8a4203871714489f22df61f30a0c8260c0959177a687afc8"
+  },
+  {
+    "theme": "classic_low_detail",
+    "role": "mobile",
+    "path": "assets/themes/classic_low_detail/frames/mobile.png",
+    "bytes": 6049,
+    "sha256": "2b798dd18710b885710674d2a57d9bd6b15fbc982fde5c0ba3fc290876d2f046"
+  },
+  {
+    "theme": "classic_low_detail",
+    "role": "portrait",
+    "path": "assets/themes/classic_low_detail/frames/portrait.png",
+    "bytes": 5352,
+    "sha256": "9d36516f2a26c9f3b21b359230142c75a83b2249dcb6100a5fd914de0484318d"
+  },
+  {
+    "theme": "classic_low_detail",
+    "role": "statistics",
+    "path": "assets/themes/classic_low_detail/frames/statistics.png",
+    "bytes": 5227,
+    "sha256": "e7383dc8a11046d0c24252bb3b097cff2ff97b2d6106f0938b5361f87dde4c08"
+  },
+  {
+    "theme": "classic_low_detail",
+    "role": "separator",
+    "path": "assets/themes/classic_low_detail/frames/separator.png",
+    "bytes": 4827,
+    "sha256": "e22f8955ef0d3ce05cf348dcff2c804f4cac3c0137dbfda47282f65169140e6f"
+  },
+  {
+    "theme": "classic_low_detail",
+    "role": "scene",
+    "path": "assets/themes/classic_low_detail/decorations/scene.png",
+    "bytes": 6116,
+    "sha256": "7bfcdb73d1da6c26429aa0aa70a28403987c88d2ab235ec2cc49d5a8c96a6102"
+  },
+  {
+    "theme": "classic_low_detail",
+    "role": "scene-mobile",
+    "path": "assets/themes/classic_low_detail/decorations/scene-mobile.png",
+    "bytes": 5280,
+    "sha256": "4a036fd2ee4596bcc526082cba748b62f3a6fc3a981b9d43cd4a4d247bbc0ce1"
+  },
+  {
+    "theme": "blood_court",
+    "role": "panel",
+    "path": "assets/themes/blood_court/frames/panel.png",
+    "bytes": 5979,
+    "sha256": "10052332f00c5e45d1ba67bf4b57afdf9a11f37002177613cc2d4896d032bab2"
+  },
+  {
+    "theme": "blood_court",
+    "role": "mobile",
+    "path": "assets/themes/blood_court/frames/mobile.png",
+    "bytes": 4648,
+    "sha256": "d072e7122538e1b9da5817f3db3b2affd3cc6a0e184f44306e84402728e9de7d"
+  },
+  {
+    "theme": "blood_court",
+    "role": "portrait",
+    "path": "assets/themes/blood_court/frames/portrait.png",
+    "bytes": 4030,
+    "sha256": "ef936ea7045a8200747c06ec5a6ccb713d8457718ad5e281d33d76b5110ee0e2"
+  },
+  {
+    "theme": "blood_court",
+    "role": "statistics",
+    "path": "assets/themes/blood_court/frames/statistics.png",
+    "bytes": 3931,
+    "sha256": "2c71140a43306ae3990b7a9566f15d334dd15a3711266b5fee5c384e9d555284"
+  },
+  {
+    "theme": "blood_court",
+    "role": "separator",
+    "path": "assets/themes/blood_court/frames/separator.png",
+    "bytes": 3876,
+    "sha256": "682019aef59c163475445df7539ba17247a5e603ecc05ea7ab6d7ecbadf791b1"
+  },
+  {
+    "theme": "blood_court",
+    "role": "scene",
+    "path": "assets/themes/blood_court/decorations/scene.png",
+    "bytes": 67104,
+    "sha256": "66a565c69e9d9d488c8a291aeda34e2bdc6347831ce7afeec30a60fed2e9df81"
+  },
+  {
+    "theme": "blood_court",
+    "role": "scene-mobile",
+    "path": "assets/themes/blood_court/decorations/scene-mobile.png",
+    "bytes": 27661,
+    "sha256": "a6789a54d23958efceb5f759366fdfc2985d7029fa4086ad5fdf6417f15de6d1"
+  },
+  {
+    "theme": "witch_glass",
+    "role": "panel",
+    "path": "assets/themes/witch_glass/frames/panel.png",
+    "bytes": 14615,
+    "sha256": "9f85a8472acbe82cf10939a0104006f673d3c640b29575088c09bd7f4184f9c0"
+  },
+  {
+    "theme": "witch_glass",
+    "role": "mobile",
+    "path": "assets/themes/witch_glass/frames/mobile.png",
+    "bytes": 11268,
+    "sha256": "7498d6183e099bf6fbe771a9166d3b11cc56ebbd9dfac872e87b6b6ec802ec66"
+  },
+  {
+    "theme": "witch_glass",
+    "role": "portrait",
+    "path": "assets/themes/witch_glass/frames/portrait.png",
+    "bytes": 11673,
+    "sha256": "fcaa78c0ef12fee08e9c418b8e539bae9fa67f3b7d669630ab4a1f84b7b4dcf6"
+  },
+  {
+    "theme": "witch_glass",
+    "role": "statistics",
+    "path": "assets/themes/witch_glass/frames/statistics.png",
+    "bytes": 11479,
+    "sha256": "efaeb37d6d4d3dd0c9072630a68cf195f407479b7807110682c5b534819b1766"
+  },
+  {
+    "theme": "witch_glass",
+    "role": "separator",
+    "path": "assets/themes/witch_glass/frames/separator.png",
+    "bytes": 11439,
+    "sha256": "9ca7a6b18179d1b44420db594c0556f1b26a160e61454f6b00beef04c5c7b73a"
+  },
+  {
+    "theme": "witch_glass",
+    "role": "scene",
+    "path": "assets/themes/witch_glass/decorations/scene.png",
+    "bytes": 93665,
+    "sha256": "8cfe29e90a4a7d5f65ec05f123314650f19b99f676b4f2a3388502cbc6bff649"
+  },
+  {
+    "theme": "witch_glass",
+    "role": "scene-mobile",
+    "path": "assets/themes/witch_glass/decorations/scene-mobile.png",
+    "bytes": 38726,
+    "sha256": "2d825c0bf7a72e710a03ebc02f33f547bc9699280c68644044cbad988334d655"
+  },
+  {
+    "theme": "moon_iron",
+    "role": "panel",
+    "path": "assets/themes/moon_iron/frames/panel.png",
+    "bytes": 5907,
+    "sha256": "bcc1bebec6a1c86a9c2dcd6c6591c30a30da987f68c604aac8c9584dbaa56e92"
+  },
+  {
+    "theme": "moon_iron",
+    "role": "mobile",
+    "path": "assets/themes/moon_iron/frames/mobile.png",
+    "bytes": 4668,
+    "sha256": "232089f42edeea798856e1d8306b107df9f088fddc58682746fb625e5f378a42"
+  },
+  {
+    "theme": "moon_iron",
+    "role": "portrait",
+    "path": "assets/themes/moon_iron/frames/portrait.png",
+    "bytes": 3895,
+    "sha256": "534ee79f9b7c4b93b639450db0ae2ec333870aa8c8bfd15132fb4c7063332ecb"
+  },
+  {
+    "theme": "moon_iron",
+    "role": "statistics",
+    "path": "assets/themes/moon_iron/frames/statistics.png",
+    "bytes": 3799,
+    "sha256": "c8812d776151d926c9bc773c48c384f01e312572bb6b6cb75cd7c151427f12ae"
+  },
+  {
+    "theme": "moon_iron",
+    "role": "separator",
+    "path": "assets/themes/moon_iron/frames/separator.png",
+    "bytes": 3583,
+    "sha256": "26b268ede3975666849a819b8ab28481bedc7d13d7548a4d77df0349e3e0c603"
+  },
+  {
+    "theme": "moon_iron",
+    "role": "scene",
+    "path": "assets/themes/moon_iron/decorations/scene.png",
+    "bytes": 72551,
+    "sha256": "2789a7d8665908f6affdc97ca24626a94c60244aa53604f36ce4a651f5aad2f7"
+  },
+  {
+    "theme": "moon_iron",
+    "role": "scene-mobile",
+    "path": "assets/themes/moon_iron/decorations/scene-mobile.png",
+    "bytes": 28628,
+    "sha256": "059f60097a32f56eca12ad4086560553ed36c7268382656229e9b3a84285a1f8"
+  },
+  {
+    "theme": "lunar_eclipse",
+    "role": "panel",
+    "path": "assets/themes/lunar_eclipse/frames/panel.png",
+    "bytes": 12079,
+    "sha256": "f0fa19386bc4e5f0adfdaf529039ee01127f8a3d872a44afcb436507cb900d38"
+  },
+  {
+    "theme": "lunar_eclipse",
+    "role": "mobile",
+    "path": "assets/themes/lunar_eclipse/frames/mobile.png",
+    "bytes": 10602,
+    "sha256": "a893022180462abf7287f72fa295217938f87f524663ab486a36df5774e33d0f"
+  },
+  {
+    "theme": "lunar_eclipse",
+    "role": "portrait",
+    "path": "assets/themes/lunar_eclipse/frames/portrait.png",
+    "bytes": 9588,
+    "sha256": "8baf139caa87f739026b45c52098da51bda2121861eafb7d894c5d7a72a32073"
+  },
+  {
+    "theme": "lunar_eclipse",
+    "role": "statistics",
+    "path": "assets/themes/lunar_eclipse/frames/statistics.png",
+    "bytes": 9427,
+    "sha256": "95a5243ba715ef90a43f04eed84ec7e7b584edcdbbe1f61cd9be2b5c13c023f3"
+  },
+  {
+    "theme": "lunar_eclipse",
+    "role": "separator",
+    "path": "assets/themes/lunar_eclipse/frames/separator.png",
+    "bytes": 9398,
+    "sha256": "71eca91b079ee8f1e0c412a71389596c3041e819d1a5b4011cd23905f45ebc9c"
+  },
+  {
+    "theme": "lunar_eclipse",
+    "role": "scene",
+    "path": "assets/themes/lunar_eclipse/decorations/scene.png",
+    "bytes": 107728,
+    "sha256": "eb5477448fd7e44a1b9b0b0b6377a0ec7616901c0ac5ad6fd76b023fbc855c04"
+  },
+  {
+    "theme": "lunar_eclipse",
+    "role": "scene-mobile",
+    "path": "assets/themes/lunar_eclipse/decorations/scene-mobile.png",
+    "bytes": 45217,
+    "sha256": "09cba36bfabaead8b39c1d949ca63f12ab4413c01edcd4241a40028efd00d525"
+  },
+  {
+    "theme": "cathedral_rose",
+    "role": "panel",
+    "path": "assets/themes/cathedral_rose/frames/panel.png",
+    "bytes": 12017,
+    "sha256": "39d3dbc0648fe9fce8550a42119ee113a299c83540b6dc0c550813dd63ce6dad"
+  },
+  {
+    "theme": "cathedral_rose",
+    "role": "mobile",
+    "path": "assets/themes/cathedral_rose/frames/mobile.png",
+    "bytes": 10560,
+    "sha256": "40236f39cc6894aa732961edc911cb8f9441b90d802e49d26455f514cd2e5c0c"
+  },
+  {
+    "theme": "cathedral_rose",
+    "role": "portrait",
+    "path": "assets/themes/cathedral_rose/frames/portrait.png",
+    "bytes": 9362,
+    "sha256": "2754949a57252a1c5d276bf02e1dba151628635ba97bbc43e5870ecb4563de2a"
+  },
+  {
+    "theme": "cathedral_rose",
+    "role": "statistics",
+    "path": "assets/themes/cathedral_rose/frames/statistics.png",
+    "bytes": 9203,
+    "sha256": "bf177660bf522a17b021758afa1c82057cd8c3e519a6d5c863fc1177823ff7f8"
+  },
+  {
+    "theme": "cathedral_rose",
+    "role": "separator",
+    "path": "assets/themes/cathedral_rose/frames/separator.png",
+    "bytes": 8810,
+    "sha256": "3afab3a753ec874333c2c3874888f3a0b433c87b1e1fe14a9558ca0f022fcedf"
+  },
+  {
+    "theme": "cathedral_rose",
+    "role": "scene",
+    "path": "assets/themes/cathedral_rose/decorations/scene.png",
+    "bytes": 153840,
+    "sha256": "113f673b96185638d88a327fa4beab18a627ac1dd57a4e7ec51328c4203efb21"
+  },
+  {
+    "theme": "cathedral_rose",
+    "role": "scene-mobile",
+    "path": "assets/themes/cathedral_rose/decorations/scene-mobile.png",
+    "bytes": 56433,
+    "sha256": "25e2575a70c84822c53c76eece0ebabd0e8d26d5162e31bca756b5e89b1144fd"
+  },
+  {
+    "theme": "thorn_vigil",
+    "role": "panel",
+    "path": "assets/themes/thorn_vigil/frames/panel.png",
+    "bytes": 12414,
+    "sha256": "d034317e809a582f335778c96842619b4a9ad950bcf6f6f052da05f56b4f1c12"
+  },
+  {
+    "theme": "thorn_vigil",
+    "role": "mobile",
+    "path": "assets/themes/thorn_vigil/frames/mobile.png",
+    "bytes": 11161,
+    "sha256": "b15eb41a5e4840a3b866ff4451cde7254f65f25df897828e0d258e7e117dca96"
+  },
+  {
+    "theme": "thorn_vigil",
+    "role": "portrait",
+    "path": "assets/themes/thorn_vigil/frames/portrait.png",
+    "bytes": 9651,
+    "sha256": "beaaa558e5d559448a5bacc0154c70abbe108f2f6a8c597e9aaeee6d682649cf"
+  },
+  {
+    "theme": "thorn_vigil",
+    "role": "statistics",
+    "path": "assets/themes/thorn_vigil/frames/statistics.png",
+    "bytes": 9492,
+    "sha256": "202123c38ee0916185ae73c0eb32e7f67196d5ae1fa34ae3bc581ee8dfc00eb5"
+  },
+  {
+    "theme": "thorn_vigil",
+    "role": "separator",
+    "path": "assets/themes/thorn_vigil/frames/separator.png",
+    "bytes": 9285,
+    "sha256": "26070eac282029d46e9561ae5bd6257b24208bd678a954ad64190a3ea4cf7322"
+  },
+  {
+    "theme": "thorn_vigil",
+    "role": "scene",
+    "path": "assets/themes/thorn_vigil/decorations/scene.png",
+    "bytes": 94292,
+    "sha256": "684d24e803e1cd0b6ca218bb3bb7f677dcae68a83886a76dfccecd18831f87b3"
+  },
+  {
+    "theme": "thorn_vigil",
+    "role": "scene-mobile",
+    "path": "assets/themes/thorn_vigil/decorations/scene-mobile.png",
+    "bytes": 38804,
+    "sha256": "10e8d2d55350853f2cde4f6fabeeb4e86b147ac7c98de7e53e42945148123d3f"
+  },
+  {
+    "theme": "frost_chapel",
+    "role": "panel",
+    "path": "assets/themes/frost_chapel/frames/panel.png",
+    "bytes": 11743,
+    "sha256": "607a22544f658d38ac671470a1019fccd52e9da88d50385ff73b2b2c4df22fbf"
+  },
+  {
+    "theme": "frost_chapel",
+    "role": "mobile",
+    "path": "assets/themes/frost_chapel/frames/mobile.png",
+    "bytes": 10382,
+    "sha256": "078d414f5bf0fc73e4bde391e55825ae8f1ee1fba06c3d89cdf914129f6e85a5"
+  },
+  {
+    "theme": "frost_chapel",
+    "role": "portrait",
+    "path": "assets/themes/frost_chapel/frames/portrait.png",
+    "bytes": 10911,
+    "sha256": "a4a606e63d5e1985651de3d721943917d2855957e6dd412c704a1d6be9d11d68"
+  },
+  {
+    "theme": "frost_chapel",
+    "role": "statistics",
+    "path": "assets/themes/frost_chapel/frames/statistics.png",
+    "bytes": 10687,
+    "sha256": "62f76508d80a22c46c47c7d8a47ad89a9d95f13129e74d286524f27f9da421a1"
+  },
+  {
+    "theme": "frost_chapel",
+    "role": "separator",
+    "path": "assets/themes/frost_chapel/frames/separator.png",
+    "bytes": 10724,
+    "sha256": "dd408c557302995dc6ad844bc2dbb6aa45f8c9d66be90b464c44578be0ed02ff"
+  },
+  {
+    "theme": "frost_chapel",
+    "role": "scene",
+    "path": "assets/themes/frost_chapel/decorations/scene.png",
+    "bytes": 123102,
+    "sha256": "1e56637dd0e9a30aa6d6def702487eb5ec295514645a19a075453f0a3c9bbd9e"
+  },
+  {
+    "theme": "frost_chapel",
+    "role": "scene-mobile",
+    "path": "assets/themes/frost_chapel/decorations/scene-mobile.png",
+    "bytes": 44527,
+    "sha256": "58ac3d4773a9e31276565940a0f60710c63bbe39bad4d46e628e7706310c4b0e"
+  },
+  {
+    "theme": "obsidian_sigil",
+    "role": "panel",
+    "path": "assets/themes/obsidian_sigil/frames/panel.png",
+    "bytes": 17276,
+    "sha256": "428801ccc11d8fe6becda3bddc1f8fe1d724aa3d001eafbc8514dc805750ccc8"
+  },
+  {
+    "theme": "obsidian_sigil",
+    "role": "mobile",
+    "path": "assets/themes/obsidian_sigil/frames/mobile.png",
+    "bytes": 13135,
+    "sha256": "25d285c45157361a8cc819a3fd3a11154aab96cb3d2187eea20e317ea05735bd"
+  },
+  {
+    "theme": "obsidian_sigil",
+    "role": "portrait",
+    "path": "assets/themes/obsidian_sigil/frames/portrait.png",
+    "bytes": 13793,
+    "sha256": "3cf11b8772a68eba90ff2628fe4c26a3b5b84b817400624b638483a02fe0aa7b"
+  },
+  {
+    "theme": "obsidian_sigil",
+    "role": "statistics",
+    "path": "assets/themes/obsidian_sigil/frames/statistics.png",
+    "bytes": 13574,
+    "sha256": "2dc0eb825db1e7ca759b230cebc331bc333d5c3e8753370b838c14203e9efcca"
+  },
+  {
+    "theme": "obsidian_sigil",
+    "role": "separator",
+    "path": "assets/themes/obsidian_sigil/frames/separator.png",
+    "bytes": 13177,
+    "sha256": "43d117c5643165561960515c05196684d8cf46fa5ea5b40f2235ed427f314057"
+  },
+  {
+    "theme": "obsidian_sigil",
+    "role": "scene",
+    "path": "assets/themes/obsidian_sigil/decorations/scene.png",
+    "bytes": 140885,
+    "sha256": "e53fb71ff76ac58e5f0b58c6988dfc34b9b4c65fc3ff4cfbaa0a8e8f8cf8fd32"
+  },
+  {
+    "theme": "obsidian_sigil",
+    "role": "scene-mobile",
+    "path": "assets/themes/obsidian_sigil/decorations/scene-mobile.png",
+    "bytes": 55653,
+    "sha256": "bf167947433a7a3d96c0d06dce138ab2221e92d7c2cca95d63bea55a20e1ad29"
+  },
+  {
+    "theme": "solar_reliquary",
+    "role": "panel",
+    "path": "assets/themes/solar_reliquary/frames/panel.png",
+    "bytes": 12960,
+    "sha256": "929305f9f94e5b4befabf4f6917c2da041764d89058dbaf517d24c14f75dc7c8"
+  },
+  {
+    "theme": "solar_reliquary",
+    "role": "mobile",
+    "path": "assets/themes/solar_reliquary/frames/mobile.png",
+    "bytes": 11657,
+    "sha256": "d225efb586fa484e8cde2a13cb5b3a7b3cf1a423d62c1e0ededb7c9e17bd86ed"
+  },
+  {
+    "theme": "solar_reliquary",
+    "role": "portrait",
+    "path": "assets/themes/solar_reliquary/frames/portrait.png",
+    "bytes": 10246,
+    "sha256": "1593a15f35cf6c074a430aa99f671e40ed230d096540acc7cabb09ccf420c64d"
+  },
+  {
+    "theme": "solar_reliquary",
+    "role": "statistics",
+    "path": "assets/themes/solar_reliquary/frames/statistics.png",
+    "bytes": 10080,
+    "sha256": "29c97dbef1e91465d52f13437974aed312cbdba194ac47889c1ff2bbbe5aacc8"
+  },
+  {
+    "theme": "solar_reliquary",
+    "role": "separator",
+    "path": "assets/themes/solar_reliquary/frames/separator.png",
+    "bytes": 9504,
+    "sha256": "2ebfe3161534195eaed30d9e5fa82f84d2d51a8b30d3beb2cb1ea749ee14e3b9"
+  },
+  {
+    "theme": "solar_reliquary",
+    "role": "scene",
+    "path": "assets/themes/solar_reliquary/decorations/scene.png",
+    "bytes": 114165,
+    "sha256": "a8e527c2e554b2045a6dd3a7e8802a31f7806ac9d2a4d8ad24ae9f3de1f8093e"
+  },
+  {
+    "theme": "solar_reliquary",
+    "role": "scene-mobile",
+    "path": "assets/themes/solar_reliquary/decorations/scene-mobile.png",
+    "bytes": 47652,
+    "sha256": "a9652574af1393b02c7a6e821dd6dcf4f5339cf7295d5ca0639c8530535de1c2"
+  },
+  {
+    "theme": "storm_cathedral",
+    "role": "panel",
+    "path": "assets/themes/storm_cathedral/frames/panel.png",
+    "bytes": 11491,
+    "sha256": "a13f3544d874a0aba9ce68496817f518e5b53c6836425043e2c9e5f960fa79f3"
+  },
+  {
+    "theme": "storm_cathedral",
+    "role": "mobile",
+    "path": "assets/themes/storm_cathedral/frames/mobile.png",
+    "bytes": 9795,
+    "sha256": "6d646dbbe826340ffbf68346d49896a21adffe8066231319169657a1f3769c85"
+  },
+  {
+    "theme": "storm_cathedral",
+    "role": "portrait",
+    "path": "assets/themes/storm_cathedral/frames/portrait.png",
+    "bytes": 8961,
+    "sha256": "e96f748c79fda5f69481f933a3fd71870eddcb47519d41a9f9990b8c25117f6c"
+  },
+  {
+    "theme": "storm_cathedral",
+    "role": "statistics",
+    "path": "assets/themes/storm_cathedral/frames/statistics.png",
+    "bytes": 8802,
+    "sha256": "12de19c8333ca64576a4bb8549ffb2d31664856576e6393bf7ecf3c862997bce"
+  },
+  {
+    "theme": "storm_cathedral",
+    "role": "separator",
+    "path": "assets/themes/storm_cathedral/frames/separator.png",
+    "bytes": 8115,
+    "sha256": "9492d8c44a48d1646aa0bfe4054f76b4280ec55c64217ccc172c9cf188af4868"
+  },
+  {
+    "theme": "storm_cathedral",
+    "role": "scene",
+    "path": "assets/themes/storm_cathedral/decorations/scene.png",
+    "bytes": 83112,
+    "sha256": "2e66c82584c7ca85f54cd7886bb841aba5120e8c5ef3af5fda96ba7c0bb4e77a"
+  },
+  {
+    "theme": "storm_cathedral",
+    "role": "scene-mobile",
+    "path": "assets/themes/storm_cathedral/decorations/scene-mobile.png",
+    "bytes": 32039,
+    "sha256": "b6da60840c2a9cc3e416da235f66462eac59e36f33cfac10d4e296ddac8e35dc"
+  },
+  {
+    "theme": "abyssal_tide",
+    "role": "panel",
+    "path": "assets/themes/abyssal_tide/frames/panel.png",
+    "bytes": 9198,
+    "sha256": "ddb830fcb92bd38e3317c3632d048efff151ec0e81f9a5a7952552f4a2e91ca2"
+  },
+  {
+    "theme": "abyssal_tide",
+    "role": "mobile",
+    "path": "assets/themes/abyssal_tide/frames/mobile.png",
+    "bytes": 7437,
+    "sha256": "86a5b618ea7ae6a4e9eb4d06f763a91755efb4871a3a05333613758b8368343d"
+  },
+  {
+    "theme": "abyssal_tide",
+    "role": "portrait",
+    "path": "assets/themes/abyssal_tide/frames/portrait.png",
+    "bytes": 6591,
+    "sha256": "aeca0cbd5b44ee020d115d57b822c0245a26c00b10d27fff53345e6895a36b2c"
+  },
+  {
+    "theme": "abyssal_tide",
+    "role": "statistics",
+    "path": "assets/themes/abyssal_tide/frames/statistics.png",
+    "bytes": 6427,
+    "sha256": "f6a6bd0cac1b6bde098ec82b8dad9ffef9d27f4dc393549db6b19251e53c9d57"
+  },
+  {
+    "theme": "abyssal_tide",
+    "role": "separator",
+    "path": "assets/themes/abyssal_tide/frames/separator.png",
+    "bytes": 6102,
+    "sha256": "6ea1d8885c70fbbf0270ddf2d8e414d322bd2b3bbd82ab3ac7534d60778a1fa8"
+  },
+  {
+    "theme": "abyssal_tide",
+    "role": "scene",
+    "path": "assets/themes/abyssal_tide/decorations/scene.png",
+    "bytes": 105395,
+    "sha256": "36c11f54073583aa55a8ead1664c6721f314b442b8496379aa81a4990905da1b"
+  },
+  {
+    "theme": "abyssal_tide",
+    "role": "scene-mobile",
+    "path": "assets/themes/abyssal_tide/decorations/scene-mobile.png",
+    "bytes": 45412,
+    "sha256": "04b359980cffb2d1646a0a9151abccc8f5f75839c6b539de078aeac2dbfe7d4f"
+  },
+  {
+    "theme": "ember_rite",
+    "role": "panel",
+    "path": "assets/themes/ember_rite/frames/panel.png",
+    "bytes": 11036,
+    "sha256": "7029f21662f20d62a283933ad276bd576b974f54e47879bbde746783f5324726"
+  },
+  {
+    "theme": "ember_rite",
+    "role": "mobile",
+    "path": "assets/themes/ember_rite/frames/mobile.png",
+    "bytes": 9626,
+    "sha256": "67382ae39a68592845a0f470e5ebd9518c079deb70e35c40c99fa93fa05f9407"
+  },
+  {
+    "theme": "ember_rite",
+    "role": "portrait",
+    "path": "assets/themes/ember_rite/frames/portrait.png",
+    "bytes": 8567,
+    "sha256": "8d16f3aba26ce8b167cf20e59784ea3cccb43664fbd813c6efdd82c50b401611"
+  },
+  {
+    "theme": "ember_rite",
+    "role": "statistics",
+    "path": "assets/themes/ember_rite/frames/statistics.png",
+    "bytes": 8408,
+    "sha256": "ca23470353f2ba00635851f1d8da554f93e3d209f8072e1e0cf71f67dcb7b858"
+  },
+  {
+    "theme": "ember_rite",
+    "role": "separator",
+    "path": "assets/themes/ember_rite/frames/separator.png",
+    "bytes": 8284,
+    "sha256": "a82c6317f68eba9240bf9b89f46e4b6308b3e5d58ea264d1e4e8f92f13bfa826"
+  },
+  {
+    "theme": "ember_rite",
+    "role": "scene",
+    "path": "assets/themes/ember_rite/decorations/scene.png",
+    "bytes": 103461,
+    "sha256": "c6ed2defd7092b6efba1c4e190329910aa843567eab9d3f7a43a46ad5280f5c9"
+  },
+  {
+    "theme": "ember_rite",
+    "role": "scene-mobile",
+    "path": "assets/themes/ember_rite/decorations/scene-mobile.png",
+    "bytes": 39686,
+    "sha256": "cb1f79468b946b7e566752a1d84ec041c23193bc88be345b5f80a640f8ca8c16"
+  },
+  {
+    "theme": "ivory_archive",
+    "role": "panel",
+    "path": "assets/themes/ivory_archive/frames/panel.png",
+    "bytes": 6628,
+    "sha256": "b7c7dee59ce80492a526cb68add629788d33379583c53889002e7240a27821b1"
+  },
+  {
+    "theme": "ivory_archive",
+    "role": "mobile",
+    "path": "assets/themes/ivory_archive/frames/mobile.png",
+    "bytes": 5160,
+    "sha256": "0388a5236d083fc2a71a2e602cbe86fed7468a853cc028c507710eda2559b343"
+  },
+  {
+    "theme": "ivory_archive",
+    "role": "portrait",
+    "path": "assets/themes/ivory_archive/frames/portrait.png",
+    "bytes": 4541,
+    "sha256": "6422832736af077142c125304b0745d060414fe5bb2cd16e725313bd00c0ef55"
+  },
+  {
+    "theme": "ivory_archive",
+    "role": "statistics",
+    "path": "assets/themes/ivory_archive/frames/statistics.png",
+    "bytes": 4422,
+    "sha256": "d47f8d639014eeb53b3df29223bde4600a979267cb760f4b68675e5d64c7bcf1"
+  },
+  {
+    "theme": "ivory_archive",
+    "role": "separator",
+    "path": "assets/themes/ivory_archive/frames/separator.png",
+    "bytes": 4288,
+    "sha256": "1f1be0a68a953e8d9ab3e72bca8e7a0dad5ff5abcec2b8d0e6abd99f63850a1f"
+  },
+  {
+    "theme": "ivory_archive",
+    "role": "scene",
+    "path": "assets/themes/ivory_archive/decorations/scene.png",
+    "bytes": 106653,
+    "sha256": "4b2208a235ccbf1c29e86b46b504a9691e3cb190b569008682c0434a3decfe37"
+  },
+  {
+    "theme": "ivory_archive",
+    "role": "scene-mobile",
+    "path": "assets/themes/ivory_archive/decorations/scene-mobile.png",
+    "bytes": 42564,
+    "sha256": "096beef39fec3fe487a6656a393220944db31f97d3318fd9c94a514ea99c2e17"
+  },
+  {
+    "theme": "vervain_gothic",
+    "role": "panel",
+    "path": "assets/themes/vervain_gothic/frames/panel.png",
+    "bytes": 9284,
+    "sha256": "0c56f2fc3e782690801719567a03a2efe929e93c672f0646d7517eb82edb3645"
+  },
+  {
+    "theme": "vervain_gothic",
+    "role": "mobile",
+    "path": "assets/themes/vervain_gothic/frames/mobile.png",
+    "bytes": 7697,
+    "sha256": "2158b90de260a648e9b375ac4343bc3f9aac87c6b052b9e95cf40f6227b7d353"
+  },
+  {
+    "theme": "vervain_gothic",
+    "role": "portrait",
+    "path": "assets/themes/vervain_gothic/frames/portrait.png",
+    "bytes": 6846,
+    "sha256": "e99aceb0dbf0be69d3ae5aa5780cf0ae83234c44b4b5cfa3d03004ab7f5a5349"
+  },
+  {
+    "theme": "vervain_gothic",
+    "role": "statistics",
+    "path": "assets/themes/vervain_gothic/frames/statistics.png",
+    "bytes": 6697,
+    "sha256": "44e7c986b625320cd704b5920c12da2a82987dcf8ccc7ec21163e9f3c3da0060"
+  },
+  {
+    "theme": "vervain_gothic",
+    "role": "separator",
+    "path": "assets/themes/vervain_gothic/frames/separator.png",
+    "bytes": 6725,
+    "sha256": "d301c894b87b570dc25b3443d9959ec0c095aa17fad90b8e35f76717d10b1410"
+  },
+  {
+    "theme": "vervain_gothic",
+    "role": "scene",
+    "path": "assets/themes/vervain_gothic/decorations/scene.png",
+    "bytes": 98234,
+    "sha256": "d0c352f0c3d993eb1afecc6da23759c75079fca7e7a3f21ef5c5decfffe3eb78"
+  },
+  {
+    "theme": "vervain_gothic",
+    "role": "scene-mobile",
+    "path": "assets/themes/vervain_gothic/decorations/scene-mobile.png",
+    "bytes": 38941,
+    "sha256": "483bdffd0d23a0fb72de2ee6cf35aa2b6a85ff9a7a93041e422c6b70bb147c15"
+  },
+  {
+    "theme": "kingi_wrong_future",
+    "role": "panel",
+    "path": "assets/themes/kingi_wrong_future/frames/panel.png",
+    "bytes": 6238,
+    "sha256": "4e8e5ce6b8c8444375ccdd70b714233075dc8e5818dc96cd739a5371a4b09391"
+  },
+  {
+    "theme": "kingi_wrong_future",
+    "role": "mobile",
+    "path": "assets/themes/kingi_wrong_future/frames/mobile.png",
+    "bytes": 4878,
+    "sha256": "52d8f6056b398616f1dc9807dc1955778884cb213dfd7ca1c655ef7865aa669d"
+  },
+  {
+    "theme": "kingi_wrong_future",
+    "role": "portrait",
+    "path": "assets/themes/kingi_wrong_future/frames/portrait.png",
+    "bytes": 4283,
+    "sha256": "311c13cdccb6daf20bc1cd87f20452ea7efa0b7030c5ffa98622df0b65637109"
+  },
+  {
+    "theme": "kingi_wrong_future",
+    "role": "statistics",
+    "path": "assets/themes/kingi_wrong_future/frames/statistics.png",
+    "bytes": 4187,
+    "sha256": "bae27ee89f4e6ef833696fddb7ab78a4c6cec282538fcb433d97e2e91c49105b"
+  },
+  {
+    "theme": "kingi_wrong_future",
+    "role": "separator",
+    "path": "assets/themes/kingi_wrong_future/frames/separator.png",
+    "bytes": 4119,
+    "sha256": "933fc7126404f311b58f970f7dd760aa668099b3808a8237adea0c11ed06030d"
+  },
+  {
+    "theme": "kingi_wrong_future",
+    "role": "scene",
+    "path": "assets/themes/kingi_wrong_future/decorations/scene.png",
+    "bytes": 106954,
+    "sha256": "1fc1ffe8b73fd48233cb42a6a02c33a321c0ee60f524b4cff704dd003728ec36"
+  },
+  {
+    "theme": "kingi_wrong_future",
+    "role": "scene-mobile",
+    "path": "assets/themes/kingi_wrong_future/decorations/scene-mobile.png",
+    "bytes": 39468,
+    "sha256": "a959f3c750580c1999119489d37a52c411c15aff45ecf47e42551eb9fc5d92af"
+  },
+  {
+    "theme": "blood_chapel",
+    "role": "panel",
+    "path": "assets/themes/blood_chapel/frames/panel.png",
+    "bytes": 7354,
+    "sha256": "f1b8c0f3f0f5f3ffe406be6209121a40fecd0b2ebc6b94723d078eac5af69f67"
+  },
+  {
+    "theme": "blood_chapel",
+    "role": "mobile",
+    "path": "assets/themes/blood_chapel/frames/mobile.png",
+    "bytes": 5939,
+    "sha256": "af7c58b53ad98f5a9a4001dd6b4256f7ef6f7c605b6e4b7c1e57d02cac338c81"
+  },
+  {
+    "theme": "blood_chapel",
+    "role": "portrait",
+    "path": "assets/themes/blood_chapel/frames/portrait.png",
+    "bytes": 5148,
+    "sha256": "7d73a99308f9ebc9e0d02fe9671259bf28fec326cd13311cba34190615d61b64"
+  },
+  {
+    "theme": "blood_chapel",
+    "role": "statistics",
+    "path": "assets/themes/blood_chapel/frames/statistics.png",
+    "bytes": 5032,
+    "sha256": "caad4d0ae89fb85a368d95ddc7883fa5fddad840acf45236c9e3d526db9254eb"
+  },
+  {
+    "theme": "blood_chapel",
+    "role": "separator",
+    "path": "assets/themes/blood_chapel/frames/separator.png",
+    "bytes": 4731,
+    "sha256": "23a94bf58135f7646e7c204576559eb335b680d3e51ba3f7e723f49f722fa6dd"
+  },
+  {
+    "theme": "blood_chapel",
+    "role": "scene",
+    "path": "assets/themes/blood_chapel/decorations/scene.png",
+    "bytes": 107901,
+    "sha256": "112c8d5cf8303b3c0dca0c01f4580677648993a7835ac165b82aa2bebae3cff2"
+  },
+  {
+    "theme": "blood_chapel",
+    "role": "scene-mobile",
+    "path": "assets/themes/blood_chapel/decorations/scene-mobile.png",
+    "bytes": 39613,
+    "sha256": "38c59b517ef8c17d7fa9360bb6d506351b675d7be3d472999fa0a45cb9fa652b"
+  },
+  {
+    "theme": "null_crown",
+    "role": "panel",
+    "path": "assets/themes/null_crown/frames/panel.png",
+    "bytes": 5732,
+    "sha256": "d9336bc0ff9d6003fbd012b9cf2849c7e593373fe2b04b6266106b90f87c1dec"
+  },
+  {
+    "theme": "null_crown",
+    "role": "mobile",
+    "path": "assets/themes/null_crown/frames/mobile.png",
+    "bytes": 4434,
+    "sha256": "866b14f0b7bbb1846b7b6e58e992ad3bda26f93d72699483dc8fc353e21b5b74"
+  },
+  {
+    "theme": "null_crown",
+    "role": "portrait",
+    "path": "assets/themes/null_crown/frames/portrait.png",
+    "bytes": 3771,
+    "sha256": "ab8b738cfb91595c351130de07d767b8e8045034bc7be234151ae926a02c2cb3"
+  },
+  {
+    "theme": "null_crown",
+    "role": "statistics",
+    "path": "assets/themes/null_crown/frames/statistics.png",
+    "bytes": 3676,
+    "sha256": "3857ab3fb500c6832954522d49f2522dc2a74b56be92654289e33a0d9672114a"
+  },
+  {
+    "theme": "null_crown",
+    "role": "separator",
+    "path": "assets/themes/null_crown/frames/separator.png",
+    "bytes": 3618,
+    "sha256": "f156de8da7abcd9679fb78db5894de32def477d1988244cebdb8dc12b5e2d619"
+  },
+  {
+    "theme": "null_crown",
+    "role": "scene",
+    "path": "assets/themes/null_crown/decorations/scene.png",
+    "bytes": 57816,
+    "sha256": "ff3a3970d82271e271911d52f9816024a7816b6b1d739638c578541c5d91ccec"
+  },
+  {
+    "theme": "null_crown",
+    "role": "scene-mobile",
+    "path": "assets/themes/null_crown/decorations/scene-mobile.png",
+    "bytes": 26670,
+    "sha256": "a345fd7f1a024d642f3590494f5f388253d8acf6f1e1d516cdc7ebe98b3ae152"
+  },
+  {
+    "theme": "phobia_dark",
+    "role": "panel",
+    "path": "assets/themes/phobia_dark/frames/panel.png",
+    "bytes": 9701,
+    "sha256": "bb05cd8fd17418903e37aaf726c38fdac87be1fc3e9258604c95c107cc7861b1"
+  },
+  {
+    "theme": "phobia_dark",
+    "role": "mobile",
+    "path": "assets/themes/phobia_dark/frames/mobile.png",
+    "bytes": 8216,
+    "sha256": "5ccc9fb16b2bca423687aa6aa0a76180571e30129ee7f7335b4a99cb357ed7bf"
+  },
+  {
+    "theme": "phobia_dark",
+    "role": "portrait",
+    "path": "assets/themes/phobia_dark/frames/portrait.png",
+    "bytes": 7306,
+    "sha256": "fd707a3ae03a5293150b88e5a4d2d484f9f961324ed036b5aecac62f14187ed4"
+  },
+  {
+    "theme": "phobia_dark",
+    "role": "statistics",
+    "path": "assets/themes/phobia_dark/frames/statistics.png",
+    "bytes": 7147,
+    "sha256": "720cce7686c946d726e3c33e0bb37608d0d7038dd9fe45666d7a940fa0a35d95"
+  },
+  {
+    "theme": "phobia_dark",
+    "role": "separator",
+    "path": "assets/themes/phobia_dark/frames/separator.png",
+    "bytes": 6773,
+    "sha256": "70601721d19daa98a83af51776776c201f18ca1a7134977621795178540547fd"
+  },
+  {
+    "theme": "phobia_dark",
+    "role": "scene",
+    "path": "assets/themes/phobia_dark/decorations/scene.png",
+    "bytes": 75181,
+    "sha256": "554dcc2f351b26ecfee2d29d2f3589908b5b260f8acb2c815e5c43b35d8bd809"
+  },
+  {
+    "theme": "phobia_dark",
+    "role": "scene-mobile",
+    "path": "assets/themes/phobia_dark/decorations/scene-mobile.png",
+    "bytes": 34625,
+    "sha256": "0707acd650c17395aab351f9f71b279d5d60c3fe1a484f1284fb9eb210393fc8"
+  },
+  {
+    "theme": "whispering_reliquary",
+    "role": "panel",
+    "path": "assets/themes/whispering_reliquary/frames/panel.png",
+    "bytes": 5534,
+    "sha256": "60b1e4efbef55e5d389fc1cc2402801e88395fea8b89c8383f646ec26064ed1f"
+  },
+  {
+    "theme": "whispering_reliquary",
+    "role": "mobile",
+    "path": "assets/themes/whispering_reliquary/frames/mobile.png",
+    "bytes": 4251,
+    "sha256": "d10618b646922698f659c0e89a830820dd58b223f9a36e459d3b6801bcf357d8"
+  },
+  {
+    "theme": "whispering_reliquary",
+    "role": "portrait",
+    "path": "assets/themes/whispering_reliquary/frames/portrait.png",
+    "bytes": 3575,
+    "sha256": "bcd820baf17c2920967368a61bc0df42778d4f1d7714dc6b530da9f146970cd5"
+  },
+  {
+    "theme": "whispering_reliquary",
+    "role": "statistics",
+    "path": "assets/themes/whispering_reliquary/frames/statistics.png",
+    "bytes": 3480,
+    "sha256": "9c03d213327ea8e3f8d30844a14166e00b482177d62e41a4e0604a0db1cfff74"
+  },
+  {
+    "theme": "whispering_reliquary",
+    "role": "separator",
+    "path": "assets/themes/whispering_reliquary/frames/separator.png",
+    "bytes": 3426,
+    "sha256": "23bfc6f3883442074ca14089d06b30a89cccb2cce7f267f53a95fdaceb0c062d"
+  },
+  {
+    "theme": "whispering_reliquary",
+    "role": "scene",
+    "path": "assets/themes/whispering_reliquary/decorations/scene.png",
+    "bytes": 128450,
+    "sha256": "1d08fc6aa56fce892f65ef5799b16a479fb502505b8f4cc5edfe9c0fb45639e1"
+  },
+  {
+    "theme": "whispering_reliquary",
+    "role": "scene-mobile",
+    "path": "assets/themes/whispering_reliquary/decorations/scene-mobile.png",
+    "bytes": 45840,
+    "sha256": "4bd09dfea5fc02994f59f5ca77a7f209de212fc8ac216d74b88258b343a0a52d"
+  },
+  {
+    "theme": "black_briar_kingdom",
+    "role": "panel",
+    "path": "assets/themes/black_briar_kingdom/frames/panel.png",
+    "bytes": 9943,
+    "sha256": "754c0563522fdff8c8d9b679065169eed9bee871e496b6dd09048893c5e8fa0f"
+  },
+  {
+    "theme": "black_briar_kingdom",
+    "role": "mobile",
+    "path": "assets/themes/black_briar_kingdom/frames/mobile.png",
+    "bytes": 8630,
+    "sha256": "ca8a0ae2f90eff76e6e42aac23f98fac6339da6764bf0e026e8c763f91010d4c"
+  },
+  {
+    "theme": "black_briar_kingdom",
+    "role": "portrait",
+    "path": "assets/themes/black_briar_kingdom/frames/portrait.png",
+    "bytes": 7691,
+    "sha256": "dab0c6261be3bc327a2fbbcca730d979168f3102abc6a4dfbc2d5042405c2a47"
+  },
+  {
+    "theme": "black_briar_kingdom",
+    "role": "statistics",
+    "path": "assets/themes/black_briar_kingdom/frames/statistics.png",
+    "bytes": 7532,
+    "sha256": "90d186d0162c5f54693a8acebe51b994951b06c268ab8bb98350e67189e37d6e"
+  },
+  {
+    "theme": "black_briar_kingdom",
+    "role": "separator",
+    "path": "assets/themes/black_briar_kingdom/frames/separator.png",
+    "bytes": 7536,
+    "sha256": "90b58f17983631fb57acdaa1f2c939e6812896144a64272a3c712b6caab19691"
+  },
+  {
+    "theme": "black_briar_kingdom",
+    "role": "scene",
+    "path": "assets/themes/black_briar_kingdom/decorations/scene.png",
+    "bytes": 103865,
+    "sha256": "ce81105627e96d69f1d0cf0243642746fef2310d0ac2994782e9e554af58cffd"
+  },
+  {
+    "theme": "black_briar_kingdom",
+    "role": "scene-mobile",
+    "path": "assets/themes/black_briar_kingdom/decorations/scene-mobile.png",
+    "bytes": 40701,
+    "sha256": "68efdc7e993134b0ed7d9a12c3d11023e94d894cddc3c4f6ec332ea81b43c980"
+  },
+  {
+    "theme": "slime_prince",
+    "role": "panel",
+    "path": "assets/themes/slime_prince/frames/panel.png",
+    "bytes": 9242,
+    "sha256": "fa2354b6f8ea4e4c09944f925c6e8df11ed1b314e927cdaff4216e9169076fe2"
+  },
+  {
+    "theme": "slime_prince",
+    "role": "mobile",
+    "path": "assets/themes/slime_prince/frames/mobile.png",
+    "bytes": 7926,
+    "sha256": "c89200b36a4cf44c2276c90391e008be2d10f41ffd78c709795da8b449d070f2"
+  },
+  {
+    "theme": "slime_prince",
+    "role": "portrait",
+    "path": "assets/themes/slime_prince/frames/portrait.png",
+    "bytes": 6891,
+    "sha256": "efa22d9265f200876d7ba0f7f8a118ab8649beaa21d277e83c8b50e1a7bbb2e6"
+  },
+  {
+    "theme": "slime_prince",
+    "role": "statistics",
+    "path": "assets/themes/slime_prince/frames/statistics.png",
+    "bytes": 6732,
+    "sha256": "46310bfe7172c5b87cb9dbd3d4d43df5c5aa36ff029e8558a9e9c92d7c25bad8"
+  },
+  {
+    "theme": "slime_prince",
+    "role": "separator",
+    "path": "assets/themes/slime_prince/frames/separator.png",
+    "bytes": 6481,
+    "sha256": "04618fc51f42881fdee6293f74ae20b349393594fca096ef687d772c31deda8d"
+  },
+  {
+    "theme": "slime_prince",
+    "role": "scene",
+    "path": "assets/themes/slime_prince/decorations/scene.png",
+    "bytes": 122612,
+    "sha256": "26ac4536c2f3d872c4ad168ec492196bd4f255dcfb4347ebe7b097cec9887cf2"
+  },
+  {
+    "theme": "slime_prince",
+    "role": "scene-mobile",
+    "path": "assets/themes/slime_prince/decorations/scene-mobile.png",
+    "bytes": 47790,
+    "sha256": "7d3e054f64d40a48eb7b944eb320f744f70c66f2ee649031d66e279c68c23069"
+  },
+  {
+    "theme": "moon_rot",
+    "role": "panel",
+    "path": "assets/themes/moon_rot/frames/panel.png",
+    "bytes": 11082,
+    "sha256": "564699af101b8f93305273eaff09c01dd7fa1b36d7f4ddac330678b031e422d2"
+  },
+  {
+    "theme": "moon_rot",
+    "role": "mobile",
+    "path": "assets/themes/moon_rot/frames/mobile.png",
+    "bytes": 9679,
+    "sha256": "f3fa117bf7bccac60d0b07f0291e5074cd9f6bc79f77bb13418dc6a63a252f3e"
+  },
+  {
+    "theme": "moon_rot",
+    "role": "portrait",
+    "path": "assets/themes/moon_rot/frames/portrait.png",
+    "bytes": 8594,
+    "sha256": "c3cb6901c08d4fbef424ddea6e1935deb6ec8f3674e8c40ba33e9e7cd8b5a72e"
+  },
+  {
+    "theme": "moon_rot",
+    "role": "statistics",
+    "path": "assets/themes/moon_rot/frames/statistics.png",
+    "bytes": 8435,
+    "sha256": "b96f9914712005255e120b4ebf3fbc496335d38f839f311407c3dab93d8b220e"
+  },
+  {
+    "theme": "moon_rot",
+    "role": "separator",
+    "path": "assets/themes/moon_rot/frames/separator.png",
+    "bytes": 8261,
+    "sha256": "dcccc9dc949d75419c62defd0caa7187a820234c70b140e466b93b3c256daf9c"
+  },
+  {
+    "theme": "moon_rot",
+    "role": "scene",
+    "path": "assets/themes/moon_rot/decorations/scene.png",
+    "bytes": 127176,
+    "sha256": "d3b52dd1f652c703479151f71b9702a39871e64ad8a4771d04773216399e8e4e"
+  },
+  {
+    "theme": "moon_rot",
+    "role": "scene-mobile",
+    "path": "assets/themes/moon_rot/decorations/scene-mobile.png",
+    "bytes": 48322,
+    "sha256": "3f8f15eec8b26892424c2dfa3cc847a1be62a2f20d24a2117cb07d260edf9b81"
+  },
+  {
+    "theme": "obser_relic",
+    "role": "panel",
+    "path": "assets/themes/obser_relic/frames/panel.png",
+    "bytes": 4935,
+    "sha256": "fbaa69fb551ef6b2cfc5523f858399d8e2ce1637541ad45e7d986a2747a1e7e5"
+  },
+  {
+    "theme": "obser_relic",
+    "role": "mobile",
+    "path": "assets/themes/obser_relic/frames/mobile.png",
+    "bytes": 3407,
+    "sha256": "56c29f9103960ac212f4e88a616d3645361923d6b8fec7813a72f5e82dec0ba0"
+  },
+  {
+    "theme": "obser_relic",
+    "role": "portrait",
+    "path": "assets/themes/obser_relic/frames/portrait.png",
+    "bytes": 3065,
+    "sha256": "2c991a6ef5b9557885d374b7a9e220fee212011a5345981dd16cd2a6da8f4e07"
+  },
+  {
+    "theme": "obser_relic",
+    "role": "statistics",
+    "path": "assets/themes/obser_relic/frames/statistics.png",
+    "bytes": 2966,
+    "sha256": "c430238feb8b3d712620f916b988272476d7c1b3b7778884324d2b57c3f639f8"
+  },
+  {
+    "theme": "obser_relic",
+    "role": "separator",
+    "path": "assets/themes/obser_relic/frames/separator.png",
+    "bytes": 2897,
+    "sha256": "27aa1a20e48ff71ec69976595cbe3a9c13f7a7f5cef52681e59fcbdcdd3ea72e"
+  },
+  {
+    "theme": "obser_relic",
+    "role": "scene",
+    "path": "assets/themes/obser_relic/decorations/scene.png",
+    "bytes": 64879,
+    "sha256": "49005f08a2e1459f4336688f83fae0d57604b6556cffd05a79e3b59ec2aa7d0f"
+  },
+  {
+    "theme": "obser_relic",
+    "role": "scene-mobile",
+    "path": "assets/themes/obser_relic/decorations/scene-mobile.png",
+    "bytes": 24405,
+    "sha256": "9838cf1753d928cf1326b02c752269907341ae0d75ca81954621eb299c788be8"
+  },
+  {
+    "theme": "deep_forest_demon",
+    "role": "panel",
+    "path": "assets/themes/deep_forest_demon/frames/panel.png",
+    "bytes": 11217,
+    "sha256": "666e066d9728362efdc5efee0d5afcb9c4b074058988201f3ddb5efba801bcb9"
+  },
+  {
+    "theme": "deep_forest_demon",
+    "role": "mobile",
+    "path": "assets/themes/deep_forest_demon/frames/mobile.png",
+    "bytes": 9918,
+    "sha256": "1de2aa96d96164415b31f60ab94692bd1ebf7ba1caabd063461527d2b1c55563"
+  },
+  {
+    "theme": "deep_forest_demon",
+    "role": "portrait",
+    "path": "assets/themes/deep_forest_demon/frames/portrait.png",
+    "bytes": 8697,
+    "sha256": "a497c1ef85268d8bc7675ea5f8e920f2bd1ac0d30ea7b1764a9921048087186d"
+  },
+  {
+    "theme": "deep_forest_demon",
+    "role": "statistics",
+    "path": "assets/themes/deep_forest_demon/frames/statistics.png",
+    "bytes": 8539,
+    "sha256": "787473c699480c69566c9881f550ceb95e44bf7aca20e7ab3765edcdefc9ebd8"
+  },
+  {
+    "theme": "deep_forest_demon",
+    "role": "separator",
+    "path": "assets/themes/deep_forest_demon/frames/separator.png",
+    "bytes": 8685,
+    "sha256": "4f124bdfa72f5e8522449958ad040861bbb854143afcabbf4547ee55707cb62e"
+  },
+  {
+    "theme": "deep_forest_demon",
+    "role": "scene",
+    "path": "assets/themes/deep_forest_demon/decorations/scene.png",
+    "bytes": 133981,
+    "sha256": "2d7394c7ffae33aa4385c8b92fd1c1d1dc201071b85cb1d109844313f47a1344"
+  },
+  {
+    "theme": "deep_forest_demon",
+    "role": "scene-mobile",
+    "path": "assets/themes/deep_forest_demon/decorations/scene-mobile.png",
+    "bytes": 52609,
+    "sha256": "a79fbc66a04b4009e7487c0d6246499d735b8d43b5fc99157cd5d2a1454fa15b"
+  },
+  {
+    "theme": "astral_ink",
+    "role": "panel",
+    "path": "assets/themes/astral_ink/frames/panel.png",
+    "bytes": 10005,
+    "sha256": "8af06e56b2745981af96cfd88f93bedac4a722c33620bc2ba6694018b91da042"
+  },
+  {
+    "theme": "astral_ink",
+    "role": "mobile",
+    "path": "assets/themes/astral_ink/frames/mobile.png",
+    "bytes": 8473,
+    "sha256": "ca0ff632d8d05276210759f261804c6a9f57da324c02a5ce7b6c19c2ecca64f5"
+  },
+  {
+    "theme": "astral_ink",
+    "role": "portrait",
+    "path": "assets/themes/astral_ink/frames/portrait.png",
+    "bytes": 7554,
+    "sha256": "df732f6f2652814fa3639bfb5d5bee5a19af7fd0ecb8060d10b6c7cd16edc967"
+  },
+  {
+    "theme": "astral_ink",
+    "role": "statistics",
+    "path": "assets/themes/astral_ink/frames/statistics.png",
+    "bytes": 7395,
+    "sha256": "144de13a69768773764cb5ce61e1ddcd38303200b25a4b1254859f4a80d799b4"
+  },
+  {
+    "theme": "astral_ink",
+    "role": "separator",
+    "path": "assets/themes/astral_ink/frames/separator.png",
+    "bytes": 7042,
+    "sha256": "2bd45b83e10678d71ddc097c868740ad26968cdc333bd85f66a72054544390d9"
+  },
+  {
+    "theme": "astral_ink",
+    "role": "scene",
+    "path": "assets/themes/astral_ink/decorations/scene.png",
+    "bytes": 80565,
+    "sha256": "21fe3a511be52f2b0e558622d3b96483d725cefbe52bf93a97c65383262a8445"
+  },
+  {
+    "theme": "astral_ink",
+    "role": "scene-mobile",
+    "path": "assets/themes/astral_ink/decorations/scene-mobile.png",
+    "bytes": 36738,
+    "sha256": "5a47ed2df798d1cf7acaf6e1ee44561c56356d4300b738db913c429acdb8a4e4"
+  },
+  {
+    "theme": "bone_saint",
+    "role": "panel",
+    "path": "assets/themes/bone_saint/frames/panel.png",
+    "bytes": 8090,
+    "sha256": "f55415baeacfbf8d0db22d9a0c038351b3b55bb126be04b2493bd175dcc2f3db"
+  },
+  {
+    "theme": "bone_saint",
+    "role": "mobile",
+    "path": "assets/themes/bone_saint/frames/mobile.png",
+    "bytes": 6568,
+    "sha256": "f674578294b4c0a70a1b683e2a56242ea6c47c3dfcc0a8a201679cd31a6bdb35"
+  },
+  {
+    "theme": "bone_saint",
+    "role": "portrait",
+    "path": "assets/themes/bone_saint/frames/portrait.png",
+    "bytes": 5752,
+    "sha256": "a86d85fd7a1ddb65b4c53afa350258f0e2d9eebc13c3a7a9c7767f57342e4b0c"
+  },
+  {
+    "theme": "bone_saint",
+    "role": "statistics",
+    "path": "assets/themes/bone_saint/frames/statistics.png",
+    "bytes": 5625,
+    "sha256": "ea54a4578bfdef2e89983788d49ffa2a60aa5f288ccf852fce157337e19900e0"
+  },
+  {
+    "theme": "bone_saint",
+    "role": "separator",
+    "path": "assets/themes/bone_saint/frames/separator.png",
+    "bytes": 5276,
+    "sha256": "273f894d81db9911226346d2f82205a3900d76f758336a76f97a10027585e683"
+  },
+  {
+    "theme": "bone_saint",
+    "role": "scene",
+    "path": "assets/themes/bone_saint/decorations/scene.png",
+    "bytes": 108219,
+    "sha256": "05343b98f8f0aded5882ba7e7fcda891aadbde6d169137211c241337f74d8e44"
+  },
+  {
+    "theme": "bone_saint",
+    "role": "scene-mobile",
+    "path": "assets/themes/bone_saint/decorations/scene-mobile.png",
+    "bytes": 41236,
+    "sha256": "77a899376431a7852f8cdd86e9500bdf9f3849cafae70c5f1f6e69bdf71a6f78"
+  },
+  {
+    "theme": "medieval_keep",
+    "role": "panel",
+    "path": "assets/themes/medieval_keep/frames/panel.png",
+    "bytes": 6286,
+    "sha256": "395be246b4f7cfb9b0be25da8cc0393b10550f1baf7985d61500812a4fd5fd5f"
+  },
+  {
+    "theme": "medieval_keep",
+    "role": "mobile",
+    "path": "assets/themes/medieval_keep/frames/mobile.png",
+    "bytes": 5026,
+    "sha256": "f50866f5dc6e74ae6e7ab0fbf6ee0a078fd76f9be10ad8cf58675e19a8df8762"
+  },
+  {
+    "theme": "medieval_keep",
+    "role": "portrait",
+    "path": "assets/themes/medieval_keep/frames/portrait.png",
+    "bytes": 4251,
+    "sha256": "f8e939a3cc8fc4a56cbdc4b46933340d8b0d6fa4e39e8ec6eb28a21d475eae92"
+  },
+  {
+    "theme": "medieval_keep",
+    "role": "statistics",
+    "path": "assets/themes/medieval_keep/frames/statistics.png",
+    "bytes": 4156,
+    "sha256": "840caa28eaa48c197b2e3343596fde24073b30725a8121933e7b9af6e39b350e"
+  },
+  {
+    "theme": "medieval_keep",
+    "role": "separator",
+    "path": "assets/themes/medieval_keep/frames/separator.png",
+    "bytes": 3769,
+    "sha256": "a32d83858e8c003cf79fee9a3f782ef9e510826d758e3559f151df770e4df0a5"
+  },
+  {
+    "theme": "medieval_keep",
+    "role": "scene",
+    "path": "assets/themes/medieval_keep/decorations/scene.png",
+    "bytes": 131470,
+    "sha256": "52a3a46461b14f0f2d5d047a51311d70212452284056524a7ed31e4d26804979"
+  },
+  {
+    "theme": "medieval_keep",
+    "role": "scene-mobile",
+    "path": "assets/themes/medieval_keep/decorations/scene-mobile.png",
+    "bytes": 45669,
+    "sha256": "593c9724289f7f15136544b592ac1be6cf43fa0d57b1356514f0b5fb2a73bb63"
+  },
+  {
+    "theme": "fortezza_oculum",
+    "role": "panel",
+    "path": "assets/themes/fortezza_oculum/frames/panel.png",
+    "bytes": 4878,
+    "sha256": "1c77d81cd0bd8961c1bc11bd06f96c2200054d04ff7f3b9a211e95c379a8de31"
+  },
+  {
+    "theme": "fortezza_oculum",
+    "role": "mobile",
+    "path": "assets/themes/fortezza_oculum/frames/mobile.png",
+    "bytes": 3575,
+    "sha256": "b133d2b097f4bc3ae74e59bcc982ec5acebfd877a25a31d3096b39a0f5c62418"
+  },
+  {
+    "theme": "fortezza_oculum",
+    "role": "portrait",
+    "path": "assets/themes/fortezza_oculum/frames/portrait.png",
+    "bytes": 2938,
+    "sha256": "4da9e1cd84ca171b6a9eb98c931413a25bb2d8c925c5bb5d48f29cfe390d4021"
+  },
+  {
+    "theme": "fortezza_oculum",
+    "role": "statistics",
+    "path": "assets/themes/fortezza_oculum/frames/statistics.png",
+    "bytes": 2853,
+    "sha256": "8b10df04f36266cbfce9d35489cf6795fa5d2c29ab274e80011f3286ac9d1b8e"
+  },
+  {
+    "theme": "fortezza_oculum",
+    "role": "separator",
+    "path": "assets/themes/fortezza_oculum/frames/separator.png",
+    "bytes": 2955,
+    "sha256": "e2563b64b166837bbcdf2ee4b205f00ea4801e483b8b213b5b933cca8f692e39"
+  },
+  {
+    "theme": "fortezza_oculum",
+    "role": "scene",
+    "path": "assets/themes/fortezza_oculum/decorations/scene.png",
+    "bytes": 114547,
+    "sha256": "decabeb024313a593cea5670974aa981decc67978597e792b2abc7c72697247b"
+  },
+  {
+    "theme": "fortezza_oculum",
+    "role": "scene-mobile",
+    "path": "assets/themes/fortezza_oculum/decorations/scene-mobile.png",
+    "bytes": 45660,
+    "sha256": "db910f4705e91c52404cacb1889d383f3fe0e17cf7f4dc89232724ae87bb8628"
+  },
+  {
+    "theme": "hoshy_cosmic_cat",
+    "role": "panel",
+    "path": "assets/themes/hoshy_cosmic_cat/frames/panel.png",
+    "bytes": 11983,
+    "sha256": "bdc53ce7ab644ad0a4d94df13a6296137e8eea3ccc1f0cb60003a813c0095912"
+  },
+  {
+    "theme": "hoshy_cosmic_cat",
+    "role": "mobile",
+    "path": "assets/themes/hoshy_cosmic_cat/frames/mobile.png",
+    "bytes": 10579,
+    "sha256": "d313dc88c2c41dcad52dae36eef203cdfc60bab9491b9699806f5b4ee40727e2"
+  },
+  {
+    "theme": "hoshy_cosmic_cat",
+    "role": "portrait",
+    "path": "assets/themes/hoshy_cosmic_cat/frames/portrait.png",
+    "bytes": 9383,
+    "sha256": "040d2855fad2264e8e9c7a70f35ec18aafc9301d982e3f02f3c66e8c1dc0c31e"
+  },
+  {
+    "theme": "hoshy_cosmic_cat",
+    "role": "statistics",
+    "path": "assets/themes/hoshy_cosmic_cat/frames/statistics.png",
+    "bytes": 9225,
+    "sha256": "2de7ba79fa6554f10d32262d3a1f1bd97f0c9bf8d19127caff4677952709a913"
+  },
+  {
+    "theme": "hoshy_cosmic_cat",
+    "role": "separator",
+    "path": "assets/themes/hoshy_cosmic_cat/frames/separator.png",
+    "bytes": 9052,
+    "sha256": "8e6cf7b615c097b2cc3e5e54a306967de8804050eedc34272375477aa4d8766f"
+  },
+  {
+    "theme": "hoshy_cosmic_cat",
+    "role": "scene",
+    "path": "assets/themes/hoshy_cosmic_cat/decorations/scene.png",
+    "bytes": 123564,
+    "sha256": "48e6bf4cc4be09346aa8577e94b65dfc354aa5935745274407e467b4c2c646f3"
+  },
+  {
+    "theme": "hoshy_cosmic_cat",
+    "role": "scene-mobile",
+    "path": "assets/themes/hoshy_cosmic_cat/decorations/scene-mobile.png",
+    "bytes": 47100,
+    "sha256": "ad4b6eeae394fa7575f9ccf688084c907d0cb62e0d29541dc294ff0e355f6cc4"
+  },
+  {
+    "theme": "ash_oracle",
+    "role": "panel",
+    "path": "assets/themes/ash_oracle/frames/panel.png",
+    "bytes": 10072,
+    "sha256": "9d49517d64377610e091e0762fa37b030d0afd53e4797f0e24cafce80bf07bbd"
+  },
+  {
+    "theme": "ash_oracle",
+    "role": "mobile",
+    "path": "assets/themes/ash_oracle/frames/mobile.png",
+    "bytes": 8580,
+    "sha256": "10f278159922764710844d1d5746782cebbabb5820bdce8a40aeccb22d5cc7ed"
+  },
+  {
+    "theme": "ash_oracle",
+    "role": "portrait",
+    "path": "assets/themes/ash_oracle/frames/portrait.png",
+    "bytes": 7667,
+    "sha256": "6175c5667d0d9ce4e07b61dd6ee296e95d320bab6c1fff8e3487c286909e4079"
+  },
+  {
+    "theme": "ash_oracle",
+    "role": "statistics",
+    "path": "assets/themes/ash_oracle/frames/statistics.png",
+    "bytes": 7508,
+    "sha256": "b15f341f63a21daaa798309cc8e74ec7f567ad3edc9dd38349abab46e84c394c"
+  },
+  {
+    "theme": "ash_oracle",
+    "role": "separator",
+    "path": "assets/themes/ash_oracle/frames/separator.png",
+    "bytes": 7462,
+    "sha256": "b3f13172e1e78762902e7d621e55ad2ef5fb97bad5765a176342837233e03456"
+  },
+  {
+    "theme": "ash_oracle",
+    "role": "scene",
+    "path": "assets/themes/ash_oracle/decorations/scene.png",
+    "bytes": 107758,
+    "sha256": "2023d6d5575041902ac2baf6a15f83fc45b3569d471c3bcbe2d87ae0c6a4377a"
+  },
+  {
+    "theme": "ash_oracle",
+    "role": "scene-mobile",
+    "path": "assets/themes/ash_oracle/decorations/scene-mobile.png",
+    "bytes": 41259,
+    "sha256": "0b2113726d01acb7b8a2fdc2914c1b02b6a15192d98c53a2ddc15f30a7f05851"
+  },
+  {
+    "theme": "void_liturgy",
+    "role": "panel",
+    "path": "assets/themes/void_liturgy/frames/panel.png",
+    "bytes": 9328,
+    "sha256": "347b5db599c971312e6c7e4db925613dbe5191377479000fb93d6218f8889904"
+  },
+  {
+    "theme": "void_liturgy",
+    "role": "mobile",
+    "path": "assets/themes/void_liturgy/frames/mobile.png",
+    "bytes": 7829,
+    "sha256": "8d74521ecc7aa35238f28aebce5f7249c97cc1e697b572ed830f8cc2b01a0666"
+  },
+  {
+    "theme": "void_liturgy",
+    "role": "portrait",
+    "path": "assets/themes/void_liturgy/frames/portrait.png",
+    "bytes": 7022,
+    "sha256": "a43fc633aba83245121e239f4172a7a8680942867a1d0293e263625a227321a2"
+  },
+  {
+    "theme": "void_liturgy",
+    "role": "statistics",
+    "path": "assets/themes/void_liturgy/frames/statistics.png",
+    "bytes": 6863,
+    "sha256": "742c482e37dc3ae4b25f92bac33e1cd97a74884bd260e0ac9ecc56e84a1ac2b2"
+  },
+  {
+    "theme": "void_liturgy",
+    "role": "separator",
+    "path": "assets/themes/void_liturgy/frames/separator.png",
+    "bytes": 6932,
+    "sha256": "6c43dde4465269c3e8859cf04ec4fb06ef0d462328b081547b43c195772ea090"
+  },
+  {
+    "theme": "void_liturgy",
+    "role": "scene",
+    "path": "assets/themes/void_liturgy/decorations/scene.png",
+    "bytes": 95351,
+    "sha256": "11e7dccfb86be20159612f40aae2333a7025f858592604d2b3dc43d1d6abba2e"
+  },
+  {
+    "theme": "void_liturgy",
+    "role": "scene-mobile",
+    "path": "assets/themes/void_liturgy/decorations/scene-mobile.png",
+    "bytes": 37521,
+    "sha256": "5a2171de981ddd25a83166984f867060864d489a076151fbb47cbee7778ab17b"
+  },
+  {
+    "theme": "shadow_gate_rank",
+    "role": "panel",
+    "path": "assets/themes/shadow_gate_rank/frames/panel.png",
+    "bytes": 5455,
+    "sha256": "4112c45601a21c6edaac2ab10175636790da105d085f44e896fd89a9092450d1"
+  },
+  {
+    "theme": "shadow_gate_rank",
+    "role": "mobile",
+    "path": "assets/themes/shadow_gate_rank/frames/mobile.png",
+    "bytes": 4073,
+    "sha256": "8333e6ec9b16f48ab3d2e122d58b9b568e8e2f182adcc08a61cd17ad3d5e6dfa"
+  },
+  {
+    "theme": "shadow_gate_rank",
+    "role": "portrait",
+    "path": "assets/themes/shadow_gate_rank/frames/portrait.png",
+    "bytes": 3531,
+    "sha256": "eb2de78e23d122fa589737d15c664d59088f81647123d760cd03ddc6c75ef65f"
+  },
+  {
+    "theme": "shadow_gate_rank",
+    "role": "statistics",
+    "path": "assets/themes/shadow_gate_rank/frames/statistics.png",
+    "bytes": 3436,
+    "sha256": "8ecd296a25c0f8aa320fdb0a1fee52b941c5ed1490213d4b42b3eef3eadbf5b8"
+  },
+  {
+    "theme": "shadow_gate_rank",
+    "role": "separator",
+    "path": "assets/themes/shadow_gate_rank/frames/separator.png",
+    "bytes": 3391,
+    "sha256": "7c570b69ddad122c65b9800562ac1e0e1ef6ca9b10573a25922f95913a950148"
+  },
+  {
+    "theme": "shadow_gate_rank",
+    "role": "scene",
+    "path": "assets/themes/shadow_gate_rank/decorations/scene.png",
+    "bytes": 139759,
+    "sha256": "153717e96eef8b090e303760245912878137ae782646dd5635fec740a38a98dd"
+  },
+  {
+    "theme": "shadow_gate_rank",
+    "role": "scene-mobile",
+    "path": "assets/themes/shadow_gate_rank/decorations/scene-mobile.png",
+    "bytes": 49342,
+    "sha256": "7211d8dda71ee8d39e17be7bc67504133444dd764cf411c7df15a36fb1d768af"
+  },
+  {
+    "theme": "postea_bloom",
+    "role": "panel",
+    "path": "assets/themes/postea_bloom/frames/panel.png",
+    "bytes": 11205,
+    "sha256": "42dfd1e2669869692673f9dcca5e8b8c9dedec930bc50b45769b750337464b85"
+  },
+  {
+    "theme": "postea_bloom",
+    "role": "mobile",
+    "path": "assets/themes/postea_bloom/frames/mobile.png",
+    "bytes": 9444,
+    "sha256": "c3687e2af77cd2c041e223c94351482390dcac82bd16999d55bb50d7422ab1f7"
+  },
+  {
+    "theme": "postea_bloom",
+    "role": "portrait",
+    "path": "assets/themes/postea_bloom/frames/portrait.png",
+    "bytes": 8749,
+    "sha256": "a1510613d61c6816b2adb404e0e90e37c926079a4c3d04d7d9973d7bf7852e32"
+  },
+  {
+    "theme": "postea_bloom",
+    "role": "statistics",
+    "path": "assets/themes/postea_bloom/frames/statistics.png",
+    "bytes": 8590,
+    "sha256": "773dedbb494f36fa6fba61aa8c1a7138c150ad1879db0e4a3c880a2db17e434a"
+  },
+  {
+    "theme": "postea_bloom",
+    "role": "separator",
+    "path": "assets/themes/postea_bloom/frames/separator.png",
+    "bytes": 8332,
+    "sha256": "524fd9b7a87e3f2df8bcaadb3581ef55a40ef83397285d49efd20513a707ac10"
+  },
+  {
+    "theme": "postea_bloom",
+    "role": "scene",
+    "path": "assets/themes/postea_bloom/decorations/scene.png",
+    "bytes": 95438,
+    "sha256": "d256568bd49c00fb00afd75a2da2579d9b7d70ac6bcfbe804fb04a2fd8504a38"
+  },
+  {
+    "theme": "postea_bloom",
+    "role": "scene-mobile",
+    "path": "assets/themes/postea_bloom/decorations/scene-mobile.png",
+    "bytes": 40433,
+    "sha256": "e3a7281447f4aed9265842d9b3e11195c7416b76fb3142b3c3a064651ac69b1c"
+  },
+  {
+    "theme": "karma_duality",
+    "role": "panel",
+    "path": "assets/themes/karma_duality/frames/panel.png",
+    "bytes": 8373,
+    "sha256": "0fc7028cb2682f40cbef40a108969974a08e5c1cca4ac0c841d18b7c286e56dd"
+  },
+  {
+    "theme": "karma_duality",
+    "role": "mobile",
+    "path": "assets/themes/karma_duality/frames/mobile.png",
+    "bytes": 6886,
+    "sha256": "0dbfc461483b97cfa2bcbcfd0652a6a0274cfa7a425924bb4b962c1fe8adac30"
+  },
+  {
+    "theme": "karma_duality",
+    "role": "portrait",
+    "path": "assets/themes/karma_duality/frames/portrait.png",
+    "bytes": 6221,
+    "sha256": "93dbc78cbcf80639f99e9208759f0d6e2a4c01c4986cd0114e7b43cebdea7023"
+  },
+  {
+    "theme": "karma_duality",
+    "role": "statistics",
+    "path": "assets/themes/karma_duality/frames/statistics.png",
+    "bytes": 6087,
+    "sha256": "3ebc4c82b17f060fa27eb10cc676c85e89f36a2da1f13554c60f6e0f5ce5c6ce"
+  },
+  {
+    "theme": "karma_duality",
+    "role": "separator",
+    "path": "assets/themes/karma_duality/frames/separator.png",
+    "bytes": 6079,
+    "sha256": "c23bef173d92aa5aa47de3e7b4e90fa6cedf94ae91d24285f52ae2f77d1434c6"
+  },
+  {
+    "theme": "karma_duality",
+    "role": "scene",
+    "path": "assets/themes/karma_duality/decorations/scene.png",
+    "bytes": 86144,
+    "sha256": "7e73f22d93684cdec0ba50700cc84201b26ed16a696e695be51a23df86cc3904"
+  },
+  {
+    "theme": "karma_duality",
+    "role": "scene-mobile",
+    "path": "assets/themes/karma_duality/decorations/scene-mobile.png",
+    "bytes": 34124,
+    "sha256": "8a0c333d1af03d3944d59418d47de12e7d6abe89d2cc505e2226efe3e23f32fc"
+  },
+  {
+    "theme": "monster_lantern",
+    "role": "panel",
+    "path": "assets/themes/monster_lantern/frames/panel.png",
+    "bytes": 5537,
+    "sha256": "fb6325d51accdf7f71e587768a04bd1ab3af2c9aa19fa9b3ca93912317ab0366"
+  },
+  {
+    "theme": "monster_lantern",
+    "role": "mobile",
+    "path": "assets/themes/monster_lantern/frames/mobile.png",
+    "bytes": 4151,
+    "sha256": "1600e24b86529878786272e086e5e3bb27394b2b62035640caad587f1383e89b"
+  },
+  {
+    "theme": "monster_lantern",
+    "role": "portrait",
+    "path": "assets/themes/monster_lantern/frames/portrait.png",
+    "bytes": 3693,
+    "sha256": "69c7b01e6043d386fb40dd407b33c1e85f92defe8cecf4dd920c6f351161d0f4"
+  },
+  {
+    "theme": "monster_lantern",
+    "role": "statistics",
+    "path": "assets/themes/monster_lantern/frames/statistics.png",
+    "bytes": 3597,
+    "sha256": "3de6109ff8f35c58115f9f5309a71ff6bf3ba751aedec6780e542ccb753f5f3f"
+  },
+  {
+    "theme": "monster_lantern",
+    "role": "separator",
+    "path": "assets/themes/monster_lantern/frames/separator.png",
+    "bytes": 3461,
+    "sha256": "abd00b8c30c307fb5a9c43d27cd594d2e6428f952dcea54615eee07fe9023c2d"
+  },
+  {
+    "theme": "monster_lantern",
+    "role": "scene",
+    "path": "assets/themes/monster_lantern/decorations/scene.png",
+    "bytes": 94181,
+    "sha256": "e544fc5e548114278e55e93011b7aa139a411a5891472ce794ef89b59e29dcae"
+  },
+  {
+    "theme": "monster_lantern",
+    "role": "scene-mobile",
+    "path": "assets/themes/monster_lantern/decorations/scene-mobile.png",
+    "bytes": 33640,
+    "sha256": "a01b648c7af0e44428787f9abf5868ef6de1430c361027be8e8b78ece0fde059"
+  },
+  {
+    "theme": "jrpg_legend",
+    "role": "panel",
+    "path": "assets/themes/jrpg_legend/frames/panel.png",
+    "bytes": 6304,
+    "sha256": "919913fda5161b202fdc815974e680037ad1fcac3b7ea9abc4415467bbfb7452"
+  },
+  {
+    "theme": "jrpg_legend",
+    "role": "mobile",
+    "path": "assets/themes/jrpg_legend/frames/mobile.png",
+    "bytes": 4840,
+    "sha256": "002c91278c6b9bff8b46b4b7de3f7bd0dbdff56629988080f5b92b5d2a6ce0cc"
+  },
+  {
+    "theme": "jrpg_legend",
+    "role": "portrait",
+    "path": "assets/themes/jrpg_legend/frames/portrait.png",
+    "bytes": 4256,
+    "sha256": "07120f0a7a9205fa95628f20bd84393ffa1f979b5d57f3e22ccc6107e31522ec"
+  },
+  {
+    "theme": "jrpg_legend",
+    "role": "statistics",
+    "path": "assets/themes/jrpg_legend/frames/statistics.png",
+    "bytes": 4151,
+    "sha256": "539a5dca3b8d00ac29a423419adcbf7b6dbec63e541bddef7d28267d8b8b9b15"
+  },
+  {
+    "theme": "jrpg_legend",
+    "role": "separator",
+    "path": "assets/themes/jrpg_legend/frames/separator.png",
+    "bytes": 4206,
+    "sha256": "3b0206fd90001208a9112b94628a64d37eae74350c0a05b60a572bae5ab84e10"
+  },
+  {
+    "theme": "jrpg_legend",
+    "role": "scene",
+    "path": "assets/themes/jrpg_legend/decorations/scene.png",
+    "bytes": 58067,
+    "sha256": "bdf11a6560170e190a60af4ab67a1532c2f03165843d885f8a0405703ffd96e3"
+  },
+  {
+    "theme": "jrpg_legend",
+    "role": "scene-mobile",
+    "path": "assets/themes/jrpg_legend/decorations/scene-mobile.png",
+    "bytes": 21231,
+    "sha256": "0fc2ab896acc3bfefee83f3ddc3637e2823e432251fabf7baa12663173e2579d"
+  },
+  {
+    "theme": "rogue_mutation",
+    "role": "panel",
+    "path": "assets/themes/rogue_mutation/frames/panel.png",
+    "bytes": 7515,
+    "sha256": "7c6c1abe95b030b25ffbd4fc0770afb1e86e115e508a79820abc34fc03923cac"
+  },
+  {
+    "theme": "rogue_mutation",
+    "role": "mobile",
+    "path": "assets/themes/rogue_mutation/frames/mobile.png",
+    "bytes": 6304,
+    "sha256": "5646885a659378fd66e813dec1463825247b3340714dab816b4dd067eeae4c9b"
+  },
+  {
+    "theme": "rogue_mutation",
+    "role": "portrait",
+    "path": "assets/themes/rogue_mutation/frames/portrait.png",
+    "bytes": 5497,
+    "sha256": "ed8ffc27b1948070098b6b51c0b6f232c7a82bdf390d00b22f938d682ca48c3c"
+  },
+  {
+    "theme": "rogue_mutation",
+    "role": "statistics",
+    "path": "assets/themes/rogue_mutation/frames/statistics.png",
+    "bytes": 5396,
+    "sha256": "c52fa3d7119bbdc8654cac8e4a69c30738418e46c20b66e3bf0175225db36c22"
+  },
+  {
+    "theme": "rogue_mutation",
+    "role": "separator",
+    "path": "assets/themes/rogue_mutation/frames/separator.png",
+    "bytes": 5279,
+    "sha256": "c6b818baed4f9caad62fa3b74b47dba85e5273b737a8c714ab716e6e9696b191"
+  },
+  {
+    "theme": "rogue_mutation",
+    "role": "scene",
+    "path": "assets/themes/rogue_mutation/decorations/scene.png",
+    "bytes": 71581,
+    "sha256": "4a4a2f902891d5d2622f70b76d5b8bf4a8ad27ab27e42088f838324d2aad6335"
+  },
+  {
+    "theme": "rogue_mutation",
+    "role": "scene-mobile",
+    "path": "assets/themes/rogue_mutation/decorations/scene-mobile.png",
+    "bytes": 31780,
+    "sha256": "17342f8c3a37de02a18ac5216dbe3e5a58084eb15232eaec168f87457bd3035c"
+  },
+  {
+    "theme": "cell_crimson_run",
+    "role": "panel",
+    "path": "assets/themes/cell_crimson_run/frames/panel.png",
+    "bytes": 6396,
+    "sha256": "aa3659820676dcc6485a056c628fab03df7eae43a4478a8d0fbd2ffbb491d29c"
+  },
+  {
+    "theme": "cell_crimson_run",
+    "role": "mobile",
+    "path": "assets/themes/cell_crimson_run/frames/mobile.png",
+    "bytes": 4995,
+    "sha256": "aec6d4cde2cd2ff8a10be9a9a114f7ab3359c07747d14bd012ca17128d8d74de"
+  },
+  {
+    "theme": "cell_crimson_run",
+    "role": "portrait",
+    "path": "assets/themes/cell_crimson_run/frames/portrait.png",
+    "bytes": 4311,
+    "sha256": "3dd08e9980d6e9373783ff380d1130d7d8b0f8cc1aa6a527f26965fb49f4afce"
+  },
+  {
+    "theme": "cell_crimson_run",
+    "role": "statistics",
+    "path": "assets/themes/cell_crimson_run/frames/statistics.png",
+    "bytes": 4215,
+    "sha256": "7d7db13d5b10943c0e30943070b974d29170fceca4fb0cd9970a6dcce61e8b61"
+  },
+  {
+    "theme": "cell_crimson_run",
+    "role": "separator",
+    "path": "assets/themes/cell_crimson_run/frames/separator.png",
+    "bytes": 3809,
+    "sha256": "4e3ec74ff04bce255adbc1ddf9aa7d1d33cd918fce81bba6f4c9763d02fd6161"
+  },
+  {
+    "theme": "cell_crimson_run",
+    "role": "scene",
+    "path": "assets/themes/cell_crimson_run/decorations/scene.png",
+    "bytes": 91956,
+    "sha256": "8bf3f3ff37590db3f7071085a7f9b94731519845c9a40b59f9af90e0d86bc978"
+  },
+  {
+    "theme": "cell_crimson_run",
+    "role": "scene-mobile",
+    "path": "assets/themes/cell_crimson_run/decorations/scene-mobile.png",
+    "bytes": 35931,
+    "sha256": "e137435d24a4251c2eac227a9eef8b9dc350f8ce0de441e879d4de0e60808474"
+  },
+  {
+    "theme": "darkest_stagecoach",
+    "role": "panel",
+    "path": "assets/themes/darkest_stagecoach/frames/panel.png",
+    "bytes": 4679,
+    "sha256": "907f45156e84ad06d1ec48401b64732b4e52a295be1bc5842b0f7cecc733c11e"
+  },
+  {
+    "theme": "darkest_stagecoach",
+    "role": "mobile",
+    "path": "assets/themes/darkest_stagecoach/frames/mobile.png",
+    "bytes": 3323,
+    "sha256": "abd77bf2bc05c8556c5b94cf70e4a211f871dfa1396265bf00edb159c2c23e0e"
+  },
+  {
+    "theme": "darkest_stagecoach",
+    "role": "portrait",
+    "path": "assets/themes/darkest_stagecoach/frames/portrait.png",
+    "bytes": 2746,
+    "sha256": "e2eada73eeded6322c3fb63d6bb746a06585270049c72bc31c3b13ea2113a6b9"
+  },
+  {
+    "theme": "darkest_stagecoach",
+    "role": "statistics",
+    "path": "assets/themes/darkest_stagecoach/frames/statistics.png",
+    "bytes": 2674,
+    "sha256": "bdea8f574e2ac4167c0dc2db5a85333bf1287e4a7d0e2f55d46e4a8316ac5809"
+  },
+  {
+    "theme": "darkest_stagecoach",
+    "role": "separator",
+    "path": "assets/themes/darkest_stagecoach/frames/separator.png",
+    "bytes": 2719,
+    "sha256": "7f85a46203dfc52151bf7f661f87f2083673d0aec94544ca810b84e30588f024"
+  },
+  {
+    "theme": "darkest_stagecoach",
+    "role": "scene",
+    "path": "assets/themes/darkest_stagecoach/decorations/scene.png",
+    "bytes": 129458,
+    "sha256": "ea74c7a358eb5f76a753453021f74c6e764d774bd9ac204879653450b66b695a"
+  },
+  {
+    "theme": "darkest_stagecoach",
+    "role": "scene-mobile",
+    "path": "assets/themes/darkest_stagecoach/decorations/scene-mobile.png",
+    "bytes": 45117,
+    "sha256": "eefd222d3cde7ab1b6872fca398fcaf728ae91d4462055ee09ab23dc819a14fe"
+  },
+  {
+    "theme": "ashen_covenant",
+    "role": "panel",
+    "path": "assets/themes/ashen_covenant/frames/panel.png",
+    "bytes": 12049,
+    "sha256": "ff760f27316184c739b905bb2f026f57d752c4bfc1f8fb50eeba0271e248d7ed"
+  },
+  {
+    "theme": "ashen_covenant",
+    "role": "mobile",
+    "path": "assets/themes/ashen_covenant/frames/mobile.png",
+    "bytes": 10648,
+    "sha256": "c422b76f858f408e50219adf15e389a163410f43119b435bb3f08a8f5c293409"
+  },
+  {
+    "theme": "ashen_covenant",
+    "role": "portrait",
+    "path": "assets/themes/ashen_covenant/frames/portrait.png",
+    "bytes": 9528,
+    "sha256": "ce6dbbc7991cdb5d1c6a236ea8a9eca3b847089b19e64f4a88efa51b4a6c257d"
+  },
+  {
+    "theme": "ashen_covenant",
+    "role": "statistics",
+    "path": "assets/themes/ashen_covenant/frames/statistics.png",
+    "bytes": 9369,
+    "sha256": "e99aa80be92b03890791a856b46d6f7f5b855a67bf51f56ba7171798ecf41189"
+  },
+  {
+    "theme": "ashen_covenant",
+    "role": "separator",
+    "path": "assets/themes/ashen_covenant/frames/separator.png",
+    "bytes": 9268,
+    "sha256": "632a159a58be740cbbc66e812603d636ab6f7178becefe5d75dc828eb536b916"
+  },
+  {
+    "theme": "ashen_covenant",
+    "role": "scene",
+    "path": "assets/themes/ashen_covenant/decorations/scene.png",
+    "bytes": 88248,
+    "sha256": "f0fc5b4de9834493fa5478d1d0497dbf0d3f562be165936dda9be4a4dba54866"
+  },
+  {
+    "theme": "ashen_covenant",
+    "role": "scene-mobile",
+    "path": "assets/themes/ashen_covenant/decorations/scene-mobile.png",
+    "bytes": 33235,
+    "sha256": "f5984d7ce52c97eabc3bf2c830048dc35d0ef0aa8c5d0ed6f3b3343f427bd4e9"
+  },
+  {
+    "theme": "eclipse_bonfire",
+    "role": "panel",
+    "path": "assets/themes/eclipse_bonfire/frames/panel.png",
+    "bytes": 9909,
+    "sha256": "579830b0cc730e46d64ea99b22ff2acbeae55beb88f7d6a59a98b050f3d705d3"
+  },
+  {
+    "theme": "eclipse_bonfire",
+    "role": "mobile",
+    "path": "assets/themes/eclipse_bonfire/frames/mobile.png",
+    "bytes": 8505,
+    "sha256": "7a68e387f49a4a8113659c1a392c5549fbc94c83e655056ddc74e0227bd1f18f"
+  },
+  {
+    "theme": "eclipse_bonfire",
+    "role": "portrait",
+    "path": "assets/themes/eclipse_bonfire/frames/portrait.png",
+    "bytes": 7714,
+    "sha256": "69566532f3a1cba2e2b0e2e5e711ad126bb2d358dbec5498f17125e542954416"
+  },
+  {
+    "theme": "eclipse_bonfire",
+    "role": "statistics",
+    "path": "assets/themes/eclipse_bonfire/frames/statistics.png",
+    "bytes": 7555,
+    "sha256": "5f8d2dfd6bb662709b4e1d47b73dda8e8a5f9012bacb9df65416234d8079b079"
+  },
+  {
+    "theme": "eclipse_bonfire",
+    "role": "separator",
+    "path": "assets/themes/eclipse_bonfire/frames/separator.png",
+    "bytes": 7449,
+    "sha256": "a299f342fff8ae012e9aca867134f9ca489e259e833efc2a522d7b9e63db2444"
+  },
+  {
+    "theme": "eclipse_bonfire",
+    "role": "scene",
+    "path": "assets/themes/eclipse_bonfire/decorations/scene.png",
+    "bytes": 83099,
+    "sha256": "7daf9875ad78275f7205cabfcb83f1a335bd17d1b161e89dd86c9d7212a2ff11"
+  },
+  {
+    "theme": "eclipse_bonfire",
+    "role": "scene-mobile",
+    "path": "assets/themes/eclipse_bonfire/decorations/scene-mobile.png",
+    "bytes": 33934,
+    "sha256": "f2ff8bdceb237bcef728204477df71f5229f5706826a06981d796ef082ad709e"
+  },
+  {
+    "theme": "bolted_black_iron",
+    "role": "panel",
+    "path": "assets/themes/bolted_black_iron/frames/panel.png",
+    "bytes": 5678,
+    "sha256": "0de548ab8140c1c76dd08cbae113740be7e4c14a609556f412f77b8abb87556d"
+  },
+  {
+    "theme": "bolted_black_iron",
+    "role": "mobile",
+    "path": "assets/themes/bolted_black_iron/frames/mobile.png",
+    "bytes": 4375,
+    "sha256": "f99bfbb86135ae9350214a86eb438a5b5b15a0195f4fc2268c6dd0689539827b"
+  },
+  {
+    "theme": "bolted_black_iron",
+    "role": "portrait",
+    "path": "assets/themes/bolted_black_iron/frames/portrait.png",
+    "bytes": 3791,
+    "sha256": "9847fe43b083e8072bb7a90125fa93bb8c4fa27c5c2801173ef0fe8277680c76"
+  },
+  {
+    "theme": "bolted_black_iron",
+    "role": "statistics",
+    "path": "assets/themes/bolted_black_iron/frames/statistics.png",
+    "bytes": 3696,
+    "sha256": "27569b1d7a2c77b499da8a02613efe16b6e665607be7b7095915744181a3b241"
+  },
+  {
+    "theme": "bolted_black_iron",
+    "role": "separator",
+    "path": "assets/themes/bolted_black_iron/frames/separator.png",
+    "bytes": 3495,
+    "sha256": "f8bdd7f491e7829b7e2892dacf1aeb1f131e1d662124309b1b6717a1a8bbf2a9"
+  },
+  {
+    "theme": "bolted_black_iron",
+    "role": "scene",
+    "path": "assets/themes/bolted_black_iron/decorations/scene.png",
+    "bytes": 85404,
+    "sha256": "e6d1519f2b576328a8c433c985b3b5d7d7d97ab3ad0a1163e1f1fb6f3bba0c5a"
+  },
+  {
+    "theme": "bolted_black_iron",
+    "role": "scene-mobile",
+    "path": "assets/themes/bolted_black_iron/decorations/scene-mobile.png",
+    "bytes": 29637,
+    "sha256": "cdb2841b7dffac0166b57ee2d84018e11273b3e16a9d1bc851dc59a820bd2d4d"
+  },
+  {
+    "theme": "bolted_gold_plate",
+    "role": "panel",
+    "path": "assets/themes/bolted_gold_plate/frames/panel.png",
+    "bytes": 5784,
+    "sha256": "eab3f6fb8576780ce53dd1150b12e1ace8ab03bccb44a34b1a15ab3eca732372"
+  },
+  {
+    "theme": "bolted_gold_plate",
+    "role": "mobile",
+    "path": "assets/themes/bolted_gold_plate/frames/mobile.png",
+    "bytes": 4401,
+    "sha256": "419b98cc770d2723878ecce919b90ab7c63a1a85ea6ed311842c753c90e55ec0"
+  },
+  {
+    "theme": "bolted_gold_plate",
+    "role": "portrait",
+    "path": "assets/themes/bolted_gold_plate/frames/portrait.png",
+    "bytes": 3832,
+    "sha256": "5c1d551dcee20dcbccbf416b11c5431d7db4fc3bd4bc938656caa15ae5b331d1"
+  },
+  {
+    "theme": "bolted_gold_plate",
+    "role": "statistics",
+    "path": "assets/themes/bolted_gold_plate/frames/statistics.png",
+    "bytes": 3738,
+    "sha256": "ea02b33a46ee4752bf844a73f74be481780f0d7d280f94220e2cb8780a8728ad"
+  },
+  {
+    "theme": "bolted_gold_plate",
+    "role": "separator",
+    "path": "assets/themes/bolted_gold_plate/frames/separator.png",
+    "bytes": 3537,
+    "sha256": "2e876a7eab333910274ce10649ded9d3b789d0c20d7ebd1562028178924ee136"
+  },
+  {
+    "theme": "bolted_gold_plate",
+    "role": "scene",
+    "path": "assets/themes/bolted_gold_plate/decorations/scene.png",
+    "bytes": 129925,
+    "sha256": "1f5b4956d79b05903c965cb7b01a5e14bd244621e6125388fdf02732242399ee"
+  },
+  {
+    "theme": "bolted_gold_plate",
+    "role": "scene-mobile",
+    "path": "assets/themes/bolted_gold_plate/decorations/scene-mobile.png",
+    "bytes": 48947,
+    "sha256": "2cd8529936f7af3de7c92679563461edb8dfc101072e7eec27dd377ea1698689"
+  },
+  {
+    "theme": "bolted_copper_oxide",
+    "role": "panel",
+    "path": "assets/themes/bolted_copper_oxide/frames/panel.png",
+    "bytes": 6317,
+    "sha256": "515a1adc3bc605ae8dce8af76306704b5af9bc83c88e8b22c69f710ad9eecef9"
+  },
+  {
+    "theme": "bolted_copper_oxide",
+    "role": "mobile",
+    "path": "assets/themes/bolted_copper_oxide/frames/mobile.png",
+    "bytes": 4817,
+    "sha256": "823d2df4f962bea32ae441ef436f623a7a10c74b84188f8e40fb6fafe834f563"
+  },
+  {
+    "theme": "bolted_copper_oxide",
+    "role": "portrait",
+    "path": "assets/themes/bolted_copper_oxide/frames/portrait.png",
+    "bytes": 4360,
+    "sha256": "397dd1620fa506b094e191790cea9e23ce08ff3cca8e4f2eeb4c8533d1fd3680"
+  },
+  {
+    "theme": "bolted_copper_oxide",
+    "role": "statistics",
+    "path": "assets/themes/bolted_copper_oxide/frames/statistics.png",
+    "bytes": 4253,
+    "sha256": "25ff8a8a707690ea254577b96a083a0d495e4ffbb5064933ea5aa669cc28b595"
+  },
+  {
+    "theme": "bolted_copper_oxide",
+    "role": "separator",
+    "path": "assets/themes/bolted_copper_oxide/frames/separator.png",
+    "bytes": 3713,
+    "sha256": "36ebd6f07d3bfad4ff656d64f52632d9cd05229703009ec5e085b70907dc6906"
+  },
+  {
+    "theme": "bolted_copper_oxide",
+    "role": "scene",
+    "path": "assets/themes/bolted_copper_oxide/decorations/scene.png",
+    "bytes": 92617,
+    "sha256": "a3b41ba56eb184edeabe4519445586c7a46c7ed21899c3d19d5d6384d7475ce9"
+  },
+  {
+    "theme": "bolted_copper_oxide",
+    "role": "scene-mobile",
+    "path": "assets/themes/bolted_copper_oxide/decorations/scene-mobile.png",
+    "bytes": 34414,
+    "sha256": "e3e6b97d8bfe6fb21c612f7a27ce90b9e52f082e2cc601cd5685e6bd57aa0a7d"
+  },
+  {
+    "theme": "bolted_silver_plate",
+    "role": "panel",
+    "path": "assets/themes/bolted_silver_plate/frames/panel.png",
+    "bytes": 5201,
+    "sha256": "eb0528526116d272b5bf6f85ef2ad7f6d3623ddd18c7c06054520f277427d56f"
+  },
+  {
+    "theme": "bolted_silver_plate",
+    "role": "mobile",
+    "path": "assets/themes/bolted_silver_plate/frames/mobile.png",
+    "bytes": 4011,
+    "sha256": "a6f3d71d3185336b6305da6665575fd7fa81151339ef5a521332f51a1dbb0c96"
+  },
+  {
+    "theme": "bolted_silver_plate",
+    "role": "portrait",
+    "path": "assets/themes/bolted_silver_plate/frames/portrait.png",
+    "bytes": 3353,
+    "sha256": "6127dbe0a288686b74bb15c56c005ee52163f2c21f5688341c452fc260a40f8f"
+  },
+  {
+    "theme": "bolted_silver_plate",
+    "role": "statistics",
+    "path": "assets/themes/bolted_silver_plate/frames/statistics.png",
+    "bytes": 3258,
+    "sha256": "343b40f27ed9665eb18b3820fde7f81f930f3a08470a8826ecb58eb67064550b"
+  },
+  {
+    "theme": "bolted_silver_plate",
+    "role": "separator",
+    "path": "assets/themes/bolted_silver_plate/frames/separator.png",
+    "bytes": 3252,
+    "sha256": "b13e585f43504312c4e5420098d0cc83b6b233b85d4600a2ab8287dbfddb8b0a"
+  },
+  {
+    "theme": "bolted_silver_plate",
+    "role": "scene",
+    "path": "assets/themes/bolted_silver_plate/decorations/scene.png",
+    "bytes": 81921,
+    "sha256": "06ac2cc9d37f2d879d8c5dff5f40804b99bfee60952bd6186db8ccab33845c98"
+  },
+  {
+    "theme": "bolted_silver_plate",
+    "role": "scene-mobile",
+    "path": "assets/themes/bolted_silver_plate/decorations/scene-mobile.png",
+    "bytes": 33928,
+    "sha256": "5d379a7ddb84d796767e04ba7b4c4c1fc09e0965513f0763c50a99f4f29a67dc"
+  },
+  {
+    "theme": "meadow_sprite",
+    "role": "panel",
+    "path": "assets/themes/meadow_sprite/frames/panel.png",
+    "bytes": 9252,
+    "sha256": "a8d98f78c273553aa29751c72b0b6ecd4e82d160351e633e3d2721acf1cec52a"
+  },
+  {
+    "theme": "meadow_sprite",
+    "role": "mobile",
+    "path": "assets/themes/meadow_sprite/frames/mobile.png",
+    "bytes": 7933,
+    "sha256": "6835c900d0087f807c12f92bb864cc35c4411f4c0c2ee6eed7aa3a4ef1963b12"
+  },
+  {
+    "theme": "meadow_sprite",
+    "role": "portrait",
+    "path": "assets/themes/meadow_sprite/frames/portrait.png",
+    "bytes": 7045,
+    "sha256": "ebe95851a1808adce8df92080633b907ef341b463418718e477b6e57271b4bef"
+  },
+  {
+    "theme": "meadow_sprite",
+    "role": "statistics",
+    "path": "assets/themes/meadow_sprite/frames/statistics.png",
+    "bytes": 6886,
+    "sha256": "e2a85d46dfe3f644192fe8fac4b3bb9dccdd46f2b63f6bfa494fbcaa3a0626df"
+  },
+  {
+    "theme": "meadow_sprite",
+    "role": "separator",
+    "path": "assets/themes/meadow_sprite/frames/separator.png",
+    "bytes": 6954,
+    "sha256": "5125bc0a514bdece088b6e16b8d4d989bde7ed0679295c6f356973056e5191c5"
+  },
+  {
+    "theme": "meadow_sprite",
+    "role": "scene",
+    "path": "assets/themes/meadow_sprite/decorations/scene.png",
+    "bytes": 130145,
+    "sha256": "ba4030dbe97fcffe1738fee00b36c9efb4ed4cf97125e30f2f029bdcc5f39093"
+  },
+  {
+    "theme": "meadow_sprite",
+    "role": "scene-mobile",
+    "path": "assets/themes/meadow_sprite/decorations/scene-mobile.png",
+    "bytes": 48306,
+    "sha256": "4208cac9c2df4db487d598b03e2534b63f9b5f35f3775acbe800dc5a6166570c"
+  },
+  {
+    "theme": "aurora_moth",
+    "role": "panel",
+    "path": "assets/themes/aurora_moth/frames/panel.png",
+    "bytes": 13551,
+    "sha256": "9433295796f2813607f5a9ed57f1f80e1fc219f00bf375794bff6dc8e168307c"
+  },
+  {
+    "theme": "aurora_moth",
+    "role": "mobile",
+    "path": "assets/themes/aurora_moth/frames/mobile.png",
+    "bytes": 10359,
+    "sha256": "89042c7934106f620b0db9cae3f2c63f96b8f3458a42c27bc59b0b2b2babce45"
+  },
+  {
+    "theme": "aurora_moth",
+    "role": "portrait",
+    "path": "assets/themes/aurora_moth/frames/portrait.png",
+    "bytes": 10666,
+    "sha256": "d77c2400f82dacb61e69bac2e2b223739496ed317634127502187b0b967980ec"
+  },
+  {
+    "theme": "aurora_moth",
+    "role": "statistics",
+    "path": "assets/themes/aurora_moth/frames/statistics.png",
+    "bytes": 10482,
+    "sha256": "75d228796824b1becf8b2584250a863f66015534e932e1829bdeb2a6c2341428"
+  },
+  {
+    "theme": "aurora_moth",
+    "role": "separator",
+    "path": "assets/themes/aurora_moth/frames/separator.png",
+    "bytes": 10385,
+    "sha256": "d2c16abd5dd41d84fde562014b15cdb5e817c4e142598aa2ddb514776e431707"
+  },
+  {
+    "theme": "aurora_moth",
+    "role": "scene",
+    "path": "assets/themes/aurora_moth/decorations/scene.png",
+    "bytes": 81850,
+    "sha256": "d77ae30e3f274bc384866b4c80e2d99ee30a4e2810dc2c3279ae159e26b3636b"
+  },
+  {
+    "theme": "aurora_moth",
+    "role": "scene-mobile",
+    "path": "assets/themes/aurora_moth/decorations/scene-mobile.png",
+    "bytes": 38370,
+    "sha256": "bd6933d48ff84b9762bfca0b406afc196d7accedf46d23bb16f8e5480b0bbdbb"
+  },
+  {
+    "theme": "modern_school_day",
+    "role": "panel",
+    "path": "assets/themes/modern_school_day/frames/panel.png",
+    "bytes": 6390,
+    "sha256": "7755557f4f965347d4b396c1da600adc477ef5a57bd88004cc64ae5517455d06"
+  },
+  {
+    "theme": "modern_school_day",
+    "role": "mobile",
+    "path": "assets/themes/modern_school_day/frames/mobile.png",
+    "bytes": 5041,
+    "sha256": "8d0897f62f6014f07a292563901552d5433388f9b27273af394990cdc22cbac8"
+  },
+  {
+    "theme": "modern_school_day",
+    "role": "portrait",
+    "path": "assets/themes/modern_school_day/frames/portrait.png",
+    "bytes": 4380,
+    "sha256": "b006f888175cef8781026ca3bd3406a7cb463349cc59ad175c94859ce10b14bf"
+  },
+  {
+    "theme": "modern_school_day",
+    "role": "statistics",
+    "path": "assets/themes/modern_school_day/frames/statistics.png",
+    "bytes": 4285,
+    "sha256": "c172e7ddaa4a1f4a1ed4ce3f018dbb099a7f9ec72782049522699882abe7f622"
+  },
+  {
+    "theme": "modern_school_day",
+    "role": "separator",
+    "path": "assets/themes/modern_school_day/frames/separator.png",
+    "bytes": 3882,
+    "sha256": "0cf1a88c0c5f7c5611a60e29485a1435897c8547504db70271b183f8687f98de"
+  },
+  {
+    "theme": "modern_school_day",
+    "role": "scene",
+    "path": "assets/themes/modern_school_day/decorations/scene.png",
+    "bytes": 109626,
+    "sha256": "9c359914cf74149455e388d36bef90ddfd59691eb6e4d75f0baa4c0f85c0994e"
+  },
+  {
+    "theme": "modern_school_day",
+    "role": "scene-mobile",
+    "path": "assets/themes/modern_school_day/decorations/scene-mobile.png",
+    "bytes": 40521,
+    "sha256": "b1767308ddb5c8292a7d6ca27b00a5f2cd1423bb4c353776ce458ecd7f443bca"
+  },
+  {
+    "theme": "vtt_arcane_table",
+    "role": "panel",
+    "path": "assets/themes/vtt_arcane_table/frames/panel.png",
+    "bytes": 6532,
+    "sha256": "99f739e44779da38e5a6f3045b94ad3ab0f7f9eb9a29d47578f82fbcd574a248"
+  },
+  {
+    "theme": "vtt_arcane_table",
+    "role": "mobile",
+    "path": "assets/themes/vtt_arcane_table/frames/mobile.png",
+    "bytes": 5238,
+    "sha256": "4faf7ea1848bca9b6a0c68d335ae3c2ba8cfb663baa52ced6efac77a8d8fb9ac"
+  },
+  {
+    "theme": "vtt_arcane_table",
+    "role": "portrait",
+    "path": "assets/themes/vtt_arcane_table/frames/portrait.png",
+    "bytes": 4433,
+    "sha256": "827723fb9d1a8c70c45e1be699ce085cba7df4cce523f0a0cc46a86cf8c37649"
+  },
+  {
+    "theme": "vtt_arcane_table",
+    "role": "statistics",
+    "path": "assets/themes/vtt_arcane_table/frames/statistics.png",
+    "bytes": 4337,
+    "sha256": "ddf85b77744eb3710334323e67bbe38178e70ab49ba60e6b6361bc736bca71c2"
+  },
+  {
+    "theme": "vtt_arcane_table",
+    "role": "separator",
+    "path": "assets/themes/vtt_arcane_table/frames/separator.png",
+    "bytes": 4376,
+    "sha256": "ccf9ae5e8bc92d13e87dc4361b5da1b17d81609fd85c820bf9872d95599e7772"
+  },
+  {
+    "theme": "vtt_arcane_table",
+    "role": "scene",
+    "path": "assets/themes/vtt_arcane_table/decorations/scene.png",
+    "bytes": 79042,
+    "sha256": "3e6b7241e25e85bf1ccfbc368364f299f7bd10da3414822656423de36a06d55f"
+  },
+  {
+    "theme": "vtt_arcane_table",
+    "role": "scene-mobile",
+    "path": "assets/themes/vtt_arcane_table/decorations/scene-mobile.png",
+    "bytes": 33690,
+    "sha256": "bc1cf5b1a90c0ef02946b0e8da3f340568b86bba42366291b52b0e24b4603dfe"
+  },
+  {
+    "theme": "vtt_obsidian_grid",
+    "role": "panel",
+    "path": "assets/themes/vtt_obsidian_grid/frames/panel.png",
+    "bytes": 17084,
+    "sha256": "2661111678019ac0bb8f5ad3fd0faae5d4079ccfd16e5e0008f4b6ee4b553f1c"
+  },
+  {
+    "theme": "vtt_obsidian_grid",
+    "role": "mobile",
+    "path": "assets/themes/vtt_obsidian_grid/frames/mobile.png",
+    "bytes": 13237,
+    "sha256": "c228b2fef894acce3b13cbc5f5288edaa58fd071d1797389f5145f524f9eb839"
+  },
+  {
+    "theme": "vtt_obsidian_grid",
+    "role": "portrait",
+    "path": "assets/themes/vtt_obsidian_grid/frames/portrait.png",
+    "bytes": 13658,
+    "sha256": "baf4bdd51f1b89456cb8ebda6285a7ac0473b7694513ec3068187ff0adb5be54"
+  },
+  {
+    "theme": "vtt_obsidian_grid",
+    "role": "statistics",
+    "path": "assets/themes/vtt_obsidian_grid/frames/statistics.png",
+    "bytes": 13438,
+    "sha256": "1fc740782e9d4182e13de0a47c892a82f75d9c04b341ee468a558c7ee9eace4c"
+  },
+  {
+    "theme": "vtt_obsidian_grid",
+    "role": "separator",
+    "path": "assets/themes/vtt_obsidian_grid/frames/separator.png",
+    "bytes": 13030,
+    "sha256": "dbaae54da4ec5b6cba38a6ad8ebdc8e1554b277484546aca735aba5b3b1f8b18"
+  },
+  {
+    "theme": "vtt_obsidian_grid",
+    "role": "scene",
+    "path": "assets/themes/vtt_obsidian_grid/decorations/scene.png",
+    "bytes": 119096,
+    "sha256": "a003c64cef354896759637bc9ed4308539d38b3bbc50211ecd3204a381bcfb16"
+  },
+  {
+    "theme": "vtt_obsidian_grid",
+    "role": "scene-mobile",
+    "path": "assets/themes/vtt_obsidian_grid/decorations/scene-mobile.png",
+    "bytes": 48730,
+    "sha256": "3d06fb55ecb95eccd6281640063add261b4e188a4232385297cb5cc263adfd8f"
+  },
+  {
+    "theme": "vtt_parchment_layers",
+    "role": "panel",
+    "path": "assets/themes/vtt_parchment_layers/frames/panel.png",
+    "bytes": 5697,
+    "sha256": "daa0a4c1d009bb17371bda9d6b8b54a00c8583ebae9dad666bf256622ae3503a"
+  },
+  {
+    "theme": "vtt_parchment_layers",
+    "role": "mobile",
+    "path": "assets/themes/vtt_parchment_layers/frames/mobile.png",
+    "bytes": 4304,
+    "sha256": "fd412cdf83882af496b4a59b1665eb2d531c42bef623881465729244922bb851"
+  },
+  {
+    "theme": "vtt_parchment_layers",
+    "role": "portrait",
+    "path": "assets/themes/vtt_parchment_layers/frames/portrait.png",
+    "bytes": 3822,
+    "sha256": "3c1f7a04993620a0b4297c58dd52442f9a4bcbd0afba922c80f1347cc66c8040"
+  },
+  {
+    "theme": "vtt_parchment_layers",
+    "role": "statistics",
+    "path": "assets/themes/vtt_parchment_layers/frames/statistics.png",
+    "bytes": 3726,
+    "sha256": "298081f1d7d4a84146d828e99f256aacca29125f2dc8874d7227e770196a8e29"
+  },
+  {
+    "theme": "vtt_parchment_layers",
+    "role": "separator",
+    "path": "assets/themes/vtt_parchment_layers/frames/separator.png",
+    "bytes": 3728,
+    "sha256": "c71c17f2ababe3d9946dc2ec561c1d465b245d42f5a91357f6308c747591f11f"
+  },
+  {
+    "theme": "vtt_parchment_layers",
+    "role": "scene",
+    "path": "assets/themes/vtt_parchment_layers/decorations/scene.png",
+    "bytes": 125428,
+    "sha256": "9f322bd46b50f21b7794095239074ee14fedbf183b0607301f68b3282b193652"
+  },
+  {
+    "theme": "vtt_parchment_layers",
+    "role": "scene-mobile",
+    "path": "assets/themes/vtt_parchment_layers/decorations/scene-mobile.png",
+    "bytes": 49953,
+    "sha256": "13a39c7cec14b41cee71910fbd7eca5c8fc4e4f15ec581346f1b11b7bf6a6114"
+  },
+  {
+    "theme": "vtt_master_overlay",
+    "role": "panel",
+    "path": "assets/themes/vtt_master_overlay/frames/panel.png",
+    "bytes": 6432,
+    "sha256": "4ea8ad772760e0d8e48189e47f076ec07e2dd15fae7ec6d53f7db8e9ec2c6ef0"
+  },
+  {
+    "theme": "vtt_master_overlay",
+    "role": "mobile",
+    "path": "assets/themes/vtt_master_overlay/frames/mobile.png",
+    "bytes": 5199,
+    "sha256": "2ed829ea2789d3c64326ca6d19306141b3747fdcedafd8f06aa77f0b83dc7694"
+  },
+  {
+    "theme": "vtt_master_overlay",
+    "role": "portrait",
+    "path": "assets/themes/vtt_master_overlay/frames/portrait.png",
+    "bytes": 4315,
+    "sha256": "3b54c7013ba486d9585b0f98d91fd380c4250ea74e42c1230a7cece3fdc433ab"
+  },
+  {
+    "theme": "vtt_master_overlay",
+    "role": "statistics",
+    "path": "assets/themes/vtt_master_overlay/frames/statistics.png",
+    "bytes": 4220,
+    "sha256": "c227a8feeb40cc857b5b3231a78ea3e42f8b883ffef1de8a581b1896607d5843"
+  },
+  {
+    "theme": "vtt_master_overlay",
+    "role": "separator",
+    "path": "assets/themes/vtt_master_overlay/frames/separator.png",
+    "bytes": 4244,
+    "sha256": "834e760c51c872bacaaa744bbd368dcb70d3d4a14418bc67b25708040887ba46"
+  },
+  {
+    "theme": "vtt_master_overlay",
+    "role": "scene",
+    "path": "assets/themes/vtt_master_overlay/decorations/scene.png",
+    "bytes": 92368,
+    "sha256": "5963495367d4a813d306c8f66e34a54e056b6c3e93d1f12af08698d1feab5ed1"
+  },
+  {
+    "theme": "vtt_master_overlay",
+    "role": "scene-mobile",
+    "path": "assets/themes/vtt_master_overlay/decorations/scene-mobile.png",
+    "bytes": 32023,
+    "sha256": "57ed319e467e172c22db30c032fff60582745bebc8fd4ff24f1208ad1e6ce140"
+  },
+  {
+    "theme": "verdigris_mourning",
+    "role": "panel",
+    "path": "assets/themes/verdigris_mourning/frames/panel.png",
+    "bytes": 10010,
+    "sha256": "53817a047a49ec2b188b299b042a477bb02528ebadbde42597463e89134852c4"
+  },
+  {
+    "theme": "verdigris_mourning",
+    "role": "mobile",
+    "path": "assets/themes/verdigris_mourning/frames/mobile.png",
+    "bytes": 8676,
+    "sha256": "80139975f334a8ed50ba17069660c5e50f9c0989f2d8ce264564cbe2cabbe4de"
+  },
+  {
+    "theme": "verdigris_mourning",
+    "role": "portrait",
+    "path": "assets/themes/verdigris_mourning/frames/portrait.png",
+    "bytes": 7741,
+    "sha256": "699eff8ce0b444401b648ac258f39d12be233f7af067d4db4c1a9c69876a6a6a"
+  },
+  {
+    "theme": "verdigris_mourning",
+    "role": "statistics",
+    "path": "assets/themes/verdigris_mourning/frames/statistics.png",
+    "bytes": 7581,
+    "sha256": "1672d8f8e5291f9c0fa4d65e9e2f069cd2e9a413cec6247117a0d5466cfe8730"
+  },
+  {
+    "theme": "verdigris_mourning",
+    "role": "separator",
+    "path": "assets/themes/verdigris_mourning/frames/separator.png",
+    "bytes": 7530,
+    "sha256": "bd57c798877f1791ef2662ef1b9d14e79c30632ed2bb87de217df40ca8d4e3ce"
+  },
+  {
+    "theme": "verdigris_mourning",
+    "role": "scene",
+    "path": "assets/themes/verdigris_mourning/decorations/scene.png",
+    "bytes": 97210,
+    "sha256": "5c896998baf03e14d2e1efc13447342a3ebd4eebaf05cd2af1e3854c2f97d0ac"
+  },
+  {
+    "theme": "verdigris_mourning",
+    "role": "scene-mobile",
+    "path": "assets/themes/verdigris_mourning/decorations/scene-mobile.png",
+    "bytes": 41733,
+    "sha256": "5341ec093e22aeb394a5e3760fd7252d1a0f4988800a773fc4659290abc54f1a"
+  },
+  {
+    "theme": "restyle_originale",
+    "role": "panel",
+    "path": "assets/themes/restyle_originale/frames/panel.png",
+    "bytes": 6827,
+    "sha256": "bac7de0a8aa9e17f95dd63b15a09745a20400d1e9111748efcbf4a6c8ce0fbac"
+  },
+  {
+    "theme": "restyle_originale",
+    "role": "mobile",
+    "path": "assets/themes/restyle_originale/frames/mobile.png",
+    "bytes": 5620,
+    "sha256": "adad6f601e61aefd0eae8f5f9c30f4f147c2f4b5f7cca6942cb61293b780dabe"
+  },
+  {
+    "theme": "restyle_originale",
+    "role": "portrait",
+    "path": "assets/themes/restyle_originale/frames/portrait.png",
+    "bytes": 4717,
+    "sha256": "59618b48b6bafe6dbd65992cd3db8b2fc29078bcf48601be84bbecb75bc6eb0e"
+  },
+  {
+    "theme": "restyle_originale",
+    "role": "statistics",
+    "path": "assets/themes/restyle_originale/frames/statistics.png",
+    "bytes": 4611,
+    "sha256": "0904053e3db1ed335c53d44df00239c4dd7b9ba74e2bce1c901da81450e84354"
+  },
+  {
+    "theme": "restyle_originale",
+    "role": "separator",
+    "path": "assets/themes/restyle_originale/frames/separator.png",
+    "bytes": 4428,
+    "sha256": "cb5982c2b510b9b712f5d11acf841be8f49475c704076c1a08201ad656e68804"
+  },
+  {
+    "theme": "restyle_originale",
+    "role": "scene",
+    "path": "assets/themes/restyle_originale/decorations/scene.png",
+    "bytes": 73764,
+    "sha256": "4fe4933a583f2f1f74871591bffc34640cfc49b489b50ba3c73a98482bfbd089"
+  },
+  {
+    "theme": "restyle_originale",
+    "role": "scene-mobile",
+    "path": "assets/themes/restyle_originale/decorations/scene-mobile.png",
+    "bytes": 27333,
+    "sha256": "0fbf785a833c38f2e30f3847d61019c36b18d9c3265a2c9a718bed6fcf08dcad"
+  },
+  {
+    "theme": "restyle_cenere",
+    "role": "panel",
+    "path": "assets/themes/restyle_cenere/frames/panel.png",
+    "bytes": 11817,
+    "sha256": "a10b5ebd7ca50c74213ed9cb1b694655138e01a1a5ccf9997f3fbbea5660ee3d"
+  },
+  {
+    "theme": "restyle_cenere",
+    "role": "mobile",
+    "path": "assets/themes/restyle_cenere/frames/mobile.png",
+    "bytes": 10510,
+    "sha256": "ec94c8139837f428ede4f90efdfc846d816c6fed8c3e18d9a431e2e75ad4e3a4"
+  },
+  {
+    "theme": "restyle_cenere",
+    "role": "portrait",
+    "path": "assets/themes/restyle_cenere/frames/portrait.png",
+    "bytes": 9220,
+    "sha256": "1055fdcc054e96c4c6fa57b5b260b1c08c9cf4cb952e41c92fb77b4d1f63df00"
+  },
+  {
+    "theme": "restyle_cenere",
+    "role": "statistics",
+    "path": "assets/themes/restyle_cenere/frames/statistics.png",
+    "bytes": 9061,
+    "sha256": "b62c23ca89e7da94963ae3d2a466dec529d6f59655c64f21907df896889695b4"
+  },
+  {
+    "theme": "restyle_cenere",
+    "role": "separator",
+    "path": "assets/themes/restyle_cenere/frames/separator.png",
+    "bytes": 8510,
+    "sha256": "1860e62622e82105b272882a27f247191976f5d2ab2a9c5d4b4a42c1e290a330"
+  },
+  {
+    "theme": "restyle_cenere",
+    "role": "scene",
+    "path": "assets/themes/restyle_cenere/decorations/scene.png",
+    "bytes": 69900,
+    "sha256": "33cafe6941ae85521d387b4f181a55be1336a03d9714c4332555d8c054fdeea8"
+  },
+  {
+    "theme": "restyle_cenere",
+    "role": "scene-mobile",
+    "path": "assets/themes/restyle_cenere/decorations/scene-mobile.png",
+    "bytes": 32693,
+    "sha256": "42e175c8524de0156b8b6eac86e5fff424f9660f584b876b10f548ff79a20654"
+  },
+  {
+    "theme": "restyle_sangue",
+    "role": "panel",
+    "path": "assets/themes/restyle_sangue/frames/panel.png",
+    "bytes": 7492,
+    "sha256": "b8f6e699ecf66e3934ea2df8061fbdb077fa758c81ed7e6299a101b515905e74"
+  },
+  {
+    "theme": "restyle_sangue",
+    "role": "mobile",
+    "path": "assets/themes/restyle_sangue/frames/mobile.png",
+    "bytes": 6156,
+    "sha256": "a812967476ebc66d0ca556fc9d1519884230a5827f7a25b79821ef4c9f10ad77"
+  },
+  {
+    "theme": "restyle_sangue",
+    "role": "portrait",
+    "path": "assets/themes/restyle_sangue/frames/portrait.png",
+    "bytes": 5280,
+    "sha256": "941c16b7f7b02827efce92f18ac4d75c9b2259a1d519564927eaa8ebf7e77106"
+  },
+  {
+    "theme": "restyle_sangue",
+    "role": "statistics",
+    "path": "assets/themes/restyle_sangue/frames/statistics.png",
+    "bytes": 5165,
+    "sha256": "5f5aec44eddcd1f651a91778b78ac3981be1912ebd3a6797fca965ce5bc99581"
+  },
+  {
+    "theme": "restyle_sangue",
+    "role": "separator",
+    "path": "assets/themes/restyle_sangue/frames/separator.png",
+    "bytes": 4956,
+    "sha256": "2e00614fa4b22cc268ecff56f5bdbcf8ed98643aeff3329c3fb71ddd7db9073c"
+  },
+  {
+    "theme": "restyle_sangue",
+    "role": "scene",
+    "path": "assets/themes/restyle_sangue/decorations/scene.png",
+    "bytes": 101152,
+    "sha256": "6debed493e853af9c1197f0ac2e4d8d35b7bdf330f72558a794a8589253ffdd9"
+  },
+  {
+    "theme": "restyle_sangue",
+    "role": "scene-mobile",
+    "path": "assets/themes/restyle_sangue/decorations/scene-mobile.png",
+    "bytes": 39386,
+    "sha256": "6af835cdaf52387d5534b36c91777712803dc238ec2f0abef6df9a1be5e9ddf8"
+  },
+  {
+    "theme": "restyle_aurora",
+    "role": "panel",
+    "path": "assets/themes/restyle_aurora/frames/panel.png",
+    "bytes": 15552,
+    "sha256": "889ed20a03f268db6f914acd95b9ba372581b4f98e9b99f5c7b1e86433615b29"
+  },
+  {
+    "theme": "restyle_aurora",
+    "role": "mobile",
+    "path": "assets/themes/restyle_aurora/frames/mobile.png",
+    "bytes": 11978,
+    "sha256": "e7b606664ed5fd00852e121b6f2e7d38551f1a0e251f06b529c23634e078b2c9"
+  },
+  {
+    "theme": "restyle_aurora",
+    "role": "portrait",
+    "path": "assets/themes/restyle_aurora/frames/portrait.png",
+    "bytes": 12432,
+    "sha256": "9a287b9967833daa873a00be27ad9270e4a8b1bd75b0c72f1b496a171f02cae1"
+  },
+  {
+    "theme": "restyle_aurora",
+    "role": "statistics",
+    "path": "assets/themes/restyle_aurora/frames/statistics.png",
+    "bytes": 12224,
+    "sha256": "4026945f54975a04f8821607b7c872c644a7166b1ae37d4404af72e3481b3849"
+  },
+  {
+    "theme": "restyle_aurora",
+    "role": "separator",
+    "path": "assets/themes/restyle_aurora/frames/separator.png",
+    "bytes": 11869,
+    "sha256": "eefbd01239f1c3a28ffc3307d9f946b009730e7914ced6d9a134f65e71822e00"
+  },
+  {
+    "theme": "restyle_aurora",
+    "role": "scene",
+    "path": "assets/themes/restyle_aurora/decorations/scene.png",
+    "bytes": 129010,
+    "sha256": "f003d1da32d0f67524793df6b35ab0f76271e2950659e4565b05b251491cd95e"
+  },
+  {
+    "theme": "restyle_aurora",
+    "role": "scene-mobile",
+    "path": "assets/themes/restyle_aurora/decorations/scene-mobile.png",
+    "bytes": 50666,
+    "sha256": "87fda2342876df68af1b4357a10183e5c244d5c88fbf8e43d54d5cccdd8e0f3f"
+  },
+  {
+    "theme": "restyle_natura",
+    "role": "panel",
+    "path": "assets/themes/restyle_natura/frames/panel.png",
+    "bytes": 9765,
+    "sha256": "ac6a890b917901bf22793d3ce6ba77437d606113d04383021c30d9ca134c4a72"
+  },
+  {
+    "theme": "restyle_natura",
+    "role": "mobile",
+    "path": "assets/themes/restyle_natura/frames/mobile.png",
+    "bytes": 8351,
+    "sha256": "0751a96667910b7c71b27e5e54c2f441a711eacbd68ae288bcebae8b0773a226"
+  },
+  {
+    "theme": "restyle_natura",
+    "role": "portrait",
+    "path": "assets/themes/restyle_natura/frames/portrait.png",
+    "bytes": 7372,
+    "sha256": "955316bc3e4ea3e9cc64897b98f61f5f608283fdd7fb9fc8e596db3910c5240d"
+  },
+  {
+    "theme": "restyle_natura",
+    "role": "statistics",
+    "path": "assets/themes/restyle_natura/frames/statistics.png",
+    "bytes": 7215,
+    "sha256": "f794fa2ea3f69d8bdafac9a16d04f9210c1ce1130ac7fc5fba0ba267ca9b7821"
+  },
+  {
+    "theme": "restyle_natura",
+    "role": "separator",
+    "path": "assets/themes/restyle_natura/frames/separator.png",
+    "bytes": 7087,
+    "sha256": "8d7fd5845dfd2b73dd264e5b990870cc43941cce8eb55ddbb8bc3661cef732b9"
+  },
+  {
+    "theme": "restyle_natura",
+    "role": "scene",
+    "path": "assets/themes/restyle_natura/decorations/scene.png",
+    "bytes": 99143,
+    "sha256": "6de2f64a8e06efa4b30f5930c29f0e98ed4b34e5a4d02978bbcc3c54465fde76"
+  },
+  {
+    "theme": "restyle_natura",
+    "role": "scene-mobile",
+    "path": "assets/themes/restyle_natura/decorations/scene-mobile.png",
+    "bytes": 38967,
+    "sha256": "702cfac6d415af9fe3e1a92f52028f6d799c8fdbda33102a7246e62f876143e1"
+  },
+  {
+    "theme": "restyle_lume",
+    "role": "panel",
+    "path": "assets/themes/restyle_lume/frames/panel.png",
+    "bytes": 11267,
+    "sha256": "2e4eb66a847ab960af592cc9d4f90b52c32c8652933589fec061c7a4722bac76"
+  },
+  {
+    "theme": "restyle_lume",
+    "role": "mobile",
+    "path": "assets/themes/restyle_lume/frames/mobile.png",
+    "bytes": 9605,
+    "sha256": "41c6410fb07fcf1b7be5ef91b718f92b17e33bec5819c998305d8cf90d26658d"
+  },
+  {
+    "theme": "restyle_lume",
+    "role": "portrait",
+    "path": "assets/themes/restyle_lume/frames/portrait.png",
+    "bytes": 8701,
+    "sha256": "f629f43f4cb99c04223605b7a188cfd3156c9ab23a82fd6f328cafa9f0bc8f73"
+  },
+  {
+    "theme": "restyle_lume",
+    "role": "statistics",
+    "path": "assets/themes/restyle_lume/frames/statistics.png",
+    "bytes": 8507,
+    "sha256": "430a5d0e0486f44a286250d2bb24f3f9f2ecf62ad0139bc4010e44de5a1dee50"
+  },
+  {
+    "theme": "restyle_lume",
+    "role": "separator",
+    "path": "assets/themes/restyle_lume/frames/separator.png",
+    "bytes": 8155,
+    "sha256": "75ea2d1b4ce0f5e08e6eef3b124904f72a363a3970eb8581d6905b4fe8fd4008"
+  },
+  {
+    "theme": "restyle_lume",
+    "role": "scene",
+    "path": "assets/themes/restyle_lume/decorations/scene.png",
+    "bytes": 89981,
+    "sha256": "b520a5ea561791b1d260e9e7255fb4b02d951112a8b778a1706a366a9b57d002"
+  },
+  {
+    "theme": "restyle_lume",
+    "role": "scene-mobile",
+    "path": "assets/themes/restyle_lume/decorations/scene-mobile.png",
+    "bytes": 38249,
+    "sha256": "eabcbbb6af483206f515bab97b2e33ca9ad51eb87ec29d5b8d411d66a89d9a2f"
+  }
+]

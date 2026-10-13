@@ -1,0 +1,13 @@
+{
+  "id": "modern_school_day",
+  "name": "Giorno di scuola",
+  "materials": "quaderno oscuro e sigillo sulla copertina",
+  "family": "forged",
+  "signature": "95386a7eee06359800a2d0cacdd511c43636fabc5062613fa4765c7b2619233f",
+  "motion": "pagina che si solleva",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

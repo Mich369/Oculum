@@ -1,0 +1,13 @@
+{
+  "id": "bolted_black_iron",
+  "name": "Metallo nero bullonato",
+  "materials": "placche nere e catene bullonate",
+  "family": "forged",
+  "signature": "9d46b73cffcb65fd1c348ea98870ab97492452463219b54d27b675372ad1216a",
+  "motion": "riflesso sui rivetti",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

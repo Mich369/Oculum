@@ -1,0 +1,13 @@
+{
+  "id": "postea_bloom",
+  "name": "Postea errante",
+  "materials": "reliquia errante e boccioli metallici",
+  "family": "botanical",
+  "signature": "3a72620adc6f985aef5705928e1e72f67a41386d406e124607e6bb8a866c58ff",
+  "motion": "bocciolo che si apre",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

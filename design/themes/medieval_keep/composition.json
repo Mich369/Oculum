@@ -1,0 +1,13 @@
+{
+  "id": "medieval_keep",
+  "name": "Mastio medievale",
+  "materials": "merli di pietra e stendardo logoro",
+  "family": "forged",
+  "signature": "d8254bd7a07bc73adea7529a9147d1423e57a7ad4d2023f24f2ba8e6d0233727",
+  "motion": "stendardo oscillante",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

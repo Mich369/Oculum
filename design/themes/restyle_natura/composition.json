@@ -1,0 +1,13 @@
+{
+  "id": "restyle_natura",
+  "name": "Natura",
+  "materials": "occhio nel seme e radici bronzee",
+  "family": "botanical",
+  "signature": "90ebf5ca0d96c03e5147a54bcdb62c9d9d6e7b8c2c34afd6a0f40109f70d05ce",
+  "motion": "radice oscillante",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

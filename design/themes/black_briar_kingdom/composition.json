@@ -1,0 +1,13 @@
+{
+  "id": "black_briar_kingdom",
+  "name": "Regno del rovo nero",
+  "materials": "stemma soffocato dal rovo nero",
+  "family": "botanical",
+  "signature": "1db7ad8810e109c77ac87ce3f768181bd180d1c807cfe6ef8ea1efe87019b476",
+  "motion": "ramo che si inclina",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

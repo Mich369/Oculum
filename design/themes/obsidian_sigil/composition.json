@@ -1,0 +1,13 @@
+{
+  "id": "obsidian_sigil",
+  "name": "Sigillo ossidiana",
+  "materials": "ossidiana fratturata e glifo sospeso",
+  "family": "crystal",
+  "signature": "65d9d1115278abb3cab6ec21c53a66547307eaeef45584fd7f3294c451ced911",
+  "motion": "respiro del glifo",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

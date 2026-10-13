@@ -1,0 +1,13 @@
+{
+  "id": "darkest_stagecoach",
+  "name": "Carrozza cupa",
+  "materials": "ruota scheggiata e lanterna di viaggio",
+  "family": "forged",
+  "signature": "917a8c04879a63d3f0f427e618917d295ac84f379fdb8930d67a0ce43195eb7e",
+  "motion": "tremolio della lanterna",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

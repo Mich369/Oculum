@@ -1,0 +1,13 @@
+{
+  "id": "restyle_sangue",
+  "name": "Sangue",
+  "materials": "occhio suturato e filo di essenza",
+  "family": "cathedral",
+  "signature": "d39d30d5f4feeea9c29caff7ba2f6d38f91c9bd08151c87c02752f16d6db9202",
+  "motion": "essenza nel filo",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
+import 'write_fresh_capture.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -109,9 +110,10 @@ void main() {
                   ? 'output/ui'
                   : 'output/ui/${label.replaceAll(RegExp(r"[^a-zA-Z0-9_-]"), "_")}',
             )..createSync(recursive: true);
-            File(
-              '${out.path}/oculus-page$page-${size.width.toInt()}.png',
-            ).writeAsBytesSync(bytes!.buffer.asUint8List());
+            writeFreshCapture(
+              File('${out.path}/oculus-page$page-${size.width.toInt()}.png'),
+              bytes!.buffer.asUint8List(),
+            );
             picture.dispose();
           });
         }

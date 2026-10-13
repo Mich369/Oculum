@@ -1,0 +1,13 @@
+{
+  "id": "moon_iron",
+  "name": "Ferro lunare",
+  "materials": "falce lunare incastonata in ferro",
+  "family": "forged",
+  "signature": "af35aa989f3b23ef55894b252bd7c772308fff690d8505cdd94203d384e9adcd",
+  "motion": "riflesso sulla falce",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

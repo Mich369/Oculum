@@ -1,0 +1,13 @@
+{
+  "id": "hoshy_cosmic_cat",
+  "name": "Hoshy gatto cosmico",
+  "materials": "gatto etereo e coda di costellazioni",
+  "family": "astral",
+  "signature": "73d71decd4e78936aeb9c11354c7be6b4d6206869f4649a3cffef837dd348680",
+  "motion": "pupilla del gatto",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

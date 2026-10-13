@@ -1,0 +1,13 @@
+{
+  "id": "vtt_parchment_layers",
+  "name": "Strati pergamena",
+  "materials": "mappe stratificate e chiodi cartografici",
+  "family": "cathedral",
+  "signature": "e10135557121ca886129909bb08d6da6cbfe4f6e8ddae9dc3f1299b3ce767e35",
+  "motion": "lembo della mappa",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

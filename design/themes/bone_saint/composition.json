@@ -1,0 +1,13 @@
+{
+  "id": "bone_saint",
+  "name": "Santo d osso",
+  "materials": "aureola di vertebre e osso scolpito",
+  "family": "cathedral",
+  "signature": "649f56363145f3d4e079be258ecd4991ccd69e1a21ea308d7606dbe07ef58ac1",
+  "motion": "luce fra le vertebre",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

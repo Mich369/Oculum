@@ -1,0 +1,13 @@
+{
+  "id": "classic_rpg",
+  "name": "Classic RPG",
+  "materials": "scudo araldico e fibbie di cuoio inciso",
+  "family": "cathedral",
+  "signature": "facf1fe80c2015a1a37d52049ff23b18f8b73640a4a37d389e2b2b02ec331237",
+  "motion": "luce sulle incisioni",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

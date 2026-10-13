@@ -1,0 +1,13 @@
+{
+  "id": "shadow_gate_rank",
+  "name": "Porta d ombra",
+  "materials": "portale a gradini e catene d'ombra",
+  "family": "cathedral",
+  "signature": "01a0ee47b5dcd5febe661fa0803cf7788e82df05d74a483b56aaa5970798edfc",
+  "motion": "ombra dietro il portale",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

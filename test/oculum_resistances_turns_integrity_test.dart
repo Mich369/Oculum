@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'write_fresh_capture.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart'
     show debugDefaultTargetPlatformOverride;
@@ -401,9 +402,10 @@ void main() {
           final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
           final dir = Directory('output/ui/resistances-turns-20261003')
             ..createSync(recursive: true);
-          File(
-            '${dir.path}/$name.png',
-          ).writeAsBytesSync(bytes!.buffer.asUint8List());
+          writeFreshCapture(
+            File('${dir.path}/$name.png'),
+            bytes!.buffer.asUint8List(),
+          );
           image.dispose();
         });
       }

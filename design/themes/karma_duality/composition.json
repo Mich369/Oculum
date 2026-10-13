@@ -1,0 +1,13 @@
+{
+  "id": "karma_duality",
+  "name": "Bilancia del karma",
+  "materials": "due occhi sulla bilancia spezzata",
+  "family": "astral",
+  "signature": "b41a149dd2f9e5a6de1403131876e921d0b20cdb014e8ad67bbbb2a808ba61c1",
+  "motion": "oscillazione della bilancia",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

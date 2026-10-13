@@ -1,0 +1,13 @@
+{
+  "id": "phobia_dark",
+  "name": "Phobia",
+  "materials": "iride osservatrice e fenditura oscura",
+  "family": "tide",
+  "signature": "f5b26eaa9e08ff369227207cfa0f67d225c9fa95aaf3e1ded4b492ff9a76ecb7",
+  "motion": "pupilla laterale",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

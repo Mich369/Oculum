@@ -1,0 +1,13 @@
+{
+  "id": "moon_rot",
+  "name": "Luna marcia",
+  "materials": "luna corrosa e funghi lunari",
+  "family": "astral",
+  "signature": "ef8820c9e1d27b14f4974d6e3bcb0a3f69ef8dd48e6e2253a2c9f4d44ea0ae03",
+  "motion": "spore leggere",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

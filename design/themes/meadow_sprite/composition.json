@@ -1,0 +1,13 @@
+{
+  "id": "meadow_sprite",
+  "name": "Folletto di prato",
+  "materials": "folletto nascosto e erbe intrecciate",
+  "family": "botanical",
+  "signature": "efa2d9658a0b00e72d96776ebc2396fc111305a27a0c38a932e92dc3cd3c2fd3",
+  "motion": "lucciola errante",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

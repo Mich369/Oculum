@@ -1,0 +1,13 @@
+{
+  "id": "eclipse_bonfire",
+  "name": "FalÃ² d eclissi",
+  "materials": "falÃ² dentro una mezzaluna consumata",
+  "family": "ember",
+  "signature": "bacb085d0ec5d3f9b79c64c6c1dee6711a530d58506b90ab391a2b5a72785a56",
+  "motion": "fiamma breve",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

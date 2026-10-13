@@ -1,0 +1,13 @@
+{
+  "id": "slime_prince",
+  "name": "Principe slime",
+  "materials": "corona galleggiante e gelatina regale",
+  "family": "tide",
+  "signature": "a0b044dd8978b1f904343da300aa4a0365427a0e6459e44527a4e1a03614e600",
+  "motion": "compressione dello slime",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "vtt_arcane_table",
+  "name": "Tavolo arcano",
+  "materials": "tavolo rituale e pedine runiche",
+  "family": "cathedral",
+  "signature": "0e6d1c723203a7fd90bb9390eac68ce3652ce2586a751b6af34a468ab6e9da1b",
+  "motion": "runa sul tavolo",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

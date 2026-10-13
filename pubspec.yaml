@@ -53,67 +53,191 @@ flutter:
     - assets/oculum_dungeon/generated_sprites/equipment/
     - assets/oculum_dungeon/generated_sprites/npc/
     - assets/themes/classic_reliquary/overlays/
+    - assets/themes/classic_reliquary/frames/
+    - assets/themes/classic_reliquary/decorations/
     - assets/themes/classic_rpg/overlays/
+    - assets/themes/classic_rpg/frames/
+    - assets/themes/classic_rpg/decorations/
     - assets/themes/classic_low_detail/overlays/
+    - assets/themes/classic_low_detail/frames/
+    - assets/themes/classic_low_detail/decorations/
     - assets/themes/blood_court/overlays/
+    - assets/themes/blood_court/frames/
+    - assets/themes/blood_court/decorations/
     - assets/themes/witch_glass/overlays/
+    - assets/themes/witch_glass/frames/
+    - assets/themes/witch_glass/decorations/
     - assets/themes/moon_iron/overlays/
+    - assets/themes/moon_iron/frames/
+    - assets/themes/moon_iron/decorations/
     - assets/themes/lunar_eclipse/overlays/
+    - assets/themes/lunar_eclipse/frames/
+    - assets/themes/lunar_eclipse/decorations/
     - assets/themes/cathedral_rose/overlays/
+    - assets/themes/cathedral_rose/frames/
+    - assets/themes/cathedral_rose/decorations/
     - assets/themes/thorn_vigil/overlays/
+    - assets/themes/thorn_vigil/frames/
+    - assets/themes/thorn_vigil/decorations/
     - assets/themes/frost_chapel/overlays/
+    - assets/themes/frost_chapel/frames/
+    - assets/themes/frost_chapel/decorations/
     - assets/themes/obsidian_sigil/overlays/
+    - assets/themes/obsidian_sigil/frames/
+    - assets/themes/obsidian_sigil/decorations/
     - assets/themes/solar_reliquary/overlays/
+    - assets/themes/solar_reliquary/frames/
+    - assets/themes/solar_reliquary/decorations/
     - assets/themes/storm_cathedral/overlays/
+    - assets/themes/storm_cathedral/frames/
+    - assets/themes/storm_cathedral/decorations/
     - assets/themes/abyssal_tide/overlays/
+    - assets/themes/abyssal_tide/frames/
+    - assets/themes/abyssal_tide/decorations/
     - assets/themes/ember_rite/overlays/
+    - assets/themes/ember_rite/frames/
+    - assets/themes/ember_rite/decorations/
     - assets/themes/ivory_archive/overlays/
+    - assets/themes/ivory_archive/frames/
+    - assets/themes/ivory_archive/decorations/
     - assets/themes/vervain_gothic/overlays/
+    - assets/themes/vervain_gothic/frames/
+    - assets/themes/vervain_gothic/decorations/
     - assets/themes/kingi_wrong_future/overlays/
+    - assets/themes/kingi_wrong_future/frames/
+    - assets/themes/kingi_wrong_future/decorations/
     - assets/themes/blood_chapel/overlays/
+    - assets/themes/blood_chapel/frames/
+    - assets/themes/blood_chapel/decorations/
     - assets/themes/null_crown/overlays/
+    - assets/themes/null_crown/frames/
+    - assets/themes/null_crown/decorations/
     - assets/themes/phobia_dark/overlays/
+    - assets/themes/phobia_dark/frames/
+    - assets/themes/phobia_dark/decorations/
     - assets/themes/whispering_reliquary/overlays/
+    - assets/themes/whispering_reliquary/frames/
+    - assets/themes/whispering_reliquary/decorations/
     - assets/themes/black_briar_kingdom/overlays/
+    - assets/themes/black_briar_kingdom/frames/
+    - assets/themes/black_briar_kingdom/decorations/
     - assets/themes/slime_prince/overlays/
+    - assets/themes/slime_prince/frames/
+    - assets/themes/slime_prince/decorations/
     - assets/themes/moon_rot/overlays/
+    - assets/themes/moon_rot/frames/
+    - assets/themes/moon_rot/decorations/
     - assets/themes/obser_relic/overlays/
+    - assets/themes/obser_relic/frames/
+    - assets/themes/obser_relic/decorations/
     - assets/themes/deep_forest_demon/overlays/
+    - assets/themes/deep_forest_demon/frames/
+    - assets/themes/deep_forest_demon/decorations/
     - assets/themes/astral_ink/overlays/
+    - assets/themes/astral_ink/frames/
+    - assets/themes/astral_ink/decorations/
     - assets/themes/bone_saint/overlays/
+    - assets/themes/bone_saint/frames/
+    - assets/themes/bone_saint/decorations/
     - assets/themes/medieval_keep/overlays/
+    - assets/themes/medieval_keep/frames/
+    - assets/themes/medieval_keep/decorations/
     - assets/themes/fortezza_oculum/overlays/
+    - assets/themes/fortezza_oculum/frames/
+    - assets/themes/fortezza_oculum/decorations/
     - assets/themes/hoshy_cosmic_cat/overlays/
+    - assets/themes/hoshy_cosmic_cat/frames/
+    - assets/themes/hoshy_cosmic_cat/decorations/
     - assets/themes/ash_oracle/overlays/
+    - assets/themes/ash_oracle/frames/
+    - assets/themes/ash_oracle/decorations/
     - assets/themes/void_liturgy/overlays/
+    - assets/themes/void_liturgy/frames/
+    - assets/themes/void_liturgy/decorations/
     - assets/themes/shadow_gate_rank/overlays/
+    - assets/themes/shadow_gate_rank/frames/
+    - assets/themes/shadow_gate_rank/decorations/
     - assets/themes/postea_bloom/overlays/
+    - assets/themes/postea_bloom/frames/
+    - assets/themes/postea_bloom/decorations/
     - assets/themes/karma_duality/overlays/
+    - assets/themes/karma_duality/frames/
+    - assets/themes/karma_duality/decorations/
     - assets/themes/monster_lantern/overlays/
+    - assets/themes/monster_lantern/frames/
+    - assets/themes/monster_lantern/decorations/
     - assets/themes/jrpg_legend/overlays/
+    - assets/themes/jrpg_legend/frames/
+    - assets/themes/jrpg_legend/decorations/
     - assets/themes/rogue_mutation/overlays/
+    - assets/themes/rogue_mutation/frames/
+    - assets/themes/rogue_mutation/decorations/
     - assets/themes/cell_crimson_run/overlays/
+    - assets/themes/cell_crimson_run/frames/
+    - assets/themes/cell_crimson_run/decorations/
     - assets/themes/darkest_stagecoach/overlays/
+    - assets/themes/darkest_stagecoach/frames/
+    - assets/themes/darkest_stagecoach/decorations/
     - assets/themes/ashen_covenant/overlays/
+    - assets/themes/ashen_covenant/frames/
+    - assets/themes/ashen_covenant/decorations/
     - assets/themes/eclipse_bonfire/overlays/
+    - assets/themes/eclipse_bonfire/frames/
+    - assets/themes/eclipse_bonfire/decorations/
     - assets/themes/bolted_black_iron/overlays/
+    - assets/themes/bolted_black_iron/frames/
+    - assets/themes/bolted_black_iron/decorations/
     - assets/themes/bolted_gold_plate/overlays/
+    - assets/themes/bolted_gold_plate/frames/
+    - assets/themes/bolted_gold_plate/decorations/
     - assets/themes/bolted_copper_oxide/overlays/
+    - assets/themes/bolted_copper_oxide/frames/
+    - assets/themes/bolted_copper_oxide/decorations/
     - assets/themes/bolted_silver_plate/overlays/
+    - assets/themes/bolted_silver_plate/frames/
+    - assets/themes/bolted_silver_plate/decorations/
     - assets/themes/meadow_sprite/overlays/
+    - assets/themes/meadow_sprite/frames/
+    - assets/themes/meadow_sprite/decorations/
     - assets/themes/aurora_moth/overlays/
+    - assets/themes/aurora_moth/frames/
+    - assets/themes/aurora_moth/decorations/
     - assets/themes/modern_school_day/overlays/
+    - assets/themes/modern_school_day/frames/
+    - assets/themes/modern_school_day/decorations/
     - assets/themes/vtt_arcane_table/overlays/
+    - assets/themes/vtt_arcane_table/frames/
+    - assets/themes/vtt_arcane_table/decorations/
     - assets/themes/vtt_obsidian_grid/overlays/
+    - assets/themes/vtt_obsidian_grid/frames/
+    - assets/themes/vtt_obsidian_grid/decorations/
     - assets/themes/vtt_parchment_layers/overlays/
+    - assets/themes/vtt_parchment_layers/frames/
+    - assets/themes/vtt_parchment_layers/decorations/
     - assets/themes/vtt_master_overlay/overlays/
+    - assets/themes/vtt_master_overlay/frames/
+    - assets/themes/vtt_master_overlay/decorations/
     - assets/themes/verdigris_mourning/overlays/
+    - assets/themes/verdigris_mourning/frames/
+    - assets/themes/verdigris_mourning/decorations/
     - assets/themes/restyle_originale/overlays/
+    - assets/themes/restyle_originale/frames/
+    - assets/themes/restyle_originale/decorations/
     - assets/themes/restyle_cenere/overlays/
+    - assets/themes/restyle_cenere/frames/
+    - assets/themes/restyle_cenere/decorations/
     - assets/themes/restyle_sangue/overlays/
+    - assets/themes/restyle_sangue/frames/
+    - assets/themes/restyle_sangue/decorations/
     - assets/themes/restyle_aurora/overlays/
+    - assets/themes/restyle_aurora/frames/
+    - assets/themes/restyle_aurora/decorations/
     - assets/themes/restyle_natura/overlays/
+    - assets/themes/restyle_natura/frames/
+    - assets/themes/restyle_natura/decorations/
     - assets/themes/restyle_lume/overlays/
+    - assets/themes/restyle_lume/frames/
+    - assets/themes/restyle_lume/decorations/
     - assets/fonts/
     - assets/fonts/licenses/
     - assets/manuals/

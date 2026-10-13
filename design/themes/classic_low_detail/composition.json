@@ -1,0 +1,13 @@
+{
+  "id": "classic_low_detail",
+  "name": "Classic low detail",
+  "materials": "sigillo inciso in rame e montatura d osso; nessun occhio in reliquiario",
+  "family": "cathedral",
+  "signature": "a1ed8359dca012481c566ceb98c32d9e81e62c05ba8a5e57037d3969b2e3afce",
+  "motion": "nessun movimento",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

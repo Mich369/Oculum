@@ -38,8 +38,11 @@ void main() {
                 effect,
                 variables: {'danni': 5},
               ),
-              effect.type == 'danno' ? 6 + form : 1 + form,
+              1 + form,
             );
+            if (effect.type == 'danno') {
+              expect(effect.mode, 'prossima_azione');
+            }
             if (effect.type != 'danno') expect(effect.duration, '1');
           }
         }

@@ -1,0 +1,13 @@
+{
+  "id": "monster_lantern",
+  "name": "Lanterna dei mostri",
+  "materials": "lanterna con silhouette prigioniera",
+  "family": "cathedral",
+  "signature": "eca2dfae39e740783e123e475d8d5947d18d3a548fed6e4f443fc94d6753a2aa",
+  "motion": "ombra nella lanterna",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

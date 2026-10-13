@@ -31,7 +31,13 @@ void main() {
             previousRequirement = requirement;
             expect(
               skill.oculumMinimoPerLivello(form),
-              art.tipo == 'Capacità Pawn' ? equals(0) : greaterThan(0),
+              art.tipo == 'Capacità Pawn' ||
+                      skill
+                          .tipoPerLivello(form)
+                          .toLowerCase()
+                          .contains('passiv')
+                  ? equals(0)
+                  : greaterThan(0),
               reason: '${monster.id}/${skill.nome}: form $form cost; $text',
             );
             expect(

@@ -1,0 +1,13 @@
+{
+  "id": "thorn_vigil",
+  "name": "Veglia di rovi",
+  "materials": "rovi annodati e sigillo trafitto",
+  "family": "botanical",
+  "signature": "a83b4ad828178f0e3685c8c37f0eb5822e44d2c05a75f4982af2b83131676924",
+  "motion": "spine illuminate in sequenza",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

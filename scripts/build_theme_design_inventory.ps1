@@ -2,9 +2,9 @@ $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $sources = @('lib/main.dart', 'lib/src/main/oculum_design_system.dart')
 $identities = @'
-classic_reliquary|occhio in reliquiario di rame e osso|palpebra lenta
+classic_reliquary|sigillo inciso in rame, montatura d osso|riflesso lento sulle incisioni
 classic_rpg|scudo araldico e fibbie di cuoio inciso|luce sulle incisioni
-classic_low_detail|sigillo oculare inciso compatto|nessun movimento
+classic_low_detail|sigillo inciso compatto|nessun movimento
 blood_court|corona spinata e calice di essenza|goccia nel calice
 witch_glass|ampolle sospese e vetro incrinato|vapore nell'ampolla
 moon_iron|falce lunare incastonata in ferro|riflesso sulla falce
@@ -106,6 +106,8 @@ $dart.Add('class OculumThemeAssetPack {')
 $dart.Add('  const OculumThemeAssetPack(this.id, this.name, this.motif, this.motion);')
 $dart.Add('  final String id, name, motif, motion;')
 $dart.Add('  String get relic => "assets/themes/$id/overlays/relic.png";')
+$dart.Add('  String frame(String role) => ''assets/themes/$id/frames/$role.png'';')
+$dart.Add('  String scene({required bool mobile}) => ''assets/themes/$id/decorations/scene${mobile ? ''-mobile'' : ''''}.png'';')
 $dart.Add('}')
 $dart.Add('const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{')
 foreach ($theme in $themes) {

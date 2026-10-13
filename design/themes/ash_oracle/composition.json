@@ -1,0 +1,13 @@
+{
+  "id": "ash_oracle",
+  "name": "Oracolo di cenere",
+  "materials": "maschera profetica e cenere raccolta",
+  "family": "ember",
+  "signature": "2e7cddaa6230968fc8b7b4e88689b89161c1201ee2ee82252e2a8e8d75478fa4",
+  "motion": "cenere ascendente",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

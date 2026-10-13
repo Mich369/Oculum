@@ -1,0 +1,13 @@
+{
+  "id": "blood_chapel",
+  "name": "Cappella di sangue",
+  "materials": "arco osseo e reliquia sanguigna",
+  "family": "cathedral",
+  "signature": "484da93758fbb84aa5d1c7dba80fc1ac4a59cef85857e0d58b343173270e16b8",
+  "motion": "essenza lungo l'arco",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

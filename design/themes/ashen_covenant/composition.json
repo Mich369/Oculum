@@ -1,0 +1,13 @@
+{
+  "id": "ashen_covenant",
+  "name": "Patto di cenere",
+  "materials": "sigillo giurato e tessuto bruciato",
+  "family": "ember",
+  "signature": "1740b8f1b6553fa735f4d03052ca7d32428f12b63b3917eaf3ec522512752603",
+  "motion": "cenere dal sigillo",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

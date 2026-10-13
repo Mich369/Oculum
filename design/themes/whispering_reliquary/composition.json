@@ -1,0 +1,13 @@
+{
+  "id": "whispering_reliquary",
+  "name": "Reliquiario dei sussurri",
+  "materials": "bocche sigillate e nastri reliquiario",
+  "family": "cathedral",
+  "signature": "c33d33b5508f5da5c6b6a7a8c432e2eb347c4988c4ad106b6ecfa2e42966f40a",
+  "motion": "nastro che respira",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

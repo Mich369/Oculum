@@ -1,0 +1,13 @@
+{
+  "id": "vervain_gothic",
+  "name": "Vervain",
+  "materials": "occhio fra radici e fiori di verbena",
+  "family": "botanical",
+  "signature": "f7a9dc9550897e824fb371c96e0cc8fefc51aa59a9e4efdd3b5e24575c18b371",
+  "motion": "petalo cadente",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

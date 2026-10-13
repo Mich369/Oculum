@@ -1,0 +1,13 @@
+{
+  "id": "witch_glass",
+  "name": "Vetro strega",
+  "materials": "ampolle sospese e vetro incrinato",
+  "family": "crystal",
+  "signature": "eb2e4ea3253e23849cd07a3bba0118edf31de9cf359e5d2c91542b812556fcc1",
+  "motion": "vapore nell'ampolla",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

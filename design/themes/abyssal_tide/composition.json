@@ -1,0 +1,13 @@
+{
+  "id": "abyssal_tide",
+  "name": "Marea abissale",
+  "materials": "conchiglia infranta e tentacoli perlacei",
+  "family": "tide",
+  "signature": "a49bda991851717a54ecf96dd6902e06b08dc8ae3f7e04ac82c21ff40e237d31",
+  "motion": "tentacolo oscillante",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

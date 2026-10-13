@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
+import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<dynamic> mountSheet(WidgetTester tester, Size size) async {
@@ -54,6 +55,42 @@ Future<dynamic> mountSheet(WidgetTester tester, Size size) async {
 }
 
 void main() {
+  testWidgets(
+    'monster techniques add only their bonus and expire after the attack',
+    (tester) async {
+      final state = await mountSheet(tester, const Size(1440, 900));
+      final probe = OculumPerformanceProbe(state);
+      final before = probe.damageTotal();
+      final horror = oculumMonsterBookArt(
+        monsterById('weak_horror_lacrimante')!,
+      );
+      probe.applyEffects(horror.skills.first.effettiEvoluzione(1));
+      expect(probe.damageTotal(), before + 1);
+      expect(probe.consumeNextAttackEffects(), isTrue);
+      expect(probe.damageTotal(), before);
+      expect(probe.consumeNextAttackEffects(), isFalse);
+      final generated = defaultMonsterBookEntries.firstWhere(
+        (entry) =>
+            entry.id.startsWith('inspired_') &&
+            oculumMonsterBookArt(entry).skills.any(
+              (skill) => skill
+                  .effettiEvoluzione(1)
+                  .any((effect) => effect.type == 'danno'),
+            ),
+      );
+      final attack = oculumMonsterBookArt(generated).skills.firstWhere(
+        (skill) =>
+            skill.effettiEvoluzione(1).any((effect) => effect.type == 'danno'),
+      );
+      probe.applyEffects(
+        attack.effettiEvoluzione(1),
+        spentResources: {'oculum': 4},
+      );
+      expect(probe.damageTotal(), before + 4);
+      probe.consumeNextAttackEffects();
+      expect(probe.damageTotal(), before);
+    },
+  );
   test(
     'damage percentage has defined rounding and cannot produce negative damage',
     () {

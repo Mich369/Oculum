@@ -1,0 +1,13 @@
+{
+  "id": "kingi_wrong_future",
+  "name": "Kingi",
+  "materials": "ingranaggi deformi e occhio meccanico",
+  "family": "cathedral",
+  "signature": "5c7f43e77038c58a7cc77c233c670508c304e549d322db9142d1761c562502d0",
+  "motion": "rotazione di un ingranaggio",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

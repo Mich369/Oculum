@@ -1,0 +1,13 @@
+{
+  "id": "bolted_silver_plate",
+  "name": "Metallo argento bullonato",
+  "materials": "argento martellato e lenti oculari",
+  "family": "forged",
+  "signature": "7df6cd64ccf39c3c3f247afe79b4c82df25d96c54ca692a0e7843ce60c607a09",
+  "motion": "riflesso sulla lente",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "aurora_moth",
+  "name": "Falena aurora",
+  "materials": "falena dalle ali traforate e antenna lunare",
+  "family": "crystal",
+  "signature": "10943f778cad4712d97c24ddeb62d2b81e1a1069c1e495c978b059cea5e5f8dc",
+  "motion": "battito lento delle ali",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

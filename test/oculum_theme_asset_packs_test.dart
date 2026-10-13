@@ -7,6 +7,36 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test('every theme frame has a fully transparent reading center', () async {
+    for (final pack in oculumThemeAssetPacks.values) {
+      for (final role in [
+        'panel',
+        'mobile',
+        'portrait',
+        'statistics',
+        'separator',
+      ]) {
+        final codec = await ui.instantiateImageCodec(
+          await File(pack.frame(role)).readAsBytes(),
+          targetWidth: 64,
+        );
+        final image = (await codec.getNextFrame()).image;
+        final pixels = await image.toByteData(
+          format: ui.ImageByteFormat.rawStraightRgba,
+        );
+        final center =
+            ((image.height ~/ 2) * image.width + image.width ~/ 2) * 4 + 3;
+        expect(
+          pixels!.getUint8(center),
+          0,
+          reason: '${pack.id}/$role reading center',
+        );
+        expect(pixels.buffer.asUint8List().where((v) => v > 0), isNotEmpty);
+        image.dispose();
+        codec.dispose();
+      }
+    }
+  });
   test(
     'every registered theme relic is a real PNG with transparent pixels',
     () async {

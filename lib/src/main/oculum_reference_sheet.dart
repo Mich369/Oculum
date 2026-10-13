@@ -630,54 +630,60 @@ extension _OculumReferenceSheet on _OculumHomePageState {
             key: const ValueKey('reference_portrait_frame'),
             width: compact ? 72 : 104,
             height: compact ? 72 : 104,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border.all(color: tertiaryColor.withValues(alpha: .65)),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(7),
-                child: GestureDetector(
-                  onTap: mostraRitrattoIngrandito,
-                  onLongPress: immaginePersonaggio == null
-                      ? null
-                      : mostraAzioniImmaginePersonaggio,
-                  onSecondaryTap: immaginePersonaggio == null
-                      ? null
-                      : copiaImmaginePersonaggioNegliAppunti,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (portraitShowEyeBehind || immaginePersonaggio == null)
-                        Center(
-                          child: Image.asset(
-                            oculumMemoryEyeAsset(portraitEyeRole) ??
-                                'assets/icon/oculum_eye.png',
-                            width: compact ? 48 : 72,
+            child: OculumThemeSheetFrame(
+              role: OculumThemeFrameRole.portrait,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: tertiaryColor.withValues(alpha: .65),
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(7),
+                  child: GestureDetector(
+                    onTap: mostraRitrattoIngrandito,
+                    onLongPress: immaginePersonaggio == null
+                        ? null
+                        : mostraAzioniImmaginePersonaggio,
+                    onSecondaryTap: immaginePersonaggio == null
+                        ? null
+                        : copiaImmaginePersonaggioNegliAppunti,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (portraitShowEyeBehind ||
+                            immaginePersonaggio == null)
+                          Center(
+                            child: Image.asset(
+                              oculumMemoryEyeAsset(portraitEyeRole) ??
+                                  'assets/icon/oculum_eye.png',
+                              width: compact ? 48 : 72,
+                            ),
+                          ),
+                        if (immaginePersonaggio != null)
+                          Image.memory(
+                            immaginePersonaggio!,
+                            fit: BoxFit.contain,
+                            cacheWidth: 320,
+                          ),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: IconButton(
+                            key: const ValueKey('portrait-enlarge'),
+                            tooltip: t('Ingrandisci immagine', 'Enlarge image'),
+                            visualDensity: VisualDensity.compact,
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
+                            icon: const Icon(Icons.open_in_full, size: 15),
+                            onPressed: mostraRitrattoIngrandito,
                           ),
                         ),
-                      if (immaginePersonaggio != null)
-                        Image.memory(
-                          immaginePersonaggio!,
-                          fit: BoxFit.contain,
-                          cacheWidth: 320,
-                        ),
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: IconButton(
-                          key: const ValueKey('portrait-enlarge'),
-                          tooltip: t('Ingrandisci immagine', 'Enlarge image'),
-                          visualDensity: VisualDensity.compact,
-                          constraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 32,
-                          ),
-                          icon: const Icon(Icons.open_in_full, size: 15),
-                          onPressed: mostraRitrattoIngrandito,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -739,355 +745,362 @@ extension _OculumReferenceSheet on _OculumHomePageState {
         },
       ),
     );
-    return SingleChildScrollView(
-      key: sheetScrollKey('sheet'),
-      padding: responsivePagePadding(),
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (!modalitaDesktop || phoneCompactUi)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Wrap(
+    return OculumThemeSheetBackdrop(
+      child: SingleChildScrollView(
+        key: sheetScrollKey('sheet'),
+        padding: responsivePagePadding(),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (!modalitaDesktop || phoneCompactUi)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final section in [
+                      ('general', t('Generale', 'General')),
+                      ('statistics', t('Statistiche', 'Statistics')),
+                    ])
+                      ChoiceChip(
+                        label: Text(section.$2),
+                        selected: referenceSheetSection == section.$1,
+                        onSelected: (_) => setState(() {
+                          referenceSheetSection = section.$1;
+                          referenceRequestedAnchor = '';
+                        }),
+                      ),
+                    TextButton.icon(
+                      onPressed: () => vaiAllaFunzione(page: 3),
+                      icon: Icon(Icons.auto_awesome_outlined),
+                      label: Text('Oculum Art'),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => vaiAllaFunzione(page: 6),
+                      icon: Icon(Icons.inventory_2_outlined),
+                      label: Text(t('Inventario', 'Inventory')),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => vaiAllaFunzione(page: 5),
+                      icon: Icon(Icons.menu_book_outlined),
+                      label: Text(t('Diario', 'Diary')),
+                    ),
+                    TextButton.icon(
+                      onPressed: openResistanceDetails,
+                      icon: Icon(Icons.shield_outlined),
+                      label: Text('Resistenze'),
+                    ),
+                  ],
+                ),
+              ),
+            OculumThemeSheetFrame(child: hero),
+            const OculumThemeRelicBanner(),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () {
+                  setState(
+                    () => referenceOculumFlames = !referenceOculumFlames,
+                  );
+                  programmaSalvataggio();
+                },
+                icon: Icon(
+                  referenceOculumFlames
+                      ? Icons.view_agenda_outlined
+                      : Icons.local_fire_department_outlined,
+                  size: 16,
+                ),
+                label: Text(
+                  referenceOculumFlames
+                      ? t('Oculum: usa la barra', 'Oculum: use the bar')
+                      : t('Oculum: usa le fiammelle', 'Oculum: use the flames'),
+                ),
+              ),
+            ),
+            referenceStatStrip(),
+            if (referenceSheetSection == 'statistics')
+              referenceStatisticsEditor(),
+            if (referenceSheetSection == 'general')
+              gothicPanel(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 10,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          t('Tiri e azioni', 'Rolls and actions'),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: tertiaryColor,
+                          ),
+                        ),
+                        referenceTurnControls(),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Color(0xff491c24),
+                            foregroundColor: Color(0xffffddd4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              side: BorderSide(color: Color(0xffad5559)),
+                            ),
+                          ),
+                          onPressed: () => tiraValoreSpeciale(
+                            'VC',
+                            vc(),
+                            applyGlobalRollModifier: false,
+                          ),
+                          icon: Icon(Icons.casino_outlined),
+                          label: Text('VC ${vc()} · ${t('Attacco', 'Attack')}'),
+                        ),
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Color(0xff142a40),
+                            foregroundColor: Color(0xffd6eaff),
+                            side: BorderSide(color: Color(0xff517dab)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                          onPressed: () => tiraValoreSpeciale(
+                            'CM',
+                            cm(),
+                            applyGlobalRollModifier: false,
+                          ),
+                          icon: Icon(Icons.shield_outlined),
+                          label: Text('CM ${cm()} · ${t('Difesa', 'Defense')}'),
+                        ),
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: eyePupilGlowColor.withValues(
+                              alpha: .12,
+                            ),
+                            foregroundColor: eyePupilGlowColor,
+                            side: BorderSide(
+                              color: eyePupilGlowColor.withValues(alpha: .72),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                          onPressed: mostraMenuSchivataOculum,
+                          icon: Icon(Icons.visibility_outlined),
+                          label: Text(
+                            '${t('Schivata', 'Dodge')} ${schivateOculumDisponibili()}/${schivateOculumTotali()}',
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: tiraAiutaCompagno,
+                          icon: Icon(Icons.volunteer_activism_outlined),
+                          label: Text(t('Aiuta compagno', 'Help ally')),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => tiraValoreSpeciale(
+                            'Iniziativa',
+                            iniziativa(),
+                            applyGlobalRollModifier: false,
+                          ),
+                          icon: Icon(Icons.bolt_outlined),
+                          label: Text(
+                            '${t('Iniziativa', 'Initiative')} +${iniziativa()}',
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: tertiaryColor,
+                            side: BorderSide(color: tertiaryColor),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => apriDannoCuraDalCentroPartita(),
+                          icon: Icon(Icons.favorite_outline),
+                          label: Text(
+                            t(
+                              'Danni subiti e cura',
+                              'Damage taken and healing',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      '${t('Danni inflitti', 'Damage dealt')}: ${dannoTotale()} · ${t('Difesa totale', 'Total defense')}: ${difesa()} · ${t('I Sottotratti sono tiri alternativi', 'Subtraits are alternative rolls')}',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            if (referenceSheetSection == 'general')
+              Wrap(
+                alignment: WrapAlignment.center,
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  for (final section in [
-                    ('general', t('Generale', 'General')),
-                    ('statistics', t('Statistiche', 'Statistics')),
-                  ])
-                    ChoiceChip(
-                      label: Text(section.$2),
-                      selected: referenceSheetSection == section.$1,
-                      onSelected: (_) => setState(() {
-                        referenceSheetSection = section.$1;
-                        referenceRequestedAnchor = '';
-                      }),
-                    ),
-                  TextButton.icon(
-                    onPressed: () => vaiAllaFunzione(page: 3),
-                    icon: Icon(Icons.auto_awesome_outlined),
-                    label: Text('Oculum Art'),
+                  fold(
+                    'subtraits',
+                    t('Sottotratti', 'Subtraits'),
+                    'sheet_subtraits',
+                    Icons.visibility_outlined,
+                    referenceSubtraitsPanel,
                   ),
-                  TextButton.icon(
-                    onPressed: () => vaiAllaFunzione(page: 6),
-                    icon: Icon(Icons.inventory_2_outlined),
-                    label: Text(t('Inventario', 'Inventory')),
-                  ),
-                  TextButton.icon(
-                    onPressed: () => vaiAllaFunzione(page: 5),
-                    icon: Icon(Icons.menu_book_outlined),
-                    label: Text(t('Diario', 'Diary')),
-                  ),
-                  TextButton.icon(
-                    onPressed: openResistanceDetails,
-                    icon: Icon(Icons.shield_outlined),
-                    label: Text('Resistenze'),
+                  fold(
+                    'initiative',
+                    t('Turnistica', 'Turn order'),
+                    'sheet_initiative',
+                    Icons.swap_vert,
+                    referenceEncounterSlots,
                   ),
                 ],
               ),
-            ),
-          hero,
-          const OculumThemeRelicBanner(),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: () {
-                setState(() => referenceOculumFlames = !referenceOculumFlames);
-                programmaSalvataggio();
-              },
-              icon: Icon(
-                referenceOculumFlames
-                    ? Icons.view_agenda_outlined
-                    : Icons.local_fire_department_outlined,
-                size: 16,
-              ),
-              label: Text(
-                referenceOculumFlames
-                    ? t('Oculum: usa la barra', 'Oculum: use the bar')
-                    : t('Oculum: usa le fiammelle', 'Oculum: use the flames'),
-              ),
-            ),
-          ),
-          referenceStatStrip(),
-          if (referenceSheetSection == 'statistics')
-            referenceStatisticsEditor(),
-          if (referenceSheetSection == 'general')
-            gothicPanel(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 10,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        t('Tiri e azioni', 'Rolls and actions'),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: tertiaryColor,
-                        ),
-                      ),
-                      referenceTurnControls(),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Color(0xff491c24),
-                          foregroundColor: Color(0xffffddd4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                            side: BorderSide(color: Color(0xffad5559)),
-                          ),
-                        ),
-                        onPressed: () => tiraValoreSpeciale(
-                          'VC',
-                          vc(),
-                          applyGlobalRollModifier: false,
-                        ),
-                        icon: Icon(Icons.casino_outlined),
-                        label: Text('VC ${vc()} · ${t('Attacco', 'Attack')}'),
-                      ),
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: Color(0xff142a40),
-                          foregroundColor: Color(0xffd6eaff),
-                          side: BorderSide(color: Color(0xff517dab)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                        ),
-                        onPressed: () => tiraValoreSpeciale(
-                          'CM',
-                          cm(),
-                          applyGlobalRollModifier: false,
-                        ),
-                        icon: Icon(Icons.shield_outlined),
-                        label: Text('CM ${cm()} · ${t('Difesa', 'Defense')}'),
-                      ),
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: eyePupilGlowColor.withValues(
-                            alpha: .12,
-                          ),
-                          foregroundColor: eyePupilGlowColor,
-                          side: BorderSide(
-                            color: eyePupilGlowColor.withValues(alpha: .72),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                        ),
-                        onPressed: mostraMenuSchivataOculum,
-                        icon: Icon(Icons.visibility_outlined),
-                        label: Text(
-                          '${t('Schivata', 'Dodge')} ${schivateOculumDisponibili()}/${schivateOculumTotali()}',
-                        ),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: tiraAiutaCompagno,
-                        icon: Icon(Icons.volunteer_activism_outlined),
-                        label: Text(t('Aiuta compagno', 'Help ally')),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () => tiraValoreSpeciale(
-                          'Iniziativa',
-                          iniziativa(),
-                          applyGlobalRollModifier: false,
-                        ),
-                        icon: Icon(Icons.bolt_outlined),
-                        label: Text(
-                          '${t('Iniziativa', 'Initiative')} +${iniziativa()}',
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: tertiaryColor,
-                          side: BorderSide(color: tertiaryColor),
-                        ),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () => apriDannoCuraDalCentroPartita(),
-                        icon: Icon(Icons.favorite_outline),
-                        label: Text(
-                          t('Danni subiti e cura', 'Damage taken and healing'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '${t('Danni inflitti', 'Damage dealt')}: ${dannoTotale()} · ${t('Difesa totale', 'Total defense')}: ${difesa()} · ${t('I Sottotratti sono tiri alternativi', 'Subtraits are alternative rolls')}',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          if (referenceSheetSection == 'general')
             Wrap(
               alignment: WrapAlignment.center,
               spacing: 8,
               runSpacing: 8,
               children: [
                 fold(
-                  'subtraits',
-                  t('Sottotratti', 'Subtraits'),
-                  'sheet_subtraits',
-                  Icons.visibility_outlined,
-                  referenceSubtraitsPanel,
+                  'commands',
+                  t('Centro combattimento', 'Combat center'),
+                  'sheet_command_center',
+                  Icons.auto_stories_outlined,
+                  sheetCommandCenter,
                 ),
                 fold(
-                  'initiative',
-                  t('Turnistica', 'Turn order'),
-                  'sheet_initiative',
-                  Icons.swap_vert,
-                  referenceEncounterSlots,
+                  'combat',
+                  t('Attacco, difesa e bonus', 'Attack, defense and bonuses'),
+                  'sheet_combat_values',
+                  Icons.shield_outlined,
+                  referenceCombatDetails,
                 ),
+                fold(
+                  'health',
+                  t('Vita, scudi e condizioni', 'HP, shields and conditions'),
+                  'sheet_hp',
+                  Icons.favorite_outline,
+                  hpModePanel,
+                ),
+                referenceDetailTile(
+                  'Occhi dei Caduti attivi · ${occhiCaduti.where((eye) => '${eye['ownerSheetId'] ?? ''}' == sheetTagAt(schedaCorrente) && readBoolValue(eye['active']) && !oculumFallenEyeIsDead(eye)).length}',
+                  'sheet_fallen_eyes_active',
+                  Icons.visibility,
+                  fallenEyesPage,
+                ),
+                fold(
+                  'damage',
+                  t('Danni subiti e cura', 'Damage taken and healing'),
+                  'sheet_damage_heal',
+                  Icons.healing_outlined,
+                  damageHealPanel,
+                ),
+                fold(
+                  'values',
+                  t('Valori e formule', 'Values and formulas'),
+                  'sheet_values',
+                  Icons.functions,
+                  () => mainValuesOverviewPanel(dense: true),
+                ),
+                fold(
+                  'editable',
+                  t('Modifica statistiche', 'Edit stats'),
+                  'sheet_editable_values',
+                  Icons.tune,
+                  editableMainValuesDropdown,
+                ),
+                fold(
+                  'experience',
+                  t('Esperienza e progressione', 'Experience and progression'),
+                  'sheet_exp',
+                  Icons.auto_awesome_outlined,
+                  experiencePanel,
+                ),
+                fold(
+                  'identity',
+                  t('Nome e identità', 'Name and identity'),
+                  'sheet_identity',
+                  Icons.badge_outlined,
+                  () => sheetIdentityEditorPanel(dense: true),
+                ),
+                fold(
+                  'race',
+                  t('Stirpe e origine', 'Lineage and origin'),
+                  'sheet_race',
+                  Icons.history_edu_outlined,
+                  raceIdentityPanel,
+                ),
+                fold(
+                  'portrait',
+                  t('Ritratto e Occhio', 'Portrait and Eye'),
+                  'sheet_image',
+                  Icons.portrait_outlined,
+                  () => Center(
+                    child: ConstrainedBox(
+                      key: ValueKey('reference_portrait_preview'),
+                      constraints: BoxConstraints(maxWidth: 390),
+                      child: oculumEyeBox(),
+                    ),
+                  ),
+                ),
+                fold(
+                  'party',
+                  t('Party e alleati', 'Party and allies'),
+                  'sheet_party',
+                  Icons.groups_outlined,
+                  partyPanel,
+                ),
+                referenceDetailTile(
+                  t('Dadi rapidi', 'Quick dice'),
+                  'sheet_dice_quick',
+                  Icons.casino_outlined,
+                  () => sheetDiceDropdownPanel(dense: true),
+                ),
+                if (!referenceOculumFlames)
+                  fold(
+                    'oculum',
+                    t('Oculum completo e fiammelle', 'Full Oculum and flames'),
+                    'reference_oculum_full',
+                    Icons.local_fire_department_outlined,
+                    oculumResourcePanel,
+                  ),
+                fold(
+                  'stats',
+                  t('Dettagli delle statistiche', 'Stat details'),
+                  'sheet_stats',
+                  Icons.insights_outlined,
+                  () => statsOverviewPanel(dense: true),
+                ),
+                if (referenceSheetSection == 'general')
+                  fold(
+                    'tools',
+                    t('Azioni e consultazione', 'Actions and reference'),
+                    'sheet_quick_glance',
+                    Icons.explore_outlined,
+                    () => Column(
+                      children: [
+                        occhiataVeloceRaWidget(),
+                        quickLoreButtonsPanel(),
+                        manualQuickToolsPanel(),
+                        gradeBonusActionButton(),
+                      ],
+                    ),
+                  ),
               ],
             ),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              fold(
-                'commands',
-                t('Centro combattimento', 'Combat center'),
-                'sheet_command_center',
-                Icons.auto_stories_outlined,
-                sheetCommandCenter,
-              ),
-              fold(
-                'combat',
-                t('Attacco, difesa e bonus', 'Attack, defense and bonuses'),
-                'sheet_combat_values',
-                Icons.shield_outlined,
-                referenceCombatDetails,
-              ),
-              fold(
-                'health',
-                t('Vita, scudi e condizioni', 'HP, shields and conditions'),
-                'sheet_hp',
-                Icons.favorite_outline,
-                hpModePanel,
-              ),
-              referenceDetailTile(
-                'Occhi dei Caduti attivi · ${occhiCaduti.where((eye) => '${eye['ownerSheetId'] ?? ''}' == sheetTagAt(schedaCorrente) && readBoolValue(eye['active']) && !oculumFallenEyeIsDead(eye)).length}',
-                'sheet_fallen_eyes_active',
-                Icons.visibility,
-                fallenEyesPage,
-              ),
-              fold(
-                'damage',
-                t('Danni subiti e cura', 'Damage taken and healing'),
-                'sheet_damage_heal',
-                Icons.healing_outlined,
-                damageHealPanel,
-              ),
-              fold(
-                'values',
-                t('Valori e formule', 'Values and formulas'),
-                'sheet_values',
-                Icons.functions,
-                () => mainValuesOverviewPanel(dense: true),
-              ),
-              fold(
-                'editable',
-                t('Modifica statistiche', 'Edit stats'),
-                'sheet_editable_values',
-                Icons.tune,
-                editableMainValuesDropdown,
-              ),
-              fold(
-                'experience',
-                t('Esperienza e progressione', 'Experience and progression'),
-                'sheet_exp',
-                Icons.auto_awesome_outlined,
-                experiencePanel,
-              ),
-              fold(
-                'identity',
-                t('Nome e identità', 'Name and identity'),
-                'sheet_identity',
-                Icons.badge_outlined,
-                () => sheetIdentityEditorPanel(dense: true),
-              ),
-              fold(
-                'race',
-                t('Stirpe e origine', 'Lineage and origin'),
-                'sheet_race',
-                Icons.history_edu_outlined,
-                raceIdentityPanel,
-              ),
-              fold(
-                'portrait',
-                t('Ritratto e Occhio', 'Portrait and Eye'),
-                'sheet_image',
-                Icons.portrait_outlined,
-                () => Center(
-                  child: ConstrainedBox(
-                    key: ValueKey('reference_portrait_preview'),
-                    constraints: BoxConstraints(maxWidth: 390),
-                    child: oculumEyeBox(),
-                  ),
-                ),
-              ),
-              fold(
-                'party',
-                t('Party e alleati', 'Party and allies'),
-                'sheet_party',
-                Icons.groups_outlined,
-                partyPanel,
-              ),
-              referenceDetailTile(
-                t('Dadi rapidi', 'Quick dice'),
-                'sheet_dice_quick',
-                Icons.casino_outlined,
-                () => sheetDiceDropdownPanel(dense: true),
-              ),
-              if (!referenceOculumFlames)
-                fold(
-                  'oculum',
-                  t('Oculum completo e fiammelle', 'Full Oculum and flames'),
-                  'reference_oculum_full',
-                  Icons.local_fire_department_outlined,
-                  oculumResourcePanel,
-                ),
-              fold(
-                'stats',
-                t('Dettagli delle statistiche', 'Stat details'),
-                'sheet_stats',
-                Icons.insights_outlined,
-                () => statsOverviewPanel(dense: true),
-              ),
-              if (referenceSheetSection == 'general')
-                fold(
-                  'tools',
-                  t('Azioni e consultazione', 'Actions and reference'),
-                  'sheet_quick_glance',
-                  Icons.explore_outlined,
-                  () => Column(
-                    children: [
-                      occhiataVeloceRaWidget(),
-                      quickLoreButtonsPanel(),
-                      manualQuickToolsPanel(),
-                      gradeBonusActionButton(),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-          ValueListenableBuilder<int>(
-            valueListenable: diceResultRevision,
-            builder: (context, revision, child) => dadoMostrato.isEmpty
-                ? const SizedBox.shrink()
-                : diceResultPanel(),
-          ),
-        ],
+            ValueListenableBuilder<int>(
+              valueListenable: diceResultRevision,
+              builder: (context, revision, child) => dadoMostrato.isEmpty
+                  ? const SizedBox.shrink()
+                  : diceResultPanel(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1110,94 +1123,97 @@ extension _OculumReferenceSheet on _OculumHomePageState {
               for (var i = 0; i < stats.length; i++) ...[
                 if (i > 0) SizedBox(width: 6),
                 Expanded(
-                  child: Material(
-                    color: backgroundBottomColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(
-                        color: statFormulaColor(
-                          stats[i].$1,
-                        ).withValues(alpha: .55),
-                      ),
-                    ),
-                    child: Ink(
-                      decoration: BoxDecoration(
+                  child: OculumThemeSheetFrame(
+                    role: OculumThemeFrameRole.statistics,
+                    child: Material(
+                      color: backgroundBottomColor,
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color.lerp(
+                        side: BorderSide(
+                          color: statFormulaColor(
+                            stats[i].$1,
+                          ).withValues(alpha: .55),
+                        ),
+                      ),
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color.lerp(
+                                backgroundBottomColor,
+                                statFormulaColor(stats[i].$1),
+                                .09,
+                              )!,
                               backgroundBottomColor,
-                              statFormulaColor(stats[i].$1),
-                              .09,
-                            )!,
-                            backgroundBottomColor,
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(8),
-                        hoverColor: statFormulaColor(
-                          stats[i].$1,
-                        ).withValues(alpha: .09),
-                        splashColor: statFormulaColor(
-                          stats[i].$1,
-                        ).withValues(alpha: .18),
-                        onTap: () => tiraStat(stats[i].$2, stats[i].$3),
-                        onLongPress: () => vaiAllaFunzione(
-                          page: 0,
-                          anchorId: 'sheet_editable_values_${stats[i].$1}',
-                        ),
-                        child: Semantics(
-                          button: true,
-                          label:
-                              '${stats[i].$2} ${stats[i].$3}. ${t('Tocca per tirare; tieni premuto per modificare.', 'Tap to roll; hold to edit.')}',
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: compact ? 4 : 12,
-                              vertical: compact ? 9 : 10,
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  switch (stats[i].$1) {
-                                    'resilienza' => Icons.favorite_outline,
-                                    'volonta' =>
-                                      Icons.local_fire_department_outlined,
-                                    'materia' => Icons.shield_outlined,
-                                    _ => Icons.visibility_outlined,
-                                  },
-                                  size: compact ? 15 : 18,
-                                  color: statFormulaColor(stats[i].$1),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  stats[i].$2,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: compact ? 10 : 13,
-                                    color: primaryColor,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  '${stats[i].$3}',
-                                  style: TextStyle(
-                                    fontSize: compact ? 21 : 28,
-                                    fontWeight: FontWeight.w700,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          hoverColor: statFormulaColor(
+                            stats[i].$1,
+                          ).withValues(alpha: .09),
+                          splashColor: statFormulaColor(
+                            stats[i].$1,
+                          ).withValues(alpha: .18),
+                          onTap: () => tiraStat(stats[i].$2, stats[i].$3),
+                          onLongPress: () => vaiAllaFunzione(
+                            page: 0,
+                            anchorId: 'sheet_editable_values_${stats[i].$1}',
+                          ),
+                          child: Semantics(
+                            button: true,
+                            label:
+                                '${stats[i].$2} ${stats[i].$3}. ${t('Tocca per tirare; tieni premuto per modificare.', 'Tap to roll; hold to edit.')}',
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: compact ? 4 : 12,
+                                vertical: compact ? 9 : 10,
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    switch (stats[i].$1) {
+                                      'resilienza' => Icons.favorite_outline,
+                                      'volonta' =>
+                                        Icons.local_fire_department_outlined,
+                                      'materia' => Icons.shield_outlined,
+                                      _ => Icons.visibility_outlined,
+                                    },
+                                    size: compact ? 15 : 18,
                                     color: statFormulaColor(stats[i].$1),
                                   ),
-                                ),
-                                Text(
-                                  t('Tira', 'Roll'),
-                                  style: TextStyle(
-                                    fontSize: compact ? 10 : 11,
-                                    color: primaryColor.withValues(alpha: .7),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    stats[i].$2,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: compact ? 10 : 13,
+                                      color: primaryColor,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  SizedBox(height: 4),
+                                  Text(
+                                    '${stats[i].$3}',
+                                    style: TextStyle(
+                                      fontSize: compact ? 21 : 28,
+                                      fontWeight: FontWeight.w700,
+                                      color: statFormulaColor(stats[i].$1),
+                                    ),
+                                  ),
+                                  Text(
+                                    t('Tira', 'Roll'),
+                                    style: TextStyle(
+                                      fontSize: compact ? 10 : 11,
+                                      color: primaryColor.withValues(alpha: .7),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

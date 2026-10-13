@@ -50,6 +50,7 @@ import 'widgets/oculum_reference_frame.dart';
 import 'widgets/oculum_goth_ornaments.dart';
 import 'widgets/oculum_theme_presentation.dart';
 import 'widgets/oculum_theme_relic.dart';
+import 'widgets/oculum_theme_sheet_art.dart';
 import 'services/oculum_encounter_visibility.dart';
 import 'widgets/oculum_quick_edit_eye.dart';
 import 'widgets/oculum_monster_picker.dart';

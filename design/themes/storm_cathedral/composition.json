@@ -1,0 +1,13 @@
+{
+  "id": "storm_cathedral",
+  "name": "Cattedrale tempesta",
+  "materials": "guglie spezzate e parafulmini rituali",
+  "family": "ember",
+  "signature": "8826dee22be8b3bc0125a490174babf082416b866d9239939ab81f7f61e89d9b",
+  "motion": "arco elettrico breve",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

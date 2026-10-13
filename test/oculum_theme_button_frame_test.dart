@@ -4,8 +4,65 @@ import 'package:oculum/main.dart';
 import 'package:oculum/widgets/oculum_goth_ornaments.dart';
 import 'package:oculum/widgets/oculum_theme_presentation.dart';
 import 'package:oculum/widgets/oculum_theme_relic.dart';
+import 'package:oculum/widgets/oculum_theme_sheet_art.dart';
 
 void main() {
+  testWidgets(
+    'theme artwork preserves button position and content dimensions',
+    (tester) async {
+      final theme = oculumBaseTheme.copyWith(
+        extensions: const [
+          OculumGothOrnaments(
+            family: OculumGothFamily.botanical,
+            ink: Colors.green,
+            accent: Colors.purple,
+            opacity: .4,
+            themeId: 'vervain_gothic',
+          ),
+        ],
+      );
+      Widget content() => SizedBox(
+        width: 280,
+        height: 112,
+        child: Center(
+          child: FilledButton(
+            key: const ValueKey('stable-theme-action'),
+            onPressed: () {},
+            child: const Text('Attacco'),
+          ),
+        ),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: Scaffold(body: Center(child: content())),
+        ),
+      );
+      final before = tester.getRect(
+        find.byKey(const ValueKey('stable-theme-action')),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: Scaffold(
+            body: Center(
+              child: OculumThemeSheetBackdrop(
+                child: OculumThemeSheetFrame(child: content()),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(
+        tester.getRect(find.byKey(const ValueKey('stable-theme-action'))),
+        before,
+      );
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byKey(const ValueKey('stable-theme-action')));
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('theme details stay at the edges and buttons remain usable', (
     tester,
   ) async {

@@ -114,6 +114,16 @@ bool oculumMonsterHasOculumArt(MonsterBookEntry monster) {
       (monster.stats['oculum'] ?? 0) > 0;
 }
 
+String oculumMonsterBookSkillBaseId(String id) =>
+    id.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
+
+bool oculumMonsterBookSkillIsPassive(String id) {
+  final base = oculumMonsterBookSkillBaseId(id);
+  return base == 'inferno_in_corpo' ||
+      base.startsWith('lava_regeneration_') ||
+      (base.startsWith('riccio_aculeo_') && base.endsWith('_armatura'));
+}
+
 CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
     monster.id == 'slime_roccioso'
     ? oculumRockSlimeArt(monster)
@@ -176,15 +186,16 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
               evo1: _monsterBookSkillEvolution(monster, id, index, 0),
               evo2: _monsterBookSkillEvolution(monster, id, index, 1),
               evo3: _monsterBookSkillEvolution(monster, id, index, 2),
-              tipiPerLivello:
-                  id == 'inferno_in_corpo' ||
-                      id.startsWith('lava_regeneration_')
+              tipiPerLivello: oculumMonsterBookSkillIsPassive(id)
                   ? const ['Passiva mostro', 'Passiva mostro', 'Passiva mostro']
                   : null,
-              oculumMinimiPerLivello: id.startsWith('riccio_aculeo_')
-                  ? id.endsWith('_armatura')
-                        ? [1, 2, 3]
-                        : id.endsWith('_precisi')
+              risorseCostoPerLivello: oculumMonsterBookSkillIsPassive(id)
+                  ? const ['nessuna', 'nessuna', 'nessuna']
+                  : null,
+              oculumMinimiPerLivello: oculumMonsterBookSkillIsPassive(id)
+                  ? [0, 0, 0]
+                  : id.startsWith('riccio_aculeo_')
+                  ? oculumMonsterBookSkillBaseId(id).endsWith('_precisi')
                         ? [2, 5, 10]
                         : [1, 5, 11]
                   : id.startsWith('weak_horror_')
@@ -196,10 +207,10 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
                         id.startsWith('legno_marcio_')
                   ? [1, 5, 11]
                   : null,
-              oculumMassimiPerLivello: id.startsWith('riccio_aculeo_')
-                  ? id.endsWith('_armatura')
-                        ? [1, 2, 3]
-                        : id.endsWith('_precisi')
+              oculumMassimiPerLivello: oculumMonsterBookSkillIsPassive(id)
+                  ? [0, 0, 0]
+                  : id.startsWith('riccio_aculeo_')
+                  ? oculumMonsterBookSkillBaseId(id).endsWith('_precisi')
                         ? [2, 5, 11]
                         : [4, 10, 40]
                   : id.startsWith('weak_horror_')
@@ -387,7 +398,10 @@ String _monsterBookSkillEvolution(
     r'(?:costo\s*[:=]?.{0,24}oculum|\d+\s*[/–-]\s*\d+\s*oculum)',
     caseSensitive: false,
   ).hasMatch(text);
-  final cost = id.startsWith('hero_path:') || hasCost
+  final cost =
+      id.startsWith('hero_path:') ||
+          hasCost ||
+          oculumMonsterBookSkillIsPassive(id)
       ? ''
       : 'Costo: ${const ['I (1/4)', 'II (5/10)', 'III (11/30)'][form]} Oculum.\n';
   final effects = _monsterBookGenericEffects(id);
@@ -427,37 +441,37 @@ List<List<OculumStructuredEffect>>? _monsterBookGenericEffects(String id) {
     );
   }
   if (id.startsWith('lava_regeneration_')) {
-    final amount = oculumLavaRegenerationAmount(id);
     return List.generate(
       3,
-      (_) => [
+      (form) => [
         OculumStructuredEffect(
           id: '${id}_automatic',
           type: 'cura',
           resource: 'vita',
-          valueExpression: '$amount',
+          valueExpression: '${oculumLavaRegenerationAmount(id, form: form)}',
           mode: 'rigenerazione',
           frequency: '1',
           duration: '-1',
           durationUnit: 'turni',
           narrativeText: monsterBookSkillText(id),
-          customDisplayText: 'Rigenera $amount HP a fine turno',
+          customDisplayText:
+              'Rigenera ${oculumLavaRegenerationAmount(id, form: form)} HP a fine turno',
         ),
       ],
     );
   }
   if (id.startsWith('riccio_aculeo_')) return List.generate(3, (_) => []);
   if (id.startsWith('weak_horror_')) {
-    final guard = id.endsWith('_guard');
+    final guard = oculumMonsterBookSkillBaseId(id).endsWith('_guard');
     return List.generate(
       3,
       (form) => [
         OculumStructuredEffect(
           id: '${id}_forma_${form + 1}',
           type: guard ? 'difesa' : 'danno',
-          valueExpression: guard ? '${form + 1}' : 'danni+${form + 1}',
+          valueExpression: '${form + 1}',
           recipient: guard ? 'se_stesso' : 'bersaglio',
-          mode: guard ? 'finche_attivo' : 'immediato',
+          mode: guard ? 'finche_attivo' : 'prossima_azione',
           duration: guard ? '1' : '',
           narrativeText: guard
               ? 'Difesa personale per un turno; stessa tecnica non cumulabile.'
@@ -490,10 +504,9 @@ List<List<OculumStructuredEffect>>? _monsterBookGenericEffects(String id) {
       OculumStructuredEffect(
         id: '${id}_forma_${form + 1}',
         type: offense ? 'danno' : 'difesa',
-        valueExpression:
-            '${offense ? 'danni+' : ''}oculum_spent*${const ['1', '1.5', '2'][form]}',
+        valueExpression: 'oculum_spent*${const ['1', '1.5', '2'][form]}',
         recipient: offense ? 'bersaglio' : 'se_stesso',
-        mode: offense ? 'immediato' : 'finche_attivo',
+        mode: offense ? 'prossima_azione' : 'finche_attivo',
         duration: offense ? '' : '1',
         narrativeText:
             'Restano validi bersagli, limiti e condizioni della tecnica.',

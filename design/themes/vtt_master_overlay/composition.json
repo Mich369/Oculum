@@ -1,0 +1,13 @@
+{
+  "id": "vtt_master_overlay",
+  "name": "Overlay del Master",
+  "materials": "anello del Master e marcatori oculari",
+  "family": "cathedral",
+  "signature": "405afc586008069c2da7eca2a14f734ee3c8ef774d9818328621969e96832ce0",
+  "motion": "marcatore illuminato",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

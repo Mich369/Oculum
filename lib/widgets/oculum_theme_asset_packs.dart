@@ -3,6 +3,9 @@ class OculumThemeAssetPack {
   const OculumThemeAssetPack(this.id, this.name, this.motif, this.motion);
   final String id, name, motif, motion;
   String get relic => "assets/themes/$id/overlays/relic.png";
+  String frame(String role) => 'assets/themes/$id/frames/$role.png';
+  String scene({required bool mobile}) =>
+      'assets/themes/$id/decorations/scene${mobile ? '-mobile' : ''}.png';
 }
 
 const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
@@ -34,7 +37,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
     "witch_glass",
     "Vetro strega",
     "ampolle sospese e vetro incrinato",
-    "vapore nell\u0027ampolla",
+    "vapore nell'ampolla",
   ),
   "moon_iron": OculumThemeAssetPack(
     "moon_iron",
@@ -99,7 +102,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
   "ivory_archive": OculumThemeAssetPack(
     "ivory_archive",
     "Archivio d avorio",
-    "fogli arrotolati e fermagli d\u0027avorio",
+    "fogli arrotolati e fermagli d'avorio",
     "polvere fra i fogli",
   ),
   "vervain_gothic": OculumThemeAssetPack(
@@ -118,7 +121,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
     "blood_chapel",
     "Cappella di sangue",
     "arco osseo e reliquia sanguigna",
-    "essenza lungo l\u0027arco",
+    "essenza lungo l'arco",
   ),
   "null_crown": OculumThemeAssetPack(
     "null_crown",
@@ -213,7 +216,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
   "shadow_gate_rank": OculumThemeAssetPack(
     "shadow_gate_rank",
     "Porta d ombra",
-    "portale a gradini e catene d\u0027ombra",
+    "portale a gradini e catene d'ombra",
     "ombra dietro il portale",
   ),
   "postea_bloom": OculumThemeAssetPack(
@@ -266,8 +269,8 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
   ),
   "eclipse_bonfire": OculumThemeAssetPack(
     "eclipse_bonfire",
-    "FalÃ² d eclissi",
-    "falÃ² dentro una mezzaluna consumata",
+    "Falò d eclissi",
+    "falò dentro una mezzaluna consumata",
     "fiamma breve",
   ),
   "bolted_black_iron": OculumThemeAssetPack(
@@ -280,7 +283,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
     "bolted_gold_plate",
     "Metallo oro bullonato",
     "placche auree e sigillo regale",
-    "luce sull\u0027incisione",
+    "luce sull'incisione",
   ),
   "bolted_copper_oxide": OculumThemeAssetPack(
     "bolted_copper_oxide",
@@ -321,7 +324,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
   "vtt_obsidian_grid": OculumThemeAssetPack(
     "vtt_obsidian_grid",
     "Griglia ossidiana",
-    "tessere d\u0027ossidiana e giunture incise",
+    "tessere d'ossidiana e giunture incise",
     "giunture illuminate",
   ),
   "vtt_parchment_layers": OculumThemeAssetPack(
@@ -340,7 +343,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
     "verdigris_mourning",
     "Rame sepolto",
     "rame sepolto e catene floreali corrose",
-    "polvere sull\u0027incisione",
+    "polvere sull'incisione",
   ),
   "restyle_originale": OculumThemeAssetPack(
     "restyle_originale",

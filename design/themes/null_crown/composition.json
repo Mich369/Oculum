@@ -1,0 +1,13 @@
+{
+  "id": "null_crown",
+  "name": "Corona nulla",
+  "materials": "corona incompleta sospesa nel vuoto",
+  "family": "cathedral",
+  "signature": "fe03a391f78a83cb8045e9f3bb36e4e54a1376286576a2572b9a3f6480ae5e4f",
+  "motion": "ombra intermittente",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

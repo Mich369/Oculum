@@ -107,8 +107,11 @@ String oculumLavaSkillText(String id) {
   return 'Rigenerazione di lava — I/Passiva automatica: a fine turno recuperi $amount HP se non hai subito $weakness. $upgrades Se $weakness ti colpisce, la rigenerazione resta a 0 per il prossimo turno e tutto viene scritto nel log del Master. Nessun tiro e nessun costo.';
 }
 
-int oculumLavaRegenerationAmount(String id) => id.contains('minor')
-    ? 3
-    : id.contains('guardian')
-    ? 8
-    : 15;
+int oculumLavaRegenerationAmount(String id, {int form = 0}) {
+  final values = id.contains('minor')
+      ? const [3, 5, 8]
+      : id.contains('guardian')
+      ? const [8, 12, 16]
+      : const [15, 20, 25];
+  return values[form.clamp(0, 2)];
+}

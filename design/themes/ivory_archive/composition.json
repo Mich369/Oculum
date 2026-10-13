@@ -1,0 +1,13 @@
+{
+  "id": "ivory_archive",
+  "name": "Archivio d avorio",
+  "materials": "fogli arrotolati e fermagli d'avorio",
+  "family": "cathedral",
+  "signature": "5e472225b4d8feb1062ae16eabb187175465bbfb9d192311e29dbf3ad5db5006",
+  "motion": "polvere fra i fogli",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

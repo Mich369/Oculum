@@ -1,0 +1,13 @@
+{
+  "id": "deep_forest_demon",
+  "name": "Demone del bosco profondo",
+  "materials": "corna ramificate e corteccia demoniaca",
+  "family": "botanical",
+  "signature": "fb6d7265297818e42f7558fc50afe1af4790a6c3af65bc85305783f0024952b9",
+  "motion": "lucciole fra le corna",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

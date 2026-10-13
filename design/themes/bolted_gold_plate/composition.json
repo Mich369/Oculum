@@ -1,0 +1,13 @@
+{
+  "id": "bolted_gold_plate",
+  "name": "Metallo oro bullonato",
+  "materials": "placche auree e sigillo regale",
+  "family": "forged",
+  "signature": "41be16836a72d14459495c4680be74337e07f433c26c08139e27601a92f33cf1",
+  "motion": "luce sull'incisione",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

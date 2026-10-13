@@ -1,0 +1,13 @@
+{
+  "id": "blood_court",
+  "name": "Corte di sangue",
+  "materials": "corona spinata e calice di essenza",
+  "family": "cathedral",
+  "signature": "cc9273031a28a2d12ec2414c3dee6b5322bb0bd6dab85859faa5b985a7adc5e4",
+  "motion": "goccia nel calice",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "rogue_mutation",
+  "name": "Mutazione Roguelike",
+  "materials": "occhio mutante e membrane irregolari",
+  "family": "tide",
+  "signature": "a190dc3d31b7b22dd5f7a91b173ba02db80cebd6d6e48bced008ad25ab5c1d58",
+  "motion": "contrazione della membrana",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

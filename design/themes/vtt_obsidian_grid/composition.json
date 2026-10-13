@@ -1,0 +1,13 @@
+{
+  "id": "vtt_obsidian_grid",
+  "name": "Griglia ossidiana",
+  "materials": "tessere d'ossidiana e giunture incise",
+  "family": "crystal",
+  "signature": "8e5dc209644aa7621c94206c859bdfb1012a5ae9b4d7dc17b4ce00284d461a8e",
+  "motion": "giunture illuminate",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

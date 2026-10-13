@@ -1,0 +1,13 @@
+{
+  "id": "lunar_eclipse",
+  "name": "Eclissi lunare",
+  "materials": "disco eclissato e orbite spezzate",
+  "family": "astral",
+  "signature": "9c6ea9e94eedb200994c63add0f4fad47a8f5633521f288f84f56d130eb9c960",
+  "motion": "orbita lenta",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

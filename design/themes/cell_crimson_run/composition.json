@@ -1,0 +1,13 @@
+{
+  "id": "cell_crimson_run",
+  "name": "Cella cremisi",
+  "materials": "sbarre infrante e catene cremisi",
+  "family": "forged",
+  "signature": "91c7e4f5e124367ede673671fdb74ca40ea52ab81f64d04ae2e14180d03d6bda",
+  "motion": "oscillazione della catena",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

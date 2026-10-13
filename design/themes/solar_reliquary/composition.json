@@ -1,0 +1,13 @@
+{
+  "id": "solar_reliquary",
+  "name": "Reliquiario solare",
+  "materials": "reliquiario radiale e raggi consumati",
+  "family": "ember",
+  "signature": "ef13e41f6a387b60997014f0d20df5e68706fbaaed234eb7e350fbcaf8127b84",
+  "motion": "luce fra i raggi",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

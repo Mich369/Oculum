@@ -1,0 +1,13 @@
+{
+  "id": "ember_rite",
+  "name": "Rito di brace",
+  "materials": "pietra carbonizzata e cera rituale",
+  "family": "ember",
+  "signature": "7516edb0dd57747f608538275b1d290e24f6c156a671b1bde38b4aee323db9ba",
+  "motion": "brace pulsante",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}
