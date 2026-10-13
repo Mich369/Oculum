@@ -78,12 +78,26 @@ ThemeData oculumBuildPaletteTheme({
   required Color surface,
   required Color background,
   required String fontFamily,
+  OculumGothFamily buttonFamily = OculumGothFamily.none,
+  Color buttonInk = Colors.transparent,
+  double buttonDecorationOpacity = 0,
 }) {
   final text = oculumReadableThemeColor(primary, surface);
   final highlight = oculumReadableThemeColor(accent, surface);
   final onHighlight = oculumReadableThemeColor(primary, highlight);
   final raisedSurface = Color.lerp(surface, primary, .035)!;
-  final controlShape = RoundedRectangleBorder(
+  final controlShape = OculumButtonFrame(
+    family: buttonFamily,
+    ink: buttonInk,
+    accent: highlight,
+    opacity: buttonDecorationOpacity,
+    borderRadius: BorderRadius.circular(10),
+  );
+  final textControlShape = OculumButtonFrame(
+    family: buttonFamily,
+    ink: buttonInk,
+    accent: highlight,
+    opacity: buttonDecorationOpacity,
     borderRadius: BorderRadius.circular(10),
   );
   final controlOverlay = WidgetStateProperty.resolveWith<Color?>((states) {
@@ -233,6 +247,14 @@ ThemeData oculumBuildPaletteTheme({
       labelStyle: textTheme.bodyMedium,
       side: BorderSide(color: highlight.withValues(alpha: .55)),
     ),
+    iconButtonTheme: IconButtonThemeData(
+      style: (base.iconButtonTheme.style ?? const ButtonStyle()).merge(
+        ButtonStyle(
+          shape: WidgetStatePropertyAll<OutlinedBorder>(controlShape),
+          overlayColor: controlOverlay,
+        ),
+      ),
+    ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: (base.elevatedButtonTheme.style ?? const ButtonStyle()).merge(
         ElevatedButton.styleFrom(
@@ -251,6 +273,7 @@ ThemeData oculumBuildPaletteTheme({
         TextButton.styleFrom(
           foregroundColor: highlight,
           textStyle: textTheme.labelLarge,
+          shape: textControlShape,
         ),
       ),
     ),
@@ -258,7 +281,9 @@ ThemeData oculumBuildPaletteTheme({
       style: OutlinedButton.styleFrom(
         foregroundColor: text,
         side: BorderSide(color: highlight.withValues(alpha: .55)),
-        shape: controlShape,
+        shape: controlShape.copyWith(
+          side: BorderSide(color: highlight.withValues(alpha: .55)),
+        ),
         minimumSize: const Size(44, 40),
         backgroundColor: raisedSurface,
         textStyle: textTheme.labelLarge,

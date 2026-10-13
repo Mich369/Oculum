@@ -9,8 +9,8 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
   "classic_reliquary": OculumThemeAssetPack(
     "classic_reliquary",
     "Classic Oculum",
-    "occhio in reliquiario di rame e osso",
-    "palpebra lenta",
+    "sigillo inciso in rame, montatura d osso",
+    "riflesso lento sulle incisioni",
   ),
   "classic_rpg": OculumThemeAssetPack(
     "classic_rpg",
@@ -21,7 +21,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
   "classic_low_detail": OculumThemeAssetPack(
     "classic_low_detail",
     "Classic low detail",
-    "sigillo oculare inciso compatto",
+    "sigillo inciso compatto",
     "nessun movimento",
   ),
   "blood_court": OculumThemeAssetPack(

@@ -4408,7 +4408,8 @@ class _OculumHomePageState extends State<OculumHomePage>
     final inheritedTheme = oculumBaseTheme;
     final inheritedThemeIdentity = identityHashCode(inheritedTheme);
     final decoration = currentThemeDecorationSpec();
-    final paletteHash = Object.hash(
+    final sheetIdentity = currentThemeVisualIdentity();
+    final paletteHash = Object.hashAll(<Object?>[
       primaryColor,
       secondaryColor,
       tertiaryColor,
@@ -4417,14 +4418,19 @@ class _OculumHomePageState extends State<OculumHomePage>
       backgroundBottomColor,
       modalitaLeggera,
       modalitaVeloce,
+      decoration.presetId,
       decoration.style,
+      decoration.opacity,
+      decoration.usesBaseColors,
+      sheetIdentity.mainSheetGuiStyle.id,
+      sheetIdentity.mainSheetGuiStyle.panelMood,
+      visualThemeGuiPresetId(),
       colorPresetSelezionato,
       decoration.primary,
       decoration.secondary,
       decoration.accent,
-      decoration.opacity,
       oculumGraphicsEnabled.value,
-    );
+    ]);
     if (_cachedAppTypographyTheme == null ||
         _cachedAppTypographyStyle != stileCarattereApp ||
         _cachedBaseThemeIdentity != inheritedThemeIdentity ||
@@ -4441,11 +4447,18 @@ class _OculumHomePageState extends State<OculumHomePage>
             surface: backgroundMidColor,
             background: backgroundBottomColor,
             fontFamily: appFontFamily,
+            buttonFamily: oculumGothFamily(decoration.style),
+            buttonInk: Color.lerp(
+              decoration.primary,
+              decoration.secondary,
+              .55,
+            )!,
+            buttonDecorationOpacity: decoration.opacity,
           ).copyWith(
             extensions: [
               ...inheritedTheme.extensions.values,
               OculumGothOrnaments(
-                themeId: colorPresetSelezionato,
+                themeId: decoration.presetId,
                 family: oculumGothFamily(decoration.style),
                 ink: Color.lerp(decoration.primary, decoration.secondary, .55)!,
                 accent: decoration.accent,

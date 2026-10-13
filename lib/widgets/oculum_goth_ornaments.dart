@@ -13,6 +13,208 @@ enum OculumGothFamily {
   cathedral,
 }
 
+/// Decorative strokes stay in the button's outer frame, leaving its label,
+/// icon and hit area untouched.
+class OculumButtonFrame extends RoundedRectangleBorder {
+  const OculumButtonFrame({
+    required this.family,
+    required this.ink,
+    required this.accent,
+    this.opacity = .45,
+    super.side,
+    super.borderRadius = const BorderRadius.all(Radius.circular(10)),
+  });
+
+  final OculumGothFamily family;
+  final Color ink;
+  final Color accent;
+  final double opacity;
+
+  @override
+  OculumButtonFrame copyWith({
+    BorderSide? side,
+    BorderRadiusGeometry? borderRadius,
+  }) => OculumButtonFrame(
+    family: family,
+    ink: ink,
+    accent: accent,
+    opacity: opacity,
+    side: side ?? this.side,
+    borderRadius: borderRadius ?? this.borderRadius,
+  );
+
+  @override
+  ShapeBorder scale(double t) => OculumButtonFrame(
+    family: family,
+    ink: ink,
+    accent: accent,
+    opacity: opacity,
+    side: side.scale(t),
+    borderRadius: borderRadius * t,
+  );
+
+  @override
+  ShapeBorder? lerpFrom(ShapeBorder? a, double t) {
+    if (a is RoundedRectangleBorder) {
+      return OculumButtonFrame(
+        family: family,
+        ink: ink,
+        accent: accent,
+        opacity: opacity,
+        side: BorderSide.lerp(a.side, side, t),
+        borderRadius: BorderRadiusGeometry.lerp(
+          a.borderRadius,
+          borderRadius,
+          t,
+        )!,
+      );
+    }
+    return super.lerpFrom(a, t);
+  }
+
+  @override
+  ShapeBorder? lerpTo(ShapeBorder? b, double t) {
+    if (b is RoundedRectangleBorder) {
+      return OculumButtonFrame(
+        family: family,
+        ink: ink,
+        accent: accent,
+        opacity: opacity,
+        side: BorderSide.lerp(side, b.side, t),
+        borderRadius: BorderRadiusGeometry.lerp(
+          borderRadius,
+          b.borderRadius,
+          t,
+        )!,
+      );
+    }
+    return super.lerpTo(b, t);
+  }
+
+  @override
+  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
+    super.paint(canvas, rect, textDirection: textDirection);
+    if (family == OculumGothFamily.none ||
+        rect.width < 36 ||
+        rect.height < 32) {
+      return;
+    }
+    final alpha = (opacity * .62).clamp(.08, .42);
+    final line = Paint()
+      ..color = accent.withValues(alpha: alpha)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .85
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final detail = Paint()
+      ..color = ink.withValues(alpha: alpha * .82)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .7
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    const inset = 3.5;
+    const reach = 8.5;
+    for (final right in [false, true]) {
+      for (final bottom in [false, true]) {
+        final x = right ? rect.right - inset : rect.left + inset;
+        final y = bottom ? rect.bottom - inset : rect.top + inset;
+        final sx = right ? -1.0 : 1.0;
+        final sy = bottom ? -1.0 : 1.0;
+        canvas.save();
+        canvas.translate(x, y);
+        canvas.scale(sx, sy);
+        switch (family) {
+          case OculumGothFamily.botanical:
+            final stem = Path()
+              ..moveTo(0, reach)
+              ..quadraticBezierTo(1, 2, reach, 0);
+            canvas.drawPath(stem, line);
+            final leaf = Path()
+              ..moveTo(3, 4)
+              ..quadraticBezierTo(3, 0, 7, 1)
+              ..quadraticBezierTo(7, 4, 3, 4)
+              ..close();
+            canvas.drawPath(leaf, detail);
+          case OculumGothFamily.crystal:
+            final shard = Path()
+              ..moveTo(0, 1)
+              ..lineTo(2.5, 0)
+              ..lineTo(reach, 2.5)
+              ..lineTo(2.5, reach)
+              ..lineTo(0, 1);
+            canvas.drawPath(shard, line);
+            canvas.drawLine(
+              const Offset(2.5, 1.5),
+              const Offset(2.5, 7),
+              detail,
+            );
+          case OculumGothFamily.forged:
+            canvas.drawCircle(const Offset(4, 4), 2.7, line);
+            canvas.drawLine(const Offset(2, 4), const Offset(6, 4), detail);
+          case OculumGothFamily.astral:
+            canvas.drawLine(const Offset(4, 0), const Offset(4, 8), line);
+            canvas.drawLine(const Offset(0, 4), const Offset(8, 4), line);
+            canvas.drawLine(
+              const Offset(1.2, 1.2),
+              const Offset(6.8, 6.8),
+              detail,
+            );
+            canvas.drawLine(
+              const Offset(6.8, 1.2),
+              const Offset(1.2, 6.8),
+              detail,
+            );
+          case OculumGothFamily.tide:
+            final curl = Path()
+              ..moveTo(0, 1)
+              ..cubicTo(2, 1, 2, 5, 5, 5)
+              ..cubicTo(7, 5, 7, 7, reach, 7);
+            canvas.drawPath(curl, line);
+            canvas.drawCircle(const Offset(5, 2), .9, detail);
+          case OculumGothFamily.ember:
+            final flame = Path()
+              ..moveTo(1, reach)
+              ..quadraticBezierTo(0, 4, 4, 0)
+              ..quadraticBezierTo(3, 5, reach, 4)
+              ..quadraticBezierTo(7, 8, 1, reach);
+            canvas.drawPath(flame, line);
+          case OculumGothFamily.cathedral:
+            final arch = Path()
+              ..moveTo(0, reach)
+              ..lineTo(0, 4)
+              ..quadraticBezierTo(0, 0, 4, 0)
+              ..lineTo(reach, 0);
+            canvas.drawPath(arch, line);
+            canvas.drawPath(
+              Path()
+                ..moveTo(3, 2)
+                ..lineTo(4.5, 4)
+                ..lineTo(6, 2),
+              detail,
+            );
+          case OculumGothFamily.none:
+            break;
+        }
+        canvas.restore();
+      }
+    }
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is OculumButtonFrame &&
+      other.family == family &&
+      other.ink == ink &&
+      other.accent == accent &&
+      other.opacity == opacity &&
+      other.side == side &&
+      other.borderRadius == borderRadius;
+
+  @override
+  int get hashCode =>
+      Object.hash(family, ink, accent, opacity, side, borderRadius);
+}
+
 OculumGothFamily oculumGothFamily(String style) => switch (style) {
   'none' => OculumGothFamily.none,
   'vervain' ||
@@ -218,25 +420,19 @@ class OculumGothPainter extends CustomPainter {
         Offset(size.width - 20, 5),
         _paint(spec.accent, stroke: true, width: .5),
       );
-      // Corner seals leave the center clear, even in short combat panels.
+      // The corners carry the theme motif; the text and control area stays clear.
       for (final right in [false, true]) {
         for (final bottom in [false, true]) {
           canvas.save();
           canvas.translate(right ? size.width : 0, bottom ? size.height : 0);
           canvas.scale(right ? -1 : 1, bottom ? -1 : 1);
           final corner = Path()
-            ..moveTo(6, 24)
-            ..lineTo(6, 12)
-            ..quadraticBezierTo(6, 6, 12, 6)
-            ..lineTo(24, 6);
-          canvas.drawPath(corner, _paint(spec.accent, stroke: true));
-          final seal = Path()
-            ..moveTo(12, 8)
-            ..lineTo(16, 12)
-            ..lineTo(12, 16)
-            ..lineTo(8, 12)
-            ..close();
-          canvas.drawPath(seal, _paint(spec.ink));
+            ..moveTo(3, 13)
+            ..lineTo(3, 7)
+            ..quadraticBezierTo(3, 3, 7, 3)
+            ..lineTo(13, 3);
+          canvas.drawPath(corner, _paint(spec.accent, stroke: true, width: .8));
+          _paintPanelCornerMotif(canvas);
           canvas.restore();
         }
       }
@@ -309,6 +505,74 @@ class OculumGothPainter extends CustomPainter {
       canvas.restore();
     }
     canvas.restore();
+  }
+
+  void _paintPanelCornerMotif(Canvas canvas) {
+    final stroke = _paint(spec.accent, stroke: true, width: .7);
+    final detail = _paint(spec.ink, stroke: true, width: .55);
+    switch (spec.family) {
+      case OculumGothFamily.botanical:
+        canvas.drawLine(const Offset(4, 10), const Offset(10, 4), stroke);
+        for (final point in [const Offset(6, 7), const Offset(9, 5)]) {
+          canvas.drawOval(
+            Rect.fromCenter(center: point, width: 3, height: 1.8),
+            detail,
+          );
+        }
+      case OculumGothFamily.crystal:
+        final shard = Path()
+          ..moveTo(5, 10)
+          ..lineTo(5, 6)
+          ..lineTo(8, 4)
+          ..lineTo(11, 7)
+          ..lineTo(8, 10)
+          ..close();
+        canvas.drawPath(shard, stroke);
+        canvas.drawLine(const Offset(8, 5), const Offset(8, 9), detail);
+      case OculumGothFamily.forged:
+        canvas.drawCircle(const Offset(8, 8), 2.2, stroke);
+        canvas.drawLine(const Offset(6.5, 8), const Offset(9.5, 8), detail);
+      case OculumGothFamily.astral:
+        canvas.drawLine(const Offset(8, 4), const Offset(8, 12), stroke);
+        canvas.drawLine(const Offset(4, 8), const Offset(12, 8), stroke);
+        canvas.drawCircle(const Offset(8, 8), 1.4, detail);
+      case OculumGothFamily.tide:
+        canvas.drawPath(
+          Path()
+            ..moveTo(4, 7)
+            ..quadraticBezierTo(6, 4, 8, 7)
+            ..quadraticBezierTo(10, 10, 12, 7),
+          stroke,
+        );
+        canvas.drawPath(
+          Path()
+            ..moveTo(4, 10)
+            ..quadraticBezierTo(6, 7, 8, 10),
+          detail,
+        );
+      case OculumGothFamily.ember:
+        canvas.drawPath(
+          Path()
+            ..moveTo(6, 11)
+            ..quadraticBezierTo(4, 8, 8, 4)
+            ..quadraticBezierTo(7, 8, 11, 8)
+            ..quadraticBezierTo(11, 11, 6, 11),
+          stroke,
+        );
+      case OculumGothFamily.cathedral:
+        canvas.drawPath(
+          Path()
+            ..moveTo(5, 11)
+            ..lineTo(5, 8)
+            ..quadraticBezierTo(5, 5, 8, 5)
+            ..quadraticBezierTo(11, 5, 11, 8)
+            ..lineTo(11, 11),
+          stroke,
+        );
+        canvas.drawLine(const Offset(8, 6), const Offset(8, 11), detail);
+      case OculumGothFamily.none:
+        break;
+    }
   }
 
   void _vine(Canvas c, double w, double h) {

@@ -110,10 +110,16 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
         final context = tester.element(find.byType(OculumHomePage));
         final theme = Theme.of(context);
+        final ornaments = theme.extension<OculumGothOrnaments>();
+        expect(ornaments, isNotNull, reason: preset.id);
+        final filledShape = theme.filledButtonTheme.style?.shape?.resolve(
+          const <WidgetState>{},
+        );
+        expect(filledShape, isA<OculumButtonFrame>(), reason: preset.id);
         expect(
-          theme.extension<OculumGothOrnaments>(),
-          isNotNull,
-          reason: preset.id,
+          (filledShape! as OculumButtonFrame).family,
+          ornaments!.family,
+          reason: 'The button frame must follow the selected sheet theme.',
         );
         if ([
           'vervain_gothic',
