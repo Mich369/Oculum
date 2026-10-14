@@ -9772,7 +9772,29 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final roll = Random.secure().nextInt(faces) + 1;
     final attack = authoredFaces != null ? 0 : dannoTotale();
     final damage = roll + attack;
-    if (target != null) applyMasterEnemyQuickHpAction(target, damage: damage);
+    if (target != null) {
+      applyMasterEnemyQuickHpAction(target, damage: damage);
+      final typedOpenDamage = art.openSkillEffects
+          .where(
+            (effect) =>
+                effect.type.trim().toLowerCase() == 'danno' ||
+                effect.target.trim().toLowerCase() == 'danni',
+          )
+          .map((effect) => oculumCombatElementId(effect.elementType))
+          .where((element) => element.isNotEmpty)
+          .firstOrNull;
+      final resolvedElement = typedOpenDamage == null || typedOpenDamage.isEmpty
+          ? elementoDannoDominante()
+          : typedOpenDamage;
+      oculumCombatTheme.resolveOutgoingAction(
+        actionId:
+            'open-$schedaCorrente-${art.nome}-${DateTime.now().microsecondsSinceEpoch}',
+        hitDamageByElement: [
+          <String, int>{resolvedElement: damage},
+        ],
+      );
+      oculumCombatTheme.react('outgoing', elementId: resolvedElement);
+    }
     setState(() {
       cooldown?.activate();
       final messages = applyStructuredEffectsOnActivation(
@@ -9880,7 +9902,17 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     adjustRecordedStatSpentFromDelta('oculum', -spent);
     recordCurrentOculumProgress();
     final damage = spent * 10;
-    if (target != null) applyMasterEnemyQuickHpAction(target!, damage: damage);
+    if (target != null) {
+      applyMasterEnemyQuickHpAction(target!, damage: damage);
+      oculumCombatTheme.resolveOutgoingAction(
+        actionId:
+            'rock-slime-open-$schedaCorrente-${DateTime.now().microsecondsSinceEpoch}',
+        hitDamageByElement: [
+          <String, int>{'slime': damage},
+        ],
+      );
+      oculumCombatTheme.react('outgoing', elementId: 'slime');
+    }
     setState(() {
       art.openSkillCooldown?.activate();
       risultato =

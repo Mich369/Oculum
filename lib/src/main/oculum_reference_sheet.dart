@@ -1588,13 +1588,15 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
         );
         final cardWidth =
             (constraints.maxWidth - gap * (columns - 1)) / columns;
-        return Wrap(
-          spacing: gap,
-          runSpacing: gap,
-          children: [
-            for (final id in ids)
-              SizedBox(width: cardWidth, child: _resistanceElementCard(id)),
-          ],
+        return OculumElementMotifClock(
+          child: Wrap(
+            spacing: gap,
+            runSpacing: gap,
+            children: [
+              for (final id in ids)
+                SizedBox(width: cardWidth, child: _resistanceElementCard(id)),
+            ],
+          ),
         );
       },
     );
@@ -1619,7 +1621,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
         children: [
           Row(
             children: [
-              Icon(Icons.remove_red_eye_outlined, color: color, size: 16),
+              OculumElementSigil(elementId: id, color: color),
               SizedBox(width: 6),
               Expanded(
                 child: Text(

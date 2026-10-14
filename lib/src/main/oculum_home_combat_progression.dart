@@ -4097,6 +4097,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         aggiungiLog(risultato);
       });
       programmaSalvataggio();
+      oculumCombatTheme.react(
+        'dodge',
+        elementId: oculumCombatElementId(selectedIncomingDamageElement()),
+      );
       return;
     }
 
@@ -4336,11 +4340,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         ? modificatore.name
         : '${((modificatorePercentualeLibero - 1) * 100).toStringAsFixed(0)}% danno ricevuto';
     final elementoAttivo = selectedIncomingDamageElement();
-    var dannoModificato = dannoModificatoBase > 0
+    final incomingElementRules = activeIncomingDamageRules(elementoAttivo);
+    final dannoDopoRegoleElementali = dannoModificatoBase > 0
         ? applicaParserDanniSubiti(dannoModificatoBase, elementoAttivo)
         : dannoModificatoBase;
-    dannoModificato = applyConditionIncomingDamage(dannoModificato);
-    final parserRulesLog = activeIncomingDamageRules(elementoAttivo).isEmpty
+    var dannoModificato = applyConditionIncomingDamage(
+      dannoDopoRegoleElementali,
+    );
+    final parserRulesLog = incomingElementRules.isEmpty
         ? ''
         : ' Parser ${incomingDamageRulesSummary(elementoAttivo)}: $dannoModificatoBase -> $dannoModificato.';
     final dannoLog = critico
@@ -4407,6 +4414,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
       programmaSalvataggio();
       sendRealtimeHpChanged();
+      oculumCombatTheme.react('heal');
       controllaStatoForzaDopoHp();
       return;
     }
@@ -4435,6 +4443,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       });
 
       programmaSalvataggio();
+      oculumCombatTheme.react(
+        incomingElementRules.isNotEmpty &&
+                dannoDopoRegoleElementali < dannoModificatoBase
+            ? 'resisted'
+            : incomingElementRules.isNotEmpty &&
+                  dannoDopoRegoleElementali > dannoModificatoBase
+            ? 'vulnerable'
+            : 'blocked',
+        elementId: oculumCombatElementId(elementoAttivo),
+      );
       return;
     }
 
@@ -4480,6 +4498,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int temp = hpTemp();
     int hp = hpCorrenti();
     var hpPrima = hp;
+    final oculumShieldBeforeDamage = oculumShield;
+    final shieldBeforeDamage = shield;
     var pawnDamageLog = '';
     final safeHpPronto = hasSafeHpParserCommand();
     final saveShieldValue = saveShieldParserValue();
@@ -4840,6 +4860,46 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     });
 
     consumeDifficultyIncreaseFortunaBonus(hpLost: hp < hpPrima);
+    final elementalAdjustment = incomingElementRules.isEmpty
+        ? 0
+        : dannoDopoRegoleElementali.compareTo(dannoModificatoBase);
+    if (oculumShieldBeforeDamage > 0 && oculumShield <= 0 ||
+        shieldBeforeDamage > 0 && shield <= 0) {
+      oculumCombatTheme.react(
+        'shieldBreak',
+        elementId: oculumCombatElementId(elementoAttivo),
+      );
+    } else if (riduzioneParataOculum > 0) {
+      oculumCombatTheme.react(
+        'parry',
+        elementId: oculumCombatElementId(elementoAttivo),
+      );
+    } else if (elementalAdjustment < 0) {
+      oculumCombatTheme.react(
+        'resisted',
+        elementId: oculumCombatElementId(elementoAttivo),
+      );
+    } else if (elementalAdjustment > 0) {
+      oculumCombatTheme.react(
+        'vulnerable',
+        elementId: oculumCombatElementId(elementoAttivo),
+      );
+    } else if (hp < hpPrima && critico) {
+      oculumCombatTheme.react(
+        'critical',
+        elementId: oculumCombatElementId(elementoAttivo),
+      );
+    } else if (hp < hpPrima) {
+      oculumCombatTheme.react(
+        'hit',
+        elementId: oculumCombatElementId(elementoAttivo),
+      );
+    } else if (dannoFinale > 0) {
+      oculumCombatTheme.react(
+        'blocked',
+        elementId: oculumCombatElementId(elementoAttivo),
+      );
+    }
     programmaSalvataggio();
     sendRealtimeHpChanged();
     checkAutomaticAshFromHpLoss(hpPrima, hp, source: t('danno', 'damage'));
@@ -4863,6 +4923,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
     final hpRecuperati = healed.current - hpPrima;
     final hpTempOttenuti = healed.temporary - hpTempPrima;
+
+    if (hpRecuperati > 0 || hpTempOttenuti > 0) {
+      oculumCombatTheme.react('heal');
+    }
 
     setState(() {
       currentHpController.text = healed.current.toString();

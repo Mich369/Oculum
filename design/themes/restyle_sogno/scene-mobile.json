@@ -2,7 +2,7 @@
   "width": 640,
   "height": 96,
   "source": "assets/themes/restyle_sogno/overlays/relic.png",
-  "layers": 0,
+  "layers": 1,
   "variant": "default",
   "placement": "right",
   "alphaCenter": 0

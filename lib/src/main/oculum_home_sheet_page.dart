@@ -11,10 +11,15 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   String hpReadoutProtetto() =>
       vitaAfonaAttiva() ? '???/${maxHp()}' : '${hpCorrenti()}/${maxHp()}';
 
+  Color vitalMemoryThemeColor() =>
+      readableOnTheme(Color.lerp(tertiaryColor, primaryColor, .45)!);
+
   String lifeBarStyleLabel(String id) {
     return switch (id) {
       'base_dinamica' => t('Vita dinamica', 'Dynamic health'),
       'fiamme_oculum' => t('Fiamme Oculum', 'Oculum flames'),
+      'anime_spirituali' => t('Anime in orbita', 'Circling souls'),
+      'acido_oculum' => t('Colature Acido', 'Acid drips'),
       'soulslike' => 'Soulslike',
       'action_rpg' => 'Action RPG',
       'jrpg_crystal' => 'JRPG Crystal',
@@ -54,7 +59,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   final color = lit
                       ? eyePupilGlowColor
                       : incomingLit
-                      ? Color.lerp(eyePupilGlowColor, Colors.cyanAccent, .32)!
+                      ? vitalMemoryThemeColor()
                       : Colors.blueGrey.shade800;
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 3),
@@ -134,11 +139,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                       color: lit
                           ? eyePupilGlowColor
                           : incomingLit
-                          ? Color.lerp(
-                              eyePupilGlowColor,
-                              Colors.cyanAccent,
-                              .32,
-                            )!
+                          ? vitalMemoryThemeColor()
                           : Colors.blueGrey.shade800,
                       shadows: lit || incomingLit
                           ? [
@@ -171,6 +172,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     return switch (id) {
       'base_dinamica' => Icons.health_and_safety_outlined,
       'fiamme_oculum' => Icons.local_fire_department_rounded,
+      'anime_spirituali' => Icons.blur_circular_outlined,
+      'acido_oculum' => Icons.opacity_outlined,
       'soulslike' => Icons.local_fire_department_outlined,
       'action_rpg' => Icons.flash_on_outlined,
       'jrpg_crystal' => Icons.diamond_outlined,
@@ -186,6 +189,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     const styles = <String>[
       'base_dinamica',
       'fiamme_oculum',
+      'anime_spirituali',
+      'acido_oculum',
       'gotico_oculum',
       'soulslike',
       'action_rpg',
@@ -436,6 +441,14 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   }
 
   List<Color> lifeBarGradient(String style, Color hpColor) {
+    if (Theme.of(context).extension<OculumGothOrnaments>()?.family ==
+        OculumGothFamily.spirit) {
+      return const [Color(0xFF9DA3AE), Color(0xFFF4F5F8), Color(0xFFCFD3DB)];
+    }
+    if (Theme.of(context).extension<OculumGothOrnaments>()?.family ==
+        OculumGothFamily.acid) {
+      return const [Color(0xFF45613A), Color(0xFFC5E870), Color(0xFF8E78AF)];
+    }
     return switch (style) {
       'base_dinamica' => [hpColor.withValues(alpha: 0.72), hpColor],
       'soulslike' => const [Color(0xFF4B0D12), Color(0xFFB7262E)],
@@ -443,6 +456,11 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       'jrpg_crystal' => const [Color(0xFF2355B8), Color(0xFFA4E9FF)],
       'survival_horror' => const [Color(0xFF5D6714), Color(0xFFCFDA38)],
       'roguelite' => const [Color(0xFF8E296F), Color(0xFFFF7BC2)],
+      'acido_oculum' => const [
+        Color(0xFF45613A),
+        Color(0xFFC5E870),
+        Color(0xFF8E78AF),
+      ],
       'fiamme_oculum' => [
         const Color(0xFF24104A),
         tertiaryColor,
@@ -457,6 +475,20 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     required double height,
   }) {
     switch (style) {
+      case 'acido_oculum':
+        return Positioned.fill(
+          child: OculumResourceBarFx(
+            kind: OculumResourceFxKind.acid,
+            color: const Color(0xFFD4F08D),
+          ),
+        );
+      case 'anime_spirituali':
+        return Positioned.fill(
+          child: OculumResourceBarFx(
+            kind: OculumResourceFxKind.souls,
+            color: Colors.white,
+          ),
+        );
       case 'base_dinamica':
         return const Positioned.fill(child: IgnorePointer());
       case 'soulslike':
@@ -634,6 +666,12 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         ? 0.0
         : (criticalShield / totalVisual).clamp(0.0, 1.0);
     final showOculumShield = shouldShowScudoOculum();
+    final spiritualLifeBar =
+        Theme.of(context).extension<OculumGothOrnaments>()?.family ==
+        OculumGothFamily.spirit;
+    final acidLifeBar =
+        Theme.of(context).extension<OculumGothOrnaments>()?.family ==
+        OculumGothFamily.acid;
 
     Color hpColor;
     final pureHpRatio = maxHpVal <= 0 ? 0 : curr / maxHpVal;
@@ -653,7 +691,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     final barHeight = switch (stileBarraVita) {
       'soulslike' => 22.0,
       'action_rpg' => 14.0,
-      'fiamme_oculum' => 30.0,
+      'fiamme_oculum' || 'anime_spirituali' || 'acido_oculum' => 30.0,
       'jrpg_crystal' => 28.0,
       'survival_horror' => 18.0,
       'roguelite' => 30.0,
@@ -667,10 +705,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       _ => 12.0,
     };
     final emptyColor = switch (stileBarraVita) {
+      _ when spiritualLifeBar => const Color(0xFF292C34),
+      _ when acidLifeBar => const Color(0xFF172018),
       'soulslike' => const Color(0xFF140B0B),
       'jrpg_crystal' => const Color(0xFF11172A),
       'survival_horror' => const Color(0xFF151815),
       'roguelite' => const Color(0xFF211329),
+      'acido_oculum' => const Color(0xFF172018),
       _ => const Color(0xFF240C14),
     };
     final narrowLifeBar = barHeight <= 22;
@@ -786,13 +827,17 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             ),
             const SizedBox(height: 12),
           ],
-          if (stileBarraVita == 'oculum_eyes')
+          if (stileBarraVita == 'oculum_eyes' &&
+              !spiritualLifeBar &&
+              !acidLifeBar)
             oculumEyeHeartHealthMeter(
               current: curr,
               maximum: maxHpVal,
               incomingHealing: incomingHealing,
             )
-          else if (stileBarraVita == 'fiamme_oculum')
+          else if (stileBarraVita == 'fiamme_oculum' &&
+              !spiritualLifeBar &&
+              !acidLifeBar)
             oculumFlameHealthMeter(
               current: curr,
               maximum: maxHpVal,
@@ -840,11 +885,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                           widthFactor: incomingW / (hpW + incomingW),
                           child: Container(
                             height: barHeight,
-                            color: Color.lerp(
-                              hpColor,
-                              Colors.cyanAccent,
-                              .32,
-                            )!.withValues(alpha: 0.72),
+                            color: vitalMemoryThemeColor().withValues(
+                              alpha: .72,
+                            ),
                           ),
                         ),
                       ),
@@ -916,7 +959,11 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     ),
                   ),
                   lifeBarIdentityOverlay(
-                    style: stileBarraVita,
+                    style: spiritualLifeBar
+                        ? 'anime_spirituali'
+                        : acidLifeBar
+                        ? 'acido_oculum'
+                        : stileBarraVita,
                     height: barHeight,
                   ),
                   if (!narrowLifeBar)
@@ -1040,6 +1087,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     final oculumShieldRatioTarget = max(1, oculumShieldDisplayTarget);
     final lines = <Widget>[];
     final vitaAfona = vitaAfonaAttiva();
+    final themeFamily = Theme.of(
+      context,
+    ).extension<OculumGothOrnaments>()?.family;
+    final acidTheme = themeFamily == OculumGothFamily.acid;
 
     Widget gaugeLine({
       required String label,
@@ -1047,6 +1098,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       required double ratio,
       required Color color,
       required IconData icon,
+      OculumResourceFxKind? effect,
     }) {
       final safeRatio = ratio.clamp(0.0, 1.0).toDouble();
       return Padding(
@@ -1083,13 +1135,23 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               ],
             ),
             const SizedBox(height: 4),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: LinearProgressIndicator(
-                value: safeRatio,
-                minHeight: dense ? 5 : 7,
-                color: color,
-                backgroundColor: Colors.black.withValues(alpha: 0.56),
+            SizedBox(
+              height: dense ? 5 : 7,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    LinearProgressIndicator(
+                      value: safeRatio,
+                      minHeight: dense ? 5 : 7,
+                      color: color,
+                      backgroundColor: Colors.black.withValues(alpha: 0.56),
+                    ),
+                    if (effect != null && safeRatio > 0)
+                      OculumResourceBarFx(kind: effect, color: color),
+                  ],
+                ),
               ),
             ),
           ],
@@ -1104,8 +1166,21 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             ? '???/${max(1, maxHpVal)}'
             : '$currentHp/${max(1, maxHpVal)}',
         ratio: vitaAfona ? 0 : currentHp / max(1, maxHpVal),
-        color: vitaAfona ? Colors.black : Colors.redAccent,
+        color: vitaAfona
+            ? Colors.black
+            : themeFamily == OculumGothFamily.spirit
+            ? Colors.white
+            : themeFamily == OculumGothFamily.acid
+            ? const Color(0xFFC5E870)
+            : Colors.redAccent,
         icon: vitaAfona ? Icons.dangerous_rounded : Icons.favorite,
+        effect: stileBarraVita == 'fiamme_oculum'
+            ? OculumResourceFxKind.embers
+            : themeFamily == OculumGothFamily.spirit
+            ? OculumResourceFxKind.souls
+            : themeFamily == OculumGothFamily.acid
+            ? OculumResourceFxKind.acid
+            : null,
       ),
     );
     if (tempHp > 0) {
@@ -1125,11 +1200,24 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           padding: EdgeInsets.only(bottom: dense ? 7 : 9),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: (incomingHealing / max(1, maxHpVal)).clamp(0.0, 1.0),
-              minHeight: dense ? 3 : 4,
-              color: Color.lerp(Colors.redAccent, Colors.cyanAccent, .32)!,
-              backgroundColor: Colors.transparent,
+            child: SizedBox(
+              height: dense ? 3 : 4,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  LinearProgressIndicator(
+                    value: (incomingHealing / max(1, maxHpVal)).clamp(0.0, 1.0),
+                    minHeight: dense ? 3 : 4,
+                    color: vitalMemoryThemeColor(),
+                    backgroundColor: Colors.transparent,
+                  ),
+                  if (themeFamily == OculumGothFamily.spirit)
+                    const OculumResourceBarFx(
+                      kind: OculumResourceFxKind.souls,
+                      color: Colors.white,
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1152,6 +1240,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           ratio: oculumShield / oculumShieldRatioTarget,
           color: eyePupilGlowColor,
           icon: Icons.visibility,
+          effect: acidTheme ? OculumResourceFxKind.acid : null,
         ),
       );
 
@@ -6849,24 +6938,35 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           rollDifficultyField(),
           const SizedBox(height: 12),
           damageModifierDropdown(),
-          if (mostraSempreColpito || hasCondition('vampirismo')) ...[
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: showReportedHitDialog,
-                icon: const Icon(Icons.bloodtype_rounded),
-                label: Text(
-                  hasCondition('vampirismo')
-                      ? t(
-                          'Colpito • cura Vampirismo',
-                          'Hit • Vampirism healing',
-                        )
-                      : t('Colpito • invia al Master', 'Hit • send to Master'),
-                ),
-              ),
-            ),
-          ],
+          ValueListenableBuilder<OculumCombatThemeState>(
+            valueListenable: oculumCombatTheme,
+            builder: (context, combatTheme, _) =>
+                mostraSempreColpito ||
+                    hasCondition('vampirismo') ||
+                    combatTheme.automatic
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: showReportedHitDialog,
+                        icon: const Icon(Icons.bloodtype_rounded),
+                        label: Text(
+                          hasCondition('vampirismo')
+                              ? t(
+                                  'Colpito • cura Vampirismo',
+                                  'Hit • Vampirism healing',
+                                )
+                              : t(
+                                  'Colpito • invia al Master',
+                                  'Hit • send to Master',
+                                ),
+                        ),
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
           const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {

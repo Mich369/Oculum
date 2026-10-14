@@ -38,7 +38,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
     "witch_glass",
     "Vetro strega",
     "ampolle sospese e vetro incrinato",
-    "vapore nell'ampolla",
+    "vapore nell\u0027ampolla",
   ),
   "moon_iron": OculumThemeAssetPack(
     "moon_iron",
@@ -103,7 +103,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
   "ivory_archive": OculumThemeAssetPack(
     "ivory_archive",
     "Archivio d avorio",
-    "fogli arrotolati e fermagli d'avorio",
+    "fogli arrotolati e fermagli d\u0027avorio",
     "polvere fra i fogli",
   ),
   "vervain_gothic": OculumThemeAssetPack(
@@ -122,7 +122,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
     "blood_chapel",
     "Cappella di sangue",
     "arco osseo e reliquia sanguigna",
-    "essenza lungo l'arco",
+    "essenza lungo l\u0027arco",
   ),
   "null_crown": OculumThemeAssetPack(
     "null_crown",
@@ -217,7 +217,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
   "shadow_gate_rank": OculumThemeAssetPack(
     "shadow_gate_rank",
     "Porta d ombra",
-    "portale a gradini e catene d'ombra",
+    "portale a gradini e catene d\u0027ombra",
     "ombra dietro il portale",
   ),
   "postea_bloom": OculumThemeAssetPack(
@@ -271,7 +271,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
   "eclipse_bonfire": OculumThemeAssetPack(
     "eclipse_bonfire",
     "Falò d eclissi",
-    "falò dentro una mezzaluna consumata",
+    "falÃ² dentro una mezzaluna consumata",
     "fiamma breve",
   ),
   "bolted_black_iron": OculumThemeAssetPack(
@@ -284,7 +284,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
     "bolted_gold_plate",
     "Metallo oro bullonato",
     "placche auree e sigillo regale",
-    "luce sull'incisione",
+    "luce sull\u0027incisione",
   ),
   "bolted_copper_oxide": OculumThemeAssetPack(
     "bolted_copper_oxide",
@@ -325,7 +325,7 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
   "vtt_obsidian_grid": OculumThemeAssetPack(
     "vtt_obsidian_grid",
     "Griglia ossidiana",
-    "tessere d'ossidiana e giunture incise",
+    "tessere d\u0027ossidiana e giunture incise",
     "giunture illuminate",
   ),
   "vtt_parchment_layers": OculumThemeAssetPack(
@@ -344,7 +344,13 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
     "verdigris_mourning",
     "Rame sepolto",
     "rame sepolto e catene floreali corrose",
-    "polvere sull'incisione",
+    "polvere sull\u0027incisione",
+  ),
+  "restyle_legno": OculumThemeAssetPack(
+    "restyle_legno",
+    "Legno",
+    "noce antico, venature e cornici intagliate",
+    "polvere di legno lungo gli intagli",
   ),
   "restyle_originale": OculumThemeAssetPack(
     "restyle_originale",
@@ -382,10 +388,22 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
     "occhio di cera e candelabro antico",
     "fiamma della candela",
   ),
+  "restyle_acido": OculumThemeAssetPack(
+    "restyle_acido",
+    "Acido",
+    "vetro tossico, colature chartreuse e schegge ametista",
+    "gocce viscose discendenti",
+  ),
   "restyle_sogno": OculumThemeAssetPack(
     "restyle_sogno",
     "Sogno",
     "nuvole stratificate blu, viola e rosa pastello",
     "nubi che scorrono lentamente",
+  ),
+  "restyle_spiritualita": OculumThemeAssetPack(
+    "restyle_spiritualita",
+    "Spiritualità",
+    "velo d anime e luce bianca",
+    "punti pallidi in orbita laterale",
   ),
 };

@@ -5,6 +5,24 @@ part of '../../main.dart';
 /// Additive presets: legacy IDs, custom colors and unlocked themes are retained.
 const oculumRestylePresets = <OculumColorPreset>[
   OculumColorPreset(
+    id: 'restyle_legno',
+    nameIt: 'Legno',
+    nameEn: 'Wood',
+    descriptionIt:
+        'Noce antico, venature vere e cornici intagliate. Colori modificabili.',
+    descriptionEn:
+        'Aged walnut, real wood grain and carved frames. Editable colors.',
+    primary: Color(0xfff0e2c8),
+    secondary: Color(0xff241911),
+    tertiary: Color(0xffd5a565),
+    utility: Color(0xffc2aa87),
+    oculumFormula: Color(0xffdfb77c),
+    backgroundTop: Color(0xff100b08),
+    backgroundMid: Color(0xff241911),
+    backgroundBottom: Color(0xff17100b),
+    eyePupilGlow: Color(0xffd5a565),
+  ),
+  OculumColorPreset(
     id: 'restyle_originale',
     nameIt: 'Originale',
     nameEn: 'Original',
@@ -108,6 +126,24 @@ const oculumRestylePresets = <OculumColorPreset>[
     eyePupilGlow: Color(0xffc3a365),
   ),
   OculumColorPreset(
+    id: 'restyle_acido',
+    nameIt: 'Acido',
+    nameEn: 'Acid',
+    descriptionIt:
+        'Vetro tossico, colature chartreuse e riflessi ametista. Colori modificabili.',
+    descriptionEn:
+        'Toxic glass, chartreuse rivulets and amethyst reflections. Colors are editable.',
+    primary: Color(0xffe5ebdc),
+    secondary: Color(0xff171b18),
+    tertiary: Color(0xffb3d66f),
+    utility: Color(0xffb7a1cb),
+    oculumFormula: Color(0xffa7d95a),
+    backgroundTop: Color(0xff0a100d),
+    backgroundMid: Color(0xff171b18),
+    backgroundBottom: Color(0xff0d1310),
+    eyePupilGlow: Color(0xffbbdc78),
+  ),
+  OculumColorPreset(
     id: 'restyle_sogno',
     nameIt: 'Sogno',
     nameEn: 'Dream',
@@ -124,6 +160,24 @@ const oculumRestylePresets = <OculumColorPreset>[
     backgroundMid: Color(0xff171a2b),
     backgroundBottom: Color(0xff171322),
     eyePupilGlow: Color(0xffc5a5e6),
+  ),
+  OculumColorPreset(
+    id: 'restyle_spiritualita',
+    nameIt: 'Spiritualità',
+    nameEn: 'Spirituality',
+    descriptionIt:
+        'Velo d anime, luce bianca e punti pallidi in orbita. Colori modificabili.',
+    descriptionEn:
+        'A veil of souls, white light and pale orbiting motes. Editable colors.',
+    primary: Color(0xfff0f1f3),
+    secondary: Color(0xff181a20),
+    tertiary: Color(0xffc9cdd4),
+    utility: Color(0xffa9adb7),
+    oculumFormula: Color(0xffe4e8ef),
+    backgroundTop: Color(0xff0b0c11),
+    backgroundMid: Color(0xff181a20),
+    backgroundBottom: Color(0xff111319),
+    eyePupilGlow: Color(0xffe5e9ef),
   ),
 ];
 

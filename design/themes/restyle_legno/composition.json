@@ -1,0 +1,13 @@
+{
+  "id": "restyle_legno",
+  "name": "Legno",
+  "materials": "noce antico, venature e cornici intagliate",
+  "family": "wood",
+  "signature": "c68a3d520f7a781b29f17b95e1bd835731581f2f764cb3987df6b55bc75ac83d",
+  "motion": "polvere di legno lungo gli intagli",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

@@ -241,6 +241,16 @@ flutter:
     - assets/themes/restyle_sogno/overlays/
     - assets/themes/restyle_sogno/frames/
     - assets/themes/restyle_sogno/decorations/
+    - assets/themes/restyle_legno/overlays/
+    - assets/themes/restyle_legno/frames/
+    - assets/themes/restyle_legno/decorations/
+    - assets/themes/restyle_acido/overlays/
+    - assets/themes/restyle_acido/frames/
+    - assets/themes/restyle_acido/decorations/
+    - assets/themes/restyle_spiritualita/overlays/
+    - assets/themes/restyle_spiritualita/frames/
+    - assets/themes/restyle_spiritualita/decorations/
+    - assets/themes/materials/
     - assets/fonts/
     - assets/fonts/licenses/
     - assets/manuals/

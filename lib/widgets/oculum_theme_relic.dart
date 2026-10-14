@@ -17,6 +17,10 @@ OculumThemeAssetPack oculumResolveThemeArt(
       OculumGothFamily.tide => 'abyssal_tide',
       OculumGothFamily.ember => 'ember_rite',
       OculumGothFamily.dream => 'restyle_sogno',
+      OculumGothFamily.wood => 'restyle_legno',
+      OculumGothFamily.ash => 'restyle_cenere',
+      OculumGothFamily.acid => 'restyle_acido',
+      OculumGothFamily.spirit => 'restyle_spiritualita',
       _ => 'classic_reliquary',
     }]!;
 
@@ -64,6 +68,10 @@ class OculumThemeRelicBanner extends StatelessWidget {
     OculumGothFamily.ember => Icons.local_fire_department_outlined,
     OculumGothFamily.cathedral => Icons.architecture_outlined,
     OculumGothFamily.dream => Icons.cloud_outlined,
+    OculumGothFamily.wood => Icons.forest_outlined,
+    OculumGothFamily.ash => Icons.blur_on_outlined,
+    OculumGothFamily.acid => Icons.opacity_outlined,
+    OculumGothFamily.spirit => Icons.blur_circular_outlined,
     OculumGothFamily.none => Icons.shield_outlined,
   };
 

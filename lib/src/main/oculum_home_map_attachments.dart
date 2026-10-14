@@ -1753,6 +1753,20 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         return 'vervain';
       case 'restyle_sogno':
         return 'dream';
+      case 'restyle_legno':
+        return 'wood';
+      case 'restyle_acido':
+        return 'acid';
+      case 'restyle_spiritualita':
+        return 'spirit';
+      case 'restyle_cenere':
+        return 'ash';
+      case 'restyle_aurora':
+        return 'lunar';
+      case 'restyle_natura':
+        return 'botanical';
+      case 'restyle_lume':
+        return 'ember';
       case 'kingi_wrong_future':
         return 'kingi';
       case 'jrpg_legend':
@@ -1859,6 +1873,26 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         return t(
           'nuvole blu, viola e rosa pastello',
           'blue, violet and pastel pink clouds',
+        );
+      case 'restyle_legno':
+        return t(
+          'noce antico, venature e intagli',
+          'aged walnut, grain and carvings',
+        );
+      case 'restyle_acido':
+        return t(
+          'vetro tossico, colature chartreuse e schegge ametista',
+          'toxic glass, chartreuse rivulets and amethyst shards',
+        );
+      case 'restyle_spiritualita':
+        return t(
+          'velo d anime, luce bianca e punti pallidi in orbita',
+          'veil of souls, white light and pale orbiting motes',
+        );
+      case 'restyle_cenere':
+        return t(
+          'cenere depositata, polvere e bordi consumati',
+          'settled ash, dust and worn edges',
         );
       case 'kingi_wrong_future':
         return t('motore runico Kingi', 'Kingi runic engine');

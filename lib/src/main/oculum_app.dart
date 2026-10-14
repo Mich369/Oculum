@@ -89,32 +89,64 @@ class OculumThemeScope extends StatelessWidget {
         child: ValueListenableBuilder<OculumThemePresentation>(
           valueListenable: oculumThemePresentation,
           child: child,
-          builder: (context, presentation, child) => OculumGothAmbience(
-            spec:
-                ornaments?.copyWith(
-                  motion:
-                      ornaments.motion &&
-                      presentation.motion != OculumThemeMotion.disabled,
-                  variant: presentation.variant,
-                ) ??
-                const OculumGothOrnaments(
-                  family: OculumGothFamily.none,
-                  ink: Colors.transparent,
-                  accent: Colors.transparent,
-                  opacity: 0,
-                ),
-            child: Theme(
-              data: theme.copyWith(
-                extensions: [
-                  for (final extension in theme.extensions.values)
-                    if (extension is! OculumGothOrnaments) extension,
-                  if (ornaments != null)
-                    ornaments.copyWith(variant: presentation.variant),
-                ],
+          builder: (context, presentation, child) =>
+              ValueListenableBuilder<OculumCombatThemeState>(
+                valueListenable: oculumCombatTheme,
+                child: child,
+                builder: (context, combat, child) {
+                  final combatFamily = combat.automatic
+                      ? combat.activeFamily
+                      : null;
+                  final selectedOrnaments = ornaments?.copyWith(
+                    family: combatFamily ?? ornaments.family,
+                    motion:
+                        ornaments.motion &&
+                        presentation.motion != OculumThemeMotion.disabled,
+                    variant: presentation.variant,
+                  );
+                  final spec =
+                      selectedOrnaments ??
+                      const OculumGothOrnaments(
+                        family: OculumGothFamily.none,
+                        ink: Colors.transparent,
+                        accent: Colors.transparent,
+                        opacity: 0,
+                      );
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      OculumGothAmbience(
+                        spec: spec,
+                        child: Theme(
+                          data: theme.copyWith(
+                            extensions: [
+                              for (final extension in theme.extensions.values)
+                                if (extension is! OculumGothOrnaments)
+                                  extension,
+                              ?selectedOrnaments,
+                            ],
+                          ),
+                          child: child!,
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: OculumCombatReactionHost(
+                          state: combat,
+                          transitionDuration: switch (presentation.motion) {
+                            OculumThemeMotion.complete => const Duration(
+                              milliseconds: 120,
+                            ),
+                            OculumThemeMotion.reduced => const Duration(
+                              milliseconds: 80,
+                            ),
+                            OculumThemeMotion.disabled => Duration.zero,
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
-              child: child!,
-            ),
-          ),
         ),
       );
     },
@@ -125,6 +157,7 @@ final ValueNotifier<bool> oculumGraphicsEnabled = ValueNotifier(false);
 
 Future<void> loadOculumGraphicsPreference() async {
   await loadOculumThemePresentation();
+  await oculumCombatTheme.loadPreference();
   final prefs = await SharedPreferences.getInstance();
   oculumGraphicsEnabled.value =
       prefs.getBool('oculum.graphicsEnabled') ?? false;

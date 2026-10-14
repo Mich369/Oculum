@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'oculum_goth_ornaments.dart';
 import 'oculum_theme_asset_packs.dart';
+import 'oculum_combat_theme.dart';
 
 enum OculumThemeMotion { complete, reduced, disabled }
 
@@ -85,6 +86,10 @@ class OculumThemePresentationControls extends StatelessWidget {
           english ? 'Still nature · dry stems' : 'Natura morta · steli secchi',
         OculumGothFamily.dream =>
           english ? 'Quiet dream · blue clouds' : 'Sogno quieto · nubi blu',
+        OculumGothFamily.wood => english ? 'Aged walnut' : 'Noce consumato',
+        OculumGothFamily.ash => english ? 'Settled ash' : 'Cenere depositata',
+        OculumGothFamily.acid => english ? 'Toxic glass' : 'Vetro tossico',
+        OculumGothFamily.spirit => english ? 'Resting souls' : 'Anime quiete',
         _ => english ? 'Worn engraving' : 'Incisione consumata',
       };
       final aliveLabel = switch (family) {
@@ -96,6 +101,12 @@ class OculumThemePresentationControls extends StatelessWidget {
           english
               ? 'Chromatic dream · blue, violet, pastel pink'
               : 'Sogno cromatico · blu, viola e rosa pastello',
+        OculumGothFamily.wood => english ? 'Carved walnut' : 'Noce intagliato',
+        OculumGothFamily.ash => english ? 'Ash and soot' : 'Cenere e fuliggine',
+        OculumGothFamily.acid =>
+          english ? 'Dripping acid glass' : 'Vetro d acido colante',
+        OculumGothFamily.spirit =>
+          english ? 'Circling pale souls' : 'Anime pallide in orbita',
         _ => english ? 'Awakened ornament' : 'Ornamento risvegliato',
       };
       return Column(
@@ -108,6 +119,32 @@ class OculumThemePresentationControls extends StatelessWidget {
               english
                   ? 'Static artwork remains visible when motion is disabled.'
                   : 'I PNG restano visibili anche con le animazioni disattivate.',
+            ),
+          ),
+          ValueListenableBuilder<OculumCombatThemeState>(
+            valueListenable: oculumCombatTheme,
+            builder: (context, combat, _) => SwitchListTile.adaptive(
+              secondary: const Icon(Icons.bolt_outlined),
+              title: Text(
+                english
+                    ? 'Combat material response'
+                    : 'Tema reattivo al combattimento',
+              ),
+              subtitle: Text(
+                combat.elementId.isEmpty
+                    ? (combat.automatic
+                          ? (english
+                                ? 'Automatic · changes after a typed attack is resolved.'
+                                : 'Automatico · cambia dopo la risoluzione di un attacco elementale.')
+                          : (english
+                                ? 'Off · the selected theme stays in control.'
+                                : 'Disattivato · resta attivo il tema selezionato.'))
+                    : (english
+                          ? 'Last resolved attack: ${combat.elementId}${combat.secondaryElementId.isEmpty ? '' : ' + ${combat.secondaryElementId}'}.'
+                          : 'Ultimo attacco risolto: ${combat.elementId}${combat.secondaryElementId.isEmpty ? '' : ' + ${combat.secondaryElementId}'}.'),
+              ),
+              value: combat.automatic,
+              onChanged: oculumCombatTheme.setAutomatic,
             ),
           ),
           Padding(

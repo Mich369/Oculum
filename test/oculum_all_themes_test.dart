@@ -187,6 +187,9 @@ void main() {
           'vervain_gothic',
           'frost_chapel',
           'bolted_black_iron',
+          'restyle_legno',
+          'restyle_cenere',
+          'ember_rite',
         ].contains(preset.id)) {
           final boundary = tester.renderObject<RenderRepaintBoundary>(
             find.byKey(const ValueKey('real-themed-screen')),

@@ -94,6 +94,15 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
                           'Colpito: $formula $type = $total.',
                           'Hit reported: $formula $type = $total.',
                         );
+                        final elementId = oculumCombatElementId(type);
+                        oculumCombatTheme.resolveOutgoingAction(
+                          actionId: DateTime.now().microsecondsSinceEpoch
+                              .toString(),
+                          hitDamageByElement: [
+                            <String, int>{elementId: total},
+                          ],
+                          normalAction: elementId == 'fisico',
+                        );
                         setState(() {
                           risultato = message;
                           aggiungiLog(message);

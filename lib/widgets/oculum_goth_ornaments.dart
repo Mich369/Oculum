@@ -12,6 +12,31 @@ enum OculumGothFamily {
   ember,
   cathedral,
   dream,
+  wood,
+  ash,
+  acid,
+  spirit,
+}
+
+String oculumMaterialTexture(OculumGothOrnaments spec) {
+  final id = spec.themeId;
+  final material = id.contains('ivory') || id.contains('bone')
+      ? 'ivory'
+      : switch (spec.family) {
+          OculumGothFamily.botanical => 'bark',
+          OculumGothFamily.crystal => 'crystal',
+          OculumGothFamily.forged => 'metal',
+          OculumGothFamily.astral => 'astral',
+          OculumGothFamily.tide => 'water',
+          OculumGothFamily.ember => 'charred',
+          OculumGothFamily.dream => 'dream',
+          OculumGothFamily.wood => 'wood',
+          OculumGothFamily.ash => 'ash',
+          OculumGothFamily.acid => 'acid',
+          OculumGothFamily.spirit => 'spirit',
+          _ => 'stone',
+        };
+  return 'assets/themes/materials/$material.png';
 }
 
 /// Decorative strokes stay in the button's outer frame, leaving its label,
@@ -246,6 +271,44 @@ class OculumButtonFrame extends RoundedRectangleBorder {
               ..close();
             canvas.drawPath(cloud, line);
             canvas.drawLine(const Offset(4, 8), const Offset(10, 8), detail);
+          case OculumGothFamily.wood:
+            for (var i = 0; i < 3; i++) {
+              canvas.drawPath(
+                Path()
+                  ..moveTo(1, 3 + i * 3)
+                  ..cubicTo(5, i * 3, 7, 6 + i * 2, 11, 3 + i * 3),
+                i.isEven ? line : detail,
+              );
+            }
+            canvas.drawOval(const Rect.fromLTWH(4, 3, 3, 5), detail);
+          case OculumGothFamily.ash:
+            for (var i = 0; i < 12; i++) {
+              final x = 1.0 + (i * 7 % 11);
+              final y = 1.0 + (i * 5 % 10);
+              canvas.drawCircle(
+                Offset(x, y),
+                i % 3 == 0 ? .9 : .4,
+                i.isEven ? line : detail,
+              );
+            }
+          case OculumGothFamily.acid:
+            final drip = Path()
+              ..moveTo(1, 2)
+              ..quadraticBezierTo(5, 5, 4, 9)
+              ..quadraticBezierTo(3, 12, 6, 12)
+              ..quadraticBezierTo(9, 11, 7, 8)
+              ..quadraticBezierTo(6, 4, 11, 1);
+            canvas.drawPath(drip, line);
+            canvas.drawCircle(const Offset(6, 11), .8, detail);
+          case OculumGothFamily.spirit:
+            canvas.drawOval(const Rect.fromLTWH(3, 1, 6, 10), line);
+            canvas.drawCircle(const Offset(6, 4), .7, detail);
+            canvas.drawPath(
+              Path()
+                ..moveTo(4, 8)
+                ..quadraticBezierTo(6, 10, 8, 8),
+              detail,
+            );
           case OculumGothFamily.none:
             break;
         }
@@ -287,6 +350,10 @@ OculumGothFamily oculumGothFamily(String style) => switch (style) {
   'tide' => OculumGothFamily.tide,
   'ember' || 'souls' => OculumGothFamily.ember,
   'dream' || 'sogno' => OculumGothFamily.dream,
+  'wood' => OculumGothFamily.wood,
+  'ash' => OculumGothFamily.ash,
+  'acid' || 'restyle_acido' => OculumGothFamily.acid,
+  'spirit' || 'restyle_spiritualita' => OculumGothFamily.spirit,
   _ => OculumGothFamily.cathedral,
 };
 
@@ -400,6 +467,15 @@ class _OculumGothAmbienceState extends State<OculumGothAmbience>
     }
   }
 
+  Duration _themeTransitionDuration(BuildContext context) {
+    if (MediaQuery.disableAnimationsOf(context)) return Duration.zero;
+    return switch (oculumThemePresentation.value.motion) {
+      OculumThemeMotion.complete => const Duration(milliseconds: 360),
+      OculumThemeMotion.reduced => const Duration(milliseconds: 170),
+      OculumThemeMotion.disabled => Duration.zero,
+    };
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -417,24 +493,67 @@ class _OculumGothAmbienceState extends State<OculumGothAmbience>
         Positioned.fill(
           child: IgnorePointer(
             child: ExcludeSemantics(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  RepaintBoundary(
-                    child: CustomPaint(painter: OculumGothPainter(widget.spec)),
+              child: RepaintBoundary(
+                child: Opacity(
+                  opacity: switch (widget.spec.family) {
+                    OculumGothFamily.ash => .13,
+                    OculumGothFamily.wood => .11,
+                    _ => .06,
+                  },
+                  child: AnimatedSwitcher(
+                    duration: _themeTransitionDuration(context),
+                    child: Image.asset(
+                      oculumMaterialTexture(widget.spec),
+                      key: ValueKey(
+                        'theme-material-${widget.spec.themeId}-${widget.spec.family.name}',
+                      ),
+                      repeat: ImageRepeat.repeat,
+                      fit: BoxFit.none,
+                      scale: 2,
+                      cacheWidth: 512,
+                      filterQuality: FilterQuality.low,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const SizedBox.shrink(),
+                    ),
                   ),
-                  if (widget.spec.motion &&
-                      !MediaQuery.disableAnimationsOf(context))
-                    RepaintBoundary(
-                      child: CustomPaint(
-                        painter: OculumGothPainter(
-                          widget.spec,
-                          clock: clock,
-                          particles: true,
+                ),
+              ),
+            ),
+          ),
+        ),
+      if (widget.spec.family != OculumGothFamily.none &&
+          widget.spec.opacity > 0)
+        Positioned.fill(
+          child: IgnorePointer(
+            child: ExcludeSemantics(
+              child: AnimatedSwitcher(
+                duration: _themeTransitionDuration(context),
+                child: RepaintBoundary(
+                  key: ValueKey(
+                    'theme-art-${widget.spec.family.name}-${widget.spec.variant.name}-${widget.spec.accent.toARGB32()}',
+                  ),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      RepaintBoundary(
+                        child: CustomPaint(
+                          painter: OculumGothPainter(widget.spec),
                         ),
                       ),
-                    ),
-                ],
+                      if (widget.spec.motion &&
+                          !MediaQuery.disableAnimationsOf(context))
+                        RepaintBoundary(
+                          child: CustomPaint(
+                            painter: OculumGothPainter(
+                              widget.spec,
+                              clock: clock,
+                              particles: true,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -512,6 +631,10 @@ class OculumGothPainter extends CustomPainter {
       if (particles) {
         if (spec.family == OculumGothFamily.dream) {
           _driftingClouds(canvas, band, size.height);
+        } else if (spec.family == OculumGothFamily.ember) {
+          _fallingFlames(canvas, band, size.height);
+        } else if (spec.family == OculumGothFamily.acid) {
+          _drippingAcid(canvas, band, size.height);
         } else {
           for (var i = 0; i < 7; i++) {
             final t = ((clock?.value ?? 0) + i / 7) % 1;
@@ -558,13 +681,25 @@ class OculumGothPainter extends CustomPainter {
             _stars(canvas, band, size.height);
             break;
           case OculumGothFamily.ember:
-            _candles(canvas, band, size.height);
+            _scorchedEdges(canvas, band, size.height);
             break;
           case OculumGothFamily.cathedral:
             _arches(canvas, band, size.height);
             break;
           case OculumGothFamily.dream:
             _clouds(canvas, band, size.height);
+            break;
+          case OculumGothFamily.wood:
+            _woodGrain(canvas, band, size.height);
+            break;
+          case OculumGothFamily.ash:
+            _ashDust(canvas, band, size.height);
+            break;
+          case OculumGothFamily.acid:
+            _acidEdge(canvas, band, size.height);
+            break;
+          case OculumGothFamily.spirit:
+            _spiritMotes(canvas, band, size.height);
             break;
           case OculumGothFamily.none:
             break;
@@ -647,8 +782,184 @@ class OculumGothPainter extends CustomPainter {
             stroke,
           );
         }
+      case OculumGothFamily.wood:
+        for (var i = 0; i < 3; i++) {
+          canvas.drawPath(
+            Path()
+              ..moveTo(3, 5 + i * 3)
+              ..quadraticBezierTo(7, 3 + i * 2, 12, 6 + i * 2),
+            detail,
+          );
+        }
+      case OculumGothFamily.ash:
+        for (var i = 0; i < 12; i++) {
+          canvas.drawCircle(
+            Offset(3.0 + (i * 7 % 10), 3.0 + (i * 3 % 10)),
+            i.isEven ? .65 : .35,
+            detail,
+          );
+        }
+      case OculumGothFamily.acid:
+        final drip = Path()
+          ..moveTo(2, 3)
+          ..quadraticBezierTo(6, 6, 5, 10)
+          ..quadraticBezierTo(4, 13, 7, 13)
+          ..quadraticBezierTo(10, 12, 8, 9)
+          ..quadraticBezierTo(7, 5, 12, 2);
+        canvas.drawPath(drip, stroke);
+        canvas.drawCircle(const Offset(7, 12), 1, detail);
+      case OculumGothFamily.spirit:
+        canvas.drawOval(const Rect.fromLTWH(4, 3, 7, 10), stroke);
+        canvas.drawCircle(const Offset(7.5, 6), .7, detail);
+        canvas.drawPath(
+          Path()
+            ..moveTo(5, 11)
+            ..quadraticBezierTo(7.5, 13, 10, 11),
+          detail,
+        );
       case OculumGothFamily.none:
         break;
+    }
+  }
+
+  void _fallingFlames(Canvas c, double w, double h) {
+    for (var i = 0; i < 6; i++) {
+      final t = ((clock?.value ?? 0) + i / 6) % 1;
+      final extinction = ((1 - t) / .22).clamp(0.0, 1.0);
+      final entry = (t / .06).clamp(0.0, 1.0);
+      final visibility = extinction * entry;
+      final x = w * .5 + math.sin(t * math.pi * 4 + i) * w * .2;
+      final y = t * h;
+      c.save();
+      c.translate(x, y);
+      c.scale(.7 + extinction * .6);
+      final flame = Path()
+        ..moveTo(0, 5)
+        ..cubicTo(-7, 3, -4, -3, -1, -8)
+        ..cubicTo(0, -3, 5, -3, 4, 2)
+        ..quadraticBezierTo(3, 6, 0, 5)
+        ..close();
+      c.drawPath(
+        flame,
+        Paint()
+          ..color = const Color(
+            0xffe89c4c,
+          ).withValues(alpha: spec.opacity * visibility * .8),
+      );
+      c.drawPath(
+        Path()
+          ..moveTo(0, 4)
+          ..quadraticBezierTo(-3, 0, 0, -3)
+          ..quadraticBezierTo(3, 2, 0, 4),
+        Paint()
+          ..color = const Color(
+            0xffffd18a,
+          ).withValues(alpha: spec.opacity * visibility),
+      );
+      c.restore();
+    }
+  }
+
+  void _scorchedEdges(Canvas c, double w, double h) {
+    for (var y = 12.0; y < h; y += 54) {
+      c.drawPath(
+        Path()
+          ..moveTo(w * .25, y)
+          ..lineTo(w * .7, y + 11)
+          ..lineTo(w * .3, y + 25),
+        _paint(spec.ink, stroke: true, width: 2),
+      );
+    }
+  }
+
+  void _woodGrain(Canvas c, double w, double h) {
+    for (var i = 0; i < 4; i++) {
+      final path = Path()..moveTo(2 + i * w / 5, 0);
+      for (var y = 0.0; y < h; y += 30) {
+        path.quadraticBezierTo(
+          2 + i * w / 5 + math.sin(y / 85) * 3,
+          y + 15,
+          2 + i * w / 5,
+          y + 30,
+        );
+      }
+      c.drawPath(path, _paint(spec.ink, stroke: true, width: .65));
+    }
+  }
+
+  void _ashDust(Canvas c, double w, double h) {
+    for (var i = 0; i < h / 6; i++) {
+      c.drawCircle(
+        Offset((i * 7 % 19) / 19 * w, i * 6.0),
+        i % 3 == 0 ? 1.4 : .5,
+        _paint(spec.accent),
+      );
+    }
+  }
+
+  void _acidEdge(Canvas c, double w, double h) {
+    for (var y = 14.0; y < h; y += 58) {
+      final x = w * (.35 + ((y ~/ 58) % 2) * .2);
+      final drop = Path()
+        ..moveTo(x - 2.4, y)
+        ..quadraticBezierTo(x, y + 3, x + 2.4, y)
+        ..lineTo(x + .9, y + 7)
+        ..quadraticBezierTo(x, y + 10, x - .9, y + 7)
+        ..close();
+      c.drawPath(drop, _paint(spec.accent.withValues(alpha: .48)));
+      c.drawPath(
+        drop,
+        _paint(spec.ink.withValues(alpha: .7), stroke: true, width: .55),
+      );
+      c.drawLine(
+        Offset(x - .4, y + 2),
+        Offset(x - .2, y + 5),
+        _paint(Colors.white.withValues(alpha: .4), stroke: true, width: .4),
+      );
+    }
+  }
+
+  void _drippingAcid(Canvas c, double w, double h) {
+    final phase = clock?.value ?? 0;
+    for (var i = 0; i < 5; i++) {
+      final t = (phase + i / 5) % 1;
+      final y = t * (h + 28) - 14;
+      final x = w * (.3 + (i % 3) * .2);
+      final radius = i.isEven ? 1.7 : 1.1;
+      c.drawOval(
+        Rect.fromCenter(
+          center: Offset(x, y),
+          width: radius * .9,
+          height: radius * 2.6,
+        ),
+        _paint(spec.accent),
+      );
+      c.drawCircle(
+        Offset(x - .4, y - radius * .4),
+        radius * .32,
+        _paint(Colors.white.withValues(alpha: .65)),
+      );
+    }
+  }
+
+  void _spiritMotes(Canvas c, double w, double h) {
+    final phase = clock?.value ?? 0;
+    for (var i = 0; i < 8; i++) {
+      final t = (phase + i / 8) % 1;
+      final y = t * h;
+      final x = w * (.5 + math.sin(t * math.pi * 2 + i * .8) * .24);
+      final alpha = i.isEven ? .42 : .25;
+      final radius = i % 3 == 0 ? 1.6 : .9;
+      c.drawCircle(
+        Offset(x, y),
+        radius,
+        _paint(Colors.white.withValues(alpha: alpha)),
+      );
+      c.drawCircle(
+        Offset(x - .3, y - .3),
+        radius * .35,
+        _paint(Colors.white.withValues(alpha: alpha * .7)),
+      );
     }
   }
 
@@ -776,23 +1087,6 @@ class OculumGothPainter extends CustomPainter {
         _paint(spec.ink, stroke: true, width: .5),
       );
       previous = p;
-    }
-  }
-
-  void _candles(Canvas c, double w, double h) {
-    for (var y = 30.0; y < h; y += 98) {
-      c.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(w * .25, y, w * .5, 27),
-          const Radius.circular(2),
-        ),
-        _paint(spec.ink, stroke: true),
-      );
-      final flame = Path()
-        ..moveTo(w * .5, y - 13)
-        ..quadraticBezierTo(w, y - 1, w * .5, y - 1)
-        ..quadraticBezierTo(0, y - 4, w * .5, y - 13);
-      c.drawPath(flame, _paint(spec.accent));
     }
   }
 

@@ -64,8 +64,10 @@ restyle_sangue|occhio suturato e filo di essenza|essenza nel filo
 restyle_aurora|occhio ametista e veli aurorali|velo aurorale
 restyle_natura|occhio nel seme e radici bronzee|radice oscillante
 restyle_lume|occhio di cera e candelabro antico|fiamma della candela
+restyle_acido|vetro tossico, colature chartreuse e schegge ametista|gocce viscose discendenti
+restyle_spiritualita|velo d anime e luce bianca|punti pallidi in orbita laterale
 restyle_sogno|nuvole stratificate blu, viola e rosa pastello|nubi che scorrono lentamente
-restyle_sogno|nuvole stratificate blu, viola e rosa pastello|nubi che scorrono lentamente
+restyle_legno|noce antico, venature e cornici intagliate|polvere di legno lungo gli intagli
 '@
 $lookup = @{}
 foreach ($line in $identities.Trim().Split("`n")) {
@@ -73,7 +75,7 @@ foreach ($line in $identities.Trim().Split("`n")) {
   $lookup[$parts[0]] = @{ motif = $parts[1]; motion = $parts[2] }
 }
 $themes = foreach ($source in $sources) {
-  $text = Get-Content -LiteralPath (Join-Path $root $source) -Raw
+  $text = Get-Content -LiteralPath (Join-Path $root $source) -Raw -Encoding utf8
   foreach ($match in [regex]::Matches($text, 'OculumColorPreset\(\s*id:\s*''([^'']+)''[\s\S]*?nameIt:\s*''([^'']+)''')) {
     $id = $match.Groups[1].Value
     if (!$lookup.ContainsKey($id)) { throw "Missing Art Bible for $id" }
@@ -97,7 +99,7 @@ $themes = foreach ($source in $sources) {
     }
   }
 }
-if (@($themes).Count -ne 63) { throw "Expected 63 existing themes, found $(@($themes).Count)" }
+if (@($themes).Count -ne 66) { throw "Expected 66 themes, found $(@($themes).Count)" }
 $destination = Join-Path $root 'docs/design'
 New-Item -ItemType Directory -Path $destination -Force | Out-Null
 $themes | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $destination 'theme-art-bible.json') -Encoding utf8

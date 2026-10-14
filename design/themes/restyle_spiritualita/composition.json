@@ -1,0 +1,13 @@
+{
+  "id": "restyle_spiritualita",
+  "name": "Spiritualità",
+  "materials": "velo d anime e luce bianca",
+  "family": "spirit",
+  "signature": "94f780387bdad6912d0af34c99f4b193fa0ead703b4984b1c5ae5715aca5ac54",
+  "motion": "punti pallidi in orbita laterale",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

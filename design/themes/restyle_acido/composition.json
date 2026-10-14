@@ -1,0 +1,13 @@
+{
+  "id": "restyle_acido",
+  "name": "Acido",
+  "materials": "vetro tossico, colature chartreuse e schegge ametista",
+  "family": "acid",
+  "signature": "275d7569f89ac1467d2f264a1751502d8fb7563ab4eefbd1415569d03cc3a445",
+  "motion": "gocce viscose discendenti",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}
