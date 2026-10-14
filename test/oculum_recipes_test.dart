@@ -39,6 +39,15 @@ void main() {
   });
 
   group('Ricette', () {
+    test('Oltre i limiti raddoppia i grammi e costa almeno 1 Volontà', () {
+      expect(oculumGatherEffortTotalGrams(500), 1000);
+      expect(oculumGatherEffortTotalGrams(0), 0);
+      expect(oculumGatherEffortWillCost(0), 1);
+      expect(oculumGatherEffortWillCost(4), 1);
+      expect(oculumGatherEffortWillCost(5), 1);
+      expect(oculumGatherEffortWillCost(10), 2);
+    });
+
     test('accetta grammi interi e decimali positivi senza perdere cifre', () {
       expect(oculumNormalizePositiveGramText('25'), '25');
       expect(oculumNormalizePositiveGramText('0012,500'), '12.500');

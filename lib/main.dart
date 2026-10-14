@@ -68,6 +68,7 @@ import 'src/main/oculum_web_save_store_stub.dart'
     if (dart.library.js_interop) 'src/main/oculum_web_save_store_web.dart';
 
 part 'src/main/oculum_app.dart';
+part 'src/main/oculum_home_artwork.dart';
 part 'src/main/oculum_helpers.dart';
 part 'src/main/oculum_pack_leaders.dart';
 part 'src/main/oculum_spine_hedgehog.dart';

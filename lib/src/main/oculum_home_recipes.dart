@@ -2,6 +2,11 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member
 
+int oculumGatherEffortWillCost(int currentWill) =>
+    max(1, max(0, currentWill) ~/ 5);
+
+int oculumGatherEffortTotalGrams(int normalGrams) => max(0, normalGrams) * 2;
+
 extension _OculumHomeRecipes on _OculumHomePageState {
   bool get canManageRecipes => canActWithoutMasterApproval;
 
@@ -235,6 +240,65 @@ extension _OculumHomeRecipes on _OculumHomePageState {
       risultato = t(
         'Materiali presi: ${formatoPesoMateriali(requested)}. Presa rimasta: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
         'Materials taken: ${formatoPesoMateriali(requested)}. Remaining capacity: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+      );
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+  }
+
+  Future<void> _usaPresaMaterialiOltreILimite() async {
+    final volontaDisponibile = currentSpendableStatValue('volonta');
+    final costoVolonta = oculumGatherEffortWillCost(
+      currentStatValue('volonta'),
+    );
+    if (volontaDisponibile < costoVolonta) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t(
+              'Volontà insufficiente: servono $costoVolonta punti attuali.',
+              'Not enough Will: $costoVolonta current points are required.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final kg = await _chiediKg(
+      title: t('Oltre i limiti', 'Beyond the limit'),
+      label: t(
+        'Quantità normale (lo sforzo ne aggiunge altrettanta)',
+        'Normal amount (effort adds the same amount)',
+      ),
+    );
+    if (kg == null || !mounted) return;
+    final normale = (kg * 1000).round();
+    if (normale > presaMaterialiGrammi) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t(
+              'La parte normale supera la presa disponibile: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+              'The normal portion exceeds your available capacity: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final sforzo = normale;
+    final totale = oculumGatherEffortTotalGrams(normale);
+    setState(() {
+      presaMaterialiGrammi -= normale;
+      setCurrentStatFromVisibleInput(
+        'volonta',
+        max(0, volontaTotale() - costoVolonta).toString(),
+      );
+      risultato = t(
+        'Oltre i limiti: ${formatoPesoMateriali(normale)} normali + ${formatoPesoMateriali(sforzo)} da sforzo = ${formatoPesoMateriali(totale)}. Volontà -$costoVolonta. Presa rimasta: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+        'Beyond the limit: ${formatoPesoMateriali(normale)} normal + ${formatoPesoMateriali(sforzo)} from effort = ${formatoPesoMateriali(totale)}. Will -$costoVolonta. Capacity left: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
       );
       aggiungiLog(risultato);
     });
@@ -1256,6 +1320,18 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                   onPressed: _usaPresaMateriali,
                   icon: const Icon(Icons.inventory_2_outlined),
                   label: Text(t('Prendi', 'Take')),
+                ),
+                OutlinedButton.icon(
+                  key: const ValueKey<String>('gather_beyond_limits_button'),
+                  onPressed: _usaPresaMaterialiOltreILimite,
+                  icon: const Icon(Icons.local_fire_department_outlined),
+                  label: Text(t('Oltre i limiti', 'Beyond the limit')),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFFFC476),
+                    side: BorderSide(
+                      color: const Color(0xFFFFA726).withValues(alpha: 0.72),
+                    ),
+                  ),
                 ),
                 OutlinedButton.icon(
                   onPressed: _aumentaPresaMaterialiTemporanea,
