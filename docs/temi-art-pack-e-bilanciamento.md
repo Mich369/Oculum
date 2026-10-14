@@ -14,7 +14,11 @@ I temi sono puramente decorativi: nessun riordino, ridimensionamento o spostamen
 - `design/themes/<id>/*.svg`: cornici vettoriali modificabili.
 - `scripts/build_theme_art_packs.cjs`: esportazione riproducibile dei PNG; accetta il percorso del modulo sharp come primo parametro.
 - `lib/widgets/oculum_theme_sheet_art.dart`: spazi protetti, layout adattivo e movimento della scena.
+- `lib/widgets/oculum_goth_ornaments.dart`: motivi incisi diversi sui bordi dei pulsanti e delle schede; la pittura resta dentro i margini e non cambia dimensioni, posizione, hit-area o testo.
 - `design/theme-art-manifest.json`: dimensioni e hash degli asset realmente inclusi.
+
+## Incisioni decorative sui controlli
+Ogni famiglia ha un segno più leggibile sui quattro angoli dei pulsanti: tralcio e foglie, sfaccettatura, bullone, stella, onda, fiamma o arco gotico. I motivi sono disegnati dal `ShapeBorder` esistente, dentro la cornice già presente; le misure e le callback dei pulsanti restano invariate. La variante `none` resta priva di decorazioni.
 
 ## Mostri: correzioni conservative
 Identità, statistiche base, drop e requisiti dei mostri vengono conservati.

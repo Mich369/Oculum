@@ -95,8 +95,8 @@ class OculumButtonFrame extends RoundedRectangleBorder {
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
     super.paint(canvas, rect, textDirection: textDirection);
     if (family == OculumGothFamily.none ||
-        rect.width < 36 ||
-        rect.height < 32) {
+        rect.width < 52 ||
+        rect.height < 36) {
       return;
     }
     final alpha = (opacity * .62).clamp(.08, .42);
@@ -112,8 +112,10 @@ class OculumButtonFrame extends RoundedRectangleBorder {
       ..strokeWidth = .7
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
+    // Keep all ornament inside the button's existing padding. The expanded
+    // corners make the theme visible at a glance without covering its label.
     const inset = 3.5;
-    const reach = 8.5;
+    const reach = 11.0;
     for (final right in [false, true]) {
       for (final bottom in [false, true]) {
         final x = right ? rect.right - inset : rect.left + inset;
@@ -127,71 +129,105 @@ class OculumButtonFrame extends RoundedRectangleBorder {
           case OculumGothFamily.botanical:
             final stem = Path()
               ..moveTo(0, reach)
-              ..quadraticBezierTo(1, 2, reach, 0);
+              ..cubicTo(1, 5, 5, 7, 7, 3)
+              ..quadraticBezierTo(9, 1, reach, 0);
             canvas.drawPath(stem, line);
-            final leaf = Path()
-              ..moveTo(3, 4)
-              ..quadraticBezierTo(3, 0, 7, 1)
-              ..quadraticBezierTo(7, 4, 3, 4)
-              ..close();
-            canvas.drawPath(leaf, detail);
+            for (final leaf in [
+              Path()
+                ..moveTo(3, 7)
+                ..quadraticBezierTo(2, 3, 6, 4)
+                ..quadraticBezierTo(7, 7, 3, 7)
+                ..close(),
+              Path()
+                ..moveTo(7, 4)
+                ..quadraticBezierTo(7, 0, 10, 1)
+                ..quadraticBezierTo(11, 4, 7, 4)
+                ..close(),
+            ]) {
+              canvas.drawPath(leaf, detail);
+            }
+            canvas.drawCircle(const Offset(4, 8), .8, line);
           case OculumGothFamily.crystal:
             final shard = Path()
-              ..moveTo(0, 1)
-              ..lineTo(2.5, 0)
-              ..lineTo(reach, 2.5)
-              ..lineTo(2.5, reach)
-              ..lineTo(0, 1);
+              ..moveTo(1, 2)
+              ..lineTo(4, 0)
+              ..lineTo(reach, 3)
+              ..lineTo(4, reach)
+              ..lineTo(1, 2);
             canvas.drawPath(shard, line);
-            canvas.drawLine(
-              const Offset(2.5, 1.5),
-              const Offset(2.5, 7),
-              detail,
-            );
+            canvas.drawLine(const Offset(4, 1), const Offset(4, 9), detail);
+            canvas.drawLine(const Offset(4, 5), const Offset(9, 3), detail);
           case OculumGothFamily.forged:
-            canvas.drawCircle(const Offset(4, 4), 2.7, line);
-            canvas.drawLine(const Offset(2, 4), const Offset(6, 4), detail);
+            canvas.drawRRect(
+              RRect.fromRectAndRadius(
+                const Rect.fromLTWH(1, 1, 9, 9),
+                const Radius.circular(2),
+              ),
+              line,
+            );
+            canvas.drawCircle(const Offset(5.5, 5.5), 2.1, detail);
+            canvas.drawLine(const Offset(4, 5.5), const Offset(7, 5.5), line);
+            canvas.drawCircle(const Offset(2.5, 2.5), .7, detail);
           case OculumGothFamily.astral:
-            canvas.drawLine(const Offset(4, 0), const Offset(4, 8), line);
-            canvas.drawLine(const Offset(0, 4), const Offset(8, 4), line);
-            canvas.drawLine(
-              const Offset(1.2, 1.2),
-              const Offset(6.8, 6.8),
-              detail,
-            );
-            canvas.drawLine(
-              const Offset(6.8, 1.2),
-              const Offset(1.2, 6.8),
-              detail,
-            );
+            final star = Path()
+              ..moveTo(5.5, 0)
+              ..lineTo(6.8, 4.2)
+              ..lineTo(reach, 5.5)
+              ..lineTo(6.8, 6.8)
+              ..lineTo(5.5, reach)
+              ..lineTo(4.2, 6.8)
+              ..lineTo(0, 5.5)
+              ..lineTo(4.2, 4.2)
+              ..close();
+            canvas.drawPath(star, line);
+            canvas.drawCircle(const Offset(5.5, 5.5), 1.5, detail);
+            canvas.drawCircle(const Offset(5.5, 5.5), .65, line);
           case OculumGothFamily.tide:
             final curl = Path()
-              ..moveTo(0, 1)
-              ..cubicTo(2, 1, 2, 5, 5, 5)
-              ..cubicTo(7, 5, 7, 7, reach, 7);
+              ..moveTo(0, 2)
+              ..cubicTo(3, 0, 3, 6, 6, 6)
+              ..cubicTo(9, 6, 8, 2, reach, 2);
             canvas.drawPath(curl, line);
-            canvas.drawCircle(const Offset(5, 2), .9, detail);
+            canvas.drawPath(
+              Path()
+                ..moveTo(1, 9)
+                ..quadraticBezierTo(5, 6, 9, 9),
+              detail,
+            );
+            canvas.drawCircle(const Offset(8, 7), .9, line);
           case OculumGothFamily.ember:
             final flame = Path()
-              ..moveTo(1, reach)
-              ..quadraticBezierTo(0, 4, 4, 0)
-              ..quadraticBezierTo(3, 5, reach, 4)
-              ..quadraticBezierTo(7, 8, 1, reach);
+              ..moveTo(2, reach)
+              ..quadraticBezierTo(0, 7, 4, 4)
+              ..quadraticBezierTo(4, 2, 6, 0)
+              ..quadraticBezierTo(6, 4, reach, 5)
+              ..quadraticBezierTo(10, 9, 7, reach)
+              ..close();
             canvas.drawPath(flame, line);
+            canvas.drawPath(
+              Path()
+                ..moveTo(5, 9)
+                ..quadraticBezierTo(4, 7, 7, 5)
+                ..quadraticBezierTo(8, 8, 5, 9),
+              detail,
+            );
           case OculumGothFamily.cathedral:
             final arch = Path()
               ..moveTo(0, reach)
-              ..lineTo(0, 4)
-              ..quadraticBezierTo(0, 0, 4, 0)
-              ..lineTo(reach, 0);
+              ..lineTo(0, 5)
+              ..quadraticBezierTo(0, 1, 5, 1)
+              ..lineTo(reach, 1);
             canvas.drawPath(arch, line);
             canvas.drawPath(
               Path()
-                ..moveTo(3, 2)
-                ..lineTo(4.5, 4)
-                ..lineTo(6, 2),
+                ..moveTo(3, 9)
+                ..lineTo(3, 6)
+                ..quadraticBezierTo(3, 3, 6, 3)
+                ..quadraticBezierTo(9, 3, 9, 6)
+                ..lineTo(9, 9),
               detail,
             );
+            canvas.drawLine(const Offset(6, 4), const Offset(6, 9), detail);
           case OculumGothFamily.none:
             break;
         }
