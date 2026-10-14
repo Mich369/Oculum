@@ -1751,6 +1751,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         return 'postea';
       case 'vervain_gothic':
         return 'vervain';
+      case 'restyle_sogno':
+        return 'dream';
       case 'kingi_wrong_future':
         return 'kingi';
       case 'jrpg_legend':
@@ -1853,6 +1855,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         return t('libro e glifi d archivio', 'archive book and glyphs');
       case 'vervain_gothic':
         return t('fiori Vervain e rovi', 'Vervain flowers and thorns');
+      case 'restyle_sogno':
+        return t(
+          'nuvole blu, viola e rosa pastello',
+          'blue, violet and pastel pink clouds',
+        );
       case 'kingi_wrong_future':
         return t('motore runico Kingi', 'Kingi runic engine');
       case 'blood_chapel':

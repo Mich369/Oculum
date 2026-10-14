@@ -1300,5 +1300,26 @@
     ],
     "responsive": "Desktop: laterale; tablet: angolo; telefono: sigillo compatto sopra la cornice",
     "status": "asset_created"
+  },
+  {
+    "id": "restyle_sogno",
+    "name": "Sogno",
+    "source": "lib/src/main/oculum_design_system.dart",
+    "atmosphere": "Dark fantasy Oculum; interpretare il significato del tema esistente",
+    "formsAndMaterials": "nuvole stratificate blu, viola e rosa pastello",
+    "signaturePng": "assets/themes/restyle_sogno/overlays/relic.png",
+    "assetBytes": 8087,
+    "assetSha256": "80dac4b7939b89e3abaa7012b078819b7611e8411ca993c47a6af3c8bb06bb21",
+    "motion": "nubi che scorrono lentamente",
+    "lighting": "Luce locale sulla reliquia; colori personalizzati mantenuti",
+    "particles": "Pochi elementi coerenti con materiali e simboli",
+    "forbidden": [
+      "decorazioni su testo o controlli",
+      "stessa silhouette semplicemente ricolorata",
+      "video continui",
+      "asset privi di alpha"
+    ],
+    "responsive": "Desktop: laterale; tablet: angolo; telefono: sigillo compatto sopra la cornice",
+    "status": "asset_created"
   }
 ]

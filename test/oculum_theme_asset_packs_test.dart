@@ -38,6 +38,46 @@ void main() {
     }
   });
   test(
+    'both art variants ship transparent PNGs for every theme role',
+    () async {
+      for (final pack in oculumThemeAssetPacks.values) {
+        for (final variant in ['still', 'alive']) {
+          for (final role in [
+            'panel',
+            'mobile',
+            'portrait',
+            'statistics',
+            'separator',
+          ]) {
+            final file = File(pack.frame(role, variant: variant));
+            expect(
+              file.existsSync(),
+              isTrue,
+              reason: '${pack.id}/$role/$variant',
+            );
+            final codec = await ui.instantiateImageCodec(
+              await file.readAsBytes(),
+              targetWidth: 64,
+            );
+            final image = (await codec.getNextFrame()).image;
+            final pixels = await image.toByteData(
+              format: ui.ImageByteFormat.rawStraightRgba,
+            );
+            final center =
+                ((image.height ~/ 2) * image.width + image.width ~/ 2) * 4 + 3;
+            expect(
+              pixels!.getUint8(center),
+              0,
+              reason: '${pack.id}/$role/$variant reading center',
+            );
+            image.dispose();
+            codec.dispose();
+          }
+        }
+      }
+    },
+  );
+  test(
     'every registered theme relic is a real PNG with transparent pixels',
     () async {
       for (final pack in oculumThemeAssetPacks.values) {
@@ -82,6 +122,7 @@ void main() {
       await setOculumThemePresentation(
         const OculumThemePresentation().copyWith(
           motion: OculumThemeMotion.disabled,
+          variant: OculumThemeVariant.alive,
           relicScale: 99,
           relicOpacity: -1,
           artPackId: 'vervain_gothic',
@@ -90,6 +131,7 @@ void main() {
       oculumThemePresentation.value = const OculumThemePresentation();
       await loadOculumThemePresentation();
       expect(oculumThemePresentation.value.motion, OculumThemeMotion.disabled);
+      expect(oculumThemePresentation.value.variant, OculumThemeVariant.alive);
       expect(oculumThemePresentation.value.relicScale, 1.3);
       expect(oculumThemePresentation.value.relicOpacity, .25);
       expect(oculumThemePresentation.value.artPackId, 'vervain_gothic');

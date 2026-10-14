@@ -1,0 +1,13 @@
+{
+  "id": "restyle_sogno",
+  "name": "Sogno",
+  "materials": "nuvole stratificate blu, viola e rosa pastello",
+  "family": "dream",
+  "signature": "4aed2399d060de0d32a2d037078d7872806d7646de6a236dd5a1f396dd01e4d4",
+  "motion": "nubi che scorrono lentamente",
+  "figmaFile": "Dw1F8sR6bzTCuGkaH2CEeS",
+  "safeCenter": "Artwork only in outer 28 pixels; alpha=0 in reading area",
+  "desktop": "extended scene and split edge",
+  "tablet": "compact edge and side ornament",
+  "mobile": "dedicated shallow scene and narrow frame"
+}

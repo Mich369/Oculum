@@ -1,0 +1,9 @@
+{
+  "width": 640,
+  "height": 96,
+  "source": "assets/themes/ivory_archive/overlays/relic.png",
+  "layers": 1,
+  "variant": "still",
+  "placement": "left",
+  "alphaCenter": 0
+}

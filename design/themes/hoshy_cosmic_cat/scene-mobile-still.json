@@ -1,0 +1,9 @@
+{
+  "width": 640,
+  "height": 96,
+  "source": "assets/themes/hoshy_cosmic_cat/overlays/relic.png",
+  "layers": 1,
+  "variant": "still",
+  "placement": "left",
+  "alphaCenter": 0
+}

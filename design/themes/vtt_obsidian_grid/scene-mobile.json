@@ -3,5 +3,7 @@
   "height": 96,
   "source": "assets/themes/vtt_obsidian_grid/overlays/relic.png",
   "layers": 1,
-  "placement": "right"
+  "variant": "default",
+  "placement": "right",
+  "alphaCenter": 0
 }

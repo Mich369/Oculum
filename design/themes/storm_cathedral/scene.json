@@ -3,5 +3,7 @@
   "height": 192,
   "source": "assets/themes/storm_cathedral/overlays/relic.png",
   "layers": 1,
-  "placement": "right"
+  "variant": "default",
+  "placement": "right",
+  "alphaCenter": 0
 }

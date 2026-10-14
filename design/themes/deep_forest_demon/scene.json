@@ -3,5 +3,7 @@
   "height": 192,
   "source": "assets/themes/deep_forest_demon/overlays/relic.png",
   "layers": 1,
-  "placement": "right"
+  "variant": "default",
+  "placement": "right",
+  "alphaCenter": 0
 }

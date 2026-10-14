@@ -1,0 +1,9 @@
+{
+  "width": 1024,
+  "height": 192,
+  "source": "assets/themes/vervain_gothic/overlays/relic.png",
+  "layers": 1,
+  "variant": "still",
+  "placement": "left",
+  "alphaCenter": 0
+}

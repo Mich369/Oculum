@@ -41,6 +41,7 @@ class OculumThemeSheetFrame extends StatelessWidget {
               'mobile' => const Rect.fromLTRB(96, 48, 544, 272),
               _ => const Rect.fromLTRB(128, 64, 896, 448),
             };
+            final variant = presentation.variant.name;
             return Stack(
               fit: StackFit.passthrough,
               clipBehavior: Clip.none,
@@ -53,8 +54,10 @@ class OculumThemeSheetFrame extends StatelessWidget {
                         child: Opacity(
                           opacity: presentation.relicOpacity,
                           child: Image.asset(
-                            pack.frame(name),
-                            key: ValueKey('theme-sheet-frame-${pack.id}-$name'),
+                            pack.frame(name, variant: variant),
+                            key: ValueKey(
+                              'theme-sheet-frame-${pack.id}-$name-$variant',
+                            ),
                             scale: 2,
                             centerSlice: Rect.fromLTRB(
                               slice.left / 2,
@@ -139,14 +142,16 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
     final spec = Theme.of(context).extension<OculumGothOrnaments>();
     if (spec != null && spec.themeId.isNotEmpty && spec.opacity > 0) {
       final pack = oculumResolveThemeArt(spec, oculumThemePresentation.value);
-      if (pack.id != preloadedPack) {
-        preloadedPack = pack.id;
+      final variant = oculumThemePresentation.value.variant.name;
+      final preloadKey = '${pack.id}:$variant';
+      if (preloadKey != preloadedPack) {
+        preloadedPack = preloadKey;
         final mobile = MediaQuery.sizeOf(context).width < 600;
         for (final asset in [
-          pack.frame(mobile ? 'mobile' : 'panel'),
-          pack.frame('portrait'),
-          pack.frame('statistics'),
-          pack.scene(mobile: mobile),
+          pack.frame(mobile ? 'mobile' : 'panel', variant: variant),
+          pack.frame('portrait', variant: variant),
+          pack.frame('statistics', variant: variant),
+          pack.scene(mobile: mobile, variant: variant),
         ]) {
           precacheImage(AssetImage(asset), context);
         }
@@ -210,6 +215,7 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
       valueListenable: oculumThemePresentation,
       builder: (context, presentation, _) {
         final pack = oculumResolveThemeArt(spec, presentation);
+        final variant = presentation.variant.name;
         final mobile = MediaQuery.sizeOf(context).width < 600;
         final height = (mobile ? 52.0 : 96.0) * presentation.relicScale;
         return SizedBox(
@@ -225,7 +231,7 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: Image.asset(
-                          pack.frame('separator'),
+                          pack.frame('separator', variant: variant),
                           height: 12,
                           width: double.infinity,
                           fit: BoxFit.fill,
@@ -238,7 +244,7 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
                         child: Opacity(
                           opacity: presentation.relicOpacity,
                           child: Image.asset(
-                            pack.scene(mobile: mobile),
+                            pack.scene(mobile: mobile, variant: variant),
                             fit: BoxFit.contain,
                             alignment: Alignment.centerRight,
                             cacheWidth: mobile ? 640 : 1024,

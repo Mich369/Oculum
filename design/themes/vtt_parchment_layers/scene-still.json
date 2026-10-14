@@ -1,0 +1,9 @@
+{
+  "width": 1024,
+  "height": 192,
+  "source": "assets/themes/vtt_parchment_layers/overlays/relic.png",
+  "layers": 1,
+  "variant": "still",
+  "placement": "right",
+  "alphaCenter": 0
+}

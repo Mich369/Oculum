@@ -1,0 +1,9 @@
+{
+  "width": 640,
+  "height": 96,
+  "source": "assets/themes/moon_iron/overlays/relic.png",
+  "layers": 1,
+  "variant": "still",
+  "placement": "left",
+  "alphaCenter": 0
+}

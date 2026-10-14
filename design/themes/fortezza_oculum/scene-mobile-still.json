@@ -1,0 +1,9 @@
+{
+  "width": 640,
+  "height": 96,
+  "source": "assets/themes/fortezza_oculum/overlays/relic.png",
+  "layers": 1,
+  "variant": "still",
+  "placement": "right",
+  "alphaCenter": 0
+}

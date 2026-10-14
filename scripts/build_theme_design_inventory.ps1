@@ -64,6 +64,8 @@ restyle_sangue|occhio suturato e filo di essenza|essenza nel filo
 restyle_aurora|occhio ametista e veli aurorali|velo aurorale
 restyle_natura|occhio nel seme e radici bronzee|radice oscillante
 restyle_lume|occhio di cera e candelabro antico|fiamma della candela
+restyle_sogno|nuvole stratificate blu, viola e rosa pastello|nubi che scorrono lentamente
+restyle_sogno|nuvole stratificate blu, viola e rosa pastello|nubi che scorrono lentamente
 '@
 $lookup = @{}
 foreach ($line in $identities.Trim().Split("`n")) {
@@ -95,7 +97,7 @@ $themes = foreach ($source in $sources) {
     }
   }
 }
-if (@($themes).Count -ne 62) { throw "Expected 62 existing themes, found $(@($themes).Count)" }
+if (@($themes).Count -ne 63) { throw "Expected 63 existing themes, found $(@($themes).Count)" }
 $destination = Join-Path $root 'docs/design'
 New-Item -ItemType Directory -Path $destination -Force | Out-Null
 $themes | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $destination 'theme-art-bible.json') -Encoding utf8
@@ -106,8 +108,8 @@ $dart.Add('class OculumThemeAssetPack {')
 $dart.Add('  const OculumThemeAssetPack(this.id, this.name, this.motif, this.motion);')
 $dart.Add('  final String id, name, motif, motion;')
 $dart.Add('  String get relic => "assets/themes/$id/overlays/relic.png";')
-$dart.Add('  String frame(String role) => ''assets/themes/$id/frames/$role.png'';')
-$dart.Add('  String scene({required bool mobile}) => ''assets/themes/$id/decorations/scene${mobile ? ''-mobile'' : ''''}.png'';')
+$dart.Add('  String frame(String role, {String variant = ""}) => "assets/themes/$id/frames/$role${variant.isEmpty ? "" : "-$variant"}.png";')
+$dart.Add('  String scene({required bool mobile, String variant = ""}) => "assets/themes/$id/decorations/scene${mobile ? "-mobile" : ""}${variant.isEmpty ? "" : "-$variant"}.png";')
 $dart.Add('}')
 $dart.Add('const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{')
 foreach ($theme in $themes) {

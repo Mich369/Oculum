@@ -1,0 +1,9 @@
+{
+  "width": 1024,
+  "height": 192,
+  "source": "assets/themes/vtt_arcane_table/overlays/relic.png",
+  "layers": 1,
+  "variant": "alive",
+  "placement": "left",
+  "alphaCenter": 0
+}

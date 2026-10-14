@@ -4431,6 +4431,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       decoration.secondary,
       decoration.accent,
       oculumGraphicsEnabled.value,
+      oculumThemePresentation.value.variant,
     ]);
     if (_cachedAppTypographyTheme == null ||
         _cachedAppTypographyStyle != stileCarattereApp ||
@@ -4455,6 +4456,7 @@ class _OculumHomePageState extends State<OculumHomePage>
               .55,
             )!,
             buttonDecorationOpacity: decoration.opacity,
+            themeVariant: oculumThemePresentation.value.variant,
           ).copyWith(
             extensions: [
               ...inheritedTheme.extensions.values,

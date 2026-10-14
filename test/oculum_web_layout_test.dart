@@ -10,6 +10,7 @@ void main() {
         const Size(390, 844),
         const Size(834, 1194),
         const Size(1024, 1366),
+        const Size(1080, 1920),
       ]) {
         expect(oculumWebUsesDesktop(size, OculumWebViewMode.automatic), false);
         expect(
@@ -68,6 +69,15 @@ void main() {
     await tester.pump();
     expect(desktop, true);
     expect(size!.shortestSide, greaterThanOrEqualTo(600));
+    await tester.binding.setSurfaceSize(const Size(1920, 1080));
+    await tester.pump();
+    expect(desktop, true);
+    expect(size, const Size(1920, 1080));
+    await tester.binding.setSurfaceSize(const Size(1080, 1920));
+    await tester.pump();
+    expect(desktop, false);
+    expect(size!.width, 599);
+    expect(size!.aspectRatio, closeTo(1080 / 1920, .001));
     expect(tester.takeException(), isNull);
   });
 }

@@ -3,9 +3,10 @@ class OculumThemeAssetPack {
   const OculumThemeAssetPack(this.id, this.name, this.motif, this.motion);
   final String id, name, motif, motion;
   String get relic => "assets/themes/$id/overlays/relic.png";
-  String frame(String role) => 'assets/themes/$id/frames/$role.png';
-  String scene({required bool mobile}) =>
-      'assets/themes/$id/decorations/scene${mobile ? '-mobile' : ''}.png';
+  String frame(String role, {String variant = ""}) =>
+      "assets/themes/$id/frames/$role${variant.isEmpty ? "" : "-$variant"}.png";
+  String scene({required bool mobile, String variant = ""}) =>
+      "assets/themes/$id/decorations/scene${mobile ? "-mobile" : ""}${variant.isEmpty ? "" : "-$variant"}.png";
 }
 
 const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
@@ -380,5 +381,11 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
     "Lume",
     "occhio di cera e candelabro antico",
     "fiamma della candela",
+  ),
+  "restyle_sogno": OculumThemeAssetPack(
+    "restyle_sogno",
+    "Sogno",
+    "nuvole stratificate blu, viola e rosa pastello",
+    "nubi che scorrono lentamente",
   ),
 };

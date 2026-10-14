@@ -69,6 +69,43 @@ Color oculumReadableThemeColor(
   return whiteRatio >= blackRatio ? Colors.white : Colors.black;
 }
 
+/// Preserves the theme's hue while keeping text readable on page and panel layers.
+Color oculumReadableThemeColorOnLayers(
+  Color preferred,
+  Iterable<Color> backgrounds, {
+  double minRatio = 4.5,
+}) {
+  final layers = backgrounds.toList(growable: false);
+  if (layers.isEmpty) return preferred;
+  bool readable(Color color) => layers.every(
+    (background) =>
+        oculumThemeContrastRatio(
+          Color.alphaBlend(color, background),
+          background,
+        ) >=
+        minRatio,
+  );
+  final opaque = preferred.withValues(alpha: 1);
+  if (readable(opaque)) return opaque;
+  final original = HSLColor.fromColor(opaque);
+  for (var step = 1; step <= 20; step++) {
+    final delta = step * .025;
+    for (final lightness in [
+      (original.lightness + delta).clamp(0.0, 1.0),
+      (original.lightness - delta).clamp(0.0, 1.0),
+    ]) {
+      final candidate = original.withLightness(lightness).toColor();
+      if (readable(candidate)) return candidate;
+    }
+  }
+  double score(Color color) => layers
+      .map((layer) => oculumThemeContrastRatio(color, layer))
+      .reduce((left, right) => left < right ? left : right);
+  return score(Colors.white) >= score(Colors.black)
+      ? Colors.white
+      : Colors.black;
+}
+
 /// Shared by the sheet and the navigator, including dialogs and popup routes.
 ThemeData oculumBuildPaletteTheme({
   required ThemeData base,
@@ -81,16 +118,33 @@ ThemeData oculumBuildPaletteTheme({
   OculumGothFamily buttonFamily = OculumGothFamily.none,
   Color buttonInk = Colors.transparent,
   double buttonDecorationOpacity = 0,
+  OculumThemeVariant themeVariant = OculumThemeVariant.still,
 }) {
-  final text = oculumReadableThemeColor(primary, surface);
-  final highlight = oculumReadableThemeColor(accent, surface);
+  final textLayers = <Color>[surface, background];
+  final text = oculumReadableThemeColorOnLayers(primary, textLayers);
+  final highlight = oculumReadableThemeColorOnLayers(accent, textLayers);
   final onHighlight = oculumReadableThemeColor(primary, highlight);
   final raisedSurface = Color.lerp(surface, primary, .035)!;
+  final onRaisedSurface = oculumReadableThemeColorOnLayers(primary, <Color>[
+    raisedSurface,
+    background,
+  ]);
+  final disabledText = oculumReadableThemeColorOnLayers(
+    primary.withValues(alpha: .72),
+    textLayers,
+    minRatio: 3,
+  );
+  final highlightBorder = oculumReadableThemeColorOnLayers(
+    accent,
+    textLayers,
+    minRatio: 3,
+  );
   final controlShape = OculumButtonFrame(
     family: buttonFamily,
     ink: buttonInk,
     accent: highlight,
     opacity: buttonDecorationOpacity,
+    variant: themeVariant,
     borderRadius: BorderRadius.circular(10),
   );
   final textControlShape = OculumButtonFrame(
@@ -98,6 +152,7 @@ ThemeData oculumBuildPaletteTheme({
     ink: buttonInk,
     accent: highlight,
     opacity: buttonDecorationOpacity,
+    variant: themeVariant,
     borderRadius: BorderRadius.circular(10),
   );
   final controlOverlay = WidgetStateProperty.resolveWith<Color?>((states) {
@@ -111,7 +166,10 @@ ThemeData oculumBuildPaletteTheme({
     }
     return Colors.transparent;
   });
-  final error = oculumReadableThemeColor(base.colorScheme.error, surface);
+  final error = oculumReadableThemeColorOnLayers(
+    base.colorScheme.error,
+    textLayers,
+  );
   final scheme = base.colorScheme.copyWith(
     surface: surface,
     surfaceContainerLowest: background,
@@ -131,8 +189,8 @@ ThemeData oculumBuildPaletteTheme({
     onSecondaryContainer: oculumReadableThemeColor(primary, secondary),
     tertiary: highlight,
     onTertiary: onHighlight,
-    outline: highlight,
-    outlineVariant: highlight.withValues(alpha: .35),
+    outline: highlightBorder,
+    outlineVariant: highlightBorder.withValues(alpha: .58),
     surfaceTint: Colors.transparent,
     error: error,
     onError: oculumReadableThemeColor(primary, error),
@@ -159,36 +217,73 @@ ThemeData oculumBuildPaletteTheme({
     scaffoldBackgroundColor: background,
     canvasColor: surface,
     cardColor: surface,
-    disabledColor: text.withValues(alpha: .38),
-    focusColor: highlight.withValues(alpha: .12),
-    hoverColor: highlight.withValues(alpha: .08),
+    disabledColor: disabledText,
+    focusColor: highlight.withValues(alpha: .16),
+    hoverColor: highlight.withValues(alpha: .11),
     dividerColor: highlight.withValues(alpha: .25),
     textTheme: textTheme,
     primaryTextTheme: textTheme,
     iconTheme: IconThemeData(color: text),
+    appBarTheme: base.appBarTheme.copyWith(
+      backgroundColor: background,
+      foregroundColor: text,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: IconThemeData(color: text),
+      actionsIconTheme: IconThemeData(color: highlight),
+      titleTextStyle: textTheme.titleLarge,
+    ),
+    navigationBarTheme: base.navigationBarTheme.copyWith(
+      backgroundColor: surface,
+      indicatorColor: secondary,
+      surfaceTintColor: Colors.transparent,
+      labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>((states) {
+        return textTheme.labelMedium?.copyWith(
+          color: states.contains(WidgetState.selected) ? highlight : text,
+        );
+      }),
+      iconTheme: WidgetStateProperty.resolveWith<IconThemeData?>((states) {
+        return IconThemeData(
+          color: states.contains(WidgetState.selected) ? highlight : text,
+        );
+      }),
+    ),
+    navigationRailTheme: base.navigationRailTheme.copyWith(
+      backgroundColor: background,
+      indicatorColor: secondary,
+      selectedIconTheme: IconThemeData(color: highlight),
+      unselectedIconTheme: IconThemeData(color: text),
+      selectedLabelTextStyle: textTheme.labelMedium?.copyWith(color: highlight),
+      unselectedLabelTextStyle: textTheme.labelMedium?.copyWith(color: text),
+    ),
+    drawerTheme: base.drawerTheme.copyWith(
+      backgroundColor: surface,
+      surfaceTintColor: Colors.transparent,
+      shape: controlShape,
+    ),
     dialogTheme: base.dialogTheme.copyWith(
       backgroundColor: surface,
       surfaceTintColor: Colors.transparent,
       titleTextStyle: textTheme.titleLarge,
       contentTextStyle: textTheme.bodyMedium,
-      shape: RoundedRectangleBorder(
+      shape: controlShape.copyWith(
+        side: BorderSide(color: highlightBorder.withValues(alpha: .72)),
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: highlight.withValues(alpha: .4)),
       ),
     ),
     popupMenuTheme: base.popupMenuTheme.copyWith(
       color: surface,
       surfaceTintColor: Colors.transparent,
       textStyle: textTheme.bodyMedium,
-      shape: RoundedRectangleBorder(
+      shape: controlShape.copyWith(
+        side: BorderSide(color: highlightBorder.withValues(alpha: .72)),
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: highlight.withValues(alpha: .35)),
       ),
     ),
     bottomSheetTheme: base.bottomSheetTheme.copyWith(
       backgroundColor: surface,
       modalBackgroundColor: surface,
       surfaceTintColor: Colors.transparent,
+      shape: controlShape,
     ),
     tooltipTheme: base.tooltipTheme.copyWith(
       decoration: BoxDecoration(
@@ -202,17 +297,16 @@ ThemeData oculumBuildPaletteTheme({
       backgroundColor: surface,
       contentTextStyle: textTheme.bodyMedium,
       actionTextColor: highlight,
+      shape: controlShape,
     ),
     inputDecorationTheme: base.inputDecorationTheme.copyWith(
       filled: true,
       fillColor: surface,
       labelStyle: textTheme.bodyMedium,
-      hintStyle: textTheme.bodyMedium?.copyWith(
-        color: text.withValues(alpha: .7),
-      ),
+      hintStyle: textTheme.bodyMedium?.copyWith(color: text),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: highlight.withValues(alpha: .35)),
+        borderSide: BorderSide(color: highlightBorder.withValues(alpha: .84)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -230,6 +324,7 @@ ThemeData oculumBuildPaletteTheme({
     cardTheme: base.cardTheme.copyWith(
       color: surface,
       surfaceTintColor: Colors.transparent,
+      shape: controlShape,
     ),
     listTileTheme: base.listTileTheme.copyWith(
       textColor: text,
@@ -245,7 +340,58 @@ ThemeData oculumBuildPaletteTheme({
       backgroundColor: surface,
       selectedColor: secondary,
       labelStyle: textTheme.bodyMedium,
-      side: BorderSide(color: highlight.withValues(alpha: .55)),
+      side: BorderSide(color: highlightBorder.withValues(alpha: .84)),
+    ),
+    checkboxTheme: base.checkboxTheme.copyWith(
+      checkColor: WidgetStatePropertyAll<Color>(onHighlight),
+      fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        return states.contains(WidgetState.selected)
+            ? highlight
+            : Colors.transparent;
+      }),
+      side: BorderSide(color: highlightBorder, width: 1.25),
+    ),
+    radioTheme: base.radioTheme.copyWith(
+      fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        return states.contains(WidgetState.selected) ? highlight : text;
+      }),
+    ),
+    switchTheme: base.switchTheme.copyWith(
+      thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        return states.contains(WidgetState.selected) ? onHighlight : text;
+      }),
+      trackColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        return states.contains(WidgetState.selected)
+            ? highlight
+            : highlightBorder.withValues(alpha: .35);
+      }),
+      trackOutlineColor: WidgetStatePropertyAll<Color>(highlightBorder),
+    ),
+    sliderTheme: base.sliderTheme.copyWith(
+      activeTrackColor: highlight,
+      inactiveTrackColor: highlightBorder.withValues(alpha: .42),
+      thumbColor: highlight,
+      overlayColor: highlight.withValues(alpha: .20),
+      valueIndicatorColor: highlight,
+      valueIndicatorTextStyle: textTheme.labelMedium?.copyWith(
+        color: onHighlight,
+      ),
+    ),
+    progressIndicatorTheme: base.progressIndicatorTheme.copyWith(
+      color: highlight,
+      linearTrackColor: highlightBorder.withValues(alpha: .28),
+      circularTrackColor: highlightBorder.withValues(alpha: .28),
+    ),
+    scrollbarTheme: base.scrollbarTheme.copyWith(
+      thumbColor: WidgetStatePropertyAll<Color>(highlightBorder),
+      trackColor: WidgetStatePropertyAll<Color>(
+        highlightBorder.withValues(alpha: .18),
+      ),
+      trackBorderColor: WidgetStatePropertyAll<Color>(
+        highlightBorder.withValues(alpha: .35),
+      ),
+      radius: const Radius.circular(8),
+      thickness: const WidgetStatePropertyAll<double>(5),
     ),
     iconButtonTheme: IconButtonThemeData(
       style: (base.iconButtonTheme.style ?? const ButtonStyle()).merge(
@@ -258,7 +404,7 @@ ThemeData oculumBuildPaletteTheme({
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: (base.elevatedButtonTheme.style ?? const ButtonStyle()).merge(
         ElevatedButton.styleFrom(
-          foregroundColor: text,
+          foregroundColor: onRaisedSurface,
           backgroundColor: raisedSurface,
           textStyle: textTheme.labelLarge,
           shape: controlShape,

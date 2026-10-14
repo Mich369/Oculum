@@ -107,6 +107,24 @@ const oculumRestylePresets = <OculumColorPreset>[
     backgroundBottom: Color(0xff17130d),
     eyePupilGlow: Color(0xffc3a365),
   ),
+  OculumColorPreset(
+    id: 'restyle_sogno',
+    nameIt: 'Sogno',
+    nameEn: 'Dream',
+    descriptionIt:
+        'Nuvole notturne blu, viola e rosa pastello. Colori modificabili.',
+    descriptionEn:
+        'Night clouds in blue, violet and pastel pink. Colors are editable.',
+    primary: Color(0xffe8dff2),
+    secondary: Color(0xff171a2b),
+    tertiary: Color(0xffaa91d2),
+    utility: Color(0xffa9badb),
+    oculumFormula: Color(0xffc6a5e8),
+    backgroundTop: Color(0xff0b1220),
+    backgroundMid: Color(0xff171a2b),
+    backgroundBottom: Color(0xff171322),
+    eyePupilGlow: Color(0xffc5a5e6),
+  ),
 ];
 
 /// Centralized visual language for the main Oculum application.

@@ -1,0 +1,9 @@
+{
+  "width": 1024,
+  "height": 192,
+  "source": "assets/themes/eclipse_bonfire/overlays/relic.png",
+  "layers": 1,
+  "variant": "alive",
+  "placement": "right",
+  "alphaCenter": 0
+}

@@ -16,6 +16,7 @@ OculumThemeAssetPack oculumResolveThemeArt(
       OculumGothFamily.astral => 'lunar_eclipse',
       OculumGothFamily.tide => 'abyssal_tide',
       OculumGothFamily.ember => 'ember_rite',
+      OculumGothFamily.dream => 'restyle_sogno',
       _ => 'classic_reliquary',
     }]!;
 
@@ -34,9 +35,16 @@ class OculumThemePanelArtwork extends StatelessWidget {
         spec.opacity <= 0) {
       return child;
     }
-    return CustomPaint(
-      foregroundPainter: OculumGothPainter(spec, panel: true),
+    return ValueListenableBuilder<OculumThemePresentation>(
+      valueListenable: oculumThemePresentation,
       child: child,
+      builder: (context, presentation, child) => CustomPaint(
+        foregroundPainter: OculumGothPainter(
+          spec.copyWith(variant: presentation.variant),
+          panel: true,
+        ),
+        child: child,
+      ),
     );
   }
 }
@@ -55,6 +63,7 @@ class OculumThemeRelicBanner extends StatelessWidget {
     OculumGothFamily.tide => Icons.waves_outlined,
     OculumGothFamily.ember => Icons.local_fire_department_outlined,
     OculumGothFamily.cathedral => Icons.architecture_outlined,
+    OculumGothFamily.dream => Icons.cloud_outlined,
     OculumGothFamily.none => Icons.shield_outlined,
   };
 

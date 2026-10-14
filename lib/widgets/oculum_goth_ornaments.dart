@@ -11,6 +11,7 @@ enum OculumGothFamily {
   tide,
   ember,
   cathedral,
+  dream,
 }
 
 /// Decorative strokes stay in the button's outer frame, leaving its label,
@@ -21,6 +22,7 @@ class OculumButtonFrame extends RoundedRectangleBorder {
     required this.ink,
     required this.accent,
     this.opacity = .45,
+    this.variant = OculumThemeVariant.still,
     super.side,
     super.borderRadius = const BorderRadius.all(Radius.circular(10)),
   });
@@ -29,16 +31,19 @@ class OculumButtonFrame extends RoundedRectangleBorder {
   final Color ink;
   final Color accent;
   final double opacity;
+  final OculumThemeVariant variant;
 
   @override
   OculumButtonFrame copyWith({
     BorderSide? side,
     BorderRadiusGeometry? borderRadius,
+    OculumThemeVariant? variant,
   }) => OculumButtonFrame(
     family: family,
     ink: ink,
     accent: accent,
     opacity: opacity,
+    variant: variant ?? this.variant,
     side: side ?? this.side,
     borderRadius: borderRadius ?? this.borderRadius,
   );
@@ -49,6 +54,7 @@ class OculumButtonFrame extends RoundedRectangleBorder {
     ink: ink,
     accent: accent,
     opacity: opacity,
+    variant: variant,
     side: side.scale(t),
     borderRadius: borderRadius * t,
   );
@@ -61,6 +67,7 @@ class OculumButtonFrame extends RoundedRectangleBorder {
         ink: ink,
         accent: accent,
         opacity: opacity,
+        variant: variant,
         side: BorderSide.lerp(a.side, side, t),
         borderRadius: BorderRadiusGeometry.lerp(
           a.borderRadius,
@@ -80,6 +87,7 @@ class OculumButtonFrame extends RoundedRectangleBorder {
         ink: ink,
         accent: accent,
         opacity: opacity,
+        variant: variant,
         side: BorderSide.lerp(side, b.side, t),
         borderRadius: BorderRadiusGeometry.lerp(
           borderRadius,
@@ -228,6 +236,16 @@ class OculumButtonFrame extends RoundedRectangleBorder {
               detail,
             );
             canvas.drawLine(const Offset(6, 4), const Offset(6, 9), detail);
+          case OculumGothFamily.dream:
+            final cloud = Path()
+              ..moveTo(1, 9)
+              ..cubicTo(0, 7, 2, 5, 4, 6)
+              ..cubicTo(4, 2, 9, 2, 9, 6)
+              ..cubicTo(12, 5, 13, 9, 10, 10)
+              ..lineTo(2, 10)
+              ..close();
+            canvas.drawPath(cloud, line);
+            canvas.drawLine(const Offset(4, 8), const Offset(10, 8), detail);
           case OculumGothFamily.none:
             break;
         }
@@ -243,12 +261,13 @@ class OculumButtonFrame extends RoundedRectangleBorder {
       other.ink == ink &&
       other.accent == accent &&
       other.opacity == opacity &&
+      other.variant == variant &&
       other.side == side &&
       other.borderRadius == borderRadius;
 
   @override
   int get hashCode =>
-      Object.hash(family, ink, accent, opacity, side, borderRadius);
+      Object.hash(family, ink, accent, opacity, variant, side, borderRadius);
 }
 
 OculumGothFamily oculumGothFamily(String style) => switch (style) {
@@ -267,6 +286,7 @@ OculumGothFamily oculumGothFamily(String style) => switch (style) {
   'lunar' || 'hoshy' || 'shadow_gate' || 'sigil' => OculumGothFamily.astral,
   'tide' => OculumGothFamily.tide,
   'ember' || 'souls' => OculumGothFamily.ember,
+  'dream' || 'sogno' => OculumGothFamily.dream,
   _ => OculumGothFamily.cathedral,
 };
 
@@ -279,12 +299,14 @@ class OculumGothOrnaments extends ThemeExtension<OculumGothOrnaments> {
     required this.opacity,
     this.motion = false,
     this.themeId = '',
+    this.variant = OculumThemeVariant.still,
   });
   final OculumGothFamily family;
   final Color ink, accent;
   final double opacity;
   final bool motion;
   final String themeId;
+  final OculumThemeVariant variant;
   @override
   OculumGothOrnaments copyWith({
     OculumGothFamily? family,
@@ -293,6 +315,7 @@ class OculumGothOrnaments extends ThemeExtension<OculumGothOrnaments> {
     double? opacity,
     bool? motion,
     String? themeId,
+    OculumThemeVariant? variant,
   }) => OculumGothOrnaments(
     family: family ?? this.family,
     ink: ink ?? this.ink,
@@ -300,6 +323,7 @@ class OculumGothOrnaments extends ThemeExtension<OculumGothOrnaments> {
     opacity: opacity ?? this.opacity,
     motion: motion ?? this.motion,
     themeId: themeId ?? this.themeId,
+    variant: variant ?? this.variant,
   );
   @override
   OculumGothOrnaments lerp(covariant OculumGothOrnaments? other, double t) =>
@@ -312,6 +336,7 @@ class OculumGothOrnaments extends ThemeExtension<OculumGothOrnaments> {
           opacity: opacity + (other.opacity - opacity) * t,
           motion: other.motion,
           themeId: other.themeId,
+          variant: other.variant,
         );
 }
 
@@ -485,31 +510,35 @@ class OculumGothPainter extends CustomPainter {
       }
       canvas.clipRect(Rect.fromLTWH(0, 0, band, size.height));
       if (particles) {
-        for (var i = 0; i < 7; i++) {
-          final t = ((clock?.value ?? 0) + i / 7) % 1;
-          final y = t * (size.height + 20) - 10;
-          final x = band * .5 + math.sin(t * math.pi * 6 + i) * band * .25;
-          canvas.save();
-          canvas.translate(x, y);
-          canvas.rotate(t * math.pi * 3 + i);
-          if (spec.family == OculumGothFamily.botanical) {
-            canvas.drawOval(
-              const Rect.fromLTWH(-2, -4, 4, 8),
-              _paint(spec.accent),
-            );
-            canvas.drawLine(
-              const Offset(0, -3),
-              const Offset(0, 3),
-              _paint(spec.ink, stroke: true, width: .4),
-            );
-          } else {
-            canvas.drawCircle(
-              Offset.zero,
-              i.isEven ? 1.5 : .8,
-              _paint(spec.accent),
-            );
+        if (spec.family == OculumGothFamily.dream) {
+          _driftingClouds(canvas, band, size.height);
+        } else {
+          for (var i = 0; i < 7; i++) {
+            final t = ((clock?.value ?? 0) + i / 7) % 1;
+            final y = t * (size.height + 20) - 10;
+            final x = band * .5 + math.sin(t * math.pi * 6 + i) * band * .25;
+            canvas.save();
+            canvas.translate(x, y);
+            canvas.rotate(t * math.pi * 3 + i);
+            if (spec.family == OculumGothFamily.botanical) {
+              canvas.drawOval(
+                const Rect.fromLTWH(-2, -4, 4, 8),
+                _paint(spec.accent),
+              );
+              canvas.drawLine(
+                const Offset(0, -3),
+                const Offset(0, 3),
+                _paint(spec.ink, stroke: true, width: .4),
+              );
+            } else {
+              canvas.drawCircle(
+                Offset.zero,
+                i.isEven ? 1.5 : .8,
+                _paint(spec.accent),
+              );
+            }
+            canvas.restore();
           }
-          canvas.restore();
         }
       } else {
         switch (spec.family) {
@@ -533,6 +562,9 @@ class OculumGothPainter extends CustomPainter {
             break;
           case OculumGothFamily.cathedral:
             _arches(canvas, band, size.height);
+            break;
+          case OculumGothFamily.dream:
+            _clouds(canvas, band, size.height);
             break;
           case OculumGothFamily.none:
             break;
@@ -606,6 +638,15 @@ class OculumGothPainter extends CustomPainter {
           stroke,
         );
         canvas.drawLine(const Offset(8, 6), const Offset(8, 11), detail);
+      case OculumGothFamily.dream:
+        for (var i = 0; i < 3; i++) {
+          canvas.drawPath(
+            Path()
+              ..moveTo(3, 9 - i * 2.3)
+              ..cubicTo(3, 5 - i * 2.3, 10, 5 - i * 2.3, 11, 8 - i * 2.3),
+            stroke,
+          );
+        }
       case OculumGothFamily.none:
         break;
     }
@@ -774,6 +815,55 @@ class OculumGothPainter extends CustomPainter {
         Offset(w * .5, y + 26),
         _paint(spec.accent, stroke: true, width: .6),
       );
+    }
+  }
+
+  void _clouds(Canvas c, double w, double h) {
+    // Layered cloud contours stay inside the narrow edge gutter.
+    final heightStep = spec.variant == OculumThemeVariant.alive ? 48.0 : 62.0;
+    for (var y = 12.0; y < h; y += heightStep) {
+      final cloud = Path()
+        ..moveTo(1, y + 18)
+        ..cubicTo(4, y + 8, 10, y + 9, w * .44, y + 12)
+        ..cubicTo(w * .5, y - 1, w * .8, y + 1, w - 1, y + 12)
+        ..cubicTo(w + 4, y + 24, w * .6, y + 26, 1, y + 18);
+      c.drawPath(cloud, _paint(spec.ink, stroke: true, width: 1.8));
+      c.drawPath(
+        cloud.shift(
+          Offset(-1, spec.variant == OculumThemeVariant.alive ? 5 : 3),
+        ),
+        _paint(spec.accent, stroke: true, width: .75),
+      );
+      if (spec.variant == OculumThemeVariant.alive) {
+        for (var i = 0; i < 3; i++) {
+          final x = w * (.22 + i * .27);
+          c.drawCircle(
+            Offset(x, y + 28),
+            i.isEven ? 1.6 : 1,
+            _paint(spec.accent),
+          );
+        }
+      }
+    }
+  }
+
+  void _driftingClouds(Canvas c, double w, double h) {
+    // A restrained horizontal drift keeps the Dream theme alive without
+    // pulling focus from the sheet or moving any interactive element.
+    final phase = (clock?.value ?? 0) * math.pi * 2;
+    final step = spec.variant == OculumThemeVariant.alive ? 86.0 : 112.0;
+    for (var i = 0, y = 28.0; y < h + step; i++, y += step) {
+      final drift =
+          math.sin(phase + i * .9) *
+          (spec.variant == OculumThemeVariant.alive ? 2.4 : 1.4);
+      final cloud = Path()
+        ..moveTo(1, y + 7 + drift)
+        ..quadraticBezierTo(w * .18, y - 1 + drift, w * .42, y + 6 + drift)
+        ..quadraticBezierTo(w * .72, y - 3 + drift, w - 1, y + 8 + drift);
+      c.drawPath(cloud, _paint(spec.accent, stroke: true, width: 1.1));
+      if (spec.variant == OculumThemeVariant.alive) {
+        c.drawCircle(Offset(w * .42, y + 12 + drift), 1.1, _paint(spec.ink));
+      }
     }
   }
 

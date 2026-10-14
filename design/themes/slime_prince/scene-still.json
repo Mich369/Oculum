@@ -1,0 +1,9 @@
+{
+  "width": 1024,
+  "height": 192,
+  "source": "assets/themes/slime_prince/overlays/relic.png",
+  "layers": 1,
+  "variant": "still",
+  "placement": "left",
+  "alphaCenter": 0
+}

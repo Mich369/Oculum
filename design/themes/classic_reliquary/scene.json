@@ -3,5 +3,7 @@
   "height": 192,
   "source": "assets/themes/classic_reliquary/overlays/relic.png",
   "layers": 0,
-  "placement": "right"
+  "variant": "default",
+  "placement": "right",
+  "alphaCenter": 0
 }

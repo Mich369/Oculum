@@ -95,6 +95,7 @@ class OculumThemeScope extends StatelessWidget {
                   motion:
                       ornaments.motion &&
                       presentation.motion != OculumThemeMotion.disabled,
+                  variant: presentation.variant,
                 ) ??
                 const OculumGothOrnaments(
                   family: OculumGothFamily.none,
@@ -102,7 +103,17 @@ class OculumThemeScope extends StatelessWidget {
                   accent: Colors.transparent,
                   opacity: 0,
                 ),
-            child: child!,
+            child: Theme(
+              data: theme.copyWith(
+                extensions: [
+                  for (final extension in theme.extensions.values)
+                    if (extension is! OculumGothOrnaments) extension,
+                  if (ornaments != null)
+                    ornaments.copyWith(variant: presentation.variant),
+                ],
+              ),
+              child: child!,
+            ),
           ),
         ),
       );

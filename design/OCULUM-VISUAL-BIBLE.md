@@ -6,10 +6,12 @@ La scheda è un oggetto costruito nel mondo di Oculum. Il tema è puramente deco
 Goth fantasy inciso, materiali consumati e piccoli bagliori locali. Cinzel per sigilli e titoli, i font già scelti dal giocatore per contenuti e numeri. La grafica incornicia la lettura.
 
 ## Theme Identity
-Gli ID e i nomi dei 62 temi esistenti rimangono invariati. `docs/design/theme-art-bible.json` conserva motivi e materiali; `design/themes/<id>/composition.json` definisce la composizione riproducibile. Ogni illustrazione originale resta in `assets/themes/<id>/overlays/relic.png`.
+I 62 temi esistenti conservano ID, nome e identità; il preset Sogno aggiunge una nuova identità senza rinominarli. `docs/design/theme-art-bible.json` conserva motivi e materiali; `design/themes/<id>/composition.json` definisce la composizione riproducibile. Ogni illustrazione originale resta in `assets/themes/<id>/overlays/relic.png`.
 
 ## Materials / Shapes / Frame Language
-Radici: ramificazioni, foglie, asimmetria. Cristallo: facce appuntite e giunzioni spezzate. Ferro: placche interrotte e rivetti. Astrale: orbite incomplete e costellazioni. Abisso: curve correnti e ventose. Cenere: archi bruciati e scintille. Cattedrale: archi, nervature e sigilli. Il motivo specifico del tema determina tagli, densità e disposizione, oltre alla famiglia.
+Radici: ramificazioni, foglie, asimmetria. Cristallo: facce appuntite e giunzioni spezzate. Ferro: placche interrotte e rivetti. Astrale: orbite incomplete e costellazioni. Abisso: curve correnti e ventose. Cenere: archi bruciati e scintille. Cattedrale: archi, nervature e sigilli. Sogno: profili morbidi sovrapposti dal blu al viola e al rosa pastello. Il motivo specifico del tema determina tagli, densità e disposizione, oltre alla famiglia.
+
+Natura dispone di due composizioni selezionabili: steli secchi con petali caduti, oppure tralci vivi con foglie e fiori viola. Sogno usa nubi stratificate blu, viola e rosa pastello; il trattamento quieto è rarefatto, quello cromatico aggiunge strati e piccoli astri. La selezione è salvata e vale per cornici, scene, pannelli e incisioni dei controlli.
 
 ## Icon Language / Rune Language
 Simboli incisi piccoli, bordi sottili e rune incompiute. Nessuna icona ornamentale sostituisce un'azione. Le icone funzionali esistenti conservano significato e area cliccabile.

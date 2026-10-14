@@ -3,5 +3,7 @@
   "height": 192,
   "source": "assets/themes/restyle_sangue/overlays/relic.png",
   "layers": 1,
-  "placement": "left"
+  "variant": "default",
+  "placement": "left",
+  "alphaCenter": 0
 }

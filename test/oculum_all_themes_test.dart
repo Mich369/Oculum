@@ -48,7 +48,45 @@ void main() {
     expect(oculumReadableThemeColor(Colors.white, background), Colors.white);
   });
 
+  test('theme foregrounds remain readable across page and panel layers', () {
+    for (final combination in <(Color, Color, Color)>[
+      (
+        const Color(0xffe5bfd9),
+        const Color(0xff171018),
+        const Color(0xff08070b),
+      ),
+      (
+        const Color(0xff26303c),
+        const Color(0xfff5f0e6),
+        const Color(0xfffffbf3),
+      ),
+      (
+        const Color(0xff9a8bce),
+        const Color(0xff151725),
+        const Color(0xff080c1b),
+      ),
+      (
+        const Color(0xffdbac61),
+        const Color(0xfff7f0df),
+        const Color(0xffe9dec8),
+      ),
+    ]) {
+      final foreground = oculumReadableThemeColorOnLayers(combination.$1, [
+        combination.$2,
+        combination.$3,
+      ]);
+      for (final background in [combination.$2, combination.$3]) {
+        expect(
+          oculumThemeContrastRatio(foreground, background),
+          greaterThanOrEqualTo(4.5),
+        );
+      }
+    }
+  });
+
   for (final size in [
+    const Size(1920, 1080),
+    const Size(1080, 1920),
     const Size(1440, 900),
     const Size(834, 1194),
     const Size(390, 844),
@@ -110,6 +148,30 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
         final context = tester.element(find.byType(OculumHomePage));
         final theme = Theme.of(context);
+        expect(
+          oculumThemeContrastRatio(
+            theme.colorScheme.onSurface,
+            theme.colorScheme.surface,
+          ),
+          greaterThanOrEqualTo(4.5),
+          reason: '${preset.id}: panel text',
+        );
+        expect(
+          oculumThemeContrastRatio(
+            theme.colorScheme.onSurface,
+            theme.scaffoldBackgroundColor,
+          ),
+          greaterThanOrEqualTo(4.5),
+          reason: '${preset.id}: page text',
+        );
+        expect(
+          oculumThemeContrastRatio(
+            theme.colorScheme.onPrimary,
+            theme.colorScheme.primary,
+          ),
+          greaterThanOrEqualTo(4.5),
+          reason: '${preset.id}: accent text',
+        );
         final ornaments = theme.extension<OculumGothOrnaments>();
         expect(ornaments, isNotNull, reason: preset.id);
         final filledShape = theme.filledButtonTheme.style?.shape?.resolve(

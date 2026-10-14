@@ -238,6 +238,9 @@ flutter:
     - assets/themes/restyle_lume/overlays/
     - assets/themes/restyle_lume/frames/
     - assets/themes/restyle_lume/decorations/
+    - assets/themes/restyle_sogno/overlays/
+    - assets/themes/restyle_sogno/frames/
+    - assets/themes/restyle_sogno/decorations/
     - assets/fonts/
     - assets/fonts/licenses/
     - assets/manuals/
