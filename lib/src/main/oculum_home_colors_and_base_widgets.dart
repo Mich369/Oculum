@@ -200,7 +200,7 @@ ThemeData oculumBuildPaletteTheme({
     bodyColor: text,
     displayColor: text,
   );
-  return base.copyWith(
+  final paletteTheme = base.copyWith(
     colorScheme: scheme,
     primaryColor: highlight,
     primaryColorLight: highlight,
@@ -447,6 +447,7 @@ ThemeData oculumBuildPaletteTheme({
       ),
     ),
   );
+  return oculumWithArtButtons(paletteTheme);
 }
 
 class _OculumModelTextField extends StatefulWidget {

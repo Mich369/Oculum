@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'oculum_art_button.dart';
 
 class OculumBottomNavItem {
   const OculumBottomNavItem({
@@ -427,7 +428,8 @@ class _BottomNavButton extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      child: InkWell(
+      child: OculumArtInkWell(
+        selected: selected,
         borderRadius: BorderRadius.circular(16),
         splashColor: selectedColor.withValues(alpha: 0.24),
         highlightColor: selectedColor.withValues(alpha: 0.14),

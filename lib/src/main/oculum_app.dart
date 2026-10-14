@@ -82,7 +82,7 @@ class OculumThemeScope extends StatelessWidget {
     valueListenable: oculumActiveTheme,
     child: child,
     builder: (context, activeTheme, child) {
-      final theme = activeTheme ?? oculumBaseTheme;
+      final theme = oculumWithArtButtons(activeTheme ?? oculumBaseTheme);
       final ornaments = theme.extension<OculumGothOrnaments>();
       return Theme(
         data: theme,
@@ -208,7 +208,7 @@ class OculumApp extends StatelessWidget {
               : typographyContent(context);
           return OculumThemeScope(child: content);
         },
-        theme: oculumBaseTheme,
+        theme: oculumWithArtButtons(oculumBaseTheme),
         home: const OculumStartupPreloader(),
       ),
     );
