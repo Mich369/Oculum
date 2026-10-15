@@ -504,6 +504,8 @@ class _OculumGothAmbienceState extends State<OculumGothAmbience>
                     duration: _themeTransitionDuration(context),
                     child: Image.asset(
                       oculumMaterialTexture(widget.spec),
+                      width: double.infinity,
+                      height: double.infinity,
                       key: ValueKey(
                         'theme-material-${widget.spec.themeId}-${widget.spec.family.name}',
                       ),

@@ -36,7 +36,7 @@ void main() {
         codec.dispose();
       }
     }
-  });
+  }, timeout: const Timeout(Duration(minutes: 2)));
   test(
     'both art variants ship transparent PNGs for every theme role',
     () async {

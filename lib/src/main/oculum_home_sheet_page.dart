@@ -673,20 +673,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         Theme.of(context).extension<OculumGothOrnaments>()?.family ==
         OculumGothFamily.acid;
 
-    Color hpColor;
-    final pureHpRatio = maxHpVal <= 0 ? 0 : curr / maxHpVal;
-
-    if (pureHpRatio > 0.75) {
-      hpColor = const Color(0xFF2ECC71);
-    } else if (pureHpRatio > 0.5) {
-      hpColor = const Color(0xFFF1C40F);
-    } else if (pureHpRatio > 0.3) {
-      hpColor = const Color(0xFFFF8C22);
-    } else if (pureHpRatio > 0.15) {
-      hpColor = const Color(0xFFE53935);
-    } else {
-      hpColor = const Color(0xFF6D1028);
-    }
+    final hpColor = oculumHealthColor(hpW);
 
     final barHeight = switch (stileBarraVita) {
       'soulslike' => 22.0,
@@ -865,8 +852,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               child: Stack(
                 children: [
                   Container(height: barHeight, color: emptyColor),
-                  FractionallySizedBox(
-                    widthFactor: hpW,
+                  OculumAnimatedResourceFill(
+                    key: ValueKey('life-fill-${currentSheetScrollId()}'),
+                    fraction: hpW,
                     child: Container(
                       height: 34,
                       decoration: BoxDecoration(
@@ -5398,8 +5386,73 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, refresh) {
           final remaining = oculumStarterSubtraitPointsRemaining(allocation);
+          final ordered = [...hiddenEyeStats]
+            ..sort(
+              (a, b) => oculumNormalizeText(
+                a.nome,
+              ).compareTo(oculumNormalizeText(b.nome)),
+            );
+          final split = (ordered.length / 2).ceil();
+          Widget pointCard(HiddenEyeStat stat) => Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: hiddenEyeStatIdentityColor(stat).withValues(alpha: .6),
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  stat.nome,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: hiddenEyeStatIdentityColor(stat),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      tooltip: 'Togli un punto',
+                      onPressed: (allocation[stat.id] ?? 0) > 0
+                          ? () => refresh(() {
+                              allocation[stat.id] =
+                                  (allocation[stat.id] ?? 0) - 1;
+                            })
+                          : null,
+                      icon: const Icon(Icons.remove),
+                    ),
+                    Expanded(
+                      child: Text(
+                        '${allocation[stat.id] ?? 0}/3',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Assegna un punto',
+                      onPressed: remaining > 0 && (allocation[stat.id] ?? 0) < 3
+                          ? () => refresh(() {
+                              allocation[stat.id] =
+                                  (allocation[stat.id] ?? 0) + 1;
+                            })
+                          : null,
+                      icon: const Icon(Icons.add),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
           return AlertDialog(
             title: Text('Sottotratti iniziali · $remaining punti rimasti'),
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 24,
+            ),
+            contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
             content: SizedBox(
               width: 520,
               child: SingleChildScrollView(
@@ -5409,34 +5462,31 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     const Text(
                       'Hai 9 punti anche se hai saltato il tutorial. Il limite di 3 riguarda i punti iniziali, non i progressi già conquistati.',
                     ),
-                    for (final stat in hiddenEyeStats)
-                      Row(
-                        children: [
-                          Expanded(child: Text(stat.nome)),
-                          IconButton(
-                            tooltip: 'Togli un punto',
-                            onPressed: (allocation[stat.id] ?? 0) > 0
-                                ? () => refresh(() {
-                                    allocation[stat.id] =
-                                        (allocation[stat.id] ?? 0) - 1;
-                                  })
-                                : null,
-                            icon: const Icon(Icons.remove),
-                          ),
-                          Text('${allocation[stat.id] ?? 0}/3'),
-                          IconButton(
-                            tooltip: 'Assegna un punto',
-                            onPressed:
-                                remaining > 0 && (allocation[stat.id] ?? 0) < 3
-                                ? () => refresh(() {
-                                    allocation[stat.id] =
-                                        (allocation[stat.id] ?? 0) + 1;
-                                  })
-                                : null,
-                            icon: const Icon(Icons.add),
-                          ),
-                        ],
-                      ),
+                    ExpansionTile(
+                      leading: const Icon(Icons.folder_open_outlined),
+                      title: const Text('Distribuisci i punti'),
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (var column = 0; column < 2; column++) ...[
+                              if (column > 0) const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    for (final stat
+                                        in ordered
+                                            .skip(column * split)
+                                            .take(split))
+                                      pointCard(stat),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -5498,35 +5548,49 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       );
     }
 
-    final rowHeight = uiScale(
-      visibleStats.any((stat) => stat.homebrew) ? 208 : 172,
-    );
-    return GridView.builder(
+    final ordered = [...visibleStats]
+      ..sort(
+        (a, b) =>
+            oculumNormalizeText(a.nome).compareTo(oculumNormalizeText(b.nome)),
+      );
+    final split = (ordered.length / 2).ceil();
+    return Row(
       key: PageStorageKey<String>('hidden_eye_grid_$group'),
-      primary: false,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: visibleStats.length,
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 258,
-        mainAxisExtent: rowHeight,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-      ),
-      itemBuilder: (context, index) {
-        final stat = visibleStats[index];
-        return KeyedSubtree(
-          key: ValueKey<String>(
-            'hidden_eye_stat_${currentSheetScrollId()}_${stat.id}',
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var column = 0; column < 2; column++) ...[
+          if (column > 0) const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              children: [
+                for (final stat in ordered.skip(column * split).take(split))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: KeyedSubtree(
+                      key: ValueKey(
+                        'hidden_eye_stat_${currentSheetScrollId()}_${stat.id}',
+                      ),
+                      child: hiddenEyeStatManagerCard(
+                        sheetContext: sheetContext,
+                        stat: stat,
+                        onBaseEdited: onBaseEdited,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
-          child: hiddenEyeStatManagerCard(
-            sheetContext: sheetContext,
-            stat: stat,
-            onBaseEdited: onBaseEdited,
-          ),
-        );
-      },
+        ],
+      ],
     );
+  }
+
+  Color hiddenEyeStatIdentityColor(HiddenEyeStat stat) {
+    if (stat.id == 'fortuna') return const Color(0xFFD4AF37);
+    final group = hiddenEyeStatGroup(stat.id);
+    return const ['resilienza', 'volonta', 'materia', 'oculum'].contains(group)
+        ? statFormulaColor(group)
+        : const Color(0xFFADB1BA);
   }
 
   Future<void> showCreateHomebrewSubtraitDialog() async {
@@ -5637,10 +5701,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         },
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: eyePupilGlowColor,
-        foregroundColor: eyePupilGlowColor.computeLuminance() > 0.45
-            ? Colors.black
-            : Colors.white,
+        backgroundColor: hiddenEyeStatIdentityColor(
+          stat,
+        ).withValues(alpha: .18),
+        foregroundColor: hiddenEyeStatIdentityColor(stat),
+        side: BorderSide(
+          color: hiddenEyeStatIdentityColor(stat).withValues(alpha: .7),
+        ),
       ),
     );
   }
@@ -5659,7 +5726,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 grade: stat.valore,
               ),
               backgroundColor: Colors.white.withValues(alpha: 0.10),
-              valueColor: AlwaysStoppedAnimation<Color>(eyePupilGlowColor),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                hiddenEyeStatIdentityColor(stat),
+              ),
             ),
           ),
         );
@@ -5733,7 +5802,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       child: gothicPanel(
         borderColor: hiddenEyeManagerSelectedStatId == stat.id
             ? tertiaryColor
-            : eyePupilGlowColor,
+            : hiddenEyeStatIdentityColor(stat),
         padding: const EdgeInsets.all(8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -5749,7 +5818,27 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             hiddenEyeStatRollButton(sheetContext: sheetContext, stat: stat),
             const SizedBox(height: 8),
             hiddenEyeStatProgressBar(stat),
-            hiddenEyeStatBaseControls(stat: stat, onBaseEdited: onBaseEdited),
+            ExpansionTile(
+              key: PageStorageKey(
+                'subtrait-points-${currentSheetScrollId()}-${stat.id}',
+              ),
+              tilePadding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              iconColor: hiddenEyeStatIdentityColor(stat),
+              title: Text(
+                t('Punti e base', 'Points and base'),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: hiddenEyeStatIdentityColor(stat),
+                ),
+              ),
+              children: [
+                hiddenEyeStatBaseControls(
+                  stat: stat,
+                  onBaseEdited: onBaseEdited,
+                ),
+              ],
+            ),
             hiddenEyeStatDescription(stat),
           ],
         ),

@@ -5,6 +5,59 @@ import 'oculum_theme_presentation.dart';
 
 enum OculumResourceFxKind { embers, acid, souls }
 
+/// Health colour is interpolated continuously, including at danger thresholds.
+Color oculumHealthColor(double fraction) {
+  final value = fraction.isFinite ? fraction.clamp(0.0, 1.0) : 0.0;
+  const stops = [0.0, .15, .30, .50, .75, 1.0];
+  const colors = [
+    Color(0xFF6D1028),
+    Color(0xFFE53935),
+    Color(0xFFFF8C22),
+    Color(0xFFF1C40F),
+    Color(0xFF2ECC71),
+    Color(0xFF66D99A),
+  ];
+  for (var i = 1; i < stops.length; i++) {
+    if (value <= stops[i]) {
+      return Color.lerp(
+        colors[i - 1],
+        colors[i],
+        (value - stops[i - 1]) / (stops[i] - stops[i - 1]),
+      )!;
+    }
+  }
+  return colors.last;
+}
+
+class OculumAnimatedResourceFill extends StatelessWidget {
+  const OculumAnimatedResourceFill({
+    super.key,
+    required this.fraction,
+    required this.child,
+  });
+  final double fraction;
+  final Widget child;
+  @override
+  Widget build(BuildContext context) {
+    final motion = oculumThemePresentation.value.motion;
+    final disabled =
+        MediaQuery.disableAnimationsOf(context) ||
+        motion == OculumThemeMotion.disabled;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: fraction.isFinite ? fraction.clamp(0.0, 1.0) : 0.0),
+      duration: disabled
+          ? Duration.zero
+          : Duration(
+              milliseconds: motion == OculumThemeMotion.reduced ? 140 : 380,
+            ),
+      curve: Curves.easeOutCubic,
+      child: child,
+      builder: (context, value, content) =>
+          FractionallySizedBox(widthFactor: value, child: content),
+    );
+  }
+}
+
 /// Small clipped particles for resource gauges. Decorative only: the painter
 /// never handles input and is constrained to the bar's own bounds.
 class OculumResourceBarFx extends StatefulWidget {

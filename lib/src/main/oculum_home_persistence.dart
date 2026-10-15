@@ -8126,7 +8126,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         }
 
         final generatedArt = matchedMonster != null
-            ? (matchedMonster.skillIds.isEmpty
+            ? (monsterBookUsableSkillIds(matchedMonster).isEmpty
                   ? null
                   : oculumMonsterBookImportArt(matchedMonster))
             : humanoidChoice != null && artMode != 'none'
@@ -8143,6 +8143,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
                 kind: kind,
               );
         if (matchedMonster != null) {
+          final knownTitleKeys = titoli
+              .map((title) => title.chiaveSistema)
+              .toSet();
+          titoli.addAll(
+            oculumMonsterBookTitles(
+              matchedMonster,
+            ).where((title) => knownTitleKeys.add(title.chiaveSistema)),
+          );
           skills
             ..clear()
             ..addAll(oculumMonsterBookSkills(matchedMonster));
@@ -8174,7 +8182,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
           );
         }
 
-        if (matchedMonster != null && matchedMonster.skillIds.isEmpty) {
+        if (matchedMonster != null &&
+            monsterBookUsableSkillIds(matchedMonster).isEmpty) {
           skills.clear();
           arti.clear();
         }

@@ -93,9 +93,9 @@ class OculumThemeSheetBackdrop extends StatelessWidget {
     children: [
       const Positioned.fill(
         child: IgnorePointer(
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Opacity(opacity: .45, child: OculumThemeSheetScene()),
+          child: Opacity(
+            opacity: .30,
+            child: OculumThemeSheetScene(fillArea: true),
           ),
         ),
       ),
@@ -107,7 +107,8 @@ class OculumThemeSheetBackdrop extends StatelessWidget {
 /// A backdrop scene adds no layout space. The loop spends most of its time
 /// motionless and rebuilds only a Transform, never the functional sheet.
 class OculumThemeSheetScene extends StatefulWidget {
-  const OculumThemeSheetScene({super.key});
+  const OculumThemeSheetScene({super.key, this.fillArea = false});
+  final bool fillArea;
   @override
   State<OculumThemeSheetScene> createState() => _OculumThemeSheetSceneState();
 }
@@ -220,7 +221,8 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
         final height = (mobile ? 52.0 : 96.0) * presentation.relicScale;
         return SizedBox(
           key: ValueKey('theme-sheet-scene-${pack.id}'),
-          height: height,
+          height: widget.fillArea ? double.infinity : height,
+          width: double.infinity,
           child: IgnorePointer(
             child: ExcludeSemantics(
               child: ClipRect(
@@ -245,8 +247,10 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
                           opacity: presentation.relicOpacity,
                           child: Image.asset(
                             pack.scene(mobile: mobile, variant: variant),
-                            fit: BoxFit.contain,
-                            alignment: Alignment.centerRight,
+                            fit: widget.fillArea
+                                ? BoxFit.cover
+                                : BoxFit.contain,
+                            alignment: Alignment.bottomRight,
                             cacheWidth: mobile ? 640 : 1024,
                             filterQuality: FilterQuality.medium,
                           ),

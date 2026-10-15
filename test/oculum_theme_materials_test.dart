@@ -43,6 +43,12 @@ void main() {
         find.byKey(ValueKey('theme-material-${entry.$1}-${entry.$2.name}')),
         findsOneWidget,
       );
+      expect(
+        tester.getSize(
+          find.byKey(ValueKey('theme-material-${entry.$1}-${entry.$2.name}')),
+        ),
+        tester.view.physicalSize / tester.view.devicePixelRatio,
+      );
       await tester.tap(find.text('VC · Attacco'));
       expect(taps, 1, reason: entry.$1);
       expect(tester.takeException(), isNull, reason: entry.$1);

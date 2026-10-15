@@ -964,6 +964,9 @@ extension _OculumFallenEyes on _OculumHomePageState {
         'conditionImmunities': ['rinsecchito'],
       'shadowScaling': monster.elementId.toLowerCase() == 'shadow',
     });
+    source['titoli'] = [
+      for (final title in oculumMonsterBookTitles(monster)) title.toJson(),
+    ];
     source['skills'] = [
       for (final skill in oculumMonsterBookSkills(monster)) skill.toJson(),
     ];

@@ -571,7 +571,20 @@ extension _OculumReferenceSheet on _OculumHomePageState {
               ),
               const SizedBox(width: 6),
               Expanded(child: Text(name)),
-              Text(label, style: TextStyle(fontWeight: FontWeight.w700)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(label, style: TextStyle(fontWeight: FontWeight.w700)),
+                  if (shields && !hidden && vitalMemoryPendingHealing() > 0)
+                    Text(
+                      'Ricordo Vitale +${vitalMemoryPendingHealing()}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: vitalMemoryThemeColor(),
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
           SizedBox(height: 5),
@@ -587,14 +600,71 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                 borderRadius: BorderRadius.circular(4),
                 child: Stack(
                   children: [
-                    LinearProgressIndicator(
-                      value: maximum > 0
-                          ? (current / maximum).clamp(0.0, 1.0)
-                          : 0,
-                      minHeight: 8,
-                      color: color,
-                      backgroundColor: color.withValues(alpha: .15),
+                    TweenAnimationBuilder<double>(
+                      key: ValueKey(
+                        'reference-meter-$shields-${currentSheetScrollId()}',
+                      ),
+                      tween: Tween(
+                        end: maximum > 0
+                            ? (current / maximum).clamp(0.0, 1.0)
+                            : 0.0,
+                      ),
+                      duration:
+                          MediaQuery.disableAnimationsOf(context) ||
+                              oculumThemePresentation.value.motion ==
+                                  OculumThemeMotion.disabled
+                          ? Duration.zero
+                          : const Duration(milliseconds: 380),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, fraction, _) {
+                        final palette = lifeBarGradient(
+                          stileBarraVita,
+                          oculumHealthColor(fraction),
+                        );
+                        return LinearProgressIndicator(
+                          value: fraction,
+                          minHeight: 8,
+                          color: shields ? palette[palette.length ~/ 2] : color,
+                          backgroundColor: color.withValues(alpha: .15),
+                        );
+                      },
                     ),
+                    if (shields &&
+                        maximum > 0 &&
+                        maximum > current &&
+                        vitalMemoryPendingHealing() > 0)
+                      Positioned.fill(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: FractionallySizedBox(
+                            widthFactor:
+                                ((max(0, current) +
+                                            vitalMemoryPendingHealing()) /
+                                        maximum)
+                                    .clamp(0.0, 1.0),
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: FractionallySizedBox(
+                                widthFactor:
+                                    min(
+                                      vitalMemoryPendingHealing(),
+                                      maximum - max(0, current),
+                                    ) /
+                                    min(
+                                      maximum,
+                                      max(0, current) +
+                                          vitalMemoryPendingHealing(),
+                                    ),
+                                child: ColoredBox(
+                                  color: vitalMemoryThemeColor().withValues(
+                                    alpha: .72,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     if (shields && scudo() > 0)
                       LinearProgressIndicator(
                         key: ValueKey('reference_shield_bar'),

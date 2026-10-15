@@ -2635,6 +2635,14 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         razzaController.text = razza.nome;
       } else if (selectedMonster != null) {
         trattiRazziali.add(_tutorialMonsterRacialTrait(selectedMonster));
+        final knownTitleKeys = titoli
+            .map((title) => title.chiaveSistema)
+            .toSet();
+        titoli.addAll(
+          oculumMonsterBookTitles(
+            selectedMonster,
+          ).where((title) => knownTitleKeys.add(title.chiaveSistema)),
+        );
         final importedArt = oculumMonsterBookImportArt(selectedMonster);
         final monsterArt = importedArt == null
             ? null

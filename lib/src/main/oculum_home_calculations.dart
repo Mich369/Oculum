@@ -101,6 +101,10 @@ int oculumStatRollBonus({
 }
 
 Iterable<String> oculumActiveTitleFormulaTexts(OculumTitle title) sync* {
+  if (title.chiaveSistema.startsWith('monster_identity_') &&
+      (!title.equipaggiato || !title.sempreVisibile)) {
+    return;
+  }
   yield title.buff;
   yield title.puntoCieco;
 

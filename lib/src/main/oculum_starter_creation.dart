@@ -283,6 +283,132 @@ CharacterArt? oculumMonsterBookImportArt(MonsterBookEntry monster) {
   return art.skills.isEmpty ? null : art;
 }
 
+/// An assortment, not three simultaneous bonuses. Existing/custom titles are
+/// never rewritten; the selected visible title supplies its own trade-off.
+List<OculumTitle> oculumMonsterBookTitles(MonsterBookEntry monster) {
+  final body = '${monster.id} ${monster.nameIt} ${monster.descIt}'
+      .toLowerCase();
+  final chaos =
+      monster.elementId == 'chaos' ||
+      monster.formTags.contains('Errante') ||
+      body.contains('errante');
+  if ((monster.isNpc && !chaos) ||
+      monster.id.startsWith('pawn_guardiano') ||
+      (!chaos &&
+          RegExp(
+            r'privo di logica|creatura senza coscienza',
+          ).hasMatch(monster.descIt.toLowerCase())) ||
+      (!chaos && RegExp(r'\blarva\b').hasMatch(monster.nameIt.toLowerCase()))) {
+    return [];
+  }
+  final aerial = RegExp(
+    r'arpia|grifone|corvo|angelo|vespa|pipistrello|falena',
+  ).hasMatch(body);
+  final armored = RegExp(
+    r'golem|roccia|corazz|ferro|metallo|rinocer|tartarug|osso',
+  ).hasMatch(body);
+  final records = chaos
+      ? <(String, String, String, String)>[
+          (
+            'Dove il mondo sbaglia',
+            '@VC+2',
+            '@CM-1',
+            'Riconosci passaggi e geometrie impossibili, ma la realtà stabile ti mette a disagio.',
+          ),
+          (
+            'Senza un ieri',
+            '@Difesa+4',
+            '@VC-1',
+            'Nessun luogo conserva la tua storia intera; recuperare un ricordo richiede una testimonianza.',
+          ),
+          (
+            'Ospite dell’ultima stanza',
+            '@Danni+4',
+            '@CM-1',
+            'Senti quando una stanza ha trattenuto una presenza di Chaos; attirarne l’attenzione non è sempre un vantaggio.',
+          ),
+        ]
+      : aerial
+      ? <(String, String, String, String)>[
+          (
+            'Occhi sopra la tempesta',
+            '@VC+2',
+            '@Difesa-2',
+            'Dall’alto distingui tracce e movimenti; le coperture basse ti nascondono le prede.',
+          ),
+          (
+            'Custode del nido',
+            '@CM+2',
+            '@Danni-2',
+            'Proteggi il luogo dove allevi o custodisci qualcuno; la tua minaccia è riconoscibile.',
+          ),
+          (
+            'Artiglio del cielo spezzato',
+            '@Danni+4',
+            '@VC-1',
+            'Il tuo passaggio lascia segni riconoscibili sulle superfici colpite.',
+          ),
+        ]
+      : armored
+      ? <(String, String, String, String)>[
+          (
+            'Cuore sotto le placche',
+            '@Difesa+4',
+            '@VC-1',
+            'Porti sulla corazza le cicatrici degli scontri superati.',
+          ),
+          (
+            'Peso del giuramento',
+            '@Danni+3',
+            '@CM-1',
+            'Chi vede il tuo incedere può riconoscere la promessa che custodisci.',
+          ),
+          (
+            'L’ultimo a cedere',
+            '@CM+1 @Difesa+2',
+            '@Danni-2',
+            'Non abbandoni facilmente il luogo o il branco che hai scelto.',
+          ),
+        ]
+      : <(String, String, String, String)>[
+          (
+            'Custode della soglia',
+            '@Difesa+3',
+            '@VC-1',
+            'Conosci gli ingressi e le tracce del territorio che proteggi.',
+          ),
+          (
+            'Fame dietro gli occhi',
+            '@Danni+4',
+            '@Difesa-2',
+            'Il tuo modo di cacciare lascia una firma che un inseguitore può riconoscere.',
+          ),
+          (
+            'Passo fra le ombre',
+            '@CM+2',
+            '@Danni-2',
+            'Preferisci passaggi riparati e riconosci i nascondigli adatti al tuo corpo.',
+          ),
+        ];
+  return [
+    for (var i = 0; i < records.length; i++)
+      OculumTitle(
+        nome: records[i].$1,
+        tipo: chaos ? 'Titolo di Chaos' : 'Titolo Mostro',
+        ottenimento: 'Identità di ${monster.nameIt}.',
+        leggenda: '${monster.nameIt}. ${records[i].$4}',
+        buff: records[i].$2,
+        puntoCieco: records[i].$3,
+        skill: '',
+        richiede: 'Attivo solo come Titolo visibile.',
+        equipaggiato: chaos && i == 0,
+        sempreVisibile: chaos && i == 0,
+        visibleSelectionManual: chaos && i == 0,
+        chiaveSistema: 'monster_identity_${monster.id}_$i',
+      ),
+  ];
+}
+
 CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
     monster.id == 'slime_roccioso'
     ? oculumRockSlimeArt(monster)
