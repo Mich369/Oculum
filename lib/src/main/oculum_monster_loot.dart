@@ -30,10 +30,59 @@ List<InventoryItem> oculumGenerateMonsterLoot({
   required int grade,
   required Random random,
   required String killId,
+  int? naturalDropRoll,
+  int? dropTotal,
 }) {
   final safeGrade = grade.clamp(0, 12).toInt();
   final safeLevel = max(0, level);
   final art = oculumMonsterBookArt(monster);
+  if (monster.id == 'slime_roccioso' ||
+      monster.id.startsWith('slime_roccioso_variante_')) {
+    final natural = naturalDropRoll ?? random.nextInt(20) + 1;
+    if (natural < 1 || natural > 20) {
+      throw ArgumentError.value(natural, 'naturalDropRoll');
+    }
+    final total = dropTotal ?? natural;
+    return [
+      InventoryItem(
+        nome: 'Roccia Slime',
+        peso: .25,
+        quantita: 1,
+        gradoOggetto: safeGrade,
+        gradoRichiesto: safeGrade,
+        note: 'Materiale — Roccia Slime, 250 g. Drop dello Slime Roccioso.',
+        monsterLoot: {
+          'id': '$killId:rock',
+          'monsterId': monster.id,
+          'material': true,
+          'naturalDropRoll': natural,
+          'dropTotal': total,
+        },
+      ),
+      for (final skill in art.skills.where(
+        (skill) =>
+            (skill.nome == 'Indurimento' && (total >= 15 || natural == 20)) ||
+            (skill.nome == 'Rimbalzo' && natural == 20),
+      ))
+        InventoryItem(
+          nome: 'Tecnica dello Slime — ${skill.nome}',
+          peso: 0,
+          quantita: 1,
+          gradoOggetto: safeGrade,
+          gradoRichiesto: safeGrade,
+          note:
+              'Skill apprendibile: ${skill.nome}. Conserva le tre forme, i costi e i livelli del mostro. Tiro Drop $natural naturale, totale $total.',
+          monsterLoot: {
+            'id': '$killId:skill:${skill.nome}',
+            'monsterId': monster.id,
+            'learnableMonsterSkill': true,
+            'skill': skill.toJson(),
+            'naturalDropRoll': natural,
+            'dropTotal': total,
+          },
+        ),
+    ];
+  }
   final selectedSkill = art.skills.isEmpty
       ? null
       : art.skills[random.nextInt(art.skills.length)];
@@ -364,6 +413,40 @@ extension _OculumMonsterLoot on _OculumHomePageState {
 
   void openMonsterLootSkill(InventoryItem item) {
     if (item.monsterLoot['skill'] is! Map) return;
+    if (item.monsterLoot['learnableMonsterSkill'] == true) {
+      if (!inventario.contains(item) || item.quantita <= 0) return;
+      final skill = ArtSkill.fromJson(
+        Map<String, dynamic>.from(item.monsterLoot['skill']),
+      );
+      if (arti.any(
+        (art) => art.skills.any((known) => known.nome == skill.nome),
+      )) {
+        aggiungiLog(
+          'Tecnica già conosciuta: ${skill.nome}; il drop non viene consumato.',
+        );
+        return;
+      }
+      refreshOculumHome(() {
+        arti.add(
+          CharacterArt(
+            nome: 'Tecnica appresa — ${skill.nome}',
+            tipo: 'Tecnica mostro appresa',
+            hasIntegrity: false,
+            descrizione:
+                'Tecnica appresa dal drop dello Slime Roccioso: mantiene forme, costi e livelli originali.',
+            skills: [skill],
+          ),
+        );
+        item.quantita--;
+        if (item.quantita == 0) inventario.remove(item);
+        risultato =
+            'Appresa ${skill.nome} dal drop dello Slime Roccioso. Disponibile nelle Art, con i livelli e i costi originali.';
+        aggiungiLog(risultato);
+      });
+      programmaSalvataggio();
+      notifyDiceResultChanged();
+      return;
+    }
     final type = 'Art Oggetto Drop:${item.monsterLoot['id']}';
     if (!arti.any((art) => art.tipo == type)) {
       refreshOculumHome(

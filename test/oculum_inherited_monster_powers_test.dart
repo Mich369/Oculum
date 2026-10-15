@@ -60,7 +60,7 @@ void main() {
         var previous = -1;
         for (var form = 0; form < 3; form++) {
           final value = oculumEvaluateStructuredEffectValue(
-            skill.effettiPerLivello[form].single,
+            skill.effettiPerLivello[form].first,
             variables: {'danni': 10},
             spentResources: {'oculum': 4},
           );

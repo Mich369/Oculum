@@ -950,14 +950,18 @@ extension _OculumFallenEyes on _OculumHomePageState {
         'conditionImmunities': ['rinsecchito'],
       'shadowScaling': monster.elementId.toLowerCase() == 'shadow',
     });
-    source['skills'] = <dynamic>[];
+    source['skills'] = [
+      for (final skill in oculumMonsterBookSkills(monster)) skill.toJson(),
+    ];
+    final importedArt = oculumMonsterBookImportArt(monster);
     source['arti'] = [
-      oculumCompleteMonsterOpen(
-        oculumMonsterBookArt(monster),
-        name: monster.nameIt,
-        level: level,
-        grade: oculumGradeForLevel(level),
-      ).toJson(),
+      if (importedArt != null)
+        oculumCompleteMonsterOpen(
+          importedArt,
+          name: monster.nameIt,
+          level: level,
+          grade: oculumGradeForLevel(level),
+        ).toJson(),
     ];
     source['fallenEyeOriginalArts'] = source['arti'];
     return source;

@@ -6,6 +6,7 @@ part 'spine_hedgehog.dart';
 part 'pack_leader_monsters.dart';
 part 'lava_monsters.dart';
 part 'necromancer_monsters.dart';
+part 'concrete_monster_techniques.dart';
 
 class MonsterBookEntry {
   final String id;
@@ -792,7 +793,11 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'materia': 6,
       'oculum': 4,
     },
-    skillIds: ['inferno_in_corpo'],
+    skillIds: [
+      'inverno_in_corpo',
+      'frost_demon_lesser_spur',
+      'frost_demon_lesser_shell',
+    ],
     dropIds: ['scheggia_glaciale'],
   ),
   MonsterBookEntry(
@@ -814,7 +819,11 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'materia': 19,
       'oculum': 13,
     },
-    skillIds: ['inferno_in_corpo'],
+    skillIds: [
+      'inverno_in_corpo',
+      'frost_demon_intermediate_ray',
+      'frost_demon_intermediate_prison',
+    ],
     dropIds: ['occhio_glaciale'],
   ),
   MonsterBookEntry(
@@ -837,7 +846,11 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'materia': 50,
       'oculum': 39,
     },
-    skillIds: ['inferno_in_corpo'],
+    skillIds: [
+      'inverno_in_corpo',
+      'frost_demon_greater_lances',
+      'frost_demon_greater_mirror',
+    ],
     dropIds: ['cuore_glaciale'],
   ),
   MonsterBookEntry(
@@ -3621,7 +3634,7 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     nameIt: 'Slime Roccioso',
     nameEn: 'Rocky Slime',
     descIt:
-        'Senza Grado/I/II. I cuccioli attaccano tutto, gli adulti sono neutrali buoni. Palla di Roccia Slime crea blocchi con Vita Oculum ×3/×5; Rimbalzo prepara reazioni e danno; Indurimento converte Resilienza e Oculum in difesa. Apertura livello 15: Masso Slime. Drop: Roccia Slime 250 g.',
+        'Senza Grado/I/II. I cuccioli, privi di cervello, attaccano tutto ciò che incontrano; gli adulti sono neutrali buoni e proteggono i piccoli. Palla di Roccia Slime crea blocchi con Vita Oculum ×3/×5; Rimbalzo prepara Reazioni e danni; Indurimento aggiunge Scudo e Difesa, entrambi aumentati dall’Oculum immesso. Apertura livello 15: Masso Slime. Drop: Roccia Slime 250 g; con 15 o più Indurimento, con 20 naturale Rimbalzo.',
     descEn: 'Rock slime.',
     elementId: 'terra',
     spriteAssetPath: '',
@@ -4662,6 +4675,8 @@ String _inspiredMonsterSkillText(String rawId) {
 }
 
 String monsterBookSkillText(String rawId) {
+  final canonicalId = rawId.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
+  if (canonicalId != rawId) return monsterBookSkillText(canonicalId);
   if (rawId.startsWith('pawn_guardiano_')) {
     if (rawId.contains('protezione')) {
       return 'Protezione Pawn — I/Passiva: seleziona le schede nel pannello Pawn · Guardiani. Intercetta solo danni alla Vita, dopo gli Scudi del bersaglio; poi applica Difesa e Scudo del Pawn. II/La protezione mantiene queste regole. III/La protezione mantiene queste regole. Nessun costo.';
@@ -4680,12 +4695,17 @@ String monsterBookSkillText(String rawId) {
   if (rawId == 'inferno_in_corpo') {
     return 'Inferno in corpo — I/Passiva automatica: Alta Resistenza a fuoco, cenere e magma. II/La stessa protezione resta attiva contro gli effetti persistenti. III/La protezione resta automatica anche come Occhio dei Caduti. Nessun tiro e nessun costo.';
   }
+  if (rawId == 'inverno_in_corpo') {
+    return 'Inverno in corpo — I/Passiva automatica: Alta Resistenza a Gelo. Richiede livello 0. II/La stessa protezione resta attiva contro il Gelo persistente. Richiede livello 3. III/La protezione rimane automatica come Occhio dei Caduti. Richiede livello 6. Nessun costo.';
+  }
   final lava = oculumLavaSkillText(rawId);
   if (lava.isNotEmpty) return lava;
   if (rawId.startsWith('weak_horror_')) {
     return oculumWeakHorrorSkillText(rawId);
   }
   if (rawId.startsWith('inspired_')) {
+    final concrete = monsterBookConcreteTechnique(rawId);
+    if (concrete != null) return concrete.text();
     final inspired = _inspiredMonsterSkillText(rawId);
     if (inspired.isNotEmpty) return inspired;
   }
@@ -4713,7 +4733,7 @@ String monsterBookSkillText(String rawId) {
     case 'rock_slime_bounce':
       return 'Rimbalzo — I/Ottieni una Reazione e +25% danni al prossimo attacco. Richiede livello 1. (1/3 Oculum). II/Ottieni una Reazione e +50% danni al prossimo attacco. Richiede livello 6. (4/6 Oculum). III/Tira 1d3 rimbalzi: una Reazione e +50% danni per ciascuno, per tutto il turno. Richiede livello 12. (7/10 Oculum).';
     case 'rock_slime_harden':
-      return 'Indurimento — I/Resilienza +10 + Oculum immesso e Difesa +5 + Oculum immesso. Richiede livello 0. (1/2 Oculum). II/Resilienza +15 + Oculum immesso e Difesa +6 + Oculum immesso. Richiede livello 3. (3/4 Oculum). III/Resilienza +25 + Oculum immesso e Difesa +15 + Oculum immesso. Richiede livello 10. (5/10 Oculum).';
+      return 'Indurimento — I/Indurisci il rivestimento gelatinoso: ottieni 10 + Oculum immesso Scudo e +5 + Oculum immesso Difesa per 6 turni. Lo Scudo resta fino a esaurimento. Richiede livello 0. (1/2 Oculum). II/Lo strato di roccia conferisce 15 + Oculum immesso Scudo e +6 + Oculum immesso Difesa per 6 turni. Richiede livello 3. (3/4 Oculum). III/La crosta compatta conferisce 25 + Oculum immesso Scudo e +15 + Oculum immesso Difesa per 6 turni. Richiede livello 10. (5/10 Oculum). Non modifica Resilienza o Vita massima; la Difesa della stessa tecnica non si cumula.';
     case 'slime_tornado':
       return 'Tornado Slime — I/Dalla sfera slime volante scateni un tornado: +1 energia Reazione e Svantaggio ai nemici. Richiede livello 9. (3/10 Oculum). II/Il tornado concede +1 energia Reazione, dà Svantaggio ai nemici e infligge Oculum danni ad area. Richiede livello 20. (11/20 Oculum). III/Il tornado concede +1 energia Reazione, dà Doppio Svantaggio ai nemici e infligge Oculum danni ad area. Richiede livello 30. (21/30 Oculum).';
     case 'king_crash':
@@ -4925,6 +4945,8 @@ String monsterBookSkillText(String rawId) {
     case 'longrank_command':
       return 'comando dell armaiolo — I/Livello 82: un umanoide alleato cambia stile o ottiene una Reazione; II/due alleati ricevono +12 Difesa; III/la Fila Lunga avanza insieme e controlla una zona, ma il comandante è il bersaglio evidente.';
   }
+  final concrete = monsterBookConcreteTechnique(rawId);
+  if (concrete != null) return concrete.text();
   bool hasAny(Iterable<String> terms) => terms.any(id.contains);
   if (hasAny(['guard', 'shield', 'shell', 'hide', 'skin', 'armor', 'cover'])) {
     return '$label — I/erigi una protezione che assorbe il prossimo colpo o copre un alleato; II/la barriera dura fino al tuo turno successivo e rende più costoso forzarla; III/respingi chi la attraversa, ma rinunci alla pressione offensiva mentre la mantieni.';

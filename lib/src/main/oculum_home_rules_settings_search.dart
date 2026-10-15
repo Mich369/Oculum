@@ -2322,9 +2322,6 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     );
   }
 
-  CharacterArt _tutorialMonsterArt(MonsterBookEntry monster, int level) =>
-      oculumMonsterBookArt(monster);
-
   int _statPiuBassa(Map<String, int> stats) {
     const ordine = ['resilienza', 'volonta', 'materia'];
     return ordine.map((key) => stats[key] ?? 0).reduce(min);
@@ -2638,12 +2635,16 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         razzaController.text = razza.nome;
       } else if (selectedMonster != null) {
         trattiRazziali.add(_tutorialMonsterRacialTrait(selectedMonster));
-        final monsterArt = oculumCompleteMonsterOpen(
-          _tutorialMonsterArt(selectedMonster, livello),
-          name: selectedMonster.nameIt,
-          level: livello,
-          grade: grado,
-        );
+        final importedArt = oculumMonsterBookImportArt(selectedMonster);
+        final monsterArt = importedArt == null
+            ? null
+            : oculumCompleteMonsterOpen(
+                importedArt,
+                name: selectedMonster.nameIt,
+                level: livello,
+                grade: grado,
+              );
+        skills.addAll(oculumMonsterBookSkills(selectedMonster));
         // Il Book usa la Prima Art già presente nella scheda: non aggiunge una
         // quarta sezione. Una Prima Art personalizzata resta intatta e la
         // peculiarità viene inserita davanti, così la nuova creatura continua
@@ -2655,7 +2656,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
               candidate.descrizione ==
                   'La prima manifestazione del potere personale.',
         );
-        if (selectedMonster.skillIds.isNotEmpty) {
+        if (monsterArt != null) {
           if (firstBaseIndex >= 0) {
             arti[firstBaseIndex] = monsterArt;
           } else {

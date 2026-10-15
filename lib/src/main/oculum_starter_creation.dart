@@ -120,8 +120,167 @@ String oculumMonsterBookSkillBaseId(String id) =>
 bool oculumMonsterBookSkillIsPassive(String id) {
   final base = oculumMonsterBookSkillBaseId(id);
   return base == 'inferno_in_corpo' ||
+      base == 'inverno_in_corpo' ||
       base.startsWith('lava_regeneration_') ||
       (base.startsWith('riccio_aculeo_') && base.endsWith('_armatura'));
+}
+
+MonsterConcreteTechnique? _activeConcreteMonsterTechnique(String id) {
+  final technique = monsterBookConcreteTechnique(id);
+  return technique != null && technique.text() == monsterBookSkillText(id)
+      ? technique
+      : null;
+}
+
+/// Natural techniques belong to Skills, including on creatures that also
+/// possess an Art. The original catalogue Art remains available for exports.
+const _naturalMonsterTechniqueIds = {
+  'inferno_in_corpo',
+  'inverno_in_corpo',
+  'dirty_strike',
+  'run_laugh',
+  'junk',
+  'tripwire',
+  'den_move',
+  'pack_attack',
+  'scattered_bones',
+  'reassemble',
+  'hollow',
+  'rotten_bite',
+  'slow_step',
+  'feint',
+  'quick_hand',
+  'backstab',
+  'leg_bite',
+  'predator',
+  'wolf_pack',
+  'blood_scent',
+  'predator_laugh',
+  'rend',
+  'dive',
+  'wingbeat',
+  'brutal_charge',
+  'hurt_rage',
+  'shoulder',
+  'web',
+  'climb',
+  'formation',
+  'short_order',
+  'counterattack',
+  'innocent_object',
+  'sticky_tongue',
+  'ground_maul',
+  'grab',
+  'hard_head',
+  'coordinated_assault',
+  'drag',
+  'howl',
+  'stone_tail',
+  'mineral_skin',
+  'long_arms',
+  'massive_body',
+  'seismic_punch',
+  'cracks',
+  'dive_claw',
+  'carry',
+  'defensive_wings',
+  'maze_charge',
+  'blind_fury',
+  'corridor_memory',
+  'destroying_step',
+  'grab_throw',
+  'growing_anger',
+  'wing_hit',
+  'coordinated_heads',
+  'head_fury',
+  'poison_tongue',
+};
+
+bool oculumMonsterTechniqueIsNatural(MonsterBookEntry monster, String id) =>
+    !oculumMonsterHasOculumArt(monster) ||
+    _naturalMonsterTechniqueIds.contains(oculumMonsterBookSkillBaseId(id));
+
+List<CharacterSkill> oculumMonsterBookSkills(MonsterBookEntry monster) {
+  if (monster.id.startsWith('pawn_guardiano')) return [];
+  final art = oculumMonsterBookArt(monster);
+  final ids = monsterBookUsableSkillIds(monster);
+  return [
+    for (var index = 0; index < min(ids.length, art.skills.length); index++)
+      if (oculumMonsterTechniqueIsNatural(monster, ids[index]))
+        _naturalMonsterSkill(monster, ids[index], art.skills[index]),
+  ];
+}
+
+CharacterSkill _naturalMonsterSkill(
+  MonsterBookEntry monster,
+  String id,
+  ArtSkill source,
+) {
+  final passive = oculumMonsterBookSkillIsPassive(id);
+  final forms = [
+    for (var form = 0; form < 3; form++)
+      CharacterSkillForm(
+        nome: const ['I', 'II', 'III'][form],
+        tipo: passive ? 'Passiva mostro' : 'Skill naturale mostro',
+        livello:
+            '${(monsterBookConcreteTechnique(id)?.requiredLevel ?? 0) + form * 3}',
+        costo: passive ? 'Nessun costo' : '${form + 1}/${form + 1} Volontà',
+        costoStrutturato: OculumSkillCost(
+          resource: passive ? 'nessuna' : 'volonta',
+          amountExpression: passive ? '0' : '${form + 1}',
+        ),
+        cooldown: passive
+            ? '0 turni'
+            : '${source.cooldownPerLivello[form].amount} turni',
+        cooldownStrutturato: OculumAbilityCooldown.fromJson(
+          source.cooldownPerLivello[form].toJson(),
+        ),
+        descrizione: source
+            .testoEvoluzione(form + 1)
+            .replaceAll('Oculum immesso', 'Materia')
+            .replaceAll('Oculum speso', 'Materia')
+            .replaceAll(
+              RegExp(r'Costo:[^\n]*Oculum\.?\n?', caseSensitive: false),
+              '',
+            )
+            .replaceAll(
+              RegExp(r'\([0-9]+/[0-9]+ Oculum[^)]*\)'),
+              passive ? '(nessun costo)' : '(${form + 1}/${form + 1} Volontà)',
+            ),
+        oculumLimitiConfiguratiManualmente: true,
+        effettiStrutturati: [
+          for (final effect in source.effettiPerLivello[form])
+            OculumStructuredEffect.fromJson({
+              ...effect.toJson(),
+              'valueExpression': effect.valueExpression.replaceAll(
+                'oculum_spent',
+                'materia',
+              ),
+            }),
+        ],
+      ),
+  ];
+  return CharacterSkill(
+    nome: source.nome,
+    tipo: forms.first.tipo,
+    costo: forms.first.costo,
+    cooldown: forms.first.cooldown,
+    descrizione: forms.first.descrizione,
+    equipaggiata: true,
+    forme: forms,
+  );
+}
+
+CharacterArt? oculumMonsterBookImportArt(MonsterBookEntry monster) {
+  final art = oculumMonsterBookArt(monster);
+  if (monster.id.startsWith('pawn_guardiano')) return art;
+  final ids = monsterBookUsableSkillIds(monster);
+  art.skills = [
+    for (var index = 0; index < min(ids.length, art.skills.length); index++)
+      if (!oculumMonsterTechniqueIsNatural(monster, ids[index]))
+        art.skills[index],
+  ];
+  return art.skills.isEmpty ? null : art;
 }
 
 CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
@@ -177,7 +336,14 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
             ArtSkill(
               nome: monsterBookSkillText(id).split('—').first.trim(),
               livello: 0,
-              cooldownPerLivello: id.startsWith('weak_horror_')
+              cooldownPerLivello: _activeConcreteMonsterTechnique(id) != null
+                  ? [
+                      for (final turns in _activeConcreteMonsterTechnique(
+                        id,
+                      )!.cooldowns)
+                        OculumAbilityCooldown(amount: turns),
+                    ]
+                  : id.startsWith('weak_horror_')
                   ? [
                       for (var i = 0; i < 3; i++)
                         OculumAbilityCooldown(amount: 3),
@@ -194,6 +360,8 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
                   : null,
               oculumMinimiPerLivello: oculumMonsterBookSkillIsPassive(id)
                   ? [0, 0, 0]
+                  : _activeConcreteMonsterTechnique(id) != null
+                  ? _activeConcreteMonsterTechnique(id)!.minimums
                   : id.startsWith('riccio_aculeo_')
                   ? oculumMonsterBookSkillBaseId(id).endsWith('_precisi')
                         ? [2, 5, 10]
@@ -209,6 +377,8 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
                   : null,
               oculumMassimiPerLivello: oculumMonsterBookSkillIsPassive(id)
                   ? [0, 0, 0]
+                  : _activeConcreteMonsterTechnique(id) != null
+                  ? _activeConcreteMonsterTechnique(id)!.maximums
                   : id.startsWith('riccio_aculeo_')
                   ? oculumMonsterBookSkillBaseId(id).endsWith('_precisi')
                         ? [2, 5, 11]
@@ -222,7 +392,8 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
                         id.startsWith('legno_marcio_')
                   ? [4, 10, 30]
                   : null,
-              effettiPerLivello: id == 'inferno_in_corpo'
+              effettiPerLivello:
+                  id == 'inferno_in_corpo' || id == 'inverno_in_corpo'
                   ? List.generate(
                       3,
                       (_) => oculumParseStructuredEffectsFromText(
@@ -351,12 +522,10 @@ List<OculumStructuredEffect> oculumRockSlimeEffects(
   }
   return [
     OculumStructuredEffect(
-      id: '${id}_res',
-      type: 'modifica_statistica',
-      target: 'Resilienza',
+      id: '${id}_shield',
+      type: 'scudo',
       valueExpression: '${const [10, 15, 25][form]}+oculum_spent',
-      mode: 'aumento',
-      duration: '6',
+      mode: 'immediato',
     ),
     OculumStructuredEffect(
       id: '${id}_def',
@@ -374,6 +543,10 @@ String _monsterBookSkillEvolution(
   int form,
 ) {
   final text = monsterBookSkillForms(id)[form];
+  final concrete = monsterBookConcreteTechnique(id);
+  if (concrete != null && monsterBookSkillText(id) == concrete.text()) {
+    return text;
+  }
   if (id.startsWith('riccio_aculeo_')) {
     final variant = oculumSpineVariants
         .where((v) => id.startsWith('riccio_aculeo_${v.id}_'))
@@ -432,7 +605,33 @@ String _monsterBookSkillEvolution(
 /// Only fills narrative-only techniques. Authored numeric powers and Oculus
 /// techniques keep their own formulas instead of receiving a second effect.
 List<List<OculumStructuredEffect>>? _monsterBookGenericEffects(String id) {
-  if (id == 'inferno_in_corpo') {
+  final canonical = oculumMonsterBookSkillBaseId(id);
+  if (canonical != id) return _monsterBookGenericEffects(canonical);
+  final concrete = monsterBookConcreteTechnique(id);
+  if (concrete != null && monsterBookSkillText(id) == concrete.text()) {
+    return [
+      for (var form = 0; form < 3; form++)
+        [
+          for (var index = 0; index < concrete.forms[form].length; index++)
+            OculumStructuredEffect(
+              id: '${oculumMonsterBookSkillBaseId(id)}_forma_${form + 1}_$index',
+              type: concrete.forms[form][index].type,
+              target: concrete.forms[form][index].target,
+              valueExpression: concrete.forms[form][index].formula,
+              elementType: concrete.forms[form][index].type == 'danno'
+                  ? concrete.element
+                  : '',
+              mode: concrete.forms[form][index].mode,
+              duration: concrete.forms[form][index].duration,
+              resource: concrete.forms[form][index].type == 'cura'
+                  ? 'vita'
+                  : '',
+              narrativeText: concrete.action,
+            ),
+        ],
+    ];
+  }
+  if (id == 'inferno_in_corpo' || id == 'inverno_in_corpo') {
     return List.generate(
       3,
       (_) => oculumParseStructuredEffectsFromText(

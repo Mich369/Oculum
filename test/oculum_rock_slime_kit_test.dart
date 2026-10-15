@@ -99,15 +99,23 @@ void main() {
     );
     probe.tickEffects('turni');
     expect(state.activeStructuredEffects, isEmpty);
+    final shieldBefore = int.tryParse(state.scudoController.text) ?? 0;
+    final hpBefore = probe.maximumHp();
     probe.applyEffects(
       oculumRockSlimeEffects('rock_slime_harden', 2),
       spentResources: {'oculum': 5},
     );
+    expect(int.parse(state.scudoController.text), shieldBefore + 30);
     expect(
-      state.activeStructuredEffects.firstWhere(
+      probe.maximumHp(),
+      hpBefore,
+      reason: 'Indurimento adds Shield, never Resilience or maximum Life',
+    );
+    expect(
+      state.activeStructuredEffects.where(
         (dynamic effect) => effect['target'] == 'resilienza',
-      )['value'],
-      30,
+      ),
+      isEmpty,
     );
     expect(
       state.activeStructuredEffects.firstWhere(

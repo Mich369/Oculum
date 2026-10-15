@@ -347,7 +347,14 @@ void main() {
       monsterBookSkillText('fire_charge'),
       startsWith('fire charge — I/carichi'),
     );
-    expect(monsterBookSkillText('poison_tongue'), contains('I/colpisci'));
+    expect(
+      monsterBookSkillText('poison_tongue'),
+      contains('I/Allunghi la lingua'),
+    );
+    expect(
+      monsterBookSkillText('poison_tongue'),
+      isNot(contains('attacco tematico')),
+    );
     expect(
       monsterById('rock_rhino')?.descIt,
       contains('Skill per il giocatore:'),

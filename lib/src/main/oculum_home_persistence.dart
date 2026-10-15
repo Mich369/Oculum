@@ -8128,7 +8128,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         final generatedArt = matchedMonster != null
             ? (matchedMonster.skillIds.isEmpty
                   ? null
-                  : oculumMonsterBookArt(matchedMonster))
+                  : oculumMonsterBookImportArt(matchedMonster))
             : humanoidChoice != null && artMode != 'none'
             ? oculumBalancedHumanoidArt(
                 mode: artMode,
@@ -8142,6 +8142,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
                 grade: grado,
                 kind: kind,
               );
+        if (matchedMonster != null) {
+          skills
+            ..clear()
+            ..addAll(oculumMonsterBookSkills(matchedMonster));
+          arti.clear();
+        }
         if (generatedArt != null) {
           if (!(matchedMonster?.id.startsWith('pawn_guardiano') ?? false) &&
               (selectedType.toLowerCase().contains('mostro') ||
