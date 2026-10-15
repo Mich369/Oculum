@@ -661,18 +661,32 @@ extension _OculumFallenEyes on _OculumHomePageState {
     final monster = monsterBookEntryById(sourceId);
     if (monster != null) {
       final data = eye['sheetData'] as Map;
-      final art = oculumCompleteMonsterOpen(
-        oculumMonsterBookArt(monster),
-        name: monster.nameIt,
-        level: readIntValue(data['livello']),
-        grade: readIntValue(data['grado']),
-      );
+      final importedArt = oculumMonsterBookImportArt(monster);
+      final art = importedArt == null
+          ? null
+          : oculumCompleteMonsterOpen(
+              importedArt,
+              name: monster.nameIt,
+              level: readIntValue(data['livello']),
+              grade: readIntValue(data['grado']),
+            );
       final originals = eye['originalArts'] as List? ?? const [];
-      if (!originals.whereType<Map>().any(
-        (item) => (item['skills'] as List? ?? const []).isNotEmpty,
-      )) {
+      if (art != null &&
+          !originals.whereType<Map>().any(
+            (item) => (item['skills'] as List? ?? const []).isNotEmpty,
+          )) {
         eye['originalArts'] = [art.toJson()];
       }
+      final natural = oculumMonsterBookSkills(monster);
+      final originalSkills = (eye['originalSkills'] as List? ?? const [])
+          .whereType<Map>()
+          .map((skill) => Map<String, dynamic>.from(skill))
+          .toList();
+      final names = originalSkills.map((skill) => '${skill['nome']}').toSet();
+      for (final skill in natural) {
+        if (names.add(skill.nome)) originalSkills.add(skill.toJson());
+      }
+      eye['originalSkills'] = originalSkills;
     }
   }
 
