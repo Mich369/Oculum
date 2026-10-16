@@ -938,12 +938,18 @@ extension _OculumFallenEyes on _OculumHomePageState {
       livello: max(0, level),
       grado: oculumGradeForLevel(level),
     );
-    final stats = oculumMonsterCreationStats(monster, level);
+    final baseStats = oculumMonsterCreationStats(monster, 0);
+    final growth = oculumFallenEyeGrowthStats(level, baseStats);
+    final stats = {
+      for (final key in baseStats.keys) key: baseStats[key]! + growth[key]!,
+    };
     final res = max(1, stats['resilienza'] ?? 6);
     final vol = max(0, stats['volonta'] ?? 3);
     final mat = max(0, stats['materia'] ?? 3);
     final ocu = max(0, stats['oculum'] ?? 2);
     source.addAll({
+      'monsterBaseStats': baseStats,
+      'fallenEyeLevelStatBonuses': growth,
       'resilienza': '$res',
       'currentResilienza': '$res',
       'volonta': '$vol',
@@ -2723,14 +2729,75 @@ extension _OculumFallenEyes on _OculumHomePageState {
             key: readIntValue(saved[key]),
         };
       }
-      // A level-zero source is an explicit base, not earned level points.
-      return readIntValue(draft['livello']) == 0
-          ? {
-              for (final key in ['resilienza', 'volonta', 'materia', 'oculum'])
-                key: readIntValue(draft[key]),
-            }
-          : <String, int>{};
+      // A manual source without base metadata supplies its own explicit base.
+      return {
+        for (final key in ['resilienza', 'volonta', 'materia', 'oculum'])
+          key: readIntValue(draft[key]),
+      };
     }
+
+    final statControllers = <String, TextEditingController>{
+      'resilienza': res,
+      'volonta': vol,
+      'materia': mat,
+      'oculum': ocu,
+    };
+    var growthLevel = max(0, int.tryParse(level.text) ?? 0);
+    Map<String, int> readSavedGrowth() {
+      final saved = draft['fallenEyeLevelStatBonuses'];
+      if (saved is Map) {
+        return {
+          for (final key in statControllers.keys)
+            key: max(0, readIntValue(saved[key])),
+        };
+      }
+      final base = creationBaseStats();
+      // Existing manually allocated growth must not be awarded a second time.
+      final target = oculumFallenEyeGrowthStats(growthLevel, base);
+      final budget = target.values.fold<int>(0, (sum, value) => sum + value);
+      final currentTotal = statControllers.values.fold<int>(
+        0,
+        (sum, controller) => sum + (int.tryParse(controller.text) ?? 0),
+      );
+      final baseTotal = base.values.fold<int>(0, (sum, value) => sum + value);
+      var earned = (currentTotal - baseTotal).clamp(0, budget);
+      if (earned == budget) return target;
+      final inferred = <String, int>{};
+      for (final key in statControllers.keys) {
+        final value = min(
+          earned,
+          max(0, readIntValue(draft[key]) - (base[key] ?? 0)),
+        );
+        inferred[key] = value;
+        earned -= value;
+      }
+      return inferred;
+    }
+
+    var appliedGrowth = readSavedGrowth();
+    void updateLevelGrowth() {
+      final nextLevel = int.tryParse(level.text);
+      if (nextLevel == null || nextLevel < 0) return;
+      final base = creationBaseStats();
+      if (base.isEmpty) return;
+      final nextGrowth = oculumFallenEyeGrowthStats(nextLevel, base);
+      final oldRes = max(1, int.tryParse(res.text) ?? 1);
+      for (final entry in statControllers.entries) {
+        final current = int.tryParse(entry.value.text) ?? 0;
+        entry.value.text =
+            '${max(entry.key == 'resilienza' ? 1 : 0, current - (appliedGrowth[entry.key] ?? 0) + nextGrowth[entry.key]!)}';
+      }
+      final newRes = max(1, int.tryParse(res.text) ?? 1);
+      // Preserve wounds and manual HP adjustments while updating the maximum.
+      final oldMax = oldRes * (10 + oculumGradeForLevel(growthLevel) * 5);
+      final newMax = newRes * (10 + oculumGradeForLevel(nextLevel) * 5);
+      hp.text =
+          '${max(0, (int.tryParse(hp.text) ?? oldMax) + newMax - oldMax)}';
+      growthLevel = nextLevel;
+      appliedGrowth = nextGrowth;
+    }
+
+    updateLevelGrowth();
 
     final accepted = await oculumShowDialogUntilClosed<bool>(
       context: context,
@@ -2770,6 +2837,8 @@ extension _OculumFallenEyes on _OculumHomePageState {
                                 level: max(0, int.tryParse(level.text) ?? 0),
                               ),
                             );
+                            growthLevel = max(0, int.tryParse(level.text) ?? 0);
+                            appliedGrowth = readSavedGrowth();
                           });
                         },
                       ),
@@ -2796,7 +2865,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                   TextField(
                     controller: level,
                     keyboardType: TextInputType.number,
-                    onChanged: (_) => dialogSetState(() {}),
+                    onChanged: (_) => dialogSetState(updateLevelGrowth),
                     decoration: InputDecoration(
                       labelText: 'Livello',
                       helperText:
@@ -2918,7 +2987,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                         false,
                       );
                       final missing = oculumMonsterMissingStatPoints(
-                        type: '${draft['tipoScheda'] ?? 'Mostro'}',
+                        type: 'Mostro',
                         level: levelValue,
                         grade: gradeValue,
                         resilienza: int.tryParse(res.text) ?? 0,
@@ -2930,7 +2999,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                       return Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
-                          'Crescita — livello $levelValue, grado $gradeValue: mancano $missing punti. Le statistiche base (${creationBaseStats().values.fold<int>(0, (a, b) => a + b)} punti) non vengono conteggiate come crescita.',
+                          'Crescita automatica: ${levelValue * 9} punti livello + ${gradeValue * 10} punti grado — mancano $missing punti. Le statistiche base (${creationBaseStats().values.fold<int>(0, (a, b) => a + b)} punti) non vengono conteggiate come crescita.',
                           style: TextStyle(
                             color: missing == 0
                                 ? Colors.lightGreen
@@ -2986,6 +3055,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
       final parsedLevel = max(0, int.tryParse(level.text) ?? 1);
       draft.addAll({
         'monsterBaseStats': creationBaseStats(),
+        'fallenEyeLevelStatBonuses': appliedGrowth,
         'nome': name.text.trim(),
         'livello': '$parsedLevel',
         'grado': '${gradoAutomaticoDaLivello(parsedLevel, false)}',
@@ -2998,6 +3068,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
         'currentMateria': '${max(0, int.tryParse(mat.text) ?? 0)}',
         'oculum': '${max(0, int.tryParse(ocu.text) ?? 0)}',
         'currentOculum': '${max(0, int.tryParse(ocu.text) ?? 0)}',
+        'maxOculum': max(0, int.tryParse(ocu.text) ?? 0),
         'cmRapido': cm.text,
         'attaccoRapido': vc.text,
         'fallenEyeOriginalArts': [

@@ -118,7 +118,32 @@ void main() {
       );
       await tester.enterText(field('Livello'), '1');
       await tester.pump();
-      expect(find.textContaining('mancano 9 punti'), findsOneWidget);
+      expect(find.textContaining('mancano 0 punti'), findsOneWidget);
+      int stat(String label) =>
+          int.parse(tester.widget<TextField>(field(label)).controller!.text);
+      int total() =>
+          stat('Resilienza') +
+          stat('Volontà') +
+          stat('Materia') +
+          stat('Oculum');
+      expect(total(), 27 + 9);
+      expect(stat('Oculum'), 0);
+      final firstRes = stat('Resilienza');
+      expect(stat('Vita'), firstRes * 10);
+      await tester.enterText(field('Livello'), '2');
+      await tester.pump();
+      expect(total(), 27 + 18);
+      await tester.enterText(field('Livello'), '1');
+      await tester.pump();
+      expect(total(), 27 + 9);
+      expect(stat('Resilienza'), firstRes);
+      await tester.enterText(field('Livello'), '0');
+      await tester.pump();
+      expect(total(), 27);
+      expect(stat('Vita'), 140);
+      await tester.enterText(field('Livello'), '1');
+      await tester.pump();
+      expect(total(), 36);
       expect(find.textContaining('27 punti'), findsOneWidget);
       final nameBounds = tester.getRect(field('Nome del mostro'));
       final levelBounds = tester.getRect(field('Livello'));
@@ -126,6 +151,59 @@ void main() {
       final hpBounds = tester.getRect(field('Vita'));
       final oculumBounds = tester.getRect(field('Oculum'));
       expect(oculumBounds.top - hpBounds.bottom, greaterThanOrEqualTo(15));
+      final base = {'resilienza': 14, 'volonta': 5, 'materia': 8, 'oculum': 0};
+      final saved = <String, dynamic>{
+        'nome': 'Slime salvato',
+        'livello': '1',
+        'grado': '0',
+        'monsterBaseStats': base,
+        'fallenEyeLevelStatBonuses': oculumFallenEyeGrowthStats(1, base),
+        'currentHp': '${stat('Vita') - 7}',
+        'resilienza': '${stat('Resilienza')}',
+        'volonta': '${stat('Volontà')}',
+        'materia': '${stat('Materia')}',
+        'oculum': '0',
+      };
+      await tester.tap(find.text('Annulla'));
+      await tester.pump(const Duration(milliseconds: 350));
+      unawaited(
+        probe.showCreateFallenEye(
+          editingEye: {'rarity': 'comune', 'sheetData': saved},
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(total(), 36);
+      expect(stat('Vita'), firstRes * 10 - 7);
+      await tester.enterText(field('Livello'), '2');
+      await tester.pump();
+      expect(total(), 45);
+      expect(stat('Vita'), stat('Resilienza') * 10 - 7);
+      await tester.enterText(field('Livello'), '0');
+      await tester.pump();
+      expect(total(), 27);
+      expect(stat('Vita'), 133);
+      await tester.tap(find.text('Annulla'));
+      await tester.pump(const Duration(milliseconds: 350));
+      // A legacy Eye with all nine points manually assigned to Will keeps them.
+      final legacy = Map<String, dynamic>.from(saved)
+        ..remove('fallenEyeLevelStatBonuses')
+        ..addAll({
+          'resilienza': '14',
+          'volonta': '14',
+          'materia': '8',
+          'currentHp': '133',
+        });
+      unawaited(
+        probe.showCreateFallenEye(
+          editingEye: {'rarity': 'comune', 'sheetData': legacy},
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(total(), 36);
+      expect(stat('Volontà'), 14);
+      expect(stat('Vita'), 133);
       await tester.tap(find.text('Annulla'));
       await tester.pump(const Duration(milliseconds: 350));
       probe.cancelPendingSave();

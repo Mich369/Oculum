@@ -59,7 +59,8 @@ class OculumPerformanceProbe {
     _state.sheetDiceRollPanel,
   );
   void openResistances() => _state.openResistanceDetails();
-  Future<void> showCreateFallenEye() => _state._showCreateFallenEyeDialog();
+  Future<void> showCreateFallenEye({Map<String, dynamic>? editingEye}) =>
+      _state._showCreateFallenEyeDialog(editingEye: editingEye);
   Widget skillsPage() => _state.skillsPage();
   Widget contextActionAnchor({
     required Widget child,

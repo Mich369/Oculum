@@ -1274,8 +1274,19 @@ Map<String, int> oculumMonsterCreationStats(
   };
 }
 
-/// Il contatore di creazione usa solo le quattro statistiche reali del
-/// mostro: ogni livello vale il suo rango e ogni grado aggiunge 10×grado.
+/// Fallen Eyes earn nine level points in addition to their original base.
+/// Grade points remain separate; a creature without Oculum keeps that identity.
+Map<String, int> oculumFallenEyeGrowthStats(
+  int level,
+  Map<String, int> baseStats,
+) => oculumDistributeMonsterStats(
+  max(0, level) * 9 + oculumGradeForLevel(level) * 10,
+  hasSkills: true,
+  hasOculumArt: (baseStats['oculum'] ?? 0) > 0,
+  buildStats: baseStats,
+);
+
+/// Counts earned growth separately from the original four base statistics.
 int oculumMonsterMissingStatPoints({
   required String type,
   required int level,

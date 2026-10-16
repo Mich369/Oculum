@@ -6,6 +6,35 @@ import 'package:oculum/main.dart';
 
 void main() {
   test(
+    'Fallen Eye automatic growth adds nine level points beyond the base',
+    () {
+      for (final oculum in [0, 4]) {
+        final base = {
+          'resilienza': 14,
+          'volonta': 5,
+          'materia': 8,
+          'oculum': oculum,
+        };
+        for (var level = 0; level <= 100; level++) {
+          final growth = oculumFallenEyeGrowthStats(level, base);
+          expect(
+            growth.values.reduce((a, b) => a + b),
+            level * 9 + oculumGradeForLevel(level) * 10,
+          );
+          if (oculum == 0) expect(growth['oculum'], 0);
+          expect(oculumFallenEyeGrowthStats(level, base), growth);
+        }
+        expect(base, {
+          'resilienza': 14,
+          'volonta': 5,
+          'materia': 8,
+          'oculum': oculum,
+        });
+      }
+    },
+  );
+
+  test(
     'tutorial requirements belong to Master without altering preset powers',
     () {
       final original = oculumStarterWaterArt();
