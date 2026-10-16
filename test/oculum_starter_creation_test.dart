@@ -160,6 +160,61 @@ void main() {
   });
 
   test('monster creation counter includes rank points and grade points', () {
+    const base = {'resilienza': 14, 'volonta': 5, 'materia': 8, 'oculum': 0};
+    expect(
+      oculumMonsterMissingStatPoints(
+        type: 'Mostro',
+        level: 1,
+        grade: 0,
+        resilienza: 10,
+        volonta: 9,
+        materia: 8,
+        oculum: 0,
+        baseStats: base,
+      ),
+      9,
+      reason: 'Redistributing base points must not create growth points',
+    );
+    expect(
+      oculumMonsterMissingStatPoints(
+        type: 'Mostro',
+        level: 1,
+        grade: 0,
+        resilienza: 14,
+        volonta: 5,
+        materia: 8,
+        oculum: 0,
+        baseStats: base,
+      ),
+      9,
+      reason: 'The 27 base points must not pay for the level',
+    );
+    expect(
+      oculumMonsterMissingStatPoints(
+        type: 'Mostro',
+        level: 1,
+        grade: 0,
+        resilienza: 18,
+        volonta: 8,
+        materia: 10,
+        oculum: 0,
+        baseStats: base,
+      ),
+      0,
+    );
+    expect(
+      oculumMonsterMissingStatPoints(
+        type: 'Mostro',
+        level: 0,
+        grade: 0,
+        resilienza: 14,
+        volonta: 5,
+        materia: 8,
+        oculum: 0,
+        baseStats: base,
+      ),
+      0,
+    );
     expect(
       oculumMonsterMissingStatPoints(
         type: 'Mostro Boss',

@@ -253,9 +253,10 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
                           opacity: presentation.relicOpacity,
                           child: Image.asset(
                             pack.scene(mobile: mobile, variant: variant),
-                            fit: widget.fillArea
-                                ? BoxFit.cover
-                                : BoxFit.contain,
+                            // Wide decorative strips must never be enlarged
+                            // to cover a tall sheet: that crops the artwork
+                            // into a blurred block behind the reading area.
+                            fit: BoxFit.contain,
                             alignment: Alignment.bottomRight,
                             cacheWidth: mobile ? 640 : 1024,
                             filterQuality: FilterQuality.medium,

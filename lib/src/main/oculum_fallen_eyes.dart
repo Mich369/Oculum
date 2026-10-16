@@ -2709,8 +2709,30 @@ extension _OculumFallenEyes on _OculumHomePageState {
     }
 
     loadDraft(draft);
-    MonsterBookEntry? selectedMonster;
-    final accepted = await showDialog<bool>(
+    MonsterBookEntry? selectedMonster = monsterById(
+      '${draft['monsterBookSourceId'] ?? editingEye?['sourceMonsterId'] ?? ''}',
+    );
+    Map<String, int> creationBaseStats() {
+      if (selectedMonster != null) {
+        return oculumMonsterCreationStats(selectedMonster!, 0);
+      }
+      final saved = draft['monsterBaseStats'];
+      if (saved is Map) {
+        return {
+          for (final key in ['resilienza', 'volonta', 'materia', 'oculum'])
+            key: readIntValue(saved[key]),
+        };
+      }
+      // A level-zero source is an explicit base, not earned level points.
+      return readIntValue(draft['livello']) == 0
+          ? {
+              for (final key in ['resilienza', 'volonta', 'materia', 'oculum'])
+                key: readIntValue(draft[key]),
+            }
+          : <String, int>{};
+    }
+
+    final accepted = await oculumShowDialogUntilClosed<bool>(
       context: context,
       builder: (dialog) => StatefulBuilder(
         builder: (context, dialogSetState) => AlertDialog(
@@ -2745,7 +2767,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                               _fallenEyeSourceFromMonsterBook(
                                 picked,
                                 name: picked.nameIt,
-                                level: max(1, int.tryParse(level.text) ?? 1),
+                                level: max(0, int.tryParse(level.text) ?? 0),
                               ),
                             );
                           });
@@ -2763,12 +2785,14 @@ extension _OculumFallenEyes on _OculumHomePageState {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
+                  const SizedBox(height: 10),
                   TextField(
                     controller: name,
                     decoration: const InputDecoration(
                       labelText: 'Nome del mostro',
                     ),
                   ),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: level,
                     keyboardType: TextInputType.number,
@@ -2779,6 +2803,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
                           'Grado automatico: ${gradoAutomaticoDaLivello(max(0, int.tryParse(level.text) ?? 0), false)}',
                     ),
                   ),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String?>(
                     initialValue: selectedRarity,
                     isExpanded: true,
@@ -2810,8 +2835,10 @@ extension _OculumFallenEyes on _OculumHomePageState {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
+                  const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
+                    runSpacing: 16,
                     children: [
                       SizedBox(
                         width: 130,
@@ -2898,11 +2925,12 @@ extension _OculumFallenEyes on _OculumHomePageState {
                         volonta: int.tryParse(vol.text) ?? 0,
                         materia: int.tryParse(mat.text) ?? 0,
                         oculum: int.tryParse(ocu.text) ?? 0,
+                        baseStats: creationBaseStats(),
                       );
                       return Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
-                          'Contatore Mostro — livello $levelValue, grado $gradeValue: mancano $missing punti statistica per il valore richiesto.',
+                          'Crescita — livello $levelValue, grado $gradeValue: mancano $missing punti. Le statistiche base (${creationBaseStats().values.fold<int>(0, (a, b) => a + b)} punti) non vengono conteggiate come crescita.',
                           style: TextStyle(
                             color: missing == 0
                                 ? Colors.lightGreen
@@ -2921,12 +2949,16 @@ extension _OculumFallenEyes on _OculumHomePageState {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
+                  const SizedBox(height: 8),
                   for (var i = 0; i < artNames.length; i++)
-                    TextField(
-                      controller: artNames[i],
-                      decoration: InputDecoration(
-                        labelText: 'Art ${i + 1}',
-                        hintText: '???',
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: TextField(
+                        controller: artNames[i],
+                        decoration: InputDecoration(
+                          labelText: 'Art ${i + 1}',
+                          hintText: '???',
+                        ),
                       ),
                     ),
                   Text(
@@ -2953,6 +2985,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
     if (accepted == true) {
       final parsedLevel = max(0, int.tryParse(level.text) ?? 1);
       draft.addAll({
+        'monsterBaseStats': creationBaseStats(),
         'nome': name.text.trim(),
         'livello': '$parsedLevel',
         'grado': '${gradoAutomaticoDaLivello(parsedLevel, false)}',

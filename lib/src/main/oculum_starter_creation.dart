@@ -1284,12 +1284,25 @@ int oculumMonsterMissingStatPoints({
   required int volonta,
   required int materia,
   required int oculum,
+  Map<String, int> baseStats = const {},
 }) {
   final required =
       max(0, level) * oculumMonsterStatPointsPerLevel(type) +
       max(0, grade) * oculumMonsterStatPointsPerGrade(type);
-  final assigned =
-      max(0, resilienza) + max(0, volonta) + max(0, materia) + max(0, oculum);
+  final baseTotal = [
+    'resilienza',
+    'volonta',
+    'materia',
+    'oculum',
+  ].fold<int>(0, (sum, key) => sum + max(0, baseStats[key] ?? 0));
+  final assigned = max(
+    0,
+    max(0, resilienza) +
+        max(0, volonta) +
+        max(0, materia) +
+        max(0, oculum) -
+        baseTotal,
+  );
   return max(0, required - assigned).toInt();
 }
 

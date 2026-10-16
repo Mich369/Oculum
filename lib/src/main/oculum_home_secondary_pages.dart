@@ -11505,7 +11505,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   Widget skillsPage() {
     return responsivePageList(
       pageKey: 'skills',
-      maxColumns: 2,
+      maxColumns: 1,
       minColumnWidth: 340,
       fullWidthIndexes: const <int>{0},
       children: [
