@@ -218,8 +218,12 @@ function frame(theme, w, h, role, variant = '') {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${shapes.join('')}</svg>`;
 }
 async function run() {
-  const inventory=[];
+  const manifestPath=path.join(root,'design/theme-art-manifest.json');
+  const knownIds=new Set(themes.filter(t=>!['buried_herbarium','funeral_clockwork','tidal_stained_glass'].includes(t.id)).map(t=>t.id));
+  const inventory=fs.existsSync(manifestPath)?JSON.parse(fs.readFileSync(manifestPath,'utf8')).filter(entry=>!knownIds.has(entry.theme)):[];
   for(const theme of themes) {
+    // These authored packs are exported by build_elaborate_theme_packs.cjs.
+    if (['buried_herbarium','funeral_clockwork','tidal_stained_glass'].includes(theme.id)) continue;
     const dir=path.join(root,'design/themes',theme.id), output=path.join(root,'assets/themes',theme.id);
     fs.mkdirSync(dir,{recursive:true});
     const comp={id:theme.id,name:theme.name,materials:theme.formsAndMaterials,family:familyOf(theme.id),signature:hash(theme.id).toString('hex'),motion:theme.motion,figmaFile:'Dw1F8sR6bzTCuGkaH2CEeS',safeCenter:'Artwork only in outer 28 pixels; alpha=0 in reading area',desktop:'extended scene and split edge',tablet:'compact edge and side ornament',mobile:'dedicated shallow scene and narrow frame'};

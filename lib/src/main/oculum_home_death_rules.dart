@@ -1,5 +1,36 @@
 part of '../../main.dart';
 
+int oculumHpMultiplierForGrade(int grade) =>
+    10 + 5 * grade.clamp(0, 12).toInt();
+
+int oculumSheetHpMaximum(Map<String, dynamic> sheet) {
+  final resilience = max(
+    1,
+    readIntValue(
+      sheet['derivedResilienzaTotal'],
+      fallback: readIntValue(
+        sheet['currentResilienza'],
+        fallback: readIntValue(sheet['resilienza'], fallback: 1),
+      ),
+    ),
+  );
+  final multiplier = oculumHpMultiplierForGrade(readIntValue(sheet['grado']));
+  final saved = readIntValue(sheet['derivedMaxHp']);
+  if (saved > 0) {
+    return max(
+      1,
+      saved +
+          resilience *
+              (multiplier -
+                  readIntValue(sheet['hpGradeMultiplier'], fallback: 10)),
+    );
+  }
+  return max(
+    1,
+    resilience * multiplier + readIntValue(sheet['manualHpMaximumAdjustment']),
+  );
+}
+
 extension _OculumHomeDeathRules on _OculumHomePageState {
   static const int deathWoundLimit = 3;
   static const int vitalWillLimit = 3;
@@ -9,18 +40,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
   int sheetMaxHpForDeathAt(int index) {
     if (index == schedaCorrente) return max(1, maxHp());
     if (index < 0 || index >= schedePersonaggio.length) return 1;
-    final sheet = schedePersonaggio[index];
-    final saved = readIntValue(sheet['derivedMaxHp']);
-    if (saved > 0) return saved;
-    final resilience = max(
-      1,
-      readIntValue(
-        sheet['currentResilienza'],
-        fallback: readIntValue(sheet['resilienza'], fallback: 1),
-      ),
-    );
-    final grade = max(0, readIntValue(sheet['grado']));
-    return max(1, resilience * 10 * max(1, grade * 5)).toInt();
+    return oculumSheetHpMaximum(schedePersonaggio[index]);
   }
 
   int sheetCurrentHpForDeathAt(int index) {

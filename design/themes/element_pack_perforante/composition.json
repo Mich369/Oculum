@@ -1,0 +1,15 @@
+{
+  "element": "perforante",
+  "id": "element_pack_perforante",
+  "name": "Spine del bastione",
+  "material": "metal",
+  "motion": "glint",
+  "accent": "DCC7A5",
+  "style": "bolted_metal",
+  "legacyPack": "jrpg_legend",
+  "materialSource": "assets/themes/materials/metal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

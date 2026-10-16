@@ -409,7 +409,67 @@ List<OculumTitle> oculumMonsterBookTitles(MonsterBookEntry monster) {
   ];
 }
 
-CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) =>
+CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
+  final art = _rawMonsterBookArt(monster);
+  for (final skill in art.skills) {
+    for (var form = 1; form <= 3; form++) {
+      final text = skill.testoEvoluzione(form);
+      if (text.isEmpty || text == '???') continue;
+      final passive = skill
+          .tipoPerLivello(form)
+          .toLowerCase()
+          .contains('passiv');
+      final index = form - 1;
+      if (passive) {
+        skill.impostaRisorsaCostoPerLivello(form, 'nessuna');
+        skill.impostaLimitiOculumPerLivello(form, minimo: 0, massimo: 0);
+        continue;
+      }
+      final spent =
+          skill
+              .effettiEvoluzione(form)
+              .any(
+                (e) => '${e.valueExpression} ${e.duration}'.contains(
+                  'oculum_spent',
+                ),
+              ) ||
+          RegExp(
+            r'Oculum (?:immesso|speso)',
+            caseSensitive: false,
+          ).hasMatch(text) ||
+          skill.nome == 'Lancio di aculei' ||
+          skill.nome == 'Aculei precisi' && form == 3;
+      if (!spent &&
+          skill.oculumMassimoPerLivello(form) >
+              skill.oculumMinimoPerLivello(form)) {
+        final amount = skill.oculumMinimoPerLivello(form);
+        skill.impostaLimitiOculumPerLivello(
+          form,
+          minimo: amount,
+          massimo: amount,
+        );
+        skill.oculumMassimiInizialiPerLivello[index] = amount;
+        skill.aumentoMassimoOculumAttivoPerLivello[index] = false;
+        final corrected = text.replaceAllMapped(
+          RegExp(r'\(\s*\d+\s*/\s*\d+\s*(Oculum)?\s*\)', caseSensitive: false),
+          (match) =>
+              '($amount/$amount${match.group(1) == null ? "" : " Oculum"})',
+        );
+        switch (form) {
+          case 1:
+            skill.evo1 = corrected;
+          case 2:
+            skill.evo2 = corrected;
+          case 3:
+            skill.evo3 = corrected;
+        }
+      }
+    }
+  }
+  return art;
+}
+
+CharacterArt _rawMonsterBookArt(MonsterBookEntry monster) =>
     monster.id == 'slime_roccioso'
     ? oculumRockSlimeArt(monster)
     : monster.id.startsWith('pawn_guardiano')

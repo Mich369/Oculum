@@ -1,0 +1,15 @@
+{
+  "element": "fuoco",
+  "id": "element_pack_fuoco",
+  "name": "Braci discendenti",
+  "material": "charred",
+  "motion": "sparks",
+  "accent": "F5AB68",
+  "style": "ember",
+  "legacyPack": "ember_rite",
+  "materialSource": "assets/themes/materials/charred.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

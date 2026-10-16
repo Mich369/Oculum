@@ -1,0 +1,15 @@
+{
+  "element": "maledizione",
+  "id": "element_pack_maledizione",
+  "name": "Sigillo incatenato",
+  "material": "metal",
+  "motion": "chains",
+  "accent": "BEA2BD",
+  "style": "cathedral",
+  "legacyPack": "thorn_vigil",
+  "materialSource": "assets/themes/materials/metal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

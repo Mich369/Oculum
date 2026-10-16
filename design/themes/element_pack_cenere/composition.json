@@ -1,0 +1,15 @@
+{
+  "element": "cenere",
+  "id": "element_pack_cenere",
+  "name": "Polvere dei giuramenti",
+  "material": "ash",
+  "motion": "ash",
+  "accent": "C3C5CD",
+  "style": "ash",
+  "legacyPack": "restyle_cenere",
+  "materialSource": "design/materials/canva-20261016/ash-material.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

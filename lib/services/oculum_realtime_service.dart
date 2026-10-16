@@ -32,6 +32,7 @@ class OculumRealtimeService {
     'party_log',
     'damage_report',
     'session_note',
+    'session_note_chunk',
     'session_notes_request',
     'session_notes_snapshot',
     'recipes_request',
@@ -76,6 +77,7 @@ class OculumRealtimeService {
   Future<void>? _connecting;
   int _generation = 0;
   final _sheetTransfers = OculumSheetTransferAssembler();
+  final _sessionNoteTransfers = OculumSheetTransferAssembler();
   int _sheetTransferSequence = 0;
 
   bool get isConnected => _connected && !_disposed && _channel != null;
@@ -182,6 +184,7 @@ class OculumRealtimeService {
   Future<void> disconnect({bool notify = true}) async {
     _generation++;
     _sheetTransfers.clear();
+    _sessionNoteTransfers.clear();
     final channel = _channel;
     _channel = null;
     _connected = false;
@@ -758,6 +761,52 @@ class OculumRealtimeService {
     }
 
     try {
+      if (event == 'session_note' || event == 'session_notes_snapshot') {
+        final generation = _generation;
+        final encoded = await compute(
+          oculumEncodeSheetTransfer,
+          <String, dynamic>{'event': event, 'sheet': payload},
+        );
+        if (_channel != channel || !isConnected || generation != _generation) {
+          return false;
+        }
+        if (encoded.length > OculumSheetTransferAssembler.chunkSize) {
+          final count =
+              (encoded.length / OculumSheetTransferAssembler.chunkSize).ceil();
+          if (count > OculumSheetTransferAssembler.maxChunks) {
+            _safeStatus(
+              'Appunti troppo grandi per il trasferimento: salvataggio locale conservato.',
+            );
+            return false;
+          }
+          final transferId =
+              '${_presenceKey}_notes_${++_sheetTransferSequence}';
+          for (var i = 0; i < count; i++) {
+            if (generation != _generation ||
+                _channel != channel ||
+                !isConnected) {
+              return false;
+            }
+            final start = i * OculumSheetTransferAssembler.chunkSize;
+            final end = (start + OculumSheetTransferAssembler.chunkSize).clamp(
+              0,
+              encoded.length,
+            );
+            if (!await _sendConfirmed('session_note_chunk', {
+              'transferId': transferId,
+              'chunkIndex': i,
+              'chunkCount': count,
+              'data': encoded.substring(start, end),
+            })) {
+              return false;
+            }
+            await Future<void>.delayed(const Duration(milliseconds: 60));
+          }
+          return generation == _generation &&
+              _channel == channel &&
+              isConnected;
+        }
+      }
       if (event == 'sheet_shared') {
         final generation = _generation;
         final encoded = await compute(oculumEncodeSheetTransfer, payload);
@@ -844,6 +893,24 @@ class OculumRealtimeService {
         ? Map<String, dynamic>.from(nestedPayload)
         : Map<String, dynamic>.from(payload);
 
+    if (event == 'session_note_chunk') {
+      final assembled = _sessionNoteTransfers.accept(
+        normalized,
+        DateTime.now(),
+      );
+      if (assembled != null &&
+          const {
+            'session_note',
+            'session_notes_snapshot',
+          }.contains(assembled['event']) &&
+          assembled['sheet'] is Map) {
+        onEvent(
+          '${assembled['event']}',
+          Map<String, dynamic>.from(assembled['sheet']),
+        );
+      }
+      return;
+    }
     if (event == 'sheet_shared_chunk') {
       final assembled = _sheetTransfers.accept(normalized, DateTime.now());
       if (assembled != null) onEvent('sheet_shared', assembled);

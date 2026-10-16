@@ -1,0 +1,10 @@
+{
+  "provider": "Canva",
+  "referenceDesign": "DAHX-kQUyBo",
+  "transparentMediaId": "MAHYIjPQqpM",
+  "original": "design/materials/canva-20261016/ice-frame.png",
+  "originalWidth": 1776,
+  "originalHeight": 896,
+  "safeBand": 24,
+  "exporter": "scripts/build_canva_theme_frames.cjs"
+}

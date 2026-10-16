@@ -1,0 +1,15 @@
+{
+  "element": "gravita",
+  "id": "element_pack_gravita",
+  "name": "Anelli del peso",
+  "material": "astral",
+  "motion": "gravity",
+  "accent": "BCAAD4",
+  "style": "sigil",
+  "legacyPack": "shadow_gate_rank",
+  "materialSource": "assets/themes/materials/astral.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

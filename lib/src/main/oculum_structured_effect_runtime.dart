@@ -72,6 +72,34 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
       }
       total += readIntValue(effect['value']);
     }
+    for (final effect in automaticMonsterPassiveEffects()) {
+      if (!const {
+        'danno',
+        'danno_percentuale',
+        'difesa',
+        'modifica_statistica',
+        'modifica_sottotratto',
+        'velocita',
+      }.contains(effect.type)) {
+        continue;
+      }
+      if (normalizedStructuredTarget(oculumStructuredEffectTargetKey(effect)) !=
+          normalized) {
+        continue;
+      }
+      total += oculumEvaluateStructuredEffectValue(
+        effect,
+        variables: {
+          'resilienza': currentResilienza(),
+          'volonta': currentVolonta(),
+          'materia': currentMateria(),
+          'oculum': currentOculum(),
+          'livello': leggiNumero(livelloController),
+          'grado': leggiNumero(gradoController),
+        },
+        subtraits: hiddenEyeStats,
+      );
+    }
     return total;
   }
 

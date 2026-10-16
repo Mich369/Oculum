@@ -1,0 +1,15 @@
+{
+  "element": "vuoto",
+  "id": "element_pack_vuoto",
+  "name": "Orbita mancante",
+  "material": "astral",
+  "motion": "void",
+  "accent": "A5A1C4",
+  "style": "sigil",
+  "legacyPack": "void_liturgy",
+  "materialSource": "assets/themes/materials/astral.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

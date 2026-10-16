@@ -1,0 +1,15 @@
+{
+  "element": "diabolico",
+  "id": "element_pack_diabolico",
+  "name": "Corna del patto",
+  "material": "charred",
+  "motion": "embers",
+  "accent": "DDA17E",
+  "style": "cathedral",
+  "legacyPack": "black_briar_kingdom",
+  "materialSource": "assets/themes/materials/charred.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

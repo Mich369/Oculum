@@ -1,0 +1,15 @@
+{
+  "element": "plasma",
+  "id": "element_pack_plasma",
+  "name": "Filamenti ionici",
+  "material": "charred",
+  "motion": "plasma",
+  "accent": "E6A3DD",
+  "style": "ember",
+  "legacyPack": "ashen_covenant",
+  "materialSource": "assets/themes/materials/charred.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

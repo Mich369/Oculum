@@ -1,0 +1,15 @@
+{
+  "element": "lava",
+  "id": "element_pack_lava",
+  "name": "Faglia incandescente",
+  "material": "charred",
+  "motion": "molten",
+  "accent": "FF9760",
+  "style": "ember",
+  "legacyPack": "eclipse_bonfire",
+  "materialSource": "assets/themes/materials/charred.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

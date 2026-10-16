@@ -1,0 +1,15 @@
+{
+  "element": "natura",
+  "id": "element_pack_natura",
+  "name": "Rami in fiore",
+  "material": "bark",
+  "motion": "petals",
+  "accent": "AAC6A2",
+  "style": "botanical",
+  "legacyPack": "vervain_gothic",
+  "materialSource": "assets/themes/materials/bark.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

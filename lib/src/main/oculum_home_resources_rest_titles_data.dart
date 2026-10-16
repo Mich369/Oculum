@@ -2715,7 +2715,10 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     programmaSalvataggio();
   }
 
-  void usaSkillTitolo(OculumTitle titolo, {TitleExtraSkillEntry? skillExtra}) {
+  Future<void> usaSkillTitolo(
+    OculumTitle titolo, {
+    TitleExtraSkillEntry? skillExtra,
+  }) async {
     final displayName = (skillExtra?.nome.trim().isNotEmpty ?? false)
         ? skillExtra!.nome.trim()
         : titolo.nome.trim().isEmpty
@@ -2736,6 +2739,16 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
           'Empty Title Skill: write a description or add an effect.',
         );
       });
+      return;
+    }
+    final cost = skillExtra?.cost ?? titolo.skillCost;
+    if (cost != null) {
+      await useConfiguredAbility(
+        source: '$displayName — Skill del Titolo',
+        effects: effects,
+        cost: cost,
+        valid: () => titoli.contains(titolo) || trattiRazziali.contains(titolo),
+      );
       return;
     }
     setState(() {

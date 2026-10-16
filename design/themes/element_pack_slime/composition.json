@@ -1,0 +1,15 @@
+{
+  "element": "slime",
+  "id": "element_pack_slime",
+  "name": "Membrane del principe",
+  "material": "acid",
+  "motion": "bubbles",
+  "accent": "A5D9B8",
+  "style": "tide",
+  "legacyPack": "slime_prince",
+  "materialSource": "assets/themes/materials/acid.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

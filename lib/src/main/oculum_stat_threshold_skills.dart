@@ -250,6 +250,22 @@ extension _OculumStatThresholdSkills on _OculumHomePageState {
       'materia': leggiNumero(materiaController),
       'oculum': leggiNumero(oculumController),
     };
+    // Summoning bonuses are temporary even when mirrored in legacy base fields.
+    // They must not unlock the reward for reaching six permanent base points.
+    final ownerTag = sheetTagAt(schedaCorrente);
+    for (final eye in occhiCaduti) {
+      if (!readBoolValue(eye['active']) ||
+          '${eye['ownerSheetId'] ?? ''}' != ownerTag) {
+        continue;
+      }
+      final bonuses = eye['summonStatBonuses'] as Map? ?? const {};
+      for (final entry in bonuses.entries) {
+        final key = '${entry.key}';
+        if (stats.containsKey(key)) {
+          stats[key] = max(0, stats[key]! - readIntValue(entry.value));
+        }
+      }
+    }
     final stat = changedStat != null && (stats[changedStat] ?? 0) >= 6
         ? changedStat
         : oculumFirstThresholdStat(stats);

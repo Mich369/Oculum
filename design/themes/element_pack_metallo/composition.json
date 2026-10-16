@@ -1,0 +1,15 @@
+{
+  "element": "metallo",
+  "id": "element_pack_metallo",
+  "name": "Placche del fabbro",
+  "material": "metal",
+  "motion": "glint",
+  "accent": "C0CBCF",
+  "style": "bolted_metal",
+  "legacyPack": "bolted_gold_plate",
+  "materialSource": "assets/themes/materials/metal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

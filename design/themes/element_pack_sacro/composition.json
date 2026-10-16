@@ -1,0 +1,15 @@
+{
+  "element": "sacro",
+  "id": "element_pack_sacro",
+  "name": "Navata consacrata",
+  "material": "stone",
+  "motion": "rays",
+  "accent": "E8D5B1",
+  "style": "cathedral",
+  "legacyPack": "cathedral_rose",
+  "materialSource": "assets/themes/materials/stone.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

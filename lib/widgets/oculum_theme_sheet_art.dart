@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'oculum_goth_ornaments.dart';
 import 'oculum_theme_presentation.dart';
 import 'oculum_theme_relic.dart';
+import 'oculum_element_ambient_art.dart';
 
 enum OculumThemeFrameRole { panel, portrait, statistics }
 
@@ -218,6 +219,11 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
         final pack = oculumResolveThemeArt(spec, presentation);
         final variant = presentation.variant.name;
         final mobile = MediaQuery.sizeOf(context).width < 600;
+        final element = oculumElementForArtPack(pack.id);
+        final animated =
+            spec.motion &&
+            presentation.motion != OculumThemeMotion.disabled &&
+            !MediaQuery.disableAnimationsOf(context);
         final height = (mobile ? 52.0 : 96.0) * presentation.relicScale;
         return SizedBox(
           key: ValueKey('theme-sheet-scene-${pack.id}'),
@@ -257,6 +263,7 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
                         ),
                         builder: (context, child) {
                           _checkVisibility();
+                          if (element != null) return child!;
                           final phase = clock.value < .78
                               ? 0.0
                               : math.sin((clock.value - .78) / .22 * math.pi);
@@ -270,6 +277,20 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
                           );
                         },
                       ),
+                      if (element != null && animated)
+                        Positioned.fill(
+                          child: CustomPaint(
+                            key: ValueKey('element-ambient-$element'),
+                            painter: OculumElementAmbientPainter(
+                              clock: clock,
+                              element: element,
+                              color: spec.accent,
+                              reduced:
+                                  presentation.motion ==
+                                  OculumThemeMotion.reduced,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),

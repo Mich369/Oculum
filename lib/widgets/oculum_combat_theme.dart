@@ -41,11 +41,7 @@ class OculumCombatThemeState {
 OculumGothFamily? oculumCombatElementFamily(String rawElementId) {
   final id = oculumCombatElementId(rawElementId);
   return switch (id) {
-    'fuoco' ||
-    'lava' ||
-    'cenere' ||
-    'plasma' ||
-    'esplosivo' => OculumGothFamily.ember,
+    'fuoco' || 'lava' || 'plasma' || 'esplosivo' => OculumGothFamily.ember,
     'gelo' || 'cristallo' => OculumGothFamily.crystal,
     'acqua' => OculumGothFamily.tide,
     'vento' ||
@@ -58,6 +54,7 @@ OculumGothFamily? oculumCombatElementFamily(String rawElementId) {
     'maledizione' ||
     'slime' => OculumGothFamily.botanical,
     'acido' => OculumGothFamily.acid,
+    'cenere' => OculumGothFamily.ash,
     'terra' || 'vero' => OculumGothFamily.cathedral,
     'sconosciuto' => OculumGothFamily.cathedral,
     'metallo' ||
@@ -116,6 +113,8 @@ String oculumCombatElementId(String value) {
         'impact': 'contundente',
         'fire': 'fuoco',
         'ice': 'gelo',
+        'ghiaccio': 'gelo',
+        'spiritualita': 'spirituale',
         'water': 'acqua',
         'lightning': 'fulmine',
         'electric': 'fulmine',

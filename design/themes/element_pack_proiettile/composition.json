@@ -1,0 +1,15 @@
+{
+  "element": "proiettile",
+  "id": "element_pack_proiettile",
+  "name": "Bossoli del baluardo",
+  "material": "metal",
+  "motion": "glint",
+  "accent": "D4B583",
+  "style": "bolted_metal",
+  "legacyPack": "fortezza_oculum",
+  "materialSource": "assets/themes/materials/metal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

@@ -1,0 +1,15 @@
+{
+  "element": "corrotto",
+  "id": "element_pack_corrotto",
+  "name": "Membrana contaminata",
+  "material": "bark",
+  "motion": "corruption",
+  "accent": "BB91B8",
+  "style": "botanical",
+  "legacyPack": "rogue_mutation",
+  "materialSource": "assets/themes/materials/bark.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

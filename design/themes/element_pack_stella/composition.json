@@ -1,0 +1,15 @@
+{
+  "element": "stella",
+  "id": "element_pack_stella",
+  "name": "Atlante delle stelle",
+  "material": "astral",
+  "motion": "stars",
+  "accent": "D4D9FF",
+  "style": "lunar",
+  "legacyPack": "astral_ink",
+  "materialSource": "assets/themes/materials/astral.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

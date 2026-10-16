@@ -1,0 +1,15 @@
+{
+  "element": "magia",
+  "id": "element_pack_magia",
+  "name": "Sigilli dello stregone",
+  "material": "astral",
+  "motion": "runes",
+  "accent": "D7AFEB",
+  "style": "sigil",
+  "legacyPack": "vtt_arcane_table",
+  "materialSource": "assets/themes/materials/astral.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

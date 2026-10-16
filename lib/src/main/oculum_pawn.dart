@@ -163,7 +163,7 @@ class OculumPawnGuardian {
   bool get alive => hp > 0;
   int get maxHp => creatureSheetTag.isNotEmpty && creatureMaxHp > 0
       ? creatureMaxHp
-      : max(1, stats['resilienza'] ?? 3) * 10;
+      : max(1, stats['resilienza'] ?? 3) * oculumHpMultiplierForGrade(grade);
   int get experiencePerTurn =>
       isV2 ? oculumPawnV2ExperiencePerTurn : oculumPawnExperiencePerTurn;
   int get statPointsPerLevel => oculumPawnStatPointsPerLevel;
@@ -398,7 +398,9 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       if (pawn.creatureMaxHp > 0) {
         pawn.creatureMaxHp = max(
           1,
-          pawn.creatureMaxHp + (resilience - pawn.stats['resilienza']!) * 10,
+          pawn.creatureMaxHp +
+              (resilience - pawn.stats['resilienza']!) *
+                  oculumHpMultiplierForGrade(pawn.grade),
         );
       }
       for (final key in pawn.stats.keys.toList()) {
@@ -681,9 +683,11 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       id: 'pawn_${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(1000000)}',
       ownerTag: pawnSenderTag,
       hp: isV2
-          ? max(1, inherited['resilienza'] ?? 0) * 10
+          ? max(1, inherited['resilienza'] ?? 0) *
+                oculumHpMultiplierForGrade(ownerGrade)
           : recoveryLevel > 0
-          ? recoveryStats['resilienza']! * 10
+          ? recoveryStats['resilienza']! *
+                oculumHpMultiplierForGrade(recoveryGrade)
           : 30,
       level: recoveryLevel,
       conscious: item.craftData['conscious'] == true,

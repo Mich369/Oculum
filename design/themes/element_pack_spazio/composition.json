@@ -1,0 +1,15 @@
+{
+  "element": "spazio",
+  "id": "element_pack_spazio",
+  "name": "Portali del firmamento",
+  "material": "astral",
+  "motion": "space",
+  "accent": "AAAEE0",
+  "style": "lunar",
+  "legacyPack": "vtt_master_overlay",
+  "materialSource": "assets/themes/materials/astral.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

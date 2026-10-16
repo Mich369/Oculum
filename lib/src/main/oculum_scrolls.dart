@@ -28,6 +28,125 @@ int oculumScrollCooldown(int grade) => 3 + grade.clamp(0, 12) ~/ 3;
 
 int oculumScrollEffectMagnitude(int grade) => 1 + grade.clamp(0, 12);
 
+class OculumTechniqueScrollProfile {
+  const OculumTechniqueScrollProfile(
+    this.id,
+    this.name,
+    this.monster,
+    this.element,
+    this.effects,
+  );
+  final String id, name, monster, element;
+  final List<OculumStructuredEffect> effects;
+}
+
+final List<OculumTechniqueScrollProfile> oculumTechniqueScrolls = () {
+  final result = <OculumTechniqueScrollProfile>[];
+  final names = <String>{};
+  for (final monster in defaultMonsterBookEntries.where((m) => !m.isNpc)) {
+    final art = oculumMonsterBookArt(monster);
+    for (final (index, skill) in art.skills.indexed) {
+      final name = skill.nome.trim();
+      if (skill.tipoPerLivello(1).toLowerCase().contains('passiv') ||
+          name.isEmpty ||
+          names.contains(oculumNormalizeText(name))) {
+        continue;
+      }
+      final effects = skill
+          .effettiEvoluzione(1)
+          .where(
+            (effect) =>
+                effect.enabled &&
+                const {
+                  'danno',
+                  'danno_percentuale',
+                  'difesa',
+                  'cura',
+                  'scudo',
+                  'velocita',
+                  'modifica_statistica',
+                  'modifica_sottotratto',
+                  'hp_temporanei',
+                  'aggiungi_reazioni',
+                }.contains(effect.type),
+          )
+          .toList();
+      if (effects.isEmpty) continue;
+      names.add(oculumNormalizeText(name));
+      result.add(
+        OculumTechniqueScrollProfile(
+          '${monster.id}_$index',
+          name,
+          monster.nameIt,
+          monster.elementId,
+          effects,
+        ),
+      );
+    }
+  }
+  return List<OculumTechniqueScrollProfile>.unmodifiable(result.take(120));
+}();
+
+InventoryItem oculumTechniqueScrollItem(
+  OculumTechniqueScrollProfile profile,
+  int grade,
+) {
+  final g = grade.clamp(0, 12).toInt();
+  final effects = [
+    for (final original in profile.effects)
+      OculumStructuredEffect.fromJson({
+        ...original.toJson(),
+        'id': 'scroll_${profile.id}_$g/${original.id}',
+        'recipient': 'se_stesso',
+        'valueExpression':
+            '(${original.valueExpression.replaceAll("oculum_spent", "${g + 1}")})*(1+$g/10)',
+        'diceExpression': original.diceExpression,
+        'mode': const {'cura', 'scudo', 'hp_temporanei'}.contains(original.type)
+            ? 'immediato'
+            : const {
+                'danno',
+                'danno_percentuale',
+                'modifica_sottotratto',
+                'velocita',
+              }.contains(original.type)
+            ? 'prossima_azione'
+            : 'finche_attivo',
+        'duration':
+            const {'cura', 'scudo', 'hp_temporanei'}.contains(original.type)
+            ? ''
+            : '${1 + g ~/ 4}',
+        'durationUnit': 'turni',
+        'frequency': '',
+        'stackable': false,
+      }),
+  ];
+  final description =
+      'L’impronta di ${profile.monster} prepara ${profile.name}. Gli effetti seguenti sono applicati al lanciatore; i bonus di attacco valgono per il prossimo attacco, le cure sono immediate. La pergamena contiene ${g + 1} Oculum impresso: non richiede una spesa Oculum aggiuntiva.\n${effects.map(oculumStructuredEffectDescription).join("\n")}';
+  return InventoryItem(
+    nome: '[${profile.name}] [Pergamena] [Grado $g]',
+    peso: .1,
+    quantita: 1,
+    gradoOggetto: g,
+    elementoDanno: profile.element,
+    note:
+        '$description\nMonouso; apprendibile, non evolvibile. Costo ${oculumScrollWillCost(g)}/${oculumScrollWillCost(g)} Volontà; CD ${oculumScrollCooldown(g)} turni personali; DT ${oculumScrollDifficulty(g)}. Valore ${oculumScrollValue(g)} Obser.',
+    craftData: {
+      'scroll': {
+        'id': 'technique/${profile.id}/$g',
+        'name': profile.name,
+        'element': profile.element,
+        'grade': g,
+        'kind': 'technique',
+        'description': description,
+        'sourceMonster': profile.monster,
+        'effects': effects.map((e) => e.toJson()).toList(),
+        'willCost': oculumScrollWillCost(g),
+        'cooldownTurns': oculumScrollCooldown(g),
+      },
+    },
+  );
+}
+
 const oculumMonsterEchoScrolls = [
   (
     id: 'spine_volley',
@@ -253,9 +372,12 @@ extension _OculumScrolls on _OculumHomePageState {
       return;
     }
     final g = readIntValue(data['grade']).clamp(0, 12);
-    final lastCastRound = readIntValue(data['lastCastRound'], fallback: -999);
+    final lastCastRound = readIntValue(
+      data['lastCastPersonalTurn'],
+      fallback: -999,
+    );
     final cooldown = oculumScrollCooldown(g);
-    if (item == null && masterInitiativeRound < lastCastRound + cooldown) {
+    if (item == null && playerReportedTurn < lastCastRound + cooldown) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -353,6 +475,11 @@ extension _OculumScrolls on _OculumHomePageState {
         ? '${data['description']}'
         : 'Tiro fallito: nessun effetto.';
     var resolvedAttackDamage = 0;
+    if (success && kind == 'technique') {
+      final effects = oculumReadStructuredEffects(data['effects']);
+      outcome +=
+          '\n${applyStructuredEffectsOnActivation(effects, source: source).join("\n")}';
+    }
     if (success && kind == 'attack') {
       final faces = 8 + 6 * g;
       final damage = Random.secure().nextInt(faces) + 1;
@@ -540,7 +667,10 @@ extension _OculumScrolls on _OculumHomePageState {
         oculumCombatTheme.react('open', elementId: '${data['element']}');
       }
     }
-    if (item == null) data['lastCastRound'] = masterInitiativeRound;
+    if (item == null) {
+      data['lastCastRound'] = masterInitiativeRound;
+      data['lastCastPersonalTurn'] = playerReportedTurn;
+    }
     invalidateDerivedDataCaches();
     notifyActiveSheetSummaryChanged();
     notifyDiceResultChanged();

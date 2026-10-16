@@ -1,0 +1,10 @@
+{
+  "provider": "Canva",
+  "referenceDesign": "DAHX-kQUyBo",
+  "transparentMediaId": "MAHYIp4_Ams",
+  "original": "design/materials/canva-20261016/physical-frame.png",
+  "originalWidth": 1776,
+  "originalHeight": 896,
+  "safeBand": 24,
+  "exporter": "scripts/build_canva_theme_frames.cjs"
+}

@@ -2,6 +2,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test(
+    'Technique scroll catalogue contains at least 100 distinct learnable skills',
+    () {
+      expect(oculumTechniqueScrolls.length, greaterThanOrEqualTo(100));
+      expect(
+        oculumTechniqueScrolls.map((p) => p.id).toSet().length,
+        oculumTechniqueScrolls.length,
+      );
+      expect(
+        oculumTechniqueScrolls.map((p) => p.name.toLowerCase()).toSet().length,
+        oculumTechniqueScrolls.length,
+      );
+      for (final profile in oculumTechniqueScrolls) {
+        final item = oculumTechniqueScrollItem(profile, 0);
+        final scroll = item.craftData['scroll'] as Map;
+        expect(scroll['effects'], isNotEmpty, reason: profile.id);
+        expect(scroll['willCost'], greaterThan(0), reason: profile.id);
+        expect(scroll['cooldownTurns'], greaterThan(0), reason: profile.id);
+        expect(
+          InventoryItem.fromJson(item.toJson()).craftData['scroll'],
+          scroll,
+        );
+      }
+    },
+  );
   test('Drop scrolls start at 18 and grow one grade every 10', () {
     expect(oculumScrollDropGrade('forza', 138), isNull);
     expect(oculumScrollDropGrade('drop', 17), isNull);

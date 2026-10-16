@@ -1606,6 +1606,26 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     if (formIndex < 0 || formIndex >= skill.forme.length) return;
     final form = skill.forme[formIndex];
     final structuredCooldown = form.cooldownStrutturato;
+    if (skill.passiva || form.tipo.toLowerCase().contains('passiv')) {
+      aggiungiLog(
+        '${skill.nome}: passiva automatica, nessun costo di attivazione.',
+      );
+      return;
+    }
+    if (form.costoStrutturato != null) {
+      if (leggiNumero(livelloController) < readIntValue(form.livello)) {
+        aggiungiLog('${skill.nome}: richiede livello ${form.livello}.');
+        return;
+      }
+      await useConfiguredAbility(
+        source: '${skill.nome} / ${form.nome}',
+        effects: form.effettiStrutturati,
+        cost: form.costoStrutturato,
+        cooldown: structuredCooldown,
+        valid: () => skills.contains(skill) && skill.forme.contains(form),
+      );
+      return;
+    }
     if (structuredCooldown != null && !structuredCooldown.ready) {
       setState(() {
         risultato =
@@ -3422,6 +3442,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                         'title_${titolo.chiaveSistema.isEmpty ? index : titolo.chiaveSistema}_skill',
                     onChanged: invalidateDerivedDataCaches,
                   ),
+                  structuredCostEditor(
+                    cost: titolo.skillCost,
+                    storageId: 'title_${identityHashCode(titolo)}_cost',
+                    onChanged: (value) {
+                      setState(() => titolo.skillCost = value);
+                      programmaSalvataggio();
+                    },
+                  ),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
                     onPressed: () => usaSkillTitolo(titolo),
@@ -3850,6 +3878,17 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                               storageId:
                                   'title_${titolo.chiaveSistema.isEmpty ? index : titolo.chiaveSistema}_extra_skill_$i',
                               onChanged: invalidateDerivedDataCaches,
+                            ),
+                            structuredCostEditor(
+                              cost: titolo.skillExtra[i].cost,
+                              storageId:
+                                  'title_${identityHashCode(titolo)}_extra_${i}_cost',
+                              onChanged: (value) {
+                                setState(
+                                  () => titolo.skillExtra[i].cost = value,
+                                );
+                                programmaSalvataggio();
+                              },
                             ),
                             const SizedBox(height: 8),
                             ElevatedButton.icon(
@@ -4778,6 +4817,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     for (final echo in oculumMonsterEchoScrolls) {
       for (var grade = 0; grade <= 12; grade++) {
         add(oculumMonsterEchoScrollItem(echo.id, grade));
+      }
+    }
+    for (final technique in oculumTechniqueScrolls) {
+      for (var grade = 0; grade <= 12; grade++) {
+        add(oculumTechniqueScrollItem(technique, grade));
       }
     }
     for (final element in allDamageElementIds()) {
@@ -5916,6 +5960,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               ),
               const SizedBox(height: 6),
             ],
+            if (item.arma || item.protegge) equipmentAbilityEditor(item),
             campoModello(
               label: t('Nome Oggetto', 'Item Name'),
               initialValue: item.nome,

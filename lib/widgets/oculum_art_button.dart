@@ -40,7 +40,10 @@ class OculumArtButtonLayer extends StatelessWidget {
               final family = combat.automatic ? combat.activeFamily : null;
               final artSpec = family == null
                   ? spec
-                  : spec.copyWith(family: family, themeId: '');
+                  : spec.copyWith(
+                      family: family,
+                      themeId: 'element_${combat.elementId}',
+                    );
               final pack = oculumResolveThemeArt(
                 artSpec,
                 family == null

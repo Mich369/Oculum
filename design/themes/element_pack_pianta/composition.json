@@ -1,0 +1,15 @@
+{
+  "element": "pianta",
+  "id": "element_pack_pianta",
+  "name": "Fronda del germoglio",
+  "material": "bark",
+  "motion": "leaves",
+  "accent": "BFCE91",
+  "style": "botanical",
+  "legacyPack": "meadow_sprite",
+  "materialSource": "assets/themes/materials/bark.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

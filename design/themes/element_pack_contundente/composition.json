@@ -1,0 +1,15 @@
+{
+  "element": "contundente",
+  "id": "element_pack_contundente",
+  "name": "Forgia infranta",
+  "material": "stone",
+  "motion": "dust",
+  "accent": "B5B0A7",
+  "style": "medieval",
+  "legacyPack": "medieval_keep",
+  "materialSource": "assets/themes/materials/stone.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

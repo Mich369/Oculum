@@ -27,6 +27,7 @@ class OculumSessionNote {
     required this.authorTag,
     required this.message,
     required this.createdAt,
+    this.images = const [],
   });
 
   factory OculumSessionNote.create({
@@ -34,6 +35,7 @@ class OculumSessionNote {
     required String authorTag,
     required String message,
     DateTime? createdAt,
+    List<String> images = const [],
   }) {
     final timestamp = (createdAt ?? DateTime.now()).toUtc();
     final entropy = Random().nextInt(0x7FFFFFFF).toRadixString(16);
@@ -43,6 +45,7 @@ class OculumSessionNote {
       authorTag: _oculumSessionNoteText(authorTag, 128),
       message: _oculumSessionNoteText(message, oculumSessionNoteMaxLength),
       createdAt: timestamp,
+      images: List.unmodifiable(images),
     );
   }
 
@@ -51,6 +54,7 @@ class OculumSessionNote {
   final String authorTag;
   final String message;
   final DateTime createdAt;
+  final List<String> images;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'id': id,
@@ -58,6 +62,7 @@ class OculumSessionNote {
     'authorTag': authorTag,
     'message': message,
     'createdAt': createdAt.toUtc().toIso8601String(),
+    if (images.isNotEmpty) 'images': images,
   };
 
   static OculumSessionNote? tryParse(Object? raw) {
@@ -67,7 +72,21 @@ class OculumSessionNote {
       data['message'] ?? data['text'],
       oculumSessionNoteMaxLength,
     );
-    if (message.isEmpty) return null;
+    final images = <String>[];
+    for (final rawImage
+        in data['images'] is List ? data['images'] as List : const []) {
+      if (rawImage is! String ||
+          rawImage.length > 8 * 1024 * 1024 ||
+          images.length >= 4) {
+        continue;
+      }
+      try {
+        if (base64Decode(rawImage).isNotEmpty) images.add(rawImage);
+      } on FormatException {
+        continue;
+      }
+    }
+    if (message.isEmpty && images.isEmpty) return null;
 
     final author = _oculumSessionNoteText(
       data['author'] ?? data['playerName'] ?? '???',
@@ -82,8 +101,11 @@ class OculumSessionNote {
         DateTime.tryParse(rawCreatedAt)?.toUtc() ?? DateTime.now().toUtc();
     var id = _oculumSessionNoteText(data['id'] ?? data['noteId'], 160);
     if (id.isEmpty) {
-      id =
-          'legacy_${_oculumSessionNoteStableHash('$authorTag|$author|$rawCreatedAt|$message')}';
+      final legacyContent = '$authorTag|$author|$rawCreatedAt|$message';
+      final content = images.isEmpty
+          ? legacyContent
+          : '$legacyContent|${images.map(_oculumSessionNoteStableHash).join()}';
+      id = 'legacy_${_oculumSessionNoteStableHash(content)}';
     }
 
     return OculumSessionNote(
@@ -92,6 +114,7 @@ class OculumSessionNote {
       authorTag: authorTag,
       message: message,
       createdAt: createdAt,
+      images: List.unmodifiable(images),
     );
   }
 }
@@ -124,7 +147,9 @@ int oculumMergeSessionNotes(
   final ids = target.map((note) => note.id).toSet();
   var added = 0;
   for (final note in incoming) {
-    if (note.message.isEmpty || !ids.add(note.id)) continue;
+    if ((note.message.isEmpty && note.images.isEmpty) || !ids.add(note.id)) {
+      continue;
+    }
     target.add(note);
     added++;
   }
@@ -182,6 +207,65 @@ class _OculumSessionTimelineItem {
 }
 
 extension _OculumStorySessionNotes on _OculumHomePageState {
+  Future<void> addSessionNoteImage() async {
+    if (storySessionNoteImages.length >= 4) return;
+    final selected = await _picker.pickImage(source: ImageSource.gallery);
+    if (selected == null) return;
+    final bytes = await selected.readAsBytes();
+    if (!mounted) return;
+    if (bytes.length > 6 * 1024 * 1024) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'L’immagine supera 6 MB: scegli una versione più piccola. Nessuna immagine è stata modificata.',
+          ),
+        ),
+      );
+      return;
+    }
+    setState(() => storySessionNoteImages.add(base64Encode(bytes)));
+  }
+
+  Widget sessionNoteImage(String encoded, {bool preview = false}) => InkWell(
+    onTap: () => showDialog<void>(
+      context: context,
+      builder: (dialog) => Dialog(
+        backgroundColor: backgroundMidColor,
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              minScale: .3,
+              maxScale: 8,
+              child: Image.memory(
+                base64Decode(encoded),
+                fit: BoxFit.contain,
+                errorBuilder: (_, error, stack) =>
+                    const Icon(Icons.broken_image_outlined),
+              ),
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              child: IconButton(
+                tooltip: 'Chiudi',
+                onPressed: () => Navigator.pop(dialog),
+                icon: const Icon(Icons.close),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+    child: Image.memory(
+      base64Decode(encoded),
+      width: preview ? 80 : null,
+      height: preview ? 80 : 180,
+      cacheWidth: 960,
+      fit: BoxFit.contain,
+      errorBuilder: (_, error, stack) =>
+          const Icon(Icons.broken_image_outlined),
+    ),
+  );
   String storySessionAuthorTag() {
     final tag = sheetTagAt(schedaCorrente).trim();
     return tag.isNotEmpty ? tag : effectiveOculumUsername();
@@ -231,16 +315,18 @@ extension _OculumStorySessionNotes on _OculumHomePageState {
 
   void submitStorySessionNote() {
     final message = cleanUiText(storySessionNoteController.text).trim();
-    if (message.isEmpty) return;
+    if (message.isEmpty && storySessionNoteImages.isEmpty) return;
     final note = OculumSessionNote.create(
       author: realtimeDisplayName(),
       authorTag: storySessionAuthorTag(),
       message: message,
+      images: storySessionNoteImages,
     );
 
     setState(() {
       oculumMergeSessionNotes(storySessionNotes, <OculumSessionNote>[note]);
       storySessionNoteController.clear();
+      storySessionNoteImages.clear();
     });
     scheduleStorySessionNotesSave();
 
@@ -508,6 +594,11 @@ extension _OculumStorySessionNotes on _OculumHomePageState {
                                 height: 1.3,
                               ),
                             ),
+                            for (final image in note.images)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: sessionNoteImage(image),
+                              ),
                           ],
                         ),
                       ),
@@ -517,9 +608,45 @@ extension _OculumStorySessionNotes on _OculumHomePageState {
               ),
             ),
           const SizedBox(height: 12),
+          if (storySessionNoteImages.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final (index, image) in storySessionNoteImages.indexed)
+                  SizedBox(
+                    width: 90,
+                    height: 90,
+                    child: Stack(
+                      children: [
+                        sessionNoteImage(image, preview: true),
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: IconButton(
+                            tooltip: 'Rimuovi immagine',
+                            onPressed: () => setState(
+                              () => storySessionNoteImages.removeAt(index),
+                            ),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              IconButton(
+                tooltip: 'Aggiungi immagine all’appunto',
+                onPressed: storySessionNoteImages.length < 4
+                    ? addSessionNoteImage
+                    : null,
+                icon: const Icon(Icons.add_photo_alternate_outlined),
+                color: tertiaryColor,
+              ),
               Expanded(
                 child: TextField(
                   controller: storySessionNoteController,

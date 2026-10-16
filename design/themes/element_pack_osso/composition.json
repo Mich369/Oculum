@@ -1,0 +1,15 @@
+{
+  "element": "osso",
+  "id": "element_pack_osso",
+  "name": "Rosario vertebrale",
+  "material": "ivory",
+  "motion": "dust",
+  "accent": "DFD5BD",
+  "style": "cathedral",
+  "legacyPack": "bone_saint",
+  "materialSource": "assets/themes/materials/ivory.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

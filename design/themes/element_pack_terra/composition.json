@@ -1,0 +1,15 @@
+{
+  "element": "terra",
+  "id": "element_pack_terra",
+  "name": "Strati del monolite",
+  "material": "stone",
+  "motion": "dust",
+  "accent": "CAA477",
+  "style": "medieval",
+  "legacyPack": "obsidian_sigil",
+  "materialSource": "assets/themes/materials/stone.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

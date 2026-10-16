@@ -2653,6 +2653,14 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                 grade: grado,
               );
         skills.addAll(oculumMonsterBookSkills(selectedMonster));
+        skills.addAll(
+          oculumEnemyAbilityVariants(
+            selectedMonster,
+            seed: monsterSpriteStableSeed(
+              '${selectedMonster.id}:${DateTime.now().microsecondsSinceEpoch}',
+            ),
+          ),
+        );
         // Il Book usa la Prima Art già presente nella scheda: non aggiunge una
         // quarta sezione. Una Prima Art personalizzata resta intatta e la
         // peculiarità viene inserita davanti, così la nuova creatura continua

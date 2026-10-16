@@ -1,0 +1,15 @@
+{
+  "element": "benedizione",
+  "id": "element_pack_benedizione",
+  "name": "Nastri del voto",
+  "material": "spirit",
+  "motion": "halo",
+  "accent": "E8D7B1",
+  "style": "spirit",
+  "legacyPack": "moon_iron",
+  "materialSource": "assets/themes/materials/spirit.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

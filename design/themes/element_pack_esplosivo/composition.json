@@ -1,0 +1,15 @@
+{
+  "element": "esplosivo",
+  "id": "element_pack_esplosivo",
+  "name": "Raggi dello scoppio",
+  "material": "charred",
+  "motion": "burst",
+  "accent": "E7BC8E",
+  "style": "ember",
+  "legacyPack": "cell_crimson_run",
+  "materialSource": "assets/themes/materials/charred.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

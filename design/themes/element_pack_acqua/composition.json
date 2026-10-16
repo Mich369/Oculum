@@ -1,0 +1,15 @@
+{
+  "element": "acqua",
+  "id": "element_pack_acqua",
+  "name": "Reliquia della risacca",
+  "material": "water",
+  "motion": "waves",
+  "accent": "82CCD8",
+  "style": "tide",
+  "legacyPack": "tidal_stained_glass",
+  "materialSource": "assets/themes/materials/water.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

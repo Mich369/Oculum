@@ -1,0 +1,15 @@
+{
+  "element": "laser",
+  "id": "element_pack_laser",
+  "name": "Lenti allineate",
+  "material": "crystal",
+  "motion": "beam",
+  "accent": "EBA5AD",
+  "style": "frost",
+  "legacyPack": "vtt_obsidian_grid",
+  "materialSource": "assets/themes/materials/crystal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

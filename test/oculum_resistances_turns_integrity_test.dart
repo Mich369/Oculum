@@ -424,12 +424,12 @@ void main() {
         const Color(0xFF8D8A82).withValues(alpha: .82),
         reason: 'Cenere must use its own element color as its card border',
       );
-      expect(probe.hpMultiplier(), 10);
+      expect(probe.hpMultiplier(), 15);
       state.gradoController.text = '50';
       expect(
         probe.hpMultiplier(),
-        10,
-        reason: 'each Resilienza point provides exactly 10 maximum HP',
+        70,
+        reason: 'HP gain is 10 + 5 per grade, capped at grade 12',
       );
       state.gradoController.text = '1';
       final beforeGrowth = probe.coreStats();
@@ -446,8 +446,8 @@ void main() {
       }
       expect(
         probe.currentHp(),
-        hpBeforeGrowth + 20,
-        reason: '+2 Resilienza must also grant 20 current HP',
+        hpBeforeGrowth + 30,
+        reason: '+2 Resilienza grants 30 current HP at grade I',
       );
       state.oculumController.text = '0';
       state.currentOculumController.text = '0';

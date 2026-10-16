@@ -1,0 +1,15 @@
+{
+  "element": "energia",
+  "id": "element_pack_energia",
+  "name": "Nodi della sorgente",
+  "material": "spirit",
+  "motion": "pulse",
+  "accent": "ABE0ED",
+  "style": "spirit",
+  "legacyPack": "restyle_lume",
+  "materialSource": "assets/themes/materials/spirit.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

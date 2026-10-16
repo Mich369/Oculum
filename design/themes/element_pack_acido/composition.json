@@ -1,0 +1,15 @@
+{
+  "element": "acido",
+  "id": "element_pack_acido",
+  "name": "Vetro che cola",
+  "material": "acid",
+  "motion": "acid",
+  "accent": "C5E68A",
+  "style": "acid",
+  "legacyPack": "restyle_acido",
+  "materialSource": "assets/themes/materials/acid.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

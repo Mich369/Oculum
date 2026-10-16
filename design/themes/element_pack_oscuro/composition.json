@@ -1,0 +1,15 @@
+{
+  "element": "oscuro",
+  "id": "element_pack_oscuro",
+  "name": "Velo senza luce",
+  "material": "astral",
+  "motion": "shadow",
+  "accent": "A49CBC",
+  "style": "cathedral",
+  "legacyPack": "null_crown",
+  "materialSource": "assets/themes/materials/astral.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

@@ -1,0 +1,15 @@
+{
+  "element": "postea",
+  "id": "element_pack_postea",
+  "name": "Circuiti del ritorno",
+  "material": "metal",
+  "motion": "circuit",
+  "accent": "B7B1ED",
+  "style": "postea",
+  "legacyPack": "postea_bloom",
+  "materialSource": "assets/themes/materials/metal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

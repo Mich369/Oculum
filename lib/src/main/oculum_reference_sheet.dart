@@ -1526,6 +1526,19 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
         .map((effect) => canonicalDamageModifierName('${effect['preset']}'))
         .toList();
     temporary.addAll(
+      automaticMonsterPassiveEffects()
+          .where(
+            (effect) =>
+                effect.type == 'elemental_resistance' &&
+                (oculumNormalizeElementId(effect.elementType) == elementId ||
+                    effect.elementType == 'tutti' ||
+                    effect.elementType == 'tutti i danni'),
+          )
+          .map(
+            (effect) => canonicalDamageModifierName(effect.customDisplayText),
+          ),
+    );
+    temporary.addAll(
       merchantHerbalEffects
           .where(
             (effect) =>

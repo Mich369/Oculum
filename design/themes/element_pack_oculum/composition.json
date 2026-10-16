@@ -1,0 +1,15 @@
+{
+  "element": "oculum",
+  "id": "element_pack_oculum",
+  "name": "Iride cesellata",
+  "material": "metal",
+  "motion": "iris",
+  "accent": "D2B6EC",
+  "style": "sigil",
+  "legacyPack": "restyle_originale",
+  "materialSource": "assets/themes/materials/metal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

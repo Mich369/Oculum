@@ -59,6 +59,17 @@ class OculumPerformanceProbe {
     _state.sheetDiceRollPanel,
   );
   void openResistances() => _state.openResistanceDetails();
+  Widget contextActionAnchor({
+    required Widget child,
+    required VoidCallback activate,
+    required VoidCallback roll,
+  }) => _state.quickContextMenuAnchor(
+    label: 'Volontà',
+    child: child,
+    onActivate: activate,
+    onRoll: roll,
+    conditionTarget: OculumConditionTarget.volonta,
+  );
   void openSubtraits() => _state.openReferenceDetail(
     'Sottotratti',
     'sheet_subtraits',
@@ -131,6 +142,11 @@ class OculumPerformanceProbe {
   bool triggerPackLeaderPhase() => _state.applicaFaseCapobrancoSeServe();
   Map<String, dynamic> fallenEyeBodyFromSource(Map<String, dynamic> source) =>
       _state._fallenEyeBodyFromSource(source);
+  Future<void> activateFallenEye(Map<String, dynamic> eye) =>
+      _state.activateFallenEye(eye);
+  Future<void> deactivateFallenEye(Map<String, dynamic> eye) =>
+      _state.deactivateFallenEye(eye);
+  int repairFallenEyeSheets() => _state.repairMissingFallenEyeSheets();
   Future<OculumHumanoidChoice?> humanoidCreationDialog() =>
       _state.askHumanoidRole(
         4,

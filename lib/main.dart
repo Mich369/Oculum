@@ -1,3 +1,4 @@
+import 'widgets/oculum_element_theme_registry.dart';
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
@@ -90,6 +91,7 @@ part 'src/main/oculum_home_image_cache.dart';
 part 'src/main/oculum_home_combat_progression.dart';
 part 'src/main/oculum_home_resources_rest_titles_data.dart';
 part 'src/main/oculum_design_system.dart';
+part 'src/main/oculum_element_themes.dart';
 part 'src/main/oculum_reference_sheet.dart';
 part 'src/main/oculum_reference_campaign.dart';
 part 'src/main/oculum_art_loadout.dart';
@@ -108,6 +110,8 @@ part 'src/main/oculum_online_permissions.dart';
 part 'src/main/oculum_stat_threshold_skills.dart';
 part 'src/main/oculum_diary_knowledge_integration.dart';
 part 'src/main/oculum_monster_loot.dart';
+part 'src/main/oculum_equipment_abilities.dart';
+part 'src/main/oculum_enemy_ability_variants.dart';
 part 'src/main/oculum_authored_materials.dart';
 part 'src/main/oculum_crafting_expansion.dart';
 part 'src/main/oculum_skill_target_automation.dart';
@@ -1397,6 +1401,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final Map<String, Timer> pawnDamageRetryTimers = {};
   Map<String, dynamic> pawnPendingDamage = {};
   final storySessionNoteController = TextEditingController();
+  final List<String> storySessionNoteImages = [];
   final buffMalusRapidiController = TextEditingController();
   final dannoSubitoController = TextEditingController();
   final dannoSubitoPercentController = TextEditingController();
@@ -2362,6 +2367,7 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   final List<OculumColorPreset> colorPresets = const [
     ...oculumRestylePresets,
+    ...oculumElementPresets,
     OculumColorPreset(
       id: 'classic_reliquary',
       nameIt: 'Classic Oculum',
@@ -3070,6 +3076,57 @@ class _OculumHomePageState extends State<OculumHomePage>
       backgroundMid: Color(0xFF1A0B08),
       backgroundBottom: Color(0xFF030201),
       eyePupilGlow: Color(0xFFD8A448),
+    ),
+    OculumColorPreset(
+      id: 'buried_herbarium',
+      nameIt: 'Erbario sepolto',
+      nameEn: 'Buried herbarium',
+      descriptionIt:
+          'Legno inciso, radici intrecciate e fiori custoditi fra le venature.',
+      descriptionEn:
+          'Carved wood, intertwined roots and flowers held within the grain.',
+      primary: Color(0xFFE7DCC5),
+      secondary: Color(0xFF18150F),
+      tertiary: Color(0xFFBDA578),
+      utility: Color(0xFF8EAC8B),
+      oculumFormula: Color(0xFFBDA578),
+      backgroundTop: Color(0xFF120F0B),
+      backgroundMid: Color(0xFF211C14),
+      backgroundBottom: Color(0xFF120F0B),
+      eyePupilGlow: Color(0xFF8EAC8B),
+    ),
+    OculumColorPreset(
+      id: 'funeral_clockwork',
+      nameIt: 'Orologeria funebre',
+      nameEn: 'Funeral clockwork',
+      descriptionIt:
+          'Ottone brunito, quadranti spezzati e giunture meccaniche.',
+      descriptionEn: 'Burnished brass, broken dials and mechanical joints.',
+      primary: Color(0xFFECE3D1),
+      secondary: Color(0xFF14171B),
+      tertiary: Color(0xFFD2B989),
+      utility: Color(0xFF9AACBB),
+      oculumFormula: Color(0xFFD2B989),
+      backgroundTop: Color(0xFF0C0E11),
+      backgroundMid: Color(0xFF1D232B),
+      backgroundBottom: Color(0xFF0C0E11),
+      eyePupilGlow: Color(0xFF9AACBB),
+    ),
+    OculumColorPreset(
+      id: 'tidal_stained_glass',
+      nameIt: 'Vetrata delle maree',
+      nameEn: 'Tidal stained glass',
+      descriptionIt: 'Vetro marino piombato, conchiglie incise e madreperla.',
+      descriptionEn: 'Leaded sea glass, engraved shells and mother of pearl.',
+      primary: Color(0xFFE1EFEB),
+      secondary: Color(0xFF101C25),
+      tertiary: Color(0xFFA0D9D5),
+      utility: Color(0xFFB3A2D1),
+      oculumFormula: Color(0xFFA0D9D5),
+      backgroundTop: Color(0xFF081017),
+      backgroundMid: Color(0xFF152A35),
+      backgroundBottom: Color(0xFF081017),
+      eyePupilGlow: Color(0xFFB3A2D1),
     ),
     OculumColorPreset(
       id: 'ashen_covenant',

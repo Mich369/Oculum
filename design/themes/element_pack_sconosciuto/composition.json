@@ -1,0 +1,15 @@
+{
+  "element": "sconosciuto",
+  "id": "element_pack_sconosciuto",
+  "name": "Glifi indecifrati",
+  "material": "stone",
+  "motion": "unknown",
+  "accent": "B6ABC7",
+  "style": "sigil",
+  "legacyPack": "vtt_parchment_layers",
+  "materialSource": "assets/themes/materials/stone.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

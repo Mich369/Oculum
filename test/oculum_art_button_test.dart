@@ -1,8 +1,8 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:image/image.dart' as img;
 import 'package:oculum/widgets/oculum_art_button.dart';
 import 'package:oculum/widgets/oculum_combat_theme.dart';
 import 'package:oculum/widgets/oculum_theme_asset_packs.dart';
@@ -33,7 +33,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
-  test('every pack ships transparent nine-slice button states', () {
+  test('every pack ships transparent nine-slice button states', () async {
     for (final pack in oculumThemeAssetPacks.values) {
       for (final state in [
         'normal',
@@ -44,10 +44,20 @@ void main() {
       ]) {
         final file = File(pack.buttonFrame(state));
         expect(file.existsSync(), isTrue, reason: '${pack.id}/$state');
-        final image = img.decodePng(file.readAsBytesSync())!;
+        final codec = await ui.instantiateImageCodec(await file.readAsBytes());
+        final image = (await codec.getNextFrame()).image;
+        final pixels = (await image.toByteData(
+          format: ui.ImageByteFormat.rawStraightRgba,
+        ))!;
         expect(image.width, 1024);
         expect(image.height, 512);
-        expect(image.getPixel(512, 256).a, 0, reason: 'Reading center');
+        expect(
+          pixels.getUint8((256 * 1024 + 512) * 4 + 3),
+          0,
+          reason: 'Reading center',
+        );
+        image.dispose();
+        codec.dispose();
       }
     }
   });
@@ -111,7 +121,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(
-        find.byKey(const ValueKey('button-art-ember_rite-normal')),
+        find.byKey(const ValueKey('button-art-element_pack_fuoco-normal')),
         findsOneWidget,
       );
       oculumCombatTheme.value = const OculumCombatThemeState(
@@ -120,7 +130,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(
-        find.byKey(const ValueKey('button-art-bolted_black_iron-normal')),
+        find.byKey(const ValueKey('button-art-canva_physical-normal')),
         findsOneWidget,
       );
       await tester.tap(find.text('Act'));

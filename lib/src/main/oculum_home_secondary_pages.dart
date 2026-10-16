@@ -4444,7 +4444,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 children: [
                   statPill(
                     'HP',
-                    '${sheetIntValueAt(index, 'currentHp')}/${max(1, sheetIntValueAt(index, 'resilienza') * 10)}',
+                    '${sheetIntValueAt(index, 'currentHp')}/${sheetMaxHpForDeathAt(index)}',
                     Colors.redAccent,
                   ),
                   statPill(
@@ -5728,9 +5728,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   int masterDashboardEnemyMaxHpAt(int index) {
     if (index < 0 || index >= schedePersonaggio.length) return 1;
-    final savedMax = sheetIntValueAt(index, 'maxHp');
-    if (savedMax > 0) return savedMax;
-    return max(1, sheetIntValueAt(index, 'resilienza') * 10);
+    return sheetMaxHpForDeathAt(index);
   }
 
   void setMasterEnemyLayerValue(int index, String key, int value) {
@@ -11492,6 +11490,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             color: tertiaryColor,
           ),
           const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => showAbilityCatalogue(destination: art),
+            icon: const Icon(Icons.library_add),
+            label: const Text('Scegli abilità dal catalogo'),
+          ),
           for (int skillIndex = 0; skillIndex < art.skills.length; skillIndex++)
             artSkillEditorTile(artIndex, skillIndex),
         ],
@@ -11514,6 +11517,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               conditionImpactIndicator(target: OculumConditionTarget.skill),
             ],
           ),
+        ),
+        OutlinedButton.icon(
+          onPressed: showAbilityCatalogue,
+          icon: const Icon(Icons.library_add),
+          label: const Text('Scegli abilità dal catalogo'),
         ),
         freeSkillsPanel(),
       ],

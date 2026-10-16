@@ -1,0 +1,15 @@
+{
+  "element": "fulmine",
+  "id": "element_pack_fulmine",
+  "name": "Guglie del temporale",
+  "material": "metal",
+  "motion": "lightning",
+  "accent": "B5D5FF",
+  "style": "storm",
+  "legacyPack": "storm_cathedral",
+  "materialSource": "assets/themes/materials/metal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

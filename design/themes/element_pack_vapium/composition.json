@@ -1,0 +1,15 @@
+{
+  "element": "vapium",
+  "id": "element_pack_vapium",
+  "name": "Condotti del respiro",
+  "material": "metal",
+  "motion": "steam",
+  "accent": "B7D6CA",
+  "style": "bolted_metal",
+  "legacyPack": "bolted_copper_oxide",
+  "materialSource": "assets/themes/materials/metal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

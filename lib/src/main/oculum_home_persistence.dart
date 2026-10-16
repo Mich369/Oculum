@@ -1384,6 +1384,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'derivedMateriaTotal': materiaTotale(),
       'derivedOculumTotal': oculumTotale(),
       'derivedMaxHp': maxHp(),
+      'hpGradeMultiplier': moltiplicatoreHp(),
       'derivedDanno': dannoTotale(),
       'derivedDifesa': difesa(),
       'derivedVC': vc(),
@@ -1924,10 +1925,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       json['merchantDustPurchasedSinceLongRest'],
       fallback: false,
     );
-    if (merchantStockSessionId != merchantRuntimeSessionId) {
-      merchantStock.clear();
-      merchantStockSessionId = '';
-    }
+    merchantStockSessionId = merchantStock.isEmpty
+        ? ''
+        : merchantRuntimeSessionId;
     final activeMerchant = merchantProfiles
         .where((profile) => '${profile['id'] ?? ''}' == merchantActiveProfileId)
         .firstOrNull;
@@ -4663,7 +4663,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
           schedaCorrente = 0;
         }
 
+        final repairedEyes = repairMissingFallenEyeSheets();
         caricaStatoDaJson(schedePersonaggio[schedaCorrente]);
+        if (repairedEyes > 0) {
+          aggiungiLog(
+            'Ripristinate $repairedEyes schede di Occhi dei Caduti già evocati, senza nuovi costi o ricompense.',
+          );
+        }
         assicuraTagSchede();
         saveActiveCampaignInMemory();
         assicuraAmiciOculum();
@@ -8153,7 +8159,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
           );
           skills
             ..clear()
-            ..addAll(oculumMonsterBookSkills(matchedMonster));
+            ..addAll(oculumMonsterBookSkills(matchedMonster))
+            ..addAll(
+              oculumEnemyAbilityVariants(
+                matchedMonster,
+                seed: monsterSpriteStableSeed(
+                  '$nome:${DateTime.now().microsecondsSinceEpoch}',
+                ),
+              ),
+            );
           arti.clear();
         }
         if (generatedArt != null) {

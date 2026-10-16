@@ -1,0 +1,15 @@
+{
+  "element": "psichico",
+  "id": "element_pack_psichico",
+  "name": "Labirinto della mente",
+  "material": "astral",
+  "motion": "pulse",
+  "accent": "BBA2EC",
+  "style": "sigil",
+  "legacyPack": "karma_duality",
+  "materialSource": "assets/themes/materials/astral.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

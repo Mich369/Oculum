@@ -348,6 +348,7 @@ extension _OculumCampaigns on _OculumHomePageState {
       schedaCorrente = 0;
     }
 
+    repairMissingFallenEyeSheets();
     caricaStatoDaJson(schedePersonaggio[schedaCorrente]);
     assicuraTagSchede();
   }
@@ -763,7 +764,7 @@ extension _OculumCampaigns on _OculumHomePageState {
               for (int i = 0; i < previewCount; i++)
                 campaignStatChip(
                   nomeSchedaPersonaggio(i),
-                  'HP ${sheetIntValueAt(i, 'currentHp')}/${max(1, sheetIntValueAt(i, 'resilienza') * 10)} • OCU ${sheetIntValueAt(i, 'currentOculum')}',
+                  'HP ${sheetIntValueAt(i, 'currentHp')}/${sheetMaxHpForDeathAt(i)} • OCU ${sheetIntValueAt(i, 'currentOculum')}',
                 ),
             ],
           ),

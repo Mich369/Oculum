@@ -1,0 +1,15 @@
+{
+  "element": "taglio",
+  "id": "element_pack_taglio",
+  "name": "Lame del silenzio",
+  "material": "metal",
+  "motion": "glint",
+  "accent": "C9D9E5",
+  "style": "bolted_metal",
+  "legacyPack": "bolted_silver_plate",
+  "materialSource": "assets/themes/materials/metal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

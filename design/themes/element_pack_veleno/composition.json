@@ -1,0 +1,15 @@
+{
+  "element": "veleno",
+  "id": "element_pack_veleno",
+  "name": "Veleno del serpente",
+  "material": "acid",
+  "motion": "vapor",
+  "accent": "B5CF71",
+  "style": "acid",
+  "legacyPack": "witch_glass",
+  "materialSource": "assets/themes/materials/acid.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

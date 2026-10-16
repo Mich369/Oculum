@@ -1,0 +1,15 @@
+{
+  "element": "nonmorto",
+  "id": "element_pack_nonmorto",
+  "name": "Cuciture del ritorno",
+  "material": "ivory",
+  "motion": "grave",
+  "accent": "C5C4AC",
+  "style": "cathedral",
+  "legacyPack": "blood_chapel",
+  "materialSource": "assets/themes/materials/ivory.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

@@ -1728,7 +1728,20 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   }
 
   String themeDecorationStyleForPreset(String id) {
+    if (id.startsWith('element_pack_')) {
+      return oculumElementThemeStyles[id.substring(13)] ?? 'cathedral';
+    }
+    if (id.startsWith('element_')) {
+      final pack = oculumElementThemePackIds[id.substring(8)];
+      if (pack != null) return themeDecorationStyleForPreset(pack);
+    }
     switch (id) {
+      case 'canva_ice':
+        return 'frost';
+      case 'canva_spirit':
+        return 'spirit';
+      case 'canva_physical':
+        return 'bolted_metal';
       case 'none':
       case 'classic_reliquary':
       case 'classic_low_detail':
@@ -1743,6 +1756,10 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       case 'bone_saint':
       case 'verdigris_mourning':
         return 'cathedral';
+      case 'funeral_clockwork':
+        return 'bolted_metal';
+      case 'tidal_stained_glass':
+        return 'tide';
       case 'medieval_keep':
         return 'medieval';
       case 'fortezza_oculum':
@@ -1753,6 +1770,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         return 'vervain';
       case 'restyle_sogno':
         return 'dream';
+      case 'buried_herbarium':
       case 'restyle_legno':
         return 'wood';
       case 'restyle_acido':

@@ -1,0 +1,15 @@
+{
+  "element": "sogno",
+  "id": "element_pack_sogno",
+  "name": "Nubi del sonno",
+  "material": "dream",
+  "motion": "clouds",
+  "accent": "D8BDEB",
+  "style": "dream",
+  "legacyPack": "restyle_sogno",
+  "materialSource": "assets/themes/materials/dream.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

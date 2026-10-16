@@ -99,6 +99,9 @@ class OculumThemeScope extends StatelessWidget {
                       : null;
                   final selectedOrnaments = ornaments?.copyWith(
                     family: combatFamily ?? ornaments.family,
+                    themeId: combatFamily == null
+                        ? ornaments.themeId
+                        : 'element_${combat.elementId}',
                     motion:
                         ornaments.motion &&
                         presentation.motion != OculumThemeMotion.disabled,

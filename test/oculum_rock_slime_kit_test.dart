@@ -19,7 +19,8 @@ void main() {
       ];
       final maximums = [
         [4, 10, 20],
-        [3, 6, 10],
+        // Bounce does not scale with Oculum spent: its cost is fixed.
+        [1, 4, 7],
         [2, 4, 10],
       ];
       final levels = [

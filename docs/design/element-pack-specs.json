@@ -1,0 +1,552 @@
+[
+  {
+    "element": "taglio",
+    "id": "element_pack_taglio",
+    "name": "Lame del silenzio",
+    "material": "metal",
+    "motion": "glint",
+    "accent": "C9D9E5",
+    "style": "bolted_metal",
+    "legacyPack": "bolted_silver_plate"
+  },
+  {
+    "element": "perforante",
+    "id": "element_pack_perforante",
+    "name": "Spine del bastione",
+    "material": "metal",
+    "motion": "glint",
+    "accent": "DCC7A5",
+    "style": "bolted_metal",
+    "legacyPack": "jrpg_legend"
+  },
+  {
+    "element": "contundente",
+    "id": "element_pack_contundente",
+    "name": "Forgia infranta",
+    "material": "stone",
+    "motion": "dust",
+    "accent": "B5B0A7",
+    "style": "medieval",
+    "legacyPack": "medieval_keep"
+  },
+  {
+    "element": "fuoco",
+    "id": "element_pack_fuoco",
+    "name": "Braci discendenti",
+    "material": "charred",
+    "motion": "sparks",
+    "accent": "F5AB68",
+    "style": "ember",
+    "legacyPack": "ember_rite"
+  },
+  {
+    "element": "vento",
+    "id": "element_pack_vento",
+    "name": "Nastri della burrasca",
+    "material": "astral",
+    "motion": "wind",
+    "accent": "BFDACF",
+    "style": "lunar",
+    "legacyPack": "aurora_moth"
+  },
+  {
+    "element": "acqua",
+    "id": "element_pack_acqua",
+    "name": "Reliquia della risacca",
+    "material": "water",
+    "motion": "waves",
+    "accent": "82CCD8",
+    "style": "tide",
+    "legacyPack": "tidal_stained_glass"
+  },
+  {
+    "element": "terra",
+    "id": "element_pack_terra",
+    "name": "Strati del monolite",
+    "material": "stone",
+    "motion": "dust",
+    "accent": "CAA477",
+    "style": "medieval",
+    "legacyPack": "obsidian_sigil"
+  },
+  {
+    "element": "sonoro",
+    "id": "element_pack_sonoro",
+    "name": "Diapason delle cripte",
+    "material": "metal",
+    "motion": "sound",
+    "accent": "C7B3D8",
+    "style": "sigil",
+    "legacyPack": "whispering_reliquary"
+  },
+  {
+    "element": "psichico",
+    "id": "element_pack_psichico",
+    "name": "Labirinto della mente",
+    "material": "astral",
+    "motion": "pulse",
+    "accent": "BBA2EC",
+    "style": "sigil",
+    "legacyPack": "karma_duality"
+  },
+  {
+    "element": "lava",
+    "id": "element_pack_lava",
+    "name": "Faglia incandescente",
+    "material": "charred",
+    "motion": "molten",
+    "accent": "FF9760",
+    "style": "ember",
+    "legacyPack": "eclipse_bonfire"
+  },
+  {
+    "element": "fulmine",
+    "id": "element_pack_fulmine",
+    "name": "Guglie del temporale",
+    "material": "metal",
+    "motion": "lightning",
+    "accent": "B5D5FF",
+    "style": "storm",
+    "legacyPack": "storm_cathedral"
+  },
+  {
+    "element": "veleno",
+    "id": "element_pack_veleno",
+    "name": "Veleno del serpente",
+    "material": "acid",
+    "motion": "vapor",
+    "accent": "B5CF71",
+    "style": "acid",
+    "legacyPack": "witch_glass"
+  },
+  {
+    "element": "cenere",
+    "id": "element_pack_cenere",
+    "name": "Polvere dei giuramenti",
+    "material": "ash",
+    "motion": "ash",
+    "accent": "C3C5CD",
+    "style": "ash",
+    "legacyPack": "restyle_cenere"
+  },
+  {
+    "element": "sangue",
+    "id": "element_pack_sangue",
+    "name": "Vasi della corte",
+    "material": "water",
+    "motion": "blood",
+    "accent": "D89B9F",
+    "style": "cathedral",
+    "legacyPack": "blood_court"
+  },
+  {
+    "element": "cristallo",
+    "id": "element_pack_cristallo",
+    "name": "Prisma spezzato",
+    "material": "crystal",
+    "motion": "prism",
+    "accent": "C8D1F3",
+    "style": "frost",
+    "legacyPack": "restyle_aurora"
+  },
+  {
+    "element": "oscuro",
+    "id": "element_pack_oscuro",
+    "name": "Velo senza luce",
+    "material": "astral",
+    "motion": "shadow",
+    "accent": "A49CBC",
+    "style": "cathedral",
+    "legacyPack": "null_crown"
+  },
+  {
+    "element": "lunare",
+    "id": "element_pack_lunare",
+    "name": "Falci del plenilunio",
+    "material": "metal",
+    "motion": "orbit",
+    "accent": "D2D8EF",
+    "style": "lunar",
+    "legacyPack": "lunar_eclipse"
+  },
+  {
+    "element": "solare",
+    "id": "element_pack_solare",
+    "name": "Disco del vespro",
+    "material": "metal",
+    "motion": "rays",
+    "accent": "F2D19A",
+    "style": "lunar",
+    "legacyPack": "solar_reliquary"
+  },
+  {
+    "element": "vapium",
+    "id": "element_pack_vapium",
+    "name": "Condotti del respiro",
+    "material": "metal",
+    "motion": "steam",
+    "accent": "B7D6CA",
+    "style": "bolted_metal",
+    "legacyPack": "bolted_copper_oxide"
+  },
+  {
+    "element": "osso",
+    "id": "element_pack_osso",
+    "name": "Rosario vertebrale",
+    "material": "ivory",
+    "motion": "dust",
+    "accent": "DFD5BD",
+    "style": "cathedral",
+    "legacyPack": "bone_saint"
+  },
+  {
+    "element": "gravita",
+    "id": "element_pack_gravita",
+    "name": "Anelli del peso",
+    "material": "astral",
+    "motion": "gravity",
+    "accent": "BCAAD4",
+    "style": "sigil",
+    "legacyPack": "shadow_gate_rank"
+  },
+  {
+    "element": "vuoto",
+    "id": "element_pack_vuoto",
+    "name": "Orbita mancante",
+    "material": "astral",
+    "motion": "void",
+    "accent": "A5A1C4",
+    "style": "sigil",
+    "legacyPack": "void_liturgy"
+  },
+  {
+    "element": "sogno",
+    "id": "element_pack_sogno",
+    "name": "Nubi del sonno",
+    "material": "dream",
+    "motion": "clouds",
+    "accent": "D8BDEB",
+    "style": "dream",
+    "legacyPack": "restyle_sogno"
+  },
+  {
+    "element": "metallo",
+    "id": "element_pack_metallo",
+    "name": "Placche del fabbro",
+    "material": "metal",
+    "motion": "glint",
+    "accent": "C0CBCF",
+    "style": "bolted_metal",
+    "legacyPack": "bolted_gold_plate"
+  },
+  {
+    "element": "postea",
+    "id": "element_pack_postea",
+    "name": "Circuiti del ritorno",
+    "material": "metal",
+    "motion": "circuit",
+    "accent": "B7B1ED",
+    "style": "postea",
+    "legacyPack": "postea_bloom"
+  },
+  {
+    "element": "radice",
+    "id": "element_pack_radice",
+    "name": "Radici del sepolcro",
+    "material": "wood",
+    "motion": "roots",
+    "accent": "AFBE87",
+    "style": "wood",
+    "legacyPack": "deep_forest_demon"
+  },
+  {
+    "element": "slime",
+    "id": "element_pack_slime",
+    "name": "Membrane del principe",
+    "material": "acid",
+    "motion": "bubbles",
+    "accent": "A5D9B8",
+    "style": "tide",
+    "legacyPack": "slime_prince"
+  },
+  {
+    "element": "oculum",
+    "id": "element_pack_oculum",
+    "name": "Iride cesellata",
+    "material": "metal",
+    "motion": "iris",
+    "accent": "D2B6EC",
+    "style": "sigil",
+    "legacyPack": "restyle_originale"
+  },
+  {
+    "element": "stella",
+    "id": "element_pack_stella",
+    "name": "Atlante delle stelle",
+    "material": "astral",
+    "motion": "stars",
+    "accent": "D4D9FF",
+    "style": "lunar",
+    "legacyPack": "astral_ink"
+  },
+  {
+    "element": "corrotto",
+    "id": "element_pack_corrotto",
+    "name": "Membrana contaminata",
+    "material": "bark",
+    "motion": "corruption",
+    "accent": "BB91B8",
+    "style": "botanical",
+    "legacyPack": "rogue_mutation"
+  },
+  {
+    "element": "nonmorto",
+    "id": "element_pack_nonmorto",
+    "name": "Cuciture del ritorno",
+    "material": "ivory",
+    "motion": "grave",
+    "accent": "C5C4AC",
+    "style": "cathedral",
+    "legacyPack": "blood_chapel"
+  },
+  {
+    "element": "acido",
+    "id": "element_pack_acido",
+    "name": "Vetro che cola",
+    "material": "acid",
+    "motion": "acid",
+    "accent": "C5E68A",
+    "style": "acid",
+    "legacyPack": "restyle_acido"
+  },
+  {
+    "element": "sacro",
+    "id": "element_pack_sacro",
+    "name": "Navata consacrata",
+    "material": "stone",
+    "motion": "rays",
+    "accent": "E8D5B1",
+    "style": "cathedral",
+    "legacyPack": "cathedral_rose"
+  },
+  {
+    "element": "diabolico",
+    "id": "element_pack_diabolico",
+    "name": "Corna del patto",
+    "material": "charred",
+    "motion": "embers",
+    "accent": "DDA17E",
+    "style": "cathedral",
+    "legacyPack": "black_briar_kingdom"
+  },
+  {
+    "element": "angelico",
+    "id": "element_pack_angelico",
+    "name": "Ali del santuario",
+    "material": "ivory",
+    "motion": "feathers",
+    "accent": "EEE4CF",
+    "style": "spirit",
+    "legacyPack": "ivory_archive"
+  },
+  {
+    "element": "necrotico",
+    "id": "element_pack_necrotico",
+    "name": "Spore della fine",
+    "material": "bark",
+    "motion": "spores",
+    "accent": "ABB493",
+    "style": "botanical",
+    "legacyPack": "moon_rot"
+  },
+  {
+    "element": "magia",
+    "id": "element_pack_magia",
+    "name": "Sigilli dello stregone",
+    "material": "astral",
+    "motion": "runes",
+    "accent": "D7AFEB",
+    "style": "sigil",
+    "legacyPack": "vtt_arcane_table"
+  },
+  {
+    "element": "energia",
+    "id": "element_pack_energia",
+    "name": "Nodi della sorgente",
+    "material": "spirit",
+    "motion": "pulse",
+    "accent": "ABE0ED",
+    "style": "spirit",
+    "legacyPack": "restyle_lume"
+  },
+  {
+    "element": "esplosivo",
+    "id": "element_pack_esplosivo",
+    "name": "Raggi dello scoppio",
+    "material": "charred",
+    "motion": "burst",
+    "accent": "E7BC8E",
+    "style": "ember",
+    "legacyPack": "cell_crimson_run"
+  },
+  {
+    "element": "radiazione",
+    "id": "element_pack_radiazione",
+    "name": "Fissione del vetro",
+    "material": "acid",
+    "motion": "radiation",
+    "accent": "D0DC8F",
+    "style": "acid",
+    "legacyPack": "ash_oracle"
+  },
+  {
+    "element": "plasma",
+    "id": "element_pack_plasma",
+    "name": "Filamenti ionici",
+    "material": "charred",
+    "motion": "plasma",
+    "accent": "E6A3DD",
+    "style": "ember",
+    "legacyPack": "ashen_covenant"
+  },
+  {
+    "element": "tecnologia",
+    "id": "element_pack_tecnologia",
+    "name": "Circuiti del custode",
+    "material": "metal",
+    "motion": "circuit",
+    "accent": "93CDC9",
+    "style": "bolted_metal",
+    "legacyPack": "kingi_wrong_future"
+  },
+  {
+    "element": "proiettile",
+    "id": "element_pack_proiettile",
+    "name": "Bossoli del baluardo",
+    "material": "metal",
+    "motion": "glint",
+    "accent": "D4B583",
+    "style": "bolted_metal",
+    "legacyPack": "fortezza_oculum"
+  },
+  {
+    "element": "laser",
+    "id": "element_pack_laser",
+    "name": "Lenti allineate",
+    "material": "crystal",
+    "motion": "beam",
+    "accent": "EBA5AD",
+    "style": "frost",
+    "legacyPack": "vtt_obsidian_grid"
+  },
+  {
+    "element": "tempo",
+    "id": "element_pack_tempo",
+    "name": "Clessidra del lutto",
+    "material": "metal",
+    "motion": "clock",
+    "accent": "DDC99D",
+    "style": "bolted_metal",
+    "legacyPack": "funeral_clockwork"
+  },
+  {
+    "element": "spazio",
+    "id": "element_pack_spazio",
+    "name": "Portali del firmamento",
+    "material": "astral",
+    "motion": "space",
+    "accent": "AAAEE0",
+    "style": "lunar",
+    "legacyPack": "vtt_master_overlay"
+  },
+  {
+    "element": "caos",
+    "id": "element_pack_caos",
+    "name": "Frammenti discordanti",
+    "material": "stone",
+    "motion": "chaos",
+    "accent": "D3A6CA",
+    "style": "cathedral",
+    "legacyPack": "monster_lantern"
+  },
+  {
+    "element": "natura",
+    "id": "element_pack_natura",
+    "name": "Rami in fiore",
+    "material": "bark",
+    "motion": "petals",
+    "accent": "AAC6A2",
+    "style": "botanical",
+    "legacyPack": "vervain_gothic"
+  },
+  {
+    "element": "pianta",
+    "id": "element_pack_pianta",
+    "name": "Fronda del germoglio",
+    "material": "bark",
+    "motion": "leaves",
+    "accent": "BFCE91",
+    "style": "botanical",
+    "legacyPack": "meadow_sprite"
+  },
+  {
+    "element": "bestiale",
+    "id": "element_pack_bestiale",
+    "name": "Artigli della tana",
+    "material": "wood",
+    "motion": "tracks",
+    "accent": "D1B58F",
+    "style": "botanical",
+    "legacyPack": "restyle_natura"
+  },
+  {
+    "element": "maledizione",
+    "id": "element_pack_maledizione",
+    "name": "Sigillo incatenato",
+    "material": "metal",
+    "motion": "chains",
+    "accent": "BEA2BD",
+    "style": "cathedral",
+    "legacyPack": "thorn_vigil"
+  },
+  {
+    "element": "benedizione",
+    "id": "element_pack_benedizione",
+    "name": "Nastri del voto",
+    "material": "spirit",
+    "motion": "halo",
+    "accent": "E8D7B1",
+    "style": "spirit",
+    "legacyPack": "moon_iron"
+  },
+  {
+    "element": "cura",
+    "id": "element_pack_cura",
+    "name": "Erbe del conforto",
+    "material": "wood",
+    "motion": "healing",
+    "accent": "BCD5B4",
+    "style": "botanical",
+    "legacyPack": "buried_herbarium"
+  },
+  {
+    "element": "vero",
+    "id": "element_pack_vero",
+    "name": "Specchio senza inganno",
+    "material": "crystal",
+    "motion": "clarity",
+    "accent": "D7DFE2",
+    "style": "frost",
+    "legacyPack": "classic_rpg"
+  },
+  {
+    "element": "sconosciuto",
+    "id": "element_pack_sconosciuto",
+    "name": "Glifi indecifrati",
+    "material": "stone",
+    "motion": "unknown",
+    "accent": "B6ABC7",
+    "style": "sigil",
+    "legacyPack": "vtt_parchment_layers"
+  }
+]

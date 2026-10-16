@@ -83,11 +83,18 @@ List<InventoryItem> oculumGenerateMonsterLoot({
         ),
     ];
   }
-  final selectedSkill = art.skills.isEmpty
+  final activeSkills = art.skills
+      .where(
+        (skill) =>
+            !skill.tipoPerLivello(1).toLowerCase().contains('passiv') &&
+            !skill.evo1.toLowerCase().contains('passiva automatica'),
+      )
+      .toList();
+  final selectedSkill = activeSkills.isEmpty
       ? null
-      : art.skills[random.nextInt(art.skills.length)];
+      : activeSkills[random.nextInt(activeSkills.length)];
   ArtSkill? forEquipment(String type) {
-    if (art.skills.isEmpty) return null;
+    if (activeSkills.isEmpty) return null;
     final patterns = type == 'weapon'
         ? RegExp('carica|spadata|colp|attacc|danni|lacer', caseSensitive: false)
         : type == 'armor'
@@ -99,7 +106,7 @@ List<InventoryItem> oculumGenerateMonsterLoot({
             'ossa|svantaggio|stun|scudo|immobil|presa',
             caseSensitive: false,
           );
-    final matches = art.skills
+    final matches = activeSkills
         .where((skill) => patterns.hasMatch('${skill.nome} ${skill.evo1}'))
         .toList();
     if (monster.id.startsWith('mammuth_in_decomposizione')) {
@@ -109,7 +116,7 @@ List<InventoryItem> oculumGenerateMonsterLoot({
           ? 1
           : 0];
     }
-    return matches.isEmpty ? art.skills.first : matches.first;
+    return matches.isEmpty ? null : matches.first;
   }
 
   final metadata = <String, dynamic>{
@@ -153,22 +160,49 @@ List<InventoryItem> oculumGenerateMonsterLoot({
         },
       ),
   ];
-  if (selectedSkill != null) {
+  final natural = naturalDropRoll ?? random.nextInt(20) + 1;
+  if (natural < 1 || natural > 20) {
+    throw ArgumentError.value(natural, 'naturalDropRoll');
+  }
+  if (selectedSkill != null && (dropTotal ?? natural) >= 18) {
     final weapon = random.nextBool();
+    final inherited = forEquipment(weapon ? 'weapon' : 'armor');
+    if (inherited == null) return drops;
+    final forestHorn = monster.id == 'forest_demon' && weapon;
     drops.add(
       InventoryItem(
-        nome: '${weapon ? 'Zanna' : 'Reliquia'} di ${monster.nameIt}',
+        nome: forestHorn
+            ? 'Corno Affilato del Forest Demon'
+            : '${weapon ? 'Arma ricavata da' : 'Protezione ricavata da'} ${monster.nameIt}',
         peso: 0,
         quantita: 1,
         arma: weapon,
         protegge: !weapon,
         gradoOggetto: safeGrade,
         gradoRichiesto: safeGrade,
-        bonusDanno: weapon ? max(1, safeLevel + safeGrade) : 0,
+        bonusDanno: forestHorn
+            ? 10
+            : weapon
+            ? max(1, safeLevel + safeGrade)
+            : 0,
+        buff: forestHorn ? '@Schianto+2' : '',
+        ability: forestHorn
+            ? oculumEquipmentAbility(
+                'Corno Affilato del Forest Demon',
+                safeGrade,
+              )
+            : oculumEquipmentAbilityFromArt(inherited),
         bonusDifesa: weapon ? 0 : max(1, safeGrade),
         note:
-            'Generato all’uccisione. Skill ereditata: ${selectedSkill.nome}.\n${selectedSkill.evo1}\n${selectedSkill.evo2}\n${selectedSkill.evo3}',
-        monsterLoot: {...metadata, 'id': '$killId:relic', 'material': false},
+            'Drop raro (tiro Drop almeno 18). Skill ereditata: ${forestHorn ? "Carica del corno" : inherited.nome}.\n${forestHorn ? "150% danni per il turno, costo fisso 1 Volontà, CD 6." : inherited.evo1}',
+        monsterLoot: {
+          ...metadata,
+          'id': '$killId:relic',
+          'material': false,
+          'skill': inherited.toJson(),
+          'naturalDropRoll': natural,
+          'dropTotal': dropTotal ?? natural,
+        },
       ),
     );
   }

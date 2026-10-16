@@ -1,0 +1,15 @@
+{
+  "element": "tecnologia",
+  "id": "element_pack_tecnologia",
+  "name": "Circuiti del custode",
+  "material": "metal",
+  "motion": "circuit",
+  "accent": "93CDC9",
+  "style": "bolted_metal",
+  "legacyPack": "kingi_wrong_future",
+  "materialSource": "assets/themes/materials/metal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

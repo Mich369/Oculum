@@ -1082,6 +1082,7 @@ class TitleExtraSkillEntry {
   TitleExtraSkillEntry({
     this.nome = '',
     this.descrizione = '',
+    this.cost,
     List<OculumStructuredEffect>? effects,
   }) : effects = List<OculumStructuredEffect>.from(
          effects ?? const <OculumStructuredEffect>[],
@@ -1089,12 +1090,14 @@ class TitleExtraSkillEntry {
 
   String nome;
   String descrizione;
+  OculumSkillCost? cost;
   List<OculumStructuredEffect> effects;
 
   Map<String, dynamic> toJson() {
     return {
       'nome': nome,
       'descrizione': descrizione,
+      if (cost != null) 'cost': cost!.toJson(),
       if (effects.isNotEmpty)
         'effects': effects.map((effect) => effect.toJson()).toList(),
     };
@@ -1104,6 +1107,9 @@ class TitleExtraSkillEntry {
     return TitleExtraSkillEntry(
       nome: json['nome'] ?? '',
       descrizione: json['descrizione'] ?? '',
+      cost: json['cost'] is Map
+          ? OculumSkillCost.fromJson(Map<String, dynamic>.from(json['cost']))
+          : null,
       effects: oculumReadStructuredEffects(json['effects']),
     );
   }
@@ -1143,6 +1149,7 @@ class OculumTitle {
     List<ConditionalBuffEntry>? openConditionalBuffs,
     List<OculumStructuredEffect>? openEffects,
     List<OculumStructuredEffect>? skillEffects,
+    this.skillCost,
   }) {
     this.openExtra = openExtra ?? [];
     this.skillExtra = skillExtra ?? [];
@@ -1193,6 +1200,7 @@ class OculumTitle {
   late List<ConditionalBuffEntry> openConditionalBuffs;
   late List<OculumStructuredEffect> openEffects;
   late List<OculumStructuredEffect> skillEffects;
+  OculumSkillCost? skillCost;
 
   Map<String, dynamic> toJson() {
     return {
@@ -1203,6 +1211,7 @@ class OculumTitle {
       'buff': buff,
       'puntoCieco': puntoCieco,
       'skill': skill,
+      if (skillCost != null) 'skillCost': skillCost!.toJson(),
       'richiede': richiede,
       'resilienza': resilienza,
       'volonta': volonta,
@@ -1299,6 +1308,11 @@ class OculumTitle {
           .toList(),
       openEffects: oculumReadStructuredEffects(json['openEffects']),
       skillEffects: oculumReadStructuredEffects(json['skillEffects']),
+      skillCost: json['skillCost'] is Map
+          ? OculumSkillCost.fromJson(
+              Map<String, dynamic>.from(json['skillCost']),
+            )
+          : null,
     );
   }
 }
@@ -1463,6 +1477,7 @@ class InventoryItem {
     this.statGemDieFaces = 0,
     this.monsterLoot = const {},
     this.craftData = const {},
+    this.ability,
   });
 
   String nome;
@@ -1494,6 +1509,7 @@ class InventoryItem {
   int statGemDieFaces;
   Map<String, dynamic> monsterLoot;
   Map<String, dynamic> craftData;
+  CharacterSkill? ability;
 
   Map<String, dynamic> toJson() {
     return {
@@ -1527,11 +1543,15 @@ class InventoryItem {
       if (statGemDieFaces > 0) 'statGemDieFaces': statGemDieFaces,
       if (monsterLoot.isNotEmpty) 'monsterLoot': monsterLoot,
       if (craftData.isNotEmpty) 'craftData': craftData,
+      if (ability != null) 'ability': ability!.toJson(),
     };
   }
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) {
     return InventoryItem(
+      ability: json['ability'] is Map
+          ? CharacterSkill.fromJson(Map<String, dynamic>.from(json['ability']))
+          : null,
       monsterLoot: json['monsterLoot'] is Map
           ? Map<String, dynamic>.from(json['monsterLoot'])
           : <String, dynamic>{},

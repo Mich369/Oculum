@@ -1,0 +1,15 @@
+{
+  "element": "sangue",
+  "id": "element_pack_sangue",
+  "name": "Vasi della corte",
+  "material": "water",
+  "motion": "blood",
+  "accent": "D89B9F",
+  "style": "cathedral",
+  "legacyPack": "blood_court",
+  "materialSource": "assets/themes/materials/water.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

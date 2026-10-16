@@ -1,0 +1,15 @@
+{
+  "element": "solare",
+  "id": "element_pack_solare",
+  "name": "Disco del vespro",
+  "material": "metal",
+  "motion": "rays",
+  "accent": "F2D19A",
+  "style": "lunar",
+  "legacyPack": "solar_reliquary",
+  "materialSource": "assets/themes/materials/metal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

@@ -1,0 +1,15 @@
+{
+  "element": "caos",
+  "id": "element_pack_caos",
+  "name": "Frammenti discordanti",
+  "material": "stone",
+  "motion": "chaos",
+  "accent": "D3A6CA",
+  "style": "cathedral",
+  "legacyPack": "monster_lantern",
+  "materialSource": "assets/themes/materials/stone.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

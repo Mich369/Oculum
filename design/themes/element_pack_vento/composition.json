@@ -1,0 +1,15 @@
+{
+  "element": "vento",
+  "id": "element_pack_vento",
+  "name": "Nastri della burrasca",
+  "material": "astral",
+  "motion": "wind",
+  "accent": "BFDACF",
+  "style": "lunar",
+  "legacyPack": "aurora_moth",
+  "materialSource": "assets/themes/materials/astral.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

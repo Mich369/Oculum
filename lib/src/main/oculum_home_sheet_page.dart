@@ -310,17 +310,33 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     );
   }
 
+  RelativeRect quickContextMenuPosition(Offset position) {
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final local = overlay.globalToLocal(position);
+    return RelativeRect.fromRect(
+      Rect.fromLTWH(local.dx, local.dy, 0, 0),
+      Offset.zero & overlay.size,
+    );
+  }
+
   Future<void> showLifeBarContextMenuAt(Offset position) async {
-    if (modalitaVeloce) return;
     final choice = await showMenu<String>(
       context: context,
-      position: RelativeRect.fromLTRB(
-        position.dx,
-        position.dy,
-        position.dx,
-        position.dy,
-      ),
+      position: quickContextMenuPosition(position),
       items: [
+        PopupMenuItem<String>(
+          value: 'resistances',
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.security, color: secondaryColor),
+            title: Text(
+              t(
+                'Resistenze e vulnerabilità',
+                'Resistances and vulnerabilities',
+              ),
+            ),
+          ),
+        ),
         PopupMenuItem<String>(
           value: 'style',
           child: ListTile(
@@ -373,6 +389,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       ],
     );
     if (choice == 'style' && mounted) await showLifeBarStyleGallery();
+    if (choice == 'resistances' && mounted) openResistanceDetails();
     if (choice == 'hp' && mounted) {
       vaiAllaFunzione(page: 0, anchorId: 'sheet_hp');
     }
@@ -3926,6 +3943,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       showQuickContextMenu(
         label: label,
         position: position,
+        onActivate: onActivate,
         onEdit: onEdit,
         onRoll: onRoll,
         onDecrease: onDecrease,
@@ -3960,6 +3978,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   Future<void> showQuickContextMenu({
     required String label,
     required Offset position,
+    VoidCallback? onActivate,
     VoidCallback? onEdit,
     VoidCallback? onRoll,
     VoidCallback? onDecrease,
@@ -3968,16 +3987,21 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     OculumConditionTarget? conditionTarget,
   }) async {
     final cleanLabel = cleanUiText(label).trim();
+    final origin = currentSheetScrollId();
     final choice = await showMenu<String>(
       context: context,
-      color: const Color(0xFF10121A),
-      position: RelativeRect.fromLTRB(
-        position.dx,
-        position.dy,
-        position.dx,
-        position.dy,
-      ),
+      color: Theme.of(context).colorScheme.surface,
+      position: quickContextMenuPosition(position),
       items: [
+        if (onActivate != null && onEdit == null && onRoll == null)
+          PopupMenuItem<String>(
+            value: 'open',
+            child: ListTile(
+              dense: true,
+              leading: Icon(Icons.open_in_new, color: primaryColor),
+              title: Text(t('Apri $cleanLabel', 'Open $cleanLabel')),
+            ),
+          ),
         if (onRoll != null)
           PopupMenuItem<String>(
             value: 'roll',
@@ -4010,6 +4034,36 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             ],
           ),
         ),
+        if (conditionTarget != null) ...[
+          const PopupMenuDivider(),
+          PopupMenuItem<String>(
+            value: 'related_stats',
+            child: Text(t('Statistiche e bonus', 'Statistics and bonuses')),
+          ),
+          PopupMenuItem<String>(
+            value: 'related_subtraits',
+            child: Text(t('Sottotratti e tiri', 'Subtraits and rolls')),
+          ),
+          PopupMenuItem<String>(
+            value: 'related_resistances',
+            child: Text(
+              t(
+                'Resistenze e vulnerabilità',
+                'Resistances and vulnerabilities',
+              ),
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'related_life',
+            child: Text(
+              t('Vita, scudi e condizioni', 'Life, shields and conditions'),
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'related_damage',
+            child: Text(t('Danni subiti e cura', 'Damage taken and healing')),
+          ),
+        ],
         if (conditionTarget != null &&
             conditionsAffecting(conditionTarget).isNotEmpty)
           PopupMenuItem<String>(
@@ -4048,8 +4102,30 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       ],
     );
 
-    if (!mounted || choice == null) return;
+    if (!mounted || choice == null || origin != currentSheetScrollId()) return;
     switch (choice) {
+      case 'open':
+        onActivate?.call();
+        break;
+      case 'related_stats':
+        vaiAllaFunzione(page: 0, anchorId: 'sheet_stats');
+        break;
+      case 'related_subtraits':
+        openReferenceDetail(
+          'Sottotratti',
+          'sheet_subtraits',
+          referenceSubtraitsPanel,
+        );
+        break;
+      case 'related_resistances':
+        openResistanceDetails();
+        break;
+      case 'related_life':
+        vaiAllaFunzione(page: 0, anchorId: 'sheet_hp');
+        break;
+      case 'related_damage':
+        vaiAllaFunzione(page: 0, anchorId: 'sheet_damage_heal');
+        break;
       case 'roll':
         onRoll?.call();
         break;

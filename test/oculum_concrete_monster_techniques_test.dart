@@ -71,7 +71,18 @@ void main() {
         );
         final skill = matches.single;
         expect(skill.oculumMinimiPerLivello.take(3), concrete.minimums);
-        expect(skill.oculumMassimiPerLivello.take(3), concrete.maximums);
+        // A selectable cost is meaningful only when spending more changes an
+        // effect. Fixed techniques now retain their original minimum cost.
+        for (var form = 0; form < 3; form++) {
+          final scalesWithSpend = concrete.forms[form].any(
+            (effect) => effect.formula.contains('oculum_spent'),
+          );
+          expect(
+            skill.oculumMassimoPerLivello(form + 1),
+            scalesWithSpend ? concrete.maximums[form] : concrete.minimums[form],
+            reason: '${monster.id}/${concrete.name} form ${form + 1}',
+          );
+        }
         expect(
           skill.cooldownPerLivello.take(3).map((timer) => timer.amount),
           concrete.cooldowns,

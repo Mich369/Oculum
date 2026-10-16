@@ -99,6 +99,57 @@ String oculumRawVitaliumRuleForGrade(int grade) {
 
 int oculumMerchantWeaponSkillDamage(int grade) => 5 + max(0, grade) * 10;
 
+bool oculumMerchantPawnV2Available(Random random) => random.nextInt(10) == 0;
+
+const oculumMerchantEssentialIds = [
+  'pawn',
+  'oculum_vial',
+  'raw_vitalium',
+  'refined_vitalium',
+];
+
+int oculumMerchantNeedScore(
+  Map<String, dynamic> offer,
+  Map<String, int> stats,
+) {
+  var score = 0;
+  final bonuses = offer['statBonuses'];
+  if (bonuses is Map) {
+    for (final stat in const ['resilienza', 'volonta', 'materia', 'oculum']) {
+      if (stat == 'oculum' && (stats[stat] ?? 0) <= 0) continue;
+      final bonus = max(0, readIntValue(bonuses[stat]));
+      score += bonus * (12 - (stats[stat] ?? 0).clamp(0, 12).toInt()) * 10;
+    }
+  }
+  if (offer['kind'] == 'stat_gem' && readIntValue(offer['remaining']) > 0) {
+    final key = '${offer['stat']}';
+    if (key != 'oculum' || (stats['oculum'] ?? 0) > 0) {
+      score += max(0, 10 - (stats[key] ?? 0)) * 3;
+    }
+  }
+  return score;
+}
+
+List<Map<String, dynamic>> oculumMerchantOrderedOffers(
+  List<Map<String, dynamic>> stock,
+  Map<String, int> stats,
+) {
+  final indexed = stock.asMap().entries.toList();
+  indexed.sort((a, b) {
+    final ai = oculumMerchantEssentialIds.indexOf('${a.value['id']}');
+    final bi = oculumMerchantEssentialIds.indexOf('${b.value['id']}');
+    if (ai >= 0 || bi >= 0) {
+      return (ai < 0 ? 100 : ai).compareTo(bi < 0 ? 100 : bi);
+    }
+    final score = oculumMerchantNeedScore(
+      b.value,
+      stats,
+    ).compareTo(oculumMerchantNeedScore(a.value, stats));
+    return score != 0 ? score : a.key.compareTo(b.key);
+  });
+  return indexed.map((entry) => entry.value).toList();
+}
+
 String oculumMerchantWeaponSkillName(String weaponName) {
   final lower = weaponName.toLowerCase();
   if (lower.contains('arco') || lower.contains('balestra')) {
@@ -124,9 +175,36 @@ String oculumMerchantWeaponSkillText(String weaponName, int grade) {
 }
 
 /// Negoziante locale della scheda. Lo stock usa il salvataggio della scheda,
-/// ma il suo identificatore di sessione lo rinnova solo dopo la chiusura e
-/// riapertura dell'app: non cambia ad ogni rebuild o apertura del pannello.
+/// e resta stabile anche dopo il riavvio. Un nuovo mercante ha un nuovo stock.
 extension _OculumHomeMerchant on _OculumHomePageState {
+  Map<String, int> get merchantNeedStats => {
+    for (final key in const ['resilienza', 'volonta', 'materia', 'oculum'])
+      key: merchantGemStatValue(key),
+  };
+  List<Map<String, dynamic>> recommendedMerchantStock() =>
+      oculumMerchantOrderedOffers(ensureMerchantStock(), merchantNeedStats);
+  String merchantRecommendation(Map<String, dynamic> offer) {
+    if (oculumMerchantNeedScore(offer, merchantNeedStats) <= 0) return '';
+    final bonuses = offer['statBonuses'];
+    if (bonuses is! Map) return '';
+    final entries =
+        bonuses.entries
+            .where(
+              (e) =>
+                  readIntValue(e.value) > 0 &&
+                  (e.key != 'oculum' || merchantGemStatValue('oculum') > 0),
+            )
+            .toList()
+          ..sort(
+            (a, b) => merchantGemStatValue(
+              '${a.key}',
+            ).compareTo(merchantGemStatValue('${b.key}')),
+          );
+    if (entries.isEmpty) return '';
+    final stat = '${entries.first.key}';
+    return 'Consigliato: $stat ${merchantGemStatValue(stat)} → +${entries.first.value} mentre equipaggiato.\n';
+  }
+
   int merchantGemStatValue(String key) => max(
     0,
     leggiNumero(switch (key) {
@@ -269,8 +347,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   );
 
   List<Map<String, dynamic>> ensureMerchantStock() {
-    if (merchantStockSessionId == merchantRuntimeSessionId &&
-        merchantStock.isNotEmpty) {
+    if (merchantStock.isNotEmpty) {
+      merchantStockSessionId = merchantRuntimeSessionId;
       updateMerchantGemOffers();
       ensureMerchantFoodOffers();
       _saveActiveMerchantProfileStock();
@@ -292,14 +370,15 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'desc':
             'Consumabile: scegli quanto Oculum immettere e recuperi altrettanti HP. Se non hai Oculum, puoi alimentarlo spendendo 2 Materia e 2 Volontà per ogni punto. $rawVitaliumRule',
       },
-      {
-        'id': 'refined_vitalium',
-        'name': 'Vitalium Ridefinito',
-        'cost': 100 + random.nextInt(61),
-        'kind': 'refined_vitalium',
-        'desc':
-            'Ripristina HP, integrità delle Art e statistiche attuali fino ai massimali; non crea Oculum se il massimale è zero.',
-      },
+      if (random.nextInt(50) != 0)
+        {
+          'id': 'refined_vitalium',
+          'name': 'Vitalium Ridefinito',
+          'cost': 100 + random.nextInt(61),
+          'kind': 'refined_vitalium',
+          'desc':
+              'Ripristina HP, integrità delle Art e statistiche attuali fino ai massimali; non crea Oculum se il massimale è zero.',
+        },
       {
         'id': 'oculum_vial',
         'name': 'Fiala di Oculum',
@@ -318,6 +397,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'desc': 'Scegli tu se diventa arma, armatura o scudo.',
       },
     ];
+    if (oculumMerchantPawnV2Available(random)) {
+      merchantStock.add(oculumPawnV2MerchantOffer());
+    }
     for (final gem in oculumStatGemNames.entries) {
       if (!oculumStatGemAvailable(random)) continue;
       merchantStock.add(<String, dynamic>{
@@ -341,70 +423,75 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             'Rara. Imprigiona il bersaglio, applica Stordito e infligge danno perforante.',
       });
     }
-    // Catalogo > 200 oggetti: ogni scheda ne vede solo pochi, ma non pesca
-    // sempre dagli stessi dieci nomi. Lo stock salvato resta invariato fino al
-    // prossimo avvio dell'app.
-    const materials = <String>[
-      'bronzo rovinato',
-      'ferro opaco',
-      'rame freddo',
-      'osso levigato',
-      'legno nero',
-      'acciaio vecchio',
-      'vetro fumé',
-      'pietra di fiume',
-      'cuoio duro',
-      'argento annerito',
-      'corallo secco',
-      'cenere compressa',
-      'ottone consumato',
-      'salice rosso',
-      'sale nero',
-      'vetro di luna',
-    ];
-    const weapons = <String>[
-      'coltellino',
-      'spada corta',
-      'spada lunga',
-      'sciabola',
-      'stocco',
-      'ascia',
-      'mazza',
-      'martello',
-      'lancia',
-      'picca',
-      'alabarda',
-      'falce',
-      'frusta',
-      'arco',
-      'balestra',
-      'guanti d arme',
-    ];
-    const protections = <String>[
-      'scudo',
-      'brocchiere',
-      'mantello',
-      'giubba',
-      'corazza',
-      'piastra',
-      'elmo',
-      'bracciale',
-      'stivali',
-      'anello',
-      'cappuccio',
-      'targa',
-    ];
-    final catalog = <({String name, bool weapon})>[
-      for (final material in materials)
-        for (final weapon in weapons)
-          (name: '$weapon di $material', weapon: true),
-      for (final material in materials)
-        for (final protection in protections)
-          (name: '$protection di $material', weapon: false),
-    ];
-    for (var i = 0; i < 8; i++) {
+    // Quattro offerte distinte da materiali reali del Monster Book.
+    // Lo stock salvato resta invariato fino alla scelta di un nuovo mercante.
+    const catalog =
+        <({String name, bool weapon, String monster, int grade, int damage})>[
+          (
+            name: 'Corno Affilato del Forest Demon',
+            weapon: true,
+            monster: 'forest_demon',
+            grade: 1,
+            damage: 10,
+          ),
+          (
+            name: 'Guanto di Zanne di Goblin',
+            weapon: true,
+            monster: 'goblin_base',
+            grade: 0,
+            damage: 5,
+          ),
+          (
+            name: 'Arco di Piume di Arpia',
+            weapon: true,
+            monster: 'arpia_base',
+            grade: 0,
+            damage: 6,
+          ),
+          (
+            name: 'Lancia di Basalto dello Scarabeo',
+            weapon: true,
+            monster: 'scarabeo_di_basalto',
+            grade: 0,
+            damage: 7,
+          ),
+          (
+            name: 'Lama del Demone Glaciale',
+            weapon: true,
+            monster: 'demone_glaciale_minore',
+            grade: 1,
+            damage: 9,
+          ),
+          (
+            name: 'Corazza di Carapace di Scarabeo',
+            weapon: false,
+            monster: 'scarabeo_di_basalto',
+            grade: 0,
+            damage: 0,
+          ),
+          (
+            name: 'Scudo di Roccia Slime',
+            weapon: false,
+            monster: 'slime_roccioso',
+            grade: 0,
+            damage: 0,
+          ),
+          (
+            name: 'Mantello di Pelle del Lupo di Bruma',
+            weapon: false,
+            monster: 'lupo_di_bruma',
+            grade: 0,
+            damage: 0,
+          ),
+        ];
+    final usedGearNames = <String>{};
+    for (var i = 0; i < 4; i++) {
       final source = catalog[random.nextInt(catalog.length)];
-      final grade = random.nextInt(40) == 0 ? 1 + random.nextInt(12) : 0;
+      if (!usedGearNames.add(source.name)) {
+        i--;
+        continue;
+      }
+      final grade = min(12, source.grade + (random.nextInt(40) == 0 ? 1 : 0));
       final protection = !source.weapon;
       final offensiveShield =
           protection &&
@@ -414,7 +501,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       final weapon = source.weapon || offensiveShield;
       final damage = offensiveShield
           ? 2 + grade * 8
-          : oculumMerchantAttackValue(6, leggiNumero(volontaController));
+          : source.damage + max(0, grade - source.grade) * 5;
       final defence = oculumMerchantDefenseValue(
         leggiNumero(materiaController),
       );
@@ -422,23 +509,33 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         maxHp(),
         35 + random.nextInt(16),
       );
-      final breakEffect = protection && random.nextInt(4) == 0
+      final breakEffect = protection
           ? <String, dynamic>{
-              'duration': 2 + random.nextInt(2),
-              'buffTarget': random.nextBool() ? 'difesa' : 'danni',
+              'duration': 2,
+              'abilityBoostPercent': 50,
+              'buffTarget': source.monster == 'lupo_di_bruma' ? 'cm' : 'difesa',
               'buffValue': 4 + grade * 2,
-              'condition': random.nextBool() ? 'fortificato' : 'concentrato',
-              'element': const [
-                'fuoco',
-                'cenere',
-                'ghiaccio',
-                'oblio',
-              ][random.nextInt(4)],
+              'condition': source.monster == 'lupo_di_bruma'
+                  ? 'concentrato'
+                  : 'fortificato',
+              'element': monsterById(source.monster)?.elementId ?? 'fisico',
               'resistance': 'Resistenza',
             }
           : <String, dynamic>{};
       merchantStock.add(<String, dynamic>{
         'id': 'merchant_${i}_${random.nextInt(1 << 31)}',
+        'authored': true,
+        'monsterId': source.monster,
+        'buff': source.monster == 'forest_demon' ? '@Schianto+2' : '',
+        'statBonuses': source.monster == 'goblin_base'
+            ? {'materia': 2}
+            : source.monster == 'arpia_base' ||
+                  source.monster == 'lupo_di_bruma'
+            ? {'materia': 1}
+            : source.monster == 'scarabeo_di_basalto' ||
+                  source.monster == 'slime_roccioso'
+            ? {'resilienza': 1}
+            : <String, int>{},
         'name': source.name,
         'cost': merchantTitleCost(
           grade == 0
@@ -478,9 +575,6 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     if (!merchantStock.any((offer) => offer['id'] == 'pawn')) {
       merchantStock.add(oculumPawnMerchantOffer());
-    }
-    if (!merchantStock.any((offer) => offer['id'] == 'pawn_v2')) {
-      merchantStock.add(oculumPawnV2MerchantOffer());
     }
     const foods = <Map<String, dynamic>>[
       {
@@ -629,7 +723,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     if ('${offer['kind'] ?? ''}' == 'gear' && readBoolValue(offer['weapon'])) {
       final grade = readIntValue(offer['grade']);
-      return '${offer['desc'] ?? ''}\nSkill: ${oculumMerchantWeaponSkillName('${offer['name'] ?? ''}')} — +${oculumMerchantWeaponSkillDamage(grade)} danni${grade > 0 ? ' (scala +10 per Grado)' : ''}.';
+      final ability = oculumEquipmentAbility('${offer['name']}', grade);
+      return '${offer['desc'] ?? ''}\n${ability.nome}: ${ability.forme.first.descrizione} · ${ability.forme.first.costo} · CD ${ability.forme.first.cooldown}';
     }
     return '${offer['desc'] ?? ''}';
   }
@@ -659,7 +754,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   Widget merchantQuickPanel() {
-    final stock = ensureMerchantStock();
+    final stock = recommendedMerchantStock();
     return gothicPanel(
       borderColor: tertiaryColor.withValues(alpha: .7),
       padding: EdgeInsets.zero,
@@ -765,7 +860,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                     style: const TextStyle(color: Colors.white),
                   ),
                   subtitle: Text(
-                    merchantOfferDescription(offer),
+                    '${merchantRecommendation(offer)}${merchantOfferDescription(offer)}',
                     style: const TextStyle(color: Colors.white70, fontSize: 11),
                   ),
                   trailing: FilledButton(
@@ -788,7 +883,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
 
   // ignore: unused_element
   Future<void> showMerchantDialog() async {
-    final stock = ensureMerchantStock();
+    final stock = recommendedMerchantStock();
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -809,7 +904,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                     style: const TextStyle(color: Colors.white),
                   ),
                   subtitle: Text(
-                    merchantOfferDescription(offer),
+                    '${merchantRecommendation(offer)}${merchantOfferDescription(offer)}',
                     style: const TextStyle(color: Colors.white70),
                   ),
                   trailing: FilledButton(
@@ -886,7 +981,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       if (kind == 'pawn' || kind == 'pawn_v2') purchasedPawn = item;
       inventario.add(item);
       if (kind == 'stat_gem') offer['remaining'] = 0;
-      if (item.arma) {
+      if (item.arma && item.ability == null) {
         final weaponSkill = merchantWeaponSkill(item);
         if (!skills.any((skill) => skill.nome == weaponSkill.nome)) {
           skills.add(weaponSkill);
@@ -1066,12 +1161,18 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       nome: isTitle
           ? 'Item Titolo — ${titleType.replaceAll('_', ' ')}'
           : '${offer['name']}',
+      ability: oculumEquipmentAbility(
+        isTitle
+            ? (weapon ? 'Arma del Titolo' : 'Corazza del Titolo')
+            : '${offer['name']}',
+        grade,
+      ),
       peso: 1.2,
       quantita: 1,
       note: isTitle
           ? 'Oggetto scelto dal Negoziante.'
           : weapon
-          ? '${offer['desc']}\nSkill: ${oculumMerchantWeaponSkillName('${offer['name'] ?? ''}')}. ${oculumMerchantWeaponSkillText('${offer['name'] ?? ''}', grade)}'
+          ? '${offer['desc']}\nMateriale: ${offer['monsterId'] ?? "forgiatura del mercante"}. Skill configurabile nell’oggetto.'
           : '${offer['desc']}',
       arma: weapon,
       protegge: protects,
@@ -1081,7 +1182,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                 : readIntValue(offer['damage'], fallback: 2 + grade * 8))
           : weapon
           ? max(
-              6,
+              readBoolValue(offer['authored']) ? 1 : 6,
               readIntValue(
                 offer['damage'],
                 fallback: oculumMerchantAttackValue(
@@ -1113,11 +1214,16 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       gradoOggetto: grade,
       gradoRichiesto: grade,
       elementoDanno: grade >= 2 ? 'Oculum' : 'Fisico',
-      buff: readBoolValue(offer['quickReaction'])
-          ? '@ReazioneVeloce+1'
-          : grade >= 3 && shield
-          ? '@SchivateOculum+1'
-          : '',
+      buff: [
+        '${offer['buff'] ?? ''}',
+        if (offer['statBonuses'] is Map)
+          for (final entry in (offer['statBonuses'] as Map).entries)
+            if (entry.key != 'oculum' || merchantGemStatValue('oculum') > 0)
+              '@${entry.key}+${entry.value}',
+        if (readBoolValue(offer['quickReaction'])) '@ReazioneVeloce+1',
+        if (!readBoolValue(offer['quickReaction']) && grade >= 3 && shield)
+          '@SchivateOculum+1',
+      ].where((value) => value.isNotEmpty).join(' '),
       effettoRotturaScudo: offer['shieldBreakEffect'] is Map
           ? Map<String, dynamic>.from(offer['shieldBreakEffect'])
           : <String, dynamic>{},

@@ -1,0 +1,15 @@
+{
+  "element": "radiazione",
+  "id": "element_pack_radiazione",
+  "name": "Fissione del vetro",
+  "material": "acid",
+  "motion": "radiation",
+  "accent": "D0DC8F",
+  "style": "acid",
+  "legacyPack": "ash_oracle",
+  "materialSource": "assets/themes/materials/acid.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

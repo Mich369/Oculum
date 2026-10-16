@@ -1,0 +1,15 @@
+{
+  "element": "radice",
+  "id": "element_pack_radice",
+  "name": "Radici del sepolcro",
+  "material": "wood",
+  "motion": "roots",
+  "accent": "AFBE87",
+  "style": "wood",
+  "legacyPack": "deep_forest_demon",
+  "materialSource": "assets/themes/materials/wood.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

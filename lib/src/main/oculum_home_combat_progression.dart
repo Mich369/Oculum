@@ -1087,6 +1087,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         scrollGrade,
         'auto',
       );
+        if (oculumTechniqueScrolls.isNotEmpty && random.nextInt(5) != 0) {
+        dropScroll = oculumTechniqueScrollItem(
+          oculumTechniqueScrolls[Random.secure().nextInt(
+            oculumTechniqueScrolls.length,
+          )],
+          scrollGrade,
+        );
+      }
       inventario.add(dropScroll);
       invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
     }

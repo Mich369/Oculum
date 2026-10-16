@@ -1,0 +1,15 @@
+{
+  "element": "cristallo",
+  "id": "element_pack_cristallo",
+  "name": "Prisma spezzato",
+  "material": "crystal",
+  "motion": "prism",
+  "accent": "C8D1F3",
+  "style": "frost",
+  "legacyPack": "restyle_aurora",
+  "materialSource": "assets/themes/materials/crystal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

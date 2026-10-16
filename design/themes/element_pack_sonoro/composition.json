@@ -1,0 +1,15 @@
+{
+  "element": "sonoro",
+  "id": "element_pack_sonoro",
+  "name": "Diapason delle cripte",
+  "material": "metal",
+  "motion": "sound",
+  "accent": "C7B3D8",
+  "style": "sigil",
+  "legacyPack": "whispering_reliquary",
+  "materialSource": "assets/themes/materials/metal.png",
+  "readingCenter": "transparent",
+  "safeBand": 24,
+  "motionScope": "outer edges only",
+  "generator": "scripts/build_element_theme_packs.cjs"
+}

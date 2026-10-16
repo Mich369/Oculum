@@ -6,6 +6,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
   bool tickStructuredAbilityCooldowns(String unit, {bool scheduleSave = true}) {
     var changed = false;
     if (oculumTurnUnit(unit) == 'turni') {
+      tickMonsterPassiveHealing();
       for (var artIndex = 0; artIndex < arti.length; artIndex++) {
         final art = arti[artIndex];
         for (var skillIndex = 0; skillIndex < art.skills.length; skillIndex++) {
@@ -41,6 +42,11 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     for (final skill in skills) {
       skill.ensureForms();
       for (final form in skill.forme) {
+        changed = (form.cooldownStrutturato?.tick(unit) ?? false) || changed;
+      }
+    }
+    for (final item in inventario) {
+      for (final form in item.ability?.forme ?? <CharacterSkillForm>[]) {
         changed = (form.cooldownStrutturato?.tick(unit) ?? false) || changed;
       }
     }

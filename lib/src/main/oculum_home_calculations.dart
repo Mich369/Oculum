@@ -3943,9 +3943,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return -(difficulty ?? difficoltaTiro());
   }
 
-  int moltiplicatoreHp() {
-    return 10;
-  }
+  int moltiplicatoreHp() =>
+      oculumHpMultiplierForGrade(leggiNumero(gradoController));
 
   int globalQuickBonus(String key) {
     return parseTitleQuickCommands(buffMalusRapidiController.text)[key] ?? 0;

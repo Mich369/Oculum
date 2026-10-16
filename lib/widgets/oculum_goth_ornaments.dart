@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'oculum_theme_presentation.dart';
+import 'oculum_element_theme_registry.dart';
 
 enum OculumGothFamily {
   none,
@@ -20,6 +21,15 @@ enum OculumGothFamily {
 
 String oculumMaterialTexture(OculumGothOrnaments spec) {
   final id = spec.themeId;
+  final element = id.startsWith('element_pack_')
+      ? id.substring(13)
+      : id.startsWith('element_')
+      ? id.substring(8)
+      : '';
+  final elementalMaterial = oculumElementThemeMaterials[element];
+  if (elementalMaterial != null) {
+    return 'assets/themes/materials/$elementalMaterial.png';
+  }
   final material = id.contains('ivory') || id.contains('bone')
       ? 'ivory'
       : switch (spec.family) {

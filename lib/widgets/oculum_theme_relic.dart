@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'oculum_goth_ornaments.dart';
 import 'oculum_theme_asset_packs.dart';
 import 'oculum_theme_presentation.dart';
+import 'oculum_element_theme_registry.dart';
 
 OculumThemeAssetPack oculumResolveThemeArt(
   OculumGothOrnaments spec,
@@ -9,6 +10,11 @@ OculumThemeAssetPack oculumResolveThemeArt(
 ) =>
     oculumThemeAssetPacks[presentation.artPackId] ??
     oculumThemeAssetPacks[spec.themeId] ??
+    oculumThemeAssetPacks[oculumElementThemePackIds[spec.themeId.startsWith(
+          'element_',
+        )
+        ? spec.themeId.substring(8)
+        : '']] ??
     oculumThemeAssetPacks[switch (spec.family) {
       OculumGothFamily.botanical => 'vervain_gothic',
       OculumGothFamily.crystal => 'frost_chapel',
