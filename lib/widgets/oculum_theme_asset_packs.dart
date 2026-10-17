@@ -5,7 +5,9 @@ class OculumThemeAssetPack {
   const OculumThemeAssetPack(this.id, this.name, this.motif, this.motion);
   final String id, name, motif, motion;
   String buttonFrame(String state) =>
-      "assets/themes/$id/frames/button-$state.png";
+      "assets/themes/$id/frames/identity-$state.png";
+  String get identityFrame => buttonFrame('normal');
+  String get identitySurface => "assets/themes/$id/frames/identity-surface.png";
   String get relic => "assets/themes/$id/overlays/relic.png";
   String frame(String role, {String variant = ""}) =>
       "assets/themes/$id/frames/$role${variant.isEmpty ? "" : "-$variant"}.png";

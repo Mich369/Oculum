@@ -415,10 +415,9 @@ class _ElementSigilPainter extends CustomPainter {
     'tuono' ||
     'radiazione' ||
     'laser' => 'spark',
+    'solare' || 'sole' || 'solar' || 'sun' => 'solar',
     'lunare' ||
-    'solare' ||
     'luna' ||
-    'sole' ||
     'stella' ||
     'star' ||
     'gravita' ||
@@ -590,6 +589,17 @@ class _ElementSigilPainter extends CustomPainter {
           ink..strokeWidth = 1.2,
         );
         canvas.drawCircle(Offset(x, 2), 1.2, pale);
+      case 'solar':
+        canvas.drawCircle(Offset(cx, cy), 3.5, ink);
+        for (var i = 0; i < 8; i++) {
+          final a = i * math.pi / 4;
+          final radius = 7 + math.sin(phaseAngle + i) * .8;
+          canvas.drawLine(
+            Offset(cx + math.cos(a) * 5, cy + math.sin(a) * 5),
+            Offset(cx + math.cos(a) * radius, cy + math.sin(a) * radius),
+            pale..strokeWidth = 1,
+          );
+        }
       case 'astral':
         canvas.drawCircle(
           Offset(cx, cy),

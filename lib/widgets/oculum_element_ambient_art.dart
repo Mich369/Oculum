@@ -99,17 +99,19 @@ class OculumElementAmbientPainter extends CustomPainter {
     required this.clock,
     required this.element,
     required this.color,
+    this.motion,
     this.reduced = false,
   }) : super(repaint: clock);
   final Animation<double> clock;
   final String element;
   final Color color;
+  final String? motion;
   final bool reduced;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
-    final mode = oculumElementThemeMotions[element];
+    final mode = motion ?? oculumElementThemeMotions[element];
     if (mode == null) return;
     final kind = oculumElementAnimationKind(mode);
     final band = math.min(16.0, size.shortestSide * .22);
@@ -398,5 +400,6 @@ class OculumElementAmbientPainter extends CustomPainter {
       old.clock != clock ||
       old.element != element ||
       old.color != color ||
+      old.motion != motion ||
       old.reduced != reduced;
 }

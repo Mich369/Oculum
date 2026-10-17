@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
+import 'write_fresh_capture.dart';
 
 void main() {
   test(
@@ -231,13 +232,16 @@ void main() {
       copy['items'][0]['value'] = 99;
       expect((source['items'] as List).first['value'], 0);
       Directory('output/performance').createSync(recursive: true);
-      File('output/performance/fallen-eye-snapshot.json').writeAsStringSync(
-        jsonEncode({
-          'fixture': '13 references to a 1 MiB portrait, debug test',
-          'jsonRoundTripMicroseconds': old.elapsedMicroseconds,
-          'treeCopyMicroseconds': timer.elapsedMicroseconds,
-          'note': 'Snapshot benchmark only; not overall app FPS.',
-        }),
+      writeFreshCapture(
+        File('output/performance/fallen-eye-snapshot.json'),
+        utf8.encode(
+          jsonEncode({
+            'fixture': '13 references to a 1 MiB portrait, debug test',
+            'jsonRoundTripMicroseconds': old.elapsedMicroseconds,
+            'treeCopyMicroseconds': timer.elapsedMicroseconds,
+            'note': 'Snapshot benchmark only; not overall app FPS.',
+          }),
+        ),
       );
     },
   );

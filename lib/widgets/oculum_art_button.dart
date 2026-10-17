@@ -79,7 +79,7 @@ class OculumArtButtonLayer extends StatelessWidget {
                                 Opacity(
                                   opacity: disabled ? .035 : .10,
                                   child: Image.asset(
-                                    oculumMaterialTexture(artSpec),
+                                    pack.identitySurface,
                                     fit: BoxFit.cover,
                                     filterQuality: FilterQuality.low,
                                   ),

@@ -21250,5 +21250,5339 @@
     "path": "assets/themes/element_pack_sconosciuto/overlays/relic.png",
     "bytes": 4631,
     "sha256": "732939cae2134838cf194a8293cea36aede0423b07298264f492e9751bea2a99"
+  },
+  {
+    "theme": "classic_reliquary",
+    "role": "identity-disabled",
+    "path": "assets/themes/classic_reliquary/frames/identity-disabled.png",
+    "bytes": 7361,
+    "sha256": "8c61f90e2ec99d477b42dc3c674de097518dce3c6469e84623592d0871511064"
+  },
+  {
+    "theme": "classic_reliquary",
+    "role": "identity-hover",
+    "path": "assets/themes/classic_reliquary/frames/identity-hover.png",
+    "bytes": 9602,
+    "sha256": "5753aa4db030aff1da322366a637aa1cbf9b41579972a1a22ed970190a556d04"
+  },
+  {
+    "theme": "classic_reliquary",
+    "role": "identity-normal",
+    "path": "assets/themes/classic_reliquary/frames/identity-normal.png",
+    "bytes": 9665,
+    "sha256": "7245e4b0723ecacefd4b7c15cfc20531f6ae0a6e4c06489d8811ef72953279d2"
+  },
+  {
+    "theme": "classic_reliquary",
+    "role": "identity-pressed",
+    "path": "assets/themes/classic_reliquary/frames/identity-pressed.png",
+    "bytes": 9185,
+    "sha256": "98877283941ca9db47c7fa6c3752ee7874c0265580aec911257b6ca35b80ad81"
+  },
+  {
+    "theme": "classic_reliquary",
+    "role": "identity-selected",
+    "path": "assets/themes/classic_reliquary/frames/identity-selected.png",
+    "bytes": 10189,
+    "sha256": "fb735ee70960b02779b82cca210b265bb0e63380b8b100bb541aa557b4079828"
+  },
+  {
+    "theme": "classic_reliquary",
+    "role": "identity-surface",
+    "path": "assets/themes/classic_reliquary/frames/identity-surface.png",
+    "bytes": 62474,
+    "sha256": "b4973f7d2e3af2d72c035f84780502e48cdc63976c24dc4c8fbece1d1e670a78"
+  },
+  {
+    "theme": "classic_rpg",
+    "role": "identity-disabled",
+    "path": "assets/themes/classic_rpg/frames/identity-disabled.png",
+    "bytes": 5751,
+    "sha256": "2569e35b12c7a0b18fb9bc9533a06b0d87b20098c3f0b864f47d56cef9c9443f"
+  },
+  {
+    "theme": "classic_rpg",
+    "role": "identity-hover",
+    "path": "assets/themes/classic_rpg/frames/identity-hover.png",
+    "bytes": 5386,
+    "sha256": "efcd78a6026dd45a020909ec3c75c3c99a06153a972c9e72eb34a47277d4026b"
+  },
+  {
+    "theme": "classic_rpg",
+    "role": "identity-normal",
+    "path": "assets/themes/classic_rpg/frames/identity-normal.png",
+    "bytes": 5525,
+    "sha256": "41a9548d5e6045971212a76e9639d0e96ad61e13aa89ea9c0320a3ff20e582ae"
+  },
+  {
+    "theme": "classic_rpg",
+    "role": "identity-pressed",
+    "path": "assets/themes/classic_rpg/frames/identity-pressed.png",
+    "bytes": 5309,
+    "sha256": "bed5c6f938ab47c79e708b4d44ac48aeaae2f12a07ca93c9a55e0bd074852eea"
+  },
+  {
+    "theme": "classic_rpg",
+    "role": "identity-selected",
+    "path": "assets/themes/classic_rpg/frames/identity-selected.png",
+    "bytes": 5642,
+    "sha256": "f3196efb55c873ea4384a91c740b1ff912e27b8d86d6b80c03142e4b4076444b"
+  },
+  {
+    "theme": "classic_rpg",
+    "role": "identity-surface",
+    "path": "assets/themes/classic_rpg/frames/identity-surface.png",
+    "bytes": 65601,
+    "sha256": "efb90203dd7d6876ae1ae3a3e207af80601743226b24baf80c7ad1ce35601c22"
+  },
+  {
+    "theme": "classic_low_detail",
+    "role": "identity-disabled",
+    "path": "assets/themes/classic_low_detail/frames/identity-disabled.png",
+    "bytes": 4929,
+    "sha256": "6a2be8dafc859c0cdebdc480f1be75bce2cd2df3552815c2c6d5e1d90cfcb0bf"
+  },
+  {
+    "theme": "classic_low_detail",
+    "role": "identity-hover",
+    "path": "assets/themes/classic_low_detail/frames/identity-hover.png",
+    "bytes": 4744,
+    "sha256": "faf99b6a5714c31bbe8c5b8a2784edf43f3939c0b7bea9f95d2f3c055b197d8e"
+  },
+  {
+    "theme": "classic_low_detail",
+    "role": "identity-normal",
+    "path": "assets/themes/classic_low_detail/frames/identity-normal.png",
+    "bytes": 4767,
+    "sha256": "5519906b46e621f72a39cd20a2428e9228673ed9c6a220c0e0310af37d3708e7"
+  },
+  {
+    "theme": "classic_low_detail",
+    "role": "identity-pressed",
+    "path": "assets/themes/classic_low_detail/frames/identity-pressed.png",
+    "bytes": 5494,
+    "sha256": "6fad29ddbb6db46b74b1f736e2e9fbe9893062845407fc184ac299ddb446bff9"
+  },
+  {
+    "theme": "classic_low_detail",
+    "role": "identity-selected",
+    "path": "assets/themes/classic_low_detail/frames/identity-selected.png",
+    "bytes": 4851,
+    "sha256": "ac58f7b3341965fcdfdfb4aa6413e7eaa94642b743574864e3d2ad1c993f70d0"
+  },
+  {
+    "theme": "classic_low_detail",
+    "role": "identity-surface",
+    "path": "assets/themes/classic_low_detail/frames/identity-surface.png",
+    "bytes": 65597,
+    "sha256": "92380cb21573f68dac7fadf3483629d58b0608cc9e878193e6579e528e1393f9"
+  },
+  {
+    "theme": "blood_court",
+    "role": "identity-disabled",
+    "path": "assets/themes/blood_court/frames/identity-disabled.png",
+    "bytes": 10148,
+    "sha256": "0c3f409f617dea2a46aec91aa853bc3bde2a492a9b4af3ebddcfe8bb8b287d10"
+  },
+  {
+    "theme": "blood_court",
+    "role": "identity-hover",
+    "path": "assets/themes/blood_court/frames/identity-hover.png",
+    "bytes": 11840,
+    "sha256": "73345805e0e09fd3df98aad443884be2611c08c3123a5983523289f5a0cacbcc"
+  },
+  {
+    "theme": "blood_court",
+    "role": "identity-normal",
+    "path": "assets/themes/blood_court/frames/identity-normal.png",
+    "bytes": 12246,
+    "sha256": "62e35b0f5d068358f922d2e0603e73527803948e72a7ca89c71b7cd13afbd574"
+  },
+  {
+    "theme": "blood_court",
+    "role": "identity-pressed",
+    "path": "assets/themes/blood_court/frames/identity-pressed.png",
+    "bytes": 11552,
+    "sha256": "0b4f3f800dac89c730ebd2d5ec8783b2b56d2db3bbfd6099c47079ec1a8cd605"
+  },
+  {
+    "theme": "blood_court",
+    "role": "identity-selected",
+    "path": "assets/themes/blood_court/frames/identity-selected.png",
+    "bytes": 12106,
+    "sha256": "387cec2a75cf68cda3b561697ba27c63a39d865d1d6b6f49a229677cfe27ef8a"
+  },
+  {
+    "theme": "blood_court",
+    "role": "identity-surface",
+    "path": "assets/themes/blood_court/frames/identity-surface.png",
+    "bytes": 63065,
+    "sha256": "1694e016269d45464ccbd13bb13c68b1784b2e636d0610d0d452dcc9847e67bf"
+  },
+  {
+    "theme": "witch_glass",
+    "role": "identity-disabled",
+    "path": "assets/themes/witch_glass/frames/identity-disabled.png",
+    "bytes": 7444,
+    "sha256": "da36c3309906463c92ae9f6682b6f98f153edf80fbfad6201279efeaa957ab0f"
+  },
+  {
+    "theme": "witch_glass",
+    "role": "identity-hover",
+    "path": "assets/themes/witch_glass/frames/identity-hover.png",
+    "bytes": 9405,
+    "sha256": "403207e2e6a3191546a6e872bd8b52a6b9e486b0ddeb6c54276cd39b4e159dc2"
+  },
+  {
+    "theme": "witch_glass",
+    "role": "identity-normal",
+    "path": "assets/themes/witch_glass/frames/identity-normal.png",
+    "bytes": 9497,
+    "sha256": "1c59c5efc952c9b42b80524ebfa17d605b6e56d047522c0bbe9272535c96bf82"
+  },
+  {
+    "theme": "witch_glass",
+    "role": "identity-pressed",
+    "path": "assets/themes/witch_glass/frames/identity-pressed.png",
+    "bytes": 9128,
+    "sha256": "888136f1a5a98b9b36798c4f6baad114661c9b8257b216db382026b4eded021a"
+  },
+  {
+    "theme": "witch_glass",
+    "role": "identity-selected",
+    "path": "assets/themes/witch_glass/frames/identity-selected.png",
+    "bytes": 9920,
+    "sha256": "a578b9922494029a4f5e834b5a0d25f63bf81767047f624114def341aa651dfb"
+  },
+  {
+    "theme": "witch_glass",
+    "role": "identity-surface",
+    "path": "assets/themes/witch_glass/frames/identity-surface.png",
+    "bytes": 48845,
+    "sha256": "efcfd6ab852749c1a0689652ab6ad1aa0151c4b1cf2ef323d455c96033214154"
+  },
+  {
+    "theme": "moon_iron",
+    "role": "identity-disabled",
+    "path": "assets/themes/moon_iron/frames/identity-disabled.png",
+    "bytes": 7822,
+    "sha256": "eb1b426e8dafad1342e21fafb56c181ac8b5ac512a51cbdff088fdc32ad18667"
+  },
+  {
+    "theme": "moon_iron",
+    "role": "identity-hover",
+    "path": "assets/themes/moon_iron/frames/identity-hover.png",
+    "bytes": 9453,
+    "sha256": "42c61781290ab219ff9653fa26221bc0bf6104e9ae1e8ed673d2f86ee57e579f"
+  },
+  {
+    "theme": "moon_iron",
+    "role": "identity-normal",
+    "path": "assets/themes/moon_iron/frames/identity-normal.png",
+    "bytes": 9500,
+    "sha256": "b0d343ae5ff607e13fc4a15ed3f6ee09736144f5794678ba3f9c537cc540c935"
+  },
+  {
+    "theme": "moon_iron",
+    "role": "identity-pressed",
+    "path": "assets/themes/moon_iron/frames/identity-pressed.png",
+    "bytes": 9594,
+    "sha256": "b11eec1158f4de1d0b289f40222d215c71c66ccf469d4e90bffba17b70c2abce"
+  },
+  {
+    "theme": "moon_iron",
+    "role": "identity-selected",
+    "path": "assets/themes/moon_iron/frames/identity-selected.png",
+    "bytes": 9982,
+    "sha256": "f5dfd8d39b81b9af709e6cd43251ba9dcf6540f570f0b2022a0e572bcac7009b"
+  },
+  {
+    "theme": "moon_iron",
+    "role": "identity-surface",
+    "path": "assets/themes/moon_iron/frames/identity-surface.png",
+    "bytes": 63197,
+    "sha256": "03922de409c16a6fd4b97222ca0c59795e30248ecba3f94055a4bcdf8916fff1"
+  },
+  {
+    "theme": "lunar_eclipse",
+    "role": "identity-disabled",
+    "path": "assets/themes/lunar_eclipse/frames/identity-disabled.png",
+    "bytes": 8670,
+    "sha256": "9671432f4fed1e1546c2ba4d5945b90e61cde049ee965a1728cac8f85f1a6925"
+  },
+  {
+    "theme": "lunar_eclipse",
+    "role": "identity-hover",
+    "path": "assets/themes/lunar_eclipse/frames/identity-hover.png",
+    "bytes": 9419,
+    "sha256": "e85221ffdbe3f93f4f3959187c112a452ec9a3cb50e705bfa7820e934c91c4b8"
+  },
+  {
+    "theme": "lunar_eclipse",
+    "role": "identity-normal",
+    "path": "assets/themes/lunar_eclipse/frames/identity-normal.png",
+    "bytes": 9153,
+    "sha256": "3f36d67cfecab3f9060b34a3b39547d9922585521570bb24e1b650361020861f"
+  },
+  {
+    "theme": "lunar_eclipse",
+    "role": "identity-pressed",
+    "path": "assets/themes/lunar_eclipse/frames/identity-pressed.png",
+    "bytes": 8784,
+    "sha256": "70089ade6fad251ef469c5d364fc8cc31a6682abc92d98857e86301347d3d157"
+  },
+  {
+    "theme": "lunar_eclipse",
+    "role": "identity-selected",
+    "path": "assets/themes/lunar_eclipse/frames/identity-selected.png",
+    "bytes": 9617,
+    "sha256": "f0f8e256088e313b058cba16b9fb5c0337f08aeec3422d49e18fb4b6ec884ce9"
+  },
+  {
+    "theme": "lunar_eclipse",
+    "role": "identity-surface",
+    "path": "assets/themes/lunar_eclipse/frames/identity-surface.png",
+    "bytes": 63333,
+    "sha256": "1c0398fd3c359beeb01b408c3af22588cdb4db8e2bf09c330c8c7cafc455eca0"
+  },
+  {
+    "theme": "cathedral_rose",
+    "role": "identity-disabled",
+    "path": "assets/themes/cathedral_rose/frames/identity-disabled.png",
+    "bytes": 15347,
+    "sha256": "b5b543c127e337059c9534b3c5101770f4d15e3669561c9a394a1868e165a35a"
+  },
+  {
+    "theme": "cathedral_rose",
+    "role": "identity-hover",
+    "path": "assets/themes/cathedral_rose/frames/identity-hover.png",
+    "bytes": 16137,
+    "sha256": "947aa0430e657969ec1ffa17d92672826747a41521256c85b9dc89dc38a1d052"
+  },
+  {
+    "theme": "cathedral_rose",
+    "role": "identity-normal",
+    "path": "assets/themes/cathedral_rose/frames/identity-normal.png",
+    "bytes": 16134,
+    "sha256": "56c0eae97215f9f49276f88f6ca40516d45fd60e62917618bb38481e3f6f0d4b"
+  },
+  {
+    "theme": "cathedral_rose",
+    "role": "identity-pressed",
+    "path": "assets/themes/cathedral_rose/frames/identity-pressed.png",
+    "bytes": 15790,
+    "sha256": "517b83580f2e25b1f9ac5ba002b42f09bf931ddc9a5e46a2b71498d8cb4b6cdb"
+  },
+  {
+    "theme": "cathedral_rose",
+    "role": "identity-selected",
+    "path": "assets/themes/cathedral_rose/frames/identity-selected.png",
+    "bytes": 16613,
+    "sha256": "9c77bf5c6dba73e28483896ed8b70865aa2cabef01f805b71b638c206db14620"
+  },
+  {
+    "theme": "cathedral_rose",
+    "role": "identity-surface",
+    "path": "assets/themes/cathedral_rose/frames/identity-surface.png",
+    "bytes": 65145,
+    "sha256": "00d706c96050a067af9dd2a793a498b9ef369c30361e11749ee8358bdc0717df"
+  },
+  {
+    "theme": "thorn_vigil",
+    "role": "identity-disabled",
+    "path": "assets/themes/thorn_vigil/frames/identity-disabled.png",
+    "bytes": 15081,
+    "sha256": "307b119a45a64c141555caba1ab70659369ae82f3259c0debe55700f8b245e2f"
+  },
+  {
+    "theme": "thorn_vigil",
+    "role": "identity-hover",
+    "path": "assets/themes/thorn_vigil/frames/identity-hover.png",
+    "bytes": 15707,
+    "sha256": "de94ff014c6925f7a3d18ed963ccb0190167dd3ed0f64bad3dd11a7d8607f57f"
+  },
+  {
+    "theme": "thorn_vigil",
+    "role": "identity-normal",
+    "path": "assets/themes/thorn_vigil/frames/identity-normal.png",
+    "bytes": 16294,
+    "sha256": "47d0269ff6f59574dae72f88b70c9b70564e0f0eb9de20bab0573edeb2b30080"
+  },
+  {
+    "theme": "thorn_vigil",
+    "role": "identity-pressed",
+    "path": "assets/themes/thorn_vigil/frames/identity-pressed.png",
+    "bytes": 15553,
+    "sha256": "87b38cd4ddf3031217979659e6dfa19ad00ebd15d55cad5ba8de05e26bac274d"
+  },
+  {
+    "theme": "thorn_vigil",
+    "role": "identity-selected",
+    "path": "assets/themes/thorn_vigil/frames/identity-selected.png",
+    "bytes": 16195,
+    "sha256": "b3b79bcc5f010592b36d5c72d62c2af266e1a3732a83d1904042bb5661955602"
+  },
+  {
+    "theme": "thorn_vigil",
+    "role": "identity-surface",
+    "path": "assets/themes/thorn_vigil/frames/identity-surface.png",
+    "bytes": 64917,
+    "sha256": "586f1f506ee1e730fee1df8a430f88351ce1b6f41c420469aa51e3f604f6f184"
+  },
+  {
+    "theme": "frost_chapel",
+    "role": "identity-disabled",
+    "path": "assets/themes/frost_chapel/frames/identity-disabled.png",
+    "bytes": 7117,
+    "sha256": "35a0ce0f8b2c97f956ffcdb6c713264d936fd91a485520e3c68df5c63124895c"
+  },
+  {
+    "theme": "frost_chapel",
+    "role": "identity-hover",
+    "path": "assets/themes/frost_chapel/frames/identity-hover.png",
+    "bytes": 7318,
+    "sha256": "f558858adf66d3cd77c5ba56517a5d1e45df4bf33a3a5c1874ea6cb326c56ffc"
+  },
+  {
+    "theme": "frost_chapel",
+    "role": "identity-normal",
+    "path": "assets/themes/frost_chapel/frames/identity-normal.png",
+    "bytes": 7113,
+    "sha256": "6eb79d7da0fe5bae37cfc5ec70a07500f6e6e521fa7e016e9d175f76ba1c891e"
+  },
+  {
+    "theme": "frost_chapel",
+    "role": "identity-pressed",
+    "path": "assets/themes/frost_chapel/frames/identity-pressed.png",
+    "bytes": 6912,
+    "sha256": "e60b7d76e831b78204180ae15624ed5d148f3ab6fbf4b35cd71e759cb6255c8a"
+  },
+  {
+    "theme": "frost_chapel",
+    "role": "identity-selected",
+    "path": "assets/themes/frost_chapel/frames/identity-selected.png",
+    "bytes": 7548,
+    "sha256": "469d1c3daa8bd85781e133ea0a93bc4fd33f3ec43bb05f1cf755b0fabfd1efb2"
+  },
+  {
+    "theme": "frost_chapel",
+    "role": "identity-surface",
+    "path": "assets/themes/frost_chapel/frames/identity-surface.png",
+    "bytes": 63858,
+    "sha256": "c18206d4013163563c55b659bd844d2698a2bdaca5a4ad8cef6541d182d77e8d"
+  },
+  {
+    "theme": "obsidian_sigil",
+    "role": "identity-disabled",
+    "path": "assets/themes/obsidian_sigil/frames/identity-disabled.png",
+    "bytes": 6855,
+    "sha256": "5e4cd85e08a48d7bfd24aa578ba11261dd15ef84c7dd739788a52de56e9de1ee"
+  },
+  {
+    "theme": "obsidian_sigil",
+    "role": "identity-hover",
+    "path": "assets/themes/obsidian_sigil/frames/identity-hover.png",
+    "bytes": 7806,
+    "sha256": "9b04b025a79f4986bbf901c42661867185e02d76c87247b40fca9499f263a338"
+  },
+  {
+    "theme": "obsidian_sigil",
+    "role": "identity-normal",
+    "path": "assets/themes/obsidian_sigil/frames/identity-normal.png",
+    "bytes": 7959,
+    "sha256": "3e8aad25abecfd0dac37d0661223ec50a379a2fc56e181a65540c5e58423b2f6"
+  },
+  {
+    "theme": "obsidian_sigil",
+    "role": "identity-pressed",
+    "path": "assets/themes/obsidian_sigil/frames/identity-pressed.png",
+    "bytes": 7957,
+    "sha256": "002c6d9bf40e448a2689a92f0c33a54389f47b1f927ae27a278c70699864bda2"
+  },
+  {
+    "theme": "obsidian_sigil",
+    "role": "identity-selected",
+    "path": "assets/themes/obsidian_sigil/frames/identity-selected.png",
+    "bytes": 8146,
+    "sha256": "e531eff393775bf617ef9d9856c968a9e69a29a95bf980d02f755fe88ddc749f"
+  },
+  {
+    "theme": "obsidian_sigil",
+    "role": "identity-surface",
+    "path": "assets/themes/obsidian_sigil/frames/identity-surface.png",
+    "bytes": 63904,
+    "sha256": "cf770d34e666a07574f434e338e97d29ecb524aefc5247b2f398c10bf10195ce"
+  },
+  {
+    "theme": "solar_reliquary",
+    "role": "identity-disabled",
+    "path": "assets/themes/solar_reliquary/frames/identity-disabled.png",
+    "bytes": 9121,
+    "sha256": "3be9d2bd54c6b2385276f9e3a78e08caef5e4129df5c5afb16be4f14a96cee19"
+  },
+  {
+    "theme": "solar_reliquary",
+    "role": "identity-hover",
+    "path": "assets/themes/solar_reliquary/frames/identity-hover.png",
+    "bytes": 11449,
+    "sha256": "cabdb1803d658b2b8dbeac4453598996c5b987ab79435294a3632022c29e5a72"
+  },
+  {
+    "theme": "solar_reliquary",
+    "role": "identity-normal",
+    "path": "assets/themes/solar_reliquary/frames/identity-normal.png",
+    "bytes": 11600,
+    "sha256": "0a68facb144c57417723f0c12aec7bb4908e6b6626213484609f2c4eed5cfe8e"
+  },
+  {
+    "theme": "solar_reliquary",
+    "role": "identity-pressed",
+    "path": "assets/themes/solar_reliquary/frames/identity-pressed.png",
+    "bytes": 11109,
+    "sha256": "1839decfa3506e9541ad793d67a3ab691d985a54e86a562836edc3cd5a0f8b93"
+  },
+  {
+    "theme": "solar_reliquary",
+    "role": "identity-selected",
+    "path": "assets/themes/solar_reliquary/frames/identity-selected.png",
+    "bytes": 11427,
+    "sha256": "db6c03b75101b6878afc798d81f532cde553985517692a60ae4898ad25ad492b"
+  },
+  {
+    "theme": "solar_reliquary",
+    "role": "identity-surface",
+    "path": "assets/themes/solar_reliquary/frames/identity-surface.png",
+    "bytes": 62887,
+    "sha256": "162aaf6eae2e7fbafe7afe3d26f92145584722ef983c6b34ec60d60a38659789"
+  },
+  {
+    "theme": "storm_cathedral",
+    "role": "identity-disabled",
+    "path": "assets/themes/storm_cathedral/frames/identity-disabled.png",
+    "bytes": 5902,
+    "sha256": "3a611651c5d80cb9bbd1829d36b9557e0ae6ddca67b2214425d658d08a103b12"
+  },
+  {
+    "theme": "storm_cathedral",
+    "role": "identity-hover",
+    "path": "assets/themes/storm_cathedral/frames/identity-hover.png",
+    "bytes": 6789,
+    "sha256": "616d7733a9dced4e9dbf7e4143b58ea243fd26430700ebb390136dbf272bf9df"
+  },
+  {
+    "theme": "storm_cathedral",
+    "role": "identity-normal",
+    "path": "assets/themes/storm_cathedral/frames/identity-normal.png",
+    "bytes": 6778,
+    "sha256": "8c04896c7d0bd7b52b4d582ea01e721d2125484757a1c5e0b64c436252195df5"
+  },
+  {
+    "theme": "storm_cathedral",
+    "role": "identity-pressed",
+    "path": "assets/themes/storm_cathedral/frames/identity-pressed.png",
+    "bytes": 6583,
+    "sha256": "89ebb6fbfa48939021e3d27726301cbcdd408bd7cba367e83227cd2332aa936a"
+  },
+  {
+    "theme": "storm_cathedral",
+    "role": "identity-selected",
+    "path": "assets/themes/storm_cathedral/frames/identity-selected.png",
+    "bytes": 6951,
+    "sha256": "6375f979a156156327231e06712aff9209d7c8f683de045aee081015bb1d140d"
+  },
+  {
+    "theme": "storm_cathedral",
+    "role": "identity-surface",
+    "path": "assets/themes/storm_cathedral/frames/identity-surface.png",
+    "bytes": 65591,
+    "sha256": "7e75193e7c449276f7c3582d6ba856d38e3f713e4cc5ccc3795467ad73dcc68d"
+  },
+  {
+    "theme": "abyssal_tide",
+    "role": "identity-disabled",
+    "path": "assets/themes/abyssal_tide/frames/identity-disabled.png",
+    "bytes": 8264,
+    "sha256": "2828a00080ecf98ded0872af077daecc37d219fbeeafb64839572e6388b90c2d"
+  },
+  {
+    "theme": "abyssal_tide",
+    "role": "identity-hover",
+    "path": "assets/themes/abyssal_tide/frames/identity-hover.png",
+    "bytes": 10341,
+    "sha256": "eebe0dddb761ce47763497bfeaf06fc46ed9b8980633d8ae21253ef211d7f7ec"
+  },
+  {
+    "theme": "abyssal_tide",
+    "role": "identity-normal",
+    "path": "assets/themes/abyssal_tide/frames/identity-normal.png",
+    "bytes": 10438,
+    "sha256": "8f066286afe3f3e00fe6f5e6c7c1dbe6d6f547a4b40403c1813bcad9695e21bf"
+  },
+  {
+    "theme": "abyssal_tide",
+    "role": "identity-pressed",
+    "path": "assets/themes/abyssal_tide/frames/identity-pressed.png",
+    "bytes": 10500,
+    "sha256": "686e2fa8d44dd1c2841682f7b6b784632add150cae0902b560f6baca65754f44"
+  },
+  {
+    "theme": "abyssal_tide",
+    "role": "identity-selected",
+    "path": "assets/themes/abyssal_tide/frames/identity-selected.png",
+    "bytes": 10862,
+    "sha256": "302dedfde24dba569fc501de27d8787d890ced600c668b2782dd302fbe3156bc"
+  },
+  {
+    "theme": "abyssal_tide",
+    "role": "identity-surface",
+    "path": "assets/themes/abyssal_tide/frames/identity-surface.png",
+    "bytes": 64151,
+    "sha256": "7edd9e37b8a6bdf77a0e947b44805114239bc3160bb5f81696a09c5e21af4226"
+  },
+  {
+    "theme": "ember_rite",
+    "role": "identity-disabled",
+    "path": "assets/themes/ember_rite/frames/identity-disabled.png",
+    "bytes": 40275,
+    "sha256": "0d559b16f449aaf0ef9fbaa8d72e36526f6895ebe55a71cc6047eacafd82621b"
+  },
+  {
+    "theme": "ember_rite",
+    "role": "identity-hover",
+    "path": "assets/themes/ember_rite/frames/identity-hover.png",
+    "bytes": 37295,
+    "sha256": "a5e0109411f040d919795c2fc48b31e87c09ef1bb8ec0ab7c913879469c585c4"
+  },
+  {
+    "theme": "ember_rite",
+    "role": "identity-normal",
+    "path": "assets/themes/ember_rite/frames/identity-normal.png",
+    "bytes": 37271,
+    "sha256": "c63963c366a0be4324ac542e9ed975f3d18e0fdb3a3091492c4369369839fb87"
+  },
+  {
+    "theme": "ember_rite",
+    "role": "identity-pressed",
+    "path": "assets/themes/ember_rite/frames/identity-pressed.png",
+    "bytes": 37037,
+    "sha256": "5c81d34e27ccbefd18ce06d5ff9883ea304f73c668522cd7a677ccb3336b2392"
+  },
+  {
+    "theme": "ember_rite",
+    "role": "identity-selected",
+    "path": "assets/themes/ember_rite/frames/identity-selected.png",
+    "bytes": 37269,
+    "sha256": "91536e2cf8b5c173ac5e0f3b1daec3a8ae9f3efca6bb83f07fb66448d14f3179"
+  },
+  {
+    "theme": "ember_rite",
+    "role": "identity-surface",
+    "path": "assets/themes/ember_rite/frames/identity-surface.png",
+    "bytes": 62833,
+    "sha256": "a4605700bb0aa56efad42f2c05c90895189fa8f4f10b2f0db94a961b561f378a"
+  },
+  {
+    "theme": "ivory_archive",
+    "role": "identity-disabled",
+    "path": "assets/themes/ivory_archive/frames/identity-disabled.png",
+    "bytes": 7941,
+    "sha256": "addc29b74f31d3648369c7a4372889b08a2aa8a4031706594ab6c1537bf99362"
+  },
+  {
+    "theme": "ivory_archive",
+    "role": "identity-hover",
+    "path": "assets/themes/ivory_archive/frames/identity-hover.png",
+    "bytes": 9016,
+    "sha256": "f30523d8c29bc67f577f20d5d54139af33be5a3949e74cec530283ea32aa59e1"
+  },
+  {
+    "theme": "ivory_archive",
+    "role": "identity-normal",
+    "path": "assets/themes/ivory_archive/frames/identity-normal.png",
+    "bytes": 8836,
+    "sha256": "b2c134835ea866d084b94eedc015cf2b0631fabf82e99c1819bac462ce9e7019"
+  },
+  {
+    "theme": "ivory_archive",
+    "role": "identity-pressed",
+    "path": "assets/themes/ivory_archive/frames/identity-pressed.png",
+    "bytes": 8443,
+    "sha256": "982cce3121267ee72fbe4409ee7b9c264dd992515cef3eddf8189d0d742fc08e"
+  },
+  {
+    "theme": "ivory_archive",
+    "role": "identity-selected",
+    "path": "assets/themes/ivory_archive/frames/identity-selected.png",
+    "bytes": 9085,
+    "sha256": "3c622d62989cda327cec40231d2c4956ff897c10b1ee52ac917f6df3a0c3be41"
+  },
+  {
+    "theme": "ivory_archive",
+    "role": "identity-surface",
+    "path": "assets/themes/ivory_archive/frames/identity-surface.png",
+    "bytes": 62215,
+    "sha256": "f4d820aa475f225d72324d0361309ee539f62b7dbeb3362e78fb637170c29a5d"
+  },
+  {
+    "theme": "vervain_gothic",
+    "role": "identity-disabled",
+    "path": "assets/themes/vervain_gothic/frames/identity-disabled.png",
+    "bytes": 16098,
+    "sha256": "f55981a0c40bd0791cfb5370565bce86076ea6f84a4658e4c91c54180a2bd0cd"
+  },
+  {
+    "theme": "vervain_gothic",
+    "role": "identity-hover",
+    "path": "assets/themes/vervain_gothic/frames/identity-hover.png",
+    "bytes": 16724,
+    "sha256": "f006f80e47048969bc85d5f3a44cf76204be4223ac91b36fac0d26e23900b5e6"
+  },
+  {
+    "theme": "vervain_gothic",
+    "role": "identity-normal",
+    "path": "assets/themes/vervain_gothic/frames/identity-normal.png",
+    "bytes": 16716,
+    "sha256": "53b59fb7d581ef3a8251e93113a90c34b08a2e4f7db983c08b24e952d1b6389a"
+  },
+  {
+    "theme": "vervain_gothic",
+    "role": "identity-pressed",
+    "path": "assets/themes/vervain_gothic/frames/identity-pressed.png",
+    "bytes": 16587,
+    "sha256": "10199ca44514a87244245e197051caa7a3305c94d71ea1b9945991aa177cc219"
+  },
+  {
+    "theme": "vervain_gothic",
+    "role": "identity-selected",
+    "path": "assets/themes/vervain_gothic/frames/identity-selected.png",
+    "bytes": 16905,
+    "sha256": "d02567f4acb933c535362de41ec3fa01e765b218346ad3b5f5e96504afdb1232"
+  },
+  {
+    "theme": "vervain_gothic",
+    "role": "identity-surface",
+    "path": "assets/themes/vervain_gothic/frames/identity-surface.png",
+    "bytes": 64971,
+    "sha256": "45a94009ae5442d47360be9e0f942750e83e55890b1e50c56eea0b5770cd7525"
+  },
+  {
+    "theme": "kingi_wrong_future",
+    "role": "identity-disabled",
+    "path": "assets/themes/kingi_wrong_future/frames/identity-disabled.png",
+    "bytes": 6371,
+    "sha256": "dc70fd90e84612ac181d0c7765c3abb52a0c8614b67c835a30108597a4ca5de7"
+  },
+  {
+    "theme": "kingi_wrong_future",
+    "role": "identity-hover",
+    "path": "assets/themes/kingi_wrong_future/frames/identity-hover.png",
+    "bytes": 6046,
+    "sha256": "ca8172beabc4c58e08f1cd2045c8b9cdcc7a2b12e0e3d7c08e14a2728a54b820"
+  },
+  {
+    "theme": "kingi_wrong_future",
+    "role": "identity-normal",
+    "path": "assets/themes/kingi_wrong_future/frames/identity-normal.png",
+    "bytes": 6122,
+    "sha256": "c194bfe7cbeba22d397641f54c1173ab8c1af4db55838bc001e2624e1bd2b17d"
+  },
+  {
+    "theme": "kingi_wrong_future",
+    "role": "identity-pressed",
+    "path": "assets/themes/kingi_wrong_future/frames/identity-pressed.png",
+    "bytes": 5810,
+    "sha256": "00e1af59cab53196fdf750491eb02392fd233e302ed1493953bfb7c60d15ca99"
+  },
+  {
+    "theme": "kingi_wrong_future",
+    "role": "identity-selected",
+    "path": "assets/themes/kingi_wrong_future/frames/identity-selected.png",
+    "bytes": 6247,
+    "sha256": "633efe59932ab4892b1b8526a00c271232e3900d558dcefddec3b4cfabe8aae4"
+  },
+  {
+    "theme": "kingi_wrong_future",
+    "role": "identity-surface",
+    "path": "assets/themes/kingi_wrong_future/frames/identity-surface.png",
+    "bytes": 63132,
+    "sha256": "ed2803d28f8ecb9bb1e75305bb9a342cfa8d4f46c78f7511ae1c933d5c49f4d4"
+  },
+  {
+    "theme": "blood_chapel",
+    "role": "identity-disabled",
+    "path": "assets/themes/blood_chapel/frames/identity-disabled.png",
+    "bytes": 10395,
+    "sha256": "221fa592688b03f122bcbd52fa33b51885af519b3433f24cd9cabe8294c71d40"
+  },
+  {
+    "theme": "blood_chapel",
+    "role": "identity-hover",
+    "path": "assets/themes/blood_chapel/frames/identity-hover.png",
+    "bytes": 12470,
+    "sha256": "c1f8c065d09b885579c1e2eb990be197ac312a3d702c1ee0d97b924abeab37a0"
+  },
+  {
+    "theme": "blood_chapel",
+    "role": "identity-normal",
+    "path": "assets/themes/blood_chapel/frames/identity-normal.png",
+    "bytes": 12737,
+    "sha256": "740a3922edca4531431ec3fefc6149367c88306f816861d64df3a4a27308fa6e"
+  },
+  {
+    "theme": "blood_chapel",
+    "role": "identity-pressed",
+    "path": "assets/themes/blood_chapel/frames/identity-pressed.png",
+    "bytes": 12052,
+    "sha256": "45107eb375c3b160af8d6206695635d83d3b77ce6a731cc66f8be7a5d502ab4e"
+  },
+  {
+    "theme": "blood_chapel",
+    "role": "identity-selected",
+    "path": "assets/themes/blood_chapel/frames/identity-selected.png",
+    "bytes": 12544,
+    "sha256": "8238618d7bce13d0e1149ffe9b7582ffa14caf06846d9e1b01a539c5a66d373b"
+  },
+  {
+    "theme": "blood_chapel",
+    "role": "identity-surface",
+    "path": "assets/themes/blood_chapel/frames/identity-surface.png",
+    "bytes": 62950,
+    "sha256": "cbdb39ad60e1c2725df0083f3669f8099a8c72bdfc1288884b66d24df018e8d8"
+  },
+  {
+    "theme": "null_crown",
+    "role": "identity-disabled",
+    "path": "assets/themes/null_crown/frames/identity-disabled.png",
+    "bytes": 5829,
+    "sha256": "14c15ca020342350e6e539f2b5132285d39f87d75d2b9a72921c8b6414e6436c"
+  },
+  {
+    "theme": "null_crown",
+    "role": "identity-hover",
+    "path": "assets/themes/null_crown/frames/identity-hover.png",
+    "bytes": 6865,
+    "sha256": "371078cb9e3c4df86e44ba27f45af40ea9ae40eef51698da0676a3299a2bd4c7"
+  },
+  {
+    "theme": "null_crown",
+    "role": "identity-normal",
+    "path": "assets/themes/null_crown/frames/identity-normal.png",
+    "bytes": 6967,
+    "sha256": "b13354e2c618dc25565ed4293c0be91bd88018eb4104c1c3acdbc7f0992e8811"
+  },
+  {
+    "theme": "null_crown",
+    "role": "identity-pressed",
+    "path": "assets/themes/null_crown/frames/identity-pressed.png",
+    "bytes": 6622,
+    "sha256": "f6b4b34cd8810b63b7866a3baefcd6702d476639a2743e68c9942a61a9558705"
+  },
+  {
+    "theme": "null_crown",
+    "role": "identity-selected",
+    "path": "assets/themes/null_crown/frames/identity-selected.png",
+    "bytes": 7109,
+    "sha256": "e1d1b50aefe44f0d1e108d4fea1ce59f7b1d10a1602a1d69e226a81e9ac369f6"
+  },
+  {
+    "theme": "null_crown",
+    "role": "identity-surface",
+    "path": "assets/themes/null_crown/frames/identity-surface.png",
+    "bytes": 65693,
+    "sha256": "8402b883fd64c2b0d0d0f8520d1eed6c85ac4f58a2ee4d94d4526ed67ace64be"
+  },
+  {
+    "theme": "phobia_dark",
+    "role": "identity-disabled",
+    "path": "assets/themes/phobia_dark/frames/identity-disabled.png",
+    "bytes": 8710,
+    "sha256": "ea513b907457c7e2da7fe65d524ed8dc42870bb3857bd7e008d291463ef4a82d"
+  },
+  {
+    "theme": "phobia_dark",
+    "role": "identity-hover",
+    "path": "assets/themes/phobia_dark/frames/identity-hover.png",
+    "bytes": 9818,
+    "sha256": "7d9a066dfe764f69861ac761da6e99920fe4e0ef2ca2290e3ded93222d8290ea"
+  },
+  {
+    "theme": "phobia_dark",
+    "role": "identity-normal",
+    "path": "assets/themes/phobia_dark/frames/identity-normal.png",
+    "bytes": 9605,
+    "sha256": "aaa8d19c5e01d1aaa3c3a8f943cc4a03647238978660f06672cfe097ecd49254"
+  },
+  {
+    "theme": "phobia_dark",
+    "role": "identity-pressed",
+    "path": "assets/themes/phobia_dark/frames/identity-pressed.png",
+    "bytes": 9380,
+    "sha256": "ade4fd1f685a464b2fede94e366b63566bd9ffc98dfa77d4e06c74d1203d88d1"
+  },
+  {
+    "theme": "phobia_dark",
+    "role": "identity-selected",
+    "path": "assets/themes/phobia_dark/frames/identity-selected.png",
+    "bytes": 10206,
+    "sha256": "7ccc9f39b8592336a93877126075a5dd422b18ce5529fa5c07ac9e1ad5dd2d15"
+  },
+  {
+    "theme": "phobia_dark",
+    "role": "identity-surface",
+    "path": "assets/themes/phobia_dark/frames/identity-surface.png",
+    "bytes": 64092,
+    "sha256": "bde2a981826eea6d25b0481ee8ba54587e7a12cb63447990d74dead0cca2e78d"
+  },
+  {
+    "theme": "whispering_reliquary",
+    "role": "identity-disabled",
+    "path": "assets/themes/whispering_reliquary/frames/identity-disabled.png",
+    "bytes": 5596,
+    "sha256": "2fd3e86032f969b4a5ea86aae51a42294e3286f875ed544ad4e651af63c5b53c"
+  },
+  {
+    "theme": "whispering_reliquary",
+    "role": "identity-hover",
+    "path": "assets/themes/whispering_reliquary/frames/identity-hover.png",
+    "bytes": 6563,
+    "sha256": "3f692c984d9b19c25c0e783346f25916368cbd416faa807a4d98ff2458530bf7"
+  },
+  {
+    "theme": "whispering_reliquary",
+    "role": "identity-normal",
+    "path": "assets/themes/whispering_reliquary/frames/identity-normal.png",
+    "bytes": 6593,
+    "sha256": "40af1f377344e393367501e8b1b724e2e1f655151a68f464b426dfc89ed51834"
+  },
+  {
+    "theme": "whispering_reliquary",
+    "role": "identity-pressed",
+    "path": "assets/themes/whispering_reliquary/frames/identity-pressed.png",
+    "bytes": 6274,
+    "sha256": "210358b23b065109dcdef4f1731a589e980b7a93c8f12548a5465f60c1fb2a8b"
+  },
+  {
+    "theme": "whispering_reliquary",
+    "role": "identity-selected",
+    "path": "assets/themes/whispering_reliquary/frames/identity-selected.png",
+    "bytes": 6777,
+    "sha256": "505e65e33b948b160d41efee34a9616a2a126fb3ac207bedf43a18aa24cb31e8"
+  },
+  {
+    "theme": "whispering_reliquary",
+    "role": "identity-surface",
+    "path": "assets/themes/whispering_reliquary/frames/identity-surface.png",
+    "bytes": 65637,
+    "sha256": "ef166908a3133892cd52e55a512742bcf3c5507e5f49f80079908dd07f7ab90d"
+  },
+  {
+    "theme": "black_briar_kingdom",
+    "role": "identity-disabled",
+    "path": "assets/themes/black_briar_kingdom/frames/identity-disabled.png",
+    "bytes": 15508,
+    "sha256": "d333a3a1083e67041267618e4b39276214f5336f0da78e9e05bd67bd68b70e51"
+  },
+  {
+    "theme": "black_briar_kingdom",
+    "role": "identity-hover",
+    "path": "assets/themes/black_briar_kingdom/frames/identity-hover.png",
+    "bytes": 16250,
+    "sha256": "e2b909a1d0f5954ca382c1d0e996379a650decb2f98cf182f5e84dd112bbeb15"
+  },
+  {
+    "theme": "black_briar_kingdom",
+    "role": "identity-normal",
+    "path": "assets/themes/black_briar_kingdom/frames/identity-normal.png",
+    "bytes": 16350,
+    "sha256": "7a09cb27404c0943bf4f036aac68ba491785d1ab29ee8cf8ac5a6fd6fc12b550"
+  },
+  {
+    "theme": "black_briar_kingdom",
+    "role": "identity-pressed",
+    "path": "assets/themes/black_briar_kingdom/frames/identity-pressed.png",
+    "bytes": 16155,
+    "sha256": "389d2f546baf89f26aca6cf4f41addf7e0c3a93ab04e844b2488a93739763eee"
+  },
+  {
+    "theme": "black_briar_kingdom",
+    "role": "identity-selected",
+    "path": "assets/themes/black_briar_kingdom/frames/identity-selected.png",
+    "bytes": 16529,
+    "sha256": "22228f2fbf109fbfa8e81db3aa208304ecfa47979696cbd870edb765a519492d"
+  },
+  {
+    "theme": "black_briar_kingdom",
+    "role": "identity-surface",
+    "path": "assets/themes/black_briar_kingdom/frames/identity-surface.png",
+    "bytes": 65112,
+    "sha256": "cf103c30e7b782e6cc6b9cd8d41b7493defe7d4eb68be4086a07d82e10e22a55"
+  },
+  {
+    "theme": "slime_prince",
+    "role": "identity-disabled",
+    "path": "assets/themes/slime_prince/frames/identity-disabled.png",
+    "bytes": 7344,
+    "sha256": "b7cab1b6724ca52ca3dd4d993cbf534e8028d3866525581933b04be21a4a7de5"
+  },
+  {
+    "theme": "slime_prince",
+    "role": "identity-hover",
+    "path": "assets/themes/slime_prince/frames/identity-hover.png",
+    "bytes": 9290,
+    "sha256": "544ddd7717f2b21e0834aeb686e2642f78898b9e49b31e4da1e731b81136f543"
+  },
+  {
+    "theme": "slime_prince",
+    "role": "identity-normal",
+    "path": "assets/themes/slime_prince/frames/identity-normal.png",
+    "bytes": 9467,
+    "sha256": "bae28c92f416ad94ece78a5496fb64ced82d9a5e912f176541eb16de3b4021c9"
+  },
+  {
+    "theme": "slime_prince",
+    "role": "identity-pressed",
+    "path": "assets/themes/slime_prince/frames/identity-pressed.png",
+    "bytes": 9052,
+    "sha256": "ff59e231a60c6eaf756e18fdbc9dda7cb6eb455f51046c6b22cfbba9aaec4017"
+  },
+  {
+    "theme": "slime_prince",
+    "role": "identity-selected",
+    "path": "assets/themes/slime_prince/frames/identity-selected.png",
+    "bytes": 9883,
+    "sha256": "2bde92218e867754934266e2e58dd3498ad31698d2116d205f389e8a970bcb15"
+  },
+  {
+    "theme": "slime_prince",
+    "role": "identity-surface",
+    "path": "assets/themes/slime_prince/frames/identity-surface.png",
+    "bytes": 64198,
+    "sha256": "573a46fb4f3ab5f6cbb5098c339fde979c119dbcc6fdfe60de0510a5f87b8bf3"
+  },
+  {
+    "theme": "moon_rot",
+    "role": "identity-disabled",
+    "path": "assets/themes/moon_rot/frames/identity-disabled.png",
+    "bytes": 8159,
+    "sha256": "36022b9b37c00711cf7c053057d94762ca762131c1ef1b274516310f290fdb19"
+  },
+  {
+    "theme": "moon_rot",
+    "role": "identity-hover",
+    "path": "assets/themes/moon_rot/frames/identity-hover.png",
+    "bytes": 9886,
+    "sha256": "155302e92bc745ded0edc61eee3171b632f42660aa68bd9fa7bea7550f7de09d"
+  },
+  {
+    "theme": "moon_rot",
+    "role": "identity-normal",
+    "path": "assets/themes/moon_rot/frames/identity-normal.png",
+    "bytes": 9830,
+    "sha256": "147167da5d38e6df004cd1df6a1c9416a458682efeca370f6958eece0b3f547e"
+  },
+  {
+    "theme": "moon_rot",
+    "role": "identity-pressed",
+    "path": "assets/themes/moon_rot/frames/identity-pressed.png",
+    "bytes": 9973,
+    "sha256": "0dd0af8f96baf98b7b6195f3e084d05884a112ebb14da303a604087a348b362f"
+  },
+  {
+    "theme": "moon_rot",
+    "role": "identity-selected",
+    "path": "assets/themes/moon_rot/frames/identity-selected.png",
+    "bytes": 10425,
+    "sha256": "3e1d595b90953cf2d2837f5405e2e3ea931f4fad6a7331fc1fe5fcc8d9cad4c8"
+  },
+  {
+    "theme": "moon_rot",
+    "role": "identity-surface",
+    "path": "assets/themes/moon_rot/frames/identity-surface.png",
+    "bytes": 63333,
+    "sha256": "ad1a063a295e2d0850d4e36bf58011e832a0ab203ee660b9938eb60e7feb466b"
+  },
+  {
+    "theme": "obser_relic",
+    "role": "identity-disabled",
+    "path": "assets/themes/obser_relic/frames/identity-disabled.png",
+    "bytes": 6537,
+    "sha256": "09b1953e82311c9cbfd60f35c1a9ef331e1e378417918b1b7822aefb7a4c23ef"
+  },
+  {
+    "theme": "obser_relic",
+    "role": "identity-hover",
+    "path": "assets/themes/obser_relic/frames/identity-hover.png",
+    "bytes": 6324,
+    "sha256": "f84edfcbd274c9de85a268013931cb05c1962c80f21584f295d03a0fc14e92f8"
+  },
+  {
+    "theme": "obser_relic",
+    "role": "identity-normal",
+    "path": "assets/themes/obser_relic/frames/identity-normal.png",
+    "bytes": 6235,
+    "sha256": "7c2cf48b8b5f75887f90428dd5a073b12d2d5437152699c12af732842d26fbb1"
+  },
+  {
+    "theme": "obser_relic",
+    "role": "identity-pressed",
+    "path": "assets/themes/obser_relic/frames/identity-pressed.png",
+    "bytes": 5966,
+    "sha256": "5c9a9519338d257dc2dca6884b0a2ffe02ff8e0a5753ec7a546fd1ad3a66e762"
+  },
+  {
+    "theme": "obser_relic",
+    "role": "identity-selected",
+    "path": "assets/themes/obser_relic/frames/identity-selected.png",
+    "bytes": 6430,
+    "sha256": "6e7b524135787855f90200e8f6256c1f77057a45fbb84e1fb221819a372ed5fd"
+  },
+  {
+    "theme": "obser_relic",
+    "role": "identity-surface",
+    "path": "assets/themes/obser_relic/frames/identity-surface.png",
+    "bytes": 63246,
+    "sha256": "ecdb17885a0cf7322b38591cfef067d310d98399b36168a5a983c20679bf039c"
+  },
+  {
+    "theme": "deep_forest_demon",
+    "role": "identity-disabled",
+    "path": "assets/themes/deep_forest_demon/frames/identity-disabled.png",
+    "bytes": 14920,
+    "sha256": "e3953cfe2da04c16046537a7b27e4fa13b2474ac2a8f19a7f110bdd98edd6ac9"
+  },
+  {
+    "theme": "deep_forest_demon",
+    "role": "identity-hover",
+    "path": "assets/themes/deep_forest_demon/frames/identity-hover.png",
+    "bytes": 15494,
+    "sha256": "6e676e11cc9f1879bcc0fd79c767ba744574dd4fc93e3a6191fe499685939ece"
+  },
+  {
+    "theme": "deep_forest_demon",
+    "role": "identity-normal",
+    "path": "assets/themes/deep_forest_demon/frames/identity-normal.png",
+    "bytes": 15588,
+    "sha256": "d1dd73b8d317b8156c1a368d2dad42a874543ddb8c8a427d4d6fcd2d6bbec107"
+  },
+  {
+    "theme": "deep_forest_demon",
+    "role": "identity-pressed",
+    "path": "assets/themes/deep_forest_demon/frames/identity-pressed.png",
+    "bytes": 15345,
+    "sha256": "8ee69d624e2350869a220ae5e4fa99b57f6ffc54393af4f918961e083b860bce"
+  },
+  {
+    "theme": "deep_forest_demon",
+    "role": "identity-selected",
+    "path": "assets/themes/deep_forest_demon/frames/identity-selected.png",
+    "bytes": 15933,
+    "sha256": "9593ab34b42608042fa83346103ec8ce93216b82f98c0f89cbd037e6e2c5e819"
+  },
+  {
+    "theme": "deep_forest_demon",
+    "role": "identity-surface",
+    "path": "assets/themes/deep_forest_demon/frames/identity-surface.png",
+    "bytes": 65002,
+    "sha256": "bcb6884aa4db15667a7d2700fa9a407ffdc58742dd5b09b7e9633839dc784989"
+  },
+  {
+    "theme": "astral_ink",
+    "role": "identity-disabled",
+    "path": "assets/themes/astral_ink/frames/identity-disabled.png",
+    "bytes": 7880,
+    "sha256": "c4ea0e826fa3f12bea472fb03f15787468f08076188e63f36a690facd22c1478"
+  },
+  {
+    "theme": "astral_ink",
+    "role": "identity-hover",
+    "path": "assets/themes/astral_ink/frames/identity-hover.png",
+    "bytes": 8429,
+    "sha256": "56ac1f0881a13df42f442cf0fc02e76992bc29a70e49153570e9e75c590a782e"
+  },
+  {
+    "theme": "astral_ink",
+    "role": "identity-normal",
+    "path": "assets/themes/astral_ink/frames/identity-normal.png",
+    "bytes": 8268,
+    "sha256": "bedbf2eee15bb2fb1990de8b32aa70418953129e213ba193defc0d6e881f45cb"
+  },
+  {
+    "theme": "astral_ink",
+    "role": "identity-pressed",
+    "path": "assets/themes/astral_ink/frames/identity-pressed.png",
+    "bytes": 8062,
+    "sha256": "4b0b12af5e50fe4fad1cfd74958f1e69d3fa50f4b63e9de27b7bba9d168535a8"
+  },
+  {
+    "theme": "astral_ink",
+    "role": "identity-selected",
+    "path": "assets/themes/astral_ink/frames/identity-selected.png",
+    "bytes": 8730,
+    "sha256": "82b2de21e7cfb08e3eef4f3156d5fd112db9fd5dc1dc1e10bc4b6085c4b4ec24"
+  },
+  {
+    "theme": "astral_ink",
+    "role": "identity-surface",
+    "path": "assets/themes/astral_ink/frames/identity-surface.png",
+    "bytes": 63215,
+    "sha256": "2b75afa617def81b015e579a6be77e2f2d27df24564cfeb9ce1b366a58042102"
+  },
+  {
+    "theme": "bone_saint",
+    "role": "identity-disabled",
+    "path": "assets/themes/bone_saint/frames/identity-disabled.png",
+    "bytes": 7157,
+    "sha256": "38274e3a65147a36be51df21a5c2dc632eb73c312f9aa1adfd85af1fff66034e"
+  },
+  {
+    "theme": "bone_saint",
+    "role": "identity-hover",
+    "path": "assets/themes/bone_saint/frames/identity-hover.png",
+    "bytes": 9153,
+    "sha256": "c0de93196e093d2a4b3f5566d5567d39b26eb26f051d0b59f7a4f543e0a3c282"
+  },
+  {
+    "theme": "bone_saint",
+    "role": "identity-normal",
+    "path": "assets/themes/bone_saint/frames/identity-normal.png",
+    "bytes": 9170,
+    "sha256": "e1e2342fa9fa1906ea6843578c135b603adee8ee6abcd37d5ad5dbc476a17bfe"
+  },
+  {
+    "theme": "bone_saint",
+    "role": "identity-pressed",
+    "path": "assets/themes/bone_saint/frames/identity-pressed.png",
+    "bytes": 8934,
+    "sha256": "340f42f32a6aaa28d4303b55703b4b0a23cd9927161a8dbda524a573aa6ea743"
+  },
+  {
+    "theme": "bone_saint",
+    "role": "identity-selected",
+    "path": "assets/themes/bone_saint/frames/identity-selected.png",
+    "bytes": 9563,
+    "sha256": "8533fc1f6c7dc8b8ba4512d75dc71ed8d6718819c39c558eb05749e8d5a1bdf9"
+  },
+  {
+    "theme": "bone_saint",
+    "role": "identity-surface",
+    "path": "assets/themes/bone_saint/frames/identity-surface.png",
+    "bytes": 30098,
+    "sha256": "2fc4e81f3036b827f501c968d45164087bcb02d507d3683b6ddddb746034a3f6"
+  },
+  {
+    "theme": "medieval_keep",
+    "role": "identity-disabled",
+    "path": "assets/themes/medieval_keep/frames/identity-disabled.png",
+    "bytes": 5410,
+    "sha256": "db56979450da30ddbd528ca363c4485c0fe0cd7e00ba653ecbc6d7dab176f112"
+  },
+  {
+    "theme": "medieval_keep",
+    "role": "identity-hover",
+    "path": "assets/themes/medieval_keep/frames/identity-hover.png",
+    "bytes": 5170,
+    "sha256": "1e1c0587341c73029b5fcfc921f543458ae0b08b41c68457ecf92bec1c6f8538"
+  },
+  {
+    "theme": "medieval_keep",
+    "role": "identity-normal",
+    "path": "assets/themes/medieval_keep/frames/identity-normal.png",
+    "bytes": 5120,
+    "sha256": "6307332af35aeef3113b2a02b3edef029a2e7a6711d37dd56c043e29e41756f1"
+  },
+  {
+    "theme": "medieval_keep",
+    "role": "identity-pressed",
+    "path": "assets/themes/medieval_keep/frames/identity-pressed.png",
+    "bytes": 5932,
+    "sha256": "72359e156c6db040671ac8cde1a953ae3563ba1cc3acfcd3f0828e1ad5ec8861"
+  },
+  {
+    "theme": "medieval_keep",
+    "role": "identity-selected",
+    "path": "assets/themes/medieval_keep/frames/identity-selected.png",
+    "bytes": 5373,
+    "sha256": "db77b6bcd83dfc10cefacd132a275994a1727304714a261e2c1fd970a5c86838"
+  },
+  {
+    "theme": "medieval_keep",
+    "role": "identity-surface",
+    "path": "assets/themes/medieval_keep/frames/identity-surface.png",
+    "bytes": 65542,
+    "sha256": "ce086a22929bae0c26393454a30a835beb06cde151a424e3cc71164f31d4263f"
+  },
+  {
+    "theme": "fortezza_oculum",
+    "role": "identity-disabled",
+    "path": "assets/themes/fortezza_oculum/frames/identity-disabled.png",
+    "bytes": 6094,
+    "sha256": "e674d1324764d07b42eadfc5e74def8b165f849beadbbf780f383247c4667eef"
+  },
+  {
+    "theme": "fortezza_oculum",
+    "role": "identity-hover",
+    "path": "assets/themes/fortezza_oculum/frames/identity-hover.png",
+    "bytes": 5754,
+    "sha256": "0d101abc5d2ee5751476a3c3082a172fefd68b8429f75834b90f9933d058f958"
+  },
+  {
+    "theme": "fortezza_oculum",
+    "role": "identity-normal",
+    "path": "assets/themes/fortezza_oculum/frames/identity-normal.png",
+    "bytes": 5842,
+    "sha256": "5d8ad4cca850719c019b30be0e3a6e2c14d9c116e0eb5c793cc9e5effce62283"
+  },
+  {
+    "theme": "fortezza_oculum",
+    "role": "identity-pressed",
+    "path": "assets/themes/fortezza_oculum/frames/identity-pressed.png",
+    "bytes": 5653,
+    "sha256": "911c803459707f29b298c0e9dee24c72188e336b9ec1f99f4e812b13a2390755"
+  },
+  {
+    "theme": "fortezza_oculum",
+    "role": "identity-selected",
+    "path": "assets/themes/fortezza_oculum/frames/identity-selected.png",
+    "bytes": 5821,
+    "sha256": "3afc15841f6fed5bdc3bfa97abdce8edb1324ab956900d4dd5e83308ac22c9ab"
+  },
+  {
+    "theme": "fortezza_oculum",
+    "role": "identity-surface",
+    "path": "assets/themes/fortezza_oculum/frames/identity-surface.png",
+    "bytes": 63269,
+    "sha256": "a3d61cc36bb26dba78ead5845f4e8c88a6874ffeb653cd1f48626e01e9511f5c"
+  },
+  {
+    "theme": "hoshy_cosmic_cat",
+    "role": "identity-disabled",
+    "path": "assets/themes/hoshy_cosmic_cat/frames/identity-disabled.png",
+    "bytes": 8504,
+    "sha256": "60c26b1a8483af9d0ee0465412f6bd4c4a624cedcbc49ac9539c1f622bc236f9"
+  },
+  {
+    "theme": "hoshy_cosmic_cat",
+    "role": "identity-hover",
+    "path": "assets/themes/hoshy_cosmic_cat/frames/identity-hover.png",
+    "bytes": 9961,
+    "sha256": "d82a1e9c0c01bc3985abe245d14fcf2a58ff3ff51fe411a1cfb0e39c11eb8234"
+  },
+  {
+    "theme": "hoshy_cosmic_cat",
+    "role": "identity-normal",
+    "path": "assets/themes/hoshy_cosmic_cat/frames/identity-normal.png",
+    "bytes": 10036,
+    "sha256": "7103cc0ef6b58b6a3c9db26c6271a78c430a7d320a8b79f4a5a45c14650aed19"
+  },
+  {
+    "theme": "hoshy_cosmic_cat",
+    "role": "identity-pressed",
+    "path": "assets/themes/hoshy_cosmic_cat/frames/identity-pressed.png",
+    "bytes": 10052,
+    "sha256": "193f56252d75eef60cb10d5f30bb99f7e3eaaa9f6586cd5306b497a78a8b0297"
+  },
+  {
+    "theme": "hoshy_cosmic_cat",
+    "role": "identity-selected",
+    "path": "assets/themes/hoshy_cosmic_cat/frames/identity-selected.png",
+    "bytes": 10491,
+    "sha256": "3819a2100188089a0b90101696edace73748015f531943638946f648162ac9a5"
+  },
+  {
+    "theme": "hoshy_cosmic_cat",
+    "role": "identity-surface",
+    "path": "assets/themes/hoshy_cosmic_cat/frames/identity-surface.png",
+    "bytes": 63249,
+    "sha256": "c578e7d79db094ef595af3ed4ba30e60d60c560125dd67ce8b9eedffbc0a4d57"
+  },
+  {
+    "theme": "ash_oracle",
+    "role": "identity-disabled",
+    "path": "assets/themes/ash_oracle/frames/identity-disabled.png",
+    "bytes": 66161,
+    "sha256": "ef1c8fa772b44eea985cabab834566b4405933603f9aff852098a7fcf8bf1da9"
+  },
+  {
+    "theme": "ash_oracle",
+    "role": "identity-hover",
+    "path": "assets/themes/ash_oracle/frames/identity-hover.png",
+    "bytes": 61704,
+    "sha256": "832b59e597fa103d49e29799182a97029542c1bef3e91b877d38510945c031ed"
+  },
+  {
+    "theme": "ash_oracle",
+    "role": "identity-normal",
+    "path": "assets/themes/ash_oracle/frames/identity-normal.png",
+    "bytes": 65316,
+    "sha256": "fa2d6a926143f0f91491bc964457ab133aa1ae0e6628d2620c63b06ee37bf67d"
+  },
+  {
+    "theme": "ash_oracle",
+    "role": "identity-pressed",
+    "path": "assets/themes/ash_oracle/frames/identity-pressed.png",
+    "bytes": 65536,
+    "sha256": "bbe57fa60ec8a21b5d71b1f61a2302178fcc29dfea5a3b412518cdea202a5e78"
+  },
+  {
+    "theme": "ash_oracle",
+    "role": "identity-selected",
+    "path": "assets/themes/ash_oracle/frames/identity-selected.png",
+    "bytes": 64888,
+    "sha256": "853f5270a01551fac0fb3150f262e25ad05247ed8163283e32c7772e88eb6e57"
+  },
+  {
+    "theme": "ash_oracle",
+    "role": "identity-surface",
+    "path": "assets/themes/ash_oracle/frames/identity-surface.png",
+    "bytes": 53238,
+    "sha256": "5c043cfc1a58dc37077aaba6f821c887e50a5265ec26664ff0e12283e7320c8f"
+  },
+  {
+    "theme": "void_liturgy",
+    "role": "identity-disabled",
+    "path": "assets/themes/void_liturgy/frames/identity-disabled.png",
+    "bytes": 8930,
+    "sha256": "ee7642ddc7987bff48f6642a3e0d0308cf1d58d9b10b21bee0d854f238ec87b6"
+  },
+  {
+    "theme": "void_liturgy",
+    "role": "identity-hover",
+    "path": "assets/themes/void_liturgy/frames/identity-hover.png",
+    "bytes": 10595,
+    "sha256": "4d56260637f23b0340a43a0c465b1ae6ca561205ab264dcca8c7e1fc0baca87e"
+  },
+  {
+    "theme": "void_liturgy",
+    "role": "identity-normal",
+    "path": "assets/themes/void_liturgy/frames/identity-normal.png",
+    "bytes": 10485,
+    "sha256": "d69bc2862d75c5d6f63a797cd2af2e8bd6fc12d370405a78834c135930662cb8"
+  },
+  {
+    "theme": "void_liturgy",
+    "role": "identity-pressed",
+    "path": "assets/themes/void_liturgy/frames/identity-pressed.png",
+    "bytes": 10489,
+    "sha256": "c59167829b8e08f98cc710884f8f6b43db43be219009f4cdc82e5df7be8c4295"
+  },
+  {
+    "theme": "void_liturgy",
+    "role": "identity-selected",
+    "path": "assets/themes/void_liturgy/frames/identity-selected.png",
+    "bytes": 11019,
+    "sha256": "a6e19ff6c27141b0aef563f7cc557312c79c462f61c1761023869b7337911bb9"
+  },
+  {
+    "theme": "void_liturgy",
+    "role": "identity-surface",
+    "path": "assets/themes/void_liturgy/frames/identity-surface.png",
+    "bytes": 63604,
+    "sha256": "ea2d319624a6c11fbd1939e3b88ebb2b04399ebc917c1ac65c212cc2393a845e"
+  },
+  {
+    "theme": "shadow_gate_rank",
+    "role": "identity-disabled",
+    "path": "assets/themes/shadow_gate_rank/frames/identity-disabled.png",
+    "bytes": 7686,
+    "sha256": "8b421e6dd463c7576ac0f91e91a74093b15219445052b123ed6a267416a36480"
+  },
+  {
+    "theme": "shadow_gate_rank",
+    "role": "identity-hover",
+    "path": "assets/themes/shadow_gate_rank/frames/identity-hover.png",
+    "bytes": 8282,
+    "sha256": "34e16c514cafc03cdc5a50e5e227d9c8d421d34ac79ccfc7b4f1d2533e3fe9e6"
+  },
+  {
+    "theme": "shadow_gate_rank",
+    "role": "identity-normal",
+    "path": "assets/themes/shadow_gate_rank/frames/identity-normal.png",
+    "bytes": 8113,
+    "sha256": "d8ff343a1104d20aa5bd52fef98b042c27f208b3c8bc5b9f359dac3b04f57ce8"
+  },
+  {
+    "theme": "shadow_gate_rank",
+    "role": "identity-pressed",
+    "path": "assets/themes/shadow_gate_rank/frames/identity-pressed.png",
+    "bytes": 7850,
+    "sha256": "d9da618abe8d4a8ee4124279188b0b8d71248b6d126a657b8c5df1775b1bb767"
+  },
+  {
+    "theme": "shadow_gate_rank",
+    "role": "identity-selected",
+    "path": "assets/themes/shadow_gate_rank/frames/identity-selected.png",
+    "bytes": 8595,
+    "sha256": "d95f962cd971ee96dd1dd89d343b53eb82b2ec8d57c56ba5b0968c1c40daec9f"
+  },
+  {
+    "theme": "shadow_gate_rank",
+    "role": "identity-surface",
+    "path": "assets/themes/shadow_gate_rank/frames/identity-surface.png",
+    "bytes": 63463,
+    "sha256": "43fb161006f535956e72fac1e54f21fbbf1dcd23ccbd0680044da99f6dfeb2fa"
+  },
+  {
+    "theme": "postea_bloom",
+    "role": "identity-disabled",
+    "path": "assets/themes/postea_bloom/frames/identity-disabled.png",
+    "bytes": 15492,
+    "sha256": "68e2044a12ff61033492955328e3c7d01ced0d5b734244fef52335002683d6e7"
+  },
+  {
+    "theme": "postea_bloom",
+    "role": "identity-hover",
+    "path": "assets/themes/postea_bloom/frames/identity-hover.png",
+    "bytes": 16025,
+    "sha256": "0b8f885c1311380c32867e27ecf9d81ef36ba5ea657056f6d293192d2cdef84d"
+  },
+  {
+    "theme": "postea_bloom",
+    "role": "identity-normal",
+    "path": "assets/themes/postea_bloom/frames/identity-normal.png",
+    "bytes": 16338,
+    "sha256": "f5748a85771dd458b40c50f97edd04475eae44e2faab9bd0f2b93e2cfaa31d4f"
+  },
+  {
+    "theme": "postea_bloom",
+    "role": "identity-pressed",
+    "path": "assets/themes/postea_bloom/frames/identity-pressed.png",
+    "bytes": 15973,
+    "sha256": "5c2e6fffc6a72f465cc18be97b571f4c91933e28e4433fe4330f5d7ae0c8785a"
+  },
+  {
+    "theme": "postea_bloom",
+    "role": "identity-selected",
+    "path": "assets/themes/postea_bloom/frames/identity-selected.png",
+    "bytes": 16688,
+    "sha256": "5bff95a24bcf541f63cf906372443825ddedc18789fb95fe3742f330d928b4c7"
+  },
+  {
+    "theme": "postea_bloom",
+    "role": "identity-surface",
+    "path": "assets/themes/postea_bloom/frames/identity-surface.png",
+    "bytes": 65011,
+    "sha256": "d792217d5cd2f6137c45fc13499169d5c2b5116474195a4455e1957316c8afb2"
+  },
+  {
+    "theme": "karma_duality",
+    "role": "identity-disabled",
+    "path": "assets/themes/karma_duality/frames/identity-disabled.png",
+    "bytes": 8212,
+    "sha256": "6874a3674c00ae1bf3744bc47ac10f042562d30fa76ce1b94235bb5dadb04ff7"
+  },
+  {
+    "theme": "karma_duality",
+    "role": "identity-hover",
+    "path": "assets/themes/karma_duality/frames/identity-hover.png",
+    "bytes": 9011,
+    "sha256": "ed57d60a46d41bb9a08f6f85b65c50442a1a119a4d0417eaed0ef70146b78607"
+  },
+  {
+    "theme": "karma_duality",
+    "role": "identity-normal",
+    "path": "assets/themes/karma_duality/frames/identity-normal.png",
+    "bytes": 8682,
+    "sha256": "d79e21b3a1420d688d77e21209362ed126b94d46ecdfc759822ff353619332d4"
+  },
+  {
+    "theme": "karma_duality",
+    "role": "identity-pressed",
+    "path": "assets/themes/karma_duality/frames/identity-pressed.png",
+    "bytes": 8386,
+    "sha256": "42a69b5fcc1ab3bbbf492f5c13ad48496cc18c9218d3dc10bfec2770b4f028fc"
+  },
+  {
+    "theme": "karma_duality",
+    "role": "identity-selected",
+    "path": "assets/themes/karma_duality/frames/identity-selected.png",
+    "bytes": 9207,
+    "sha256": "25a49c3e8b91b54d75136f834d63ce8b5defac8ee5dea5ed0524a9d37b6269f4"
+  },
+  {
+    "theme": "karma_duality",
+    "role": "identity-surface",
+    "path": "assets/themes/karma_duality/frames/identity-surface.png",
+    "bytes": 63262,
+    "sha256": "2d1889001c4aa3a74f1d87afd8703e9ecadb1b18d4042b73abce3dd6a300e42e"
+  },
+  {
+    "theme": "monster_lantern",
+    "role": "identity-disabled",
+    "path": "assets/themes/monster_lantern/frames/identity-disabled.png",
+    "bytes": 6643,
+    "sha256": "12b98c016585dec051b42050effe3cccc85ec77850b745fbb31a1bbaaae31bf6"
+  },
+  {
+    "theme": "monster_lantern",
+    "role": "identity-hover",
+    "path": "assets/themes/monster_lantern/frames/identity-hover.png",
+    "bytes": 6367,
+    "sha256": "ad0e82a9b2035d79df39dd5755f38296109ed8608b8faa94eb4d5a36b52c3271"
+  },
+  {
+    "theme": "monster_lantern",
+    "role": "identity-normal",
+    "path": "assets/themes/monster_lantern/frames/identity-normal.png",
+    "bytes": 6371,
+    "sha256": "ceb1ce452a6a5eec8dfba001be5a36ade94b7c113f9472d9296e89ea7e74e9de"
+  },
+  {
+    "theme": "monster_lantern",
+    "role": "identity-pressed",
+    "path": "assets/themes/monster_lantern/frames/identity-pressed.png",
+    "bytes": 6154,
+    "sha256": "679b48fa2983e6689fbb0c81c779e05372cc6b9e4fed5f16f6aa0d4f7e591206"
+  },
+  {
+    "theme": "monster_lantern",
+    "role": "identity-selected",
+    "path": "assets/themes/monster_lantern/frames/identity-selected.png",
+    "bytes": 6466,
+    "sha256": "d8008efe15c97e35dcd088786d7cc544d495f4fa67cfa42b5521a5f50eff8e91"
+  },
+  {
+    "theme": "monster_lantern",
+    "role": "identity-surface",
+    "path": "assets/themes/monster_lantern/frames/identity-surface.png",
+    "bytes": 65632,
+    "sha256": "5b46c389e9a17df5adb06fb79da925c0aa6e488583ac705799628fd0c670200e"
+  },
+  {
+    "theme": "jrpg_legend",
+    "role": "identity-disabled",
+    "path": "assets/themes/jrpg_legend/frames/identity-disabled.png",
+    "bytes": 6067,
+    "sha256": "c58d9f47bc3a4ec72cdbb90acebe97eda71c6a9c67d8c6041f0cda4f189e3762"
+  },
+  {
+    "theme": "jrpg_legend",
+    "role": "identity-hover",
+    "path": "assets/themes/jrpg_legend/frames/identity-hover.png",
+    "bytes": 5771,
+    "sha256": "eb6449f12f78a1c3ebc6aee0aab07bc13be2c8ce6b7c6801760477678b4bf603"
+  },
+  {
+    "theme": "jrpg_legend",
+    "role": "identity-normal",
+    "path": "assets/themes/jrpg_legend/frames/identity-normal.png",
+    "bytes": 5795,
+    "sha256": "d7ede3f23cec20cf7af8387295cea4c343cfdcc4092708970aa23b434b4dbc21"
+  },
+  {
+    "theme": "jrpg_legend",
+    "role": "identity-pressed",
+    "path": "assets/themes/jrpg_legend/frames/identity-pressed.png",
+    "bytes": 5548,
+    "sha256": "a9a0efaca3a1c76c9a4e536037b7e697b124b2bb9144d121f95e3e9b3824ec95"
+  },
+  {
+    "theme": "jrpg_legend",
+    "role": "identity-selected",
+    "path": "assets/themes/jrpg_legend/frames/identity-selected.png",
+    "bytes": 5880,
+    "sha256": "1b73bba58a92adfab61f94cef86547904c221fe1ca5c294b267e25deab464702"
+  },
+  {
+    "theme": "jrpg_legend",
+    "role": "identity-surface",
+    "path": "assets/themes/jrpg_legend/frames/identity-surface.png",
+    "bytes": 65471,
+    "sha256": "cebbac3a9e200c5c9857fc10f50219d8fc4227f550b32d51841cfcd783b5462f"
+  },
+  {
+    "theme": "rogue_mutation",
+    "role": "identity-disabled",
+    "path": "assets/themes/rogue_mutation/frames/identity-disabled.png",
+    "bytes": 8231,
+    "sha256": "aaf5de7752a784823fc88b8bb5e20e0881826b405378dccd78cd438e204cda88"
+  },
+  {
+    "theme": "rogue_mutation",
+    "role": "identity-hover",
+    "path": "assets/themes/rogue_mutation/frames/identity-hover.png",
+    "bytes": 10218,
+    "sha256": "41f9302460c8528e71d95a13efbaa64eb4f067b1f2dde9118a01a7bea00843d0"
+  },
+  {
+    "theme": "rogue_mutation",
+    "role": "identity-normal",
+    "path": "assets/themes/rogue_mutation/frames/identity-normal.png",
+    "bytes": 10300,
+    "sha256": "032b4682e266800db81a2e2e99e0fb714fb3ed4555cc66d2cdc7e6b76c1e0f64"
+  },
+  {
+    "theme": "rogue_mutation",
+    "role": "identity-pressed",
+    "path": "assets/themes/rogue_mutation/frames/identity-pressed.png",
+    "bytes": 10326,
+    "sha256": "e73593b1da67452b635e586cffd6d05dd83c7bb343d1a7dadb687edb57bf32a4"
+  },
+  {
+    "theme": "rogue_mutation",
+    "role": "identity-selected",
+    "path": "assets/themes/rogue_mutation/frames/identity-selected.png",
+    "bytes": 10705,
+    "sha256": "bc5736a2869cfd204c539941de0a426437a94dba5c4195eb258dbbf1503035df"
+  },
+  {
+    "theme": "rogue_mutation",
+    "role": "identity-surface",
+    "path": "assets/themes/rogue_mutation/frames/identity-surface.png",
+    "bytes": 64241,
+    "sha256": "b9e1ff68b47cd74af53a1a86597ebda69c364e72e5d88241b31c92c0386b769f"
+  },
+  {
+    "theme": "cell_crimson_run",
+    "role": "identity-disabled",
+    "path": "assets/themes/cell_crimson_run/frames/identity-disabled.png",
+    "bytes": 6468,
+    "sha256": "05039f2f41ebe79a2c11357c59a556a3dc857c9c93fdfd166e62f9ca89d5ae76"
+  },
+  {
+    "theme": "cell_crimson_run",
+    "role": "identity-hover",
+    "path": "assets/themes/cell_crimson_run/frames/identity-hover.png",
+    "bytes": 6327,
+    "sha256": "0509caf813d9abed1c9e154ac3f3822964842d8aebfaf60fd760fcabbaf3444d"
+  },
+  {
+    "theme": "cell_crimson_run",
+    "role": "identity-normal",
+    "path": "assets/themes/cell_crimson_run/frames/identity-normal.png",
+    "bytes": 6303,
+    "sha256": "d96e1a1221e7138f0acd0983d2346f3316ff818cbd7290cf02a0e225c18df9f1"
+  },
+  {
+    "theme": "cell_crimson_run",
+    "role": "identity-pressed",
+    "path": "assets/themes/cell_crimson_run/frames/identity-pressed.png",
+    "bytes": 6132,
+    "sha256": "319db00cc90020f79c69e1f6f2e22a4e92e8ee831fb1b8a8568ef148badde97e"
+  },
+  {
+    "theme": "cell_crimson_run",
+    "role": "identity-selected",
+    "path": "assets/themes/cell_crimson_run/frames/identity-selected.png",
+    "bytes": 6334,
+    "sha256": "b47646cab38f1efe81c2943de0237581bd97751f9742460e84c2ad3fad634558"
+  },
+  {
+    "theme": "cell_crimson_run",
+    "role": "identity-surface",
+    "path": "assets/themes/cell_crimson_run/frames/identity-surface.png",
+    "bytes": 63310,
+    "sha256": "8211c351641be99c7ca63aefb466df404850df474cb0beb55b880a1db7f4c926"
+  },
+  {
+    "theme": "darkest_stagecoach",
+    "role": "identity-disabled",
+    "path": "assets/themes/darkest_stagecoach/frames/identity-disabled.png",
+    "bytes": 5458,
+    "sha256": "cb9763ce8450f41afc631dcaf5f15ecb3da1475e96650ca580d9db98017c9ed2"
+  },
+  {
+    "theme": "darkest_stagecoach",
+    "role": "identity-hover",
+    "path": "assets/themes/darkest_stagecoach/frames/identity-hover.png",
+    "bytes": 6365,
+    "sha256": "d10f7cf3850e654b4b4671390f007015d216af3dc2ccd02f4e966bf62dcbbf5c"
+  },
+  {
+    "theme": "darkest_stagecoach",
+    "role": "identity-normal",
+    "path": "assets/themes/darkest_stagecoach/frames/identity-normal.png",
+    "bytes": 6346,
+    "sha256": "c0d2adbe21af769c29a929ec44ad70f4dd135e1f3b485f92e6a7c1a6c9c34edb"
+  },
+  {
+    "theme": "darkest_stagecoach",
+    "role": "identity-pressed",
+    "path": "assets/themes/darkest_stagecoach/frames/identity-pressed.png",
+    "bytes": 6124,
+    "sha256": "a21aa78151d78d23fe88a0c0de5c575bc4ae7df12300f4328d24beb0225e0b48"
+  },
+  {
+    "theme": "darkest_stagecoach",
+    "role": "identity-selected",
+    "path": "assets/themes/darkest_stagecoach/frames/identity-selected.png",
+    "bytes": 6657,
+    "sha256": "db47574671f4232eefc605d7680d09bbbef5ac9b5e1ba0613ee93777190ea7cd"
+  },
+  {
+    "theme": "darkest_stagecoach",
+    "role": "identity-surface",
+    "path": "assets/themes/darkest_stagecoach/frames/identity-surface.png",
+    "bytes": 63238,
+    "sha256": "ecbcd67f425c19800f719265f83476d08c1dabf3846054d9312b16849fbae685"
+  },
+  {
+    "theme": "buried_herbarium",
+    "role": "identity-disabled",
+    "path": "assets/themes/buried_herbarium/frames/identity-disabled.png",
+    "bytes": 61408,
+    "sha256": "51082b2b82df81013e1721aab87c6bfa455f7b73a69fe1ce4fda9202e2e43d48"
+  },
+  {
+    "theme": "buried_herbarium",
+    "role": "identity-hover",
+    "path": "assets/themes/buried_herbarium/frames/identity-hover.png",
+    "bytes": 60359,
+    "sha256": "346249924cef536caebe7296870673818105e17d4d17fc58ca41ac24b647d682"
+  },
+  {
+    "theme": "buried_herbarium",
+    "role": "identity-normal",
+    "path": "assets/themes/buried_herbarium/frames/identity-normal.png",
+    "bytes": 61502,
+    "sha256": "095c42bd99e07df6ff03883185cc40c2c254bedca88d05f6e7ae8470e7470643"
+  },
+  {
+    "theme": "buried_herbarium",
+    "role": "identity-pressed",
+    "path": "assets/themes/buried_herbarium/frames/identity-pressed.png",
+    "bytes": 60894,
+    "sha256": "376062837b11aff07372d85e7370ecd2f10766b19da8d523daf8059d13ebcf60"
+  },
+  {
+    "theme": "buried_herbarium",
+    "role": "identity-selected",
+    "path": "assets/themes/buried_herbarium/frames/identity-selected.png",
+    "bytes": 61221,
+    "sha256": "7db88a52db98dec6c7cf19641b33ed9a8141fca0982b2d1d4175751fe6734b02"
+  },
+  {
+    "theme": "buried_herbarium",
+    "role": "identity-surface",
+    "path": "assets/themes/buried_herbarium/frames/identity-surface.png",
+    "bytes": 64792,
+    "sha256": "96c3b58720832b18a5a93e7b776d7ad7eabc8052ede2cf28606e7298926c5b12"
+  },
+  {
+    "theme": "funeral_clockwork",
+    "role": "identity-disabled",
+    "path": "assets/themes/funeral_clockwork/frames/identity-disabled.png",
+    "bytes": 6936,
+    "sha256": "a59113d74560e15450202b4582c33010844021c6c4fcde824ea37a903d82337b"
+  },
+  {
+    "theme": "funeral_clockwork",
+    "role": "identity-hover",
+    "path": "assets/themes/funeral_clockwork/frames/identity-hover.png",
+    "bytes": 6653,
+    "sha256": "ad579e2db62cdcb50651e814cbdf783c745e0092ab0138a9154bb0d069318987"
+  },
+  {
+    "theme": "funeral_clockwork",
+    "role": "identity-normal",
+    "path": "assets/themes/funeral_clockwork/frames/identity-normal.png",
+    "bytes": 6656,
+    "sha256": "fff86e5a7f20c8ce6971ec31027e264bb5680941f04ecc4a53b312ff9a181b0a"
+  },
+  {
+    "theme": "funeral_clockwork",
+    "role": "identity-pressed",
+    "path": "assets/themes/funeral_clockwork/frames/identity-pressed.png",
+    "bytes": 6402,
+    "sha256": "b881665f5c4141ecfe21173245877162dda27d7de5d4af91d38ddd9fab004e44"
+  },
+  {
+    "theme": "funeral_clockwork",
+    "role": "identity-selected",
+    "path": "assets/themes/funeral_clockwork/frames/identity-selected.png",
+    "bytes": 6888,
+    "sha256": "9484399625910f69e1f3a745ea4dfda230fd1ab4d31afd215c2e529bc9cce091"
+  },
+  {
+    "theme": "funeral_clockwork",
+    "role": "identity-surface",
+    "path": "assets/themes/funeral_clockwork/frames/identity-surface.png",
+    "bytes": 63109,
+    "sha256": "e314f3e60cd69e41858b8586baece4b1003bf9045875c1a6c2a337311a0e749f"
+  },
+  {
+    "theme": "tidal_stained_glass",
+    "role": "identity-disabled",
+    "path": "assets/themes/tidal_stained_glass/frames/identity-disabled.png",
+    "bytes": 7540,
+    "sha256": "6ce52c9e5ef7fec15d3667083ba6ea102b738b1dae44ce12b3ccc4ac3f4471c0"
+  },
+  {
+    "theme": "tidal_stained_glass",
+    "role": "identity-hover",
+    "path": "assets/themes/tidal_stained_glass/frames/identity-hover.png",
+    "bytes": 7534,
+    "sha256": "2fff3e77dc6d7ccf4ebc744cad5a295d96156d8ea89fe6b21b3663d9c98eb73c"
+  },
+  {
+    "theme": "tidal_stained_glass",
+    "role": "identity-normal",
+    "path": "assets/themes/tidal_stained_glass/frames/identity-normal.png",
+    "bytes": 7569,
+    "sha256": "6b3c813ca935a308bb2f5d91d371bfd73fbb64be2ba8dc17bc19d46fd89cc1f2"
+  },
+  {
+    "theme": "tidal_stained_glass",
+    "role": "identity-pressed",
+    "path": "assets/themes/tidal_stained_glass/frames/identity-pressed.png",
+    "bytes": 7233,
+    "sha256": "2d7216d27869d7a837ef7c01501a820247052513a9df5d2ef8316f2a82e5473a"
+  },
+  {
+    "theme": "tidal_stained_glass",
+    "role": "identity-selected",
+    "path": "assets/themes/tidal_stained_glass/frames/identity-selected.png",
+    "bytes": 7762,
+    "sha256": "5c4113cb06174112924d9e9a6291eae4afd670b686196ee8f7d1f4adf242ce1f"
+  },
+  {
+    "theme": "tidal_stained_glass",
+    "role": "identity-surface",
+    "path": "assets/themes/tidal_stained_glass/frames/identity-surface.png",
+    "bytes": 64098,
+    "sha256": "f3107b98ce83efe4de9ab558d05ae166be3ed91202af0b6f67b1d4f07071f033"
+  },
+  {
+    "theme": "ashen_covenant",
+    "role": "identity-disabled",
+    "path": "assets/themes/ashen_covenant/frames/identity-disabled.png",
+    "bytes": 11847,
+    "sha256": "681fd3bdab00072d2294cc410447405a5ea53eb89bc5ecacacc76118d5d7d8ca"
+  },
+  {
+    "theme": "ashen_covenant",
+    "role": "identity-hover",
+    "path": "assets/themes/ashen_covenant/frames/identity-hover.png",
+    "bytes": 12796,
+    "sha256": "88d39ab2f5cc55318c67d1f199f7ffccc8cb889b19d514073d09a78b95e03132"
+  },
+  {
+    "theme": "ashen_covenant",
+    "role": "identity-normal",
+    "path": "assets/themes/ashen_covenant/frames/identity-normal.png",
+    "bytes": 12837,
+    "sha256": "8411f31cac5ce8c85335ed3773dede15adfa905813f05dab342cfa39796ffcfe"
+  },
+  {
+    "theme": "ashen_covenant",
+    "role": "identity-pressed",
+    "path": "assets/themes/ashen_covenant/frames/identity-pressed.png",
+    "bytes": 12565,
+    "sha256": "6fde2637d4ca2cc2c1f49e3b7b7b75078d25814619e5892d0317345800d51779"
+  },
+  {
+    "theme": "ashen_covenant",
+    "role": "identity-selected",
+    "path": "assets/themes/ashen_covenant/frames/identity-selected.png",
+    "bytes": 12897,
+    "sha256": "2e08209e28447a8718c1f626e6f0465c1b1f918ae9433760c71eb03ce287ba48"
+  },
+  {
+    "theme": "ashen_covenant",
+    "role": "identity-surface",
+    "path": "assets/themes/ashen_covenant/frames/identity-surface.png",
+    "bytes": 53201,
+    "sha256": "73cd3ae955962938ea45593fd3e63486aee8501006883371c379c5320e460bc0"
+  },
+  {
+    "theme": "eclipse_bonfire",
+    "role": "identity-disabled",
+    "path": "assets/themes/eclipse_bonfire/frames/identity-disabled.png",
+    "bytes": 10993,
+    "sha256": "c01b92c36cd50b7583277e47411823f45916c522210cdfcfc7804c1875e7c8f1"
+  },
+  {
+    "theme": "eclipse_bonfire",
+    "role": "identity-hover",
+    "path": "assets/themes/eclipse_bonfire/frames/identity-hover.png",
+    "bytes": 12398,
+    "sha256": "cfbbc8312315f0935d6b21bde4c16b51c1cfe75cf622eb4548ca78cb7b74039e"
+  },
+  {
+    "theme": "eclipse_bonfire",
+    "role": "identity-normal",
+    "path": "assets/themes/eclipse_bonfire/frames/identity-normal.png",
+    "bytes": 12571,
+    "sha256": "d2831b9197ada3d676e033ac4ac51db4cd21b54add4ed7e2af64bde0d615fd56"
+  },
+  {
+    "theme": "eclipse_bonfire",
+    "role": "identity-pressed",
+    "path": "assets/themes/eclipse_bonfire/frames/identity-pressed.png",
+    "bytes": 12219,
+    "sha256": "a582d812b614a64da894d58b1c4a9660cff883075d0d702519fb964bf798762e"
+  },
+  {
+    "theme": "eclipse_bonfire",
+    "role": "identity-selected",
+    "path": "assets/themes/eclipse_bonfire/frames/identity-selected.png",
+    "bytes": 12664,
+    "sha256": "4b9038f6ced17b599a4c32c71787fd41d196ccb4ae6b8ac06151240fca27287d"
+  },
+  {
+    "theme": "eclipse_bonfire",
+    "role": "identity-surface",
+    "path": "assets/themes/eclipse_bonfire/frames/identity-surface.png",
+    "bytes": 63214,
+    "sha256": "7a53ee4fe8c909ecebb61d8834e5716a9c3eb3d82cc79f52821069569ba1eed6"
+  },
+  {
+    "theme": "bolted_black_iron",
+    "role": "identity-disabled",
+    "path": "assets/themes/bolted_black_iron/frames/identity-disabled.png",
+    "bytes": 4627,
+    "sha256": "781997ffab6f4a8f9165d0a55e5e5c0783db69701563aac5d54a84fa7f7f4beb"
+  },
+  {
+    "theme": "bolted_black_iron",
+    "role": "identity-hover",
+    "path": "assets/themes/bolted_black_iron/frames/identity-hover.png",
+    "bytes": 5137,
+    "sha256": "c394b3a2cdbb403c767cb5ce9c15ddc652ea024637c26ed42c87e62f1400536a"
+  },
+  {
+    "theme": "bolted_black_iron",
+    "role": "identity-normal",
+    "path": "assets/themes/bolted_black_iron/frames/identity-normal.png",
+    "bytes": 5281,
+    "sha256": "801d5610d37c3ce512a6cda280a9d37c1305be0c2d889df5a360bf868b89dc01"
+  },
+  {
+    "theme": "bolted_black_iron",
+    "role": "identity-pressed",
+    "path": "assets/themes/bolted_black_iron/frames/identity-pressed.png",
+    "bytes": 5186,
+    "sha256": "10304a217c42294198903020a354183d767e10478e87096c0743af7e9da29b49"
+  },
+  {
+    "theme": "bolted_black_iron",
+    "role": "identity-selected",
+    "path": "assets/themes/bolted_black_iron/frames/identity-selected.png",
+    "bytes": 5331,
+    "sha256": "df332613276ff3e1fe5b008a109bbdcc69564382169e849a3b8998b7925e645b"
+  },
+  {
+    "theme": "bolted_black_iron",
+    "role": "identity-surface",
+    "path": "assets/themes/bolted_black_iron/frames/identity-surface.png",
+    "bytes": 63170,
+    "sha256": "b7c9fe87eca4d11f918c19bc1562a66f421cda5795ba52f0bc0a5cb8d3696bc8"
+  },
+  {
+    "theme": "bolted_gold_plate",
+    "role": "identity-disabled",
+    "path": "assets/themes/bolted_gold_plate/frames/identity-disabled.png",
+    "bytes": 5586,
+    "sha256": "f4192f5d28e115df77098586e6ae6128603647e3c04c6959ba120e73f6693f30"
+  },
+  {
+    "theme": "bolted_gold_plate",
+    "role": "identity-hover",
+    "path": "assets/themes/bolted_gold_plate/frames/identity-hover.png",
+    "bytes": 6681,
+    "sha256": "06a46ec11aed8207478bf8330bcf7d5eda1828dd8fd86b4eac52993958305c40"
+  },
+  {
+    "theme": "bolted_gold_plate",
+    "role": "identity-normal",
+    "path": "assets/themes/bolted_gold_plate/frames/identity-normal.png",
+    "bytes": 6668,
+    "sha256": "fa0ace53940fd26dd55943c3063ceaf03f2f99e2e691b996febab501292e02f1"
+  },
+  {
+    "theme": "bolted_gold_plate",
+    "role": "identity-pressed",
+    "path": "assets/themes/bolted_gold_plate/frames/identity-pressed.png",
+    "bytes": 6373,
+    "sha256": "6da0e25a1e73f17edc5890aea8d93b4b620c446eb50f64c2546d679a7e9964e4"
+  },
+  {
+    "theme": "bolted_gold_plate",
+    "role": "identity-selected",
+    "path": "assets/themes/bolted_gold_plate/frames/identity-selected.png",
+    "bytes": 6907,
+    "sha256": "e4b111df11d811f7418dbbf06f50b985991a8d74d47da93d0f48b16c952206b7"
+  },
+  {
+    "theme": "bolted_gold_plate",
+    "role": "identity-surface",
+    "path": "assets/themes/bolted_gold_plate/frames/identity-surface.png",
+    "bytes": 63192,
+    "sha256": "19c66caab6ecf47acd292f06be7ed6943544d38e1b5bdc93c349b172f8f675f3"
+  },
+  {
+    "theme": "bolted_copper_oxide",
+    "role": "identity-disabled",
+    "path": "assets/themes/bolted_copper_oxide/frames/identity-disabled.png",
+    "bytes": 5497,
+    "sha256": "09f71934649d145205da4920e330e7b3a714f34602a6b2f9f9b989f3559e8344"
+  },
+  {
+    "theme": "bolted_copper_oxide",
+    "role": "identity-hover",
+    "path": "assets/themes/bolted_copper_oxide/frames/identity-hover.png",
+    "bytes": 6436,
+    "sha256": "69242155dc3ec0989efad8a1b1c9bfa281b0d6536f329117b6201fce55671594"
+  },
+  {
+    "theme": "bolted_copper_oxide",
+    "role": "identity-normal",
+    "path": "assets/themes/bolted_copper_oxide/frames/identity-normal.png",
+    "bytes": 6437,
+    "sha256": "d668cd7491c03cc254af5e7df1d3ec07a285de206b336e3b6a95f33839e8577c"
+  },
+  {
+    "theme": "bolted_copper_oxide",
+    "role": "identity-pressed",
+    "path": "assets/themes/bolted_copper_oxide/frames/identity-pressed.png",
+    "bytes": 6175,
+    "sha256": "108ef312ad6d574534f33c5da25b30911e85d43e76c40b5eec3a2534fab1bf49"
+  },
+  {
+    "theme": "bolted_copper_oxide",
+    "role": "identity-selected",
+    "path": "assets/themes/bolted_copper_oxide/frames/identity-selected.png",
+    "bytes": 6580,
+    "sha256": "4e8410ac579414e5a893c1c57f29b7a50c22bfdb2ee1893065ac49963cf7f2f0"
+  },
+  {
+    "theme": "bolted_copper_oxide",
+    "role": "identity-surface",
+    "path": "assets/themes/bolted_copper_oxide/frames/identity-surface.png",
+    "bytes": 63323,
+    "sha256": "a6b37e6f596de75552086243e8176698060b58c2a39e282629ce28c7ee7e79cd"
+  },
+  {
+    "theme": "bolted_silver_plate",
+    "role": "identity-disabled",
+    "path": "assets/themes/bolted_silver_plate/frames/identity-disabled.png",
+    "bytes": 6007,
+    "sha256": "661b3941e426fbf2407b2292891d6f89313c1040ee3c15af49ba9899a21f9e51"
+  },
+  {
+    "theme": "bolted_silver_plate",
+    "role": "identity-hover",
+    "path": "assets/themes/bolted_silver_plate/frames/identity-hover.png",
+    "bytes": 5680,
+    "sha256": "4b1e673e38f2ca516cb8821075fd9cdd69cf2b83021cc4661459c7e590244941"
+  },
+  {
+    "theme": "bolted_silver_plate",
+    "role": "identity-normal",
+    "path": "assets/themes/bolted_silver_plate/frames/identity-normal.png",
+    "bytes": 5618,
+    "sha256": "dac7fe8db72a9e65fdc2c9f1c1e2744583ca38ebcdb288d3149e26cd1a6e32a6"
+  },
+  {
+    "theme": "bolted_silver_plate",
+    "role": "identity-pressed",
+    "path": "assets/themes/bolted_silver_plate/frames/identity-pressed.png",
+    "bytes": 5459,
+    "sha256": "db34ad5e9963992103a4d0365c8fbc1b15ffcc41b28f34c277b5742b3ba1a9ab"
+  },
+  {
+    "theme": "bolted_silver_plate",
+    "role": "identity-selected",
+    "path": "assets/themes/bolted_silver_plate/frames/identity-selected.png",
+    "bytes": 5867,
+    "sha256": "98cab07e38a48d263fa25993f06c8115701dc72648b2e600a9e13b536d02e988"
+  },
+  {
+    "theme": "bolted_silver_plate",
+    "role": "identity-surface",
+    "path": "assets/themes/bolted_silver_plate/frames/identity-surface.png",
+    "bytes": 63243,
+    "sha256": "d1b8211958b8ce9c44d39ccc7be5e877acf9712e6880437003970f5652cdf73e"
+  },
+  {
+    "theme": "meadow_sprite",
+    "role": "identity-disabled",
+    "path": "assets/themes/meadow_sprite/frames/identity-disabled.png",
+    "bytes": 14315,
+    "sha256": "9f795d385c9707cfa1425dc0c622bb4fded85fc90068584a4732acc559eeb991"
+  },
+  {
+    "theme": "meadow_sprite",
+    "role": "identity-hover",
+    "path": "assets/themes/meadow_sprite/frames/identity-hover.png",
+    "bytes": 15262,
+    "sha256": "3a33b703f3911e6e4956cdd0516c51e23e83a337e3e54a251b782d76157f2b2e"
+  },
+  {
+    "theme": "meadow_sprite",
+    "role": "identity-normal",
+    "path": "assets/themes/meadow_sprite/frames/identity-normal.png",
+    "bytes": 15308,
+    "sha256": "2ced4f57f925c8b32b8781ffe033f2da816463b65054d259f318ee905a03d113"
+  },
+  {
+    "theme": "meadow_sprite",
+    "role": "identity-pressed",
+    "path": "assets/themes/meadow_sprite/frames/identity-pressed.png",
+    "bytes": 15073,
+    "sha256": "530d71a72632253e4878c0d59495488d9199ab18dbf7d6cd44794b8e1d7fb053"
+  },
+  {
+    "theme": "meadow_sprite",
+    "role": "identity-selected",
+    "path": "assets/themes/meadow_sprite/frames/identity-selected.png",
+    "bytes": 15532,
+    "sha256": "68438b2213ae2fdaa0796f11287eabdddeab05f39dcaa865f642156691e723f1"
+  },
+  {
+    "theme": "meadow_sprite",
+    "role": "identity-surface",
+    "path": "assets/themes/meadow_sprite/frames/identity-surface.png",
+    "bytes": 65009,
+    "sha256": "0adc4735c476939cecf99cb00c6b9c68c5d6c8eead7ce5d150295e90f8aee7f8"
+  },
+  {
+    "theme": "aurora_moth",
+    "role": "identity-disabled",
+    "path": "assets/themes/aurora_moth/frames/identity-disabled.png",
+    "bytes": 8098,
+    "sha256": "9d1daff53ddf12b9e0b3dc5be38ced69747e11503882b29155c65a45567a97d0"
+  },
+  {
+    "theme": "aurora_moth",
+    "role": "identity-hover",
+    "path": "assets/themes/aurora_moth/frames/identity-hover.png",
+    "bytes": 9994,
+    "sha256": "48f949cc1c1fe245ce5c488f76896df10e7f25ef595e93ff0c26fc53b739fe47"
+  },
+  {
+    "theme": "aurora_moth",
+    "role": "identity-normal",
+    "path": "assets/themes/aurora_moth/frames/identity-normal.png",
+    "bytes": 10075,
+    "sha256": "5736a22c7a64b810291980a8ab6bc19bd68b47e8330582e355ea05cedcf51a20"
+  },
+  {
+    "theme": "aurora_moth",
+    "role": "identity-pressed",
+    "path": "assets/themes/aurora_moth/frames/identity-pressed.png",
+    "bytes": 10132,
+    "sha256": "62b6937541c7c9f138050f1f47131d5a69d2bae089d9dc61fda329b28b037766"
+  },
+  {
+    "theme": "aurora_moth",
+    "role": "identity-selected",
+    "path": "assets/themes/aurora_moth/frames/identity-selected.png",
+    "bytes": 10612,
+    "sha256": "3144f8e929c06595a9afe36859ecf38ddf1f4dbe4a9d9b4ed68d5f78f8d3fab4"
+  },
+  {
+    "theme": "aurora_moth",
+    "role": "identity-surface",
+    "path": "assets/themes/aurora_moth/frames/identity-surface.png",
+    "bytes": 55978,
+    "sha256": "66998283ef307bb80c954f86a0fbfac88a40140059a368185884cabc4fba658c"
+  },
+  {
+    "theme": "modern_school_day",
+    "role": "identity-disabled",
+    "path": "assets/themes/modern_school_day/frames/identity-disabled.png",
+    "bytes": 5361,
+    "sha256": "4ee7d6d57f7ccae2d4d417b6b8eb29768eccf4018b40143874fac9da8e2171a3"
+  },
+  {
+    "theme": "modern_school_day",
+    "role": "identity-hover",
+    "path": "assets/themes/modern_school_day/frames/identity-hover.png",
+    "bytes": 5128,
+    "sha256": "21e80c46b93ac04f827be65ed8aa701980118fbca23da5a2eab2d83f4e435730"
+  },
+  {
+    "theme": "modern_school_day",
+    "role": "identity-normal",
+    "path": "assets/themes/modern_school_day/frames/identity-normal.png",
+    "bytes": 5176,
+    "sha256": "b1e6d99124173846bfe5099f9502321d58bb4ea35eb7f160fde9afc640e5ea3e"
+  },
+  {
+    "theme": "modern_school_day",
+    "role": "identity-pressed",
+    "path": "assets/themes/modern_school_day/frames/identity-pressed.png",
+    "bytes": 5159,
+    "sha256": "420bf6c1535fa26ea35cc69e933016f188b3ec8fb34171c1d5d6c5794f0ce1d2"
+  },
+  {
+    "theme": "modern_school_day",
+    "role": "identity-selected",
+    "path": "assets/themes/modern_school_day/frames/identity-selected.png",
+    "bytes": 5228,
+    "sha256": "0920563aa03ddfeb3428d91cadf924fc832784d00133afcee642439cd45564ba"
+  },
+  {
+    "theme": "modern_school_day",
+    "role": "identity-surface",
+    "path": "assets/themes/modern_school_day/frames/identity-surface.png",
+    "bytes": 65559,
+    "sha256": "d591b7a1f2ba23c9a8a4dac90cf73cd8deadb01e266df70baf7e797035296772"
+  },
+  {
+    "theme": "vtt_arcane_table",
+    "role": "identity-disabled",
+    "path": "assets/themes/vtt_arcane_table/frames/identity-disabled.png",
+    "bytes": 7106,
+    "sha256": "ae925c42551ac897edbcddbd2845f73c1fb4287348188bbb751be2837fdb0a43"
+  },
+  {
+    "theme": "vtt_arcane_table",
+    "role": "identity-hover",
+    "path": "assets/themes/vtt_arcane_table/frames/identity-hover.png",
+    "bytes": 6917,
+    "sha256": "e604debf0c71ed3248245897ae0b3e9850eec57c5a100cbc6f965b7c0fe5566d"
+  },
+  {
+    "theme": "vtt_arcane_table",
+    "role": "identity-normal",
+    "path": "assets/themes/vtt_arcane_table/frames/identity-normal.png",
+    "bytes": 6938,
+    "sha256": "ef60eef33b6fb8fe0ff272ff86b4fce0f81cac27429ce9a1a39d947bb7c2e97c"
+  },
+  {
+    "theme": "vtt_arcane_table",
+    "role": "identity-pressed",
+    "path": "assets/themes/vtt_arcane_table/frames/identity-pressed.png",
+    "bytes": 6637,
+    "sha256": "4b149a59bc6ae5cd8c4f59b5c1ad981a9e40369be4a0f17c258f0c75464ac999"
+  },
+  {
+    "theme": "vtt_arcane_table",
+    "role": "identity-selected",
+    "path": "assets/themes/vtt_arcane_table/frames/identity-selected.png",
+    "bytes": 7175,
+    "sha256": "4f103127b28d6486cf7532100c9990feb38499432ed0a7ea9c16f07a0750ec8b"
+  },
+  {
+    "theme": "vtt_arcane_table",
+    "role": "identity-surface",
+    "path": "assets/themes/vtt_arcane_table/frames/identity-surface.png",
+    "bytes": 65641,
+    "sha256": "39954d503de5037b19bca97e155334fc74fbba7cbc6e323b880d1d0f3765c453"
+  },
+  {
+    "theme": "vtt_obsidian_grid",
+    "role": "identity-disabled",
+    "path": "assets/themes/vtt_obsidian_grid/frames/identity-disabled.png",
+    "bytes": 5298,
+    "sha256": "30dddc8405a2c59f422a42dd64229feb7410f3129e284a915b1e62f0fa058c59"
+  },
+  {
+    "theme": "vtt_obsidian_grid",
+    "role": "identity-hover",
+    "path": "assets/themes/vtt_obsidian_grid/frames/identity-hover.png",
+    "bytes": 5210,
+    "sha256": "9592110aec82e0e5d167a5d524d491bf7bcfd3ea58b4360e94c9f995c65d7f03"
+  },
+  {
+    "theme": "vtt_obsidian_grid",
+    "role": "identity-normal",
+    "path": "assets/themes/vtt_obsidian_grid/frames/identity-normal.png",
+    "bytes": 5339,
+    "sha256": "c7d525ace463732d35a5ca7e299cb4b0ba821832500eee10889afdabd40d30ba"
+  },
+  {
+    "theme": "vtt_obsidian_grid",
+    "role": "identity-pressed",
+    "path": "assets/themes/vtt_obsidian_grid/frames/identity-pressed.png",
+    "bytes": 5252,
+    "sha256": "6be8fadb568738c688dd49144ec439ff8ff13cab4d05cfc1d6764d6df7f875f6"
+  },
+  {
+    "theme": "vtt_obsidian_grid",
+    "role": "identity-selected",
+    "path": "assets/themes/vtt_obsidian_grid/frames/identity-selected.png",
+    "bytes": 5378,
+    "sha256": "713ba97fae7d6fc1db10b9b7f3e42cdaf3e1fcceaacd5a4fef49b55a4a7263fd"
+  },
+  {
+    "theme": "vtt_obsidian_grid",
+    "role": "identity-surface",
+    "path": "assets/themes/vtt_obsidian_grid/frames/identity-surface.png",
+    "bytes": 64080,
+    "sha256": "39e862d23d36f544f26c8a17ce0340bec894444e1e752f32e6906e81defbf39d"
+  },
+  {
+    "theme": "vtt_parchment_layers",
+    "role": "identity-disabled",
+    "path": "assets/themes/vtt_parchment_layers/frames/identity-disabled.png",
+    "bytes": 6715,
+    "sha256": "7a3932e0415eed91903ed9a8dcedae5fb62536dc4773e41efcc63d75a92f047e"
+  },
+  {
+    "theme": "vtt_parchment_layers",
+    "role": "identity-hover",
+    "path": "assets/themes/vtt_parchment_layers/frames/identity-hover.png",
+    "bytes": 7991,
+    "sha256": "3fae8b35a7985dcce40fa3c712c4ceb9b39e7836fc39567109b10fefec70ba99"
+  },
+  {
+    "theme": "vtt_parchment_layers",
+    "role": "identity-normal",
+    "path": "assets/themes/vtt_parchment_layers/frames/identity-normal.png",
+    "bytes": 7986,
+    "sha256": "55ea6110530cd14b7e9f6303d5f62f904694687a9d0710874698112345a0eaf0"
+  },
+  {
+    "theme": "vtt_parchment_layers",
+    "role": "identity-pressed",
+    "path": "assets/themes/vtt_parchment_layers/frames/identity-pressed.png",
+    "bytes": 7698,
+    "sha256": "26a1203950c11a981af7b1d63a9a91d7d67f380f2e238dede97c5a485e015ae2"
+  },
+  {
+    "theme": "vtt_parchment_layers",
+    "role": "identity-selected",
+    "path": "assets/themes/vtt_parchment_layers/frames/identity-selected.png",
+    "bytes": 8262,
+    "sha256": "4a9aa2704c5364bfc25833fa5219c675b90ce6058d848c92f2bd2f72c486b23e"
+  },
+  {
+    "theme": "vtt_parchment_layers",
+    "role": "identity-surface",
+    "path": "assets/themes/vtt_parchment_layers/frames/identity-surface.png",
+    "bytes": 65538,
+    "sha256": "fa5ea86bc9a2b2d1c992ac26e5a09e11c526982fc7bcff21929d441a8700e651"
+  },
+  {
+    "theme": "vtt_master_overlay",
+    "role": "identity-disabled",
+    "path": "assets/themes/vtt_master_overlay/frames/identity-disabled.png",
+    "bytes": 6732,
+    "sha256": "e082341f9fb52cf4495a0e0fb653ce2dd881f94bee55cbbc58d1ad68ec5ae854"
+  },
+  {
+    "theme": "vtt_master_overlay",
+    "role": "identity-hover",
+    "path": "assets/themes/vtt_master_overlay/frames/identity-hover.png",
+    "bytes": 6497,
+    "sha256": "116967bfdcc1512f2e6c7c9a479490ae35c5afb7a555eb62170a63fbe94c4d8b"
+  },
+  {
+    "theme": "vtt_master_overlay",
+    "role": "identity-normal",
+    "path": "assets/themes/vtt_master_overlay/frames/identity-normal.png",
+    "bytes": 6534,
+    "sha256": "3f22d10b3bcd2453d503aa85c157293de09952d89359c52942e3d0d7d197ce59"
+  },
+  {
+    "theme": "vtt_master_overlay",
+    "role": "identity-pressed",
+    "path": "assets/themes/vtt_master_overlay/frames/identity-pressed.png",
+    "bytes": 6286,
+    "sha256": "e89693c6aabefda13c06932416c0ddcff7da383a83328c9e26312f1aec8c6657"
+  },
+  {
+    "theme": "vtt_master_overlay",
+    "role": "identity-selected",
+    "path": "assets/themes/vtt_master_overlay/frames/identity-selected.png",
+    "bytes": 6747,
+    "sha256": "f6f88c8e67c09ce486a1f5deef3460c6e012ae74dcca59fef6ecb752ac81af92"
+  },
+  {
+    "theme": "vtt_master_overlay",
+    "role": "identity-surface",
+    "path": "assets/themes/vtt_master_overlay/frames/identity-surface.png",
+    "bytes": 65610,
+    "sha256": "8ede95f8c454d229b693db1afec4a3927e78156679eb2eb7cccde610db36dc55"
+  },
+  {
+    "theme": "verdigris_mourning",
+    "role": "identity-disabled",
+    "path": "assets/themes/verdigris_mourning/frames/identity-disabled.png",
+    "bytes": 15617,
+    "sha256": "4bcccac0e06b175444740e34c6a27ccac3167220b0f643c3946983a06bf1ea36"
+  },
+  {
+    "theme": "verdigris_mourning",
+    "role": "identity-hover",
+    "path": "assets/themes/verdigris_mourning/frames/identity-hover.png",
+    "bytes": 16553,
+    "sha256": "e16e9b93cd81c8b137c9813d25ba622f03162fa6b7819ddb2971fd59319758e9"
+  },
+  {
+    "theme": "verdigris_mourning",
+    "role": "identity-normal",
+    "path": "assets/themes/verdigris_mourning/frames/identity-normal.png",
+    "bytes": 16374,
+    "sha256": "d48950527ccc10efe9ad816f3cf5f31280aba038903d6c6928734b08d5e111b6"
+  },
+  {
+    "theme": "verdigris_mourning",
+    "role": "identity-pressed",
+    "path": "assets/themes/verdigris_mourning/frames/identity-pressed.png",
+    "bytes": 16239,
+    "sha256": "33ac9c88b47bf914497cf5918e0230c2bad770c86c9420237af3787a01f27a22"
+  },
+  {
+    "theme": "verdigris_mourning",
+    "role": "identity-selected",
+    "path": "assets/themes/verdigris_mourning/frames/identity-selected.png",
+    "bytes": 16948,
+    "sha256": "40568dd8d14fee59b187c157fd8a3ad90a2017fb3554f074d1c7c5ae6785babd"
+  },
+  {
+    "theme": "verdigris_mourning",
+    "role": "identity-surface",
+    "path": "assets/themes/verdigris_mourning/frames/identity-surface.png",
+    "bytes": 64914,
+    "sha256": "14f127ce6c0035bdd57e9f3cc0b697ebae8589e5d66e82d889cbfc2fc3c8c6a7"
+  },
+  {
+    "theme": "restyle_legno",
+    "role": "identity-disabled",
+    "path": "assets/themes/restyle_legno/frames/identity-disabled.png",
+    "bytes": 61488,
+    "sha256": "20dd5fda75ce4a1715418b18312afa80aee2068ec0f05def0980d2dc3a154d61"
+  },
+  {
+    "theme": "restyle_legno",
+    "role": "identity-hover",
+    "path": "assets/themes/restyle_legno/frames/identity-hover.png",
+    "bytes": 61799,
+    "sha256": "ab3b11c77fa48a79a198f264c6d06835e1e64ae4ead0ec53229ba92ed3059ed9"
+  },
+  {
+    "theme": "restyle_legno",
+    "role": "identity-normal",
+    "path": "assets/themes/restyle_legno/frames/identity-normal.png",
+    "bytes": 61639,
+    "sha256": "2b519023ef67a128cca9f4fd12ef6b8e9a53ad80267a96010002b2b2483c7b02"
+  },
+  {
+    "theme": "restyle_legno",
+    "role": "identity-pressed",
+    "path": "assets/themes/restyle_legno/frames/identity-pressed.png",
+    "bytes": 61735,
+    "sha256": "24199972faef10e794836665e3d823ca69646d54d7823a1f4f3c751fcace4f97"
+  },
+  {
+    "theme": "restyle_legno",
+    "role": "identity-selected",
+    "path": "assets/themes/restyle_legno/frames/identity-selected.png",
+    "bytes": 61504,
+    "sha256": "2990c707d56bdb2d13dc70cba17de5fc4350e4e1ed0fdada65e4731068703b5c"
+  },
+  {
+    "theme": "restyle_legno",
+    "role": "identity-surface",
+    "path": "assets/themes/restyle_legno/frames/identity-surface.png",
+    "bytes": 64601,
+    "sha256": "6c8dfe0feaa8921f2d3a8f9c71c766785e6cab0bc3125d6ea50a6385ecbbdfae"
+  },
+  {
+    "theme": "restyle_originale",
+    "role": "identity-disabled",
+    "path": "assets/themes/restyle_originale/frames/identity-disabled.png",
+    "bytes": 6872,
+    "sha256": "78f39a593ebe2544147775bbae11466c11997db43ea0de6f2293121981cb97f1"
+  },
+  {
+    "theme": "restyle_originale",
+    "role": "identity-hover",
+    "path": "assets/themes/restyle_originale/frames/identity-hover.png",
+    "bytes": 6639,
+    "sha256": "5825812f3d0f32498107b27ffebb2921ae00dfe9f02058d0008728844c89b636"
+  },
+  {
+    "theme": "restyle_originale",
+    "role": "identity-normal",
+    "path": "assets/themes/restyle_originale/frames/identity-normal.png",
+    "bytes": 6646,
+    "sha256": "235cda0111f79a59fce73bcd66b0201e7de3f163f510dfd157ea64ab79210947"
+  },
+  {
+    "theme": "restyle_originale",
+    "role": "identity-pressed",
+    "path": "assets/themes/restyle_originale/frames/identity-pressed.png",
+    "bytes": 6502,
+    "sha256": "5e89aa6406fb2a1eef6649002741ecc7e446db030985039e2986a6ca3a62adaf"
+  },
+  {
+    "theme": "restyle_originale",
+    "role": "identity-selected",
+    "path": "assets/themes/restyle_originale/frames/identity-selected.png",
+    "bytes": 6770,
+    "sha256": "c83063c9761a0e002f76b2a1f0ecfcaa4f68cafcd82f7f47c7044c49152de274"
+  },
+  {
+    "theme": "restyle_originale",
+    "role": "identity-surface",
+    "path": "assets/themes/restyle_originale/frames/identity-surface.png",
+    "bytes": 65653,
+    "sha256": "7eaa9d475c4ea771a0ccd9e82a45b08ac5e3c48d7b95ccf2bd9d3b0c7f52550c"
+  },
+  {
+    "theme": "restyle_cenere",
+    "role": "identity-disabled",
+    "path": "assets/themes/restyle_cenere/frames/identity-disabled.png",
+    "bytes": 65982,
+    "sha256": "27fa347a5aad85c1c003c40cf79f55100f7d46213b4db6a817248be82b709f6f"
+  },
+  {
+    "theme": "restyle_cenere",
+    "role": "identity-hover",
+    "path": "assets/themes/restyle_cenere/frames/identity-hover.png",
+    "bytes": 61357,
+    "sha256": "8da4d82339d9a6406a03d27ca771a05facaef0ede38d8293ca67440e691c43a1"
+  },
+  {
+    "theme": "restyle_cenere",
+    "role": "identity-normal",
+    "path": "assets/themes/restyle_cenere/frames/identity-normal.png",
+    "bytes": 64607,
+    "sha256": "ee357b4f61e49ad6b6b769f63ca2d8bdc9a5f30624dcae8bca4dd915de51cfe5"
+  },
+  {
+    "theme": "restyle_cenere",
+    "role": "identity-pressed",
+    "path": "assets/themes/restyle_cenere/frames/identity-pressed.png",
+    "bytes": 64629,
+    "sha256": "05d1fe1bbdabf0e6a4e0d3009e5f1d0516805092593984beb69338c9d1bdf14d"
+  },
+  {
+    "theme": "restyle_cenere",
+    "role": "identity-selected",
+    "path": "assets/themes/restyle_cenere/frames/identity-selected.png",
+    "bytes": 64287,
+    "sha256": "bb602bfbdb59ca7ffa023106aad42d33d983d49df25b19a50fe39694347045d4"
+  },
+  {
+    "theme": "restyle_cenere",
+    "role": "identity-surface",
+    "path": "assets/themes/restyle_cenere/frames/identity-surface.png",
+    "bytes": 53371,
+    "sha256": "62268a43140343d931ab4240e7eedddf86ac7a47aff65306465e9a5e92f7797f"
+  },
+  {
+    "theme": "restyle_sangue",
+    "role": "identity-disabled",
+    "path": "assets/themes/restyle_sangue/frames/identity-disabled.png",
+    "bytes": 10788,
+    "sha256": "9b06a15c6dd161293099b7da31a8c98522120460d62db47f65cfd3be8806c2d5"
+  },
+  {
+    "theme": "restyle_sangue",
+    "role": "identity-hover",
+    "path": "assets/themes/restyle_sangue/frames/identity-hover.png",
+    "bytes": 12305,
+    "sha256": "fba245a64401c2ffa28a8f9ad250e4bb2d47cf0c7f5539fd0fcf4624bd133b52"
+  },
+  {
+    "theme": "restyle_sangue",
+    "role": "identity-normal",
+    "path": "assets/themes/restyle_sangue/frames/identity-normal.png",
+    "bytes": 12539,
+    "sha256": "7ef58498cbd6dde39c1a6a549045fe834548844f773e4531de359369f514e8a4"
+  },
+  {
+    "theme": "restyle_sangue",
+    "role": "identity-pressed",
+    "path": "assets/themes/restyle_sangue/frames/identity-pressed.png",
+    "bytes": 11911,
+    "sha256": "a54df2bb578c6e26ee05c6ecd19699f0eef02a0bcb8514337195f3f7414b5551"
+  },
+  {
+    "theme": "restyle_sangue",
+    "role": "identity-selected",
+    "path": "assets/themes/restyle_sangue/frames/identity-selected.png",
+    "bytes": 12497,
+    "sha256": "8fa12b180269ba2b3922303a5108aab5ef2708cc7805f6c2be20b33d38b5ea8d"
+  },
+  {
+    "theme": "restyle_sangue",
+    "role": "identity-surface",
+    "path": "assets/themes/restyle_sangue/frames/identity-surface.png",
+    "bytes": 62874,
+    "sha256": "52ca872def65148b8c27dd02057a86be61ec054ab5d2d405fd4cc3f0d1893339"
+  },
+  {
+    "theme": "restyle_aurora",
+    "role": "identity-disabled",
+    "path": "assets/themes/restyle_aurora/frames/identity-disabled.png",
+    "bytes": 7653,
+    "sha256": "b2cf6a4a5a2e03991a1526d0d85ce22c5cdb467158c330d45bbea8c203594e79"
+  },
+  {
+    "theme": "restyle_aurora",
+    "role": "identity-hover",
+    "path": "assets/themes/restyle_aurora/frames/identity-hover.png",
+    "bytes": 9590,
+    "sha256": "f5070119017ad2fb99e76c8d16de5a8bb5b29faf8c34e072fbe1f43f23fb6ef7"
+  },
+  {
+    "theme": "restyle_aurora",
+    "role": "identity-normal",
+    "path": "assets/themes/restyle_aurora/frames/identity-normal.png",
+    "bytes": 9674,
+    "sha256": "eb2260ff36b581f359f4f04d698a39b7acdeaac6e66b47dd040ef9cbee37b123"
+  },
+  {
+    "theme": "restyle_aurora",
+    "role": "identity-pressed",
+    "path": "assets/themes/restyle_aurora/frames/identity-pressed.png",
+    "bytes": 9462,
+    "sha256": "11dce54535ede0b878866f907be5b15cdeaa35cb6fe363231f2fe4ca69a45801"
+  },
+  {
+    "theme": "restyle_aurora",
+    "role": "identity-selected",
+    "path": "assets/themes/restyle_aurora/frames/identity-selected.png",
+    "bytes": 10155,
+    "sha256": "92af28e41bc25b96d629a660d2d927820d3d40e6648b1a57aa3ee783a188f244"
+  },
+  {
+    "theme": "restyle_aurora",
+    "role": "identity-surface",
+    "path": "assets/themes/restyle_aurora/frames/identity-surface.png",
+    "bytes": 56224,
+    "sha256": "82ff5644c537532421ccd2b2df78137377149476f15002c81fee16deb88c0a45"
+  },
+  {
+    "theme": "restyle_natura",
+    "role": "identity-disabled",
+    "path": "assets/themes/restyle_natura/frames/identity-disabled.png",
+    "bytes": 14508,
+    "sha256": "83ab6ee785fe5c22708fe440cef163303f3a58d9668833ca78b7aedc874b492a"
+  },
+  {
+    "theme": "restyle_natura",
+    "role": "identity-hover",
+    "path": "assets/themes/restyle_natura/frames/identity-hover.png",
+    "bytes": 15334,
+    "sha256": "a9e0b4de076641d3bd665b8bcdefb04c821d3f3194d23f69259072ee270005dc"
+  },
+  {
+    "theme": "restyle_natura",
+    "role": "identity-normal",
+    "path": "assets/themes/restyle_natura/frames/identity-normal.png",
+    "bytes": 15339,
+    "sha256": "a1421e535606eeb1d5e7594ea419c8f9061493afcf42e16e61727c12e5d51aa1"
+  },
+  {
+    "theme": "restyle_natura",
+    "role": "identity-pressed",
+    "path": "assets/themes/restyle_natura/frames/identity-pressed.png",
+    "bytes": 14987,
+    "sha256": "0b42af23fd38369e26a037d73ea84c3f653d8f0a0e6ff70c1979ecbc0b5bcdf1"
+  },
+  {
+    "theme": "restyle_natura",
+    "role": "identity-selected",
+    "path": "assets/themes/restyle_natura/frames/identity-selected.png",
+    "bytes": 15562,
+    "sha256": "05bd17018413772e43c8a54846b20d28410b292781790b1d03cf2e39942274ae"
+  },
+  {
+    "theme": "restyle_natura",
+    "role": "identity-surface",
+    "path": "assets/themes/restyle_natura/frames/identity-surface.png",
+    "bytes": 65129,
+    "sha256": "b07dc7b8d314ce67c2ff9b95800f180ae46380ec8f0994aa55d7769ebafaf39e"
+  },
+  {
+    "theme": "restyle_lume",
+    "role": "identity-disabled",
+    "path": "assets/themes/restyle_lume/frames/identity-disabled.png",
+    "bytes": 9570,
+    "sha256": "48b9c1ff1b2c76e3966558c8aba04b63cab38067df05854caa02604490916e56"
+  },
+  {
+    "theme": "restyle_lume",
+    "role": "identity-hover",
+    "path": "assets/themes/restyle_lume/frames/identity-hover.png",
+    "bytes": 11351,
+    "sha256": "e8eb82ba9f97b609fee42758f59bba226830fbf5a3740bccd5279e82291b4fb5"
+  },
+  {
+    "theme": "restyle_lume",
+    "role": "identity-normal",
+    "path": "assets/themes/restyle_lume/frames/identity-normal.png",
+    "bytes": 11436,
+    "sha256": "5974bd97db3e06e7f40b8f90770e13b784ad9590a82766e6003f87c74cb8ea43"
+  },
+  {
+    "theme": "restyle_lume",
+    "role": "identity-pressed",
+    "path": "assets/themes/restyle_lume/frames/identity-pressed.png",
+    "bytes": 10900,
+    "sha256": "3ed5d87b64df1d3c322401c19ed7148d03f597eb0d74ded92f1311aae8091fac"
+  },
+  {
+    "theme": "restyle_lume",
+    "role": "identity-selected",
+    "path": "assets/themes/restyle_lume/frames/identity-selected.png",
+    "bytes": 11340,
+    "sha256": "d94f909f7dd3ac84b682bc60817a1907aa5040c6d7e2e0291d3850a8290d5a85"
+  },
+  {
+    "theme": "restyle_lume",
+    "role": "identity-surface",
+    "path": "assets/themes/restyle_lume/frames/identity-surface.png",
+    "bytes": 63029,
+    "sha256": "b39f3a6cda87e5b0979fd16192dffd0e78d7538d0867b89686dae99118d148ae"
+  },
+  {
+    "theme": "restyle_acido",
+    "role": "identity-disabled",
+    "path": "assets/themes/restyle_acido/frames/identity-disabled.png",
+    "bytes": 7338,
+    "sha256": "ef714bb0f41f012b74df97fa3616f0ffbeb3f9b511591e668166d62bb19231fb"
+  },
+  {
+    "theme": "restyle_acido",
+    "role": "identity-hover",
+    "path": "assets/themes/restyle_acido/frames/identity-hover.png",
+    "bytes": 9434,
+    "sha256": "7ab9b6e0fd3335eea0d50082d0720b02baa93de5a6ada633cc24591298e0591f"
+  },
+  {
+    "theme": "restyle_acido",
+    "role": "identity-normal",
+    "path": "assets/themes/restyle_acido/frames/identity-normal.png",
+    "bytes": 9389,
+    "sha256": "f86d4ce5d77ad5af705895c3fb49c5aa557a0d6ed065b7acbadb91a96a704d28"
+  },
+  {
+    "theme": "restyle_acido",
+    "role": "identity-pressed",
+    "path": "assets/themes/restyle_acido/frames/identity-pressed.png",
+    "bytes": 9015,
+    "sha256": "97bca8e506a3e5f11d40902ae4b25c456b8efee3cbd35929b840aa3d1f0710b2"
+  },
+  {
+    "theme": "restyle_acido",
+    "role": "identity-selected",
+    "path": "assets/themes/restyle_acido/frames/identity-selected.png",
+    "bytes": 9848,
+    "sha256": "cdf6e20c2b59389d962aa64773b97fa71bf365f0d4764d1dbc75edce1dd7ab0d"
+  },
+  {
+    "theme": "restyle_acido",
+    "role": "identity-surface",
+    "path": "assets/themes/restyle_acido/frames/identity-surface.png",
+    "bytes": 48834,
+    "sha256": "13a2dfe35dc34ebeb06cd960a0d2a99783194119600e653405c840f5adf440c0"
+  },
+  {
+    "theme": "restyle_sogno",
+    "role": "identity-disabled",
+    "path": "assets/themes/restyle_sogno/frames/identity-disabled.png",
+    "bytes": 53655,
+    "sha256": "79d0cb81fd465cdda003d07543b5de374454061bbaf2f98d6403dd01054f73c2"
+  },
+  {
+    "theme": "restyle_sogno",
+    "role": "identity-hover",
+    "path": "assets/themes/restyle_sogno/frames/identity-hover.png",
+    "bytes": 49997,
+    "sha256": "9fe47a8d2cfca1cf8cc6a48a267a03f2ba930d5e4ca88c6ee9965efc49f50d56"
+  },
+  {
+    "theme": "restyle_sogno",
+    "role": "identity-normal",
+    "path": "assets/themes/restyle_sogno/frames/identity-normal.png",
+    "bytes": 54931,
+    "sha256": "5be3b0d892f30d0c7fffcafa64aa93c702b434d3fea79bdcdcefa02db054a800"
+  },
+  {
+    "theme": "restyle_sogno",
+    "role": "identity-pressed",
+    "path": "assets/themes/restyle_sogno/frames/identity-pressed.png",
+    "bytes": 53944,
+    "sha256": "7143b7c520fe8973b1415b7c5ce2c4a795e695d4224952340c4c749551ecb5d0"
+  },
+  {
+    "theme": "restyle_sogno",
+    "role": "identity-selected",
+    "path": "assets/themes/restyle_sogno/frames/identity-selected.png",
+    "bytes": 54974,
+    "sha256": "7ccd11160b6b483199d02c903e2fce3e928dac9d72077e83d9fb7b615d04cde3"
+  },
+  {
+    "theme": "restyle_sogno",
+    "role": "identity-surface",
+    "path": "assets/themes/restyle_sogno/frames/identity-surface.png",
+    "bytes": 55688,
+    "sha256": "eb4cb1a7fe9ccb22e01171c339a94458d8d5a31a3115952d491f173c069b3c90"
+  },
+  {
+    "theme": "restyle_spiritualita",
+    "role": "identity-disabled",
+    "path": "assets/themes/restyle_spiritualita/frames/identity-disabled.png",
+    "bytes": 7994,
+    "sha256": "5ff541ceb2e35868ff8da0de61aaf885c968c7b11fe4efc692568df702f8ff6a"
+  },
+  {
+    "theme": "restyle_spiritualita",
+    "role": "identity-hover",
+    "path": "assets/themes/restyle_spiritualita/frames/identity-hover.png",
+    "bytes": 9769,
+    "sha256": "4865769a62a8f38362aa9867e46749ea2de52651843f37e6ad4157b2c0d17b0c"
+  },
+  {
+    "theme": "restyle_spiritualita",
+    "role": "identity-normal",
+    "path": "assets/themes/restyle_spiritualita/frames/identity-normal.png",
+    "bytes": 9782,
+    "sha256": "353b32a1787c8458a8387b958a259808afed2041c22bb342f06d62d815056396"
+  },
+  {
+    "theme": "restyle_spiritualita",
+    "role": "identity-pressed",
+    "path": "assets/themes/restyle_spiritualita/frames/identity-pressed.png",
+    "bytes": 9837,
+    "sha256": "6d2c7076eb8e08fb39cb26c5f5b1b7cbfc1190f816d23a448d14ceb37b58d4a8"
+  },
+  {
+    "theme": "restyle_spiritualita",
+    "role": "identity-selected",
+    "path": "assets/themes/restyle_spiritualita/frames/identity-selected.png",
+    "bytes": 10244,
+    "sha256": "b0fba79c4a667a7eaa9d27f40eea32f0280047d8409529dfba520be556f36465"
+  },
+  {
+    "theme": "restyle_spiritualita",
+    "role": "identity-surface",
+    "path": "assets/themes/restyle_spiritualita/frames/identity-surface.png",
+    "bytes": 30306,
+    "sha256": "6715f6b3f55afc95ea66f7869df4ab3c80ec047afe35fd6a558b23199a171127"
+  },
+  {
+    "theme": "element_pack_taglio",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_taglio/frames/identity-disabled.png",
+    "bytes": 5116,
+    "sha256": "f20085e0769f435f20a1dac65dd4b423df82e01f75b6a814f07c1c8185e8c5ed"
+  },
+  {
+    "theme": "element_pack_taglio",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_taglio/frames/identity-hover.png",
+    "bytes": 6002,
+    "sha256": "b60886a98f3c731dbe194672ee3f42c6fedd2ee651be333f78962f6c1c1bf3a8"
+  },
+  {
+    "theme": "element_pack_taglio",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_taglio/frames/identity-normal.png",
+    "bytes": 6038,
+    "sha256": "f801e7c86b405d1babf09812380a63cc9ffd99ed688a35caf6066e552eabcaa4"
+  },
+  {
+    "theme": "element_pack_taglio",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_taglio/frames/identity-pressed.png",
+    "bytes": 5718,
+    "sha256": "170ec78273645713231b909f9ad8501d92b679e68c317c0b95579423d091fb36"
+  },
+  {
+    "theme": "element_pack_taglio",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_taglio/frames/identity-selected.png",
+    "bytes": 6112,
+    "sha256": "09fd55906cae2895279a5fb45c60c9bf9a4b1768567a3bee529384f9f6c65a56"
+  },
+  {
+    "theme": "element_pack_taglio",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_taglio/frames/identity-surface.png",
+    "bytes": 63045,
+    "sha256": "01c4990854310be901d91702607ecaa878fcbcfa64e68db18dd9cbd6fac9dee8"
+  },
+  {
+    "theme": "element_pack_perforante",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_perforante/frames/identity-disabled.png",
+    "bytes": 5020,
+    "sha256": "b162652cc1b7e60dbcb903bb1845270c12da17d7ad4b151676edc492b766be46"
+  },
+  {
+    "theme": "element_pack_perforante",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_perforante/frames/identity-hover.png",
+    "bytes": 5794,
+    "sha256": "25a4774ca5d56d0989305421dfe90d66c0906d7c682504f30f73807f4816a9f8"
+  },
+  {
+    "theme": "element_pack_perforante",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_perforante/frames/identity-normal.png",
+    "bytes": 5766,
+    "sha256": "e02390722c5bc627c41d5d834160102df64521b0386579e7613d352d75f6a0c1"
+  },
+  {
+    "theme": "element_pack_perforante",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_perforante/frames/identity-pressed.png",
+    "bytes": 5511,
+    "sha256": "e966eacb732a11f3627ae6d4750f9b1718709edb583833a09e909f1bca241d01"
+  },
+  {
+    "theme": "element_pack_perforante",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_perforante/frames/identity-selected.png",
+    "bytes": 6017,
+    "sha256": "ff6ee3d666cf19847839d9b4635f881584339a4c3fb8653dd37208baed4ed5ca"
+  },
+  {
+    "theme": "element_pack_perforante",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_perforante/frames/identity-surface.png",
+    "bytes": 63205,
+    "sha256": "cfa5274a0df9ac7a673bac3af66d00b14442760ca5c88a6683c524db28a8a926"
+  },
+  {
+    "theme": "element_pack_contundente",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_contundente/frames/identity-disabled.png",
+    "bytes": 6390,
+    "sha256": "b68a340588f03f8c952cdc25c945d6adc241c868e62e4b83dd4e48a71948d660"
+  },
+  {
+    "theme": "element_pack_contundente",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_contundente/frames/identity-hover.png",
+    "bytes": 5971,
+    "sha256": "1e388c3ed7f7cbb17885549808ea5c47a8102b06eef654acd03396c6d3737328"
+  },
+  {
+    "theme": "element_pack_contundente",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_contundente/frames/identity-normal.png",
+    "bytes": 6006,
+    "sha256": "4732b7a9aa6b5c1e8c391541c897d72d7c1e511f3fb67232b158de4231192491"
+  },
+  {
+    "theme": "element_pack_contundente",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_contundente/frames/identity-pressed.png",
+    "bytes": 5829,
+    "sha256": "011c5e0517cb909043537eb6fd9357c39275c04470e7bdcb5c4a65ef7ea6dd2b"
+  },
+  {
+    "theme": "element_pack_contundente",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_contundente/frames/identity-selected.png",
+    "bytes": 6299,
+    "sha256": "90c1812fe7f6caa8379055d848deb3293c6c1c0ea3a07f73f65769c8afecaa82"
+  },
+  {
+    "theme": "element_pack_contundente",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_contundente/frames/identity-surface.png",
+    "bytes": 65562,
+    "sha256": "fefc99173e87b2ab1d885e060b4b5ca1dcdf149daa49508433b0f75d1f6a6391"
+  },
+  {
+    "theme": "element_pack_fuoco",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_fuoco/frames/identity-disabled.png",
+    "bytes": 40803,
+    "sha256": "8b24636f871ad2d372005a93189ea4642eab248ec2da099a593a22f352199278"
+  },
+  {
+    "theme": "element_pack_fuoco",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_fuoco/frames/identity-hover.png",
+    "bytes": 38566,
+    "sha256": "922f79101cb4f717a470f6fdd56833aa5915f2aef694cdc0999549389b391f17"
+  },
+  {
+    "theme": "element_pack_fuoco",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_fuoco/frames/identity-normal.png",
+    "bytes": 37187,
+    "sha256": "94cc2aa8236083d866a7a0a0129071394ebcccd2387b0fcbd7c1fd1fd3575d34"
+  },
+  {
+    "theme": "element_pack_fuoco",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_fuoco/frames/identity-pressed.png",
+    "bytes": 38004,
+    "sha256": "bfca7918bb0dd7528df4804fee96000a0542471eac9e79e2a57b177d8ecfe53f"
+  },
+  {
+    "theme": "element_pack_fuoco",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_fuoco/frames/identity-selected.png",
+    "bytes": 38216,
+    "sha256": "875f8053eeebaf182c5118f8d0e9be3cbeba6f686ae3e832e9f2c13ebc898cdf"
+  },
+  {
+    "theme": "element_pack_fuoco",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_fuoco/frames/identity-surface.png",
+    "bytes": 62850,
+    "sha256": "5e34dec5794772365c2737a650b28daf778d6a5ead0896d18e114c45a862de2c"
+  },
+  {
+    "theme": "element_pack_vento",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_vento/frames/identity-disabled.png",
+    "bytes": 7685,
+    "sha256": "69fb6078c3966cc8428cb88e73aca580d2c2b0cc486d7b1c832b1182b2aab6b0"
+  },
+  {
+    "theme": "element_pack_vento",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_vento/frames/identity-hover.png",
+    "bytes": 9401,
+    "sha256": "ec61f614c43a47ef049e238fdfe21ab9684ddd559e2e662c67a80d6659e3082f"
+  },
+  {
+    "theme": "element_pack_vento",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_vento/frames/identity-normal.png",
+    "bytes": 9455,
+    "sha256": "42cdab9b87194dacce2ee7c67b40cfd7bd40b4f93b8732243643ec59de2a2e34"
+  },
+  {
+    "theme": "element_pack_vento",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_vento/frames/identity-pressed.png",
+    "bytes": 9429,
+    "sha256": "f39436214743ad02ba80a5458cb67742c8a75ac9957a98a25e7d92e76d5aee05"
+  },
+  {
+    "theme": "element_pack_vento",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_vento/frames/identity-selected.png",
+    "bytes": 9875,
+    "sha256": "48ce03510d42cd73f46fee6d90a700eff9c61f17222ed04d3a4357c3f2cf31de"
+  },
+  {
+    "theme": "element_pack_vento",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_vento/frames/identity-surface.png",
+    "bytes": 63394,
+    "sha256": "29f46c7699a132426b3cebce0fee540aa68a6a9531fb3b87266c815f62178c88"
+  },
+  {
+    "theme": "element_pack_acqua",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_acqua/frames/identity-disabled.png",
+    "bytes": 7664,
+    "sha256": "1a9f359c9397df3fa1270d0e9c49652b1c0e94aa8cdcb97f7e6ce23245bf85e0"
+  },
+  {
+    "theme": "element_pack_acqua",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_acqua/frames/identity-hover.png",
+    "bytes": 9867,
+    "sha256": "69aac2ee752ba9056316ecc1d57cba58dcf16d3429735adff1e4cfe3394ee146"
+  },
+  {
+    "theme": "element_pack_acqua",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_acqua/frames/identity-normal.png",
+    "bytes": 9957,
+    "sha256": "d364d94a35833ab3b05f23f21464967eec79b33f378c33632b3a8a138b562002"
+  },
+  {
+    "theme": "element_pack_acqua",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_acqua/frames/identity-pressed.png",
+    "bytes": 9727,
+    "sha256": "4f9e5a08f580fb67b3b9ec107666dc548f93f575abefbd28808c81eaef18fffc"
+  },
+  {
+    "theme": "element_pack_acqua",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_acqua/frames/identity-selected.png",
+    "bytes": 10481,
+    "sha256": "7daf6b0ecf393cc2ab533038a97a829ecc43e3ea6c42a7fb89f660e0ae48b606"
+  },
+  {
+    "theme": "element_pack_acqua",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_acqua/frames/identity-surface.png",
+    "bytes": 64158,
+    "sha256": "45764e702d1d581e7b7d48c2790723af4c83ed993f6d8992bd9557de32dc1525"
+  },
+  {
+    "theme": "element_pack_terra",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_terra/frames/identity-disabled.png",
+    "bytes": 5711,
+    "sha256": "9f5160c09b5edbd39497c76fe578df6d2eb241ab3bf51571e298b80bb4c10087"
+  },
+  {
+    "theme": "element_pack_terra",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_terra/frames/identity-hover.png",
+    "bytes": 6613,
+    "sha256": "86cd1e8a1065269011b2dff1121f4ce55609ea3e4dbcdf51a130a4de1e9bfb65"
+  },
+  {
+    "theme": "element_pack_terra",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_terra/frames/identity-normal.png",
+    "bytes": 6597,
+    "sha256": "621250132af228087cf249279e5d6f2502f005942ea96f16174ae33987ea3717"
+  },
+  {
+    "theme": "element_pack_terra",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_terra/frames/identity-pressed.png",
+    "bytes": 6389,
+    "sha256": "97a3f455d54eb08c7114d0094657c35346e70b3521f38745a5215bc3bf9b014d"
+  },
+  {
+    "theme": "element_pack_terra",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_terra/frames/identity-selected.png",
+    "bytes": 6810,
+    "sha256": "8c850f7072b1117bbaee1cc56f339c0b870fb48e81caa96200a3e42db4b5115b"
+  },
+  {
+    "theme": "element_pack_terra",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_terra/frames/identity-surface.png",
+    "bytes": 65625,
+    "sha256": "a3ec07d141741dd91843fc713f9ce07b0be2252d39e77da840ce9fbad02f641e"
+  },
+  {
+    "theme": "element_pack_sonoro",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_sonoro/frames/identity-disabled.png",
+    "bytes": 6198,
+    "sha256": "264ed19551f1892d93be7578b852bfbace0ad5acc140a485f047370a3cb9fb12"
+  },
+  {
+    "theme": "element_pack_sonoro",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_sonoro/frames/identity-hover.png",
+    "bytes": 5898,
+    "sha256": "4bbefdd85bcadafde0c085f28dea2b98cefdfe475007332b7d4d86839b4711d9"
+  },
+  {
+    "theme": "element_pack_sonoro",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_sonoro/frames/identity-normal.png",
+    "bytes": 5947,
+    "sha256": "28fffac54d5a728cfc8a6d23812d54de50f832c3d20a1c729d6f61d82b2c8ff1"
+  },
+  {
+    "theme": "element_pack_sonoro",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_sonoro/frames/identity-pressed.png",
+    "bytes": 5708,
+    "sha256": "5a9def426c8f84a191f9ac8fa254504b8c0b87536e96ecb8a9876685d5f60eba"
+  },
+  {
+    "theme": "element_pack_sonoro",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_sonoro/frames/identity-selected.png",
+    "bytes": 6193,
+    "sha256": "330ef46d7c29792180a3cb64ca5735ee80d7408d1d2acb68fb10eb5e41cc086d"
+  },
+  {
+    "theme": "element_pack_sonoro",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_sonoro/frames/identity-surface.png",
+    "bytes": 63174,
+    "sha256": "e1fa13224de7fcdb19fcd1bbf4b05a9aa51333f0457d84f46beea38592cd6dd4"
+  },
+  {
+    "theme": "element_pack_psichico",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_psichico/frames/identity-disabled.png",
+    "bytes": 7411,
+    "sha256": "17ef352b2aceee8f4b4846452a379f9950dd23a3461232d0c940a7a4f6a57871"
+  },
+  {
+    "theme": "element_pack_psichico",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_psichico/frames/identity-hover.png",
+    "bytes": 9125,
+    "sha256": "0c43616a446679e713fedb33d052563b1ee83465dd88149c90cd263e672d0695"
+  },
+  {
+    "theme": "element_pack_psichico",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_psichico/frames/identity-normal.png",
+    "bytes": 9119,
+    "sha256": "2c395977758c73b4267ca73b2774b8f7d34f52489779751663a4b9cf336d75fd"
+  },
+  {
+    "theme": "element_pack_psichico",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_psichico/frames/identity-pressed.png",
+    "bytes": 8946,
+    "sha256": "0a5508489f1ae92cbf678c348fa282c260ab712ea77a809bc7fdc173b85326e6"
+  },
+  {
+    "theme": "element_pack_psichico",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_psichico/frames/identity-selected.png",
+    "bytes": 9552,
+    "sha256": "5cd246dec4adb299c288012ca80910ae325abd9009542d1c288ce655356d237f"
+  },
+  {
+    "theme": "element_pack_psichico",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_psichico/frames/identity-surface.png",
+    "bytes": 63277,
+    "sha256": "cc1b9ad67edf3bbc3d898ca759a4e790f4226d5b9978e64890b483781d236e4c"
+  },
+  {
+    "theme": "element_pack_lava",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_lava/frames/identity-disabled.png",
+    "bytes": 41009,
+    "sha256": "7930c667eb3118fa62d58642dcdc1e380ffd56187ad0e0e296525303af05ae45"
+  },
+  {
+    "theme": "element_pack_lava",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_lava/frames/identity-hover.png",
+    "bytes": 38451,
+    "sha256": "07a1384b6d75843d749c7e7c33203a923789344295e910691473b2fd4ac2d7ed"
+  },
+  {
+    "theme": "element_pack_lava",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_lava/frames/identity-normal.png",
+    "bytes": 38220,
+    "sha256": "fd43a61df0d8e597851a31805908970e129cb9f747b5fc5f30d1d1570299f110"
+  },
+  {
+    "theme": "element_pack_lava",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_lava/frames/identity-pressed.png",
+    "bytes": 39089,
+    "sha256": "f7cfce08a59703c699d90ff1984d1873df792ee336b791b97804fab1f2a652f9"
+  },
+  {
+    "theme": "element_pack_lava",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_lava/frames/identity-selected.png",
+    "bytes": 38294,
+    "sha256": "5c805eeb7b2de879303b7696c15ebf26625cbfdb2862281be14d211465de9bee"
+  },
+  {
+    "theme": "element_pack_lava",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_lava/frames/identity-surface.png",
+    "bytes": 62998,
+    "sha256": "9e5d58bb3f9e1084a304337e37c976df786a4a4c193cb362cfedcb6af6bdf207"
+  },
+  {
+    "theme": "element_pack_fulmine",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_fulmine/frames/identity-disabled.png",
+    "bytes": 5230,
+    "sha256": "0d0aea5f41edc79d460883c0fed2fe3f0b88df1ee2eb8346606c7d18188a0d34"
+  },
+  {
+    "theme": "element_pack_fulmine",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_fulmine/frames/identity-hover.png",
+    "bytes": 6344,
+    "sha256": "ca785faa6e814091a22a13e853a1585af30e81f2a2011a148d33c02b622d1904"
+  },
+  {
+    "theme": "element_pack_fulmine",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_fulmine/frames/identity-normal.png",
+    "bytes": 6303,
+    "sha256": "8ff7e2bf8d0b3d5e51c1d1213948cd99d1a349317bd3b5372f0796ce06c8f2ee"
+  },
+  {
+    "theme": "element_pack_fulmine",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_fulmine/frames/identity-pressed.png",
+    "bytes": 6084,
+    "sha256": "8fe037aeea49f26cbaf5cb55acc28265f9915da5d82ee43fcc7045b0b995fc8b"
+  },
+  {
+    "theme": "element_pack_fulmine",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_fulmine/frames/identity-selected.png",
+    "bytes": 6419,
+    "sha256": "83c2a0e435bb22bf6c1c8d4f505b0578877687e50dcdf388b371e545848ce428"
+  },
+  {
+    "theme": "element_pack_fulmine",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_fulmine/frames/identity-surface.png",
+    "bytes": 63156,
+    "sha256": "6570826c7f821c89255af224331d7b19f7b771e4264a349b66fb8f63b21ae914"
+  },
+  {
+    "theme": "element_pack_veleno",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_veleno/frames/identity-disabled.png",
+    "bytes": 8135,
+    "sha256": "c97b7f964d0075d869c7f74d02bc12e661a2950e04eebcb12f63256cca017a0d"
+  },
+  {
+    "theme": "element_pack_veleno",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_veleno/frames/identity-hover.png",
+    "bytes": 9856,
+    "sha256": "ba25e7c62d92daaf2cf85dc6282b024bba1e3f58ad28c33bfcce5cde3d83f668"
+  },
+  {
+    "theme": "element_pack_veleno",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_veleno/frames/identity-normal.png",
+    "bytes": 10051,
+    "sha256": "d5b7b3d1795a59779ee31259adba83b6997f4c08d17d2b83b73c23bd826c9ab4"
+  },
+  {
+    "theme": "element_pack_veleno",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_veleno/frames/identity-pressed.png",
+    "bytes": 9944,
+    "sha256": "107ae5b10fb1e6955a59b6ad31dbbc9e9bd227a9d3bccef12bc5d2c286549384"
+  },
+  {
+    "theme": "element_pack_veleno",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_veleno/frames/identity-selected.png",
+    "bytes": 10447,
+    "sha256": "9b5e4d033976a66dc14ec0b9c48486273f1ae79d4124d027928a541ca289f657"
+  },
+  {
+    "theme": "element_pack_veleno",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_veleno/frames/identity-surface.png",
+    "bytes": 48408,
+    "sha256": "6527871a49a6070450e1171fb52b69fe12b920cbf7d49167ef40feb64f0be067"
+  },
+  {
+    "theme": "element_pack_cenere",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_cenere/frames/identity-disabled.png",
+    "bytes": 66035,
+    "sha256": "c9b0f5657ffb55819ebf3c2d65c0a90ec69578d292ce63bbe4fd80fdc16b9163"
+  },
+  {
+    "theme": "element_pack_cenere",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_cenere/frames/identity-hover.png",
+    "bytes": 62594,
+    "sha256": "5ba159bc7cc62e9fc6d3f0b1b6300102b31e5281eaa1995cf4718d9942eef86c"
+  },
+  {
+    "theme": "element_pack_cenere",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_cenere/frames/identity-normal.png",
+    "bytes": 65123,
+    "sha256": "036a7afa802caecef22dec39b9eaea7831ddf0eb92ab1b5e4c79ca32efef6512"
+  },
+  {
+    "theme": "element_pack_cenere",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_cenere/frames/identity-pressed.png",
+    "bytes": 65512,
+    "sha256": "260149be48fa627679ba692dcb62f3047d8c3d9b750c80b985e41ae2c3f5dae9"
+  },
+  {
+    "theme": "element_pack_cenere",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_cenere/frames/identity-selected.png",
+    "bytes": 63870,
+    "sha256": "94a13c1f3cb5f8baa923638f3d6cec4ec4fc0c7f1fa384bf8139a84ea9686d03"
+  },
+  {
+    "theme": "element_pack_cenere",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_cenere/frames/identity-surface.png",
+    "bytes": 52901,
+    "sha256": "d6327f0d4ea609913cbe191c52e5d97d5b1f11251ec20b1acaec7edc3070b4ad"
+  },
+  {
+    "theme": "element_pack_sangue",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_sangue/frames/identity-disabled.png",
+    "bytes": 7718,
+    "sha256": "49c46d8048fff827036ac56ab5b9594ccb3ad37e369578a1f39928b6ad43b40f"
+  },
+  {
+    "theme": "element_pack_sangue",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_sangue/frames/identity-hover.png",
+    "bytes": 9707,
+    "sha256": "d4700912e80666b8739ffb1dacf55d06bed2aebb1fe1b0becd25bd1405219915"
+  },
+  {
+    "theme": "element_pack_sangue",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_sangue/frames/identity-normal.png",
+    "bytes": 9845,
+    "sha256": "26d4b0957ecfacbb6b20f5837aa9ff6984aa3e0d04e3cc243d697bcf1aaf4557"
+  },
+  {
+    "theme": "element_pack_sangue",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_sangue/frames/identity-pressed.png",
+    "bytes": 9455,
+    "sha256": "a1a4374a3d1dd1060fdd9e6f830a39a560c59600701699d930ab8d1e7545b89d"
+  },
+  {
+    "theme": "element_pack_sangue",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_sangue/frames/identity-selected.png",
+    "bytes": 10103,
+    "sha256": "4da15800eca97acbbc969223d3ecc639620e86f39c8b24710496a39b2135b394"
+  },
+  {
+    "theme": "element_pack_sangue",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_sangue/frames/identity-surface.png",
+    "bytes": 64054,
+    "sha256": "42e6a8a834ae052b65c9d36858bac3ea639e8a0a44de8f4b90a7b6913ead1b37"
+  },
+  {
+    "theme": "element_pack_cristallo",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_cristallo/frames/identity-disabled.png",
+    "bytes": 6611,
+    "sha256": "f3cfaa07c56db241c28b1ec7c9785119f50b739b56cfeccdfd6ac76dc98e00c1"
+  },
+  {
+    "theme": "element_pack_cristallo",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_cristallo/frames/identity-hover.png",
+    "bytes": 7581,
+    "sha256": "47e50974d433d56f6b76b7d9d210ca22cb3ab67af1f406afade3ad4f5094f481"
+  },
+  {
+    "theme": "element_pack_cristallo",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_cristallo/frames/identity-normal.png",
+    "bytes": 7731,
+    "sha256": "f634df40caf783a371fda5f5b24921c40a1043f40e7fef82a60bc04d3b79c1bb"
+  },
+  {
+    "theme": "element_pack_cristallo",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_cristallo/frames/identity-pressed.png",
+    "bytes": 7605,
+    "sha256": "493da0fa922501c55b5f01e4c323f6c0038382e728b23f94a7cd4e63bb653a9b"
+  },
+  {
+    "theme": "element_pack_cristallo",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_cristallo/frames/identity-selected.png",
+    "bytes": 7942,
+    "sha256": "22ada3ee9fb240eaf3b3a9d275e0401c261164fd2ac2957082e5c2e13e38097f"
+  },
+  {
+    "theme": "element_pack_cristallo",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_cristallo/frames/identity-surface.png",
+    "bytes": 64061,
+    "sha256": "639c120cbe5dea0bb69e5038f6393cd2cc6ab9a331fbfa90a1328ef63bc8aeb2"
+  },
+  {
+    "theme": "element_pack_oscuro",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_oscuro/frames/identity-disabled.png",
+    "bytes": 8588,
+    "sha256": "4db11b623bafc7d53b16afec559db2aa0a0fa119172e4a4323efdb6931f2d009"
+  },
+  {
+    "theme": "element_pack_oscuro",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_oscuro/frames/identity-hover.png",
+    "bytes": 10133,
+    "sha256": "1c4a0d75d2393e9e380f43aa7d98a1d7a78858f53465c15de40c47b4a4c5ce8a"
+  },
+  {
+    "theme": "element_pack_oscuro",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_oscuro/frames/identity-normal.png",
+    "bytes": 10225,
+    "sha256": "d7a1a69d50dd5ecd7c3db838cdcc3ddae9cac7ad616ee3b3b8c213b19349df6f"
+  },
+  {
+    "theme": "element_pack_oscuro",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_oscuro/frames/identity-pressed.png",
+    "bytes": 10224,
+    "sha256": "bb44112f10904ec301a0c9e80d7b79aa86a876182640a11dea211ba3f60c801d"
+  },
+  {
+    "theme": "element_pack_oscuro",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_oscuro/frames/identity-selected.png",
+    "bytes": 10782,
+    "sha256": "895d1d8e44763369b09eeaa678a2baf6c2fa26b7395cbfaa0f54c6c0be55651f"
+  },
+  {
+    "theme": "element_pack_oscuro",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_oscuro/frames/identity-surface.png",
+    "bytes": 63272,
+    "sha256": "dcb99c8315203aa10246d518d311a0859a43bf57bfe6e9b1ad1872f3990ecf0c"
+  },
+  {
+    "theme": "element_pack_lunare",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_lunare/frames/identity-disabled.png",
+    "bytes": 7810,
+    "sha256": "4cbe7c0e17186cddc036461937fd05cc5786546ab42200f7af78c596099bd0cd"
+  },
+  {
+    "theme": "element_pack_lunare",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_lunare/frames/identity-hover.png",
+    "bytes": 9450,
+    "sha256": "7e8ee9f9388f78ea5132730c1b62905e9380994e41fe648ca970c6832abbefab"
+  },
+  {
+    "theme": "element_pack_lunare",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_lunare/frames/identity-normal.png",
+    "bytes": 9547,
+    "sha256": "a7bd37cc0220db46b2c22ac4e1982dc538031c9478f484da623f3196e49a8036"
+  },
+  {
+    "theme": "element_pack_lunare",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_lunare/frames/identity-pressed.png",
+    "bytes": 9459,
+    "sha256": "a37dcfbd5c87c09a4b3a12cf497c576b395a00bc3be3893dcac5b3fa82efaabc"
+  },
+  {
+    "theme": "element_pack_lunare",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_lunare/frames/identity-selected.png",
+    "bytes": 9940,
+    "sha256": "6dc3d4d587f57622f2acff11a4939524c48894c6b87036269ba89bbd1222302c"
+  },
+  {
+    "theme": "element_pack_lunare",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_lunare/frames/identity-surface.png",
+    "bytes": 63288,
+    "sha256": "f6695a6b0db88812ed7961f812f1252d4bb566849ba953ab8807c149d99655e0"
+  },
+  {
+    "theme": "element_pack_solare",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_solare/frames/identity-disabled.png",
+    "bytes": 9151,
+    "sha256": "7d86b0c369ef4528f6d17ac9b33d7dfd957c498aa32953de787a8fec4ff2dfad"
+  },
+  {
+    "theme": "element_pack_solare",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_solare/frames/identity-hover.png",
+    "bytes": 11398,
+    "sha256": "f7e14b527dbf8ae92f074ec32be12e5f54d1c74f2df54d8519e44900e1ec66bd"
+  },
+  {
+    "theme": "element_pack_solare",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_solare/frames/identity-normal.png",
+    "bytes": 11516,
+    "sha256": "5a12a83db6db43d822f4d5b8ed68a480e4f90fbafaba2df56fda59eeba6ec562"
+  },
+  {
+    "theme": "element_pack_solare",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_solare/frames/identity-pressed.png",
+    "bytes": 11017,
+    "sha256": "4ac8a5ff09e48f4258053d3715ede9778724742c59f864b130b598eaa582c8d2"
+  },
+  {
+    "theme": "element_pack_solare",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_solare/frames/identity-selected.png",
+    "bytes": 11301,
+    "sha256": "1fdeda773774a98d3285a1984018c86ba87d17fd79c3f442797a555ea54f57ac"
+  },
+  {
+    "theme": "element_pack_solare",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_solare/frames/identity-surface.png",
+    "bytes": 63042,
+    "sha256": "45c9a253f53a3ed345ba46416db66310bdb2b83800ccb1f7b4e0d9f9baa406a2"
+  },
+  {
+    "theme": "element_pack_vapium",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_vapium/frames/identity-disabled.png",
+    "bytes": 6029,
+    "sha256": "b30ef23a1beed7c5abc58793bbc7fc798fa45f6ebc882797d53991db4ae2c927"
+  },
+  {
+    "theme": "element_pack_vapium",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_vapium/frames/identity-hover.png",
+    "bytes": 5814,
+    "sha256": "5f1a95a61a1bd059ec67e5f9a004b516dea4c1fc9bbe337ea3f74e29f7b9c8e0"
+  },
+  {
+    "theme": "element_pack_vapium",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_vapium/frames/identity-normal.png",
+    "bytes": 5862,
+    "sha256": "a1911734d7c0ff2bbde0c8e7f31cd3850dcd43b3425d10b5684d44aca726092c"
+  },
+  {
+    "theme": "element_pack_vapium",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_vapium/frames/identity-pressed.png",
+    "bytes": 5544,
+    "sha256": "2ce872b41b3f95804159bb522e03234df36a3dca5be6eb3078cbd6e40234d971"
+  },
+  {
+    "theme": "element_pack_vapium",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_vapium/frames/identity-selected.png",
+    "bytes": 5997,
+    "sha256": "af69a40929e2737169d6db8bcd14a14b83086de650139f037d53d94a244ddc51"
+  },
+  {
+    "theme": "element_pack_vapium",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_vapium/frames/identity-surface.png",
+    "bytes": 63112,
+    "sha256": "6b63197c306ae5c52cc7dbfc35a3a872f9ab028a2fa4525d584c7f2ce024c45e"
+  },
+  {
+    "theme": "element_pack_osso",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_osso/frames/identity-disabled.png",
+    "bytes": 7256,
+    "sha256": "6e8c609a01ce45d1b8db451f201cf0e13bb8abd9bf77c23ec3e182e466af73f9"
+  },
+  {
+    "theme": "element_pack_osso",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_osso/frames/identity-hover.png",
+    "bytes": 9352,
+    "sha256": "073bba3c7b6ffb9566751f64964274e07d2ee83201b1cdfbcedc4bd959b609e9"
+  },
+  {
+    "theme": "element_pack_osso",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_osso/frames/identity-normal.png",
+    "bytes": 9473,
+    "sha256": "44a127df727935d680a91ff4982500f9146ab553a8b9e8e4060bf57173c945f9"
+  },
+  {
+    "theme": "element_pack_osso",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_osso/frames/identity-pressed.png",
+    "bytes": 9041,
+    "sha256": "50399839fc353e3d9609f98f503a8ae17ec0694ab822b5182ad17dc2ad4ce756"
+  },
+  {
+    "theme": "element_pack_osso",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_osso/frames/identity-selected.png",
+    "bytes": 9924,
+    "sha256": "ce0c69684f2f213bdaaacde457a38ebfc238ec491b064cb95b6ea69a9b8d93d9"
+  },
+  {
+    "theme": "element_pack_osso",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_osso/frames/identity-surface.png",
+    "bytes": 62275,
+    "sha256": "1269edddf8a46aa74f5d066f15e42240a9c55d991d81b7dae56b3f86a74a2c14"
+  },
+  {
+    "theme": "element_pack_gravita",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_gravita/frames/identity-disabled.png",
+    "bytes": 7769,
+    "sha256": "de7e6c7fe43072fc1ffe7d6c102dde821461ea74f9da4eb1d544632b3eca607d"
+  },
+  {
+    "theme": "element_pack_gravita",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_gravita/frames/identity-hover.png",
+    "bytes": 9667,
+    "sha256": "af75413d19ec05020f8dfaf0b63cd229d04a26bda48a5e4cbcb5c77b8b730da3"
+  },
+  {
+    "theme": "element_pack_gravita",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_gravita/frames/identity-normal.png",
+    "bytes": 9734,
+    "sha256": "0b7518f940ceb02d5b32fae4d64f7bb8872825e7d39fa66bf2db92466b605e95"
+  },
+  {
+    "theme": "element_pack_gravita",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_gravita/frames/identity-pressed.png",
+    "bytes": 9468,
+    "sha256": "e75633c6fbba8e8406ca2bf85b0404436bb20abaa5dbdbbbea04d84f11114922"
+  },
+  {
+    "theme": "element_pack_gravita",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_gravita/frames/identity-selected.png",
+    "bytes": 10112,
+    "sha256": "bf819cc798a03d825c01928e6e2f4ae540a353b8f2ade352b0e170f8364a3e79"
+  },
+  {
+    "theme": "element_pack_gravita",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_gravita/frames/identity-surface.png",
+    "bytes": 63495,
+    "sha256": "7198f9a075a99bae1ecd5bdbdd5b09a5a9b76371037096fcdebd653b829aad6b"
+  },
+  {
+    "theme": "element_pack_vuoto",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_vuoto/frames/identity-disabled.png",
+    "bytes": 8352,
+    "sha256": "a98e2a62d0efca36bb904c5d93fca6d3c0117695451cb38c1748a18a87033d6a"
+  },
+  {
+    "theme": "element_pack_vuoto",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_vuoto/frames/identity-hover.png",
+    "bytes": 9992,
+    "sha256": "a5357b7833a2486904beb3d9dccf2e3b8b187dc929ea89f4e06bb512d3116fbd"
+  },
+  {
+    "theme": "element_pack_vuoto",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_vuoto/frames/identity-normal.png",
+    "bytes": 9990,
+    "sha256": "6c4d96b034c2ef3cf8ce35c613d491327d2aaadb0f3470527f58ca967b80c67e"
+  },
+  {
+    "theme": "element_pack_vuoto",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_vuoto/frames/identity-pressed.png",
+    "bytes": 10085,
+    "sha256": "f1b2002ed7162cc090067616122adff3a1acd2d9b05b018dc413be098ce91f48"
+  },
+  {
+    "theme": "element_pack_vuoto",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_vuoto/frames/identity-selected.png",
+    "bytes": 10484,
+    "sha256": "6901e459506e78b62f7403ed9579da4c651c59f0843c73e5aa4aacec09b1fd5f"
+  },
+  {
+    "theme": "element_pack_vuoto",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_vuoto/frames/identity-surface.png",
+    "bytes": 63195,
+    "sha256": "ad85d20cc2aa16958f85539be31c512246f8b050c68391fbee7ce3b48307e831"
+  },
+  {
+    "theme": "element_pack_sogno",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_sogno/frames/identity-disabled.png",
+    "bytes": 53673,
+    "sha256": "908bc4c375cecd952220b6de7a44b2f0389d600d43c52ccd4d994bf53267b9a5"
+  },
+  {
+    "theme": "element_pack_sogno",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_sogno/frames/identity-hover.png",
+    "bytes": 50207,
+    "sha256": "39356be4da7bc67f47b95ef1253dcc15dcc2a936d9f58403132d38f74860aa6c"
+  },
+  {
+    "theme": "element_pack_sogno",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_sogno/frames/identity-normal.png",
+    "bytes": 54661,
+    "sha256": "f4cc4b97d93228dd4a48df30d2c6ddd7effc74b25190917d970035f4a7b8f19a"
+  },
+  {
+    "theme": "element_pack_sogno",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_sogno/frames/identity-pressed.png",
+    "bytes": 53644,
+    "sha256": "ccc81712b120d76df0b286ded09861036b9982acea1bc41b1ab6776845465042"
+  },
+  {
+    "theme": "element_pack_sogno",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_sogno/frames/identity-selected.png",
+    "bytes": 54412,
+    "sha256": "9bb0ed4e16ca247a33713d7ef8dbc16fcf984c1ecc356d9e96bf08c39a1e2475"
+  },
+  {
+    "theme": "element_pack_sogno",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_sogno/frames/identity-surface.png",
+    "bytes": 53702,
+    "sha256": "32099e94625c7479b1a870f118df0ea2bc32eddc40a8e84f5f71104a6ef9609c"
+  },
+  {
+    "theme": "element_pack_metallo",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_metallo/frames/identity-disabled.png",
+    "bytes": 5826,
+    "sha256": "778de10b17ddbcf5d2ee97a237a8eb0b8f9805d85fe05087739934bc4cabffcd"
+  },
+  {
+    "theme": "element_pack_metallo",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_metallo/frames/identity-hover.png",
+    "bytes": 5663,
+    "sha256": "b2d2a10699f9fad44fd8d98280aecdd2df441f00ad044ecf191562a04d02f406"
+  },
+  {
+    "theme": "element_pack_metallo",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_metallo/frames/identity-normal.png",
+    "bytes": 5575,
+    "sha256": "afc042104e360a7a4a2f8e8f42c22ccf9c0ebbecf61b7d72d4484885825aa6d5"
+  },
+  {
+    "theme": "element_pack_metallo",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_metallo/frames/identity-pressed.png",
+    "bytes": 5461,
+    "sha256": "7bfdb2f25bcd5a19927d599ce0449aeb0370bac12ec78d58a98480ea7c59e915"
+  },
+  {
+    "theme": "element_pack_metallo",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_metallo/frames/identity-selected.png",
+    "bytes": 5597,
+    "sha256": "f50e6a35fdb2e00e5b00a681570f9d3d6121e03ed7a8b66c42b17cff61b6e983"
+  },
+  {
+    "theme": "element_pack_metallo",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_metallo/frames/identity-surface.png",
+    "bytes": 63022,
+    "sha256": "db40c208c731341b1de2219b3989e7251be0665f254946e2bc17ebcef2c837af"
+  },
+  {
+    "theme": "element_pack_postea",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_postea/frames/identity-disabled.png",
+    "bytes": 6622,
+    "sha256": "87a8d56f7ab4102eb72f4dff64987dd4710ce6903340ee29d6b8e3bf53a4eacd"
+  },
+  {
+    "theme": "element_pack_postea",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_postea/frames/identity-hover.png",
+    "bytes": 6414,
+    "sha256": "b84a73b8fb59a64d1fb93c76d2337b1329e7bb787360105df2b3fa72f25099ca"
+  },
+  {
+    "theme": "element_pack_postea",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_postea/frames/identity-normal.png",
+    "bytes": 6451,
+    "sha256": "4692dd32b83c12085cbcad1aef2b9c04388a18a35383943b4e968de56c8edf92"
+  },
+  {
+    "theme": "element_pack_postea",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_postea/frames/identity-pressed.png",
+    "bytes": 6204,
+    "sha256": "399b23077cd43f7707c377100c17727182ebebeae5497ba0f7e557c6595cb550"
+  },
+  {
+    "theme": "element_pack_postea",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_postea/frames/identity-selected.png",
+    "bytes": 6485,
+    "sha256": "6968116f71fd56e63d55a8ec601923a9aa7057adea3f0a46a0b645c66a647f91"
+  },
+  {
+    "theme": "element_pack_postea",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_postea/frames/identity-surface.png",
+    "bytes": 63266,
+    "sha256": "6516b2ca55dbaabf863e2964189b076526c34f96435bac44253207e8c91dd0c9"
+  },
+  {
+    "theme": "element_pack_radice",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_radice/frames/identity-disabled.png",
+    "bytes": 61771,
+    "sha256": "0a8a7020fa8c22d2575aaed6d38c28d35c77262ef68a127827deb5d6a4293e19"
+  },
+  {
+    "theme": "element_pack_radice",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_radice/frames/identity-hover.png",
+    "bytes": 61360,
+    "sha256": "a1f849c8d0de155ae2b9a389e26b4b9bee3529137ccc3858916a2d6849c2daa5"
+  },
+  {
+    "theme": "element_pack_radice",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_radice/frames/identity-normal.png",
+    "bytes": 61475,
+    "sha256": "b0bc4fbae1e3acef3955472e4933cad232b9ab6dd178fa22bb5bcc8bd48f01fb"
+  },
+  {
+    "theme": "element_pack_radice",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_radice/frames/identity-pressed.png",
+    "bytes": 62204,
+    "sha256": "dce4afb49e0113a854d5fa32c7f00e66ef73bb2b66e3075fff6c26bb00207fd6"
+  },
+  {
+    "theme": "element_pack_radice",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_radice/frames/identity-selected.png",
+    "bytes": 61885,
+    "sha256": "171c4f6d2d5b526f28572d53a3dbf1c76df5013b9ebcfb41c0853225026877f4"
+  },
+  {
+    "theme": "element_pack_radice",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_radice/frames/identity-surface.png",
+    "bytes": 64664,
+    "sha256": "e3d86370f251fba63333ce65bbbcc45837121b57671d66a49984fc53619bed5c"
+  },
+  {
+    "theme": "element_pack_slime",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_slime/frames/identity-disabled.png",
+    "bytes": 8387,
+    "sha256": "d24f626a874ff1aa3e20e58015cb422e077c4a399106a097fe01280447692c70"
+  },
+  {
+    "theme": "element_pack_slime",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_slime/frames/identity-hover.png",
+    "bytes": 10247,
+    "sha256": "d4fd13cdc505e16a1aa38bee35a291b443bcf1526aa1374ae28cdf6d6a109a35"
+  },
+  {
+    "theme": "element_pack_slime",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_slime/frames/identity-normal.png",
+    "bytes": 10407,
+    "sha256": "88cdfbf9af12fcd41d1d426409ab8dd13f990932b9c76b7357be50f30297b082"
+  },
+  {
+    "theme": "element_pack_slime",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_slime/frames/identity-pressed.png",
+    "bytes": 10379,
+    "sha256": "572852e3d6342b3e00c74c062dd90a433dd27d7ab678048afaaae0cc2c2261a8"
+  },
+  {
+    "theme": "element_pack_slime",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_slime/frames/identity-selected.png",
+    "bytes": 10854,
+    "sha256": "aceb610a88e8b15ebbfd6fa3cc2507391560f8a66590872d2ef73207a244a255"
+  },
+  {
+    "theme": "element_pack_slime",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_slime/frames/identity-surface.png",
+    "bytes": 48751,
+    "sha256": "578172803c92380c773acc5bb89366837d65ea8ed59b113e6c65b7ee51ae8764"
+  },
+  {
+    "theme": "element_pack_oculum",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_oculum/frames/identity-disabled.png",
+    "bytes": 6447,
+    "sha256": "18c21c081b2fdf65428dafe8ed03a639cbef0f0a37f7786f69b6577215746957"
+  },
+  {
+    "theme": "element_pack_oculum",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_oculum/frames/identity-hover.png",
+    "bytes": 6281,
+    "sha256": "24fa58bca5ef424eadb49e6607bfb8babd4f10a58ecf98f6bc6c16fdab608f52"
+  },
+  {
+    "theme": "element_pack_oculum",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_oculum/frames/identity-normal.png",
+    "bytes": 6330,
+    "sha256": "1b55c87ccdb75d705619d3d5ef244e55b2361e1ca78afb799beffc7183d9e52b"
+  },
+  {
+    "theme": "element_pack_oculum",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_oculum/frames/identity-pressed.png",
+    "bytes": 6033,
+    "sha256": "985c9efbad9a5d49d597d6145fe87449f2734f928df5a84985fa65847942322a"
+  },
+  {
+    "theme": "element_pack_oculum",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_oculum/frames/identity-selected.png",
+    "bytes": 6457,
+    "sha256": "5e6fa27f17f66e92e4d619ecb9c50b2e6452d9284c0ce441b5601e8911216ebe"
+  },
+  {
+    "theme": "element_pack_oculum",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_oculum/frames/identity-surface.png",
+    "bytes": 63148,
+    "sha256": "dfeafa894015f9410a23b5a45fe9b6c93949b64fa29320ccef71c70008839176"
+  },
+  {
+    "theme": "element_pack_stella",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_stella/frames/identity-disabled.png",
+    "bytes": 7332,
+    "sha256": "a764a152d5f7f68b4db9a81b06d9dadb9aec41fda9aeb3f2303afece5388745c"
+  },
+  {
+    "theme": "element_pack_stella",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_stella/frames/identity-hover.png",
+    "bytes": 9357,
+    "sha256": "2ab2357fd39ab1edd705ef9e0c7e0664e8e57952c72e20a198682cf34ccabd82"
+  },
+  {
+    "theme": "element_pack_stella",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_stella/frames/identity-normal.png",
+    "bytes": 9409,
+    "sha256": "71eaa6913173fd3b83301bac6eb958e7b77cc4c1eca2fb9e4754471ee3565b01"
+  },
+  {
+    "theme": "element_pack_stella",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_stella/frames/identity-pressed.png",
+    "bytes": 9020,
+    "sha256": "b75c1a810a0746e6622331d6091725dd0ded2a6b52adb891b3f76057d8c022a3"
+  },
+  {
+    "theme": "element_pack_stella",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_stella/frames/identity-selected.png",
+    "bytes": 9790,
+    "sha256": "a4041bd6fde8fb87e1e454df82ed1bbf0886a92160860df86e34fec2d5c5f1ec"
+  },
+  {
+    "theme": "element_pack_stella",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_stella/frames/identity-surface.png",
+    "bytes": 63267,
+    "sha256": "378af0f3dc236648460d97c230882c274b18fe9b641f20bb72e68b2cdc7b305b"
+  },
+  {
+    "theme": "element_pack_corrotto",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_corrotto/frames/identity-disabled.png",
+    "bytes": 15646,
+    "sha256": "a79b77c79731c5e1ae9d659cabf51080f395b6abb2ef05a7b591defe3ff313fe"
+  },
+  {
+    "theme": "element_pack_corrotto",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_corrotto/frames/identity-hover.png",
+    "bytes": 16417,
+    "sha256": "d365464d59180938cb0077b112313b130584246acda72927ab4f5c00cfcdbbd7"
+  },
+  {
+    "theme": "element_pack_corrotto",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_corrotto/frames/identity-normal.png",
+    "bytes": 16346,
+    "sha256": "a80a8a04592c1fd40a8d7fdcc9cdab3d562ead2358aa5b0dc4e7e8f18a205165"
+  },
+  {
+    "theme": "element_pack_corrotto",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_corrotto/frames/identity-pressed.png",
+    "bytes": 16128,
+    "sha256": "d7b4b71101b9ee62e84272f020516bd78d1954e693a6c474c04618464c6c06c4"
+  },
+  {
+    "theme": "element_pack_corrotto",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_corrotto/frames/identity-selected.png",
+    "bytes": 16803,
+    "sha256": "04f755aa3f410ff55a3222c6f391ff5e4546ea7abb5e355c5cae0b3ce13e1e2e"
+  },
+  {
+    "theme": "element_pack_corrotto",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_corrotto/frames/identity-surface.png",
+    "bytes": 64925,
+    "sha256": "56a5fd753b177a2f7aefe7ed5d8c82ef3ae3d25566bc601691ac32435124c064"
+  },
+  {
+    "theme": "element_pack_nonmorto",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_nonmorto/frames/identity-disabled.png",
+    "bytes": 7696,
+    "sha256": "007cee56937f0a2fc8e2de9e09b10528acd69dda59240a2270a095547570c607"
+  },
+  {
+    "theme": "element_pack_nonmorto",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_nonmorto/frames/identity-hover.png",
+    "bytes": 8831,
+    "sha256": "371ba0004cd5daed51db69064ce8a3d688f37d07245eab9fa15c3e41a0523fd5"
+  },
+  {
+    "theme": "element_pack_nonmorto",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_nonmorto/frames/identity-normal.png",
+    "bytes": 8552,
+    "sha256": "1f4293adb41e9a281682b73b831b0245ff3f2c1d0d9179540f14b3aec2a6feb6"
+  },
+  {
+    "theme": "element_pack_nonmorto",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_nonmorto/frames/identity-pressed.png",
+    "bytes": 8177,
+    "sha256": "1f986b87481af12df7ca42b792e7ac1c691402a2f3919d02588684a688dd8103"
+  },
+  {
+    "theme": "element_pack_nonmorto",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_nonmorto/frames/identity-selected.png",
+    "bytes": 9065,
+    "sha256": "1434854ce741f2bc393bf2d11eb3b3f768e409cbdcefff2785c22a587f9c3553"
+  },
+  {
+    "theme": "element_pack_nonmorto",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_nonmorto/frames/identity-surface.png",
+    "bytes": 62381,
+    "sha256": "95f79f63567e96ab1364d08a08c1950d78564512fa209fff13c477cbe6e1fe78"
+  },
+  {
+    "theme": "element_pack_acido",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_acido/frames/identity-disabled.png",
+    "bytes": 7455,
+    "sha256": "2312414ecf3aea547c9233955d95e9edf529f2d15abad3e8e99c38cfbb63b1cf"
+  },
+  {
+    "theme": "element_pack_acido",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_acido/frames/identity-hover.png",
+    "bytes": 9438,
+    "sha256": "1a4c4f05b4cfbd387cbec82f69c625243e817335d77ee8751e73ad3578462d1c"
+  },
+  {
+    "theme": "element_pack_acido",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_acido/frames/identity-normal.png",
+    "bytes": 9506,
+    "sha256": "287baf0e6da4ad74f0168c86e2bb476874992d560313179ee3762ca9f36eb001"
+  },
+  {
+    "theme": "element_pack_acido",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_acido/frames/identity-pressed.png",
+    "bytes": 8864,
+    "sha256": "3447449f108db8c0f3ce7cfe47cbd970b81e0d1f3bfdcebf3022318913cb1370"
+  },
+  {
+    "theme": "element_pack_acido",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_acido/frames/identity-selected.png",
+    "bytes": 10054,
+    "sha256": "ebb445c33b8da00b575a3ffe71085b6f51fbda48d724fb2a431e31cf9e5aeb4f"
+  },
+  {
+    "theme": "element_pack_acido",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_acido/frames/identity-surface.png",
+    "bytes": 48776,
+    "sha256": "23203e6f26557da1f6573f20c5482aab0c58f3ac2b6f979c0bb504e9e4fd8e22"
+  },
+  {
+    "theme": "element_pack_sacro",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_sacro/frames/identity-disabled.png",
+    "bytes": 6071,
+    "sha256": "db002d3f5a6df54b2e95290d38dc2f7dcd0f48a4470887867881de3aa1a8ab33"
+  },
+  {
+    "theme": "element_pack_sacro",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_sacro/frames/identity-hover.png",
+    "bytes": 5866,
+    "sha256": "bf013a9512441eee6eed234aed8d5809322aec4fa193dc457d409699cb87af07"
+  },
+  {
+    "theme": "element_pack_sacro",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_sacro/frames/identity-normal.png",
+    "bytes": 5935,
+    "sha256": "bad72786beebaf7d8ceaf29e6bb0142596a95036e4540e0692f848c9b8280079"
+  },
+  {
+    "theme": "element_pack_sacro",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_sacro/frames/identity-pressed.png",
+    "bytes": 5782,
+    "sha256": "e25719ce3c8503577628a5061b12bdf5f64f26c28192279f2bf505c3990387cc"
+  },
+  {
+    "theme": "element_pack_sacro",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_sacro/frames/identity-selected.png",
+    "bytes": 6022,
+    "sha256": "71548eb3b8007874ae61f8c927a22f11e3ebab81932a9a548d1215a21b3d58fa"
+  },
+  {
+    "theme": "element_pack_sacro",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_sacro/frames/identity-surface.png",
+    "bytes": 65560,
+    "sha256": "ec7f30174b865c229ca68caf303fb2278c35347acfe7bcb110795c53c11563aa"
+  },
+  {
+    "theme": "element_pack_diabolico",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_diabolico/frames/identity-disabled.png",
+    "bytes": 10892,
+    "sha256": "862412554ec09297e4ecc8a592d9f1934d6982cd2c8324f9afa5364da1805a67"
+  },
+  {
+    "theme": "element_pack_diabolico",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_diabolico/frames/identity-hover.png",
+    "bytes": 12633,
+    "sha256": "42a0a86dfb7358f27cf9f06a874395c2b693c5c20fdea15695966923c7c65c04"
+  },
+  {
+    "theme": "element_pack_diabolico",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_diabolico/frames/identity-normal.png",
+    "bytes": 12619,
+    "sha256": "1d4f5a1c6079df8b8b0fe3fe42ba690c4262dea260c9b2604902db6f8272f793"
+  },
+  {
+    "theme": "element_pack_diabolico",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_diabolico/frames/identity-pressed.png",
+    "bytes": 12200,
+    "sha256": "87c0ea562176cfa881cf2a25243c501ae7ce03594b235958b107680c3d98401d"
+  },
+  {
+    "theme": "element_pack_diabolico",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_diabolico/frames/identity-selected.png",
+    "bytes": 12732,
+    "sha256": "5b28d59b8e44fd526a7ff434485a95673cf5aaff85372cb926875d78513e4866"
+  },
+  {
+    "theme": "element_pack_diabolico",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_diabolico/frames/identity-surface.png",
+    "bytes": 62882,
+    "sha256": "fd7c1e92c383d63378eb9d8482c96acf1e8dcd199baf42b9790ac92e5c3d2d9a"
+  },
+  {
+    "theme": "element_pack_angelico",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_angelico/frames/identity-disabled.png",
+    "bytes": 8280,
+    "sha256": "3e41b0ba824246876ee9f88ab4ff42e1c21a99863c63755f984b33777b7e99de"
+  },
+  {
+    "theme": "element_pack_angelico",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_angelico/frames/identity-hover.png",
+    "bytes": 10419,
+    "sha256": "6a3f49a218d7336af270463648b79015d2dcd7df9c357c55f41f825ce6d66558"
+  },
+  {
+    "theme": "element_pack_angelico",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_angelico/frames/identity-normal.png",
+    "bytes": 10440,
+    "sha256": "52194e6c3e7916752f320663540d5135a83ca3ccd6611509d0672268a3bcd8bc"
+  },
+  {
+    "theme": "element_pack_angelico",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_angelico/frames/identity-pressed.png",
+    "bytes": 10477,
+    "sha256": "21c5d90aada01ea748667f05ab8453b377947d64a304de21f46ee9735e67957d"
+  },
+  {
+    "theme": "element_pack_angelico",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_angelico/frames/identity-selected.png",
+    "bytes": 11099,
+    "sha256": "71627304018f0d54a74c26e7f1d27d65f0ad812ede2aea1d7eaf4b433165b4af"
+  },
+  {
+    "theme": "element_pack_angelico",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_angelico/frames/identity-surface.png",
+    "bytes": 62295,
+    "sha256": "19a19f32e6408d6854d68aa8693b6a38d28e9a748c4b6c2d2b15722a79e923f9"
+  },
+  {
+    "theme": "element_pack_necrotico",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_necrotico/frames/identity-disabled.png",
+    "bytes": 15159,
+    "sha256": "6ad439209ab461c35cbcf3061866e919eebc3ebc3357df0bb0bd17a54056012f"
+  },
+  {
+    "theme": "element_pack_necrotico",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_necrotico/frames/identity-hover.png",
+    "bytes": 16111,
+    "sha256": "f1f6f9aef0a1944f8411eab4fe3a483089a0a3c8056d277cbd5c07ff33c5e9ae"
+  },
+  {
+    "theme": "element_pack_necrotico",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_necrotico/frames/identity-normal.png",
+    "bytes": 15810,
+    "sha256": "1ff91ade8a331be530d85715265fb3d26bcb0320e2108696964760b6a27b019f"
+  },
+  {
+    "theme": "element_pack_necrotico",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_necrotico/frames/identity-pressed.png",
+    "bytes": 15811,
+    "sha256": "2278fa06fc9b087246ac4b9170decc023578926b2bcc3f2b887de7d5513fb075"
+  },
+  {
+    "theme": "element_pack_necrotico",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_necrotico/frames/identity-selected.png",
+    "bytes": 16453,
+    "sha256": "0e06a0b4ff9babbe76cf96b3d8ccbdd28d614189b41d90fe5120bac53b267bdf"
+  },
+  {
+    "theme": "element_pack_necrotico",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_necrotico/frames/identity-surface.png",
+    "bytes": 64959,
+    "sha256": "357bd943586133fb73a48f3c56b5080115aeaac86e988e82f19ba1c4d3dbd305"
+  },
+  {
+    "theme": "element_pack_magia",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_magia/frames/identity-disabled.png",
+    "bytes": 6997,
+    "sha256": "8a72d2f93553b948f692445c71bd1c574841becf58c1cfacce0db3d34c4b3291"
+  },
+  {
+    "theme": "element_pack_magia",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_magia/frames/identity-hover.png",
+    "bytes": 9015,
+    "sha256": "3a0e12dc6a236fec4518dd5d85107df425a7767fd243bd3f389c14f8c5b2cca3"
+  },
+  {
+    "theme": "element_pack_magia",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_magia/frames/identity-normal.png",
+    "bytes": 9093,
+    "sha256": "074ef9b66254eaf21b72831fc0b179721a55fa088b8f48d811c15d55879478e0"
+  },
+  {
+    "theme": "element_pack_magia",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_magia/frames/identity-pressed.png",
+    "bytes": 8694,
+    "sha256": "6b9b46f6989886d2b428003ab1341d2d942e71353e020089d3db31a411f0fff1"
+  },
+  {
+    "theme": "element_pack_magia",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_magia/frames/identity-selected.png",
+    "bytes": 9601,
+    "sha256": "310373d76308a342b2d8fa127fec0b6baa9a564a357659dcc123a4a15a3299de"
+  },
+  {
+    "theme": "element_pack_magia",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_magia/frames/identity-surface.png",
+    "bytes": 63264,
+    "sha256": "88ca28a700cc73a45b392ca2a44a9cafb3a08a8e84697660ace60b0f617417f5"
+  },
+  {
+    "theme": "element_pack_energia",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_energia/frames/identity-disabled.png",
+    "bytes": 8236,
+    "sha256": "54484021ef777c13e63f08fc0d32cc2361dec2c08b96470dfff48ae5a4df71d6"
+  },
+  {
+    "theme": "element_pack_energia",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_energia/frames/identity-hover.png",
+    "bytes": 10246,
+    "sha256": "7f19c287bb77fc7ea37ccc71b7cf2b426f847a1eb13fc09dcb9482610010c631"
+  },
+  {
+    "theme": "element_pack_energia",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_energia/frames/identity-normal.png",
+    "bytes": 10367,
+    "sha256": "6c4f34f7a676721b1ee13b51082dcb3ad742add4ab5ad43cc6a4113ec3df5a3d"
+  },
+  {
+    "theme": "element_pack_energia",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_energia/frames/identity-pressed.png",
+    "bytes": 10333,
+    "sha256": "bc713165825443f7fd025e8974cb3637706c2c8a3beada7c4330bfaffc28a67c"
+  },
+  {
+    "theme": "element_pack_energia",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_energia/frames/identity-selected.png",
+    "bytes": 10824,
+    "sha256": "cc75a3d901582e78ac1bb5764b8fcd3064206c9b14bd90fd58c89b527f1ac62e"
+  },
+  {
+    "theme": "element_pack_energia",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_energia/frames/identity-surface.png",
+    "bytes": 30923,
+    "sha256": "8fb7860ce70d87fc32ec4af7d5abaad8defa2f4e479df959707598044c12c866"
+  },
+  {
+    "theme": "element_pack_esplosivo",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_esplosivo/frames/identity-disabled.png",
+    "bytes": 11239,
+    "sha256": "1ffc77601bb91270fa7b6cf3769c6ceb240c2c0bfe82614a36993c86d7d7ea91"
+  },
+  {
+    "theme": "element_pack_esplosivo",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_esplosivo/frames/identity-hover.png",
+    "bytes": 12707,
+    "sha256": "29eb175a63d8b3d3a6ba60865fa00a858ee52c8763c2acc1286831d2bde340d5"
+  },
+  {
+    "theme": "element_pack_esplosivo",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_esplosivo/frames/identity-normal.png",
+    "bytes": 12833,
+    "sha256": "97b1f4aa6bed707d04910017044579336a38652fdccefeb3100285f412fd002d"
+  },
+  {
+    "theme": "element_pack_esplosivo",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_esplosivo/frames/identity-pressed.png",
+    "bytes": 12370,
+    "sha256": "68edb9ded1c7cc0040a37ada3ec825ddbc9e70140f988004cd3aa1373e6cce0f"
+  },
+  {
+    "theme": "element_pack_esplosivo",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_esplosivo/frames/identity-selected.png",
+    "bytes": 12838,
+    "sha256": "b9445f92d9c2a77cbe25e044f8c0e0b02739721d026411322976664bae62e23e"
+  },
+  {
+    "theme": "element_pack_esplosivo",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_esplosivo/frames/identity-surface.png",
+    "bytes": 63256,
+    "sha256": "ca6ad019cdd0340aefe80dd87a6f4dc95336ee18c10195417b43d516333217e5"
+  },
+  {
+    "theme": "element_pack_radiazione",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_radiazione/frames/identity-disabled.png",
+    "bytes": 7936,
+    "sha256": "c708610d96b4ec0c5b4e6c8dc07a343c7b476da67b5ccc4f26f916d51b431349"
+  },
+  {
+    "theme": "element_pack_radiazione",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_radiazione/frames/identity-hover.png",
+    "bytes": 10120,
+    "sha256": "3c008980b4f702be708b2816b79d0c2601dcd01fafdc72dd73629895bc20522d"
+  },
+  {
+    "theme": "element_pack_radiazione",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_radiazione/frames/identity-normal.png",
+    "bytes": 10175,
+    "sha256": "7f93e4d5823f30a830fa8b757f30781ade00a749bd0539a799a6e11c22f49abf"
+  },
+  {
+    "theme": "element_pack_radiazione",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_radiazione/frames/identity-pressed.png",
+    "bytes": 9542,
+    "sha256": "d85efcc40fca57a6e6dba1c70f3859ea410c35a7d791fdafb9dc26465331cdd9"
+  },
+  {
+    "theme": "element_pack_radiazione",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_radiazione/frames/identity-selected.png",
+    "bytes": 10798,
+    "sha256": "b30d1f37d0169a08714d7a09125a948f031acc8a963be5ef6b58563945e51223"
+  },
+  {
+    "theme": "element_pack_radiazione",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_radiazione/frames/identity-surface.png",
+    "bytes": 49096,
+    "sha256": "4f512469c51e47dfc97ea7b5830f30e8af6ae3d15e3415e70e6341014964a755"
+  },
+  {
+    "theme": "element_pack_plasma",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_plasma/frames/identity-disabled.png",
+    "bytes": 11305,
+    "sha256": "7a73907d7933f9a9df6b086eb4bfa2d71cd282db0a6f33c34eee7f4c8b3aa9b6"
+  },
+  {
+    "theme": "element_pack_plasma",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_plasma/frames/identity-hover.png",
+    "bytes": 12758,
+    "sha256": "979b5fa92678dc29bee56c04afd6cc8b8509c14e2727bb7b3fe1103f8d6ee560"
+  },
+  {
+    "theme": "element_pack_plasma",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_plasma/frames/identity-normal.png",
+    "bytes": 12981,
+    "sha256": "184c945f86df3f5a611c5a98c943ec3eec7b787dd7aaf23b0cd140c2b91ef5c4"
+  },
+  {
+    "theme": "element_pack_plasma",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_plasma/frames/identity-pressed.png",
+    "bytes": 12564,
+    "sha256": "e582e2c7270fa7728989c121d3d53d554f761f16d3f09f4f4176303c1fad2cc0"
+  },
+  {
+    "theme": "element_pack_plasma",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_plasma/frames/identity-selected.png",
+    "bytes": 12907,
+    "sha256": "baaddc72ddeae348be465bc716459d3b4489a582420748475e6ceaf1a4b0dfb5"
+  },
+  {
+    "theme": "element_pack_plasma",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_plasma/frames/identity-surface.png",
+    "bytes": 62985,
+    "sha256": "39510207b6fffa4ca4122cf37487ec1854429d9b50b8d61c570f01938585e21f"
+  },
+  {
+    "theme": "element_pack_tecnologia",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_tecnologia/frames/identity-disabled.png",
+    "bytes": 5037,
+    "sha256": "86f3ffcb20997717ba50aa1a5dd80060b96eb585be7dfac7ad302ace5a453233"
+  },
+  {
+    "theme": "element_pack_tecnologia",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_tecnologia/frames/identity-hover.png",
+    "bytes": 4793,
+    "sha256": "2bac3d12ebdc909cb9e71c567904c5a0b6ed7a244d4158e4f3f5fdca9df984ef"
+  },
+  {
+    "theme": "element_pack_tecnologia",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_tecnologia/frames/identity-normal.png",
+    "bytes": 5679,
+    "sha256": "102670e395de7c0dcb5a9df03206c458f8ea16d1d8d928bffc13a14a05b93e30"
+  },
+  {
+    "theme": "element_pack_tecnologia",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_tecnologia/frames/identity-pressed.png",
+    "bytes": 5512,
+    "sha256": "4ffbe53151bfe16fffa389daee364938e672310da3fbc694d4ab90d469c4b464"
+  },
+  {
+    "theme": "element_pack_tecnologia",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_tecnologia/frames/identity-selected.png",
+    "bytes": 5710,
+    "sha256": "9f0cc68cabb71f1a3b17daaf8621c0093861ebaa55c3491bc485af68732e1faa"
+  },
+  {
+    "theme": "element_pack_tecnologia",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_tecnologia/frames/identity-surface.png",
+    "bytes": 63190,
+    "sha256": "8caebb2f36b2fb0a3e64c63d7f0d0dd18fcf7c8cc331d356e1911b7286680191"
+  },
+  {
+    "theme": "element_pack_proiettile",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_proiettile/frames/identity-disabled.png",
+    "bytes": 5596,
+    "sha256": "07d1f128d6ddb69e916f442ab4cc1696506848b634c9c31027001750107e5e5b"
+  },
+  {
+    "theme": "element_pack_proiettile",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_proiettile/frames/identity-hover.png",
+    "bytes": 5376,
+    "sha256": "c9a0469bc6af3147246e0526c5ea1a2c214c03c75afa1747863629ca7de3804f"
+  },
+  {
+    "theme": "element_pack_proiettile",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_proiettile/frames/identity-normal.png",
+    "bytes": 5468,
+    "sha256": "df0b011fc40d8871f3fec275c7cb014e1345d2d536699fcc86c73f0a4260d85a"
+  },
+  {
+    "theme": "element_pack_proiettile",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_proiettile/frames/identity-pressed.png",
+    "bytes": 5280,
+    "sha256": "d6523d3b27be4055de151e7e573c216bdcd540d9601680f353db93d0759e5912"
+  },
+  {
+    "theme": "element_pack_proiettile",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_proiettile/frames/identity-selected.png",
+    "bytes": 5504,
+    "sha256": "4c68330253a2d4e510c566b4bc3b88751896e9fd8a4c69661a90a2a966c00ca2"
+  },
+  {
+    "theme": "element_pack_proiettile",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_proiettile/frames/identity-surface.png",
+    "bytes": 63170,
+    "sha256": "e182ac82c47fc775f4f845aedf68089cbd72fdecd3152eea0b03ceaa5c426f3c"
+  },
+  {
+    "theme": "element_pack_laser",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_laser/frames/identity-disabled.png",
+    "bytes": 6034,
+    "sha256": "b08536f5de33095129824762da1eeaf1fd7b0400c55b3c1d3bfe2b9fe93dc2ba"
+  },
+  {
+    "theme": "element_pack_laser",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_laser/frames/identity-hover.png",
+    "bytes": 7055,
+    "sha256": "c53e9d7e95a6df5886de4917f7600dbe9e5ffe004fcf51952e21c6634ff2595c"
+  },
+  {
+    "theme": "element_pack_laser",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_laser/frames/identity-normal.png",
+    "bytes": 7203,
+    "sha256": "8b7b8e7cf22be67b42f1dc5221949aa04a4850398e8434be0a85b18bfc74f077"
+  },
+  {
+    "theme": "element_pack_laser",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_laser/frames/identity-pressed.png",
+    "bytes": 6950,
+    "sha256": "e40655c2be11eddf250a7f0564fe274b1d6b98fc0fa1b755ae07239634a75c6c"
+  },
+  {
+    "theme": "element_pack_laser",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_laser/frames/identity-selected.png",
+    "bytes": 7359,
+    "sha256": "ebf3326d456a3c1c291201f7937a3b501315193dd44a7eb76c57ad156228c63b"
+  },
+  {
+    "theme": "element_pack_laser",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_laser/frames/identity-surface.png",
+    "bytes": 63756,
+    "sha256": "e75f5e0ae81b6a0078b887d95d903850dec7f014d114eb5e1f5cd9e801e3249d"
+  },
+  {
+    "theme": "element_pack_tempo",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_tempo/frames/identity-disabled.png",
+    "bytes": 5521,
+    "sha256": "9b2e4c54e973cfde38f90a2825641db7d72389259a83f811196ce587162a79a5"
+  },
+  {
+    "theme": "element_pack_tempo",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_tempo/frames/identity-hover.png",
+    "bytes": 6535,
+    "sha256": "3352d15e0ea11ec7e1dcdc9d084aad629d274f11c4f5c508049713791b4301ba"
+  },
+  {
+    "theme": "element_pack_tempo",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_tempo/frames/identity-normal.png",
+    "bytes": 6445,
+    "sha256": "3ec77d7471f1d88ad6a8e7096cfa5e24559a2e4050d0eba75d1d428c38f0b6ed"
+  },
+  {
+    "theme": "element_pack_tempo",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_tempo/frames/identity-pressed.png",
+    "bytes": 6254,
+    "sha256": "f1dd9ca0ca182935e6bf5bce83a676e69d6ab0b9fb3e7da0b146a7d42f587c44"
+  },
+  {
+    "theme": "element_pack_tempo",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_tempo/frames/identity-selected.png",
+    "bytes": 6542,
+    "sha256": "847cb9ee1770ba9b0179e40385ae0dc914369188218e16a2ba57fb5c9a65dbcc"
+  },
+  {
+    "theme": "element_pack_tempo",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_tempo/frames/identity-surface.png",
+    "bytes": 63041,
+    "sha256": "d7bf40c10b81f8e20e3aaef3d0d062dec7f5731aeba5708a78d8e7bfefdd7f6c"
+  },
+  {
+    "theme": "element_pack_spazio",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_spazio/frames/identity-disabled.png",
+    "bytes": 7909,
+    "sha256": "fe554d3fb2fe7bec4cc6e54835b78d3e800d44a794dc6f3ae2b98df9785e39e9"
+  },
+  {
+    "theme": "element_pack_spazio",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_spazio/frames/identity-hover.png",
+    "bytes": 9897,
+    "sha256": "092d6232c70c34892db868d6ae0df11df7541b6f9c945688b8695a5c72ee58bb"
+  },
+  {
+    "theme": "element_pack_spazio",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_spazio/frames/identity-normal.png",
+    "bytes": 9911,
+    "sha256": "2388d6359fc04e8856c5d071d900c167472aeff827491c98078043959c337492"
+  },
+  {
+    "theme": "element_pack_spazio",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_spazio/frames/identity-pressed.png",
+    "bytes": 9764,
+    "sha256": "64799a6b97694f2700efc39d06ca928d50265215842e6e51143d92afeabf45cd"
+  },
+  {
+    "theme": "element_pack_spazio",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_spazio/frames/identity-selected.png",
+    "bytes": 10349,
+    "sha256": "10b4ab7402f2c8da293fa6313805f4ce3ee63e0d71988014f5f6722bc46abcc1"
+  },
+  {
+    "theme": "element_pack_spazio",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_spazio/frames/identity-surface.png",
+    "bytes": 63457,
+    "sha256": "3e3544f9df43b0f98f3df76f2cbe5a4585a5d762826c53fc918501858012f540"
+  },
+  {
+    "theme": "element_pack_caos",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_caos/frames/identity-disabled.png",
+    "bytes": 6209,
+    "sha256": "b674e992621a725dc3f66318aabb775b1ccc93a4ffa011e79e3d3b0af641da05"
+  },
+  {
+    "theme": "element_pack_caos",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_caos/frames/identity-hover.png",
+    "bytes": 7257,
+    "sha256": "09cca70b84d0e2475b499eb9af716b6afa4bbba9447bc8991dbb16a7cc394578"
+  },
+  {
+    "theme": "element_pack_caos",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_caos/frames/identity-normal.png",
+    "bytes": 7281,
+    "sha256": "a67ba6c49bdc06eb4198de24b4cf677dd8ae4dd2f0f42632bdd3ed168a2cfeb4"
+  },
+  {
+    "theme": "element_pack_caos",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_caos/frames/identity-pressed.png",
+    "bytes": 7034,
+    "sha256": "788161b03b0cfbb01693b2cfc16c8619a9f1b48a482846e6c9f7ea7191b38a5d"
+  },
+  {
+    "theme": "element_pack_caos",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_caos/frames/identity-selected.png",
+    "bytes": 7587,
+    "sha256": "d0688e9703a183c783db6158db278ca0a645119679a45334eee8a0af408591c0"
+  },
+  {
+    "theme": "element_pack_caos",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_caos/frames/identity-surface.png",
+    "bytes": 65488,
+    "sha256": "662fa30c4a5185bedcd2ad3f444e25677d34e49309a202d6d7fdfd1dade9f456"
+  },
+  {
+    "theme": "element_pack_natura",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_natura/frames/identity-disabled.png",
+    "bytes": 14598,
+    "sha256": "d1339d2ae936fb6769da193d588eb5747701a0842e235bffe1db8848cd92e5f8"
+  },
+  {
+    "theme": "element_pack_natura",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_natura/frames/identity-hover.png",
+    "bytes": 15114,
+    "sha256": "9a3a04e528c3496da0de4c69db89140d322211e4d09449d87100410f0fb2b1f3"
+  },
+  {
+    "theme": "element_pack_natura",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_natura/frames/identity-normal.png",
+    "bytes": 15369,
+    "sha256": "2af66caa170736cf53c1aeccb5b2a62193008399b20b163557483a79ad898e0b"
+  },
+  {
+    "theme": "element_pack_natura",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_natura/frames/identity-pressed.png",
+    "bytes": 14950,
+    "sha256": "2ccd557621d5625fa7a9cc21e035d43f30a9f18b3afbee627ae062a023a88482"
+  },
+  {
+    "theme": "element_pack_natura",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_natura/frames/identity-selected.png",
+    "bytes": 15456,
+    "sha256": "074199a0d31cc05d5811e320cdbe1eaa137b6bfdab0bf160098e39ae28a635a7"
+  },
+  {
+    "theme": "element_pack_natura",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_natura/frames/identity-surface.png",
+    "bytes": 64642,
+    "sha256": "8495112b7e8d975d9da26bc54ae109118f5c49ec77aa6c25ebac0488ef2bbe2e"
+  },
+  {
+    "theme": "element_pack_pianta",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_pianta/frames/identity-disabled.png",
+    "bytes": 15516,
+    "sha256": "51cedd170f9a7608cb0f06d8d2505d66bd2577afe33588d62c3adf18ab4022f3"
+  },
+  {
+    "theme": "element_pack_pianta",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_pianta/frames/identity-hover.png",
+    "bytes": 16353,
+    "sha256": "fd0793239bd0d2a333b84ea4622b54be890c026b3b304c13ce5b22e4362e7e3f"
+  },
+  {
+    "theme": "element_pack_pianta",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_pianta/frames/identity-normal.png",
+    "bytes": 16298,
+    "sha256": "7a1796edfc52e75dbe7a2858ef197065ab7c380af676a540509129202d776289"
+  },
+  {
+    "theme": "element_pack_pianta",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_pianta/frames/identity-pressed.png",
+    "bytes": 16022,
+    "sha256": "44ac209b27addb854d7cbf3c74e87a376a75669816f177e80cd8be7b32b22a37"
+  },
+  {
+    "theme": "element_pack_pianta",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_pianta/frames/identity-selected.png",
+    "bytes": 16687,
+    "sha256": "6883e20a1fa81e77cfc9a285368f91fc514c611f95c9f1b01e319340b44e3f23"
+  },
+  {
+    "theme": "element_pack_pianta",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_pianta/frames/identity-surface.png",
+    "bytes": 65130,
+    "sha256": "980b0be2a302c9efc18cb03990b343727f97a2dcf52c64eb30493071f003e464"
+  },
+  {
+    "theme": "element_pack_bestiale",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_bestiale/frames/identity-disabled.png",
+    "bytes": 15910,
+    "sha256": "d9fd86c83461796b6e5cbfb658e411077a5d0491b0c9fbc7e0d0d829bf3ab007"
+  },
+  {
+    "theme": "element_pack_bestiale",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_bestiale/frames/identity-hover.png",
+    "bytes": 16517,
+    "sha256": "e89521209e01124dfeaaa10c6e859fb09c9f6b6770051f89c548ac9ddd2afa0e"
+  },
+  {
+    "theme": "element_pack_bestiale",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_bestiale/frames/identity-normal.png",
+    "bytes": 16945,
+    "sha256": "5a910a50c7c3a51e07fc6707de139e5fe8063f8b0d6898145b1cdb9e903833b1"
+  },
+  {
+    "theme": "element_pack_bestiale",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_bestiale/frames/identity-pressed.png",
+    "bytes": 16334,
+    "sha256": "326b8354b9918aa8debf1a9d2708fd8f1124a367fc60e906d8c3f891f16f150d"
+  },
+  {
+    "theme": "element_pack_bestiale",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_bestiale/frames/identity-selected.png",
+    "bytes": 17164,
+    "sha256": "16065c7584ac79309f3b021763a003e3cf665f39d06e8641f2da2faa3756ddd8"
+  },
+  {
+    "theme": "element_pack_bestiale",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_bestiale/frames/identity-surface.png",
+    "bytes": 64808,
+    "sha256": "79c9bfa315ffeba2cf6afd33bb5f2b2c134ffccf0b7f6ced398c7abf1c2d7bb5"
+  },
+  {
+    "theme": "element_pack_maledizione",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_maledizione/frames/identity-disabled.png",
+    "bytes": 5862,
+    "sha256": "79f76cd64a709b9046cdb9df8c69b5b1a14404d62ae26882ea7dfe5d9f073183"
+  },
+  {
+    "theme": "element_pack_maledizione",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_maledizione/frames/identity-hover.png",
+    "bytes": 6970,
+    "sha256": "989145fa3e3fa3629512e8a420747cca634ee4fca2e16dff17756a8f7746dec3"
+  },
+  {
+    "theme": "element_pack_maledizione",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_maledizione/frames/identity-normal.png",
+    "bytes": 7040,
+    "sha256": "e8b200ab710708ef82dac39859b2e4cc0d66dc2e67f6d789ea8ce40d6b580dbf"
+  },
+  {
+    "theme": "element_pack_maledizione",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_maledizione/frames/identity-pressed.png",
+    "bytes": 6661,
+    "sha256": "e86bdd349bca1122878b25eab4cac76a99bee4513dadcaa31b2133e99adbecf6"
+  },
+  {
+    "theme": "element_pack_maledizione",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_maledizione/frames/identity-selected.png",
+    "bytes": 7165,
+    "sha256": "1e8dea8736a85abf415fc3466fbcb167476f8868c7bd6dcd04b9c6f88358a989"
+  },
+  {
+    "theme": "element_pack_maledizione",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_maledizione/frames/identity-surface.png",
+    "bytes": 63209,
+    "sha256": "5988061ebb523bffb164b46668c568782968934aabd7006d0047f59a58c3420e"
+  },
+  {
+    "theme": "element_pack_benedizione",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_benedizione/frames/identity-disabled.png",
+    "bytes": 7928,
+    "sha256": "c173704702a39e65c67621d8f4db0807aa973203518c02b6147fb17d48cdab87"
+  },
+  {
+    "theme": "element_pack_benedizione",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_benedizione/frames/identity-hover.png",
+    "bytes": 9694,
+    "sha256": "7481ef457e0bfe35b5a2c086f54ed5ffd4aae8c879103fb388fac1d38db22493"
+  },
+  {
+    "theme": "element_pack_benedizione",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_benedizione/frames/identity-normal.png",
+    "bytes": 9806,
+    "sha256": "7685744a760ef6e011066dff9a6c6ae21984119c07507305e4e95d1c368959c9"
+  },
+  {
+    "theme": "element_pack_benedizione",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_benedizione/frames/identity-pressed.png",
+    "bytes": 9867,
+    "sha256": "661a20142acb4084dd054933ae5f5c1801fdce62058a1cbcb0accb37a002ba04"
+  },
+  {
+    "theme": "element_pack_benedizione",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_benedizione/frames/identity-selected.png",
+    "bytes": 10229,
+    "sha256": "0febf338bb58190ff93987890bca965cb7ada61c3ca32b3d2d138121b9f4c16d"
+  },
+  {
+    "theme": "element_pack_benedizione",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_benedizione/frames/identity-surface.png",
+    "bytes": 30580,
+    "sha256": "cd9d6e023c3e4dcd245b5aa87f6de9940216ed3d81d5dd0032510683445b1134"
+  },
+  {
+    "theme": "element_pack_cura",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_cura/frames/identity-disabled.png",
+    "bytes": 15076,
+    "sha256": "f21148e2d604979aa940940bcc728053d3547865f98edf05c453099dca6de14c"
+  },
+  {
+    "theme": "element_pack_cura",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_cura/frames/identity-hover.png",
+    "bytes": 15539,
+    "sha256": "3714915b34f11037904d5bf3026243df426d2fceebf3ee2a46d31c9fa3f0a631"
+  },
+  {
+    "theme": "element_pack_cura",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_cura/frames/identity-normal.png",
+    "bytes": 15618,
+    "sha256": "16a09dff9dcc339c65b23fe8cb6867473be1a5f748973e2981a7b9a9d4d6149f"
+  },
+  {
+    "theme": "element_pack_cura",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_cura/frames/identity-pressed.png",
+    "bytes": 15219,
+    "sha256": "72b27865c6e277d13f12ed2181f8d9b1ece863e6b094fb56558a4dff3d224ffc"
+  },
+  {
+    "theme": "element_pack_cura",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_cura/frames/identity-selected.png",
+    "bytes": 15958,
+    "sha256": "d488a76fb47fb2314cd5f45509f581d858da73f322d13dc23a8979c2afb2ce0b"
+  },
+  {
+    "theme": "element_pack_cura",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_cura/frames/identity-surface.png",
+    "bytes": 64858,
+    "sha256": "3bb0f3218f8f875dc3e86fa47572a17493df0a8434c1635d8f421ff19a2203d2"
+  },
+  {
+    "theme": "element_pack_vero",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_vero/frames/identity-disabled.png",
+    "bytes": 6478,
+    "sha256": "44e102989c5c5b14a4be91b2cc6b84e97e2b11b7d174a39fbaec02d18d2cb6dd"
+  },
+  {
+    "theme": "element_pack_vero",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_vero/frames/identity-hover.png",
+    "bytes": 7514,
+    "sha256": "30ab14fe6d19b10f268f4216e79bf5291ce637fd2245355bd5489150f8ae0046"
+  },
+  {
+    "theme": "element_pack_vero",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_vero/frames/identity-normal.png",
+    "bytes": 7611,
+    "sha256": "7ab78d5efae3b9b9a87b11a7bd6b30297179aeceae51b13c2b7701dfa2765760"
+  },
+  {
+    "theme": "element_pack_vero",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_vero/frames/identity-pressed.png",
+    "bytes": 7394,
+    "sha256": "402078f3e5ee6631bd39c431c1d0b58416844926f491c0e513218cd2f8c2cf00"
+  },
+  {
+    "theme": "element_pack_vero",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_vero/frames/identity-selected.png",
+    "bytes": 7936,
+    "sha256": "1be32c75d30474bf7097a87cda85cbd5107882602182587f52df84481126167f"
+  },
+  {
+    "theme": "element_pack_vero",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_vero/frames/identity-surface.png",
+    "bytes": 64056,
+    "sha256": "d79a9238e06ded611cd41b9e0e18a269910581d9051e3ae3a5161f707a19983b"
+  },
+  {
+    "theme": "element_pack_sconosciuto",
+    "role": "identity-disabled",
+    "path": "assets/themes/element_pack_sconosciuto/frames/identity-disabled.png",
+    "bytes": 5997,
+    "sha256": "26d8289488433fc6049907a9b8f20f2252efa11813a708803305949383ea636d"
+  },
+  {
+    "theme": "element_pack_sconosciuto",
+    "role": "identity-hover",
+    "path": "assets/themes/element_pack_sconosciuto/frames/identity-hover.png",
+    "bytes": 6988,
+    "sha256": "e1e44627ec76b350a5f9882da642360cb6a88144a8bf15c63daefe9d7bfdb24a"
+  },
+  {
+    "theme": "element_pack_sconosciuto",
+    "role": "identity-normal",
+    "path": "assets/themes/element_pack_sconosciuto/frames/identity-normal.png",
+    "bytes": 7044,
+    "sha256": "fcce0b693cfbaeed5a6def4581a27d5fb187718dc6fd4c06f5a19cd87d0a637c"
+  },
+  {
+    "theme": "element_pack_sconosciuto",
+    "role": "identity-pressed",
+    "path": "assets/themes/element_pack_sconosciuto/frames/identity-pressed.png",
+    "bytes": 6717,
+    "sha256": "1fe7b8b498ac65235637a20024daaf7c5571bf2100956aa828c9b41531ee9945"
+  },
+  {
+    "theme": "element_pack_sconosciuto",
+    "role": "identity-selected",
+    "path": "assets/themes/element_pack_sconosciuto/frames/identity-selected.png",
+    "bytes": 7185,
+    "sha256": "3681f910a0acbe1ad325ac58089991788ebabe578e34f2292b7a32ece0029576"
+  },
+  {
+    "theme": "element_pack_sconosciuto",
+    "role": "identity-surface",
+    "path": "assets/themes/element_pack_sconosciuto/frames/identity-surface.png",
+    "bytes": 65561,
+    "sha256": "5ac944693815ca94bb59e74577ca61e4fe39cdc41c15a682e61d642a0e6c9cac"
+  },
+  {
+    "theme": "canva_ice",
+    "role": "identity-disabled",
+    "path": "assets/themes/canva_ice/frames/identity-disabled.png",
+    "bytes": 54224,
+    "sha256": "361ccf261838f9a40ace0048e521e942b06478585a12634443edbed753528ec3"
+  },
+  {
+    "theme": "canva_ice",
+    "role": "identity-hover",
+    "path": "assets/themes/canva_ice/frames/identity-hover.png",
+    "bytes": 53740,
+    "sha256": "a2fa77fed11692361cf46a55a2016c9ea885dec225152945e6ce14f4d8a79ee5"
+  },
+  {
+    "theme": "canva_ice",
+    "role": "identity-normal",
+    "path": "assets/themes/canva_ice/frames/identity-normal.png",
+    "bytes": 53678,
+    "sha256": "4158baa88edafbc4992c53a283d92143fc9f65426327b41234902bdf197f8309"
+  },
+  {
+    "theme": "canva_ice",
+    "role": "identity-pressed",
+    "path": "assets/themes/canva_ice/frames/identity-pressed.png",
+    "bytes": 53252,
+    "sha256": "319df3421d1c2e5f3fef5e51c548456f2385c93f2932ab12085a1aa534efacb6"
+  },
+  {
+    "theme": "canva_ice",
+    "role": "identity-selected",
+    "path": "assets/themes/canva_ice/frames/identity-selected.png",
+    "bytes": 53407,
+    "sha256": "a1f7dbf2dbcfd62f38d67109c285d40d22a1402e9984c0ce2df2c91bba733681"
+  },
+  {
+    "theme": "canva_ice",
+    "role": "identity-surface",
+    "path": "assets/themes/canva_ice/frames/identity-surface.png",
+    "bytes": 63993,
+    "sha256": "089c826ce39a865b0e2a8fe35fd94ee0bc10efd072384ac088f5ed8b81f75657"
+  },
+  {
+    "theme": "canva_spirit",
+    "role": "identity-disabled",
+    "path": "assets/themes/canva_spirit/frames/identity-disabled.png",
+    "bytes": 53788,
+    "sha256": "a4866baf0980118c8af81c9403dc9d91f18ffc6a634f27853d224301c6b89037"
+  },
+  {
+    "theme": "canva_spirit",
+    "role": "identity-hover",
+    "path": "assets/themes/canva_spirit/frames/identity-hover.png",
+    "bytes": 52895,
+    "sha256": "11f260ccf385a774de181225723963bfa7fda95257bee50414e4ca14eb54202b"
+  },
+  {
+    "theme": "canva_spirit",
+    "role": "identity-normal",
+    "path": "assets/themes/canva_spirit/frames/identity-normal.png",
+    "bytes": 53943,
+    "sha256": "802f898790747ab352277735a504036248dfb52f615a884eba0b85f7a004e213"
+  },
+  {
+    "theme": "canva_spirit",
+    "role": "identity-pressed",
+    "path": "assets/themes/canva_spirit/frames/identity-pressed.png",
+    "bytes": 53333,
+    "sha256": "ca8187d16c6c2a3b9e04d090dad5639076b60ed17b0e84148387b5401a560fab"
+  },
+  {
+    "theme": "canva_spirit",
+    "role": "identity-selected",
+    "path": "assets/themes/canva_spirit/frames/identity-selected.png",
+    "bytes": 53495,
+    "sha256": "698cea0db196e1e01218e683b201d6933e5c80fd78cb8709f38cc02c7c0198f1"
+  },
+  {
+    "theme": "canva_spirit",
+    "role": "identity-surface",
+    "path": "assets/themes/canva_spirit/frames/identity-surface.png",
+    "bytes": 30360,
+    "sha256": "b7d4e90291c38c451158a3926f734b82951a7f7d8bebe7d4fdbf3f0dd6794f66"
+  },
+  {
+    "theme": "canva_physical",
+    "role": "identity-disabled",
+    "path": "assets/themes/canva_physical/frames/identity-disabled.png",
+    "bytes": 76203,
+    "sha256": "71abf6072976ca94201dc3a64c21661fb0c25afa450e05a08f9cb80aeaf454c6"
+  },
+  {
+    "theme": "canva_physical",
+    "role": "identity-hover",
+    "path": "assets/themes/canva_physical/frames/identity-hover.png",
+    "bytes": 73355,
+    "sha256": "3ac26e4c79ecd3782749f8b91a8d6e9300984cf4502c8d8e2c758742d9859ad2"
+  },
+  {
+    "theme": "canva_physical",
+    "role": "identity-normal",
+    "path": "assets/themes/canva_physical/frames/identity-normal.png",
+    "bytes": 75710,
+    "sha256": "96073a2a30352e4708562b52a74ba8a550c0c50df3dc54f886abd61d8c60be73"
+  },
+  {
+    "theme": "canva_physical",
+    "role": "identity-pressed",
+    "path": "assets/themes/canva_physical/frames/identity-pressed.png",
+    "bytes": 75545,
+    "sha256": "fd9756f0a74ce1ae132eab7877c45bc15070f9a4836306011fdebc9b48d284ed"
+  },
+  {
+    "theme": "canva_physical",
+    "role": "identity-selected",
+    "path": "assets/themes/canva_physical/frames/identity-selected.png",
+    "bytes": 76280,
+    "sha256": "c66d193bc901c1658f6c58c42506cd76919eb1aa6fd655e77706a3e3f729aa90"
+  },
+  {
+    "theme": "canva_physical",
+    "role": "identity-surface",
+    "path": "assets/themes/canva_physical/frames/identity-surface.png",
+    "bytes": 63123,
+    "sha256": "aec6358c640de8d1d9f3c6b8d1bf4ed625704cad00a4e28bdbf4acf729592eaa"
   }
 ]

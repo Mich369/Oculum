@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'oculum_theme_presentation.dart';
 import 'oculum_element_theme_registry.dart';
+import 'oculum_theme_identity.dart';
 
 enum OculumGothFamily {
   none,
@@ -19,13 +20,18 @@ enum OculumGothFamily {
   spirit,
 }
 
-String oculumMaterialTexture(OculumGothOrnaments spec) {
+String oculumMaterialTexture(OculumGothOrnaments spec, {String? artPackId}) {
   final id = spec.themeId;
   final element = id.startsWith('element_pack_')
       ? id.substring(13)
       : id.startsWith('element_')
       ? id.substring(8)
       : '';
+  final identity =
+      oculumThemeIdentities[artPackId] ??
+      oculumThemeIdentities[id] ??
+      oculumThemeIdentities[oculumElementThemePackIds[element]];
+  if (identity != null) return identity.surface;
   final elementalMaterial = oculumElementThemeMaterials[element];
   if (elementalMaterial != null) {
     return 'assets/themes/materials/$elementalMaterial.png';
@@ -441,6 +447,13 @@ class _OculumGothAmbienceState extends State<OculumGothAmbience>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    oculumThemePresentation.addListener(_presentationChanged);
+  }
+
+  void _presentationChanged() {
+    if (!mounted) return;
+    _motion();
+    setState(() {});
   }
 
   @override
@@ -489,6 +502,7 @@ class _OculumGothAmbienceState extends State<OculumGothAmbience>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    oculumThemePresentation.removeListener(_presentationChanged);
     clock.dispose();
     super.dispose();
   }
@@ -506,14 +520,17 @@ class _OculumGothAmbienceState extends State<OculumGothAmbience>
               child: RepaintBoundary(
                 child: Opacity(
                   opacity: switch (widget.spec.family) {
-                    OculumGothFamily.ash => .13,
-                    OculumGothFamily.wood => .11,
-                    _ => .06,
+                    OculumGothFamily.ash => .16,
+                    OculumGothFamily.wood => .14,
+                    _ => .09,
                   },
                   child: AnimatedSwitcher(
                     duration: _themeTransitionDuration(context),
                     child: Image.asset(
-                      oculumMaterialTexture(widget.spec),
+                      oculumMaterialTexture(
+                        widget.spec,
+                        artPackId: oculumThemePresentation.value.artPackId,
+                      ),
                       width: double.infinity,
                       height: double.infinity,
                       key: ValueKey(

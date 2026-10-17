@@ -60,7 +60,7 @@ void main() {
         codec.dispose();
       }
     }
-  });
+  }, timeout: const Timeout(Duration(minutes: 2)));
 
   testWidgets(
     'native buttons retain keyboard activation and disabled behavior',

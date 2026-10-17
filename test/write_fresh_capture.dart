@@ -1,9 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
 
-/// Windows may keep a previously viewed PNG mapped. Preserve the fresh capture
+/// Windows may keep a previously viewed artifact mapped. Preserve the fresh file
 /// under a unique name in the same artifact directory instead of losing it.
-void writeFreshCapture(File file, Uint8List bytes) {
+void writeFreshCapture(File file, List<int> bytes) {
   try {
     file.writeAsBytesSync(bytes);
   } on FileSystemException catch (error) {
@@ -14,7 +13,7 @@ void writeFreshCapture(File file, Uint8List bytes) {
     );
     fresh.writeAsBytesSync(bytes);
     stderr.writeln(
-      'Fresh capture: ${fresh.path} (previous PNG mapped by Windows).',
+      'Fresh capture: ${fresh.path} (previous artifact mapped by Windows).',
     );
   }
 }

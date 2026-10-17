@@ -78,7 +78,7 @@ const oculumElementThemeStyles = <String, String>{
   'cristallo': 'frost',
   'oscuro': 'cathedral',
   'lunare': 'lunar',
-  'solare': 'lunar',
+  'solare': 'ember',
   'vapium': 'bolted_metal',
   'osso': 'cathedral',
   'gravita': 'sigil',

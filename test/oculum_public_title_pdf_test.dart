@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
+import 'write_fresh_capture.dart';
 
 void main() {
   test('visible title preserves zero Oculum and all awarded points', () {
@@ -262,7 +263,7 @@ void main() {
         final bytes = await probe.oculusFilledPdf();
         expect(bytes.length, greaterThan(10000));
         Directory('output/pdf').createSync(recursive: true);
-        File('output/pdf/Oculus_PG_verifica.pdf').writeAsBytesSync(bytes);
+        writeFreshCapture(File('output/pdf/Oculus_PG_verifica.pdf'), bytes);
       });
       probe.cancelPendingSave();
       await tester.pumpWidget(const SizedBox.shrink());

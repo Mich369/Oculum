@@ -1,0 +1,1272 @@
+[
+  {
+    "id": "classic_reliquary",
+    "name": "Classic Oculum",
+    "material": "ivory",
+    "motif": "sigillo inciso in rame, montatura d osso",
+    "motion": "halo",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "classic_rpg",
+    "name": "Classic RPG",
+    "material": "stone",
+    "motif": "scudo araldico e fibbie di cuoio inciso",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "classic_low_detail",
+    "name": "Classic low detail",
+    "material": "stone",
+    "motif": "sigillo inciso compatto",
+    "motion": "none",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "blood_court",
+    "name": "Corte di sangue",
+    "material": "charred",
+    "motif": "corona spinata e calice di essenza",
+    "motion": "blood",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "witch_glass",
+    "name": "Vetro strega",
+    "material": "acid",
+    "motif": "ampolle sospese e vetro incrinato",
+    "motion": "bubbles",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "moon_iron",
+    "name": "Ferro lunare",
+    "material": "astral",
+    "motif": "falce lunare incastonata in ferro",
+    "motion": "orbit",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": "sun"
+  },
+  {
+    "id": "lunar_eclipse",
+    "name": "Eclissi lunare",
+    "material": "astral",
+    "motif": "disco eclissato e orbite spezzate",
+    "motion": "orbit",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": "sun"
+  },
+  {
+    "id": "cathedral_rose",
+    "name": "Rosa cattedrale",
+    "material": "bark",
+    "motif": "rosone a petali e vetro piombato",
+    "motion": "leaves",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "thorn_vigil",
+    "name": "Veglia di rovi",
+    "material": "bark",
+    "motif": "rovi annodati e sigillo trafitto",
+    "motion": "roots",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "frost_chapel",
+    "name": "Cappella di brina",
+    "material": "crystal",
+    "motif": "occhio congelato e schegge di cappella",
+    "motion": "prism",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "obsidian_sigil",
+    "name": "Sigillo ossidiana",
+    "material": "crystal",
+    "motif": "ossidiana fratturata e glifo sospeso",
+    "motion": "prism",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "solar_reliquary",
+    "name": "Reliquiario solare",
+    "material": "charred",
+    "motif": "reliquiario radiale e raggi consumati",
+    "motion": "rays",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": "moon"
+  },
+  {
+    "id": "storm_cathedral",
+    "name": "Cattedrale tempesta",
+    "material": "stone",
+    "motif": "guglie spezzate e parafulmini rituali",
+    "motion": "lightning",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "abyssal_tide",
+    "name": "Marea abissale",
+    "material": "water",
+    "motif": "conchiglia infranta e tentacoli perlacei",
+    "motion": "waves",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "ember_rite",
+    "name": "Rito di brace",
+    "material": "charred",
+    "motif": "pietra carbonizzata e cera rituale",
+    "motion": "sparks",
+    "source": "canva-20261017/adobe-fire-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "ivory_archive",
+    "name": "Archivio d avorio",
+    "material": "ivory",
+    "motif": "fogli arrotolati e fermagli d'avorio",
+    "motion": "halo",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "vervain_gothic",
+    "name": "Vervain",
+    "material": "bark",
+    "motif": "occhio fra radici e fiori di verbena",
+    "motion": "petals",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "kingi_wrong_future",
+    "name": "Kingi",
+    "material": "metal",
+    "motif": "ingranaggi deformi e occhio meccanico",
+    "motion": "clock",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "blood_chapel",
+    "name": "Cappella di sangue",
+    "material": "charred",
+    "motif": "arco osseo e reliquia sanguigna",
+    "motion": "blood",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "null_crown",
+    "name": "Corona nulla",
+    "material": "stone",
+    "motif": "corona incompleta sospesa nel vuoto",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "phobia_dark",
+    "name": "Phobia",
+    "material": "water",
+    "motif": "iride osservatrice e fenditura oscura",
+    "motion": "waves",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "whispering_reliquary",
+    "name": "Reliquiario dei sussurri",
+    "material": "stone",
+    "motif": "bocche sigillate e nastri reliquiario",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "black_briar_kingdom",
+    "name": "Regno del rovo nero",
+    "material": "bark",
+    "motif": "stemma soffocato dal rovo nero",
+    "motion": "roots",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "slime_prince",
+    "name": "Principe slime",
+    "material": "water",
+    "motif": "corona galleggiante e gelatina regale",
+    "motion": "bubbles",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "moon_rot",
+    "name": "Luna marcia",
+    "material": "astral",
+    "motif": "luna corrosa e funghi lunari",
+    "motion": "orbit",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": "sun"
+  },
+  {
+    "id": "obser_relic",
+    "name": "Reliquia Obser",
+    "material": "metal",
+    "motif": "moneta perforata e bilancia rituale",
+    "motion": "glint",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "deep_forest_demon",
+    "name": "Demone del bosco profondo",
+    "material": "bark",
+    "motif": "corna ramificate e corteccia demoniaca",
+    "motion": "leaves",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "astral_ink",
+    "name": "Inchiostro astrale",
+    "material": "astral",
+    "motif": "calamaio cosmico e scie calligrafiche",
+    "motion": "stars",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "bone_saint",
+    "name": "Santo d osso",
+    "material": "spirit",
+    "motif": "aureola di vertebre e osso scolpito",
+    "motion": "souls",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "medieval_keep",
+    "name": "Mastio medievale",
+    "material": "stone",
+    "motif": "merli di pietra e stendardo logoro",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "fortezza_oculum",
+    "name": "Fortezza Oculum",
+    "material": "metal",
+    "motif": "bastione oculare e cancelli runici",
+    "motion": "glint",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "hoshy_cosmic_cat",
+    "name": "Hoshy gatto cosmico",
+    "material": "astral",
+    "motif": "gatto etereo e coda di costellazioni",
+    "motion": "stars",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "ash_oracle",
+    "name": "Oracolo di cenere",
+    "material": "ash",
+    "motif": "maschera profetica e cenere raccolta",
+    "motion": "ash",
+    "source": "canva-20261017/ash-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "void_liturgy",
+    "name": "Liturgia del vuoto",
+    "material": "astral",
+    "motif": "cerchio liturgico incompleto e velario",
+    "motion": "stars",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "shadow_gate_rank",
+    "name": "Porta d ombra",
+    "material": "astral",
+    "motif": "portale a gradini e catene d'ombra",
+    "motion": "stars",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "postea_bloom",
+    "name": "Postea errante",
+    "material": "bark",
+    "motif": "reliquia errante e boccioli metallici",
+    "motion": "petals",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "karma_duality",
+    "name": "Bilancia del karma",
+    "material": "astral",
+    "motif": "due occhi sulla bilancia spezzata",
+    "motion": "stars",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "monster_lantern",
+    "name": "Lanterna dei mostri",
+    "material": "stone",
+    "motif": "lanterna con silhouette prigioniera",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "jrpg_legend",
+    "name": "Leggenda JRPG",
+    "material": "stone",
+    "motif": "lama cerimoniale e cristallo custodito",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "rogue_mutation",
+    "name": "Mutazione Roguelike",
+    "material": "water",
+    "motif": "occhio mutante e membrane irregolari",
+    "motion": "waves",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "cell_crimson_run",
+    "name": "Cella cremisi",
+    "material": "metal",
+    "motif": "sbarre infrante e catene cremisi",
+    "motion": "glint",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "darkest_stagecoach",
+    "name": "Carrozza cupa",
+    "material": "metal",
+    "motif": "ruota scheggiata e lanterna di viaggio",
+    "motion": "glint",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "buried_herbarium",
+    "name": "Erbario sepolto",
+    "material": "wood",
+    "motif": "legno inciso, radici e fiori custoditi",
+    "motion": "roots",
+    "source": "canva-20261017/wood-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "funeral_clockwork",
+    "name": "Orologeria funebre",
+    "material": "metal",
+    "motif": "ottone brunito, quadranti e giunture",
+    "motion": "clock",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "tidal_stained_glass",
+    "name": "Vetrata delle maree",
+    "material": "crystal",
+    "motif": "vetro marino piombato e madreperla",
+    "motion": "prism",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "ashen_covenant",
+    "name": "Patto di cenere",
+    "material": "ash",
+    "motif": "sigillo giurato e tessuto bruciato",
+    "motion": "ash",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "eclipse_bonfire",
+    "name": "Falò d eclissi",
+    "material": "charred",
+    "motif": "falò dentro una mezzaluna consumata",
+    "motion": "sparks",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "bolted_black_iron",
+    "name": "Metallo nero bullonato",
+    "material": "metal",
+    "motif": "placche nere e catene bullonate",
+    "motion": "glint",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "bolted_gold_plate",
+    "name": "Metallo oro bullonato",
+    "material": "metal",
+    "motif": "placche auree e sigillo regale",
+    "motion": "glint",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "bolted_copper_oxide",
+    "name": "Rame ossidato bullonato",
+    "material": "metal",
+    "motif": "rame ossidato e tubi rituali",
+    "motion": "glint",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "bolted_silver_plate",
+    "name": "Metallo argento bullonato",
+    "material": "metal",
+    "motif": "argento martellato e lenti oculari",
+    "motion": "glint",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "meadow_sprite",
+    "name": "Folletto di prato",
+    "material": "bark",
+    "motif": "folletto nascosto e erbe intrecciate",
+    "motion": "petals",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "aurora_moth",
+    "name": "Falena aurora",
+    "material": "dream",
+    "motif": "falena dalle ali traforate e antenna lunare",
+    "motion": "clouds",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "modern_school_day",
+    "name": "Giorno di scuola",
+    "material": "stone",
+    "motif": "quaderno oscuro e sigillo sulla copertina",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "vtt_arcane_table",
+    "name": "Tavolo arcano",
+    "material": "stone",
+    "motif": "tavolo rituale e pedine runiche",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "vtt_obsidian_grid",
+    "name": "Griglia ossidiana",
+    "material": "crystal",
+    "motif": "tessere d'ossidiana e giunture incise",
+    "motion": "prism",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "vtt_parchment_layers",
+    "name": "Strati pergamena",
+    "material": "stone",
+    "motif": "mappe stratificate e chiodi cartografici",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "vtt_master_overlay",
+    "name": "Overlay del Master",
+    "material": "stone",
+    "motif": "anello del Master e marcatori oculari",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "verdigris_mourning",
+    "name": "Rame sepolto",
+    "material": "bark",
+    "motif": "rame sepolto e catene floreali corrose",
+    "motion": "leaves",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "restyle_legno",
+    "name": "Legno",
+    "material": "wood",
+    "motif": "noce antico, venature e cornici intagliate",
+    "motion": "dust",
+    "source": "canva-20261017/wood-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "restyle_originale",
+    "name": "Originale",
+    "material": "stone",
+    "motif": "occhio cesellato e pergamena annerita",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "restyle_cenere",
+    "name": "Cenere",
+    "material": "ash",
+    "motif": "occhio di pietra e strati di cenere",
+    "motion": "ash",
+    "source": "canva-20261017/ash-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "restyle_sangue",
+    "name": "Sangue",
+    "material": "charred",
+    "motif": "occhio suturato e filo di essenza",
+    "motion": "blood",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "restyle_aurora",
+    "name": "Aurora",
+    "material": "dream",
+    "motif": "occhio ametista e veli aurorali",
+    "motion": "clouds",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "restyle_natura",
+    "name": "Natura",
+    "material": "bark",
+    "motif": "occhio nel seme e radici bronzee",
+    "motion": "roots",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "restyle_lume",
+    "name": "Lume",
+    "material": "charred",
+    "motif": "occhio di cera e candelabro antico",
+    "motion": "sparks",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "restyle_acido",
+    "name": "Acido",
+    "material": "acid",
+    "motif": "vetro tossico, colature chartreuse e schegge ametista",
+    "motion": "acid",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "restyle_sogno",
+    "name": "Sogno",
+    "material": "dream",
+    "motif": "nuvole stratificate blu, viola e rosa pastello",
+    "motion": "clouds",
+    "source": "canva-20261017/dream-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "restyle_spiritualita",
+    "name": "Spiritualità",
+    "material": "spirit",
+    "motif": "velo d anime e luce bianca",
+    "motion": "souls",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_taglio",
+    "name": "Lame del silenzio",
+    "material": "metal",
+    "motif": "Lame del silenzio",
+    "motion": "glint",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_perforante",
+    "name": "Spine del bastione",
+    "material": "metal",
+    "motif": "Spine del bastione",
+    "motion": "glint",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_contundente",
+    "name": "Forgia infranta",
+    "material": "stone",
+    "motif": "Forgia infranta",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_fuoco",
+    "name": "Braci discendenti",
+    "material": "charred",
+    "motif": "Braci discendenti",
+    "motion": "sparks",
+    "source": "canva-20261017/adobe-fire-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_vento",
+    "name": "Nastri della burrasca",
+    "material": "astral",
+    "motif": "Nastri della burrasca",
+    "motion": "wind",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_acqua",
+    "name": "Reliquia della risacca",
+    "material": "water",
+    "motif": "Reliquia della risacca",
+    "motion": "waves",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_terra",
+    "name": "Strati del monolite",
+    "material": "stone",
+    "motif": "Strati del monolite",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_sonoro",
+    "name": "Diapason delle cripte",
+    "material": "metal",
+    "motif": "Diapason delle cripte",
+    "motion": "sound",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_psichico",
+    "name": "Labirinto della mente",
+    "material": "astral",
+    "motif": "Labirinto della mente",
+    "motion": "pulse",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_lava",
+    "name": "Faglia incandescente",
+    "material": "charred",
+    "motif": "Faglia incandescente",
+    "motion": "molten",
+    "source": "canva-20261017/adobe-fire-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_fulmine",
+    "name": "Guglie del temporale",
+    "material": "metal",
+    "motif": "Guglie del temporale",
+    "motion": "lightning",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_veleno",
+    "name": "Veleno del serpente",
+    "material": "acid",
+    "motif": "Veleno del serpente",
+    "motion": "vapor",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_cenere",
+    "name": "Polvere dei giuramenti",
+    "material": "ash",
+    "motif": "Polvere dei giuramenti",
+    "motion": "ash",
+    "source": "canva-20261017/ash-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_sangue",
+    "name": "Vasi della corte",
+    "material": "water",
+    "motif": "Vasi della corte",
+    "motion": "blood",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_cristallo",
+    "name": "Prisma spezzato",
+    "material": "crystal",
+    "motif": "Prisma spezzato",
+    "motion": "prism",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_oscuro",
+    "name": "Velo senza luce",
+    "material": "astral",
+    "motif": "Velo senza luce",
+    "motion": "shadow",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_lunare",
+    "name": "Falci del plenilunio",
+    "material": "astral",
+    "motif": "Falci del plenilunio",
+    "motion": "orbit",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": "sun"
+  },
+  {
+    "id": "element_pack_solare",
+    "name": "Disco del vespro",
+    "material": "charred",
+    "motif": "Disco del vespro",
+    "motion": "rays",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": "moon"
+  },
+  {
+    "id": "element_pack_vapium",
+    "name": "Condotti del respiro",
+    "material": "metal",
+    "motif": "Condotti del respiro",
+    "motion": "steam",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_osso",
+    "name": "Rosario vertebrale",
+    "material": "ivory",
+    "motif": "Rosario vertebrale",
+    "motion": "dust",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_gravita",
+    "name": "Anelli del peso",
+    "material": "astral",
+    "motif": "Anelli del peso",
+    "motion": "gravity",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_vuoto",
+    "name": "Orbita mancante",
+    "material": "astral",
+    "motif": "Orbita mancante",
+    "motion": "void",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_sogno",
+    "name": "Nubi del sonno",
+    "material": "dream",
+    "motif": "Nubi del sonno",
+    "motion": "clouds",
+    "source": "canva-20261017/dream-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_metallo",
+    "name": "Placche del fabbro",
+    "material": "metal",
+    "motif": "Placche del fabbro",
+    "motion": "glint",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_postea",
+    "name": "Circuiti del ritorno",
+    "material": "metal",
+    "motif": "Circuiti del ritorno",
+    "motion": "circuit",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_radice",
+    "name": "Radici del sepolcro",
+    "material": "wood",
+    "motif": "Radici del sepolcro",
+    "motion": "roots",
+    "source": "canva-20261017/wood-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_slime",
+    "name": "Membrane del principe",
+    "material": "acid",
+    "motif": "Membrane del principe",
+    "motion": "bubbles",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_oculum",
+    "name": "Iride cesellata",
+    "material": "metal",
+    "motif": "Iride cesellata",
+    "motion": "iris",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_stella",
+    "name": "Atlante delle stelle",
+    "material": "astral",
+    "motif": "Atlante delle stelle",
+    "motion": "stars",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_corrotto",
+    "name": "Membrana contaminata",
+    "material": "bark",
+    "motif": "Membrana contaminata",
+    "motion": "corruption",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_nonmorto",
+    "name": "Cuciture del ritorno",
+    "material": "ivory",
+    "motif": "Cuciture del ritorno",
+    "motion": "grave",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_acido",
+    "name": "Vetro che cola",
+    "material": "acid",
+    "motif": "Vetro che cola",
+    "motion": "acid",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_sacro",
+    "name": "Navata consacrata",
+    "material": "stone",
+    "motif": "Navata consacrata",
+    "motion": "rays",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_diabolico",
+    "name": "Corna del patto",
+    "material": "charred",
+    "motif": "Corna del patto",
+    "motion": "embers",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_angelico",
+    "name": "Ali del santuario",
+    "material": "ivory",
+    "motif": "Ali del santuario",
+    "motion": "feathers",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_necrotico",
+    "name": "Spore della fine",
+    "material": "bark",
+    "motif": "Spore della fine",
+    "motion": "spores",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_magia",
+    "name": "Sigilli dello stregone",
+    "material": "astral",
+    "motif": "Sigilli dello stregone",
+    "motion": "runes",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_energia",
+    "name": "Nodi della sorgente",
+    "material": "spirit",
+    "motif": "Nodi della sorgente",
+    "motion": "pulse",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_esplosivo",
+    "name": "Raggi dello scoppio",
+    "material": "charred",
+    "motif": "Raggi dello scoppio",
+    "motion": "burst",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_radiazione",
+    "name": "Fissione del vetro",
+    "material": "acid",
+    "motif": "Fissione del vetro",
+    "motion": "radiation",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_plasma",
+    "name": "Filamenti ionici",
+    "material": "charred",
+    "motif": "Filamenti ionici",
+    "motion": "plasma",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_tecnologia",
+    "name": "Circuiti del custode",
+    "material": "metal",
+    "motif": "Circuiti del custode",
+    "motion": "circuit",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_proiettile",
+    "name": "Bossoli del baluardo",
+    "material": "metal",
+    "motif": "Bossoli del baluardo",
+    "motion": "glint",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_laser",
+    "name": "Lenti allineate",
+    "material": "crystal",
+    "motif": "Lenti allineate",
+    "motion": "beam",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_tempo",
+    "name": "Clessidra del lutto",
+    "material": "metal",
+    "motif": "Clessidra del lutto",
+    "motion": "clock",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_spazio",
+    "name": "Portali del firmamento",
+    "material": "astral",
+    "motif": "Portali del firmamento",
+    "motion": "space",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_caos",
+    "name": "Frammenti discordanti",
+    "material": "stone",
+    "motif": "Frammenti discordanti",
+    "motion": "chaos",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_natura",
+    "name": "Rami in fiore",
+    "material": "bark",
+    "motif": "Rami in fiore",
+    "motion": "petals",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_pianta",
+    "name": "Fronda del germoglio",
+    "material": "bark",
+    "motif": "Fronda del germoglio",
+    "motion": "leaves",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_bestiale",
+    "name": "Artigli della tana",
+    "material": "wood",
+    "motif": "Artigli della tana",
+    "motion": "tracks",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_maledizione",
+    "name": "Sigillo incatenato",
+    "material": "metal",
+    "motif": "Sigillo incatenato",
+    "motion": "chains",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_benedizione",
+    "name": "Nastri del voto",
+    "material": "spirit",
+    "motif": "Nastri del voto",
+    "motion": "halo",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_cura",
+    "name": "Erbe del conforto",
+    "material": "wood",
+    "motif": "Erbe del conforto",
+    "motion": "healing",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_vero",
+    "name": "Specchio senza inganno",
+    "material": "crystal",
+    "motif": "Specchio senza inganno",
+    "motion": "clarity",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "element_pack_sconosciuto",
+    "name": "Glifi indecifrati",
+    "material": "stone",
+    "motif": "Glifi indecifrati",
+    "motion": "unknown",
+    "source": "Authored SVG relief plus retained material",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "canva_ice",
+    "name": "Ghiaccio · Canva",
+    "material": "crystal",
+    "motif": "Ghiaccio scolpito e cristalli sospesi",
+    "motion": "prism",
+    "source": "canva-20261016/ice-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "canva_spirit",
+    "name": "Spirituale · Canva",
+    "material": "spirit",
+    "motif": "Alabastro e filamenti d’anime",
+    "motion": "souls",
+    "source": "canva-20261016/spirit-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  },
+  {
+    "id": "canva_physical",
+    "name": "Fisico · Canva",
+    "material": "metal",
+    "motif": "Acciaio martellato e cuoio da battaglia",
+    "motion": "glint",
+    "source": "canva-20261016/physical-frame.png",
+    "safeBand": 48,
+    "opposition": null
+  }
+]

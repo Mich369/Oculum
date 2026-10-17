@@ -4,6 +4,7 @@ import 'oculum_goth_ornaments.dart';
 import 'oculum_theme_presentation.dart';
 import 'oculum_theme_relic.dart';
 import 'oculum_element_ambient_art.dart';
+import 'oculum_theme_identity.dart';
 
 enum OculumThemeFrameRole { panel, portrait, statistics }
 
@@ -36,12 +37,14 @@ class OculumThemeSheetFrame extends StatelessWidget {
                 : mobile
                 ? 'mobile'
                 : 'panel';
-            final slice = switch (name) {
-              'portrait' => const Rect.fromLTRB(48, 48, 208, 208),
-              'statistics' => const Rect.fromLTRB(48, 48, 208, 144),
-              'mobile' => const Rect.fromLTRB(96, 48, 544, 272),
-              _ => const Rect.fromLTRB(128, 64, 896, 448),
-            };
+            const slice = Rect.fromLTRB(128, 64, 896, 448);
+            final scale = math.max(
+              compact ? 8.0 : 4.0,
+              math.max(
+                256 / math.max(1, constraints.maxWidth),
+                128 / math.max(1, constraints.maxHeight),
+              ),
+            );
             final variant = presentation.variant.name;
             return Stack(
               fit: StackFit.passthrough,
@@ -55,16 +58,16 @@ class OculumThemeSheetFrame extends StatelessWidget {
                         child: Opacity(
                           opacity: presentation.relicOpacity,
                           child: Image.asset(
-                            pack.frame(name, variant: variant),
+                            pack.identityFrame,
                             key: ValueKey(
                               'theme-sheet-frame-${pack.id}-$name-$variant',
                             ),
-                            scale: 2,
+                            scale: scale,
                             centerSlice: Rect.fromLTRB(
-                              slice.left / 2,
-                              slice.top / 2,
-                              slice.right / 2,
-                              slice.bottom / 2,
+                              slice.left / scale,
+                              slice.top / scale,
+                              slice.right / scale,
+                              slice.bottom / scale,
                             ),
                             fit: BoxFit.fill,
                             // Keep native pixels for nine-slice geometry. These
@@ -220,6 +223,7 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
         final variant = presentation.variant.name;
         final mobile = MediaQuery.sizeOf(context).width < 600;
         final element = oculumElementForArtPack(pack.id);
+        final identity = oculumThemeIdentities[pack.id];
         final animated =
             spec.motion &&
             presentation.motion != OculumThemeMotion.disabled &&
@@ -278,13 +282,16 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
                           );
                         },
                       ),
-                      if (element != null && animated)
+                      if (animated && identity?.motion != 'none')
                         Positioned.fill(
                           child: CustomPaint(
-                            key: ValueKey('element-ambient-$element'),
+                            key: ValueKey(
+                              'element-ambient-${element ?? pack.id}',
+                            ),
                             painter: OculumElementAmbientPainter(
                               clock: clock,
-                              element: element,
+                              element: element ?? pack.id,
+                              motion: identity?.motion,
                               color: spec.accent,
                               reduced:
                                   presentation.motion ==
