@@ -48,6 +48,10 @@ I requisiti sono livello 0 / 3 / 6. Il controllo si può evitare col tiro difens
 
 ### Aggiornamenti del 18 ottobre
 
+- La risposta difensiva include una ricevuta delle risorse effettivamente perse: Scudo Oculum, Scudo normale, HP temporanei e Vita. Il bersaglio la registra nel log e l'attaccante la riceve con l'esito; non vengono pubblicati i massimali o i valori residui privati. Un'intercettazione Pawn ancora pendente è indicata come tale. Le perdite sono misurate prima degli eventuali effetti aggiuntivi della tecnica, per non confonderle con cure o nuovi scudi.
+
+- Il confronto online richiama un unico gestore della difesa risolta, con controlli su identità della richiesta, scheda selezionata, scontro, proprietà della scheda ed esito pendente. La prova del gestore reale verifica l'ordine Difesa → Scudo Oculum → Scudo → HP temporanei → Vita, colpi assorbiti da ogni singolo strato, esito pieno/quasi riuscito/evitato e duplicati. Esempio senza modificatori speciali: con Difesa 5, Scudo Oculum 10, Scudo 20 e HP temporanei 20, 105 danni pieni tolgono 50 Vita; nel quasi riuscito la Difesa vale 8 e tolgono 47 Vita. L'altra scheda non viene alterata.
+
 - I pulsanti principali sono **Attacco**, **Difesa** e **Aiuta compagno**, nelle posizioni già presenti. Aprono pannelli separati con pulsanti a icona e nome: VC nel pannello Attacco, CM in Difesa, tiro di aiuto in Aiuta compagno; sottotratti pertinenti soltanto se sbloccati, più Skill, Art, Open e skill dei Titoli della categoria. L'opzione online «Bersaglio del fight» apre il pianificatore dello scontro. La scelta chiude prima il pannello e richiama il gestore originale della mossa, evitando finestre sovrapposte al dado. I nomi e le chiavi VC/CM nei salvataggi restano compatibili.
 
 - Entrambi i pulsanti di riconoscimento nell'editor usano il parser di formule, dadi, costi, durate e destinatari. La deduplicazione considera anche unità della durata, frequenza, elemento e risorsa: ripetere il riconoscimento non riattiva né sostituisce gli effetti personalizzati già presenti. Frasi condizionali o negate restano da definire manualmente; non diventano bonus incondizionati.

@@ -126,6 +126,11 @@ class OculumPerformanceProbe {
       _state.combatAbilityResourceColor([resource]);
   Future<void> defendCombat(Map<String, dynamic> request, String choice) =>
       _state.defendOnlineAttack(request, choice);
+  Future<void> resolveCombatDefense(
+    Map<String, dynamic> request,
+    String choice,
+    int total,
+  ) => _state.applyResolvedOnlineDefense(request, choice, total);
   Future<void> applyLocalTargetEffect(Map<String, dynamic> pending) =>
       _state.applyPendingTargetEffectLocally(pending);
   void receiveRole(Map<String, dynamic> payload) =>

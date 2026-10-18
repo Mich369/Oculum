@@ -3,6 +3,15 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 extension _OculumOnlineAttacks on _OculumHomePageState {
+  String combatDamageReceiptText(Map<String, dynamic> receipt) {
+    int amount(String key) => readIntValue(receipt[key]).clamp(0, 100000000);
+    return 'Scudo Oculum −${amount('oculumShieldLost')} · '
+        'Scudo −${amount('shieldLost')} · '
+        'HP temporanei −${amount('temporaryHpLost')} · '
+        'Vita −${amount('hpLost')}'
+        '${receipt['pawnPending'] == true ? ' · intercettazione Pawn in attesa' : ''}';
+  }
+
   String get onlineCombatEncounterId => realtimeIsMasterRole
       ? selectedMasterInitiativeGroupId
       : '${realtimeVisibleInitiativeSnapshot['encounterId'] ?? ''}';
@@ -374,6 +383,19 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       request['defense'] = defense;
       request['defenseChoice'] = payload['defenseChoice'];
       request['outcome'] = outcome.name;
+      final rawReceipt = payload['damageReceipt'];
+      if (rawReceipt is Map) {
+        request['damageReceipt'] = <String, dynamic>{
+          for (final key in const [
+            'oculumShieldLost',
+            'shieldLost',
+            'temporaryHpLost',
+            'hpLost',
+          ])
+            key: readIntValue(rawReceipt[key]).clamp(0, 100000000),
+          'pawnPending': rawReceipt['pawnPending'] == true,
+        };
+      }
       request['freeReaction'] =
           request['reactionOf'] == null &&
           (oculumDefenseGrantsFreeReaction(attack, defense) ||
@@ -384,7 +406,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       );
       combatLogFor(
         source,
-        '[ESITO ATTACCO] $attack contro ${payload['defenseChoice']} $defense: ${outcome.label}.${request['freeReaction'] == true ? ' Il difensore ottiene una reazione gratuita contro di te.' : ''}',
+        '[ESITO ATTACCO] $attack contro ${payload['defenseChoice']} $defense: ${outcome.label}.${request['damageReceipt'] is Map<String, dynamic> ? ' ${combatDamageReceiptText(request['damageReceipt'] as Map<String, dynamic>)}.' : ''}${request['freeReaction'] == true ? ' Il difensore ottiene una reazione gratuita contro di te.' : ''}',
       );
     }
     while (onlineCombatRequests.length > 200) {
@@ -477,116 +499,153 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       if (!mounted || defense == null || sheetTagAt(schedaCorrente) != tag) {
         return;
       }
-      final attack = readIntValue(request['attack']);
-      final outcome = oculumAttackOutcome(
-        attack,
-        defense!,
-        difficulty: '${request['difficulty'] ?? 'normale'}',
-      );
-      final critical =
-          request['forcedCritical'] == true ||
-          oculumAttackIsCritical(attack, defense!);
-      final resisted = choice == 'resistenza' && defense! >= attack;
-      request['status'] = 'resolved';
-      request['defense'] = defense;
-      request['defenseChoice'] = choice;
-      request['outcome'] = outcome.name;
-      request['freeReaction'] =
-          request['reactionOf'] == null &&
-          (oculumDefenseGrantsFreeReaction(attack, defense!) || resisted);
-      request['criticalReaction'] = oculumDefenseGrantsFreeReaction(
-        attack,
-        defense!,
-      );
-      aggiungiLog(
-        '[ESITO DIFESA] $choice $defense contro $attack: ${outcome.label}.${request['freeReaction'] == true ? ' Reazione gratuita su chi ha provato a colpirti.${request['criticalReaction'] == true ? ' Il contrattacco è critico: bonus critico ×2 e Fragilità secondo le regole del bersaglio.' : ' Contrattacco ordinario.'}' : ''}',
-      );
-      if (resisted) {
-        aggiungiLog(
-          '[RESISTENZA] 1 danno prima degli Scudi; reazione gratuita contro chi ha attaccato, senza concatenazione.',
-        );
-      }
-      final damage = resisted
-          ? 1
-          : oculumOpposedDamage(
-              readIntValue(request['damage']),
-              attack,
-              defense!,
-              forcedCritical: request['forcedCritical'] == true,
-              difficulty: '${request['difficulty'] ?? 'normale'}',
-            );
-      // Persist the decision before applying damage: duplicate broadcasts cannot
-      // replay the mutation, including while a Pawn interception is pending.
-      await salvaDatiSoloLocale();
-      if (!mounted || sheetTagAt(schedaCorrente) != tag) return;
-      if (damage > 0) {
-        final previousElement = incomingDamageElement;
-        incomingDamageElement = '${request['element'] ?? 'fisico'}';
-        try {
-          await applicaDannoSubito(
-            dannoEsplicito: damage,
-            critico: critical,
-            criticalBonusMultiplier: critical ? 2 : 1,
-            defenseMultiplier:
-                !critical && outcome == OculumAttackOutcome.reduced ? 1.5 : 1,
-            enemyLevel: readIntValue(request['level']),
-            enemyDifficulty: '${request['difficulty']}',
-            resolvedResistance: resisted,
-          );
-        } finally {
-          if (mounted && sheetTagAt(schedaCorrente) == tag) {
-            incomingDamageElement = previousElement;
-          }
-        }
-      }
-      if (!resisted &&
-          outcome != OculumAttackOutcome.avoided &&
-          mounted &&
-          sheetTagAt(schedaCorrente) == tag) {
-        final rawEffects = request['effects'];
-        if (rawEffects is List) {
-          for (final raw in rawEffects.take(30).whereType<Map>()) {
-            final effect = OculumStructuredEffect.fromJson(
-              Map<String, dynamic>.from(raw),
-            )..recipient = 'se_stesso';
-            if (effect.type == 'danno') {
-              continue; // Included in the single damage packet.
-            }
-            if (outcome == OculumAttackOutcome.reduced) {
-              final duration = int.tryParse(effect.duration);
-              if (duration != null || effect.type == 'stato') {
-                final reduced = oculumOpposedEffectDuration(
-                  duration ?? 1,
-                  outcome,
-                );
-                if (reduced == 0) {
-                  aggiungiLog(
-                    '[EFFETTO RIDOTTO] ${effect.appliedState.isEmpty ? effect.type : effect.appliedState}: durata 0, non applicato.',
-                  );
-                  continue;
-                }
-                effect.duration = '$reduced';
-              }
-            }
-            final messages = applyStructuredEffectsOnActivation([
-              effect,
-            ], source: '${request['sourceName']} · attacco $id');
-            for (final message in messages) {
-              aggiungiLog('[EFFETTO ${outcome.label}] $message');
-            }
-          }
-        }
-      }
-      final reply = {...request, 'defense': defense, 'defenseChoice': choice};
-      await realtimeService?.sendCombatEvent(
-        'combat_defense',
-        permissionEnvelope(reply),
-      );
-      if (mounted) setState(() {});
-      programmaSalvataggio();
+      await applyResolvedOnlineDefense(request, choice, defense!);
     } finally {
       onlineCombatResolving.remove(id);
     }
+  }
+
+  Future<void> applyResolvedOnlineDefense(
+    Map<String, dynamic> request,
+    String choice,
+    int defense,
+  ) async {
+    final tag = sheetTagAt(schedaCorrente);
+    final id = '${request['id']}';
+    if (!mounted ||
+        request['status'] != 'pending' ||
+        request['targetTag'] != tag ||
+        request['scope'] != permissionScope ||
+        request['encounterId'] != onlineCombatEncounterId ||
+        !identical(onlineCombatRequests[id], request) ||
+        !controlsOnlineCombatSheet(tag) ||
+        pawnPendingDamage.isNotEmpty) {
+      return;
+    }
+    final attack = readIntValue(request['attack']);
+    final outcome = oculumAttackOutcome(
+      attack,
+      defense,
+      difficulty: '${request['difficulty'] ?? 'normale'}',
+    );
+    final critical =
+        request['forcedCritical'] == true ||
+        oculumAttackIsCritical(attack, defense);
+    final resisted = choice == 'resistenza' && defense >= attack;
+    request['status'] = 'resolved';
+    request['defense'] = defense;
+    request['defenseChoice'] = choice;
+    request['outcome'] = outcome.name;
+    request['freeReaction'] =
+        request['reactionOf'] == null &&
+        (oculumDefenseGrantsFreeReaction(attack, defense) || resisted);
+    request['criticalReaction'] = oculumDefenseGrantsFreeReaction(
+      attack,
+      defense,
+    );
+    aggiungiLog(
+      '[ESITO DIFESA] $choice $defense contro $attack: ${outcome.label}.${request['freeReaction'] == true ? ' Reazione gratuita su chi ha provato a colpirti.${request['criticalReaction'] == true ? ' Il contrattacco è critico: bonus critico ×2 e Fragilità secondo le regole del bersaglio.' : ' Contrattacco ordinario.'}' : ''}',
+    );
+    if (resisted) {
+      aggiungiLog(
+        '[RESISTENZA] 1 danno prima degli Scudi; reazione gratuita contro chi ha attaccato, senza concatenazione.',
+      );
+    }
+    final damage = resisted
+        ? 1
+        : oculumOpposedDamage(
+            readIntValue(request['damage']),
+            attack,
+            defense,
+            forcedCritical: request['forcedCritical'] == true,
+            difficulty: '${request['difficulty'] ?? 'normale'}',
+          );
+    // Persist the decision before applying damage: duplicate broadcasts cannot
+    // replay the mutation, including while a Pawn interception is pending.
+    await salvaDatiSoloLocale();
+    if (!mounted || sheetTagAt(schedaCorrente) != tag) return;
+    final beforeOculumShield = scudoOculum();
+    final beforeShield = scudo();
+    final beforeTemporaryHp = hpTemp();
+    final beforeHp = hpCorrenti();
+    if (damage > 0) {
+      final previousElement = incomingDamageElement;
+      incomingDamageElement = '${request['element'] ?? 'fisico'}';
+      try {
+        await applicaDannoSubito(
+          dannoEsplicito: damage,
+          critico: critical,
+          criticalBonusMultiplier: critical ? 2 : 1,
+          defenseMultiplier: !critical && outcome == OculumAttackOutcome.reduced
+              ? 1.5
+              : 1,
+          enemyLevel: readIntValue(request['level']),
+          enemyDifficulty: '${request['difficulty']}',
+          resolvedResistance: resisted,
+        );
+      } finally {
+        if (mounted && sheetTagAt(schedaCorrente) == tag) {
+          incomingDamageElement = previousElement;
+        }
+      }
+    }
+    if (!mounted || sheetTagAt(schedaCorrente) != tag) return;
+    final receipt = <String, dynamic>{
+      'oculumShieldLost': max(0, beforeOculumShield - scudoOculum()),
+      'shieldLost': max(0, beforeShield - scudo()),
+      'temporaryHpLost': max(0, beforeTemporaryHp - hpTemp()),
+      'hpLost': max(0, beforeHp - hpCorrenti()),
+      'pawnPending': pawnPendingDamage.isNotEmpty,
+    };
+    request['damageReceipt'] = receipt;
+    aggiungiLog(
+      '[DANNO RISOLTO] ${request['sourceName']} → ${request['targetName'] ?? nomeController.text}: ${combatDamageReceiptText(receipt)}.',
+    );
+    if (!resisted &&
+        outcome != OculumAttackOutcome.avoided &&
+        mounted &&
+        sheetTagAt(schedaCorrente) == tag) {
+      final rawEffects = request['effects'];
+      if (rawEffects is List) {
+        for (final raw in rawEffects.take(30).whereType<Map>()) {
+          final effect = OculumStructuredEffect.fromJson(
+            Map<String, dynamic>.from(raw),
+          )..recipient = 'se_stesso';
+          if (effect.type == 'danno') {
+            continue; // Included in the single damage packet.
+          }
+          if (outcome == OculumAttackOutcome.reduced) {
+            final duration = int.tryParse(effect.duration);
+            if (duration != null || effect.type == 'stato') {
+              final reduced = oculumOpposedEffectDuration(
+                duration ?? 1,
+                outcome,
+              );
+              if (reduced == 0) {
+                aggiungiLog(
+                  '[EFFETTO RIDOTTO] ${effect.appliedState.isEmpty ? effect.type : effect.appliedState}: durata 0, non applicato.',
+                );
+                continue;
+              }
+              effect.duration = '$reduced';
+            }
+          }
+          final messages = applyStructuredEffectsOnActivation([
+            effect,
+          ], source: '${request['sourceName']} · attacco $id');
+          for (final message in messages) {
+            aggiungiLog('[EFFETTO ${outcome.label}] $message');
+          }
+        }
+      }
+    }
+    final reply = {...request, 'defense': defense, 'defenseChoice': choice};
+    await realtimeService?.sendCombatEvent(
+      'combat_defense',
+      permissionEnvelope(reply),
+    );
+    if (mounted) setState(() {});
+    programmaSalvataggio();
   }
 
   Widget onlineCombatRequestsPanel() {
