@@ -190,6 +190,8 @@ class OculumPerformanceProbe {
       _state.publicEncounterSnapshot(group);
   void receiveInitiative(Map<String, dynamic> payload) =>
       _state.receiveRealtimeInitiativeSnapshot(payload);
+  void receiveEncounterControl(Map<String, dynamic> payload) =>
+      _state.receiveEncounterControl(payload);
   int attackBonus() => _state.bonusAttaccoRapido();
   void selectArt(int index) => _state.selectIncorporatedArt(_state.arti[index]);
   void advanceArtTurn() => _state.advanceArtSwitchTurn();

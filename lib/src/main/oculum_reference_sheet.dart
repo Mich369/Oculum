@@ -192,7 +192,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
 
   Widget referenceTurnControls() {
     final remote =
-        !haPermessiMaster &&
+        !realtimeIsMasterRole &&
         realtimeService?.isConnected == true &&
         realtimeVisibleInitiativeSnapshot['tokens'] is List;
     final hasFight = remote
@@ -217,7 +217,9 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                 : 'Turno precedente',
             visualDensity: VisualDensity.compact,
             onPressed: remote
-                ? null
+                ? realtimeIsCoMasterRole && hasFight
+                      ? () => requestVisibleEncounterStep(-1)
+                      : null
                 : () => hasFight
                       ? nextMasterInitiativeTurn(delta: -1)
                       : setPlayerReportedTurn(playerReportedTurn - 1),
@@ -236,7 +238,9 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                 : 'Turno successivo',
             visualDensity: VisualDensity.compact,
             onPressed: remote
-                ? null
+                ? realtimeIsCoMasterRole && hasFight
+                      ? () => requestVisibleEncounterStep(1)
+                      : null
                 : () => hasFight
                       ? nextMasterInitiativeTurn()
                       : setPlayerReportedTurn(playerReportedTurn + 1),
@@ -1319,7 +1323,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
   }
 
   Widget referenceEncounterSlots() {
-    final local = haPermessiMaster || realtimeService?.isConnected != true;
+    final local = realtimeIsMasterRole || realtimeService?.isConnected != true;
     if (local) {
       captureActiveMasterInitiativeGroup();
     }
@@ -1477,23 +1481,27 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                                       Map<String, dynamic>.from(group);
                                   syncCurrentSheetEncounterTurn();
                                 });
-                                unawaited(
-                                  realtimeService!.sendInitiativeTurnAdjusted(
-                                    senderRole: 'player',
-                                    campaignId:
-                                        '${group['campaignId'] ?? activeCampaignId}',
-                                    campaignName:
-                                        '${group['campaignName'] ?? activeCampaignName()}',
-                                    sheetTag: sheetTagAt(schedaCorrente),
-                                    turn: playerReportedTurn,
-                                    encounterId: id,
-                                    joinEncounter: true,
-                                  ),
-                                );
+                                if (!realtimeIsCoMasterRole) {
+                                  unawaited(
+                                    realtimeService!.sendInitiativeTurnAdjusted(
+                                      senderRole: 'player',
+                                      campaignId:
+                                          '${group['campaignId'] ?? activeCampaignId}',
+                                      campaignName:
+                                          '${group['campaignName'] ?? activeCampaignName()}',
+                                      sheetTag: sheetTagAt(schedaCorrente),
+                                      turn: playerReportedTurn,
+                                      encounterId: id,
+                                      joinEncounter: true,
+                                    ),
+                                  );
+                                }
                               },
                         child: Text(
                           realtimeService?.isConnected == true
-                              ? 'Entra nello scontro'
+                              ? realtimeIsCoMasterRole
+                                    ? 'Apri scontro condiviso'
+                                    : 'Entra nello scontro'
                               : 'Online non connesso',
                         ),
                       ),

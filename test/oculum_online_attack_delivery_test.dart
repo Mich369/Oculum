@@ -144,6 +144,56 @@ void main() {
         state.onlineCombatRequests.containsKey('fake-ordinary-counter'),
         isFalse,
       );
+      state.modalitaMaster = true;
+      state.isMasterHost = true;
+      probe.ensureEncounters();
+      state.masterInitiativePublished = true;
+      state.masterInitiativeRound = 3;
+      state.masterInitiativeActiveIndex = 0;
+      state.masterInitiativeTokens.clear();
+      state.masterInitiativeTokens.addAll(<Map<String, dynamic>>[
+        {'id': 'first', 'name': 'Primo', 'status': 'active'},
+        {'id': 'second', 'name': 'Secondo', 'status': 'ready'},
+      ]);
+      probe.initiativeSnapshot();
+      state.realtimeUsers = <Map<String, dynamic>>[
+        {
+          'sessionId': 'co-session',
+          'activeSheetTag': 'ENEMY',
+          'role': 'coMaster',
+        },
+      ];
+      final control = <String, dynamic>{
+        'id': 'initiative:test-control',
+        'scope': probe.permissionScope,
+        'campaignId': state.activeCampaignId,
+        'encounterId': state.selectedMasterInitiativeGroupId,
+        'expectedRound': 3,
+        'expectedActiveTag': 'first',
+        'sessionId': 'co-session',
+        'senderTag': 'ENEMY',
+        'senderRole': 'coMaster',
+        'delta': 1,
+      };
+      probe.receiveEncounterControl({...control, 'sessionId': 'forged'});
+      expect(state.masterInitiativeActiveIndex, 0);
+      probe.receiveEncounterControl(control);
+      expect(state.masterInitiativeActiveIndex, 1);
+      probe.receiveEncounterControl(control);
+      expect(
+        state.masterInitiativeActiveIndex,
+        1,
+        reason: 'A repeated control must not advance twice',
+      );
+      probe.receiveEncounterControl({
+        ...control,
+        'id': 'initiative:stale-control',
+      });
+      expect(
+        state.masterInitiativeActiveIndex,
+        1,
+        reason: 'A stale view must not change a later turn',
+      );
       state.realtimeService = null;
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 3));

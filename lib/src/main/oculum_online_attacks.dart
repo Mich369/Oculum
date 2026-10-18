@@ -3,13 +3,13 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 extension _OculumOnlineAttacks on _OculumHomePageState {
-  String get onlineCombatEncounterId => haPermessiMaster
+  String get onlineCombatEncounterId => realtimeIsMasterRole
       ? selectedMasterInitiativeGroupId
       : '${realtimeVisibleInitiativeSnapshot['encounterId'] ?? ''}';
 
   List<Map<String, dynamic>> onlineCombatTokens() {
     if (realtimeService?.isConnected != true) return [];
-    final raw = haPermessiMaster
+    final raw = realtimeIsMasterRole
         ? masterInitiativeTokens
         : realtimeVisibleInitiativeSnapshot['tokens'];
     if (raw is! List) return [];

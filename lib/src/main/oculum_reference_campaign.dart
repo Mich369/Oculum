@@ -1084,7 +1084,11 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
             activeIndex: activeIndex,
             accent: tertiaryColor,
             events: events,
-            onNextTurn: master ? () => nextMasterInitiativeTurn() : null,
+            onNextTurn: master
+                ? () => nextMasterInitiativeTurn()
+                : realtimeIsCoMasterRole
+                ? () => requestVisibleEncounterStep(1)
+                : null,
             onIdentify: master ? null : identifyEncounterParticipant,
             onReveal: master ? revealEncounterParticipant : null,
             portraitBuilder: (token) =>

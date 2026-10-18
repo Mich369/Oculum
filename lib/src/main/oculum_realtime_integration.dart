@@ -541,6 +541,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   void handleRealtimeEvent(String event, Map<String, dynamic> payload) {
+    if (event == 'initiative_control') {
+      receiveEncounterControl(payload);
+      return;
+    }
     if (event == 'combat_attack' || event == 'combat_defense') {
       receiveOnlineCombatEvent(event, payload);
       return;
@@ -2016,6 +2020,99 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         playerReportedTurn = reported;
         break;
       }
+    }
+  }
+
+  Future<void> requestVisibleEncounterStep(int delta) async {
+    if (!realtimeIsCoMasterRole ||
+        realtimeService?.isConnected != true ||
+        !const {-1, 1}.contains(delta)) {
+      return;
+    }
+    final snapshot = realtimeVisibleInitiativeSnapshot;
+    final raw = snapshot['tokens'];
+    if (raw is! List || raw.isEmpty) return;
+    final active = readIntValue(
+      snapshot['activeIndex'],
+    ).clamp(0, raw.length - 1);
+    final delivered = await realtimeService!.sendCombatEvent(
+      'initiative_control',
+      permissionEnvelope({
+        'id':
+            'initiative:${DateTime.now().microsecondsSinceEpoch}:${sheetTagAt(schedaCorrente)}',
+        'encounterId': snapshot['encounterId'],
+        'expectedRound': readIntValue(snapshot['round']),
+        'expectedActiveTag': '${(raw[active] as Map)['id'] ?? ''}',
+        'delta': delta,
+      }),
+    );
+    if (!mounted) return;
+    aggiungiLog(
+      delivered
+          ? '[TURNISTICA] Comando inviato al Master; attendo lo stato condiviso.'
+          : '[TURNISTICA] Comando non consegnato: nessun turno locale modificato.',
+    );
+  }
+
+  void receiveEncounterControl(Map<String, dynamic> payload) {
+    if (!realtimeIsMasterRole || !validPermissionSender(payload, staff: true)) {
+      return;
+    }
+    final id = '${payload['id'] ?? ''}';
+    final delta = readIntValue(payload['delta']);
+    if (!id.startsWith('initiative:') ||
+        id.length > 160 ||
+        onlineCombatRequests.containsKey(id) ||
+        !const {-1, 1}.contains(delta)) {
+      return;
+    }
+    final group = masterInitiativeGroups
+        .where(
+          (g) =>
+              g['id'] == payload['encounterId'] &&
+              readBoolValue(g['published']),
+        )
+        .firstOrNull;
+    if (group == null) return;
+    final previous = selectedMasterInitiativeGroupId;
+    captureActiveMasterInitiativeGroup();
+    selectMasterInitiativeGroup('${group['id']}');
+    try {
+      final active = masterInitiativeTokens.isEmpty
+          ? null
+          : masterInitiativeTokens[masterInitiativeActiveIndex.clamp(
+              0,
+              masterInitiativeTokens.length - 1,
+            )];
+      if (active == null ||
+          readIntValue(payload['expectedRound']) != masterInitiativeRound ||
+          '${payload['expectedActiveTag']}' !=
+              publicInitiativeSourceTag(active)) {
+        return;
+      }
+      onlineCombatRequests[id] = {
+        'id': id,
+        'type': 'initiative_control',
+        'status': 'resolved',
+        'scope': permissionScope,
+      };
+      while (onlineCombatRequests.length > 200) {
+        final old = onlineCombatRequests.entries
+            .where((e) => e.value['status'] != 'pending')
+            .firstOrNull;
+        if (old == null) break;
+        onlineCombatRequests.remove(old.key);
+      }
+      nextMasterInitiativeTurn(delta: delta);
+      aggiungiLog(
+        '[TURNISTICA] ${payload['playerName'] ?? 'Co-Master'} ha cambiato il turno di ${group['name'] ?? group['id']}.',
+      );
+      captureActiveMasterInitiativeGroup();
+    } finally {
+      if (selectedMasterInitiativeGroupId != previous) {
+        selectMasterInitiativeGroup(previous);
+      }
+      sendRealtimeInitiativeSnapshotIfPublished();
     }
   }
 

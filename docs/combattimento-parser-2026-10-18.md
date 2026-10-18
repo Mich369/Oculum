@@ -56,6 +56,7 @@ I requisiti sono livello 0 / 3 / 6. Il controllo si può evitare col tiro difens
 - Gli stati con durata in azioni mantengono questa unità, senza essere convertiti in turni.
 - Le viste della turnistica mantengono la selezione e lo snapshot condiviso anche durante il cambio scheda. Il Master pubblica anche Azione usata, Reazioni massime/usate/disponibili; entrare in uno scontro riallinea il turno personale e i timer. Chiudere la condivisione svuota anche l'elenco delle turnistiche online.
 - La conferma di una pergamena controlla l'oggetto nell'inventario attivo: la normalizzazione dell'ID della stessa scheda non deve annullare un uso confermato. Cambiare a una scheda con un altro inventario continua ad annullare l'operazione.
+- Online il Co-Master apre lo scontro condiviso e invia avanti/indietro al Master, che applica il comando e ripubblica lo stato. Il comando richiede ruolo e sessione validi, ID univoco, round e partecipante attivo corrispondenti. Duplicati e comandi da viste obsolete vengono scartati. Aprire la vista come Co-Master non aggiunge automaticamente la sua scheda fra i combattenti.
 
 ### Richieste successive ancora da completare
 

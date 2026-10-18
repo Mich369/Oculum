@@ -23,6 +23,7 @@ class OculumRealtimeService {
 
   static const Set<String> supportedEvents = <String>{
     'combat_attack',
+    'initiative_control',
     'combat_defense',
     'pawn_snapshot',
     'pawn_command',
@@ -721,7 +722,9 @@ class OculumRealtimeService {
   Future<void> refreshPresence() => _trackPresence();
 
   Future<bool> sendCombatEvent(String event, Map<String, dynamic> payload) {
-    if (event != 'combat_attack' && event != 'combat_defense') {
+    if (event != 'combat_attack' &&
+        event != 'combat_defense' &&
+        event != 'initiative_control') {
       throw ArgumentError('Evento combattimento non supportato');
     }
     return _sendConfirmed(event, {
