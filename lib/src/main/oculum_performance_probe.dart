@@ -120,6 +120,8 @@ class OculumPerformanceProbe {
       _state.receiveOnlineCombatEvent(event, payload);
   Widget combatRequestsPanel() => _state.onlineCombatRequestsPanel();
   Widget combatAbilityBar() => _state.combatAbilityQuickBar();
+  Future<void> openCombatActionPanel(OculumCombatAbilityRole role) =>
+      _state.showCombatActionPanel(role);
   Color combatAbilityColor(String resource) =>
       _state.combatAbilityResourceColor([resource]);
   Future<void> defendCombat(Map<String, dynamic> request, String choice) =>

@@ -930,13 +930,11 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                               side: BorderSide(color: Color(0xffad5559)),
                             ),
                           ),
-                          onPressed: () => tiraValoreSpeciale(
-                            'VC',
-                            vc(),
-                            applyGlobalRollModifier: false,
+                          onPressed: () => showCombatActionPanel(
+                            OculumCombatAbilityRole.attack,
                           ),
                           icon: Icon(Icons.casino_outlined),
-                          label: Text('VC ${vc()} · ${t('Attacco', 'Attack')}'),
+                          label: Text(t('Attacco', 'Attack')),
                         ),
                         OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
@@ -947,13 +945,11 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                               borderRadius: BorderRadius.circular(5),
                             ),
                           ),
-                          onPressed: () => tiraValoreSpeciale(
-                            'CM',
-                            cm(),
-                            applyGlobalRollModifier: false,
+                          onPressed: () => showCombatActionPanel(
+                            OculumCombatAbilityRole.defense,
                           ),
                           icon: Icon(Icons.shield_outlined),
-                          label: Text('CM ${cm()} · ${t('Difesa', 'Defense')}'),
+                          label: Text(t('Difesa', 'Defense')),
                         ),
                         OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
@@ -975,7 +971,9 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                           ),
                         ),
                         OutlinedButton.icon(
-                          onPressed: tiraAiutaCompagno,
+                          onPressed: () => showCombatActionPanel(
+                            OculumCombatAbilityRole.support,
+                          ),
                           icon: Icon(Icons.volunteer_activism_outlined),
                           label: Text(t('Aiuta compagno', 'Help ally')),
                         ),
@@ -1008,7 +1006,6 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                     ),
                     SizedBox(height: 8),
                     onlineCombatRequestsPanel(),
-                    combatAbilityQuickBar(),
                     Text(
                       '${t('Danni inflitti', 'Damage dealt')}: ${dannoTotale()} · ${t('Difesa totale', 'Total defense')}: ${difesa()} · ${t('I Sottotratti sono tiri alternativi', 'Subtraits are alternative rolls')}',
                       style: TextStyle(fontSize: 12),

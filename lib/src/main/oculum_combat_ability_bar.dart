@@ -139,7 +139,41 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     }
   }
 
-  Widget combatAbilityQuickBar() {
+  Future<void> showCombatActionPanel(OculumCombatAbilityRole role) async {
+    final origin = currentSheetScrollId();
+    final selected = await showDialog<VoidCallback>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        scrollable: true,
+        title: Text(switch (role) {
+          OculumCombatAbilityRole.attack => t('Attacco', 'Attack'),
+          OculumCombatAbilityRole.defense => t('Difesa', 'Defense'),
+          OculumCombatAbilityRole.support => t('Aiuta compagno', 'Help ally'),
+        }),
+        content: SizedBox(
+          width: min(720, max(0, MediaQuery.sizeOf(dialog).width - 48)),
+          child: combatAbilityQuickBar(
+            onlyRole: role,
+            onChoose: (action) => Navigator.pop(dialog, action),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: Text(t('Chiudi', 'Close')),
+          ),
+        ],
+      ),
+    );
+    if (mounted && selected != null && currentSheetScrollId() == origin) {
+      selected();
+    }
+  }
+
+  Widget combatAbilityQuickBar({
+    OculumCombatAbilityRole? onlyRole,
+    ValueChanged<VoidCallback>? onChoose,
+  }) {
     final entries =
         <
           ({
@@ -151,6 +185,73 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             VoidCallback use,
           })
         >[];
+    if (onlyRole != null) {
+      final attack = onlyRole == OculumCombatAbilityRole.attack;
+      final support = onlyRole == OculumCombatAbilityRole.support;
+      if (attack && onlineAttackTokens().isNotEmpty) {
+        entries.add((
+          name: 'Bersaglio del fight',
+          role: onlyRole,
+          color: eyePupilGlowColor,
+          enabled: true,
+          hint: 'Scegli il bersaglio e il tiro da inviare online.',
+          use: () => unawaited(planOnlineAttack()),
+        ));
+      }
+      entries.add((
+        name: support
+            ? t('Aiuta compagno', 'Help ally')
+            : '${attack ? 'VC' : 'CM'} +${attack ? vc() : cm()}',
+        role: onlyRole,
+        color: support
+            ? primaryColor
+            : attack
+            ? Colors.redAccent
+            : Colors.blueAccent,
+        enabled: true,
+        hint: support ? 'Tiro di aiuto compagno' : 'Tiro ordinario',
+        use: () {
+          if (support) {
+            unawaited(tiraAiutaCompagno());
+          } else {
+            unawaited(
+              tiraValoreSpeciale(
+                attack ? 'VC' : 'CM',
+                attack ? vc() : cm(),
+                applyGlobalRollModifier: false,
+              ),
+            );
+          }
+        },
+      ));
+      final allowed = switch (onlyRole) {
+        OculumCombatAbilityRole.attack => const {
+          'schianto',
+          'forza',
+          'riflessi',
+          'manifestazione_potere',
+        },
+        OculumCombatAbilityRole.defense => const {
+          'riflessi',
+          'resistenza',
+          'manifestazione_potere',
+        },
+        OculumCombatAbilityRole.support => const {'medicina'},
+      };
+      for (final stat in hiddenEyeStats.where(
+        (s) => s.unlocked && allowed.contains(s.id),
+      )) {
+        entries.add((
+          name:
+              '${stat.nome} +${hiddenEyeTotal(stat) + hiddenEyeStatRollQuickBonus(stat) + tiroGlobaleBonus()}',
+          role: onlyRole,
+          color: hiddenEyeStatIdentityColor(stat),
+          enabled: true,
+          hint: 'Tiro alternativo: descrivi e motiva come lo usi.',
+          use: () => unawaited(tiraSottotrattoOcchio(stat)),
+        ));
+      }
+    }
     for (final title in {...titoli, ...trattiRazziali}) {
       void addTitleSkill(TitleExtraSkillEntry? extra) {
         final text = extra?.descrizione ?? title.skill;
@@ -271,67 +372,96 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       }
     }
     if (entries.isEmpty) return const SizedBox.shrink();
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        Widget group(OculumCombatAbilityRole role) {
-          final subset = entries.where((e) => e.role == role).toList();
-          final color = switch (role) {
-            OculumCombatAbilityRole.attack => eyePupilGlowColor,
-            OculumCombatAbilityRole.defense => secondaryColor,
-            OculumCombatAbilityRole.support => primaryColor,
-          };
-          final title = switch (role) {
-            OculumCombatAbilityRole.attack => 'Attacco',
-            OculumCombatAbilityRole.defense => 'Difesa',
-            OculumCombatAbilityRole.support => 'Aiuta compagno',
-          };
-          return ExpansionTile(
-            key: PageStorageKey('combat_abilities_${role.name}'),
-            title: Text(
-              '$title · ${subset.length}',
-              style: TextStyle(color: color),
-            ),
-            childrenPadding: const EdgeInsets.all(8),
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final e in subset)
-                    Tooltip(
-                      message: e.hint,
-                      child: OutlinedButton(
-                        onPressed: e.enabled ? e.use : null,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: e.color,
-                          side: BorderSide(
-                            color: e.color.withValues(alpha: .55),
-                          ),
-                        ),
-                        child: Text(e.name),
+    Widget buildOptions(BuildContext context, BoxConstraints constraints) {
+      Widget group(OculumCombatAbilityRole role) {
+        final subset = entries.where((e) => e.role == role).toList();
+        final color = switch (role) {
+          OculumCombatAbilityRole.attack => eyePupilGlowColor,
+          OculumCombatAbilityRole.defense => secondaryColor,
+          OculumCombatAbilityRole.support => primaryColor,
+        };
+        final title = switch (role) {
+          OculumCombatAbilityRole.attack => 'Attacco',
+          OculumCombatAbilityRole.defense => 'Difesa',
+          OculumCombatAbilityRole.support => 'Aiuta compagno',
+        };
+        final options = Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final e in subset)
+              Tooltip(
+                message: '${e.name}\n${e.hint}',
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 132,
+                    maxWidth: 230,
+                    minHeight: 48,
+                  ),
+                  child: OutlinedButton.icon(
+                    onPressed: e.enabled
+                        ? () {
+                            if (onChoose != null) {
+                              onChoose(e.use);
+                            } else {
+                              e.use();
+                            }
+                          }
+                        : null,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: e.color,
+                      side: BorderSide(color: e.color.withValues(alpha: .55)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 9,
                       ),
                     ),
-                ],
+                    icon: Icon(switch (role) {
+                      OculumCombatAbilityRole.attack => Icons.casino_outlined,
+                      OculumCombatAbilityRole.defense => Icons.shield_outlined,
+                      OculumCombatAbilityRole.support =>
+                        Icons.volunteer_activism_outlined,
+                    }, size: 18),
+                    label: Text(
+                      e.name,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
               ),
-            ],
-          );
-        }
-
-        if (constraints.maxWidth < 900) {
-          return Column(
-            children: [
-              for (final role in OculumCombatAbilityRole.values) group(role),
-            ],
-          );
-        }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final role in OculumCombatAbilityRole.values)
-              Expanded(child: group(role)),
           ],
         );
-      },
-    );
+        if (onlyRole != null) return options;
+        return ExpansionTile(
+          key: PageStorageKey('combat_abilities_${role.name}'),
+          title: Text(
+            '$title · ${subset.length}',
+            style: TextStyle(color: color),
+          ),
+          childrenPadding: const EdgeInsets.all(8),
+          children: [options],
+        );
+      }
+
+      if (onlyRole != null) return group(onlyRole);
+      if (constraints.maxWidth < 900) {
+        return Column(
+          children: [
+            for (final role in OculumCombatAbilityRole.values) group(role),
+          ],
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final role in OculumCombatAbilityRole.values)
+            Expanded(child: group(role)),
+        ],
+      );
+    }
+
+    if (onlyRole != null) return buildOptions(context, const BoxConstraints());
+    return LayoutBuilder(builder: buildOptions);
   }
 }
