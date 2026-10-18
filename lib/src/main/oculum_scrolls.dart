@@ -238,11 +238,24 @@ InventoryItem oculumMonsterEchoScrollItem(String id, int grade) {
   );
 }
 
-bool oculumScrollCanLearn(int natural, int total, int grade, int percentile) =>
+int oculumScrollLearningChance(String difficulty) => switch (difficulty) {
+  'facile' => 20,
+  'difficile' => 10,
+  'oculum' => 5,
+  _ => 15,
+};
+
+bool oculumScrollCanLearn(
+  int natural,
+  int total,
+  int grade,
+  int percentile, {
+  String difficulty = 'normale',
+}) =>
     natural == 20 &&
     total >= 30 + 10 * grade.clamp(0, 12) &&
     percentile >= 0 &&
-    percentile < 20;
+    percentile < oculumScrollLearningChance(difficulty);
 
 InventoryItem oculumScrollItem(
   String element,
@@ -302,7 +315,8 @@ InventoryItem oculumScrollItem(
     elementoDanno: element,
     note:
         '$description\nMonouso. Valore: ${oculumScrollValue(g)} Obser. '
-        'Con 20 naturale e totale ≥ ${30 + 10 * g}: 20% di apprendere '
+        'Con 20 naturale e totale ≥ ${30 + 10 * g}: possibilità di apprendere '
+        '(Facile 20%, Medio 15%, Difficile 10%, Oculum 5%) '
         'la skill, non evolvibile. Gli effetti sui bersagli sono dichiarati al Master.',
     craftData: {'scroll': data},
   );
@@ -367,6 +381,7 @@ extension _OculumScrolls on _OculumHomePageState {
     Map<String, dynamic> data, {
     InventoryItem? item,
   }) async {
+    final origin = currentSheetScrollId();
     if (!mounted ||
         (item != null && (!inventario.contains(item) || item.quantita <= 0))) {
       return;
@@ -420,14 +435,18 @@ extension _OculumScrolls on _OculumHomePageState {
     final targets = targetKind
         ? await _selectScrollTargets('${data['kind']}', g)
         : <int>[];
-    if (!mounted || (targetKind && targets.isEmpty)) return;
+    if (!mounted ||
+        currentSheetScrollId() != origin ||
+        (targetKind && targets.isEmpty)) {
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('${data['name']} · Grado ${data['grade']}'),
         content: SingleChildScrollView(
           child: Text(
-            '${data['description']}\n\n${item == null ? 'Skill appresa, non evolvibile.' : 'Consuma una pergamena. Possibilità di apprendimento: 20% con 20 naturale e totale ≥ ${30 + 10 * readIntValue(data['grade'])}.'}'
+            '${data['description']}\n\n${item == null ? 'Skill appresa, non evolvibile.' : 'Consuma una pergamena. Possibilità di apprendimento: ${oculumScrollLearningChance(normalizedCampaignDifficulty())}% con 20 naturale e totale ≥ ${30 + 10 * readIntValue(data['grade'])}.'}'
             '\nCosto: $cost Volontà · CD ${oculumScrollDifficulty(g)} · ricarica ${oculumScrollCooldown(g)} turni. '
             'Il tiro usa Volontà, bonus e Oculum preparato. Il Master vede risultato e bersagli.',
           ),
@@ -446,6 +465,7 @@ extension _OculumScrolls on _OculumHomePageState {
     );
     if (confirmed != true ||
         !mounted ||
+        currentSheetScrollId() != origin ||
         (item != null && (!inventario.contains(item) || item.quantita <= 0))) {
       return;
     }
@@ -535,6 +555,9 @@ extension _OculumScrolls on _OculumHomePageState {
       if (item != null) {
         item.quantita--;
         if (item.quantita == 0) inventario.remove(item);
+        aggiungiLog(
+          'Pergamena consumata: ${data['name']}. Esemplari rimasti: ${item.quantita}. L’uso non assegna automaticamente la skill.',
+        );
       }
       if (success && (kind == 'ward' || kind == 'control')) {
         activeStructuredEffects.removeWhere(
@@ -553,7 +576,16 @@ extension _OculumScrolls on _OculumHomePageState {
       }
       if (item != null && natural == 20 && total >= 30 + 10 * g) {
         final percentile = Random.secure().nextInt(100);
-        if (oculumScrollCanLearn(natural, total, g, percentile)) {
+        final chance = oculumScrollLearningChance(
+          normalizedCampaignDifficulty(),
+        );
+        if (oculumScrollCanLearn(
+          natural,
+          total,
+          g,
+          percentile,
+          difficulty: normalizedCampaignDifficulty(),
+        )) {
           if (!skills.any((skill) => skill.scrollData['id'] == data['id'])) {
             skills.add(
               CharacterSkill(
@@ -567,12 +599,12 @@ extension _OculumScrolls on _OculumHomePageState {
               ),
             );
             learned =
-                '\nSkill appresa (d100 ${percentile + 1} ≤ 20), non evolvibile.';
+                '\nSkill appresa (d100 ${percentile + 1} ≤ $chance), non evolvibile.';
           } else {
             learned = '\nSkill già appresa: nessun duplicato.';
           }
         } else {
-          learned = '\nSkill non appresa (d100 ${percentile + 1} > 20).';
+          learned = '\nSkill non appresa (d100 ${percentile + 1} > $chance).';
         }
       }
       risultato =

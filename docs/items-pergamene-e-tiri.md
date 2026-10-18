@@ -71,7 +71,7 @@ Le regole delle nuove pergamene sono centralizzate in `lib/src/main/oculum_scrol
 | Difesa dell'egida | +3 + 3 × grado |
 | Durata dei buff | 2 + grado dei propri turni |
 | Soglia per apprendere | 20 naturale e totale ≥ 30 + 10 × grado |
-| Probabilità di apprendere | 20% |
+| Probabilità di apprendere dopo il requisito critico | Facile 20%, Medio 15%, Difficile 10%, Oculum 5% (aggiornamento 18 ottobre 2026) |
 
 Nomi, descrizioni e parametri delle pergamene sono conservati in `craftData.scroll`.
 Le Skill apprese conservano `scrollData`, aggiunto senza cambiare i campi dei vecchi salvataggi.

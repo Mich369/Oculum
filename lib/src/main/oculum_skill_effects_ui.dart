@@ -2389,6 +2389,37 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                 ),
               if (freeText.trim().isNotEmpty)
                 OutlinedButton.icon(
+                  icon: const Icon(Icons.rule),
+                  label: const Text('Parser abilità · formule e requisiti'),
+                  onPressed: () {
+                    final parsed = oculumParseAbilityMechanics(
+                      freeText,
+                      subtraits: hiddenEyeStats,
+                    );
+                    final existing = {
+                      for (final e in effects)
+                        '${e.type}|${e.target}|${e.valueExpression}|${e.recipient}|${e.mode}|${e.duration}',
+                    };
+                    setState(() {
+                      var added = 0;
+                      for (final effect in parsed.effects) {
+                        if (existing.add(
+                          '${effect.type}|${effect.target}|${effect.valueExpression}|${effect.recipient}|${effect.mode}|${effect.duration}',
+                        )) {
+                          effects.add(effect);
+                          added++;
+                        }
+                      }
+                      onChanged();
+                      risultato =
+                          '$added effetti aggiunti. Testo originale conservato. Da verificare: ${parsed.unrecognizedText}';
+                      aggiungiLog(risultato);
+                    });
+                    programmaSalvataggio();
+                  },
+                ),
+              if (freeText.trim().isNotEmpty)
+                OutlinedButton.icon(
                   onPressed: () {
                     final parsed = oculumParseStructuredEffectsFromText(
                       freeText,

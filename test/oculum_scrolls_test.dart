@@ -36,15 +36,64 @@ void main() {
     }
     expect(oculumScrollDropGrade('drop', 999), 12);
   });
-  test('Learning requires natural 20, grade threshold and 20 percent', () {
-    for (var grade = 0; grade <= 12; grade++) {
-      final threshold = 30 + 10 * grade;
-      expect(oculumScrollCanLearn(19, threshold, grade, 0), isFalse);
-      expect(oculumScrollCanLearn(20, threshold - 1, grade, 0), isFalse);
-      expect(oculumScrollCanLearn(20, threshold, grade, 19), isTrue);
-      expect(oculumScrollCanLearn(20, threshold, grade, 20), isFalse);
-    }
-  });
+  test(
+    'Learning requires natural 20, grade threshold and difficulty chance',
+    () {
+      for (var grade = 0; grade <= 12; grade++) {
+        final threshold = 30 + 10 * grade;
+        expect(oculumScrollCanLearn(19, threshold, grade, 0), isFalse);
+        expect(oculumScrollCanLearn(20, threshold - 1, grade, 0), isFalse);
+        for (final entry in {
+          'facile': 20,
+          'normale': 15,
+          'difficile': 10,
+          'oculum': 5,
+        }.entries) {
+          expect(oculumScrollLearningChance(entry.key), entry.value);
+          expect(
+            oculumScrollCanLearn(
+              20,
+              threshold,
+              grade,
+              entry.value - 1,
+              difficulty: entry.key,
+            ),
+            isTrue,
+          );
+          expect(
+            oculumScrollCanLearn(
+              20,
+              threshold,
+              grade,
+              entry.value,
+              difficulty: entry.key,
+            ),
+            isFalse,
+          );
+          expect(
+            oculumScrollCanLearn(
+              19,
+              threshold,
+              grade,
+              0,
+              difficulty: entry.key,
+            ),
+            isFalse,
+          );
+          expect(
+            oculumScrollCanLearn(
+              20,
+              threshold - 1,
+              grade,
+              0,
+              difficulty: entry.key,
+            ),
+            isFalse,
+          );
+        }
+      }
+    },
+  );
   test(
     'Every default element has attacks, control and buffs at every grade',
     () {

@@ -1,5 +1,15 @@
 part of '../../main.dart';
 
+const oculumRuneBookCreativeGuide =
+    'Le parole che conosci sono i mattoni della tua Rune Art: puoi combinarle '
+    'per inventare Skill, non soltanto ripetere formule già scritte. La Rune Art '
+    'si compone dalle parole apprese e si usa tramite le formule rapide. '
+    'Scrivi le sue Skill insieme al Master, concordando effetti, bersagli, '
+    'costi, DT, durata e ricarica; poi inseriscili nella Skill e nei suoi effetti '
+    'strutturati. Puoi usare solo parole note. Per esempio, una parola di '
+    'protezione combinata con bersaglio e durata può diventare una barriera; '
+    'il suo valore va concordato, non è un bonus gratuito.';
+
 class RuneArtWordDef {
   const RuneArtWordDef({
     required this.id,
@@ -596,13 +606,13 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
         nome: 'Rune Art',
         tipo: 'Rune Art',
         descrizione:
-            'Il potere delle rune si avvicina molto alle Oculum Art, ma e piu facilmente modificabile, anche in fight se si e esperti. Costruisci formule scegliendo target, verbo, aspetto, mod, intensita, durata e trigger. Puoi preparare primo o secondo slot. Le combo con Rune Art valgono il 25%.',
+            '$oculumRuneBookCreativeGuide\nCostruisci formule scegliendo target, verbo, aspetto, mod, intensità, durata e trigger. Puoi preparare primo o secondo slot. Le combo con Rune Art valgono il 25%.',
         skills: [
           ArtSkill(
             nome: 'Libro Runico',
             livello: 1,
             evo1:
-                'Ogni libro insegna sei parole. Self / Ally e Pulse sono le prime parole obbligatorie; Intensita I e 1 azione sono sempre disponibili.',
+                'Ogni libro insegna sei parole. Self / Ally e Pulse sono le prime parole obbligatorie; Intensità I e 1 azione sono sempre disponibili.\n$oculumRuneBookCreativeGuide',
             evo2:
                 'Puoi tenere due formule rapide e ricombinare parole tra primo e secondo slot.',
             evo3:
@@ -780,6 +790,10 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
                   const Text(
                     'Le parole obbligatorie restano note. Intensità e Durata si apprendono in ordine; le altre parole le scegli tu.',
                   ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text(oculumRuneBookCreativeGuide),
+                  ),
                   for (final word in options.where(
                     (word) => !previousKnown.contains(word.id),
                   ))
@@ -950,6 +964,7 @@ extension _OculumHomeRuneArt on _OculumHomePageState {
                         ),
                       ),
                       const SizedBox(height: 12),
+                      const Text(oculumRuneBookCreativeGuide),
                       SegmentedButton<int>(
                         segments: [
                           ButtonSegment<int>(

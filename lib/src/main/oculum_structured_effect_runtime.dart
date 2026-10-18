@@ -245,6 +245,40 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             ? 0
             : oculumStructuredEffectFrequency(effect.frequency);
         final isPeriodic = frequency > 0;
+        final preparedAttackBonus =
+            const {'danno', 'danno_percentuale'}.contains(effect.type) &&
+            effect.mode == 'prossima_azione';
+        if (effect.recipient != 'se_stesso' && !preparedAttackBonus) {
+          // Freeze caster formulas and dice now; retries and the defender must
+          // never roll the same payload again or evaluate it on enemy stats.
+          final frozen = OculumStructuredEffect.fromJson(effect.toJson())
+            ..valueExpression = '$value'
+            ..duration = '$duration'
+            ..diceExpression = ''
+            ..includeLevel = false
+            ..includeGrade = false;
+          if (!effect.stackable) {
+            activeStructuredEffects.removeWhere(
+              (e) =>
+                  e['effectId'] == effect.id && e['type'] == 'pending_target',
+            );
+          }
+          activeStructuredEffects.add({
+            'effectId': effect.id,
+            'source': source,
+            'type': 'pending_target',
+            'mode': 'prossima_azione',
+            'target': effect.target,
+            'value': 0,
+            'remaining': 1,
+            'unit': 'azioni',
+            'effect': frozen.toJson(),
+          });
+          messages.add(
+            '${oculumStructuredEffectDescription(effect, subtraits: hiddenEyeStats)} = $value · pronto sul bersaglio del prossimo attacco, dopo la difesa.',
+          );
+          continue;
+        }
         if (effect.type == 'danno' &&
             effect.id.startsWith('rock_slime_ball_') &&
             effect.mode != 'prossima_azione') {
@@ -392,6 +426,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
                 duration: duration > 0 ? duration : null,
                 durationType: switch (oculumTurnUnit(effect.durationUnit)) {
                   'tiri' => OculumConditionDurationType.rolls,
+                  'azioni' => OculumConditionDurationType.actions,
                   'riposi_brevi' => OculumConditionDurationType.shortRest,
                   'riposi_lunghi' => OculumConditionDurationType.longRest,
                   _ => OculumConditionDurationType.turns,
@@ -549,15 +584,29 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
               children: [
                 Expanded(
                   child: Text(
-                    '${activeStructuredEffects[index]['source']}: '
-                    '${activeStructuredEffects[index]['target']} '
-                    '${activeStructuredEffects[index]['type'] == 'costrutto' ? '${activeStructuredEffects[index]['hp']}/${activeStructuredEffects[index]['maxHp']} Vita · ' : ''}'
-                    '${readIntValue(activeStructuredEffects[index]['value']) >= 0 ? '+' : ''}'
-                    '${activeStructuredEffects[index]['value']}'
-                    '${activeStructuredEffects[index]['type'] == 'danno_percentuale' ? '%' : ''} - '
-                    '${activeStructuredEffectTiming(activeStructuredEffects[index])}',
+                    activeStructuredEffects[index]['type'] == 'pending_target'
+                        ? '${activeStructuredEffects[index]['source']}: ${oculumStructuredEffectDescription(OculumStructuredEffect.fromJson(Map<String, dynamic>.from(activeStructuredEffects[index]['effect'] as Map)))} · da applicare al bersaglio'
+                        : '${activeStructuredEffects[index]['source']}: '
+                              '${activeStructuredEffects[index]['target']} '
+                              '${activeStructuredEffects[index]['type'] == 'costrutto' ? '${activeStructuredEffects[index]['hp']}/${activeStructuredEffects[index]['maxHp']} Vita · ' : ''}'
+                              '${readIntValue(activeStructuredEffects[index]['value']) >= 0 ? '+' : ''}'
+                              '${activeStructuredEffects[index]['value']}'
+                              '${activeStructuredEffects[index]['type'] == 'danno_percentuale' ? '%' : ''} - '
+                              '${activeStructuredEffectTiming(activeStructuredEffects[index])}',
                   ),
                 ),
+                if (activeStructuredEffects[index]['type'] == 'pending_target')
+                  IconButton(
+                    tooltip: realtimeService?.isConnected == true
+                        ? 'Dichiara un attacco nella turnistica'
+                        : 'Applica a una scheda locale dopo la difesa',
+                    icon: const Icon(Icons.gps_fixed),
+                    onPressed: realtimeService?.isConnected == true
+                        ? () => planOnlineAttack()
+                        : () => applyPendingTargetEffectLocally(
+                            activeStructuredEffects[index],
+                          ),
+                  ),
                 if (activeStructuredEffects[index]['type'] == 'costrutto')
                   IconButton(
                     tooltip: t('Danni al costrutto', 'Damage to construct'),
@@ -596,6 +645,93 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         ],
       ),
     );
+  }
+
+  Future<void> applyPendingTargetEffectLocally(
+    Map<String, dynamic> pending,
+  ) async {
+    if (onlineMasterApprovalRequired || pending['effect'] is! Map) return;
+    final source = schedaCorrente;
+    final origin = currentSheetScrollId();
+    final target = await showDialog<int>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('Effetto · bersaglio locale'),
+        content: SizedBox(
+          width: 480,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Seleziona la scheda su cui applicare l’effetto dopo aver risolto il tiro di difesa. Non modifica il Monster Book.',
+                ),
+                for (var index = 0; index < schedePersonaggio.length; index++)
+                  ListTile(
+                    title: Text(
+                      '${schedePersonaggio[index]['nome'] ?? 'Scheda ${index + 1}'}',
+                    ),
+                    onTap: () => Navigator.pop(dialog, index),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('Annulla'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted ||
+        target == null ||
+        target >= schedePersonaggio.length ||
+        currentSheetScrollId() != origin ||
+        !activeStructuredEffects.contains(pending) ||
+        onlineMasterApprovalRequired) {
+      return;
+    }
+    final effect = OculumStructuredEffect.fromJson(
+      Map<String, dynamic>.from(pending['effect'] as Map),
+    )..recipient = 'se_stesso';
+    activeStructuredEffects.remove(pending);
+    aggiungiLog(
+      'Effetto ${pending['source']} assegnato a ${schedePersonaggio[target]['nome']}.',
+    );
+    salvaSchedaCorrenteInMemoria();
+    final global = catturaImpostazioniGlobali();
+    setState(() {
+      schedaCorrente = target;
+      caricaStatoDaJson(schedePersonaggio[target]);
+      ripristinaImpostazioniGlobali(global);
+    });
+    try {
+      if (effect.type == 'danno') {
+        await applicaDannoSubito(
+          dannoEsplicito: max(0, readIntValue(effect.valueExpression)),
+        );
+      } else {
+        for (final message in applyStructuredEffectsOnActivation([
+          effect,
+        ], source: '${pending['source']}')) {
+          aggiungiLog(message);
+        }
+      }
+      salvaSchedaCorrenteInMemoria();
+    } finally {
+      if (mounted &&
+          schedaCorrente == target &&
+          source < schedePersonaggio.length) {
+        setState(() {
+          schedaCorrente = source;
+          caricaStatoDaJson(schedePersonaggio[source]);
+          ripristinaImpostazioniGlobali(global);
+        });
+      }
+      programmaSalvataggio();
+    }
   }
 
   Future<void> damageStructuredConstruct(Map<String, dynamic> construct) async {

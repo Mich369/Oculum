@@ -1073,6 +1073,8 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
       child: Column(
         children: [
           OculumReferenceArt(combat: true, height: 96),
+          onlineAttackButton(),
+          onlineCombatRequestsPanel(),
           SizedBox(height: 12),
           OculumEncounterStage(
             key: ValueKey(

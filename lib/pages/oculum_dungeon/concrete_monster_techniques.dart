@@ -9,8 +9,9 @@ class MonsterTechniqueEffect {
     this.target = '',
     this.mode = 'finche_attivo',
     this.duration = '1',
+    this.recipient = 'se_stesso',
   });
-  final String type, formula, target, mode, duration;
+  final String type, formula, target, mode, duration, recipient;
 }
 
 class MonsterConcreteTechnique {
@@ -33,7 +34,7 @@ class MonsterConcreteTechnique {
   /// Persistent resources need a longer recovery than a single attack bonus.
   List<int> get cooldowns => switch (kind) {
     'cura' => const [3, 4, 5],
-    'costrutto' => const [3, 4, 5],
+    'costrutto' || 'controllo' => const [3, 4, 5],
     'scudo' => const [2, 3, 4],
     'movimento' || 'richiamo' => const [2, 2, 3],
     _ => const [1, 1, 2],
@@ -45,12 +46,13 @@ class MonsterConcreteTechnique {
           return switch (e.type) {
             'danno' => '+$value Danni al prossimo attacco; si consuma una sola volta',
             'danno_percentuale' => '+$value% Danni al prossimo attacco; si consuma una sola volta',
-            'difesa' => '+$value Difesa per ${e.duration} turno',
+            'difesa' => '${e.mode == 'diminuzione' ? '-' : '+'}$value Difesa per ${e.duration} turno',
             'scudo' => '+$value Scudo, fino a esaurimento',
             'cura' => 'recuperi $value Vita, entro il massimo',
             'costrutto' => 'crei ${e.target} con $value Vita per ${e.duration} turni; la sua Vita si gestisce nella scheda effetti',
             'aggiungi_reazioni' => '+$value Reazione per ${e.duration} turno',
             'modifica_statistica' => '${e.target} ${e.mode == 'diminuzione' ? '-' : '+'}$value per ${e.duration} turno',
+            'stato' => '${e.target} grado $value per ${e.duration} turni sul bersaglio; una difesa riuscita evita lo stato',
             _ => '$value ${e.target}',
           };
         }).join('; ');
@@ -97,6 +99,8 @@ final Map<String, MonsterConcreteTechnique?> _concreteTechniqueCache = {};
 MonsterConcreteTechnique? monsterBookConcreteTechnique(String rawId) {
   final id = rawId.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
   return _concreteTechniqueCache.putIfAbsent(id, () {
+    final necromancy = _necromancerTechnique(id);
+    if (necromancy != null) return necromancy;
     final owner = _concreteTechniqueOwners[id];
     if (owner == null) return null;
     final frost = _frostDemonTechniques[id];
@@ -255,6 +259,127 @@ MonsterConcreteTechnique? monsterBookConcreteTechnique(String rawId) {
       kind: kind,
     );
   });
+}
+
+MonsterConcreteTechnique? _necromancerTechnique(String id) {
+  final profile = switch (id) {
+    'necromancer_ash_bind' => (
+      'Legacci del focolare spento',
+      'La cenere si stringe alle caviglie: un solo bersaglio, immobilità spezzabile. Con attacco quasi riuscito la durata è dimezzata, arrotondata per difetto fino a zero.',
+      'cenere',
+      'controllo',
+    ),
+    'necromancer_soul_flame' => (
+      'Lucignolo dell’anima',
+      'Accendi una fiamma spettrale nel palmo e la scagli contro un solo bersaglio; il bonus vale per un solo attacco.',
+      'spirituale',
+      'danno',
+    ),
+    'necromancer_obsidian_chain' => (
+      'Catena del sepolcro nero',
+      'Una catena di ossidiana intrappola un solo bersaglio mentre una maglia si avvolge sul padrone come Scudo.',
+      'ombra',
+      'scudo',
+    ),
+    'necromancer_black_sun' => (
+      'Eclisse nelle orbite',
+      'Un disco nero attraversa lo sguardo di un bersaglio: riduce la sua VC e riveste il necromante di Scudo.',
+      'ombra',
+      'difesa',
+    ),
+    'necromancer_hunger_mark' => (
+      'Marchio della bocca vuota',
+      'Il marchio incide un bersaglio e ne rallenta il passo; non sottrae statistiche permanenti.',
+      'sangue',
+      'danno',
+    ),
+    'necromancer_last_feast' => (
+      'Banchetto dell’ultimo respiro',
+      'Assorbi l’eco dei morti vicini per curarti, esponendoti: perdi Difesa per un turno. Non cura servitori né riporta in vita creature.',
+      'sangue',
+      'cura',
+    ),
+    _ => null,
+  };
+  if (profile == null) return null;
+  final fixed = id == 'necromancer_ash_bind';
+  return MonsterConcreteTechnique(
+    name: profile.$1,
+    action: profile.$2,
+    element: profile.$3,
+    kind: profile.$4,
+    requiredLevel: 0,
+    minimums: fixed ? const [3, 6, 10] : const [1, 5, 11],
+    maximums: fixed ? const [3, 6, 10] : const [4, 10, 20],
+    forms: List.generate(3, (form) {
+      MonsterTechniqueEffect state(String name) => MonsterTechniqueEffect(
+        'stato',
+        '1',
+        target: name,
+        recipient: 'bersaglio',
+        duration: '${form + 1}',
+      );
+      return switch (id) {
+        'necromancer_ash_bind' => [state('immobilizzato')],
+        'necromancer_soul_flame' => [
+          MonsterTechniqueEffect(
+            'danno',
+            'oculum_spent+${[6, 12, 20][form]}',
+            mode: 'prossima_azione',
+            duration: '',
+          ),
+        ],
+        'necromancer_obsidian_chain' => [
+          state('immobilizzato'),
+          MonsterTechniqueEffect(
+            'scudo',
+            'oculum_spent*${form + 2}',
+            mode: 'immediato',
+            duration: '',
+          ),
+        ],
+        'necromancer_black_sun' => [
+          MonsterTechniqueEffect(
+            'modifica_statistica',
+            '${[2, 3, 5][form]}',
+            target: 'vc',
+            mode: 'diminuzione',
+            recipient: 'bersaglio',
+            duration: '${form + 1}',
+          ),
+          MonsterTechniqueEffect(
+            'scudo',
+            'oculum_spent*2',
+            mode: 'immediato',
+            duration: '',
+          ),
+        ],
+        'necromancer_hunger_mark' => [
+          state('rallentato'),
+          MonsterTechniqueEffect(
+            'danno',
+            'oculum_spent+${[4, 9, 16][form]}',
+            mode: 'prossima_azione',
+            duration: '',
+          ),
+        ],
+        _ => [
+          MonsterTechniqueEffect(
+            'cura',
+            'oculum_spent*${form + 2}+${form * 4}',
+            mode: 'immediato',
+            duration: '',
+          ),
+          MonsterTechniqueEffect(
+            'difesa',
+            '${form + 2}',
+            mode: 'diminuzione',
+            duration: '1',
+          ),
+        ],
+      };
+    }),
+  );
 }
 
 /// Explicit tactical differences: these are not chosen from an ID hash.

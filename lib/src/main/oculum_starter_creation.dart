@@ -411,8 +411,30 @@ List<OculumTitle> oculumMonsterBookTitles(MonsterBookEntry monster) {
 
 CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
   final art = _rawMonsterBookArt(monster);
-  for (final skill in art.skills) {
+  final ids = monsterBookUsableSkillIds(monster);
+  for (final (skillIndex, skill) in art.skills.indexed) {
     for (var form = 1; form <= 3; form++) {
+      final id = ids[skillIndex];
+      if (skill.effettiPerLivello[form - 1].isEmpty &&
+          !id.startsWith('pawn_guardiano') &&
+          !id.startsWith('riccio_aculeo_') &&
+          !id.startsWith('necromancer_raise_dead')) {
+        skill.effettiPerLivello[form - 1] = oculumParseAbilityMechanics(
+          monsterBookSkillForms(id)[form - 1],
+          investedOculum: true,
+        ).effects;
+      }
+      final authoredCost = oculumParseAbilityCost(
+        monsterBookSkillForms(id)[form - 1],
+      );
+      if (authoredCost != null) {
+        skill.impostaRisorsaCostoPerLivello(form, authoredCost.resource);
+        skill.impostaLimitiOculumPerLivello(
+          form,
+          minimo: authoredCost.minimum,
+          massimo: authoredCost.maximum,
+        );
+      }
       final text = skill.testoEvoluzione(form);
       if (text.isEmpty || text == '???') continue;
       final passive = skill
@@ -470,7 +492,7 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
 }
 
 CharacterArt _rawMonsterBookArt(MonsterBookEntry monster) =>
-    monster.id == 'slime_roccioso'
+    oculumMonsterBookSkillBaseId(monster.id) == 'slime_roccioso'
     ? oculumRockSlimeArt(monster)
     : monster.id.startsWith('pawn_guardiano')
     ? CharacterArt(
@@ -631,7 +653,7 @@ CharacterArt oculumRockSlimeArt(MonsterBookEntry monster) => CharacterArt(
       'Schiaccio — Oculum immesso ×5 danni, +100% danni Open. Il raddoppio si applica una sola volta; Difesa e Scudi restano validi.',
   monsterOpenSkill: true,
   skills: [
-    for (final id in monster.skillIds)
+    for (final id in monster.skillIds.map(oculumMonsterBookSkillBaseId))
       ArtSkill(
         nome: monsterBookSkillText(id).split('—').first.trim(),
         livello: 0,
@@ -753,10 +775,12 @@ String _monsterBookSkillEvolution(
   final requirement = text.contains(authoredRequirement)
       ? ''
       : 'Richiede livello ${baseLevel + form * 3}\n';
-  final hasCost = RegExp(
-    r'(?:costo\s*[:=]?.{0,24}oculum|\d+\s*[/–-]\s*\d+\s*oculum)',
-    caseSensitive: false,
-  ).hasMatch(text);
+  final hasCost =
+      oculumParseAbilityCost(text) != null ||
+      RegExp(
+        r'(?:costo\s*[:=]?.{0,24}oculum|\d+\s*[/–-]\s*\d+\s*oculum)',
+        caseSensitive: false,
+      ).hasMatch(text);
   final cost =
       id.startsWith('hero_path:') ||
           hasCost ||
@@ -809,6 +833,10 @@ List<List<OculumStructuredEffect>>? _monsterBookGenericEffects(String id) {
                   : '',
               mode: concrete.forms[form][index].mode,
               duration: concrete.forms[form][index].duration,
+              recipient: concrete.forms[form][index].recipient,
+              appliedState: concrete.forms[form][index].type == 'stato'
+                  ? concrete.forms[form][index].target
+                  : '',
               resource: concrete.forms[form][index].type == 'cura'
                   ? 'vita'
                   : '',

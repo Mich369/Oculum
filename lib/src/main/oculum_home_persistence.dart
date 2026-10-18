@@ -5132,7 +5132,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   Map<String, dynamic> catturaImpostazioniGlobali() {
     return <String, dynamic>{
-      'onlinePermissionRequests': onlinePermissionRequests,
+      'onlinePermissionRequests': {
+        for (final e in onlinePermissionRequests.entries)
+          e.key: Map<String, dynamic>.from(e.value),
+      },
+      'onlineCombatRequests': {
+        for (final e in onlineCombatRequests.entries)
+          e.key: Map<String, dynamic>.from(e.value),
+      },
       'trustedCoMasterTags': trustedCoMasterTags.toList(),
       'linguaInglese': linguaInglese,
       'tutorialCompletato': tutorialCompletato,
@@ -5182,6 +5189,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
             : !kIsWeb && defaultTargetPlatform == TargetPlatform.windows);
     modalitaMaster = readBoolValue(globali['modalitaMaster']);
     onlinePermissionRequests.clear();
+    onlineCombatRequests.clear();
+    final savedCombat = globali['onlineCombatRequests'];
+    if (savedCombat is Map) {
+      for (final entry in savedCombat.entries.take(200)) {
+        if (entry.value is Map) {
+          onlineCombatRequests['${entry.key}'] = Map<String, dynamic>.from(
+            entry.value as Map,
+          );
+        }
+      }
+    }
     final savedRequests = globali['onlinePermissionRequests'];
     if (savedRequests is Map) {
       for (final entry in savedRequests.entries) {

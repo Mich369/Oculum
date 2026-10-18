@@ -5664,6 +5664,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       child: ListTile(
                         dense: true,
                         leading: monsterBookEntryPreview(entry),
+                        onTap: () => showMonsterBookMechanics(entry),
                         title: Text(
                           entry.nameIt,
                           maxLines: 1,

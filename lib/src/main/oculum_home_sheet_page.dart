@@ -7175,6 +7175,17 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   ),
                 ),
                 actionButton(
+                  label: t(
+                    'Quasi riuscito · Difesa ×1,5',
+                    'Partial hit · Defense ×1.5',
+                  ),
+                  backgroundColor: primaryColor,
+                  foregroundColor: primaryColor.computeLuminance() > 0.45
+                      ? Colors.black
+                      : Colors.white,
+                  onPressed: () => applicaDannoSubito(defenseMultiplier: 1.5),
+                ),
+                actionButton(
                   label: t('Critico', 'Critical'),
                   backgroundColor: tertiaryColor,
                   foregroundColor: tertiaryColor.computeLuminance() > 0.45
@@ -7521,6 +7532,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             ),
           ),
           const SizedBox(height: 10),
+          smallInfoText(oculumRuneBookCreativeGuide),
           Wrap(
             spacing: 8,
             runSpacing: 8,

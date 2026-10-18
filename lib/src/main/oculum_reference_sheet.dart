@@ -909,6 +909,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                           ),
                         ),
                         referenceTurnControls(),
+                        onlineAttackButton(),
                       ],
                     ),
                     SizedBox(height: 10),
@@ -1002,6 +1003,8 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                       ],
                     ),
                     SizedBox(height: 8),
+                    onlineCombatRequestsPanel(),
+                    combatAbilityQuickBar(),
                     Text(
                       '${t('Danni inflitti', 'Damage dealt')}: ${dannoTotale()} · ${t('Difesa totale', 'Total defense')}: ${difesa()} · ${t('I Sottotratti sono tiri alternativi', 'Subtraits are alternative rolls')}',
                       style: TextStyle(fontSize: 12),

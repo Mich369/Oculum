@@ -91,5 +91,5 @@ String oculumNecromancerSkillText(String id) {
   if (id == 'necromancer_raise_dead') {
     return 'Richiamo dei servitori — I/Crea due servitori, ciascuno con 10 + Vita massima del necromante/3 HP. Ogni Oculum immesso aggiunge 1 HP a ciascun servitore. Finché uno è vivo il necromante non subisce danni. CD 10 turni. Richiede livello 0. (1/4 Oculum). II/La stessa evocazione ottiene +10 HP per servitore, più 1 HP per ogni Oculum immesso. CD 10 turni. Richiede livello 3. (5/10 Oculum). III/La stessa evocazione ottiene +20 HP per servitore, più 1 HP per ogni Oculum immesso, e condivide le condizioni del padrone. CD 10 turni. Richiede livello 6. (11/30 Oculum).';
   }
-  return 'Tecnica necromantica — I/Un attacco del necromante o dei suoi servitori. Richiede livello 0. (1/4 Oculum). II/Aggiunge Oculum ai danni. Richiede livello 3. (5/10 Oculum). III/Colpisce anche un secondo bersaglio. Richiede livello 6. (11/30 Oculum).';
+  return _necromancerTechnique(id)?.text() ?? '';
 }

@@ -51,6 +51,49 @@ ArtSkill oculumAbilityWithEvolutions(ArtSkill original, int count) {
 }
 
 extension _OculumAbilityCatalogue on _OculumHomePageState {
+  Future<void> showMonsterBookMechanics(MonsterBookEntry monster) async {
+    final art = oculumMonsterBookArt(monster);
+    await showDialog<void>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: Text('${monster.nameIt} · abilità ed effetti'),
+        content: SizedBox(
+          width: 640,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Gli effetti qui mostrati sono gli stessi importati nella scheda. Costi, durata e formule vengono letti dal catalogo.',
+                ),
+                for (final skill in art.skills)
+                  ExpansionTile(
+                    title: Text(skill.nome),
+                    children: [
+                      for (var form = 1; form <= 3; form++)
+                        Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Text(
+                            '${artLevelRoman(form)} · ${skill.oculumMinimoPerLivello(form)}/${skill.oculumMassimoPerLivello(form)} ${skill.risorsaCostoPerLivello(form)}\n${skill.testoEvoluzione(form)}\n${skill.effettiEvoluzione(form).map(oculumStructuredEffectDescription).join('\n')}\n${skill.effettiEvoluzione(form).isEmpty ? 'Nessun effetto strutturato in questa forma: verifica il pannello dedicato o definisci gli effetti con il Master prima di applicarli.' : ''}',
+                          ),
+                        ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('Chiudi'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> showAbilityCatalogue({CharacterArt? destination}) async {
     final originSheet = currentSheetScrollId();
     final entries =
@@ -127,7 +170,7 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
                               Padding(
                                 padding: const EdgeInsets.all(8),
                                 child: Text(
-                                  '${artLevelRoman(form)} · ${entry.natural != null && !five ? entry.natural!.forme[min(form - 1, entry.natural!.forme.length - 1)].costo : "${art.oculumMinimoPerLivello(form)}/${art.oculumMassimoPerLivello(form)} ${art.risorsaCostoPerLivello(form)}"}\n${entry.natural != null && !five ? entry.natural!.forme[min(form - 1, entry.natural!.forme.length - 1)].descrizione : art.testoEvoluzione(form)}',
+                                  '${artLevelRoman(form)} · ${entry.natural != null && !five ? entry.natural!.forme[min(form - 1, entry.natural!.forme.length - 1)].costo : "${art.oculumMinimoPerLivello(form)}/${art.oculumMassimoPerLivello(form)} ${art.risorsaCostoPerLivello(form)}"}\n${entry.natural != null && !five ? entry.natural!.forme[min(form - 1, entry.natural!.forme.length - 1)].descrizione : art.testoEvoluzione(form)}\n${(entry.natural != null && !five ? entry.natural!.forme[min(form - 1, entry.natural!.forme.length - 1)].effettiStrutturati : art.effettiEvoluzione(form)).map(oculumStructuredEffectDescription).join('\n')}',
                                 ),
                               ),
                           ],

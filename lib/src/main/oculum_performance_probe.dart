@@ -93,19 +93,39 @@ class OculumPerformanceProbe {
   void removeParticipant(int index) =>
       _state.removeMasterInitiativeTokenAt(index);
   void damage(int amount) => _state.applicaDannoSubito(dannoEsplicito: amount);
-  Future<void> damageResolved(int amount, {bool critical = false}) =>
-      _state.applicaDannoSubito(
-        dannoEsplicito: amount,
-        critico: critical,
-        enemyDifficulty: 'normale',
-        enemyLevel: 0,
-      );
+  Future<void> damageResolved(
+    int amount, {
+    bool critical = false,
+    int criticalMultiplier = 1,
+    double defenseMultiplier = 1,
+    int enemyLevel = 0,
+    String difficulty = 'normale',
+    bool resolvedResistance = false,
+  }) => _state.applicaDannoSubito(
+    dannoEsplicito: amount,
+    critico: critical,
+    criticalBonusMultiplier: criticalMultiplier,
+    defenseMultiplier: defenseMultiplier,
+    enemyDifficulty: difficulty,
+    enemyLevel: enemyLevel,
+    resolvedResistance: resolvedResistance,
+  );
 
   bool get masterPermissions => _state.haPermessiMaster;
   bool get canActWithoutApproval => _state.canActWithoutMasterApproval;
   String get permissionScope => _state.permissionScope;
   void receivePermission(String event, Map<String, dynamic> payload) =>
       _state.receivePermissionEvent(event, payload);
+  void receiveCombat(String event, Map<String, dynamic> payload) =>
+      _state.receiveOnlineCombatEvent(event, payload);
+  Widget combatRequestsPanel() => _state.onlineCombatRequestsPanel();
+  Widget combatAbilityBar() => _state.combatAbilityQuickBar();
+  Color combatAbilityColor(String resource) =>
+      _state.combatAbilityResourceColor([resource]);
+  Future<void> defendCombat(Map<String, dynamic> request, String choice) =>
+      _state.defendOnlineAttack(request, choice);
+  Future<void> applyLocalTargetEffect(Map<String, dynamic> pending) =>
+      _state.applyPendingTargetEffectLocally(pending);
   void receiveRole(Map<String, dynamic> payload) =>
       _state.applyRealtimeRoleUpdate(payload);
   void requestAction(String action, String description) =>

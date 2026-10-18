@@ -377,6 +377,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         realtimeLastSentSheetHashes.clear();
         publishRealtimeStateAfterConnection();
         syncPawnPresence();
+        unawaited(replayOnlineCombatRequests());
       },
       presenceDataProvider: () => <String, dynamic>{
         'role': realtimeLocalRole(),
@@ -540,6 +541,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   void handleRealtimeEvent(String event, Map<String, dynamic> payload) {
+    if (event == 'combat_attack' || event == 'combat_defense') {
+      receiveOnlineCombatEvent(event, payload);
+      return;
+    }
     if (event == 'permission_request' || event == 'permission_decision') {
       receivePermissionEvent(event, payload);
       return;
@@ -3551,6 +3556,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           else
             Column(
               children: [
+                onlineAttackButton(),
+                onlineCombatRequestsPanel(),
                 for (int i = 0; i < tokens.length; i++)
                   Container(
                     margin: const EdgeInsets.only(bottom: 6),

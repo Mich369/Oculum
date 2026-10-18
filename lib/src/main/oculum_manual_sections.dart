@@ -4054,6 +4054,43 @@ The app changes page and tries to scroll directly to the selected field or secti
 If a section is not loaded yet, the app must not crash: it only reports that the function is not linked.
 ''',
   ),
+  ManualSection(
+    titleIt: 'Attacco contrapposto — conferme del 18 ottobre 2026',
+    titleEn: 'Opposed attacks — rules confirmed October 18, 2026',
+    contentIt: r'''
+Indica con A il totale del tiro di attacco e D quello del tiro di difesa. Questi totali sono distinti dalla Difesa numerica della scheda.
+
+ATTACCO QUASI RIUSCITO
+• Facile: A supera D da 1 a 6.
+• Medio/Normale: A supera D da 1 a 5.
+• Difficile: A supera D da 1 a 3.
+• Oculum: A è pari a D oppure inferiore di 1. Esempio D=10: A=9 o 10 quasi riuscito, A≥11 pieno, A≤8 evitato.
+In un quasi riuscito la Difesa numerica contro il colpo vale ×1,5, arrotondata per eccesso (7 diventa 11). La durata degli effetti in turni o azioni è dimezzata per difetto, minimo 0: 1 diventa 0, 3 diventa 1. Durata 0 significa che l'effetto non si applica, non che diventa permanente. Il danno base non si dimezza.
+Negli altri casi, fuori dall'eccezione Oculum, D≥A evita l'attacco; un vantaggio di A oltre la fascia indicata dà esito pieno.
+
+TIRO DOPPIO E CRITICO
+Se A raggiunge almeno il doppio di D ottiene un critico positivo, con precedenza sulla fascia quasi riuscita. Se D raggiunge almeno il doppio di A il difensore ottiene una reazione gratuita su chi ha provato a colpirlo. Il contrattacco è critico.
+Si raddoppia soltanto il bonus del danno critico, non il danno totale. Il bonus ordinario per livello del nemico è +3 Facile, +2 Medio, +1 Difficile, +1 ogni due livelli Oculum. Esempio: danno base 51, nemico livello 10 Medio, critico da tiro doppio → 51+40=91 prima delle protezioni. Il critico modifica gli stadi di Resistenza/Fragilità secondo le regole del danno critico.
+Normalmente gli arrotondamenti sono per difetto; il ×1,5 della Difesa quasi riuscita è l'eccezione esplicitamente confermata.
+
+LARVA BIANCA
+La modalità fuga di Scavata usa il sottotratto Velo. Questa scelta non modifica il tiro della modalità di attacco sotterraneo.
+
+PERGAMENE MONOUSO
+L'uso consuma una pergamena ed esegue la tecnica; non assegna automaticamente una skill permanente. Anche un tiro fallito consuma la pergamena. Con 20 naturale e totale almeno 30 + 10 × grado si verifica separatamente l'apprendimento: Facile 20%, Medio 15%, Difficile 10%, Oculum 5%. La skill eventualmente appresa conserva costi e cooldown, non è evolvibile e non viene duplicata.
+
+ONLINE E OFFLINE
+Online, in una turnistica, dichiari il bersaglio. VC è il tiro di attacco ordinario: per un tiro alternativo devi descrivere l'attacco e motivarlo al Master. Il bersaglio riceve la richiesta di difendersi con CM, Riflessi, Resistenza o Manifestazione del Potere secondo la tecnica. Offline tutto rimane utilizzabile, con scelta di bersaglio, confronto dei tiri ed esito gestibili manualmente.
+''',
+    contentEn: r'''
+Let A be the attack roll total and D the defense roll total, distinct from the sheet Defense value.
+Partial hit bands: Easy A-D=1..6; Normal 1..5; Hard 1..3. In Oculum, A=D or A=D-1 is partial; A>D is full; A≤D-2 is avoided.
+A partial hit uses sheet Defense ×1.5 rounded UP. Effect durations in turns/actions are halved rounded DOWN, minimum zero. A zero-duration effect does not apply. Base damage is not halved.
+Double the opposing total grants a positive critical. Double defense grants a free critical counterattack against the attacker. Only the difficulty/level critical damage bonus doubles, never base damage. Existing resistance/fragility critical rules remain in force.
+Rounding is normally down; partial-hit Defense ×1.5 is the explicitly confirmed exception.
+Online attacks declare a target and justify any attack roll other than VC. Defenders respond with the appropriate defense. Offline abilities remain usable with manual targeting, rolls and resolution.
+''',
+  ),
 ];
 
 // =====================================================

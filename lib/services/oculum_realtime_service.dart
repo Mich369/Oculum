@@ -22,6 +22,8 @@ class OculumRealtimeService {
   static String startupStatus = 'Supabase non inizializzato.';
 
   static const Set<String> supportedEvents = <String>{
+    'combat_attack',
+    'combat_defense',
     'pawn_snapshot',
     'pawn_command',
     'pawn_intercept_request',
@@ -717,6 +719,17 @@ class OculumRealtimeService {
   }
 
   Future<void> refreshPresence() => _trackPresence();
+
+  Future<bool> sendCombatEvent(String event, Map<String, dynamic> payload) {
+    if (event != 'combat_attack' && event != 'combat_defense') {
+      throw ArgumentError('Evento combattimento non supportato');
+    }
+    return _sendConfirmed(event, {
+      ...payload,
+      'sessionId': _presenceKey,
+      'playerName': _displayName,
+    });
+  }
 
   Future<bool> sendPermissionEvent(String event, Map<String, dynamic> payload) {
     if (event != 'permission_request' && event != 'permission_decision') {
