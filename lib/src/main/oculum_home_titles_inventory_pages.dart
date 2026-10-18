@@ -3450,6 +3450,18 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       programmaSalvataggio();
                     },
                   ),
+                  structuredCooldownEditor(
+                    cooldown: titolo.skillCooldown,
+                    storageId: 'title_${identityHashCode(titolo)}_skill_cd',
+                    onChanged: (value) {
+                      setState(() => titolo.skillCooldown = value);
+                      programmaSalvataggio();
+                    },
+                  ),
+                  titleCombatRoleEditor(
+                    titolo.skillCombatRole,
+                    (value) => titolo.skillCombatRole = value,
+                  ),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
                     onPressed: () => usaSkillTitolo(titolo),
@@ -3889,6 +3901,22 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                                 );
                                 programmaSalvataggio();
                               },
+                            ),
+                            structuredCooldownEditor(
+                              cooldown: titolo.skillExtra[i].cooldown,
+                              storageId:
+                                  'title_${identityHashCode(titolo)}_extra_${i}_cd',
+                              onChanged: (value) {
+                                setState(
+                                  () => titolo.skillExtra[i].cooldown = value,
+                                );
+                                programmaSalvataggio();
+                              },
+                            ),
+                            titleCombatRoleEditor(
+                              titolo.skillExtra[i].combatRole,
+                              (value) =>
+                                  titolo.skillExtra[i].combatRole = value,
                             ),
                             const SizedBox(height: 8),
                             ElevatedButton.icon(

@@ -248,8 +248,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       permissionEnvelope(request),
     );
     if (!mounted) return;
+    final previousDelivery = request['sent'];
     request['sent'] = delivered == true;
+    if (delivered != true && previousDelivery != false) {
+      combatLogFor(
+        '${request['sourceTag']}',
+        '[INVIO COMBATTIMENTO] Invio a ${request['targetName'] ?? request['targetTag']} non confermato da Supabase. La richiesta resta in attesa e sarà ritentata alla riconnessione.',
+      );
+    }
     setState(() {});
+    programmaSalvataggio();
   }
 
   Future<void> replayOnlineCombatRequests() async {
@@ -285,6 +293,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   }
 
   void receiveOnlineCombatEvent(String event, Map<String, dynamic> payload) {
+    if (event != 'combat_attack' && event != 'combat_defense') return;
     if (!validPermissionSender(payload)) return;
     final id = '${payload['id'] ?? ''}';
     if (id.isEmpty ||

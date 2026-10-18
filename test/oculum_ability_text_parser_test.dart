@@ -2,6 +2,36 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('inline cost does not swallow executable bonuses', () {
+    final result = oculumParseAbilityMechanics('Costo: 2 Oculum; @VC+3 per 2 turni');
+    expect(result.effects.single.target, 'VC');
+    expect(result.effects.single.valueExpression, '3');
+    expect(result.effects.single.duration, '2');
+  });
+  test('conditional and negated clauses stay manual', () {
+    for (final text in [
+      'Se colpisci ottieni +5 Materia',
+      'Quando perdi Vita ottieni +2 Volontà',
+      'Non ottieni +3 Resilienza',
+    ]) {
+      final result = oculumParseAbilityMechanics(text);
+      expect(result.effects, isEmpty, reason: text);
+      expect(result.unrecognizedText, contains(text));
+    }
+  });
+  test('semantic matching preserves timing differences and ignores IDs', () {
+    final first = oculumParseAbilityMechanics('@VC+3 per 2 turni').effects.single;
+    final copy = OculumStructuredEffect.fromJson({...first.toJson(), 'id': 'another'});
+    expect(oculumStructuredEffectSemanticKey(copy), oculumStructuredEffectSemanticKey(first));
+    copy.durationUnit = 'azioni';
+    expect(oculumStructuredEffectSemanticKey(copy), isNot(oculumStructuredEffectSemanticKey(first)));
+  });
+  test('resource costs distinguish fixed, variable and free use', () {
+    expect(oculumParseAbilityCost('costo 1 Volontà')?.resource, 'volonta');
+    expect(oculumParseAbilityCost('(2/6 Oculum)')?.maximum, 6);
+    expect(oculumParseAbilityCost('Nessun costo')?.resource, 'nessuna');
+    expect(oculumParseAbilityCost('recuperi 1/4 della Vita'), isNull);
+  });
   test('ability parser separates requirements, costs and real bonuses', () {
     final parsed = oculumParseAbilityMechanics(
       'Richiede livello 24. Costo: 5/5 Oculum.\n@VC+2 e +34 danni per 2 turni',

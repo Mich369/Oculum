@@ -2728,10 +2728,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     final configured = skillExtra?.effects ?? titolo.skillEffects;
     final effects = configured.isNotEmpty
         ? List<OculumStructuredEffect>.from(configured)
-        : oculumParseStructuredEffectsFromText(
-            text,
-            subtraits: hiddenEyeStats,
-          ).effects;
+        : oculumParseAbilityMechanics(text, subtraits: hiddenEyeStats).effects;
     if (text.trim().isEmpty && effects.isEmpty) {
       setState(() {
         risultato = t(
@@ -2742,11 +2739,21 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       return;
     }
     final cost = skillExtra?.cost ?? titolo.skillCost;
+    final cooldown =
+        skillExtra?.cooldown ??
+        (skillExtra == null ? titolo.skillCooldown : null);
+    if (cooldown != null && !cooldown.ready) {
+      aggiungiLog(
+        '$displayName: cooldown ${cooldown.remaining} ${cooldown.unit}.',
+      );
+      return;
+    }
     if (cost != null) {
       await useConfiguredAbility(
         source: '$displayName — Skill del Titolo',
         effects: effects,
         cost: cost,
+        cooldown: cooldown,
         valid: () => titoli.contains(titolo) || trattiRazziali.contains(titolo),
       );
       return;
@@ -2771,6 +2778,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         });
       }
     }
+    cooldown?.activate();
     scheduleRealtimeOculumChanged();
     programmaSalvataggio();
   }

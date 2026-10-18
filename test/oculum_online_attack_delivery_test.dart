@@ -100,6 +100,11 @@ void main() {
       };
       probe.receiveCombat('combat_attack', {...packet, 'sessionId': 'forged'});
       expect(state.onlineCombatRequests, isEmpty);
+      probe.receiveCombat('combat_attack', {
+        ...packet,
+        'targetTag': 'OUTSIDE_FIGHT',
+      });
+      expect(state.onlineCombatRequests, isEmpty);
       probe.receiveCombat('combat_attack', packet);
       expect(state.onlineCombatRequests.length, 1);
       final before = (state.logEventi as List)
@@ -114,6 +119,22 @@ void main() {
       );
       expect(before, 1);
       final Map request = state.onlineCombatRequests['attack-one'];
+      state.onlineCombatRequests['outgoing'] = <String, dynamic>{
+        ...packet,
+        'id': 'outgoing',
+        'sourceTag': 'ROSE',
+        'targetTag': 'ENEMY',
+        'status': 'pending',
+      };
+      probe.receiveCombat('unsupported_event', {
+        ...packet,
+        'id': 'outgoing',
+        'sourceTag': 'ROSE',
+        'targetTag': 'ENEMY',
+        'defense': 30,
+      });
+      expect(state.onlineCombatRequests['outgoing']['status'], 'pending');
+      state.onlineCombatRequests.remove('outgoing');
       request['status'] = 'resolved';
       probe.receiveCombat('combat_attack', packet);
       expect(state.onlineCombatRequests['attack-one']['status'], 'resolved');

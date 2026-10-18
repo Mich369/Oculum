@@ -48,6 +48,10 @@ I requisiti sono livello 0 / 3 / 6. Il controllo si può evitare col tiro difens
 
 ### Aggiornamenti del 18 ottobre
 
+- Entrambi i pulsanti di riconoscimento nell'editor usano il parser di formule, dadi, costi, durate e destinatari. La deduplicazione considera anche unità della durata, frequenza, elemento e risorsa: ripetere il riconoscimento non riattiva né sostituisce gli effetti personalizzati già presenti. Frasi condizionali o negate restano da definire manualmente; non diventano bonus incondizionati.
+- Le skill principali ed extra dei Titoli compaiono nella barra combattimento. L'editor permette di scegliere Automatico, Attacco, Difesa o Aiuta compagno e di configurare cooldown indipendenti. Gruppo, cooldown residuo, costi ed effetti sono salvati nel JSON; i salvataggi precedenti hanno impostazioni predefinite additive.
+- Gli attacchi online usano Supabase Realtime per inviare danno ed effetti al bersaglio del fight e ricevere la difesa. Un bersaglio esterno allo scontro, un mittente non valido, un evento sconosciuto o una richiesta duplicata non deve applicare conseguenze. Un invio non confermato dal server viene segnalato nel log del mittente; l'esito del difensore resta una conferma distinta. La richiesta pendente viene ritentata alla riconnessione. Questo non equivale a una verifica reale tra due dispositivi e non introduce ancora un selettore multibersaglio universale per cure e supporti.
+
 - Pergamene: l'uso consuma un esemplare ed esegue la tecnica; l'apprendimento è un controllo separato, solo con 20 naturale e totale ≥30+10×grado. Probabilità Facile/Medio/Difficile/Oculum: 20/15/10/5%. Conferma e log mostrano la probabilità della campagna; il log registra anche il consumo.
 - La barra sotto i comandi di combattimento raggruppa Skill equipaggiate, Art in uso e Open in Attacco, Difesa e Aiuta compagno. La scelta della forma passa dai gestori originali di costo, livello e cooldown. Le passive non compaiono come attivazioni manuali.
 - Colori delle abilità: Oculum personalizzato, Resilienza verde, Volontà rosso, Materia blu. Le abilità senza risorsa riconosciuta usano il testo del tema.

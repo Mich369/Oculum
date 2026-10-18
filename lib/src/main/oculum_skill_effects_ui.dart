@@ -45,6 +45,12 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         changed = (form.cooldownStrutturato?.tick(unit) ?? false) || changed;
       }
     }
+    for (final title in {...titoli, ...trattiRazziali}) {
+      changed = (title.skillCooldown?.tick(unit) ?? false) || changed;
+      for (final extra in title.skillExtra) {
+        changed = (extra.cooldown?.tick(unit) ?? false) || changed;
+      }
+    }
     for (final item in inventario) {
       for (final form in item.ability?.forme ?? <CharacterSkillForm>[]) {
         changed = (form.cooldownStrutturato?.tick(unit) ?? false) || changed;
@@ -1032,6 +1038,10 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       'consumo_risorsa' => t('Consumo risorsa', 'Consume resource'),
       'conversione_risorsa' => t('Conversione risorsa', 'Resource conversion'),
       'stato' => t('Applica stato', 'Apply condition'),
+      'elemental_resistance' => t(
+        'Resistenza elementale',
+        'Elemental resistance',
+      ),
       _ => type,
     };
   }
@@ -2398,13 +2408,13 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                     );
                     final existing = {
                       for (final e in effects)
-                        '${e.type}|${e.target}|${e.valueExpression}|${e.recipient}|${e.mode}|${e.duration}',
+                        oculumStructuredEffectSemanticKey(e),
                     };
                     setState(() {
                       var added = 0;
                       for (final effect in parsed.effects) {
                         if (existing.add(
-                          '${effect.type}|${effect.target}|${effect.valueExpression}|${effect.recipient}|${effect.mode}|${effect.duration}',
+                          oculumStructuredEffectSemanticKey(effect),
                         )) {
                           effects.add(effect);
                           added++;
@@ -2421,7 +2431,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
               if (freeText.trim().isNotEmpty)
                 OutlinedButton.icon(
                   onPressed: () {
-                    final parsed = oculumParseStructuredEffectsFromText(
+                    final parsed = oculumParseAbilityMechanics(
                       freeText,
                       subtraits: hiddenEyeStats,
                     );
@@ -2435,7 +2445,17 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                       return;
                     }
                     setState(() {
-                      effects.addAll(parsed.effects);
+                      final existing = {
+                        for (final effect in effects)
+                          oculumStructuredEffectSemanticKey(effect),
+                      };
+                      for (final effect in parsed.effects) {
+                        if (existing.add(
+                          oculumStructuredEffectSemanticKey(effect),
+                        )) {
+                          effects.add(effect);
+                        }
+                      }
                       onChanged();
                       risultato = parsed.unrecognizedText.isEmpty
                           ? t(

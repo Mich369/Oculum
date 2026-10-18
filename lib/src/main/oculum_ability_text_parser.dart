@@ -1,10 +1,19 @@
 part of '../../main.dart';
 
+const _oculumAbilityResourcePattern =
+    r'(?:Scudo\s+Oculum|Oculum|OCU|Volont[aà]|VOL|Materia|MAT|Resilienza|RES|Vita|HP|Scudo|Reazioni?|Azioni?)';
+
 ({int minimum, int maximum, String resource})? oculumParseAbilityCost(
   String raw,
 ) {
+  if (RegExp(
+    r'\b(?:nessun\s+costo|senza\s+costo|gratuit[oa])\b',
+    caseSensitive: false,
+  ).hasMatch(raw)) {
+    return (minimum: 0, maximum: 0, resource: 'nessuna');
+  }
   final range = RegExp(
-    r'\(?\s*(\d+)\s*[/–-]\s*(\d+)\s*(Oculum|Volontà|Materia)?\s*\)?',
+    '(?:\\b(?:costo|spendi|consumi|costa)\\s*:?\\s*|\\()\\s*(\\d+)\\s*[/–-]\\s*(\\d+)\\s*($_oculumAbilityResourcePattern)?\\s*\\)?',
     caseSensitive: false,
   ).firstMatch(raw);
   if (range != null) {
@@ -17,8 +26,23 @@ part of '../../main.dart';
       resource: oculumNormalizeEffectResource(range.group(3) ?? 'oculum'),
     );
   }
+  final nakedRange = RegExp(
+    '(\\d+)\\s*/\\s*(\\d+)\\s*($_oculumAbilityResourcePattern)\\b',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (nakedRange != null) {
+    final minimum = int.parse(nakedRange.group(1)!);
+    final maximum = int.parse(nakedRange.group(2)!);
+    return maximum < minimum
+        ? null
+        : (
+            minimum: minimum,
+            maximum: maximum,
+            resource: oculumNormalizeEffectResource(nakedRange.group(3)!),
+          );
+  }
   final fixed = RegExp(
-    r'(?:spendi|costa|costo\s*:?|consumi)\s*(\d+)\s*(Oculum|Volontà|Materia)',
+    '(?:spendi|costa|costo\\s*:?|consumi)\\s*(\\d+)\\s*($_oculumAbilityResourcePattern)',
     caseSensitive: false,
   ).firstMatch(raw);
   if (fixed == null) return null;
@@ -38,6 +62,71 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
   bool investedOculum = false,
 }) {
   final effects = <OculumStructuredEffect>[];
+  final leftovers = <String>[];
+  final seen = <String>{};
+  final sourceKey = raw.codeUnits
+      .fold<int>(17, (hash, unit) => (hash * 31 + unit) % 2147483647)
+      .toRadixString(16);
+  final clauses = <String>[];
+  var start = 0;
+  for (var index = 0; index < raw.length; index++) {
+    final character = raw[index];
+    final decimal =
+        character == '.' &&
+        index > 0 &&
+        index + 1 < raw.length &&
+        RegExp(r'\d').hasMatch(raw[index - 1]) &&
+        RegExp(r'\d').hasMatch(raw[index + 1]);
+    if (character == ';' || character == '\n' || character == '.' && !decimal) {
+      clauses.add(raw.substring(start, index));
+      start = index + 1;
+    }
+  }
+  clauses.add(raw.substring(start));
+  for (final clause
+      in clauses.map((c) => c.trim()).where((c) => c.isNotEmpty)) {
+    if (RegExp(
+      r'\bse\s+(?!stess[oa]\b)|\b(?:quando|qualora)\b|\b(?:con|al)\s+(?:un\s+)?critico\b|\bnon\s+(?:ottieni|guadagni|ricevi|infliggi|curi|aumenta|aggiungi)\b|\bsubisc\w*\s+[^;]*danni\s+ogni\b|\bScudo\s+Oculum\b',
+      caseSensitive: false,
+    ).hasMatch(clause)) {
+      leftovers.add(clause);
+      continue;
+    }
+    final parsed = _oculumParseAbilityClause(
+      clause,
+      subtraits: subtraits,
+      investedOculum: investedOculum,
+    );
+    for (final effect in parsed.effects) {
+      if (!seen.add(oculumStructuredEffectSemanticKey(effect))) continue;
+      effect.id = 'parsed_${sourceKey}_${effects.length}';
+      effects.add(effect);
+    }
+    if (parsed.unrecognizedText.isNotEmpty) {
+      leftovers.add(parsed.unrecognizedText);
+    }
+  }
+  return OculumFreeTextEffectParseResult(
+    effects: effects,
+    unrecognizedText: leftovers.join('; '),
+  );
+}
+
+String oculumStructuredEffectSemanticKey(OculumStructuredEffect effect) {
+  final data = effect.toJson()
+    ..remove('id')
+    ..remove('narrativeText')
+    ..remove('enabled');
+  if (effect.type != 'elemental_resistance') data.remove('customDisplayText');
+  return jsonEncode(data);
+}
+
+OculumFreeTextEffectParseResult _oculumParseAbilityClause(
+  String raw, {
+  Iterable<HiddenEyeStat> subtraits = const [],
+  bool investedOculum = false,
+}) {
+  final effects = <OculumStructuredEffect>[];
   // Stable across platforms and reloads: different texts have distinct IDs.
   final sourceKey = raw.codeUnits
       .fold<int>(17, (hash, unit) => (hash * 31 + unit) % 2147483647)
@@ -46,8 +135,23 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
   var text = oculumCleanMojibakeText(raw)
       .replaceAll('−', '-')
       .replaceAll('×', '*')
+      .replaceAll(RegExp(r'\s+x\s*', caseSensitive: false), ' * ')
+      .replaceAllMapped(RegExp(r'(\d),(\d)'), (m) => '${m[1]}.${m[2]}')
       .replaceAll(RegExp(r'\b(?:III|II|IV|V|I)/'), '')
-      .replaceAll(RegExp(r'Costo\s*:[^\n.]*[.\n]?', caseSensitive: false), '')
+      .replaceAll(
+        RegExp(
+          '\\b(?:Costo\\s*:?|spendi|consumi|costa)\\s*\\d+(?:\\s*/\\s*\\d+)?\\s*(?:$_oculumAbilityResourcePattern)?',
+          caseSensitive: false,
+        ),
+        '',
+      )
+      .replaceAll(
+        RegExp(
+          r'\b(?:CD|cooldown|ricarica)\s*:?\s*\d+\s*(?:turn\w*|azion\w*|tir\w*)?',
+          caseSensitive: false,
+        ),
+        '',
+      )
       .replaceAll(
         RegExp(r'Richiede\s+(?:livello|lvl)\s*\d+\.?', caseSensitive: false),
         '',
@@ -55,30 +159,46 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
       .replaceAll(RegExp(r'\bLivello\s+\d+\s*[:,]?', caseSensitive: false), '')
       .replaceAll(
         RegExp(
-          r'\(\s*\d+\s*[/–-]\s*\d+\s*(?:Oculum)?[^)]*\)',
+          '\\(\\s*\\d+\\s*[/–-]\\s*\\d+\\s*(?:$_oculumAbilityResourcePattern)?\\s*\\)',
           caseSensitive: false,
         ),
         '',
       );
-  final durationMatch = RegExp(
-    r'(?:per|dura(?:ta)?\s*:?|fino a)\s*(\d+|un|uno|due|tre|tutto il)\s*(turn\w*|tir\w*|azion\w*)',
+  final durationMatches = RegExp(
+    r'(?:per|dura(?:ta)?\s*:?|fino a)\s*(\d*d\d+(?:\s*[+-]\s*\d+)?|\d+|un|una|uno|due|tre|quattro|cinque|sei|tutto il|Oculum(?:\s+(?:immesso|speso|investito))?)\s*(riposi\s+lunghi|riposi\s+brevi|turn\w*|tir\w*|azion\w*)',
     caseSensitive: false,
-  ).firstMatch(text);
-  final duration = switch (durationMatch?.group(1)?.toLowerCase()) {
-    'un' || 'uno' || 'tutto il' => '1',
-    'due' => '2',
-    'tre' => '3',
-    final String value => value,
-    _ => '1',
-  };
-  final unit = durationMatch?.group(2)?.toLowerCase().startsWith('tir') == true
-      ? 'tiri'
-      : 'turni';
+  ).allMatches(text).toList();
+  final durationMatch = durationMatches.firstOrNull;
+  String durationText(RegExpMatch? match) =>
+      switch (match?.group(1)?.toLowerCase()) {
+        'un' || 'una' || 'uno' || 'tutto il' => '1',
+        'due' => '2',
+        'tre' => '3',
+        'quattro' => '4',
+        'cinque' => '5',
+        'sei' => '6',
+        final String value => value,
+        _ => '1',
+      };
+  String durationUnit(RegExpMatch? match) =>
+      switch (match?.group(2)?.toLowerCase()) {
+        final String value when value.startsWith('tir') => 'tiri',
+        final String value when value.startsWith('azion') => 'azioni',
+        'riposi lunghi' => 'riposi_lunghi',
+        'riposi brevi' => 'riposi_brevi',
+        _ => 'turni',
+      };
+  RegExpMatch? durationAt(RegExpMatch? at) => at == null
+      ? durationMatch
+      : durationMatches.where((m) => m.start >= at.end).firstOrNull ??
+            durationMatches.lastOrNull;
+  final duration = durationText(durationMatch);
+  final unit = durationUnit(durationMatch);
   String formula(String value) => value
       .trim()
       .replaceAll(
         RegExp(
-          r'\bOculum\s+(?:immesso|speso|investito)\b',
+          r'\bOculum\s+(?:immesso|speso|investito|messo|impiegato)\b',
           caseSensitive: false,
         ),
         'oculum_spent',
@@ -100,10 +220,33 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
     String recipient = 'se_stesso',
     String? mode,
     String resource = '',
+    RegExpMatch? at,
   }) {
     final expression = formula(value);
-    final key = '$type|$target|$expression|$recipient';
+    final timing = durationAt(at);
+    final periodic = RegExp(
+      r'ogni\s+(\d+|un|uno)?\s*(turn\w*|tir\w*|azion\w*)',
+      caseSensitive: false,
+    ).firstMatch(text);
+    final isPeriodic =
+        periodic != null &&
+        const {'cura', 'scudo', 'hp_temporanei'}.contains(type);
+    final key =
+        '$type|$target|$expression|$recipient|${durationText(timing)}|${durationUnit(timing)}';
     if (!seen.add(key)) return;
+    var element = '';
+    if (type == 'danno' && at != null) {
+      final aliases = <String>{
+        ...oculumDefaultElementIds,
+        ...oculumElementAliases.keys,
+        ...oculumDefaultElementIds.map(oculumElementDisplayIt),
+      }.toList()..sort((a, b) => b.length.compareTo(a.length));
+      final match = RegExp(
+        '^\\s*(?:(?:da|di|elemento)\\s+)?(${aliases.map(RegExp.escape).join('|')})\\b',
+        caseSensitive: false,
+      ).firstMatch(text.substring(at.end));
+      if (match != null) element = oculumNormalizeElementId(match[1]!);
+    }
     effects.add(
       OculumStructuredEffect(
         id: 'parsed_${sourceKey}_${effects.length}_${type}_${target.replaceAll(' ', '_')}',
@@ -113,7 +256,7 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
         recipient: recipient,
         resource: resource,
         mode:
-            mode ??
+            (isPeriodic && type == 'cura' ? 'rigenerazione' : mode) ??
             (type == 'danno' || type == 'danno_percentuale'
                 ? durationMatch == null
                       ? 'prossima_azione'
@@ -121,8 +264,22 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
                 : type == 'scudo' || type == 'cura'
                 ? 'immediato'
                 : 'aumento'),
-        duration: type == 'cura' || type == 'scudo' ? '' : duration,
-        durationUnit: unit,
+        duration: isPeriodic && timing == null
+            ? '-1'
+            : !isPeriodic && (type == 'cura' || type == 'scudo')
+            ? ''
+            : formula(durationText(timing)),
+        durationUnit: isPeriodic
+            ? periodic.group(2)!.toLowerCase().startsWith('azion')
+                  ? 'azioni'
+                  : periodic.group(2)!.toLowerCase().startsWith('tir')
+                  ? 'tiri'
+                  : 'turni'
+            : durationUnit(timing),
+        frequency: isPeriodic
+            ? '${int.tryParse(periodic.group(1) ?? '') ?? 1}'
+            : '',
+        elementType: element,
         narrativeText: raw,
       ),
     );
@@ -130,7 +287,7 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
 
   // Tokens deliberately exclude costs, levels, DT and unknown identifiers.
   const atom =
-      r'(?:\d+(?:[.,]\d+)?(?:d\d+)?|\d*d\d+|oculum_spent|Oculum\s+(?:immesso|speso|investito)|Oculum|OCU|Danni|Materia|Resilienza|Volontà|Medicina|Vita\s+(?:attuale|rimanente|massima))';
+      r'(?:\d*d\d+|\d+(?:[.,]\d+)?|oculum_spent|Oculum\s+(?:immesso|speso|investito|messo|impiegato)|Oculum|OCU|Danni|Materia|Resilienza|Volontà|Medicina|Livello|Grado|Vita\s+(?:attuale|rimanente|massima))';
   const expression = '$atom(?:\\s*[+*/-]\\s*$atom)*';
   final claims = <(int, int)>[];
   String recipientNear(RegExpMatch match) {
@@ -142,11 +299,22 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
         1;
     final suffix = text.indexOf('.', match.end);
     final clause = text.substring(start, suffix < 0 ? text.length : suffix);
+    final before = text.substring(start, match.start);
+    final subjects = RegExp(
+      r'\b(?:ti|te stesso|te stessa|ottieni|guadagni|ricevi|recuperi|subisci|perdi|bersaglio|avversario|nemico|alleato|compagno)\b',
+      caseSensitive: false,
+    ).allMatches(before).toList();
+    final subject = subjects.lastOrNull?.group(0)?.toLowerCase();
+    if (const {'alleato', 'compagno'}.contains(subject)) return 'alleato';
+    if (const {'bersaglio', 'avversario', 'nemico'}.contains(subject)) {
+      return 'bersaglio';
+    }
+    if (subject != null) return 'se_stesso';
     if (RegExp(
-      r'\b(?:ti|tuo|tua|perdi|subisci)\b',
+      r'\b(?:all[’\x27]?|a un|un)\s*(?:alleato|compagno)\b',
       caseSensitive: false,
     ).hasMatch(clause)) {
-      return 'se_stesso';
+      return 'alleato';
     }
     return RegExp(
           r'\b(?:bersaglio|avversario|nemico)\b',
@@ -170,10 +338,101 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
     ...subtraits.map((s) => s.nome),
   ];
   final targetPattern = targets.map(RegExp.escape).join('|');
+  bool isSubtrait(String target) =>
+      const {'precisione', 'riflessi'}.contains(oculumNormalizeText(target)) ||
+      subtraits.any(
+        (s) => oculumNormalizeText(s.nome) == oculumNormalizeText(target),
+      );
+  void statBonus(
+    RegExpMatch match,
+    String target,
+    String value,
+    bool negative,
+  ) {
+    add(
+      isSubtrait(target) ? 'modifica_sottotratto' : 'modifica_statistica',
+      value,
+      target: target,
+      mode: negative ? 'diminuzione' : 'aumento',
+      recipient: recipientNear(match),
+      at: match,
+    );
+    claims.add((match.start, match.end));
+  }
+
+  for (final match in RegExp(
+    r'(?:Danni|Danno)\s*([+-])\s*(\d+)\s*%',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    add(
+      'danno_percentuale',
+      '${match[1] == '-' ? '-' : ''}${match[2]}',
+      at: match,
+    );
+    claims.add((match.start, match.end));
+  }
+  for (final match in RegExp(
+    r'([+-]?)(\d+)\s*%\s*(?:(?:dei\s+tuoi|ai|di)\s+)?dann\w*',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    if (claimed(match)) continue;
+    final percentage = int.parse(match[2]!);
+    add(
+      'danno_percentuale',
+      '${match[1] == '+'
+          ? percentage
+          : match[1] == '-'
+          ? -percentage
+          : percentage - 100}',
+      at: match,
+    );
+    claims.add((match.start, match.end));
+  }
+  for (final match in RegExp(
+    '([+-])\\s*($expression)\\s+($targetPattern)\\b',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    if (RegExp(
+      r'(?:Danni|Danno|Difesa|Scudo)\s*$',
+      caseSensitive: false,
+    ).hasMatch(text.substring(0, match.start))) {
+      continue;
+    }
+    if (!claimed(match)) {
+      statBonus(match, match[3]!, match[2]!, match[1] == '-');
+    }
+  }
+  for (final match in RegExp(
+    '(?:aument\\w*|riduc\\w*|diminuisc\\w*)\\s+(?:la\\s+|il\\s+)?($targetPattern)\\s+di\\s+($expression)',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    if (claimed(match) ||
+        text.substring(match.end).trimLeft().startsWith('%')) {
+      continue;
+    }
+    statBonus(
+      match,
+      match[1]!,
+      match[2]!,
+      !oculumNormalizeText(match[0]!).startsWith('aument'),
+    );
+  }
+  for (final match in RegExp(
+    '([+-])\\s*($expression)\\s+(?:a\\s+)?tutt\\w*\\s+(?:le\\s+)?stat(?:istiche|s)?\\b',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    for (final target in const ['Resilienza', 'Volontà', 'Materia', 'Oculum']) {
+      statBonus(match, target, match[2]!, match[1] == '-');
+    }
+  }
   for (final match in RegExp(
     '@?($targetPattern)\\s*([+-])\\s*($expression)',
     caseSensitive: false,
   ).allMatches(text)) {
+    if (claimed(match) ||
+        text.substring(match.end).trimLeft().startsWith('%')) {
+      continue;
+    }
     final target = match.group(1)!;
     add(
       oculumNormalizeText(target) == 'precisione' ||
@@ -187,12 +446,13 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
       match.group(3)!,
       target: target,
       mode: match.group(2) == '-' ? 'diminuzione' : 'aumento',
-      recipient: match.group(2) == '-' ? recipientNear(match) : 'se_stesso',
+      recipient: recipientNear(match),
+      at: match,
     );
     claims.add((match.start, match.end));
   }
   for (final match in RegExp(
-    '([+-]?)\\s*($expression)\\s+(dann[oi]|Difesa|Scudo)\\b',
+    '([+-]?)\\s*($expression)\\s+(dann[oi]|Difesa|Scudo|Resistenza)\\b',
     caseSensitive: false,
   ).allMatches(text)) {
     if (claimed(match)) continue;
@@ -204,6 +464,8 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
           ? 'difesa'
           : 'scudo',
       '${match.group(1) == '-' ? '-' : ''}${match.group(2)!}',
+      recipient: recipientNear(match),
+      at: match,
     );
     claims.add((match.start, match.end));
   }
@@ -220,11 +482,13 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
           ? 'difesa'
           : 'scudo',
       match.group(2)!,
+      recipient: recipientNear(match),
+      at: match,
     );
     claims.add((match.start, match.end));
   }
   for (final match in RegExp(
-    '(?:recuperi|curi|rigeneri)\\s+($expression)\\s+(Vita|HP|Oculum)\\b',
+    '(?:recuperi|recupera|curi|cura|rigeneri|rigenera|guarisci)\\s+($expression)\\s+(Vita|HP|Oculum)\\b',
     caseSensitive: false,
   ).allMatches(text)) {
     add(
@@ -233,6 +497,121 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
       resource: oculumNormalizeText(match.group(2)!) == 'oculum'
           ? 'oculum'
           : 'vita',
+      recipient: recipientNear(match),
+      at: match,
+    );
+    claims.add((match.start, match.end));
+  }
+  for (final match in RegExp(
+    '(?:ottieni|guadagni|ricevi|aggiungi|ti dai)\\s*\\+?\\s*($expression)\\s+(?:HP|Vita)\\s+temporane[io]\\b',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    if (durationMatches.isNotEmpty || claimed(match)) continue;
+    add(
+      'hp_temporanei',
+      match[1]!,
+      recipient: recipientNear(match),
+      mode: 'immediato',
+      at: match,
+    );
+    claims.add((match.start, match.end));
+  }
+  for (final match in RegExp(
+    '\\b(?:muro|barriera)\\b[^;]*?assorb\\w*\\s+($expression)\\s+danni\\b',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    if (claims.any((span) => span.$1 < match.end && span.$2 > match.start)) {
+      effects.removeWhere(
+        (e) => e.type == 'danno' && e.valueExpression == formula(match[1]!),
+      );
+    }
+    add('scudo', match[1]!, mode: 'immediato', at: match);
+    claims.add((match.start, match.end));
+  }
+  for (final match in RegExp(
+    r'\b(?:perde|perdi|rimuovi|sottrai|consuma)\s+(\d+|una?|due|tre)\s+Reazion\w*(\s+rapid\w*)?',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    final value = switch (match[1]!.toLowerCase()) {
+      'un' || 'una' => '1',
+      'due' => '2',
+      'tre' => '3',
+      final value => value,
+    };
+    add(
+      match[2] == null ? 'rimuovi_reazioni' : 'rimuovi_reazioni_rapide',
+      value,
+      recipient: recipientNear(match),
+      at: match,
+    );
+    claims.add((match.start, match.end));
+  }
+  final resistance = RegExp(
+    r'\b(Alta\s+Resistenza|Resistenza\s+Alta|Resistenza\s+Leggera|Fragilit[aà]\s+Leggera|Alta\s+Fragilit[aà]|Fragilit[aà]|Resistenza|Immunit[aà])\s+(?:a|al|alla|ai|agli)\s+(.+?)(?=\s+per\s+|$)',
+    caseSensitive: false,
+  ).firstMatch(text);
+  if (resistance != null) {
+    final names = resistance[2]!.split(
+      RegExp(r'\s+e\s+|,', caseSensitive: false),
+    );
+    var known = true;
+    final elements = <String>[];
+    for (final name in names) {
+      final id = oculumNormalizeElementId(
+        name.trim().replaceFirst(
+          RegExp(r'^(?:danni?\s+)?(?:da\s+)?', caseSensitive: false),
+          '',
+        ),
+      );
+      if (!oculumDefaultElementIds.contains(id)) {
+        known = false;
+        break;
+      }
+      elements.add(id);
+    }
+    if (known && elements.isNotEmpty) {
+      for (final element in elements.toSet()) {
+        final effect = OculumStructuredEffect(
+          type: 'elemental_resistance',
+          elementType: element,
+          customDisplayText: resistance[1]!,
+          valueExpression: '0',
+          mode: 'finche_attivo',
+          duration: durationMatch == null ? '-1' : formula(duration),
+          durationUnit: unit,
+          recipient: recipientNear(resistance),
+          narrativeText: raw,
+        );
+        effects.add(effect);
+      }
+      claims.add((resistance.start, resistance.end));
+    }
+  }
+  final stateNames = <String, String>{
+    for (final definition in oculumConditionCatalog)
+      definition.nameIt: definition.id,
+  };
+  final statePattern = stateNames.keys.toList()
+    ..sort((a, b) => b.length.compareTo(a.length));
+  for (final match in RegExp(
+    '(?:applichi|applica|infliggi|infligge|ottieni|ricevi|subisci|diventi|diventa)\\s+(?:(?:lo stato|la condizione|stato|condizione)\\s+)?(${statePattern.map(RegExp.escape).join('|')})(?:\\s+(?:grado|stadio)\\s*(\\d+))?\\b',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    if (claimed(match)) continue;
+    final name = stateNames.keys.firstWhere(
+      (n) => n.toLowerCase() == match[1]!.toLowerCase(),
+    );
+    final timing = durationAt(match);
+    effects.add(
+      OculumStructuredEffect(
+        type: 'stato',
+        appliedState: stateNames[name]!,
+        valueExpression: match[2] ?? '1',
+        recipient: recipientNear(match),
+        duration: timing == null ? '' : formula(durationText(timing)),
+        durationUnit: durationUnit(timing),
+        narrativeText: raw,
+      ),
     );
     claims.add((match.start, match.end));
   }
@@ -240,19 +619,30 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
     r'(?:ottieni|concede?|guadagni)\s+(?:\+\s*)?(\d+|una?|due|tre)\s+(?:energia\s+)?Reazion\w*',
     caseSensitive: false,
   ).allMatches(text)) {
-    add('aggiungi_reazioni', switch (match.group(1)!.toLowerCase()) {
-      'una' || 'un' => '1',
-      'due' => '2',
-      'tre' => '3',
-      final value => value,
-    });
+    add(
+      'aggiungi_reazioni',
+      switch (match.group(1)!.toLowerCase()) {
+        'una' || 'un' => '1',
+        'due' => '2',
+        'tre' => '3',
+        final value => value,
+      },
+      recipient: recipientNear(match),
+      at: match,
+    );
     claims.add((match.start, match.end));
   }
   for (final match in RegExp(
     r'\+(\d+)\s*%\s*(?:a[il]?\s+)?dann\w*',
     caseSensitive: false,
   ).allMatches(text)) {
-    add('danno_percentuale', match.group(1)!);
+    if (claimed(match)) continue;
+    add(
+      'danno_percentuale',
+      match.group(1)!,
+      recipient: recipientNear(match),
+      at: match,
+    );
     claims.add((match.start, match.end));
   }
   for (final entry in <String, String>{

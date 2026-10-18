@@ -1083,6 +1083,8 @@ class TitleExtraSkillEntry {
     this.nome = '',
     this.descrizione = '',
     this.cost,
+    this.cooldown,
+    this.combatRole = '',
     List<OculumStructuredEffect>? effects,
   }) : effects = List<OculumStructuredEffect>.from(
          effects ?? const <OculumStructuredEffect>[],
@@ -1091,6 +1093,8 @@ class TitleExtraSkillEntry {
   String nome;
   String descrizione;
   OculumSkillCost? cost;
+  OculumAbilityCooldown? cooldown;
+  String combatRole;
   List<OculumStructuredEffect> effects;
 
   Map<String, dynamic> toJson() {
@@ -1098,6 +1102,8 @@ class TitleExtraSkillEntry {
       'nome': nome,
       'descrizione': descrizione,
       if (cost != null) 'cost': cost!.toJson(),
+      if (cooldown != null) 'cooldown': cooldown!.toJson(),
+      if (combatRole.isNotEmpty) 'combatRole': combatRole,
       if (effects.isNotEmpty)
         'effects': effects.map((effect) => effect.toJson()).toList(),
     };
@@ -1111,6 +1117,12 @@ class TitleExtraSkillEntry {
           ? OculumSkillCost.fromJson(Map<String, dynamic>.from(json['cost']))
           : null,
       effects: oculumReadStructuredEffects(json['effects']),
+      cooldown: json['cooldown'] is Map
+          ? OculumAbilityCooldown.fromJson(
+              Map<String, dynamic>.from(json['cooldown']),
+            )
+          : null,
+      combatRole: '${json['combatRole'] ?? ''}',
     );
   }
 }
@@ -1150,6 +1162,8 @@ class OculumTitle {
     List<OculumStructuredEffect>? openEffects,
     List<OculumStructuredEffect>? skillEffects,
     this.skillCost,
+    this.skillCooldown,
+    this.skillCombatRole = '',
   }) {
     this.openExtra = openExtra ?? [];
     this.skillExtra = skillExtra ?? [];
@@ -1201,6 +1215,8 @@ class OculumTitle {
   late List<OculumStructuredEffect> openEffects;
   late List<OculumStructuredEffect> skillEffects;
   OculumSkillCost? skillCost;
+  OculumAbilityCooldown? skillCooldown;
+  String skillCombatRole;
 
   Map<String, dynamic> toJson() {
     return {
@@ -1212,6 +1228,8 @@ class OculumTitle {
       'puntoCieco': puntoCieco,
       'skill': skill,
       if (skillCost != null) 'skillCost': skillCost!.toJson(),
+      if (skillCooldown != null) 'skillCooldown': skillCooldown!.toJson(),
+      if (skillCombatRole.isNotEmpty) 'skillCombatRole': skillCombatRole,
       'richiede': richiede,
       'resilienza': resilienza,
       'volonta': volonta,
@@ -1308,6 +1326,12 @@ class OculumTitle {
           .toList(),
       openEffects: oculumReadStructuredEffects(json['openEffects']),
       skillEffects: oculumReadStructuredEffects(json['skillEffects']),
+      skillCooldown: json['skillCooldown'] is Map
+          ? OculumAbilityCooldown.fromJson(
+              Map<String, dynamic>.from(json['skillCooldown']),
+            )
+          : null,
+      skillCombatRole: '${json['skillCombatRole'] ?? ''}',
       skillCost: json['skillCost'] is Map
           ? OculumSkillCost.fromJson(
               Map<String, dynamic>.from(json['skillCost']),

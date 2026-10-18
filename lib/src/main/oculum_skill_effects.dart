@@ -26,6 +26,7 @@ const List<String> oculumStructuredEffectTypes = <String>[
   'consumo_risorsa',
   'conversione_risorsa',
   'stato',
+  'elemental_resistance',
 ];
 
 int oculumDamageWithPercentage(int damage, int percent) =>
