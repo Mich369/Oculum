@@ -1884,6 +1884,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final active = tokens.isEmpty
         ? 0
         : readIntValue(group['activeIndex']).clamp(0, tokens.length - 1);
+    final round = readIntValue(group['round']);
+    final turnKey = '$round:${tokens.isEmpty ? '' : tokens[active]['id']}';
     return {
       'campaignId': activeCampaignId,
       'campaignName': activeCampaignName(),
@@ -1909,6 +1911,17 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'tokenSize': masterInitiativeTokenSize(tokens[i]),
             'initiativeTotal': readIntValue(tokens[i]['initiativeTotal']),
             'reportedTurn': max(0, readIntValue(tokens[i]['reportedTurn'])),
+            'actionUsed': readBoolValue(tokens[i]['actionUsed']),
+            'reactionMax': masterInitiativeReactionMax(tokens[i]),
+            'reactionUsed': masterInitiativeReactionUsed(
+              tokens[i],
+              round: round,
+            ),
+            'reactionAvailable': masterInitiativeReactionAvailable(
+              tokens[i],
+              round: round,
+              turnKey: turnKey,
+            ),
             'active': i == active,
             ...oculumPublicEncounterIdentity(tokens[i]),
           },
@@ -1924,6 +1937,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         (payload['snapshot'] is! Map ||
             (payload['snapshot'] as Map)['encounters'] is! List)) {
       realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
+      realtimeEncounterSnapshots = <Map<String, dynamic>>[];
+      realtimeSelectedEncounterId = '';
       clearTemporaryCombatResistanceEffects();
       risultato = t('Fight chiusa dal Master.', 'Fight closed by the Master.');
       aggiungiLog(risultato);
@@ -1969,6 +1984,20 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
     realtimeVisibleInitiativeSnapshot =
         jsonDecode(jsonEncode(selectedSnapshot)) as Map<String, dynamic>;
+    syncCurrentSheetEncounterTurn();
+    final realtimeTokens = realtimeVisibleInitiativeSnapshot['tokens'];
+    if (realtimeTokens is! List || realtimeTokens.isEmpty) {
+      clearTemporaryCombatResistanceEffects();
+    }
+    notifyActiveSheetSummaryChanged();
+    risultato = t(
+      'Fight aggiornata dal Master.',
+      'Fight updated by the Master.',
+    );
+    aggiungiLog(risultato);
+  }
+
+  void syncCurrentSheetEncounterTurn() {
     final currentTag = sheetTagAt(schedaCorrente);
     final snapshotTokens = realtimeVisibleInitiativeSnapshot['tokens'];
     if (snapshotTokens is List) {
@@ -1988,15 +2017,6 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         break;
       }
     }
-    final realtimeTokens = realtimeVisibleInitiativeSnapshot['tokens'];
-    if (realtimeTokens is! List || realtimeTokens.isEmpty) {
-      clearTemporaryCombatResistanceEffects();
-    }
-    risultato = t(
-      'Fight aggiornata dal Master.',
-      'Fight updated by the Master.',
-    );
-    aggiungiLog(risultato);
   }
 
   void sendRealtimeReportedTurn({

@@ -54,6 +54,8 @@ I requisiti sono livello 0 / 3 / 6. Il controllo si può evitare col tiro difens
 - Manifestazione del Potere: controllo esatto del 13% per consumare 1 Oculum, una volta per tiro. La difesa online richiede una descrizione.
 - Resistenza riuscita online: 1 danno assorbibile dagli Scudi e contrattacco gratuito ordinario; solo il tiro difensivo doppio lo rende critico. I contrattacchi non possono generarne altri.
 - Gli stati con durata in azioni mantengono questa unità, senza essere convertiti in turni.
+- Le viste della turnistica mantengono la selezione e lo snapshot condiviso anche durante il cambio scheda. Il Master pubblica anche Azione usata, Reazioni massime/usate/disponibili; entrare in uno scontro riallinea il turno personale e i timer. Chiudere la condivisione svuota anche l'elenco delle turnistiche online.
+- La conferma di una pergamena controlla l'oggetto nell'inventario attivo: la normalizzazione dell'ID della stessa scheda non deve annullare un uso confermato. Cambiare a una scheda con un altro inventario continua ad annullare l'operazione.
 
 ### Richieste successive ancora da completare
 

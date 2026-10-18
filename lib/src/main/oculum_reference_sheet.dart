@@ -1475,6 +1475,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                                   realtimeSelectedEncounterId = id;
                                   realtimeVisibleInitiativeSnapshot =
                                       Map<String, dynamic>.from(group);
+                                  syncCurrentSheetEncounterTurn();
                                 });
                                 unawaited(
                                   realtimeService!.sendInitiativeTurnAdjusted(

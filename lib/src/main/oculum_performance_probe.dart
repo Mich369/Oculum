@@ -184,6 +184,10 @@ class OculumPerformanceProbe {
   void selectEncounter(String id) => _state.selectMasterInitiativeGroup(id);
   Map<String, dynamic> initiativeSnapshot() =>
       _state.buildRealtimeInitiativeSnapshot();
+  void refreshEncounterResources(Map<String, dynamic> token) =>
+      _state.restoreMasterInitiativeTurnResources(token);
+  Map<String, dynamic> publicEncounter(Map<String, dynamic> group) =>
+      _state.publicEncounterSnapshot(group);
   void receiveInitiative(Map<String, dynamic> payload) =>
       _state.receiveRealtimeInitiativeSnapshot(payload);
   int attackBonus() => _state.bonusAttaccoRapido();

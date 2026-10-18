@@ -59,6 +59,18 @@ void main() {
       'id': 'approval',
       'status': 'pending',
     };
+    state.realtimeSelectedEncounterId = 'shared-fight';
+    state.realtimeVisibleInitiativeSnapshot = <String, dynamic>{
+      'encounterId': 'shared-fight',
+      'round': 7,
+      'activeIndex': 1,
+      'tokens': <Map<String, dynamic>>[
+        {'id': 'CASTER', 'actionUsed': true, 'reactionUsed': 1},
+      ],
+    };
+    state.realtimeEncounterSnapshots = <Map<String, dynamic>>[
+      Map<String, dynamic>.from(state.realtimeVisibleInitiativeSnapshot as Map),
+    ];
     probe.applyEffects([
       OculumStructuredEffect(
         type: 'modifica_statistica',
@@ -70,6 +82,57 @@ void main() {
       ),
     ]);
     expect(probe.defenseCm(), before);
+    probe.ensureEncounters();
+    state.masterInitiativePublished = true;
+    state.masterInitiativeTokens.clear();
+    state.masterInitiativeTokens.add(<String, dynamic>{
+      'id': 'manual-combatant',
+      'name': 'Custode',
+      'status': 'active',
+      'actionUsed': true,
+      'reactionMax': 1,
+      'reactionUsed': 1,
+    });
+    final publicFight = probe.initiativeSnapshot();
+    final publicToken = (publicFight['tokens'] as List).single as Map;
+    expect(publicToken['actionUsed'], isTrue);
+    expect(publicToken['reactionMax'], 1);
+    expect(publicToken['reactionUsed'], 1);
+    expect(publicToken['reactionAvailable'], 0);
+    final token = state.masterInitiativeTokens.single as Map<String, dynamic>;
+    probe.refreshEncounterResources(token);
+    expect(token['reactionUsed'], 0);
+    expect(token['reactionMax'], 1);
+    expect(token['actionUsed'], isFalse);
+    probe.refreshEncounterResources(token);
+    expect(
+      token['reactionMax'],
+      1,
+      reason: 'Refreshing never accumulates reactions',
+    );
+    final otherFight = probe.publicEncounter({
+      'id': 'other-fight',
+      'round': 99,
+      'activeIndex': 0,
+      'tokens': [
+        {
+          'id': 'other-actor',
+          'reactionMax': 1,
+          'reactionUsedRound': 99,
+          'reactionFastMax': 2,
+          'reactionFastUsed': 2,
+          'reactionFastTurnKey': '99:other-actor',
+        },
+      ],
+    });
+    final otherToken = (otherFight['tokens'] as List).single as Map;
+    expect(otherToken['reactionUsed'], 1);
+    expect(
+      otherToken['reactionAvailable'],
+      0,
+      reason:
+          'Each published encounter uses its own round and active participant',
+    );
     expect(state.activeStructuredEffects.single['type'], 'pending_target');
     final source = state.schedaCorrente as int;
     final target = Map<String, dynamic>.from(probe.snapshot())
@@ -106,6 +169,17 @@ void main() {
     expect(state.schedaCorrente, source);
     expect(state.onlineCombatRequests.containsKey('history'), isTrue);
     expect(state.onlinePermissionRequests.containsKey('approval'), isTrue);
+    expect(state.realtimeSelectedEncounterId, 'shared-fight');
+    expect(state.realtimeVisibleInitiativeSnapshot['round'], 7);
+    expect(state.realtimeVisibleInitiativeSnapshot['activeIndex'], 1);
+    expect(
+      state.realtimeVisibleInitiativeSnapshot['tokens'][0]['actionUsed'],
+      isTrue,
+    );
+    expect(
+      state.realtimeEncounterSnapshots.single['encounterId'],
+      'shared-fight',
+    );
     expect(
       (state.schedePersonaggio[index]['activeStructuredEffects'] as List).any(
         (e) => e['value'] == -4 && e['target'] == 'cm',

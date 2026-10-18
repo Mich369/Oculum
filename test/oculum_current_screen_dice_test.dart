@@ -216,7 +216,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       await use;
-      expect(scroll.quantita, 1);
+      expect(scroll.quantita, 1, reason: '${state.logEventi}');
       expect(state.dadoMostrato, state.dadoOverlay);
       expect(state.tiroCriticoUno, state.overlayCriticoUno);
       expect(state.tiroCriticoVenti, state.overlayCriticoVenti);

@@ -436,7 +436,8 @@ extension _OculumScrolls on _OculumHomePageState {
         ? await _selectScrollTargets('${data['kind']}', g)
         : <int>[];
     if (!mounted ||
-        currentSheetScrollId() != origin ||
+        (item == null && currentSheetScrollId() != origin) ||
+        (item != null && !inventario.contains(item)) ||
         (targetKind && targets.isEmpty)) {
       return;
     }
@@ -465,7 +466,7 @@ extension _OculumScrolls on _OculumHomePageState {
     );
     if (confirmed != true ||
         !mounted ||
-        currentSheetScrollId() != origin ||
+        (item == null && currentSheetScrollId() != origin) ||
         (item != null && (!inventario.contains(item) || item.quantita <= 0))) {
       return;
     }

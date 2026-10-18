@@ -5132,6 +5132,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   Map<String, dynamic> catturaImpostazioniGlobali() {
     return <String, dynamic>{
+      'liveEncounterSnapshot': Map<String, dynamic>.from(
+        realtimeVisibleInitiativeSnapshot,
+      ),
+      'liveEncounterSnapshots': realtimeEncounterSnapshots
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      'liveEncounterSelectedId': realtimeSelectedEncounterId,
       'onlinePermissionRequests': {
         for (final e in onlinePermissionRequests.entries)
           e.key: Map<String, dynamic>.from(e.value),
@@ -5180,6 +5187,21 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   void ripristinaImpostazioniGlobali(Map<String, dynamic> globali) {
+    if (globali['liveEncounterSnapshot'] is Map) {
+      realtimeVisibleInitiativeSnapshot = Map<String, dynamic>.from(
+        globali['liveEncounterSnapshot'] as Map,
+      );
+      realtimeEncounterSnapshots =
+          (globali['liveEncounterSnapshots'] as List? ?? const [])
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+      realtimeSelectedEncounterId =
+          '${globali['liveEncounterSelectedId'] ?? ''}';
+      if (realtimeService?.isConnected == true && !realtimeIsMasterRole) {
+        syncCurrentSheetEncounterTurn();
+      }
+    }
     linguaInglese = readBoolValue(globali['linguaInglese']);
     tutorialCompletato = readBoolValue(globali['tutorialCompletato']);
     modalitaDesktop =

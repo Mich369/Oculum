@@ -932,8 +932,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     oculumProfileMark('roll_subtrait');
     if (stat.id == 'manifestazione_potere') {
       final consumptionRoll = Random.secure().nextInt(100);
-      final consumed = oculumManifestationConsumesOculum(consumptionRoll) ? spendOculum(1, scheduleSave: false) : 0;
-      aggiungiLog('Manifestazione del Potere · controllo unico 13%: ${consumptionRoll + 1}/100. ${consumed > 0 ? '-1 Oculum.' : 'Nessun consumo${oculumTotale() <= 0 ? ': riserva esaurita' : ''}.'}');
+      final consumed = oculumManifestationConsumesOculum(consumptionRoll)
+          ? spendOculum(1, scheduleSave: false)
+          : 0;
+      aggiungiLog(
+        'Manifestazione del Potere · controllo unico 13%: ${consumptionRoll + 1}/100. ${consumed > 0 ? '-1 Oculum.' : 'Nessun consumo${oculumTotale() <= 0 ? ': riserva esaurita' : ''}.'}',
+      );
       if (consumed > 0) {
         recordCurrentOculumProgress();
         scheduleRealtimeOculumChanged();
@@ -1598,21 +1602,26 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     return '$masterInitiativeRound:${activeMasterInitiativeTokenId()}';
   }
 
-  int masterInitiativeReactionUsed(Map<String, dynamic> token) {
+  int masterInitiativeReactionUsed(Map<String, dynamic> token, {int? round}) {
+    final currentRound = round ?? masterInitiativeRound;
     final maxReactions = masterInitiativeReactionMax(token);
     final legacyUsed =
         !token.containsKey('reactionUsed') &&
-            masterInitiativeRound > 0 &&
-            readIntValue(token['reactionUsedRound']) == masterInitiativeRound
+            currentRound > 0 &&
+            readIntValue(token['reactionUsedRound']) == currentRound
         ? 1
         : 0;
     final used = max(readIntValue(token['reactionUsed']), legacyUsed);
     return used.clamp(0, maxReactions).toInt();
   }
 
-  int masterInitiativeFastReactionUsedThisTurn(Map<String, dynamic> token) {
+  int masterInitiativeFastReactionUsedThisTurn(
+    Map<String, dynamic> token, {
+    String? turnKey,
+  }) {
     final maxFast = masterInitiativeFastReactionMax(token);
-    if ('${token['reactionFastTurnKey'] ?? ''}' != masterInitiativeTurnKey()) {
+    if ('${token['reactionFastTurnKey'] ?? ''}' !=
+        (turnKey ?? masterInitiativeTurnKey())) {
       return 0;
     }
     return readIntValue(token['reactionFastUsed']).clamp(0, maxFast).toInt();
@@ -1623,13 +1632,17 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         masterInitiativeFastReactionMax(token);
   }
 
-  int masterInitiativeReactionAvailable(Map<String, dynamic> token) {
+  int masterInitiativeReactionAvailable(
+    Map<String, dynamic> token, {
+    int? round,
+    String? turnKey,
+  }) {
     return max(
       0,
       masterInitiativeReactionMax(token) -
-          masterInitiativeReactionUsed(token) +
+          masterInitiativeReactionUsed(token, round: round) +
           masterInitiativeFastReactionMax(token) -
-          masterInitiativeFastReactionUsedThisTurn(token) -
+          masterInitiativeFastReactionUsedThisTurn(token, turnKey: turnKey) -
           artDebtForToken(token, 'reaction'),
     );
   }
@@ -4117,7 +4130,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       luck: fortunaTotale,
     );
     final fortunaSchivataRoll = Random.secure().nextInt(10000);
-    if (!resolvedResistance && fortunaTotale > 0 &&
+    if (!resolvedResistance &&
+        fortunaTotale > 0 &&
         oculumPercentRollSucceeds(
           chancePercent: fortunaSchivataChance,
           rollBasisPoints: fortunaSchivataRoll,
@@ -4148,11 +4162,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       difficulty: normalizedCampaignDifficulty(),
     );
     final currentOculumParryRoll = Random.secure().nextInt(1000);
-    final parryChanceTriggered = !resolvedResistance && oculumParryChanceRollSucceeds(
-      currentOculum: currentOculumForParry,
-      roll: currentOculumParryRoll,
-      difficulty: normalizedCampaignDifficulty(),
-    );
+    final parryChanceTriggered =
+        !resolvedResistance &&
+        oculumParryChanceRollSucceeds(
+          currentOculum: currentOculumForParry,
+          roll: currentOculumParryRoll,
+          difficulty: normalizedCampaignDifficulty(),
+        );
     final manifestationStat = hiddenEyeStats.firstWhere(
       (stat) => stat.id == 'manifestazione_potere',
     );
@@ -4203,7 +4219,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final misfortune = oculumMisfortuneProfile(activeDifficulty);
     final misfortuneCriticalRoll = Random.secure().nextInt(10000);
     final misfortuneCriticalTriggered =
-        !resolvedResistance && !critico &&
+        !resolvedResistance &&
+        !critico &&
         oculumPercentRollSucceeds(
           chancePercent: misfortune.criticalChance,
           rollBasisPoints: misfortuneCriticalRoll,
@@ -4274,7 +4291,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         : '';
     final difficultyBypasses = rollDifficultyIncreaseDamageBypasses();
     final ignoraDifesa = dannoOltreDifesa || difficultyBypasses.beyondDefense;
-    final ignoraScudi = !resolvedResistance && (dannoOltreScudi || difficultyBypasses.beyondShield);
+    final ignoraScudi =
+        !resolvedResistance &&
+        (dannoOltreScudi || difficultyBypasses.beyondShield);
     final bonusScudiManuale = bonusDannoScudiPercentuale();
     final bonusScudiCorrosione = conditionShieldDamageBonusPercent();
     final bonusScudoNormale =
@@ -4387,9 +4406,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final dannoDopoRegoleElementali = dannoModificatoBase > 0
         ? applicaParserDanniSubiti(dannoModificatoBase, elementoAttivo)
         : dannoModificatoBase;
-    var dannoModificato = resolvedResistance ? 1 : applyConditionIncomingDamage(
-      dannoDopoRegoleElementali,
-    );
+    var dannoModificato = resolvedResistance
+        ? 1
+        : applyConditionIncomingDamage(dannoDopoRegoleElementali);
     final parserRulesLog = incomingElementRules.isEmpty
         ? ''
         : ' Parser ${incomingDamageRulesSummary(elementoAttivo)}: $dannoModificatoBase -> $dannoModificato.';

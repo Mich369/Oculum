@@ -18,6 +18,10 @@ void main() {
     state.currentVolontaController.text = '10';
     state.oculumController.text = '0';
     state.currentOculumController.text = '0';
+    if (state.schedePersonaggio.isEmpty) {
+      state.schedePersonaggio.add(Map<String, dynamic>.from(probe.snapshot()));
+      state.schedaCorrente = 0;
+    }
     state.inventario.add(item);
     final countBefore = (state.skills as List).length;
     final use = probe.useScroll(item);
@@ -26,6 +30,10 @@ void main() {
       find.textContaining('Possibilità di apprendimento:'),
       findsOneWidget,
     );
+    // A legacy identity can be normalized while the confirmation stays open.
+    state.schedePersonaggio[state.schedaCorrente]['sheetTag'] =
+        'NORMALIZED-SHEET';
+    state.schedePersonaggio[state.schedaCorrente]['id'] = 'NORMALIZED-SHEET';
     await tester.tap(find.text('Usa e tira'));
     await tester.pump();
     await tester.runAsync(() => use);
