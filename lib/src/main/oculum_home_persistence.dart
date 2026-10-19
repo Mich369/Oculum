@@ -1428,6 +1428,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'superIspirazioni': superIspirazioniController.text,
       'ispirazioniOculum': ispirazioniOculumController.text,
       'ispirazioneOculumCriticoInAttesa': ispirazioneOculumCriticoInAttesa,
+      'combatHelpPending':
+          schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
+          ? readIntValue(schedePersonaggio[schedaCorrente]['combatHelpPending'])
+          : 0,
+      'coreMasteryPoints': Map<String, int>.from(coreMasteryPoints),
       'esperienzaCriticaStatistiche': Map<String, int>.from(
         esperienzaCriticaStatistiche,
       ),
@@ -1946,14 +1951,18 @@ extension _OculumHomePersistence on _OculumHomePageState {
     ispirazioneOculumCriticoInAttesa = readBoolValue(
       json['ispirazioneOculumCriticoInAttesa'],
     );
-    final esperienzaCritica = json['esperienzaCriticaStatistiche'];
-    if (esperienzaCritica is Map) {
-      for (final key in esperienzaCriticaStatistiche.keys) {
-        esperienzaCriticaStatistiche[key] = max(
-          0,
-          readIntValue(esperienzaCritica[key]),
-        );
+    coreMasteryPoints.clear();
+    final savedMasteryPoints = json['coreMasteryPoints'];
+    if (savedMasteryPoints is Map) {
+      for (final key in ['vc', 'cm', 'iniziativa', 'aiuta_compagno']) {
+        coreMasteryPoints[key] = max(0, readIntValue(savedMasteryPoints[key]));
       }
+    }
+    final esperienzaCritica = json['esperienzaCriticaStatistiche'];
+    for (final key in esperienzaCriticaStatistiche.keys) {
+      esperienzaCriticaStatistiche[key] = esperienzaCritica is Map
+          ? max(0, readIntValue(esperienzaCritica[key]))
+          : 0;
     }
     karmaController.text = '${json['karma'] ?? '0'}';
     folliaController.text = readIntValue(json['follia']).toString();

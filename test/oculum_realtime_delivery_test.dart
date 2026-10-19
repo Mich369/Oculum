@@ -151,6 +151,30 @@ void main() {
     );
   });
 
+  test(
+    'changing from player to summon changes delivery identity without refresh churn',
+    () {
+      const user = {
+        'sessionId': 'same',
+        'localSheetTags': ['PG', 'EYE'],
+        'activeSheetTag': 'PG',
+      };
+      final before = oculumRealtimePresenceTagSignature([user]);
+      expect(
+        oculumRealtimePresenceTagSignature([
+          {...user, 'activeSheetTag': 'EYE'},
+        ]),
+        isNot(before),
+      );
+      expect(
+        oculumRealtimePresenceTagSignature([
+          {...user, 'joinedAt': 'later'},
+        ]),
+        before,
+      );
+    },
+  );
+
   test('concurrent connect is shared and resubscribe publishes once', () async {
     final previous = OculumRealtimeService.supabaseAvailable;
     OculumRealtimeService.supabaseAvailable = true;

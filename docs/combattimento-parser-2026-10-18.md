@@ -80,6 +80,20 @@ Per il catalogo sorgente, le tecniche necromantiche hanno una sola definizione i
 
 ## Limiti da non confondere con verifiche concluse
 
+### Selezione compatta e collegamento dei tiri
+
+Il selettore dell'attacco dispone i tiri in due colonne (una su finestre strette), con il colore della statistica associata. Mostra inizialmente VC e i sottotratti principali sbloccati; «Aggiungi tiro» permette di inserire altri sottotratti disponibili e «−» di nasconderli per quella apertura. VC resta disponibile. Un tiro alternativo richiede ancora la motivazione al Master.
+
+Attacco apre il bersaglio dello scontro online mantenendo il tiro scelto. Difesa risponde all'attacco pendente per la scheda corrente; se ce ne sono diversi chiede quale difendere. Senza una richiesta online resta utilizzabile il tiro manuale. Le richieste persistenti vengono reinviate anche dopo l'aggiornamento delle presenze e della turnistica condivisa, conservando i controlli di identità e la protezione contro doppie applicazioni.
+
 Il parser non interpreta automaticamente ogni frase narrativa o condizionale del catalogo. Un effetto non riconosciuto va definito nell'editor con il Master; non gli si attribuisce un bonus generico per nascondere il problema. Le capacità con gestore dedicato, come Pawn e Riccio Aculeo, continuano a usare quel gestore.
 
 I test di consegna simulano il protocollo e verificano identità del mittente, duplicati ed esiti salvati. Non sostituiscono una prova tra due dispositivi reali su Supabase. Build, pubblicazione Pages e installazione della distribuzione vanno riportate separatamente al termine delle rispettive verifiche.
+
+## Destinatari dell'aiuto e attacchi multipli — 19 ottobre
+
+Aiuta compagno apre la scelta dell'alleato prima del tiro: annullare non tira il dado. Online propone i partecipanti vivi dello scontro, offline le altre schede locali. Il totale non negativo viene conservato come bonus al prossimo tiro del destinatario; compare nella formula e nei log e viene consumato una volta. Anche il comando Aiuta della turnistica Master permette la scelta. Le consegne online con identità non valida o duplicate non aggiungono altro bonus.
+
+Il selettore Attacco consente più bersagli quando la tecnica preparata lo prevede: mostra minimo e massimo e impedisce scelte fuori intervallo. Ogni destinatario riceve una richiesta propria con lo stesso tiro d'attacco e risolve separatamente Difesa, effetti e risorse. Il costo della tecnica e il cooldown vengono attivati una volta, non una volta per nemico. Le reazioni gratuite restano rivolte al solo attaccante originario.
+
+Dal pannello delle forme Skill/Art, le espressioni «da 2 a 4 avversari», «uno o due avversari», «fino a 3 bersagli» e «fino a Oculum nemici» preparano i relativi limiti. Per Oculum si usa la spesa effettiva dell'attivazione quando presente. Nome, descrizione, costi ed effetti restano modificabili negli editor esistenti; una descrizione priva di un numero esplicito resta a bersaglio singolo. Le selezioni automatiche di avversari sono online; offline le tecniche restano risolvibili manualmente.

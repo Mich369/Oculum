@@ -5,6 +5,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test(
+    'manual points do not advance mastery thresholds and earned points persist',
+    () {
+      final stat = HiddenEyeStat(
+        id: 'velo',
+        nome: 'Velo',
+        descrizione: '',
+        valore: 40,
+      );
+      expect(oculusSubtraitMasteryApplyGain(stat, 99), 0);
+      expect(stat.valore, 40);
+      expect(oculusSubtraitMasteryApplyGain(stat, 1), 1);
+      final restored = HiddenEyeStat.fromJson(stat.toJson());
+      expect(restored.masteryLevels, 1);
+      expect(restored.valore, 41);
+      expect(oculusSubtraitMasteryApplyGain(restored, 199), 0);
+      expect(oculusSubtraitMasteryApplyGain(restored, 1), 1);
+      expect(restored.masteryLevels, 2);
+    },
+  );
   test('Forza usa sempre meta della Volonta e resta serializzabile', () {
     expect(
       oculumHiddenEyeDerivedBonusFor(
@@ -69,63 +89,13 @@ void main() {
   });
 
   test('calcola soglia e guadagno maestria dei sottotratti Oculus', () {
-    const expectedTargets = <int>[
-      33,
-      36,
-      63,
-      69,
-      96,
-      100,
-      120,
-      160,
-      236,
-      296,
-      300,
-      369,
-      396,
-      436,
-      469,
-      536,
-      596,
-      639,
-      663,
-      669,
-      693,
-      700,
-      703,
-      736,
-      769,
-      836,
-      869,
-      896,
-      900,
-      903,
-      906,
-      909,
-    ];
-    for (var grade = 0; grade < expectedTargets.length; grade++) {
-      expect(
-        oculusSubtraitMasteryTargetForGrade(grade),
-        expectedTargets[grade],
-        reason: 'soglia Base $grade -> ${grade + 1}',
-      );
+    const expectedTargets = [100, 200, 350, 500, 700, 850];
+    for (var i = 0; i < expectedTargets.length; i++) {
+      expect(oculusSubtraitMasteryTargetForGrade(i), expectedTargets[i]);
     }
-    const lateDigits = <int>[3, 6, 9];
-    var grade = expectedTargets.length;
-    for (var decade = 91; decade <= 99; decade++) {
-      for (final digit in lateDigits) {
-        expect(
-          oculusSubtraitMasteryTargetForGrade(grade),
-          decade * 10 + digit,
-          reason: 'soglia Base $grade -> ${grade + 1}',
-        );
-        grade++;
-      }
-    }
-    expect(oculusSubtraitMasteryTargetForGrade(58), 999);
-    expect(oculusSubtraitMasteryTargetForGrade(59), 1000);
+    expect(oculusSubtraitMasteryTargetForGrade(6), 1000);
     expect(oculusSubtraitMasteryTargetForGrade(99), 1000);
-    expect(oculusSubtraitMasteryTargetForGrade(-1), 33);
+    expect(oculusSubtraitMasteryTargetForGrade(-1), 100);
 
     expect(oculusSubtraitMasteryGainForDie(14), 0);
     expect(oculusSubtraitMasteryGainForDie(15), 15);
@@ -146,20 +116,21 @@ void main() {
       nome: 'Velo',
       descrizione: 'Test',
       valore: 0,
-      masteryProgress: 30,
+      masteryProgress: 90,
     );
 
     final completed = oculusSubtraitMasteryApplyGain(stat, 60);
 
-    expect(completed, 2);
-    expect(stat.valore, 2);
-    expect(stat.masteryProgress, 21);
+    expect(completed, 1);
+    expect(stat.valore, 1);
+    expect(stat.masteryProgress, 50);
+    expect(stat.masteryLevels, 1);
     expect(
       oculusSubtraitMasteryFraction(
         progress: stat.masteryProgress,
-        grade: stat.valore,
+        grade: stat.masteryLevels,
       ),
-      closeTo(21 / 63, 0.0001),
+      closeTo(50 / 200, 0.0001),
     );
   });
 
@@ -179,7 +150,7 @@ void main() {
     expect(restored.masteryProgress, 600);
     expect(
       oculusSubtraitMasteryFraction(progress: 18, grade: 0),
-      closeTo(18 / 33, 0.0001),
+      closeTo(18 / 100, 0.0001),
     );
   });
 

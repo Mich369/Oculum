@@ -1,6 +1,6 @@
 # Oculum — registro delle regole confermate
 
-Ultimo aggiornamento: 18 ottobre 2026. Documento da consultare prima di modificare il regolamento.
+Ultimo aggiornamento: 19 ottobre 2026. Documento da consultare prima di modificare il regolamento.
 
 ## Fonti e precedenza
 
@@ -92,3 +92,7 @@ Esempio: 51 danni base, nemico livello 10, Medio: bonus ordinario 20; tiro doppi
 ## Come aggiornare il riferimento
 
 Registra la nuova conferma con data, esempio e fonte. Aggiorna il manuale interno; riesporta il manuale consultabile; aggiungi test sui limiti della regola. Non cancellare una decisione precedente senza indicare quale nuova decisione la sostituisce.
+
+## Conferma del 19 ottobre 2026: Maestria iniziale
+
+Le soglie dipendono esclusivamente dai punti ottenuti tramite Maestria, non dai punti base, manuali o dai buff. Sottotratti: 100, 200, 350, 500, 700, 850; dopo sei punti guadagnati la soglia resta 1000. VC, CM e Aiuta compagno: 250, 500, 750; dal quarto punto 1000. Iniziativa: 200, 400, 600, 800; dal quinto punto 1000. L'avanzo si conserva. Le difficoltà mantengono i diversi guadagni EXP per tiro; non modificano queste soglie. I salvataggi precedenti non contengono il conteggio separato: si preservano valori e progresso, iniziando il nuovo contatore da zero senza attribuire aumenti retroattivi al caricamento.

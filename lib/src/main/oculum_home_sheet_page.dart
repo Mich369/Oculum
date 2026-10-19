@@ -5799,7 +5799,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             child: LinearProgressIndicator(
               value: oculusSubtraitMasteryFraction(
                 progress: stat.masteryProgress,
-                grade: stat.valore,
+                grade: stat.masteryLevels,
               ),
               backgroundColor: Colors.white.withValues(alpha: 0.10),
               valueColor: AlwaysStoppedAnimation<Color>(
@@ -8295,6 +8295,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         ? 1000
         : oculumCoreRollExperienceTarget(
             key: criticalExperienceKey,
+            earnedPoints: coreMasteryPoints[criticalExperienceKey] ?? 0,
             difficulty: normalizedCampaignDifficulty(),
           );
     final criticalExperienceProgress =
@@ -9720,6 +9721,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           ? 1000
           : oculumCoreRollExperienceTarget(
               key: coreKey,
+              earnedPoints: coreMasteryPoints[coreKey] ?? 0,
               difficulty: normalizedCampaignDifficulty(),
             );
       return InkWell(
@@ -9852,15 +9854,15 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     final basicActions = <Widget>[
       basicAction(
         'Attacco · VC',
-        '1d20 + ${vc()} · Danno ${dannoTotale()} · EXP ${esperienzaCriticaStatistiche['vc'] ?? 0}/${oculumCoreRollExperienceTarget(key: 'vc', difficulty: normalizedCampaignDifficulty())}',
+        '1d20 + ${vc()} · Danno ${dannoTotale()} · EXP ${esperienzaCriticaStatistiche['vc'] ?? 0}/${oculumCoreRollExperienceTarget(key: 'vc', earnedPoints: coreMasteryPoints['vc'] ?? 0, difficulty: normalizedCampaignDifficulty())}',
         Icons.gps_fixed,
-        () => tiraValoreSpeciale('VC', vc()),
+        () => useCombatRoll(OculumCombatAbilityRole.attack),
       ),
       basicAction(
         'Difesa · CM',
-        '1d20 + ${cm()} · Difesa ${difesa()} · EXP ${esperienzaCriticaStatistiche['cm'] ?? 0}/${oculumCoreRollExperienceTarget(key: 'cm', difficulty: normalizedCampaignDifficulty())}',
+        '1d20 + ${cm()} · Difesa ${difesa()} · EXP ${esperienzaCriticaStatistiche['cm'] ?? 0}/${oculumCoreRollExperienceTarget(key: 'cm', earnedPoints: coreMasteryPoints['cm'] ?? 0, difficulty: normalizedCampaignDifficulty())}',
         Icons.shield_outlined,
-        () => tiraValoreSpeciale('CM', cm()),
+        () => useCombatRoll(OculumCombatAbilityRole.defense),
       ),
       basicAction(
         'Iniziativa',
@@ -9988,13 +9990,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                       'VC',
                       '${vc()}',
                       brass,
-                      () => tiraValoreSpeciale('VC', vc()),
+                      () => useCombatRoll(OculumCombatAbilityRole.attack),
                     ),
                     combatMetric(
                       'CM',
                       '${cm()}',
                       ink,
-                      () => tiraValoreSpeciale('CM', cm()),
+                      () => useCombatRoll(OculumCombatAbilityRole.defense),
                     ),
                     combatMetric(
                       '⚔',
@@ -10066,11 +10068,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     ),
                     manuscriptSectionTab(
                       label: 'TIRA VC',
-                      onPressed: () => tiraValoreSpeciale('VC', vc()),
+                      onPressed: () =>
+                          useCombatRoll(OculumCombatAbilityRole.attack),
                     ),
                     manuscriptSectionTab(
                       label: 'TIRA CM',
-                      onPressed: () => tiraValoreSpeciale('CM', cm()),
+                      onPressed: () =>
+                          useCombatRoll(OculumCombatAbilityRole.defense),
                     ),
                     manuscriptSectionTab(
                       label: 'MODIFICA',

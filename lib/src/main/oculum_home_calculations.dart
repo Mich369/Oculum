@@ -5304,7 +5304,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int iniziativa() {
-    return bonusLivelloGrado() +
+    return (coreMasteryPoints['iniziativa'] ?? 0) +
+        bonusLivelloGrado() +
         materiaTotale() ~/ 5 +
         runtimeQuickBonus('iniziativa') +
         vantaggioTiroBonus() +
@@ -5327,7 +5328,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int vc() {
-    return bonusLivelloGrado() +
+    return (coreMasteryPoints['vc'] ?? 0) +
+        bonusLivelloGrado() +
         leggiNumero(vcRapidoController) +
         (volontaTotale() ~/ 3) +
         activeStructuredEffectBonus('vc') +
@@ -5342,7 +5344,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int cm() {
-    return bonusLivelloGrado() +
+    return (coreMasteryPoints['cm'] ?? 0) +
+        bonusLivelloGrado() +
         (materiaTotale() ~/ 2) +
         activeStructuredEffectBonus('cm') +
         bonusCmRapido() +

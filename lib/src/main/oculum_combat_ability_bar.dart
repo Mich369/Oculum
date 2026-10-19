@@ -40,6 +40,68 @@ OculumCombatAbilityRole oculumCombatAbilityRole(
 }
 
 extension _OculumCombatAbilityBar on _OculumHomePageState {
+  Future<bool> defendPendingCombat(String choice) async {
+    if (realtimeService?.isConnected != true) return false;
+    final tag = sheetTagAt(schedaCorrente);
+    final pending = onlineCombatRequests.values
+        .where(
+          (request) =>
+              request['targetTag'] == tag &&
+              request['status'] == 'pending' &&
+              request['kind'] != 'help' &&
+              request['scope'] == permissionScope &&
+              request['encounterId'] == onlineCombatEncounterId,
+        )
+        .toList();
+    if (pending.isEmpty) return false;
+    Map<String, dynamic>? selected = pending.first;
+    if (pending.length > 1) {
+      selected = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (dialog) => SimpleDialog(
+          title: const Text('Quale attacco vuoi difendere?'),
+          children: [
+            for (final request in pending)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(dialog, request),
+                child: Text('${request['sourceName']} · ${request['attack']}'),
+              ),
+          ],
+        ),
+      );
+    }
+    if (mounted && selected != null && sheetTagAt(schedaCorrente) == tag) {
+      await defendOnlineAttack(selected, choice);
+    }
+    return true;
+  }
+
+  Future<void> useCombatRoll(
+    OculumCombatAbilityRole role, {
+    HiddenEyeStat? stat,
+  }) async {
+    final origin = currentSheetScrollId();
+    if (role == OculumCombatAbilityRole.attack &&
+        onlineAttackTokens().isNotEmpty) {
+      await planOnlineAttack(initialChoice: stat?.id ?? 'vc');
+      return;
+    }
+    if (role == OculumCombatAbilityRole.defense &&
+        await defendPendingCombat(stat?.id ?? 'cm')) {
+      return;
+    }
+    if (!mounted || currentSheetScrollId() != origin) return;
+    if (stat != null) {
+      await tiraSottotrattoOcchio(stat);
+    } else {
+      await tiraValoreSpeciale(
+        role == OculumCombatAbilityRole.attack ? 'VC' : 'CM',
+        role == OculumCombatAbilityRole.attack ? vc() : cm(),
+        applyGlobalRollModifier: false,
+      );
+    }
+  }
+
   Widget titleCombatRoleEditor(String value, ValueChanged<String> changed) =>
       DropdownButtonFormField<String>(
         initialValue:
@@ -124,6 +186,11 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       ),
     );
     if (!mounted || chosen == null || currentSheetScrollId() != origin) return;
+    final description =
+        natural?.forme[chosen].descrizione ??
+        artSkill!.testoEvoluzione(chosen + 1);
+    final oculumBefore = currentOculum();
+    final beforeEffects = jsonEncode(activeStructuredEffects);
     if (natural != null && skills.contains(natural)) {
       await usaFormaSkill(natural, skills.indexOf(natural), chosen);
     } else if (art != null &&
@@ -135,6 +202,34 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         skillIndex: art.skills.indexOf(artSkill),
         nuovoLivello: chosen + 1,
         riutilizza: artSkill.livello == chosen + 1,
+      );
+    }
+    if (!mounted ||
+        currentSheetScrollId() != origin ||
+        beforeEffects == jsonEncode(activeStructuredEffects)) {
+      return;
+    }
+    final spentOculum = max(0, oculumBefore - currentOculum());
+    final targetLimits = oculumAttackTargetLimits(
+      description,
+      spentOculum > 0 ? spentOculum : oculumTotale(),
+    );
+    final pending = activeStructuredEffects
+        .where(
+          (e) =>
+              e['type'] == 'pending_target' &&
+              e['effect'] is Map &&
+              (e['effect'] as Map)['recipient'] != 'alleato',
+        )
+        .toList();
+    for (final effect in pending) {
+      effect['minimumTargets'] = targetLimits.minimum;
+      effect['maximumTargets'] = targetLimits.maximum;
+    }
+    if (pending.isNotEmpty && onlineAttackTokens().isNotEmpty) {
+      await planOnlineAttack(
+        minimumTargets: targetLimits.minimum,
+        maximumTargets: targetLimits.maximum,
       );
     }
   }
@@ -214,13 +309,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           if (support) {
             unawaited(tiraAiutaCompagno());
           } else {
-            unawaited(
-              tiraValoreSpeciale(
-                attack ? 'VC' : 'CM',
-                attack ? vc() : cm(),
-                applyGlobalRollModifier: false,
-              ),
-            );
+            unawaited(useCombatRoll(onlyRole));
           }
         },
       ));
@@ -248,7 +337,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           color: hiddenEyeStatIdentityColor(stat),
           enabled: true,
           hint: 'Tiro alternativo: descrivi e motiva come lo usi.',
-          use: () => unawaited(tiraSottotrattoOcchio(stat)),
+          use: () => unawaited(useCombatRoll(onlyRole, stat: stat)),
         ));
       }
     }

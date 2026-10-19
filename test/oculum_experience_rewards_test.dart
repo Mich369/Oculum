@@ -2,35 +2,59 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('attack limits use explicit creature counts and Oculum limits', () {
+    expect(oculumAttackTargetLimits('uno o due avversari', 9), (
+      minimum: 1,
+      maximum: 2,
+    ));
+    expect(oculumAttackTargetLimits('colpisci da 2 a 4 avversari', 9), (
+      minimum: 2,
+      maximum: 4,
+    ));
+    expect(oculumAttackTargetLimits('fino a Oculum nemici', 7), (
+      minimum: 1,
+      maximum: 7,
+    ));
+    expect(oculumAttackTargetLimits('fino a 3 bersagli', 7), (
+      minimum: 1,
+      maximum: 3,
+    ));
+    expect(oculumAttackTargetLimits('colpisci 2 creature', 7), (
+      minimum: 2,
+      maximum: 2,
+    ));
+    expect(oculumAttackTargetLimits('danno +20, costo 5/10', 7), (
+      minimum: 1,
+      maximum: 1,
+    ));
+  });
   group('Soglia EXP dei tiri VC e CM', () {
-    test(
-      'usa la difficolta corrente e lascia inalterata la soglia statistiche',
-      () {
-        expect(
-          oculumCoreRollExperienceTarget(key: 'vc', difficulty: 'oculum'),
-          2500,
-        );
-        expect(
-          oculumCoreRollExperienceTarget(key: 'cm', difficulty: 'difficile'),
-          1500,
-        );
-        expect(
-          oculumCoreRollExperienceTarget(key: 'vc', difficulty: 'normale'),
-          1250,
-        );
-        expect(
-          oculumCoreRollExperienceTarget(key: 'cm', difficulty: 'facile'),
-          1000,
-        );
+    test('soglie crescenti sui punti guadagnati, fino a mille', () {
+      for (final difficulty in ['facile', 'normale', 'difficile', 'oculum']) {
+        for (final key in ['vc', 'cm', 'iniziativa', 'aiuta_compagno']) {
+          final expected = key == 'iniziativa'
+              ? [200, 400, 600, 800, 1000, 1000]
+              : [250, 500, 750, 1000, 1000, 1000];
+          for (var i = 0; i < expected.length; i++) {
+            expect(
+              oculumCoreRollExperienceTarget(
+                key: key,
+                difficulty: difficulty,
+                earnedPoints: i,
+              ),
+              expected[i],
+            );
+          }
+        }
         expect(
           oculumCoreRollExperienceTarget(
             key: 'resilienza',
-            difficulty: 'oculum',
+            difficulty: difficulty,
           ),
           1000,
         );
-      },
-    );
+      }
+    });
 
     test('VC e CM ricevono la stessa EXP dei tiri delle statistiche', () {
       for (final difficulty in ['facile', 'normale', 'difficile', 'oculum']) {

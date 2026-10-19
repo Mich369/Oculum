@@ -4,6 +4,10 @@ Esportato dal manuale interno dell’app. Per le correzioni più recenti consult
 
 ## 1. Fondamento di Oculum
 
+Maestria (conferma 19 ottobre 2026): i primi sei punti dei Sottotratti richiedono 100/200/350/500/700/850 EXP; poi sempre 1000. VC, CM e Aiuta compagno richiedono 250/500/750, poi 1000; Iniziativa 200/400/600/800, poi 1000. Si contano solo i punti guadagnati tramite Maestria, con avanzo conservato. Punti base, assegnazioni manuali e buff non anticipano le soglie. Il guadagno EXP per tiro resta legato alla difficoltà.
+
+Aiuta compagno: scegli l'alleato prima del tiro. Il totale non negativo resta come aiuto per il suo prossimo tiro, compare nella formula e nel log e si consuma una volta. Online scegli fra i partecipanti vivi dello scontro; offline fra le altre schede locali. Per gli attacchi multipli scegli i bersagli entro i limiti della tecnica: ognuno risolve la propria difesa ed i propri danni, mentre costo e cooldown della tecnica si pagano una volta.
+
 In Oculum il potere passa dagli occhi. Un occhio può custodire un ricordo, portare i segni di un trauma o dare forma a ciò che desideri. Le sue capacità si intrecciano con la storia di chi lo possiede.
 
 La scheda descrive il personaggio attraverso quattro statistiche: Resilienza, Volontà, Materia e Oculum. Le usi in combattimento e nelle altre scene. Prima di tirare, racconta che cosa vuoi fare: se il modo in cui agisci lo giustifica, puoi proporre un uso diverso dal solito della tua statistica.

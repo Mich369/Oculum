@@ -1834,7 +1834,10 @@ class _OculumHomePageState extends State<OculumHomePage>
     'oculum': 0,
     'vc': 0,
     'cm': 0,
+    'iniziativa': 0,
+    'aiuta_compagno': 0,
   };
+  final Map<String, int> coreMasteryPoints = <String, int>{};
   String lastValidRollSnapshot = '';
   bool lastValidRollCancelled = false;
 

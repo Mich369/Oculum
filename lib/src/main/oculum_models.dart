@@ -139,6 +139,7 @@ class HiddenEyeStat {
     this.valore = 0,
     this.unlocked = true,
     this.masteryProgress = 0,
+    this.masteryLevels = 0,
     this.category = '',
     this.homebrew = false,
   });
@@ -149,6 +150,7 @@ class HiddenEyeStat {
   int valore;
   bool unlocked;
   int masteryProgress;
+  int masteryLevels;
   String category;
   bool homebrew;
 
@@ -159,6 +161,7 @@ class HiddenEyeStat {
     'valore': valore,
     'unlocked': unlocked,
     'oculusSubtraitMasteryProgress': masteryProgress,
+    'oculusSubtraitMasteryLevels': masteryLevels,
     if (category.isNotEmpty) 'category': category,
     if (homebrew) 'homebrew': true,
   };
@@ -175,6 +178,7 @@ class HiddenEyeStat {
       masteryProgress: readIntValue(
         json['oculusSubtraitMasteryProgress'] ?? json['maestria'],
       ),
+      masteryLevels: max(0, readIntValue(json['oculusSubtraitMasteryLevels'])),
       category: '${json['category'] ?? ''}',
       homebrew: readBoolValue(json['homebrew']),
     );
@@ -699,60 +703,19 @@ class OculumPersistentVitalsSnapshot {
 }
 
 const List<int> oculusSubtraitMasteryTargets = <int>[
-  33,
-  36,
-  63,
-  69,
-  96,
   100,
-  120,
-  160,
-  236,
-  296,
-  300,
-  369,
-  396,
-  436,
-  469,
-  536,
-  596,
-  639,
-  663,
-  669,
-  693,
+  200,
+  350,
+  500,
   700,
-  703,
-  736,
-  769,
-  836,
-  869,
-  896,
-  900,
-  903,
-  906,
-  909,
+  850,
 ];
-const int _oculusSubtraitMasteryFinalTarget = 1000;
-const List<int> _oculusSubtraitMasteryLateDigits = <int>[3, 6, 9];
-const int _oculusSubtraitMasteryLateDecades = 9;
 
 int oculusSubtraitMasteryTargetForValue(int value) {
-  final normalizedValue = max(0, value);
-  if (normalizedValue < oculusSubtraitMasteryTargets.length) {
-    return oculusSubtraitMasteryTargets[normalizedValue];
-  }
-  final lateIndex = normalizedValue - oculusSubtraitMasteryTargets.length;
-  final lateTargetCount =
-      _oculusSubtraitMasteryLateDigits.length *
-      _oculusSubtraitMasteryLateDecades;
-  if (lateIndex < lateTargetCount) {
-    final decade = 91 + lateIndex ~/ _oculusSubtraitMasteryLateDigits.length;
-    final digit =
-        _oculusSubtraitMasteryLateDigits[lateIndex %
-            _oculusSubtraitMasteryLateDigits.length];
-    return decade * 10 + digit;
-  }
-  return _oculusSubtraitMasteryFinalTarget;
+  final index = max(0, value);
+  return index < oculusSubtraitMasteryTargets.length
+      ? oculusSubtraitMasteryTargets[index]
+      : 1000;
 }
 
 int oculusSubtraitMasteryTargetForGrade(int grade) {
@@ -778,11 +741,12 @@ int oculusSubtraitMasteryApplyGain(HiddenEyeStat stat, int gain) {
   var safety = 0;
 
   while (safety < 64) {
-    final target = oculusSubtraitMasteryTargetForValue(stat.valore);
+    final target = oculusSubtraitMasteryTargetForValue(stat.masteryLevels);
     if (target <= 0 || stat.masteryProgress < target) break;
 
     stat.masteryProgress -= target;
     stat.valore += 1;
+    stat.masteryLevels += 1;
     completedLevels += 1;
     safety += 1;
   }
@@ -827,16 +791,15 @@ int oculumCoreRollExperienceGain({
 int oculumCoreRollExperienceTarget({
   required String key,
   required String difficulty,
+  int earnedPoints = 0,
 }) {
-  if (key.trim().toLowerCase() != 'vc' && key.trim().toLowerCase() != 'cm') {
-    return 1000;
-  }
-  return switch (difficulty.trim().toLowerCase()) {
-    'oculum' => 2500,
-    'difficile' || 'hard' => 1500,
-    'facile' || 'easy' => 1000,
-    _ => 1250,
+  final targets = switch (key.trim().toLowerCase()) {
+    'vc' || 'cm' || 'aiuta_compagno' => const [250, 500, 750],
+    'iniziativa' => const [200, 400, 600, 800],
+    _ => const <int>[],
   };
+  final index = max(0, earnedPoints);
+  return index < targets.length ? targets[index] : 1000;
 }
 
 /// Crescita autonoma dei mostri d'élite sui loro tiri naturali: un Boss

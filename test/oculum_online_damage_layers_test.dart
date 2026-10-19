@@ -1,9 +1,11 @@
 import 'dart:math';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/services/oculum_realtime_service.dart';
-import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 class _LayerTransport extends OculumRealtimeService {
   _LayerTransport()
@@ -27,11 +29,41 @@ void main() {
   testWidgets('selected defender consumes defense and all HP layers once', (
     tester,
   ) async {
-    final dynamic state = await fixtures.mountSheet(
-      tester,
-      const Size(1440, 900),
+    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    await SharedPreferences.getInstance();
+    final directory = Directory(
+      'build/damage-layers-${DateTime.now().microsecondsSinceEpoch}',
+    )..createSync(recursive: true);
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (_) async => directory.absolute.path,
     );
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('dev.fluttercommunity.plus/connectivity'),
+      (_) async => ['none'],
+    );
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('dev.fluttercommunity.plus/connectivity_status'),
+      (_) async => null,
+    );
+    await tester.pumpWidget(
+      MaterialApp(theme: ThemeData.dark(), home: const OculumHomePage()),
+    );
+    final dynamic state = tester.state(find.byType(OculumHomePage));
+    state.tutorialDialogPending = true;
     final probe = OculumPerformanceProbe(state);
+    await tester.runAsync(() async {
+      state.saveBlobDirectoryFuture = Future<Directory>.value(directory);
+      state.sharedPreferencesFuture = Future<SharedPreferences>.value(
+        await SharedPreferences.getInstance(),
+      );
+      await probe.reloadSave();
+    });
+    expect(state.datiCaricati, isTrue);
     // Exercise real damage mutations without disk writes or threshold rewards;
     // persistence and transport have their own integration tests.
     state.datiCaricati = false;
@@ -95,6 +127,9 @@ void main() {
     ]);
     for (final dynamic stat in state.hiddenEyeStats) {
       stat.valore = 0;
+      // Resilience 100 supports the HP fixture but also grants Resistance 50.
+      // Cancel only that derived passive to isolate the resource-layer order.
+      if (stat.id == 'resistenza') stat.valore = -50;
       if (stat.id == 'fortuna') stat.unlocked = false;
     }
     for (final result in [
@@ -153,7 +188,12 @@ void main() {
       remaining -= spentShield;
       final spentTemp = min(20, remaining);
       remaining -= spentTemp;
-      expect(state.scudoOculumController.text, '${10 - spentOculumShield}');
+      expect(
+        state.scudoOculumController.text,
+        '${10 - spentOculumShield}',
+        reason:
+            'case $result, defense $defense: ${(state.logEventi as List).reversed.take(4).join("\n")}',
+      );
       expect(state.scudoController.text, '${20 - spentShield}');
       expect(state.hpTempController.text, '${20 - spentTemp}');
       final expectedHp = 1000 - remaining;
@@ -176,7 +216,108 @@ void main() {
         reason: 'Duplicate defense must not apply damage twice',
       );
     }
+    final last = state.onlineCombatRequests.values.last as Map<String, dynamic>;
+    last['status'] = 'pending';
+    last['damage'] = 0;
+    final defending = probe.useCombatRoll(OculumCombatAbilityRole.defense);
+    await tester.pump();
+    await tester.runAsync(() async {
+      await defending.timeout(const Duration(seconds: 15));
+    });
+    expect(
+      last['status'],
+      'resolved',
+      reason: 'The ordinary Defense button must answer the pending attack',
+    );
+    expect(last['defenseChoice'], 'cm');
+    state.realtimeVisibleInitiativeSnapshot['tokens'] = [
+      {'id': owner, 'name': 'Rose'},
+      {'id': enemy, 'name': 'Avversario'},
+      {'id': 'OTHER', 'name': 'Altro mostro'},
+    ];
+    final planned = probe.planAttack(minimum: 2, maximum: 2);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Altro mostro'));
+    await tester.pump();
+    await tester.ensureVisible(find.text('Dichiara e tira'));
+    await tester.tap(find.text('Dichiara e tira'));
+    await tester.pump();
+    await tester.runAsync(() async => await planned);
+    final grouped = (state.onlineCombatRequests.values as Iterable)
+        .where((request) => request['attackGroupId'] != null)
+        .toList();
+    expect(grouped, hasLength(2));
+    expect(grouped.map((r) => r['targetTag']).toSet(), {enemy, 'OTHER'});
+    expect(grouped.map((r) => r['attackGroupId']).toSet(), hasLength(1));
+    expect(grouped.map((r) => r['attack']).toSet(), hasLength(1));
+    state.campaignDifficulty = 'normale';
+    state.coreMasteryPoints.clear();
+    state.esperienzaCriticaStatistiche['vc'] = 0;
+    probe.invalidateDerivedCaches();
+    final beforeVc = probe.vc();
+    for (var i = 0; i < 3; i++) {
+      probe.gainCoreMastery('vc', 20);
+    }
+    expect(state.coreMasteryPoints['vc'], 1);
+    expect(state.esperienzaCriticaStatistiche['vc'], 50);
+    expect(probe.vc(), beforeVc + 1);
+    expect((state.logEventi as List).join('\n'), contains('[MAESTRIA] vc +1'));
+    state.esperienzaCriticaStatistiche['aiuta_compagno'] = 0;
+    for (var i = 0; i < 3; i++) {
+      probe.gainCoreMastery('aiuta_compagno', 10, faces: 10);
+    }
+    expect(state.coreMasteryPoints['aiuta_compagno'], 1);
+    expect(state.esperienzaCriticaStatistiche['aiuta_compagno'], 50);
+    final helpPacket = <String, dynamic>{
+      'id': 'help-packet',
+      'scope': probe.permissionScope,
+      'campaignId': state.activeCampaignId,
+      'encounterId': 'fight',
+      'sessionId': 'enemy-session',
+      'senderTag': enemy,
+      'senderRole': 'player',
+      'sourceTag': enemy,
+      'sourceName': 'Avversario',
+      'targetTag': owner,
+      'targetName': 'Rose',
+      'helpBonus': 7,
+    };
+    probe.receiveCombat('combat_help', {...helpPacket, 'sessionId': 'forged'});
+    expect(probe.consumeHelp(), 0);
+    probe.receiveCombat('combat_help', helpPacket);
+    probe.receiveCombat('combat_help', helpPacket);
+    expect(probe.consumeHelp(), 7);
+    expect(probe.consumeHelp(), 0);
+    probe.receiveCombat('combat_help', helpPacket);
+    expect(
+      probe.consumeHelp(),
+      0,
+      reason: 'A retry after consumption must not restore the bonus',
+    );
+    expect(
+      (state.logEventi as List).join('\n'),
+      contains('[AIUTO CONSUMATO] +7'),
+    );
     state.realtimeService = null;
+    state.schedePersonaggio[1]['realtimeSharedSheet'] = false;
+    final helping = probe.helpAlly();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.text('Chi vuoi aiutare?'), findsOneWidget);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(SimpleDialog),
+        matching: find.text('Avversario'),
+      ),
+    );
+    await tester.pump();
+    await tester.runAsync(() async => await helping);
+    expect(
+      state.schedePersonaggio[1]['combatHelpPending'],
+      greaterThanOrEqualTo(0),
+    );
+    expect((state.logEventi as List).join('\n'), contains('→ Avversario'));
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
   });

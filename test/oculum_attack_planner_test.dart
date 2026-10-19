@@ -3,6 +3,101 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/widgets/oculum_attack_planner.dart';
 
 void main() {
+  testWidgets(
+    'multiple targets enforce minimum and maximum independently of roll choice',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: OculumAttackPlanner(
+            targets: const {'a': 'Slime A', 'b': 'Slime B', 'c': 'Slime C'},
+            minimumTargets: 2,
+            maximumTargets: 2,
+            choices: const [OculumAttackChoice('vc', 'VC', 3)],
+            chance: (_, _) => null,
+          ),
+        ),
+      );
+      FilledButton submit() => tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Dichiara e tira'),
+      );
+      expect(submit().onPressed, isNull);
+      await tester.tap(find.widgetWithText(CheckboxListTile, 'Slime B'));
+      await tester.pump();
+      expect(submit().onPressed, isNotNull);
+      expect(
+        tester
+            .widget<CheckboxListTile>(
+              find.widgetWithText(CheckboxListTile, 'Slime C'),
+            )
+            .onChanged,
+        isNull,
+      );
+      await tester.tap(find.widgetWithText(CheckboxListTile, 'Slime B'));
+      await tester.pump();
+      expect(submit().onPressed, isNull);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('requested alternative is selected and visible on opening', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OculumAttackPlanner(
+          targets: const {'enemy': 'Slime'},
+          initialChoice: 'velo',
+          choices: const [
+            OculumAttackChoice('vc', 'VC', 4),
+            OculumAttackChoice('velo', 'Velo', 5),
+          ],
+          chance: (_, _) => null,
+        ),
+      ),
+    );
+    expect(find.text('Velo +5'), findsOneWidget);
+    expect(find.byKey(const ValueKey('attack-reason')), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Dichiara e tira'),
+          )
+          .onPressed,
+      isNull,
+    );
+  });
+  testWidgets('optional rolls can be added and removed without losing VC', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OculumAttackPlanner(
+          targets: const {'enemy': 'Slime'},
+          choices: const [
+            OculumAttackChoice('vc', 'VC', 4, color: Colors.red),
+            OculumAttackChoice('medicina', 'Medicina', 3, color: Colors.green),
+          ],
+          chance: (_, _) => null,
+        ),
+      ),
+    );
+    expect(find.text('Medicina +3'), findsNothing);
+    await tester.tap(find.text('Aggiungi tiro'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Medicina +3'));
+    await tester.pumpAndSettle();
+    expect(find.text('Medicina +3'), findsOneWidget);
+    final button = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, 'Medicina +3'),
+    );
+    expect(button.style!.foregroundColor!.resolve({}), Colors.green);
+    await tester.tap(find.text('Medicina +3'));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Rimuovi Medicina'));
+    await tester.pump();
+    expect(find.text('Medicina +3'), findsNothing);
+    expect(find.text('VC +4'), findsOneWidget);
+    expect(find.byKey(const ValueKey('attack-reason')), findsNothing);
+  });
   for (final size in [const Size(1440, 900), const Size(390, 844)]) {
     testWidgets(
       'planner requires an explanation for alternative attacks $size',

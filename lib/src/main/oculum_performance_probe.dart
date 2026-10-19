@@ -122,6 +122,8 @@ class OculumPerformanceProbe {
   Widget combatAbilityBar() => _state.combatAbilityQuickBar();
   Future<void> openCombatActionPanel(OculumCombatAbilityRole role) =>
       _state.showCombatActionPanel(role);
+  Future<void> useCombatRoll(OculumCombatAbilityRole role) =>
+      _state.useCombatRoll(role);
   Color combatAbilityColor(String resource) =>
       _state.combatAbilityResourceColor([resource]);
   Future<void> defendCombat(Map<String, dynamic> request, String choice) =>
@@ -158,6 +160,18 @@ class OculumPerformanceProbe {
   void increaseBaseStat(String key, int amount) =>
       _state.aumentaStatBaseEAttuale(key, amount);
   void invalidateDerivedCaches() => _state.invalidateDerivedDataCaches();
+  int vc() => _state.vc();
+  int consumeHelp() => _state.consumeCombatHelp();
+  Future<void> helpAlly() => _state.tiraAiutaCompagno();
+  Future<void> planAttack({int minimum = 1, int maximum = 1}) =>
+      _state.planOnlineAttack(minimumTargets: minimum, maximumTargets: maximum);
+  String gainCoreMastery(String key, int natural, {int faces = 20}) =>
+      _state.registraEsperienzaCriticaStat(
+        key: key,
+        dado: natural,
+        totale: natural,
+        faces: faces,
+      );
   Map<String, int> levelUpBonuses() => {
     for (final name in _state.statsLevelUp)
       name: _state.bonusLevelUpPerStat(name),

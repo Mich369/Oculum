@@ -254,13 +254,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     return tiraDado(20, countsAsCooldownRoll: countsAsCooldownRoll);
   }
 
-  int esperienzaCriticaCore({required int dado, required int totale}) =>
-      oculumCoreRollExperienceGain(
-        naturalRoll: dado,
-        faces: 20,
-        rollSucceeded: totale > 0,
-        difficulty: normalizedCampaignDifficulty(),
-      );
+  int esperienzaCriticaCore({
+    required int dado,
+    required int totale,
+    int faces = 20,
+  }) => oculumCoreRollExperienceGain(
+    naturalRoll: dado,
+    faces: faces,
+    rollSucceeded: totale > 0,
+    difficulty: normalizedCampaignDifficulty(),
+  );
 
   String? chiaveEsperienzaCriticaStat(String label) {
     final normalized = label.trim().toLowerCase();
@@ -277,13 +280,41 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     required String key,
     required int dado,
     required int totale,
+    int faces = 20,
   }) {
-    final gain = esperienzaCriticaCore(dado: dado, totale: totale);
+    final gain = esperienzaCriticaCore(
+      dado: dado,
+      totale: totale,
+      faces: faces,
+    );
     if (gain <= 0) return '';
     esperienzaCriticaStatistiche[key] =
         max(0, esperienzaCriticaStatistiche[key] ?? 0) + gain;
+    var earned = 0;
+    if (const {'vc', 'cm', 'iniziativa', 'aiuta_compagno'}.contains(key)) {
+      while ((esperienzaCriticaStatistiche[key] ?? 0) >=
+          oculumCoreRollExperienceTarget(
+            key: key,
+            difficulty: normalizedCampaignDifficulty(),
+            earnedPoints: coreMasteryPoints[key] ?? 0,
+          )) {
+        final target = oculumCoreRollExperienceTarget(
+          key: key,
+          difficulty: normalizedCampaignDifficulty(),
+          earnedPoints: coreMasteryPoints[key] ?? 0,
+        );
+        esperienzaCriticaStatistiche[key] =
+            esperienzaCriticaStatistiche[key]! - target;
+        coreMasteryPoints[key] = (coreMasteryPoints[key] ?? 0) + 1;
+        earned++;
+      }
+      if (earned > 0) {
+        invalidateDerivedDataCaches();
+        aggiungiLog('[MAESTRIA] $key +$earned permanente.');
+      }
+    }
     notifyActiveSheetSummaryChanged();
-    return ' EXP $key +$gain';
+    return ' EXP $key +$gain${earned > 0 ? ' · Maestria +$earned' : ''}';
   }
 
   void applyAutomaticAshForTurnProgress(int previous, int next) {
@@ -717,12 +748,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     oculumProfileMark('roll_stat');
     final dado = tiraD20();
     final oculumSpend = consumaOculumTiro();
-    final bonus = oculumStatRollBonus(
-      statValue: valore,
-      levelGradeBonus: bonusLivelloGrado(),
-      quickBonus: statRollQuickBonus(nome),
-      extraBonus: oculumSpend.bonus,
-    );
+    final bonus =
+        consumeCombatHelp() +
+        oculumStatRollBonus(
+          statValue: valore,
+          levelGradeBonus: bonusLivelloGrado(),
+          quickBonus: statRollQuickBonus(nome),
+          extraBonus: oculumSpend.bonus,
+        );
     final totale = rollTotalWithCritical(dado, 20, [bonus]);
     final testoDado = rollFormulaWithCritical(
       roll: dado,
@@ -805,6 +838,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final oculumSpend = consumaOculumTiro();
     final bonusTotale =
         bonus +
+        consumeCombatHelp() +
         (applyGlobalRollModifier ? tiroGlobaleBonus() : 0) +
         oculumSpend.bonus;
     final totale = rollTotalWithCritical(dado, 20, [bonusTotale]);
@@ -876,7 +910,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       expGuadagnata,
       motivo: t('Tiro superato', 'Successful roll'),
     );
-    final coreExpText = nome == 'VC' || nome == 'CM'
+    final coreExpText = nome == 'VC' || nome == 'CM' || nome == 'Iniziativa'
         ? registraEsperienzaCriticaStat(
             key: nome.toLowerCase(),
             dado: dado,
@@ -960,6 +994,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final oculumSpend = consumaOculumTiro();
     final bonus =
         hiddenEyeTotal(stat) +
+        consumeCombatHelp() +
         hiddenEyeStatRollQuickBonus(stat) +
         tiroGlobaleBonus() +
         oculumSpend.bonus;
@@ -1222,10 +1257,21 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   Future<void> tiraAiutaCompagno() async {
+    final origin = currentSheetScrollId();
+    final target = await chooseHelpTarget();
+    if (!mounted || currentSheetScrollId() != origin) return;
+    if (target == null &&
+        (realtimeService?.isConnected == true ||
+            schedePersonaggio.length > 1)) {
+      return;
+    }
     final dado = tiraDado(10);
     final livello = max(0, leggiNumero(livelloController));
     final grado = max(0, leggiNumero(gradoController));
-    final bonusGlobale = tiroGlobaleBonus();
+    final bonusGlobale =
+        tiroGlobaleBonus() +
+        (coreMasteryPoints['aiuta_compagno'] ?? 0) +
+        consumeCombatHelp();
     final bonus = livello + grado * 6 + bonusGlobale;
     final totale = rollTotalWithCritical(dado, 10, [
       livello,
@@ -1238,6 +1284,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       bonuses: [livello, grado * 6, bonusGlobale],
     );
     final label = t('Aiuta compagno', 'Help ally');
+    final masteryText = registraEsperienzaCriticaStat(
+      key: 'aiuta_compagno',
+      dado: dado,
+      totale: totale,
+      faces: 10,
+    );
 
     var statoForzaLog = '';
     setState(() {
@@ -1246,8 +1298,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       dadoMostratoFacce = 10;
       tiroCriticoUno = dado == 1;
       tiroCriticoVenti = dado == 10;
-      risultato = '$label: $testoDado$statoForzaLog';
-      aggiungiLog('Tiro $label: $testoDado.$statoForzaLog');
+      risultato = '$label: $testoDado$statoForzaLog$masteryText';
+      aggiungiLog('Tiro $label: $testoDado.$statoForzaLog$masteryText');
     });
     registerValidRoll();
     if (statoForzaLog.isNotEmpty) {
@@ -1260,6 +1312,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       criticoVenti: dado == 10,
       facce: 10,
     );
+    if (target != null) await deliverCombatHelp(target, max(0, totale));
     await sendRealtimeDiceRollWithMasterConsent(
       label: label,
       roll: dado,
@@ -1397,22 +1450,33 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   int sheetRollBonusAt(int index, String key) {
+    if (index == schedaCorrente) {
+      if (key == 'vc') return vc();
+      if (key == 'cm') return cm();
+      if (key == 'iniziativa') return iniziativa();
+    }
     final derived = sheetDerivedRollBonusAt(index, key);
     if (derived != null) return derived;
 
     final levelGrade = sheetBonusLivelloGradoAt(index);
+    final savedMastery = schedePersonaggio[index]['coreMasteryPoints'];
+    final mastery = savedMastery is Map
+        ? max(0, readIntValue(savedMastery[key]))
+        : 0;
 
     switch (key) {
       case 'vc':
-        return levelGrade +
+        return mastery +
+            levelGrade +
             sheetIntValueAt(index, 'volonta') ~/ 3 +
             readIntValue(schedePersonaggio[index]['vcRapido']);
       case 'cm':
-        return levelGrade +
+        return mastery +
+            levelGrade +
             sheetIntValueAt(index, 'materia') ~/ 2 +
             sheetCmRapidoAt(index);
       case 'iniziativa':
-        return levelGrade + sheetIntValueAt(index, 'materia') ~/ 5;
+        return mastery + levelGrade + sheetIntValueAt(index, 'materia') ~/ 5;
       default:
         return sheetIntValueAt(index, key) ~/ 2 + levelGrade;
     }
@@ -3013,7 +3077,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       0,
       readIntValue(schedePersonaggio[index]['companionAidPending']),
     );
-    final bonus = baseBonus + aid;
+    final directedHelp = readIntValue(
+      schedePersonaggio[index]['combatHelpPending'],
+    ).clamp(0, 1000000);
+    final bonus = baseBonus + aid + directedHelp;
+    if (directedHelp > 0) {
+      aggiungiLog(
+        '[AIUTO CONSUMATO] ${nomeSchedaPersonaggio(index)} +$directedHelp nel tiro.',
+      );
+    }
+    schedePersonaggio[index]['combatHelpPending'] = 0;
     schedePersonaggio[index]['companionAidPending'] = 0;
     final level = sheetCriticalLevelAt(index);
     final grade = max(0, sheetIntValueAt(index, 'grado'));
@@ -3112,6 +3185,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     bool reaction = false,
   }) async {
     if (tokenIndex < 0 || tokenIndex >= masterInitiativeTokens.length) {
+      return;
+    }
+    final sourceToken = masterInitiativeTokens[tokenIndex];
+    final sourceTag = '${sourceToken['sheetTag'] ?? sourceToken['id'] ?? ''}';
+    final helpTarget = await chooseHelpTarget(sourceTag: sourceTag);
+    if (!mounted ||
+        helpTarget == null ||
+        tokenIndex >= masterInitiativeTokens.length ||
+        !identical(masterInitiativeTokens[tokenIndex], sourceToken)) {
       return;
     }
     String label = t('Aiuta compagno', 'Help ally');
@@ -3224,6 +3306,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     sendRealtimeInitiativeSnapshotIfPublished();
     if (!ok) return;
 
+    if (helpTarget.isNotEmpty) {
+      await deliverCombatHelp(
+        helpTarget,
+        max(0, totale),
+        sourceTag: sourceTag,
+        sourceName: name,
+      );
+    }
     mostraDadoCentrale(
       valore: testoDado,
       criticoUno: dado == 1,

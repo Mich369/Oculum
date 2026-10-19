@@ -221,6 +221,10 @@ String oculumRealtimePresenceTagSignature(
 ) {
   final tags = <String>{};
   for (final user in users) {
+    final active = '${user['activeSheetTag'] ?? ''}'.trim().toUpperCase();
+    if (active.isNotEmpty) {
+      tags.add('active:${user['sessionId'] ?? ''}:$active');
+    }
     final rawTags = user['localSheetTags'];
     if (rawTags is! List) continue;
     for (final raw in rawTags) {
@@ -429,6 +433,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             (friendPresenceChanged || staffPresenceChanged)) {
           syncPawnPresence();
           startPermissionRetry();
+          unawaited(replayOnlineCombatRequests());
           if (realtimeIsMasterRole) {
             for (final record in realtimeSharedSheets) {
               if (realtimeCoMasterTags.contains(
@@ -545,7 +550,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       receiveEncounterControl(payload);
       return;
     }
-    if (event == 'combat_attack' || event == 'combat_defense') {
+    if (event == 'combat_attack' ||
+        event == 'combat_defense' ||
+        event == 'combat_help') {
       receiveOnlineCombatEvent(event, payload);
       return;
     }
@@ -1989,6 +1996,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     realtimeVisibleInitiativeSnapshot =
         jsonDecode(jsonEncode(selectedSnapshot)) as Map<String, dynamic>;
     syncCurrentSheetEncounterTurn();
+    unawaited(replayOnlineCombatRequests());
     final realtimeTokens = realtimeVisibleInitiativeSnapshot['tokens'];
     if (realtimeTokens is! List || realtimeTokens.isEmpty) {
       clearTemporaryCombatResistanceEffects();

@@ -25,6 +25,7 @@ class OculumRealtimeService {
     'combat_attack',
     'initiative_control',
     'combat_defense',
+    'combat_help',
     'pawn_snapshot',
     'pawn_command',
     'pawn_intercept_request',
@@ -724,6 +725,7 @@ class OculumRealtimeService {
   Future<bool> sendCombatEvent(String event, Map<String, dynamic> payload) {
     if (event != 'combat_attack' &&
         event != 'combat_defense' &&
+        event != 'combat_help' &&
         event != 'initiative_control') {
       throw ArgumentError('Evento combattimento non supportato');
     }
