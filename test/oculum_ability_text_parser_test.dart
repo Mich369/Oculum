@@ -2,6 +2,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test(
+    'Fate Sign probabilities increase with the paid cost and sum to 100',
+    () {
+      expect(oculumFateSignChances(50), (
+        normal: 70,
+        superInspiration: 20,
+        oculum: 10,
+      ));
+      expect(oculumFateSignChances(120), (
+        normal: 30,
+        superInspiration: 40,
+        oculum: 30,
+      ));
+      var previousSuper = 0, previousOculum = 0;
+      for (var cost = 50; cost <= 120; cost++) {
+        final chance = oculumFateSignChances(cost);
+        expect(chance.normal + chance.superInspiration + chance.oculum, 100);
+        expect(chance.superInspiration, greaterThanOrEqualTo(previousSuper));
+        expect(chance.oculum, greaterThanOrEqualTo(previousOculum));
+        previousSuper = chance.superInspiration;
+        previousOculum = chance.oculum;
+      }
+      expect(oculumFateSignOutcome(50, 69), 'normal');
+      expect(oculumFateSignOutcome(50, 70), 'super');
+      expect(oculumFateSignOutcome(50, 90), 'oculum');
+      expect(oculumFateSignOutcome(120, 30), 'super');
+      expect(oculumFateSignOutcome(120, 70), 'oculum');
+    },
+  );
   test('inventory scrolls classify and target their executable effects', () {
     final heal = oculumScrollCombatEffects({'kind': 'heal', 'grade': 2});
     expect(heal.single.valueExpression, '16');

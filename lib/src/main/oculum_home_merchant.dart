@@ -270,6 +270,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       'alchimista' =>
         const {
               'smoking_herbs',
+              'fate_sign',
               'stat_gem',
               'refined_vitalium',
               'oculum_vial',
@@ -1141,9 +1142,17 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       updateMerchantGemOffers();
       if (readIntValue(offer['remaining']) <= 0) return;
     }
-    final cost = merchantOfferCost(offer);
+    var cost = merchantOfferCost(offer);
     if (leggiNumero(obserController) < cost) return;
     final kind = '${offer['kind'] ?? ''}';
+    if (kind == 'fate_sign') {
+      final selected = await chooseFateSignPrice();
+      if (!mounted ||
+          selected == null ||
+          leggiNumero(obserController) < selected)
+        return;
+      cost = selected;
+    }
     String titleType = '';
     InventoryItem? purchasedPawn;
     if (kind == 'title_item') {
@@ -1179,7 +1188,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     // ignore: invalid_use_of_protected_member
     setState(() {
       obserController.text = (leggiNumero(obserController) - cost).toString();
-      final item = merchantItemFromOffer(offer, titleType: titleType);
+      final item = merchantItemFromOffer(
+        kind == 'fate_sign' ? {...offer, 'cost': cost} : offer,
+        titleType: titleType,
+      );
       if (kind == 'pawn' || kind == 'pawn_v2') purchasedPawn = item;
       inventario.add(item);
       if (kind == 'stat_gem') offer['remaining'] = 0;
@@ -1260,6 +1272,17 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     Map<String, dynamic> offer, {
     String titleType = '',
   }) {
+    if (offer['kind'] == 'fate_sign') {
+      return InventoryItem(
+        nome: 'Segno del Fato',
+        quantita: 1,
+        peso: .01,
+        note: '${offer['desc']}',
+        craftData: {
+          'fateSign': {'cost': readIntValue(offer['cost'], fallback: 50)},
+        },
+      );
+    }
     if (offer['kind'] == 'smoking_herbs') {
       return InventoryItem(
         nome: '${offer['name']}',
@@ -1508,6 +1531,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool isMerchantConsumable(InventoryItem item) =>
+      item.craftData['fateSign'] is Map ||
       item.craftData['smokingHerbs'] is Map ||
       item.craftData['creatureCore'] == true ||
       item.craftData['pawn'] == true ||
@@ -1543,6 +1567,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     if (item.craftData['smokingHerbs'] is Map) {
       useSmokingHerbs(item);
+      // ignore: invalid_use_of_protected_member
+      if (mounted) setState(() {});
+      return;
+    }
+    if (item.craftData['fateSign'] is Map) {
+      useFateSign(item);
       // ignore: invalid_use_of_protected_member
       if (mounted) setState(() {});
       return;

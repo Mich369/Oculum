@@ -20,6 +20,9 @@ Map<String, dynamic> oculumSmokingHerbsOffer(String merchantId) => {
 
 extension _OculumSmokingHerbs on _OculumHomePageState {
   void ensureSmokingHerbsOffer() {
+    if (!merchantStock.any((offer) => offer['id'] == 'fate_sign')) {
+      merchantStock.add(oculumFateSignOffer());
+    }
     if (!merchantStock.any((offer) => offer['id'] == 'smoking_herbs')) {
       merchantStock.add(oculumSmokingHerbsOffer(merchantActiveProfileId));
     }

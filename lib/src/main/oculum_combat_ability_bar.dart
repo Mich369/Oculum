@@ -765,6 +765,21 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       }
     }
     for (final item in inventario.where(
+      (item) =>
+          item.quantita > 0 &&
+          item.craftData['scroll'] is! Map &&
+          isMerchantConsumable(item),
+    )) {
+      entries.add((
+        name: '${item.nome} ×${item.quantita}',
+        roles: {OculumCombatAbilityRole.support},
+        color: statFormulaColor('resilienza'),
+        enabled: canEquipInventoryItem(item),
+        hint: '${item.note}\nConsumabile dall’inventario',
+        use: () => unawaited(useMerchantConsumable(item)),
+      ));
+    }
+    for (final item in inventario.where(
       (item) => item.quantita > 0 && item.craftData['scroll'] is Map,
     )) {
       final scroll = Map<String, dynamic>.from(item.craftData['scroll'] as Map);

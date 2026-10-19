@@ -136,6 +136,7 @@ part 'src/main/oculum_home_recipes.dart';
 part 'src/main/oculum_home_titles_inventory_pages.dart';
 part 'src/main/oculum_home_merchant.dart';
 part 'src/main/oculum_smoking_herbs.dart';
+part 'src/main/oculum_fate_sign.dart';
 part 'src/main/oculum_scrolls.dart';
 part 'src/main/oculum_pawn.dart';
 part 'src/main/oculum_pawn_cores.dart';
