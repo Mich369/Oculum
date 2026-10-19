@@ -447,8 +447,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       salvaSchedaCorrenteInMemoria();
       if (!mounted ||
           realtimeService != service ||
-          !canShareRealtimeSheetToStaff)
+          !canShareRealtimeSheetToStaff) {
         return;
+      }
       await sendRealtimeSheetToStaffAt(
         schedaCorrente,
         ensureMasterReceipt: true,
