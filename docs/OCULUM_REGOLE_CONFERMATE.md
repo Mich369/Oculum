@@ -200,3 +200,6 @@ L'utente indica le illustrazioni promozionali anime di S4 League, più curate de
 - Entra nello scontro condivide la scheda e richiede l'inserimento al Master. La turnistica cambia dopo la conferma nel suo aggiornamento; l'arrivo della scheda in ritardo non perde la richiesta.
 - Le schede dei partecipanti aggiornano vita e risorse nella turnistica del Master, preservando ordine, iniziativa e reazioni gestite dal tracker.
 - Il progresso personale ricevuto dal Master attiva condizioni, cooldown e avanzamento Art una sola volta. Offline i contatori rimangono manuali.
+- In fight, danni, cure, modificatori di Aiuta compagno e condizioni si applicano al destinatario secondo l'esito. Un totale negativo di Aiuta compagno sottrae dal prossimo tiro. Nessun reinvio deve ripetere la mutazione.
+- Il log del difensore indica attaccante, mossa, danni dichiarati e DT difensiva uguale al totale del tiro nemico. Restano valide le soglie e le eccezioni del confronto attacco/difesa confermate sopra.
+- Cure e condizioni sulle proprie schede non aperte vengono applicate senza cambiare la scheda visualizzata; anche il loro progresso segue i turni del Master.

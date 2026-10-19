@@ -105,3 +105,4 @@ Questo elenco descrive il codice della patch. Le verifiche concluse e la version
 - Snapshot numerati e associati alla sessione del Master: messaggi vecchi o estranei non sostituiscono lo stato più recente.
 - Verifiche locali: 12 test mirati riusciti; analisi di lib pulita. Prova completa fra due browser da eseguire separatamente.
 - Modificabili: partecipanti, lato alleato/nemico, ordine e iniziativa, turno, condizioni e durate, valori di abilità ed effetti tramite gli editor esistenti. La sorgente online dei turni è il Master; offline resta manuale.
+- Estensione: cure/condizioni automatiche anche su schede possedute non aperte, ricevute emesse con l'identità del destinatario, progressione dei relativi turni senza cambiare la scheda visibile. Bonus e malus di Aiuta compagno visibili e consumati nel tiro successivo. Log difensivo con mossa e DT dal tiro nemico. Verifiche mirate comprendono danni a strati, cura unica, condizione ricevuta e aiuto negativo.

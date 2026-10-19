@@ -358,6 +358,40 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     return bonus;
   }
 
+  void applySupportToOwnedSheet(
+    int index,
+    List<OculumStructuredEffect> effects,
+    String source,
+  ) {
+    final original = schedaCorrente;
+    final switching = index != original;
+    salvaSchedaCorrenteInMemoria();
+    final global = catturaImpostazioniGlobali();
+    try {
+      if (switching) {
+        schedaCorrente = index;
+        caricaStatoDaJson(schedePersonaggio[index]);
+        ripristinaImpostazioniGlobali(global);
+        selectSharedEncounterForCurrentSheet();
+      }
+      for (final message in applyStructuredEffectsOnActivation(
+        effects,
+        source: source,
+      )) {
+        aggiungiLog('[SUPPORTO RICEVUTO] $message');
+      }
+      salvaSchedaCorrenteInMemoria();
+    } finally {
+      if (switching) {
+        schedaCorrente = original;
+        caricaStatoDaJson(schedePersonaggio[original]);
+        ripristinaImpostazioniGlobali(global);
+      }
+    }
+    sendRealtimeSheetToStaffAt(index, force: true, ensureMasterReceipt: true);
+    syncSharedSheetToMasterEncounters(index);
+  }
+
   void receiveCombatHelp(Map<String, dynamic> payload) {
     if (!validPermissionSender(payload) ||
         payload['encounterId'] != onlineCombatEncounterId) {
@@ -383,7 +417,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       return;
     }
     if (payload['helpMode'] == 'effects') {
-      if (sheetTagAt(schedaCorrente) != target || payload['effects'] is! List) {
+      if (payload['effects'] is! List) {
         return;
       }
       final effects = (payload['effects'] as List)
@@ -410,12 +444,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         'received': true,
         'status': 'resolved',
       };
-      for (final message in applyStructuredEffectsOnActivation(
+      applySupportToOwnedSheet(
+        localSheetIndexForOculumTag(target),
         effects,
-        source: '${payload['sourceName']} · supporto $id',
-      )) {
-        aggiungiLog('[SUPPORTO RICEVUTO] $message');
-      }
+        '${payload['sourceName']} · supporto $id',
+      );
       unawaited(sendCombatAcknowledgement(onlineCombatRequests[id]!, 'help'));
       programmaSalvataggio();
       if (mounted) setState(() {});
@@ -751,6 +784,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'targetName': '${byId[selectedTag]!['name'] ?? '???'}',
           'attackGroupId': id,
           'choice': plan.choiceId,
+          if (targetEffects.isNotEmpty)
+            'abilityName': activeStructuredEffects
+                .where((effect) => effect['type'] == 'pending_target')
+                .map((effect) => '${effect['source'] ?? ''}')
+                .where((name) => name.isNotEmpty)
+                .toSet()
+                .join(' + '),
           'reason': plan.reason,
           'attack': total,
           'natural': natural,
@@ -848,23 +888,21 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     Map<String, dynamic> request,
     String phase,
   ) async {
-    final tag = sheetTagAt(schedaCorrente);
-    final expected = phase == 'defense'
-        ? request['sourceTag']
-        : request['targetTag'];
-    if (tag != expected || !controlsOnlineCombatSheet(tag)) {
+    final expected =
+        '${phase == 'defense' ? request['sourceTag'] : request['targetTag']}';
+    if (!controlsOnlineCombatSheet(expected)) {
       return;
     }
-    await realtimeService?.sendCombatEvent(
-      'combat_ack',
-      permissionEnvelope({
+    await realtimeService?.sendCombatEvent('combat_ack', {
+      ...permissionEnvelope({
         'id': request['id'],
         'sourceTag': request['sourceTag'],
         'targetTag': request['targetTag'],
         'encounterId': request['encounterId'],
         'phase': phase,
       }),
-    );
+      'senderTag': expected,
+    });
   }
 
   void receiveCombatAcknowledgement(Map<String, dynamic> payload) {
@@ -993,13 +1031,36 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     request['received'] = true;
     combatLogFor(
       '${request['targetTag']}',
-      '[DIFESA RICHIESTA] ${request['sourceName']} attacca con ${request['choice']}: ${request['attack']}. ${request['reason'] ?? ''} Tira CM, Riflessi, Resistenza o Manifestazione del Potere dal riquadro Difese in attesa.',
+      '[DIFESA RICHIESTA] ${request['targetName'] ?? 'Sei'} sotto attacco: ${request['sourceName']} usa ${request['abilityName'] ?? request['choice']}. DT difensiva ${request['attack']} (tiro nemico). Danni dichiarati ${request['damage']} · ${request['element'] ?? 'fisico'}. ${request['reason'] ?? ''} Tira CM, Riflessi, Resistenza o Manifestazione del Potere dal riquadro Difese in attesa; danni ed effetti verranno applicati in base all’esito.',
     );
   }
 
   void receiveOnlineCombatEvent(String event, Map<String, dynamic> payload) {
     final requested = '${payload['encounterId'] ?? ''}';
     final previous = selectedMasterInitiativeGroupId;
+    if (!realtimeIsMasterRole &&
+        requested.isNotEmpty &&
+        requested != onlineCombatEncounterId) {
+      if (!controlsOnlineCombatSheet('${payload['targetTag']}') &&
+          !controlsOnlineCombatSheet('${payload['sourceTag']}')) {
+        return;
+      }
+      final encounter = realtimeEncounterSnapshots
+          .where((group) => group['encounterId'] == requested)
+          .firstOrNull;
+      if (encounter == null) return;
+      final previousSnapshot = realtimeVisibleInitiativeSnapshot;
+      final previousSelection = realtimeSelectedEncounterId;
+      realtimeVisibleInitiativeSnapshot = encounter;
+      realtimeSelectedEncounterId = requested;
+      try {
+        receiveOnlineCombatEventForSelectedEncounter(event, payload);
+      } finally {
+        realtimeVisibleInitiativeSnapshot = previousSnapshot;
+        realtimeSelectedEncounterId = previousSelection;
+      }
+      return;
+    }
     if (realtimeIsMasterRole && requested.isNotEmpty && requested != previous) {
       captureActiveMasterInitiativeGroup();
       final group = masterInitiativeGroups
@@ -1411,6 +1472,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   Widget onlineCombatRequestsPanel() {
     if (realtimeService?.isConnected != true) return const SizedBox.shrink();
     final tag = sheetTagAt(schedaCorrente);
+    final helpBonus =
+        schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
+        ? readIntValue(schedePersonaggio[schedaCorrente]['combatHelpPending'])
+        : 0;
     final outgoing = onlineCombatRequests.values
         .where(
           (r) =>
@@ -1445,13 +1510,25 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             controlsOnlineCombatSheet('${request['targetTag']}'))
           '${request['targetTag']}': request,
     };
-    if (requests.isEmpty && outgoing.isEmpty && otherTargets.isEmpty) {
+    if (requests.isEmpty &&
+        outgoing.isEmpty &&
+        otherTargets.isEmpty &&
+        helpBonus == 0) {
       return const SizedBox.shrink();
     }
     return gothicPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (helpBonus != 0)
+            Text(
+              'Aiuta compagno: ${helpBonus > 0 ? '+' : ''}$helpBonus al prossimo tiro · applicazione automatica',
+              style: TextStyle(
+                color: helpBonus > 0
+                    ? Colors.lightBlueAccent
+                    : Colors.redAccent,
+              ),
+            ),
           for (final entry in otherTargets.entries)
             OutlinedButton.icon(
               onPressed: () async {
@@ -1482,7 +1559,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    '${request['sourceName']} · ${request['choice']} ${request['attack']} · ${request['reason'] ?? ''}',
+                    '${request['sourceName']} → ${request['targetName'] ?? nomeController.text} · ${request['abilityName'] ?? request['choice']} · DT ${request['attack']} · ${request['reason'] ?? ''}',
                   ),
                   if (request['status'] == 'pending')
                     Wrap(

@@ -359,6 +359,38 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
   }
 
+  void syncOwnedEncounterTurns() {
+    if (realtimeService?.isConnected != true || realtimeIsMasterRole) return;
+    for (var index = 0; index < schedePersonaggio.length; index++) {
+      if (index == schedaCorrente ||
+          readBoolValue(schedePersonaggio[index]['realtimeSharedSheet'])) {
+        continue;
+      }
+      final selected = oculumSelectSharedEncounter(
+        realtimeEncounterSnapshots,
+        sheetTag: sheetTagAt(index),
+        selectedId: '',
+      );
+      final tokens = (selected['tokens'] as List? ?? const []).whereType<Map>();
+      final participant = tokens
+          .where(
+            (token) =>
+                '${token['sheetTag'] ?? token['id'] ?? ''}' ==
+                sheetTagAt(index),
+          )
+          .firstOrNull;
+      if (participant != null &&
+          readIntValue(participant['reportedTurn']) >
+              readIntValue(schedePersonaggio[index]['playerReportedTurn'])) {
+        applySupportToOwnedSheet(
+          index,
+          const [],
+          'Progressione turnistica Master',
+        );
+      }
+    }
+  }
+
   void syncSharedSheetToMasterEncounters(int index) {
     if (!realtimeIsMasterRole) return;
     syncMasterInitiativeTokenDeathFromSheet(index);
@@ -2175,6 +2207,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       }
     }
     syncCurrentSheetEncounterTurn();
+    syncOwnedEncounterTurns();
     shareOwnedEncounterSheetsToStaff();
     unawaited(replayOnlineCombatRequests());
     final realtimeTokens = realtimeVisibleInitiativeSnapshot['tokens'];

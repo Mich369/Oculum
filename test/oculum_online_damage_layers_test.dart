@@ -442,6 +442,63 @@ void main() {
       hpBeforeSupport + 7,
       reason: 'A retry must not heal twice',
     );
+    final inactive = <String, dynamic>{
+      'id': '003-ALLY',
+      'sheetTag': '003-ALLY',
+      'nome': 'Alleato',
+      'resilienza': '10',
+      'currentResilienza': '10',
+      'currentHp': '30',
+      'grado': '0',
+      'livello': '0',
+    };
+    state.schedePersonaggio.add(inactive);
+    (state.realtimeVisibleInitiativeSnapshot['tokens'] as List).add({
+      'id': '003-ALLY',
+    });
+    final inactivePacket = <String, dynamic>{
+      ...supportPacket,
+      'id': 'inactive-support',
+      'targetTag': '003-ALLY',
+      'effects': [
+        OculumStructuredEffect(
+          type: 'cura',
+          resource: 'vita',
+          valueExpression: '7',
+          duration: '0',
+          recipient: 'alleato',
+        ).toJson(),
+        OculumStructuredEffect(
+          type: 'stato',
+          appliedState: 'sanguinamento',
+          valueExpression: '1',
+          duration: '2',
+          recipient: 'alleato',
+        ).toJson(),
+      ],
+    };
+    probe.receiveCombat('combat_help', inactivePacket);
+    expect(state.schedaCorrente, 0);
+    expect(int.parse('${state.schedePersonaggio[2]['currentHp']}'), 37);
+    expect(state.schedePersonaggio[2]['conditions'], isNotEmpty);
+    probe.receiveCombat('combat_help', inactivePacket);
+    expect(
+      int.parse('${state.schedePersonaggio[2]['currentHp']}'),
+      37,
+      reason:
+          'Inactive-sheet support must apply once without changing the open sheet.',
+    );
+    expect(
+      transport.sent.any(
+        (entry) =>
+            entry.$1 == 'combat_ack' &&
+            entry.$2['id'] == 'inactive-support' &&
+            entry.$2['senderTag'] == '003-ALLY',
+      ),
+      isTrue,
+      reason:
+          'Support receipt missing: ${transport.sent} · ${state.schedePersonaggio[2]['sheetTag']}',
+    );
     final scoutPacket = {
       ...helpPacket,
       'id': 'scout-once',
