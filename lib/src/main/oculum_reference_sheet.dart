@@ -975,7 +975,9 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                             OculumCombatAbilityRole.support,
                           ),
                           icon: Icon(Icons.volunteer_activism_outlined),
-                          label: Text(t('Aiuto e utilità', 'Help and utility')),
+                          label: Text(
+                            t('Supporto e utilità', 'Support and utility'),
+                          ),
                         ),
                         if (bestCombatScoutStat() != null)
                           OutlinedButton.icon(

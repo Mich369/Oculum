@@ -1589,6 +1589,13 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       }
     }
     if (target == OculumConditionTarget.danno) {
+      final confusedHerbs = getCondition('confuso_erbe');
+      if (confusedHerbs != null && !statoForzaRimuoveMalus()) {
+        percent -= readIntValue(
+          confusedHerbs.metadata['damagePenaltyPercent'],
+          fallback: 20,
+        );
+      }
       if (hasCondition('potenziato')) percent += 15 * positiveMultiplier;
       if (!statoForzaRimuoveMalus() && hasCondition('indebolito')) {
         percent -= 20;
@@ -1652,6 +1659,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
 
   int applyConditionHealingAmount(int requested) {
     if (requested <= 0) return 0;
+    clearSmokingHerbConfusion();
     final cursed = getCondition('maledetto');
     if (cursed == null || statoForzaRimuoveMalus()) return requested;
     return oculumCursedHealing(requested, cursed.stage);

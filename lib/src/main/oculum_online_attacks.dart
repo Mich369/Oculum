@@ -581,6 +581,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     String initialChoice = 'vc',
     int minimumTargets = 1,
     int maximumTargets = 1,
+    int? preparedAttackTotal,
+    int? preparedAttackNatural,
   }) async {
     if (freeReactionId == null && maximumTargets == 1) {
       for (final effect in activeStructuredEffects.where(
@@ -817,7 +819,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       programmaSalvataggio();
     }
 
-    if (plan.choiceId == 'vc') {
+    if (preparedAttackTotal != null) {
+      resolved(preparedAttackNatural ?? 0, preparedAttackTotal);
+    } else if (plan.choiceId == 'vc') {
       await tiraValoreSpeciale(
         'VC',
         vc(),

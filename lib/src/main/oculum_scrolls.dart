@@ -28,6 +28,78 @@ int oculumScrollCooldown(int grade) => 3 + grade.clamp(0, 12) ~/ 3;
 
 int oculumScrollEffectMagnitude(int grade) => 1 + grade.clamp(0, 12);
 
+List<OculumStructuredEffect> oculumScrollCombatEffects(
+  Map<String, dynamic> data, {
+  int? resolvedDamage,
+}) {
+  final configured = oculumReadStructuredEffects(data['effects']);
+  if (configured.isNotEmpty) return configured;
+  final g = readIntValue(data['grade']).clamp(0, 12);
+  final kind = '${data['kind']}';
+  final duration = kind == 'imprison' ? 1 : 1 + g ~/ 3;
+  final effects = <OculumStructuredEffect>[];
+  if (kind == 'attack') {
+    effects.add(
+      OculumStructuredEffect(
+        type: 'danno',
+        recipient: 'bersaglio',
+        valueExpression: resolvedDamage == null
+            ? '1d${8 + 6 * g}+danni'
+            : '$resolvedDamage',
+        elementType: '${data['element'] ?? 'fisico'}',
+      ),
+    );
+  } else if (kind == 'heal' || kind == 'ward') {
+    effects.add(
+      OculumStructuredEffect(
+        type: kind == 'heal' ? 'cura' : 'scudo',
+        recipient: 'alleato',
+        resource: 'vita',
+        valueExpression: '${kind == 'heal' ? 8 + 4 * g : 5 + 2 * g}',
+      ),
+    );
+  } else if (const {'imprison', 'control', 'weaken', 'stun'}.contains(kind)) {
+    effects.add(
+      OculumStructuredEffect(
+        type: 'stato',
+        recipient: 'bersaglio',
+        appliedState: switch (kind) {
+          'imprison' => 'immobilizzato',
+          'control' => 'rallentato',
+          'weaken' => 'indebolito',
+          _ => 'stordito',
+        },
+        valueExpression: '${1 + g}',
+        duration: '$duration',
+      ),
+    );
+    if (kind == 'control' && g > 0) {
+      effects.add(
+        OculumStructuredEffect(
+          type: 'danno',
+          recipient: 'bersaglio',
+          valueExpression: 'danni*$g*0.5',
+          elementType: '${data['element']}',
+        ),
+      );
+    }
+  }
+  if (kind == 'attack' && '${data['condition'] ?? ''}'.isNotEmpty) {
+    effects.add(
+      OculumStructuredEffect(
+        type: 'stato',
+        recipient: 'bersaglio',
+        appliedState: '${data['condition']}',
+        valueExpression: '1',
+        duration: '${max(1, 1 + g ~/ 4)}',
+      ),
+    );
+  }
+  return effects.isNotEmpty
+      ? effects
+      : oculumResolveAbilityEffects([], '${data['description'] ?? ''}');
+}
+
 class OculumTechniqueScrollProfile {
   const OculumTechniqueScrollProfile(
     this.id,
@@ -432,13 +504,18 @@ extension _OculumScrolls on _OculumHomePageState {
             masterInitiativeTokens.any(
               (token) => masterInitiativeSheetIndexForToken(token) >= 0,
             ));
-    final targets = targetKind
+    final onlineFight =
+        realtimeService?.isConnected == true &&
+        onlineCombatTokens().any(
+          (token) => onlineCombatTokenTag(token) == sheetTagAt(schedaCorrente),
+        );
+    final targets = targetKind && !onlineFight
         ? await _selectScrollTargets('${data['kind']}', g)
         : <int>[];
     if (!mounted ||
         (item == null && currentSheetScrollId() != origin) ||
         (item != null && !inventario.contains(item)) ||
-        (targetKind && targets.isEmpty)) {
+        (targetKind && !onlineFight && targets.isEmpty)) {
       return;
     }
     final confirmed = await showDialog<bool>(
@@ -477,6 +554,7 @@ extension _OculumScrolls on _OculumHomePageState {
         volontaTotale() +
         runtimeQuickBonus('tiro_volonta') +
         tiroGlobaleBonus() +
+        consumeCombatHelp() +
         spend.bonus;
     final total = rollTotalWithCritical(natural, 20, [bonus]);
     final success =
@@ -497,7 +575,7 @@ extension _OculumScrolls on _OculumHomePageState {
         : 'Tiro fallito: nessun effetto.';
     var resolvedAttackDamage = 0;
     if (success && kind == 'technique') {
-      final effects = oculumReadStructuredEffects(data['effects']);
+      final effects = oculumScrollCombatEffects(data);
       outcome +=
           '\n${applyStructuredEffectsOnActivation(effects, source: source).join("\n")}';
     }
@@ -612,7 +690,46 @@ extension _OculumScrolls on _OculumHomePageState {
           '${data['name']} [Grado $g]: $formula.${oculumTiroLogLabel(spend)}\n$outcome$learned';
       aggiungiLog(risultato);
     });
-    if (success) {
+    if (success && onlineFight && kind != 'technique') {
+      final effects = oculumScrollCombatEffects(
+        data,
+        resolvedDamage: max(0, resolvedAttackDamage - bonusDannoPiatto()),
+      );
+      for (final message in applyStructuredEffectsOnActivation(
+        effects,
+        source: '${data['name']} · Scroll',
+      )) {
+        aggiungiLog(message);
+      }
+      await finishParsedAbilityTargets(
+        '${data['description'] ?? ''}',
+        attackTotal: total,
+        natural: natural,
+      );
+    } else if (success && onlineFight && kind == 'technique') {
+      final hasPendingAttack = activeStructuredEffects.any(
+        (effect) =>
+            effect['type'] == 'pending_target' &&
+            effect['effect'] is Map &&
+            (effect['effect'] as Map)['recipient'] != 'alleato',
+      );
+      await finishParsedAbilityTargets(
+        '${data['description'] ?? ''}',
+        attackTotal: total,
+        natural: natural,
+      );
+      if (!hasPendingAttack &&
+          oculumCombatAbilityRoles(
+            oculumScrollCombatEffects(data),
+          ).contains(OculumCombatAbilityRole.attack) &&
+          onlineAttackTokens().isNotEmpty) {
+        await planOnlineAttack(
+          preparedAttackTotal: total,
+          preparedAttackNatural: natural,
+        );
+      }
+    }
+    if (success && !onlineFight) {
       for (final sheetIndex in targets) {
         switch (kind) {
           case 'attack':

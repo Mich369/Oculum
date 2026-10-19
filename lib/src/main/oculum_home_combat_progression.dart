@@ -759,6 +759,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         processConditionTick(OculumConditionTickTrigger.endTurn);
         processConditionTick(OculumConditionTickTrigger.startTurn);
         tickStructuredAbilityCooldowns('turni', scheduleSave: false);
+        advanceSmokingHerbs('turn');
       }
     }
     applyAutomaticAshForTurnProgress(previous, safe);

@@ -14,6 +14,11 @@ class OculumPerformanceProbe {
   void addCondition(String type, {int stage = 1}) =>
       _state.applyCondition(type, stage: stage);
   int willTotal() => _state.volontaTotale();
+  int herbalBonus(String stat) => _state.merchantHerbalStatBonus(stat);
+  void advanceHerbs(String trigger) => _state.advanceSmokingHerbs(trigger);
+  int difficultyRollModifier() => _state.modificatoreDifficoltaTiro();
+  void applyHealing(int amount) =>
+      _state.applyStructuredHealing('vita', amount);
   Map<String, int> willParts() => {
     'current': _state.currentVolonta(),
     'runtime': _state.runtimeCurrentStatBonus('volonta'),

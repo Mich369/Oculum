@@ -1532,7 +1532,13 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       <String, num>{'oculum': oculumImmesso},
     );
     final structuredMessages = applyStructuredEffectsOnActivation(
-      form.effettiStrutturati.map(
+      oculumResolveAbilityEffects(
+        form.effettiStrutturati,
+        '${form.descrizione}\n${form.effetto}\n${form.buff}\n${form.danni}\n${form.cura}\n${form.difesa}',
+        subtraits: hiddenEyeStats,
+        investedOculum: true,
+        legacyQuickCommands: true,
+      ).map(
         (effect) => effect.id == 'role:Bastione:defense'
             ? (OculumStructuredEffect.fromJson(effect.toJson())
                 ..valueExpression = '${difesa()}')
@@ -1619,7 +1625,13 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       }
       await useConfiguredAbility(
         source: '${skill.nome} / ${form.nome}',
-        effects: form.effettiStrutturati,
+        effects: oculumResolveAbilityEffects(
+          form.effettiStrutturati,
+          '${form.descrizione}\n${form.effetto}\n${form.buff}\n${form.danni}\n${form.cura}\n${form.difesa}',
+          subtraits: hiddenEyeStats,
+          investedOculum: true,
+          legacyQuickCommands: true,
+        ),
         cost: form.costoStrutturato,
         cooldown: structuredCooldown,
         valid: () => skills.contains(skill) && skill.forme.contains(form),

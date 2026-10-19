@@ -1399,6 +1399,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'rebirthato': rebirthato,
       'linguaInglese': linguaInglese,
       'tutorialCompletato': tutorialCompletato,
+      'homeArtworkChoice': homeArtworkChoice,
       'modalitaDesktop': modalitaDesktop,
       'modalitaVeloce': modalitaVeloce,
       'modalitaLeggera': modalitaLeggera,
@@ -1875,6 +1876,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
     rebirthato = readBoolValue(json['rebirthato']);
     linguaInglese = readBoolValue(json['linguaInglese']);
     tutorialCompletato = readBoolValue(json['tutorialCompletato']);
+    homeArtworkChoice =
+        oculumHomeArtworkChoices.containsKey(json['homeArtworkChoice'])
+        ? '${json['homeArtworkChoice']}'
+        : '';
     modalitaDesktop =
         oculumDesktopRequestedAtLaunch ||
         (json.containsKey('modalitaDesktop')
@@ -5204,6 +5209,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
           .map((e) => Map<String, dynamic>.from(e))
           .toList(),
       'liveEncounterSelectedId': realtimeSelectedEncounterId,
+      'homeArtworkChoice': homeArtworkChoice,
       'onlinePermissionRequests': {
         for (final e in onlinePermissionRequests.entries)
           e.key: Map<String, dynamic>.from(e.value),
@@ -5273,6 +5279,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
     linguaInglese = readBoolValue(globali['linguaInglese']);
     tutorialCompletato = readBoolValue(globali['tutorialCompletato']);
+    homeArtworkChoice =
+        oculumHomeArtworkChoices.containsKey(globali['homeArtworkChoice'])
+        ? '${globali['homeArtworkChoice']}'
+        : '';
     modalitaDesktop =
         oculumDesktopRequestedAtLaunch ||
         (globali.containsKey('modalitaDesktop')

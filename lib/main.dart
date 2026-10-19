@@ -135,6 +135,7 @@ part 'src/main/oculum_story_session_notes.dart';
 part 'src/main/oculum_home_recipes.dart';
 part 'src/main/oculum_home_titles_inventory_pages.dart';
 part 'src/main/oculum_home_merchant.dart';
+part 'src/main/oculum_smoking_herbs.dart';
 part 'src/main/oculum_scrolls.dart';
 part 'src/main/oculum_pawn.dart';
 part 'src/main/oculum_pawn_cores.dart';
@@ -1258,6 +1259,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool linguaInglese = false;
   bool datiCaricati = false;
   bool tutorialCompletato = false;
+  String homeArtworkChoice = '';
   bool rebirthato = false;
   bool modalitaDesktop =
       !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;

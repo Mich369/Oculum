@@ -3,6 +3,39 @@ part of '../../main.dart';
 const _oculumAbilityResourcePattern =
     r'(?:Scudo\s+Oculum|Oculum|OCU|Volont[aà]|VOL|Materia|MAT|Resilienza|RES|Vita|HP|Scudo|Reazioni?|Azioni?)';
 
+List<OculumStructuredEffect> oculumResolveAbilityEffects(
+  Iterable<OculumStructuredEffect> configured,
+  String text, {
+  Iterable<HiddenEyeStat> subtraits = const [],
+  bool investedOculum = false,
+  bool legacyQuickCommands = false,
+}) {
+  final declared = configured.toList();
+  if (declared.isNotEmpty) return declared;
+  final parsed = oculumParseAbilityMechanics(
+    text,
+    subtraits: subtraits,
+    investedOculum: investedOculum,
+  ).effects;
+  // Existing @stat and @damage commands are already evaluated by the legacy
+  // quick-command runtime. Do not apply those same self bonuses a second time.
+  return legacyQuickCommands
+      ? parsed
+            .where(
+              (effect) =>
+                  !(effect.recipient == 'se_stesso' &&
+                      effect.narrativeText.contains('@') &&
+                      const {
+                        'danno',
+                        'difesa',
+                        'modifica_statistica',
+                        'modifica_sottotratto',
+                      }.contains(effect.type)),
+            )
+            .toList()
+      : parsed;
+}
+
 ({int minimum, int maximum, String resource})? oculumParseAbilityCost(
   String raw,
 ) {
@@ -61,6 +94,11 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
   Iterable<HiddenEyeStat> subtraits = const [],
   bool investedOculum = false,
 }) {
+  raw = raw
+      .replaceAll('**', '')
+      .replaceAll('__', '')
+      .replaceAll('`', '')
+      .replaceAll(RegExp(r'^\s*#{1,6}\s+', multiLine: true), '');
   final effects = <OculumStructuredEffect>[];
   final leftovers = <String>[];
   final seen = <String>{};
@@ -294,6 +332,18 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
   const atom =
       r'(?:\d*d\d+|\d+(?:[.,]\d+)?|oculum_spent|Oculum\s+(?:immesso|speso|investito|messo|impiegato)|Oculum|OCU|Danni|Materia|Resilienza|Volontà|Medicina|Livello|Grado|Vita\s+(?:attuale|rimanente|massima))';
   const expression = '$atom(?:\\s*[+*/-]\\s*$atom)*';
+  text = text
+      .replaceAllMapped(
+        RegExp(
+          '@(?:cura|guarigione)\\s*[:=+]?\\s*($expression)(?:\\s+(Vita|HP|Oculum))?',
+          caseSensitive: false,
+        ),
+        (match) => 'cura ${match[1]} ${match[2] ?? 'Vita'}',
+      )
+      .replaceAll(
+        RegExp(r'@(?:stato|condizione)\s*[:=]?\s*', caseSensitive: false),
+        'applica ',
+      );
   final claims = <(int, int)>[];
   String recipientNear(RegExpMatch match) {
     final start =
@@ -313,6 +363,12 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
     if (subject != null &&
         (subject.startsWith('alleat') || subject.startsWith('compagn'))) {
       return 'alleato';
+    }
+    if (RegExp(
+      r'\b(?:infligg\w*|caus\w*|colpisc\w*|attacc\w*|spara\w*)\b',
+      caseSensitive: false,
+    ).hasMatch(before)) {
+      return 'bersaglio';
     }
     if (const {'bersaglio', 'avversario', 'nemico'}.contains(subject)) {
       return 'bersaglio';
@@ -602,7 +658,7 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
   final statePattern = stateNames.keys.toList()
     ..sort((a, b) => b.length.compareTo(a.length));
   for (final match in RegExp(
-    '(?:applichi|applica|infliggi|infligge|ottieni|ricevi|subisci|diventi|diventa)\\s+(?:(?:lo stato|la condizione|stato|condizione)\\s+)?(${statePattern.map(RegExp.escape).join('|')})(?:\\s+(?:grado|stadio)\\s*(\\d+))?\\b',
+    '(?:applichi|applica|infliggi|infligge|ottieni|ricevi|subisci|diventi|diventa)\\s+(?:(?:lo stato|la condizione|stato|condizione)\\s+)?(${statePattern.map(RegExp.escape).join('|')})(?:\\s+(?:(?:grado|stadio)\\s*)?(VI|IV|V|III|II|I|\\d+))?\\b',
     caseSensitive: false,
   ).allMatches(text)) {
     if (claimed(match)) continue;
@@ -614,7 +670,17 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
       OculumStructuredEffect(
         type: 'stato',
         appliedState: stateNames[name]!,
-        valueExpression: match[2] ?? '1',
+        valueExpression:
+            const {
+              'I': '1',
+              'II': '2',
+              'III': '3',
+              'IV': '4',
+              'V': '5',
+              'VI': '6',
+            }[match[2]?.toUpperCase()] ??
+            match[2] ??
+            '1',
         recipient: recipientNear(match),
         duration: timing == null ? '' : formula(durationText(timing)),
         durationUnit: durationUnit(timing),

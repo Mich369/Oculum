@@ -2,6 +2,14 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member
 
+const oculumHomeArtworkChoices = <String, String>{
+  'cathedral_eye': 'Occhio della cattedrale',
+  'solar_islands': 'Sole e isole volanti',
+  'amber_shore': 'Riva d’ambra',
+  'anime_reliquary': 'Reliquiario',
+  'canva_spirit_duelist': 'Duellante spirituale',
+};
+
 extension _OculumReferenceCampaign on _OculumHomePageState {
   void selectReferenceRole(bool master) {
     setState(() {
@@ -30,32 +38,87 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
             LayoutBuilder(
               builder: (context, constraints) => gothicPanel(
                 padding: const EdgeInsets.all(8),
-                child: OculumReferenceArt(
-                  height: (constraints.maxWidth * .6).clamp(200, 440),
-                ),
+                child: oculumHomeArtworkChoices.containsKey(homeArtworkChoice)
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/oculum/home_art/$homeArtworkChoice.png',
+                          key: ValueKey('home_artwork_$homeArtworkChoice'),
+                          height: (constraints.maxWidth * .6).clamp(200, 440),
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          semanticLabel:
+                              oculumHomeArtworkChoices[homeArtworkChoice],
+                        ),
+                      )
+                    : OculumReferenceArt(
+                        height: (constraints.maxWidth * .6).clamp(200, 440),
+                      ),
               ),
             ),
             SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(child: Text('Scegli l’immagine Home')),
+                TextButton(
+                  onPressed: homeArtworkChoice.isEmpty
+                      ? null
+                      : () {
+                          setState(() => homeArtworkChoice = '');
+                          programmaSalvataggio();
+                        },
+                  child: Text('Originale'),
+                ),
+              ],
+            ),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  for (final name in [
-                    'cathedral_eye',
-                    'solar_islands',
-                    'amber_shore',
-                    'anime_reliquary',
-                    'canva_spirit_duelist',
-                  ])
+                  for (final name in oculumHomeArtworkChoices.keys)
                     Padding(
                       padding: const EdgeInsets.only(right: 10),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.asset(
-                          'assets/oculum/home_art/$name.png',
-                          width: 280,
-                          height: 175,
-                          fit: BoxFit.cover,
+                      child: Semantics(
+                        button: true,
+                        selected: homeArtworkChoice == name,
+                        label: oculumHomeArtworkChoices[name],
+                        child: InkWell(
+                          key: ValueKey('choose_home_artwork_$name'),
+                          onTap: () {
+                            setState(() => homeArtworkChoice = name);
+                            programmaSalvataggio();
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: homeArtworkChoice == name
+                                    ? tertiaryColor
+                                    : primaryColor.withValues(alpha: .25),
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Image.asset(
+                                    'assets/oculum/home_art/$name.png',
+                                    width: 280,
+                                    height: 175,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Text(
+                                    '${homeArtworkChoice == name ? '✓ ' : ''}${oculumHomeArtworkChoices[name]}',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),

@@ -499,6 +499,31 @@ void main() {
       reason:
           'Support receipt missing: ${transport.sent} · ${state.schedePersonaggio[2]['sheetTag']}',
     );
+    final herbsOffer = oculumSmokingHerbsOffer('alchemist-test');
+    expect(herbsOffer['cost'], inInclusiveRange(30, 50));
+    final herbs = probe.merchantItem(herbsOffer);
+    state.inventario.add(herbs);
+    await probe.useMerchantItem(herbs);
+    expect(probe.herbalBonus('volonta'), 6);
+    expect(probe.herbalBonus('materia'), 4);
+    expect(state.inventario.contains(herbs), isFalse);
+    final difficultyBeforeHerbs = probe.difficultyRollModifier();
+    for (var turn = 0; turn < 3; turn++) probe.advanceHerbs('turn');
+    expect(probe.herbalBonus('volonta'), 0);
+    expect(
+      (state.activeConditions as List).any(
+        (dynamic c) => c.conditionType == 'confuso_erbe',
+      ),
+      isTrue,
+    );
+    expect(probe.difficultyRollModifier(), difficultyBeforeHerbs - 2);
+    probe.applyHealing(1);
+    expect(
+      (state.activeConditions as List).any(
+        (dynamic c) => c.conditionType == 'confuso_erbe',
+      ),
+      isFalse,
+    );
     final scoutPacket = {
       ...helpPacket,
       'id': 'scout-once',

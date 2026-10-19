@@ -269,6 +269,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             offer['defence'] != null,
       'alchimista' =>
         const {
+              'smoking_herbs',
               'stat_gem',
               'refined_vitalium',
               'oculum_vial',
@@ -485,6 +486,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   );
 
   List<Map<String, dynamic>> ensureMerchantStock() {
+    if (merchantStock.isNotEmpty) ensureSmokingHerbsOffer();
     if (merchantStock.isNotEmpty) {
       merchantStockSessionId = merchantRuntimeSessionId;
       updateMerchantGemOffers();
@@ -707,6 +709,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void ensureMerchantFoodOffers() {
+    ensureSmokingHerbsOffer();
     for (final offer in oculumCreatureCoreOffers()) {
       if (!merchantStock.any((existing) => existing['id'] == offer['id'])) {
         merchantStock.add(offer);
@@ -1257,6 +1260,15 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     Map<String, dynamic> offer, {
     String titleType = '',
   }) {
+    if (offer['kind'] == 'smoking_herbs') {
+      return InventoryItem(
+        nome: '${offer['name']}',
+        quantita: 1,
+        peso: .05,
+        note: '${offer['desc']}',
+        craftData: {'smokingHerbs': Map<String, dynamic>.from(offer)},
+      );
+    }
     if (offer['kind'] == 'alchemy_pet') {
       return InventoryItem(
         nome: '${offer['name']}',
@@ -1474,7 +1486,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             effect['statId'] == statId &&
             readIntValue(effect['shortRestsRemaining']) > 0,
       )
-      .fold<int>(0, (sum, effect) => sum + readIntValue(effect['value']));
+      .fold<int>(
+        smokingHerbStatBonus(statId),
+        (sum, effect) => sum + readIntValue(effect['value']),
+      );
 
   Map<String, dynamic>? merchantCraftedHerbalOffer(String itemName) {
     final offerId = switch (itemName.trim()) {
@@ -1493,6 +1508,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool isMerchantConsumable(InventoryItem item) =>
+      item.craftData['smokingHerbs'] is Map ||
       item.craftData['creatureCore'] == true ||
       item.craftData['pawn'] == true ||
       item.craftData['alchemyPet'] != null ||
@@ -1523,6 +1539,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       } else {
         await summonCreatureCore(item);
       }
+      return;
+    }
+    if (item.craftData['smokingHerbs'] is Map) {
+      useSmokingHerbs(item);
+      // ignore: invalid_use_of_protected_member
+      if (mounted) setState(() {});
       return;
     }
     if (item.craftData['pawn'] == true) {

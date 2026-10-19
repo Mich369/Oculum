@@ -1627,6 +1627,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       progressionSurge.shortRest();
       consumedFoodBonuses.clear();
       for (final effect in merchantHerbalEffects) {
+        if (effect['type'] == 'smoking_herbs') continue;
         effect['shortRestsRemaining'] = max(
           0,
           readIntValue(effect['shortRestsRemaining']) - 1,
@@ -1635,6 +1636,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       merchantHerbalEffects.removeWhere(
         (effect) => readIntValue(effect['shortRestsRemaining']) <= 0,
       );
+      advanceSmokingHerbs('short_rest');
       invalidateHiddenEyeDerivedCaches();
 
       impostaCenereControllata(
@@ -1740,6 +1742,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       merchantDustPurchaseCount = 0;
       restThresholdTemporaryHp();
       schedePersonaggio[schedaCorrente]['packLeaderPhaseTriggered'] = false;
+      advanceSmokingHerbs('long_rest');
       merchantHerbalEffects.clear();
       for (final item in inventario) {
         if (item.craftData['gerinResonanceGrade'] == null ||

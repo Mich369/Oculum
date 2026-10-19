@@ -4070,7 +4070,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int modificatoreDifficoltaTiro({int? difficulty}) {
-    return -(difficulty ?? difficoltaTiro());
+    final confused = getCondition('confuso_erbe');
+    final extra = confused == null || statoForzaRimuoveMalus()
+        ? 0
+        : readIntValue(confused.metadata['difficultyPenalty'], fallback: 2);
+    return -(difficulty ?? difficoltaTiro()) - extra;
   }
 
   int moltiplicatoreHp() =>

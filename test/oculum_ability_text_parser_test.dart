@@ -2,6 +2,83 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('inventory scrolls classify and target their executable effects', () {
+    final heal = oculumScrollCombatEffects({'kind': 'heal', 'grade': 2});
+    expect(heal.single.valueExpression, '16');
+    expect(heal.single.recipient, 'alleato');
+    expect(
+      oculumCombatAbilityRoles(heal),
+      contains(OculumCombatAbilityRole.support),
+    );
+    final attack = oculumScrollCombatEffects({
+      'kind': 'attack',
+      'grade': 1,
+      'element': 'fuoco',
+    }, resolvedDamage: 42);
+    expect(attack.single.valueExpression, '42');
+    expect(attack.single.recipient, 'bersaglio');
+    expect(oculumCombatAbilityRoles(attack), {OculumCombatAbilityRole.attack});
+    final state = oculumScrollCombatEffects({'kind': 'stun', 'grade': 1});
+    expect(
+      oculumCombatAbilityRoles(state),
+      containsAll([
+        OculumCombatAbilityRole.attack,
+        OculumCombatAbilityRole.support,
+      ]),
+    );
+  });
+  test(
+    'text-only effects keep manual overrides and execute command aliases',
+    () {
+      final configured = OculumStructuredEffect(
+        type: 'cura',
+        valueExpression: '99',
+      );
+      expect(
+        oculumResolveAbilityEffects([configured], 'cura 7 Vita').single,
+        same(configured),
+      );
+      final heal = oculumResolveAbilityEffects([], '**@Cura+7** a 2 alleati');
+      expect(heal.single.type, 'cura');
+      expect(heal.single.recipient, 'alleato');
+      expect(heal.single.valueExpression, '7');
+      final condition = oculumResolveAbilityEffects(
+        [],
+        '@Stato: Bruciatura II al bersaglio per 2 turni',
+      );
+      expect(condition.single.appliedState, 'bruciatura');
+      expect(condition.single.valueExpression, '2');
+      expect(condition.single.duration, '2');
+      expect(
+        oculumResolveAbilityEffects([], '@VC+8', legacyQuickCommands: true),
+        isEmpty,
+      );
+      expect(
+        oculumResolveAbilityEffects(
+          [],
+          'Infliggi 8 danni Fuoco',
+        ).single.recipient,
+        'bersaglio',
+      );
+    },
+  );
+  test('mixed bonuses use the stronger role and utility remains visible', () {
+    Set<OculumCombatAbilityRole> roles(String text) =>
+        oculumCombatAbilityRoles(oculumResolveAbilityEffects([], text));
+    expect(roles('@CM+8; @VC+8'), containsAll(OculumCombatAbilityRole.values));
+    expect(roles('@CM+9; @VC+5'), {
+      OculumCombatAbilityRole.defense,
+      OculumCombatAbilityRole.support,
+    });
+    expect(roles('@Danni+12; @Difesa+5'), {
+      OculumCombatAbilityRole.attack,
+      OculumCombatAbilityRole.support,
+    });
+    expect(
+      roles('Applica Bruciatura al bersaglio per 2 turni'),
+      contains(OculumCombatAbilityRole.support),
+    );
+  });
   test('explicit target ranges survive copying and JSON', () {
     final effect = OculumStructuredEffect(
       type: 'cura',

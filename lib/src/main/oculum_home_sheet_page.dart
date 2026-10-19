@@ -4780,7 +4780,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 onPressed: () => modificaDifesaRapida(1),
               ),
               quickCommandButton(
-                label: t('Aiuto e utilità', 'Help and utility'),
+                label: t('Supporto e utilità', 'Support and utility'),
                 icon: Icons.volunteer_activism,
                 color: const Color(0xFF7EE7C8),
                 onPressed: () => showCombatActionPanel(OculumCombatAbilityRole.support),
@@ -7548,7 +7548,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   backgroundColor: const Color(0xFF7EE7C8),
                   foregroundColor: Colors.black,
                 ),
-                label: Text(t('Aiuto e utilità', 'Help and utility')),
+                label: Text(t('Supporto e utilità', 'Support and utility')),
               ),
               Chip(
                 avatar: const Icon(Icons.casino, size: 16),

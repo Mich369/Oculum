@@ -1188,6 +1188,23 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     rollModifierByStage: <int>[-2, -4, -6],
   ),
   OculumConditionDefinition(
+    id: 'confuso_erbe',
+    nameIt: 'Confuso',
+    nameEn: 'Dazed',
+    icon: Icons.psychology_alt,
+    category: OculumConditionCategory.mental,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'Postumo delle erbe fumabili: −20% danni e DT +2. Dura 2 turni o fino alla prossima cura o riposo.',
+    descriptionEn:
+        'Smoking herb aftereffect: −20% damage and difficulty +2. Lasts 2 turns or until healing or rest.',
+    defaultDuration: 2,
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.danno,
+      OculumConditionTarget.tiri,
+    },
+  ),
+  OculumConditionDefinition(
     id: 'silenziato',
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.skill,

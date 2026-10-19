@@ -8877,7 +8877,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 livelloNuovo - 1,
                 block: true,
               )
-            : skill.effettiPerLivello[livelloNuovo - 1],
+            : oculumResolveAbilityEffects(
+                skill.effettiPerLivello[livelloNuovo - 1],
+                skill.testoEvoluzione(livelloNuovo),
+                subtraits: hiddenEyeStats,
+                investedOculum: true,
+                legacyQuickCommands: true,
+              ),
         source: '${art.nome} / ${skill.nome} ${artLevelRoman(livelloNuovo)}',
         level: livelloNuovo,
         spentResources: <String, num>{costResource: resourceSpent},
@@ -9682,8 +9688,19 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       final art = arti[artIndex];
       final structuredMessages =
           applyStructuredEffectsOnActivation(<OculumStructuredEffect>[
-            ...art.openDescriptionEffects,
-            if (!art.monsterOpenSkill) ...art.openSkillEffects,
+            ...oculumResolveAbilityEffects(
+              art.openDescriptionEffects,
+              art.openDescription,
+              subtraits: hiddenEyeStats,
+              legacyQuickCommands: true,
+            ),
+            if (!art.monsterOpenSkill)
+              ...oculumResolveAbilityEffects(
+                art.openSkillEffects,
+                art.openSkill,
+                subtraits: hiddenEyeStats,
+                legacyQuickCommands: true,
+              ),
             ...art.openBuffEffects,
           ], source: artOpenDisplayName(art, artIndex));
       if (structuredMessages.isNotEmpty) {
@@ -9700,6 +9717,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
     scheduleRealtimeOculumChanged();
     if (!consumedIntegrity) programmaSalvataggio();
+    if (consumedIntegrity &&
+        mounted &&
+        targetArt.openDescriptionEffects.isEmpty &&
+        !targetArt.descrizione.startsWith('Art del ')) {
+      await finishParsedAbilityTargets(targetArt.openDescription);
+    }
   }
 
   Future<void> usaSkillOpenMostro(int artIndex) async {
@@ -9725,6 +9748,34 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     if (art.descrizione.startsWith('Art del ')) {
       await resolveBalancedOpen(art, activation: false);
       return;
+    }
+    if (art.openSkillEffects.isEmpty) {
+      final effects = oculumResolveAbilityEffects(
+        const [],
+        art.openSkill,
+        subtraits: hiddenEyeStats,
+        legacyQuickCommands: true,
+      );
+      if (effects.isNotEmpty) {
+        final parsedCost = oculumParseAbilityCost(art.openSkill);
+        final used = await useConfiguredAbility(
+          source: '${artOpenDisplayName(art, artIndex)} · Skill Open',
+          effects: effects,
+          cost: parsedCost == null
+              ? null
+              : OculumSkillCost(
+                  resource: parsedCost.resource,
+                  amountExpression: '${parsedCost.minimum}',
+                  variable: parsedCost.maximum != parsedCost.minimum,
+                  minimum: parsedCost.minimum,
+                  maximum: parsedCost.maximum,
+                ),
+          cooldown: cooldown,
+          valid: () => arti.contains(art) && art.openAttiva,
+        );
+        if (used && mounted) await finishParsedAbilityTargets(art.openSkill);
+        return;
+      }
     }
     final sourceTag = sheetTagAt(schedaCorrente);
     final candidates = masterPartyIndexes()
