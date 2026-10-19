@@ -508,7 +508,9 @@ void main() {
     expect(probe.herbalBonus('materia'), 4);
     expect(state.inventario.contains(herbs), isFalse);
     final difficultyBeforeHerbs = probe.difficultyRollModifier();
-    for (var turn = 0; turn < 3; turn++) probe.advanceHerbs('turn');
+    for (var turn = 0; turn < 3; turn++) {
+      probe.advanceHerbs('turn');
+    }
     expect(probe.herbalBonus('volonta'), 0);
     expect(
       (state.activeConditions as List).any(
