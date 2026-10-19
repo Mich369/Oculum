@@ -2,6 +2,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('Chaos sign has exact point probabilities and stable shop offers', () {
+    final counts = <int, int>{};
+    for (var roll = 0; roll < 100; roll++) {
+      final points = oculumChaosSignPoints(roll);
+      counts[points] = (counts[points] ?? 0) + 1;
+    }
+    expect(counts, {0: 3, 1: 75, 2: 13, 3: 9});
+    for (var i = 0; i < 100; i++) {
+      final offer = oculumFateSignOffer('shop-$i');
+      expect(offer['cost'], inInclusiveRange(50, 120));
+      expect(offer['remaining'], 1);
+      expect(offer, oculumFateSignOffer('shop-$i'));
+      expect(
+        oculumChaosSignOffer('shop-$i')['cost'],
+        inInclusiveRange(60, 120),
+      );
+    }
+  });
+
   test(
     'Fate Sign probabilities increase with the paid cost and sum to 100',
     () {

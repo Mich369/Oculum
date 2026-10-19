@@ -282,6 +282,49 @@ void main() {
     callback();
     expect(state.obserController.text, '${1000 - 4 * dustPrice}');
     expect(state.ascensionDustController.text, '4');
+    state.obserController.text = '1000';
+    final sign = probe.shopOffers().singleWhere(
+      (o) => o['kind'] == 'fate_sign',
+    );
+    final signCost = sign['cost'] as int;
+    await probe.buyShopOffer(sign);
+    await probe.buyShopOffer(sign);
+    expect(state.obserController.text, '${1000 - signCost}');
+    expect(sign['remaining'], 0);
+    expect(
+      probe.shopOffers().singleWhere(
+        (o) => o['kind'] == 'fate_sign',
+      )['remaining'],
+      0,
+    );
+    probe.load(probe.snapshot());
+    expect(
+      probe.shopOffers().singleWhere(
+        (o) => o['kind'] == 'fate_sign',
+      )['remaining'],
+      0,
+    );
+    final chaos = probe.merchantItem(oculumChaosSignOffer('test-shop'));
+    state.inventario.add(chaos);
+    int totalStats() => [
+      state.resilienzaController,
+      state.volontaController,
+      state.materiaController,
+      state.oculumController,
+    ].fold<int>(0, (sum, c) => sum + int.parse(c.text as String));
+    final beforeChaos = totalStats();
+    await probe.useMerchantItem(chaos);
+    final afterChaos = totalStats();
+    expect(
+      afterChaos - beforeChaos,
+      inInclusiveRange(
+        0,
+        ((chaos.craftData['chaosSign'] as Map)['cost'] as int) ~/ 10 * 3,
+      ),
+    );
+    expect(state.inventario.contains(chaos), isFalse);
+    await probe.useMerchantItem(chaos);
+    expect(totalStats(), afterChaos);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
   });

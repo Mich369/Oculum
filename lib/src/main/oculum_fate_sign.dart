@@ -25,66 +25,75 @@ String oculumFateSignOutcome(int cost, int percentile) {
       : 'oculum';
 }
 
-Map<String, dynamic> oculumFateSignOffer() => {
-  'id': 'fate_sign',
-  'kind': 'fate_sign',
-  'name': 'Segno del Fato',
-  'cost': 50,
+Map<String, dynamic> oculumFateSignOffer([String merchantId = '']) {
+  final cost = 50 + monsterSpriteStableSeed('fate:$merchantId').abs() % 71;
+  final chance = oculumFateSignChances(cost);
+  return {
+    'id': 'fate_sign',
+    'kind': 'fate_sign',
+    'name': 'Segno del Fato',
+    'cost': cost,
+    'remaining': 1,
+    'shopPriceVersion': 1,
+    'desc':
+        'Disponibile: 1 per negozio. Prezzo del mercante: $cost Obser. '
+        'Ispirazione ${chance.normal}%, Super ${chance.superInspiration}%, '
+        'Oculum ${chance.oculum}%. Monouso; rispetta i limiti di Ispirazione.',
+  };
+}
+
+bool oculumChaosSignAvailable(String merchantId) =>
+    monsterSpriteStableSeed('chaos-availability:$merchantId').abs() % 100 < 3;
+
+int oculumChaosSignPoints(int percentile) {
+  final roll = percentile.clamp(0, 99);
+  if (roll < 3) return 0;
+  if (roll < 12) return 3;
+  if (roll < 25) return 2;
+  return 1;
+}
+
+Map<String, dynamic> oculumChaosSignOffer(String merchantId) => {
+  'id': 'chaos_sign',
+  'kind': 'chaos_sign',
+  'name': 'Segno del Chaos',
+  'cost': 60 + monsterSpriteStableSeed('chaos-price:$merchantId').abs() % 61,
+  'remaining': 1,
   'desc':
-      'Scegli da 50 a 120 Obser. A 50: 70% Ispirazione, 20% Super Ispirazione, 10% Ispirazione Oculum. A 120: 30%/40%/30%. Crescita graduale: più spendi, maggiori sono le possibilità rare. Monouso, rispetta i limiti di Ispirazione.',
+      'Molto raro: 3% dei negozi dell’alchimista. Una copia. Monouso: '
+      'ogni 10 Obser di valore effettua un’estrazione su una statistica casuale '
+      '(Resilienza, Volontà, Materia oppure Oculum). '
+      '75%: +1; 13%: +2; 9%: +3; 3%: +0. Punti permanenti.',
 };
 
 extension _OculumFateSign on _OculumHomePageState {
-  Future<int?> chooseFateSignPrice() => showDialog<int>(
-    context: context,
-    builder: (dialog) {
-      var selected = 50;
-      return StatefulBuilder(
-        builder: (context, update) {
-          final chance = oculumFateSignChances(selected);
-          return AlertDialog(
-            title: const Text('Segno del Fato'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '$selected Obser',
-                  style: TextStyle(color: tertiaryColor, fontSize: 22),
-                ),
-                Slider(
-                  value: selected.toDouble(),
-                  min: 50,
-                  max: 120,
-                  divisions: 70,
-                  label: '$selected Obser',
-                  onChanged: (value) => update(() => selected = value.round()),
-                ),
-                Text(
-                  'Ispirazione ${chance.normal}%\nSuper Ispirazione ${chance.superInspiration}%\nIspirazione Oculum ${chance.oculum}%',
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Il segno si conserva nell’inventario. Consumarlo assegna un’ispirazione rispettando i limiti già previsti.',
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialog),
-                child: const Text('Annulla'),
-              ),
-              FilledButton(
-                onPressed: selected > leggiNumero(obserController)
-                    ? null
-                    : () => Navigator.pop(dialog, selected),
-                child: const Text('Acquista'),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
+  void useChaosSign(InventoryItem item) {
+    final config = item.craftData['chaosSign'] as Map;
+    final cost = readIntValue(config['cost'], fallback: 60).clamp(60, 120);
+    final random = Random.secure();
+    final controllers = [
+      resilienzaController,
+      volontaController,
+      materiaController,
+      oculumController,
+    ];
+    const names = ['Resilienza', 'Volontà', 'Materia', 'Oculum'];
+    final gains = List<int>.filled(4, 0);
+    for (var i = 0; i < cost ~/ 10; i++) {
+      gains[random.nextInt(4)] += oculumChaosSignPoints(random.nextInt(100));
+    }
+    item.quantita--;
+    if (item.quantita <= 0) inventario.remove(item);
+    for (var i = 0; i < controllers.length; i++) {
+      controllers[i].text = '${leggiNumero(controllers[i]) + gains[i]}';
+    }
+    invalidateDerivedDataCaches();
+    aggiungiLog(
+      '[SEGNO DEL CHAOS] $cost Obser · ${cost ~/ 10} estrazioni: '
+      '${List.generate(4, (i) => '${names[i]} +${gains[i]}').join(', ')}. Segno consumato.',
+    );
+    programmaSalvataggio();
+  }
 
   void useFateSign(InventoryItem item) {
     final cost = readIntValue(

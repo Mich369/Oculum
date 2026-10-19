@@ -21,7 +21,22 @@ Map<String, dynamic> oculumSmokingHerbsOffer(String merchantId) => {
 extension _OculumSmokingHerbs on _OculumHomePageState {
   void ensureSmokingHerbsOffer() {
     if (!merchantStock.any((offer) => offer['id'] == 'fate_sign')) {
-      merchantStock.add(oculumFateSignOffer());
+      merchantStock.add(oculumFateSignOffer(merchantActiveProfileId));
+    }
+    for (final offer in merchantStock.where((o) => o['kind'] == 'fate_sign')) {
+      if (offer['shopPriceVersion'] != 1) {
+        final remaining = offer['remaining'];
+        offer.addAll(oculumFateSignOffer(merchantActiveProfileId));
+        if (remaining != null) offer['remaining'] = remaining;
+      }
+    }
+    final profile = _activeMerchantProfile();
+    if (profile['chaosSignChecked'] != true) {
+      profile['chaosSignChecked'] = true;
+      if (oculumChaosSignAvailable(merchantActiveProfileId) &&
+          !merchantStock.any((offer) => offer['id'] == 'chaos_sign')) {
+        merchantStock.add(oculumChaosSignOffer(merchantActiveProfileId));
+      }
     }
     if (!merchantStock.any((offer) => offer['id'] == 'smoking_herbs')) {
       merchantStock.add(oculumSmokingHerbsOffer(merchantActiveProfileId));

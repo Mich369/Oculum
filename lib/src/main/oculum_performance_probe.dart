@@ -30,6 +30,8 @@ class OculumPerformanceProbe {
   void masterRollRequests(Map<String, dynamic> group) =>
       _state.receiveMasterRollRequests(group);
   void shopType(String type) => _state.selectMerchantShop(type);
+  Future<void> buyShopOffer(Map<String, dynamic> offer) =>
+      _state.buyMerchantOffer(offer);
   int get dustPrice => _state.merchantDustPrice;
   int shopCost(Map<String, dynamic> offer) => _state.merchantOfferCost(offer);
   List<Map<String, dynamic>> shopOffers() => _state.recommendedMerchantStock();
