@@ -892,6 +892,8 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
   }
 
   Color statFormulaColor(String stat) {
+    final custom = oculumCustomStatColor(oculumStatKey(stat));
+    if (custom != null) return custom;
     switch (oculumStatKey(stat)) {
       case 'volonta':
         return const Color(0xFFE74C3C);
@@ -1568,6 +1570,9 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
               ensureSecretThemeUnlocks(announce: true) || needsRefresh;
         }
 
+        if (identical(controller, livelloController)) {
+          notifyExperienceChanged();
+        }
         if (identical(controller, expController)) {
           notifyExperienceChanged();
         }

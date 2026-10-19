@@ -132,6 +132,8 @@ class OculumThemeScope extends StatelessWidget {
                           child: child!,
                         ),
                       ),
+                      const Positioned.fill(child: OculumCustomArtworkLayer()),
+                      const Positioned.fill(child: OculumCustomArtworkLayer()),
                       Positioned.fill(
                         child: OculumCombatReactionHost(
                           state: combat,
@@ -296,7 +298,7 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader>
         child: Stack(
           fit: StackFit.expand,
           children: [
-            OculumHomeHorrorArtwork(animation: _homeArtworkAnimation),
+            OculumWatchingEyes(animation: _homeArtworkAnimation),
             Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
@@ -376,7 +378,7 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          OculumHomeHorrorArtwork(animation: _homeArtworkAnimation),
+          OculumWatchingEyes(animation: _homeArtworkAnimation),
           Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 460),

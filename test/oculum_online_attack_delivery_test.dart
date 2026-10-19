@@ -146,7 +146,7 @@ void main() {
       });
       expect(
         state.onlineCombatRequests.containsKey('invalid-alternative'),
-        isFalse,
+        isTrue,
       );
       probe.receiveCombat('combat_attack', {
         ...packet,

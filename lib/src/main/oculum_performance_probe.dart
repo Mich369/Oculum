@@ -7,6 +7,27 @@ class OculumPerformanceProbe {
   OculumPerformanceProbe(State state) : _state = state as _OculumHomePageState;
   final _OculumHomePageState _state;
 
+  String currentTag() => _state.sheetTagAt(_state.schedaCorrente);
+  Map<String, int> itemBonuses(InventoryItem item) =>
+      _state.itemQuickBonuses(item);
+  bool canEquip(InventoryItem item) => _state.canEquipInventoryItem(item);
+  void addCondition(String type, {int stage = 1}) =>
+      _state.applyCondition(type, stage: stage);
+  int willTotal() => _state.volontaTotale();
+  Map<String, int> willParts() => {
+    'current': _state.currentVolonta(),
+    'runtime': _state.runtimeCurrentStatBonus('volonta'),
+    'food': _state.nourishmentStatBonus('volonta', _state.currentVolonta()),
+    'flat': _state.conditionFlatModifier(OculumConditionTarget.volonta),
+  };
+  void encounterRewards(List<Map<String, dynamic>> rewards) =>
+      _state.receiveEncounterRewards(rewards);
+  void masterRollRequests(Map<String, dynamic> group) =>
+      _state.receiveMasterRollRequests(group);
+  void shopType(String type) => _state.selectMerchantShop(type);
+  int get dustPrice => _state.merchantDustPrice;
+  int shopCost(Map<String, dynamic> offer) => _state.merchantOfferCost(offer);
+  List<Map<String, dynamic>> shopOffers() => _state.recommendedMerchantStock();
   List<OculumColorPreset> get themes => List.unmodifiable(_state.colorPresets);
   void applyTheme(String id) => _state.applicaColorPreset(id);
   Future<void> useCharacterSkill(CharacterSkill skill) =>
@@ -162,7 +183,13 @@ class OculumPerformanceProbe {
   void invalidateDerivedCaches() => _state.invalidateDerivedDataCaches();
   int vc() => _state.vc();
   int consumeHelp() => _state.consumeCombatHelp();
+  void completeFate(Map<String, dynamic> group) =>
+      _state.applyChainedFateCompletion(group);
+  int fateExperienceMultiplier() => _state.chainedFateExperienceMultiplier();
+  void openReputations() => _state.openReputationManagerSheet();
   Future<void> helpAlly() => _state.tiraAiutaCompagno();
+  Future<void> retryCombat() =>
+      _state.replayOnlineCombatRequests(retryOnly: true);
   Future<void> planAttack({int minimum = 1, int maximum = 1}) =>
       _state.planOnlineAttack(minimumTargets: minimum, maximumTargets: maximum);
   String gainCoreMastery(String key, int natural, {int faces = 20}) =>

@@ -21,7 +21,7 @@ part of '../../main.dart';
     );
   }
   final range = RegExp(
-    r'(?:da\s+)?(\d+)\s*(?:a|o|[-–])\s*(\d+)\s+(?:bersagli|avversari|nemici|creature)',
+    r'(?:da\s+)?(\d+)\s*(?:a|o|[-–])\s*(\d+)\s+(?:bersagli|avversari|nemici|creature|alleati|compagni)',
   ).firstMatch(normalized);
   if (range != null) {
     final minimum = (int.tryParse(range.group(1)!) ?? 1).clamp(1, 100);
@@ -34,12 +34,12 @@ part of '../../main.dart';
     );
   }
   if (RegExp(
-    r'fino\s+ad?\s+oculum\s+(?:bersagli|avversari|nemici|creature)',
+    r'fino\s+ad?\s+oculum\s+(?:bersagli|avversari|nemici|creature|alleati|compagni)',
   ).hasMatch(normalized)) {
     return (minimum: 1, maximum: oculum.clamp(1, 100));
   }
   final count = RegExp(
-    r'(?:fino\s+a|massimo|max)\s+(\d+)\s+(?:bersagli|avversari|nemici|creature)',
+    r'(?:fino\s+a|massimo|max)\s+(\d+)\s+(?:bersagli|avversari|nemici|creature|alleati|compagni)',
   ).firstMatch(normalized);
   if (count != null) {
     return (
@@ -48,7 +48,7 @@ part of '../../main.dart';
     );
   }
   final exact = RegExp(
-    r'(\d+)\s+(?:bersagli|avversari|nemici|creature)',
+    r'(\d+)\s+(?:bersagli|avversari|nemici|creature|alleati|compagni)',
   ).firstMatch(normalized);
   if (exact != null) {
     final count = (int.tryParse(exact.group(1)!) ?? 1).clamp(1, 100);
@@ -58,6 +58,50 @@ part of '../../main.dart';
 }
 
 extension _OculumOnlineAttacks on _OculumHomePageState {
+  Future<void> manualPartyHealing() async {
+    final origin = currentSheetScrollId();
+    final controller = TextEditingController();
+    final amount = await showDialog<int>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('Cura · valore concordato con il Master'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'Vita da recuperare'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('Annulla'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = int.tryParse(controller.text);
+              if (value != null && value > 0 && value <= 1000000) {
+                Navigator.pop(dialog, value);
+              }
+            },
+            child: const Text('Scegli destinatario'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (!mounted || amount == null || currentSheetScrollId() != origin) return;
+    activeStructuredEffects.add({
+      'type': 'pending_target',
+      'source': 'Cura concordata',
+      'effect': OculumStructuredEffect(
+        type: 'cura',
+        recipient: 'alleato',
+        valueExpression: '$amount',
+        duration: '0',
+      ).toJson(),
+    });
+    await deliverPendingSupport();
+  }
+
   Future<Map<String, dynamic>?> chooseHelpTarget({String? sourceTag}) async {
     final own = sourceTag ?? sheetTagAt(schedaCorrente);
     final online = realtimeService?.isConnected == true;
@@ -89,15 +133,226 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     );
   }
 
+  Color combatTargetColor(Map<String, dynamic> token) {
+    final tag = onlineCombatTokenTag(token);
+    if (tag == sheetTagAt(schedaCorrente)) return Colors.greenAccent;
+    final own = onlineCombatTokens()
+        .where((t) => onlineCombatTokenTag(t) == sheetTagAt(schedaCorrente))
+        .firstOrNull;
+    return '${token['side'] ?? 'ally'}' == '${own?['side'] ?? 'ally'}'
+        ? Colors.lightBlueAccent
+        : Colors.redAccent;
+  }
+
+  Future<void> deliverPendingSupport({int minimum = 1, int maximum = 1}) async {
+    final origin = currentSheetScrollId();
+    final pending = activeStructuredEffects
+        .where(
+          (e) =>
+              e['type'] == 'pending_target' &&
+              e['effect'] is Map &&
+              (e['effect'] as Map)['recipient'] == 'alleato',
+        )
+        .toList();
+    if (pending.isEmpty) {
+      return;
+    }
+    final online = realtimeService?.isConnected == true;
+    final encounter = onlineCombatEncounterId;
+    final own = sheetTagAt(schedaCorrente);
+    final candidates = online
+        ? onlineCombatTokens().where((t) => t['status'] != 'dead').toList()
+        : <Map<String, dynamic>>[
+            for (var i = 0; i < schedePersonaggio.length; i++)
+              if (schedePersonaggio[i]['realtimeSharedSheet'] != true)
+                {
+                  'sheetTag': sheetTagAt(i),
+                  'name': nomeSchedaPersonaggio(i),
+                  'side': 'ally',
+                },
+          ];
+    if (!candidates.any((t) => onlineCombatTokenTag(t) == own)) {
+      return;
+    }
+    final counts = <String, int>{};
+    final selected = await showDialog<List<String>>(
+      context: context,
+      builder: (dialog) => StatefulBuilder(
+        builder: (context, update) {
+          final count = counts.values.fold<int>(0, (a, b) => a + b);
+          return AlertDialog(
+            title: const Text('Supporto · scegli i destinatari'),
+            content: SizedBox(
+              width: 480,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(context).height * .6,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Selezionati $count · da $minimum a $maximum. I destinatari mancanti saranno scelti tra quelli segnati.',
+                      ),
+                      for (final token in candidates)
+                        Builder(
+                          builder: (_) {
+                            final tag = onlineCombatTokenTag(token);
+                            final n = counts[tag] ?? 0;
+                            return ListTile(
+                              leading: Icon(
+                                Icons.person_outline,
+                                color: combatTargetColor(token),
+                              ),
+                              title: Text(
+                                tag == own
+                                    ? 'Se stessi'
+                                    : '${token['name'] ?? '???'}',
+                              ),
+                              subtitle: n > 0 ? Text('Applicazioni: $n') : null,
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Rimuovi destinatario',
+                                    onPressed: n == 0
+                                        ? null
+                                        : () => update(() {
+                                            if (n == 1) {
+                                              counts.remove(tag);
+                                            } else {
+                                              counts[tag] = n - 1;
+                                            }
+                                          }),
+                                    icon: const Icon(Icons.remove),
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Aggiungi destinatario',
+                                    onPressed: count >= maximum
+                                        ? null
+                                        : () =>
+                                              update(() => counts[tag] = n + 1),
+                                    icon: const Icon(Icons.add),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialog),
+                child: const Text('Annulla'),
+              ),
+              FilledButton(
+                onPressed: count == 0
+                    ? null
+                    : () {
+                        final result = [
+                          for (final e in counts.entries)
+                            for (var i = 0; i < e.value; i++) e.key,
+                        ];
+                        final keys = counts.keys.toList();
+                        final random = Random();
+                        while (result.length < minimum) {
+                          result.add(keys[random.nextInt(keys.length)]);
+                        }
+                        Navigator.pop(dialog, result);
+                      },
+                child: const Text('Applica supporto'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    if (!mounted ||
+        selected == null ||
+        currentSheetScrollId() != origin ||
+        online && encounter != onlineCombatEncounterId) {
+      return;
+    }
+    final valid = (online ? onlineCombatTokens() : candidates)
+        .map(onlineCombatTokenTag)
+        .toSet();
+    if (selected.any((tag) => !valid.contains(tag))) {
+      return;
+    }
+    final effects = [
+      for (final e in pending) Map<String, dynamic>.from(e['effect'] as Map),
+    ];
+    final group = 'support:$own:${DateTime.now().microsecondsSinceEpoch}';
+    activeStructuredEffects.removeWhere((e) => pending.contains(e));
+    for (var hit = 0; hit < selected.length; hit++) {
+      final tag = selected[hit];
+      final target = candidates.firstWhere(
+        (t) => onlineCombatTokenTag(t) == tag,
+      );
+      if (online) {
+        final request = <String, dynamic>{
+          'id': '$group:$hit',
+          'kind': 'help',
+          'helpMode': 'effects',
+          'helpBonus': 0,
+          'effects': effects,
+          'status': 'pending',
+          'scope': permissionScope,
+          'encounterId': encounter,
+          'sourceTag': own,
+          'sourceName': realtimeDisplayName(),
+          'targetTag': tag,
+          'targetName': '${target['name'] ?? '???'}',
+        };
+        onlineCombatRequests['${request['id']}'] = request;
+        receiveCombatHelp(permissionEnvelope(request));
+        await realtimeService?.sendCombatEvent(
+          'combat_help',
+          permissionEnvelope(request),
+        );
+      } else {
+        final index = localSheetIndexForOculumTag(tag);
+        if (index < 0) {
+          continue;
+        }
+        for (final effect in effects) {
+          final temporary = <String, dynamic>{
+            'effect': effect,
+            'source': 'Supporto',
+            'type': 'pending_target',
+          };
+          activeStructuredEffects.add(temporary);
+          await applyPendingTargetEffectLocally(
+            temporary,
+            selectedIndex: index,
+          );
+          if (!mounted || currentSheetScrollId() != origin) return;
+        }
+      }
+      aggiungiLog('[SUPPORTO] ${target['name'] ?? tag}: effetti inviati.');
+    }
+    programmaSalvataggio();
+    if (mounted) setState(() {});
+  }
+
   int consumeCombatHelp() {
     if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
       return 0;
     }
     final sheet = schedePersonaggio[schedaCorrente];
-    final bonus = readIntValue(sheet['combatHelpPending']).clamp(0, 1000000);
-    if (bonus > 0) {
+    final bonus = readIntValue(
+      sheet['combatHelpPending'],
+    ).clamp(-1000000, 1000000);
+    if (bonus != 0) {
       sheet['combatHelpPending'] = 0;
-      aggiungiLog('[AIUTO CONSUMATO] +$bonus nel prossimo tiro.');
+      aggiungiLog(
+        '[AIUTO CONSUMATO] ${bonus >= 0 ? '+' : ''}$bonus nel prossimo tiro.',
+      );
       programmaSalvataggio();
     }
     return bonus;
@@ -116,15 +371,57 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         id.length > 160 ||
         (payload['senderTag'] != source &&
             !const {'master', 'coMaster'}.contains(payload['senderRole'])) ||
-        source == target ||
+        (source == target && payload['helpMode'] != 'effects') ||
         !tags.contains(source) ||
         !tags.contains(target)) {
       return;
     }
     if (!controlsOnlineCombatSheet(target)) return;
     final existing = onlineCombatRequests[id];
-    if (existing?['received'] == true) return;
-    final bonus = readIntValue(payload['helpBonus']).clamp(0, 1000000);
+    if (existing?['received'] == true) {
+      unawaited(sendCombatAcknowledgement(existing!, 'help'));
+      return;
+    }
+    if (payload['helpMode'] == 'effects') {
+      if (sheetTagAt(schedaCorrente) != target || payload['effects'] is! List) {
+        return;
+      }
+      final effects = (payload['effects'] as List)
+          .whereType<Map>()
+          .take(30)
+          .map(
+            (raw) =>
+                OculumStructuredEffect.fromJson(Map<String, dynamic>.from(raw))
+                  ..recipient = 'se_stesso',
+          )
+          .toList();
+      // Only frozen numeric formulas are accepted; do not roll or reevaluate caster stats.
+      if (effects.any(
+        (e) =>
+            num.tryParse(e.valueExpression) == null ||
+            e.diceExpression.isNotEmpty ||
+            int.tryParse(e.duration) == null,
+      )) {
+        return;
+      }
+      onlineCombatRequests[id] = {
+        ...payload,
+        'kind': 'help',
+        'received': true,
+        'status': 'resolved',
+      };
+      for (final message in applyStructuredEffectsOnActivation(
+        effects,
+        source: '${payload['sourceName']} · supporto $id',
+      )) {
+        aggiungiLog('[SUPPORTO RICEVUTO] $message');
+      }
+      unawaited(sendCombatAcknowledgement(onlineCombatRequests[id]!, 'help'));
+      programmaSalvataggio();
+      if (mounted) setState(() {});
+      return;
+    }
+    final bonus = readIntValue(payload['helpBonus']).clamp(-1000000, 1000000);
     final index = localSheetIndexForOculumTag(target);
     if (index < 0) return;
     onlineCombatRequests[id] = {
@@ -136,12 +433,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     schedePersonaggio[index]['combatHelpPending'] =
         readIntValue(
           schedePersonaggio[index]['combatHelpPending'],
-        ).clamp(0, 1000000) +
+        ).clamp(-1000000, 1000000) +
         bonus;
     combatLogFor(
       target,
-      '[AIUTA COMPAGNO] ${payload['sourceName']} aiuta ${payload['targetName']}: +$bonus al prossimo tiro.',
+      '[AIUTA COMPAGNO] ${payload['sourceName']} aiuta ${payload['targetName']}: ${bonus >= 0 ? '+' : ''}$bonus al prossimo tiro.',
     );
+    unawaited(sendCombatAcknowledgement(onlineCombatRequests[id]!, 'help'));
     programmaSalvataggio();
     if (mounted) setState(() {});
   }
@@ -157,7 +455,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final tag = onlineCombatTokenTag(target);
     final name = '${target['name'] ?? '???'}';
     aggiungiLog(
-      '[AIUTA COMPAGNO] $helperName → $name: +$bonus al prossimo tiro.',
+      '[AIUTA COMPAGNO] $helperName → $name: ${bonus >= 0 ? '+' : ''}$bonus al prossimo tiro.',
     );
     if (realtimeService?.isConnected == true) {
       final request = <String, dynamic>{
@@ -170,7 +468,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         'sourceName': helperName,
         'targetTag': tag,
         'targetName': name,
-        'helpBonus': max(0, bonus),
+        'helpBonus': bonus.clamp(-1000000, 1000000),
       };
       onlineCombatRequests['${request['id']}'] = request;
       receiveCombatHelp(permissionEnvelope(request));
@@ -184,11 +482,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         schedePersonaggio[index]['combatHelpPending'] =
             readIntValue(
               schedePersonaggio[index]['combatHelpPending'],
-            ).clamp(0, 1000000) +
-            max(0, bonus);
+            ).clamp(-1000000, 1000000) +
+            bonus.clamp(-1000000, 1000000);
         combatLogFor(
           tag,
-          '[AIUTA COMPAGNO] $helperName: +${max(0, bonus)} al prossimo tiro.',
+          '[AIUTA COMPAGNO] $helperName: ${bonus >= 0 ? '+' : ''}$bonus al prossimo tiro.',
         );
       }
     }
@@ -204,7 +502,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         '${receipt['pawnPending'] == true ? ' · intercettazione Pawn in attesa' : ''}';
   }
 
-  String get onlineCombatEncounterId => realtimeIsMasterRole
+  String get onlineCombatEncounterId =>
+      realtimeService?.isConnected != true || realtimeIsMasterRole
       ? selectedMasterInitiativeGroupId
       : '${realtimeVisibleInitiativeSnapshot['encounterId'] ?? ''}';
 
@@ -312,10 +611,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         choices: choices,
         chance: (tag, option) {
           // Never derive hidden enemy statistics from a replicated private sheet.
-          if (!haPermessiMaster || slotMachineRollsEnabled) return null;
+          final known = discoveredCombatTarget(tag);
+          if ((!haPermessiMaster && known == null) || slotMachineRollsEnabled) {
+            return null;
+          }
           final index = masterInitiativeSheetIndexForToken(byId[tag]!);
-          if (index < 0) return null;
-          final defense = sheetRollBonusAt(index, 'cm');
+          if (known == null && index < 0) return null;
+          final defense = known != null
+              ? readIntValue(known['cm'])
+              : sheetRollBonusAt(index, 'cm');
           return OculumAttackForecast.fromRolls(
             [
               for (var die = 1; die <= 20; die++)
@@ -327,9 +631,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                   die,
                   20,
                   [defense],
-                  level: sheetCriticalLevelAt(index),
-                  grade: sheetIntValueAt(index, 'grado'),
-                  difficulty: sheetDifficoltaTiroAt(index),
+                  level: known != null
+                      ? readIntValue(known['level'])
+                      : sheetCriticalLevelAt(index),
+                  grade: known != null
+                      ? readIntValue(known['grade'])
+                      : sheetIntValueAt(index, 'grado'),
+                  difficulty: known != null
+                      ? readIntValue(known['rollDifficulty'])
+                      : sheetDifficoltaTiroAt(index),
                 ),
             ],
             difficulty: normalizedCampaignDifficulty(),
@@ -388,7 +698,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       freeReaction['counterAttackId'] = id;
     }
     aggiungiLog(
-      '[ATTACCO] $label · ${choices.firstWhere((c) => c.id == plan.choiceId).name}.${plan.choiceId == 'vc' ? '' : ' Motivazione inviata al Master.'}',
+      '[ATTACCO] $label · ${choices.firstWhere((c) => c.id == plan.choiceId).name}.${plan.choiceId == 'vc' ? '' : ' Descrivi l’attacco al Master, anche a voce.'}',
     );
     void resolved(int natural, int total) {
       if (!mounted ||
@@ -396,8 +706,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           encounter != onlineCombatEncounterId) {
         return;
       }
-      for (final selectedTag in plan.targetIds) {
-        final requestId = plan.targetIds.length == 1 ? id : '$id:$selectedTag';
+      for (var hit = 0; hit < plan.targetIds.length; hit++) {
+        final selectedTag = plan.targetIds[hit];
+        final requestId = plan.targetIds.length == 1
+            ? id
+            : '$id:$hit:$selectedTag';
         final request = <String, dynamic>{
           'id': requestId,
           'scope': permissionScope,
@@ -442,7 +755,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       final stat = hiddenEyeStats
           .where((s) => s.id == plan.choiceId && s.unlocked)
           .firstOrNull;
-      if (stat == null || plan.reason.trim().isEmpty) return;
+      if (stat == null) return;
       await tiraSottotrattoOcchio(
         stat,
         actionLabel: label,
@@ -497,32 +810,144 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     programmaSalvataggio();
   }
 
-  Future<void> replayOnlineCombatRequests() async {
-    if (realtimeService?.isConnected != true) return;
+  Future<void> sendCombatAcknowledgement(
+    Map<String, dynamic> request,
+    String phase,
+  ) async {
     final tag = sheetTagAt(schedaCorrente);
-    for (final request in onlineCombatRequests.values.toList()) {
-      if (request['scope'] != permissionScope ||
-          request['encounterId'] != onlineCombatEncounterId) {
-        continue;
-      }
-      if (request['kind'] == 'help') {
-        if (request['sourceTag'] == tag) {
+    final expected = phase == 'defense'
+        ? request['sourceTag']
+        : request['targetTag'];
+    if (tag != expected || !controlsOnlineCombatSheet(tag)) {
+      return;
+    }
+    await realtimeService?.sendCombatEvent(
+      'combat_ack',
+      permissionEnvelope({
+        'id': request['id'],
+        'sourceTag': request['sourceTag'],
+        'targetTag': request['targetTag'],
+        'encounterId': request['encounterId'],
+        'phase': phase,
+      }),
+    );
+  }
+
+  void receiveCombatAcknowledgement(Map<String, dynamic> payload) {
+    if (!validPermissionSender(payload) ||
+        payload['encounterId'] != onlineCombatEncounterId) {
+      return;
+    }
+    final request = onlineCombatRequests['${payload['id']}'];
+    if (request == null ||
+        request['scope'] != permissionScope ||
+        request['sourceTag'] != payload['sourceTag'] ||
+        request['targetTag'] != payload['targetTag']) {
+      return;
+    }
+    final phase = '${payload['phase']}';
+    final expected = phase == 'defense'
+        ? request['sourceTag']
+        : request['targetTag'];
+    if (payload['senderTag'] != expected ||
+        !const {'attack', 'defense', 'help'}.contains(phase)) {
+      return;
+    }
+    final key = '${phase}Acknowledged';
+    if (request[key] == true) {
+      return;
+    }
+    request[key] = true;
+    if (phase == 'attack') {
+      combatLogFor(
+        '${request['sourceTag']}',
+        '[ATTACCO RICEVUTO] ${request['targetName'] ?? request['targetTag']}: in attesa del tiro difensivo.',
+      );
+    }
+    if (phase == 'help') request['status'] = 'resolved';
+    if (mounted) setState(() {});
+    programmaSalvataggio();
+  }
+
+  void claimOnlineVampirism(Map<String, dynamic> request) {
+    if (request['sourceTag'] != sheetTagAt(schedaCorrente) ||
+        request['status'] != 'resolved' ||
+        (request['kind'] == 'help' || request['kind'] == 'scout') ||
+        request['vampirismClaimed'] == true) {
+      return;
+    }
+    request['vampirismClaimed'] = true;
+    if (request['outcome'] != OculumAttackOutcome.avoided.name) {
+      // The confirmed rule uses declared damage, even when target shields absorb it.
+      applyVampirismHealing(
+        damage: max(0, readIntValue(request['damage'])),
+        source:
+            'attacco confermato contro ${request['targetName'] ?? request['targetTag']}',
+      );
+    }
+    programmaSalvataggio();
+  }
+
+  Future<void> replayOnlineCombatRequests({bool retryOnly = false}) async {
+    if (realtimeService?.isConnected != true || onlineCombatReplayInFlight) {
+      return;
+    }
+    onlineCombatReplayInFlight = true;
+    try {
+      final tag = sheetTagAt(schedaCorrente);
+      final prefix =
+          '${realtimeService?.normalizedRoomId ?? realtimeRoomController.text.trim()}:';
+      for (final request in onlineCombatRequests.values.toList()) {
+        if (!mounted ||
+            realtimeService?.isConnected != true ||
+            sheetTagAt(schedaCorrente) != tag) {
+          break;
+        }
+        if (request['sourceTag'] == tag &&
+            request['status'] == 'pending' &&
+            '${request['scope']}'.startsWith(prefix) &&
+            request['encounterId'] == onlineCombatEncounterId) {
+          request['scope'] = permissionScope;
+        }
+        if (request['scope'] != permissionScope ||
+            request['encounterId'] != onlineCombatEncounterId) {
+          continue;
+        }
+        if (request['kind'] == 'scout') {
+          if (request['sourceTag'] == tag && request['status'] == 'pending') {
+            await realtimeService?.sendCombatEvent(
+              'combat_scout',
+              permissionEnvelope(request),
+            );
+          }
+          continue;
+        }
+        claimOnlineVampirism(request);
+        if (request['kind'] == 'help') {
+          if (request['sourceTag'] == tag &&
+              (!retryOnly || request['helpAcknowledged'] != true)) {
+            await realtimeService?.sendCombatEvent(
+              'combat_help',
+              permissionEnvelope(request),
+            );
+          }
+          continue;
+        }
+        if (request['sourceTag'] == tag &&
+            request['status'] == 'pending' &&
+            (!retryOnly || request['attackAcknowledged'] != true)) {
+          await sendOnlineCombatRequest(request);
+        } else if (request['targetTag'] == tag &&
+            request['status'] == 'resolved' &&
+            (!retryOnly || request['defenseAcknowledged'] != true)) {
           await realtimeService?.sendCombatEvent(
-            'combat_help',
+            'combat_defense',
             permissionEnvelope(request),
           );
         }
-        continue;
       }
-      if (request['sourceTag'] == tag && request['status'] == 'pending') {
-        await sendOnlineCombatRequest(request);
-      } else if (request['targetTag'] == tag &&
-          request['status'] == 'resolved') {
-        await realtimeService?.sendCombatEvent(
-          'combat_defense',
-          permissionEnvelope(request),
-        );
-      }
+    } finally {
+      onlineCombatReplayInFlight = false;
     }
   }
 
@@ -539,6 +964,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   }
 
   void receiveOnlineCombatEvent(String event, Map<String, dynamic> payload) {
+    if (event == 'combat_scout') {
+      receiveCombatScout(payload);
+      return;
+    }
+    if (event == 'combat_ack') {
+      receiveCombatAcknowledgement(payload);
+      return;
+    }
     if (event == 'combat_help') {
       receiveCombatHelp(payload);
       return;
@@ -559,8 +992,6 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     if (event == 'combat_attack') {
       if (payload['senderTag'] != source ||
-          (payload['choice'] != 'vc' &&
-              '${payload['reason'] ?? ''}'.trim().isEmpty) ||
           readIntValue(payload['damage']) < 0 ||
           readIntValue(payload['damage']) > 100000000) {
         return;
@@ -604,13 +1035,27 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         original['counterAttackId'] = id;
       }
       receiveLocalCombatAttack(request);
+      unawaited(sendCombatAcknowledgement(request, 'attack'));
+      if (request['status'] == 'resolved' &&
+          controlsOnlineCombatSheet(target) &&
+          sheetTagAt(schedaCorrente) == target) {
+        unawaited(
+          realtimeService?.sendCombatEvent(
+            'combat_defense',
+            permissionEnvelope(request),
+          ),
+        );
+      }
     } else {
       final request = onlineCombatRequests[id];
       if (request == null ||
           payload['senderTag'] != request['targetTag'] ||
           payload['sourceTag'] != request['sourceTag'] ||
-          payload['targetTag'] != request['targetTag'] ||
-          request['status'] != 'pending') {
+          payload['targetTag'] != request['targetTag']) {
+        return;
+      }
+      unawaited(sendCombatAcknowledgement(request, 'defense'));
+      if (request['status'] != 'pending') {
         return;
       }
       final defense = readIntValue(payload['defense']);
@@ -645,6 +1090,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         attack,
         defense,
       );
+      claimOnlineVampirism(request);
       combatLogFor(
         source,
         '[ESITO ATTACCO] $attack contro ${payload['defenseChoice']} $defense: ${outcome.label}.${request['damageReceipt'] is Map<String, dynamic> ? ' ${combatDamageReceiptText(request['damageReceipt'] as Map<String, dynamic>)}.' : ''}${request['freeReaction'] == true ? ' Il difensore ottiene una reazione gratuita contro di te.' : ''}',
@@ -698,10 +1144,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                   child: const Text('Annulla'),
                 ),
                 FilledButton(
-                  onPressed: description.isEmpty
-                      ? null
-                      : () => Navigator.pop(dialog, true),
-                  child: const Text('Descrivi e tira'),
+                  onPressed: () => Navigator.pop(dialog, true),
+                  child: const Text('Tira · descrizione anche a voce'),
                 ),
               ],
             ),
@@ -823,6 +1267,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           enemyLevel: readIntValue(request['level']),
           enemyDifficulty: '${request['difficulty']}',
           resolvedResistance: resisted,
+          resistancePresetOverride:
+              combatDiscoveries[combatDiscoveryKey(
+                    tag,
+                    combatScoutSide('${request['sourceTag']}'),
+                  )]?['weakPoint'] ==
+                  true
+              ? 'Fragilità Semi Letale'
+              : null,
         );
       } finally {
         if (mounted && sheetTagAt(schedaCorrente) == tag) {
@@ -892,6 +1344,17 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   Widget onlineCombatRequestsPanel() {
     if (realtimeService?.isConnected != true) return const SizedBox.shrink();
     final tag = sheetTagAt(schedaCorrente);
+    final outgoing = onlineCombatRequests.values
+        .where(
+          (r) =>
+              r['scope'] == permissionScope &&
+              r['encounterId'] == onlineCombatEncounterId &&
+              r['sourceTag'] == tag &&
+              r['status'] == 'pending' &&
+              r['kind'] != 'help' &&
+              r['kind'] != 'scout',
+        )
+        .toList();
     final requests = onlineCombatRequests.values
         .where(
           (r) =>
@@ -899,15 +1362,24 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               r['encounterId'] == onlineCombatEncounterId &&
               r['targetTag'] == tag &&
               r['kind'] != 'help' &&
+              r['kind'] != 'scout' &&
               (r['status'] == 'pending' ||
                   (r['freeReaction'] == true && r['reactionUsed'] != true)),
         )
         .toList();
-    if (requests.isEmpty) return const SizedBox.shrink();
+    if (requests.isEmpty && outgoing.isEmpty) return const SizedBox.shrink();
     return gothicPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          for (final request in outgoing)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Text(
+                '${request['targetName'] ?? request['targetTag']} · ${request['attackAcknowledged'] == true ? 'Attacco ricevuto: attende la difesa' : 'Consegna in attesa: reinvio automatico'}',
+                style: TextStyle(color: primaryColor),
+              ),
+            ),
           Text(
             'Difese e reazioni in attesa',
             style: TextStyle(color: tertiaryColor, fontWeight: FontWeight.bold),
@@ -926,11 +1398,31 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
+                        if (schivataOculumPronta() ||
+                            schivateOculumDisponibili() > 0)
+                          OutlinedButton.icon(
+                            onPressed:
+                                onlineCombatResolving.contains(
+                                  '${request['id']}',
+                                )
+                                ? null
+                                : mostraMenuSchivataOculum,
+                            icon: Icon(
+                              Icons.visibility,
+                              color: eyePupilGlowColor,
+                            ),
+                            label: Text(
+                              schivataOculumPronta()
+                                  ? 'Schivata pronta · ${schivataOculumProntaLabel()}'
+                                  : 'Prepara Schivata Oculum',
+                            ),
+                          ),
                         for (final option in <String, String>{
                           'cm': 'CM',
-                          'riflessi': 'Riflessi',
-                          'resistenza': 'Resistenza',
-                          'manifestazione_potere': 'Manifestazione del Potere',
+                          for (final stat in hiddenEyeStats)
+                            if (stat.unlocked &&
+                                combatDefenseRollIds.contains(stat.id))
+                              stat.id: stat.nome,
                         }.entries)
                           OutlinedButton(
                             onPressed:

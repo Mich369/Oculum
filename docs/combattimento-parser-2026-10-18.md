@@ -6,7 +6,7 @@ Leggere [il registro delle conferme](OCULUM_REGOLE_CONFERMATE.md) e [il manuale 
 
 ## Attacchi e difese online
 
-Nella scheda e nella turnistica compare **Attacca un bersaglio** quando la scheda è partecipante a un combattimento online. Il dialogo sceglie il bersaglio e VC o un sottotratto sbloccato. I tiri alternativi richiedono una motivazione scritta. Il tiro usa il dado già presente nella schermata attuale.
+Nella scheda e nella turnistica compare **Attacca un bersaglio** quando la scheda è partecipante a un combattimento online. Il dialogo sceglie il bersaglio e VC o un sottotratto sbloccato. Per i tiri alternativi basta motivare l’attacco a voce al Master; la nota scritta è facoltativa. Il tiro usa il dado già presente nella schermata attuale.
 
 Il bersaglio vede una richiesta nel suo log e il pannello **Difese e reazioni in attesa**, con CM, Riflessi, Resistenza e Manifestazione del Potere. I sottotratti non disponibili sono disabilitati. Il confronto segue la difficoltà: fasce 1–6/1–5/1–3; Oculum pari o uno sotto. Nel quasi riuscito la Difesa numerica vale ×1,5 per eccesso, e le durate sono dimezzate per difetto fino a zero.
 
@@ -92,8 +92,27 @@ I test di consegna simulano il protocollo e verificano identità del mittente, d
 
 ## Destinatari dell'aiuto e attacchi multipli — 19 ottobre
 
-Aiuta compagno apre la scelta dell'alleato prima del tiro: annullare non tira il dado. Online propone i partecipanti vivi dello scontro, offline le altre schede locali. Il totale non negativo viene conservato come bonus al prossimo tiro del destinatario; compare nella formula e nei log e viene consumato una volta. Anche il comando Aiuta della turnistica Master permette la scelta. Le consegne online con identità non valida o duplicate non aggiungono altro bonus.
+Aiuta compagno apre la scelta dell'alleato prima del tiro: annullare non tira il dado. Online propone i partecipanti vivi dello scontro, offline le altre schede locali. Il totale, anche negativo, viene conservato come modificatore al prossimo tiro del destinatario; compare nella formula e nei log e viene consumato una volta. Anche il comando Aiuta della turnistica Master permette la scelta. Le consegne online con identità non valida o duplicate non aggiungono altro bonus.
 
 Il selettore Attacco consente più bersagli quando la tecnica preparata lo prevede: mostra minimo e massimo e impedisce scelte fuori intervallo. Ogni destinatario riceve una richiesta propria con lo stesso tiro d'attacco e risolve separatamente Difesa, effetti e risorse. Il costo della tecnica e il cooldown vengono attivati una volta, non una volta per nemico. Le reazioni gratuite restano rivolte al solo attaccante originario.
 
 Dal pannello delle forme Skill/Art, le espressioni «da 2 a 4 avversari», «uno o due avversari», «fino a 3 bersagli» e «fino a Oculum nemici» preparano i relativi limiti. Per Oculum si usa la spesa effettiva dell'attivazione quando presente. Nome, descrizione, costi ed effetti restano modificabili negli editor esistenti; una descrizione priva di un numero esplicito resta a bersaglio singolo. Le selezioni automatiche di avversari sono online; offline le tecniche restano risolvibili manualmente.
+
+## Consegna prima della sincronizzazione — correzione del 19 ottobre
+
+Un broadcast accettato dal server non prova che il destinatario abbia già ricevuto la turnistica. Attacchi, difese e aiuti non confermati sono ritentati ogni cinque secondi; una conferma autenticata del destinatario interrompe il relativo reinvio. Tornare online o cambiare presenze riprova anche i messaggi già confermati, così una sessione ripristinata può recuperare richieste pendenti. Identità, stanza, campagna, scontro e ID originali restano controllati; un esito già risolto non applica nuovamente danni. I reinvii si fermano se cambia la scheda attiva durante un invio. La scheda dell'attaccante mostra separatamente «Consegna in attesa» e «Attacco ricevuto: attende la difesa».
+
+Nel pannello Difesa, «Aggiungi tiro difensivo» propone altri sottotratti sbloccati con il colore della statistica. Il comando di rimozione li nasconde; CM rimane disponibile. La selezione è salvata per scheda nel JSON e non viene copiata automaticamente sulle altre schede. I nuovi tiri difensivi usano lo stesso confronto e lo stesso percorso di danno delle opzioni predefinite; le eccezioni esplicite delle skill restano separate.
+
+
+### Aggiornamento del 19 ottobre: modifiche locali da verificare
+
+- La nota scritta dell'attacco è facoltativa anche nella validazione del pacchetto online; è sufficiente descriverlo a voce al Master.
+- Aiuta compagno conserva anche il totale negativo, con segno corretto nel log e consumo una sola volta; i duplicati non ripristinano il modificatore.
+- Il planner accetta colpi ripetuti sullo stesso destinatario. I colpi minimi mancanti si assegnano casualmente ai soli destinatari selezionati; ogni colpo ha un ID distinto anche sullo stesso nemico.
+- Schivata Oculum si può preparare dal riquadro delle difese online usando il consumabile esistente; la risoluzione usa la stessa funzione di danno della scheda. Prepararla non equivale ad aver risolto il tiro difensivo.
+- Il pannello in attesa mostra i tiri difensivi personalizzati, mantenendo CM. Manifestazione consente la descrizione a voce.
+- Le regole dettagliate del confronto sono richiudibili e non si ripetono messaggi di probabilità non disponibile su ogni tiro.
+- Il riepilogo Titoli mostra la capacità Apprendimento di 1 + Grado. Non sono stati ancora introdotti i vincoli automatici delle altre categorie né i premi Chained Fate.
+
+La suite precedente terminò con 827 test passati e 2 saltati. Il successivo log mirato riporta 10 test passati. Le ulteriori modifiche Schivata/pannello Titoli richiedono una nuova verifica; avvio di analyze e test al momento bloccato dalla revisione automatica delle autorizzazioni per capacità del servizio. Nessuna nuova distribuzione installata e nessuna prova browser web/incognito completata per questa patch.

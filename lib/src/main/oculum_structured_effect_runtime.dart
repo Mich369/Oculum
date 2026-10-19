@@ -248,10 +248,12 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         final preparedAttackBonus =
             const {'danno', 'danno_percentuale'}.contains(effect.type) &&
             effect.mode == 'prossima_azione';
-        if (effect.recipient != 'se_stesso' && !preparedAttackBonus) {
+        final effectiveRecipient = combatSupportTargeting && effect.recipient == 'se_stesso' ? 'alleato' : effect.recipient;
+        if (effectiveRecipient != 'se_stesso' && !preparedAttackBonus) {
           // Freeze caster formulas and dice now; retries and the defender must
           // never roll the same payload again or evaluate it on enemy stats.
           final frozen = OculumStructuredEffect.fromJson(effect.toJson())
+            ..recipient = effectiveRecipient
             ..valueExpression = '$value'
             ..duration = '$duration'
             ..diceExpression = ''
@@ -272,6 +274,8 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             'value': 0,
             'remaining': 1,
             'unit': 'azioni',
+            'minimumTargets': effect.minimumTargets,
+            'maximumTargets': effect.maximumTargets,
             'effect': frozen.toJson(),
           });
           messages.add(
@@ -597,11 +601,21 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
                 ),
                 if (activeStructuredEffects[index]['type'] == 'pending_target')
                   IconButton(
-                    tooltip: realtimeService?.isConnected == true
+                    tooltip:
+                        (activeStructuredEffects[index]['effect']
+                                as Map?)?['recipient'] ==
+                            'alleato'
+                        ? 'Scegli i destinatari del supporto'
+                        : realtimeService?.isConnected == true
                         ? 'Dichiara un attacco nella turnistica'
                         : 'Applica a una scheda locale dopo la difesa',
                     icon: const Icon(Icons.gps_fixed),
-                    onPressed: realtimeService?.isConnected == true
+                    onPressed:
+                        (activeStructuredEffects[index]['effect']
+                                as Map?)?['recipient'] ==
+                            'alleato'
+                        ? () => deliverPendingSupport()
+                        : realtimeService?.isConnected == true
                         ? () => planOnlineAttack()
                         : () => applyPendingTargetEffectLocally(
                             activeStructuredEffects[index],
@@ -648,43 +662,50 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
   }
 
   Future<void> applyPendingTargetEffectLocally(
-    Map<String, dynamic> pending,
-  ) async {
+    Map<String, dynamic> pending, {
+    int? selectedIndex,
+  }) async {
     if (onlineMasterApprovalRequired || pending['effect'] is! Map) return;
     final source = schedaCorrente;
     final origin = currentSheetScrollId();
-    final target = await showDialog<int>(
-      context: context,
-      builder: (dialog) => AlertDialog(
-        title: const Text('Effetto · bersaglio locale'),
-        content: SizedBox(
-          width: 480,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Seleziona la scheda su cui applicare l’effetto dopo aver risolto il tiro di difesa. Non modifica il Monster Book.',
-                ),
-                for (var index = 0; index < schedePersonaggio.length; index++)
-                  ListTile(
-                    title: Text(
-                      '${schedePersonaggio[index]['nome'] ?? 'Scheda ${index + 1}'}',
+    final target =
+        selectedIndex ??
+        await showDialog<int>(
+          context: context,
+          builder: (dialog) => AlertDialog(
+            title: const Text('Effetto · bersaglio locale'),
+            content: SizedBox(
+              width: 480,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Seleziona la scheda su cui applicare l’effetto dopo aver risolto il tiro di difesa. Non modifica il Monster Book.',
                     ),
-                    onTap: () => Navigator.pop(dialog, index),
-                  ),
-              ],
+                    for (
+                      var index = 0;
+                      index < schedePersonaggio.length;
+                      index++
+                    )
+                      ListTile(
+                        title: Text(
+                          '${schedePersonaggio[index]['nome'] ?? 'Scheda ${index + 1}'}',
+                        ),
+                        onTap: () => Navigator.pop(dialog, index),
+                      ),
+                  ],
+                ),
+              ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialog),
+                child: const Text('Annulla'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialog),
-            child: const Text('Annulla'),
-          ),
-        ],
-      ),
-    );
+        );
     if (!mounted ||
         target == null ||
         target >= schedePersonaggio.length ||

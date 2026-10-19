@@ -125,6 +125,343 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  void claimLevelMilestoneRewards() {
+    if (schedaCorrente < 0 ||
+        schedaCorrente >= schedePersonaggio.length ||
+        applyingRealtimeRemoteSheet ||
+        schedePersonaggio[schedaCorrente]['realtimeSharedSheet'] == true) {
+      return;
+    }
+    final rewards = oculumLevelMilestoneRewards(
+      max(0, leggiNumero(livelloController)),
+      levelMilestoneClaims,
+    );
+    if (rewards.isEmpty) {
+      return;
+    }
+    for (final e in rewards.entries) {
+      levelMilestoneClaims.add(e.key);
+      levelMilestoneReserve += e.value;
+      aggiungiLog(
+        '[TRAGUARDO LIVELLO ${e.key}] +${e.value} punti statistica nella riserva da distribuire.',
+      );
+    }
+    programmaSalvataggio(invalidateCaches: false);
+  }
+
+  Widget levelMilestoneReservePanel() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Riserva traguardi: $levelMilestoneReserve punti',
+        style: TextStyle(color: tertiaryColor, fontWeight: FontWeight.bold),
+      ),
+      const Text(
+        'Livelli 5, 15, 25, 50, 100 e 200: un quarto del livello per eccesso, una sola volta per soglia.',
+      ),
+      Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        children: [
+          for (final stat in const {
+            'resilienza': 'Resilienza',
+            'volonta': 'Volontà',
+            'materia': 'Materia',
+            'oculum': 'Oculum',
+          }.entries)
+            OutlinedButton(
+              onPressed:
+                  levelMilestoneReserve <= 0 ||
+                      (stat.key == 'oculum' && oculumMassimoNaturale() <= 0)
+                  ? null
+                  : () {
+                      setState(() {
+                        levelMilestoneReserve--;
+                        aumentaStatBaseEAttuale(stat.key, 1);
+                      });
+                      aggiungiLog(
+                        '[RISERVA TRAGUARDI] +1 ${stat.value}; restano $levelMilestoneReserve punti.',
+                      );
+                      notifyExperienceChanged();
+                      programmaSalvataggio();
+                    },
+              child: Text('+1 ${stat.value}'),
+            ),
+        ],
+      ),
+    ],
+  );
+
+  int chainedFateExperienceMultiplier() {
+    final onlinePlayer =
+        realtimeService?.isConnected == true && !realtimeIsMasterRole;
+    final group = onlinePlayer
+        ? realtimeVisibleInitiativeSnapshot
+        : masterInitiativeGroups
+              .where((g) => g['id'] == selectedMasterInitiativeGroupId)
+              .firstOrNull;
+    final run = group?['chainedFate'];
+    if (run is! Map ||
+        run['status'] != 'active' ||
+        !(run['participants'] as List? ?? []).contains(
+          sheetTagAt(schedaCorrente),
+        )) {
+      return 1;
+    }
+    return chainedFateCompletedIds.length >= 3 ? 3 : 2;
+  }
+
+  void applyChainedFateCompletion(Map<String, dynamic> group) {
+    final run = group['chainedFate'];
+    if (run is! Map || run['status'] != 'completed') {
+      return;
+    }
+    final id = '${run['id'] ?? ''}';
+    if (id.isEmpty) {
+      return;
+    }
+    final participants = (run['participants'] as List? ?? [])
+        .whereType<String>()
+        .toSet();
+    for (var i = 0; i < schedePersonaggio.length; i++) {
+      if (schedePersonaggio[i]['realtimeSharedSheet'] == true ||
+          !participants.contains(sheetTagAt(i))) {
+        continue;
+      }
+      final completed = i == schedaCorrente
+          ? chainedFateCompletedIds
+          : (schedePersonaggio[i]['chainedFateCompletedIds'] as List? ?? [])
+                .whereType<String>()
+                .toSet();
+      if (!completed.add(id)) {
+        continue;
+      }
+      schedePersonaggio[i]['chainedFateCompletedIds'] = completed.toList();
+      combatLogFor(
+        sheetTagAt(i),
+        '[CHAINED FATE COMPLETATO] ${run['name'] ?? 'Dungeon del Fato'} · ${completed.length <= 3 ? 'ottenuto uno slot Titolo del Fato' : 'nessuno slot aggiuntivo; nei prossimi Chained Fate EXP ×3'}.',
+      );
+    }
+    programmaSalvataggio();
+  }
+
+  Future<void> manageChainedFate(String encounterId) async {
+    if (realtimeService?.isConnected == true && !realtimeIsMasterRole) {
+      return;
+    }
+    captureActiveMasterInitiativeGroup();
+    final group = masterInitiativeGroups
+        .where((g) => g['id'] == encounterId)
+        .firstOrNull;
+    if (group == null) {
+      return;
+    }
+    final running =
+        group['chainedFate'] is Map &&
+        (group['chainedFate'] as Map)['status'] == 'active';
+    final tokens = (group['tokens'] as List? ?? []).whereType<Map>().toList();
+    final selected = tokens
+        .map((t) => '${t['sheetTag'] ?? t['id']}')
+        .where((s) => s.isNotEmpty)
+        .toSet();
+    final action = await showDialog<String>(
+      context: context,
+      builder: (dialog) => StatefulBuilder(
+        builder: (context, update) => AlertDialog(
+          title: const Text('Chained Fate'),
+          content: SizedBox(
+            width: 460,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    running
+                        ? 'Dungeon in corso. Completare assegna il premio una sola volta a ogni partecipante.'
+                        : 'Avvia il dungeon per questi partecipanti: EXP ×2 nei primi tre, poi ×3. I primi tre completamenti danno uno slot Fato ciascuno.',
+                  ),
+                  if (!running)
+                    for (final token in tokens)
+                      CheckboxListTile(
+                        title: Text('${token['name'] ?? '???'}'),
+                        value: selected.contains(
+                          '${token['sheetTag'] ?? token['id']}',
+                        ),
+                        onChanged: (value) => update(() {
+                          final tag = '${token['sheetTag'] ?? token['id']}';
+                          if (value == true) {
+                            selected.add(tag);
+                          } else {
+                            selected.remove(tag);
+                          }
+                        }),
+                      ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialog),
+              child: const Text('Chiudi'),
+            ),
+            if (running)
+              TextButton(
+                onPressed: () => Navigator.pop(dialog, 'cancelled'),
+                child: const Text('Termina senza premio'),
+              ),
+            FilledButton(
+              onPressed: selected.isEmpty && !running
+                  ? null
+                  : () =>
+                        Navigator.pop(dialog, running ? 'completed' : 'active'),
+              child: Text(running ? 'Completa dungeon' : 'Avvia dungeon'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted ||
+        action == null ||
+        !masterInitiativeGroups.contains(group) ||
+        realtimeService?.isConnected == true && !realtimeIsMasterRole) {
+      return;
+    }
+    if (action == 'active') {
+      group['chainedFate'] = {
+        'id': 'fate:${DateTime.now().microsecondsSinceEpoch}',
+        'status': 'active',
+        'name': '${group['name']}',
+        'participants': selected.toList(),
+      };
+    } else if (group['chainedFate'] is Map) {
+      (group['chainedFate'] as Map)['status'] = action;
+    }
+    applyChainedFateCompletion(group);
+    if (realtimeService?.isConnected == true) {
+      group['published'] = true;
+    }
+    aggiungiLog('[CHAINED FATE] ${group['name']}: $action.');
+    sendRealtimeInitiativeSnapshotIfPublished();
+    programmaSalvataggio();
+    setState(() {});
+  }
+
+  Future<void> mergeMasterEncounters(String destinationId) async {
+    if (realtimeService?.isConnected == true && !realtimeIsMasterRole) {
+      return;
+    }
+    captureActiveMasterInitiativeGroup();
+    final destination = masterInitiativeGroups
+        .where((g) => g['id'] == destinationId)
+        .firstOrNull;
+    if (destination == null) {
+      return;
+    }
+    final selected = <String>{};
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => StatefulBuilder(
+        builder: (context, update) => AlertDialog(
+          title: const Text('Unisci turnistiche'),
+          content: SizedBox(
+            width: 440,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'I partecipanti confluiscono nello scontro scelto, mantenendo risorse e azioni già usate. Gli scontri di origine vengono svuotati.',
+                  ),
+                  for (final group in masterInitiativeGroups.where(
+                    (g) =>
+                        g['id'] != destinationId &&
+                        (g['tokens'] as List? ?? []).isNotEmpty,
+                  ))
+                    CheckboxListTile(
+                      title: Text('${group['name']}'),
+                      value: selected.contains('${group['id']}'),
+                      onChanged: (value) => update(() {
+                        if (value == true) {
+                          selected.add('${group['id']}');
+                        } else {
+                          selected.remove('${group['id']}');
+                        }
+                      }),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialog, false),
+              child: const Text('Annulla'),
+            ),
+            FilledButton(
+              onPressed: selected.isEmpty
+                  ? null
+                  : () => Navigator.pop(dialog, true),
+              child: const Text('Unisci'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted ||
+        accepted != true ||
+        !masterInitiativeGroups.contains(destination) ||
+        realtimeService?.isConnected == true && !realtimeIsMasterRole) {
+      return;
+    }
+    captureActiveMasterInitiativeGroup();
+    final tokens = [
+      for (final raw in (destination['tokens'] as List? ?? []).whereType<Map>())
+        Map<String, dynamic>.from(raw),
+    ];
+    final tags = tokens.map((t) => '${t['sheetTag'] ?? t['id']}').toSet();
+    final aliases = <String>{
+      ...List<String>.from(
+        (destination['mergedEncounterIds'] as List? ?? []).whereType<String>(),
+      ),
+      ...selected,
+    };
+    for (final group in masterInitiativeGroups.where(
+      (g) => selected.contains('${g['id']}'),
+    )) {
+      aliases.addAll(
+        (group['mergedEncounterIds'] as List? ?? []).whereType<String>(),
+      );
+      for (final raw in (group['tokens'] as List? ?? []).whereType<Map>()) {
+        final token = Map<String, dynamic>.from(raw);
+        if (tags.add('${token['sheetTag'] ?? token['id']}')) tokens.add(token);
+      }
+      group['tokens'] = <Map<String, dynamic>>[];
+      group['published'] = false;
+      group['activeIndex'] = 0;
+    }
+    destination['tokens'] = tokens;
+    destination['mergedEncounterIds'] = aliases.toList();
+    mergeCombatDiscoveries(aliases, destinationId);
+    destination['published'] = realtimeService?.isConnected == true;
+    // Load directly: selectMasterInitiativeGroup would overwrite the merged data.
+    selectedMasterInitiativeGroupId = destinationId;
+    loadSelectedMasterInitiativeGroup();
+    for (final request in onlineCombatRequests.values) {
+      if (aliases.contains('${request['encounterId']}') &&
+          tags.contains('${request['sourceTag']}') &&
+          tags.contains('${request['targetTag']}')) {
+        request['encounterId'] = destinationId;
+      }
+    }
+    aggiungiLog(
+      '[TURNISTICHE UNITE] ${destination['name']}: ${tokens.length} partecipanti.',
+    );
+    setState(() {});
+    sendRealtimeInitiativeSnapshotIfPublished();
+    programmaSalvataggio();
+  }
+
   void addMasterInitiativeGroup() {
     captureActiveMasterInitiativeGroup();
     final id = 'encounter_${DateTime.now().microsecondsSinceEpoch}';
@@ -231,6 +568,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   void clearTemporaryCombatResistanceEffects() {
+    forgetCombatDiscoveries(onlineCombatEncounterId);
     oculumRemoveCurrentCombatTemporaryEffects(temporaryCombatResistanceEffects);
   }
 
@@ -754,7 +1092,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           statValue: valore,
           levelGradeBonus: bonusLivelloGrado(),
           quickBonus: statRollQuickBonus(nome),
-          extraBonus: oculumSpend.bonus,
+          extraBonus:
+              oculumSpend.bonus +
+              (oculumStatKey(nome) == 'oculum' && hasCondition('anima_staccata')
+                  ? -12
+                  : 0),
         );
     final totale = rollTotalWithCritical(dado, 20, [bonus]);
     final testoDado = rollFormulaWithCritical(
@@ -794,6 +1136,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'Tiro $nome: $testoDado.${oculumTiroLogLabel(oculumSpend)}$statoForzaLog$expText$coreExpText',
     );
     registerValidRoll(consumoStatKey: statConsumata);
+    if (oculumStatKey(nome) == 'oculum' && hasCondition('anima_staccata')) {
+      processConditionTick(OculumConditionTickTrigger.action);
+    }
     notifyDiceResultChanged();
     if (statoForzaLog.isNotEmpty ||
         (consumoElevato && statConsumata.isNotEmpty)) {
@@ -1312,7 +1657,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       criticoVenti: dado == 10,
       facce: 10,
     );
-    if (target != null) await deliverCombatHelp(target, max(0, totale));
+    if (target != null) await deliverCombatHelp(target, totale);
     await sendRealtimeDiceRollWithMasterConsent(
       label: label,
       roll: dado,
@@ -2891,6 +3236,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final token = masterInitiativeTokens[index];
       final next = !masterInitiativeActionUsed(token);
       token['actionUsed'] = next;
+      if (next &&
+          '${token['sheetTag'] ?? token['id']}' == sheetTagAt(schedaCorrente)) {
+        processConditionTick(OculumConditionTickTrigger.action);
+      }
       token['updatedAt'] = DateTime.now().toIso8601String();
       risultato = next
           ? '${t('Azione usata', 'Action used')}: ${token['name']}.'
@@ -3068,9 +3417,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   Future<void> tiraSchedaMasterParty(int index, String key) async {
-    if (index < 0 || index >= schedePersonaggio.length) {
-      return;
-    }
+    if (index < 0 || index >= schedePersonaggio.length) return;
     final dado = tiraD20();
     final baseBonus = sheetRollBonusAt(index, key);
     final aid = max(
@@ -3079,11 +3426,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
     final directedHelp = readIntValue(
       schedePersonaggio[index]['combatHelpPending'],
-    ).clamp(0, 1000000);
+    ).clamp(-1000000, 1000000);
     final bonus = baseBonus + aid + directedHelp;
-    if (directedHelp > 0) {
+    if (directedHelp != 0) {
       aggiungiLog(
-        '[AIUTO CONSUMATO] ${nomeSchedaPersonaggio(index)} +$directedHelp nel tiro.',
+        '[AIUTO CONSUMATO] ${nomeSchedaPersonaggio(index)} ${directedHelp >= 0 ? '+' : ''}$directedHelp nel tiro.',
       );
     }
     schedePersonaggio[index]['combatHelpPending'] = 0;
@@ -3309,7 +3656,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (helpTarget.isNotEmpty) {
       await deliverCombatHelp(
         helpTarget,
-        max(0, totale),
+        totale,
         sourceTag: sourceTag,
         sourceName: name,
       );
@@ -4190,6 +4537,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int criticalBonusMultiplier = 1,
     double defenseMultiplier = 1,
     bool resolvedResistance = false,
+    String? resistancePresetOverride,
     int? dannoEsplicito,
     String? enemyDifficulty,
     int? enemyLevel,
@@ -4325,13 +4673,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final activePercentDamageType = selectedIncomingDamageElement()
         .trim()
         .toLowerCase();
-    final percentualeLiberaPrima = oculumIncomingDamagePercentMultiplier(
-      configuredIncomingDamagePercentForType(activePercentDamageType),
-    );
+    final percentualeLiberaPrima = resistancePresetOverride != null
+        ? null
+        : oculumIncomingDamagePercentMultiplier(
+            configuredIncomingDamagePercentForType(activePercentDamageType),
+          );
     final stadioLiberoDopo = critico && percentualeLiberaPrima != null
         ? prossimoStadioCriticoPercentualeLibera(percentualeLiberaPrima)
         : null;
-    final modificatorePrima = configuredIncomingDamagePreset();
+    final modificatorePrima =
+        resistancePresetOverride ?? configuredIncomingDamagePreset();
     final modificatoreDopo =
         stadioLiberoDopo?.name ??
         (critico
@@ -4479,6 +4830,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             : ""}';
     final modificatore = critico
         ? modificatoreDannoDaNome(modificatoreDopo)
+        : resistancePresetOverride != null
+        ? modificatoreDannoDaNome(resistancePresetOverride)
         : modificatoreDannoAttuale();
     final modificatorePercentualeLibero =
         stadioLiberoDopo?.multiplier ?? percentualeLiberaPrima;
@@ -5522,8 +5875,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   String expGradeBonusLabel() => '+${expGradeBonus()} EXP grado';
 
-  String applicaEsperienzaFlat(int amount, {required String motivo}) {
-    final expAggiunta = max(0, amount);
+  String applicaEsperienzaFlat(
+    int amount, {
+    required String motivo,
+    bool applyChainedFate = true,
+  }) {
+    final expAggiunta =
+        max(0, amount) *
+        (applyChainedFate ? chainedFateExperienceMultiplier() : 1);
     if (expAggiunta == 0) return '';
 
     final expPrima = expCorrente();
@@ -5587,7 +5946,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final base = max(0, leggiNumero(expDaAggiungereController));
     if (base == 0) return 0;
     final value =
-        (base * expSourceMultiplier() * expGradeMultiplier()) + expGradeBonus();
+        ((base * expSourceMultiplier() * expGradeMultiplier()) +
+            expGradeBonus()) *
+        chainedFateExperienceMultiplier();
     if (value.isNaN || value.isInfinite) return 0;
     return value.round().clamp(0, 999999).toInt();
   }

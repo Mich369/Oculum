@@ -36,6 +36,33 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
               ),
             ),
             SizedBox(height: 10),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final name in [
+                    'cathedral_eye',
+                    'solar_islands',
+                    'amber_shore',
+                    'anime_reliquary',
+                'canva_spirit_duelist',
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/oculum/home_art/$name.png',
+                          width: 280,
+                          height: 175,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
             Row(
               children: [
                 Expanded(

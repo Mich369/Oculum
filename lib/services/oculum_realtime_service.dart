@@ -26,6 +26,8 @@ class OculumRealtimeService {
     'initiative_control',
     'combat_defense',
     'combat_help',
+    'combat_ack',
+    'combat_scout',
     'pawn_snapshot',
     'pawn_command',
     'pawn_intercept_request',
@@ -726,6 +728,8 @@ class OculumRealtimeService {
     if (event != 'combat_attack' &&
         event != 'combat_defense' &&
         event != 'combat_help' &&
+        event != 'combat_ack' &&
+        event != 'combat_scout' &&
         event != 'initiative_control') {
       throw ArgumentError('Evento combattimento non supportato');
     }

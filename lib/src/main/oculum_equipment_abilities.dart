@@ -9,6 +9,11 @@ CharacterSkill oculumEquipmentAbility(String name, int grade) {
   final bow = lower.contains('arco') || lower.contains('balestra');
   final armor =
       lower.contains('corazza') ||
+      lower.contains('armatura') ||
+      lower.contains('veste') ||
+      lower.contains('vesti ') ||
+      lower.contains('guanto') ||
+      lower.contains('guanti') ||
       lower.contains('scudo') ||
       lower.contains('mantello');
   final frost = lower.contains('ghiaccio') || lower.contains('glaciale');
@@ -131,6 +136,54 @@ CharacterSkill oculumEquipmentAbilityFromArt(ArtSkill skill) => CharacterSkill(
 );
 
 extension _OculumEquipmentAbilities on _OculumHomePageState {
+  Future<void> useEquipmentQuickAbility(
+    InventoryItem item,
+    CharacterSkillForm form,
+    OculumCombatAbilityRole role,
+  ) async {
+    final origin = currentSheetScrollId();
+    final effects = form.effettiStrutturati.isNotEmpty
+        ? form.effettiStrutturati
+        : oculumParseStructuredEffectsFromText(
+            form.descrizione,
+            subtraits: hiddenEyeStats,
+          ).effects;
+    final previousSupport = combatSupportTargeting;
+    final before = activeStructuredEffects
+        .where((e) => e['type'] == 'pending_target')
+        .toSet();
+    var used = false;
+    try {
+      combatSupportTargeting = role == OculumCombatAbilityRole.support;
+      used = await useConfiguredAbility(
+        source: '${item.nome} · ${item.ability?.nome}',
+        effects: effects,
+        cost: form.costoStrutturato,
+        cooldown: form.cooldownStrutturato,
+        valid: () =>
+            inventario.contains(item) &&
+            item.quantita > 0 &&
+            item.equipaggiata &&
+            canEquipInventoryItem(item) &&
+            leggiNumero(livelloController) >=
+                max(item.livelloOggetto, readIntValue(form.livello)),
+      );
+    } finally {
+      combatSupportTargeting = previousSupport;
+    }
+    if (!mounted || !used || currentSheetScrollId() != origin) return;
+    final pending = activeStructuredEffects
+        .where((e) => e['type'] == 'pending_target' && !before.contains(e))
+        .toList();
+    if (pending.isEmpty) return;
+    if (role == OculumCombatAbilityRole.support) {
+      await deliverPendingSupport();
+    } else if (role == OculumCombatAbilityRole.attack &&
+        onlineAttackTokens().isNotEmpty) {
+      await planOnlineAttack();
+    }
+  }
+
   Iterable<OculumStructuredEffect> automaticMonsterPassiveEffects() sync* {
     final level = max(0, leggiNumero(livelloController));
     for (final skill in skills.where((s) => s.passiva && s.equipaggiata)) {
@@ -291,6 +344,9 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
             spendArtSkillCostResource(resource, paid) != paid)) {
       return false;
     }
+    // Consume existing one-action conditions before adding new self effects.
+    // A condition just granted by this ability starts with its full duration.
+    processConditionTick(OculumConditionTickTrigger.action);
     final messages = applyStructuredEffectsOnActivation(
       effects,
       source: source,
@@ -394,7 +450,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                     !item.equipaggiata ||
                         !canEquipInventoryItem(item) ||
                         leggiNumero(livelloController) <
-                            readIntValue(form.livello)
+                            max(item.livelloOggetto, readIntValue(form.livello))
                     ? null
                     : () => useConfiguredAbility(
                         source: '${item.nome} / ${ability.nome} ${i + 1}',
@@ -405,7 +461,9 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                             inventario.contains(item) &&
                             item.quantita > 0 &&
                             item.equipaggiata &&
-                            canEquipInventoryItem(item),
+                            canEquipInventoryItem(item) &&
+                            leggiNumero(livelloController) >=
+                                item.livelloOggetto,
                       ),
               ),
             ],

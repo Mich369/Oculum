@@ -14,8 +14,9 @@ class OculumHomeHorrorArtwork extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
+            _OculumHomeGallery(animation: animation),
             Opacity(
-              opacity: 0.55,
+              opacity: 0.13,
               child: Image.asset(
                 'assets/themes/materials/wood.png',
                 fit: BoxFit.cover,
@@ -458,4 +459,64 @@ class _OculumHomeHorrorPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _OculumHomeHorrorPainter oldDelegate) =>
       oldDelegate.animation != animation;
+}
+
+class _OculumHomeGallery extends StatefulWidget {
+  const _OculumHomeGallery({required this.animation});
+  final Animation<double> animation;
+  @override
+  State<_OculumHomeGallery> createState() => _OculumHomeGalleryState();
+}
+
+class _OculumHomeGalleryState extends State<_OculumHomeGallery> {
+  static const scenes = ['cathedral_eye', 'solar_islands', 'amber_shore', 'anime_reliquary', 'canva_spirit_duelist'];
+  int scene = 0;
+  void updateScene() {
+    final next = (widget.animation.value * scenes.length).floor().clamp(
+      0,
+      scenes.length - 1,
+    );
+    if (next != scene && mounted && !MediaQuery.disableAnimationsOf(context)) {
+      setState(() => scene = next);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.animation.addListener(updateScene);
+  }
+
+  @override
+  void didUpdateWidget(covariant _OculumHomeGallery oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.animation != widget.animation) {
+      oldWidget.animation.removeListener(updateScene);
+      widget.animation.addListener(updateScene);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.animation.removeListener(updateScene);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => RepaintBoundary(
+    child: AnimatedSwitcher(
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 700),
+      child: SizedBox.expand(
+        key: ValueKey(scene),
+        child: Image.asset(
+          'assets/oculum/home_art/${scenes[scene]}.png',
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.high,
+          excludeFromSemantics: true,
+        ),
+      ),
+    ),
+  );
 }

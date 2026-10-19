@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../game/oculum_opposed_attack.dart';
 
@@ -78,7 +79,17 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
           .toSet()
         ..add(choice);
   final reason = TextEditingController();
-  final extraTargets = <String>{};
+  final extraTargets = <String>[];
+
+  List<String> completedExtraTargets() {
+    final result = [target, ...extraTargets];
+    final selected = result.toSet().toList();
+    final random = Random();
+    while (result.length < widget.minimumTargets && selected.isNotEmpty) {
+      result.add(selected[random.nextInt(selected.length)]);
+    }
+    return result.skip(1).toList();
+  }
 
   Future<void> addChoice() async {
     final hidden = widget.choices
@@ -133,12 +144,39 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
                 if (value != null) {
                   setState(() {
                     target = value;
-                    extraTargets.remove(value);
+                    extraTargets.removeWhere((id) => id == value);
                   });
                 }
               },
             ),
             if (widget.maximumTargets > 1) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Colpi sul bersaglio: ${1 + extraTargets.where((id) => id == target).length}',
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Ripeti sul bersaglio',
+                    onPressed: 1 + extraTargets.length < widget.maximumTargets
+                        ? () => setState(() => extraTargets.add(target))
+                        : null,
+                    icon: const Icon(Icons.add),
+                  ),
+                  IconButton(
+                    tooltip: 'Rimuovi colpo ripetuto',
+                    onPressed: extraTargets.contains(target)
+                        ? () => setState(() => extraTargets.remove(target))
+                        : null,
+                    icon: const Icon(Icons.remove),
+                  ),
+                ],
+              ),
+              if (1 + extraTargets.length < widget.minimumTargets)
+                const Text(
+                  'I colpi rimanenti saranno distribuiti casualmente fra i bersagli selezionati.',
+                ),
               Text(
                 'Bersagli: ${1 + extraTargets.length} · minimo ${widget.minimumTargets}, massimo ${widget.maximumTargets}',
               ),
@@ -164,7 +202,7 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
             ],
             const SizedBox(height: 12),
             const Text(
-              'VC è il tiro di attacco ordinario. Con qualsiasi altro tiro devi descrivere l’attacco e motivare la scelta al Master; la scelta non garantisce che sia ammessa.',
+              'VC è il tiro di attacco ordinario. Per un tiro alternativo descrivi l’attacco a voce al Master; non serve scriverlo.',
             ),
             const SizedBox(height: 8),
             Align(
@@ -243,22 +281,21 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
                                       ),
                                   ],
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    8,
-                                    0,
-                                    8,
-                                    8,
+                                if (chance != null)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      8,
+                                      0,
+                                      8,
+                                      8,
+                                    ),
+                                    child: Text(
+                                      'Stima contro CM · evitato ${chance.avoided.toStringAsFixed(1)}% · ridotto ${chance.reduced.toStringAsFixed(1)}% · pieno ${chance.full.toStringAsFixed(1)}%',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
                                   ),
-                                  child: Text(
-                                    chance == null
-                                        ? 'Probabilità non disponibile: difesa non condivisa.'
-                                        : 'Stima contro CM · evitato ${chance.avoided.toStringAsFixed(1)}% · ridotto ${chance.reduced.toStringAsFixed(1)}% · pieno ${chance.full.toStringAsFixed(1)}%',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                ),
                               ],
                             ),
                           ),
@@ -274,17 +311,23 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
                 controller: reason,
                 maxLines: 3,
                 decoration: const InputDecoration(
-                  labelText: 'Descrivi l’attacco e motiva il tiro',
-                  helperText: 'Obbligatorio per un attacco diverso da VC.',
+                  labelText: 'Nota al Master (facoltativa)',
+                  helperText: 'Puoi descrivere l’attacco a voce.',
                 ),
                 onChanged: (_) => setState(() {}),
               ),
             const SizedBox(height: 8),
-            const Text(
-              'Quasi riuscito se superi la difesa di 1–6 in Facile, 1–5 in Medio, 1–3 in Difficile. In Oculum: attacco pari alla difesa o inferiore di 1. In questi casi Difesa ×1,5 e durata degli effetti dimezzata, minimo 0. Attacco doppio: bonus critico ×2 e Fragilità. Difesa doppia: reazione critica gratuita.',
-            ),
-            const Text(
-              'Le stime usano solo i modificatori noti: non includono reazioni, spese future, dadi speciali o decisioni del Master.',
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: const Text('Regole del confronto'),
+              children: [
+                const Text(
+                  'Quasi riuscito se superi la difesa di 1–6 in Facile, 1–5 in Medio, 1–3 in Difficile. In Oculum: attacco pari alla difesa o inferiore di 1. In questi casi Difesa ×1,5 e durata degli effetti dimezzata, minimo 0. Attacco doppio: bonus critico ×2 e Fragilità. Difesa doppia: reazione critica gratuita.',
+                ),
+                const Text(
+                  'Le stime usano solo i modificatori noti: non includono reazioni, spese future, dadi speciali o decisioni del Master.',
+                ),
+              ],
             ),
           ],
         ),
@@ -296,11 +339,7 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
         child: const Text('Annulla'),
       ),
       FilledButton(
-        onPressed:
-            target.isEmpty ||
-                1 + extraTargets.length < widget.minimumTargets ||
-                !widget.choices.any((c) => c.id == choice) ||
-                (choice != 'vc' && reason.text.trim().isEmpty)
+        onPressed: target.isEmpty || !widget.choices.any((c) => c.id == choice)
             ? null
             : () => Navigator.pop(
                 context,
@@ -308,7 +347,7 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
                   target,
                   choice,
                   choice == 'vc' ? '' : reason.text.trim(),
-                  additionalTargetIds: extraTargets.toList(),
+                  additionalTargetIds: completedExtraTargets(),
                 ),
               ),
         child: const Text('Dichiara e tira'),

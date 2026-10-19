@@ -6,7 +6,7 @@ Esportato dal manuale interno dell’app. Per le correzioni più recenti consult
 
 Maestria (conferma 19 ottobre 2026): i primi sei punti dei Sottotratti richiedono 100/200/350/500/700/850 EXP; poi sempre 1000. VC, CM e Aiuta compagno richiedono 250/500/750, poi 1000; Iniziativa 200/400/600/800, poi 1000. Si contano solo i punti guadagnati tramite Maestria, con avanzo conservato. Punti base, assegnazioni manuali e buff non anticipano le soglie. Il guadagno EXP per tiro resta legato alla difficoltà.
 
-Aiuta compagno: scegli l'alleato prima del tiro. Il totale non negativo resta come aiuto per il suo prossimo tiro, compare nella formula e nel log e si consuma una volta. Online scegli fra i partecipanti vivi dello scontro; offline fra le altre schede locali. Per gli attacchi multipli scegli i bersagli entro i limiti della tecnica: ognuno risolve la propria difesa ed i propri danni, mentre costo e cooldown della tecnica si pagano una volta.
+Aiuta compagno: scegli l'alleato prima del tiro. Il totale, anche negativo, resta come aiuto per il suo prossimo tiro, compare nella formula e nel log e si consuma una volta. Online scegli fra i partecipanti vivi dello scontro; offline fra le altre schede locali. Per gli attacchi multipli scegli i bersagli entro i limiti della tecnica: ognuno risolve la propria difesa ed i propri danni, mentre costo e cooldown della tecnica si pagano una volta.
 
 In Oculum il potere passa dagli occhi. Un occhio può custodire un ricordo, portare i segni di un trauma o dare forma a ciò che desideri. Le sue capacità si intrecciano con la storia di chi lo possiede.
 
@@ -1836,5 +1836,29 @@ La modalità fuga di Scavata usa il sottotratto Velo. Questa scelta non modifica
 PERGAMENE MONOUSO
 L'uso consuma una pergamena ed esegue la tecnica; non assegna automaticamente una skill permanente. Anche un tiro fallito consuma la pergamena. Con 20 naturale e totale almeno 30 + 10 × grado si verifica separatamente l'apprendimento: Facile 20%, Medio 15%, Difficile 10%, Oculum 5%. La skill eventualmente appresa conserva costi e cooldown, non è evolvibile e non viene duplicata.
 
+BERSAGLI, SUPPORTI E OSSERVAZIONE — 19 OTTOBRE
+La fascia di bersagli/colpi è modificabile nell'editor degli effetti. Un bersaglio può ricevere più colpi; quelli minimi mancanti vengono distribuiti fra i destinatari selezionati. Costo e cooldown si pagano una volta. Anche cure e supporti possono scegliere più destinatari, compresi se stessi; Aiuta compagno può dare un modificatore positivo o negativo al prossimo tiro e viene consumato una volta.
+Percezione e Investigazione scelgono un bersaglio: totale almeno pari al suo livello rivela il livello esatto e le stime; il critico scopre il punto debole e concede a sé e alleati Fragilità Semi Letale verso quel nemico fino a fine fight. Nel pannello Tiri e azioni compare il migliore dei due sottotratti disponibili. Gli scontri restano distinti, salvo unione esplicita del Master.
+
+TITOLI E CHAINED FATE — 19 OTTOBRE
+Sei slot standard iniziali, sette al Grado III, otto al VI e nove al IX. Apprendimento: uno slot iniziale più uno per Grado; con Rebirth i primi tre Evoluti non occupano slot. Alchimia/Magia usa slot distinti pari al Grado, con uno già utilizzabile al Grado 0 per Rebirth. Chaos: uno slot ogni −10 Karma. Malanno: uno ogni sei Resilienza; non si rimuove volontariamente. Benessere non occupa slot.
+La Prima Art assegna uno slot Fato alla prima forma della prima skill, uno alla seconda forma della seconda skill e uno alla terza forma della terza skill. Ogni traguardo si ottiene una sola volta.
+Il Master avvia il Chained Fate e sceglie i partecipanti. Nei primi tre dungeon EXP ×2; ogni completamento dà uno slot Fato dedicato. Dai successivi EXP ×3 e nessuno slot aggiuntivo. Completare lo stesso dungeon due volte non ripete il premio.
+
+PARSER E MODIFICHE
+Il riconoscimento del testo prepara formule, dadi, durata e destinatari; le frasi non riconosciute restano manuali. «Da 2 a 4 bersagli», «2 nemici» e «fino a Oculum bersagli» configurano la fascia. Effetti e parametri rimangono modificabili e salvati nel JSON; i valori risolti dal lanciatore non si ritirano a ogni reinvio online. Il testo scritto della motivazione è facoltativo: può essere spiegata a voce al Master.
+Le Reputazioni possono essere organizzate in cartelle e sottocartelle senza limite fisso, conservando valori, descrizioni e influenza del Karma.
+
 ONLINE E OFFLINE
-Online, in una turnistica, dichiari il bersaglio. VC è il tiro di attacco ordinario: per un tiro alternativo devi descrivere l'attacco e motivarlo al Master. Il bersaglio riceve la richiesta di difendersi con CM, Riflessi, Resistenza o Manifestazione del Potere secondo la tecnica. Offline tutto rimane utilizzabile, con scelta di bersaglio, confronto dei tiri ed esito gestibili manualmente.
+Online, in una turnistica, dichiari il bersaglio. VC è il tiro di attacco ordinario: per un tiro alternativo basta descrivere l'attacco e motivarlo a voce al Master; scrivere è facoltativo. Il bersaglio riceve la richiesta di difendersi con CM, Riflessi, Resistenza o Manifestazione del Potere secondo la tecnica. Offline tutto rimane utilizzabile, con scelta di bersaglio, confronto dei tiri ed esito gestibili manualmente.
+
+### Atelier personale e Aiuto e utilità
+In Impostazioni, aprire «Atelier · Immagini e colori statistiche». Le immagini si possono caricare in più layer e posizionare attraverso i controlli; ordine, dimensione, rotazione e opacità restano modificabili. L'anteprima mostra la composizione. Copia codice e Importa codice trasferiscono anche i dati delle immagini. Limiti attuali: 12 immagini, 1,5 MB ciascuna; in caso di spazio locale insufficiente l'editor segnala l'errore e conserva il codice esportabile. I layer non intercettano clic o tocchi.
+Ogni colore statistica dispone di tonalità, saturazione, luminosità, cursori RGB e HEX sincronizzati, con confronto tra precedente e nuovo colore. Il ripristino riattiva i colori ordinari.
+«Aiuto e utilità» riunisce aiuto, cure e abilità di supporto. «Cura · valore concordato» applica il valore già determinato col Master, non crea una cura gratuita da una nuova regola. Online scegliere una scheda presente nella stessa turnistica; offline scegliere una scheda locale. I membri del Party annotati senza scheda collegata restano appunti narrativi.
+
+### Equipaggiamento, condizioni e negozi — rifinitura del 19 ottobre
+Gli oggetti conservano livello, Grado richiesto, statistica di crescita e da 1 a 3 punti per livello. Il Grado dell'oggetto e quello richiesto devono essere entrambi accessibili. Il livello della forma e quello dell'oggetto determinano il livello necessario per usare la skill. Le abilità equipaggiate compaiono nel gruppo Attacco, Difesa o Aiuto e utilità secondo gli effetti; le Open dei titoli usano lo stesso comando di attivazione dell'editor, senza duplicare i bonus.
+I nuovi nutrimenti I–VI durano tre turni e aumentano la statistica indicata del 2/4/6/8/10/12%, arrotondando per difetto. La durata è indicata nel log del consumo. Le erbe precedenti mantengono la propria durata a riposi. I parametri restano modificabili.
+Il selettore del negozio distingue materiali, fabbro, alchimista e chef. Solo l'alchimista propone gli acquisti Ascension Dust da 33–69 Obser, una Dust per acquisto, fino a tre nel periodo già gestito dal Riposo Lungo. I cibi di mostri predisposti verificano separatamente l'apprendimento con probabilità 0,5% + Fortuna, limitata al 100%.
+Il comando Termina scontro assegna a ciascun partecipante il premio base dei nemici uccisi e chiude la turnistica. Il moltiplicatore Chained Fate riguarda soltanto i partecipanti selezionati per quel dungeon. Ogni assegnazione conserva una ricevuta contro i duplicati.

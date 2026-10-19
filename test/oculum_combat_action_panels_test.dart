@@ -4,6 +4,51 @@ import 'package:oculum/main.dart';
 import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
+  testWidgets(
+    'defense rolls can be added, saved and removed while CM stays available',
+    (tester) async {
+      final dynamic state = await fixtures.mountSheet(
+        tester,
+        const Size(1440, 900),
+      );
+      final probe = OculumPerformanceProbe(state);
+      state.hiddenEyeStats.clear();
+      state.hiddenEyeStats.add(
+        HiddenEyeStat(id: 'forza', nome: 'Forza', descrizione: ''),
+      );
+      final opening = probe.openCombatActionPanel(
+        OculumCombatAbilityRole.defense,
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(find.textContaining('Forza +'), findsNothing);
+      await tester.tap(
+        find.widgetWithText(TextButton, 'Aggiungi tiro difensivo'),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.tap(find.widgetWithText(SimpleDialogOption, 'Forza'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(find.textContaining('Forza +'), findsOneWidget);
+      expect(probe.snapshot()['combatDefenseRollIds'], contains('forza'));
+      await tester.tap(find.byTooltip('Rimuovi Forza'));
+      await tester.pump();
+      expect(find.textContaining('Forza +'), findsNothing);
+      expect(find.textContaining('CM +'), findsOneWidget);
+      expect(
+        probe.snapshot()['combatDefenseRollIds'],
+        isNot(contains('forza')),
+      );
+      await tester.tap(find.text('Chiudi'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      await opening;
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 3));
+    },
+  );
   for (final size in [const Size(1440, 900), const Size(390, 844)]) {
     testWidgets('combat panels separate rolls and abilities at $size', (
       tester,

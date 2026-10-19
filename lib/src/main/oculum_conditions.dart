@@ -604,6 +604,117 @@ OculumDifficultyIncreaseFightProfile oculumDifficultyIncreaseFightProfile(
 const List<OculumConditionDefinition>
 oculumConditionCatalog = <OculumConditionDefinition>[
   OculumConditionDefinition(
+    id: 'nutrito_resilienza',
+    nameIt: 'Vigore di radice',
+    nameEn: 'Vigore di radice',
+    icon: Icons.spa_outlined,
+    category: OculumConditionCategory.positive,
+    polarity: OculumConditionPolarity.positive,
+    maxStage: 6,
+    stackMode: OculumConditionStackMode.replaceIfStronger,
+    basePercentByStage: [2, 4, 6, 8, 10, 12],
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    affectedTargets: {OculumConditionTarget.resilienza},
+    descriptionIt:
+        'I–VI: +2/4/6/8/10/12% a resilienza; 3 turni. Non si somma con versioni dello stesso buff. Arrotondamento per difetto.',
+    descriptionEn:
+        'I–VI: +2/4/6/8/10/12% resilienza; 3 turns, strongest stage only.',
+  ),
+  OculumConditionDefinition(
+    id: 'nutrito_volonta',
+    nameIt: 'Ardore di brace',
+    nameEn: 'Ardore di brace',
+    icon: Icons.spa_outlined,
+    category: OculumConditionCategory.positive,
+    polarity: OculumConditionPolarity.positive,
+    maxStage: 6,
+    stackMode: OculumConditionStackMode.replaceIfStronger,
+    basePercentByStage: [2, 4, 6, 8, 10, 12],
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    affectedTargets: {OculumConditionTarget.volonta},
+    descriptionIt:
+        'I–VI: +2/4/6/8/10/12% a volonta; 3 turni. Non si somma con versioni dello stesso buff. Arrotondamento per difetto.',
+    descriptionEn:
+        'I–VI: +2/4/6/8/10/12% volonta; 3 turns, strongest stage only.',
+  ),
+  OculumConditionDefinition(
+    id: 'nutrito_materia',
+    nameIt: 'Tempra minerale',
+    nameEn: 'Tempra minerale',
+    icon: Icons.spa_outlined,
+    category: OculumConditionCategory.positive,
+    polarity: OculumConditionPolarity.positive,
+    maxStage: 6,
+    stackMode: OculumConditionStackMode.replaceIfStronger,
+    basePercentByStage: [2, 4, 6, 8, 10, 12],
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    affectedTargets: {OculumConditionTarget.materia},
+    descriptionIt:
+        'I–VI: +2/4/6/8/10/12% a materia; 3 turni. Non si somma con versioni dello stesso buff. Arrotondamento per difetto.',
+    descriptionEn:
+        'I–VI: +2/4/6/8/10/12% materia; 3 turns, strongest stage only.',
+  ),
+  OculumConditionDefinition(
+    id: 'nutrito_oculum',
+    nameIt: 'Risonanza spirituale',
+    nameEn: 'Risonanza spirituale',
+    icon: Icons.spa_outlined,
+    category: OculumConditionCategory.positive,
+    polarity: OculumConditionPolarity.positive,
+    maxStage: 6,
+    stackMode: OculumConditionStackMode.replaceIfStronger,
+    basePercentByStage: [2, 4, 6, 8, 10, 12],
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    affectedTargets: {OculumConditionTarget.oculum},
+    descriptionIt:
+        'I–VI: +2/4/6/8/10/12% a oculum; 3 turni. Non si somma con versioni dello stesso buff. Arrotondamento per difetto.',
+    descriptionEn:
+        'I–VI: +2/4/6/8/10/12% oculum; 3 turns, strongest stage only.',
+  ),
+  OculumConditionDefinition(
+    id: 'nutrito_tutte',
+    nameIt: 'Armonia delle quattro vene',
+    nameEn: 'Armonia delle quattro vene',
+    icon: Icons.spa_outlined,
+    category: OculumConditionCategory.positive,
+    polarity: OculumConditionPolarity.positive,
+    maxStage: 6,
+    stackMode: OculumConditionStackMode.replaceIfStronger,
+    basePercentByStage: [2, 4, 6, 8, 10, 12],
+    defaultDuration: 3,
+    durationType: OculumConditionDurationType.turns,
+    affectedTargets: {
+      OculumConditionTarget.resilienza,
+      OculumConditionTarget.volonta,
+      OculumConditionTarget.materia,
+      OculumConditionTarget.oculum,
+    },
+    descriptionIt:
+        'I–VI: +2/4/6/8/10/12% a tutte; 3 turni. Non si somma con versioni dello stesso buff. Arrotondamento per difetto.',
+    descriptionEn:
+        'I–VI: +2/4/6/8/10/12% tutte; 3 turns, strongest stage only.',
+  ),
+  OculumConditionDefinition(
+    id: 'anima_staccata',
+    nameIt: 'Anima staccata',
+    nameEn: 'Detached soul',
+    icon: Icons.blur_on,
+    category: OculumConditionCategory.oculum,
+    polarity: OculumConditionPolarity.negative,
+    defaultDuration: 1,
+    durationType: OculumConditionDurationType.actions,
+    tickTrigger: OculumConditionTickTrigger.action,
+    affectedTargets: {OculumConditionTarget.oculum, OculumConditionTarget.tiri},
+    descriptionIt:
+        'Svantaggio Oculum (−12) ai tiri Oculum per 1 azione. La separazione spirituale non riduce la statistica permanente.',
+    descriptionEn:
+        'Oculum disadvantage (−12) to Oculum rolls for one action; permanent stats are unchanged.',
+  ),
+  OculumConditionDefinition(
     id: 'ricordo_vitale',
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.resilienza,

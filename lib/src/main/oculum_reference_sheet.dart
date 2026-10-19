@@ -702,7 +702,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
           final compact = constraints.maxWidth < 500;
           final portrait = SizedBox(
             key: const ValueKey('reference_portrait_frame'),
-            width: compact ? 72 : 104,
+            width: compact ? 80 : 116,
             height: compact ? 72 : 104,
             child: OculumThemeSheetFrame(
               role: OculumThemeFrameRole.portrait,
@@ -975,8 +975,16 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                             OculumCombatAbilityRole.support,
                           ),
                           icon: Icon(Icons.volunteer_activism_outlined),
-                          label: Text(t('Aiuta compagno', 'Help ally')),
+                          label: Text(t('Aiuto e utilità', 'Help and utility')),
                         ),
+                        if (bestCombatScoutStat() != null)
+                          OutlinedButton.icon(
+                            onPressed: scoutCombatTarget,
+                            icon: const Icon(Icons.search),
+                            label: Text(
+                              '${bestCombatScoutStat()!.nome} +${hiddenEyeTotal(bestCombatScoutStat()!)}',
+                            ),
+                          ),
                         OutlinedButton.icon(
                           onPressed: () => tiraValoreSpeciale(
                             'Iniziativa',
@@ -1005,6 +1013,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                       ],
                     ),
                     SizedBox(height: 8),
+                    masterRequestedRollsPanel(),
                     onlineCombatRequestsPanel(),
                     Text(
                       '${t('Danni inflitti', 'Damage dealt')}: ${dannoTotale()} · ${t('Difesa totale', 'Total defense')}: ${difesa()} · ${t('I Sottotratti sono tiri alternativi', 'Subtraits are alternative rolls')}',
@@ -1426,6 +1435,30 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                           onPressed: () => enterLocalReferenceEncounter(id),
                           child: Text('Entra con questa scheda'),
                         ),
+                      ),
+                    if (local)
+                      TextButton.icon(
+                        onPressed: () => finishEncounter(id),
+                        icon: const Icon(Icons.flag_outlined),
+                        label: const Text('Termina scontro'),
+                      ),
+                    if (local)
+                      TextButton.icon(
+                        onPressed: () => requestPlayerRolls(id),
+                        icon: const Icon(Icons.casino_outlined),
+                        label: const Text('Richiedi tiri'),
+                      ),
+                    if (local)
+                      TextButton.icon(
+                        onPressed: () => manageChainedFate(id),
+                        icon: const Icon(Icons.link),
+                        label: const Text('Chained Fate'),
+                      ),
+                    if (local)
+                      TextButton.icon(
+                        onPressed: () => mergeMasterEncounters(id),
+                        icon: const Icon(Icons.merge),
+                        label: const Text('Unisci altri scontri qui'),
                       ),
                     if (local)
                       Wrap(

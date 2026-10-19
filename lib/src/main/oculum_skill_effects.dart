@@ -367,6 +367,8 @@ class OculumStructuredEffect {
     this.durationUnit = 'turni',
     this.frequency = '',
     this.recipient = 'se_stesso',
+    this.minimumTargets = 0,
+    this.maximumTargets = 0,
     this.diceExpression = '',
     this.diceDestination = 'valore',
     this.includeLevel = false,
@@ -396,6 +398,8 @@ class OculumStructuredEffect {
   String durationUnit;
   String frequency;
   String recipient;
+  int minimumTargets;
+  int maximumTargets;
   String diceExpression;
   String diceDestination;
   bool includeLevel;
@@ -438,6 +442,8 @@ class OculumStructuredEffect {
     'durationUnit': durationUnit,
     'frequency': frequency,
     'recipient': recipient,
+    'minimumTargets': minimumTargets,
+    'maximumTargets': maximumTargets,
     'diceExpression': diceExpression,
     'diceDestination': diceDestination,
     'includeLevel': includeLevel,
@@ -467,6 +473,8 @@ class OculumStructuredEffect {
       durationUnit: '${json['durationUnit'] ?? json['unitaDurata'] ?? 'turni'}',
       frequency: '${json['frequency'] ?? json['frequenza'] ?? ''}',
       recipient: '${json['recipient'] ?? json['bersaglio'] ?? 'se_stesso'}',
+      minimumTargets: readIntValue(json['minimumTargets']).clamp(0, 100),
+      maximumTargets: readIntValue(json['maximumTargets']).clamp(0, 100),
       diceExpression:
           '${json['diceExpression'] ?? json['dadiAttivazione'] ?? ''}',
       diceDestination:

@@ -164,6 +164,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     ) {
       if (mounted && realtimeService?.isConnected == true) {
         unawaited(replayPermissionRequests());
+        unawaited(replayOnlineCombatRequests(retryOnly: true));
       }
     });
     unawaited(replayPermissionRequests());

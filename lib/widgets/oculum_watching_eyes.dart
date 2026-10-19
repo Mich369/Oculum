@@ -1,0 +1,103 @@
+import 'dart:math' as math;
+import 'package:flutter/material.dart';
+
+/// Decorative eyes: isolated paint, no semantics and no input capture.
+class OculumWatchingEyes extends StatefulWidget {
+  const OculumWatchingEyes({super.key, required this.animation});
+  final Animation<double> animation;
+  @override
+  State<OculumWatchingEyes> createState() => _OculumWatchingEyesState();
+}
+
+class _OculumWatchingEyesState extends State<OculumWatchingEyes> {
+  final gaze = ValueNotifier<Offset>(const Offset(-1000, -1000));
+  @override
+  void dispose() {
+    gaze.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(
+    child: MouseRegion(
+      opaque: false,
+      hitTestBehavior: HitTestBehavior.translucent,
+      onHover: (e) => gaze.value = e.localPosition,
+      onExit: (_) => gaze.value = const Offset(-1000, -1000),
+      child: IgnorePointer(
+        child: RepaintBoundary(
+          child: CustomPaint(
+            painter: _EyesPainter(
+              widget.animation,
+              gaze,
+              MediaQuery.disableAnimationsOf(context),
+            ),
+            child: const SizedBox.expand(),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _EyesPainter extends CustomPainter {
+  _EyesPainter(this.animation, this.gaze, this.reduced)
+    : super(repaint: Listenable.merge([animation, gaze]));
+  final Animation<double> animation;
+  final ValueNotifier<Offset> gaze;
+  final bool reduced;
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = const Color(0xff08090e),
+    );
+    final phase = reduced ? 0.0 : animation.value * math.pi * 2;
+    for (var i = 0; i < 24; i++) {
+      final col = i % 6, row = i ~/ 6;
+      final moving = i % 4 == 0;
+      final x =
+          size.width * ((col + .5) / 6) +
+          (moving ? math.sin(phase + i) * 16 : 0);
+      final y =
+          size.height * ((row + .5) / 4) +
+          (moving ? math.cos(phase + i) * 12 : 0);
+      final center = Offset(x, y);
+      final w = (size.width / 20).clamp(18.0, 44.0);
+      final path = Path()
+        ..moveTo(x - w, y)
+        ..quadraticBezierTo(x, y - w * .65, x + w, y)
+        ..quadraticBezierTo(x, y + w * .65, x - w, y);
+      final color = Color.lerp(
+        const Color(0xffa99ac8),
+        const Color(0xffad8a58),
+        (i % 3) / 2,
+      )!;
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = color.withValues(alpha: .22)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1,
+      );
+      var delta = gaze.value.dx < -500 ? Offset.zero : gaze.value - center;
+      if (delta.distance > 0) delta = delta / delta.distance * w * .16;
+      canvas.save();
+      canvas.clipPath(path);
+      canvas.drawCircle(
+        center + delta,
+        w * .23,
+        Paint()..color = color.withValues(alpha: .28),
+      );
+      canvas.drawOval(
+        Rect.fromCenter(center: center + delta, width: w * .12, height: w * .4),
+        Paint()..color = const Color(0xff020306),
+      );
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _EyesPainter old) =>
+      old.reduced != reduced || old.gaze != gaze || old.animation != animation;
+}

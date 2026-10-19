@@ -157,48 +157,50 @@ void main() {
   );
 
   for (final size in [const Size(1440, 900), const Size(390, 844)]) {
-    testWidgets('square portrait has clickable full-size viewer at $size', (
-      tester,
-    ) async {
-      final state = await mountSheet(tester, size);
-      final frame = tester.widget<SizedBox>(
-        find.byKey(const ValueKey('reference_portrait_frame')),
-      );
-      expect(frame.width, frame.height);
-      expect(frame.width, lessThanOrEqualTo(104));
-      await tester.tap(find.byKey(const ValueKey('portrait-enlarge')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-      expect(
-        find.byKey(const ValueKey('portrait-enlarged-dialog')),
-        findsOneWidget,
-      );
-      expect(find.byType(InteractiveViewer), findsOneWidget);
-      await tester.tap(find.text('Chiudi'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-      final bytes = await tester.runAsync(
-        () => File(
-          'assets/themes/vervain_gothic/overlays/relic.png',
-        ).readAsBytes(),
-      );
-      state.updateOculumHomeUi(() => state.immaginePersonaggio = bytes);
-      await tester.pump();
-      await tester.tap(find.byKey(const ValueKey('portrait-enlarge')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-      final image = tester.widget<Image>(
-        find
-            .descendant(
-              of: find.byKey(const ValueKey('portrait-enlarged-dialog')),
-              matching: find.byType(Image),
-            )
-            .first,
-      );
-      expect((image.image as MemoryImage).bytes, same(bytes));
-      expect(state.immaginePersonaggio, same(bytes));
-      expect(tester.takeException(), isNull);
-      await tester.pumpWidget(const SizedBox.shrink());
-    });
+    testWidgets(
+      'rectangular portrait has clickable full-size viewer at $size',
+      (tester) async {
+        final state = await mountSheet(tester, size);
+        final frame = tester.widget<SizedBox>(
+          find.byKey(const ValueKey('reference_portrait_frame')),
+        );
+        expect(frame.width, greaterThan(frame.height!));
+        expect(frame.width! / frame.height!, lessThan(1.2));
+        expect(frame.width, lessThanOrEqualTo(116));
+        await tester.tap(find.byKey(const ValueKey('portrait-enlarge')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        expect(
+          find.byKey(const ValueKey('portrait-enlarged-dialog')),
+          findsOneWidget,
+        );
+        expect(find.byType(InteractiveViewer), findsOneWidget);
+        await tester.tap(find.text('Chiudi'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        final bytes = await tester.runAsync(
+          () => File(
+            'assets/themes/vervain_gothic/overlays/relic.png',
+          ).readAsBytes(),
+        );
+        state.updateOculumHomeUi(() => state.immaginePersonaggio = bytes);
+        await tester.pump();
+        await tester.tap(find.byKey(const ValueKey('portrait-enlarge')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        final image = tester.widget<Image>(
+          find
+              .descendant(
+                of: find.byKey(const ValueKey('portrait-enlarged-dialog')),
+                matching: find.byType(Image),
+              )
+              .first,
+        );
+        expect((image.image as MemoryImage).bytes, same(bytes));
+        expect(state.immaginePersonaggio, same(bytes));
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
   }
 }

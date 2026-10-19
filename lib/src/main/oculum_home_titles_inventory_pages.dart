@@ -3047,6 +3047,28 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     ];
 
     void toggleTitleEquipped() {
+      if (!trattoRazziale) {
+        final pool = titleSlotPool(titolo);
+        final capacity = titleSlotCapacity(pool);
+        if (titolo.equipaggiato &&
+            pool == 'Titolo Malanno' &&
+            !haPermessiMaster) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Un Titolo Malanno non si rimuove volontariamente: va curato con il Master.',
+              ),
+            ),
+          );
+          return;
+        }
+        if (!titolo.equipaggiato &&
+            capacity != null &&
+            titleSlotsUsed(pool, including: titolo) > capacity) {
+          showTitleSlots();
+          return;
+        }
+      }
       setState(() {
         final runtimeRes =
             titleQuickResilienzaBonus(titolo) +
@@ -4443,8 +4465,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             color: tertiaryColor,
           ),
           const SizedBox(height: 10),
+          TextButton(
+            onPressed: showTitleSlots,
+            child: Text(
+              '${t('Titoli indossati', 'Equipped titles')}: $equipaggiati / ${titoli.length}',
+            ),
+          ),
+          const SizedBox(height: 8),
           Text(
-            '${t('Titoli indossati', 'Equipped titles')}: $equipaggiati / ${titoli.length}',
+            'Slot Apprendimento: ${learningTitleSlotCapacity()} · 1 iniziale + Grado',
           ),
           const SizedBox(height: 8),
           Text('${t('Open attive', 'Active Opens')}: $openAttive'),
@@ -4571,8 +4600,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                 color: tertiaryColor,
               ),
               const SizedBox(height: 10),
+              TextButton(
+                onPressed: showTitleSlots,
+                child: Text(
+                  '${t('Titoli indossati', 'Equipped titles')}: $equipaggiati / ${titoli.length}',
+                ),
+              ),
+              const SizedBox(height: 8),
               Text(
-                '${t('Titoli indossati', 'Equipped titles')}: $equipaggiati / ${titoli.length}',
+                'Slot Apprendimento: ${learningTitleSlotCapacity()} · 1 iniziale + Grado',
               ),
               const SizedBox(height: 8),
               Text('${t('Open attive', 'Active Opens')}: $openAttive'),
@@ -6592,6 +6628,68 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                         1,
                         int.tryParse(value.trim()) ?? 1,
                       );
+                    },
+                  ),
+                  campoModello(
+                    label: 'Livello oggetto',
+                    initialValue: '${inventario[i].livelloOggetto}',
+                    onChanged: (v) {
+                      inventario[i].livelloOggetto = (int.tryParse(v) ?? 0)
+                          .clamp(0, 10000);
+                      invalidateDerivedDataCaches();
+                      programmaSalvataggio();
+                    },
+                  ),
+                  campoModello(
+                    label: 'Punti statistica per livello (1–3)',
+                    initialValue: '${inventario[i].puntiStatPerLivello}',
+                    onChanged: (v) {
+                      inventario[i].puntiStatPerLivello = (int.tryParse(v) ?? 1)
+                          .clamp(1, 3);
+                      invalidateDerivedDataCaches();
+                      programmaSalvataggio();
+                    },
+                  ),
+                  DropdownButtonFormField<String>(
+                    initialValue:
+                        const {
+                          'resilienza',
+                          'volonta',
+                          'materia',
+                          'oculum',
+                        }.contains(inventario[i].statCrescita)
+                        ? inventario[i].statCrescita
+                        : '',
+                    decoration: const InputDecoration(
+                      labelText: 'Statistica che cresce con il livello',
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: '',
+                        child: Text(
+                          'Automatico · arma Volontà, protezione Materia',
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'resilienza',
+                        child: Text('Resilienza'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'volonta',
+                        child: Text('Volontà'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'materia',
+                        child: Text('Materia'),
+                      ),
+                      DropdownMenuItem(value: 'oculum', child: Text('Oculum')),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) {
+                        inventario[i].statCrescita = v;
+                        invalidateDerivedDataCaches();
+                        programmaSalvataggio();
+                      }
                     },
                   ),
                   campoModello(

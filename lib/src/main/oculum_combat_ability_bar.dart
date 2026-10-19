@@ -49,6 +49,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
               request['targetTag'] == tag &&
               request['status'] == 'pending' &&
               request['kind'] != 'help' &&
+              request['kind'] != 'scout' &&
               request['scope'] == permissionScope &&
               request['encounterId'] == onlineCombatEncounterId,
         )
@@ -115,7 +116,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           DropdownMenuItem(value: '', child: Text('Automatico dagli effetti')),
           DropdownMenuItem(value: 'attacco', child: Text('Attacco')),
           DropdownMenuItem(value: 'difesa', child: Text('Difesa')),
-          DropdownMenuItem(value: 'supporto', child: Text('Aiuta compagno')),
+          DropdownMenuItem(value: 'supporto', child: Text('Aiuto e utilità')),
         ],
         onChanged: (value) {
           if (value != null) {
@@ -127,11 +128,17 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
 
   Color combatAbilityResourceColor(Iterable<String> resources) {
     final values = resources.map(oculumNormalizeText).toList();
-    if (values.any((v) => v.contains('oculum'))) return eyePupilGlowColor;
-    if (values.any((v) => v.contains('vol'))) return Colors.redAccent;
-    if (values.any((v) => v.contains('materia'))) return Colors.blueAccent;
+    if (values.any((v) => v.contains('oculum'))) {
+      return statFormulaColor('oculum');
+    }
+    if (values.any((v) => v.contains('vol'))) {
+      return statFormulaColor('volonta');
+    }
+    if (values.any((v) => v.contains('materia'))) {
+      return statFormulaColor('materia');
+    }
     if (values.any((v) => v.contains('resilienza') || v.contains('hp'))) {
-      return Colors.greenAccent;
+      return statFormulaColor('resilienza');
     }
     return Theme.of(context).colorScheme.onSurface;
   }
@@ -191,29 +198,57 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         artSkill!.testoEvoluzione(chosen + 1);
     final oculumBefore = currentOculum();
     final beforeEffects = jsonEncode(activeStructuredEffects);
-    if (natural != null && skills.contains(natural)) {
-      await usaFormaSkill(natural, skills.indexOf(natural), chosen);
-    } else if (art != null &&
-        artSkill != null &&
-        arti.contains(art) &&
-        art.skills.contains(artSkill)) {
-      await impostaLivelloSkillArt(
-        artIndex: arti.indexOf(art),
-        skillIndex: art.skills.indexOf(artSkill),
-        nuovoLivello: chosen + 1,
-        riutilizza: artSkill.livello == chosen + 1,
-      );
+    final declaredEffects =
+        natural?.forme[chosen].effettiStrutturati ??
+        artSkill!.effettiEvoluzione(chosen + 1);
+    final recognizedEffects = declaredEffects.isNotEmpty
+        ? declaredEffects
+        : oculumParseAbilityMechanics(
+            description,
+            subtraits: hiddenEyeStats,
+            investedOculum: true,
+          ).effects;
+    combatSupportTargeting =
+        oculumCombatAbilityRole(recognizedEffects) ==
+        OculumCombatAbilityRole.support;
+    try {
+      if (natural != null && skills.contains(natural)) {
+        await usaFormaSkill(natural, skills.indexOf(natural), chosen);
+      } else if (art != null &&
+          artSkill != null &&
+          arti.contains(art) &&
+          art.skills.contains(artSkill)) {
+        await impostaLivelloSkillArt(
+          artIndex: arti.indexOf(art),
+          skillIndex: art.skills.indexOf(artSkill),
+          nuovoLivello: chosen + 1,
+          riutilizza: artSkill.livello == chosen + 1,
+        );
+      }
+    } finally {
+      combatSupportTargeting = false;
     }
+
     if (!mounted ||
         currentSheetScrollId() != origin ||
         beforeEffects == jsonEncode(activeStructuredEffects)) {
       return;
     }
     final spentOculum = max(0, oculumBefore - currentOculum());
-    final targetLimits = oculumAttackTargetLimits(
+    var targetLimits = oculumAttackTargetLimits(
       description,
       spentOculum > 0 ? spentOculum : oculumTotale(),
     );
+    for (final pendingEffect in activeStructuredEffects.where(
+      (e) => e['type'] == 'pending_target',
+    )) {
+      final configuredMinimum = readIntValue(pendingEffect['minimumTargets']);
+      final configuredMaximum = readIntValue(pendingEffect['maximumTargets']);
+      if (configuredMinimum > 0 || configuredMaximum > 0) {
+        final low = max(1, configuredMinimum);
+        targetLimits = (minimum: low, maximum: max(low, configuredMaximum));
+      }
+    }
     final pending = activeStructuredEffects
         .where(
           (e) =>
@@ -226,6 +261,18 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       effect['minimumTargets'] = targetLimits.minimum;
       effect['maximumTargets'] = targetLimits.maximum;
     }
+    if (activeStructuredEffects.any(
+      (e) =>
+          e['type'] == 'pending_target' &&
+          e['effect'] is Map &&
+          (e['effect'] as Map)['recipient'] == 'alleato',
+    )) {
+      await deliverPendingSupport(
+        minimum: targetLimits.minimum,
+        maximum: targetLimits.maximum,
+      );
+      if (!mounted || currentSheetScrollId() != origin) return;
+    }
     if (pending.isNotEmpty && onlineAttackTokens().isNotEmpty) {
       await planOnlineAttack(
         minimumTargets: targetLimits.minimum,
@@ -234,30 +281,116 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     }
   }
 
+  Widget defenseRollControls(StateSetter refresh, String origin) {
+    final available = hiddenEyeStats
+        .where(
+          (s) =>
+              s.unlocked && !const {'nodo', 'fortuna', 'drop'}.contains(s.id),
+        )
+        .toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextButton.icon(
+          icon: const Icon(Icons.add),
+          label: const Text('Aggiungi tiro difensivo'),
+          onPressed: available.any((s) => !combatDefenseRollIds.contains(s.id))
+              ? () async {
+                  final selected = await showDialog<String>(
+                    context: context,
+                    builder: (dialog) => SimpleDialog(
+                      title: const Text('Aggiungi tiro difensivo'),
+                      children: [
+                        for (final stat in available.where(
+                          (s) => !combatDefenseRollIds.contains(s.id),
+                        ))
+                          SimpleDialogOption(
+                            onPressed: () => Navigator.pop(dialog, stat.id),
+                            child: Text(
+                              stat.nome,
+                              style: TextStyle(
+                                color: hiddenEyeStatIdentityColor(stat),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                  if (!mounted ||
+                      currentSheetScrollId() != origin ||
+                      selected == null) {
+                    return;
+                  }
+                  refresh(() => combatDefenseRollIds.add(selected));
+                  programmaSalvataggio();
+                }
+              : null,
+        ),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final stat in available.where(
+              (s) => combatDefenseRollIds.contains(s.id),
+            ))
+              InputChip(
+                label: Text(
+                  stat.nome,
+                  style: TextStyle(color: hiddenEyeStatIdentityColor(stat)),
+                ),
+                deleteIcon: Icon(
+                  Icons.remove_circle_outline,
+                  color: hiddenEyeStatIdentityColor(stat),
+                  size: 18,
+                ),
+                deleteButtonTooltipMessage: 'Rimuovi ${stat.nome}',
+                onDeleted: () {
+                  refresh(() => combatDefenseRollIds.remove(stat.id));
+                  programmaSalvataggio();
+                },
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Future<void> showCombatActionPanel(OculumCombatAbilityRole role) async {
     final origin = currentSheetScrollId();
     final selected = await showDialog<VoidCallback>(
       context: context,
-      builder: (dialog) => AlertDialog(
-        scrollable: true,
-        title: Text(switch (role) {
-          OculumCombatAbilityRole.attack => t('Attacco', 'Attack'),
-          OculumCombatAbilityRole.defense => t('Difesa', 'Defense'),
-          OculumCombatAbilityRole.support => t('Aiuta compagno', 'Help ally'),
-        }),
-        content: SizedBox(
-          width: min(720, max(0, MediaQuery.sizeOf(dialog).width - 48)),
-          child: combatAbilityQuickBar(
-            onlyRole: role,
-            onChoose: (action) => Navigator.pop(dialog, action),
+      builder: (dialog) => StatefulBuilder(
+        builder: (context, refresh) => AlertDialog(
+          scrollable: true,
+          title: Text(switch (role) {
+            OculumCombatAbilityRole.attack => t('Attacco', 'Attack'),
+            OculumCombatAbilityRole.defense => t('Difesa', 'Defense'),
+            OculumCombatAbilityRole.support => t(
+              'Aiuto e utilità',
+              'Help and utility',
+            ),
+          }),
+          content: SizedBox(
+            width: min(720, max(0, MediaQuery.sizeOf(dialog).width - 48)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                combatAbilityQuickBar(
+                  onlyRole: role,
+                  onChoose: (action) => Navigator.pop(dialog, action),
+                ),
+                if (role == OculumCombatAbilityRole.defense)
+                  defenseRollControls(refresh, origin),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialog),
+              child: Text(t('Chiudi', 'Close')),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialog),
-            child: Text(t('Chiudi', 'Close')),
-          ),
-        ],
       ),
     );
     if (mounted && selected != null && currentSheetScrollId() == origin) {
@@ -313,6 +446,17 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           }
         },
       ));
+      if (support) {
+        entries.add((
+          name: 'Cura · valore concordato',
+          role: onlyRole,
+          color: statFormulaColor('resilienza'),
+          enabled: true,
+          hint:
+              'Applica una cura già determinata con il Master, senza un nuovo tiro.',
+          use: () => unawaited(manualPartyHealing()),
+        ));
+      }
       final allowed = switch (onlyRole) {
         OculumCombatAbilityRole.attack => const {
           'schianto',
@@ -320,11 +464,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           'riflessi',
           'manifestazione_potere',
         },
-        OculumCombatAbilityRole.defense => const {
-          'riflessi',
-          'resistenza',
-          'manifestazione_potere',
-        },
+        OculumCombatAbilityRole.defense => combatDefenseRollIds,
         OculumCombatAbilityRole.support => const {'medicina'},
       };
       for (final stat in hiddenEyeStats.where(
@@ -382,6 +522,40 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       addTitleSkill(null);
       for (final extra in title.skillExtra) {
         addTitleSkill(extra);
+      }
+      void addTitleOpen(TitleOpenEntry? extra) {
+        final name = extra?.nome ?? title.openName;
+        final description = extra?.descrizione ?? title.openDescription;
+        final skill = extra?.openSkill ?? title.openSkill;
+        final effects = extra?.effects ?? title.openEffects;
+        if (name.trim().isEmpty &&
+            description.trim().isEmpty &&
+            skill.trim().isEmpty &&
+            effects.isEmpty) {
+          return;
+        }
+        final active = extra?.attiva ?? title.openAttiva;
+        entries.add((
+          name:
+              '${active ? 'Chiudi' : 'Apri'} ${name.trim().isEmpty ? title.nome : name} · Titolo',
+          role: oculumCombatAbilityRole(
+            effects.isEmpty
+                ? oculumParseAbilityMechanics(
+                    '$description $skill',
+                    subtraits: hiddenEyeStats,
+                  ).effects
+                : effects,
+          ),
+          color: statFormulaColor('oculum'),
+          enabled: title.evoluto,
+          hint: '$description\n$skill',
+          use: () => usaOpen(title, openExtra: extra),
+        ));
+      }
+
+      addTitleOpen(null);
+      for (final extra in title.openExtra) {
+        addTitleOpen(extra);
       }
     }
     for (final skill in skills.where((s) => s.equipaggiata && !s.passiva)) {
@@ -458,6 +632,36 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             use: () => usaSkillOpenMostro(arti.indexOf(art)),
           ));
         }
+      }
+    }
+    for (final item in inventario.where(
+      (i) => i.equipaggiata && i.quantita > 0 && i.ability != null,
+    )) {
+      final ability = item.ability!;
+      ability.ensureForms();
+      for (final (index, form) in ability.forme.indexed) {
+        if (form.tipo.toLowerCase().contains('passiv')) continue;
+        final effects = form.effettiStrutturati.isNotEmpty
+            ? form.effettiStrutturati
+            : oculumParseStructuredEffectsFromText(
+                form.descrizione,
+                subtraits: hiddenEyeStats,
+              ).effects;
+        final role = oculumCombatAbilityRole(effects, explicitType: form.tipo);
+        entries.add((
+          name: '${ability.nome} ${index + 1} · ${item.nome}',
+          role: role,
+          color: combatAbilityResourceColor([
+            form.costoStrutturato?.resource ?? form.costo,
+          ]),
+          enabled:
+              canEquipInventoryItem(item) &&
+              (form.cooldownStrutturato?.ready ?? true) &&
+              leggiNumero(livelloController) >=
+                  max(item.livelloOggetto, readIntValue(form.livello)),
+          hint: form.descrizione,
+          use: () => unawaited(useEquipmentQuickAbility(item, form, role)),
+        ));
       }
     }
     if (entries.isEmpty) return const SizedBox.shrink();

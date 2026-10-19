@@ -820,10 +820,42 @@ int oculumCoreRollExperienceTarget({
   return (levels: 0, experience: 0);
 }
 
+Map<int, int> oculumLevelMilestoneRewards(int level, Iterable<int> claimed) {
+  final taken = claimed.toSet();
+  return {
+    for (final milestone in const [5, 15, 25, 50, 100, 200])
+      if (level >= milestone && !taken.contains(milestone))
+        milestone: (milestone + 3) ~/ 4,
+  };
+}
+
+int oculumStandardTitleCapacity(int grade) =>
+    6 + (max(0, grade) ~/ 3).clamp(0, 3);
+int oculumLearningTitleCapacity(int grade) => 1 + max(0, grade);
+
+String oculumReputationFolderPath(String raw) => raw
+    .split('/')
+    .map((p) => p.trim())
+    .where((p) => p.isNotEmpty && p != '.' && p != '..')
+    .join('/');
+
+Set<String> oculumReputationFolderAncestors(Iterable<String> paths) {
+  final result = <String>{};
+  for (final raw in paths) {
+    final parts = oculumReputationFolderPath(raw).split('/');
+    for (var i = 1; i <= parts.length; i++) {
+      final path = parts.take(i).join('/');
+      if (path.isNotEmpty) result.add(path);
+    }
+  }
+  return result;
+}
+
 class ReputationEntry {
   ReputationEntry({
     required this.cityName,
     this.description = '',
+    this.folder = '',
     this.value = 0,
     int? baseValue,
     this.userModified = false,
@@ -831,6 +863,7 @@ class ReputationEntry {
   }) : baseValue = baseValue ?? value;
 
   String cityName;
+  String folder;
   String description;
   int value;
   int baseValue;
@@ -839,6 +872,7 @@ class ReputationEntry {
 
   Map<String, dynamic> toJson() => {
     'cityName': cityName,
+    'folder': oculumReputationFolderPath(folder),
     'description': description,
     'value': value,
     'baseValue': baseValue,
@@ -850,6 +884,7 @@ class ReputationEntry {
     final value = readIntValue(json['value']);
     return ReputationEntry(
       cityName: '${json['cityName'] ?? ''}',
+      folder: oculumReputationFolderPath('${json['folder'] ?? ''}'),
       description: '${json['description'] ?? ''}',
       value: value,
       baseValue: json.containsKey('baseValue')
@@ -1453,6 +1488,9 @@ class InventoryItem {
     this.scudoIntegritaCorrente = -1,
     this.scudoIntegritaOculumCorrente = -1,
     this.gradoOggetto = 0,
+    this.livelloOggetto = 0,
+    this.puntiStatPerLivello = 1,
+    this.statCrescita = '',
     this.gradoRichiesto = 0,
     this.elementoDanno = 'Fisico',
     this.putrefazioneSessioni = 0,
@@ -1485,6 +1523,9 @@ class InventoryItem {
   int scudoIntegritaCorrente;
   int scudoIntegritaOculumCorrente;
   int gradoOggetto;
+  int livelloOggetto;
+  int puntiStatPerLivello;
+  String statCrescita;
   int gradoRichiesto;
   String elementoDanno;
   int putrefazioneSessioni;
@@ -1519,6 +1560,9 @@ class InventoryItem {
       'scudoIntegritaCorrente': scudoIntegritaCorrente,
       'scudoIntegritaOculumCorrente': scudoIntegritaOculumCorrente,
       'gradoOggetto': gradoOggetto,
+      'livelloOggetto': livelloOggetto,
+      'puntiStatPerLivello': puntiStatPerLivello,
+      'statCrescita': statCrescita,
       'gradoRichiesto': gradoRichiesto,
       'elementoDanno': elementoDanno,
       'putrefazioneSessioni': putrefazioneSessioni,
@@ -1578,6 +1622,14 @@ class InventoryItem {
         fallback: -1,
       ),
       gradoOggetto: readIntValue(json['gradoOggetto']).clamp(0, 12).toInt(),
+      livelloOggetto: readIntValue(
+        json['livelloOggetto'],
+      ).clamp(0, 10000).toInt(),
+      puntiStatPerLivello: readIntValue(
+        json['puntiStatPerLivello'],
+        fallback: 1,
+      ).clamp(1, 3).toInt(),
+      statCrescita: '${json['statCrescita'] ?? ''}',
       gradoRichiesto: readIntValue(json['gradoRichiesto']).clamp(0, 12).toInt(),
       elementoDanno: oculumCleanMojibakeText(
         '${json['elementoDanno'] ?? json['tipoDanno'] ?? 'Fisico'}',

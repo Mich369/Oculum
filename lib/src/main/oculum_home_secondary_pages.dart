@@ -8763,6 +8763,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
 
     skill.livello = livelloNuovo;
+    if (artIndex == 0 &&
+        skillIndex >= 0 &&
+        skillIndex < 3 &&
+        livelloNuovo >= skillIndex + 1 &&
+        fateArtSlotMilestones.add(skillIndex)) {
+      aggiungiLog(
+        '[SLOT TITOLO DEL FATO] Ottenuto dalla forma ${skillIndex + 1} della skill ${skillIndex + 1} della Prima Art.',
+      );
+    }
     skill.activeTurnsRemaining =
         livelloNuovo > 0 &&
             !skill.tipoPerLivello(livelloNuovo).toLowerCase().contains('passiv')

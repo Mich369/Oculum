@@ -18,11 +18,15 @@ class _LayerTransport extends OculumRealtimeService {
       );
   @override
   bool get isConnected => true;
+  final sent = <(String, Map<String, dynamic>)>[];
   @override
   Future<bool> sendCombatEvent(
     String event,
     Map<String, dynamic> payload,
-  ) async => true;
+  ) async {
+    sent.add((event, Map<String, dynamic>.from(payload)));
+    return true;
+  }
 }
 
 void main() {
@@ -83,7 +87,8 @@ void main() {
     final enemy = '${state.schedePersonaggio[1]['sheetTag']}';
     state.modalitaMaster = false;
     state.sonoCoMaster = false;
-    state.realtimeService = _LayerTransport();
+    final transport = _LayerTransport();
+    state.realtimeService = transport;
     state.realtimeVisibleInitiativeSnapshot = <String, dynamic>{
       'encounterId': 'fight',
       'tokens': [
@@ -151,7 +156,7 @@ void main() {
       final defense = probe.defense();
       final raw = defense + result.$3;
       final id = 'layers-${result.$2}-${result.$3}';
-      probe.receiveCombat('combat_attack', {
+      final packet = <String, dynamic>{
         'id': id,
         'scope': probe.permissionScope,
         'campaignId': state.activeCampaignId,
@@ -168,7 +173,25 @@ void main() {
         'level': 0,
         'difficulty': 'normale',
         'element': 'fisico',
-      });
+      };
+      if (result.$3 == 5) {
+        final readySnapshot = state.realtimeVisibleInitiativeSnapshot;
+        state.realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
+        probe.receiveCombat('combat_attack', packet);
+        expect(
+          state.onlineCombatRequests.containsKey(id),
+          isFalse,
+          reason:
+              'A browser without the encounter cannot yet accept the attack',
+        );
+        state.realtimeVisibleInitiativeSnapshot = readySnapshot;
+      }
+      probe.receiveCombat('combat_attack', packet);
+      expect(
+        state.onlineCombatRequests.containsKey(id),
+        isTrue,
+        reason: 'Retry after encounter sync must deliver the original request',
+      );
       final request = Map<String, dynamic>.from(
         state.onlineCombatRequests[id] as Map,
       );
@@ -251,6 +274,48 @@ void main() {
     expect(grouped.map((r) => r['targetTag']).toSet(), {enemy, 'OTHER'});
     expect(grouped.map((r) => r['attackGroupId']).toSet(), hasLength(1));
     expect(grouped.map((r) => r['attack']).toSet(), hasLength(1));
+    transport.sent.clear();
+    await tester.runAsync(() => probe.retryCombat());
+    expect(
+      transport.sent.where((e) => e.$1 == 'combat_attack'),
+      hasLength(2),
+      reason:
+          'Server acceptance alone must not stop retries before recipient receipt',
+    );
+    final outgoing = grouped.firstWhere((r) => r['targetTag'] == enemy);
+    final acknowledgement = <String, dynamic>{
+      'id': outgoing['id'],
+      'sourceTag': owner,
+      'targetTag': enemy,
+      'scope': probe.permissionScope,
+      'campaignId': state.activeCampaignId,
+      'encounterId': 'fight',
+      'sessionId': 'enemy-session',
+      'senderTag': enemy,
+      'senderRole': 'player',
+      'phase': 'attack',
+    };
+    probe.receiveCombat('combat_ack', {
+      ...acknowledgement,
+      'sessionId': 'forged',
+    });
+    expect(outgoing['attackAcknowledged'], isNot(true));
+    probe.receiveCombat('combat_ack', acknowledgement);
+    expect(outgoing['attackAcknowledged'], isTrue);
+    transport.sent.clear();
+    await tester.runAsync(() => probe.retryCombat());
+    expect(transport.sent.where((e) => e.$1 == 'combat_attack'), hasLength(1));
+    expect(
+      transport.sent
+          .where((e) => e.$1 == 'combat_attack')
+          .single
+          .$2['targetTag'],
+      'OTHER',
+    );
+    expect(
+      (state.logEventi as List).join('\n'),
+      contains('[ATTACCO RICEVUTO]'),
+    );
     state.campaignDifficulty = 'normale';
     state.coreMasteryPoints.clear();
     state.esperienzaCriticaStatistiche['vc'] = 0;
@@ -299,6 +364,102 @@ void main() {
       (state.logEventi as List).join('\n'),
       contains('[AIUTO CONSUMATO] +7'),
     );
+    probe.receiveCombat('combat_help', {
+      ...helpPacket,
+      'id': 'negative-help',
+      'helpBonus': -4,
+    });
+    expect(probe.consumeHelp(), -4);
+    expect(probe.consumeHelp(), 0);
+    probe.receiveCombat('combat_help', {
+      ...helpPacket,
+      'id': 'negative-help',
+      'helpBonus': -4,
+    });
+    expect(
+      probe.consumeHelp(),
+      0,
+      reason: 'A repeated negative help packet must not apply twice',
+    );
+    expect(
+      (state.logEventi as List).join('\n'),
+      contains('[AIUTO CONSUMATO] -4'),
+    );
+    state.currentHpController.text = '900';
+    final hpBeforeSupport = int.parse(state.currentHpController.text as String);
+    final supportPacket = {
+      ...helpPacket,
+      'id': 'heal-once',
+      'helpMode': 'effects',
+      'effects': [
+        OculumStructuredEffect(
+          type: 'cura',
+          resource: 'vita',
+          valueExpression: '7',
+          duration: '0',
+          recipient: 'alleato',
+        ).toJson(),
+      ],
+    };
+    probe.receiveCombat('combat_help', supportPacket);
+    expect(
+      int.parse(state.currentHpController.text as String),
+      hpBeforeSupport + 7,
+    );
+    probe.receiveCombat('combat_help', supportPacket);
+    expect(
+      int.parse(state.currentHpController.text as String),
+      hpBeforeSupport + 7,
+      reason: 'A retry must not heal twice',
+    );
+    final scoutPacket = {
+      ...helpPacket,
+      'id': 'scout-once',
+      'scoutPhase': 'request',
+      'kind': 'scout',
+      'natural': 20,
+      'total': 10000,
+    };
+    probe.receiveCombat('combat_scout', {
+      ...scoutPacket,
+      'sessionId': 'forged',
+    });
+    expect(state.onlineCombatRequests.containsKey('scout-once'), isFalse);
+    probe.receiveCombat('combat_scout', scoutPacket);
+    expect(state.onlineCombatRequests['scout-once']['scoutPhase'], 'result');
+    expect(state.onlineCombatRequests['scout-once']['weakPoint'], isTrue);
+    final scoutLogs = (state.logEventi as List)
+        .where((e) => '$e'.contains('[OSSERVAZIONE]'))
+        .length;
+    probe.receiveCombat('combat_scout', scoutPacket);
+    expect(
+      (state.logEventi as List)
+          .where((e) => '$e'.contains('[OSSERVAZIONE]'))
+          .length,
+      scoutLogs,
+    );
+    for (var i = 0; i < 4; i++) {
+      final run = {
+        'chainedFate': {
+          'id': 'fate-test-$i',
+          'status': 'completed',
+          'participants': [owner],
+          'name': 'Dungeon prova',
+        },
+      };
+      probe.completeFate(run);
+      probe.completeFate(run);
+    }
+    expect(state.chainedFateCompletedIds.length, 4);
+    state.realtimeVisibleInitiativeSnapshot['chainedFate'] = {
+      'id': 'fate-active',
+      'status': 'active',
+      'participants': [owner],
+    };
+    expect(probe.fateExperienceMultiplier(), 3);
+    state.realtimeVisibleInitiativeSnapshot['chainedFate']['status'] =
+        'cancelled';
+    expect(probe.fateExperienceMultiplier(), 1);
     state.realtimeService = null;
     state.schedePersonaggio[1]['realtimeSharedSheet'] = false;
     final helping = probe.helpAlly();
@@ -313,11 +474,17 @@ void main() {
     );
     await tester.pump();
     await tester.runAsync(() async => await helping);
-    expect(
-      state.schedePersonaggio[1]['combatHelpPending'],
-      greaterThanOrEqualTo(0),
-    );
-    expect((state.logEventi as List).join('\n'), contains('→ Avversario'));
+    final pendingHelp = state.schedePersonaggio[1]['combatHelpPending'];
+    expect(pendingHelp, isA<int>());
+    final helpLog = (state.logEventi as List)
+        .map((entry) => '$entry')
+        .firstWhere((entry) => entry.contains('[AIUTA COMPAGNO]'));
+    final loggedBonus = RegExp(
+      r': ([+-]?\d+) al prossimo tiro',
+    ).firstMatch(helpLog);
+    expect(loggedBonus, isNotNull);
+    expect(int.parse(loggedBonus!.group(1)!), pendingHelp);
+    expect(helpLog, contains('→ Avversario'));
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
   });

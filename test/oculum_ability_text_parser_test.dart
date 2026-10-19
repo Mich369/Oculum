@@ -2,8 +2,34 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('explicit target ranges survive copying and JSON', () {
+    final effect = OculumStructuredEffect(
+      type: 'cura',
+      recipient: 'alleato',
+      valueExpression: '7',
+      minimumTargets: 2,
+      maximumTargets: 4,
+    );
+    final restored = effect.copyForNextForm();
+    expect(restored.minimumTargets, 2);
+    expect(restored.maximumTargets, 4);
+    expect(restored.recipient, 'alleato');
+    final legacy = OculumStructuredEffect.fromJson({
+      'type': 'cura',
+      'valueExpression': '7',
+    });
+    expect(legacy.minimumTargets, 0);
+    expect(legacy.maximumTargets, 0);
+    final parsed = oculumParseAbilityMechanics('Cura 7 Vita a 2 alleati');
+    expect(parsed.effects, isNotEmpty);
+    expect(parsed.effects.first.recipient, 'alleato');
+    expect(parsed.effects.first.minimumTargets, 2);
+    expect(parsed.effects.first.maximumTargets, 2);
+  });
   test('inline cost does not swallow executable bonuses', () {
-    final result = oculumParseAbilityMechanics('Costo: 2 Oculum; @VC+3 per 2 turni');
+    final result = oculumParseAbilityMechanics(
+      'Costo: 2 Oculum; @VC+3 per 2 turni',
+    );
     expect(result.effects.single.target, 'VC');
     expect(result.effects.single.valueExpression, '3');
     expect(result.effects.single.duration, '2');
@@ -20,11 +46,22 @@ void main() {
     }
   });
   test('semantic matching preserves timing differences and ignores IDs', () {
-    final first = oculumParseAbilityMechanics('@VC+3 per 2 turni').effects.single;
-    final copy = OculumStructuredEffect.fromJson({...first.toJson(), 'id': 'another'});
-    expect(oculumStructuredEffectSemanticKey(copy), oculumStructuredEffectSemanticKey(first));
+    final first = oculumParseAbilityMechanics(
+      '@VC+3 per 2 turni',
+    ).effects.single;
+    final copy = OculumStructuredEffect.fromJson({
+      ...first.toJson(),
+      'id': 'another',
+    });
+    expect(
+      oculumStructuredEffectSemanticKey(copy),
+      oculumStructuredEffectSemanticKey(first),
+    );
     copy.durationUnit = 'azioni';
-    expect(oculumStructuredEffectSemanticKey(copy), isNot(oculumStructuredEffectSemanticKey(first)));
+    expect(
+      oculumStructuredEffectSemanticKey(copy),
+      isNot(oculumStructuredEffectSemanticKey(first)),
+    );
   });
   test('resource costs distinguish fixed, variable and free use', () {
     expect(oculumParseAbilityCost('costo 1 Volontà')?.resource, 'volonta');

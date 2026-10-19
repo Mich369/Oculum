@@ -3,6 +3,39 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/widgets/oculum_attack_planner.dart';
 
 void main() {
+  testWidgets('missing required hits repeat the only selected target', (
+    tester,
+  ) async {
+    OculumAttackPlan? result;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            child: const Text('Apri'),
+            onPressed: () async {
+              result = await showDialog<OculumAttackPlan>(
+                context: context,
+                builder: (_) => OculumAttackPlanner(
+                  targets: const {'enemy': 'Slime'},
+                  minimumTargets: 3,
+                  maximumTargets: 3,
+                  choices: const [OculumAttackChoice('vc', 'VC', 3)],
+                  chance: (_, _) => null,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Apri'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dichiara e tira'));
+    await tester.pumpAndSettle();
+    expect(result?.targetIds, ['enemy', 'enemy', 'enemy']);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'multiple targets enforce minimum and maximum independently of roll choice',
     (tester) async {
@@ -20,7 +53,7 @@ void main() {
       FilledButton submit() => tester.widget<FilledButton>(
         find.widgetWithText(FilledButton, 'Dichiara e tira'),
       );
-      expect(submit().onPressed, isNull);
+      expect(submit().onPressed, isNotNull);
       await tester.tap(find.widgetWithText(CheckboxListTile, 'Slime B'));
       await tester.pump();
       expect(submit().onPressed, isNotNull);
@@ -34,7 +67,7 @@ void main() {
       );
       await tester.tap(find.widgetWithText(CheckboxListTile, 'Slime B'));
       await tester.pump();
-      expect(submit().onPressed, isNull);
+      expect(submit().onPressed, isNotNull);
       expect(tester.takeException(), isNull);
     },
   );
@@ -62,7 +95,7 @@ void main() {
             find.widgetWithText(FilledButton, 'Dichiara e tira'),
           )
           .onPressed,
-      isNull,
+      isNotNull,
     );
   });
   testWidgets('optional rolls can be added and removed without losing VC', (
@@ -100,7 +133,7 @@ void main() {
   });
   for (final size in [const Size(1440, 900), const Size(390, 844)]) {
     testWidgets(
-      'planner requires an explanation for alternative attacks $size',
+      'planner allows verbal explanation for alternative attacks $size',
       (tester) async {
         tester.view.physicalSize = size;
         tester.view.devicePixelRatio = 1;
@@ -120,11 +153,11 @@ void main() {
             ),
           ),
         );
-        expect(find.textContaining('difesa non condivisa'), findsNWidgets(2));
+        expect(find.textContaining('difesa non condivisa'), findsNothing);
         await tester.tap(find.text('Forza +7'));
         await tester.pump();
         final submit = find.widgetWithText(FilledButton, 'Dichiara e tira');
-        expect(tester.widget<FilledButton>(submit).onPressed, isNull);
+        expect(tester.widget<FilledButton>(submit).onPressed, isNotNull);
         await tester.enterText(
           find.byKey(const ValueKey('attack-reason')),
           'Spingo il masso contro la gamba',

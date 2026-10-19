@@ -16,6 +16,7 @@ void main() {
     state.masterInitiativeTokens.clear();
     state.volontaController.text = '5';
     state.currentVolontaController.text = '10';
+    state.gradoController.text = '12';
     state.oculumController.text = '0';
     state.currentOculumController.text = '0';
     if (state.schedePersonaggio.isEmpty) {

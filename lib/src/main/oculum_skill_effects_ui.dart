@@ -1361,6 +1361,12 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     final maximumController = TextEditingController(
       text: seed.maximum?.toString() ?? '',
     );
+    final minimumTargetsController = TextEditingController(
+      text: seed.minimumTargets > 0 ? '${seed.minimumTargets}' : '',
+    );
+    final maximumTargetsController = TextEditingController(
+      text: seed.maximumTargets > 0 ? '${seed.maximumTargets}' : '',
+    );
     final narrativeController = TextEditingController(text: seed.narrativeText);
     final customController = TextEditingController(
       text: seed.customDisplayText,
@@ -1407,6 +1413,12 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         durationUnit: durationUnit,
         frequency: frequencyController.text.trim(),
         recipient: recipient,
+        minimumTargets: (int.tryParse(minimumTargetsController.text) ?? 0)
+            .clamp(0, 100),
+        maximumTargets: max(
+          int.tryParse(minimumTargetsController.text) ?? 0,
+          int.tryParse(maximumTargetsController.text) ?? 0,
+        ).clamp(0, 100),
         diceExpression: diceController.text.trim(),
         diceDestination: diceDestination,
         includeLevel: includeLevel,
@@ -1892,6 +1904,12 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                               child: Text(t('Bersaglio', 'Target')),
                             ),
                             DropdownMenuItem(
+                              value: 'alleato',
+                              child: Text(
+                                t('Alleati / Se stessi', 'Allies / Self'),
+                              ),
+                            ),
+                            DropdownMenuItem(
                               value: 'area',
                               child: Text(t('Area', 'Area')),
                             ),
@@ -1899,6 +1917,30 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                           onChanged: (value) => setDialogState(() {
                             recipient = value ?? 'se_stesso';
                           }),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: minimumTargetsController,
+                                keyboardType: TextInputType.number,
+                                decoration: fieldDecoration(
+                                  'Bersagli / colpi minimi (auto se vuoto)',
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: maximumTargetsController,
+                                keyboardType: TextInputType.number,
+                                decoration: fieldDecoration(
+                                  'Bersagli / colpi massimi (auto se vuoto)',
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 10),
                         ExpansionTile(
@@ -2216,6 +2258,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       frequencyController.dispose();
       diceController.dispose();
       gradeValueController.dispose();
+      minimumTargetsController.dispose();
+      maximumTargetsController.dispose();
       minimumController.dispose();
       maximumController.dispose();
       narrativeController.dispose();

@@ -1,3 +1,4 @@
+import 'oculum_custom_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'oculum_goth_ornaments.dart';
@@ -41,6 +42,7 @@ class OculumThemePresentation {
 final oculumThemePresentation = ValueNotifier(const OculumThemePresentation());
 
 Future<void> loadOculumThemePresentation() async {
+  await loadOculumCustomArtwork();
   final prefs = await SharedPreferences.getInstance();
   final name = prefs.getString('oculum.themeMotion');
   oculumThemePresentation.value = OculumThemePresentation(

@@ -51,6 +51,8 @@ import 'widgets/oculum_reference_frame.dart';
 import 'widgets/oculum_goth_ornaments.dart';
 import 'widgets/oculum_resource_bar_fx.dart';
 import 'widgets/oculum_theme_presentation.dart';
+import 'widgets/oculum_custom_theme.dart';
+import 'widgets/oculum_watching_eyes.dart';
 import 'widgets/oculum_combat_theme.dart';
 import 'widgets/oculum_theme_relic.dart';
 import 'widgets/oculum_theme_sheet_art.dart';
@@ -120,6 +122,10 @@ part 'src/main/oculum_authored_materials.dart';
 part 'src/main/oculum_crafting_expansion.dart';
 part 'src/main/oculum_skill_target_automation.dart';
 part 'src/main/oculum_online_attacks.dart';
+part 'src/main/oculum_combat_scout.dart';
+part 'src/main/oculum_master_roll_requests.dart';
+part 'src/main/oculum_encounter_rewards.dart';
+part 'src/main/oculum_alchemy_pets.dart';
 part 'src/main/oculum_humanoid_roles.dart';
 part 'src/main/oculum_global_search.dart';
 part 'src/main/oculum_friends.dart';
@@ -920,6 +926,8 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   void notifyExperienceChanged() {
     if (!mounted) return;
+    claimQueuedEncounterRewards();
+    claimLevelMilestoneRewards();
     oculumProgressProfileCount('expNotifications');
     experienceRevision.value++;
   }
@@ -1496,6 +1504,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   List<Map<String, dynamic>> merchantHerbalEffects = <Map<String, dynamic>>[];
   bool merchantIsOpen = false;
   bool merchantDustPurchasedSinceLongRest = false;
+  int merchantDustPurchaseCount = 0;
   final ascensionDustController = TextEditingController(text: '0');
   final ispirazioniController = TextEditingController(text: '0');
   final superIspirazioniController = TextEditingController(text: '0');
@@ -1657,6 +1666,11 @@ class _OculumHomePageState extends State<OculumHomePage>
   final List<OculumTemporaryResistanceEffect> temporaryCombatResistanceEffects =
       <OculumTemporaryResistanceEffect>[];
   final List<ReputationEntry> reputations = [];
+  final Set<String> reputationFolders = {};
+  final Set<String> chainedFateCompletedIds = {};
+  final Set<int> fateArtSlotMilestones = {};
+  final Set<int> levelMilestoneClaims = {};
+  int levelMilestoneReserve = 0;
   bool reputationsManuallyCleared = false;
   final List<String> logEventi = [];
   final List<Map<String, dynamic>> partyMembri = [];
@@ -1837,6 +1851,13 @@ class _OculumHomePageState extends State<OculumHomePage>
     'iniziativa': 0,
     'aiuta_compagno': 0,
   };
+  final Set<String> combatDefenseRollIds = {
+    'riflessi',
+    'resistenza',
+    'manifestazione_potere',
+  };
+  bool onlineCombatReplayInFlight = false;
+  bool combatSupportTargeting = false;
   final Map<String, int> coreMasteryPoints = <String, int>{};
   String lastValidRollSnapshot = '';
   bool lastValidRollCancelled = false;
@@ -2047,6 +2068,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool coMasterCanSetCoMaster = false;
   final Map<String, Map<String, dynamic>> onlinePermissionRequests = {};
   final Map<String, Map<String, dynamic>> onlineCombatRequests = {};
+  final Map<String, Map<String, dynamic>> combatDiscoveries = {};
   final Set<String> onlineCombatResolving = {};
   final Set<String> trustedCoMasterTags = {};
   final ValueNotifier<int> onlinePermissionRevision = ValueNotifier(0);

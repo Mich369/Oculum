@@ -2776,6 +2776,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          levelMilestoneReservePanel(),
+          const SizedBox(height: 12),
           Text(
             expName,
             maxLines: 2,
@@ -4778,10 +4780,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 onPressed: () => modificaDifesaRapida(1),
               ),
               quickCommandButton(
-                label: t('Aiuta compagno', 'Help ally'),
+                label: t('Aiuto e utilità', 'Help and utility'),
                 icon: Icons.volunteer_activism,
                 color: const Color(0xFF7EE7C8),
-                onPressed: tiraAiutaCompagno,
+                onPressed: () => showCombatActionPanel(OculumCombatAbilityRole.support),
               ),
               quickCommandButton(
                 label: scannerRiposiLunghi >= 3
@@ -5160,6 +5162,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
 
   void openReputationManagerSheet() {
     setState(ensureReputationDefaults);
+    var folder = '';
+    final origin = currentSheetScrollId();
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -5196,96 +5200,236 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                         ),
                         subtitle: Text(
                           t(
-                            'Modifica manualmente ogni citta e il valore da -100 a +100.',
+                            'Organizza città e luoghi in cartelle e sottocartelle. Valori da -100 a +100.',
                             'Manually edit every city and its -100 to +100 value.',
                           ),
                           style: const TextStyle(color: Colors.white70),
                         ),
                       ),
-                      for (var i = 0; i < reputations.length; i++) ...[
-                        gothicPanel(
-                          borderColor: Colors.amber.withValues(alpha: 0.55),
-                          padding: const EdgeInsets.all(10),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    flex: 2,
-                                    child: campoModello(
-                                      fieldKey: ValueKey('rep_city_modal_$i'),
-                                      label: t('Citta', 'City'),
-                                      initialValue: reputations[i].cityName,
-                                      onChanged: (value) {
-                                        reputations[i].cityName = cleanUiText(
-                                          value,
-                                        );
-                                        reputations[i].userModified = true;
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: campoModello(
-                                      fieldKey: ValueKey('rep_value_modal_$i'),
-                                      label: t('Valore', 'Value'),
-                                      initialValue: '${reputations[i].value}',
-                                      onChanged: (value) {
-                                        final next =
-                                            (int.tryParse(value.trim()) ?? 0)
-                                                .clamp(-100, 100)
-                                                .toInt();
-                                        reputations[i].value = next;
-                                        reputations[i].baseValue = next;
-                                        reputations[i].userModified = true;
-                                      },
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: t('Cancella', 'Delete'),
-                                    onPressed: () {
-                                      setSheetState(() {
-                                        reputations.removeAt(i);
-                                        reputationsManuallyCleared =
-                                            reputations.isEmpty;
-                                      });
-                                      setState(() {});
-                                      programmaSalvataggio();
-                                    },
-                                    icon: const Icon(
-                                      Icons.delete_outline,
-                                      color: Colors.redAccent,
-                                    ),
-                                  ),
-                                ],
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (folder.isNotEmpty)
+                            TextButton.icon(
+                              onPressed: () => setSheetState(
+                                () => folder = folder.contains('/')
+                                    ? folder.substring(
+                                        0,
+                                        folder.lastIndexOf('/'),
+                                      )
+                                    : '',
                               ),
-                              const SizedBox(height: 8),
-                              campoModello(
-                                fieldKey: ValueKey('rep_desc_modal_$i'),
-                                label: t('Descrizione', 'Description'),
-                                initialValue: reputations[i].description,
-                                maxLines: 2,
-                                onChanged: (value) {
-                                  reputations[i].description = cleanUiText(
-                                    value,
-                                  );
-                                  reputations[i].userModified = true;
-                                },
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                reputationLabel(reputations[i].value),
-                                style: TextStyle(
-                                  color: Colors.amber.shade200,
-                                  fontWeight: FontWeight.w900,
+                              icon: const Icon(Icons.arrow_back),
+                              label: const Text('Cartella superiore'),
+                            ),
+                          TextButton.icon(
+                            icon: const Icon(Icons.create_new_folder_outlined),
+                            label: const Text('Nuova sottocartella'),
+                            onPressed: () async {
+                              final controller = TextEditingController();
+                              final name = await showDialog<String>(
+                                context: sheetContext,
+                                builder: (dialog) => AlertDialog(
+                                  title: const Text(
+                                    'Nuova cartella · Reputazioni',
+                                  ),
+                                  content: TextField(
+                                    controller: controller,
+                                    autofocus: true,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Nome città, regione o luogo',
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(dialog),
+                                      child: const Text('Annulla'),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () => Navigator.pop(
+                                        dialog,
+                                        controller.text.trim(),
+                                      ),
+                                      child: const Text('Crea'),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                              );
+                              controller.dispose();
+                              if (!mounted ||
+                                  !sheetContext.mounted ||
+                                  currentSheetScrollId() != origin ||
+                                  name == null ||
+                                  name.isEmpty) {
+                                return;
+                              }
+                              final path = oculumReputationFolderPath(
+                                folder.isEmpty ? name : '$folder/$name',
+                              );
+                              setSheetState(
+                                () => reputationFolders.addAll(
+                                  oculumReputationFolderAncestors([path]),
+                                ),
+                              );
+                              programmaSalvataggio();
+                            },
                           ),
+                        ],
+                      ),
+                      Text(
+                        folder.isEmpty
+                            ? 'Tutti i luoghi · cartella principale'
+                            : folder,
+                        style: TextStyle(
+                          color: tertiaryColor,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 8),
-                      ],
+                      ),
+                      for (final child
+                          in (reputationFolders
+                              .where(
+                                (path) =>
+                                    (path.contains('/')
+                                        ? path.substring(
+                                            0,
+                                            path.lastIndexOf('/'),
+                                          )
+                                        : '') ==
+                                    folder,
+                              )
+                              .toList()
+                            ..sort()))
+                        ListTile(
+                          leading: Icon(
+                            Icons.folder_outlined,
+                            color: tertiaryColor,
+                          ),
+                          title: Text(child.split('/').last),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => setSheetState(() => folder = child),
+                        ),
+                      for (var i = 0; i < reputations.length; i++)
+                        if (reputations[i].folder == folder) ...[
+                          gothicPanel(
+                            borderColor: Colors.amber.withValues(alpha: 0.55),
+                            padding: const EdgeInsets.all(10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: campoModello(
+                                        fieldKey: ValueKey('rep_city_modal_$i'),
+                                        label: t('Citta', 'City'),
+                                        initialValue: reputations[i].cityName,
+                                        onChanged: (value) {
+                                          reputations[i].cityName = cleanUiText(
+                                            value,
+                                          );
+                                          reputations[i].userModified = true;
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: campoModello(
+                                        fieldKey: ValueKey(
+                                          'rep_value_modal_$i',
+                                        ),
+                                        label: t('Valore', 'Value'),
+                                        initialValue: '${reputations[i].value}',
+                                        onChanged: (value) {
+                                          final next =
+                                              (int.tryParse(value.trim()) ?? 0)
+                                                  .clamp(-100, 100)
+                                                  .toInt();
+                                          reputations[i].value = next;
+                                          reputations[i].baseValue = next;
+                                          reputations[i].userModified = true;
+                                        },
+                                      ),
+                                    ),
+                                    IconButton(
+                                      tooltip: t('Cancella', 'Delete'),
+                                      onPressed: () {
+                                        setSheetState(() {
+                                          reputations.removeAt(i);
+                                          reputationsManuallyCleared =
+                                              reputations.isEmpty;
+                                        });
+                                        setState(() {});
+                                        programmaSalvataggio();
+                                      },
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        color: Colors.redAccent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                DropdownButtonFormField<String>(
+                                  key: ValueKey(
+                                    'rep_folder_${i}_${reputations[i].folder}',
+                                  ),
+                                  initialValue: reputations[i].folder,
+                                  isExpanded: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Sposta in cartella',
+                                  ),
+                                  items: [
+                                    const DropdownMenuItem(
+                                      value: '',
+                                      child: Text('Cartella principale'),
+                                    ),
+                                    for (final path
+                                        in (reputationFolders.toList()..sort()))
+                                      DropdownMenuItem(
+                                        value: path,
+                                        child: Text(
+                                          path,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                  ],
+                                  onChanged: (value) {
+                                    if (value == null) return;
+                                    setSheetState(() {
+                                      reputations[i].folder = value;
+                                      reputations[i].userModified = true;
+                                    });
+                                    programmaSalvataggio();
+                                  },
+                                ),
+                                const SizedBox(height: 8),
+                                campoModello(
+                                  fieldKey: ValueKey('rep_desc_modal_$i'),
+                                  label: t('Descrizione', 'Description'),
+                                  initialValue: reputations[i].description,
+                                  maxLines: 2,
+                                  onChanged: (value) {
+                                    reputations[i].description = cleanUiText(
+                                      value,
+                                    );
+                                    reputations[i].userModified = true;
+                                  },
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  reputationLabel(reputations[i].value),
+                                  style: TextStyle(
+                                    color: Colors.amber.shade200,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
                       Align(
                         alignment: Alignment.centerLeft,
                         child: OutlinedButton.icon(
@@ -5295,6 +5439,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                               reputations.add(
                                 ReputationEntry(
                                   cityName: t('Nuova citta', 'New city'),
+                                  folder: folder,
                                   description: '',
                                   value: 0,
                                   userModified: true,
@@ -7397,13 +7542,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             runSpacing: 8,
             children: [
               ElevatedButton.icon(
-                onPressed: tiraAiutaCompagno,
+                onPressed: () => showCombatActionPanel(OculumCombatAbilityRole.support),
                 icon: const Icon(Icons.volunteer_activism),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF7EE7C8),
                   foregroundColor: Colors.black,
                 ),
-                label: Text(t('Aiuta compagno', 'Help ally')),
+                label: Text(t('Aiuto e utilità', 'Help and utility')),
               ),
               Chip(
                 avatar: const Icon(Icons.casino, size: 16),

@@ -10,7 +10,7 @@ const List<ManualSection> oculumManualSections = [
     contentIt: r'''
 Maestria (conferma 19 ottobre 2026): i primi sei punti dei Sottotratti richiedono 100/200/350/500/700/850 EXP; poi sempre 1000. VC, CM e Aiuta compagno richiedono 250/500/750, poi 1000; Iniziativa 200/400/600/800, poi 1000. Si contano solo i punti guadagnati tramite Maestria, con avanzo conservato. Punti base, assegnazioni manuali e buff non anticipano le soglie. Il guadagno EXP per tiro resta legato alla difficoltà.
 
-Aiuta compagno: scegli l'alleato prima del tiro. Il totale non negativo resta come aiuto per il suo prossimo tiro, compare nella formula e nel log e si consuma una volta. Online scegli fra i partecipanti vivi dello scontro; offline fra le altre schede locali. Per gli attacchi multipli scegli i bersagli entro i limiti della tecnica: ognuno risolve la propria difesa ed i propri danni, mentre costo e cooldown della tecnica si pagano una volta.
+Aiuta compagno: scegli l'alleato prima del tiro. Il totale, anche negativo, resta come aiuto per il suo prossimo tiro, compare nella formula e nel log e si consuma una volta. Online scegli fra i partecipanti vivi dello scontro; offline fra le altre schede locali. Per gli attacchi multipli scegli i bersagli entro i limiti della tecnica: ognuno risolve la propria difesa ed i propri danni, mentre costo e cooldown della tecnica si pagano una volta.
 
 In Oculum il potere passa dagli occhi. Un occhio può custodire un ricordo, portare i segni di un trauma o dare forma a ciò che desideri. Le sue capacità si intrecciano con la storia di chi lo possiede.
 
@@ -4083,8 +4083,21 @@ La modalità fuga di Scavata usa il sottotratto Velo. Questa scelta non modifica
 PERGAMENE MONOUSO
 L'uso consuma una pergamena ed esegue la tecnica; non assegna automaticamente una skill permanente. Anche un tiro fallito consuma la pergamena. Con 20 naturale e totale almeno 30 + 10 × grado si verifica separatamente l'apprendimento: Facile 20%, Medio 15%, Difficile 10%, Oculum 5%. La skill eventualmente appresa conserva costi e cooldown, non è evolvibile e non viene duplicata.
 
+BERSAGLI, SUPPORTI E OSSERVAZIONE — 19 OTTOBRE
+La fascia di bersagli/colpi è modificabile nell'editor degli effetti. Un bersaglio può ricevere più colpi; quelli minimi mancanti vengono distribuiti fra i destinatari selezionati. Costo e cooldown si pagano una volta. Anche cure e supporti possono scegliere più destinatari, compresi se stessi; Aiuta compagno può dare un modificatore positivo o negativo al prossimo tiro e viene consumato una volta.
+Percezione e Investigazione scelgono un bersaglio: totale almeno pari al suo livello rivela il livello esatto e le stime; il critico scopre il punto debole e concede a sé e alleati Fragilità Semi Letale verso quel nemico fino a fine fight. Nel pannello Tiri e azioni compare il migliore dei due sottotratti disponibili. Gli scontri restano distinti, salvo unione esplicita del Master.
+
+TITOLI E CHAINED FATE — 19 OTTOBRE
+Sei slot standard iniziali, sette al Grado III, otto al VI e nove al IX. Apprendimento: uno slot iniziale più uno per Grado; con Rebirth i primi tre Evoluti non occupano slot. Alchimia/Magia usa slot distinti pari al Grado, con uno già utilizzabile al Grado 0 per Rebirth. Chaos: uno slot ogni −10 Karma. Malanno: uno ogni sei Resilienza; non si rimuove volontariamente. Benessere non occupa slot.
+La Prima Art assegna uno slot Fato alla prima forma della prima skill, uno alla seconda forma della seconda skill e uno alla terza forma della terza skill. Ogni traguardo si ottiene una sola volta.
+Il Master avvia il Chained Fate e sceglie i partecipanti. Nei primi tre dungeon EXP ×2; ogni completamento dà uno slot Fato dedicato. Dai successivi EXP ×3 e nessuno slot aggiuntivo. Completare lo stesso dungeon due volte non ripete il premio.
+
+PARSER E MODIFICHE
+Il riconoscimento del testo prepara formule, dadi, durata e destinatari; le frasi non riconosciute restano manuali. «Da 2 a 4 bersagli», «2 nemici» e «fino a Oculum bersagli» configurano la fascia. Effetti e parametri rimangono modificabili e salvati nel JSON; i valori risolti dal lanciatore non si ritirano a ogni reinvio online. Il testo scritto della motivazione è facoltativo: può essere spiegata a voce al Master.
+Le Reputazioni possono essere organizzate in cartelle e sottocartelle senza limite fisso, conservando valori, descrizioni e influenza del Karma.
+
 ONLINE E OFFLINE
-Online, in una turnistica, dichiari il bersaglio. VC è il tiro di attacco ordinario: per un tiro alternativo devi descrivere l'attacco e motivarlo al Master. Il bersaglio riceve la richiesta di difendersi con CM, Riflessi, Resistenza o Manifestazione del Potere secondo la tecnica. Offline tutto rimane utilizzabile, con scelta di bersaglio, confronto dei tiri ed esito gestibili manualmente.
+Online, in una turnistica, dichiari il bersaglio. VC è il tiro di attacco ordinario: per un tiro alternativo basta descrivere l'attacco e motivarlo a voce al Master; scrivere è facoltativo. Il bersaglio riceve la richiesta di difendersi con CM, Riflessi, Resistenza o Manifestazione del Potere secondo la tecnica. Offline tutto rimane utilizzabile, con scelta di bersaglio, confronto dei tiri ed esito gestibili manualmente.
 ''',
     contentEn: r'''
 Let A be the attack roll total and D the defense roll total, distinct from the sheet Defense value.

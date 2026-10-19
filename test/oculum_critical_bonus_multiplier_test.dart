@@ -38,10 +38,10 @@ void main() {
         (state.logEventi as List).join('\n'),
         contains('Difesa $expectedDefense (×1,5 · attacco quasi riuscito)'),
       );
-      expect(probe.combatAbilityColor('volonta'), Colors.redAccent);
-      expect(probe.combatAbilityColor('materia'), Colors.blueAccent);
-      expect(probe.combatAbilityColor('resilienza'), Colors.greenAccent);
-      expect(probe.combatAbilityColor('oculum'), state.eyePupilGlowColor);
+      expect(probe.combatAbilityColor('volonta'), const Color(0xFFE74C3C));
+      expect(probe.combatAbilityColor('materia'), const Color(0xFF44A7FF));
+      expect(probe.combatAbilityColor('resilienza'), const Color(0xFF2ECC71));
+      expect(probe.combatAbilityColor('oculum'), state.oculumStatFormulaColor);
       state.scudoController.text = '10';
       state.scudoOculumController.text = '0';
       final hpBeforeResistance = state.currentHpController.text;

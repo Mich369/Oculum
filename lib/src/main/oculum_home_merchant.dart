@@ -174,6 +174,9 @@ String oculumMerchantWeaponSkillText(String weaponName, int grade) {
       'Al quarto uso la Skill va in recupero fino al turno successivo.';
 }
 
+double oculumMonsterFoodLearningChance(num luck) =>
+    (.5 + luck).clamp(0, 100).toDouble();
+
 /// Negoziante locale della scheda. Lo stock usa il salvataggio della scheda,
 /// e resta stabile anche dopo il riavvio. Un nuovo mercante ha un nuovo stock.
 extension _OculumHomeMerchant on _OculumHomePageState {
@@ -181,8 +184,121 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     for (final key in const ['resilienza', 'volonta', 'materia', 'oculum'])
       key: merchantGemStatValue(key),
   };
+  void tryLearnMonsterFood(Map food) {
+    final id = '${food['learnMonsterId'] ?? ''}';
+    if (id.isEmpty) return;
+    final monster = monsterById(id);
+    if (monster == null) return;
+    final fortune = hiddenEyeStats
+        .where((s) => s.id == 'fortuna' && s.unlocked)
+        .firstOrNull;
+    final luck = fortune == null ? 0 : hiddenEyeTotal(fortune);
+    final chance = oculumMonsterFoodLearningChance(luck);
+    final roll = Random().nextDouble() * 100;
+    if (roll >= chance) {
+      aggiungiLog(
+        '[CIBO MOSTRO] ${monster.nameIt}: nessuna skill appresa (${roll.toStringAsFixed(2)}% / ${chance.toStringAsFixed(1)}%).',
+      );
+      return;
+    }
+    final art = oculumMonsterBookArt(monster);
+    final ids = monsterBookUsableSkillIds(monster);
+    final eligible = <int>[
+      for (var i = 0; i < min(ids.length, art.skills.length); i++)
+        if (!skills.any((s) => s.nome == art.skills[i].nome)) i,
+    ];
+    if (eligible.isEmpty) {
+      aggiungiLog(
+        '[CIBO MOSTRO] Nessuna nuova skill di ${monster.nameIt} da apprendere.',
+      );
+      return;
+    }
+    final index = eligible[Random().nextInt(eligible.length)];
+    final skill = _naturalMonsterSkill(monster, ids[index], art.skills[index])
+      ..equipaggiata = false;
+    skills.add(skill);
+    aggiungiLog(
+      '[CIBO MOSTRO] Appresa ${skill.nome} da ${monster.nameIt}. Forme, costi e cooldown modificabili nelle Skill.',
+    );
+  }
+
+  int get merchantDustPrice =>
+      33 + (monsterSpriteStableSeed(merchantActiveProfileId) % 37).abs();
+  String get merchantShopType {
+    final profile = merchantProfiles
+        .where((p) => p['id'] == merchantActiveProfileId)
+        .firstOrNull;
+    return '${profile?['shopType'] ?? 'tutti'}';
+  }
+
+  int merchantOfferCost(Map<String, dynamic> offer) {
+    final base =
+        readIntValue(offer['cost']) + max(0, readIntValue(offer['level'])) * 25;
+    return merchantShopType == 'alchimista' &&
+            offer['kind'] == 'refined_vitalium'
+        ? max(1, (base * .9).floor())
+        : base;
+  }
+
+  bool merchantOfferMatchesShop(Map<String, dynamic> offer) {
+    final kind = '${offer['kind']}';
+    if (kind == 'technique_scroll' &&
+        readIntValue(offer['scrollGrade']) !=
+            max(0, leggiNumero(gradoController)).clamp(0, 12)) {
+      return false;
+    }
+    return switch (merchantShopType) {
+      'materiali' =>
+        const {
+              'raw_vitalium',
+              'refined_vitalium',
+              'oculum_vial',
+              'creature_core',
+            }.contains(kind) ||
+            (kind == 'food' && offer['isMaterial'] == true),
+      'fabbro' =>
+        const {
+              'pawn',
+              'pawn_v2',
+              'title_item',
+              'weapon',
+              'armor',
+              'shield',
+            }.contains(kind) ||
+            offer['damage'] != null ||
+            offer['defence'] != null,
+      'alchimista' =>
+        const {
+              'stat_gem',
+              'refined_vitalium',
+              'oculum_vial',
+              'bone_prison_scroll',
+              'scroll',
+              'technique_scroll',
+              'alchemy_pet',
+              'creature_core',
+            }.contains(kind) ||
+            offer['isMaterial'] == true,
+      'chef' => kind == 'food' && offer['isMaterial'] != true,
+      _ => true,
+    };
+  }
+
   List<Map<String, dynamic>> recommendedMerchantStock() =>
-      oculumMerchantOrderedOffers(ensureMerchantStock(), merchantNeedStats);
+      oculumMerchantOrderedOffers(
+        ensureMerchantStock().where(merchantOfferMatchesShop).toList(),
+        merchantNeedStats,
+      );
+  void selectMerchantShop(String type) {
+    final profile = merchantProfiles
+        .where((p) => p['id'] == merchantActiveProfileId)
+        .firstOrNull;
+    if (profile == null) return;
+    // ignore: invalid_use_of_protected_member
+    setState(() => profile['shopType'] = type);
+    programmaSalvataggio();
+  }
+
   String merchantRecommendation(Map<String, dynamic> offer) {
     if (oculumMerchantNeedScore(offer, merchantNeedStats) <= 0) return '';
     final bonuses = offer['statBonuses'];
@@ -316,6 +432,28 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     spacing: 8,
     runSpacing: 6,
     children: [
+      DropdownButton<String>(
+        value: merchantShopType,
+        onChanged: (v) {
+          if (v != null) selectMerchantShop(v);
+        },
+        items: const [
+          DropdownMenuItem(value: 'tutti', child: Text('Tutti i banchi')),
+          DropdownMenuItem(
+            value: 'materiali',
+            child: Text('Venditore di materiali'),
+          ),
+          DropdownMenuItem(
+            value: 'fabbro',
+            child: Text('Fabbro · armi e Pawn'),
+          ),
+          DropdownMenuItem(
+            value: 'alchimista',
+            child: Text('Alchimista · cristalli e crafting'),
+          ),
+          DropdownMenuItem(value: 'chef', child: Text('Chef · cibi e bevande')),
+        ],
+      ),
       PopupMenuButton<String>(
         tooltip: 'Torna da un mercante già incontrato',
         onSelected: switchMerchantProfile,
@@ -544,6 +682,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           level: grade,
         ),
         'kind': 'gear',
+        'level': max(1, grade * 5 + random.nextInt(5)),
         'grade': grade,
         'weapon': weapon,
         'protection': protection,
@@ -576,9 +715,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (!merchantStock.any((offer) => offer['id'] == 'pawn')) {
       merchantStock.add(oculumPawnMerchantOffer());
     }
-    const foods = <Map<String, dynamic>>[
+    final foods = <Map<String, dynamic>>[
       {
         'id': 'food_forest_demon',
+        'learnMonsterId': 'forest_demon',
         'name': 'Carne di Forest Demon',
         'cost': 12,
         'volonta': 2,
@@ -586,6 +726,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       },
       {
         'id': 'food_mammuth',
+        'learnMonsterId':
+            defaultMonsterBookEntries
+                .where((m) => m.nameIt.toLowerCase().contains('mammuth'))
+                .firstOrNull
+                ?.id ??
+            '',
         'name': 'Carne cotta di Mammuth',
         'cost': 15,
         'resilienza': 2,
@@ -678,7 +824,59 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'alcohol': true,
       },
     ];
-    for (final food in foods) {
+    final grade = max(0, leggiNumero(gradoController)).clamp(0, 12);
+    final profiles = oculumTechniqueScrolls.take(8).toList();
+    for (final profile in profiles) {
+      final id = 'alchemist_scroll_${profile.id}_$grade';
+      if (!merchantStock.any((o) => o['id'] == id)) {
+        merchantStock.add({
+          'id': id,
+          'kind': 'technique_scroll',
+          'name': 'Pergamena ${profile.name} · Grado $grade',
+          'cost': oculumScrollValue(grade),
+          'scrollProfileId': profile.id,
+          'scrollGrade': grade,
+          'desc':
+              'Monouso. Costo ${oculumScrollWillCost(grade)} Volontà, CD ${oculumScrollCooldown(grade)} turni, DT ${oculumScrollDifficulty(grade)}. Apprendimento raro secondo difficoltà.',
+        });
+      }
+    }
+    for (final pet in oculumAlchemyPets) {
+      if (!merchantStock.any((o) => o['id'] == 'pet_${pet.$1}')) {
+        merchantStock.add({
+          'id': 'pet_${pet.$1}',
+          'kind': 'alchemy_pet',
+          'petId': pet.$1,
+          'name': pet.$2,
+          'cost': 120,
+          'desc':
+              '${pet.$3} Grado 0; supporto 1 Volontà, CD 3 turni. Crea una scheda alleata modificabile.',
+        });
+      }
+    }
+    final extendedFoods = <Map<String, dynamic>>[
+      ...foods,
+      for (final spec in [
+        ('resilienza', 'Zuppa di radici ferrigne'),
+        ('volonta', 'Stufato di brace'),
+        ('materia', 'Brodo di scaglie minerali'),
+        ('oculum', 'Infuso di fiori spirituali'),
+        ('tutte', 'Banchetto delle Quattro Vene'),
+      ])
+        for (var stage = 1; stage <= 6; stage++)
+          {
+            'id': 'meal_${spec.$1}_$stage',
+            'name':
+                '${spec.$2} ${['I', 'II', 'III', 'IV', 'V', 'VI'][stage - 1]}',
+            'cost': stage * stage * (spec.$1 == 'tutte' ? 18 : 8),
+            'condition': 'nutrito_${spec.$1}',
+            'conditionStage': stage,
+            'conditionTurns': 3,
+            'desc':
+                '+${stage * 2}% ${spec.$1}, 3 turni. Versioni dello stesso buff non cumulative. Valori modificabili nelle condizioni.',
+          },
+    ];
+    for (final food in extendedFoods) {
       Map<String, dynamic>? existing;
       for (final candidate in merchantStock) {
         if (candidate['id'] == food['id']) {
@@ -724,7 +922,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if ('${offer['kind'] ?? ''}' == 'gear' && readBoolValue(offer['weapon'])) {
       final grade = readIntValue(offer['grade']);
       final ability = oculumEquipmentAbility('${offer['name']}', grade);
-      return '${offer['desc'] ?? ''}\n${ability.nome}: ${ability.forme.first.descrizione} · ${ability.forme.first.costo} · CD ${ability.forme.first.cooldown}';
+      return '${offer['desc'] ?? ''}\nLivello oggetto ${readIntValue(offer['level'])}; +${(1 + grade ~/ 4).clamp(1, 3)} punti statistica per livello. Skill richiede livello personaggio ≥ livello oggetto.\n${ability.nome}: ${ability.forme.first.descrizione} · ${ability.forme.first.costo} · CD ${ability.forme.first.cooldown}';
     }
     return '${offer['desc'] ?? ''}';
   }
@@ -823,20 +1021,21 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
                 onPressed:
-                    merchantDustPurchasedSinceLongRest ||
-                        leggiNumero(obserController) < 20
+                    merchantDustPurchaseCount >= 3 ||
+                        merchantShopType != 'alchimista' ||
+                        leggiNumero(obserController) < merchantDustPrice
                     ? null
                     : buyAscensionDustFromMerchant,
                 icon: const Icon(Icons.auto_awesome_outlined),
                 label: Text(
-                  merchantDustPurchasedSinceLongRest
+                  merchantDustPurchaseCount >= 3
                       ? t(
                           'Dust acquistata · disponibile dopo il Riposo Lungo',
                           'Dust purchased · available after a Long Rest',
                         )
                       : t(
-                          '20 Obser → 1 Ascension Dust · 1 per Riposo Lungo',
-                          '20 Obser → 1 Ascension Dust · 1 per Long Rest',
+                          '$merchantDustPrice Obser → 1 Ascension Dust · $merchantDustPurchaseCount/3 per Riposo Lungo',
+                          '$merchantDustPrice Obser → 1 Ascension Dust · $merchantDustPurchaseCount/3 per Long Rest',
                         ),
                 ),
               ),
@@ -868,10 +1067,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                         (offer['kind'] == 'stat_gem' &&
                                 readIntValue(offer['remaining']) <= 0) ||
                             leggiNumero(obserController) <
-                                readIntValue(offer['cost'])
+                                merchantOfferCost(offer)
                         ? null
                         : () => buyMerchantOffer(offer),
-                    child: Text('${offer['cost']} O'),
+                    child: Text('${merchantOfferCost(offer)} O'),
                   ),
                 ),
               ),
@@ -897,7 +1096,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               itemCount: stock.length,
               itemBuilder: (context, index) {
                 final offer = stock[index];
-                final cost = readIntValue(offer['cost']);
+                final cost = merchantOfferCost(offer);
                 return ListTile(
                   title: Text(
                     '${offer['name']}',
@@ -939,7 +1138,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       updateMerchantGemOffers();
       if (readIntValue(offer['remaining']) <= 0) return;
     }
-    final cost = readIntValue(offer['cost']);
+    final cost = merchantOfferCost(offer);
     if (leggiNumero(obserController) < cost) return;
     final kind = '${offer['kind'] ?? ''}';
     String titleType = '';
@@ -1009,7 +1208,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         item.bonusDifesa * 10 +
         item.bonusScudo * 3 +
         item.bonusScudoOculum * 12 +
-        grade * grade * 90;
+        grade * grade * 90 +
+        max(0, item.livelloOggetto) * 25;
     return max(1, rawValue ~/ 6) * max(1, item.quantita);
   }
 
@@ -1033,17 +1233,21 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void buyAscensionDustFromMerchant() {
-    if (merchantDustPurchasedSinceLongRest ||
-        leggiNumero(obserController) < 20) {
+    if (merchantDustPurchaseCount >= 3 ||
+        merchantShopType != 'alchimista' ||
+        leggiNumero(obserController) < merchantDustPrice) {
       return;
     }
     // ignore: invalid_use_of_protected_member
     setState(() {
-      obserController.text = (leggiNumero(obserController) - 20).toString();
+      obserController.text = (leggiNumero(obserController) - merchantDustPrice)
+          .toString();
       ascensionDustController.text = (leggiNumero(ascensionDustController) + 1)
           .toString();
-      merchantDustPurchasedSinceLongRest = true;
-      risultato = 'Negoziante: 20 Obser convertiti in 1 Ascension Dust.';
+      merchantDustPurchaseCount++;
+      merchantDustPurchasedSinceLongRest = merchantDustPurchaseCount >= 3;
+      risultato =
+          'Alchimista: $merchantDustPrice Obser per 1 Ascension Dust · $merchantDustPurchaseCount/3.';
       aggiungiLog(risultato);
     });
     programmaSalvataggio();
@@ -1053,6 +1257,24 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     Map<String, dynamic> offer, {
     String titleType = '',
   }) {
+    if (offer['kind'] == 'alchemy_pet') {
+      return InventoryItem(
+        nome: '${offer['name']}',
+        peso: .1,
+        quantita: 1,
+        note: '${offer['desc']}',
+        craftData: {'alchemyPet': offer['petId']},
+      );
+    }
+    if (offer['kind'] == 'technique_scroll') {
+      final profile = oculumTechniqueScrolls.firstWhere(
+        (p) => p.id == offer['scrollProfileId'],
+      );
+      return oculumTechniqueScrollItem(
+        profile,
+        readIntValue(offer['scrollGrade']),
+      );
+    }
     if (offer['kind'] == 'creature_core') {
       return oculumCreatureCore(readIntValue(offer['coreTier']));
     }
@@ -1075,6 +1297,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           'subtraitId',
           'subtraitBonus',
           'condition',
+          'conditionStage',
+          'conditionTurns',
+          'learnMonsterId',
         ])
           if (offer.containsKey(key)) key: offer[key],
       };
@@ -1212,6 +1437,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       bonusScudoIncludeGrado: true,
       bonusScudoOculum: grade >= 3 && shield ? 4 + grade * 3 : 0,
       gradoOggetto: grade,
+      livelloOggetto: max(0, readIntValue(offer['level'])),
+      puntiStatPerLivello: (1 + grade ~/ 4).clamp(1, 3),
+      statCrescita: weapon ? 'volonta' : 'materia',
       gradoRichiesto: grade,
       elementoDanno: grade >= 2 ? 'Oculum' : 'Fisico',
       buff: [
@@ -1267,6 +1495,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   bool isMerchantConsumable(InventoryItem item) =>
       item.craftData['creatureCore'] == true ||
       item.craftData['pawn'] == true ||
+      item.craftData['alchemyPet'] != null ||
       item.craftData['scroll'] is Map ||
       item.monsterLoot['food'] is Map ||
       oculumStatGemNames.containsKey(item.statGemStat) ||
@@ -1279,6 +1508,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       }.contains(item.nome.trim());
 
   Future<void> useMerchantConsumable(InventoryItem item) async {
+    if (!canEquipInventoryItem(item)) {
+      aggiungiLog('Grado insufficiente per usare ${item.nome}.');
+      return;
+    }
     if (!inventario.contains(item) ||
         !isMerchantConsumable(item) ||
         item.quantita <= 0) {
@@ -1294,6 +1527,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     if (item.craftData['pawn'] == true) {
       await activatePawnItem(item);
+      return;
+    }
+    if (item.craftData['alchemyPet'] != null) {
+      await activateAlchemyPet(item);
       return;
     }
     if (item.craftData['scroll'] is Map) {
@@ -1383,18 +1620,25 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           if (condition.isNotEmpty) {
             applyCondition(
               condition,
-              duration: 2,
-              durationType: OculumConditionDurationType.rests,
+              stage: readIntValue(food['conditionStage'], fallback: 1),
+              duration: readIntValue(food['conditionTurns'], fallback: 2),
+              durationType: food['conditionTurns'] != null
+                  ? OculumConditionDurationType.turns
+                  : OculumConditionDurationType.rests,
               tickTrigger: OculumConditionTickTrigger.none,
               source: 'Erba ${item.nome}',
             );
             effects.add(condition);
           }
+          tryLearnMonsterFood(food);
           item.quantita--;
           if (item.quantita <= 0) inventario.remove(item);
           invalidateDerivedDataCaches();
+          final durationLabel = food['conditionTurns'] != null
+              ? '${readIntValue(food['conditionTurns'])} turni'
+              : 'fino al Riposo Lungo o dopo 2 Riposi Brevi';
           risultato =
-              '${item.nome}: ${effects.join(', ')}. Gli effetti temporanei durano fino al Riposo Lungo o dopo 2 Riposi Brevi.';
+              '${item.nome}: ${effects.join(', ')}. Durata: $durationLabel.';
           aggiungiLog(risultato);
         });
         programmaSalvataggio();
@@ -1414,6 +1658,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               (consumedFoodBonuses[key] ?? 0) +
               (key == 'oculum' ? oculumBonus : readIntValue(food[key]));
         }
+        tryLearnMonsterFood(food);
         item.quantita--;
         if (item.quantita <= 0) inventario.remove(item);
         invalidateDerivedDataCaches();

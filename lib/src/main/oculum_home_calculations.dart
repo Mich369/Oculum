@@ -995,6 +995,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       0,
       current +
           runtimeCurrentStatBonus(key) +
+          nourishmentStatBonus(key, current) +
           (conditionTarget == null
               ? 0
               : conditionFlatModifier(conditionTarget)),
@@ -2210,6 +2211,21 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (deltaRes != 0) rimarginaHpDaAumentoResilienza(deltaRes);
   }
 
+  bool ensureTitleSlotAvailable(OculumTitle title) {
+    if (title.equipaggiato || trattiRazziali.contains(title)) return true;
+    final pool = titleSlotPool(title);
+    final capacity = titleSlotCapacity(pool);
+    if (capacity == null ||
+        titleSlotsUsed(pool, including: title) <= capacity) {
+      return true;
+    }
+    aggiungiLog(
+      '[TITOLI] Nessuno slot disponibile in $pool per ${title.nome}.',
+    );
+    showTitleSlots();
+    return false;
+  }
+
   void equipaggiaTitoloPerOpen(OculumTitle titolo) {
     if (titolo.equipaggiato) return;
     final runtimeRes =
@@ -2442,6 +2458,24 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   Map<String, int> itemQuickBonuses(InventoryItem item) {
     final bonuses = <String, int>{};
+    if (item.equipaggiata &&
+        canEquipInventoryItem(item) &&
+        (item.arma || item.protegge)) {
+      final stat =
+          const {
+            'resilienza',
+            'volonta',
+            'materia',
+            'oculum',
+          }.contains(item.statCrescita)
+          ? item.statCrescita
+          : (item.arma ? 'volonta' : 'materia');
+      if (stat != 'oculum' || leggiNumero(oculumController) > 0) {
+        bonuses[stat] =
+            max(0, item.livelloOggetto) * item.puntiStatPerLivello.clamp(1, 3);
+      }
+    }
+
     for (final text in activeItemQuickTexts(item)) {
       addTitleQuickCommands(bonuses, text);
     }
@@ -2490,7 +2524,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (type.contains('apprendimento') || type.contains('learning')) {
       return 'Titoli Di Apprendimento';
     }
-    if (type.contains('chaos')) {
+    if (type.contains('chaos') || type.contains('caos')) {
       return 'Titolo Chaos';
     }
     if (type.contains('alchimia') ||
@@ -2513,6 +2547,102 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
         .replaceAll(RegExp(r'_+'), '_')
         .replaceAll(RegExp(r'^_|_$'), '');
+  }
+
+  int learningTitleSlotCapacity() =>
+      oculumLearningTitleCapacity(leggiNumero(gradoController));
+
+  String titleSlotPool(OculumTitle title) {
+    final category = normalizeTitleCategory(title.tipo);
+    return const {
+          'Titoli Di Apprendimento',
+          'Titolo Malanno',
+          'Titolo Benessere',
+          'Titolo Chaos',
+          'Titoli Alchimia/Magia',
+          'Titoli Attributo',
+          'Titoli del Fato',
+        }.contains(category)
+        ? category
+        : 'Standard';
+  }
+
+  int? titleSlotCapacity(String pool) => switch (pool) {
+    'Standard' => oculumStandardTitleCapacity(leggiNumero(gradoController)),
+    'Titoli Di Apprendimento' => learningTitleSlotCapacity(),
+    'Titolo Malanno' => max(0, resilienzaBase()) ~/ 6,
+    'Titolo Chaos' => max(0, -karmaTotale()) ~/ 10,
+    'Titoli Alchimia/Magia' => max(
+      rebirthato ? 1 : 0,
+      max(0, leggiNumero(gradoController)),
+    ),
+    'Titoli del Fato' =>
+      fateArtSlotMilestones.length + min(3, chainedFateCompletedIds.length),
+    _ => null,
+  };
+
+  int titleSlotsUsed(String pool, {OculumTitle? including}) {
+    final equipped = titoli
+        .where(
+          (t) =>
+              (t.equipaggiato || identical(t, including)) &&
+              titleSlotPool(t) == pool,
+        )
+        .toList();
+    if (pool == 'Titoli Di Apprendimento' && rebirthato) {
+      return equipped.length - min(3, equipped.where((t) => t.evoluto).length);
+    }
+    return equipped.length;
+  }
+
+  void showTitleSlots() {
+    showDialog<void>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('Titoli indossati · slot disponibili'),
+        content: SizedBox(
+          width: 480,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final pool in [
+                  'Standard',
+                  'Titoli Di Apprendimento',
+                  'Titolo Malanno',
+                  'Titolo Chaos',
+                  'Titoli del Fato',
+                  'Titoli Alchimia/Magia',
+                ])
+                  ListTile(
+                    title: Text(pool),
+                    trailing: Text(
+                      '${titleSlotsUsed(pool)} / ${titleSlotCapacity(pool)}',
+                    ),
+                  ),
+                const Text(
+                  'Standard: 6 iniziali, 7 al III, 8 al VI, 9 al IX. Apprendimento: 1 iniziale più Grado. Con Rebirth, i primi 3 Evoluti di Apprendimento non occupano slot.',
+                ),
+                Text(
+                  'Chained Fate completati: ${chainedFateCompletedIds.length} · slot Fato ottenuti: ${min(3, chainedFateCompletedIds.length)}',
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Benessere non occupa slot. I titoli già salvati non vengono rimossi automaticamente se superano la nuova capacità.',
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('Chiudi'),
+          ),
+        ],
+      ),
+    );
   }
 
   String titleCategoryRules(String category) {
@@ -2544,8 +2674,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         );
       case 'Titoli Di Apprendimento':
         return t(
-          'Derivano da addestramento, mastery o tiri critici. Con Rebirth, i primi 3 se Evoluti non occupano slot. Si usa uno slot per Grado.',
-          'Come from training, mastery or critical rolls. With Rebirth, the first 3 do not use slots if Evolved. Uses one slot per Grade.',
+          'Derivano da addestramento, mastery o tiri critici. Con Rebirth, i primi 3 se Evoluti non occupano slot. Uno slot disponibile fin da subito, più uno per ogni Grado.',
+          'Come from training, mastery or critical rolls. With Rebirth, the first 3 do not use slots if Evolved. One slot is available immediately, plus one per Grade.',
         );
       case 'Titolo Chaos':
         return t(
@@ -2554,7 +2684,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         );
       case 'Titoli Alchimia/Magia':
         return t(
-          'Legati a pratiche arcane, cerchi, elementi, Oculum e Materia. Rebirth concede uno slot gratuito; senza Rebirth si ottiene 1 slot per aumento di Grado. Non occupano slot standard e il massimo equipaggiabile e pari al Grado.',
+          'Legati a pratiche arcane, cerchi, elementi, Oculum e Materia. Rebirth concede uno slot gratuito; senza Rebirth si ottiene 1 slot per aumento di Grado. Non occupano slot standard. Massimo pari al Grado; con Rebirth è utilizzabile uno slot anche al Grado 0.',
           'Tied to arcane practice, circles, elements, Oculum and Materia. Rebirth grants one free slot; without Rebirth, gain 1 slot per Grade increase. They do not use standard slots and the equip cap equals Grade.',
         );
       case 'Titoli Attributo':
@@ -4935,7 +5065,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int itemGrade(InventoryItem item) => item.gradoOggetto.clamp(0, 12).toInt();
 
   int requiredItemGrade(InventoryItem item) =>
-      item.gradoRichiesto.clamp(0, 12).toInt();
+      max(item.gradoOggetto, item.gradoRichiesto).clamp(0, 12).toInt();
 
   int itemAttackBonus(InventoryItem item) =>
       item.bonusDanno + itemGrade(item) * 5;
@@ -4980,7 +5110,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   bool canEquipInventoryItem(InventoryItem item) {
-    final requiredGrade = requiredItemGrade(item);
+    final requiredGrade = max(item.gradoOggetto, requiredItemGrade(item));
     if (requiredGrade <= 0) return true;
     return max(0, leggiNumero(gradoController)) >= requiredGrade;
   }

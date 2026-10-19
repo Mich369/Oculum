@@ -1423,6 +1423,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       if (merchantHerbalEffects.isNotEmpty)
         'merchantHerbalEffects': merchantHerbalEffects,
       'merchantDustPurchasedSinceLongRest': merchantDustPurchasedSinceLongRest,
+      'merchantDustPurchaseCount': merchantDustPurchaseCount,
       'ascensionDust': ascensionDustController.text,
       'ispirazioni': ispirazioniController.text,
       'superIspirazioni': superIspirazioniController.text,
@@ -1432,6 +1433,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
           schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
           ? readIntValue(schedePersonaggio[schedaCorrente]['combatHelpPending'])
           : 0,
+      'combatDefenseRollIds': combatDefenseRollIds.toList(),
       'coreMasteryPoints': Map<String, int>.from(coreMasteryPoints),
       'esperienzaCriticaStatistiche': Map<String, int>.from(
         esperienzaCriticaStatistiche,
@@ -1554,6 +1556,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'draftNotes': draftNotes.map((x) => x.toJson()).toList(),
       'hiddenEyeStats': hiddenEyeStats.map((x) => x.toJson()).toList(),
       'reputations': reputations.map((x) => x.toJson()).toList(),
+      'reputationFolders': reputationFolders.toList(),
+      'chainedFateCompletedIds': chainedFateCompletedIds.toList(),
+      'fateArtSlotMilestones': fateArtSlotMilestones.toList(),
+      'levelMilestoneClaims': levelMilestoneClaims.toList(),
+      'levelMilestoneReserve': levelMilestoneReserve,
       'reputationsManuallyCleared': reputationsManuallyCleared,
       'logEventi': List<String>.from(logEventi),
       'fortuna': fortuna,
@@ -1930,6 +1937,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
       json['merchantDustPurchasedSinceLongRest'],
       fallback: false,
     );
+    merchantDustPurchaseCount = readIntValue(
+      json['merchantDustPurchaseCount'],
+      fallback: merchantDustPurchasedSinceLongRest ? 1 : 0,
+    ).clamp(0, 3);
     merchantStockSessionId = merchantStock.isEmpty
         ? ''
         : merchantRuntimeSessionId;
@@ -1951,6 +1962,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
     ispirazioneOculumCriticoInAttesa = readBoolValue(
       json['ispirazioneOculumCriticoInAttesa'],
     );
+    final savedDefenseRolls = json['combatDefenseRollIds'];
+    combatDefenseRollIds
+      ..clear()
+      ..addAll(
+        savedDefenseRolls is List
+            ? savedDefenseRolls.map((value) => '$value')
+            : const ['riflessi', 'resistenza', 'manifestazione_potere'],
+      );
     coreMasteryPoints.clear();
     final savedMasteryPoints = json['coreMasteryPoints'];
     if (savedMasteryPoints is Map) {
@@ -2378,6 +2397,22 @@ extension _OculumHomePersistence on _OculumHomePageState {
       );
     ensureHiddenEyeDefaults();
 
+    levelMilestoneClaims
+      ..clear()
+      ..addAll((json['levelMilestoneClaims'] as List? ?? []).map(readIntValue));
+    levelMilestoneReserve = max(0, readIntValue(json['levelMilestoneReserve']));
+    fateArtSlotMilestones
+      ..clear()
+      ..addAll(
+        (json['fateArtSlotMilestones'] as List? ?? [])
+            .map(readIntValue)
+            .where((i) => i >= 0 && i < 3),
+      );
+    chainedFateCompletedIds
+      ..clear()
+      ..addAll(
+        (json['chainedFateCompletedIds'] as List? ?? []).whereType<String>(),
+      );
     final reputationsRaw = json['reputations'];
     reputationsManuallyCleared =
         readBoolValue(json['reputationsManuallyCleared']) ||
@@ -2391,6 +2426,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
             .whereType<Map>()
             .map((x) => ReputationEntry.fromJson(Map<String, dynamic>.from(x)))
             .where((entry) => entry.cityName.trim().isNotEmpty),
+      );
+    reputationFolders
+      ..clear()
+      ..addAll(
+        oculumReputationFolderAncestors([
+          if (json['reputationFolders'] is List)
+            ...List<String>.from(
+              (json['reputationFolders'] as List).whereType<String>(),
+            ),
+          ...reputations.map((entry) => entry.folder),
+        ]),
       );
     ensureReputationDefaults();
 
@@ -3984,6 +4030,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
         'draftNotes',
         'hiddenEyeStats',
         'reputations',
+        'reputationFolders',
+        'chainedFateCompletedIds',
+        'fateArtSlotMilestones',
+        'levelMilestoneClaims',
+        'levelMilestoneReserve',
         'logEventi',
         'partyMembri',
         'customDamageTypes',
@@ -4146,6 +4197,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'draftNotes',
       'hiddenEyeStats',
       'reputations',
+      'reputationFolders',
+      'chainedFateCompletedIds',
+      'fateArtSlotMilestones',
+      'levelMilestoneClaims',
+      'levelMilestoneReserve',
       'logEventi',
       'partyMembri',
       'customDamageTypes',
@@ -5152,6 +5208,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
         for (final e in onlinePermissionRequests.entries)
           e.key: Map<String, dynamic>.from(e.value),
       },
+      'combatDiscoveries': {
+        for (final e in combatDiscoveries.entries)
+          e.key: Map<String, dynamic>.from(e.value),
+      },
       'onlineCombatRequests': {
         for (final e in onlineCombatRequests.entries)
           e.key: Map<String, dynamic>.from(e.value),
@@ -5220,6 +5280,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
             : !kIsWeb && defaultTargetPlatform == TargetPlatform.windows);
     modalitaMaster = readBoolValue(globali['modalitaMaster']);
     onlinePermissionRequests.clear();
+    combatDiscoveries.clear();
+    if (globali['combatDiscoveries'] is Map) {
+      for (final e in (globali['combatDiscoveries'] as Map).entries) {
+        if (e.value is Map) {
+          combatDiscoveries['${e.key}'] = Map<String, dynamic>.from(
+            e.value as Map,
+          );
+        }
+      }
+    }
     onlineCombatRequests.clear();
     final savedCombat = globali['onlineCombatRequests'];
     if (savedCombat is Map) {
@@ -5582,9 +5652,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   Future<void> duplicaSchedaPersonaggio(int index) async {
-    if (index < 0 || index >= schedePersonaggio.length) {
-      return;
-    }
+    if (index < 0 || index >= schedePersonaggio.length) return;
 
     salvaSchedaCorrenteInMemoria();
     final globali = catturaImpostazioniGlobali();

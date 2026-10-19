@@ -208,7 +208,7 @@ void main() {
       state.tutorialCompletato = true;
       state.datiCaricati = true;
       state.paginaCorrente = 6;
-      state.obserController.text = '100';
+      state.obserController.text = '1000';
       state.ascensionDustController.text = '0';
     });
     await tester.pump(const Duration(seconds: 1));
@@ -218,16 +218,21 @@ void main() {
     )['name'];
     await tester.tap(find.text(activeMerchantName as String));
     await tester.pumpAndSettle();
+    probe.shopType('alchimista');
+    await tester.pumpAndSettle();
+    final dustPrice = probe.dustPrice;
     final buy = find.widgetWithText(
       OutlinedButton,
-      '20 Obser → 1 Ascension Dust · 1 per Riposo Lungo',
+      '$dustPrice Obser → 1 Ascension Dust · 0/3 per Riposo Lungo',
     );
     final callback = tester.widget<OutlinedButton>(buy).onPressed!;
     callback();
-    callback(); // A queued second click must also be rejected by the transaction.
+    callback();
+    callback();
+    callback(); // A stale fourth click must be rejected by the transaction.
     await tester.pump();
-    expect(state.obserController.text, '80');
-    expect(state.ascensionDustController.text, '1');
+    expect(state.obserController.text, '${1000 - 3 * dustPrice}');
+    expect(state.ascensionDustController.text, '3');
     expect(state.merchantDustPurchasedSinceLongRest, isTrue);
     expect(
       tester
@@ -275,8 +280,8 @@ void main() {
     );
     expect(state.merchantDustPurchasedSinceLongRest, isFalse);
     callback();
-    expect(state.obserController.text, '60');
-    expect(state.ascensionDustController.text, '2');
+    expect(state.obserController.text, '${1000 - 4 * dustPrice}');
+    expect(state.ascensionDustController.text, '4');
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
   });

@@ -1440,6 +1440,110 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     );
   }
 
+  int nourishmentStatBonus(String key, int base) {
+    var percent = 0.0;
+    for (final type in ['nutrito_$key', 'nutrito_tutte']) {
+      final instance = getCondition(type);
+      if (instance != null) {
+        final override = instance.metadata['percent'];
+        percent += override is num
+            ? override.toDouble()
+            : (oculumConditionDefinition(
+                    type,
+                  )?.percentForStage(instance.stage) ??
+                  0);
+      }
+    }
+    return (max(0, base) * percent / 100).floor();
+  }
+
+  Future<void> rollConditionRecovery(OculumConditionInstance instance) async {
+    final dt = readIntValue(instance.metadata['recoveryDt']);
+    if (dt <= 0) {
+      aggiungiLog('Il Master deve impostare la DT di liberazione.');
+      return;
+    }
+    final origin = currentSheetScrollId();
+    final stat = await showDialog<HiddenEyeStat>(
+      context: context,
+      builder: (dialog) => SimpleDialog(
+        title: Text('Liberati da ${conditionLabel(instance)} · DT $dt'),
+        children: [
+          for (final s in hiddenEyeStats.where((s) => s.unlocked))
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(dialog, s),
+              child: Text(
+                s.nome,
+                style: TextStyle(color: hiddenEyeStatIdentityColor(s)),
+              ),
+            ),
+        ],
+      ),
+    );
+    if (!mounted ||
+        stat == null ||
+        currentSheetScrollId() != origin ||
+        !activeConditions.contains(instance)) {
+      return;
+    }
+    await tiraSottotrattoOcchio(
+      stat,
+      actionLabel: 'Liberazione ${conditionLabel(instance)} · DT $dt',
+      onResolved: (natural, total) {
+        if (currentSheetScrollId() != origin ||
+            !activeConditions.contains(instance)) {
+          return;
+        }
+        if (total >= dt) {
+          removeCondition(instance, force: true);
+          aggiungiLog(
+            '[LIBERAZIONE] ${stat.nome}: $total ≥ $dt, effetto rimosso.',
+          );
+        } else {
+          aggiungiLog(
+            '[LIBERAZIONE] ${stat.nome}: $total < $dt, effetto mantenuto.',
+          );
+        }
+      },
+    );
+  }
+
+  Future<void> editConditionRecoveryDt(OculumConditionInstance instance) async {
+    final input = TextEditingController(
+      text: '${instance.metadata['recoveryDt'] ?? 0}',
+    );
+    final dt = await showDialog<int>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('DT per liberarsi dalla condizione'),
+        content: TextField(
+          controller: input,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'DT'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('Annulla'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final n = int.tryParse(input.text);
+              if (n != null && n >= 0) Navigator.pop(dialog, n);
+            },
+            child: const Text('Salva'),
+          ),
+        ],
+      ),
+    );
+    input.dispose();
+    if (!mounted || dt == null || !activeConditions.contains(instance)) return;
+    instance.metadata['recoveryDt'] = dt;
+    aggiungiLog('${conditionLabel(instance)}: DT liberazione $dt.');
+    notifyConditionsChanged(conditionTargetsFor(instance));
+    programmaSalvataggio(invalidateCaches: false);
+  }
+
   int conditionGlobalRollModifier() {
     if (statoForzaRimuoveMalus()) return 0;
     final rawPenalty = activeConditions.fold<int>(0, (total, instance) {
@@ -2363,6 +2467,10 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
         if (removeOculumFlamesAtSafetyThreshold()) break;
       }
       final expiresForTrigger =
+          (instance.durationType == OculumConditionDurationType.actions &&
+              trigger == OculumConditionTickTrigger.action) ||
+          (instance.durationType == OculumConditionDurationType.rolls &&
+              trigger == OculumConditionTickTrigger.roll) ||
           (instance.durationType == OculumConditionDurationType.turns &&
               trigger == OculumConditionTickTrigger.endTurn) ||
           (instance.durationType == OculumConditionDurationType.shortRest &&
@@ -3237,6 +3345,28 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       builder: (context) => SafeArea(
         child: Wrap(
           children: [
+            if (readIntValue(instance.metadata['recoveryDt']) > 0)
+              ListTile(
+                leading: const Icon(Icons.casino_outlined),
+                title: const Text('Tira per liberarti'),
+                onTap: () {
+                  Navigator.pop(context);
+                  rollConditionRecovery(instance);
+                },
+              ),
+
+            if (modalitaMaster)
+              ListTile(
+                leading: const Icon(Icons.gavel_outlined),
+                title: Text(
+                  'DT liberazione · ${instance.metadata['recoveryDt'] ?? 0}',
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  editConditionRecoveryDt(instance);
+                },
+              ),
+
             ListTile(
               leading: const Icon(Icons.timer_outlined),
               title: Text(t('Durata fissa o a dadi', 'Fixed or dice duration')),

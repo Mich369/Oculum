@@ -381,6 +381,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         realtimeLastSentSheetHashes.clear();
         publishRealtimeStateAfterConnection();
         syncPawnPresence();
+        startPermissionRetry();
         unawaited(replayOnlineCombatRequests());
       },
       presenceDataProvider: () => <String, dynamic>{
@@ -552,7 +553,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
     if (event == 'combat_attack' ||
         event == 'combat_defense' ||
-        event == 'combat_help') {
+        event == 'combat_help' ||
+        event == 'combat_ack' ||
+        event == 'combat_scout') {
       receiveOnlineCombatEvent(event, payload);
       return;
     }
@@ -1870,6 +1873,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'campaignId': activeCampaignId,
       'campaignName': activeCampaignName(),
       'encounters': published,
+      'completedEncounterRewards': [
+        for (final g in masterInitiativeGroups)
+          ...(g['rewards'] as List? ?? []),
+      ],
       'sentAt': DateTime.now().toIso8601String(),
     };
   }
@@ -1901,6 +1908,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'campaignId': activeCampaignId,
       'campaignName': activeCampaignName(),
       'encounterId': group['id'],
+      'mergedEncounterIds': group['mergedEncounterIds'] ?? const <String>[],
+      if (group['chainedFate'] is Map) 'chainedFate': group['chainedFate'],
+      if (group['rollRequests'] is List) 'rollRequests': group['rollRequests'],
       'name': group['name'],
       'round': group['round'],
       'activeIndex': active,
@@ -1947,6 +1957,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (readBoolValue(payload['closed']) &&
         (payload['snapshot'] is! Map ||
             (payload['snapshot'] as Map)['encounters'] is! List)) {
+      forgetCombatDiscoveries(onlineCombatEncounterId);
       realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
       realtimeEncounterSnapshots = <Map<String, dynamic>>[];
       realtimeSelectedEncounterId = '';
@@ -1958,6 +1969,14 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
     final snapshotRaw = payload['snapshot'];
     if (snapshotRaw is! Map) return;
+    if (snapshotRaw['campaignId'] != null &&
+        snapshotRaw['campaignId'] != permissionCampaignId) {
+      return;
+    }
+    receiveEncounterRewards(
+      (snapshotRaw['completedEncounterRewards'] as List? ?? [])
+          .whereType<Map>(),
+    );
     final encountersRaw = snapshotRaw['encounters'];
     var selectedSnapshot = Map<String, dynamic>.from(snapshotRaw);
     if (encountersRaw is List) {
@@ -1966,10 +1985,30 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           .map((item) => Map<String, dynamic>.from(item))
           .toList();
       selectedSnapshot = realtimeEncounterSnapshots.firstWhere(
-        (item) => item['encounterId'] == realtimeSelectedEncounterId,
-        orElse: () => realtimeEncounterSnapshots.isNotEmpty
-            ? realtimeEncounterSnapshots.first
-            : <String, dynamic>{'tokens': [], 'round': 1, 'activeIndex': 0},
+        (item) =>
+            item['encounterId'] == realtimeSelectedEncounterId ||
+            (item['mergedEncounterIds'] is List &&
+                (item['mergedEncounterIds'] as List).contains(
+                  realtimeSelectedEncounterId,
+                )),
+        orElse: () {
+          // Keep an explicitly selected fight isolated if it disappears.
+          // On first connection, only auto-select a fight containing this sheet.
+          if (realtimeSelectedEncounterId.isEmpty) {
+            final tag = sheetTagAt(schedaCorrente);
+            for (final encounter in realtimeEncounterSnapshots) {
+              final tokens = encounter['tokens'];
+              if (tokens is List &&
+                  tokens.whereType<Map>().any(
+                    (token) =>
+                        '${token['sheetTag'] ?? token['id'] ?? ''}' == tag,
+                  )) {
+                return encounter;
+              }
+            }
+          }
+          return <String, dynamic>{'tokens': [], 'round': 1, 'activeIndex': 0};
+        },
       );
       realtimeSelectedEncounterId = '${selectedSnapshot['encounterId'] ?? ''}';
     }
@@ -1995,6 +2034,23 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
     realtimeVisibleInitiativeSnapshot =
         jsonDecode(jsonEncode(selectedSnapshot)) as Map<String, dynamic>;
+    applyChainedFateCompletion(selectedSnapshot);
+    receiveMasterRollRequests(selectedSnapshot);
+    final aliases = (selectedSnapshot['mergedEncounterIds'] as List? ?? [])
+        .whereType<String>()
+        .toSet();
+    mergeCombatDiscoveries(aliases, '${selectedSnapshot['encounterId']}');
+    final mergedTags = (selectedSnapshot['tokens'] as List? ?? [])
+        .whereType<Map>()
+        .map((t) => '${t['sheetTag'] ?? t['id']}')
+        .toSet();
+    for (final request in onlineCombatRequests.values) {
+      if (aliases.contains('${request['encounterId']}') &&
+          mergedTags.contains('${request['sourceTag']}') &&
+          mergedTags.contains('${request['targetTag']}')) {
+        request['encounterId'] = selectedSnapshot['encounterId'];
+      }
+    }
     syncCurrentSheetEncounterTurn();
     unawaited(replayOnlineCombatRequests());
     final realtimeTokens = realtimeVisibleInitiativeSnapshot['tokens'];

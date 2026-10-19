@@ -1737,6 +1737,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     final potenzaNucleoDaRimuovere = <int>[];
     setState(() {
       merchantDustPurchasedSinceLongRest = false;
+      merchantDustPurchaseCount = 0;
       restThresholdTemporaryHp();
       schedePersonaggio[schedaCorrente]['packLeaderPhaseTriggered'] = false;
       merchantHerbalEffects.clear();
@@ -2624,6 +2625,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void usaOpen(OculumTitle titolo, {TitleOpenEntry? openExtra}) {
+    if (!ensureTitleSlotAvailable(titolo)) {
+      return;
+    }
     List<OculumStructuredEffect> effectsToActivate =
         const <OculumStructuredEffect>[];
     var effectSource = '';
@@ -2719,6 +2723,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     OculumTitle titolo, {
     TitleExtraSkillEntry? skillExtra,
   }) async {
+    if (!ensureTitleSlotAvailable(titolo)) {
+      return;
+    }
     final displayName = (skillExtra?.nome.trim().isNotEmpty ?? false)
         ? skillExtra!.nome.trim()
         : titolo.nome.trim().isEmpty
@@ -2748,39 +2755,89 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       );
       return;
     }
-    if (cost != null) {
-      await useConfiguredAbility(
-        source: '$displayName — Skill del Titolo',
-        effects: effects,
-        cost: cost,
-        cooldown: cooldown,
-        valid: () => titoli.contains(titolo) || trattiRazziali.contains(titolo),
-      );
-      return;
-    }
-    setState(() {
-      equipaggiaTitoloPerOpen(titolo);
-      risultato = t(
-        'Skill del Titolo attivata: $displayName.',
-        'Title Skill activated: $displayName.',
-      );
-      aggiungiLog(risultato);
-    });
-    if (effects.isNotEmpty) {
-      final messages = applyStructuredEffectsOnActivation(
-        effects,
-        source: '$displayName — Skill del Titolo',
-      );
-      if (messages.isNotEmpty) {
-        setState(() {
-          risultato += '\n${messages.join('\n')}';
-          aggiungiLog('$displayName: ${messages.join(' | ')}');
-        });
+    final origin = currentSheetScrollId();
+    final beforeEffects = jsonEncode(activeStructuredEffects);
+    final previousSupportTargeting = combatSupportTargeting;
+    combatSupportTargeting =
+        oculumCombatAbilityRole(
+          effects,
+          explicitType: skillExtra?.combatRole ?? titolo.skillCombatRole,
+        ) ==
+        OculumCombatAbilityRole.support;
+    try {
+      if (cost != null) {
+        await useConfiguredAbility(
+          source: '$displayName — Skill del Titolo',
+          effects: effects,
+          cost: cost,
+          cooldown: cooldown,
+          valid: () =>
+              titoli.contains(titolo) || trattiRazziali.contains(titolo),
+        );
+        return;
+      }
+      setState(() {
+        equipaggiaTitoloPerOpen(titolo);
+        risultato = t(
+          'Skill del Titolo attivata: $displayName.',
+          'Title Skill activated: $displayName.',
+        );
+        aggiungiLog(risultato);
+      });
+      if (effects.isNotEmpty) {
+        final messages = applyStructuredEffectsOnActivation(
+          effects,
+          source: '$displayName — Skill del Titolo',
+        );
+        if (messages.isNotEmpty) {
+          setState(() {
+            risultato += '\n${messages.join('\n')}';
+            aggiungiLog('$displayName: ${messages.join(' | ')}');
+          });
+        }
+      }
+      cooldown?.activate();
+      scheduleRealtimeOculumChanged();
+      programmaSalvataggio();
+    } finally {
+      combatSupportTargeting = previousSupportTargeting;
+      if (mounted &&
+          currentSheetScrollId() == origin &&
+          beforeEffects != jsonEncode(activeStructuredEffects)) {
+        var limits = oculumAttackTargetLimits(text, oculumTotale());
+        for (final effect in effects) {
+          if (effect.minimumTargets > 0 || effect.maximumTargets > 0) {
+            final low = max(1, effect.minimumTargets);
+            limits = (minimum: low, maximum: max(low, effect.maximumTargets));
+          }
+        }
+        if (activeStructuredEffects.any(
+          (e) =>
+              e['type'] == 'pending_target' &&
+              e['effect'] is Map &&
+              (e['effect'] as Map)['recipient'] == 'alleato',
+        )) {
+          await deliverPendingSupport(
+            minimum: limits.minimum,
+            maximum: limits.maximum,
+          );
+        }
+        if (mounted &&
+            currentSheetScrollId() == origin &&
+            onlineAttackTokens().isNotEmpty &&
+            activeStructuredEffects.any(
+              (e) =>
+                  e['type'] == 'pending_target' &&
+                  e['effect'] is Map &&
+                  (e['effect'] as Map)['recipient'] != 'alleato',
+            )) {
+          await planOnlineAttack(
+            minimumTargets: limits.minimum,
+            maximumTargets: limits.maximum,
+          );
+        }
       }
     }
-    cooldown?.activate();
-    scheduleRealtimeOculumChanged();
-    programmaSalvataggio();
   }
 
   void aggiungiOpenExtra(OculumTitle titolo) {

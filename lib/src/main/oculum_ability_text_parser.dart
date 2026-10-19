@@ -98,6 +98,11 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
       investedOculum: investedOculum,
     );
     for (final effect in parsed.effects) {
+      final targets = oculumAttackTargetLimits(clause, 1);
+      if (targets.maximum > 1) {
+        effect.minimumTargets = targets.minimum;
+        effect.maximumTargets = targets.maximum;
+      }
       if (!seen.add(oculumStructuredEffectSemanticKey(effect))) continue;
       effect.id = 'parsed_${sourceKey}_${effects.length}';
       effects.add(effect);
@@ -301,17 +306,20 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
     final clause = text.substring(start, suffix < 0 ? text.length : suffix);
     final before = text.substring(start, match.start);
     final subjects = RegExp(
-      r'\b(?:ti|te stesso|te stessa|ottieni|guadagni|ricevi|recuperi|subisci|perdi|bersaglio|avversario|nemico|alleato|compagno)\b',
+      r'\b(?:ti|te stesso|te stessa|ottieni|guadagni|ricevi|recuperi|subisci|perdi|bersaglio|avversario|nemico|alleat[oi]|compagn[oi])\b',
       caseSensitive: false,
     ).allMatches(before).toList();
     final subject = subjects.lastOrNull?.group(0)?.toLowerCase();
-    if (const {'alleato', 'compagno'}.contains(subject)) return 'alleato';
+    if (subject != null &&
+        (subject.startsWith('alleat') || subject.startsWith('compagn'))) {
+      return 'alleato';
+    }
     if (const {'bersaglio', 'avversario', 'nemico'}.contains(subject)) {
       return 'bersaglio';
     }
     if (subject != null) return 'se_stesso';
     if (RegExp(
-      r'\b(?:all[’\x27]?|a un|un)\s*(?:alleato|compagno)\b',
+      r'\b(?:all[’\x27]?|a|ad|ai|agli)\s*(?:(?:\d+|un|uno|una|due|tre|quattro|cinque|sei)\s+)?(?:alleat[oi]|compagn[oi])\b',
       caseSensitive: false,
     ).hasMatch(clause)) {
       return 'alleato';
