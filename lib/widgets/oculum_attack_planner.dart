@@ -21,6 +21,23 @@ class OculumAttackPlan {
   List<String> get targetIds => [targetId, ...additionalTargetIds];
 }
 
+/// A forecast can be exact or intentionally approximate.  A hidden estimate
+/// still carries a short explanation, but never a percentage or enemy value.
+class OculumAttackChanceEstimate {
+  const OculumAttackChanceEstimate(
+    this.forecast, {
+    this.approximate = false,
+    this.hiddenReason = '',
+  });
+  const OculumAttackChanceEstimate.hidden(this.hiddenReason)
+    : forecast = null,
+      approximate = false;
+
+  final OculumAttackForecast? forecast;
+  final bool approximate;
+  final String hiddenReason;
+}
+
 /// Exact enumeration of supplied roll totals; callers decide which information
 /// is public and which modifiers can legitimately be included in an estimate.
 double oculumOpposedRollChance(List<int> attack, List<int> defense) {
@@ -47,7 +64,10 @@ class OculumAttackPlanner extends StatefulWidget {
   });
   final Map<String, String> targets;
   final List<OculumAttackChoice> choices;
-  final OculumAttackForecast? Function(String target, OculumAttackChoice choice)
+  final OculumAttackChanceEstimate? Function(
+    String target,
+    OculumAttackChoice choice,
+  )
   chance;
   final String? initialTarget;
   final String initialChoice;
@@ -226,7 +246,8 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
                   ))
                     Builder(
                       builder: (_) {
-                        final chance = widget.chance(target, option);
+                        final estimate = widget.chance(target, option);
+                        final chance = estimate?.forecast;
                         final color =
                             option.color ??
                             Theme.of(context).colorScheme.primary;
@@ -290,7 +311,24 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
                                       8,
                                     ),
                                     child: Text(
-                                      'Stima contro CM · evitato ${chance.avoided.toStringAsFixed(1)}% · ridotto ${chance.reduced.toStringAsFixed(1)}% · pieno ${chance.full.toStringAsFixed(1)}%',
+                                      '${estimate!.approximate ? 'Stima approssimata' : 'Stima Percezione'} contro CM · evitato ${chance.avoided.toStringAsFixed(1)}% · ridotto ${chance.reduced.toStringAsFixed(1)}% · pieno ${chance.full.toStringAsFixed(1)}%',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
+                                  ),
+                                if (chance == null &&
+                                    estimate != null &&
+                                    estimate.hiddenReason.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      8,
+                                      0,
+                                      8,
+                                      8,
+                                    ),
+                                    child: Text(
+                                      estimate.hiddenReason,
                                       style: Theme.of(
                                         context,
                                       ).textTheme.bodySmall,

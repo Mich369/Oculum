@@ -221,9 +221,28 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             ..diceDestination = 'valore'
             ..valueExpression = '(${effect.valueExpression})*$slimeBounces';
         }
+        final isAreaDamage =
+            effect.type == 'danno' &&
+            effect.maximumTargets > 1 &&
+            effect.maximumTargets >= effect.minimumTargets;
+        final areaDamageParts = isAreaDamage
+            ? oculumSplitAreaDamageExpression(effect.valueExpression)
+            : (base: effect.valueExpression, perTargetBonus: '');
+        final effectForRoll = isAreaDamage
+            ? OculumStructuredEffect.fromJson(resolvedEffect.toJson())
+            : resolvedEffect;
+        if (isAreaDamage) {
+          effectForRoll.valueExpression = areaDamageParts.base;
+        }
+        final effectVariables = isAreaDamage
+            ? <String, num>{
+                ...variables,
+                'danni': max(0, dannoTotaleBaseSenzaComandi()),
+              }
+            : variables;
         final roll = oculumResolveStructuredEffectRoll(
-          resolvedEffect,
-          variables: variables,
+          effectForRoll,
+          variables: effectVariables,
           subtraits: hiddenEyeStats,
           spentResources: spentResources,
           level: resolvedLevel,
@@ -247,8 +266,12 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         final isPeriodic = frequency > 0;
         final preparedAttackBonus =
             const {'danno', 'danno_percentuale'}.contains(effect.type) &&
-            effect.mode == 'prossima_azione';
-        final effectiveRecipient = combatSupportTargeting && effect.recipient == 'se_stesso' ? 'alleato' : effect.recipient;
+            effect.mode == 'prossima_azione' &&
+            !(isAreaDamage && effect.recipient == 'nemico');
+        final effectiveRecipient =
+            combatSupportTargeting && effect.recipient == 'se_stesso'
+            ? 'alleato'
+            : effect.recipient;
         if (effectiveRecipient != 'se_stesso' && !preparedAttackBonus) {
           // Freeze caster formulas and dice now; retries and the defender must
           // never roll the same payload again or evaluate it on enemy stats.
@@ -276,6 +299,18 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             'unit': 'azioni',
             'minimumTargets': effect.minimumTargets,
             'maximumTargets': effect.maximumTargets,
+            if (isAreaDamage && areaDamageParts.perTargetBonus.isNotEmpty)
+              'damageBonusPerTarget': oculumEvaluateStructuredEffectValue(
+                OculumStructuredEffect(
+                  valueExpression: areaDamageParts.perTargetBonus,
+                ),
+                variables: <String, num>{
+                  ...variables,
+                  'danni': max(0, dannoTotaleBaseSenzaComandi()),
+                },
+                subtraits: hiddenEyeStats,
+                spentResources: spentResources,
+              ),
             'effect': frozen.toJson(),
           });
           messages.add(

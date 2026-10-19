@@ -5151,6 +5151,26 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
   }
 
+  /// Flat Danni modifiers are kept outside an area's shared base packet so
+  /// each selected hit receives the complete modifier.
+  int bonusDannoPiatto() {
+    final flatBonus =
+        titleQuickBonus('danni') +
+        artQuickBonus('danni') +
+        itemQuickBonus('danni') +
+        globalQuickBonus('danni') +
+        skillFormaBonus('danni') +
+        activeStructuredEffectBonus('danni');
+    final beforeConditions = dannoTotaleBaseSenzaComandi() + flatBonus;
+    final conditionDelta =
+        applyConditionDerivedValue(
+          OculumConditionTarget.danno,
+          beforeConditions,
+        ) -
+        beforeConditions;
+    return flatBonus + conditionDelta;
+  }
+
   String formulaDannoDettagliata() {
     final base = dannoTotaleBaseSenzaComandi();
     final bonusTitoli = titleQuickBonus('danni');

@@ -134,6 +134,18 @@ extension _OculumFriends on _OculumHomePageState {
         .toList();
   }
 
+  /// Tags that this installation actually owns.  Remote copies are useful to
+  /// browse in the Master/Co-Master UI, but must never become an identity
+  /// advertised through Realtime Presence.
+  List<String> ownedOculumTags() {
+    assicuraTagSchede();
+    return schedePersonaggio
+        .where((sheet) => !readBoolValue(sheet['realtimeSharedSheet']))
+        .map((sheet) => normalizeOculumFriendTag('${sheet['sheetTag'] ?? ''}'))
+        .where((tag) => tag.isNotEmpty)
+        .toList();
+  }
+
   bool isOculumFriendBlocked(String tag) {
     final clean = normalizeOculumFriendTag(tag).toUpperCase();
     return blockedOculumFriends.any(

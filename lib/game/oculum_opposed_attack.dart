@@ -1,3 +1,5 @@
+import 'dart:math';
+
 /// Shared attack/defense rule, including the explicit Oculum tie exception.
 enum OculumAttackOutcome {
   avoided('Evitato'),
@@ -27,6 +29,44 @@ OculumAttackOutcome oculumAttackOutcome(
   };
   if (margin <= band) return OculumAttackOutcome.reduced;
   return OculumAttackOutcome.full;
+}
+
+/// Divides one declared damage packet among each selected hit. Rounding up is
+/// intentional: every target receives at least its equal share, as confirmed
+/// for multi-target attacks.
+int oculumDamagePerTarget(
+  int baseDamage,
+  int targetCount, {
+  int flatBonusPerTarget = 0,
+}) {
+  if (targetCount <= 0) return 0;
+  final base = max(0, baseDamage);
+  final share = (base + targetCount - 1) ~/ targetCount;
+  return max(0, share + flatBonusPerTarget);
+}
+
+/// Keeps an additive tail such as `danni+8` outside the divided area packet.
+/// The tail is evaluated once on activation and added to every hit.
+({String base, String perTargetBonus}) oculumSplitAreaDamageExpression(
+  String expression,
+) {
+  var depth = 0;
+  for (var index = 0; index < expression.length; index++) {
+    final char = expression[index];
+    if (char == '(') depth++;
+    if (char == ')') depth = max(0, depth - 1);
+    if (depth != 0 || (char != '+' && char != '-')) continue;
+    if (index == 0 || index == expression.length - 1) continue;
+    final left = expression.substring(0, index).trim();
+    final right = expression.substring(index + 1).trim();
+    if (left.isEmpty ||
+        right.isEmpty ||
+        !RegExp(r'danni', caseSensitive: false).hasMatch(left)) {
+      continue;
+    }
+    return (base: left, perTargetBonus: char == '-' ? '-($right)' : right);
+  }
+  return (base: expression, perTargetBonus: '');
 }
 
 /// Zero/negative totals do not grant an unearned critical reaction.

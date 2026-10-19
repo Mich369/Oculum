@@ -1309,6 +1309,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     void Function(int naturalRoll, int total)? onResolved,
   }) async {
     oculumProfileMark('roll_subtrait');
+    if (stat.id == 'percezione' && actionLabel == null && onResolved == null) {
+      await scoutCombatTarget(requestedStat: stat);
+      return;
+    }
     if (stat.id == 'manifestazione_potere') {
       final consumptionRoll = Random.secure().nextInt(100);
       final consumed = oculumManifestationConsumesOculum(consumptionRoll)

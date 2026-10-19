@@ -387,7 +387,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       presenceDataProvider: () => <String, dynamic>{
         'role': realtimeLocalRole(),
         'activeSheetTag': sheetTagAt(schedaCorrente),
-        'localSheetTags': localOculumTags(),
+        'localSheetTags': ownedOculumTags(),
         'campaignId': activeCampaignId,
         'campaignName': activeCampaignName(),
         'masterClaimId': realtimeMasterClaimId,
@@ -1434,6 +1434,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       return localRole == 'master';
     }
     if (senderRole == 'master') {
+      if (targetAudience == 'staff_turn_order') {
+        return localRole == 'coMaster';
+      }
       return localRole != 'master' &&
           (targetAudience == 'players_enemy_tokens' ||
               targetAudience == 'players_party_full');
@@ -2293,6 +2296,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   void sendRealtimeInitiativeSnapshot({bool close = false}) {
     final service = realtimeService;
     if (service?.isConnected != true || !realtimeIsMasterRole) return;
+    if (!close) sendRealtimeStaffTurnOrderSheets();
 
     unawaited(
       service!.sendInitiativeSnapshot(
@@ -2404,6 +2408,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
     if (senderRole == 'master' &&
         targetAudience != 'players_party_full' &&
+        targetAudience != 'staff_turn_order' &&
         !readBoolValue(sheet['realtimeRestrictedByMaster'])) {
       return false;
     }
@@ -2455,6 +2460,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     } else {
       realtimeSharedSheets.add(record);
     }
+    // A Co-Master that joins after a player still needs the same usable sheet
+    // in the turn order.  Relay the Master registry only to Co-Masters; the
+    // player copy stays owned by its original session and remains read-only.
+    if (realtimeIsMasterRole && senderRole == 'player') {
+      sendRealtimeStaffTurnOrderSheets();
+    }
     // Confirm only after validation and storage in the receiving sheet registry.
     sendRealtimeMasterSheetAck(
       payload: payload,
@@ -2481,7 +2492,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         return true;
       }
 
-      return false;
+      // A staff relay is deliberately retained in the browsing registry until
+      // opened; accepting it must still refresh and save the receiving UI.
+      return targetAudience == 'staff_turn_order';
     }
 
     final existingLocal = Map<String, dynamic>.from(
@@ -2529,6 +2542,69 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
   void sendRealtimeMasterPartySheets() {
     sendRealtimeMasterVisiblePartyTokens();
+  }
+
+  /// Mirrors the player-sheet registry from the Master to all Co-Masters.
+  /// It is intentionally separate from player-facing party publication: this
+  /// contains no new writable ownership and is only used to open a participant
+  /// from the shared turn order.
+  void sendRealtimeStaffTurnOrderSheets() {
+    final service = realtimeService;
+    if (service?.isConnected != true || !realtimeIsMasterRole) return;
+    if (!realtimeUsers.any((user) => user['role'] == 'coMaster')) return;
+
+    final participantTags = <String>{
+      for (final token in masterInitiativeTokens)
+        publicInitiativeSourceTag(token),
+      for (final group in masterInitiativeGroups)
+        for (final token
+            in (group['tokens'] as List? ?? const []).whereType<Map>())
+          publicInitiativeSourceTag(Map<String, dynamic>.from(token)),
+    };
+    final records = <String, Map<String, dynamic>>{};
+    for (final record in realtimeSharedSheets) {
+      final tag = '${record['sheetId'] ?? ''}';
+      if (participantTags.contains(tag) &&
+          const {'player', 'coMaster'}.contains(record['senderRole']) &&
+          record['sheet'] is Map) {
+        records[tag] = record;
+      }
+    }
+    for (var index = 0; index < schedePersonaggio.length; index++) {
+      final source = schedePersonaggio[index];
+      if (readBoolValue(source['realtimeSharedSheet'])) continue;
+      final tag = '${source['sheetTag'] ?? source['id'] ?? ''}';
+      if (!participantTags.contains(tag)) continue;
+      records[tag] = {
+        'sheetId': tag,
+        'ownerTag': tag,
+        'sheetName': nomeSchedaPersonaggio(index),
+        'sheet': schedaJsonAt(index),
+      };
+    }
+    for (final record in records.values) {
+      final sheetId = normalizeOculumFriendTag('${record['sheetId'] ?? ''}');
+      final ownerTag = normalizeOculumFriendTag('${record['ownerTag'] ?? ''}');
+      if (sheetId.isEmpty || ownerTag.isEmpty) continue;
+      final sheet = realtimeSafeSheetJson(
+        Map<String, dynamic>.from(record['sheet'] as Map),
+        includeImage: true,
+      );
+      unawaited(
+        service!.sendSharedSheet(
+          sheet: sheet,
+          campaignId: activeCampaignId,
+          campaignName: activeCampaignName(),
+          sheetId: sheetId,
+          sheetName: '${record['sheetName'] ?? sheet['nome'] ?? '???'}',
+          ownerTag: ownerTag,
+          senderRole: 'master',
+          targetAudience: 'staff_turn_order',
+          fromMaster: true,
+          masterParty: false,
+        ),
+      );
+    }
   }
 
   void sendRealtimeCurrentPartySheet() {
@@ -3248,9 +3324,49 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (realtimeService?.isConnected != true || !haPermessiMaster) return;
 
     salvaSchedaCorrenteInMemoria();
+    sendRealtimeStaffTurnOrderSheets();
     for (final index in masterPartyIndexes()) {
       sendRealtimeMasterVisibleTokenAt(index);
     }
+  }
+
+  Future<void> apriSchedaPartecipanteTurnistica(
+    Map<String, dynamic> token,
+  ) async {
+    if (!realtimeCanBrowseOtherSheets) return;
+    final tag = normalizeOculumFriendTag(
+      onlineCombatTokenTag(token),
+    );
+    if (tag.isEmpty) return;
+    final recordIndex = realtimeSharedSheets.indexWhere(
+      (record) =>
+          ('${record['campaignId'] ?? ''}' == activeCampaignId ||
+              '${record['campaignId'] ?? ''}' == permissionCampaignId) &&
+          (normalizeOculumFriendTag('${record['sheetId'] ?? ''}') == tag ||
+              normalizeOculumFriendTag('${record['ownerTag'] ?? ''}') == tag),
+    );
+    if (recordIndex >= 0) {
+      await apriSchedaRealtimeCondivisa(recordIndex);
+      return;
+    }
+    final localIndex = schedePersonaggio.indexWhere(
+      (sheet) =>
+          normalizeOculumFriendTag('${sheet['sheetTag'] ?? ''}') == tag ||
+          normalizeOculumFriendTag('${sheet['realtimeSourceSheetTag'] ?? ''}') ==
+              tag,
+    );
+    if (localIndex >= 0) {
+      await cambiaSchedaPersonaggio(localIndex);
+      return;
+    }
+    setState(() {
+      risultato = t(
+        'Scheda del partecipante non ancora ricevuta: richiesta inviata.',
+        'Participant sheet not received yet: request sent.',
+      );
+      aggiungiLog(risultato);
+    });
+    unawaited(realtimeService?.requestSharedSheets());
   }
 
   void sendRealtimeMonsterBookSnapshot() {

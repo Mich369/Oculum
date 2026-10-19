@@ -238,9 +238,7 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
   MonsterBookEntry monster, {
   required int seed,
 }) {
-  if (monster.isNpc ||
-      monsterBookUsableSkillIds(monster).isEmpty ||
-      monster.id.startsWith('pawn_guardiano')) {
+  if (monster.isNpc || monster.id.startsWith('pawn_guardiano')) {
     return [];
   }
   final body = oculumNormalizeText(
@@ -255,6 +253,9 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
           int cd,
           List<OculumStructuredEffect> effects,
           bool magic,
+          bool multiTarget,
+          List<int> targetCounts,
+          List<double> damageRatios,
         })
       >[];
   OculumStructuredEffect effect(
@@ -263,12 +264,18 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
     String target = '',
     String mode = 'prossima_azione',
     String duration = '',
+    int minimumTargets = 0,
+    int maximumTargets = 0,
+    String recipient = 'se_stesso',
   }) => OculumStructuredEffect(
     type: type,
     target: target,
     valueExpression: value,
     mode: mode,
     duration: duration,
+    minimumTargets: minimumTargets,
+    maximumTargets: maximumTargets,
+    recipient: recipient,
     elementType: element,
   );
   void add(
@@ -277,8 +284,20 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
     int cd,
     List<OculumStructuredEffect> effects, {
     bool magic = false,
+    bool multiTarget = false,
+    List<int> targetCounts = const [1, 1, 1],
+    List<double> damageRatios = const [],
   }) {
-    pool.add((name: name, text: text, cd: cd, effects: effects, magic: magic));
+    pool.add((
+      name: name,
+      text: text,
+      cd: cd,
+      effects: effects,
+      magic: magic,
+      multiTarget: multiTarget,
+      targetCounts: targetCounts,
+      damageRatios: damageRatios,
+    ));
   }
 
   final winged = RegExp(
@@ -438,6 +457,61 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
       magic: true,
     );
   }
+  // Every non-NPC monster can roll one area technique at spawn. The packet is
+  // computed once from this creature, then split across the chosen hits. This
+  // leaves one other random slot for a body/element-specific move.
+  final areaResource = (monster.stats['volonta'] ?? 0) > 0
+      ? 'volonta'
+      : (monster.stats['materia'] ?? 0) > 0
+      ? 'materia'
+      : (monster.stats['oculum'] ?? 0) > 0
+      ? 'oculum'
+      : 'nessuna';
+  final areaElement = element.isEmpty ? 'fisico' : element;
+  add(
+    'Spazzata a raggiera',
+    'Colpisci in un arco largo fino a quattro bersagli. Il danno totale della mossa è diviso fra i colpi scelti, arrotondando per eccesso per ogni bersaglio; ogni bersaglio tira la propria difesa. Costo e ricarica si pagano una volta.',
+    4,
+    [
+      effect(
+        'danno',
+        'danni*0.75',
+        minimumTargets: 2,
+        maximumTargets: 2,
+        recipient: 'nemico',
+      ),
+    ],
+    multiTarget: true,
+    targetCounts: const [2, 3, 4],
+    damageRatios: const [.75, 1, 1.25],
+  );
+  add(
+    'Eco a catena',
+    'Rilasci un impulso che salta fra fino a cinque bersagli. Il danno totale della mossa è diviso fra i colpi scelti, arrotondando per eccesso per ogni bersaglio; ciascuno tira la propria difesa. Costo e ricarica si pagano una volta.',
+    5,
+    [
+      effect(
+        'danno',
+        'danni*0.6',
+        minimumTargets: 3,
+        maximumTargets: 3,
+        recipient: 'nemico',
+      ),
+    ],
+    magic: areaResource == 'oculum',
+    multiTarget: true,
+    targetCounts: const [3, 4, 5],
+    damageRatios: const [.6, .8, 1],
+  );
+  // Ensure even bodies without a matching motif receive a single-target move.
+  if (!pool.any((move) => !move.multiTarget)) {
+    add(
+      'Impatto diretto',
+      'Concentri il peso in un solo colpo: +5 Danni al prossimo attacco contro un bersaglio.',
+      3,
+      [effect('danno', '5')],
+    );
+  }
   // Fallbacks describe universally available postures, not absent limbs.
   if (pool.length < 2) {
     add(
@@ -453,9 +527,36 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
       [effect('danno_percentuale', '20')],
     );
   }
-  pool.shuffle(Random(seed));
+  final random = Random(seed);
+  pool.shuffle(random);
+  final areaMoves = pool.where((move) => move.multiTarget).toList();
+  final singleMoves = pool.where((move) => !move.multiTarget).toList();
+  final chosenMoves =
+      <
+        ({
+          String name,
+          String text,
+          int cd,
+          List<OculumStructuredEffect> effects,
+          bool magic,
+          bool multiTarget,
+          List<int> targetCounts,
+          List<double> damageRatios,
+        })
+      >[];
+  if (areaMoves.isNotEmpty) {
+    chosenMoves.add(areaMoves[random.nextInt(areaMoves.length)]);
+  }
+  chosenMoves.addAll(singleMoves.take(2 - chosenMoves.length));
+  if (chosenMoves.length < 2) {
+    chosenMoves.addAll(
+      areaMoves
+          .where((move) => !chosenMoves.contains(move))
+          .take(2 - chosenMoves.length),
+    );
+  }
   final result = <CharacterSkill>[];
-  for (final move in pool.take(2)) {
+  for (final move in chosenMoves) {
     final resource = move.magic
         ? 'oculum'
         : (monster.stats['volonta'] ?? 0) > 0
@@ -472,6 +573,17 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
     );
     final text =
         '${move.text}\nVariante individuale di ${monster.nameIt}; scelta alla creazione e conservata nella scheda.';
+    final targetMaximum = move.targetCounts.first;
+    final firstEffects = [
+      for (final (effectIndex, sourceEffect) in move.effects.indexed)
+        OculumStructuredEffect.fromJson({
+          ...sourceEffect.toJson(),
+          'id': 'enemy_${monster.id}_${seed}_${move.name}_${effectIndex}_0',
+          if (move.multiTarget) 'minimumTargets': targetMaximum,
+          if (move.multiTarget) 'maximumTargets': targetMaximum,
+          if (move.multiTarget) 'elementType': areaElement,
+        }),
+    ];
     result.add(
       CharacterSkill(
         nome: '${move.name} — ${monster.nameIt}',
@@ -487,11 +599,17 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
           CharacterSkillForm(
             nome: 'I',
             tipo: 'Tecnica individuale mostro',
-            costo: move.magic ? '1/3 Oculum' : '1/1 $resource',
-            descrizione: text,
+            costo: move.magic
+                ? '1/3 Oculum'
+                : resource == 'nessuna'
+                ? 'Nessun costo'
+                : '1/1 $resource',
+            descrizione: move.multiTarget
+                ? '${move.name} I: colpisce $targetMaximum volte. Scegli fino a $targetMaximum bersagli, anche ripetendo lo stesso; i colpi mancanti si assegnano a caso fra quelli scelti. Danno totale ${move.damageRatios.first * 100}% dei Danni, diviso fra i colpi e arrotondato per eccesso per bersaglio; ciascuno tira la propria difesa. Costo ${resource == 'nessuna' ? 'gratuito' : '1 $resource'}, ricarica ${move.cd} turni.\n$text'
+                : text,
             costoStrutturato: cost,
             cooldownStrutturato: OculumAbilityCooldown(amount: move.cd),
-            effettiStrutturati: move.effects,
+            effettiStrutturati: firstEffects,
             oculumLimitiConfiguratiManualmente: true,
           ),
         ],
@@ -501,11 +619,16 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
     final first = created.forme.first;
     for (var form = 1; form < 3; form++) {
       final ratio = 1 + form * .25;
+      final stageDamageRatio = move.multiTarget
+          ? move.damageRatios[form]
+          : ratio;
       final evolved = [
         for (final e in first.effettiStrutturati)
           OculumStructuredEffect.fromJson({
             ...e.toJson(),
-            'id': '${monster.id}_${move.name}_${seed}_$form',
+            'id': '${monster.id}_${seed}_${move.name}_${e.id}_$form',
+            if (move.multiTarget) 'minimumTargets': move.targetCounts[form],
+            if (move.multiTarget) 'maximumTargets': move.targetCounts[form],
             if (const {
               'danno',
               'danno_percentuale',
@@ -515,7 +638,9 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
               'modifica_sottotratto',
               'modifica_statistica',
             }.contains(e.type))
-              'valueExpression': '(${e.valueExpression})*$ratio',
+              'valueExpression': move.multiTarget
+                  ? 'danni*$stageDamageRatio'
+                  : '(${e.valueExpression})*$ratio',
           }),
       ];
       final minCost = move.magic
@@ -524,14 +649,22 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
           ? 0
           : form + 1;
       final maxCost = move.magic ? const [3, 6, 10][form] : minCost;
+      final costText = resource == 'nessuna'
+          ? 'Nessun costo'
+          : 'Costo $minCost/$maxCost $resource';
+      final targetText = move.multiTarget
+          ? 'Colpisce ${move.targetCounts[form]} volte; scegli fino a quel numero di bersagli. Puoi ripetere lo stesso bersaglio; i colpi mancanti si assegnano a caso fra quelli scelti. Il danno totale è diviso fra i colpi e arrotondato per eccesso per bersaglio; ognuno tira la propria difesa.'
+          : '';
       created.forme.add(
         CharacterSkillForm(
           nome: const ['I', 'II', 'III'][form],
           tipo: created.tipo,
           livello: '${form * 5}',
-          costo: '$minCost/$maxCost $resource',
+          costo: resource == 'nessuna'
+              ? 'Nessun costo'
+              : '$minCost/$maxCost $resource',
           descrizione:
-              '${move.name} ${form + 1}: ${evolved.map(oculumStructuredEffectDescription).join("; ")}. Costo $minCost/$maxCost $resource.',
+              "${move.name} ${form + 1}: ${evolved.map(oculumStructuredEffectDescription).join('; ')}.$targetText $costText. Ricarica ${move.cd + (move.multiTarget ? form : 0)} turni.",
           costoStrutturato: OculumSkillCost(
             resource: resource,
             amountExpression: '$minCost',
@@ -539,7 +672,9 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
             minimum: minCost,
             maximum: maxCost,
           ),
-          cooldownStrutturato: OculumAbilityCooldown(amount: move.cd),
+          cooldownStrutturato: OculumAbilityCooldown(
+            amount: move.cd + (move.multiTarget ? form : 0),
+          ),
           effettiStrutturati: evolved,
           oculumLimitiConfiguratiManualmente: true,
         ),
@@ -573,6 +708,7 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
           costoStrutturato: OculumSkillCost(resource: 'nessuna'),
           effettiStrutturati: [
             OculumStructuredEffect(
+              id: 'enemy_${monster.id}_${seed}_passive_0',
               type: 'modifica_sottotratto',
               target: target,
               valueExpression: '1',
@@ -594,6 +730,7 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
         costoStrutturato: OculumSkillCost(resource: 'nessuna'),
         effettiStrutturati: [
           OculumStructuredEffect(
+            id: 'enemy_${monster.id}_${seed}_passive_$form',
             type: 'modifica_sottotratto',
             target: target,
             valueExpression: '${form + 1}',

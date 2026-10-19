@@ -125,6 +125,69 @@ void main() {
     },
   );
   test(
+    'each non-NPC monster rolls one saved area technique with balanced stages',
+    () {
+      for (final monster in defaultMonsterBookEntries.where(
+        (entry) => !entry.isNpc && !entry.id.startsWith('pawn_guardiano'),
+      )) {
+        final first = oculumEnemyAbilityVariants(monster, seed: 2419);
+        final second = oculumEnemyAbilityVariants(monster, seed: 2419);
+        final area = first
+            .where(
+              (skill) => skill.forme.first.effettiStrutturati.any(
+                (effect) => effect.minimumTargets > 1,
+              ),
+            )
+            .toList();
+        expect(area, hasLength(1), reason: monster.id);
+        expect(
+          first.map((skill) => skill.toJson()).toList(),
+          second.map((skill) => skill.toJson()).toList(),
+          reason:
+              'The same spawn seed must preserve the same abilities: ${monster.id}',
+        );
+        final skill = area.single;
+        expect(skill.forme, hasLength(3), reason: monster.id);
+        final firstHitCount =
+            skill.forme.first.effettiStrutturati.single.minimumTargets;
+        expect(
+          firstHitCount,
+          anyOf(2, 3),
+          reason: '${monster.id} ${skill.nome}',
+        );
+        for (var form = 0; form < skill.forme.length; form++) {
+          final hitCount = firstHitCount + form;
+          final effect = skill.forme[form].effettiStrutturati.single;
+          expect(effect.type, 'danno', reason: '${monster.id} ${skill.nome}');
+          expect(
+            effect.minimumTargets,
+            hitCount,
+            reason: '${monster.id} forma $form',
+          );
+          expect(
+            effect.maximumTargets,
+            hitCount,
+            reason: '${monster.id} forma $form',
+          );
+          expect(
+            effect.elementType,
+            isNotEmpty,
+            reason: '${monster.id} forma $form',
+          );
+          expect(
+            skill.forme[form].cooldownStrutturato!.amount,
+            greaterThanOrEqualTo(4),
+          );
+        }
+        final restored = CharacterSkill.fromJson(skill.toJson());
+        expect(
+          restored.forme[2].effettiStrutturati.single.maximumTargets,
+          firstHitCount + 2,
+        );
+      }
+    },
+  );
+  test(
     'monster Open has a buff and an independent persisted skill cooldown',
     () {
       final art = CharacterArt(

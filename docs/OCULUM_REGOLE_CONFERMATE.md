@@ -52,8 +52,12 @@ Esempio: 51 danni base, nemico livello 10, Medio: bonus ordinario 20; tiro doppi
 
 - Online, in una turnistica, scegli il bersaglio e il tiro d'attacco. VC è il tiro ordinario; Schianto, Forza, Riflessi o altri tiri alternativi richiedono una descrizione e una motivazione al Master.
 - Il log del bersaglio richiede una difesa con CM, Riflessi, Resistenza o Manifestazione del Potere, secondo la mossa. Non pubblicare statistiche nascoste per calcolare probabilità.
+- La sessione online dichiara tutte le proprie schede, non le copie ricevute. Perciò, passando da una propria scheda all'altra, una richiesta di attacco resta valida anche prima del completamento dell'aggiornamento Presence. Se il bersaglio è già nella turnistica selezionata, può ricevere la richiesta anche quando il token dell'attaccante arriva un istante dopo nel suo snapshot.
+- Master e Co-Master hanno lo stesso registro in sola lettura delle schede dei partecipanti nella turnistica. Dal partecipante possono aprire «Apri scheda»; la condivisione non trasferisce proprietà, né abilita un player a modificare la scheda di un altro player.
 - Offline le abilità devono continuare a funzionare. Scelta del bersaglio, tiro difensivo ed esito possono essere manuali, senza autorizzazione del Master online.
 - Gli effetti su un nemico non devono diminuire per errore le statistiche di chi li attiva.
+- Conferma del 19 ottobre 2026: una skill ad area divide il danno totale fra i colpi/bersagli scelti; ogni quota è arrotondata per eccesso. Ogni bersaglio effettua la propria difesa e applica le proprie resistenze. Se una forma richiede più colpi di quanti bersagli distinti sono scelti, i colpi mancanti si assegnano casualmente fra i bersagli selezionati; uno stesso bersaglio può ricevere più colpi. Costo e cooldown si applicano una sola volta all'azione.
+- Conferma del 19 ottobre 2026: la generazione casuale assegna a ogni mostro non-NPC e non Pawn una tecnica multi-bersaglio equilibrata oltre a una variante individuale. Le tecniche generate sono persistite nella scheda e restano modificabili dall'editor.
 
 ## Conferme precedenti da conservare
 
@@ -107,11 +111,13 @@ Questo registro conserva le richieste; non certifica la loro implementazione. Le
 - Per un attacco alternativo a VC basta descrivere e motivare l'attacco **a voce** al Master. Scrivere è facoltativo e non deve bloccare il tiro né la consegna online.
 - Aiuta compagno permette di scegliere il destinatario; il totale, anche negativo, diventa rispettivamente un + o un − nel suo tiro. Cura e supporto devono scegliere i bersagli della turnistica, includendo «Se stessi» quando appropriato.
 - Ogni attacco deve avere una fascia di bersagli/colpi modificabile. È possibile selezionare più volte lo stesso nemico. Se si selezionano meno destinatari del numero richiesto, i colpi rimasti si distribuiscono casualmente fra quelli selezionati, anche se il destinatario è uno solo. Costo e cooldown non vengono pagati per ogni colpo.
+- Negli attacchi a più bersagli si divide soltanto il danno base; ogni bonus piatto esplicito, per esempio «Danni +8», si applica per intero a ciascun bersaglio. Ogni quota base si arrotonda per eccesso, poi si aggiunge il bonus individuale.
 - Anche cure, effetti, difese e supporti possono avere più destinatari. Il riconoscimento deve funzionare sia per effetti strutturati sia per parser del testo.
 - Si possono concedere reazioni ad altri. La propria scheda è verde, gli alleati azzurri, i nemici rossi.
 - Online le azioni riguardano solo il proprio fight; deve esistere una funzione esplicita per unire più fight. Offline resta possibile la gestione manuale intuitiva.
 - Attacchi senza skill usano i Danni inflitti della scheda. La risoluzione deve rispettare Difesa, resistenze per tipo, Schivata Oculum, Scudi, HP temporanei e Vita, anche online. Migliorare il collegamento del vampirismo con danni realmente inflitti e turnistica.
-- Nascondere inizialmente le probabilità. Percezione o Investigazione selezionano un bersaglio; un totale almeno pari al livello ne rivela livello esatto e probabilità. Mostrare nei Tiri e azioni il migliore dei due tiri. Un critico scopre il punto cieco per sé e alleati: richiesta di attacchi «semi letali», il cui effetto preciso e durata sono **da chiarire**.
+- Nascondere inizialmente le probabilità. Percezione o Investigazione sono azioni lanciabili anche senza bersaglio; scegliendo un partecipante, il totale deve raggiungere **Livello + Velo** usando Oculum per rivelare livello esatto e probabilità. Se manca di al massimo 5, mostra una stima con livello più basso ma stesso Grado; se manca di più, mostra solo «Non senti abbastanza». Mostrare nei Tiri e azioni il migliore dei due tiri. Un critico scopre il punto cieco per sé e alleati: richiesta di attacchi «semi letali», il cui effetto preciso e durata sono **da chiarire**.
+- Precisazione successiva confermata: **pari basta**. In caso di lettura approssimata il livello percepito si riduce dello scarto del tiro, minimo 0, conservando il Grado. Esempio: livello 12, Velo 5, tiro 14 → scarto 3, livello percepito 9; tiro 17 → esatto. L'azione Percezione deve offrire sia la scelta di una persona sia il lancio libero senza bersaglio.
 - Le skill dei titoli comprendono Open, skill della Open e skill conferite dal titolo stesso. Molte skill iniziali dei mostri vanno rese disponibili dal livello 0, preservando le eccezioni intenzionali.
 
 ### Slot e categorie di titoli

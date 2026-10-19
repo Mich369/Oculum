@@ -62,6 +62,7 @@ import 'widgets/oculum_quick_edit_eye.dart';
 import 'widgets/oculum_monster_picker.dart';
 import 'widgets/oculum_attack_planner.dart';
 import 'game/oculum_opposed_attack.dart';
+import 'game/oculum_combat_scout_rules.dart';
 import 'pages/oculum_dungeon/monster_book.dart';
 import 'pages/oculum_dungeon_game.dart';
 import 'pages/hero_path_page.dart';

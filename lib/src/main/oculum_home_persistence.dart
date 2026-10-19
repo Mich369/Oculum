@@ -5729,6 +5729,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
       aggiungiLog('Scheda caricata: ${nomeSchedaPersonaggio(index)}.');
     });
 
+    // The active tag is part of the Realtime Presence identity.  Refresh it
+    // as soon as the player changes sheet, while the owned tag list keeps
+    // combat delivery valid during the short Presence update window.
+    if (realtimeService?.isConnected == true) {
+      refreshRealtimeRolePresence();
+      if (!readBoolValue(schedePersonaggio[index]['realtimeSharedSheet'])) {
+        sendRealtimeCurrentSheetToStaff(immediate: true);
+      }
+    }
+
     await salvaDati();
   }
 

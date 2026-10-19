@@ -520,7 +520,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   }
 
   String onlineCombatTokenTag(Map<String, dynamic> token) =>
-      '${token['sheetTag'] ?? token['id'] ?? ''}';
+      realtimeIsMasterRole
+      ? publicInitiativeSourceTag(token)
+      : '${token['sheetTag'] ?? token['id'] ?? ''}';
 
   List<Map<String, dynamic>> onlineAttackTokens() {
     final tokens = onlineCombatTokens();
@@ -573,7 +575,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       return;
     }
     final byId = {
-      for (final token in tokens) '${token['sheetTag'] ?? token['id']}': token,
+      for (final token in tokens) onlineCombatTokenTag(token): token,
     };
     final subs = hiddenEyeStats
         .where(
@@ -610,17 +612,29 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         maximumTargets: maximumTargets.clamp(1, 100),
         choices: choices,
         chance: (tag, option) {
-          // Never derive hidden enemy statistics from a replicated private sheet.
+          // Never derive hidden enemy statistics from a replicated private
+          // sheet. Even Master views use the Percezione result shown to the
+          // acting participant, rather than silently revealing a target.
           final known = discoveredCombatTarget(tag);
-          if ((!haPermessiMaster && known == null) || slotMachineRollsEnabled) {
-            return null;
+          if (slotMachineRollsEnabled) {
+            return const OculumAttackChanceEstimate.hidden(
+              'Probabilità nascoste con i tiri casuali.',
+            );
           }
-          final index = masterInitiativeSheetIndexForToken(byId[tag]!);
-          if (known == null && index < 0) return null;
-          final defense = known != null
-              ? readIntValue(known['cm'])
-              : sheetRollBonusAt(index, 'cm');
-          return OculumAttackForecast.fromRolls(
+          if (known == null) {
+            return const OculumAttackChanceEstimate.hidden(
+              'Usa Percezione sul bersaglio per leggere le probabilità.',
+            );
+          }
+          final reveal = '${known['reveal'] ?? 'insufficient'}';
+          if (reveal != OculumCombatScoutReveal.exact.name &&
+              reveal != OculumCombatScoutReveal.approximate.name) {
+            return const OculumAttackChanceEstimate.hidden(
+              'Non senti abbastanza del bersaglio.',
+            );
+          }
+          final defense = readIntValue(known['cm']);
+          final forecast = OculumAttackForecast.fromRolls(
             [
               for (var die = 1; die <= 20; die++)
                 rollTotalWithCritical(die, 20, [option.bonus]),
@@ -631,18 +645,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                   die,
                   20,
                   [defense],
-                  level: known != null
-                      ? readIntValue(known['level'])
-                      : sheetCriticalLevelAt(index),
-                  grade: known != null
-                      ? readIntValue(known['grade'])
-                      : sheetIntValueAt(index, 'grado'),
-                  difficulty: known != null
-                      ? readIntValue(known['rollDifficulty'])
-                      : sheetDifficoltaTiroAt(index),
+                  level: readIntValue(known['level']),
+                  grade: readIntValue(known['grade']),
+                  difficulty: readIntValue(known['rollDifficulty']),
                 ),
             ],
             difficulty: normalizedCampaignDifficulty(),
+          );
+          return OculumAttackChanceEstimate(
+            forecast,
+            approximate: reveal == OculumCombatScoutReveal.approximate.name,
           );
         },
       ),
@@ -660,8 +672,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       return;
     }
     final currentIds = {
-      for (final token in onlineAttackTokens())
-        '${token['sheetTag'] ?? token['id']}',
+      for (final token in onlineAttackTokens()) onlineCombatTokenTag(token),
     };
     if (plan.targetIds.any((id) => !currentIds.contains(id)) ||
         plan.targetIds.length < minimumTargets ||
@@ -680,17 +691,36 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         if (e['type'] == 'pending_target' &&
             e['effect'] is Map &&
             (e['effect'] as Map)['recipient'] != 'alleato')
-          Map<String, dynamic>.from(e['effect'] as Map),
+          {
+            ...Map<String, dynamic>.from(e['effect'] as Map),
+            'areaDamageBonusPerTarget': readIntValue(e['damageBonusPerTarget']),
+          },
     ];
     final directDamage = targetEffects
         .where((e) => e['type'] == 'danno')
         .toList();
-    final damage = directDamage.isEmpty
-        ? preparedDamage
+    final flatDamageBonus =
+        bonusDannoPiatto() +
+        directDamage.fold<int>(
+          0,
+          (sum, e) => sum + readIntValue(e['areaDamageBonusPerTarget']),
+        );
+    final baseDamage = directDamage.isEmpty
+        ? max(0, preparedDamage - flatDamageBonus)
         : directDamage.fold<int>(
             0,
             (sum, e) => sum + max(0, readIntValue(e['valueExpression'])),
           );
+    final damagePerTarget = oculumDamagePerTarget(
+      baseDamage,
+      plan.targetIds.length,
+      flatBonusPerTarget: flatDamageBonus,
+    );
+    if (plan.targetIds.length > 1) {
+      aggiungiLog(
+        '[DANNI AD AREA] Danno base $baseDamage ÷ ${plan.targetIds.length} colpi, arrotondato per eccesso, + bonus piatto $flatDamageBonus per ogni bersaglio = $damagePerTarget danni a bersaglio. Ogni bersaglio risolve la propria difesa e le proprie resistenze.',
+      );
+    }
     final sourceTag = sheetTagAt(schedaCorrente);
     final id = '$sourceTag:${DateTime.now().microsecondsSinceEpoch}';
     if (freeReaction != null) {
@@ -724,7 +754,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'reason': plan.reason,
           'attack': total,
           'natural': natural,
-          'damage': damage,
+          'damage': damagePerTarget,
+          'damageTotal': damagePerTarget * plan.targetIds.length,
+          'damageBasePacket': baseDamage,
+          'damageBonusPerTarget': flatDamageBonus,
+          'damageTargetCount': plan.targetIds.length,
           'effects': targetEffects,
           'element': element,
           'level': activeCriticalLevel(),
@@ -764,7 +798,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       if (!mounted || currentSheetScrollId() != origin) return;
       if (consumeNextAttackStructuredEffects()) {
         aggiungiLog(
-          '$label · Danni preparati $damage, bonus del prossimo attacco consumati una sola volta.',
+          '$label · Danni per bersaglio $damagePerTarget, bonus del prossimo attacco consumati una sola volta.',
         );
       }
     }
@@ -987,7 +1021,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final tags = onlineCombatTokens().map(onlineCombatTokenTag).toSet();
     final source = '${payload['sourceTag'] ?? ''}',
         target = '${payload['targetTag'] ?? ''}';
-    if (!tags.contains(source) || !tags.contains(target) || source == target) {
+    // A player can receive a packet just before the source token reaches its
+    // local initiative snapshot.  The sender was already authenticated by
+    // Presence and the selected recipient is still required to be in this
+    // fight, so retain the request instead of silently dropping its defense.
+    if (!tags.contains(target) ||
+        source == target ||
+        (!tags.contains(source) && !controlsOnlineCombatSheet(target))) {
       return;
     }
     if (event == 'combat_attack') {
@@ -1367,11 +1407,35 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                   (r['freeReaction'] == true && r['reactionUsed'] != true)),
         )
         .toList();
-    if (requests.isEmpty && outgoing.isEmpty) return const SizedBox.shrink();
+    final otherTargets = <String, Map<String, dynamic>>{
+      for (final request in onlineCombatRequests.values)
+        if (request['scope'] == permissionScope &&
+            request['encounterId'] == onlineCombatEncounterId &&
+            request['status'] == 'pending' &&
+            request['targetTag'] != tag &&
+            request['kind'] != 'help' &&
+            request['kind'] != 'scout' &&
+            controlsOnlineCombatSheet('${request['targetTag']}'))
+          '${request['targetTag']}': request,
+    };
+    if (requests.isEmpty && outgoing.isEmpty && otherTargets.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return gothicPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          for (final entry in otherTargets.entries)
+            OutlinedButton.icon(
+              onPressed: () async {
+                final index = localSheetIndexForOculumTag(entry.key);
+                if (index >= 0) await cambiaSchedaPersonaggio(index);
+              },
+              icon: const Icon(Icons.shield_outlined),
+              label: Text(
+                '${entry.value['targetName'] ?? entry.key} · attaccato: apri la scheda per difenderti',
+              ),
+            ),
           for (final request in outgoing)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),

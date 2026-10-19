@@ -258,6 +258,36 @@ void main() {
       {'id': enemy, 'name': 'Avversario'},
       {'id': 'OTHER', 'name': 'Altro mostro'},
     ];
+    state.activeStructuredEffects.clear();
+    state.buffMalusRapidiController.text = '@Danni+8';
+    probe.invalidateDerivedCaches();
+    final singleDamage = probe.damageTotal();
+    probe.applyEffects([
+      OculumStructuredEffect(
+        id: 'single-damage-flat-bonus',
+        type: 'danno',
+        valueExpression: 'danni',
+        recipient: 'nemico',
+      ),
+    ]);
+    final singlePlan = probe.planAttack(minimum: 1, maximum: 1);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.ensureVisible(find.text('Dichiara e tira'));
+    await tester.tap(find.text('Dichiara e tira'));
+    await tester.pump();
+    await tester.runAsync(() async => await singlePlan);
+    final singlePacket = (state.onlineCombatRequests.values as Iterable)
+        .singleWhere((request) => request['attackGroupId'] != null);
+    expect(
+      singlePacket['damage'],
+      singleDamage,
+      reason: 'A skill using Danni already contains the flat +8 exactly once.',
+    );
+    state.onlineCombatRequests.remove(singlePacket['id']);
+    state.buffMalusRapidiController.clear();
+    state.activeStructuredEffects.clear();
+    probe.invalidateDerivedCaches();
     final planned = probe.planAttack(minimum: 2, maximum: 2);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));

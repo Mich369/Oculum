@@ -11,6 +11,7 @@ class OculumEncounterStage extends StatefulWidget {
     this.onNextTurn,
     this.onIdentify,
     this.onReveal,
+    this.onOpenSheet,
     this.events = const [],
   });
   final List<Map<String, dynamic>> tokens;
@@ -20,6 +21,7 @@ class OculumEncounterStage extends StatefulWidget {
   final VoidCallback? onNextTurn;
   final void Function(Map<String, dynamic>)? onIdentify;
   final void Function(Map<String, dynamic>)? onReveal;
+  final void Function(Map<String, dynamic>)? onOpenSheet;
   final List<String> events;
   @override
   State<OculumEncounterStage> createState() => _OculumEncounterStageState();
@@ -185,6 +187,12 @@ class _OculumEncounterStageState extends State<OculumEncounterStage> {
                               TextButton(
                                 onPressed: () => widget.onReveal!(token),
                                 child: const Text('Informazioni per i Player'),
+                              ),
+                            if (widget.onOpenSheet != null)
+                              TextButton.icon(
+                                onPressed: () => widget.onOpenSheet!(token),
+                                icon: const Icon(Icons.menu_book_outlined),
+                                label: const Text('Apri scheda'),
                               ),
                           ],
                         ),

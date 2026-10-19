@@ -17,6 +17,36 @@ class _CombatService extends OculumRealtimeService {
       );
   @override
   bool get isConnected => true;
+  final staffSheets = <Map<String, dynamic>>[];
+  @override
+  Future<void> sendSharedSheet({
+    required Map<String, dynamic> sheet,
+    required String campaignId,
+    required String campaignName,
+    required String sheetId,
+    required String sheetName,
+    required String ownerTag,
+    required String senderRole,
+    required String targetAudience,
+    required bool fromMaster,
+    required bool masterParty,
+    List<String> targetTags = const [],
+    String deliveryId = '',
+  }) async {
+    staffSheets.add({
+      'sheet': sheet,
+      'sheetId': sheetId,
+      'sheetName': sheetName,
+      'ownerTag': ownerTag,
+      'senderRole': senderRole,
+      'targetAudience': targetAudience,
+      'fromMaster': fromMaster,
+      'masterParty': masterParty,
+      'campaignId': campaignId,
+      'campaignName': campaignName,
+    });
+  }
+
   @override
   Future<bool> sendCombatEvent(
     String event,
@@ -55,10 +85,10 @@ void main() {
       });
       state.schedePersonaggio.clear();
       state.schedePersonaggio.addAll(<Map<String, dynamic>>[
-        {'id': 'ROSE', 'sheetTag': 'ROSE', 'nome': 'Rose'},
+        {'id': '001-ROSE', 'sheetTag': '001-ROSE', 'nome': 'Rose'},
         {
-          'id': 'ENEMY',
-          'sheetTag': 'ENEMY',
+          'id': '002-ENEMY',
+          'sheetTag': '002-ENEMY',
           'nome': 'Slime',
           'realtimeSharedSheet': true,
         },
@@ -71,14 +101,14 @@ void main() {
       state.realtimeVisibleInitiativeSnapshot = <String, dynamic>{
         'encounterId': 'fight',
         'tokens': [
-          {'id': 'ROSE', 'name': 'Rose'},
-          {'id': 'ENEMY', 'name': 'Slime'},
+          {'id': '001-ROSE', 'name': 'Rose'},
+          {'id': '002-ENEMY', 'name': 'Slime'},
         ],
       };
       state.realtimeUsers = <Map<String, dynamic>>[
         {
           'sessionId': 'enemy-session',
-          'activeSheetTag': 'ENEMY',
+          'activeSheetTag': '002-ENEMY',
           'role': 'player',
         },
       ];
@@ -89,11 +119,11 @@ void main() {
         'campaignId': state.activeCampaignId,
         'encounterId': 'fight',
         'sessionId': 'enemy-session',
-        'senderTag': 'ENEMY',
+        'senderTag': '002-ENEMY',
         'senderRole': 'player',
-        'sourceTag': 'ENEMY',
+        'sourceTag': '002-ENEMY',
         'sourceName': 'Slime',
-        'targetTag': 'ROSE',
+        'targetTag': '001-ROSE',
         'choice': 'vc',
         'attack': 12,
         'damage': 30,
@@ -118,19 +148,88 @@ void main() {
         before,
       );
       expect(before, 1);
+      // Switching the attacker's sheet must not invalidate a packet already
+      // in flight, nor must a late source token hide the defender's request.
+      state.realtimeUsers = <Map<String, dynamic>>[
+        {
+          'sessionId': 'enemy-session',
+          'activeSheetTag': 'ANOTHER_OWNED_SHEET',
+          'localSheetTags': ['002-ENEMY', 'ANOTHER_OWNED_SHEET'],
+          'role': 'player',
+        },
+      ];
+      final readyTokens = state.realtimeVisibleInitiativeSnapshot['tokens'];
+      state.realtimeVisibleInitiativeSnapshot['tokens'] = [
+        {'id': '001-ROSE', 'name': 'Rose'},
+      ];
+      probe.receiveCombat('combat_attack', {...packet, 'id': 'during-switch'});
+      expect(state.onlineCombatRequests['during-switch']['received'], isTrue);
+      probe.receiveCombat('combat_attack', {
+        ...packet,
+        'id': 'unowned-source',
+        'senderTag': 'UNOWNED',
+        'sourceTag': 'UNOWNED',
+      });
+      expect(state.onlineCombatRequests.containsKey('unowned-source'), isFalse);
+      state.realtimeVisibleInitiativeSnapshot['tokens'] = readyTokens;
+      state.schedePersonaggio.add(<String, dynamic>{
+        'id': '003-TARGET',
+        'sheetTag': '003-TARGET',
+        'nome': 'Compagno osservato',
+        'livello': 12,
+        'grado': 3,
+        'materia': 10,
+        'derivedCM': 35,
+        'hiddenEyeStats': [
+          {'id': 'velo', 'valore': 0, 'unlocked': true},
+        ],
+      });
+      state.realtimeVisibleInitiativeSnapshot['tokens'] = [
+        ...(readyTokens as List),
+        {'id': '003-TARGET', 'name': 'Compagno osservato'},
+      ];
+      // Reading an owned participant resolves even while another sheet is
+      // open. The reply publishes only the information earned by the roll.
+      for (final reading in [
+        (29, 'exact', 12),
+        (26, 'approximate', 9),
+        (23, 'insufficient', null),
+      ]) {
+        final scoutId = 'scout-${reading.$2}';
+        probe.receiveCombat('combat_scout', {
+          ...packet,
+          'id': scoutId,
+          'kind': 'scout',
+          'targetTag': '003-TARGET',
+          'targetName': 'Compagno osservato',
+          'scoutPhase': 'request',
+          'natural': 15,
+          'total': reading.$1,
+        });
+        final reply = state.onlineCombatRequests[scoutId];
+        expect(reply['scoutPhase'], 'result');
+        expect(reply['reveal'], reading.$2);
+        expect(reply['level'], reading.$3);
+        if (reading.$2 == 'insufficient') {
+          expect(reply.containsKey('cm'), isFalse);
+          expect(reply.containsKey('grade'), isFalse);
+        } else {
+          expect(reply['grade'], 3);
+        }
+      }
       final Map request = state.onlineCombatRequests['attack-one'];
       state.onlineCombatRequests['outgoing'] = <String, dynamic>{
         ...packet,
         'id': 'outgoing',
-        'sourceTag': 'ROSE',
-        'targetTag': 'ENEMY',
+        'sourceTag': '001-ROSE',
+        'targetTag': '002-ENEMY',
         'status': 'pending',
       };
       probe.receiveCombat('unsupported_event', {
         ...packet,
         'id': 'outgoing',
-        'sourceTag': 'ROSE',
-        'targetTag': 'ENEMY',
+        'sourceTag': '001-ROSE',
+        'targetTag': '002-ENEMY',
         'defense': 30,
       });
       expect(state.onlineCombatRequests['outgoing']['status'], 'pending');
@@ -180,7 +279,7 @@ void main() {
       state.realtimeUsers = <Map<String, dynamic>>[
         {
           'sessionId': 'co-session',
-          'activeSheetTag': 'ENEMY',
+          'activeSheetTag': '002-ENEMY',
           'role': 'coMaster',
         },
       ];
@@ -192,7 +291,7 @@ void main() {
         'expectedRound': 3,
         'expectedActiveTag': 'first',
         'sessionId': 'co-session',
-        'senderTag': 'ENEMY',
+        'senderTag': '002-ENEMY',
         'senderRole': 'coMaster',
         'delta': 1,
       };
@@ -215,6 +314,51 @@ void main() {
         1,
         reason: 'A stale view must not change a later turn',
       );
+      final transport = state.realtimeService as _CombatService;
+      state.masterInitiativeTokens.addAll(<Map<String, dynamic>>[
+        {'id': '001-ROSE', 'sheetTag': '001-ROSE', 'name': 'Rose'},
+        {'id': '002-ENEMY', 'sheetTag': '002-ENEMY', 'name': 'Slime'},
+      ]);
+      state.realtimeSharedSheets.addAll(<Map<String, dynamic>>[
+        {
+          'sheetId': '002-ENEMY',
+          'ownerTag': '002-ENEMY',
+          'senderRole': 'player',
+          'campaignId': 'campaign-local-to-player',
+          'sheet': {
+            'id': '002-ENEMY',
+            'sheetTag': '002-ENEMY',
+            'nome': 'Slime',
+          },
+        },
+        {
+          'sheetId': '004-OUTSIDE',
+          'ownerTag': '004-OUTSIDE',
+          'senderRole': 'player',
+          'campaignId': 'campaign-local-to-player',
+          'sheet': {'id': '004-OUTSIDE', 'sheetTag': '004-OUTSIDE'},
+        },
+      ]);
+      probe.shareStaffTurnOrderSheets();
+      expect(
+        transport.staffSheets.map((sheet) => sheet['sheetId']),
+        containsAll(['001-ROSE', '002-ENEMY']),
+      );
+      expect(
+        transport.staffSheets.any((sheet) => sheet['sheetId'] == '004-OUTSIDE'),
+        isFalse,
+        reason: 'Only participants are relayed to staff turn-order views.',
+      );
+      final relayed = transport.staffSheets.firstWhere(
+        (sheet) => sheet['sheetId'] == '002-ENEMY',
+      );
+      state.modalitaMaster = false;
+      state.isMasterHost = false;
+      state.sonoCoMaster = false;
+      expect(probe.receiveStaffSheet(relayed), isFalse);
+      state.sonoCoMaster = true;
+      expect(probe.receiveStaffSheet(relayed), isTrue);
+      expect(probe.ownedPresenceTags(), isNot(contains('002-ENEMY')));
       state.realtimeService = null;
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 3));

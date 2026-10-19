@@ -45,7 +45,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                     'solar_islands',
                     'amber_shore',
                     'anime_reliquary',
-                'canva_spirit_duelist',
+                    'canva_spirit_duelist',
                   ])
                     Padding(
                       padding: const EdgeInsets.only(right: 10),
@@ -1118,6 +1118,9 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                 : null,
             onIdentify: master ? null : identifyEncounterParticipant,
             onReveal: master ? revealEncounterParticipant : null,
+            onOpenSheet: realtimeCanBrowseOtherSheets
+                ? apriSchedaPartecipanteTurnistica
+                : null,
             portraitBuilder: (token) =>
                 '${token['imageBase64'] ?? ''}'.isEmpty &&
                     '${token['spriteAssetPath'] ?? ''}'.isEmpty

@@ -55,8 +55,69 @@ extension _OculumCombatScout on _OculumHomePageState {
         combatScoutSide(sheetTagAt(schedaCorrente)),
       )];
 
-  Future<void> scoutCombatTarget() async {
-    final stat = bestCombatScoutStat();
+  int activeCombatScoutVelo() {
+    final stat = hiddenEyeStats
+        .where((candidate) => candidate.id == 'velo' && candidate.unlocked)
+        .firstOrNull;
+    return stat == null ? 0 : max(0, hiddenEyeTotal(stat));
+  }
+
+  int sheetCombatScoutVeloAt(int index) {
+    if (index < 0 || index >= schedePersonaggio.length) return 0;
+    if (index == schedaCorrente) return activeCombatScoutVelo();
+    final sheet = schedePersonaggio[index];
+    final raw = (sheet['hiddenEyeStats'] as List? ?? const <dynamic>[])
+        .whereType<Map>()
+        .where((candidate) => candidate['id'] == 'velo')
+        .firstOrNull;
+    if (raw == null || raw['unlocked'] == false) return 0;
+    final level = sheetIntValueAt(index, 'livello');
+    return max(
+      0,
+      readIntValue(raw['valore']) +
+          oculumHiddenEyeDerivedBonusFor(
+            level: level,
+            id: 'velo',
+            resilienza: sheetIntValueAt(index, 'resilienza'),
+            volonta: sheetIntValueAt(index, 'volonta'),
+            materia: sheetIntValueAt(index, 'materia'),
+            oculum: sheetIntValueAt(index, 'oculum'),
+            karma: readIntValue(sheet['karma']),
+          ) +
+          (oculumRoleSubtraitBonuses(
+                '${sheet['humanoidRole'] ?? ''}',
+                level,
+              )['velo'] ??
+              0),
+    );
+  }
+
+  String combatScoutReadText(OculumCombatScoutRead read) {
+    return switch (read.reveal) {
+      OculumCombatScoutReveal.exact => 'lettura esatta',
+      OculumCombatScoutReveal.approximate => 'lettura approssimata',
+      OculumCombatScoutReveal.insufficient => 'non senti abbastanza',
+    };
+  }
+
+  void rememberCombatScoutRead(String key, Map<String, dynamic> read) {
+    final previous = combatDiscoveries[key];
+    int rank(Map<String, dynamic>? value) => switch (value?['reveal']) {
+      'exact' => 2,
+      'approximate' => 1,
+      _ => 0,
+    };
+    combatDiscoveries[key] = {
+      ...?(rank(previous) > rank(read) ? previous : read),
+      'weakPoint': previous?['weakPoint'] == true || read['weakPoint'] == true,
+    };
+  }
+
+  Future<void> scoutCombatTarget({
+    Map<String, dynamic>? selectedTarget,
+    HiddenEyeStat? requestedStat,
+  }) async {
+    final stat = requestedStat ?? bestCombatScoutStat();
     if (stat == null) {
       return;
     }
@@ -72,26 +133,44 @@ extension _OculumCombatScout on _OculumHomePageState {
                   schedePersonaggio[i]['realtimeSharedSheet'] != true)
                 {'sheetTag': sheetTagAt(i), 'name': nomeSchedaPersonaggio(i)},
           ];
-    final target = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (dialog) => SimpleDialog(
-        title: Text('${stat.nome} · osserva un bersaglio'),
-        children: [
-          for (final token in tokens)
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(dialog, token),
-              child: Text(
-                '${token['name'] ?? '???'}',
-                style: TextStyle(color: combatTargetColor(token)),
+    final target =
+        selectedTarget ??
+        await showDialog<Map<String, dynamic>>(
+          context: context,
+          builder: (dialog) => SimpleDialog(
+            title: Text('${stat.nome} · osserva'),
+            children: [
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(dialog, {'general': true}),
+                child: const Text('Lancia senza bersaglio · lettura generale'),
               ),
-            ),
-        ],
-      ),
-    );
+              for (final token in tokens)
+                SimpleDialogOption(
+                  onPressed: () => Navigator.pop(dialog, token),
+                  child: Text(
+                    '${token['name'] ?? '???'}',
+                    style: TextStyle(color: combatTargetColor(token)),
+                  ),
+                ),
+            ],
+          ),
+        );
     if (!mounted ||
         target == null ||
         currentSheetScrollId() != origin ||
         online && encounter != onlineCombatEncounterId) {
+      return;
+    }
+    if (target['general'] == true) {
+      await tiraSottotrattoOcchio(
+        stat,
+        actionLabel: '${stat.nome} · lettura generale',
+        onResolved: (natural, total) {
+          aggiungiLog(
+            '[PERCEZIONE] Lettura generale $total: nessun bersaglio scelto, quindi nessuna probabilità individuale rivelata.',
+          );
+        },
+      );
       return;
     }
     final targetTag = onlineCombatTokenTag(target);
@@ -127,20 +206,27 @@ extension _OculumCombatScout on _OculumHomePageState {
           if (index < 0) {
             return;
           }
-          final success = total >= sheetCriticalLevelAt(index);
-          if (success) {
-            combatDiscoveries[combatDiscoveryKey(targetTag, 'ally')] = {
-              'level': sheetCriticalLevelAt(index),
-              'cm': sheetRollBonusAt(index, 'cm'),
-              'criticalLevel': sheetCriticalLevelAt(index),
-              'grade': sheetIntValueAt(index, 'grado'),
+          final read = oculumCombatScoutRead(
+            rollTotal: total,
+            targetLevel: sheetCriticalLevelAt(index),
+            targetVelo: sheetCombatScoutVeloAt(index),
+            targetGrade: sheetIntValueAt(index, 'grado'),
+            targetCm: sheetRollBonusAt(index, 'cm'),
+          );
+          rememberCombatScoutRead(combatDiscoveryKey(targetTag, 'ally'), {
+            'reveal': read.reveal.name,
+            if (read.showsProbabilities) 'level': read.targetLevel,
+            if (read.showsProbabilities) 'cm': read.targetCm,
+            if (read.showsProbabilities) 'criticalLevel': read.targetLevel,
+            if (read.showsProbabilities) 'grade': read.targetGrade,
+            if (read.showsProbabilities)
               'rollDifficulty': sheetDifficoltaTiroAt(index),
+            if (read.showsProbabilities)
               'difficulty': normalizedCampaignDifficulty(),
-              'weakPoint': natural == 20,
-            };
-          }
+            'weakPoint': read.isExact && natural == 20,
+          });
           aggiungiLog(
-            '[OSSERVAZIONE] ${target['name']}: ${success ? 'livello ${sheetCriticalLevelAt(index)} scoperto${natural == 20 ? '; punto debole: Fragilità Semi Letale per te e gli alleati fino a fine fight' : ''}' : 'livello non scoperto'}.',
+            '[PERCEZIONE] ${target['name']}: ${combatScoutReadText(read)}${read.showsProbabilities ? '; livello ${read.targetLevel}, grado ${read.targetGrade}' : ''}${read.isExact && natural == 20 ? '; punto debole: Fragilità Semi Letale per te e gli alleati fino a fine fight' : ''}.',
           );
           programmaSalvataggio();
         }
@@ -157,42 +243,54 @@ extension _OculumCombatScout on _OculumHomePageState {
         target = '${payload['targetTag'] ?? ''}',
         id = '${payload['id'] ?? ''}';
     final tags = onlineCombatTokens().map(onlineCombatTokenTag).toSet();
+    final incomingRequest =
+        payload['scoutPhase'] == 'request' && controlsOnlineCombatSheet(target);
     if (id.isEmpty ||
         id.length > 160 ||
         source == target ||
-        !tags.contains(source) ||
-        !tags.contains(target)) {
+        !tags.contains(target) ||
+        (!tags.contains(source) && !incomingRequest)) {
       return;
     }
     if (payload['scoutPhase'] == 'request') {
       if (payload['senderTag'] != source ||
-          target != sheetTagAt(schedaCorrente) ||
           !controlsOnlineCombatSheet(target)) {
         return;
       }
+      final targetIndex = localSheetIndexForOculumTag(target);
+      if (targetIndex < 0) return;
       final previous = onlineCombatRequests[id];
       if (previous?['scoutPhase'] == 'result') {
         unawaited(
-          realtimeService?.sendCombatEvent(
-            'combat_scout',
-            permissionEnvelope(previous!),
-          ),
+          realtimeService?.sendCombatEvent('combat_scout', {
+            ...permissionEnvelope(previous!),
+            'senderTag': target,
+          }),
         );
         return;
       }
-      final success = readIntValue(payload['total']) >= activeCriticalLevel();
-      final weakPoint = success && readIntValue(payload['natural']) == 20;
+      final read = oculumCombatScoutRead(
+        rollTotal: readIntValue(payload['total']),
+        targetLevel: sheetCriticalLevelAt(targetIndex),
+        targetVelo: sheetCombatScoutVeloAt(targetIndex),
+        targetGrade: sheetIntValueAt(targetIndex, 'grado'),
+        targetCm: sheetRollBonusAt(targetIndex, 'cm'),
+      );
+      final weakPoint = read.isExact && readIntValue(payload['natural']) == 20;
       final reply = <String, dynamic>{
         ...payload,
         'kind': 'scout',
         'scoutPhase': 'result',
         'status': 'resolved',
-        'success': success,
-        if (success) 'level': activeCriticalLevel(),
-        if (success) 'cm': cm(),
-        if (success) 'grade': activeCriticalGrade(),
-        if (success) 'difficulty': normalizedCampaignDifficulty(),
-        if (success) 'rollDifficulty': difficoltaTiro(),
+        'success': read.isExact,
+        'reveal': read.reveal.name,
+        if (read.showsProbabilities) 'level': read.targetLevel,
+        if (read.showsProbabilities) 'cm': read.targetCm,
+        if (read.showsProbabilities) 'grade': read.targetGrade,
+        if (read.showsProbabilities)
+          'difficulty': normalizedCampaignDifficulty(),
+        if (read.showsProbabilities)
+          'rollDifficulty': sheetDifficoltaTiroAt(targetIndex),
         'weakPoint': weakPoint,
       };
       for (final key in ['senderTag', 'senderRole', 'sessionId']) {
@@ -200,17 +298,19 @@ extension _OculumCombatScout on _OculumHomePageState {
       }
       onlineCombatRequests[id] = reply;
       if (weakPoint) {
-        combatDiscoveries[combatDiscoveryKey(target, combatScoutSide(source))] =
-            {'weakPoint': true};
+        rememberCombatScoutRead(
+          combatDiscoveryKey(target, combatScoutSide(source)),
+          {'weakPoint': true},
+        );
       }
       aggiungiLog(
-        '[OSSERVAZIONE] ${payload['sourceName']} ${success ? 'ha scoperto il tuo livello${weakPoint ? ' e il punto debole fino a fine fight' : ''}' : 'non ha scoperto il tuo livello'}.',
+        '[PERCEZIONE] ${payload['sourceName']} ha ottenuto ${combatScoutReadText(read)}${weakPoint ? ' e il punto debole fino a fine fight' : ''}.',
       );
       unawaited(
-        realtimeService?.sendCombatEvent(
-          'combat_scout',
-          permissionEnvelope(reply),
-        ),
+        realtimeService?.sendCombatEvent('combat_scout', {
+          ...permissionEnvelope(reply),
+          'senderTag': target,
+        }),
       );
     } else if (payload['scoutPhase'] == 'result') {
       if (payload['senderTag'] != target) {
@@ -221,24 +321,34 @@ extension _OculumCombatScout on _OculumHomePageState {
         return;
       }
       final key = combatDiscoveryKey(target, side);
-      if (payload['success'] == true) {
-        final previous = combatDiscoveries[key];
-        combatDiscoveries[key] = {
+      final reveal =
+          '${payload['reveal'] ?? (payload['success'] == true ? 'exact' : 'insufficient')}';
+      if (!OculumCombatScoutReveal.values.any((v) => v.name == reveal)) return;
+      rememberCombatScoutRead(key, {
+        'reveal': reveal,
+        if (reveal != OculumCombatScoutReveal.insufficient.name)
           'level': readIntValue(payload['level']),
+        if (reveal != OculumCombatScoutReveal.insufficient.name)
           'cm': readIntValue(payload['cm']),
+        if (reveal != OculumCombatScoutReveal.insufficient.name)
           'criticalLevel': readIntValue(payload['level']),
+        if (reveal != OculumCombatScoutReveal.insufficient.name)
           'grade': readIntValue(payload['grade']),
+        if (reveal != OculumCombatScoutReveal.insufficient.name)
           'difficulty': '${payload['difficulty']}',
+        if (reveal != OculumCombatScoutReveal.insufficient.name)
           'rollDifficulty': readIntValue(payload['rollDifficulty']),
-          'weakPoint':
-              payload['weakPoint'] == true || previous?['weakPoint'] == true,
-        };
-      }
+        'weakPoint': payload['weakPoint'] == true,
+      });
       final request = onlineCombatRequests[id];
       if (request != null && request['status'] == 'pending') {
         request['status'] = 'resolved';
         aggiungiLog(
-          '[OSSERVAZIONE] ${payload['targetName']}: ${payload['success'] == true ? 'livello ${payload['level']} scoperto${payload['weakPoint'] == true ? '; punto debole: Fragilità Semi Letale fino a fine fight' : ''}' : 'livello non scoperto'}.',
+          '[PERCEZIONE] ${payload['targetName']}: ${reveal == OculumCombatScoutReveal.exact.name
+              ? 'lettura esatta; livello ${payload['level']}'
+              : reveal == OculumCombatScoutReveal.approximate.name
+              ? 'lettura approssimata; livello ${payload['level']}, grado ${payload['grade']}'
+              : 'non senti abbastanza'}${payload['weakPoint'] == true ? '; punto debole: Fragilità Semi Letale per te e gli alleati fino a fine fight' : ''}.',
         );
       }
     } else {

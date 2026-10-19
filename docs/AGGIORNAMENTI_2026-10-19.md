@@ -19,8 +19,8 @@ Questo elenco descrive il codice della patch. Le verifiche concluse e la version
 
 ## Osservazione e scontri
 
-- Tiri e azioni mostra il migliore fra Percezione e Investigazione sbloccate. Si sceglie il bersaglio.
-- Un totale almeno pari al livello rivela il livello esatto e abilita le stime; con critico riuscito viene scoperto il punto debole, con Fragilità Semi Letale per sé e alleati fino alla fine dello scontro.
+- Tiri e azioni mostra il migliore fra Percezione e Investigazione sbloccate. L'azione offre sia il lancio libero sia la scelta di un partecipante; anche Percezione nei Sottotratti apre questa scelta.
+- Un totale almeno pari a **Livello + Velo** rivela il livello esatto e abilita le stime. Se manca di massimo 5, il livello percepito si riduce dello scarto mantenendo il Grado; oltre 5 compare «Non senti abbastanza». Il critico scopre il punto debole, con Fragilità Semi Letale per sé e alleati fino alla fine dello scontro. Una nuova lettura peggiore non cancella una scoperta migliore.
 - Le informazioni sono distinte per campagna, scontro e lato. La fine del fight le elimina; l'unione esplicita conserva quelle dei fight riuniti.
 - Il Master può unire scontri. Partecipanti duplicati non vengono aggiunti due volte; gli altri scontri rimangono salvati e vengono svuotati dei partecipanti trasferiti. Le richieste pendenti compatibili passano allo scontro unito.
 
@@ -48,12 +48,23 @@ Questo elenco descrive il codice della patch. Le verifiche concluse e la version
 
 ## Stato verifiche
 
-- Test mirati: 16 passati (`build/test-combat-support-folders.log`).
-- Compilazione web con Atelier completata; le aggiunte successive a negozi, condizioni ed equipaggiamento richiedono una nuova compilazione finale.
-- Analisi statica di tutte le sorgenti pulita prima dell'ultima rifinitura della selezione fight; da ripetere a chiusura delle modifiche.
-- Suite completa, CI del nuovo commit, Pages del nuovo commit e distribuzione nuova: ancora da verificare.
-- Prova reale web/incognito del nuovo combattimento: non completata; l'uso locale del browser era disabilitato nelle impostazioni Work.
+- Test mirati finali: 25 passati. Dettaglio in `output/reports/combat-review-20261019.json`; le verifiche di trasporto e condivisione sono riportate nella revisione sotto.
+- Build finali Web, Windows normale e Windows Test completate. Gli archivi Web e Windows hanno superato la verifica di contenuto e hash. L'esito definitivo della distribuzione si legge nel suo `BUILD-VERIFICATE.json` e nel risultato dello script di verifica; la sola presenza di questo documento non certifica l'APK.
+- Analisi statica finale: `dart analyze lib`, nessun problema.
+- Suite completa e CI del nuovo commit non eseguite in questa rifinitura. Pages non aggiornato da questa esecuzione.
+- Verifica browser locale: avvio, selezione ruolo Player e apertura della creazione scheda riusciti. Computer Use si è poi fermato perché non poteva confermare l'URL corrente; il combattimento completo fra browser normale e incognito resta da verificare.
 - Canva: collegamento successivamente ripristinato. Il PNG a risoluzione completa consegnato dall'utente è incluso come `assets/oculum/home_art/canva_spirit_duelist.png`; nessuna ulteriore modifica alle mani.
+
+## Revisione combattimento e Percezione — 19 ottobre
+
+- Identità online: la presenza dichiara solo schede possedute. Cambiare scheda non invalida un messaggio in arrivo; i bersagli sul Master usano l'identificativo originale del proprietario, anche se la copia locale ha un altro identificativo.
+- Una difesa pendente su un'altra scheda posseduta compare con un pulsante per aprire quella scheda. Nessuna seconda applicazione dei danni alla ricezione di duplicati.
+- Il Master inoltra al Co-Master le schede dei partecipanti, comprese le proprie creature, conservando la proprietà originale. Il registro si aggiorna anche quando la campagna locale del Player ha un identificativo diverso. Il Player non importa l'inoltro destinato al personale.
+- Percezione: scelta di un partecipante oppure lancio libero; soglia esatta Livello + Velo, pari sufficiente. Scarto da 1 a 5: livello percepito ridotto dello scarto, Grado conservato e probabilità dichiarate approssimate. Scarto maggiore: «Non senti abbastanza», senza percentuali. Un tentativo peggiore non cancella una lettura migliore. Il critico riuscito conserva la scoperta del punto debole.
+- Le mosse con fascia da 1 a più bersagli mantengono la separazione fra base da dividere e bonus individuali anche quando si sceglie un solo bersaglio. Il test di regressione verifica il bonus Danni +8 una sola volta nella skill singola.
+- Verifiche completate: 25 test mirati di Percezione, pianificatore, danni, consegna online, regole dei mostri e attacchi contrapposti; test di trasporto/condivisione e test con due client Supabase reali, con scheda grande, conferma del destinatario e riconnessione. Queste verifiche non equivalgono a una prova completa fra due finestre browser.
+- Personalizzabili negli editor esistenti: Livello, Grado e Velo che determinano la soglia; statistiche, costi, cooldown, effetti, elemento, durata e fascia bersagli delle tecniche; partecipanti e unione degli scontri. Le letture ottenute sono salvate per campagna, scontro e lato. Le regole della soglia sono definite in `lib/game/oculum_combat_scout_rules.dart`.
+- Packaging locale riproducibile: `scripts/build_combat_distribution.ps1`. Compila Web, Windows, Windows Test con salvataggi separati e APK; verifica contenuto e hash degli ZIP, runtime e APK, conserva il vecchio pacchetto in backup e blocca la sostituzione se Oculum è aperto o se cambiano le sorgenti durante la compilazione. Il manifest dichiara esplicitamente origine locale e presenza di modifiche non committate.
 
 ## Atelier e Aiuto e utilità (aggiunte successive)
 

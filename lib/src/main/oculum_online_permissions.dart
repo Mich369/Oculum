@@ -50,13 +50,33 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     }
     final role = '${payload['senderRole'] ?? ''}';
     if (staff && role != 'master' && role != 'coMaster') return false;
-    return realtimeUsers.any(
-      (user) =>
-          '${user['sessionId'] ?? ''}' == '${payload['sessionId'] ?? ''}' &&
-          '${user['activeSheetTag'] ?? ''}' ==
-              '${payload['senderTag'] ?? ''}' &&
-          '${user['role'] ?? ''}' == role,
-    );
+    final senderTag = normalizeOculumFriendTag(
+      '${payload['senderTag'] ?? ''}',
+    ).toUpperCase();
+    if (senderTag.isEmpty) return false;
+    return realtimeUsers.any((user) {
+      if ('${user['sessionId'] ?? ''}' != '${payload['sessionId'] ?? ''}' ||
+          '${user['role'] ?? ''}' != role) {
+        return false;
+      }
+      final listedTags = <String>{};
+      final rawTags = user['localSheetTags'];
+      if (rawTags is List) {
+        for (final raw in rawTags) {
+          final tag = normalizeOculumFriendTag('$raw').toUpperCase();
+          if (tag.isNotEmpty) listedTags.add(tag);
+        }
+      }
+      // Presence from older clients may not yet expose the owned tag list.
+      // Keep their active-tag behaviour as a compatibility fallback.  Newer
+      // clients are accepted for every locally owned sheet, so a quick sheet
+      // switch cannot make an attack disappear before Presence refreshes.
+      if (listedTags.isNotEmpty) return listedTags.contains(senderTag);
+      return normalizeOculumFriendTag(
+            '${user['activeSheetTag'] ?? ''}',
+          ).toUpperCase() ==
+          senderTag;
+    });
   }
 
   Map<String, dynamic> permissionEnvelope(Map<String, dynamic> request) => {

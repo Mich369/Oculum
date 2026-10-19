@@ -2,6 +2,36 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/game/oculum_opposed_attack.dart';
 
 void main() {
+  test('area attack damage divides across every hit rounding up', () {
+    expect(oculumDamagePerTarget(10, 3), 4);
+    expect(oculumDamagePerTarget(10, 2), 5);
+    expect(oculumDamagePerTarget(10, 1), 10);
+    expect(oculumDamagePerTarget(30, 3, flatBonusPerTarget: 8), 18);
+    expect(oculumDamagePerTarget(30, 1, flatBonusPerTarget: 8), 38);
+    expect(oculumDamagePerTarget(0, 3), 0);
+    expect(oculumDamagePerTarget(-4, 2), 0);
+    expect(oculumDamagePerTarget(10, 0), 0);
+  });
+
+  test('flat additive damage stays on each area hit', () {
+    expect(oculumSplitAreaDamageExpression('danni+8'), (
+      base: 'danni',
+      perTargetBonus: '8',
+    ));
+    expect(oculumSplitAreaDamageExpression('(danni*0.75)+8'), (
+      base: '(danni*0.75)',
+      perTargetBonus: '8',
+    ));
+    expect(oculumSplitAreaDamageExpression('danni-3'), (
+      base: 'danni',
+      perTargetBonus: '-(3)',
+    ));
+    expect(oculumSplitAreaDamageExpression('danni*0.75'), (
+      base: 'danni*0.75',
+      perTargetBonus: '',
+    ));
+  });
+
   test(
     'Manifestazione consumes Oculum on exactly thirteen of one hundred outcomes',
     () {

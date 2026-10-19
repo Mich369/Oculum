@@ -139,6 +139,10 @@ class OculumPerformanceProbe {
       _state.receivePermissionEvent(event, payload);
   void receiveCombat(String event, Map<String, dynamic> payload) =>
       _state.receiveOnlineCombatEvent(event, payload);
+  void shareStaffTurnOrderSheets() => _state.sendRealtimeStaffTurnOrderSheets();
+  bool receiveStaffSheet(Map<String, dynamic> payload) =>
+      _state.receiveRealtimeSharedSheet(payload);
+  List<String> ownedPresenceTags() => _state.ownedOculumTags();
   Widget combatRequestsPanel() => _state.onlineCombatRequestsPanel();
   Widget combatAbilityBar() => _state.combatAbilityQuickBar();
   Future<void> openCombatActionPanel(OculumCombatAbilityRole role) =>
