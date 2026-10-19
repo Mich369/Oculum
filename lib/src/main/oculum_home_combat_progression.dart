@@ -732,6 +732,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     bool broadcast = true,
     bool advanceArt = true,
   }) {
+    if (broadcast &&
+        realtimeService?.isConnected == true &&
+        !realtimeIsMasterRole) {
+      aggiungiLog(
+        '[TURNISTICA] Il turno online segue quello condiviso dal Master.',
+      );
+      return;
+    }
     final safe = max(0, value);
     if (safe == playerReportedTurn) return;
     final previous = playerReportedTurn;

@@ -95,3 +95,13 @@ Questo elenco descrive il codice della patch. Le verifiche concluse e la version
 - Il push del commit `bc96f1c2` a `main` è stato respinto dalla revisione automatica. Il repository remoto è ancora a `745cc891ec7b9247265a1b28b428e77f4cc5ae8c`; Pages e CI aggiornate non sono partite.
 - La pubblicazione Pages e la verifica dal sito non sono ancora state confermate. Il browser locale continua a essere disabilitato in Work; nessuna prova reale fra due browser è stata fatta.
 - `build/distribution` contiene ancora i pacchetti del 17 ottobre. Saranno sostituiti soltanto con artefatti verificati costruiti dai sorgenti aggiornati; la cartella precedente resta intatta fino a quel momento.
+
+## Turnistica autorevole del Master
+- Ingresso online tramite condivisione scheda, conferma nello snapshot del Master e recupero della richiesta se la scheda arriva dopo.
+- Cambio PG: selezione automatica del suo scontro; Co-Master può consultare gli scontri condivisi senza crearne copie indipendenti.
+- Risorse dei partecipanti riallineate dalle schede ricevute, mantenendo iniziativa, ordine e risorse del turno del tracker.
+- Condizioni, cooldown e Art avanzano con il contatore del Master; bloccato il contatore personale online indipendente.
+- Eventi di combattimento ricevuti dal Master instradati al relativo scontro pubblicato anche se ne sta visualizzando un altro.
+- Snapshot numerati e associati alla sessione del Master: messaggi vecchi o estranei non sostituiscono lo stato più recente.
+- Verifiche locali: 12 test mirati riusciti; analisi di lib pulita. Prova completa fra due browser da eseguire separatamente.
+- Modificabili: partecipanti, lato alleato/nemico, ordine e iniziativa, turno, condizioni e durate, valori di abilità ed effetti tramite gli editor esistenti. La sorgente online dei turni è il Master; offline resta manuale.

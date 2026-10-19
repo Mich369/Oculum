@@ -998,6 +998,33 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   }
 
   void receiveOnlineCombatEvent(String event, Map<String, dynamic> payload) {
+    final requested = '${payload['encounterId'] ?? ''}';
+    final previous = selectedMasterInitiativeGroupId;
+    if (realtimeIsMasterRole && requested.isNotEmpty && requested != previous) {
+      captureActiveMasterInitiativeGroup();
+      final group = masterInitiativeGroups
+          .where(
+            (group) =>
+                group['id'] == requested && readBoolValue(group['published']),
+          )
+          .firstOrNull;
+      if (group == null) return;
+      selectMasterInitiativeGroup(requested);
+      try {
+        receiveOnlineCombatEventForSelectedEncounter(event, payload);
+      } finally {
+        captureActiveMasterInitiativeGroup();
+        selectMasterInitiativeGroup(previous);
+      }
+      return;
+    }
+    receiveOnlineCombatEventForSelectedEncounter(event, payload);
+  }
+
+  void receiveOnlineCombatEventForSelectedEncounter(
+    String event,
+    Map<String, dynamic> payload,
+  ) {
     if (event == 'combat_scout') {
       receiveCombatScout(payload);
       return;

@@ -85,6 +85,7 @@ class OculumRealtimeService {
   final _sheetTransfers = OculumSheetTransferAssembler();
   final _sessionNoteTransfers = OculumSheetTransferAssembler();
   int _sheetTransferSequence = 0;
+  int _initiativeRevision = 0;
 
   bool get isConnected => _connected && !_disposed && _channel != null;
 
@@ -514,6 +515,8 @@ class OculumRealtimeService {
     required bool closed,
   }) {
     return _send('initiative_shared', <String, dynamic>{
+      'sessionId': _presenceKey,
+      'revision': ++_initiativeRevision,
       'playerName': _displayName,
       'senderRole': 'master',
       'campaignId': campaignId,
@@ -535,6 +538,7 @@ class OculumRealtimeService {
     bool leaveEncounter = false,
   }) {
     return _send('initiative_turn_adjusted', <String, dynamic>{
+      'sessionId': _presenceKey,
       'playerName': _displayName,
       'senderRole': senderRole,
       'campaignId': campaignId,

@@ -2112,6 +2112,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   final List<Map<String, dynamic>> masterInitiativeGroups = [];
   String selectedMasterInitiativeGroupId = 'encounter_1';
   String realtimeSelectedEncounterId = '';
+  String realtimeInitiativeSession = '';
+  int realtimeInitiativeRevision = 0;
+  final Map<String, Map<String, dynamic>> realtimePendingEncounterJoins = {};
   List<Map<String, dynamic>> realtimeEncounterSnapshots = [];
   final masterInitiativeNameController = TextEditingController();
   final masterInitiativeTypeController = TextEditingController(text: 'Mostro');

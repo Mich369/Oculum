@@ -133,15 +133,18 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     );
   }
 
-  void syncMasterInitiativeTokenDeathFromSheet(int index) {
+  void syncMasterInitiativeTokenDeathFromSheet(
+    int index, {
+    Map<String, dynamic>? participant,
+  }) {
     if (index < 0 || index >= schedePersonaggio.length) return;
     final tag = sheetTagAt(index);
     final tokenIndex = masterInitiativeTokens.indexWhere(
       (token) => '${token['sheetTag'] ?? ''}' == tag,
     );
-    if (tokenIndex < 0) return;
+    if (tokenIndex < 0 && participant == null) return;
 
-    final token = masterInitiativeTokens[tokenIndex];
+    final token = participant ?? masterInitiativeTokens[tokenIndex];
     final isCurrent = index == schedaCorrente;
     final downed = isCurrent
         ? schedaAttivaCaduta

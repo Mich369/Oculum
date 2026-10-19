@@ -1504,29 +1504,9 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                         onPressed:
                             id.isEmpty || realtimeService?.isConnected != true
                             ? null
-                            : () {
-                                setState(() {
-                                  realtimeSelectedEncounterId = id;
-                                  realtimeVisibleInitiativeSnapshot =
-                                      Map<String, dynamic>.from(group);
-                                  syncCurrentSheetEncounterTurn();
-                                });
-                                if (!realtimeIsCoMasterRole) {
-                                  unawaited(
-                                    realtimeService!.sendInitiativeTurnAdjusted(
-                                      senderRole: 'player',
-                                      campaignId:
-                                          '${group['campaignId'] ?? activeCampaignId}',
-                                      campaignName:
-                                          '${group['campaignName'] ?? activeCampaignName()}',
-                                      sheetTag: sheetTagAt(schedaCorrente),
-                                      turn: playerReportedTurn,
-                                      encounterId: id,
-                                      joinEncounter: true,
-                                    ),
-                                  );
-                                }
-                              },
+                            : () => joinSharedMasterEncounter(
+                                Map<String, dynamic>.from(group),
+                              ),
                         child: Text(
                           realtimeService?.isConnected == true
                               ? realtimeIsCoMasterRole
@@ -1911,7 +1891,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
       unawaited(
         realtimeService!.sendInitiativeTurnAdjusted(
           senderRole: 'player',
-          campaignId: activeCampaignId,
+          campaignId: permissionCampaignId,
           campaignName: activeCampaignName(),
           sheetTag: tag,
           turn: playerReportedTurn,

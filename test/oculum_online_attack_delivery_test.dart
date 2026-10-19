@@ -359,6 +359,57 @@ void main() {
       state.sonoCoMaster = true;
       expect(probe.receiveStaffSheet(relayed), isTrue);
       expect(probe.ownedPresenceTags(), isNot(contains('002-ENEMY')));
+      state.realtimeUsers = <Map<String, dynamic>>[
+        {
+          'role': 'master',
+          'sessionId': 'master-session',
+          'campaignId': state.activeCampaignId,
+        },
+      ];
+      final snapshot = <String, dynamic>{
+        'senderRole': 'master',
+        'sessionId': 'master-session',
+        'revision': 2,
+        'campaignId': state.activeCampaignId,
+        'snapshot': {
+          'campaignId': state.activeCampaignId,
+          'encounters': [
+            {
+              'encounterId': 'authoritative',
+              'round': 4,
+              'activeIndex': 0,
+              'tokens': [
+                {'id': '001-ROSE', 'reportedTurn': 0},
+              ],
+            },
+          ],
+        },
+      };
+      probe.receiveInitiative(snapshot);
+      expect(state.realtimeVisibleInitiativeSnapshot['round'], 4);
+      probe.receiveInitiative({
+        ...snapshot,
+        'revision': 1,
+        'closed': true,
+        'snapshot': null,
+      });
+      expect(
+        state.realtimeVisibleInitiativeSnapshot['round'],
+        4,
+        reason: 'An old close packet must not replace a newer Master snapshot.',
+      );
+      probe.receiveInitiative({
+        ...snapshot,
+        'revision': 3,
+        'sessionId': 'stranger',
+        'closed': true,
+        'snapshot': null,
+      });
+      expect(
+        state.realtimeVisibleInitiativeSnapshot['round'],
+        4,
+        reason: 'Only the room Master session controls online initiative.',
+      );
       state.realtimeService = null;
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 3));

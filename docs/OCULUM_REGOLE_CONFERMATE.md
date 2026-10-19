@@ -194,3 +194,9 @@ L'utente indica le illustrazioni promozionali anime di S4 League, più curate de
 - Il log dei nutrimenti indica i turni effettivi, distinguendoli dalle erbe a riposi.
 - Il moltiplicatore EXP Chained Fate è limitato ai partecipanti del dungeon.
 - Analisi statica `dart analyze lib`: nessun problema. Questo risultato non certifica prove online reali, pacchetti o pubblicazione. Pubblicazione e sostituzione sospese su richiesta dell'utente fino alla rifinitura completa.
+
+## Turnistica online del Master — 19 ottobre 2026
+- Online, i turni vengono avanzati dal Master; i player seguono lo scontro pubblicato che contiene la propria scheda. Cambiare PG seleziona lo scontro del nuovo PG, senza unire fight differenti.
+- Entra nello scontro condivide la scheda e richiede l'inserimento al Master. La turnistica cambia dopo la conferma nel suo aggiornamento; l'arrivo della scheda in ritardo non perde la richiesta.
+- Le schede dei partecipanti aggiornano vita e risorse nella turnistica del Master, preservando ordine, iniziativa e reazioni gestite dal tracker.
+- Il progresso personale ricevuto dal Master attiva condizioni, cooldown e avanzamento Art una sola volta. Offline i contatori rimangono manuali.

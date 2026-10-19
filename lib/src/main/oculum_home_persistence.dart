@@ -5733,6 +5733,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     // as soon as the player changes sheet, while the owned tag list keeps
     // combat delivery valid during the short Presence update window.
     if (realtimeService?.isConnected == true) {
+      selectSharedEncounterForCurrentSheet();
       refreshRealtimeRolePresence();
       if (!readBoolValue(schedePersonaggio[index]['realtimeSharedSheet'])) {
         sendRealtimeCurrentSheetToStaff(immediate: true);
