@@ -24,6 +24,7 @@ InventoryItem oculumCreatureCore(
   Map<String, dynamic>? source,
   bool broken = false,
   bool conscious = false,
+  int? maximumGrade,
 }) {
   final band = oculumCoreTiers[tier.clamp(0, 3)];
   return InventoryItem(
@@ -32,12 +33,13 @@ InventoryItem oculumCreatureCore(
     quantita: 1,
     note: broken
         ? 'Meccanica DT 15 + livello originale; un dado naturale di 15+ conserva la coscienza se supera la DT. Critico negativo: scarti metallici. Con 6 kg di Metallo runico rievoca il Pawn a livello 10.'
-        : 'Evoca una creatura di grado ${band.$2}/${band.$3}.${conscious ? " Conserva la coscienza della creatura originale." : ""}',
+        : 'Evoca una creatura di grado ${band.$2}/${maximumGrade ?? band.$3}.${conscious ? " Conserva la coscienza della creatura originale." : ""}',
     craftData: {
       'creatureCore': true,
       'coreTier': tier.clamp(0, 3),
       'brokenCore': broken,
       'conscious': conscious,
+      if (maximumGrade != null) 'coreMaxGrade': maximumGrade.clamp(band.$2, 12),
       // ignore: use_null_aware_elements
       if (source != null) 'coreSource': source,
     },
@@ -154,6 +156,9 @@ extension _OculumPawnCores on _OculumHomePageState {
                 readIntValue(item.craftData['coreTier']),
                 source: source,
                 conscious: outcome == 'conscious',
+                maximumGrade: item.craftData['coreMaxGrade'] is num
+                    ? readIntValue(item.craftData['coreMaxGrade'])
+                    : null,
               ),
       );
       aggiungiLog(
@@ -266,6 +271,10 @@ extension _OculumPawnCores on _OculumHomePageState {
     }
     final tier = readIntValue(item.craftData['coreTier']).clamp(0, 3);
     final band = oculumCoreTiers[tier];
+    final maximumGrade = readIntValue(
+      item.craftData['coreMaxGrade'],
+      fallback: band.$3,
+    ).clamp(band.$2, 12);
     var selected = '', grade = band.$2;
     final selection = await showDialog<(String, int)>(
       context: context,
@@ -286,7 +295,7 @@ extension _OculumPawnCores on _OculumHomePageState {
                 DropdownButton<int>(
                   value: grade,
                   items: [
-                    for (var g = band.$2; g <= band.$3; g++)
+                    for (var g = band.$2; g <= maximumGrade; g++)
                       DropdownMenuItem(value: g, child: Text('Grado $g')),
                   ],
                   onChanged: (g) => refresh(() => grade = g ?? grade),

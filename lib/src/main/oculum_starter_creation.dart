@@ -201,6 +201,9 @@ bool oculumMonsterTechniqueIsNatural(MonsterBookEntry monster, String id) =>
     _naturalMonsterTechniqueIds.contains(oculumMonsterBookSkillBaseId(id));
 
 List<CharacterSkill> oculumMonsterBookSkills(MonsterBookEntry monster) {
+  if (oculumWitheredLarvaMonster(monster)) {
+    return oculumWitheredLarvaSkills(monster);
+  }
   if (monster.id.startsWith('pawn_guardiano')) return [];
   final art = oculumMonsterBookArt(monster);
   final ids = monsterBookUsableSkillIds(monster);
@@ -272,6 +275,7 @@ CharacterSkill _naturalMonsterSkill(
 }
 
 CharacterArt? oculumMonsterBookImportArt(MonsterBookEntry monster) {
+  if (oculumWitheredLarvaMonster(monster)) return null;
   final art = oculumMonsterBookArt(monster);
   if (monster.id.startsWith('pawn_guardiano')) return art;
   final ids = monsterBookUsableSkillIds(monster);
@@ -410,6 +414,9 @@ List<OculumTitle> oculumMonsterBookTitles(MonsterBookEntry monster) {
 }
 
 CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
+  if (oculumWitheredLarvaMonster(monster)) {
+    return oculumWitheredLarvaArt(monster);
+  }
   final art = _rawMonsterBookArt(monster);
   final ids = monsterBookUsableSkillIds(monster);
   for (final (skillIndex, skill) in art.skills.indexed) {

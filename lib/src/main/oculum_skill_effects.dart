@@ -8,6 +8,7 @@ const List<String> oculumStructuredEffectTypes = <String>[
   'danno',
   'danno_percentuale',
   'costrutto',
+  'tiro_sottotratto',
   'difesa',
   'cura',
   'modifica_statistica',
@@ -380,6 +381,7 @@ class OculumStructuredEffect {
     this.maximum,
     this.narrativeText = '',
     this.customDisplayText = '',
+    this.activationOption = '',
     this.elementType = '',
     this.appliedState = '',
     this.bypassDefense = false,
@@ -411,6 +413,7 @@ class OculumStructuredEffect {
   int? maximum;
   String narrativeText;
   String customDisplayText;
+  String activationOption;
   String elementType;
   String appliedState;
   bool bypassDefense;
@@ -455,6 +458,7 @@ class OculumStructuredEffect {
     if (maximum != null) 'maximum': maximum,
     'narrativeText': narrativeText,
     'customDisplayText': customDisplayText,
+    'activationOption': activationOption,
     'elementType': elementType,
     'appliedState': appliedState,
     'bypassDefense': bypassDefense,
@@ -500,6 +504,7 @@ class OculumStructuredEffect {
       narrativeText: '${json['narrativeText'] ?? json['testoNarrativo'] ?? ''}',
       customDisplayText:
           '${json['customDisplayText'] ?? json['testoPersonalizzato'] ?? ''}',
+      activationOption: '${json['activationOption'] ?? ''}',
       elementType: '${json['elementType'] ?? json['tipoElemento'] ?? ''}',
       appliedState: '${json['appliedState'] ?? json['statoApplicato'] ?? ''}',
       bypassDefense: readBoolValue(
@@ -990,6 +995,8 @@ String oculumStructuredEffectDescription(
   final displayedValue =
       '$value$dice$progressionText$elementText$damageBypassText';
   switch (effect.type) {
+    case 'tiro_sottotratto':
+      return 'Tira ${target.isEmpty ? 'un sottotratto' : target}${effect.activationOption.isEmpty ? '' : ' · ${effect.activationOption}'}';
     case 'danno':
       return withPeriod(
         effect.mode == 'finche_attivo'

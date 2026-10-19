@@ -337,7 +337,11 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             }
             if (!effect.stackable) {
               activeStructuredEffects.removeWhere(
-                (active) => active['effectId'] == effect.id,
+                (active) =>
+                    active['effectId'] == effect.id ||
+                    effect.mode == 'nidiata' &&
+                        active['type'] == 'costrutto' &&
+                        active['mode'] == 'nidiata',
               );
             }
             activeStructuredEffects.add(<String, dynamic>{
@@ -471,6 +475,14 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
                   _ => OculumConditionDurationType.turns,
                 },
                 source: source,
+                metadata: effect.resource == 'oculum_upkeep'
+                    ? {
+                        'oculumUpkeep': max(
+                          1,
+                          readIntValue(spentResources['oculum'], fallback: 1),
+                        ),
+                      }
+                    : null,
               );
               if (!applied) {
                 messages.add(

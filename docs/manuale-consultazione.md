@@ -1196,6 +1196,22 @@ PRESTAZIONI
 L'app deve restare fluida su telefono, desktop e macOS.
 Le ottimizzazioni devono alleggerire calcoli e ridisegni senza rimuovere decorazioni, painter, temi o funzioni già presenti.
 
+## Aggiornamento — Costrutto Rinsecchito, Larva Bianca e cartelle
+
+Costrutto Rinsecchito e Larva Bianca sono mostri iniziali di Grado 0–I. I loro punti base restano distinti dalla crescita per livello.
+
+Il Costrutto parte con Resilienza 2, Volontà 3, Materia 1 e Oculum 3. Usa scudi e Ricordo Vitale: 1 Oculum all’attivazione e 1 a ogni successivo inizio turno, per tanti turni quanto Oculum prima dell’attivazione. Se non può mantenere il costo, l’effetto termina. Ramo spezzato aggiunge +4/+12/+34 e Oculum; nella seconda forma il bonus complessivo è ×1,5, nella terza ×2. Gli arrotondamenti sono per difetto. Il nucleo rotto debole copre Grado 0–III; i rami sono materiale. Il cuore raro cura il 90% della Vita massima, senza superarla, e concede Ricordo Vitale per 1d9 turni senza costo di mantenimento.
+
+La Larva parte con Resilienza 1, Volontà 2, Materia 0 e Oculum 0. Le sue mosse sono gratuite e hanno cooldown. Assalto aggiunge +5/+15/+45, più Oculum ×1/×1,5/×2. Infestazione genera 1d100 / 1d200+20 / 1d250+100 larve da 1 Vita: dopo gli scudi, una larva si sacrifica per ogni danno diretto alla Vita del padrone. Una nuova Nidiata sostituisce quella precedente. Scavata permette di scegliere fuga con tiro Velo oppure svantaggio alto al bersaglio. Il terreno deve permettere di scavare, secondo il Master.
+
+Un 20 naturale sul Drop della Larva dà una scroll Nidiata nella forma disponibile al mostro. La scroll si consuma usando la mossa; apprenderla resta raro secondo le regole delle scroll e la difficoltà. Non assegna automaticamente la skill.
+
+Impostazioni iniziali del catalogo, modificabili: forme ai livelli 0/3/6; CD Assalto 2/3/4, Nidiata 4/6/8, Scavata 3/4/5; svantaggio alto di Scavata −6 per un tiro; probabilità del cuore 3%. Questi sono valori di bilanciamento iniziali, distinti dalle conferme numeriche dell’utente. Gli editor conservano costi, cooldown, effetti e usi alternativi nel JSON.
+
+Le Schede possono essere organizzate in cartelle e sottocartelle rinominabili. Tieni premuta una scheda per creare una cartella, scegliere dove spostarla o attivare lo spostamento libero; tieni premuta una cartella per rinominarla o crearvi una sottocartella. L’organizzazione si salva nella campagna e non cambia gli identificativi usati da turnistica, mappe e condivisioni.
+
+I parser delle formule riconoscono floor(...), ceil(...) e round(...). Gli effetti possono avere usi alternativi separati: scegli la modalità e vengono applicati soltanto i suoi effetti, più quelli comuni.
+
 ## 24. Ciclo, crisi, mappa e dungeon
 
 Queste regole descrivono il tempo di Oculum, le crisi automatiche e le attività di esplorazione. Le formule generali di vita, danno, critici ed EXP restano nelle sezioni precedenti e qui non vengono ripetute.
@@ -1853,23 +1869,3 @@ ONLINE E OFFLINE
 Online, in una turnistica, dichiari il bersaglio. VC è il tiro di attacco ordinario: per un tiro alternativo basta descrivere l'attacco e motivarlo a voce al Master; scrivere è facoltativo. Il bersaglio riceve la richiesta di difendersi con CM, Riflessi, Resistenza o Manifestazione del Potere secondo la tecnica. Offline tutto rimane utilizzabile, con scelta di bersaglio, confronto dei tiri ed esito gestibili manualmente.
 
 La presenza online dichiara tutte le schede possedute dalla sessione: cambiare scheda aggiorna subito la presenza, quindi una richiesta di attacco non viene persa durante il cambio. Master e Co-Master condividono il registro in sola lettura delle schede dei partecipanti nella stessa turnistica; dal partecipante puoi aprire «Apri scheda». Le copie online non trasferiscono la proprietà della scheda al personale.
-
-### Turnistica online condivisa
-La turnistica online è quella pubblicata dal Master. «Entra nello scontro» invia la scheda e la richiesta di ingresso: il Master conferma tramite il proprio tracker. Cambiando personaggio si segue automaticamente il suo scontro. Gli aggiornamenti delle schede riallineano vita e risorse dei partecipanti; i turni ricevuti fanno progredire condizioni e cooldown. Il player non avanza un contatore online separato. Offline si conserva la gestione manuale. I vari scontri rimangono distinti salvo unione esplicita.
-Cure, condizioni e aiuti vengono applicati automaticamente alla scheda destinataria della fight, anche se è una propria scheda non aperta. L'aiuto, positivo o negativo, si consuma una sola volta nel tiro successivo e compare nel pannello del destinatario. Quando vieni attaccato, il log riporta attaccante, mossa e DT pari al tiro nemico: scegli la difesa e l'app applica l'esito, senza reinserire danni o condizioni. Il Master mantiene la possibilità di correggere i valori.
-Nella Home puoi scegliere la scena principale cliccando una delle anteprime sottostanti. La selezione evidenziata viene salvata e rimane al cambio scheda; «Originale» ripristina la scena iniziale.
-### Supporto e utilità e riconoscimento testuale
-Tutte le abilità che concedono o applicano buff/debuff compaiono anche in «Supporto e utilità». Le tecniche miste VC/CM o Danni/Difesa compaiono in entrambi i pannelli se i valori sono pari, altrimenti nel pannello potenziato di più. La stessa abilità mantiene gli stessi costi e cooldown indipendentemente dal pannello da cui viene usata.
-Skill, forme Art e descrizioni Open senza effetti configurati vengono interpretate dal parser dei testi eseguibili; gli effetti configurati manualmente restano prioritari. Esempi: `@Cura+7 a 2 alleati`, `@Stato: Bruciatura II al bersaglio per 2 turni`, `Infliggi Oculum+8 danni Fuoco`. Condizioni, costi e requisiti non riconosciuti restano da concordare col Master. I comandi rapidi già gestiti non vengono duplicati dal nuovo riconoscimento.
-### Erbe fumabili dell’alchimista
-Prezzo 30–50 Obser per dose, stabile nel mercante salvato. +6 Volontà e +4 Materia fino al primo limite raggiunto: 3 turni di combattimento, 2 riposi brevi o 1 lungo. Dopo il buff si applica Confuso: −20% danni e DT +2 per 2 turni o fino alla prossima cura o riposo. Questa correzione sostituisce il precedente +2% di fallimento. Valori del consumabile conservati nei dati dell’oggetto; durata e gestione della condizione restano modificabili dal Master.
-Le scroll dell’inventario sono disponibili anche nei pannelli del combattimento secondo gli effetti. La pergamena si consuma con il normale utilizzo; in fight usa bersagli, difese, cure e condizioni condivise. Per la risoluzione offensiva viene riutilizzato il tiro della scroll, senza generare un secondo tiro d’attacco.
-### Segno del Fato
-L’alchimista vende Segno del Fato. Il negozio fissa il prezzo fra 50 e 120 Obser, con una sola copia disponibile. Le probabilità dipendono dal prezzo trovato, senza scelta della spesa. A 50 Obser: 70% Ispirazione, 20% Super Ispirazione, 10% Ispirazione Oculum. A 120: 30%/40%/30%; le percentuali intermedie crescono gradualmente. Il prezzo del negozio resta nel consumabile salvato; usarlo consuma una dose e assegna immediatamente una delle tre ispirazioni, rispettando massimali e conversioni già esistenti.
-
-- Correzione utente: Segno del Fato ha prezzo fissato dal negozio, 50–120 Obser, una sola copia nello stesso shop. Segno del Chaos: solo alchimista, presenza 3% per negozio, prezzo 60–120 Obser. Consumandolo, ogni 10 Obser del suo prezzo (per difetto) genera un’estrazione indipendente su Resilienza/Volontà/Materia/Oculum casuale: 75% +1 punto, 13% +2, 9% +3, 3% +0. Punti permanenti; disponibilità e prezzo persistenti.
-
-## Recupero automatico online — 19 ottobre 2026
-Richiesta utente: tutte le proprie schede online devono poter arrivare al Master e partecipare alla sua turnistica. Correzione più recente: la connessione, l’arrivo del Master e la richiesta di recupero sincronizzano automaticamente solo la scheda attualmente usata; le copie ricevute non vengono rispedite come proprie. L’ingresso richiesto resta in attesa e viene ritentato finché lo snapshot del Master non contiene il partecipante. La presenza in ritardo non elimina una richiesta: il Master la ricontrolla dopo la presenza o la scheda. Restano verificati proprietario/sessione, campagna e fight pubblicata. Il recupero di una singola scheda usa il suo tag.
-
-- Precisazione utente: invio automatico al Master soltanto della scheda attualmente usata, senza inviare in blocco le altre. Restano conferma di ricezione e ritentativi per la scheda scelta.

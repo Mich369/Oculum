@@ -5148,6 +5148,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       rimanente -= assorbito;
     }
 
+    rimanente = absorbLarvalBroodDamage(rimanente);
     if (rimanente > 0 && pawnProtects(sheetTagAt(schedaCorrente))) {
       final beforePawn = rimanente;
       if (pawnRemoteAuthority) {

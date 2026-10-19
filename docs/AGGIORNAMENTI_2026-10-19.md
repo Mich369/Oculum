@@ -123,3 +123,13 @@ Richiesta utente: tutte le proprie schede online devono poter arrivare al Master
 Confronto trasferimenti staff: esclusi solo i timestamp volatili dalla firma del contenuto, mantenendoli nel payload; una scheda invariata non provoca reinvii ricorsivi. Verifiche: 7 test mirati riusciti; prova reale con due client Supabase su trasferimento grande, ACK e riconnessione riuscita. Non è una prova completa di combattimento in due browser.
 
 - Precisazione utente: invio automatico al Master soltanto della scheda attualmente usata, senza inviare in blocco le altre. Restano conferma di ricezione e ritentativi per la scheda scelta.
+
+## Audit online, mostri e cartelle
+
+Ospite protetto Supabase, email facoltativa nelle Impostazioni, persistenza dell'accesso configurabile e logout del solo dispositivo. Stanze e autorità Master validate nel backend, eventi privati e autorizzazioni delle modifiche alle schede. Protezione delle code cloud per account e dei salvataggi vuoti. Dettagli, migrazioni e limiti in `ONLINE_AUDIT_2026-10-19.md`.
+
+Costrutto Rinsecchito e Larva Bianca aggiunti con skill, forme, drop e scroll. Scavata ha modalità Fuga su Velo o Attacco; Nidiata assorbe danni diretti alla Vita. Ricordo Vitale controlla il mantenimento. Cartelle e sottocartelle rinominabili nella barra Schede, spostamento tramite menu o trascinamento, salvataggio per campagna. Occhio del ritratto leggermente più largo.
+
+Personalizzabili negli editor/JSON: skill e forme, costi, cooldown, formule, durate, bersagli, condizioni, modalità alternative degli effetti (`activationOption`), organizzazione e nomi delle cartelle. Le nuove definizioni non sostituiscono quelle già personalizzate nelle schede salvate.
+
+Verifiche completate: analisi lib/test pulita, 44 regressioni locali finali; prove reali Supabase di isolamento cloud, invio/ricevuta/riconnessione e combattimento automatico con runtime player. La prova manuale completa da due browser e i dispositivi fisici restano distinti e non ancora certificati.

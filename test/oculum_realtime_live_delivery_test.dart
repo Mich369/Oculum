@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
@@ -31,9 +32,14 @@ void main() {
         client: masterClient,
         roomId: room,
         playerName: 'Synthetic Master',
-        presenceDataProvider: () => {'role': 'master'},
+        onAccessRequested: (_, _) async => true,
+        presenceDataProvider: () => {
+          'role': 'master',
+          'activeSheetTag': 'SYNTHETIC_MASTER',
+          'localSheetTags': ['SYNTHETIC_MASTER'],
+        },
         onPresenceChanged: (_) {},
-        onStatusChanged: (_) {},
+        onStatusChanged: (status) => debugPrint('Master: $status'),
         onEvent: (event, payload) {
           if (event != 'sheet_shared') return;
           if (payload['deliveryId'] == 'after_reconnect') {
@@ -63,9 +69,13 @@ void main() {
         client: playerClient,
         roomId: room,
         playerName: 'Synthetic Player',
-        presenceDataProvider: () => {'role': 'player'},
+        presenceDataProvider: () => {
+          'role': 'player',
+          'activeSheetTag': 'SYNTHETIC_PLAYER',
+          'localSheetTags': ['SYNTHETIC_PLAYER'],
+        },
         onPresenceChanged: (_) {},
-        onStatusChanged: (_) {},
+        onStatusChanged: (status) => debugPrint('Player: $status'),
         onEvent: (event, payload) {
           if (event == 'sheet_received_ack' &&
               payload['deliveryId'] == 'synthetic_receipt' &&
@@ -81,7 +91,8 @@ void main() {
         await masterClient.dispose();
         OculumRealtimeService.supabaseAvailable = previous;
       });
-      await Future.wait([master.connect(), player.connect()]);
+      await master.connect();
+      await player.connect();
       expect(master.isConnected, isTrue);
       expect(player.isConnected, isTrue);
       final sheet = <String, dynamic>{

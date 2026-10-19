@@ -445,8 +445,14 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         canShareRealtimeSheetToStaff) {
       realtimeOwnedSheetResyncRequested = false;
       salvaSchedaCorrenteInMemoria();
-      if (!mounted || realtimeService != service || !canShareRealtimeSheetToStaff) return;
-      await sendRealtimeSheetToStaffAt(schedaCorrente, ensureMasterReceipt: true);
+      if (!mounted ||
+          realtimeService != service ||
+          !canShareRealtimeSheetToStaff)
+        return;
+      await sendRealtimeSheetToStaffAt(
+        schedaCorrente,
+        ensureMasterReceipt: true,
+      );
     }
   }
 
@@ -632,6 +638,30 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     service = OculumRealtimeService(
       roomId: room,
       playerName: realtimeDisplayName(),
+      onAccessRequested: (userId, displayName) async {
+        if (!mounted || realtimeService != service) return false;
+        return await showDialog<bool>(
+              context: context,
+              barrierDismissible: false,
+              builder: (dialog) => AlertDialog(
+                title: const Text('Ingresso nella stanza'),
+                content: Text(
+                  '$displayName chiede di partecipare alla tua sessione.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialog, false),
+                    child: const Text('Rifiuta'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(dialog, true),
+                    child: const Text('Ammetti'),
+                  ),
+                ],
+              ),
+            ) ??
+            false;
+      },
       onConnected: () {
         if (!mounted || realtimeService != service) return;
         realtimeStaffTransfersInFlight.clear();
@@ -646,6 +676,14 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         'role': realtimeLocalRole(),
         'activeSheetTag': sheetTagAt(schedaCorrente),
         'localSheetTags': ownedOculumTags(),
+        'revokedSheetAccess': [
+          for (final friend in blockedOculumFriends)
+            {'targetTag': '${friend['tag'] ?? ''}'},
+          for (var i = 0; i < schedePersonaggio.length; i++)
+            if (!readBoolValue(schedePersonaggio[i]['realtimeSharedSheet']))
+              for (final tag in sheetRevokedAccessTagsAt(i))
+                {'targetTag': tag, 'sheetTag': sheetTagAt(i)},
+        ],
         'campaignId': activeCampaignId,
         'campaignName': activeCampaignName(),
         'masterClaimId': realtimeMasterClaimId,
@@ -1545,9 +1583,16 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   bool get realtimeWantsMasterRole => modalitaMaster || isMasterHost;
 
   bool get realtimeIsMasterRole =>
-      realtimeWantsMasterRole && !realtimeMasterBlockedByPresence;
+      realtimeService?.isConnected == true &&
+          realtimeService?.authenticatedRole != null
+      ? realtimeService!.authenticatedRole == 'master'
+      : realtimeWantsMasterRole && !realtimeMasterBlockedByPresence;
 
-  bool get realtimeIsCoMasterRole => !realtimeIsMasterRole && sonoCoMaster;
+  bool get realtimeIsCoMasterRole =>
+      realtimeService?.isConnected == true &&
+          realtimeService?.authenticatedRole != null
+      ? realtimeService!.authenticatedRole == 'coMaster'
+      : !realtimeIsMasterRole && sonoCoMaster;
 
   bool get realtimeCanBrowseOtherSheets =>
       realtimeIsMasterRole || realtimeIsCoMasterRole;

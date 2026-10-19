@@ -195,6 +195,16 @@ class OculumPerformanceProbe {
   void loseResilienceBuff(int amount) =>
       _state.rimarginaHpDaAumentoResilienza(-amount);
   int currentHp() => _state.hpCorrenti();
+  int broodHp() => _state.broodRemainingHp();
+  int absorbBroodDamage(int value) => _state.absorbLarvalBroodDamage(value);
+  void useWitheredHeart(InventoryItem item) => _state.useWitheredHeart(item);
+  void tickConditions(OculumConditionTickTrigger trigger) =>
+      _state.processConditionTick(trigger);
+  void moveSheetFolderEntry(String tag, String parent, {int? beforeIndex}) =>
+      _state.moveSidebarEntry(tag, parent, beforeIndex: beforeIndex);
+  Future<void> showSheetFolders() => _state.showSheetFoldersDialog();
+  Map<String, dynamic> campaignSnapshot() => _state.currentCampaignSnapshot();
+  void loadCampaign(Map<String, dynamic> data) => _state.loadCampaignSnapshot(data);
   int currentTemporaryHp() => _state.hpTemp();
   void increaseBaseStat(String key, int amount) =>
       _state.aumentaStatBaseEAttuale(key, amount);

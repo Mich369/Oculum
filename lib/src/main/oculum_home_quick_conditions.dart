@@ -2416,6 +2416,23 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     for (final instance in snapshot) {
       if (!activeConditions.contains(instance)) continue;
       if (trigger == OculumConditionTickTrigger.startTurn &&
+          readIntValue(instance.metadata['oculumUpkeep']) > 0) {
+        final upkeep = readIntValue(instance.metadata['oculumUpkeep']);
+        if (currentOculum() < upkeep) {
+          aggiungiLog(
+            '${conditionName(instance)} interrotto: Oculum insufficiente per il mantenimento.',
+          );
+          removeCondition(instance, force: true, expired: true);
+          mutated = true;
+          continue;
+        }
+        spendOculum(upkeep, scheduleSave: false);
+        aggiungiLog(
+          '${conditionName(instance)}: −$upkeep Oculum di mantenimento.',
+        );
+        mutated = true;
+      }
+      if (trigger == OculumConditionTickTrigger.startTurn &&
           instance.conditionType == 'putrido') {
         final turnsWithoutApplication =
             readIntValue(instance.metadata['turnsWithoutApplication']) + 1;

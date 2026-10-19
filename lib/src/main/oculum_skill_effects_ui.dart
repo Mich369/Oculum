@@ -1018,6 +1018,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         'Aumento/diminuzione sottotratto',
         'Subtrait change',
       ),
+      'tiro_sottotratto' => t('Tiro di sottotratto', 'Subtrait roll'),
       'velocita' => t('Velocità', 'Speed'),
       'forza' => t('Forza', 'Strength'),
       'scudo' => t('Scudo', 'Shield'),
@@ -1081,6 +1082,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         'Reazioni rapide',
         'VC',
       ]);
+    } else if (type == 'tiro_sottotratto') {
+      values.addAll(hiddenEyeStats.map((stat) => stat.id));
     } else if (type == 'modifica_sottotratto') {
       values.addAll(
         hiddenEyeStats.where((stat) => stat.unlocked).map((stat) => stat.nome),
@@ -1368,6 +1371,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       text: seed.maximumTargets > 0 ? '${seed.maximumTargets}' : '',
     );
     final narrativeController = TextEditingController(text: seed.narrativeText);
+    final optionController = TextEditingController(text: seed.activationOption);
     final customController = TextEditingController(
       text: seed.customDisplayText,
     );
@@ -1432,6 +1436,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         maximum: int.tryParse(maximumController.text.trim()),
         narrativeText: narrativeController.text,
         customDisplayText: customController.text,
+        activationOption: optionController.text.trim(),
         elementType: elementTypeController.text.trim(),
         appliedState: appliedState,
         bypassDefense: bypassDefense,
@@ -1753,7 +1758,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                 : null,
                             dropdownColor: const Color(0xFF10121A),
                             decoration: fieldDecoration(
-                              type == 'modifica_sottotratto'
+                              type == 'modifica_sottotratto' || type == 'tiro_sottotratto'
                                   ? t('Sottotratto', 'Subtrait')
                                   : isConversion
                                   ? t('Risorsa ottenuta', 'Resource gained')
@@ -2082,6 +2087,14 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                               }),
                             ),
                             TextField(
+                              controller: optionController,
+                              decoration: fieldDecoration(
+                                'Uso alternativo (es. Attacco / Fuga)',
+                              ),
+                              onChanged: (_) =>
+                                  scheduleDialogRefresh(setDialogState),
+                            ),
+                            TextField(
                               controller: customController,
                               maxLines: 2,
                               decoration: fieldDecoration(
@@ -2263,6 +2276,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       minimumController.dispose();
       maximumController.dispose();
       narrativeController.dispose();
+      optionController.dispose();
       customController.dispose();
       elementTypeController.dispose();
     }

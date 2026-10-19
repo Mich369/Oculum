@@ -702,7 +702,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
           final compact = constraints.maxWidth < 500;
           final portrait = SizedBox(
             key: const ValueKey('reference_portrait_frame'),
-            width: compact ? 80 : 116,
+            width: compact ? 88 : 128,
             height: compact ? 72 : 104,
             child: OculumThemeSheetFrame(
               role: OculumThemeFrameRole.portrait,
@@ -732,7 +732,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                             child: Image.asset(
                               oculumMemoryEyeAsset(portraitEyeRole) ??
                                   'assets/icon/oculum_eye.png',
-                              width: compact ? 48 : 72,
+                              width: compact ? 54 : 82,
                             ),
                           ),
                         if (immaginePersonaggio != null)

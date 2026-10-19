@@ -47,12 +47,88 @@ class _FakeAuthBackend implements OculumAuthBackend {
   Future<void> close() => _events.close();
 }
 
+class _FakeEmailBackend extends _FakeAuthBackend
+    implements OculumEmailAuthBackend {
+  bool? linked;
+  String? email;
+  @override
+  Future<void> signInAnonymously() async {
+    user = const OculumBackendUser(
+      id: 'protected-guest',
+      provider: 'anonymous',
+    );
+  }
+
+  @override
+  Future<void> requestEmail(String email, {required bool linkGuest}) async {
+    this.email = email;
+    linked = linkGuest;
+  }
+
+  @override
+  Future<void> verifyEmail(
+    String email,
+    String token, {
+    required bool linkGuest,
+  }) async {
+    if (token != '123456') throw const FormatException('Codice non valido');
+    user = OculumBackendUser(
+      id: linkGuest ? 'protected-guest' : 'email-account',
+      provider: 'email',
+    );
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
+
+  test(
+    'ospite protetto collega email mantenendo la propria identità',
+    () async {
+      final backend = _FakeEmailBackend();
+      final auth = OculumAuthService.forTesting(
+        backend: backend,
+        connectivityCheck: () async => true,
+      );
+      await auth.initialize();
+      expect(await auth.signInAsProtectedGuest(), isTrue);
+      expect(auth.state.isAuthenticated, isTrue);
+      expect(auth.state.isGuest, isTrue);
+      expect(auth.state.canSyncToCloud, isFalse);
+      expect(await auth.requestEmailAccess(' player@example.com '), isTrue);
+      expect(backend.email, 'player@example.com');
+      expect(backend.linked, isTrue);
+      expect(await auth.verifyEmailAccess('wrong'), isFalse);
+      expect(auth.state.userId, 'protected-guest');
+      expect(await auth.verifyEmailAccess('123456'), isTrue);
+      expect(auth.state.userId, 'protected-guest');
+      expect(auth.state.canSyncToCloud, isTrue);
+      auth.dispose();
+      await backend.close();
+    },
+  );
+
+  test(
+    'mantieni accesso falso non conserva sessioni né token aggiornati',
+    () async {
+      final storage = OculumSessionStorage(
+        persistSessionKey: 'test-auth-token',
+      );
+      await storage.initialize();
+      await storage.persistSession('synthetic-session');
+      expect(await storage.hasAccessToken(), isTrue);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(OculumSessionStorage.rememberKey, false);
+      await storage.persistSession('synthetic-refreshed-session');
+      expect(await storage.hasAccessToken(), isFalse);
+      expect(await storage.accessToken(), isNull);
+      expect(prefs.getString('test-auth-token'), isNull);
+    },
+  );
 
   test('avvio Guest senza Supabase resta local-only', () async {
     final auth = OculumAuthService.forTesting(

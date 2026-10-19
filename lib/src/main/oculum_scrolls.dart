@@ -463,7 +463,10 @@ extension _OculumScrolls on _OculumHomePageState {
       data['lastCastPersonalTurn'],
       fallback: -999,
     );
-    final cooldown = oculumScrollCooldown(g);
+    final cooldown = max(
+      0,
+      readIntValue(data['cooldownTurns'], fallback: oculumScrollCooldown(g)),
+    );
     if (item == null && playerReportedTurn < lastCastRound + cooldown) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -477,7 +480,10 @@ extension _OculumScrolls on _OculumHomePageState {
       );
       return;
     }
-    final cost = oculumScrollWillCost(g);
+    final cost = max(
+      0,
+      readIntValue(data['willCost'], fallback: oculumScrollWillCost(g)),
+    );
     if (currentVolonta() < cost) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -525,7 +531,7 @@ extension _OculumScrolls on _OculumHomePageState {
         content: SingleChildScrollView(
           child: Text(
             '${data['description']}\n\n${item == null ? 'Skill appresa, non evolvibile.' : 'Consuma una pergamena. Possibilità di apprendimento: ${oculumScrollLearningChance(normalizedCampaignDifficulty())}% con 20 naturale e totale ≥ ${30 + 10 * readIntValue(data['grade'])}.'}'
-            '\nCosto: $cost Volontà · CD ${oculumScrollDifficulty(g)} · ricarica ${oculumScrollCooldown(g)} turni. '
+            '\nCosto: $cost Volontà · DT ${oculumScrollDifficulty(g)} · ricarica $cooldown turni. '
             'Il tiro usa Volontà, bonus e Oculum preparato. Il Master vede risultato e bersagli.',
           ),
         ),
@@ -671,7 +677,7 @@ extension _OculumScrolls on _OculumHomePageState {
                 nome: '${data['name']} [Grado $g]',
                 tipo: 'Attiva',
                 costo: '$cost VOL',
-                cooldown: '${oculumScrollCooldown(g)}',
+                cooldown: '$cooldown',
                 descrizione:
                     '${data['description']}\nAppresa da pergamena: non evolvibile.',
                 scrollData: Map<String, dynamic>.from(data),

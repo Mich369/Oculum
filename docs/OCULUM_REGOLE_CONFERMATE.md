@@ -2,6 +2,19 @@
 
 Ultimo aggiornamento: 19 ottobre 2026. Documento da consultare prima di modificare il regolamento.
 
+## Accesso online — conferme del 19 ottobre 2026
+
+- Ospite protetto tramite Supabase, senza registrazione obbligatoria. Email facoltativa nelle Impostazioni, collegabile all’ospite mantenendo la sua identità.
+- Account utilizzabile su più dispositivi; chiedere se mantenere l’accesso sul dispositivo. L’offline resta disponibile senza account e il login non sovrascrive i salvataggi locali.
+- Il Master deve essere autorizzato anche dal backend. Per l’avanzamento delle implementazioni e le verifiche distinte consultare `ONLINE_AUDIT_2026-10-19.md`; le parti ancora in prova non costituiscono consegna completata.
+
+## Mostri e organizzazione — conferme del 19 ottobre 2026
+
+- Costrutto Rinsecchito, base Grado 0–I: Res 2, Vol 3, Mat 1 crescente, Ocu 3. Tank con scudi; Ricordo Vitale dura Oculum turni e costa 1 Oculum per turno. Attacco +4/+12/+34 più Oculum, seconda forma ×1,5 e terza ×2. Drop nucleo rotto debole fascia 0–III, rami e cuore raro. Il cuore cura il 90% Vita e dà Ricordo Vitale per 1d9 turni.
+- Larva Bianca, base Grado 0–I: Res 1, Vol 2, Mat 0, Ocu 0. Mosse gratuite a cooldown. Assalto +5/+15/+45 più Oculum ×1/×1,5/×2. Nidiata 1d100 / 1d200+20 / 1d250+100 larve con 1 Vita, sacrificate una per danno. Scavata: fuga su Velo oppure attacco con svantaggio alto. Un 20 sul Drop dà la scroll della forma del mostro; apprendimento raro, non automatico.
+- L’utente autorizza la scelta di cooldown e potenza dello svantaggio, purché modificabili. I valori iniziali del catalogo sono riportati nel manuale come impostazioni modificabili, non come ulteriori conferme numeriche.
+- Schede organizzabili in cartelle/sottocartelle rinominabili, con menu alla pressione prolungata e spostamento libero. Gli identificativi e gli indici fisici delle schede non devono cambiare per organizzare la barra laterale.
+
 ## Fonti e precedenza
 
 1. Correzione esplicita più recente dell'utente, registrata qui con un esempio.

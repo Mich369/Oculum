@@ -97,4 +97,59 @@ void main() {
     expect(exported, isNotNull);
     expect(exported!['user_id'], 'user-2');
   });
+
+  test('switching accounts preserves both pending saves', () async {
+    final service = OculumCloudSaveService.instance;
+    await service.queueLocalSaveForSync('first', payload: {'name': 'A'});
+    await service.queueLocalSaveForSync('second', payload: {'name': 'B'});
+    expect((await service.exportPendingSnapshotForUser('first'))!['payload'], {
+      'name': 'A',
+    });
+    expect((await service.exportPendingSnapshotForUser('second'))!['payload'], {
+      'name': 'B',
+    });
+    expect(await service.exportPendingSnapshotForUser('third'), isNull);
+  });
+
+  test('invalid payload cannot replace a pending save', () async {
+    final service = OculumCloudSaveService.instance;
+    await service.queueLocalSaveForSync('first', payload: {'name': 'A'});
+    expect(await service.queueLocalSaveForSync('first', payload: {}), isFalse);
+    expect(
+      await service.queueLocalSaveForSync(
+        'first',
+        payload: {'name': 'A'},
+        encodedPayload: '{"name":"B"}',
+      ),
+      isFalse,
+    );
+    expect((await service.exportPendingSnapshotForUser('first'))!['payload'], {
+      'name': 'A',
+    });
+  });
+
+  test('snapshot uses canonical SHA256 and freezes nested content', () {
+    final payload = <String, dynamic>{
+      'nested': {'b': 2, 'a': 1},
+      'savedAt': 'old',
+    };
+    final first = OculumCloudSaveService.buildSnapshotRecord(
+      userId: 'first',
+      payload: payload,
+      deviceOrigin: 'test',
+    );
+    final second = OculumCloudSaveService.buildSnapshotRecord(
+      userId: 'first',
+      payload: {
+        'savedAt': 'new',
+        'nested': {'a': 1, 'b': 2},
+      },
+      deviceOrigin: 'test',
+    );
+    expect(first.contentSignature, second.contentSignature);
+    expect(first.contentSignature, matches(RegExp(r'^[a-f0-9]{64}$')));
+    expect(first.id, isNot(second.id));
+    (payload['nested'] as Map)['a'] = 99;
+    expect((first.payload['nested'] as Map)['a'], 1);
+  });
 }

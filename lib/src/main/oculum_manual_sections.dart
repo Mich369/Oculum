@@ -2492,6 +2492,30 @@ The app must stay smooth on phone, desktop and macOS.
 Optimizations must reduce calculations and redraws without removing decorations, painters, themes or existing features.
 ''',
   ),
+  ManualSection(
+    titleIt: 'Aggiornamento — Costrutto Rinsecchito, Larva Bianca e cartelle',
+    titleEn: 'Update — Withered Construct, White Larva and folders',
+    contentIt: r'''
+Costrutto Rinsecchito e Larva Bianca sono mostri iniziali di Grado 0–I. I loro punti base restano distinti dalla crescita per livello.
+
+Il Costrutto parte con Resilienza 2, Volontà 3, Materia 1 e Oculum 3. Usa scudi e Ricordo Vitale: 1 Oculum all’attivazione e 1 a ogni successivo inizio turno, per tanti turni quanto Oculum prima dell’attivazione. Se non può mantenere il costo, l’effetto termina. Ramo spezzato aggiunge +4/+12/+34 e Oculum; nella seconda forma il bonus complessivo è ×1,5, nella terza ×2. Gli arrotondamenti sono per difetto. Il nucleo rotto debole copre Grado 0–III; i rami sono materiale. Il cuore raro cura il 90% della Vita massima, senza superarla, e concede Ricordo Vitale per 1d9 turni senza costo di mantenimento.
+
+La Larva parte con Resilienza 1, Volontà 2, Materia 0 e Oculum 0. Le sue mosse sono gratuite e hanno cooldown. Assalto aggiunge +5/+15/+45, più Oculum ×1/×1,5/×2. Infestazione genera 1d100 / 1d200+20 / 1d250+100 larve da 1 Vita: dopo gli scudi, una larva si sacrifica per ogni danno diretto alla Vita del padrone. Una nuova Nidiata sostituisce quella precedente. Scavata permette di scegliere fuga con tiro Velo oppure svantaggio alto al bersaglio. Il terreno deve permettere di scavare, secondo il Master.
+
+Un 20 naturale sul Drop della Larva dà una scroll Nidiata nella forma disponibile al mostro. La scroll si consuma usando la mossa; apprenderla resta raro secondo le regole delle scroll e la difficoltà. Non assegna automaticamente la skill.
+
+Impostazioni iniziali del catalogo, modificabili: forme ai livelli 0/3/6; CD Assalto 2/3/4, Nidiata 4/6/8, Scavata 3/4/5; svantaggio alto di Scavata −6 per un tiro; probabilità del cuore 3%. Questi sono valori di bilanciamento iniziali, distinti dalle conferme numeriche dell’utente. Gli editor conservano costi, cooldown, effetti e usi alternativi nel JSON.
+
+Le Schede possono essere organizzate in cartelle e sottocartelle rinominabili. Tieni premuta una scheda per creare una cartella, scegliere dove spostarla o attivare lo spostamento libero; tieni premuta una cartella per rinominarla o crearvi una sottocartella. L’organizzazione si salva nella campagna e non cambia gli identificativi usati da turnistica, mappe e condivisioni.
+
+I parser delle formule riconoscono floor(...), ceil(...) e round(...). Gli effetti possono avere usi alternativi separati: scegli la modalità e vengono applicati soltanto i suoi effetti, più quelli comuni.
+''',
+    contentEn: r'''
+Initial Grade 0–I monsters retain separate base and level stats. The construct has Resilience 2, Will 3, Materia 1 and Oculum 3. Vital Memory costs 1 Oculum per turn. Its rare heart restores 90% maximum HP, capped, and grants 1d9 turns of Vital Memory without upkeep.
+The larva has Resilience 1, Will 2, Materia 0 and Oculum 0. Its free cooldown skills include Assault, a sacrificial brood and Burrow with a Veil escape option. A natural 20 drop grants a consumable brood scroll; learning remains rare.
+Sheet folders are nested, renameable and saved per campaign without changing sheet IDs. Formula functions floor, ceil and round and alternate activation modes remain editable in JSON.
+''',
+  ),
 ];
 
 const ManualSection oculumCycleCrisisDungeonManualSection = ManualSection(

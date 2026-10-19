@@ -1552,6 +1552,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool isMerchantConsumable(InventoryItem item) =>
+      item.craftData['witheredHeart'] == true ||
       item.craftData['chaosSign'] is Map ||
       item.craftData['fateSign'] is Map ||
       item.craftData['smokingHerbs'] is Map ||
@@ -1577,6 +1578,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (!inventario.contains(item) ||
         !isMerchantConsumable(item) ||
         item.quantita <= 0) {
+      return;
+    }
+    if (item.craftData['witheredHeart'] == true) {
+      useWitheredHeart(item);
+      // ignore: invalid_use_of_protected_member
+      if (mounted) setState(() {});
       return;
     }
     if (item.craftData['creatureCore'] == true) {

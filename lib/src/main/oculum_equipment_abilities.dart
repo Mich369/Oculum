@@ -247,6 +247,34 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       aggiungiLog('$source: cooldown ${cooldown.remaining} ${cooldown.unit}.');
       return false;
     }
+    final options = effects
+        .where((e) => e.enabled && e.activationOption.trim().isNotEmpty)
+        .map((e) => e.activationOption.trim())
+        .toSet()
+        .toList();
+    if (options.isNotEmpty) {
+      final selected = await showDialog<String>(
+        context: context,
+        builder: (dialog) => SimpleDialog(
+          title: Text('Come usi $source?'),
+          children: [
+            for (final option in options)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(dialog, option),
+                child: Text(option),
+              ),
+          ],
+        ),
+      );
+      if (!mounted || selected == null) return false;
+      effects = effects
+          .where(
+            (e) =>
+                e.activationOption.trim().isEmpty ||
+                e.activationOption.trim() == selected,
+          )
+          .toList();
+    }
     final resolved = cost ?? OculumSkillCost(resource: 'nessuna');
     if (!resolved.isValid(subtraits: hiddenEyeStats)) {
       aggiungiLog('$source: costo non valido.');
@@ -361,6 +389,14 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     scheduleRealtimeOculumChanged();
     programmaSalvataggio();
     notifyDiceResultChanged();
+    for (final effect in effects.where(
+      (e) => e.enabled && e.type == 'tiro_sottotratto',
+    )) {
+      final stat = hiddenEyeStats
+          .where((s) => s.id == effect.target)
+          .firstOrNull;
+      if (stat != null) await tiraSottotrattoOcchio(stat, actionLabel: source);
+    }
     return true;
   }
 

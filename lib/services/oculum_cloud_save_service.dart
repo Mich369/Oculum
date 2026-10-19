@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:pointycastle/digests/sha256.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,6 +12,39 @@ const String _pendingCloudDeviceKey = 'oculum.cloud_save.pending_device';
 
 String _encodeCloudSavePayload(Map<String, dynamic> payload) {
   return jsonEncode(payload);
+}
+
+dynamic _canonicalCloudValue(dynamic value) {
+  if (value is Map) {
+    final keys = value.keys.cast<String>().toList()..sort();
+    return {for (final key in keys) key: _canonicalCloudValue(value[key])};
+  }
+  if (value is List) return value.map(_canonicalCloudValue).toList();
+  return value;
+}
+
+String _cloudPayloadSignature(Map<String, dynamic> payload) {
+  final comparable = Map<String, dynamic>.from(payload)
+    ..remove('savedAt')
+    ..remove('saveRevision');
+  final bytes = Uint8List.fromList(
+    utf8.encode(jsonEncode(_canonicalCloudValue(comparable))),
+  );
+  return SHA256Digest()
+      .process(bytes)
+      .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+      .join();
+}
+
+void _validateCloudPayload(Map<String, dynamic> payload) {
+  if (payload.isEmpty) throw const FormatException('Empty cloud save');
+  // A full save cannot replace a previous version with an empty sheet list.
+  for (final key in ['schedePersonaggio', 'schede']) {
+    if (payload.containsKey(key) &&
+        (payload[key] is! List || (payload[key] as List).isEmpty)) {
+      throw const FormatException('Incomplete cloud save');
+    }
+  }
 }
 
 class OculumCloudSaveService extends ChangeNotifier {
@@ -31,6 +65,7 @@ class OculumCloudSaveService extends ChangeNotifier {
 
   Future<Map<String, dynamic>?> fetchLatestSnapshot(String userId) async {
     try {
+      _requireCurrentUser(userId);
       final response = await Supabase.instance.client
           .from(_cloudSaveTable)
           .select()
@@ -51,6 +86,8 @@ class OculumCloudSaveService extends ChangeNotifier {
     String? encodedPayload,
   }) async {
     try {
+      if (userId.trim().isEmpty) return false;
+      _validateCloudPayload(payload);
       final prefs = await SharedPreferences.getInstance();
       final String encoded =
           encodedPayload ??
@@ -61,6 +98,16 @@ class OculumCloudSaveService extends ChangeNotifier {
                   payload,
                   debugLabel: 'oculum-cloud-save-encode',
                 ));
+      final decoded = jsonDecode(encoded);
+      if (decoded is! Map ||
+          _cloudPayloadSignature(Map<String, dynamic>.from(decoded)) !=
+              _cloudPayloadSignature(payload)) {
+        return false;
+      }
+      // Each account keeps its own queue. Legacy keys remain readable for
+      // existing clients, but never act as the only copy of a pending save.
+      await prefs.setString('$_pendingCloudPayloadKey.$userId', encoded);
+      await prefs.setString('$_pendingCloudDeviceKey.$userId', 'flutter');
       await prefs.setString(_pendingCloudUserKey, userId);
       await prefs.setString(_pendingCloudDeviceKey, 'flutter');
       await prefs.setString(_pendingCloudPayloadKey, encoded);
@@ -77,16 +124,20 @@ class OculumCloudSaveService extends ChangeNotifier {
   ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final pendingPayload = prefs.getString(_pendingCloudPayloadKey);
-      if (pendingPayload == null ||
-          prefs.getString(_pendingCloudUserKey) != userId) {
+      final pendingPayload =
+          prefs.getString('$_pendingCloudPayloadKey.$userId') ??
+          (prefs.getString(_pendingCloudUserKey) == userId
+              ? prefs.getString(_pendingCloudPayloadKey)
+              : null);
+      if (pendingPayload == null) {
         return null;
       }
       final payload = jsonDecode(pendingPayload);
       return buildSnapshotRecord(
         userId: userId,
         payload: Map<String, dynamic>.from(payload as Map),
-        deviceOrigin: prefs.getString(_pendingCloudDeviceKey) ?? 'flutter',
+        deviceOrigin:
+            prefs.getString('$_pendingCloudDeviceKey.$userId') ?? 'flutter',
       ).toJson();
     } catch (_) {
       debugPrint('Pending snapshot export failed.');
@@ -99,12 +150,15 @@ class OculumCloudSaveService extends ChangeNotifier {
     Map<String, dynamic> payload,
   ) async {
     try {
+      _requireCurrentUser(userId);
       final snapshot = buildSnapshotRecord(
         userId: userId,
         payload: payload,
         deviceOrigin: 'flutter',
       );
-      await Supabase.instance.client.from(_cloudSaveTable).upsert(snapshot);
+      await Supabase.instance.client
+          .from(_cloudSaveTable)
+          .insert(snapshot.toJson());
       statusNotifier.value = 'Saved to cloud';
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_cloudSavePrefsKey, statusNotifier.value);
@@ -133,6 +187,7 @@ class OculumCloudSaveService extends ChangeNotifier {
 
   Future<void> clearCloudData(String userId) async {
     try {
+      _requireCurrentUser(userId);
       await Supabase.instance.client
           .from(_cloudSaveTable)
           .delete()
@@ -178,22 +233,37 @@ class OculumCloudSaveService extends ChangeNotifier {
     required Map<String, dynamic> payload,
     required String deviceOrigin,
   }) {
-    final revision = 1 + Random().nextInt(1000000);
+    _validateCloudPayload(payload);
+    final frozenPayload = Map<String, dynamic>.from(
+      jsonDecode(jsonEncode(payload)) as Map,
+    );
+    final revision = DateTime.now().microsecondsSinceEpoch;
+    final random = Random.secure();
+    final nonce = List.generate(
+      16,
+      (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ).join();
     final timestamp = DateTime.now().toUtc().toIso8601String();
-    final comparable = Map<String, dynamic>.from(payload)
-      ..remove('savedAt')
-      ..remove('saveRevision');
-    final signature = '${jsonEncode(comparable).hashCode}:${comparable.length}';
+    final signature = _cloudPayloadSignature(frozenPayload);
     return CloudSaveRecord(
-      id: '${userId}_$revision',
+      id: '${userId}_$nonce',
       userId: userId,
       revision: revision,
       contentSignature: signature,
-      payload: payload,
+      payload: frozenPayload,
       createdAt: timestamp,
       updatedAt: timestamp,
       deviceOrigin: deviceOrigin,
     );
+  }
+
+  void _requireCurrentUser(String userId) {
+    final auth = Supabase.instance.client.auth;
+    if (userId.isEmpty ||
+        auth.currentSession == null ||
+        auth.currentUser?.id != userId) {
+      throw StateError('Cloud account does not match the active session');
+    }
   }
 }
 

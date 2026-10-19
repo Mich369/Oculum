@@ -55,6 +55,8 @@ class OculumAuthPanel extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 10),
+                const _OculumEmailAccessForm(),
+                const SizedBox(height: 10),
                 if (!state.isAuthenticated) ...[
                   _ProviderButton(
                     label: 'Google',
@@ -120,6 +122,112 @@ class OculumAuthPanel extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _OculumEmailAccessForm extends StatefulWidget {
+  const _OculumEmailAccessForm();
+  @override
+  State<_OculumEmailAccessForm> createState() => _OculumEmailAccessFormState();
+}
+
+class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
+  final _email = TextEditingController();
+  final _code = TextEditingController();
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _code.dispose();
+    super.dispose();
+  }
+
+  Future<void> _run(Future<bool> Function() operation) async {
+    setState(() => _busy = true);
+    final success = await operation();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (success && OculumAuthService.instance.pendingEmail != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Controlla la tua email. Usa il codice ricevuto o il link di conferma.',
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = OculumAuthService.instance;
+    return ListenableBuilder(
+      listenable: auth,
+      builder: (context, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Mantieni l’accesso su questo dispositivo'),
+            value: auth.rememberAccess,
+            onChanged: _busy
+                ? null
+                : (value) => auth.setRememberAccess(value ?? false),
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+          if (!auth.state.isAuthenticated)
+            OutlinedButton.icon(
+              onPressed: _busy || !auth.isSupabaseReady
+                  ? null
+                  : () => _run(auth.signInAsProtectedGuest),
+              icon: const Icon(Icons.shield_outlined),
+              label: const Text('Ospite online protetto'),
+            ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _email,
+            enabled: !_busy && auth.isSupabaseReady,
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              hintText: 'Accedi o collega l’ospite',
+            ),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _busy || !auth.isSupabaseReady
+                ? null
+                : () => _run(() => auth.requestEmailAccess(_email.text)),
+            icon: const Icon(Icons.mail_outline),
+            label: Text(
+              auth.state.provider == 'anonymous'
+                  ? 'Collega email all’ospite'
+                  : 'Accedi con email',
+            ),
+          ),
+          if (auth.pendingEmail != null) ...[
+            const SizedBox(height: 8),
+            TextField(
+              controller: _code,
+              enabled: !_busy,
+              autofillHints: const [AutofillHints.oneTimeCode],
+              decoration: const InputDecoration(
+                labelText: 'Codice ricevuto via email',
+              ),
+            ),
+            TextButton(
+              onPressed: _busy
+                  ? null
+                  : () => _run(() => auth.verifyEmailAccess(_code.text)),
+              child: const Text('Conferma codice'),
+            ),
+          ],
+          if (_busy) const LinearProgressIndicator(),
+        ],
+      ),
     );
   }
 }

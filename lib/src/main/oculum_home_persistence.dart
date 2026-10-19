@@ -5515,6 +5515,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
         position.dy,
       ),
       items: [
+        const PopupMenuItem<String>(
+          value: 'organize',
+          child: Text('Cartelle e spostamento…'),
+        ),
         PopupMenuItem<String>(
           value: 'copy',
           child: Row(
@@ -5581,7 +5585,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
     if (!mounted || choice == null) return;
 
-    if (choice == 'copy') {
+    if (choice == 'organize') {
+      await showSheetFolderMoveMenu(index);
+    } else if (choice == 'copy') {
       await duplicaSchedaPersonaggio(index);
     } else if (choice == 'rename') {
       await rinominaSchedaPersonaggio(index);

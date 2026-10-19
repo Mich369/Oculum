@@ -2308,6 +2308,23 @@ class _OculumFormulaParser {
       pos++;
       return value;
     }
+    if (tok.type == 'function') {
+      pos++;
+      if (atEnd || current!.text != '(') {
+        throw const FormatException('Funzione senza parentesi.');
+      }
+      pos++;
+      final value = parseExpression();
+      if (atEnd || current!.text != ')') {
+        throw const FormatException('Parentesi non chiusa.');
+      }
+      pos++;
+      return switch (tok.text.toLowerCase()) {
+        'floor' => value.floorToDouble(),
+        'ceil' => value.ceilToDouble(),
+        _ => value.roundToDouble(),
+      };
+    }
     if (tok.type == 'number') {
       pos++;
       return tok.number;
@@ -2348,7 +2365,10 @@ List<_OculumToken> _oculumTokenizeFormula(String input) {
 
   void addToken(_OculumToken token) {
     final nextCanStartValue =
-        token.type == 'number' || token.type == 'variable' || token.text == '(';
+        token.type == 'number' ||
+        token.type == 'variable' ||
+        token.type == 'function' ||
+        token.text == '(';
     if (prevCanMultiply && nextCanStartValue) {
       tokens.add(const _OculumToken('op', '*', 0));
     }
@@ -2415,7 +2435,11 @@ List<_OculumToken> _oculumTokenizeFormula(String input) {
           (_oculumIsLatinLetter(input[i]) || input[i] == '_')) {
         i++;
       }
-      addToken(_OculumToken('variable', input.substring(start, i), 0));
+      final word = input.substring(start, i);
+      final function =
+          const {'floor', 'ceil', 'round'}.contains(word.toLowerCase()) &&
+          input.substring(i).trimLeft().startsWith('(');
+      addToken(_OculumToken(function ? 'function' : 'variable', word, 0));
       continue;
     }
     throw FormatException('Carattere non valido: $ch.');

@@ -20,6 +20,13 @@ extension _OculumCampaigns on _OculumHomePageState {
       'pawnGuardians': pawnGuardians.map((pawn) => pawn.toJson()).toList(),
       'pawnDamageReceipts': pawnDamageReceipts,
       'pawnPendingDamage': pawnPendingDamage,
+      'sheetSidebarFolders': sheetSidebarFolders
+          .map((f) => Map<String, dynamic>.from(f))
+          .toList(),
+      'sheetSidebarPlacements': {
+        for (final entry in sheetSidebarPlacements.entries)
+          entry.key: Map<String, dynamic>.from(entry.value),
+      },
       'schedaCorrente': schedaCorrente,
       'schedePersonaggio': schedePersonaggio
           .map((x) => Map<String, dynamic>.from(x))
@@ -189,6 +196,25 @@ extension _OculumCampaigns on _OculumHomePageState {
       sheets.add(statoVuotoPersonaggio());
     }
 
+    sheetSidebarFolders
+      ..clear()
+      ..addAll(
+        (campaign['sheetSidebarFolders'] as List? ?? []).whereType<Map>().map(
+          (folder) => Map<String, dynamic>.from(folder),
+        ),
+      );
+    sheetSidebarPlacements.clear();
+    final placements = campaign['sheetSidebarPlacements'];
+    if (placements is Map) {
+      for (final entry in placements.entries) {
+        if (entry.value is Map) {
+          sheetSidebarPlacements['${entry.key}'] = Map<String, dynamic>.from(
+            entry.value as Map,
+          );
+        }
+      }
+    }
+    sheetSidebarRevision.value++;
     activeCampaignId = '${campaign['id'] ?? generateCampaignId()}';
     loadPawnCampaignState(campaign);
     campaignNameController.text =

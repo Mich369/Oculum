@@ -6,6 +6,7 @@ part 'spine_hedgehog.dart';
 part 'pack_leader_monsters.dart';
 part 'lava_monsters.dart';
 part 'necromancer_monsters.dart';
+part 'withered_construct_white_larva.dart';
 part 'concrete_monster_techniques.dart';
 
 class MonsterBookEntry {
@@ -4675,6 +4676,8 @@ String _inspiredMonsterSkillText(String rawId) {
 }
 
 String monsterBookSkillText(String rawId) {
+  final newMonsterText = oculumWitheredLarvaSkillText(rawId);
+  if (newMonsterText.isNotEmpty) return newMonsterText;
   final canonicalId = rawId.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
   if (canonicalId != rawId) return monsterBookSkillText(canonicalId);
   if (rawId.startsWith('pawn_guardiano_')) {
@@ -5151,6 +5154,7 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
             ..._packLeaderMonsterBookEntries,
             ..._lavaMonsterEntries,
             ..._necromancerMonsterEntries,
+            ..._witheredConstructWhiteLarvaEntries,
             ..._manualMonsterBookEntries,
             ..._heroPathMonsterBookEntries(),
             ..._generateMonsterTier(
@@ -5389,6 +5393,7 @@ Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
   yield* _packLeaderMonsterBookEntries;
   yield* _lavaMonsterEntries;
   yield* _necromancerMonsterEntries;
+  yield* _witheredConstructWhiteLarvaEntries;
   yield* _manualMonsterBookEntries;
 }
 

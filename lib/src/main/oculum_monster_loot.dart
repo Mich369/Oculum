@@ -36,6 +36,81 @@ List<InventoryItem> oculumGenerateMonsterLoot({
   final safeGrade = grade.clamp(0, 12).toInt();
   final safeLevel = max(0, level);
   final art = oculumMonsterBookArt(monster);
+  if (monster.id == 'costrutto_rinsecchito') {
+    final core = oculumCreatureCore(0, broken: true, maximumGrade: 3)
+      ..nome = 'Nucleo rotto debole'
+      ..note =
+          'Nucleo del Costrutto Rinsecchito, fascia Grado 0–III. Riparabile con Meccanica secondo le regole dei nuclei.';
+    return [
+      core,
+      InventoryItem(
+        nome: 'Rami rinsecchiti',
+        peso: .25,
+        quantita: 1,
+        note: 'Materiale del Costrutto Rinsecchito.',
+        monsterLoot: {
+          'id': '$killId:branches',
+          'monsterId': monster.id,
+          'material': true,
+        },
+      ),
+      if (random.nextInt(100) <
+          (monster.dropChances['cuore_rami_rinsecchiti'] ?? 3))
+        InventoryItem(
+          nome: 'Cuore di rami rinsecchiti',
+          peso: .2,
+          quantita: 1,
+          note:
+              'Consumabile: recupera il 90% della Vita massima entro il massimo; Ricordo Vitale per 1d9 turni, senza mantenimento.',
+          craftData: {'witheredHeart': true},
+          monsterLoot: {'id': '$killId:heart', 'monsterId': monster.id},
+        ),
+    ];
+  }
+  if (monster.id == 'larva_bianca') {
+    final natural = naturalDropRoll ?? random.nextInt(20) + 1;
+    if (natural < 1 || natural > 20) {
+      throw ArgumentError.value(natural, 'naturalDropRoll');
+    }
+    final form = (safeLevel ~/ 3).clamp(0, 2);
+    return [
+      if (natural == 20)
+        InventoryItem(
+          nome: 'Scroll Nidiata ${const ['I', 'II', 'III'][form]}',
+          peso: .05,
+          quantita: 1,
+          gradoOggetto: safeGrade,
+          gradoRichiesto: safeGrade,
+          note:
+              'Monouso. Usa Infestazione nella forma del mostro; apprendimento raro secondo difficoltà, 20 naturale e DT di apprendimento.',
+          craftData: {
+            'scroll': {
+              'id': 'white_larva_brood_form_${form + 1}',
+              'name': 'Nidiata ${const ['I', 'II', 'III'][form]}',
+              'kind': 'technique',
+              'grade': safeGrade,
+              'element': 'fisico',
+              'description': oculumWitheredLarvaSkillText('white_larva_brood'),
+              'willCost': 0,
+              'cooldownTurns': oculumWitheredLarvaCooldown(
+                'white_larva_brood',
+                form,
+              ),
+              'effects': oculumWitheredLarvaEffects(
+                'white_larva_brood',
+                form,
+              ).map((e) => e.toJson()).toList(),
+            },
+          },
+          monsterLoot: {
+            'id': '$killId:brood-scroll',
+            'monsterId': monster.id,
+            'naturalDropRoll': natural,
+            'form': form + 1,
+          },
+        ),
+    ];
+  }
   if (monster.id == 'slime_roccioso' ||
       monster.id.startsWith('slime_roccioso_variante_')) {
     final natural = naturalDropRoll ?? random.nextInt(20) + 1;

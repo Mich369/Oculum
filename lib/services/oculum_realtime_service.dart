@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'oculum_sheet_transfer.dart';
@@ -14,9 +15,15 @@ class OculumRealtimeService {
     required this.onStatusChanged,
     this.presenceDataProvider,
     this.onConnected,
+    this.onAccessRequested,
     SupabaseClient? client,
   }) : _client = client,
-       _presenceKey = 'presence_${DateTime.now().microsecondsSinceEpoch}';
+       _presenceKey = _newSessionId();
+
+  static String _newSessionId() {
+    final random = Random.secure();
+    return 'presence_${List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join()}';
+  }
 
   static bool supabaseAvailable = false;
   static String startupStatus = 'Supabase non inizializzato.';
@@ -65,6 +72,8 @@ class OculumRealtimeService {
     'sheet_received_ack',
     'diary_knowledge',
     'diary_knowledge_ack',
+    'item_gift',
+    'item_gift_ack',
   };
 
   final String roomId;
@@ -74,6 +83,8 @@ class OculumRealtimeService {
   final void Function(String status) onStatusChanged;
   final Map<String, dynamic> Function()? presenceDataProvider;
   final void Function()? onConnected;
+  final Future<bool> Function(String userId, String displayName)?
+  onAccessRequested;
 
   final String _presenceKey;
   final SupabaseClient? _client;
@@ -86,6 +97,20 @@ class OculumRealtimeService {
   final _sessionNoteTransfers = OculumSheetTransferAssembler();
   int _sheetTransferSequence = 0;
   int _initiativeRevision = 0;
+  String? _secureRoomId;
+  String? authenticatedRole;
+  Timer? _roomHeartbeat;
+  bool _roomRefreshing = false;
+  final _accessDecisions = <String>{};
+  Future<void> _incomingEvents = Future<void>.value();
+  bool _presenceRegistered = false;
+  final _deliveredEvents = <String>{};
+  final _appliedAccessRevocations = <String>{};
+  int _replaySequence = 0;
+  final _replaySince = DateTime.now()
+      .toUtc()
+      .subtract(const Duration(minutes: 5))
+      .toIso8601String();
 
   bool get isConnected => _connected && !_disposed && _channel != null;
 
@@ -95,7 +120,9 @@ class OculumRealtimeService {
     return clean.length > 64 ? clean.substring(0, 64) : clean;
   }
 
-  String get channelName => 'oculum_room_$normalizedRoomId';
+  String get channelName => _secureRoomId == null
+      ? 'oculum_room_$normalizedRoomId'
+      : 'oculum_secure_$_secureRoomId';
 
   Future<void> connect() {
     if (_disposed || isConnected) return Future<void>.value();
@@ -116,6 +143,41 @@ class OculumRealtimeService {
 
     try {
       final client = _client ?? Supabase.instance.client;
+      if (client.auth.currentSession == null) {
+        await client.auth.signInAnonymously().timeout(
+          const Duration(seconds: 20),
+        );
+      }
+      if (_disposed || generation != _generation) return;
+      final requestedRole = presenceDataProvider?.call()['role'];
+      Map<String, dynamic> membership;
+      final approvalDeadline = DateTime.now().add(const Duration(minutes: 2));
+      do {
+        membership = Map<String, dynamic>.from(
+          await client.rpc(
+                'oculum_open_room',
+                params: {
+                  'p_code': normalizedRoomId,
+                  'p_name': _displayName,
+                  'p_as_master': requestedRole == 'master',
+                },
+              )
+              as Map,
+        );
+        if (_disposed || generation != _generation) return;
+        if (membership['status'] == 'denied') {
+          throw StateError('Il Master non ha autorizzato l’ingresso.');
+        }
+        if (membership['status'] == 'approved') break;
+        _safeStatus('Ingresso richiesto: in attesa della conferma del Master.');
+        if (DateTime.now().isAfter(approvalDeadline)) {
+          throw TimeoutException('Conferma del Master ancora in attesa.');
+        }
+        await Future<void>.delayed(const Duration(seconds: 3));
+      } while (!_disposed && generation == _generation);
+      if (_disposed || generation != _generation) return;
+      _secureRoomId = '${membership['roomId']}';
+      authenticatedRole = '${membership['role']}';
       final channel = client.channel(
         channelName,
         opts: RealtimeChannelConfig(
@@ -123,6 +185,7 @@ class OculumRealtimeService {
           self: true,
           key: _presenceKey,
           enabled: true,
+          private: true,
         ),
       );
 
@@ -132,7 +195,11 @@ class OculumRealtimeService {
         channel.onBroadcast(
           event: eventName,
           callback: (payload) {
-            if (_channel == channel) _handleBroadcast(eventName, payload);
+            if (_channel == channel) {
+              _incomingEvents = _incomingEvents.then(
+                (_) => _handleBroadcast(eventName, payload),
+              );
+            }
           },
         );
       }
@@ -150,9 +217,26 @@ class OculumRealtimeService {
             final wasConnected = _connected;
             _connected = true;
             _safeStatus('Connesso a $channelName');
-            unawaited(_trackPresence());
-            if (!subscribed.isCompleted) subscribed.complete();
-            if (!wasConnected) onConnected?.call();
+            _presenceRegistered = false;
+            unawaited(() async {
+              await _trackPresence();
+              if (_disposed || _channel != channel) return;
+              if (!_presenceRegistered) {
+                if (!subscribed.isCompleted) {
+                  subscribed.completeError(
+                    'Registrazione della sessione non riuscita.',
+                  );
+                }
+                return;
+              }
+              if (!subscribed.isCompleted) subscribed.complete();
+              if (!wasConnected) onConnected?.call();
+            }());
+            _roomHeartbeat?.cancel();
+            _roomHeartbeat = Timer.periodic(
+              const Duration(seconds: 5),
+              (_) => unawaited(_trackPresence()),
+            );
             break;
           case RealtimeSubscribeStatus.channelError:
             _connected = false;
@@ -190,6 +274,8 @@ class OculumRealtimeService {
 
   Future<void> disconnect({bool notify = true}) async {
     _generation++;
+    _roomHeartbeat?.cancel();
+    _roomHeartbeat = null;
     _sheetTransfers.clear();
     _sessionNoteTransfers.clear();
     final channel = _channel;
@@ -728,6 +814,18 @@ class OculumRealtimeService {
 
   Future<void> refreshPresence() => _trackPresence();
 
+  Future<void> revokeSheetEditor(String targetTag, {String? sheetTag}) async {
+    if (!isConnected || _secureRoomId == null) return;
+    await (_client ?? Supabase.instance.client).rpc(
+      'oculum_revoke_sheet_editor',
+      params: {
+        'p_room': _secureRoomId,
+        'p_target_tag': targetTag,
+        'p_sheet_tag': sheetTag,
+      },
+    );
+  }
+
   Future<bool> sendCombatEvent(String event, Map<String, dynamic> payload) {
     if (event != 'combat_attack' &&
         event != 'combat_defense' &&
@@ -863,6 +961,12 @@ class OculumRealtimeService {
               encoded.length,
             );
             if (!await _sendConfirmed('sheet_shared_chunk', {
+              '_routing': {
+                'sheetId': payload['sheetId'],
+                'senderRole': payload['senderRole'],
+                'targetAudience': payload['targetAudience'],
+                'targetTags': payload['targetTags'] ?? const [],
+              },
               'transferId': transferId,
               'chunkIndex': i,
               'chunkCount': count,
@@ -876,12 +980,20 @@ class OculumRealtimeService {
               isConnected;
         }
       }
-      final response = await channel
-          .sendBroadcastMessage(event: event, payload: payload)
-          .timeout(const Duration(seconds: 6));
+      final response = await (_client ?? Supabase.instance.client)
+          .rpc(
+            'oculum_emit_room_event',
+            params: {
+              'p_room': _secureRoomId,
+              'p_session': _presenceKey,
+              'p_event': event,
+              'p_payload': payload,
+            },
+          )
+          .timeout(const Duration(seconds: 15));
       if (_channel != channel || !isConnected) return false;
-      if (response == ChannelResponse.ok) return true;
-      _safeStatus('Invio realtime fallito: ${response.name}');
+      if (response is String && response.isNotEmpty) return true;
+      _safeStatus('Invio realtime non confermato.');
       return false;
     } catch (error) {
       _safeStatus('Invio realtime fallito: $error');
@@ -891,7 +1003,8 @@ class OculumRealtimeService {
 
   Future<void> _trackPresence() async {
     final channel = _channel;
-    if (!isConnected || channel == null) return;
+    if (!isConnected || channel == null || _roomRefreshing) return;
+    _roomRefreshing = true;
 
     try {
       final payload = <String, dynamic>{
@@ -906,20 +1019,152 @@ class OculumRealtimeService {
         payload.addAll(extra);
       }
 
-      await channel.track(payload).timeout(const Duration(seconds: 6));
+      final revocations =
+          (payload.remove('revokedSheetAccess') as List? ?? const [])
+              .whereType<Map>()
+              .toList();
+      final revocationKeys = {
+        for (final entry in revocations)
+          '${entry['sheetTag'] ?? '*'}:${entry['targetTag']}',
+      };
+      _appliedAccessRevocations.removeWhere(
+        (key) => !revocationKeys.contains(key),
+      );
+
+      final client = _client ?? Supabase.instance.client;
+      await client
+          .rpc(
+            'oculum_touch_room_session',
+            params: {
+              'p_room': _secureRoomId,
+              'p_session': _presenceKey,
+              'p_presence': payload,
+            },
+          )
+          .timeout(const Duration(seconds: 10));
+      _presenceRegistered = true;
+      for (final entry in revocations) {
+        final key = '${entry['sheetTag'] ?? '*'}:${entry['targetTag']}';
+        if (_appliedAccessRevocations.contains(key)) continue;
+        await revokeSheetEditor(
+          '${entry['targetTag']}',
+          sheetTag: entry['sheetTag'] as String?,
+        );
+        _appliedAccessRevocations.add(key);
+      }
       _emitPresence();
+      await _replayEvents(client, channel);
+      if (authenticatedRole == 'master' && onAccessRequested != null) {
+        final pending = await client
+            .from('oculum_room_members')
+            .select('user_id,display_name')
+            .eq('room_id', _secureRoomId!)
+            .eq('status', 'pending');
+        for (final request in pending) {
+          final userId = '${request['user_id']}';
+          if (!_accessDecisions.add(userId)) continue;
+          try {
+            final allowed = await onAccessRequested!(
+              userId,
+              '${request['display_name']}',
+            );
+            if (_disposed || _channel != channel) return;
+            await client.rpc(
+              'oculum_decide_room_member',
+              params: {
+                'p_room': _secureRoomId,
+                'p_user': userId,
+                'p_allow': allowed,
+                'p_role': 'player',
+              },
+            );
+          } catch (_) {
+            _accessDecisions.remove(userId);
+            rethrow;
+          }
+        }
+      }
     } catch (error) {
       _safeStatus('Presence non aggiornata: $error');
+    } finally {
+      _roomRefreshing = false;
     }
   }
 
-  void _handleBroadcast(String event, Map<String, dynamic> payload) {
+  Future<void> _handleBroadcast(
+    String event,
+    Map<String, dynamic> payload,
+  ) async {
+    if (_disposed || !isConnected) return;
+    final header = payload['payload'] is Map
+        ? payload['payload'] as Map
+        : payload;
+    final id = header['serverEventId'];
+    if (id is! String) return;
+    final channel = _channel;
+    try {
+      final record = await (_client ?? Supabase.instance.client)
+          .from('oculum_room_events')
+          .select('event,payload')
+          .eq('room_id', _secureRoomId!)
+          .eq('id', id)
+          .maybeSingle();
+      if (_disposed ||
+          _channel != channel ||
+          record == null ||
+          record['event'] != event ||
+          record['payload'] is! Map) {
+        return;
+      }
+      if (!_deliveredEvents.add(id)) return;
+      if (_deliveredEvents.length > 4000) {
+        _deliveredEvents.remove(_deliveredEvents.first);
+      }
+      _deliverVerifiedEvent(
+        event,
+        Map<String, dynamic>.from(record['payload'] as Map),
+      );
+    } catch (_) {
+      _safeStatus(
+        'Evento in attesa di riconnessione: salvataggio locale conservato.',
+      );
+    }
+  }
+
+  Future<void> _replayEvents(
+    SupabaseClient client,
+    RealtimeChannel channel,
+  ) async {
+    final records = await client
+        .from('oculum_room_events')
+        .select('id,event,payload,sequence')
+        .eq('room_id', _secureRoomId!)
+        .gt('sequence', _replaySequence)
+        .gte('created_at', _replaySince)
+        .order('sequence')
+        .limit(200);
+    for (final record in records) {
+      if (_disposed || _channel != channel) return;
+      final id = '${record['id']}';
+      if (_deliveredEvents.add(id)) {
+        if (_deliveredEvents.length > 4000) {
+          _deliveredEvents.remove(_deliveredEvents.first);
+        }
+        _deliverVerifiedEvent(
+          '${record['event']}',
+          Map<String, dynamic>.from(record['payload'] as Map),
+        );
+      }
+      _replaySequence = (record['sequence'] as num).toInt();
+    }
+  }
+
+  void _deliverVerifiedEvent(String event, Map<String, dynamic> payload) {
     if (_disposed) return;
 
-    final nestedPayload = payload['payload'];
-    final normalized = nestedPayload is Map
-        ? Map<String, dynamic>.from(nestedPayload)
-        : Map<String, dynamic>.from(payload);
+    // The database already supplied the verified body. Unwrapping a user
+    // supplied nested `payload` here would discard authenticated sender fields.
+    final normalized = Map<String, dynamic>.from(payload);
 
     if (event == 'session_note_chunk') {
       final assembled = _sessionNoteTransfers.accept(
@@ -941,13 +1186,28 @@ class OculumRealtimeService {
     }
     if (event == 'sheet_shared_chunk') {
       final assembled = _sheetTransfers.accept(normalized, DateTime.now());
-      if (assembled != null) onEvent('sheet_shared', assembled);
+      if (assembled != null &&
+          assembled['sheetId'] == normalized['authenticatedSheetId']) {
+        onEvent('sheet_shared', {
+          ...assembled,
+          if (normalized['authenticatedRole'] == 'player') 'fromMaster': false,
+          if (normalized['authenticatedRole'] == 'player') 'masterParty': false,
+          for (final key in [
+            'senderRole',
+            'senderTag',
+            'sessionId',
+            'authenticatedUserId',
+            'authenticatedRole',
+          ])
+            key: normalized[key],
+        });
+      }
       return;
     }
     onEvent(event, normalized);
   }
 
-  void _emitPresence() {
+  Future<void> _emitPresence() async {
     if (_disposed) return;
 
     final channel = _channel;
@@ -956,13 +1216,24 @@ class OculumRealtimeService {
       return;
     }
 
-    final users = <Map<String, dynamic>>[];
-    for (final state in channel.presenceState()) {
-      for (final presence in state.presences) {
-        users.add(<String, dynamic>{...presence.payload});
-      }
+    try {
+      final data = await (_client ?? Supabase.instance.client).rpc(
+        'oculum_room_presence',
+        params: {'p_room': _secureRoomId},
+      );
+      if (_disposed || _channel != channel) return;
+      final users = (data as List)
+          .whereType<Map>()
+          .map((row) => Map<String, dynamic>.from(row))
+          .toList();
+      final own = users
+          .where((row) => row['sessionId'] == _presenceKey)
+          .firstOrNull;
+      if (own != null) authenticatedRole = '${own['role']}';
+      onPresenceChanged(users);
+    } catch (_) {
+      // A failed poll must not replace known peers with an empty snapshot.
     }
-    onPresenceChanged(users);
   }
 
   void _safeStatus(String status) {

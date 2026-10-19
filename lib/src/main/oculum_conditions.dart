@@ -1205,6 +1205,25 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     },
   ),
   OculumConditionDefinition(
+    id: 'scavata_svantaggio_alto',
+    nameIt: 'Scavata · svantaggio alto',
+    nameEn: 'Burrow · high disadvantage',
+    icon: Icons.terrain,
+    category: OculumConditionCategory.special,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'Disorientato dalla Scavata: −6 al prossimo tiro. Durata e potenza modificabili.',
+    descriptionEn: 'Disoriented by Burrow: −6 to the next roll.',
+    defaultDuration: 1,
+    durationType: OculumConditionDurationType.rolls,
+    tickTrigger: OculumConditionTickTrigger.roll,
+    rollModifierByStage: [-6],
+    affectedTargets: {
+      OculumConditionTarget.tiri,
+      OculumConditionTarget.combattimento,
+    },
+  ),
+  OculumConditionDefinition(
     id: 'silenziato',
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.skill,

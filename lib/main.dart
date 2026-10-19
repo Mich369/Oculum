@@ -131,6 +131,8 @@ part 'src/main/oculum_humanoid_roles.dart';
 part 'src/main/oculum_global_search.dart';
 part 'src/main/oculum_friends.dart';
 part 'src/main/oculum_campaigns.dart';
+part 'src/main/oculum_sheet_folders.dart';
+part 'src/main/oculum_withered_larva.dart';
 part 'src/main/oculum_story_session_notes.dart';
 part 'src/main/oculum_home_recipes.dart';
 part 'src/main/oculum_home_titles_inventory_pages.dart';
@@ -477,10 +479,15 @@ Future<bool> _initializeOculumSupabase() async {
       return false;
     }
 
+    final sessionStorage = OculumSessionStorage(
+      persistSessionKey: 'sb-${Uri.parse(supabaseUrl).host.split('.').first}-auth-token',
+    );
+    OculumAuthService.sessionStorage = sessionStorage;
     await Supabase.initialize(
       url: supabaseUrl,
       publishableKey: supabasePublishableKey,
-      authOptions: const FlutterAuthClientOptions(
+      authOptions: FlutterAuthClientOptions(
+        localStorage: sessionStorage,
         authFlowType: AuthFlowType.pkce,
         autoRefreshToken: true,
         detectSessionInUri: true,
@@ -2119,6 +2126,10 @@ class _OculumHomePageState extends State<OculumHomePage>
   int realtimeInitiativeRevision = 0;
   final Map<String, Map<String, dynamic>> realtimePendingEncounterJoins = {};
   final Map<String, Map<String, dynamic>> realtimeOutgoingEncounterJoins = {};
+  final List<Map<String, dynamic>> sheetSidebarFolders = [];
+  final Map<String, Map<String, dynamic>> sheetSidebarPlacements = {};
+  final ValueNotifier<int> sheetSidebarRevision = ValueNotifier(0);
+  bool sheetSidebarFreeMove = false;
   Timer? realtimeEncounterJoinRetryTimer;
   bool realtimeEncounterJoinSending = false;
   Future<void>? realtimeOwnedSheetSync;
@@ -3860,6 +3871,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     realtimeOculumDebounceTimer?.cancel();
     realtimeSheetShareDebounceTimer?.cancel();
     realtimeEncounterJoinRetryTimer?.cancel();
+    sheetSidebarRevision.dispose();
     realtimeReconnectTimer?.cancel();
     diaryKnowledgeRetryTimer?.cancel();
     diaryKnowledgeRevision.dispose();
@@ -4321,70 +4333,15 @@ class _OculumHomePageState extends State<OculumHomePage>
                         SizedBox(
                           height: min(
                             420.0,
-                            max(72.0, schedePersonaggio.length * 56.0),
-                          ),
-                          child: ListView.builder(
-                            key: const PageStorageKey<String>(
-                              'desktop_sheet_menu_lazy_list',
-                            ),
-                            itemCount: schedePersonaggio.length,
-                            itemExtent: 56,
-                            itemBuilder: (context, i) => GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onSecondaryTapDown: (details) =>
-                                  mostraMenuSchedaPersonaggio(
-                                    index: i,
-                                    position: details.globalPosition,
-                                  ),
-                              onLongPressStart: (details) =>
-                                  mostraMenuSchedaPersonaggio(
-                                    index: i,
-                                    position: details.globalPosition,
-                                  ),
-                              child: Material(
-                                color: Colors.transparent,
-                                borderRadius: BorderRadius.circular(10),
-                                clipBehavior: Clip.antiAlias,
-                                child: ListTile(
-                                  dense: true,
-                                  visualDensity: VisualDensity.compact,
-                                  selected: schedaCorrente == i,
-                                  selectedTileColor: primaryColor.withValues(
-                                    alpha: 0.10,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  leading: Text(
-                                    '${i + 1}',
-                                    style: TextStyle(
-                                      color: schedaCorrente == i
-                                          ? tertiaryColor
-                                          : Colors.grey,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  title: Text(
-                                    cleanUiText(nomeSchedaPersonaggio(i)),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: readableOnTheme(primaryColor),
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    cleanUiText(tipoSchedaPersonaggio(i)),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Colors.grey.shade400,
-                                    ),
-                                  ),
-                                  onTap: () => cambiaSchedaPersonaggio(i),
-                                ),
-                              ),
+                            max(
+                              112.0,
+                              (schedePersonaggio.length +
+                                      sheetSidebarFolders.length +
+                                      1) *
+                                  56.0,
                             ),
                           ),
+                          child: sheetFolderBrowser(),
                         ),
                       ],
                     ),
@@ -4827,6 +4784,10 @@ class _OculumHomePageState extends State<OculumHomePage>
                         );
                         return;
                       }
+                      if (value == 'sheet_folders') {
+                        showSheetFoldersDialog();
+                        return;
+                      }
                       if (value == 'new_sheet') {
                         if (paginaCorrente != onlinePageIndex ||
                             realtimeCanBrowseOtherSheets) {
@@ -4895,6 +4856,10 @@ class _OculumHomePageState extends State<OculumHomePage>
                         PopupMenuItem<String>(
                           value: 'settings',
                           child: Text(t('Impostazioni', 'Settings')),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'sheet_folders',
+                          child: Text('Schede e cartelle'),
                         ),
                         PopupMenuItem<String>(
                           value: 'new_sheet',

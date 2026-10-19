@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
@@ -54,7 +55,57 @@ abstract class OculumAuthBackend {
   Future<void> signOut();
 }
 
-class SupabaseOculumAuthBackend implements OculumAuthBackend {
+/// Optional capability so existing offline/test backends remain compatible.
+abstract class OculumEmailAuthBackend {
+  Future<void> signInAnonymously();
+  Future<void> requestEmail(String email, {required bool linkGuest});
+  Future<void> verifyEmail(
+    String email,
+    String token, {
+    required bool linkGuest,
+  });
+}
+
+/// Preserves the SDK's existing session key while honoring the user's choice.
+class OculumSessionStorage extends LocalStorage {
+  OculumSessionStorage({required String persistSessionKey})
+    : _storage = SharedPreferencesLocalStorage(
+        persistSessionKey: persistSessionKey,
+      );
+  static const rememberKey = 'oculum.auth.remember_access';
+  final LocalStorage _storage;
+  late SharedPreferences _prefs;
+
+  @override
+  Future<void> initialize() async {
+    _prefs = await SharedPreferences.getInstance();
+    await _storage.initialize();
+    if (!(_prefs.getBool(rememberKey) ?? true)) {
+      await _storage.removePersistedSession();
+    }
+  }
+
+  @override
+  Future<bool> hasAccessToken() async =>
+      (_prefs.getBool(rememberKey) ?? true) && await _storage.hasAccessToken();
+  @override
+  Future<String?> accessToken() async => (_prefs.getBool(rememberKey) ?? true)
+      ? await _storage.accessToken()
+      : null;
+  @override
+  Future<void> removePersistedSession() => _storage.removePersistedSession();
+  @override
+  Future<void> persistSession(String session) async {
+    if (_prefs.getBool(rememberKey) ?? true) {
+      await _storage.persistSession(session);
+    } else {
+      await _storage.removePersistedSession();
+    }
+  }
+}
+
+class SupabaseOculumAuthBackend
+    implements OculumAuthBackend, OculumEmailAuthBackend {
   SupabaseClient get _client => Supabase.instance.client;
 
   @override
@@ -63,7 +114,9 @@ class SupabaseOculumAuthBackend implements OculumAuthBackend {
     if (user == null || _client.auth.currentSession == null) return null;
     return OculumBackendUser(
       id: user.id,
-      provider: user.appMetadata['provider']?.toString(),
+      provider: user.isAnonymous
+          ? 'anonymous'
+          : user.appMetadata['provider']?.toString(),
     );
   }
 
@@ -75,7 +128,9 @@ class SupabaseOculumAuthBackend implements OculumAuthBackend {
             ? null
             : OculumBackendUser(
                 id: user.id,
-                provider: user.appMetadata['provider']?.toString(),
+                provider: user.isAnonymous
+                    ? 'anonymous'
+                    : user.appMetadata['provider']?.toString(),
               );
         final type = switch (data.event) {
           AuthChangeEvent.signedIn => OculumBackendAuthEventType.signedIn,
@@ -109,7 +164,40 @@ class SupabaseOculumAuthBackend implements OculumAuthBackend {
   }
 
   @override
-  Future<void> signOut() => _client.auth.signOut(scope: SignOutScope.global);
+  Future<void> signOut() => _client.auth.signOut(scope: SignOutScope.local);
+
+  @override
+  Future<void> signInAnonymously() async {
+    await _client.auth.signInAnonymously();
+  }
+
+  @override
+  Future<void> requestEmail(String email, {required bool linkGuest}) async {
+    final redirect = kIsWeb
+        ? Uri.base.replace(query: '', fragment: '').toString()
+        : oculumOAuthRedirectUrl;
+    if (linkGuest) {
+      await _client.auth.updateUser(
+        UserAttributes(email: email),
+        emailRedirectTo: redirect,
+      );
+    } else {
+      await _client.auth.signInWithOtp(email: email, emailRedirectTo: redirect);
+    }
+  }
+
+  @override
+  Future<void> verifyEmail(
+    String email,
+    String token, {
+    required bool linkGuest,
+  }) async {
+    await _client.auth.verifyOTP(
+      email: email,
+      token: token,
+      type: linkGuest ? OtpType.emailChange : OtpType.email,
+    );
+  }
 }
 
 class OculumAuthState {
@@ -136,6 +224,7 @@ class OculumAuthState {
   bool get canSyncToCloud => isAuthenticated && !isGuest;
 
   String get displayLabel {
+    if (provider == 'anonymous') return 'Ospite online protetto';
     if (isAuthenticated) return 'Accesso effettuato';
     if (isGuest) return 'Modalità locale';
     return 'Accesso non effettuato';
@@ -145,6 +234,8 @@ class OculumAuthState {
     'google' => 'Google',
     'apple' => 'Apple',
     'guest' => 'Guest',
+    'anonymous' => 'Ospite protetto',
+    'email' => 'Email',
     _ => 'Nessuno',
   };
 }
@@ -197,6 +288,10 @@ class OculumAuthService extends ChangeNotifier {
   StreamSubscription<OculumBackendAuthEvent>? _authSubscription;
   Timer? _oauthTimer;
   bool _operationInProgress = false;
+  String? pendingEmail;
+  bool _linkingGuestEmail = false;
+  bool rememberAccess = true;
+  static OculumSessionStorage? sessionStorage;
   OculumAuthProvider? _lastAttemptedProvider;
 
   final ValueNotifier<OculumAuthState> stateNotifier = ValueNotifier(
@@ -229,6 +324,7 @@ class OculumAuthService extends ChangeNotifier {
 
   Future<void> initialize({bool supabaseReady = false}) async {
     final prefs = await SharedPreferences.getInstance();
+    rememberAccess = prefs.getBool(OculumSessionStorage.rememberKey) ?? true;
     if (supabaseReady && _backend == null) {
       _backend = SupabaseOculumAuthBackend();
     }
@@ -259,6 +355,87 @@ class OculumAuthService extends ChangeNotifier {
             : 'Accedi per usare le funzioni online.',
       ),
     );
+  }
+
+  Future<void> setRememberAccess(bool remember) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(OculumSessionStorage.rememberKey, remember);
+    rememberAccess = remember;
+    if (!remember) {
+      await sessionStorage?.removePersistedSession();
+    } else if (_backend is SupabaseOculumAuthBackend) {
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null) {
+        await sessionStorage?.persistSession(jsonEncode(session.toJson()));
+      }
+    }
+    notifyListeners();
+  }
+
+  Future<bool> signInAsProtectedGuest() => _runEmailOperation(() async {
+    if (_backend!.currentUser == null) {
+      await (_backend as OculumEmailAuthBackend).signInAnonymously();
+    }
+    final user = _backend!.currentUser;
+    if (user == null) throw StateError('Missing guest session');
+    await _applySignedIn(user);
+  });
+
+  Future<bool> requestEmailAccess(String email) => _runEmailOperation(() async {
+    final normalized = email.trim();
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(normalized)) {
+      throw const FormatException('Email non valida');
+    }
+    final link = state.provider == 'anonymous';
+    await (_backend as OculumEmailAuthBackend).requestEmail(
+      normalized,
+      linkGuest: link,
+    );
+    pendingEmail = normalized;
+    _linkingGuestEmail = link;
+  });
+
+  Future<bool> verifyEmailAccess(String code) => _runEmailOperation(() async {
+    final email = pendingEmail;
+    if (email == null || code.trim().isEmpty) {
+      throw const FormatException('Codice mancante');
+    }
+    await (_backend as OculumEmailAuthBackend).verifyEmail(
+      email,
+      code.trim(),
+      linkGuest: _linkingGuestEmail,
+    );
+    final user = _backend!.currentUser;
+    if (user == null) throw StateError('Missing email session');
+    pendingEmail = null;
+    await _applySignedIn(user);
+  });
+
+  Future<bool> _runEmailOperation(Future<void> Function() operation) async {
+    if (_operationInProgress) return false;
+    if (_backend is! OculumEmailAuthBackend) {
+      _showRecoverableError(
+        'Accesso online non disponibile. I salvataggi restano locali.',
+      );
+      return false;
+    }
+    _operationInProgress = true;
+    try {
+      await operation().timeout(const Duration(seconds: 20));
+      return true;
+    } on AuthException catch (error) {
+      _showRecoverableError(_friendlyAuthError(error.message));
+    } on FormatException catch (error) {
+      _showRecoverableError(error.message);
+    } catch (_) {
+      _showRecoverableError(
+        'Accesso non riuscito. Controlla la rete e riprova.',
+      );
+    } finally {
+      _operationInProgress = false;
+      notifyListeners();
+    }
+    return false;
   }
 
   Future<bool> signInWithGoogle({String? redirectTo}) =>
@@ -425,7 +602,7 @@ class OculumAuthService extends ChangeNotifier {
     _setState(
       OculumAuthState(
         isAuthenticated: true,
-        isGuest: false,
+        isGuest: user.provider == 'anonymous',
         isLoading: false,
         userId: user.id,
         provider: provider,
