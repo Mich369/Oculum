@@ -102,6 +102,11 @@ List<CharacterSkill> oculumWitheredLarvaSkills(MonsterBookEntry monster) => [
             tipo: 'Skill naturale mostro',
             livello: '${f * 3}',
             descrizione: monsterBookSkillText(id),
+            // Costs are authored below; CD and damage fractions in the prose
+            // must not be reinterpreted as an Oculum spending range on reload.
+            oculumLimitiConfiguratiManualmente: true,
+            oculumMinimoUtilizzabile: id == 'withered_memory' ? 1 : 0,
+            oculumMassimoUtilizzabile: id == 'withered_memory' ? 1 : 0,
             costo: id.startsWith('white_larva')
                 ? 'Nessun costo'
                 : id == 'withered_memory'
