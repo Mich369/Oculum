@@ -31,6 +31,9 @@ jobs:
       - run: flutter analyze --no-pub
       # Keep image-heavy widget suites within the Windows runner's memory budget.
       - run: flutter test --no-pub --concurrency=2
+      - name: Verify authenticated online transport and combat
+        timeout-minutes: 5
+        run: flutter test --no-pub --concurrency=1 --dart-define=OculumLiveRealtimeTest=true --dart-define=OculumLiveSupabaseTest=true test/oculum_supabase_live_connection_test.dart test/oculum_cloud_live_isolation_test.dart test/oculum_realtime_live_delivery_test.dart test/oculum_combat_live_application_test.dart
       - name: Verify diary link suggestions
         run: flutter test --no-pub test/oculum_diary_memory_test.dart
       - name: Verify diary typing latency regression
