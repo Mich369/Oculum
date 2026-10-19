@@ -146,6 +146,13 @@ class OculumPerformanceProbe {
       _state.receivePermissionEvent(event, payload);
   void receiveCombat(String event, Map<String, dynamic> payload) =>
       _state.receiveOnlineCombatEvent(event, payload);
+  Future<void> syncOwnedStaffSheets() =>
+      _state.sendRealtimeOwnedSheetsToStaff();
+  Future<void> joinMasterEncounter(Map<String, dynamic> group) =>
+      _state.joinSharedMasterEncounter(group);
+  Future<void> retryEncounterJoins() => _state.retryPendingEncounterJoins();
+  void receiveEncounterJoin(Map<String, dynamic> payload) =>
+      _state.receiveRealtimeReportedTurn(payload);
   void shareStaffTurnOrderSheets() => _state.sendRealtimeStaffTurnOrderSheets();
   bool receiveStaffSheet(Map<String, dynamic> payload) =>
       _state.receiveRealtimeSharedSheet(payload);

@@ -2,6 +2,53 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('timestamp-only saves do not create endless staff transfers', () {
+    final original = <String, dynamic>{
+      'nome': 'Rose',
+      'currentHp': 20,
+      'localUpdatedAt': 'old',
+    };
+    expect(
+      oculumRealtimeSheetContentSignature(original),
+      oculumRealtimeSheetContentSignature({
+        ...original,
+        'localUpdatedAt': 'new',
+      }),
+    );
+    expect(
+      oculumRealtimeSheetContentSignature(original),
+      isNot(
+        oculumRealtimeSheetContentSignature({...original, 'currentHp': 19}),
+      ),
+    );
+  });
+
+  test('ownership accepts normalized inactive tags only for their session', () {
+    final users = [
+      {
+        'sessionId': 'owner',
+        'activeSheetTag': 'active',
+        'localSheetTags': ['inactive'],
+      },
+    ];
+    expect(
+      oculumRealtimePresenceOwnsSheet(users, {
+        'sessionId': 'owner',
+      }, ' INACTIVE '),
+      isTrue,
+    );
+    expect(
+      oculumRealtimePresenceOwnsSheet(users, {
+        'sessionId': 'stranger',
+      }, 'inactive'),
+      isFalse,
+    );
+    expect(
+      oculumRealtimePresenceOwnsSheet(users, {'sessionId': 'owner'}, 'missing'),
+      isFalse,
+    );
+  });
+
   final encounters = <Map<String, dynamic>>[
     {
       'encounterId': 'first',

@@ -765,12 +765,14 @@ class OculumRealtimeService {
   }) =>
       _sendConfirmed(acknowledgement ? 'item_gift_ack' : 'item_gift', envelope);
 
-  Future<void> requestSharedSheets() => _send('sheet_ping', {
-    'playerName': _displayName,
-    'senderRole': presenceDataProvider?.call()['role'] ?? 'player',
-    'requestSharedSheets': true,
-    'sentAt': _nowIso(),
-  });
+  Future<void> requestSharedSheets({String targetSheetTag = ''}) =>
+      _send('sheet_ping', {
+        'playerName': _displayName,
+        'senderRole': presenceDataProvider?.call()['role'] ?? 'player',
+        'requestSharedSheets': true,
+        if (targetSheetTag.isNotEmpty) 'targetSheetTag': targetSheetTag,
+        'sentAt': _nowIso(),
+      });
 
   Future<void> _send(String event, Map<String, dynamic> payload) async {
     await _sendConfirmed(event, payload);

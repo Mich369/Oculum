@@ -47,6 +47,60 @@ class _CombatService extends OculumRealtimeService {
     });
   }
 
+  final joins = <Map<String, dynamic>>[];
+  @override
+  Future<void> refreshPresence() async {}
+  @override
+  Future<void> sendInitiativeTurnAdjusted({
+    required String senderRole,
+    required String campaignId,
+    required String campaignName,
+    required String sheetTag,
+    required int turn,
+    String encounterId = '',
+    bool joinEncounter = false,
+    bool leaveEncounter = false,
+  }) async {
+    joins.add({
+      'sheetTag': sheetTag,
+      'encounterId': encounterId,
+      'campaignId': campaignId,
+      'joinEncounter': joinEncounter,
+    });
+  }
+
+  @override
+  Future<bool> sendSharedSheetConfirmed({
+    required Map<String, dynamic> sheet,
+    required String campaignId,
+    required String campaignName,
+    required String sheetId,
+    required String sheetName,
+    required String ownerTag,
+    required String senderRole,
+    required String targetAudience,
+    required bool fromMaster,
+    required bool masterParty,
+    List<String> targetTags = const [],
+    String deliveryId = '',
+  }) async {
+    await sendSharedSheet(
+      sheet: sheet,
+      campaignId: campaignId,
+      campaignName: campaignName,
+      sheetId: sheetId,
+      sheetName: sheetName,
+      ownerTag: ownerTag,
+      senderRole: senderRole,
+      targetAudience: targetAudience,
+      fromMaster: fromMaster,
+      masterParty: masterParty,
+      targetTags: targetTags,
+      deliveryId: deliveryId,
+    );
+    return true;
+  }
+
   @override
   Future<bool> sendCombatEvent(
     String event,
@@ -58,6 +112,10 @@ void main() {
   testWidgets(
     'attack requests validate sender, log once, and cannot reopen resolved damage',
     (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1440, 1000);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       SharedPreferences.setMockInitialValues({});
       final directory = Directory('build/combat-delivery-test')
         ..createSync(recursive: true);
@@ -410,6 +468,55 @@ void main() {
         4,
         reason: 'Only the room Master session controls online initiative.',
       );
+      state.sonoCoMaster = false;
+      state.schedePersonaggio.add(<String, dynamic>{
+        'id': '003-ALLY',
+        'sheetTag': '003-ALLY',
+        'nome': 'Ally',
+      });
+      final transportForJoin = state.realtimeService as _CombatService;
+      transportForJoin.staffSheets.clear();
+      await probe.syncOwnedStaffSheets();
+      expect(
+        transportForJoin.staffSheets.map((s) => s['sheetId']),
+        contains('003-ALLY'),
+      );
+      expect(
+        transportForJoin.staffSheets.map((s) => s['sheetId']),
+        isNot(contains('002-ENEMY')),
+      );
+      state.schedaCorrente = state.schedePersonaggio.length - 1;
+      probe.load(
+        Map<String, dynamic>.from(state.schedePersonaggio.last as Map),
+      );
+      await probe.joinMasterEncounter({
+        'encounterId': 'join-test',
+        'campaignId': state.activeCampaignId,
+        'name': 'Fight',
+      });
+      expect(transportForJoin.joins.last['sheetTag'], '003-ALLY');
+      final initialJoins = transportForJoin.joins.length;
+      await probe.retryEncounterJoins();
+      expect(transportForJoin.joins.length, initialJoins + 1);
+      probe.receiveInitiative({
+        ...snapshot,
+        'revision': 4,
+        'snapshot': {
+          'campaignId': state.activeCampaignId,
+          'encounters': [
+            {
+              'encounterId': 'join-test',
+              'tokens': [
+                {'sheetTag': '003-ALLY', 'id': '003-ALLY'},
+              ],
+            },
+          ],
+        },
+      });
+      await tester.pump();
+      await probe.retryEncounterJoins();
+      expect(state.realtimeOutgoingEncounterJoins, isEmpty);
+      expect(transportForJoin.joins.length, initialJoins + 1);
       state.realtimeService = null;
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 3));

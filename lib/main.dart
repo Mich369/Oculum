@@ -2118,6 +2118,12 @@ class _OculumHomePageState extends State<OculumHomePage>
   String realtimeInitiativeSession = '';
   int realtimeInitiativeRevision = 0;
   final Map<String, Map<String, dynamic>> realtimePendingEncounterJoins = {};
+  final Map<String, Map<String, dynamic>> realtimeOutgoingEncounterJoins = {};
+  Timer? realtimeEncounterJoinRetryTimer;
+  bool realtimeEncounterJoinSending = false;
+  Future<void>? realtimeOwnedSheetSync;
+  bool realtimeOwnedSheetResyncRequested = false;
+
   List<Map<String, dynamic>> realtimeEncounterSnapshots = [];
   final masterInitiativeNameController = TextEditingController();
   final masterInitiativeTypeController = TextEditingController(text: 'Mostro');
@@ -3853,6 +3859,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     relayLobbyRefreshTimer?.cancel();
     realtimeOculumDebounceTimer?.cancel();
     realtimeSheetShareDebounceTimer?.cancel();
+    realtimeEncounterJoinRetryTimer?.cancel();
     realtimeReconnectTimer?.cancel();
     diaryKnowledgeRetryTimer?.cancel();
     diaryKnowledgeRevision.dispose();
