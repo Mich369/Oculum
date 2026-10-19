@@ -430,32 +430,23 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
   }
 
-  Future<void> sendRealtimeOwnedSheetsToStaff() {
+  Future<void> sendRealtimeActiveSheetToStaff() {
     realtimeOwnedSheetResyncRequested = true;
-    return realtimeOwnedSheetSync ??= _sendRealtimeOwnedSheetsToStaff()
+    return realtimeOwnedSheetSync ??= _sendRealtimeActiveSheetToStaff()
         .whenComplete(() {
           realtimeOwnedSheetSync = null;
         });
   }
 
-  Future<void> _sendRealtimeOwnedSheetsToStaff() async {
+  Future<void> _sendRealtimeActiveSheetToStaff() async {
     final service = realtimeService;
     while (realtimeOwnedSheetResyncRequested &&
         mounted &&
         canShareRealtimeSheetToStaff) {
       realtimeOwnedSheetResyncRequested = false;
       salvaSchedaCorrenteInMemoria();
-      for (final tag in ownedOculumTags().toList()) {
-        if (!mounted ||
-            realtimeService != service ||
-            !canShareRealtimeSheetToStaff) {
-          return;
-        }
-        final index = localSheetIndexForOculumTag(tag);
-        if (index >= 0) {
-          await sendRealtimeSheetToStaffAt(index, ensureMasterReceipt: true);
-        }
-      }
+      if (!mounted || realtimeService != service || !canShareRealtimeSheetToStaff) return;
+      await sendRealtimeSheetToStaffAt(schedaCorrente, ensureMasterReceipt: true);
     }
   }
 
@@ -474,19 +465,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
   void shareOwnedEncounterSheetsToStaff() {
     if (!canShareRealtimeSheetToStaff) return;
-    final tags = <String>{
-      for (final encounter in realtimeEncounterSnapshots)
-        for (final token
-            in (encounter['tokens'] as List? ?? const []).whereType<Map>())
-          '${token['sheetTag'] ?? token['id'] ?? ''}',
-    };
-    for (var index = 0; index < schedePersonaggio.length; index++) {
-      if (index != schedaCorrente &&
-          !readBoolValue(schedePersonaggio[index]['realtimeSharedSheet']) &&
-          tags.contains(sheetTagAt(index))) {
-        sendRealtimeSheetToStaffAt(index);
-      }
-    }
+    unawaited(sendRealtimeActiveSheetToStaff());
   }
 
   void syncOwnedEncounterTurns() {
@@ -552,7 +531,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (realtimeService?.isConnected != true) return;
     unawaited(flushDiaryKnowledge());
     sendRealtimeSheetPreview();
-    unawaited(sendRealtimeOwnedSheetsToStaff());
+    unawaited(sendRealtimeActiveSheetToStaff());
     unawaited(retryPendingEncounterJoins());
     if (!realtimeIsMasterRole) {
       resendRealtimeFriendSheetsForPresence();
@@ -710,7 +689,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           realtimeLastSentSheetHashes.removeWhere(
             (key, _) => key.startsWith('staff:'),
           );
-          unawaited(sendRealtimeOwnedSheetsToStaff());
+          unawaited(sendRealtimeActiveSheetToStaff());
           unawaited(retryPendingEncounterJoins());
         }
         if (service.isConnected &&
@@ -1009,7 +988,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
               realtimeLastSentSheetHashes.removeWhere(
                 (key, _) => key.startsWith('staff:'),
               );
-              unawaited(sendRealtimeOwnedSheetsToStaff());
+              unawaited(sendRealtimeActiveSheetToStaff());
             }
           }
           break;

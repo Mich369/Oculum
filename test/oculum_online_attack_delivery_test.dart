@@ -479,7 +479,7 @@ void main() {
       await probe.syncOwnedStaffSheets();
       expect(
         transportForJoin.staffSheets.map((s) => s['sheetId']),
-        contains('003-ALLY'),
+        isNot(contains('003-ALLY')),
       );
       expect(
         transportForJoin.staffSheets.map((s) => s['sheetId']),
