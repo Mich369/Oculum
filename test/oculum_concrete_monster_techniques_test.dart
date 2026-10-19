@@ -18,8 +18,14 @@ void main() {
       for (final skill in skills) {
         final restored = CharacterSkill.fromJson(skill.toJson());
         for (final form in restored.forme) {
-          expect(form.usaOculumConfigurabile, isFalse, reason: monster.id);
-          expect(form.costoStrutturato!.resource, isNot('oculum'));
+          final vitalMemory =
+              monster.id == 'costrutto_rinsecchito' &&
+              skill.nome == 'Ricordo del nucleo';
+          expect(form.usaOculumConfigurabile, vitalMemory, reason: monster.id);
+          expect(
+            form.costoStrutturato!.resource,
+            vitalMemory ? 'oculum' : isNot('oculum'),
+          );
           expect(
             form.effettiStrutturati.any(
               (e) => e.valueExpression.contains('oculum_spent'),

@@ -298,7 +298,7 @@ extension _OculumSheetFolders on _OculumHomePageState {
             ),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: child,
+          child: Material(type: MaterialType.transparency, child: child),
         ),
       );
       Widget draggable(Widget child, String data) => sheetSidebarFreeMove

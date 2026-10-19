@@ -33,6 +33,7 @@ void main() {
             expect(
               skill.oculumMinimoPerLivello(form),
               art.tipo == 'Capacità Pawn' ||
+                      monster.id == 'larva_bianca' ||
                       skill
                           .tipoPerLivello(form)
                           .toLowerCase()

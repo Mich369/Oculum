@@ -7,7 +7,13 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('manuale attivo e PDF restano completi e senza testo corrotto', () async {
-    expect(activeManualSections, hasLength(24));
+    expect(activeManualSections.length, oculumManualSections.length + 1);
+    expect(
+      activeManualSections.map((section) => section.titleIt),
+      contains(
+        'Aggiornamento — Costrutto Rinsecchito, Larva Bianca e cartelle',
+      ),
+    );
     for (final section in activeManualSections) {
       final text =
           '${section.titleIt}\n${section.contentIt}\n'

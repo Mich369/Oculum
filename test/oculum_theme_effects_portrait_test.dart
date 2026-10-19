@@ -165,8 +165,8 @@ void main() {
           find.byKey(const ValueKey('reference_portrait_frame')),
         );
         expect(frame.width, greaterThan(frame.height!));
-        expect(frame.width! / frame.height!, lessThan(1.2));
-        expect(frame.width, lessThanOrEqualTo(116));
+        expect(frame.width! / frame.height!, inInclusiveRange(1.20, 1.25));
+        expect(frame.width, size.width < 600 ? 88 : 128);
         await tester.tap(find.byKey(const ValueKey('portrait-enlarge')));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 350));

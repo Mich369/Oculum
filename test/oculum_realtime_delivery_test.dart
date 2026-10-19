@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/services/oculum_realtime_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -44,19 +47,96 @@ class _Channel implements RealtimeChannel {
   }
 }
 
-class _Client implements SupabaseClient {
-  final testChannel = _Channel();
+// Exercise the production authenticated RPC transport against an in-memory
+// HTTP backend. Raw unsigned broadcasts must never bypass the event journal.
+class _Client extends SupabaseClient {
+  factory _Client() => _Client._(_Channel());
+  _Client._(this.testChannel)
+    : super(
+        'https://isolated-test.supabase.co',
+        'public-test-key',
+        authOptions: const AuthClientOptions(autoRefreshToken: false),
+        httpClient: MockClient((request) async {
+          dynamic body;
+          final path = request.url.path;
+          if (path.endsWith('/signup')) {
+            body = {
+              'access_token': 'test-session',
+              'refresh_token': 'test-refresh',
+              'token_type': 'bearer',
+              'expires_in': 3600,
+              'user': {
+                'id': 'owner',
+                'aud': 'authenticated',
+                'created_at': '2026-10-19T00:00:00Z',
+                'is_anonymous': true,
+              },
+            };
+          } else if (path.endsWith('/oculum_open_room')) {
+            body = {'roomId': 'room', 'role': 'player', 'status': 'approved'};
+          } else if (path.endsWith('/oculum_emit_room_event')) {
+            final input = jsonDecode(request.body) as Map;
+            final result =
+                await (testChannel.pendingSend?.future ??
+                    Future.value(testChannel.response));
+            if (result != ChannelResponse.ok) {
+              return http.Response(
+                jsonEncode({'message': result.name, 'code': 'TEST'}),
+                503,
+                request: request,
+              );
+            }
+            final id = 'event-${testChannel.broadcasts.length}';
+            final payload = Map<String, dynamic>.from(
+              input['p_payload'] as Map,
+            );
+            final routing = payload['_routing'] as Map? ?? payload;
+            payload.addAll({
+              'authenticatedSheetId': routing['sheetId'],
+              'authenticatedRole': 'player',
+              'senderRole': 'player',
+              'targetAudience': routing['targetAudience'],
+            });
+            testChannel.broadcasts.add({
+              'id': id,
+              'event': input['p_event'],
+              'payload': payload,
+            });
+            body = id;
+          } else if (path.endsWith('/oculum_room_events')) {
+            final eventId = request.url.queryParameters['id'];
+            body = eventId == null
+                ? <dynamic>[]
+                : testChannel.broadcasts.firstWhere(
+                    (event) => 'eq.${event['id']}' == eventId,
+                  );
+          } else if (path.endsWith('/oculum_room_presence')) {
+            body = <dynamic>[];
+          } else {
+            body = null;
+          }
+          return http.Response(
+            jsonEncode(body),
+            200,
+            request: request,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      );
+  final _Channel testChannel;
   int channelCount = 0;
 
   @override
-  dynamic noSuchMethod(Invocation invocation) {
-    if (invocation.memberName == #channel) {
-      channelCount++;
-      return testChannel;
-    }
-    if (invocation.memberName == #removeChannel) return Future.value('ok');
-    return super.noSuchMethod(invocation);
+  RealtimeChannel channel(
+    String name, {
+    RealtimeChannelConfig opts = const RealtimeChannelConfig(),
+  }) {
+    channelCount++;
+    return testChannel;
   }
+
+  @override
+  Future<String> removeChannel(RealtimeChannel channel) async => 'ok';
 }
 
 void main() {
@@ -67,6 +147,7 @@ void main() {
       OculumRealtimeService.supabaseAvailable = true;
       addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
       final client = _Client();
+      await client.auth.signInAnonymously();
       final received = <Map<String, dynamic>>[];
       final service = OculumRealtimeService(
         client: client,
@@ -76,7 +157,7 @@ void main() {
           if (event == 'sheet_shared') received.add(payload);
         },
         onPresenceChanged: (_) {},
-        onStatusChanged: (_) {},
+        onStatusChanged: (status) => printOnFailure(status),
       );
       addTearDown(service.dispose);
       await service.connect();
@@ -104,12 +185,16 @@ void main() {
         isTrue,
       );
       for (final part in parts.skip(1).toList().reversed) {
-        client.testChannel.callbacks['sheet_shared_chunk']!(part['payload']);
+        client.testChannel.callbacks['sheet_shared_chunk']!({
+          'serverEventId': part['id'],
+        });
+        await Future<void>.delayed(Duration.zero);
         expect(received, isEmpty);
       }
-      client.testChannel.callbacks['sheet_shared_chunk']!(
-        parts.first['payload'],
-      );
+      client.testChannel.callbacks['sheet_shared_chunk']!({
+        'serverEventId': parts.first['id'],
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 20));
       expect(received.single['sheet'], sheet);
       expect(received.single['deliveryId'], 'receipt');
       client.testChannel.response = ChannelResponse.error;
@@ -195,12 +280,14 @@ void main() {
     expect(client.channelCount, 1);
     expect(connected, 1);
     client.testChannel.subscription!(RealtimeSubscribeStatus.subscribed, null);
+    await Future<void>.delayed(Duration.zero);
     expect(connected, 1);
     client.testChannel.subscription!(
       RealtimeSubscribeStatus.channelError,
       'offline',
     );
     client.testChannel.subscription!(RealtimeSubscribeStatus.subscribed, null);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
     expect(connected, 2);
     client.testChannel.pendingSend = Completer<ChannelResponse>();
     final sending = service.sendSharedSheetConfirmed(
@@ -215,6 +302,7 @@ void main() {
       fromMaster: false,
       masterParty: false,
     );
+    await Future<void>.delayed(Duration.zero);
     await service.disconnect();
     client.testChannel.pendingSend!.complete(ChannelResponse.ok);
     expect(await sending, isFalse);
@@ -262,7 +350,7 @@ void main() {
       );
       addTearDown(service.dispose);
       await service.connect();
-      expect(service.isConnected, isTrue);
+      expect(service.isConnected, isTrue, reason: statuses.join('\n'));
       for (final response in [
         ChannelResponse.error,
         ChannelResponse.timedOut,

@@ -2623,7 +2623,7 @@ Guided mode shows simple explanations and examples beside the main controls. Fas
 
 final List<ManualSection> activeManualSections =
     List<ManualSection>.unmodifiable(<ManualSection>[
-      ...oculumManualSections.sublist(0, oculumManualSections.length - 1),
+      ...oculumManualSections,
       oculumCycleCrisisDungeonManualSection,
     ]);
 

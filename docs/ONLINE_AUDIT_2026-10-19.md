@@ -25,7 +25,7 @@ Ospite protetto senza registrazione obbligatoria; email facoltativa nelle Impost
 - Due client reali: ingresso autorizzato, trasferimento scheda, ricevuta del destinatario distinta dall’ACK del server, riconnessione.
 - Runtime Flutter del player e client Master su Supabase reale: richiesta di difesa nel log, difesa risolta, Scudo Oculum → Scudo → HP temporanei → Vita, ricevuta del danno, aiuto negativo e cura senza duplicati. Test: `flutter test --no-pub --dart-define=OculumLiveRealtimeTest=true test/oculum_combat_live_application_test.dart`.
 - Analisi completa `dart analyze lib test`: nessun problema. Ultima regressione locale: 44 test riusciti su mostri/cartelle, VTT, permessi, autenticazione e cloud.
-- Due sessioni Chrome con origini locali separate, stesso build release e Supabase reale: avvio Master/player, ospiti indipendenti, ingresso pendente e dialogo di ammissione verificati. La prova completa di combattimento e riconnessione da queste due interfacce non è ancora conclusa.
+- Due sessioni Chrome con origini locali separate, stesso build release e Supabase reale: ospiti indipendenti, ingresso pendente, ammissione esplicita, scheda ricevuta dal Master, conferma nel log player e disconnessione/riconnessione riuscite. Il controllo browser è stato poi disabilitato nelle impostazioni Work; combattimento completo da queste due interfacce non ancora concluso. Non è una simulazione di perdita fisica della rete.
 
 Le prove di combattimento completate usano client/runtime di test. Non equivalgono a una prova manuale completa fra due browser o dispositivi fisici. L'utente ha chiarito che chiedeva se tutte le prove fossero passate: non ha dichiarato di averle eseguite.
 
@@ -50,4 +50,8 @@ Abilità, costi, durata, bersagli ed effetti restano negli editor e nel JSON, se
 - `20261019181221_preserve_oculum_sheet_sharing_permissions.sql`
 
 Nessun salvataggio cancellato. Implementazioni privilegiate nello schema privato con `search_path` vuoto, controllo UID e permessi espliciti; ingressi pubblici come chiamante. Gli accessi degli ospiti autenticati segnalati dagli advisor sono intenzionali e limitati da proprietà/appartenenza. Ricontrollare gli advisor dopo le ultime migrazioni: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable
+
+## Riparazione della CI 39303938214
+
+Run precedente: 857 riusciti, 12 falliti, 4 live esclusi per opt-in. Corretto il Material trasparente delle nuove righe cartelle (ink e selezione visibili); aggiunti i requisiti espliciti alle forme dei due mostri; manuale attivo senza perdita dell'ultima sezione. Aggiornati i test per la regola confermata dei costi gratuiti Larva, costo Oculum di Ricordo del nucleo e dimensioni del ritratto. I test realtime ora usano il vero client HTTP con backend in memoria per autenticazione/RPC/journal, senza riabilitare broadcast non autenticati. Il test del PDF verifica il numero delle sezioni rispetto alla sorgente e la presenza dell'aggiornamento, anziché un vecchio totale fisso.
 
