@@ -2,6 +2,18 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+Duration oculumRealtimeSheetAckRetryDelay(int attempt) => Duration(
+  seconds: attempt <= 1
+      ? 8
+      : attempt == 2
+      ? 15
+      : attempt == 3
+      ? 30
+      : attempt == 4
+      ? 60
+      : 120,
+);
+
 const Set<String> oculumRealtimeMetadataKeys = <String>{
   'id',
   'sheetTag',
@@ -1679,13 +1691,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     realtimePendingMasterAckAttempts[deliveryId] = attempt;
     realtimePendingMasterAckTimers.remove(deliveryId)?.cancel();
     realtimePendingMasterAckTimers[deliveryId] = Timer(
-      Duration(
-        seconds: attempt <= 1
-            ? 3
-            : attempt < 5
-            ? 5
-            : 30,
-      ),
+      // Avoid replaying large sheets every few seconds while the database is
+      // degraded. The durable journal retries with capped exponential delay.
+      oculumRealtimeSheetAckRetryDelay(attempt),
       () {
         realtimePendingMasterAckTimers.remove(deliveryId);
         if (!mounted) return;

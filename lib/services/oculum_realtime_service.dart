@@ -9,6 +9,11 @@ import 'oculum_chunk_recovery.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OculumRealtimeService {
+  /// Keep presence and durable-event reconciliation responsive without
+  /// continuously querying PostgREST when Realtime is already connected.
+  static const Duration roomRefreshInterval = Duration(seconds: 15);
+  static const Duration httpPollingInterval = Duration(seconds: 5);
+
   OculumRealtimeService({
     required this.roomId,
     required this.playerName,
@@ -260,7 +265,7 @@ class OculumRealtimeService {
             }());
             _roomHeartbeat?.cancel();
             _roomHeartbeat = Timer.periodic(
-              const Duration(seconds: 5),
+              roomRefreshInterval,
               (_) => unawaited(_trackPresence()),
             );
             break;
@@ -321,7 +326,7 @@ class OculumRealtimeService {
     _pollingFallback = true;
     _connected = true;
     _safeStatus(status);
-    _fallbackPollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _fallbackPollingTimer = Timer.periodic(httpPollingInterval, (_) {
       unawaited(_trackPresence());
     });
     await _trackPresence();
@@ -964,7 +969,9 @@ class OculumRealtimeService {
         // A newly selected/created sheet must be registered before its first
         // share; await an in-flight refresh rather than racing its owner RPC.
         await _trackPresence();
-        if (!isConnected || generation != _generation || _channel != channel) return false;
+        if (!isConnected || generation != _generation || _channel != channel) {
+          return false;
+        }
       }
       if (event == 'session_note' || event == 'session_notes_snapshot') {
         final generation = _generation;

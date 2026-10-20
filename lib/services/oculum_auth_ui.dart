@@ -135,16 +135,22 @@ class _OculumEmailAccessForm extends StatefulWidget {
 class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
   final _email = TextEditingController();
   final _code = TextEditingController();
+  final _password = TextEditingController();
   bool _busy = false;
+  bool _hidePassword = true;
 
   @override
   void dispose() {
     _email.dispose();
     _code.dispose();
+    _password.dispose();
     super.dispose();
   }
 
-  Future<void> _run(Future<bool> Function() operation) async {
+  Future<void> _run(
+    Future<bool> Function() operation, {
+    String? successMessage,
+  }) async {
     setState(() => _busy = true);
     final success = await operation();
     if (!mounted) return;
@@ -157,6 +163,10 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
           ),
         ),
       );
+    } else if (success && successMessage != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(successMessage)));
     }
   }
 
@@ -165,69 +175,155 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
     final auth = OculumAuthService.instance;
     return ListenableBuilder(
       listenable: auth,
-      builder: (context, _) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Mantieni l’accesso su questo dispositivo'),
-            value: auth.rememberAccess,
-            onChanged: _busy
-                ? null
-                : (value) => auth.setRememberAccess(value ?? false),
-            controlAffinity: ListTileControlAffinity.leading,
-          ),
-          if (!auth.state.isAuthenticated)
-            OutlinedButton.icon(
-              onPressed: _busy || !auth.isSupabaseReady
+      builder: (context, _) {
+        final state = auth.state;
+        final hasAccount = state.isAuthenticated && !state.isGuest;
+        final protectedGuest = state.isAuthenticated && state.isGuest;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Mantieni l’accesso su questo dispositivo'),
+              value: auth.rememberAccess,
+              onChanged: _busy
                   ? null
-                  : () => _run(auth.signInAsProtectedGuest),
-              icon: const Icon(Icons.shield_outlined),
-              label: const Text('Ospite online protetto'),
+                  : (value) => auth.setRememberAccess(value ?? false),
+              controlAffinity: ListTileControlAffinity.leading,
             ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _email,
-            enabled: !_busy && auth.isSupabaseReady,
-            keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email],
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              hintText: 'Accedi o collega l’ospite',
-            ),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: _busy || !auth.isSupabaseReady
-                ? null
-                : () => _run(() => auth.requestEmailAccess(_email.text)),
-            icon: const Icon(Icons.mail_outline),
-            label: Text(
-              auth.state.provider == 'anonymous'
-                  ? 'Collega email all’ospite'
-                  : 'Accedi con email',
-            ),
-          ),
-          if (auth.pendingEmail != null) ...[
+            if (!state.isAuthenticated)
+              OutlinedButton.icon(
+                onPressed: _busy || !auth.isSupabaseReady
+                    ? null
+                    : () => _run(auth.signInAsProtectedGuest),
+                icon: const Icon(Icons.shield_outlined),
+                label: const Text('Ospite online protetto'),
+              ),
+            if (!hasAccount) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _email,
+                enabled: !_busy && auth.isSupabaseReady,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  hintText: 'Account Oculum',
+                  prefixIcon: Icon(Icons.alternate_email),
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             TextField(
-              controller: _code,
-              enabled: !_busy,
-              autofillHints: const [AutofillHints.oneTimeCode],
-              decoration: const InputDecoration(
-                labelText: 'Codice ricevuto via email',
+              controller: _password,
+              enabled: !_busy && auth.isSupabaseReady,
+              obscureText: _hidePassword,
+              autofillHints: hasAccount
+                  ? const [AutofillHints.newPassword]
+                  : const [AutofillHints.password],
+              decoration: InputDecoration(
+                labelText: hasAccount ? 'Nuova password' : 'Password',
+                helperText: hasAccount
+                    ? 'La password viene gestita da Supabase e non salvata nella scheda.'
+                    : 'Almeno 8 caratteri. Non viene salvata in Oculum.',
+                prefixIcon: const Icon(Icons.key_outlined),
+                suffixIcon: IconButton(
+                  tooltip: _hidePassword
+                      ? 'Mostra password'
+                      : 'Nascondi password',
+                  onPressed: () =>
+                      setState(() => _hidePassword = !_hidePassword),
+                  icon: Icon(
+                    _hidePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
               ),
             ),
-            TextButton(
-              onPressed: _busy
-                  ? null
-                  : () => _run(() => auth.verifyEmailAccess(_code.text)),
-              child: const Text('Conferma codice'),
-            ),
+            const SizedBox(height: 8),
+            if (hasAccount)
+              OutlinedButton.icon(
+                onPressed: _busy || !auth.isSupabaseReady
+                    ? null
+                    : () => _run(
+                        () => auth.setAccountPassword(_password.text),
+                        successMessage: 'Password aggiornata sul tuo account.',
+                      ),
+                icon: const Icon(Icons.password_outlined),
+                label: const Text('Imposta password'),
+              )
+            else if (protectedGuest)
+              OutlinedButton.icon(
+                onPressed: _busy || !auth.isSupabaseReady
+                    ? null
+                    : () => _run(
+                        () => auth.linkGuestEmailPassword(
+                          _email.text,
+                          _password.text,
+                        ),
+                      ),
+                icon: const Icon(Icons.link),
+                label: const Text('Collega email e password'),
+              )
+            else
+              OutlinedButton.icon(
+                onPressed: _busy || !auth.isSupabaseReady
+                    ? null
+                    : () => _run(
+                        () => auth.signInWithEmailPassword(
+                          _email.text,
+                          _password.text,
+                        ),
+                      ),
+                icon: const Icon(Icons.login),
+                label: const Text('Accedi con email e password'),
+              ),
+            if (!hasAccount) ...[
+              TextButton.icon(
+                onPressed: _busy || !auth.isSupabaseReady
+                    ? null
+                    : () => _run(
+                        () => auth.requestPasswordReset(_email.text),
+                        successMessage:
+                            'Se l’account esiste, riceverai un link per reimpostare la password.',
+                      ),
+                icon: const Icon(Icons.lock_reset),
+                label: const Text('Password dimenticata?'),
+              ),
+              TextButton.icon(
+                onPressed: _busy || !auth.isSupabaseReady
+                    ? null
+                    : () => _run(() => auth.requestEmailAccess(_email.text)),
+                icon: const Icon(Icons.mail_outline),
+                label: Text(
+                  protectedGuest
+                      ? 'Collega solo email con codice'
+                      : 'Ricevi un codice via email',
+                ),
+              ),
+            ],
+            if (auth.pendingEmail != null) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _code,
+                enabled: !_busy,
+                autofillHints: const [AutofillHints.oneTimeCode],
+                decoration: const InputDecoration(
+                  labelText: 'Codice ricevuto via email',
+                ),
+              ),
+              TextButton(
+                onPressed: _busy
+                    ? null
+                    : () => _run(() => auth.verifyEmailAccess(_code.text)),
+                child: const Text('Conferma codice'),
+              ),
+            ],
+            if (_busy) const LinearProgressIndicator(),
           ],
-          if (_busy) const LinearProgressIndicator(),
-        ],
-      ),
+        );
+      },
     );
   }
 }

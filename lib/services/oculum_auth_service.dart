@@ -59,6 +59,10 @@ abstract class OculumAuthBackend {
 abstract class OculumEmailAuthBackend {
   Future<void> signInAnonymously();
   Future<void> requestEmail(String email, {required bool linkGuest});
+  Future<void> linkGuestEmailPassword(String email, String password);
+  Future<void> signInWithEmailPassword(String email, String password);
+  Future<void> setPassword(String password);
+  Future<void> requestPasswordReset(String email);
   Future<void> verifyEmail(
     String email,
     String token, {
@@ -173,9 +177,7 @@ class SupabaseOculumAuthBackend
 
   @override
   Future<void> requestEmail(String email, {required bool linkGuest}) async {
-    final redirect = kIsWeb
-        ? Uri.base.replace(query: '', fragment: '').toString()
-        : oculumOAuthRedirectUrl;
+    final redirect = _emailRedirect;
     if (linkGuest) {
       await _client.auth.updateUser(
         UserAttributes(email: email),
@@ -184,6 +186,33 @@ class SupabaseOculumAuthBackend
     } else {
       await _client.auth.signInWithOtp(email: email, emailRedirectTo: redirect);
     }
+  }
+
+  String get _emailRedirect => kIsWeb
+      ? Uri.base.replace(query: '', fragment: '').toString()
+      : oculumOAuthRedirectUrl;
+
+  @override
+  Future<void> linkGuestEmailPassword(String email, String password) async {
+    await _client.auth.updateUser(
+      UserAttributes(email: email, password: password),
+      emailRedirectTo: _emailRedirect,
+    );
+  }
+
+  @override
+  Future<void> signInWithEmailPassword(String email, String password) async {
+    await _client.auth.signInWithPassword(email: email, password: password);
+  }
+
+  @override
+  Future<void> setPassword(String password) async {
+    await _client.auth.updateUser(UserAttributes(password: password));
+  }
+
+  @override
+  Future<void> requestPasswordReset(String email) async {
+    await _client.auth.resetPasswordForEmail(email, redirectTo: _emailRedirect);
   }
 
   @override
@@ -394,6 +423,74 @@ class OculumAuthService extends ChangeNotifier {
     pendingEmail = normalized;
     _linkingGuestEmail = link;
   });
+
+  Future<bool> linkGuestEmailPassword(String email, String password) =>
+      _runEmailOperation(() async {
+        final normalized = _validateEmail(email);
+        _validatePassword(password);
+        if (state.provider != 'anonymous') {
+          throw const FormatException(
+            'Accedi prima come ospite online protetto per collegare l’email.',
+          );
+        }
+        await (_backend as OculumEmailAuthBackend).linkGuestEmailPassword(
+          normalized,
+          password,
+        );
+        pendingEmail = normalized;
+        _linkingGuestEmail = true;
+      });
+
+  Future<bool> signInWithEmailPassword(String email, String password) =>
+      _runEmailOperation(() async {
+        final normalized = _validateEmail(email);
+        if (password.isEmpty) {
+          throw const FormatException('Inserisci la password.');
+        }
+        await (_backend as OculumEmailAuthBackend).signInWithEmailPassword(
+          normalized,
+          password,
+        );
+        final user = _backend!.currentUser;
+        if (user == null) throw StateError('Missing email session');
+        await _applySignedIn(user);
+      });
+
+  Future<bool> setAccountPassword(String password) => _runEmailOperation(
+    () async {
+      _validatePassword(password);
+      if (!state.isAuthenticated || state.isGuest) {
+        throw const FormatException(
+          'Accedi o collega prima un account email per impostare la password.',
+        );
+      }
+      await (_backend as OculumEmailAuthBackend).setPassword(password);
+    },
+  );
+
+  Future<bool> requestPasswordReset(String email) =>
+      _runEmailOperation(() async {
+        final normalized = _validateEmail(email);
+        await (_backend as OculumEmailAuthBackend).requestPasswordReset(
+          normalized,
+        );
+      });
+
+  static String _validateEmail(String email) {
+    final normalized = email.trim();
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(normalized)) {
+      throw const FormatException('Email non valida');
+    }
+    return normalized;
+  }
+
+  static void _validatePassword(String password) {
+    if (password.length < 8) {
+      throw const FormatException(
+        'La password deve contenere almeno 8 caratteri.',
+      );
+    }
+  }
 
   Future<bool> verifyEmailAccess(String code) => _runEmailOperation(() async {
     final email = pendingEmail;

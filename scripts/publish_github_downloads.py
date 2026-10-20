@@ -15,11 +15,11 @@ import tempfile
 REPO = os.environ.get("GH_REPO", "Mich369/Oculum")
 CHANNEL = "oculum-downloads"
 MARKER = "<!-- OCULUM_DOWNLOADS:"
-WORKFLOWS = {
-    "Build distribution", "Oculum Test Windows distribution",
-    "Crea e aggiorna macOS", "Play Oculum on GitHub Pages",
-    "Diari and Mappa tests",
-}
+WORKFLOWS = {"Build distribution"}
+PUBLIC_ARTIFACTS = (
+    "Oculum-macOS", "Oculum-Windows", "Oculum-Test-Windows",
+    "Oculum-Linux", "Oculum-Android",
+)
 
 
 def gh(*args, **kwargs):
@@ -58,6 +58,22 @@ def asset_name(artifact):
     if artifact.get("size_in_bytes", 0) >= 2 * 1024 ** 3:
         raise ValueError("Artifact exceeds GitHub Release asset size limit")
     return artifact["name"] + ".zip"
+
+
+def select_public_artifacts(artifacts):
+    """Return the complete supported release set, excluding all other files."""
+    selected = {}
+    for artifact in artifacts:
+        name = artifact.get("name")
+        if name not in PUBLIC_ARTIFACTS:
+            continue
+        if name in selected:
+            raise ValueError(f"Duplicate public artifact: {name}")
+        selected[name] = artifact
+    missing = [name for name in PUBLIC_ARTIFACTS if name not in selected]
+    if missing:
+        raise ValueError("Waiting for the complete platform set; missing: " + ", ".join(missing))
+    return [selected[name] for name in PUBLIC_ARTIFACTS]
 
 
 def read_catalog(body):
@@ -107,9 +123,16 @@ def publish(run_id):
     if not artifacts:
         print("This successful workflow produced no downloadable artifacts")
         return
+    artifacts = select_public_artifacts(artifacts)
     tag = f"oculum-build-{run_id}"
     current = release(CHANNEL)
     catalog = read_catalog(current.get("body") or "") if current else {}
+    # The public channel lists only the coordinated five-platform build. Other
+    # older per-workflow releases remain intact and directly accessible.
+    catalog = {
+        key: value for key, value in catalog.items()
+        if value.get("workflow") == "Build distribution"
+    }
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         if not release(tag):

@@ -233,6 +233,22 @@ class _Backend {
 }
 
 void main() {
+  test('realtime recovery intervals stay bounded on an unhealthy backend', () {
+    expect(
+      OculumRealtimeService.roomRefreshInterval,
+      const Duration(seconds: 15),
+    );
+    expect(
+      OculumRealtimeService.httpPollingInterval,
+      const Duration(seconds: 5),
+    );
+    expect(oculumRealtimeSheetAckRetryDelay(1), const Duration(seconds: 8));
+    expect(oculumRealtimeSheetAckRetryDelay(2), const Duration(seconds: 15));
+    expect(oculumRealtimeSheetAckRetryDelay(3), const Duration(seconds: 30));
+    expect(oculumRealtimeSheetAckRetryDelay(4), const Duration(seconds: 60));
+    expect(oculumRealtimeSheetAckRetryDelay(10), const Duration(seconds: 120));
+  });
+
   test('reconnect does not await an obsolete presence reply', () async {
     final previous = OculumRealtimeService.supabaseAvailable;
     OculumRealtimeService.supabaseAvailable = true;
@@ -446,7 +462,7 @@ void main() {
       await Future.wait([
         sheetReceived.future,
         ackReceived.future,
-      ]).timeout(const Duration(seconds: 8));
+      ]).timeout(const Duration(seconds: 15));
     },
   );
 

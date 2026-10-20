@@ -32,7 +32,7 @@ function Get-SourceFingerprint {
     }
   })
   $sha = [Security.Cryptography.SHA256]::Create()
-  try { return [Convert]::ToHexString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes(($records -join "`n")))) }
+  try { return [BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes(($records -join "`n")))).Replace('-', '') }
   finally { $sha.Dispose() }
 }
 
@@ -65,7 +65,7 @@ function New-CheckedZip([string]$Folder, [string]$Name) {
       if (!$entry -or $entry.Length -ne $file.Length) { throw "ZIP payload missing: $Name/$relative" }
       $stream = $entry.Open()
       $sha = [Security.Cryptography.SHA256]::Create()
-      try { $hash = [Convert]::ToHexString($sha.ComputeHash($stream)) }
+      try { $hash = [BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '') }
       finally { $stream.Dispose(); $sha.Dispose() }
       if ($hash -ne (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash) {
         throw "ZIP hash mismatch: $Name/$relative"

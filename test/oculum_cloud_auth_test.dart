@@ -51,6 +51,8 @@ class _FakeEmailBackend extends _FakeAuthBackend
     implements OculumEmailAuthBackend {
   bool? linked;
   String? email;
+  String? password;
+  String? resetEmail;
   @override
   Future<void> signInAnonymously() async {
     user = const OculumBackendUser(
@@ -63,6 +65,30 @@ class _FakeEmailBackend extends _FakeAuthBackend
   Future<void> requestEmail(String email, {required bool linkGuest}) async {
     this.email = email;
     linked = linkGuest;
+  }
+
+  @override
+  Future<void> linkGuestEmailPassword(String email, String password) async {
+    this.email = email;
+    this.password = password;
+    linked = true;
+  }
+
+  @override
+  Future<void> signInWithEmailPassword(String email, String password) async {
+    this.email = email;
+    this.password = password;
+    user = const OculumBackendUser(id: 'email-account', provider: 'email');
+  }
+
+  @override
+  Future<void> setPassword(String password) async {
+    this.password = password;
+  }
+
+  @override
+  Future<void> requestPasswordReset(String email) async {
+    resetEmail = email;
   }
 
   @override
@@ -99,9 +125,16 @@ void main() {
       expect(auth.state.isAuthenticated, isTrue);
       expect(auth.state.isGuest, isTrue);
       expect(auth.state.canSyncToCloud, isFalse);
-      expect(await auth.requestEmailAccess(' player@example.com '), isTrue);
+      expect(
+        await auth.linkGuestEmailPassword(
+          ' player@example.com ',
+          'safe-password',
+        ),
+        isTrue,
+      );
       expect(backend.email, 'player@example.com');
       expect(backend.linked, isTrue);
+      expect(backend.password, 'safe-password');
       expect(await auth.verifyEmailAccess('wrong'), isFalse);
       expect(auth.state.userId, 'protected-guest');
       expect(await auth.verifyEmailAccess('123456'), isTrue);
@@ -111,6 +144,48 @@ void main() {
       await backend.close();
     },
   );
+
+  test('email e password permettono accesso multi-dispositivo', () async {
+    final backend = _FakeEmailBackend();
+    final auth = OculumAuthService.forTesting(
+      backend: backend,
+      connectivityCheck: () async => true,
+    );
+    await auth.initialize();
+
+    expect(
+      await auth.signInWithEmailPassword(
+        ' player@example.com ',
+        'safe-password',
+      ),
+      isTrue,
+    );
+    expect(auth.state.userId, 'email-account');
+    expect(auth.state.canSyncToCloud, isTrue);
+    expect(backend.email, 'player@example.com');
+
+    auth.dispose();
+    await backend.close();
+  });
+
+  test('password e reset email restano lato Supabase Auth', () async {
+    final backend = _FakeEmailBackend()
+      ..user = const OculumBackendUser(id: 'email-account', provider: 'email');
+    final auth = OculumAuthService.forTesting(
+      backend: backend,
+      connectivityCheck: () async => true,
+    );
+    await auth.initialize();
+
+    expect(await auth.setAccountPassword('new-safe-password'), isTrue);
+    expect(backend.password, 'new-safe-password');
+    expect(await auth.requestPasswordReset(' player@example.com '), isTrue);
+    expect(backend.resetEmail, 'player@example.com');
+    expect(await auth.setAccountPassword('short'), isFalse);
+
+    auth.dispose();
+    await backend.close();
+  });
 
   test(
     'mantieni accesso falso non conserva sessioni né token aggiornati',

@@ -27,6 +27,19 @@ class DownloadPublicationTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 publisher.asset_name({**artifact, **patch})
 
+    def test_only_publishes_the_complete_five_platform_set(self):
+        artifacts = [
+            {"name": name, "id": index, "expired": False, "size_in_bytes": 4}
+            for index, name in enumerate(publisher.PUBLIC_ARTIFACTS, start=1)
+        ]
+        artifacts += [{"name": "Oculum-iOS-unsigned", "id": 99}]
+        self.assertEqual(
+            [item["name"] for item in publisher.select_public_artifacts(artifacts)],
+            list(publisher.PUBLIC_ARTIFACTS),
+        )
+        with self.assertRaisesRegex(ValueError, "Waiting for the complete"):
+            publisher.select_public_artifacts(artifacts[:-2])
+
     def test_catalog_round_trip_keeps_other_platforms(self):
         catalog = {"one": dict(workflow="Build distribution", commit="a" * 40,
                                runUrl="https://github.com/Mich369/Oculum/actions/runs/1",

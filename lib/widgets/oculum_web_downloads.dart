@@ -19,9 +19,12 @@ class _OculumWebDownloadsState extends State<OculumWebDownloads> {
   List<OculumDownloadArtifact>? _artifacts;
   bool _loading = false;
   bool _failed = false;
+  Timer? _pendingRefresh;
 
-  Future<void> _load() async {
-    if (_loading || _artifacts != null) return;
+  Future<void> _load({bool force = false}) async {
+    if (_loading || (!force && _artifacts != null)) return;
+    _pendingRefresh?.cancel();
+    _pendingRefresh = null;
     setState(() {
       _loading = true;
       _failed = false;
@@ -34,6 +37,12 @@ class _OculumWebDownloadsState extends State<OculumWebDownloads> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+    if (mounted && _artifacts?.isEmpty == true) {
+      _pendingRefresh = Timer(
+        const Duration(seconds: 30),
+        () => unawaited(_load(force: true)),
+      );
+    }
   }
 
   void _open(Uri url) =>
@@ -41,6 +50,7 @@ class _OculumWebDownloadsState extends State<OculumWebDownloads> {
 
   @override
   void dispose() {
+    _pendingRefresh?.cancel();
     if (widget.client == null) _client.close();
     super.dispose();
   }
@@ -58,18 +68,44 @@ class _OculumWebDownloadsState extends State<OculumWebDownloads> {
         if (_loading)
           const MenuItemButton(
             onPressed: null,
-            child: Text('Caricamento download…'),
+            child: Text('Manutenzione in corso…'),
+          ),
+        if (_loading)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: SizedBox(
+              width: 250,
+              child: Text(
+                'Controllo che tutte le piattaforme abbiano completato la build.',
+                style: TextStyle(fontSize: 12),
+              ),
+            ),
           ),
         if (_failed)
           MenuItemButton(
             onPressed: _load,
             child: const Text('Riprova a caricare i download'),
           ),
-        if (!_loading && !_failed && _artifacts?.isEmpty == true)
+        if (!_loading && !_failed && _artifacts?.isEmpty == true) ...[
           const MenuItemButton(
             onPressed: null,
-            child: Text('Nessun artifact disponibile'),
+            child: Text('Manutenzione in corso'),
           ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: SizedBox(
+              width: 250,
+              child: Text(
+                'I download appariranno quando macOS, Windows, Windows Test, Linux e Android avranno completato la build.',
+                style: TextStyle(fontSize: 12),
+              ),
+            ),
+          ),
+          MenuItemButton(
+            onPressed: () => unawaited(_load(force: true)),
+            child: const Text('Controlla di nuovo'),
+          ),
+        ],
         for (final artifact in _artifacts ?? <OculumDownloadArtifact>[])
           MenuItemButton(
             onPressed: () => _open(artifact.url),

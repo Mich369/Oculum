@@ -3,6 +3,13 @@ import 'package:http/http.dart' as http;
 
 const oculumBuildDownloadsUrl =
     'https://github.com/Mich369/Oculum/releases/tag/oculum-downloads';
+const _requiredArtifactNames = <String>[
+  'Oculum-macOS',
+  'Oculum-Windows',
+  'Oculum-Test-Windows',
+  'Oculum-Linux',
+  'Oculum-Android',
+];
 
 class OculumDownloadArtifact {
   const OculumDownloadArtifact(this.name, this.bytes, this.url);
@@ -24,6 +31,7 @@ Future<List<OculumDownloadArtifact>> oculumFetchDownloadArtifacts(
           headers: const {'Accept': 'application/vnd.github+json'},
         )
         .timeout(const Duration(seconds: 10));
+    if (response.statusCode == 404) return <String, dynamic>{};
     if (response.statusCode != 200) {
       throw StateError(
         'Download metadata unavailable (${response.statusCode})',
@@ -40,32 +48,37 @@ Future<List<OculumDownloadArtifact>> oculumFetchDownloadArtifacts(
   final encoded = body.split(marker).last.split(' -->').first;
   final catalog = jsonDecode(encoded);
   if (catalog is! Map) return const [];
-  final artifacts = <OculumDownloadArtifact>[];
-  for (final group in catalog.values.whereType<Map>()) {
+  final groups = catalog.values.whereType<Map>().where(
+    (group) => group['workflow'] == 'Build distribution',
+  );
+  for (final group in groups) {
     final runId = int.tryParse('${group['runId']}');
     final commit = '${group['commit'] ?? ''}';
     if (runId == null ||
         runId <= 0 ||
-        !RegExp(r'^[a-f0-9]{40}$').hasMatch(commit))
-    {
+        !RegExp(r'^[a-f0-9]{40}$').hasMatch(commit)) {
       continue;
     }
+    final found = <String, OculumDownloadArtifact>{};
     for (final artifact
         in (group['artifacts'] as List? ?? const []).whereType<Map>()) {
       final name = '${artifact['name'] ?? ''}';
-      if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(name)) continue;
+      if (!_requiredArtifactNames.contains(name)) continue;
       final expectedUrl =
           'https://github.com/Mich369/Oculum/releases/download/oculum-build-$runId/$name.zip';
       if (artifact['url'] != expectedUrl) continue;
-      artifacts.add(
-        OculumDownloadArtifact(
-          '$name · ${group['workflow']}',
-          int.tryParse('${artifact['bytes']}') ?? 0,
-          Uri.parse(expectedUrl),
-        ),
+      found[name] = OculumDownloadArtifact(
+        name,
+        int.tryParse('${artifact['bytes']}') ?? 0,
+        Uri.parse(expectedUrl),
       );
     }
+    if (_requiredArtifactNames.every(found.containsKey)) {
+      return [for (final name in _requiredArtifactNames) found[name]!];
+    }
   }
-  artifacts.sort((a, b) => a.name.compareTo(b.name));
-  return artifacts;
+
+  // Do not expose a partial release while the publisher is still assembling
+  // the complete cross-platform set.
+  return const [];
 }

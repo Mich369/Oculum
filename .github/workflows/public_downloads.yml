@@ -1,7 +1,7 @@
 name: Publish public downloads
 on:
   workflow_run:
-    workflows: [Build distribution, Oculum Test Windows distribution, Crea e aggiorna macOS, Play Oculum on GitHub Pages, Diari and Mappa tests]
+    workflows: [Build distribution]
     types: [completed]
     branches: [main]
   workflow_dispatch:
