@@ -16,6 +16,7 @@ REPO = os.environ.get("GH_REPO", "Mich369/Oculum")
 CHANNEL = "oculum-downloads"
 MARKER = "<!-- OCULUM_DOWNLOADS:"
 WORKFLOWS = {"Build distribution"}
+WORKFLOW_PATHS = {".github/workflows/build_distribution.yml"}
 PUBLIC_ARTIFACTS = (
     "Oculum-macOS", "Oculum-Windows", "Oculum-Test-Windows",
     "Oculum-Linux", "Oculum-Android",
@@ -41,9 +42,11 @@ def release(tag):
     result.check_returncode()
 
 
-def validate_run(run):
+def validate_run(run, workflow):
     if (run.get("conclusion") != "success" or run.get("status") != "completed"
-            or run.get("head_branch") != "main" or run.get("name") not in WORKFLOWS
+            or run.get("head_branch") != "main"
+            or workflow.get("name") not in WORKFLOWS
+            or workflow.get("path") not in WORKFLOW_PATHS
             or run.get("repository", {}).get("full_name") != REPO
             or run.get("head_repository", {}).get("full_name") != REPO
             or not re.fullmatch(r"[0-9a-f]{40}", run.get("head_sha", ""))):
@@ -106,7 +109,8 @@ def publish(run_id):
     if not re.fullmatch(r"[1-9][0-9]*", run_id):
         raise ValueError("Invalid run id")
     run = api(f"actions/runs/{run_id}")
-    validate_run(run)
+    workflow = api(f"actions/workflows/{run['workflow_id']}")
+    validate_run(run, workflow)
     workflow_id = run["workflow_id"]
     latest = api(f"actions/workflows/{workflow_id}/runs?branch=main&status=success&per_page=1")
     if latest["workflow_runs"][0]["id"] != run["id"]:

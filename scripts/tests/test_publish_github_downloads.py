@@ -10,15 +10,20 @@ spec.loader.exec_module(publisher)
 class DownloadPublicationTests(unittest.TestCase):
     def test_only_successful_trusted_main_builds(self):
         run = dict(conclusion="success", status="completed", head_branch="main",
-                   name="Build distribution", head_sha="a" * 40,
+                   name="Build distribution main @ abc123", head_sha="a" * 40,
                    repository={"full_name": publisher.REPO},
                    head_repository={"full_name": publisher.REPO})
-        publisher.validate_run(run)
+        workflow = dict(name="Build distribution",
+                        path=".github/workflows/build_distribution.yml")
+        publisher.validate_run(run, workflow)
         for key, value in [("conclusion", "failure"), ("head_branch", "other"),
-                           ("head_repository", {"full_name": "outsider/fork"}),
-                           ("name", "Untrusted job")]:
+                           ("head_repository", {"full_name": "outsider/fork"})]:
             with self.assertRaises(ValueError):
-                publisher.validate_run({**run, key: value})
+                publisher.validate_run({**run, key: value}, workflow)
+        for key, value in [("name", "Untrusted job"),
+                           ("path", ".github/workflows/other.yml")]:
+            with self.assertRaises(ValueError):
+                publisher.validate_run(run, {**workflow, key: value})
 
     def test_artifacts_cannot_escape_download_folder(self):
         artifact = dict(id=1, name="Oculum-Windows", expired=False, size_in_bytes=4)
