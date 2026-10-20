@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/services/oculum_realtime_service.dart';
+import 'package:oculum/services/oculum_chunk_recovery.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _runLive = bool.fromEnvironment('OculumLiveRealtimeTest');
@@ -95,6 +96,44 @@ void main() {
       await player.connect();
       expect(master.isConnected, isTrue);
       expect(player.isConnected, isTrue);
+      // Exercise the fresh HTTP path even when the pooled connection is healthy.
+      final recoveryRoom = await playerClient
+          .from('oculum_room_members')
+          .select('room_id')
+          .eq('user_id', playerClient.auth.currentUser!.id)
+          .single();
+      final recoverySession = await playerClient
+          .from('oculum_room_sessions')
+          .select('session_id')
+          .eq('room_id', recoveryRoom['room_id'])
+          .eq('user_id', playerClient.auth.currentUser!.id)
+          .single();
+      expect(
+        await oculumRecoverSheetChunk(
+          restUrl: playerClient.rest.url,
+          headers: {
+            ...playerClient.rest.headers,
+            'apikey': playerClient.realtime.headers['apikey']!,
+          },
+          accessToken: playerClient.auth.currentSession!.accessToken,
+          parameters: {
+            'p_room': recoveryRoom['room_id'],
+            'p_session': recoverySession['session_id'],
+            'p_event': 'sheet_shared_chunk',
+            'p_payload': {
+              '_routing': {
+                'sheetId': 'SYNTHETIC_PLAYER',
+                'targetAudience': 'master_coMaster',
+              },
+              'transferId': 'synthetic-recovery-only',
+              'chunkIndex': 0,
+              'chunkCount': 2,
+              'data': 'e30=',
+            },
+          },
+        ),
+        isA<String>(),
+      );
       final sheet = <String, dynamic>{
         'nome': 'Synthetic sheet',
         'imageBase64': 'x' * 500000,

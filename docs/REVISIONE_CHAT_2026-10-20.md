@@ -14,7 +14,11 @@
 
 ## Verifiche concluse
 
-- Analisi Dart di lib e test: nessun problema, prima dell'ultima aggiunta al controllo disponibilità Open; ripetere nel controllo finale.
+- Correzione successiva al fallimento CI: il database conferma il primo trasferimento completo e il secondo interrotto dopo il blocco 6. Il recupero ora usa una connessione HTTP nuova, limitata e chiusa anche su timeout, con la stessa sessione, chiave pubblica e RPC autorizzata. Non esteso alle azioni di combattimento. Tre regressioni del recupero più nove di trasporto: 12 passate. Prova reale esplicita del percorso nuovo, scheda grande, reinvio, ACK e riconnessione passata in 21 secondi (`build/audit-chunk-forced-recovery.log`). Il primo tentativo del recupero aveva evidenziato un header apikey mancante, corretto prima della prova riuscita.
+- Chrome ha aperto il web locale e la schermata Online; non è una prova app↔web completata. Successivamente lo strumento ha nuovamente segnalato browser locale disabilitato. Il web precedentemente compilato richiede ricompilazione con la correzione di trasporto.
+- Suite completa dopo il recupero HTTP: **907 passati, 5 saltati, zero errori**, exit 0, in 10 minuti e 24 secondi. I cinque skip richiedono parametri o servizi esterni espliciti; la prova Chrome↔Windows resta fra questi e non viene presentata come eseguita.
+- Quattro prove Supabase reali dopo il recupero: **4 passate**, exit 0, in 1 minuto e 28 secondi. Auth, isolamento snapshot fra due ospiti, scheda grande con ACK e riconnessione, combattimento con scudi/difesa/danni/cura e aiuto sia −3 sia +4, ciascuno consumato una sola volta.
+- Analisi Flutter completa: nessun problema (`flutter analyze --no-pub`).
 - Cinque test emblema/catalogo/prezzi iniziali passati; aggiunta e passata regressione visibilità per costo/cooldown.
 - Quattordici test combinati generazione mostri, pannelli desktop/telefono e emblema passati.
 - Test online reale `oculum_combat_live_application_test.dart`: passato il 20 ottobre, due client autenticati nella stanza sintetica `e2931ac3-4ef1-4515-b762-8eb435bb1168`. Verifica difesa, scudi, danni, cura, aiuto firmato e duplicati. Si è attivato il fallback HTTPS dopo un timeout WebSocket; completamento in 1 minuto e 50 secondi.
@@ -22,9 +26,10 @@
 
 ## Verifiche ancora da concludere
 
-- Suite completa in corso: `build/audit-full-tests-20261020.log`; non considerare tutti i test passati finché il processo non termina con successo.
+- La prima suite (`build/audit-full-tests-20261020.log`) aveva un test prezzi obsoleto: confrontava il prezzo base del Segno del Fato con il prezzo realmente pagato dopo il modificatore persistente del mercante. Corretto il confronto con `shopCost`; regressione mirata e intera suite finale passate.
 - Nuova distribuzione Windows, Windows Test, APK e web da compilare e verificare. La distribuzione precedente non è una prova di questi sorgenti.
 - Prova manuale con applicazione Windows e Chrome, e terzo dispositivo indipendente: non completata su questi sorgenti. La prova automatica con due client Supabase non la sostituisce.
+- Il browser locale segnala `Local browser use is disabled in Work settings`. In attesa dell'abilitazione da parte dell'utente. Compilazione impostata `-StageOnly`: nessuna installazione automatica dei pacchetti finché la prova richiesta non è completata.
 - Il plugin GitHub non ha restituito stati o run PR per il commit base `7562c2c4414b49c185a221794a2aa4fd0d5216c7`: nessuna certificazione CI o pubblicazione Pages da questo dato.
 
 ## Personalizzazione

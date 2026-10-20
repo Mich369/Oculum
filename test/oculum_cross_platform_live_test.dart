@@ -1,18 +1,19 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oculum/main.dart';
 import 'package:oculum/services/oculum_realtime_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
   const room = String.fromEnvironment('CrossPlatformRoom');
+  const url = String.fromEnvironment('OculumSupabaseUrl');
+  const publishableKey = String.fromEnvironment('OculumSupabasePublishableKey');
   test(
     'Windows realtime and Chrome HTTPS polling exchange a sheet and reconnect',
     () async {
       final client = SupabaseClient(
-        oculumConfiguredSupabaseUrl,
-        oculumConfiguredSupabasePublishableKey,
+        url,
+        publishableKey,
         authOptions: const AuthClientOptions(autoRefreshToken: false),
       );
       OculumRealtimeService.supabaseAvailable = true;
@@ -101,11 +102,11 @@ void main() {
       } else {
         await Future.wait(
           received.values.map((value) => value.future),
-        ).timeout(const Duration(minutes: 4));
+        ).timeout(const Duration(minutes: 8));
         await Future<void>.delayed(const Duration(seconds: 2));
       }
     },
-    timeout: const Timeout(Duration(minutes: 5)),
+    timeout: const Timeout(Duration(minutes: 9)),
     skip: room.isEmpty
         ? 'Imposta CrossPlatformRoom per eseguire la prova online reale.'
         : false,

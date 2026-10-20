@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'oculum_sheet_transfer.dart';
+import 'oculum_chunk_recovery.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -1045,20 +1046,30 @@ class OculumRealtimeService {
         }
       }
       final retryChunk = event == 'sheet_shared_chunk';
+      final client = _client ?? Supabase.instance.client;
+      final parameters = <String, dynamic>{
+        'p_room': _secureRoomId,
+        'p_session': _presenceKey,
+        'p_event': event,
+        'p_payload': payload,
+      };
       Object? response;
       for (var attempt = 0; attempt < (retryChunk ? 2 : 1); attempt++) {
         try {
-          response = await (_client ?? Supabase.instance.client)
-              .rpc(
-                'oculum_emit_room_event',
-                params: {
-                  'p_room': _secureRoomId,
-                  'p_session': _presenceKey,
-                  'p_event': event,
-                  'p_payload': payload,
-                },
-              )
-              .timeout(Duration(seconds: retryChunk ? 30 : 15));
+          response = attempt == 0
+              ? await client
+                    .rpc('oculum_emit_room_event', params: parameters)
+                    .timeout(Duration(seconds: retryChunk ? 30 : 15))
+              : await oculumRecoverSheetChunk(
+                  restUrl: client.rest.url,
+                  headers: {
+                    ...client.rest.headers,
+                    if (client.realtime.headers['apikey'] != null)
+                      'apikey': client.realtime.headers['apikey']!,
+                  },
+                  accessToken: client.auth.currentSession?.accessToken ?? '',
+                  parameters: parameters,
+                );
           break;
         } on TimeoutException {
           if (!retryChunk ||

@@ -268,12 +268,14 @@ void main() {
           expect(
             probe.incomingDamagePreset('fisico'),
             'Bassa Fragilità',
-            reason: 'A critical hit advances the target resistance for its damage element.',
+            reason:
+                'A critical hit advances the target resistance for its damage element.',
           );
           expect(
             (state.logEventi as List).join('\n'),
             contains('Critico nemico'),
-            reason: 'The critical damage bonus must be logged on the target sheet.',
+            reason:
+                'The critical damage bonus must be logged on the target sheet.',
           );
           if (readIntValue(damageReceipt['shieldLost']) > 0) {
             expect(readIntValue(damageReceipt['oculumShieldLost']), 10);
@@ -299,6 +301,19 @@ void main() {
             () => state.schedePersonaggio[0]['combatHelpPending'] == -3,
           );
           expect(probe.consumeHelp(), -3);
+          expect(probe.consumeHelp(), 0);
+          expect(
+            await master.sendCombatEvent('combat_help', {
+              ...support,
+              'id': 'live-help-positive',
+              'helpBonus': 4,
+            }),
+            isTrue,
+          );
+          await waitFor(
+            () => state.schedePersonaggio[0]['combatHelpPending'] == 4,
+          );
+          expect(probe.consumeHelp(), 4);
           expect(probe.consumeHelp(), 0);
           final hpBeforeHealing = probe.currentHp();
           final healing = <String, dynamic>{
