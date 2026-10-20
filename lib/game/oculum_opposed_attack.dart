@@ -40,9 +40,13 @@ int oculumDamagePerTarget(
   int flatBonusPerTarget = 0,
 }) {
   if (targetCount <= 0) return 0;
-  final base = max(0, baseDamage);
-  final share = (base + targetCount - 1) ~/ targetCount;
-  return max(0, share + flatBonusPerTarget);
+  // Keep a signed remainder until the per-target bonus has been recombined.
+  // A skill expression such as `danni+8` is split from the prepared packet;
+  // its base may be negative when existing penalties outweigh the bonus.
+  final share = baseDamage >= 0
+      ? (baseDamage + targetCount - 1) ~/ targetCount
+      : -((-baseDamage) ~/ targetCount);
+  return max(1, share + flatBonusPerTarget);
 }
 
 /// Skill damage is an addition to the attacker's ordinary base damage. The
@@ -52,7 +56,7 @@ int oculumAttackDamageWithAbilityBonus({
   required int fixedBonuses,
   required int abilityDamageBonus,
 }) =>
-    max(0, preparedDamage - max(0, fixedBonuses)).toInt() +
+    (preparedDamage - max(0, fixedBonuses)).toInt() +
     max(0, abilityDamageBonus).toInt();
 
 /// Reads an additive attack-roll fraction from editable equipment, skill,
@@ -393,3 +397,4 @@ class OculumAttackForecast {
     );
   }
 }
+
