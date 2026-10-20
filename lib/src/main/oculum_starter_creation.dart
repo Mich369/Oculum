@@ -1087,16 +1087,47 @@ CharacterArt oculumCompleteMonsterOpen(
     caseSensitive: false,
   ).hasMatch(name);
   final power = max(3, level ~/ 2 + grade * 3);
+  final tier = grade.clamp(0, 9);
+  final ultimateBonus = tier < 3
+      ? '1d50+25'
+      : tier < 5
+      ? '1d90+60'
+      : tier < 7
+      ? '1d120+150'
+      : tier < 9
+      ? '1d180+260'
+      : '1d250+400';
+  final requiredLevel = art.skills
+      .expand((skill) => [skill.evo1, skill.evo2, skill.evo3])
+      .expand(
+        (text) => RegExp(
+          r'Richiede livello\s+(\d+)',
+          caseSensitive: false,
+        ).allMatches(text),
+      )
+      .map((match) => int.parse(match.group(1)!))
+      .fold<int>(0, max);
   if (art.openName.trim().isEmpty) art.openName = 'Open — $name';
-  if (art.openDescription.trim().isEmpty) {
+  if (art.openDescription.trim().isEmpty &&
+      art.openDescriptionEffects.isEmpty) {
     art.openDescription =
-        'Richiami il potere di $name. Il Buff Open dura finché l’Open rimane attiva; la Skill Open si usa separatamente.';
+        'Richiede livello $requiredLevel. Esplosione di $name: danni inflitti di base +$ultimateBonus a un bersaglio. Il Buff Open si attiva subito; la Skill Open si usa separatamente.';
+    art.openDescriptionEffects = [
+      OculumStructuredEffect(
+        id: 'monster_open_ultimate_${art.nome}',
+        type: 'danno',
+        target: 'danni',
+        valueExpression: ultimateBonus,
+        recipient: 'bersaglio',
+      ),
+    ];
   }
-  if (art.openBuff.trim().isEmpty) {
-    art.openBuff = defensive ? '@Difesa+$power' : '@Danni+$power';
+  if (art.openBuff.trim().isEmpty && art.openBuffEffects.isEmpty) {
+    art.openBuff = '@Stats+${max(4, grade)}';
   }
-  if (art.openSkill.trim().isEmpty ||
-      art.openSkill == 'Combo naturale fra skill generate.') {
+  if (art.openSkillEffects.isEmpty &&
+      (art.openSkill.trim().isEmpty ||
+          art.openSkill == 'Combo naturale fra skill generate.')) {
     art.openSkill = defensive
         ? 'Guardia di $name: rinforzi la tua difesa di $power per 1 turno. Cooldown: 3 turni.'
         : 'Affondo di $name: i tuoi colpi ottengono +${power * 2} danni per 1 turno. Cooldown: 3 turni.';

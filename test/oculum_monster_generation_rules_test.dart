@@ -206,7 +206,9 @@ void main() {
       );
       oculumCompleteMonsterOpen(art, name: 'Guardiano', level: 30, grade: 2);
       expect(art.openAttiva, isFalse);
-      expect(art.openBuff, contains('@Difesa+'));
+      expect(art.openBuff, '@Stats+4');
+      expect(art.openDescriptionEffects.single.valueExpression, '1d50+25');
+      expect(art.openDescription, contains('danni inflitti di base'));
       expect(art.openSkillEffects.single.duration, '1');
       expect(art.openSkillCooldown!.ready, isTrue);
       art.openSkillCooldown!.activate();

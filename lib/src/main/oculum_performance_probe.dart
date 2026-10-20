@@ -15,6 +15,13 @@ class OculumPerformanceProbe {
       _state.applyCondition(type, stage: stage);
   int willTotal() => _state.volontaTotale();
   int herbalBonus(String stat) => _state.merchantHerbalStatBonus(stat);
+  int emblemBonus({bool subtrait = false}) =>
+      _state.summoningEmblemBonus('resilienza', subtrait: subtrait);
+  void expireEmblems(String encounterId) =>
+      _state.expireSummoningEmblems(encounterId);
+  void useTitleOpen(OculumTitle title) => _state.usaOpen(title);
+  Widget masterCatalog() => _state.masterItemGiftPanel(initiallyExpanded: true);
+  List<InventoryItem> masterCatalogItems() => _state._masterGiftCatalog();
   void advanceHerbs(String trigger) => _state.advanceSmokingHerbs(trigger);
   int difficultyRollModifier() => _state.modificatoreDifficoltaTiro();
   void applyHealing(int amount) =>

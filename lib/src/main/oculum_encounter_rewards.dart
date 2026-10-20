@@ -141,6 +141,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       ..add(reward);
     group['rewards'] = rewards;
     receiveEncounterRewards([reward]);
+    expireSummoningEmblems(id);
     closeRealtimeInitiativeSnapshot();
     for (final request in onlineCombatRequests.values) {
       if (request['encounterId'] == id &&

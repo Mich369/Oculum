@@ -9655,6 +9655,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           disattivaTutteLeOpen(exceptArt: art);
         }
         art.openAttiva = true;
+        art.openUsedSinceLongRest = true;
         art.openDescriptionCooldown?.activate();
         if (!art.monsterOpenSkill) art.openSkillCooldown?.activate();
         art.openBuffCooldown?.activate();
@@ -9701,7 +9702,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 subtraits: hiddenEyeStats,
                 legacyQuickCommands: true,
               ),
-            ...art.openBuffEffects,
+            ...oculumResolveAbilityEffects(
+              art.openBuffEffects,
+              art.openBuff,
+              subtraits: hiddenEyeStats,
+              legacyQuickCommands: true,
+            ),
           ], source: artOpenDisplayName(art, artIndex));
       if (structuredMessages.isNotEmpty) {
         setState(() {
@@ -9717,10 +9723,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
     scheduleRealtimeOculumChanged();
     if (!consumedIntegrity) programmaSalvataggio();
-    if (consumedIntegrity &&
-        mounted &&
-        targetArt.openDescriptionEffects.isEmpty &&
-        !targetArt.descrizione.startsWith('Art del ')) {
+    if (consumedIntegrity && mounted) {
       await finishParsedAbilityTargets(targetArt.openDescription);
     }
   }
@@ -9749,9 +9752,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       await resolveBalancedOpen(art, activation: false);
       return;
     }
-    if (art.openSkillEffects.isEmpty) {
+    {
       final effects = oculumResolveAbilityEffects(
-        const [],
+        art.openSkillEffects,
         art.openSkill,
         subtraits: hiddenEyeStats,
         legacyQuickCommands: true,
@@ -10383,7 +10386,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               storageId: 'art_${artIndex}_open_description',
               onChanged: invalidateDerivedDataCaches,
             ),
-            campoModello(
+            combatPlacementTypeEditor(
               fieldKey: ValueKey('art_${artIndex}_open_skill_type'),
               label: t('Tipo Open Skill', 'Open Skill type'),
               initialValue: art.openSkillType,
@@ -10893,7 +10896,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final index = level - 1;
     return Column(
       children: [
-        campoModello(
+        combatPlacementTypeEditor(
           fieldKey: ValueKey(
             'art_${artIndex}_skill_${skillIndex}_level_${level}_type',
           ),

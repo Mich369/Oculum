@@ -1759,7 +1759,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                 : null,
                             dropdownColor: const Color(0xFF10121A),
                             decoration: fieldDecoration(
-                              type == 'modifica_sottotratto' || type == 'tiro_sottotratto'
+                              type == 'modifica_sottotratto' ||
+                                      type == 'tiro_sottotratto'
                                   ? t('Sottotratto', 'Subtrait')
                                   : isConversion
                                   ? t('Risorsa ottenuta', 'Resource gained')
@@ -2306,7 +2307,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       programmaSalvataggio();
     }
 
-    return Container(
+    final editor = Container(
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -2536,6 +2537,18 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
           ),
         ],
       ),
+    );
+    return ExpansionTile(
+      key: PageStorageKey(
+        'effects_advanced_${storageId.isEmpty ? identityHashCode(effects) : storageId}',
+      ),
+      title: Text(
+        t('Impostazioni avanzate · effetti', 'Advanced settings · effects'),
+      ),
+      subtitle: Text(
+        '${effects.length} ${t('effetti configurati', 'configured effects')}',
+      ),
+      children: [editor],
     );
   }
 }

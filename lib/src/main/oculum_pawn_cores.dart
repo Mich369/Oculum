@@ -66,7 +66,7 @@ List<Map<String, dynamic>> oculumCreatureCoreOffers() => [
 
 extension _OculumPawnCores on _OculumHomePageState {
   void claimBrokenPawnCore(OculumPawnGuardian pawn) {
-    if (pawn.alive) return;
+    if (pawn.alive || pawn.isSummoningSlime) return;
     final index = schedePersonaggio.indexWhere(
       (sheet) =>
           '${sheet['sheetTag'] ?? sheet['id'] ?? ''}' == pawn.ownerTag ||

@@ -2,6 +2,60 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+const oculumInventoryCatalogCategoryLabels = <String, String>{
+  'all': 'Tutte le categorie',
+  'weapon': 'Armi',
+  'armor': 'Armature e vesti',
+  'shield': 'Scudi',
+  'item': 'Oggetti',
+  'consumable': 'Consumabili',
+  'food': 'Cibo e bevande',
+  'material': 'Materiali',
+  'scroll': 'Scroll',
+  'companion': 'Compagni ed evocazioni',
+};
+
+int oculumInventoryCatalogGrade(InventoryItem item) {
+  final scroll = item.craftData['scroll'];
+  return max(
+    max(item.gradoOggetto, item.gradoRichiesto),
+    scroll is Map ? readIntValue(scroll['grade']) : 0,
+  );
+}
+
+Set<String> oculumInventoryCatalogCategories(InventoryItem item) {
+  final categories = <String>{};
+  if (item.arma) categories.add('weapon');
+  if (item.bonusScudo > 0 ||
+      item.bonusScudoOculum > 0 ||
+      item.nome.toLowerCase().contains('scudo')) {
+    categories.add('shield');
+  }
+  if (item.protegge && !categories.contains('shield')) categories.add('armor');
+  if (item.monsterLoot['food'] is Map) categories.add('food');
+  if (item.monsterLoot['material'] == true ||
+      item.craftData['material'] != null) {
+    categories.add('material');
+  }
+  if (item.craftData['scroll'] is Map) {
+    categories.addAll({'scroll', 'consumable'});
+  }
+  if (item.craftData['alchemyPet'] != null ||
+      item.craftData['pawn'] == true ||
+      item.craftData['summoningEmblem'] is Map ||
+      item.craftData['creatureCore'] == true) {
+    categories.addAll({'companion', 'consumable'});
+  }
+  if (item.statGemStat.isNotEmpty ||
+      item.craftData['fateSign'] is Map ||
+      item.craftData['chaosSign'] is Map ||
+      item.craftData['smokingHerbs'] is Map) {
+    categories.add('consumable');
+  }
+  if (categories.isEmpty) categories.add('item');
+  return categories;
+}
+
 class _StoryConstellationPainter extends CustomPainter {
   _StoryConstellationPainter(this.center, this.points);
   final Offset center;
@@ -2073,6 +2127,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               value: form.nome,
               onChanged: (value) => form.nome = value,
             ),
+            titleCombatRoleEditor(oculumAbilityPlacement(form.tipo), (role) {
+              form.tipo = oculumAbilityTypeWithPlacement(form.tipo, role);
+              syncSkillLegacyFromForm(skill, formIndex);
+            }),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -2679,7 +2737,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                               onChanged: (value) => skills[i].nome = value,
                             ),
                             const SizedBox(height: 8),
-                            campoModello(
+                            combatPlacementTypeEditor(
                               label: t('Tipo Skill', 'Skill Type'),
                               initialValue: skills[i].tipo,
                               onChanged: (value) {
@@ -3698,6 +3756,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       maxLines: 2,
                       showCommandHelp: true,
                     ),
+                    titleCombatRoleEditor(
+                      titolo.openCombatRole,
+                      (value) => titolo.openCombatRole = value,
+                    ),
                     structuredEffectsEditor(
                       effects: titolo.openEffects,
                       freeText: <String>[
@@ -3807,6 +3869,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                               },
                               maxLines: 2,
                               showCommandHelp: true,
+                            ),
+                            titleCombatRoleEditor(
+                              titolo.openExtra[i].combatRole,
+                              (value) => titolo.openExtra[i].combatRole = value,
                             ),
                             structuredEffectsEditor(
                               effects: titolo.openExtra[i].effects,
@@ -5034,10 +5100,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     final needle = masterItemSearchController.text.trim().toLowerCase();
     final items = unique.values.toList()
       ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
-    if (needle.isEmpty) return items;
     return items
         .where(
           (item) =>
+              (masterItemGradeFilter < 0 ||
+                  oculumInventoryCatalogGrade(item) == masterItemGradeFilter) &&
+              (masterItemCategoryFilter == 'all' ||
+                  oculumInventoryCatalogCategories(
+                    item,
+                  ).contains(masterItemCategoryFilter)) &&
               '${item.nome} ${item.note} ${item.buff} ${item.elementoDanno}'
                   .toLowerCase()
                   .contains(needle),
@@ -5084,6 +5155,52 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             fillColor: const Color(0xFF10121A),
             border: const OutlineInputBorder(),
           ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 12,
+          runSpacing: 10,
+          children: [
+            SizedBox(
+              width: 190,
+              child: DropdownButtonFormField<int>(
+                initialValue: masterItemGradeFilter,
+                decoration: const InputDecoration(labelText: 'Grado'),
+                items: [
+                  const DropdownMenuItem(
+                    value: -1,
+                    child: Text('Tutti i gradi'),
+                  ),
+                  for (var grade = 0; grade <= 12; grade++)
+                    DropdownMenuItem(
+                      value: grade,
+                      child: Text(
+                        'Grado ${grade == 0 ? '0' : artLevelRoman(grade)}',
+                      ),
+                    ),
+                ],
+                onChanged: (value) =>
+                    setState(() => masterItemGradeFilter = value ?? -1),
+              ),
+            ),
+            SizedBox(
+              width: 220,
+              child: DropdownButtonFormField<String>(
+                initialValue: masterItemCategoryFilter,
+                decoration: const InputDecoration(labelText: 'Categoria'),
+                items: [
+                  for (final entry
+                      in oculumInventoryCatalogCategoryLabels.entries)
+                    DropdownMenuItem(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    ),
+                ],
+                onChanged: (value) =>
+                    setState(() => masterItemCategoryFilter = value ?? 'all'),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
         if (schedePersonaggio.isEmpty && _masterOnlinePlayers().isEmpty)
@@ -5683,6 +5800,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           position.dy,
         ),
         items: <PopupMenuEntry<String>>[
+          if (item.craftData['summoningEmblem'] is Map)
+            const PopupMenuItem<String>(
+              value: 'configure_emblem',
+              child: Text('Configura emblema'),
+            ),
           if (item.craftData['brokenCore'] == true)
             const PopupMenuItem<String>(
               value: 'restore_pawn_core',
@@ -5802,6 +5924,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       );
       if (!mounted || choice == null || !inventario.contains(item)) return;
       switch (choice) {
+        case 'configure_emblem':
+          await editSummoningEmblem(item);
+          break;
         case 'combine_monster':
           await combineMonsterMaterial(item);
           break;

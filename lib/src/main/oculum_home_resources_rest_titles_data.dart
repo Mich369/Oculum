@@ -1740,6 +1740,15 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     setState(() {
       merchantDustPurchasedSinceLongRest = false;
       merchantDustPurchaseCount = 0;
+      for (final art in arti) {
+        art.openUsedSinceLongRest = false;
+      }
+      for (final title in [...titoli, ...trattiRazziali]) {
+        title.openUsedSinceLongRest = false;
+        for (final open in title.openExtra) {
+          open.usedSinceLongRest = false;
+        }
+      }
       restThresholdTemporaryHp();
       schedePersonaggio[schedaCorrente]['packLeaderPhaseTriggered'] = false;
       advanceSmokingHerbs('long_rest');
@@ -2649,8 +2658,12 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
           disattivaTutteLeOpen(exceptTitle: titolo, exceptOpenExtra: openExtra);
           equipaggiaTitoloPerOpen(titolo);
           openExtra.attiva = true;
-          effectsToActivate = List<OculumStructuredEffect>.from(
+          openExtra.usedSinceLongRest = true;
+          effectsToActivate = oculumResolveAbilityEffects(
             openExtra.effects,
+            '${openExtra.descrizione}\n${openExtra.openBuff}',
+            subtraits: hiddenEyeStats,
+            legacyQuickCommands: true,
           );
           effectSource = openExtra.nome.trim().isEmpty
               ? titolo.nome
@@ -2681,8 +2694,12 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         disattivaTutteLeOpen(exceptTitle: titolo);
         equipaggiaTitoloPerOpen(titolo);
         titolo.openAttiva = true;
-        effectsToActivate = List<OculumStructuredEffect>.from(
+        titolo.openUsedSinceLongRest = true;
+        effectsToActivate = oculumResolveAbilityEffects(
           titolo.openEffects,
+          '${titolo.openDescription}\n${titolo.openBuff}',
+          subtraits: hiddenEyeStats,
+          legacyQuickCommands: true,
         );
         effectSource = titolo.openName.trim().isEmpty
             ? titolo.nome

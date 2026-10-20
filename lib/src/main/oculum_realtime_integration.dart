@@ -2360,6 +2360,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
 
     if (oculumInitiativePayloadClosesFight(payload)) {
+      expireSummoningEmblems(onlineCombatEncounterId);
       realtimeOutgoingEncounterJoins.clear();
       realtimeEncounterJoinRetryTimer?.cancel();
       realtimeEncounterJoinRetryTimer = null;

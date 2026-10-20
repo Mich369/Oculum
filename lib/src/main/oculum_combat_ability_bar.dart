@@ -4,6 +4,18 @@ part of '../../main.dart';
 
 enum OculumCombatAbilityRole { attack, defense, support }
 
+final _oculumAbilityPlacementPattern = RegExp(
+  r'\[pannello:(attacco|difesa|supporto)\]\s*',
+  caseSensitive: false,
+);
+String oculumAbilityPlacement(String type) =>
+    _oculumAbilityPlacementPattern.firstMatch(type)?.group(1)?.toLowerCase() ??
+    '';
+String oculumAbilityTypeWithPlacement(String type, String placement) {
+  final content = type.replaceAll(_oculumAbilityPlacementPattern, '').trim();
+  return placement.isEmpty ? content : '[pannello:$placement] $content'.trim();
+}
+
 bool oculumCombatTextHasUnresolvedRequirement(String text) =>
     RegExp(r'\[\s*Richiede\b[^\]]*\]', caseSensitive: false).hasMatch(text);
 
@@ -156,6 +168,22 @@ Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
     if (utility) roles.add(OculumCombatAbilityRole.support);
   }
   final declared = oculumNormalizeText(explicitType);
+  final manual = oculumAbilityPlacement(explicitType).isNotEmpty
+      ? oculumAbilityPlacement(explicitType)
+      : explicitType.trim().toLowerCase();
+  final manualRole = switch (manual) {
+    'attacco' => OculumCombatAbilityRole.attack,
+    'difesa' => OculumCombatAbilityRole.defense,
+    'supporto' => OculumCombatAbilityRole.support,
+    _ => null,
+  };
+  if (manualRole != null) {
+    return {
+      manualRole,
+      if (roles.contains(OculumCombatAbilityRole.support))
+        OculumCombatAbilityRole.support,
+    };
+  }
   if (scores.isNotEmpty) {
     final strongest = scores.values.reduce(max);
     roles.addAll(
@@ -344,6 +372,34 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     },
   );
 
+  Widget combatPlacementTypeEditor({
+    Key? fieldKey,
+    required String label,
+    required String initialValue,
+    required ValueChanged<String> onChanged,
+    String? helper,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      titleCombatRoleEditor(
+        oculumAbilityPlacement(initialValue),
+        (role) => onChanged(oculumAbilityTypeWithPlacement(initialValue, role)),
+      ),
+      ExpansionTile(
+        title: Text('$label · dettagli avanzati'),
+        children: [
+          campoModello(
+            fieldKey: fieldKey,
+            label: label,
+            initialValue: initialValue,
+            onChanged: onChanged,
+            helper: helper,
+          ),
+        ],
+      ),
+    ],
+  );
+
   Color combatAbilityResourceColor(Iterable<String> resources) {
     final values = resources.map(oculumNormalizeText).toList();
     if (values.any((v) => v.contains('oculum'))) {
@@ -361,6 +417,53 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     return Theme.of(context).colorScheme.onSurface;
   }
 
+  bool combatAbilityCostAvailable(OculumSkillCost? cost, String text) {
+    final parsed = oculumParseAbilityCost(text);
+    final resource = cost?.resource ?? parsed?.resource ?? 'nessuna';
+    if (oculumNormalizeEffectResource(resource) == 'nessuna') return true;
+    final minimum = cost == null
+        ? parsed?.minimum ?? 0
+        : cost.variable
+        ? max(0, cost.minimum)
+        : max(
+            0,
+            oculumEvaluateStructuredEffectValue(
+              OculumStructuredEffect(valueExpression: cost.amountExpression),
+              variables: formulaValueContext(),
+              subtraits: hiddenEyeStats,
+            ),
+          );
+    return artSkillCostResourceAvailable(resource) >= minimum;
+  }
+
+  bool combatNaturalFormAvailable(CharacterSkillForm form) =>
+      !form.tipo.toLowerCase().contains('passiv') &&
+      (form.cooldownStrutturato?.ready ?? true) &&
+      !oculumCombatTextHasUnresolvedRequirement(
+        '${form.descrizione}\n${form.effetto}\n${form.buff}\n${form.danni}\n${form.cura}\n${form.difesa}',
+      ) &&
+      combatAbilityCostAvailable(form.costoStrutturato, form.costo) &&
+      (form.oculumMinimoUtilizzabile <= 0 ||
+          currentOculum() >= form.oculumMinimoUtilizzabile);
+
+  bool combatArtFormAvailable(CharacterArt art, ArtSkill skill, int form) =>
+      !skill.tipoPerLivello(form).toLowerCase().contains('passiv') &&
+      skill.cooldownPerLivello[form - 1].ready &&
+      !oculumCombatTextHasUnresolvedRequirement(skill.testoEvoluzione(form)) &&
+      leggiNumero(livelloController) >=
+          (int.tryParse(
+                RegExp(
+                      r'Richiede livello\s+(\d+)',
+                      caseSensitive: false,
+                    ).firstMatch(skill.testoEvoluzione(form))?.group(1) ??
+                    '',
+              ) ??
+              0) &&
+      artSkillCostResourceAvailable(
+            effectiveArtCostResource(art, skill, form),
+          ) >=
+          skill.oculumMinimoPerLivello(form);
+
   Future<void> chooseCombatAbilityForm({
     CharacterSkill? natural,
     CharacterArt? art,
@@ -376,6 +479,10 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           for (var form = 0; form < count; form++)
             Builder(
               builder: (_) {
+                final available = natural != null
+                    ? combatNaturalFormAvailable(natural.forme[form])
+                    : combatArtFormAvailable(art!, artSkill!, form + 1);
+                if (!available) return const SizedBox.shrink();
                 final effectForm = natural?.forme[form];
                 final description = effectForm == null
                     ? artSkill!.testoEvoluzione(form + 1)
@@ -907,7 +1014,10 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                 oculumParseAbilityCost(text)?.resource ??
                 'nessuna',
           ]),
-          enabled: (cooldown?.ready ?? true) && !unresolvedRequirement,
+          enabled:
+              (cooldown?.ready ?? true) &&
+              !unresolvedRequirement &&
+              combatAbilityCostAvailable(cost, text),
           hint:
               '${extra?.descrizione ?? title.skill}${cooldown?.ready == false ? '\nRicarica: ${cooldown!.remaining} ${cooldown.unit}' : ''}',
           details: () => showCombatAbilityDetails(
@@ -936,8 +1046,10 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         addTitleSkill(extra);
       }
       void addTitleOpen(TitleOpenEntry? extra) {
+        if (extra?.usedSinceLongRest ?? title.openUsedSinceLongRest) return;
         final name = extra?.nome ?? title.openName;
-        final description = extra?.descrizione ?? title.openDescription;
+        final description =
+            '${extra?.descrizione ?? title.openDescription}\n${extra?.openBuff ?? title.openBuff}';
         final skill = extra?.openSkill ?? title.openSkill;
         final effects = extra?.effects ?? title.openEffects;
         if (name.trim().isEmpty &&
@@ -957,6 +1069,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                     subtraits: hiddenEyeStats,
                   ).effects
                 : effects,
+            explicitType: extra?.combatRole ?? title.openCombatRole,
           ),
           color: statFormulaColor('oculum'),
           enabled:
@@ -998,17 +1111,18 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           '${form.descrizione}\n${form.effetto}\n${form.buff}\n${form.danni}\n${form.cura}\n${form.difesa}',
         ),
       );
-      final roles = rolesFor(
-        forms.expand(
-          (form) => oculumResolveAbilityEffects(
-            form.effettiStrutturati,
-            '${form.descrizione}\n${form.effetto}\n${form.buff}\n${form.danni}\n${form.cura}\n${form.difesa}',
-            subtraits: hiddenEyeStats,
-            investedOculum: true,
+      final roles = <OculumCombatAbilityRole>{
+        for (final form in forms)
+          ...rolesFor(
+            oculumResolveAbilityEffects(
+              form.effettiStrutturati,
+              '${form.descrizione}\n${form.effetto}\n${form.buff}\n${form.danni}\n${form.cura}\n${form.difesa}',
+              subtraits: hiddenEyeStats,
+              investedOculum: true,
+            ),
+            explicitType: form.tipo,
           ),
-        ),
-        explicitType: skill.tipo,
-      );
+      };
       entries.add((
         name: skill.nome,
         roles: roles,
@@ -1020,7 +1134,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                 f.costo,
           ),
         ),
-        enabled: !allFormsLocked,
+        enabled: forms.any(combatNaturalFormAvailable),
         hint: 'Skill · scegli la forma e conferma il costo',
         details: () => showCombatAbilityDetails(
           name: skill.nome,
@@ -1053,15 +1167,18 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             .every((t) => t.toLowerCase().contains('passiv'))) {
           continue;
         }
-        final roles = rolesFor([
+        final roles = <OculumCombatAbilityRole>{
           for (var form = 1; form <= artMaxLevel(art); form++)
-            ...oculumResolveAbilityEffects(
-              skill.effettiEvoluzione(form),
-              skill.testoEvoluzione(form),
-              subtraits: hiddenEyeStats,
-              investedOculum: true,
+            ...rolesFor(
+              oculumResolveAbilityEffects(
+                skill.effettiEvoluzione(form),
+                skill.testoEvoluzione(form),
+                subtraits: hiddenEyeStats,
+                investedOculum: true,
+              ),
+              explicitType: skill.tipoPerLivello(form),
             ),
-        ], explicitType: skill.tipoPerLivello(1));
+        };
         final texts = [
           for (var form = 1; form <= artMaxLevel(art); form++)
             skill.testoEvoluzione(form),
@@ -1076,7 +1193,13 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             for (var form = 1; form <= artMaxLevel(art); form++)
               effectiveArtCostResource(art, skill, form),
           ]),
-          enabled: art.sbloccata && art.inUso && !allFormsLocked,
+          enabled:
+              art.sbloccata &&
+              art.inUso &&
+              List.generate(
+                artMaxLevel(art),
+                (i) => i + 1,
+              ).any((form) => combatArtFormAvailable(art, skill, form)),
           hint: art.inUso
               ? 'Art · scegli la forma e conferma il costo'
               : 'Seleziona prima questa Art nella scheda',
@@ -1122,21 +1245,38 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             subtraits: hiddenEyeStats,
           ),
         ], explicitType: art.openSkillType);
-        entries.add((
-          name: '${art.openAttiva ? 'Chiudi' : 'Apri'} ${art.openName}',
-          roles: roles,
-          color: eyePupilGlowColor,
-          enabled: art.sbloccata && art.inUso,
-          hint: 'Open · usa requisiti e costi originali',
-          use: () => usaOpenArt(arti.indexOf(art)),
-          details: null,
-        ));
+        if (!art.openUsedSinceLongRest) {
+          entries.add((
+            name: '${art.openAttiva ? 'Chiudi' : 'Apri'} ${art.openName}',
+            roles: roles,
+            color: eyePupilGlowColor,
+            enabled:
+                artOpenSbloccata(art) &&
+                art.inUso &&
+                art.switchPhase.isEmpty &&
+                (art.openDescriptionCooldown?.ready ?? true) &&
+                (art.openBuffCooldown?.ready ?? true) &&
+                (art.monsterOpenSkill ||
+                    (art.openSkillCooldown?.ready ?? true)) &&
+                (oculumRecognizedArtKind(art) == 'emblem' ||
+                    oculumArtCanActivate(
+                      art.integritaCorrente,
+                      cost: artUseCost(oculumArtActivationCost),
+                    )),
+            hint: 'Open · usa requisiti e costi originali',
+            use: () => usaOpenArt(arti.indexOf(art)),
+            details: null,
+          ));
+        }
         if (art.monsterOpenSkill && art.openAttiva) {
           entries.add((
             name: '${art.openName} · Skill Open',
             roles: roles,
             color: eyePupilGlowColor,
-            enabled: art.openSkillCooldown?.ready ?? true,
+            enabled:
+                artOpenSbloccata(art) &&
+                (art.openSkillCooldown?.ready ?? true) &&
+                combatAbilityCostAvailable(null, art.openSkill),
             hint: 'Skill Open · cooldown originale',
             details: null,
             use: () => usaSkillOpenMostro(arti.indexOf(art)),
@@ -1156,7 +1296,9 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         color: statFormulaColor('resilienza'),
         enabled: canEquipInventoryItem(item),
         hint: '${item.note}\nConsumabile dall’inventario',
-        details: null,
+        details: item.craftData['summoningEmblem'] is Map
+            ? () => editSummoningEmblem(item)
+            : null,
         use: () => unawaited(useMerchantConsumable(item)),
       ));
     }
@@ -1169,7 +1311,10 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         name: '${scroll['name'] ?? item.nome} · Scroll ×${item.quantita}',
         roles: rolesFor(effects),
         color: statFormulaColor('volonta'),
-        enabled: canEquipInventoryItem(item),
+        enabled:
+            canEquipInventoryItem(item) &&
+            artSkillCostResourceAvailable('volonta') >=
+                oculumScrollWillCost(readIntValue(scroll['grade'])),
         hint:
             '${scroll['description'] ?? item.note}\nMonouso · costo ${oculumScrollWillCost(readIntValue(scroll['grade']))} Volontà',
         details: () => showCombatAbilityDetails(
@@ -1214,6 +1359,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           ]),
           enabled:
               canEquipInventoryItem(item) &&
+              combatNaturalFormAvailable(form) &&
               (form.cooldownStrutturato?.ready ?? true) &&
               oculumEquipmentSkillLevelAvailable(
                 characterLevel: leggiNumero(livelloController),
@@ -1251,7 +1397,9 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     if (entries.isEmpty) return const SizedBox.shrink();
     Widget buildOptions(BuildContext context, BoxConstraints constraints) {
       Widget group(OculumCombatAbilityRole role) {
-        final subset = entries.where((e) => e.roles.contains(role)).toList();
+        final subset = entries
+            .where((e) => e.enabled && e.roles.contains(role))
+            .toList();
         final color = switch (role) {
           OculumCombatAbilityRole.attack => eyePupilGlowColor,
           OculumCombatAbilityRole.defense => secondaryColor,

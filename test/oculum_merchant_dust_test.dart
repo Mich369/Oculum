@@ -286,7 +286,7 @@ void main() {
     final sign = probe.shopOffers().singleWhere(
       (o) => o['kind'] == 'fate_sign',
     );
-    final signCost = sign['cost'] as int;
+    final signCost = probe.shopCost(sign);
     await probe.buyShopOffer(sign);
     await probe.buyShopOffer(sign);
     expect(state.obserController.text, '${1000 - signCost}');

@@ -957,6 +957,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         merchantHerbalStatBonus(key) +
         statoForzaQuickBonus(key) +
         rebirthLevelBonus() +
+        summoningEmblemBonus(key) +
         activeStructuredEffectBonus(key);
   }
 
@@ -2132,6 +2133,20 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   bool artOpenSbloccata(CharacterArt art) {
+    if (art.openDescriptionEffects.any(
+      (effect) => effect.id.startsWith('monster_open_ultimate_'),
+    )) {
+      final required =
+          int.tryParse(
+            RegExp(
+                  r'Richiede livello\s+(\d+)',
+                  caseSensitive: false,
+                ).firstMatch(art.openDescription)?.group(1) ??
+                '',
+          ) ??
+          0;
+      return art.sbloccata && leggiNumero(livelloController) >= required;
+    }
     if (art.openName == 'Masso Slime' &&
         art.skills.any((skill) => skill.nome == 'Palla di Roccia Slime')) {
       return art.sbloccata && leggiNumero(livelloController) >= 15;
@@ -4707,6 +4722,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final structuredBonus =
         activeStructuredEffectBonus(stat.id) +
         roleSubtraitBonus(stat.id) +
+        summoningEmblemBonus(stat.id, subtrait: true) +
         merchantHerbalSubtraitBonus(stat.id);
     final cacheBase = stat.valore + dustBonus + quickBonus + structuredBonus;
     final cachedBase = hiddenEyeTotalBaseCache[stat.id];

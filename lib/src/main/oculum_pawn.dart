@@ -120,11 +120,13 @@ class OculumPawnGuardian {
     this.ownerGrade = 0,
     this.pendingRegistration = false,
     this.conscious = false,
+    Map<String, dynamic>? summoningEmblem,
     Map<String, int>? stats,
     Map<String, int>? baseStats,
     Map<String, int>? allocatedStats,
     List<String>? targets,
-  }) : stats = oculumPawnStats(stats),
+  }) : summoningEmblem = Map.of(summoningEmblem ?? const {}),
+       stats = oculumPawnStats(stats),
        baseStats = oculumPawnStats(baseStats ?? stats),
        allocatedStats = {
          for (final key in const ['resilienza', 'volonta', 'materia', 'oculum'])
@@ -137,6 +139,9 @@ class OculumPawnGuardian {
     level = max(0, level);
     experience = max(0, experience);
     unspentStatPoints = max(0, unspentStatPoints);
+    if (isSummoningSlime) {
+      this.targets = this.targets.take(maximumTargets).toList();
+    }
   }
   final String id;
   final String ownerTag;
@@ -159,18 +164,33 @@ class OculumPawnGuardian {
   final Map<String, int> allocatedStats;
   bool pendingRegistration;
   bool conscious;
+  final Map<String, dynamic> summoningEmblem;
+  bool get isSummoningSlime => summoningEmblem.isNotEmpty;
+  int get maximumTargets => isSummoningSlime
+      ? readIntValue(
+          summoningEmblem['maximumTargets'],
+          fallback: 3,
+        ).clamp(1, 100)
+      : 1000000;
   List<String> targets;
   bool get alive => hp > 0;
-  int get maxHp => creatureSheetTag.isNotEmpty && creatureMaxHp > 0
+  int get maxHp => isSummoningSlime
+      ? max(1, readIntValue(summoningEmblem['hp'], fallback: 120))
+      : creatureSheetTag.isNotEmpty && creatureMaxHp > 0
       ? creatureMaxHp
       : max(1, stats['resilienza'] ?? 3) * oculumHpMultiplierForGrade(grade);
   int get experiencePerTurn =>
       isV2 ? oculumPawnV2ExperiencePerTurn : oculumPawnExperiencePerTurn;
   int get statPointsPerLevel => oculumPawnStatPointsPerLevel;
-  String get displayName => isV2 ? 'Pawn V2' : 'Pawn';
+  String get displayName => isSummoningSlime
+      ? 'Slime dell’Emblema'
+      : isV2
+      ? 'Pawn V2'
+      : 'Pawn';
   int get baseDefense =>
       ((stats['volonta']! + stats['materia']!) ~/ 2) + level + grade * 6;
-  int get defense => max(0, baseDefense + creatureDefenseBonus);
+  int get defense =>
+      isSummoningSlime ? 0 : max(0, baseDefense + creatureDefenseBonus);
 
   void syncOwnerProgress({
     required int level,
@@ -251,6 +271,12 @@ class OculumPawnGuardian {
 
   bool advanceTo(int nextTurn, {String difficulty = 'normale'}) {
     if (nextTurn <= turn || !alive || pendingRegistration) return false;
+    if (isSummoningSlime) {
+      turn = nextTurn;
+      final duration = readIntValue(summoningEmblem['turns']);
+      if (duration > 0 && turn >= duration) hp = 0;
+      return true;
+    }
     while (turn < nextTurn) {
       gainTurnExperience(difficulty);
       if (hp < maxHp) {
@@ -288,6 +314,7 @@ class OculumPawnGuardian {
     'targets': targets.toList(),
     'pendingRegistration': pendingRegistration,
     'conscious': conscious,
+    if (isSummoningSlime) 'summoningEmblem': Map.of(summoningEmblem),
   };
   factory OculumPawnGuardian.fromJson(Map<String, dynamic> data) =>
       OculumPawnGuardian(
@@ -316,6 +343,9 @@ class OculumPawnGuardian {
             : null,
         pendingRegistration: readBoolValue(data['pendingRegistration']),
         conscious: readBoolValue(data['conscious']),
+        summoningEmblem: data['summoningEmblem'] is Map
+            ? Map<String, dynamic>.from(data['summoningEmblem'] as Map)
+            : null,
         baseStats: data['baseStats'] is Map
             ? (data['baseStats'] as Map).map(
                 (key, value) => MapEntry('$key', readIntValue(value)),
@@ -750,6 +780,14 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       choices.putIfAbsent(tag, () => '$tag (salvato)');
     }
     choices.remove(pawn.creatureSheetTag);
+    if (pawn.isSummoningSlime) {
+      final allowed = validSummoningSlimeTargets(
+        pawn,
+        choices.keys,
+        limit: false,
+      );
+      choices.removeWhere((tag, _) => !allowed.contains(tag));
+    }
     final selected = pawn.targets.toSet();
     final result = await showDialog<List<String>>(
       context: context,
@@ -767,7 +805,8 @@ extension _OculumPawnRuntime on _OculumHomePageState {
                       value: selected.contains(choice.key),
                       title: Text(choice.value),
                       onChanged: (value) => refresh(() {
-                        if (value == true) {
+                        if (value == true &&
+                            selected.length < pawn.maximumTargets) {
                           selected.add(choice.key);
                         } else {
                           selected.remove(choice.key);
@@ -837,6 +876,20 @@ extension _OculumPawnRuntime on _OculumHomePageState {
             'pawnId': pawn.id,
           }),
         );
+      }
+      return;
+    }
+    final encounter = '${pawn.summoningEmblem['encounterId'] ?? ''}';
+    if (pawn.isSummoningSlime && encounter != selectedMasterInitiativeGroupId) {
+      if (!masterInitiativeGroups.any((group) => group['id'] == encounter)) {
+        return;
+      }
+      final previous = selectedMasterInitiativeGroupId;
+      selectMasterInitiativeGroup(encounter);
+      try {
+        addPawnToInitiative(pawn);
+      } finally {
+        selectMasterInitiativeGroup(previous);
       }
       return;
     }
@@ -1057,6 +1110,12 @@ extension _OculumPawnRuntime on _OculumHomePageState {
           pawn.alive &&
           !pawn.pendingRegistration &&
           pawn.creatureSheetTag != tag &&
+          (!pawn.isSummoningSlime ||
+              oculumSummoningSlimeApplies(
+                pawn,
+                tag,
+                onlineCombatEncounterId,
+              )) &&
           pawn.targets.contains(tag),
     )) {
       if (remaining == 0) break;
@@ -1073,6 +1132,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       );
     }
     if (remaining != damage) {
+      invalidateDerivedDataCaches();
       notifyActiveSheetSummaryChanged();
       programmaSalvataggio();
       sendPawnSnapshot();
@@ -1085,6 +1145,8 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         pawn.alive &&
         !pawn.pendingRegistration &&
         pawn.creatureSheetTag != tag &&
+        (!pawn.isSummoningSlime ||
+            oculumSummoningSlimeApplies(pawn, tag, onlineCombatEncounterId)) &&
         pawn.targets.contains(tag),
   );
 
@@ -1175,6 +1237,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
           ..clear()
           ..addAll(received)
           ..addAll(pending);
+        invalidateDerivedDataCaches();
         for (final pawn in received) {
           syncPawnCreatureToSheet(pawn);
         }
@@ -1213,6 +1276,12 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         raw['targets'] = targets;
         raw['pendingRegistration'] = false;
         final created = OculumPawnGuardian.fromJson(raw);
+        if (created.isSummoningSlime) {
+          final approved = validSummoningSlimeTargets(created, created.targets);
+          if (approved.isEmpty || approved.length != created.targets.length) {
+            return;
+          }
+        }
         if (created.isV2) {
           created.level = 0;
           created.experience = 0;
@@ -1239,7 +1308,9 @@ extension _OculumPawnRuntime on _OculumHomePageState {
           pawn != null &&
           (pawnControlledBy(pawn, sender) ||
               payload['senderRole'] == 'coMaster')) {
-        pawn.targets = targets;
+        pawn.targets = pawn.isSummoningSlime
+            ? validSummoningSlimeTargets(pawn, targets)
+            : targets.take(pawn.maximumTargets).toList();
       } else if (action == 'allocate' &&
           pawn != null &&
           (pawnControlledBy(pawn, sender) ||

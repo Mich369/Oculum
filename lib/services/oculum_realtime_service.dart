@@ -1033,23 +1033,45 @@ class OculumRealtimeService {
             })) {
               return false;
             }
+            // Persisted chunks are idempotent by transferId + chunkIndex.
+            // Pace large transfers to avoid bursting the authenticated RPC.
+            if (i + 1 < count) {
+              await Future<void>.delayed(const Duration(milliseconds: 60));
+            }
           }
           return generation == _generation &&
               _channel == channel &&
               isConnected;
         }
       }
-      final response = await (_client ?? Supabase.instance.client)
-          .rpc(
-            'oculum_emit_room_event',
-            params: {
-              'p_room': _secureRoomId,
-              'p_session': _presenceKey,
-              'p_event': event,
-              'p_payload': payload,
-            },
-          )
-          .timeout(const Duration(seconds: 15));
+      final retryChunk = event == 'sheet_shared_chunk';
+      Object? response;
+      for (var attempt = 0; attempt < (retryChunk ? 2 : 1); attempt++) {
+        try {
+          response = await (_client ?? Supabase.instance.client)
+              .rpc(
+                'oculum_emit_room_event',
+                params: {
+                  'p_room': _secureRoomId,
+                  'p_session': _presenceKey,
+                  'p_event': event,
+                  'p_payload': payload,
+                },
+              )
+              .timeout(Duration(seconds: retryChunk ? 30 : 15));
+          break;
+        } on TimeoutException {
+          if (!retryChunk ||
+              attempt > 0 ||
+              _channel != channel ||
+              !isConnected) {
+            rethrow;
+          }
+          // A timed-out RPC may already have committed. Retrying only sheet
+          // chunks is safe: the receiver ignores the same transfer/index pair.
+          _safeStatus('Blocco scheda lento: ritento la conferma una volta.');
+        }
+      }
       if (_channel != channel || !isConnected) return false;
       if (response is String && response.isNotEmpty) return true;
       _safeStatus('Invio realtime non confermato.');

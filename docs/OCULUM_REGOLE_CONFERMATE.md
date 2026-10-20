@@ -2,6 +2,16 @@
 
 Ultimo aggiornamento: 20 ottobre 2026. Documento da consultare prima di modificare il regolamento.
 
+## Conferme del 20 ottobre 2026 — emblema, mercanti e Open
+
+- Nei tre pannelli di combattimento non compaiono skill in cooldown o senza risorse per alcuna forma; se almeno una forma è utilizzabile la skill resta visibile e la scelta contiene le sole forme disponibili. I sottotratti come tiri rimangono utilizzabili.
+- Le Open mancanti dei mostri vengono completate con un'ultimate che aggiunge al danno base 1d50+25 nei gradi iniziali; i profili più forti crescono da 1d90+60 fino a 1d250+400. Sono valori iniziali modificabili, scelti nel bilanciamento delegato. Sblocco al massimo livello richiesto dalle altre tre forme; Buff Open @Stats+4 (più alto per i gradi maggiori) e capacità ridotta con recupero autonomo di tre turni. Le Open e gli effetti già personalizzati non vengono riscritti.
+- Emblema di evocazione dell'alchimista: slime per l'intero fight con **120 HP**, fino a **tre** destinatari scelti (anche se stessi), **+3 a ciascuna delle quattro statistiche e +2 a tutti i sottotratti**. L'utente autorizza il prezzo e richiede che sia maggiore di Pawn: valore iniziale modificabile **200 Obser**, Pawn 100. La Vita dello slime è una riserva condivisa; l'assorbimento riusa il percorso dei Guardiani dopo le difese personali. Non ottiene la rigenerazione di Pawn. Bonus temporanei mentre è vivo e rimozione a fine scontro. HP, bonus, destinatari e durata personalizzata sono salvati nel JSON.
+- Ogni mercante ha prezzi leggermente diversi: impostazione ordinaria scelta ±5%. Per nuovo negozio, **3%** di probabilità di aumentare i prezzi del **25%**; **1%** di ridurli del **15%**, senza dichiarare il modificatore. La percentuale è persistente: riaprire, cercare, filtrare e ricaricare non ritirano i prezzi. Arrotondamento per difetto, minimo 1 Obser. Il Segno del Chaos usa quanto effettivamente pagato.
+- Catalogo Master nell'inventario: filtri combinabili per Grado e categoria (armi, armature/vesti, scudi, oggetti, consumabili, cibo/bevande, materiali, scroll e compagni/evocazioni). Gli oggetti ibridi possono appartenere a più categorie. Nessuna modifica agli inventari o ai requisiti.
+- La singola Open usata viene nascosta da Attacco, Difesa e Supporto e utilità fino al prossimo Riposo Lungo. Dato personale alla scheda, persistente. Le eventuali skill della Open mantengono il proprio comando e recupero.
+- L'Open attiva il proprio Open Buff. Gli editor offrono una scelta semplice della collocazione nei pannelli; gli effetti avanzati restano chiusi fino al clic. La collocazione conserva tipi/elementi, parser e JSON. Buff e debuff restano anche in Supporto secondo la conferma precedente.
+
 ## Equipaggiamento del Fabbro — conferme e implementazione del 20 ottobre 2026
 
 - Ogni arma, armatura e scudo di catalogo indica il proprio livello. Il livello della skill dell'oggetto non può essere inferiore al livello dell'oggetto; ogni forma può avere un requisito più alto. La skill è utilizzabile solo quando il personaggio raggiunge il requisito e ha l'oggetto equipaggiato. Il requisito viene controllato nel pannello rapido, nell'editor e al momento dell'attivazione, anche se la UI è obsoleta.

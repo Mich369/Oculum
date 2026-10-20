@@ -216,6 +216,10 @@ void main() {
           .toList();
       expect(offers.length, 4);
       expect(offers.every((offer) => readIntValue(offer['level']) > 0), isTrue);
+      // Isolate the alchemist discount from the merchant's price personality.
+      (state.merchantProfiles as List).whereType<Map>().firstWhere(
+        (profile) => profile['id'] == state.merchantActiveProfileId,
+      )['pricePercent'] = 100;
       probe.shopType('alchimista');
       expect(probe.shopCost({'kind': 'refined_vitalium', 'cost': 100}), 90);
       expect(probe.shopOffers().any((o) => o['kind'] == 'alchemy_pet'), isTrue);

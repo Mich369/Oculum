@@ -1033,6 +1033,8 @@ class TitleOpenEntry {
     this.openBuff = '',
     this.openSkill = '',
     this.attiva = false,
+    this.usedSinceLongRest = false,
+    this.combatRole = '',
     List<ConditionalBuffEntry>? conditionalBuffs,
     List<OculumStructuredEffect>? effects,
   }) {
@@ -1045,6 +1047,8 @@ class TitleOpenEntry {
   String openBuff;
   String openSkill;
   bool attiva;
+  bool usedSinceLongRest;
+  String combatRole;
 
   late List<ConditionalBuffEntry> conditionalBuffs;
   late List<OculumStructuredEffect> effects;
@@ -1056,6 +1060,8 @@ class TitleOpenEntry {
       'openBuff': openBuff,
       'openSkill': openSkill,
       'attiva': attiva,
+      'usedSinceLongRest': usedSinceLongRest,
+      if (combatRole.isNotEmpty) 'combatRole': combatRole,
       'conditionalBuffs': conditionalBuffs.map((x) => x.toJson()).toList(),
       if (effects.isNotEmpty)
         'effects': effects.map((effect) => effect.toJson()).toList(),
@@ -1069,6 +1075,11 @@ class TitleOpenEntry {
       openBuff: json['openBuff'] ?? '',
       openSkill: json['openSkill'] ?? '',
       attiva: readBoolValue(json['attiva']),
+      usedSinceLongRest: readBoolValue(
+        json['usedSinceLongRest'],
+        fallback: readBoolValue(json['attiva']),
+      ),
+      combatRole: '${json['combatRole'] ?? ''}',
       conditionalBuffs: ((json['conditionalBuffs'] ?? []) as List)
           .map(
             (x) => ConditionalBuffEntry.fromJson(Map<String, dynamic>.from(x)),
@@ -1156,6 +1167,8 @@ class OculumTitle {
     this.openBuff = '',
     this.openSkill = '',
     this.openAttiva = false,
+    this.openUsedSinceLongRest = false,
+    this.openCombatRole = '',
     this.chiaveSistema = '',
     this.openExperienceClaimed = 0,
     List<TitleOpenEntry>? openExtra,
@@ -1208,6 +1221,8 @@ class OculumTitle {
   String openBuff;
   String openSkill;
   bool openAttiva;
+  bool openUsedSinceLongRest;
+  String openCombatRole;
   String chiaveSistema;
   int openExperienceClaimed;
 
@@ -1250,6 +1265,8 @@ class OculumTitle {
       'openBuff': openBuff,
       'openSkill': openSkill,
       'openAttiva': openAttiva,
+      'openUsedSinceLongRest': openUsedSinceLongRest,
+      if (openCombatRole.isNotEmpty) 'openCombatRole': openCombatRole,
       'chiaveSistema': chiaveSistema,
       'openExperienceClaimed': openExperienceClaimed,
       'openExtra': openExtra.map((x) => x.toJson()).toList(),
@@ -1299,6 +1316,11 @@ class OculumTitle {
       openBuff: json['openBuff'] ?? '',
       openSkill: json['openSkill'] ?? '',
       openAttiva: readBoolValue(json['openAttiva']),
+      openUsedSinceLongRest: readBoolValue(
+        json['openUsedSinceLongRest'],
+        fallback: readBoolValue(json['openAttiva']),
+      ),
+      openCombatRole: '${json['openCombatRole'] ?? ''}',
       chiaveSistema: json['chiaveSistema'] ?? '',
       openExperienceClaimed: json.containsKey('openExperienceClaimed')
           ? readIntValue(json['openExperienceClaimed'])
@@ -3234,6 +3256,7 @@ class CharacterArt {
     this.openBuff = '',
     this.openSkill = '',
     this.openAttiva = false,
+    this.openUsedSinceLongRest = false,
     this.monsterOpenSkill = false,
     this.openDescriptionType = '',
     this.openSkillType = '',
@@ -3287,6 +3310,7 @@ class CharacterArt {
   String openBuff;
   String openSkill;
   bool openAttiva;
+  bool openUsedSinceLongRest;
   bool monsterOpenSkill;
   String openDescriptionType;
   String openSkillType;
@@ -3326,6 +3350,7 @@ class CharacterArt {
       'openBuff': openBuff,
       'openSkill': openSkill,
       'openAttiva': openAttiva,
+      'openUsedSinceLongRest': openUsedSinceLongRest,
       if (monsterOpenSkill) 'monsterOpenSkill': true,
       if (openDescriptionType.trim().isNotEmpty)
         'openDescriptionType': openDescriptionType,
@@ -3382,6 +3407,10 @@ class CharacterArt {
       openBuff: oculumCleanMojibakeText('${json['openBuff'] ?? ''}'),
       openSkill: oculumCleanMojibakeText('${json['openSkill'] ?? ''}'),
       openAttiva: readBoolValue(json['openAttiva']),
+      openUsedSinceLongRest: readBoolValue(
+        json['openUsedSinceLongRest'],
+        fallback: readBoolValue(json['openAttiva']),
+      ),
       monsterOpenSkill: readBoolValue(json['monsterOpenSkill']),
       openDescriptionType: '${json['openDescriptionType'] ?? ''}',
       openSkillType: '${json['openSkillType'] ?? ''}',

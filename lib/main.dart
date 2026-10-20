@@ -148,6 +148,7 @@ part 'src/main/oculum_home_share_content.dart';
 part 'src/main/oculum_home_rules_settings_search.dart';
 part 'src/main/oculum_home_dialogs_quick_edit.dart';
 part 'src/main/oculum_fallen_eyes.dart';
+part 'src/main/oculum_summoning_emblem.dart';
 part 'src/main/oculum_starter_creation.dart';
 part 'src/main/oculum_painters.dart';
 part 'src/main/oculum_necromancers.dart';
@@ -1418,6 +1419,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final reazioniVelociController = TextEditingController(text: '0');
   final realtimeChatController = TextEditingController();
   final masterItemSearchController = TextEditingController();
+  int masterItemGradeFilter = -1;
+  String masterItemCategoryFilter = 'all';
   final resistanceElementSearchController = TextEditingController();
   OverlayEntry? currentScreenDiceOverlay;
   final List<OculumPawnGuardian> pawnGuardians = [];

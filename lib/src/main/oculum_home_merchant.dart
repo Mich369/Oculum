@@ -126,6 +126,16 @@ int oculumMerchantEquipmentPrice(Map<String, dynamic> offer) {
 
 bool oculumMerchantPawnV2Available(Random random) => random.nextInt(10) == 0;
 
+int oculumMerchantPricePercent(Random random) {
+  final roll = random.nextInt(100);
+  if (roll < 3) return 125;
+  if (roll == 3) return 85;
+  return 95 + random.nextInt(11);
+}
+
+int oculumMerchantApplyPricePercent(int price, int percent) =>
+    max(1, max(0, price) * percent.clamp(1, 10000) ~/ 100);
+
 const oculumMerchantEssentialIds = [
   'pawn',
   'oculum_vial',
@@ -247,8 +257,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     );
   }
 
-  int get merchantDustPrice =>
-      33 + (monsterSpriteStableSeed(merchantActiveProfileId) % 37).abs();
+  int get merchantDustPrice => oculumMerchantApplyPricePercent(
+    33 + (monsterSpriteStableSeed(merchantActiveProfileId) % 37).abs(),
+    merchantPricePercent,
+  );
+  int get merchantPricePercent =>
+      readIntValue(_activeMerchantProfile()['pricePercent'], fallback: 100);
   String get merchantShopType {
     final profile = merchantProfiles
         .where((p) => p['id'] == merchantActiveProfileId)
@@ -262,10 +276,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         ? oculumMerchantEquipmentPrice(offer)
         : readIntValue(offer['cost']) +
               max(0, readIntValue(offer['level'])) * 25;
-    return merchantShopType == 'alchimista' &&
-            offer['kind'] == 'refined_vitalium'
+    final adjusted =
+        merchantShopType == 'alchimista' && offer['kind'] == 'refined_vitalium'
         ? max(1, (base * .9).floor())
         : base;
+    return oculumMerchantApplyPricePercent(adjusted, merchantPricePercent);
   }
 
   bool merchantOfferMatchesShop(Map<String, dynamic> offer) {
@@ -307,6 +322,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               'scroll',
               'technique_scroll',
               'alchemy_pet',
+              'summoning_emblem',
               'creature_core',
             }.contains(kind) ||
             offer['isMaterial'] == true,
@@ -393,12 +409,19 @@ extension _OculumHomeMerchant on _OculumHomePageState {
 
   Map<String, dynamic> _activeMerchantProfile() {
     for (final profile in merchantProfiles) {
-      if ('${profile['id'] ?? ''}' == merchantActiveProfileId) return profile;
+      if ('${profile['id'] ?? ''}' == merchantActiveProfileId) {
+        profile.putIfAbsent(
+          'pricePercent',
+          () => oculumMerchantPricePercent(Random.secure()),
+        );
+        return profile;
+      }
     }
     final profile = <String, dynamic>{
       'id': merchantActiveProfileId,
       'name': 'Mercante di fiducia',
       'stock': <Map<String, dynamic>>[],
+      'pricePercent': oculumMerchantPricePercent(Random.secure()),
     };
     merchantProfiles.add(profile);
     return profile;
@@ -969,6 +992,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         });
       }
     }
+    if (!merchantStock.any((offer) => offer['id'] == 'summoning_emblem')) {
+      merchantStock.add(oculumSummoningEmblemOffer());
+    }
     for (final pet in oculumAlchemyPets) {
       if (!merchantStock.any((o) => o['id'] == 'pet_${pet.$1}')) {
         merchantStock.add({
@@ -1358,7 +1384,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     setState(() {
       obserController.text = (leggiNumero(obserController) - cost).toString();
       final item = merchantItemFromOffer(
-        kind == 'fate_sign' ? {...offer, 'cost': cost} : offer,
+        const {'fate_sign', 'chaos_sign'}.contains(kind)
+            ? {...offer, 'cost': cost}
+            : offer,
         titleType: titleType,
       );
       if (kind == 'pawn' || kind == 'pawn_v2') purchasedPawn = item;
@@ -1472,6 +1500,21 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         peso: .05,
         note: '${offer['desc']}',
         craftData: {'smokingHerbs': Map<String, dynamic>.from(offer)},
+      );
+    }
+    if (offer['kind'] == 'summoning_emblem') {
+      return InventoryItem(
+        nome: '${offer['name']}',
+        peso: .1,
+        quantita: 1,
+        note: '${offer['desc']}',
+        craftData: {
+          'summoningEmblem': Map<String, dynamic>.from(
+            offer['summoningEmblem'] is Map
+                ? offer['summoningEmblem'] as Map
+                : oculumSummoningEmblemDefaults,
+          ),
+        },
       );
     }
     if (offer['kind'] == 'alchemy_pet') {
@@ -1713,6 +1756,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool isMerchantConsumable(InventoryItem item) =>
+      item.craftData['summoningEmblem'] is Map ||
       item.craftData['witheredHeart'] == true ||
       item.craftData['chaosSign'] is Map ||
       item.craftData['fateSign'] is Map ||
@@ -1739,6 +1783,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (!inventario.contains(item) ||
         !isMerchantConsumable(item) ||
         item.quantita <= 0) {
+      return;
+    }
+    if (item.craftData['summoningEmblem'] is Map) {
+      await activateSummoningEmblem(item);
       return;
     }
     if (item.craftData['witheredHeart'] == true) {
