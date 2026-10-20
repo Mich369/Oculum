@@ -1586,6 +1586,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final relayRoomController = TextEditingController(text: '');
   final realtimeRoomController = TextEditingController(text: 'test');
   final realtimeNameController = TextEditingController();
+  // Session-only: room secrets must not enter local saves or sheet JSON.
+  final realtimeRoomPasswordController = TextEditingController();
   final oculumUsernameController = TextEditingController();
   final friendTagController = TextEditingController();
   final friendNameController = TextEditingController();
@@ -4101,6 +4103,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     relayRoomController.dispose();
     realtimeRoomController.dispose();
     realtimeNameController.dispose();
+    realtimeRoomPasswordController.dispose();
     oculumUsernameController.dispose();
     friendTagController.dispose();
     friendNameController.dispose();
@@ -5222,3 +5225,4 @@ class _OculumHomePageState extends State<OculumHomePage>
     );
   }
 }
+

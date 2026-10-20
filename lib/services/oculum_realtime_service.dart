@@ -24,6 +24,7 @@ class OculumRealtimeService {
     this.onConnected,
     this.onAccessRequested,
     this.httpPollingOnly = false,
+    this.roomPassword = '',
     SupabaseClient? client,
   }) : _client = client,
        _presenceKey = _newSessionId();
@@ -86,12 +87,13 @@ class OculumRealtimeService {
 
   final String roomId;
   final String playerName;
+  final String roomPassword;
   final void Function(String event, Map<String, dynamic> payload) onEvent;
   final void Function(List<Map<String, dynamic>> users) onPresenceChanged;
   final void Function(String status) onStatusChanged;
   final Map<String, dynamic> Function()? presenceDataProvider;
   final void Function()? onConnected;
-  final Future<bool> Function(String userId, String displayName)?
+  final Future<bool?> Function(String userId, String displayName)?
   onAccessRequested;
 
   /// Use the authenticated HTTPS event journal instead of a websocket.
@@ -106,6 +108,13 @@ class OculumRealtimeService {
   bool _connectionPublished = false;
   bool _disposed = false;
   Future<void>? _connecting;
+  bool _awaitingApproval = false;
+  bool _masterRoleUnavailable = false;
+  bool _requiresUserAction = false;
+  bool roomPasswordProtected = false;
+  String? unavailableActiveSheetTag;
+  String? _registeredIdentitySignature;
+  Completer<void>? _approvalCancelled;
   int _generation = 0;
   final _sheetTransfers = OculumSheetTransferAssembler();
   final _sessionNoteTransfers = OculumSheetTransferAssembler();
@@ -122,6 +131,7 @@ class OculumRealtimeService {
   DateTime? _nextRoomRefresh;
   int _roomRefreshFailures = 0;
   final _accessDecisions = <String>{};
+  final _reportedSheetConflicts = <String>{};
   Future<void> _incomingEvents = Future<void>.value();
   bool _presenceRegistered = false;
   final _deliveredEvents = <String>{};
@@ -137,6 +147,10 @@ class OculumRealtimeService {
       _connected && !_disposed && (_channel != null || _pollingFallback);
 
   bool get isConnected => _transportActive && _presenceRegistered;
+  bool get isConnecting => _connecting != null;
+  bool get isAwaitingApproval => _awaitingApproval;
+  bool get masterRoleUnavailable => _masterRoleUnavailable;
+  bool get requiresUserAction => _requiresUserAction;
 
   String get normalizedRoomId {
     final clean = roomId.trim().replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
@@ -164,6 +178,10 @@ class OculumRealtimeService {
     final generation = _generation + 1;
     await disconnect(notify: false);
     if (_disposed || generation != _generation) return;
+    _masterRoleUnavailable = false;
+    _requiresUserAction = false;
+    _secureRoomId = null;
+    authenticatedRole = null;
 
     try {
       final client = _client ?? Supabase.instance.client;
@@ -174,32 +192,61 @@ class OculumRealtimeService {
       }
       if (_disposed || generation != _generation) return;
       final requestedRole = presenceDataProvider?.call()['role'];
-      Map<String, dynamic> membership;
-      final approvalDeadline = DateTime.now().add(const Duration(minutes: 2));
-      do {
-        membership = Map<String, dynamic>.from(
-          await client.rpc(
-                'oculum_open_room',
-                params: {
-                  'p_code': normalizedRoomId,
-                  'p_name': _displayName,
-                  'p_as_master': requestedRole == 'master',
-                },
-              )
-              as Map,
-        );
+      var membership = Map<String, dynamic>.from(
+        await client.rpc(
+              roomPassword.isEmpty
+                  ? 'oculum_open_room'
+                  : 'oculum_open_room_with_password',
+              params: {
+                'p_code': normalizedRoomId,
+                'p_name': _displayName,
+                'p_as_master': requestedRole == 'master',
+                if (roomPassword.isNotEmpty) 'p_password': roomPassword,
+              },
+            )
+            as Map,
+      );
+      if (_disposed || generation != _generation) return;
+      _masterRoleUnavailable =
+          requestedRole == 'master' && membership['role'] != 'master';
+      roomPasswordProtected = membership['passwordProtected'] == true;
+      final pendingRoomId = '${membership['roomId']}';
+      final approvalCancelled = Completer<void>();
+      _approvalCancelled = approvalCancelled;
+      while (true) {
         if (_disposed || generation != _generation) return;
         if (membership['status'] == 'denied') {
           throw StateError('Il Master non ha autorizzato l’ingresso.');
         }
         if (membership['status'] == 'approved') break;
-        _safeStatus('Ingresso richiesto: in attesa della conferma del Master.');
-        if (DateTime.now().isAfter(approvalDeadline)) {
-          throw TimeoutException('Conferma del Master ancora in attesa.');
+        _awaitingApproval = true;
+        _safeStatus(
+          _masterRoleUnavailable
+              ? 'Questa stanza appartiene a un altro account. Ingresso come giocatore in attesa del Master. Per ospitare, crea una nuova stanza oppure accedi con l’account proprietario.'
+              : 'Ingresso richiesto: in attesa della conferma del Master.',
+        );
+        await Future.any<void>([
+          Future<void>.delayed(const Duration(seconds: 10)),
+          approvalCancelled.future,
+        ]);
+        if (_disposed || generation != _generation) return;
+        // Opening a room takes a write lock. Poll only our own membership
+        // while pending, without repeatedly submitting the same request.
+        final updated = await client
+            .from('oculum_room_members')
+            .select('role,status')
+            .eq('room_id', pendingRoomId)
+            .eq('user_id', client.auth.currentUser!.id)
+            .maybeSingle()
+            .timeout(const Duration(seconds: 20));
+        if (updated == null) {
+          throw StateError('Richiesta di ingresso non più disponibile.');
         }
-        await Future<void>.delayed(const Duration(seconds: 3));
-      } while (!_disposed && generation == _generation);
+        membership = {...membership, ...updated};
+      }
       if (_disposed || generation != _generation) return;
+      _awaitingApproval = false;
+      _approvalCancelled = null;
       _secureRoomId = '${membership['roomId']}';
       authenticatedRole = '${membership['role']}';
       if (httpPollingOnly) {
@@ -313,8 +360,77 @@ class OculumRealtimeService {
           'WebSocket non disponibile; uso la sincronizzazione HTTPS: $error',
         );
       } else {
+        _requiresUserAction =
+            error is PostgrestException &&
+            (error.code == '42501' || error.code == '22023');
         _safeStatus('Realtime non connesso: $error');
       }
+    }
+  }
+
+  Future<bool> setRoomPassword(String password) async {
+    if (!isConnected ||
+        authenticatedRole != 'master' ||
+        _secureRoomId == null) {
+      return false;
+    }
+    try {
+      await (_client ?? Supabase.instance.client)
+          .rpc(
+            'oculum_set_room_password',
+            params: {'p_room': _secureRoomId, 'p_password': password},
+          )
+          .timeout(const Duration(seconds: 20));
+      roomPasswordProtected = password.isNotEmpty;
+      _safeStatus(
+        password.isEmpty
+            ? 'Password della stanza rimossa.'
+            : 'Password della stanza aggiornata.',
+      );
+      return true;
+    } catch (error) {
+      _safeStatus('Password della stanza non aggiornata: $error');
+      return false;
+    }
+  }
+
+  Future<bool> decideRoomAccess(String userId, bool allowed) async {
+    if (!isConnected || authenticatedRole != 'master') return false;
+    try {
+      await (_client ?? Supabase.instance.client)
+          .rpc(
+            'oculum_decide_room_member',
+            params: {
+              'p_room': _secureRoomId,
+              'p_user': userId,
+              'p_allow': allowed,
+              'p_role': 'player',
+            },
+          )
+          .timeout(const Duration(seconds: 20));
+      return true;
+    } catch (error) {
+      _safeStatus('Richiesta di ingresso non aggiornata: $error');
+      return false;
+    }
+  }
+
+  Future<void> _reviewRoomAccess(
+    String userId,
+    String name,
+    int generation,
+  ) async {
+    if (!_accessDecisions.add(userId)) return;
+    try {
+      final allowed = await onAccessRequested!(userId, name);
+      if (_disposed || generation != _generation || allowed == null) return;
+      await decideRoomAccess(userId, allowed);
+    } catch (error) {
+      if (!_disposed && generation == _generation) {
+        _safeStatus('Richiesta di ingresso in attesa: $error');
+      }
+    } finally {
+      _accessDecisions.remove(userId);
     }
   }
 
@@ -334,6 +450,12 @@ class OculumRealtimeService {
 
   Future<void> disconnect({bool notify = true}) async {
     _generation++;
+    final approvalCancelled = _approvalCancelled;
+    _approvalCancelled = null;
+    _awaitingApproval = false;
+    if (approvalCancelled != null && !approvalCancelled.isCompleted) {
+      approvalCancelled.complete();
+    }
     _roomHeartbeat?.cancel();
     _roomHeartbeat = null;
     _fallbackPollingTimer?.cancel();
@@ -341,6 +463,8 @@ class OculumRealtimeService {
     _pollingFallback = false;
     _presenceRegistered = false;
     _connectionPublished = false;
+    _registeredIdentitySignature = null;
+    unavailableActiveSheetTag = null;
     _lastPresenceWrite = null;
     _lastPresenceSignature = null;
     _nextRoomRefresh = null;
@@ -965,11 +1089,28 @@ class OculumRealtimeService {
     }
 
     try {
-      if (event == 'sheet_shared') {
+      if (event == 'sheet_shared' ||
+          '${payload['senderTag'] ?? ''}'.isNotEmpty) {
         // A newly selected/created sheet must be registered before its first
         // share; await an in-flight refresh rather than racing its owner RPC.
         await _trackPresence();
+        // A refresh started before a sheet switch may have registered the
+        // previous identity. Finish registering the current identity first.
+        if (generation == _generation &&
+            _registeredIdentitySignature != _currentIdentitySignature) {
+          await _trackPresence();
+        }
         if (!isConnected || generation != _generation || _channel != channel) {
+          return false;
+        }
+        final unavailable = unavailableActiveSheetTag;
+        if (unavailable != null &&
+            (event == 'sheet_shared' &&
+                    _normalizedTag(payload['sheetId']) == unavailable ||
+                _normalizedTag(payload['senderTag']) == unavailable)) {
+          _safeStatus(
+            'La scheda selezionata non è associata a questo account nella stanza. Usa l’account originale oppure una copia con un nuovo tag.',
+          );
           return false;
         }
       }
@@ -1114,7 +1255,15 @@ class OculumRealtimeService {
       _safeStatus('Invio realtime non confermato.');
       return false;
     } catch (error) {
-      _safeStatus('Invio realtime fallito: $error');
+      if (error is PostgrestException &&
+          error.code == '42501' &&
+          error.message.contains('Sender sheet belongs')) {
+        _safeStatus(
+          'La scheda selezionata appartiene a un altro account online. Seleziona una tua scheda oppure accedi con l’account originale.',
+        );
+      } else {
+        _safeStatus('Invio realtime fallito: $error');
+      }
       return false;
     }
   }
@@ -1125,6 +1274,16 @@ class OculumRealtimeService {
       if (_generation == generation) _roomRefresh = null;
     });
   }
+
+  static String _normalizedTag(dynamic tag) =>
+      '${tag ?? ''}'.replaceAll(RegExp(r'\s+'), '').toUpperCase();
+
+  String get _currentIdentitySignature => _identitySignature(
+    presenceDataProvider?.call() ?? const <String, dynamic>{},
+  );
+
+  String _identitySignature(Map<String, dynamic> presence) =>
+      jsonEncode([presence['activeSheetTag'], presence['localSheetTags']]);
 
   Future<void> _refreshRoom() async {
     final channel = _channel;
@@ -1150,6 +1309,7 @@ class OculumRealtimeService {
       if (extra != null) {
         payload.addAll(extra);
       }
+      final identitySignature = _identitySignature(payload);
 
       final revocations =
           (payload.remove('revokedSheetAccess') as List? ?? const [])
@@ -1185,6 +1345,7 @@ class OculumRealtimeService {
         if (stale()) return;
         _lastPresenceWrite = DateTime.now();
         _lastPresenceSignature = signature;
+        _registeredIdentitySignature = identitySignature;
       }
       _presenceRegistered = true;
       for (final entry in revocations) {
@@ -1220,26 +1381,11 @@ class OculumRealtimeService {
         if (stale()) return;
         for (final request in pending) {
           final userId = '${request['user_id']}';
-          if (!_accessDecisions.add(userId)) continue;
-          try {
-            final allowed = await onAccessRequested!(
-              userId,
-              '${request['display_name']}',
-            );
-            if (stale()) return;
-            await client.rpc(
-              'oculum_decide_room_member',
-              params: {
-                'p_room': _secureRoomId,
-                'p_user': userId,
-                'p_allow': allowed,
-                'p_role': 'player',
-              },
-            );
-          } catch (_) {
-            _accessDecisions.remove(userId);
-            rethrow;
-          }
+          // Waiting for the Master must not block sheet registration, ACKs,
+          // initiative replay or the room heartbeat.
+          unawaited(
+            _reviewRoomAccess(userId, '${request['display_name']}', generation),
+          );
         }
       }
     } catch (error) {
@@ -1458,7 +1604,42 @@ class OculumRealtimeService {
       final own = users
           .where((row) => row['sessionId'] == _presenceKey)
           .firstOrNull;
-      if (own != null) authenticatedRole = '${own['role']}';
+      if (own != null) {
+        authenticatedRole = '${own['role']}';
+        final requested = _normalizedTag(
+          presenceDataProvider?.call()['activeSheetTag'],
+        );
+        final accepted = (own['localSheetTags'] as List? ?? const [])
+            .map(_normalizedTag)
+            .toSet();
+        final unavailable =
+            _registeredIdentitySignature == _currentIdentitySignature &&
+                authenticatedRole == 'player' &&
+                requested.isNotEmpty &&
+                !accepted.contains(requested)
+            ? requested
+            : null;
+        if (unavailable != unavailableActiveSheetTag && unavailable != null) {
+          _safeStatus(
+            'La scheda selezionata non è associata a questo account nella stanza. Usa l’account originale oppure una copia con un nuovo tag.',
+          );
+        }
+        unavailableActiveSheetTag = unavailable;
+        if (unavailable != null && _reportedSheetConflicts.add(unavailable)) {
+          unawaited(
+            _sendConfirmed('permission_request', {
+              'id': 'sheet_identity:${own['userId']}:$unavailable',
+              'action': 'sheet_identity_conflict',
+              'requestedSheetTag': unavailable,
+              'requesterName': _displayName,
+              'senderTag': '',
+              'createdAt': _nowIso(),
+            }).then((sent) {
+              if (!sent) _reportedSheetConflicts.remove(unavailable);
+            }),
+          );
+        }
+      }
       onPresenceChanged(users);
     } catch (_) {
       // A failed poll must not replace known peers with an empty snapshot.
@@ -1477,3 +1658,4 @@ class OculumRealtimeService {
 
   static String _nowIso() => DateTime.now().toIso8601String();
 }
+

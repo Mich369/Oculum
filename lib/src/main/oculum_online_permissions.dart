@@ -42,7 +42,13 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
 
   Iterable<Map<String, dynamic>> get currentPermissionRequests =>
       onlinePermissionRequests.values.where(
-        (request) => request['scope'] == permissionScope,
+        (request) =>
+            request['scope'] == permissionScope ||
+            (const {
+                  'room_join',
+                  'sheet_identity_conflict',
+                }.contains(request['action']) &&
+                request['roomCode'] == realtimeService?.normalizedRoomId),
       );
 
   bool validPermissionSender(
@@ -209,6 +215,36 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
   }
 
   void receivePermissionEvent(String event, Map<String, dynamic> payload) {
+    if (event == 'permission_request' &&
+        payload['action'] == 'sheet_identity_conflict') {
+      // This is a diagnostic request from a database-verified room member,
+      // not a claim of ownership or permission to act on the named sheet.
+      final userId = '${payload['authenticatedUserId'] ?? ''}';
+      if (!haPermessiMaster ||
+          userId.isEmpty ||
+          payload['authenticatedRole'] != 'player') {
+        return;
+      }
+      final id = '${payload['id'] ?? ''}';
+      final tag = '${payload['requestedSheetTag'] ?? ''}';
+      if (id != 'sheet_identity:$userId:$tag' || tag.isEmpty) return;
+      if (onlinePermissionRequests.containsKey(id)) return;
+      onlinePermissionRequests[id] = {
+        'id': id,
+        'action': 'sheet_identity_conflict',
+        'scope': permissionScope,
+        'roomCode': realtimeService?.normalizedRoomId,
+        'requesterName':
+            '${payload['requesterName'] ?? payload['playerName'] ?? 'Player'}',
+        'description':
+            'Scheda $tag da collegare: il tag risulta di un altro account. Il giocatore deve usare l’account originale o una copia con nuovo tag.',
+        'status': 'pending',
+        'unread': true,
+        'createdAt': payload['createdAt'],
+      };
+      refreshPermissionUi();
+      return;
+    }
     if (!validPermissionSender(
       payload,
       staff: event == 'permission_decision',
@@ -283,11 +319,28 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
   ) async {
     if (!haPermessiMaster ||
         request['status'] != 'pending' ||
-        request['scope'] != permissionScope) {
+        (request['scope'] != permissionScope &&
+            !(request['action'] == 'room_join' &&
+                request['roomCode'] == realtimeService?.normalizedRoomId))) {
       return;
     }
     final service = realtimeService;
     if (service?.isConnected != true) return;
+    if (request['action'] == 'room_join') {
+      final succeeded = await service!.decideRoomAccess(
+        '${request['userId']}',
+        allowed,
+      );
+      if (succeeded && mounted) {
+        onlinePermissionRequests['${request['id']}'] = {
+          ...request,
+          'status': allowed ? 'approved' : 'rejected',
+          'unread': false,
+        };
+        refreshPermissionUi();
+      }
+      return;
+    }
     final decision = {
       ...request,
       'status': allowed ? 'approved' : 'rejected',
@@ -413,14 +466,27 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
                             '${request['description']}',
                             style: TextStyle(color: primaryColor),
                           ),
-                          if (request['status'] == 'pending')
+                          if (request['status'] == 'pending' &&
+                              request['action'] == 'sheet_identity_conflict')
+                            TextButton(
+                              onPressed: () {
+                                request['status'] = 'reviewed';
+                                refreshPermissionUi();
+                              },
+                              child: Text(t('Ricevuto', 'Acknowledge')),
+                            )
+                          else if (request['status'] == 'pending')
                             Wrap(
                               spacing: 8,
                               children: [
                                 TextButton(
                                   onPressed: () =>
                                       decideMasterRequest(request, true),
-                                  child: Text(t('Consenti', 'Allow')),
+                                  child: Text(
+                                    request['action'] == 'room_join'
+                                        ? t('Ammetti', 'Admit')
+                                        : t('Consenti', 'Allow'),
+                                  ),
                                 ),
                                 TextButton(
                                   onPressed: () =>
@@ -431,7 +497,9 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
                             )
                           else
                             Text(
-                              request['status'] == 'approved'
+                              request['status'] == 'reviewed'
+                                  ? t('Segnalazione letta', 'Report read')
+                                  : request['status'] == 'approved'
                                   ? t('Consentito', 'Allowed')
                                   : t('Rifiutato', 'Rejected'),
                               style: TextStyle(color: tertiaryColor),
@@ -448,3 +516,4 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     );
   }
 }
+

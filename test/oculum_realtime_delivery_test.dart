@@ -73,18 +73,58 @@ class _Client extends SupabaseClient {
                 'is_anonymous': true,
               },
             };
-          } else if (path.endsWith('/oculum_open_room')) {
+          } else if (path.endsWith('/oculum_open_room') ||
+              path.endsWith('/oculum_open_room_with_password')) {
             final input = jsonDecode(request.body) as Map;
+            backend.openRoomCalls++;
+            backend.lastRoomInput = input;
+            if (backend.roomAccessError != null) {
+              return http.Response(
+                jsonEncode({
+                  'message': backend.roomAccessError,
+                  'code': '42501',
+                }),
+                403,
+                request: request,
+                headers: {'content-type': 'application/json'},
+              );
+            }
             body = {
               'roomId': 'room',
-              'role': input['p_as_master'] == true ? 'master' : 'player',
-              'status': 'approved',
+              'role':
+                  backend.roomRole ??
+                  (input['p_as_master'] == true ? 'master' : 'player'),
+              'status': backend.roomStatus,
             };
+          } else if (path.endsWith('/oculum_room_members')) {
+            backend.membershipReads++;
+            body = request.url.queryParameters['status'] == 'eq.pending'
+                ? backend.pendingAccess
+                : [
+                    {
+                      'role': backend.roomRole ?? 'player',
+                      'status': backend.roomStatus,
+                    },
+                  ];
+          } else if (path.endsWith('/oculum_set_room_password')) {
+            backend.passwordWrites++;
+            body = null;
           } else if (path.endsWith('/oculum_touch_room_session')) {
             backend.presenceWrites++;
             final input = jsonDecode(request.body) as Map;
             backend.sessions['${input['p_session']}'] =
                 Map<String, dynamic>.from(input['p_presence'] as Map);
+            backend.sessions['${input['p_session']}']!['role'] ??= 'player';
+            if (backend.foreignTags.isNotEmpty) {
+              final presence = backend.sessions['${input['p_session']}']!;
+              final tags = (presence['localSheetTags'] as List? ?? const [])
+                  .where((tag) => !backend.foreignTags.contains(tag))
+                  .toList();
+              presence['localSheetTags'] = tags;
+              if (!tags.contains(presence['activeSheetTag'])) {
+                presence['activeSheetTag'] = '';
+              }
+            }
             final delayedReply = backend.delayedPresenceReply;
             backend.delayedPresenceReply = null;
             if (delayedReply != null) {
@@ -194,7 +234,7 @@ class _Client extends SupabaseClient {
               }
             }
           } else if (path.endsWith('/oculum_room_presence')) {
-            body = <dynamic>[];
+            body = backend.sessions.values.toList();
           } else {
             body = null;
           }
@@ -224,6 +264,15 @@ class _Client extends SupabaseClient {
 }
 
 class _Backend {
+  String roomStatus = 'approved';
+  String? roomRole;
+  String? roomAccessError;
+  int openRoomCalls = 0;
+  int membershipReads = 0;
+  int passwordWrites = 0;
+  final foreignTags = <String>{};
+  final pendingAccess = <Map<String, dynamic>>[];
+  Map? lastRoomInput;
   Completer<void>? delayedPresenceReply;
   Completer<void>? presenceReplyStarted;
   int presenceWrites = 0;
@@ -233,6 +282,120 @@ class _Backend {
 }
 
 void main() {
+  test(
+    'pending join stays busy, cannot become Master and cancels immediately',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+      final backend = _Backend()
+        ..roomStatus = 'pending'
+        ..roomRole = 'player';
+      final client = _Client(backend);
+      final waiting = Completer<void>();
+      late OculumRealtimeService service;
+      service = OculumRealtimeService(
+        client: client,
+        roomId: 'test',
+        playerName: 'Another account',
+        presenceDataProvider: () => {'role': 'master'},
+        onEvent: (_, _) {},
+        onPresenceChanged: (_) {},
+        onStatusChanged: (status) {
+          if (service.isAwaitingApproval && !waiting.isCompleted) {
+            expect(service.isConnecting, isTrue);
+            expect(status, contains('altro account'));
+            waiting.complete();
+          }
+        },
+      );
+      addTearDown(() async {
+        await service.dispose();
+        await client.dispose();
+      });
+      final attempt = service.connect();
+      await waiting.future.timeout(const Duration(seconds: 3));
+      expect(service.masterRoleUnavailable, isTrue);
+      expect(service.isConnected, isFalse);
+      expect(identical(service.connect(), attempt), isTrue);
+      expect(await service.setRoomPassword('forbidden'), isFalse);
+      expect(backend.passwordWrites, 0);
+      await service.disconnect();
+      await attempt.timeout(const Duration(seconds: 1));
+      expect(service.isAwaitingApproval, isFalse);
+      expect(service.isConnecting, isFalse);
+      expect(backend.openRoomCalls, 1);
+      expect(client.channelCount, 0);
+    },
+  );
+
+  test(
+    'approval polling reads own membership without repeating the write RPC',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+      final backend = _Backend()..roomStatus = 'pending';
+      final client = _Client(backend);
+      final waiting = Completer<void>();
+      final service = OculumRealtimeService(
+        client: client,
+        roomId: 'test',
+        playerName: 'Player',
+        roomPassword: 'session-secret',
+        onEvent: (_, _) {},
+        onPresenceChanged: (_) {},
+        onStatusChanged: (_) {
+          if (!waiting.isCompleted) waiting.complete();
+        },
+      );
+      addTearDown(() async {
+        await service.dispose();
+        await client.dispose();
+      });
+      final attempt = service.connect();
+      await waiting.future.timeout(const Duration(seconds: 3));
+      backend.roomStatus = 'approved';
+      await attempt.timeout(const Duration(seconds: 15));
+      expect(service.isConnected, isTrue);
+      expect(service.authenticatedRole, 'player');
+      expect(backend.openRoomCalls, 1);
+      expect(backend.membershipReads, 1);
+      expect(backend.lastRoomInput!['p_password'], 'session-secret');
+      expect(await service.setRoomPassword('forbidden'), isFalse);
+    },
+  );
+
+  test(
+    'incorrect password requires user input instead of automatic retries',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+      final backend = _Backend()..roomAccessError = 'Password non corretta';
+      final client = _Client(backend);
+      final statuses = <String>[];
+      final service = OculumRealtimeService(
+        client: client,
+        roomId: 'test',
+        playerName: 'Player',
+        roomPassword: 'wrong',
+        onEvent: (_, _) {},
+        onPresenceChanged: (_) {},
+        onStatusChanged: statuses.add,
+      );
+      addTearDown(() async {
+        await service.dispose();
+        await client.dispose();
+      });
+      await service.connect();
+      expect(service.requiresUserAction, isTrue, reason: statuses.join('\n'));
+      expect(service.isConnected, isFalse);
+      expect(backend.openRoomCalls, 1);
+      expect(client.channelCount, 0);
+    },
+  );
+
   test('realtime recovery intervals stay bounded on an unhealthy backend', () {
     expect(
       OculumRealtimeService.roomRefreshInterval,
@@ -248,6 +411,153 @@ void main() {
     expect(oculumRealtimeSheetAckRetryDelay(4), const Duration(seconds: 60));
     expect(oculumRealtimeSheetAckRetryDelay(10), const Duration(seconds: 120));
   });
+
+  test(
+    'waiting for a Master decision does not block the room heartbeat',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+      final backend = _Backend()
+        ..pendingAccess.add({'user_id': 'new-player', 'display_name': 'Rose'});
+      final client = _Client(backend);
+      final decision = Completer<bool?>();
+      final received = Completer<void>();
+      final service = OculumRealtimeService(
+        client: client,
+        roomId: 'master',
+        playerName: 'Master',
+        presenceDataProvider: () => {'role': 'master'},
+        onAccessRequested: (_, _) {
+          if (!received.isCompleted) received.complete();
+          return decision.future;
+        },
+        onEvent: (_, _) {},
+        onPresenceChanged: (_) {},
+        onStatusChanged: (_) {},
+      );
+      addTearDown(() async {
+        if (!decision.isCompleted) decision.complete(null);
+        await service.dispose();
+        await client.dispose();
+      });
+      await service.connect().timeout(const Duration(seconds: 3));
+      await received.future.timeout(const Duration(seconds: 3));
+      expect(service.isConnected, isTrue);
+      await service.refreshPresence().timeout(const Duration(seconds: 3));
+      expect(
+        await service.sendPermissionEvent('permission_decision', {
+          'id': 'other-action',
+        }),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'foreign active sheet is explained and cannot be sent as an owned sheet',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+      final backend = _Backend()..foreignTags.add('FOREIGN');
+      final client = _Client(backend);
+      var activeTag = 'FOREIGN';
+      final service = OculumRealtimeService(
+        client: client,
+        roomId: 'test',
+        playerName: 'Player',
+        presenceDataProvider: () => {
+          'role': 'player',
+          'activeSheetTag': activeTag,
+          'localSheetTags': [activeTag],
+        },
+        onEvent: (_, _) {},
+        onPresenceChanged: (_) {},
+        onStatusChanged: (_) {},
+      );
+      addTearDown(() async {
+        await service.dispose();
+        await client.dispose();
+      });
+      await service.connect();
+      expect(service.unavailableActiveSheetTag, 'FOREIGN');
+      expect(
+        await service.sendSharedSheetConfirmed(
+          sheet: {'nome': 'Foreign'},
+          campaignId: 'campaign',
+          campaignName: 'Campaign',
+          sheetId: 'FOREIGN',
+          sheetName: 'Foreign',
+          ownerTag: 'FOREIGN',
+          senderRole: 'player',
+          targetAudience: 'master_coMaster',
+          fromMaster: false,
+          masterParty: false,
+        ),
+        isFalse,
+      );
+      expect(
+        backend.events.where((event) => event['event'] == 'sheet_shared'),
+        isEmpty,
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(backend.events.single['event'], 'permission_request');
+      expect(
+        backend.events.single['payload']['action'],
+        'sheet_identity_conflict',
+      );
+      expect(backend.events.single['payload'].containsKey('sheet'), isFalse);
+      activeTag = 'LOCAL';
+      await service.refreshPresence();
+      expect(service.unavailableActiveSheetTag, isNull);
+    },
+  );
+
+  test(
+    'sheet switch during a presence request registers the new sender before sending',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+      final backend = _Backend();
+      final client = _Client(backend);
+      var activeTag = 'INITIAL';
+      final service = OculumRealtimeService(
+        client: client,
+        roomId: 'race',
+        playerName: 'Player',
+        presenceDataProvider: () => {
+          'role': 'player',
+          'activeSheetTag': activeTag,
+          'localSheetTags': [activeTag],
+        },
+        onEvent: (_, _) {},
+        onPresenceChanged: (_) {},
+        onStatusChanged: (_) {},
+      );
+      addTearDown(() async {
+        await service.dispose();
+        await client.dispose();
+      });
+      await service.connect();
+      final delayed = Completer<void>();
+      backend.delayedPresenceReply = delayed;
+      backend.presenceReplyStarted = Completer<void>();
+      activeTag = 'OLD';
+      final refresh = service.refreshPresence();
+      await backend.presenceReplyStarted!.future;
+      activeTag = 'NEW';
+      final sent = service.sendPermissionEvent('permission_request', {
+        'senderTag': 'NEW',
+      });
+      delayed.complete();
+      await refresh;
+      expect(await sent, isTrue);
+      expect(backend.sessions.values.single['activeSheetTag'], 'NEW');
+      expect(backend.events.single['payload']['senderTag'], 'NEW');
+    },
+  );
 
   test('reconnect does not await an obsolete presence reply', () async {
     final previous = OculumRealtimeService.supabaseAvailable;
@@ -756,3 +1066,4 @@ void main() {
     },
   );
 }
+

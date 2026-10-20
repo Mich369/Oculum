@@ -598,6 +598,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         !realtimeAutoReconnectEnabled ||
         realtimeService != service ||
         service.isConnected ||
+        service.isConnecting ||
+        service.requiresUserAction ||
         (realtimeReconnectTimer?.isActive ?? false)) {
       return;
     }
@@ -612,7 +614,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       if (!mounted ||
           !realtimeAutoReconnectEnabled ||
           realtimeService != service ||
-          service.isConnected) {
+          service.isConnected ||
+          service.isConnecting ||
+          service.requiresUserAction) {
         return;
       }
       setState(() {
@@ -675,29 +679,30 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     service = OculumRealtimeService(
       roomId: room,
       playerName: realtimeDisplayName(),
+      roomPassword: realtimeRoomPasswordController.text,
       onAccessRequested: (userId, displayName) async {
-        if (!mounted || realtimeService != service) return false;
-        return await showDialog<bool>(
-              context: context,
-              barrierDismissible: false,
-              builder: (dialog) => AlertDialog(
-                title: const Text('Ingresso nella stanza'),
-                content: Text(
-                  '$displayName chiede di partecipare alla tua sessione.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(dialog, false),
-                    child: const Text('Rifiuta'),
-                  ),
-                  FilledButton(
-                    onPressed: () => Navigator.pop(dialog, true),
-                    child: const Text('Ammetti'),
-                  ),
-                ],
-              ),
-            ) ??
-            false;
+        if (!mounted || realtimeService != service) return null;
+        final id = 'room_join:${service.normalizedRoomId}:$userId';
+        if (onlinePermissionRequests[id]?['status'] != 'pending') {
+          onlinePermissionRequests[id] = {
+            'id': id,
+            'action': 'room_join',
+            'scope': permissionScope,
+            'roomCode': service.normalizedRoomId,
+            'userId': userId,
+            'requesterName': displayName,
+            'description': t(
+              'Chiede di entrare nella stanza.',
+              'Requests access to the room.',
+            ),
+            'status': 'pending',
+            'unread': true,
+            'createdAt': DateTime.now().toIso8601String(),
+          };
+          refreshPermissionUi();
+        }
+        // The top request panel sends the decision directly to the backend.
+        return null;
       },
       onConnected: () {
         if (!mounted || realtimeService != service) return;
@@ -808,7 +813,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         setState(() {
           realtimeStatus = status;
           realtimeConnected = connected;
-          realtimeConnecting = false;
+          realtimeConnecting = !connected && service.isConnecting;
         });
         if (!connected) scheduleRealtimeReconnect(service);
       },
@@ -892,6 +897,22 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeEncounterJoinRetryTimer = null;
       realtimeStatus = t('Realtime disconnesso.', 'Realtime disconnected.');
     });
+  }
+
+  Future<void> createRealtimeMasterRoom() async {
+    await disconnectRealtimeOculum();
+    if (!mounted) return;
+    final random = Random.secure();
+    final code = List.generate(
+      2,
+      (_) => random.nextInt(0x100000000).toRadixString(16).padLeft(8, '0'),
+    ).join();
+    setState(() {
+      modalitaMaster = true;
+      realtimeRoomController.text = 'oculum_$code';
+    });
+    programmaSalvataggio();
+    await connectRealtimeOculum();
   }
 
   void handleRealtimeEvent(String event, Map<String, dynamic> payload) {
@@ -1786,7 +1807,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   bool get canShareRealtimeSheetToStaff {
-    return realtimeService?.isConnected == true && !realtimeIsMasterRole;
+    return realtimeService?.isConnected == true &&
+        realtimeService?.unavailableActiveSheetTag == null &&
+        !realtimeIsMasterRole;
   }
 
   bool canReceiveRealtimeSheetFrom(
@@ -4374,8 +4397,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   Widget realtimeOculumPanel() {
     final connectedLabel = realtimeConnected
         ? t(
-            'Connesso a oculum_room_${realtimeRoomController.text.trim().isEmpty ? 'test' : realtimeRoomController.text.trim()}',
-            'Connected to oculum_room_${realtimeRoomController.text.trim().isEmpty ? 'test' : realtimeRoomController.text.trim()}',
+            'Connesso alla stanza ${realtimeService?.normalizedRoomId ?? realtimeRoomController.text}',
+            'Connected to room ${realtimeService?.normalizedRoomId ?? realtimeRoomController.text}',
           )
         : realtimeStatus;
 
@@ -4446,13 +4469,18 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
               ),
             ),
             subtitle: Text(
-              realtimeMasterBlockedByPresence
+              realtimeService?.masterRoleUnavailable == true
+                  ? t(
+                      'La stanza appartiene a un altro account: puoi partecipare come giocatore oppure creare una nuova stanza.',
+                      'This room belongs to another account: join as a player or create a new room.',
+                    )
+                  : realtimeMasterBlockedByPresence
                   ? t(
                       'Master gia presente: ruolo attuale Giocatore.',
                       'Master already present: current role Player.',
                     )
                   : t(
-                      'Ruolo attuale: ${realtimeLocalRole() == 'master'
+                      '${realtimeConnected ? 'Ruolo online' : 'Ruolo richiesto'}: ${realtimeLocalRole() == 'master'
                           ? 'Master'
                           : realtimeLocalRole() == 'coMaster'
                           ? 'Co-Master'
@@ -4465,25 +4493,30 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                     ),
               style: TextStyle(color: Colors.white.withValues(alpha: 0.72)),
             ),
-            onChanged: (value) {
-              setState(() {
-                modalitaMaster = value;
-                realtimeMasterBlockedByPresence =
-                    value && realtimeShouldYieldMaster(realtimeUsers);
-                if (!value) {
-                  realtimeMasterBlockedByPresence = false;
-                }
-                risultato = realtimeMasterBlockedByPresence
-                    ? t(
-                        'Master gia presente nella stanza: resti giocatore.',
-                        'A Master is already in the room: you stay player.',
-                      )
-                    : t('Ruolo realtime aggiornato.', 'Realtime role updated.');
-                aggiungiLog(risultato);
-              });
-              unawaited(realtimeService?.refreshPresence());
-              programmaSalvataggio();
-            },
+            onChanged: realtimeConnecting || realtimeConnected
+                ? null
+                : (value) {
+                    setState(() {
+                      modalitaMaster = value;
+                      realtimeMasterBlockedByPresence =
+                          value && realtimeShouldYieldMaster(realtimeUsers);
+                      if (!value) {
+                        realtimeMasterBlockedByPresence = false;
+                      }
+                      risultato = realtimeMasterBlockedByPresence
+                          ? t(
+                              'Master gia presente nella stanza: resti giocatore.',
+                              'A Master is already in the room: you stay player.',
+                            )
+                          : t(
+                              'Ruolo realtime aggiornato.',
+                              'Realtime role updated.',
+                            );
+                      aggiungiLog(risultato);
+                    });
+                    unawaited(realtimeService?.refreshPresence());
+                    programmaSalvataggio();
+                  },
           ),
           const SizedBox(height: 12),
           Row(
@@ -4508,6 +4541,43 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           ),
           const SizedBox(height: 12),
           realtimeSheetAccessDropdown(),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: Text(
+              t('Password stanza (opzionale)', 'Room password (optional)'),
+              style: TextStyle(color: primaryColor),
+            ),
+            leading: Icon(Icons.lock_outline, color: primaryColor),
+            children: [
+              TextField(
+                controller: realtimeRoomPasswordController,
+                obscureText: true,
+                enableSuggestions: false,
+                autocorrect: false,
+                decoration: InputDecoration(
+                  labelText: t('Password stanza', 'Room password'),
+                  helperText: t(
+                    'Vuota = nessuna password. Il Master deve comunque ammettere i nuovi giocatori.',
+                    'Empty = no password. The Master must still approve new players.',
+                  ),
+                  helperMaxLines: 3,
+                ),
+              ),
+              if (realtimeConnected && realtimeIsMasterRole)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      await realtimeService?.setRoomPassword(
+                        realtimeRoomPasswordController.text,
+                      );
+                    },
+                    icon: const Icon(Icons.lock_reset),
+                    label: Text(t('Applica password', 'Apply password')),
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 10,
@@ -4522,8 +4592,24 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                     ? null
                     : connectRealtimeOculum,
                 icon: const Icon(Icons.link),
-                label: Text(t('Connetti', 'Connect')),
+                label: Text(
+                  realtimeService?.isAwaitingApproval == true
+                      ? t('In attesa del Master', 'Waiting for Master')
+                      : realtimeConnecting
+                      ? t('Connessione...', 'Connecting...')
+                      : t('Connetti', 'Connect'),
+                ),
               ),
+              if (!realtimeConnected && realtimeWantsMasterRole)
+                OutlinedButton.icon(
+                  onPressed:
+                      realtimeConnecting &&
+                          realtimeService?.isAwaitingApproval != true
+                      ? null
+                      : createRealtimeMasterRoom,
+                  icon: const Icon(Icons.add_home_outlined),
+                  label: Text(t('Crea nuova stanza', 'Create new room')),
+                ),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
@@ -4533,7 +4619,11 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                     ? disconnectRealtimeOculum
                     : null,
                 icon: const Icon(Icons.link_off),
-                label: Text(t('Disconnetti', 'Disconnect')),
+                label: Text(
+                  realtimeConnecting
+                      ? t('Annulla ingresso', 'Cancel joining')
+                      : t('Disconnetti', 'Disconnect'),
+                ),
               ),
               ElevatedButton.icon(
                 onPressed: realtimeConnected ? sendRealtimePing : null,
@@ -4563,6 +4653,28 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             connectedLabel,
             color: realtimeConnected ? Colors.greenAccent : tertiaryColor,
           ),
+          if (realtimeConnected &&
+              realtimeService?.unavailableActiveSheetTag != null) ...[
+            const SizedBox(height: 10),
+            smallInfoText(
+              t(
+                'Questa scheda non appartiene al tuo account online nella stanza. Se l’hai creata tu, accedi all’account originale nelle Impostazioni. Puoi anche creare una copia con un nuovo tag: la scheda originale resta conservata.',
+                'This sheet does not belong to your online account in this room. If it is yours, sign in to the original account in Settings. You can also create a copy with a new tag; the original sheet is preserved.',
+              ),
+              color: tertiaryColor,
+            ),
+            OutlinedButton.icon(
+              onPressed: () async {
+                await duplicaSchedaCorrente();
+                await realtimeService?.refreshPresence();
+                unawaited(sendRealtimeActiveSheetToStaff());
+              },
+              icon: const Icon(Icons.copy_all_outlined),
+              label: Text(
+                t('Crea copia con nuovo tag', 'Create copy with new tag'),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           Text(
             t('Chat sessione', 'Session chat'),
@@ -4641,3 +4753,4 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     );
   }
 }
+
