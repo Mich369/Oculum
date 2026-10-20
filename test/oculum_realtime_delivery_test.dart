@@ -234,6 +234,7 @@ class _Client extends SupabaseClient {
               }
             }
           } else if (path.endsWith('/oculum_room_presence')) {
+            backend.presenceReads++;
             body = backend.sessions.values.toList();
           } else {
             body = null;
@@ -276,6 +277,7 @@ class _Backend {
   Completer<void>? delayedPresenceReply;
   Completer<void>? presenceReplyStarted;
   int presenceWrites = 0;
+  int presenceReads = 0;
   final sessions = <String, Map<String, dynamic>>{};
   final events = <Map<String, dynamic>>[];
   int initiativeSnapshotReads = 0;
@@ -634,6 +636,18 @@ void main() {
       await service.connect();
       final initialWrites = backend.presenceWrites;
       expect(initialWrites, greaterThan(0));
+      final initialReads = backend.presenceReads;
+      for (var i = 0; i < 10; i++) {
+        expect(
+          await service.sendPermissionEvent('permission_request', {
+            'senderTag': 'PLAYER',
+            'id': 'action-$i',
+          }),
+          isTrue,
+        );
+      }
+      expect(backend.presenceReads, initialReads);
+      expect(backend.presenceWrites, initialWrites);
       await Future.wait(List.generate(10, (_) => service.refreshPresence()));
       expect(backend.presenceWrites, initialWrites);
       activeTag = 'SUMMON';

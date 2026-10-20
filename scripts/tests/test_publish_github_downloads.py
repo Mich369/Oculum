@@ -52,3 +52,21 @@ class DownloadPublicationTests(unittest.TestCase):
         self.assertEqual(publisher.read_catalog(publisher.notes(catalog)), catalog)
         with self.assertRaises(ValueError):
             publisher.read_catalog("An unrelated release must never be overwritten")
+
+    def test_full_release_keeps_extra_archives_without_exposing_unknown_files(self):
+        names = publisher.PUBLIC_ARTIFACTS + publisher.EXTRA_ARCHIVES
+        artifacts = [dict(name=name, id=index, expired=False, size_in_bytes=4)
+                     for index, name in enumerate(names, start=1)]
+        self.assertEqual(len(publisher.select_release_archives(artifacts)), 8)
+        self.assertEqual(len(publisher.select_public_artifacts(artifacts)), 5)
+        with self.assertRaisesRegex(ValueError, "Unreviewed"):
+            publisher.select_release_archives(artifacts + [dict(name="private-saves")])
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            publisher.select_release_archives(artifacts + [artifacts[-1]])
+        catalog = {"one": dict(workflow="Build distribution", commit="a" * 40,
+                               runId=42, runUrl="https://github.com/Mich369/Oculum/actions/runs/42",
+                               artifacts=[])}
+        notes = publisher.notes(catalog)
+        self.assertIn("releases/tag/oculum-build-42", notes)
+        self.assertEqual(publisher.read_catalog(notes), catalog)
+

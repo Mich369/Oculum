@@ -21,6 +21,7 @@ PUBLIC_ARTIFACTS = (
     "Oculum-macOS", "Oculum-Windows", "Oculum-Test-Windows",
     "Oculum-Linux", "Oculum-Android",
 )
+EXTRA_ARCHIVES = ("Oculum-Web", "Oculum-iOS-unsigned", "Oculum-UI-Catture")
 
 
 def gh(*args, **kwargs):
@@ -79,6 +80,23 @@ def select_public_artifacts(artifacts):
     return [selected[name] for name in PUBLIC_ARTIFACTS]
 
 
+def select_release_archives(artifacts):
+    """Publish every reviewed build archive; keep five platforms in the UI."""
+    selected = select_public_artifacts(artifacts)
+    seen = set(PUBLIC_ARTIFACTS)
+    for artifact in artifacts:
+        name = artifact.get("name")
+        if name in PUBLIC_ARTIFACTS:
+            continue
+        if name not in EXTRA_ARCHIVES or name in seen:
+            raise ValueError("Unreviewed or duplicate archive: " + str(name))
+        seen.add(name)
+        selected.append(artifact)
+    for artifact in selected:
+        asset_name(artifact)
+    return selected
+
+
 def read_catalog(body):
     if MARKER not in body:
         if body.strip():
@@ -100,6 +118,8 @@ def notes(catalog):
                   f"Commit `{item['commit'][:7]}` · [Build verificata]({item['runUrl']})", ""]
         for artifact in item["artifacts"]:
             lines.append(f"- [{artifact['name']}]({artifact['url']}) — {artifact['bytes'] / 1024 ** 2:.1f} MB")
+        if item.get("runId"):
+            lines += ["", f"[Archivio completo della build](https://github.com/{REPO}/releases/tag/oculum-build-{item['runId']}) — include anche Web, iOS non firmato e catture di verifica."]
         lines.append("")
     lines.append(MARKER + json.dumps(catalog, ensure_ascii=True, separators=(",", ":")) + " -->")
     return "\n".join(lines)
@@ -127,7 +147,7 @@ def publish(run_id):
     if not artifacts:
         print("This successful workflow produced no downloadable artifacts")
         return
-    artifacts = select_public_artifacts(artifacts)
+    artifacts = select_release_archives(artifacts)
     tag = f"oculum-build-{run_id}"
     current = release(CHANNEL)
     catalog = read_catalog(current.get("body") or "") if current else {}
@@ -159,7 +179,8 @@ def publish(run_id):
                             "url": f"https://github.com/{REPO}/releases/download/{tag}/{filename}"})
         catalog[str(workflow_id)] = {
             "workflow": run["name"], "runId": run["id"], "commit": run["head_sha"],
-            "runUrl": run["html_url"], "artifacts": entries,
+            "runUrl": run["html_url"],
+            "artifacts": [entry for entry in entries if entry["name"] in PUBLIC_ARTIFACTS],
         }
         note_file = root / "downloads.md"
         note_file.write_text(notes(catalog), encoding="utf-8")
@@ -174,3 +195,4 @@ def publish(run_id):
 
 if __name__ == "__main__":
     publish(sys.argv[1])
+

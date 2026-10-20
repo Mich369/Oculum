@@ -1093,7 +1093,11 @@ class OculumRealtimeService {
           '${payload['senderTag'] ?? ''}'.isNotEmpty) {
         // A newly selected/created sheet must be registered before its first
         // share; await an in-flight refresh rather than racing its owner RPC.
-        await _trackPresence();
+        if (event == 'sheet_shared' ||
+            !_presenceRegistered ||
+            _registeredIdentitySignature != _currentIdentitySignature) {
+          await _trackPresence();
+        }
         // A refresh started before a sheet switch may have registered the
         // previous identity. Finish registering the current identity first.
         if (generation == _generation &&

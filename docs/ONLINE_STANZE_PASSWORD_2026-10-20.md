@@ -17,6 +17,7 @@ La password può essere modificata dal proprietario con **Applica password**. Un
 - La registrazione della richiesta avviene una volta. L'attesa legge soltanto la propria membership ogni 10 secondi, evitando ripetuti lock di scrittura della stanza.
 - Le richieste di accesso compaiono nella busta in alto e non tengono occupato il ciclo di sincronizzazione mentre il Master decide.
 - Cambiare scheda durante un aggiornamento Presence fa completare la registrazione della nuova identità prima dell'invio dell'azione.
+- Le azioni della stessa scheda già registrata non aggiungono letture/scritture della stanza: verificato con dieci invii consecutivi. Il cambio scheda conserva il controllo di registrazione.
 - Se il server non riconosce la scheda selezionata come appartenente all'account, il client mostra il conflitto e invia al Master una segnalazione nelle richieste in alto. La segnalazione contiene nome e tag, non la scheda privata, e non trasferisce proprietà.
 - È possibile accedere all'account originale o creare esplicitamente una copia con un nuovo tag tramite la duplicazione esistente. L'originale resta conservato.
 
@@ -43,4 +44,8 @@ Il rollback esplicito è preparato in `supabase/tests/rollback_optional_room_pas
 ## Personalizzabile
 
 Room ID, nome visibile, password opzionale, approvazione/rifiuto del partecipante e scelta della scheda da usare. Questa correzione non modifica regole di combattimento, abilità o cataloghi personalizzati.
+
+## Pubblicazione
+
+Il run `39488620536` del commit `8ae8c43` è interamente riuscito. Tutti gli otto archivi sono stati verificati e resi pubblici senza login; il menu mostra le cinque piattaforme. Per questo run gli archivi Web, iOS non firmato e catture sono stati completati manualmente. Il publisher ora comprende automaticamente anche questi archivi verificati, mantenendo cinque piattaforme nel catalogo e un collegamento all'archivio completo. Nomi inattesi o file non esaminati bloccano la pubblicazione.
 
