@@ -16,6 +16,7 @@ class OculumRealtimeService {
     this.presenceDataProvider,
     this.onConnected,
     this.onAccessRequested,
+    this.httpPollingOnly = false,
     SupabaseClient? client,
   }) : _client = client,
        _presenceKey = _newSessionId();
@@ -86,10 +87,16 @@ class OculumRealtimeService {
   final Future<bool> Function(String userId, String displayName)?
   onAccessRequested;
 
+  /// Use the authenticated HTTPS event journal instead of a websocket.
+  /// Automatic mode falls back to this transport when websocket setup fails.
+  final bool httpPollingOnly;
+
   final String _presenceKey;
   final SupabaseClient? _client;
   RealtimeChannel? _channel;
   bool _connected = false;
+  bool _pollingFallback = false;
+  bool _connectionPublished = false;
   bool _disposed = false;
   Future<void>? _connecting;
   int _generation = 0;
@@ -100,6 +107,7 @@ class OculumRealtimeService {
   String? _secureRoomId;
   String? authenticatedRole;
   Timer? _roomHeartbeat;
+  Timer? _fallbackPollingTimer;
   bool _roomRefreshing = false;
   final _accessDecisions = <String>{};
   Future<void> _incomingEvents = Future<void>.value();
@@ -107,12 +115,16 @@ class OculumRealtimeService {
   final _deliveredEvents = <String>{};
   final _appliedAccessRevocations = <String>{};
   int _replaySequence = 0;
+  int _initiativeRestoredGeneration = -1;
   final _replaySince = DateTime.now()
       .toUtc()
       .subtract(const Duration(minutes: 5))
       .toIso8601String();
 
-  bool get isConnected => _connected && !_disposed && _channel != null;
+  bool get _transportActive =>
+      _connected && !_disposed && (_channel != null || _pollingFallback);
+
+  bool get isConnected => _transportActive && _presenceRegistered;
 
   String get normalizedRoomId {
     final clean = roomId.trim().replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
@@ -178,6 +190,12 @@ class OculumRealtimeService {
       if (_disposed || generation != _generation) return;
       _secureRoomId = '${membership['roomId']}';
       authenticatedRole = '${membership['role']}';
+      if (httpPollingOnly) {
+        await _startHttpPollingFallback(
+          'Il client usa la sincronizzazione HTTPS compatibile.',
+        );
+        return;
+      }
       final channel = client.channel(
         channelName,
         opts: RealtimeChannelConfig(
@@ -215,6 +233,7 @@ class OculumRealtimeService {
         switch (status) {
           case RealtimeSubscribeStatus.subscribed:
             final wasConnected = _connected;
+            _pollingFallback = false;
             _connected = true;
             _safeStatus('Connesso a $channelName');
             _presenceRegistered = false;
@@ -230,7 +249,7 @@ class OculumRealtimeService {
                 return;
               }
               if (!subscribed.isCompleted) subscribed.complete();
-              if (!wasConnected) onConnected?.call();
+              if (!wasConnected) _notifyConnectedOnce();
             }());
             _roomHeartbeat?.cancel();
             _roomHeartbeat = Timer.periodic(
@@ -240,6 +259,8 @@ class OculumRealtimeService {
             break;
           case RealtimeSubscribeStatus.channelError:
             _connected = false;
+            _presenceRegistered = false;
+            _connectionPublished = false;
             _safeStatus('Realtime errore canale: ${error ?? 'sconosciuto'}');
             if (!subscribed.isCompleted) {
               subscribed.completeError(error ?? 'Realtime channel error');
@@ -247,6 +268,8 @@ class OculumRealtimeService {
             break;
           case RealtimeSubscribeStatus.closed:
             _connected = false;
+            _presenceRegistered = false;
+            _connectionPublished = false;
             _safeStatus('Realtime disconnesso.');
             onPresenceChanged(const <Map<String, dynamic>>[]);
             if (!subscribed.isCompleted) {
@@ -255,6 +278,8 @@ class OculumRealtimeService {
             break;
           case RealtimeSubscribeStatus.timedOut:
             _connected = false;
+            _presenceRegistered = false;
+            _connectionPublished = false;
             _safeStatus('Realtime timeout.');
             if (!subscribed.isCompleted) {
               subscribed.completeError('Realtime timeout');
@@ -266,16 +291,44 @@ class OculumRealtimeService {
       await subscribed.future.timeout(const Duration(seconds: 12));
     } catch (error) {
       if (_disposed || generation != _generation) return;
-      _connected = false;
-      _safeStatus('Realtime non connesso: $error');
       await disconnect(notify: false);
+      if (_disposed) return;
+      final client = _client ?? Supabase.instance.client;
+      if (_secureRoomId != null &&
+          authenticatedRole != null &&
+          client.auth.currentSession != null) {
+        await _startHttpPollingFallback(
+          'WebSocket non disponibile; uso la sincronizzazione HTTPS: $error',
+        );
+      } else {
+        _safeStatus('Realtime non connesso: $error');
+      }
     }
+  }
+
+  Future<void> _startHttpPollingFallback(String status) async {
+    if (_disposed || _secureRoomId == null || authenticatedRole == null) {
+      return;
+    }
+    _fallbackPollingTimer?.cancel();
+    _pollingFallback = true;
+    _connected = true;
+    _safeStatus(status);
+    _fallbackPollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      unawaited(_trackPresence());
+    });
+    await _trackPresence();
   }
 
   Future<void> disconnect({bool notify = true}) async {
     _generation++;
     _roomHeartbeat?.cancel();
     _roomHeartbeat = null;
+    _fallbackPollingTimer?.cancel();
+    _fallbackPollingTimer = null;
+    _pollingFallback = false;
+    _presenceRegistered = false;
+    _connectionPublished = false;
     _sheetTransfers.clear();
     _sessionNoteTransfers.clear();
     final channel = _channel;
@@ -310,6 +363,8 @@ class OculumRealtimeService {
     required int maxHp,
     required int tempHp,
     required int shield,
+    int larvalBroodHp = 0,
+    int larvalBroodMaxHp = 0,
   }) {
     return _send('hp_changed', <String, dynamic>{
       'playerName': _displayName,
@@ -317,6 +372,10 @@ class OculumRealtimeService {
       'maxHp': maxHp,
       'tempHp': tempHp,
       'shield': shield,
+      if (larvalBroodMaxHp > 0) ...{
+        'larvalBroodHp': larvalBroodHp.clamp(0, larvalBroodMaxHp),
+        'larvalBroodMaxHp': larvalBroodMaxHp,
+      },
       'sentAt': _nowIso(),
     });
   }
@@ -881,7 +940,7 @@ class OculumRealtimeService {
     Map<String, dynamic> payload,
   ) async {
     final channel = _channel;
-    if (!isConnected || channel == null) {
+    if (!isConnected || (channel == null && !_pollingFallback)) {
       _safeStatus('Realtime non connesso.');
       return false;
     }
@@ -1003,7 +1062,11 @@ class OculumRealtimeService {
 
   Future<void> _trackPresence() async {
     final channel = _channel;
-    if (!isConnected || channel == null || _roomRefreshing) return;
+    if (!_transportActive ||
+        (channel == null && !_pollingFallback) ||
+        _roomRefreshing) {
+      return;
+    }
     _roomRefreshing = true;
 
     try {
@@ -1054,6 +1117,11 @@ class OculumRealtimeService {
       }
       _emitPresence();
       await _replayEvents(client, channel);
+      if (_initiativeRestoredGeneration != _generation &&
+          await _restoreLatestInitiativeSnapshot(client, channel)) {
+        _initiativeRestoredGeneration = _generation;
+      }
+      if (_presenceRegistered) _notifyConnectedOnce();
       if (authenticatedRole == 'master' && onAccessRequested != null) {
         final pending = await client
             .from('oculum_room_members')
@@ -1089,6 +1157,17 @@ class OculumRealtimeService {
     } finally {
       _roomRefreshing = false;
     }
+  }
+
+  void _notifyConnectedOnce() {
+    if (_disposed ||
+        !_connected ||
+        !_presenceRegistered ||
+        _connectionPublished) {
+      return;
+    }
+    _connectionPublished = true;
+    onConnected?.call();
   }
 
   Future<void> _handleBroadcast(
@@ -1133,7 +1212,7 @@ class OculumRealtimeService {
 
   Future<void> _replayEvents(
     SupabaseClient client,
-    RealtimeChannel channel,
+    RealtimeChannel? channel,
   ) async {
     final records = await client
         .from('oculum_room_events')
@@ -1150,12 +1229,54 @@ class OculumRealtimeService {
         if (_deliveredEvents.length > 4000) {
           _deliveredEvents.remove(_deliveredEvents.first);
         }
-        _deliverVerifiedEvent(
-          '${record['event']}',
-          Map<String, dynamic>.from(record['payload'] as Map),
-        );
+        final event = '${record['event']}';
+        final payload = Map<String, dynamic>.from(record['payload'] as Map);
+        if (event == 'initiative_shared') {
+          payload['restoredSnapshot'] = true;
+        }
+        _deliverVerifiedEvent(event, payload);
       }
       _replaySequence = (record['sequence'] as num).toInt();
+    }
+  }
+
+  /// Event replay is intentionally short-lived so reconnecting clients do not
+  /// replay old attacks, rolls, or chat. The current fight is different: it is
+  /// durable shared state and must survive an app restart. Restore only the
+  /// newest database-verified Master snapshot, never a client broadcast body.
+  Future<bool> _restoreLatestInitiativeSnapshot(
+    SupabaseClient client,
+    RealtimeChannel? channel,
+  ) async {
+    try {
+      final record = await client
+          .from('oculum_room_events')
+          .select('id,event,payload,sequence')
+          .eq('room_id', _secureRoomId!)
+          .eq('event', 'initiative_shared')
+          .order('sequence', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      if (_disposed || _channel != channel) return false;
+      if (record == null ||
+          record['event'] != 'initiative_shared' ||
+          record['payload'] is! Map) {
+        return true;
+      }
+      final id = '${record['id']}';
+      if (!_deliveredEvents.add(id)) return true;
+      if (_deliveredEvents.length > 4000) {
+        _deliveredEvents.remove(_deliveredEvents.first);
+      }
+      final payload = Map<String, dynamic>.from(record['payload'] as Map)
+        ..['restoredSnapshot'] = true;
+      _deliverVerifiedEvent('initiative_shared', payload);
+      return true;
+    } catch (_) {
+      // The realtime transport stays connected even if historical state cannot
+      // be restored; the next heartbeat retries without discarding local data.
+      _safeStatus('Turnistica condivisa in attesa di sincronizzazione.');
+      return false;
     }
   }
 
@@ -1211,7 +1332,7 @@ class OculumRealtimeService {
     if (_disposed) return;
 
     final channel = _channel;
-    if (channel == null) {
+    if (channel == null && !_pollingFallback) {
       onPresenceChanged(const <Map<String, dynamic>>[]);
       return;
     }

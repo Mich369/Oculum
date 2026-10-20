@@ -92,7 +92,9 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
   }
 
   bool masterInitiativeTokenCanAct(Map<String, dynamic> token) {
-    return !masterInitiativeTokenIsDead(token) &&
+    return !readBoolValue(token['shadowCloneExpired']) &&
+        '${token['status'] ?? ''}' != 'expired' &&
+        !masterInitiativeTokenIsDead(token) &&
         !masterInitiativeTokenIsDowned(token);
   }
 

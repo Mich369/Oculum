@@ -693,6 +693,58 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                 ),
               ),
             ),
+          if (shields && !hidden && broodMaximumHp() > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.bug_report_outlined,
+                        size: 13,
+                        color: Color(0xFFE44D5E),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          t('Nidiata · larve', 'Brood · larvae'),
+                          style: const TextStyle(
+                            color: Color(0xFFE44D5E),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${broodRemainingHp()}/${broodMaximumHp()}',
+                        key: const ValueKey('larval_brood_health_label'),
+                        style: const TextStyle(
+                          color: Color(0xFFE44D5E),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      key: const ValueKey('larval_brood_health_bar'),
+                      value: (broodRemainingHp() / broodMaximumHp()).clamp(
+                        0.0,
+                        1.0,
+                      ),
+                      minHeight: 8,
+                      color: const Color(0xFFE44D5E),
+                      backgroundColor: const Color(0xFF4A1720),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -1545,7 +1597,8 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
           (effect) =>
               effect['type'] == 'elemental_resistance' &&
               effect['element'] == elementId &&
-              readIntValue(effect['remaining']) > 0,
+              // -1 is the persisted value for an effect without expiry.
+              readIntValue(effect['remaining']) != 0,
         )
         .map((effect) => canonicalDamageModifierName('${effect['preset']}'))
         .toList();
@@ -1907,6 +1960,34 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
   // Advance only the participant who has completed a turn. Remote players own
   // their live effects; snapshots carry the same monotonic personal counter.
   void advanceEncounterParticipantTurn(int index) {
+    // The Master counts each completed initiative turn once and publishes the
+    // resulting duration in the authoritative shared snapshot.
+    for (final cloneToken in masterInitiativeTokens) {
+      if (!readBoolValue(cloneToken['oculumShadowClone']) ||
+          readBoolValue(cloneToken['shadowCloneExpired'])) {
+        continue;
+      }
+      final remaining = max(
+        0,
+        readIntValue(cloneToken['shadowCloneTurnsRemaining']) - 1,
+      );
+      cloneToken['shadowCloneTurnsRemaining'] = remaining;
+      if (remaining == 0) {
+        cloneToken['shadowCloneExpired'] = true;
+        cloneToken['status'] = 'expired';
+        cloneToken['currentHp'] = 0;
+        final tag = '${cloneToken['sheetTag'] ?? cloneToken['id'] ?? ''}';
+        final cloneSheet = schedePersonaggio
+            .where((sheet) => '${sheet['sheetTag'] ?? ''}' == tag)
+            .firstOrNull;
+        if (cloneSheet != null) {
+          cloneSheet['shadowCloneExpired'] = true;
+          cloneSheet['shadowCloneTurnsRemaining'] = 0;
+          cloneSheet['currentHp'] = '0';
+        }
+        aggiungiLog('Clone d’ombra dissolto al termine della sua durata.');
+      }
+    }
     final token = masterInitiativeTokens[index];
     final scrollEffects = (token['scrollEffects'] as List? ?? [])
         .whereType<Map>()

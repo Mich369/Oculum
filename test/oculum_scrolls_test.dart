@@ -3,6 +3,28 @@ import 'package:oculum/main.dart';
 
 void main() {
   test(
+    'Shadow Alive scroll preserves its formula and grade duration in JSON',
+    () {
+      for (var grade = 0; grade <= 12; grade++) {
+        final item = oculumShadowLivingScrollItem(grade);
+        final restored = InventoryItem.fromJson(item.toJson());
+        final scroll = restored.craftData['scroll'] as Map;
+        final effect = oculumScrollCombatEffects(
+          Map<String, dynamic>.from(scroll),
+        ).single;
+        expect(scroll['kind'], 'shadow_clone');
+        expect(scroll['grade'], grade);
+        expect(effect.type, 'evocazione');
+        expect(effect.target, 'clone_ombra');
+        expect(effect.valueExpression, 'livello*5');
+        expect(effect.duration, '${grade * 2 + 3}');
+        expect(effect.durationUnit, 'turni');
+        expect(effect.recipient, 'se_stesso');
+      }
+    },
+  );
+
+  test(
     'Technique scroll catalogue contains at least 100 distinct learnable skills',
     () {
       expect(oculumTechniqueScrolls.length, greaterThanOrEqualTo(100));

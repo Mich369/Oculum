@@ -8,6 +8,7 @@ const List<String> oculumStructuredEffectTypes = <String>[
   'danno',
   'danno_percentuale',
   'costrutto',
+  'evocazione',
   'tiro_sottotratto',
   'difesa',
   'cura',
@@ -1011,6 +1012,10 @@ String oculumStructuredEffectDescription(
     case 'costrutto':
       return withPeriod(
         '${effect.target.isEmpty ? 'Costrutto' : effect.target}: $displayedValue Vita',
+      );
+    case 'evocazione':
+      return withPeriod(
+        '${effect.target.isEmpty ? 'Evocazione' : effect.target}: $displayedValue Vita',
       );
     case 'difesa':
       return withPeriod('Difesa + $displayedValue');

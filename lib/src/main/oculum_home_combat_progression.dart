@@ -1357,6 +1357,31 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         tiroGlobaleBonus() +
         oculumSpend.bonus;
     final totale = rollTotalWithCritical(dado, 20, [bonus]);
+    final utilityCombat =
+        actionLabel?.toLowerCase().contains('utility') ?? false;
+    if (utilityCombat &&
+        currentCombatIsActive() &&
+        hiddenEyeTotal(stat) >= 10 &&
+        dado > 10) {
+      final sheet = schedePersonaggio[schedaCorrente];
+      if (stat.id == 'concentrazione') {
+        sheet['combatConcentrationPending'] = true;
+        aggiungiLog(
+          '[CONCENTRAZIONE] Tiro $dado: attivata per la prossima azione di combattimento (+10% Danni se attacchi, +12% Difesa se ti difendi).',
+        );
+        programmaSalvataggio();
+      } else if (stat.id == 'adattamento') {
+        final reduction = 1 + (dado - 10);
+        sheet['combatAdaptationReductionPending'] = max(
+          reduction,
+          readIntValue(sheet['combatAdaptationReductionPending']),
+        );
+        aggiungiLog(
+          '[ADATTAMENTO] Tiro $dado: il prossimo danno ricevuto è ridotto di $reduction.',
+        );
+        programmaSalvataggio();
+      }
+    }
     onResolved?.call(dado, totale);
     final testoDado = rollFormulaWithCritical(
       roll: dado,
@@ -1934,6 +1959,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         return t('A terra', 'Downed');
       case 'dead':
         return t('Morto/KO', 'Dead/KO');
+      case 'expired':
+        return t('Dissolto', 'Dissolved');
       default:
         return t('Da agire', 'Ready');
     }
@@ -1951,6 +1978,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         return Colors.deepOrangeAccent;
       case 'dead':
         return Colors.redAccent;
+      case 'expired':
+        return Colors.blueGrey;
       default:
         return primaryColor;
     }
@@ -2109,6 +2138,37 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     return masterInitiativeTokenCanAct(token) &&
         masterInitiativeReactionAvailable(token) > 0 &&
         !masterInitiativeTokenIsTemporary(token);
+  }
+
+  bool consumeMasterReactionForSheetTag(String sheetTag) {
+    if (!realtimeIsMasterRole || sheetTag.isEmpty) return false;
+    final index = masterInitiativeTokens.indexWhere(
+      (token) => publicInitiativeSourceTag(token) == sheetTag,
+    );
+    if (index < 0 || !masterInitiativeCanUseReaction(index)) return false;
+    final token = masterInitiativeTokens[index];
+    final normalMax = masterInitiativeReactionMax(token);
+    final normalUsed = masterInitiativeReactionUsed(token);
+    final fastMax = masterInitiativeFastReactionMax(token);
+    final fastUsed = masterInitiativeFastReactionUsedThisTurn(token);
+    if (normalMax > normalUsed) {
+      token['reactionUsed'] = normalUsed + 1;
+      token['reactionUsedRound'] = masterInitiativeRound;
+    } else if (fastMax > fastUsed) {
+      token['reactionFastUsed'] = fastUsed + 1;
+      token['reactionFastTurnKey'] = masterInitiativeTurnKey();
+    } else {
+      return false;
+    }
+    token['reactionAt'] = DateTime.now().toIso8601String();
+    token['updatedAt'] = DateTime.now().toIso8601String();
+    aggiungiLog(
+      '[TURNISTICA] Reazione di ${token['name'] ?? sheetTag} consumata con Schianto.',
+    );
+    programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
+    sendRealtimeInitiativeSnapshotIfPublished();
+    return true;
   }
 
   bool masterInitiativeCanDuplicateAction(int index) {
@@ -2465,6 +2525,17 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'actionUsed': false,
       'currentHp': sheetCurrentHpForDeathAt(index),
       'maxHp': sheetMaxHpForDeathAt(index),
+      if (readBoolValue(schedePersonaggio[index]['oculumShadowClone'])) ...{
+        'oculumShadowClone': true,
+        'shadowCloneTurnsRemaining': readIntValue(
+          schedePersonaggio[index]['shadowCloneTurnsRemaining'],
+        ),
+        'shadowCloneExpired': readBoolValue(
+          schedePersonaggio[index]['shadowCloneExpired'],
+        ),
+        'shadowCloneOwnerTag':
+            '${schedePersonaggio[index]['shadowCloneOwnerTag'] ?? ''}',
+      },
       'currentOculum': sheetCurrentOculumForDeathAt(index),
       'maxOculum': sheetMaxOculumForDeathAt(index),
       'shield': index == schedaCorrente
@@ -2528,6 +2599,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       token['reportedTurn'] = previous['reportedTurn'] ?? token['reportedTurn'];
       token['reflexExperience'] = previous['reflexExperience'] ?? 0;
       token['reflexTieAwardKey'] = previous['reflexTieAwardKey'];
+      if (readBoolValue(previous['oculumShadowClone'])) {
+        token['oculumShadowClone'] = true;
+        token['shadowCloneTurnsRemaining'] = readIntValue(
+          previous['shadowCloneTurnsRemaining'],
+          fallback: readIntValue(token['shadowCloneTurnsRemaining']),
+        );
+        token['shadowCloneExpired'] = readBoolValue(
+          previous['shadowCloneExpired'],
+        );
+      }
       masterInitiativeTokens[existingIndex] = token;
     } else {
       masterInitiativeTokens.add(token);
@@ -4549,6 +4630,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     bool critico = false,
     int criticalBonusMultiplier = 1,
     double defenseMultiplier = 1,
+    double incomingDamageMultiplier = 1,
     bool resolvedResistance = false,
     String? resistancePresetOverride,
     int? dannoEsplicito,
@@ -4561,10 +4643,56 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       notifyDiceResultChanged();
       return;
     }
-    final dannoInserito = dannoEsplicito ?? leggiValoreDannoCura();
+    var dannoInserito = dannoEsplicito ?? leggiValoreDannoCura();
 
     if (dannoInserito == null || dannoInserito <= 0) return;
+    final damageBeforeAdaptation = dannoInserito;
     ensureHiddenEyeDefaults();
+    final sheet =
+        schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
+        ? schedePersonaggio[schedaCorrente]
+        : <String, dynamic>{};
+    final sheetKind = tipoSchedaPersonaggio(schedaCorrente).trim().toLowerCase();
+    final monsterSourceId = '${sheet['monsterBookSourceId'] ?? ''}'.trim();
+    final sourceMonster = monsterSourceId.isEmpty
+        ? null
+        : monsterBookEntryById(monsterSourceId);
+    final isMiniBoss =
+        (sourceMonster?.isMiniBoss ?? false) ||
+        (sheetKind.contains('mini') && sheetKind.contains('boss'));
+    final isBoss =
+        (sourceMonster?.isBoss ?? false) ||
+        (sheetKind.contains('boss') && !isMiniBoss);
+    final incomingElement = selectedIncomingDamageElement();
+    final previousElementalAdaptation = sheet['combatElementalAdaptation'];
+    final elementalAdaptation = (isMiniBoss || isBoss)
+        ? oculumPrepareMonsterElementalAdaptation(
+            isMiniBoss: isMiniBoss,
+            isBoss: isBoss,
+            incomingElement: incomingElement,
+            previousState: previousElementalAdaptation is Map
+                ? Map<String, dynamic>.from(previousElementalAdaptation)
+                : const <String, dynamic>{},
+          )
+        : null;
+    final adaptationReduction = max(
+      0,
+      readIntValue(sheet['combatAdaptationReductionPending']),
+    );
+    if (adaptationReduction > 0) {
+      final reduced = min(dannoInserito, adaptationReduction);
+      dannoInserito -= reduced;
+      sheet['combatAdaptationReductionPending'] = 0;
+      aggiungiLog(
+        '[ADATTAMENTO] -$reduced al prossimo danno ricevuto ($damageBeforeAdaptation → $dannoInserito).',
+      );
+      programmaSalvataggio();
+      if (dannoInserito <= 0) {
+        risultato = 'Adattamento ha assorbito tutto il danno.';
+        notifyDiceResultChanged();
+        return;
+      }
+    }
 
     int subtraitTotal(String id) {
       for (final stat in hiddenEyeStats) {
@@ -4712,7 +4840,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           criticalEnemyLevel,
         ) *
         criticalBonusMultiplier.clamp(1, 2);
-    final dannoPrimaParata = dannoInserito + (critico ? bonusCritico : 0);
+    final dannoPrimaParataLordo = dannoInserito + (critico ? bonusCritico : 0);
+    final dannoPrimaParata = oculumReduceIncomingDamage(
+      dannoPrimaParataLordo,
+      incomingDamageMultiplier,
+    );
+    final riduzioneElementale = dannoPrimaParataLordo - dannoPrimaParata;
     final riduzioneParataOculum = parryCheckSucceeded
         ? oculumParryDamageReduction(
             currentOculum: currentOculumForParry,
@@ -4738,10 +4871,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         ? ' Oculum Dodge${schivataLabel.isEmpty ? "" : " $schivataLabel"}: -$riduzioneSchivata%, damage $dannoPrimaSchivata -> $dannoDopoSchivata.'
         : '';
     final parataOculumLogIt = parryChanceTriggered
-        ? ' il tuo oculum si è concentrato per indebolire il colpo (probabilità $parryChanceThreshold/1000, ${campaignDifficultyLabel()}): prova $parrySubtraitLabel 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal contro DT $parryDifficulty; ${parryCheckSucceeded ? "danno $dannoPrimaParata → $dannoDopoParataOculum (riduzione $riduzioneParataOculum, gratuita)." : "prova fallita, il colpo non viene indebolito."}${parryCriticalAwardsDodge ? " Critico: +1 Schivata Oculum." : ""}'
+        ? ' il tuo oculum si è concentrato per indebolire il colpo (probabilità $parryChanceThreshold/1000, ${campaignDifficultyLabel()}): prova $parrySubtraitLabel 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal contro DT $parryDifficulty; ${riduzioneElementale > 0 ? "difesa elementale: -$riduzioneElementale (×${incomingDamageMultiplier.toStringAsFixed(2)}). " : ""}${parryCheckSucceeded ? "danno $dannoPrimaParata → $dannoDopoParataOculum (riduzione $riduzioneParataOculum, gratuita)." : "prova fallita, il colpo non viene indebolito."}${parryCriticalAwardsDodge ? " Critico: +1 Schivata Oculum." : ""}'
         : '';
     final parataOculumLogEn = parryChanceTriggered
-        ? ' Your Oculum concentrated to weaken the blow (chance $parryChanceThreshold/1000, ${campaignDifficultyLabel()}): $parrySubtraitLabel check 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal against DT $parryDifficulty; ${parryCheckSucceeded ? "damage $dannoPrimaParata → $dannoDopoParataOculum (reduction $riduzioneParataOculum, free)." : "check failed; the blow is not weakened."}${parryCriticalAwardsDodge ? " Critical: +1 Oculum Dodge." : ""}'
+        ? ' Your Oculum concentrated to weaken the blow (chance $parryChanceThreshold/1000, ${campaignDifficultyLabel()}): $parrySubtraitLabel check 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal against DT $parryDifficulty; ${riduzioneElementale > 0 ? "elemental defense: -$riduzioneElementale (×${incomingDamageMultiplier.toStringAsFixed(2)}). " : ""}${parryCheckSucceeded ? "damage $dannoPrimaParata → $dannoDopoParataOculum (reduction $riduzioneParataOculum, free)." : "check failed; the blow is not weakened."}${parryCriticalAwardsDodge ? " Critical: +1 Oculum Dodge." : ""}'
         : '';
     final difficultyBypasses = rollDifficultyIncreaseDamageBypasses();
     final ignoraDifesa = dannoOltreDifesa || difficultyBypasses.beyondDefense;
@@ -4772,6 +4905,21 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             1,
             dannoInArrivo - (difesa() * defenseMultiplier.clamp(1, 1.5)).ceil(),
           );
+    final adaptiveResistance = elementalAdaptation?.resistanceBeforeHit ?? 0;
+    final dannoPrimaAdattamento = dannoDopoDifesa;
+    if (dannoDopoDifesa > 0 && adaptiveResistance > 0) {
+      dannoDopoDifesa = oculumReduceIncomingDamage(
+        dannoDopoDifesa,
+        (100 - adaptiveResistance) / 100,
+      );
+    }
+    final elementalAdaptationLogIt = elementalAdaptation == null
+        ? ''
+        : elementalAdaptation.lockedElement.isNotEmpty &&
+              elementalAdaptation.element != elementalAdaptation.lockedElement
+        ? ' Adattamento del mini-boss bloccato su ${elementalAdaptation.lockedElement}; ${elementalAdaptation.element} non aumenta la resistenza.'
+        : ' Resistenza adattiva ${elementalAdaptation.element}: $adaptiveResistance% su questo colpo'
+              '${elementalAdaptation.changed ? ' → ${elementalAdaptation.resistanceAfterHit}% dal prossimo' : ''}; danno dopo Difesa $dannoPrimaAdattamento → $dannoDopoDifesa.';
     var passiveReductionLogIt = '';
     var passiveReductionLogEn = '';
     if (dannoDopoDifesa > 0 && fortunaTotale > 0) {
@@ -4814,11 +4962,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
     }
     final difesaLogIt = ignoraDifesa
-        ? ' oltre Difesa = $dannoDopoDifesa$passiveReductionLogIt'
-        : ' - Difesa ${(difesa() * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1,5 · attacco quasi riuscito)' : ''} = $dannoDopoDifesa$passiveReductionLogIt';
+        ? ' oltre Difesa = $dannoDopoDifesa$elementalAdaptationLogIt$passiveReductionLogIt'
+        : ' - Difesa ${(difesa() * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1,5 · attacco quasi riuscito)' : ''} = $dannoPrimaAdattamento$elementalAdaptationLogIt$passiveReductionLogIt';
     final difesaLogEn = ignoraDifesa
         ? ' beyond Defense = $dannoDopoDifesa$passiveReductionLogEn'
-        : ' - Defense ${(difesa() * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1.5 · partial attack)' : ''} = $dannoDopoDifesa$passiveReductionLogEn';
+        : ' - Defense ${(difesa() * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1.5 · partial attack)' : ''} = $dannoPrimaAdattamento$elementalAdaptationLogIt$passiveReductionLogEn';
     final opzioniImpattoIt =
         '${ignoraScudi ? " Oltre Scudi: il danno salta Scudo Oculum e Scudo." : ""}'
         '${difficultyBypasses.beyondDefense ? " Aumento difficolta: attivato Oltre Difesa." : ""}'
@@ -4869,7 +5017,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         ? ''
         : ' Parser ${incomingDamageRulesSummary(elementoAttivo)}: $dannoModificatoBase -> $dannoModificato.';
     final dannoLog = critico
-        ? '$dannoInseritoLog + $bonusCritico critico = $dannoPrimaParata'
+        ? '$dannoInseritoLog + $bonusCritico critico = $dannoPrimaParataLordo${riduzioneElementale > 0 ? " - $riduzioneElementale difesa elementale = $dannoPrimaParata" : ""}'
         : dannoInseritoLog;
     final stadioPrimaLog = percentualeLiberaPrima == null
         ? modificatorePrima
@@ -5226,6 +5374,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
 
     setState(() {
+      if (elementalAdaptation != null) {
+        sheet['combatElementalAdaptation'] = elementalAdaptation.state;
+      }
       if (critico) {
         incomingDamagePresets[activePercentDamageType] = modificatoreDopo;
         if (stadioLiberoDopo != null) {

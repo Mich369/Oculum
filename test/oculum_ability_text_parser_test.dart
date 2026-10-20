@@ -2,6 +2,46 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('bracketed Richiede markers keep a skill locked until resolved', () {
+    expect(
+      oculumCombatTextHasUnresolvedRequirement(
+        '[Richiede: il Master deve assegnare il titolo]',
+      ),
+      isTrue,
+    );
+    expect(
+      oculumCombatTextHasUnresolvedRequirement(
+        'I — Attacco normale. Richiede livello 0.',
+      ),
+      isFalse,
+    );
+    expect(
+      oculumCombatTextHasUnresolvedRequirement(
+        'Effetto libero senza requisito',
+      ),
+      isFalse,
+    );
+  });
+
+  test('free-text shadow summons become executable sheet effects', () {
+    final defaultDuration = oculumParseAbilityMechanics(
+      'Evoca un tuo clone d’ombra che dura Oculum turni.',
+    ).effects.single;
+    expect(defaultDuration.type, 'evocazione');
+    expect(defaultDuration.target, 'clone_ombra');
+    expect(defaultDuration.valueExpression, '10');
+    expect(defaultDuration.duration, 'oculum');
+    expect(defaultDuration.durationUnit, 'turni');
+    expect(defaultDuration.recipient, 'se_stesso');
+
+    final customDuration = oculumParseAbilityMechanics(
+      'Crea un clone d\'ombra per 4 turni.',
+    ).effects.single;
+    expect(customDuration.type, 'evocazione');
+    expect(customDuration.valueExpression, '10');
+    expect(customDuration.duration, '4');
+  });
+
   test('Chaos sign has exact point probabilities and stable shop offers', () {
     final counts = <int, int>{};
     for (var roll = 0; roll < 100; roll++) {
@@ -126,6 +166,27 @@ void main() {
       roles('Applica Bruciatura al bersaglio per 2 turni'),
       contains(OculumCombatAbilityRole.support),
     );
+  });
+  test('defensive protection effects appear in defense and utility', () {
+    for (final effect in <OculumStructuredEffect>[
+      OculumStructuredEffect(type: 'scudo', valueExpression: '8'),
+      OculumStructuredEffect(type: 'hp_temporanei', valueExpression: '8'),
+      OculumStructuredEffect(
+        type: 'elemental_resistance',
+        elementType: 'fuoco',
+        customDisplayText: 'Alta Resistenza',
+      ),
+      OculumStructuredEffect(type: 'difesa', target: 'scudo_oculum'),
+    ]) {
+      expect(
+        oculumCombatAbilityRoles([effect]),
+        containsAll([
+          OculumCombatAbilityRole.defense,
+          OculumCombatAbilityRole.support,
+        ]),
+        reason: effect.type,
+      );
+    }
   });
   test('explicit target ranges survive copying and JSON', () {
     final effect = OculumStructuredEffect(

@@ -7,6 +7,8 @@ part 'pack_leader_monsters.dart';
 part 'lava_monsters.dart';
 part 'necromancer_monsters.dart';
 part 'withered_construct_white_larva.dart';
+part 'gold_marble_aberrations.dart';
+part 'elemental_collector.dart';
 part 'concrete_monster_techniques.dart';
 
 class MonsterBookEntry {
@@ -5155,6 +5157,8 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
             ..._lavaMonsterEntries,
             ..._necromancerMonsterEntries,
             ..._witheredConstructWhiteLarvaEntries,
+            ..._goldMarbleAberrationEntries,
+            ..._elementalCollectorEntries,
             ..._manualMonsterBookEntries,
             ..._heroPathMonsterBookEntries(),
             ..._generateMonsterTier(
@@ -5386,6 +5390,8 @@ void resetMonsterBookEntries() {
 
 Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
   yield* _craftedMonsterBookEntries;
+  yield* _goldMarbleAberrationEntries;
+  yield* _elementalCollectorEntries;
   yield* _inspiredMonsterBookEntries;
   yield* _weakHorrorMonsterBookEntries;
   yield* _spineHedgehogEntries;

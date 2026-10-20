@@ -113,6 +113,8 @@ class OculumPerformanceProbe {
   Future<void> useScroll(InventoryItem item) =>
       _state.useMerchantConsumable(item);
   int defense() => _state.difesa();
+  String incomingDamagePreset(String element) =>
+      _state.configuredIncomingDamagePreset(element);
   Widget dicePanel() => _state.sheetDiceRollPanel(dense: true);
   Widget subtraitsPanel() => _state.referenceSubtraitsPanel();
   void resetEncounter() => _state.resetMasterInitiativeRound();
@@ -196,6 +198,7 @@ class OculumPerformanceProbe {
       _state.rimarginaHpDaAumentoResilienza(-amount);
   int currentHp() => _state.hpCorrenti();
   int broodHp() => _state.broodRemainingHp();
+  int broodMaxHp() => _state.broodMaximumHp();
   int absorbBroodDamage(int value) => _state.absorbLarvalBroodDamage(value);
   void useWitheredHeart(InventoryItem item) => _state.useWitheredHeart(item);
   void tickConditions(OculumConditionTickTrigger trigger) =>
@@ -204,7 +207,8 @@ class OculumPerformanceProbe {
       _state.moveSidebarEntry(tag, parent, beforeIndex: beforeIndex);
   Future<void> showSheetFolders() => _state.showSheetFoldersDialog();
   Map<String, dynamic> campaignSnapshot() => _state.currentCampaignSnapshot();
-  void loadCampaign(Map<String, dynamic> data) => _state.loadCampaignSnapshot(data);
+  void loadCampaign(Map<String, dynamic> data) =>
+      _state.loadCampaignSnapshot(data);
   int currentTemporaryHp() => _state.hpTemp();
   void increaseBaseStat(String key, int amount) =>
       _state.aumentaStatBaseEAttuale(key, amount);

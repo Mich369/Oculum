@@ -234,6 +234,7 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader>
   bool ready = false;
   bool preloadStarted = false;
   OculumStartupRole? selectedRole;
+  OculumStartupRole? hoveredRole;
   late final AnimationController _homeArtworkAnimation;
 
   @override
@@ -298,7 +299,12 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader>
         child: Stack(
           fit: StackFit.expand,
           children: [
-            OculumWatchingEyes(animation: _homeArtworkAnimation),
+            OculumWatchingEyes(
+              animation: _homeArtworkAnimation,
+              reverseGaze:
+                  selectedRole == OculumStartupRole.master ||
+                  hoveredRole == OculumStartupRole.master,
+            ),
             Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
@@ -378,67 +384,78 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          OculumWatchingEyes(animation: _homeArtworkAnimation),
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Icon(
-                      Icons.remove_red_eye,
-                      color: Color(0xFFE6D8BD),
-                      size: 54,
-                    ),
-                    const SizedBox(height: 18),
-                    const Text(
-                      'OCULUM',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
+          OculumWatchingEyes(
+            animation: _homeArtworkAnimation,
+            reverseGaze:
+                selectedRole == OculumStartupRole.master ||
+                hoveredRole == OculumStartupRole.master,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Icon(
+                        Icons.remove_red_eye,
                         color: Color(0xFFE6D8BD),
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0,
+                        size: 54,
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          selectedRole = OculumStartupRole.player;
-                          oculumStartupRole = OculumStartupRole.player;
-                        });
-                        unawaited(startPreload());
-                      },
-                      icon: const Icon(Icons.person),
-                      label: const Text('Player'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE6D8BD),
-                        foregroundColor: const Color(0xFF050408),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      const SizedBox(height: 18),
+                      const Text(
+                        'OCULUM',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFFE6D8BD),
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          selectedRole = OculumStartupRole.master;
-                          oculumStartupRole = OculumStartupRole.master;
-                        });
-                        unawaited(startPreload());
-                      },
-                      icon: const Icon(Icons.auto_awesome),
-                      label: const Text('Master'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFFE6D8BD),
-                        side: const BorderSide(color: Color(0xFFE6D8BD)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            selectedRole = OculumStartupRole.player;
+                            oculumStartupRole = OculumStartupRole.player;
+                          });
+                          unawaited(startPreload());
+                        },
+                        icon: const Icon(Icons.person),
+                        label: const Text('Player'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE6D8BD),
+                          foregroundColor: const Color(0xFF050408),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+                      MouseRegion(
+                        onEnter: (_) => setState(
+                          () => hoveredRole = OculumStartupRole.master,
+                        ),
+                        onExit: (_) => setState(() => hoveredRole = null),
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              selectedRole = OculumStartupRole.master;
+                              oculumStartupRole = OculumStartupRole.master;
+                            });
+                            unawaited(startPreload());
+                          },
+                          icon: const Icon(Icons.auto_awesome),
+                          label: const Text('Master'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFFE6D8BD),
+                            side: const BorderSide(color: Color(0xFFE6D8BD)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

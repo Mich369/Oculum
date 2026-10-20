@@ -73,10 +73,14 @@ List<InventoryItem> oculumGenerateMonsterLoot({
       throw ArgumentError.value(natural, 'naturalDropRoll');
     }
     final form = (safeLevel ~/ 3).clamp(0, 2);
+    final scrollRank = safeGrade.clamp(0, 8);
+    const romanRanks = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
+    final rankName = romanRanks[scrollRank];
+    final scrollEffect = oculumLarvalBroodScrollEffect(scrollRank);
     return [
       if (natural == 20)
         InventoryItem(
-          nome: 'Scroll Nidiata ${const ['I', 'II', 'III'][form]}',
+          nome: 'Scroll Nidiata $rankName',
           peso: .05,
           quantita: 1,
           gradoOggetto: safeGrade,
@@ -85,8 +89,8 @@ List<InventoryItem> oculumGenerateMonsterLoot({
               'Monouso. Usa Infestazione nella forma del mostro; apprendimento raro secondo difficoltà, 20 naturale e DT di apprendimento.',
           craftData: {
             'scroll': {
-              'id': 'white_larva_brood_form_${form + 1}',
-              'name': 'Nidiata ${const ['I', 'II', 'III'][form]}',
+              'id': 'white_larva_brood_rank_${scrollRank + 1}',
+              'name': 'Nidiata $rankName',
               'kind': 'technique',
               'grade': safeGrade,
               'element': 'fisico',
@@ -96,17 +100,15 @@ List<InventoryItem> oculumGenerateMonsterLoot({
                 'white_larva_brood',
                 form,
               ),
-              'effects': oculumWitheredLarvaEffects(
-                'white_larva_brood',
-                form,
-              ).map((e) => e.toJson()).toList(),
+              'effects': [scrollEffect.toJson()],
             },
           },
           monsterLoot: {
             'id': '$killId:brood-scroll',
             'monsterId': monster.id,
             'naturalDropRoll': natural,
-            'form': form + 1,
+            'form': scrollRank + 1,
+            'monsterForm': form + 1,
           },
         ),
     ];

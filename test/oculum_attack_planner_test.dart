@@ -36,6 +36,47 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('attack element is visible and returned with the plan', (
+    tester,
+  ) async {
+    OculumAttackPlan? result;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () async {
+              result = await showDialog<OculumAttackPlan>(
+                context: context,
+                builder: (_) => OculumAttackPlanner(
+                  targets: const {'enemy': 'Nemico'},
+                  choices: const [OculumAttackChoice('vc', 'VC', 2)],
+                  chance: (_, _) => null,
+                  elements: const [
+                    OculumCombatElement('fuoco', 'Fuoco', Colors.red),
+                    OculumCombatElement('acqua', 'Acqua', Colors.blue),
+                  ],
+                  initialElement: 'fuoco',
+                ),
+              );
+            },
+            child: const Text('Apri'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Apri'));
+    await tester.pumpAndSettle();
+    expect(find.text('Elemento · Fuoco'), findsOneWidget);
+    await tester.tap(find.text('Elemento · Fuoco'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Acqua').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dichiara e tira'));
+    await tester.pumpAndSettle();
+    expect(result?.element, 'acqua');
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'multiple targets enforce minimum and maximum independently of roll choice',
     (tester) async {

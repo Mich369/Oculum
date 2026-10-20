@@ -480,7 +480,8 @@ Future<bool> _initializeOculumSupabase() async {
     }
 
     final sessionStorage = OculumSessionStorage(
-      persistSessionKey: 'sb-${Uri.parse(supabaseUrl).host.split('.').first}-auth-token',
+      persistSessionKey:
+          'sb-${Uri.parse(supabaseUrl).host.split('.').first}-auth-token',
     );
     OculumAuthService.sessionStorage = sessionStorage;
     await Supabase.initialize(
@@ -1866,6 +1867,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     'riflessi',
     'resistenza',
     'manifestazione_potere',
+    'strategia',
   };
   bool onlineCombatReplayInFlight = false;
   bool combatSupportTargeting = false;
@@ -3458,6 +3460,22 @@ class _OculumHomePageState extends State<OculumHomePage>
         aggiungiLog(risultato);
       }
     });
+
+    // Network-interface changes (Wi-Fi, mobile data, Ethernet, VPN or a
+    // browser regaining connectivity) should wake an already configured live
+    // session immediately instead of waiting for the longest retry interval.
+    // A reported link is only a hint: the Realtime connection still performs
+    // its authenticated server handshake before it is considered connected.
+    final service = realtimeService;
+    if (hasLink &&
+        realtimeAutoReconnectEnabled &&
+        service != null &&
+        !service.isConnected) {
+      realtimeReconnectTimer?.cancel();
+      realtimeReconnectTimer = null;
+      realtimeReconnectAttempt = 0;
+      scheduleRealtimeReconnect(service);
+    }
   }
 
   Future<void> controllaConnessioneOnline() async {

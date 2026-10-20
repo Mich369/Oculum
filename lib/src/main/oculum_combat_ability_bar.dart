@@ -4,6 +4,116 @@ part of '../../main.dart';
 
 enum OculumCombatAbilityRole { attack, defense, support }
 
+bool oculumCombatTextHasUnresolvedRequirement(String text) =>
+    RegExp(r'\[\s*Richiede\b[^\]]*\]', caseSensitive: false).hasMatch(text);
+
+({String expression, int minimum, int maximum}) _combatFormulaDiceBounds(
+  String raw,
+) {
+  var minimum = 0;
+  var maximum = 0;
+  final expression = raw.replaceAllMapped(RegExp(r'\b(\d*)\s*[dD]\s*(\d+)\b'), (
+    match,
+  ) {
+    final count = int.tryParse(match.group(1) ?? '') ?? 1;
+    final faces = int.tryParse(match.group(2) ?? '') ?? 1;
+    minimum += count;
+    maximum += count * faces;
+    return '0';
+  });
+  return (expression: expression, minimum: minimum, maximum: maximum);
+}
+
+String _combatEffectPreview(
+  OculumStructuredEffect effect, {
+  required Map<String, num> variables,
+  required Iterable<HiddenEyeStat> subtraits,
+  required int level,
+  required int grade,
+}) {
+  final normalized = OculumStructuredEffect.fromJson(effect.toJson());
+  final valueDice = _combatFormulaDiceBounds(
+    oculumEffectFormulaExpression(effect.valueExpression, subtraits),
+  );
+  final extraDice = _combatFormulaDiceBounds(effect.diceExpression);
+  normalized.valueExpression = valueDice.expression;
+  normalized.diceExpression = '';
+  normalized.includeLevel = false;
+  normalized.includeGrade = false;
+  final base = oculumEvaluateStructuredEffectValue(
+    normalized,
+    variables: variables,
+    subtraits: subtraits,
+  );
+  final fixedBonus =
+      (effect.includeLevel ? max(0, level) : 0) +
+      (effect.includeGrade
+          ? oculumRoundFormulaResult(max(0, grade) * effect.gradeValue)
+          : 0);
+  final diceMin =
+      valueDice.minimum +
+      (effect.diceDestination == 'durata' ? 0 : extraDice.minimum);
+  final diceMax =
+      valueDice.maximum +
+      (effect.diceDestination == 'durata' ? 0 : extraDice.maximum);
+  var low = base + fixedBonus + diceMin;
+  var high = base + fixedBonus + diceMax;
+  if (effect.diceDestination == 'moltiplicatore') {
+    low = (base + fixedBonus) * extraDice.minimum;
+    high = (base + fixedBonus) * extraDice.maximum;
+  }
+  final amount = low == high ? '$low' : '$low–$high';
+  final duration = _combatFormulaDiceBounds(
+    oculumEffectFormulaExpression(effect.duration, subtraits),
+  );
+  final durationBase = duration.expression.trim().isEmpty
+      ? 0
+      : oculumEvaluateStructuredEffectValue(
+          OculumStructuredEffect(valueExpression: duration.expression),
+          variables: variables,
+          subtraits: subtraits,
+        );
+  final durationTotal =
+      durationBase +
+      (effect.diceDestination == 'durata'
+          ? extraDice.minimum
+          : duration.minimum);
+  final durationMax =
+      durationBase +
+      (effect.diceDestination == 'durata'
+          ? extraDice.maximum
+          : duration.maximum);
+  final durationText = durationTotal <= 0
+      ? ''
+      : ' · durata ${durationTotal == durationMax ? durationTotal : '$durationTotal–$durationMax'} ${effect.durationUnit}';
+  final targetCount = effect.maximumTargets > 1
+      ? ' · fino a ${effect.maximumTargets} bersagli'
+      : '';
+  final label = switch (effect.type) {
+    'danno' => 'Danni',
+    'danno_percentuale' => 'Danni',
+    'cura' => 'Cura ${effect.resource}'.trim(),
+    'scudo' => 'Scudo',
+    'scudo_oculum' => 'Scudo Oculum',
+    'hp_temporanei' => 'HP temporanei',
+    'difesa' => 'Difesa',
+    'modifica_statistica' || 'modifica_sottotratto' => 'Bonus ${effect.target}',
+    'stato' => 'Condizione ${effect.appliedState}',
+    'elemental_resistance' => 'Resistenza ${effect.elementType}',
+    'evocazione' || 'costrutto' => 'Evocazione',
+    _ =>
+      effect.customDisplayText.trim().isEmpty
+          ? effect.type
+          : effect.customDisplayText,
+  };
+  final diceNote = [
+    if (valueDice.minimum != 0 || valueDice.maximum != 0)
+      valueDice.expression.trim(),
+    if (extraDice.expression.trim().isNotEmpty) effect.diceExpression,
+  ].where((value) => value.trim().isNotEmpty).join(' + ');
+  return '$label: $amount${diceNote.isEmpty ? '' : ' · dadi $diceNote'}$durationText$targetCount';
+}
+
 Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
   Iterable<OculumStructuredEffect> effects, {
   String explicitType = '',
@@ -25,10 +135,18 @@ Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
     } else if (const {
           'difesa',
           'scudo',
+          'hp_temporanei',
           'costrutto',
           'elemental_resistance',
         }.contains(effect.type) ||
-        const {'cm', 'difesa', 'scudo', 'schivata_oculum'}.contains(target)) {
+        const {
+          'cm',
+          'difesa',
+          'scudo',
+          'scudo_oculum',
+          'hp_temp',
+          'schivata_oculum',
+        }.contains(target)) {
       role = OculumCombatAbilityRole.defense;
     }
     if (role != null) scores[role] = (scores[role] ?? 0) + score;
@@ -95,6 +213,9 @@ OculumCombatAbilityRole oculumCombatAbilityRole(
         const {'cura', 'hp_temporanei'}.contains(e.type) ||
         e.recipient == 'alleato',
   )) {
+    return OculumCombatAbilityRole.support;
+  }
+  if (active.any((e) => e.type == 'evocazione')) {
     return OculumCombatAbilityRole.support;
   }
   return OculumCombatAbilityRole.defense;
@@ -256,9 +377,15 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             Builder(
               builder: (_) {
                 final effectForm = natural?.forme[form];
-                final description =
-                    effectForm?.descrizione ??
-                    artSkill!.testoEvoluzione(form + 1);
+                final description = effectForm == null
+                    ? artSkill!.testoEvoluzione(form + 1)
+                    : '${effectForm.descrizione}\n${effectForm.effetto}\n${effectForm.buff}\n${effectForm.danni}\n${effectForm.cura}\n${effectForm.difesa}';
+                final requirementLocked =
+                    oculumCombatTextHasUnresolvedRequirement(description);
+                final structured =
+                    effectForm?.effettiStrutturati ??
+                    artSkill?.effettiEvoluzione(form + 1) ??
+                    const <OculumStructuredEffect>[];
                 final cost =
                     effectForm?.costo ??
                     '${artSkill!.oculumMinimoPerLivello(form + 1)}/${artSkill.oculumMassimoPerLivello(form + 1)} ${artSkill.risorsaCostoPerLivello(form + 1)}';
@@ -266,20 +393,49 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                     effectForm?.cooldownStrutturato ??
                     artSkill?.cooldownPerLivello[form];
                 return SimpleDialogOption(
-                  onPressed: timer?.ready == false
+                  onPressed: timer?.ready == false || requirementLocked
                       ? null
                       : () => Navigator.pop(dialog, form),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Text(
-                        '${artLevelRoman(form + 1)} · $cost${timer?.ready == false ? ' · recupero ${timer!.remaining} ${timer.unit}' : ''}',
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${artLevelRoman(form + 1)} · $cost${timer?.ready == false ? ' · recupero ${timer!.remaining} ${timer.unit}' : ''}${requirementLocked ? ' · requisito non soddisfatto' : ''}',
+                            ),
+                            Text(
+                              description,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
                       ),
-                      Text(
-                        description,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall,
+                      IconButton(
+                        tooltip: 'Dettagli con i tuoi valori attuali',
+                        icon: const Icon(Icons.info_outline),
+                        onPressed: () => showCombatAbilityDetails(
+                          name:
+                              '${natural?.nome ?? artSkill?.nome ?? 'Abilità'} ${artLevelRoman(form + 1)}',
+                          description: description,
+                          color: eyePupilGlowColor,
+                          effects: structured.isNotEmpty
+                              ? structured
+                              : oculumResolveAbilityEffects(
+                                  const [],
+                                  description,
+                                  subtraits: hiddenEyeStats,
+                                  investedOculum: true,
+                                ),
+                          cost: cost,
+                          cooldown: timer?.ready == false
+                              ? '${timer!.remaining} ${timer.unit}'
+                              : '',
+                          locked: requirementLocked,
+                        ),
                       ),
                     ],
                   ),
@@ -378,12 +534,120 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     }
   }
 
+  Future<void> showCombatAbilityDetails({
+    required String name,
+    required String description,
+    required Color color,
+    Iterable<OculumStructuredEffect> effects = const [],
+    String cost = '',
+    String cooldown = '',
+    bool locked = false,
+  }) async {
+    final resolved = effects.where((effect) => effect.enabled).toList();
+    await showDialog<void>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        scrollable: true,
+        title: Row(
+          children: [
+            Icon(Icons.visibility_outlined, color: color),
+            const SizedBox(width: 10),
+            Expanded(child: Text(name)),
+          ],
+        ),
+        content: SizedBox(
+          width: min(620, max(0, MediaQuery.sizeOf(dialog).width - 48)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (locked)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text(
+                    'Requisito non soddisfatto: questa voce non è considerata sbloccata.',
+                    style: TextStyle(
+                      color: Theme.of(dialog).colorScheme.error,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              if (description.trim().isNotEmpty)
+                SelectableText(description.trim()),
+              if (cost.trim().isNotEmpty || cooldown.trim().isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    if (cost.trim().isNotEmpty)
+                      Chip(label: Text('Costo · $cost')),
+                    if (cooldown.trim().isNotEmpty)
+                      Chip(label: Text('Ricarica · $cooldown')),
+                  ],
+                ),
+              ],
+              if (resolved.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text(
+                  'Effetto stimato con i tuoi valori attuali',
+                  style: Theme.of(dialog).textTheme.titleSmall?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                for (final effect in resolved)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Text(
+                      '• ${_combatEffectPreview(effect, variables: formulaValueContext(), subtraits: hiddenEyeStats, level: leggiNumero(livelloController), grade: leggiNumero(gradoController))}',
+                    ),
+                  ),
+              ],
+              if (resolved.isEmpty && !locked)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Text(
+                    'Effetto narrativo o personalizzato: il testo completo resta visibile sopra e non viene interpretato come un tiro automatico.',
+                    style: Theme.of(dialog).textTheme.bodySmall,
+                  ),
+                ),
+              const SizedBox(height: 10),
+              Text(
+                'Anteprima informativa: non tira dadi e non consuma risorse.',
+                style: Theme.of(dialog).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: Text(t('Chiudi', 'Close')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> showCombatSubtraitDetails(
+    HiddenEyeStat stat,
+    OculumCombatAbilityRole role,
+  ) => showCombatAbilityDetails(
+    name: '${stat.nome} · ${hiddenEyeTotal(stat)}',
+    description:
+        'Tiro d20 con bonus attuale ${hiddenEyeTotal(stat)}. ${switch (role) {
+          OculumCombatAbilityRole.attack => 'Puoi usarlo per attaccare: il bersaglio risolve la difesa e le protezioni in ordine.',
+          OculumCombatAbilityRole.defense => 'Puoi usarlo per difenderti dall’attacco selezionato; il risultato determina se l’effetto viene evitato, ridotto o applicato.',
+          OculumCombatAbilityRole.support => 'Tiro di supporto/utilità. Il bonus deriva dai valori attuali della scheda.',
+        }}${stat.id == 'strategia' ? ' Con Strategia +5 è selezionabile anche in attacco; l’aiuto al tiro conserva il bonus configurato.' : ''}${stat.id == 'concentrazione' && hiddenEyeTotal(stat) >= 10 ? ' In fight, se il d20 supera 10, prepara il bonus previsto alla prossima azione.' : ''}${stat.id == 'adattamento' && hiddenEyeTotal(stat) >= 10 ? ' In fight, se il d20 supera 10, prepara la riduzione del prossimo danno.' : ''}',
+    color: hiddenEyeStatIdentityColor(stat),
+  );
+
   Widget defenseRollControls(StateSetter refresh, String origin) {
     final available = hiddenEyeStats
-        .where(
-          (s) =>
-              s.unlocked && !const {'nodo', 'fortuna', 'drop'}.contains(s.id),
-        )
+        .where(oculumCombatSubtraitSelectable)
         .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,6 +780,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             Color color,
             String hint,
             VoidCallback use,
+            VoidCallback? details,
           })
         >[];
     if (onlyRole != null) {
@@ -528,6 +793,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           color: eyePupilGlowColor,
           enabled: true,
           hint: 'Scegli il bersaglio e il tiro da inviare online.',
+          details: null,
           use: () => unawaited(planOnlineAttack()),
         ));
       }
@@ -543,6 +809,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             : Colors.blueAccent,
         enabled: true,
         hint: support ? 'Tiro di aiuto compagno' : 'Tiro ordinario',
+        details: null,
         use: () {
           if (support) {
             unawaited(tiraAiutaCompagno());
@@ -559,6 +826,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           enabled: true,
           hint:
               'Applica una cura già determinata con il Master, senza un nuovo tiro.',
+          details: null,
           use: () => unawaited(manualPartyHealing()),
         ));
       }
@@ -568,12 +836,21 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           'forza',
           'riflessi',
           'manifestazione_potere',
+          'strategia',
+          'precisione',
         },
         OculumCombatAbilityRole.defense => combatDefenseRollIds,
-        OculumCombatAbilityRole.support => const {'medicina'},
+        OculumCombatAbilityRole.support => {
+          'medicina',
+          if (currentCombatIsActive())
+            for (final stat in hiddenEyeStats)
+              if (const {'concentrazione', 'adattamento'}.contains(stat.id) &&
+                  hiddenEyeTotal(stat) >= 10)
+                stat.id,
+        },
       };
       for (final stat in hiddenEyeStats.where(
-        (s) => s.unlocked && allowed.contains(s.id),
+        (s) => oculumCombatSubtraitSelectable(s) && allowed.contains(s.id),
       )) {
         entries.add((
           name:
@@ -581,8 +858,18 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           roles: {onlyRole},
           color: hiddenEyeStatIdentityColor(stat),
           enabled: true,
-          hint: 'Tiro alternativo: descrivi e motiva come lo usi.',
-          use: () => unawaited(useCombatRoll(onlyRole, stat: stat)),
+          hint: const {'concentrazione', 'adattamento'}.contains(stat.id)
+              ? 'Utility di combattimento: attiva il beneficio al prossimo momento utile.'
+              : 'Tiro alternativo: descrivi e motiva come lo usi.',
+          details: () => showCombatSubtraitDetails(stat, onlyRole),
+          use: () => unawaited(
+            const {'concentrazione', 'adattamento'}.contains(stat.id)
+                ? tiraSottotrattoOcchio(
+                    stat,
+                    actionLabel: '${stat.nome} · utility',
+                  )
+                : useCombatRoll(onlyRole, stat: stat),
+          ),
         ));
       }
     }
@@ -606,6 +893,9 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         final name = extra == null
             ? title.nome
             : '${extra.nome.trim().isEmpty ? 'Skill extra' : extra.nome} · ${title.nome}';
+        final unresolvedRequirement = oculumCombatTextHasUnresolvedRequirement(
+          text,
+        );
         entries.add((
           name: '$name · Titolo',
           roles: rolesFor(
@@ -617,9 +907,26 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                 oculumParseAbilityCost(text)?.resource ??
                 'nessuna',
           ]),
-          enabled: cooldown?.ready ?? true,
+          enabled: (cooldown?.ready ?? true) && !unresolvedRequirement,
           hint:
               '${extra?.descrizione ?? title.skill}${cooldown?.ready == false ? '\nRicarica: ${cooldown!.remaining} ${cooldown.unit}' : ''}',
+          details: () => showCombatAbilityDetails(
+            name: '$name · Titolo',
+            description: text,
+            color: combatAbilityResourceColor([
+              cost?.resource ??
+                  oculumParseAbilityCost(text)?.resource ??
+                  'nessuna',
+            ]),
+            effects: effects,
+            cost: cost == null
+                ? ''
+                : '${cost.minimum}/${cost.maximum} ${cost.resource}',
+            cooldown: cooldown == null
+                ? ''
+                : '${cooldown.remaining} ${cooldown.unit}',
+            locked: oculumCombatTextHasUnresolvedRequirement(text),
+          ),
           use: () => usaSkillTitolo(title, skillExtra: extra),
         ));
       }
@@ -652,8 +959,25 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                 : effects,
           ),
           color: statFormulaColor('oculum'),
-          enabled: title.evoluto,
+          enabled:
+              title.evoluto &&
+              !oculumCombatTextHasUnresolvedRequirement('$description\n$skill'),
           hint: '$description\n$skill',
+          details: () => showCombatAbilityDetails(
+            name: name,
+            description: '$description\n$skill',
+            color: eyePupilGlowColor,
+            effects: effects.isEmpty
+                ? oculumResolveAbilityEffects(
+                    const [],
+                    '$description\n$skill',
+                    subtraits: hiddenEyeStats,
+                  )
+                : effects,
+            locked: oculumCombatTextHasUnresolvedRequirement(
+              '$description\n$skill',
+            ),
+          ),
           use: () => usaOpen(title, openExtra: extra),
         ));
       }
@@ -669,6 +993,11 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           .where((f) => !f.tipo.toLowerCase().contains('passiv'))
           .toList();
       if (forms.isEmpty) continue;
+      final allFormsLocked = forms.every(
+        (form) => oculumCombatTextHasUnresolvedRequirement(
+          '${form.descrizione}\n${form.effetto}\n${form.buff}\n${form.danni}\n${form.cura}\n${form.difesa}',
+        ),
+      );
       final roles = rolesFor(
         forms.expand(
           (form) => oculumResolveAbilityEffects(
@@ -691,8 +1020,29 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                 f.costo,
           ),
         ),
-        enabled: true,
+        enabled: !allFormsLocked,
         hint: 'Skill · scegli la forma e conferma il costo',
+        details: () => showCombatAbilityDetails(
+          name: skill.nome,
+          description: forms
+              .map(
+                (form) =>
+                    '${artLevelRoman(readIntValue(form.livello))} · ${form.descrizione}',
+              )
+              .join('\n\n'),
+          color: combatAbilityResourceColor(
+            forms.map((form) => form.costoStrutturato?.resource ?? form.costo),
+          ),
+          effects: forms.expand(
+            (form) => oculumResolveAbilityEffects(
+              form.effettiStrutturati,
+              '${form.descrizione}\n${form.effetto}\n${form.buff}\n${form.danni}\n${form.cura}\n${form.difesa}',
+              subtraits: hiddenEyeStats,
+              investedOculum: true,
+            ),
+          ),
+          locked: allFormsLocked,
+        ),
         use: () => chooseCombatAbilityForm(natural: skill),
       ));
     }
@@ -712,6 +1062,13 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
               investedOculum: true,
             ),
         ], explicitType: skill.tipoPerLivello(1));
+        final texts = [
+          for (var form = 1; form <= artMaxLevel(art); form++)
+            skill.testoEvoluzione(form),
+        ];
+        final allFormsLocked = texts.every(
+          oculumCombatTextHasUnresolvedRequirement,
+        );
         entries.add((
           name: '${skill.nome} · ${art.nome}',
           roles: roles,
@@ -719,10 +1076,31 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             for (var form = 1; form <= artMaxLevel(art); form++)
               effectiveArtCostResource(art, skill, form),
           ]),
-          enabled: art.sbloccata && art.inUso,
+          enabled: art.sbloccata && art.inUso && !allFormsLocked,
           hint: art.inUso
               ? 'Art · scegli la forma e conferma il costo'
               : 'Seleziona prima questa Art nella scheda',
+          details: () => showCombatAbilityDetails(
+            name: '${skill.nome} · ${art.nome}',
+            description: [
+              for (var form = 1; form <= artMaxLevel(art); form++)
+                '${artLevelRoman(form)} · ${skill.testoEvoluzione(form)}',
+            ].join('\n\n'),
+            color: combatAbilityResourceColor([
+              for (var form = 1; form <= artMaxLevel(art); form++)
+                effectiveArtCostResource(art, skill, form),
+            ]),
+            effects: [
+              for (var form = 1; form <= artMaxLevel(art); form++)
+                ...oculumResolveAbilityEffects(
+                  skill.effettiEvoluzione(form),
+                  skill.testoEvoluzione(form),
+                  subtraits: hiddenEyeStats,
+                  investedOculum: true,
+                ),
+            ],
+            locked: allFormsLocked,
+          ),
           use: () => chooseCombatAbilityForm(art: art, artSkill: skill),
         ));
       }
@@ -751,6 +1129,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           enabled: art.sbloccata && art.inUso,
           hint: 'Open · usa requisiti e costi originali',
           use: () => usaOpenArt(arti.indexOf(art)),
+          details: null,
         ));
         if (art.monsterOpenSkill && art.openAttiva) {
           entries.add((
@@ -759,6 +1138,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             color: eyePupilGlowColor,
             enabled: art.openSkillCooldown?.ready ?? true,
             hint: 'Skill Open · cooldown originale',
+            details: null,
             use: () => usaSkillOpenMostro(arti.indexOf(art)),
           ));
         }
@@ -776,6 +1156,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         color: statFormulaColor('resilienza'),
         enabled: canEquipInventoryItem(item),
         hint: '${item.note}\nConsumabile dall’inventario',
+        details: null,
         use: () => unawaited(useMerchantConsumable(item)),
       ));
     }
@@ -791,6 +1172,14 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         enabled: canEquipInventoryItem(item),
         hint:
             '${scroll['description'] ?? item.note}\nMonouso · costo ${oculumScrollWillCost(readIntValue(scroll['grade']))} Volontà',
+        details: () => showCombatAbilityDetails(
+          name: '${scroll['name'] ?? item.nome}',
+          description: '${scroll['description'] ?? item.note}',
+          color: statFormulaColor('volonta'),
+          effects: effects,
+          cost:
+              '${oculumScrollWillCost(readIntValue(scroll['grade']))} Volontà',
+        ),
         use: () => unawaited(useScrollAbility(scroll, item: item)),
       ));
     }
@@ -808,6 +1197,15 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                 subtraits: hiddenEyeStats,
               ).effects;
         final roles = rolesFor(effects, explicitType: form.tipo);
+        final itemSkillLevelReady = oculumEquipmentSkillLevelAvailable(
+          characterLevel: leggiNumero(livelloController),
+          itemLevel: item.livelloOggetto,
+          formLevel: form.livello,
+        );
+        final requiredEquipmentLevel = oculumEquipmentRequiredSkillLevel(
+          itemLevel: item.livelloOggetto,
+          formLevel: form.livello,
+        );
         entries.add((
           name: '${ability.nome} ${index + 1} · ${item.nome}',
           roles: roles,
@@ -817,9 +1215,28 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           enabled:
               canEquipInventoryItem(item) &&
               (form.cooldownStrutturato?.ready ?? true) &&
-              leggiNumero(livelloController) >=
-                  max(item.livelloOggetto, readIntValue(form.livello)),
-          hint: form.descrizione,
+              oculumEquipmentSkillLevelAvailable(
+                characterLevel: leggiNumero(livelloController),
+                itemLevel: item.livelloOggetto,
+                formLevel: form.livello,
+              ),
+          hint:
+              '${itemSkillLevelReady ? '' : 'Richiede livello $requiredEquipmentLevel dell’oggetto/personaggio.\n'}${form.descrizione}',
+          details: () => showCombatAbilityDetails(
+            name: '${ability.nome} ${index + 1}',
+            description: form.descrizione,
+            color: combatAbilityResourceColor([
+              form.costoStrutturato?.resource ?? form.costo,
+            ]),
+            effects: effects,
+            cost: form.costo,
+            cooldown: form.cooldownStrutturato?.ready == false
+                ? '${form.cooldownStrutturato!.remaining} ${form.cooldownStrutturato!.unit}'
+                : '',
+            locked:
+                !itemSkillLevelReady ||
+                oculumCombatTextHasUnresolvedRequirement(form.descrizione),
+          ),
           use: () => unawaited(
             useEquipmentQuickAbility(
               item,
@@ -851,41 +1268,83 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           children: [
             for (final e in subset)
               Tooltip(
-                message: '${e.name}\n${e.hint}',
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minWidth: 132,
-                    maxWidth: 230,
-                    minHeight: 48,
-                  ),
-                  child: OutlinedButton.icon(
-                    onPressed: e.enabled
-                        ? () {
-                            if (onChoose != null) {
-                              onChoose(e.use);
-                            } else {
-                              e.use();
-                            }
-                          }
-                        : null,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: e.color,
-                      side: BorderSide(color: e.color.withValues(alpha: .55)),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 9,
+                message:
+                    '${e.name}\n${e.hint}\nTieni premuto o clicca con il tasto destro per i dettagli.',
+                child: GestureDetector(
+                  onLongPress: () {
+                    final detail = e.details;
+                    if (detail != null) {
+                      detail();
+                      return;
+                    }
+                    showCombatAbilityDetails(
+                      name: e.name,
+                      description: e.hint,
+                      color: e.color,
+                      effects: oculumResolveAbilityEffects(
+                        const [],
+                        e.hint,
+                        subtraits: hiddenEyeStats,
+                        investedOculum: true,
                       ),
+                      locked: oculumCombatTextHasUnresolvedRequirement(e.hint),
+                    );
+                  },
+                  onSecondaryTap: () {
+                    final detail = e.details;
+                    if (detail != null) {
+                      detail();
+                      return;
+                    }
+                    showCombatAbilityDetails(
+                      name: e.name,
+                      description: e.hint,
+                      color: e.color,
+                      effects: oculumResolveAbilityEffects(
+                        const [],
+                        e.hint,
+                        subtraits: hiddenEyeStats,
+                        investedOculum: true,
+                      ),
+                      locked: oculumCombatTextHasUnresolvedRequirement(e.hint),
+                    );
+                  },
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: 132,
+                      maxWidth: 230,
+                      minHeight: 48,
                     ),
-                    icon: Icon(switch (role) {
-                      OculumCombatAbilityRole.attack => Icons.casino_outlined,
-                      OculumCombatAbilityRole.defense => Icons.shield_outlined,
-                      OculumCombatAbilityRole.support =>
-                        Icons.volunteer_activism_outlined,
-                    }, size: 18),
-                    label: Text(
-                      e.name,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
+                    child: OutlinedButton.icon(
+                      onPressed: e.enabled
+                          ? () {
+                              if (onChoose != null) {
+                                onChoose(e.use);
+                              } else {
+                                e.use();
+                              }
+                            }
+                          : null,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: e.color,
+                        side: BorderSide(color: e.color.withValues(alpha: .55)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 9,
+                        ),
+                      ),
+                      icon: Icon(switch (role) {
+                        OculumCombatAbilityRole.attack => Icons.casino_outlined,
+                        OculumCombatAbilityRole.defense =>
+                          Icons.shield_outlined,
+                        OculumCombatAbilityRole.support =>
+                          Icons.volunteer_activism_outlined,
+                      }, size: 18),
+                      label: Text(
+                        e.name,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
                 ),

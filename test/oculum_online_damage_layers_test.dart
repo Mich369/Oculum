@@ -120,6 +120,20 @@ void main() {
     state.dannoOltreScudi = false;
     state.incomingDamagePresets.clear();
     state.modificatoreDannoSelezionato = 'Normale';
+    state.activeStructuredEffects
+      ..clear()
+      ..add({
+        'effectId': 'permanent-fire-resistance',
+        'type': 'elemental_resistance',
+        'element': 'fuoco',
+        'preset': 'Alta Resistenza',
+        'remaining': -1,
+      });
+    expect(probe.incomingDamagePreset('fuoco'), 'Alta Resistenza');
+    expect(probe.incomingDamagePreset('acqua'), 'Normale');
+    state.activeStructuredEffects.single['remaining'] = 0;
+    expect(probe.incomingDamagePreset('fuoco'), 'Normale');
+    state.activeStructuredEffects.clear();
     state.schivataOculumRiduzionePronta = 0;
     state.activeConditions.clear();
     state.hiddenEyeStats.addAll([

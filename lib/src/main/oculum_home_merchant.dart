@@ -99,6 +99,31 @@ String oculumRawVitaliumRuleForGrade(int grade) {
 
 int oculumMerchantWeaponSkillDamage(int grade) => 5 + max(0, grade) * 10;
 
+bool oculumMerchantCanPurchaseOffer(
+  Map<String, dynamic> offer, {
+  required int characterGrade,
+}) {
+  if (!const {'gear', 'title_item'}.contains('${offer['kind'] ?? ''}')) {
+    return true;
+  }
+  return max(0, readIntValue(offer['grade'])) <= max(0, characterGrade);
+}
+
+int oculumMerchantEquipmentMinimumPrice(int grade) =>
+    max(50, 50 + (max(0, grade) * 210 + 1) ~/ 3);
+
+int oculumMerchantEquipmentPrice(Map<String, dynamic> offer) {
+  final grade = max(0, readIntValue(offer['grade']));
+  final level = max(0, readIntValue(offer['level']));
+  final levelBand = grade * 5;
+  final levelPremium = max(0, level - levelBand) * 10;
+  return max(
+        readIntValue(offer['cost']),
+        oculumMerchantEquipmentMinimumPrice(grade),
+      ) +
+      levelPremium;
+}
+
 bool oculumMerchantPawnV2Available(Random random) => random.nextInt(10) == 0;
 
 const oculumMerchantEssentialIds = [
@@ -232,8 +257,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   int merchantOfferCost(Map<String, dynamic> offer) {
-    final base =
-        readIntValue(offer['cost']) + max(0, readIntValue(offer['level'])) * 25;
+    final isEquipment = const {'gear', 'title_item'}.contains(offer['kind']);
+    final base = isEquipment
+        ? oculumMerchantEquipmentPrice(offer)
+        : readIntValue(offer['cost']) +
+              max(0, readIntValue(offer['level'])) * 25;
     return merchantShopType == 'alchimista' &&
             offer['kind'] == 'refined_vitalium'
         ? max(1, (base * .9).floor())
@@ -533,6 +561,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'name': 'Item Titolo',
         'cost': merchantTitleCost(75 + random.nextInt(46)),
         'kind': 'title_item',
+        'level': 1 + random.nextInt(10),
+        'grade': 0,
         'damage': oculumMerchantAttackValue(6, leggiNumero(volontaController)),
         'defence': oculumMerchantDefenseValue(leggiNumero(materiaController)),
         'shield': oculumMerchantShieldValue(maxHp(), 35 + random.nextInt(16)),
@@ -682,8 +712,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'cost': merchantTitleCost(
           grade == 0
               ? 25 + random.nextInt(51)
-              : grade * (100 + random.nextInt(101)),
-          level: grade,
+              : grade * (86 + random.nextInt(115)),
         ),
         'kind': 'gear',
         'level': max(1, grade * 5 + random.nextInt(5)),
@@ -704,6 +733,100 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             : 'Oggetto graduato molto raro: richiede Grado $grade per essere equipaggiato.',
       });
     }
+    merchantStock.addAll([
+      <String, dynamic>{
+        'id': 'weapon_echo_riflessi',
+        'name': 'Stocco dell’Eco Riflessa',
+        'kind': 'gear',
+        'cost': 80,
+        'level': 1,
+        'grade': 0,
+        'weapon': true,
+        'protection': false,
+        'damage': 4,
+        'defence': 0,
+        'buff': '@Danni+1/4dadoriflessi',
+        'desc':
+            'Arma del fabbro: quando attacchi usando Riflessi, aggiunge un quarto del risultato totale del tiro ai danni di ogni bersaglio. Negli altri attacchi il tratto non si attiva.',
+      },
+      <String, dynamic>{
+        'id': 'weapon_martello_forza',
+        'name': 'Martello della Faglia',
+        'kind': 'gear',
+        'cost': 160,
+        'level': 4,
+        'grade': 1,
+        'weapon': true,
+        'protection': false,
+        'damage': 9,
+        'defence': 0,
+        'buff': '@Danni+1/3dadoforza',
+        'desc':
+            'Arma del fabbro: quando attacchi usando Forza, aggiunge un terzo del risultato totale del tiro ai danni di ogni bersaglio. Negli altri attacchi il tratto non si attiva.',
+      },
+      <String, dynamic>{
+        'id': 'weapon_lancia_velo',
+        'name': 'Lancia della Soglia Velata',
+        'kind': 'gear',
+        'cost': 105,
+        'level': 3,
+        'grade': 0,
+        'weapon': true,
+        'protection': false,
+        'damage': 6,
+        'defence': 0,
+        'buff': '@Danni+1/5dadovelo',
+        'desc':
+            'Arma del fabbro: con Velo aggiunge un quinto del risultato totale del tiro ai danni di ciascun bersaglio. Skill bloccata fino al livello 3.',
+      },
+      <String, dynamic>{
+        'id': 'weapon_pugnale_precisione',
+        'name': 'Pugnale della Misura Esatta',
+        'kind': 'gear',
+        'cost': 115,
+        'level': 5,
+        'grade': 0,
+        'weapon': true,
+        'protection': false,
+        'damage': 5,
+        'defence': 0,
+        'buff': '@Danni+1/4dadoprecisione',
+        'desc':
+            'Arma del fabbro: con Precisione aggiunge un quarto del risultato totale del tiro ai danni di ciascun bersaglio. Skill bloccata fino al livello 5.',
+      },
+      <String, dynamic>{
+        'id': 'armor_corazza_guardia',
+        'name': 'Corazza della Guardia Frazionata',
+        'kind': 'gear',
+        'cost': 120,
+        'level': 4,
+        'grade': 0,
+        'weapon': false,
+        'protection': true,
+        'damage': 0,
+        'defence': 9,
+        'shield': 12,
+        'buff': '@Danni+1/5dadoresilienza',
+        'desc':
+            'Armatura del fabbro: la skill difensiva richiede livello 4; il tratto offensivo si attiva solo se attacchi con Resilienza.',
+      },
+      <String, dynamic>{
+        'id': 'shield_bastione_materia',
+        'name': 'Scudo del Bastione di Materia',
+        'kind': 'gear',
+        'cost': 132,
+        'level': 6,
+        'grade': 0,
+        'weapon': false,
+        'protection': true,
+        'damage': 0,
+        'defence': 8,
+        'shield': 18,
+        'buff': '@Danni+1/5dadomateria',
+        'desc':
+            'Scudo del fabbro: la skill difensiva richiede livello 6; il tratto offensivo si attiva solo se attacchi con Materia.',
+      },
+    ]);
     merchantStockSessionId = merchantRuntimeSessionId;
     ensureMerchantFoodOffers();
     _saveActiveMerchantProfileStock();
@@ -927,10 +1050,17 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if ('${offer['kind'] ?? ''}' == 'raw_vitalium') {
       return 'Consumabile: scegli quanto Oculum immettere; recuperi altrettanti HP. Se non hai Oculum, paghi 2 Materia e 2 Volontà per punto. ${oculumRawVitaliumRuleForGrade(max(0, leggiNumero(gradoController)))}';
     }
-    if ('${offer['kind'] ?? ''}' == 'gear' && readBoolValue(offer['weapon'])) {
+    if ('${offer['kind'] ?? ''}' == 'title_item') {
+      final level = max(0, readIntValue(offer['level']));
+      final grade = max(0, readIntValue(offer['grade']));
+      return '${offer['desc'] ?? ''}\nLivello oggetto: $level · Grado richiesto per acquistare/equipaggiare: $grade. La skill dell’oggetto scelto si sblocca al livello $level (o al livello più alto indicato dalla forma).';
+    }
+    if ('${offer['kind'] ?? ''}' == 'gear') {
       final grade = readIntValue(offer['grade']);
+      final level = max(0, readIntValue(offer['level']));
       final ability = oculumEquipmentAbility('${offer['name']}', grade);
-      return '${offer['desc'] ?? ''}\nLivello oggetto ${readIntValue(offer['level'])}; +${(1 + grade ~/ 4).clamp(1, 3)} punti statistica per livello. Skill richiede livello personaggio ≥ livello oggetto.\n${ability.nome}: ${ability.forme.first.descrizione} · ${ability.forme.first.costo} · CD ${ability.forme.first.cooldown}';
+      final skill = ability.forme.first;
+      return '${offer['desc'] ?? ''}\nLivello oggetto: $level · Grado richiesto per acquistare/equipaggiare: ${max(0, grade)}. +${(1 + max(0, grade) ~/ 4).clamp(1, 3)} punti statistica per livello. La skill dell’oggetto si sblocca al livello $level (o al livello più alto indicato dalla forma).\n${ability.nome}: ${skill.descrizione} · ${skill.costo} · CD ${skill.cooldown}';
     }
     return '${offer['desc'] ?? ''}';
   }
@@ -1078,11 +1208,22 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                                   'chaos_sign',
                                 }.contains(offer['kind']) &&
                                 readIntValue(offer['remaining']) <= 0) ||
+                            !oculumMerchantCanPurchaseOffer(
+                              offer,
+                              characterGrade: leggiNumero(gradoController),
+                            ) ||
                             leggiNumero(obserController) <
                                 merchantOfferCost(offer)
                         ? null
                         : () => buyMerchantOffer(offer),
-                    child: Text('${merchantOfferCost(offer)} O'),
+                    child: Text(
+                      oculumMerchantCanPurchaseOffer(
+                            offer,
+                            characterGrade: leggiNumero(gradoController),
+                          )
+                          ? '${merchantOfferCost(offer)} O'
+                          : 'Grado ${readIntValue(offer['grade'])}',
+                    ),
                   ),
                 ),
               ),
@@ -1126,13 +1267,24 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                                   'chaos_sign',
                                 }.contains(offer['kind']) &&
                                 readIntValue(offer['remaining']) <= 0) ||
+                            !oculumMerchantCanPurchaseOffer(
+                              offer,
+                              characterGrade: leggiNumero(gradoController),
+                            ) ||
                             leggiNumero(obserController) < cost
                         ? null
                         : () async {
                             await buyMerchantOffer(offer);
                             if (mounted) refresh(() {});
                           },
-                    child: Text('$cost O'),
+                    child: Text(
+                      oculumMerchantCanPurchaseOffer(
+                            offer,
+                            characterGrade: leggiNumero(gradoController),
+                          )
+                          ? '$cost O'
+                          : 'Grado ${readIntValue(offer['grade'])}',
+                    ),
                   ),
                 );
               },
@@ -1150,6 +1302,15 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   Future<void> buyMerchantOffer(Map<String, dynamic> offer) async {
+    if (!oculumMerchantCanPurchaseOffer(
+      offer,
+      characterGrade: leggiNumero(gradoController),
+    )) {
+      aggiungiLog(
+        'Grado insufficiente: ${offer['name']} richiede Grado ${readIntValue(offer['grade'])}.',
+      );
+      return;
+    }
     if (offer['kind'] == 'stat_gem') {
       updateMerchantGemOffers();
       if (readIntValue(offer['remaining']) <= 0) return;
@@ -1451,10 +1612,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       peso: 1.2,
       quantita: 1,
       note: isTitle
-          ? 'Oggetto scelto dal Negoziante.'
+          ? 'Oggetto scelto dal Negoziante. Livello oggetto ${max(0, readIntValue(offer['level']))} · Grado richiesto $grade. Skill sbloccata dal livello ${max(0, readIntValue(offer['level']))}.'
           : weapon
-          ? '${offer['desc']}\nMateriale: ${offer['monsterId'] ?? "forgiatura del mercante"}. Skill configurabile nell’oggetto.'
-          : '${offer['desc']}',
+          ? '${offer['desc']}\nLivello oggetto ${max(0, readIntValue(offer['level']))} · Grado richiesto $grade. Skill dell’oggetto sbloccata dal livello ${max(0, readIntValue(offer['level']))}. Materiale: ${offer['monsterId'] ?? "forgiatura del mercante"}. Skill configurabile nell’oggetto.'
+          : '${offer['desc']}\nLivello oggetto ${max(0, readIntValue(offer['level']))} · Grado richiesto $grade. Skill difensiva sbloccata dal livello ${max(0, readIntValue(offer['level']))}.',
       arma: weapon,
       protegge: protects,
       bonusDanno: weapon && protects

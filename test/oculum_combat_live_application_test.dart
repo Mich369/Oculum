@@ -206,9 +206,9 @@ void main() {
             'sourceName': 'Master',
             'targetTag': playerTag,
             'choice': 'vc',
-            'attack': 18,
+            'attack': 100,
             'damage': probe.defense() + 100,
-            'level': 0,
+            'level': 1,
             'difficulty': 'normale',
             'element': 'fisico',
           };
@@ -219,22 +219,72 @@ void main() {
           );
           expect(
             (state.logEventi as List).join('\n'),
-            contains('[DIFESA RICHIESTA]'),
+            contains('[DIFESA RICHIESTA ·'),
           );
           final request =
               state.onlineCombatRequests['live-damage'] as Map<String, dynamic>;
+          probe.applyEffects([
+            OculumStructuredEffect(
+              id: 'live-defense-shield',
+              type: 'scudo',
+              valueExpression: '30',
+              duration: '0',
+              recipient: 'se_stesso',
+            ),
+          ], source: 'Skill difensiva di prova');
+          expect(
+            state.scudoController.text,
+            '50',
+            reason: 'The defense skill adds its shield before the response.',
+          );
           await probe.resolveCombatDefense(request, 'cm', 10);
           expect(request['outcome'], 'full');
           expect(state.scudoOculumController.text, '0');
           expect(state.scudoController.text, '0');
           expect(state.hpTempController.text, '0');
-          expect(probe.currentHp(), 950);
           await waitFor(() => receipts.isNotEmpty);
-          expect((receipts.last['damageReceipt'] as Map)['hpLost'], 50);
+          final damageReceipt = Map<String, dynamic>.from(
+            receipts.last['damageReceipt'] as Map,
+          );
+          expect(
+            probe.currentHp(),
+            1000 - readIntValue(damageReceipt['hpLost']),
+            reason:
+                'Only damage left after the ordered protection layers may reduce HP.',
+          );
+          expect(
+            readIntValue(damageReceipt['oculumShieldLost']),
+            lessThanOrEqualTo(10),
+          );
+          expect(
+            readIntValue(damageReceipt['shieldLost']),
+            lessThanOrEqualTo(50),
+          );
+          expect(
+            readIntValue(damageReceipt['temporaryHpLost']),
+            lessThanOrEqualTo(20),
+          );
+          expect(damageReceipt['pawnPending'], false);
+          expect(
+            probe.incomingDamagePreset('fisico'),
+            'Bassa Fragilità',
+            reason: 'A critical hit advances the target resistance for its damage element.',
+          );
+          expect(
+            (state.logEventi as List).join('\n'),
+            contains('Critico nemico'),
+            reason: 'The critical damage bonus must be logged on the target sheet.',
+          );
+          if (readIntValue(damageReceipt['shieldLost']) > 0) {
+            expect(readIntValue(damageReceipt['oculumShieldLost']), 10);
+          }
+          if (readIntValue(damageReceipt['temporaryHpLost']) > 0) {
+            expect(readIntValue(damageReceipt['shieldLost']), 50);
+          }
           await probe.resolveCombatDefense(request, 'cm', 10);
           expect(
             probe.currentHp(),
-            950,
+            1000 - readIntValue(damageReceipt['hpLost']),
             reason: 'Duplicate defense must not repeat damage',
           );
           final support = <String, dynamic>{
@@ -250,6 +300,7 @@ void main() {
           );
           expect(probe.consumeHelp(), -3);
           expect(probe.consumeHelp(), 0);
+          final hpBeforeHealing = probe.currentHp();
           final healing = <String, dynamic>{
             ...support,
             'id': 'live-heal',
@@ -269,12 +320,12 @@ void main() {
           await waitFor(
             () => state.onlineCombatRequests['live-heal']?['received'] == true,
           );
-          expect(probe.currentHp(), 960);
+          expect(probe.currentHp(), hpBeforeHealing + 10);
           await master.sendCombatEvent('combat_help', healing);
           await Future<void>.delayed(const Duration(seconds: 1));
           expect(
             probe.currentHp(),
-            960,
+            hpBeforeHealing + 10,
             reason: 'Duplicate support must not heal twice',
           );
           await player.dispose();

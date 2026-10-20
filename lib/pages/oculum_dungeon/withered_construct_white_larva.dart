@@ -35,7 +35,7 @@ const _witheredConstructWhiteLarvaEntries = [
     nameIt: 'Larva Bianca',
     nameEn: 'White Larva',
     descIt:
-        'Grado 0–I. Resilienza 1, Volontà 2, Materia 0, Oculum 0. Mosse senza costo con cooldown. Assalto prepara +5/+15/+45 Danni più Oculum (×1,5 nella seconda forma, ×2 nella terza). Infestazione genera una nidiata: 1d100 / 1d200+20 / 1d250+100 larve da 1 Vita, una sacrificata per danno. Scavata permette fuga su Velo oppure attacco con svantaggio alto al difensore. Un 20 naturale sul Drop rilascia una scroll Nidiata della forma disponibile del mostro; apprendimento raro come le altre scroll.',
+        'Grado 0–I. Resilienza 1, Volontà 2, Materia 0, Oculum 0. Mosse senza costo con cooldown. Assalto prepara +5/+15/+45 Danni più Oculum (×1,5 nella seconda forma, ×2 nella terza). Infestazione genera una nidiata: 1d100 / 1d200+20 / 1d250+100 larve da 1 Vita, una sacrificata per danno e visibile in una barra rossa. Scavata permette fuga su Velo oppure attacco con svantaggio alto al difensore. Un 20 naturale sul Drop rilascia una scroll Nidiata; l’apprendimento dalla scroll resta raro.',
     descEn: 'Grade 0–I larva with free cooldown moves and a sacrificial brood.',
     elementId: 'fisico',
     spriteAssetPath: '',
@@ -70,7 +70,7 @@ String oculumWitheredLarvaSkillText(String id) => switch (id) {
   'white_larva_assault' =>
     'Assalto — I/+5 + Oculum Danni; II/+15 + floor(Oculum×1,5); III/+45 + Oculum×2. Prossimo attacco, una sola volta. Costo 0. CD 2/3/4 turni. Forme: livelli 0/3/6.',
   'white_larva_brood' =>
-    'Infestazione · Nidiata — I/1d100; II/1d200+20; III/1d250+100 larve da 1 Vita. Ogni danno destinato alla Vita uccide una larva prima del padrone. Non si cumula: rinnova la nidiata. Costo 0. CD 4/6/8 turni. Forme: livelli 0/3/6.',
+    'Infestazione · Nidiata — I/1d100; II/1d200+20; III/1d250+100 larve da 1 Vita. La nidiata ha una barra Vita rossa; ogni danno dopo Scudi e HP temporanei sacrifica una larva prima del padrone. Non si cumula: rinnova la nidiata. Le scroll hanno ranghi I–IX e aggiungono il Livello dell’utilizzatore. Costo 0. CD 4/6/8 turni. Forme: livelli 0/3/6.',
   'white_larva_burrow' =>
     'Scavata — I/scegli Fuga: tiro Velo, oppure Attacco: il bersaglio riceve −6 al prossimo tiro; II/stessa scelta; III/stessa scelta. Il Master decide se il terreno permette di scavare. Costo 0. CD 3/4/5 turni. Forme: livelli 0/3/6.',
   _ => '',

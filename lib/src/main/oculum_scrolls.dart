@@ -49,6 +49,20 @@ List<OculumStructuredEffect> oculumScrollCombatEffects(
         elementType: '${data['element'] ?? 'fisico'}',
       ),
     );
+  } else if (kind == 'shadow_clone') {
+    effects.add(
+      OculumStructuredEffect(
+        id: 'shadow_living_${g}',
+        type: 'evocazione',
+        target: 'clone_ombra',
+        recipient: 'se_stesso',
+        valueExpression: 'livello*5',
+        mode: 'immediato',
+        duration: '${g * 2 + 3}',
+        durationUnit: 'turni',
+        narrativeText: '${data['description'] ?? 'Ombra viva'}',
+      ),
+    );
   } else if (kind == 'heal' || kind == 'ward') {
     effects.add(
       OculumStructuredEffect(
@@ -98,6 +112,38 @@ List<OculumStructuredEffect> oculumScrollCombatEffects(
   return effects.isNotEmpty
       ? effects
       : oculumResolveAbilityEffects([], '${data['description'] ?? ''}');
+}
+
+InventoryItem oculumShadowLivingScrollItem(int grade) {
+  final g = grade.clamp(0, 12).toInt();
+  final duration = g * 2 + 3;
+  final description =
+      'Evoca una scheda Clone d’ombra alleata con Vita pari a 5 × il tuo livello; copia le tue statistiche tranne Resilienza. Dura $duration turni. Se sei in una turnistica online, la scheda viene inviata al Master e l’ingresso resta soggetto alla conferma della turnistica.';
+  return InventoryItem(
+    nome: '[Ombra viva] [Pergamena] [Grado $g]',
+    peso: .1,
+    quantita: 1,
+    gradoOggetto: g,
+    note:
+        '$description\nMonouso. Costo ${oculumScrollWillCost(g)} Volontà; CD ${oculumScrollDifficulty(g)}; ricarica ${oculumScrollCooldown(g)} turni. Valore ${oculumScrollValue(g)} Obser.',
+    craftData: {
+      'scroll': {
+        'id': 'ombra_viva/$g',
+        'name': 'Ombra viva',
+        'element': 'ombra',
+        'grade': g,
+        'kind': 'shadow_clone',
+        'description': description,
+        'willCost': oculumScrollWillCost(g),
+        'cooldownTurns': oculumScrollCooldown(g),
+        'effects': oculumScrollCombatEffects({
+          'grade': g,
+          'kind': 'shadow_clone',
+          'description': description,
+        }).map((effect) => effect.toJson()).toList(),
+      },
+    },
+  );
 }
 
 class OculumTechniqueScrollProfile {
@@ -580,7 +626,7 @@ extension _OculumScrolls on _OculumHomePageState {
         ? '${data['description']}'
         : 'Tiro fallito: nessun effetto.';
     var resolvedAttackDamage = 0;
-    if (success && kind == 'technique') {
+    if (success && const {'technique', 'shadow_clone'}.contains(kind)) {
       final effects = oculumScrollCombatEffects(data);
       outcome +=
           '\n${applyStructuredEffectsOnActivation(effects, source: source).join("\n")}';
@@ -696,7 +742,9 @@ extension _OculumScrolls on _OculumHomePageState {
           '${data['name']} [Grado $g]: $formula.${oculumTiroLogLabel(spend)}\n$outcome$learned';
       aggiungiLog(risultato);
     });
-    if (success && onlineFight && kind != 'technique') {
+    if (success &&
+        onlineFight &&
+        !const {'technique', 'shadow_clone'}.contains(kind)) {
       final effects = oculumScrollCombatEffects(
         data,
         resolvedDamage: max(0, resolvedAttackDamage - bonusDannoPiatto()),
@@ -712,7 +760,9 @@ extension _OculumScrolls on _OculumHomePageState {
         attackTotal: total,
         natural: natural,
       );
-    } else if (success && onlineFight && kind == 'technique') {
+    } else if (success &&
+        onlineFight &&
+        const {'technique', 'shadow_clone'}.contains(kind)) {
       final hasPendingAttack = activeStructuredEffects.any(
         (effect) =>
             effect['type'] == 'pending_target' &&

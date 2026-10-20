@@ -1641,6 +1641,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
           'monsterBookApprovedScope',
           'packLeaderPhaseTriggered',
           'packLeaderPhaseBaseMaxHp',
+          'combatElementalAdaptation',
           'humanoidRole',
           'monsterLootGenerated',
           'monsterLootGeneratedAt',
@@ -1973,8 +1974,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
       ..addAll(
         savedDefenseRolls is List
             ? savedDefenseRolls.map((value) => '$value')
-            : const ['riflessi', 'resistenza', 'manifestazione_potere'],
-      );
+            : const [
+                'riflessi',
+                'resistenza',
+                'manifestazione_potere',
+                'strategia',
+              ],
+      )
+      // Aggiunta compatibile: i salvataggi precedenti conservano le scelte
+      // personalizzate e ricevono Strategia come opzione difensiva disponibile.
+      ..add('strategia');
     coreMasteryPoints.clear();
     final savedMasteryPoints = json['coreMasteryPoints'];
     if (savedMasteryPoints is Map) {
@@ -7644,6 +7653,23 @@ extension _OculumHomePersistence on _OculumHomePageState {
         if (matchedMonster != null) {
           schedePersonaggio[schedaCorrente]['monsterBookSourceId'] =
               matchedMonster.id;
+          if (matchedMonster.stats['elementalResistancePreset'] == 1) {
+            incomingDamagePresets
+              ..clear()
+              ..addEntries(
+                allDamageElementIds().map(
+                  (element) => MapEntry(element, 'Resistenza'),
+                ),
+              );
+            schedePersonaggio[schedaCorrente]['combatElementalAdaptation'] =
+                <String, dynamic>{
+                  'version': 1,
+                  'kind': 'boss',
+                  'resistanceByElement': <String, int>{},
+                  'collectedElements': <String>[],
+                  'lastElement': '',
+                };
+          }
           inventario
             ..clear()
             ..addAll([
@@ -7662,6 +7688,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
             '@VC+3 @ReazioneVeloce+1 @Danni+${max(8, livello * 3 + 8)} ${elementDisplayName(variantElement)}',
           if (normalizedVariant == 'elite')
             '@VC+5 @CM+4 @Reazione+1 @ReazioneVeloce+1 @Danni+${max(18, livello * 6 + 18)} ${elementDisplayName(variantElement)} @Difesa+${max(12, livello * 3 + 12)} ${elementDisplayName(variantElement)}',
+          if (matchedMonster?.stats['damageBonus'] == 15) '@Danni+15',
+          if (matchedMonster?.stats['defenseBonus'] == 5) '@Difesa+5',
         ].join(' ');
 
         skills

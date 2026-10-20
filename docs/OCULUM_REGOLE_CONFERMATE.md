@@ -1,6 +1,14 @@
 # Oculum — registro delle regole confermate
 
-Ultimo aggiornamento: 19 ottobre 2026. Documento da consultare prima di modificare il regolamento.
+Ultimo aggiornamento: 20 ottobre 2026. Documento da consultare prima di modificare il regolamento.
+
+## Equipaggiamento del Fabbro — conferme e implementazione del 20 ottobre 2026
+
+- Ogni arma, armatura e scudo di catalogo indica il proprio livello. Il livello della skill dell'oggetto non può essere inferiore al livello dell'oggetto; ogni forma può avere un requisito più alto. La skill è utilizzabile solo quando il personaggio raggiunge il requisito e ha l'oggetto equipaggiato. Il requisito viene controllato nel pannello rapido, nell'editor e al momento dell'attivazione, anche se la UI è obsoleta.
+- Un oggetto di grado superiore a quello del personaggio non è acquistabile. Gli oggetti dello stesso grado o di grado inferiore sono acquistabili, anche se il personaggio non ha ancora il livello per sbloccarne la skill.
+- Minimo prezzo equipaggiamento: Grado 0 50 Obser; ogni grado aggiunge 70, quindi Grado I 120, II 190, III 260, IV 330 e così via. Il minimo del Grado III è 260 Obser. La fascia di livello base è 5 × grado; ogni livello oltre tale fascia aggiunge 10 Obser. Le statistiche possono alzare ulteriormente il prezzo. Questi minimi e formule sono impostazioni iniziali del negozio, non impediscono la personalizzazione dei prezzi.
+- I bonus statistici degli equipaggiamenti restano 1–3 punti per livello e sono memorizzati nel JSON. Nuove armi del Fabbro includono Stocco dell'Eco Riflessa (1/4 Riflessi), Martello della Faglia (1/3 Forza), Lancia della Soglia Velata (1/5 Velo) e Pugnale della Misura Esatta (1/4 Precisione). Sono aggiunte anche una corazza e uno scudo con livelli e skill difensive. Le frazioni si attivano soltanto usando il relativo sottotratto e il testo rimane modificabile.
+- Testi, livello, grado, bonus, skill, forme, costi, cooldown e formula restano modificabili/salvati nell'oggetto; gli equipaggiamenti già salvati mantengono i loro valori. Il livello degli oggetti legacy senza campo `livelloOggetto` rimane 0 per non alterare i salvataggi.
 
 ## Accesso online — conferme del 19 ottobre 2026
 
@@ -11,9 +19,12 @@ Ultimo aggiornamento: 19 ottobre 2026. Documento da consultare prima di modifica
 ## Mostri e organizzazione — conferme del 19 ottobre 2026
 
 - Costrutto Rinsecchito, base Grado 0–I: Res 2, Vol 3, Mat 1 crescente, Ocu 3. Tank con scudi; Ricordo Vitale dura Oculum turni e costa 1 Oculum per turno. Attacco +4/+12/+34 più Oculum, seconda forma ×1,5 e terza ×2. Drop nucleo rotto debole fascia 0–III, rami e cuore raro. Il cuore cura il 90% Vita e dà Ricordo Vitale per 1d9 turni.
-- Larva Bianca, base Grado 0–I: Res 1, Vol 2, Mat 0, Ocu 0. Mosse gratuite a cooldown. Assalto +5/+15/+45 più Oculum ×1/×1,5/×2. Nidiata 1d100 / 1d200+20 / 1d250+100 larve con 1 Vita, sacrificate una per danno. Scavata: fuga su Velo oppure attacco con svantaggio alto. Un 20 sul Drop dà la scroll della forma del mostro; apprendimento raro, non automatico.
+- Larva Bianca, base Grado 0–I: Res 1, Vol 2, Mat 0, Ocu 0. Mosse gratuite a cooldown. Assalto +5/+15/+45 più Oculum ×1/×1,5/×2. Nidiata 1d100 / 1d200+20 / 1d250+100 larve con 1 Vita, sacrificate una per danno. La riserva compare come barra Vita rossa sotto la Vita del personaggio; dopo Scudi e HP temporanei assorbe un danno per larva. Scavata: fuga su Velo oppure attacco con svantaggio alto. Un 20 sul Drop dà una scroll Nidiata; l'apprendimento dalla scroll resta raro e non automatico.
 - L’utente autorizza la scelta di cooldown e potenza dello svantaggio, purché modificabili. I valori iniziali del catalogo sono riportati nel manuale come impostazioni modificabili, non come ulteriori conferme numeriche.
 - Schede organizzabili in cartelle/sottocartelle rinominabili, con menu alla pressione prolungata e spostamento libero. Gli identificativi e gli indici fisici delle schede non devono cambiare per organizzare la barra laterale.
+- Se evochi un Occhio dei Caduti mentre il suo proprietario è già nella turnistica, la creatura entra automaticamente nello stesso scontro: offline viene aggiunta localmente; online il proprietario invia la scheda e richiede al Master l'inserimento autorizzato.
+- Clone d’ombra: la creazione diretta produce una scheda alleata con le statistiche del proprietario tranne Resilienza, 10 Vita e durata pari ai turni di Oculum. La scroll Ombra viva usa invece Vita pari a 5 × livello del proprietario, copia le altre statistiche tranne Resilienza e dura `grado della scroll × 2 + 3` turni. Se il proprietario è già in turnistica, la scheda del clone viene aggiunta allo scontro: offline localmente; online viene inviata al Master, che ne autorizza l’ingresso nella turnistica condivisa.
+- Nella schermata iniziale gli occhi seguono il puntatore anche mentre si premono i controlli. Passando sul ruolo Master, gli occhi orientano lo sguardo in direzione opposta al puntatore.
 
 ## Fonti e precedenza
 
@@ -61,6 +72,7 @@ Esempio: 51 danni base, nemico livello 10, Medio: bonus ordinario 20; tiro doppi
 
 ### Online e offline
 
+- Compatibilità di rete: Windows, browser e dispositivi mobili devono comunicare tra Wi‑Fi, rete mobile, Ethernet, VPN e reti che non consentono WebSocket, usando l'autenticazione e le autorizzazioni della stanza. Realtime resta il trasporto immediato; quando il WebSocket non si apre, invio e ricezione passano al registro persistente HTTPS già protetto da RLS. La consegna della scheda si considera completata solo con la conferma `sheet_received_ack` del destinatario; un semplice invio accettato dal server non equivale alla ricezione. Offline continua a funzionare localmente. Le reti senza accesso a Internet o che bloccano anche HTTPS non possono sincronizzare finché la connessione non torna.
 - Conferma del 18 ottobre 2026: il danno al partecipante selezionato, dopo il confronto dei tiri, passa per Difesa, Scudo Oculum, Scudo normale, HP temporanei e infine Vita. Il quasi riuscito mantiene la Difesa ×1,5 arrotondata per eccesso; un attacco evitato non consuma protezioni. Restano le eccezioni esplicite già definite per abilità, Resistenza, Scudo di Salvataggio e Pawn. Un duplicato della stessa risoluzione non applica di nuovo il danno.
 
 - Online, in una turnistica, scegli il bersaglio e il tiro d'attacco. VC è il tiro ordinario; Schianto, Forza, Riflessi o altri tiri alternativi richiedono una descrizione e una motivazione al Master.
@@ -86,6 +98,13 @@ Esempio: 51 danni base, nemico livello 10, Medio: bonus ordinario 20; tiro doppi
 
 - La modalità fuga di **Scavata** usa il sottotratto **Velo** (`velo`). Questa indicazione riguarda la fuga; non cambia il tiro della modalità di attacco sotterraneo.
 - Fonte: correzione esplicita dell'utente «il tiro per la fuga della larva deve essere su velo».
+
+## Nidiata — barra e scroll, conferma del 20 ottobre 2026
+
+- Infestazione mostra una barra Vita rossa pari al numero di mini larve generate. Ogni larva ha 1 Vita e viene sacrificata per assorbire un danno dopo Scudi e HP temporanei; il danno rimasto prosegue verso il personaggio.
+- La stessa barra e lo stesso assorbimento si applicano a chi apprende Infestazione con una scroll: è un esito raro secondo le probabilità già previste per apprendere una tecnica da scroll. Usare una scroll esegue la tecnica e la consuma; l'apprendimento non è automatico.
+- I nove ranghi della scroll Nidiata hanno questi dadi e modificatori, aggiungendo il Livello dell'utilizzatore: I `1d50+20+livello`; II `1d100+30+livello`; III `1d120+50+livello`; IV `1d200+60+livello`; V `1d200+100+livello`; VI `1d250+120+livello`; VII `1d250+150+livello`; VIII `1d250+200+livello`; IX `2d250+200+livello`.
+- Una nuova nidiata sostituisce quella precedente. Le larve e la Vita residua sono salvate nella scheda e incluse negli aggiornamenti online della Vita.
 
 ## Pergamene — aggiornamento del 18 ottobre 2026
 
@@ -164,6 +183,26 @@ Questo registro conserva le richieste; non certifica la loro implementazione. Le
 - Confermato: i primi tre Chained Fate completati concedono slot Fato ed EXP ×2. Dai successivi non si ottengono ulteriori slot premio e l'EXP nei Chained Fate passa a ×3.
 - Reputazioni: cartelle e sottocartelle liberamente creabili, senza un limite fisso, per città e luoghi scoperti. Organizzazione salvata nella scheda, senza perdere valori o reputazioni precedenti. È possibile spostare le reputazioni tra cartelle.
 
+### Conferme di combattimento del 20 ottobre 2026
+
+- Percezione, Investigazione, Furbizia e Valutazione possono essere usate per osservare. La scheda propone il valore più alto fra i quattro; il tiro può anche essere lanciato liberamente senza bersaglio.
+- Precisione da +6: il colpo ha 80% di avanzare la Fragilità di uno stadio, 15% di due stadi, 5% di tre, senza superare Fragilità Letale. Ogni punto oltre +6 trasferisce un punto percentuale dalla fascia +1 a quella +2 fino a 50/45/5; poi dalla fascia +2 alla fascia +3 fino a 50/40/10. La modifica vale soltanto per il colpo e non cambia la resistenza salvata sulla scheda.
+- Da Precisione +20 si ritaglia un ulteriore 5% dalla fascia +1 per un esito speciale che fa ricevere al bersaglio il 260–350% del danno normale, scelto casualmente. Questo esito resta separato dalla progressione delle fasce; la fascia +1 si riduce di conseguenza.
+- Schianto: un bersaglio di Grado 0–II colpito salta la propria azione, ma conserva la Reazione e la tira con Schianto +10 contro l'attaccante. Sopra il Grado II questa mossa non nega l'azione.
+- Riflessi: con +6 un critico concede una Reazione aggiuntiva contro l'attaccante solo se il movimento dell'attaccante è pari o inferiore al proprio; da +12 il risultato naturale 19 o 20 la concede, da +20 bastano 18, 19 o 20, senza vincolo di movimento. L'effetto aggiunge una sola Reazione per il trigger e non accumula Reazioni oltre i limiti concessi da Skill.
+- Concentrazione (statistica almeno 10): un tiro Utility in combattimento con dado naturale maggiore di 10 prepara il prossimo attacco (+10% Danni) oppure la prossima difesa (+12%), consumando il bonus al primo dei due usato.
+- Adattamento (statistica almeno 10): un tiro Utility in combattimento con dado naturale maggiore di 10 prepara una riduzione al prossimo danno ricevuto pari a 1 + (dado naturale − 10). La riduzione si consuma sul primo danno e non si accumula oltre il valore maggiore già pronto.
+- Schianto contro un bersaglio di Grado 0–II: il colpo riuscito gli fa saltare l'azione, ma conserva la Reazione e la tira con Schianto +10 contro l'attaccante. Sopra il Grado II l'effetto non nega l'azione. La sincronizzazione del salto azione tra dispositivi richiede autorità della turnistica del Master.
+- Queste sono regole confermate, non una certificazione che ogni risoluzione offline/online sia già implementata. Conservare costi, durate, bersagli e valori modificabili dagli editor.
+
+### Elementi in combattimento — conferma del 20 ottobre 2026
+
+- Attacco e Difesa mostrano un selettore dell'elemento scelto, sempre visibile prima del tiro e scorribile. L'attaccante sceglie l'elemento del danno; il difensore sceglie l'affinità con cui protegge questa risposta. La scelta difensiva non riscrive resistenze o personalizzazioni salvate.
+- Un'affinità che prevale sull'elemento in arrivo riduce del 25% il danno di quell'attacco: Acqua protegge dal Fuoco; Oscuro protegge da Luce/Sacro; Solare protegge da Lunare. Il vantaggio elementale si applica al danno, incluso il bonus del critico, prima delle protezioni e della Vita. L'elemento originale resta quello usato per resistenze e Fragilità.
+- Angelico e Diabolico si indeboliscono reciprocamente: ciascuno riduce del 25% i danni dell'altro. Questa protezione vale finché la Vita del difensore è almeno il 30% del massimo; sotto tale soglia svanisce.
+- Per gli elementi base, la prima implementazione aggiunge Acqua > Fuoco/Lava, Fuoco > Gelo, Gelo > Vento, Vento > Terra/Radice e Terra > Fulmine > Acqua. Le coppie non elencate, gli elementi personalizzati e i danni Fisico/Taglio/Perforante/Contundente non ricevono vantaggi automatici. La tabella è intenzionalmente circoscritta e può essere ampliata senza cambiare il formato dei salvataggi.
+- Regola esplicita: «il Buio batte la Luce per la credenza per la Luna» e «Sole batte Luna»; Angelico e Diabolico sono pari nel senso che si riducono reciprocamente gli attacchi. Conferma utente del 20 ottobre 2026.
+
 
 ### Presentazione confermata durante l'implementazione
 
@@ -228,3 +267,7 @@ L'utente indica le illustrazioni promozionali anime di S4 League, più curate de
 Richiesta utente: tutte le proprie schede online devono poter arrivare al Master e partecipare alla sua turnistica. Correzione più recente: la connessione, l’arrivo del Master e la richiesta di recupero sincronizzano automaticamente solo la scheda attualmente usata; le copie ricevute non vengono rispedite come proprie. L’ingresso richiesto resta in attesa e viene ritentato finché lo snapshot del Master non contiene il partecipante. La presenza in ritardo non elimina una richiesta: il Master la ricontrolla dopo la presenza o la scheda. Restano verificati proprietario/sessione, campagna e fight pubblicata. Il recupero di una singola scheda usa il suo tag.
 
 - Precisazione utente: invio automatico al Master soltanto della scheda attualmente usata, senza inviare in blocco le altre. Restano conferma di ricezione e ritentativi per la scheda scelta.
+
+## Uso dei sottotratti — 20 ottobre 2026
+- Correzione esplicita dell'utente: i sottotratti in sé sono sempre utilizzabili; le soglie di Maestria non sono un requisito per poterli tirare. La Maestria continua a governare i propri avanzamenti e benefici. Nei pannelli di combattimento sono selezionabili i sottotratti pertinenti all'azione, anche se il vecchio campo `unlocked` del salvataggio è falso. Strategia è disponibile anche come scelta difensiva.
+- In attacco, Manifestazione del Potere con totale almeno +6 aggiunge +3 danni per livello a ciascun bersaglio colpito; negli attacchi multipli il bonus piatto si applica a ogni bersaglio.

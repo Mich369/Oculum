@@ -1787,6 +1787,23 @@ extension _OculumFallenEyes on _OculumHomePageState {
           '${schedePersonaggio[summonedIndex]['sheetTag'] ?? ''}';
       eye['usesBlankSummonSlot'] = true;
       eye['active'] = true;
+      // During a combat, the summoned Fallen Eye joins its owner's current
+      // local or Master-hosted initiative automatically. Outside combat the
+      // existing summon flow remains unchanged.
+      if (currentCombatIsActive()) {
+        final ownerTag = '${eye['ownerSheetId'] ?? ''}';
+        final ownerInTurnOrder = masterInitiativeTokens.any(
+          (token) => '${token['sheetTag'] ?? token['id'] ?? ''}' == ownerTag,
+        );
+        final alreadyInTurnOrder = masterInitiativeTokens.any(
+          (token) =>
+              '${token['sheetTag'] ?? token['id'] ?? ''}' ==
+              '${schedePersonaggio[summonedIndex]['sheetTag'] ?? ''}',
+        );
+        if (ownerInTurnOrder && !alreadyInTurnOrder) {
+          addSheetToMasterInitiative(summonedIndex, rollInitiative: true);
+        }
+      }
       aggiungiLog(
         'Occhio dei Caduti evocato: ${eye['name']}. Scheda disponibile nell’elenco: ${sheet['nome'] ?? eye['name']}.',
       );
@@ -1843,6 +1860,48 @@ extension _OculumFallenEyes on _OculumHomePageState {
     }
     _touchFallenEyes();
     await salvaDati();
+    if (currentCombatIsActive()) {
+      final ownerTag = '${eye['ownerSheetId'] ?? ''}';
+      final summonedTag = '${eye['summonedSheetTag'] ?? ''}';
+      final normalizedOwnerTag = normalizeOculumFriendTag(
+        ownerTag,
+      ).toUpperCase();
+      final localOwnerInTurnOrder = masterInitiativeTokens.any(
+        (token) =>
+            normalizeOculumFriendTag(
+              '${token['sheetTag'] ?? token['id'] ?? ''}',
+            ).toUpperCase() ==
+            normalizedOwnerTag,
+      );
+      final sharedEncounter = oculumSelectSharedEncounter(
+        realtimeEncounterSnapshots,
+        sheetTag: ownerTag,
+        selectedId: realtimeSelectedEncounterId,
+      );
+      final hasSharedEncounter =
+          '${sharedEncounter['encounterId'] ?? ''}'.isNotEmpty;
+      final summonedIndex = schedePersonaggio.indexWhere(
+        (sheet) => '${sheet['sheetTag'] ?? ''}' == summonedTag,
+      );
+      if (summonedIndex >= 0 && localOwnerInTurnOrder) {
+        if (realtimeIsMasterRole || realtimeService?.isConnected != true) {
+          addSheetToMasterInitiative(summonedIndex, rollInitiative: true);
+        } else if (hasSharedEncounter) {
+          await joinSharedMasterEncounter(
+            Map<String, dynamic>.from(sharedEncounter),
+            sheetIndex: summonedIndex,
+          );
+        }
+      } else if (summonedIndex >= 0 &&
+          !realtimeIsMasterRole &&
+          realtimeService?.isConnected == true &&
+          hasSharedEncounter) {
+        await joinSharedMasterEncounter(
+          Map<String, dynamic>.from(sharedEncounter),
+          sheetIndex: summonedIndex,
+        );
+      }
+    }
     final rarity = '${eye['rarity'] ?? 'comune'}';
     if (!oculumFallenEyeCanLevel(rarity)) {
       _showFallenEyeSummonNotice(

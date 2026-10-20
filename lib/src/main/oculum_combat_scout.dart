@@ -36,9 +36,12 @@ extension _OculumCombatScout on _OculumHomePageState {
   HiddenEyeStat? bestCombatScoutStat() {
     final candidates = hiddenEyeStats
         .where(
-          (s) =>
-              s.unlocked &&
-              const {'percezione', 'investigazione'}.contains(s.id),
+          (s) => const {
+            'percezione',
+            'investigazione',
+            'furbizia',
+            'valutazione',
+          }.contains(s.id),
         )
         .toList();
     candidates.sort((a, b) => hiddenEyeTotal(b).compareTo(hiddenEyeTotal(a)));

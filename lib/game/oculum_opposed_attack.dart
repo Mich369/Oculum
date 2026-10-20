@@ -45,6 +45,108 @@ int oculumDamagePerTarget(
   return max(0, share + flatBonusPerTarget);
 }
 
+/// Skill damage is an addition to the attacker's ordinary base damage. The
+/// fixed bonuses are split out so area attacks can add them to every target.
+int oculumAttackDamageWithAbilityBonus({
+  required int preparedDamage,
+  required int fixedBonuses,
+  required int abilityDamageBonus,
+}) =>
+    max(0, preparedDamage - max(0, fixedBonuses)).toInt() +
+    max(0, abilityDamageBonus).toInt();
+
+/// Reads an additive attack-roll fraction from editable equipment, skill,
+/// Art, title, or quick-command text. Examples:
+/// `@Danni+1/2dadoriflessi` and `1/3dadoforza ai danni`.
+/// The formula contributes only when the named subtrait made this attack.
+int oculumAttackRollDamageBonus({
+  required Iterable<String> sourceTexts,
+  required String attackChoiceId,
+  required int rollTotal,
+}) {
+  if (rollTotal <= 0) return 0;
+  final chosen = _oculumCanonicalAttackSubtrait(attackChoiceId);
+  if (chosen.isEmpty) return 0;
+  final pattern = RegExp(
+    r'(?:(\d+)\s*/\s*(\d+)\s*)?dado\s*([A-Za-zÀ-ÿ_]+)',
+    caseSensitive: false,
+  );
+  var total = 0;
+  for (final text in sourceTexts) {
+    for (final match in pattern.allMatches(text)) {
+      final subtrait = _oculumCanonicalAttackSubtrait(match.group(3) ?? '');
+      if (subtrait != chosen) continue;
+      final marker = text.toLowerCase().lastIndexOf('@danni', match.start);
+      final lastCommand = text.lastIndexOf('@', match.start);
+      final commandBound = marker >= 0 && marker >= lastCommand;
+      final nextCommand = text.indexOf('@', match.end);
+      final end = nextCommand < 0 ? text.length : nextCommand;
+      final suffix = text.substring(match.end, end).toLowerCase();
+      final freeTextDamage = RegExp(r'\bdann[io]\b').hasMatch(suffix);
+      if (!commandBound && !freeTextDamage) continue;
+      final numerator = max(0, int.tryParse(match.group(1) ?? '1') ?? 1);
+      final denominator = max(1, int.tryParse(match.group(2) ?? '1') ?? 1);
+      total += rollTotal * numerator ~/ denominator;
+    }
+  }
+  return total;
+}
+
+String _oculumCanonicalAttackSubtrait(String raw) {
+  final normalized = raw
+      .toLowerCase()
+      .replaceAll('à', 'a')
+      .replaceAll('è', 'e')
+      .replaceAll('é', 'e')
+      .replaceAll('ì', 'i')
+      .replaceAll('ò', 'o')
+      .replaceAll('ù', 'u')
+      .replaceAll(RegExp(r'[^a-z0-9]'), '')
+      .replaceFirst(RegExp(r'^dado'), '');
+  return switch (normalized) {
+    'vc' || 'volonta' => 'vc',
+    'forza' => 'forza',
+    'riflessi' || 'riflesso' => 'riflessi',
+    'schianto' => 'schianto',
+    'precisione' => 'precisione',
+    'manifestazione' || 'manifestazionedelpotere' => 'manifestazione_potere',
+    'furbizia' => 'furbizia',
+    'velo' => 'velo',
+    'strategia' => 'strategia',
+    'percezione' => 'percezione',
+    'investigazione' => 'investigazione',
+    'valutazione' => 'valutazione',
+    _ => normalized,
+  };
+}
+
+String oculumMonsterCollectedElement(Map<String, dynamic> state) =>
+    _oculumCanonicalCombatElement('${state['lastElement'] ?? ''}');
+
+List<String> oculumMonsterCollectedElements(Map<String, dynamic> state) {
+  final raw = state['collectedElements'];
+  if (raw is! Iterable) return const [];
+  return <String>{
+    for (final item in raw)
+      if (_oculumCanonicalCombatElement('$item').isNotEmpty)
+        _oculumCanonicalCombatElement('$item'),
+  }.toList(growable: false);
+}
+
+bool oculumIsElementCollector(String monsterBookSourceId) =>
+    monsterBookSourceId.trim().startsWith('collezionista_di_elementi');
+
+int oculumElementCollectorDefensePenalty({
+  required String sourceMonsterBookId,
+  required String incomingElement,
+  required String defenseElement,
+}) =>
+    oculumIsElementCollector(sourceMonsterBookId) &&
+        _oculumCanonicalCombatElement(incomingElement) ==
+            _oculumCanonicalCombatElement(defenseElement)
+    ? 2
+    : 0;
+
 /// Keeps an additive tail such as `danni+8` outside the divided area packet.
 /// The tail is evaluated once on activation and added to every hit.
 ({String base, String perTargetBonus}) oculumSplitAreaDamageExpression(
@@ -99,6 +201,163 @@ int oculumOpposedDamage(
       damage + (critical && criticalBonus > 0 ? criticalBonus * 2 : 0);
   return amount;
 }
+
+/// Returns the damage retained when a defender chooses an elemental affinity.
+/// A counter-affinity protects from that incoming element by 25%. Custom and
+/// non-elemental types stay neutral unless an explicit matchup is added here.
+/// Angelic and demonic damage mutually weaken each other while the defender
+/// has at least 30% of maximum HP; at lower HP that ward collapses.
+double oculumElementalDefenseMultiplier({
+  required String incomingElement,
+  required String defenseElement,
+  required int currentHp,
+  required int maximumHp,
+}) {
+  final incoming = _oculumCanonicalCombatElement(incomingElement);
+  final defense = _oculumCanonicalCombatElement(defenseElement);
+  if (incoming.isEmpty || defense.isEmpty || maximumHp <= 0) return 1;
+
+  bool isAngelic(String value) => value == 'angelico';
+  bool isDemonic(String value) => value == 'demoniaco';
+  final pair =
+      (isAngelic(incoming) && isDemonic(defense)) ||
+      (isDemonic(incoming) && isAngelic(defense));
+  if (pair) {
+    final hp = currentHp.clamp(0, maximumHp);
+    return hp * 100 >= maximumHp * 30 ? 0.75 : 1;
+  }
+
+  // The left side is the defending affinity; it counters the incoming type.
+  const counters = <String, Set<String>>{
+    'acqua': {'fuoco', 'lava'},
+    'fuoco': {'gelo', 'ghiaccio'},
+    'gelo': {'vento', 'aria'},
+    'ghiaccio': {'vento', 'aria'},
+    'vento': {'terra', 'radice'},
+    'terra': {'fulmine', 'elettrico'},
+    'fulmine': {'acqua'},
+    'oscuro': {'luce'},
+    'sacro': {'oscuro'},
+    'solare': {'lunare'},
+  };
+  return counters[defense]?.contains(incoming) == true ? 0.75 : 1;
+}
+
+String _oculumCanonicalCombatElement(String raw) {
+  final value = raw.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
+  return const {
+        'dark': 'oscuro',
+        'darkness': 'oscuro',
+        'buio': 'oscuro',
+        'light': 'luce',
+        'lunar': 'lunare',
+        'moon': 'lunare',
+        'solar': 'solare',
+        'sun': 'solare',
+        'angelic': 'angelico',
+        'demonic': 'demoniaco',
+        'diabolico': 'demoniaco',
+        'diabolic': 'demoniaco',
+        'ghiaccio': 'gelo',
+        'aria': 'vento',
+        'elettrico': 'fulmine',
+      }[value] ??
+      value;
+}
+
+class OculumMonsterElementalAdaptation {
+  const OculumMonsterElementalAdaptation({
+    required this.resistanceBeforeHit,
+    required this.resistanceAfterHit,
+    required this.element,
+    required this.lockedElement,
+    required this.state,
+    required this.changed,
+  });
+
+  final int resistanceBeforeHit;
+  final int resistanceAfterHit;
+  final String element;
+  final String lockedElement;
+  final Map<String, dynamic> state;
+  final bool changed;
+}
+
+/// Mini-Bosses adapt only to their first incoming element (+3 resistance per
+/// hit, capped at 60%). Bosses track each element independently (+6, capped at
+/// 75%). The before-hit value applies to this hit; the returned state is for
+/// subsequent hits.
+OculumMonsterElementalAdaptation oculumPrepareMonsterElementalAdaptation({
+  required bool isMiniBoss,
+  required bool isBoss,
+  required String incomingElement,
+  Map<String, dynamic> previousState = const {},
+}) {
+  final element = _oculumCanonicalCombatElement(incomingElement);
+  final rawResistances = previousState['resistanceByElement'];
+  final resistances = <String, int>{
+    if (rawResistances is Map)
+      for (final entry in rawResistances.entries)
+        _oculumCanonicalCombatElement('${entry.key}'): max(
+          0,
+          int.tryParse('${entry.value}') ?? 0,
+        ),
+  };
+  if (!isMiniBoss && !isBoss) {
+    return OculumMonsterElementalAdaptation(
+      resistanceBeforeHit: 0,
+      resistanceAfterHit: 0,
+      element: element,
+      lockedElement: '',
+      state: previousState,
+      changed: false,
+    );
+  }
+
+  final locked = isBoss
+      ? ''
+      : _oculumCanonicalCombatElement('${previousState['firstElement'] ?? ''}');
+  final chosen = isBoss || locked.isEmpty ? element : locked;
+  if (!isBoss && locked.isNotEmpty && element != locked) {
+    final current = resistances[locked] ?? 0;
+    return OculumMonsterElementalAdaptation(
+      resistanceBeforeHit: 0,
+      resistanceAfterHit: current,
+      element: element,
+      lockedElement: locked,
+      state: previousState,
+      changed: false,
+    );
+  }
+
+  final current = (resistances[chosen] ?? 0).clamp(0, isBoss ? 75 : 60);
+  final next = min(isBoss ? 75 : 60, current + (isBoss ? 6 : 3));
+  resistances[chosen] = next;
+  final state = <String, dynamic>{
+    ...previousState,
+    'version': 1,
+    'kind': isBoss ? 'boss' : 'miniBoss',
+    if (!isBoss) 'firstElement': chosen,
+    'resistanceByElement': resistances,
+    'lastElement': element,
+    if (isBoss && element.isNotEmpty)
+      'collectedElements': <String>{
+        ...oculumMonsterCollectedElements(previousState),
+        element,
+      }.toList(growable: false),
+  };
+  return OculumMonsterElementalAdaptation(
+    resistanceBeforeHit: current,
+    resistanceAfterHit: next,
+    element: element,
+    lockedElement: isBoss ? '' : chosen,
+    state: state,
+    changed: next != current || (!isBoss && locked.isEmpty),
+  );
+}
+
+int oculumReduceIncomingDamage(int damage, double multiplier) =>
+    (max(0, damage) * multiplier.clamp(0, 1)).ceil();
 
 int oculumOpposedEffectDuration(int duration, OculumAttackOutcome outcome) =>
     outcome == OculumAttackOutcome.avoided

@@ -65,6 +65,8 @@ final Map<String, MonsterBookEntry> _concreteTechniqueOwners = () {
   final owners = <String, MonsterBookEntry>{};
   final creatures = [
     ..._staticMonsterBookEntries,
+    ..._goldMarbleAberrationEntries,
+    ..._elementalCollectorEntries,
     ..._generateMonsterTier(
       count: max(2, targetNormalMonsterCount - _staticNormalMonsterCount),
       tier: _GeneratedMonsterTier.normal,
@@ -99,6 +101,44 @@ final Map<String, MonsterConcreteTechnique?> _concreteTechniqueCache = {};
 MonsterConcreteTechnique? monsterBookConcreteTechnique(String rawId) {
   final id = rawId.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
   return _concreteTechniqueCache.putIfAbsent(id, () {
+    if (id == 'collettore_martello_elementale') {
+      return const MonsterConcreteTechnique(
+        name: 'Martello del Collezionista',
+        action:
+            '[Richiede Collezionista di Elementi] Evoca un enorme martello tra le mani e lo usa in questo colpo; il martello svanisce subito dopo e non può essere impugnato da altre creature. Il danno indicato si aggiunge sempre al danno base dell’attacco. L’elemento può essere scelto fra quelli raccolti dal Boss.',
+        element: 'fisico',
+        kind: 'danno',
+        requiredLevel: 0,
+        minimums: [1, 5, 11],
+        maximums: [4, 10, 50],
+        forms: [
+          [
+            MonsterTechniqueEffect(
+              'danno',
+              '20+oculum_spent*2',
+              mode: 'prossima_azione',
+              duration: '',
+            ),
+          ],
+          [
+            MonsterTechniqueEffect(
+              'danno',
+              '40+oculum_spent*2',
+              mode: 'prossima_azione',
+              duration: '',
+            ),
+          ],
+          [
+            MonsterTechniqueEffect(
+              'danno',
+              '64+oculum_spent*3',
+              mode: 'prossima_azione',
+              duration: '',
+            ),
+          ],
+        ],
+      );
+    }
     final necromancy = _necromancerTechnique(id);
     if (necromancy != null) return necromancy;
     final owner = _concreteTechniqueOwners[id];

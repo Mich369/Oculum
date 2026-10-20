@@ -1008,6 +1008,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         'Costrutto con Vita propria',
         'Construct with its own HP',
       ),
+      'evocazione' => t('Evocazione con scheda', 'Summon with a sheet'),
       'difesa' => t('Difesa', 'Defense'),
       'cura' => t('Cura / rigenerazione', 'Healing / regeneration'),
       'modifica_statistica' => t(

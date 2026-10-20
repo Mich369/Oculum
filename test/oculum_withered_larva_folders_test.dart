@@ -75,20 +75,66 @@ void main() {
       final item = oculumGenerateMonsterLoot(
         monster: larva,
         level: form * 3,
-        grade: 1,
+        grade: form,
         random: Random(1),
         killId: 'form-$form',
         naturalDropRoll: 20,
       ).single;
       final data = Map<String, dynamic>.from(item.craftData['scroll'] as Map);
       expect(data['willCost'], 0);
-      expect(data['id'], 'white_larva_brood_form_${form + 1}');
+      expect(data['id'], 'white_larva_brood_rank_${form + 1}');
+      final effect = oculumScrollCombatEffects(data).single;
       expect(
-        oculumScrollCombatEffects(data).single.valueExpression,
-        ['1d100', '1d200+20', '1d250+100'][form],
+        effect.valueExpression,
+        ['20+livello', '30+livello', '50+livello'][form],
       );
+      expect(effect.diceExpression, ['1d50', '1d100', '1d120'][form]);
+      expect(effect.mode, 'nidiata');
       expect(item.monsterLoot['learnableMonsterSkill'], isNot(true));
     }
+  });
+
+  test(
+    'all nine brood scroll ranks add the user level to the specified dice',
+    () {
+      const dice = [
+        '1d50',
+        '1d100',
+        '1d120',
+        '1d200',
+        '1d200',
+        '1d250',
+        '1d250',
+        '1d250',
+        '2d250',
+      ];
+      const bases = [20, 30, 50, 60, 100, 120, 150, 200, 200];
+      for (var rank = 0; rank < 9; rank++) {
+        final effect = oculumLarvalBroodScrollEffect(rank);
+        expect(effect.diceExpression, dice[rank]);
+        expect(effect.valueExpression, '${bases[rank]}+livello');
+        expect(effect.includeLevel, isFalse);
+        final expectedDice = oculumRollEffectDice(
+          dice[rank],
+          random: Random(rank),
+        );
+        final roll = oculumResolveStructuredEffectRoll(
+          effect,
+          variables: {'livello': 12},
+          level: 12,
+          grade: 0,
+          random: Random(rank),
+        );
+        expect(roll.value, bases[rank] + 12 + expectedDice.total);
+      }
+    },
+  );
+
+  test('scroll learning stays a separate rare natural-20 check', () {
+    expect(oculumScrollCanLearn(19, 100, 0, 0), isFalse);
+    expect(oculumScrollCanLearn(20, 29, 0, 0), isFalse);
+    expect(oculumScrollCanLearn(20, 30, 0, 14), isTrue);
+    expect(oculumScrollCanLearn(20, 30, 0, 15), isFalse);
   });
 
   test('nested folders reject cycles without moving physical sheets', () {
@@ -158,6 +204,7 @@ void main() {
         ),
       ]);
       expect(probe.broodHp(), 10);
+      expect(probe.broodMaxHp(), 10);
       expect(probe.absorbBroodDamage(7), 0);
       expect(probe.broodHp(), 3);
       expect(probe.absorbBroodDamage(8), 5);
@@ -181,6 +228,7 @@ void main() {
         ),
       ]);
       expect(probe.broodHp(), 20, reason: 'New brood replaces the old form');
+      expect(probe.broodMaxHp(), 20);
       state.oculumController.text = '3';
       state.currentOculumController.text = '2';
       probe.invalidateDerivedCaches();

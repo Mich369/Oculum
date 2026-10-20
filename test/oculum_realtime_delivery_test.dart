@@ -50,8 +50,9 @@ class _Channel implements RealtimeChannel {
 // Exercise the production authenticated RPC transport against an in-memory
 // HTTP backend. Raw unsigned broadcasts must never bypass the event journal.
 class _Client extends SupabaseClient {
-  factory _Client() => _Client._(_Channel());
-  _Client._(this.testChannel)
+  factory _Client([_Backend? backend]) =>
+      _Client._(_Channel(), backend ?? _Backend());
+  _Client._(this.testChannel, this.backend)
     : super(
         'https://isolated-test.supabase.co',
         'public-test-key',
@@ -73,7 +74,17 @@ class _Client extends SupabaseClient {
               },
             };
           } else if (path.endsWith('/oculum_open_room')) {
-            body = {'roomId': 'room', 'role': 'player', 'status': 'approved'};
+            final input = jsonDecode(request.body) as Map;
+            body = {
+              'roomId': 'room',
+              'role': input['p_as_master'] == true ? 'master' : 'player',
+              'status': 'approved',
+            };
+          } else if (path.endsWith('/oculum_touch_room_session')) {
+            final input = jsonDecode(request.body) as Map;
+            backend.sessions['${input['p_session']}'] =
+                Map<String, dynamic>.from(input['p_presence'] as Map);
+            body = null;
           } else if (path.endsWith('/oculum_emit_room_event')) {
             final input = jsonDecode(request.body) as Map;
             final result =
@@ -86,16 +97,37 @@ class _Client extends SupabaseClient {
                 request: request,
               );
             }
-            final id = 'event-${testChannel.broadcasts.length}';
+            if (!backend.sessions.containsKey('${input['p_session']}')) {
+              return http.Response(
+                jsonEncode({
+                  'message': 'session not registered',
+                  'code': 'TEST',
+                }),
+                403,
+                request: request,
+              );
+            }
+            final id = 'event-${backend.events.length}';
+            final session = backend.sessions['${input['p_session']}']!;
             final payload = Map<String, dynamic>.from(
               input['p_payload'] as Map,
             );
             final routing = payload['_routing'] as Map? ?? payload;
             payload.addAll({
-              'authenticatedSheetId': routing['sheetId'],
-              'authenticatedRole': 'player',
-              'senderRole': 'player',
+              'authenticatedSheetId': routing['sheetId'] ?? payload['sheetId'],
+              'authenticatedRole': session['role'],
+              'senderRole': session['role'],
               'targetAudience': routing['targetAudience'],
+              'senderTag': session['activeSheetTag'],
+              'sessionId': input['p_session'],
+            });
+            backend.events.add({
+              'id': id,
+              'sequence': backend.events.length + 1,
+              'created_at': DateTime.now().toUtc().toIso8601String(),
+              'room_id': 'room',
+              'event': input['p_event'],
+              'payload': payload,
             });
             testChannel.broadcasts.add({
               'id': id,
@@ -104,12 +136,56 @@ class _Client extends SupabaseClient {
             });
             body = id;
           } else if (path.endsWith('/oculum_room_events')) {
-            final eventId = request.url.queryParameters['id'];
-            body = eventId == null
-                ? <dynamic>[]
-                : testChannel.broadcasts.firstWhere(
-                    (event) => 'eq.${event['id']}' == eventId,
-                  );
+            final eventId = request.url.queryParameters['id']?.replaceFirst(
+              'eq.',
+              '',
+            );
+            if (eventId != null) {
+              body = backend.events
+                  .where((event) => event['id'] == eventId)
+                  .firstOrNull;
+            } else if (request.url.queryParameters['event'] ==
+                'eq.initiative_shared') {
+              backend.initiativeSnapshotReads++;
+              body =
+                  backend.events
+                      .where(
+                        (event) =>
+                            event['event'] == 'initiative_shared' &&
+                            event['room_id'] ==
+                                request.url.queryParameters['room_id']
+                                    ?.replaceFirst('eq.', ''),
+                      )
+                      .toList()
+                    ..sort(
+                      (a, b) => (b['sequence'] as int).compareTo(
+                        a['sequence'] as int,
+                      ),
+                    );
+              body = (body as List).firstOrNull;
+            } else {
+              final after =
+                  int.tryParse(
+                    request.url.queryParameters['sequence']?.replaceFirst(
+                          'gt.',
+                          '',
+                        ) ??
+                        '',
+                  ) ??
+                  0;
+              body = backend.events
+                  .where((event) => (event['sequence'] as int) > after)
+                  .toList();
+              final from = request.url.queryParameters['created_at']
+                  ?.replaceFirst('gte.', '');
+              if (from != null) {
+                body = (body as List)
+                    .where(
+                      (event) => '${event['created_at']}'.compareTo(from) >= 0,
+                    )
+                    .toList();
+              }
+            }
           } else if (path.endsWith('/oculum_room_presence')) {
             body = <dynamic>[];
           } else {
@@ -124,6 +200,7 @@ class _Client extends SupabaseClient {
         }),
       );
   final _Channel testChannel;
+  final _Backend backend;
   int channelCount = 0;
 
   @override
@@ -139,7 +216,198 @@ class _Client extends SupabaseClient {
   Future<String> removeChannel(RealtimeChannel channel) async => 'ok';
 }
 
+class _Backend {
+  final sessions = <String, Map<String, dynamic>>{};
+  final events = <Map<String, dynamic>>[];
+  int initiativeSnapshotReads = 0;
+}
+
 void main() {
+  test('an explicit close closes even a complete saved fight snapshot', () {
+    expect(
+      oculumInitiativePayloadClosesFight({
+        'closed': true,
+        'snapshot': {'encounters': []},
+      }),
+      isTrue,
+    );
+    expect(
+      oculumInitiativePayloadClosesFight({
+        'closed': false,
+        'snapshot': {'encounters': []},
+      }),
+      isFalse,
+    );
+  });
+
+  test(
+    'HTTPS polling delivers a sheet and peer receipt after session registration',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+      final backend = _Backend();
+      final playerClient = _Client(backend);
+      final masterClient = _Client(backend);
+      final playerReady = Completer<void>();
+      final masterReady = Completer<void>();
+      final sheetReceived = Completer<void>();
+      final ackReceived = Completer<void>();
+      late OculumRealtimeService master;
+      master = OculumRealtimeService(
+        client: masterClient,
+        roomId: 'cross-network',
+        playerName: 'Master',
+        httpPollingOnly: true,
+        presenceDataProvider: () => {
+          'role': 'master',
+          'activeSheetTag': 'MASTER',
+          'localSheetTags': ['MASTER'],
+        },
+        onConnected: () {
+          expect(
+            backend.sessions.values.any((value) => value['role'] == 'master'),
+            isTrue,
+          );
+          if (!masterReady.isCompleted) masterReady.complete();
+        },
+        onEvent: (event, payload) {
+          if (event == 'sheet_shared' && payload['deliveryId'] == 'receipt-1') {
+            if (!sheetReceived.isCompleted) sheetReceived.complete();
+            unawaited(
+              master.sendSheetReceivedAck(
+                deliveryId: 'receipt-1',
+                ownerTag: 'PLAYER',
+                sheetId: 'PLAYER',
+                sheetName: 'Player',
+                campaignId: 'cross-network',
+                campaignName: 'Test',
+                receiverRole: 'master',
+                receiverTag: 'MASTER',
+              ),
+            );
+          }
+        },
+        onPresenceChanged: (_) {},
+        onStatusChanged: printOnFailure,
+      );
+      final player = OculumRealtimeService(
+        client: playerClient,
+        roomId: 'cross-network',
+        playerName: 'Player',
+        httpPollingOnly: true,
+        presenceDataProvider: () => {
+          'role': 'player',
+          'activeSheetTag': 'PLAYER',
+          'localSheetTags': ['PLAYER'],
+        },
+        onConnected: () {
+          expect(
+            backend.sessions.values.any((value) => value['role'] == 'player'),
+            isTrue,
+          );
+          if (!playerReady.isCompleted) playerReady.complete();
+        },
+        onEvent: (event, payload) {
+          if (event == 'sheet_received_ack' &&
+              payload['deliveryId'] == 'receipt-1' &&
+              payload['authenticatedRole'] == 'master' &&
+              !ackReceived.isCompleted) {
+            ackReceived.complete();
+          }
+        },
+        onPresenceChanged: (_) {},
+        onStatusChanged: printOnFailure,
+      );
+      addTearDown(() async {
+        await player.dispose();
+        await master.dispose();
+        await playerClient.dispose();
+        await masterClient.dispose();
+      });
+
+      await Future.wait([master.connect(), player.connect()]);
+      await Future.wait([
+        masterReady.future,
+        playerReady.future,
+      ]).timeout(const Duration(seconds: 5));
+      expect(playerClient.channelCount, 0);
+      expect(masterClient.channelCount, 0);
+      expect(
+        await player.sendSharedSheetConfirmed(
+          sheet: {'nome': 'Player', 'hp': 24, 'diario': 'Scheda di prova'},
+          campaignId: 'cross-network',
+          campaignName: 'Test',
+          sheetId: 'PLAYER',
+          sheetName: 'Player',
+          ownerTag: 'PLAYER',
+          senderRole: 'player',
+          targetAudience: 'master_coMaster',
+          fromMaster: false,
+          masterParty: false,
+          deliveryId: 'receipt-1',
+        ),
+        isTrue,
+      );
+      await Future.wait([
+        sheetReceived.future,
+        ackReceived.future,
+      ]).timeout(const Duration(seconds: 8));
+    },
+  );
+
+  test('fresh session restores the last durable initiative snapshot', () async {
+    final previous = OculumRealtimeService.supabaseAvailable;
+    OculumRealtimeService.supabaseAvailable = true;
+    addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+    final backend = _Backend();
+    backend.events.add({
+      'id': 'old-fight',
+      'sequence': 8,
+      'created_at': '2026-01-01T00:00:00Z',
+      'room_id': 'room',
+      'event': 'initiative_shared',
+      'payload': {
+        'sessionId': 'old-master-session',
+        'senderRole': 'master',
+        'authenticatedRole': 'master',
+        'authenticatedUserId': 'owner',
+        'revision': 12,
+        'campaignId': 'campaign',
+        'snapshot': {'round': 4, 'turnCount': 3},
+      },
+    });
+    final client = _Client(backend);
+    final restored = Completer<Map<String, dynamic>>();
+    final service = OculumRealtimeService(
+      client: client,
+      roomId: 'room',
+      playerName: 'Player',
+      httpPollingOnly: true,
+      presenceDataProvider: () => {
+        'role': 'player',
+        'activeSheetTag': 'PLAYER',
+        'localSheetTags': ['PLAYER'],
+      },
+      onEvent: (event, payload) {
+        if (event == 'initiative_shared' && !restored.isCompleted) {
+          restored.complete(payload);
+        }
+      },
+      onPresenceChanged: (_) {},
+      onStatusChanged: printOnFailure,
+    );
+    addTearDown(service.dispose);
+
+    await service.connect();
+    final payload = await restored.future.timeout(const Duration(seconds: 5));
+    expect(payload['restoredSnapshot'], isTrue);
+    expect(payload['snapshot'], {'round': 4, 'turnCount': 3});
+    expect(payload['authenticatedUserId'], 'owner');
+    await service.refreshPresence();
+    expect(backend.initiativeSnapshotReads, 1);
+  });
+
   test(
     'large sheets travel in bounded chunks and import only when complete',
     () async {

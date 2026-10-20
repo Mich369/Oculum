@@ -328,6 +328,32 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         }
 
         switch (effect.type) {
+          case 'evocazione':
+            if (normalizedStructuredTarget(effect.target) != 'clone_ombra') {
+              messages.add('Evocazione non riconosciuta: ${effect.target}.');
+              continue;
+            }
+            if (value <= 0 || duration <= 0) {
+              messages.add(
+                'Clone d’ombra non creato: servono Vita e durata maggiori di zero.',
+              );
+              continue;
+            }
+            final cloneIndex = createShadowCloneSheet(
+              hp: value,
+              duration: duration,
+              source: source,
+            );
+            if (cloneIndex < 0) {
+              messages.add(
+                'Clone d’ombra non creato: scheda proprietaria assente.',
+              );
+              continue;
+            }
+            messages.add(
+              'Clone d’ombra creato: ${schedePersonaggio[cloneIndex]['nome']} · ${value} Vita · $duration ${effect.durationUnit}.',
+            );
+            break;
           case 'costrutto':
             if (value <= 0) {
               messages.add(
@@ -585,6 +611,163 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     return messages;
   }
 
+  int createShadowCloneSheet({
+    required int hp,
+    required int duration,
+    required String source,
+  }) {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return -1;
+    }
+    salvaSchedaCorrenteInMemoria();
+    final owner = Map<String, dynamic>.from(schedePersonaggio[schedaCorrente]);
+    final ownerTag = sheetTagAt(schedaCorrente);
+    final level = max(0, readIntValue(owner['livello']));
+    final grade = max(0, readIntValue(owner['grado']));
+    final clone = statoVuotoPersonaggio(
+      nome: 'Clone d’ombra di ${nomeSchedaPersonaggio(schedaCorrente)}',
+      tipo: 'Evocazione',
+      livello: level,
+      grado: grade,
+    );
+    const copiedStats = <String>[
+      'volonta',
+      'currentVolonta',
+      'materia',
+      'currentMateria',
+      'oculum',
+      'currentOculum',
+      'maxOculum',
+      'normalCurrentOculum',
+      'temporaryOculum',
+      'temporaryOculumRollsRemaining',
+      'fortuna',
+      'difficoltaTiro',
+      'campaignDifficulty',
+      'attaccoRapido',
+      'vcRapido',
+      'cmRapido',
+      'difesaRapida',
+      'hiddenEyeStats',
+      'primaryColor',
+      'secondaryColor',
+      'tertiaryColor',
+      'eyeUtilityColor',
+      'backgroundTopColor',
+      'colorPreset',
+      'spriteAssetPath',
+      'immaginePersonaggioBase64',
+    ];
+    for (final key in copiedStats) {
+      if (owner.containsKey(key)) {
+        clone[key] = oculumCopyJsonTree(owner[key]);
+      }
+    }
+    // Resilience is intentionally independent. The explicit HP value is
+    // preserved exactly through the ordinary HP calculation and JSON save.
+    clone['resilienza'] = '1';
+    clone['currentResilienza'] = '1';
+    clone['tempResilienza'] = 0;
+    clone['currentHp'] = '$hp';
+    clone['hpTemp'] = '0';
+    clone['scudo'] = '0';
+    clone['scudoOculum'] = '0';
+    clone['manualHpMaximumAdjustment'] = hp - oculumHpMultiplierForGrade(grade);
+    clone['derivedMaxHp'] = hp;
+    clone['hpGradeMultiplier'] = oculumHpMultiplierForGrade(grade);
+    clone['oculumShadowClone'] = true;
+    clone['shadowCloneOwnerTag'] = ownerTag;
+    clone['shadowCloneSource'] = source;
+    clone['shadowCloneTurnsRemaining'] = duration;
+    clone['shadowCloneExpired'] = false;
+    clone['countsForPartyStats'] = false;
+    clone['inMasterParty'] = true;
+    clone['skills'] = <dynamic>[];
+    clone['arti'] = <dynamic>[];
+    clone['conditions'] = <Map<String, dynamic>>[];
+    clone['activeStructuredEffects'] = <Map<String, dynamic>>[];
+
+    final cloneTag = normalizeOculumFriendTag(
+      '${clone['sheetTag'] ?? clone['id'] ?? ''}',
+    );
+    final index = schedePersonaggio.length;
+    if (cloneTag.isNotEmpty &&
+        schedePersonaggio.any(
+          (sheet) =>
+              normalizeOculumFriendTag('${sheet['sheetTag'] ?? sheet['id']}') ==
+              cloneTag,
+        )) {
+      clone.remove('sheetTag');
+      clone.remove('id');
+    }
+    schedePersonaggio.add(clone);
+    assicuraTagSchede();
+    final actualTag = sheetTagAt(index);
+    final localOwnerInTurnOrder = masterInitiativeTokens.any(
+      (token) =>
+          normalizeOculumFriendTag(
+            '${token['sheetTag'] ?? token['id'] ?? ''}',
+          ).toUpperCase() ==
+          ownerTag.toUpperCase(),
+    );
+    final sharedEncounters = realtimeEncounterSnapshots.isNotEmpty
+        ? realtimeEncounterSnapshots
+        : <Map<String, dynamic>>[
+            if (realtimeVisibleInitiativeSnapshot.isNotEmpty)
+              realtimeVisibleInitiativeSnapshot,
+          ];
+    final sharedEncounter = oculumSelectSharedEncounter(
+      sharedEncounters,
+      sheetTag: ownerTag,
+      selectedId: realtimeSelectedEncounterId,
+    );
+    final sharedOwnerInTurnOrder =
+        (sharedEncounter['tokens'] as List? ?? const <dynamic>[])
+            .whereType<Map>()
+            .any(
+              (token) =>
+                  normalizeOculumFriendTag(
+                    '${token['sheetTag'] ?? token['id'] ?? ''}',
+                  ).toUpperCase() ==
+                  ownerTag.toUpperCase(),
+            );
+    if (currentCombatIsActive() &&
+        (localOwnerInTurnOrder || sharedOwnerInTurnOrder)) {
+      if (realtimeService?.isConnected != true || realtimeIsMasterRole) {
+        scheduleMicrotask(() {
+          if (!mounted || index >= schedePersonaggio.length) return;
+          addSheetToMasterInitiative(index, rollInitiative: true);
+          final token = masterInitiativeTokens.firstWhere(
+            (item) => '${item['sheetTag'] ?? ''}' == actualTag,
+            orElse: () => <String, dynamic>{},
+          );
+          if (token.isNotEmpty) {
+            token['oculumShadowClone'] = true;
+            token['shadowCloneTurnsRemaining'] = duration;
+          }
+          sendRealtimeInitiativeSnapshotIfPublished();
+        });
+      } else {
+        if ('${sharedEncounter['encounterId'] ?? ''}'.isNotEmpty) {
+          unawaited(_shareShadowCloneAndRequestTurn(index, sharedEncounter));
+        }
+      }
+    }
+    programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
+    return index;
+  }
+
+  Future<void> _shareShadowCloneAndRequestTurn(
+    int index,
+    Map<String, dynamic> encounter,
+  ) async {
+    // joinSharedMasterEncounter retries the full-sheet transfer with a Master
+    // receipt before publishing the join request; avoid duplicate transfers.
+    if (!mounted || index >= schedePersonaggio.length) return;
+    await joinSharedMasterEncounter(encounter, sheetIndex: index);
+  }
+
   String activeStructuredEffectTiming(Map<String, dynamic> effect) {
     if (effect['mode'] == 'prossima_azione') {
       return t('prossimo attacco', 'next attack');
@@ -634,16 +817,51 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    activeStructuredEffects[index]['type'] == 'pending_target'
-                        ? '${activeStructuredEffects[index]['source']}: ${oculumStructuredEffectDescription(OculumStructuredEffect.fromJson(Map<String, dynamic>.from(activeStructuredEffects[index]['effect'] as Map)))} · da applicare al bersaglio'
-                        : '${activeStructuredEffects[index]['source']}: '
-                              '${activeStructuredEffects[index]['target']} '
-                              '${activeStructuredEffects[index]['type'] == 'costrutto' ? '${activeStructuredEffects[index]['hp']}/${activeStructuredEffects[index]['maxHp']} Vita · ' : ''}'
-                              '${readIntValue(activeStructuredEffects[index]['value']) >= 0 ? '+' : ''}'
-                              '${activeStructuredEffects[index]['value']}'
-                              '${activeStructuredEffects[index]['type'] == 'danno_percentuale' ? '%' : ''} - '
-                              '${activeStructuredEffectTiming(activeStructuredEffects[index])}',
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        activeStructuredEffects[index]['type'] ==
+                                'pending_target'
+                            ? '${activeStructuredEffects[index]['source']}: ${oculumStructuredEffectDescription(OculumStructuredEffect.fromJson(Map<String, dynamic>.from(activeStructuredEffects[index]['effect'] as Map)))} · da applicare al bersaglio'
+                            : '${activeStructuredEffects[index]['source']}: '
+                                  '${activeStructuredEffects[index]['target']} '
+                                  '${activeStructuredEffects[index]['type'] == 'costrutto' ? '${activeStructuredEffects[index]['hp']}/${activeStructuredEffects[index]['maxHp']} Vita · ' : ''}'
+                                  '${readIntValue(activeStructuredEffects[index]['value']) >= 0 ? '+' : ''}'
+                                  '${activeStructuredEffects[index]['value']}'
+                                  '${activeStructuredEffects[index]['type'] == 'danno_percentuale' ? '%' : ''} - '
+                                  '${activeStructuredEffectTiming(activeStructuredEffects[index])}',
+                      ),
+                      if (activeStructuredEffects[index]['type'] ==
+                              'costrutto' &&
+                          activeStructuredEffects[index]['mode'] == 'nidiata')
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4, right: 6),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              key: ValueKey('larval_brood_effect_bar_$index'),
+                              value:
+                                  readIntValue(
+                                        activeStructuredEffects[index]['maxHp'],
+                                      ) <=
+                                      0
+                                  ? 0
+                                  : (readIntValue(
+                                              activeStructuredEffects[index]['hp'],
+                                            ) /
+                                            readIntValue(
+                                              activeStructuredEffects[index]['maxHp'],
+                                            ))
+                                        .clamp(0.0, 1.0),
+                              minHeight: 7,
+                              color: const Color(0xFFE44D5E),
+                              backgroundColor: const Color(0xFF4A1720),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 if (activeStructuredEffects[index]['type'] == 'pending_target')

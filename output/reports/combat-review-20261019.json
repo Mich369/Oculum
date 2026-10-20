@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-19",
+  "targetedTests": {
+    "command": "flutter test --no-pub test/oculum_combat_scout_rules_test.dart test/oculum_online_attack_delivery_test.dart test/oculum_online_damage_layers_test.dart test/oculum_attack_planner_test.dart test/oculum_opposed_attack_test.dart test/oculum_monster_generation_rules_test.dart",
+    "result": "passed",
+    "count": 25
+  },
+  "realtimeRegression": {
+    "command": "flutter test --no-pub test/oculum_online_attack_delivery_test.dart test/oculum_realtime_delivery_test.dart test/oculum_theme_share_reliability_test.dart",
+    "result": "passed",
+    "count": 14
+  },
+  "liveSupabase": {
+    "command": "flutter test --no-pub test/oculum_realtime_live_delivery_test.dart --dart-define=OculumLiveRealtimeTest=true",
+    "result": "passed",
+    "scope": "Two synthetic Supabase clients; large sheet, recipient receipt, reconnect",
+    "count": 1
+  },
+  "staticAnalysis": {
+    "result": "passed",
+    "command": "dart analyze lib"
+  },
+  "browser": {
+    "result": "partial",
+    "reached": "Fresh local web build: role selection and character creation screen",
+    "fullTwoBrowserCombat": "not completed",
+    "stopped": "Computer Use could not confirm the current browser URL"
+  },
+  "publishedPages": "not updated by this turn",
+  "distribution": {
+    "result": "installed and verified",
+    "path": "C:\\Oculum App\\oculum\\build\\distribution",
+    "backup": "C:\\Oculum App\\oculum\\build\\distribution-backup-20261019-115907",
+    "buildOrigin": "local",
+    "sourceDirty": true,
+    "sourceTreeSha256": "C0045E5BBCF771D70AD0792A42789182F029077A746CEBB536B2653648715468",
+    "manifestFiles": 18452,
+    "hashMismatches": 0,
+    "verificationCommand": "build/verify_eye_auto_distribution.ps1 -ExpectedCommit ca339fa3b7a38defe416c2a8e21b0622666ef17b",
+    "note": "commit field identifies the base checkout; local uncommitted source snapshot is identified by sourceTreeSha256"
+  }
+}

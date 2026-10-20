@@ -390,6 +390,32 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
 
   bool claimed(RegExpMatch match) =>
       claims.any((span) => match.start < span.$2 && match.end > span.$1);
+  for (final match in RegExp(
+    r'\b(?:(?:evoca|evocare|crea|creare|convochi|convocare)\s+(?:un\s+)?(?:tuo\s+)?clone\s+d[\x27’]ombra|Ombra\s+viva)\b',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    if (claimed(match)) continue;
+    final timing = durationAt(match);
+    final durationValue = durationText(timing).trim();
+    final durationLower = durationValue.toLowerCase();
+    final durationExpression = timing == null ||
+            durationLower.startsWith('oculum')
+        ? 'oculum'
+        : formula(durationValue);
+    effects.add(
+      OculumStructuredEffect(
+        type: 'evocazione',
+        target: 'clone_ombra',
+        valueExpression: '10',
+        mode: 'immediato',
+        duration: durationExpression,
+        durationUnit: 'turni',
+        recipient: 'se_stesso',
+        narrativeText: raw,
+      ),
+    );
+    claims.add((match.start, match.end));
+  }
   final targets = <String>[
     'Resilienza',
     'Volontà',

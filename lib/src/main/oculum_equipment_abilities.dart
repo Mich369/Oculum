@@ -2,6 +2,22 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member
 
+int oculumEquipmentRequiredSkillLevel({
+  required int itemLevel,
+  required String formLevel,
+}) => max(max(0, itemLevel), max(0, int.tryParse(formLevel.trim()) ?? 0));
+
+bool oculumEquipmentSkillLevelAvailable({
+  required int characterLevel,
+  required int itemLevel,
+  required String formLevel,
+}) =>
+    max(0, characterLevel) >=
+    oculumEquipmentRequiredSkillLevel(
+      itemLevel: itemLevel,
+      formLevel: formLevel,
+    );
+
 /// Fixed-cost physical techniques never advertise a variable Oculum range.
 CharacterSkill oculumEquipmentAbility(String name, int grade) {
   final lower = name.toLowerCase();
@@ -165,8 +181,11 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
             item.quantita > 0 &&
             item.equipaggiata &&
             canEquipInventoryItem(item) &&
-            leggiNumero(livelloController) >=
-                max(item.livelloOggetto, readIntValue(form.livello)),
+            oculumEquipmentSkillLevelAvailable(
+              characterLevel: leggiNumero(livelloController),
+              itemLevel: item.livelloOggetto,
+              formLevel: form.livello,
+            ),
       );
     } finally {
       combatSupportTargeting = previousSupport;
@@ -485,8 +504,11 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                 onPressed:
                     !item.equipaggiata ||
                         !canEquipInventoryItem(item) ||
-                        leggiNumero(livelloController) <
-                            max(item.livelloOggetto, readIntValue(form.livello))
+                        !oculumEquipmentSkillLevelAvailable(
+                          characterLevel: leggiNumero(livelloController),
+                          itemLevel: item.livelloOggetto,
+                          formLevel: form.livello,
+                        )
                     ? null
                     : () => useConfiguredAbility(
                         source: '${item.nome} / ${ability.nome} ${i + 1}',
@@ -498,8 +520,11 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                             item.quantita > 0 &&
                             item.equipaggiata &&
                             canEquipInventoryItem(item) &&
-                            leggiNumero(livelloController) >=
-                                item.livelloOggetto,
+                            oculumEquipmentSkillLevelAvailable(
+                              characterLevel: leggiNumero(livelloController),
+                              itemLevel: item.livelloOggetto,
+                              formLevel: form.livello,
+                            ),
                       ),
               ),
             ],

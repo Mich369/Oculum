@@ -27,6 +27,99 @@ void main() {
     expect(old.livelloOggetto, 0);
     expect(old.puntiStatPerLivello, 1);
   });
+  test('equipment skill waits for both item and form levels', () {
+    expect(
+      oculumEquipmentSkillLevelAvailable(
+        characterLevel: 4,
+        itemLevel: 5,
+        formLevel: '0',
+      ),
+      isFalse,
+    );
+    expect(
+      oculumEquipmentSkillLevelAvailable(
+        characterLevel: 5,
+        itemLevel: 5,
+        formLevel: '0',
+      ),
+      isTrue,
+    );
+    expect(
+      oculumEquipmentSkillLevelAvailable(
+        characterLevel: 8,
+        itemLevel: 5,
+        formLevel: '10',
+      ),
+      isFalse,
+    );
+    expect(
+      oculumEquipmentSkillLevelAvailable(
+        characterLevel: 10,
+        itemLevel: 5,
+        formLevel: '10',
+      ),
+      isTrue,
+    );
+  });
+  test('shop blocks equipment above the character grade only', () {
+    expect(
+      oculumMerchantCanPurchaseOffer({
+        'kind': 'gear',
+        'grade': 2,
+      }, characterGrade: 1),
+      isFalse,
+    );
+    expect(
+      oculumMerchantCanPurchaseOffer({
+        'kind': 'gear',
+        'grade': 1,
+      }, characterGrade: 1),
+      isTrue,
+    );
+    expect(
+      oculumMerchantCanPurchaseOffer({
+        'kind': 'gear',
+        'grade': 1,
+      }, characterGrade: 2),
+      isTrue,
+    );
+    expect(
+      oculumMerchantCanPurchaseOffer({
+        'kind': 'food',
+        'grade': 99,
+      }, characterGrade: 0),
+      isTrue,
+    );
+  });
+  test('equipment minimum price scales by grade with Grade III at 260', () {
+    expect(List<int>.generate(7, oculumMerchantEquipmentMinimumPrice), [
+      50,
+      120,
+      190,
+      260,
+      330,
+      400,
+      470,
+    ]);
+    expect(
+      oculumMerchantEquipmentPrice({
+        'kind': 'gear',
+        'grade': 3,
+        'level': 15,
+        'cost': 258,
+      }),
+      260,
+    );
+    expect(
+      oculumMerchantEquipmentPrice({
+        'kind': 'gear',
+        'grade': 3,
+        'level': 19,
+        'cost': 258,
+      }),
+      300,
+    );
+  });
   testWidgets(
     'grade guard, percent food buffs, rewards and Master requests are idempotent',
     (tester) async {
@@ -109,6 +202,20 @@ void main() {
       );
       final probe = OculumPerformanceProbe(state);
       probe.createMerchantProfile();
+      final offers = (state.merchantStock as List)
+          .whereType<Map>()
+          .map((offer) => Map<String, dynamic>.from(offer))
+          .where(
+            (offer) => const {
+              'weapon_lancia_velo',
+              'weapon_pugnale_precisione',
+              'armor_corazza_guardia',
+              'shield_bastione_materia',
+            }.contains(offer['id']),
+          )
+          .toList();
+      expect(offers.length, 4);
+      expect(offers.every((offer) => readIntValue(offer['level']) > 0), isTrue);
       probe.shopType('alchimista');
       expect(probe.shopCost({'kind': 'refined_vitalium', 'cost': 100}), 90);
       expect(probe.shopOffers().any((o) => o['kind'] == 'alchemy_pet'), isTrue);

@@ -578,6 +578,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   Future<void> planOnlineAttack({
     String? targetId,
     String? freeReactionId,
+    String? schiantoReactionId,
     String initialChoice = 'vc',
     int minimumTargets = 1,
     int maximumTargets = 1,
@@ -609,15 +610,23 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             freeReaction?['targetTag'] != sheetTagAt(schedaCorrente))) {
       return;
     }
+    final schiantoReaction = onlineCombatRequests[schiantoReactionId];
+    final schiantoBonus =
+        schiantoReactionId != null &&
+            schiantoReaction?['schiantoActionSkipped'] == true &&
+            schiantoReaction?['schiantoReactionUsed'] != true &&
+            schiantoReaction?['targetTag'] == sheetTagAt(schedaCorrente) &&
+            readIntValue(
+                  schedePersonaggio[schedaCorrente]['combatSchiantoReactionBonusPending'],
+                ) >=
+                10
+        ? 10
+        : 0;
+    if (schiantoReactionId != null && schiantoBonus == 0) return;
     final byId = {
       for (final token in tokens) onlineCombatTokenTag(token): token,
     };
-    final subs = hiddenEyeStats
-        .where(
-          (s) =>
-              s.unlocked && !const {'nodo', 'fortuna', 'drop'}.contains(s.id),
-        )
-        .toList();
+    final subs = hiddenEyeStats.where(oculumCombatSubtraitSelectable).toList();
     const first = ['schianto', 'forza', 'riflessi'];
     subs.sort((a, b) {
       final ai = first.indexOf(a.id), bi = first.indexOf(b.id);
@@ -631,16 +640,43 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           stat.nome,
           hiddenEyeTotal(stat) +
               hiddenEyeStatRollQuickBonus(stat) +
-              tiroGlobaleBonus(),
+              tiroGlobaleBonus() +
+              (stat.id == 'schianto' ? schiantoBonus : 0),
           color: hiddenEyeStatIdentityColor(stat),
         ),
     ];
+    final sourceSheet = schedePersonaggio[schedaCorrente];
+    final sourceMonsterId = '${sourceSheet['monsterBookSourceId'] ?? ''}';
+    final isElementCollector = oculumIsElementCollector(sourceMonsterId);
+    final adaptationState = sourceSheet['combatElementalAdaptation'] is Map
+        ? Map<String, dynamic>.from(
+            sourceSheet['combatElementalAdaptation'] as Map,
+          )
+        : const <String, dynamic>{};
+    final collectedElements = oculumMonsterCollectedElements(adaptationState);
+    final attackElements = isElementCollector && collectedElements.isNotEmpty
+        ? collectedElements
+        : allDamageElementIds();
+    final replayElement = isElementCollector
+        ? oculumMonsterCollectedElement(adaptationState)
+        : '';
     final plan = await showDialog<OculumAttackPlan>(
       context: context,
       builder: (_) => OculumAttackPlanner(
         targets: {
           for (final e in byId.entries) e.key: '${e.value['name'] ?? '???'}',
         },
+        elements: [
+          for (final element in attackElements)
+            OculumCombatElement(
+              element,
+              elementDisplayName(element),
+              elementColor(element),
+            ),
+        ],
+        initialElement: replayElement.isNotEmpty
+            ? replayElement
+            : elementoDannoDominante(),
         initialTarget: targetId,
         initialChoice: initialChoice,
         minimumTargets: minimumTargets.clamp(1, 100),
@@ -701,9 +737,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         encounter != onlineCombatEncounterId) {
       return;
     }
-    if (freeReactionId != null &&
+    final requiredReactionTarget = freeReactionId != null
+        ? (freeReaction == null ? null : freeReaction['sourceTag'])
+        : (schiantoReaction == null ? null : schiantoReaction['sourceTag']);
+    if ((freeReactionId != null || schiantoReactionId != null) &&
         (plan.targetIds.length != 1 ||
-            plan.targetId != freeReaction?['sourceTag'])) {
+            plan.targetId != requiredReactionTarget)) {
       return;
     }
     final currentIds = {
@@ -720,7 +759,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final label =
         'Attacco contro $target${plan.reason.isEmpty ? '' : ' · ${plan.reason}'}';
     final preparedDamage = dannoTotale();
-    final element = elementoDannoDominante();
+    final element = oculumNormalizeElementId(plan.element);
     final targetEffects = [
       for (final e in activeStructuredEffects)
         if (e['type'] == 'pending_target' &&
@@ -734,29 +773,61 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final directDamage = targetEffects
         .where((e) => e['type'] == 'danno')
         .toList();
+    final manifestationTotal = hiddenEyeStats
+        .where((stat) => stat.id == 'manifestazione_potere')
+        .firstOrNull;
+    final manifestationDamageBonus = plan.choiceId == 'manifestazione_potere'
+        ? oculumManifestationAttackDamageBonus(
+            manifestationTotal: manifestationTotal == null
+                ? 0
+                : hiddenEyeTotal(manifestationTotal),
+            level: leggiNumero(livelloController),
+          )
+        : 0;
     final flatDamageBonus =
         bonusDannoPiatto() +
+        manifestationDamageBonus +
         directDamage.fold<int>(
           0,
           (sum, e) => sum + readIntValue(e['areaDamageBonusPerTarget']),
         );
-    final baseDamage = directDamage.isEmpty
-        ? max(0, preparedDamage - flatDamageBonus)
-        : directDamage.fold<int>(
-            0,
-            (sum, e) => sum + max(0, readIntValue(e['valueExpression'])),
-          );
-    final damagePerTarget = oculumDamagePerTarget(
+    final abilityDamageBonus = directDamage.fold<int>(
+      0,
+      (sum, e) => sum + max(0, readIntValue(e['valueExpression'])),
+    );
+    final baseDamage = oculumAttackDamageWithAbilityBonus(
+      preparedDamage: preparedDamage,
+      fixedBonuses: flatDamageBonus,
+      abilityDamageBonus: abilityDamageBonus,
+    );
+    final concentrationSheet = schedePersonaggio[schedaCorrente];
+    final concentrationPending =
+        concentrationSheet['combatConcentrationPending'] == true;
+    final unboostedDamagePerTarget = oculumDamagePerTarget(
       baseDamage,
       plan.targetIds.length,
       flatBonusPerTarget: flatDamageBonus,
     );
+    final damagePerTarget = concentrationPending
+        ? (unboostedDamagePerTarget * 1.10).ceil()
+        : unboostedDamagePerTarget;
     if (plan.targetIds.length > 1) {
       aggiungiLog(
         '[DANNI AD AREA] Danno base $baseDamage ÷ ${plan.targetIds.length} colpi, arrotondato per eccesso, + bonus piatto $flatDamageBonus per ogni bersaglio = $damagePerTarget danni a bersaglio. Ogni bersaglio risolve la propria difesa e le proprie resistenze.',
       );
     }
+    if (manifestationDamageBonus > 0) {
+      aggiungiLog(
+        '[MANIFESTAZIONE DEL POTERE] +$manifestationDamageBonus danni per bersaglio (+3 × livello), applicati una volta a ogni bersaglio colpito.',
+      );
+    }
     final sourceTag = sheetTagAt(schedaCorrente);
+    final precisionStat = plan.choiceId == 'precisione'
+        ? hiddenEyeStats.where((stat) => stat.id == 'precisione').firstOrNull
+        : null;
+    final precisionTotal = precisionStat == null
+        ? 0
+        : hiddenEyeTotal(precisionStat);
     final id = '$sourceTag:${DateTime.now().microsecondsSinceEpoch}';
     if (freeReaction != null) {
       freeReaction['reactionUsed'] = true;
@@ -771,17 +842,76 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           encounter != onlineCombatEncounterId) {
         return;
       }
+      if (concentrationPending) {
+        concentrationSheet['combatConcentrationPending'] = false;
+        aggiungiLog(
+          '[CONCENTRAZIONE] +10% Danni applicato una sola volta alla quota di questo attacco.',
+        );
+      }
+      if (schiantoReactionId != null && schiantoReaction != null) {
+        schiantoReaction['schiantoReactionUsed'] = true;
+        concentrationSheet.remove('combatSchiantoReactionBonusPending');
+        aggiungiLog(
+          '[SCHIANTO] Reazione consumata: +10 a Schianto contro l’attaccante.',
+        );
+      }
+      final attackRollDamageBonus = oculumAttackRollDamageBonus(
+        sourceTexts: <String>[
+          for (final title in titoliCalcolabili)
+            if (title.equipaggiato) ...activeTitleQuickTexts(title),
+          for (final art in arti)
+            if (art.sbloccata && art.inUso) ...activeArtQuickTexts(art),
+          for (final item in inventario)
+            if (item.equipaggiata) ...activeItemQuickTexts(item),
+          for (final skill in skills)
+            if (skill.equipaggiata) ...skillQuickCommandTexts(skill),
+          buffMalusRapidiController.text,
+        ],
+        attackChoiceId: plan.choiceId,
+        rollTotal: total,
+      );
+      final resolvedFlatDamageBonus = flatDamageBonus + attackRollDamageBonus;
+      final resolvedDamagePerTarget = concentrationPending
+          ? (oculumDamagePerTarget(
+                  baseDamage,
+                  plan.targetIds.length,
+                  flatBonusPerTarget: resolvedFlatDamageBonus,
+                ) *
+                1.10)
+                .ceil()
+          : oculumDamagePerTarget(
+              baseDamage,
+              plan.targetIds.length,
+              flatBonusPerTarget: resolvedFlatDamageBonus,
+            );
+      if (attackRollDamageBonus > 0) {
+        aggiungiLog(
+          '[FORMULA DEL TIRO] $plan.choiceId $total: +$attackRollDamageBonus Danni per bersaglio dalla formula del dado, arrotondata per difetto. Attacco multiplo: il bonus si applica a ogni bersaglio.',
+        );
+      }
       for (var hit = 0; hit < plan.targetIds.length; hit++) {
         final selectedTag = plan.targetIds[hit];
         final requestId = plan.targetIds.length == 1
             ? id
             : '$id:$hit:$selectedTag';
+        final precisionHit = precisionStat == null
+            ? const OculumPrecisionHitResult(
+                fragilityStages: 0,
+                receivedDamagePercent: 100,
+              )
+            : oculumPrecisionHitResult(
+                precisionTotal: precisionTotal,
+                percentileRoll: Random.secure().nextInt(100),
+                customDamagePercent: 260 + Random.secure().nextInt(91),
+              );
         final request = <String, dynamic>{
           'id': requestId,
           'scope': permissionScope,
           'encounterId': encounter,
           'sourceTag': sourceTag,
+          if (isElementCollector) 'sourceMonsterBookId': sourceMonsterId,
           'sourceName': realtimeDisplayName(),
+          'sourceMovement': movimento(),
           'targetTag': selectedTag,
           'targetName': '${byId[selectedTag]!['name'] ?? '???'}',
           'attackGroupId': id,
@@ -796,11 +926,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'reason': plan.reason,
           'attack': total,
           'natural': natural,
-          'damage': damagePerTarget,
-          'damageTotal': damagePerTarget * plan.targetIds.length,
+          'damage': resolvedDamagePerTarget,
+          'damageTotal': resolvedDamagePerTarget * plan.targetIds.length,
           'damageBasePacket': baseDamage,
-          'damageBonusPerTarget': flatDamageBonus,
+          'damageBonusPerTarget': resolvedFlatDamageBonus,
           'damageTargetCount': plan.targetIds.length,
+          if (precisionStat != null) ...{
+            'precisionTotal': precisionTotal,
+            'precisionFragilityStages': precisionHit.fragilityStages,
+            'precisionDamagePercent': precisionHit.receivedDamagePercent,
+          },
           'effects': targetEffects,
           'element': element,
           'level': activeCriticalLevel(),
@@ -809,6 +944,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               freeReactionId != null &&
               freeReaction?['criticalReaction'] == true,
           'reactionOf': freeReactionId,
+          if (schiantoReactionId != null) ...{
+            'schiantoReactionOf': schiantoReactionId,
+            'schiantoReactionBonus': schiantoBonus,
+          },
           'status': 'pending',
           'createdAt': DateTime.now().toIso8601String(),
         };
@@ -831,7 +970,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       );
     } else {
       final stat = hiddenEyeStats
-          .where((s) => s.id == plan.choiceId && s.unlocked)
+          .where(
+            (s) => s.id == plan.choiceId && oculumCombatSubtraitSelectable(s),
+          )
           .firstOrNull;
       if (stat == null) return;
       await tiraSottotrattoOcchio(
@@ -1035,7 +1176,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     request['received'] = true;
     combatLogFor(
       '${request['targetTag']}',
-      '[DIFESA RICHIESTA] ${request['targetName'] ?? 'Sei'} sotto attacco: ${request['sourceName']} usa ${request['abilityName'] ?? request['choice']}. DT difensiva ${request['attack']} (tiro nemico). Danni dichiarati ${request['damage']} · ${request['element'] ?? 'fisico'}. ${request['reason'] ?? ''} Tira CM, Riflessi, Resistenza o Manifestazione del Potere dal riquadro Difese in attesa; danni ed effetti verranno applicati in base all’esito.',
+      '[DIFESA RICHIESTA · ${request['targetName'] ?? 'bersaglio'}] ${request['sourceName']} usa ${request['abilityName'] ?? request['choice']}. Tiro nemico ${request['attack']} · DT da superare: ${request['attack']} · danni dichiarati ${request['damage']} (${request['element'] ?? 'fisico'}). Tira CM, Riflessi, Resistenza, Manifestazione del Potere o un sottotratto difensivo configurato. La skill difensiva può essere usata prima del tiro; questo bersaglio applicherà in automatico condizioni, resistenze ed effetti, poi Difesa, Scudo Oculum, Scudo, HP temporanei e Vita in base all’esito. ${request['reason'] ?? ''}',
     );
   }
 
@@ -1166,6 +1307,31 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         }
         original['counterAttackId'] = id;
       }
+      if (request['schiantoReactionOf'] != null) {
+        final original =
+            onlineCombatRequests['${request['schiantoReactionOf']}'];
+        if (original == null ||
+            original['schiantoActionSkipped'] != true ||
+            original['schiantoReactionAvailable'] != true ||
+            original['schiantoReactionUsed'] == true ||
+            original['targetTag'] != source ||
+            original['sourceTag'] != target ||
+            request['choice'] != 'schianto' ||
+            readIntValue(request['schiantoReactionBonus']) != 10) {
+          onlineCombatRequests.remove(id);
+          return;
+        }
+        if (realtimeIsMasterRole && !consumeMasterReactionForSheetTag(source)) {
+          original['schiantoReactionRejected'] = true;
+          onlineCombatRequests.remove(id);
+          combatLogFor(
+            source,
+            '[SCHIANTO] Reazione non accettata: il Master non trova una Reazione disponibile nella turnistica.',
+          );
+          return;
+        }
+        original['schiantoReactionUsed'] = true;
+      }
       receiveLocalCombatAttack(request);
       unawaited(sendCombatAcknowledgement(request, 'attack'));
       if (request['status'] == 'resolved' &&
@@ -1201,6 +1367,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       request['defense'] = defense;
       request['defenseChoice'] = payload['defenseChoice'];
       request['outcome'] = outcome.name;
+      request['schiantoActionSkipped'] =
+          payload['schiantoActionSkipped'] == true;
+      request['schiantoReactionBonus'] = readIntValue(
+        payload['schiantoReactionBonus'],
+      );
+      request['schiantoReactionAvailable'] =
+          payload['schiantoReactionAvailable'] == true;
       final rawReceipt = payload['damageReceipt'];
       if (rawReceipt is Map) {
         request['damageReceipt'] = <String, dynamic>{
@@ -1214,14 +1387,33 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'pawnPending': rawReceipt['pawnPending'] == true,
         };
       }
+      final reflexBonusReaction =
+          payload['defenseChoice'] == 'riflessi' &&
+          oculumReflexGrantsCounterReaction(
+            reflexesTotal: readIntValue(payload['defenseSubtraitTotal']),
+            naturalRoll: readIntValue(payload['defenseNatural']),
+            targetMovement: readIntValue(
+              request['sourceMovement'],
+              fallback: -1,
+            ),
+            characterMovement: readIntValue(
+              payload['targetMovement'],
+              fallback: -1,
+            ),
+          );
+      request['reflexBonusReaction'] = reflexBonusReaction;
       request['freeReaction'] =
           request['reactionOf'] == null &&
           (oculumDefenseGrantsFreeReaction(attack, defense) ||
-              payload['defenseChoice'] == 'resistenza' && defense >= attack);
+              payload['defenseChoice'] == 'resistenza' && defense >= attack ||
+              reflexBonusReaction);
       request['criticalReaction'] = oculumDefenseGrantsFreeReaction(
         attack,
         defense,
       );
+      if (realtimeIsMasterRole || realtimeIsCoMasterRole) {
+        applyOnlineSchiantoActionSkip(payload);
+      }
       claimOnlineVampirism(request);
       combatLogFor(
         source,
@@ -1293,7 +1485,38 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         aggiungiLog('[DIFESA · MANIFESTAZIONE] $description');
       }
       int? defense;
-      void resolved(int natural, int total) => defense = total;
+      int defenseNatural = 0;
+      final concentrationPending =
+          schedePersonaggio[schedaCorrente]['combatConcentrationPending'] ==
+          true;
+      final collectorDefensePenalty = oculumElementCollectorDefensePenalty(
+        sourceMonsterBookId: '${request['sourceMonsterBookId'] ?? ''}',
+        incomingElement: '${request['element'] ?? ''}',
+        defenseElement: '${request['defenseElement'] ?? ''}',
+      );
+      void resolved(int natural, int total) {
+        defenseNatural = natural;
+        final penalized = total - collectorDefensePenalty;
+        if (collectorDefensePenalty > 0) {
+          request['collectorDefensePenalty'] = collectorDefensePenalty;
+          aggiungiLog(
+            '[COLLEZIONISTA DI ELEMENTI] Parare con ${elementDisplayName('${request['defenseElement']}')} il suo stesso elemento: -$collectorDefensePenalty al tiro difensivo ($total → $penalized).',
+          );
+        }
+        if (!concentrationPending) {
+          defense = penalized;
+          return;
+        }
+        final bonus = (penalized * 0.12).ceil();
+        request['concentrationDefenseBonus'] = bonus;
+        defense = penalized + bonus;
+        schedePersonaggio[schedaCorrente]['combatConcentrationPending'] = false;
+        aggiungiLog(
+          '[CONCENTRAZIONE] Difesa +$bonus (+12%) per questa risposta.',
+        );
+        programmaSalvataggio();
+      }
+
       if (choice == 'cm') {
         await tiraValoreSpeciale(
           'CM',
@@ -1304,7 +1527,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         );
       } else {
         final stat = hiddenEyeStats
-            .where((s) => s.id == choice && s.unlocked)
+            .where((s) => s.id == choice && oculumCombatSubtraitSelectable(s))
             .firstOrNull;
         if (stat == null) return;
         await tiraSottotrattoOcchio(
@@ -1316,7 +1539,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       if (!mounted || defense == null || sheetTagAt(schedaCorrente) != tag) {
         return;
       }
-      await applyResolvedOnlineDefense(request, choice, defense!);
+      await applyResolvedOnlineDefense(
+        request,
+        choice,
+        defense!,
+        defenseNatural: defenseNatural,
+      );
     } finally {
       onlineCombatResolving.remove(id);
     }
@@ -1325,8 +1553,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   Future<void> applyResolvedOnlineDefense(
     Map<String, dynamic> request,
     String choice,
-    int defense,
-  ) async {
+    int defense, {
+    int defenseNatural = 0,
+  }) async {
     final tag = sheetTagAt(schedaCorrente);
     final id = '${request['id']}';
     if (!mounted ||
@@ -1349,20 +1578,54 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         request['forcedCritical'] == true ||
         oculumAttackIsCritical(attack, defense);
     final resisted = choice == 'resistenza' && defense >= attack;
+    final reflexStat = choice == 'riflessi'
+        ? hiddenEyeStats.where((stat) => stat.id == 'riflessi').firstOrNull
+        : null;
+    final reflexesTotal = reflexStat == null ? 0 : hiddenEyeTotal(reflexStat);
+    final reflexBonusReaction = oculumReflexGrantsCounterReaction(
+      reflexesTotal: reflexesTotal,
+      naturalRoll: defenseNatural,
+      targetMovement: readIntValue(request['sourceMovement'], fallback: -1),
+      characterMovement: movimento(),
+    );
     request['status'] = 'resolved';
     request['defense'] = defense;
     request['defenseChoice'] = choice;
+    request['defenseNatural'] = defenseNatural;
+    request['defenseSubtraitTotal'] = reflexesTotal;
+    request['targetMovement'] = movimento();
+    request['reflexBonusReaction'] = reflexBonusReaction;
+    final schiantoActionSkipped =
+        request['choice'] == 'schianto' &&
+        oculumSchiantoSkipsAction(
+          targetGrade: activeCriticalGrade(),
+          attackAvoided: outcome == OculumAttackOutcome.avoided,
+          resisted: resisted,
+        );
+    if (schiantoActionSkipped) {
+      request['schiantoActionSkipped'] = true;
+      request['schiantoReactionBonus'] = 10;
+      request['schiantoReactionAvailable'] = true;
+      schedePersonaggio[schedaCorrente]['combatSchiantoReactionBonusPending'] =
+          10;
+      aggiungiLog(
+        '[SCHIANTO] Bersaglio di Grado ${activeCriticalGrade()} salta l’azione ma conserva la Reazione: può rispondere con Schianto +10 contro l’attaccante.',
+      );
+      programmaSalvataggio();
+    }
     request['outcome'] = outcome.name;
     request['freeReaction'] =
         request['reactionOf'] == null &&
-        (oculumDefenseGrantsFreeReaction(attack, defense) || resisted);
+        (oculumDefenseGrantsFreeReaction(attack, defense) ||
+            resisted ||
+            reflexBonusReaction);
     request['criticalReaction'] = oculumDefenseGrantsFreeReaction(
       attack,
       defense,
     );
-    aggiungiLog(
-      '[ESITO DIFESA] $choice $defense contro $attack: ${outcome.label}.${request['freeReaction'] == true ? ' Reazione gratuita su chi ha provato a colpirti.${request['criticalReaction'] == true ? ' Il contrattacco è critico: bonus critico ×2 e Fragilità secondo le regole del bersaglio.' : ' Contrattacco ordinario.'}' : ''}',
-    );
+      aggiungiLog(
+        '[ESITO DIFESA] $choice $defense contro $attack: ${outcome.label}.${readIntValue(request['collectorDefensePenalty']) > 0 ? ' Collezionista: -${request['collectorDefensePenalty']} perché hai scelto lo stesso elemento.' : ''}${request['freeReaction'] == true ? ' Reazione gratuita su chi ha provato a colpirti.${reflexBonusReaction ? ' Riflessi concede una Reazione aggiuntiva.' : ''}${request['criticalReaction'] == true ? ' Il contrattacco è critico: bonus critico ×2 e Fragilità secondo le regole del bersaglio.' : ' Contrattacco ordinario.'}' : ''}',
+      );
     if (resisted) {
       aggiungiLog(
         '[RESISTENZA] 1 danno prima degli Scudi; reazione gratuita contro chi ha attaccato, senza concatenazione.',
@@ -1377,6 +1640,39 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             forcedCritical: request['forcedCritical'] == true,
             difficulty: '${request['difficulty'] ?? 'normale'}',
           );
+    final incomingElement = oculumNormalizeElementId(
+      '${request['element'] ?? 'fisico'}',
+    );
+    final defenseElement = oculumNormalizeElementId(
+      '${request['defenseElement'] ?? elementoDannoDominante()}',
+    );
+    final elementalDefenseMultiplier = oculumElementalDefenseMultiplier(
+      incomingElement: incomingElement,
+      defenseElement: defenseElement,
+      currentHp: hpCorrenti(),
+      maximumHp: maxHp(),
+    );
+    request['defenseElement'] = defenseElement;
+    request['elementalDefenseMultiplier'] = elementalDefenseMultiplier;
+    if (damage > 0 && elementalDefenseMultiplier < 1) {
+      aggiungiLog(
+        '[DIFESA ELEMENTALE] ${elementDisplayName(defenseElement)} protegge da ${elementDisplayName(incomingElement)}: -25% danni in ingresso${defenseElement == 'angelico' || defenseElement == 'diabolico' ? ', finché la Vita resta almeno al 30% del massimo' : ''}.',
+      );
+    }
+    final precisionStages =
+        request['choice'] == 'precisione' &&
+            !resisted &&
+            outcome != OculumAttackOutcome.avoided
+        ? readIntValue(request['precisionFragilityStages']).clamp(0, 3).toInt()
+        : 0;
+    final precisionDamagePercent =
+        request['choice'] == 'precisione' &&
+            !resisted &&
+            outcome != OculumAttackOutcome.avoided
+        ? readIntValue(
+            request['precisionDamagePercent'],
+          ).clamp(100, 350).toInt()
+        : 100;
     // Persist the decision before applying damage: duplicate broadcasts cannot
     // replay the mutation, including while a Pawn interception is pending.
     await salvaDatiSoloLocale();
@@ -1388,11 +1684,35 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (damage > 0) {
       final previousElement = incomingDamageElement;
       incomingDamageElement = '${request['element'] ?? 'fisico'}';
+      final discoveredWeakPoint =
+          combatDiscoveries[combatDiscoveryKey(
+            tag,
+            combatScoutSide('${request['sourceTag']}'),
+          )]?['weakPoint'] ==
+          true;
+      final precisionBasePreset = discoveredWeakPoint
+          ? 'Fragilità Semi Letale'
+          : configuredIncomingDamagePreset();
+      final precisionPreset = precisionStages > 0
+          ? oculumAdvanceDamagePreset(
+              precisionBasePreset,
+              precisionStages,
+              scalaCriticaDanno(),
+            )
+          : null;
+      final precisionAdjustedDamage = (damage * precisionDamagePercent / 100)
+          .ceil();
+      if (precisionStages > 0 || precisionDamagePercent > 100) {
+        aggiungiLog(
+          '[PRECISIONE] ${precisionStages > 0 ? '+$precisionStages stadi di Fragilità' : ''}${precisionStages > 0 && precisionDamagePercent > 100 ? ' · ' : ''}${precisionDamagePercent > 100 ? '$precisionDamagePercent% del danno' : ''}, applicati solo a questo colpo.',
+        );
+      }
       try {
         await applicaDannoSubito(
-          dannoEsplicito: damage,
+          dannoEsplicito: precisionAdjustedDamage,
           critico: critical,
           criticalBonusMultiplier: critical ? 2 : 1,
+          incomingDamageMultiplier: elementalDefenseMultiplier,
           defenseMultiplier: !critical && outcome == OculumAttackOutcome.reduced
               ? 1.5
               : 1,
@@ -1400,13 +1720,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           enemyDifficulty: '${request['difficulty']}',
           resolvedResistance: resisted,
           resistancePresetOverride:
-              combatDiscoveries[combatDiscoveryKey(
-                    tag,
-                    combatScoutSide('${request['sourceTag']}'),
-                  )]?['weakPoint'] ==
-                  true
-              ? 'Fragilità Semi Letale'
-              : null,
+              precisionPreset ??
+              (discoveredWeakPoint ? 'Fragilità Semi Letale' : null),
         );
       } finally {
         if (mounted && sheetTagAt(schedaCorrente) == tag) {
@@ -1464,13 +1779,81 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         }
       }
     }
-    final reply = {...request, 'defense': defense, 'defenseChoice': choice};
+    final reply = {
+      ...request,
+      'defense': defense,
+      'defenseChoice': choice,
+      'defenseElement': defenseElement,
+      'elementalDefenseMultiplier': elementalDefenseMultiplier,
+    };
     await realtimeService?.sendCombatEvent(
       'combat_defense',
       permissionEnvelope(reply),
     );
     if (mounted) setState(() {});
     programmaSalvataggio();
+  }
+
+  void applyOnlineSchiantoActionSkip(Map<String, dynamic> result) {
+    if (result['schiantoActionSkipped'] != true ||
+        result['choice'] != 'schianto' ||
+        '${result['encounterId'] ?? ''}' != onlineCombatEncounterId ||
+        '${result['outcome'] ?? ''}' == OculumAttackOutcome.avoided.name) {
+      return;
+    }
+    final targetTag = '${result['targetTag'] ?? ''}';
+    final token = masterInitiativeTokens
+        .where(
+          (entry) => '${entry['sheetTag'] ?? entry['id'] ?? ''}' == targetTag,
+        )
+        .firstOrNull;
+    if (token == null || masterInitiativeTokenGrade(token) > 2) return;
+    token['actionUsed'] = true;
+    token['schiantoActionSkipped'] = true;
+    token['schiantoReactionBonus'] = 10;
+    token['updatedAt'] = DateTime.now().toIso8601String();
+    risultato =
+        '[SCHIANTO] ${token['name'] ?? targetTag} salta l’azione; Reazione disponibile con Schianto +10.';
+    aggiungiLog(risultato);
+    programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
+    sendRealtimeInitiativeSnapshotIfPublished();
+  }
+
+  Future<void> chooseDefenseElement(Map<String, dynamic> request) async {
+    final options = allDamageElementIds();
+    if (options.isEmpty) return;
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('Affinità elementale · Difesa'),
+        content: SizedBox(
+          width: 360,
+          height: MediaQuery.sizeOf(dialog).height * .6,
+          child: ListView.builder(
+            itemCount: options.length,
+            itemBuilder: (context, index) {
+              final id = options[index];
+              return ListTile(
+                leading: Icon(Icons.circle, color: elementColor(id), size: 16),
+                title: Text(elementDisplayName(id)),
+                selected: id == request['defenseElement'],
+                onTap: () => Navigator.pop(dialog, id),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('Annulla'),
+          ),
+        ],
+      ),
+    );
+    if (selected == null || !mounted || request['status'] != 'pending') return;
+    request['defenseElement'] = selected;
+    setState(() {});
   }
 
   Widget onlineCombatRequestsPanel() {
@@ -1500,7 +1883,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               r['kind'] != 'help' &&
               r['kind'] != 'scout' &&
               (r['status'] == 'pending' ||
-                  (r['freeReaction'] == true && r['reactionUsed'] != true)),
+                  (r['freeReaction'] == true && r['reactionUsed'] != true) ||
+                  (r['schiantoReactionAvailable'] == true &&
+                      r['schiantoReactionUsed'] != true)),
         )
         .toList();
     final otherTargets = <String, Map<String, dynamic>>{
@@ -1563,13 +1948,50 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    '${request['sourceName']} → ${request['targetName'] ?? nomeController.text} · ${request['abilityName'] ?? request['choice']} · DT ${request['attack']} · ${request['reason'] ?? ''}',
+                    '${request['sourceName']} → ${request['targetName'] ?? nomeController.text} · ${request['abilityName'] ?? request['choice']} · tiro nemico ${request['attack']} · DT da superare ${request['attack']} · ${request['reason'] ?? ''}',
                   ),
+                  if (request['status'] == 'pending')
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        onPressed: () => chooseDefenseElement(request),
+                        icon: Icon(
+                          Icons.water_drop_outlined,
+                          color: elementColor(
+                            '${request['defenseElement'] ?? elementoDannoDominante()}',
+                          ),
+                        ),
+                        label: Text(
+                          'Difesa · ${elementDisplayName('${request['defenseElement'] ?? elementoDannoDominante()}')} · attacco ${elementDisplayName('${request['element'] ?? 'fisico'}')}',
+                          style: TextStyle(
+                            color: elementColor(
+                              '${request['defenseElement'] ?? elementoDannoDominante()}',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   if (request['status'] == 'pending')
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
+                        Tooltip(
+                          message:
+                              'Applica prima una skill difensiva a questa scheda. Poi scegli qui il tiro per questo specifico bersaglio.',
+                          child: OutlinedButton.icon(
+                            onPressed:
+                                onlineCombatResolving.contains(
+                                  '${request['id']}',
+                                )
+                                ? null
+                                : () => showCombatActionPanel(
+                                    OculumCombatAbilityRole.defense,
+                                  ),
+                            icon: const Icon(Icons.shield_moon_outlined),
+                            label: const Text('Skill e protezioni'),
+                          ),
+                        ),
                         if (schivataOculumPronta() ||
                             schivateOculumDisponibili() > 0)
                           OutlinedButton.icon(
@@ -1592,7 +2014,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                         for (final option in <String, String>{
                           'cm': 'CM',
                           for (final stat in hiddenEyeStats)
-                            if (stat.unlocked &&
+                            if (oculumCombatSubtraitSelectable(stat) &&
                                 combatDefenseRollIds.contains(stat.id))
                               stat.id: stat.nome,
                         }.entries)
@@ -1604,13 +2026,29 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                                     (option.key != 'cm' &&
                                         !hiddenEyeStats.any(
                                           (s) =>
-                                              s.id == option.key && s.unlocked,
+                                              s.id == option.key &&
+                                              oculumCombatSubtraitSelectable(s),
                                         ))
                                 ? null
                                 : () => defendOnlineAttack(request, option.key),
                             child: Text(option.value),
                           ),
                       ],
+                    )
+                  else if (request['schiantoReactionAvailable'] == true &&
+                      request['schiantoReactionUsed'] != true &&
+                      readIntValue(
+                            schedePersonaggio[schedaCorrente]['combatSchiantoReactionBonusPending'],
+                          ) >=
+                          10)
+                    FilledButton.icon(
+                      onPressed: () => planOnlineAttack(
+                        targetId: '${request['sourceTag']}',
+                        initialChoice: 'schianto',
+                        schiantoReactionId: '${request['id']}',
+                      ),
+                      icon: const Icon(Icons.flash_on),
+                      label: const Text('Reazione Schianto +10'),
                     )
                   else
                     FilledButton.icon(

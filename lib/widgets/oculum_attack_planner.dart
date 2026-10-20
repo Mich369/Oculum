@@ -9,15 +9,23 @@ class OculumAttackChoice {
   final Color? color;
 }
 
+class OculumCombatElement {
+  const OculumCombatElement(this.id, this.name, this.color);
+  final String id, name;
+  final Color color;
+}
+
 class OculumAttackPlan {
   const OculumAttackPlan(
     this.targetId,
     this.choiceId,
     this.reason, {
     this.additionalTargetIds = const [],
+    this.element = 'fisico',
   });
   final String targetId, choiceId, reason;
   final List<String> additionalTargetIds;
+  final String element;
   List<String> get targetIds => [targetId, ...additionalTargetIds];
 }
 
@@ -61,6 +69,8 @@ class OculumAttackPlanner extends StatefulWidget {
     this.initialChoice = 'vc',
     this.minimumTargets = 1,
     this.maximumTargets = 1,
+    this.elements = const [],
+    this.initialElement = 'fisico',
   });
   final Map<String, String> targets;
   final List<OculumAttackChoice> choices;
@@ -72,6 +82,8 @@ class OculumAttackPlanner extends StatefulWidget {
   final String? initialTarget;
   final String initialChoice;
   final int minimumTargets, maximumTargets;
+  final List<OculumCombatElement> elements;
+  final String initialElement;
   @override
   State<OculumAttackPlanner> createState() => _OculumAttackPlannerState();
 }
@@ -84,6 +96,10 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
       widget.choices.any((option) => option.id == widget.initialChoice)
       ? widget.initialChoice
       : 'vc';
+  late String element =
+      widget.elements.any((option) => option.id == widget.initialElement)
+      ? widget.initialElement
+      : widget.elements.firstOrNull?.id ?? 'fisico';
   late final Set<String> visible =
       widget.choices
           .where(
@@ -100,6 +116,39 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
         ..add(choice);
   final reason = TextEditingController();
   final extraTargets = <String>[];
+
+  Future<void> chooseElement() async {
+    if (widget.elements.isEmpty) return;
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('Elemento dell’attacco'),
+        content: SizedBox(
+          width: 360,
+          height: MediaQuery.sizeOf(dialog).height * .6,
+          child: ListView.builder(
+            itemCount: widget.elements.length,
+            itemBuilder: (context, index) {
+              final option = widget.elements[index];
+              return ListTile(
+                leading: Icon(Icons.circle, color: option.color, size: 16),
+                title: Text(option.name),
+                selected: option.id == element,
+                onTap: () => Navigator.pop(dialog, option.id),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('Annulla'),
+          ),
+        ],
+      ),
+    );
+    if (mounted && selected != null) setState(() => element = selected);
+  }
 
   List<String> completedExtraTargets() {
     final result = [target, ...extraTargets];
@@ -150,6 +199,28 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (widget.elements.isNotEmpty)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: chooseElement,
+                  icon: Icon(
+                    Icons.water_drop_outlined,
+                    color: widget.elements
+                        .firstWhere((option) => option.id == element)
+                        .color,
+                  ),
+                  label: Text(
+                    'Elemento · ${widget.elements.firstWhere((option) => option.id == element).name}',
+                    style: TextStyle(
+                      color: widget.elements
+                          .firstWhere((option) => option.id == element)
+                          .color,
+                    ),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: target.isEmpty ? null : target,
               isExpanded: true,
@@ -386,6 +457,7 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
                   choice,
                   choice == 'vc' ? '' : reason.text.trim(),
                   additionalTargetIds: completedExtraTargets(),
+                  element: element,
                 ),
               ),
         child: const Text('Dichiara e tira'),

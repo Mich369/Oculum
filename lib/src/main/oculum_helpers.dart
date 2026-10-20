@@ -231,6 +231,116 @@ int oculumCriticalDamageBonusForDifficulty(
   };
 }
 
+/// Bonus piatto per un attacco dichiarato con Manifestazione del Potere.
+/// Da +6, aggiunge 3 danni per livello a ciascun bersaglio colpito.
+int oculumManifestationAttackDamageBonus({
+  required int manifestationTotal,
+  required int level,
+}) => manifestationTotal < 6 ? 0 : max(0, level) * 3;
+
+bool oculumReflexGrantsCounterReaction({
+  required int reflexesTotal,
+  required int naturalRoll,
+  required int targetMovement,
+  required int characterMovement,
+}) => reflexesTotal >= 20
+    ? naturalRoll >= 18 && naturalRoll <= 20
+    : reflexesTotal >= 12
+    ? naturalRoll >= 19 && naturalRoll <= 20
+    : reflexesTotal >= 6 &&
+          naturalRoll == 20 &&
+          targetMovement >= 0 &&
+          targetMovement <= characterMovement;
+
+bool oculumSchiantoSkipsAction({
+  required int targetGrade,
+  required bool attackAvoided,
+  required bool resisted,
+}) => targetGrade <= 2 && !attackAvoided && !resisted;
+
+/// Distribution for Precision attacks. At +20 the special 5% outcome is
+/// carved out of the +1-stage band and amplifies incoming damage instead.
+class OculumPrecisionHitResult {
+  const OculumPrecisionHitResult({
+    required this.fragilityStages,
+    required this.receivedDamagePercent,
+  });
+
+  final int fragilityStages;
+  final int receivedDamagePercent;
+}
+
+OculumPrecisionHitResult oculumPrecisionHitResult({
+  required int precisionTotal,
+  required int percentileRoll,
+  int customDamagePercent = 260,
+}) {
+  if (precisionTotal < 6 || percentileRoll < 0 || percentileRoll > 99) {
+    return const OculumPrecisionHitResult(
+      fragilityStages: 0,
+      receivedDamagePercent: 100,
+    );
+  }
+  var shift = precisionTotal - 6;
+  final firstShift = min(30, shift);
+  final baseOneStageChance = 80 - firstShift;
+  var twoStageChance = 15 + firstShift;
+  var threeStageChance = 5;
+  shift -= firstShift;
+  final secondShift = min(5, shift);
+  twoStageChance -= secondShift;
+  threeStageChance += secondShift;
+  final customDamageChance = precisionTotal >= 20 ? 5 : 0;
+  final oneStageChance = baseOneStageChance - customDamageChance;
+  if (percentileRoll < oneStageChance) {
+    return const OculumPrecisionHitResult(
+      fragilityStages: 1,
+      receivedDamagePercent: 100,
+    );
+  }
+  if (customDamageChance > 0 && percentileRoll < baseOneStageChance) {
+    return OculumPrecisionHitResult(
+      fragilityStages: 0,
+      receivedDamagePercent: customDamagePercent.clamp(260, 350).toInt(),
+    );
+  }
+  if (percentileRoll <
+      baseOneStageChance + customDamageChance + twoStageChance) {
+    return const OculumPrecisionHitResult(
+      fragilityStages: 2,
+      receivedDamagePercent: 100,
+    );
+  }
+  if (percentileRoll <
+      baseOneStageChance +
+          customDamageChance +
+          twoStageChance +
+          threeStageChance) {
+    return const OculumPrecisionHitResult(
+      fragilityStages: 3,
+      receivedDamagePercent: 100,
+    );
+  }
+  return const OculumPrecisionHitResult(
+    fragilityStages: 0,
+    receivedDamagePercent: 100,
+  );
+}
+
+String oculumAdvanceDamagePreset(
+  String currentPreset,
+  int stages,
+  List<String> damageScale,
+) {
+  if (damageScale.isEmpty) return currentPreset;
+  var index = damageScale.indexOf(currentPreset);
+  if (index < 0) index = damageScale.indexOf('Normale');
+  if (index < 0) index = 0;
+  return damageScale[(index + max(0, stages))
+      .clamp(0, damageScale.length - 1)
+      .toInt()];
+}
+
 /// Converte il testo libero del danno ricevuto in un moltiplicatore.
 /// `+25%` significa 125% del danno; `-25%` significa 75%.
 double? oculumIncomingDamagePercentMultiplier(String raw) {

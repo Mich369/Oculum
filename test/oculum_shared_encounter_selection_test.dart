@@ -80,6 +80,23 @@ void main() {
       'second',
     );
   });
+  test('shared encounter membership ignores sheet tag letter casing', () {
+    expect(
+      oculumSelectSharedEncounter(
+        [
+          {
+            'encounterId': 'case-insensitive',
+            'tokens': [
+              {'sheetTag': '  PLAYER-EYE  '},
+            ],
+          },
+        ],
+        sheetTag: 'player-eye',
+        selectedId: '',
+      )['encounterId'],
+      'case-insensitive',
+    );
+  });
   test('unlisted sheets do not inherit another fight', () {
     expect(
       oculumSelectSharedEncounter(

@@ -67,6 +67,83 @@ void main() {
     );
   });
 
+  test('Reflex counterreaction thresholds respect movement only at +6', () {
+    expect(
+      oculumReflexGrantsCounterReaction(
+        reflexesTotal: 6,
+        naturalRoll: 20,
+        targetMovement: 30,
+        characterMovement: 30,
+      ),
+      isTrue,
+    );
+    expect(
+      oculumReflexGrantsCounterReaction(
+        reflexesTotal: 6,
+        naturalRoll: 20,
+        targetMovement: 31,
+        characterMovement: 30,
+      ),
+      isFalse,
+    );
+    expect(
+      oculumReflexGrantsCounterReaction(
+        reflexesTotal: 12,
+        naturalRoll: 19,
+        targetMovement: 99,
+        characterMovement: 1,
+      ),
+      isTrue,
+    );
+    expect(
+      oculumReflexGrantsCounterReaction(
+        reflexesTotal: 20,
+        naturalRoll: 18,
+        targetMovement: 99,
+        characterMovement: 1,
+      ),
+      isTrue,
+    );
+  });
+
+  test(
+    'Schianto skips only a non-avoided, non-resisted target through Grade II',
+    () {
+      expect(
+        oculumSchiantoSkipsAction(
+          targetGrade: 2,
+          attackAvoided: false,
+          resisted: false,
+        ),
+        isTrue,
+      );
+      expect(
+        oculumSchiantoSkipsAction(
+          targetGrade: 3,
+          attackAvoided: false,
+          resisted: false,
+        ),
+        isFalse,
+      );
+      expect(
+        oculumSchiantoSkipsAction(
+          targetGrade: 1,
+          attackAvoided: true,
+          resisted: false,
+        ),
+        isFalse,
+      );
+      expect(
+        oculumSchiantoSkipsAction(
+          targetGrade: 1,
+          attackAvoided: false,
+          resisted: true,
+        ),
+        isFalse,
+      );
+    },
+  );
+
   test('Legacy turn unit aliases use the same personal duration', () {
     for (final unit in ['turn', 'turns', 'turno', 'turni', 'TURN']) {
       expect(oculumTurnUnit(unit), 'turni');

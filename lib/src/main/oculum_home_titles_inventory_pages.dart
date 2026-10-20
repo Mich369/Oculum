@@ -4908,6 +4908,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       }
     }
 
+    for (var grade = 0; grade <= 12; grade++) {
+      add(oculumShadowLivingScrollItem(grade));
+    }
+
     for (var sheet = 0; sheet < schedePersonaggio.length; sheet++) {
       for (final raw in _sheetMapList(sheet, 'inventario')) {
         try {
@@ -5966,6 +5970,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     color: oculumStatFormulaColor,
                     icon: Icons.visibility,
                   ),
+                if (item.arma || item.protegge)
+                  compactInventoryChip(
+                    label: 'LIV ${item.livelloOggetto}',
+                    color: tertiaryColor,
+                    icon: Icons.lock_clock_outlined,
+                  ),
                 if (item.gradoOggetto > 0 || item.gradoRichiesto > 0)
                   compactInventoryChip(
                     label:
@@ -6554,6 +6564,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     if (inventario[i].protegge &&
                         itemOculumShieldBonus(inventario[i]) > 0)
                       statChip('SO', itemOculumShieldBonus(inventario[i])),
+                    if (inventario[i].arma || inventario[i].protegge)
+                      Chip(
+                        avatar: const Icon(Icons.lock_clock_outlined, size: 16),
+                        label: Text('Livello ${inventario[i].livelloOggetto}'),
+                        backgroundColor: tertiaryColor.withValues(alpha: .16),
+                      ),
                     if (inventario[i].gradoOggetto > 0 ||
                         inventario[i].gradoRichiesto > 0)
                       Chip(

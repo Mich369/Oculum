@@ -32,6 +32,9 @@ const Set<String> oculumRealtimeMetadataKeys = <String>{
   'diaryKnowledgeSync',
 };
 
+bool oculumInitiativePayloadClosesFight(Map<String, dynamic> payload) =>
+    readBoolValue(payload['closed']);
+
 const Set<String> oculumRealtimeProtectedEmptyFields = <String>{
   'immaginePersonaggioBase64',
   'background',
@@ -304,9 +307,13 @@ Map<String, dynamic> oculumSelectSharedEncounter(
   required String selectedId,
   bool staff = false,
 }) {
+  String normalizedTag(String value) =>
+      value.trim().replaceAll(RegExp(r'\s+'), '').toUpperCase();
   bool containsSheet(Map<String, dynamic> encounter) =>
       (encounter['tokens'] as List? ?? const []).whereType<Map>().any(
-        (token) => '${token['sheetTag'] ?? token['id'] ?? ''}' == sheetTag,
+        (token) =>
+            normalizedTag('${token['sheetTag'] ?? token['id'] ?? ''}') ==
+            normalizedTag(sheetTag),
       );
   final selected = encounters.where(
     (encounter) =>
@@ -334,7 +341,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
   }
 
-  Future<void> joinSharedMasterEncounter(Map<String, dynamic> group) async {
+  Future<void> joinSharedMasterEncounter(
+    Map<String, dynamic> group, {
+    int? sheetIndex,
+  }) async {
     final id = '${group['encounterId'] ?? ''}';
     final service = realtimeService;
     if (id.isEmpty || service?.isConnected != true) return;
@@ -344,14 +354,19 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       setState(() {});
       return;
     }
-    salvaSchedaCorrenteInMemoria();
-    final tag = sheetTagAt(schedaCorrente);
+    final joiningIndex = sheetIndex ?? schedaCorrente;
+    if (joiningIndex < 0 || joiningIndex >= schedePersonaggio.length) return;
+    if (joiningIndex == schedaCorrente) salvaSchedaCorrenteInMemoria();
+    final tag = sheetTagAt(joiningIndex);
     realtimeOutgoingEncounterJoins['$id:$tag'] = {
       'sheetTag': tag,
       'encounterId': id,
       'campaignId': group['campaignId'] ?? permissionCampaignId,
       'campaignName': group['campaignName'] ?? activeCampaignName(),
-      'turn': playerReportedTurn,
+      'turn': readIntValue(
+        schedePersonaggio[joiningIndex]['playerReportedTurn'],
+        fallback: joiningIndex == schedaCorrente ? playerReportedTurn : 0,
+      ),
     };
     await service!.refreshPresence();
     await retryPendingEncounterJoins();
@@ -529,7 +544,16 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (chosen.isNotEmpty) return chosen;
 
     final sheetName = nomeController.text.trim();
-    if (sheetName.isNotEmpty && sheetName != '???') return sheetName;
+    if (sheetName.isNotEmpty && sheetName != '???') {
+      final visibleTitle = titoli
+          .where((title) => title.equipaggiato && title.sempreVisibile)
+          .map((title) => title.nome.trim())
+          .where((title) => title.isNotEmpty)
+          .firstOrNull;
+      return visibleTitle == null || visibleTitle == sheetName
+          ? sheetName
+          : '$sheetName | $visibleTitle';
+    }
 
     return 'Scheda ${schedaCorrente + 1}';
   }
@@ -1251,7 +1275,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         return '$player HP ${payload['currentHp'] ?? '?'}'
             '/${payload['maxHp'] ?? '?'}'
             ' • Temp ${payload['tempHp'] ?? 0}'
-            ' • Scudo ${payload['shield'] ?? 0}';
+            ' • Scudo ${payload['shield'] ?? 0}'
+            '${readIntValue(payload['larvalBroodMaxHp']) > 0 ? " • Nidiata ${payload['larvalBroodHp'] ?? 0}/${payload['larvalBroodMaxHp']}" : ''}';
       case 'oculum_changed':
         return '$player Oculum ${payload['currentOculum'] ?? '?'}'
             '/${payload['maxOculum'] ?? '?'}';
@@ -1328,9 +1353,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           '$player confirmed sheet receipt: ${payload['sheetName'] ?? '???'}.',
         );
       case 'initiative_shared':
-        if (readBoolValue(payload['closed']) &&
-            (payload['snapshot'] is! Map ||
-                (payload['snapshot'] as Map)['encounters'] is! List)) {
+        if (oculumInitiativePayloadClosesFight(payload)) {
           return t(
             '$player ha chiuso la Fight visibile.',
             '$player closed the visible Fight.',
@@ -1386,6 +1409,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         maxHp: maxHp(),
         tempHp: hpTemp(),
         shield: scudo(),
+        larvalBroodHp: broodRemainingHp(),
+        larvalBroodMaxHp: broodMaximumHp(),
       ),
     );
   }
@@ -2266,6 +2291,15 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'spriteAssetPath': masterInitiativeTokenSpriteAsset(tokens[i]),
             'tokenSize': masterInitiativeTokenSize(tokens[i]),
             'initiativeTotal': readIntValue(tokens[i]['initiativeTotal']),
+            if (readBoolValue(tokens[i]['oculumShadowClone'])) ...{
+              'oculumShadowClone': true,
+              'shadowCloneTurnsRemaining': readIntValue(
+                tokens[i]['shadowCloneTurnsRemaining'],
+              ),
+              'shadowCloneExpired': readBoolValue(
+                tokens[i]['shadowCloneExpired'],
+              ),
+            },
             'reportedTurn': max(0, readIntValue(tokens[i]['reportedTurn'])),
             'actionUsed': readBoolValue(tokens[i]['actionUsed']),
             'reactionMax': masterInitiativeReactionMax(tokens[i]),
@@ -2291,9 +2325,24 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final session = '${payload['sessionId'] ?? ''}';
     final revision = readIntValue(payload['revision']);
     if (session.isNotEmpty) {
-      if (!realtimeUsers.any(
-        (user) => user['role'] == 'master' && user['sessionId'] == session,
-      )) {
+      final authenticatedUserId = '${payload['authenticatedUserId'] ?? ''}'
+          .trim();
+      final restoredSnapshot = readBoolValue(payload['restoredSnapshot']);
+      if (restoredSnapshot) {
+        // This payload came from the room event table under member RLS; the
+        // database stamps authenticatedRole and prevents players forging this
+        // event. It may belong to a Master session that has since reconnected
+        // with a new session id, or is temporarily offline.
+        if (payload['authenticatedRole'] != 'master' ||
+            authenticatedUserId.isEmpty) {
+          return;
+        }
+      } else if (!realtimeUsers.any((user) {
+        if (user['role'] != 'master') return false;
+        if (user['sessionId'] == session) return true;
+        return authenticatedUserId.isNotEmpty &&
+            '${user['userId'] ?? ''}' == authenticatedUserId;
+      })) {
         return;
       }
       if (session == realtimeInitiativeSession &&
@@ -2310,9 +2359,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeInitiativeRevision = revision;
     }
 
-    if (readBoolValue(payload['closed']) &&
-        (payload['snapshot'] is! Map ||
-            (payload['snapshot'] as Map)['encounters'] is! List)) {
+    if (oculumInitiativePayloadClosesFight(payload)) {
       realtimeOutgoingEncounterJoins.clear();
       realtimeEncounterJoinRetryTimer?.cancel();
       realtimeEncounterJoinRetryTimer = null;

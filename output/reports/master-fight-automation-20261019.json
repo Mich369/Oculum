@@ -1,0 +1,79 @@
+{
+  "commit": "3829a1c8e9eb18306a3ebf7720d0217acff2b755",
+  "staticAnalysis": "passed: dart analyze lib test",
+  "targetedTests": {
+    "count": 53,
+    "command": "flutter test --no-pub test/oculum_ability_text_parser_test.dart test/oculum_online_damage_layers_test.dart test/oculum_online_attack_delivery_test.dart test/oculum_structured_skill_effects_test.dart",
+    "result": "passed"
+  },
+  "covered": [
+    "Master-owned encounter selection",
+    "stale snapshot rejection",
+    "Master session validation",
+    "damage defense and resource layers",
+    "negative ally help consumed once",
+    "healing and condition on inactive owned sheet",
+    "inactive target receipt identity"
+  ],
+  "fullTwoBrowserCombat": "not completed",
+  "pagesRun": 39275233754,
+  "pages": "success",
+  "localDistribution": "building",
+  "customizable": [
+    "participants",
+    "initiative order",
+    "target selections",
+    "skill and effect values",
+    "condition duration",
+    "condition DT",
+    "Home artwork choice",
+    "merchant stock price and remaining quantity in JSON",
+    "Fate/Chaos item cost in craftData",
+    "centralized Fate curve and Chaos rarity and point probabilities"
+  ],
+  "contentRegression": {
+    "count": 10,
+    "scope": "Scroll catalogue and consumption, merchant dust, artwork",
+    "result": "passed"
+  },
+  "signTests": {
+    "count": 17,
+    "result": "passed",
+    "command": "flutter test --no-pub test/oculum_ability_text_parser_test.dart test/oculum_merchant_dust_test.dart test/oculum_scroll_consumption_test.dart",
+    "coverage": [
+      "Fate and Chaos probabilities",
+      "stable shop price",
+      "single purchase rejects duplicate click",
+      "sold-out stock persists in JSON",
+      "Chaos consumed once and permanent stat gains"
+    ]
+  },
+  "publishedHttp": {
+    "indexStatus": 200,
+    "indexExactCommit": true,
+    "bootstrapStatus": 200,
+    "bootstrapExactCommit": true
+  },
+  "github": {
+    "pages": {
+      "run": 39275233754,
+      "result": "success"
+    },
+    "windowsTest": {
+      "run": 39275233709,
+      "result": "success"
+    },
+    "diariMapTests": {
+      "run": 39275233728,
+      "result": "success"
+    },
+    "fullDistribution": {
+      "run": 39275233595,
+      "result": "in progress"
+    },
+    "macOS": {
+      "run": 39275233499,
+      "result": "in progress"
+    }
+  }
+}

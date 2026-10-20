@@ -5,6 +5,22 @@ part of '../../main.dart';
 bool oculumWitheredLarvaMonster(MonsterBookEntry monster) =>
     monster.id == 'costrutto_rinsecchito' || monster.id == 'larva_bianca';
 
+({int absorbed, int remainingDamage}) oculumApplyLarvalBroodDamage({
+  required int incoming,
+  required List<Map<String, dynamic>> broods,
+}) {
+  var damage = max(0, incoming);
+  final initialDamage = damage;
+  for (final brood in broods) {
+    if (damage <= 0) break;
+    final hp = max(0, readIntValue(brood['hp']));
+    final absorbed = min(hp, damage);
+    brood['hp'] = hp - absorbed;
+    damage -= absorbed;
+  }
+  return (absorbed: initialDamage - damage, remainingDamage: damage);
+}
+
 List<OculumStructuredEffect> oculumWitheredLarvaEffects(String id, int form) {
   OculumStructuredEffect effect(
     String type,
@@ -77,6 +93,33 @@ List<OculumStructuredEffect> oculumWitheredLarvaEffects(String id, int form) {
     ],
     _ => [],
   };
+}
+
+OculumStructuredEffect oculumLarvalBroodScrollEffect(int scrollRank) {
+  const dice = <String>[
+    '1d50',
+    '1d100',
+    '1d120',
+    '1d200',
+    '1d200',
+    '1d250',
+    '1d250',
+    '1d250',
+    '2d250',
+  ];
+  const bases = <int>[20, 30, 50, 60, 100, 120, 150, 200, 200];
+  final rank = scrollRank.clamp(0, dice.length - 1);
+  return OculumStructuredEffect(
+    id: 'white_larva_brood_scroll_${rank + 1}',
+    type: 'costrutto',
+    target: 'Nidiata di larve',
+    valueExpression: '${bases[rank]}+livello',
+    diceExpression: dice[rank],
+    mode: 'nidiata',
+    duration: '-1',
+    recipient: 'se_stesso',
+    includeLevel: false,
+  );
 }
 
 List<CharacterSkill> oculumWitheredLarvaSkills(MonsterBookEntry monster) => [
@@ -177,30 +220,36 @@ CharacterArt oculumWitheredLarvaArt(MonsterBookEntry monster) {
 }
 
 extension _OculumWitheredLarvaRuntime on _OculumHomePageState {
+  List<Map<String, dynamic>> activeLarvalBroods() => activeStructuredEffects
+      .where((e) => e['type'] == 'costrutto' && e['mode'] == 'nidiata')
+      .toList(growable: false);
+
   int broodRemainingHp() => activeStructuredEffects
       .where((e) => e['type'] == 'costrutto' && e['mode'] == 'nidiata')
       .fold(0, (total, brood) => total + max(0, readIntValue(brood['hp'])));
 
+  int broodMaximumHp() => activeLarvalBroods().fold(
+    0,
+    (total, brood) => total + max(0, readIntValue(brood['maxHp'])),
+  );
+
   int absorbLarvalBroodDamage(int incoming) {
-    var damage = max(0, incoming);
-    if (damage == 0 || broodRemainingHp() == 0) return damage;
-    for (final brood in activeStructuredEffects.where(
-      (e) => e['type'] == 'costrutto' && e['mode'] == 'nidiata',
-    )) {
-      final hp = max(0, readIntValue(brood['hp']));
-      final absorbed = min(hp, damage);
-      brood['hp'] = hp - absorbed;
-      damage -= absorbed;
-      if (absorbed > 0) {
-        aggiungiLog(
-          '[NIDIATA] $absorbed larve sacrificate, ${brood['hp']} rimaste.',
-        );
-      }
+    final broods = activeLarvalBroods();
+    if (incoming <= 0 || broods.isEmpty) return max(0, incoming);
+    final result = oculumApplyLarvalBroodDamage(
+      incoming: incoming,
+      broods: broods,
+    );
+    if (result.absorbed > 0) {
+      aggiungiLog(
+        '[NIDIATA] ${result.absorbed} larve sacrificate, '
+        '${broodRemainingHp()} rimaste.',
+      );
     }
     activeStructuredEffects.removeWhere(
       (e) => e['mode'] == 'nidiata' && readIntValue(e['hp']) <= 0,
     );
-    return damage;
+    return result.remainingDamage;
   }
 
   void useWitheredHeart(InventoryItem item) {

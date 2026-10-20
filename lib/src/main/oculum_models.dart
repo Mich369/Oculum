@@ -185,6 +185,11 @@ class HiddenEyeStat {
   }
 }
 
+/// I sottotratti sono azioni sempre disponibili; `unlocked` governa soltanto
+/// eventuali benefici/progressi aggiuntivi e non deve bloccare un tiro.
+bool oculumCombatSubtraitSelectable(HiddenEyeStat stat) =>
+    !const {'nodo', 'fortuna', 'drop'}.contains(stat.id);
+
 const String oculumAdaptationResistanceEffectId =
     'oculum.temp_resistance.adattamento.all_damage.current_combat.v1';
 
