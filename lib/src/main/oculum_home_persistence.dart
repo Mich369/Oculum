@@ -1642,6 +1642,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
           'packLeaderPhaseTriggered',
           'packLeaderPhaseBaseMaxHp',
           'combatElementalAdaptation',
+          'aberrationPhase',
+          'aberrationFinalPhaseTriggered',
           'humanoidRole',
           'monsterLootGenerated',
           'monsterLootGeneratedAt',

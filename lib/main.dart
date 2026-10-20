@@ -11,6 +11,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'widgets/oculum_living_seal.dart';
 import 'widgets/oculum_web_layout.dart';
+import 'widgets/oculum_web_downloads.dart';
 import 'widgets/oculum_memory_eye.dart';
 import 'package:flutter/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -4690,6 +4691,7 @@ class _OculumHomePageState extends State<OculumHomePage>
                         ),
                     ],
                   ),
+                if (kIsWeb) OculumWebDownloads(color: primaryColor),
                 if (!oculusModActive)
                   IconButton(
                     key: const ValueKey('current_screen_dice'),

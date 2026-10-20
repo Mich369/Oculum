@@ -192,11 +192,10 @@ extension _OculumReferenceSheet on _OculumHomePageState {
 
   Widget referenceTurnControls() {
     final remote =
-        !realtimeIsMasterRole &&
-        realtimeService?.isConnected == true &&
-        realtimeVisibleInitiativeSnapshot['tokens'] is List;
+        !realtimeIsMasterRole && realtimeService?.isConnected == true;
     final hasFight = remote
-        ? (realtimeVisibleInitiativeSnapshot['tokens'] as List).isNotEmpty
+        ? (realtimeVisibleInitiativeSnapshot['tokens'] as List? ?? const [])
+              .isNotEmpty
         : masterInitiativeTokens.isNotEmpty;
     final round = remote
         ? readIntValue(realtimeVisibleInitiativeSnapshot['round'], fallback: 0)
@@ -575,19 +574,28 @@ extension _OculumReferenceSheet on _OculumHomePageState {
               ),
               const SizedBox(width: 6),
               Expanded(child: Text(name)),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(label, style: TextStyle(fontWeight: FontWeight.w700)),
-                  if (shields && !hidden && vitalMemoryPendingHealing() > 0)
-                    Text(
-                      'Ricordo Vitale +${vitalMemoryPendingHealing()}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: vitalMemoryThemeColor(),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        label,
+                        style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
-                ],
+                    if (shields && !hidden && vitalMemoryPendingHealing() > 0)
+                      Text(
+                        'Ricordo Vitale +${vitalMemoryPendingHealing()}',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: vitalMemoryThemeColor(),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),

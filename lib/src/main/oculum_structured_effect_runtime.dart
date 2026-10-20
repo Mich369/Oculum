@@ -267,6 +267,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         final preparedAttackBonus =
             const {'danno', 'danno_percentuale'}.contains(effect.type) &&
             effect.mode == 'prossima_azione' &&
+            !effect.bypassDefense &&
+            !effect.bypassShields &&
+            effect.shieldDamageBonusPercent == 0 &&
             !(isAreaDamage && effect.recipient == 'nemico');
         final effectiveRecipient =
             combatSupportTargeting && effect.recipient == 'se_stesso'
@@ -997,6 +1000,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
       if (effect.type == 'danno') {
         await applicaDannoSubito(
           dannoEsplicito: max(0, readIntValue(effect.valueExpression)),
+          bypassDefense: effect.bypassDefense,
+          bypassShields: effect.bypassShields,
+          shieldDamageBonusPercent: effect.shieldDamageBonusPercent,
         );
       } else {
         for (final message in applyStructuredEffectsOnActivation([

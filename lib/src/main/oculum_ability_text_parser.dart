@@ -398,8 +398,8 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
     final timing = durationAt(match);
     final durationValue = durationText(timing).trim();
     final durationLower = durationValue.toLowerCase();
-    final durationExpression = timing == null ||
-            durationLower.startsWith('oculum')
+    final durationExpression =
+        timing == null || durationLower.startsWith('oculum')
         ? 'oculum'
         : formula(durationValue);
     effects.add(
@@ -466,6 +466,14 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
     caseSensitive: false,
   ).allMatches(text)) {
     if (claimed(match)) continue;
+    // Shield-only percentages must not also increase the entire attack.
+    if (RegExp(
+      r'^\s*(?:agli|allo|ai)\s+scud[oi]\b',
+      caseSensitive: false,
+    ).hasMatch(text.substring(match.end))) {
+      claims.add((match.start, match.end));
+      continue;
+    }
     final percentage = int.parse(match[2]!);
     add(
       'danno_percentuale',
@@ -775,6 +783,30 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
       ),
     );
     claims.add((match.start, match.end));
+  }
+  // Penetration belongs to the chosen defender's damage packet, never to
+  // permanent defensive settings on the caster.
+  final beyondDefense = RegExp(
+    r'\b(?:oltre\s+difesa|ignora\s+(?:la\s+)?difesa)\b',
+    caseSensitive: false,
+  ).hasMatch(text);
+  final beyondShields = RegExp(
+    r'\b(?:oltre\s+scud[oi]|ignora\s+(?:(?:lo|gli)\s+)?scud[oi])\b',
+    caseSensitive: false,
+  ).hasMatch(text);
+  final shieldBonus = RegExp(
+    r'\+(\d+)\s*%\s*(?:danni\s*)?(?:agli|a(?:llo|i)?)\s+scud[oi]',
+    caseSensitive: false,
+  ).firstMatch(text);
+  for (final effect in effects.where((effect) => effect.type == 'danno')) {
+    effect.bypassDefense = beyondDefense;
+    effect.bypassShields = beyondShields;
+    effect.shieldDamageBonusPercent =
+        (int.tryParse(shieldBonus?.group(1) ?? '') ?? 0).clamp(0, 1000);
+    if (beyondDefense || beyondShields || effect.shieldDamageBonusPercent > 0) {
+      effect.recipient = 'nemico';
+      effect.mode = 'prossima_azione';
+    }
   }
   // A recognized numeric rule does not imply its entire story was understood.
   final remainder = StringBuffer();

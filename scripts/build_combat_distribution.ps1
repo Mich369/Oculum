@@ -39,8 +39,11 @@ function Get-SourceFingerprint {
 function Invoke-FlutterBuild([string]$Name, [string[]]$BuildArguments) {
   $log = Join-Path $buildRoot "combat-build-$Name-$stamp.log"
   Write-Output "BUILD $Name -> $log"
-  & $flutter @BuildArguments *> $log
-  if ($LASTEXITCODE -ne 0) { throw "Build $Name failed; see $log" }
+  & $flutter @BuildArguments
+  $buildExitCode = $LASTEXITCODE
+  "Build $Name completed with exit code $buildExitCode at $([DateTime]::UtcNow.ToString('o'))" |
+    Set-Content -LiteralPath $log -Encoding utf8
+  if ($buildExitCode -ne 0) { throw "Build $Name failed; see terminal output and $log" }
   Write-Output "BUILT $Name"
 }
 

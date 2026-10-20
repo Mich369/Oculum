@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/widgets/oculum_goth_ornaments.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'write_fresh_capture.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -204,7 +205,7 @@ void main() {
               'output/ui/temi-goth/real-${preset.id}-${size.width.toInt()}.png',
             );
             await file.parent.create(recursive: true);
-            await file.writeAsBytes(bytes!.buffer.asUint8List());
+            writeFreshCapture(file, bytes!.buffer.asUint8List());
           });
         }
         expect(

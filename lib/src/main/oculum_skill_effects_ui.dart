@@ -1341,6 +1341,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     var includeGrade = seed.includeGrade;
     var bypassDefense = seed.bypassDefense;
     var bypassShields = seed.bypassShields;
+    var shieldDamageBonusPercent = seed.shieldDamageBonusPercent;
     var advancedExpanded =
         seed.diceExpression.trim().isNotEmpty ||
         seed.includeLevel ||
@@ -1442,6 +1443,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         appliedState: appliedState,
         bypassDefense: bypassDefense,
         bypassShields: bypassShields,
+        shieldDamageBonusPercent: shieldDamageBonusPercent,
       );
     }
 
@@ -1449,6 +1451,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       update(() {
         bypassDefense = false;
         bypassShields = false;
+        shieldDamageBonusPercent = 0;
         frequencyController.clear();
         durationController.clear();
         durationUnit = 'turni';
@@ -1675,6 +1678,18 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                           ),
                         if (modes.length > 1) const SizedBox(height: 10),
                         if (type == 'danno') ...[
+                          TextFormField(
+                            initialValue: '$shieldDamageBonusPercent',
+                            keyboardType: TextInputType.number,
+                            decoration: fieldDecoration(
+                              t(
+                                'Danni aggiuntivi agli Scudi (%)',
+                                'Additional shield damage (%)',
+                              ),
+                            ),
+                            onChanged: (value) => shieldDamageBonusPercent =
+                                (int.tryParse(value) ?? 0).clamp(0, 1000),
+                          ),
                           SwitchListTile.adaptive(
                             contentPadding: EdgeInsets.zero,
                             value: bypassDefense,

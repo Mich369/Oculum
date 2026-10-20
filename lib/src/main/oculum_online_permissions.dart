@@ -21,6 +21,11 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
           .firstOrNull;
       final campaign = '${master?['campaignId'] ?? ''}';
       if (campaign.isNotEmpty) return campaign;
+      // A restored, database-verified Master snapshot remains authoritative
+      // while the Master is temporarily absent from Presence.
+      final sharedCampaign =
+          '${realtimeVisibleInitiativeSnapshot['campaignId'] ?? ''}';
+      if (sharedCampaign.isNotEmpty) return sharedCampaign;
     }
     return activeCampaignId;
   }

@@ -387,6 +387,7 @@ class OculumStructuredEffect {
     this.appliedState = '',
     this.bypassDefense = false,
     this.bypassShields = false,
+    this.shieldDamageBonusPercent = 0,
   }) : id = id?.trim().isNotEmpty == true
            ? id!.trim()
            : 'effect_${DateTime.now().microsecondsSinceEpoch}';
@@ -419,6 +420,7 @@ class OculumStructuredEffect {
   String appliedState;
   bool bypassDefense;
   bool bypassShields;
+  int shieldDamageBonusPercent;
 
   OculumStructuredEffect copyWithNewId() {
     return OculumStructuredEffect.fromJson(toJson())
@@ -464,6 +466,7 @@ class OculumStructuredEffect {
     'appliedState': appliedState,
     'bypassDefense': bypassDefense,
     'bypassShields': bypassShields,
+    'shieldDamageBonusPercent': shieldDamageBonusPercent,
   };
 
   factory OculumStructuredEffect.fromJson(Map<String, dynamic> json) {
@@ -512,6 +515,9 @@ class OculumStructuredEffect {
         json['bypassDefense'] ?? json['oltreDifesa'],
       ),
       bypassShields: readBoolValue(json['bypassShields'] ?? json['oltreScudi']),
+      shieldDamageBonusPercent: readIntValue(
+        json['shieldDamageBonusPercent'],
+      ).clamp(0, 1000),
     );
   }
 }
@@ -989,6 +995,8 @@ String oculumStructuredEffectDescription(
   final bypassText = <String>[
     if (effect.bypassDefense) 'oltre Difesa',
     if (effect.bypassShields) 'oltre Scudi',
+    if (effect.shieldDamageBonusPercent > 0)
+      '+${effect.shieldDamageBonusPercent}% danni agli Scudi',
   ].join(', ');
   final damageBypassText = effect.type == 'danno' && bypassText.isNotEmpty
       ? ' ($bypassText)'

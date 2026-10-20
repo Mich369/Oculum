@@ -138,6 +138,9 @@ class OculumPerformanceProbe {
     int enemyLevel = 0,
     String difficulty = 'normale',
     bool resolvedResistance = false,
+    bool bypassDefense = false,
+    bool bypassShields = false,
+    int shieldDamageBonusPercent = 0,
   }) => _state.applicaDannoSubito(
     dannoEsplicito: amount,
     critico: critical,
@@ -146,6 +149,9 @@ class OculumPerformanceProbe {
     enemyDifficulty: difficulty,
     enemyLevel: enemyLevel,
     resolvedResistance: resolvedResistance,
+    bypassDefense: bypassDefense,
+    bypassShields: bypassShields,
+    shieldDamageBonusPercent: shieldDamageBonusPercent,
   );
 
   bool get masterPermissions => _state.haPermessiMaster;
@@ -155,6 +161,13 @@ class OculumPerformanceProbe {
       _state.receivePermissionEvent(event, payload);
   void receiveCombat(String event, Map<String, dynamic> payload) =>
       _state.receiveOnlineCombatEvent(event, payload);
+  Future<void> connectOnline() => _state.connectRealtimeOculum();
+  Future<void> disconnectOnline() async {
+    _state.realtimeAutoReconnectEnabled = false;
+    await _state.realtimeService?.disconnect();
+  }
+  void publishTurnOrder() => _state.publishRealtimeInitiativeSnapshot();
+  void recordCurrentEncounter() => _state.captureActiveMasterInitiativeGroup();
   Future<void> syncOwnedStaffSheets() =>
       _state.sendRealtimeActiveSheetToStaff();
   Future<void> joinMasterEncounter(Map<String, dynamic> group) =>

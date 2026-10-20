@@ -253,6 +253,58 @@ void main() {
         reason: 'Duplicate defense must not apply damage twice',
       );
     }
+    // One-shot penetration must leave no armed defensive toggle behind.
+    state.scudoOculumController.text = '10';
+    state.scudoController.text = '20';
+    state.hpTempController.text = '0';
+    state.currentHpController.text = '1000';
+    state.dannoOltreDifesa = true;
+    state.dannoOltreScudi = true;
+    state.dannoBonusScudoPercentController.text = '25';
+    probe.invalidateDerivedCaches();
+    await tester.runAsync(() => probe.damageResolved(40));
+    expect(state.currentHpController.text, '960');
+    expect(state.scudoController.text, '20');
+    expect(state.dannoOltreDifesa, isFalse);
+    expect(state.dannoOltreScudi, isFalse);
+    expect(state.dannoBonusScudoPercentController.text, '0');
+    await tester.runAsync(() => probe.damageResolved(40));
+    expect(
+      int.parse(state.scudoController.text),
+      lessThan(20),
+      reason: 'The next hit uses shields again',
+    );
+
+    // Superior revival is a saved, single-use transition in the real damage path.
+    state.schedePersonaggio[0]['monsterBookSourceId'] =
+        'aberrazione_oro_marmo_superiore_solare';
+    state.livelloController.text = '5';
+    state.currentHpController.text = '10';
+    state.scudoOculumController.text = '0';
+    state.scudoController.text = '0';
+    probe.invalidateDerivedCaches();
+    final maximum = probe.maximumHp();
+    await tester.runAsync(
+      () =>
+          probe.damageResolved(10000, bypassDefense: true, bypassShields: true),
+    );
+    expect(int.parse(state.currentHpController.text), (maximum * .75).ceil());
+    expect(state.schedePersonaggio[0]['aberrationPhase'], 3);
+    expect(
+      (state.activeStructuredEffects as List)
+          .where((e) => e['effectId'] == 'aberration_final_phase')
+          .single['value'],
+      10,
+    );
+    await tester.runAsync(
+      () =>
+          probe.damageResolved(10000, bypassDefense: true, bypassShields: true),
+    );
+    expect(state.currentHpController.text, '0');
+    state.schedePersonaggio[0].remove('monsterBookSourceId');
+    state.activeStructuredEffects.clear();
+    state.livelloController.text = '0';
+    state.currentHpController.text = '1000';
     final last = state.onlineCombatRequests.values.last as Map<String, dynamic>;
     last['status'] = 'pending';
     last['damage'] = 0;
@@ -513,6 +565,11 @@ void main() {
       reason:
           'Support receipt missing: ${transport.sent} · ${state.schedePersonaggio[2]['sheetTag']}',
     );
+    // Earlier random combat rolls may activate a Force state that legitimately
+    // suppresses penalties. Isolate the herb aftereffect from that bonus.
+    state.statoForzaAttivo = '';
+    state.statoForzaTiriRimanenti = 0;
+    probe.invalidateDerivedCaches();
     final herbsOffer = oculumSmokingHerbsOffer('alchemist-test');
     expect(herbsOffer['cost'], inInclusiveRange(30, 50));
     final herbs = probe.merchantItem(herbsOffer);

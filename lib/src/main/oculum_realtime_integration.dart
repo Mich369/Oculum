@@ -814,6 +814,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeInitiativeRevision = 0;
       realtimePendingEncounterJoins.clear();
       realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
+      realtimeEncounterSnapshots = <Map<String, dynamic>>[];
+      realtimeSelectedEncounterId = '';
       realtimeCoMasterTags.clear();
       realtimeSeenEventKeys.clear();
       realtimeRoleUpdateTimestamps.clear();
@@ -852,6 +854,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeUsers = [];
       realtimeSharedSheets.clear();
       realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
+      realtimeEncounterSnapshots = <Map<String, dynamic>>[];
+      realtimeSelectedEncounterId = '';
       realtimeVisibleVttSnapshot = <String, dynamic>{};
       realtimeVisibleVttScene = null;
       realtimeVisibleVttImageBytes = null;
@@ -2350,8 +2354,13 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         return;
       }
     }
-    if ('${payload['campaignId'] ?? permissionCampaignId}' !=
-        permissionCampaignId) {
+    final masterCampaign = realtimeUsers
+        .where((user) => user['role'] == 'master')
+        .map((user) => '${user['campaignId'] ?? ''}')
+        .where((id) => id.isNotEmpty)
+        .firstOrNull;
+    if (masterCampaign != null &&
+        '${payload['campaignId'] ?? masterCampaign}' != masterCampaign) {
       return;
     }
     if (session.isNotEmpty) {
@@ -2377,7 +2386,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final snapshotRaw = payload['snapshot'];
     if (snapshotRaw is! Map) return;
     if (snapshotRaw['campaignId'] != null &&
-        snapshotRaw['campaignId'] != permissionCampaignId) {
+        snapshotRaw['campaignId'] != payload['campaignId']) {
       return;
     }
     receiveEncounterRewards(
@@ -4249,15 +4258,16 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                   ),
                 ),
               ),
-              TextButton.icon(
-                onPressed: () {
-                  setState(() {
-                    realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
-                  });
-                },
-                icon: const Icon(Icons.close, size: 16),
-                label: Text(t('Nascondi', 'Hide')),
-              ),
+              if (realtimeService?.isConnected != true)
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
+                    });
+                  },
+                  icon: const Icon(Icons.close, size: 16),
+                  label: Text(t('Nascondi', 'Hide')),
+                ),
             ],
           ),
           const SizedBox(height: 6),

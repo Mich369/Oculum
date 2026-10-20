@@ -29,6 +29,8 @@ $commit = (& git -C $projectRoot rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0 -or $run.head_sha -ne $commit -or $run.conclusion -ne 'success') {
   throw 'Only a successful build of the current commit can be installed'
 }
+$pendingSources = @(& git -C $projectRoot status --porcelain -- lib assets windows android web pubspec.yaml pubspec.lock)
+if ($LASTEXITCODE -ne 0 -or $pendingSources.Count) { throw 'Commit the current build sources before installing GitHub packages' }
 foreach ($path in @($distRoot, $stagingRoot, $downloadRoot)) { Assert-BuildChild $path }
 if ((Test-Path -LiteralPath $stagingRoot) -or (Test-Path -LiteralPath $downloadRoot)) {
   throw 'Fresh staging path already exists; inspect it before retrying'
@@ -161,10 +163,23 @@ $active = @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
   $_.Path -and $_.Path.StartsWith($distRoot + '\', [StringComparison]::OrdinalIgnoreCase)
 })
 if ($active.Count) { throw 'Save and close the app running from distribution before replacing it. Fresh packages are ready in staging.' }
-Assert-BuildChild $distRoot
-if (Test-Path -LiteralPath $distRoot) { Remove-Item -LiteralPath $distRoot -Recurse -Force }
-Assert-BuildChild $stagingRoot
-Move-Item -LiteralPath $stagingRoot -Destination $distRoot
+foreach ($record in $manifest.files) {
+  $verifiedFile = Join-Path $stagingRoot $record.path
+  if ((Get-FileHash -LiteralPath $verifiedFile -Algorithm SHA256).Hash -ne $record.sha256) {
+    throw "Staging changed before replacement: $($record.path)"
+  }
+}
+$backupRoot = Join-Path $buildRoot ("distribution-backup-$RunId-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+foreach ($path in @($distRoot, $stagingRoot, $backupRoot)) { Assert-BuildChild $path }
+if (Test-Path -LiteralPath $distRoot) { Move-Item -LiteralPath $distRoot -Destination $backupRoot }
+try { Move-Item -LiteralPath $stagingRoot -Destination $distRoot }
+catch {
+  if (!(Test-Path -LiteralPath $distRoot) -and (Test-Path -LiteralPath $backupRoot)) {
+    Move-Item -LiteralPath $backupRoot -Destination $distRoot
+  }
+  throw
+}
+& (Join-Path $buildRoot 'verify_eye_auto_distribution.ps1') -ExpectedCommit $commit
 Assert-BuildChild $downloadRoot
 Remove-Item -LiteralPath $downloadRoot -Recurse -Force
-Write-Host "Installed only fresh GitHub builds for $commit in $distRoot"
+Write-Host "Installed only fresh GitHub builds for $commit in $distRoot; previous distribution preserved in $backupRoot"

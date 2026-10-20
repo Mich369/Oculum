@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -109,7 +110,12 @@ class OculumRealtimeService {
   String? authenticatedRole;
   Timer? _roomHeartbeat;
   Timer? _fallbackPollingTimer;
-  bool _roomRefreshing = false;
+  Future<void>? _roomRefresh;
+  Future<void>? _presenceRead;
+  DateTime? _lastPresenceWrite;
+  String? _lastPresenceSignature;
+  DateTime? _nextRoomRefresh;
+  int _roomRefreshFailures = 0;
   final _accessDecisions = <String>{};
   Future<void> _incomingEvents = Future<void>.value();
   bool _presenceRegistered = false;
@@ -330,6 +336,12 @@ class OculumRealtimeService {
     _pollingFallback = false;
     _presenceRegistered = false;
     _connectionPublished = false;
+    _lastPresenceWrite = null;
+    _lastPresenceSignature = null;
+    _nextRoomRefresh = null;
+    _roomRefreshFailures = 0;
+    _roomRefresh = null;
+    _presenceRead = null;
     _sheetTransfers.clear();
     _sessionNoteTransfers.clear();
     final channel = _channel;
@@ -941,12 +953,19 @@ class OculumRealtimeService {
     Map<String, dynamic> payload,
   ) async {
     final channel = _channel;
+    final generation = _generation;
     if (!isConnected || (channel == null && !_pollingFallback)) {
       _safeStatus('Realtime non connesso.');
       return false;
     }
 
     try {
+      if (event == 'sheet_shared') {
+        // A newly selected/created sheet must be registered before its first
+        // share; await an in-flight refresh rather than racing its owner RPC.
+        await _trackPresence();
+        if (!isConnected || generation != _generation || _channel != channel) return false;
+      }
       if (event == 'session_note' || event == 'session_notes_snapshot') {
         final generation = _generation;
         final encoded = await compute(
@@ -1093,14 +1112,24 @@ class OculumRealtimeService {
     }
   }
 
-  Future<void> _trackPresence() async {
+  Future<void> _trackPresence() {
+    final generation = _generation;
+    return _roomRefresh ??= _refreshRoom().whenComplete(() {
+      if (_generation == generation) _roomRefresh = null;
+    });
+  }
+
+  Future<void> _refreshRoom() async {
     final channel = _channel;
+    final generation = _generation;
+    bool stale() =>
+        _disposed || _generation != generation || _channel != channel;
     if (!_transportActive ||
         (channel == null && !_pollingFallback) ||
-        _roomRefreshing) {
+        (_nextRoomRefresh != null &&
+            DateTime.now().isBefore(_nextRoomRefresh!))) {
       return;
     }
-    _roomRefreshing = true;
 
     try {
       final payload = <String, dynamic>{
@@ -1128,16 +1157,28 @@ class OculumRealtimeService {
       );
 
       final client = _client ?? Supabase.instance.client;
-      await client
-          .rpc(
-            'oculum_touch_room_session',
-            params: {
-              'p_room': _secureRoomId,
-              'p_session': _presenceKey,
-              'p_presence': payload,
-            },
-          )
-          .timeout(const Duration(seconds: 10));
+      final signature = jsonEncode(
+        Map<String, dynamic>.from(payload)..remove('joinedAt'),
+      );
+      if (!_presenceRegistered ||
+          signature != _lastPresenceSignature ||
+          _lastPresenceWrite == null ||
+          DateTime.now().difference(_lastPresenceWrite!) >=
+              const Duration(seconds: 15)) {
+        await client
+            .rpc(
+              'oculum_touch_room_session',
+              params: {
+                'p_room': _secureRoomId,
+                'p_session': _presenceKey,
+                'p_presence': payload,
+              },
+            )
+            .timeout(const Duration(seconds: 10));
+        if (stale()) return;
+        _lastPresenceWrite = DateTime.now();
+        _lastPresenceSignature = signature;
+      }
       _presenceRegistered = true;
       for (final entry in revocations) {
         final key = '${entry['sheetTag'] ?? '*'}:${entry['targetTag']}';
@@ -1146,21 +1187,30 @@ class OculumRealtimeService {
           '${entry['targetTag']}',
           sheetTag: entry['sheetTag'] as String?,
         );
+        if (stale()) return;
         _appliedAccessRevocations.add(key);
       }
-      _emitPresence();
+      // Resolve authoritative roles/campaign before replaying snapshots and
+      // permissions. Otherwise the UI can reject an event, then mark it seen.
+      await _emitPresence();
+      if (stale()) return;
       await _replayEvents(client, channel);
+      if (stale()) return;
       if (_initiativeRestoredGeneration != _generation &&
           await _restoreLatestInitiativeSnapshot(client, channel)) {
-        _initiativeRestoredGeneration = _generation;
+        _initiativeRestoredGeneration = generation;
       }
+      if (stale()) return;
       if (_presenceRegistered) _notifyConnectedOnce();
+      _roomRefreshFailures = 0;
+      _nextRoomRefresh = null;
       if (authenticatedRole == 'master' && onAccessRequested != null) {
         final pending = await client
             .from('oculum_room_members')
             .select('user_id,display_name')
             .eq('room_id', _secureRoomId!)
             .eq('status', 'pending');
+        if (stale()) return;
         for (final request in pending) {
           final userId = '${request['user_id']}';
           if (!_accessDecisions.add(userId)) continue;
@@ -1169,7 +1219,7 @@ class OculumRealtimeService {
               userId,
               '${request['display_name']}',
             );
-            if (_disposed || _channel != channel) return;
+            if (stale()) return;
             await client.rpc(
               'oculum_decide_room_member',
               params: {
@@ -1186,9 +1236,12 @@ class OculumRealtimeService {
         }
       }
     } catch (error) {
+      if (stale()) return;
+      _roomRefreshFailures = min(5, _roomRefreshFailures + 1);
+      _nextRoomRefresh = DateTime.now().add(
+        Duration(seconds: min(60, 3 * (1 << _roomRefreshFailures))),
+      );
       _safeStatus('Presence non aggiornata: $error');
-    } finally {
-      _roomRefreshing = false;
     }
   }
 
@@ -1247,6 +1300,7 @@ class OculumRealtimeService {
     SupabaseClient client,
     RealtimeChannel? channel,
   ) async {
+    final generation = _generation;
     final records = await client
         .from('oculum_room_events')
         .select('id,event,payload,sequence')
@@ -1256,7 +1310,7 @@ class OculumRealtimeService {
         .order('sequence')
         .limit(200);
     for (final record in records) {
-      if (_disposed || _channel != channel) return;
+      if (_disposed || _generation != generation || _channel != channel) return;
       final id = '${record['id']}';
       if (_deliveredEvents.add(id)) {
         if (_deliveredEvents.length > 4000) {
@@ -1269,6 +1323,7 @@ class OculumRealtimeService {
         }
         _deliverVerifiedEvent(event, payload);
       }
+      if (_disposed || _generation != generation || _channel != channel) return;
       _replaySequence = (record['sequence'] as num).toInt();
     }
   }
@@ -1281,6 +1336,7 @@ class OculumRealtimeService {
     SupabaseClient client,
     RealtimeChannel? channel,
   ) async {
+    final generation = _generation;
     try {
       final record = await client
           .from('oculum_room_events')
@@ -1290,7 +1346,9 @@ class OculumRealtimeService {
           .order('sequence', ascending: false)
           .limit(1)
           .maybeSingle();
-      if (_disposed || _channel != channel) return false;
+      if (_disposed || _generation != generation || _channel != channel) {
+        return false;
+      }
       if (record == null ||
           record['event'] != 'initiative_shared' ||
           record['payload'] is! Map) {
@@ -1308,7 +1366,9 @@ class OculumRealtimeService {
     } catch (_) {
       // The realtime transport stays connected even if historical state cannot
       // be restored; the next heartbeat retries without discarding local data.
-      _safeStatus('Turnistica condivisa in attesa di sincronizzazione.');
+      if (_generation == generation) {
+        _safeStatus('Turnistica condivisa in attesa di sincronizzazione.');
+      }
       return false;
     }
   }
@@ -1361,10 +1421,18 @@ class OculumRealtimeService {
     onEvent(event, normalized);
   }
 
-  Future<void> _emitPresence() async {
+  Future<void> _emitPresence() {
+    final generation = _generation;
+    return _presenceRead ??= _readPresence().whenComplete(() {
+      if (_generation == generation) _presenceRead = null;
+    });
+  }
+
+  Future<void> _readPresence() async {
     if (_disposed) return;
 
     final channel = _channel;
+    final generation = _generation;
     if (channel == null && !_pollingFallback) {
       onPresenceChanged(const <Map<String, dynamic>>[]);
       return;
@@ -1375,7 +1443,7 @@ class OculumRealtimeService {
         'oculum_room_presence',
         params: {'p_room': _secureRoomId},
       );
-      if (_disposed || _channel != channel) return;
+      if (_disposed || _generation != generation || _channel != channel) return;
       final users = (data as List)
           .whereType<Map>()
           .map((row) => Map<String, dynamic>.from(row))

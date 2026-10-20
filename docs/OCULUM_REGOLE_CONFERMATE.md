@@ -2,6 +2,14 @@
 
 Ultimo aggiornamento: 20 ottobre 2026. Documento da consultare prima di modificare il regolamento.
 
+## Conferme successive — aberrazioni e penetrazione
+
+- Aberrazioni d’oro e marmo: Minore = Mostro a due fasi; Intermedia = Mini Boss a due fasi; Maggiore = Boss a due fasi; Superiore = Boss a tre fasi. Varianti Solare (glass cannon, elemento Sole) e Angelica (equilibrata, elemento Luce). Le basi esistenti 20/40/60 e il piccolo surplus angelico restano; per le nuove Superiori è scelto un valore iniziale modificabile 80/82.
+- Le prime due fasi usano la stessa barra, passaggio al 50% Vita. Solo la Superiore, alla prima sconfitta, entra nella terza fase recuperando il 75% della Vita massima e ricevendo +2 × livello Danni. Passaggio e risveglio non si ripetono per messaggi duplicati; lo stato è persistente nel JSON.
+- Raggi multipli: Minori due bersagli; Intermedie tre con +25 Danni; Maggiori sei con +80 Danni alla forma completa. Per le Superiori si conserva il profilo a sei raggi come base modificabile. Le forme precedenti hanno bonus ridotti.
+- Oltre Difesa, Oltre Scudi e percentuale aggiuntiva ai danni sugli Scudi sono parametri del singolo colpo sul bersaglio, consumati con il colpo; non cambiano le impostazioni permanenti della vittima. Nuove tecniche individuali con penetrazione hanno CD 2–5 turni; quelle con Oltre Difesa e CD 2 partono scariche.
+- Online la turnistica del Master sostituisce la fonte locale di turni e bersagli del player finché collegato. La turnistica locale resta salvata per il ritorno offline.
+
 ## Conferme del 20 ottobre 2026 — emblema, mercanti e Open
 
 - Nei tre pannelli di combattimento non compaiono skill in cooldown o senza risorse per alcuna forma; se almeno una forma è utilizzabile la skill resta visibile e la scelta contiene le sole forme disponibili. I sottotratti come tiri rimangono utilizzabili.
@@ -23,6 +31,7 @@ Ultimo aggiornamento: 20 ottobre 2026. Documento da consultare prima di modifica
 ## Accesso online — conferme del 19 ottobre 2026
 
 - Ospite protetto tramite Supabase, senza registrazione obbligatoria. Email facoltativa nelle Impostazioni, collegabile all’ospite mantenendo la sua identità.
+- Accesso online (riconfermato il 20 ottobre 2026): il Master deve accettare ogni nuovo utente. La stessa identità già approvata nella stessa stanza può rientrare senza nuova richiesta, salvo revoca o espulsione. Il codice e il QR individuano la stanza e non autorizzano l'accesso; un ospite che perde la sua identità è un nuovo utente.
 - Account utilizzabile su più dispositivi; chiedere se mantenere l’accesso sul dispositivo. L’offline resta disponibile senza account e il login non sovrascrive i salvataggi locali.
 - Il Master deve essere autorizzato anche dal backend. Per l’avanzamento delle implementazioni e le verifiche distinte consultare `ONLINE_AUDIT_2026-10-19.md`; le parti ancora in prova non costituiscono consegna completata.
 

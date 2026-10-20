@@ -873,11 +873,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       final resolvedFlatDamageBonus = flatDamageBonus + attackRollDamageBonus;
       final resolvedDamagePerTarget = concentrationPending
           ? (oculumDamagePerTarget(
-                  baseDamage,
-                  plan.targetIds.length,
-                  flatBonusPerTarget: resolvedFlatDamageBonus,
-                ) *
-                1.10)
+                      baseDamage,
+                      plan.targetIds.length,
+                      flatBonusPerTarget: resolvedFlatDamageBonus,
+                    ) *
+                    1.10)
                 .ceil()
           : oculumDamagePerTarget(
               baseDamage,
@@ -1623,9 +1623,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       attack,
       defense,
     );
-      aggiungiLog(
-        '[ESITO DIFESA] $choice $defense contro $attack: ${outcome.label}.${readIntValue(request['collectorDefensePenalty']) > 0 ? ' Collezionista: -${request['collectorDefensePenalty']} perché hai scelto lo stesso elemento.' : ''}${request['freeReaction'] == true ? ' Reazione gratuita su chi ha provato a colpirti.${reflexBonusReaction ? ' Riflessi concede una Reazione aggiuntiva.' : ''}${request['criticalReaction'] == true ? ' Il contrattacco è critico: bonus critico ×2 e Fragilità secondo le regole del bersaglio.' : ' Contrattacco ordinario.'}' : ''}',
-      );
+    aggiungiLog(
+      '[ESITO DIFESA] $choice $defense contro $attack: ${outcome.label}.${readIntValue(request['collectorDefensePenalty']) > 0 ? ' Collezionista: -${request['collectorDefensePenalty']} perché hai scelto lo stesso elemento.' : ''}${request['freeReaction'] == true ? ' Reazione gratuita su chi ha provato a colpirti.${reflexBonusReaction ? ' Riflessi concede una Reazione aggiuntiva.' : ''}${request['criticalReaction'] == true ? ' Il contrattacco è critico: bonus critico ×2 e Fragilità secondo le regole del bersaglio.' : ' Contrattacco ordinario.'}' : ''}',
+    );
     if (resisted) {
       aggiungiLog(
         '[RESISTENZA] 1 danno prima degli Scudi; reazione gratuita contro chi ha attaccato, senza concatenazione.',
@@ -1713,6 +1713,32 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           critico: critical,
           criticalBonusMultiplier: critical ? 2 : 1,
           incomingDamageMultiplier: elementalDefenseMultiplier,
+          bypassDefense: (request['effects'] as List? ?? const [])
+              .whereType<Map>()
+              .any(
+                (effect) =>
+                    effect['type'] == 'danno' &&
+                    readBoolValue(effect['bypassDefense']),
+              ),
+          bypassShields: (request['effects'] as List? ?? const [])
+              .whereType<Map>()
+              .any(
+                (effect) =>
+                    effect['type'] == 'danno' &&
+                    readBoolValue(effect['bypassShields']),
+              ),
+          shieldDamageBonusPercent: (request['effects'] as List? ?? const [])
+              .whereType<Map>()
+              .where((effect) => effect['type'] == 'danno')
+              .fold<int>(
+                0,
+                (total, effect) => max(
+                  total,
+                  readIntValue(
+                    effect['shieldDamageBonusPercent'],
+                  ).clamp(0, 1000),
+                ),
+              ),
           defenseMultiplier: !critical && outcome == OculumAttackOutcome.reduced
               ? 1.5
               : 1,

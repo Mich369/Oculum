@@ -81,9 +81,16 @@ class _Client extends SupabaseClient {
               'status': 'approved',
             };
           } else if (path.endsWith('/oculum_touch_room_session')) {
+            backend.presenceWrites++;
             final input = jsonDecode(request.body) as Map;
             backend.sessions['${input['p_session']}'] =
                 Map<String, dynamic>.from(input['p_presence'] as Map);
+            final delayedReply = backend.delayedPresenceReply;
+            backend.delayedPresenceReply = null;
+            if (delayedReply != null) {
+              backend.presenceReplyStarted?.complete();
+              await delayedReply.future;
+            }
             body = null;
           } else if (path.endsWith('/oculum_emit_room_event')) {
             final input = jsonDecode(request.body) as Map;
@@ -217,12 +224,99 @@ class _Client extends SupabaseClient {
 }
 
 class _Backend {
+  Completer<void>? delayedPresenceReply;
+  Completer<void>? presenceReplyStarted;
+  int presenceWrites = 0;
   final sessions = <String, Map<String, dynamic>>{};
   final events = <Map<String, dynamic>>[];
   int initiativeSnapshotReads = 0;
 }
 
 void main() {
+  test('reconnect does not await an obsolete presence reply', () async {
+    final previous = OculumRealtimeService.supabaseAvailable;
+    OculumRealtimeService.supabaseAvailable = true;
+    addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+    final backend = _Backend();
+    final client = _Client(backend);
+    var activeTag = 'PLAYER';
+    final service = OculumRealtimeService(
+      client: client,
+      roomId: 'presence-reconnect',
+      playerName: 'Player',
+      httpPollingOnly: true,
+      presenceDataProvider: () => {
+        'role': 'player',
+        'activeSheetTag': activeTag,
+        'localSheetTags': [activeTag],
+      },
+      onEvent: (_, _) {},
+      onPresenceChanged: (_) {},
+      onStatusChanged: printOnFailure,
+    );
+    final delayedReply = Completer<void>();
+    addTearDown(() async {
+      if (!delayedReply.isCompleted) delayedReply.complete();
+      await service.dispose();
+      await client.dispose();
+    });
+    await service.connect();
+    activeTag = 'OLD';
+    backend.delayedPresenceReply = delayedReply;
+    backend.presenceReplyStarted = Completer<void>();
+    final obsoleteRefresh = service.refreshPresence();
+    await backend.presenceReplyStarted!.future;
+    await service.disconnect();
+    activeTag = 'NEW';
+    await service.connect().timeout(const Duration(seconds: 3));
+    expect(service.isConnected, isTrue);
+    expect(backend.sessions.values.single['activeSheetTag'], 'NEW');
+    final writesBeforeObsoleteReply = backend.presenceWrites;
+    delayedReply.complete();
+    await obsoleteRefresh;
+    await service.refreshPresence();
+    expect(backend.presenceWrites, writesBeforeObsoleteReply);
+  });
+
+  test(
+    'unchanged presence coalesces refreshes but new active sheets register immediately',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+      final backend = _Backend();
+      final client = _Client(backend);
+      var activeTag = 'PLAYER';
+      final service = OculumRealtimeService(
+        client: client,
+        roomId: 'presence-io',
+        playerName: 'Player',
+        httpPollingOnly: true,
+        presenceDataProvider: () => {
+          'role': 'player',
+          'activeSheetTag': activeTag,
+          'localSheetTags': [activeTag],
+        },
+        onEvent: (_, _) {},
+        onPresenceChanged: (_) {},
+        onStatusChanged: printOnFailure,
+      );
+      addTearDown(() async {
+        await service.dispose();
+        await client.dispose();
+      });
+      await service.connect();
+      final initialWrites = backend.presenceWrites;
+      expect(initialWrites, greaterThan(0));
+      await Future.wait(List.generate(10, (_) => service.refreshPresence()));
+      expect(backend.presenceWrites, initialWrites);
+      activeTag = 'SUMMON';
+      await service.refreshPresence();
+      expect(backend.presenceWrites, initialWrites + 1);
+      expect(backend.sessions.values.single['activeSheetTag'], 'SUMMON');
+    },
+  );
+
   test('an explicit close closes even a complete saved fight snapshot', () {
     expect(
       oculumInitiativePayloadClosesFight({

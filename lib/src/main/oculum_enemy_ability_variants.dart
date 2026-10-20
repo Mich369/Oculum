@@ -458,6 +458,84 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
     );
   }
   // Every non-NPC monster can roll one area technique at spawn. The packet is
+  final piercingNames = switch (element) {
+    'solare' => [
+      'Ago della corona',
+      'Lama del meriggio',
+      'Raggio fra le crepe',
+    ],
+    'luce' ||
+    'angelico' => ['Filo di luce', 'Sigillo penetrante', 'Lancia del giudizio'],
+    'acqua' || 'ghiaccio' => [
+      'Getto fra le giunture',
+      'Ago di pressione',
+      'Lama cristallina',
+    ],
+    'fuoco' || 'lava' => [
+      'Fusione della guardia',
+      'Dardo incandescente',
+      'Taglio di brace',
+    ],
+    'buio' ||
+    'spirituale' => ['Ferita incorporea', 'Filo d’ombra', 'Stoccata spettrale'],
+    _ => [
+      'Impatto di rottura',
+      'Affondo nella guardia',
+      'Pressione concentrata',
+    ],
+  };
+  for (var variant = 0; variant < piercingNames.length; variant++) {
+    add(
+      piercingNames[variant],
+      'Colpo preciso a un bersaglio: +${2 + variant} Danni, Oltre Difesa solo su questo colpo. Ricarica obbligatoria; non modifica la Difesa permanente della vittima.',
+      2 + variant,
+      [
+        OculumStructuredEffect(
+          type: 'danno',
+          valueExpression: '${2 + variant}',
+          recipient: 'nemico',
+          mode: 'prossima_azione',
+          bypassDefense: true,
+          elementType: element,
+        ),
+      ],
+      magic: element != 'fisico' && element.isNotEmpty,
+    );
+  }
+  for (var variant = 0; variant < 3; variant++) {
+    add(
+      '${const ['Incrinare', 'Erodere', 'Spezzare'][variant]} la barriera',
+      'Concentri $element contro un bersaglio: +2 Danni e +${20 + variant * 10}% danni ai suoi Scudi, solo per questo colpo.',
+      3 + variant,
+      [
+        OculumStructuredEffect(
+          type: 'danno',
+          valueExpression: '2',
+          recipient: 'nemico',
+          mode: 'prossima_azione',
+          shieldDamageBonusPercent: 20 + variant * 10,
+          elementType: element,
+        ),
+      ],
+      magic: element != 'fisico' && element.isNotEmpty,
+    );
+  }
+  add(
+    'Varco nella barriera',
+    'Attraversi la barriera con un colpo controllato: +2 Danni, Oltre Scudi solo per questo attacco. La Difesa resta valida.',
+    5,
+    [
+      OculumStructuredEffect(
+        type: 'danno',
+        valueExpression: '2',
+        recipient: 'nemico',
+        mode: 'prossima_azione',
+        bypassShields: true,
+        elementType: element,
+      ),
+    ],
+    magic: element != 'fisico' && element.isNotEmpty,
+  );
   // computed once from this creature, then split across the chosen hits. This
   // leaves one other random slot for a body/element-specific move.
   final areaResource = (monster.stats['volonta'] ?? 0) > 0
@@ -608,7 +686,12 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
                 ? '${move.name} I: colpisce $targetMaximum volte. Scegli fino a $targetMaximum bersagli, anche ripetendo lo stesso; i colpi mancanti si assegnano a caso fra quelli scelti. Danno totale ${move.damageRatios.first * 100}% dei Danni, diviso fra i colpi e arrotondato per eccesso per bersaglio; ciascuno tira la propria difesa. Costo ${resource == 'nessuna' ? 'gratuito' : '1 $resource'}, ricarica ${move.cd} turni.\n$text'
                 : text,
             costoStrutturato: cost,
-            cooldownStrutturato: OculumAbilityCooldown(amount: move.cd),
+            cooldownStrutturato: OculumAbilityCooldown(
+              amount: move.cd,
+              startsReady:
+                  move.cd != 2 ||
+                  !move.effects.any((effect) => effect.bypassDefense),
+            ),
             effettiStrutturati: firstEffects,
             oculumLimitiConfiguratiManualmente: true,
           ),
@@ -674,6 +757,9 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
           ),
           cooldownStrutturato: OculumAbilityCooldown(
             amount: move.cd + (move.multiTarget ? form : 0),
+            startsReady:
+                move.cd != 2 ||
+                !move.effects.any((effect) => effect.bypassDefense),
           ),
           effettiStrutturati: evolved,
           oculumLimitiConfiguratiManualmente: true,
@@ -737,6 +823,57 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
             mode: 'finche_attivo',
             duration: '-1',
           ),
+        ],
+      ),
+    );
+  }
+  if (monster.id.startsWith('aberrazione_oro_marmo_')) {
+    final targets = monster.formTags.contains('Minore')
+        ? 2
+        : monster.formTags.contains('Intermedia')
+        ? 3
+        : 6;
+    final bonus = targets == 2
+        ? 10
+        : targets == 3
+        ? 25
+        : 80;
+    result.add(
+      CharacterSkill(
+        nome: element == 'solare'
+            ? 'Raggi del sole infranto'
+            : 'Raggi del marmo luminoso',
+        tipo: 'Tecnica radiante multipla',
+        costo: '1/1 Oculum',
+        cooldown: '3 turni',
+        descrizione:
+            'Raggi di ${element == 'solare' ? 'Sole' : 'Luce'} contro $targets bersagli; forme e parametri modificabili.',
+        equipaggiata: true,
+        forme: [
+          for (var form = 0; form < 3; form++)
+            CharacterSkillForm(
+              nome: const ['I', 'II', 'III'][form],
+              livello: '${form * 5}',
+              costoStrutturato: OculumSkillCost(
+                resource: 'oculum',
+                amountExpression: '${form + 1}',
+              ),
+              cooldownStrutturato: OculumAbilityCooldown(amount: 3 + form),
+              descrizione:
+                  '$targets raggi di ${element == 'solare' ? 'Sole' : 'Luce'} su $targets bersagli: danno base diviso per eccesso, +${(bonus * (form + 1) / 3).ceil()} Danni a ciascuno. Difesa separata per colpo. Ricarica ${3 + form} turni.',
+              effettiStrutturati: [
+                OculumStructuredEffect(
+                  id: 'aberration_${monster.id}_rays_$form',
+                  type: 'danno',
+                  recipient: 'nemico',
+                  mode: 'prossima_azione',
+                  valueExpression: 'danni*0+${(bonus * (form + 1) / 3).ceil()}',
+                  minimumTargets: targets,
+                  maximumTargets: targets,
+                  elementType: element,
+                ),
+              ],
+            ),
         ],
       ),
     );

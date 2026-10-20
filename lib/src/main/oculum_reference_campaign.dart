@@ -5,7 +5,7 @@ part of '../../main.dart';
 const oculumHomeArtworkChoices = <String, String>{
   'cathedral_eye': 'Occhio della cattedrale',
   'solar_islands': 'Sole e isole volanti',
-  'amber_shore': 'Riva d’ambra',
+  'amber_shore': 'Rame fatato',
   'anime_reliquary': 'Reliquiario',
   'canva_spirit_duelist': 'Duellante spirituale',
 };

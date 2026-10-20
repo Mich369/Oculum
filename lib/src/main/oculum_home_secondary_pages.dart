@@ -5218,8 +5218,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   String monsterBookQuickStatsLabel(MonsterBookEntry entry) {
     final stats = entry.stats;
+    final phases = (stats['combatPhases'] ?? 1) > 1
+        ? ' • ${entry.presetType} • ${stats['combatPhases']} fasi'
+        : '';
     if (stats.containsKey('resilienza') || stats.containsKey('defense')) {
-      return 'Lv ${stats['level'] ?? 0} • RES ${stats['resilienza'] ?? 3} • VOL ${stats['volonta'] ?? 1} • MAT ${stats['materia'] ?? 0} • OCU ${stats['oculum'] ?? 1} • DIF ${stats['defense'] ?? stats['def'] ?? 0}${(stats['shield'] ?? 0) > 0 ? ' • SCU ${stats['shield']}' : ''}';
+      return 'Lv ${stats['level'] ?? 0} • RES ${stats['resilienza'] ?? 3} • VOL ${stats['volonta'] ?? 1} • MAT ${stats['materia'] ?? 0} • OCU ${stats['oculum'] ?? 1} • DIF ${stats['defense'] ?? stats['def'] ?? 0}${(stats['shield'] ?? 0) > 0 ? ' • SCU ${stats['shield']}' : ''}$phases';
     }
     return 'HP ${stats['hp'] ?? 0} • ATK ${stats['atk'] ?? 0} • DIF ${stats['def'] ?? 0}';
   }

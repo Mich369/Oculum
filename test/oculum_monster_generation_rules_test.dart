@@ -134,9 +134,11 @@ void main() {
         final second = oculumEnemyAbilityVariants(monster, seed: 2419);
         final area = first
             .where(
-              (skill) => skill.forme.first.effettiStrutturati.any(
-                (effect) => effect.minimumTargets > 1,
-              ),
+              (skill) =>
+                  !skill.nome.startsWith('Raggi del') &&
+                  skill.forme.first.effettiStrutturati.any(
+                    (effect) => effect.minimumTargets > 1,
+                  ),
             )
             .toList();
         expect(area, hasLength(1), reason: monster.id);

@@ -543,6 +543,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   bool currentCombatIsActive() {
     final realtimeTokens = realtimeVisibleInitiativeSnapshot['tokens'];
+    if (realtimeService?.isConnected == true && !realtimeIsMasterRole) {
+      return realtimeTokens is List && realtimeTokens.isNotEmpty;
+    }
     return masterInitiativePublished ||
         masterInitiativeTokens.isNotEmpty ||
         (realtimeTokens is List && realtimeTokens.isNotEmpty);
@@ -4631,6 +4634,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int criticalBonusMultiplier = 1,
     double defenseMultiplier = 1,
     double incomingDamageMultiplier = 1,
+    bool bypassDefense = false,
+    bool bypassShields = false,
+    int shieldDamageBonusPercent = 0,
     bool resolvedResistance = false,
     String? resistancePresetOverride,
     int? dannoEsplicito,
@@ -4652,7 +4658,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
         ? schedePersonaggio[schedaCorrente]
         : <String, dynamic>{};
-    final sheetKind = tipoSchedaPersonaggio(schedaCorrente).trim().toLowerCase();
+    final sheetKind = tipoSchedaPersonaggio(
+      schedaCorrente,
+    ).trim().toLowerCase();
     final monsterSourceId = '${sheet['monsterBookSourceId'] ?? ''}'.trim();
     final sourceMonster = monsterSourceId.isEmpty
         ? null
@@ -4877,11 +4885,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         ? ' Your Oculum concentrated to weaken the blow (chance $parryChanceThreshold/1000, ${campaignDifficultyLabel()}): $parrySubtraitLabel check 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal against DT $parryDifficulty; ${riduzioneElementale > 0 ? "elemental defense: -$riduzioneElementale (×${incomingDamageMultiplier.toStringAsFixed(2)}). " : ""}${parryCheckSucceeded ? "damage $dannoPrimaParata → $dannoDopoParataOculum (reduction $riduzioneParataOculum, free)." : "check failed; the blow is not weakened."}${parryCriticalAwardsDodge ? " Critical: +1 Oculum Dodge." : ""}'
         : '';
     final difficultyBypasses = rollDifficultyIncreaseDamageBypasses();
-    final ignoraDifesa = dannoOltreDifesa || difficultyBypasses.beyondDefense;
+    final ignoraDifesa =
+        bypassDefense || dannoOltreDifesa || difficultyBypasses.beyondDefense;
     final ignoraScudi =
         !resolvedResistance &&
-        (dannoOltreScudi || difficultyBypasses.beyondShield);
-    final bonusScudiManuale = bonusDannoScudiPercentuale();
+        (bypassShields || dannoOltreScudi || difficultyBypasses.beyondShield);
+    final bonusScudiManuale =
+        bonusDannoScudiPercentuale() + shieldDamageBonusPercent.clamp(0, 1000);
     final bonusScudiCorrosione = conditionShieldDamageBonusPercent();
     final bonusScudoNormale =
         bonusScudiManuale +
@@ -5359,6 +5369,38 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
     }
 
+    if ((sourceMonster?.stats['combatPhases'] ?? 0) > 1 && hpPrima > 0) {
+      final oldPhase = max(
+        1,
+        readIntValue(sheet['aberrationPhase'], fallback: 1),
+      );
+      if (hp <= 0 &&
+          sourceMonster?.stats['combatPhases'] == 3 &&
+          !readBoolValue(sheet['aberrationFinalPhaseTriggered'])) {
+        sheet['aberrationFinalPhaseTriggered'] = true;
+        sheet['aberrationPhase'] = 3;
+        hp = max(1, (maxHp() * .75).ceil());
+        activeStructuredEffects.add({
+          'effectId': 'aberration_final_phase',
+          'source': 'Ultima fase · Aberrazione',
+          'type': 'danno',
+          'value': 2 * activeCriticalLevel(),
+          'mode': 'finche_attivo',
+          'remaining': -1,
+          'unit': 'turni',
+          'target': '',
+        });
+        invalidateDerivedDataCaches();
+        aggiungiLog(
+          '[ABERRAZIONE · III] Recupera $hp Vita (75% del massimo); +${2 * activeCriticalLevel()} Danni fino alla fine della fase.',
+        );
+      } else if (hp > 0 && hp <= maxHp() / 2 && oldPhase < 2) {
+        sheet['aberrationPhase'] = 2;
+        aggiungiLog(
+          '[ABERRAZIONE · II] Entrata nella seconda fase al 50% della Vita.',
+        );
+      }
+    }
     if (safeHpPronto && hp <= 0 && hpPrima > 0) {
       hp = 1;
       safeHpAttivato = true;
@@ -5377,6 +5419,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       if (elementalAdaptation != null) {
         sheet['combatElementalAdaptation'] = elementalAdaptation.state;
       }
+      // Manual penetration is a per-hit choice too. Never leave it armed for
+      // the next attack, including when this hit was absorbed by shields.
+      dannoOltreDifesa = false;
+      dannoOltreScudi = false;
+      dannoBonusScudoPercentController.text = '0';
       if (critico) {
         incomingDamagePresets[activePercentDamageType] = modificatoreDopo;
         if (stadioLiberoDopo != null) {

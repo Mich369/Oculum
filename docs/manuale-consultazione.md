@@ -1892,6 +1892,10 @@ La Prima Art assegna uno slot Fato alla prima forma della prima skill, uno alla 
 Il Master avvia il Chained Fate e sceglie i partecipanti. Nei primi tre dungeon EXP ×2; ogni completamento dà uno slot Fato dedicato. Dai successivi EXP ×3 e nessuno slot aggiuntivo. Completare lo stesso dungeon due volte non ripete il premio.
 
 PARSER E MODIFICHE
+
+Oltre Difesa e Oltre Scudi si applicano soltanto al colpo preparato sul bersaglio scelto. Il parametro «Danni aggiuntivi agli Scudi (%)» aumenta il danno agli Scudi di quel colpo. Dopo il colpo questi parametri si consumano e non modificano le impostazioni permanenti del difensore. Tutti sono modificabili nell’editor e conservati nel JSON.
+
+Le Aberrazioni d’Oro e Marmo hanno varianti Solari offensive (Sole) e Angeliche equilibrate (Luce). Minore: Mostro, due fasi; Intermedia: Mini Boss, due fasi; Maggiore: Boss, due fasi; Superiore: Boss, tre fasi. La seconda fase inizia al 50% della stessa barra Vita. Solo la Superiore alla prima sconfitta si rialza con il 75% della Vita massima, entra nella terza fase e riceve +2 × livello ai danni. La rinascita finale si verifica una volta. I raggi possono colpire due bersagli per le Minori, tre per le Intermedie (+25 danni alla forma completa), sei per le Maggiori (+80); costo e ricarica si pagano una volta.
 Il riconoscimento del testo prepara formule, dadi, durata e destinatari; le frasi non riconosciute restano manuali. «Da 2 a 4 bersagli», «2 nemici» e «fino a Oculum bersagli» configurano la fascia. Effetti e parametri rimangono modificabili e salvati nel JSON; i valori risolti dal lanciatore non si ritirano a ogni reinvio online. Il testo scritto della motivazione è facoltativo: può essere spiegata a voce al Master.
 Le Reputazioni possono essere organizzate in cartelle e sottocartelle senza limite fisso, conservando valori, descrizioni e influenza del Karma.
 
