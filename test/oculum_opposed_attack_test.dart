@@ -8,7 +8,7 @@ void main() {
     expect(oculumDamagePerTarget(10, 1), 10);
     expect(oculumDamagePerTarget(30, 3, flatBonusPerTarget: 8), 18);
     expect(oculumDamagePerTarget(30, 1, flatBonusPerTarget: 8), 38);
-    expect(oculumDamagePerTarget(0, 3), 0);
+    expect(oculumDamagePerTarget(0, 3), 1);
     expect(oculumDamagePerTarget(-4, 2), 0);
     expect(oculumDamagePerTarget(10, 0), 0);
   });
@@ -48,6 +48,19 @@ void main() {
         abilityDamageBonus: 20,
       ),
       71,
+    );
+  });
+
+  test('fixed skill bonus does not erase an already negative damage base', () {
+    final base = oculumAttackDamageWithAbilityBonus(
+      preparedDamage: 6,
+      fixedBonuses: 8,
+      abilityDamageBonus: 0,
+    );
+    expect(base, -2);
+    expect(
+      oculumDamagePerTarget(base, 1, flatBonusPerTarget: 8),
+      6,
     );
   });
 
@@ -315,3 +328,4 @@ void main() {
     },
   );
 }
+
