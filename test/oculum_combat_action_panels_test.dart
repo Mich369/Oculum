@@ -96,7 +96,11 @@ void main() {
           expect(texts, contains('Medicina'));
           expect(texts, isNot(contains('VC +')));
         }
-        expect(texts, isNot(contains('Riflessi')));
+        // Subtraits remain usable as rolls even when their optional mastery
+        // benefit is locked; support only lists support rolls.
+        if (role != OculumCombatAbilityRole.support) {
+          expect(texts, contains('Riflessi +0'));
+        }
         expect(tester.takeException(), isNull);
         await tester.tap(
           find.descendant(of: panel, matching: find.text('Chiudi')),
