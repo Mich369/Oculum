@@ -1176,7 +1176,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     request['received'] = true;
     combatLogFor(
       '${request['targetTag']}',
-      '[DIFESA RICHIESTA] · ${request['targetName'] ?? 'bersaglio'} · ${request['sourceName']} usa ${request['abilityName'] ?? request['choice']}. Tiro nemico ${request['attack']} · DT da superare: ${request['attack']} · danni dichiarati ${request['damage']} (${request['element'] ?? 'fisico'}). Tira CM, Riflessi, Resistenza, Manifestazione del Potere o un sottotratto difensivo configurato. La skill difensiva può essere usata prima del tiro; questo bersaglio applicherà in automatico condizioni, resistenze ed effetti, poi Difesa, Scudo Oculum, Scudo, HP temporanei e Vita in base all’esito. ${request['reason'] ?? ''}',
+      '[DIFESA RICHIESTA · ${request['targetName'] ?? 'bersaglio'}] ${request['sourceName']} usa ${request['abilityName'] ?? request['choice']}. Tiro nemico ${request['attack']} · DT da superare: ${request['attack']} · danni dichiarati ${request['damage']} (${request['element'] ?? 'fisico'}). Tira CM, Riflessi, Resistenza, Manifestazione del Potere o un sottotratto difensivo configurato. La skill difensiva può essere usata prima del tiro; questo bersaglio applicherà in automatico condizioni, resistenze ed effetti, poi Difesa, Scudo Oculum, Scudo, HP temporanei e Vita in base all’esito. ${request['reason'] ?? ''}',
     );
   }
 
