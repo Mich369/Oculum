@@ -282,6 +282,15 @@ void main() {
     state.currentHpController.text = '10';
     state.scudoOculumController.text = '0';
     state.scudoController.text = '0';
+    // Earlier cases intentionally exercise critical-stage damage presets.
+    // Isolate the phase-transition assertions from that per-element state.
+    state.incomingDamagePresets.clear();
+    state.modificatoreDannoSelezionato = 'Normale';
+    state.dannoSubitoPercentController.clear();
+    state.activeConditions.clear();
+    state.schivataOculumRiduzionePronta = 0;
+    state.schivataOculumEtichettaPronta = '';
+    state.scudoSalvataggioAttivo = false;
     probe.invalidateDerivedCaches();
     final maximum = probe.maximumHp();
     await tester.runAsync(
@@ -674,3 +683,4 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 }
+
