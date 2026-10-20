@@ -52,7 +52,7 @@ List<OculumStructuredEffect> oculumScrollCombatEffects(
   } else if (kind == 'shadow_clone') {
     effects.add(
       OculumStructuredEffect(
-        id: 'shadow_living_${g}',
+        id: 'shadow_living_$g',
         type: 'evocazione',
         target: 'clone_ombra',
         recipient: 'se_stesso',

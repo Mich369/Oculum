@@ -351,7 +351,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
               continue;
             }
             messages.add(
-              'Clone d’ombra creato: ${schedePersonaggio[cloneIndex]['nome']} · ${value} Vita · $duration ${effect.durationUnit}.',
+              'Clone d’ombra creato: ${schedePersonaggio[cloneIndex]['nome']} · $value Vita · $duration ${effect.durationUnit}.',
             );
             break;
           case 'costrutto':
