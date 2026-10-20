@@ -60,17 +60,9 @@ jobs:
       - name: Analisi statica
         run: flutter analyze
 
-      - name: Verifica connessione Supabase da macOS
-        shell: bash
-        env:
-          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
-          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
-        run: |
-          flutter test test/oculum_supabase_live_connection_test.dart \
-            "--dart-define=OculumLiveSupabaseTest=true" \
-            "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
-            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
-
+      # The distribution workflow runs the authenticated Supabase/realtime
+      # integration suite once. Avoid a second live probe while that suite is
+      # exercising the same project in parallel.
       - name: Test Flutter
         run: flutter test
 

@@ -184,11 +184,36 @@ void main() {
           await Future<void>.delayed(const Duration(milliseconds: 100));
         }
       }
+      Future<void> connectWithRetry(
+        OculumRealtimeService service,
+        String label,
+      ) async {
+        const retryDelays = <Duration>[
+          Duration.zero,
+          Duration(seconds: 2),
+          Duration(seconds: 5),
+        ];
+        for (var attempt = 0; attempt < retryDelays.length; attempt++) {
+          if (retryDelays[attempt] > Duration.zero) {
+            await Future<void>.delayed(retryDelays[attempt]);
+          }
+          await service.connect();
+          if (service.isConnected) return;
+          debugPrint(
+            '$label non connesso al tentativo ${attempt + 1}/'
+            '${retryDelays.length}; riprovo se il servizio è disponibile.',
+          );
+        }
+        fail('$label non si è connesso dopo tentativi limitati.');
+      }
 
       await tester.runAsync(
         () => HttpOverrides.runWithHttpOverrides(() async {
-          await master.connect();
-          await player.connect();
+          // Connect the room owner first and retry transient Auth/Postgres
+          // timeouts before asking the player to join a room that may not
+          // have been created yet.
+          await connectWithRetry(master, 'Master');
+          await connectWithRetry(player, 'Player');
           expect(master.isConnected, isTrue);
           expect(player.isConnected, isTrue);
           await waitFor(
