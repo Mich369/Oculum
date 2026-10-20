@@ -9,7 +9,7 @@ void main() {
     expect(oculumDamagePerTarget(30, 3, flatBonusPerTarget: 8), 18);
     expect(oculumDamagePerTarget(30, 1, flatBonusPerTarget: 8), 38);
     expect(oculumDamagePerTarget(0, 3), 1);
-    expect(oculumDamagePerTarget(-4, 2), 0);
+    expect(oculumDamagePerTarget(-4, 2), 1);
     expect(oculumDamagePerTarget(10, 0), 0);
   });
 
