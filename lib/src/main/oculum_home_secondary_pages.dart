@@ -3124,7 +3124,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }
 
   Widget initiativeTokenAvatar(Map<String, dynamic> token) {
-    final imageRaw = '${token['imageBase64'] ?? ''}';
+    final imageRaw = realtimeEncounterPortrait(token);
     final spriteAssetPath = masterInitiativeTokenSpriteAsset(token);
     final size = masterInitiativeTokenSize(token).toDouble();
     final cacheSide = oculumImageCacheDimension(context, size, max: 320);

@@ -2471,6 +2471,32 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     };
   }
 
+  String realtimeEncounterPortrait(Map<String, dynamic> token) {
+    final embedded = '${token['imageBase64'] ?? ''}';
+    if (embedded.isNotEmpty) return embedded;
+    final tag = normalizeOculumFriendTag(
+      '${token['sheetTag'] ?? token['id'] ?? ''}',
+    ).toUpperCase();
+    if (tag.isEmpty) return '';
+    // These records have already passed room/recipient authorization. Reuse
+    // their portrait rather than embedding it in every round/turn update.
+    for (final record in realtimeSharedSheets.reversed) {
+      if (normalizeOculumFriendTag(
+            '${record['sheetId'] ?? ''}',
+          ).toUpperCase() !=
+          tag) {
+        continue;
+      }
+      final sheet = record['sheet'];
+      if (sheet is Map) {
+        final image = '${sheet['immaginePersonaggioBase64'] ?? ''}';
+        if (image.isNotEmpty) return image;
+      }
+    }
+    final index = localSheetIndexForOculumTag(tag);
+    return index >= 0 ? sheetImageBase64At(index) : '';
+  }
+
   void receiveRealtimeInitiativeSnapshot(Map<String, dynamic> payload) {
     final senderRole = '${payload['senderRole'] ?? ''}';
     if (realtimeIsMasterRole || senderRole != 'master') return;

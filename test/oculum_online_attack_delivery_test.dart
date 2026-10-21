@@ -430,6 +430,7 @@ void main() {
             'id': '002-ENEMY',
             'sheetTag': '002-ENEMY',
             'nome': 'Slime',
+            'immaginePersonaggioBase64': 'shared-portrait',
           },
         },
         {
@@ -441,6 +442,11 @@ void main() {
         },
       ]);
       probe.shareStaffTurnOrderSheets();
+      expect(
+        probe.encounterPortrait({'id': '002-enemy'}),
+        'shared-portrait',
+        reason: 'Compact turn snapshots reuse the separately shared portrait',
+      );
       final initialRelays = transport.staffSheets.length;
       probe.shareStaffTurnOrderSheets();
       expect(

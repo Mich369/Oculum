@@ -298,6 +298,8 @@ class OculumPerformanceProbe {
       _state.restoreMasterInitiativeTurnResources(token);
   Map<String, dynamic> publicEncounter(Map<String, dynamic> group) =>
       _state.publicEncounterSnapshot(group);
+  String encounterPortrait(Map<String, dynamic> token) =>
+      _state.realtimeEncounterPortrait(token);
   void receiveInitiative(Map<String, dynamic> payload) =>
       _state.receiveRealtimeInitiativeSnapshot(payload);
   void receiveEncounterControl(Map<String, dynamic> payload) =>

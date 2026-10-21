@@ -293,9 +293,18 @@ void main() {
     state.scudoSalvataggioAttivo = false;
     probe.invalidateDerivedCaches();
     final maximum = probe.maximumHp();
+    // A random Force State can heal +25 HP after a lethal hit. Disable it
+    // for this phase-only fixture; the normal combat path remains unchanged.
+    state.statoForzaAttivo = '';
+    state.statoForzaTiriRimanenti = 0;
+    state.statoForzaPronto = false;
+    state.currentOculumController.text = '0';
     await tester.runAsync(
-      () =>
-          probe.damageResolved(10000, bypassDefense: true, bypassShields: true),
+      () => probe.damageResolved(
+        10000,
+        bypassDefense: true,
+        bypassShields: true,
+      ),
     );
     expect(int.parse(state.currentHpController.text), (maximum * .75).ceil());
     expect(state.schedePersonaggio[0]['aberrationPhase'], 3);
@@ -305,9 +314,14 @@ void main() {
           .single['value'],
       10,
     );
+    state.statoForzaPronto = false;
+    state.currentOculumController.text = '0';
     await tester.runAsync(
-      () =>
-          probe.damageResolved(10000, bypassDefense: true, bypassShields: true),
+      () => probe.damageResolved(
+        10000,
+        bypassDefense: true,
+        bypassShields: true,
+      ),
     );
     expect(state.currentHpController.text, '0');
     state.schedePersonaggio[0].remove('monsterBookSourceId');
@@ -683,4 +697,3 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 }
-

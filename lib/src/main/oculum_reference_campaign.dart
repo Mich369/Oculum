@@ -1134,6 +1134,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
     final shown = tokens
         .map((token) {
           final copy = Map<String, dynamic>.from(token);
+          copy['imageBase64'] = realtimeEncounterPortrait(token);
           final type = '${copy['type'] ?? ''}'.toLowerCase();
           if (copy['side'] == 'enemy' || type.contains('mostro')) {
             copy['spriteAssetPath'] = '';

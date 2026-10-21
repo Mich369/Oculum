@@ -166,6 +166,7 @@ void main() {
         onStatusChanged: (s) => debugPrint('Player: $s'),
         onEvent: (event, payload) {
           if (event.startsWith('combat_')) probe.receiveCombat(event, payload);
+          if (event == 'sheet_shared') probe.receiveStaffSheet(payload);
         },
       );
       state.realtimeService = player;
@@ -184,6 +185,7 @@ void main() {
           await Future<void>.delayed(const Duration(milliseconds: 100));
         }
       }
+
       Future<void> connectWithRetry(
         OculumRealtimeService service,
         String label,
@@ -367,6 +369,34 @@ void main() {
             probe.currentHp(),
             hpBeforeHealing + 10,
             reason: 'Duplicate support must not heal twice',
+          );
+          expect(
+            await master.sendSharedSheetConfirmed(
+              sheet: {'currentHp': '11', 'scudo': '7', 'hpTemp': '3'},
+              campaignId: state.activeCampaignId,
+              campaignName: 'Synthetic verification',
+              sheetId: playerTag,
+              sheetName: 'Player',
+              ownerTag: playerTag,
+              senderRole: 'sheetEdit',
+              targetAudience: 'owner',
+              fromMaster: true,
+              masterParty: false,
+              targetTags: [playerTag],
+            ),
+            isTrue,
+          );
+          await waitFor(() => probe.currentHp() == 11);
+          expect(
+            state.scudoController.text,
+            '7',
+            reason: 'The room Master can edit the online owner sheet',
+          );
+          expect(state.hpTempController.text, '3');
+          expect(
+            probe.ownerTag(),
+            playerTag,
+            reason: 'Master editing does not transfer character ownership',
           );
           await player.dispose();
           await master.dispose();

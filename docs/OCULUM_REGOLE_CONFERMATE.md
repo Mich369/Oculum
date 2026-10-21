@@ -10,6 +10,7 @@ Ultimo aggiornamento: 20 ottobre 2026. Documento da consultare prima di modifica
 - Oltre Difesa, Oltre Scudi e percentuale aggiuntiva ai danni sugli Scudi sono parametri del singolo colpo sul bersaglio, consumati con il colpo; non cambiano le impostazioni permanenti della vittima. Nuove tecniche individuali con penetrazione hanno CD 2–5 turni; quelle con Oltre Difesa e CD 2 partono scariche.
 - Online la turnistica del Master sostituisce la fonte locale di turni e bersagli del player finché collegato. La turnistica locale resta salvata per il ritorno offline.
 - Riconfermato il 21 ottobre 2026: online si usa la turnistica del Master della stanza, non una turnistica manuale separata del player. Lo scontro attivo del Master si pubblica automaticamente; «Pubblica» resta disponibile per un invio esplicito e «Chiudi player» conserva la possibilità di interrompere la pubblicazione. Richiesta schede e invio realtime devono funzionare anche senza amicizia fra i tag. Un tag già appartenente a un altro account non viene riassegnato automaticamente: account originale o copia esplicita con nuovo tag, mantenendo l'originale.
+- Il Master conserva la possibilità di agire sulle schede online condivise nella propria stanza; le modifiche autorizzate vengono riportate al proprietario. I controlli sulla proprietà del tag non devono impedire queste operazioni del Master e non trasferiscono la proprietà del personaggio.
 
 ## Conferme del 20 ottobre 2026 — emblema, mercanti e Open
 
