@@ -31,3 +31,6 @@ Il Master conserva la modifica delle schede condivise tramite il canale `sheetEd
 ## Verifiche
 
 I risultati locali, i test con Auth/Supabase reali, la CI, il sito e i pacchetti sono da riportare separatamente. Un test del trasporto con client reali non certifica da solo una prova manuale fra tre applicazioni Windows/Chrome/Windows Test.
+
+## Correzione aggiuntiva dimostrata dalla CI
+Una patch autorizzata del Master arrivava al proprietario ma veniva scartata: un autosave, avvenuto dopo l'invio e prima della ricezione, aggiornava localUpdatedAt. Le patch Master/Co-Master verificate dal backend su schede proprie ora seguono la sequenza degli eventi del database nella stanza autenticata. La revisione applicata resta nel salvataggio: duplicati e revisioni precedenti non ripristinano vecchi valori. Le copie condivise modificate localmente e i pacchetti senza revisione verificata conservano la protezione precedente. Nessuna nuova richiesta al database: viene riusata la sequenza già ricevuta.

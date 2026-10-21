@@ -1906,3 +1906,5 @@ La presenza online dichiara tutte le schede possedute dalla sessione: cambiare s
 
 CONSEGNA SCHEDE E TURNISTICA — 21 OTTOBRE
 La turnistica online segue lo scontro attivo del Master della stanza. Il Master può agire sulle schede condivise autorizzate: le modifiche a Vita, Scudo e HP temporanei raggiungono il proprietario senza trasferire il tag. Le copie di consultazione non assegnano automaticamente la proprietà. Invio e richiesta della sola scheda attiva restano disponibili anche senza amicizia fra i tag; un conflitto di proprietà richiede l'account originale oppure una copia esplicita con nuovo tag.
+
+Le modifiche online autorizzate di Master e Co-Master alla scheda del proprietario seguono l'ordine confermato dal server della stanza; un autosave locale non le rende obsolete. Le revisioni già applicate non vengono ripetute. I dati privati non modificati restano conservati.

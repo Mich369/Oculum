@@ -1592,6 +1592,7 @@ class OculumRealtimeService {
             'sessionId',
             'authenticatedUserId',
             'authenticatedRole',
+            'serverSequence',
           ])
             key: normalized[key],
         });

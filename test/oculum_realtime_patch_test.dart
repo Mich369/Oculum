@@ -2,6 +2,60 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('only authenticated staff owner edits can use database revisions', () {
+    final owner = <String, dynamic>{'localUpdatedAt': '2099-01-01T00:00:00Z'};
+    final packet = <String, dynamic>{
+      'authenticatedRole': 'master',
+      'serverSequence': 42,
+      'sentAt': '2026-01-01T00:00:00Z',
+    };
+    expect(
+      oculumRealtimeStaffOwnerEditSequence(
+        owner,
+        packet,
+        'oculum_secure_room-one',
+      ),
+      42,
+    );
+    expect(
+      oculumRealtimeStaffOwnerEditSequence(owner, {
+        ...packet,
+        'authenticatedRole': 'coMaster',
+      }, 'oculum_secure_room-one'),
+      42,
+    );
+    expect(
+      oculumRealtimeStaffOwnerEditSequence(owner, {
+        ...packet,
+        'authenticatedRole': 'player',
+        'senderRole': 'master',
+      }, 'oculum_secure_room-one'),
+      isNull,
+    );
+    expect(
+      oculumRealtimeStaffOwnerEditSequence(owner, {
+        ...packet,
+        'serverSequence': 0,
+      }, 'oculum_secure_room-one'),
+      isNull,
+    );
+    expect(
+      oculumRealtimeStaffOwnerEditSequence(owner, packet, 'oculum_room_legacy'),
+      isNull,
+    );
+    expect(
+      oculumRealtimeStaffOwnerEditSequence(
+        {
+          ...owner,
+          'realtimeSharedSheet': true,
+          'realtimeDirtyAt': '2099-01-01',
+        },
+        packet,
+        'oculum_secure_room-one',
+      ),
+      isNull,
+    );
+  });
   test('private Eye roles never propagate through owner sheet edits', () {
     final original = <String, dynamic>{
       'currentHp': '100',

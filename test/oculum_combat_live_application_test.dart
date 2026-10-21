@@ -135,6 +135,7 @@ void main() {
       final oldAvailable = OculumRealtimeService.supabaseAvailable;
       OculumRealtimeService.supabaseAvailable = true;
       final receipts = <Map<String, dynamic>>[];
+      bool? masterPatchApplied;
       final master = OculumRealtimeService(
         client: masterClient,
         roomId: room,
@@ -166,7 +167,18 @@ void main() {
         onStatusChanged: (s) => debugPrint('Player: $s'),
         onEvent: (event, payload) {
           if (event.startsWith('combat_')) probe.receiveCombat(event, payload);
-          if (event == 'sheet_shared') probe.receiveStaffSheet(payload);
+          if (event == 'sheet_shared') {
+            final applied = probe.receiveStaffSheet(payload);
+            if (payload['senderRole'] == 'sheetEdit') {
+              masterPatchApplied = applied;
+              debugPrint(
+                'Master patch received: applied=$applied, '
+                'HP=${probe.currentHp()}, sentAt=${payload['sentAt']}, '
+                'localUpdatedAt=${state.schedePersonaggio[0]['localUpdatedAt']}, '
+                'dirtyAt=${state.schedePersonaggio[0]['realtimeDirtyAt']}',
+              );
+            }
+          }
         },
       );
       state.realtimeService = player;
@@ -386,7 +398,13 @@ void main() {
             ),
             isTrue,
           );
-          await waitFor(() => probe.currentHp() == 11);
+          await waitFor(() => masterPatchApplied != null);
+          expect(
+            masterPatchApplied,
+            isTrue,
+            reason: (state.logEventi as List).take(8).join('\n'),
+          );
+          expect(probe.currentHp(), 11);
           expect(
             state.scudoController.text,
             '7',

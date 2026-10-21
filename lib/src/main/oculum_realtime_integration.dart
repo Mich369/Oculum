@@ -29,6 +29,8 @@ const Set<String> oculumRealtimeMetadataKeys = <String>{
   'realtimeLocalSheetTag',
   'realtimeDirtyLocal',
   'realtimeDirtyAt',
+  'realtimeOwnerEditSequence',
+  'realtimeOwnerEditRoom',
   'localUpdatedAt',
   'realtimeRestrictedByMaster',
   'realtimeReadOnlyByMaster',
@@ -43,6 +45,20 @@ const Set<String> oculumRealtimeMetadataKeys = <String>{
   'diaryEntityRoles',
   'diaryKnowledgeSync',
 };
+
+int? oculumRealtimeStaffOwnerEditSequence(
+  Map<String, dynamic> existing,
+  Map<String, dynamic> payload,
+  String channelName,
+) {
+  if (readBoolValue(existing['realtimeSharedSheet']) ||
+      !const {'master', 'coMaster'}.contains(payload['authenticatedRole']) ||
+      !channelName.startsWith('oculum_secure_')) {
+    return null;
+  }
+  final sequence = readIntValue(payload['serverSequence']);
+  return sequence > 0 ? sequence : null;
+}
 
 bool oculumInitiativePayloadClosesFight(Map<String, dynamic> payload) =>
     readBoolValue(payload['closed']);
@@ -1993,6 +2009,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'realtimeRevokedAccessTags',
       'realtimeVisibleInitiativeSnapshot',
       'encounterPlayerIdentities',
+      'realtimeOwnerEditSequence',
+      'realtimeOwnerEditRoom',
       'diaryEntityRoles',
       'diaryKnowledgeSync',
     ]) {
@@ -2184,7 +2202,22 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       '${existing['sheetTag'] ?? existing['id'] ?? sheetId}',
     );
 
-    if (realtimeRemoteIsStaleForLocal(existing, payload)) {
+    final editRoom = realtimeService?.channelName ?? '';
+    final editSequence = oculumRealtimeStaffOwnerEditSequence(
+      existing,
+      payload,
+      editRoom,
+    );
+    // A local autosave can run after the Master sent this patch but before
+    // delivery. Its wall clock is not an authoritative version of the edit.
+    // Only verified staff edits to the owner's sheet use the server order;
+    // locally edited shared copies retain their existing dirty-data guard.
+    final stale = editSequence != null
+        ? existing['realtimeOwnerEditRoom'] == editRoom &&
+              editSequence <=
+                  readIntValue(existing['realtimeOwnerEditSequence'])
+        : realtimeRemoteIsStaleForLocal(existing, payload);
+    if (stale) {
       aggiungiLog(
         t(
           'Realtime ignorato: aggiornamento vecchio per ${existing['nome'] ?? '???'}.',
@@ -2221,6 +2254,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
     updated['id'] = localTag;
     updated['sheetTag'] = localTag;
+    if (editSequence != null) {
+      updated['realtimeOwnerEditSequence'] = editSequence;
+      updated['realtimeOwnerEditRoom'] = editRoom;
+    }
     updated['localUpdatedAt'] =
         '${payload['sentAt'] ?? DateTime.now().toIso8601String()}';
     updated['inMasterParty'] = readBoolValue(existing['inMasterParty']);

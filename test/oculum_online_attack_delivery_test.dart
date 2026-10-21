@@ -7,6 +7,8 @@ import 'package:oculum/services/oculum_realtime_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _CombatService extends OculumRealtimeService {
+  @override
+  String get channelName => 'oculum_secure_synthetic-room';
   _CombatService()
     : super(
         roomId: 'combat_test',
@@ -603,6 +605,50 @@ void main() {
       await probe.retryEncounterJoins();
       expect(state.realtimeOutgoingEncounterJoins, isEmpty);
       expect(transportForJoin.joins.length, initialJoins + 1);
+      // A Master edit may arrive after an unrelated autosave advanced the
+      // owner's local wall clock. Database sequence, not that clock, orders it.
+      state.realtimeService = _CombatService();
+      state.modalitaMaster = false;
+      state.sonoCoMaster = false;
+      state.schedaCorrente = 0;
+      probe.load(Map<String, dynamic>.from(state.schedePersonaggio[0] as Map));
+      state.schedePersonaggio[0]['localUpdatedAt'] = '2099-01-01T00:00:00Z';
+      final edit = <String, dynamic>{
+        'senderRole': 'sheetEdit',
+        'authenticatedRole': 'master',
+        'serverSequence': 100,
+        'sheetId': probe.ownerTag(),
+        'ownerTag': probe.ownerTag(),
+        'targetTags': [probe.ownerTag()],
+        'sentAt': '2026-01-01T00:00:00Z',
+        'sheet': {'currentHp': '11'},
+      };
+      expect(probe.receiveStaffSheet(edit), isTrue);
+      expect(probe.currentHp(), 11);
+      expect(state.schedePersonaggio[0]['realtimeOwnerEditSequence'], 100);
+      state.currentHpController.text = '22';
+      expect(probe.receiveStaffSheet(edit), isFalse);
+      expect(probe.receiveStaffSheet({...edit, 'serverSequence': 99}), isFalse);
+      expect(probe.currentHp(), 22, reason: 'A replay cannot restore old HP');
+      expect(
+        probe.receiveStaffSheet({
+          ...edit,
+          'serverSequence': 101,
+          'sheet': {'currentHp': '13'},
+        }),
+        isTrue,
+      );
+      expect(probe.currentHp(), 13);
+      state.schedePersonaggio[0]['localUpdatedAt'] = '2099-01-01T00:00:00Z';
+      expect(
+        probe.receiveStaffSheet({
+          ...edit,
+          'authenticatedRole': 'player',
+          'serverSequence': 200,
+        }),
+        isFalse,
+        reason: 'A claimed role cannot bypass the local guard',
+      );
       state.realtimeService = null;
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 3));
