@@ -697,7 +697,7 @@ INIZIATIVA MASTER
 Nella pagina Master trovi il tracker iniziativa.
 Puoi aggiungere partecipanti manuali o usare schede già salvate nel party Master.
 Durante un fight usa prima il riquadro Turno attivo: mostra chi agisce ora, totale iniziativa e round.
-Il pulsante Pubblica invia ai player la turnistica compatta; resta visibile finché premi Chiudi player o invii un nuovo aggiornamento.
+Online lo scontro attivo del Master viene condiviso automaticamente con i player della stanza. Il pulsante Pubblica permette anche un invio esplicito della turnistica compatta; resta visibile finché premi Chiudi player o invii un nuovo aggiornamento. Il player usa turni e bersagli del Master; la turnistica locale rimane conservata per il ritorno offline.
 Se la turnistica e pubblicata, cambi turno, roll, riordino e rimozioni vengono reinviati automaticamente.
 L'aggiunta manuale e a scomparsa per non occupare spazio mentre combatti.
 Ogni partecipante ha:

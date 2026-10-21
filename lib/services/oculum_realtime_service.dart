@@ -119,6 +119,7 @@ class OculumRealtimeService {
   final _sheetTransfers = OculumSheetTransferAssembler();
   final _sessionNoteTransfers = OculumSheetTransferAssembler();
   int _sheetTransferSequence = 0;
+  Future<void> _sheetSendTail = Future<void>.value();
   int _initiativeRevision = 0;
   String? _secureRoomId;
   String? authenticatedRole;
@@ -450,6 +451,7 @@ class OculumRealtimeService {
 
   Future<void> disconnect({bool notify = true}) async {
     _generation++;
+    _sheetSendTail = Future<void>.value();
     final approvalCancelled = _approvalCancelled;
     _approvalCancelled = null;
     _awaitingApproval = false;
@@ -879,7 +881,39 @@ class OculumRealtimeService {
     List<String> targetTags = const <String>[],
     String deliveryId = '',
   }) {
-    return _send('sheet_shared', <String, dynamic>{
+    return _queueSharedSheet(<String, dynamic>{
+      'playerName': _displayName,
+      'ownerTag': ownerTag,
+      'campaignId': campaignId,
+      'campaignName': campaignName,
+      'sheetId': sheetId,
+      'sheetName': sheetName,
+      'senderRole': senderRole,
+      'targetAudience': targetAudience,
+      'targetTags': targetTags,
+      'fromMaster': fromMaster,
+      'masterParty': masterParty,
+      'sheet': sheet,
+      'deliveryId': deliveryId,
+      'sentAt': _nowIso(),
+    }).then<void>((_) {});
+  }
+
+  Future<bool> sendSharedSheetConfirmed({
+    required Map<String, dynamic> sheet,
+    required String campaignId,
+    required String campaignName,
+    required String sheetId,
+    required String sheetName,
+    required String ownerTag,
+    required String senderRole,
+    required String targetAudience,
+    required bool fromMaster,
+    required bool masterParty,
+    List<String> targetTags = const <String>[],
+    String deliveryId = '',
+  }) {
+    return _queueSharedSheet(<String, dynamic>{
       'playerName': _displayName,
       'ownerTag': ownerTag,
       'campaignId': campaignId,
@@ -897,36 +931,17 @@ class OculumRealtimeService {
     });
   }
 
-  Future<bool> sendSharedSheetConfirmed({
-    required Map<String, dynamic> sheet,
-    required String campaignId,
-    required String campaignName,
-    required String sheetId,
-    required String sheetName,
-    required String ownerTag,
-    required String senderRole,
-    required String targetAudience,
-    required bool fromMaster,
-    required bool masterParty,
-    List<String> targetTags = const <String>[],
-    String deliveryId = '',
-  }) {
-    return _sendConfirmed('sheet_shared', <String, dynamic>{
-      'playerName': _displayName,
-      'ownerTag': ownerTag,
-      'campaignId': campaignId,
-      'campaignName': campaignName,
-      'sheetId': sheetId,
-      'sheetName': sheetName,
-      'senderRole': senderRole,
-      'targetAudience': targetAudience,
-      'targetTags': targetTags,
-      'fromMaster': fromMaster,
-      'masterParty': masterParty,
-      'sheet': sheet,
-      'deliveryId': deliveryId,
-      'sentAt': _nowIso(),
+  // Keep a complete sheet's chunks together. Publishing a large Master party
+  // used to open dozens of transfers simultaneously, exceeding the receiver's
+  // bounded assembler and starving player deliveries on small databases.
+  Future<bool> _queueSharedSheet(Map<String, dynamic> payload) {
+    final generation = _generation;
+    final operation = _sheetSendTail.then<bool>((_) async {
+      if (!isConnected || generation != _generation) return false;
+      return _sendConfirmed('sheet_shared', payload);
     });
+    _sheetSendTail = operation.then<void>((_) {}, onError: (Object _) {});
+    return operation;
   }
 
   Future<void> sendSheetReceivedAck({
@@ -1065,7 +1080,12 @@ class OculumRealtimeService {
       _sendConfirmed(acknowledgement ? 'item_gift_ack' : 'item_gift', envelope);
 
   Future<void> requestSharedSheets({String targetSheetTag = ''}) =>
-      _send('sheet_ping', {
+      requestSharedSheetsConfirmed(
+        targetSheetTag: targetSheetTag,
+      ).then<void>((_) {});
+
+  Future<bool> requestSharedSheetsConfirmed({String targetSheetTag = ''}) =>
+      _sendConfirmed('sheet_ping', {
         'playerName': _displayName,
         'senderRole': presenceDataProvider?.call()['role'] ?? 'player',
         'requestSharedSheets': true,
@@ -1427,7 +1447,7 @@ class OculumRealtimeService {
     try {
       final record = await (_client ?? Supabase.instance.client)
           .from('oculum_room_events')
-          .select('event,payload')
+          .select('event,payload,sequence')
           .eq('room_id', _secureRoomId!)
           .eq('id', id)
           .maybeSingle();
@@ -1442,10 +1462,10 @@ class OculumRealtimeService {
       if (_deliveredEvents.length > 4000) {
         _deliveredEvents.remove(_deliveredEvents.first);
       }
-      _deliverVerifiedEvent(
-        event,
-        Map<String, dynamic>.from(record['payload'] as Map),
-      );
+      _deliverVerifiedEvent(event, {
+        ...Map<String, dynamic>.from(record['payload'] as Map),
+        'serverSequence': record['sequence'],
+      });
     } catch (_) {
       _safeStatus(
         'Evento in attesa di riconnessione: salvataggio locale conservato.',
@@ -1462,6 +1482,7 @@ class OculumRealtimeService {
         .from('oculum_room_events')
         .select('id,event,payload,sequence')
         .eq('room_id', _secureRoomId!)
+        .neq('session_id', _presenceKey)
         .gt('sequence', _replaySequence)
         .gte('created_at', _replaySince)
         .order('sequence')
@@ -1475,6 +1496,7 @@ class OculumRealtimeService {
         }
         final event = '${record['event']}';
         final payload = Map<String, dynamic>.from(record['payload'] as Map);
+        payload['serverSequence'] = record['sequence'];
         if (event == 'initiative_shared') {
           payload['restoredSnapshot'] = true;
         }
@@ -1517,6 +1539,7 @@ class OculumRealtimeService {
         _deliveredEvents.remove(_deliveredEvents.first);
       }
       final payload = Map<String, dynamic>.from(record['payload'] as Map)
+        ..['serverSequence'] = record['sequence']
         ..['restoredSnapshot'] = true;
       _deliverVerifiedEvent('initiative_shared', payload);
       return true;
@@ -1662,4 +1685,3 @@ class OculumRealtimeService {
 
   static String _nowIso() => DateTime.now().toIso8601String();
 }
-

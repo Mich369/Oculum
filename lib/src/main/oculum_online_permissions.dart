@@ -16,6 +16,13 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
 
   String get permissionCampaignId {
     if (realtimeService?.isConnected == true && !realtimeIsMasterRole) {
+      // Follow the session that actually published this fight, not the first
+      // Presence row of an account that has several Master devices open.
+      final sharedCampaign =
+          '${realtimeVisibleInitiativeSnapshot['campaignId'] ?? ''}';
+      if (realtimeVisibleInitiativeSnapshot.containsKey('campaignId')) {
+        return sharedCampaign;
+      }
       final master = realtimeUsers
           .where((user) => user['role'] == 'master')
           .firstOrNull;
@@ -23,9 +30,6 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       if (campaign.isNotEmpty) return campaign;
       // A restored, database-verified Master snapshot remains authoritative
       // while the Master is temporarily absent from Presence.
-      final sharedCampaign =
-          '${realtimeVisibleInitiativeSnapshot['campaignId'] ?? ''}';
-      if (sharedCampaign.isNotEmpty) return sharedCampaign;
     }
     return activeCampaignId;
   }
@@ -516,4 +520,3 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     );
   }
 }
-

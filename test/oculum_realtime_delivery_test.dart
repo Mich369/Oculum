@@ -285,6 +285,75 @@ class _Backend {
 
 void main() {
   test(
+    'concurrent large party sheets finish before the next transfer starts',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      final client = _Client();
+      final received = <String>{};
+      final service = OculumRealtimeService(
+        client: client,
+        roomId: 'party',
+        playerName: 'Master',
+        presenceDataProvider: () => {'role': 'master'},
+        onEvent: (event, payload) {
+          if (event == 'sheet_shared') received.add('${payload['sheetId']}');
+        },
+        onPresenceChanged: (_) {},
+        onStatusChanged: (_) {},
+      );
+      addTearDown(() async {
+        await service.dispose();
+        await client.dispose();
+        OculumRealtimeService.supabaseAvailable = previous;
+      });
+      await service.connect();
+      final results = await Future.wait([
+        for (var i = 0; i < 12; i++)
+          service.sendSharedSheetConfirmed(
+            sheet: {'nome': 'Party $i', 'imageBase64': 'x' * 70000},
+            campaignId: 'campaign',
+            campaignName: 'Campaign',
+            sheetId: 'PARTY_$i',
+            sheetName: 'Party $i',
+            ownerTag: 'PARTY_$i',
+            senderRole: 'master',
+            targetAudience: 'players_party_full',
+            fromMaster: true,
+            masterParty: true,
+          ),
+      ]);
+      expect(results, everyElement(isTrue));
+      final completed = <String>{};
+      String? active;
+      for (final part in client.testChannel.broadcasts) {
+        final payload = part['payload'] as Map;
+        final transfer = '${payload['transferId']}';
+        if (active != transfer) {
+          expect(
+            completed,
+            isNot(contains(transfer)),
+            reason: 'Chunks must not interleave',
+          );
+          if (active != null) completed.add(active);
+          active = transfer;
+        }
+        client.testChannel.callbacks['sheet_shared_chunk']!({
+          'serverEventId': part['id'],
+        });
+      }
+      for (var i = 0; i < 100 && received.length < 12; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(
+        received.length,
+        12,
+        reason:
+            'The bounded eight-transfer receiver must import the whole party',
+      );
+    },
+  );
+  test(
     'pending join stays busy, cannot become Master and cancels immediately',
     () async {
       final previous = OculumRealtimeService.supabaseAvailable;
@@ -1080,4 +1149,3 @@ void main() {
     },
   );
 }
-

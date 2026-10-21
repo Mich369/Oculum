@@ -22,6 +22,7 @@ import 'package:pasteboard/pasteboard.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:pointycastle/digests/sha256.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -2132,6 +2133,10 @@ class _OculumHomePageState extends State<OculumHomePage>
   String realtimeSelectedEncounterId = '';
   String realtimeInitiativeSession = '';
   int realtimeInitiativeRevision = 0;
+  int realtimeInitiativeServerSequence = 0;
+  final Set<String> realtimeHiddenEncounterIds = {};
+  final Set<String> realtimeShownSheetConflicts = {};
+  bool realtimeOwnedSheetForceRequested = false;
   final Map<String, Map<String, dynamic>> realtimePendingEncounterJoins = {};
   final Map<String, Map<String, dynamic>> realtimeOutgoingEncounterJoins = {};
   final List<Map<String, dynamic>> sheetSidebarFolders = [];
@@ -5225,4 +5230,3 @@ class _OculumHomePageState extends State<OculumHomePage>
     );
   }
 }
-

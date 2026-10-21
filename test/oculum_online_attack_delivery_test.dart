@@ -17,6 +17,26 @@ class _CombatService extends OculumRealtimeService {
       );
   @override
   bool get isConnected => true;
+  final turnSnapshots = <Map<String, dynamic>>[];
+  int sheetRequests = 0;
+  @override
+  Future<bool> requestSharedSheetsConfirmed({
+    String targetSheetTag = '',
+  }) async {
+    sheetRequests++;
+    return true;
+  }
+
+  @override
+  Future<void> sendInitiativeSnapshot({
+    required Map<String, dynamic> snapshot,
+    required String campaignId,
+    required String campaignName,
+    required bool closed,
+  }) async {
+    turnSnapshots.add(snapshot);
+  }
+
   final staffSheets = <Map<String, dynamic>>[];
   @override
   Future<void> sendSharedSheet({
@@ -325,15 +345,38 @@ void main() {
       state.modalitaMaster = true;
       state.isMasterHost = true;
       probe.ensureEncounters();
-      state.masterInitiativePublished = true;
+      state.masterInitiativePublished = false;
       state.masterInitiativeRound = 3;
       state.masterInitiativeActiveIndex = 0;
       state.masterInitiativeTokens.clear();
       state.masterInitiativeTokens.addAll(<Map<String, dynamic>>[
-        {'id': 'first', 'name': 'Primo', 'status': 'active'},
+        {
+          'id': 'first',
+          'name': 'Primo',
+          'status': 'active',
+          'imageBase64': 'x' * 1200000,
+        },
         {'id': 'second', 'name': 'Secondo', 'status': 'ready'},
       ]);
-      probe.initiativeSnapshot();
+      probe.syncMasterTurnOrder();
+      expect(
+        state.masterInitiativePublished,
+        isTrue,
+        reason:
+            'Online fights publish automatically without the manual Publish button',
+      );
+      final automaticallyShared =
+          (state.realtimeService as _CombatService).turnSnapshots.last;
+      expect((automaticallyShared['tokens'] as List).length, 2);
+      expect(
+        '$automaticallyShared'.length,
+        lessThan(1000000),
+        reason:
+            'Full portraits must not make the turn snapshot exceed the RPC limit',
+      );
+      await probe.requestPlayerSheets();
+      expect((state.realtimeService as _CombatService).sheetRequests, 1);
+      expect('${state.risultato}', contains('Richiesta schede consegnata'));
       state.realtimeUsers = <Map<String, dynamic>>[
         {
           'sessionId': 'co-session',
@@ -398,6 +441,14 @@ void main() {
         },
       ]);
       probe.shareStaffTurnOrderSheets();
+      final initialRelays = transport.staffSheets.length;
+      probe.shareStaffTurnOrderSheets();
+      expect(
+        transport.staffSheets.length,
+        initialRelays,
+        reason:
+            'Unchanged participant sheets are not retransmitted on every Presence refresh',
+      );
       expect(
         transport.staffSheets.map((sheet) => sheet['sheetId']),
         containsAll(['001-ROSE', '002-ENEMY']),
@@ -418,6 +469,11 @@ void main() {
       expect(probe.receiveStaffSheet(relayed), isTrue);
       expect(probe.ownedPresenceTags(), isNot(contains('002-ENEMY')));
       state.realtimeUsers = <Map<String, dynamic>>[
+        {
+          'role': 'master',
+          'sessionId': 'other-device-of-master',
+          'campaignId': 'other-local-campaign',
+        },
         {
           'role': 'master',
           'sessionId': 'master-session',
@@ -445,6 +501,12 @@ void main() {
       };
       probe.receiveInitiative(snapshot);
       expect(state.realtimeVisibleInitiativeSnapshot['round'], 4);
+      expect(
+        probe.permissionScope,
+        endsWith(':${state.activeCampaignId}'),
+        reason:
+            'Turn and action permissions follow the publishing Master session',
+      );
       probe.receiveInitiative({
         ...snapshot,
         'revision': 1,
@@ -477,6 +539,24 @@ void main() {
       final transportForJoin = state.realtimeService as _CombatService;
       transportForJoin.staffSheets.clear();
       await probe.syncOwnedStaffSheets();
+      final beforeRequest = transportForJoin.staffSheets.length;
+      await probe.sendCurrentSheet();
+      expect(transportForJoin.staffSheets.length, greaterThan(beforeRequest));
+      expect('${state.risultato}', contains('Attendo la conferma'));
+      final beforeMasterRequest = transportForJoin.staffSheets.length;
+      probe.receiveRealtime('sheet_ping', {
+        'requestSharedSheets': true,
+        'senderRole': 'master',
+        'sessionId': 'master-session',
+        'sentAt': 'manual-request',
+      });
+      await tester.pump();
+      expect(
+        transportForJoin.staffSheets.length,
+        greaterThan(beforeMasterRequest),
+        reason:
+            'A Master request retries even when the previous peer ACK is still pending',
+      );
       expect(
         transportForJoin.staffSheets.map((s) => s['sheetId']),
         isNot(contains('003-ALLY')),

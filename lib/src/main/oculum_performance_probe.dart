@@ -166,7 +166,17 @@ class OculumPerformanceProbe {
     _state.realtimeAutoReconnectEnabled = false;
     await _state.realtimeService?.disconnect();
   }
+
   void publishTurnOrder() => _state.publishRealtimeInitiativeSnapshot();
+  void syncMasterTurnOrder() =>
+      _state.sendRealtimeInitiativeSnapshotIfPublished();
+  void shareMasterParty() => _state.sendRealtimeMasterVisiblePartyTokens();
+  Future<void> resolveSheetIdentity(String tag) =>
+      _state.showRealtimeSheetIdentityConflict(tag);
+  void receiveRealtime(String event, Map<String, dynamic> payload) =>
+      _state.handleRealtimeEvent(event, payload);
+  Future<void> requestPlayerSheets() => _state.requestRealtimePlayerSheets();
+  Future<void> sendCurrentSheet() => _state.sendRealtimeCurrentSheetManually();
   void recordCurrentEncounter() => _state.captureActiveMasterInitiativeGroup();
   Future<void> syncOwnedStaffSheets() =>
       _state.sendRealtimeActiveSheetToStaff();
