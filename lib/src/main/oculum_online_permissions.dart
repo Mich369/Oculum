@@ -338,7 +338,18 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
   Future<bool> requestUtilitySpend(String resource) async {
     if (!currentCombatIsActive()) return true;
     final tag = sheetTagAt(schedaCorrente);
-    if (!_consumeLocalCombatTurnResource(tag, resource)) return false;
+    final freeReaction = const {'azione', 'reazione'}.contains(resource)
+        ? onlineCombatRequests.entries
+              .where(
+                (entry) =>
+                    entry.value['targetTag'] == tag &&
+                    entry.value['freeReaction'] == true &&
+                    entry.value['reactionUsed'] != true,
+              )
+              .firstOrNull
+        : null;
+    final selectedResource = freeReaction?.key ?? resource;
+    if (!_consumeLocalCombatTurnResource(tag, selectedResource)) return false;
     final spendId =
         '$tag:${DateTime.now().microsecondsSinceEpoch}:${pendingOnlineCombatTurnResourceSpends.length}';
     appliedOnlineCombatTurnResourceSpendIds.add(spendId);
@@ -346,7 +357,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       pendingOnlineCombatTurnResourceSpends.add({
         'id': spendId,
         'sheetTag': tag,
-        'resource': resource,
+        'resource': selectedResource,
       });
       if (pendingOnlineCombatTurnResourceSpends.length > 16) {
         pendingOnlineCombatTurnResourceSpends.removeAt(0);
@@ -708,12 +719,25 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         index >= 0 &&
         index == active &&
         !readBoolValue(tokens[index]['actionUsed']);
+    final freeReaction = onlineCombatRequests.entries
+        .where(
+          (entry) =>
+              entry.value['targetTag'] == sheetTagAt(schedaCorrente) &&
+              entry.value['freeReaction'] == true &&
+              entry.value['reactionUsed'] != true,
+        )
+        .firstOrNull;
+    final resource = freeReaction != null
+        ? freeReaction.key
+        : useAction
+        ? 'azione'
+        : 'reazione';
     final allowed = await requestUtilitySpend(
-      useAction ? 'azione' : 'reazione',
+      resource,
     );
     if (!allowed) {
       aggiungiLog(
-        'Tiro non eseguito: non hai un’Azione o una Reazione disponibile.',
+        'Tiro non eseguito: non hai un’Azione o una Reazione (anche veloce o gratuita) disponibile.',
       );
     }
     return allowed;

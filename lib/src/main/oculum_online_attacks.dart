@@ -1485,10 +1485,32 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       }
     }
     final tokens = onlineAttackTokens();
+    final freeReaction = onlineCombatRequests[freeReactionId];
+    // A counterattack is authorized by the resolved attack request itself. The
+    // attacker's token can arrive in the initiative snapshot later, so retain
+    // the authenticated source tag/name as a temporary target for this reply.
+    if (freeReactionId != null && freeReaction != null) {
+      final ownTag = sheetTagAt(schedaCorrente);
+      final ownIsActive = onlineCombatTokens().any(
+        (token) =>
+            onlineCombatTokenTag(token) == ownTag &&
+            !const {'dead', 'fled', 'expired'}.contains(token['status']),
+      );
+      final reactionTargetTag = '${freeReaction['sourceTag'] ?? ''}';
+      if (ownIsActive &&
+          reactionTargetTag.isNotEmpty &&
+          !tokens.any((token) => onlineCombatTokenTag(token) == reactionTargetTag)) {
+        tokens.add({
+          'sheetTag': reactionTargetTag,
+          'id': reactionTargetTag,
+          'name': freeReaction['sourceName'] ?? 'Attaccante',
+          'status': 'active',
+        });
+      }
+    }
     if (tokens.isEmpty) return;
     final origin = currentSheetScrollId();
     final encounter = onlineCombatEncounterId;
-    final freeReaction = onlineCombatRequests[freeReactionId];
     final counterBonus = freeReaction?['doubleDefense'] == true ? 9 : 0;
     if (freeReactionId != null &&
         (freeReaction?['freeReaction'] != true ||
@@ -1685,6 +1707,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final currentIds = {
       for (final token in onlineAttackTokens()) onlineCombatTokenTag(token),
     };
+    if (freeReactionId != null && freeReaction != null) {
+      currentIds.add('${freeReaction['sourceTag'] ?? ''}');
+    }
     if (controlledPlan.targetIds.any((id) => !currentIds.contains(id)) ||
         controlledPlan.targetIds.length < minimumTargets ||
         controlledPlan.targetIds.length > maximumTargets) {
