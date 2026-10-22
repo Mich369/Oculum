@@ -14,7 +14,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: oculum-distribution-${{ github.ref }}
+  # Pull requests use their source branch rather than the synthetic merge ref,
+  # so a stale merge-ref run cannot hold the corrected branch build in queue.
+  group: oculum-distribution-${{ github.head_ref || github.ref }}
   # A second push must queue behind a distribution build. Flutter's Windows
   # toolchain runs through cmd.exe; cancelling that run can surface as
   # "Terminate batch job (Y/N)?" and makes Package Windows release skip.
