@@ -423,6 +423,7 @@ jobs:
 
       - name: Package Android release
         run: |
+          mkdir -p build/distribution
           cp build/app/outputs/flutter-apk/app-release.apk build/distribution/Oculum-Android-release.apk
           test -s build/distribution/Oculum-Android-release.apk
           unzip -tq build/distribution/Oculum-Android-release.apk
