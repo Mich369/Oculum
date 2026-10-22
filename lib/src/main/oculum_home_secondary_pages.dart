@@ -2249,7 +2249,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  t('Oculum nei tiri fight', 'Oculum fight rolls'),
+                  t('Potenziamento', 'Empowerment'),
                   style: TextStyle(
                     color: primaryColor,
                     fontSize: 18,
@@ -2270,8 +2270,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           const SizedBox(height: 8),
           smallInfoText(
             t(
-              'Prepara punti Oculum per il prossimo tiro fight: 1 punto ogni 3 livelli, massimo 3 ogni 3 Gradi. Al livello 9 senza Grado arrivi a 3. Ogni punto vale +3.',
-              'Prepare Oculum for the next fight roll: 1 point every 3 levels, max 3 every 3 Grades. At level 9 without Grade you reach 3. Each point is +3.',
+              'Prepara punti Oculum per il prossimo tiro fight: 1 punto ogni 3 livelli, massimo 3 ogni 3 Gradi. Al livello 9 senza Grado arrivi a 3. Ogni punto dà +3 al tiro; se attacchi aggiunge anche +2 Danni per punto.',
+              'Prepare Oculum for the next fight roll: 1 point every 3 levels, max 3 every 3 Grades. At level 9 without Grade you reach 3. Each point adds +3 to the roll and, on attacks, +2 damage.',
             ),
           ),
           const SizedBox(height: 8),
@@ -2658,6 +2658,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         child: Text(
                           t('Nuova sessione Dust', 'New Dust session'),
                         ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: leggiNumero(ascensionDustController) > 0
+                            ? mostraAscensionDustExperience
+                            : null,
+                        icon: const Icon(Icons.auto_awesome),
+                        label: const Text('Converti in EXP'),
                       ),
                     ],
                   ),
@@ -3635,6 +3642,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         'TITOLO VISIBILE: ${masterInitiativeTokens[i]['visibleTitleName']}\n${masterInitiativeTokens[i]['visibleTitleLegend'] ?? ''}',
                         color: Colors.amberAccent,
                       ),
+                    if (oculumCombatTokenHealthLabel(
+                      masterInitiativeTokens[i],
+                    ).isNotEmpty)
+                      smallInfoText(
+                        oculumCombatTokenHealthLabel(masterInitiativeTokens[i]),
+                        color: Colors.orangeAccent,
+                      ),
                   ],
                 ),
               ),
@@ -3670,6 +3684,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   setState(() {
                     masterInitiativeTokens[i]['status'] = value;
                     if (value == 'dead') {
+                      masterInitiativeTokens[i]['automaticDeath'] = false;
                       aggiungiLog(
                         '[MORTE] '
                         '${masterInitiativeTokens[i]['name'] ?? '???'}'
@@ -3707,6 +3722,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   PopupMenuItem(
                     value: 'dead',
                     child: Text(masterInitiativeStatusLabel('dead')),
+                  ),
+                  PopupMenuItem(
+                    value: 'fled',
+                    child: Text(masterInitiativeStatusLabel('fled')),
                   ),
                   const PopupMenuDivider(),
                   PopupMenuItem(
@@ -4671,15 +4690,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     addRepaintBoundaries: true,
                     itemExtent: 64,
                     itemBuilder: (context, i) {
-                      final sheet = schedaJsonAt(i);
-                      final pendingApproval =
-                          onlineMasterApprovalRequired &&
-                          readBoolValue(sheet['monsterBookApprovalRequired']) &&
-                          !readBoolValue(sheet['monsterBookApproved']);
                       return GestureDetector(
-                        onLongPress: pendingApproval
-                            ? showMasterRequests
-                            : null,
                         child: CheckboxListTile(
                           key: ValueKey<String>(
                             'master_roster_${sheetTagAt(i)}',
@@ -4702,28 +4713,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                             ),
                           ),
                           subtitle: Text(
-                            '${tipoSchedaPersonaggio(i)} - ${sheetTagAt(i)}${pendingApproval ? ' · In attesa Master (tieni premuto per approvare)' : ''}',
+                            '${tipoSchedaPersonaggio(i)} - ${sheetTagAt(i)}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: pendingApproval
-                                  ? Colors.amberAccent
-                                  : tertiaryColor,
+                              color: tertiaryColor,
                               fontSize: 11,
                             ),
                           ),
-                          onChanged: pendingApproval
-                              ? (_) {
-                                  setState(() {
-                                    risultato =
-                                        'Prima approva ${nomeSchedaPersonaggio(i)} tenendo premuta la sua riga.';
-                                    aggiungiLog(risultato);
-                                  });
-                                }
-                              : (selected) => cambiaSchedaMasterParty(
-                                  i,
-                                  selected == true,
-                                ),
+                          onChanged: (selected) =>
+                              cambiaSchedaMasterParty(i, selected == true),
                           controlAffinity: ListTileControlAffinity.trailing,
                         ),
                       );
@@ -7288,6 +7287,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             masterDashboardActiveSheetPanel,
             masterDashboardPartyBoardPanel,
             masterInitiativeTrackerPanel,
+            pendingMonsterLootPanel,
             () => masterDashboardEnemiesPanel(compactNote: true),
             masterDashboardQuickControlsPanel,
             masterDashboardQuickSheetPanel,
@@ -7330,6 +7330,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 if (haPermessiMaster) () => masterItemGiftPanel(),
                 pawnGuardiansPanel,
                 masterInitiativeTrackerPanel,
+                pendingMonsterLootPanel,
                 masterDashboardPartyBoardPanel,
                 masterDashboardEnemiesPanel,
                 masterDashboardRosterPanel,
@@ -9751,6 +9752,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       await useSpineHedgehogOpen(art);
       return;
     }
+    final runicOpen = art.openName == 'Portali del nucleo';
+    final runicFight = onlineCombatEncounterId;
+    final runicOwner = schedePersonaggio[schedaCorrente];
+    if (runicOpen &&
+        runicFight.isNotEmpty &&
+        runicOwner['runicOpenUsedEncounter'] == runicFight) {
+      aggiungiLog('Portali del nucleo: già usato in questo fight.');
+      return;
+    }
     if (art.descrizione.startsWith('Art del ')) {
       await resolveBalancedOpen(art, activation: false);
       return;
@@ -9779,7 +9789,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           cooldown: cooldown,
           valid: () => arti.contains(art) && art.openAttiva,
         );
-        if (used && mounted) await finishParsedAbilityTargets(art.openSkill);
+        if (used && mounted) {
+          if (runicOpen && runicFight.isNotEmpty) {
+            runicOwner['runicOpenUsedEncounter'] = runicFight;
+          }
+          await finishParsedAbilityTargets(art.openSkill);
+        }
         return;
       }
     }

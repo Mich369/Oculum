@@ -35,7 +35,7 @@ const _witheredConstructWhiteLarvaEntries = [
     nameIt: 'Larva Bianca',
     nameEn: 'White Larva',
     descIt:
-        'Grado 0–I. Resilienza 1, Volontà 2, Materia 0, Oculum 0. Mosse senza costo con cooldown. Assalto prepara +5/+15/+45 Danni più Oculum (×1,5 nella seconda forma, ×2 nella terza). Infestazione genera una nidiata: 1d100 / 1d200+20 / 1d250+100 larve da 1 Vita, una sacrificata per danno e visibile in una barra rossa. Scavata permette fuga su Velo oppure attacco con svantaggio alto al difensore. Un 20 naturale sul Drop rilascia una scroll Nidiata; l’apprendimento dalla scroll resta raro.',
+        'Grado 0–I. Resilienza 1, Volontà 2, Materia 0, Oculum 0. Il punto debole è il ventre, sul lato inferiore esposto mentre striscia. Mosse senza costo con cooldown. Assalto prepara +5/+15/+45 Danni più Oculum (×1,5 nella seconda forma, ×2 nella terza). Infestazione genera una nidiata: 1d100 / 1d200+20 / 1d250+100 larve da 1 Vita, una sacrificata per danno e visibile in una barra rossa. Scavata permette fuga su Velo oppure attacco con svantaggio alto al difensore. Un 20 naturale sul Drop rilascia una scroll Nidiata; l’apprendimento dalla scroll resta raro.',
     descEn: 'Grade 0–I larva with free cooldown moves and a sacrificial brood.',
     elementId: 'fisico',
     spriteAssetPath: '',

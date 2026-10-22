@@ -8,6 +8,25 @@ class OculumPerformanceProbe {
   final _OculumHomePageState _state;
 
   String currentTag() => _state.sheetTagAt(_state.schedaCorrente);
+  Future<bool> utilitySpend(String resource) =>
+      _state.requestUtilitySpend(resource);
+  Future<bool> spendCombatRoll() => _state.spendCombatRollResource();
+  Map<String, dynamic> turnResourceTestPacket(String id) {
+    final tag = currentTag();
+    final packet = <String, dynamic>{
+      'id': id,
+      'kind': 'help',
+      'helpMode': 'turn_resource',
+      'encounterId': _state.onlineCombatEncounterId,
+      'sourceTag': tag,
+      'targetTag': tag,
+      'sourceName': _state.realtimeDisplayName(),
+      'helpBonus': 0,
+    };
+    _state.attachPendingCombatTurnResources(packet);
+    return _state.permissionEnvelope(packet);
+  }
+
   Map<String, int> itemBonuses(InventoryItem item) =>
       _state.itemQuickBonuses(item);
   bool canEquip(InventoryItem item) => _state.canEquipInventoryItem(item);
@@ -34,6 +53,10 @@ class OculumPerformanceProbe {
   };
   void encounterRewards(List<Map<String, dynamic>> rewards) =>
       _state.receiveEncounterRewards(rewards);
+  bool dustExperience(String subtraitId, int die) =>
+      _state.useAscensionDustForExperience(subtraitId, die: die);
+  List<String> highestDustSubtraits() =>
+      _state.dustExperienceHighestSubtraits().map((stat) => stat.id).toList();
   void masterRollRequests(Map<String, dynamic> group) =>
       _state.receiveMasterRollRequests(group);
   void shopType(String type) => _state.selectMerchantShop(type);
@@ -70,6 +93,9 @@ class OculumPerformanceProbe {
     spentResources: spentResources,
   );
   int movement() => _state.movimento();
+  int maximumHp() => _state.maxHp();
+  int maximumTemporaryHp() => _state.thresholdTemporaryHpLimit();
+  String difficulty() => _state.normalizedCampaignDifficulty();
   int damageTotal() => _state.dannoTotale();
   bool consumeNextAttackEffects() =>
       _state.consumeNextAttackStructuredEffects();
@@ -120,8 +146,36 @@ class OculumPerformanceProbe {
   Future<void> useScroll(InventoryItem item) =>
       _state.useMerchantConsumable(item);
   int defense() => _state.difesa();
+  void refillStatsAndHealth() => _state.refullVita();
+  bool activateNurseBuff() => _state.activateHeroicNurseBuffForCurrentBattle();
+  List<Map<String, dynamic>> structuredEffects() =>
+      List<Map<String, dynamic>>.from(
+        _state.activeStructuredEffects.map(
+          (effect) => Map<String, dynamic>.from(effect),
+        ),
+      );
   String incomingDamagePreset(String element) =>
       _state.configuredIncomingDamagePreset(element);
+  double corruptionResistance() => _state.currentCorruptionResistancePercent();
+  double corruptionResistanceForSheet(Map<String, dynamic> sheet) =>
+      _state.oculumCorruptionResistanceInSheet(sheet);
+  void queueCorruption({
+    required String targetTag,
+    required int sourceLevel,
+    required int sourceTotal,
+    String requestId = 'test-corruption',
+  }) => _state.queueCorruptionApplication(
+    targetTag: targetTag,
+    scrollGrade: 12,
+    sourceTag: 'corruption-source',
+    sourceName: 'Fonte Corruzione',
+    sourceTotal: sourceTotal,
+    sourceLevel: sourceLevel,
+    requestId: requestId,
+  );
+  Widget corruptionRequests() => _state.onlineCombatRequestsPanel();
+  Future<void> resistCorruption(Map<String, dynamic> request, String choice) =>
+      _state.defendCorruptionApplication(request, choice);
   Widget dicePanel() => _state.sheetDiceRollPanel(dense: true);
   Widget subtraitsPanel() => _state.referenceSubtraitsPanel();
   void resetEncounter() => _state.resetMasterInitiativeRound();
@@ -178,6 +232,9 @@ class OculumPerformanceProbe {
   Future<void> requestPlayerSheets() => _state.requestRealtimePlayerSheets();
   Future<void> sendCurrentSheet() => _state.sendRealtimeCurrentSheetManually();
   void recordCurrentEncounter() => _state.captureActiveMasterInitiativeGroup();
+  Future<void> finishEncounter(String id, {Random? random}) =>
+      _state.finishEncounter(id, random: random);
+  bool ensureSheetTags() => _state.assicuraTagSchede();
   Future<void> syncOwnedStaffSheets() =>
       _state.sendRealtimeActiveSheetToStaff();
   Future<void> joinMasterEncounter(Map<String, dynamic> group) =>
@@ -190,9 +247,19 @@ class OculumPerformanceProbe {
       _state.receiveRealtimeSharedSheet(payload);
   List<String> ownedPresenceTags() => _state.ownedOculumTags();
   Widget combatRequestsPanel() => _state.onlineCombatRequestsPanel();
+  void claimVampirism(Map<String, dynamic> request) =>
+      _state.claimOnlineVampirism(request);
+  bool recordCorruptionHit(Map<String, dynamic> request) =>
+      _state.recordCorruptionMasteryHit(request);
+  String corruptor(Map<String, dynamic> token) =>
+      _state.corruptionOwnerForToken(token);
+  int corruptionControlChance(Map<String, dynamic> token) =>
+      _state.corruptionControlChanceForToken(token);
   Widget combatAbilityBar() => _state.combatAbilityQuickBar();
   Future<void> openCombatActionPanel(OculumCombatAbilityRole role) =>
       _state.showCombatActionPanel(role);
+  Future<void> requestDefenseRetry(Map<String, dynamic> request) =>
+      _state.requestDefenseRetry(request);
   Future<void> useCombatRoll(OculumCombatAbilityRole role) =>
       _state.useCombatRoll(role);
   Color combatAbilityColor(String resource) =>
@@ -325,7 +392,6 @@ class OculumPerformanceProbe {
   int hpMultiplier() => _state.moltiplicatoreHp();
   int outgoingDamage() => _state.dannoTotale();
   String damageFormula() => _state.formulaDannoDettagliata();
-  int maximumHp() => _state.maxHp();
   Map<String, num> formulaContext() => _state.formulaValueContext();
   InventoryItem merchantItem(
     Map<String, dynamic> offer, {

@@ -1048,6 +1048,8 @@ class OculumRealtimeService {
         event != 'combat_help' &&
         event != 'combat_ack' &&
         event != 'combat_scout' &&
+        event != 'corruption_apply' &&
+        event != 'corruption_target' &&
         event != 'initiative_control') {
       throw ArgumentError('Evento combattimento non supportato');
     }
@@ -1401,7 +1403,8 @@ class OculumRealtimeService {
             .from('oculum_room_members')
             .select('user_id,display_name')
             .eq('room_id', _secureRoomId!)
-            .eq('status', 'pending');
+            .eq('status', 'pending')
+            .timeout(const Duration(seconds: 10));
         if (stale()) return;
         for (final request in pending) {
           final userId = '${request['user_id']}';
@@ -1450,7 +1453,8 @@ class OculumRealtimeService {
           .select('event,payload,sequence')
           .eq('room_id', _secureRoomId!)
           .eq('id', id)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 10));
       if (_disposed ||
           _channel != channel ||
           record == null ||
@@ -1486,7 +1490,8 @@ class OculumRealtimeService {
         .gt('sequence', _replaySequence)
         .gte('created_at', _replaySince)
         .order('sequence')
-        .limit(200);
+        .limit(200)
+        .timeout(const Duration(seconds: 10));
     for (final record in records) {
       if (_disposed || _generation != generation || _channel != channel) return;
       final id = '${record['id']}';
@@ -1524,7 +1529,8 @@ class OculumRealtimeService {
           .eq('event', 'initiative_shared')
           .order('sequence', ascending: false)
           .limit(1)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 10));
       if (_disposed || _generation != generation || _channel != channel) {
         return false;
       }
@@ -1620,10 +1626,9 @@ class OculumRealtimeService {
     }
 
     try {
-      final data = await (_client ?? Supabase.instance.client).rpc(
-        'oculum_room_presence',
-        params: {'p_room': _secureRoomId},
-      );
+      final data = await (_client ?? Supabase.instance.client)
+          .rpc('oculum_room_presence', params: {'p_room': _secureRoomId})
+          .timeout(const Duration(seconds: 10));
       if (_disposed || _generation != generation || _channel != channel) return;
       final users = (data as List)
           .whereType<Map>()

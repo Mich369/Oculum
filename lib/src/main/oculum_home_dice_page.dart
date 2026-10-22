@@ -84,10 +84,14 @@ extension _OculumHomeDicePage on _OculumHomePageState {
     );
     final modificatoreManuale = int.tryParse(diceModifierController.text) ?? 0;
     final modificatoreGlobale = tiroGlobaleBonus();
+    final bonusAiuto = consumeCombatHelp();
+    final bonusReazioniInutilizzate = consumePendingReactionRollBonus();
     final difficulty = difficoltaTiro();
     final modificatore =
         modificatoreManuale +
         modificatoreGlobale +
+        bonusAiuto +
+        bonusReazioniInutilizzate +
         modificatoreDifficoltaTiro();
     final tiriConCritico = <String>[];
 
@@ -121,6 +125,12 @@ extension _OculumHomeDicePage on _OculumHomePageState {
     final testoGlobale = modificatoreGlobale == 0
         ? ''
         : ' (${t('mod. globale', 'global mod')} ${signedRollPart(modificatoreGlobale)})';
+    final testoBonusReazioni = bonusReazioniInutilizzate == 0
+        ? ''
+        : ' (${t('reazioni residue', 'unused reactions')} +$bonusReazioniInutilizzate)';
+    final testoAiuto = bonusAiuto == 0
+        ? ''
+        : ' (${t('aiuto compagno', 'ally help')} ${signedRollPart(bonusAiuto)})';
     final testoDt = difficulty == 0
         ? ''
         : ' (DT ${signedRollPart(difficulty)})';
@@ -143,8 +153,10 @@ extension _OculumHomeDicePage on _OculumHomePageState {
       tiroCriticoUno = criticoUno;
       tiroCriticoVenti = criticoMax;
       risultato =
-          '${t('Lancio', 'Roll')} ${quantita}d$facce: $formulaDadi$testoMod = $finale$testoCritico$testoGlobale$testoDt$zeroOutcome';
-      aggiungiLog(risultato);
+          '${t('Lancio', 'Roll')} ${quantita}d$facce: $formulaDadi$testoMod = $finale$testoCritico$testoGlobale$testoAiuto$testoBonusReazioni$testoDt$zeroOutcome';
+      aggiungiLog(
+        oculumResolvedRollLog(label: '${quantita}d$facce', total: finale),
+      );
     });
     notifyDiceResultChanged();
     registerValidRoll();

@@ -1,5 +1,14 @@
 import 'dart:math';
 
+bool oculumIsDoubleCritical({
+  required int natural,
+  required int total,
+  required int opposingTotal,
+}) => natural == 20 && total > 0 && total >= max(1, opposingTotal) * 2;
+
+int oculumDoubleCriticalDamageBonus(int level, int grade) =>
+    max(2, max(0, level) * 3 + grade.clamp(0, 12) * 6);
+
 /// Shared attack/defense rule, including the explicit Oculum tie exception.
 enum OculumAttackOutcome {
   avoided('Evitato'),

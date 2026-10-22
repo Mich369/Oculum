@@ -2,6 +2,39 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+double oculumOnlineVampirismDifficultyFactor(String difficulty) =>
+    switch (normalizeTemporaryOculumDifficulty(difficulty)) {
+      'facile' => 1.25,
+      'difficile' => .75,
+      'oculum' => .5,
+      _ => 1,
+    };
+
+int oculumOnlineVampirismHealing({
+  required int confirmedHpDamage,
+  required int maximumHp,
+  required int stage,
+  required String difficulty,
+  double percentPerStage = 3,
+  double maxHpPercentPerStage = 3,
+  double? difficultyFactor,
+}) {
+  if (confirmedHpDamage <= 0 || maximumHp <= 0 || stage <= 0) return 0;
+  final factor = max(
+    0.0,
+    difficultyFactor ?? oculumOnlineVampirismDifficultyFactor(difficulty),
+  );
+  final rank = stage.clamp(1, 12);
+  final fraction = max(0.0, percentPerStage) * rank * factor / 100;
+  final cap = (maximumHp * max(0.0, maxHpPercentPerStage) * rank * factor / 100)
+      .floor();
+  if (fraction <= 0 || cap <= 0) return 0;
+  return min(
+    confirmedHpDamage,
+    min(cap, max(1, (confirmedHpDamage * fraction).floor())),
+  );
+}
+
 extension _OculumHomeQuickConditions on _OculumHomePageState {
   Future<void> showReportedHitDialog() async {
     final baseController = TextEditingController(text: '0');
@@ -112,10 +145,17 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
                             totalDamage: total,
                             damageType: type,
                           );
-                          applyVampirismHealing(
-                            damage: total,
-                            source: '$formula $type',
-                          );
+                          if (realtimeService?.isConnected == true &&
+                              currentCombatIsActive()) {
+                            aggiungiLog(
+                              '[VAMPIRISMO] Online la cura è automatica alla ricevuta dei danni: Colpito manuale non assegna altra Vita.',
+                            );
+                          } else {
+                            applyVampirismHealing(
+                              damage: total,
+                              source: '$formula $type',
+                            );
+                          }
                         });
                         Navigator.pop(dialogContext);
                       },
@@ -378,6 +418,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       case 'veleno_putrido':
       case 'sanguinamento':
       case 'bruciatura':
+      case 'corrosione_acida':
         return '-${calculateConditionEffect(instance)} HP / tick';
     }
     final modifierMap = instance.metadata['modifiers'];
@@ -1406,6 +1447,15 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     OculumConditionInstance instance, {
     int? referenceValue,
   }) {
+    if (instance.conditionType == 'corrosione_acida') {
+      return max(
+        0,
+        readIntValue(
+          instance.metadata['acidDamage'],
+          fallback: const [2, 3, 6][instance.stage.clamp(1, 3) - 1],
+        ),
+      );
+    }
     final definition = oculumConditionDefinition(instance.conditionType);
     final basePercent =
         definition?.percentForStage(instance.stage) ??
@@ -1649,6 +1699,26 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       result -= 3;
     }
     return result.round();
+  }
+
+  int conditionSubtraitBonus(String id) {
+    if (id != 'velo') return 0;
+    final level = max(0, leggiNumero(livelloController));
+    var bonus = 0;
+    for (final condition in activeConditions) {
+      if (condition.conditionType != 'trasparenza' &&
+          condition.conditionType != 'invisibile') {
+        continue;
+      }
+      final base = condition.conditionType == 'invisibile' ? 18 : 6;
+      final value =
+          readIntValue(condition.metadata['veilBaseBonus'], fallback: base) +
+          (readBoolValue(condition.metadata['veilAddLevel'], fallback: true)
+              ? level
+              : 0);
+      bonus = max(bonus, value);
+    }
+    return bonus;
   }
 
   int conditionShieldDamageBonusPercent() {
@@ -2451,7 +2521,8 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       if (instance.tickTrigger == trigger &&
           (instance.conditionType == 'veleno_putrido' ||
               instance.conditionType == 'sanguinamento' ||
-              instance.conditionType == 'bruciatura')) {
+              instance.conditionType == 'bruciatura' ||
+              instance.conditionType == 'corrosione_acida')) {
         applyDirectConditionDamage(
           instance,
           calculateConditionEffect(instance),
@@ -3179,8 +3250,31 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       text:
           '${(current['modifiers'] is Map ? (current['modifiers'] as Map).values.firstOrNull : null) ?? 0}',
     );
+    final specialValue = TextEditingController(
+      text:
+          '${current['veilBaseBonus'] ?? instance?.metadata['veilBaseBonus'] ?? current['acidDamage'] ?? instance?.metadata['acidDamage'] ?? (type == 'invisibile'
+                  ? 18
+                  : type == 'trasparenza'
+                  ? 6
+                  : 2)}',
+    );
     final affectedTargets = <OculumConditionTarget>{
       ...?definition?.affectedTargets,
+    };
+    final vampirismConfig = {...current, ...?instance?.metadata};
+    final vampirismFactors = vampirismConfig['onlineDifficultyFactors'];
+    final vampirismControllers = <String, TextEditingController>{
+      'onlinePercentPerStage': TextEditingController(
+        text: '${vampirismConfig['onlinePercentPerStage'] ?? 3}',
+      ),
+      'onlineMaxHpPercentPerStage': TextEditingController(
+        text: '${vampirismConfig['onlineMaxHpPercentPerStage'] ?? 3}',
+      ),
+      for (final difficulty in ['facile', 'normale', 'difficile', 'oculum'])
+        difficulty: TextEditingController(
+          text:
+              '${vampirismFactors is Map ? vampirismFactors[difficulty] ?? oculumOnlineVampirismDifficultyFactor(difficulty) : oculumOnlineVampirismDifficultyFactor(difficulty)}',
+        ),
     };
     if (instance != null) {
       affectedTargets.addAll(conditionTargetsFor(instance));
@@ -3282,6 +3376,55 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
                       ),
                     ),
                   ),
+                  if (const {
+                    'trasparenza',
+                    'invisibile',
+                    'corrosione_acida',
+                  }.contains(type))
+                    TextField(
+                      controller: specialValue,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: type == 'corrosione_acida'
+                            ? 'Danni diretti per turno'
+                            : 'Bonus base Velo · si aggiunge il livello',
+                      ),
+                    ),
+                  if (type == 'vampirismo') ...[
+                    TextField(
+                      controller: vampirismControllers['onlinePercentPerStage'],
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText:
+                            'Cura online · % della Vita sottratta per stadio',
+                      ),
+                    ),
+                    TextField(
+                      controller:
+                          vampirismControllers['onlineMaxHpPercentPerStage'],
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText:
+                            'Limite per attacco · % Vita massima per stadio',
+                      ),
+                    ),
+                    for (final difficulty in [
+                      'facile',
+                      'normale',
+                      'difficile',
+                      'oculum',
+                    ])
+                      TextField(
+                        controller: vampirismControllers[difficulty],
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          labelText:
+                              'Fattore ${campaignDifficultyLabel(difficulty)}',
+                        ),
+                      ),
+                  ],
                 ],
               ),
             ),
@@ -3298,6 +3441,45 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
                     double.tryParse(modifier.text.replaceAll(',', '.')) ?? 0;
                 Navigator.pop(context, <String, dynamic>{
                   'nameIt': name.text.trim(),
+                  if (type == 'vampirismo') ...{
+                    'onlinePercentPerStage': max(
+                      0.0,
+                      double.tryParse(
+                            vampirismControllers['onlinePercentPerStage']!.text
+                                .replaceAll(',', '.'),
+                          ) ??
+                          3,
+                    ),
+                    'onlineMaxHpPercentPerStage': max(
+                      0.0,
+                      double.tryParse(
+                            vampirismControllers['onlineMaxHpPercentPerStage']!
+                                .text
+                                .replaceAll(',', '.'),
+                          ) ??
+                          3,
+                    ),
+                    'onlineDifficultyFactors': {
+                      for (final difficulty in [
+                        'facile',
+                        'normale',
+                        'difficile',
+                        'oculum',
+                      ])
+                        difficulty: max(
+                          0.0,
+                          double.tryParse(
+                                vampirismControllers[difficulty]!.text
+                                    .replaceAll(',', '.'),
+                              ) ??
+                              oculumOnlineVampirismDifficultyFactor(difficulty),
+                        ),
+                    },
+                  },
+                  if (type == 'trasparenza' || type == 'invisibile')
+                    'veilBaseBonus': readIntValue(specialValue.text),
+                  if (type == 'corrosione_acida')
+                    'acidDamage': max(0, readIntValue(specialValue.text)),
                   'nameEn': name.text.trim(),
                   'descriptionIt': description.text.trim(),
                   'descriptionEn': description.text.trim(),
@@ -3328,7 +3510,9 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       description,
       baseDuration,
       modifier,
+      specialValue,
       ...difficultyControllers.values,
+      ...vampirismControllers.values,
     ]) {
       controller.dispose();
     }

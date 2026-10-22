@@ -34,6 +34,7 @@ void main() {
               skill.oculumMinimoPerLivello(form),
               art.tipo == 'Capacità Pawn' ||
                       monster.id == 'larva_bianca' ||
+                      text.contains('Nessun costo') ||
                       skill
                           .tipoPerLivello(form)
                           .toLowerCase()

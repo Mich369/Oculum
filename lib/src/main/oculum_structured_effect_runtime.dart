@@ -3,6 +3,67 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 extension _OculumStructuredEffectRuntime on _OculumHomePageState {
+  bool activateHeroicNurseBuffForCurrentBattle() {
+    final pending = heroicNursePendingBattleBuff;
+    if (pending == null || !readBoolValue(pending['pending'])) return false;
+    if (!currentCombatIsActive()) return false;
+    final difficulty = normalizedCampaignDifficulty();
+    final rawDurations = pending['difficultyDurations'];
+    final durations = rawDurations is Map
+        ? Map<String, dynamic>.from(rawDurations)
+        : const <String, dynamic>{};
+    final duration = max(
+      1,
+      readIntValue(
+        durations[difficulty],
+        fallback: oculumNurseBuffDuration(difficulty),
+      ),
+    );
+    final damagePercent = readIntValue(
+      pending['damagePercent'],
+    ).clamp(0, 100).toInt();
+    final defensePercent = readIntValue(
+      pending['defensePercent'],
+    ).clamp(0, 100).toInt();
+    final source = 'Infermiera Eroica · Refull';
+    activeStructuredEffects.removeWhere(
+      (effect) => '${effect['source'] ?? ''}' == source,
+    );
+    for (final entry in <({String type, String target, int value})>[
+      (
+        type: 'danno_percentuale',
+        target: 'danni_percentuale',
+        value: damagePercent,
+      ),
+      (
+        type: 'difesa_percentuale',
+        target: 'difesa_percentuale',
+        value: defensePercent,
+      ),
+    ]) {
+      if (entry.value <= 0) continue;
+      activeStructuredEffects.add(<String, dynamic>{
+        'id':
+            'heroic_nurse_${entry.target}_${DateTime.now().microsecondsSinceEpoch}',
+        'type': entry.type,
+        'target': entry.target,
+        'value': entry.value,
+        'remaining': duration,
+        'unit': 'turni',
+        'source': source,
+        'mode': 'temporaneo',
+      });
+    }
+    heroicNursePendingBattleBuff = null;
+    invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+    aggiungiLog(
+      '[INFERMIERA EROICA] Refull attivato per la prossima battaglia: +$damagePercent% Danni e +$defensePercent% Difesa per $duration turni (${campaignDifficultyLabel()}).',
+    );
+    programmaSalvataggio(invalidateCaches: false);
+    if (mounted) unawaited(sendRealtimeActiveSheetToStaff());
+    return true;
+  }
+
   bool removeActiveStructuredEffectsForSourcePrefix(String rawPrefix) {
     final prefix = rawPrefix.trim();
     if (prefix.isEmpty) return false;
@@ -77,6 +138,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         'danno',
         'danno_percentuale',
         'difesa',
+        'difesa_percentuale',
         'modifica_statistica',
         'modifica_sottotratto',
         'velocita',
@@ -146,6 +208,19 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
       if (due) {
         final value = readIntValue(effect['value']);
         switch ('${effect['type'] ?? ''}') {
+          case 'rimuovi_vita':
+            final before = hpCorrenti();
+            currentHpController.text = max(0, before - value.abs()).toString();
+            checkAutomaticAshFromHpLoss(
+              before,
+              hpCorrenti(),
+              source: '${effect['source'] ?? 'Effetto periodico'}',
+            );
+            aggiungiLog(
+              '[DANNO PERIODICO] ${effect['source']}: -${before - hpCorrenti()} Vita, oltre Difesa e Scudi.',
+            );
+            sendRealtimeHpChanged();
+            break;
           case 'cura':
             applyStructuredHealing('${effect['resource'] ?? 'vita'}', value);
             break;
@@ -201,6 +276,11 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
   }) {
     final messages = <String>[];
     final variables = formulaValueContext();
+    final resolvedVariables = <String, num>{
+      ...variables,
+      'hp_max': maxHp(),
+      'hp_current': hpCorrenti(),
+    };
     final resolvedLevel = max(0, level ?? activeCriticalLevel());
     final resolvedGrade = max(0, grade ?? activeCriticalGrade());
     int? slimeBounces;
@@ -236,10 +316,12 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         }
         final effectVariables = isAreaDamage
             ? <String, num>{
-                ...variables,
+                ...resolvedVariables,
                 'danni': max(0, dannoTotaleBaseSenzaComandi()),
+                if (effect.id.startsWith('goblin_kamikaze_explosion_'))
+                  'hp': maxHp(),
               }
-            : variables;
+            : resolvedVariables;
         final roll = oculumResolveStructuredEffectRoll(
           effectForRoll,
           variables: effectVariables,
@@ -250,7 +332,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         );
         final negative =
             effect.mode == 'diminuzione' || effect.type.startsWith('rimuovi_');
-        final value = negative ? -roll.value.abs() : roll.value;
+        var value = negative ? -roll.value.abs() : roll.value;
         final duration = max(0, roll.baseDuration + roll.durationBonus);
         final effectTarget = oculumStructuredEffectTargetKey(effect);
         final target = effect.type == 'stato'
@@ -260,6 +342,42 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             : normalizedStructuredTarget(
                 effectTarget.isNotEmpty ? effectTarget : effect.target,
               );
+        final corruptionOwnerTag =
+            effect.resource.startsWith('corruption_mastery:')
+            ? effect.resource.substring('corruption_mastery:'.length)
+            : '';
+        if (effect.type == 'stato' &&
+            target == 'corruzione' &&
+            effect.recipient == 'se_stesso') {
+          final marker = effect.resource.split(':');
+          final scrollGrade = marker.length > 1
+              ? max(0, int.tryParse(marker[1]) ?? 0)
+              : resolvedGrade;
+          var chance = marker.first == 'corruption_scroll'
+              ? oculumCorruptionScrollChance(
+                  scrollGrade: scrollGrade,
+                  targetGrade: activeCriticalGrade(),
+                )
+              : 100;
+          final resistance = currentCorruptionResistancePercent();
+          if (resistance > 0) {
+            chance = oculumCorruptionChanceAfterResistance(
+              chancePercent: chance,
+              resistancePercent: resistance,
+            );
+          }
+          final corruptionRoll = Random.secure().nextInt(100) + 1;
+          if (corruptionRoll > chance) {
+            messages.add(
+              'Corruzione resistita: d100 $corruptionRoll > $chance%.',
+            );
+            continue;
+          }
+          value = 1;
+          messages.add(
+            'Corruzione: d100 $corruptionRoll ≤ $chance%${resistance > 0 ? ' dopo la resistenza totale $resistance%' : ''}.',
+          );
+        }
         final frequency = effect.mode == 'prossima_azione'
             ? 0
             : oculumStructuredEffectFrequency(effect.frequency);
@@ -285,6 +403,11 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             ..diceExpression = ''
             ..includeLevel = false
             ..includeGrade = false;
+          if (effect.id.startsWith('corrosive_acid_spit_') &&
+              effect.duration == '3') {
+            frozen.duration =
+                '${oculumAcidSpitDuration(normalizedCampaignDifficulty())}';
+          }
           if (!effect.stackable) {
             activeStructuredEffects.removeWhere(
               (e) =>
@@ -331,7 +454,51 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         }
 
         switch (effect.type) {
+          case 'esperienza_dust':
+            for (final key in ['resilienza', 'volonta', 'materia', 'oculum']) {
+              esperienzaCriticaStatistiche[key] =
+                  max(0, esperienzaCriticaStatistiche[key] ?? 0) +
+                  max(0, value);
+            }
+            final eligible = dustExperienceHighestSubtraits();
+            if (eligible.isNotEmpty) {
+              oculusSubtraitMasteryApplyGain(eligible.first, max(0, value));
+            }
+            applicaEsperienzaFlat(
+              max(0, readIntValue(effect.resource)),
+              motivo: 'Espansione Ascension Dust',
+            );
+            notifyActiveSheetSummaryChanged();
+            break;
           case 'evocazione':
+            if (normalizedStructuredTarget(effect.target) ==
+                'patalpa_compagno') {
+              final summonIndex = createPatalpaCompanionSheet(source: source);
+              if (summonIndex < 0) {
+                messages.add(
+                  'Il Patalpa non può essere richiamato: è già presente nello scontro o manca la scheda evocatrice.',
+                );
+              } else {
+                messages.add(
+                  'Un Patalpa del livello dell’evocatore si unisce al fight.',
+                );
+              }
+              continue;
+            }
+            if (normalizedStructuredTarget(effect.target) ==
+                'un_vecchio_amore') {
+              final summonIndex = createDeadKnightOldLoveSheet(source: source);
+              if (summonIndex < 0) {
+                messages.add(
+                  'Un vecchio amore non può essere richiamato: abilità già usata nello scontro o scheda del Cavaliere Morto assente.',
+                );
+              } else {
+                messages.add(
+                  'Un vecchio amore si erge dal terreno: ${schedePersonaggio[summonIndex]['nome']}.',
+                );
+              }
+              continue;
+            }
             if (normalizedStructuredTarget(effect.target) != 'clone_ombra') {
               messages.add('Evocazione non riconosciuta: ${effect.target}.');
               continue;
@@ -408,6 +575,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             }
             break;
           case 'rimuovi_vita':
+            if (isPeriodic) break;
             final hpBeforeRemoval = hpCorrenti();
             currentHpController.text = max(0, hpCorrenti() + value).toString();
             checkAutomaticAshFromHpLoss(
@@ -494,7 +662,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             } else {
               final applied = applyCondition(
                 target,
-                stage: max(1, value.abs()),
+                stage: target == 'corrosione_acida' ? 1 : max(1, value.abs()),
                 duration: duration > 0 ? duration : null,
                 durationType: switch (oculumTurnUnit(effect.durationUnit)) {
                   'tiri' => OculumConditionDurationType.rolls,
@@ -504,7 +672,16 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
                   _ => OculumConditionDurationType.turns,
                 },
                 source: source,
-                metadata: effect.resource == 'oculum_upkeep'
+                metadata: target == 'corrosione_acida'
+                    ? {'acidDamage': value.abs(), 'element': 'acido'}
+                    : target == 'corruzione'
+                    ? {
+                        if (corruptionOwnerTag.isNotEmpty)
+                          'corruptedByTag': corruptionOwnerTag,
+                        'targetControlChancePercent':
+                            oculumCorruptionMasteryTargetControlPercent,
+                      }
+                    : effect.resource == 'oculum_upkeep'
                     ? {
                         'oculumUpkeep': max(
                           1,
@@ -618,6 +795,13 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     required int hp,
     required int duration,
     required String source,
+    String? displayName,
+    bool asSummon = false,
+    bool copyResilience = false,
+    int? summonExpMultiplier,
+    List<CharacterSkill> summonSkills = const [],
+    String summonDescription = '',
+    String summonKind = '',
   }) {
     if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
       return -1;
@@ -628,7 +812,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     final level = max(0, readIntValue(owner['livello']));
     final grade = max(0, readIntValue(owner['grado']));
     final clone = statoVuotoPersonaggio(
-      nome: 'Clone d’ombra di ${nomeSchedaPersonaggio(schedaCorrente)}',
+      nome:
+          displayName ??
+          'Clone d’ombra di ${nomeSchedaPersonaggio(schedaCorrente)}',
       tipo: 'Evocazione',
       livello: level,
       grado: grade,
@@ -668,9 +854,13 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     }
     // Resilience is intentionally independent. The explicit HP value is
     // preserved exactly through the ordinary HP calculation and JSON save.
-    clone['resilienza'] = '1';
-    clone['currentResilienza'] = '1';
-    clone['tempResilienza'] = 0;
+    clone['resilienza'] = copyResilience ? '${owner['resilienza'] ?? 0}' : '1';
+    clone['currentResilienza'] = copyResilience
+        ? '${owner['currentResilienza'] ?? owner['resilienza'] ?? 0}'
+        : '1';
+    clone['tempResilienza'] = copyResilience
+        ? readIntValue(owner['tempResilienza'])
+        : 0;
     clone['currentHp'] = '$hp';
     clone['hpTemp'] = '0';
     clone['scudo'] = '0';
@@ -678,14 +868,33 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     clone['manualHpMaximumAdjustment'] = hp - oculumHpMultiplierForGrade(grade);
     clone['derivedMaxHp'] = hp;
     clone['hpGradeMultiplier'] = oculumHpMultiplierForGrade(grade);
-    clone['oculumShadowClone'] = true;
+    clone['oculumShadowClone'] = !asSummon;
     clone['shadowCloneOwnerTag'] = ownerTag;
     clone['shadowCloneSource'] = source;
     clone['shadowCloneTurnsRemaining'] = duration;
     clone['shadowCloneExpired'] = false;
+    if (asSummon) {
+      final summonId = 'summon_${DateTime.now().microsecondsSinceEpoch}';
+      clone
+        ..['isSummon'] = true
+        ..['summonInstanceId'] = summonId
+        ..['summonerTag'] = ownerTag
+        ..['summonExpMultiplier'] = (summonExpMultiplier ?? 1).clamp(1, 10)
+        ..['summonEncounterId'] = onlineCombatEncounterId.isNotEmpty
+            ? onlineCombatEncounterId
+            : selectedMasterInitiativeGroupId
+        ..['summonExpired'] = false
+        ..['summonKind'] = summonKind
+        ..['notePersonaggio'] = summonDescription
+        ..['background'] = summonDescription
+        ..['skills'] = summonSkills.map((skill) => skill.toJson()).toList();
+      clone.remove('oculumShadowClone');
+      clone.remove('shadowCloneTurnsRemaining');
+      clone.remove('shadowCloneExpired');
+    }
     clone['countsForPartyStats'] = false;
     clone['inMasterParty'] = true;
-    clone['skills'] = <dynamic>[];
+    if (!asSummon) clone['skills'] = <dynamic>[];
     clone['arti'] = <dynamic>[];
     clone['conditions'] = <Map<String, dynamic>>[];
     clone['activeStructuredEffects'] = <Map<String, dynamic>>[];
@@ -744,7 +953,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             (item) => '${item['sheetTag'] ?? ''}' == actualTag,
             orElse: () => <String, dynamic>{},
           );
-          if (token.isNotEmpty) {
+          if (token.isNotEmpty && !asSummon) {
             token['oculumShadowClone'] = true;
             token['shadowCloneTurnsRemaining'] = duration;
           }
@@ -758,7 +967,144 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     }
     programmaSalvataggio();
     notifyActiveSheetSummaryChanged();
+    unawaited(sendRealtimeActiveSheetToStaff());
     return index;
+  }
+
+  int createDeadKnightOldLoveSheet({required String source}) {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return -1;
+    }
+    final owner = schedePersonaggio[schedaCorrente];
+    if ('${owner['monsterBookSourceId'] ?? ''}' != 'cavaliere_morto') {
+      return -1;
+    }
+    final ownerTag = sheetTagAt(schedaCorrente);
+    final fightId = onlineCombatEncounterId.isNotEmpty
+        ? onlineCombatEncounterId
+        : selectedMasterInitiativeGroupId;
+    final alreadyCalled =
+        masterInitiativeTokens.any(
+          (token) =>
+              token['summonKind'] == 'un_vecchio_amore' &&
+              '${token['summonerTag'] ?? ''}' == ownerTag,
+        ) ||
+        '${owner['deadKnightOldLoveSummonedFightId'] ?? ''}' == fightId;
+    if (alreadyCalled) return -1;
+
+    const hairColors = ['viola', 'argento', 'blu notte', 'rame', 'bianco'];
+    final hair = hairColors[Random.secure().nextInt(hairColors.length)];
+    final level = max(0, readIntValue(owner['livello']));
+    final grade = max(0, readIntValue(owner['grado']));
+    final bow = CharacterSkill(
+      nome: 'Arco della promessa',
+      tipo: 'Attacco evocazione',
+      costo: '1 azione',
+      cooldown: '1 turno',
+      descrizione:
+          'Scocca una freccia d’ombra contro un bersaglio. @Danni+${max(1, level + 5)} Ombra',
+      danni: max(1, level + 5),
+      equipaggiata: true,
+    );
+    final summonIndex = createShadowCloneSheet(
+      hp: max(1, sheetMaxHpForDeathAt(schedaCorrente)),
+      duration: 1,
+      source: source,
+      displayName: 'Un vecchio amore · capelli $hair',
+      asSummon: true,
+      copyResilience: true,
+      summonExpMultiplier: 2,
+      summonSkills: [bow],
+      summonKind: 'un_vecchio_amore',
+      summonDescription:
+          'Donna scheletrica evocata dal terreno, capelli color $hair, armatura di pelle e arco. Summon del Cavaliere Morto, livello $level, Grado $grade. Vale il doppio dell’EXP massima di una Summon. La scheda e l’abilità restano modificabili.',
+    );
+    owner['deadKnightOldLoveSummonedFightId'] = fightId;
+    if (summonIndex >= 0) {
+      schedePersonaggio[summonIndex]['summonKind'] = 'un_vecchio_amore';
+    }
+    programmaSalvataggio();
+    return summonIndex;
+  }
+
+  int createPatalpaCompanionSheet({required String source}) {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return -1;
+    }
+    final owner = schedePersonaggio[schedaCorrente];
+    final cooldown = max(
+      0,
+      readIntValue(owner['patalpaSummonCooldownFightsRemaining']),
+    );
+    if (cooldown > 0) {
+      risultato = 'Richiamo del Patalpa: cooldown di $cooldown fight.';
+      aggiungiLog(risultato);
+      notifyDiceResultChanged();
+      return -1;
+    }
+    final ownerTag = sheetTagAt(schedaCorrente);
+    final alreadyCalled = masterInitiativeTokens.any(
+      (token) =>
+          token['summonKind'] == 'patalpa_richiamo' &&
+          '${token['summonerTag'] ?? ''}' == ownerTag,
+    );
+    if (alreadyCalled) return -1;
+    final level = max(0, readIntValue(owner['livello']));
+    final grade = max(0, readIntValue(owner['grado']));
+    final attack = max(5, level + 5);
+    final skill = CharacterSkill(
+      nome: 'Palata del compagno',
+      tipo: 'Attacco evocazione',
+      costo: '1 azione',
+      cooldown: '2 turni',
+      descrizione:
+          'Una palata di radici colpisce il bersaglio. @Danni+$attack Natura',
+      danni: attack,
+      equipaggiata: true,
+    );
+    final receivesNoOculumResilienceBonus = Random.secure().nextInt(100) >= 75;
+    final summonIndex = createShadowCloneSheet(
+      hp: max(1, sheetMaxHpForDeathAt(schedaCorrente)),
+      duration: 1,
+      source: source,
+      displayName: 'Patalpa richiamato · Lv $level',
+      asSummon: true,
+      copyResilience: true,
+      summonSkills: [skill],
+      summonKind: 'patalpa_richiamo',
+      summonDescription:
+          'Patalpa evocato: livello $level, Grado $grade, alleato di ${nomeSchedaPersonaggio(schedaCorrente)} per il fight. Distribuzione base: 20% Resilienza, 50% Volontà, 30% Materia; nel 75% degli spawn non riceve il punto bonus di Resilienza per livello, nel 25% lo riceve. Il totale segue il budget di crescita del Patalpa. Il suo richiamo segue la regola EXP delle Summon: al massimo 5 + Grado per l’intero party; l’evocatore non riceve EXP salvo che il Fato renda la creatura realmente ostile.',
+    );
+    if (summonIndex >= 0 && summonIndex < schedePersonaggio.length) {
+      final stats = oculumPatalpaSummonStats(
+        level,
+        receivesNoOculumResilienceBonus: receivesNoOculumResilienceBonus,
+      );
+      final summon = schedePersonaggio[summonIndex];
+      summon
+        ..['resilienza'] = '${stats['resilienza']}'
+        ..['currentResilienza'] = '${stats['resilienza']}'
+        ..['volonta'] = '${stats['volonta']}'
+        ..['currentVolonta'] = '${stats['volonta']}'
+        ..['materia'] = '${stats['materia']}'
+        ..['currentMateria'] = '${stats['materia']}'
+        ..['oculum'] = '0'
+        ..['currentOculum'] = '0'
+        ..['patalpaSummonStatDistribution'] = <String, dynamic>{
+          'resiliencePercent': 20,
+          'willPercent': 50,
+          'matterPercent': 30,
+          'noOculumResiliencePerLevel': 1,
+          'resilienceBonusChancePercent': 25,
+          'spawnedWithResilienceBonus': receivesNoOculumResilienceBonus,
+          'level': level,
+          'stats': stats,
+        };
+      owner['patalpaSummonCooldownFightsRemaining'] = 3;
+      owner['patalpaSummonCooldownLastEncounterId'] = '';
+      programmaSalvataggio();
+    }
+    return summonIndex;
   }
 
   Future<void> _shareShadowCloneAndRequestTurn(
@@ -833,7 +1179,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
                                   '${activeStructuredEffects[index]['type'] == 'costrutto' ? '${activeStructuredEffects[index]['hp']}/${activeStructuredEffects[index]['maxHp']} Vita · ' : ''}'
                                   '${readIntValue(activeStructuredEffects[index]['value']) >= 0 ? '+' : ''}'
                                   '${activeStructuredEffects[index]['value']}'
-                                  '${activeStructuredEffects[index]['type'] == 'danno_percentuale' ? '%' : ''} - '
+                                  '${const {'danno_percentuale', 'difesa_percentuale'}.contains(activeStructuredEffects[index]['type']) ? '%' : ''} - '
                                   '${activeStructuredEffectTiming(activeStructuredEffects[index])}',
                       ),
                       if (activeStructuredEffects[index]['type'] ==

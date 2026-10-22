@@ -7,6 +7,18 @@ int oculumGatherEffortWillCost(int currentWill) =>
 
 int oculumGatherEffortTotalGrams(int normalGrams) => max(0, normalGrams) * 2;
 
+int oculumGatherOutputGrams({
+  required int baseGrams,
+  required int resourceGrade,
+  int? collectorGrade,
+}) {
+  final base = max(0, baseGrams);
+  final eligible =
+      collectorGrade != null &&
+      max(0, resourceGrade) <= max(0, collectorGrade);
+  return base * (eligible ? 2 : 1);
+}
+
 extension _OculumHomeRecipes on _OculumHomePageState {
   bool get canManageRecipes => canActWithoutMasterApproval;
 
@@ -221,6 +233,8 @@ extension _OculumHomeRecipes on _OculumHomePageState {
       label: t('Quanto prendi/spendi (kg)', 'Amount taken/spent (kg)'),
     );
     if (kg == null || !mounted) return;
+    final resourceGrade = await _chiediGradoMateriale();
+    if (resourceGrade == null || !mounted) return;
     final requested = (kg * 1000).round();
     if (requested > presaMaterialiGrammi) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -235,16 +249,65 @@ extension _OculumHomeRecipes on _OculumHomePageState {
       );
       return;
     }
+    final collectorGrade = _gatheringCollectorGrade();
+    final collected = oculumGatherOutputGrams(
+      baseGrams: requested,
+      resourceGrade: resourceGrade,
+      collectorGrade: collectorGrade,
+    );
     setState(() {
       presaMaterialiGrammi -= requested;
       risultato = t(
-        'Materiali presi: ${formatoPesoMateriali(requested)}. Presa rimasta: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
-        'Materials taken: ${formatoPesoMateriali(requested)}. Remaining capacity: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+        'Materiali di Grado $resourceGrade raccolti: ${formatoPesoMateriali(collected)}${collected > requested ? ' (Raccoglitore ×2)' : ''}. Presa consumata: ${formatoPesoMateriali(requested)}; rimasta: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+        'Grade $resourceGrade materials collected: ${formatoPesoMateriali(collected)}${collected > requested ? ' (Collector ×2)' : ''}. Capacity spent: ${formatoPesoMateriali(requested)}; remaining: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
       );
       aggiungiLog(risultato);
     });
     programmaSalvataggio();
   }
+
+  int? _gatheringCollectorGrade() {
+    final grades = inventario
+        .where((item) => item.quantita > 0)
+        .map((item) => item.craftData['gatheringCollector'])
+        .whereType<Map>()
+        .map((data) => max(0, readIntValue(data['grade'])))
+        .toList();
+    return grades.isEmpty ? null : grades.reduce(max);
+  }
+
+  Future<int?> _chiediGradoMateriale() => showDialog<int>(
+    context: context,
+    builder: (dialogContext) {
+      var grade = 0;
+      return StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(t('Grado del materiale', 'Material grade')),
+          content: DropdownButtonFormField<int>(
+            initialValue: grade,
+            decoration: InputDecoration(
+              labelText: t('Grado raccolto', 'Collected grade'),
+            ),
+            items: [
+              for (var value = 0; value <= 12; value++)
+                DropdownMenuItem(value: value, child: Text('Grado $value')),
+            ],
+            onChanged: (value) => setDialogState(() => grade = value ?? 0),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(t('Annulla', 'Cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, grade),
+              child: Text(t('Conferma', 'Confirm')),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 
   Future<void> _usaPresaMaterialiOltreILimite() async {
     final volontaDisponibile = currentSpendableStatValue('volonta');
@@ -273,6 +336,8 @@ extension _OculumHomeRecipes on _OculumHomePageState {
       ),
     );
     if (kg == null || !mounted) return;
+    final resourceGrade = await _chiediGradoMateriale();
+    if (resourceGrade == null || !mounted) return;
     final normale = (kg * 1000).round();
     if (normale > presaMaterialiGrammi) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -289,7 +354,13 @@ extension _OculumHomeRecipes on _OculumHomePageState {
     }
 
     final sforzo = normale;
-    final totale = oculumGatherEffortTotalGrams(normale);
+    final effortTotal = oculumGatherEffortTotalGrams(normale);
+    final collectorGrade = _gatheringCollectorGrade();
+    final totale = oculumGatherOutputGrams(
+      baseGrams: effortTotal,
+      resourceGrade: resourceGrade,
+      collectorGrade: collectorGrade,
+    );
     setState(() {
       presaMaterialiGrammi -= normale;
       setCurrentStatFromVisibleInput(
@@ -297,8 +368,8 @@ extension _OculumHomeRecipes on _OculumHomePageState {
         max(0, volontaTotale() - costoVolonta).toString(),
       );
       risultato = t(
-        'Oltre i limiti: ${formatoPesoMateriali(normale)} normali + ${formatoPesoMateriali(sforzo)} da sforzo = ${formatoPesoMateriali(totale)}. Volontà -$costoVolonta. Presa rimasta: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
-        'Beyond the limit: ${formatoPesoMateriali(normale)} normal + ${formatoPesoMateriali(sforzo)} from effort = ${formatoPesoMateriali(totale)}. Will -$costoVolonta. Capacity left: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+        'Oltre i limiti · Grado $resourceGrade: ${formatoPesoMateriali(normale)} normali + ${formatoPesoMateriali(sforzo)} da sforzo = ${formatoPesoMateriali(effortTotal)}${totale > effortTotal ? ' ×2 Raccoglitore' : ''} = ${formatoPesoMateriali(totale)}. Volontà -$costoVolonta. Presa rimasta: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+        'Beyond the limit · Grade $resourceGrade: ${formatoPesoMateriali(normale)} normal + ${formatoPesoMateriali(sforzo)} effort = ${formatoPesoMateriali(effortTotal)}${totale > effortTotal ? ' ×2 Collector' : ''} = ${formatoPesoMateriali(totale)}. Will -$costoVolonta. Capacity left: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
       );
       aggiungiLog(risultato);
     });

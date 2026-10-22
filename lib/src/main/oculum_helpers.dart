@@ -413,7 +413,7 @@ double oculumEnemyExpMultiplier({
     _ => 0.0,
   };
   return switch (oculumNormalizeText(source)) {
-    'boss' => 1.5 + delta,
+    'boss' => 2.0 + delta,
     'miniboss' || 'mini boss' => 1.3 + delta,
     _ => 1.0,
   };
@@ -1281,6 +1281,8 @@ const Map<String, String> oculumElementAliases = <String, String>{
   'corrotto': 'corrotto',
   'corrotta': 'corrotto',
   'corrupted': 'corrotto',
+  'corruzione': 'corrotto',
+  'corruption': 'corrotto',
   'nonmorto': 'nonmorto',
   'nonmorta': 'nonmorto',
   'undead': 'nonmorto',

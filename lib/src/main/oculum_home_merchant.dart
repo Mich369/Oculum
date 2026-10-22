@@ -1,5 +1,207 @@
 part of '../../main.dart';
 
+int oculumNurseHpRecoveryCost(int missingHp) => (max(0, missingHp) + 9) ~/ 10;
+
+int oculumNurseOculumShieldRecoveryCost(int missingShield) =>
+    max(0, missingShield) * 2;
+
+const List<int> oculumNurseStandardBuffPercents = <int>[10, 15, 20, 25, 30];
+
+int oculumNurseBuffPercentFromRoll({
+  required int percentileRoll,
+  required int selectionRoll,
+  int jackpotChancePercent = 1,
+  List<int> jackpotValues = const <int>[40, 60],
+  List<int> standardValues = oculumNurseStandardBuffPercents,
+}) {
+  if (percentileRoll.clamp(0, 99) < jackpotChancePercent.clamp(0, 100)) {
+    final rare = jackpotValues.where((value) => value > 30).toList();
+    if (rare.isNotEmpty) return rare[selectionRoll.abs() % rare.length];
+    return selectionRoll.isEven ? 40 : 60;
+  }
+  final standard = standardValues
+      .where((value) => value > 0 && value <= 30)
+      .toList();
+  if (standard.isEmpty) return oculumNurseStandardBuffPercents.first;
+  return standard[selectionRoll.abs() % standard.length];
+}
+
+int oculumNurseBuffSurcharge(int percent) => max(0, percent) ~/ 5;
+
+int oculumNurseBuffDuration(String difficulty) =>
+    switch (oculumNormalizeText(difficulty)) {
+      'facile' || 'easy' => 9,
+      'difficile' || 'hard' => 3,
+      'oculum' => 1,
+      _ => 6,
+    };
+
+int oculumNurseRareTempHpGift({
+  required int percentileRoll,
+  required int level,
+  int chancePercent = 1,
+  int hpPerLevel = 5,
+}) => percentileRoll.clamp(0, 99) < chancePercent.clamp(0, 100)
+    ? max(0, level) * max(0, hpPerLevel)
+    : 0;
+
+int oculumNurseFullRestorationCost({
+  required int missingHp,
+  required int missingOculumShield,
+  int missingStatPoints = 0,
+  int missingArtIntegrity = 0,
+  int negativeConditions = 0,
+  int buffPercent = 10,
+  int artIntegrityPerObser = 10,
+  int cleanseCostPerCondition = 5,
+}) {
+  final subtotal =
+      oculumNurseHpRecoveryCost(missingHp) +
+      oculumNurseOculumShieldRecoveryCost(missingOculumShield) +
+      max(0, missingStatPoints) +
+      (max(0, missingArtIntegrity) + max(1, artIntegrityPerObser) - 1) ~/
+          max(1, artIntegrityPerObser) +
+      max(0, negativeConditions) * max(0, cleanseCostPerCondition);
+  return max(1, (subtotal * .85).floor()) +
+      oculumNurseBuffSurcharge(buffPercent);
+}
+
+int oculumNurseRareBuffBonusShield(int maximumHp) => max(0, maximumHp) ~/ 4;
+
+int oculumNurseTempHpGiftFromRoll({
+  required int percentileRoll,
+  required int level,
+  required int maximumTemporaryHp,
+  int levelGiftChancePercent = 1,
+  int halfCeilingChancePercent = 2,
+  int halfFloorChancePercent = 5,
+  int hpPerLevel = 5,
+}) {
+  final roll = percentileRoll.clamp(0, 99).toInt();
+  final levelChance = levelGiftChancePercent.clamp(0, 100).toInt();
+  final ceilingChance = halfCeilingChancePercent.clamp(0, 100).toInt();
+  final floorChance = halfFloorChancePercent.clamp(0, 100).toInt();
+  if (roll < levelChance) return max(0, level) * max(0, hpPerLevel);
+  if (roll < levelChance + ceilingChance) {
+    return (max(0, maximumTemporaryHp) + 1) ~/ 2;
+  }
+  if (roll < levelChance + ceilingChance + floorChance) {
+    return max(0, maximumTemporaryHp) ~/ 2;
+  }
+  return 0;
+}
+
+int oculumBlackMarketDustPrice({
+  required int basePrice,
+  required int previousPurchases,
+}) => (max(30, min(50, basePrice)) + max(0, previousPurchases) * 10)
+    .clamp(30, 69)
+    .toInt();
+
+int oculumBlackMarketFallenEyeBasePrice({
+  required int level,
+  required int levelZeroBase,
+}) {
+  final initial = levelZeroBase.clamp(36, 69);
+  return initial + ((115 - initial) * max(0, level)) ~/ 10;
+}
+
+int oculumBlackMarketFallenEyePrice({
+  required int totalStats,
+  required int level,
+  int ownerTotalStats = 0,
+  int levelZeroBase = 50,
+  int? basePrice,
+  int statUnitCost = 2,
+  int surplusBlockSize = 20,
+  int surplusPercentPerBlock = 25,
+}) {
+  final base = max(
+    0,
+    basePrice ??
+        oculumBlackMarketFallenEyeBasePrice(
+          level: level,
+          levelZeroBase: levelZeroBase,
+        ),
+  );
+  final subtotal = base + max(0, totalStats) * max(0, statUnitCost);
+  final blocks =
+      max(0, totalStats - max(0, ownerTotalStats)) ~/ max(1, surplusBlockSize);
+  return (subtotal * (100 + blocks * max(0, surplusPercentPerBlock))) ~/ 100;
+}
+
+String? oculumMerchantCanonicalOfferKey(Map<String, dynamic> offer) {
+  final kind = '${offer['kind'] ?? ''}';
+  String canonicalName(String key, List<String> prefixes) {
+    var value = '${offer[key] ?? offer['name'] ?? offer['id'] ?? ''}'.trim();
+    for (final prefix in prefixes) {
+      if (oculumNormalizeText(value).startsWith(oculumNormalizeText(prefix))) {
+        value = value.substring(prefix.length).trim();
+        break;
+      }
+    }
+    return oculumNormalizeText(value);
+  }
+
+  switch (kind) {
+    case 'nurse_service':
+      return 'nurse:${offer['service'] ?? ''}';
+    case 'black_market_art':
+      return 'art:${canonicalName('canonicalArtName', const ['Art Nera:'])}';
+    case 'black_market_monster_art':
+      return 'art:${canonicalName('canonicalArtName', const ['Art Oculum Nera ·'])}';
+    case 'black_market_skill':
+    case 'black_market_monster_skill':
+      final semanticName = canonicalName('canonicalSkillName', const [
+        'Tecnica Nera:',
+        'Skill Nera ·',
+      ]);
+      if (semanticName.isNotEmpty) return 'skill:$semanticName';
+      final skillId = '${offer['sourceSkillId'] ?? ''}';
+      return 'skill:${skillId.isEmpty ? oculumNormalizeText('${offer['name'] ?? offer['id'] ?? ''}') : oculumMonsterBookSkillBaseId(skillId)}';
+    case 'black_market_monster_weapon':
+      return 'weapon:${canonicalName('canonicalItemName', const ['Arma del Mostro ·'])}';
+    case 'technique_scroll':
+      return 'scroll:${offer['scrollProfileId'] ?? offer['id']}:${offer['scrollGrade'] ?? ''}';
+    case 'black_market_scroll':
+      return 'scroll:${offer['scrollProfileId'] ?? offer['id']}:${offer['scrollGrade'] ?? ''}';
+    case 'black_market_fallen_eye':
+      return 'fallen_eye:${offer['sourceMonsterId'] ?? offer['id']}:${offer['level'] ?? ''}';
+    case 'black_market_ascension_dust':
+      return 'ascension_dust';
+    default:
+      return kind.startsWith('black_market_')
+          ? 'black_market:${offer['id'] ?? offer['name']}'
+          : null;
+  }
+}
+
+int oculumAlchemyMediumFallenEyeLevel(int ownerLevel) =>
+    max(0, ownerLevel - (max(0, ownerLevel) + 2) ~/ 3).toInt();
+
+int oculumAlchemyRareFallenEyeLevel(int ownerLevel) =>
+    (max(0, ownerLevel) + 1) ~/ 2;
+
+int oculumAlchemyMediumFallenEyePrice({
+  required int ownerLevel,
+  required int ownerGrade,
+  required int priceRoll,
+}) =>
+    56 +
+    priceRoll.clamp(0, 33).toInt() +
+    max(0, ownerLevel).toInt() +
+    max(0, ownerGrade).toInt() * 3;
+
+int oculumAlchemyRareFallenEyePrice({
+  required int ownerLevel,
+  required int ownerGrade,
+  required int priceRoll,
+}) =>
+    230 +
+    priceRoll.clamp(0, 220).toInt() +
+    max(0, ownerLevel) ~/ 2 +
+    max(0, ownerGrade).toInt() * 4;
+
 const oculumStatGemNames = <String, String>{
   'resilienza': 'Gemma di Resilienza',
   'volonta': 'Gemma di Volontà',
@@ -111,6 +313,11 @@ bool oculumMerchantCanPurchaseOffer(
 
 int oculumMerchantEquipmentMinimumPrice(int grade) =>
     max(50, 50 + (max(0, grade) * 210 + 1) ~/ 3);
+
+int oculumMonsterRelicSaleValueForMarketPrice(
+  int marketPrice, {
+  int quantity = 1,
+}) => max(1, max(0, marketPrice) * 30 ~/ 100) * max(1, quantity);
 
 int oculumMerchantEquipmentPrice(Map<String, dynamic> offer) {
   final grade = max(0, readIntValue(offer['grade']));
@@ -257,9 +464,16 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     );
   }
 
-  int get merchantDustPrice => oculumMerchantApplyPricePercent(
-    33 + (monsterSpriteStableSeed(merchantActiveProfileId) % 37).abs(),
-    merchantPricePercent,
+  int get merchantDustPrice => min(
+    69,
+    oculumMerchantApplyPricePercent(
+      oculumBlackMarketDustPrice(
+        basePrice:
+            30 + (monsterSpriteStableSeed(merchantActiveProfileId) % 21).abs(),
+        previousPurchases: merchantDustPurchaseCount,
+      ),
+      merchantPricePercent,
+    ),
   );
   int get merchantPricePercent =>
       readIntValue(_activeMerchantProfile()['pricePercent'], fallback: 100);
@@ -271,6 +485,94 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   int merchantOfferCost(Map<String, dynamic> offer) {
+    final kind = '${offer['kind'] ?? ''}';
+    if (kind == 'black_market_ascension_dust') {
+      return min(69, merchantDustPrice);
+    }
+    if (kind == 'black_market_fallen_eye') {
+      final source = offer['sourceSheet'];
+      final stats = source is Map
+          ? ['resilienza', 'volonta', 'materia', 'oculum'].fold<int>(
+              0,
+              (sum, stat) => sum + max(0, readIntValue(source[stat])),
+            )
+          : 1;
+      if (offer['priceFormulaVersion'] != 2) {
+        // Existing saved offers retain their custom price until a new shop.
+        return oculumMerchantApplyPricePercent(
+          max(0, readIntValue(offer['cost'])),
+          merchantPricePercent,
+        );
+      }
+      final base = oculumBlackMarketFallenEyePrice(
+        totalStats: stats,
+        level: readIntValue(offer['level']),
+        ownerTotalStats: readIntValue(offer['ownerStatTotal']),
+        basePrice: readIntValue(offer['eyeBasePrice']),
+        statUnitCost: readIntValue(offer['statUnitCost'], fallback: 2),
+        surplusBlockSize: readIntValue(offer['surplusBlockSize'], fallback: 20),
+        surplusPercentPerBlock: readIntValue(
+          offer['surplusPercentPerBlock'],
+          fallback: 25,
+        ),
+      );
+      return oculumMerchantApplyPricePercent(base, merchantPricePercent);
+    }
+    if (kind == 'nurse_service') {
+      return switch ('${offer['service'] ?? ''}') {
+        'hp' => oculumNurseHpRecoveryCost(max(0, maxHp() - hpCorrenti())),
+        'oculum_shield' => oculumNurseOculumShieldRecoveryCost(
+          max(0, scudoOculumMax() - scudoOculum()),
+        ),
+        'full' => oculumNurseFullRestorationCost(
+          missingHp: max(0, maxHp() - hpCorrenti()),
+          missingOculumShield: max(0, scudoOculumMax() - scudoOculum()),
+          missingStatPoints:
+              (max(
+                        0,
+                        currentStatNaturalControllerMax('resilienza') -
+                            currentResilienza(),
+                      ) +
+                      max(
+                        0,
+                        currentStatNaturalControllerMax('volonta') -
+                            currentVolonta(),
+                      ) +
+                      max(
+                        0,
+                        currentStatNaturalControllerMax('materia') -
+                            currentMateria(),
+                      ) +
+                      max(0, oculumMassimo() - oculumTotale()))
+                  .toInt(),
+          missingArtIntegrity: arti.fold<int>(
+            0,
+            (total, art) =>
+                total +
+                max(
+                  0,
+                  artIntegrityEffectiveMaximum(art) - art.integritaCorrente,
+                ),
+          ),
+          negativeConditions: activeConditions
+              .where(oculumConditionIsNegative)
+              .length,
+          buffPercent: readIntValue(
+            offer['buffPercent'],
+            fallback: 10,
+          ).clamp(10, 60).toInt(),
+          artIntegrityPerObser: readIntValue(
+            offer['artIntegrityPerObser'],
+            fallback: 10,
+          ),
+          cleanseCostPerCondition: readIntValue(
+            offer['cleanseCostPerCondition'],
+            fallback: 5,
+          ),
+        ),
+        _ => max(0, readIntValue(offer['cost'])),
+      };
+    }
     final isEquipment = const {'gear', 'title_item'}.contains(offer['kind']);
     final base = isEquipment
         ? oculumMerchantEquipmentPrice(offer)
@@ -304,14 +606,22 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               'pawn',
               'pawn_v2',
               'title_item',
+              'gathering_collector',
               'weapon',
               'armor',
               'shield',
             }.contains(kind) ||
             offer['damage'] != null ||
             offer['defence'] != null,
+      'mercato_nero' =>
+        kind.startsWith('black_market_') ||
+            (kind == 'technique_scroll' &&
+                offer['blackMarketSelected'] == true),
+      'infermiera_eroica' =>
+        kind == 'nurse_service' || offer['nurseCatalog'] == true,
       'alchimista' =>
         const {
+              'fallen_eye',
               'smoking_herbs',
               'fate_sign',
               'chaos_sign',
@@ -331,11 +641,24 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     };
   }
 
-  List<Map<String, dynamic>> recommendedMerchantStock() =>
-      oculumMerchantOrderedOffers(
-        ensureMerchantStock().where(merchantOfferMatchesShop).toList(),
-        merchantNeedStats,
-      );
+  List<Map<String, dynamic>> recommendedMerchantStock() {
+    final ordered = oculumMerchantOrderedOffers(
+      ensureMerchantStock().where(merchantOfferMatchesShop).toList(),
+      merchantNeedStats,
+    );
+    if (merchantShopType != 'mercato_nero' &&
+        merchantShopType != 'infermiera_eroica') {
+      return ordered;
+    }
+    final seen = <String>{};
+    return ordered
+        .where((offer) {
+          final key = oculumMerchantCanonicalOfferKey(offer);
+          return key == null || seen.add(key);
+        })
+        .toList(growable: false);
+  }
+
   void selectMerchantShop(String type) {
     final profile = merchantProfiles
         .where((p) => p['id'] == merchantActiveProfileId)
@@ -343,6 +666,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (profile == null) return;
     // ignore: invalid_use_of_protected_member
     setState(() => profile['shopType'] = type);
+    ensureMerchantStock();
+    if (type == 'infermiera_eroica' && merchantIsOpen) {
+      _rollNurseRefillBuffForShopOpen();
+    }
+    _saveActiveMerchantProfileStock();
     programmaSalvataggio();
   }
 
@@ -506,6 +834,14 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             child: Text('Alchimista · cristalli e crafting'),
           ),
           DropdownMenuItem(value: 'chef', child: Text('Chef · cibi e bevande')),
+          DropdownMenuItem(
+            value: 'mercato_nero',
+            child: Text('Mercato nero · Art e Skill'),
+          ),
+          DropdownMenuItem(
+            value: 'infermiera_eroica',
+            child: Text('Infermiera eroica · cure e recupero'),
+          ),
         ],
       ),
       PopupMenuButton<String>(
@@ -544,6 +880,19 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       merchantStockSessionId = merchantRuntimeSessionId;
       updateMerchantGemOffers();
       ensureMerchantFoodOffers();
+      if (merchantShopType == 'alchimista') {
+        final profile = _activeMerchantProfile();
+        if (profile['alchemyFallenEyeStockRolled'] != true) {
+          addAlchemyFallenEyeOffers(
+            Random(
+              monsterSpriteStableSeed(merchantActiveProfileId) ^
+                  DateTime.now().microsecondsSinceEpoch,
+            ),
+          );
+          profile['alchemyFallenEyeStockRolled'] = true;
+        }
+      }
+      ensureMerchantSpecialOffers();
       _saveActiveMerchantProfileStock();
       return merchantStock;
     }
@@ -852,8 +1201,526 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     ]);
     merchantStockSessionId = merchantRuntimeSessionId;
     ensureMerchantFoodOffers();
+    if (merchantShopType == 'alchimista' &&
+        _activeMerchantProfile()['alchemyFallenEyeStockRolled'] != true) {
+      addAlchemyFallenEyeOffers(random);
+      _activeMerchantProfile()['alchemyFallenEyeStockRolled'] = true;
+    }
+    ensureMerchantSpecialOffers();
     _saveActiveMerchantProfileStock();
     return merchantStock;
+  }
+
+  void ensureMerchantSpecialOffers() {
+    final ids = merchantStock.map((offer) => '${offer['id']}').toSet();
+    void add(Map<String, dynamic> offer) {
+      final id = '${offer['id']}';
+      if (ids.add(id)) merchantStock.add(offer);
+    }
+
+    void addMany(Iterable<Map<String, dynamic>> offers) {
+      for (final offer in offers) {
+        if (ids.add('${offer['id']}')) merchantStock.add(offer);
+      }
+    }
+
+    if (merchantShopType == 'fabbro') {
+      for (var collectorGrade = 0; collectorGrade <= 12; collectorGrade++) {
+        add(<String, dynamic>{
+          'id': 'raccoglitore_grado_$collectorGrade',
+          'name':
+              'Raccoglitore Grado ${collectorGrade == 0 ? '0' : oculumRomanStage(collectorGrade)}',
+          'kind': 'gathering_collector',
+          'cost': 350 + collectorGrade * 70,
+          'level': 0,
+          'grade': collectorGrade,
+          'remaining': 1,
+          'desc':
+              'Passiva: raddoppia i materiali raccolti di Grado $collectorGrade o inferiore. Nessun requisito di livello aggiuntivo.',
+        });
+      }
+    }
+    if (merchantShopType == 'mercato_nero') {
+      addMany(<Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'black_market_art_scoria',
+          'name': 'Art Nera: Archivio delle Scorie',
+          'kind': 'black_market_art',
+          'canonicalArtName': 'Archivio delle Scorie',
+          'cost': 18000,
+          'requiredLevel': 0,
+          'remaining': 1,
+          'desc':
+              'Art acquistabile e modificabile. Contiene due tecniche offensive con forme evolutive; livello, testi, danni e recupero restano editabili.',
+        },
+        <String, dynamic>{
+          'id': 'black_market_skill_brace',
+          'name': 'Tecnica Nera: Colpo di Brace',
+          'kind': 'black_market_skill',
+          'canonicalSkillName': 'Colpo di Brace',
+          'cost': 8000,
+          'requiredLevel': 0,
+          'remaining': 1,
+          'desc':
+              'Skill d’attacco iniziale: +20 danni Fuoco, una Azione, recupero 3 turni. Modificabile nelle Skill.',
+        },
+        <String, dynamic>{
+          'id': 'black_market_skill_gelo',
+          'name': 'Tecnica Nera: Taglio di Gelo',
+          'kind': 'black_market_skill',
+          'canonicalSkillName': 'Taglio di Gelo',
+          'cost': 12000,
+          'requiredLevel': 0,
+          'remaining': 1,
+          'desc':
+              'Skill d’attacco iniziale: +30 danni Ghiaccio, una Azione, recupero 4 turni. Modificabile nelle Skill.',
+        },
+        <String, dynamic>{
+          'id': 'black_market_scroll_corruption',
+          'name': 'Pergamena Nera · Padrone della Corruzione',
+          'kind': 'black_market_scroll',
+          'scrollProfileId': 'corruption',
+          'scrollGrade': max(
+            0,
+            leggiNumero(gradoController),
+          ).clamp(0, 12).toInt(),
+          'cost': oculumCorruptionScrollPrice(
+            max(0, leggiNumero(gradoController)).clamp(0, 12).toInt(),
+          ),
+          'remaining': 1,
+          'desc':
+              'Pergamena d’attacco monouso, venduta soltanto qui. A colpo riuscito: 100% di infezione, −20 punti per ogni Grado del mostro sopra quello della pergamena, fino a 0%. La Skill appresa è passiva, non evolvibile e modificabile nella scheda.',
+        },
+        <String, dynamic>{
+          'id': 'black_market_ascension_dust',
+          'name': 'Ascension Dust · dose clandestina',
+          'kind': 'black_market_ascension_dust',
+          'purchaseLimit': 3,
+          'desc':
+              'Fino a tre acquisti per Riposo Lungo. La dose successiva aumenta di 10 Obser; la terza non supera 69 Obser.',
+        },
+      ]);
+      ensureBlackMarketOffers();
+    }
+    if (merchantShopType == 'infermiera_eroica') {
+      addMany(<Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'nurse_service_hp',
+          'name': 'Cura delle ferite',
+          'kind': 'nurse_service',
+          'service': 'hp',
+          'desc': 'Ripristina tutti gli HP mancanti: 1 Obser ogni 10 HP.',
+        },
+        <String, dynamic>{
+          'id': 'nurse_service_oculum_shield',
+          'name': 'Ricarica Scudo Oculum',
+          'kind': 'nurse_service',
+          'service': 'oculum_shield',
+          'desc': 'Ripristina lo Scudo Oculum mancante: 2 Obser per punto.',
+        },
+        <String, dynamic>{
+          'id': 'nurse_service_will',
+          'name': 'Stimolante di Volontà',
+          'kind': 'nurse_service',
+          'service': 'will',
+          'cost': 1,
+          'desc': 'Ripristina 1 punto attuale di Volontà, fino al massimale.',
+        },
+        <String, dynamic>{
+          'id': 'nurse_service_matter',
+          'name': 'Stimolante di Materia',
+          'kind': 'nurse_service',
+          'service': 'matter',
+          'cost': 1,
+          'desc': 'Ripristina 1 punto attuale di Materia, fino al massimale.',
+        },
+        <String, dynamic>{
+          'id': 'nurse_service_temp_hp',
+          'name': 'Bendaggio eroico',
+          'kind': 'nurse_service',
+          'service': 'temp_hp',
+          'cost': 2,
+          'desc': 'Dona +15 HP temporanei, nel limite della scheda.',
+        },
+        <String, dynamic>{
+          'id': 'nurse_service_shield',
+          'name': 'Piastra di Scudo',
+          'kind': 'nurse_service',
+          'service': 'shield',
+          'cost': 2,
+          'desc': 'Dona +10 Scudo normale.',
+        },
+        <String, dynamic>{
+          'id': 'nurse_service_oculum',
+          'name': 'Fiala di Oculum',
+          'kind': 'nurse_service',
+          'service': 'oculum',
+          'cost': 3,
+          'desc': 'Ripristina 1 Oculum attuale, fino al massimale.',
+        },
+        <String, dynamic>{
+          'id': 'nurse_service_full',
+          'name': 'Refull · buff Danni e Difesa',
+          'kind': 'nurse_service',
+          'service': 'full',
+          'buffPercent': 10,
+          'standardBuffPercents': <int>[10, 15, 20, 25, 30],
+          'rareBuffJackpotChancePercent': 1,
+          'rareBuffValues': <int>[40, 60],
+          'jackpotShieldHpFractionDenominator': 4,
+          'rareTempHpChancePercent': 1,
+          'halfTempHpRoundedUpChancePercent': 2,
+          'halfTempHpRoundedDownChancePercent': 5,
+          'tempHpPerLevel': 5,
+          'artIntegrityPerObser': 10,
+          'cleanseCostPerCondition': 5,
+          'desc':
+              'Refull completo con +10–30% a Danni e Difesa per la prossima battaglia. 1% jackpot: +40% o +60% e Scudo gratuito pari a un quarto degli HP massimi. HP temporanei: 1% di 5 × livello, 2% metà massimale per eccesso, 5% metà per difetto. Sovrapprezzo 1 Obser ogni 5%.',
+        },
+        <String, dynamic>{
+          'id': 'nurse_vitalium_raw',
+          'name': 'Vitalium Grezzo',
+          'kind': 'raw_vitalium',
+          'cost': 25,
+          'nurseCatalog': true,
+          'desc':
+              'Consumabile: cura HP spendendo Oculum o le statistiche previste.',
+        },
+        <String, dynamic>{
+          'id': 'nurse_vitalium_refined',
+          'name': 'Vitalium Ridefinito',
+          'kind': 'refined_vitalium',
+          'cost': 180,
+          'nurseCatalog': true,
+          'desc':
+              'Consumabile: ripristina HP, statistiche attuali e integrità delle Art.',
+        },
+        <String, dynamic>{
+          'id': 'nurse_debuff_cleanser',
+          'name': 'Fiala Depurante Eroica',
+          'kind': 'food',
+          'cost': 30,
+          'nurseCatalog': true,
+          'cleanseNegativeConditions': true,
+          'desc': 'Consumabile: rimuove le condizioni negative attive.',
+        },
+      ]);
+    }
+  }
+
+  void ensureBlackMarketOffers() {
+    final profile = _activeMerchantProfile();
+    if (readBoolValue(profile['blackMarketOffersRolled'])) return;
+
+    final random = Random(
+      monsterSpriteStableSeed('$merchantActiveProfileId:black_market'),
+    );
+    final ownerLevel = max(0, leggiNumero(livelloController)).toInt();
+    final ownerGrade = max(
+      0,
+      leggiNumero(gradoController),
+    ).clamp(0, 12).toInt();
+    final existingKeys = merchantStock
+        .map(oculumMerchantCanonicalOfferKey)
+        .whereType<String>()
+        .toSet();
+    void addUnique(Map<String, dynamic> offer) {
+      final key = oculumMerchantCanonicalOfferKey(offer);
+      if (key != null && !existingKeys.add(key)) return;
+      if (!merchantStock.any((item) => item['id'] == offer['id'])) {
+        merchantStock.add(offer);
+      }
+    }
+
+    final artCandidates =
+        monsterBookEntries
+            .where(
+              (monster) =>
+                  !monster.isNpc &&
+                  oculumMonsterHasOculumArt(monster) &&
+                  oculumMonsterBookImportArt(monster) != null,
+            )
+            .toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
+    artCandidates.shuffle(random);
+    var addedArts = 0;
+    for (final monster in artCandidates) {
+      if (addedArts >= 2) break;
+      final imported = oculumMonsterBookImportArt(monster);
+      if (imported == null) continue;
+      final sourceArtKey = oculumMonsterBookSkillBaseId(monster.id);
+      final marker = 'oculum_market_art:$sourceArtKey';
+      if (arti.any((art) => art.descrizione.contains(marker))) continue;
+      final offer = <String, dynamic>{
+        'id': 'black_market_monster_art_$sourceArtKey',
+        'kind': 'black_market_monster_art',
+        'sourceMonsterId': monster.id,
+        'sourceArtKey': sourceArtKey,
+        'canonicalArtName': imported.nome,
+        'requiredLevel': ownerLevel,
+        'cost': 14000 + ownerLevel * 500 + ownerGrade * 1200,
+        'remaining': 1,
+        'name': 'Art Oculum Nera · ${monster.nameIt} · ${imported.nome}',
+        'desc':
+            'Art Oculum importata dal Monster Book di ${monster.nameIt}. Requisito: livello $ownerLevel. Forme, effetti e costi restano modificabili nell’editor Art. ($marker)',
+      };
+      final priorCount = merchantStock.length;
+      addUnique(offer);
+      if (merchantStock.length > priorCount) addedArts++;
+    }
+
+    final skillCandidates =
+        <
+          ({
+            MonsterBookEntry monster,
+            String id,
+            CharacterSkill skill,
+            int sourceLevel,
+          })
+        >[];
+    final seenSkillIds = <String>{};
+    for (final monster in monsterBookEntries.where((entry) => !entry.isNpc)) {
+      final art = oculumMonsterBookArt(monster);
+      final ids = monsterBookUsableSkillIds(monster);
+      for (var index = 0; index < min(ids.length, art.skills.length); index++) {
+        final sourceId = ids[index];
+        if (!oculumMonsterTechniqueIsNatural(monster, sourceId)) continue;
+        final baseId = oculumMonsterBookSkillBaseId(sourceId);
+        if (!seenSkillIds.add(baseId)) continue;
+        final skill = _naturalMonsterSkill(
+          monster,
+          sourceId,
+          art.skills[index],
+        );
+        final sourceLevel = max(
+          0,
+          monsterBookConcreteTechnique(sourceId)?.requiredLevel ?? 0,
+        );
+        if (sourceLevel <= ownerLevel + 2 &&
+            !skills.any((owned) => owned.nome == skill.nome)) {
+          skillCandidates.add((
+            monster: monster,
+            id: sourceId,
+            skill: skill,
+            sourceLevel: sourceLevel,
+          ));
+        }
+      }
+    }
+    skillCandidates.sort((a, b) => a.id.compareTo(b.id));
+    skillCandidates.shuffle(random);
+    var addedSkills = 0;
+    for (final candidate in skillCandidates) {
+      if (addedSkills >= 3) break;
+      final requiredLevel = min(
+        ownerLevel + 2,
+        max(ownerLevel, candidate.sourceLevel) + random.nextInt(3),
+      );
+      final marker =
+          'black_market_source_skill:${oculumMonsterBookSkillBaseId(candidate.id)}';
+      if (skills.any(
+        (skill) =>
+            skill.descrizione.contains(marker) ||
+            skill.forme.any((form) => form.note.contains(marker)),
+      )) {
+        continue;
+      }
+      final offer = <String, dynamic>{
+        'id':
+            'black_market_monster_skill_${oculumMonsterBookSkillBaseId(candidate.id)}',
+        'kind': 'black_market_monster_skill',
+        'sourceMonsterId': candidate.monster.id,
+        'sourceSkillId': candidate.id,
+        'canonicalSkillName': candidate.skill.nome,
+        'requiredLevel': requiredLevel,
+        'cost': 7500 + requiredLevel * 900 + ownerGrade * 400,
+        'remaining': 1,
+        'name': 'Skill Nera · ${candidate.skill.nome}',
+        'desc':
+            'Tecnica del Monster Book di ${candidate.monster.nameIt}. Richiede livello $requiredLevel; le forme successive sbloccano ogni tre livelli. Abilità e costi si modificano nell’editor Skill. ($marker)',
+      };
+      final priorCount = merchantStock.length;
+      addUnique(offer);
+      if (merchantStock.length > priorCount) addedSkills++;
+    }
+
+    final weaponCandidates =
+        monsterBookEntries
+            .where((monster) => !monster.isNpc)
+            .map(
+              (monster) => (
+                monster: monster,
+                items: oculumMonsterEquipmentCatalogue(
+                  source: monster,
+                  level: ownerLevel,
+                  grade: ownerGrade,
+                ).where((item) => item.arma).toList(),
+              ),
+            )
+            .where((entry) => entry.items.isNotEmpty)
+            .toList()
+          ..sort((a, b) => a.monster.id.compareTo(b.monster.id));
+    weaponCandidates.shuffle(random);
+    for (final candidate in weaponCandidates) {
+      final item = candidate.items.first;
+      final itemId = '${item.monsterLoot['id'] ?? ''}';
+      final sourceSkillId = '${item.craftData['sourceSkillId'] ?? ''}';
+      if (itemId.isEmpty || sourceSkillId.isEmpty) continue;
+      final alreadyOwned = inventario.any(
+        (owned) => '${owned.monsterLoot['id'] ?? ''}' == itemId,
+      );
+      if (alreadyOwned) continue;
+      addUnique(<String, dynamic>{
+        'id': 'black_market_monster_weapon_$itemId',
+        'kind': 'black_market_monster_weapon',
+        'sourceMonsterId': candidate.monster.id,
+        'sourceSkillId': sourceSkillId,
+        'itemId': itemId,
+        'canonicalItemName': item.nome,
+        'itemFamily': 'weapon',
+        'requiredLevel': ownerLevel,
+        'level': ownerLevel,
+        'grade': ownerGrade,
+        'cost': 2500 + ownerLevel * 250 + ownerGrade * 900,
+        'remaining': 1,
+        'name': 'Arma del Mostro · ${item.nome}',
+        'desc':
+            'Reliquia d’arma di ${candidate.monster.nameIt}, livello $ownerLevel e Grado $ownerGrade. La Skill collegata richiede il livello indicato e resta modificabile nell’editor equipaggiamento.',
+      });
+      break;
+    }
+
+    final ownerStats = <String, int>{
+      'resilienza': max(0, resilienzaTotale()),
+      'volonta': max(0, volontaTotale()),
+      'materia': max(0, materiaTotale()),
+      'oculum': max(0, oculumTotale()),
+    };
+    final ownerStatTotal = ownerStats.values.fold<int>(0, (a, b) => a + b);
+    if (ownerStatTotal > 0) {
+      final eyeCandidates =
+          monsterBookEntries.where((monster) => !monster.isNpc).toList()
+            ..sort((a, b) => a.id.compareTo(b.id));
+      eyeCandidates.shuffle(random);
+      for (final monster in eyeCandidates) {
+        final source = _fallenEyeSourceFromMonsterBook(
+          monster,
+          name: 'Occhio dei Caduti | ${monster.nameIt} lvl $ownerLevel',
+          level: ownerLevel,
+        );
+        final rawStats = <String, int>{
+          for (final key in ownerStats.keys)
+            key: max(0, readIntValue(source[key])),
+        };
+        final rawTotal = rawStats.values.fold<int>(0, (a, b) => a + b);
+        final statCeiling = ownerStatTotal + max(2, ownerStatTotal ~/ 10);
+        if (rawTotal > statCeiling) {
+          source['blackMarketOriginalStats'] = Map<String, int>.from(rawStats);
+          final scale = statCeiling / rawTotal;
+          final capped = <String, int>{
+            for (final key in rawStats.keys)
+              key: (rawStats[key]! * scale).floor(),
+          };
+          if (statCeiling > 0 && capped['resilienza'] == 0) {
+            capped['resilienza'] = 1;
+          }
+          while (capped.values.fold<int>(0, (a, b) => a + b) > statCeiling) {
+            final highest = capped.keys
+                .where((key) => key != 'resilienza' || capped[key]! > 1)
+                .reduce((a, b) => capped[a]! >= capped[b]! ? a : b);
+            capped[highest] = capped[highest]! - 1;
+          }
+          for (final entry in capped.entries) {
+            source[entry.key] = '${entry.value}';
+            source['current${entry.key[0].toUpperCase()}${entry.key.substring(1)}'] =
+                '${entry.value}';
+          }
+          source['monsterBaseStats'] = capped;
+          source['fallenEyeLevelStatBonuses'] = <String, int>{
+            for (final key in capped.keys) key: 0,
+          };
+          source['currentHp'] =
+              '${max(1, capped['resilienza']! * (10 + oculumGradeForLevel(ownerLevel) * 5))}';
+          source['blackMarketStatsCapped'] = true;
+        }
+        final totalStats = ownerStats.keys.fold<int>(
+          0,
+          (sum, key) => sum + max(0, readIntValue(source[key])),
+        );
+        final levelZeroBase = 36 + random.nextInt(34);
+        final eyeBasePrice = oculumBlackMarketFallenEyeBasePrice(
+          level: ownerLevel,
+          levelZeroBase: levelZeroBase,
+        );
+        final offer = <String, dynamic>{
+          'id': 'black_market_fallen_eye_${monster.id}_$ownerLevel',
+          'kind': 'black_market_fallen_eye',
+          'sourceMonsterId': monster.id,
+          'requiredLevel': ownerLevel,
+          'level': ownerLevel,
+          'grade': oculumGradeForLevel(ownerLevel),
+          'priceFormulaVersion': 2,
+          'levelZeroBase': levelZeroBase,
+          'eyeBasePrice': eyeBasePrice,
+          'ownerStatTotal': ownerStatTotal,
+          'statUnitCost': 2,
+          'surplusBlockSize': 20,
+          'surplusPercentPerBlock': 25,
+          'cost': oculumBlackMarketFallenEyePrice(
+            totalStats: totalStats,
+            level: ownerLevel,
+            ownerTotalStats: ownerStatTotal,
+            basePrice: eyeBasePrice,
+          ),
+          'remaining': 1,
+          'name': '${source['nome'] ?? monster.nameIt}',
+          'rarity': 'non_comune',
+          'sourceSheet': source,
+          'desc':
+              'Mostro del Monster Book al tuo livello ($ownerLevel). Statistiche totali $totalStats, massimo consentito il tuo totale +10% (almeno 2 punti). Prezzo: base $eyeBasePrice + statistiche ×2; +25% ogni 20 statistiche oltre il tuo totale di $ownerStatTotal, arrotondato per eccesso. Base salvata per questa visita.',
+        };
+        final existingEye = occhiCaduti.any(
+          (eye) =>
+              '${eye['monsterBookSourceId'] ?? ''}' == monster.id &&
+              readIntValue(eye['livello']) == ownerLevel,
+        );
+        if (!existingEye) addUnique(offer);
+        if (oculumMerchantCanonicalOfferKey(offer) != null &&
+            existingKeys.contains(oculumMerchantCanonicalOfferKey(offer))) {
+          break;
+        }
+      }
+    }
+
+    final grade = max(0, leggiNumero(gradoController)).clamp(0, 12).toInt();
+    final scrollCandidates =
+        merchantStock
+            .where(
+              (offer) =>
+                  offer['kind'] == 'technique_scroll' &&
+                  readIntValue(offer['scrollGrade']) == grade,
+            )
+            .toList()
+          ..sort((a, b) => '${a['id']}'.compareTo('${b['id']}'));
+    scrollCandidates.shuffle(random);
+    final selectedScrolls = <Map<String, dynamic>>[];
+    final gratitude = scrollCandidates
+        .where((offer) => offer['scrollProfileId'] == 'provi_gratitudine')
+        .firstOrNull;
+    if (gratitude != null && random.nextInt(100) < 60) {
+      selectedScrolls.add(gratitude);
+    }
+    for (final offer in scrollCandidates) {
+      if (selectedScrolls.length >= 2) break;
+      if (!selectedScrolls.contains(offer)) selectedScrolls.add(offer);
+    }
+    for (final offer in selectedScrolls) {
+      offer['blackMarketSelected'] = true;
+      offer['remaining'] = 1;
+    }
+
+    profile['blackMarketOffersRolled'] = true;
+    _saveActiveMerchantProfileStock();
   }
 
   void ensureMerchantFoodOffers() {
@@ -992,6 +1859,22 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         });
       }
     }
+    if (const {'alchimista', 'mercato_nero'}.contains(merchantShopType)) {
+      final profileId = 'provi_gratitudine';
+      final id = 'alchemist_scroll_${profileId}_$grade';
+      if (!merchantStock.any((offer) => offer['id'] == id)) {
+        merchantStock.add({
+          'id': id,
+          'kind': 'technique_scroll',
+          'name': 'Pergamena Reazione Fulminea · Grado $grade',
+          'cost': oculumScrollValue(grade),
+          'scrollProfileId': profileId,
+          'scrollGrade': grade,
+          'desc':
+              'Scroll di utility: una Reazione Fulminea e +${oculumGratitudineNextActionBonus(grade)} alla prossima azione per ogni partecipante selezionato. Costo ${oculumScrollWillCost(grade)} Volontà; apprendimento con 20 naturale.',
+        });
+      }
+    }
     if (!merchantStock.any((offer) => offer['id'] == 'summoning_emblem')) {
       merchantStock.add(oculumSummoningEmblemOffer());
     }
@@ -1046,6 +1929,121 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
   }
 
+  void addAlchemyFallenEyeOffers(Random random) {
+    final ownerLevel = max(0, leggiNumero(livelloController)).toInt();
+    final ownerGrade = max(
+      0,
+      leggiNumero(gradoController),
+    ).clamp(0, 12).toInt();
+    final ownerStats = <String, int>{
+      'resilienza': max(0, leggiNumero(resilienzaController)),
+      'volonta': max(0, leggiNumero(volontaController)),
+      'materia': max(0, leggiNumero(materiaController)),
+      'oculum': max(0, leggiNumero(oculumController)),
+    };
+    final ownerTotal = ownerStats.values.fold<int>(0, (a, b) => a + b);
+    if (ownerTotal <= 0) return;
+    final half = ownerTotal / 2;
+    final candidates = defaultMonsterBookEntries
+        .where((monster) => !monster.isNpc)
+        .map((monster) {
+          final stats = oculumMonsterCreationStats(monster, 0);
+          final total = stats.values.fold<int>(
+            0,
+            (a, b) => a + max(0, b).toInt(),
+          );
+          return (monster: monster, stats: stats, total: total);
+        })
+        .where((entry) => entry.total > 0 && entry.total <= ownerTotal)
+        .toList();
+    if (candidates.isEmpty) return;
+    final nearHalf = candidates
+        .where((entry) => (entry.total - half).abs() <= max(2, half * .2))
+        .toList();
+    final pool = nearHalf.isNotEmpty
+        ? nearHalf
+        : (candidates..sort(
+                (a, b) =>
+                    (a.total - half).abs().compareTo((b.total - half).abs()),
+              ))
+              .take(min(5, candidates.length))
+              .toList();
+    if (random.nextInt(100) < 20) {
+      final selected = pool[random.nextInt(pool.length)];
+      final creatureLevel = oculumAlchemyMediumFallenEyeLevel(ownerLevel);
+      final offerName =
+          'Occhio dei Caduti | ${selected.monster.nameIt} lvl $creatureLevel';
+      final source = _fallenEyeSourceFromMonsterBook(
+        selected.monster,
+        name: offerName,
+        level: creatureLevel,
+      );
+      merchantStock.add({
+        'id': 'alchemy_fallen_eye_medium_${random.nextInt(1 << 31)}',
+        'kind': 'fallen_eye',
+        'tier': 'medio_raro',
+        'remaining': 1,
+        'name': offerName,
+        'rarity': 'non_comune',
+        'sourceMonsterId': selected.monster.id,
+        'sourceBaseStatTotal': selected.total,
+        'level': 0,
+        'grade': ownerGrade,
+        'cost': oculumAlchemyMediumFallenEyePrice(
+          ownerLevel: ownerLevel,
+          ownerGrade: ownerGrade,
+          priceRoll: random.nextInt(34),
+        ),
+        'sourceSheet': source,
+        'desc':
+            'Medio raro. Creatura casuale di livello $creatureLevel (circa un terzo sotto il tuo, minimo 0), con statistiche base vicine alla metà delle tue e mai superiori al tuo totale. Prezzo: 56–89 + tuo livello + Grado ×3 Obser.',
+      });
+    }
+    if (random.nextInt(100) < 5) {
+      final selected = pool[random.nextInt(pool.length)];
+      final creatureLevel = oculumAlchemyRareFallenEyeLevel(ownerLevel);
+      final offerName =
+          'Occhio dei Caduti | ${selected.monster.nameIt} lvl $creatureLevel · Raro';
+      final source = _fallenEyeSourceFromMonsterBook(
+        selected.monster,
+        name: offerName,
+        level: creatureLevel,
+      );
+      final sheet = Map<String, dynamic>.from(source);
+      final combinedStats = <String, int>{
+        for (final key in ownerStats.keys)
+          key: ownerStats[key]! + max(0, selected.stats[key] ?? 0).toInt(),
+      };
+      for (final entry in combinedStats.entries) {
+        sheet[entry.key] = '${entry.value}';
+        sheet['current${entry.key[0].toUpperCase()}${entry.key.substring(1)}'] =
+            '${entry.value}';
+      }
+      sheet['monsterBaseStats'] = selected.stats;
+      sheet['currentHp'] = '${oculumSheetHpMaximum(sheet)}';
+      merchantStock.add({
+        'id': 'alchemy_fallen_eye_rare_${random.nextInt(1 << 31)}',
+        'kind': 'fallen_eye',
+        'tier': 'raro',
+        'remaining': 1,
+        'name': offerName,
+        'rarity': 'raro',
+        'sourceMonsterId': selected.monster.id,
+        'sourceBaseStatTotal': selected.total,
+        'level': 0,
+        'grade': ownerGrade,
+        'cost': oculumAlchemyRareFallenEyePrice(
+          ownerLevel: ownerLevel,
+          ownerGrade: ownerGrade,
+          priceRoll: random.nextInt(221),
+        ),
+        'sourceSheet': sheet,
+        'desc':
+            'Raro. Livello creatura pari a metà del tuo, arrotondato per eccesso. Le statistiche sommano le tue statistiche base e quelle base della creatura; la creatura scelta resta sotto il tuo totale e vicina alla metà. Prezzo: 230–450 + metà tuo livello + Grado ×4 Obser.',
+      });
+    }
+  }
+
   String merchantFoodOfferDescription(Map<String, dynamic> food) {
     final authored = '${food['desc'] ?? ''}'.trim();
     if (authored.isNotEmpty) return authored;
@@ -1065,6 +2063,35 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   String merchantOfferDescription(Map<String, dynamic> offer) {
+    if ('${offer['kind'] ?? ''}'.startsWith('black_market_') &&
+        offer['kind'] != 'black_market_ascension_dust') {
+      final requiredLevel = max(0, readIntValue(offer['requiredLevel']));
+      return '${readIntValue(offer['remaining'], fallback: 1) > 0 ? 'Disponibile: 1' : 'Esaurito'} · Richiede livello $requiredLevel. ${offer['desc'] ?? ''}';
+    }
+    if (offer['kind'] == 'black_market_ascension_dust') {
+      return merchantDustPurchaseCount >= 3
+          ? 'Limite raggiunto: $merchantDustPurchaseCount/3. Disponibile dopo il Riposo Lungo. ${offer['desc'] ?? ''}'
+          : 'Acquistate: $merchantDustPurchaseCount/3 · prossimo prezzo ${merchantOfferCost(offer)} Obser. ${offer['desc'] ?? ''}';
+    }
+    if (offer['kind'] == 'nurse_service' && offer['service'] == 'full') {
+      final percent = readIntValue(
+        offer['buffPercent'],
+        fallback: 10,
+      ).clamp(10, 60).toInt();
+      final duration = oculumNurseBuffDuration(normalizedCampaignDifficulty());
+      final jackpot = percent >= 40;
+      final shieldDenominator = max(
+        1,
+        readIntValue(offer['jackpotShieldHpFractionDenominator'], fallback: 4),
+      );
+      return 'Refull: ripristina HP, statistiche attuali, Oculum, Scudo Oculum esistente e integrità Art; rimuove i debuff. Prezzo variabile sulle risorse ripristinate, sconto 15%, più ${oculumNurseBuffSurcharge(percent)} Obser per il buff. Prossima battaglia: +$percent% Danni e Difesa per $duration turni (${campaignDifficultyLabel()}).${jackpot ? ' Estrazione rara: anche +${maxHp() ~/ shieldDenominator} Scudo gratuito.' : ''} Ogni tanto può aggiungere HP temporanei.';
+    }
+    if (offer['kind'] == 'fallen_eye') {
+      final availability = readIntValue(offer['remaining'], fallback: 1) > 0
+          ? 'Disponibile: 1'
+          : 'Esaurito';
+      return '$availability · ${offer['desc']}';
+    }
     if (const {'fate_sign', 'chaos_sign'}.contains(offer['kind'])) {
       return '${readIntValue(offer['remaining'], fallback: 1) > 0 ? 'Disponibile: 1' : 'Esaurito'} · ${offer['desc']}';
     }
@@ -1089,6 +2116,61 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       return '${offer['desc'] ?? ''}\nLivello oggetto: $level · Grado richiesto per acquistare/equipaggiare: ${max(0, grade)}. +${(1 + max(0, grade) ~/ 4).clamp(1, 3)} punti statistica per livello. La skill dell’oggetto si sblocca al livello $level (o al livello più alto indicato dalla forma).\n${ability.nome}: ${skill.descrizione} · ${skill.costo} · CD ${skill.cooldown}';
     }
     return '${offer['desc'] ?? ''}';
+  }
+
+  bool merchantOfferUnavailable(Map<String, dynamic> offer) {
+    if (offer['kind'] == 'black_market_ascension_dust') {
+      return merchantDustPurchaseCount >=
+          readIntValue(offer['purchaseLimit'], fallback: 3);
+    }
+    return offer.containsKey('remaining') &&
+        readIntValue(offer['remaining'], fallback: 1) <= 0;
+  }
+
+  bool merchantServiceHasEffect(Map<String, dynamic> offer) {
+    if (offer['kind'] != 'nurse_service') return true;
+    return switch ('${offer['service'] ?? ''}') {
+      'hp' => hpCorrenti() < maxHp(),
+      'oculum_shield' => scudoOculum() < scudoOculumMax(),
+      'will' => currentVolonta() < currentStatNaturalControllerMax('volonta'),
+      'matter' => currentMateria() < currentStatNaturalControllerMax('materia'),
+      'temp_hp' => hpTemp() < thresholdTemporaryHpLimit(),
+      'oculum' => oculumTotale() < oculumMassimo(),
+      'full' => true,
+      _ => true,
+    };
+  }
+
+  void _rollNurseRefillBuffForShopOpen() {
+    if (merchantShopType != 'infermiera_eroica') return;
+    final offer = merchantStock
+        .where(
+          (item) =>
+              item['kind'] == 'nurse_service' && item['service'] == 'full',
+        )
+        .firstOrNull;
+    if (offer == null) return;
+    final random = Random.secure();
+    offer['buffPercent'] = oculumNurseBuffPercentFromRoll(
+      percentileRoll: random.nextInt(100),
+      selectionRoll: random.nextInt(100),
+      jackpotChancePercent: readIntValue(
+        offer['rareBuffJackpotChancePercent'],
+        fallback: 1,
+      ),
+      jackpotValues:
+          (offer['rareBuffValues'] as List? ?? const <dynamic>[40, 60])
+              .map((value) => readIntValue(value))
+              .toList(),
+      standardValues:
+          (offer['standardBuffPercents'] as List? ??
+                  oculumNurseStandardBuffPercents)
+              .map((value) => readIntValue(value))
+              .toList(),
+    );
+    offer['buffRolledAt'] = DateTime.now().toIso8601String();
+    _saveActiveMerchantProfileStock();
+    programmaSalvataggio(invalidateCaches: false);
   }
 
   CharacterSkill merchantWeaponSkill(InventoryItem item) {
@@ -1134,6 +2216,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           onExpansionChanged: (open) {
             // ignore: invalid_use_of_protected_member
             setState(() => merchantIsOpen = open);
+            if (open) {
+              _rollNurseRefillBuffForShopOpen();
+              // ignore: invalid_use_of_protected_member
+              if (mounted) setState(() {});
+            }
           },
           tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
           childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
@@ -1218,9 +2305,14 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                 ),
                 child: ListTile(
                   dense: true,
-                  title: Text(
-                    '${offer['name']}',
-                    style: const TextStyle(color: Colors.white),
+                  title: Tooltip(
+                    message: offer['kind'] == 'fallen_eye'
+                        ? '${offer['name']}\n${merchantOfferDescription(offer)}'
+                        : '${offer['name']}',
+                    child: Text(
+                      '${offer['name']}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
                   subtitle: Text(
                     '${merchantRecommendation(offer)}${merchantOfferDescription(offer)}',
@@ -1228,12 +2320,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                   ),
                   trailing: FilledButton(
                     onPressed:
-                        (const {
-                                  'stat_gem',
-                                  'fate_sign',
-                                  'chaos_sign',
-                                }.contains(offer['kind']) &&
-                                readIntValue(offer['remaining']) <= 0) ||
+                        merchantOfferUnavailable(offer) ||
+                            !merchantServiceHasEffect(offer) ||
                             !oculumMerchantCanPurchaseOffer(
                               offer,
                               characterGrade: leggiNumero(gradoController),
@@ -1262,6 +2350,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   // ignore: unused_element
   Future<void> showMerchantDialog() async {
     final stock = recommendedMerchantStock();
+    _rollNurseRefillBuffForShopOpen();
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -1277,9 +2366,14 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                 final offer = stock[index];
                 final cost = merchantOfferCost(offer);
                 return ListTile(
-                  title: Text(
-                    '${offer['name']}',
-                    style: const TextStyle(color: Colors.white),
+                  title: Tooltip(
+                    message: offer['kind'] == 'fallen_eye'
+                        ? '${offer['name']}\n${merchantOfferDescription(offer)}'
+                        : '${offer['name']}',
+                    child: Text(
+                      '${offer['name']}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
                   subtitle: Text(
                     '${merchantRecommendation(offer)}${merchantOfferDescription(offer)}',
@@ -1287,12 +2381,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                   ),
                   trailing: FilledButton(
                     onPressed:
-                        (const {
-                                  'stat_gem',
-                                  'fate_sign',
-                                  'chaos_sign',
-                                }.contains(offer['kind']) &&
-                                readIntValue(offer['remaining']) <= 0) ||
+                        merchantOfferUnavailable(offer) ||
+                            !merchantServiceHasEffect(offer) ||
                             !oculumMerchantCanPurchaseOffer(
                               offer,
                               characterGrade: leggiNumero(gradoController),
@@ -1337,15 +2427,59 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       );
       return;
     }
-    if (offer['kind'] == 'stat_gem') {
-      updateMerchantGemOffers();
-      if (readIntValue(offer['remaining']) <= 0) return;
+    if (merchantOfferUnavailable(offer)) return;
+    if (offer['kind'] == 'stat_gem' ||
+        offer['kind'] == 'fallen_eye' ||
+        offer['kind'] == 'black_market_fallen_eye') {
+      if (offer['kind'] == 'stat_gem') updateMerchantGemOffers();
+      if (readIntValue(offer['remaining'], fallback: 1) <= 0) return;
     }
     final cost = merchantOfferCost(offer);
+    if (cost <= 0) return;
     if (leggiNumero(obserController) < cost) return;
     final kind = '${offer['kind'] ?? ''}';
-    if ((kind == 'fate_sign' || kind == 'chaos_sign') &&
+    if ((kind == 'fate_sign' ||
+            kind == 'chaos_sign' ||
+            kind == 'fallen_eye' ||
+            kind == 'black_market_fallen_eye') &&
         readIntValue(offer['remaining'], fallback: 1) <= 0) {
+      return;
+    }
+    if (kind == 'nurse_service') {
+      _buyNurseService(offer, cost);
+      return;
+    }
+    if (kind == 'technique_scroll' && offer['blackMarketSelected'] == true) {
+      await _buyBlackMarketOffer(offer, cost);
+      return;
+    }
+    if (kind.startsWith('black_market_')) {
+      await _buyBlackMarketOffer(offer, cost);
+      return;
+    }
+    if (kind == 'fallen_eye') {
+      final source = offer['sourceSheet'];
+      if (source is! Map || source.isEmpty) {
+        aggiungiLog(
+          'Questo Occhio dei Caduti non è disponibile: scheda sorgente mancante.',
+        );
+        return;
+      }
+      // ignore: invalid_use_of_protected_member
+      setState(() {
+        obserController.text = (leggiNumero(obserController) - cost).toString();
+        offer['remaining'] = 0;
+        risultato =
+            'Alchimista: hai ottenuto ${offer['name']} per $cost Obser.';
+        aggiungiLog(risultato);
+      });
+      _saveActiveMerchantProfileStock();
+      programmaSalvataggio();
+      await createFallenEyeFromSource(
+        Map<String, dynamic>.from(source),
+        name: '${offer['name'] ?? 'Occhio dei Caduti'}',
+        rarity: '${offer['rarity'] ?? 'non_comune'}',
+      );
       return;
     }
     String titleType = '';
@@ -1391,7 +2525,16 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       );
       if (kind == 'pawn' || kind == 'pawn_v2') purchasedPawn = item;
       inventario.add(item);
-      if (const {'stat_gem', 'fate_sign', 'chaos_sign'}.contains(kind)) {
+      if (const {
+        'stat_gem',
+        'fate_sign',
+        'chaos_sign',
+        'fallen_eye',
+        'gathering_collector',
+      }.contains(kind)) {
+        offer['remaining'] = 0;
+      }
+      if (kind == 'technique_scroll' && offer['blackMarketSelected'] == true) {
         offer['remaining'] = 0;
       }
       if (item.arma && item.ability == null) {
@@ -1406,10 +2549,386 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     _saveActiveMerchantProfileStock();
     programmaSalvataggio();
     if (purchasedPawn != null) await activatePawnItem(purchasedPawn!);
+    if (mounted) unawaited(sendRealtimeActiveSheetToStaff());
+  }
+
+  void _buyNurseService(Map<String, dynamic> offer, int cost) {
+    final service = '${offer['service'] ?? ''}';
+    if (!merchantServiceHasEffect(offer)) return;
+    // ignore: invalid_use_of_protected_member
+    setState(() {
+      obserController.text = (leggiNumero(obserController) - cost).toString();
+      switch (service) {
+        case 'hp':
+          currentHpController.text = maxHp().toString();
+          break;
+        case 'oculum_shield':
+          ricaricaScudoOculum();
+          break;
+        case 'will':
+          final current = currentVolonta();
+          setCurrentStatFromVisibleInput(
+            'volonta',
+            min(statMassimo('volonta'), current + 1).toString(),
+            trackConsumption: false,
+          );
+          break;
+        case 'matter':
+          final current = currentMateria();
+          setCurrentStatFromVisibleInput(
+            'materia',
+            min(statMassimo('materia'), current + 1).toString(),
+            trackConsumption: false,
+          );
+          break;
+        case 'temp_hp':
+          impostaHpTempTotali(hpTemp() + 15);
+          break;
+        case 'shield':
+          scudoController.text = (leggiNumero(scudoController) + 10).toString();
+          break;
+        case 'oculum':
+          addOculum(1, scheduleSave: false);
+          break;
+        case 'full':
+          refullaStatsAttuali(forceMaximum: true);
+          currentHpController.text = maxHp().toString();
+          for (final art in arti) {
+            art.integritaCorrente = artIntegrityEffectiveMaximum(art);
+          }
+          if (scudoOculumMax() > 0) ricaricaScudoOculum();
+          final removed = removeNegativeConditionsForVulnerabilityReset();
+          scudoController.text = '${leggiNumero(scudoController) + 20}';
+          final percent = readIntValue(
+            offer['buffPercent'],
+            fallback: 10,
+          ).clamp(10, 60).toInt();
+          final jackpot = percent >= 40;
+          final giftHp = oculumNurseTempHpGiftFromRoll(
+            percentileRoll: Random.secure().nextInt(100),
+            level: max(0, leggiNumero(livelloController)),
+            maximumTemporaryHp: thresholdTemporaryHpLimit(),
+            levelGiftChancePercent: readIntValue(
+              offer['rareTempHpChancePercent'],
+              fallback: 1,
+            ),
+            halfCeilingChancePercent: readIntValue(
+              offer['halfTempHpRoundedUpChancePercent'],
+              fallback: 2,
+            ),
+            halfFloorChancePercent: readIntValue(
+              offer['halfTempHpRoundedDownChancePercent'],
+              fallback: 5,
+            ),
+            hpPerLevel: readIntValue(offer['tempHpPerLevel'], fallback: 5),
+          );
+          var giftHpApplied = 0;
+          if (giftHp > 0) {
+            final beforeGift = hpTemp();
+            impostaHpTempTotali(beforeGift + giftHp);
+            giftHpApplied = max(0, hpTemp() - beforeGift);
+          }
+          final denominator = max(
+            1,
+            readIntValue(
+              offer['jackpotShieldHpFractionDenominator'],
+              fallback: 4,
+            ),
+          );
+          final rareShield = jackpot ? maxHp() ~/ denominator : 0;
+          if (rareShield > 0) {
+            scudoController.text =
+                '${leggiNumero(scudoController) + rareShield}';
+          }
+          heroicNursePendingBattleBuff = <String, dynamic>{
+            'damagePercent': percent,
+            'defensePercent': percent,
+            'pending': true,
+            'purchasedAt': DateTime.now().toIso8601String(),
+            'difficultyDurations': <String, int>{
+              'facile': 9,
+              'medio': 6,
+              'normale': 6,
+              'difficile': 3,
+              'oculum': 1,
+            },
+          };
+          risultato =
+              'Infermiera Eroica: Refull completato, $removed debuff rimossi, +20 Scudo incluso, +$percent% Danni e Difesa alla prossima battaglia${rareShield > 0 ? ', +$rareShield Scudo del jackpot' : ''}${giftHpApplied > 0 ? ', +$giftHpApplied HP temporanei in regalo' : ''}. Costo buff: ${oculumNurseBuffSurcharge(percent)} Obser.';
+          break;
+      }
+      if (service != 'full') {
+        risultato = 'Infermiera Eroica: ${offer['name']} per $cost Obser.';
+      }
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+    if (service == 'hp' || service == 'full' || service == 'shield') {
+      sendRealtimeHpChanged();
+    }
+    if (service == 'oculum' || service == 'full') {
+      scheduleRealtimeOculumChanged();
+    }
+    unawaited(sendRealtimeActiveSheetToStaff());
+  }
+
+  Future<void> _buyBlackMarketOffer(
+    Map<String, dynamic> offer,
+    int cost,
+  ) async {
+    final id = '${offer['id'] ?? ''}';
+    final kind = '${offer['kind'] ?? ''}';
+    if (kind == 'black_market_ascension_dust') {
+      if (merchantDustPurchaseCount >= 3) return;
+      // ignore: invalid_use_of_protected_member
+      setState(() {
+        obserController.text = (leggiNumero(obserController) - cost).toString();
+        ascensionDustController.text =
+            (leggiNumero(ascensionDustController) + 1).toString();
+        merchantDustPurchaseCount++;
+        merchantDustPurchasedSinceLongRest = merchantDustPurchaseCount >= 3;
+        risultato =
+            'Mercato nero: acquistata Ascension Dust per $cost Obser · $merchantDustPurchaseCount/3.';
+        aggiungiLog(risultato);
+      });
+      programmaSalvataggio();
+      if (mounted) unawaited(sendRealtimeActiveSheetToStaff());
+      return;
+    }
+    if (kind == 'black_market_fallen_eye') {
+      final source = offer['sourceSheet'];
+      if (source is! Map || source.isEmpty) return;
+      // ignore: invalid_use_of_protected_member
+      setState(() {
+        obserController.text = (leggiNumero(obserController) - cost).toString();
+        offer['remaining'] = 0;
+        risultato =
+            'Mercato nero: acquistato ${offer['name']} per $cost Obser.';
+        aggiungiLog(risultato);
+      });
+      _saveActiveMerchantProfileStock();
+      programmaSalvataggio();
+      await createFallenEyeFromSource(
+        Map<String, dynamic>.from(source),
+        name: '${offer['name'] ?? 'Occhio dei Caduti'}',
+        rarity: '${offer['rarity'] ?? 'non_comune'}',
+      );
+      if (mounted) unawaited(sendRealtimeActiveSheetToStaff());
+      return;
+    }
+
+    CharacterArt? purchasedArt;
+    CharacterSkill? purchasedSkill;
+    InventoryItem? purchasedItem;
+    if (kind == 'black_market_art') {
+      purchasedArt = _blackMarketArt(id);
+      if (purchasedArt == null ||
+          arti.any((existing) => existing.nome == purchasedArt!.nome)) {
+        return;
+      }
+    } else if (kind == 'black_market_monster_art') {
+      purchasedArt = _blackMarketMonsterArtFromOffer(offer);
+      final sourceArtKey = '${offer['sourceArtKey'] ?? ''}';
+      final marker = 'oculum_market_art:$sourceArtKey';
+      if (purchasedArt == null ||
+          arti.any((existing) => existing.descrizione.contains(marker))) {
+        return;
+      }
+    } else if (kind == 'black_market_skill') {
+      purchasedSkill = _blackMarketSkill(id);
+      if (purchasedSkill == null ||
+          skills.any((existing) => existing.nome == purchasedSkill!.nome)) {
+        return;
+      }
+    } else if (kind == 'black_market_monster_skill') {
+      purchasedSkill = _blackMarketMonsterSkillFromOffer(offer);
+      final sourceSkillId = '${offer['sourceSkillId'] ?? ''}';
+      final marker =
+          'black_market_source_skill:${oculumMonsterBookSkillBaseId(sourceSkillId)}';
+      if (purchasedSkill == null ||
+          skills.any(
+            (existing) =>
+                existing.descrizione.contains(marker) ||
+                existing.forme.any((form) => form.note.contains(marker)),
+          )) {
+        return;
+      }
+    } else if (kind == 'black_market_monster_weapon') {
+      final monster = monsterById('${offer['sourceMonsterId'] ?? ''}');
+      if (monster == null) return;
+      purchasedItem =
+          oculumMonsterEquipmentCatalogue(
+                source: monster,
+                level: readIntValue(offer['level']),
+                grade: readIntValue(offer['grade']),
+              )
+              .where(
+                (item) =>
+                    '${item.monsterLoot['id'] ?? ''}' == '${offer['itemId']}',
+              )
+              .firstOrNull;
+      if (purchasedItem == null ||
+          inventario.any(
+            (item) => '${item.monsterLoot['id'] ?? ''}' == '${offer['itemId']}',
+          )) {
+        return;
+      }
+    } else if ((kind == 'technique_scroll' &&
+            offer['blackMarketSelected'] == true) ||
+        kind == 'black_market_scroll') {
+      purchasedItem = merchantItemFromOffer(offer);
+      if (inventario.any(
+        (item) =>
+            item.craftData['scroll'] is Map &&
+            '${(item.craftData['scroll'] as Map)['id'] ?? ''}' ==
+                (offer['scrollProfileId'] == 'corruption'
+                    ? 'corruption/${readIntValue(offer['scrollGrade'])}'
+                    : 'technique/${offer['scrollProfileId']}/${readIntValue(offer['scrollGrade'])}') &&
+            readIntValue((item.craftData['scroll'] as Map)['grade']) ==
+                readIntValue(offer['scrollGrade']),
+      )) {
+        return;
+      }
+    } else {
+      return;
+    }
+
+    final purchasedName =
+        purchasedArt?.nome ??
+        purchasedSkill?.nome ??
+        purchasedItem?.nome ??
+        '${offer['name']}';
+    // ignore: invalid_use_of_protected_member
+    setState(() {
+      obserController.text = (leggiNumero(obserController) - cost).toString();
+      if (purchasedArt != null) arti.add(purchasedArt);
+      if (purchasedSkill != null) skills.add(purchasedSkill);
+      if (purchasedItem != null) inventario.add(purchasedItem);
+      offer['remaining'] = 0;
+      risultato = 'Mercato nero: acquistato $purchasedName per $cost Obser.';
+      aggiungiLog(risultato);
+    });
+    _saveActiveMerchantProfileStock();
+    programmaSalvataggio();
+    if (mounted) unawaited(sendRealtimeActiveSheetToStaff());
+  }
+
+  CharacterArt? _blackMarketMonsterArtFromOffer(Map<String, dynamic> offer) {
+    final monster = monsterById('${offer['sourceMonsterId'] ?? ''}');
+    if (monster == null) return null;
+    final imported = oculumMonsterBookImportArt(monster);
+    if (imported == null) return null;
+    final art = CharacterArt.fromJson(imported.toJson());
+    final key = '${offer['sourceArtKey'] ?? monster.id}';
+    art.nome = '${offer['name'] ?? imported.nome}';
+    art.descrizione =
+        '${art.descrizione}\nOrigine Mercato Nero: oculum_market_art:$key. Richiede livello ${readIntValue(offer['requiredLevel'])}.';
+    return art;
+  }
+
+  CharacterSkill? _blackMarketMonsterSkillFromOffer(
+    Map<String, dynamic> offer,
+  ) {
+    final monster = monsterById('${offer['sourceMonsterId'] ?? ''}');
+    final skillId = '${offer['sourceSkillId'] ?? ''}';
+    if (monster == null || skillId.isEmpty) return null;
+    final art = oculumMonsterBookArt(monster);
+    final ids = monsterBookUsableSkillIds(monster);
+    final index = ids.indexOf(skillId);
+    if (index < 0 || index >= art.skills.length) return null;
+    if (!oculumMonsterTechniqueIsNatural(monster, skillId)) return null;
+    final skill = CharacterSkill.fromJson(
+      _naturalMonsterSkill(monster, skillId, art.skills[index]).toJson(),
+    );
+    final marker =
+        'black_market_source_skill:${oculumMonsterBookSkillBaseId(skillId)}';
+    skill.nome = '${offer['name'] ?? skill.nome}';
+    skill.descrizione = '${skill.descrizione}\nOrigine: $marker.';
+    final requiredLevel = max(0, readIntValue(offer['requiredLevel']));
+    for (var i = 0; i < skill.forme.length; i++) {
+      skill.forme[i].livello = '${requiredLevel + i * 3}';
+      skill.forme[i].note =
+          '${skill.forme[i].note}${skill.forme[i].note.isEmpty ? '' : '\n'}$marker';
+    }
+    return skill;
+  }
+
+  CharacterArt? _blackMarketArt(String id) {
+    if (id != 'black_market_art_scoria') return null;
+    return CharacterArt(
+      nome: 'Art Nera: Archivio delle Scorie',
+      tipo: 'Martial Art',
+      descrizione:
+          'Art acquistata al Mercato Nero. Evoluzioni e tecniche sono modificabili nell’editor Art.',
+      skills: <ArtSkill>[
+        ArtSkill(
+          nome: 'Fiamma di Scoria',
+          evo1: '@Danni+24 Fuoco',
+          evo2: '@Danni+34 Fuoco',
+          evo3: '@Danni+46 Fuoco',
+          evo4: '@Danni+60 Fuoco',
+          evo5: '@Danni+76 Fuoco',
+          tipiPerLivello: List<String>.filled(5, 'Attacco'),
+        ),
+        ArtSkill(
+          nome: 'Taglio di Gelo Nero',
+          evo1: '@Danni+20 Ghiaccio',
+          evo2: '@Danni+30 Ghiaccio',
+          evo3: '@Danni+42 Ghiaccio',
+          evo4: '@Danni+55 Ghiaccio',
+          evo5: '@Danni+70 Ghiaccio',
+          tipiPerLivello: List<String>.filled(5, 'Attacco'),
+        ),
+      ],
+    );
+  }
+
+  CharacterSkill? _blackMarketSkill(String id) {
+    final (name, damage, element, cooldown) = switch (id) {
+      'black_market_skill_brace' => (
+        'Tecnica Nera: Colpo di Brace',
+        20,
+        'Fuoco',
+        '3 turni',
+      ),
+      'black_market_skill_gelo' => (
+        'Tecnica Nera: Taglio di Gelo',
+        30,
+        'Ghiaccio',
+        '4 turni',
+      ),
+      _ => ('', 0, '', ''),
+    };
+    if (name.isEmpty) return null;
+    return CharacterSkill(
+      nome: name,
+      tipo: 'Attacco',
+      costo: '1 azione',
+      cooldown: cooldown,
+      descrizione: 'Tecnica del Mercato Nero: +$damage danni $element.',
+      forme: <CharacterSkillForm>[
+        CharacterSkillForm(
+          nome: 'Forma I',
+          tipo: 'Attacco',
+          livello: '0',
+          costo: '1 azione',
+          cooldown: cooldown,
+          descrizione: 'Attacca un bersaglio con $element.',
+          danni: '@Danni+$damage $element',
+        ),
+      ],
+    );
   }
 
   /// Il mercante paga circa un sesto del valore stimato: utile, ma spilorcio.
   int merchantSaleValue(InventoryItem item) {
+    if (item.craftData['monsterRelic'] == true &&
+        readIntValue(item.craftData['monsterRelicMarketPrice']) > 0) {
+      return oculumMonsterRelicSaleValueForMarketPrice(
+        readIntValue(item.craftData['monsterRelicMarketPrice']),
+        quantity: item.quantita,
+      );
+    }
     if (item.craftData['scroll'] is Map) {
       final data = item.craftData['scroll'] as Map;
       return max(1, oculumScrollValue(readIntValue(data['grade'])) ~/ 6) *
@@ -1471,6 +2990,26 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     Map<String, dynamic> offer, {
     String titleType = '',
   }) {
+    if (offer['kind'] == 'gathering_collector') {
+      final collectorGrade = readIntValue(offer['grade']).clamp(0, 12);
+      final collectorLevel = max(0, readIntValue(offer['level']));
+      return InventoryItem(
+        nome: '${offer['name'] ?? 'Raccoglitore Grado 0/XII'}',
+        quantita: 1,
+        peso: .2,
+        note:
+            '${offer['desc'] ?? 'Passiva: raddoppia i materiali raccolti di Grado $collectorGrade o inferiore.'} Si attiva tenendolo nell’inventario.',
+        gradoOggetto: collectorGrade,
+        livelloOggetto: collectorLevel,
+        craftData: <String, dynamic>{
+          'gatheringCollector': <String, dynamic>{
+            'grade': collectorGrade,
+            'level': collectorLevel,
+            'multiplier': 2,
+          },
+        },
+      );
+    }
     if (offer['kind'] == 'chaos_sign') {
       return InventoryItem(
         nome: 'Segno del Chaos',
@@ -1526,7 +3065,14 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         craftData: {'alchemyPet': offer['petId']},
       );
     }
+    if (offer['kind'] == 'black_market_scroll' &&
+        offer['scrollProfileId'] == 'corruption') {
+      return oculumCorruptionScrollItem(readIntValue(offer['scrollGrade']));
+    }
     if (offer['kind'] == 'technique_scroll') {
+      if (offer['scrollProfileId'] == 'provi_gratitudine') {
+        return oculumGratitudineScrollItem(readIntValue(offer['scrollGrade']));
+      }
       final profile = oculumTechniqueScrolls.firstWhere(
         (p) => p.id == offer['scrollProfileId'],
       );

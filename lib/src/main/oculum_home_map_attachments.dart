@@ -8117,6 +8117,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
             ],
           ),
           const SizedBox(height: 8),
+          currentSheetInitiativeRemaining(compact: true),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,

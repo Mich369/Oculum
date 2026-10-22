@@ -5,6 +5,103 @@ import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
   testWidgets(
+    'equipped monster relic skills appear in their combat action panels',
+    (tester) async {
+      final dynamic state = await fixtures.mountSheet(
+        tester,
+        const Size(1440, 900),
+      );
+      final weapon = InventoryItem(
+        nome: 'Spada reliquia test',
+        peso: 1,
+        quantita: 1,
+        note: '',
+        arma: true,
+        equipaggiata: true,
+        ability: oculumEquipmentAbility('Spada reliquia test', 0),
+      );
+      final armor = InventoryItem(
+        nome: 'Armatura reliquia test',
+        peso: 1,
+        quantita: 1,
+        note: '',
+        protegge: true,
+        equipaggiata: true,
+        ability: oculumEquipmentAbility('Armatura reliquia test', 0),
+      );
+      final support = InventoryItem(
+        nome: 'Reliquia di cura test',
+        peso: 1,
+        quantita: 1,
+        note: '',
+        equipaggiata: true,
+        ability: CharacterSkill(
+          nome: 'Rimedio reliquiario',
+          tipo: 'Skill equipaggiamento',
+          costo: '',
+          cooldown: '',
+          descrizione: 'Cura 5 Vita a un alleato.',
+          forme: [
+            CharacterSkillForm(
+              nome: 'I',
+              tipo: 'Skill equipaggiamento',
+              livello: '0',
+              costo: '',
+              descrizione: 'Cura 5 Vita a un alleato.',
+              effettiStrutturati: [
+                OculumStructuredEffect(
+                  type: 'cura',
+                  recipient: 'alleato',
+                  valueExpression: '5',
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+      state.updateOculumHomeUi(() {
+        state.inventario
+          ..add(weapon)
+          ..add(armor)
+          ..add(support);
+      });
+      final expected = {
+        OculumCombatAbilityRole.attack: 'Spada reliquia test',
+        OculumCombatAbilityRole.defense: 'Armatura reliquia test',
+        OculumCombatAbilityRole.support: 'Reliquia di cura test',
+      };
+      for (final entry in expected.entries) {
+        final opened = OculumPerformanceProbe(
+          state,
+        ).openCombatActionPanel(entry.key);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        final panel = find.byType(AlertDialog).last;
+        final action = find.descendant(
+          of: panel,
+          matching: find.textContaining(entry.value),
+        );
+        expect(action, findsOneWidget, reason: '${entry.key}: ${entry.value}');
+        final button = tester.widget<OutlinedButton>(
+          find
+              .ancestor(of: action, matching: find.byType(OutlinedButton))
+              .first,
+        );
+        expect(button.onPressed, isNotNull, reason: '${entry.key}: usable');
+        expect(tester.takeException(), isNull);
+        await tester.tap(
+          find.descendant(of: panel, matching: find.text('Chiudi')),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        await opened;
+      }
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 3));
+    },
+  );
+
+  testWidgets(
     'defense rolls can be added, saved and removed while CM stays available',
     (tester) async {
       final dynamic state = await fixtures.mountSheet(

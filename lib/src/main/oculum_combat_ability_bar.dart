@@ -249,6 +249,40 @@ OculumCombatAbilityRole oculumCombatAbilityRole(
   return OculumCombatAbilityRole.defense;
 }
 
+Set<OculumCombatAbilityRole> oculumInventoryItemCombatRoles(
+  InventoryItem item,
+) {
+  final scroll = item.craftData['scroll'];
+  if (scroll is Map) {
+    final data = Map<String, dynamic>.from(scroll);
+    return oculumScrollCombatRoles(data, oculumScrollCombatEffects(data));
+  }
+  if (item.ability != null) {
+    final effects = item.ability!.forme.expand((form) {
+      return form.effettiStrutturati.isNotEmpty
+          ? form.effettiStrutturati
+          : oculumParseStructuredEffectsFromText(form.descrizione).effects;
+    });
+    return oculumCombatAbilityRoles(effects);
+  }
+  final description = oculumNormalizeText('${item.nome} ${item.note}');
+  if (item.craftData['bomb'] != null ||
+      item.craftData['bomba'] != null ||
+      description.contains('bomba') ||
+      description.contains('bomb')) {
+    return {OculumCombatAbilityRole.attack};
+  }
+  if (item.protegge ||
+      item.craftData['protective'] == true ||
+      description.contains('scudo') ||
+      description.contains('difesa') ||
+      description.contains('barriera') ||
+      description.contains('protezione')) {
+    return {OculumCombatAbilityRole.defense};
+  }
+  return {OculumCombatAbilityRole.support};
+}
+
 extension _OculumCombatAbilityBar on _OculumHomePageState {
   Future<void> finishParsedAbilityTargets(
     String text, {
@@ -327,6 +361,29 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     HiddenEyeStat? stat,
   }) async {
     final origin = currentSheetScrollId();
+    if (role == OculumCombatAbilityRole.support && stat?.id == 'medicina') {
+      await tiraSottotrattoOcchio(
+        stat!,
+        actionLabel: 'Medicina · cura',
+        onResolved: (natural, total) {
+          if (!mounted || currentSheetScrollId() != origin) return;
+          final amount = max(0, total) * (natural == 20 ? 2 : 1);
+          applyStructuredEffectsOnActivation([
+            OculumStructuredEffect(
+              type: 'cura',
+              resource: 'vita',
+              valueExpression: '$amount',
+              recipient: 'alleato',
+              duration: '0',
+            ),
+          ], source: 'Medicina${natural == 20 ? ' · cura doppia' : ''}');
+        },
+      );
+      if (mounted && currentSheetScrollId() == origin) {
+        await deliverPendingSupport();
+      }
+      return;
+    }
     if (role == OculumCombatAbilityRole.attack &&
         onlineAttackTokens().isNotEmpty) {
       await planOnlineAttack(initialChoice: stat?.id ?? 'vc');
@@ -338,7 +395,10 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     }
     if (!mounted || currentSheetScrollId() != origin) return;
     if (stat != null) {
-      await tiraSottotrattoOcchio(stat);
+      await tiraSottotrattoOcchio(
+        stat,
+        appliesAttackDamageBonus: role == OculumCombatAbilityRole.attack,
+      );
     } else {
       await tiraValoreSpeciale(
         role == OculumCombatAbilityRole.attack ? 'VC' : 'CM',
@@ -870,6 +930,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     OculumCombatAbilityRole? onlyRole,
     ValueChanged<VoidCallback>? onChoose,
   }) {
+    synchronizeFightStartCooldowns();
     Set<OculumCombatAbilityRole> rolesFor(
       Iterable<OculumStructuredEffect> effects, {
       String explicitType = '',
@@ -890,6 +951,24 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             VoidCallback? details,
           })
         >[];
+    if (!currentCombatIsActive() &&
+        namedStructuredCooldowns().any(
+          (entry) =>
+              !entry.cooldown.startsReady &&
+              entry.cooldown.amount > 0 &&
+              oculumTurnUnit(entry.cooldown.unit) == 'turni',
+        )) {
+      entries.add((
+        name: 'Prepara ricariche iniziali',
+        roles: {OculumCombatAbilityRole.support},
+        color: eyePupilGlowColor,
+        enabled: true,
+        hint:
+            'Seleziona le capacità da preparare fuori battaglia: 6 secondi per turno, con conto alla rovescia.',
+        details: null,
+        use: () => unawaited(showFightStartPreparations()),
+      ));
+    }
     if (onlyRole != null) {
       final attack = onlyRole == OculumCombatAbilityRole.attack;
       final support = onlyRole == OculumCombatAbilityRole.support;
@@ -1291,8 +1370,8 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           isMerchantConsumable(item),
     )) {
       entries.add((
-        name: '${item.nome} ×${item.quantita}',
-        roles: {OculumCombatAbilityRole.support},
+        name: 'Item · ${item.nome} ×${item.quantita}',
+        roles: oculumInventoryItemCombatRoles(item),
         color: statFormulaColor('resilienza'),
         enabled: canEquipInventoryItem(item),
         hint: '${item.note}\nConsumabile dall’inventario',
@@ -1308,8 +1387,9 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       final scroll = Map<String, dynamic>.from(item.craftData['scroll'] as Map);
       final effects = oculumScrollCombatEffects(scroll);
       entries.add((
-        name: '${scroll['name'] ?? item.nome} · Scroll ×${item.quantita}',
-        roles: rolesFor(effects),
+        name:
+            'Item · ${scroll['name'] ?? item.nome} · Pergamena ×${item.quantita}',
+        roles: oculumScrollCombatRoles(scroll, effects),
         color: statFormulaColor('volonta'),
         enabled:
             canEquipInventoryItem(item) &&
@@ -1393,6 +1473,33 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           ),
         ));
       }
+    }
+    final activeSheet =
+        schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
+        ? schedePersonaggio[schedaCorrente]
+        : const <String, dynamic>{};
+    final hasPatalpaSummon =
+        '${activeSheet['monsterBookSourceId'] ?? ''}' == 'patalpa_dolce' ||
+        inventario.any(
+          (item) =>
+              item.nome.toLowerCase().contains('armatura del patalpa') &&
+              item.quantita > 0,
+        );
+    if (hasPatalpaSummon) {
+      final fightsRemaining = max(
+        0,
+        readIntValue(activeSheet['patalpaSummonCooldownFightsRemaining']),
+      );
+      entries.add((
+        name: 'CD ripristinata',
+        roles: {OculumCombatAbilityRole.support},
+        color: eyePupilGlowColor,
+        enabled: true,
+        hint:
+            'Richiamo del Patalpa · ${fightsRemaining == 0 ? 'pronto' : 'cooldown: $fightsRemaining fight'}. Premi fuori da uno scontro per ripristinare la CD. Disponibile online e offline.',
+        details: null,
+        use: restorePatalpaSummonCooldown,
+      ));
     }
     if (entries.isEmpty) return const SizedBox.shrink();
     Widget buildOptions(BuildContext context, BoxConstraints constraints) {

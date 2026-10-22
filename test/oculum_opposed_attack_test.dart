@@ -58,10 +58,7 @@ void main() {
       abilityDamageBonus: 0,
     );
     expect(base, -2);
-    expect(
-      oculumDamagePerTarget(base, 1, flatBonusPerTarget: 8),
-      6,
-    );
+    expect(oculumDamagePerTarget(base, 1, flatBonusPerTarget: 8), 6);
   });
 
   test(

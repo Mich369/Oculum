@@ -28,6 +28,143 @@ int oculumScrollCooldown(int grade) => 3 + grade.clamp(0, 12) ~/ 3;
 
 int oculumScrollEffectMagnitude(int grade) => 1 + grade.clamp(0, 12);
 
+/// A grade difference lowers the Black Market corruption scroll by 20 points
+/// per grade. Equal-grade and weaker targets start at 100%; five grades above
+/// the scroll leaves no chance.
+int oculumCorruptionScrollChance({
+  required int scrollGrade,
+  required int targetGrade,
+}) => (100 - 20 * max(0, targetGrade - scrollGrade)).clamp(0, 100).toInt();
+
+int oculumCorruptionChanceAfterResistance({
+  required int chancePercent,
+  required num resistancePercent,
+}) =>
+    (chancePercent.clamp(0, 100) *
+            (100 - resistancePercent.clamp(0, 100)) /
+            100)
+        .floor();
+
+int oculumFightStartCooldownSecondsRemaining({
+  required DateTime? fightStartedAt,
+  required int cooldownTurns,
+  required int secondsPerTurn,
+  DateTime? now,
+}) {
+  final turns = max<int>(0, cooldownTurns);
+  final seconds = max<int>(0, secondsPerTurn);
+  if (fightStartedAt == null) return turns * seconds;
+  final total = turns * seconds;
+  final elapsed = max(
+    0,
+    (now ?? DateTime.now()).difference(fightStartedAt).inSeconds,
+  );
+  return max<int>(0, total - elapsed);
+}
+
+/// Chosen initial price for this rare Black Market-only scroll. The offer keeps
+/// the cost in its editable merchant profile, so a Master can tune it.
+int oculumCorruptionScrollPrice(int grade) => 24000 + 2000 * grade.clamp(0, 12);
+
+const int oculumCorruptionMasteryResistancePercent = 50;
+const int oculumCorruptionMasteryTargetControlPercent = 90;
+
+int oculumCorruptionRequiredFullHits({
+  required int sourceLevel,
+  required int targetLevel,
+}) => max(0, targetLevel - sourceLevel);
+
+bool oculumCanResistCorruption({
+  required int targetLevel,
+  required int sourceLevel,
+}) => targetLevel >= sourceLevel;
+
+int oculumCorruptionDefensePenalty({
+  required int targetLevel,
+  required int sourceLevel,
+}) => targetLevel == sourceLevel ? 3 : 0;
+
+bool oculumCorruptionDefenseSucceeds({
+  required int targetLevel,
+  required int sourceLevel,
+  required int defenseTotal,
+  required int sourceTotal,
+}) =>
+    oculumCanResistCorruption(
+      targetLevel: targetLevel,
+      sourceLevel: sourceLevel,
+    ) &&
+    defenseTotal -
+            oculumCorruptionDefensePenalty(
+              targetLevel: targetLevel,
+              sourceLevel: sourceLevel,
+            ) >=
+        sourceTotal;
+
+bool oculumIsCorruptionMastery(CharacterSkill skill) =>
+    skill.scrollData['kind'] == 'corruption' ||
+    oculumNormalizeText(skill.nome) == 'padrone della corruzione';
+
+int oculumCorruptionMasteryBonus(Iterable<CharacterSkill> source) {
+  final skill = source.where(oculumIsCorruptionMastery).firstOrNull;
+  if (skill == null) return 0;
+  return max(
+    0,
+    readIntValue(
+      skill.scrollData['resistancePercent'],
+      fallback: oculumCorruptionMasteryResistancePercent,
+    ),
+  );
+}
+
+double oculumCorruptionTotalResistance({
+  required double existingResistancePercent,
+  required int masteryBonusPercent,
+}) => max(0.0, existingResistancePercent) + max(0, masteryBonusPercent);
+
+InventoryItem oculumCorruptionScrollItem(int grade) {
+  final g = grade.clamp(0, 12).toInt();
+  const description =
+      'Marchio di Corruzione · pergamena d’attacco monouso. In battaglia scegli un mostro: la possibilità di infettarlo è 100%; ogni Grado del mostro sopra il Grado della pergamena riduce la possibilità di 20 punti percentuali, fino a 0%. Un grado pari o inferiore non riduce la possibilità. La skill appresa, Padrone della Corruzione, aggiunge +50 punti percentuali alla resistenza alla Corruzione già presente e non ha altre forme.';
+  final effects = oculumScrollCombatEffects({
+    'grade': g,
+    'kind': 'corruption',
+  }).map((effect) => effect.toJson()).toList();
+  return InventoryItem(
+    nome: '[Marchio di Corruzione] [Pergamena d’attacco] [Grado $g]',
+    peso: .1,
+    quantita: 1,
+    gradoOggetto: g,
+    elementoDanno: 'corruzione',
+    note:
+        '$description\nCosto iniziale: ${oculumCorruptionScrollPrice(g)} Obser, modificabile dal Master. La pergamena è venduta solo al Mercato Nero.',
+    craftData: {
+      'scroll': {
+        'id': 'corruption/$g',
+        'name': 'Padrone della Corruzione',
+        'element': 'corruzione',
+        'grade': g,
+        'kind': 'corruption',
+        'scrollCategory': 'attack',
+        'description': description,
+        'willCost': 0,
+        'cooldownTurns': 2,
+        'cooldownStart': 'fight_start',
+        'preselectOutsideFight': true,
+        'cooldownSecondsPerTurn': 6,
+        'resistancePercent': oculumCorruptionMasteryResistancePercent,
+        'targetControlPercent': oculumCorruptionMasteryTargetControlPercent,
+        'effects': effects,
+      },
+    },
+  );
+}
+
+int oculumGratitudineNextActionBonus(int grade) {
+  final value = grade.clamp(0, 12).toInt();
+  return value == 0 ? 1 : value * 6;
+}
+
 List<OculumStructuredEffect> oculumScrollCombatEffects(
   Map<String, dynamic> data, {
   int? resolvedDamage,
@@ -38,7 +175,46 @@ List<OculumStructuredEffect> oculumScrollCombatEffects(
   final kind = '${data['kind']}';
   final duration = kind == 'imprison' ? 1 : 1 + g ~/ 3;
   final effects = <OculumStructuredEffect>[];
-  if (kind == 'attack') {
+  if (kind == 'gratitudine') {
+    effects.addAll([
+      OculumStructuredEffect(
+        id: 'gratitudine_fast_reaction_$g',
+        type: 'aggiungi_reazioni_rapide',
+        target: 'reazione_veloce',
+        recipient: 'alleato',
+        valueExpression: '1',
+        duration: '1',
+        durationUnit: 'turni',
+        mode: 'temporaneo',
+        stackable: true,
+      ),
+      OculumStructuredEffect(
+        id: 'gratitudine_next_action_$g',
+        type: 'modifica_sottotratto',
+        target: 'tiro_globale',
+        recipient: 'alleato',
+        valueExpression: '${oculumGratitudineNextActionBonus(g)}',
+        duration: '1',
+        durationUnit: 'azioni',
+        mode: 'prossima_azione',
+        stackable: true,
+      ),
+    ]);
+  } else if (kind == 'corruption') {
+    effects.add(
+      OculumStructuredEffect(
+        id: 'corruption_scroll_infection',
+        type: 'stato',
+        recipient: 'nemico',
+        appliedState: 'corruzione',
+        valueExpression: '1',
+        duration: '0',
+        durationUnit: 'turni',
+        resource: 'corruption_scroll:$g',
+        stackable: false,
+      ),
+    );
+  } else if (kind == 'attack') {
     effects.add(
       OculumStructuredEffect(
         type: 'danno',
@@ -112,6 +288,83 @@ List<OculumStructuredEffect> oculumScrollCombatEffects(
   return effects.isNotEmpty
       ? effects
       : oculumResolveAbilityEffects([], '${data['description'] ?? ''}');
+}
+
+Set<OculumCombatAbilityRole> oculumScrollCombatRoles(
+  Map<String, dynamic> data,
+  Iterable<OculumStructuredEffect> effects,
+) {
+  switch ('${data['kind'] ?? ''}') {
+    case 'gratitudine':
+    case 'utility':
+    case 'heal':
+      return {OculumCombatAbilityRole.support};
+    case 'ward':
+      return {OculumCombatAbilityRole.defense};
+    case 'corruption':
+      return {OculumCombatAbilityRole.attack};
+    case 'attack':
+    case 'imprison':
+    case 'control':
+    case 'weaken':
+    case 'stun':
+      return {OculumCombatAbilityRole.attack};
+    case 'technique':
+      final active = effects.where((effect) => effect.enabled).toList();
+      if (active.any(
+        (effect) =>
+            const {'danno', 'danno_percentuale'}.contains(effect.type) ||
+            effect.recipient == 'nemico' && effect.type == 'stato',
+      )) {
+        return {OculumCombatAbilityRole.attack};
+      }
+      if (active.any(
+        (effect) => const {
+          'difesa',
+          'scudo',
+          'hp_temporanei',
+          'elemental_resistance',
+        }.contains(effect.type),
+      )) {
+        return {OculumCombatAbilityRole.defense};
+      }
+      return {OculumCombatAbilityRole.support};
+    default:
+      return oculumCombatAbilityRoles(effects);
+  }
+}
+
+InventoryItem oculumGratitudineScrollItem(int grade) {
+  final g = grade.clamp(0, 12).toInt();
+  final bonus = oculumGratitudineNextActionBonus(g);
+  final description =
+      'Scroll di utility Reazione Fulminea. Scegli uno o più partecipanti alla turnistica: ciascuno riceve una Reazione Fulminea aggiuntiva e ottiene +$bonus alla prossima azione. Al Grado 0 il bonus è +1; dagli altri gradi è Grado × 6. Se impari la skill, non puoi selezionare te stesso: ha ricarica di 1 tuo turno e costa una Reazione, oppure la tua Azione se la usi nel tuo turno. Quando la risorsa rimane disponibile, il log riporta “Provi Gratitudine”.';
+  return InventoryItem(
+    nome: '[Reazione Fulminea] [Pergamena utility] [Grado $g]',
+    peso: .1,
+    quantita: 1,
+    gradoOggetto: g,
+    note:
+        '$description\nMonouso. Costo ${oculumScrollWillCost(g)} Volontà; DT ${oculumScrollDifficulty(g)}; valore ${oculumScrollValue(g)} Obser.',
+    craftData: {
+      'scroll': {
+        'id': 'reazione_fulminea/$g',
+        'name': 'Reazione Fulminea',
+        'element': 'utility',
+        'grade': g,
+        'kind': 'gratitudine',
+        'scrollCategory': 'utility',
+        'description': description,
+        'willCost': oculumScrollWillCost(g),
+        'cooldownTurns': 1,
+        'effects': oculumScrollCombatEffects({
+          'grade': g,
+          'kind': 'gratitudine',
+          'description': description,
+        }).map((effect) => effect.toJson()).toList(),
+      },
+    },
+  );
 }
 
 InventoryItem oculumShadowLivingScrollItem(int grade) {
@@ -356,12 +609,15 @@ InventoryItem oculumMonsterEchoScrollItem(String id, int grade) {
   );
 }
 
-int oculumScrollLearningChance(String difficulty) => switch (difficulty) {
-  'facile' => 20,
-  'difficile' => 10,
-  'oculum' => 5,
-  _ => 15,
-};
+int oculumScrollLearningChance(String difficulty, {int bonusPercent = 0}) {
+  final base = switch (difficulty) {
+    'facile' => 20,
+    'difficile' => 10,
+    'oculum' => 5,
+    _ => 15,
+  };
+  return (base + bonusPercent.clamp(0, 3)).clamp(0, 100).toInt();
+}
 
 bool oculumScrollCanLearn(
   int natural,
@@ -369,11 +625,13 @@ bool oculumScrollCanLearn(
   int grade,
   int percentile, {
   String difficulty = 'normale',
+  int bonusPercent = 0,
 }) =>
     natural == 20 &&
     total >= 30 + 10 * grade.clamp(0, 12) &&
     percentile >= 0 &&
-    percentile < oculumScrollLearningChance(difficulty);
+    percentile <
+        oculumScrollLearningChance(difficulty, bonusPercent: bonusPercent);
 
 InventoryItem oculumScrollItem(
   String element,
@@ -505,6 +763,19 @@ extension _OculumScrolls on _OculumHomePageState {
       return;
     }
     final g = readIntValue(data['grade']).clamp(0, 12);
+    final kind = '${data['kind']}';
+    if (kind == 'corruption' && !currentCombatIsActive()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('La pergamena si usa durante uno scontro.'),
+        ),
+      );
+      return;
+    }
+    if (item == null && kind == 'gratitudine') {
+      await _useLearnedGratitudine(data);
+      return;
+    }
     final lastCastRound = readIntValue(
       data['lastCastPersonalTurn'],
       fallback: -999,
@@ -543,9 +814,13 @@ extension _OculumScrolls on _OculumHomePageState {
       );
       return;
     }
+    final gratitudeTargets = kind == 'gratitudine'
+        ? await _selectScrollSupportTargets(excludeSelf: false)
+        : <String>[];
     final targetKind =
         const {
           'attack',
+          'corruption',
           'heal',
           'imprison',
           'control',
@@ -564,10 +839,17 @@ extension _OculumScrolls on _OculumHomePageState {
     final targets = targetKind && !onlineFight
         ? await _selectScrollTargets('${data['kind']}', g)
         : <int>[];
+    final onlineCorruptionTarget = kind == 'corruption' && onlineFight
+        ? await _selectOnlineCorruptionTarget()
+        : null;
     if (!mounted ||
         (item == null && currentSheetScrollId() != origin) ||
         (item != null && !inventario.contains(item)) ||
-        (targetKind && !onlineFight && targets.isEmpty)) {
+        (targetKind && !onlineFight && targets.isEmpty) ||
+        (kind == 'corruption' &&
+            onlineFight &&
+            onlineCorruptionTarget == null) ||
+        (kind == 'gratitudine' && gratitudeTargets.isEmpty)) {
       return;
     }
     final confirmed = await showDialog<bool>(
@@ -576,9 +858,7 @@ extension _OculumScrolls on _OculumHomePageState {
         title: Text('${data['name']} · Grado ${data['grade']}'),
         content: SingleChildScrollView(
           child: Text(
-            '${data['description']}\n\n${item == null ? 'Skill appresa, non evolvibile.' : 'Consuma una pergamena. Possibilità di apprendimento: ${oculumScrollLearningChance(normalizedCampaignDifficulty())}% con 20 naturale e totale ≥ ${30 + 10 * readIntValue(data['grade'])}.'}'
-            '\nCosto: $cost Volontà · DT ${oculumScrollDifficulty(g)} · ricarica $cooldown turni. '
-            'Il tiro usa Volontà, bonus e Oculum preparato. Il Master vede risultato e bersagli.',
+            '${data['description']}\n\n${kind == 'corruption' ? 'La pergamena non richiede una prova di attivazione né Volontà. La possibilità indicata dipende solo dal Grado del bersaglio e dalla sua eventuale resistenza alla Corruzione.' : 'Consuma una pergamena. Possibilità di apprendimento: ${oculumScrollLearningChance(normalizedCampaignDifficulty())}%${currentCombatIsActive() ? ' (+1–3% in battaglia)' : ''} con 20 naturale e totale ≥ ${30 + 10 * readIntValue(data['grade'])}.\nCosto: $cost Volontà · DT ${oculumScrollDifficulty(g)} · ricarica $cooldown turni. Il tiro usa Volontà, bonus e Oculum preparato.'} Il Master vede il risultato e i bersagli.',
           ),
         ),
         actions: [
@@ -599,6 +879,11 @@ extension _OculumScrolls on _OculumHomePageState {
         (item != null && (!inventario.contains(item) || item.quantita <= 0))) {
       return;
     }
+    if (kind == 'corruption' &&
+        currentCombatIsActive() &&
+        !await spendCombatRollResource()) {
+      return;
+    }
     currentVolontaController.text = '${currentVolonta() - cost}';
     final natural = tiraD20();
     final spend = consumaOculumTiro();
@@ -610,24 +895,31 @@ extension _OculumScrolls on _OculumHomePageState {
         spend.bonus;
     final total = rollTotalWithCritical(natural, 20, [bonus]);
     final success =
+        kind == 'corruption' ||
         natural != 1 &&
-        total >= oculumScrollDifficulty(g) &&
-        (slotMachineRollsEnabled
-            ? resolveSlotMachineSuccess(naturalRoll: natural)
-            : total > 0);
+            total >= oculumScrollDifficulty(g) &&
+            (slotMachineRollsEnabled
+                ? resolveSlotMachineSuccess(naturalRoll: natural)
+                : total > 0);
     final formula = rollFormulaWithCritical(
       roll: natural,
       faces: 20,
       bonuses: [bonus],
     );
-    final kind = '${data['kind']}';
     final source = 'pergamena/${data['element']}/$kind';
     var outcome = success
         ? '${data['description']}'
         : 'Tiro fallito: nessun effetto.';
     var resolvedAttackDamage = 0;
-    if (success && const {'technique', 'shadow_clone'}.contains(kind)) {
-      final effects = oculumScrollCombatEffects(data);
+    if (success &&
+        const {'technique', 'shadow_clone', 'gratitudine'}.contains(kind)) {
+      final effects = oculumScrollCombatEffects(data)
+          .map(
+            (effect) => OculumStructuredEffect.fromJson(
+              effect.toJson(),
+            )..recipient = kind == 'gratitudine' ? 'alleato' : effect.recipient,
+          )
+          .toList();
       outcome +=
           '\n${applyStructuredEffectsOnActivation(effects, source: source).join("\n")}';
     }
@@ -707,8 +999,12 @@ extension _OculumScrolls on _OculumHomePageState {
       }
       if (item != null && natural == 20 && total >= 30 + 10 * g) {
         final percentile = Random.secure().nextInt(100);
+        final learningBonus = currentCombatIsActive()
+            ? Random.secure().nextInt(3) + 1
+            : 0;
         final chance = oculumScrollLearningChance(
           normalizedCampaignDifficulty(),
+          bonusPercent: learningBonus,
         );
         if (oculumScrollCanLearn(
           natural,
@@ -716,16 +1012,23 @@ extension _OculumScrolls on _OculumHomePageState {
           g,
           percentile,
           difficulty: normalizedCampaignDifficulty(),
+          bonusPercent: learningBonus,
         )) {
           if (!skills.any((skill) => skill.scrollData['id'] == data['id'])) {
             skills.add(
               CharacterSkill(
                 nome: '${data['name']} [Grado $g]',
-                tipo: 'Attiva',
-                costo: '$cost VOL',
-                cooldown: '$cooldown',
+                tipo: kind == 'corruption' ? 'Passiva' : 'Attiva',
+                costo: kind == 'corruption'
+                    ? '0'
+                    : kind == 'gratitudine'
+                    ? '1 Reazione / Azione'
+                    : '$cost VOL',
+                cooldown: kind == 'corruption'
+                    ? '2 turni dallo scontro'
+                    : '$cooldown',
                 descrizione:
-                    '${data['description']}\nAppresa da pergamena: non evolvibile.',
+                    '${data['description']}\nAppresa da pergamena: non evolvibile.${kind == 'corruption' ? '\nPassiva: resistenza alla Corruzione; al colpo pieno infetta i mostri di livello superiore. Ricarica iniziale: 2 turni dallo scontro (12 secondi a 6 secondi per turno). Il proprietario sceglie il bersaglio nel 90% degli attacchi del mostro corrotto.' : ''}',
                 scrollData: Map<String, dynamic>.from(data),
               ),
             );
@@ -742,9 +1045,56 @@ extension _OculumScrolls on _OculumHomePageState {
           '${data['name']} [Grado $g]: $formula.${oculumTiroLogLabel(spend)}\n$outcome$learned';
       aggiungiLog(risultato);
     });
-    if (success &&
+    if (success && kind == 'corruption' && onlineFight) {
+      final targetTag = onlineCorruptionTarget!;
+      if (realtimeIsMasterRole) {
+        _applyCorruptionToInitiativeTag(
+          targetTag,
+          scrollGrade: g,
+          corruptorTag: sheetTagAt(schedaCorrente),
+          sourceName: '${data['name']}',
+          sourceTotal: total,
+          sourceLevel: leggiNumero(livelloController),
+        );
+      } else {
+        final request = <String, dynamic>{
+          'id':
+              'corruption:${sheetTagAt(schedaCorrente)}:${DateTime.now().microsecondsSinceEpoch}',
+          'encounterId': onlineCombatEncounterId,
+          'sourceTag': sheetTagAt(schedaCorrente),
+          'sourceName': realtimeDisplayName(),
+          'targetTag': targetTag,
+          'scrollGrade': g,
+          'source': 'scroll',
+          'attack': total,
+          'level': leggiNumero(livelloController),
+          'scope': permissionScope,
+          'kind': 'corruption',
+          'status': 'pending',
+        };
+        attachPendingCombatTurnResources(request);
+        onlineCombatRequests['${request['id']}'] = request;
+        final sent = await realtimeService?.sendCombatEvent(
+          'corruption_apply',
+          permissionEnvelope(request),
+        );
+        aggiungiLog(
+          sent == true
+              ? '[CORRUZIONE] Richiesta inviata al Master per ${onlineCorruptionTargetName(targetTag)}.'
+              : '[CORRUZIONE] Invio al Master non confermato; la richiesta non è stata applicata.',
+        );
+      }
+    }
+    if (success && kind == 'gratitudine') {
+      await deliverPendingSupport(
+        minimum: 1,
+        maximum: gratitudeTargets.length,
+        selectedTags: gratitudeTargets,
+        sourcePrefix: source,
+      );
+    } else if (success &&
         onlineFight &&
-        !const {'technique', 'shadow_clone'}.contains(kind)) {
+        !const {'technique', 'shadow_clone', 'corruption'}.contains(kind)) {
       final effects = oculumScrollCombatEffects(
         data,
         resolvedDamage: max(0, resolvedAttackDamage - bonusDannoPiatto()),
@@ -788,6 +1138,16 @@ extension _OculumScrolls on _OculumHomePageState {
     if (success && !onlineFight) {
       for (final sheetIndex in targets) {
         switch (kind) {
+          case 'corruption':
+            queueCorruptionApplication(
+              targetTag: sheetTagAt(sheetIndex),
+              scrollGrade: g,
+              sourceTag: sheetTagAt(schedaCorrente),
+              sourceName: '${data['name']}',
+              sourceTotal: total,
+              sourceLevel: leggiNumero(livelloController),
+            );
+            break;
           case 'attack':
             applyMasterEnemyQuickHpAction(
               sheetIndex,
@@ -900,6 +1260,11 @@ extension _OculumScrolls on _OculumHomePageState {
   Future<List<int>> _selectScrollTargets(String kind, int grade) async {
     final options = <({int sheet, String name})>[];
     for (final token in masterInitiativeTokens) {
+      if (kind == 'corruption' &&
+          ('${token['side'] ?? ''}' != 'enemy' ||
+              const {'dead', 'fled', 'expired'}.contains(token['status']))) {
+        continue;
+      }
       final sheet = masterInitiativeSheetIndexForToken(token);
       if (sheet < 0 || options.any((option) => option.sheet == sheet)) continue;
       options.add((
@@ -964,5 +1329,373 @@ extension _OculumScrolls on _OculumHomePageState {
       ),
     );
     return result ?? const [];
+  }
+
+  Future<String?> _selectOnlineCorruptionTarget() async {
+    final own = sheetTagAt(schedaCorrente);
+    final ownSide = onlineCombatTokens()
+        .where((token) => onlineCombatTokenTag(token) == own)
+        .firstOrNull?['side'];
+    final targets = onlineCombatTokens().where((token) {
+      if (const {'dead', 'fled', 'expired'}.contains(token['status'])) {
+        return false;
+      }
+      if ('${token['side'] ?? ''}' == '${ownSide ?? 'ally'}') return false;
+      return true;
+    }).toList();
+    if (targets.isEmpty) return null;
+    return showDialog<String>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('Marchio di Corruzione · scegli un bersaglio'),
+        content: SizedBox(
+          width: 420,
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              for (final token in targets)
+                ListTile(
+                  title: Text('${token['name'] ?? 'Mostro'}'),
+                  subtitle: Text(
+                    'Livello ${readIntValue(token['level'])} · Grado ${readIntValue(token['grade'])}',
+                  ),
+                  onTap: () =>
+                      Navigator.pop(dialog, onlineCombatTokenTag(token)),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('Annulla'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String onlineCorruptionTargetName(String tag) =>
+      onlineCombatTokens()
+          .where((token) => onlineCombatTokenTag(token) == tag)
+          .firstOrNull?['name']
+          ?.toString() ??
+      tag;
+
+  double oculumCorruptionResistanceInSheet(Map<String, dynamic> sheet) {
+    final rawSkills = sheet['skills'];
+    final savedSkills = rawSkills is List
+        ? rawSkills.whereType<Map>().map(
+            (raw) => CharacterSkill.fromJson(Map<String, dynamic>.from(raw)),
+          )
+        : const <CharacterSkill>[];
+    final presets = sheet['incomingDamagePresets'] is Map
+        ? sheet['incomingDamagePresets'] as Map
+        : const {};
+    final percentages = sheet['dannoSubitoPercentualePerTipo'] is Map
+        ? sheet['dannoSubitoPercentualePerTipo'] as Map
+        : const {};
+    final custom =
+        percentages['corrotto'] ??
+        percentages['corruzione'] ??
+        (presets.isEmpty && percentages.isEmpty
+            ? sheet['dannoSubitoPercentuale']
+            : null);
+    final multiplier =
+        oculumIncomingDamagePercentMultiplier('${custom ?? ''}') ??
+        modificatoreDannoDaNome(
+          '${presets['corrotto'] ?? presets['corruzione'] ?? 'Normale'}',
+        ).multiplier;
+    return oculumCorruptionTotalResistance(
+      existingResistancePercent: (1 - multiplier) * 100,
+      masteryBonusPercent: oculumCorruptionMasteryBonus(savedSkills),
+    );
+  }
+
+  double currentCorruptionResistancePercent() {
+    final multiplier =
+        oculumIncomingDamagePercentMultiplier(
+          configuredIncomingDamagePercentForType('corrotto'),
+        ) ??
+        modificatoreDannoDaNome(
+          configuredIncomingDamagePreset('corrotto'),
+        ).multiplier;
+    return oculumCorruptionTotalResistance(
+      existingResistancePercent: (1 - multiplier) * 100,
+      masteryBonusPercent: oculumCorruptionMasteryBonus(skills),
+    );
+  }
+
+  void _writeCorruptionConditionToSheet(
+    Map<String, dynamic> sheet, {
+    required String corruptorTag,
+    required int chancePercent,
+    required String sourceName,
+    int controlChancePercent = oculumCorruptionMasteryTargetControlPercent,
+    Map<String, dynamic>? metadata,
+  }) {
+    final conditions = List<dynamic>.from(
+      sheet['conditions'] as List? ?? const [],
+    );
+    conditions.removeWhere(
+      (raw) => raw is Map && raw['conditionType'] == 'corruzione',
+    );
+    conditions.add(
+      OculumConditionInstance(
+        id: 'corruzione_${DateTime.now().microsecondsSinceEpoch}',
+        conditionType: 'corruzione',
+        category: OculumConditionCategory.special,
+        duration: 0,
+        durationType: OculumConditionDurationType.permanent,
+        source: sourceName,
+        metadata: {
+          ...?metadata,
+          'corruptedByTag': corruptorTag,
+          'targetControlChancePercent': controlChancePercent.clamp(0, 100),
+          'infectionChancePercent': chancePercent,
+        },
+      ).toJson(),
+    );
+    sheet['conditions'] = conditions;
+  }
+
+  void _applyCorruptionToInitiativeTag(
+    String targetTag, {
+    required int scrollGrade,
+    required String corruptorTag,
+    required String sourceName,
+    required int sourceTotal,
+    required int sourceLevel,
+  }) {
+    queueCorruptionApplication(
+      targetTag: targetTag,
+      scrollGrade: scrollGrade,
+      sourceTag: corruptorTag,
+      sourceName: sourceName,
+      sourceTotal: sourceTotal,
+      sourceLevel: sourceLevel,
+    );
+  }
+
+  Future<List<String>> _selectScrollSupportTargets({
+    required bool excludeSelf,
+  }) async {
+    final own = sheetTagAt(schedaCorrente);
+    final online = realtimeService?.isConnected == true;
+    final rawTokens = online ? onlineCombatTokens() : masterInitiativeTokens;
+    final candidates = <({String tag, String name})>[];
+    for (final token in rawTokens) {
+      if (const {'dead', 'fled', 'expired'}.contains(token['status'])) continue;
+      final index = online
+          ? localSheetIndexForOculumTag(onlineCombatTokenTag(token))
+          : masterInitiativeSheetIndexForToken(token);
+      if (!online && masterInitiativeTokens.isNotEmpty && index < 0) continue;
+      final tag = online && !realtimeIsMasterRole
+          ? onlineCombatTokenTag(token)
+          : publicInitiativeSourceTag(token);
+      if (tag.isEmpty || candidates.any((entry) => entry.tag == tag)) continue;
+      candidates.add((
+        tag: tag,
+        name:
+            '${token['name'] ?? (index >= 0 ? nomeSchedaPersonaggio(index) : '???')}',
+      ));
+    }
+    if (candidates.isEmpty && !online) {
+      for (var index = 0; index < schedePersonaggio.length; index++) {
+        if (schedePersonaggio[index]['realtimeSharedSheet'] == true) continue;
+        candidates.add((
+          tag: sheetTagAt(index),
+          name: nomeSchedaPersonaggio(index),
+        ));
+      }
+    }
+    final selectable = candidates
+        .where(
+          (entry) => entry.tag.isNotEmpty && (!excludeSelf || entry.tag != own),
+        )
+        .toList();
+    if (selectable.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            excludeSelf
+                ? 'Nessun altro partecipante può ricevere Reazione Fulminea.'
+                : 'Non ci sono partecipanti selezionabili.',
+          ),
+        ),
+      );
+      return [];
+    }
+    final selected = <String>{};
+    return await showDialog<List<String>>(
+          context: context,
+          builder: (dialogContext) => StatefulBuilder(
+            builder: (context, update) => AlertDialog(
+              title: const Text('Reazione Fulminea · destinatari'),
+              content: SizedBox(
+                width: 420,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final entry in selectable)
+                        CheckboxListTile(
+                          value: selected.contains(entry.tag),
+                          title: Text(
+                            entry.tag == own
+                                ? '${entry.name} · tu'
+                                : entry.name,
+                          ),
+                          onChanged: (value) => update(() {
+                            if (value == true) {
+                              selected.add(entry.tag);
+                            } else {
+                              selected.remove(entry.tag);
+                            }
+                          }),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Annulla'),
+                ),
+                FilledButton(
+                  onPressed: selected.isEmpty
+                      ? null
+                      : () => Navigator.pop(dialogContext, selected.toList()),
+                  child: const Text('Conferma'),
+                ),
+              ],
+            ),
+          ),
+        ) ??
+        <String>[];
+  }
+
+  bool _gratitudineResourceAvailable() {
+    if (!currentCombatIsActive()) return false;
+    final online = realtimeService?.isConnected == true;
+    final tokens = online ? onlineCombatTokens() : masterInitiativeTokens;
+    final own = sheetTagAt(schedaCorrente);
+    final index = tokens.indexWhere(
+      (token) =>
+          (online && !realtimeIsMasterRole
+              ? onlineCombatTokenTag(token)
+              : publicInitiativeSourceTag(token)) ==
+          own,
+    );
+    if (index < 0) return false;
+    final activeIndex = online && !realtimeIsMasterRole
+        ? readIntValue(realtimeVisibleInitiativeSnapshot['activeIndex'])
+        : masterInitiativeActiveIndex;
+    final token = tokens[index];
+    if (index == activeIndex &&
+        !readBoolValue(token['actionUsed']) &&
+        artDebtForToken(token, 'action') <= 0) {
+      return true;
+    }
+    final round = online && !realtimeIsMasterRole
+        ? readIntValue(realtimeVisibleInitiativeSnapshot['round'])
+        : masterInitiativeRound;
+    return masterInitiativeReactionAvailable(
+          token,
+          round: round,
+          turnKey: '$round',
+        ) >
+        0;
+  }
+
+  Future<void> _useLearnedGratitudine(Map<String, dynamic> data) async {
+    final origin = currentSheetScrollId();
+    const cooldown = 1;
+    final lastTurn = readIntValue(data['lastCastPersonalTurn'], fallback: -999);
+    if (playerReportedTurn < lastTurn + cooldown) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Reazione Fulminea in ricarica fino al tuo turno ${lastTurn + cooldown}.',
+          ),
+        ),
+      );
+      return;
+    }
+    final targets = await _selectScrollSupportTargets(excludeSelf: true);
+    if (!mounted || currentSheetScrollId() != origin || targets.isEmpty) return;
+    if (!_gratitudineResourceAvailable()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Serve un’Azione disponibile nel tuo turno o una Reazione.',
+          ),
+        ),
+      );
+      return;
+    }
+    final grade = readIntValue(data['grade']).clamp(0, 12).toInt();
+    final bonus = oculumGratitudineNextActionBonus(grade);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Reazione Fulminea'),
+        content: Text(
+          'Ogni partecipante selezionato riceve una Reazione Fulminea aggiuntiva e +$bonus alla prossima azione. Non puoi selezionare te stesso. Ricarica: 1 tuo turno. Costo: una Reazione o la tua Azione se è il tuo turno. Nel 6% dei casi la risorsa resta disponibile.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annulla'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Usa skill'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true ||
+        !mounted ||
+        currentSheetScrollId() != origin ||
+        !_gratitudineResourceAvailable()) {
+      return;
+    }
+    final retainsResource = Random.secure().nextInt(100) < 6;
+    if (!retainsResource && !await spendCombatRollResource()) return;
+    if (!mounted || currentSheetScrollId() != origin) return;
+
+    data['lastCastPersonalTurn'] = playerReportedTurn;
+    data['lastCastRound'] = masterInitiativeRound;
+    final effects = oculumScrollCombatEffects(data)
+        .map(
+          (effect) =>
+              OculumStructuredEffect.fromJson(effect.toJson())
+                ..recipient = 'alleato',
+        )
+        .toList();
+    for (final message in applyStructuredEffectsOnActivation(
+      effects,
+      source: 'Reazione Fulminea',
+    )) {
+      aggiungiLog(message);
+    }
+    if (retainsResource) aggiungiLog('Provi Gratitudine');
+    await deliverPendingSupport(
+      minimum: 1,
+      maximum: targets.length,
+      selectedTags: targets,
+      excludeSelf: true,
+      sourcePrefix: 'Reazione Fulminea',
+    );
+    if (!mounted || currentSheetScrollId() != origin) return;
+    aggiungiLog(
+      'Reazione Fulminea: ${targets.length} partecipanti selezionati · +$bonus alla prossima azione.',
+    );
+    salvaSchedaCorrenteInMemoria();
+    programmaSalvataggio();
+    sendRealtimeInitiativeSnapshotIfPublished();
+    if (mounted) setState(() {});
   }
 }

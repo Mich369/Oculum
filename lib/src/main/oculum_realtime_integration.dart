@@ -14,6 +14,12 @@ Duration oculumRealtimeSheetAckRetryDelay(int attempt) => Duration(
       : 120,
 );
 
+int oculumDropDifficultyBonus(String difficulty) => switch (difficulty) {
+  'difficile' => 3,
+  'oculum' => 6,
+  _ => 0,
+};
+
 const Set<String> oculumRealtimeMetadataKeys = <String>{
   'id',
   'sheetTag',
@@ -31,6 +37,8 @@ const Set<String> oculumRealtimeMetadataKeys = <String>{
   'realtimeDirtyAt',
   'realtimeOwnerEditSequence',
   'realtimeOwnerEditRoom',
+  'realtimeOwnerEditFieldSequences',
+  'claimedEncounterRewardIds',
   'localUpdatedAt',
   'realtimeRestrictedByMaster',
   'realtimeReadOnlyByMaster',
@@ -45,6 +53,54 @@ const Set<String> oculumRealtimeMetadataKeys = <String>{
   'diaryEntityRoles',
   'diaryKnowledgeSync',
 };
+
+List<int> oculumSelectedSheetDeliveryIndexes(
+  List<Map<String, dynamic>> sheets,
+  int selected,
+  Iterable<Map<String, dynamic>> eyes,
+) {
+  if (selected < 0 || selected >= sheets.length) return [];
+  if (readBoolValue(sheets[selected]['realtimeSharedSheet'])) return [];
+  String tag(Map sheet) =>
+      '${sheet['sheetTag'] ?? sheet['id'] ?? ''}'.toUpperCase();
+  final selectedSheet = sheets[selected];
+  final owner =
+      '${selectedSheet['summonerTag'] ?? selectedSheet['shadowCloneOwnerTag'] ?? ''}'
+          .toUpperCase();
+  final owners = {tag(selectedSheet), if (owner.isNotEmpty) owner};
+  final activeEyes = eyes.where(
+    (eye) => readBoolValue(eye['active']) && !oculumFallenEyeIsDead(eye),
+  );
+  for (final eye in activeEyes) {
+    if ('${eye['summonedSheetTag'] ?? ''}'.toUpperCase() ==
+        tag(selectedSheet)) {
+      owners.add('${eye['ownerSheetId'] ?? ''}'.toUpperCase());
+    }
+  }
+  final eyeTags = activeEyes
+      .where(
+        (eye) => owners.contains('${eye['ownerSheetId'] ?? ''}'.toUpperCase()),
+      )
+      .map((eye) => '${eye['summonedSheetTag'] ?? ''}'.toUpperCase())
+      .toSet();
+  return [
+    selected,
+    for (var i = 0; i < sheets.length; i++)
+      if (i != selected &&
+          !readBoolValue(sheets[i]['realtimeSharedSheet']) &&
+          (owners.contains(tag(sheets[i])) ||
+              eyeTags.contains(tag(sheets[i])) ||
+              ((readBoolValue(sheets[i]['isSummon']) ||
+                      readBoolValue(sheets[i]['oculumShadowClone'])) &&
+                  !readBoolValue(sheets[i]['summonExpired']) &&
+                  !readBoolValue(sheets[i]['shadowCloneExpired']) &&
+                  owners.contains(
+                    '${sheets[i]['summonerTag'] ?? sheets[i]['shadowCloneOwnerTag'] ?? ''}'
+                        .toUpperCase(),
+                  ))))
+        i,
+  ];
+}
 
 int? oculumRealtimeStaffOwnerEditSequence(
   Map<String, dynamic> existing,
@@ -500,11 +556,24 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           !canShareRealtimeSheetToStaff) {
         return;
       }
-      await sendRealtimeSheetToStaffAt(
+      repairMissingFallenEyeSheets();
+      final indexes = oculumSelectedSheetDeliveryIndexes(
+        schedePersonaggio,
         schedaCorrente,
-        force: force,
-        ensureMasterReceipt: true,
+        occhiCaduti,
       );
+      for (final index in indexes) {
+        if (!mounted ||
+            realtimeService != service ||
+            !canShareRealtimeSheetToStaff) {
+          return;
+        }
+        await sendRealtimeSheetToStaffAt(
+          index,
+          force: force,
+          ensureMasterReceipt: true,
+        );
+      }
     }
   }
 
@@ -724,6 +793,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'createdAt': DateTime.now().toIso8601String(),
           };
           refreshPermissionUi();
+          notifyMasterOfPendingRequest();
         }
         // The top request panel sends the decision directly to the backend.
         return null;
@@ -754,7 +824,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         'campaignName': activeCampaignName(),
         'masterClaimId': realtimeMasterClaimId,
         'platform': oculumClientPlatformLabel(),
-        'protocolVersion': 3,
+        'protocolVersion': 4,
         'knowledgePublicKey': diaryKnowledgeSync.publicKey,
         'knowledgeSenderTag': diaryKnowledgeSenderTag(),
       },
@@ -869,6 +939,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeShownSheetConflicts.clear();
       realtimePendingEncounterJoins.clear();
       realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
+      realtimeLoggedInitiativeTurnKey = '';
       realtimeEncounterSnapshots = <Map<String, dynamic>>[];
       realtimeSelectedEncounterId = '';
       realtimeCoMasterTags.clear();
@@ -962,7 +1033,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         event == 'combat_defense' ||
         event == 'combat_help' ||
         event == 'combat_ack' ||
-        event == 'combat_scout') {
+        event == 'combat_scout' ||
+        event == 'corruption_apply' ||
+        event == 'corruption_target') {
       receiveOnlineCombatEvent(event, payload);
       return;
     }
@@ -1111,11 +1184,19 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                   payload['senderRole'] == 'coMaster') &&
               !realtimeIsMasterRole) {
             final requestedTag = '${payload['targetSheetTag'] ?? ''}';
+            final selectedTags =
+                oculumSelectedSheetDeliveryIndexes(
+                      schedePersonaggio,
+                      schedaCorrente,
+                      occhiCaduti,
+                    )
+                    .map(sheetTagAt)
+                    .map((tag) => normalizeOculumFriendTag(tag).toUpperCase())
+                    .toSet();
             if (requestedTag.isEmpty ||
-                normalizeOculumFriendTag(requestedTag).toUpperCase() ==
-                    normalizeOculumFriendTag(
-                      sheetTagAt(schedaCorrente),
-                    ).toUpperCase()) {
+                selectedTags.contains(
+                  normalizeOculumFriendTag(requestedTag).toUpperCase(),
+                )) {
               // A manual retry must bypass both the last hash and a missing
               // peer ACK, but never disclose the player's inactive archive.
               unawaited(sendRealtimeActiveSheetToStaff(force: true));
@@ -1348,10 +1429,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         return '$player Oculum ${payload['currentOculum'] ?? '?'}'
             '/${payload['maxOculum'] ?? '?'}';
       case 'dice_roll':
-        return '[DADO] $player ${payload['label'] ?? 'tiro'}: '
-            '${payload['roll'] ?? '?'}'
-            '${readIntValue(payload['bonus']) == 0 ? '' : ' + ${payload['bonus']}'}'
-            ' = ${payload['total'] ?? '?'}';
+        return oculumResolvedRollLog(
+          label: '[DADO] $player ${payload['label'] ?? 'tiro'}',
+          total: readIntValue(payload['total']),
+        );
       case 'party_log':
         return '$player: ${payload['message'] ?? ''}';
       case 'damage_report':
@@ -1719,6 +1800,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     realtimePendingMasterAckSheetIds.clear();
     realtimePendingMasterAckAttempts.clear();
     realtimePendingMasterAckHashes.clear();
+    realtimePendingPortraitHashes.clear();
+    realtimeAcknowledgedPortraitHashes.clear();
   }
 
   String newRealtimeSheetDeliveryId(String sheetId) {
@@ -1726,6 +1809,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   void cancelRealtimeMasterAckWatch(String deliveryId) {
+    realtimePendingPortraitHashes.remove(deliveryId);
     realtimePendingMasterAckTimers.remove(deliveryId)?.cancel();
     realtimePendingMasterAckSheetIds.remove(deliveryId);
     realtimePendingMasterAckAttempts.remove(deliveryId);
@@ -1790,6 +1874,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
 
     final acknowledgedHash = realtimePendingMasterAckHashes[deliveryId];
+    final portraitHash = realtimePendingPortraitHashes.remove(deliveryId);
+    if (portraitHash != null) {
+      realtimeAcknowledgedPortraitHashes[ownerTag] = portraitHash;
+    }
     if (acknowledgedHash != null) {
       rememberRealtimeSheetHash(
         'staff:${realtimePendingMasterAckSheetIds[deliveryId]}',
@@ -2011,6 +2099,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'encounterPlayerIdentities',
       'realtimeOwnerEditSequence',
       'realtimeOwnerEditRoom',
+      'realtimeOwnerEditFieldSequences',
+      'claimedEncounterRewardIds',
       'diaryEntityRoles',
       'diaryKnowledgeSync',
     ]) {
@@ -2059,14 +2149,19 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final title = titoloSempreVisibileSchedaAt(index);
     sheet['publicVisibleTitleName'] = title?.nome ?? '';
     sheet['publicVisibleTitleLegend'] = title?.leggenda ?? '';
+    sheet['publicAccountDisplayName'] = realtimeNameController.text.trim();
   }
 
   String realtimeSharedSheetKey({
     required String ownerTag,
     required String campaignId,
     required String sheetId,
+    String senderUserId = '',
   }) {
-    return '${ownerTag.trim()}|${campaignId.trim()}|${sheetId.trim()}';
+    final legacyKey =
+        '${ownerTag.trim()}|${campaignId.trim()}|${sheetId.trim()}';
+    final sender = senderUserId.trim();
+    return sender.isEmpty ? legacyKey : '$sender|$legacyKey';
   }
 
   int realtimeLocalSheetIndexForKey(String key) {
@@ -2163,6 +2258,21 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         '${record['senderRole'] ?? ''}' == 'coMaster';
     sheet['realtimeDirtyLocal'] = false;
     sheet.remove('realtimeDirtyAt');
+    if (realtimeIsMasterRole || realtimeIsCoMasterRole) {
+      const folderId = 'oculum_received_online_sheets';
+      sheetSidebarFolders.removeWhere((folder) => folder['id'] == folderId);
+      sheetSidebarFolders.add({
+        'id': folderId,
+        'name': 'Online',
+        'parent': '',
+        'expanded': true,
+      });
+      sheetSidebarPlacements[localTag] = {
+        'folder': folderId,
+        'order': DateTime.now().microsecondsSinceEpoch.toDouble(),
+      };
+      sheetSidebarRevision.value++;
+    }
     return sheet;
   }
 
@@ -2183,17 +2293,19 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     String sheetId,
     Map<String, dynamic> payload,
   ) {
-    var localIndex = localSheetIndexForOculumTag(sheetId);
-    if (localIndex < 0) {
-      final campaignId = '${payload['campaignId'] ?? ''}'.trim().isEmpty
-          ? 'online'
-          : '${payload['campaignId'] ?? ''}'.trim();
-      final key = realtimeSharedSheetKey(
-        ownerTag: normalizeOculumFriendTag('${payload['ownerTag'] ?? sheetId}'),
-        campaignId: campaignId,
-        sheetId: normalizeOculumFriendTag(sheetId),
-      );
-      localIndex = realtimeLocalSheetIndexForKey(key);
+    final campaignId = '${payload['campaignId'] ?? ''}'.trim().isEmpty
+        ? 'online'
+        : '${payload['campaignId'] ?? ''}'.trim();
+    final senderUserId = '${payload['authenticatedUserId'] ?? ''}'.trim();
+    final key = realtimeSharedSheetKey(
+      ownerTag: normalizeOculumFriendTag('${payload['ownerTag'] ?? sheetId}'),
+      campaignId: campaignId,
+      sheetId: normalizeOculumFriendTag(sheetId),
+      senderUserId: senderUserId,
+    );
+    var localIndex = realtimeLocalSheetIndexForKey(key);
+    if (localIndex < 0 && senderUserId.isEmpty) {
+      localIndex = localSheetIndexForOculumTag(sheetId);
     }
     if (localIndex < 0) return false;
 
@@ -2212,11 +2324,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     // delivery. Its wall clock is not an authoritative version of the edit.
     // Only verified staff edits to the owner's sheet use the server order;
     // locally edited shared copies retain their existing dirty-data guard.
-    final stale = editSequence != null
-        ? existing['realtimeOwnerEditRoom'] == editRoom &&
-              editSequence <=
-                  readIntValue(existing['realtimeOwnerEditSequence'])
-        : realtimeRemoteIsStaleForLocal(existing, payload);
+    final stale =
+        editSequence == null &&
+        realtimeRemoteIsStaleForLocal(existing, payload);
     if (stale) {
       aggiungiLog(
         t(
@@ -2236,7 +2346,33 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       sheet,
       allowClearFields: allowClearFields,
     );
-    if (appliedKeys.isEmpty) {
+    final fieldSequences = <String, dynamic>{
+      if (existing['realtimeOwnerEditRoom'] == editRoom &&
+          existing['realtimeOwnerEditFieldSequences'] is Map)
+        ...Map<String, dynamic>.from(
+          existing['realtimeOwnerEditFieldSequences'] as Map,
+        ),
+    };
+    final acceptedKeys = editSequence != null
+        ? sheet.keys
+              .where(
+                (key) =>
+                    oculumRealtimePatchValueCanApply(
+                      key,
+                      sheet[key],
+                      existing,
+                      allowClearFields: allowClearFields,
+                    ) &&
+                    editSequence > readIntValue(fieldSequences[key]),
+              )
+              .toList()
+        : appliedKeys;
+    if (editSequence != null) {
+      // Independent HP/shield edits may arrive out of order. Reject only
+      // superseded fields, retaining a newer edit to every other field.
+      appliedKeys.removeWhere((key) => !acceptedKeys.contains(key));
+    }
+    if (acceptedKeys.isEmpty) {
       aggiungiLog(
         t(
           'Realtime ignorato: patch vuota o protetta per ${existing['nome'] ?? '???'}.',
@@ -2246,20 +2382,35 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       return false;
     }
 
-    final updated = oculumRealtimeMergeSheetPatch(
-      existing,
-      sheet,
-      allowClearFields: allowClearFields,
-    );
+    final updated = oculumRealtimeMergeSheetPatch(existing, {
+      for (final key in appliedKeys) key: sheet[key],
+    }, allowClearFields: allowClearFields);
 
     updated['id'] = localTag;
     updated['sheetTag'] = localTag;
     if (editSequence != null) {
-      updated['realtimeOwnerEditSequence'] = editSequence;
+      updated['realtimeOwnerEditSequence'] = max(
+        editSequence,
+        existing['realtimeOwnerEditRoom'] == editRoom
+            ? readIntValue(existing['realtimeOwnerEditSequence'])
+            : 0,
+      );
       updated['realtimeOwnerEditRoom'] = editRoom;
+      updated['realtimeOwnerEditFieldSequences'] = {
+        ...fieldSequences,
+        // Even an unchanged value confirms a newer revision of that field.
+        for (final key in acceptedKeys) key: editSequence,
+      };
     }
+    final remoteAt = realtimeIsoDate(payload['sentAt']);
+    final localAt = realtimeIsoDate(existing['localUpdatedAt']);
     updated['localUpdatedAt'] =
-        '${payload['sentAt'] ?? DateTime.now().toIso8601String()}';
+        editSequence != null &&
+            remoteAt != null &&
+            localAt != null &&
+            localAt.isAfter(remoteAt)
+        ? existing['localUpdatedAt']
+        : '${payload['sentAt'] ?? DateTime.now().toIso8601String()}';
     updated['inMasterParty'] = readBoolValue(existing['inMasterParty']);
 
     schedePersonaggio[localIndex] = updated;
@@ -2448,11 +2599,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         ? 0
         : readIntValue(group['activeIndex']).clamp(0, tokens.length - 1);
     final round = readIntValue(group['round']);
-    final turnKey = '$round:${tokens.isEmpty ? '' : tokens[active]['id']}';
+    final turnKey = '$round';
     return {
       'campaignId': activeCampaignId,
       'campaignName': activeCampaignName(),
       'encounterId': group['id'],
+      'completedFightCount': readIntValue(group['completedFightCount']),
       'mergedEncounterIds': group['mergedEncounterIds'] ?? const <String>[],
       if (group['chainedFate'] is Map) 'chainedFate': group['chainedFate'],
       if (group['rollRequests'] is List) 'rollRequests': group['rollRequests'],
@@ -2464,17 +2616,29 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'tokens': [
         for (int i = 0; i < tokens.length; i++)
           <String, dynamic>{
+            ...oculumPublicEncounterIdentity(tokens[i]),
             'index': i + 1,
             'turnNumber': i + 1,
             'turnCount': tokens.length,
             'id': publicInitiativeSourceTag(tokens[i]),
-            'name': '${tokens[i]['name'] ?? '???'}',
+            'name': oculumReferenceEncounterTokenName(tokens[i]),
             'type': '${tokens[i]['type'] ?? 'Partecipante'}',
             'side': '${tokens[i]['side'] ?? 'ally'}',
             'status': '${tokens[i]['status'] ?? 'ready'}',
+            'corruptedByTag': corruptionOwnerForToken(tokens[i]),
+            'targetControlChancePercent': corruptionControlChanceForToken(
+              tokens[i],
+            ),
+            'healthLabel': oculumCombatHealthLabel(
+              readIntValue(tokens[i]['currentHp']),
+              readIntValue(tokens[i]['maxHp']),
+            ),
             'spriteAssetPath': masterInitiativeTokenSpriteAsset(tokens[i]),
             'tokenSize': masterInitiativeTokenSize(tokens[i]),
+            'initiativeRoll': readIntValue(tokens[i]['initiativeRoll']),
+            'initiativeBase': readIntValue(tokens[i]['initiativeBase']),
             'initiativeTotal': readIntValue(tokens[i]['initiativeTotal']),
+            'reflexes': readIntValue(tokens[i]['reflexes']),
             if (readBoolValue(tokens[i]['oculumShadowClone'])) ...{
               'oculumShadowClone': true,
               'shadowCloneTurnsRemaining': readIntValue(
@@ -2487,10 +2651,35 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'reportedTurn': max(0, readIntValue(tokens[i]['reportedTurn'])),
             'actionUsed': readBoolValue(tokens[i]['actionUsed']),
             'reactionMax': masterInitiativeReactionMax(tokens[i]),
+            'reactionFastMax': masterInitiativeFastReactionMax(tokens[i]),
             'reactionUsed': masterInitiativeReactionUsed(
               tokens[i],
               round: round,
             ),
+            'reactionUsedRound': readIntValue(
+              tokens[i]['reactionUsedRound'],
+              fallback: round,
+            ),
+            'reactionFastUsed': masterInitiativeFastReactionUsedThisTurn(
+              tokens[i],
+              turnKey: turnKey,
+            ),
+            'reactionFastTurnKey': '${tokens[i]['reactionFastTurnKey'] ?? ''}',
+            'reactionPoolInitialized': readBoolValue(
+              tokens[i]['reactionPoolInitialized'],
+            ),
+            'reactionPoolRound': readIntValue(tokens[i]['reactionPoolRound']),
+            'reactionNormalFirstRoundLocked': readBoolValue(
+              tokens[i]['reactionNormalFirstRoundLocked'],
+            ),
+            'actionTurnRound': readIntValue(
+              tokens[i]['actionTurnRound'],
+              fallback: -1,
+            ),
+            'pendingReactionRollBonus': readIntValue(
+              tokens[i]['pendingReactionRollBonus'],
+            ).clamp(0, 12),
+            'freeReactionUsed': readBoolValue(tokens[i]['freeReactionUsed']),
             'reactionAvailable': masterInitiativeReactionAvailable(
               tokens[i],
               round: round,
@@ -2656,6 +2845,30 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
               }),
             )
             as Map<String, dynamic>;
+    final turnTokens = realtimeVisibleInitiativeSnapshot['tokens'];
+    if (turnTokens is List && turnTokens.isNotEmpty) {
+      final activeIndex = readIntValue(
+        realtimeVisibleInitiativeSnapshot['activeIndex'],
+      ).clamp(0, turnTokens.length - 1);
+      final active = turnTokens[activeIndex];
+      if (active is Map) {
+        final activeTag = '${active['sheetTag'] ?? active['id'] ?? ''}';
+        final turnKey =
+            '${realtimeVisibleInitiativeSnapshot['encounterId'] ?? ''}:'
+            '${readIntValue(realtimeVisibleInitiativeSnapshot['round'])}:'
+            '${active['id'] ?? activeTag}';
+        if (turnKey != realtimeLoggedInitiativeTurnKey) {
+          realtimeLoggedInitiativeTurnKey = turnKey;
+          if (activeTag == sheetTagAt(schedaCorrente)) {
+            aggiungiLog(
+              '[TURNISTICA] È il tuo turno: ${oculumReferenceEncounterTokenName(active)}. Azione disponibile.',
+            );
+          }
+        }
+      }
+    } else {
+      realtimeLoggedInitiativeTurnKey = '';
+    }
     applyChainedFateCompletion(selectedSnapshot);
     receiveMasterRollRequests(selectedSnapshot);
     final aliases = (selectedSnapshot['mergedEncounterIds'] as List? ?? [])
@@ -3082,10 +3295,15 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       ownerTag: normalizedOwnerTag,
       campaignId: campaignId,
       sheetId: sheetId,
+      senderUserId: '${payload['authenticatedUserId'] ?? ''}',
     );
     final record = <String, dynamic>{
       'key': key,
-      'ownerName': '${payload['playerName'] ?? '???'}',
+      'senderUserId': '${payload['authenticatedUserId'] ?? ''}',
+      'ownerName':
+          '${sheet['publicAccountDisplayName'] ?? ''}'.trim().isNotEmpty
+          ? '${sheet['publicAccountDisplayName']}'
+          : '${sheet['publicVisibleTitleName'] ?? ''}',
       'ownerTag': normalizedOwnerTag,
       'campaignId': campaignId,
       'campaignName': '${payload['campaignName'] ?? 'Online'}',
@@ -3101,6 +3319,28 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     };
 
     final remoteIndex = realtimeSharedSheetIndexForKey(key);
+    final portraitReference = '${sheet['realtimePortraitReference'] ?? ''}';
+    if (portraitReference.isNotEmpty) {
+      final oldSheet = remoteIndex >= 0
+          ? realtimeSharedSheets[remoteIndex]['sheet']
+          : null;
+      final oldPortrait = oldSheet is Map
+          ? '${oldSheet['immaginePersonaggioBase64'] ?? ''}'
+          : '';
+      if (oldPortrait.isEmpty ||
+          oculumRealtimeSheetContentSignature({'portrait': oldPortrait}) !=
+              portraitReference) {
+        // A newly joined Master/Co-Master must obtain a complete portrait once.
+        unawaited(
+          realtimeService?.requestSharedSheetsConfirmed(
+            targetSheetTag: sheetId,
+          ),
+        );
+        return false;
+      }
+      sheet['immaginePersonaggioBase64'] = oldPortrait;
+      sheet.remove('realtimePortraitReference');
+    }
     if (remoteIndex >= 0 &&
         realtimePayloadIsStaleForRecord(
           realtimeSharedSheets[remoteIndex],
@@ -3724,15 +3964,6 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       approvalSheet['monsterBookApprovalRequired'] = true;
       approvalSheet['monsterBookApproved'] = false;
     }
-    if (readBoolValue(approvalSheet['monsterBookApprovalRequired']) &&
-        !readBoolValue(approvalSheet['monsterBookApproved'])) {
-      requestMasterAction(
-        'monster_entry',
-        'Ingresso mostro: ${nomeSchedaPersonaggio(index)}',
-        sheetTag: sheetTagAt(index),
-      );
-    }
-
     salvaSchedaCorrenteInMemoria();
     final role = realtimeLocalRole();
     final sheet = realtimeSafeSheetJson(
@@ -3782,10 +4013,30 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
 
     realtimeStaffTransfersInFlight[sheetId] = service!;
+    final portrait = '${sheet['immaginePersonaggioBase64'] ?? ''}';
+    final portraitHash = oculumRealtimeSheetContentSignature({
+      'portrait': portrait,
+    });
+    if (activeDeliveryId.isNotEmpty) {
+      realtimePendingPortraitHashes[activeDeliveryId] = portraitHash;
+    }
+    final wireSheet = Map<String, dynamic>.from(sheet);
+    final staff = realtimeUsers
+        .where((user) => const {'master', 'coMaster'}.contains(user['role']))
+        .toList();
+    if (!force &&
+        staff.isNotEmpty &&
+        staff.every((user) => readIntValue(user['protocolVersion']) >= 4) &&
+        portrait.isNotEmpty &&
+        realtimeAcknowledgedPortraitHashes[sheetId.toUpperCase()] ==
+            portraitHash) {
+      wireSheet['immaginePersonaggioBase64'] = '';
+      wireSheet['realtimePortraitReference'] = portraitHash;
+    }
     var delivered = false;
     await service
         .sendSharedSheetConfirmed(
-          sheet: sheet,
+          sheet: wireSheet,
           campaignId: activeCampaignId,
           campaignName: activeCampaignName(),
           sheetId: sheetId,

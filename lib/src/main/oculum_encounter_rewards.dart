@@ -1,17 +1,402 @@
 part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member
+bool oculumEncounterEnemyKilled(Map token) =>
+    token['side'] == 'enemy' && token['status'] == 'dead';
+
+Map<String, List<Map<String, dynamic>>> oculumDistributeEncounterLoot({
+  required Iterable<InventoryItem> items,
+  required Iterable<String> participantTags,
+}) {
+  final participants =
+      participantTags
+          .map((tag) => tag.trim())
+          .where((tag) => tag.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+  final assignments = <String, List<Map<String, dynamic>>>{
+    for (final tag in participants) tag: <Map<String, dynamic>>[],
+  };
+  if (participants.isEmpty) return assignments;
+  var cursor = 0;
+  for (final item in items) {
+    final tag = participants[cursor++ % participants.length];
+    assignments[tag]!.add(item.toJson());
+  }
+  return assignments;
+}
+
+/// A kill can yield at most one Fallen Eye, even when several clients report
+/// the same natural-20 Drop. The strongest source goes to the least-developed
+/// participant; any remaining eyes are assigned randomly without duplication.
+Map<String, List<Map<String, dynamic>>> oculumDistributeFallenEyes({
+  required Iterable<Map<String, dynamic>> eyes,
+  required Map<String, int> participantStatTotals,
+  Random? random,
+}) {
+  final rng = random ?? Random.secure();
+  final tags = participantStatTotals.keys
+      .map((tag) => tag.trim())
+      .where((tag) => tag.isNotEmpty)
+      .toSet()
+      .toList();
+  final result = <String, List<Map<String, dynamic>>>{
+    for (final tag in tags) tag: <Map<String, dynamic>>[],
+  };
+  if (tags.isEmpty) return result;
+
+  final uniqueEyes = <Map<String, dynamic>>[];
+  final seenKillIds = <String>{};
+  final seenIds = <String>{};
+  for (final eye in eyes) {
+    final id = '${eye['id'] ?? ''}';
+    final killId = '${eye['sourceKillId'] ?? ''}';
+    if (id.isNotEmpty && !seenIds.add(id)) continue;
+    if (killId.isNotEmpty && !seenKillIds.add(killId)) continue;
+    uniqueEyes.add(eye);
+  }
+  final orderedEyes = uniqueEyes..shuffle(rng);
+  orderedEyes.sort(
+    (a, b) => readIntValue(
+      b['sourcePower'],
+    ).compareTo(readIntValue(a['sourcePower'])),
+  );
+  if (orderedEyes.isEmpty) return result;
+
+  final lowestStats =
+      tags.map((tag) => MapEntry(tag, participantStatTotals[tag] ?? 0)).toList()
+        ..sort((a, b) => a.value.compareTo(b.value));
+  final weakestTotal = lowestStats.first.value;
+  final weakest =
+      lowestStats
+          .where((entry) => entry.value == weakestTotal)
+          .map((entry) => entry.key)
+          .toList()
+        ..shuffle(rng);
+  result[weakest.first]!.add(orderedEyes.removeAt(0));
+
+  final remainingTags = tags.toList()..shuffle(rng);
+  var cursor = 0;
+  for (final eye in orderedEyes) {
+    result[remainingTags[cursor++ % remainingTags.length]]!.add(eye);
+  }
+  return result;
+}
+
+({int obser, int dust}) oculumEncounterResourcesForEnemies(
+  Iterable<Map> enemies, {
+  required int characterGrade,
+  required int characterStats,
+  int Function()? percentileRoll,
+}) {
+  var obser = 0, dust = 0;
+  var dustCap = 3;
+  for (final enemy in enemies) {
+    final grade = readIntValue(enemy['grade']).clamp(0, 12);
+    obser += max(0, readIntValue(enemy['level'])) + grade * 3;
+    if (readIntValue(enemy['statsTotal']) > max(0, characterStats)) {
+      final source = oculumNormalizeText(
+        '${enemy['source'] ?? enemy['type'] ?? ''}',
+      );
+      final gap = grade - characterGrade.clamp(0, 12);
+      final mini = source.contains('mini') && source.contains('boss');
+      final boss = source.contains('boss') && !mini;
+      final roll = gap == 1 && !mini && !boss
+          ? (percentileRoll?.call() ?? Random.secure().nextInt(100))
+          : 0;
+      final gain = boss
+          ? 5
+          : mini
+          ? 4
+          : gap >= 2
+          ? 3
+          : gap == 1
+          ? (roll < 10
+                ? 1
+                : roll < 70
+                ? 2
+                : 3)
+          : 1;
+      dustCap = max(
+        dustCap,
+        boss
+            ? 5
+            : mini
+            ? 4
+            : 3,
+      );
+      dust = min(dustCap, dust + gain);
+    }
+  }
+  return (obser: obser.clamp(0, 100000000), dust: dust);
+}
+
+double oculumExperienceGradeMultiplier(int enemyGrade, int characterGrade) =>
+    pow(
+      1.2,
+      max(0, enemyGrade.clamp(0, 12) - characterGrade.clamp(0, 12)),
+    ).toDouble();
+
+bool oculumEncounterEnemyIsSummon(Map enemy) {
+  final source = oculumNormalizeText(
+    '${enemy['source'] ?? enemy['type'] ?? ''}',
+  );
+  return readBoolValue(enemy['isSummon']) ||
+      source.contains('summon') ||
+      source.contains('evocaz');
+}
+
+Map<String, int> oculumSummonExperienceShares({
+  required Map enemy,
+  required Map<String, int> participantLevels,
+}) {
+  if (!oculumEncounterEnemyIsSummon(enemy)) return const {};
+  final summonLevel = max(0, readIntValue(enemy['level']));
+  final summonerTag = '${enemy['summonerTag'] ?? ''}'.trim();
+  final fateAllowsExp = readBoolValue(enemy['fateAllowsExp']);
+  final eligible =
+      participantLevels.entries
+          .where((entry) => entry.value <= summonLevel)
+          .where((entry) => fateAllowsExp || entry.key != summonerTag)
+          .map((entry) => entry.key)
+          .where((tag) => tag.trim().isNotEmpty)
+          .toList()
+        ..sort();
+  if (eligible.isEmpty) return const {};
+
+  // The party receives one pool per summon, rather than 5 + Grade for every
+  // participant. Divide it among eligible characters to keep that cap global.
+  final basePool = 5 + readIntValue(enemy['grade']).clamp(0, 12).toInt();
+  final multiplier = readIntValue(
+    enemy['summonExpMultiplier'],
+    fallback: 1,
+  ).clamp(1, 10);
+  final pool = basePool * multiplier;
+  final baseShare = pool ~/ eligible.length;
+  final remainder = pool % eligible.length;
+  return {
+    for (var index = 0; index < eligible.length; index++)
+      eligible[index]: baseShare + (index < remainder ? 1 : 0),
+  };
+}
+
+String oculumExperienceGradeLabel(int grade) => const [
+  '0',
+  'I',
+  'II',
+  'III',
+  'IV',
+  'V',
+  'VI',
+  'VII',
+  'VIII',
+  'IX',
+  'X',
+  'XI',
+  'XII',
+][grade.clamp(0, 12)];
+
+int oculumEncounterExperienceForEnemies(
+  Iterable<Map> enemies, {
+  required int characterGrade,
+  required bool rebirth,
+  required String difficulty,
+  String characterTag = '',
+  int characterLevel = 0,
+  Map<String, int> participantLevels = const {},
+}) {
+  var total = 0;
+  final handledSummons = <String>{};
+  for (final enemy in enemies) {
+    if (oculumEncounterEnemyIsSummon(enemy)) {
+      final summonId =
+          '${enemy['summonInstanceId'] ?? enemy['id'] ?? enemy['name'] ?? ''}';
+      if (summonId.isNotEmpty && !handledSummons.add(summonId)) continue;
+      final shares = oculumSummonExperienceShares(
+        enemy: enemy,
+        participantLevels: participantLevels.isEmpty
+            ? {if (characterTag.isNotEmpty) characterTag: characterLevel}
+            : participantLevels,
+      );
+      total +=
+          shares[characterTag] ??
+          (participantLevels.isEmpty && characterTag.isEmpty
+              ? shares.values.firstOrNull ?? 0
+              : 0);
+      continue;
+    }
+    final base =
+        max(0, readIntValue(enemy['level'])) +
+        max(0, readIntValue(enemy['statsTotal']));
+    if (base == 0) continue;
+    final grade = readIntValue(enemy['grade']).clamp(0, 12);
+    final type = oculumNormalizeText(
+      '${enemy['source'] ?? enemy['type'] ?? ''}',
+    );
+    final source = type.contains('mini') && type.contains('boss')
+        ? 'miniboss'
+        : type.contains('boss')
+        ? 'boss'
+        : 'normale';
+    total +=
+        (base *
+                    oculumEnemyExpMultiplier(
+                      source: source,
+                      difficulty: difficulty,
+                    ) *
+                    oculumExperienceGradeMultiplier(grade, characterGrade) +
+                oculumGradeExperienceBonus(
+                  enemyGrade: grade,
+                  rebirth: rebirth,
+                  difficulty: difficulty,
+                ))
+            .round();
+  }
+  return total.clamp(0, 100000000);
+}
+
+({int bonus, Map<String, dynamic> history}) oculumFirstDefeatExperience(
+  Iterable<Map> enemies,
+  Map previous,
+) {
+  final history = <String, dynamic>{
+    for (final entry in previous.entries) '${entry.key}': entry.value,
+  };
+  var bonus = 0;
+  for (final enemy in enemies) {
+    if (oculumEncounterEnemyIsSummon(enemy)) continue;
+    final book = '${enemy['monsterBookId'] ?? ''}'.trim();
+    final family = '${enemy['experienceFamilyId'] ?? ''}'.trim();
+    final key = family.isNotEmpty
+        ? family
+        : book.isNotEmpty
+        ? book.replaceFirst(RegExp(r'_variante_[a-z]+$'), '')
+        : oculumNormalizeText('${enemy['name'] ?? ''}');
+    if (key.isEmpty) continue;
+    final grade = readIntValue(enemy['grade']).clamp(0, 12);
+    final variant = jsonEncode([
+      book.isEmpty ? oculumNormalizeText('${enemy['name'] ?? ''}') : book,
+      oculumNormalizeElementId('${enemy['element'] ?? ''}'),
+      grade,
+    ]);
+    final old = history[key];
+    final record = old is Map
+        ? Map<String, dynamic>.from(old)
+        : <String, dynamic>{};
+    final seen = (record['variants'] as List? ?? []).map((v) => '$v').toSet();
+    final exp = max(0, readIntValue(enemy['experienceReward']));
+    if (old == null) {
+      bonus += (exp / 2).ceil();
+    } else if (!seen.contains(variant) &&
+        grade >= readIntValue(record['highestGrade'])) {
+      bonus += (exp / 4).floor();
+    }
+    seen.add(variant);
+    record['variants'] = seen.toList();
+    record['highestGrade'] = max(grade, readIntValue(record['highestGrade']));
+    history[key] = record;
+  }
+  return (bonus: bonus, history: history);
+}
+
 extension _OculumEncounterRewards on _OculumHomePageState {
   void receiveEncounterRewards(Iterable<Map> rewards) {
     for (final reward in rewards) {
+      resolveCorruptionFightEnd('${reward['endedEncounterId'] ?? ''}');
       final id = '${reward['id'] ?? ''}';
-      final amount = readIntValue(reward['amount']).clamp(0, 100000000);
-      if (id.isEmpty || amount <= 0) continue;
+      final legacyAmount = readIntValue(reward['amount']).clamp(0, 100000000);
+      final rawDefeated = reward['defeated'];
+      final defeated = rawDefeated is List
+          ? rawDefeated.whereType<Map>().toList()
+          : <Map>[];
+      if (id.isEmpty || legacyAmount <= 0 && defeated.isEmpty) continue;
+      var importedFallenEye = false;
+      final rawEyes = reward['fallenEyesByParticipant'];
+      if (rawEyes is Map) {
+        final seenIds = occhiCaduti
+            .map((eye) => '${eye['id'] ?? ''}')
+            .where((eyeId) => eyeId.isNotEmpty)
+            .toSet();
+        final seenKills = occhiCaduti
+            .map((eye) => '${eye['sourceKillId'] ?? ''}')
+            .where((killId) => killId.isNotEmpty)
+            .toSet();
+        for (final rawForParticipant in rawEyes.values) {
+          if (rawForParticipant is! List) continue;
+          for (final rawEye in rawForParticipant.whereType<Map>()) {
+            final eye = Map<String, dynamic>.from(rawEye);
+            final eyeId = '${eye['id'] ?? ''}';
+            final sourceKillId = '${eye['sourceKillId'] ?? ''}';
+            if (eyeId.isEmpty ||
+                seenIds.contains(eyeId) ||
+                sourceKillId.isNotEmpty && seenKills.contains(sourceKillId)) {
+              continue;
+            }
+            eye['ownerSheetId'] = '${eye['ownerSheetId'] ?? ''}';
+            occhiCaduti.add(eye);
+            seenIds.add(eyeId);
+            if (sourceKillId.isNotEmpty) seenKills.add(sourceKillId);
+            importedFallenEye = true;
+          }
+        }
+      }
+      if (importedFallenEye) _touchFallenEyes();
       for (var i = 0; i < schedePersonaggio.length; i++) {
         if (schedePersonaggio[i]['realtimeSharedSheet'] == true) continue;
         final tag = sheetTagAt(i);
         if (!(reward['participants'] as List? ?? []).contains(tag)) continue;
         final key = 'reward:$id:$tag';
+        if (onlineCombatRequests.containsKey(key)) continue;
+        if ((schedePersonaggio[i]['claimedEncounterRewardIds'] as List? ?? [])
+            .contains(key)) {
+          continue;
+        }
+        final amount = defeated.isEmpty
+            ? legacyAmount
+            : oculumEncounterExperienceForEnemies(
+                defeated,
+                characterGrade: i == schedaCorrente
+                    ? leggiNumero(gradoController)
+                    : sheetIntValueAt(i, 'grado'),
+                rebirth: i == schedaCorrente
+                    ? rebirthato
+                    : readBoolValue(schedePersonaggio[i]['rebirthato']),
+                difficulty: normalizedCampaignDifficulty(),
+                characterTag: tag,
+                characterLevel: i == schedaCorrente
+                    ? leggiNumero(livelloController)
+                    : sheetIntValueAt(i, 'livello'),
+                participantLevels: {
+                  for (final entry
+                      in (reward['participantLevels'] as Map? ?? {}).entries)
+                    '${entry.key}': readIntValue(entry.value),
+                },
+              );
+        final stats = i == schedaCorrente
+            ? leggiNumero(resilienzaController) +
+                  leggiNumero(volontaController) +
+                  leggiNumero(materiaController) +
+                  leggiNumero(oculumController)
+            : ['resilienza', 'volonta', 'materia', 'oculum'].fold<int>(
+                0,
+                (sum, stat) => sum + max(0, sheetIntValueAt(i, stat)),
+              );
+        final resources = oculumEncounterResourcesForEnemies(
+          defeated,
+          characterGrade: i == schedaCorrente
+              ? leggiNumero(gradoController)
+              : sheetIntValueAt(i, 'grado'),
+          characterStats: stats,
+        );
+        final participantLoot =
+            ((reward['lootByParticipant'] as Map?)?[tag] as List? ?? []);
+        if (amount <= 0 &&
+            resources.obser == 0 &&
+            resources.dust == 0 &&
+            participantLoot.isEmpty) {
+          continue;
+        }
         onlineCombatRequests.putIfAbsent(
           key,
           () => {
@@ -20,6 +405,34 @@ extension _OculumEncounterRewards on _OculumHomePageState {
             'status': 'queued',
             'targetTag': tag,
             'amount': amount,
+            'discoveryEnemies': [
+              for (final enemy in defeated)
+                {
+                  ...enemy,
+                  'experienceReward': oculumEncounterExperienceForEnemies(
+                    [enemy],
+                    characterGrade: i == schedaCorrente
+                        ? leggiNumero(gradoController)
+                        : sheetIntValueAt(i, 'grado'),
+                    rebirth: i == schedaCorrente
+                        ? rebirthato
+                        : readBoolValue(schedePersonaggio[i]['rebirthato']),
+                    difficulty: normalizedCampaignDifficulty(),
+                    characterTag: tag,
+                  ),
+                },
+            ],
+            'obser': resources.obser,
+            'dust': resources.dust,
+            'items':
+                ((reward['lootByParticipant'] as Map?)?[tag] as List? ?? [])
+                    .whereType<Map>()
+                    .map((item) => Map<String, dynamic>.from(item))
+                    .toList(),
+            'enemyStatsTotal': defeated.fold<int>(
+              0,
+              (sum, enemy) => sum + max(0, readIntValue(enemy['statsTotal'])),
+            ),
             'encounterName': reward['name'],
             'multiplier':
                 reward['fateActive'] == true &&
@@ -59,9 +472,29 @@ extension _OculumEncounterRewards on _OculumHomePageState {
                   r['targetTag'] == tag,
             )
             .toList()) {
+      final claimed =
+          (schedePersonaggio[schedaCorrente]['claimedEncounterRewardIds']
+                      as List? ??
+                  [])
+              .map((id) => '$id')
+              .toSet();
+      if (claimed.contains(reward['id'])) {
+        reward['status'] = 'granted';
+        continue;
+      }
       reward['status'] = 'granted';
+      schedePersonaggio[schedaCorrente]['dustLastFightEnemyStats'] =
+          readIntValue(reward['enemyStatsTotal']);
+      final discovery = oculumFirstDefeatExperience(
+        (reward['discoveryEnemies'] as List? ?? []).whereType<Map>(),
+        schedePersonaggio[schedaCorrente]['firstDefeatExperienceHistory']
+                as Map? ??
+            {},
+      );
+      schedePersonaggio[schedaCorrente]['firstDefeatExperienceHistory'] =
+          discovery.history;
       final amount =
-          readIntValue(reward['amount']) *
+          (readIntValue(reward['amount']) + discovery.bonus) *
           readIntValue(reward['multiplier'], fallback: 1);
       final message = applicaEsperienzaFlat(
         amount,
@@ -69,10 +502,53 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         applyChainedFate: false,
       );
       aggiungiLog(message);
+      if (discovery.bonus > 0) {
+        aggiungiLog(
+          '[PRIMA SCONFITTA / VARIANTE] +${discovery.bonus} EXP prima del moltiplicatore del Fato.',
+        );
+      }
+      final obser = readIntValue(reward['obser']).clamp(0, 100000000);
+      final dust = readIntValue(reward['dust']).clamp(0, 5);
+      final items = (reward['items'] as List? ?? [])
+          .whereType<Map>()
+          .map(
+            (item) => InventoryItem.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .toList();
+      if (items.isNotEmpty) {
+        if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length) {
+          final current = schedePersonaggio[schedaCorrente];
+          if (current['realtimeSharedSheet'] == true) {
+            final rawInventory = List<dynamic>.from(
+              current['inventario'] as List? ?? const [],
+            );
+            rawInventory.addAll(items.map((item) => item.toJson()));
+            current['inventario'] = rawInventory;
+          } else {
+            inventario.addAll(items);
+          }
+        }
+      }
+      obserController.text = '${max(0, leggiNumero(obserController)) + obser}';
+      ascensionDustController.text =
+          '${max(0, leggiNumero(ascensionDustController)) + dust}';
+      claimed.add('${reward['id']}');
+      schedePersonaggio[schedaCorrente]['claimedEncounterRewardIds'] = claimed
+          .toList();
+      if (obser > 0 || dust > 0) {
+        aggiungiLog(
+          '[DROP FINE SCONTRO] +$obser Obser · +$dust Ascension Dust.',
+        );
+      }
+      if (items.isNotEmpty) {
+        aggiungiLog(
+          '[DROP PARTY] ${items.map((item) => item.nome).join(', ')} assegnato a ${nomeSchedaPersonaggio(schedaCorrente)}.',
+        );
+      }
     }
   }
 
-  Future<void> finishEncounter(String id) async {
+  Future<void> finishEncounter(String id, {Random? random}) async {
     if (realtimeService?.isConnected == true && !realtimeIsMasterRole) return;
     selectMasterInitiativeGroup(id);
     captureActiveMasterInitiativeGroup();
@@ -81,34 +557,88 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         .firstOrNull;
     if (group == null || masterInitiativeTokens.isEmpty) return;
     var amount = 0;
-    final participants = <String>[];
+    final defeated = <Map<String, dynamic>>[];
+    final participants = <String>{};
+    final countedEnemies = <String>{};
     for (final token in masterInitiativeTokens) {
+      if (masterInitiativeTokenIsTemporary(token)) continue;
       if (token['side'] != 'enemy') {
         participants.add(publicInitiativeSourceTag(token));
         continue;
       }
-      if (token['status'] != 'dead' &&
-          readIntValue(token['currentHp'], fallback: 1) > 0) {
+      final corruptionIndex = localSheetIndexForOculumTag(
+        publicInitiativeSourceTag(token),
+      );
+      if (!oculumEncounterEnemyKilled(token) &&
+          !corruptionSuicideDueAt(corruptionIndex, id)) {
         continue;
       }
+      final enemyTag = publicInitiativeSourceTag(token);
+      if (enemyTag.isNotEmpty && !countedEnemies.add(enemyTag)) continue;
       final index = localSheetIndexForOculumTag(
         '${token['sheetTag'] ?? token['id']}',
       );
-      amount += max(0, readIntValue(token['level']));
+      final level = max(0, readIntValue(token['level']));
+      var statsTotal = 0;
       if (index >= 0) {
         for (final stat in ['resilienza', 'volonta', 'materia', 'oculum']) {
-          amount += max(0, sheetIntValueAt(index, stat));
+          statsTotal += max(0, sheetIntValueAt(index, stat));
         }
       } else {
-        amount += max(0, readIntValue(token['statsTotal']));
+        statsTotal = max(0, readIntValue(token['statsTotal']));
       }
+      amount += level + statsTotal;
+      final monsterSource = index >= 0
+          ? monsterLootSourceForSheet(schedePersonaggio[index])
+          : null;
+      defeated.add({
+        'id': token['id'],
+        'name': token['name'],
+        'monsterBookId': monsterSource?.id ?? '${token['monsterBookId'] ?? ''}',
+        'element': monsterSource?.elementId ?? '${token['element'] ?? ''}',
+        if (index >= 0 &&
+            '${schedePersonaggio[index]['experienceFamilyId'] ?? ''}'
+                .trim()
+                .isNotEmpty)
+          'experienceFamilyId': schedePersonaggio[index]['experienceFamilyId'],
+        'monsterSheetTag': index >= 0 ? sheetTagAt(index) : '',
+        'level': level,
+        'statsTotal': statsTotal,
+        'grade':
+            (index >= 0
+                    ? sheetIntValueAt(index, 'grado')
+                    : readIntValue(token['grade']))
+                .clamp(0, 12),
+        'isSummon': oculumEncounterEnemyIsSummon(token),
+        if (oculumEncounterEnemyIsSummon(token)) ...{
+          'summonInstanceId': '${token['summonInstanceId'] ?? token['id']}',
+          'summonerTag': '${token['summonerTag'] ?? ''}',
+          'fateAllowsExp': readBoolValue(token['fateAllowsExp']),
+          'summonExpMultiplier': readIntValue(
+            token['summonExpMultiplier'],
+            fallback: 1,
+          ).clamp(1, 10),
+        },
+        'source': index >= 0
+            ? tipoSchedaPersonaggio(index)
+            : '${token['type'] ?? 'Mostro'}',
+      });
     }
     final ok = await showDialog<bool>(
       context: context,
       builder: (dialog) => AlertDialog(
         title: const Text('Termina scontro'),
-        content: Text(
-          '$amount EXP base a ciascuno dei ${participants.length} partecipanti. La turnistica viene svuotata e la condivisione chiusa. Gli scontri uniti tornano separati.',
+        content: SingleChildScrollView(
+          child: Text(
+            '${defeated.length} nemici sconfitti · $amount EXP base. '
+            'Il premio di ciascun partecipante usa categoria e Grado di ogni nemico, '
+            'confrontato con il proprio Grado. I Drop dei mostri uccisi presenti '
+            'in turnistica vengono tirati e distribuiti ora. La turnistica viene svuotata e la '
+            'condivisione chiusa. Gli scontri uniti tornano separati.\n\n'
+            '${defeated.map((enemy) => '${enemy['name'] ?? 'Nemico'} · '
+                '${enemy['source']} · Grado ${oculumExperienceGradeLabel(readIntValue(enemy['grade']))} · '
+                '${readIntValue(enemy['level']) + readIntValue(enemy['statsTotal'])} EXP base').join('\n')}',
+          ),
         ),
         actions: [
           TextButton(
@@ -117,17 +647,188 @@ extension _OculumEncounterRewards on _OculumHomePageState {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialog, true),
-            child: const Text('Termina e assegna EXP'),
+            child: const Text('Termina, tira i Drop e assegna EXP'),
           ),
         ],
       ),
     );
     if (!mounted || ok != true) return;
+    resolveCorruptionFightEnd(id);
+    final cooldownFightSequence =
+        max(0, readIntValue(group['completedFightCount'])) + 1;
+    group['completedFightCount'] = cooldownFightSequence;
+    final cooldownFightId = '$id:$cooldownFightSequence';
+    final partyTags = participants.toList()..sort();
+    for (final tag in partyTags) {
+      final index = localSheetIndexForOculumTag(tag);
+      if (index < 0) continue;
+      final sheet = schedePersonaggio[index];
+      final remaining = max(
+        0,
+        readIntValue(sheet['patalpaSummonCooldownFightsRemaining']),
+      );
+      if (!oculumTickPatalpaSummonCooldown(
+        sheet,
+        encounterId: cooldownFightId,
+      )) {
+        continue;
+      }
+      if (remaining == 1) {
+        aggiungiLog(
+          'Richiamo del Patalpa: cooldown terminato per ${nomeSchedaPersonaggio(index)}.',
+        );
+      }
+    }
+    final participantLevels = <String, int>{
+      for (final tag in partyTags)
+        tag: (() {
+          final index = localSheetIndexForOculumTag(tag);
+          return index < 0 ? 0 : max(0, sheetIntValueAt(index, 'livello'));
+        })(),
+    };
+    final pooledLoot = <InventoryItem>[];
+    final fallenEyeCandidates = <Map<String, dynamic>>[];
+    final encounterRandom = random ?? Random.secure();
+    final knownEyeKillIds = occhiCaduti
+        .map((eye) => '${eye['sourceKillId'] ?? ''}')
+        .where((killId) => killId.isNotEmpty)
+        .toSet();
+    final candidateEyeKillIds = <String>{};
+    var rollerCursor = 0;
+    for (final enemy in defeated) {
+      final monsterId = '${enemy['monsterBookId'] ?? ''}';
+      final monster = monsterId.isEmpty
+          ? null
+          : monsterBookEntryById(monsterId);
+      if (monster == null || partyTags.isEmpty) continue;
+      final rollerTag = partyTags[rollerCursor++ % partyTags.length];
+      final rollerIndex = localSheetIndexForOculumTag(rollerTag);
+      if (rollerIndex < 0) continue;
+      final rollerSheet = schedePersonaggio[rollerIndex];
+      final rawDropStats = (rollerSheet['hiddenEyeStats'] as List? ?? const [])
+          .whereType<Map>()
+          .where((stat) => stat['id'] == 'drop')
+          .firstOrNull;
+      final bonus =
+          readIntValue(rawDropStats?['valore']) +
+          oculumHiddenEyeDerivedBonusFor(
+            id: 'drop',
+            level: readIntValue(rollerSheet['livello']),
+            resilienza: readIntValue(rollerSheet['resilienza']),
+            volonta: readIntValue(rollerSheet['volonta']),
+            materia: readIntValue(rollerSheet['materia']),
+            oculum: readIntValue(rollerSheet['oculum']),
+            karma: readIntValue(rollerSheet['karma']),
+          );
+      final natural = encounterRandom.nextInt(20) + 1;
+      final level = max(0, readIntValue(enemy['level']));
+      final grade = readIntValue(enemy['grade']).clamp(0, 12).toInt();
+      final difficulty = oculumMonsterDropDifficulty(
+        level: level,
+        grade: grade,
+      );
+      final total = rollTotalWithCritical(natural, 20, [bonus]);
+      final killId = '${enemy['id'] ?? monsterId}:$id';
+      final dropped = oculumGenerateMonsterLoot(
+        monster: monster,
+        level: level,
+        grade: grade,
+        random: Random.secure(),
+        killId: killId,
+        naturalDropRoll: natural,
+        dropTotal: total,
+      );
+      pooledLoot.addAll(dropped);
+      if (oculumFallenEyeDropCreatesOnNaturalTwenty(
+            subtraitId: 'drop',
+            naturalRoll: natural,
+          ) &&
+          !knownEyeKillIds.contains(killId) &&
+          candidateEyeKillIds.add(killId)) {
+        final monsterTagForEye = '${enemy['monsterSheetTag'] ?? ''}';
+        final sourceIndexForEye = localSheetIndexForOculumTag(monsterTagForEye);
+        final eyeSource = sourceIndexForEye >= 0
+            ? _cloneJsonMap(schedePersonaggio[sourceIndexForEye])
+            : _fallenEyeSourceFromMonsterBook(
+                monster,
+                name: '${monster.nameIt} — Occhio Caduto',
+                level: level,
+              );
+        eyeSource['nome'] = '${monster.nameIt} — Occhio Caduto';
+        eyeSource['tipoScheda'] = monster.isBoss
+            ? 'Boss'
+            : monster.isMiniBoss
+            ? 'Mini Boss'
+            : 'Mostro';
+        eyeSource['grado'] = grade;
+        eyeSource['livello'] = level;
+        final eye = _newFallenEye(
+          eyeSource,
+          name: '${monster.nameIt} — Occhio Caduto',
+        );
+        oculumFallenEyeApplyInheritedPowers(eye);
+        eye
+          ..['ownerSheetId'] = ''
+          ..['sourceKillId'] = killId
+          ..['sourcePower'] =
+              grade * 100000 + readIntValue(enemy['statsTotal']) * 100 + level
+          ..['sourceMonsterGrade'] = grade
+          ..['sourceMonsterLevel'] = level;
+        fallenEyeCandidates.add(eye);
+      }
+      final monsterTag = '${enemy['monsterSheetTag'] ?? ''}';
+      final monsterIndex = localSheetIndexForOculumTag(monsterTag);
+      if (monsterIndex >= 0) {
+        final monsterSheet = schedePersonaggio[monsterIndex];
+        monsterSheet['monsterLootPending'] = false;
+        monsterSheet['monsterLootGenerated'] = true;
+        monsterSheet['monsterLootRoll'] = {
+          'natural': natural,
+          'bonus': bonus,
+          'total': total,
+          'difficulty': difficulty,
+          'rollerTag': rollerTag,
+          'itemsDistributed': dropped.map((item) => item.nome).toList(),
+        };
+      }
+      aggiungiLog(
+        '[DROP] ${enemy['name']}: $natural + $bonus = $total contro DT $difficulty${dropped.isEmpty ? ' · nessun bottino' : ' · ${dropped.length} oggetti'}; tiro di ${nomeSchedaPersonaggio(rollerIndex)}.',
+      );
+    }
+    final lootByParticipant = oculumDistributeEncounterLoot(
+      items: pooledLoot,
+      participantTags: partyTags,
+    );
+    final participantStatTotals = <String, int>{
+      for (final tag in partyTags)
+        tag: (() {
+          final index = localSheetIndexForOculumTag(tag);
+          if (index < 0) return 0;
+          return ['resilienza', 'volonta', 'materia', 'oculum'].fold<int>(
+            0,
+            (total, stat) => total + max(0, sheetIntValueAt(index, stat)),
+          );
+        })(),
+    };
+    final fallenEyesByParticipant = oculumDistributeFallenEyes(
+      eyes: fallenEyeCandidates,
+      participantStatTotals: participantStatTotals,
+    );
+    for (final entry in fallenEyesByParticipant.entries) {
+      for (final eye in entry.value) {
+        eye['ownerSheetId'] = entry.key;
+      }
+    }
     final reward = <String, dynamic>{
+      'endedEncounterId': id,
       'id': '$id:${DateTime.now().microsecondsSinceEpoch}',
       'name': group['name'],
       'amount': amount,
-      'participants': participants,
+      'defeated': defeated,
+      'participants': participants.toList(),
+      'participantLevels': participantLevels,
+      'lootByParticipant': lootByParticipant,
+      'fallenEyesByParticipant': fallenEyesByParticipant,
       'fateActive':
           group['chainedFate'] is Map &&
           (group['chainedFate'] as Map)['status'] == 'active',

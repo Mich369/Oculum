@@ -7,6 +7,176 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test(
+    'nurse Refull rolls buff, rare jackpot, duration and recovery price',
+    () {
+      expect(
+        oculumNurseBuffPercentFromRoll(percentileRoll: 0, selectionRoll: 0),
+        40,
+      );
+      expect(
+        oculumNurseBuffPercentFromRoll(percentileRoll: 0, selectionRoll: 1),
+        60,
+      );
+      expect(
+        oculumNurseBuffPercentFromRoll(percentileRoll: 1, selectionRoll: 3),
+        25,
+      );
+      expect(oculumNurseBuffSurcharge(10), 2);
+      expect(oculumNurseBuffSurcharge(60), 12);
+      expect(oculumNurseBuffDuration('facile'), 9);
+      expect(oculumNurseBuffDuration('medio'), 6);
+      expect(oculumNurseBuffDuration('difficile'), 3);
+      expect(oculumNurseBuffDuration('oculum'), 1);
+      expect(oculumNurseRareTempHpGift(percentileRoll: 0, level: 4), 20);
+      expect(oculumNurseRareTempHpGift(percentileRoll: 1, level: 4), 0);
+      expect(
+        oculumNurseTempHpGiftFromRoll(
+          percentileRoll: 0,
+          level: 4,
+          maximumTemporaryHp: 7,
+        ),
+        20,
+      );
+      expect(
+        oculumNurseTempHpGiftFromRoll(
+          percentileRoll: 1,
+          level: 4,
+          maximumTemporaryHp: 7,
+        ),
+        4,
+      );
+      expect(
+        oculumNurseTempHpGiftFromRoll(
+          percentileRoll: 3,
+          level: 4,
+          maximumTemporaryHp: 7,
+        ),
+        3,
+      );
+      expect(
+        oculumNurseTempHpGiftFromRoll(
+          percentileRoll: 8,
+          level: 4,
+          maximumTemporaryHp: 7,
+        ),
+        0,
+      );
+      expect(oculumNurseRareBuffBonusShield(101), 25);
+      expect(
+        oculumNurseFullRestorationCost(
+          missingHp: 11,
+          missingOculumShield: 3,
+          missingStatPoints: 2,
+          missingArtIntegrity: 11,
+          negativeConditions: 1,
+          buffPercent: 20,
+        ),
+        18,
+      );
+      expect(oculumDamageWithPercentage(100, 20), 120);
+    },
+  );
+
+  test(
+    'black market prices, level-zero eligibility and duplicate identity',
+    () {
+      expect(
+        [0, 1, 2].map(
+          (purchases) => oculumBlackMarketDustPrice(
+            basePrice: 40,
+            previousPurchases: purchases,
+          ),
+        ),
+        [40, 50, 60],
+      );
+      expect(
+        oculumBlackMarketDustPrice(basePrice: 50, previousPurchases: 2),
+        69,
+      );
+      expect(
+        oculumBlackMarketFallenEyePrice(
+          totalStats: 18,
+          ownerTotalStats: 18,
+          level: 10,
+        ),
+        151,
+      );
+      expect(
+        oculumBlackMarketFallenEyeBasePrice(level: 0, levelZeroBase: 36),
+        36,
+      );
+      expect(
+        oculumBlackMarketFallenEyeBasePrice(level: 0, levelZeroBase: 69),
+        69,
+      );
+      expect(
+        oculumBlackMarketFallenEyeBasePrice(level: 10, levelZeroBase: 36),
+        115,
+      );
+      expect(
+        oculumBlackMarketFallenEyeBasePrice(level: 10, levelZeroBase: 69),
+        115,
+      );
+      expect(
+        oculumBlackMarketFallenEyeBasePrice(level: 20, levelZeroBase: 50),
+        180,
+      );
+      expect(
+        oculumBlackMarketFallenEyePrice(
+          totalStats: 37,
+          ownerTotalStats: 18,
+          level: 10,
+        ),
+        189,
+      );
+      expect(
+        oculumBlackMarketFallenEyePrice(
+          totalStats: 38,
+          ownerTotalStats: 18,
+          level: 10,
+        ),
+        238,
+      );
+      expect(
+        oculumBlackMarketFallenEyePrice(
+          totalStats: 58,
+          ownerTotalStats: 18,
+          level: 10,
+        ),
+        346,
+      );
+      final firstSkill = <String, dynamic>{
+        'kind': 'black_market_monster_skill',
+        'sourceSkillId': 'frost_bite_variante_ghiaccio',
+        'canonicalSkillName': 'Soffio Acido',
+        'damagePercent': 20,
+      };
+      final secondSkill = <String, dynamic>{
+        ...firstSkill,
+        'sourceSkillId': 'acid_breath_elite',
+        'damagePercent': 40,
+        'cost': 999999,
+      };
+      expect(
+        oculumMerchantCanonicalOfferKey(firstSkill),
+        oculumMerchantCanonicalOfferKey(secondSkill),
+      );
+      expect(
+        oculumMerchantCanonicalOfferKey({
+          'kind': 'nurse_service',
+          'service': 'full',
+          'buffPercent': 20,
+        }),
+        oculumMerchantCanonicalOfferKey({
+          'kind': 'nurse_service',
+          'service': 'full',
+          'buffPercent': 40,
+        }),
+      );
+    },
+  );
+
   test('stat gems scale only with their own stat and are occasional', () {
     expect(oculumStatGemDieFaces(9), 3);
     expect(oculumStatGemDieFaces(90), 30);
@@ -19,6 +189,48 @@ void main() {
       (_) => oculumStatGemAvailable(random),
     );
     expect(appearances.every((v) => v), isFalse);
+  });
+
+  test('alchemy Fallen Eye offers follow level and price bands', () {
+    expect(oculumAlchemyMediumFallenEyeLevel(0), 0);
+    expect(oculumAlchemyMediumFallenEyeLevel(1), 0);
+    expect(oculumAlchemyMediumFallenEyeLevel(2), 1);
+    expect(oculumAlchemyMediumFallenEyeLevel(3), 2);
+    expect(oculumAlchemyMediumFallenEyeLevel(10), 6);
+    expect(oculumAlchemyRareFallenEyeLevel(1), 1);
+    expect(oculumAlchemyRareFallenEyeLevel(10), 5);
+    expect(
+      oculumAlchemyMediumFallenEyePrice(
+        ownerLevel: 10,
+        ownerGrade: 2,
+        priceRoll: 0,
+      ),
+      72,
+    );
+    expect(
+      oculumAlchemyMediumFallenEyePrice(
+        ownerLevel: 10,
+        ownerGrade: 2,
+        priceRoll: 33,
+      ),
+      105,
+    );
+    expect(
+      oculumAlchemyRareFallenEyePrice(
+        ownerLevel: 11,
+        ownerGrade: 2,
+        priceRoll: 0,
+      ),
+      243,
+    );
+    expect(
+      oculumAlchemyRareFallenEyePrice(
+        ownerLevel: 11,
+        ownerGrade: 2,
+        priceRoll: 220,
+      ),
+      463,
+    );
   });
   TestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('Merchant Dust purchase is limited until Long Rest', (
@@ -226,12 +438,15 @@ void main() {
       '$dustPrice Obser → 1 Ascension Dust · 0/3 per Riposo Lungo',
     );
     final callback = tester.widget<OutlinedButton>(buy).onPressed!;
-    callback();
-    callback();
-    callback();
+    final dustCosts = <int>[];
+    for (var i = 0; i < 3; i++) {
+      dustCosts.add(probe.dustPrice);
+      callback();
+    }
     callback(); // A stale fourth click must be rejected by the transaction.
     await tester.pump();
-    expect(state.obserController.text, '${1000 - 3 * dustPrice}');
+    final dustTotal = dustCosts.fold<int>(0, (sum, price) => sum + price);
+    expect(state.obserController.text, '${1000 - dustTotal}');
     expect(state.ascensionDustController.text, '3');
     expect(state.merchantDustPurchasedSinceLongRest, isTrue);
     expect(
@@ -280,8 +495,42 @@ void main() {
     );
     expect(state.merchantDustPurchasedSinceLongRest, isFalse);
     callback();
-    expect(state.obserController.text, '${1000 - 4 * dustPrice}');
+    expect(state.obserController.text, '${1000 - dustTotal - dustPrice}');
     expect(state.ascensionDustController.text, '4');
+
+    state.livelloController.text = '0';
+    state.gradoController.text = '0';
+    probe.shopType('mercato_nero');
+    final blackMarket = probe.shopOffers();
+    expect(
+      blackMarket.any(
+        (offer) =>
+            offer['kind'] == 'black_market_skill' &&
+            readIntValue(offer['requiredLevel']) == 0,
+      ),
+      isTrue,
+    );
+    expect(
+      blackMarket.any(
+        (offer) =>
+            offer['kind'] == 'technique_scroll' &&
+            offer['blackMarketSelected'] == true &&
+            readIntValue(offer['scrollGrade']) == 0,
+      ),
+      isTrue,
+    );
+    expect(
+      blackMarket.any(
+        (offer) => offer['kind'] == 'black_market_ascension_dust',
+      ),
+      isTrue,
+    );
+    final marketKeys = blackMarket
+        .map(oculumMerchantCanonicalOfferKey)
+        .whereType<String>()
+        .toList();
+    expect(marketKeys.toSet(), hasLength(marketKeys.length));
+    probe.shopType('alchimista');
     state.obserController.text = '1000';
     final sign = probe.shopOffers().singleWhere(
       (o) => o['kind'] == 'fate_sign',
@@ -325,6 +574,102 @@ void main() {
     expect(state.inventario.contains(chaos), isFalse);
     await probe.useMerchantItem(chaos);
     expect(totalStats(), afterChaos);
+
+    probe.shopType('infermiera_eroica');
+    state.obserController.text = '100000';
+    state.currentHpController.text = '1';
+    for (final key in ['resilienza', 'volonta', 'materia', 'oculum']) {
+      probe.setResourceCurrent(key, 0);
+    }
+    state.scudoOculumMaxController.text = '8';
+    state.scudoOculumController.text = '1';
+    state.scudoController.text = '7';
+    final maxHpBeforeNurse = probe.maximumHp();
+    final refill = probe.shopOffers().singleWhere(
+      (offer) => offer['service'] == 'full',
+    );
+    refill['buffPercent'] = 20;
+    refill['rareTempHpChancePercent'] = 0;
+    final refillCost = probe.shopCost(refill);
+    await probe.buyShopOffer(refill);
+    expect(state.obserController.text, '${100000 - refillCost}');
+    expect(probe.maximumHp(), greaterThanOrEqualTo(maxHpBeforeNurse));
+    expect(state.currentHpController.text, '${probe.maximumHp()}');
+    expect(state.scudoOculumController.text, '8');
+    expect(state.scudoController.text, '27');
+    for (final key in ['resilienza', 'volonta', 'materia', 'oculum']) {
+      if (key == 'oculum') {
+        expect(
+          probe.snapshot()['normalCurrentOculum'],
+          probe.resourceMaximum(key),
+        );
+        expect(
+          probe.resourceCurrent(key),
+          probe.resourceMaximum(key) + state.temporaryOculum,
+        );
+      } else {
+        expect(
+          probe.resourceCurrent(key),
+          probe.resourceMaximum(key),
+          reason: 'Nurse resource $key',
+        );
+      }
+    }
+    expect(state.heroicNursePendingBattleBuff['damagePercent'], 20);
+    expect(state.heroicNursePendingBattleBuff['pending'], isTrue);
+
+    final savedPendingBuff = probe.snapshot();
+    probe.load(savedPendingBuff);
+    expect(state.heroicNursePendingBattleBuff['damagePercent'], 20);
+
+    refill['buffPercent'] = 40;
+    await probe.buyShopOffer(refill);
+    expect(state.scudoController.text, '${27 + 20 + probe.maximumHp() ~/ 4}');
+    expect(state.heroicNursePendingBattleBuff['damagePercent'], 40);
+
+    final nurseTestToken = <String, dynamic>{
+      'id': 'nurse_refill_test_turn',
+      'side': 'ally',
+    };
+    state.masterInitiativeTokens.add(nurseTestToken);
+    expect(probe.activateNurseBuff(), isTrue);
+    expect(state.heroicNursePendingBattleBuff, isNull);
+    final activatedEffects = probe
+        .structuredEffects()
+        .where((effect) => effect['source'] == 'Infermiera Eroica · Refull')
+        .toList();
+    expect(activatedEffects, hasLength(2));
+    expect(activatedEffects.map((effect) => effect['value']), everyElement(40));
+    expect(
+      activatedEffects.map((effect) => effect['remaining']),
+      everyElement(oculumNurseBuffDuration(probe.difficulty())),
+    );
+    state.masterInitiativeTokens.remove(nurseTestToken);
+
+    state.currentHpController.text = '1';
+    state.scudoController.text = '5';
+    state.scudoOculumController.text = '1';
+    for (final key in ['resilienza', 'volonta', 'materia', 'oculum']) {
+      probe.setResourceCurrent(key, 0);
+    }
+    probe.refillStatsAndHealth();
+    expect(state.currentHpController.text, '${probe.maximumHp()}');
+    expect(state.scudoOculumController.text, '8');
+    expect(state.scudoController.text, '5');
+    for (final key in ['resilienza', 'volonta', 'materia', 'oculum']) {
+      if (key == 'oculum') {
+        expect(
+          probe.snapshot()['normalCurrentOculum'],
+          probe.resourceMaximum(key),
+        );
+        expect(
+          probe.resourceCurrent(key),
+          probe.resourceMaximum(key) + state.temporaryOculum,
+        );
+      } else {
+        expect(probe.resourceCurrent(key), probe.resourceMaximum(key));
+      }
+    }
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
   });

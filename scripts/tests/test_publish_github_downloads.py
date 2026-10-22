@@ -69,4 +69,3 @@ class DownloadPublicationTests(unittest.TestCase):
         notes = publisher.notes(catalog)
         self.assertIn("releases/tag/oculum-build-42", notes)
         self.assertEqual(publisher.read_catalog(notes), catalog)
-

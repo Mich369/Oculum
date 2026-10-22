@@ -91,13 +91,17 @@ int oculumStatRollBonus({
   return statValue ~/ 2 + levelGradeBonus + quickBonus + extraBonus;
 }
 
-({int remainingOculum, int bonus}) oculumFightRollSpendResult({
+({int remainingOculum, int bonus, int damageBonus}) oculumFightRollSpendResult({
   required int currentOculum,
   required int spentOculum,
 }) {
   final safeCurrent = max(0, currentOculum);
   final safeSpent = spentOculum.clamp(0, safeCurrent).toInt();
-  return (remainingOculum: safeCurrent - safeSpent, bonus: safeSpent * 3);
+  return (
+    remainingOculum: safeCurrent - safeSpent,
+    bonus: safeSpent * 3,
+    damageBonus: safeSpent * 2,
+  );
 }
 
 Iterable<String> oculumActiveTitleFormulaTexts(OculumTitle title) sync* {
@@ -338,7 +342,31 @@ List<HiddenEyeStat> oculumMergeHiddenEyeStatsWithDefaults({
   return merged;
 }
 
+int oculumWeaponLimit(int grade) => 3 + grade.clamp(0, 12) * 5;
+
+int oculumWeaponStackDamage(Iterable<InventoryItem> weapons) {
+  final sorted = weapons.toList()
+    ..sort(
+      (a, b) => (b.bonusDanno + b.gradoOggetto * 5).compareTo(
+        a.bonusDanno + a.gradoOggetto * 5,
+      ),
+    );
+  if (sorted.isEmpty) return 0;
+  final main = sorted.first;
+  var damage = main.bonusDanno + main.gradoOggetto * 5;
+  for (final weapon in sorted.skip(1)) {
+    final extra = weapon.bonusDanno + weapon.gradoOggetto * 5;
+    final improved =
+        weapon.livelloOggetto >= main.livelloOggetto ||
+        weapon.gradoOggetto >= main.gradoOggetto;
+    damage += improved ? (extra / 3).ceil() : (extra / 3).floor();
+  }
+  return damage;
+}
+
 extension _OculumHomeCalculations on _OculumHomePageState {
+  int titleGradeStatBonus(OculumTitle title, String stat) =>
+      max(0, title.gradeStatAllocation[stat] ?? 0);
   Iterable<OculumTitle> get titoliCalcolabili sync* {
     yield* titoli;
     yield* trattiRazziali;
@@ -417,13 +445,28 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         0;
   }
 
-  String visibleSheetDisplayName(int index) => oculumNameWithVisibleTitle(
-    nomeSchedaPersonaggio(index),
-    titoloSempreVisibileSchedaAt(index)?.nome ??
-        (index >= 0 && index < schedePersonaggio.length
-            ? '${schedePersonaggio[index]['publicVisibleTitleName'] ?? ''}'
-            : ''),
-  );
+  String visibleSheetDisplayName(int index) {
+    if (index >= 0 &&
+        index < schedePersonaggio.length &&
+        readBoolValue(schedePersonaggio[index]['realtimeSharedSheet'])) {
+      final sheet = schedePersonaggio[index];
+      final owner = '${sheet['realtimeOwnerName'] ?? ''}'.trim();
+      final title =
+          '${sheet['publicVisibleTitleName'] ?? titoloSempreVisibileSchedaAt(index)?.nome ?? ''}'
+              .trim();
+      return oculumNameWithVisibleTitle(
+        nomeSchedaPersonaggio(index),
+        owner.isNotEmpty && owner != '???' ? owner : title,
+      );
+    }
+    return oculumNameWithVisibleTitle(
+      nomeSchedaPersonaggio(index),
+      titoloSempreVisibileSchedaAt(index)?.nome ??
+          (index >= 0 && index < schedePersonaggio.length
+              ? '${schedePersonaggio[index]['publicVisibleTitleName'] ?? ''}'
+              : ''),
+    );
+  }
 
   // CALCOLI STATS / HP / DERIVATI
   // =====================================================
@@ -537,7 +580,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     for (final titolo in titoliCalcolabili) {
       if (titolo.equipaggiato) {
-        totale += titolo.resilienza;
+        totale += titolo.resilienza + titleGradeStatBonus(titolo, 'resilienza');
         totale += buffCondizionaleResilienza(titolo);
       }
     }
@@ -553,7 +596,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     for (final titolo in titoliCalcolabili) {
       if (titolo.equipaggiato) {
-        totale += titolo.volonta;
+        totale += titolo.volonta + titleGradeStatBonus(titolo, 'volonta');
         totale += buffCondizionaleVolonta(titolo);
       }
     }
@@ -569,7 +612,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     for (final titolo in titoliCalcolabili) {
       if (titolo.equipaggiato) {
-        totale += titolo.materia;
+        totale += titolo.materia + titleGradeStatBonus(titolo, 'materia');
         totale += buffCondizionaleMateria(titolo);
       }
     }
@@ -585,7 +628,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     for (final titolo in titoliCalcolabili) {
       if (titolo.equipaggiato) {
-        totale += titolo.oculum;
+        totale += titolo.oculum + titleGradeStatBonus(titolo, 'oculum');
         totale += buffCondizionaleOculum(titolo);
       }
     }
@@ -1204,16 +1247,17 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
       switch (key) {
         case 'resilienza':
-          total += titolo.resilienza;
+          total +=
+              titolo.resilienza + titleGradeStatBonus(titolo, 'resilienza');
           break;
         case 'volonta':
-          total += titolo.volonta;
+          total += titolo.volonta + titleGradeStatBonus(titolo, 'volonta');
           break;
         case 'materia':
-          total += titolo.materia;
+          total += titolo.materia + titleGradeStatBonus(titolo, 'materia');
           break;
         case 'oculum':
-          total += titolo.oculum;
+          total += titolo.oculum + titleGradeStatBonus(titolo, 'oculum');
           break;
       }
     }
@@ -1946,10 +1990,22 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     if (identical(titolo, titoloSempreVisibile)) {
       final structured = <String, int>{
-        'resilienza': titolo.resilienza + buffCondizionaleResilienza(titolo),
-        'volonta': titolo.volonta + buffCondizionaleVolonta(titolo),
-        'materia': titolo.materia + buffCondizionaleMateria(titolo),
-        'oculum': titolo.oculum + buffCondizionaleOculum(titolo),
+        'resilienza':
+            titolo.resilienza +
+            titleGradeStatBonus(titolo, 'resilienza') +
+            buffCondizionaleResilienza(titolo),
+        'volonta':
+            titolo.volonta +
+            titleGradeStatBonus(titolo, 'volonta') +
+            buffCondizionaleVolonta(titolo),
+        'materia':
+            titolo.materia +
+            titleGradeStatBonus(titolo, 'materia') +
+            buffCondizionaleMateria(titolo),
+        'oculum':
+            titolo.oculum +
+            titleGradeStatBonus(titolo, 'oculum') +
+            buffCondizionaleOculum(titolo),
       };
       for (final key in {...bonuses.keys, ...structured.keys}) {
         // Only numeric stat bonuses, never resources, costs or multipliers.
@@ -2133,6 +2189,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   bool artOpenSbloccata(CharacterArt art) {
+    if (art.openName == 'Portali del nucleo') {
+      return art.sbloccata && leggiNumero(livelloController) >= 6;
+    }
     if (art.openDescriptionEffects.any(
       (effect) => effect.id.startsWith('monster_open_ultimate_'),
     )) {
@@ -2228,14 +2287,20 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   bool ensureTitleSlotAvailable(OculumTitle title) {
     if (title.equipaggiato || trattiRazziali.contains(title)) return true;
-    final pool = titleSlotPool(title);
-    final capacity = titleSlotCapacity(pool);
-    if (capacity == null ||
-        titleSlotsUsed(pool, including: title) <= capacity) {
+    final preferred = normalizeTitleCategory(title.tipo);
+    final selected = oculumChooseTitleSlot(
+      preferredPool: preferred,
+      preferredUsed: titleSlotsUsed(preferred, including: title),
+      preferredCapacity: titleSlotCapacity(preferred),
+      standardUsed: titleSlotsUsed('Standard', including: title),
+      standardCapacity: titleSlotCapacity('Standard') ?? 0,
+    );
+    if (selected != null) {
+      title.equippedSlotPool = selected;
       return true;
     }
     aggiungiLog(
-      '[TITOLI] Nessuno slot disponibile in $pool per ${title.nome}.',
+      '[TITOLI] Nessuno slot dedicato o comune disponibile per ${title.nome}.',
     );
     showTitleSlots();
     return false;
@@ -2568,6 +2633,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       oculumLearningTitleCapacity(leggiNumero(gradoController));
 
   String titleSlotPool(OculumTitle title) {
+    if (title.equippedSlotPool.trim().isNotEmpty) {
+      return title.equippedSlotPool.trim();
+    }
     final category = normalizeTitleCategory(title.tipo);
     return const {
           'Titoli Di Apprendimento',
@@ -3173,9 +3241,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     programmaSalvataggio();
   }
 
-  ({int spent, int bonus}) consumaOculumTiro() {
+  ({int spent, int bonus, int damageBonus}) consumaOculumTiro({
+    bool forAttack = false,
+  }) {
     final spent = oculumTiroPreparato();
-    if (spent <= 0) return (spent: 0, bonus: 0);
+    if (spent <= 0) return (spent: 0, bonus: 0, damageBonus: 0);
 
     final result = oculumFightRollSpendResult(
       currentOculum: oculumTotale(),
@@ -3187,12 +3257,16 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     scheduleHiddenEyeDerivedCardsRefresh();
     scheduleRealtimeOculumChanged();
     programmaSalvataggio(invalidateCaches: false);
-    return (spent: spent, bonus: result.bonus);
+    return (
+      spent: spent,
+      bonus: result.bonus,
+      damageBonus: forAttack ? result.damageBonus : 0,
+    );
   }
 
-  String oculumTiroLogLabel(({int spent, int bonus}) spend) {
+  String oculumTiroLogLabel(({int spent, int bonus, int damageBonus}) spend) {
     if (spend.spent <= 0) return '';
-    return ' Oculum fight +${spend.bonus} (${spend.spent} pt).';
+    return ' Potenziamento Oculum +${spend.bonus} al tiro (${spend.spent} pt)${spend.damageBonus > 0 ? ', +${spend.damageBonus} Danni' : ''}.';
   }
 
   void modificaFollia(int delta, {bool daMostro = false}) {
@@ -3518,10 +3592,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   void applicaBonusTitoloAttuali(OculumTitle titolo, int segno) {
     applicaBonusAttuali(
-      resilienza: titolo.resilienza,
-      volonta: titolo.volonta,
-      materia: titolo.materia,
-      oculum: titolo.oculum,
+      resilienza: titolo.resilienza + titleGradeStatBonus(titolo, 'resilienza'),
+      volonta: titolo.volonta + titleGradeStatBonus(titolo, 'volonta'),
+      materia: titolo.materia + titleGradeStatBonus(titolo, 'materia'),
+      oculum: titolo.oculum + titleGradeStatBonus(titolo, 'oculum'),
       segno: segno,
     );
   }
@@ -4723,7 +4797,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         activeStructuredEffectBonus(stat.id) +
         roleSubtraitBonus(stat.id) +
         summoningEmblemBonus(stat.id, subtrait: true) +
-        merchantHerbalSubtraitBonus(stat.id);
+        merchantHerbalSubtraitBonus(stat.id) +
+        conditionSubtraitBonus(stat.id);
     final cacheBase = stat.valore + dustBonus + quickBonus + structuredBonus;
     final cachedBase = hiddenEyeTotalBaseCache[stat.id];
     final cachedValue = hiddenEyeTotalValueCache[stat.id];
@@ -4963,6 +5038,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int difesa() {
+    activateHeroicNurseBuffForCurrentBattle();
     final beforeConditions =
         spineMaterialDefense +
         ((volontaTotale() + materiaTotale()) ~/ 2) +
@@ -4976,9 +5052,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         globalQuickBonus('difesa') +
         skillFormaBonus('difesa') +
         activeStructuredEffectBonus('difesa');
-    return applyConditionDerivedValue(
+    final conditioned = applyConditionDerivedValue(
       OculumConditionTarget.difesa,
       beforeConditions,
+    );
+    return oculumDamageWithPercentage(
+      conditioned,
+      activeStructuredEffectBonus('difesa_percentuale'),
     );
   }
 
@@ -5006,27 +5086,34 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         bonusGlobal +
         bonusSkill +
         activeStructuredEffectBonus('difesa');
-    final conditionDelta = difesa() - beforeConditions;
+    final conditionDelta =
+        applyConditionDerivedValue(
+          OculumConditionTarget.difesa,
+          beforeConditions,
+        ) -
+        beforeConditions;
     final details = quickCommandRuntimeDetails('difesa');
     final detailText = details.isEmpty ? '' : ' | ${details.join('; ')}';
-    return '(VOL $volonta + MAT $materia) / 2 = $baseStats + Lv/Gr $livelloGrado + Attributo raro $rareBonus = $base + Rapido $bonusRapido + Equip $bonusEquip + Titoli $bonusTitoli + Art/Open $bonusArt + Oggetti @ $bonusItem + Buff/Malus @ $bonusGlobal + Skill/Forme $bonusSkill + Condizioni ${conditionDelta >= 0 ? '+' : ''}$conditionDelta = ${difesa()}$detailText';
+    final percentBonus = activeStructuredEffectBonus('difesa_percentuale');
+    return '(VOL $volonta + MAT $materia) / 2 = $baseStats + Lv/Gr $livelloGrado + Attributo raro $rareBonus = $base + Rapido $bonusRapido + Equip $bonusEquip + Titoli $bonusTitoli + Art/Open $bonusArt + Oggetti @ $bonusItem + Buff/Malus @ $bonusGlobal + Skill/Forme $bonusSkill + Condizioni ${conditionDelta >= 0 ? '+' : ''}$conditionDelta${percentBonus == 0 ? '' : ' + $percentBonus% Refull'} = ${difesa()}$detailText';
   }
 
   List<InventoryItem> armiEquipaggiate() {
     final armi = inventario
         .where(
           (item) =>
-              item.arma && item.equipaggiata && canEquipInventoryItem(item),
+              item.arma &&
+              item.equipaggiata &&
+              max(0, leggiNumero(gradoController)) >= requiredItemGrade(item),
         )
         .toList();
     armi.sort((a, b) => itemAttackBonus(b).compareTo(itemAttackBonus(a)));
-    return armi;
+    return armi.take(oculumWeaponLimit(leggiNumero(gradoController))).toList();
   }
 
   int bonusDannoArmi() {
     final armi = armiEquipaggiate();
-    if (armi.isEmpty) return 0;
-    return itemAttackBonus(armi.first);
+    return oculumWeaponStackDamage(armi);
   }
 
   InventoryItem? armaPiuForteEquipaggiata() {
@@ -5131,9 +5218,18 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   bool canEquipInventoryItem(InventoryItem item) {
     final requiredGrade = max(item.gradoOggetto, requiredItemGrade(item));
-    if (requiredGrade <= 0) return true;
-    return max(0, leggiNumero(gradoController)) >= requiredGrade;
+    if (max(0, leggiNumero(gradoController)) < requiredGrade) return false;
+    if (item.arma && item.equipaggiata && inventario.contains(item)) {
+      return armiEquipaggiate().contains(item);
+    }
+    return true;
   }
+
+  bool weaponEquipLimitReached(InventoryItem item) =>
+      item.arma &&
+      !item.equipaggiata &&
+      armiEquipaggiate().length >=
+          oculumWeaponLimit(leggiNumero(gradoController));
 
   String nomeArmaPiuForteEquipaggiata() {
     final arma = armaPiuForteEquipaggiata();
@@ -5153,6 +5249,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int dannoTotale() {
+    activateHeroicNurseBuffForCurrentBattle();
     final beforeConditions =
         dannoTotaleBaseSenzaComandi() +
         titleQuickBonus('danni') +
@@ -5474,13 +5571,16 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int iniziativa() {
-    return (coreMasteryPoints['iniziativa'] ?? 0) +
-        bonusLivelloGrado() +
-        materiaTotale() ~/ 5 +
-        runtimeQuickBonus('iniziativa') +
-        vantaggioTiroBonus() +
-        malusFaticaTiri() +
-        conditionFlatModifier(OculumConditionTarget.iniziativa);
+    return max(
+      0,
+      (coreMasteryPoints['iniziativa'] ?? 0) +
+          bonusLivelloGrado() +
+          materiaTotale() ~/ 5 +
+          runtimeQuickBonus('iniziativa') +
+          vantaggioTiroBonus() +
+          malusFaticaTiri() +
+          conditionFlatModifier(OculumConditionTarget.iniziativa),
+    );
   }
 
   int movimento() {

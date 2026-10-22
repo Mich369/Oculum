@@ -1,5 +1,60 @@
 part of '../../main.dart';
 
+List<double> oculumDustTemporaryBonusChances(int enemyStats, int ownStats) {
+  final steps = max(0, enemyStats - ownStats) ~/ 25;
+  final fromOne = min(60.0, steps * 2.0);
+  final fromZero = min(10.0, steps * .5);
+  final moved = fromOne + fromZero;
+  return [10 - fromZero, 60 - fromOne, 20 + moved * .6, 10 + moved * .4];
+}
+
+int oculumDustTemporaryBonusForRoll(int enemyStats, int ownStats, double roll) {
+  var threshold = 0.0;
+  final chances = oculumDustTemporaryBonusChances(enemyStats, ownStats);
+  for (var bonus = 0; bonus < chances.length; bonus++) {
+    threshold += chances[bonus];
+    if (roll.clamp(0, 99.999999) < threshold) return bonus;
+  }
+  return 3;
+}
+
+String oculumDustDeficientStat(
+  Map<String, int> maximum,
+  Map<String, int> current,
+) {
+  final candidates = [
+    'resilienza',
+    'volonta',
+    'materia',
+    'oculum',
+  ].where((key) => key != 'oculum' || (current[key] ?? 0) > 0).toList();
+  candidates.sort((a, b) {
+    double missing(String key) =>
+        (maximum[key] ?? 0) <= 0 ? 0 : 1 - (current[key] ?? 0) / maximum[key]!;
+    final deficit = missing(b).compareTo(missing(a));
+    if (deficit != 0) return deficit;
+    final baseline = (maximum[a] ?? 0).compareTo(maximum[b] ?? 0);
+    return baseline != 0 ? baseline : a.compareTo(b);
+  });
+  return candidates.first;
+}
+
+({int common, int personal}) oculumDustExperienceReward({
+  required int die,
+  required int grade,
+  required int totalStats,
+}) {
+  final common = die.clamp(1, 90) + 20 + grade.clamp(0, 12) * 60;
+  return (common: common, personal: common + (max(0, totalStats) / 2).round());
+}
+
+/// The selected party receives a fraction of the same frozen Dust roll;
+/// never reroll or substitute the receiving character's Grade.
+int oculumDustPartyExperienceShare({
+  required int baseExperience,
+  required int additionalExperience,
+}) => (max(0, baseExperience) * .2 + max(0, additionalExperience) * .5).round();
+
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 bool oculumCanReceiveDustFromDrop({
@@ -1172,6 +1227,271 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       modificaBuffTemporaneo(key, value - current, salva: false);
     });
     programmaSalvataggio();
+  }
+
+  List<HiddenEyeStat> dustExperienceHighestSubtraits() {
+    if (hiddenEyeStats.isEmpty ||
+        schedaCorrente < 0 ||
+        schedaCorrente >= schedePersonaggio.length) {
+      return [];
+    }
+    final raw = schedePersonaggio[schedaCorrente]['subtraitRollUseCounts'];
+    final counts = raw is Map ? raw : const <String, int>{};
+    final highest = hiddenEyeStats
+        .map((stat) => readIntValue(counts[stat.id]))
+        .reduce(max);
+    return {
+      for (final stat in hiddenEyeStats)
+        if (readIntValue(counts[stat.id]) == highest) stat.id: stat,
+    }.values.toList();
+  }
+
+  bool useAscensionDustForExperience(String subtraitId, {int? die}) {
+    final available = max(0, leggiNumero(ascensionDustController));
+    final stat = dustExperienceHighestSubtraits()
+        .where((stat) => stat.id == subtraitId)
+        .firstOrNull;
+    if (available < 1 || ascensionDustUsataOggi >= 3 || stat == null) {
+      return false;
+    }
+    final totalStats =
+        max(0, leggiNumero(resilienzaController)) +
+        max(0, leggiNumero(volontaController)) +
+        max(0, leggiNumero(materiaController)) +
+        max(0, leggiNumero(oculumController));
+    final roll = die ?? Random.secure().nextInt(90) + 1;
+    final reward = oculumDustExperienceReward(
+      die: roll,
+      grade: leggiNumero(gradoController),
+      totalStats: totalStats.toInt(),
+    );
+    setState(() {
+      ascensionDustController.text = '${available - 1}';
+      ascensionDustUsataOggi++;
+      for (final key in ['resilienza', 'volonta', 'materia', 'oculum']) {
+        esperienzaCriticaStatistiche[key] =
+            max(0, esperienzaCriticaStatistiche[key] ?? 0) + reward.common;
+      }
+      oculusSubtraitMasteryApplyGain(stat, reward.common);
+      final sheet = schedePersonaggio[schedaCorrente];
+      if (hpCorrenti() <= maxHp() * .5) {
+        final bonus = oculumDustTemporaryBonusForRoll(
+          readIntValue(sheet['dustLastFightEnemyStats']),
+          totalStats.toInt(),
+          Random.secure().nextDouble() * 100,
+        );
+        if (bonus > 0) {
+          final maximum = <String, int>{
+            'resilienza': leggiNumero(resilienzaController),
+            'volonta': leggiNumero(volontaController),
+            'materia': leggiNumero(materiaController),
+            'oculum': leggiNumero(oculumController),
+          };
+          final target = oculumDustDeficientStat(maximum, {
+            'resilienza': currentResilienza(),
+            'volonta': currentVolonta(),
+            'materia': currentMateria(),
+            'oculum': currentOculum(),
+          });
+          activeStructuredEffects.add({
+            'effectId':
+                'dust-experience:${DateTime.now().microsecondsSinceEpoch}',
+            'source': 'Ascension Dust · Esperienza',
+            'type': 'modifica_statistica',
+            'target': target,
+            'value': bonus,
+            'remaining': 3,
+            'unit': 'riposi_lunghi',
+          });
+          aggiungiLog(
+            '[ASCENSION DUST] +$bonus $target per tre Riposi Lunghi.',
+          );
+        }
+      }
+      final personal = applicaEsperienzaFlat(
+        reward.personal,
+        motivo: 'Ascension Dust',
+      );
+      risultato =
+          'Ascension Dust: 1d90 ($roll) +20; '
+          '+${reward.common} EXP a ogni statistica e a ${stat.nome}. $personal';
+      aggiungiLog(risultato);
+      invalidateDerivedDataCaches();
+      notifyActiveSheetSummaryChanged();
+    });
+    programmaSalvataggio();
+    sendRealtimeActiveSheetToStaff();
+    return true;
+  }
+
+  Future<void> mostraAscensionDustExperience() async {
+    if (leggiNumero(ascensionDustController) < 1 ||
+        ascensionDustUsataOggi >= 3) {
+      return;
+    }
+    final origin = currentSheetScrollId();
+    final choices = dustExperienceHighestSubtraits();
+    if (choices.isEmpty) return;
+    var selected = choices.first.id;
+    var spend = 'azione';
+    final sharedTargets = <String>{};
+    final tokens = onlineCombatTokens();
+    final ownSide =
+        tokens
+            .where(
+              (token) =>
+                  onlineCombatTokenTag(token) == sheetTagAt(schedaCorrente),
+            )
+            .firstOrNull?['side'] ??
+        'ally';
+    final party = tokens
+        .where(
+          (token) =>
+              (token['side'] ?? 'ally') == ownSide &&
+              !const {'dead', 'fled', 'expired'}.contains(token['status']) &&
+              onlineCombatTokenTag(token) != sheetTagAt(schedaCorrente),
+        )
+        .toList();
+    final gradeBonus = leggiNumero(gradoController).clamp(0, 12) * 60;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('Ascension Dust · Esperienza'),
+        content: StatefulBuilder(
+          builder: (context, refresh) => Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Consuma 1 Dust. Un unico 1d90+20, più $gradeBonus per il tuo Grado, '
+                'aumenta l’EXP delle quattro statistiche e di un sottotratto più usato. '
+                'La tua EXP riceve anche metà delle statistiche totali.',
+              ),
+              const SizedBox(height: 12),
+              if (currentCombatIsActive())
+                DropdownButtonFormField<String>(
+                  initialValue: spend,
+                  decoration: const InputDecoration(
+                    labelText: 'Risorsa del turno',
+                  ),
+                  items: [
+                    for (final entry in const {
+                      'azione': 'Azione · solo nel tuo turno',
+                      'reazione': 'Reazione',
+                      'reazione_veloce': 'Reazione veloce',
+                    }.entries)
+                      DropdownMenuItem(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      ),
+                    for (final reaction in onlineCombatRequests.values.where(
+                      (r) =>
+                          r['targetTag'] == sheetTagAt(schedaCorrente) &&
+                          r['freeReaction'] == true &&
+                          r['reactionUsed'] != true,
+                    ))
+                      DropdownMenuItem(
+                        value: '${reaction['id']}',
+                        child: Text(
+                          'Reazione ottenuta contro ${reaction['sourceName']}',
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) => refresh(() => spend = value ?? spend),
+                ),
+              for (final token in party)
+                CheckboxListTile(
+                  title: Text('Espansione EXP · ${token['name'] ?? 'Party'}'),
+                  value: sharedTargets.contains(onlineCombatTokenTag(token)),
+                  onChanged: (value) => refresh(() {
+                    final tag = onlineCombatTokenTag(token);
+                    if (value == true) {
+                      sharedTargets.add(tag);
+                    } else {
+                      sharedTargets.remove(tag);
+                    }
+                  }),
+                ),
+              if (choices.length == 1)
+                Text(choices.first.nome)
+              else
+                DropdownButtonFormField<String>(
+                  initialValue: selected,
+                  items: [
+                    for (final stat in choices)
+                      DropdownMenuItem(value: stat.id, child: Text(stat.nome)),
+                  ],
+                  onChanged: (value) =>
+                      refresh(() => selected = value ?? selected),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, false),
+            child: const Text('Annulla'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            child: const Text('Consuma 1 Dust'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || ok != true || currentSheetScrollId() != origin) return;
+    if (currentCombatIsActive() && !await requestUtilitySpend(spend)) {
+      aggiungiLog(
+        'Dust non consumata: risorsa del turno non confermata dal Master. Puoi ritentare la richiesta.',
+      );
+      return;
+    }
+    if (!mounted || currentSheetScrollId() != origin) return;
+    final die = Random.secure().nextInt(90) + 1;
+    final total =
+        leggiNumero(resilienzaController) +
+        leggiNumero(volontaController) +
+        leggiNumero(materiaController) +
+        leggiNumero(oculumController);
+    final grade = leggiNumero(gradoController);
+    if (!useAscensionDustForExperience(selected, die: die)) return;
+    final base = die + 20;
+    final common = oculumDustPartyExperienceShare(
+      baseExperience: base,
+      additionalExperience: grade * 60,
+    );
+    final personal = oculumDustPartyExperienceShare(
+      baseExperience: base,
+      additionalExperience: grade * 60 + (total / 2).round(),
+    );
+    final own = sheetTagAt(schedaCorrente);
+    final group = '$own:dust:${DateTime.now().microsecondsSinceEpoch}';
+    for (final target in sharedTargets) {
+      final request = permissionEnvelope({
+        'id': '$group:$target',
+        'kind': 'help',
+        'helpMode': 'effects',
+        'sourceTag': own,
+        'sourceName': realtimeDisplayName(),
+        'targetTag': target,
+        'status': 'pending',
+        'scope': permissionScope,
+        'encounterId': onlineCombatEncounterId,
+        'effects': [
+          OculumStructuredEffect(
+            type: 'esperienza_dust',
+            valueExpression: '$common',
+            resource: '$personal',
+            duration: '0',
+          ).toJson(),
+        ],
+      });
+      attachPendingCombatTurnResources(request);
+      onlineCombatRequests['${request['id']}'] = request;
+      receiveCombatHelp(request);
+      await realtimeService?.sendCombatEvent('combat_help', request);
+    }
+    await flushPendingCombatTurnResources();
   }
 
   Future<void> mostraPotenziaAscensionDust() async {

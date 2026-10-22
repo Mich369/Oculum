@@ -10,6 +10,58 @@ const oculumHomeArtworkChoices = <String, String>{
   'canva_spirit_duelist': 'Duellante spirituale',
 };
 
+/// Refresh an open detail after edits settle without resetting its route,
+/// text controllers, focus or scroll position.
+class OculumSettledDetail extends StatefulWidget {
+  const OculumSettledDetail({
+    super.key,
+    required this.changes,
+    required this.builder,
+  });
+
+  final Listenable changes;
+  final WidgetBuilder builder;
+
+  @override
+  State<OculumSettledDetail> createState() => _OculumSettledDetailState();
+}
+
+class _OculumSettledDetailState extends State<OculumSettledDetail> {
+  Timer? _refresh;
+
+  void _changed() {
+    _refresh?.cancel();
+    _refresh = Timer(const Duration(seconds: 1), () {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.changes.addListener(_changed);
+  }
+
+  @override
+  void didUpdateWidget(OculumSettledDetail oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.changes != widget.changes) {
+      oldWidget.changes.removeListener(_changed);
+      widget.changes.addListener(_changed);
+    }
+  }
+
+  @override
+  void dispose() {
+    _refresh?.cancel();
+    widget.changes.removeListener(_changed);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context);
+}
+
 extension _OculumReferenceCampaign on _OculumHomePageState {
   void selectReferenceRole(bool master) {
     setState(() {
@@ -374,9 +426,13 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                   title: Text(title, style: TextStyle(fontFamily: 'Georgia')),
                   backgroundColor: backgroundTopColor,
                 ),
-                body: ValueListenableBuilder<int>(
-                  valueListenable: activeSheetSummaryRevision,
-                  builder: (context, revision, child) => DecoratedBox(
+                body: OculumSettledDetail(
+                  changes: Listenable.merge([
+                    activeSheetSummaryRevision,
+                    referenceDetailRevision,
+                    experienceRevision,
+                  ]),
+                  builder: (context) => DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: campaignBackgroundMode == 'checker'
                           ? null

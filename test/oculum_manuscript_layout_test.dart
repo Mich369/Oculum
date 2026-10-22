@@ -331,10 +331,12 @@ void main() {
       final nextTurn = find.textContaining(RegExp(r'^(Prossimo|Prox)$')).first;
       await tester.ensureVisible(nextTurn);
       await tester.tap(nextTurn);
+      await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
       expect(state.masterInitiativeActiveIndex, 1);
       expect(find.text('Turno attivo: Sentinella dei turni'), findsOneWidget);
       await tester.tap(nextTurn);
+      await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
       expect(state.masterInitiativeRound, 1);
       expect(find.text('Iniziativa Master - Round 1'), findsOneWidget);

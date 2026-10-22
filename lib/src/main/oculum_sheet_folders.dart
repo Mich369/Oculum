@@ -252,7 +252,9 @@ extension _OculumSheetFolders on _OculumHomePageState {
       void collect(String parent, int depth) {
         if (!seen.add(parent)) return;
         for (final folder in sheetSidebarFolders.where(
-          (f) => '${f['parent'] ?? ''}' == parent,
+          (f) =>
+              '${f['parent'] ?? ''}' == parent &&
+              f['id'] != 'oculum_received_online_sheets',
         )) {
           rows.add((folder: folder, index: null, depth: depth));
           if (folder['expanded'] != false) {
@@ -279,6 +281,16 @@ extension _OculumSheetFolders on _OculumHomePageState {
             );
         for (final i in indexes) {
           rows.add((folder: null, index: i, depth: depth));
+        }
+        if (parent.isEmpty) {
+          for (final folder in sheetSidebarFolders.where(
+            (f) => f['id'] == 'oculum_received_online_sheets',
+          )) {
+            rows.add((folder: folder, index: null, depth: depth));
+            if (folder['expanded'] != false) {
+              collect('${folder['id']}', depth + 1);
+            }
+          }
         }
       }
 

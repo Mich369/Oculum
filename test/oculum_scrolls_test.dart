@@ -3,6 +3,180 @@ import 'package:oculum/main.dart';
 
 void main() {
   test(
+    'Corruption defense matches source roll with minus three only at equal level',
+    () {
+      expect(
+        oculumCanResistCorruption(targetLevel: 9, sourceLevel: 10),
+        isFalse,
+      );
+      expect(
+        oculumCanResistCorruption(targetLevel: 10, sourceLevel: 10),
+        isTrue,
+      );
+      expect(
+        oculumCorruptionDefensePenalty(targetLevel: 10, sourceLevel: 10),
+        3,
+      );
+      expect(
+        oculumCorruptionDefensePenalty(targetLevel: 11, sourceLevel: 10),
+        0,
+      );
+      expect(
+        oculumCorruptionDefenseSucceeds(
+          targetLevel: 10,
+          sourceLevel: 10,
+          defenseTotal: 22,
+          sourceTotal: 20,
+        ),
+        isFalse,
+      );
+      expect(
+        oculumCorruptionDefenseSucceeds(
+          targetLevel: 10,
+          sourceLevel: 10,
+          defenseTotal: 23,
+          sourceTotal: 20,
+        ),
+        isTrue,
+      );
+      expect(
+        oculumCorruptionDefenseSucceeds(
+          targetLevel: 11,
+          sourceLevel: 10,
+          defenseTotal: 20,
+          sourceTotal: 20,
+        ),
+        isTrue,
+      );
+      expect(
+        oculumCorruptionDefenseSucceeds(
+          targetLevel: 9,
+          sourceLevel: 10,
+          defenseTotal: 999,
+          sourceTotal: 20,
+        ),
+        isFalse,
+      );
+    },
+  );
+  test(
+    'Corruption mastery adds percentage points and preserves custom bonuses',
+    () {
+      final data = Map<String, dynamic>.from(
+        oculumCorruptionScrollItem(0).craftData['scroll'] as Map,
+      );
+      final skill = CharacterSkill(
+        nome: 'Padrone della Corruzione',
+        tipo: 'Passiva',
+        costo: '0',
+        cooldown: '2',
+        descrizione: '',
+        scrollData: data,
+      );
+      expect(oculumCorruptionMasteryBonus([]), 0);
+      expect(oculumCorruptionMasteryBonus([skill]), 50);
+      final total = oculumCorruptionTotalResistance(
+        existingResistancePercent: 20,
+        masteryBonusPercent: oculumCorruptionMasteryBonus([skill]),
+      );
+      expect(total, 70);
+      expect(
+        oculumCorruptionChanceAfterResistance(
+          chancePercent: 100,
+          resistancePercent: total,
+        ),
+        30,
+      );
+      expect(
+        oculumCorruptionChanceAfterResistance(
+          chancePercent: 60,
+          resistancePercent: total,
+        ),
+        18,
+      );
+      final overOneHundred = oculumCorruptionTotalResistance(
+        existingResistancePercent: 75,
+        masteryBonusPercent: 50,
+      );
+      expect(overOneHundred, 125);
+      expect(
+        oculumCorruptionChanceAfterResistance(
+          chancePercent: 100,
+          resistancePercent: overOneHundred,
+        ),
+        0,
+      );
+      data['resistancePercent'] = 35;
+      final restored = CharacterSkill.fromJson(skill.toJson());
+      expect(oculumCorruptionMasteryBonus([restored]), 35);
+      expect(
+        oculumCorruptionTotalResistance(
+          existingResistancePercent: 20,
+          masteryBonusPercent: oculumCorruptionMasteryBonus([restored]),
+        ),
+        55,
+      );
+      expect(restored.forme, hasLength(1));
+    },
+  );
+
+  test(
+    'Corruption scroll grade chance and fight-start cooldown are explicit',
+    () {
+      for (var scrollGrade = 0; scrollGrade <= 12; scrollGrade++) {
+        for (var difference = 0; difference <= 6; difference++) {
+          expect(
+            oculumCorruptionScrollChance(
+              scrollGrade: scrollGrade,
+              targetGrade: scrollGrade + difference,
+            ),
+            difference >= 5 ? 0 : 100 - 20 * difference,
+          );
+        }
+      }
+      expect(
+        oculumCorruptionChanceAfterResistance(
+          chancePercent: 100,
+          resistancePercent: 50,
+        ),
+        50,
+      );
+
+      final started = DateTime.utc(2026, 10, 22, 10);
+      expect(
+        oculumFightStartCooldownSecondsRemaining(
+          fightStartedAt: started,
+          cooldownTurns: 2,
+          secondsPerTurn: 6,
+          now: started.add(const Duration(seconds: 5)),
+        ),
+        7,
+      );
+      expect(
+        oculumFightStartCooldownSecondsRemaining(
+          fightStartedAt: started,
+          cooldownTurns: 2,
+          secondsPerTurn: 6,
+          now: started.add(const Duration(seconds: 12)),
+        ),
+        0,
+      );
+
+      final item = InventoryItem.fromJson(
+        oculumCorruptionScrollItem(3).toJson(),
+      );
+      final scroll = Map<String, dynamic>.from(item.craftData['scroll'] as Map);
+      expect(scroll['kind'], 'corruption');
+      expect(scroll['grade'], 3);
+      expect(scroll['cooldownStart'], 'fight_start');
+      expect(scroll['preselectOutsideFight'], isTrue);
+      expect(scroll['cooldownSecondsPerTurn'], 6);
+      expect(scroll['willCost'], 0);
+      expect(scroll['scrollCategory'], 'attack');
+    },
+  );
+
+  test(
     'Shadow Alive scroll preserves its formula and grade duration in JSON',
     () {
       for (var grade = 0; grade <= 12; grade++) {

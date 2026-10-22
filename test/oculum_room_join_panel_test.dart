@@ -25,6 +25,20 @@ class _PendingRoomService extends OculumRealtimeService {
   bool get masterRoleUnavailable => true;
 }
 
+class _ReadyMasterService extends OculumRealtimeService {
+  _ReadyMasterService()
+    : super(
+        roomId: 'test',
+        playerName: 'Master',
+        onEvent: (_, _) {},
+        onPresenceChanged: (_) {},
+        onStatusChanged: (_) {},
+      );
+
+  @override
+  bool get isConnected => true;
+}
+
 void main() {
   testWidgets(
     'pending room shows cancel instead of another Connect and keeps password out of saves',
@@ -94,6 +108,9 @@ void main() {
       expect(find.text('Password stanza (opzionale)'), findsOneWidget);
       final probe = OculumPerformanceProbe(state);
       expect('${probe.snapshot()}', isNot(contains('private-room-secret')));
+      final readyMaster = _ReadyMasterService()..authenticatedRole = 'master';
+      state.realtimeService = readyMaster;
+      state.realtimeMasterBlockedByPresence = false;
       probe.receivePermission('permission_request', {
         'id': 'sheet_identity:authenticated-player:OLD-TAG',
         'action': 'sheet_identity_conflict',
@@ -118,10 +135,10 @@ void main() {
         'requestedSheetTag': 'OTHER-TAG',
       });
       expect(state.onlinePermissionRequests.containsKey('forged'), isFalse);
+      expect(probe.masterPermissions, isTrue);
       await tester.pump();
-      await tester.tap(
-        find.byKey(const ValueKey('online_permission_button')).first,
-      );
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(find.text('Richieste al Master'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 350));
       expect(find.text('Rose'), findsOneWidget);
       expect(find.text('Ricevuto'), findsOneWidget);
@@ -132,9 +149,42 @@ void main() {
             .onlinePermissionRequests['sheet_identity:authenticated-player:OLD-TAG']['status'],
         'reviewed',
       );
+      await tester.tap(
+        find.descendant(
+          of: find.byType(Dialog).last,
+          matching: find.byIcon(Icons.close),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 350));
+      state.realtimeUsers = [
+        {
+          'sessionId': 'requester-session',
+          'role': 'player',
+          'localSheetTags': ['PLAYER-TAG'],
+        },
+      ];
+      probe.receivePermission('permission_request', {
+        'id': 'test-scope:PLAYER-TAG:encounter_reset',
+        'action': 'encounter_reset',
+        'scope': probe.permissionScope,
+        'campaignId': state.activeCampaignId,
+        'senderTag': 'PLAYER-TAG',
+        'requesterTag': 'PLAYER-TAG',
+        'senderRole': 'player',
+        'sessionId': 'requester-session',
+        'requesterName': 'Player',
+        'description': 'Richiesta di prova',
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(find.text('Richieste al Master'), findsOneWidget);
+      expect(find.text('Richiesta di prova'), findsOneWidget);
+      expect(find.text('Consenti'), findsOneWidget);
+      state.realtimeService = null;
+      await readyMaster.dispose();
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 1));
     },
   );
 }
-

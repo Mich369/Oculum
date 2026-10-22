@@ -14,7 +14,7 @@ class _LiveNetwork extends HttpOverrides {}
 
 void main() {
   testWidgets(
-    'real authenticated transport applies defense, damage, healing and signed help to the player',
+    'four authenticated clients share Master initiative, attack, defense and companion help',
     (tester) async {
       tester.view.physicalSize = const Size(1440, 1000);
       tester.view.devicePixelRatio = 1;
@@ -101,12 +101,23 @@ void main() {
         'tokens': [
           {'id': playerTag},
           {'id': 'LIVE_MASTER'},
+          {'id': 'LIVE_ATTACKER'},
         ],
       };
       final room = 'combat_${DateTime.now().microsecondsSinceEpoch}';
       late SupabaseClient masterClient;
       late SupabaseClient playerClient;
+      late SupabaseClient attackerClient;
+      late SupabaseClient helperClient;
       await tester.runAsync(() async {
+        helperClient = HttpOverrides.runWithHttpOverrides(
+          () => SupabaseClient(
+            oculumConfiguredSupabaseUrl,
+            oculumConfiguredSupabasePublishableKey,
+            authOptions: const AuthClientOptions(autoRefreshToken: false),
+          ),
+          _LiveNetwork(),
+        );
         masterClient = HttpOverrides.runWithHttpOverrides(
           () => SupabaseClient(
             oculumConfiguredSupabaseUrl,
@@ -123,12 +134,22 @@ void main() {
           ),
           _LiveNetwork(),
         );
+        attackerClient = HttpOverrides.runWithHttpOverrides(
+          () => SupabaseClient(
+            oculumConfiguredSupabaseUrl,
+            oculumConfiguredSupabasePublishableKey,
+            authOptions: const AuthClientOptions(autoRefreshToken: false),
+          ),
+          _LiveNetwork(),
+        );
       });
       var clientsClosed = false;
       Future<void> closeClients() async {
         if (clientsClosed) return;
         clientsClosed = true;
         await playerClient.dispose();
+        await attackerClient.dispose();
+        await helperClient.dispose();
         await masterClient.dispose();
       }
 
@@ -136,6 +157,43 @@ void main() {
       OculumRealtimeService.supabaseAvailable = true;
       final receipts = <Map<String, dynamic>>[];
       bool? masterPatchApplied;
+      Map<String, dynamic>? attackerInitiative;
+      final attackerReceipts = <Map<String, dynamic>>[];
+      Map<String, dynamic>? helperInitiative;
+      final helper = OculumRealtimeService(
+        client: helperClient,
+        roomId: room,
+        playerName: 'Synthetic Companion',
+        presenceDataProvider: () => {
+          'role': 'player',
+          'activeSheetTag': 'LIVE_HELPER',
+          'localSheetTags': ['LIVE_HELPER'],
+          'campaignId': state.activeCampaignId,
+        },
+        onPresenceChanged: (_) {},
+        onStatusChanged: (s) => debugPrint('Companion: $s'),
+        onEvent: (event, payload) {
+          if (event == 'initiative_shared') helperInitiative = payload;
+        },
+      );
+      final attacker = OculumRealtimeService(
+        client: attackerClient,
+        roomId: room,
+        playerName: 'Synthetic Attacker',
+        httpPollingOnly: true,
+        presenceDataProvider: () => {
+          'role': 'player',
+          'activeSheetTag': 'LIVE_ATTACKER',
+          'localSheetTags': ['LIVE_ATTACKER'],
+          'campaignId': state.activeCampaignId,
+        },
+        onPresenceChanged: (_) {},
+        onStatusChanged: (s) => debugPrint('Attacker: $s'),
+        onEvent: (event, payload) {
+          if (event == 'initiative_shared') attackerInitiative = payload;
+          if (event == 'combat_defense') attackerReceipts.add(payload);
+        },
+      );
       final master = OculumRealtimeService(
         client: masterClient,
         roomId: room,
@@ -166,6 +224,7 @@ void main() {
         onPresenceChanged: (users) => state.realtimeUsers = users,
         onStatusChanged: (s) => debugPrint('Player: $s'),
         onEvent: (event, payload) {
+          if (event == 'initiative_shared') probe.receiveInitiative(payload);
           if (event.startsWith('combat_')) probe.receiveCombat(event, payload);
           if (event == 'sheet_shared') {
             final applied = probe.receiveStaffSheet(payload);
@@ -183,7 +242,9 @@ void main() {
       );
       state.realtimeService = player;
       addTearDown(() async {
+        await helper.dispose();
         await player.dispose();
+        await attacker.dispose();
         await master.dispose();
         await closeClients();
         OculumRealtimeService.supabaseAvailable = oldAvailable;
@@ -228,21 +289,60 @@ void main() {
           // have been created yet.
           await connectWithRetry(master, 'Master');
           await connectWithRetry(player, 'Player');
+          await connectWithRetry(attacker, 'Attacker');
+          await connectWithRetry(helper, 'Companion');
           expect(master.isConnected, isTrue);
           expect(player.isConnected, isTrue);
+          expect(attacker.isConnected, isTrue);
+          expect(
+            {
+              masterClient.auth.currentUser!.id,
+              playerClient.auth.currentUser!.id,
+              attackerClient.auth.currentUser!.id,
+              helperClient.auth.currentUser!.id,
+            },
+            hasLength(4),
+            reason: 'Four separate authenticated identities are required.',
+          );
           await waitFor(
             () => (state.realtimeUsers as List).any(
               (dynamic p) => p['activeSheetTag'] == 'LIVE_MASTER',
             ),
           );
+          final sharedFight = <String, dynamic>{
+            'campaignId': state.activeCampaignId,
+            'encounterId': 'live-fight',
+            'round': 4,
+            'activeIndex': 2,
+            'tokens': [
+              {'id': playerTag},
+              {'id': 'LIVE_MASTER'},
+              {'id': 'LIVE_ATTACKER'},
+              {'id': 'LIVE_HELPER'},
+            ],
+          };
+          await master.sendInitiativeSnapshot(
+            snapshot: sharedFight,
+            campaignId: state.activeCampaignId,
+            campaignName: 'Synthetic verification',
+            closed: false,
+          );
+          await waitFor(
+            () =>
+                state.realtimeVisibleInitiativeSnapshot['round'] == 4 &&
+                attackerInitiative?['snapshot']?['round'] == 4 &&
+                helperInitiative?['snapshot']?['round'] == 4,
+          );
+          expect(attackerInitiative!['authenticatedRole'], 'master');
+          expect(attackerInitiative!['snapshot'], sharedFight);
           final packet = <String, dynamic>{
             'id': 'live-damage',
             'scope': probe.permissionScope,
             'campaignId': state.activeCampaignId,
             'encounterId': 'live-fight',
-            'senderTag': 'LIVE_MASTER',
-            'sourceTag': 'LIVE_MASTER',
-            'sourceName': 'Master',
+            'senderTag': 'LIVE_ATTACKER',
+            'sourceTag': 'LIVE_ATTACKER',
+            'sourceName': 'Attacker',
             'targetTag': playerTag,
             'choice': 'vc',
             'attack': 100,
@@ -251,7 +351,10 @@ void main() {
             'difficulty': 'normale',
             'element': 'fisico',
           };
-          expect(await master.sendCombatEvent('combat_attack', packet), isTrue);
+          expect(
+            await attacker.sendCombatEvent('combat_attack', packet),
+            isTrue,
+          );
           await waitFor(
             () =>
                 state.onlineCombatRequests['live-damage']?['received'] == true,
@@ -262,6 +365,22 @@ void main() {
           );
           final request =
               state.onlineCombatRequests['live-damage'] as Map<String, dynamic>;
+          expect(
+            await helper.sendCombatEvent('combat_help', {
+              ...packet,
+              'id': 'live-defense-help',
+              'senderTag': 'LIVE_HELPER',
+              'sourceTag': 'LIVE_HELPER',
+              'sourceName': 'Companion',
+              'kind': 'help',
+              'helpBonus': 4,
+              'targetName': 'Player',
+            }),
+            isTrue,
+          );
+          await waitFor(
+            () => state.schedePersonaggio[0]['combatHelpPending'] == 4,
+          );
           probe.applyEffects([
             OculumStructuredEffect(
               id: 'live-defense-shield',
@@ -276,12 +395,22 @@ void main() {
             '50',
             reason: 'The defense skill adds its shield before the response.',
           );
-          await probe.resolveCombatDefense(request, 'cm', 10);
+          await probe.resolveCombatDefense(
+            request,
+            'cm',
+            10 + probe.consumeHelp(),
+          );
+          expect(probe.consumeHelp(), 0);
           expect(request['outcome'], 'full');
           expect(state.scudoOculumController.text, '0');
           expect(state.scudoController.text, '0');
           expect(state.hpTempController.text, '0');
           await waitFor(() => receipts.isNotEmpty);
+          await waitFor(() => attackerReceipts.isNotEmpty);
+          expect(
+            attackerReceipts.last['damageReceipt'],
+            receipts.last['damageReceipt'],
+          );
           final damageReceipt = Map<String, dynamic>.from(
             receipts.last['damageReceipt'] as Map,
           );
@@ -330,6 +459,9 @@ void main() {
           );
           final support = <String, dynamic>{
             ...packet,
+            'senderTag': 'LIVE_MASTER',
+            'sourceTag': 'LIVE_MASTER',
+            'sourceName': 'Master',
             'id': 'live-help',
             'kind': 'help',
             'helpBonus': -3,
@@ -417,6 +549,8 @@ void main() {
             reason: 'Master editing does not transfer character ownership',
           );
           await player.dispose();
+          await helper.dispose();
+          await attacker.dispose();
           await master.dispose();
           await closeClients();
         }, _LiveNetwork()),
@@ -428,6 +562,6 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
     },
     skip: !_runLive,
-    timeout: const Timeout(Duration(minutes: 3)),
+    timeout: const Timeout(Duration(minutes: 5)),
   );
 }

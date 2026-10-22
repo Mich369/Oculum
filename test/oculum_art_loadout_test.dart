@@ -14,6 +14,33 @@ CharacterArt art(String kind, {bool incorporated = false}) => CharacterArt(
 );
 
 void main() {
+  test('shared initiative summary handles incomplete and stale rows', () {
+    expect(
+      oculumReferenceEncounterInitiativeText({'initiativeTotal': 22}),
+      'Iniziativa 22',
+    );
+    expect(
+      oculumReferenceEncounterInitiativeText({
+        'initiativeRoll': 0,
+        'initiativeBase': 0,
+        'initiativeTotal': -6,
+      }),
+      'Iniziativa 0',
+    );
+    expect(
+      oculumReferenceEncounterInitiativeText({
+        'initiativeRoll': 5,
+        'initiativeBase': 4,
+        'initiativeTotal': 9,
+      }),
+      'Iniziativa 5 + 4 = 9',
+    );
+    expect(
+      oculumReferenceEncounterTokenName({'name': '???', 'id': 'Velmorid'}),
+      'Velmorid',
+    );
+  });
+
   test('Manual Art names recognize trailing Art and every letter case', () {
     for (final kind in ['illness', 'emblem', 'defiled', 'martial']) {
       for (final text in [
@@ -146,6 +173,49 @@ void main() {
       final shared = probe.initiativeSnapshot();
       expect((shared['encounters'] as List).length, 1);
       expect(shared.toString(), isNot(contains('Segreto')));
+      final publicEncounter = probe.publicEncounter({
+        'id': 'initiative-display-regression',
+        'name': 'PROVA',
+        'round': 1,
+        'activeIndex': 0,
+        'tokens': [
+          {
+            'id': 'velmorid-token',
+            'sheetTag': 'Velmorid',
+            'name': '???',
+            'type': 'Mostro',
+            'initiativeRoll': 0,
+            'initiativeBase': 0,
+            'initiativeTotal': 22,
+            'reflexes': 0,
+          },
+          {
+            'id': 'stale-token',
+            'sheetTag': 'Vecchia scheda',
+            'name': '???',
+            'type': 'Personaggio',
+            'initiativeRoll': 0,
+            'initiativeBase': 0,
+            'initiativeTotal': -6,
+            'reflexes': 0,
+          },
+        ],
+      });
+      final publicTokens = (publicEncounter['tokens'] as List).cast<Map>();
+      expect(
+        publicTokens[0]['name'],
+        'Velmorid',
+        reason: 'Public token payload: ${publicTokens[0]}',
+      );
+      expect(
+        oculumReferenceEncounterInitiativeText(publicTokens[0]),
+        'Iniziativa 22',
+      );
+      expect(publicTokens[1]['name'], 'Vecchia scheda');
+      expect(
+        oculumReferenceEncounterInitiativeText(publicTokens[1]),
+        'Iniziativa 0',
+      );
       state.schedePersonaggio.add({
         'id': 'owned_fixture',
         'sheetTag': 'owned_fixture',

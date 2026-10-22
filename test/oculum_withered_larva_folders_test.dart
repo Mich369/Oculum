@@ -79,6 +79,7 @@ void main() {
         random: Random(1),
         killId: 'form-$form',
         naturalDropRoll: 20,
+        dropTotal: oculumMonsterDropDifficulty(level: form * 3, grade: form),
       ).single;
       final data = Map<String, dynamic>.from(item.craftData['scroll'] as Map);
       expect(data['willCost'], 0);

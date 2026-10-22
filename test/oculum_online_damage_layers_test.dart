@@ -91,9 +91,32 @@ void main() {
     state.realtimeService = transport;
     state.realtimeVisibleInitiativeSnapshot = <String, dynamic>{
       'encounterId': 'fight',
+      'campaignId': state.activeCampaignId,
+      'activeIndex': 0,
+      'round': 1,
       'tokens': [
-        {'id': owner},
-        {'id': enemy},
+        {
+          'id': owner,
+          'sheetTag': owner,
+          'name': 'Rose',
+          'status': 'ready',
+          'currentHp': 1000,
+          'maxHp': 1000,
+          'actionUsed': false,
+          'reactionMax': 1,
+          'reactionUsed': 0,
+        },
+        {
+          'id': enemy,
+          'sheetTag': enemy,
+          'name': 'Avversario',
+          'side': 'enemy',
+          'status': 'ready',
+          'currentHp': 999,
+          'maxHp': 999,
+          'reactionMax': 1,
+          'reactionUsed': 0,
+        },
       ],
     };
     state.realtimeUsers = <Map<String, dynamic>>[
@@ -331,6 +354,8 @@ void main() {
     final last = state.onlineCombatRequests.values.last as Map<String, dynamic>;
     last['status'] = 'pending';
     last['damage'] = 0;
+    // The player consumes the active-turn action immediately from the shared
+    // initiative snapshot. No Master approval event is part of a defense roll.
     final defending = probe.useCombatRoll(OculumCombatAbilityRole.defense);
     await tester.pump();
     await tester.runAsync(() async {
@@ -342,10 +367,11 @@ void main() {
       reason: 'The ordinary Defense button must answer the pending attack',
     );
     expect(last['defenseChoice'], 'cm');
-    state.realtimeVisibleInitiativeSnapshot['tokens'] = [
-      {'id': owner, 'name': 'Rose'},
-      {'id': enemy, 'name': 'Avversario'},
-      {'id': 'OTHER', 'name': 'Altro mostro'},
+    state.realtimeVisibleInitiativeSnapshot['tokens'] =
+        <Map<String, dynamic>>[
+      {'id': owner, 'sheetTag': owner, 'name': 'Rose'},
+      {'id': enemy, 'sheetTag': enemy, 'name': 'Avversario'},
+      {'id': 'OTHER', 'sheetTag': 'OTHER', 'name': 'Altro mostro'},
     ];
     state.activeStructuredEffects.clear();
     state.buffMalusRapidiController.text = '@Danni+8';

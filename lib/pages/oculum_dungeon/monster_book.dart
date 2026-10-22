@@ -6,6 +6,7 @@ part 'spine_hedgehog.dart';
 part 'pack_leader_monsters.dart';
 part 'lava_monsters.dart';
 part 'necromancer_monsters.dart';
+part 'runic_acid_monsters.dart';
 part 'withered_construct_white_larva.dart';
 part 'gold_marble_aberrations.dart';
 part 'elemental_collector.dart';
@@ -191,6 +192,13 @@ class MonsterBookEntry {
     );
   }
 }
+
+bool oculumDeadKnightCanTakeDamage({
+  required bool weakPointDiscovered,
+  required int naturalAttackRoll,
+  required int attackTotal,
+  required int cm,
+}) => weakPointDiscovered || (naturalAttackRoll > 17 && attackTotal > cm);
 
 /// Physical family first, profession and condition as additional labels.
 /// A name such as Forest Demon does not make its body a Demon.
@@ -1676,16 +1684,25 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     nameIt: 'Patalpa Dolce',
     nameEn: 'Sweet Patalpa',
     descIt:
-        'Talpa patata malvagia. Base: Resilienza 15, Volontà 3, Materia 15. Generazione spende 1 azione e 10 Oculum per richiamare una Patalpa con le statistiche della più debole, senza Generazione (cooldown 10 turni). Palata: con critico applica Stun pari al critico e +2 danni × livello (cooldown 3). Rigenerazione: si interra a metà, raddoppia CM ma non tira e recupera 25% HP a turno (cooldown 2). Drop: Patalpa Dolce 250 g, cibo 2/1, +1 a tutte le stat per un’ora; con critico Pala del Patalpa Dolce (+4 VC, Palata, -2 Percezione).',
+        'Talpa patata malvagia. Base: Resilienza 15, Volontà 3, Materia 15, senza Oculum. Generazione spende 1 azione e 10 Oculum per richiamare una Patalpa con le statistiche della più debole, senza Generazione (una volta ogni 3 fight completati): il totale segue il budget del suo livello, distribuito 20% Resilienza, 50% Volontà e 30% Materia; nel 75% degli spawn manca il bonus +1 Resilienza per livello, nel 25% è presente. Palata: con critico applica Stun pari al critico e +2 danni × livello (cooldown 3 turni). Rigenerazione: si interra a metà, raddoppia CM ma non tira e recupera 25% HP a turno (cooldown 2). Drop: Patalpa Dolce 250 g, cibo 2/1, +1 a tutte le stat per un’ora; con critico Pala del Patalpa Dolce (+4 VC, Palata, -2 Percezione).',
     descEn:
-        'A potato mole. Generation spends an action and Oculum to summon a Sweet Patalpa using the weakest one’s stats.',
+        'A potato mole with base Resilience 15, Will 3, Materia 15, and no Oculum. Generation summons a Sweet Patalpa without Generation, using its level budget split 20% Resilience, 50% Will, and 30% Materia; 75% of summons lack the extra +1 Resilience per level and 25% receive it.',
     elementId: 'flora',
     spriteAssetPath:
         'assets/oculum_dungeon/generated_sprites/enemies/patalpa_dolce.png',
     isMiniBoss: false,
     isBoss: false,
     isNullFateless: false,
-    stats: {'hp': 150, 'atk': 24, 'def': 18, 'spd': 9},
+    stats: {
+      'hp': 150,
+      'atk': 24,
+      'def': 18,
+      'spd': 9,
+      'resilienza': 15,
+      'volonta': 3,
+      'materia': 15,
+      'oculum': 0,
+    },
     skillIds: [
       'patalpa_generazione',
       'patalpa_palata',
@@ -1737,6 +1754,35 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     isMiniBoss: false,
     isBoss: true,
     isNullFateless: false,
+  ),
+  MonsterBookEntry(
+    id: 'fata_cacciatrice',
+    nameIt: 'Fata Cacciatrice',
+    nameEn: 'Fate Stalker',
+    descIt:
+        'Fata predatrice volante, mini-boss aggressivo. RES 20, VOL 28, MAT 16, OCU 24. Caccia senza esitazione: apre con il bersaglio più esposto e mantiene pressione con le ali di lama. Con un tiro Drop alto lascia raramente due mezze ali.',
+    descEn:
+        'Aggressive flying predator fairy miniboss. It marks exposed targets and keeps pressure with bladed wings.',
+    elementId: 'vento',
+    spriteAssetPath: '',
+    isMiniBoss: true,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'level': 9,
+      'extraPoints': 88,
+      'resilienza': 20,
+      'volonta': 28,
+      'materia': 16,
+      'oculum': 24,
+    },
+    skillIds: [
+      'fata_lama_in_picchiata',
+      'fata_caccia_implacabile',
+      'fata_sciame_di_lame',
+    ],
+    dropIds: ['mezza_ala_fata'],
+    dropChances: {'mezza_ala_fata': 35},
   ),
   MonsterBookEntry(
     id: 'null_fateless',
@@ -4678,6 +4724,10 @@ String _inspiredMonsterSkillText(String rawId) {
 }
 
 String monsterBookSkillText(String rawId) {
+  final runicAcid = oculumRunicAcidSkillText(
+    rawId.replaceFirst(RegExp(r'_variante_[a-z]+$'), ''),
+  );
+  if (runicAcid.isNotEmpty) return runicAcid;
   final newMonsterText = oculumWitheredLarvaSkillText(rawId);
   if (newMonsterText.isNotEmpty) return newMonsterText;
   final canonicalId = rawId.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
@@ -5156,6 +5206,7 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
             ..._packLeaderMonsterBookEntries,
             ..._lavaMonsterEntries,
             ..._necromancerMonsterEntries,
+            ..._runicAcidMonsterEntries,
             ..._witheredConstructWhiteLarvaEntries,
             ..._goldMarbleAberrationEntries,
             ..._elementalCollectorEntries,
@@ -5399,6 +5450,7 @@ Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
   yield* _packLeaderMonsterBookEntries;
   yield* _lavaMonsterEntries;
   yield* _necromancerMonsterEntries;
+  yield* _runicAcidMonsterEntries;
   yield* _witheredConstructWhiteLarvaEntries;
   yield* _manualMonsterBookEntries;
 }

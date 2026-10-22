@@ -76,6 +76,84 @@ class _StoryConstellationPainter extends CustomPainter {
 }
 
 extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
+  Future<Map<String, int>?> chooseGradeStatPoints(int points) async {
+    const stats = <String, String>{
+      'resilienza': 'Resilienza',
+      'volonta': 'Volontà',
+      'materia': 'Materia',
+      'oculum': 'Oculum',
+    };
+    final values = {for (final key in stats.keys) key: 0};
+    return showDialog<Map<String, int>>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, refresh) {
+          final assigned = values.values.fold<int>(0, (a, b) => a + b);
+          return AlertDialog(
+            backgroundColor: backgroundMidColor,
+            title: Text(
+              t('Distribuisci $points punti', 'Allocate $points points'),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final entry in stats.entries)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text(entry.value)),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          onPressed: values[entry.key]! > 0
+                              ? () => refresh(
+                                  () => values[entry.key] =
+                                      values[entry.key]! - 1,
+                                )
+                              : null,
+                          icon: const Icon(Icons.remove_circle_outline),
+                        ),
+                        SizedBox(
+                          width: 32,
+                          child: Text(
+                            '${values[entry.key]}',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          onPressed: assigned < points
+                              ? () => refresh(
+                                  () => values[entry.key] =
+                                      values[entry.key]! + 1,
+                                )
+                              : null,
+                          icon: const Icon(Icons.add_circle_outline),
+                        ),
+                      ],
+                    ),
+                  ),
+                Text('$assigned / $points'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(t('Annulla', 'Cancel')),
+              ),
+              FilledButton(
+                onPressed: assigned == points
+                    ? () => Navigator.pop(dialogContext, Map.of(values))
+                    : null,
+                child: Text(t('Conferma', 'Confirm')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   Widget storyConstellationPanel() {
     final linked = diaryEntitiesFromLinks([
       for (final entry in journalEntries) entry.description,
@@ -2500,6 +2578,56 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           color: Colors.grey.shade300,
         ),
         const SizedBox(height: 10),
+        if (skill.scrollData['kind'] == 'corruption') ...[
+          campoModello(
+            label: t(
+              'Resistenza Corruzione aggiuntiva (%)',
+              'Additional Corruption resistance (%)',
+            ),
+            initialValue: '${oculumCorruptionMasteryBonus([skill])}',
+            onChanged: (value) {
+              skill.scrollData['resistancePercent'] = max(
+                0,
+                readIntValue(value),
+              );
+              programmaSalvataggio();
+            },
+          ),
+          smallInfoText(
+            t(
+              'Si somma alla resistenza già presente: 20% + 50% = 70%.',
+              'Adds to existing resistance: 20% + 50% = 70%.',
+            ),
+          ),
+          campoModello(
+            label: t(
+              'Controllo bersagli Corruzione (%)',
+              'Corruption target control (%)',
+            ),
+            initialValue:
+                '${readIntValue(skill.scrollData['targetControlPercent'], fallback: 90)}',
+            onChanged: (value) {
+              skill.scrollData['targetControlPercent'] = readIntValue(
+                value,
+              ).clamp(0, 100);
+              programmaSalvataggio();
+            },
+          ),
+          campoModello(
+            label: t(
+              'Ricarica Corruzione (turni)',
+              'Corruption cooldown (turns)',
+            ),
+            initialValue: '${corruptionSkillCooldown(skill).amount}',
+            onChanged: (value) {
+              final amount = max(0, readIntValue(value));
+              skill.scrollData['cooldownTurns'] = amount;
+              corruptionSkillCooldown(skill).amount = amount;
+              programmaSalvataggio();
+            },
+          ),
+          const SizedBox(height: 10),
+        ],
         for (int formIndex = 0; formIndex < skill.forme.length; formIndex++)
           skillFormEditorTile(skill, skillIndex, formIndex),
         if (canAdd)
@@ -3119,7 +3247,6 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     void toggleTitleEquipped() {
       if (!trattoRazziale) {
         final pool = titleSlotPool(titolo);
-        final capacity = titleSlotCapacity(pool);
         if (titolo.equipaggiato &&
             pool == 'Titolo Malanno' &&
             !haPermessiMaster) {
@@ -3132,10 +3259,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           );
           return;
         }
-        if (!titolo.equipaggiato &&
-            capacity != null &&
-            titleSlotsUsed(pool, including: titolo) > capacity) {
-          showTitleSlots();
+        if (!titolo.equipaggiato && !ensureTitleSlotAvailable(titolo)) {
           return;
         }
       }
@@ -3144,6 +3268,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             titleQuickResilienzaBonus(titolo) +
             buffCondizionaleResilienza(titolo);
         titolo.equipaggiato = !titolo.equipaggiato;
+        if (!titolo.equipaggiato) titolo.equippedSlotPool = '';
         final segno = titolo.equipaggiato ? 1 : -1;
         applicaBonusTitoloAttuali(titolo, segno);
         rimarginaHpDaAumentoResilienza(runtimeRes * segno);
@@ -3575,6 +3700,48 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     maxLines: 3,
                   ),
                   const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Text('Grado ${titolo.grade}'),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed:
+                            titolo.grade >= 12 ||
+                                titolo.grade >= leggiNumero(gradoController)
+                            ? null
+                            : () async {
+                                final allocation = await chooseGradeStatPoints(
+                                  10,
+                                );
+                                if (allocation == null) return;
+                                setState(() {
+                                  titolo.grade++;
+                                  for (final entry in allocation.entries) {
+                                    titolo.gradeStatAllocation[entry.key] =
+                                        (titolo.gradeStatAllocation[entry
+                                                .key] ??
+                                            0) +
+                                        entry.value;
+                                  }
+                                  if (titolo.equipaggiato) {
+                                    applicaBonusAttuali(
+                                      resilienza: allocation['resilienza'] ?? 0,
+                                      volonta: allocation['volonta'] ?? 0,
+                                      materia: allocation['materia'] ?? 0,
+                                      oculum: allocation['oculum'] ?? 0,
+                                    );
+                                  }
+                                });
+                                programmaSalvataggio();
+                              },
+                        icon: const Icon(Icons.upgrade),
+                        label: Text(
+                          t('Aumenta grado · +10', 'Raise grade · +10'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -5733,6 +5900,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
 
     void setItemEquipped(bool value) {
       if (!inventario.contains(item)) return;
+      if (value && weaponEquipLimitReached(item)) {
+        aggiungiLog(
+          'Limite armi: ${oculumWeaponLimit(leggiNumero(gradoController))}. Rimuovi prima un’arma.',
+        );
+        return;
+      }
       setState(() {
         if (value && !canEquipInventoryItem(item)) {
           risultato = t(
@@ -6110,6 +6283,13 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                         : Colors.redAccent,
                     icon: Icons.military_tech,
                   ),
+                if (readIntValue(item.craftData['manualPriceObser']) > 0)
+                  compactInventoryChip(
+                    label:
+                        '${readIntValue(item.craftData['manualPriceObser'])} Obser',
+                    color: Colors.amberAccent,
+                    icon: Icons.sell_outlined,
+                  ),
                 if (totalBuff != 0)
                   compactInventoryChip(
                     label: '@ ${totalBuff >= 0 ? '+' : ''}$totalBuff',
@@ -6177,6 +6357,68 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               initialValue: item.nome,
               onChanged: (value) => item.nome = value,
             ),
+            const SizedBox(height: 6),
+            if (item.arma || item.protegge)
+              OutlinedButton.icon(
+                onPressed:
+                    item.gradoOggetto >= 12 ||
+                        item.gradoOggetto >= leggiNumero(gradoController)
+                    ? null
+                    : () async {
+                        final allocation = await chooseGradeStatPoints(10);
+                        if (allocation == null) return;
+                        setState(() {
+                          item.gradoOggetto++;
+                          item.gradoRichiesto = max(
+                            item.gradoRichiesto,
+                            item.gradoOggetto,
+                          );
+                          final previous =
+                              item.craftData['gradeStatAllocation'];
+                          final cumulative = previous is Map
+                              ? Map<String, int>.from(
+                                  previous.map(
+                                    (key, value) =>
+                                        MapEntry('$key', readIntValue(value)),
+                                  ),
+                                )
+                              : <String, int>{};
+                          for (final entry in allocation.entries) {
+                            cumulative[entry.key] =
+                                (cumulative[entry.key] ?? 0) + entry.value;
+                          }
+                          final commands = [
+                            for (final entry in cumulative.entries)
+                              if (entry.value > 0)
+                                '@${entry.key == 'volonta' ? 'Volontà' : entry.key[0].toUpperCase()}${entry.key.substring(1)}+${entry.value}',
+                          ].join(' ');
+                          final oldCommands =
+                              '${item.craftData['gradeStatBuffCommands'] ?? ''}';
+                          if (oldCommands.isNotEmpty) {
+                            item.buff = item.buff
+                                .replaceAll(oldCommands, '')
+                                .trim();
+                          }
+                          item.buff = [
+                            item.buff,
+                            commands,
+                          ].where((text) => text.isNotEmpty).join(' ');
+                          item.craftData = {
+                            ...item.craftData,
+                            'gradeStatAllocation': cumulative,
+                            'gradeStatBuffCommands': commands,
+                          };
+                        });
+                        programmaSalvataggio();
+                      },
+                icon: const Icon(Icons.upgrade),
+                label: Text(
+                  t(
+                    'Aumenta grado e assegna 10 punti',
+                    'Raise grade and allocate 10 points',
+                  ),
+                ),
+              ),
             const SizedBox(height: 6),
             inventoryFieldGrid([
               campoModello(
@@ -7036,6 +7278,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     ),
                   ),
                   onChanged: (value) {
+                    if (value && weaponEquipLimitReached(inventario[i])) {
+                      aggiungiLog(
+                        'Limite armi: ${oculumWeaponLimit(leggiNumero(gradoController))}. Rimuovi prima un’arma.',
+                      );
+                      return;
+                    }
                     setState(() {
                       if (value && !canEquipInventoryItem(inventario[i])) {
                         risultato = t(
