@@ -303,6 +303,24 @@ MonsterConcreteTechnique? monsterBookConcreteTechnique(String rawId) {
 
 MonsterConcreteTechnique? _necromancerTechnique(String id) {
   final profile = switch (id) {
+    'necromancer_dead_knight_sword' => (
+      'Spadata',
+      'Carichi la spada e concentri il movimento in un solo colpo.',
+      'ombra',
+      'danno',
+    ),
+    'necromancer_dead_knight_shield' => (
+      'Difesa con spada e scudo',
+      'Incroci spada e scudo per fermare il colpo e tenere la guardia.',
+      'ombra',
+      'difesa',
+    ),
+    'necromancer_dead_knight_oculum_aegis' => (
+      'Scudo della sfera',
+      'La sfera interna alimenta la guardia con una barriera di Oculum.',
+      'ombra',
+      'scudo',
+    ),
     'necromancer_ash_bind' => (
       'Legacci del focolare spento',
       'La cenere si stringe alle caviglie: un solo bersaglio, immobilità spezzabile. Con attacco quasi riuscito la durata è dimezzata, arrotondata per difetto fino a zero.',
@@ -343,14 +361,23 @@ MonsterConcreteTechnique? _necromancerTechnique(String id) {
   };
   if (profile == null) return null;
   final fixed = id == 'necromancer_ash_bind';
+  final deadKnight = id.startsWith('necromancer_dead_knight_');
   return MonsterConcreteTechnique(
     name: profile.$1,
     action: profile.$2,
     element: profile.$3,
     kind: profile.$4,
     requiredLevel: 0,
-    minimums: fixed ? const [3, 6, 10] : const [1, 5, 11],
-    maximums: fixed ? const [3, 6, 10] : const [4, 10, 20],
+    minimums: fixed
+        ? const [3, 6, 10]
+        : deadKnight
+        ? const [0, 0, 0]
+        : const [1, 5, 11],
+    maximums: fixed
+        ? const [3, 6, 10]
+        : deadKnight
+        ? const [0, 0, 0]
+        : const [4, 10, 20],
     forms: List.generate(3, (form) {
       MonsterTechniqueEffect state(String name) => MonsterTechniqueEffect(
         'stato',
@@ -360,6 +387,34 @@ MonsterConcreteTechnique? _necromancerTechnique(String id) {
         duration: '${form + 1}',
       );
       return switch (id) {
+        'necromancer_dead_knight_sword' => [
+          MonsterTechniqueEffect(
+            'danno',
+            '5+level',
+            mode: 'prossima_azione',
+            duration: '',
+          ),
+        ],
+        'necromancer_dead_knight_shield' => [
+          MonsterTechniqueEffect('difesa', '${[5, 8, 12][form]}'),
+          if (form > 0)
+            MonsterTechniqueEffect(
+              'scudo',
+              '${form == 1 ? 20 : 30}',
+              mode: 'immediato',
+              duration: '',
+            ),
+        ],
+        'necromancer_dead_knight_oculum_aegis' => [
+          MonsterTechniqueEffect('difesa', '${[5, 8, 12][form]}'),
+          if (form > 0)
+            MonsterTechniqueEffect(
+              'scudo_oculum',
+              '${form == 1 ? 10 : 20}',
+              mode: 'immediato',
+              duration: '',
+            ),
+        ],
         'necromancer_ash_bind' => [state('immobilizzato')],
         'necromancer_soul_flame' => [
           MonsterTechniqueEffect(
@@ -947,6 +1002,21 @@ const _frostDemonTechniques = <String, (String, String, String)>{
 /// Each legacy verb gets an actual physical action and its own mechanical
 /// purpose. These entries override morphology inference, never authored rules.
 const _bespokeMonsterMoves = <String, (String, String, String)>{
+  'fata_lama_in_picchiata': (
+    'Picchiata della lama fatata',
+    'La Fata Cacciatrice chiude le ali e precipita sul bersaglio con una lama alare, risalendo subito per non concedere una risposta facile',
+    'colpo',
+  ),
+  'fata_caccia_implacabile': (
+    'Marchio della preda volante',
+    'La fata marca il bersaglio più esposto e lo attraversa con una raffica di tagli; il colpo segue il movimento della preda',
+    'colpo',
+  ),
+  'fata_sciame_di_lame': (
+    'Tempesta delle ali affilate',
+    'La Fata Cacciatrice apre le ali e scaglia lame in rapida successione, continuando a pressare il bersaglio anche dopo la prima parata',
+    'colpo',
+  ),
   'poison_tongue': (
     'Lingua della Fugra',
     'Allunghi la lingua coperta di secrezione irritante e la fai schioccare contro la pelle scoperta del bersaglio',

@@ -928,6 +928,27 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     difficultyScaling: OculumConditionDifficultyScaling.damage,
   ),
   OculumConditionDefinition(
+    id: 'corrosione_acida',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.hp,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Corrosione acida',
+    nameEn: 'Acid corrosion',
+    icon: Icons.science,
+    category: OculumConditionCategory.elemental,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'Logoramento acido a fine turno direttamente alla Vita, oltre Difesa e Scudi. Danno e durata modificabili.',
+    descriptionEn:
+        'Acid damage directly to HP at end of turn, bypassing defense and shields. Editable damage and duration.',
+    maxStage: 3,
+    stackMode: OculumConditionStackMode.refreshDuration,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+    minimumByStage: <int>[2, 3, 6],
+    difficultyScaling: OculumConditionDifficultyScaling.none,
+  ),
+  OculumConditionDefinition(
     id: 'bruciatura',
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.hp,
@@ -1723,19 +1744,35 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     descriptionEn: 'The character is not automatically detected.',
   ),
   OculumConditionDefinition(
+    id: 'trasparenza',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.tiri,
+      OculumConditionTarget.skill,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Trasparenza',
+    nameEn: 'Transparency',
+    icon: Icons.blur_on,
+    category: OculumConditionCategory.positive,
+    polarity: OculumConditionPolarity.positive,
+    descriptionIt:
+        'Velo +6 + livello del personaggio. Bonus modificabile nella condizione.',
+    descriptionEn: 'Veil +6 + character level. Editable condition bonus.',
+  ),
+  OculumConditionDefinition(
     id: 'invisibile',
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.difesa,
       OculumConditionTarget.skill,
       OculumConditionTarget.combattimento,
     },
-    nameIt: 'Invisibile',
+    nameIt: 'Invisibilità',
     nameEn: 'Invisible',
     icon: Icons.visibility_off,
     category: OculumConditionCategory.positive,
     polarity: OculumConditionPolarity.positive,
     descriptionIt:
-        'Non equivale a invulnerabile: rumori, tracce e sensi alternativi possono rivelare.',
+        'Velo +18 + livello del personaggio. Rumori, tracce e sensi alternativi possono rivelare. Bonus modificabile.',
     descriptionEn:
         'Not invulnerability: noise, tracks and alternative senses may reveal.',
   ),
@@ -1753,6 +1790,25 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     descriptionIt: 'Reazioni disponibili 0 per la durata prevista.',
     descriptionEn: 'Available Reactions are 0 for the stated duration.',
     control: true,
+  ),
+  OculumConditionDefinition(
+    id: 'corruzione',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Corruzione',
+    nameEn: 'Corruption',
+    icon: Icons.brightness_5_outlined,
+    category: OculumConditionCategory.special,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'Il mostro resta corrotto finché il Master non rimuove la condizione o termina lo scontro. Il proprietario indicato nei metadati guida il 90% dei suoi attacchi e può scegliere il bersaglio reale. Padrone della Corruzione aggiunge +50 punti percentuali alla resistenza alla Corruzione già presente; il bonus è modificabile.',
+    descriptionEn:
+        'The monster remains corrupted until the Master removes this condition or the encounter ends. The owner recorded in its metadata guides 90% of its attacks and can choose the actual target. Corruption Mastery adds 50 percentage points to existing Corruption resistance; the bonus is editable.',
+    defaultDuration: 0,
+    durationType: OculumConditionDurationType.permanent,
+    tickTrigger: OculumConditionTickTrigger.none,
+    stackMode: OculumConditionStackMode.refreshDuration,
   ),
   OculumConditionDefinition(
     id: 'vita_afona',
@@ -1783,9 +1839,9 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     category: OculumConditionCategory.positive,
     polarity: OculumConditionPolarity.positive,
     descriptionIt:
-        'Dodici stadi. A ogni nuovo turno recuperi HP pari allo stadio. Quando dichiari Colpito, recuperi il 3% dei danni dichiarati per stadio (minimo 3 HP): gli Scudi del bersaglio non cambiano il valore dichiarato.',
+        'Dodici stadi. A ogni nuovo turno recuperi HP pari allo stadio. Offline, Colpito recupera il 3% dei danni dichiarati per stadio (minimo 3 HP). Nel fight online la cura è automatica sulla Vita effettivamente sottratta: 3% per stadio, fattore Facile 1,25 / Normale 1 / Difficile 0,75 / Oculum 0,5. Il limite per attacco è 3% della tua Vita massima per stadio, con lo stesso fattore; si condivide fra tutti i bersagli. Scudi, HP temporanei, sovradanno e ricevute duplicate non danno altre cure. Valori modificabili.',
     descriptionEn:
-        'Twelve stages. At every new turn recover HP equal to the stage. When you report a Hit, recover 3% of the declared damage per stage (minimum 3 HP): target shields do not change the declared value.',
+        'Twelve stages. Each new turn restores HP equal to the stage. Offline Hit reports heal 3% of declared damage per stage, minimum 3 HP. Online encounters automatically heal from actual HP lost: 3% per stage, with Easy/Normal/Hard/Oculum factors 1.25/1/0.75/0.5. Per-attack healing is capped at 3% of your maximum HP per stage with the same factor, shared across all targets. Shields, temporary HP, overkill and duplicate receipts grant no extra healing. Values are editable.',
     maxStage: 12,
     stackMode: OculumConditionStackMode.increaseStage,
     defaultDuration: 0,

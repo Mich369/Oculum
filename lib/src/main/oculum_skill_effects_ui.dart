@@ -3,6 +3,150 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 extension _OculumSkillEffectsUi on _OculumHomePageState {
+  OculumAbilityCooldown corruptionSkillCooldown(CharacterSkill skill) {
+    skill.ensureForms();
+    return skill.forme.first.cooldownStrutturato ??= OculumAbilityCooldown(
+      amount: max(
+        0,
+        readIntValue(skill.scrollData['cooldownTurns'], fallback: 2),
+      ),
+      startsReady: false,
+    );
+  }
+
+  Iterable<({String name, OculumAbilityCooldown cooldown})>
+  namedStructuredCooldowns() sync* {
+    for (final skill in skills) {
+      skill.ensureForms();
+      if (oculumIsCorruptionMastery(skill)) corruptionSkillCooldown(skill);
+      for (final (i, form) in skill.forme.indexed) {
+        if (form.cooldownStrutturato case final cooldown?) {
+          yield (name: '${skill.nome} · ${i + 1}', cooldown: cooldown);
+        }
+      }
+    }
+    for (final title in {...titoli, ...trattiRazziali}) {
+      if (title.skillCooldown case final cooldown?) {
+        yield (name: title.nome, cooldown: cooldown);
+      }
+      for (final extra in title.skillExtra) {
+        if (extra.cooldown case final cooldown?) {
+          yield (name: '${title.nome} · ${extra.nome}', cooldown: cooldown);
+        }
+      }
+    }
+    for (final item in inventario) {
+      for (final (i, form)
+          in (item.ability?.forme ?? <CharacterSkillForm>[]).indexed) {
+        if (form.cooldownStrutturato case final cooldown?) {
+          yield (name: '${item.nome} · ${i + 1}', cooldown: cooldown);
+        }
+      }
+    }
+    for (final art in arti) {
+      for (final skill in art.skills) {
+        for (final (i, cooldown) in skill.cooldownPerLivello.indexed) {
+          yield (
+            name: '${art.nome} / ${skill.nome} · ${i + 1}',
+            cooldown: cooldown,
+          );
+        }
+      }
+      for (final (i, cooldown) in [
+        art.openDescriptionCooldown,
+        art.openSkillCooldown,
+        art.openBuffCooldown,
+      ].indexed) {
+        if (cooldown != null) {
+          yield (name: '${art.nome} · Open ${i + 1}', cooldown: cooldown);
+        }
+      }
+    }
+  }
+
+  void synchronizeFightStartCooldowns() {
+    if (!currentCombatIsActive()) return;
+    final group = realtimeService?.isConnected == true && !realtimeIsMasterRole
+        ? realtimeVisibleInitiativeSnapshot
+        : masterInitiativeGroups
+              .where((group) => group['id'] == selectedMasterInitiativeGroupId)
+              .firstOrNull;
+    final key =
+        '$permissionScope:$onlineCombatEncounterId:${readIntValue(group?['completedFightCount'])}';
+    var changed = false;
+    for (final entry in namedStructuredCooldowns()) {
+      changed = entry.cooldown.enterCombat(key) || changed;
+    }
+    if (changed) programmaSalvataggio(invalidateCaches: false);
+  }
+
+  Future<void> showFightStartPreparations() async {
+    if (currentCombatIsActive()) return;
+    final entries = namedStructuredCooldowns()
+        .where(
+          (entry) =>
+              !entry.cooldown.startsReady &&
+              oculumTurnUnit(entry.cooldown.unit) == 'turni' &&
+              entry.cooldown.amount > 0,
+        )
+        .toList();
+    final ticks = Stream<int>.periodic(const Duration(seconds: 1), (i) => i);
+    await showDialog<void>(
+      context: context,
+      builder: (dialog) => StreamBuilder<int>(
+        stream: ticks,
+        builder: (_, _) => StatefulBuilder(
+          builder: (_, update) => AlertDialog(
+            title: const Text('Preparazione · ricariche iniziali'),
+            content: SizedBox(
+              width: 460,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Fuori battaglia: 6 secondi per turno di attesa. La preparazione resta salvata anche chiudendo la pagina.',
+                    ),
+                    for (final entry in entries)
+                      ListTile(
+                        title: Text(entry.name),
+                        subtitle: Text(
+                          entry.cooldown.outsideReadyAt == null
+                              ? '${entry.cooldown.amount * 6} secondi · da preparare'
+                              : entry.cooldown.ready
+                              ? 'Pronta'
+                              : '${entry.cooldown.secondsRemaining()} secondi',
+                        ),
+                        trailing: entry.cooldown.outsideReadyAt != null
+                            ? null
+                            : IconButton(
+                                tooltip: 'Prepara',
+                                icon: const Icon(Icons.hourglass_top),
+                                onPressed: () {
+                                  if (currentCombatIsActive()) return;
+                                  update(
+                                    () => entry.cooldown.prepareOutsideCombat(),
+                                  );
+                                  programmaSalvataggio(invalidateCaches: false);
+                                },
+                              ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialog),
+                child: const Text('Chiudi'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   bool tickStructuredAbilityCooldowns(String unit, {bool scheduleSave = true}) {
     var changed = false;
     if (oculumTurnUnit(unit) == 'turni') {
@@ -1004,6 +1148,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     return switch (type) {
       'danno' => t('Danno', 'Damage'),
       'danno_percentuale' => t('Danni in percentuale', 'Damage percentage'),
+      'difesa_percentuale' => t('Difesa in percentuale', 'Defense percentage'),
       'costrutto' => t(
         'Costrutto con Vita propria',
         'Construct with its own HP',
@@ -1082,6 +1227,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         'Reazioni',
         'Reazioni rapide',
         'VC',
+        'runic_reflection_percent',
+        'runic_wound_penalty',
       ]);
     } else if (type == 'tiro_sottotratto') {
       values.addAll(hiddenEyeStats.map((stat) => stat.id));
@@ -1342,6 +1489,9 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     var bypassDefense = seed.bypassDefense;
     var bypassShields = seed.bypassShields;
     var shieldDamageBonusPercent = seed.shieldDamageBonusPercent;
+    var damagePerTarget = seed.damagePerTarget;
+    var killSource = seed.killSource;
+    var allOpponents = seed.allOpponents;
     var advancedExpanded =
         seed.diceExpression.trim().isNotEmpty ||
         seed.includeLevel ||
@@ -1444,6 +1594,9 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         bypassDefense: bypassDefense,
         bypassShields: bypassShields,
         shieldDamageBonusPercent: shieldDamageBonusPercent,
+        damagePerTarget: damagePerTarget,
+        killSource: killSource,
+        allOpponents: allOpponents,
       );
     }
 
@@ -1678,6 +1831,30 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                           ),
                         if (modes.length > 1) const SizedBox(height: 10),
                         if (type == 'danno') ...[
+                          SwitchListTile.adaptive(
+                            value: damagePerTarget,
+                            title: const Text(
+                              'Danno intero per ogni bersaglio',
+                            ),
+                            onChanged: (v) =>
+                                setDialogState(() => damagePerTarget = v),
+                          ),
+                          SwitchListTile.adaptive(
+                            value: allOpponents,
+                            title: const Text(
+                              'Tutti gli avversari dello schieramento attuale',
+                            ),
+                            onChanged: (v) =>
+                                setDialogState(() => allOpponents = v),
+                          ),
+                          SwitchListTile.adaptive(
+                            value: killSource,
+                            title: const Text(
+                              'Sacrificio: chi usa l’attacco muore',
+                            ),
+                            onChanged: (v) =>
+                                setDialogState(() => killSource = v),
+                          ),
                           TextFormField(
                             initialValue: '$shieldDamageBonusPercent',
                             keyboardType: TextInputType.number,

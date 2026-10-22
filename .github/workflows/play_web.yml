@@ -1,18 +1,18 @@
 name: Play Oculum on GitHub Pages
+# Production deploys use the exact web artifact after Build distribution and
+# public downloads both succeed. Keep dispatch as a manual recovery path.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 permissions:
   contents: read
   pages: write
   id-token: write
 concurrency:
   group: oculum-pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   web:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

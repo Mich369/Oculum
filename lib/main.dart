@@ -38,6 +38,7 @@ import 'services/oculum_auth_ui.dart';
 import 'services/oculum_cloud_save_service.dart';
 import 'services/oculum_realtime_service.dart';
 import 'services/oculum_save_profile.dart';
+import 'services/oculum_campaign_transfer.dart';
 import 'services/oculum_diary_memory.dart';
 import 'services/oculum_diary_links.dart';
 import 'services/oculum_diary_roles.dart';
@@ -125,6 +126,7 @@ part 'src/main/oculum_authored_materials.dart';
 part 'src/main/oculum_crafting_expansion.dart';
 part 'src/main/oculum_skill_target_automation.dart';
 part 'src/main/oculum_online_attacks.dart';
+part 'src/main/oculum_corruption_runtime.dart';
 part 'src/main/oculum_combat_scout.dart';
 part 'src/main/oculum_master_roll_requests.dart';
 part 'src/main/oculum_encounter_rewards.dart';
@@ -483,8 +485,10 @@ Future<bool> _initializeOculumSupabase() async {
     }
 
     final sessionStorage = OculumSessionStorage(
-      persistSessionKey:
-          'sb-${Uri.parse(supabaseUrl).host.split('.').first}-auth-token',
+      persistSessionKey: oculumAuthSessionStorageKey(
+        Uri.parse(supabaseUrl).host.split('.').first,
+        browser: kIsWeb,
+      ),
     );
     OculumAuthService.sessionStorage = sessionStorage;
     await Supabase.initialize(
@@ -670,6 +674,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   static const int quickConditionsPageIndex = 15;
   static const int fallenEyesPageIndex = 16;
   static const int homePageIndex = 17;
+  static const int monsterBookPartyPageIndex = 18;
 
   int paginaCorrente = 0;
   int schedaCorrente = 0;
@@ -1028,6 +1033,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     Duration delay = const Duration(milliseconds: 220),
   }) {
     if (!mounted) return;
+    notifyReferenceDetailChanged();
     if (appOculumInBackground || appOculumFocusTransition) {
       inputRefreshPendingAfterFocusTransition = true;
       inputUiRefreshTimer?.cancel();
@@ -1721,6 +1727,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   Timer? relayLobbyRefreshTimer;
   Timer? realtimeOculumDebounceTimer;
   Timer? realtimeSheetShareDebounceTimer;
+  bool masterRequestsDialogOpen = false;
+  bool masterRequestPopupScheduled = false;
   Timer? realtimeReconnectTimer;
   Timer? inputUiRefreshTimer;
   Timer? hiddenEyeProgressSaveTimer;
@@ -1819,6 +1827,12 @@ class _OculumHomePageState extends State<OculumHomePage>
   final ValueNotifier<int> diceResultRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> diceOverlayRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> inputUiRevision = ValueNotifier<int>(0);
+  final ValueNotifier<int> referenceDetailRevision = ValueNotifier<int>(0);
+
+  void notifyReferenceDetailChanged() {
+    if (mounted && referenceDetailRouteActive) referenceDetailRevision.value++;
+  }
+
   final OculumObservedValueNotifier<int> hiddenEyeListRevision =
       OculumObservedValueNotifier<int>(0);
   final ValueNotifier<int> experienceRevision = ValueNotifier<int>(0);
@@ -2087,9 +2101,15 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool sonoCoMaster = false;
   bool coMasterCanSetCoMaster = false;
   final Map<String, Map<String, dynamic>> onlinePermissionRequests = {};
+  final Map<String, Completer<bool>> onlineUtilitySpendWaiters = {};
   final Map<String, Map<String, dynamic>> onlineCombatRequests = {};
+  final List<Map<String, dynamic>> pendingOnlineCombatTurnResourceSpends = [];
+  final Set<String> appliedOnlineCombatTurnResourceSpendIds = {};
   final Map<String, Map<String, dynamic>> combatDiscoveries = {};
+  final Map<String, Map<String, dynamic>> monsterBookPartyDiscoveries = {};
+  final ValueNotifier<int> combatKnowledgeRevision = ValueNotifier(0);
   final Set<String> onlineCombatResolving = {};
+  final Map<String, Completer<List<String>>> corruptionTargetChoices = {};
   final Set<String> trustedCoMasterTags = {};
   final ValueNotifier<int> onlinePermissionRevision = ValueNotifier(0);
   Timer? onlinePermissionRetryTimer;
@@ -2134,6 +2154,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   String realtimeInitiativeSession = '';
   int realtimeInitiativeRevision = 0;
   int realtimeInitiativeServerSequence = 0;
+  String realtimeLoggedInitiativeTurnKey = '';
   final Set<String> realtimeHiddenEncounterIds = {};
   final Set<String> realtimeShownSheetConflicts = {};
   bool realtimeOwnedSheetForceRequested = false;
@@ -2161,6 +2182,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   int playerReportedTurn = 0;
   int automaticAshLastCheckedTurn = 0;
   final List<Map<String, dynamic>> activeStructuredEffects = [];
+  Map<String, dynamic>? heroicNursePendingBattleBuff;
   Map<String, dynamic> realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
   final ValueNotifier<Map<String, dynamic>?> realtimeDungeonMessage =
       ValueNotifier<Map<String, dynamic>?>(null);
@@ -2173,12 +2195,15 @@ class _OculumHomePageState extends State<OculumHomePage>
   final Map<String, DateTime> realtimeRoleUpdateTimestamps =
       <String, DateTime>{};
   final Map<String, String> realtimeLastSentSheetHashes = <String, String>{};
+  String realtimeLastSentMerchantRosterSignature = '';
   String realtimeFriendPresenceSignature = '';
   final Map<String, String> realtimePendingMasterAckSheetIds =
       <String, String>{};
   final Map<String, int> realtimePendingMasterAckAttempts = <String, int>{};
   final Map<String, String> realtimePendingMasterAckHashes = <String, String>{};
   final Map<String, OculumRealtimeService> realtimeStaffTransfersInFlight = {};
+  final Map<String, String> realtimeAcknowledgedPortraitHashes = {};
+  final Map<String, String> realtimePendingPortraitHashes = {};
   Future<bool>? realtimeEditedSheetSend;
   final Map<String, Timer> realtimePendingMasterAckTimers = <String, Timer>{};
   OculumRealtimeService? realtimeService;
@@ -2229,6 +2254,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     'Condizioni veloci',
     'Occhi dei Caduti',
     'Home',
+    'Monster Book Party',
   ];
 
   final List<String> pageNamesEn = [
@@ -2250,6 +2276,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     'Quick Conditions',
     'Fallen Eyes',
     'Home',
+    'Monster Book Party',
   ];
 
   final List<DamageModifierOption> modificatoriDanno = [
@@ -3549,6 +3576,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       if (includeSettings) settingsPageIndex,
       onlinePageIndex,
       recipesPageIndex,
+      monsterBookPartyPageIndex,
     ];
 
     return indexes;
@@ -3775,6 +3803,8 @@ class _OculumHomePageState extends State<OculumHomePage>
         return dicePage();
       case recipesPageIndex:
         return recipesPage();
+      case monsterBookPartyPageIndex:
+        return monsterBookPartyPage();
       default:
         return characterPage();
     }
@@ -3957,6 +3987,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     reazioniVelociController.dispose();
     realtimeChatController.dispose();
     onlinePermissionRevision.dispose();
+    combatKnowledgeRevision.dispose();
     onlinePermissionRetryTimer?.cancel();
     masterItemSearchController.dispose();
     resistanceElementSearchController.dispose();
@@ -3972,6 +4003,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     }
     conditionTargetRevisions.clear();
     inputUiRevision.dispose();
+    referenceDetailRevision.dispose();
     hiddenEyeListRevision.dispose();
     hiddenEyeManagerScrollController.dispose();
     experienceRevision.dispose();
@@ -4182,6 +4214,8 @@ class _OculumHomePageState extends State<OculumHomePage>
         return Icons.casino;
       case recipesPageIndex:
         return Icons.menu_book_outlined;
+      case monsterBookPartyPageIndex:
+        return Icons.auto_stories_outlined;
       default:
         return Icons.radio_button_unchecked;
     }
@@ -4482,6 +4516,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       'OCULUM - ${t('CONDIZIONI VELOCI', 'QUICK CONDITIONS')}',
       'OCULUM - ${t('OCCHI DEI CADUTI', 'FALLEN EYES')}',
       'OCULUM — HOME',
+      'OCULUM — MONSTER BOOK PARTY',
     ];
 
     final int safePage = paginaVisibileSicura(

@@ -48,4 +48,3 @@ Room ID, nome visibile, password opzionale, approvazione/rifiuto del partecipant
 ## Pubblicazione
 
 Il run `39488620536` del commit `8ae8c43` è interamente riuscito. Tutti gli otto archivi sono stati verificati e resi pubblici senza login; il menu mostra le cinque piattaforme. Per questo run gli archivi Web, iOS non firmato e catture sono stati completati manualmente. Il publisher ora comprende automaticamente anche questi archivi verificati, mantenendo cinque piattaforme nel catalogo e un collegamento all'archivio completo. Nomi inattesi o file non esaminati bloccano la pubblicazione.
-

@@ -169,6 +169,16 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
   Iterable<HiddenEyeStat> subtraits = const [],
   bool investedOculum = false,
 }) {
+  if (RegExp(
+    r'riflett\w*\s+\d+\s*%|corrosione acida|vita\s+(?:massima|attuale).*?danni?|danni?.*?vita\s+(?:massima|attuale)',
+    caseSensitive: false,
+  ).hasMatch(raw)) {
+    final special = oculumParseStructuredEffectsFromText(
+      raw,
+      subtraits: subtraits,
+    );
+    if (special.effects.isNotEmpty) return special;
+  }
   final effects = <OculumStructuredEffect>[];
   // Stable across platforms and reloads: different texts have distinct IDs.
   final sourceKey = raw.codeUnits
@@ -410,6 +420,44 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
         mode: 'immediato',
         duration: durationExpression,
         durationUnit: 'turni',
+        recipient: 'se_stesso',
+        narrativeText: raw,
+      ),
+    );
+    claims.add((match.start, match.end));
+  }
+  for (final match in RegExp(
+    r'\b(?:richiama|richiamare|evoca|evocare|crea|creare)\s+(?:un\s+)?patalpa\b',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    if (claimed(match)) continue;
+    effects.add(
+      OculumStructuredEffect(
+        type: 'evocazione',
+        target: 'patalpa_compagno',
+        valueExpression: '1',
+        mode: 'immediato',
+        duration: '1',
+        durationUnit: 'fight',
+        recipient: 'se_stesso',
+        narrativeText: raw,
+      ),
+    );
+    claims.add((match.start, match.end));
+  }
+  for (final match in RegExp(
+    r'\b(?:evoca|evocare|richiama|richiamare|crea|creare)\s+(?:un\s+)?(?:vecchio\s+amore|donna\s+scheletrica)\b',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    if (claimed(match)) continue;
+    effects.add(
+      OculumStructuredEffect(
+        type: 'evocazione',
+        target: 'un_vecchio_amore',
+        valueExpression: '1',
+        mode: 'immediato',
+        duration: '1',
+        durationUnit: 'fight',
         recipient: 'se_stesso',
         narrativeText: raw,
       ),

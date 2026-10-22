@@ -2847,9 +2847,26 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             },
           ),
           const SizedBox(height: 12),
-          campoTesto(
-            label: t('Grado nemico', 'Enemy grade'),
-            controller: enemyGradeExpController,
+          DropdownButtonFormField<int>(
+            key: ValueKey(
+              'exp-enemy-grade:$schedaCorrente:${enemyGradeExpController.text}',
+            ),
+            initialValue: leggiNumero(enemyGradeExpController).clamp(0, 12),
+            decoration: InputDecoration(
+              labelText: t('Grado nemico', 'Enemy grade'),
+            ),
+            items: [
+              for (var grade = 0; grade <= 12; grade++)
+                DropdownMenuItem(
+                  value: grade,
+                  child: Text(oculumExperienceGradeLabel(grade)),
+                ),
+            ],
+            onChanged: (grade) {
+              if (grade == null) return;
+              setState(() => enemyGradeExpController.text = '$grade');
+              programmaSalvataggio();
+            },
           ),
           const SizedBox(height: 8),
           smallInfoText(
@@ -4783,7 +4800,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 label: t('Supporto e utilità', 'Support and utility'),
                 icon: Icons.volunteer_activism,
                 color: const Color(0xFF7EE7C8),
-                onPressed: () => showCombatActionPanel(OculumCombatAbilityRole.support),
+                onPressed: () =>
+                    showCombatActionPanel(OculumCombatAbilityRole.support),
               ),
               quickCommandButton(
                 label: scannerRiposiLunghi >= 3
@@ -7542,7 +7560,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             runSpacing: 8,
             children: [
               ElevatedButton.icon(
-                onPressed: () => showCombatActionPanel(OculumCombatAbilityRole.support),
+                onPressed: () =>
+                    showCombatActionPanel(OculumCombatAbilityRole.support),
                 icon: const Icon(Icons.volunteer_activism),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF7EE7C8),
@@ -8209,6 +8228,27 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             value: tipoSchedaController.text,
             onChanged: cambiaTipoScheda,
           ),
+          if (isMostro() &&
+              schedaCorrente >= 0 &&
+              schedaCorrente < schedePersonaggio.length)
+            ExpansionTile(
+              title: const Text('Famiglia EXP del mostro · avanzate'),
+              children: [
+                campoModello(
+                  label: 'Famiglia condivisa dalle varianti (opzionale)',
+                  initialValue:
+                      '${schedePersonaggio[schedaCorrente]['experienceFamilyId'] ?? ''}',
+                  onChanged: (value) {
+                    schedePersonaggio[schedaCorrente]['experienceFamilyId'] =
+                        value.trim();
+                    programmaSalvataggio();
+                  },
+                ),
+                const Text(
+                  'Usa lo stesso nome per la creatura base e le sue varianti veterane o elementali. Vuoto: usa la voce del Monster Book.',
+                ),
+              ],
+            ),
           DropdownButtonFormField<String>(
             initialValue: normalizedCampaignDifficulty(),
             decoration: fieldDecoration(t('Difficoltà', 'Difficulty')),
@@ -11306,7 +11346,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       );
     }
     final viewportWidth = MediaQuery.maybeOf(context)?.size.width ?? 1200;
-    final content = !modalitaDesktop || phoneCompactUi || viewportWidth < 700
+    final content = manuscriptLivingActive &&
+            referenceRequestedAnchor.trim().isNotEmpty
+        ? referenceCharacterPage()
+        : !modalitaDesktop || phoneCompactUi || viewportWidth < 700
         ? characterMobilePage()
         : characterDesktopPage();
     if (!manuscriptLivingActive) return content;

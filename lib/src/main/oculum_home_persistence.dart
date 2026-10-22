@@ -980,6 +980,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     bool deferCacheInvalidation = false,
     Duration delay = const Duration(milliseconds: 1800),
   }) {
+    notifyReferenceDetailChanged();
     grantFirstStatThresholdSkill();
     salvataggioMutazioneRevisione++;
     salvataggioMutazioneNota = true;
@@ -1503,6 +1504,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
         'activeStructuredEffects': activeStructuredEffects
             .map((effect) => Map<String, dynamic>.from(effect))
             .toList(growable: false),
+      if (heroicNursePendingBattleBuff != null)
+        'heroicNursePendingBattleBuff': Map<String, dynamic>.from(
+          heroicNursePendingBattleBuff!,
+        ),
       'schivateOculumConsumate': schivateOculumConsumate,
       'schivateOculumBonus': schivateOculumBonus,
       'schivataOculumRiduzionePronta': schivataOculumRiduzionePronta,
@@ -1642,11 +1647,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
           'packLeaderPhaseTriggered',
           'packLeaderPhaseBaseMaxHp',
           'combatElementalAdaptation',
+          'corruptionMasteryProgress',
+          'corruptionRevenge',
           'aberrationPhase',
           'aberrationFinalPhaseTriggered',
           'humanoidRole',
           'monsterLootGenerated',
           'monsterLootGeneratedAt',
+          'monsterLootPending',
+          'monsterLootDefeatedLevel',
+          'monsterLootDefeatedGrade',
+          'monsterLootRoll',
         ])
           if (schedePersonaggio[schedaCorrente].containsKey(key))
             key: schedePersonaggio[schedaCorrente][key],
@@ -2174,6 +2185,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
             .map((effect) => Map<String, dynamic>.from(effect))
             .where(oculumShouldRestoreActiveStructuredEffect),
       );
+    heroicNursePendingBattleBuff = json['heroicNursePendingBattleBuff'] is Map
+        ? Map<String, dynamic>.from(json['heroicNursePendingBattleBuff'] as Map)
+        : null;
     schivateOculumConsumate = max(
       0,
       readIntValue(json['schivateOculumConsumate']),
@@ -4083,6 +4097,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
         'realtimeDirtyAt',
         'realtimeOwnerEditSequence',
         'realtimeOwnerEditRoom',
+        'realtimeOwnerEditFieldSequences',
+        'claimedEncounterRewardIds',
+        'firstDefeatExperienceHistory',
+        'runicOpenUsedEncounter',
+        'experienceFamilyId',
+        'subtraitRollUseCounts',
+        'dustLastFightEnemyStats',
         'localUpdatedAt',
         'realtimeRestrictedByMaster',
         'realtimeReadOnlyByMaster',
@@ -4252,6 +4273,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'realtimeDirtyAt',
       'realtimeOwnerEditSequence',
       'realtimeOwnerEditRoom',
+      'realtimeOwnerEditFieldSequences',
+      'claimedEncounterRewardIds',
+      'firstDefeatExperienceHistory',
+      'runicOpenUsedEncounter',
+      'experienceFamilyId',
+      'subtraitRollUseCounts',
+      'dustLastFightEnemyStats',
       'localUpdatedAt',
       'realtimeRestrictedByMaster',
       'realtimeReadOnlyByMaster',
@@ -4484,7 +4512,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
     sendRealtimeCurrentSheetToFriendsIfEnabled();
   }
 
-  Future<void> salvaDati() => _salvaDatiSerializzato(soloLocale: false);
+  Future<void> salvaDati() {
+    notifyReferenceDetailChanged();
+    return _salvaDatiSerializzato(soloLocale: false);
+  }
 
   Future<void> salvaDatiSoloLocale() =>
       _salvaDatiSerializzato(soloLocale: true);
@@ -5233,6 +5264,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
         for (final e in combatDiscoveries.entries)
           e.key: Map<String, dynamic>.from(e.value),
       },
+      'monsterBookPartyDiscoveries': {
+        for (final e in monsterBookPartyDiscoveries.entries)
+          e.key: Map<String, dynamic>.from(e.value),
+      },
       'onlineCombatRequests': {
         for (final e in onlineCombatRequests.entries)
           e.key: Map<String, dynamic>.from(e.value),
@@ -5310,6 +5345,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
       for (final e in (globali['combatDiscoveries'] as Map).entries) {
         if (e.value is Map) {
           combatDiscoveries['${e.key}'] = Map<String, dynamic>.from(
+            e.value as Map,
+          );
+        }
+      }
+    }
+    monsterBookPartyDiscoveries.clear();
+    if (globali['monsterBookPartyDiscoveries'] is Map) {
+      for (final e in (globali['monsterBookPartyDiscoveries'] as Map).entries) {
+        if (e.value is Map) {
+          monsterBookPartyDiscoveries['${e.key}'] = Map<String, dynamic>.from(
             e.value as Map,
           );
         }
@@ -5709,6 +5754,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'realtimeDirtyAt',
       'realtimeOwnerEditSequence',
       'realtimeOwnerEditRoom',
+      'realtimeOwnerEditFieldSequences',
+      'claimedEncounterRewardIds',
+      'firstDefeatExperienceHistory',
+      'runicOpenUsedEncounter',
+      'experienceFamilyId',
+      'subtraitRollUseCounts',
+      'dustLastFightEnemyStats',
       'localUpdatedAt',
       'realtimeRestrictedByMaster',
       'realtimeReadOnlyByMaster',
@@ -5770,6 +5822,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
       refreshRealtimeRolePresence();
       if (!readBoolValue(schedePersonaggio[index]['realtimeSharedSheet'])) {
         sendRealtimeCurrentSheetToStaff(immediate: true);
+        unawaited(sendRealtimeActiveSheetToStaff());
+      } else if (realtimeIsMasterRole) {
+        final sourceTag =
+            '${schedePersonaggio[index]['realtimeSourceSheetTag'] ?? ''}';
+        if (sourceTag.isNotEmpty) {
+          unawaited(
+            realtimeService!.requestSharedSheetsConfirmed(
+              targetSheetTag: sourceTag,
+            ),
+          );
+        }
       }
     }
 
@@ -8132,9 +8195,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
                 nome: 'Generazione',
                 tipo: 'Skill mostro',
                 costo: '10 Oculum',
-                cooldown: '10 turni',
+                cooldown: '1 uso ogni 3 fight',
                 descrizione:
-                    'Spende un azione per richiamare una Patalpa Dolce con le stats attuali del Patalpa piu debole e senza Generazione.',
+                    'Spende un azione per richiamare una Patalpa Dolce con le stats attuali del Patalpa piu debole e senza Generazione. Il budget scala col livello: 20% Resilienza, 50% Volontà, 30% Materia; nel 75% degli spawn non riceve il bonus +1 Resilienza/livello, nel 25% lo riceve. Si usa una volta ogni 3 fight completati. È una Summon: se sconfitta, il suo limite EXP è 5 + Grado per l’intero party, una sola volta; chi la richiama non riceve EXP salvo che il Fato la renda realmente ostile.',
                 equipaggiata: true,
               ),
               CharacterSkill(
@@ -8349,6 +8412,20 @@ extension _OculumHomePersistence on _OculumHomePageState {
               ),
             );
           arti.clear();
+          if (matchedMonster.id == 'cavaliere_morto' &&
+              oculumDeadKnightGetsOldLove()) {
+            skills.add(
+              CharacterSkill(
+                nome: 'Un vecchio amore',
+                tipo: 'Evocazione mostro',
+                costo: '1 azione',
+                cooldown: '1 volta per scontro',
+                descrizione:
+                    'Richiama una donna scheletrica: capelli di un colore casuale (può essere viola), armatura di pelle e arco; si erge dal terreno al livello del Cavaliere Morto. Evoca un vecchio amore. È una Summon del Cavaliere: EXP massima pari a 2 × (5 + Grado), una sola riserva per il party; il Cavaliere che la evoca non riceve EXP, salvo che il Fato la renda realmente ostile.',
+                equipaggiata: true,
+              ),
+            );
+          }
         }
         if (generatedArt != null) {
           if (!(matchedMonster?.id.startsWith('pawn_guardiano') ?? false) &&

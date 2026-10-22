@@ -1,4 +1,8 @@
-param([switch]$StageOnly)
+param(
+  [switch]$StageOnly,
+  [string]$FlutterRoot = 'C:\Users\michy\flutter',
+  [ValidateRange(1, 180)][int]$BuildTimeoutMinutes = 45
+)
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -8,7 +12,14 @@ $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $staging = Join-Path $buildRoot "distribution-combat-$stamp"
 $distribution = Join-Path $buildRoot 'distribution'
 $backup = Join-Path $buildRoot "distribution-backup-$stamp"
-$flutter = 'C:\Users\michy\flutter\bin\flutter.bat'
+$dartRuntime = Join-Path $FlutterRoot 'bin/cache/dart-sdk/bin/dart.exe'
+$flutterTool = Join-Path $FlutterRoot 'bin/cache/flutter_tools.snapshot'
+$flutterPackages = Join-Path $FlutterRoot 'packages/flutter_tools/.dart_tool/package_config.json'
+$verifier = Join-Path $PSScriptRoot 'verify_distribution.ps1'
+foreach ($requiredTool in @($dartRuntime, $flutterTool, $flutterPackages, $verifier)) {
+  if (!(Test-Path -LiteralPath $requiredTool -PathType Leaf)) { throw "Missing build tool: $requiredTool" }
+}
+. (Join-Path $PSScriptRoot 'build_process.ps1')
 Set-Location -LiteralPath $projectRoot
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
@@ -39,11 +50,13 @@ function Get-SourceFingerprint {
 function Invoke-FlutterBuild([string]$Name, [string[]]$BuildArguments) {
   $log = Join-Path $buildRoot "combat-build-$Name-$stamp.log"
   Write-Output "BUILD $Name -> $log"
-  & $flutter @BuildArguments
-  $buildExitCode = $LASTEXITCODE
-  "Build $Name completed with exit code $buildExitCode at $([DateTime]::UtcNow.ToString('o'))" |
-    Set-Content -LiteralPath $log -Encoding utf8
-  if ($buildExitCode -ne 0) { throw "Build $Name failed; see terminal output and $log" }
+  # The SDK and platform artifacts are already installed. Invoke the cached
+  # tool directly to avoid flutter.bat's silent bootstrap lock retry and the
+  # nested PowerShell/cmd PTY deadlock. Builds run sequentially in this script.
+  $arguments = @("--packages=$flutterPackages", $flutterTool, '--no-version-check', '--suppress-analytics') + $BuildArguments
+  Invoke-OculumBuildProcess -FilePath $dartRuntime -Arguments $arguments -WorkingDirectory $projectRoot `
+    -LogPath $log -Description "Build $Name" -TimeoutSeconds ($BuildTimeoutMinutes * 60) `
+    -Environment @{ FLUTTER_ROOT = $FlutterRoot; FLUTTER_ALREADY_LOCKED = 'true' }
   Write-Output "BUILT $Name"
 }
 
@@ -90,6 +103,9 @@ function Copy-WindowsEdition([string]$Name, [string]$Executable, [string]$Zip) {
 }
 
 foreach ($folder in @($staging, $distribution, $backup)) { Assert-BuildFolder $folder }
+New-Item -ItemType Directory -Path $buildRoot -Force | Out-Null
+$buildLock = [IO.File]::Open((Join-Path $buildRoot 'distribution-build.lock'), [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+try {
 New-Item -ItemType Directory -Path $staging | Out-Null
 $sourceFingerprint = Get-SourceFingerprint
 $baseCommit = (& git rev-parse HEAD).Trim()
@@ -125,6 +141,13 @@ try {
   }
 } finally { $apkZip.Dispose() }
 
+# Keep an easy-to-copy edition containing only the unpacked Windows folders.
+# This satisfies the separate-folder handoff without mixing ZIP/APK files into it.
+$unpacked = Join-Path $staging "Oculum-$stamp"
+New-Item -ItemType Directory -Path $unpacked | Out-Null
+Copy-Item -LiteralPath (Join-Path $staging 'windows') -Destination (Join-Path $unpacked 'Windows') -Recurse
+Copy-Item -LiteralPath (Join-Path $staging 'windows-test') -Destination (Join-Path $unpacked 'Windows Test') -Recurse
+
 if ((Get-SourceFingerprint) -ne $sourceFingerprint) { throw 'Build sources changed during compilation; staged packages not installed' }
 foreach ($doc in @('OCULUM_REGOLE_CONFERMATE.md', 'manuale-consultazione.md', 'AGGIORNAMENTI_2026-10-19.md')) {
   Copy-Item -LiteralPath (Join-Path $projectRoot "docs/$doc") -Destination $staging
@@ -141,6 +164,7 @@ $manifest = [ordered]@{
 }
 $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $staging 'BUILD-VERIFICATE.json') -Encoding utf8
 Write-Output "STAGED $staging"
+& $verifier -ExpectedCommit $baseCommit -DistributionRoot $staging
 if ($StageOnly) { return }
 $active = @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
   $_.Path -and $_.Path.StartsWith($distribution + '\', [StringComparison]::OrdinalIgnoreCase)
@@ -148,12 +172,20 @@ $active = @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
 if ($active.Count) { throw "Save and close Oculum before replacement. Verified packages remain in $staging" }
 foreach ($folder in @($staging, $distribution, $backup)) { Assert-BuildFolder $folder }
 if (Test-Path -LiteralPath $distribution) { Move-Item -LiteralPath $distribution -Destination $backup }
-try { Move-Item -LiteralPath $staging -Destination $distribution }
+try {
+  Move-Item -LiteralPath $staging -Destination $distribution
+  & $verifier -ExpectedCommit $baseCommit -DistributionRoot $distribution
+}
 catch {
+  if ((Test-Path -LiteralPath $distribution) -and !(Test-Path -LiteralPath $staging)) {
+    Move-Item -LiteralPath $distribution -Destination $staging
+  }
   if (!(Test-Path -LiteralPath $distribution) -and (Test-Path -LiteralPath $backup)) {
     Move-Item -LiteralPath $backup -Destination $distribution
   }
   throw
 }
-& (Join-Path $buildRoot 'verify_eye_auto_distribution.ps1') -ExpectedCommit $baseCommit
 Write-Output "INSTALLED $distribution; previous release preserved in $backup"
+} finally {
+  $buildLock.Dispose()
+}

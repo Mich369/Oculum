@@ -30,6 +30,12 @@ class _LayerTransport extends OculumRealtimeService {
 }
 
 void main() {
+  test('Semi Letale adds its 250 points to configured incoming damage', () {
+    expect(oculumAddIncomingDamagePercent(1.0, 250), 3.5);
+    expect(oculumAddIncomingDamagePercent(1.25, 250), 3.75);
+    expect(oculumAddIncomingDamagePercent(3.5, 250), 6.0);
+  });
+
   testWidgets('selected defender consumes defense and all HP layers once', (
     tester,
   ) async {
@@ -91,9 +97,32 @@ void main() {
     state.realtimeService = transport;
     state.realtimeVisibleInitiativeSnapshot = <String, dynamic>{
       'encounterId': 'fight',
+      'campaignId': state.activeCampaignId,
+      'activeIndex': 0,
+      'round': 1,
       'tokens': [
-        {'id': owner},
-        {'id': enemy},
+        {
+          'id': owner,
+          'sheetTag': owner,
+          'name': 'Rose',
+          'status': 'ready',
+          'currentHp': 1000,
+          'maxHp': 1000,
+          'actionUsed': false,
+          'reactionMax': 1,
+          'reactionUsed': 0,
+        },
+        {
+          'id': enemy,
+          'sheetTag': enemy,
+          'name': 'Avversario',
+          'side': 'enemy',
+          'status': 'ready',
+          'currentHp': 999,
+          'maxHp': 999,
+          'reactionMax': 1,
+          'reactionUsed': 0,
+        },
       ],
     };
     state.realtimeUsers = <Map<String, dynamic>>[
@@ -285,12 +314,21 @@ void main() {
     // Earlier cases intentionally exercise critical-stage damage presets.
     // Isolate the phase-transition assertions from that per-element state.
     state.incomingDamagePresets.clear();
+    state.dannoSubitoPercentPerTipo.clear();
     state.modificatoreDannoSelezionato = 'Normale';
     state.dannoSubitoPercentController.clear();
+    state.incomingDamageElement = 'fisico';
+    state.buffMalusRapidiController.clear();
     state.activeConditions.clear();
+    state.activeStructuredEffects.clear();
+    state.pawnPendingDamage.clear();
     state.schivataOculumRiduzionePronta = 0;
     state.schivataOculumEtichettaPronta = '';
     state.scudoSalvataggioAttivo = false;
+    state.schedePersonaggio[0].remove('combatAdaptationReductionPending');
+    state.schedePersonaggio[0].remove('combatElementalAdaptation');
+    state.schedePersonaggio[0].remove('aberrationFinalPhaseTriggered');
+    state.schedePersonaggio[0].remove('aberrationPhase');
     probe.invalidateDerivedCaches();
     final maximum = probe.maximumHp();
     // A random Force State can heal +25 HP after a lethal hit. Disable it
@@ -300,11 +338,8 @@ void main() {
     state.statoForzaPronto = false;
     state.currentOculumController.text = '0';
     await tester.runAsync(
-      () => probe.damageResolved(
-        10000,
-        bypassDefense: true,
-        bypassShields: true,
-      ),
+      () =>
+          probe.damageResolved(10000, bypassDefense: true, bypassShields: true),
     );
     expect(int.parse(state.currentHpController.text), (maximum * .75).ceil());
     expect(state.schedePersonaggio[0]['aberrationPhase'], 3);
@@ -317,13 +352,15 @@ void main() {
     state.statoForzaPronto = false;
     state.currentOculumController.text = '0';
     await tester.runAsync(
-      () => probe.damageResolved(
-        10000,
-        bypassDefense: true,
-        bypassShields: true,
-      ),
+      () =>
+          probe.damageResolved(10000, bypassDefense: true, bypassShields: true),
     );
-    expect(state.currentHpController.text, '0');
+    expect(
+      state.currentHpController.text,
+      '0',
+      reason:
+          'The final-phase hit must apply once; result=${state.risultato}; pendingPawn=${state.pawnPendingDamage}; damagePercent=${state.dannoSubitoPercentPerTipo}; presets=${state.incomingDamagePresets}; parser=${state.buffMalusRapidiController.text}',
+    );
     state.schedePersonaggio[0].remove('monsterBookSourceId');
     state.activeStructuredEffects.clear();
     state.livelloController.text = '0';
@@ -331,6 +368,8 @@ void main() {
     final last = state.onlineCombatRequests.values.last as Map<String, dynamic>;
     last['status'] = 'pending';
     last['damage'] = 0;
+    // The player consumes the active-turn action immediately from the shared
+    // initiative snapshot. No Master approval event is part of a defense roll.
     final defending = probe.useCombatRoll(OculumCombatAbilityRole.defense);
     await tester.pump();
     await tester.runAsync(() async {
@@ -342,10 +381,15 @@ void main() {
       reason: 'The ordinary Defense button must answer the pending attack',
     );
     expect(last['defenseChoice'], 'cm');
-    state.realtimeVisibleInitiativeSnapshot['tokens'] = [
-      {'id': owner, 'name': 'Rose'},
-      {'id': enemy, 'name': 'Avversario'},
-      {'id': 'OTHER', 'name': 'Altro mostro'},
+    state.realtimeVisibleInitiativeSnapshot['tokens'] = <Map<String, dynamic>>[
+      {'id': owner, 'sheetTag': owner, 'name': 'Rose', 'side': 'ally'},
+      {'id': enemy, 'sheetTag': enemy, 'name': 'Avversario', 'side': 'enemy'},
+      {
+        'id': 'OTHER',
+        'sheetTag': 'OTHER',
+        'name': 'Altro mostro',
+        'side': 'enemy',
+      },
     ];
     state.activeStructuredEffects.clear();
     state.buffMalusRapidiController.text = '@Danni+8';
@@ -628,6 +672,9 @@ void main() {
       'natural': 20,
       'total': 10000,
     };
+    state.schedaCorrente = 0;
+    probe.addCondition('trasparenza');
+    final fullVeilBonus = probe.veilSubtraitBonus();
     probe.receiveCombat('combat_scout', {
       ...scoutPacket,
       'sessionId': 'forged',
@@ -636,6 +683,12 @@ void main() {
     probe.receiveCombat('combat_scout', scoutPacket);
     expect(state.onlineCombatRequests['scout-once']['scoutPhase'], 'result');
     expect(state.onlineCombatRequests['scout-once']['weakPoint'], isTrue);
+    expect(state.onlineCombatRequests['scout-once']['veilBuffHalved'], isTrue);
+    final fullScoutVelo = probe.combatScoutVeloAt(0);
+    expect(
+      probe.combatScoutVeloAt(0, observerSide: 'enemy'),
+      fullScoutVelo - fullVeilBonus + fullVeilBonus ~/ 2,
+    );
     final scoutLogs = (state.logEventi as List)
         .where((e) => '$e'.contains('[OSSERVAZIONE]'))
         .length;
@@ -697,3 +750,4 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 }
+

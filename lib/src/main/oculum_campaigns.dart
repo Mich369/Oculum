@@ -515,6 +515,274 @@ extension _OculumCampaigns on _OculumHomePageState {
     await salvaDatiSoloLocale();
   }
 
+  Future<void> moveCampaignSheets() async {
+    ensureCampaignsReady();
+    if (realtimeService?.isConnected == true) {
+      setState(() {
+        risultato = t(
+          'Scollega Realtime prima di spostare le schede: così la campagna online resta coerente.',
+          'Disconnect Realtime before moving sheets so the online campaign stays consistent.',
+        );
+        aggiungiLog(risultato);
+      });
+      return;
+    }
+
+    salvaSchedaCorrenteInMemoria();
+    assicuraTagSchede();
+    saveActiveCampaignInMemory();
+    final sourceId = activeCampaignId;
+    final source = currentCampaignSnapshot();
+    const createDestination = '__create_campaign__';
+    final destinations = campagneOculum
+        .where((campaign) => '${campaign['id'] ?? ''}' != sourceId)
+        .toList(growable: false);
+    final selectedTags = <String>{};
+    final newName = TextEditingController(
+      text: t('Nuova campagna', 'New campaign'),
+    );
+    var destinationId = destinations.isEmpty
+        ? createDestination
+        : '${destinations.first['id'] ?? ''}';
+
+    final choice = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          scrollable: true,
+          backgroundColor: const Color(0xFF10121A),
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: tertiaryColor.withValues(alpha: 0.8)),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.swap_horiz_rounded, color: tertiaryColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  t('Sposta schede', 'Move sheets'),
+                  style: TextStyle(color: tertiaryColor),
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: MediaQuery.sizeOf(context).width > 588
+                ? 540
+                : MediaQuery.sizeOf(context).width - 48,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                smallInfoText(
+                  t(
+                    'Seleziona una o più schede e scegli la campagna di destinazione. Statistiche, immagini, inventario, diari e dati collegati vengono conservati.',
+                    'Select one or more sheets and choose a destination campaign. Stats, images, inventory, diaries and linked data are preserved.',
+                  ),
+                ),
+                const SizedBox(height: 14),
+                DropdownButtonFormField<String>(
+                  initialValue: destinationId,
+                  dropdownColor: const Color(0xFF11131A),
+                  decoration: fieldDecoration(
+                    t('Campagna di destinazione', 'Destination campaign'),
+                  ),
+                  items: [
+                    for (final campaign in destinations)
+                      DropdownMenuItem<String>(
+                        value: '${campaign['id'] ?? ''}',
+                        child: Text('${campaign['name'] ?? 'Campagna'}'),
+                      ),
+                    DropdownMenuItem<String>(
+                      value: createDestination,
+                      child: Text(
+                        t('Crea una nuova campagna…', 'Create a new campaign…'),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setDialogState(() => destinationId = value);
+                  },
+                ),
+                if (destinationId == createDestination) ...[
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: newName,
+                    maxLength: 64,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: fieldDecoration(
+                      t('Nome della nuova campagna', 'New campaign name'),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 6),
+                Text(
+                  t(
+                    'Schede in ${activeCampaignName()}',
+                    'Sheets in ${activeCampaignName()}',
+                  ),
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF090A10),
+                    border: Border.all(
+                      color: primaryColor.withValues(alpha: 0.35),
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  constraints: BoxConstraints(
+                    maxHeight: (MediaQuery.sizeOf(context).height * 0.34).clamp(
+                      100.0,
+                      330.0,
+                    ),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: schedePersonaggio.length,
+                    separatorBuilder: (_, _) => Divider(
+                      height: 1,
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
+                    itemBuilder: (context, index) {
+                      final tag = sheetTagAt(index).toUpperCase();
+                      final sheet = schedaJsonAt(index);
+                      final type = '${sheet['tipoScheda'] ?? 'Personaggio'}';
+                      return CheckboxListTile(
+                        dense: true,
+                        value: selectedTags.contains(tag),
+                        activeColor: tertiaryColor,
+                        checkColor: Colors.black,
+                        title: Text(
+                          nomeSchedaPersonaggio(index),
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        subtitle: Text(
+                          '$type · $tag',
+                          style: const TextStyle(color: Colors.white54),
+                        ),
+                        onChanged: (value) => setDialogState(() {
+                          if (value == true) {
+                            selectedTags.add(tag);
+                          } else {
+                            selectedTags.remove(tag);
+                          }
+                        }),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(t('Annulla', 'Cancel')),
+            ),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: tertiaryColor,
+                foregroundColor: Colors.black,
+              ),
+              onPressed: selectedTags.isEmpty
+                  ? null
+                  : () => Navigator.pop(dialogContext, {
+                      'sheetTags': selectedTags.toList(growable: false),
+                      'destinationId': destinationId,
+                      'newCampaignName': newName.text.trim(),
+                    }),
+              icon: const Icon(Icons.drive_file_move_outline),
+              label: Text(t('Sposta', 'Move')),
+            ),
+          ],
+        ),
+      ),
+    );
+    newName.dispose();
+    if (choice == null || !mounted) return;
+
+    final tags = (choice['sheetTags'] as List? ?? const <dynamic>[])
+        .map((tag) => '$tag'.trim().toUpperCase())
+        .where((tag) => tag.isNotEmpty)
+        .toSet();
+    if (tags.isEmpty) return;
+    final destinationChoice = '${choice['destinationId'] ?? ''}';
+    final creating = destinationChoice == createDestination;
+    Map<String, dynamic> target;
+    if (creating) {
+      final name = '${choice['newCampaignName'] ?? ''}'.trim().isEmpty
+          ? t('Nuova campagna', 'New campaign')
+          : '${choice['newCampaignName']}'.trim();
+      final id = generateCampaignId();
+      target =
+          campaignFromLegacyData({
+              'activeCampaignId': id,
+              'campaignName': name,
+              'multiScheda': true,
+              'schedePersonaggio': <Map<String, dynamic>>[],
+            })
+            ..['id'] = id
+            ..['name'] = name
+            ..['schedePersonaggio'] = <Map<String, dynamic>>[];
+    } else {
+      final index = campagneOculum.indexWhere(
+        (campaign) => '${campaign['id'] ?? ''}' == destinationChoice,
+      );
+      if (index < 0) return;
+      target = Map<String, dynamic>.from(campagneOculum[index]);
+    }
+
+    try {
+      final transferred = moveOculumCampaignSheets(
+        source: source,
+        destination: target,
+        sheetTags: tags,
+      );
+      final updatedSource = transferred['source']!;
+      final updatedDestination = transferred['destination']!;
+      updatedSource['updatedAt'] = DateTime.now().toIso8601String();
+      updatedDestination['updatedAt'] = DateTime.now().toIso8601String();
+      setState(() {
+        final sourceIndex = campagneOculum.indexWhere(
+          (campaign) => '${campaign['id'] ?? ''}' == sourceId,
+        );
+        if (sourceIndex >= 0) campagneOculum[sourceIndex] = updatedSource;
+        final targetIndex = campagneOculum.indexWhere(
+          (campaign) =>
+              '${campaign['id'] ?? ''}' == '${updatedDestination['id'] ?? ''}',
+        );
+        if (targetIndex >= 0) {
+          campagneOculum[targetIndex] = updatedDestination;
+        } else {
+          campagneOculum.add(updatedDestination);
+        }
+        loadCampaignSnapshot(updatedDestination);
+        risultato = t(
+          'Spostate ${tags.length} schede in ${activeCampaignName()}.',
+          'Moved ${tags.length} sheets to ${activeCampaignName()}.',
+        );
+        aggiungiLog(risultato);
+        saveActiveCampaignInMemory();
+      });
+      await salvaDatiSoloLocale();
+    } on StateError catch (error) {
+      setState(() {
+        risultato = t(
+          'Spostamento non completato: ${error.message}',
+          'Move not completed: ${error.message}',
+        );
+        aggiungiLog(risultato);
+      });
+    }
+  }
+
   Future<void> renameActiveCampaign(String value) async {
     campaignNameController.text = value.trim().isEmpty
         ? activeCampaignName()
@@ -764,6 +1032,18 @@ extension _OculumCampaigns on _OculumHomePageState {
                 label: Text(t('Crea', 'Create')),
               ),
             ],
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: moveCampaignSheets,
+            icon: const Icon(Icons.drive_file_move_outline),
+            label: Text(
+              t('Sposta schede tra campagne', 'Move sheets between campaigns'),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: tertiaryColor,
+              side: BorderSide(color: tertiaryColor.withValues(alpha: 0.65)),
+            ),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(

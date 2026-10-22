@@ -57,8 +57,12 @@ class DownloadPublicationTests(unittest.TestCase):
         names = publisher.PUBLIC_ARTIFACTS + publisher.EXTRA_ARCHIVES
         artifacts = [dict(name=name, id=index, expired=False, size_in_bytes=4)
                      for index, name in enumerate(names, start=1)]
-        self.assertEqual(len(publisher.select_release_archives(artifacts)), 8)
+        self.assertEqual(len(publisher.select_release_archives(artifacts)), 9)
         self.assertEqual(len(publisher.select_public_artifacts(artifacts)), 5)
+        with self.assertRaisesRegex(ValueError, "required site/Windows packages"):
+            publisher.select_release_archives([
+                item for item in artifacts if item["name"] != "Oculum-Web"
+            ])
         with self.assertRaisesRegex(ValueError, "Unreviewed"):
             publisher.select_release_archives(artifacts + [dict(name="private-saves")])
         with self.assertRaisesRegex(ValueError, "duplicate"):
@@ -69,4 +73,3 @@ class DownloadPublicationTests(unittest.TestCase):
         notes = publisher.notes(catalog)
         self.assertIn("releases/tag/oculum-build-42", notes)
         self.assertEqual(publisher.read_catalog(notes), catalog)
-

@@ -120,6 +120,7 @@ String oculumMonsterBookSkillBaseId(String id) =>
 bool oculumMonsterBookSkillIsPassive(String id) {
   final base = oculumMonsterBookSkillBaseId(id);
   return base == 'inferno_in_corpo' ||
+      base.startsWith('runic_') ||
       base == 'inverno_in_corpo' ||
       base.startsWith('lava_regeneration_') ||
       (base.startsWith('riccio_aculeo_') && base.endsWith('_armatura'));
@@ -197,6 +198,7 @@ const _naturalMonsterTechniqueIds = {
 };
 
 bool oculumMonsterTechniqueIsNatural(MonsterBookEntry monster, String id) =>
+    id.startsWith('runic_') ||
     !oculumMonsterHasOculumArt(monster) ||
     _naturalMonsterTechniqueIds.contains(oculumMonsterBookSkillBaseId(id));
 
@@ -227,10 +229,16 @@ CharacterSkill _naturalMonsterSkill(
         tipo: passive ? 'Passiva mostro' : 'Skill naturale mostro',
         livello:
             '${(monsterBookConcreteTechnique(id)?.requiredLevel ?? 0) + form * 3}',
-        costo: passive ? 'Nessun costo' : '${form + 1}/${form + 1} Volontà',
+        costo: passive || id == 'goblin_kamikaze_explosion'
+            ? 'Nessun costo'
+            : '${form + 1}/${form + 1} Volontà',
         costoStrutturato: OculumSkillCost(
-          resource: passive ? 'nessuna' : 'volonta',
-          amountExpression: passive ? '0' : '${form + 1}',
+          resource: passive || id == 'goblin_kamikaze_explosion'
+              ? 'nessuna'
+              : 'volonta',
+          amountExpression: passive || id == 'goblin_kamikaze_explosion'
+              ? '0'
+              : '${form + 1}',
         ),
         cooldown: passive
             ? '0 turni'
@@ -284,7 +292,7 @@ CharacterArt? oculumMonsterBookImportArt(MonsterBookEntry monster) {
       if (!oculumMonsterTechniqueIsNatural(monster, ids[index]))
         art.skills[index],
   ];
-  return art.skills.isEmpty ? null : art;
+  return art.skills.isEmpty && monster.id != 'golem_runico' ? null : art;
 }
 
 /// An assortment, not three simultaneous bonuses. Existing/custom titles are
@@ -418,6 +426,28 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
     return oculumWitheredLarvaArt(monster);
   }
   final art = _rawMonsterBookArt(monster);
+  if (monster.id == 'golem_runico') {
+    art.openName = 'Portali del nucleo';
+    art.openDescription =
+        'Livello 6. I raggi attraversano il campo da portali runici. Una sola attivazione per fight, CD 6 turni.';
+    art.openSkill =
+        'Infligge la Vita attuale del Golem a ciascun bersaglio scelto; semicolpito metà, senza aggiungere i Danni base.';
+    art.monsterOpenSkill = true;
+    art.openSkillCooldown = OculumAbilityCooldown(amount: 6);
+    art.openSkillEffects = [
+      OculumStructuredEffect(
+        id: 'runic_open_current_hp',
+        damagePerTarget: true,
+        type: 'danno',
+        valueExpression: 'hp_current',
+        recipient: 'nemico',
+        minimumTargets: 1,
+        maximumTargets: 999,
+        narrativeText:
+            'Un raggio per ciascun bersaglio scelto; non dividere il danno fra i bersagli.',
+      ),
+    ];
+  }
   final ids = monsterBookUsableSkillIds(monster);
   for (final (skillIndex, skill) in art.skills.indexed) {
     for (var form = 1; form <= 3; form++) {
@@ -551,7 +581,13 @@ CharacterArt _rawMonsterBookArt(MonsterBookEntry monster) =>
             ArtSkill(
               nome: monsterBookSkillText(id).split('—').first.trim(),
               livello: 0,
-              cooldownPerLivello: _activeConcreteMonsterTechnique(id) != null
+              cooldownPerLivello: id == 'goblin_kamikaze_explosion'
+                  ? List.generate(
+                      3,
+                      (_) =>
+                          OculumAbilityCooldown(amount: 2, startsReady: false),
+                    )
+                  : _activeConcreteMonsterTechnique(id) != null
                   ? [
                       for (final turns in _activeConcreteMonsterTechnique(
                         id,
@@ -822,6 +858,77 @@ String _monsterBookSkillEvolution(
 /// Only fills narrative-only techniques. Authored numeric powers and Oculus
 /// techniques keep their own formulas instead of receiving a second effect.
 List<List<OculumStructuredEffect>>? _monsterBookGenericEffects(String id) {
+  if (id == 'goblin_kamikaze_explosion') {
+    return List.generate(
+      3,
+      (form) => [
+        OculumStructuredEffect(
+          id: 'goblin_kamikaze_explosion_$form',
+          damagePerTarget: true,
+          killSource: true,
+          allOpponents: true,
+          type: 'danno',
+          valueExpression: 'hp',
+          recipient: 'nemico',
+          minimumTargets: 1,
+          maximumTargets: 999,
+          shieldDamageBonusPercent: 50,
+          narrativeText:
+              'Tutti gli avversari dello schieramento effettivo; morte del goblin dopo l’esplosione. CD iniziale 2 turni.',
+        ),
+      ],
+    );
+  }
+  if (id == 'corrosive_acid_spit') {
+    return List.generate(
+      3,
+      (form) => [
+        OculumStructuredEffect(
+          id: 'corrosive_acid_spit_${form + 1}',
+          type: 'stato',
+          target: 'corrosione_acida',
+          appliedState: 'corrosione_acida',
+          elementType: 'acido',
+          valueExpression: '${[2, 3, 6][form]}',
+          recipient: 'bersaglio',
+          mode: 'prossima_azione',
+          duration: '3',
+          bypassDefense: true,
+          bypassShields: true,
+          narrativeText:
+              'Logoramento acido: dura 2/3/5/6 turni in Facile/Normale/Difficile/Oculum.',
+        ),
+      ],
+    );
+  }
+  if (id.startsWith('runic_')) {
+    return List.generate(
+      3,
+      (form) => id == 'runic_guard'
+          ? [
+              OculumStructuredEffect(
+                id: 'runic_guard_${form + 1}',
+                type: 'modifica_statistica',
+                target: 'cm',
+                valueExpression: '${3 + form}',
+                mode: 'finche_attivo',
+                duration: '',
+              ),
+            ]
+          : [
+              OculumStructuredEffect(
+                id: '${id}_${form + 1}',
+                type: 'modifica_statistica',
+                target: id == 'runic_reflection'
+                    ? 'runic_reflection_percent'
+                    : 'runic_wound_penalty',
+                valueExpression:
+                    '${id == 'runic_reflection' ? [10, 15, 20][form] : [2, 3, 4][form]}',
+                mode: 'finche_attivo',
+              ),
+            ],
+    );
+  }
   final canonical = oculumMonsterBookSkillBaseId(id);
   if (canonical != id) return _monsterBookGenericEffects(canonical);
   final concrete = monsterBookConcreteTechnique(id);
@@ -1338,6 +1445,55 @@ Map<String, int> oculumMonsterCreationStats(
     for (final key in startingStats.keys)
       key: startingStats[key]! + growth[key]!,
   };
+}
+
+/// The Patalpa summon keeps the species' level-based stat budget, but shifts
+/// it toward Will and Materia. It has no Oculum stat in the current Bestiary;
+/// an additional +1 Resilience per level is an optional rare spawn roll.
+Map<String, int> oculumPatalpaSummonStats(
+  int level, {
+  bool receivesNoOculumResilienceBonus = false,
+}) {
+  final safeLevel = max(0, level);
+  final monster = monsterById('patalpa_dolce');
+  if (monster == null) {
+    throw StateError('Patalpa Dolce is missing from the Monster Book.');
+  }
+  final base = oculumMonsterCreationStats(monster, safeLevel);
+  // Patalpa is explicitly Oculum-less; don't count transient Oculum that
+  // generic monster generation may allocate from an ability description.
+  final total = [
+    'resilienza',
+    'volonta',
+    'materia',
+  ].fold<int>(0, (sum, key) => sum + max(0, base[key] ?? 0));
+  final resilience = total * 20 ~/ 100;
+  final will = total * 50 ~/ 100;
+  return {
+    'resilienza':
+        resilience + (receivesNoOculumResilienceBonus ? safeLevel : 0),
+    'volonta': will,
+    'materia': max(0, total - resilience - will),
+    'oculum': 0,
+  };
+}
+
+/// Ticks the summon ability once for each distinct completed encounter.
+bool oculumTickPatalpaSummonCooldown(
+  Map<String, dynamic> sheet, {
+  required String encounterId,
+}) {
+  final remaining = max(
+    0,
+    readIntValue(sheet['patalpaSummonCooldownFightsRemaining']),
+  );
+  if (remaining <= 0 ||
+      '${sheet['patalpaSummonCooldownLastEncounterId'] ?? ''}' == encounterId) {
+    return false;
+  }
+  sheet['patalpaSummonCooldownFightsRemaining'] = remaining - 1;
+  sheet['patalpaSummonCooldownLastEncounterId'] = encounterId;
+  return true;
 }
 
 /// Fallen Eyes earn nine level points in addition to their original base.

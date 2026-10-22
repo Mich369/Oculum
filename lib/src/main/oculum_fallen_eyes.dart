@@ -1811,6 +1811,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
       _touchFallenEyes();
     });
     await salvaDati();
+    unawaited(sendRealtimeActiveSheetToStaff());
   }
 
   /// Evento di gioco esplicito. L'attivazione della scheda e i rebuild non lo

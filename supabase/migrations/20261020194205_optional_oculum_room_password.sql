@@ -98,4 +98,3 @@ grant execute on function oculum_private.oculum_open_room_with_password(text,tex
   public.oculum_open_room_with_password(text,text,boolean,text),
   oculum_private.oculum_set_room_password(uuid,text), public.oculum_set_room_password(uuid,text)
   to authenticated;
-

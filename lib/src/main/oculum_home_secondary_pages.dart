@@ -2249,7 +2249,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  t('Oculum nei tiri fight', 'Oculum fight rolls'),
+                  t('Potenziamento', 'Empowerment'),
                   style: TextStyle(
                     color: primaryColor,
                     fontSize: 18,
@@ -2270,8 +2270,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           const SizedBox(height: 8),
           smallInfoText(
             t(
-              'Prepara punti Oculum per il prossimo tiro fight: 1 punto ogni 3 livelli, massimo 3 ogni 3 Gradi. Al livello 9 senza Grado arrivi a 3. Ogni punto vale +3.',
-              'Prepare Oculum for the next fight roll: 1 point every 3 levels, max 3 every 3 Grades. At level 9 without Grade you reach 3. Each point is +3.',
+              'Prepara punti Oculum per il prossimo tiro fight: 1 punto ogni 3 livelli, massimo 3 ogni 3 Gradi. Al livello 9 senza Grado arrivi a 3. Ogni punto dà +3 al tiro; se attacchi aggiunge anche +2 Danni per punto.',
+              'Prepare Oculum for the next fight roll: 1 point every 3 levels, max 3 every 3 Grades. At level 9 without Grade you reach 3. Each point adds +3 to the roll and, on attacks, +2 damage.',
             ),
           ),
           const SizedBox(height: 8),
@@ -2658,6 +2658,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         child: Text(
                           t('Nuova sessione Dust', 'New Dust session'),
                         ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: leggiNumero(ascensionDustController) > 0
+                            ? mostraAscensionDustExperience
+                            : null,
+                        icon: const Icon(Icons.auto_awesome),
+                        label: const Text('Converti in EXP'),
                       ),
                     ],
                   ),
@@ -3602,6 +3609,19 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   ),
                 ),
               ),
+              Tooltip(
+                message: masterInitiativeSideEyeLabel(
+                  '${masterInitiativeTokens[i]['side'] ?? 'ally'}',
+                ),
+                child: Icon(
+                  Icons.remove_red_eye,
+                  color: masterInitiativeSideEyeColor(
+                    '${masterInitiativeTokens[i]['side'] ?? 'ally'}',
+                  ),
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 6),
               initiativeTokenAvatar(masterInitiativeTokens[i]),
               const SizedBox(width: 12),
               Expanded(
@@ -3635,6 +3655,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         'TITOLO VISIBILE: ${masterInitiativeTokens[i]['visibleTitleName']}\n${masterInitiativeTokens[i]['visibleTitleLegend'] ?? ''}',
                         color: Colors.amberAccent,
                       ),
+                    if (oculumCombatTokenHealthLabel(
+                      masterInitiativeTokens[i],
+                    ).isNotEmpty)
+                      smallInfoText(
+                        oculumCombatTokenHealthLabel(masterInitiativeTokens[i]),
+                        color: Colors.orangeAccent,
+                      ),
                   ],
                 ),
               ),
@@ -3651,6 +3678,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 color: const Color(0xFF10121A),
                 icon: Icon(Icons.more_vert, color: tertiaryColor),
                 onSelected: (value) {
+                  if (value.startsWith('side:')) {
+                    unawaited(
+                      setMasterInitiativeTokenSide(i, value.substring(5)),
+                    );
+                    return;
+                  }
                   if (value == 'remove') {
                     removeMasterInitiativeTokenAt(i);
                     return;
@@ -3670,6 +3703,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   setState(() {
                     masterInitiativeTokens[i]['status'] = value;
                     if (value == 'dead') {
+                      masterInitiativeTokens[i]['automaticDeath'] = false;
                       aggiungiLog(
                         '[MORTE] '
                         '${masterInitiativeTokens[i]['name'] ?? '???'}'
@@ -3708,6 +3742,76 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     value: 'dead',
                     child: Text(masterInitiativeStatusLabel('dead')),
                   ),
+                  PopupMenuItem(
+                    value: 'fled',
+                    child: Text(masterInitiativeStatusLabel('fled')),
+                  ),
+                  if (haPermessiMaster) ...[
+                    const PopupMenuDivider(),
+                    PopupMenuItem(
+                      value: 'side:ally',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.remove_red_eye,
+                            color: masterInitiativeSideEyeColor('ally'),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              t('Occhio azzurro · Alleato', 'Blue eye · Ally'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'side:enemy',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.remove_red_eye,
+                            color: masterInitiativeSideEyeColor('enemy'),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              t('Occhio rosso · Nemico', 'Red eye · Enemy'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'side:neutral',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.remove_red_eye,
+                            color: masterInitiativeSideEyeColor('neutral'),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              t(
+                                'Occhio ambra · Neutrale',
+                                'Amber eye · Neutral',
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const PopupMenuDivider(),
                   PopupMenuItem(
                     value: 'up',
@@ -3725,6 +3829,50 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 ],
               ),
             ],
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Tooltip(
+              message: t(
+                'Vita attuale / massima e Oculum attuale / massimo',
+                'Current / maximum HP and current / maximum Oculum',
+              ),
+              child: Container(
+                constraints: const BoxConstraints(minWidth: 48),
+                margin: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.24),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'HP ${masterInitiativeTokens[i].containsKey('currentHp') ? '${readIntValue(masterInitiativeTokens[i]['currentHp'])}/${readIntValue(masterInitiativeTokens[i]['maxHp'])}' : '—'}',
+                      textAlign: TextAlign.right,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      'OCU ${masterInitiativeTokens[i].containsKey('currentOculum') ? '${readIntValue(masterInitiativeTokens[i]['currentOculum'])}/${readIntValue(masterInitiativeTokens[i]['maxOculum'])}' : '—'}',
+                      textAlign: TextAlign.right,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        color: Colors.lightBlueAccent,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
           Align(
             alignment: Alignment.centerLeft,
@@ -4671,15 +4819,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     addRepaintBoundaries: true,
                     itemExtent: 64,
                     itemBuilder: (context, i) {
-                      final sheet = schedaJsonAt(i);
-                      final pendingApproval =
-                          onlineMasterApprovalRequired &&
-                          readBoolValue(sheet['monsterBookApprovalRequired']) &&
-                          !readBoolValue(sheet['monsterBookApproved']);
                       return GestureDetector(
-                        onLongPress: pendingApproval
-                            ? showMasterRequests
-                            : null,
                         child: CheckboxListTile(
                           key: ValueKey<String>(
                             'master_roster_${sheetTagAt(i)}',
@@ -4702,28 +4842,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                             ),
                           ),
                           subtitle: Text(
-                            '${tipoSchedaPersonaggio(i)} - ${sheetTagAt(i)}${pendingApproval ? ' · In attesa Master (tieni premuto per approvare)' : ''}',
+                            '${tipoSchedaPersonaggio(i)} - ${sheetTagAt(i)}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: pendingApproval
-                                  ? Colors.amberAccent
-                                  : tertiaryColor,
+                              color: tertiaryColor,
                               fontSize: 11,
                             ),
                           ),
-                          onChanged: pendingApproval
-                              ? (_) {
-                                  setState(() {
-                                    risultato =
-                                        'Prima approva ${nomeSchedaPersonaggio(i)} tenendo premuta la sua riga.';
-                                    aggiungiLog(risultato);
-                                  });
-                                }
-                              : (selected) => cambiaSchedaMasterParty(
-                                  i,
-                                  selected == true,
-                                ),
+                          onChanged: (selected) =>
+                              cambiaSchedaMasterParty(i, selected == true),
                           controlAffinity: ListTileControlAffinity.trailing,
                         ),
                       );
@@ -4821,6 +4949,19 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     );
     final descriptionEnController = TextEditingController(
       text: existing?.descEn,
+    );
+    final weakPointController = TextEditingController(
+      text: existing?.weakPointDescriptionIt ?? '',
+    );
+    final weakPointEnController = TextEditingController(
+      text: existing?.weakPointDescriptionEn ?? '',
+    );
+    final damageResistanceController = TextEditingController(
+      text:
+          existing?.incomingDamageResistancePresets.entries
+              .map((entry) => '${entry.key}=${entry.value}')
+              .join('\n') ??
+          '',
     );
     final elementController = TextEditingController(
       text: existing?.elementId ?? 'fisico',
@@ -5022,6 +5163,28 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     ),
                     const SizedBox(height: 8),
                     TextField(
+                      controller: weakPointController,
+                      maxLines: 2,
+                      decoration: decoration(
+                        'Punto debole anatomico (italiano)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: weakPointEnController,
+                      maxLines: 2,
+                      decoration: decoration('Weak point anatomy (English)'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: damageResistanceController,
+                      maxLines: 4,
+                      decoration: decoration(
+                        'Resistenze per tipo, una per riga: taglio=Resistenza Leggera',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
                       controller: elementController,
                       decoration: decoration(t('Elemento', 'Element')),
                     ),
@@ -5167,6 +5330,23 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       isBoss: isBoss,
                       isNpc: isNpc,
                       isNullFateless: nullFateless,
+                      weakPointIt: cleanUiText(weakPointController.text).trim(),
+                      weakPointEn: cleanUiText(
+                        weakPointEnController.text,
+                      ).trim(),
+                      damageResistancePresets:
+                          <String, String>{
+                            for (final raw
+                                in damageResistanceController.text.split(
+                                  RegExp(r'[\n,;]+'),
+                                ))
+                              if (raw.contains('='))
+                                raw.substring(0, raw.indexOf('=')).trim(): raw
+                                    .substring(raw.indexOf('=') + 1)
+                                    .trim(),
+                          }..removeWhere(
+                            (key, value) => key.isEmpty || value.isEmpty,
+                          ),
                       stats: <String, int>{
                         'hp': readIntValue(hpController.text),
                         'atk': readIntValue(attackController.text),
@@ -5199,6 +5379,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       descriptionController,
       formsController,
       descriptionEnController,
+      weakPointController,
+      weakPointEnController,
+      damageResistanceController,
       elementController,
       dropsController,
       skillsController,
@@ -5726,6 +5909,170 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               color: Colors.white54,
             ),
         ],
+      ),
+    );
+  }
+
+  Widget monsterBookPartyPage() {
+    final entries = monsterBookEntries;
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          gothicPanel(
+            borderColor: tertiaryColor.withValues(alpha: .75),
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Icon(Icons.auto_stories_outlined, color: tertiaryColor),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Monster Book Party',
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      smallInfoText(
+                        'Le scoperte si salvano per campagna e si condividono con il party. Le voci ignote restano «???».',
+                      ),
+                    ],
+                  ),
+                ),
+                Chip(label: Text('${entries.length}')),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: ListView.builder(
+              itemCount: entries.length,
+              itemBuilder: (context, index) {
+                final entry = entries[index];
+                final knowledge = monsterBookPartyKnowledge(entry.id);
+                final identified = monsterBookPartyKnowsName(entry.id);
+                final weakPointKnown = knowledge?['weakPoint'] == true;
+                return Card(
+                  color: const Color(0xFF0B0D13),
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(
+                      color: tertiaryColor.withValues(alpha: .28),
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ListTile(
+                    leading: monsterBookEntryPreview(entry),
+                    title: Text(
+                      identified ? entry.nameIt : '???',
+                      style: TextStyle(
+                        color: identified ? primaryColor : Colors.white70,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    subtitle: Text(
+                      identified
+                          ? '${entry.presetType} · ${elementDisplayName(entry.elementId)}${weakPointKnown ? ' · Punto debole scoperto' : ''}'
+                          : 'Creatura non identificata · Punto debole: ???',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => showMonsterBookPartyEntry(entry),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> showMonsterBookPartyEntry(MonsterBookEntry entry) async {
+    final resistances = entry.incomingDamageResistancePresets;
+    String resistanceLabel(String type, String preset) =>
+        '${type[0].toUpperCase()}${type.substring(1)} · $preset';
+    await showDialog<void>(
+      context: context,
+      builder: (dialog) => ValueListenableBuilder<int>(
+        valueListenable: combatKnowledgeRevision,
+        builder: (context, revision, child) {
+          final knowledge = monsterBookPartyKnowledge(entry.id);
+          final identified = monsterBookPartyKnowsName(entry.id);
+          final weakPointKnown = knowledge?['weakPoint'] == true;
+          return AlertDialog(
+            backgroundColor: const Color(0xFF11121A),
+            title: Text(identified ? entry.nameIt : '???'),
+            content: SizedBox(
+              width: 620,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        monsterBookEntryPreview(entry, size: 72),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            identified
+                                ? '${entry.presetType} · ${elementDisplayName(entry.elementId)}\n${entry.descIt}'
+                                : 'Creatura non identificata. Combattendola o consultando una pagina del Monster Book registrerai le informazioni scoperte.',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Punto debole e Precisione',
+                      style: TextStyle(
+                        color: tertiaryColor,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      weakPointKnown
+                          ? 'Punto debole scoperto: ${entry.weakPointDescriptionIt}. In combattimento è disponibile il tiro Precisione mirato; il confronto resta quello normale e il colpo può fallire.'
+                          : 'Punto debole: ???. Nessun tiro Precisione mirato è disponibile finché il party non lo scopre o acquista la pagina della creatura.',
+                    ),
+                    if (identified) ...[
+                      const SizedBox(height: 14),
+                      Text(
+                        'Resistenze e vulnerabilità',
+                        style: TextStyle(
+                          color: tertiaryColor,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        resistances.isEmpty
+                            ? 'Nessuna resistenza anatomica particolare; si applica la percentuale della scheda.'
+                            : resistances.entries
+                                  .map((e) => resistanceLabel(e.key, e.value))
+                                  .join(' · '),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialog),
+                child: const Text('Chiudi'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -7288,6 +7635,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             masterDashboardActiveSheetPanel,
             masterDashboardPartyBoardPanel,
             masterInitiativeTrackerPanel,
+            pendingMonsterLootPanel,
             () => masterDashboardEnemiesPanel(compactNote: true),
             masterDashboardQuickControlsPanel,
             masterDashboardQuickSheetPanel,
@@ -7330,6 +7678,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 if (haPermessiMaster) () => masterItemGiftPanel(),
                 pawnGuardiansPanel,
                 masterInitiativeTrackerPanel,
+                pendingMonsterLootPanel,
                 masterDashboardPartyBoardPanel,
                 masterDashboardEnemiesPanel,
                 masterDashboardRosterPanel,
@@ -9751,6 +10100,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       await useSpineHedgehogOpen(art);
       return;
     }
+    final runicOpen = art.openName == 'Portali del nucleo';
+    final runicFight = onlineCombatEncounterId;
+    final runicOwner = schedePersonaggio[schedaCorrente];
+    if (runicOpen &&
+        runicFight.isNotEmpty &&
+        runicOwner['runicOpenUsedEncounter'] == runicFight) {
+      aggiungiLog('Portali del nucleo: già usato in questo fight.');
+      return;
+    }
     if (art.descrizione.startsWith('Art del ')) {
       await resolveBalancedOpen(art, activation: false);
       return;
@@ -9779,7 +10137,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           cooldown: cooldown,
           valid: () => arti.contains(art) && art.openAttiva,
         );
-        if (used && mounted) await finishParsedAbilityTargets(art.openSkill);
+        if (used && mounted) {
+          if (runicOpen && runicFight.isNotEmpty) {
+            runicOwner['runicOpenUsedEncounter'] = runicFight;
+          }
+          await finishParsedAbilityTargets(art.openSkill);
+        }
         return;
       }
     }

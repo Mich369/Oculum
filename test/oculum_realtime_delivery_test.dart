@@ -235,6 +235,9 @@ class _Client extends SupabaseClient {
             }
           } else if (path.endsWith('/oculum_room_presence')) {
             backend.presenceReads++;
+            final stalledRead = backend.stalledPresenceRead;
+            backend.stalledPresenceRead = null;
+            if (stalledRead != null) await stalledRead.future;
             body = backend.sessions.values.toList();
           } else {
             body = null;
@@ -278,12 +281,49 @@ class _Backend {
   Completer<void>? presenceReplyStarted;
   int presenceWrites = 0;
   int presenceReads = 0;
+  Completer<void>? stalledPresenceRead;
   final sessions = <String, Map<String, dynamic>>{};
   final events = <Map<String, dynamic>>[];
   int initiativeSnapshotReads = 0;
 }
 
 void main() {
+  test(
+    'a stalled presence read releases refresh and permits recovery',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      final backend = _Backend();
+      final client = _Client(backend);
+      var deliveredPresence = 0;
+      final service = OculumRealtimeService(
+        client: client,
+        roomId: 'stalled-read',
+        playerName: 'Player',
+        httpPollingOnly: true,
+        presenceDataProvider: () => {'role': 'player'},
+        onEvent: (_, _) {},
+        onPresenceChanged: (_) => deliveredPresence++,
+        onStatusChanged: printOnFailure,
+      );
+      final stalledRead = Completer<void>();
+      addTearDown(() async {
+        if (!stalledRead.isCompleted) stalledRead.complete();
+        await service.dispose();
+        await client.dispose();
+        OculumRealtimeService.supabaseAvailable = previous;
+      });
+      await service.connect();
+      backend.stalledPresenceRead = stalledRead;
+      await service.refreshPresence().timeout(const Duration(seconds: 12));
+      expect(stalledRead.isCompleted, isFalse);
+      final beforeRecovery = deliveredPresence;
+      await service.refreshPresence().timeout(const Duration(seconds: 3));
+      expect(deliveredPresence, greaterThan(beforeRecovery));
+      expect(service.isConnected, isTrue);
+    },
+  );
+
   test(
     'concurrent large party sheets finish before the next transfer starts',
     () async {
@@ -965,7 +1005,11 @@ void main() {
       client.testChannel.callbacks['sheet_shared_chunk']!({
         'serverEventId': parts.first['id'],
       });
-      await Future<void>.delayed(const Duration(milliseconds: 20));
+      final assemblyDeadline = DateTime.now().add(const Duration(seconds: 3));
+      while (received.isEmpty && DateTime.now().isBefore(assemblyDeadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(received, hasLength(1));
       expect(received.single['sheet'], sheet);
       expect(received.single['deliveryId'], 'receipt');
       client.testChannel.response = ChannelResponse.error;

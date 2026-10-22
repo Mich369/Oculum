@@ -21,7 +21,10 @@ PUBLIC_ARTIFACTS = (
     "Oculum-macOS", "Oculum-Windows", "Oculum-Test-Windows",
     "Oculum-Linux", "Oculum-Android",
 )
-EXTRA_ARCHIVES = ("Oculum-Web", "Oculum-iOS-unsigned", "Oculum-UI-Catture")
+EXTRA_ARCHIVES = (
+    "Oculum-Web", "Oculum-Windows-Folders", "Oculum-iOS-unsigned", "Oculum-UI-Catture",
+)
+REQUIRED_EXTRA_ARCHIVES = ("Oculum-Web", "Oculum-Windows-Folders")
 
 
 def gh(*args, **kwargs):
@@ -92,6 +95,9 @@ def select_release_archives(artifacts):
             raise ValueError("Unreviewed or duplicate archive: " + str(name))
         seen.add(name)
         selected.append(artifact)
+    missing = [name for name in REQUIRED_EXTRA_ARCHIVES if name not in seen]
+    if missing:
+        raise ValueError("Waiting for required site/Windows packages; missing: " + ", ".join(missing))
     for artifact in selected:
         asset_name(artifact)
     return selected

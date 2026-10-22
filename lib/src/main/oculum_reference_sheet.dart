@@ -1,5 +1,93 @@
 part of '../../main.dart';
 
+String oculumReferenceEncounterInitiativeText(Map token) {
+  final rollRaw = token['initiativeRoll'];
+  final baseRaw = token['initiativeBase'];
+  final roll = readIntValue(rollRaw);
+  final base = readIntValue(baseRaw);
+  final total = readIntValue(token['initiativeTotal']);
+  if (rollRaw == null ||
+      baseRaw == null ||
+      (roll == 0 && base == 0 && total != 0)) {
+    return 'Iniziativa ${max(0, total)}';
+  }
+  return 'Iniziativa $roll + $base = ${max(0, total)}';
+}
+
+String oculumReferenceEncounterTokenName(Map token) {
+  for (final key in const ['name', 'visibleTitleName', 'sheetTag', 'id']) {
+    final value = '${token[key] ?? ''}'.trim();
+    if (value.isNotEmpty && value != '???') return value;
+  }
+  final type = '${token['type'] ?? ''}'.trim();
+  return type.isEmpty || type == '???' ? 'Partecipante' : type;
+}
+
+String oculumReferenceEncounterResourceUsage(
+  Map token, {
+  required int round,
+  required String activeTurnKey,
+}) {
+  return oculumReferenceEncounterResourceUsageBadges(
+    token,
+    round: round,
+    activeTurnKey: activeTurnKey,
+  ).map((badge) => badge.key).join(' · ');
+}
+
+List<MapEntry<String, String>> oculumReferenceEncounterResourceUsageBadges(
+  Map token, {
+  required int round,
+  required String activeTurnKey,
+}) {
+  final used = <MapEntry<String, String>>[];
+  if (readBoolValue(token['actionUsed'])) {
+    used.add(const MapEntry('A:1', 'Azioni usate 1'));
+  }
+  final normalReactionCount = readIntValue(token['reactionUsed']);
+  final reactionUsedRound = readIntValue(
+    token['reactionUsedRound'],
+    fallback: round,
+  );
+  if (normalReactionCount > 0 && reactionUsedRound == round) {
+    used.add(
+      MapEntry('R:$normalReactionCount', 'Reazioni usate $normalReactionCount'),
+    );
+  }
+  final fastReactionCount = readIntValue(token['reactionFastUsed']);
+  final fastReactionTurnKey = '${token['reactionFastTurnKey'] ?? ''}';
+  if (fastReactionCount > 0 &&
+      (fastReactionTurnKey == activeTurnKey ||
+          (activeTurnKey.isNotEmpty &&
+              fastReactionTurnKey.startsWith('$activeTurnKey:')))) {
+    used.add(
+      MapEntry(
+        'RV:$fastReactionCount',
+        'Reazioni veloci usate $fastReactionCount',
+      ),
+    );
+  }
+  return used;
+}
+
+int oculumReactionRefreshRollBonus({
+  required int pendingBonus,
+  required int normalMaximum,
+  required int normalUsed,
+  required int fastMaximum,
+  required int fastUsed,
+  int maximumBonus = 12,
+  int bonusPerUnusedReaction = 3,
+}) {
+  final unused =
+      max(0, normalMaximum - normalUsed).toInt() +
+      max(0, fastMaximum - fastUsed).toInt();
+  final bonus =
+      max(0, pendingBonus).toInt() +
+      unused * max(0, bonusPerUnusedReaction).toInt();
+  return min(max(0, maximumBonus).toInt(), bonus).toInt();
+}
+
 // ignore_for_file: invalid_use_of_protected_member
 
 extension _OculumReferenceSheet on _OculumHomePageState {
@@ -1376,6 +1464,74 @@ extension _OculumReferenceSheet on _OculumHomePageState {
 }
 
 extension _OculumReferenceEncounters on _OculumHomePageState {
+  Widget currentSheetInitiativeRemaining({bool compact = false}) {
+    final tag = sheetTagAt(schedaCorrente);
+    final raw = realtimeIsMasterRole
+        ? masterInitiativeTokens
+        : realtimeVisibleInitiativeSnapshot['tokens'];
+    if (tag.isEmpty || raw is! List) return const SizedBox.shrink();
+    final tokens = raw.whereType<Map>().toList();
+    final index = tokens.indexWhere(
+      (token) => '${token['sheetTag'] ?? token['id'] ?? ''}' == tag,
+    );
+    if (index < 0) return const SizedBox.shrink();
+    final token = Map<String, dynamic>.from(tokens[index]);
+    final activeIndex =
+        (realtimeIsMasterRole
+                ? masterInitiativeActiveIndex
+                : readIntValue(
+                    realtimeVisibleInitiativeSnapshot['activeIndex'],
+                  ))
+            .clamp(0, tokens.length - 1);
+    final round = realtimeIsMasterRole
+        ? masterInitiativeRound
+        : readIntValue(realtimeVisibleInitiativeSnapshot['round']);
+    final activeTurnKey = '$round';
+    final actionRemaining =
+        index == activeIndex &&
+            !readBoolValue(token['actionUsed']) &&
+            masterInitiativeTokenCanAct(token) &&
+            artDebtForToken(token, 'action') == 0
+        ? 1
+        : 0;
+    final normalRemaining = masterInitiativeNormalReactionRemaining(
+      token,
+      round: round,
+    );
+    final fastRemaining = max(
+      0,
+      masterInitiativeFastReactionMax(token) -
+          masterInitiativeFastReactionUsedThisTurn(
+            token,
+            turnKey: activeTurnKey,
+          ),
+    );
+    final resources =
+        'A:$actionRemaining · R:$normalRemaining · RV:$fastRemaining';
+    return Tooltip(
+      message: t(
+        'Risorse rimanenti della tua scheda: Azioni $actionRemaining, Reazioni $normalRemaining, Reazioni veloci $fastRemaining.',
+        'Remaining resources for your sheet: Actions $actionRemaining, Reactions $normalRemaining, Fast reactions $fastRemaining.',
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: tertiaryColor.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: tertiaryColor.withValues(alpha: 0.35)),
+        ),
+        child: Text(
+          compact ? resources : 'Le tue rimanenti · $resources',
+          style: TextStyle(
+            color: tertiaryColor,
+            fontSize: compact ? 11 : 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+
   void enterLocalReferenceEncounter(String id) {
     if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
       return;
@@ -1406,6 +1562,8 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
           Text(
             'Cinque scontri indipendenti. Apri una tendina per vedere i partecipanti.',
           ),
+          const SizedBox(height: 6),
+          currentSheetInitiativeRemaining(),
           for (var index = 0; index < 5; index++)
             Builder(
               builder: (context) {
@@ -1419,6 +1577,15 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                 final tokens = (group['tokens'] as List? ?? [])
                     .whereType<Map>()
                     .toList();
+                final round = readIntValue(group['round']);
+                final activeIndex = tokens.isEmpty
+                    ? 0
+                    : readIntValue(
+                        group['activeIndex'],
+                      ).clamp(0, tokens.length - 1);
+                final activeTurnKey = tokens.isEmpty
+                    ? '$round:'
+                    : '$round:${tokens[activeIndex]['id'] ?? tokens[activeIndex]['sheetTag'] ?? ''}';
                 final selected =
                     id.isNotEmpty &&
                     id ==
@@ -1465,7 +1632,10 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                             final token = tokens[row];
                             return ListTile(
                               dense: true,
-                              title: Text('${token['name'] ?? "???"}'),
+                              title: Text(
+                                '${oculumReferenceEncounterTokenName(token)}'
+                                '${oculumCombatTokenHealthLabel(token).isEmpty ? '' : ' · ${oculumCombatTokenHealthLabel(token)}'}',
+                              ),
                               trailing: canRemoveOwnEncounterToken(token)
                                   ? IconButton(
                                       tooltip: 'Esci dallo scontro',
@@ -1478,8 +1648,57 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                                           ),
                                     )
                                   : null,
-                              subtitle: Text(
-                                '${token['type'] ?? "Partecipante"} · Iniziativa ${readIntValue(token['initiativeRoll'])} + ${readIntValue(token['initiativeBase'])} = ${readIntValue(token['initiativeTotal'])} · Riflessi ${readIntValue(token['reflexes'])} · ${masterInitiativeStatusLabel("${token['status'] ?? 'ready'}")}',
+                              subtitle: Wrap(
+                                spacing: 6,
+                                runSpacing: 3,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Text(
+                                    [
+                                      '${token['type'] ?? "Partecipante"}',
+                                      oculumReferenceEncounterInitiativeText(
+                                        token,
+                                      ),
+                                      'Riflessi ${readIntValue(token['reflexes'])}',
+                                      masterInitiativeStatusLabel(
+                                        "${token['status'] ?? 'ready'}",
+                                      ),
+                                    ].where((value) => value.isNotEmpty).join(' · '),
+                                  ),
+                                  for (final badge
+                                      in oculumReferenceEncounterResourceUsageBadges(
+                                        token,
+                                        round: round,
+                                        activeTurnKey: activeTurnKey,
+                                      ))
+                                    Tooltip(
+                                      message: badge.value,
+                                      child: Chip(
+                                        visualDensity: VisualDensity.compact,
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        labelPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 4,
+                                            ),
+                                        side: BorderSide(
+                                          color: tertiaryColor.withValues(
+                                            alpha: 0.55,
+                                          ),
+                                        ),
+                                        backgroundColor: tertiaryColor
+                                            .withValues(alpha: 0.10),
+                                        label: Text(
+                                          badge.key,
+                                          style: TextStyle(
+                                            color: tertiaryColor,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             );
                           },
@@ -1904,13 +2123,6 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
   }
 
   Future<void> requestEncounterReset() async {
-    if (!haPermessiMaster && realtimeService?.isConnected == true) {
-      requestMasterAction(
-        'encounter_reset',
-        'Reset round e turni dello scontro',
-      );
-      return;
-    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

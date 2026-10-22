@@ -1,7 +1,323 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test(
+    'Fallen Eye drops are unique per monster and strongest goes to lowest stats',
+    () {
+      final distributed = oculumDistributeFallenEyes(
+        eyes: [
+          {
+            'id': 'eye-goblin',
+            'sourceKillId': 'kill-goblin',
+            'sourcePower': 100,
+          },
+          {
+            'id': 'eye-goblin-duplicate',
+            'sourceKillId': 'kill-goblin',
+            'sourcePower': 100,
+          },
+          {
+            'id': 'eye-knight',
+            'sourceKillId': 'kill-knight',
+            'sourcePower': 500,
+          },
+        ],
+        participantStatTotals: {'strong': 40, 'weak': 12, 'mid': 24},
+        random: Random(4),
+      );
+      final assigned = distributed.values.expand((eyes) => eyes).toList();
+      expect(assigned, hasLength(2));
+      expect(
+        assigned.where((eye) => eye['sourceKillId'] == 'kill-goblin'),
+        hasLength(1),
+      );
+      expect(distributed['weak']!.single['sourceKillId'], 'kill-knight');
+    },
+  );
+
+  test(
+    'Summon EXP is one party pool, level-gated, and owner-gated by Fate',
+    () {
+      final summon = <String, dynamic>{
+        'id': 'summon-token-1',
+        'summonInstanceId': 'summon-1',
+        'isSummon': true,
+        'source': 'Evocazione',
+        'level': 4,
+        'grade': 1,
+        'statsTotal': 500,
+      };
+      final pool = [
+        summon,
+        {...summon, 'id': 'duplicate-summon-token'},
+      ];
+      const participantLevels = {'owner': 2, 'ally': 4, 'overlevelled': 5};
+      int xpFor(String tag, int level) => oculumEncounterExperienceForEnemies(
+        pool,
+        characterGrade: 0,
+        rebirth: false,
+        difficulty: 'normale',
+        characterTag: tag,
+        characterLevel: level,
+        participantLevels: participantLevels,
+      );
+
+      expect(
+        xpFor('owner', 2) + xpFor('ally', 4) + xpFor('overlevelled', 5),
+        6,
+      );
+      expect(xpFor('overlevelled', 5), 0);
+      expect(
+        oculumSummonExperienceShares(
+          enemy: {...summon, 'summonerTag': 'owner'},
+          participantLevels: participantLevels,
+        ),
+        {'ally': 6},
+      );
+      expect(
+        oculumSummonExperienceShares(
+          enemy: {...summon, 'summonerTag': 'owner', 'fateAllowsExp': true},
+          participantLevels: participantLevels,
+        ).values.fold<int>(0, (sum, share) => sum + share),
+        6,
+      );
+    },
+  );
+
+  test('health labels and actual death remain separate after a revival', () {
+    expect(oculumCombatHealthLabel(61, 100), '');
+    expect(oculumCombatHealthLabel(60, 100), 'Ferito');
+    expect(oculumCombatHealthLabel(31, 100), 'Ferito');
+    expect(oculumCombatHealthLabel(30, 100), 'Morente');
+    expect(oculumCombatHealthLabel(0, 100), '');
+    expect(oculumCombatConfirmedDeath(hp: 0, deathWounds: 0), isFalse);
+    expect(oculumCombatConfirmedDeath(hp: 0, deathWounds: 3), isTrue);
+    expect(oculumCombatConfirmedDeath(hp: 75, deathWounds: 3), isFalse);
+    expect(
+      oculumCombatTokenHealthLabel({
+        'status': 'ready',
+        'healthLabel': 'Ferito',
+      }),
+      'Ferito',
+    );
+    expect(
+      oculumCombatTokenHealthLabel({
+        'status': 'fled',
+        'healthLabel': 'Morente',
+      }),
+      '',
+    );
+  });
+  test('Dust favors missing resources and never grants Oculum at zero', () {
+    expect(
+      oculumDustDeficientStat(
+        {'resilienza': 10, 'volonta': 10, 'materia': 10, 'oculum': 10},
+        {'resilienza': 10, 'volonta': 2, 'materia': 8, 'oculum': 0},
+      ),
+      'volonta',
+    );
+    expect(
+      oculumDustDeficientStat(
+        {'resilienza': 10, 'volonta': 5, 'materia': 8, 'oculum': 0},
+        {'resilienza': 10, 'volonta': 5, 'materia': 8, 'oculum': 0},
+      ),
+      'volonta',
+    );
+  });
+  test('Dust chances shift at every twenty-five excess enemy stats', () {
+    expect(oculumDustTemporaryBonusChances(100, 100), [10, 60, 20, 10]);
+    expect(oculumDustTemporaryBonusChances(124, 100), [10, 60, 20, 10]);
+    expect(oculumDustTemporaryBonusChances(125, 100), [9.5, 58, 21.5, 11]);
+    for (var excess = 0; excess <= 10000; excess += 25) {
+      final chances = oculumDustTemporaryBonusChances(100 + excess, 100);
+      expect(chances.every((chance) => chance >= 0 && chance <= 100), isTrue);
+      expect(chances.reduce((a, b) => a + b), closeTo(100, .000001));
+    }
+    expect(oculumDustTemporaryBonusForRoll(100, 100, 0), 0);
+    expect(oculumDustTemporaryBonusForRoll(100, 100, 10), 1);
+    expect(oculumDustTemporaryBonusForRoll(100, 100, 70), 2);
+    expect(oculumDustTemporaryBonusForRoll(100, 100, 90), 3);
+  });
+  test('elite Dust limits override the ordinary three-per-fight cap', () {
+    for (final roll in [0, 9, 10, 69, 70, 99]) {
+      expect(
+        oculumEncounterResourcesForEnemies(
+          [
+            {'level': 1, 'grade': 1, 'statsTotal': 11, 'source': 'Mostro'},
+          ],
+          characterGrade: 0,
+          characterStats: 10,
+          percentileRoll: () => roll,
+        ).dust,
+        roll < 10
+            ? 1
+            : roll < 70
+            ? 2
+            : 3,
+      );
+    }
+    for (final entry in [('Mini Boss', 4), ('Boss', 5)]) {
+      expect(
+        oculumEncounterResourcesForEnemies(
+          [
+            {'level': 1, 'grade': 1, 'statsTotal': 11, 'source': entry.$1},
+          ],
+          characterGrade: 0,
+          characterStats: 10,
+        ).dust,
+        entry.$2,
+      );
+    }
+  });
+  test('Dust party shares twenty percent base and fifty percent additions', () {
+    expect(
+      oculumDustPartyExperienceShare(
+        baseExperience: 100,
+        additionalExperience: 60,
+      ),
+      50,
+    );
+    expect(
+      oculumDustPartyExperienceShare(
+        baseExperience: 100,
+        additionalExperience: 0,
+      ),
+      20,
+    );
+    expect(
+      oculumDustPartyExperienceShare(
+        baseExperience: 0,
+        additionalExperience: 60,
+      ),
+      30,
+    );
+    expect(
+      oculumDustPartyExperienceShare(
+        baseExperience: -10,
+        additionalExperience: -20,
+      ),
+      0,
+    );
+  });
+  test('kill resources are personal, grade scaled and capped per fight', () {
+    expect(
+      oculumEncounterEnemyKilled({
+        'side': 'enemy',
+        'status': 'downed',
+        'currentHp': 0,
+      }),
+      isFalse,
+    );
+    expect(
+      oculumEncounterEnemyKilled({'side': 'enemy', 'status': 'dead'}),
+      isTrue,
+    );
+    final enemies = [
+      {'level': 2, 'grade': 0, 'statsTotal': 11},
+      {'level': 5, 'grade': 2, 'statsTotal': 12},
+      {'level': 1, 'grade': 12, 'statsTotal': 100},
+    ];
+    expect(
+      oculumEncounterResourcesForEnemies(
+        enemies,
+        characterGrade: 0,
+        characterStats: 10,
+      ),
+      (obser: 50, dust: 3),
+    );
+    expect(
+      oculumEncounterResourcesForEnemies(
+        enemies,
+        characterGrade: 1,
+        characterStats: 100,
+      ),
+      (obser: 50, dust: 0),
+    );
+    expect(
+      oculumEncounterResourcesForEnemies(
+        enemies.take(1),
+        characterGrade: 0,
+        characterStats: 10,
+      ),
+      (obser: 2, dust: 1),
+    );
+  });
+  test('Dust experience uses one die and adds sixty per character grade', () {
+    expect(oculumDustExperienceReward(die: 1, grade: 0, totalStats: 10), (
+      common: 21,
+      personal: 26,
+    ));
+    expect(oculumDustExperienceReward(die: 90, grade: 2, totalStats: 20), (
+      common: 230,
+      personal: 240,
+    ));
+  });
+  test(
+    'encounter rewards compare each enemy grade with the recipient grade',
+    () {
+      expect(oculumExperienceGradeMultiplier(1, 1), 1);
+      expect(oculumExperienceGradeMultiplier(1, 0), closeTo(1.2, 0.000001));
+      expect(oculumExperienceGradeMultiplier(0, 1), 1);
+      expect(oculumExperienceGradeLabel(0), '0');
+      expect(oculumExperienceGradeLabel(12), 'XII');
+      final enemies = <Map<String, dynamic>>[
+        {'level': 2, 'statsTotal': 10, 'grade': 0, 'source': 'Mostro'},
+        {'level': 5, 'statsTotal': 15, 'grade': 1, 'source': 'Mostro'},
+      ];
+      expect(
+        oculumEncounterExperienceForEnemies(
+          enemies,
+          characterGrade: 0,
+          rebirth: false,
+          difficulty: 'normale',
+        ),
+        136,
+      );
+      expect(
+        oculumEncounterExperienceForEnemies(
+          enemies,
+          characterGrade: 1,
+          rebirth: false,
+          difficulty: 'normale',
+        ),
+        132,
+      );
+      for (final source in ['Mostro', 'Mini Boss', 'Boss']) {
+        final sourceId = source == 'Mostro'
+            ? 'normale'
+            : source == 'Boss'
+            ? 'boss'
+            : 'miniboss';
+        final expected =
+            (20 *
+                        oculumEnemyExpMultiplier(
+                          source: sourceId,
+                          difficulty: 'normale',
+                        ) *
+                        1.2 +
+                    oculumGradeExperienceBonus(
+                      enemyGrade: 1,
+                      rebirth: false,
+                      difficulty: 'normale',
+                    ))
+                .round();
+        expect(
+          oculumEncounterExperienceForEnemies(
+            [
+              {'level': 5, 'statsTotal': 15, 'grade': 1, 'source': source},
+            ],
+            characterGrade: 0,
+            rebirth: false,
+            difficulty: 'normale',
+          ),
+          expected,
+        );
+      }
+    },
+  );
   test('attack limits use explicit creature counts and Oculum limits', () {
     expect(oculumAttackTargetLimits('uno o due avversari', 9), (
       minimum: 1,

@@ -3,6 +3,25 @@ import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 
 void main() {
+  test('monster relic catalog contains at least 500 skill-based variants', () {
+    final catalog = oculumMonsterEquipmentCatalogue();
+    expect(catalog.length, greaterThanOrEqualTo(500));
+    expect(
+      catalog.map((item) => item.monsterLoot['id']).toSet().length,
+      catalog.length,
+    );
+    expect(catalog.every((item) => item.ability != null), isTrue);
+    expect(
+      catalog.every(
+        (item) =>
+            readIntValue(item.craftData['monsterRelicMarketPrice']) > 0 &&
+            '${item.craftData['sourceSkillId']}'.isNotEmpty &&
+            item.monsterLoot['rareMonsterEquipment'] == true,
+      ),
+      isTrue,
+    );
+  });
+
   test(
     'all grade boundaries come from level, including the gap at level 20',
     () {

@@ -315,10 +315,13 @@ void main() {
           'type': 'NPC',
           'currentHp': 100,
           'maxHp': 100,
+          'currentOculum': 2,
+          'maxOculum': 5,
           'status': 'ready',
           'downed': false,
         });
         state.masterInitiativeRound = 0;
+        state.modalitaMaster = true;
       });
       OculumPerformanceProbe(state).activateInitiative(0);
       await tester.pumpAndSettle();
@@ -331,10 +334,26 @@ void main() {
       final nextTurn = find.textContaining(RegExp(r'^(Prossimo|Prox)$')).first;
       await tester.ensureVisible(nextTurn);
       await tester.tap(nextTurn);
+      await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
       expect(state.masterInitiativeActiveIndex, 1);
       expect(find.text('Turno attivo: Sentinella dei turni'), findsOneWidget);
+      expect(find.text('HP 100/100'), findsWidgets);
+      expect(find.text('OCU 2/5'), findsOneWidget);
+      final sideMenu = find.byTooltip('Stato turno').last;
+      await tester.ensureVisible(sideMenu);
+      await tester.pumpAndSettle();
+      await tester.tap(sideMenu);
+      await tester.pumpAndSettle();
+      final markEnemy = find.text('Occhio rosso · Nemico').last;
+      expect(markEnemy, findsOneWidget);
+      await tester.tap(markEnemy);
+      await tester.pumpAndSettle();
+      expect(state.masterInitiativeTokens.last['side'], 'enemy');
+      await tester.ensureVisible(nextTurn);
+      await tester.pumpAndSettle();
       await tester.tap(nextTurn);
+      await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
       expect(state.masterInitiativeRound, 1);
       expect(find.text('Iniziativa Master - Round 1'), findsOneWidget);
@@ -494,13 +513,25 @@ void main() {
           query,
         );
         await tester.pumpAndSettle();
+        final quickFunctionLabel = state.linguaInglese
+            ? 'Quick function'
+            : 'Funzione rapida';
+        final dialog = find.byType(AlertDialog);
+        final quickFunction = find.descendant(
+          of: dialog,
+          matching: find.text(quickFunctionLabel),
+        );
+        final scrollable = find.byType(Scrollable).last;
+        await tester.scrollUntilVisible(
+          quickFunction,
+          120,
+          scrollable: scrollable,
+        );
+        expect(quickFunction, findsOneWidget);
         await tester.tap(
           find
-              .descendant(
-                of: find.byType(AlertDialog),
-                matching: find.text(query),
-              )
-              .last,
+              .ancestor(of: quickFunction, matching: find.byType(ListTile))
+              .first,
         );
         await tester.pumpAndSettle();
       }

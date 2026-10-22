@@ -1,5 +1,27 @@
 part of '../../main.dart';
 
+String oculumCombatHealthLabel(int hp, int maximumHp) {
+  if (maximumHp <= 0 || hp <= 0) return '';
+  if (hp * 100 <= maximumHp * 30) return 'Morente';
+  if (hp * 100 <= maximumHp * 60) return 'Ferito';
+  return '';
+}
+
+bool oculumCombatConfirmedDeath({required int hp, required int deathWounds}) =>
+    hp <= 0 && deathWounds >= 3;
+
+String oculumCombatTokenHealthLabel(Map token) {
+  if (const {'dead', 'fled', 'expired'}.contains(token['status'])) return '';
+  if (token.containsKey('currentHp') && token.containsKey('maxHp')) {
+    return oculumCombatHealthLabel(
+      readIntValue(token['currentHp']),
+      readIntValue(token['maxHp']),
+    );
+  }
+  final label = '${token['healthLabel'] ?? ''}';
+  return const {'Ferito', 'Morente'}.contains(label) ? label : '';
+}
+
 int oculumHpMultiplierForGrade(int grade) =>
     10 + 5 * grade.clamp(0, 12).toInt();
 
@@ -94,6 +116,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
   bool masterInitiativeTokenCanAct(Map<String, dynamic> token) {
     return !readBoolValue(token['shadowCloneExpired']) &&
         '${token['status'] ?? ''}' != 'expired' &&
+        '${token['status'] ?? ''}' != 'fled' &&
         !masterInitiativeTokenIsDead(token) &&
         !masterInitiativeTokenIsDowned(token);
   }
@@ -172,7 +195,21 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
             schedePersonaggio[index]['volontaVitale'],
           ).clamp(0, vitalWillLimit).toInt();
     token['downed'] = downed;
-    if (!masterInitiativeTokenIsDead(token)) {
+    if (oculumCombatConfirmedDeath(
+      hp: readIntValue(token['currentHp']),
+      deathWounds: readIntValue(token['deathWounds']),
+    )) {
+      token['status'] = 'dead';
+      token['automaticDeath'] = true;
+      token['downed'] = false;
+      generateMonsterLootForDeath(index);
+    } else if (readIntValue(token['currentHp']) > 0 &&
+        readBoolValue(token['automaticDeath'])) {
+      token['automaticDeath'] = false;
+      token['downed'] = false;
+      token['status'] = 'ready';
+    } else if (!masterInitiativeTokenIsDead(token) &&
+        token['status'] != 'fled') {
       token['status'] = downed ? 'downed' : 'ready';
     }
     token['updatedAt'] = DateTime.now().toIso8601String();

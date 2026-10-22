@@ -3,10 +3,17 @@ import 'package:flutter/material.dart';
 import '../game/oculum_opposed_attack.dart';
 
 class OculumAttackChoice {
-  const OculumAttackChoice(this.id, this.name, this.bonus, {this.color});
+  const OculumAttackChoice(
+    this.id,
+    this.name,
+    this.bonus, {
+    this.color,
+    this.featured = false,
+  });
   final String id, name;
   final int bonus;
   final Color? color;
+  final bool featured;
 }
 
 class OculumCombatElement {
@@ -71,6 +78,8 @@ class OculumAttackPlanner extends StatefulWidget {
     this.maximumTargets = 1,
     this.elements = const [],
     this.initialElement = 'fisico',
+    this.availableForTarget,
+    this.knowledgeRevision,
   });
   final Map<String, String> targets;
   final List<OculumAttackChoice> choices;
@@ -84,6 +93,9 @@ class OculumAttackPlanner extends StatefulWidget {
   final int minimumTargets, maximumTargets;
   final List<OculumCombatElement> elements;
   final String initialElement;
+  final bool Function(String target, OculumAttackChoice choice)?
+  availableForTarget;
+  final Listenable? knowledgeRevision;
   @override
   State<OculumAttackPlanner> createState() => _OculumAttackPlannerState();
 }
@@ -113,9 +125,33 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
           )
           .map((option) => option.id)
           .toSet()
+        ..addAll(
+          widget.choices
+              .where((option) => option.featured)
+              .map((option) => option.id),
+        )
         ..add(choice);
   final reason = TextEditingController();
   final extraTargets = <String>[];
+
+  @override
+  void initState() {
+    super.initState();
+    widget.knowledgeRevision?.addListener(_knowledgeChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant OculumAttackPlanner oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.knowledgeRevision != widget.knowledgeRevision) {
+      oldWidget.knowledgeRevision?.removeListener(_knowledgeChanged);
+      widget.knowledgeRevision?.addListener(_knowledgeChanged);
+    }
+  }
+
+  void _knowledgeChanged() {
+    if (mounted) setState(() {});
+  }
 
   Future<void> chooseElement() async {
     if (widget.elements.isEmpty) return;
@@ -160,9 +196,21 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
     return result.skip(1).toList();
   }
 
+  bool targetAllowsSelectedChoice(String targetId) {
+    final option = widget.choices
+        .where((candidate) => candidate.id == choice)
+        .firstOrNull;
+    return option == null ||
+        (widget.availableForTarget?.call(targetId, option) ?? true);
+  }
+
   Future<void> addChoice() async {
     final hidden = widget.choices
-        .where((option) => !visible.contains(option.id))
+        .where(
+          (option) =>
+              !visible.contains(option.id) &&
+              (widget.availableForTarget?.call(target, option) ?? true),
+        )
         .toList();
     final selected = await showDialog<String>(
       context: context,
@@ -185,6 +233,7 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
 
   @override
   void dispose() {
+    widget.knowledgeRevision?.removeListener(_knowledgeChanged);
     reason.dispose();
     super.dispose();
   }
@@ -236,6 +285,7 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
                   setState(() {
                     target = value;
                     extraTargets.removeWhere((id) => id == value);
+                    if (choice == 'precisione_punto_debole') choice = 'vc';
                   });
                 }
               },
@@ -279,8 +329,9 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
                   title: Text(entry.value),
                   value: extraTargets.contains(entry.key),
                   onChanged:
-                      extraTargets.contains(entry.key) ||
-                          1 + extraTargets.length < widget.maximumTargets
+                      targetAllowsSelectedChoice(entry.key) &&
+                          (extraTargets.contains(entry.key) ||
+                              1 + extraTargets.length < widget.maximumTargets)
                       ? (checked) => setState(() {
                           if (checked == true) {
                             extraTargets.add(entry.key);
@@ -313,7 +364,10 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
                 runSpacing: 8,
                 children: [
                   for (final option in widget.choices.where(
-                    (option) => visible.contains(option.id),
+                    (option) =>
+                        visible.contains(option.id) &&
+                        (widget.availableForTarget?.call(target, option) ??
+                            true),
                   ))
                     Builder(
                       builder: (_) {

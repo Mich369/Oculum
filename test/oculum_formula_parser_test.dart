@@ -960,7 +960,7 @@ void main() {
   test('moltiplicatori EXP Boss e Mini-Boss seguono la difficoltà', () {
     expect(
       oculumEnemyExpMultiplier(source: 'boss', difficulty: 'normale'),
-      1.5,
+      2.0,
     );
     expect(
       oculumEnemyExpMultiplier(source: 'miniboss', difficulty: 'normale'),
@@ -968,13 +968,13 @@ void main() {
     );
     expect(
       oculumEnemyExpMultiplier(source: 'boss', difficulty: 'difficile'),
-      closeTo(1.4, 0.000001),
+      closeTo(1.9, 0.000001),
     );
     expect(
       oculumEnemyExpMultiplier(source: 'miniboss', difficulty: 'difficile'),
       1.2,
     );
-    expect(oculumEnemyExpMultiplier(source: 'boss', difficulty: 'facile'), 1.6);
+    expect(oculumEnemyExpMultiplier(source: 'boss', difficulty: 'facile'), 2.1);
     expect(
       oculumEnemyExpMultiplier(source: 'miniboss', difficulty: 'facile'),
       closeTo(1.4, 0.000001),

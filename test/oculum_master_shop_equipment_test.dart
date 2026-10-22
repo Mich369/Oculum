@@ -4,6 +4,50 @@ import 'package:oculum/main.dart';
 import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
+  test(
+    'common title slots can hold Fate and other dedicated title variants',
+    () {
+      expect(
+        oculumChooseTitleSlot(
+          preferredPool: 'Titoli del Fato',
+          preferredUsed: 1,
+          preferredCapacity: 1,
+          standardUsed: 2,
+          standardCapacity: 6,
+        ),
+        'Standard',
+      );
+      expect(
+        oculumChooseTitleSlot(
+          preferredPool: 'Titoli del Fato',
+          preferredUsed: 1,
+          preferredCapacity: 1,
+          standardUsed: 6,
+          standardCapacity: 6,
+        ),
+        isNull,
+      );
+      expect(
+        oculumChooseTitleSlot(
+          preferredPool: 'Titoli del Fato',
+          preferredUsed: 0,
+          preferredCapacity: 1,
+          standardUsed: 6,
+          standardCapacity: 6,
+        ),
+        'Titoli del Fato',
+      );
+    },
+  );
+  test(
+    'monster relics resell for 30 percent of their moderate market price',
+    () {
+      expect(oculumMonsterRelicMarketPrice(level: 0, grade: 0), 50);
+      expect(oculumMonsterRelicMarketPrice(level: 30, grade: 2), 390);
+      expect(oculumMonsterRelicSaleValueForMarketPrice(390), 117);
+      expect(oculumMonsterRelicSaleValueForMarketPrice(390, quantity: 2), 234);
+    },
+  );
   test('monster food learning uses percentage points and safe bounds', () {
     expect(oculumMonsterFoodLearningChance(5), 5.5);
     expect(oculumMonsterFoodLearningChance(-10), 0);
@@ -173,6 +217,73 @@ void main() {
       probe.encounterRewards([reward]);
       probe.encounterRewards([reward]);
       expect(state.expController.text, '23');
+      state.gradoController.text = '0';
+      state.schedePersonaggio.add(<String, dynamic>{
+        'id': 'EXP_ALLY',
+        'sheetTag': 'EXP_ALLY',
+        'nome': 'Alleato grado I',
+        'grado': '1',
+        'rebirthato': false,
+      });
+      final currentSheet = state.schedaCorrente;
+      state.schedaCorrente = state.schedePersonaggio.length - 1;
+      final allyTag = probe.currentTag();
+      state.schedaCorrente = currentSheet;
+      final gradedReward = <String, dynamic>{
+        'id': 'graded-kill',
+        'amount': 20,
+        'participants': [tag, allyTag],
+        'defeated': [
+          {'level': 5, 'statsTotal': 15, 'grade': 1, 'source': 'Mostro'},
+        ],
+      };
+      probe.encounterRewards([gradedReward]);
+      probe.encounterRewards([gradedReward]);
+      expect(state.expController.text, '147');
+      expect(state.obserController.text, isNotEmpty);
+      final dustAfterReward = state.ascensionDustController.text;
+      final obserAfterReward = state.obserController.text;
+      state.onlineCombatRequests.remove('reward:graded-kill:$tag');
+      probe.encounterRewards([gradedReward]);
+      expect(state.expController.text, '147');
+      expect(state.ascensionDustController.text, dustAfterReward);
+      expect(state.obserController.text, obserAfterReward);
+      expect(
+        state.onlineCombatRequests['reward:graded-kill:$allyTag']['amount'],
+        120,
+      );
+      expect(
+        state.onlineCombatRequests['reward:graded-kill:$allyTag']['status'],
+        'queued',
+      );
+      state.ascensionDustController.text = '5';
+      state.ascensionDustUsataOggi = 0;
+      if ((state.hiddenEyeStats as List).isEmpty) {
+        state.hiddenEyeStats.add(
+          HiddenEyeStat(id: 'forza', nome: 'Forza', descrizione: ''),
+        );
+      }
+      final highest = probe.highestDustSubtraits().first;
+      final beforeDustExp = readIntValue(state.expController.text);
+      final beforeStatExp = readIntValue(
+        state.esperienzaCriticaStatistiche['volonta'],
+      );
+      expect(probe.dustExperience(highest, 1), isTrue);
+      expect(state.ascensionDustController.text, '4');
+      expect(
+        readIntValue(state.esperienzaCriticaStatistiche['volonta']),
+        beforeStatExp + 21,
+      );
+      expect(
+        readIntValue(state.expController.text),
+        greaterThan(beforeDustExp),
+      );
+      state.ascensionDustUsataOggi = 3;
+      expect(
+        probe.dustExperience(probe.highestDustSubtraits().first, 90),
+        isFalse,
+      );
+      expect(state.ascensionDustController.text, '4');
       final request = <String, dynamic>{
         'id': 'unique-roll',
         'targetTag': tag,

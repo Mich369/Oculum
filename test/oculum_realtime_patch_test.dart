@@ -114,6 +114,160 @@ void main() {
     expect(patch, {'currentHp': '90'});
   });
 
+  test(
+    'online shares purchased items but keeps each merchant stock private',
+    () {
+      final ownerSheet = <String, dynamic>{
+        'merchantStock': [
+          {'id': 'owner-only-offer'},
+        ],
+        'merchantStockSessionId': 'owner-session',
+        'merchantProfiles': [
+          {
+            'id': 'owner-market',
+            'name': 'Mercato nero',
+            'shopType': 'mercato_nero',
+            'pricePercent': 115,
+            'stock': [
+              {'id': 'personal-offer'},
+            ],
+            'offerSelections': {
+              'mercato_nero': ['personal-offer'],
+            },
+          },
+        ],
+        'merchantActiveProfileId': 'owner-market',
+        'merchantDustPurchasedSinceLongRest': true,
+        'merchantDustPurchaseCount': 2,
+        'merchantHerbalEffects': [
+          {'effect': 'vampirismo', 'shortRestsRemaining': 1},
+        ],
+        'inventario': <Map<String, dynamic>>[],
+      };
+      final outgoing = oculumRealtimeStripPrivateMerchantState(
+        Map<String, dynamic>.from(ownerSheet),
+      );
+
+      expect(outgoing.keys, isNot(contains('merchantStock')));
+      expect(outgoing['merchantProfiles'], [
+        {
+          'id': 'owner-market',
+          'name': 'Mercato nero',
+          'shopType': 'mercato_nero',
+          'pricePercent': 115,
+        },
+      ]);
+      expect(
+        outgoing['merchantHerbalEffects'],
+        ownerSheet['merchantHerbalEffects'],
+      );
+      expect(ownerSheet['merchantStock'], isNotEmpty);
+
+      final stockOnlyChange = <String, dynamic>{
+        ...ownerSheet,
+        'merchantProfiles': [
+          {
+            ...Map<String, dynamic>.from(ownerSheet['merchantProfiles']!.first),
+            'stock': [
+              {'id': 'new-private-offer'},
+            ],
+            'offerSelections': {
+              'mercato_nero': ['new-private-offer'],
+            },
+          },
+        ],
+      };
+      expect(
+        oculumRealtimeBuildSheetPatch(ownerSheet, stockOnlyChange),
+        isEmpty,
+      );
+
+      final next = <String, dynamic>{
+        ...ownerSheet,
+        'merchantStock': [
+          {'id': 'different-private-offer'},
+        ],
+        'merchantProfiles': [
+          {'id': 'different-private-market'},
+        ],
+        'inventario': [
+          {'nome': 'Arma acquistata'},
+        ],
+      };
+      final patch = oculumRealtimeBuildSheetPatch(ownerSheet, next);
+      expect(patch, {
+        'merchantProfiles': [
+          {
+            'id': 'different-private-market',
+            'name': 'Mercante di fiducia',
+            'shopType': 'tutti',
+            'pricePercent': 100,
+          },
+        ],
+        'inventario': [
+          {'nome': 'Arma acquistata'},
+        ],
+      });
+    },
+  );
+
+  test('roster mercanti condiviso conserva scorte locali per profilo', () {
+    final merged = oculumRealtimeMergeMerchantRoster(
+      [
+        {
+          'id': 'market-a',
+          'name': 'Banco A',
+          'shopType': 'chef',
+          'stock': [
+            {'id': 'solo-a'},
+          ],
+          'offerSelections': {
+            'chef': ['solo-a'],
+          },
+        },
+      ],
+      [
+        {
+          'id': 'market-a',
+          'name': 'Banco A aggiornato',
+          'shopType': 'mercato_nero',
+          'pricePercent': 110,
+          'stock': [
+            {'id': 'must-not-copy'},
+          ],
+        },
+        {
+          'id': 'market-b',
+          'name': 'Banco B',
+          'shopType': 'fabbro',
+          'pricePercent': 100,
+        },
+      ],
+    );
+
+    expect(merged, [
+      {
+        'id': 'market-a',
+        'name': 'Banco A aggiornato',
+        'shopType': 'mercato_nero',
+        'stock': [
+          {'id': 'solo-a'},
+        ],
+        'offerSelections': {
+          'chef': ['solo-a'],
+        },
+        'pricePercent': 110,
+      },
+      {
+        'id': 'market-b',
+        'name': 'Banco B',
+        'shopType': 'fabbro',
+        'pricePercent': 100,
+        'stock': <dynamic>[],
+      },
+    ]);
+  });
+
   test('merge patch HP preserva immagine, inventario e note', () {
     final existing = <String, dynamic>{
       'nome': 'Player',
@@ -162,19 +316,63 @@ void main() {
     expect(merged['immaginePersonaggioBase64'], 'image-data');
   });
 
-  test('fallback patch non manda campi pesanti non autorizzati', () {
+  test('un edit esplicito può svuotare le collezioni della scheda', () {
+    final existing = <String, dynamic>{
+      'inventario': [
+        {'nome': 'Vecchio'},
+      ],
+      'skills': [
+        {'nome': 'Skill'},
+      ],
+    };
+    final patch = <String, dynamic>{
+      'inventario': <Map<String, dynamic>>[],
+      'skills': <Map<String, dynamic>>[],
+    };
+
+    expect(oculumRealtimeMergeSheetPatch(existing, patch), existing);
+    expect(
+      oculumRealtimeMergeSheetPatch(
+        existing,
+        patch,
+        allowClearFields: {'inventario', 'skills'},
+      ),
+      {
+        'inventario': <Map<String, dynamic>>[],
+        'skills': <Map<String, dynamic>>[],
+      },
+    );
+  });
+
+  test('fallback patch condivide i dati della scheda ma filtra i segreti', () {
     final current = <String, dynamic>{
       'currentHp': '70',
       'immaginePersonaggioBase64': 'image-data',
       'background': 'testo lungo',
       'relayServerUrl': 'server privato',
+      'partyMembri': [
+        {'tag': 'ALLY'},
+      ],
+      'skills': [
+        {'name': 'Skill'},
+      ],
+      'arti': [
+        {'name': 'Art'},
+      ],
+      'inventario': [
+        {'name': 'Oggetto'},
+      ],
     };
 
     final patch = oculumRealtimeFallbackEditablePatch(current);
 
     expect(patch['currentHp'], '70');
     expect(patch.containsKey('immaginePersonaggioBase64'), isFalse);
-    expect(patch.containsKey('background'), isFalse);
+    expect(patch['background'], 'testo lungo');
+    expect(patch['partyMembri'], current['partyMembri']);
+    expect(patch['skills'], current['skills']);
+    expect(patch['arti'], current['arti']);
+    expect(patch['inventario'], current['inventario']);
     expect(patch.containsKey('relayServerUrl'), isFalse);
   });
 }

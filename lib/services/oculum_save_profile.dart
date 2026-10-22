@@ -15,6 +15,15 @@ String oculumProfiledStorageKey(String baseKey) {
   return profile.isEmpty ? baseKey : '${baseKey}__$profile';
 }
 
+/// Keeps Supabase identities isolated alongside each local save profile.
+/// The normal build retains its historical Auth key; e.g. the Test build
+/// gets a separate anonymous/user session so two app variants can join the
+/// same room as distinct participants on one Windows machine.
+String oculumAuthSessionStorageKey(String projectRef, {bool browser = false}) =>
+    oculumProfiledStorageKey(
+      'sb-$projectRef-auth-token${browser ? '-browser' : ''}',
+    );
+
 String get oculumProfileFileSuffix {
   final profile = oculumSaveProfile.trim();
   return profile.isEmpty ? '' : '_$profile';

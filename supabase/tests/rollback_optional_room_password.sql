@@ -26,4 +26,3 @@ drop function oculum_private.oculum_set_room_password(uuid,text);
 drop function oculum_private.oculum_open_room_with_password(text,text,boolean,text);
 drop table oculum_private.room_passwords;
 commit;
-

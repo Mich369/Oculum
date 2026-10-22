@@ -33,6 +33,24 @@ void main() {
     expect(restored.toJson()['leggenda'], restored.leggenda);
   });
 
+  test('grado e punti allocati del Titolo sopravvivono al JSON', () {
+    final title = OculumTitle.fromJson({
+      'nome': 'Titolo graduato',
+      'tipo': 'Titolo Azione',
+      'ottenimento': '',
+      'buff': '',
+      'puntoCieco': '',
+      'skill': '',
+      'richiede': '',
+      'grade': 2,
+      'gradeStatAllocation': {'resilienza': 5, 'volonta': 2, 'materia': 3},
+    });
+    final restored = OculumTitle.fromJson(title.toJson());
+    expect(restored.grade, 2);
+    expect(restored.gradeStatAllocation.values.reduce((a, b) => a + b), 10);
+    expect(restored.gradeStatAllocation['resilienza'], 5);
+  });
+
   test(
     'solo un Titolo indossato e prioritariamente con Open attivabile resta visibile',
     () {

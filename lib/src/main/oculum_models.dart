@@ -836,6 +836,22 @@ Map<int, int> oculumLevelMilestoneRewards(int level, Iterable<int> claimed) {
 
 int oculumStandardTitleCapacity(int grade) =>
     6 + (max(0, grade) ~/ 3).clamp(0, 3);
+
+String? oculumChooseTitleSlot({
+  required String preferredPool,
+  required int preferredUsed,
+  required int? preferredCapacity,
+  required int standardUsed,
+  required int standardCapacity,
+}) {
+  if (preferredPool == 'Standard' ||
+      preferredCapacity == null ||
+      preferredUsed < preferredCapacity) {
+    return preferredPool;
+  }
+  return standardUsed < standardCapacity ? 'Standard' : null;
+}
+
 int oculumLearningTitleCapacity(int grade) => 1 + max(0, grade);
 
 String oculumReputationFolderPath(String raw) => raw
@@ -1180,6 +1196,9 @@ class OculumTitle {
     this.skillCost,
     this.skillCooldown,
     this.skillCombatRole = '',
+    this.equippedSlotPool = '',
+    this.grade = 0,
+    this.gradeStatAllocation = const <String, int>{},
   }) {
     this.openExtra = openExtra ?? [];
     this.skillExtra = skillExtra ?? [];
@@ -1187,6 +1206,7 @@ class OculumTitle {
     this.openConditionalBuffs = openConditionalBuffs ?? [];
     this.openEffects = openEffects ?? [];
     this.skillEffects = skillEffects ?? [];
+    gradeStatAllocation = Map<String, int>.from(gradeStatAllocation);
   }
 
   String nome;
@@ -1236,6 +1256,12 @@ class OculumTitle {
   OculumAbilityCooldown? skillCooldown;
   String skillCombatRole;
 
+  /// Records which slot pool actually equipped this title. Empty is preserved
+  /// for older saves and means the title's original dedicated pool.
+  String equippedSlotPool;
+  int grade;
+  Map<String, int> gradeStatAllocation;
+
   Map<String, dynamic> toJson() {
     return {
       'nome': nome,
@@ -1248,6 +1274,10 @@ class OculumTitle {
       if (skillCost != null) 'skillCost': skillCost!.toJson(),
       if (skillCooldown != null) 'skillCooldown': skillCooldown!.toJson(),
       if (skillCombatRole.isNotEmpty) 'skillCombatRole': skillCombatRole,
+      if (equippedSlotPool.isNotEmpty) 'equippedSlotPool': equippedSlotPool,
+      'grade': grade,
+      if (gradeStatAllocation.isNotEmpty)
+        'gradeStatAllocation': gradeStatAllocation,
       'richiede': richiede,
       'resilienza': resilienza,
       'volonta': volonta,
@@ -1357,6 +1387,15 @@ class OculumTitle {
             )
           : null,
       skillCombatRole: '${json['skillCombatRole'] ?? ''}',
+      equippedSlotPool: '${json['equippedSlotPool'] ?? ''}',
+      grade: readIntValue(json['grade']).clamp(0, 12).toInt(),
+      gradeStatAllocation: json['gradeStatAllocation'] is Map
+          ? Map<String, int>.from(
+              (json['gradeStatAllocation'] as Map).map(
+                (key, value) => MapEntry('$key', readIntValue(value)),
+              ),
+            )
+          : <String, int>{},
       skillCost: json['skillCost'] is Map
           ? OculumSkillCost.fromJson(
               Map<String, dynamic>.from(json['skillCost']),

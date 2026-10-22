@@ -2,6 +2,60 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Revisione confermata — 22 ottobre 2026
+
+Padrone della Corruzione richiede un numero di colpi pieni pari alla differenza positiva di livello fra mostro e personaggio. PG livello 5 contro mostro livello 8: tre colpi pieni. Mezzi successi e colpi durante la ricarica non contano. Ogni tentativo spende il conteggio; se il mostro resiste, servono altri tre colpi. Il bonus passivo di resistenza +50 punti percentuali rimane valido anche in ricarica.
+Occhi del Mercato Nero: base casuale salvata 36–69 Obser al livello 0, crescita lineare fino a 115 al livello 10 e stesso incremento oltre il 10. Alla base si aggiungono statistiche totali del mostro ×2. Ogni blocco completo di 20 statistiche del mostro oltre il totale del personaggio aggiunge +25% al prezzo, sommando le percentuali e arrotondando per difetto. Con 18 statistiche, livello 10 e nessun surplus: 151 Obser prima del modificatore del mercante. Le offerte già salvate conservano il proprio prezzo.
+Raccoglitore è una famiglia di tredici oggetti, Grado 0–XII: ciascuno raddoppia la raccolta di Grado pari o inferiore. Non richiede livello 12. I prezzi e i dati rimangono modificabili; oggetti personalizzati già salvati non vengono riscritti.
+I Boss danno EXP ×2 in Normale e Oculum, ×2,1 in Facile e ×1,9 in Difficile. Mini Boss invariati. Fragilità Assoluta +90%, Distruttiva +100%, Semi Letale +250%, Letale +500%: Letale significa danno ×6. Queste correzioni prevalgono sulle descrizioni precedenti.
+
+## Mercanti, cibi e bevande — 22 ottobre 2026
+
+Ogni banco mostra a ogni personaggio la propria scorta di 6–9 offerte casuali, con una probabilità del 16% di mostrarne 12. I membri della campagna online condividono l’elenco dei mercanti e dei banchi, mentre scorte, offerte, prezzi personali, selezioni e contatori d’acquisto restano separati per personaggio. Questi dati personali non vengono trasferiti con la scheda; gli oggetti acquistati restano nell’inventario del personaggio e si sincronizzano normalmente. Il roster condiviso usa un evento leggero del party log e non reinvia la scheda o il catalogo completo. Il banco presenta solo oggetti delle proprie categorie e cerca di non mostrare più offerte della stessa famiglia o con lo stesso effetto. La selezione resta salvata per mercante, banco e personaggio; favorisce il livello del personaggio e considera in misura minore il budget. Quando un oggetto monouso viene acquistato, la sua offerta esaurita può essere sostituita, conservando le altre offerte disponibili. Gli inventari completi e le personalizzazioni salvate restano conservati.
+Il catalogo del cuoco contiene molti nuovi piatti e bevande: Ricordo Vitale, Vampirismo I–III, +30% Danni, +20% Difesa, Trasparenza, Invisibilità, Accelerato e Concentrato, oltre a pasti e infusi statistici. Le condizioni e i bonus a Danni e Difesa indicati come effetti da combattimento durano 3 turni. Vampirismo usa il normale calcolo Oculum e il suo stadio; Ricordo Vitale conserva anche il suo effetto di cura e il maggiore danno ricevuto. Effetti, stadi, costi, statistiche e durate sono modificabili nel JSON dell’offerta.
+
+## Vampirismo automatico online — 22 ottobre 2026
+
+Nei fight online Vampirismo recupera automaticamente Vita dopo la ricevuta dei danni effettivi del bersaglio. La base resta 3% per stadio I–XII, applicata alla Vita realmente sottratta: Scudi, HP temporanei e danni oltre la Vita rimasta non contano. Impostazioni iniziali modificabili: fattore Facile 1,25, Normale 1, Difficile 0,75, Oculum 0,5; limite per attacco pari al 3% della Vita massima per stadio, con lo stesso fattore. Tutti i bersagli del medesimo attacco condividono il limite. La cura arrotonda per difetto, minimo 1 soltanto con danno Vita e limite sufficiente; non supera la Vita sottratta né quella mancante. Maledetto e gli altri modificatori di cura restano validi.
+Ricevute duplicate o riprodotte non curano due volte. La cura raggiunge la scheda che ha attaccato anche se hai aperto un'altra scheda. Colpito manuale durante il fight online resta un resoconto e non assegna altra Vita. Senza una ricevuta della perdita effettiva non si usa il danno dichiarato come ripiego. Percentuali, limite e fattori sono modificabili nell'editor della condizione e salvati nel JSON. Offline resta il recupero precedente (3% dichiarato per stadio, minimo 3); resta il recupero pari allo stadio a inizio turno.
+
+## Padrone della Corruzione — 22 ottobre 2026
+
+La passiva Padrone della Corruzione aggiunge +50 punti percentuali alla resistenza alla Corruzione già presente: 20% diventa 70%, 50% diventa 100%. Il bonus si somma, non sostituisce la resistenza precedente. Rimane modificabile nell'editor della skill e conservato nel JSON, senza riscrivere le personalizzazioni salvate.
+Il bersaglio di livello pari o superiore alla fonte può tentare di resistere usando Crepa o Fermezza (Volontà): deve pareggiare o superare il tiro dell'attacco o della pergamena. A livello pari subisce −3 a questo tiro; a livello superiore non ha questa penalità. A livello inferiore non può effettuare questo tentativo. La resistenza percentuale passiva resta distinta e valida.
+Per il contagio, una resistenza totale del 70% riduce una probabilità iniziale del 100% al 30%; se la probabilità iniziale è 60%, la riduce al 18%. La probabilità non può scendere sotto zero; i valori salvati non vengono ridotti per applicare questo limite.
+
+## Turnistica online e condizioni — 22 ottobre 2026
+
+Al primo giro di iniziativa ogni partecipante riceve 1 Azione di base e 1 Reazione veloce; la Reazione normale di base non è ancora disponibile. Nei giri successivi, a inizio di ogni nuovo giro completo, si rinnova 1 Reazione veloce. Quando arriva il turno personale nel nuovo giro, si rinnova 1 Reazione normale di base. Le Reazioni veloci scadono a inizio giro; le normali scadono al successivo turno personale. Ogni reazione scaduta e non usata dà +3 al prossimo tiro, fino a un bonus in attesa massimo di +12. Le Azioni si rinnovano al turno personale. Usare una Reazione non avanza il turno attivo. Attacco, Aiuta compagno e difesa usano l’Azione durante il proprio turno oppure una Reazione disponibile fuori turno. Il primo tiro di difesa è gratuito; contro lo stesso attacco è consentito al massimo un secondo tentativo, spendendo una Reazione prima dei danni. Il Master approva soltanto l’ingresso di nuovi partecipanti. Le Reazioni ottenute contro un nemico sono utilizzabili anche per utility.
+Trasparenza: Velo +6 + livello. Invisibilità: Velo +18 + livello. Dopo una lettura utile di Percezione il bonus attivo si dimezza per difetto fino a fine fight. Bonus e durata restano modificabili nelle condizioni e nel JSON.
+Corrosione acida è una condizione elementale: danno diretto alla Vita a fine turno, oltre Difesa e Scudi. Lo Sputatore Corrosivo applica 2/3/6 danni nelle forme ai livelli 0/3/6; durata 2/3/5/6 turni in Facile/Normale/Difficile/Oculum, modificabile. Il Drop ottiene +3 in Difficile e +6 in Oculum.
+Doppio critico: 20 naturale e totale almeno doppio del tiro opposto; danni aggiuntivi 3×livello +6×Grado, minimo2, e +10 punti percentuali di fragilità. Doppia difesa: +9 al contrattacco di reazione contro l’attaccante. Medicina cura il totale del tiro, doppio sul critico naturale.
+Il Goblin Kamikaze ha soltanto Esplosione suicida: CD iniziale 2 turni, Vita massima danni a ogni avversario corrente, 150% danni Scudo e morte del goblin. Come Occhio dei Caduti segue lo schieramento del proprietario. Costi, effetti, formule e ricariche restano modificabili.
+Le schede ricevute dal Master sono copie online separate in fondo alle cartelle. Nome account o titolo possono cambiare senza creare un duplicato. L’aggiornamento periodico confronta le firme locali per evitare invii invariati.
+
+## Negozi e Potenziamento — 22 ottobre 2026
+
+POTENZIAMENTO
+Il vecchio nome «Oculum nei tiri fight» diventa «Potenziamento». Restano le soglie e i limiti di spesa già previsti per Livello e Grado. Ogni Oculum speso dà +3 al tiro; se il tiro è un attacco, dà anche +2 Danni per ogni punto speso.
+
+RACCOGLITORE
+Il Fabbro offre il Raccoglitore Grado 0/XII (Livello XII, Grado 0): tenendolo nell’inventario raddoppia i materiali da raccolta di Grado pari o inferiore al suo. È una passiva, non spende risorse durante la raccolta.
+
+MERCATO NERO
+L’Art «Archivio delle Scorie» costa inizialmente 18.000 Obser; «Colpo di Brace» costa 8.000 (+20 Danni Fuoco, recupero 3 turni) e «Taglio di Gelo» 12.000 (+30 Danni Ghiaccio, recupero 4 turni). Il banco può offrire Art Oculum e Skill del Monster Book, armi reliquia dei mostri, pergamene e al massimo tre pagine Monster Book diverse, dedicate a creature Erranti o Aberrazioni. Le pagine costano rispettivamente 56 e 90 Obser e rivelano nome, punto debole e resistenze. Le Art e le Skill mostro possono richiedere il livello attuale o fino a due livelli in più; sono acquistabili e conservano il requisito prima di essere utilizzabili. Anche i personaggi di livello 0 ricevono Skill e pergamene di Grado 0.
+L’Ascension Dust è acquistabile fino a tre volte per Riposo Lungo: la prima dose costa 30–50 Obser, le successive aumentano di 10 e la terza non supera 69. Per l’Occhio dei Caduti del Mercato Nero, la base salvata è casuale fra 36 e 69 Obser al livello 0, cresce in linea retta fino a 115 al livello 10 e prosegue con lo stesso incremento oltre il 10. Si aggiungono statistiche totali del mostro ×2 e +25% per ogni blocco completo di 20 statistiche oltre il totale del personaggio. Per esempio, al livello 10 con 18 statistiche il prezzo prima del modificatore del mercante è 151 Obser.
+Prezzi, effetti, forme, requisiti, quantità, formule e ricariche sono modificabili negli editor/offerta e conservati nel JSON.
+
+INFERMIERA EROICA
+• Cura delle ferite: 1 Obser ogni 10 HP mancanti; Scudo Oculum: 2 Obser per punto da ripristinare.
+• I pacchetti singoli iniziali costano 1 Obser per +1 Volontà o +1 Materia, 2 per +15 HP temporanei o +10 Scudo normale, e 3 per +1 Oculum attuale. I limiti della scheda restano rispettati.
+• Vitalium Grezzo, Vitalium Ridefinito e Fiala Depurante Eroica sono acquistabili e utilizzabili. Il Refull offre insieme ciò che manca di HP, statistiche attuali, Oculum, Scudo Oculum già sbloccato e integrità delle Art, e rimuove le condizioni negative. Il prezzo iniziale calcola HP a 1 Obser ogni 10, Scudo Oculum a 2 per punto, statistiche a 1 per punto, integrità Art a 1 ogni 10 e debuff a 5 ciascuno; applica il 15% di sconto e poi aggiunge il prezzo del buff.
+• Il Refull aggiunge gratuitamente +20 Scudo normale. All’apertura del banco il buff della prossima battaglia viene estratto fra +10%, +15%, +20%, +25% e +30% a Danni e Difesa; costa 1 Obser ogni 5 punti percentuali. Dura 9 turni in Facile, 6 in Medio, 3 in Difficile e 1 in Oculum.
+• Con probabilità iniziale modificabile dell’1%, l’offerta dà invece +40% o +60% a Danni e Difesa e aggiunge gratuitamente Scudo pari a un quarto degli HP massimi del personaggio, arrotondato per difetto. Gli HP temporanei casuali hanno tre fasce modificabili: 1% di 5 × Livello, 2% della metà del massimale per eccesso e 5% della metà per difetto.
+
+Il tasto Refull nella pagina Statistiche ripristina statistiche attuali, HP, Oculum e Scudo Oculum se già disponibile; non ricarica lo Scudo normale. Le quantità, probabilità, prezzi iniziali, buff, durate e formule del negozio sono salvati con l’offerta e restano modificabili.
+
 ## 1. Fondamento di Oculum
 
 Maestria (conferma 19 ottobre 2026): i primi sei punti dei Sottotratti richiedono 100/200/350/500/700/850 EXP; poi sempre 1000. VC, CM e Aiuta compagno richiedono 250/500/750, poi 1000; Iniziativa 200/400/600/800, poi 1000. Si contano solo i punti guadagnati tramite Maestria, con avanzo conservato. Punti base, assegnazioni manuali e buff non anticipano le soglie. Il guadagno EXP per tiro resta legato alla difficoltà.
@@ -83,7 +137,7 @@ DT, CM, VC, Danno, Difesa, Iniziativa e tiri di statistica contano anche Livello
 Iniziativa: 1d20 + Materia / 5 + Livello + Grado ×6.
 Movimento: 30 + Materia / 6 metri, più gli eventuali bonus @Movimento.
 
-Per il Danno totale somma danno base, bonus dell’arma equipaggiata e Livello + Grado ×6. Se impugni più armi, conta soltanto il bonus della più forte.
+Per il Danno totale somma danno base, bonus delle armi equipaggiate e Livello + Grado ×6. Puoi equipaggiare al massimo 3 + Grado ×5 armi. La più forte dà il proprio bonus completo; ogni altra arma dà un terzo del proprio bonus, arrotondato per difetto se ha sia livello sia Grado inferiori alla principale, altrimenti per eccesso. Arrotonda ciascuna secondaria separatamente e poi somma. Il bonus potenzia il danno inflitto senza richiedere un’aggiunta manuale della singola arma; i valori degli oggetti restano modificabili e salvati.
 
 La Difesa parte da (Volontà + Materia) / 2 + Livello + Grado ×6. Si aggiungono i bonus Difesa e Scudo degli oggetti equipaggiati che proteggono.
 
@@ -180,8 +234,8 @@ Fragilità:
 • Normale: +25%
 • Alta: +50%
 • Estrema: +75%
-• Distruttiva: +90%
-• Assoluta: +100%
+• Assoluta: +90%
+• Distruttiva: +100%
 • Semi Letale: +250%
 • Letale: +500%
 
@@ -292,7 +346,8 @@ EXP da mostri:
 - conta le statistiche maggiori delle tue;
 - ogni Grado del mostro superiore al tuo aggiunge x1.2;
 - i Mini-Boss danno x1.3 EXP;
-- i Boss danno x2 EXP.
+- i Boss danno x2 EXP;
+- a fine scontro si tira il Drop di ciascun mostro ucciso presente nella turnistica e si distribuisce al party partecipante.
 
 EXP da NPC:
 - conta il livello superiore al tuo e le statistiche maggiori delle tue;
@@ -342,7 +397,7 @@ Catena di Fragilità:
 - un colpo di sorpresa al punto debole può partire direttamente da stadi più alti.
 
 Danno letale:
-- con Fragilità Letale fai x5 danni e +5 danni.
+- con Fragilità Letale fai x6 danni (+500%); i bonus critici restano distinti.
 
 ## 18. Cerchi Magici
 
@@ -697,7 +752,7 @@ INIZIATIVA MASTER
 Nella pagina Master trovi il tracker iniziativa.
 Puoi aggiungere partecipanti manuali o usare schede già salvate nel party Master.
 Durante un fight usa prima il riquadro Turno attivo: mostra chi agisce ora, totale iniziativa e round.
-Online lo scontro attivo del Master viene condiviso automaticamente con i player della stanza. Il pulsante Pubblica permette anche un invio esplicito della turnistica compatta; resta visibile finché premi Chiudi player o invii un nuovo aggiornamento. Il player usa turni e bersagli del Master; la turnistica locale rimane conservata per il ritorno offline.
+Il pulsante Pubblica invia ai player la turnistica compatta; resta visibile finché premi Chiudi player o invii un nuovo aggiornamento.
 Se la turnistica e pubblicata, cambi turno, roll, riordino e rimozioni vengono reinviati automaticamente.
 L'aggiunta manuale e a scomparsa per non occupare spazio mentre combatti.
 Ogni partecipante ha:
@@ -1202,7 +1257,7 @@ Le ottimizzazioni devono alleggerire calcoli e ridisegni senza rimuovere decoraz
 
 ## Aggiornamento — Costrutto Rinsecchito, Larva Bianca e cartelle
 
-Costrutto Rinsecchito e Larva Bianca sono mostri iniziali di Grado 0–I. I loro punti base restano distinti dalla crescita per livello.
+Costrutto Rinsecchito e Larva Bianca sono mostri iniziali di Grado 0–I. Il punto debole della Larva Bianca è il ventre inferiore esposto mentre striscia. I loro punti base restano distinti dalla crescita per livello. La Patalpa evocata usa il budget di statistiche previsto per il suo livello, distribuito 20% Resilienza, 50% Volontà e 30% Materia; non avendo Oculum, nel 75% degli spawn non ottiene il punto extra di Resilienza per livello, mentre nel 25% lo ottiene. La scheda conserva distribuzione ed esito. Il Richiamo si usa una volta ogni tre fight completati, conteggiati dalla turnistica senza duplicare uno stesso scontro; fuori da uno scontro attivo, online o offline, il tasto tematico «CD ripristinata» azzera il cooldown.
 
 Il Costrutto parte con Resilienza 2, Volontà 3, Materia 1 e Oculum 3. Usa scudi e Ricordo Vitale: 1 Oculum all’attivazione e 1 a ogni successivo inizio turno, per tanti turni quanto Oculum prima dell’attivazione. Se non può mantenere il costo, l’effetto termina. Ramo spezzato aggiunge +4/+12/+34 e Oculum; nella seconda forma il bonus complessivo è ×1,5, nella terza ×2. Gli arrotondamenti sono per difetto. Il nucleo rotto debole copre Grado 0–III; i rami sono materiale. Il cuore raro cura il 90% della Vita massima, senza superarla, e concede Ricordo Vitale per 1d9 turni senza costo di mantenimento.
 
@@ -1528,7 +1583,7 @@ Le 12 Nuove Fasi:
 
 Armi: semplice +5, con Titolo +10, con Titolo gradato +20 per Grado.
 
-EXP mostri: conta livello e statistiche sopra le tue. Ogni Grado sopra il tuo aggiunge x1.2. Mini-Boss x1.3, Boss x1.5; Facile aggiunge 0.1 e Difficile sottrae 0.1 a entrambi.
+EXP mostri: conta livello e statistiche sopra le tue. Ogni Grado sopra il tuo aggiunge x1.2. Mini-Boss x1.3, Boss x2; Facile aggiunge 0.1 e Difficile sottrae 0.1 a entrambi.
 
 EXP NPC: conta livello e statistiche sopra le tue, va a te e a tutto il party. Ogni Grado sopra il tuo aggiunge x1.3.
 
@@ -1548,7 +1603,7 @@ Iniziativa: ottieni una Reazione.
 
 Catena: primo critico Fragilità Leggera; ogni critico successivo nello stesso fight aumenta lo stadio fino a Fragilità Letale. Un attacco di sorpresa al punto debole può partire da stadi più alti.
 
-Danno letale: x5 danni e +5 danni.
+Danno letale: x6 danni (+500%); i bonus critici restano distinti.
 
 ## 18. Cerchi Magici
 
@@ -1567,7 +1622,7 @@ Open: usabile una volta ogni 3 ore; ogni nuova sessione riduce il tempo di 1 ora
 
 Oculum: energia dell'oculus, usata per Oculum Art, cerchi magici e item specifici. Si ricarica dormendo, riposando o con oggetti.
 
-Sistema Plus: spendi Oculum per aumentare un tiro. 1 punto ogni 3 livelli, massimo 3 punti ogni 3 Gradi; al livello 9 senza Grado hai già 3 punti. Ogni punto dona +3 ai tiri in fight.
+Potenziamento: spendi Oculum entro gli stessi limiti di sblocco di Livello e Grado del sistema precedente. Ogni punto dona +3 al tiro; negli attacchi aggiunge anche +2 Danni per punto speso.
 
 ## 20. Titoli, Razze e Art
 
@@ -1863,13 +1918,25 @@ L'uso consuma una pergamena ed esegue la tecnica; non assegna automaticamente un
 
 BERSAGLI, SUPPORTI E OSSERVAZIONE — 19 OTTOBRE
 La fascia di bersagli/colpi è modificabile nell'editor degli effetti. Negli attacchi a più bersagli si divide il danno base fra i colpi scelti, arrotondando ogni quota per eccesso; i bonus piatti, per esempio «Danni +8», si aggiungono per intero a ciascun bersaglio. Ognuno tira la propria difesa e applica le proprie resistenze. Se la forma richiede più colpi dei bersagli distinti selezionati, quelli mancanti vengono assegnati casualmente ai bersagli già scelti; lo stesso nemico può essere colpito più volte. Costo e cooldown si pagano una volta. Ogni mostro non-NPC e non Pawn riceve alla generazione una tecnica ad area casuale, salvata e modificabile nella scheda, oltre alla variante individuale. Anche cure e supporti possono scegliere più destinatari, compresi se stessi; Aiuta compagno può dare un modificatore positivo o negativo al prossimo tiro e viene consumato una volta.
-Percezione, Investigazione, Furbizia e Valutazione sono azioni di osservazione: possono essere lanciate senza bersaglio per una lettura generale oppure su un partecipante. Nel pannello Tiri e azioni viene proposto il migliore fra questi quattro sottotratti. Per una lettura individuale, il totale Oculum deve raggiungere Livello + Velo; pari basta per rivelare livello esatto e probabilità. Se manca di al massimo 5, mostra una lettura approssimata con un livello ridotto dello scarto, minimo 0, ma dello stesso Grado; oltre 5 mostra solo «Non senti abbastanza». Un critico scopre il punto debole e concede a sé e alleati Fragilità Semi Letale verso quel nemico fino a fine fight. Gli scontri restano distinti, salvo unione esplicita del Master.
+Percezione, Investigazione, Furbizia e Valutazione sono azioni di osservazione: possono essere lanciate senza bersaglio per una lettura generale oppure su un partecipante. Nel pannello Tiri e azioni viene proposto il migliore fra questi quattro sottotratti. Per una lettura individuale, il totale Oculum deve raggiungere Livello + Velo; pari basta per rivelare livello esatto e probabilità. Se manca di al massimo 5, mostra una lettura approssimata con un livello ridotto dello scarto, minimo 0, ma dello stesso Grado; oltre 5 mostra solo «Non senti abbastanza». Solo una lettura esatta dimezza per difetto il bonus Velo attivo di Invisibilità o Trasparenza; il valore resta ridotto fino alla fine del fight per chi ha individuato il bersaglio e i suoi alleati, e si applica anche ai bonus personalizzati e alla crescita per livello. Le letture approssimate e «Non senti abbastanza» non lo modificano. Un critico scopre il punto debole e concede a sé e alleati Fragilità Semi Letale verso quel nemico fino a fine fight. Gli scontri restano distinti, salvo unione esplicita del Master.
+
+Il Monster Book mostra «Punto debole: ???» finché il party non ha scoperto la creatura o acquistato una pagina. Un critico di Percezione/Investigazione rivela un punto anatomico specifico e concede a sé e agli alleati Fragilità Semi Letale (+250 punti percentuali) contro quel bersaglio fino a fine scontro; il +250% si somma alla percentuale di danno già impostata. Quando il party conosce il punto debole, in combattimento si può scegliere «Precisione · punto debole»: usa il tiro Precisione e la sua progressione normale, quindi non garantisce il colpo. Una pagina del Mercato Nero rivela anche il nome della creatura, oltre al punto debole e alle resistenze, e sblocca il tiro mirato, senza applicare Semi Letale. Le scoperte sono permanenti nel Monster Book Party e si sincronizzano con un evento leggero per campagna. I preset distinguono anatomia e resistenze: ad esempio, un guscio riduce Taglio e Perforante e aumenta Contundente; i valori personalizzati del Master prevalgono. Il Mercato Nero offre al massimo tre pagine diverse di mostri erranti e aberrazioni vicine al livello e alle statistiche del personaggio, al costo di 56 Obser per gli erranti e 90 per le aberrazioni.
 
 In combattimento, Concentrazione si attiva con un tiro di sottotratto almeno 10 e dado naturale maggiore di 10: il prossimo attacco riceve +10% danni oppure la prossima difesa +12%, consumando il beneficio una sola volta. Adattamento, attivabile in Utility con sottotratto almeno 10, sul dado naturale sopra 10 riduce il prossimo danno ricevuto di 1 + (dado − 10), consumando la riduzione su un singolo evento di danno. Precisione da +6 applica al colpo una probabilità 80/15/5 di avanzare la Fragilità di uno/due/tre stadi; ogni punto oltre +6 sposta 1% da +1 a +2 fino a 50/45/5, poi da +2 a +3 fino a 50/40/10. Da +20 si ritaglia un 5% dalla fascia +1 per un esito speciale con danno ricevuto casuale dal 260% al 350%. Il valore massimo resta Fragilità Letale.
 
 Gli oggetti, le Skill, le Art e i Titoli possono aggiungere ai danni una frazione del tiro d'attacco con il parser `@Danni+1/2dadoriflessi` (sono validi anche `dadoforza`, `dadoschianto` e gli altri sottotratti). La frazione si calcola sul totale del tiro, arrotonda per difetto e si attiva solo se l'attacco usa il sottotratto indicato. Negli attacchi multipli questo bonus si applica a ciascun bersaglio. Esempio: Stocco dell'Eco Riflessa aggiunge 1/4 del tiro di Riflessi; Martello della Faglia 1/3 del tiro di Forza. Il testo resta modificabile nel campo buff dell'oggetto.
 
 Ogni arma, armatura e scudo mostra il proprio livello. La skill dell'oggetto richiede almeno quel livello del personaggio; una singola forma può richiederne uno maggiore. Il requisito viene verificato nell'elenco di combattimento e di nuovo quando si attiva la skill. Gli oggetti più alti del proprio Grado non si possono acquistare; quelli del proprio Grado o inferiore restano acquistabili anche se il loro livello skill non è ancora raggiunto.
+
+Il tiro Drop è il dado più il bonus Drop. Per la Fata Cacciatrice un totale pari o superiore a 50 garantisce entrambe le Mezze ali di fata; sotto 50 non le lascia. Il catalogo delle reliquie contiene almeno 500 armi, armature e scudi rari derivati dalle Art o Skill dei mostri: gli oggetti non copiano le statistiche base della creatura, mantengono elemento, grado e livello affrontato e bloccano le abilità fino al livello richiesto. Una uccisione può assegnare al massimo una reliquia, non l'intero catalogo; la soglia standard è 25 + 2 × Grado. I materiali hanno probabilità indipendenti, predefinita al 35% quando il mostro non ne specifica una. Le creature commestibili hanno il 45% di lasciare Carne di mostro cruda da cuocere; costrutti, golem e non morti non danno carne. È possibile ottenere solo carne o nessun bottino. L'Elmetto-scudo di melma blu usa l'elemento Slime e dà Scudo Oculum pari a 10 + il livello del mostro; i valori restano modificabili nel JSON dell'oggetto.
+
+Ogni reliquia equipaggiabile mostra un prezzo Obser e una probabilità di affisso al ritrovamento. Impostazione iniziale modificabile: 20% per un affisso +1 e 5% per il raro +2; il bersaglio casuale può essere una delle quattro statistiche o un sottotratto da combattimento. Il risultato e il comando @ effettivo vengono salvati nell'oggetto. I materiali e gli altri drop manuali hanno un prezzo iniziale basso, crescente con livello e Grado; prezzi e probabilità si possono modificare senza cambiare gli oggetti già salvati.
+
+L'Armatura del Patalpa mantiene +5 Difesa e ha Scudo `6 + 6 × livello dell’oggetto + 4 × Grado × livello dell’oggetto`: parte da 6, ogni livello aggiunge 6 e ogni Grado aggiunge altri 4 per livello. Conserva anche +2 Materia, +1 Volontà, +1 Resilienza e Richiamo del Patalpa. Il valore calcolato resta modificabile nel JSON dell'oggetto.
+
+Il Patalpa richiamato usa il budget del suo livello: 20% Resilienza, 50% Volontà, 30% Materia. Non avendo Oculum, nel 75% degli spawn non riceve il punto extra di Resilienza per livello; nel 25% lo riceve. Le statistiche restano editabili sulla scheda evocata.
+
+Quando un Titolo o un equipaggiamento viene graduato di un grado, si assegnano 10 punti fra Resilienza, Volontà, Materia e Oculum. Il selettore rapido usa − / valore / + e conferma solo quando tutti i punti sono distribuiti. Il grado e la distribuzione restano salvati nel JSON; sui Titoli valgono quando equipaggiati, sugli oggetti quando equipaggiati e il loro buff è attivo. I vecchi oggetti e Titoli senza distribuzione mantengono i loro bonus.
 
 Il Fabbro propone altre formule per sottotratto: Lancia della Soglia Velata (1/5 Velo), Pugnale della Misura Esatta (1/4 Precisione), oltre a corazza e scudo con skill difensive legate al loro livello. I minimi iniziali degli equipaggiamenti sono 50 Obser al Grado 0 e +70 per Grado (I 120, II 190, III 260, IV 330); sopra il livello base di 5 × Grado si aggiungono 10 Obser per livello. Le statistiche possono alzare il prezzo. Gli oggetti mostrano livello e grado in negozio e inventario; bonus, descrizioni, skill, costi, cooldown e formule restano modificabili nel JSON.
 
@@ -1879,6 +1946,7 @@ Riflessi concede una Reazione aggiuntiva contro l'attaccante con naturale 20 a +
 
 EMBLEMA, MERCANTI ED EDITOR — 20 OTTOBRE
 L'alchimista vende l'Emblema di evocazione dello Slime custode: prezzo base modificabile 200 Obser, più costoso di Pawn. Per l'intero scontro evoca un guardiano con 120 HP condivisi che protegge fino a tre partecipanti scelti, anche se stessi. Dopo le difese personali, il danno destinato alla Vita viene assorbito dallo slime; l'eccedenza prosegue sul bersaglio. Finché è vivo dona +3 a ciascuna delle quattro statistiche e +2 a tutti i sottotratti dei protetti. Non riceve la rigenerazione di Pawn. I bonus non alterano permanentemente le statistiche e terminano con l'evocazione o lo scontro. Il menu dell'oggetto permette di modificare Vita, destinatari, bonus e durata (0 turni significa fino a fine fight); i valori sono conservati nel JSON.
+L'alchimista può trovare anche un Occhio dei Caduti medio raro (probabilità iniziale 20%) o raro (5%): la presenza viene estratta una sola volta per mercante e resta salvata. La creatura è casuale fra quelle del Monster Book, esclusi gli NPC; le statistiche base non superano il totale delle tue e vengono scelte quanto più vicine possibile alla metà del tuo totale. Il medio raro è di livello pari al tuo meno un terzo arrotondato per eccesso, minimo 0; costa 56–89 + il tuo livello + Grado ×3 Obser. Il raro è di livello pari alla metà del tuo arrotondata per eccesso; somma alle tue quattro statistiche le statistiche base del mostro e costa 230–450 + metà del tuo livello arrotondata per difetto + Grado ×4 Obser. L'acquisto crea l'Occhio dei Caduti e consuma l'offerta; i prezzi e la scheda sorgente restano salvati.
 I prezzi dei mercanti sono personali e persistenti: ordinariamente ±5%; per nuovo negozio il 3% applica +25% e l'1% −15%, senza avviso al giocatore. Le percentuali si applicano al prezzo base, arrotondando per difetto con minimo 1 Obser. Riaprire o filtrare non cambia il prezzo. Il Segno del Chaos considera la spesa reale.
 Il catalogo Master nell'inventario offre filtri combinati per Grado e categoria. Un oggetto ibrido può comparire in più categorie. Le Open già usate sono nascoste dalle scorciatoie di combattimento fino al prossimo Riposo Lungo; le skill della Open conservano i propri comandi. Attivare una Open applica il suo Open Buff, compresi gli effetti riconosciuti dal testo. Gli editor consentono la scelta del pannello e mostrano gli effetti avanzati soltanto quando aperti; tipi, elementi e personalizzazioni restano salvati.
 
@@ -1892,10 +1960,6 @@ La Prima Art assegna uno slot Fato alla prima forma della prima skill, uno alla 
 Il Master avvia il Chained Fate e sceglie i partecipanti. Nei primi tre dungeon EXP ×2; ogni completamento dà uno slot Fato dedicato. Dai successivi EXP ×3 e nessuno slot aggiuntivo. Completare lo stesso dungeon due volte non ripete il premio.
 
 PARSER E MODIFICHE
-
-Oltre Difesa e Oltre Scudi si applicano soltanto al colpo preparato sul bersaglio scelto. Il parametro «Danni aggiuntivi agli Scudi (%)» aumenta il danno agli Scudi di quel colpo. Dopo il colpo questi parametri si consumano e non modificano le impostazioni permanenti del difensore. Tutti sono modificabili nell’editor e conservati nel JSON.
-
-Le Aberrazioni d’Oro e Marmo hanno varianti Solari offensive (Sole) e Angeliche equilibrate (Luce). Minore: Mostro, due fasi; Intermedia: Mini Boss, due fasi; Maggiore: Boss, due fasi; Superiore: Boss, tre fasi. La seconda fase inizia al 50% della stessa barra Vita. Solo la Superiore alla prima sconfitta si rialza con il 75% della Vita massima, entra nella terza fase e riceve +2 × livello ai danni. La rinascita finale si verifica una volta. I raggi possono colpire due bersagli per le Minori, tre per le Intermedie (+25 danni alla forma completa), sei per le Maggiori (+80); costo e ricarica si pagano una volta.
 Il riconoscimento del testo prepara formule, dadi, durata e destinatari; le frasi non riconosciute restano manuali. «Da 2 a 4 bersagli», «2 nemici» e «fino a Oculum bersagli» configurano la fascia. Effetti e parametri rimangono modificabili e salvati nel JSON; i valori risolti dal lanciatore non si ritirano a ogni reinvio online. Il testo scritto della motivazione è facoltativo: può essere spiegata a voce al Master.
 Le Reputazioni possono essere organizzate in cartelle e sottocartelle senza limite fisso, conservando valori, descrizioni e influenza del Karma.
 
@@ -1904,7 +1968,6 @@ Online, in una turnistica, dichiari il bersaglio. VC è il tiro di attacco ordin
 
 La presenza online dichiara tutte le schede possedute dalla sessione: cambiare scheda aggiorna subito la presenza, quindi una richiesta di attacco non viene persa durante il cambio. Master e Co-Master condividono il registro in sola lettura delle schede dei partecipanti nella stessa turnistica; dal partecipante puoi aprire «Apri scheda». Le copie online non trasferiscono la proprietà della scheda al personale.
 
-CONSEGNA SCHEDE E TURNISTICA — 21 OTTOBRE
-La turnistica online segue lo scontro attivo del Master della stanza. Il Master può agire sulle schede condivise autorizzate: le modifiche a Vita, Scudo e HP temporanei raggiungono il proprietario senza trasferire il tag. Le copie di consultazione non assegnano automaticamente la proprietà. Invio e richiesta della sola scheda attiva restano disponibili anche senza amicizia fra i tag; un conflitto di proprietà richiede l'account originale oppure una copia esplicita con nuovo tag.
+Master e Co-Master possono modificare soltanto le schede condivise e autorizzate. Le modifiche a Vita, Scudo e HP temporanei raggiungono il proprietario mantenendo il tag originale; le copie di consultazione non acquisiscono la proprietà. L'invio o la richiesta della scheda attiva funziona anche senza amicizia fra i tag. In caso di conflitto di proprietà serve l'account originale oppure una copia esplicita con un nuovo tag.
 
-Le modifiche online autorizzate di Master e Co-Master alla scheda del proprietario seguono l'ordine confermato dal server della stanza; un autosave locale non le rende obsolete. Le revisioni già applicate non vengono ripetute. I dati privati non modificati restano conservati.
+Le modifiche autorizzate seguono l'ordine delle revisioni confermate dal server: un autosalvataggio locale non annulla una modifica online più recente, le revisioni già applicate non vengono ripetute e i dati privati non modificati restano conservati.

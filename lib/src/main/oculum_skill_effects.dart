@@ -11,6 +11,7 @@ const List<String> oculumStructuredEffectTypes = <String>[
   'evocazione',
   'tiro_sottotratto',
   'difesa',
+  'difesa_percentuale',
   'cura',
   'modifica_statistica',
   'modifica_sottotratto',
@@ -144,12 +145,57 @@ class OculumAbilityCooldown {
     this.unit = 'turni',
     this.startsReady = true,
     int? remaining,
-  }) : remaining = max(0, remaining ?? (startsReady ? 0 : amount));
+    this.outsideReadyAt,
+    this.encounterKey = '',
+  }) : _remaining = max(0, remaining ?? (startsReady ? 0 : amount));
 
   int amount;
   String unit;
   bool startsReady;
-  int remaining;
+  int _remaining;
+  DateTime? outsideReadyAt;
+  String encounterKey;
+
+  int secondsRemaining({DateTime? now}) => outsideReadyAt == null
+      ? max(0, _remaining) * 6
+      : max(
+          0,
+          (outsideReadyAt!.difference(now ?? DateTime.now()).inMilliseconds /
+                  1000)
+              .ceil(),
+        );
+
+  int get remaining =>
+      outsideReadyAt == null ? _remaining : (secondsRemaining() / 6).ceil();
+  set remaining(int value) {
+    _remaining = max(0, value);
+    outsideReadyAt = null;
+  }
+
+  bool prepareOutsideCombat({DateTime? now}) {
+    if (startsReady ||
+        oculumTurnUnit(unit) != 'turni' ||
+        amount <= 0 ||
+        outsideReadyAt != null) {
+      return false;
+    }
+    outsideReadyAt = (now ?? DateTime.now()).add(
+      Duration(seconds: max(0, amount) * 6),
+    );
+    return true;
+  }
+
+  bool enterCombat(String key) {
+    if (amount <= 0 || key.isEmpty || encounterKey == key) return false;
+    encounterKey = key;
+    if (!startsReady) {
+      final prepared = outsideReadyAt;
+      remaining = prepared == null ? amount : remaining;
+    } else if (outsideReadyAt != null) {
+      remaining = remaining;
+    }
+    return true;
+  }
 
   bool get ready => remaining <= 0;
 
@@ -173,6 +219,9 @@ class OculumAbilityCooldown {
     'unit': unit,
     'startsReady': startsReady,
     'remaining': remaining,
+    if (outsideReadyAt != null)
+      'outsideReadyAt': outsideReadyAt!.toIso8601String(),
+    if (encounterKey.isNotEmpty) 'encounterKey': encounterKey,
   };
 
   factory OculumAbilityCooldown.fromJson(Map<String, dynamic> json) {
@@ -186,6 +235,8 @@ class OculumAbilityCooldown {
       remaining: json.containsKey('remaining') || json.containsKey('rimanente')
           ? max(0, readIntValue(json['remaining'] ?? json['rimanente']))
           : null,
+      outsideReadyAt: DateTime.tryParse('${json['outsideReadyAt'] ?? ''}'),
+      encounterKey: '${json['encounterKey'] ?? ''}',
     );
   }
 }
@@ -388,11 +439,17 @@ class OculumStructuredEffect {
     this.bypassDefense = false,
     this.bypassShields = false,
     this.shieldDamageBonusPercent = 0,
+    this.damagePerTarget = false,
+    this.killSource = false,
+    this.allOpponents = false,
   }) : id = id?.trim().isNotEmpty == true
            ? id!.trim()
            : 'effect_${DateTime.now().microsecondsSinceEpoch}';
 
   String id;
+  bool damagePerTarget;
+  bool killSource;
+  bool allOpponents;
   String type;
   String target;
   String resource;
@@ -467,6 +524,9 @@ class OculumStructuredEffect {
     'bypassDefense': bypassDefense,
     'bypassShields': bypassShields,
     'shieldDamageBonusPercent': shieldDamageBonusPercent,
+    'damagePerTarget': damagePerTarget,
+    'killSource': killSource,
+    'allOpponents': allOpponents,
   };
 
   factory OculumStructuredEffect.fromJson(Map<String, dynamic> json) {
@@ -518,6 +578,9 @@ class OculumStructuredEffect {
       shieldDamageBonusPercent: readIntValue(
         json['shieldDamageBonusPercent'],
       ).clamp(0, 1000),
+      damagePerTarget: readBoolValue(json['damagePerTarget']),
+      killSource: readBoolValue(json['killSource']),
+      allOpponents: readBoolValue(json['allOpponents']),
     );
   }
 }
@@ -915,6 +978,8 @@ String oculumStructuredEffectTargetKey(OculumStructuredEffect effect) {
       return 'danni_percentuale';
     case 'difesa':
       return 'difesa';
+    case 'difesa_percentuale':
+      return 'difesa_percentuale';
     case 'scudo':
       return 'scudo';
     case 'hp_temporanei':
@@ -944,7 +1009,9 @@ String oculumStructuredEffectQuickCommand(
   Iterable<HiddenEyeStat> subtraits = const <HiddenEyeStat>[],
 }) {
   if (!effect.enabled) return '';
-  if (effect.type == 'danno_percentuale') return '';
+  if (const {'danno_percentuale', 'difesa_percentuale'}.contains(effect.type)) {
+    return '';
+  }
   final key = oculumStructuredEffectTargetKey(effect);
   if (key.isEmpty) return '';
   final expression = oculumEffectFormulaExpression(
@@ -997,6 +1064,9 @@ String oculumStructuredEffectDescription(
     if (effect.bypassShields) 'oltre Scudi',
     if (effect.shieldDamageBonusPercent > 0)
       '+${effect.shieldDamageBonusPercent}% danni agli Scudi',
+    if (effect.damagePerTarget) 'danno intero per bersaglio',
+    if (effect.allOpponents) 'tutti gli avversari',
+    if (effect.killSource) 'sacrificio della fonte',
   ].join(', ');
   final damageBypassText = effect.type == 'danno' && bypassText.isNotEmpty
       ? ' ($bypassText)'
@@ -1016,6 +1086,10 @@ String oculumStructuredEffectDescription(
       return withPeriod(
         'Danni ${effect.mode == 'diminuzione' ? '-' : '+'}$displayedValue%'
         '${effect.mode == 'prossima_azione' ? ' al prossimo attacco' : ''}',
+      );
+    case 'difesa_percentuale':
+      return withPeriod(
+        'Difesa ${effect.mode == 'diminuzione' ? '-' : '+'}$displayedValue%',
       );
     case 'costrutto':
       return withPeriod(
@@ -1137,6 +1211,83 @@ OculumFreeTextEffectParseResult oculumParseStructuredEffectsFromText(
   for (final piece in pieces) {
     final lower = oculumNormalizeText(piece);
     var recognized = false;
+    final hpDamage = RegExp(
+      r'(?:danni?[^.;]*vita\s+(massima|attuale)|vita\s+(massima|attuale)[^.;]*danni?)',
+      caseSensitive: false,
+    ).firstMatch(piece);
+    if (hpDamage != null) {
+      effects.add(
+        OculumStructuredEffect(
+          type: 'danno',
+          valueExpression:
+              (hpDamage.group(1) ?? hpDamage.group(2))!.toLowerCase() ==
+                  'massima'
+              ? 'hp_max'
+              : 'hp_current',
+          recipient: 'nemico',
+          damagePerTarget: true,
+          allOpponents: RegExp(
+            r'tutti gli avversari',
+            caseSensitive: false,
+          ).hasMatch(piece),
+          killSource: RegExp(
+            r'suicid|sacrific|muore|esplodendo',
+            caseSensitive: false,
+          ).hasMatch(piece),
+          minimumTargets: 1,
+          maximumTargets:
+              RegExp(r'tutti|ogni', caseSensitive: false).hasMatch(piece)
+              ? 100
+              : 1,
+          narrativeText: piece,
+        ),
+      );
+      continue;
+    }
+    final reflection = RegExp(
+      r'riflett\w*\s+(\d+)\s*%',
+      caseSensitive: false,
+    ).firstMatch(piece);
+    final wound = RegExp(
+      r'(?:vita effettiva|danno alla vita).*?-\s*(\d+)\s*difesa',
+      caseSensitive: false,
+    ).firstMatch(piece);
+    final acid = RegExp(
+      r'corrosione acida\s*(\d+)(?:\s*(?:danni|hp|vita))?(?:\s*(?:per|/))?\s*(\d+)?\s*turn',
+      caseSensitive: false,
+    ).firstMatch(piece);
+    if (reflection != null || wound != null) {
+      effects.add(
+        OculumStructuredEffect(
+          type: 'modifica_statistica',
+          target: reflection != null
+              ? 'runic_reflection_percent'
+              : 'runic_wound_penalty',
+          valueExpression: (reflection ?? wound)!.group(1)!,
+          mode: 'finche_attivo',
+          duration: '-1',
+          narrativeText: piece,
+        ),
+      );
+      continue;
+    }
+    if (acid != null) {
+      effects.add(
+        OculumStructuredEffect(
+          type: 'stato',
+          appliedState: 'corrosione_acida',
+          target: 'corrosione_acida',
+          elementType: 'acido',
+          valueExpression: acid.group(1)!,
+          duration: acid.group(2) ?? '3',
+          recipient: 'bersaglio',
+          bypassDefense: true,
+          bypassShields: true,
+          narrativeText: piece,
+        ),
+      );
+      continue;
+    }
 
     final isWall =
         RegExp(r'\b(muro|barriera)\b', caseSensitive: false).hasMatch(piece) &&

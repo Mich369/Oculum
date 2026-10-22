@@ -1,5 +1,38 @@
 part of '../../main.dart';
 
+CharacterSkill oculumForestDemonArmorAbility(int level) {
+  final form = CharacterSkillForm(
+    nome: 'I',
+    tipo: 'Skill equipaggiamento',
+    livello: '${max(0, level)}',
+    costo: '',
+    cooldown: '3 turni',
+    cooldownStrutturato: OculumAbilityCooldown(amount: 3, startsReady: true),
+    descrizione: '+5 Volontà per 1 turno.',
+    effettiStrutturati: [
+      OculumStructuredEffect(
+        id: 'forest_demon_armor_will',
+        type: 'modifica_statistica',
+        target: 'volonta',
+        valueExpression: '5',
+        mode: 'finche_attivo',
+        duration: '1',
+        durationUnit: 'turni',
+        recipient: 'se_stesso',
+      ),
+    ],
+    oculumLimitiConfiguratiManualmente: true,
+  );
+  return CharacterSkill(
+    nome: 'Volontà del bosco scheletrico',
+    tipo: 'Skill equipaggiamento',
+    costo: '',
+    cooldown: form.cooldown,
+    descrizione: form.descrizione,
+    forme: [form],
+  );
+}
+
 // ignore_for_file: invalid_use_of_protected_member
 
 int oculumEquipmentRequiredSkillLevel({
@@ -262,6 +295,28 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     if (skillOculumUseDialogOpen || !mounted || (valid != null && !valid())) {
       return false;
     }
+    final isPatalpaSummon =
+        effects.any(
+          (effect) =>
+              effect.type == 'evocazione' &&
+              effect.target.trim().toLowerCase() == 'patalpa_compagno',
+        ) ||
+        (source.toLowerCase().contains('patalpa') &&
+            source.toLowerCase().contains('richiamo'));
+    final patalpaCooldown =
+        schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
+        ? max(
+            0,
+            readIntValue(
+              schedePersonaggio[schedaCorrente]['patalpaSummonCooldownFightsRemaining'],
+            ),
+          )
+        : 0;
+    if (isPatalpaSummon && patalpaCooldown > 0) {
+      aggiungiLog('Richiamo del Patalpa: cooldown di $patalpaCooldown fight.');
+      notifyDiceResultChanged();
+      return false;
+    }
     if (cooldown != null && !cooldown.ready) {
       aggiungiLog('$source: cooldown ${cooldown.remaining} ${cooldown.unit}.');
       return false;
@@ -417,6 +472,28 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       if (stat != null) await tiraSottotrattoOcchio(stat, actionLabel: source);
     }
     return true;
+  }
+
+  void restorePatalpaSummonCooldown() {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
+    if (currentCombatIsActive()) {
+      risultato = 'Ripristina la CD fuori da uno scontro attivo.';
+      aggiungiLog(risultato);
+      notifyDiceResultChanged();
+      return;
+    }
+    final sheet = schedePersonaggio[schedaCorrente];
+    sheet['patalpaSummonCooldownFightsRemaining'] = 0;
+    sheet['patalpaSummonCooldownLastEncounterId'] = '';
+    risultato = 'CD ripristinata: Richiamo del Patalpa è pronto.';
+    aggiungiLog(risultato);
+    programmaSalvataggio();
+    if (realtimeService?.isConnected == true) {
+      sendRealtimeCurrentSheetToStaff(immediate: true);
+    }
+    notifyDiceResultChanged();
   }
 
   Widget equipmentAbilityEditor(InventoryItem item) {

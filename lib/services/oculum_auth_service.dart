@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'oculum_save_profile.dart';
+
 const String oculumOAuthRedirectUrl = String.fromEnvironment(
   'OculumOAuthRedirectUrl',
   defaultValue: 'com.mich.oculum://login-callback',
@@ -76,7 +78,8 @@ class OculumSessionStorage extends LocalStorage {
     : _storage = SharedPreferencesLocalStorage(
         persistSessionKey: persistSessionKey,
       );
-  static const rememberKey = 'oculum.auth.remember_access';
+  static String get rememberKey =>
+      oculumProfiledStorageKey('oculum.auth.remember_access');
   final LocalStorage _storage;
   late SharedPreferences _prefs;
 
@@ -304,9 +307,14 @@ class OculumAuthService extends ChangeNotifier {
     );
   }
 
-  static const _guestModePrefsKey = 'oculum.auth.guest_mode';
-  static const _userIdPrefsKey = 'oculum.auth.user_id';
-  static const _providerPrefsKey = 'oculum.auth.provider';
+  static final _guestModePrefsKey =
+      oculumProfiledStorageKey('oculum.auth.guest_mode');
+  static final _userIdPrefsKey = oculumProfiledStorageKey(
+    'oculum.auth.user_id',
+  );
+  static final _providerPrefsKey = oculumProfiledStorageKey(
+    'oculum.auth.provider',
+  );
 
   OculumAuthBackend? _backend;
   final Future<bool> Function() _connectivityCheck;

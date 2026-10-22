@@ -5,6 +5,54 @@ import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('Patalpa summon uses its level budget and the confirmed stat split', () {
+    final patalpa = monsterById('patalpa_dolce')!;
+    expect(patalpa.stats['oculum'], 0);
+    for (var level = 0; level <= 40; level++) {
+      final base = oculumMonsterCreationStats(patalpa, level);
+      final expectedTotal =
+          base['resilienza']! + base['volonta']! + base['materia']!;
+      final ordinary = oculumPatalpaSummonStats(level);
+      final rare = oculumPatalpaSummonStats(
+        level,
+        receivesNoOculumResilienceBonus: true,
+      );
+      expect(ordinary['oculum'], 0);
+      expect(ordinary['resilienza'], expectedTotal * 20 ~/ 100);
+      expect(ordinary['volonta'], expectedTotal * 50 ~/ 100);
+      expect(
+        ordinary['materia'],
+        expectedTotal - ordinary['resilienza']! - ordinary['volonta']!,
+      );
+      expect(ordinary.values.reduce((a, b) => a + b), expectedTotal);
+      expect(rare['resilienza'], ordinary['resilienza']! + level);
+      expect(rare.values.reduce((a, b) => a + b), expectedTotal + level);
+    }
+  });
+
+  test('Patalpa summon cooldown advances once per completed fight', () {
+    final sheet = <String, dynamic>{'patalpaSummonCooldownFightsRemaining': 3};
+    expect(
+      oculumTickPatalpaSummonCooldown(sheet, encounterId: 'fight-1'),
+      isTrue,
+    );
+    expect(sheet['patalpaSummonCooldownFightsRemaining'], 2);
+    expect(
+      oculumTickPatalpaSummonCooldown(sheet, encounterId: 'fight-1'),
+      isFalse,
+    );
+    expect(sheet['patalpaSummonCooldownFightsRemaining'], 2);
+    expect(
+      oculumTickPatalpaSummonCooldown(sheet, encounterId: 'fight-2'),
+      isTrue,
+    );
+    expect(
+      oculumTickPatalpaSummonCooldown(sheet, encounterId: 'fight-3'),
+      isTrue,
+    );
+    expect(sheet['patalpaSummonCooldownFightsRemaining'], 0);
+  });
+
   test(
     'Fallen Eye automatic growth adds nine level points beyond the base',
     () {

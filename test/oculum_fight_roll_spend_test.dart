@@ -10,6 +10,7 @@ void main() {
 
     expect(result.remainingOculum, 8);
     expect(result.bonus, 9);
+    expect(result.damageBonus, 6);
   });
 
   test('il consumo fight non porta mai Oculum sotto zero', () {
@@ -17,5 +18,6 @@ void main() {
 
     expect(result.remainingOculum, 0);
     expect(result.bonus, 6);
+    expect(result.damageBonus, 4);
   });
 }

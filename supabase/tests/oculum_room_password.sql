@@ -57,4 +57,3 @@ do $$ declare r jsonb; begin
 end $$;
 rollback;
 select 'PASS: password gate, legacy RPC, approval, owner-only password changes, hash isolation, returning identity and revocation; fixtures rolled back' as verification;
-

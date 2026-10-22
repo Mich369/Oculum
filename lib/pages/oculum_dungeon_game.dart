@@ -4578,7 +4578,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         nameIt: 'Patalpa Dolce',
         nameEn: 'Sweet Patalpa',
         descIt:
-            'Una talpa patata. Stats base segnate: 15 / 3 / 15. Generazione: spende un azione e 10 Oculum per richiamare una Patalpa Dolce con le stats attuali del Patalpa più debole, senza Generazione, cooldown 10 turni. Palata: con critico applica Stun x critico e +2 danni x livello, cooldown 3 turni. Rigenerazione: si mette per metà sotto terra, raddoppia CM, non può tirare e rigenera 25% HP ogni turno, cooldown 2 turni.',
+            'Una talpa patata. Stats base segnate: Res 15 / Vol 3 / Mat 15, senza Oculum. Generazione: spende un’azione e 10 Oculum per richiamare una Patalpa Dolce con le stats attuali del Patalpa più debole, senza Generazione; budget del livello diviso 20% Res / 50% Vol / 30% Mat. Nel 75% degli spawn manca +1 Resilienza/livello, nel 25% compare. Riutilizzabile ogni 3 fight completati. Palata: con critico applica Stun x critico e +2 danni x livello, cooldown 3 turni. Rigenerazione: si mette per metà sotto terra, raddoppia CM, non può tirare e rigenera 25% HP ogni turno, cooldown 2 turni.',
         descEn:
             'A potato mole. Base stats noted: 15 / 3 / 15. Generation: spends one action and 10 Oculum to call a Sweet Patalpa with the current stats of the weakest Patalpa, without Generation, cooldown 10 turns. Shovel Slam: on critical applies Stun x critical and +2 damage x level, cooldown 3 turns. Regeneration: buries halfway, doubles CM, cannot roll and regenerates 25% HP each turn, cooldown 2 turns.',
         elementId: 'flora',
@@ -6894,7 +6894,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   void selectPublicRunTitle(String? id) {
     if (inCombat || isDungeonCoopClient) return;
-    if (id != null && !publicRunTitleCandidates.any((title) => title.id == id)) {
+    if (id != null &&
+        !publicRunTitleCandidates.any((title) => title.id == id)) {
       return;
     }
     setState(() => publicRunTitleId = id ?? '');

@@ -90,8 +90,14 @@ void main() {
       'name': 'Custode',
       'status': 'active',
       'actionUsed': true,
+      'actionTurnRound': state.masterInitiativeRound,
       'reactionMax': 1,
       'reactionUsed': 1,
+      'reactionPoolInitialized': true,
+      'reactionPoolRound': state.masterInitiativeRound,
+      'reactionFastMax': 1,
+      'reactionFastUsed': 1,
+      'reactionFastTurnKey': '${state.masterInitiativeRound}',
     });
     final publicFight = probe.initiativeSnapshot();
     final publicToken = (publicFight['tokens'] as List).single as Map;
@@ -101,9 +107,9 @@ void main() {
     expect(publicToken['reactionAvailable'], 0);
     final token = state.masterInitiativeTokens.single as Map<String, dynamic>;
     probe.refreshEncounterResources(token);
-    expect(token['reactionUsed'], 0);
+    expect(token['reactionUsed'], 1);
     expect(token['reactionMax'], 1);
-    expect(token['actionUsed'], isFalse);
+    expect(token['actionUsed'], isTrue);
     probe.refreshEncounterResources(token);
     expect(
       token['reactionMax'],

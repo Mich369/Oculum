@@ -2681,7 +2681,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         }
         razzaController.clear();
         backgroundController.text =
-            'Nasci ${oculumMonsterBirthplace(tutorialMonsterOrigin)}. Origine: $tutorialMonsterOrigin.${onlineMasterApprovalRequired ? ' Richiedi approvazione del Master prima di entrare nella campagna.' : ''}';
+            'Nasci ${oculumMonsterBirthplace(tutorialMonsterOrigin)}. Origine: $tutorialMonsterOrigin.';
       } else {
         razzaController.clear();
         backgroundController.text =
@@ -2695,10 +2695,9 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         notePersonaggioController.text = selectedMonster.descIt;
         schedePersonaggio[schedaCorrente]['monsterBookSourceId'] =
             selectedMonster.id;
-        schedePersonaggio[schedaCorrente]['monsterBookApprovalRequired'] =
-            onlineMasterApprovalRequired;
-        schedePersonaggio[schedaCorrente]['monsterBookApproved'] =
-            canActWithoutMasterApproval;
+        schedePersonaggio[schedaCorrente].remove('monsterBookApprovalRequired');
+        schedePersonaggio[schedaCorrente].remove('monsterBookApproved');
+        schedePersonaggio[schedaCorrente].remove('monsterBookApprovedScope');
       } else if (tutorialGeneraMostro) {
         schedePersonaggio[schedaCorrente].remove('monsterBookSourceId');
         schedePersonaggio[schedaCorrente].remove('monsterBookApprovalRequired');

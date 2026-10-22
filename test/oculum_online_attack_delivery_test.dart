@@ -53,6 +53,7 @@ class _CombatService extends OculumRealtimeService {
     required bool fromMaster,
     required bool masterParty,
     List<String> targetTags = const [],
+    List<String> allowClearFields = const [],
     String deliveryId = '',
   }) async {
     staffSheets.add({
@@ -66,6 +67,7 @@ class _CombatService extends OculumRealtimeService {
       'masterParty': masterParty,
       'campaignId': campaignId,
       'campaignName': campaignName,
+      'allowClearFields': allowClearFields,
     });
   }
 
@@ -104,6 +106,7 @@ class _CombatService extends OculumRealtimeService {
     required bool fromMaster,
     required bool masterParty,
     List<String> targetTags = const [],
+    List<String> allowClearFields = const [],
     String deliveryId = '',
   }) async {
     await sendSharedSheet(
@@ -118,6 +121,7 @@ class _CombatService extends OculumRealtimeService {
       fromMaster: fromMaster,
       masterParty: masterParty,
       targetTags: targetTags,
+      allowClearFields: allowClearFields,
       deliveryId: deliveryId,
     );
     return true;
@@ -356,6 +360,8 @@ void main() {
           'id': 'first',
           'name': 'Primo',
           'status': 'active',
+          'currentHp': 30,
+          'maxHp': 100,
           'imageBase64': 'x' * 1200000,
         },
         {'id': 'second', 'name': 'Secondo', 'status': 'ready'},
@@ -370,6 +376,15 @@ void main() {
       final automaticallyShared =
           (state.realtimeService as _CombatService).turnSnapshots.last;
       expect((automaticallyShared['tokens'] as List).length, 2);
+      expect(
+        (automaticallyShared['tokens'] as List).first['healthLabel'],
+        'Morente',
+      );
+      expect(
+        (automaticallyShared['tokens'] as List).first.containsKey('currentHp'),
+        isFalse,
+        reason: 'The shared label must not disclose hidden numeric HP',
+      );
       expect(
         '$automaticallyShared'.length,
         lessThan(1000000),
@@ -637,6 +652,40 @@ void main() {
           'sheet': {'currentHp': '13'},
         }),
         isTrue,
+      );
+      expect(probe.currentHp(), 13);
+      expect(
+        probe.receiveStaffSheet({
+          ...edit,
+          'serverSequence': 99,
+          'sheet': {'scudo': '7', 'currentHp': '90'},
+        }),
+        isTrue,
+        reason: 'An older shield edit must not be lost to a newer HP edit',
+      );
+      expect(state.scudoController.text, '7');
+      expect(
+        probe.currentHp(),
+        13,
+        reason: 'Only the older HP field is rejected',
+      );
+      expect(state.schedePersonaggio[0]['realtimeOwnerEditSequence'], 101);
+      expect(
+        probe.receiveStaffSheet({
+          ...edit,
+          'serverSequence': 102,
+          'sheet': {'currentHp': '13'},
+        }),
+        isTrue,
+        reason: 'An unchanged authoritative value still advances its revision',
+      );
+      expect(
+        probe.receiveStaffSheet({
+          ...edit,
+          'serverSequence': 101,
+          'sheet': {'currentHp': '90'},
+        }),
+        isFalse,
       );
       expect(probe.currentHp(), 13);
       state.schedePersonaggio[0]['localUpdatedAt'] = '2099-01-01T00:00:00Z';
