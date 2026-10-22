@@ -176,8 +176,9 @@ class OculumAbilityCooldown {
     if (startsReady ||
         oculumTurnUnit(unit) != 'turni' ||
         amount <= 0 ||
-        outsideReadyAt != null)
+        outsideReadyAt != null) {
       return false;
+    }
     outsideReadyAt = (now ?? DateTime.now()).add(
       Duration(seconds: max(0, amount) * 6),
     );

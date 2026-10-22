@@ -37,6 +37,7 @@ class _RetryTransport extends OculumRealtimeService {
     required bool fromMaster,
     required bool masterParty,
     List<String> targetTags = const <String>[],
+    List<String> allowClearFields = const <String>[],
     String deliveryId = '',
   }) async {
     sentSheets.add({

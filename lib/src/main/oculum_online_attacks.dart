@@ -114,8 +114,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   bool recordCorruptionMasteryHit(Map<String, dynamic> request) {
     if (request['outcome'] != OculumAttackOutcome.full.name ||
         schedaCorrente < 0 ||
-        schedaCorrente >= schedePersonaggio.length)
+        schedaCorrente >= schedePersonaggio.length) {
       return false;
+    }
     final required = oculumCorruptionRequiredFullHits(
       sourceLevel: readIntValue(request['level']),
       targetLevel: leggiNumero(livelloController),
@@ -164,8 +165,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   void claimCorruptionMasteryCooldown(Map<String, dynamic> request) {
     if (request['corruptionApplicationId'] == null ||
         request['corruptionCooldownClaimed'] == true ||
-        !controlsOnlineCombatSheet('${request['sourceTag']}'))
+        !controlsOnlineCombatSheet('${request['sourceTag']}')) {
       return;
+    }
     final index = localSheetIndexForOculumTag('${request['sourceTag']}');
     if (index < 0) return;
     final original = schedaCorrente;
@@ -483,7 +485,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       'damage': 0,
       'received': true,
       'fromMastery': fromMastery,
-      if (attackRequestId != null) 'attackRequestId': attackRequestId,
+      'attackRequestId': ?attackRequestId,
       'targetControlChancePercent': controlChancePercent.clamp(0, 100),
     };
     onlineCombatRequests[id] = request;
@@ -2147,8 +2149,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'corruption',
           'corruption_target',
         }.contains(request['kind']) ||
-        request['vampirismClaimed'] == true)
+        request['vampirismClaimed'] == true) {
       return;
+    }
     final source = '${request['sourceTag'] ?? ''}';
     if (!controlsOnlineCombatSheet(source)) return;
     if (source != sheetTagAt(schedaCorrente)) {

@@ -53,6 +53,7 @@ class _CombatService extends OculumRealtimeService {
     required bool fromMaster,
     required bool masterParty,
     List<String> targetTags = const [],
+    List<String> allowClearFields = const <String>[],
     String deliveryId = '',
   }) async {
     staffSheets.add({
