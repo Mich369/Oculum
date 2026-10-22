@@ -314,12 +314,21 @@ void main() {
     // Earlier cases intentionally exercise critical-stage damage presets.
     // Isolate the phase-transition assertions from that per-element state.
     state.incomingDamagePresets.clear();
+    state.dannoSubitoPercentPerTipo.clear();
     state.modificatoreDannoSelezionato = 'Normale';
     state.dannoSubitoPercentController.clear();
+    state.incomingDamageElement = 'fisico';
+    state.buffMalusRapidiController.clear();
     state.activeConditions.clear();
+    state.activeStructuredEffects.clear();
+    state.pawnPendingDamage.clear();
     state.schivataOculumRiduzionePronta = 0;
     state.schivataOculumEtichettaPronta = '';
     state.scudoSalvataggioAttivo = false;
+    state.schedePersonaggio[0].remove('combatAdaptationReductionPending');
+    state.schedePersonaggio[0].remove('combatElementalAdaptation');
+    state.schedePersonaggio[0].remove('aberrationFinalPhaseTriggered');
+    state.schedePersonaggio[0].remove('aberrationPhase');
     probe.invalidateDerivedCaches();
     final maximum = probe.maximumHp();
     // A random Force State can heal +25 HP after a lethal hit. Disable it
@@ -346,7 +355,12 @@ void main() {
       () =>
           probe.damageResolved(10000, bypassDefense: true, bypassShields: true),
     );
-    expect(state.currentHpController.text, '0');
+    expect(
+      state.currentHpController.text,
+      '0',
+      reason:
+          'The final-phase hit must apply once; result=${state.risultato}; pendingPawn=${state.pawnPendingDamage}; damagePercent=${state.dannoSubitoPercentPerTipo}; presets=${state.incomingDamagePresets}; parser=${state.buffMalusRapidiController.text}',
+    );
     state.schedePersonaggio[0].remove('monsterBookSourceId');
     state.activeStructuredEffects.clear();
     state.livelloController.text = '0';
@@ -736,3 +750,4 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 }
+
