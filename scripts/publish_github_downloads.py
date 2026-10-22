@@ -21,7 +21,7 @@ PUBLIC_ARTIFACTS = (
     "Oculum-macOS", "Oculum-Windows", "Oculum-Test-Windows",
     "Oculum-Linux", "Oculum-Android",
 )
-EXTRA_ARCHIVES = ("Oculum-Web", "Oculum-iOS-unsigned", "Oculum-UI-Catture", "Oculum-Windows-Folders", "Oculum-Windows-Folders")
+EXTRA_ARCHIVES = ("Oculum-Web", "Oculum-iOS-unsigned", "Oculum-UI-Catture", "Oculum-Windows-Folders")
 
 
 def gh(*args, **kwargs):
