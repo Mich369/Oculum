@@ -483,8 +483,9 @@ Future<bool> _initializeOculumSupabase() async {
     }
 
     final sessionStorage = OculumSessionStorage(
-      persistSessionKey:
-          'sb-${Uri.parse(supabaseUrl).host.split('.').first}-auth-token',
+      persistSessionKey: oculumAuthSessionStorageKey(
+        Uri.parse(supabaseUrl).host.split('.').first,
+      ),
     );
     OculumAuthService.sessionStorage = sessionStorage;
     await Supabase.initialize(
