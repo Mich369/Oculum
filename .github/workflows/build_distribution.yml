@@ -53,9 +53,20 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  validate-release-scripts:
+    name: Test distribution and publication scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Verify release and Pages packaging rules
+        run: python -m unittest discover -s scripts/tests -p 'test_*github*.py'
+
   # ── Windows ────────────────────────────────────────────────────────────────
   build-windows:
-    needs: validate
+    needs: [validate, validate-release-scripts]
     name: Build Windows ${{ matrix.edition }}
     runs-on: windows-latest
     timeout-minutes: 60
@@ -66,9 +77,11 @@ jobs:
           - edition: normal
             save_profile: ''
             artifact: Oculum-Windows
+            folder_path: build/distribution/windows
           - edition: test
             save_profile: test
             artifact: Oculum-Test-Windows
+            folder_path: build/distribution/windows-test
 
     steps:
       - name: Checkout repository
@@ -112,25 +125,68 @@ jobs:
       - name: Package Windows release
         shell: pwsh
         run: |
-          $dist = if ('${{ matrix.edition }}' -eq 'test') { "build/distribution/test/windows" } else { "build/distribution/windows" }
+          $dist = '${{ matrix.folder_path }}'
           New-Item -ItemType Directory -Force -Path $dist
           Copy-Item -Recurse -Force "build/windows/x64/runner/Release/*" $dist
           if ('${{ matrix.edition }}' -eq 'test') {
             Rename-Item -LiteralPath "$dist/oculum.exe" -NewName 'Oculum-Test.exe'
           }
+          $exe = if ('${{ matrix.edition }}' -eq 'test') { 'Oculum-Test.exe' } else { 'oculum.exe' }
+          foreach ($required in @($exe, 'flutter_windows.dll', 'WebView2Loader.dll', 'vcruntime140.dll', 'msvcp140.dll', 'data/app.so', 'data/icudtl.dat', 'data/flutter_assets')) {
+            if (!(Test-Path -LiteralPath (Join-Path $dist $required))) { throw "Windows runtime missing $required" }
+          }
           Compress-Archive -Path "$dist/*" -DestinationPath "build/distribution/${{ matrix.artifact }}.zip" -Force
+          if (!(Test-Path -LiteralPath "build/distribution/${{ matrix.artifact }}.zip") -or (Get-Item "build/distribution/${{ matrix.artifact }}.zip").Length -eq 0) {
+            throw 'Windows ZIP is missing or empty.'
+          }
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.artifact }}
-          path: build/distribution/${{ matrix.artifact }}.zip
+          path: |
+            build/distribution/${{ matrix.artifact }}.zip
+            ${{ matrix.folder_path }}
+          if-no-files-found: error
+          retention-days: 30
+
+  verify-windows-distribution:
+    needs: build-windows
+    name: Verify Windows packages and folders
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v6
+        with:
+          name: Oculum-Windows
+          path: build/windows-artifacts/normal
+      - uses: actions/download-artifact@v6
+        with:
+          name: Oculum-Test-Windows
+          path: build/windows-artifacts/test
+      - name: Compare ZIP contents, runtimes, and save profiles
+        shell: pwsh
+        run: |
+          $normal = Join-Path $PWD 'build/windows-artifacts/normal/windows'
+          $test = Join-Path $PWD 'build/windows-artifacts/test/windows-test'
+          & scripts/verify_windows_distribution.ps1 `
+            -NormalFolder $normal `
+            -TestFolder $test `
+            -NormalZip (Join-Path $PWD 'build/windows-artifacts/normal/Oculum-Windows.zip') `
+            -TestZip (Join-Path $PWD 'build/windows-artifacts/test/Oculum-Test-Windows.zip') `
+            -OutputParent (Join-Path $PWD 'build/distribution') `
+            -Commit $env:GITHUB_SHA
+      - name: Upload separate Windows folders
+        uses: actions/upload-artifact@v6
+        with:
+          name: Oculum-Windows-Folders
+          path: build/distribution/Oculum-${{ github.sha }}
           if-no-files-found: error
           retention-days: 30
 
   # ── macOS (unsigned) ───────────────────────────────────────────────────────
   build-macos:
-    needs: validate
+    needs: [validate, validate-release-scripts]
     name: Build macOS
     runs-on: macos-latest
 
@@ -195,7 +251,7 @@ jobs:
 
   # ── iOS (unsigned) ─────────────────────────────────────────────────────────
   build-ios-unsigned:
-    needs: validate
+    needs: [validate, validate-release-scripts]
     name: Build iOS unsigned
     runs-on: macos-latest
 
@@ -249,7 +305,7 @@ jobs:
 
   # ── Linux ──────────────────────────────────────────────────────────────────
   build-linux:
-    needs: validate
+    needs: [validate, validate-release-scripts]
     name: Build Linux
     runs-on: ubuntu-latest
 
@@ -294,10 +350,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze code
-        run: flutter analyze
-        continue-on-error: true
-
       - name: Build Linux release
         shell: bash
         env:
@@ -336,7 +388,7 @@ jobs:
 
   # ── Android ────────────────────────────────────────────────────────────────
   build-android:
-    needs: validate
+    needs: [validate, validate-release-scripts]
     name: Build Android
     runs-on: ubuntu-latest
 
@@ -371,8 +423,11 @@ jobs:
 
       - name: Package Android release
         run: |
-          mkdir -p build/distribution/android
           cp build/app/outputs/flutter-apk/app-release.apk build/distribution/Oculum-Android-release.apk
+          test -s build/distribution/Oculum-Android-release.apk
+          unzip -tq build/distribution/Oculum-Android-release.apk
+          unzip -Z1 build/distribution/Oculum-Android-release.apk | grep -Eq '^classes[0-9]*\.dex$'
+          unzip -Z1 build/distribution/Oculum-Android-release.apk | grep -q '^lib/arm64-v8a/libapp.so$'
 
       - name: Build Android App Bundle
         env:
@@ -384,7 +439,11 @@ jobs:
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
       - name: Package Android App Bundle
-        run: cp build/app/outputs/bundle/release/app-release.aab build/distribution/Oculum-Android-release.aab
+        run: |
+          cp build/app/outputs/bundle/release/app-release.aab build/distribution/Oculum-Android-release.aab
+          test -s build/distribution/Oculum-Android-release.aab
+          unzip -tq build/distribution/Oculum-Android-release.aab
+          unzip -Z1 build/distribution/Oculum-Android-release.aab | grep -q '^base/manifest/AndroidManifest.xml$'
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v6
@@ -397,7 +456,7 @@ jobs:
           retention-days: 30
 
   build-web:
-    needs: validate
+    needs: [validate, validate-release-scripts]
     name: Build Web archive
     runs-on: ubuntu-latest
     steps:
@@ -415,7 +474,7 @@ jobs:
           OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          flutter build web --release --base-href / \
+          flutter build web --release --base-href /Oculum/ \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
       - name: Package Web release
@@ -424,6 +483,12 @@ jobs:
           mkdir -p build/distribution
           cd build/web
           zip -qry ../distribution/Oculum-Web.zip .
+          cd ../..
+          python3 scripts/prepare_github_pages.py \
+            --archive build/distribution/Oculum-Web.zip \
+            --output build/verified-pages \
+            --commit "$GITHUB_SHA" \
+            --base-path /Oculum/
       - uses: actions/upload-artifact@v6
         with:
           name: Oculum-Web

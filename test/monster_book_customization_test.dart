@@ -1,10 +1,24 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:oculum/main.dart'
-    show CharacterArt, oculumMonsterBookArt, oculumStarterRaces;
+    show
+        CharacterArt,
+        oculumBlackMarketMonsterBookPageBasePrice,
+        oculumBlackMarketMonsterBookPageEligible,
+        oculumMonsterBookArt,
+        oculumRankBlackMarketMonsterBookPages,
+        oculumStarterRaces;
 
 void main() {
   tearDown(resetMonsterBookEntries);
+
+  test('buying a Monster Book page reveals the creature name', () {
+    expect(oculumMonsterBookNameIsDiscovered(null), isFalse);
+    expect(oculumMonsterBookNameIsDiscovered({'seen': true}), isFalse);
+    expect(oculumMonsterBookNameIsDiscovered({'weakPoint': true}), isFalse);
+    expect(oculumMonsterBookNameIsDiscovered({'pagePurchased': true}), isTrue);
+    expect(oculumMonsterBookNameIsDiscovered({'nameKnown': true}), isTrue);
+  });
 
   test('Monster Book custom entry keeps names, image, category and drops', () {
     const entry = MonsterBookEntry(
@@ -30,6 +44,142 @@ void main() {
     expect(restored.presetType, 'NPC');
     expect(restored.dropIds, entry.dropIds);
   });
+
+  test('Monster Book weak points and resistance overrides survive JSON', () {
+    const entry = MonsterBookEntry(
+      id: 'custom_shell_keeper',
+      nameIt: 'Custode dal Guscio',
+      nameEn: 'Shell Keeper',
+      descIt: 'Una creatura protetta da un guscio duro.',
+      descEn: 'A creature protected by a hard shell.',
+      elementId: 'fisico',
+      spriteAssetPath: '',
+      isMiniBoss: false,
+      isBoss: false,
+      isNullFateless: false,
+      weakPointIt: 'La giuntura molle sotto il bordo inferiore.',
+      weakPointEn: 'The soft joint beneath its lower rim.',
+      damageResistancePresets: {
+        'taglio': 'Resistenza',
+        'contundente': 'Fragilità Bassa',
+      },
+    );
+
+    final restored = MonsterBookEntry.fromJson(entry.toJson());
+
+    expect(restored.weakPointDescriptionIt, entry.weakPointIt);
+    expect(restored.weakPointDescriptionEn, entry.weakPointEn);
+    expect(restored.incomingDamageResistancePresets['taglio'], 'Resistenza');
+    expect(
+      restored.incomingDamageResistancePresets['contundente'],
+      'Fragilità Bassa',
+    );
+  });
+
+  test('weak point and resistance defaults follow creature anatomy', () {
+    final golem = monsterById('fate_golem')!;
+    final shell = monsterById('lumaca_assassina')!;
+    final runicGolem = monsterById('golem_runico')!;
+    final kamikaze = monsterById('goblin_kamikaze')!;
+    final acidSpitter = monsterById('sputatore_corrosivo')!;
+    const assassin = MonsterBookEntry(
+      id: 'goblin_assassino_test',
+      nameIt: 'Goblin Assassino',
+      nameEn: 'Goblin Assassin',
+      descIt: 'Un goblin addestrato con un pugnale.',
+      descEn: 'A dagger-wielding goblin assassin.',
+      elementId: 'fisico',
+      spriteAssetPath: '',
+      isMiniBoss: false,
+      isBoss: false,
+      isNullFateless: false,
+      classificationTags: ['Mostro'],
+    );
+    const incorporeal = MonsterBookEntry(
+      id: 'test_incorporeal_wraith',
+      nameIt: 'Spettro Incorporeo',
+      nameEn: 'Incorporeal Wraith',
+      descIt: 'Una sagoma senza corpo solido.',
+      descEn: 'A shape with no solid body.',
+      elementId: 'ombra',
+      spriteAssetPath: '',
+      isMiniBoss: false,
+      isBoss: false,
+      isNullFateless: false,
+      classificationTags: ['Aberrazione'],
+    );
+
+    expect(golem.weakPointDescriptionIt, contains('runico'));
+    expect(runicGolem.weakPointDescriptionIt, contains('nucleo runico'));
+    expect(kamikaze.weakPointDescriptionIt, contains('innesco centrale'));
+    expect(acidSpitter.weakPointDescriptionIt, contains('ghiandole acide'));
+    expect(
+      runicGolem.incomingDamageResistancePresets['contundente'],
+      'Fragilità Bassa',
+    );
+    expect(assassin.weakPointDescriptionIt, contains('polso'));
+    expect(incorporeal.weakPointDescriptionIt, contains('ombra'));
+    expect(
+      shell.incomingDamageResistancePresets['taglio'],
+      'Resistenza Leggera',
+    );
+    expect(
+      shell.incomingDamageResistancePresets['contundente'],
+      'Fragilità Bassa',
+    );
+    expect(oculumBlackMarketMonsterBookPageBasePrice(incorporeal), 90);
+  });
+
+  test(
+    'black market page selection offers up to three distinct nearby wanderers or aberrations',
+    () {
+      final candidates = [
+        monsterById('errante_con_la_sedia')!,
+        monsterById('errante_bocca_cucita')!,
+        monsterById('errante_specchio')!,
+        monsterById('goblin_killer')!,
+        monsterById('mini_fate_golem')!,
+      ];
+      final selected = oculumRankBlackMarketMonsterBookPages(
+        entries: candidates,
+        playerLevel: 8,
+        playerStats: const {
+          'resilienza': 7,
+          'volonta': 8,
+          'materia': 10,
+          'oculum': 8,
+        },
+      );
+
+      expect(selected, hasLength(3));
+      expect(selected.map((entry) => entry.id).toSet(), hasLength(3));
+      expect(selected.first.id, 'errante_specchio');
+      expect(selected.every(oculumBlackMarketMonsterBookPageEligible), isTrue);
+      expect(
+        oculumBlackMarketMonsterBookPageBasePrice(
+          monsterById('errante_specchio')!,
+        ),
+        56,
+      );
+      expect(
+        oculumRankBlackMarketMonsterBookPages(
+          entries: candidates,
+          playerLevel: 8,
+          playerStats: const {
+            'resilienza': 7,
+            'volonta': 8,
+            'materia': 10,
+            'oculum': 8,
+          },
+          alreadyKnownWeakPoints: const {
+            'errante_specchio',
+            'errante_con_la_sedia',
+          },
+        ).map((entry) => entry.id),
+        isNot(contains('errante_specchio')),
+      );
+    },
+  );
 
   test('default monsters are visual descriptions without imposed images', () {
     for (final entry in defaultMonsterBookEntries) {

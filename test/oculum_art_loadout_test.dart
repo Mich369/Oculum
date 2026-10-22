@@ -182,8 +182,9 @@ void main() {
           {
             'id': 'velmorid-token',
             'sheetTag': 'Velmorid',
-            'name': '???',
+            'name': 'Velmorid',
             'type': 'Mostro',
+            'nameRevealed': true,
             'initiativeRoll': 0,
             'initiativeBase': 0,
             'initiativeTotal': 22,

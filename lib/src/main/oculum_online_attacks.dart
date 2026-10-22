@@ -114,8 +114,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   bool recordCorruptionMasteryHit(Map<String, dynamic> request) {
     if (request['outcome'] != OculumAttackOutcome.full.name ||
         schedaCorrente < 0 ||
-        schedaCorrente >= schedePersonaggio.length)
+        schedaCorrente >= schedePersonaggio.length) {
       return false;
+    }
     final required = oculumCorruptionRequiredFullHits(
       sourceLevel: readIntValue(request['level']),
       targetLevel: leggiNumero(livelloController),
@@ -164,8 +165,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   void claimCorruptionMasteryCooldown(Map<String, dynamic> request) {
     if (request['corruptionApplicationId'] == null ||
         request['corruptionCooldownClaimed'] == true ||
-        !controlsOnlineCombatSheet('${request['sourceTag']}'))
+        !controlsOnlineCombatSheet('${request['sourceTag']}')) {
       return;
+    }
     final index = localSheetIndexForOculumTag('${request['sourceTag']}');
     if (index < 0) return;
     final original = schedaCorrente;
@@ -483,7 +485,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       'damage': 0,
       'received': true,
       'fromMastery': fromMastery,
-      if (attackRequestId != null) 'attackRequestId': attackRequestId,
+      'attackRequestId': ?attackRequestId,
       'targetControlChancePercent': controlChancePercent.clamp(0, 100),
     };
     onlineCombatRequests[id] = request;
@@ -1536,6 +1538,19 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               (stat.id == 'schianto' ? schiantoBonus : 0),
           color: hiddenEyeStatIdentityColor(stat),
         ),
+      for (final stat in subs.where(
+        (candidate) => candidate.id == 'precisione',
+      ))
+        OculumAttackChoice(
+          'precisione_punto_debole',
+          'Precisione · punto debole',
+          hiddenEyeTotal(stat) +
+              hiddenEyeStatRollQuickBonus(stat) +
+              tiroGlobaleBonus() +
+              counterBonus,
+          color: hiddenEyeStatIdentityColor(stat),
+          featured: true,
+        ),
     ];
     final sourceSheet = schedePersonaggio[schedaCorrente];
     final sourceMonsterId = '${sourceSheet['monsterBookSourceId'] ?? ''}';
@@ -1608,6 +1623,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                   : elementoDannoDominante(),
               initialTarget: targetId,
               initialChoice: initialChoice,
+              availableForTarget: (targetTag, option) =>
+                  option.id != 'precisione_punto_debole' ||
+                  combatTokenWeakPointKnown(byId[targetTag] ?? const {}),
               minimumTargets: minimumTargets.clamp(1, 100),
               maximumTargets: maximumTargets.clamp(1, 100),
               choices: choices,
@@ -1688,6 +1706,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (controlledPlan.targetIds.any((id) => !currentIds.contains(id)) ||
         controlledPlan.targetIds.length < minimumTargets ||
         controlledPlan.targetIds.length > maximumTargets) {
+      return;
+    }
+    if (controlledPlan.choiceId == 'precisione_punto_debole' &&
+        controlledPlan.targetIds.any(
+          (id) => !combatTokenWeakPointKnown(byId[id] ?? const {}),
+        )) {
+      aggiungiLog(
+        '[PRECISIONE] Il punto debole di uno dei bersagli non è noto al party; scegli un tiro ordinario o un bersaglio già studiato.',
+      );
       return;
     }
     if (freeReactionId == null &&
@@ -1788,7 +1815,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         '[MANIFESTAZIONE DEL POTERE] +$manifestationDamageBonus danni per bersaglio (+3 × livello), applicati una volta a ogni bersaglio colpito.',
       );
     }
-    final precisionStat = controlledPlan.choiceId == 'precisione'
+    final precisionStat =
+        const {
+          'precisione',
+          'precisione_punto_debole',
+        }.contains(controlledPlan.choiceId)
         ? hiddenEyeStats.where((stat) => stat.id == 'precisione').firstOrNull
         : null;
     final precisionTotal = precisionStat == null
@@ -1810,6 +1841,18 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           currentSheetScrollId() != origin ||
           encounter != onlineCombatEncounterId) {
         return;
+      }
+      for (final targetTag in controlledPlan.targetIds) {
+        final token = byId[targetTag];
+        if (token == null) continue;
+        final monsterBookId = monsterBookIdForCombatToken(token);
+        if (monsterBookId.isNotEmpty) {
+          rememberMonsterBookPartyDiscovery(
+            monsterBookId,
+            seen: true,
+            broadcast: true,
+          );
+        }
       }
       if (concentrationPending) {
         concentrationSheet['combatConcentrationPending'] = false;
@@ -1923,6 +1966,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'targetName': '${byId[selectedTag]!['name'] ?? '???'}',
           'attackGroupId': id,
           'choice': controlledPlan.choiceId,
+          if (controlledPlan.choiceId == 'precisione_punto_debole')
+            'targetWeakPointPrecision': true,
           if (effectsForTarget.isNotEmpty)
             'abilityName': activeStructuredEffects
                 .where((effect) => effect['type'] == 'pending_target')
@@ -1995,7 +2040,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       final stat = hiddenEyeStats
           .where(
             (s) =>
-                s.id == controlledPlan.choiceId &&
+                s.id ==
+                    (controlledPlan.choiceId == 'precisione_punto_debole'
+                        ? 'precisione'
+                        : controlledPlan.choiceId) &&
                 oculumCombatSubtraitSelectable(s),
           )
           .firstOrNull;
@@ -2122,8 +2170,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'corruption',
           'corruption_target',
         }.contains(request['kind']) ||
-        request['vampirismClaimed'] == true)
+        request['vampirismClaimed'] == true) {
       return;
+    }
     final source = '${request['sourceTag'] ?? ''}';
     if (!controlsOnlineCombatSheet(source)) return;
     if (source != sheetTagAt(schedaCorrente)) {
@@ -2996,13 +3045,19 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       );
     }
     final precisionStages =
-        request['choice'] == 'precisione' &&
+        const {
+              'precisione',
+              'precisione_punto_debole',
+            }.contains(request['choice']) &&
             !resisted &&
             outcome != OculumAttackOutcome.avoided
         ? readIntValue(request['precisionFragilityStages']).clamp(0, 3).toInt()
         : 0;
     final precisionDamagePercent =
-        request['choice'] == 'precisione' &&
+        const {
+              'precisione',
+              'precisione_punto_debole',
+            }.contains(request['choice']) &&
             !resisted &&
             outcome != OculumAttackOutcome.avoided
         ? readIntValue(
@@ -3026,9 +3081,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             combatScoutSide('${request['sourceTag']}'),
           )]?['weakPoint'] ==
           true;
-      final precisionBasePreset = discoveredWeakPoint
-          ? 'Fragilità Semi Letale'
-          : configuredIncomingDamagePreset();
+      final precisionBasePreset = configuredIncomingDamagePreset();
       final precisionPreset = precisionStages > 0
           ? oculumAdvanceDamagePreset(
               precisionBasePreset,
@@ -3038,6 +3091,24 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           : null;
       final precisionAdjustedDamage = (damage * precisionDamagePercent / 100)
           .ceil();
+      final sourceMonster = monsterBookEntryById(
+        '${schedePersonaggio[schedaCorrente]['monsterBookSourceId'] ?? ''}',
+      );
+      final monsterResistancePreset =
+          sourceMonster?.incomingDamageResistancePresets[incomingElement];
+      final explicitResistance = oculumIncomingResistanceIsExplicit(
+        elementId: incomingElement,
+        savedPresets: incomingDamagePresets,
+        savedPercentages: dannoSubitoPercentPerTipo,
+        legacyPercentage: dannoSubitoPercentController.text,
+      );
+      final anatomyResistanceAdjustment =
+          monsterResistancePreset == null || explicitResistance
+          ? 0
+          : ((damageRuleMultiplierForCommand(monsterResistancePreset) - 1) *
+                    100)
+                .round();
+      final weakPointFragilityAdjustment = discoveredWeakPoint ? 250 : 0;
       if (precisionStages > 0 || precisionDamagePercent > 100) {
         aggiungiLog(
           '[PRECISIONE] ${precisionStages > 0 ? '+$precisionStages stadi di Fragilità' : ''}${precisionStages > 0 && precisionDamagePercent > 100 ? ' · ' : ''}${precisionDamagePercent > 100 ? '$precisionDamagePercent% del danno' : ''}, applicati solo a questo colpo.',
@@ -3088,9 +3159,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           enemyLevel: readIntValue(request['level']),
           enemyDifficulty: '${request['difficulty']}',
           resolvedResistance: resisted,
-          resistancePresetOverride:
-              precisionPreset ??
-              (discoveredWeakPoint ? 'Fragilità Semi Letale' : null),
+          resistancePresetOverride: precisionPreset,
+          incomingDamagePercentAdjustment:
+              anatomyResistanceAdjustment + weakPointFragilityAdjustment,
         );
       } finally {
         if (mounted && sheetTagAt(schedaCorrente) == tag) {

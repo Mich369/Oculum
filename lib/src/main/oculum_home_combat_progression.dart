@@ -2,6 +2,11 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+double oculumAddIncomingDamagePercent(
+  double configuredMultiplier,
+  int additivePercent,
+) => configuredMultiplier + additivePercent / 100;
+
 /// Receives resolved totals: sheet DT has already been subtracted by the roll.
 String oculumResolvedRollLog({
   required String label,
@@ -1993,6 +1998,55 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       default:
         return t('Alleato', 'Ally');
     }
+  }
+
+  String masterInitiativeSideEyeLabel(String side) {
+    switch (side) {
+      case 'enemy':
+        return t('Occhio rosso · Nemico', 'Red eye · Enemy');
+      case 'neutral':
+        return t('Occhio ambra · Neutrale', 'Amber eye · Neutral');
+      default:
+        return t('Occhio azzurro · Alleato', 'Blue eye · Ally');
+    }
+  }
+
+  Color masterInitiativeSideEyeColor(String side) {
+    switch (side) {
+      case 'enemy':
+        return Colors.redAccent;
+      case 'neutral':
+        return Colors.orangeAccent;
+      default:
+        return Colors.lightBlueAccent;
+    }
+  }
+
+  Future<void> setMasterInitiativeTokenSide(int index, String side) async {
+    if (!haPermessiMaster ||
+        index < 0 ||
+        index >= masterInitiativeTokens.length) {
+      return;
+    }
+
+    final normalized = side.trim().toLowerCase();
+    if (!const {'ally', 'enemy', 'neutral'}.contains(normalized)) return;
+    final token = masterInitiativeTokens[index];
+    if ('${token['side'] ?? 'ally'}' == normalized) return;
+
+    setState(() {
+      token['side'] = normalized;
+      token['updatedAt'] = DateTime.now().toIso8601String();
+      risultato = t(
+        '${token['name'] ?? 'Partecipante'}: ${masterInitiativeSideEyeLabel(normalized)}.',
+        '${token['name'] ?? 'Participant'}: ${masterInitiativeSideEyeLabel(normalized)}.',
+      );
+      aggiungiLog('[TURNISTICA] $risultato');
+    });
+
+    programmaSalvataggio();
+    notifyActiveSheetSummaryChanged();
+    sendRealtimeInitiativeSnapshotIfPublished();
   }
 
   String masterInitiativeStatusLabel(String status) {
@@ -4991,6 +5045,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int shieldDamageBonusPercent = 0,
     bool resolvedResistance = false,
     String? resistancePresetOverride,
+    int incomingDamagePercentAdjustment = 0,
     int? dannoEsplicito,
     String? enemyDifficulty,
     int? enemyLevel,
@@ -5371,15 +5426,29 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         '[DOPPIO CRITICO] +$extraFragilityPercent punti percentuali di Fragilità per $activePercentDamageType: $percentText.',
       );
     }
-    final dannoModificatoBase = modificatorePercentualeLibero == null
+    final baseDamageMultiplier =
+        modificatorePercentualeLibero ?? modificatore.multiplier;
+    final adjustedDamageMultiplier = oculumAddIncomingDamagePercent(
+      baseDamageMultiplier,
+      incomingDamagePercentAdjustment,
+    );
+    final usesAdjustedDamageMultiplier =
+        modificatorePercentualeLibero != null ||
+        incomingDamagePercentAdjustment != 0;
+    if (incomingDamagePercentAdjustment != 0) {
+      aggiungiLog(
+        '[MODIFICATORE IN INGRESSO] ${incomingDamagePercentAdjustment > 0 ? '+' : ''}$incomingDamagePercentAdjustment punti percentuali applicati alla percentuale già configurata (${((baseDamageMultiplier - 1) * 100).round()}% → ${((adjustedDamageMultiplier - 1) * 100).round()}%).',
+      );
+    }
+    final dannoModificatoBase = !usesAdjustedDamageMultiplier
         ? applicaModificatoreDannoCon(dannoDopoDifesa, modificatore)
         : applicaModificatoreDannoPercentuale(
             dannoDopoDifesa,
-            modificatorePercentualeLibero,
+            adjustedDamageMultiplier,
           );
-    final modificatoreNome = modificatorePercentualeLibero == null
+    final modificatoreNome = !usesAdjustedDamageMultiplier
         ? modificatore.name
-        : '${((modificatorePercentualeLibero - 1) * 100).toStringAsFixed(0)}% danno ricevuto';
+        : '${((adjustedDamageMultiplier - 1) * 100).toStringAsFixed(0)}% danno ricevuto';
     final elementoAttivo = selectedIncomingDamageElement();
     final incomingElementRules = activeIncomingDamageRules(elementoAttivo);
     final dannoDopoRegoleElementali = dannoModificatoBase > 0

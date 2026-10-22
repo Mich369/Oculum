@@ -22,6 +22,10 @@ final _runicAcidMonsterEntries = <MonsterBookEntry>[
         'Un goblin ricoperto di cariche e micce. Unica tecnica: Esplosione suicida, disponibile dopo 2 turni di ricarica. Colpisce tutti gli avversari dello schieramento attuale, sia buoni sia cattivi: come Occhio dei Caduti segue lo schieramento del proprietario. Infligge danni pari alla propria Vita massima, con danneggiamento Scudo al 150%, e muore esplodendo. Non possiede altre Skill. Valori modificabili.',
     descEn:
         'A goblin covered in charges and fuses. Its only technique is a suicide explosion after two cooldown turns: maximum-HP damage to all current opponents, 150 percent shield damage, then death. A Fallen Eye follows its owner’s side.',
+    weakPointIt:
+        'L’innesco centrale sul ventre, da cui partono le micce verso le cariche laterali.',
+    weakPointEn:
+        'The central abdominal trigger where the fuses branch toward the side charges.',
     elementId: 'fuoco',
     spriteAssetPath: '',
     isMiniBoss: false,
@@ -46,6 +50,10 @@ final _runicAcidMonsterEntries = <MonsterBookEntry>[
         'Un costrutto massiccio di piastre rosso cupo, giunti di pietra nera e catene spezzate. Solchi geometrici color rame attraversano petto e braccia; la testa è una calotta senza volto sopra una fessura buia. Le rune reagiscono ai colpi. RES 10, VOL 3, MAT 6, OCU 0. Tre passive gratuite crescono ai livelli 0/3/6: riflette il 10/15/20% dei danni dichiarati se supera il tiro difensivo; quando un suo colpo toglie Vita effettiva applica -2/-3/-4 Difesa per 1 turno, non cumulabile dalla stessa fonte; CM +3/+4/+5. Oculum Art: Open attiva Portali del nucleo, livello 6, nessun costo Oculum, CD 6 turni. Una sola attivazione per fight: un raggio per bersaglio scelto, danno pari alla Vita attuale del Golem, senza sommare il danno base; sul semicolpito metà danno. I raggi emergono da portali sul campo. Nessuna immagine allegata.',
     descEn:
         'A massive construct of dark red plates, black stone joints and broken chains. Copper geometric grooves cross its chest and limbs beneath a faceless dome. Free passives evolve at levels 0/3/6: reflect 10/15/20 percent of declared damage after a successful defense; inflicting actual HP loss applies -2/-3/-4 Defense for one turn; CM +3/+4/+5. Active Open: one current-HP beam per selected target, half on a partial hit, no ordinary base damage added, six-turn cooldown and once per fight.',
+    weakPointIt:
+        'Il nucleo runico dietro le incisioni convergenti al centro del petto, protetto dalle piastre frontali.',
+    weakPointEn:
+        'The runic core behind the grooves converging at the center of its chest, shielded by the front plates.',
     elementId: 'pietra',
     spriteAssetPath: '',
     isMiniBoss: false,
@@ -71,6 +79,10 @@ final _runicAcidMonsterEntries = <MonsterBookEntry>[
         'Una creatura bassa, pallida e gonfia, con ghiandole verdastre ai lati della gola. Attacco base Sputo acido: il colpo rispetta la normale difesa; se colpisce applica un logoramento da 2/3/6 Vita per turno nelle forme I/II/III, disponibili ai livelli 0/3/6. Il logoramento dura 3 turni normali, 2 in Facile, 5 in Difficile e 6 in Oculum; ignora Difesa, Scudo Oculum, Scudo e HP temporanei. Nessun danno periodico immediato all’applicazione. Il semicolpito dimezza la durata per difetto; la stessa fonte non si cumula ma rinnova l’effetto. La forma III è la più pericolosa. Valori modificabili.',
     descEn:
         'A low pale creature with swollen green throat glands. Acid Spit applies 2/3/6 HP corrosion per turn at levels 0/3/6. Duration: Easy two, Normal three, Hard five, Oculum six turns. Corrosion bypasses defense and shields and starts on the next turn; a partial hit halves duration. Same-source applications refresh without stacking.',
+    weakPointIt:
+        'Le ghiandole acide gonfie alla base della gola, visibili quando inspira prima di sputare.',
+    weakPointEn:
+        'The swollen acid glands at the base of its throat, visible as it inhales before spitting.',
     elementId: 'acido',
     spriteAssetPath: '',
     isMiniBoss: false,

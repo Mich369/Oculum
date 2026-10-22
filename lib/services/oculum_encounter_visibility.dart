@@ -6,10 +6,17 @@ Map<String, dynamic> oculumPublicEncounterIdentity(Map<String, dynamic> token) {
       token['side'] == 'enemy' ||
       type.contains('mostro') ||
       type.contains('monster');
+  final visibleName =
+      [token['name'], token['visibleTitleName'], token['sheetTag'], token['id']]
+          .map((value) => '${value ?? ''}'.trim())
+          .firstWhere(
+            (value) => value.isNotEmpty && value != '???',
+            orElse: () => '???',
+          );
   return {
     'name': hiddenCreature && token['nameRevealed'] != true
         ? '???'
-        : '${token['name'] ?? '???'}',
+        : visibleName,
     'imageBase64': '${token['imageBase64'] ?? ''}',
     // Generic monster art is never substituted for a Master's portrait.
     'spriteAssetPath': hiddenCreature

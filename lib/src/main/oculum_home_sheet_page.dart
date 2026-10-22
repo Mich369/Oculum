@@ -11346,7 +11346,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       );
     }
     final viewportWidth = MediaQuery.maybeOf(context)?.size.width ?? 1200;
-    final content = !modalitaDesktop || phoneCompactUi || viewportWidth < 700
+    final content = manuscriptLivingActive &&
+            referenceRequestedAnchor.trim().isNotEmpty
+        ? referenceCharacterPage()
+        : !modalitaDesktop || phoneCompactUi || viewportWidth < 700
         ? characterMobilePage()
         : characterDesktopPage();
     if (!manuscriptLivingActive) return content;

@@ -8,6 +8,12 @@ class OculumPerformanceProbe {
   final _OculumHomePageState _state;
 
   String currentTag() => _state.sheetTagAt(_state.schedaCorrente);
+  String get permissionCampaignId => _state.permissionCampaignId;
+  bool partyKnowsMonsterName(String id) => _state.monsterBookPartyKnowsName(id);
+  List<Map<String, dynamic>> monsterBookDiscoverySnapshotEntries() =>
+      _state.monsterBookPartyDiscoverySnapshotEntries();
+  void receiveMonsterBookDiscoverySnapshot(Map<String, dynamic> payload) =>
+      _state.receiveMonsterBookPartyDiscoverySnapshot(payload);
   Future<bool> utilitySpend(String resource) =>
       _state.requestUtilitySpend(resource);
   Future<bool> spendCombatRoll() => _state.spendCombatRollResource();
@@ -33,6 +39,7 @@ class OculumPerformanceProbe {
   void addCondition(String type, {int stage = 1}) =>
       _state.applyCondition(type, stage: stage);
   int willTotal() => _state.volontaTotale();
+  int veilSubtraitBonus() => _state.conditionSubtraitBonus('velo');
   int herbalBonus(String stat) => _state.merchantHerbalStatBonus(stat);
   int emblemBonus({bool subtrait = false}) =>
       _state.summoningEmblemBonus('resilienza', subtrait: subtrait);
@@ -361,6 +368,25 @@ class OculumPerformanceProbe {
   void selectEncounter(String id) => _state.selectMasterInitiativeGroup(id);
   Map<String, dynamic> initiativeSnapshot() =>
       _state.buildRealtimeInitiativeSnapshot();
+  bool knowsCombatWeakPoint(Map<String, dynamic> token) =>
+      _state.combatTokenWeakPointKnown(token);
+  void rememberMonsterPage(String monsterId) =>
+      _state.rememberMonsterBookPartyDiscovery(monsterId, pagePurchased: true);
+  void rememberMonsterDiscovery(
+    String monsterId, {
+    bool seen = false,
+    bool weakPoint = false,
+    bool nameKnown = false,
+  }) => _state.rememberMonsterBookPartyDiscovery(
+    monsterId,
+    seen: seen,
+    weakPoint: weakPoint,
+    nameKnown: nameKnown,
+  );
+  Future<void> showMonsterBookEntry(String monsterId) =>
+      _state.showMonsterBookPartyEntry(monsterById(monsterId)!);
+  int combatScoutVeloAt(int index, {String? observerSide}) =>
+      _state.sheetCombatScoutVeloAt(index, observerSide: observerSide);
   void refreshEncounterResources(Map<String, dynamic> token) =>
       _state.restoreMasterInitiativeTurnResources(token);
   Map<String, dynamic> publicEncounter(Map<String, dynamic> group) =>

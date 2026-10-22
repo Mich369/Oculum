@@ -5264,6 +5264,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
         for (final e in combatDiscoveries.entries)
           e.key: Map<String, dynamic>.from(e.value),
       },
+      'monsterBookPartyDiscoveries': {
+        for (final e in monsterBookPartyDiscoveries.entries)
+          e.key: Map<String, dynamic>.from(e.value),
+      },
       'onlineCombatRequests': {
         for (final e in onlineCombatRequests.entries)
           e.key: Map<String, dynamic>.from(e.value),
@@ -5341,6 +5345,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
       for (final e in (globali['combatDiscoveries'] as Map).entries) {
         if (e.value is Map) {
           combatDiscoveries['${e.key}'] = Map<String, dynamic>.from(
+            e.value as Map,
+          );
+        }
+      }
+    }
+    monsterBookPartyDiscoveries.clear();
+    if (globali['monsterBookPartyDiscoveries'] is Map) {
+      for (final e in (globali['monsterBookPartyDiscoveries'] as Map).entries) {
+        if (e.value is Map) {
+          monsterBookPartyDiscoveries['${e.key}'] = Map<String, dynamic>.from(
             e.value as Map,
           );
         }

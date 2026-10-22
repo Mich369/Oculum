@@ -10,6 +10,8 @@ $buildRoot = Join-Path $projectRoot 'build'
 $distRoot = [IO.Path]::GetFullPath((Join-Path $buildRoot 'distribution'))
 $stagingRoot = Join-Path $buildRoot "distribution-fresh-$RunId"
 $downloadRoot = Join-Path $buildRoot "distribution-download-$RunId"
+$verifier = Join-Path $PSScriptRoot 'verify_distribution.ps1'
+if (!(Test-Path -LiteralPath $verifier -PathType Leaf)) { throw 'Distribution verifier missing' }
 
 function Assert-BuildChild([string]$Path) {
   $resolved = [IO.Path]::GetFullPath($Path)
@@ -138,9 +140,44 @@ if ((Get-FileHash (Join-Path $stagingRoot 'windows/data/app.so')).Hash -eq
     (Get-FileHash (Join-Path $stagingRoot 'windows-test/data/app.so')).Hash) {
   throw 'Windows Test payload must use an isolated save profile'
 }
+
+function Assert-SameDirectoryTree([string]$Left, [string]$Right) {
+  $leftRoot = [IO.Path]::GetFullPath($Left).TrimEnd([char[]]'\/')
+  $rightRoot = [IO.Path]::GetFullPath($Right).TrimEnd([char[]]'\/')
+  $leftFiles = @(Get-ChildItem -LiteralPath $leftRoot -Recurse -File)
+  $rightFiles = @(Get-ChildItem -LiteralPath $rightRoot -Recurse -File)
+  if ($leftFiles.Count -ne $rightFiles.Count) { throw 'Windows folder artifact file count differs from the verified ZIP.' }
+  $rightByName = @{}
+  foreach ($file in $rightFiles) {
+    $relative = $file.FullName.Substring($rightRoot.Length + 1).Replace('\', '/')
+    if ($rightByName.ContainsKey($relative)) { throw "Duplicate Windows folder artifact file: $relative" }
+    $rightByName[$relative] = $file
+  }
+  foreach ($file in $leftFiles) {
+    $relative = $file.FullName.Substring($leftRoot.Length + 1).Replace('\', '/')
+    $matching = $rightByName[$relative]
+    if (!$matching -or $matching.Length -ne $file.Length -or
+        (Get-FileHash -LiteralPath $matching.FullName -Algorithm SHA256).Hash -ne
+        (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash) {
+      throw "Windows folder artifact differs from the verified ZIP: $relative"
+    }
+  }
+}
+
+$folderBundle = Join-Path $downloadRoot 'Oculum-Windows-Folders'
+$versionedFolders = @(Get-ChildItem -LiteralPath $folderBundle -Directory | Where-Object Name -match '^Oculum-[0-9a-fA-F]{40}$')
+if ($versionedFolders.Count -ne 1) { throw 'The separate Windows folders artifact is missing or ambiguous.' }
+$bundleWindows = Join-Path $versionedFolders[0].FullName 'Windows'
+$bundleTest = Join-Path $versionedFolders[0].FullName 'Windows Test'
+Assert-SameDirectoryTree (Join-Path $stagingRoot 'windows') $bundleWindows
+Assert-SameDirectoryTree (Join-Path $stagingRoot 'windows-test') $bundleTest
+$versionedOutput = Join-Path $stagingRoot $versionedFolders[0].Name
+New-Item -ItemType Directory -Path $versionedOutput | Out-Null
+Get-ChildItem -LiteralPath $versionedFolders[0].FullName -Force | Copy-Item -Destination $versionedOutput -Recurse -Force
+
 # The standalone EXE needs the full Flutter runtime alongside it.
 Get-ChildItem -LiteralPath (Join-Path $stagingRoot 'windows') | Copy-Item -Destination $stagingRoot -Recurse
-Get-ChildItem -LiteralPath $downloadRoot -Directory | Where-Object Name -NotIn @('Oculum-Windows', 'Oculum-Test-Windows', 'Oculum-Android', 'Oculum-macOS', 'Oculum-iOS-unsigned', 'Oculum-Linux', 'Oculum-Web') | ForEach-Object {
+Get-ChildItem -LiteralPath $downloadRoot -Directory | Where-Object Name -NotIn @('Oculum-Windows', 'Oculum-Test-Windows', 'Oculum-Windows-Folders', 'Oculum-Android', 'Oculum-macOS', 'Oculum-iOS-unsigned', 'Oculum-Linux', 'Oculum-Web') | ForEach-Object {
   Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $stagingRoot $_.Name) -Recurse
 }
 Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/titoli-statistiche-critici.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-MODIFICHE.md')
@@ -159,6 +196,7 @@ $manifest = [ordered]@{
   })
 }
 $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $stagingRoot 'BUILD-VERIFICATE.json') -Encoding utf8
+& $verifier -ExpectedCommit $commit -DistributionRoot $stagingRoot
 $active = @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
   $_.Path -and $_.Path.StartsWith($distRoot + '\', [StringComparison]::OrdinalIgnoreCase)
 })
@@ -172,14 +210,19 @@ foreach ($record in $manifest.files) {
 $backupRoot = Join-Path $buildRoot ("distribution-backup-$RunId-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 foreach ($path in @($distRoot, $stagingRoot, $backupRoot)) { Assert-BuildChild $path }
 if (Test-Path -LiteralPath $distRoot) { Move-Item -LiteralPath $distRoot -Destination $backupRoot }
-try { Move-Item -LiteralPath $stagingRoot -Destination $distRoot }
+try {
+  Move-Item -LiteralPath $stagingRoot -Destination $distRoot
+  & $verifier -ExpectedCommit $commit -DistributionRoot $distRoot
+}
 catch {
+  if ((Test-Path -LiteralPath $distRoot) -and !(Test-Path -LiteralPath $stagingRoot)) {
+    Move-Item -LiteralPath $distRoot -Destination $stagingRoot
+  }
   if (!(Test-Path -LiteralPath $distRoot) -and (Test-Path -LiteralPath $backupRoot)) {
     Move-Item -LiteralPath $backupRoot -Destination $distRoot
   }
   throw
 }
-& (Join-Path $buildRoot 'verify_eye_auto_distribution.ps1') -ExpectedCommit $commit
 Assert-BuildChild $downloadRoot
 Remove-Item -LiteralPath $downloadRoot -Recurse -Force
 Write-Host "Installed only fresh GitHub builds for $commit in $distRoot; previous distribution preserved in $backupRoot"

@@ -20,40 +20,46 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       skill.ensureForms();
       if (oculumIsCorruptionMastery(skill)) corruptionSkillCooldown(skill);
       for (final (i, form) in skill.forme.indexed) {
-        if (form.cooldownStrutturato case final cooldown?)
+        if (form.cooldownStrutturato case final cooldown?) {
           yield (name: '${skill.nome} · ${i + 1}', cooldown: cooldown);
+        }
       }
     }
     for (final title in {...titoli, ...trattiRazziali}) {
-      if (title.skillCooldown case final cooldown?)
+      if (title.skillCooldown case final cooldown?) {
         yield (name: title.nome, cooldown: cooldown);
+      }
       for (final extra in title.skillExtra) {
-        if (extra.cooldown case final cooldown?)
+        if (extra.cooldown case final cooldown?) {
           yield (name: '${title.nome} · ${extra.nome}', cooldown: cooldown);
+        }
       }
     }
     for (final item in inventario) {
       for (final (i, form)
           in (item.ability?.forme ?? <CharacterSkillForm>[]).indexed) {
-        if (form.cooldownStrutturato case final cooldown?)
+        if (form.cooldownStrutturato case final cooldown?) {
           yield (name: '${item.nome} · ${i + 1}', cooldown: cooldown);
+        }
       }
     }
     for (final art in arti) {
       for (final skill in art.skills) {
-        for (final (i, cooldown) in skill.cooldownPerLivello.indexed)
+        for (final (i, cooldown) in skill.cooldownPerLivello.indexed) {
           yield (
             name: '${art.nome} / ${skill.nome} · ${i + 1}',
             cooldown: cooldown,
           );
+        }
       }
       for (final (i, cooldown) in [
         art.openDescriptionCooldown,
         art.openSkillCooldown,
         art.openBuffCooldown,
       ].indexed) {
-        if (cooldown != null)
+        if (cooldown != null) {
           yield (name: '${art.nome} · Open ${i + 1}', cooldown: cooldown);
+        }
       }
     }
   }
@@ -68,8 +74,9 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     final key =
         '$permissionScope:$onlineCombatEncounterId:${readIntValue(group?['completedFightCount'])}';
     var changed = false;
-    for (final entry in namedStructuredCooldowns())
+    for (final entry in namedStructuredCooldowns()) {
       changed = entry.cooldown.enterCombat(key) || changed;
+    }
     if (changed) programmaSalvataggio(invalidateCaches: false);
   }
 
