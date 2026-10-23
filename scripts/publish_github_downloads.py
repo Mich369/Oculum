@@ -50,7 +50,7 @@ def release(tag):
 
 def validate_run(run, workflow):
     if (run.get("conclusion") != "success" or run.get("status") != "completed"
-            or not run.get("head_branch")
+            or run.get("head_branch") != "main"
             or workflow.get("name") not in WORKFLOWS
             or workflow.get("path") not in WORKFLOW_PATHS
             or run.get("repository", {}).get("full_name") != REPO
@@ -149,16 +149,32 @@ def can_promote_channel(catalog, run_id):
                if item.get("workflow") == "Build distribution")
 
 
+def resolve_run_id(run_id):
+    candidate = (run_id or "").strip()
+    if candidate:
+        if not re.fullmatch(r"[1-9][0-9]*", candidate):
+            raise ValueError("Invalid run id: enter a positive number or leave blank")
+        return candidate
+    query = urlencode({"branch": "main", "status": "success", "per_page": 20})
+    runs = api(f"actions/workflows/build_distribution.yml/runs?{query}").get("workflow_runs", [])
+    for run in runs:
+        if (run.get("status") == "completed" and run.get("conclusion") == "success"
+                and run.get("head_branch") == "main"
+                and run.get("head_repository", {}).get("full_name") == REPO
+                and type(run.get("id")) is int and run["id"] > 0):
+            return str(run["id"])
+    raise ValueError("No successful Build distribution on main available to publish")
+
+
 def publish(run_id):
-    if not re.fullmatch(r"[1-9][0-9]*", run_id):
-        raise ValueError("Invalid run id")
+    run_id = resolve_run_id(run_id)
     run = api(f"actions/runs/{run_id}")
     workflow = api(f"actions/workflows/{run['workflow_id']}")
     validate_run(run, workflow)
     workflow_id = run["workflow_id"]
     branch_query = urlencode({"branch": run["head_branch"], "status": "success", "per_page": 1})
     latest = api(f"actions/workflows/{workflow_id}/runs?{branch_query}")
-    if latest["workflow_runs"][0]["id"] != run["id"]:
+    if not latest.get("workflow_runs") or latest["workflow_runs"][0]["id"] != run["id"]:
         print("A newer successful build exists; keeping its download channel")
         return
     artifacts = []
@@ -170,8 +186,7 @@ def publish(run_id):
             break
         page += 1
     if not artifacts:
-        print("This successful workflow produced no downloadable artifacts")
-        return
+        raise ValueError("Successful distribution has no downloadable artifacts")
     artifacts = select_release_archives(artifacts)
     tag = f"oculum-build-{run_id}"
     current = release(CHANNEL)
