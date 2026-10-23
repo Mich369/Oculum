@@ -5064,6 +5064,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     bool critico = false,
     int criticalBonusMultiplier = 1,
     double defenseMultiplier = 1,
+    int additionalDefense = 0,
     int? criticalDamageBonusOverride,
     int extraFragilityPercent = 0,
     double incomingDamageMultiplier = 1,
@@ -5348,7 +5349,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         ? dannoInArrivo
         : max(
             1,
-            dannoInArrivo - (difesa() * defenseMultiplier.clamp(1, 1.5)).ceil(),
+            dannoInArrivo -
+                ((difesa() + max(0, additionalDefense)) *
+                        defenseMultiplier.clamp(1, 1.5))
+                    .ceil(),
           );
     final adaptiveResistance = elementalAdaptation?.resistanceBeforeHit ?? 0;
     final dannoPrimaAdattamento = dannoDopoDifesa;
@@ -5408,10 +5412,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
     final difesaLogIt = ignoraDifesa
         ? ' oltre Difesa = $dannoDopoDifesa$elementalAdaptationLogIt$passiveReductionLogIt'
-        : ' - Difesa ${(difesa() * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1,5 · attacco quasi riuscito)' : ''} = $dannoPrimaAdattamento$elementalAdaptationLogIt$passiveReductionLogIt';
+        : ' - Difesa ${((difesa() + max(0, additionalDefense)) * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1,5 · attacco quasi riuscito)' : ''} = $dannoPrimaAdattamento$elementalAdaptationLogIt$passiveReductionLogIt';
     final difesaLogEn = ignoraDifesa
         ? ' beyond Defense = $dannoDopoDifesa$passiveReductionLogEn'
-        : ' - Defense ${(difesa() * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1.5 · partial attack)' : ''} = $dannoPrimaAdattamento$elementalAdaptationLogIt$passiveReductionLogEn';
+        : ' - Defense ${((difesa() + max(0, additionalDefense)) * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1.5 · partial attack)' : ''} = $dannoPrimaAdattamento$elementalAdaptationLogIt$passiveReductionLogEn';
     final opzioniImpattoIt =
         '${ignoraScudi ? " Oltre Scudi: il danno salta Scudo Oculum e Scudo." : ""}'
         '${difficultyBypasses.beyondDefense ? " Aumento difficolta: attivato Oltre Difesa." : ""}'

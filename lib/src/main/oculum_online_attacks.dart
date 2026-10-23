@@ -1989,6 +1989,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           if (isElementCollector) 'sourceMonsterBookId': sourceMonsterId,
           'sourceName': realtimeDisplayName(),
           'sourceMovement': movimento(),
+          'sourceTransparency': activeConditions.any(
+            (c) => c.conditionType == 'trasparenza',
+          ),
+          'sourceInvisibility': activeConditions.any(
+            (c) => c.conditionType == 'invisibile',
+          ),
           'targetTag': selectedTag,
           'targetName': '${byId[selectedTag]!['name'] ?? '???'}',
           'attackGroupId': id,
@@ -3171,8 +3177,31 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           '[PRECISIONE] ${precisionStages > 0 ? '+$precisionStages stadi di Fragilità' : ''}${precisionStages > 0 && precisionDamagePercent > 100 ? ' · ' : ''}${precisionDamagePercent > 100 ? '$precisionDamagePercent% del danno' : ''}, applicati solo a questo colpo.',
         );
       }
+      final sourceTag = '${request['sourceTag'] ?? ''}';
+      final discovery = discoveredCombatTarget(sourceTag);
+      final automaticSight = oculumSeesVeilAutomatically(
+        conditionType: request['sourceInvisibility'] == true
+            ? 'invisibile'
+            : 'trasparenza',
+        targetGrade: readIntValue(request['grade']),
+        observerGrade: activeCriticalGrade(),
+      );
+      final identified =
+          automaticSight ||
+          ((discovery?['bodyObservers'] as List?) ?? const []).contains(tag);
+      final transparencyDefense = oculumTransparencyDefenseBonus(
+        observerLevel: activeCriticalLevel(),
+        transparent: request['sourceTransparency'] == true,
+        identified: identified,
+      );
+      if (transparencyDefense > 0) {
+        aggiungiLog(
+          '[TRASPARENZA] Corpo individuato${automaticSight ? ' automaticamente per Grado' : ' con il tiro'}: +$transparencyDefense Difesa contro questo attaccante (tuo livello).',
+        );
+      }
       try {
         await applicaDannoSubito(
+          additionalDefense: transparencyDefense,
           dannoEsplicito: precisionAdjustedDamage,
           critico: critical,
           criticalBonusMultiplier: critical ? 2 : 1,

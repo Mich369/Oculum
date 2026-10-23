@@ -29,6 +29,24 @@ class OculumCombatScoutRead {
   bool get isExact => reveal == OculumCombatScoutReveal.exact;
 }
 
+bool oculumSeesVeilAutomatically({
+  required String conditionType,
+  required int targetGrade,
+  required int observerGrade,
+}) {
+  final grade = max(0, targetGrade);
+  if (conditionType == 'trasparenza') return observerGrade > grade;
+  if (conditionType == 'invisibile')
+    return observerGrade >= (grade ~/ 3 + 1) * 3;
+  return false;
+}
+
+int oculumTransparencyDefenseBonus({
+  required int observerLevel,
+  required bool transparent,
+  required bool identified,
+}) => transparent && identified ? max(0, observerLevel) : 0;
+
 /// Returns the strongest active Invisibility/Transparency Velo bonus.
 ///
 /// An exact Percezione reading halves each condition's bonus for the observing
@@ -39,11 +57,20 @@ int oculumCombatScoutVeilBonus({
   required Iterable<Map> conditions,
   required int level,
   bool exactPerceptionReading = false,
+  int? observerGrade,
+  int targetGrade = 0,
 }) {
   var bonus = 0;
   for (final condition in conditions) {
     final type = '${condition['conditionType'] ?? condition['type'] ?? ''}';
     if (type != 'invisibile' && type != 'trasparenza') continue;
+    if (observerGrade != null &&
+        oculumSeesVeilAutomatically(
+          conditionType: type,
+          targetGrade: targetGrade,
+          observerGrade: observerGrade,
+        ))
+      continue;
     final rawMetadata = condition['metadata'];
     final metadata = rawMetadata is Map
         ? rawMetadata

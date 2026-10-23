@@ -277,16 +277,31 @@ extension _OculumCombatScout on _OculumHomePageState {
     });
   }
 
-  int sheetCombatScoutVeloAt(int index, {String? observerSide}) {
+  int sheetCombatScoutVeloAt(
+    int index, {
+    String? observerSide,
+    int? observerGrade,
+  }) {
     if (index < 0 || index >= schedePersonaggio.length) return 0;
     final halveVeil =
         observerSide != null &&
         combatScoutVeilBuffHalvedForSheet(sheetTagAt(index), observerSide);
     if (index == schedaCorrente) {
       final fullVelo = activeCombatScoutVelo();
-      if (!halveVeil) return fullVelo;
+      if (!halveVeil && observerGrade == null) return fullVelo;
       final fullVeilBonus = conditionSubtraitBonus('velo');
-      return max(0, fullVelo - fullVeilBonus + fullVeilBonus ~/ 2);
+      return max(
+        0,
+        fullVelo -
+            fullVeilBonus +
+            oculumCombatScoutVeilBonus(
+              conditions: activeConditions.map((c) => c.toJson()),
+              level: activeCriticalLevel(),
+              exactPerceptionReading: halveVeil,
+              observerGrade: observerGrade,
+              targetGrade: activeCriticalGrade(),
+            ),
+      );
     }
     final sheet = schedePersonaggio[index];
     final raw = (sheet['hiddenEyeStats'] as List? ?? const <dynamic>[])
@@ -301,6 +316,8 @@ extension _OculumCombatScout on _OculumHomePageState {
       conditions: conditions,
       level: level,
       exactPerceptionReading: halveVeil,
+      observerGrade: observerGrade,
+      targetGrade: sheetIntValueAt(index, 'grado'),
     );
     return max(
       0,
@@ -343,6 +360,11 @@ extension _OculumCombatScout on _OculumHomePageState {
       'weakPoint': previous?['weakPoint'] == true || read['weakPoint'] == true,
       'veilBuffHalved':
           previous?['veilBuffHalved'] == true || read['veilBuffHalved'] == true,
+      'bodyObservers': <String>{
+        ...((previous?['bodyObservers'] as List?) ?? const [])
+            .whereType<String>(),
+        ...((read['bodyObservers'] as List?) ?? const []).whereType<String>(),
+      }.toList(),
     };
     combatKnowledgeRevision.value++;
   }
@@ -427,6 +449,7 @@ extension _OculumCombatScout on _OculumHomePageState {
           'targetTag': targetTag,
           'targetName': '${target['name'] ?? '???'}',
           'scoutPhase': 'request',
+          'observerGrade': activeCriticalGrade(),
           'natural': natural,
           'total': total,
         };
@@ -447,7 +470,11 @@ extension _OculumCombatScout on _OculumHomePageState {
           final read = oculumCombatScoutRead(
             rollTotal: total,
             targetLevel: sheetCriticalLevelAt(index),
-            targetVelo: sheetCombatScoutVeloAt(index, observerSide: 'ally'),
+            targetVelo: sheetCombatScoutVeloAt(
+              index,
+              observerSide: 'ally',
+              observerGrade: activeCriticalGrade(),
+            ),
             targetGrade: sheetIntValueAt(index, 'grado'),
             targetCm: sheetRollBonusAt(index, 'cm'),
           );
@@ -463,6 +490,7 @@ extension _OculumCombatScout on _OculumHomePageState {
               'difficulty': normalizedCampaignDifficulty(),
             'veilBuffHalved': read.isExact && sheetCombatScoutHasVeilAt(index),
             'weakPoint': read.isExact && natural == 20,
+            if (read.isExact) 'bodyObservers': [sheetTagAt(schedaCorrente)],
           });
           final monsterBookId = monsterBookIdForCombatToken(target);
           if (read.isExact && natural == 20 && monsterBookId.isNotEmpty) {
@@ -534,6 +562,7 @@ extension _OculumCombatScout on _OculumHomePageState {
         targetVelo: sheetCombatScoutVeloAt(
           targetIndex,
           observerSide: combatScoutSide(source),
+          observerGrade: readIntValue(payload['observerGrade']),
         ),
         targetGrade: sheetIntValueAt(targetIndex, 'grado'),
         targetCm: sheetRollBonusAt(targetIndex, 'cm'),
@@ -561,6 +590,7 @@ extension _OculumCombatScout on _OculumHomePageState {
           'rollDifficulty': sheetDifficoltaTiroAt(targetIndex),
         'weakPoint': weakPoint,
         'veilBuffHalved': veilBuffHalved,
+        if (read.isExact) 'bodyObservers': [source],
         if (monsterBookId.isNotEmpty) 'monsterBookId': monsterBookId,
       };
       for (final key in ['senderTag', 'senderRole', 'sessionId']) {
@@ -573,6 +603,7 @@ extension _OculumCombatScout on _OculumHomePageState {
           {
             'reveal': read.reveal.name,
             'veilBuffHalved': veilBuffHalved,
+            if (read.isExact) 'bodyObservers': [source],
             'weakPoint': weakPoint,
           },
         );
@@ -627,6 +658,7 @@ extension _OculumCombatScout on _OculumHomePageState {
           'rollDifficulty': readIntValue(payload['rollDifficulty']),
         'weakPoint': payload['weakPoint'] == true,
         'veilBuffHalved': payload['veilBuffHalved'] == true,
+        if (reveal == 'exact') 'bodyObservers': [source],
       });
       final monsterBookId = '${payload['monsterBookId'] ?? ''}'.trim();
       if (monsterBookId.isNotEmpty) {
