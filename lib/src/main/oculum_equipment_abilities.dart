@@ -1,5 +1,68 @@
 part of '../../main.dart';
 
+CharacterSkill oculumPosteaBootsAbility() {
+  final form = CharacterSkillForm(
+    nome: 'I',
+    tipo: 'Difesa',
+    livello: '0',
+    costo: 'Gratuito · nessuna Azione o Reazione',
+    costoStrutturato: OculumSkillCost(
+      resource: 'nessuna',
+      amountExpression: '0',
+    ),
+    cooldown: '5 turni',
+    cooldownStrutturato: OculumAbilityCooldown(amount: 5),
+    descrizione:
+        'Fuori fight: doppio salto gratuito. In fight: reroll CM +3 dopo la prima CM fallita. CD 5 turni, senza Azioni o Reazioni.',
+    effettiStrutturati: [
+      OculumStructuredEffect(type: 'difesa', valueExpression: '3'),
+    ],
+    oculumLimitiConfiguratiManualmente: true,
+  );
+  return CharacterSkill(
+    nome: 'Doppio salto / Reroll CM gratuito',
+    costo: form.costo,
+    cooldown: form.cooldown,
+    tipo: 'Difesa',
+    descrizione: form.descrizione,
+    forme: [form],
+  );
+}
+
+CharacterSkill oculumPosteaMitraAbility(int damage) {
+  final form = CharacterSkillForm(
+    nome: 'I',
+    tipo: 'Attacco',
+    livello: '0',
+    costo: 'Gratuito',
+    costoStrutturato: OculumSkillCost(
+      resource: 'nessuna',
+      amountExpression: '0',
+    ),
+    descrizione:
+        '+$damage danni soltanto usando il Mitra: solo questo bonus ignora le resistenze. Difesa e Scudi si applicano.',
+    effettiStrutturati: [
+      OculumStructuredEffect(
+        id: 'postea_mitra_damage',
+        type: 'danno',
+        recipient: 'nemico',
+        valueExpression: '$damage',
+        mode: 'prossima_azione',
+        bypassResistance: true,
+      ),
+    ],
+    oculumLimitiConfiguratiManualmente: true,
+  );
+  return CharacterSkill(
+    nome: 'Mitra runico Postea',
+    costo: form.costo,
+    cooldown: form.cooldown,
+    tipo: 'Attacco',
+    descrizione: form.descrizione,
+    forme: [form],
+  );
+}
+
 CharacterSkill oculumForestDemonArmorAbility(int level) {
   final form = CharacterSkillForm(
     nome: 'I',
@@ -190,6 +253,48 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     CharacterSkillForm form,
     OculumCombatAbilityRole role,
   ) async {
+    if (item.craftData['posteaBoots'] == true) {
+      if (!inventario.contains(item) ||
+          !item.equipaggiata ||
+          item.quantita <= 0) {
+        return;
+      }
+      if (!currentCombatIsActive()) {
+        aggiungiLog(
+          '[POSTEA] Doppio salto gratuito: nessuna Azione o Reazione consumata.',
+        );
+        programmaSalvataggio();
+        return;
+      }
+      if (form.cooldownStrutturato?.ready == false) return;
+      final request = onlineCombatRequests.values
+          .where(
+            (r) =>
+                r['targetTag'] == sheetTagAt(schedaCorrente) &&
+                r['status'] == 'pending' &&
+                r['firstDefenseChoice'] == 'cm' &&
+                r['firstDefense'] != null &&
+                r['defenseRetryUsed'] != true,
+          )
+          .firstOrNull;
+      if (request == null) {
+        aggiungiLog(
+          '[POSTEA] Reroll disponibile dopo una prima difesa CM non riuscita. Nessuna risorsa consumata.',
+        );
+        return;
+      }
+      if (onlineCombatResolving.contains('${request['id']}')) return;
+      request['defenseRetryUsed'] = true;
+      request['defenseRetryApproved'] = true;
+      request['posteaCmBonus'] = 3;
+      form.cooldownStrutturato?.activate();
+      aggiungiLog(
+        '[POSTEA] Reroll CM +3 gratuito: non usa Azione, Reazione o veloce. CD ${form.cooldownStrutturato?.amount ?? 5} turni.',
+      );
+      await defendOnlineAttack(request, 'cm');
+      programmaSalvataggio();
+      return;
+    }
     final origin = currentSheetScrollId();
     final effects = form.effettiStrutturati.isNotEmpty
         ? form.effettiStrutturati

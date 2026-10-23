@@ -821,7 +821,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       };
     }
     final isEquipment = const {'gear', 'title_item'}.contains(offer['kind']);
-    final base = offer['kind'] == 'clothing'
+    final base =
+        const {
+          'clothing',
+          'postea_weapon',
+          'postea_boots',
+        }.contains(offer['kind'])
         ? readIntValue(offer['cost'])
         : isEquipment
         ? oculumMerchantEquipmentPrice(offer)
@@ -841,8 +846,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             max(0, leggiNumero(gradoController)).clamp(0, 12)) {
       return false;
     }
-    if (kind == 'clothing')
+    if (kind.startsWith('postea_')) {
+      return merchantShopType == 'postea' || merchantShopType == 'tutti';
+    }
+    if (kind == 'clothing') {
       return merchantShopType == 'sartoria' || merchantShopType == 'tutti';
+    }
     return switch (merchantShopType) {
       'materiali' =>
         const {
@@ -888,6 +897,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               'creature_core',
             }.contains(kind) ||
             offer['isMaterial'] == true,
+      'postea' => kind.startsWith('postea_'),
       'sartoria' => kind == 'clothing',
       'chef' => kind == 'food' && offer['isMaterial'] != true,
       _ => true,
@@ -1231,6 +1241,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           DropdownMenuItem(
             value: 'alchimista',
             child: Text('Alchimista · cristalli e crafting'),
+          ),
+          DropdownMenuItem(
+            value: 'postea',
+            child: Text('Postea · Rusty, mercante runico'),
           ),
           DropdownMenuItem(
             value: 'sartoria',
@@ -1669,6 +1683,27 @@ extension _OculumHomeMerchant on _OculumHomePageState {
 
   void ensureMerchantSpecialOffers() {
     ensureClothingOffers();
+    if (!merchantStock.any((o) => o['id'] == 'postea_runic_mitra_15')) {
+      merchantStock.add({
+        'id': 'postea_runic_mitra_15',
+        'kind': 'postea_weapon',
+        'name': 'Mitra runico Postea',
+        'cost': 50,
+        'damage': 15,
+        'desc':
+            'Rusty, robottino malconcio del futuro errante di Postea. Seleziona il Mitra in Attacco: +15 danni che ignorano le resistenze. Il resto dell’attacco segue le resistenze normali; Difesa e Scudi restano applicabili.',
+      });
+    }
+    if (!merchantStock.any((o) => o['id'] == 'postea_jump_boots')) {
+      merchantStock.add({
+        'id': 'postea_jump_boots',
+        'kind': 'postea_boots',
+        'name': 'Stivali del doppio salto Postea',
+        'cost': 60,
+        'desc':
+            'Doppio salto gratuito fuori fight. In Difesa: un reroll CM +3, CD 5 turni. Non consuma Azioni, Reazioni o Reazioni veloci.',
+      });
+    }
     final ids = merchantStock.map((offer) => '${offer['id']}').toSet();
     void add(Map<String, dynamic> offer) {
       final id = '${offer['id']}';
@@ -3674,6 +3709,30 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     Map<String, dynamic> offer, {
     String titleType = '',
   }) {
+    if (offer['kind'] == 'postea_boots') {
+      return InventoryItem(
+        nome: '${offer['name']}',
+        peso: .5,
+        quantita: 1,
+        note: '${offer['desc']}',
+        craftData: {'posteaBoots': true},
+        ability: oculumPosteaBootsAbility(),
+      );
+    }
+    if (offer['kind'] == 'postea_weapon') {
+      return InventoryItem(
+        nome: '${offer['name']}',
+        peso: 1,
+        quantita: 1,
+        note: '${offer['desc']}',
+        arma: true,
+        bonusDanno: 0,
+        ability: oculumPosteaMitraAbility(
+          max(0, readIntValue(offer['damage'])),
+        ),
+        craftData: {'postea': true},
+      );
+    }
     if (offer['kind'] == 'clothing') {
       return InventoryItem(
         nome: '${offer['name']}',

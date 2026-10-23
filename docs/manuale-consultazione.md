@@ -1982,3 +1982,13 @@ Trasparenza non nasconde il corpo a chi ha Grado superiore al suo utilizzatore. 
 
 ### Creatrice di vestiti — 23 ottobre 2026
 Banco Sartoria con capi di livello e skill di protezione modificabili. Prezzo base casuale 9–18 Obser: +2 ogni 5 HP temporanei, +5 ogni 3 Scudo Oculum, +2 ogni 3 Scudo. Supplementi proposti e modificabili: +2 Obser per il tratto di crescita, +2 per punto Danni/Difesa. Crescita del livello oggetto: +1 a una statistica ogni 3 livelli oppure +1 a un sottotratto ogni 2. Bonus secondari piccoli; Scudo Oculum raro. Quando lo Scudo del singolo vestito si rompe, i suoi bonus passivi si dimezzano per difetto; con la ricarica tornano interi. Livello, destinazione e intervallo di crescita, buff, Scudo e skill restano modificabili e salvati nel JSON. L'integrità del capo è indipendente dagli altri equipaggiamenti.
+
+
+### Postea e svantaggio VC/CM — conferme 23 ottobre 2026
+Il Mitra runico Postea costa 50 Obser. Compare tra gli Attacchi: soltanto scegliendolo aggiunge +15 Danni. Solo quei 15 ignorano le resistenze; il resto dell’attacco segue le resistenze normali. Non ignora Difesa o Scudi e non dà un bonus passivo permanente. Valore ed esclusione delle resistenze sono modificabili nell’effetto della skill e salvati nel JSON.
+Un tiro VC o CM che supera quello avversario di almeno due terzi del totale avversario infligge −3 a tutti i tiri del nemico per un turno. Esempio: 20 contro 12 soddisfa la soglia; 19 contro 12 no. Gli altri tipi di tiro non applicano questo svantaggio.
+
+Stivali Postea: 60 Obser; doppio salto gratuito fuori fight oppure un solo reroll CM +3 dopo la prima CM fallita. Compare nelle Difese, non consuma Azione, Reazione normale o veloce, CD 5 turni. Cooldown e descrizione restano modificabili nell’abilità dell’oggetto.
+Cenere: ogni critico positivo ricevuto ha il 30% di dare +1 Cenere. Si esegue solo metà dei precedenti controlli di svenimento, mantenendo le prove e gli esiti preesistenti. A ogni turno personale, se Cenere > Livello +3, probabilità min(100, 20 + Cenere)% di perdere la Reazione normale per quel turno; la veloce resta distinta. I log mostrano tiro, soglia e risultato.
+
+Log fight: indicare sempre attaccante e difensore per nome, tecnica e tiro. Prima della difesa: “deve difendersi”; dopo: totale difesa con aiuto e chi ha vinto. Aiuta compagno resta disponibile per attaccante e difensore.

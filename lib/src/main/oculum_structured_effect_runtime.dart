@@ -387,6 +387,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             effect.mode == 'prossima_azione' &&
             !effect.bypassDefense &&
             !effect.bypassShields &&
+            !effect.bypassResistance &&
             effect.shieldDamageBonusPercent == 0 &&
             !(isAreaDamage && effect.recipient == 'nemico');
         final effectiveRecipient =
@@ -1348,6 +1349,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           dannoEsplicito: max(0, readIntValue(effect.valueExpression)),
           bypassDefense: effect.bypassDefense,
           bypassShields: effect.bypassShields,
+          resistanceBypassDamage: effect.bypassResistance
+              ? max(0, readIntValue(effect.valueExpression))
+              : 0,
           shieldDamageBonusPercent: effect.shieldDamageBonusPercent,
         );
       } else {

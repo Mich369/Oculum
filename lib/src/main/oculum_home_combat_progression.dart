@@ -7,6 +7,19 @@ double oculumAddIncomingDamagePercent(
   int additivePercent,
 ) => configuredMultiplier + additivePercent / 100;
 
+int oculumAshReactionLossChance(int ash, int level) =>
+    ash > max(0, level) + 3 ? (20 + ash).clamp(0, 100) : 0;
+
+bool oculumVcCmInflictsDisadvantage(
+  String choice,
+  int winningTotal,
+  int opposingTotal,
+) =>
+    const {'vc', 'cm'}.contains(choice.toLowerCase()) &&
+    opposingTotal > 0 &&
+    winningTotal > opposingTotal &&
+    (winningTotal - opposingTotal) * 3 >= opposingTotal * 2;
+
 String oculumCombatExchangeLog({
   required String attacker,
   required String technique,
@@ -17,16 +30,12 @@ String oculumCombatExchangeLog({
   int defenseHelp = 0,
   required bool avoided,
 }) {
-  return [
-    '${defender == 'te' ? '$attacker ti attacca' : '$attacker attacca $defender'} con $technique: $attack.',
-    'Difesa $defenseChoice: ${defense - defenseHelp}.',
-    if (defenseHelp != 0)
-      'Aiuto compagno alla difesa: ${defenseHelp >= 0 ? '+' : ''}$defenseHelp. Totale difesa: $defense.',
-    if (attack == defense && avoided)
-      'Parità: $attack = $defense. Vince la difesa; attacco evitato.'
-    else
-      'Attacco $attack contro difesa $defense: ${avoided ? 'attacco evitato' : 'attacco riuscito'}.',
-  ].join('\n');
+  final target = defender == 'te' ? 'Tu' : defender;
+  final help = defenseHelp == 0 ? '' : ' + aiuto $defenseHelp';
+  return '$attacker → $target · $technique $attack. '
+      '$target: $defenseChoice ${defense - defenseHelp}$help = $defense. '
+      '${avoided ? '$target si difende' : '$attacker colpisce $target'}'
+      '${attack == defense && avoided ? ' (parità: vince la difesa)' : ''}.';
 }
 
 /// Receives resolved totals: sheet DT has already been subtracted by the roll.
@@ -2168,6 +2177,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   int masterInitiativeReactionMax(Map<String, dynamic> token) {
+    if (token['ashReactionExhausted'] == true) return 0;
     return max(1, readIntValue(token['reactionMax'], fallback: 1));
   }
 
@@ -2358,8 +2368,26 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     restoreMasterInitiativeTokenReactions(token);
     if (readIntValue(token['actionTurnRound'], fallback: -1) !=
         masterInitiativeRound) {
-      token['actionUsed'] = false;
+      token['actionUsed'] =
+          token['posteaFirstRoundReactionOnly'] == true &&
+          masterInitiativeRound == 0;
       token['actionTurnRound'] = masterInitiativeRound;
+      final tag = publicInitiativeSourceTag(token);
+      final index = localSheetIndexForOculumTag(tag);
+      final ash = index < 0
+          ? readIntValue(token['ash'])
+          : index == schedaCorrente
+          ? leggiNumero(cenereController)
+          : sheetIntValueAt(index, 'cenere');
+      final level = max(0, readIntValue(token['level']));
+      final chance = oculumAshReactionLossChance(ash, level);
+      final roll = Random.secure().nextInt(100);
+      token['ashReactionExhausted'] = roll < chance;
+      if (chance > 0) {
+        aggiungiLog(
+          '[ESAURIMENTO] ${token['name']}: Cenere $ash > Livello $level +3; tiro ${roll + 1}/100, probabilità $chance%. ${roll < chance ? 'Reazione normale non disponibile per questo turno.' : 'Reazione mantenuta.'}',
+        );
+      }
     }
     resetLocalMapMovementForInitiativeToken(token);
   }
@@ -2829,6 +2857,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
               variantSeed: monsterSpriteStableSeed('$tag $sheetNotes'),
             ),
       'tokenSize': 54,
+      'ash': sheetIntValueAt(index, 'cenere'),
       'level': sheetCriticalLevelAt(index),
       'grade': max(0, sheetIntValueAt(index, 'grado')),
       'rollDifficulty': sheetDifficoltaTiroAt(index),
@@ -3024,6 +3053,19 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     programmaSalvataggio();
     notifyActiveSheetSummaryChanged();
     sendRealtimeMasterVisibleTokenAt(index);
+    for (final pawn in pawnGuardians.where(
+      (pawn) =>
+          pawn.ownerTag == sheetTagAt(index) &&
+          pawn.alive &&
+          !pawn.pendingRegistration,
+    )) {
+      final alreadyAssigned = masterInitiativeGroups.any(
+        (group) => (group['tokens'] as List? ?? const []).whereType<Map>().any(
+          (token) => token['pawnId'] == pawn.id,
+        ),
+      );
+      if (!alreadyAssigned) addPawnToInitiative(pawn);
+    }
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
@@ -3874,8 +3916,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   void clearMasterInitiativeTokens() {
     if (realtimeService?.isConnected == true &&
         !realtimeIsMasterRole &&
-        !realtimeIsCoMasterRole)
+        !realtimeIsCoMasterRole) {
       return;
+    }
     setState(() {
       masterInitiativeTokens.clear();
       clearTemporaryCombatResistanceEffects();
@@ -5073,6 +5116,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int criticalBonusMultiplier = 1,
     double defenseMultiplier = 1,
     int additionalDefense = 0,
+    int resistanceBypassDamage = 0,
     int? criticalDamageBonusOverride,
     int extraFragilityPercent = 0,
     double incomingDamageMultiplier = 1,
@@ -5256,6 +5300,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           rollBasisPoints: misfortuneCriticalRoll,
         );
     if (misfortuneCriticalTriggered) critico = true;
+    if (critico) {
+      final ashRoll = Random.secure().nextInt(100);
+      final ashMessage = ashRoll < 30 ? modificaCenereControllata(1) : null;
+      aggiungiLog(
+        '[CRITICO RICEVUTO] Cenere: tiro ${ashRoll + 1}/100, 30% → ${ashRoll < 30 ? '+1 Cenere' : 'nessun aumento'}.${ashMessage == null ? '' : ' $ashMessage'}',
+      );
+    }
     final misfortuneShieldRoll = Random.secure().nextInt(10000);
     final misfortuneShieldTriggered = oculumPercentRollSucceeds(
       chancePercent: misfortune.shieldChance,
@@ -5293,10 +5344,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             ) *
             criticalBonusMultiplier.clamp(1, 2);
     final dannoPrimaParataLordo = dannoInserito + (critico ? bonusCritico : 0);
-    final dannoPrimaParata = oculumReduceIncomingDamage(
+    final runicBeforeDefense = min(
+      max(0, resistanceBypassDamage),
       dannoPrimaParataLordo,
-      incomingDamageMultiplier,
     );
+    final dannoPrimaParata =
+        oculumReduceIncomingDamage(
+          dannoPrimaParataLordo - runicBeforeDefense,
+          incomingDamageMultiplier,
+        ) +
+        runicBeforeDefense;
     final riduzioneElementale = dannoPrimaParataLordo - dannoPrimaParata;
     final riduzioneParataOculum = parryCheckSucceeded
         ? oculumParryDamageReduction(
@@ -5362,6 +5419,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                         defenseMultiplier.clamp(1, 1.5))
                     .ceil(),
           );
+    // Split once after Defense, then apply resistances only to ordinary damage.
+    final protectedRunicDamage = resolvedResistance
+        ? 0
+        : min(max(0, resistanceBypassDamage), dannoDopoDifesa);
+    dannoDopoDifesa -= protectedRunicDamage;
     final adaptiveResistance = elementalAdaptation?.resistanceBeforeHit ?? 0;
     final dannoPrimaAdattamento = dannoDopoDifesa;
     if (dannoDopoDifesa > 0 && adaptiveResistance > 0) {
@@ -5565,10 +5627,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       sendRealtimeHpChanged();
       oculumCombatTheme.react('heal');
       controllaStatoForzaDopoHp();
-      return;
+      if (protectedRunicDamage == 0) return;
+      dannoModificato = 0;
     }
 
-    if (dannoModificato == 0) {
+    if (dannoModificato == 0 && protectedRunicDamage == 0) {
       setState(() {
         if (critico) {
           incomingDamagePresets[activePercentDamageType] = modificatoreDopo;
@@ -5610,10 +5673,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final scudoCriticoAttivo = scudoCriticoPrima > 0;
     final scudoCriticoSpezzato = critico && scudoCriticoAttivo;
 
-    if (scudoCriticoAttivo) {
-      dannoFinale = max(1, (dannoFinale / 2).ceil());
-    }
-
     final resistenzaStatoForzaAttiva =
         statoForzaAttivo == 'azzeramento_vulnerabilita';
     if (resistenzaStatoForzaAttiva) {
@@ -5640,6 +5699,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final resistenzaAdattamentoLogEn = resistenzaAdattamentoAttiva
         ? ' Adaptation: Temporary Resistance to all damage, damage reduced to $dannoFinale.'
         : '';
+
+    dannoFinale += protectedRunicDamage;
+    if (protectedRunicDamage > 0) {
+      aggiungiLog(
+        '[MITRA RUNICO] +$protectedRunicDamage danni oltre le resistenze; resto dell’attacco dopo le resistenze: ${dannoFinale - protectedRunicDamage}. Scudi applicati normalmente.',
+      );
+    }
+    if (scudoCriticoAttivo) {
+      dannoFinale = max(1, (dannoFinale / 2).ceil());
+    }
 
     int rimanente = dannoFinale;
     int oculumShield = scudoOculum();

@@ -202,6 +202,7 @@ class OculumPerformanceProbe {
     bool bypassDefense = false,
     bool bypassShields = false,
     int shieldDamageBonusPercent = 0,
+    int resistanceBypassDamage = 0,
   }) => _state.applicaDannoSubito(
     dannoEsplicito: amount,
     critico: critical,
@@ -213,6 +214,7 @@ class OculumPerformanceProbe {
     bypassDefense: bypassDefense,
     bypassShields: bypassShields,
     shieldDamageBonusPercent: shieldDamageBonusPercent,
+    resistanceBypassDamage: resistanceBypassDamage,
   );
 
   bool get masterPermissions => _state.haPermessiMaster;

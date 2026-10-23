@@ -180,6 +180,26 @@ void main() {
       if (stat.id == 'resistenza') stat.valore = -50;
       if (stat.id == 'fortuna') stat.unlocked = false;
     }
+    // A mixed packet keeps only its 15 runic points outside resistance.
+    state.scudoOculumController.text = '0';
+    state.scudoController.text = '0';
+    state.hpTempController.text = '0';
+    state.currentHpController.text = '1000';
+    state.incomingDamageElement = 'fisico';
+    state.dannoSubitoPercentPerTipo.clear();
+    state.incomingDamagePresets['fisico'] = 'Immunità';
+    probe.invalidateDerivedCaches();
+    await probe.damageResolved(
+      probe.defense() + 115,
+      resistanceBypassDamage: 15,
+    );
+    expect(int.parse(state.currentHpController.text), 985);
+    expect(
+      state.logEventi.any((dynamic e) => '$e'.contains('[MITRA RUNICO] +15')),
+      isTrue,
+    );
+    state.incomingDamagePresets.clear();
+    state.activeConditions.clear();
     for (final result in [
       (18, 'full', 5),
       (18, 'full', 15),

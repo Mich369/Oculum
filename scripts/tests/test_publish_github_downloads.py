@@ -16,7 +16,7 @@ class DownloadPublicationTests(unittest.TestCase):
         workflow = dict(name="Build distribution",
                         path=".github/workflows/build_distribution.yml")
         publisher.validate_run(run, workflow)
-        for key, value in [("conclusion", "failure"), ("head_branch", "other"),
+        for key, value in [("conclusion", "failure"), ("head_branch", ""),
                            ("head_repository", {"full_name": "outsider/fork"})]:
             with self.assertRaises(ValueError):
                 publisher.validate_run({**run, key: value}, workflow)

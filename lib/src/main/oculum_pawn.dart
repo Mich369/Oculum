@@ -115,6 +115,10 @@ class OculumPawnGuardian {
     this.experience = 0,
     this.unspentStatPoints = 0,
     this.isV2 = false,
+    this.posteaType = '',
+    this.posteaMedicine = 0,
+    this.posteaTemporaryResilience = 0,
+    this.posteaLastFight = '',
     this.grade = 0,
     this.ownerLevel = 0,
     this.ownerGrade = 0,
@@ -156,6 +160,10 @@ class OculumPawnGuardian {
   int experience;
   int unspentStatPoints;
   bool isV2;
+  String posteaType;
+  int posteaMedicine;
+  int posteaTemporaryResilience;
+  String posteaLastFight;
   int grade;
   int ownerLevel;
   int ownerGrade;
@@ -174,7 +182,9 @@ class OculumPawnGuardian {
       : 1000000;
   List<String> targets;
   bool get alive => hp > 0;
-  int get maxHp => isSummoningSlime
+  int get maxHp => posteaType == 'healer'
+      ? 100
+      : isSummoningSlime
       ? max(1, readIntValue(summoningEmblem['hp'], fallback: 120))
       : creatureSheetTag.isNotEmpty && creatureMaxHp > 0
       ? creatureMaxHp
@@ -182,7 +192,13 @@ class OculumPawnGuardian {
   int get experiencePerTurn =>
       isV2 ? oculumPawnV2ExperiencePerTurn : oculumPawnExperiencePerTurn;
   int get statPointsPerLevel => oculumPawnStatPointsPerLevel;
-  String get displayName => isSummoningSlime
+  String get displayName => posteaType == 'pawn'
+      ? 'Pawn Postea'
+      : posteaType == 'healer'
+      ? 'Curatore vivente'
+      : posteaType == 'core'
+      ? 'Costrutto del Core autoriparabile'
+      : isSummoningSlime
       ? 'Slime dell’Emblema'
       : isV2
       ? 'Pawn V2'
@@ -271,6 +287,16 @@ class OculumPawnGuardian {
 
   bool advanceTo(int nextTurn, {String difficulty = 'normale'}) {
     if (nextTurn <= turn || !alive || pendingRegistration) return false;
+    if (posteaType.isNotEmpty) {
+      while (turn < nextTurn) {
+        if (posteaType == 'pawn') {
+          stats['resilienza'] = stats['resilienza']! + 3;
+          posteaTemporaryResilience += 3;
+        }
+        turn++;
+      }
+      return true;
+    }
     if (isSummoningSlime) {
       turn = nextTurn;
       final duration = readIntValue(summoningEmblem['turns']);
@@ -290,6 +316,29 @@ class OculumPawnGuardian {
     return true;
   }
 
+  void finishPosteaFight(String encounterId, {required bool won}) {
+    if (posteaType.isEmpty ||
+        encounterId.isEmpty ||
+        posteaLastFight == encounterId) {
+      return;
+    }
+    posteaLastFight = encounterId;
+    if (posteaType == 'pawn') {
+      stats['resilienza'] = max(
+        0,
+        stats['resilienza']! - posteaTemporaryResilience,
+      );
+      posteaTemporaryResilience = 0;
+      if (!alive && won) {
+        stats.updateAll((key, value) => value + 1);
+        baseStats.updateAll((key, value) => value + 1);
+        hp = maxHp;
+      }
+      hp = min(hp, maxHp);
+    }
+    turn = 0;
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'ownerTag': ownerTag,
@@ -305,6 +354,10 @@ class OculumPawnGuardian {
     'experience': experience,
     'unspentStatPoints': unspentStatPoints,
     'isV2': isV2,
+    'posteaType': posteaType,
+    'posteaMedicine': posteaMedicine,
+    'posteaTemporaryResilience': posteaTemporaryResilience,
+    'posteaLastFight': posteaLastFight,
     'grade': grade,
     'ownerLevel': ownerLevel,
     'ownerGrade': ownerGrade,
@@ -331,6 +384,12 @@ class OculumPawnGuardian {
         experience: readIntValue(data['experience']),
         unspentStatPoints: readIntValue(data['unspentStatPoints']),
         isV2: readBoolValue(data['isV2']),
+        posteaType: '${data['posteaType'] ?? ''}',
+        posteaMedicine: readIntValue(data['posteaMedicine']),
+        posteaTemporaryResilience: readIntValue(
+          data['posteaTemporaryResilience'],
+        ),
+        posteaLastFight: '${data['posteaLastFight'] ?? ''}',
         grade: readIntValue(data['grade']),
         ownerLevel: readIntValue(data['ownerLevel']),
         ownerGrade: readIntValue(data['ownerGrade']),
@@ -685,6 +744,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
 
   Future<void> activatePawnItem(InventoryItem item) async {
     if (!inventario.contains(item) || item.quantita <= 0) return;
+    final posteaType = '${item.craftData['posteaCompanion'] ?? ''}';
     final isV2 = item.craftData['pawnV2'] == true;
     final recoveryLevel = max(0, readIntValue(item.craftData['recoveryLevel']));
     final recoveryGrade = oculumGradeForLevel(recoveryLevel);
@@ -712,7 +772,12 @@ extension _OculumPawnRuntime on _OculumHomePageState {
     final pawn = OculumPawnGuardian(
       id: 'pawn_${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(1000000)}',
       ownerTag: pawnSenderTag,
-      hp: isV2
+      posteaType: posteaType,
+      posteaMedicine: readIntValue(item.craftData['medicine']),
+      targets: posteaType == 'pawn' ? [pawnSenderTag] : null,
+      hp: posteaType == 'pawn' || posteaType == 'healer'
+          ? 100
+          : isV2
           ? max(1, inherited['resilienza'] ?? 0) *
                 oculumHpMultiplierForGrade(ownerGrade)
           : recoveryLevel > 0
@@ -725,7 +790,9 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       grade: isV2 ? ownerGrade : recoveryGrade,
       ownerLevel: isV2 ? ownerLevel : 0,
       ownerGrade: isV2 ? ownerGrade : 0,
-      stats: isV2
+      stats: posteaType == 'pawn'
+          ? {'resilienza': 10, 'volonta': 15, 'materia': 25, 'oculum': 0}
+          : isV2
           ? inherited
           : recoveryLevel > 0
           ? recoveryStats
@@ -758,6 +825,11 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       );
     } else {
       sendPawnSnapshot();
+    }
+    if (masterInitiativeTokens.any(
+      (token) => publicInitiativeSourceTag(token) == pawn.ownerTag,
+    )) {
+      addPawnToInitiative(pawn);
     }
     await choosePawnTargets(pawn);
   }
@@ -910,6 +982,23 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       sendRealtimeInitiativeSnapshotIfPublished();
       return;
     }
+    final baseInitiative = oculumHiddenEyeDerivedBonusFor(
+      level: pawn.level,
+      id: 'iniziativa',
+      resilienza: pawn.stats['resilienza']!,
+      volonta: pawn.stats['volonta']!,
+      materia: pawn.stats['materia']!,
+      oculum: pawn.stats['oculum']!,
+      karma: 0,
+    );
+    final natural = tiraD20(countsAsCooldownRoll: false);
+    final initiative = rollTotalWithCritical(
+      natural,
+      20,
+      [baseInitiative],
+      level: pawn.level,
+      grade: pawn.grade,
+    );
     setState(
       () => masterInitiativeTokens.add({
         'id': pawn.id,
@@ -919,6 +1008,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         'pawnId': pawn.id,
         'name': pawn.displayName,
         'role': 'pawn',
+        if (pawn.posteaType == 'pawn') 'posteaFirstRoundReactionOnly': true,
         'hp': pawn.hp,
         'maxHp': pawn.maxHp,
         'volonta': pawn.stats['volonta'],
@@ -927,7 +1017,9 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         'resilienza': pawn.stats['resilienza'],
         'level': pawn.level,
         'grade': pawn.grade,
-        'initiativeTotal': 0,
+        'initiativeTotal': initiative,
+        'initiativeRoll': natural,
+        'initiativeBase': baseInitiative,
         'reportedTurn': pawn.turn,
         'status': pawn.alive ? 'ready' : 'dead',
         'dead': !pawn.alive,
@@ -1116,7 +1208,9 @@ extension _OculumPawnRuntime on _OculumHomePageState {
                 tag,
                 onlineCombatEncounterId,
               )) &&
-          pawn.targets.contains(tag),
+          pawn.targets.contains(tag) &&
+          pawn.posteaType != 'pawn' &&
+          pawn.posteaType != 'healer',
     )) {
       if (remaining == 0) break;
       final before = remaining;
@@ -1147,7 +1241,9 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         pawn.creatureSheetTag != tag &&
         (!pawn.isSummoningSlime ||
             oculumSummoningSlimeApplies(pawn, tag, onlineCombatEncounterId)) &&
-        pawn.targets.contains(tag),
+        pawn.targets.contains(tag) &&
+        pawn.posteaType != 'pawn' &&
+        pawn.posteaType != 'healer',
   );
 
   void retryPawnDamage(Map<String, dynamic> request) {
@@ -1304,6 +1400,11 @@ extension _OculumPawnRuntime on _OculumHomePageState {
           created.hp = created.maxHp;
         }
         pawnGuardians.add(created);
+        if (masterInitiativeTokens.any(
+          (token) => publicInitiativeSourceTag(token) == created.ownerTag,
+        )) {
+          addPawnToInitiative(created);
+        }
       } else if (action == 'targets' &&
           pawn != null &&
           (pawnControlledBy(pawn, sender) ||

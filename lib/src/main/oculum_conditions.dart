@@ -1226,6 +1226,25 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     },
   ),
   OculumConditionDefinition(
+    id: 'duello_vc_cm_svantaggio',
+    nameIt: 'Svantaggio · VC/CM',
+    nameEn: 'VC/CM disadvantage',
+    icon: Icons.trending_down,
+    category: OculumConditionCategory.special,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        '−3 a tutti i tiri per 1 turno: VC o CM avversario ha superato il tuo totale di almeno due terzi.',
+    descriptionEn:
+        '−3 to all rolls for one turn after an opposing VC/CM exceeds your roll by at least two thirds.',
+    defaultDuration: 1,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+    rollModifierByStage: [-3],
+    affectedTargets: {
+      OculumConditionTarget.tiri,
+      OculumConditionTarget.combattimento,
+    },
+  ),
+  OculumConditionDefinition(
     id: 'scavata_svantaggio_alto',
     nameIt: 'Scavata · svantaggio alto',
     nameEn: 'Burrow · high disadvantage',

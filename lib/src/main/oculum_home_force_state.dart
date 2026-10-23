@@ -700,6 +700,13 @@ extension _OculumHomeForceState on _OculumHomePageState {
         checkedUntil = cenere;
         continue;
       }
+      if (random.nextInt(100) >= 50) {
+        checkedUntil = cenere;
+        aggiungiLog(
+          '[CENERE] Controllo svenimento saltato (50% dei controlli precedenti).',
+        );
+        continue;
+      }
       final faces = dadoSvenimentoCenere(cenere);
       final roll = random.nextInt(faces) + 1;
       final resilienzaBonus = resilienzaTotale() ~/ 3;

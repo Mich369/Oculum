@@ -438,6 +438,7 @@ class OculumStructuredEffect {
     this.appliedState = '',
     this.bypassDefense = false,
     this.bypassShields = false,
+    this.bypassResistance = false,
     this.shieldDamageBonusPercent = 0,
     this.damagePerTarget = false,
     this.killSource = false,
@@ -477,6 +478,7 @@ class OculumStructuredEffect {
   String appliedState;
   bool bypassDefense;
   bool bypassShields;
+  bool bypassResistance;
   int shieldDamageBonusPercent;
 
   OculumStructuredEffect copyWithNewId() {
@@ -523,6 +525,7 @@ class OculumStructuredEffect {
     'appliedState': appliedState,
     'bypassDefense': bypassDefense,
     'bypassShields': bypassShields,
+    'bypassResistance': bypassResistance,
     'shieldDamageBonusPercent': shieldDamageBonusPercent,
     'damagePerTarget': damagePerTarget,
     'killSource': killSource,
@@ -575,6 +578,7 @@ class OculumStructuredEffect {
         json['bypassDefense'] ?? json['oltreDifesa'],
       ),
       bypassShields: readBoolValue(json['bypassShields'] ?? json['oltreScudi']),
+      bypassResistance: readBoolValue(json['bypassResistance']),
       shieldDamageBonusPercent: readIntValue(
         json['shieldDamageBonusPercent'],
       ).clamp(0, 1000),
@@ -1062,6 +1066,7 @@ String oculumStructuredEffectDescription(
   final bypassText = <String>[
     if (effect.bypassDefense) 'oltre Difesa',
     if (effect.bypassShields) 'oltre Scudi',
+    if (effect.bypassResistance) 'ignora le resistenze solo per questo danno',
     if (effect.shieldDamageBonusPercent > 0)
       '+${effect.shieldDamageBonusPercent}% danni agli Scudi',
     if (effect.damagePerTarget) 'danno intero per bersaglio',

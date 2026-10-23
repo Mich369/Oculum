@@ -1488,6 +1488,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     var includeGrade = seed.includeGrade;
     var bypassDefense = seed.bypassDefense;
     var bypassShields = seed.bypassShields;
+    var bypassResistance = seed.bypassResistance;
     var shieldDamageBonusPercent = seed.shieldDamageBonusPercent;
     var damagePerTarget = seed.damagePerTarget;
     var killSource = seed.killSource;
@@ -1593,6 +1594,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         appliedState: appliedState,
         bypassDefense: bypassDefense,
         bypassShields: bypassShields,
+        bypassResistance: bypassResistance,
         shieldDamageBonusPercent: shieldDamageBonusPercent,
         damagePerTarget: damagePerTarget,
         killSource: killSource,
@@ -1604,6 +1606,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       update(() {
         bypassDefense = false;
         bypassShields = false;
+        bypassResistance = false;
         shieldDamageBonusPercent = 0;
         frequencyController.clear();
         durationController.clear();
@@ -1880,6 +1883,18 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             onChanged: (value) => setDialogState(() {
                               bypassDefense = value;
                             }),
+                          ),
+                          SwitchListTile.adaptive(
+                            contentPadding: EdgeInsets.zero,
+                            value: bypassResistance,
+                            title: const Text(
+                              'Ignora resistenze per questo bonus',
+                            ),
+                            subtitle: const Text(
+                              'Il resto dell’attacco segue le resistenze normali.',
+                            ),
+                            onChanged: (value) =>
+                                setDialogState(() => bypassResistance = value),
                           ),
                           SwitchListTile.adaptive(
                             contentPadding: EdgeInsets.zero,

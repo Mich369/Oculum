@@ -36,8 +36,9 @@ bool oculumSeesVeilAutomatically({
 }) {
   final grade = max(0, targetGrade);
   if (conditionType == 'trasparenza') return observerGrade > grade;
-  if (conditionType == 'invisibile')
+  if (conditionType == 'invisibile') {
     return observerGrade >= (grade ~/ 3 + 1) * 3;
+  }
   return false;
 }
 
@@ -69,8 +70,9 @@ int oculumCombatScoutVeilBonus({
           conditionType: type,
           targetGrade: targetGrade,
           observerGrade: observerGrade,
-        ))
+        )) {
       continue;
+    }
     final rawMetadata = condition['metadata'];
     final metadata = rawMetadata is Map
         ? rawMetadata

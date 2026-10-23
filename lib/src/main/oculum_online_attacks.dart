@@ -2187,7 +2187,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (phase == 'attack') {
       combatLogFor(
         '${request['sourceTag']}',
-        '[ATTACCO RICEVUTO] ${request['targetName'] ?? request['targetTag']}: in attesa del tiro difensivo.',
+        '[ATTACCO RICEVUTO] ${request['sourceName']} → ${request['targetName'] ?? request['targetTag']} · ${request['abilityName'] ?? request['choice']} ${request['attack']}. Il bersaglio deve difendersi; puoi aiutare attaccante o difensore.',
       );
     }
     if (phase == 'help') request['status'] = 'resolved';
@@ -2393,7 +2393,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     request['received'] = true;
     combatLogFor(
       '${request['targetTag']}',
-      '[DIFESA RICHIESTA · ${request['targetName'] ?? 'bersaglio'}] ${request['sourceName']} usa ${request['abilityName'] ?? request['choice']}. Tiro nemico ${request['attack']} · DT da superare: ${request['attack']} · danni dichiarati ${request['damage']} (${request['element'] ?? 'fisico'}). Tira CM, Riflessi, Resistenza, Manifestazione del Potere o un sottotratto difensivo configurato. La skill difensiva può essere usata prima del tiro; questo bersaglio applicherà in automatico condizioni, resistenze ed effetti, poi Difesa, Scudo Oculum, Scudo, HP temporanei e Vita in base all’esito. ${request['reason'] ?? ''}',
+      '[DIFESA] ${request['sourceName']} → ${request['targetName'] ?? 'bersaglio'} · ${request['abilityName'] ?? request['choice']} ${request['attack']}. ${request['targetName'] ?? 'Il bersaglio'} deve difendersi · danni ${request['damage']}. Aiuto disponibile per attaccante o difensore.',
     );
   }
 
@@ -2623,6 +2623,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         defense,
         difficulty: '${request['difficulty'] ?? 'normale'}',
       );
+      applyVcCmDisadvantage(request, '${payload['defenseChoice']}', defense);
       request['status'] = 'resolved';
       request['defense'] = defense;
       request['defenseChoice'] = payload['defenseChoice'];
@@ -2710,7 +2711,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       );
       combatLogFor(
         source,
-        '${oculumResolvedRollLog(label: '[ESITO ATTACCO]', total: attack, opposingTotal: defense, succeeded: outcome != OculumAttackOutcome.avoided)} ${outcome.label}.${request['damageReceipt'] is Map<String, dynamic> ? ' ${combatDamageReceiptText(request['damageReceipt'] as Map<String, dynamic>)}.' : ''}${request['freeReaction'] == true ? ' Il difensore ottiene una reazione gratuita contro di te.' : ''}',
+        '${request['targetName']}: ${request['damageReceipt'] is Map<String, dynamic> ? combatDamageReceiptText(request['damageReceipt'] as Map<String, dynamic>) : outcome.label}${request['freeReaction'] == true ? ' · Reazione gratuita contro ${request['sourceName']}' : ''}.',
       );
     }
     while (onlineCombatRequests.length > 200) {
@@ -2810,7 +2811,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       );
       void resolved(int natural, int total) {
         defenseNatural = natural;
-        final penalized = total - collectorDefensePenalty;
+        final penalized =
+            total -
+            collectorDefensePenalty +
+            (choice == 'cm'
+                ? max(0, readIntValue(request['posteaCmBonus'])).toInt()
+                : 0);
         if (collectorDefensePenalty > 0) {
           request['collectorDefensePenalty'] = collectorDefensePenalty;
           aggiungiLog(
@@ -2865,7 +2871,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         request['firstDefenseChoice'] = choice;
         request['firstDefenseNatural'] = defenseNatural;
         aggiungiLog(
-          '[DIFESA NON RIUSCITA] $defense contro ${request['attack']}: scegli se ricevere i danni o spendere una Reazione per un solo nuovo tentativo.',
+          '[DIFESA NON RIUSCITA] ${request['targetName'] ?? nomeController.text}: $choice $defense contro ${request['sourceName']} ${request['attack']}. Danni o un solo reroll; puoi aiutare il difensore.',
         );
         notifyActiveSheetSummaryChanged();
         programmaSalvataggio();
@@ -3024,6 +3030,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       targetMovement: readIntValue(request['sourceMovement'], fallback: -1),
       characterMovement: movimento(),
     );
+    applyVcCmDisadvantage(request, choice, defense);
     request['status'] = 'resolved';
     request['defense'] = defense;
     request['defenseChoice'] = choice;
@@ -3060,11 +3067,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       defense,
     );
     aggiungiLog(
-      '${oculumResolvedRollLog(label: '[ESITO DIFESA] $choice', total: defense, opposingTotal: attack, succeeded: outcome == OculumAttackOutcome.avoided)} ${outcome.label}.${request['freeReaction'] == true ? ' Reazione gratuita su chi ha provato a colpirti.${reflexBonusReaction ? ' Riflessi concede una Reazione aggiuntiva.' : ''}' : ''}',
+      '${request['targetName'] ?? nomeController.text}: ${outcome.label}${request['freeReaction'] == true ? ' · Reazione gratuita contro ${request['sourceName']}' : ''}.',
     );
     aggiungiLog(
       oculumCombatExchangeLog(
         attacker: '${request['sourceName'] ?? 'Avversario'}',
+        defender: '${request['targetName'] ?? nomeController.text}',
         technique:
             '${request['abilityName'] ?? request['choice'] ?? 'attacco'}',
         attack: attack,
@@ -3201,6 +3209,17 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       }
       try {
         await applicaDannoSubito(
+          resistanceBypassDamage: (request['effects'] as List? ?? const [])
+              .whereType<Map>()
+              .where(
+                (e) =>
+                    e['type'] == 'danno' &&
+                    readBoolValue(e['bypassResistance']),
+              )
+              .fold<int>(
+                0,
+                (sum, e) => sum + max(0, readIntValue(e['valueExpression'])),
+              ),
           additionalDefense: transparencyDefense,
           dannoEsplicito: precisionAdjustedDamage,
           critico: critical,
@@ -3374,6 +3393,55 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       permissionEnvelope(reply),
     );
     if (mounted) setState(() {});
+    programmaSalvataggio();
+  }
+
+  void applyVcCmDisadvantage(
+    Map<String, dynamic> request,
+    String defenseChoice,
+    int defense,
+  ) {
+    final attack = readIntValue(request['attack']);
+    final vcWins = oculumVcCmInflictsDisadvantage(
+      '${request['choice']}',
+      attack,
+      defense,
+    );
+    final cmWins = oculumVcCmInflictsDisadvantage(
+      defenseChoice,
+      defense,
+      attack,
+    );
+    if (!vcWins && !cmWins) return;
+    final target = '${request[vcWins ? 'targetTag' : 'sourceTag']}';
+    if (!controlsOnlineCombatSheet(target)) return;
+    final index = localSheetIndexForOculumTag(target);
+    if (index < 0) return;
+    final original = schedaCorrente;
+    salvaSchedaCorrenteInMemoria();
+    final global = catturaImpostazioniGlobali();
+    try {
+      if (index != original) {
+        schedaCorrente = index;
+        caricaStatoDaJson(schedePersonaggio[index]);
+        ripristinaImpostazioniGlobali(global);
+      }
+      applyCondition(
+        'duello_vc_cm_svantaggio',
+        duration: 1,
+        source: 'VC/CM · ${request['id']}',
+      );
+      aggiungiLog(
+        '[SVANTAGGIO VC/CM] ${vcWins ? attack : defense} contro ${vcWins ? defense : attack}: margine di almeno due terzi. −3 a tutti i tiri per 1 turno.',
+      );
+      salvaSchedaCorrenteInMemoria();
+    } finally {
+      if (index != original && mounted) {
+        schedaCorrente = original;
+        caricaStatoDaJson(schedePersonaggio[original]);
+        ripristinaImpostazioniGlobali(global);
+      }
+    }
     programmaSalvataggio();
   }
 

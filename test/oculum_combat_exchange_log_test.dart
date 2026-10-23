@@ -5,6 +5,7 @@ void main() {
   test('combat log explains helped defense and ties', () {
     final log = oculumCombatExchangeLog(
       attacker: 'Raudon',
+      defender: 'Mario',
       technique: 'Schianto',
       attack: 23,
       defenseChoice: 'Riflessi',
@@ -12,9 +13,9 @@ void main() {
       defenseHelp: 4,
       avoided: true,
     );
-    expect(log, contains('Raudon ti attacca con Schianto: 23'));
-    expect(log, contains('Difesa Riflessi: 19'));
-    expect(log, contains('Aiuto compagno alla difesa: +4'));
-    expect(log, contains('Vince la difesa'));
+    expect(log, contains('Raudon → Mario · Schianto 23'));
+    expect(log, contains('Mario: Riflessi 19'));
+    expect(log, contains('+ aiuto 4 = 23'));
+    expect(log, contains('vince la difesa'));
   });
 }

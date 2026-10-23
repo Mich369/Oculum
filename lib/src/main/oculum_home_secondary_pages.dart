@@ -3539,8 +3539,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   Future<void> showInitiativeContextMenu() async {
     if (realtimeService?.isConnected == true &&
         !realtimeIsMasterRole &&
-        !realtimeIsCoMasterRole)
+        !realtimeIsCoMasterRole) {
       return;
+    }
     final clear = await showModalBottomSheet<bool>(
       context: context,
       builder: (menuContext) => SafeArea(

@@ -18,7 +18,6 @@ CHANNEL = "oculum-downloads"
 MARKER = "<!-- OCULUM_DOWNLOADS:"
 WORKFLOWS = {"Build distribution"}
 WORKFLOW_PATHS = {".github/workflows/build_distribution.yml"}
-PUBLISH_BRANCHES = {"main", "codex/oculum-completamento-20261022"}
 PUBLIC_ARTIFACTS = (
     "Oculum-macOS", "Oculum-Windows", "Oculum-Test-Windows",
     "Oculum-Linux", "Oculum-Android",
@@ -50,7 +49,7 @@ def release(tag):
 
 def validate_run(run, workflow):
     if (run.get("conclusion") != "success" or run.get("status") != "completed"
-            or run.get("head_branch") not in PUBLISH_BRANCHES
+            or not run.get("head_branch")
             or workflow.get("name") not in WORKFLOWS
             or workflow.get("path") not in WORKFLOW_PATHS
             or run.get("repository", {}).get("full_name") != REPO
@@ -115,16 +114,16 @@ def read_catalog(body):
 
 
 def notes(catalog):
-    lines = ["# Oculum — download pubblici", "",
+    lines = ["# Oculum â€” download pubblici", "",
              "Artifact completi delle ultime build riuscite, scaricabili senza account.",
              "Ogni gruppo indica il commit verificato. I file ZIP conservano gli artifact originali.", ""]
     for item in sorted(catalog.values(), key=lambda item: item["workflow"]):
         lines += [f"## {item['workflow']}", "",
-                  f"Commit `{item['commit'][:7]}` · [Build verificata]({item['runUrl']})", ""]
+                  f"Commit `{item['commit'][:7]}` Â· [Build verificata]({item['runUrl']})", ""]
         for artifact in item["artifacts"]:
-            lines.append(f"- [{artifact['name']}]({artifact['url']}) — {artifact['bytes'] / 1024 ** 2:.1f} MB")
+            lines.append(f"- [{artifact['name']}]({artifact['url']}) â€” {artifact['bytes'] / 1024 ** 2:.1f} MB")
         if item.get("runId"):
-            lines += ["", f"[Archivio completo della build](https://github.com/{REPO}/releases/tag/oculum-build-{item['runId']}) — include anche Web, iOS non firmato e catture di verifica."]
+            lines += ["", f"[Archivio completo della build](https://github.com/{REPO}/releases/tag/oculum-build-{item['runId']}) â€” include anche Web, iOS non firmato e catture di verifica."]
         lines.append("")
     lines.append(MARKER + json.dumps(catalog, ensure_ascii=True, separators=(",", ":")) + " -->")
     return "\n".join(lines)
@@ -167,7 +166,7 @@ def publish(run_id):
         root = Path(directory)
         if not release(tag):
             gh("release", "create", tag, "--repo", REPO, "--target", run["head_sha"],
-               "--title", f"{run['name']} — {run['head_sha'][:7]}", "--prerelease",
+               "--title", f"{run['name']} â€” {run['head_sha'][:7]}", "--prerelease",
                "--latest=false", "--notes", f"Verified build: {run['html_url']}")
         entries = []
         for artifact in artifacts:
@@ -194,7 +193,7 @@ def publish(run_id):
             gh("release", "edit", CHANNEL, "--repo", REPO, "--notes-file", str(note_file))
         else:
             gh("release", "create", CHANNEL, "--repo", REPO, "--target", run["head_sha"],
-               "--title", "Oculum — download pubblici", "--notes-file", str(note_file),
+               "--title", "Oculum â€” download pubblici", "--notes-file", str(note_file),
                "--latest=false")
     print(f"Published {len(entries)} verified public artifacts for run {run_id}")
 
