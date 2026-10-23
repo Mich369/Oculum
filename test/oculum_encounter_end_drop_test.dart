@@ -156,7 +156,12 @@ void main() {
       var seed = 0;
       while (true) {
         final rolls = Random(seed);
-        if (rolls.nextInt(20) == 19 && rolls.nextInt(20) == 19) break;
+        // finishEncounter also consumes a percentile roll for the Dust crystal
+        // after each defeated monster's natural Drop roll.
+        final firstNatural = rolls.nextInt(20) + 1;
+        rolls.nextInt(100);
+        final secondNatural = rolls.nextInt(20) + 1;
+        if (firstNatural == 20 && secondNatural == 20) break;
         seed++;
       }
       final finish = probe.finishEncounter('encounter_1', random: Random(seed));
