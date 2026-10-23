@@ -200,9 +200,12 @@ CharacterArt oculumWitheredLarvaArt(MonsterBookEntry monster) {
       for (final skill in skills)
         ArtSkill(
           nome: skill.nome,
-          evo1: 'Richiede livello 0. ${skill.forme[0].descrizione}',
-          evo2: 'Richiede livello 3. ${skill.forme[1].descrizione}',
-          evo3: 'Richiede livello 6. ${skill.forme[2].descrizione}',
+          evo1:
+              'Richiede livello 0. Costo: ${skill.forme[0].costo}. ${skill.forme[0].descrizione}',
+          evo2:
+              'Richiede livello 3. Costo: ${skill.forme[1].costo}. ${skill.forme[1].descrizione}',
+          evo3:
+              'Richiede livello 6. Costo: ${skill.forme[2].costo}. ${skill.forme[2].descrizione}',
           effettiPerLivello: skill.forme.map((f) => f.effettiStrutturati),
           cooldownPerLivello: skill.forme.map((f) => f.cooldownStrutturato!),
           risorseCostoPerLivello: skill.forme

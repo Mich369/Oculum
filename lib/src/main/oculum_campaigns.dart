@@ -796,14 +796,18 @@ extension _OculumCampaigns on _OculumHomePageState {
     required String targetId,
     required String targetName,
     int? sheetIndex,
+    bool ban = false,
   }) async {
+    if (!(modalitaMaster || isMasterHost || sonoCoMaster)) return;
     if (targetId.trim().isEmpty) return;
+    if (ban && realtimeService?.isConnected != true) return;
 
     if (!masterKickRequiresConfirmation) {
       await kickSheetFromCampaign(
         targetId: targetId,
         targetName: targetName,
         sheetIndex: sheetIndex,
+        ban: ban,
       );
       return;
     }
@@ -830,8 +834,12 @@ extension _OculumCampaigns on _OculumHomePageState {
                 children: [
                   Text(
                     t(
-                      'Vuoi togliere $targetName dal party/sessione?',
-                      'Do you want to remove $targetName from the party/session?',
+                      ban
+                          ? 'Vuoi bannare $targetName dalla stanza? Potrà rientrare solo dopo aver tolto il ban.'
+                          : 'Vuoi togliere $targetName dal party/sessione?',
+                      ban
+                          ? 'Do you want to ban $targetName from this room? They can return only after the ban is lifted.'
+                          : 'Do you want to remove $targetName from the party/session?',
                     ),
                     style: const TextStyle(color: Colors.white),
                   ),
@@ -870,7 +878,11 @@ extension _OculumCampaigns on _OculumHomePageState {
                   ),
                   onPressed: () => Navigator.of(context).pop(true),
                   icon: const Icon(Icons.person_remove),
-                  label: Text(t('Kicka davvero', 'Really kick')),
+                  label: Text(
+                    ban
+                        ? t('Banna dalla stanza', 'Ban from room')
+                        : t('Kicka davvero', 'Really kick'),
+                  ),
                 ),
               ],
             );
@@ -889,6 +901,7 @@ extension _OculumCampaigns on _OculumHomePageState {
       targetId: targetId,
       targetName: targetName,
       sheetIndex: sheetIndex,
+      ban: ban,
     );
   }
 
@@ -896,7 +909,26 @@ extension _OculumCampaigns on _OculumHomePageState {
     required String targetId,
     required String targetName,
     int? sheetIndex,
+    bool ban = false,
   }) async {
+    if (realtimeService?.isConnected == true) {
+      try {
+        await realtimeService!.moderateRoomSheet(
+          targetId,
+          action: ban ? 'ban' : 'kick',
+        );
+      } catch (error) {
+        if (mounted) {
+          setState(() {
+            risultato = 'Moderazione stanza non riuscita: $error';
+            aggiungiLog(risultato);
+          });
+        }
+        return;
+      }
+    } else if (ban) {
+      return;
+    }
     setState(() {
       if (sheetIndex != null &&
           sheetIndex >= 0 &&
@@ -910,8 +942,12 @@ extension _OculumCampaigns on _OculumHomePageState {
       );
 
       risultato = t(
-        '$targetName è stato kickato dal party.',
-        '$targetName was kicked from the party.',
+        ban
+            ? '$targetName è stato bannato dalla stanza.'
+            : '$targetName è stato kickato dal party.',
+        ban
+            ? '$targetName has been banned from the room.'
+            : '$targetName was kicked from the party.',
       );
       aggiungiLog(risultato);
       saveActiveCampaignInMemory();
@@ -919,6 +955,74 @@ extension _OculumCampaigns on _OculumHomePageState {
 
     sendKickPlayer(targetId);
     await salvaDati();
+  }
+
+  Future<void> manageRoomBans() async {
+    final service = realtimeService;
+    if (service == null ||
+        !service.isConnected ||
+        !(modalitaMaster || isMasterHost || sonoCoMaster)) {
+      return;
+    }
+    List<Map<String, dynamic>> bans;
+    try {
+      bans = await service.listRoomBans();
+    } catch (error) {
+      if (mounted) {
+        setState(() => risultato = 'Elenco ban non disponibile: $error');
+      }
+      return;
+    }
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialog) => StatefulBuilder(
+        builder: (context, refresh) => AlertDialog(
+          title: const Text('Utenti bannati dalla stanza'),
+          content: SizedBox(
+            width: 420,
+            child: bans.isEmpty
+                ? const Text('Nessun utente bannato.')
+                : ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (final ban in bans)
+                        ListTile(
+                          title: Text('${ban['displayName'] ?? 'Giocatore'}'),
+                          subtitle: Text('${ban['sheetTag'] ?? ''}'),
+                          trailing: IconButton(
+                            tooltip: 'Rimuovi ban',
+                            icon: const Icon(Icons.lock_open),
+                            onPressed: () async {
+                              try {
+                                await service.moderateRoomSheet(
+                                  '${ban['sheetTag']}',
+                                  action: 'unban',
+                                );
+                                refresh(() => bans.remove(ban));
+                              } catch (error) {
+                                if (mounted) {
+                                  setState(
+                                    () => risultato =
+                                        'Rimozione ban non riuscita: $error',
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialog),
+              child: const Text('Chiudi'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Map<String, int> campaignQuickStats() {

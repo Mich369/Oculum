@@ -8130,6 +8130,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }
 
   Widget onlinePage() {
+    final canKickRoomMember = modalitaMaster || isMasterHost || sonoCoMaster;
     return responsivePageList(
       pageKey: 'online',
       maxColumns: 2,
@@ -8280,6 +8281,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     ),
                   ),
                   const SizedBox(height: 10),
+                  if (canKickRoomMember && realtimeService?.isConnected == true)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: manageRoomBans,
+                        icon: const Icon(Icons.shield_outlined),
+                        label: Text(t('Gestisci ban', 'Manage bans')),
+                      ),
+                    ),
                   ...partyMembri.where((p) => p.containsKey('id')).map((p) {
                     final isCoMaster = readBoolValue(p['isCoMaster']);
                     final canToggle =
@@ -8318,19 +8328,40 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                                     }
                                   : null,
                             ),
-                            IconButton(
-                              tooltip: t('Kicka', 'Kick'),
-                              onPressed: id.isEmpty
-                                  ? null
-                                  : () => requestKickSheet(
-                                      targetId: id,
-                                      targetName: name,
+                            if (canKickRoomMember)
+                              PopupMenuButton<String>(
+                                tooltip: t('Modera utente', 'Moderate user'),
+                                onSelected: (action) => requestKickSheet(
+                                  targetId: id,
+                                  targetName: name,
+                                  ban: action == 'ban',
+                                ),
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    value: 'kick',
+                                    child: Text(
+                                      t(
+                                        'Espelli dalla stanza',
+                                        'Kick from room',
+                                      ),
                                     ),
-                              icon: const Icon(
-                                Icons.person_remove,
-                                color: Colors.redAccent,
+                                  ),
+                                  if (realtimeService?.isConnected == true)
+                                    PopupMenuItem(
+                                      value: 'ban',
+                                      child: Text(
+                                        t(
+                                          'Banna dalla stanza',
+                                          'Ban from room',
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                                icon: const Icon(
+                                  Icons.person_remove,
+                                  color: Colors.redAccent,
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       ),

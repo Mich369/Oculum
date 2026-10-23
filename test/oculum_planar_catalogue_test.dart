@@ -10,14 +10,14 @@ void main() {
     expect(skill.maximums, [2, 2, 2]);
     expect(skill.cooldowns, [3, 3, 3]);
   });
-  test('228 authored species, no duplicate ids or normalized names', () {
-    expect(oculumPlanarMonsterEntries.length, 228);
+  test('230 authored species, no duplicate ids or normalized names', () {
+    expect(oculumPlanarMonsterEntries.length, 230);
     final ids = oculumPlanarMonsterEntries.map((e) => e.id).toSet();
-    expect(ids.length, 228);
+    expect(ids.length, 230);
     final names = oculumPlanarMonsterEntries
         .map((e) => e.nameIt.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), ''))
         .toSet();
-    expect(names.length, 228);
+    expect(names.length, 230);
     for (final e in oculumPlanarMonsterEntries) {
       expect(
         defaultMonsterBookEntries.where((m) => m.id == e.id).length,
@@ -30,6 +30,54 @@ void main() {
         expect(oculumPlanarTechnique(id), isNotNull, reason: id);
       }
     }
+  });
+  test('Piranha Mortale and Angelic Ray have distinct editable techniques', () {
+    final piranha = monsterById('piranha_mortale')!;
+    expect(piranha.planeIds, ['affogato']);
+    expect(piranha.skillIds, [
+      'piranha_morso',
+      'piranha_sciame',
+      'piranha_richiamo',
+    ]);
+    expect(piranha.encounterRules['swarmAttackerCount'], 2);
+    expect(piranha.encounterRules['summon']['maxAlive'], 2);
+    expect(
+      oculumPlanarTechnique('piranha_morso')!.forms[1].last.target,
+      'sanguinante',
+    );
+    expect(
+      oculumPlanarTechnique('piranha_richiamo')!.forms[0].single.duration,
+      '3',
+    );
+    final ray = oculumPlanarTechnique('raggio_angelico')!;
+    expect(ray.element, 'angelico');
+    expect(
+      oculumAngelRayDamage(
+        baseDamage: 10,
+        attackerKarma: 4,
+        targetKarma: -6,
+        targetKind: 'Demone',
+      ),
+      40,
+    );
+    expect(
+      oculumAngelRayDamage(
+        baseDamage: 10,
+        attackerKarma: 0,
+        targetKarma: 8,
+        targetKind: 'Diavolo',
+      ),
+      15,
+    );
+    expect(
+      oculumAngelRayDamage(
+        baseDamage: 10,
+        attackerKarma: 0,
+        targetKarma: 0,
+        targetKind: 'Arcidiavolo',
+      ),
+      13,
+    );
   });
   test('each microreality has at least twenty distinct base species', () {
     for (final plane in oculumMicroRealityIds) {

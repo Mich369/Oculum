@@ -38,6 +38,7 @@ class OculumRealtimeService {
   static String startupStatus = 'Supabase non inizializzato.';
 
   static const Set<String> supportedEvents = <String>{
+    'room_member_removed',
     'combat_attack',
     'initiative_control',
     'combat_defense',
@@ -569,6 +570,44 @@ class OculumRealtimeService {
       'message': message,
       'sentAt': _nowIso(),
     });
+  }
+
+  Future<void> moderateRoomSheet(
+    String sheetTag, {
+    required String action,
+  }) async {
+    if (!isConnected ||
+        _secureRoomId == null ||
+        !{'master', 'coMaster'}.contains(authenticatedRole) ||
+        !{'kick', 'ban', 'unban'}.contains(action)) {
+      throw StateError('Solo Master e Co-Master possono moderare la stanza.');
+    }
+    await (_client ?? Supabase.instance.client)
+        .rpc(
+          'oculum_moderate_room_sheet',
+          params: {
+            'p_room': _secureRoomId,
+            'p_session': _presenceKey,
+            'p_sheet_tag': sheetTag,
+            'p_action': action,
+          },
+        )
+        .timeout(const Duration(seconds: 15));
+  }
+
+  Future<List<Map<String, dynamic>>> listRoomBans() async {
+    if (!isConnected ||
+        _secureRoomId == null ||
+        !{'master', 'coMaster'}.contains(authenticatedRole)) {
+      throw StateError('Solo Master e Co-Master possono gestire i ban.');
+    }
+    final result = await (_client ?? Supabase.instance.client)
+        .rpc('oculum_list_room_bans', params: {'p_room': _secureRoomId})
+        .timeout(const Duration(seconds: 15));
+    return (result as List)
+        .whereType<Map>()
+        .map((value) => Map<String, dynamic>.from(value))
+        .toList(growable: false);
   }
 
   Future<void> sendDamageReport({
@@ -1603,6 +1642,17 @@ class OculumRealtimeService {
     // The database already supplied the verified body. Unwrapping a user
     // supplied nested `payload` here would discard authenticated sender fields.
     final normalized = Map<String, dynamic>.from(payload);
+
+    if (event == 'room_member_removed' &&
+        normalized['targetUserId'] ==
+            (_client ?? Supabase.instance.client).auth.currentUser?.id) {
+      _safeStatus(
+        normalized['action'] == 'ban'
+            ? 'Sei stato bannato da questa stanza.'
+            : 'Sei stato espulso da questa stanza.',
+      );
+      unawaited(disconnect(notify: false));
+    }
 
     if (event == 'session_note_chunk') {
       final assembled = _sessionNoteTransfers.accept(

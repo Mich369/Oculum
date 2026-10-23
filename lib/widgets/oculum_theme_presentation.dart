@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'oculum_custom_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -40,10 +42,29 @@ class OculumThemePresentation {
 }
 
 final oculumThemePresentation = ValueNotifier(const OculumThemePresentation());
+final ValueNotifier<Map<String, String>> oculumSheetRelicSelections =
+    ValueNotifier(<String, String>{});
 
 Future<void> loadOculumThemePresentation() async {
   await loadOculumCustomArtwork();
   final prefs = await SharedPreferences.getInstance();
+  final savedSheetRelics = prefs.getString('oculum.sheetRelicSelections');
+  if (savedSheetRelics == null) {
+    oculumSheetRelicSelections.value = <String, String>{};
+  } else {
+    try {
+      final decoded = jsonDecode(savedSheetRelics);
+      if (decoded is Map) {
+        oculumSheetRelicSelections.value = {
+          for (final entry in decoded.entries)
+            if (entry.key is String && entry.value is String)
+              entry.key as String: entry.value as String,
+        };
+      }
+    } on FormatException {
+      oculumSheetRelicSelections.value = <String, String>{};
+    }
+  }
   final name = prefs.getString('oculum.themeMotion');
   oculumThemePresentation.value = OculumThemePresentation(
     motion: OculumThemeMotion.values.firstWhere(
@@ -69,6 +90,28 @@ Future<void> loadOculumThemePresentation() async {
       return '';
     }(),
   );
+}
+
+OculumThemePresentation oculumThemePresentationForSheet(String sheetId) {
+  final id = sheetId.trim();
+  final selected = id.isEmpty ? null : oculumSheetRelicSelections.value[id];
+  return selected == null
+      ? oculumThemePresentation.value
+      : oculumThemePresentation.value.copyWith(artPackId: selected);
+}
+
+Future<void> setOculumSheetRelic(String sheetId, String artPackId) async {
+  final key = sheetId.trim();
+  if (key.isEmpty) return;
+  final selections = Map<String, String>.of(oculumSheetRelicSelections.value);
+  if (artPackId.isEmpty) {
+    selections.remove(key);
+  } else {
+    selections[key] = artPackId;
+  }
+  oculumSheetRelicSelections.value = selections;
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('oculum.sheetRelicSelections', jsonEncode(selections));
 }
 
 Future<void> setOculumThemePresentation(OculumThemePresentation value) async {

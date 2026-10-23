@@ -2,6 +2,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('negative resource quick commands parse as costs', () {
+    expect(oculumParseAbilityCost('@mat-1'), (
+      minimum: 1,
+      maximum: 1,
+      resource: 'materia',
+    ));
+    expect(oculumParseAbilityCost('@Oculum-3'), (
+      minimum: 3,
+      maximum: 3,
+      resource: 'oculum',
+    ));
+    expect(oculumParseAbilityCost('@vol-3'), (
+      minimum: 3,
+      maximum: 3,
+      resource: 'volonta',
+    ));
+    expect(oculumParseAbilityCost('@mat+1'), isNull);
+  });
+
   test('bracketed Richiede markers keep a skill locked until resolved', () {
     expect(
       oculumCombatTextHasUnresolvedRequirement(

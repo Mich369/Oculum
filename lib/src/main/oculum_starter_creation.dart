@@ -717,9 +717,24 @@ CharacterArt oculumRockSlimeArt(MonsterBookEntry monster) => CharacterArt(
       ArtSkill(
         nome: monsterBookSkillText(id).split('—').first.trim(),
         livello: 0,
-        evo1: monsterBookSkillForms(id)[0],
-        evo2: monsterBookSkillForms(id)[1],
-        evo3: monsterBookSkillForms(id)[2],
+        evo1:
+            '${monsterBookSkillForms(id)[0]}\nCosto: ${switch (id) {
+              'rock_slime_ball' => '1–4 Oculum',
+              'rock_slime_bounce' => '1–3 Oculum',
+              _ => '1–2 Oculum',
+            }}.',
+        evo2:
+            '${monsterBookSkillForms(id)[1]}\nCosto: ${switch (id) {
+              'rock_slime_ball' => '5–10 Oculum',
+              'rock_slime_bounce' => '4–6 Oculum',
+              _ => '3–4 Oculum',
+            }}.',
+        evo3:
+            '${monsterBookSkillForms(id)[2]}\nCosto: ${switch (id) {
+              'rock_slime_ball' => '11–20 Oculum',
+              'rock_slime_bounce' => '7–10 Oculum',
+              _ => '5–10 Oculum',
+            }}.',
         oculumMinimiPerLivello: switch (id) {
           'rock_slime_ball' => [1, 5, 11],
           'rock_slime_bounce' => [1, 4, 7],

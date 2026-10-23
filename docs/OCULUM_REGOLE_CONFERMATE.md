@@ -2,6 +2,9 @@
 
 ## Conferme del 23 ottobre 2026 — bestiario e quest
 
+- Piranha Mortale: creatura comune del Regno Affogato, caccia in gruppo; i suoi attacchi coordinati usano un solo tiro e non moltiplicano il danno per ogni pesce. Può richiamare fino a due Piranha minori con iniziativa, 1/3/5 Vita secondo la forma, 1 Resilienza, senza abilità né capacità di evocare altri. Il Morso può applicare Sanguinante dopo un colpo riuscito; statistiche, costo, durata e recupero sono valori iniziali modificabili.
+- Raggio Angelico: skill a elemento Angelico con danno base + Karma dell’attaccante + valore assoluto del Karma negativo del bersaglio. Dopo la somma applica ×2 contro Demoni, ×1,5 contro Diavoli e ×1,3 contro Arcidiavoli. I moltiplicatori e i valori delle forme sono modificabili nella skill salvata.
+
 - Solo alcune skill hanno carica crescente: attivazione 2 Oculum e una Azione; danni +40% senza incrementi, poi +80%, +120% e +180% dopo uno/due/tre incrementi. Ogni incremento costa 1 Oculum e una Azione, massimo uno per turno personale. Rilascio anticipato con normale Azione/Reazione; stessi controlli di Concentrazione quando si perde Vita. Costi e progressione modificabili nell’editor e conservati nel JSON.
 - Solo le skill esplicitamente preparate richiedono due fasi: Azione di preparazione; rilascio con il successivo attacco/difesa spendendo normalmente Azione o Reazione, senza una terza risorsa o doppio costo della skill. La preparazione si interrompe soltanto in seguito a perdita di Vita, non se Scudi o HP temporanei assorbono tutto. Bonus Concentrazione +3 = 3% di mantenimento, massimo 100%. Nemico superiore di due Gradi: −10 punti percentuali; di tre: −20; poi altri −10 per ogni Grado.
 - Soltanto la scroll fornisce +3 × suo Grado alla Concentrazione per la tecnica che lo richiede; il bonus non resta nella skill appresa e non aumenta la Concentrazione generale.

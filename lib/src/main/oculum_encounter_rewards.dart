@@ -783,14 +783,22 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         naturalDropRoll: natural,
         dropTotal: total,
       );
-      final crystal = oculumDustCrystalDrop(
-        monsterLevel: level,
-        monsterGrade: grade,
-        rollerLevel: participantLevels[rollerTag] ?? 0,
-        dropTotal: total,
-        percentile: encounterRandom.nextInt(100),
-        killId: killId,
-      );
+      final rollerLevel = participantLevels[rollerTag] ?? 0;
+      // Do not consume a percentile roll when a crystal cannot drop. Besides
+      // avoiding needless RNG, this keeps deterministic Drop sequences stable
+      // for subsequent defeated monsters.
+      final crystalEligible =
+          level >= rollerLevel + 3 && total >= 20 + level + 2 * grade;
+      final crystal = crystalEligible
+          ? oculumDustCrystalDrop(
+              monsterLevel: level,
+              monsterGrade: grade,
+              rollerLevel: rollerLevel,
+              dropTotal: total,
+              percentile: encounterRandom.nextInt(100),
+              killId: killId,
+            )
+          : null;
       if (crystal != null && !oculumEncounterEnemyIsSummon(enemy)) {
         dropped.add(crystal);
       }

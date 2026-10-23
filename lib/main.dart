@@ -5274,8 +5274,9 @@ class _OculumHomePageState extends State<OculumHomePage>
                                       }
                                       return Column(
                                         children: [
-                                          const OculumThemeRelicBanner(
+                                          OculumThemeRelicBanner(
                                             dense: true,
+                                            sheetId: currentSheetScrollId(),
                                           ),
                                           Expanded(child: page),
                                         ],

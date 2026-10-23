@@ -1803,7 +1803,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final label =
         'Attacco contro $target${controlledPlan.reason.isEmpty ? '' : ' · ${controlledPlan.reason}'}';
     final preparedDamage = dannoTotale();
-    final element = oculumNormalizeElementId(controlledPlan.element);
+    final angelicRayPrepared = activeStructuredEffects.any(
+      (effect) =>
+          effect['mode'] == 'prossima_azione' &&
+          effect['type'] == 'danno' &&
+          '${effect['effectId'] ?? ''}'.startsWith('raggio_angelico_forma_'),
+    );
+    final element = angelicRayPrepared
+        ? 'angelico'
+        : oculumNormalizeElementId(controlledPlan.element);
     final sourceTag = sheetTagAt(schedaCorrente);
     final corruptionMastery = skills
         .where(
@@ -1813,6 +1821,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         )
         .firstOrNull;
     final targetEffects = [
+      if (angelicRayPrepared)
+        OculumStructuredEffect(
+          id: 'raggio_angelico_forma_1_0',
+          type: 'danno',
+          valueExpression: '0',
+          elementType: 'angelico',
+          mode: 'prossima_azione',
+          recipient: 'nemico',
+        ).toJson(),
       if (activeStructuredEffectBonus('runic_wound_penalty') > 0)
         OculumStructuredEffect(
           id: 'runic_wound_on_hp',
@@ -2045,6 +2062,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             ).clamp(0, 100),
           if (isElementCollector) 'sourceMonsterBookId': sourceMonsterId,
           'sourceName': realtimeDisplayName(),
+          if (effectsForTarget.any(
+            (effect) =>
+                '${effect['id'] ?? ''}'.startsWith('raggio_angelico_forma_'),
+          )) ...{
+            'sourceKarma': karmaTotale(),
+          },
           'sourceHelpers': List<dynamic>.from(
             schedePersonaggio[schedaCorrente]['combatHelpLastSources']
                     as List? ??
@@ -3269,10 +3292,41 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         '[RESISTENZA] 1 danno prima degli Scudi; reazione gratuita contro chi ha attaccato, senza concatenazione.',
       );
     }
+    final rayEffects = (request['effects'] as List? ?? const [])
+        .whereType<Map>()
+        .where(
+          (effect) =>
+              '${effect['id'] ?? ''}'.startsWith('raggio_angelico_forma_'),
+        )
+        .toList(growable: false);
+    var resolvedAttackBaseDamage = readIntValue(request['damage']);
+    if (rayEffects.isNotEmpty) {
+      final targetMonster = monsterLootSourceForSheet(
+        schedePersonaggio[schedaCorrente],
+      );
+      final targetKind = <String>[
+        targetMonster?.id ?? '',
+        targetMonster?.nameIt ?? '',
+        if (targetMonster != null) ...targetMonster.formTags,
+        nomeController.text,
+        tipoSchedaPersonaggio(schedaCorrente),
+      ].join(' ');
+      final sourceKarma = readIntValue(request['sourceKarma']);
+      final targetKarma = karmaTotale();
+      resolvedAttackBaseDamage = oculumAngelRayDamage(
+        baseDamage: resolvedAttackBaseDamage,
+        attackerKarma: sourceKarma,
+        targetKarma: targetKarma,
+        targetKind: targetKind,
+      );
+      aggiungiLog(
+        '[RAGGIO ANGELICO] Danno base ${readIntValue(request['damage'])} + Karma attaccante $sourceKarma + ${max(0, -targetKarma)} dal Karma negativo del bersaglio; moltiplicatore ×${oculumAngelRayMultiplier(targetKind)} = $resolvedAttackBaseDamage prima di difesa, resistenze e Scudi.',
+      );
+    }
     final damage = resisted
         ? 1
         : oculumOpposedDamage(
-            readIntValue(request['damage']),
+            resolvedAttackBaseDamage,
             attack,
             defense,
             forcedCritical: request['forcedCritical'] == true,

@@ -1037,7 +1037,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                 ),
               ),
             OculumThemeSheetFrame(child: hero),
-            const OculumThemeRelicBanner(),
+            OculumThemeRelicBanner(sheetId: currentSheetScrollId()),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(

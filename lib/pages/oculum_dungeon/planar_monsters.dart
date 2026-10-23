@@ -541,6 +541,27 @@ MonsterConcreteTechnique? oculumPlanarTechnique(String rawId) =>
     )] ??
     _planarTechniques[rawId.replaceFirst(RegExp(r'_variante_[a-z]+$'), '')];
 
+/// Damage preview/resolution rule shared by the Angelic Ray variants.
+/// Karma is added before the target-class multiplier; positive target Karma
+/// never increases the ray.
+int oculumAngelRayDamage({
+  required int baseDamage,
+  required int attackerKarma,
+  required int targetKarma,
+  required String targetKind,
+}) {
+  final karmaDamage = baseDamage + attackerKarma + max(0, -targetKarma);
+  return (karmaDamage * oculumAngelRayMultiplier(targetKind)).ceil();
+}
+
+double oculumAngelRayMultiplier(String targetKind) {
+  final kind = targetKind.trim().toLowerCase();
+  if (kind.contains('arcidiavol')) return 1.3;
+  if (kind.contains('diavol')) return 1.5;
+  if (kind.contains('demon')) return 2;
+  return 1;
+}
+
 MonsterConcreteTechnique _buildPlanarTechnique(
   MonsterBookEntry owner,
   int slot,
@@ -625,6 +646,45 @@ MonsterConcreteTechnique _buildPlanarTechnique(
 
 // Readapted first-edition creatures: one stable species, multiple habitats.
 final _shieldCloudMonsterEntries = <MonsterBookEntry>[
+  _authoredPlanar(
+    'piranha_mortale',
+    'Piranha Mortale',
+    ['affogato'],
+    'acqua',
+    'Pesce predatore dal corpo stretto, pinne scure e mascelle sovradimensionate. Caccia in banchi coordinati: uno distrae la preda mentre gli altri mordono i fianchi. Può richiamare piccoli piranha pallidi, molto meno resistenti ma insistenti. Il morso può aprire una ferita sanguinante; una difesa riuscita evita sia il danno sia la condizione.',
+    'Le branchie esterne, che restano scoperte quando il banco si ricompone.',
+    [3, 2, 3, 1],
+    2,
+    false,
+    false,
+    ['piranha_morso', 'piranha_sciame', 'piranha_richiamo'],
+    {
+      'swarmAttackerCount': 2,
+      'bleedOnNaturalCritical': true,
+      'summon': {
+        'id': 'piranha_minore',
+        'count': 1,
+        'maxAlive': 2,
+        'weakerThanSource': true,
+      },
+    },
+    {'acqua': 'resistenza', 'fulmine': 'Fragilità'},
+  ),
+  _authoredPlanar(
+    'araldo_raggio_angelico',
+    'Araldo del Raggio Angelico',
+    ['angelico', 'sacro'],
+    'angelico',
+    'Creatura umanoide dalle ali stratificate d’avorio, con una fenditura di luce azzurra al centro del petto. Proietta un raggio lineare e preciso, poi deve attendere che il sigillo sul torace si ricomponga.',
+    'La fenditura luminosa sul petto: interromperne la linea riduce la precisione del raggio.',
+    [5, 7, 6, 5],
+    3,
+    false,
+    false,
+    ['raggio_angelico'],
+    {'rayDamageUsesKarma': true},
+    {'buio': 'Fragilità', 'diabolico': 'resistenza'},
+  ),
   _authoredPlanar(
     'fire_shield',
     'FireShield',
@@ -1195,6 +1255,85 @@ final _authoredPlanarTechniques = <String, MonsterConcreteTechnique>{
 };
 
 final _extraPlanarTechniques = <String, MonsterConcreteTechnique>{
+  'piranha_morso': _planarMove(
+    'Morso sanguinante',
+    'Un piranha del banco azzanna il bersaglio. Le Forme II e III applicano Sanguinante per 2 turni dopo un colpo riuscito; la Forma I infligge soltanto il danno. La difesa o una schivata riuscita evitano il colpo e la condizione.',
+    'acqua',
+    'danno',
+    [
+      for (var form = 0; form < 3; form++)
+        [
+          MonsterTechniqueEffect(
+            'danno',
+            '${4 + form * 4}+oculum_spent',
+            mode: 'prossima_azione',
+            duration: '',
+          ),
+          if (form > 0)
+            const MonsterTechniqueEffect(
+              'stato',
+              '1',
+              target: 'sanguinante',
+              duration: '2',
+              recipient: 'nemico',
+            ),
+        ],
+    ],
+    minimums: [1, 4, 9],
+    maximums: [4, 8, 15],
+    cd: [1, 2, 3],
+  ),
+  'piranha_sciame': _planarMove(
+    'Attacco del banco',
+    'Due piranha coordinano il morso: un solo tiro d’attacco e una sola difesa, con danno complessivo moderato. Non moltiplica i danni per il numero di pesci.',
+    'acqua',
+    'danno',
+    _planarDamageForms([8, 14, 22]),
+    minimums: [1, 5, 11],
+    maximums: [4, 10, 20],
+    cd: [2, 3, 4],
+  ),
+  'piranha_richiamo': _planarMove(
+    'Richiamo dei piccoli',
+    'Richiama un piranha minore con iniziativa propria. Ha 1/3/5 Vita, 1 Resilienza, nessuna skill e non può evocare altri pesci; massimo due vivi. Dura fino alla fine dello scontro.',
+    'acqua',
+    'costrutto',
+    [
+      for (final hp in [1, 3, 5])
+        [
+          MonsterTechniqueEffect(
+            'costrutto',
+            '$hp',
+            target: 'Piranha minore',
+            mode: 'immediato',
+            duration: '3',
+          ),
+        ],
+    ],
+    minimums: [2, 5, 11],
+    maximums: [2, 5, 11],
+    cd: [5, 5, 5],
+  ),
+  'raggio_angelico': _planarMove(
+    'Raggio Angelico',
+    'Scaglia un raggio lineare di energia angelica. Formula danno: Danno base dell’attacco + Karma dell’attaccante + valore assoluto del Karma negativo del bersaglio. Moltiplicatore dopo la somma: ×2 contro Demoni, ×1,5 contro Diavoli, ×1,3 contro Arcidiavoli; nessun moltiplicatore contro altri bersagli. Risolve una sola difesa e rispetta resistenze, Scudi e regole dei critici. Il Master può modificare costo, danno base, recupero e moltiplicatori nella skill salvata.',
+    'angelico',
+    'danno',
+    [
+      for (var form = 0; form < 3; form++)
+        [
+          MonsterTechniqueEffect(
+            'danno',
+            '0',
+            mode: 'prossima_azione',
+            duration: '',
+          ),
+        ],
+    ],
+    minimums: [1, 5, 11],
+    maximums: [4, 10, 20],
+    cd: [3, 4, 5],
+  ),
   'bringi_seeds': _planarMove(
     'Guance piene',
     'Risposta automatica alla prima aggressione: 1d20 semi da 1 Vita; dopo tre colpi subiti 1d100+20 semi, poi ricomincia il conteggio. Pacifico/neutrale, non provoca il combattimento.',

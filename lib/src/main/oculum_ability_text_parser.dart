@@ -45,6 +45,21 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
   ).hasMatch(raw)) {
     return (minimum: 0, maximum: 0, resource: 'nessuna');
   }
+  // The cost editor also accepts the existing quick-command spelling
+  // (for example, @mat-1). A negative resource command unambiguously means
+  // expenditure; positive @stat commands remain effects, not costs.
+  final quickCost = RegExp(
+    r'@\s*(Scudo\s*Oculum|Oculum|OCU|Volont[aà]|VOL|Materia|MAT|Resilienza|RES|Vita|HP|Scudo)\s*-\s*(\d+)',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (quickCost != null) {
+    final amount = int.parse(quickCost.group(2)!);
+    return (
+      minimum: amount,
+      maximum: amount,
+      resource: oculumNormalizeEffectResource(quickCost.group(1)),
+    );
+  }
   final range = RegExp(
     '(?:\\b(?:costo|spendi|consumi|costa)\\s*:?\\s*|\\()\\s*(\\d+)\\s*[/–-]\\s*(\\d+)\\s*($_oculumAbilityResourcePattern)?\\s*\\)?',
     caseSensitive: false,

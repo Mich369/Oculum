@@ -137,4 +137,33 @@ void main() {
       expect(oculumThemePresentation.value.artPackId, 'vervain_gothic');
     },
   );
+
+  test('relic artwork selections are isolated per sheet', () async {
+    SharedPreferences.setMockInitialValues({});
+    final before = Map<String, String>.of(oculumSheetRelicSelections.value);
+    final globalPresentation = oculumThemePresentation.value;
+    addTearDown(() {
+      oculumSheetRelicSelections.value = before;
+      oculumThemePresentation.value = globalPresentation;
+    });
+
+    await setOculumSheetRelic('sheet-a', 'abyssal_tide');
+    await setOculumSheetRelic('sheet-b', 'ember_rite');
+
+    expect(oculumSheetRelicSelections.value['sheet-a'], 'abyssal_tide');
+    expect(oculumSheetRelicSelections.value['sheet-b'], 'ember_rite');
+    expect(
+      oculumThemePresentationForSheet('sheet-a').artPackId,
+      'abyssal_tide',
+    );
+    expect(oculumThemePresentationForSheet('sheet-b').artPackId, 'ember_rite');
+    expect(oculumThemePresentation.value, globalPresentation);
+
+    await setOculumSheetRelic('sheet-a', '');
+    expect(oculumSheetRelicSelections.value.containsKey('sheet-a'), isFalse);
+    expect(oculumThemePresentationForSheet('sheet-a'), globalPresentation);
+    expect(oculumSheetRelicSelections.value['sheet-b'], 'ember_rite');
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('oculum.sheetRelicSelections'), contains('sheet-b'));
+  });
 }

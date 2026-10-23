@@ -534,6 +534,15 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
               );
               continue;
             }
+            if (effect.target.trim().toLowerCase() == 'piranha minore') {
+              final created = createPiranhaMinion(hp: value, source: source);
+              messages.add(
+                created
+                    ? 'Un Piranha minore entra in turnistica: $value Vita, 1 Resilienza, nessuna evocazione propria.'
+                    : 'Limite raggiunto: possono restare al massimo due Piranha minori del gruppo.',
+              );
+              continue;
+            }
             if (!effect.stackable) {
               activeStructuredEffects.removeWhere(
                 (active) =>
@@ -978,6 +987,58 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     notifyActiveSheetSummaryChanged();
     unawaited(sendRealtimeActiveSheetToStaff());
     return index;
+  }
+
+  bool createPiranhaMinion({required int hp, required String source}) {
+    final ownerTag = sheetTagAt(schedaCorrente);
+    final existing = schedePersonaggio.where(
+      (sheet) =>
+          sheet['isSummon'] == true &&
+          sheet['summonKind'] == 'piranha_minore' &&
+          '${sheet['summonerTag'] ?? ''}' == ownerTag &&
+          sheet['summonExpired'] != true,
+    );
+    if (existing.length >= 2) return false;
+    final skill = CharacterSkill(
+      nome: 'Morso minore',
+      tipo: 'Attacco evocazione',
+      costo: 'Nessun costo',
+      cooldown: '1 turno',
+      descrizione: '@Danni+1 Acqua',
+      danni: 1,
+      equipaggiata: true,
+    );
+    final summonIndex = createShadowCloneSheet(
+      hp: hp,
+      duration: 3,
+      source: source,
+      displayName: 'Piranha minore di ${nomeSchedaPersonaggio(schedaCorrente)}',
+      asSummon: true,
+      summonSkills: [skill],
+      summonKind: 'piranha_minore',
+      summonDescription:
+          'Piccolo alleato acquatico. 1 Resilienza, 0 Volontà/Materia/Oculum; non può evocare altri Piranha.',
+    );
+    if (summonIndex < 0 || summonIndex >= schedePersonaggio.length) {
+      return false;
+    }
+    final summon = schedePersonaggio[summonIndex];
+    summon
+      ..['livello'] = '0'
+      ..['grado'] = '0'
+      ..['resilienza'] = '1'
+      ..['currentResilienza'] = '1'
+      ..['volonta'] = '0'
+      ..['currentVolonta'] = '0'
+      ..['materia'] = '0'
+      ..['currentMateria'] = '0'
+      ..['oculum'] = '0'
+      ..['currentOculum'] = '0'
+      ..['manualHpMaximumAdjustment'] = hp - oculumHpMultiplierForGrade(0)
+      ..['currentHp'] = '$hp'
+      ..['derivedMaxHp'] = hp;
+    programmaSalvataggio();
+    return true;
   }
 
   int createDeadKnightOldLoveSheet({required String source}) {

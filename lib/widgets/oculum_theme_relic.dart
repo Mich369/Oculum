@@ -62,8 +62,13 @@ class OculumThemePanelArtwork extends StatelessWidget {
 /// A small, text-first theme signature. It uses no default eye or reliquary
 /// image; the selected theme is identified by its own palette and motif.
 class OculumThemeRelicBanner extends StatelessWidget {
-  const OculumThemeRelicBanner({super.key, this.dense = false});
+  const OculumThemeRelicBanner({
+    super.key,
+    this.dense = false,
+    this.sheetId = '',
+  });
   final bool dense;
+  final String sheetId;
 
   IconData _iconFor(OculumGothFamily family) => switch (family) {
     OculumGothFamily.botanical => Icons.local_florist_outlined,
@@ -85,9 +90,13 @@ class OculumThemeRelicBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final spec = Theme.of(context).extension<OculumGothOrnaments>();
     if (spec == null || spec.themeId.isEmpty) return const SizedBox.shrink();
-    return ValueListenableBuilder<OculumThemePresentation>(
-      valueListenable: oculumThemePresentation,
-      builder: (context, presentation, _) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([
+        oculumThemePresentation,
+        oculumSheetRelicSelections,
+      ]),
+      builder: (context, _) {
+        final presentation = oculumThemePresentationForSheet(sheetId);
         final pack = oculumResolveThemeArt(spec, presentation);
         final showThemeArtwork =
             pack.id != 'classic_reliquary' && pack.id != 'classic_low_detail';
@@ -95,7 +104,7 @@ class OculumThemeRelicBanner extends StatelessWidget {
         final accent = spec.accent;
         final iconSize = dense ? 30.0 : 42.0;
         return GestureDetector(
-          onTap: () => showOculumRelicPicker(context),
+          onTap: () => showOculumRelicPicker(context, sheetId: sheetId),
           child: Container(
             margin: EdgeInsets.symmetric(vertical: dense ? 4 : 10),
             padding: EdgeInsets.symmetric(
@@ -195,7 +204,10 @@ class OculumThemeRelicBanner extends StatelessWidget {
   }
 }
 
-Future<void> showOculumRelicPicker(BuildContext context) async {
+Future<void> showOculumRelicPicker(
+  BuildContext context, {
+  String sheetId = '',
+}) async {
   var query = '';
   final selected = await showDialog<String>(
     context: context,
@@ -287,8 +299,12 @@ Future<void> showOculumRelicPicker(BuildContext context) async {
     ),
   );
   if (selected != null) {
-    await setOculumThemePresentation(
-      oculumThemePresentation.value.copyWith(artPackId: selected),
-    );
+    if (sheetId.isNotEmpty) {
+      await setOculumSheetRelic(sheetId, selected);
+    } else {
+      await setOculumThemePresentation(
+        oculumThemePresentation.value.copyWith(artPackId: selected),
+      );
+    }
   }
 }

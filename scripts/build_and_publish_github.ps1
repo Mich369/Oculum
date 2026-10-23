@@ -7,7 +7,7 @@ function Invoke-Gh([string[]]$Arguments) {
   if ($LASTEXITCODE -ne 0) { throw "gh failed: $($Arguments[0])" }
   return $result
 }
-$dirty = @(& git status --porcelain -- lib assets android windows macos linux web test scripts .github docs pubspec.yaml pubspec.lock)
+$dirty = @(& git status --porcelain -- lib assets android windows macos linux web test scripts supabase .github docs pubspec.yaml pubspec.lock)
 if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect Git status' }
 if ($dirty.Count -gt 0) { throw 'Ci sono modifiche locali non committate. Committale prima: GitHub costruisce soltanto i commit inviati.' }
 $branch = (& git branch --show-current).Trim()
@@ -32,13 +32,32 @@ function Start-And-WaitWorkflow([string]$Workflow,[string]$Ref,[string[]]$Inputs
 }
 $build = Start-And-WaitWorkflow 'build_distribution.yml' $branch @()
 if ($build.headSha -ne $commit) { throw 'La build non corrisponde al commit richiesto' }
-# workflow_run also publishes automatically; this explicit pass recovers a missed publication.
-$null = Start-And-WaitWorkflow 'public_downloads.yml' 'main' @('-f',"run_id=$($build.databaseId)")
-$release = (Invoke-Gh @('api',"repos/$Repository/releases/tags/oculum-downloads") | Out-String) | ConvertFrom-Json
-$marker = '<!-- OCULUM_DOWNLOADS:'
-$raw = ([string]$release.body).Split(@($marker),[StringSplitOptions]::None)[1].Split(@(' -->'),[StringSplitOptions]::None)[0]
-$catalog = $raw | ConvertFrom-Json
-$matching = @($catalog.PSObject.Properties.Value | Where-Object { "$($_.runId)" -eq "$($build.databaseId)" -and $_.commit -eq $commit })
-if ($matching.Count -eq 0) { throw 'Il canale pubblico non punta alla build richiesta: potrebbe essere stata superata da una build piu recente.' }
+Write-Host 'La pubblicazione parte automaticamente soltanto dopo la build riuscita. Attendo il catalogo pubblico...'
+$matching = $null
+$deadline = [DateTimeOffset]::UtcNow.AddMinutes(35)
+while ([DateTimeOffset]::UtcNow -lt $deadline) {
+  try {
+    $release = (Invoke-Gh @('api',"repos/$Repository/releases/tags/oculum-downloads") | Out-String) | ConvertFrom-Json
+    $marker = [regex]::Match([string]$release.body, '<!-- OCULUM_DOWNLOADS:(.*?) -->', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+    if ($marker.Success) {
+      $catalog = $marker.Groups[1].Value | ConvertFrom-Json
+      $matching = @($catalog.PSObject.Properties.Value | Where-Object {
+        "$($_.runId)" -eq "$($build.databaseId)" -and $_.commit -eq $commit
+      }) | Select-Object -First 1
+      if ($null -ne $matching -and @($matching.artifacts).Count -gt 0) { break }
+    }
+  } catch {
+    Write-Host 'La pagina pubblica non e ancora aggiornata; ritento.'
+  }
+  Start-Sleep -Seconds 20
+}
+if ($null -eq $matching -or @($matching.artifacts).Count -eq 0) {
+  throw 'Build riuscita ma pubblicazione automatica non verificata. Controlla l azione Publish public downloads.'
+}
+foreach ($asset in $matching.artifacts) {
+  if (!$asset.url -or [long]$asset.bytes -le 0 -or $asset.sha256 -notmatch '^[0-9a-f]{64}$') {
+    throw "Manifest download non valido: $($asset.name)"
+  }
+}
 Write-Host "Build e download aggiornati per $commit"
 Write-Host "https://github.com/$Repository/releases/tag/oculum-downloads"
