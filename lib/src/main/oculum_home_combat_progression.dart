@@ -3556,7 +3556,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
       if (masterInitiativeTokens.isEmpty) {
         masterInitiativeActiveIndex = 0;
-        risultato = t('Iniziativa pulita.', 'Initiative cleared.');
+        risultato = t(
+          'Turnistica selezionata svuotata.',
+          'Selected initiative cleared.',
+        );
+        captureActiveMasterInitiativeGroup();
         aggiungiLog(risultato);
         return;
       }
@@ -3868,6 +3872,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   void clearMasterInitiativeTokens() {
+    if (realtimeService?.isConnected == true &&
+        !realtimeIsMasterRole &&
+        !realtimeIsCoMasterRole)
+      return;
     setState(() {
       masterInitiativeTokens.clear();
       clearTemporaryCombatResistanceEffects();

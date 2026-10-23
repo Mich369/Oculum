@@ -3536,7 +3536,31 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
   }
 
-  Widget masterInitiativeTrackerPanel() {
+  Future<void> showInitiativeContextMenu() async {
+    if (realtimeService?.isConnected == true &&
+        !realtimeIsMasterRole &&
+        !realtimeIsCoMasterRole)
+      return;
+    final clear = await showModalBottomSheet<bool>(
+      context: context,
+      builder: (menuContext) => SafeArea(
+        child: ListTile(
+          leading: const Icon(Icons.clear_all),
+          title: const Text('Svuota turnistica'),
+          onTap: () => Navigator.pop(menuContext, true),
+        ),
+      ),
+    );
+    if (clear == true && mounted) clearMasterInitiativeTokens();
+  }
+
+  Widget masterInitiativeTrackerPanel() => GestureDetector(
+    onSecondaryTap: showInitiativeContextMenu,
+    onLongPress: showInitiativeContextMenu,
+    child: buildMasterInitiativeTrackerPanel(),
+  );
+
+  Widget buildMasterInitiativeTrackerPanel() {
     if (referenceCampaignStyle && masterInitiativeTokens.isNotEmpty) {
       normalizeMasterInitiativeTokens();
       return Column(
@@ -4360,7 +4384,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               TextButton.icon(
                 onPressed: clearMasterInitiativeTokens,
                 icon: const Icon(Icons.clear_all),
-                label: Text(t('Pulisci', 'Clear')),
+                label: Text(t('Svuota turnistica', 'Clear initiative')),
               ),
             ],
           ),
