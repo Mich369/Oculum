@@ -7036,57 +7036,80 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     },
                   ),
                   campoModello(
-                    label: 'Punti statistica per livello (1–3)',
-                    initialValue: '${inventario[i].puntiStatPerLivello}',
+                    label: inventario[i].craftData['clothing'] == true
+                        ? 'Livelli per +1 (vestito)'
+                        : 'Punti statistica per livello (1–3)',
+                    initialValue:
+                        '${inventario[i].craftData['clothing'] == true ? readIntValue(inventario[i].craftData['growthEvery'], fallback: 3) : inventario[i].puntiStatPerLivello}',
                     onChanged: (v) {
-                      inventario[i].puntiStatPerLivello = (int.tryParse(v) ?? 1)
-                          .clamp(1, 3);
+                      if (inventario[i].craftData['clothing'] == true) {
+                        inventario[i].craftData['growthEvery'] =
+                            (int.tryParse(v) ?? 3).clamp(1, 10000);
+                      } else {
+                        inventario[i].puntiStatPerLivello =
+                            (int.tryParse(v) ?? 1).clamp(1, 3);
+                      }
                       invalidateDerivedDataCaches();
                       programmaSalvataggio();
                     },
                   ),
-                  DropdownButtonFormField<String>(
-                    initialValue:
-                        const {
-                          'resilienza',
-                          'volonta',
-                          'materia',
-                          'oculum',
-                        }.contains(inventario[i].statCrescita)
-                        ? inventario[i].statCrescita
-                        : '',
-                    decoration: const InputDecoration(
-                      labelText: 'Statistica che cresce con il livello',
-                    ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: '',
-                        child: Text(
-                          'Automatico · arma Volontà, protezione Materia',
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'resilienza',
-                        child: Text('Resilienza'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'volonta',
-                        child: Text('Volontà'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'materia',
-                        child: Text('Materia'),
-                      ),
-                      DropdownMenuItem(value: 'oculum', child: Text('Oculum')),
-                    ],
-                    onChanged: (v) {
-                      if (v != null) {
-                        inventario[i].statCrescita = v;
+                  if (inventario[i].craftData['clothing'] == true)
+                    campoModello(
+                      label:
+                          'Statistica o sottotratto del vestito (es. materia, riflessi)',
+                      initialValue: inventario[i].statCrescita,
+                      onChanged: (value) {
+                        inventario[i].statCrescita = value.trim().toLowerCase();
                         invalidateDerivedDataCaches();
                         programmaSalvataggio();
-                      }
-                    },
-                  ),
+                      },
+                    )
+                  else
+                    DropdownButtonFormField<String>(
+                      initialValue:
+                          const {
+                            'resilienza',
+                            'volonta',
+                            'materia',
+                            'oculum',
+                          }.contains(inventario[i].statCrescita)
+                          ? inventario[i].statCrescita
+                          : '',
+                      decoration: const InputDecoration(
+                        labelText: 'Statistica che cresce con il livello',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: '',
+                          child: Text(
+                            'Automatico · arma Volontà, protezione Materia',
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'resilienza',
+                          child: Text('Resilienza'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'volonta',
+                          child: Text('Volontà'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'materia',
+                          child: Text('Materia'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'oculum',
+                          child: Text('Oculum'),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) {
+                          inventario[i].statCrescita = v;
+                          invalidateDerivedDataCaches();
+                          programmaSalvataggio();
+                        }
+                      },
+                    ),
                   campoModello(
                     label: t('Grado oggetto', 'Item grade'),
                     initialValue: inventario[i].gradoOggetto.toString(),

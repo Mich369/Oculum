@@ -5655,7 +5655,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
               item.protegge &&
               item.equipaggiata &&
               canEquipInventoryItem(item) &&
-              (item.effettoIntegritaScudo.trim().isNotEmpty ||
+              (item.craftData['clothing'] == true ||
+                  item.effettoIntegritaScudo.trim().isNotEmpty ||
                   item.effettoRotturaScudo.isNotEmpty) &&
               itemIntegrityShieldCurrent(item) > 0,
         )
@@ -5666,7 +5667,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
               item.protegge &&
               item.equipaggiata &&
               canEquipInventoryItem(item) &&
-              (item.effettoIntegritaScudo.trim().isNotEmpty ||
+              (item.craftData['clothing'] == true ||
+                  item.effettoIntegritaScudo.trim().isNotEmpty ||
                   item.effettoRotturaScudo.isNotEmpty) &&
               itemIntegrityOculumShieldCurrent(item) > 0,
         )

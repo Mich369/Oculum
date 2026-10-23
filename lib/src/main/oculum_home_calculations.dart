@@ -2538,6 +2538,23 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   Map<String, int> itemQuickBonuses(InventoryItem item) {
     final bonuses = <String, int>{};
+    if (item.craftData['clothing'] == true) {
+      if (!item.equipaggiata || !canEquipInventoryItem(item)) return bonuses;
+      final every = max(
+        1,
+        readIntValue(item.craftData['growthEvery'], fallback: 3),
+      );
+      if (item.statCrescita != 'oculum' || leggiNumero(oculumController) > 0) {
+        bonuses[item.statCrescita] = max(0, item.livelloOggetto) ~/ every;
+      }
+      for (final text in activeItemQuickTexts(item)) {
+        addTitleQuickCommands(bonuses, text);
+      }
+      if (itemIntegrityShieldCurrent(item) == 0) {
+        bonuses.updateAll((key, value) => value ~/ 2);
+      }
+      return bonuses;
+    }
     if (item.equipaggiata &&
         canEquipInventoryItem(item) &&
         (item.arma || item.protegge)) {
@@ -4798,6 +4815,26 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         roleSubtraitBonus(stat.id) +
         summoningEmblemBonus(stat.id, subtrait: true) +
         merchantHerbalSubtraitBonus(stat.id) +
+        inventario
+            .where(
+              (item) =>
+                  item.craftData['clothing'] == true &&
+                  item.equipaggiata &&
+                  canEquipInventoryItem(item) &&
+                  item.statCrescita == stat.id,
+            )
+            .fold<int>(0, (total, item) {
+              final growth =
+                  max(0, item.livelloOggetto) ~/
+                  max(
+                    1,
+                    readIntValue(item.craftData['growthEvery'], fallback: 2),
+                  );
+              return total +
+                  (itemIntegrityShieldCurrent(item) == 0
+                      ? growth ~/ 2
+                      : growth);
+            }) +
         conditionSubtraitBonus(stat.id);
     final cacheBase = stat.valore + dustBonus + quickBonus + structuredBonus;
     final cachedBase = hiddenEyeTotalBaseCache[stat.id];

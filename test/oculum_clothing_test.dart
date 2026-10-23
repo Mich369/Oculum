@@ -1,0 +1,92 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:oculum/main.dart';
+
+void main() {
+  testWidgets(
+    'clothes preserve growth and halve only their own broken shield bonuses',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final regular = await rootBundle.load('assets/fonts/Poppins-Regular.ttf');
+      for (final family in [
+        'Poppins',
+        'Roboto',
+        'serif',
+        'Segoe UI',
+        'Garamond',
+        'Georgia',
+      ]) {
+        await (FontLoader(family)..addFont(Future.value(regular))).load();
+      }
+      final icons = File(
+        'build/unit_test_assets/fonts/MaterialIcons-Regular.otf',
+      );
+      if (icons.existsSync()) {
+        await (FontLoader('MaterialIcons')..addFont(
+              Future.value(ByteData.sublistView(icons.readAsBytesSync())),
+            ))
+            .load();
+      }
+      final directory = Directory('build/layout-test-data')
+        ..createSync(recursive: true);
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('plugins.flutter.io/path_provider'),
+        (_) async => directory.absolute.path,
+      );
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('dev.fluttercommunity.plus/connectivity'),
+        (_) async => ['none'],
+      );
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('dev.fluttercommunity.plus/connectivity_status'),
+        (_) async => null,
+      );
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1440, 900);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final capture = GlobalKey();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.dark(useMaterial3: true),
+          home: RepaintBoundary(key: capture, child: const OculumHomePage()),
+        ),
+      );
+      await tester.runAsync(
+        () async => Future<void>.delayed(const Duration(milliseconds: 500)),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      final dynamic state = tester.state(find.byType(OculumHomePage));
+      final probe = OculumPerformanceProbe(state);
+
+      final item = probe.merchantItem({
+        'kind': 'clothing',
+        'name': 'Veste prova',
+        'level': 12,
+        'growthStat': 'materia',
+        'growthEvery': 3,
+        'shield': 6,
+        'tempHp': 10,
+        'damage': 2,
+        'defence': 2,
+        'desc': 'test',
+      });
+      item.equipaggiata = true;
+      expect(item.ability, isNotNull);
+      expect(probe.itemBonuses(item)['materia'], 4);
+      expect(probe.itemBonuses(item)['hp_temp'], 10);
+      item.scudoIntegritaCorrente = 0;
+      expect(probe.itemBonuses(item)['materia'], 2);
+      expect(probe.itemBonuses(item)['hp_temp'], 5);
+      final restored = InventoryItem.fromJson(item.toJson());
+      expect(probe.itemBonuses(restored)['materia'], 2);
+      restored.scudoIntegritaCorrente = 6;
+      expect(probe.itemBonuses(restored)['materia'], 4);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    },
+  );
+}

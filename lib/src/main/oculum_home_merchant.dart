@@ -821,7 +821,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       };
     }
     final isEquipment = const {'gear', 'title_item'}.contains(offer['kind']);
-    final base = isEquipment
+    final base = offer['kind'] == 'clothing'
+        ? readIntValue(offer['cost'])
+        : isEquipment
         ? oculumMerchantEquipmentPrice(offer)
         : readIntValue(offer['cost']) +
               max(0, readIntValue(offer['level'])) * 25;
@@ -839,6 +841,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             max(0, leggiNumero(gradoController)).clamp(0, 12)) {
       return false;
     }
+    if (kind == 'clothing')
+      return merchantShopType == 'sartoria' || merchantShopType == 'tutti';
     return switch (merchantShopType) {
       'materiali' =>
         const {
@@ -884,6 +888,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               'creature_core',
             }.contains(kind) ||
             offer['isMaterial'] == true,
+      'sartoria' => kind == 'clothing',
       'chef' => kind == 'food' && offer['isMaterial'] != true,
       _ => true,
     };
@@ -1226,6 +1231,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           DropdownMenuItem(
             value: 'alchimista',
             child: Text('Alchimista · cristalli e crafting'),
+          ),
+          DropdownMenuItem(
+            value: 'sartoria',
+            child: Text('Creatrice di vestiti · sartoria'),
           ),
           DropdownMenuItem(value: 'chef', child: Text('Chef · cibi e bevande')),
           DropdownMenuItem(
@@ -1607,7 +1616,59 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     return merchantStock;
   }
 
+  void ensureClothingOffers() {
+    if (merchantStock.any((o) => o['kind'] == 'clothing')) return;
+    final rng = Random();
+    const growth = [
+      'resilienza',
+      'volonta',
+      'materia',
+      'oculum',
+      'riflessi',
+      'velo',
+      'precisione',
+      'resistenza',
+    ];
+    for (var i = 0; i < 16; i++) {
+      final level = i ~/ 2 + 1;
+      final stat = growth[i % growth.length];
+      final tempHp = i % 3 == 0 ? 5 : 0;
+      final shield = 3 + (i % 2) * 3;
+      final oculumShield = i == 15 ? 3 : 0;
+      final damage = i % 5 == 0 ? 1 : 0;
+      final defense = i % 4 == 0 ? 1 : 0;
+      final base = 9 + rng.nextInt(10);
+      merchantStock.add({
+        'id': 'sartoria_$i',
+        'kind': 'clothing',
+        'name':
+            '${i.isEven ? 'Veste' : 'Mantello'} della ${const ['Custodia', 'Quiete', 'Soglia', 'Trama'][i % 4]} $level',
+        'level': level,
+        'grade': 0,
+        'growthStat': stat,
+        'growthEvery': i % growth.length < 4 ? 3 : 2,
+        'shield': shield,
+        'oculumShield': oculumShield,
+        'tempHp': tempHp,
+        'damage': damage,
+        'defence': defense,
+        'baseCost': base,
+        'cost':
+            base +
+            (tempHp / 5).ceil() * 2 +
+            (shield / 3).ceil() * 2 +
+            (oculumShield / 3).ceil() * 5 +
+            damage * 2 +
+            defense * 2 +
+            2,
+        'desc':
+            'Vestito economico: +1 $stat ogni ${i % growth.length < 4 ? 3 : 2} livelli oggetto. Bonus dimezzati per difetto quando si rompe il suo Scudo. Skill di protezione modificabile. Supplementi proposti: crescita 2 Obser, Danni/Difesa 2 Obser per punto.',
+      });
+    }
+  }
+
   void ensureMerchantSpecialOffers() {
+    ensureClothingOffers();
     final ids = merchantStock.map((offer) => '${offer['id']}').toSet();
     void add(Map<String, dynamic> offer) {
       final id = '${offer['id']}';
@@ -3613,6 +3674,27 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     Map<String, dynamic> offer, {
     String titleType = '',
   }) {
+    if (offer['kind'] == 'clothing') {
+      return InventoryItem(
+        nome: '${offer['name']}',
+        peso: .5,
+        quantita: 1,
+        note: '${offer['desc']}',
+        protegge: true,
+        livelloOggetto: max(0, readIntValue(offer['level'])),
+        statCrescita: '${offer['growthStat']}',
+        bonusScudo: max(0, readIntValue(offer['shield'])),
+        bonusScudoIncludeGrado: true,
+        bonusScudoOculum: max(0, readIntValue(offer['oculumShield'])),
+        buff:
+            '@HPTemp+${readIntValue(offer['tempHp'])} @Danni+${readIntValue(offer['damage'])} @Difesa+${readIntValue(offer['defence'])}',
+        craftData: {
+          'clothing': true,
+          'growthEvery': readIntValue(offer['growthEvery'], fallback: 3),
+        },
+        ability: oculumEquipmentAbility('${offer['name']}', 0),
+      );
+    }
     if (offer['kind'] == 'gathering_collector') {
       final collectorGrade = readIntValue(offer['grade']).clamp(0, 12);
       final collectorLevel = max(0, readIntValue(offer['level']));
