@@ -1423,6 +1423,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       if (merchantProfiles.isNotEmpty) 'merchantProfiles': merchantProfiles,
       'selectedPlaneId': selectedPlaneId,
       for (final key in [
+        'planarRuntime',
+        'receivedPartyQuestRewards',
+        'lastDamageSourceTag',
         'skullFormOriginal',
         'skullFormHitsRemaining',
         'skullFormName',

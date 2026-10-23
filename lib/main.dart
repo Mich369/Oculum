@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' show FrameTiming;
+import 'package:http/http.dart' as http;
+import 'services/oculum_app_update.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -131,6 +133,14 @@ part 'src/main/oculum_combat_scout.dart';
 part 'src/main/oculum_master_roll_requests.dart';
 part 'src/main/oculum_encounter_rewards.dart';
 part 'src/main/oculum_party_chest.dart';
+part 'src/main/oculum_party_quests.dart';
+part 'src/main/oculum_planar_runtime.dart';
+part 'src/main/oculum_prepared_skills.dart';
+part 'src/main/oculum_fate_chaos.dart';
+part 'src/main/oculum_postea.dart';
+part 'src/main/oculum_dust_crystals.dart';
+part 'src/main/oculum_parasites.dart';
+part 'src/main/oculum_app_update_ui.dart';
 part 'src/main/oculum_planes.dart';
 part 'src/main/oculum_alchemy_pets.dart';
 part 'src/main/oculum_humanoid_roles.dart';
@@ -1546,7 +1556,14 @@ class _OculumHomePageState extends State<OculumHomePage>
   final manualSearchController = TextEditingController();
   final themeSearchController = TextEditingController();
   final monsterBookSearchController = TextEditingController();
+  bool oculumUpdateBusy = false;
+  Timer? oculumUpdateTimer;
+  DateTime? oculumUpdateLastCheck;
+  bool oculumUpdateChecking = false;
+  String? oculumUpdateNotifiedCommit;
   String monsterBookTierFilter = 'Tutti';
+  String monsterBookHabitatFilter = '';
+  String partyBookHabitatFilter = '';
   final recipeSearchController = TextEditingController();
 
   final quickSheetNameController = TextEditingController(text: '???');
@@ -3847,6 +3864,14 @@ class _OculumHomePageState extends State<OculumHomePage>
       }),
     );
     avviaControlloConnessioneOnline();
+    if (oculumSourceCommit.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => unawaited(checkOculumUpdateAutomatically()),
+      );
+      oculumUpdateTimer = Timer.periodic(const Duration(hours: 1), (_) {
+        if (!appOculumInBackground) unawaited(checkOculumUpdateAutomatically());
+      });
+    }
   }
 
   @override
@@ -3863,6 +3888,7 @@ class _OculumHomePageState extends State<OculumHomePage>
         autosavePendingAfterFocusTransition = true;
       }
       scheduleOculumFocusSettled();
+      unawaited(checkOculumUpdateAutomatically());
       return;
     }
 
@@ -3908,6 +3934,7 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   @override
   void dispose() {
+    oculumUpdateTimer?.cancel();
     for (final timer in pawnDamageRetryTimers.values) {
       timer.cancel();
     }
@@ -4531,6 +4558,7 @@ class _OculumHomePageState extends State<OculumHomePage>
         ? <int>[0, settingsPageIndex]
         : visiblePageIndexes();
     final compactPhone = MediaQuery.of(context).size.shortestSide < 600;
+    final secondaryToolbar = MediaQuery.sizeOf(context).width < 1100;
     final appFontFamily = switch (stileCarattereApp) {
       'gotico' => 'Copperplate Gothic Light',
       'manoscritto' => 'Garamond',
@@ -4662,6 +4690,18 @@ class _OculumHomePageState extends State<OculumHomePage>
                   onPressed: () => openEyeMemory(campaign: haPermessiMaster),
                 ),
               ),
+              bottom: secondaryToolbar
+                  ? PreferredSize(
+                      preferredSize: const Size.fromHeight(44),
+                      child: SizedBox(
+                        height: 44,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: additionalOculumToolbarActions(),
+                        ),
+                      ),
+                    )
+                  : null,
               actionsIconTheme: IconThemeData(size: compactPhone ? 20 : 24),
               centerTitle: true,
               backgroundColor: backgroundTopColor,
@@ -4738,7 +4778,7 @@ class _OculumHomePageState extends State<OculumHomePage>
                         ),
                     ],
                   ),
-                if (kIsWeb) OculumWebDownloads(color: primaryColor),
+                if (!secondaryToolbar) ...additionalOculumToolbarActions(),
                 if (!oculusModActive)
                   IconButton(
                     key: const ValueKey('current_screen_dice'),

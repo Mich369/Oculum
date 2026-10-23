@@ -10,8 +10,9 @@ class MonsterTechniqueEffect {
     this.mode = 'finche_attivo',
     this.duration = '1',
     this.recipient = 'se_stesso',
+    this.dice = '',
   });
-  final String type, formula, target, mode, duration, recipient;
+  final String type, formula, target, mode, duration, recipient, dice;
 }
 
 class MonsterConcreteTechnique {
@@ -24,25 +25,29 @@ class MonsterConcreteTechnique {
     required this.requiredLevel,
     this.minimums = const [1, 5, 11],
     this.maximums = const [4, 10, 30],
+    this.cooldownValues,
   });
   final String name, action, element, kind;
   final int requiredLevel;
   final List<int> minimums, maximums;
+  final List<int>? cooldownValues;
   final List<List<MonsterTechniqueEffect>> forms;
 
   /// Recovery is expressed in personal turns, using the existing Art timer.
   /// Persistent resources need a longer recovery than a single attack bonus.
-  List<int> get cooldowns => switch (kind) {
-    'cura' => const [3, 4, 5],
-    'costrutto' || 'controllo' => const [3, 4, 5],
-    'scudo' => const [2, 3, 4],
-    'movimento' || 'richiamo' => const [2, 2, 3],
-    _ => const [1, 1, 2],
-  };
+  List<int> get cooldowns =>
+      cooldownValues ??
+      switch (kind) {
+        'cura' => const [3, 4, 5],
+        'costrutto' || 'controllo' => const [3, 4, 5],
+        'scudo' => const [2, 3, 4],
+        'movimento' || 'richiamo' => const [2, 2, 3],
+        _ => const [1, 1, 2],
+      };
   String text() =>
       '$name — ${List.generate(3, (i) {
         final mechanics = forms[i].map((e) {
-          final value = e.formula.replaceAll('oculum_spent', 'Oculum immesso');
+          final value = '${e.dice.isEmpty ? '' : '${e.dice} + '}${e.formula.replaceAll('oculum_spent', 'Oculum immesso')}';
           return switch (e.type) {
             'danno' => '+$value Danni al prossimo attacco; si consuma una sola volta',
             'danno_percentuale' => '+$value% Danni al prossimo attacco; si consuma una sola volta',
@@ -100,6 +105,8 @@ final Map<String, MonsterConcreteTechnique?> _concreteTechniqueCache = {};
 
 MonsterConcreteTechnique? monsterBookConcreteTechnique(String rawId) {
   final id = rawId.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
+  final planar = oculumPlanarTechnique(id);
+  if (planar != null) return planar;
   return _concreteTechniqueCache.putIfAbsent(id, () {
     if (id == 'collettore_martello_elementale') {
       return const MonsterConcreteTechnique(

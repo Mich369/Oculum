@@ -273,7 +273,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     int? level,
     int? grade,
     Map<String, num> spentResources = const <String, num>{},
+    bool applyFusionBonus = true,
   }) {
+    if (applyFusionBonus) effects = dustFusionArtEffects(effects);
     final messages = <String>[];
     final variables = formulaValueContext();
     final resolvedVariables = <String, num>{
@@ -554,6 +556,12 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
               'unit': effect.durationUnit,
               'stackable': effect.stackable,
             });
+            break;
+          case 'preparazione':
+            prepareConcentratedSkill(effect, value, source);
+            break;
+          case 'planar':
+            activatePlanarEffect(effect, value, duration, source);
             break;
           case 'cura':
             if (!isPeriodic && effect.mode != 'rigenerazione') {
@@ -1355,9 +1363,11 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           shieldDamageBonusPercent: effect.shieldDamageBonusPercent,
         );
       } else {
-        for (final message in applyStructuredEffectsOnActivation([
-          effect,
-        ], source: '${pending['source']}')) {
+        for (final message in applyStructuredEffectsOnActivation(
+          [effect],
+          source: '${pending['source']}',
+          applyFusionBonus: false,
+        )) {
           aggiungiLog(message);
         }
       }

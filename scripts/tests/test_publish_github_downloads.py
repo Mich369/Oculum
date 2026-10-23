@@ -1,6 +1,8 @@
 import importlib.util
 from pathlib import Path
 import unittest
+from unittest.mock import patch
+from io import BytesIO
 
 spec = importlib.util.spec_from_file_location("publisher", Path(__file__).parents[1] / "publish_github_downloads.py")
 publisher = importlib.util.module_from_spec(spec)
@@ -69,3 +71,21 @@ class DownloadPublicationTests(unittest.TestCase):
         notes = publisher.notes(catalog)
         self.assertIn("releases/tag/oculum-build-42", notes)
         self.assertEqual(publisher.read_catalog(notes), catalog)
+
+
+class DownloadRecoveryTests(unittest.TestCase):
+    def test_channel_does_not_regress_across_branches(self):
+        catalog = {"one": dict(workflow="Build distribution", runId=200)}
+        self.assertFalse(publisher.can_promote_channel(catalog, "100"))
+        self.assertTrue(publisher.can_promote_channel(catalog, "201"))
+
+    def test_anonymous_archive_check_has_no_authorization(self):
+        class Response(BytesIO):
+            status = 206
+            headers = {"Content-Range": "bytes 0-3/100"}
+        with patch.object(publisher, "urlopen", return_value=Response(b"PK\x03\x04")) as opening:
+            publisher.verify_anonymous_download(dict(name="Oculum-Windows",url="https://github.com/package.zip",bytes=100))
+            self.assertFalse(opening.call_args.args[0].has_header("Authorization"))
+        with patch.object(publisher, "urlopen", return_value=Response(b"HTML")):
+            with self.assertRaises(ValueError):
+                publisher.verify_anonymous_download(dict(name="Oculum-Windows",url="https://github.com/package.zip",bytes=100))

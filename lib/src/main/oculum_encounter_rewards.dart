@@ -240,17 +240,20 @@ int oculumEncounterExperienceForEnemies(
         ? 'boss'
         : 'normale';
     total +=
-        (base *
-                    oculumEnemyExpMultiplier(
-                      source: source,
+        ((('${enemy['monsterBookId'] ?? ''}'.startsWith('martire_mortale'))
+                    ? .5
+                    : 1) *
+                (base *
+                        oculumEnemyExpMultiplier(
+                          source: source,
+                          difficulty: difficulty,
+                        ) *
+                        oculumExperienceGradeMultiplier(grade, characterGrade) +
+                    oculumGradeExperienceBonus(
+                      enemyGrade: grade,
+                      rebirth: rebirth,
                       difficulty: difficulty,
-                    ) *
-                    oculumExperienceGradeMultiplier(grade, characterGrade) +
-                oculumGradeExperienceBonus(
-                  enemyGrade: grade,
-                  rebirth: rebirth,
-                  difficulty: difficulty,
-                ))
+                    )))
             .round();
   }
   return total.clamp(0, 100000000);
@@ -304,6 +307,15 @@ extension _OculumEncounterRewards on _OculumHomePageState {
   void receiveEncounterRewards(Iterable<Map> rewards) {
     for (final reward in rewards) {
       resolveCorruptionFightEnd('${reward['endedEncounterId'] ?? ''}');
+      for (final pawn in pawnGuardians.where(
+        (p) => (reward['participants'] as List? ?? []).contains(p.ownerTag),
+      )) {
+        pawn.finishPosteaFight(
+          '${reward['id'] ?? ''}',
+          won: reward['won'] == true,
+        );
+        updatePawnInitiativeToken(pawn);
+      }
       final id = '${reward['id'] ?? ''}';
       final legacyAmount = readIntValue(reward['amount']).clamp(0, 100000000);
       final rawDefeated = reward['defeated'];
@@ -603,6 +615,12 @@ extension _OculumEncounterRewards on _OculumHomePageState {
           'experienceFamilyId': schedePersonaggio[index]['experienceFamilyId'],
         'monsterSheetTag': index >= 0 ? sheetTagAt(index) : '',
         'level': level,
+        'killerTag': index >= 0
+            ? schedePersonaggio[index]['lastDamageSourceTag']
+            : token['lastDamageSourceTag'],
+        'finisher': index >= 0
+            ? schedePersonaggio[index]['lastPlanarFinisher']
+            : token['lastPlanarFinisher'],
         'statsTotal': statsTotal,
         'grade':
             (index >= 0
@@ -633,7 +651,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
             '${defeated.length} nemici sconfitti · $amount EXP base. '
             'Il premio di ciascun partecipante usa categoria e Grado di ogni nemico, '
             'confrontato con il proprio Grado. I Drop dei mostri uccisi presenti '
-            'in turnistica vengono tirati e distribuiti ora. La turnistica viene svuotata e la '
+            'in turnistica vengono tirati e distribuiti ora. Party e NPC alleati restano sulla board; i nemici vengono rimossi. La '
             'condivisione chiusa. Gli scontri uniti tornano separati.\n\n'
             '${defeated.map((enemy) => '${enemy['name'] ?? 'Nemico'} · '
                 '${enemy['source']} · Grado ${oculumExperienceGradeLabel(readIntValue(enemy['grade']))} · '
@@ -658,12 +676,38 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         max(0, readIntValue(group['completedFightCount'])) + 1;
     group['completedFightCount'] = cooldownFightSequence;
     final cooldownFightId = '$id:$cooldownFightSequence';
+    for (final enemy in defeated) {
+      await resolveMartyrDeath(enemy, '$cooldownFightId:${enemy['id']}');
+    }
+    recordPlanarMonsterRewards(defeated, cooldownFightId);
+    advancePartyQuestKills(defeated, cooldownFightId);
     recordPartySpeciesHunts(defeated, cooldownFightId);
     final partyTags = participants.toList()..sort();
     for (final tag in partyTags) {
       final index = localSheetIndexForOculumTag(tag);
       if (index < 0) continue;
       final sheet = schedePersonaggio[index];
+      final planar = sheet['planarRuntime'];
+      if (planar is Map) {
+        for (final key in const [
+          'maxPower',
+          'scalesTurns',
+          'flightTurns',
+          'vanishTurns',
+          'illusionTurns',
+          'illusionCopies',
+          'armorHits',
+          'barrierTurns',
+          'barrierPower',
+          'chargePower',
+          'chargeNeeded',
+          'chargeSteps',
+          'attackRollBonus',
+          'defenseRollPenalty',
+        ]) {
+          planar.remove(key);
+        }
+      }
       final remaining = max(
         0,
         readIntValue(sheet['patalpaSummonCooldownFightsRemaining']),
@@ -729,7 +773,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         grade: grade,
       );
       final total = rollTotalWithCritical(natural, 20, [bonus]);
-      final killId = '${enemy['id'] ?? monsterId}:$id';
+      final killId = '${enemy['id'] ?? monsterId}:$cooldownFightId';
       final dropped = oculumGenerateMonsterLoot(
         monster: monster,
         level: level,
@@ -739,6 +783,17 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         naturalDropRoll: natural,
         dropTotal: total,
       );
+      final crystal = oculumDustCrystalDrop(
+        monsterLevel: level,
+        monsterGrade: grade,
+        rollerLevel: participantLevels[rollerTag] ?? 0,
+        dropTotal: total,
+        percentile: encounterRandom.nextInt(100),
+        killId: killId,
+      );
+      if (crystal != null && !oculumEncounterEnemyIsSummon(enemy)) {
+        dropped.add(crystal);
+      }
       pooledLoot.addAll(dropped);
       if (oculumFallenEyeDropCreatesOnNaturalTwenty(
             subtraitId: 'drop',
@@ -821,6 +876,17 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       }
     }
     final reward = <String, dynamic>{
+      'won':
+          defeated.isNotEmpty &&
+          !(group['tokens'] as List? ?? []).whereType<Map>().any(
+            (token) =>
+                token['side'] == 'enemy' &&
+                !const {
+                  'dead',
+                  'fled',
+                  'expired',
+                }.contains('${token['status']}'),
+          ),
       'endedEncounterId': id,
       'id': '$id:${DateTime.now().microsecondsSinceEpoch}',
       'name': group['name'],
@@ -844,7 +910,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     group['rewards'] = rewards;
     receiveEncounterRewards([reward]);
     expireSummoningEmblems(id);
-    closeRealtimeInitiativeSnapshot();
+    clearTemporaryCombatResistanceEffects();
     for (final request in onlineCombatRequests.values) {
       if (request['encounterId'] == id &&
           request['kind'] != 'encounter_reward') {
@@ -852,7 +918,12 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         request['freeReaction'] = false;
       }
     }
-    masterInitiativeTokens.clear();
+    final allies = oculumBoardAfterFight(masterInitiativeTokens);
+    masterInitiativeTokens
+      ..clear()
+      ..addAll(allies);
+    group['combatEnded'] = true;
+    reindexMasterInitiativeTokens();
     masterInitiativeRound = 0;
     masterInitiativeActiveIndex = 0;
     masterInitiativeManualOrder = false;

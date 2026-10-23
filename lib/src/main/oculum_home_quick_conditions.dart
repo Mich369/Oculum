@@ -962,6 +962,12 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
   }) {
     final definition = oculumConditionDefinition(type);
     if (definition == null) return false;
+    if (planarState['posteaImmuneCondition'] == type) {
+      aggiungiLog(
+        '[ANTI MALUS] ${definition.nameIt} bloccato dalla protezione di Rusty.',
+      );
+      return false;
+    }
     if (conditionImmunities.contains(type.trim().toLowerCase())) {
       final message = t(
         'Immunità: ${definition.nameIt} non si applica.',
@@ -1653,7 +1659,9 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     }
     if (target == OculumConditionTarget.movimento) {
       if (!statoForzaRimuoveMalus() &&
-          (hasCondition('immobilizzato') || hasCondition('afferrato'))) {
+          (hasCondition('immobilizzato') ||
+              hasCondition('afferrato') ||
+              hasCondition('paralisi_fato'))) {
         return 0;
       }
       if (hasCondition('accelerato')) percent += 20 * positiveMultiplier;

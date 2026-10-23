@@ -1100,6 +1100,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       return 0;
     }
     final sheet = schedePersonaggio[schedaCorrente];
+    sheet['combatHelpLastSources'] = List<String>.from(
+      (sheet['combatHelpPendingSources'] as List? ?? []).map((v) => '$v'),
+    );
+    sheet['combatHelpPendingSources'] = <String>[];
     var bonus = readIntValue(
       sheet['combatHelpPending'],
     ).clamp(-1000000, 1000000);
@@ -1151,6 +1155,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       for (final message in applyStructuredEffectsOnActivation(
         effects,
         source: source,
+        applyFusionBonus: false,
       )) {
         aggiungiLog('[SUPPORTO RICEVUTO] $message');
       }
@@ -1237,6 +1242,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       'status': 'resolved',
       'received': true,
     };
+    schedePersonaggio[index]['combatHelpPendingSources'] = {
+      ...(schedePersonaggio[index]['combatHelpPendingSources'] as List? ?? []),
+      '${payload['sourceTag']}',
+    }.toList();
     schedePersonaggio[index]['combatHelpPending'] =
         readIntValue(
           schedePersonaggio[index]['combatHelpPending'],
@@ -1396,6 +1405,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     } else {
       final index = localSheetIndexForOculumTag(tag);
       if (index >= 0) {
+        schedePersonaggio[index]['combatHelpPendingSources'] = {
+          ...(schedePersonaggio[index]['combatHelpPendingSources'] as List? ??
+              []),
+          helperTag,
+        }.toList();
         schedePersonaggio[index]['combatHelpPending'] =
             readIntValue(
               schedePersonaggio[index]['combatHelpPending'],
@@ -1471,7 +1485,21 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     int? preparedAttackTotal,
     int? preparedAttackNatural,
   }) async {
+    if (parasiteOwnerLocked || parasiteHiddenInHost) {
+      aggiungiLog(
+        '[PARASSITA] Attacco non disponibile: usa i comandi di liberazione.',
+      );
+      return;
+    }
     synchronizeFightStartCooldowns();
+    if (planarCharging || planarCloudForm) {
+      aggiungiLog(
+        planarCloudForm
+            ? 'La nube non può attaccare.'
+            : 'Carica in corso: completa o interrompi la Scarica prima di agire.',
+      );
+      return;
+    }
     if (freeReactionId == null && maximumTargets == 1) {
       for (final effect in activeStructuredEffects.where(
         (e) => e['type'] == 'pending_target',
@@ -1576,6 +1604,19 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           featured: true,
         ),
     ];
+    if (isLarvalParasite) {
+      choices
+        ..clear()
+        ..add(
+          OculumAttackChoice(
+            'parasite_infiltration',
+            'Infiltrazione · Riflessi',
+            parasiteReflexes,
+            color: Colors.purpleAccent,
+          ),
+        );
+      initialChoice = 'parasite_infiltration';
+    }
     final sourceSheet = schedePersonaggio[schedaCorrente];
     final sourceMonsterId = '${sourceSheet['monsterBookSourceId'] ?? ''}';
     final preparedIds = activeStructuredEffects
@@ -1746,7 +1787,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     if (freeReactionId == null &&
         schiantoReactionId == null &&
-        !await spendCombatRollResource()) {
+        !(isLarvalParasite
+            ? await requestUtilitySpend('azione')
+            : await spendCombatRollResource())) {
       return;
     }
     if (!mounted ||
@@ -1821,6 +1864,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       fixedBonuses: flatDamageBonus,
       abilityDamageBonus: abilityDamageBonus,
     );
+    final preparedSkill = takePreparedSkill('attacco');
     final concentrationSheet = schedePersonaggio[schedaCorrente];
     final concentrationPending =
         concentrationSheet['combatConcentrationPending'] == true;
@@ -1829,9 +1873,18 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       controlledPlan.targetIds.length,
       flatBonusPerTarget: flatDamageBonus,
     );
-    final damagePerTarget = concentrationPending
+    final normalDamagePerTarget = concentrationPending
         ? (unboostedDamagePerTarget * 1.10).ceil()
         : unboostedDamagePerTarget;
+    final damagePerTarget = preparedSkill.isEmpty
+        ? normalDamagePerTarget
+        : oculumDamageWithPercentage(
+            normalDamagePerTarget,
+            readIntValue(preparedSkill['power']) +
+                (preparedSkill['growing'] == true
+                    ? 0
+                    : max(0, readIntValue(preparedSkill['roll']))),
+          );
     if (controlledPlan.targetIds.length > 1) {
       aggiungiLog(
         '[DANNI AD AREA] Danno base $baseDamage ÷ ${controlledPlan.targetIds.length} colpi, arrotondato per eccesso, + bonus piatto $flatDamageBonus per ogni bersaglio = $damagePerTarget danni a bersaglio. Ogni bersaglio risolve la propria difesa e le proprie resistenze.',
@@ -1861,6 +1914,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       '[ATTACCO] $label · ${choices.firstWhere((c) => c.id == controlledPlan.choiceId).name}.${controlledPlan.choiceId == 'vc' ? '' : ' Descrivi l’attacco al Master, anche a voce.'}',
     );
     void resolved(int natural, int total) {
+      total += readIntValue(preparedSkill['rollBonus']);
+      total += planarAttackRollBonus();
+      planarState.remove('attackRollBonus');
+      planarState['vanishTurns'] = 0;
       total +=
           counterBonus +
           (controlledPlan.choiceId == 'schianto' ? schiantoBonus : 0);
@@ -1988,6 +2045,19 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             ).clamp(0, 100),
           if (isElementCollector) 'sourceMonsterBookId': sourceMonsterId,
           'sourceName': realtimeDisplayName(),
+          'sourceHelpers': List<dynamic>.from(
+            schedePersonaggio[schedaCorrente]['combatHelpLastSources']
+                    as List? ??
+                [],
+          ),
+          if (isLarvalParasite) ...{
+            'parasiteReflexes': parasiteReflexes,
+            'parasiteDamage': dannoTotale(),
+            'parasiteDefense': difesa(),
+          },
+          'sourceChaos': identityIsChaos,
+          'chaosTurn': '${planarState['chaosEncounter']}:$playerReportedTurn',
+          'chaosPercentile': Random.secure().nextInt(100),
           'sourceMovement': movimento(),
           'sourceTransparency': activeConditions.any(
             (c) => c.conditionType == 'trasparenza',
@@ -2011,8 +2081,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'reason': controlledPlan.reason,
           'attack': total,
           'natural': natural,
-          'damage':
-              resolvedDamagePerTarget + corruptionRevengeDamage(selectedTag),
+          'damage': isLarvalParasite
+              ? 0
+              : resolvedDamagePerTarget + corruptionRevengeDamage(selectedTag),
           'damageTotal':
               resolvedDamagePerTarget * controlledPlan.targetIds.length,
           'damageBasePacket': baseDamage,
@@ -2025,13 +2096,27 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             'precisionDamagePercent': precisionHit.receivedDamagePercent,
           },
           'effects': effectsForTarget,
+          'sourceWill': volontaTotale(),
+          'sourcePlanarStats':
+              resilienzaTotale() +
+              volontaTotale() +
+              materiaTotale() +
+              oculumTotale(),
+          'baseAttack':
+              effectsForTarget.isEmpty &&
+              !activeStructuredEffects.any(
+                (e) => e['mode'] == 'prossima_azione',
+              ),
           'element': element,
           'level': activeCriticalLevel(),
           'grade': activeCriticalGrade(),
           'difficulty': normalizedCampaignDifficulty(),
           'forcedCritical':
+              (natural == 19 &&
+                  hasPlanarTechnique('blade_skull_critical') &&
+                  const {'taglio', 'fisico_taglio'}.contains(element)) ||
               freeReactionId != null &&
-              freeReaction?['criticalReaction'] == true,
+                  freeReaction?['criticalReaction'] == true,
           'reactionOf': freeReactionId,
           if (schiantoReactionId != null) ...{
             'schiantoReactionOf': schiantoReactionId,
@@ -2099,6 +2184,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
 
   bool controlsOnlineCombatSheet(String tag) {
     final index = localSheetIndexForOculumTag(tag);
+    if (index >= 0 && parasiteSheetControlledByStaff(tag)) return true;
     if (index < 0 ||
         readBoolValue(schedePersonaggio[index]['realtimeSharedSheet'])) {
       return false;
@@ -2219,6 +2305,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         caricaStatoDaJson(schedePersonaggio[index]);
         ripristinaImpostazioniGlobali(global);
         claimOnlineVampirism(request);
+        claimPlanarBellHealing(request);
         salvaSchedaCorrenteInMemoria();
       } finally {
         schedaCorrente = original;
@@ -2355,6 +2442,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           continue;
         }
         claimOnlineVampirism(request);
+        claimPlanarBellHealing(request);
         if (request['kind'] == 'help') {
           if (request['sourceTag'] == tag &&
               (!retryOnly || request['helpAcknowledged'] != true)) {
@@ -2523,7 +2611,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       return;
     }
     if (event == 'combat_attack') {
-      if (payload['senderTag'] != source ||
+      if ((payload['senderTag'] != source &&
+              !parasiteStaffPacket(payload, source)) ||
           readIntValue(payload['damage']) < 0 ||
           readIntValue(payload['damage']) > 100000000) {
         return;
@@ -2607,7 +2696,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     } else {
       final request = onlineCombatRequests[id];
       if (request == null ||
-          payload['senderTag'] != request['targetTag'] ||
+          (payload['senderTag'] != request['targetTag'] &&
+              !parasiteStaffPacket(payload, '${request['targetTag']}')) ||
           payload['sourceTag'] != request['sourceTag'] ||
           payload['targetTag'] != request['targetTag']) {
         return;
@@ -2624,10 +2714,41 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         difficulty: '${request['difficulty'] ?? 'normale'}',
       );
       applyVcCmDisadvantage(request, '${payload['defenseChoice']}', defense);
+      if (outcome == OculumAttackOutcome.avoided &&
+          payload['chaosDefensePenalty'] == true) {
+        applyChaosPenaltyGroup(
+          request,
+          attackingSide: true,
+          source: '${request['targetName']}',
+          receipt: 'defense:${request['id']}',
+        );
+      }
+      if (outcome != OculumAttackOutcome.avoided &&
+          request['sourceChaos'] == true &&
+          payload['chaosAttackPenalty'] == true) {
+        request['defenseHelpers'] = payload['defenseHelpers'];
+        applyChaosPenaltyGroup(
+          request,
+          attackingSide: false,
+          source: '${request['sourceName']}',
+          receipt:
+              'attack:${request['chaosTurn']}:${request['sourceTag']}:${request['targetTag']}',
+        );
+      }
       request['status'] = 'resolved';
       request['defense'] = defense;
       request['defenseChoice'] = payload['defenseChoice'];
       request['defenseHelp'] = readIntValue(payload['defenseHelp']);
+      if (request['choice'] == 'parasite_infiltration' &&
+          outcome != OculumAttackOutcome.avoided) {
+        final index = localSheetIndexForOculumTag('${request['sourceTag']}');
+        if (index >= 0) {
+          schedePersonaggio[index]['planarRuntime'] = {
+            ...(schedePersonaggio[index]['planarRuntime'] as Map? ?? {}),
+            'parasiteHostTag': request['targetTag'],
+          };
+        }
+      }
       request['doubleDefense'] = payload['doubleDefense'] == true;
       if (controlsOnlineCombatSheet('${request['sourceTag']}') &&
           sheetTagAt(schedaCorrente) == request['sourceTag'] &&
@@ -2639,6 +2760,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         recoverPlanePressureCritical(
           doubleCritical: true,
           receiptId: 'attack:${request['attackGroupId'] ?? request['id']}',
+        );
+      }
+      if (readIntValue(payload['bringiRetaliation']) > 0) {
+        unawaited(
+          applyPlanarSeedDamage(
+            '${request['sourceTag']}',
+            readIntValue(payload['bringiRetaliation']).clamp(1, 120),
+          ),
         );
       }
       final reflected = readIntValue(
@@ -2707,6 +2836,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         applyOnlineSchiantoActionSkip(payload);
       }
       claimOnlineVampirism(request);
+      claimPlanarBellHealing(request);
       combatLogFor(
         source,
         oculumCombatExchangeLog(
@@ -2751,6 +2881,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         request['defenseRetryApproved'] != true) {
       return;
     }
+    if (parasiteOwnerLocked) return;
     if (request['status'] != 'pending' ||
         request['targetTag'] != tag ||
         request['scope'] != permissionScope ||
@@ -3004,12 +3135,37 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         pawnPendingDamage.isNotEmpty) {
       return;
     }
-    final attack = readIntValue(request['attack']);
-    final outcome = oculumAttackOutcome(
+    defense += readIntValue(takePreparedSkill('difesa')['rollBonus']);
+    defense += planarDefenseRollBonus();
+    planarState.remove('defenseRollPenalty');
+    final incomingPlanar = (request['effects'] as List? ?? [])
+        .whereType<Map>()
+        .where((e) => e['type'] == 'planar')
+        .toList();
+    final bell = incomingPlanar.any((e) => e['target'] == 'bell_paralysis');
+    final attack = bell ? 25 : readIntValue(request['attack']);
+    final defenderMonster = monsterBookEntryById(
+      '${schedePersonaggio[schedaCorrente]['monsterBookSourceId'] ?? ''}',
+    );
+    final exposed = readIntValue(planarState['physicalExposure']) > 0;
+    if (exposed) planarState['physicalExposure'] = 0;
+    if (defenderMonster?.id == 'fire_shield' && request['element'] == 'acqua') {
+      planarState['physicalExposure'] = 1;
+    }
+    var outcome = oculumAttackOutcome(
       attack,
       defense,
       difficulty: '${request['difficulty'] ?? 'normale'}',
     );
+    if (defenderMonster?.id == 'smiling_storm' &&
+        request['baseAttack'] == true &&
+        readIntValue(request['sourcePlanarStats']) <=
+            resilienzaTotale() +
+                volontaTotale() +
+                materiaTotale() +
+                oculumTotale()) {
+      outcome = OculumAttackOutcome.avoided;
+    }
     final critical =
         request['forcedCritical'] == true ||
         oculumAttackIsCritical(attack, defense);
@@ -3048,7 +3204,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       targetMovement: readIntValue(request['sourceMovement'], fallback: -1),
       characterMovement: movimento(),
     );
+    request['defenseHelpers'] = List<dynamic>.from(
+      schedePersonaggio[schedaCorrente]['combatHelpLastSources'] as List? ?? [],
+    );
+    resolveChaosIncomingAttack(request, outcome);
     applyVcCmDisadvantage(request, choice, defense);
+    if (request['choice'] == 'parasite_infiltration' &&
+        outcome != OculumAttackOutcome.avoided) {
+      installParasite(request);
+    }
     request['status'] = 'resolved';
     request['defense'] = defense;
     request['defenseChoice'] = choice;
@@ -3238,6 +3402,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 0,
                 (sum, e) => sum + max(0, readIntValue(e['valueExpression'])),
               ),
+          enemyGrade: readIntValue(request['grade']),
+          attackKind: '${request['choice'] ?? ''}',
+          magicalAttack: (request['effects'] as List? ?? []).isNotEmpty,
           additionalDefense: transparencyDefense,
           dannoEsplicito: precisionAdjustedDamage,
           critico: critical,
@@ -3250,9 +3417,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               : null,
           extraFragilityPercent: doubleCritical ? 10 : 0,
           incomingDamageMultiplier: elementalDefenseMultiplier,
-          bypassDefense: (request['effects'] as List? ?? const [])
-              .whereType<Map>()
-              .any(
+          bypassDefense:
+              (readIntValue(planarState['armorHits']) > 0 &&
+                  request['choice'] == 'schianto') ||
+              (request['effects'] as List? ?? const []).whereType<Map>().any(
                 (effect) =>
                     effect['type'] == 'danno' &&
                     readBoolValue(effect['bypassDefense']),
@@ -3282,7 +3450,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           enemyLevel: readIntValue(request['level']),
           enemyDifficulty: '${request['difficulty']}',
           resolvedResistance: resisted,
-          resistancePresetOverride: precisionPreset,
+          resistancePresetOverride:
+              exposed &&
+                  const {
+                    'fisico',
+                    'taglio',
+                    'contundente',
+                    'perforante',
+                  }.contains('${request['element']}')
+              ? 'Normale'
+              : precisionPreset,
           incomingDamagePercentAdjustment:
               anatomyResistanceAdjustment + weakPointFragilityAdjustment,
         );
@@ -3300,6 +3477,21 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       'hpLost': min(max(0, beforeHp), max(0, beforeHp - hpCorrenti())),
       'pawnPending': pawnPendingDamage.isNotEmpty,
     };
+    if (readIntValue(receipt['hpLost']) > 0 && schedePersonaggio.isNotEmpty) {
+      schedePersonaggio[schedaCorrente]['lastDamageSourceTag'] =
+          request['sourceTag'];
+    }
+    if (readIntValue(receipt['hpLost']) > 0) {
+      schedePersonaggio[schedaCorrente]['lastPlanarFinisher'] = {
+        'sourceTag': request['sourceTag'],
+        'choice': request['choice'],
+        'weakPoint': request['targetWeakPointPrecision'] == true,
+        'abilityName': request['abilityName'] ?? '',
+        'element': request['element'],
+        'baseAttack': request['baseAttack'] == true,
+      };
+    }
+    planarAfterHpDamage();
     request['damageReceipt'] = receipt;
     aggiungiLog(
       '[DANNO RISOLTO] ${request['sourceName']} → ${request['targetName'] ?? nomeController.text}: ${combatDamageReceiptText(receipt)}.',
@@ -3316,6 +3508,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           )..recipient = 'se_stesso';
           if (effect.type == 'danno') {
             continue; // Included in the single damage packet.
+          }
+          if (effect.type == 'planar' &&
+              !planarIsCriticalEffectAllowed(request, effect)) {
+            continue;
           }
           if (effect.type == 'stato' &&
               effect.appliedState == 'corruzione' &&
@@ -3373,9 +3569,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               effect.duration = '$reduced';
             }
           }
-          final messages = applyStructuredEffectsOnActivation([
-            effect,
-          ], source: '${request['sourceName']} · attacco $id');
+          final messages = applyStructuredEffectsOnActivation(
+            [effect],
+            source: '${request['sourceName']} · attacco $id',
+            applyFusionBonus: false,
+          );
+          if (effect.type == 'planar' &&
+              effect.target == 'bell_paralysis' &&
+              readIntValue(request['natural']) == 20) {
+            applyCondition('stordito', duration: 1, source: 'Rintocco critico');
+          }
           for (final message in messages) {
             aggiungiLog('[EFFETTO ${outcome.label}] $message');
           }
@@ -3385,9 +3588,32 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         }
       }
     }
+    var bringiRetaliation = 0;
+    if (defenderMonster?.id == 'bringi') {
+      final seen = planarState['bringiFirstResponse'] == true;
+      var hits = readIntValue(planarState['bringiHits']);
+      if (outcome != OculumAttackOutcome.avoided) hits++;
+      if (!seen) {
+        bringiRetaliation = Random.secure().nextInt(20) + 1;
+        planarState['bringiFirstResponse'] = true;
+      }
+      if (hits >= 3) {
+        bringiRetaliation = Random.secure().nextInt(100) + 21;
+        hits = 0;
+      }
+      planarState['bringiHits'] = hits;
+      if (bringiRetaliation > 0) {
+        aggiungiLog(
+          '[BRINGI] ${request['sourceName']}: $bringiRetaliation semi da 1 Vita.',
+        );
+      }
+    }
     final reply = {
       ...request,
-      'runicReflectedDamage': defense > attack
+      'bringiRetaliation': bringiRetaliation,
+      'runicReflectedDamage': readIntValue(planarState['barrierTurns']) > 0
+          ? readIntValue(planarState['barrierPower'])
+          : defense > attack
           ? (readIntValue(request['damage']) *
                     activeStructuredEffectBonus('runic_reflection_percent') /
                     100)

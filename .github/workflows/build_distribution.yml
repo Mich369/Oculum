@@ -31,6 +31,13 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Verify public downloads and isolated Windows updater
+        shell: pwsh
+        run: |
+          python -m unittest discover -s scripts/tests -p test_publish_github_downloads.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m unittest discover -s scripts/tests -p test_windows_update.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - run: flutter analyze --no-pub
       # Keep image-heavy widget suites within the Windows runner's memory budget.
       - run: flutter test --no-pub --concurrency=2
@@ -101,6 +108,7 @@ jobs:
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           flutter build windows --release `
+            "--dart-define=OculumSourceCommit=${{ github.sha }}" `
             "--dart-define=OculumSaveProfile=${{ matrix.save_profile }}" `
             "--dart-define=OculumSupabaseUrl=$env:OCULUM_SUPABASE_URL" `
             "--dart-define=OculumSupabasePublishableKey=$env:OCULUM_SUPABASE_PUBLISHABLE_KEY"
@@ -163,6 +171,7 @@ jobs:
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           flutter build macos --release \
+            "--dart-define=OculumSourceCommit=${{ github.sha }}" \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}" \
             "--dart-define=OculumOAuthRedirectUrl=com.mich.oculum://login-callback"
@@ -225,6 +234,7 @@ jobs:
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           flutter build ios --release --no-codesign \
+            "--dart-define=OculumSourceCommit=${{ github.sha }}" \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
@@ -305,6 +315,7 @@ jobs:
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           flutter build linux --release \
+            "--dart-define=OculumSourceCommit=${{ github.sha }}" \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
@@ -359,6 +370,17 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Restore stable Android signing identity
+        shell: bash
+        env:
+          OCULUM_ANDROID_KEYSTORE_BASE64: ${{ secrets.OCULUM_ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          test -n "$OCULUM_ANDROID_KEYSTORE_BASE64" || { echo "Missing stable Android signing secret"; exit 1; }
+          mkdir -p "$HOME/.android"
+          printf '%s' "$OCULUM_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
+          chmod 600 "$HOME/.android/debug.keystore"
+
       - name: Build Android release APK
         shell: bash
         env:
@@ -366,6 +388,7 @@ jobs:
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           flutter build apk --release \
+            "--dart-define=OculumSourceCommit=${{ github.sha }}" \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
@@ -380,6 +403,7 @@ jobs:
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           flutter build appbundle --release \
+            "--dart-define=OculumSourceCommit=${{ github.sha }}" \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
@@ -416,6 +440,7 @@ jobs:
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           flutter build web --release --base-href / \
+            "--dart-define=OculumSourceCommit=${{ github.sha }}" \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
       - name: Package Web release

@@ -1127,17 +1127,26 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     ),
                   ),
                 ),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: readableOnTheme(Colors.white),
-                    fontSize: dense ? 10.5 : 12,
-                    fontWeight: FontWeight.w900,
+              ],
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: SizedBox(
+                width: double.infinity,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: readableOnTheme(Colors.white),
+                      fontSize: dense ? 12 : 14,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-              ],
+              ),
             ),
             const SizedBox(height: 4),
             SizedBox(
@@ -2222,8 +2231,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   ? constraints.maxWidth
                   : MediaQuery.of(context).size.width;
               final compact = width < 520 || lightweightUi;
-              final eyeWidth = min(width, compact ? 160.0 : 200.0);
-              final eyeHeight = eyeWidth;
+              final eyeWidth = min(width, compact ? 192.0 : 240.0);
+              final eyeHeight = min(width / 1.2, compact ? 160.0 : 200.0);
               final radius = compact ? 12.0 : 14.0;
 
               final imageCard = SizedBox(
@@ -2235,7 +2244,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     color: Colors.transparent,
                     border: Border.all(
                       color: primaryColor.withValues(alpha: 0.70),
-                      width: 1.4,
+                      width: 1.68,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -8180,6 +8189,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             ],
           ),
           SizedBox(height: spacing),
+          fateChaosIdentityEditor(),
+          SizedBox(height: spacing),
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(dense ? 8 : 10),
@@ -9695,14 +9706,21 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 ),
               ),
               const SizedBox(height: 3),
-              Text(
-                label == 'VITA' && vitaAfonaAttiva()
-                    ? '??? / $maxValue'
-                    : '$value / $maxValue',
-                style: const TextStyle(
-                  fontSize: 24,
-                  height: 1.2,
-                  fontWeight: FontWeight.w700,
+              SizedBox(
+                width: double.infinity,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    label == 'VITA' && vitaAfonaAttiva()
+                        ? '??? / $maxValue'
+                        : '$value / $maxValue',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      height: 1.2,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
               const Spacer(),
@@ -11346,8 +11364,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       );
     }
     final viewportWidth = MediaQuery.maybeOf(context)?.size.width ?? 1200;
-    final content = manuscriptLivingActive &&
-            referenceRequestedAnchor.trim().isNotEmpty
+    final content =
+        manuscriptLivingActive && referenceRequestedAnchor.trim().isNotEmpty
         ? referenceCharacterPage()
         : !modalitaDesktop || phoneCompactUi || viewportWidth < 700
         ? characterMobilePage()

@@ -1026,6 +1026,25 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     descriptionEn: 'Movement -25%.',
   ),
   OculumConditionDefinition(
+    id: 'paralisi_fato',
+    nameIt: 'Paralisi dal Fato',
+    nameEn: 'Fate Paralysis',
+    icon: Icons.lock_outline,
+    category: OculumConditionCategory.special,
+    polarity: OculumConditionPolarity.negative,
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.movimento,
+      OculumConditionTarget.reazioni,
+      OculumConditionTarget.combattimento,
+    },
+    descriptionIt:
+        'Movimento 0; blocca Azioni e Reazioni per quattro turni. La prima difesa gratuita resta risolvibile.',
+    descriptionEn:
+        'Movement zero; blocks actions and reactions for four turns. The first free defense remains available.',
+    defaultDuration: 4,
+    control: true,
+  ),
+  OculumConditionDefinition(
     id: 'stordito',
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.resilienza,
@@ -1223,6 +1242,25 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.danno,
       OculumConditionTarget.tiri,
+    },
+  ),
+  OculumConditionDefinition(
+    id: 'chaos_svantaggio',
+    nameIt: 'Svantaggio · Chaos',
+    nameEn: 'Chaos disadvantage',
+    icon: Icons.trending_down,
+    category: OculumConditionCategory.special,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        '−3 a tutti i tiri per 1 turno, provocato da Chaos dopo un attacco o una difesa riuscita.',
+    descriptionEn:
+        '−3 to all rolls for one turn from a successful Chaos attack or defense.',
+    defaultDuration: 1,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+    rollModifierByStage: [-3],
+    affectedTargets: {
+      OculumConditionTarget.tiri,
+      OculumConditionTarget.combattimento,
     },
   ),
   OculumConditionDefinition(

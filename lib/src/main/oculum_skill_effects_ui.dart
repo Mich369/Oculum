@@ -73,6 +73,10 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
               .firstOrNull;
     final key =
         '$permissionScope:$onlineCombatEncounterId:${readIntValue(group?['completedFightCount'])}';
+    synchronizeIdentityCombat(key);
+    if (planarState['posteaImmuneCondition'] != null) {
+      planarState['posteaImmunityWaitingFight'] = false;
+    }
     var changed = false;
     for (final entry in namedStructuredCooldowns()) {
       changed = entry.cooldown.enterCombat(key) || changed;
@@ -1147,6 +1151,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
   String structuredEffectTypeLabel(String type) {
     return switch (type) {
       'danno' => t('Danno', 'Damage'),
+      'preparazione' => t('Preparazione e rilascio', 'Prepare and release'),
+      'planar' => t('Regola speciale creatura', 'Special creature rule'),
       'danno_percentuale' => t('Danni in percentuale', 'Damage percentage'),
       'difesa_percentuale' => t('Difesa in percentuale', 'Defense percentage'),
       'costrutto' => t(
@@ -1213,7 +1219,15 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
 
   List<String> structuredEffectTargetOptions(String type) {
     final values = <String>[];
-    if (type == 'modifica_statistica') {
+    if (type == 'preparazione') {
+      values.addAll(['attacco', 'difesa']);
+    } else if (type == 'planar') {
+      values.addAll({
+        ..._planarSelfRules.values,
+        ..._planarTargetRules.values,
+        'annihilation',
+      });
+    } else if (type == 'modifica_statistica') {
       values.addAll(<String>[
         'Resilienza',
         'Volontà',
@@ -1525,6 +1539,12 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     );
     final narrativeController = TextEditingController(text: seed.narrativeText);
     final optionController = TextEditingController(text: seed.activationOption);
+    final chargeCostController = TextEditingController(
+      text: '${seed.chargeOculumPerTurn}',
+    );
+    final chargeStepsController = TextEditingController(
+      text: seed.chargeDamageSteps.join(','),
+    );
     final customController = TextEditingController(
       text: seed.customDisplayText,
     );
@@ -1561,6 +1581,18 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     OculumStructuredEffect currentEffect() {
       return OculumStructuredEffect(
         id: seed.id,
+        sourceScrollGrade: seed.sourceScrollGrade,
+        chargeOculumPerTurn: max(
+          0,
+          int.tryParse(chargeCostController.text) ?? 0,
+        ),
+        chargeDamageSteps: chargeStepsController.text
+            .split(',')
+            .map((v) => int.tryParse(v.trim()))
+            .whereType<int>()
+            .map((v) => max(0, v))
+            .take(10)
+            .toList(),
         type: type,
         target: targetController.text.trim(),
         resource: resource,
@@ -2330,6 +2362,25 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             ),
                           ],
                         ),
+                        if (type == 'preparazione') ...[
+                          TextField(
+                            controller: chargeCostController,
+                            keyboardType: TextInputType.number,
+                            decoration: fieldDecoration(
+                              'Oculum per incremento di carica (0: nessuna carica crescente)',
+                            ),
+                            onChanged: (_) =>
+                                scheduleDialogRefresh(setDialogState),
+                          ),
+                          TextField(
+                            controller: chargeStepsController,
+                            decoration: fieldDecoration(
+                              'Danni % per carica, dalla base al massimo (es. 40,80,120,180)',
+                            ),
+                            onChanged: (_) =>
+                                scheduleDialogRefresh(setDialogState),
+                          ),
+                        ],
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
@@ -2486,6 +2537,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       maximumController.dispose();
       narrativeController.dispose();
       optionController.dispose();
+      chargeCostController.dispose();
+      chargeStepsController.dispose();
       customController.dispose();
       elementTypeController.dispose();
     }
@@ -2550,24 +2603,10 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
           ),
           if (effects.isNotEmpty) ...[
             const SizedBox(height: 8),
-            ReorderableListView.builder(
+            Column(
               key: ValueKey('structured_effects_$storageId'),
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: effects.length,
-              // Compatibilità Flutter 3.41/3.44: onReorderItem non è
-              // disponibile nelle versioni locali precedenti.
-              // ignore: deprecated_member_use
-              onReorder: (oldIndex, newIndex) {
-                setState(() {
-                  if (newIndex > oldIndex) newIndex--;
-                  final effect = effects.removeAt(oldIndex);
-                  effects.insert(newIndex, effect);
-                  onChanged();
-                });
-                programmaSalvataggio();
-              },
-              itemBuilder: (context, index) {
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(effects.length, (index) {
                 final effect = effects[index];
                 return Card(
                   key: ValueKey('${storageId}_${effect.id}'),
@@ -2604,12 +2643,27 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             effects.insert(index + 1, effect.copyWithNewId());
                           } else if (action == 'delete') {
                             effects.removeAt(index);
+                          } else if (action == 'up' && index > 0) {
+                            effects.insert(index - 1, effects.removeAt(index));
+                          } else if (action == 'down' &&
+                              index + 1 < effects.length) {
+                            effects.insert(index + 1, effects.removeAt(index));
                           }
                           onChanged();
                         });
                         programmaSalvataggio();
                       },
                       itemBuilder: (context) => <PopupMenuEntry<String>>[
+                        if (index > 0)
+                          const PopupMenuItem(
+                            value: 'up',
+                            child: Text('Sposta su'),
+                          ),
+                        if (index + 1 < effects.length)
+                          const PopupMenuItem(
+                            value: 'down',
+                            child: Text('Sposta giù'),
+                          ),
                         PopupMenuItem(
                           value: 'edit',
                           child: Text(t('Modifica', 'Edit')),
@@ -2626,7 +2680,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                     ),
                   ),
                 );
-              },
+              }),
             ),
           ],
           const SizedBox(height: 8),

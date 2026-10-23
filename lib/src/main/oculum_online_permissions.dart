@@ -98,7 +98,11 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     ...request,
     'scope': permissionScope,
     'campaignId': permissionCampaignId,
-    'senderTag': sheetTagAt(schedaCorrente),
+    'senderTag':
+        parasiteSheetControlledByStaff(sheetTagAt(schedaCorrente)) &&
+            ownPermissionTags.isNotEmpty
+        ? ownPermissionTags.first
+        : sheetTagAt(schedaCorrente),
     'senderRole': realtimeLocalRole(),
   };
 
@@ -341,6 +345,10 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
   }
 
   Future<bool> requestUtilitySpend(String resource) async {
+    if (hasCondition('paralisi_fato')) {
+      aggiungiLog('Paralisi dal Fato: Azioni e Reazioni bloccate.');
+      return false;
+    }
     if (!currentCombatIsActive()) return true;
     final tag = sheetTagAt(schedaCorrente);
     final freeReaction = const {'azione', 'reazione'}.contains(resource)

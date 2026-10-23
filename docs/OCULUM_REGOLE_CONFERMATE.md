@@ -1,5 +1,19 @@
 # Oculum — registro delle regole confermate
 
+## Conferme del 23 ottobre 2026 — bestiario e quest
+
+- Solo alcune skill hanno carica crescente: attivazione 2 Oculum e una Azione; danni +40% senza incrementi, poi +80%, +120% e +180% dopo uno/due/tre incrementi. Ogni incremento costa 1 Oculum e una Azione, massimo uno per turno personale. Rilascio anticipato con normale Azione/Reazione; stessi controlli di Concentrazione quando si perde Vita. Costi e progressione modificabili nell’editor e conservati nel JSON.
+- Solo le skill esplicitamente preparate richiedono due fasi: Azione di preparazione; rilascio con il successivo attacco/difesa spendendo normalmente Azione o Reazione, senza una terza risorsa o doppio costo della skill. La preparazione si interrompe soltanto in seguito a perdita di Vita, non se Scudi o HP temporanei assorbono tutto. Bonus Concentrazione +3 = 3% di mantenimento, massimo 100%. Nemico superiore di due Gradi: −10 punti percentuali; di tre: −20; poi altri −10 per ogni Grado.
+- Soltanto la scroll fornisce +3 × suo Grado alla Concentrazione per la tecnica che lo richiede; il bonus non resta nella skill appresa e non aumenta la Concentrazione generale.
+- Potenziamento: usa lo stesso controllo Preparati già esistente, con soglie di livello/Grado, +3 al tiro per Oculum e +2 Danni per punto se attacchi. Nel tiro di preparazione aumenta anche il mantenimento della concentrazione. Pulsante nella riga Tiri e azioni quando il limite per regola è almeno 1; selezione numerica entro il limite corrente e consumo al prossimo tiro.
+- Tecniche che consumano Volontà o Materia: bonus numerici positivi inizialmente aumentati del 20%, arrotondamento per eccesso, come bilanciamento richiesto e modificabile nella formula; non aumenta durate né Azioni/Reazioni.
+- Fluttuare: versione ridotta delle Ali di Fata, confermata dall’utente: 1d4 turni, +3 Difesa e +3 Movimento, costo 2 Oculum, CD 3 turni, Azione nel proprio turno o Reazione fuori turno; nessuna immunità automatica. Valori modificabili.
+- Quest: tre obiettivi contemporanei brevi, fattibili nel luogo corrente; combattimenti con nemici almeno di livello pari al riferimento del party. Le uccisioni contano dalla comparsa della quest. Obser alla cassa comune; bonus personale a chi completa, con unica estrazione 25% Ispirazione / 10% Super / 5% Oculum / 3% Schivata / 1% tutte e tre più Schivata / 56% nessun bonus personale.
+- Bringi: pacifico e neutrale; prima aggressione 1d20 semi, dopo tre colpi ricevuti 1d100+20 semi, ognuno da 1 Vita. Aspetto di scoiattolo con guance piene; assegnazione editoriale al Regno Mezzano e alla Foresta elementale.
+- Annichilimento: Titolo Malanno @res-30%, durata tre Riposi Lunghi; la fuga del Diavolo nasconde l’identità nel Monster Book conservando i progressi.
+- Premi speciali delle creature: scroll con apprendimento normale. Soglie speciali Drop sul dado naturale. Le nuove statistiche e i costi non espressamente confermati sono bilanciamenti iniziali modificabili, non regole del manuale storico.
+- Aggiornamento tecnico: backup verificato dei salvataggi prima della sostituzione; nessuna disinstallazione Android. L’utente autorizza la conservazione della chiave Android come secret privato cifrato GitHub Actions, mai nei sorgenti o nei download. La pubblicazione segue le build riuscite di qualsiasi ramo del repository.
+
 ## Correzioni definitive dalla revisione del 22 ottobre 2026
 
 - Percezione fuori turnistica: il tiro usa la prova già prevista e può mirare alle altre schede visibili senza avviare o richiedere l’ordine d’iniziativa. Le informazioni di grado seguono il normale esito della lettura; il punto debole continua a richiedere il critico naturale previsto dalla regola confermata.
@@ -474,3 +488,27 @@ Amuleto Teschio: prezzo confermato 120 +10×Grado Obser; richiede un’Azione ne
 Pressione del piano: prova Adattamento solo se almeno due Gradi sotto il minimo dell’area. DT 18 + Grado minimo da superare strettamente. Critico negativo: −20 a tutte le statistiche; successo: nessun malus; fallimento entro 3 punti dalla DT (parità inclusa), oppure naturale 18+ insufficiente: −5; altro fallimento: −10. Dura fino all’uscita dal piano, senza accumulo tra tentativi; statistiche minime zero.
 
 Recupero pressione in fight: ogni proprio critico positivo riduce di 3 il solo malus da area; doppio critico di 6 complessivi. Valori fissi, non casuali; minimo zero. I malus di altra origine restano invariati.
+
+
+### Identità Fato / Chaos e occhi — conferme 23 ottobre 2026
+Identità Fato / Chaos: Fato è predefinito. A ogni nuovo Grado un solo tiro: 6% niente, 14% una Ispirazione normale, 30% normale e Super, 40% normale/Super/Oculum, 9% le tre più una Schivata Oculum, 1% le tre più Schivata, Scudo pari al 20% della Vita attuale e Scudo Oculum aggiuntivo pari al 25% di quello Scudo, per eccesso. Cambiare identità o abbassare il Grado non ripete i premi; nessun premio retroattivo.
+Chaos: a inizio fight e a ogni turno personale estrae indipendentemente da −3 a +3 sulle quattro statistiche; sostituisce i bonus precedenti e li rimuove a fine fight. Dopo un attacco riuscito o una difesa riuscita, 25% di infliggere −3 a tutti i tiri all’avversario per un turno, una sola estrazione per avversario nel proprio turno. I valori di base salvati non vengono alterati.
+Gli occhi seguono il mouse muovendosi leggermente. Solo il clic sul ruolo Master li fa guardare dalla parte opposta in 0,4 secondi; a 0,6 secondi dal clic riprendono a seguire. La cornice del ritratto è più larga del 20%, con bordo proporzionato.
+
+### Catalogo Rusty — prezzi proposti e conferme precedenti
+Anti malus 50 Obser, prima copia in omaggio al primo acquisto Postea per personaggio: rimuove una condizione negativa scelta e la blocca fino alla fine dello scontro corrente o prossimo. Il Curatore ha 100 HP e Medicina propria fissata all’acquisto: estrazione equiprobabile 150/100/75/50% della Medicina del compratore, per eccesso. Prezzi proposti modificabili: 95/80/70/60 Obser. Cura 20 + Medicina a ogni proprio turno il proprietario.
+Pawn Postea 250 Obser: statistiche iniziali 10/15/25/0; +3 Resilienza per turno vivo solo nel fight. Rinasce soltanto dopo vittoria con +1 permanente a tutte le statistiche, una volta per scontro; iniziativa e Reazione veloce al primo giro.
+Core autoriparabile: 90 + livello + Grado ×2, costrutto al livello fissato all’acquisto, riparato al Riposo Lungo. Katana del Fato: 200 Obser, +30 Danni da arma, niente critici negativi mentre equipaggiata, +1 Ispirazione alla chiusura della sessione. Guanti: 60 Obser, +15 Danni scegliendo l’attacco corpo a corpo e 20 Scudo rinnovati a sessione. Runa d’impatto: 50 Obser, +20 Danni selezionati per 20 utilizzi iniziali modificabili. Gli esempi di usi non sono limiti universali su tutte le armi.
+Chaos colpisce con lo stesso malus anche chi ha aiutato l’avversario nello stesso confronto, conferma 23 ottobre.
+
+### Cristalli Dust, fusione e board — conferme 23 ottobre 2026
+A fine scontro party e NPC alleati restano sulla board; tutti i nemici uccisi generano comunque il proprio drop. Piccolo 1d3 Dust e prezzo 40–60; Medio 1d6+2 e prezzo 90–120; Grande 1d10+2 e prezzo 150–200 Obser, modificabili. Sono materiali crafting e consumabili rompibili a scelta, senza assegnazione automatica della Dust.
+Drop aggiuntivo soltanto da nemico ucciso almeno tre livelli sopra chi tira: totale Drop almeno 20 + livello mostro + Grado ×2. Poi una sola estrazione: 25% piccolo, 15% medio, 6% grande, 54% nulla. Non sostituisce gli altri drop; evocazioni escluse.
+Fusione I/II/III visibile solo possedendo il cristallo richiesto; ne consuma uno. +1/+2/+3 a tutte le quattro statistiche e +10/+20/+30% agli effetti positivi Art (statistiche, sottotratti, Danni, Difesa, cura). Durata Piccolo 1d3 Riposi Lunghi, Medio 1d6+1, Grande 1d10+2. Una fusione attiva, nuova sostituisce precedente; in fight richiede Azione propria. Bonus temporanei separati dalle statistiche base.
+### Parassiti e Martire Mortale — conferme 23 ottobre 2026
+Parassita: 1 Resilienza, 0 Volontà, 0 Materia, 0 Oculum, Riflessi +9–15. Unico attacco: infiltrazione con Azione usando Riflessi. Infestato controllato dal Master; il proprietario può tentare liberazione con Resistenza o Volontà una volta per turno spendendo Azione e superando il precedente tiro del parassita. Penalità cumulativa −3 per turno fino a −9. Fallimento entro cinque punti rimuove una Reazione al controllore; fallimento di uno aggiunge −4 al suo prossimo tiro. Critico che danneggia Vita dell’infestato dà +5 al prossimo tentativo di liberazione. Medicina naturale elimina il parassita a 14 con Riflessi9/10,15 con11/12,16 con13,17 con14,18 con15. Vita del parassita non cresce, non è attaccabile dentro l’ospite e non subisce il danno inflitto all’ospite. Metà dei suoi Danni e Difesa si aggiunge all’ospite.
+Martire Mortale: debole, EXP dimezzata; alla morte il Master sceglie massimo tre alleati. Bonus statistico 10% +10% ogni dieci livelli, durata max(1, livello/5 per difetto) turni.
+
+Correzione fusione: il +10/+20/+30% si applica anche agli effetti positivi delle Skill, oltre alle Art; Danni e Difesa personali ricevono +15% per la stessa durata, fisso per ogni taglia.
+
+Ultima correzione: il bonus personale a Danni e Difesa della fusione è +5/+10/+15% rispettivamente Piccolo/Medio/Grande; resta +10/+20/+30% agli effetti positivi Art e Skill.

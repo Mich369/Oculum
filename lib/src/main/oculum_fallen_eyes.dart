@@ -948,6 +948,10 @@ extension _OculumFallenEyes on _OculumHomePageState {
     final mat = max(0, stats['materia'] ?? 3);
     final ocu = max(0, stats['oculum'] ?? 2);
     source.addAll({
+      'scudoCritico': '${monster.encounterRules['criticalShields'] ?? 0}',
+      'schivateOculumBonus': readIntValue(
+        monster.encounterRules['oculumDodges'],
+      ),
       'monsterBaseStats': baseStats,
       'fallenEyeLevelStatBonuses': growth,
       'resilienza': '$res',

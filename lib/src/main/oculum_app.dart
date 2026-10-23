@@ -301,9 +301,7 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader>
           children: [
             OculumWatchingEyes(
               animation: _homeArtworkAnimation,
-              reverseGaze:
-                  selectedRole == OculumStartupRole.master ||
-                  hoveredRole == OculumStartupRole.master,
+              reverseGaze: selectedRole == OculumStartupRole.master,
             ),
             Center(
               child: ConstrainedBox(
@@ -386,9 +384,7 @@ class _OculumStartupPreloaderState extends State<OculumStartupPreloader>
         children: [
           OculumWatchingEyes(
             animation: _homeArtworkAnimation,
-            reverseGaze:
-                selectedRole == OculumStartupRole.master ||
-                hoveredRole == OculumStartupRole.master,
+            reverseGaze: selectedRole == OculumStartupRole.master,
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 460),

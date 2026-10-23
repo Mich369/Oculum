@@ -1853,6 +1853,17 @@ class CharacterSkillForm {
        effettiStrutturati = List<OculumStructuredEffect>.from(
          effettiStrutturati ?? const <OculumStructuredEffect>[],
        ) {
+    if (costo.trim().isEmpty && costoStrutturato == null) {
+      costoStrutturato = oculumStructuredCostFromText(descrizione);
+    }
+    final structured = costoStrutturato;
+    if (costo.trim().isEmpty && structured != null) {
+      costo = structured.resource == 'nessuna'
+          ? 'Nessun costo'
+          : structured.variable
+          ? '${structured.minimum}/${structured.maximum} ${structured.resource}'
+          : '${structured.amountExpression}/${structured.amountExpression} ${structured.resource}';
+    }
     aggiornaLimitiOculumDaDescrizione();
   }
 
@@ -1882,9 +1893,13 @@ class CharacterSkillForm {
 
   bool aggiornaLimitiOculumDaDescrizione() {
     if (oculumLimitiConfiguratiManualmente) return false;
+    if (costoStrutturato != null &&
+        oculumNormalizeEffectResource(costoStrutturato!.resource) != 'oculum') {
+      return false;
+    }
     final parsed =
-        oculumSkillTextCostLimits(costo) ??
-        oculumSkillTextCostLimits(descrizione);
+        oculumSkillTextCostLimits(descrizione) ??
+        oculumSkillTextCostLimits(costo);
     if (parsed == null) return false;
     final masteryGrowth = max(
       0,

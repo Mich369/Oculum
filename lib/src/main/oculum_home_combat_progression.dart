@@ -593,7 +593,20 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   bool currentCombatIsActive() {
     final realtimeTokens = realtimeVisibleInitiativeSnapshot['tokens'];
     if (realtimeService?.isConnected == true && !realtimeIsMasterRole) {
-      return realtimeTokens is List && realtimeTokens.isNotEmpty;
+      return realtimeVisibleInitiativeSnapshot['combatEnded'] != true &&
+          realtimeTokens is List &&
+          realtimeTokens.isNotEmpty;
+    }
+    final group = masterInitiativeGroups
+        .where((g) => g['id'] == selectedMasterInitiativeGroupId)
+        .firstOrNull;
+    if (group?['combatEnded'] == true &&
+        !masterInitiativeTokens.any(
+          (token) =>
+              token['side'] == 'enemy' &&
+              !const {'dead', 'fled', 'expired'}.contains('${token['status']}'),
+        )) {
+      return false;
     }
     return masterInitiativePublished ||
         masterInitiativeTokens.isNotEmpty ||
@@ -620,6 +633,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   void clearTemporaryCombatResistanceEffects() {
+    resetOwnedPlanarFightEffects();
     forgetCombatDiscoveries(onlineCombatEncounterId);
     oculumRemoveCurrentCombatTemporaryEffects(temporaryCombatResistanceEffects);
   }
@@ -637,7 +651,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       programmaSalvataggio(invalidateCaches: false);
       return Random.secure().nextBool() ? safeFaces : 1;
     }
-    return Random().nextInt(safeFaces) + 1;
+    final rolled = Random().nextInt(safeFaces) + 1;
+    // A Fate Katana turns a negative critical into an ordinary low roll.
+    return rolled == 1 && hasFateKatana ? 2 : rolled;
   }
 
   int tiraD20({bool countsAsCooldownRoll = true}) {
@@ -785,6 +801,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     bool advanceArt = true,
   }) {
     synchronizeFightStartCooldowns();
+    ensurePartyQuests();
     if (broadcast &&
         realtimeService?.isConnected == true &&
         !realtimeIsMasterRole) {
@@ -812,6 +829,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         processConditionTick(OculumConditionTickTrigger.endTurn);
         processConditionTick(OculumConditionTickTrigger.startTurn);
         tickStructuredAbilityCooldowns('turni', scheduleSave: false);
+        tickPlanarTurn();
         advanceSmokingHerbs('turn');
       }
     }
@@ -892,6 +910,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     return roll +
         criticalDieModifier(roll, faces, level: level, grade: grade) +
         bonuses.fold<int>(0, (a, b) => a + b) +
+        consumeParasiteControllerPenalty() +
         modificatoreDifficoltaTiro(difficulty: difficulty);
   }
 
@@ -3551,6 +3570,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   void nextMasterInitiativeTurn({int delta = 1}) {
     if (masterInitiativeTokens.isEmpty) return;
+    final group = masterInitiativeGroups
+        .where((g) => g['id'] == selectedMasterInitiativeGroupId)
+        .firstOrNull;
+    group?['combatEnded'] = false;
     setState(() {
       normalizeMasterInitiativeTokens();
       if (delta > 0) {
@@ -5134,7 +5157,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int? dannoEsplicito,
     String? enemyDifficulty,
     int? enemyLevel,
+    int? enemyGrade,
+    String attackKind = '',
+    bool magicalAttack = false,
   }) async {
+    if (parasiteHiddenInHost) {
+      aggiungiLog(
+        '[PARASSITA] Dentro l’ospite non può essere colpito separatamente.',
+      );
+      return;
+    }
     if (pawnPendingDamage.isNotEmpty) {
       risultato =
           'Danno precedente in attesa del Master: Pawn sta risolvendo la protezione.';
@@ -5714,6 +5746,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           ? ' Adaptation: Temporary Resistance to all damage, damage reduced to $dannoFinale.'
           : '';
 
+      dannoFinale = planarModifyIncomingDamage(
+        dannoFinale,
+        element: incomingElement,
+        attackKind: attackKind,
+        magical: magicalAttack,
+      );
       dannoFinale += protectedRunicDamage;
       if (protectedRunicDamage > 0) {
         aggiungiLog(
@@ -6202,7 +6240,19 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
       programmaSalvataggio();
       sendRealtimeHpChanged();
+      if (hp < hpPrima && critico && parasiteInfested) {
+        planarState['parasiteInfestation'] = {
+          ...parasiteInfestation,
+          'adrenaline': readIntValue(parasiteInfestation['adrenaline']) + 5,
+        };
+      }
+      if (hp < hpPrima) {
+        interruptPreparedSkill(
+          attackerGrade: enemyGrade ?? oculumGradeForLevel(enemyLevel ?? 0),
+        );
+      }
       checkAutomaticAshFromHpLoss(hpPrima, hp, source: t('danno', 'damage'));
+      planarAfterHpDamage();
       controllaCadutaDopoDanno();
       controllaStatoForzaDopoHp();
     } finally {
@@ -6369,6 +6419,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             oculumMonsterStatPointsPerGrade(tipoSchedaController.text);
       }
       gradoController.text = nuovoGrado.toString();
+      rewardIdentityGrades(gradoAttuale, nuovoGrado);
       scudoController.text =
           (leggiNumero(scudoController) + gradiGuadagnati * 100).toString();
       scudoCriticoController.text =

@@ -23,3 +23,17 @@ Future<bool> oculumDownloadBytes({
   web.URL.revokeObjectURL(url);
   return true;
 }
+
+Future<void> oculumReloadUpdatedWeb(String commit) async {
+  final current = Uri.parse(web.window.location.href);
+  web.window.location.replace(
+    current
+        .replace(
+          queryParameters: {
+            ...current.queryParameters,
+            'oculum_update': commit,
+          },
+        )
+        .toString(),
+  );
+}

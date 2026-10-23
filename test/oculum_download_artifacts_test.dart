@@ -56,8 +56,11 @@ void main() {
       addTearDown(client.close);
       final result = await oculumFetchDownloadArtifacts(client);
       expect(calls, 1);
-      expect(result, hasLength(5));
-      expect(result.map((item) => item.name), names);
+      expect(result, hasLength(6));
+      expect(result.map((item) => item.name), [
+        ...names,
+        'Oculum-iOS-unsigned',
+      ]);
       expect(result.first.url.path, contains('/releases/download/'));
       expect(result.every((item) => item.bytes == 200), isTrue);
     },

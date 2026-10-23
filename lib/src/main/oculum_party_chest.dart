@@ -106,6 +106,7 @@ Map<String, dynamic> oculumApplyPartyChestOperation(Map previous, Map request) {
     'receipts': receipts,
     'revision': readIntValue(state['revision']) + 1,
   });
+  oculumPromotePendingChestLoot(state);
   return state;
 }
 
@@ -263,12 +264,14 @@ extension _OculumPartyChest on _OculumHomePageState {
       partyChest['members'] = members;
       partyChest['revision'] = readIntValue(partyChest['revision']) + 1;
       programmaSalvataggio();
+      refreshPartyQuestStats();
     }
   }
 
   Future<void> sendPartyChestState() async {
     if (!realtimeIsMasterRole || realtimeService?.isConnected != true) return;
     refreshPartyChestMembers();
+    refreshPartyQuestStats();
     await realtimeService!.sendPermissionEvent(
       'permission_decision',
       permissionEnvelope({
@@ -311,7 +314,8 @@ extension _OculumPartyChest on _OculumHomePageState {
       return;
     }
     if (event == 'permission_request') {
-      if (!realtimeIsMasterRole || (!local && !validPermissionSender(payload))) {
+      if (!realtimeIsMasterRole ||
+          (!local && !validPermissionSender(payload))) {
         return;
       }
       refreshPartyChestMembers();
@@ -343,6 +347,7 @@ extension _OculumPartyChest on _OculumHomePageState {
         partyChestCampaigns[permissionCampaignId] = incoming;
       }
     }
+    settlePartyQuestRewards();
     final receipt = payload['receipt'];
     if (receipt is Map) settlePartyChestReceipt(receipt);
     programmaSalvataggio();
@@ -359,7 +364,8 @@ extension _OculumPartyChest on _OculumHomePageState {
       return;
     }
     final index = localSheetIndexForOculumTag('${pending['requesterTag']}');
-    if (index < 0 || !ownPermissionTags.contains('${pending['requesterTag']}')) {
+    if (index < 0 ||
+        !ownPermissionTags.contains('${pending['requesterTag']}')) {
       return;
     }
     final original = schedaCorrente;

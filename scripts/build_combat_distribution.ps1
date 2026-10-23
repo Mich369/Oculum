@@ -53,7 +53,7 @@ function Invoke-FlutterBuild([string]$Name, [string[]]$BuildArguments) {
   # The SDK and platform artifacts are already installed. Invoke the cached
   # tool directly to avoid flutter.bat's silent bootstrap lock retry and the
   # nested PowerShell/cmd PTY deadlock. Builds run sequentially in this script.
-  $arguments = @("--packages=$flutterPackages", $flutterTool, '--no-version-check', '--suppress-analytics') + $BuildArguments
+  $arguments = @("--packages=$flutterPackages", $flutterTool, '--no-version-check', '--suppress-analytics') + $BuildArguments + @("--dart-define=OculumSourceCommit=$(& git rev-parse HEAD)")
   Invoke-OculumBuildProcess -FilePath $dartRuntime -Arguments $arguments -WorkingDirectory $projectRoot `
     -LogPath $log -Description "Build $Name" -TimeoutSeconds ($BuildTimeoutMinutes * 60) `
     -Environment @{ FLUTTER_ROOT = $FlutterRoot; FLUTTER_ALREADY_LOCKED = 'true' }

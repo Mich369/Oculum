@@ -11,6 +11,13 @@ const _requiredArtifactNames = <String>[
   'Oculum-Android',
 ];
 
+const _extraArtifactNames = <String>[
+  'Oculum-Web',
+  'Oculum-iOS-unsigned',
+  'Oculum-UI-Catture',
+  'Oculum-Windows-Folders',
+];
+
 class OculumDownloadArtifact {
   const OculumDownloadArtifact(this.name, this.bytes, this.url);
   final String name;
@@ -63,7 +70,10 @@ Future<List<OculumDownloadArtifact>> oculumFetchDownloadArtifacts(
     for (final artifact
         in (group['artifacts'] as List? ?? const []).whereType<Map>()) {
       final name = '${artifact['name'] ?? ''}';
-      if (!_requiredArtifactNames.contains(name)) continue;
+      if (!_requiredArtifactNames.contains(name) &&
+          !_extraArtifactNames.contains(name)) {
+        continue;
+      }
       final expectedUrl =
           'https://github.com/Mich369/Oculum/releases/download/oculum-build-$runId/$name.zip';
       if (artifact['url'] != expectedUrl) continue;
@@ -74,7 +84,10 @@ Future<List<OculumDownloadArtifact>> oculumFetchDownloadArtifacts(
       );
     }
     if (_requiredArtifactNames.every(found.containsKey)) {
-      return [for (final name in _requiredArtifactNames) found[name]!];
+      return [
+        for (final name in [..._requiredArtifactNames, ..._extraArtifactNames])
+          if (found.containsKey(name)) found[name]!,
+      ];
     }
   }
 

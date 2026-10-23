@@ -231,6 +231,20 @@ List<InventoryItem> oculumGenerateMonsterLoot({
     level: safeLevel,
     grade: safeGrade,
   );
+  final planarDrops = oculumPlanarNaturalDrops(
+    monster,
+    safeLevel,
+    safeGrade,
+    natural,
+    killId,
+  );
+  if (planarDrops != null) {
+    return _withManualDropPrices(
+      planarDrops,
+      level: safeLevel,
+      grade: safeGrade,
+    );
+  }
   if (resolvedDropTotal < dropDifficulty) return <InventoryItem>[];
   final art = oculumMonsterBookArt(monster);
   if (monster.id == 'costrutto_rinsecchito') {

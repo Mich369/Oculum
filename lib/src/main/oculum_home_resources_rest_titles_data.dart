@@ -1704,6 +1704,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     );
     if (confirmed != true || !mounted) return;
     setState(() {
+      planarState['cloudLifeUsed'] = false;
+      posteaNewSession();
       ascensionDustCombat.newSession();
       aggiungiLog(
         'Nuova sessione: potenziamento combattimento Ascension Dust 0/3.',
@@ -2168,6 +2170,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       ripristinaStatsRiposoLungo();
       ricaricaScudoOculum();
 
+      restDustFusion();
+      longRestPlanarEffects();
+      restorePosteaCores();
       raccoltaResilienzaSpesa = 0;
       raccoltaVolontaSpesa = 0;
       raccoltaMateriaSpesa = 0;
@@ -2962,6 +2967,10 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void usaOpen(OculumTitle titolo, {TitleOpenEntry? openExtra}) {
+    if (parasiteInfested && !parasiteOwnerLocked) {
+      aggiungiLog('[PARASSITA] Il controllore non può usare Open.');
+      return;
+    }
     if (!ensureTitleSlotAvailable(titolo)) {
       return;
     }
@@ -2983,6 +2992,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
           disattivaTutteLeOpen(exceptTitle: titolo, exceptOpenExtra: openExtra);
           equipaggiaTitoloPerOpen(titolo);
           openExtra.attiva = true;
+          clearParasite(killed: true);
           openExtra.usedSinceLongRest = true;
           effectsToActivate = oculumResolveAbilityEffects(
             openExtra.effects,
@@ -3019,6 +3029,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         disattivaTutteLeOpen(exceptTitle: titolo);
         equipaggiaTitoloPerOpen(titolo);
         titolo.openAttiva = true;
+        clearParasite(killed: true);
         titolo.openUsedSinceLongRest = true;
         effectsToActivate = oculumResolveAbilityEffects(
           titolo.openEffects,

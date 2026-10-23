@@ -733,6 +733,16 @@ extension _OculumHomeMerchant on _OculumHomePageState {
 
   int merchantOfferCost(Map<String, dynamic> offer) {
     final kind = '${offer['kind'] ?? ''}';
+    if (kind == 'dust_crystal') return max(0, readIntValue(offer['cost']));
+    if (kind == 'postea_companion' && offer['companion'] == 'core') {
+      return (90 +
+              max(0, leggiNumero(livelloController)) +
+              2 * max(0, leggiNumero(gradoController)))
+          .toInt();
+    }
+    if (kind.startsWith('postea_') && kind != 'postea_cyber_armor') {
+      return max(0, readIntValue(offer['cost']));
+    }
     if (kind == 'postea_cyber_armor') return 36 + (maxHp() / 2).ceil();
     if (kind == 'black_market_ascension_dust') {
       return min(69, merchantDustPrice);
@@ -1727,6 +1737,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void ensureMerchantSpecialOffers() {
+    ensurePosteaOffers();
+    ensureDustCrystalOffers();
     ensurePlaneOffers();
     ensureClothingOffers();
     if (!merchantStock.any((o) => o['id'] == 'postea_runic_mitra_15')) {
@@ -3311,8 +3323,22 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             : offer,
         titleType: titleType,
       );
-      if (kind == 'pawn' || kind == 'pawn_v2') purchasedPawn = item;
+      if (kind == 'pawn' || kind == 'pawn_v2' || kind == 'postea_companion') {
+        purchasedPawn = item;
+      }
       inventario.add(item);
+      if (kind.startsWith('postea_') &&
+          planarState['posteaFirstGiftClaimed'] != true) {
+        planarState['posteaFirstGiftClaimed'] = true;
+        inventario.add(
+          posteaItem({
+            'kind': 'postea_antimalus',
+            'name': 'Anti malus · omaggio di Rusty',
+            'desc':
+                'Rimuove un malus e lo blocca fino alla fine del fight corrente o prossimo.',
+          }),
+        );
+      }
       if (const {
         'stat_gem',
         'fate_sign',
@@ -3778,6 +3804,18 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     Map<String, dynamic> offer, {
     String titleType = '',
   }) {
+    if (offer['kind'] == 'dust_crystal') {
+      return oculumDustCrystal('${offer['size']}');
+    }
+    if (const {
+      'postea_companion',
+      'postea_antimalus',
+      'postea_katana',
+      'postea_gloves',
+      'postea_runic_lens',
+    }.contains(offer['kind'])) {
+      return posteaItem(offer);
+    }
     if (offer['kind'] == 'postea_cyber_armor') {
       final level = max(0, leggiNumero(livelloController));
       final grade = max(0, leggiNumero(gradoController));
@@ -4235,6 +4273,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool isMerchantConsumable(InventoryItem item) =>
+      item.craftData['dustCrystal'] != null ||
+      item.craftData['posteaAntimalus'] == true ||
       item.craftData['summoningEmblem'] is Map ||
       item.craftData['witheredHeart'] == true ||
       item.craftData['chaosSign'] is Map ||
@@ -4262,6 +4302,14 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (!inventario.contains(item) ||
         !isMerchantConsumable(item) ||
         item.quantita <= 0) {
+      return;
+    }
+    if (item.craftData['dustCrystal'] != null) {
+      await breakDustCrystal(item);
+      return;
+    }
+    if (item.craftData['posteaAntimalus'] == true) {
+      await usePosteaAntiMalus(item);
       return;
     }
     if (item.craftData['summoningEmblem'] is Map) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
@@ -19,8 +20,34 @@ class OculumWatchingEyes extends StatefulWidget {
   State<OculumWatchingEyes> createState() => _OculumWatchingEyesState();
 }
 
-class _OculumWatchingEyesState extends State<OculumWatchingEyes> {
+class _OculumWatchingEyesState extends State<OculumWatchingEyes>
+    with SingleTickerProviderStateMixin {
   final gaze = ValueNotifier<Offset>(const Offset(-1000, -1000));
+  late final AnimationController reversal = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 400),
+  );
+  Timer? releaseGaze;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.reverseGaze) masterClicked();
+  }
+
+  @override
+  void didUpdateWidget(covariant OculumWatchingEyes oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.reverseGaze && !oldWidget.reverseGaze) masterClicked();
+  }
+
+  void masterClicked() {
+    releaseGaze?.cancel();
+    reversal.forward(from: 0);
+    releaseGaze = Timer(const Duration(milliseconds: 600), () {
+      if (mounted) reversal.value = 0;
+    });
+  }
 
   void updateGaze(Offset value) {
     gaze.value = value;
@@ -29,6 +56,8 @@ class _OculumWatchingEyesState extends State<OculumWatchingEyes> {
 
   @override
   void dispose() {
+    releaseGaze?.cancel();
+    reversal.dispose();
     gaze.dispose();
     super.dispose();
   }
@@ -54,7 +83,7 @@ class _OculumWatchingEyesState extends State<OculumWatchingEyes> {
                     widget.animation,
                     gaze,
                     MediaQuery.disableAnimationsOf(context),
-                    widget.reverseGaze,
+                    reversal,
                   ),
                   child: const SizedBox.expand(),
                 ),
@@ -69,12 +98,12 @@ class _OculumWatchingEyesState extends State<OculumWatchingEyes> {
 }
 
 class _EyesPainter extends CustomPainter {
-  _EyesPainter(this.animation, this.gaze, this.reduced, this.reverseGaze)
-    : super(repaint: Listenable.merge([animation, gaze]));
+  _EyesPainter(this.animation, this.gaze, this.reduced, this.reversal)
+    : super(repaint: Listenable.merge([animation, gaze, reversal]));
   final Animation<double> animation;
   final ValueNotifier<Offset> gaze;
   final bool reduced;
-  final bool reverseGaze;
+  final Animation<double> reversal;
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawRect(
@@ -84,13 +113,13 @@ class _EyesPainter extends CustomPainter {
     final phase = reduced ? 0.0 : animation.value * math.pi * 2;
     for (var i = 0; i < 24; i++) {
       final col = i % 6, row = i ~/ 6;
-      final moving = i % 4 == 0;
+      final amplitude = i % 4 == 0 ? 7.0 : 3.0;
       final x =
           size.width * ((col + .5) / 6) +
-          (moving ? math.sin(phase + i) * 16 : 0);
+          (reduced ? 0 : math.sin(phase + i) * amplitude);
       final y =
           size.height * ((row + .5) / 4) +
-          (moving ? math.cos(phase + i) * 12 : 0);
+          (reduced ? 0 : math.cos(phase + i) * amplitude * .75);
       final center = Offset(x, y);
       final w = (size.width / 20).clamp(18.0, 44.0);
       final path = Path()
@@ -110,7 +139,7 @@ class _EyesPainter extends CustomPainter {
           ..strokeWidth = 1,
       );
       var delta = gaze.value.dx < -500 ? Offset.zero : gaze.value - center;
-      if (reverseGaze) delta = -delta;
+      delta *= 1 - 2 * reversal.value;
       if (delta.distance > 0) delta = delta / delta.distance * w * .16;
       canvas.save();
       canvas.clipPath(path);
@@ -132,5 +161,5 @@ class _EyesPainter extends CustomPainter {
       old.reduced != reduced ||
       old.gaze != gaze ||
       old.animation != animation ||
-      old.reverseGaze != reverseGaze;
+      old.reversal != reversal;
 }

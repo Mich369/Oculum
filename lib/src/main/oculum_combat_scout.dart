@@ -62,6 +62,9 @@ extension _OculumCombatScout on _OculumHomePageState {
   }
 
   bool monsterBookPartyKnowsName(String monsterId) =>
+      !(partyChest['forgottenMonsterIds'] as List? ?? []).contains(
+        oculumPartyHuntSpeciesId(monsterId),
+      ) &&
       oculumMonsterBookNameIsDiscovered(monsterBookPartyKnowledge(monsterId));
 
   bool monsterBookPartyKnowsWeakPoint(String monsterId) =>
@@ -77,6 +80,16 @@ extension _OculumCombatScout on _OculumHomePageState {
   }) {
     final id = monsterId.trim();
     if (id.isEmpty || monsterBookEntryById(id) == null) return;
+    if ((nameKnown || pagePurchased) && canManagePartyQuests) {
+      final forgotten = List<dynamic>.from(
+        partyChest['forgottenMonsterIds'] as List? ?? [],
+      );
+      if (forgotten.remove(oculumPartyHuntSpeciesId(id))) {
+        partyChest['forgottenMonsterIds'] = forgotten;
+        partyChest['revision'] = readIntValue(partyChest['revision']) + 1;
+        unawaited(sendPartyChestState());
+      }
+    }
     final key = monsterBookPartyDiscoveryKey(id);
     final previous = monsterBookPartyDiscoveries[key] ?? const {};
     final next = <String, dynamic>{

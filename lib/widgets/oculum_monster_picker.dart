@@ -48,13 +48,15 @@ class _MonsterSearchDialog extends StatefulWidget {
 
 class _MonsterSearchDialogState extends State<_MonsterSearchDialog> {
   String query = '';
+  String habitat = '';
 
   @override
   Widget build(BuildContext context) {
     final terms = query.trim().toLowerCase().split(RegExp(r'\s+'));
     final matches = widget.entries.where((entry) {
       final text = '${entry.nameIt} ${entry.nameEn} ${entry.id}'.toLowerCase();
-      return terms.every(text.contains);
+      return terms.every(text.contains) &&
+          (habitat.isEmpty || entry.planeIds.contains(habitat));
     }).toList();
     return AlertDialog(
       title: const Text('Cerca un mostro'),
@@ -71,6 +73,22 @@ class _MonsterSearchDialogState extends State<_MonsterSearchDialog> {
                 prefixIcon: Icon(Icons.search),
               ),
               onChanged: (value) => setState(() => query = value),
+            ),
+            DropdownButtonFormField<String>(
+              initialValue: habitat,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Piano / microrealtà',
+              ),
+              items: [
+                const DropdownMenuItem(
+                  value: '',
+                  child: Text('Tutti i luoghi'),
+                ),
+                for (final place in oculumMonsterHabitats.entries)
+                  DropdownMenuItem(value: place.key, child: Text(place.value)),
+              ],
+              onChanged: (value) => setState(() => habitat = value ?? ''),
             ),
             ListTile(
               title: const Text('Crea una creatura libera'),

@@ -2691,6 +2691,14 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
           ? (selectedMonster?.presetType ?? tutorialMonsterTier)
           : 'Personaggio';
       if (selectedMonster != null) {
+        scudoCriticoController.text =
+            '${selectedMonster.encounterRules['criticalShields'] ?? 0}';
+        schivateOculumBonus = readIntValue(
+          selectedMonster.encounterRules['oculumDodges'],
+        );
+        if (selectedMonster.id == 'blade_skull') {
+          applyCondition('vampirismo', source: 'Vampirismo naturale');
+        }
         nomeController.text = selectedMonster.nameIt;
         notePersonaggioController.text = selectedMonster.descIt;
         schedePersonaggio[schedaCorrente]['monsterBookSourceId'] =
@@ -3153,7 +3161,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                         smallInfoText(
                           tutorialGeneraMostro
                               ? 'Grado dal livello: +10 punti per Mostro, +15 per Mini-Boss, +25 per Boss a ogni Grado. Le Skill e le Oculum Art ricevono una riserva di Oculum; senza entrambe i punti vanno a RES, VOL e MAT. L’EXP iniziale viene estratta casualmente tra 0 e 120.'
-                              : 'Umanoide: distribuzione iniziale 3/2/1/1, poi +1 punto libero per livello e +10 per grado. L’EXP iniziale viene estratta casualmente tra 0 e 120.',
+                              : 'Scegli il piano iniziale, il ruolo e un’Art coerente con il personaggio. Le forme II/III richiedono livello 3/6; puoi sempre modificare costi, effetti e descrizioni nella scheda. Le Azioni si usano nel proprio turno, le Reazioni fuori turno.\nUmanoide: distribuzione iniziale 3/2/1/1, poi +1 punto libero per livello e +10 per grado. L’EXP iniziale viene estratta casualmente tra 0 e 120.',
                         ),
                         const SizedBox(height: 8),
                         Row(

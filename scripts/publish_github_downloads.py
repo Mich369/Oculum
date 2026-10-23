@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 REPO = os.environ.get("GH_REPO", "Mich369/Oculum")
 CHANNEL = "oculum-downloads"
@@ -129,6 +130,25 @@ def notes(catalog):
     return "\n".join(lines)
 
 
+def verify_anonymous_download(entry):
+    """Verify public redirects, size and ZIP header without sending credentials."""
+    request = Request(entry["url"], headers={"Range": "bytes=0-3", "User-Agent": "Oculum-public-download-check"})
+    with urlopen(request, timeout=60) as response:
+        if response.status not in (200, 206) or response.read(4) != b"PK\x03\x04":
+            raise ValueError("Public download is unavailable or not an archive: " + entry["name"])
+        total = response.headers.get("Content-Range", "").split("/")[-1]
+        if response.status == 200:
+            total = response.headers.get("Content-Length", "")
+        if total and (not total.isdigit() or int(total) != entry["bytes"]):
+            raise ValueError("Public download size mismatch: " + entry["name"])
+
+
+def can_promote_channel(catalog, run_id):
+    """A slow build from another branch cannot roll the public channel back."""
+    return all(int(item.get("runId", 0)) <= int(run_id) for item in catalog.values()
+               if item.get("workflow") == "Build distribution")
+
+
 def publish(run_id):
     if not re.fullmatch(r"[1-9][0-9]*", run_id):
         raise ValueError("Invalid run id")
@@ -156,6 +176,7 @@ def publish(run_id):
     tag = f"oculum-build-{run_id}"
     current = release(CHANNEL)
     catalog = read_catalog(current.get("body") or "") if current else {}
+    promote = can_promote_channel(catalog, run_id)
     # The public channel lists only the coordinated five-platform build. Other
     # older per-workflow releases remain intact and directly accessible.
     catalog = {
@@ -182,10 +203,15 @@ def publish(run_id):
             entries.append({"name": artifact["name"], "bytes": path.stat().st_size,
                             "sha256": digest,
                             "url": f"https://github.com/{REPO}/releases/download/{tag}/{filename}"})
+        for entry in entries:
+            verify_anonymous_download(entry)
+        if not promote:
+            print("Archived verified build without rolling back the public channel")
+            return
         catalog[str(workflow_id)] = {
             "workflow": run["name"], "runId": run["id"], "commit": run["head_sha"],
             "runUrl": run["html_url"],
-            "artifacts": [entry for entry in entries if entry["name"] in PUBLIC_ARTIFACTS],
+            "artifacts": entries,
         }
         note_file = root / "downloads.md"
         note_file.write_text(notes(catalog), encoding="utf-8")

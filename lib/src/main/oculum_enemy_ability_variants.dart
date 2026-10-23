@@ -457,6 +457,89 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
       magic: true,
     );
   }
+  if ((monster.stats['oculum'] ?? 0) > 0 &&
+      const {'luce', 'solare', 'angelico'}.contains(element)) {
+    add(
+      'Raggio di luce',
+      'Concentri un fascio luminoso su un solo nemico: +4 + Oculum speso ×2 Danni al prossimo attacco. Il bersaglio può difendersi.',
+      4,
+      [effect('danno', '4+oculum_spent*2')],
+      magic: true,
+    );
+    add(
+      'Lame dell’aurora',
+      'Due lame di luce convergono: +6 + Oculum speso Danni totali al prossimo attacco, senza duplicare il colpo.',
+      4,
+      [effect('danno', '6+oculum_spent')],
+      magic: true,
+    );
+  }
+  if ((monster.stats['oculum'] ?? 0) > 0 &&
+      (monster.planeIds.contains('morti') ||
+          RegExp('necromant|non morto|scheletr|cadaver').hasMatch(body))) {
+    add(
+      'Raggio necromantico',
+      'Un filo di energia funebre colpisce un nemico: +3 + Oculum speso ×2 Danni al prossimo attacco; applica Vita Afona per un turno se il colpo supera la difesa.',
+      5,
+      [
+        effect('danno', '3+oculum_spent*2'),
+        OculumStructuredEffect(
+          type: 'stato',
+          target: 'vita_afona',
+          appliedState: 'vita_afona',
+          valueExpression: '1',
+          recipient: 'nemico',
+          duration: '1',
+          elementType: element,
+        ),
+      ],
+      magic: true,
+    );
+    add(
+      'Mano del sepolcro',
+      'Una mano d’ossa trattiene un nemico: Immobilizzato per un turno dopo una difesa fallita; nessun danno automatico.',
+      5,
+      [
+        OculumStructuredEffect(
+          type: 'stato',
+          target: 'immobilizzato',
+          appliedState: 'immobilizzato',
+          valueExpression: '1',
+          recipient: 'nemico',
+          duration: '1',
+          elementType: element,
+        ),
+      ],
+      magic: true,
+    );
+  }
+  if ((monster.stats['oculum'] ?? 0) > 0 &&
+      const {'ghiaccio', 'gelo'}.contains(element)) {
+    add(
+      'Presa di ghiaccio',
+      'Ghiaccio stringe le gambe di un nemico: Immobilizzato per un turno dopo una difesa fallita. Non toglie automaticamente tutte le reazioni.',
+      4,
+      [
+        OculumStructuredEffect(
+          type: 'stato',
+          target: 'immobilizzato',
+          appliedState: 'immobilizzato',
+          valueExpression: '1',
+          recipient: 'nemico',
+          duration: '1',
+          elementType: 'ghiaccio',
+        ),
+      ],
+      magic: true,
+    );
+    add(
+      'Raggio di brina',
+      'Un getto sottile congela la superficie colpita: +4 + Oculum speso ×2 Danni al prossimo attacco.',
+      4,
+      [effect('danno', '4+oculum_spent*2')],
+      magic: true,
+    );
+  }
   // Every non-NPC monster can roll one area technique at spawn. The packet is
   final piercingNames = switch (element) {
     'solare' => [
@@ -654,13 +737,16 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
     final targetMaximum = move.targetCounts.first;
     final firstEffects = [
       for (final (effectIndex, sourceEffect) in move.effects.indexed)
-        OculumStructuredEffect.fromJson({
-          ...sourceEffect.toJson(),
-          'id': 'enemy_${monster.id}_${seed}_${move.name}_${effectIndex}_0',
-          if (move.multiTarget) 'minimumTargets': targetMaximum,
-          if (move.multiTarget) 'maximumTargets': targetMaximum,
-          if (move.multiTarget) 'elementType': areaElement,
-        }),
+        oculumStatPaidEffect(
+          OculumStructuredEffect.fromJson({
+            ...sourceEffect.toJson(),
+            'id': 'enemy_${monster.id}_${seed}_${move.name}_${effectIndex}_0',
+            if (move.multiTarget) 'minimumTargets': targetMaximum,
+            if (move.multiTarget) 'maximumTargets': targetMaximum,
+            if (move.multiTarget) 'elementType': areaElement,
+          }),
+          resource,
+        ),
     ];
     result.add(
       CharacterSkill(

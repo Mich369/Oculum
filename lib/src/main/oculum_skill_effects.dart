@@ -30,6 +30,8 @@ const List<String> oculumStructuredEffectTypes = <String>[
   'conversione_risorsa',
   'stato',
   'elemental_resistance',
+  'planar',
+  'preparazione',
 ];
 
 int oculumDamageWithPercentage(int damage, int percent) =>
@@ -268,6 +270,8 @@ String oculumNormalizeEffectResource(dynamic raw) {
     case 'hp':
     case 'vita':
       return 'vita';
+    case 'obser':
+      return 'obser';
     case 'fortuna':
       return 'fortuna';
     case 'scudo':
@@ -412,6 +416,9 @@ class OculumStructuredEffect {
   OculumStructuredEffect({
     String? id,
     this.type = 'danno',
+    this.sourceScrollGrade = 0,
+    this.chargeOculumPerTurn = 0,
+    this.chargeDamageSteps = const <int>[40, 80, 120, 180],
     this.target = '',
     this.resource = '',
     this.valueExpression = '0',
@@ -452,6 +459,9 @@ class OculumStructuredEffect {
   bool killSource;
   bool allOpponents;
   String type;
+  int sourceScrollGrade;
+  int chargeOculumPerTurn;
+  List<int> chargeDamageSteps;
   String target;
   String resource;
   String valueExpression;
@@ -499,6 +509,9 @@ class OculumStructuredEffect {
   Map<String, dynamic> toJson() => <String, dynamic>{
     'id': id,
     'type': type,
+    if (sourceScrollGrade > 0) 'sourceScrollGrade': sourceScrollGrade,
+    if (chargeOculumPerTurn > 0) 'chargeOculumPerTurn': chargeOculumPerTurn,
+    if (chargeOculumPerTurn > 0) 'chargeDamageSteps': chargeDamageSteps,
     'target': target,
     'resource': resource,
     'valueExpression': valueExpression,
@@ -536,6 +549,16 @@ class OculumStructuredEffect {
     return OculumStructuredEffect(
       id: '${json['id'] ?? ''}',
       type: '${json['type'] ?? json['tipo'] ?? 'danno'}',
+      sourceScrollGrade: readIntValue(json['sourceScrollGrade']).clamp(0, 12),
+      chargeOculumPerTurn: readIntValue(
+        json['chargeOculumPerTurn'],
+      ).clamp(0, 100),
+      chargeDamageSteps: json['chargeDamageSteps'] is List
+          ? (json['chargeDamageSteps'] as List)
+                .map((v) => max(0, readIntValue(v)))
+                .take(10)
+                .toList()
+          : const [40, 80, 120, 180],
       target: '${json['target'] ?? json['bersaglioValore'] ?? ''}',
       resource: '${json['resource'] ?? json['risorsa'] ?? ''}',
       valueExpression: '${json['valueExpression'] ?? json['valore'] ?? '0'}',

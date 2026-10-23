@@ -3727,6 +3727,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   }
                   setState(() {
                     masterInitiativeTokens[i]['status'] = value;
+                    if (value == 'fled') {
+                      recordPlanarMonsterEscape(masterInitiativeTokens[i]);
+                    }
                     if (value == 'dead') {
                       masterInitiativeTokens[i]['automaticDeath'] = false;
                       aggiungiLog(
@@ -4966,6 +4969,22 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }
 
   Future<void> showMonsterBookEditor([MonsterBookEntry? existing]) async {
+    final rulesController = TextEditingController(
+      text: const JsonEncoder.withIndent(
+        '  ',
+      ).convert(existing?.encounterRules ?? {}),
+    );
+    final coreStatControllers = <String, TextEditingController>{
+      for (final key in const [
+        'level',
+        'resilienza',
+        'volonta',
+        'materia',
+        'oculum',
+      ])
+        key: TextEditingController(text: '${existing?.stats[key] ?? 0}'),
+    };
+    final editedHabitats = <String>{...?existing?.planeIds};
     final nameItController = TextEditingController(text: existing?.nameIt);
     final nameEnController = TextEditingController(text: existing?.nameEn);
     final descriptionController = TextEditingController(text: existing?.descIt);
@@ -5187,6 +5206,54 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       ),
                     ),
                     const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final entry in coreStatControllers.entries)
+                          SizedBox(
+                            width: 120,
+                            child: TextField(
+                              controller: entry.value,
+                              keyboardType: TextInputType.number,
+                              decoration: decoration(entry.key),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ExpansionTile(
+                      title: const Text('Regole speciali modificabili (JSON)'),
+                      children: [
+                        TextField(
+                          controller: rulesController,
+                          minLines: 3,
+                          maxLines: 12,
+                          decoration: decoration(
+                            'Costi, soglie, premi e proprietà speciali',
+                          ),
+                        ),
+                      ],
+                    ),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        for (final habitat in oculumMonsterHabitats.entries)
+                          FilterChip(
+                            label: Text(habitat.value),
+                            selected: editedHabitats.contains(habitat.key),
+                            onSelected: (selected) => setDialogState(() {
+                              if (selected) {
+                                editedHabitats.add(habitat.key);
+                              } else {
+                                editedHabitats.remove(habitat.key);
+                              }
+                            }),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
                     TextField(
                       controller: weakPointController,
                       maxLines: 2,
@@ -5323,6 +5390,21 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 onPressed: () {
                   final nameIt = cleanUiText(nameItController.text).trim();
                   if (nameIt.isEmpty) return;
+                  Map<String, dynamic> editedRules;
+                  try {
+                    editedRules = Map<String, dynamic>.from(
+                      jsonDecode(rulesController.text) as Map,
+                    );
+                  } catch (_) {
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Regole JSON non valide: correggile prima di salvare.',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
                   final id =
                       existing?.id ??
                       newMonsterBookEntryId(nameItController.text);
@@ -5355,6 +5437,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       isBoss: isBoss,
                       isNpc: isNpc,
                       isNullFateless: nullFateless,
+                      planeIds: editedHabitats.toList(),
+                      encounterRules: editedRules,
                       weakPointIt: cleanUiText(weakPointController.text).trim(),
                       weakPointEn: cleanUiText(
                         weakPointEnController.text,
@@ -5373,6 +5457,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                             (key, value) => key.isEmpty || value.isEmpty,
                           ),
                       stats: <String, int>{
+                        ...?existing?.stats,
+                        for (final entry in coreStatControllers.entries)
+                          entry.key: max(0, readIntValue(entry.value.text)),
                         'hp': readIntValue(hpController.text),
                         'atk': readIntValue(attackController.text),
                         'def': readIntValue(defenseController.text),
@@ -5380,6 +5467,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       },
                       skillIds: parseMonsterBookList(skillsController.text),
                       dropIds: parseMonsterBookList(dropsController.text),
+                      dropChances: existing?.dropChances ?? const {},
+                      inventoryItems: existing?.inventoryItems ?? const [],
                       canWieldWeapons: canWieldWeapons,
                       weaponTags: parseMonsterBookList(weaponsController.text),
                       armorTags: parseMonsterBookList(armorController.text),
@@ -5399,6 +5488,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     );
 
     for (final controller in [
+      rulesController,
+      ...coreStatControllers.values,
       nameItController,
       nameEnController,
       descriptionController,
@@ -5628,6 +5719,35 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
   }
 
+  Widget monsterHabitatFilter(
+    String value,
+    ValueChanged<String> changed,
+  ) => DropdownButtonFormField<String>(
+    key: ValueKey('monster-habitat-$value'),
+    initialValue: value,
+    isExpanded: true,
+    decoration: const InputDecoration(
+      labelText: 'Piano / microrealtà',
+      prefixIcon: Icon(Icons.public),
+    ),
+    items: [
+      const DropdownMenuItem(
+        value: '',
+        child: Text('Tutti i piani e le microrealtà'),
+      ),
+      for (final habitat in oculumMonsterHabitats.entries)
+        DropdownMenuItem(
+          value: habitat.key,
+          child: Text(
+            '${oculumMicroRealityIds.contains(habitat.key) ? 'Micro realtà' : 'Piani naturali'} · ${habitat.value}',
+          ),
+        ),
+    ],
+    onChanged: (v) {
+      if (v != null) changed(v);
+    },
+  );
+
   Widget masterDashboardMonsterBookPanel() {
     final query = oculumNormalizeText(monsterBookSearchController.text);
     String categoryFor(MonsterBookEntry entry) {
@@ -5654,7 +5774,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     // Il Book può contenere centinaia di mostri e varianti: la scansione è
     // riusata finché non cambiano query, filtro o la lista configurata.
     final filterCacheKey =
-        '${identityHashCode(monsterBookEntries)}|$query|$monsterBookTierFilter';
+        '${identityHashCode(monsterBookEntries)}|$query|$monsterBookTierFilter|$monsterBookHabitatFilter';
     final filtered = monsterBookFilterCacheKey == filterCacheKey
         ? monsterBookFilterCache
         : monsterBookEntries
@@ -5664,7 +5784,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     categoryFor(entry) == monsterBookTierFilter ||
                     entry.formTags.contains(monsterBookTierFilter) ||
                     tierFor(entry) == monsterBookTierFilter;
-                if (!categoryMatches) {
+                if (!categoryMatches ||
+                    (monsterBookHabitatFilter.isNotEmpty &&
+                        !entry.planeIds.contains(monsterBookHabitatFilter))) {
                   return false;
                 }
                 if (query.isEmpty) return true;
@@ -5719,6 +5841,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             ),
           ),
           const SizedBox(height: 10),
+          monsterHabitatFilter(
+            monsterBookHabitatFilter,
+            (v) => setState(() => monsterBookHabitatFilter = v),
+          ),
+          const SizedBox(height: 8),
           TextField(
             controller: monsterBookSearchController,
             decoration: InputDecoration(
@@ -5939,23 +6066,30 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }
 
   Widget monsterBookPartyPage() {
-    final entries = monsterBookEntries.toList()
-      ..sort((a, b) {
-        bool known(String id) {
-          final k = monsterBookPartyKnowledge(id);
-          return k != null &&
-                  const [
-                    'seen',
-                    'nameKnown',
-                    'weakPoint',
-                    'pagePurchased',
-                  ].any((key) => k[key] == true) ||
-              partyHuntsForMonster(id).isNotEmpty;
-        }
+    final entries =
+        monsterBookEntries
+            .where(
+              (e) =>
+                  partyBookHabitatFilter.isEmpty ||
+                  e.planeIds.contains(partyBookHabitatFilter),
+            )
+            .toList()
+          ..sort((a, b) {
+            bool known(String id) {
+              final k = monsterBookPartyKnowledge(id);
+              return k != null &&
+                      const [
+                        'seen',
+                        'nameKnown',
+                        'weakPoint',
+                        'pagePurchased',
+                      ].any((key) => k[key] == true) ||
+                  partyHuntsForMonster(id).isNotEmpty;
+            }
 
-        final order = (known(b.id) ? 1 : 0).compareTo(known(a.id) ? 1 : 0);
-        return order != 0 ? order : a.nameIt.compareTo(b.nameIt);
-      });
+            final order = (known(b.id) ? 1 : 0).compareTo(known(a.id) ? 1 : 0);
+            return order != 0 ? order : a.nameIt.compareTo(b.nameIt);
+          });
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -5991,6 +6125,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             ),
           ),
           const SizedBox(height: 10),
+          monsterHabitatFilter(
+            partyBookHabitatFilter,
+            (v) => setState(() => partyBookHabitatFilter = v),
+          ),
+          const SizedBox(height: 8),
           Expanded(
             child: ListView.builder(
               itemCount: entries.length,
@@ -9964,6 +10103,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }
 
   Future<void> usaOpenArt(int artIndex) async {
+    if (parasiteInfested && !parasiteOwnerLocked) {
+      aggiungiLog('[PARASSITA] Il controllore non può usare Open.');
+      return;
+    }
     if (artIndex < 0 || artIndex >= arti.length) return;
     final targetArt = arti[artIndex];
     if (!targetArt.openAttiva &&
@@ -10063,6 +10206,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           disattivaTutteLeOpen(exceptArt: art);
         }
         art.openAttiva = true;
+        clearParasite(killed: true);
         art.openUsedSinceLongRest = true;
         art.openDescriptionCooldown?.activate();
         if (!art.monsterOpenSkill) art.openSkillCooldown?.activate();

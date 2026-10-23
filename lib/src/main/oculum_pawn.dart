@@ -118,6 +118,7 @@ class OculumPawnGuardian {
     this.posteaType = '',
     this.posteaMedicine = 0,
     this.posteaTemporaryResilience = 0,
+    this.posteaCompletedFightIds = const [],
     this.posteaLastFight = '',
     this.grade = 0,
     this.ownerLevel = 0,
@@ -163,6 +164,7 @@ class OculumPawnGuardian {
   String posteaType;
   int posteaMedicine;
   int posteaTemporaryResilience;
+  List<String> posteaCompletedFightIds;
   String posteaLastFight;
   int grade;
   int ownerLevel;
@@ -282,7 +284,7 @@ class OculumPawnGuardian {
     final absorbedHp = min(hp, remaining);
     hp -= absorbedHp;
     remaining -= absorbedHp;
-    return remaining;
+    return posteaType == 'pawn' ? 0 : remaining;
   }
 
   bool advanceTo(int nextTurn, {String difficulty = 'normale'}) {
@@ -319,9 +321,10 @@ class OculumPawnGuardian {
   void finishPosteaFight(String encounterId, {required bool won}) {
     if (posteaType.isEmpty ||
         encounterId.isEmpty ||
-        posteaLastFight == encounterId) {
+        posteaCompletedFightIds.contains(encounterId)) {
       return;
     }
+    posteaCompletedFightIds = [...posteaCompletedFightIds, encounterId];
     posteaLastFight = encounterId;
     if (posteaType == 'pawn') {
       stats['resilienza'] = max(
@@ -357,6 +360,7 @@ class OculumPawnGuardian {
     'posteaType': posteaType,
     'posteaMedicine': posteaMedicine,
     'posteaTemporaryResilience': posteaTemporaryResilience,
+    'posteaCompletedFightIds': posteaCompletedFightIds,
     'posteaLastFight': posteaLastFight,
     'grade': grade,
     'ownerLevel': ownerLevel,
@@ -369,58 +373,60 @@ class OculumPawnGuardian {
     'conscious': conscious,
     if (isSummoningSlime) 'summoningEmblem': Map.of(summoningEmblem),
   };
-  factory OculumPawnGuardian.fromJson(Map<String, dynamic> data) =>
-      OculumPawnGuardian(
-        id: '${data['id'] ?? ''}',
-        ownerTag: '${data['ownerTag'] ?? ''}',
-        creatureSheetTag: '${data['creatureSheetTag'] ?? ''}',
-        creatureMaxHp: readIntValue(data['creatureMaxHp']),
-        creatureDefenseBonus: readIntValue(data['creatureDefenseBonus']),
-        hp: readIntValue(data['hp'], fallback: 30),
-        shield: readIntValue(data['shield']),
-        savingShield: readBoolValue(data['savingShield']),
-        turn: readIntValue(data['turn']),
-        level: readIntValue(data['level']),
-        experience: readIntValue(data['experience']),
-        unspentStatPoints: readIntValue(data['unspentStatPoints']),
-        isV2: readBoolValue(data['isV2']),
-        posteaType: '${data['posteaType'] ?? ''}',
-        posteaMedicine: readIntValue(data['posteaMedicine']),
-        posteaTemporaryResilience: readIntValue(
-          data['posteaTemporaryResilience'],
-        ),
-        posteaLastFight: '${data['posteaLastFight'] ?? ''}',
-        grade: readIntValue(data['grade']),
-        ownerLevel: readIntValue(data['ownerLevel']),
-        ownerGrade: readIntValue(data['ownerGrade']),
-        stats: data['stats'] is Map
-            ? oculumPawnStats(
-                (data['stats'] as Map).map(
-                  (key, value) => MapEntry('$key', readIntValue(value)),
-                ),
-              )
-            : null,
-        pendingRegistration: readBoolValue(data['pendingRegistration']),
-        conscious: readBoolValue(data['conscious']),
-        summoningEmblem: data['summoningEmblem'] is Map
-            ? Map<String, dynamic>.from(data['summoningEmblem'] as Map)
-            : null,
-        baseStats: data['baseStats'] is Map
-            ? (data['baseStats'] as Map).map(
-                (key, value) => MapEntry('$key', readIntValue(value)),
-              )
-            : null,
-        allocatedStats: data['allocatedStats'] is Map
-            ? (data['allocatedStats'] as Map).map(
-                (key, value) => MapEntry('$key', readIntValue(value)),
-              )
-            : null,
-        targets: (data['targets'] is List ? data['targets'] as List : const [])
-            .whereType<String>()
-            .where((tag) => tag.isNotEmpty)
-            .toSet()
-            .toList(),
-      );
+  factory OculumPawnGuardian.fromJson(
+    Map<String, dynamic> data,
+  ) => OculumPawnGuardian(
+    id: '${data['id'] ?? ''}',
+    ownerTag: '${data['ownerTag'] ?? ''}',
+    creatureSheetTag: '${data['creatureSheetTag'] ?? ''}',
+    creatureMaxHp: readIntValue(data['creatureMaxHp']),
+    creatureDefenseBonus: readIntValue(data['creatureDefenseBonus']),
+    hp: readIntValue(data['hp'], fallback: 30),
+    shield: readIntValue(data['shield']),
+    savingShield: readBoolValue(data['savingShield']),
+    turn: readIntValue(data['turn']),
+    level: readIntValue(data['level']),
+    experience: readIntValue(data['experience']),
+    unspentStatPoints: readIntValue(data['unspentStatPoints']),
+    isV2: readBoolValue(data['isV2']),
+    posteaType: '${data['posteaType'] ?? ''}',
+    posteaCompletedFightIds: (data['posteaCompletedFightIds'] as List? ?? [])
+        .map((v) => '$v')
+        .toList(),
+    posteaMedicine: readIntValue(data['posteaMedicine']),
+    posteaTemporaryResilience: readIntValue(data['posteaTemporaryResilience']),
+    posteaLastFight: '${data['posteaLastFight'] ?? ''}',
+    grade: readIntValue(data['grade']),
+    ownerLevel: readIntValue(data['ownerLevel']),
+    ownerGrade: readIntValue(data['ownerGrade']),
+    stats: data['stats'] is Map
+        ? oculumPawnStats(
+            (data['stats'] as Map).map(
+              (key, value) => MapEntry('$key', readIntValue(value)),
+            ),
+          )
+        : null,
+    pendingRegistration: readBoolValue(data['pendingRegistration']),
+    conscious: readBoolValue(data['conscious']),
+    summoningEmblem: data['summoningEmblem'] is Map
+        ? Map<String, dynamic>.from(data['summoningEmblem'] as Map)
+        : null,
+    baseStats: data['baseStats'] is Map
+        ? (data['baseStats'] as Map).map(
+            (key, value) => MapEntry('$key', readIntValue(value)),
+          )
+        : null,
+    allocatedStats: data['allocatedStats'] is Map
+        ? (data['allocatedStats'] as Map).map(
+            (key, value) => MapEntry('$key', readIntValue(value)),
+          )
+        : null,
+    targets: (data['targets'] is List ? data['targets'] as List : const [])
+        .whereType<String>()
+        .where((tag) => tag.isNotEmpty)
+        .toSet()
+        .toList(),
+  );
 }
 
 extension _OculumPawnRuntime on _OculumHomePageState {
@@ -831,7 +837,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
     )) {
       addPawnToInitiative(pawn);
     }
-    await choosePawnTargets(pawn);
+    if (posteaType.isEmpty) await choosePawnTargets(pawn);
   }
 
   Future<void> choosePawnTargets(OculumPawnGuardian pawn) async {
@@ -1064,6 +1070,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
     if (!pawn.advanceTo(turn, difficulty: normalizedCampaignDifficulty())) {
       return;
     }
+    healPosteaOwner(pawn);
     updatePawnInitiativeToken(pawn);
     aggiungiLog(
       '${pawn.displayName}: turno ${pawn.turn}, ${pawn.hp}/${pawn.maxHp} HP, ${pawn.shield} Scudo. EXP ${pawn.experience}/$threshold, livello ${pawn.level}, grado ${pawn.grade}${pawn.level > previousLevel || pawn.grade > gradeBefore || pawn.unspentStatPoints > pointsBefore ? ', ${pawn.unspentStatPoints} punti statistica disponibili' : ''}${pawn.savingShield ? ', Scudo di Salvataggio pronto' : ''}.',
@@ -1209,7 +1216,6 @@ extension _OculumPawnRuntime on _OculumHomePageState {
                 onlineCombatEncounterId,
               )) &&
           pawn.targets.contains(tag) &&
-          pawn.posteaType != 'pawn' &&
           pawn.posteaType != 'healer',
     )) {
       if (remaining == 0) break;
@@ -1242,7 +1248,6 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         (!pawn.isSummoningSlime ||
             oculumSummoningSlimeApplies(pawn, tag, onlineCombatEncounterId)) &&
         pawn.targets.contains(tag) &&
-        pawn.posteaType != 'pawn' &&
         pawn.posteaType != 'healer',
   );
 
@@ -1441,6 +1446,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
             requestedTurn,
             difficulty: normalizedCampaignDifficulty(),
           );
+          healPosteaOwner(pawn);
           updatePawnInitiativeToken(pawn);
         }
       } else if (action == 'initiative' &&

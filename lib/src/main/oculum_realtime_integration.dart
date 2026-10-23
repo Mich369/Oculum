@@ -2725,6 +2725,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'campaignName': activeCampaignName(),
       'encounterId': group['id'],
       'completedFightCount': readIntValue(group['completedFightCount']),
+      'combatEnded': group['combatEnded'] == true,
       'mergedEncounterIds': group['mergedEncounterIds'] ?? const <String>[],
       if (group['chainedFate'] is Map) 'chainedFate': group['chainedFate'],
       if (group['rollRequests'] is List) 'rollRequests': group['rollRequests'],
@@ -2967,6 +2968,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
               }),
             )
             as Map<String, dynamic>;
+    if (realtimeVisibleInitiativeSnapshot['combatEnded'] == true) {
+      clearTemporaryCombatResistanceEffects();
+    }
     final turnTokens = realtimeVisibleInitiativeSnapshot['tokens'];
     if (turnTokens is List && turnTokens.isNotEmpty) {
       final activeIndex = readIntValue(

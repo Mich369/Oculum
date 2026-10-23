@@ -884,6 +884,20 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
   }
 
   Future<void> showCombatActionPanel(OculumCombatAbilityRole role) async {
+    if (parasiteOwnerLocked) {
+      await showDialog<void>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Controllo del parassita'),
+          content: parasiteEscapePanel(),
+        ),
+      );
+      return;
+    }
+    if (isLarvalParasite && role == OculumCombatAbilityRole.attack) {
+      await planOnlineAttack();
+      return;
+    }
     final origin = currentSheetScrollId();
     final selected = await showDialog<VoidCallback>(
       context: context,
@@ -903,6 +917,15 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (role == OculumCombatAbilityRole.support)
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(dialog);
+                      unawaited(parasiteMedicineTreatment());
+                    },
+                    icon: const Icon(Icons.healing),
+                    label: const Text('Medicina · cura infestazione'),
+                  ),
                 combatAbilityQuickBar(
                   onlyRole: role,
                   onChoose: (action) => Navigator.pop(dialog, action),

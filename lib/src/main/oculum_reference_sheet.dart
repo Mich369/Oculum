@@ -565,19 +565,34 @@ extension _OculumReferenceSheet on _OculumHomePageState {
           title: Text(t('Ritratto ingrandito', 'Enlarged portrait')),
           content: SizedBox.square(
             dimension: side,
-            child: InteractiveViewer(
-              minScale: 1,
-              maxScale: 5,
-              child: bytes == null
-                  ? Image.asset(asset, fit: BoxFit.contain)
-                  : Image.memory(
-                      bytes,
-                      fit: BoxFit.contain,
-                      filterQuality: FilterQuality.high,
-                    ),
+            child: GestureDetector(
+              onTap: bytes == null ? null : mostraAzioniImmaginePersonaggio,
+              child: InteractiveViewer(
+                minScale: 1,
+                maxScale: 5,
+                child: bytes == null
+                    ? Image.asset(asset, fit: BoxFit.contain)
+                    : Image.memory(
+                        bytes,
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
+                      ),
+              ),
             ),
           ),
           actions: [
+            if (bytes != null)
+              TextButton.icon(
+                onPressed: copiaImmaginePersonaggioNegliAppunti,
+                icon: const Icon(Icons.copy),
+                label: const Text('Copia'),
+              ),
+            if (bytes != null)
+              TextButton.icon(
+                onPressed: scaricaImmaginePersonaggio,
+                icon: const Icon(Icons.download),
+                label: const Text('Scarica'),
+              ),
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
               child: Text(t('Chiudi', 'Close')),
@@ -1073,97 +1088,112 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                       spacing: 10,
                       runSpacing: 10,
                       children: [
-                        FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Color(0xff491c24),
-                            foregroundColor: Color(0xffffddd4),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
-                              side: BorderSide(color: Color(0xffad5559)),
+                        if (parasiteOwnerLocked) parasiteEscapePanel(),
+                        if (!parasiteOwnerLocked) ...[
+                          FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Color(0xff491c24),
+                              foregroundColor: Color(0xffffddd4),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5),
+                                side: BorderSide(color: Color(0xffad5559)),
+                              ),
                             ),
-                          ),
-                          onPressed: () => showCombatActionPanel(
-                            OculumCombatAbilityRole.attack,
-                          ),
-                          icon: Icon(Icons.casino_outlined),
-                          label: Text(t('Attacco', 'Attack')),
-                        ),
-                        OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: Color(0xff142a40),
-                            foregroundColor: Color(0xffd6eaff),
-                            side: BorderSide(color: Color(0xff517dab)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
+                            onPressed: () => showCombatActionPanel(
+                              OculumCombatAbilityRole.attack,
                             ),
+                            icon: Icon(Icons.casino_outlined),
+                            label: Text(t('Attacco', 'Attack')),
                           ),
-                          onPressed: () => showCombatActionPanel(
-                            OculumCombatAbilityRole.defense,
-                          ),
-                          icon: Icon(Icons.shield_outlined),
-                          label: Text(t('Difesa', 'Defense')),
-                        ),
-                        OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: eyePupilGlowColor.withValues(
-                              alpha: .12,
-                            ),
-                            foregroundColor: eyePupilGlowColor,
-                            side: BorderSide(
-                              color: eyePupilGlowColor.withValues(alpha: .72),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                          ),
-                          onPressed: mostraMenuSchivataOculum,
-                          icon: Icon(Icons.visibility_outlined),
-                          label: Text(
-                            '${t('Schivata', 'Dodge')} ${schivateOculumDisponibili()}/${schivateOculumTotali()}',
-                          ),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: () => showCombatActionPanel(
-                            OculumCombatAbilityRole.support,
-                          ),
-                          icon: Icon(Icons.volunteer_activism_outlined),
-                          label: Text(
-                            t('Supporto e utilità', 'Support and utility'),
-                          ),
-                        ),
-                        if (bestCombatScoutStat() != null)
                           OutlinedButton.icon(
-                            onPressed: scoutCombatTarget,
-                            icon: const Icon(Icons.search),
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: Color(0xff142a40),
+                              foregroundColor: Color(0xffd6eaff),
+                              side: BorderSide(color: Color(0xff517dab)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                            ),
+                            onPressed: () => showCombatActionPanel(
+                              OculumCombatAbilityRole.defense,
+                            ),
+                            icon: Icon(Icons.shield_outlined),
+                            label: Text(t('Difesa', 'Defense')),
+                          ),
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: eyePupilGlowColor.withValues(
+                                alpha: .12,
+                              ),
+                              foregroundColor: eyePupilGlowColor,
+                              side: BorderSide(
+                                color: eyePupilGlowColor.withValues(alpha: .72),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                            ),
+                            onPressed: mostraMenuSchivataOculum,
+                            icon: Icon(Icons.visibility_outlined),
                             label: Text(
-                              '${bestCombatScoutStat()!.nome} +${hiddenEyeTotal(bestCombatScoutStat()!)}',
+                              '${t('Schivata', 'Dodge')} ${schivateOculumDisponibili()}/${schivateOculumTotali()}',
                             ),
                           ),
-                        OutlinedButton.icon(
-                          onPressed: () => tiraValoreSpeciale(
-                            'Iniziativa',
-                            iniziativa(),
-                            applyGlobalRollModifier: false,
-                          ),
-                          icon: Icon(Icons.bolt_outlined),
-                          label: Text(
-                            '${t('Iniziativa', 'Initiative')} +${iniziativa()}',
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: tertiaryColor,
-                            side: BorderSide(color: tertiaryColor),
-                          ),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: () => apriDannoCuraDalCentroPartita(),
-                          icon: Icon(Icons.favorite_outline),
-                          label: Text(
-                            t(
-                              'Danni subiti e cura',
-                              'Damage taken and healing',
+                          ...dustFusionButtons(),
+                          if (oculumTiroLimiteRegola() > 0)
+                            rollEmpowermentButton(),
+                          if (hasGrowingPreparedSkill)
+                            OutlinedButton.icon(
+                              key: const ValueKey('prepared_skill_grow'),
+                              onPressed: growPreparedSkill,
+                              icon: const Icon(Icons.bolt),
+                              label: Text(
+                                'Carica · +${(planarState['preparedSkill'] as Map)['power']}% Danni',
+                              ),
+                            ),
+                          OutlinedButton.icon(
+                            onPressed: () => showCombatActionPanel(
+                              OculumCombatAbilityRole.support,
+                            ),
+                            icon: Icon(Icons.volunteer_activism_outlined),
+                            label: Text(
+                              t('Supporto e utilità', 'Support and utility'),
                             ),
                           ),
-                        ),
+                          if (bestCombatScoutStat() != null)
+                            OutlinedButton.icon(
+                              onPressed: scoutCombatTarget,
+                              icon: const Icon(Icons.search),
+                              label: Text(
+                                '${bestCombatScoutStat()!.nome} +${hiddenEyeTotal(bestCombatScoutStat()!)}',
+                              ),
+                            ),
+                          OutlinedButton.icon(
+                            onPressed: () => tiraValoreSpeciale(
+                              'Iniziativa',
+                              iniziativa(),
+                              applyGlobalRollModifier: false,
+                            ),
+                            icon: Icon(Icons.bolt_outlined),
+                            label: Text(
+                              '${t('Iniziativa', 'Initiative')} +${iniziativa()}',
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: tertiaryColor,
+                              side: BorderSide(color: tertiaryColor),
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () => apriDannoCuraDalCentroPartita(),
+                            icon: Icon(Icons.favorite_outline),
+                            label: Text(
+                              t(
+                                'Danni subiti e cura',
+                                'Damage taken and healing',
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     SizedBox(height: 8),

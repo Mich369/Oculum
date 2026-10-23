@@ -289,9 +289,13 @@ void main() {
         // A selectable cost is meaningful only when spending more changes an
         // effect. Fixed techniques now retain their original minimum cost.
         for (var form = 0; form < 3; form++) {
-          final scalesWithSpend = concrete.forms[form].any(
-            (effect) => effect.formula.contains('oculum_spent'),
-          );
+          final scalesWithSpend =
+              concrete.forms[form].any(
+                (effect) => effect.formula.contains('oculum_spent'),
+              ) ||
+              skill.effettiPerLivello[form].any(
+                (effect) => effect.valueExpression.contains('oculum_spent'),
+              );
           expect(
             skill.oculumMassimoPerLivello(form + 1),
             passive
@@ -309,11 +313,30 @@ void main() {
         for (var form = 0; form < 3; form++) {
           final timer = skill.cooldownPerLivello[form];
           expect(timer.activate(), isTrue);
-          expect(timer.activate(), isFalse);
+          expect(
+            timer.activate(),
+            isFalse,
+            reason: '${monster.id}/$id form $form cooldown ${timer.amount}',
+          );
           for (var turn = 0; turn < concrete.cooldowns[form]; turn++) {
             timer.tick('turni');
           }
           expect(timer.ready, isTrue);
+          if (oculumPlanarTechnique(id) != null) {
+            expect(
+              skill.effettiPerLivello[form],
+              isNotEmpty,
+              reason: '$id form $form',
+            );
+            expect(
+              skill.effettiPerLivello[form].every(
+                (e) => oculumStructuredEffectTypes.contains(e.type),
+              ),
+              isTrue,
+              reason: id,
+            );
+            continue; // Planar callbacks add duration/receipt rules beyond the raw damage forms.
+          }
           expect(
             skill.effettiPerLivello[form],
             hasLength(concrete.forms[form].length),

@@ -7,3 +7,5 @@ Future<bool> oculumDownloadBytes({
 }) async {
   return false;
 }
+
+Future<void> oculumReloadUpdatedWeb(String commit) async {}

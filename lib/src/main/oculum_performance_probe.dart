@@ -7,6 +7,55 @@ class OculumPerformanceProbe {
   OculumPerformanceProbe(State state) : _state = state as _OculumHomePageState;
   final _OculumHomePageState _state;
 
+  Map<String, dynamic> planarStateSnapshot() =>
+      Map<String, dynamic>.from(_state.planarState);
+  int planarIncoming(
+    int damage, {
+    String element = 'fisico',
+    String kind = '',
+    bool magical = false,
+  }) => _state.planarModifyIncomingDamage(
+    damage,
+    element: element,
+    attackKind: kind,
+    magical: magical,
+  );
+  void fateGrade(int previous, int next, int roll) =>
+      _state.rewardIdentityGrades(previous, next, percentile: roll);
+  void chooseChaos(bool value) =>
+      _state.planarState['identityFateChaos'] = value ? 'Chaos' : 'Fato';
+  void chaosStats(List<int> values) => _state.refreshChaosStats(values: values);
+  int chaosBonus(String stat) => _state.chaosStatBonus(stat);
+  bool chaosProc(String opponent, int percentile) =>
+      _state.rollChaosProc(opponent, percentile: percentile);
+  void tickPlanar() => _state.tickPlanarTurn();
+  void restPlanar() => _state.longRestPlanarEffects();
+  void finishPlanarFight() => _state.resetPlanarFight();
+  List<Map<String, dynamic>> partyQuests() => _state.activePartyQuests;
+  Future<void> growCharge() => _state.growPreparedSkill();
+  Map<String, dynamic> releasePrepared(String kind) =>
+      _state.takePreparedSkill(kind);
+  Future<void> empowermentDialog() => _state.showRollEmpowermentDialog();
+  int preparedRollAmount() => _state.oculumTiroPreparato();
+  ({int spent, int bonus, int damageBonus}) consumeRollEmpowerment() =>
+      _state.consumaOculumTiro(forAttack: true);
+  Widget effectsEditor(List<OculumStructuredEffect> effects) =>
+      _state.structuredEffectsEditor(
+        effects: effects,
+        onChanged: () {},
+        storageId: 'windows_effects_regression',
+      );
+  bool interruptPrepared({int attackerGrade = 0, int? percentile}) =>
+      _state.interruptPreparedSkill(
+        attackerGrade: attackerGrade,
+        percentile: percentile,
+      );
+  Widget vitalsHud() => _state.stackedVitalsHudPanel(dense: true);
+  void makePartyQuests() => _state.ensurePartyQuests();
+  void advanceQuests(Iterable<Map> enemies, String id) =>
+      _state.advancePartyQuestKills(enemies, id);
+  Map<String, dynamic> partyChestSnapshot() =>
+      Map<String, dynamic>.from(_state.partyChest);
   String currentTag() => _state.sheetTagAt(_state.schedaCorrente);
   String get permissionCampaignId => _state.permissionCampaignId;
   bool partyKnowsMonsterName(String id) => _state.monsterBookPartyKnowsName(id);
@@ -187,7 +236,8 @@ class OculumPerformanceProbe {
       _state.convertInventoryItemToTitle(item);
   int itemShield(InventoryItem item) => _state.itemShieldBonus(item);
   String get planeId => _state.selectedPlaneId;
-  Future<void> useNecromancy(InventoryItem item) => _state.useNecromancyEquipment(item);
+  Future<void> useNecromancy(InventoryItem item) =>
+      _state.useNecromancyEquipment(item);
   void skullHit() => _state.advanceSkullFormHit();
   Widget dicePanel() => _state.sheetDiceRollPanel(dense: true);
   Widget subtraitsPanel() => _state.referenceSubtraitsPanel();

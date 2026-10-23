@@ -11,13 +11,15 @@ part 'withered_construct_white_larva.dart';
 part 'gold_marble_aberrations.dart';
 part 'elemental_collector.dart';
 part 'concrete_monster_techniques.dart';
+part 'planar_monsters.dart';
 
 bool oculumMonsterBookNameIsDiscovered(Map<String, dynamic>? knowledge) =>
-    knowledge?['nameKnown'] == true ||
-    knowledge?['pagePurchased'] == true;
+    knowledge?['nameKnown'] == true || knowledge?['pagePurchased'] == true;
 
 class MonsterBookEntry {
   final String id;
+  final List<String> planeIds;
+  final Map<String, dynamic> encounterRules;
   final String nameIt;
   final String nameEn;
   final String descIt;
@@ -62,6 +64,8 @@ class MonsterBookEntry {
 
   const MonsterBookEntry({
     required this.id,
+    this.planeIds = const [],
+    this.encounterRules = const {},
     required this.nameIt,
     required this.nameEn,
     required this.descIt,
@@ -96,6 +100,8 @@ class MonsterBookEntry {
 
   MonsterBookEntry copyWith({
     String? id,
+    List<String>? planeIds,
+    Map<String, dynamic>? encounterRules,
     String? nameIt,
     String? nameEn,
     String? descIt,
@@ -122,6 +128,8 @@ class MonsterBookEntry {
   }) {
     return MonsterBookEntry(
       id: id ?? this.id,
+      planeIds: planeIds ?? this.planeIds,
+      encounterRules: encounterRules ?? this.encounterRules,
       nameIt: nameIt ?? this.nameIt,
       nameEn: nameEn ?? this.nameEn,
       descIt: descIt ?? this.descIt,
@@ -152,6 +160,8 @@ class MonsterBookEntry {
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'id': id,
+      'planeIds': List<String>.from(planeIds),
+      'encounterRules': Map<String, dynamic>.from(encounterRules),
       'classificationTags': formTags,
       'nameIt': nameIt,
       'nameEn': nameEn,
@@ -193,6 +203,10 @@ class MonsterBookEntry {
     }
     return MonsterBookEntry(
       id: '${json['id'] ?? ''}'.trim(),
+      planeIds: _monsterBookStrings(json['planeIds']),
+      encounterRules: json['encounterRules'] is Map
+          ? Map<String, dynamic>.from(json['encounterRules'] as Map)
+          : const {},
       classificationTags: _monsterBookStrings(json['classificationTags']),
       nameIt: '${json['nameIt'] ?? json['name'] ?? ''}'.trim(),
       nameEn: '${json['nameEn'] ?? json['nameIt'] ?? json['name'] ?? ''}'
@@ -3960,35 +3974,56 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
   ),
   MonsterBookEntry(
     id: 'sharp',
+    planeIds: ['sotterraneo', 'postea', 'nuvole_rocciose'],
     nameIt: 'Sharp',
     nameEn: 'Sharp',
     descIt:
-        'Senza Grado, livello 0. Scava la roccia e vola con piccoli razzetti dietro la testa; l’aspetto inganna, perché è molto buono. Base: Resilienza 2, Volontà 6, Materia 10. Drop: Scarti metallici, Dente di Sharp; raro a 18+: Scroll Mangia Roccia o Scroll Volo Sfrecciante.',
+        'Corpo bianco a sacco, enorme bocca verde con denti triangolari e piccole zampe. Una calotta nera con due razzetti rossi abbraccia la testa; spuntoni metallici emergono dal dorso. È buono e curioso, mangia roccia per scavare, poi fugge in volo sfrecciante.',
     descEn: 'Kind rocket miner.',
     elementId: 'metallo',
     spriteAssetPath: '',
     isMiniBoss: false,
     isBoss: false,
     isNullFateless: false,
-    stats: {'hp': 40, 'atk': 8, 'def': 9, 'spd': 20},
+    stats: {
+      'level': 0,
+      'grade': 0,
+      'resilienza': 2,
+      'volonta': 6,
+      'materia': 10,
+      'oculum': 0,
+    },
     skillIds: ['rock_eater', 'rocket_flight', 'kind_mining'],
-    dropIds: ['scarti_metallici', 'dente_sharp', 'scroll_mangia_roccia'],
+    dropIds: ['scarti_metallici', 'dente_sharp'],
+    encounterRules: {
+      'rareDropNatural': 18,
+      'rareScrollIds': ['rock_eater', 'rocket_flight'],
+    },
   ),
   MonsterBookEntry(
     id: 'ogle',
+    planeIds: ['mezzano', 'sotterraneo'],
     nameIt: 'Ogle',
     nameEn: 'Ogle',
     descIt:
-        'Creatura emotiva che ricorda un cane: si disperde in copie e stordisce con attacchi psico-illusivi. Base: Resilienza 1, Volontà 0, Materia 5. Drop: Occhi Illusivi.',
+        'Corpo basso e grassoccio color malva, quattro zampe corte con piccoli artigli gialli e grandi orecchie laterali. Numerosi occhi rossi lucidi circondano la fronte; la bocca larga mostra denti minuti. Si atteggia come un cane emotivo: cerca attenzione e abbaia attraverso copie psicoillusorie. Nel Regno mezzano esce di notte.',
     descEn: 'Emotional illusion hound.',
     elementId: 'psichico',
     spriteAssetPath: '',
     isMiniBoss: false,
     isBoss: false,
     isNullFateless: false,
-    stats: {'hp': 35, 'atk': 9, 'def': 4, 'spd': 16},
+    stats: {
+      'level': 0,
+      'grade': 0,
+      'resilienza': 1,
+      'volonta': 0,
+      'materia': 5,
+      'oculum': 0,
+    },
     skillIds: ['ogle_split', 'psycho_bark', 'illusion_stun'],
     dropIds: ['occhi_illusivi'],
+    encounterRules: {'mezzanoOnlyAtNight': true},
   ),
   MonsterBookEntry(
     id: 'lumin_gommoso',
@@ -4008,35 +4043,76 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
   ),
   MonsterBookEntry(
     id: 'topino_avventuroso',
+    planeIds: ['mezzano', 'sotterraneo', 'foresta_elementale'],
     nameIt: 'Topino Avventuroso',
     nameEn: 'Adventurous Mouse',
     descIt:
-        'Topino livello 1/9, Senza Grado, taglia minuscola. Fiaccolata aumenta il dado, Scatto Arretrante protegge e Cura Topesca aiuta tutto il party. Ultimate: Coltello Nascosto avvelenato. Drop: Fiaccola; con 20 Scroll Coltello Avvelenato.',
+        'Topino minuscolo dalla pelliccia color miele, grandi orecchie e mantello verde sfrangiato. Regge una fiaccola più alta di lui, ha una cintura di corda e un piccolo coltello nascosto. Esplora in gruppo, indietreggia dai pericoli e cura i compagni. Livelli 1–9, Senza Grado.',
     descEn: 'Adventurous mouse.',
     elementId: 'fisico',
     spriteAssetPath: '',
     isMiniBoss: false,
     isBoss: false,
     isNullFateless: false,
-    stats: {'hp': 42, 'atk': 10, 'def': 5, 'spd': 18},
-    skillIds: ['fiaccolata', 'topino_backstep', 'cura_topesca'],
+    stats: {
+      'level': 1,
+      'grade': 0,
+      'resilienza': 3,
+      'volonta': 3,
+      'materia': 4,
+      'oculum': 3,
+      'oculumArt': 1,
+    },
+    skillIds: [
+      'fiaccolata',
+      'topino_backstep',
+      'cura_topesca',
+      'topino_poison_knife',
+    ],
     dropIds: ['fiaccola', 'scroll_coltello_avvelenato'],
+    encounterRules: {
+      'rareDropNatural': 20,
+      'rareScrollIds': ['topino_poison_knife'],
+      'levelMin': 1,
+      'levelMax': 9,
+    },
+    inventoryItems: [
+      {
+        'nome': 'Fiaccola',
+        'peso': 0.2,
+        'quantita': 6,
+        'note': 'Fiaccola di scorta del Topino.',
+      },
+    ],
   ),
   MonsterBookEntry(
     id: 'mosca_campana',
+    planeIds: ['mezzano', 'foresta_elementale', 'sotterraneo'],
     nameIt: 'Mosca Campana',
     nameEn: 'Bell Fly',
     descIt:
-        'Base: Resilienza 10, Volontà 10, Materia 5. Muove la campanella per infliggere Paralisi del Fato per quattro turni se non superi una DT molto difficile; con critico aggiunge Stun e cura gli alleati della propria Volontà. Drop 15: Polvere della Magia del Suono; drop 18: Campanella stordisci nemici.',
+        'Una pallina nera e pelosa con grandi occhi bianchi, quattro piccole ali trasparenti e zampe appuntite. Porta sulla testa una campana di bronzo ossidato; una seconda campanella pende sotto il corpo. Il rintocco paralizza per quattro turni; un critico stordisce per un turno e cura gli alleati della sua Volontà.',
     descEn: 'Bell fly.',
     elementId: 'sonoro',
     spriteAssetPath: '',
     isMiniBoss: false,
     isBoss: false,
     isNullFateless: false,
-    stats: {'hp': 80, 'atk': 15, 'def': 8, 'spd': 19},
-    skillIds: ['bell_fate_paralysis', 'critical_stun', 'will_heal'],
-    dropIds: ['polvere_magia_suono', 'campanella_stordente'],
+    stats: {
+      'level': 0,
+      'resilienza': 10,
+      'volonta': 10,
+      'materia': 5,
+      'oculum': 0,
+    },
+    skillIds: ['bell_fate_paralysis'],
+    dropIds: [],
+    encounterRules: {
+      'materialNaturalThreshold': 15,
+      'itemNaturalThreshold': 18,
+      'paralysisDifficulty': 25,
+      'paralysisDuration': 4,
+    },
   ),
   MonsterBookEntry(
     id: 'obra',
@@ -4892,6 +4968,8 @@ String _inspiredMonsterSkillText(String rawId) {
 }
 
 String monsterBookSkillText(String rawId) {
+  final planar = oculumPlanarTechnique(rawId);
+  if (planar != null) return planar.text();
   final runicAcid = oculumRunicAcidSkillText(
     rawId.replaceFirst(RegExp(r'_variante_[a-z]+$'), ''),
   );
@@ -5375,6 +5453,7 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
             ..._lavaMonsterEntries,
             ..._necromancerMonsterEntries,
             ..._runicAcidMonsterEntries,
+            ...oculumPlanarMonsterEntries,
             ..._witheredConstructWhiteLarvaEntries,
             ..._goldMarbleAberrationEntries,
             ..._elementalCollectorEntries,
@@ -5619,6 +5698,7 @@ Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
   yield* _lavaMonsterEntries;
   yield* _necromancerMonsterEntries;
   yield* _runicAcidMonsterEntries;
+  yield* oculumPlanarMonsterEntries;
   yield* _witheredConstructWhiteLarvaEntries;
   yield* _manualMonsterBookEntries;
 }

@@ -212,10 +212,59 @@ CharacterSkill oculumEquipmentAbility(
   );
 }
 
+OculumSkillCost? oculumStructuredCostFromText(String text) {
+  final parsed = oculumParseAbilityCost(text);
+  if (parsed == null) return null;
+  return OculumSkillCost(
+    resource: parsed.resource,
+    amountExpression: '${parsed.minimum}',
+    minimum: parsed.minimum,
+    maximum: parsed.maximum,
+    variable: parsed.minimum != parsed.maximum,
+  );
+}
+
+OculumStructuredEffect oculumStatPaidEffect(
+  OculumStructuredEffect original,
+  String resource,
+) {
+  final effect = OculumStructuredEffect.fromJson(original.toJson());
+  final positive =
+      const {
+        'danno',
+        'danno_percentuale',
+        'difesa',
+        'difesa_percentuale',
+        'cura',
+        'scudo',
+        'hp_temporanei',
+        'modifica_statistica',
+        'modifica_sottotratto',
+        'velocita',
+        'forza',
+      }.contains(effect.type) &&
+      effect.mode != 'diminuzione' &&
+      !effect.valueExpression.trimLeft().startsWith('-');
+  if (const {'volonta', 'materia'}.contains(resource) &&
+      positive &&
+      effect.valueExpression.trim() != 'hp') {
+    effect.valueExpression = 'ceil((${effect.valueExpression})*1.2)';
+  }
+  return effect;
+}
+
+String oculumArtSkillCostText(ArtSkill skill, int form) {
+  final resource = skill.risorsaCostoPerLivello(form);
+  if (resource == 'nessuna') return 'Nessun costo';
+  final minimum = skill.oculumMinimoPerLivello(form);
+  final maximum = skill.oculumMassimoPerLivello(form);
+  return '$minimum/$maximum $resource';
+}
+
 CharacterSkill oculumEquipmentAbilityFromArt(ArtSkill skill) => CharacterSkill(
   nome: skill.nome,
   tipo: 'Skill equipaggiamento',
-  costo: '',
+  costo: oculumArtSkillCostText(skill, 1),
   cooldown: '',
   descrizione: skill.evo1,
   forme: [
@@ -224,6 +273,8 @@ CharacterSkill oculumEquipmentAbilityFromArt(ArtSkill skill) => CharacterSkill(
         nome: const ['I', 'II', 'III'][i],
         tipo: skill.tipoPerLivello(i + 1),
         descrizione: skill.testoEvoluzione(i + 1),
+        costo: oculumArtSkillCostText(skill, i + 1),
+        cooldown: '${skill.cooldownPerLivello[i].amount} turni',
         livello:
             RegExp(
               r'(?:Richiede\s+)?livello\s+(\d+)',
@@ -351,6 +402,31 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     CharacterSkillForm form,
     OculumCombatAbilityRole role,
   ) async {
+    if (item.craftData.containsKey('posteaUses') &&
+        readIntValue(item.craftData['posteaUses']) <= 0) {
+      aggiungiLog('[POSTEA] Runa esaurita: nessun utilizzo rimasto.');
+      return;
+    }
+    if (item.craftData['posteaGloves'] == true) {
+      final accepted = await showDialog<bool>(
+        context: context,
+        builder: (dialog) => AlertDialog(
+          title: const Text('Guanti da combattimento'),
+          content: const Text('Usi questo bonus con un attacco corpo a corpo?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialog, false),
+              child: const Text('Annulla'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialog, true),
+              child: const Text('Corpo a corpo'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted || accepted != true) return;
+    }
     if (item.craftData['necromancyKind'] != null) {
       await useNecromancyEquipment(item);
       return;
@@ -439,6 +515,16 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       combatSupportTargeting = previousSupport;
     }
     if (!mounted || !used || currentSheetScrollId() != origin) return;
+    if (item.craftData.containsKey('posteaUses')) {
+      item.craftData = {
+        ...item.craftData,
+        'posteaUses': max(0, readIntValue(item.craftData['posteaUses']) - 1),
+      };
+      aggiungiLog(
+        '[POSTEA] ${item.nome}: ${item.craftData['posteaUses']} utilizzi rimasti.',
+      );
+      programmaSalvataggio();
+    }
     final pending = activeStructuredEffects
         .where((e) => e['type'] == 'pending_target' && !before.contains(e))
         .toList();
@@ -510,6 +596,19 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     if (skillOculumUseDialogOpen || !mounted || (valid != null && !valid())) {
       return false;
     }
+    if (planarCharging &&
+        !effects.any(
+          (e) => e.type == 'planar' && e.target == 'lightning_charge',
+        )) {
+      aggiungiLog('Carica in corso: non puoi usare altre abilità.');
+      return false;
+    }
+    if (effects.any(
+          (e) => e.type == 'planar' && e.target == 'lightning_charge',
+        ) &&
+        readIntValue(planarState['chargePower']) > 0) {
+      return continuePlanarCharge();
+    }
     final isPatalpaSummon =
         effects.any(
           (effect) =>
@@ -537,7 +636,12 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       return false;
     }
     final options = effects
-        .where((e) => e.enabled && e.activationOption.trim().isNotEmpty)
+        .where(
+          (e) =>
+              e.enabled &&
+              e.type != 'preparazione' &&
+              e.activationOption.trim().isNotEmpty,
+        )
         .map((e) => e.activationOption.trim())
         .toSet()
         .toList();
@@ -559,6 +663,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       effects = effects
           .where(
             (e) =>
+                e.type == 'preparazione' ||
                 e.activationOption.trim().isEmpty ||
                 e.activationOption.trim() == selected,
           )
@@ -656,6 +761,31 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         (cooldown != null && !cooldown.ready)) {
       return false;
     }
+    final preparesAttack = effects.any(
+      (e) =>
+          const {'danno', 'danno_percentuale'}.contains(e.type) &&
+          e.mode == 'prossima_azione',
+    );
+    if (!preparesAttack && currentCombatIsActive()) {
+      final token = onlineCombatTokens()
+          .where((t) => onlineCombatTokenTag(t) == sheetTagAt(schedaCorrente))
+          .firstOrNull;
+      final ownTurn =
+          token != null &&
+          onlineCombatTokens().indexOf(token) ==
+              (_usesLocalMasterInitiative
+                  ? masterInitiativeActiveIndex
+                  : readIntValue(
+                      realtimeVisibleInitiativeSnapshot['activeIndex'],
+                    ));
+      if (effects.any((e) => e.type == 'preparazione') && !ownTurn) {
+        aggiungiLog('Preparazione: serve la tua Azione nel tuo turno.');
+        return false;
+      }
+      if (!await requestUtilitySpend(ownTurn ? 'azione' : 'reazione')) {
+        return false;
+      }
+    }
     if (resource != 'nessuna' &&
         (artSkillCostResourceAvailable(resource) < paid ||
             spendArtSkillCostResource(resource, paid) != paid)) {
@@ -670,6 +800,25 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       spentResources: {resource: paid},
     );
     cooldown?.activate();
+    if (effects.any((e) => e.id.startsWith('planar:party_heal:'))) {
+      final ownSide = combatScoutSide(sheetTagAt(schedaCorrente));
+      final targets = realtimeService?.isConnected == true
+          ? onlineCombatTokens()
+                .where(
+                  (t) =>
+                      combatScoutSide(onlineCombatTokenTag(t)) == ownSide &&
+                      !const {'dead', 'fled', 'expired'}.contains(t['status']),
+                )
+                .map(onlineCombatTokenTag)
+                .toList()
+          : questPartyIndices().map(sheetTagAt).toList();
+      await deliverPendingSupport(
+        minimum: 1,
+        maximum: max(1, targets.length),
+        selectedTags: targets,
+        sourcePrefix: source,
+      );
+    }
     setState(() {
       risultato = '$source · spesi $paid $resource.\n${messages.join("\n")}';
       aggiungiLog(risultato);

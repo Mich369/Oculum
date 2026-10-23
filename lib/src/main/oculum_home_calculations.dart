@@ -1039,6 +1039,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       0,
       current +
           runtimeCurrentStatBonus(key) +
+          chaosStatBonus(key) +
+          dustFusionTier +
           nourishmentStatBonus(key, current) +
           (conditionTarget == null
               ? 0
@@ -1048,7 +1050,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int resilienzaTotale() => max(
     0,
-    currentStatWithRuntimeBuffs('resilienza', currentResilienza()) -
+    currentStatWithRuntimeBuffs('resilienza', currentResilienza()) +
+        planarResilienceBonus(
+          currentStatWithRuntimeBuffs('resilienza', currentResilienza()),
+        ) -
         planePressurePenalty,
   );
   int volontaTotale() => max(
@@ -4284,6 +4289,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int maxHp() {
+    if (isLarvalParasite) return 10;
+    if (planarCloudForm) {
+      return max(1, readIntValue(planarState['cloudLifeHp']));
+    }
     return max(
       1,
       max(1, resilienzaTotale()) * moltiplicatoreHp() +
@@ -5102,14 +5111,15 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         itemQuickBonus('difesa') +
         globalQuickBonus('difesa') +
         skillFormaBonus('difesa') +
-        activeStructuredEffectBonus('difesa');
+        (activeStructuredEffectBonus('difesa') +
+            parasiteHostBonus('defenseBonus'));
     final conditioned = applyConditionDerivedValue(
       OculumConditionTarget.difesa,
       beforeConditions,
     );
     return oculumDamageWithPercentage(
       conditioned,
-      activeStructuredEffectBonus('difesa_percentuale'),
+      activeStructuredEffectBonus('difesa_percentuale') + (dustFusionTier * 5),
     );
   }
 
@@ -5136,7 +5146,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         bonusItem +
         bonusGlobal +
         bonusSkill +
-        activeStructuredEffectBonus('difesa');
+        (activeStructuredEffectBonus('difesa') +
+            parasiteHostBonus('defenseBonus'));
     final conditionDelta =
         applyConditionDerivedValue(
           OculumConditionTarget.difesa,
@@ -5310,14 +5321,15 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         itemQuickBonus('danni') +
         globalQuickBonus('danni') +
         skillFormaBonus('danni') +
-        activeStructuredEffectBonus('danni');
+        activeStructuredEffectBonus('danni') +
+        parasiteHostBonus('damageBonus');
     final conditioned = applyConditionDerivedValue(
       OculumConditionTarget.danno,
       beforeConditions,
     );
     return oculumDamageWithPercentage(
       applicaBonusDanniPotenzaNucleo(conditioned),
-      activeStructuredEffectBonus('danni_percentuale'),
+      activeStructuredEffectBonus('danni_percentuale') + (dustFusionTier * 5),
     );
   }
 

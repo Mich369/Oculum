@@ -170,7 +170,14 @@ List<OculumStructuredEffect> oculumScrollCombatEffects(
   int? resolvedDamage,
 }) {
   final configured = oculumReadStructuredEffects(data['effects']);
-  if (configured.isNotEmpty) return configured;
+  if (configured.isNotEmpty) {
+    for (final effect in configured.where((e) => e.type == 'preparazione')) {
+      effect.sourceScrollGrade = data['learned'] == true
+          ? 0
+          : readIntValue(data['grade']).clamp(0, 12);
+    }
+    return configured;
+  }
   final g = readIntValue(data['grade']).clamp(0, 12);
   final kind = '${data['kind']}';
   final duration = kind == 'imprison' ? 1 : 1 + g ~/ 3;
@@ -412,8 +419,10 @@ class OculumTechniqueScrollProfile {
 }
 
 final List<OculumTechniqueScrollProfile> oculumTechniqueScrolls = () {
-  final result = <OculumTechniqueScrollProfile>[];
-  final names = <String>{};
+  final result = <OculumTechniqueScrollProfile>[
+    ...oculumPreparedScrollProfiles(),
+  ];
+  final names = result.map((p) => oculumNormalizeText(p.name)).toSet();
   for (final monster in defaultMonsterBookEntries.where((m) => !m.isNpc)) {
     final art = oculumMonsterBookArt(monster);
     for (final (index, skill) in art.skills.indexed) {
@@ -455,7 +464,7 @@ final List<OculumTechniqueScrollProfile> oculumTechniqueScrolls = () {
       );
     }
   }
-  return List<OculumTechniqueScrollProfile>.unmodifiable(result.take(120));
+  return List<OculumTechniqueScrollProfile>.unmodifiable(result.take(124));
 }();
 
 InventoryItem oculumTechniqueScrollItem(
@@ -468,6 +477,7 @@ InventoryItem oculumTechniqueScrollItem(
       OculumStructuredEffect.fromJson({
         ...original.toJson(),
         'id': 'scroll_${profile.id}_$g/${original.id}',
+        if (original.type == 'preparazione') 'sourceScrollGrade': g,
         'recipient': 'se_stesso',
         'valueExpression':
             '(${original.valueExpression.replaceAll("oculum_spent", "${g + 1}")})*(1+$g/10)',
@@ -772,6 +782,11 @@ extension _OculumScrolls on _OculumHomePageState {
       );
       return;
     }
+    if (item == null &&
+        oculumScrollCombatEffects(data).any((e) => e.type == 'preparazione')) {
+      await useLearnedPreparedSkill(data);
+      return;
+    }
     if (item == null && kind == 'gratitudine') {
       await _useLearnedGratitudine(data);
       return;
@@ -884,9 +899,19 @@ extension _OculumScrolls on _OculumHomePageState {
         !await spendCombatRollResource()) {
       return;
     }
+    if (currentCombatIsActive() &&
+        oculumScrollCombatEffects(data).any((e) => e.type == 'preparazione') &&
+        !await requestUtilitySpend('azione')) {
+      return;
+    }
     currentVolontaController.text = '${currentVolonta() - cost}';
     final natural = tiraD20();
-    final spend = consumaOculumTiro();
+    final concentrationPreparation = oculumScrollCombatEffects(
+      data,
+    ).any((e) => e.type == 'preparazione');
+    final spend = concentrationPreparation
+        ? (spent: 0, bonus: 0, damageBonus: 0)
+        : consumaOculumTiro();
     final bonus =
         volontaTotale() +
         runtimeQuickBonus('tiro_volonta') +
@@ -1019,7 +1044,12 @@ extension _OculumScrolls on _OculumHomePageState {
               CharacterSkill(
                 nome: '${data['name']} [Grado $g]',
                 tipo: kind == 'corruption' ? 'Passiva' : 'Attiva',
-                costo: kind == 'corruption'
+                costo:
+                    oculumScrollCombatEffects(
+                      data,
+                    ).any((e) => e.type == 'preparazione')
+                    ? '2/2 Oculum'
+                    : kind == 'corruption'
                     ? '0'
                     : kind == 'gratitudine'
                     ? '1 Reazione / Azione'
@@ -1029,7 +1059,10 @@ extension _OculumScrolls on _OculumHomePageState {
                     : '$cooldown',
                 descrizione:
                     '${data['description']}\nAppresa da pergamena: non evolvibile.${kind == 'corruption' ? '\nPassiva: resistenza alla Corruzione; al colpo pieno infetta i mostri di livello superiore. Ricarica iniziale: 2 turni dallo scontro (12 secondi a 6 secondi per turno). Il proprietario sceglie il bersaglio nel 90% degli attacchi del mostro corrotto.' : ''}',
-                scrollData: Map<String, dynamic>.from(data),
+                scrollData: {
+                  ...Map<String, dynamic>.from(data),
+                  'learned': true,
+                },
               ),
             );
             learned =

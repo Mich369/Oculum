@@ -119,7 +119,10 @@ String oculumMonsterBookSkillBaseId(String id) =>
 
 bool oculumMonsterBookSkillIsPassive(String id) {
   final base = oculumMonsterBookSkillBaseId(id);
-  return base == 'inferno_in_corpo' ||
+  return base == 'blade_skull_vampirism' ||
+      base == 'bringi_seeds' ||
+      base == 'blade_skull_critical' ||
+      base == 'inferno_in_corpo' ||
       base.startsWith('runic_') ||
       base == 'inverno_in_corpo' ||
       base.startsWith('lava_regeneration_') ||
@@ -198,9 +201,15 @@ const _naturalMonsterTechniqueIds = {
 };
 
 bool oculumMonsterTechniqueIsNatural(MonsterBookEntry monster, String id) =>
-    id.startsWith('runic_') ||
-    !oculumMonsterHasOculumArt(monster) ||
-    _naturalMonsterTechniqueIds.contains(oculumMonsterBookSkillBaseId(id));
+    !const {
+      'fiaccolata',
+      'topino_backstep',
+      'cura_topesca',
+      'topino_poison_knife',
+    }.contains(oculumMonsterBookSkillBaseId(id)) &&
+    (id.startsWith('runic_') ||
+        !oculumMonsterHasOculumArt(monster) ||
+        _naturalMonsterTechniqueIds.contains(oculumMonsterBookSkillBaseId(id)));
 
 List<CharacterSkill> oculumMonsterBookSkills(MonsterBookEntry monster) {
   if (oculumWitheredLarvaMonster(monster)) {
@@ -222,6 +231,9 @@ CharacterSkill _naturalMonsterSkill(
   ArtSkill source,
 ) {
   final passive = oculumMonsterBookSkillIsPassive(id);
+  final resource = monster.id == 'ogle' || (monster.stats['volonta'] ?? 0) <= 0
+      ? 'materia'
+      : 'volonta';
   final forms = [
     for (var form = 0; form < 3; form++)
       CharacterSkillForm(
@@ -231,14 +243,14 @@ CharacterSkill _naturalMonsterSkill(
             '${(monsterBookConcreteTechnique(id)?.requiredLevel ?? 0) + form * 3}',
         costo: passive || id == 'goblin_kamikaze_explosion'
             ? 'Nessun costo'
-            : '${form + 1}/${form + 1} Volontà',
+            : '${monster.id == 'mosca_campana' ? 3 : form + 1}/${monster.id == 'mosca_campana' ? 3 : form + 1} $resource',
         costoStrutturato: OculumSkillCost(
           resource: passive || id == 'goblin_kamikaze_explosion'
               ? 'nessuna'
-              : 'volonta',
+              : resource,
           amountExpression: passive || id == 'goblin_kamikaze_explosion'
               ? '0'
-              : '${form + 1}',
+              : '${monster.id == 'mosca_campana' ? 3 : form + 1}',
         ),
         cooldown: passive
             ? '0 turni'
@@ -256,18 +268,23 @@ CharacterSkill _naturalMonsterSkill(
             )
             .replaceAll(
               RegExp(r'\([0-9]+/[0-9]+ Oculum[^)]*\)'),
-              passive ? '(nessun costo)' : '(${form + 1}/${form + 1} Volontà)',
+              passive
+                  ? '(nessun costo)'
+                  : '(${monster.id == 'mosca_campana' ? 3 : form + 1}/${monster.id == 'mosca_campana' ? 3 : form + 1} $resource)',
             ),
         oculumLimitiConfiguratiManualmente: true,
         effettiStrutturati: [
           for (final effect in source.effettiPerLivello[form])
-            OculumStructuredEffect.fromJson({
-              ...effect.toJson(),
-              'valueExpression': effect.valueExpression.replaceAll(
-                'oculum_spent',
-                'materia',
-              ),
-            }),
+            oculumStatPaidEffect(
+              OculumStructuredEffect.fromJson({
+                ...effect.toJson(),
+                'valueExpression': effect.valueExpression.replaceAll(
+                  'oculum_spent',
+                  '${resource}_spent',
+                ),
+              }),
+              resource,
+            ),
         ],
       ),
   ];
@@ -858,6 +875,12 @@ String _monsterBookSkillEvolution(
 /// Only fills narrative-only techniques. Authored numeric powers and Oculus
 /// techniques keep their own formulas instead of receiving a second effect.
 List<List<OculumStructuredEffect>>? _monsterBookGenericEffects(String id) {
+  final canonical = oculumMonsterBookSkillBaseId(id);
+  final effects = _monsterBookBaseEffects(canonical);
+  return oculumPlanarSkillEffects(canonical, effects);
+}
+
+List<List<OculumStructuredEffect>>? _monsterBookBaseEffects(String id) {
   if (id == 'goblin_kamikaze_explosion') {
     return List.generate(
       3,
@@ -940,6 +963,7 @@ List<List<OculumStructuredEffect>>? _monsterBookGenericEffects(String id) {
             OculumStructuredEffect(
               id: '${oculumMonsterBookSkillBaseId(id)}_forma_${form + 1}_$index',
               type: concrete.forms[form][index].type,
+              diceExpression: concrete.forms[form][index].dice,
               target: concrete.forms[form][index].target,
               valueExpression: concrete.forms[form][index].formula,
               elementType: concrete.forms[form][index].type == 'danno'
@@ -1635,6 +1659,12 @@ const List<OculumStarterChoice> oculumStarterBackgrounds = [
 
 const List<OculumStarterChoice> oculumStarterRaces = [
   OculumStarterChoice(
+    id: 'figli_madre_natura',
+    nome: 'Figli di Madre Natura',
+    descrizione:
+        'Nati dalla vita del mondo: pelle, foglie, cortecce o piccoli tratti animali. Scegli aspetto e legame naturale; nessun bonus aggiuntivo imposto, tratti modificabili con il Master.',
+  ),
+  OculumStarterChoice(
     id: 'demone_maggiore',
     nome: 'Demone Maggiore',
     descrizione:
@@ -1729,6 +1759,17 @@ const List<OculumStarterChoice> oculumStarterFateTitles = [
 ];
 
 List<CharacterArt> oculumStarterArtChoices() => [
+  for (final element in const [
+    'fuoco',
+    'terra',
+    'vento',
+    'ghiaccio',
+    'fulmine',
+    'luce',
+    'buio',
+    'natura',
+  ])
+    oculumStarterElementArt(element),
   oculumStarterWaterArt(),
   oculumStarterRockArt(),
   oculumStarterMartialArt(
@@ -2036,3 +2077,62 @@ CharacterArt oculumStarterRockArt() => CharacterArt(
     ),
   ],
 );
+
+CharacterArt oculumStarterElementArt(String element) {
+  final names = const {
+    'fuoco': 'Focolare Vermiglio',
+    'terra': 'Radici del Suolo',
+    'vento': 'Respiro delle Correnti',
+    'ghiaccio': 'Cuore di Brina',
+    'fulmine': 'Circuito della Tempesta',
+    'luce': 'Lanterna Interiore',
+    'buio': 'Velo del Crepuscolo',
+    'natura': 'Linfa Risvegliata',
+  };
+  return CharacterArt(
+    nome: names[element] ?? element,
+    tipo: 'Oculum Art',
+    descrizione:
+        'Art iniziale di $element. Tre tecniche: colpo, protezione e movimento. Costi, effetti e cooldown modificabili.',
+    skills: [
+      for (var slot = 0; slot < 3; slot++)
+        ArtSkill(
+          nome: '${['Impulso', 'Custodia', 'Passo'][slot]} di $element',
+          livello: 0,
+          evo1: 'I/ Richiede livello 0. (1/4 Oculum).',
+          evo2: 'II/ Richiede livello 3. (5/10 Oculum).',
+          evo3: 'III/ Richiede livello 6. (11/20 Oculum).',
+          cooldownPerLivello: [
+            for (var form = 0; form < 3; form++)
+              OculumAbilityCooldown(amount: slot == 0 ? 2 + form : 3 + form),
+          ],
+          effettiPerLivello: [
+            for (var form = 0; form < 3; form++)
+              [
+                OculumStructuredEffect(
+                  id: 'starter:$element:$slot:$form',
+                  type: slot == 0
+                      ? 'danno'
+                      : slot == 1
+                      ? 'scudo'
+                      : 'modifica_sottotratto',
+                  target: slot == 2 ? 'movimento' : '',
+                  valueExpression: slot == 0
+                      ? '${3 + form * 5}+oculum_spent'
+                      : slot == 1
+                      ? '${5 + form * 5}+oculum_spent'
+                      : '${2 + form}',
+                  mode: slot == 0
+                      ? 'prossima_azione'
+                      : slot == 1
+                      ? 'immediato'
+                      : 'finche_attivo',
+                  duration: slot == 2 ? '2' : '',
+                  elementType: element,
+                ),
+              ],
+          ],
+        ),
+    ],
+  );
+}
