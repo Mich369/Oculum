@@ -86,8 +86,7 @@ extension _OculumCorruptionRuntime on _OculumHomePageState {
     }
     final metadata = condition.metadata;
     if (metadata['pendingResistanceId'] != null) return;
-    if (turn <
-        readIntValue(metadata['nextResistanceTurn'], fallback: turn + 3)) {
+    if (turn < readIntValue(metadata['nextResistanceTurn'], fallback: turn + 3)) {
       return;
     }
     final attempt = readIntValue(metadata['escapeAttempts']) + 1;
