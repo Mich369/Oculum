@@ -2347,6 +2347,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   bool masterInitiativeCanToggleAction(int index) {
     if (index < 0 || index >= masterInitiativeTokens.length) return false;
+    if (!masterInitiativeActionUsed(masterInitiativeTokens[index]) &&
+        index != masterInitiativeActiveIndex) {
+      return false;
+    }
     return masterInitiativeTokenCanAct(masterInitiativeTokens[index]) &&
         artDebtForToken(masterInitiativeTokens[index], 'action') < 1;
   }

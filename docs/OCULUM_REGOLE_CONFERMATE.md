@@ -423,6 +423,7 @@ Richiesta utente: tutte le proprie schede online devono poter arrivare al Master
 - Il payload pubblico della turnistica include tiro iniziativa, base, totale e Riflessi, così il Master riceve gli stessi dati necessari a mostrare la scheda selezionata.
 
 ## Azioni e reazioni nella turnistica — conferma 22 ottobre 2026
+- Precisazione esplicita del 23 ottobre 2026: l'Azione si usa soltanto nel proprio turno. Ogni Azione di un partecipante, inclusi i nemici, fa avanzare la turnistica di una posizione; Reazione e Reazione veloce non la fanno avanzare. Anche il comando manuale del Master rispetta il turno del partecipante.
 - Nel primo giro ogni partecipante ha 1 Azione di base e 1 Reazione veloce; la Reazione normale di base non è ancora disponibile. L’Azione si rinnova al turno personale.
 - Nei giri successivi si rinnova 1 Reazione veloce all’inizio del nuovo giro completo. Quando arriva il turno personale del partecipante, si rinnova 1 Reazione normale di base. La Reazione veloce scade all’inizio del nuovo giro; la normale scade al successivo turno personale.
 - Ogni Reazione o Reazione veloce non usata quando scade aggiunge +3 al prossimo tiro, accumulando fino a +12 in attesa. Il bonus si consuma al primo tiro successivo. Usare una Reazione non avanza il turno attivo.

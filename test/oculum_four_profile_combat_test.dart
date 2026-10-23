@@ -240,6 +240,10 @@ void main() {
           }) ??
           false;
       final dynamic master = states[0];
+      expect(master.masterInitiativeCanToggleAction(3), isFalse);
+      master.toggleMasterInitiativeActionUsed(3);
+      expect(master.masterInitiativeTokens[3]['actionUsed'], isFalse);
+      expect(master.masterInitiativeActiveIndex, 1);
       // A's action advances to B; A's next attack uses its quick reaction.
       expect(await spend(1), isTrue);
       expect(master.masterInitiativeTokens[1]['actionUsed'], isTrue);
@@ -255,6 +259,7 @@ void main() {
       expect(await spend(1), isTrue);
       expect(master.masterInitiativeTokens[1]['reactionUsed'], 0);
       expect(master.masterInitiativeTokens[1]['reactionFastUsed'], 1);
+      expect(master.masterInitiativeActiveIndex, 2);
       expect(await spend(1), isFalse);
       // C helps A outside C's turn and spends its quick reaction. B can use
       // both its quick reaction and its action during its own turn.

@@ -1964,6 +1964,7 @@ Il riconoscimento del testo prepara formule, dadi, durata e destinatari; le fras
 Le Reputazioni possono essere organizzate in cartelle e sottocartelle senza limite fisso, conservando valori, descrizioni e influenza del Karma.
 
 ONLINE E OFFLINE
+Turnistica (precisazione 23 ottobre 2026): l'Azione è disponibile soltanto nel proprio turno. Ogni Azione, anche di un nemico, porta avanti l'ordine di una posizione. Reazione e Reazione veloce non fanno avanzare il turno. Questa regola vale anche per il comando manuale del Master.
 Online, in una turnistica, dichiari il bersaglio. VC è il tiro di attacco ordinario: per un tiro alternativo basta descrivere l'attacco e motivarlo a voce al Master; scrivere è facoltativo. Il bersaglio riceve la richiesta di difendersi con CM, Riflessi, Resistenza o Manifestazione del Potere secondo la tecnica. Offline tutto rimane utilizzabile, con scelta di bersaglio, confronto dei tiri ed esito gestibili manualmente.
 
 La presenza online dichiara tutte le schede possedute dalla sessione: cambiare scheda aggiorna subito la presenza, quindi una richiesta di attacco non viene persa durante il cambio. Master e Co-Master condividono il registro in sola lettura delle schede dei partecipanti nella stessa turnistica; dal partecipante puoi aprire «Apri scheda». Le copie online non trasferiscono la proprietà della scheda al personale.
