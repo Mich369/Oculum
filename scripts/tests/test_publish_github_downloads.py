@@ -11,14 +11,14 @@ spec.loader.exec_module(publisher)
 
 class DownloadPublicationTests(unittest.TestCase):
     def test_only_successful_trusted_repository_builds(self):
-        run = dict(conclusion="success", status="completed", head_branch="codex/oculum-completamento-20261022",
+        run = dict(conclusion="success", status="completed", head_branch="main",
                    name="Build distribution main @ abc123", head_sha="a" * 40,
                    repository={"full_name": publisher.REPO},
                    head_repository={"full_name": publisher.REPO})
         workflow = dict(name="Build distribution",
                         path=".github/workflows/build_distribution.yml")
         publisher.validate_run(run, workflow)
-        for key, value in [("conclusion", "failure"), ("head_branch", ""),
+        for key, value in [("conclusion", "failure"), ("head_branch", ""), ("head_branch", "feature"),
                            ("head_repository", {"full_name": "outsider/fork"})]:
             with self.assertRaises(ValueError):
                 publisher.validate_run({**run, key: value}, workflow)
@@ -74,6 +74,24 @@ class DownloadPublicationTests(unittest.TestCase):
 
 
 class DownloadRecoveryTests(unittest.TestCase):
+    def test_resolve_latest_successful_main_distribution(self):
+        builds = {"workflow_runs": [
+            {"id": 25, "status": "completed", "conclusion": "success",
+             "head_branch": "main", "head_repository": {"full_name": "other/fork"}},
+            {"id": 24, "status": "completed", "conclusion": "success",
+             "head_branch": "main", "head_repository": {"full_name": publisher.REPO}},
+        ]}
+        with patch.object(publisher, "api", return_value=builds):
+            self.assertEqual(publisher.resolve_run_id(""), "24")
+        with patch.object(publisher, "api") as mocked:
+            self.assertEqual(publisher.resolve_run_id("123"), "123")
+            mocked.assert_not_called()
+        with self.assertRaisesRegex(ValueError, "Invalid run id"):
+            publisher.resolve_run_id("invalid")
+        with patch.object(publisher, "api", return_value={"workflow_runs": []}):
+            with self.assertRaisesRegex(ValueError, "No successful"):
+                publisher.resolve_run_id("")
+
     def test_channel_does_not_regress_across_branches(self):
         catalog = {"one": dict(workflow="Build distribution", runId=200)}
         self.assertFalse(publisher.can_promote_channel(catalog, "100"))
