@@ -230,7 +230,18 @@ void main() {
         );
         expect((eye['sheetData'] as Map)['tipoScheda'], 'Mostro');
       }
-      expect(state.masterInitiativeTokens, isEmpty);
+      // The updated manual keeps party members and friendly NPCs on the
+      // initiative board after the fight; only enemies are removed.
+      expect(state.masterInitiativeTokens, hasLength(1));
+      expect(state.masterInitiativeTokens.single['id'], 'PLAYER');
+      expect(state.masterInitiativeTokens.single['side'], 'party');
+      expect(state.masterInitiativeGroups.first['combatEnded'], isTrue);
+      final remainingGroupTokens =
+          (state.masterInitiativeGroups.first['tokens'] as List)
+              .whereType<Map>()
+              .toList();
+      expect(remainingGroupTokens, hasLength(1));
+      expect(remainingGroupTokens.single['id'], 'PLAYER');
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 1));
     },
