@@ -361,7 +361,7 @@ void main() {
           );
           expect(
             (state.logEventi as List).join('\n'),
-            contains('[DIFESA RICHIESTA ·'),
+            contains('[DIFESA]'),
           );
           final request =
               state.onlineCombatRequests['live-damage'] as Map<String, dynamic>;
