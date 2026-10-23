@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'oculum_custom_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,6 +43,25 @@ class OculumThemePresentation {
 
 final oculumThemePresentation = ValueNotifier(const OculumThemePresentation());
 
+const _randomHomeArtPacks = <String>[
+  'classic_reliquary',
+  'classic_rpg',
+  'blood_court',
+  'witch_glass',
+  'moon_iron',
+  'lunar_eclipse',
+  'cathedral_rose',
+  'thorn_vigil',
+  'frost_chapel',
+  'obsidian_sigil',
+  'solar_reliquary',
+  'storm_cathedral',
+  'abyssal_tide',
+  'ember_rite',
+  'ivory_archive',
+  'vervain_gothic',
+];
+
 Future<void> loadOculumThemePresentation() async {
   await loadOculumCustomArtwork();
   final prefs = await SharedPreferences.getInstance();
@@ -59,7 +80,15 @@ Future<void> loadOculumThemePresentation() async {
       .25,
       1,
     ),
-    artPackId: prefs.getString('oculum.themeArtPack') ?? '',
+    // An empty preference means that the player has never selected the Home
+    // artwork. Choose an image pack for this launch, but do not persist it:
+    // the next launch can choose again, while an explicit selection remains
+    // stable through setOculumThemePresentation.
+    artPackId: () {
+      final selected = prefs.getString('oculum.themeArtPack') ?? '';
+      if (selected.isNotEmpty) return selected;
+      return _randomHomeArtPacks[Random.secure().nextInt(_randomHomeArtPacks.length)];
+    }(),
   );
 }
 

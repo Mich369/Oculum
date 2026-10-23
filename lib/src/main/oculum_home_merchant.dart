@@ -130,6 +130,73 @@ int oculumBlackMarketFallenEyePrice({
   return (subtotal * (100 + blocks * max(0, surplusPercentPerBlock))) ~/ 100;
 }
 
+bool oculumBlackMarketMonsterBookPageEligible(MonsterBookEntry entry) {
+  if (entry.isNpc) return false;
+  final identity = '${entry.id} ${entry.nameIt} ${entry.nameEn}'.toLowerCase();
+  return entry.formTags.any(
+        (tag) => oculumNormalizeText(tag) == 'aberrazione',
+      ) ||
+      RegExp(r'errante|wandering').hasMatch(identity);
+}
+
+int oculumBlackMarketMonsterBookPageBasePrice(MonsterBookEntry entry) =>
+    entry.formTags.any((tag) => oculumNormalizeText(tag) == 'aberrazione')
+    ? 90
+    : 56;
+
+List<MonsterBookEntry> oculumRankBlackMarketMonsterBookPages({
+  required Iterable<MonsterBookEntry> entries,
+  required int playerLevel,
+  required Map<String, int> playerStats,
+  Set<String> alreadyKnownWeakPoints = const <String>{},
+  int limit = 3,
+}) {
+  if (limit <= 0) return const <MonsterBookEntry>[];
+  const statKeys = <String>['resilienza', 'volonta', 'materia', 'oculum'];
+  final owner = <String, int>{
+    for (final key in statKeys) key: max(0, playerStats[key] ?? 0),
+  };
+  final ownerTotal = statKeys.fold<int>(0, (sum, key) => sum + owner[key]!);
+  final candidates =
+      entries
+          .where(
+            (entry) =>
+                oculumBlackMarketMonsterBookPageEligible(entry) &&
+                !alreadyKnownWeakPoints.contains(entry.id),
+          )
+          .toList()
+        ..sort((a, b) {
+          int score(MonsterBookEntry entry) {
+            final stats = entry.stats;
+            final statDistance = statKeys.fold<int>(0, (sum, key) {
+              return sum + ((stats[key] ?? 0) - owner[key]!).abs();
+            });
+            final total = statKeys.fold<int>(
+              0,
+              (sum, key) => sum + max(0, stats[key] ?? 0),
+            );
+            final levelDistance = ((stats['level'] ?? 0) - playerLevel).abs();
+            return statDistance +
+                (total - ownerTotal).abs() +
+                levelDistance * 5;
+          }
+
+          final difference = score(a).compareTo(score(b));
+          return difference != 0 ? difference : a.id.compareTo(b.id);
+        });
+  final selected = <MonsterBookEntry>[];
+  final families = <String>{};
+  for (final entry in candidates) {
+    final family = oculumNormalizeText(
+      entry.nameIt.split(RegExp(r'[·|/]')).first.trim(),
+    );
+    if (!families.add(family)) continue;
+    selected.add(entry);
+    if (selected.length >= max(0, limit)) break;
+  }
+  return selected;
+}
+
 String? oculumMerchantCanonicalOfferKey(Map<String, dynamic> offer) {
   final kind = '${offer['kind'] ?? ''}';
   String canonicalName(String key, List<String> prefixes) {
@@ -169,11 +236,191 @@ String? oculumMerchantCanonicalOfferKey(Map<String, dynamic> offer) {
       return 'fallen_eye:${offer['sourceMonsterId'] ?? offer['id']}:${offer['level'] ?? ''}';
     case 'black_market_ascension_dust':
       return 'ascension_dust';
+    case 'monster_book_page':
+      return 'monster_book_page:${offer['monsterBookId'] ?? offer['id']}';
     default:
       return kind.startsWith('black_market_')
           ? 'black_market:${offer['id'] ?? offer['name']}'
           : null;
   }
+}
+
+int oculumMerchantOfferCount(Random random) =>
+    random.nextInt(100) < 16 ? 12 : 6 + random.nextInt(4);
+
+String? oculumMerchantOfferFamilyKey(Map<String, dynamic> offer) {
+  final canonical = oculumMerchantCanonicalOfferKey(offer);
+  if (canonical != null) return canonical;
+  final kind = '${offer['kind'] ?? ''}';
+  if (kind == 'gathering_collector') return 'gathering_collector';
+  if (kind == 'creature_core') return 'creature_core';
+  if (kind == 'stat_gem') return 'stat_gem:${offer['stat'] ?? ''}';
+  if (kind == 'food') {
+    final condition = '${offer['condition'] ?? ''}'.trim();
+    if (condition == 'fortificato' ||
+        readIntValue(offer['defensePercent']) > 0) {
+      return 'food:defense';
+    }
+    if (condition.isNotEmpty) return 'food:condition:$condition';
+    if (readIntValue(offer['damagePercent']) > 0) {
+      return 'food:damage_percent';
+    }
+    if (readIntValue(offer['defensePercent']) > 0) {
+      return 'food:defense_percent';
+    }
+    if (offer['restoreAllStats'] == true) return 'food:restore_all_stats';
+    if (readIntValue(offer['healHpPercent']) > 0) return 'food:heal_hp';
+    if (offer['cleanseNegativeConditions'] == true) {
+      return 'food:cleanse_conditions';
+    }
+    final stats = const [
+      'resilienza',
+      'volonta',
+      'materia',
+      'oculum',
+    ].where(offer.containsKey).toList(growable: false);
+    if (stats.isNotEmpty) return 'food:stats:${stats.join(',')}';
+    final id = '${offer['id'] ?? offer['name'] ?? ''}'.trim();
+    return id.isEmpty ? null : 'food:$id';
+  }
+  final id = '${offer['id'] ?? ''}'.trim();
+  return id.isEmpty ? null : '$kind:$id';
+}
+
+List<Map<String, dynamic>> oculumMerchantUniqueOffers(
+  Iterable<Map<String, dynamic>> offers, {
+  Random? random,
+  Set<String> preferredIds = const <String>{},
+}) {
+  final seen = <String>{};
+  final indexes = <String, int>{};
+  final familyCounts = <String, int>{};
+  final unique = <Map<String, dynamic>>[];
+  for (final offer in offers) {
+    final key = oculumMerchantOfferFamilyKey(offer);
+    if (key == null || seen.add(key)) {
+      if (key != null) {
+        indexes[key] = unique.length;
+        familyCounts[key] = 1;
+      }
+      unique.add(offer);
+      continue;
+    }
+    final index = indexes[key]!;
+    final existing = unique[index];
+    final offerId = '${offer['id'] ?? ''}';
+    final existingId = '${existing['id'] ?? ''}';
+    final isPreferred = preferredIds.contains(offerId);
+    final existingIsPreferred = preferredIds.contains(existingId);
+    final familyCount = (familyCounts[key] ?? 1) + 1;
+    familyCounts[key] = familyCount;
+    if ((isPreferred && !existingIsPreferred) ||
+        (!existingIsPreferred &&
+            !isPreferred &&
+            random != null &&
+            random.nextInt(familyCount) == 0)) {
+      unique[index] = offer;
+    }
+  }
+  return unique;
+}
+
+List<Map<String, dynamic>> oculumSelectMerchantOffers(
+  List<Map<String, dynamic>> offers, {
+  required int characterLevel,
+  required int budget,
+  required int count,
+  required Random random,
+  int Function(Map<String, dynamic> offer)? priceOf,
+}) {
+  final remaining = oculumMerchantUniqueOffers(offers).toList();
+  final selected = <Map<String, dynamic>>[];
+  final target = min(max(0, count), remaining.length);
+  while (selected.length < target) {
+    final weights = remaining
+        .map((offer) {
+          final hasLevel =
+              offer.containsKey('requiredLevel') ||
+              offer.containsKey('level') ||
+              offer.containsKey('recommendedLevel');
+          final offerLevel = readIntValue(
+            offer['requiredLevel'] ??
+                offer['level'] ??
+                offer['recommendedLevel'],
+          );
+          final levelGap = (offerLevel - max(0, characterLevel)).abs();
+          final levelWeight = !hasLevel
+              ? 1.0
+              : levelGap <= 1
+              ? 2.0
+              : levelGap <= 3
+              ? 1.5
+              : levelGap <= 6
+              ? 1.0
+              : .65;
+          final price = max(
+            0,
+            priceOf?.call(offer) ?? readIntValue(offer['cost']),
+          );
+          final budgetWeight = budget <= 0
+              ? 1.0
+              : price <= budget
+              ? 1.12
+              : price <= budget + budget ~/ 4
+              ? 1.0
+              : .88;
+          return levelWeight * budgetWeight;
+        })
+        .toList(growable: false);
+    final totalWeight = weights.fold<double>(0, (sum, value) => sum + value);
+    var ticket = random.nextDouble() * totalWeight;
+    var pickedIndex = weights.length - 1;
+    for (var index = 0; index < weights.length; index++) {
+      ticket -= weights[index];
+      if (ticket < 0) {
+        pickedIndex = index;
+        break;
+      }
+    }
+    selected.add(remaining.removeAt(pickedIndex));
+  }
+  return selected;
+}
+
+List<Map<String, dynamic>> oculumMerchantTimedFoodEffects(
+  Map<String, dynamic> food, {
+  required String source,
+}) {
+  final duration = readIntValue(
+    food['conditionTurns'],
+    fallback: 3,
+  ).clamp(1, 999).toInt();
+  final effects = <Map<String, dynamic>>[];
+  for (final entry in <({String type, String target, String key})>[
+    (
+      type: 'danno_percentuale',
+      target: 'danni_percentuale',
+      key: 'damagePercent',
+    ),
+    (
+      type: 'difesa_percentuale',
+      target: 'difesa_percentuale',
+      key: 'defensePercent',
+    ),
+  ]) {
+    final value = readIntValue(food[entry.key]);
+    if (value == 0) continue;
+    effects.add(<String, dynamic>{
+      'type': entry.type,
+      'target': entry.target,
+      'value': value,
+      'remaining': duration,
+      'unit': 'turni',
+      'source': source,
+      'mode': 'temporaneo',
+    });
+  }
+  return effects;
 }
 
 int oculumAlchemyMediumFallenEyeLevel(int ownerLevel) =>
@@ -615,6 +862,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             offer['defence'] != null,
       'mercato_nero' =>
         kind.startsWith('black_market_') ||
+            kind == 'monster_book_page' ||
             (kind == 'technique_scroll' &&
                 offer['blackMarketSelected'] == true),
       'infermiera_eroica' =>
@@ -642,21 +890,162 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   List<Map<String, dynamic>> recommendedMerchantStock() {
-    final ordered = oculumMerchantOrderedOffers(
-      ensureMerchantStock().where(merchantOfferMatchesShop).toList(),
+    final stock = ensureMerchantStock();
+    final selections = _activeMerchantProfile()['offerSelections'];
+    final selection = selections is Map ? selections[merchantShopType] : null;
+    final rawSelectedIds = selection is Map ? selection['ids'] : null;
+    if (rawSelectedIds is! List) return const <Map<String, dynamic>>[];
+    final selectedIds = rawSelectedIds.map((id) => '$id').toSet();
+    final selected = stock
+        .where(
+          (offer) =>
+              merchantOfferMatchesShop(offer) &&
+              selectedIds.contains('${offer['id'] ?? ''}') &&
+              !merchantOfferUnavailable(offer),
+        )
+        .toList();
+    return oculumMerchantOrderedOffers(
+      oculumMerchantUniqueOffers(selected),
       merchantNeedStats,
     );
-    if (merchantShopType != 'mercato_nero' &&
-        merchantShopType != 'infermiera_eroica') {
-      return ordered;
+  }
+
+  List<Map<String, dynamic>> _merchantReservedOffers(
+    List<Map<String, dynamic>> candidates,
+  ) {
+    Map<String, dynamic>? firstWhere(bool Function(Map<String, dynamic>) test) {
+      for (final offer in candidates) {
+        if (test(offer)) return offer;
+      }
+      return null;
     }
-    final seen = <String>{};
-    return ordered
-        .where((offer) {
-          final key = oculumMerchantCanonicalOfferKey(offer);
-          return key == null || seen.add(key);
-        })
-        .toList(growable: false);
+
+    final reserved = <Map<String, dynamic>>[];
+    switch (merchantShopType) {
+      case 'mercato_nero':
+        final dust = firstWhere(
+          (offer) => offer['kind'] == 'black_market_ascension_dust',
+        );
+        final scroll = firstWhere(
+          (offer) =>
+              (offer['kind'] == 'technique_scroll' &&
+                  offer['blackMarketSelected'] == true) ||
+              offer['kind'] == 'black_market_scroll',
+        );
+        final entrySkill = firstWhere(
+          (offer) =>
+              offer['kind'] == 'black_market_skill' &&
+              readIntValue(offer['requiredLevel']) <=
+                  max(0, leggiNumero(livelloController)),
+        );
+        if (dust != null) reserved.add(dust);
+        if (scroll != null) reserved.add(scroll);
+        if (entrySkill != null) reserved.add(entrySkill);
+        break;
+      case 'alchimista':
+        final fate = firstWhere((offer) => offer['kind'] == 'fate_sign');
+        final pet = firstWhere((offer) => offer['kind'] == 'alchemy_pet');
+        if (fate != null) reserved.add(fate);
+        if (pet != null) reserved.add(pet);
+        break;
+      case 'fabbro':
+        final pawn = firstWhere(
+          (offer) => offer['kind'] == 'pawn' || offer['kind'] == 'pawn_v2',
+        );
+        if (pawn != null) reserved.add(pawn);
+        break;
+      case 'materiali':
+        final vitalium = firstWhere((offer) => offer['kind'] == 'raw_vitalium');
+        if (vitalium != null) reserved.add(vitalium);
+        break;
+      case 'infermiera_eroica':
+        final refill = firstWhere(
+          (offer) =>
+              offer['kind'] == 'nurse_service' && offer['service'] == 'full',
+        );
+        if (refill != null) reserved.add(refill);
+        break;
+    }
+    return reserved;
+  }
+
+  void _ensureMerchantOfferSelection() {
+    final profile = _activeMerchantProfile();
+    final selections = profile['offerSelections'] is Map
+        ? Map<String, dynamic>.from(profile['offerSelections'] as Map)
+        : <String, dynamic>{};
+    final savedValue = selections[merchantShopType];
+    final saved = savedValue is Map
+        ? Map<String, dynamic>.from(savedValue)
+        : <String, dynamic>{};
+    final savedIds = (saved['ids'] as List?)
+        ?.map((id) => '$id')
+        .toList(growable: true);
+    final random = Random.secure();
+    final level = max(0, leggiNumero(livelloController));
+    final candidates = oculumMerchantUniqueOffers(
+      merchantStock
+          .where(merchantOfferMatchesShop)
+          .where((offer) => !merchantOfferUnavailable(offer)),
+      random: random,
+      preferredIds: savedIds?.toSet() ?? const <String>{},
+    );
+    final reserved = _merchantReservedOffers(candidates);
+    final reservedIds = reserved
+        .map((offer) => '${offer['id'] ?? ''}')
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    final levelChanged = readIntValue(saved['level'], fallback: -1) != level;
+    final wasSaved = savedIds != null && savedValue is Map;
+    final targetCount = wasSaved && !levelChanged
+        ? readIntValue(saved['count'], fallback: 0).clamp(6, 12).toInt()
+        : oculumMerchantOfferCount(random);
+    final candidateIds = candidates
+        .map((offer) => '${offer['id'] ?? ''}')
+        .toSet();
+    final selectedIds = <String>[];
+    for (final id in reservedIds) {
+      if (candidateIds.contains(id)) selectedIds.add(id);
+    }
+    if (wasSaved && !levelChanged) {
+      for (final id in savedIds) {
+        if (candidateIds.contains(id) && !selectedIds.contains(id)) {
+          selectedIds.add(id);
+        }
+      }
+    }
+    if (selectedIds.length > targetCount) {
+      selectedIds.removeRange(targetCount, selectedIds.length);
+    }
+    final missing = max(0, targetCount - selectedIds.length);
+    if (missing > 0) {
+      final selectedSet = selectedIds.toSet();
+      final extras = oculumSelectMerchantOffers(
+        candidates
+            .where((offer) => !selectedSet.contains('${offer['id'] ?? ''}'))
+            .toList(),
+        characterLevel: level,
+        budget: max(0, leggiNumero(obserController)),
+        count: missing,
+        random: random,
+        priceOf: merchantOfferCost,
+      );
+      selectedIds.addAll(extras.map((offer) => '${offer['id'] ?? ''}'));
+    }
+    final next = <String, dynamic>{
+      'level': level,
+      'count': targetCount,
+      'ids': selectedIds,
+    };
+    if (saved['level'] == next['level'] &&
+        saved['count'] == next['count'] &&
+        (saved['ids'] as List?)?.map((id) => '$id').join('|') ==
+            selectedIds.join('|')) {
+      return;
+    }
+    selections[merchantShopType] = next;
+    profile['offerSelections'] = selections;
+    programmaSalvataggio(invalidateCaches: false);
   }
 
   void selectMerchantShop(String type) {
@@ -672,6 +1061,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     _saveActiveMerchantProfileStock();
     programmaSalvataggio();
+    unawaited(sendRealtimeMerchantRosterSnapshot());
   }
 
   String merchantRecommendation(Map<String, dynamic> offer) {
@@ -738,10 +1128,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   Map<String, dynamic> _activeMerchantProfile() {
     for (final profile in merchantProfiles) {
       if ('${profile['id'] ?? ''}' == merchantActiveProfileId) {
+        final needsPrice = !profile.containsKey('pricePercent');
         profile.putIfAbsent(
           'pricePercent',
           () => oculumMerchantPricePercent(Random.secure()),
         );
+        if (needsPrice) unawaited(sendRealtimeMerchantRosterSnapshot());
         return profile;
       }
     }
@@ -752,6 +1144,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       'pricePercent': oculumMerchantPricePercent(Random.secure()),
     };
     merchantProfiles.add(profile);
+    unawaited(sendRealtimeMerchantRosterSnapshot());
     return profile;
   }
 
@@ -790,6 +1183,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     // ignore: invalid_use_of_protected_member
     setState(() {});
     programmaSalvataggio();
+    unawaited(sendRealtimeMerchantRosterSnapshot());
   }
 
   void createRandomMerchantProfile() {
@@ -893,6 +1287,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         }
       }
       ensureMerchantSpecialOffers();
+      _ensureMerchantOfferSelection();
       _saveActiveMerchantProfileStock();
       return merchantStock;
     }
@@ -1207,6 +1602,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       _activeMerchantProfile()['alchemyFallenEyeStockRolled'] = true;
     }
     ensureMerchantSpecialOffers();
+    _ensureMerchantOfferSelection();
     _saveActiveMerchantProfileStock();
     return merchantStock;
   }
@@ -1221,6 +1617,39 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     void addMany(Iterable<Map<String, dynamic>> offers) {
       for (final offer in offers) {
         if (ids.add('${offer['id']}')) merchantStock.add(offer);
+      }
+    }
+
+    if (merchantShopType == 'mercato_nero') {
+      final ownerStats = <String, int>{
+        'resilienza': currentStatNaturalControllerMax('resilienza'),
+        'volonta': currentStatNaturalControllerMax('volonta'),
+        'materia': currentStatNaturalControllerMax('materia'),
+        'oculum': currentStatNaturalControllerMax('oculum'),
+      };
+      final alreadyKnown = <String>{
+        for (final entry in monsterBookEntries)
+          if (monsterBookPartyKnowledge(entry.id)?['pagePurchased'] == true)
+            entry.id,
+      };
+      final candidates = oculumRankBlackMarketMonsterBookPages(
+        entries: monsterBookEntries,
+        playerLevel: max(0, leggiNumero(livelloController)),
+        playerStats: ownerStats,
+        alreadyKnownWeakPoints: alreadyKnown,
+        limit: 3,
+      );
+      for (final entry in candidates) {
+        add(<String, dynamic>{
+          'id': 'monster_book_page_${entry.id}',
+          'name': 'Pagina Monster Book · ${entry.nameIt}',
+          'kind': 'monster_book_page',
+          'monsterBookId': entry.id,
+          'cost': oculumBlackMarketMonsterBookPageBasePrice(entry),
+          'remaining': 1,
+          'desc':
+              'Pagina rara del Mercato Nero: rivela aspetto, resistenze e punto debole specifico. Sblocca il tiro Precisione mirato in combattimento. Prezzo ${oculumBlackMarketMonsterBookPageBasePrice(entry)} Obser.',
+        });
       }
     }
 
@@ -1912,6 +2341,158 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             'desc':
                 '+${stage * 2}% ${spec.$1}, 3 turni. Versioni dello stesso buff non cumulative. Valori modificabili nelle condizioni.',
           },
+      ...<Map<String, dynamic>>[
+        {
+          'id': 'meal_vital_memory',
+          'name': 'Bistecca del Ricordo Vitale',
+          'cost': 38,
+          'condition': 'ricordo_vitale',
+          'conditionTurns': 3,
+          'desc':
+              'Ricordo Vitale per 3 turni: il personaggio subisce più danni, ma recupera parte dei danni HP ricevuti secondo la condizione.',
+        },
+        {
+          'id': 'drink_blood_vitality_i',
+          'name': 'Infuso Ematico · I',
+          'cost': 46,
+          'condition': 'vampirismo',
+          'conditionStage': 1,
+          'conditionTurns': 3,
+          'desc':
+              'Vampirismo I per 3 turni. Effetto configurabile nella condizione.',
+        },
+        {
+          'id': 'drink_blood_vitality_ii',
+          'name': 'Infuso Ematico · II',
+          'cost': 78,
+          'condition': 'vampirismo',
+          'conditionStage': 2,
+          'conditionTurns': 3,
+          'desc':
+              'Vampirismo II per 3 turni. Effetto configurabile nella condizione.',
+        },
+        {
+          'id': 'drink_blood_vitality_iii',
+          'name': 'Infuso Ematico · III',
+          'cost': 124,
+          'condition': 'vampirismo',
+          'conditionStage': 3,
+          'conditionTurns': 3,
+          'desc':
+              'Vampirismo III per 3 turni. Effetto configurabile nella condizione.',
+        },
+        {
+          'id': 'meal_hunters_fervor',
+          'name': 'Arrosto del Cacciatore Cremisi',
+          'cost': 72,
+          'damagePercent': 30,
+          'conditionTurns': 3,
+          'desc': '+30% Danni per 3 turni di combattimento.',
+        },
+        {
+          'id': 'meal_rune_bastion',
+          'name': 'Brodo del Bastione Runico',
+          'cost': 68,
+          'defensePercent': 20,
+          'conditionTurns': 3,
+          'desc': '+20% Difesa per 3 turni di combattimento.',
+        },
+        {
+          'id': 'drink_clear_veil',
+          'name': 'Tisana della Soglia Trasparente',
+          'cost': 58,
+          'condition': 'trasparenza',
+          'conditionTurns': 3,
+          'desc': 'Trasparenza per 3 turni: Velo +6 + livello.',
+        },
+        {
+          'id': 'drink_invisibility',
+          'name': 'Elisir dell’Assenza',
+          'cost': 116,
+          'condition': 'invisibile',
+          'conditionTurns': 3,
+          'desc': 'Invisibilità per 3 turni: Velo +18 + livello.',
+        },
+        {
+          'id': 'drink_quickstep',
+          'name': 'Liquore del Passo Cavo',
+          'cost': 44,
+          'condition': 'accelerato',
+          'conditionTurns': 3,
+          'desc':
+              'Accelerato per 3 turni. Effetto configurabile nella condizione.',
+        },
+        {
+          'id': 'drink_focus',
+          'name': 'Tè delle Quattro Lenti',
+          'cost': 42,
+          'condition': 'concentrato',
+          'conditionTurns': 3,
+          'desc':
+              'Concentrato per 3 turni. Effetto configurabile nella condizione.',
+        },
+        {
+          'id': 'meal_fortified',
+          'name': 'Stufato della Muraglia Viva',
+          'cost': 52,
+          'condition': 'fortificato',
+          'conditionTurns': 3,
+          'desc': 'Fortificato per 3 turni: Difesa +15% (minimo +1).',
+        },
+        {
+          'id': 'meal_fourfold_feast',
+          'name': 'Banchetto delle Quattro Vene',
+          'cost': 90,
+          'resilienza': 2,
+          'volonta': 2,
+          'materia': 2,
+          'oculum': 2,
+          'desc':
+              'Bonus consumabile alle quattro statistiche fino al prossimo riposo.',
+        },
+        {
+          'id': 'meal_sunroot',
+          'name': 'Radici Dorate al Miele',
+          'cost': 34,
+          'resilienza': 3,
+          'materia': 1,
+        },
+        {
+          'id': 'meal_moonfish',
+          'name': 'Pesce Lunare in Crosta',
+          'cost': 36,
+          'volonta': 3,
+          'oculum': 1,
+        },
+        {
+          'id': 'drink_star_anise',
+          'name': 'Cordiale di Anice Stellare',
+          'cost': 31,
+          'materia': 2,
+          'oculum': 1,
+        },
+        {
+          'id': 'drink_mineral_spring',
+          'name': 'Acqua della Sorgente Minerale',
+          'cost': 24,
+          'resilienza': 1,
+          'materia': 2,
+        },
+        {
+          'id': 'meal_red_fungus',
+          'name': 'Fungo Rosso alla Brace',
+          'cost': 28,
+          'volonta': 2,
+          'materia': 1,
+        },
+        {
+          'id': 'meal_cloudbread',
+          'name': 'Pane di Nuvola Salata',
+          'cost': 26,
+          'resilienza': 2,
+          'volonta': 1,
+        },
+      ],
     ];
     for (final food in extendedFoods) {
       Map<String, dynamic>? existing;
@@ -1922,10 +2503,18 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         }
       }
       final offer = existing ?? <String, dynamic>{};
-      offer.addAll(food);
-      offer['kind'] = 'food';
-      offer['desc'] = merchantFoodOfferDescription(food);
-      if (existing == null) merchantStock.add(offer);
+      if (existing == null) {
+        offer.addAll(food);
+        offer['kind'] = 'food';
+        offer['desc'] = merchantFoodOfferDescription(food);
+        merchantStock.add(offer);
+      } else {
+        for (final entry in food.entries) {
+          offer.putIfAbsent(entry.key, () => entry.value);
+        }
+        offer.putIfAbsent('kind', () => 'food');
+        offer.putIfAbsent('desc', () => merchantFoodOfferDescription(offer));
+      }
     }
   }
 
@@ -2123,6 +2712,13 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       return merchantDustPurchaseCount >=
           readIntValue(offer['purchaseLimit'], fallback: 3);
     }
+    if (offer['kind'] == 'monster_book_page' &&
+        monsterBookPartyKnowledge(
+              '${offer['monsterBookId'] ?? ''}',
+            )?['pagePurchased'] ==
+            true) {
+      return true;
+    }
     return offer.containsKey('remaining') &&
         readIntValue(offer['remaining'], fallback: 1) <= 0;
   }
@@ -2261,8 +2857,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           ),
           subtitle: Text(
             t(
-              'Bancarella personale · puoi tornare ai mercanti già incontrati.',
-              'Personal stall · revisit merchants you have already met.',
+              'Bancarella personale · 6–9 offerte, 16% di probabilità di trovarne 12.',
+              'Personal stall · 6–9 offers, with a 16% chance of 12.',
             ),
             style: const TextStyle(color: Colors.white70, fontSize: 11),
           ),
@@ -2438,6 +3034,33 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (cost <= 0) return;
     if (leggiNumero(obserController) < cost) return;
     final kind = '${offer['kind'] ?? ''}';
+    if (kind == 'monster_book_page') {
+      final monsterId = '${offer['monsterBookId'] ?? ''}'.trim();
+      final monster = monsterBookEntryById(monsterId);
+      if (monster == null ||
+          monsterBookPartyKnowledge(monsterId)?['pagePurchased'] == true) {
+        return;
+      }
+      // ignore: invalid_use_of_protected_member
+      setState(() {
+        obserController.text = (leggiNumero(obserController) - cost).toString();
+        offer['remaining'] = 0;
+        risultato =
+            'Pagina Monster Book acquistata: ${monster.nameIt} · punto debole scoperto.';
+        aggiungiLog(risultato);
+      });
+      // Share only the discovery marker and stable Monster Book id.
+      rememberMonsterBookPartyDiscovery(
+        monsterId,
+        seen: true,
+        weakPoint: true,
+        pagePurchased: true,
+        broadcast: true,
+      );
+      _saveActiveMerchantProfileStock();
+      programmaSalvataggio();
+      return;
+    }
     if ((kind == 'fate_sign' ||
             kind == 'chaos_sign' ||
             kind == 'fallen_eye' ||
@@ -3105,6 +3728,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           'condition',
           'conditionStage',
           'conditionTurns',
+          'damagePercent',
+          'defensePercent',
           'learnMonsterId',
         ])
           if (offer.containsKey(key)) key: offer[key],
@@ -3388,6 +4013,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           food['resistanceElement'] != null ||
           food['subtraitId'] != null ||
           food['condition'] != null ||
+          readIntValue(food['damagePercent']) != 0 ||
+          readIntValue(food['defensePercent']) != 0 ||
           food['isMaterial'] == true ||
           item.nome.startsWith('Erba ') ||
           item.nome.startsWith('Polline ') ||
@@ -3457,6 +4084,28 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             });
             effects.add('+$subtraitBonus $subtraitId');
             invalidateHiddenEyeDerivedCaches();
+          }
+          final timedEffects = oculumMerchantTimedFoodEffects(
+            Map<String, dynamic>.from(food),
+            source: 'Cibo e Bevanda · ${item.nome}',
+          );
+          for (final timed in timedEffects) {
+            activeStructuredEffects.removeWhere(
+              (effect) =>
+                  effect['source'] == timed['source'] &&
+                  effect['type'] == timed['type'] &&
+                  effect['target'] == timed['target'],
+            );
+            activeStructuredEffects.add(<String, dynamic>{
+              'id':
+                  'merchant_food_${timed['target']}_${DateTime.now().microsecondsSinceEpoch}',
+              ...timed,
+            });
+            final label = timed['type'] == 'danno_percentuale'
+                ? 'Danni'
+                : 'Difesa';
+            final value = readIntValue(timed['value']);
+            effects.add('$label ${value > 0 ? '+' : ''}$value%');
           }
           final condition = '${food['condition'] ?? ''}'.trim();
           if (condition.isNotEmpty) {

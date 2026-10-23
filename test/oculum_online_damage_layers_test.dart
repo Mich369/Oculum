@@ -30,6 +30,12 @@ class _LayerTransport extends OculumRealtimeService {
 }
 
 void main() {
+  test('Semi Letale adds its 250 points to configured incoming damage', () {
+    expect(oculumAddIncomingDamagePercent(1.0, 250), 3.5);
+    expect(oculumAddIncomingDamagePercent(1.25, 250), 3.75);
+    expect(oculumAddIncomingDamagePercent(3.5, 250), 6.0);
+  });
+
   testWidgets('selected defender consumes defense and all HP layers once', (
     tester,
   ) async {
@@ -323,11 +329,8 @@ void main() {
     state.statoForzaPronto = false;
     state.currentOculumController.text = '0';
     await tester.runAsync(
-      () => probe.damageResolved(
-        10000,
-        bypassDefense: true,
-        bypassShields: true,
-      ),
+      () =>
+          probe.damageResolved(10000, bypassDefense: true, bypassShields: true),
     );
     expect(int.parse(state.currentHpController.text), (maximum * .75).ceil());
     expect(state.schedePersonaggio[0]['aberrationPhase'], 3);
@@ -340,11 +343,8 @@ void main() {
     state.statoForzaPronto = false;
     state.currentOculumController.text = '0';
     await tester.runAsync(
-      () => probe.damageResolved(
-        10000,
-        bypassDefense: true,
-        bypassShields: true,
-      ),
+      () =>
+          probe.damageResolved(10000, bypassDefense: true, bypassShields: true),
     );
     expect(state.currentHpController.text, '0');
     state.schedePersonaggio[0].remove('monsterBookSourceId');
@@ -367,11 +367,15 @@ void main() {
       reason: 'The ordinary Defense button must answer the pending attack',
     );
     expect(last['defenseChoice'], 'cm');
-    state.realtimeVisibleInitiativeSnapshot['tokens'] =
-        <Map<String, dynamic>>[
-      {'id': owner, 'sheetTag': owner, 'name': 'Rose'},
-      {'id': enemy, 'sheetTag': enemy, 'name': 'Avversario'},
-      {'id': 'OTHER', 'sheetTag': 'OTHER', 'name': 'Altro mostro'},
+    state.realtimeVisibleInitiativeSnapshot['tokens'] = <Map<String, dynamic>>[
+      {'id': owner, 'sheetTag': owner, 'name': 'Rose', 'side': 'ally'},
+      {'id': enemy, 'sheetTag': enemy, 'name': 'Avversario', 'side': 'enemy'},
+      {
+        'id': 'OTHER',
+        'sheetTag': 'OTHER',
+        'name': 'Altro mostro',
+        'side': 'enemy',
+      },
     ];
     state.activeStructuredEffects.clear();
     state.buffMalusRapidiController.text = '@Danni+8';
@@ -654,6 +658,9 @@ void main() {
       'natural': 20,
       'total': 10000,
     };
+    state.schedaCorrente = 0;
+    probe.addCondition('trasparenza');
+    final fullVeilBonus = probe.veilSubtraitBonus();
     probe.receiveCombat('combat_scout', {
       ...scoutPacket,
       'sessionId': 'forged',
@@ -662,6 +669,12 @@ void main() {
     probe.receiveCombat('combat_scout', scoutPacket);
     expect(state.onlineCombatRequests['scout-once']['scoutPhase'], 'result');
     expect(state.onlineCombatRequests['scout-once']['weakPoint'], isTrue);
+    expect(state.onlineCombatRequests['scout-once']['veilBuffHalved'], isTrue);
+    final fullScoutVelo = probe.combatScoutVeloAt(0);
+    expect(
+      probe.combatScoutVeloAt(0, observerSide: 'enemy'),
+      fullScoutVelo - fullVeilBonus + fullVeilBonus ~/ 2,
+    );
     final scoutLogs = (state.logEventi as List)
         .where((e) => '$e'.contains('[OSSERVAZIONE]'))
         .length;

@@ -911,6 +911,7 @@ class OculumRealtimeService {
     required bool fromMaster,
     required bool masterParty,
     List<String> targetTags = const <String>[],
+    List<String> allowClearFields = const <String>[],
     String deliveryId = '',
   }) {
     return _queueSharedSheet(<String, dynamic>{
@@ -923,6 +924,7 @@ class OculumRealtimeService {
       'senderRole': senderRole,
       'targetAudience': targetAudience,
       'targetTags': targetTags,
+      if (allowClearFields.isNotEmpty) 'allowClearFields': allowClearFields,
       'fromMaster': fromMaster,
       'masterParty': masterParty,
       'sheet': sheet,
@@ -1057,6 +1059,42 @@ class OculumRealtimeService {
       ...payload,
       'sessionId': _presenceKey,
       'playerName': _displayName,
+    });
+  }
+
+  /// Send only a campaign discovery marker through the existing lightweight
+  /// party-log route, avoiding a Monster Book or character-sheet snapshot.
+  Future<bool> sendMonsterBookDiscovery(Map<String, dynamic> payload) {
+    return _sendConfirmed('party_log', {
+      ...payload,
+      'monsterBookDiscovery': true,
+      'sessionId': _presenceKey,
+      'playerName': _displayName,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  /// Reconcile only compact Monster Book discovery markers after presence
+  /// changes. This deliberately reuses the existing party-log event channel.
+  Future<bool> sendMonsterBookDiscoverySnapshot(Map<String, dynamic> payload) {
+    return _sendConfirmed('party_log', {
+      ...payload,
+      'monsterBookDiscoverySnapshot': true,
+      'sessionId': _presenceKey,
+      'playerName': _displayName,
+      'sentAt': _nowIso(),
+    });
+  }
+
+  /// Synchronize only campaign merchant identities and shop metadata.
+  /// Per-character offers, stock, and purchase counters stay local.
+  Future<bool> sendMerchantRosterSnapshot(Map<String, dynamic> payload) {
+    return _sendConfirmed('party_log', {
+      ...payload,
+      'merchantRosterSnapshot': true,
+      'sessionId': _presenceKey,
+      'playerName': _displayName,
+      'sentAt': _nowIso(),
     });
   }
 

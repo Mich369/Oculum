@@ -53,6 +53,7 @@ class _CombatService extends OculumRealtimeService {
     required bool fromMaster,
     required bool masterParty,
     List<String> targetTags = const [],
+    List<String> allowClearFields = const [],
     String deliveryId = '',
   }) async {
     staffSheets.add({
@@ -66,6 +67,7 @@ class _CombatService extends OculumRealtimeService {
       'masterParty': masterParty,
       'campaignId': campaignId,
       'campaignName': campaignName,
+      'allowClearFields': allowClearFields,
     });
   }
 
@@ -104,6 +106,7 @@ class _CombatService extends OculumRealtimeService {
     required bool fromMaster,
     required bool masterParty,
     List<String> targetTags = const [],
+    List<String> allowClearFields = const [],
     String deliveryId = '',
   }) async {
     await sendSharedSheet(
@@ -118,6 +121,7 @@ class _CombatService extends OculumRealtimeService {
       fromMaster: fromMaster,
       masterParty: masterParty,
       targetTags: targetTags,
+      allowClearFields: allowClearFields,
       deliveryId: deliveryId,
     );
     return true;

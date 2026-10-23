@@ -29,6 +29,62 @@ class OculumCombatScoutRead {
   bool get isExact => reveal == OculumCombatScoutReveal.exact;
 }
 
+/// Returns the strongest active Invisibility/Transparency Velo bonus.
+///
+/// An exact Percezione reading halves each condition's bonus for the observing
+/// side, rounding down. An approximate reading does not change the bonus, and
+/// other sides retain the original bonus.
+/// The condition's saved editor values and level scaling remain authoritative.
+int oculumCombatScoutVeilBonus({
+  required Iterable<Map> conditions,
+  required int level,
+  bool exactPerceptionReading = false,
+}) {
+  var bonus = 0;
+  for (final condition in conditions) {
+    final type = '${condition['conditionType'] ?? condition['type'] ?? ''}';
+    if (type != 'invisibile' && type != 'trasparenza') continue;
+    final rawMetadata = condition['metadata'];
+    final metadata = rawMetadata is Map
+        ? rawMetadata
+        : const <String, dynamic>{};
+    final base = type == 'invisibile' ? 18 : 6;
+    final rawBase = metadata['veilBaseBonus'];
+    final parsedBase = rawBase is num
+        ? rawBase.toInt()
+        : int.tryParse('${rawBase ?? ''}') ?? base;
+    final rawAddLevel = metadata['veilAddLevel'];
+    final addLevel = rawAddLevel == null
+        ? true
+        : rawAddLevel == true || rawAddLevel == 1 || rawAddLevel == 'true';
+    final value = parsedBase + (addLevel ? (level < 0 ? 0 : level) : 0);
+    final normalized = value < 0 ? 0 : value;
+    final effective = exactPerceptionReading ? normalized ~/ 2 : normalized;
+    if (effective > bonus) bonus = effective;
+  }
+  return bonus;
+}
+
+/// Whether this incoming damage element has an explicit saved resistance.
+/// Explicit per-element customizations override Monster Book anatomy defaults;
+/// temporary effects are intentionally resolved separately by the caller.
+bool oculumIncomingResistanceIsExplicit({
+  required String elementId,
+  required Map savedPresets,
+  required Map savedPercentages,
+  String legacyPercentage = '',
+}) {
+  final id = elementId.trim().toLowerCase();
+  bool containsElement(Map map) =>
+      map.keys.any((key) => '$key'.trim().toLowerCase() == id);
+  if (containsElement(savedPresets) || containsElement(savedPercentages)) {
+    return true;
+  }
+  final hasTypedConfiguration =
+      savedPresets.isNotEmpty || savedPercentages.isNotEmpty;
+  return !hasTypedConfiguration && legacyPercentage.trim().isNotEmpty;
+}
+
 /// Resolves the confirmed Percezione threshold.
 ///
 /// Exact information requires `level + Velo`. A miss of at most five returns

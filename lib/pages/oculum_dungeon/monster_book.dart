@@ -12,6 +12,10 @@ part 'gold_marble_aberrations.dart';
 part 'elemental_collector.dart';
 part 'concrete_monster_techniques.dart';
 
+bool oculumMonsterBookNameIsDiscovered(Map<String, dynamic>? knowledge) =>
+    knowledge?['nameKnown'] == true ||
+    knowledge?['pagePurchased'] == true;
+
 class MonsterBookEntry {
   final String id;
   final String nameIt;
@@ -26,6 +30,9 @@ class MonsterBookEntry {
   final bool isNpc;
   final bool isNullFateless;
   final Map<String, int> stats;
+  final String weakPointIt;
+  final String weakPointEn;
+  final Map<String, String> damageResistancePresets;
   final List<String> skillIds;
   final List<String> dropIds;
 
@@ -35,6 +42,15 @@ class MonsterBookEntry {
   final bool canWieldWeapons;
   final List<String> weaponTags;
   final List<String> armorTags;
+
+  String get weakPointDescriptionIt => weakPointIt.trim().isNotEmpty
+      ? weakPointIt.trim()
+      : oculumMonsterBookWeakPointDescription(this);
+  String get weakPointDescriptionEn => weakPointEn.trim().isNotEmpty
+      ? weakPointEn.trim()
+      : oculumMonsterBookWeakPointDescription(this, english: true);
+  Map<String, String> get incomingDamageResistancePresets =>
+      oculumMonsterBookDamageResistancePresets(this);
 
   /// Oggetti reali ottenuti quando questo mostro viene creato come scheda.
   /// Restano dati del Book, non cambiano il formato dei salvataggi esistenti.
@@ -58,6 +74,9 @@ class MonsterBookEntry {
     this.isNpc = false,
     required this.isNullFateless,
     this.stats = const {},
+    this.weakPointIt = '',
+    this.weakPointEn = '',
+    this.damageResistancePresets = const {},
     this.skillIds = const [],
     this.dropIds = const [],
     this.dropChances = const {},
@@ -89,6 +108,9 @@ class MonsterBookEntry {
     bool? isNpc,
     bool? isNullFateless,
     Map<String, int>? stats,
+    String? weakPointIt,
+    String? weakPointEn,
+    Map<String, String>? damageResistancePresets,
     List<String>? skillIds,
     List<String>? dropIds,
     Map<String, int>? dropChances,
@@ -112,6 +134,10 @@ class MonsterBookEntry {
       isNpc: isNpc ?? this.isNpc,
       isNullFateless: isNullFateless ?? this.isNullFateless,
       stats: stats ?? this.stats,
+      weakPointIt: weakPointIt ?? this.weakPointIt,
+      weakPointEn: weakPointEn ?? this.weakPointEn,
+      damageResistancePresets:
+          damageResistancePresets ?? this.damageResistancePresets,
       skillIds: skillIds ?? this.skillIds,
       dropIds: dropIds ?? this.dropIds,
       dropChances: dropChances ?? this.dropChances,
@@ -139,6 +165,11 @@ class MonsterBookEntry {
       'isNpc': isNpc,
       'isNullFateless': isNullFateless,
       'stats': Map<String, int>.from(stats),
+      'weakPointIt': weakPointIt,
+      'weakPointEn': weakPointEn,
+      'damageResistancePresets': Map<String, String>.from(
+        damageResistancePresets,
+      ),
       'skillIds': List<String>.from(skillIds),
       'dropIds': List<String>.from(dropIds),
       'dropChances': Map<String, int>.from(dropChances),
@@ -180,6 +211,11 @@ class MonsterBookEntry {
       isNpc: _monsterBookBool(json['isNpc']) || type == 'npc',
       isNullFateless: _monsterBookBool(json['isNullFateless']),
       stats: stats,
+      weakPointIt: '${json['weakPointIt'] ?? ''}',
+      weakPointEn: '${json['weakPointEn'] ?? ''}',
+      damageResistancePresets: _monsterBookStringMap(
+        json['damageResistancePresets'],
+      ),
       skillIds: _monsterBookStrings(json['skillIds']),
       dropIds: _monsterBookStrings(json['dropIds']),
       dropChances: _monsterBookIntMap(json['dropChances']),
@@ -191,6 +227,138 @@ class MonsterBookEntry {
       ),
     );
   }
+}
+
+Map<String, String> _monsterBookStringMap(dynamic value) {
+  if (value is! Map) return const <String, String>{};
+  return <String, String>{
+    for (final entry in value.entries)
+      if ('${entry.key}'.trim().isNotEmpty &&
+          '${entry.value}'.trim().isNotEmpty)
+        '${entry.key}'.trim(): '${entry.value}'.trim(),
+  };
+}
+
+String oculumMonsterBookWeakPointDescription(
+  MonsterBookEntry entry, {
+  bool english = false,
+}) {
+  final description = english ? entry.descEn : entry.descIt;
+  final match = RegExp(
+    r'(?:punto\s+debole|weak\s+point)\s*:\s*([^.;\n]+)',
+    caseSensitive: false,
+  ).firstMatch(description);
+  if (match != null) return match.group(1)!.trim();
+
+  final identity = '${entry.id} ${entry.nameIt} ${entry.nameEn} ${entry.descIt}'
+      .toLowerCase();
+  if (identity.contains('goblin') &&
+      (identity.contains('assassin') || identity.contains('assassino'))) {
+    return english
+        ? 'the exposed tendon at the dagger wrist, where the grip and thrust meet'
+        : 'il tendine esposto al polso del pugnale, dove presa e affondo si incontrano';
+  }
+  if (identity.contains('golem') ||
+      identity.contains('costrutto') ||
+      identity.contains('construct')) {
+    return english
+        ? 'the rune nexus where the chest grooves converge on the core beneath the plates'
+        : 'il nodo runico dove i solchi del petto convergono sul nucleo sotto le piastre';
+  }
+  if (RegExp(
+    r'incorpore|spettro|fantasma|wraith|ghost|phantom|spirit|spirito',
+  ).hasMatch(identity)) {
+    return english
+        ? 'the shadow or reflection anchoring its presence to the battlefield'
+        : 'l’ombra o il riflesso che ancora la sua presenza al campo di battaglia';
+  }
+  if (RegExp(
+    r'guscio|carapace|shell|conchiglia|corazza|corazzat|placca',
+  ).hasMatch(identity)) {
+    return english
+        ? 'the soft hinge beneath the lower rim of its shell, exposed when it turns'
+        : 'la giuntura morbida sotto il bordo inferiore del guscio, esposta quando si gira';
+  }
+  if (RegExp(
+    r'ala|alato|arpia|wing|volatile|uccello|bird',
+  ).hasMatch(identity)) {
+    return english
+        ? 'the wing root, exposed when it banks or folds its wings'
+        : 'l’attaccatura dell’ala, esposta quando piega o inclina le ali';
+  }
+  if (RegExp(r'slime|gelatina|melma').hasMatch(identity)) {
+    return english
+        ? 'the core, briefly visible when the body stretches around a blow'
+        : 'il nucleo, visibile per un istante quando il corpo si tende attorno a un colpo';
+  }
+  if (entry.elementId.trim().isNotEmpty && entry.elementId != 'fisico') {
+    final element = entry.elementId.replaceAll('_', ' ');
+    return english
+        ? 'the point where its $element gathers beneath the body or armor'
+        : 'il punto in cui $element si concentra sotto il corpo o la corazza';
+  }
+  return english
+      ? 'the exposed joint that bears its weight when it changes direction'
+      : 'l’articolazione esposta che sostiene il peso quando cambia direzione';
+}
+
+/// Resistance values use the existing damage presets. Neutral categories are
+/// omitted and inherit the sheet's current setting; explicit saved overrides
+/// always take precedence over the anatomy-based defaults.
+Map<String, String> oculumMonsterBookDamageResistancePresets(
+  MonsterBookEntry entry,
+) {
+  final identity = '${entry.id} ${entry.nameIt} ${entry.nameEn} ${entry.descIt}'
+      .toLowerCase();
+  final presets = <String, String>{};
+  final shell = RegExp(
+    r'guscio|carapace|shell|conchiglia|corazza|corazzat|placca|crosta',
+  ).hasMatch(identity);
+  final construct = RegExp(
+    r'golem|costrutto|construct|pietra|metallo|runic|runic[oa]',
+  ).hasMatch(identity);
+  final incorporeal = RegExp(
+    r'incorpore|spettro|fantasma|wraith|ghost|phantom|spirit|spirito',
+  ).hasMatch(identity);
+  final slime = RegExp(r'slime|gelatina|melma').hasMatch(identity);
+  if (incorporeal) {
+    presets.addAll({
+      'taglio': 'Alta Resistenza',
+      'perforante': 'Alta Resistenza',
+      'contundente': 'Alta Resistenza',
+      'luce': 'Fragilità Bassa',
+    });
+  } else if (construct) {
+    presets.addAll({
+      'taglio': 'Resistenza',
+      'perforante': 'Resistenza Leggera',
+      'contundente': 'Fragilità Bassa',
+      if (identity.contains('runic') || identity.contains('runico'))
+        'elettrico': 'Fragilità Bassa',
+      'acido': 'Resistenza Leggera',
+    });
+  } else if (shell) {
+    presets.addAll({
+      'taglio': 'Resistenza Leggera',
+      'perforante': 'Resistenza Leggera',
+      'contundente': 'Fragilità Bassa',
+    });
+  } else if (slime) {
+    presets.addAll({
+      'taglio': 'Resistenza Leggera',
+      'perforante': 'Resistenza',
+      'contundente': 'Normale',
+      'fuoco': 'Fragilità Bassa',
+    });
+  }
+  final element = entry.elementId.trim().toLowerCase();
+  if (element.isNotEmpty &&
+      element != 'fisico' &&
+      !presets.containsKey(element)) {
+    presets[element] = 'Resistenza Leggera';
+  }
+  presets.addAll(entry.damageResistancePresets);
+  return Map<String, String>.unmodifiable(presets);
 }
 
 bool oculumDeadKnightCanTakeDamage({

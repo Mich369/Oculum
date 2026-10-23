@@ -3,7 +3,6 @@ on:
   workflow_run:
     workflows: [Build distribution]
     types: [completed]
-    branches: [main]
   workflow_dispatch:
     inputs:
       run_id:

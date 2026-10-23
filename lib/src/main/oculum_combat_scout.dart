@@ -3,10 +3,202 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 extension _OculumCombatScout on _OculumHomePageState {
+  String monsterBookPartyDiscoveryKey(String monsterId) =>
+      '$permissionCampaignId:${monsterId.trim()}';
+
+  Map<String, dynamic>? monsterBookPartyKnowledge(String monsterId) =>
+      monsterBookPartyDiscoveries[monsterBookPartyDiscoveryKey(monsterId)];
+
+  List<Map<String, dynamic>> monsterBookPartyDiscoverySnapshotEntries() {
+    final prefix = '$permissionCampaignId:';
+    final entries = <Map<String, dynamic>>[];
+    for (final entry in monsterBookPartyDiscoveries.entries) {
+      if (!entry.key.startsWith(prefix)) continue;
+      final id = entry.key.substring(prefix.length).trim();
+      if (id.isEmpty || monsterBookEntryById(id) == null) continue;
+      final knowledge = entry.value;
+      final seen = knowledge['seen'] == true;
+      final nameKnown = knowledge['nameKnown'] == true;
+      final weakPoint = knowledge['weakPoint'] == true;
+      final pagePurchased = knowledge['pagePurchased'] == true;
+      if (!seen && !nameKnown && !weakPoint && !pagePurchased) continue;
+      entries.add({
+        'monsterBookId': id,
+        'seen': seen,
+        'nameKnown': nameKnown || pagePurchased,
+        'weakPoint': weakPoint || pagePurchased,
+        'pagePurchased': pagePurchased,
+      });
+    }
+    entries.sort(
+      (a, b) => '${a['monsterBookId']}'.compareTo('${b['monsterBookId']}'),
+    );
+    return entries;
+  }
+
+  Future<void> sendMonsterBookPartyDiscoverySnapshot() async {
+    final service = realtimeService;
+    if (service?.isConnected != true) return;
+    final entries = monsterBookPartyDiscoverySnapshotEntries();
+    const batchSize = 50;
+    for (var start = 0; start < entries.length; start += batchSize) {
+      if (!mounted || realtimeService != service || !service!.isConnected) {
+        return;
+      }
+      final batch = entries.skip(start).take(batchSize).toList();
+      final batchIndex = start ~/ batchSize;
+      final sent = await service.sendMonsterBookDiscoverySnapshot(
+        permissionEnvelope({
+          'id':
+              'book-snapshot:$permissionCampaignId:$batchIndex:${batch.length}',
+          'discoveries': batch,
+        }),
+      );
+      if (!sent) return;
+      if (start + batchSize < entries.length) {
+        await Future<void>.delayed(const Duration(milliseconds: 80));
+      }
+    }
+  }
+
+  bool monsterBookPartyKnowsName(String monsterId) =>
+      oculumMonsterBookNameIsDiscovered(monsterBookPartyKnowledge(monsterId));
+
+  bool monsterBookPartyKnowsWeakPoint(String monsterId) =>
+      monsterBookPartyKnowledge(monsterId)?['weakPoint'] == true;
+
+  void rememberMonsterBookPartyDiscovery(
+    String monsterId, {
+    bool nameKnown = false,
+    bool seen = false,
+    bool weakPoint = false,
+    bool pagePurchased = false,
+    bool broadcast = false,
+  }) {
+    final id = monsterId.trim();
+    if (id.isEmpty || monsterBookEntryById(id) == null) return;
+    final key = monsterBookPartyDiscoveryKey(id);
+    final previous = monsterBookPartyDiscoveries[key] ?? const {};
+    final next = <String, dynamic>{
+      ...previous,
+      'monsterBookId': id,
+      'seen': previous['seen'] == true || seen,
+      'nameKnown': previous['nameKnown'] == true || nameKnown || pagePurchased,
+      'weakPoint': previous['weakPoint'] == true || weakPoint || pagePurchased,
+      'pagePurchased': previous['pagePurchased'] == true || pagePurchased,
+      'discoveredAt':
+          previous['discoveredAt'] ?? DateTime.now().toIso8601String(),
+    };
+    if (mapEquals(previous, next)) return;
+    monsterBookPartyDiscoveries[key] = next;
+    combatKnowledgeRevision.value++;
+    programmaSalvataggio();
+    if (broadcast && realtimeService?.isConnected == true) {
+      unawaited(
+        realtimeService!.sendMonsterBookDiscovery(
+          permissionEnvelope({
+            'id': 'book:$permissionCampaignId:$id:${next['discoveredAt']}',
+            'monsterBookId': id,
+            'nameKnown': nameKnown || pagePurchased,
+            'seen': seen,
+            'weakPoint': weakPoint || pagePurchased,
+            'pagePurchased': pagePurchased,
+          }),
+        ),
+      );
+    }
+    if (mounted) setState(() {});
+  }
+
+  void receiveMonsterBookPartyDiscovery(Map<String, dynamic> payload) {
+    if (!validPermissionSender(payload) ||
+        payload['campaignId'] != permissionCampaignId) {
+      return;
+    }
+    final monsterId = '${payload['monsterBookId'] ?? ''}'.trim();
+    if (monsterId.isEmpty || monsterBookEntryById(monsterId) == null) return;
+    rememberMonsterBookPartyDiscovery(
+      monsterId,
+      nameKnown: payload['nameKnown'] == true,
+      seen: payload['seen'] == true,
+      weakPoint: payload['weakPoint'] == true,
+      pagePurchased: payload['pagePurchased'] == true,
+    );
+  }
+
+  void receiveMonsterBookPartyDiscoverySnapshot(Map<String, dynamic> payload) {
+    if (payload['monsterBookDiscoverySnapshot'] != true ||
+        !validPermissionSender(payload) ||
+        payload['campaignId'] != permissionCampaignId ||
+        payload['discoveries'] is! List) {
+      return;
+    }
+    final incoming = payload['discoveries'] as List;
+    if (incoming.length > 50) return;
+    var changed = false;
+    for (final raw in incoming) {
+      if (raw is! Map) continue;
+      final id = '${raw['monsterBookId'] ?? ''}'.trim();
+      if (id.isEmpty || monsterBookEntryById(id) == null) continue;
+      final key = monsterBookPartyDiscoveryKey(id);
+      final previous = monsterBookPartyDiscoveries[key] ?? const {};
+      final pagePurchased =
+          previous['pagePurchased'] == true || raw['pagePurchased'] == true;
+      final next = <String, dynamic>{
+        ...previous,
+        'monsterBookId': id,
+        'seen': previous['seen'] == true || raw['seen'] == true,
+        'nameKnown':
+            previous['nameKnown'] == true ||
+            raw['nameKnown'] == true ||
+            pagePurchased,
+        'weakPoint':
+            previous['weakPoint'] == true ||
+            raw['weakPoint'] == true ||
+            pagePurchased,
+        'pagePurchased': pagePurchased,
+        'discoveredAt':
+            previous['discoveredAt'] ?? DateTime.now().toIso8601String(),
+      };
+      if (mapEquals(previous, next)) continue;
+      monsterBookPartyDiscoveries[key] = next;
+      changed = true;
+    }
+    if (!changed) return;
+    combatKnowledgeRevision.value++;
+    programmaSalvataggio();
+    if (mounted) setState(() {});
+  }
+
+  String monsterBookIdForCombatToken(Map<String, dynamic> token) {
+    final fromToken =
+        '${token['monsterBookId'] ?? token['monsterBookSourceId'] ?? ''}'
+            .trim();
+    if (fromToken.isNotEmpty) return fromToken;
+    final index = localSheetIndexForOculumTag(onlineCombatTokenTag(token));
+    if (index < 0 || index >= schedePersonaggio.length) return '';
+    return '${schedePersonaggio[index]['monsterBookSourceId'] ?? ''}'.trim();
+  }
+
+  bool combatTokenWeakPointKnown(Map<String, dynamic> token) {
+    final targetTag = onlineCombatTokenTag(token);
+    final discovery =
+        combatDiscoveries[combatDiscoveryKey(
+          targetTag,
+          combatScoutSide(sheetTagAt(schedaCorrente)),
+        )];
+    return discovery?['weakPoint'] == true ||
+        monsterBookPartyKnowsWeakPoint(monsterBookIdForCombatToken(token));
+  }
+
   void forgetCombatDiscoveries(String encounter) {
+    final previousCount = combatDiscoveries.length;
     combatDiscoveries.removeWhere(
       (key, _) => key.startsWith('$activeCampaignId:$encounter:'),
     );
+    if (combatDiscoveries.length != previousCount) {
+      combatKnowledgeRevision.value++;
+    }
   }
 
   void mergeCombatDiscoveries(
@@ -29,6 +221,7 @@ extension _OculumCombatScout on _OculumHomePageState {
             'weakPoint': true,
         };
         combatDiscoveries.remove(e.key);
+        combatKnowledgeRevision.value++;
       }
     }
   }
@@ -65,9 +258,36 @@ extension _OculumCombatScout on _OculumHomePageState {
     return stat == null ? 0 : max(0, hiddenEyeTotal(stat));
   }
 
-  int sheetCombatScoutVeloAt(int index) {
+  bool combatScoutVeilBuffHalvedForSheet(String tag, String observerSide) =>
+      combatDiscoveries[combatDiscoveryKey(
+        tag,
+        observerSide,
+      )]?['veilBuffHalved'] ==
+      true;
+
+  bool sheetCombatScoutHasVeilAt(int index) {
+    if (index < 0 || index >= schedePersonaggio.length) return false;
+    final conditions = index == schedaCorrente
+        ? activeConditions.map((condition) => condition.toJson())
+        : (schedePersonaggio[index]['conditions'] as List? ?? const [])
+              .whereType<Map>();
+    return conditions.any((condition) {
+      final type = '${condition['conditionType'] ?? condition['type'] ?? ''}';
+      return type == 'invisibile' || type == 'trasparenza';
+    });
+  }
+
+  int sheetCombatScoutVeloAt(int index, {String? observerSide}) {
     if (index < 0 || index >= schedePersonaggio.length) return 0;
-    if (index == schedaCorrente) return activeCombatScoutVelo();
+    final halveVeil =
+        observerSide != null &&
+        combatScoutVeilBuffHalvedForSheet(sheetTagAt(index), observerSide);
+    if (index == schedaCorrente) {
+      final fullVelo = activeCombatScoutVelo();
+      if (!halveVeil) return fullVelo;
+      final fullVeilBonus = conditionSubtraitBonus('velo');
+      return max(0, fullVelo - fullVeilBonus + fullVeilBonus ~/ 2);
+    }
     final sheet = schedePersonaggio[index];
     final raw = (sheet['hiddenEyeStats'] as List? ?? const <dynamic>[])
         .whereType<Map>()
@@ -75,6 +295,13 @@ extension _OculumCombatScout on _OculumHomePageState {
         .firstOrNull;
     if (raw == null || raw['unlocked'] == false) return 0;
     final level = sheetIntValueAt(index, 'livello');
+    final conditions = (sheet['conditions'] as List? ?? const [])
+        .whereType<Map>();
+    final veilBonus = oculumCombatScoutVeilBonus(
+      conditions: conditions,
+      level: level,
+      exactPerceptionReading: halveVeil,
+    );
     return max(
       0,
       readIntValue(raw['valore']) +
@@ -91,7 +318,8 @@ extension _OculumCombatScout on _OculumHomePageState {
                 '${sheet['humanoidRole'] ?? ''}',
                 level,
               )['velo'] ??
-              0),
+              0) +
+          veilBonus,
     );
   }
 
@@ -113,7 +341,10 @@ extension _OculumCombatScout on _OculumHomePageState {
     combatDiscoveries[key] = {
       ...?(rank(previous) > rank(read) ? previous : read),
       'weakPoint': previous?['weakPoint'] == true || read['weakPoint'] == true,
+      'veilBuffHalved':
+          previous?['veilBuffHalved'] == true || read['veilBuffHalved'] == true,
     };
+    combatKnowledgeRevision.value++;
   }
 
   Future<void> scoutCombatTarget({
@@ -128,14 +359,18 @@ extension _OculumCombatScout on _OculumHomePageState {
     final own = sheetTagAt(schedaCorrente);
     final online = realtimeService?.isConnected == true;
     final encounter = onlineCombatEncounterId;
-    final tokens = online
-        ? onlineAttackTokens()
-        : <Map<String, dynamic>>[
-            for (var i = 0; i < schedePersonaggio.length; i++)
-              if (i != schedaCorrente &&
-                  schedePersonaggio[i]['realtimeSharedSheet'] != true)
-                {'sheetTag': sheetTagAt(i), 'name': nomeSchedaPersonaggio(i)},
-          ];
+    final locallyVisibleSheets = <Map<String, dynamic>>[
+      for (var i = 0; i < schedePersonaggio.length; i++)
+        if (i != schedaCorrente)
+          {'sheetTag': sheetTagAt(i), 'name': nomeSchedaPersonaggio(i)},
+    ];
+    final activeEncounterTargets = online ? onlineAttackTokens() : const [];
+    // Percezione is an exploration action too: when the Master has not
+    // published an initiative order, use the sheets already visible to this
+    // client instead of requiring combat tokens.
+    final tokens = activeEncounterTargets.isNotEmpty
+        ? activeEncounterTargets
+        : locallyVisibleSheets;
     final target =
         selectedTarget ??
         await showDialog<Map<String, dynamic>>(
@@ -212,7 +447,7 @@ extension _OculumCombatScout on _OculumHomePageState {
           final read = oculumCombatScoutRead(
             rollTotal: total,
             targetLevel: sheetCriticalLevelAt(index),
-            targetVelo: sheetCombatScoutVeloAt(index),
+            targetVelo: sheetCombatScoutVeloAt(index, observerSide: 'ally'),
             targetGrade: sheetIntValueAt(index, 'grado'),
             targetCm: sheetRollBonusAt(index, 'cm'),
           );
@@ -226,10 +461,26 @@ extension _OculumCombatScout on _OculumHomePageState {
               'rollDifficulty': sheetDifficoltaTiroAt(index),
             if (read.showsProbabilities)
               'difficulty': normalizedCampaignDifficulty(),
+            'veilBuffHalved': read.isExact && sheetCombatScoutHasVeilAt(index),
             'weakPoint': read.isExact && natural == 20,
           });
+          final monsterBookId = monsterBookIdForCombatToken(target);
+          if (read.isExact && natural == 20 && monsterBookId.isNotEmpty) {
+            rememberMonsterBookPartyDiscovery(
+              monsterBookId,
+              seen: true,
+              weakPoint: true,
+              broadcast: true,
+            );
+          } else if (monsterBookId.isNotEmpty) {
+            rememberMonsterBookPartyDiscovery(
+              monsterBookId,
+              seen: true,
+              broadcast: true,
+            );
+          }
           aggiungiLog(
-            '[PERCEZIONE] ${target['name']}: ${combatScoutReadText(read)}${read.showsProbabilities ? '; livello ${read.targetLevel}, grado ${read.targetGrade}' : ''}${read.isExact && natural == 20 ? '; punto debole: Fragilità Semi Letale per te e gli alleati fino a fine fight' : ''}.',
+            '[PERCEZIONE] ${target['name']}: ${combatScoutReadText(read)}${read.showsProbabilities ? '; livello ${read.targetLevel}, grado ${read.targetGrade}' : ''}${read.isExact && sheetCombatScoutHasVeilAt(index) ? '; bonus Velo di Invisibilità/Trasparenza dimezzato per difetto per te e gli alleati fino a fine fight' : ''}${read.isExact && natural == 20 ? '; punto debole: Fragilità Semi Letale per te e gli alleati fino a fine fight' : ''}.',
           );
           programmaSalvataggio();
         }
@@ -245,7 +496,12 @@ extension _OculumCombatScout on _OculumHomePageState {
     final source = '${payload['sourceTag'] ?? ''}',
         target = '${payload['targetTag'] ?? ''}',
         id = '${payload['id'] ?? ''}';
-    final tags = onlineCombatTokens().map(onlineCombatTokenTag).toSet();
+    final combatTokens = onlineCombatTokens();
+    final tags = combatTokens.isNotEmpty
+        ? combatTokens.map(onlineCombatTokenTag).toSet()
+        : <String>{
+            for (var i = 0; i < schedePersonaggio.length; i++) sheetTagAt(i),
+          };
     final incomingRequest =
         payload['scoutPhase'] == 'request' && controlsOnlineCombatSheet(target);
     if (id.isEmpty ||
@@ -275,11 +531,20 @@ extension _OculumCombatScout on _OculumHomePageState {
       final read = oculumCombatScoutRead(
         rollTotal: readIntValue(payload['total']),
         targetLevel: sheetCriticalLevelAt(targetIndex),
-        targetVelo: sheetCombatScoutVeloAt(targetIndex),
+        targetVelo: sheetCombatScoutVeloAt(
+          targetIndex,
+          observerSide: combatScoutSide(source),
+        ),
         targetGrade: sheetIntValueAt(targetIndex, 'grado'),
         targetCm: sheetRollBonusAt(targetIndex, 'cm'),
       );
       final weakPoint = read.isExact && readIntValue(payload['natural']) == 20;
+      final veilBuffHalved =
+          read.isExact && sheetCombatScoutHasVeilAt(targetIndex);
+      final targetSheet = schedePersonaggio[targetIndex];
+      final monsterBookId =
+          '${payload['monsterBookId'] ?? targetSheet['monsterBookSourceId'] ?? ''}'
+              .trim();
       final reply = <String, dynamic>{
         ...payload,
         'kind': 'scout',
@@ -295,19 +560,38 @@ extension _OculumCombatScout on _OculumHomePageState {
         if (read.showsProbabilities)
           'rollDifficulty': sheetDifficoltaTiroAt(targetIndex),
         'weakPoint': weakPoint,
+        'veilBuffHalved': veilBuffHalved,
+        if (monsterBookId.isNotEmpty) 'monsterBookId': monsterBookId,
       };
       for (final key in ['senderTag', 'senderRole', 'sessionId']) {
         reply.remove(key);
       }
       onlineCombatRequests[id] = reply;
+      if (read.showsProbabilities) {
+        rememberCombatScoutRead(
+          combatDiscoveryKey(target, combatScoutSide(source)),
+          {
+            'reveal': read.reveal.name,
+            'veilBuffHalved': veilBuffHalved,
+            'weakPoint': weakPoint,
+          },
+        );
+      }
       if (weakPoint) {
+        if (monsterBookId.isNotEmpty) {
+          rememberMonsterBookPartyDiscovery(
+            monsterBookId,
+            seen: true,
+            weakPoint: true,
+          );
+        }
         rememberCombatScoutRead(
           combatDiscoveryKey(target, combatScoutSide(source)),
           {'weakPoint': true},
         );
       }
       aggiungiLog(
-        '[PERCEZIONE] ${payload['sourceName']} ha ottenuto ${combatScoutReadText(read)}${weakPoint ? ' e il punto debole fino a fine fight' : ''}.',
+        '[PERCEZIONE] ${payload['sourceName']} ha ottenuto ${combatScoutReadText(read)}${veilBuffHalved ? '; bonus Velo di Invisibilità/Trasparenza dimezzato per difetto' : ''}${weakPoint ? ' e il punto debole fino a fine fight' : ''}.',
       );
       unawaited(
         realtimeService?.sendCombatEvent('combat_scout', {
@@ -342,7 +626,16 @@ extension _OculumCombatScout on _OculumHomePageState {
         if (reveal != OculumCombatScoutReveal.insufficient.name)
           'rollDifficulty': readIntValue(payload['rollDifficulty']),
         'weakPoint': payload['weakPoint'] == true,
+        'veilBuffHalved': payload['veilBuffHalved'] == true,
       });
+      final monsterBookId = '${payload['monsterBookId'] ?? ''}'.trim();
+      if (monsterBookId.isNotEmpty) {
+        rememberMonsterBookPartyDiscovery(
+          monsterBookId,
+          seen: true,
+          weakPoint: payload['weakPoint'] == true,
+        );
+      }
       final request = onlineCombatRequests[id];
       if (request != null && request['status'] == 'pending') {
         request['status'] = 'resolved';
@@ -351,7 +644,7 @@ extension _OculumCombatScout on _OculumHomePageState {
               ? 'lettura esatta; livello ${payload['level']}'
               : reveal == OculumCombatScoutReveal.approximate.name
               ? 'lettura approssimata; livello ${payload['level']}, grado ${payload['grade']}'
-              : 'non senti abbastanza'}${payload['weakPoint'] == true ? '; punto debole: Fragilità Semi Letale per te e gli alleati fino a fine fight' : ''}.',
+              : 'non senti abbastanza'}${payload['veilBuffHalved'] == true ? '; bonus Velo di Invisibilità/Trasparenza dimezzato per difetto' : ''}${payload['weakPoint'] == true ? '; punto debole: Fragilità Semi Letale per te e gli alleati fino a fine fight' : ''}.',
         );
       }
     } else {

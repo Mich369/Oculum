@@ -7,6 +7,116 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('merchant offer counts and selection stay varied but focused', () {
+    final countRandom = Random(20261022);
+    var twelveOfferShops = 0;
+    for (var index = 0; index < 20000; index++) {
+      final count = oculumMerchantOfferCount(countRandom);
+      expect(count == 12 || (count >= 6 && count <= 9), isTrue);
+      if (count == 12) twelveOfferShops++;
+    }
+    expect(twelveOfferShops / 20000, closeTo(.16, .01));
+
+    final offers = <Map<String, dynamic>>[
+      for (var index = 0; index < 3; index++)
+        {'id': 'near_$index', 'kind': 'gear', 'level': 8 + index, 'cost': 500},
+      {'id': 'far', 'kind': 'gear', 'level': 18, 'cost': 500},
+    ];
+    var nearLevelPicks = 0;
+    final levelRandom = Random(281);
+    for (var index = 0; index < 3000; index++) {
+      final selected = oculumSelectMerchantOffers(
+        offers,
+        characterLevel: 9,
+        budget: 1000,
+        count: 1,
+        random: levelRandom,
+      ).single;
+      if ('${selected['id']}' != 'far') nearLevelPicks++;
+    }
+    expect(nearLevelPicks / 3000, greaterThan(.85));
+
+    final budgetOffers = [
+      {'id': 'affordable', 'kind': 'food', 'cost': 100},
+      {'id': 'costly', 'kind': 'food', 'cost': 1000},
+    ];
+    var affordablePicks = 0;
+    final budgetRandom = Random(877);
+    for (var index = 0; index < 3000; index++) {
+      if (oculumSelectMerchantOffers(
+            budgetOffers,
+            characterLevel: 4,
+            budget: 500,
+            count: 1,
+            random: budgetRandom,
+          ).single['id'] ==
+          'affordable') {
+        affordablePicks++;
+      }
+    }
+    expect(affordablePicks / 3000, inInclusiveRange(.53, .59));
+  });
+
+  test('merchant selection hides duplicate versions of the same effect', () {
+    final offers = <Map<String, dynamic>>[
+      {
+        'id': 'meal_low',
+        'kind': 'food',
+        'condition': 'vampirismo',
+        'conditionStage': 1,
+      },
+      {
+        'id': 'meal_high',
+        'kind': 'food',
+        'condition': 'vampirismo',
+        'conditionStage': 3,
+      },
+      {'id': 'damage_20', 'kind': 'food', 'damagePercent': 20},
+      {'id': 'damage_30', 'kind': 'food', 'damagePercent': 30},
+      {'id': 'defense_condition', 'kind': 'food', 'condition': 'fortificato'},
+      {'id': 'defense_percent', 'kind': 'food', 'defensePercent': 20},
+      {
+        'id': 'monster_skill',
+        'kind': 'black_market_monster_skill',
+        'canonicalSkillName': 'Soffio Acido',
+      },
+      {
+        'id': 'regular_skill',
+        'kind': 'black_market_skill',
+        'canonicalSkillName': 'Soffio Acido',
+      },
+      {'id': 'collector_0', 'kind': 'gathering_collector', 'grade': 0},
+      {'id': 'collector_1', 'kind': 'gathering_collector', 'grade': 1},
+      {'id': 'transparency', 'kind': 'food', 'condition': 'trasparenza'},
+    ];
+
+    final unique = oculumMerchantUniqueOffers(offers);
+    expect(unique.map((offer) => offer['id']), [
+      'meal_low',
+      'damage_20',
+      'defense_condition',
+      'monster_skill',
+      'collector_0',
+      'transparency',
+    ]);
+  });
+
+  test('food and drink combat effects persist for the authored turn count', () {
+    final effects = oculumMerchantTimedFoodEffects({
+      'damagePercent': 30,
+      'defensePercent': 20,
+      'conditionTurns': 3,
+    }, source: 'Cibo e Bevanda · Prova');
+    expect(effects, hasLength(2));
+    expect(effects.map((effect) => effect['value']), [30, 20]);
+    expect(effects.map((effect) => effect['remaining']), [3, 3]);
+    expect(effects.map((effect) => effect['unit']), everyElement('turni'));
+    expect(effects.map((effect) => effect['target']), [
+      'danni_percentuale',
+      'difesa_percentuale',
+    ]);
+  });
+
   test(
     'nurse Refull rolls buff, rare jackpot, duration and recovery price',
     () {
@@ -304,6 +414,55 @@ void main() {
     expect(state.merchantActiveProfileId, firstMerchantId);
     expect(probe.merchantOfferIds(), firstMerchantStock);
     probe.switchMerchantProfile(secondMerchantId);
+    probe.shopType('chef');
+    final chefOffers = probe.shopOffers();
+    expect(
+      chefOffers.length == 12 ||
+          (chefOffers.length >= 6 && chefOffers.length <= 9),
+      isTrue,
+    );
+    expect(chefOffers.every((offer) => offer['kind'] == 'food'), isTrue);
+    expect(
+      chefOffers.map(oculumMerchantOfferFamilyKey).toSet(),
+      hasLength(chefOffers.length),
+    );
+    expect(
+      state.merchantStock.where((offer) => offer['kind'] == 'food').length,
+      greaterThanOrEqualTo(45),
+    );
+    final hunterFoodOffer = state.merchantStock.singleWhere(
+      (offer) => offer['id'] == 'meal_hunters_fervor',
+    );
+    final hunterFood = probe.merchantItem(hunterFoodOffer);
+    state.inventario.add(hunterFood);
+    await probe.useMerchantItem(hunterFood);
+    expect(
+      probe.structuredEffects().singleWhere(
+        (effect) => effect['target'] == 'danni_percentuale',
+      ),
+      containsPair('value', 30),
+    );
+    expect(
+      probe.structuredEffects().singleWhere(
+        (effect) => effect['target'] == 'danni_percentuale',
+      )['remaining'],
+      3,
+    );
+    final veilFood = probe.merchantItem({
+      'kind': 'food',
+      'id': 'test_veil_drink',
+      'name': 'Bevanda di Prova',
+      'condition': 'trasparenza',
+      'conditionTurns': 3,
+      'desc': 'Trasparenza per tre turni.',
+    });
+    state.inventario.add(veilFood);
+    await probe.useMerchantItem(veilFood);
+    final transparency = probe.conditions.singleWhere(
+      (condition) => condition.conditionType == 'trasparenza',
+    );
+    expect(transparency.duration, 3);
+    expect(transparency.durationType, OculumConditionDurationType.turns);
     state.volontaController.text = '10';
     state.materiaController.text = '7';
     state.volontaController.text = '9';
@@ -532,27 +691,33 @@ void main() {
     expect(marketKeys.toSet(), hasLength(marketKeys.length));
     probe.shopType('alchimista');
     state.obserController.text = '1000';
-    final sign = probe.shopOffers().singleWhere(
-      (o) => o['kind'] == 'fate_sign',
+    final alchemistOffers = probe.shopOffers();
+    expect(
+      alchemistOffers.length == 12 ||
+          (alchemistOffers.length >= 6 && alchemistOffers.length <= 9),
+      isTrue,
     );
+    final sign = alchemistOffers.singleWhere((o) => o['kind'] == 'fate_sign');
     final signCost = probe.shopCost(sign);
     await probe.buyShopOffer(sign);
     await probe.buyShopOffer(sign);
     expect(state.obserController.text, '${1000 - signCost}');
     expect(sign['remaining'], 0);
     expect(
-      probe.shopOffers().singleWhere(
-        (o) => o['kind'] == 'fate_sign',
+      state.merchantStock.singleWhere(
+        (o) => o['id'] == sign['id'],
       )['remaining'],
       0,
     );
+    expect(probe.shopOffers().any((o) => o['id'] == sign['id']), isFalse);
     probe.load(probe.snapshot());
     expect(
-      probe.shopOffers().singleWhere(
-        (o) => o['kind'] == 'fate_sign',
+      state.merchantStock.singleWhere(
+        (o) => o['id'] == sign['id'],
       )['remaining'],
       0,
     );
+    expect(probe.shopOffers().any((o) => o['id'] == sign['id']), isFalse);
     final chaos = probe.merchantItem(oculumChaosSignOffer('test-shop'));
     state.inventario.add(chaos);
     int totalStats() => [

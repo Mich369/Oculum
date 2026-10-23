@@ -674,6 +674,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   static const int quickConditionsPageIndex = 15;
   static const int fallenEyesPageIndex = 16;
   static const int homePageIndex = 17;
+  static const int monsterBookPartyPageIndex = 18;
 
   int paginaCorrente = 0;
   int schedaCorrente = 0;
@@ -2105,6 +2106,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final List<Map<String, dynamic>> pendingOnlineCombatTurnResourceSpends = [];
   final Set<String> appliedOnlineCombatTurnResourceSpendIds = {};
   final Map<String, Map<String, dynamic>> combatDiscoveries = {};
+  final Map<String, Map<String, dynamic>> monsterBookPartyDiscoveries = {};
+  final ValueNotifier<int> combatKnowledgeRevision = ValueNotifier(0);
   final Set<String> onlineCombatResolving = {};
   final Map<String, Completer<List<String>>> corruptionTargetChoices = {};
   final Set<String> trustedCoMasterTags = {};
@@ -2192,6 +2195,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final Map<String, DateTime> realtimeRoleUpdateTimestamps =
       <String, DateTime>{};
   final Map<String, String> realtimeLastSentSheetHashes = <String, String>{};
+  String realtimeLastSentMerchantRosterSignature = '';
   String realtimeFriendPresenceSignature = '';
   final Map<String, String> realtimePendingMasterAckSheetIds =
       <String, String>{};
@@ -2250,6 +2254,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     'Condizioni veloci',
     'Occhi dei Caduti',
     'Home',
+    'Monster Book Party',
   ];
 
   final List<String> pageNamesEn = [
@@ -2271,6 +2276,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     'Quick Conditions',
     'Fallen Eyes',
     'Home',
+    'Monster Book Party',
   ];
 
   final List<DamageModifierOption> modificatoriDanno = [
@@ -3570,6 +3576,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       if (includeSettings) settingsPageIndex,
       onlinePageIndex,
       recipesPageIndex,
+      monsterBookPartyPageIndex,
     ];
 
     return indexes;
@@ -3796,6 +3803,8 @@ class _OculumHomePageState extends State<OculumHomePage>
         return dicePage();
       case recipesPageIndex:
         return recipesPage();
+      case monsterBookPartyPageIndex:
+        return monsterBookPartyPage();
       default:
         return characterPage();
     }
@@ -3978,6 +3987,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     reazioniVelociController.dispose();
     realtimeChatController.dispose();
     onlinePermissionRevision.dispose();
+    combatKnowledgeRevision.dispose();
     onlinePermissionRetryTimer?.cancel();
     masterItemSearchController.dispose();
     resistanceElementSearchController.dispose();
@@ -4204,6 +4214,8 @@ class _OculumHomePageState extends State<OculumHomePage>
         return Icons.casino;
       case recipesPageIndex:
         return Icons.menu_book_outlined;
+      case monsterBookPartyPageIndex:
+        return Icons.auto_stories_outlined;
       default:
         return Icons.radio_button_unchecked;
     }
@@ -4504,6 +4516,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       'OCULUM - ${t('CONDIZIONI VELOCI', 'QUICK CONDITIONS')}',
       'OCULUM - ${t('OCCHI DEI CADUTI', 'FALLEN EYES')}',
       'OCULUM — HOME',
+      'OCULUM — MONSTER BOOK PARTY',
     ];
 
     final int safePage = paginaVisibileSicura(

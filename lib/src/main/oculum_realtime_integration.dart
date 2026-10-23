@@ -20,7 +20,88 @@ int oculumDropDifficultyBonus(String difficulty) => switch (difficulty) {
   _ => 0,
 };
 
+/// Offers and purchase counters belong to the local character. Merchant roster
+/// metadata is shared separately, while purchased goods sync in the inventory.
+const Set<String> oculumRealtimePrivateMerchantFields = <String>{
+  'merchantStock',
+  'merchantStockSessionId',
+  'merchantActiveProfileId',
+  'merchantDustPurchasedSinceLongRest',
+  'merchantDustPurchaseCount',
+};
+
+List<Map<String, dynamic>> oculumRealtimeMerchantRosterProjection(
+  dynamic rawProfiles,
+) {
+  if (rawProfiles is! List) return <Map<String, dynamic>>[];
+  final profiles = <String, Map<String, dynamic>>{};
+  for (final raw in rawProfiles.whereType<Map>()) {
+    final profile = Map<String, dynamic>.from(raw);
+    final id = '${profile['id'] ?? ''}'.trim();
+    if (id.isEmpty) continue;
+    profiles[id] = <String, dynamic>{
+      'id': id,
+      'name': '${profile['name'] ?? 'Mercante di fiducia'}',
+      'shopType': '${profile['shopType'] ?? 'tutti'}',
+      'pricePercent': readIntValue(
+        profile['pricePercent'],
+        fallback: 100,
+      ).clamp(70, 160),
+    };
+    if (profiles.length >= 128) break;
+  }
+  return profiles.values.toList(growable: false)
+    ..sort((a, b) => '${a['id']}'.compareTo('${b['id']}'));
+}
+
+List<Map<String, dynamic>> oculumRealtimeMergeMerchantRoster(
+  List<Map<String, dynamic>> localProfiles,
+  dynamic incomingProfiles,
+) {
+  final merged = <String, Map<String, dynamic>>{};
+  for (final profile in localProfiles) {
+    final id = '${profile['id'] ?? ''}'.trim();
+    if (id.isEmpty) continue;
+    merged[id] = Map<String, dynamic>.from(profile);
+  }
+  for (final profile in oculumRealtimeMerchantRosterProjection(
+    incomingProfiles,
+  )) {
+    final id = '${profile['id']}';
+    final existing = merged[id];
+    if (existing == null) {
+      merged[id] = <String, dynamic>{...profile, 'stock': <dynamic>[]};
+      continue;
+    }
+    final personalStock = existing['stock'];
+    existing.addAll(profile);
+    if (personalStock is List) existing['stock'] = personalStock;
+  }
+  return merged.values.toList(growable: false)
+    ..sort((a, b) => '${a['id']}'.compareTo('${b['id']}'));
+}
+
+Map<String, dynamic> oculumRealtimeStripPrivateMerchantState(
+  Map<String, dynamic> sheet,
+) {
+  final profiles = oculumRealtimeMerchantRosterProjection(
+    sheet['merchantProfiles'],
+  );
+  for (final key in oculumRealtimePrivateMerchantFields) {
+    sheet.remove(key);
+  }
+  if (profiles.isEmpty) {
+    sheet.remove('merchantProfiles');
+  } else {
+    sheet['merchantProfiles'] = profiles;
+  }
+  return sheet;
+}
+
 const Set<String> oculumRealtimeMetadataKeys = <String>{
+  'relayServerUrl',
+  'relayRoomCode',
+  'connectedMasterIp',
   'id',
   'sheetTag',
   'realtimeSharedSheet',
@@ -52,6 +133,7 @@ const Set<String> oculumRealtimeMetadataKeys = <String>{
   'encounterPlayerIdentities',
   'diaryEntityRoles',
   'diaryKnowledgeSync',
+  ...oculumRealtimePrivateMerchantFields,
 };
 
 List<int> oculumSelectedSheetDeliveryIndexes(
@@ -131,43 +213,8 @@ const Set<String> oculumRealtimeProtectedEmptyFields = <String>{
   'arti',
   'diarioPagine',
   'journalEntries',
-};
-
-const Set<String> oculumRealtimeFallbackEditableFields = <String>{
-  'nome',
-  'tipoScheda',
-  'razza',
-  'livello',
-  'grado',
-  'currentHp',
-  'hpTemp',
-  'scudo',
-  'scudoCritico',
-  'scudoOculum',
-  'scudoOculumMax',
-  'currentResilienza',
-  'currentVolonta',
-  'currentMateria',
-  'currentOculum',
-  'attaccoRapido',
-  'cmRapido',
-  'vcRapido',
-  'incomingDamagePresets',
-  'incomingDamageElement',
-  'dannoSubitoPercentualePerTipo',
-  'assignableSubtraitPoints',
-  'difesaRapida',
-  'reazioni',
-  'reazioniVeloci',
-  'buffMalusRapidi',
-  'inventario',
-  'titoli',
-  'trattiRazziali',
-  'skills',
-  'notePersonaggio',
   'partyMembri',
-  'inMasterParty',
-  'masterSideOverride',
+  'merchantProfiles',
 };
 
 /// Una condivisione diretta fra amici deve arrivare anche ai player, non solo
@@ -224,9 +271,13 @@ Map<String, dynamic> oculumRealtimeBuildSheetPatch(
     final key = entry.key;
     if (oculumRealtimeMetadataKeys.contains(key)) continue;
     if (onlyKeys != null && !onlyKeys.contains(key)) continue;
-    final nextValue = entry.value;
+    final nextValue = key == 'merchantProfiles'
+        ? oculumRealtimeMerchantRosterProjection(entry.value)
+        : entry.value;
     final previousHasKey = previous.containsKey(key);
-    final previousValue = previous[key];
+    final previousValue = key == 'merchantProfiles'
+        ? oculumRealtimeMerchantRosterProjection(previous[key])
+        : previous[key];
     if (previousHasKey && jsonEncode(previousValue) == jsonEncode(nextValue)) {
       continue;
     }
@@ -238,11 +289,14 @@ Map<String, dynamic> oculumRealtimeBuildSheetPatch(
 Map<String, dynamic> oculumRealtimeFallbackEditablePatch(
   Map<String, dynamic> current,
 ) {
-  return oculumRealtimeBuildSheetPatch(
+  final patch = oculumRealtimeBuildSheetPatch(
     const <String, dynamic>{},
     current,
-    onlyKeys: oculumRealtimeFallbackEditableFields,
   );
+  // A base64 portrait can dominate a patch. Portraits already use the
+  // dedicated chunked sheet transfer and hash-based refresh path.
+  patch.remove('immaginePersonaggioBase64');
+  return patch;
 }
 
 List<String> oculumRealtimeAppliedPatchKeys(
@@ -261,7 +315,10 @@ List<String> oculumRealtimeAppliedPatchKeys(
     )) {
       continue;
     }
-    if (jsonEncode(existing[key]) == jsonEncode(entry.value)) continue;
+    final currentValue = key == 'merchantProfiles'
+        ? oculumRealtimeMerchantRosterProjection(existing[key])
+        : existing[key];
+    if (jsonEncode(currentValue) == jsonEncode(entry.value)) continue;
     keys.add(key);
   }
   return keys;
@@ -283,7 +340,21 @@ Map<String, dynamic> oculumRealtimeMergeSheetPatch(
     )) {
       continue;
     }
-    merged[key] = oculumRealtimeCloneJsonValue(entry.value);
+    final currentValue = key == 'merchantProfiles'
+        ? oculumRealtimeMerchantRosterProjection(existing[key])
+        : existing[key];
+    if (jsonEncode(currentValue) == jsonEncode(entry.value)) continue;
+    merged[key] = key == 'merchantProfiles' && entry.value is List
+        ? oculumRealtimeMergeMerchantRoster(
+            existing[key] is List
+                ? (existing[key] as List)
+                      .whereType<Map>()
+                      .map((profile) => Map<String, dynamic>.from(profile))
+                      .toList()
+                : <Map<String, dynamic>>[],
+            entry.value,
+          )
+        : oculumRealtimeCloneJsonValue(entry.value);
   }
   return merged;
 }
@@ -665,6 +736,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
   void publishRealtimeStateAfterConnection() {
     if (realtimeService?.isConnected != true) return;
+    unawaited(sendRealtimeMerchantRosterSnapshot());
     unawaited(flushDiaryKnowledge());
     sendRealtimeSheetPreview();
     unawaited(sendRealtimeActiveSheetToStaff());
@@ -803,6 +875,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         realtimeStaffTransfersInFlight.clear();
         clearRealtimeMasterAckTracking();
         realtimeLastSentSheetHashes.clear();
+        realtimeLastSentMerchantRosterSignature = '';
         publishRealtimeStateAfterConnection();
         syncPawnPresence();
         startPermissionRetry();
@@ -869,6 +942,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           unawaited(service.refreshPresence());
         }
         if (service.isConnected &&
+            (friendPresenceChanged || staffPresenceChanged)) {
+          unawaited(sendRealtimeMerchantRosterSnapshot(force: true));
+        }
+        if (service.isConnected &&
             !realtimeIsMasterRole &&
             (friendPresenceChanged || staffPresenceChanged)) {
           realtimeLastSentSheetHashes.removeWhere(
@@ -876,6 +953,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           );
           unawaited(sendRealtimeActiveSheetToStaff());
           unawaited(retryPendingEncounterJoins());
+          if (staffPresenceChanged) {
+            unawaited(sendMonsterBookPartyDiscoverySnapshot());
+          }
         }
         if (service.isConnected &&
             (friendPresenceChanged || staffPresenceChanged)) {
@@ -902,6 +982,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           );
           resendRealtimeFriendSheetsForPresence();
           if (realtimeIsMasterRole) {
+            unawaited(sendMonsterBookPartyDiscoverySnapshot());
             sendRealtimeMasterVisiblePartyTokens();
             sendRealtimeInitiativeSnapshotIfPublished();
           }
@@ -1025,6 +1106,20 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   void handleRealtimeEvent(String event, Map<String, dynamic> payload) {
+    if (event == 'party_log' && payload['merchantRosterSnapshot'] == true) {
+      final merged = receiveRealtimeMerchantRosterSnapshot(payload);
+      if (merged) unawaited(sendRealtimeMerchantRosterSnapshot());
+      return;
+    }
+    if (event == 'party_log' &&
+        payload['monsterBookDiscoverySnapshot'] == true) {
+      receiveMonsterBookPartyDiscoverySnapshot(payload);
+      return;
+    }
+    if (event == 'party_log' && payload['monsterBookDiscovery'] == true) {
+      receiveMonsterBookPartyDiscovery(payload);
+      return;
+    }
     if (event == 'initiative_control') {
       receiveEncounterControl(payload);
       return;
@@ -2080,9 +2175,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   Map<String, dynamic> realtimeSafeSheetJson(
     Map<String, dynamic> source, {
     bool includeImage = false,
-    bool includePartyMembers = false,
+    bool includePartyMembers = true,
   }) {
     final safe = jsonDecode(jsonEncode(source)) as Map<String, dynamic>;
+    oculumRealtimeStripPrivateMerchantState(safe);
 
     for (final key in const <String>[
       'relayServerUrl',
@@ -2217,6 +2313,25 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final sheet = sheetRaw is Map
         ? jsonDecode(jsonEncode(sheetRaw)) as Map<String, dynamic>
         : <String, dynamic>{};
+    oculumRealtimeStripPrivateMerchantState(sheet);
+    final existingProfiles =
+        existingIndex != null &&
+            existingIndex >= 0 &&
+            existingIndex < schedePersonaggio.length &&
+            schedePersonaggio[existingIndex]['merchantProfiles'] is List
+        ? (schedePersonaggio[existingIndex]['merchantProfiles'] as List)
+              .whereType<Map>()
+              .map((profile) => Map<String, dynamic>.from(profile))
+              .toList()
+        : <Map<String, dynamic>>[];
+    final profilesWithRemoteRoster = oculumRealtimeMergeMerchantRoster(
+      existingProfiles,
+      sheet['merchantProfiles'],
+    );
+    sheet['merchantProfiles'] = oculumRealtimeMergeMerchantRoster(
+      profilesWithRemoteRoster,
+      oculumRealtimeMerchantRosterProjection(merchantProfiles),
+    );
 
     final key = '${record['key'] ?? ''}';
     final sourceTag = normalizeOculumFriendTag('${record['sheetId'] ?? ''}');
@@ -2304,7 +2419,11 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       senderUserId: senderUserId,
     );
     var localIndex = realtimeLocalSheetIndexForKey(key);
-    if (localIndex < 0 && senderUserId.isEmpty) {
+    final secureStaffEdit =
+        const {'master', 'coMaster'}.contains(payload['authenticatedRole']) &&
+        (realtimeService?.channelName.startsWith('oculum_secure_') ?? false) &&
+        readIntValue(payload['serverSequence']) > 0;
+    if (localIndex < 0 && (senderUserId.isEmpty || secureStaffEdit)) {
       localIndex = localSheetIndexForOculumTag(sheetId);
     }
     if (localIndex < 0) return false;
@@ -2621,6 +2740,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'turnNumber': i + 1,
             'turnCount': tokens.length,
             'id': publicInitiativeSourceTag(tokens[i]),
+            if (monsterBookIdForCombatToken(tokens[i]).isNotEmpty)
+              'monsterBookId': monsterBookIdForCombatToken(tokens[i]),
             'name': oculumReferenceEncounterTokenName(tokens[i]),
             'type': '${tokens[i]['type'] ?? 'Partecipante'}',
             'side': '${tokens[i]['side'] ?? 'ally'}',
@@ -3268,7 +3389,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         : realtimeSafeSheetJson(
             Map<String, dynamic>.from(sheetRaw),
             includeImage: true,
-            includePartyMembers: senderRole == 'fullShare',
+            includePartyMembers: true,
           );
     final sheetId = normalizeOculumFriendTag(
       '${payload['sheetId'] ?? sheet['sheetTag'] ?? sheet['id'] ?? ''}',
@@ -4137,12 +4258,20 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final patch = baseSheet.isNotEmpty
         ? oculumRealtimeBuildSheetPatch(baseSheet, fullSheet)
         : oculumRealtimeFallbackEditablePatch(fullSheet);
+    final allowClearFields = <String>[
+      for (final entry in patch.entries)
+        if (entry.key != 'merchantProfiles' &&
+            oculumRealtimeProtectedEmptyFields.contains(entry.key) &&
+            oculumRealtimeValueIsEmpty(entry.value) &&
+            !oculumRealtimeValueIsEmpty(baseSheet[entry.key]))
+          entry.key,
+    ];
     patch['id'] = sourceTag;
     patch['sheetTag'] = sourceTag;
     if (oculumRealtimeAppliedPatchKeys(
       baseSheet,
       patch,
-      allowClearFields: const <String>{},
+      allowClearFields: allowClearFields.toSet(),
     ).isEmpty) {
       return false;
     }
@@ -4161,6 +4290,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       fromMaster: realtimeIsMasterRole,
       masterParty: false,
       targetTags: <String>[sourceTag],
+      allowClearFields: allowClearFields,
     );
     if (!sent || !mounted || realtimeService != service) return false;
 
@@ -4334,6 +4464,79 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         removedIds: removed,
       ),
     );
+  }
+
+  String realtimeMerchantRosterSignature(String campaignId, dynamic profiles) =>
+      jsonEncode(<dynamic>[
+        campaignId.trim(),
+        oculumRealtimeMerchantRosterProjection(profiles),
+      ]);
+
+  Future<bool> sendRealtimeMerchantRosterSnapshot({bool force = false}) async {
+    final service = realtimeService;
+    if (service?.isConnected != true) return false;
+    final profiles = oculumRealtimeMerchantRosterProjection(merchantProfiles);
+    if (profiles.isEmpty) return false;
+    final campaignId = activeCampaignId.trim();
+    if (campaignId.isEmpty) return false;
+    final signature = realtimeMerchantRosterSignature(campaignId, profiles);
+    if (!force && signature == realtimeLastSentMerchantRosterSignature) {
+      return true;
+    }
+    final sent = await service!.sendMerchantRosterSnapshot({
+      'campaignId': campaignId,
+      'merchantProfiles': profiles,
+    });
+    if (!sent || !mounted || realtimeService != service) return false;
+    final latest = realtimeMerchantRosterSignature(
+      activeCampaignId,
+      merchantProfiles,
+    );
+    if (latest == signature) {
+      realtimeLastSentMerchantRosterSignature = signature;
+    } else {
+      unawaited(sendRealtimeMerchantRosterSnapshot());
+    }
+    return true;
+  }
+
+  bool receiveRealtimeMerchantRosterSnapshot(Map<String, dynamic> payload) {
+    if (!mounted ||
+        '${payload['campaignId'] ?? ''}'.trim() != activeCampaignId.trim()) {
+      return false;
+    }
+    final incoming = oculumRealtimeMerchantRosterProjection(
+      payload['merchantProfiles'],
+    );
+    if (incoming.isEmpty) return false;
+    salvaSchedaCorrenteInMemoria();
+    var changed = false;
+    var activeProfiles = merchantProfiles;
+    for (var i = 0; i < schedePersonaggio.length; i++) {
+      final sheet = schedePersonaggio[i];
+      final raw = sheet['merchantProfiles'];
+      final current = raw is List
+          ? raw
+                .whereType<Map>()
+                .map((profile) => Map<String, dynamic>.from(profile))
+                .toList()
+          : <Map<String, dynamic>>[];
+      final merged = oculumRealtimeMergeMerchantRoster(current, incoming);
+      if (realtimeMerchantRosterSignature(activeCampaignId, current) !=
+          realtimeMerchantRosterSignature(activeCampaignId, merged)) {
+        sheet['merchantProfiles'] = merged;
+        changed = true;
+      }
+      if (i == schedaCorrente) activeProfiles = merged;
+    }
+    if (!changed) return false;
+    setState(() => merchantProfiles = activeProfiles);
+    saveActiveCampaignInMemory();
+    programmaSalvataggio(
+      invalidateCaches: false,
+      delay: const Duration(milliseconds: 1000),
+    );
+    return true;
   }
 
   void sendRealtimeMasterVisibleTokenAt(int index) {

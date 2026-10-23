@@ -8,8 +8,8 @@ spec.loader.exec_module(publisher)
 
 
 class DownloadPublicationTests(unittest.TestCase):
-    def test_only_successful_trusted_main_builds(self):
-        run = dict(conclusion="success", status="completed", head_branch="main",
+    def test_only_successful_trusted_repository_builds(self):
+        run = dict(conclusion="success", status="completed", head_branch="codex/oculum-completamento-20261022",
                    name="Build distribution main @ abc123", head_sha="a" * 40,
                    repository={"full_name": publisher.REPO},
                    head_repository={"full_name": publisher.REPO})
@@ -57,7 +57,7 @@ class DownloadPublicationTests(unittest.TestCase):
         names = publisher.PUBLIC_ARTIFACTS + publisher.EXTRA_ARCHIVES
         artifacts = [dict(name=name, id=index, expired=False, size_in_bytes=4)
                      for index, name in enumerate(names, start=1)]
-        self.assertEqual(len(publisher.select_release_archives(artifacts)), 8)
+        self.assertEqual(len(publisher.select_release_archives(artifacts)), 9)
         self.assertEqual(len(publisher.select_public_artifacts(artifacts)), 5)
         with self.assertRaisesRegex(ValueError, "Unreviewed"):
             publisher.select_release_archives(artifacts + [dict(name="private-saves")])

@@ -1703,22 +1703,10 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
 
   int conditionSubtraitBonus(String id) {
     if (id != 'velo') return 0;
-    final level = max(0, leggiNumero(livelloController));
-    var bonus = 0;
-    for (final condition in activeConditions) {
-      if (condition.conditionType != 'trasparenza' &&
-          condition.conditionType != 'invisibile') {
-        continue;
-      }
-      final base = condition.conditionType == 'invisibile' ? 18 : 6;
-      final value =
-          readIntValue(condition.metadata['veilBaseBonus'], fallback: base) +
-          (readBoolValue(condition.metadata['veilAddLevel'], fallback: true)
-              ? level
-              : 0);
-      bonus = max(bonus, value);
-    }
-    return bonus;
+    return oculumCombatScoutVeilBonus(
+      conditions: activeConditions.map((condition) => condition.toJson()),
+      level: max(0, leggiNumero(livelloController)),
+    );
   }
 
   int conditionShieldDamageBonusPercent() {

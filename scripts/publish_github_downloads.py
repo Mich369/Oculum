@@ -11,17 +11,22 @@ import re
 import subprocess
 import sys
 import tempfile
+from urllib.parse import urlencode
 
 REPO = os.environ.get("GH_REPO", "Mich369/Oculum")
 CHANNEL = "oculum-downloads"
 MARKER = "<!-- OCULUM_DOWNLOADS:"
 WORKFLOWS = {"Build distribution"}
 WORKFLOW_PATHS = {".github/workflows/build_distribution.yml"}
+PUBLISH_BRANCHES = {"main", "codex/oculum-completamento-20261022"}
 PUBLIC_ARTIFACTS = (
     "Oculum-macOS", "Oculum-Windows", "Oculum-Test-Windows",
     "Oculum-Linux", "Oculum-Android",
 )
-EXTRA_ARCHIVES = ("Oculum-Web", "Oculum-iOS-unsigned", "Oculum-UI-Catture")
+EXTRA_ARCHIVES = (
+    "Oculum-Web", "Oculum-iOS-unsigned", "Oculum-UI-Catture",
+    "Oculum-Windows-Folders",
+)
 
 
 def gh(*args, **kwargs):
@@ -45,13 +50,13 @@ def release(tag):
 
 def validate_run(run, workflow):
     if (run.get("conclusion") != "success" or run.get("status") != "completed"
-            or run.get("head_branch") != "main"
+            or run.get("head_branch") not in PUBLISH_BRANCHES
             or workflow.get("name") not in WORKFLOWS
             or workflow.get("path") not in WORKFLOW_PATHS
             or run.get("repository", {}).get("full_name") != REPO
             or run.get("head_repository", {}).get("full_name") != REPO
             or not re.fullmatch(r"[0-9a-f]{40}", run.get("head_sha", ""))):
-        raise ValueError("Only successful trusted main-branch builds may be published")
+        raise ValueError("Only successful trusted repository builds may be published")
 
 
 def asset_name(artifact):
@@ -132,7 +137,8 @@ def publish(run_id):
     workflow = api(f"actions/workflows/{run['workflow_id']}")
     validate_run(run, workflow)
     workflow_id = run["workflow_id"]
-    latest = api(f"actions/workflows/{workflow_id}/runs?branch=main&status=success&per_page=1")
+    branch_query = urlencode({"branch": run["head_branch"], "status": "success", "per_page": 1})
+    latest = api(f"actions/workflows/{workflow_id}/runs?{branch_query}")
     if latest["workflow_runs"][0]["id"] != run["id"]:
         print("A newer successful build exists; keeping its download channel")
         return

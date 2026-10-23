@@ -10,6 +10,8 @@ $buildRoot = Join-Path $projectRoot 'build'
 $distRoot = [IO.Path]::GetFullPath((Join-Path $buildRoot 'distribution'))
 $stagingRoot = Join-Path $buildRoot "distribution-fresh-$RunId"
 $downloadRoot = Join-Path $buildRoot "distribution-download-$RunId"
+$verifier = Join-Path $PSScriptRoot 'verify_distribution.ps1'
+if (!(Test-Path -LiteralPath $verifier -PathType Leaf)) { throw 'Distribution verifier missing' }
 
 function Assert-BuildChild([string]$Path) {
   $resolved = [IO.Path]::GetFullPath($Path)
@@ -159,6 +161,7 @@ $manifest = [ordered]@{
   })
 }
 $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $stagingRoot 'BUILD-VERIFICATE.json') -Encoding utf8
+& $verifier -ExpectedCommit $commit -DistributionRoot $stagingRoot
 $active = @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
   $_.Path -and $_.Path.StartsWith($distRoot + '\', [StringComparison]::OrdinalIgnoreCase)
 })
@@ -172,14 +175,19 @@ foreach ($record in $manifest.files) {
 $backupRoot = Join-Path $buildRoot ("distribution-backup-$RunId-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 foreach ($path in @($distRoot, $stagingRoot, $backupRoot)) { Assert-BuildChild $path }
 if (Test-Path -LiteralPath $distRoot) { Move-Item -LiteralPath $distRoot -Destination $backupRoot }
-try { Move-Item -LiteralPath $stagingRoot -Destination $distRoot }
+try {
+  Move-Item -LiteralPath $stagingRoot -Destination $distRoot
+  & $verifier -ExpectedCommit $commit -DistributionRoot $distRoot
+}
 catch {
+  if ((Test-Path -LiteralPath $distRoot) -and !(Test-Path -LiteralPath $stagingRoot)) {
+    Move-Item -LiteralPath $distRoot -Destination $stagingRoot
+  }
   if (!(Test-Path -LiteralPath $distRoot) -and (Test-Path -LiteralPath $backupRoot)) {
     Move-Item -LiteralPath $backupRoot -Destination $distRoot
   }
   throw
 }
-& (Join-Path $buildRoot 'verify_eye_auto_distribution.ps1') -ExpectedCommit $commit
 Assert-BuildChild $downloadRoot
 Remove-Item -LiteralPath $downloadRoot -Recurse -Force
 Write-Host "Installed only fresh GitHub builds for $commit in $distRoot; previous distribution preserved in $backupRoot"

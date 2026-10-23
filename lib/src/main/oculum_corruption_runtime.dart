@@ -44,8 +44,9 @@ extension _OculumCorruptionRuntime on _OculumHomePageState {
   };
 
   void advanceCorruptionPersonalTurn(int turn) {
-    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length)
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
       return;
+    }
     final sheet = schedePersonaggio[schedaCorrente];
     final progress = sheet['corruptionMasteryProgress'];
     if (progress is Map) {
@@ -70,21 +71,25 @@ extension _OculumCorruptionRuntime on _OculumHomePageState {
         );
         row['lastDecayTurn'] = since + (elapsed ~/ interval) * interval;
         progress[entry.key] = row;
-        if (before != row['hits'])
+        if (before != row['hits']) {
           aggiungiLog(
             '[CORRUZIONE] Nessun nuovo colpo: accumulo di ${entry.key} $before → ${row['hits']}.',
           );
+        }
       }
     }
     final condition = getCondition('corruzione');
     if (condition == null ||
         condition.metadata['suicideAtFightEnd'] == true ||
-        condition.metadata['endResolved'] == true)
+        condition.metadata['endResolved'] == true) {
       return;
+    }
     final metadata = condition.metadata;
     if (metadata['pendingResistanceId'] != null) return;
-    if (turn < readIntValue(metadata['nextResistanceTurn'], fallback: turn + 3))
+    if (turn <
+        readIntValue(metadata['nextResistanceTurn'], fallback: turn + 3)) {
       return;
+    }
     final attempt = readIntValue(metadata['escapeAttempts']) + 1;
     final difficulty =
         readIntValue(metadata['escapeDifficulty']) +
@@ -140,8 +145,9 @@ extension _OculumCorruptionRuntime on _OculumHomePageState {
     final condition = getCondition('corruzione');
     if (condition == null ||
         condition.id != request['conditionId'] ||
-        condition.metadata['pendingResistanceId'] != request['id'])
+        condition.metadata['pendingResistanceId'] != request['id']) {
       return;
+    }
     final metadata = condition.metadata;
     request['status'] = 'resolved';
     metadata.remove('pendingResistanceId');
@@ -190,8 +196,9 @@ extension _OculumCorruptionRuntime on _OculumHomePageState {
   }
 
   int corruptionRevengeDamage(String target) {
-    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length)
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
       return 0;
+    }
     final raw = schedePersonaggio[schedaCorrente]['corruptionRevenge'];
     final row = raw is Map ? raw[target] : null;
     return row is Map && row['encounterId'] == onlineCombatEncounterId
@@ -220,24 +227,28 @@ extension _OculumCorruptionRuntime on _OculumHomePageState {
     for (var index = 0; index < schedePersonaggio.length; index++) {
       final sheet = schedePersonaggio[index];
       final current = index == schedaCorrente;
-      if (current)
+      if (current) {
         sheet['conditions'] = activeConditions.map((c) => c.toJson()).toList();
+      }
       final revenge = sheet['corruptionRevenge'];
-      if (revenge is Map)
+      if (revenge is Map) {
         revenge.removeWhere(
           (_, row) => row is Map && row['encounterId'] == encounter,
         );
+      }
       if (!corruptionSuicideDueAt(index, encounter)) continue;
       if (realtimeService?.isConnected == true &&
           !realtimeIsMasterRole &&
-          !controlsOnlineCombatSheet(sheetTagAt(index)))
+          !controlsOnlineCombatSheet(sheetTagAt(index))) {
         continue;
+      }
       for (final raw in (sheet['conditions'] as List).whereType<Map>()) {
         final metadata = raw['metadata'];
         if (raw['conditionType'] != 'corruzione' ||
             metadata is! Map ||
-            metadata['encounterId'] != encounter)
+            metadata['encounterId'] != encounter) {
           continue;
+        }
         metadata['endResolved'] = true;
       }
       sheet['currentHp'] = '0';
