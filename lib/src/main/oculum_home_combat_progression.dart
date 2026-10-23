@@ -816,7 +816,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
     }
     applyAutomaticAshForTurnProgress(previous, safe);
-    if (safe > previous) advanceCorruptionPersonalTurn(safe);
+    if (safe > previous) {
+      advanceCorruptionPersonalTurn(safe);
+      advanceNecromancySummons(safe);
+    }
     notifyActiveSheetSummaryChanged();
     programmaSalvataggio(invalidateCaches: false);
     if (broadcast) {
@@ -1367,6 +1370,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       total: totale,
     );
     onOculumDamageBonus?.call(oculumSpend.damageBonus);
+    if (dado == 20) recoverPlanePressureCritical();
     onResolved?.call(dado, totale);
   }
 
@@ -1459,6 +1463,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
     }
     onOculumDamageBonus?.call(oculumSpend.damageBonus);
+    if (dado == 20) recoverPlanePressureCritical();
     onResolved?.call(dado, totale);
     final testoDado = rollFormulaWithCritical(
       roll: dado,
@@ -5230,942 +5235,979 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       return;
     }
 
-    final currentOculumForParry = max(0, currentOculum());
-    final parryChanceThreshold = oculumParryChanceThresholdPerThousand(
-      currentOculumForParry,
-      difficulty: normalizedCampaignDifficulty(),
-    );
-    final currentOculumParryRoll = Random.secure().nextInt(1000);
-    final parryChanceTriggered =
-        !resolvedResistance &&
-        oculumParryChanceRollSucceeds(
-          currentOculum: currentOculumForParry,
-          roll: currentOculumParryRoll,
-          difficulty: normalizedCampaignDifficulty(),
-        );
-    final manifestationStat = hiddenEyeStats.firstWhere(
-      (stat) => stat.id == 'manifestazione_potere',
-    );
-    final bodyControlStat = hiddenEyeStats.firstWhere(
-      (stat) => stat.id == 'controllo_corporeo',
-    );
-    final manifestationBonus =
-        hiddenEyeTotal(manifestationStat) +
-        hiddenEyeStatRollQuickBonus(manifestationStat);
-    final bodyControlBonus =
-        hiddenEyeTotal(bodyControlStat) +
-        hiddenEyeStatRollQuickBonus(bodyControlStat);
-    // A tie favors Manifestazione del Potere, the Oculum-aligned subtrait.
-    final useManifestation = manifestationBonus >= bodyControlBonus;
-    final parrySubtrait = useManifestation
-        ? manifestationStat
-        : bodyControlStat;
-    final parrySubtraitLabel = parrySubtrait.nome;
-    final parrySubtraitBonus =
-        hiddenEyeTotal(parrySubtrait) +
-        hiddenEyeStatRollQuickBonus(parrySubtrait) +
-        tiroGlobaleBonus();
-    final parryDifficulty = oculumParryDifficulty(
-      level: leggiNumero(livelloController),
-      grade: leggiNumero(gradoController),
-    );
-    final parryManifestationRoll = parryChanceTriggered ? tiraD20() : 0;
-    final parryManifestationTotal = parryChanceTriggered
-        ? rollTotalWithCritical(parryManifestationRoll, 20, [
-            parrySubtraitBonus,
-          ])
-        : 0;
-    final parryCheckSucceeded =
-        parryChanceTriggered &&
-        oculumParryManifestationCheckSucceeds(
-          total: parryManifestationTotal,
-          difficulty: parryDifficulty,
-        );
-    final parryCriticalAwardsDodge = oculumParryCriticalAwardsDodge(
-      parrySucceeded: parryCheckSucceeded,
-      naturalRoll: parryManifestationRoll,
-    );
-    if (parryCriticalAwardsDodge) {
-      setState(() => schivateOculumBonus++);
-      programmaSalvataggio();
-    }
-    final activeDifficulty = normalizedCampaignDifficulty();
-    final misfortune = oculumMisfortuneProfile(activeDifficulty);
-    final misfortuneCriticalRoll = Random.secure().nextInt(10000);
-    final misfortuneCriticalTriggered =
-        !resolvedResistance &&
-        !critico &&
-        oculumPercentRollSucceeds(
-          chancePercent: misfortune.criticalChance,
-          rollBasisPoints: misfortuneCriticalRoll,
-        );
-    if (misfortuneCriticalTriggered) critico = true;
-    if (critico) {
-      final ashRoll = Random.secure().nextInt(100);
-      final ashMessage = ashRoll < 30 ? modificaCenereControllata(1) : null;
-      aggiungiLog(
-        '[CRITICO RICEVUTO] Cenere: tiro ${ashRoll + 1}/100, 30% → ${ashRoll < 30 ? '+1 Cenere' : 'nessun aumento'}.${ashMessage == null ? '' : ' $ashMessage'}',
+    final skullFormHit =
+        schedaCorrente >= 0 &&
+        schedaCorrente < schedePersonaggio.length &&
+        schedePersonaggio[schedaCorrente]['skullFormOriginal'] is Map;
+    try {
+      final currentOculumForParry = max(0, currentOculum());
+      final parryChanceThreshold = oculumParryChanceThresholdPerThousand(
+        currentOculumForParry,
+        difficulty: normalizedCampaignDifficulty(),
       );
-    }
-    final misfortuneShieldRoll = Random.secure().nextInt(10000);
-    final misfortuneShieldTriggered = oculumPercentRollSucceeds(
-      chancePercent: misfortune.shieldChance,
-      rollBasisPoints: misfortuneShieldRoll,
-    );
-
-    final activePercentDamageType = selectedIncomingDamageElement()
-        .trim()
-        .toLowerCase();
-    final percentualeLiberaPrima = resistancePresetOverride != null
-        ? null
-        : oculumIncomingDamagePercentMultiplier(
-            configuredIncomingDamagePercentForType(activePercentDamageType),
-          );
-    final stadioLiberoDopo = critico && percentualeLiberaPrima != null
-        ? prossimoStadioCriticoPercentualeLibera(percentualeLiberaPrima)
-        : null;
-    final modificatorePrima =
-        resistancePresetOverride ?? configuredIncomingDamagePreset();
-    final modificatoreDopo =
-        stadioLiberoDopo?.name ??
-        (critico
-            ? prossimoStadioCriticoDanno(modificatorePrima)
-            : modificatorePrima);
-    final riduzioneSchivata = schivataOculumRiduzionePronta;
-    final schivataLabel = schivataOculumEtichettaPronta.trim();
-    final criticalDifficulty =
-        enemyDifficulty ?? normalizedCampaignDifficulty();
-    final criticalEnemyLevel = max(0, enemyLevel ?? 1);
-    final bonusCritico =
-        criticalDamageBonusOverride ??
-        oculumCriticalDamageBonusForDifficulty(
-              criticalDifficulty,
-              criticalEnemyLevel,
-            ) *
-            criticalBonusMultiplier.clamp(1, 2);
-    final dannoPrimaParataLordo = dannoInserito + (critico ? bonusCritico : 0);
-    final runicBeforeDefense = min(
-      max(0, resistanceBypassDamage),
-      dannoPrimaParataLordo,
-    );
-    final dannoPrimaParata =
-        oculumReduceIncomingDamage(
-          dannoPrimaParataLordo - runicBeforeDefense,
-          incomingDamageMultiplier,
-        ) +
-        runicBeforeDefense;
-    final riduzioneElementale = dannoPrimaParataLordo - dannoPrimaParata;
-    final riduzioneParataOculum = parryCheckSucceeded
-        ? oculumParryDamageReduction(
+      final currentOculumParryRoll = Random.secure().nextInt(1000);
+      final parryChanceTriggered =
+          !resolvedResistance &&
+          oculumParryChanceRollSucceeds(
             currentOculum: currentOculumForParry,
-            incomingDamage: dannoPrimaParata,
-          )
-        : 0;
-    final dannoDopoParataOculum = max(
-      0,
-      dannoPrimaParata - riduzioneParataOculum,
-    );
-    final dannoPrimaSchivata = dannoDopoParataOculum;
-    final dannoDopoSchivata = applicaRiduzioneSchivataOculum(
-      dannoPrimaSchivata,
-    );
-    final dannoInArrivo = dannoDopoSchivata;
-    final dannoInseritoLog = dannoEsplicito == null
-        ? dettaglioValoreDannoCura(dannoInserito)
-        : '$dannoInserito';
-    final schivataLogIt = riduzioneSchivata > 0
-        ? ' Schivata Oculum${schivataLabel.isEmpty ? "" : " $schivataLabel"}: -$riduzioneSchivata%, danno $dannoPrimaSchivata -> $dannoDopoSchivata.'
-        : '';
-    final schivataLogEn = riduzioneSchivata > 0
-        ? ' Oculum Dodge${schivataLabel.isEmpty ? "" : " $schivataLabel"}: -$riduzioneSchivata%, damage $dannoPrimaSchivata -> $dannoDopoSchivata.'
-        : '';
-    final parataOculumLogIt = parryChanceTriggered
-        ? ' il tuo oculum si è concentrato per indebolire il colpo (probabilità $parryChanceThreshold/1000, ${campaignDifficultyLabel()}): prova $parrySubtraitLabel 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal contro DT $parryDifficulty; ${riduzioneElementale > 0 ? "difesa elementale: -$riduzioneElementale (×${incomingDamageMultiplier.toStringAsFixed(2)}). " : ""}${parryCheckSucceeded ? "danno $dannoPrimaParata → $dannoDopoParataOculum (riduzione $riduzioneParataOculum, gratuita)." : "prova fallita, il colpo non viene indebolito."}${parryCriticalAwardsDodge ? " Critico: +1 Schivata Oculum." : ""}'
-        : '';
-    final parataOculumLogEn = parryChanceTriggered
-        ? ' Your Oculum concentrated to weaken the blow (chance $parryChanceThreshold/1000, ${campaignDifficultyLabel()}): $parrySubtraitLabel check 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal against DT $parryDifficulty; ${riduzioneElementale > 0 ? "elemental defense: -$riduzioneElementale (×${incomingDamageMultiplier.toStringAsFixed(2)}). " : ""}${parryCheckSucceeded ? "damage $dannoPrimaParata → $dannoDopoParataOculum (reduction $riduzioneParataOculum, free)." : "check failed; the blow is not weakened."}${parryCriticalAwardsDodge ? " Critical: +1 Oculum Dodge." : ""}'
-        : '';
-    final difficultyBypasses = rollDifficultyIncreaseDamageBypasses();
-    final ignoraDifesa =
-        bypassDefense || dannoOltreDifesa || difficultyBypasses.beyondDefense;
-    final ignoraScudi =
-        !resolvedResistance &&
-        (bypassShields || dannoOltreScudi || difficultyBypasses.beyondShield);
-    final bonusScudiManuale =
-        bonusDannoScudiPercentuale() + shieldDamageBonusPercent.clamp(0, 1000);
-    final bonusScudiCorrosione = conditionShieldDamageBonusPercent();
-    final bonusScudoNormale =
-        bonusScudiManuale +
-        bonusScudiCorrosione +
-        (misfortuneShieldTriggered ? misfortune.normalShieldBonus : 0);
-    final bonusScudoOculum =
-        bonusScudiManuale +
-        bonusScudiCorrosione +
-        (misfortuneShieldTriggered ? misfortune.oculumShieldBonus : 0);
-    final shieldDifficultyValue = switch (activeDifficulty) {
-      'facile' => '×1,5 ↓',
-      'difficile' => '×0,5 ↑',
-      'oculum' => '×0,2 ↓',
-      _ => '×1',
-    };
-    var dannoDopoDifesa = dannoInArrivo <= 0
-        ? 0
-        : ignoraDifesa
-        ? dannoInArrivo
-        : max(
-            1,
-            dannoInArrivo -
-                ((difesa() + max(0, additionalDefense)) *
-                        defenseMultiplier.clamp(1, 1.5))
-                    .ceil(),
+            roll: currentOculumParryRoll,
+            difficulty: normalizedCampaignDifficulty(),
           );
-    // Split once after Defense, then apply resistances only to ordinary damage.
-    final protectedRunicDamage = resolvedResistance
-        ? 0
-        : min(max(0, resistanceBypassDamage), dannoDopoDifesa);
-    dannoDopoDifesa -= protectedRunicDamage;
-    final adaptiveResistance = elementalAdaptation?.resistanceBeforeHit ?? 0;
-    final dannoPrimaAdattamento = dannoDopoDifesa;
-    if (dannoDopoDifesa > 0 && adaptiveResistance > 0) {
-      dannoDopoDifesa = oculumReduceIncomingDamage(
-        dannoDopoDifesa,
-        (100 - adaptiveResistance) / 100,
+      final manifestationStat = hiddenEyeStats.firstWhere(
+        (stat) => stat.id == 'manifestazione_potere',
       );
-    }
-    final elementalAdaptationLogIt = elementalAdaptation == null
-        ? ''
-        : elementalAdaptation.lockedElement.isNotEmpty &&
-              elementalAdaptation.element != elementalAdaptation.lockedElement
-        ? ' Adattamento del mini-boss bloccato su ${elementalAdaptation.lockedElement}; ${elementalAdaptation.element} non aumenta la resistenza.'
-        : ' Resistenza adattiva ${elementalAdaptation.element}: $adaptiveResistance% su questo colpo'
-              '${elementalAdaptation.changed ? ' → ${elementalAdaptation.resistanceAfterHit}% dal prossimo' : ''}; danno dopo Difesa $dannoPrimaAdattamento → $dannoDopoDifesa.';
-    var passiveReductionLogIt = '';
-    var passiveReductionLogEn = '';
-    if (dannoDopoDifesa > 0 && fortunaTotale > 0) {
-      final chance = oculumLuckMitigationChancePercent(
-        resistance: resistenzaTotale,
-        luck: fortunaTotale,
+      final bodyControlStat = hiddenEyeStats.firstWhere(
+        (stat) => stat.id == 'controllo_corporeo',
       );
-      final chanceRoll = Random.secure().nextInt(10000);
-      if (oculumPercentRollSucceeds(
-        chancePercent: chance,
-        rollBasisPoints: chanceRoll,
-      )) {
-        final sides = oculumLuckDieSides(fortunaTotale);
-        final reduction = Random.secure().nextInt(sides) + 1;
-        dannoDopoDifesa = oculumDamageAfterPassiveReduction(
-          damage: dannoDopoDifesa,
-          reduction: reduction,
-        );
-        passiveReductionLogIt +=
-            ' Fortuna: 1d$sides=$reduction, danno attenuato a $dannoDopoDifesa.';
-        passiveReductionLogEn +=
-            ' Luck: 1d$sides=$reduction, damage reduced to $dannoDopoDifesa.';
-      }
-    }
-    if (dannoDopoDifesa > 0 && resistenzaTotale > 0) {
-      final chance = oculumResistancePassiveChancePercent(resistenzaTotale);
-      final chanceRoll = Random.secure().nextInt(10000);
-      if (oculumPercentRollSucceeds(
-        chancePercent: chance,
-        rollBasisPoints: chanceRoll,
-      )) {
-        dannoDopoDifesa = oculumDamageAfterPassiveReduction(
-          damage: dannoDopoDifesa,
-          reduction: resistenzaTotale,
-        );
-        passiveReductionLogIt +=
-            ' Resistenza passiva: -$resistenzaTotale, minimo 1 → $dannoDopoDifesa.';
-        passiveReductionLogEn +=
-            ' Passive Resistance: -$resistenzaTotale, minimum 1 → $dannoDopoDifesa.';
-      }
-    }
-    final difesaLogIt = ignoraDifesa
-        ? ' oltre Difesa = $dannoDopoDifesa$elementalAdaptationLogIt$passiveReductionLogIt'
-        : ' - Difesa ${((difesa() + max(0, additionalDefense)) * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1,5 · attacco quasi riuscito)' : ''} = $dannoPrimaAdattamento$elementalAdaptationLogIt$passiveReductionLogIt';
-    final difesaLogEn = ignoraDifesa
-        ? ' beyond Defense = $dannoDopoDifesa$passiveReductionLogEn'
-        : ' - Defense ${((difesa() + max(0, additionalDefense)) * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1.5 · partial attack)' : ''} = $dannoPrimaAdattamento$elementalAdaptationLogIt$passiveReductionLogEn';
-    final opzioniImpattoIt =
-        '${ignoraScudi ? " Oltre Scudi: il danno salta Scudo Oculum e Scudo." : ""}'
-        '${difficultyBypasses.beyondDefense ? " Aumento difficolta: attivato Oltre Difesa." : ""}'
-        '${difficultyBypasses.beyondShield ? " Aumento difficolta: attivato Oltre Scudo." : ""}'
-        '${!ignoraScudi ? " Valore Scudo $shieldDifficultyValue." : ""}'
-        '${bonusScudiManuale > 0 && !ignoraScudi ? " Danno agli scudi +$bonusScudiManuale%." : ""}'
-        '${misfortuneShieldTriggered && !ignoraScudi
-            ? activeDifficulty == "oculum"
-                  ? " Sfortuna: +100% danni a Scudo e Scudo Oculum."
-                  : " Sfortuna: +50% danni allo Scudo."
-            : ""}';
-    final opzioniImpattoEn =
-        '${ignoraScudi ? " Beyond Shields: damage skips Oculum Shield and Shield." : ""}'
-        '${difficultyBypasses.beyondDefense ? " Difficulty increase: Beyond Defense triggered." : ""}'
-        '${difficultyBypasses.beyondShield ? " Difficulty increase: Beyond Shield triggered." : ""}'
-        '${!ignoraScudi ? " Shield value $shieldDifficultyValue." : ""}'
-        '${bonusScudiManuale > 0 && !ignoraScudi ? " Shield damage +$bonusScudiManuale%." : ""}'
-        '${misfortuneShieldTriggered && !ignoraScudi
-            ? activeDifficulty == "oculum"
-                  ? " Misfortune: +100% damage to Shield and Oculum Shield."
-                  : " Misfortune: +50% damage to Shield."
-            : ""}';
-    final modificatore = critico
-        ? modificatoreDannoDaNome(modificatoreDopo)
-        : resistancePresetOverride != null
-        ? modificatoreDannoDaNome(resistancePresetOverride)
-        : modificatoreDannoAttuale();
-    final basePercent = stadioLiberoDopo?.multiplier ?? percentualeLiberaPrima;
-    final modificatorePercentualeLibero = extraFragilityPercent > 0
-        ? (basePercent ?? modificatore.multiplier) + extraFragilityPercent / 100
-        : basePercent;
-    if (extraFragilityPercent > 0 && modificatorePercentualeLibero != null) {
-      final percentText = testoPercentualeDannoLibera(
-        modificatorePercentualeLibero,
+      final manifestationBonus =
+          hiddenEyeTotal(manifestationStat) +
+          hiddenEyeStatRollQuickBonus(manifestationStat);
+      final bodyControlBonus =
+          hiddenEyeTotal(bodyControlStat) +
+          hiddenEyeStatRollQuickBonus(bodyControlStat);
+      // A tie favors Manifestazione del Potere, the Oculum-aligned subtrait.
+      final useManifestation = manifestationBonus >= bodyControlBonus;
+      final parrySubtrait = useManifestation
+          ? manifestationStat
+          : bodyControlStat;
+      final parrySubtraitLabel = parrySubtrait.nome;
+      final parrySubtraitBonus =
+          hiddenEyeTotal(parrySubtrait) +
+          hiddenEyeStatRollQuickBonus(parrySubtrait) +
+          tiroGlobaleBonus();
+      final parryDifficulty = oculumParryDifficulty(
+        level: leggiNumero(livelloController),
+        grade: leggiNumero(gradoController),
       );
-      dannoSubitoPercentPerTipo[activePercentDamageType] = percentText;
-      dannoSubitoPercentController.text = percentText;
-      aggiungiLog(
-        '[DOPPIO CRITICO] +$extraFragilityPercent punti percentuali di Fragilità per $activePercentDamageType: $percentText.',
-      );
-    }
-    final baseDamageMultiplier =
-        modificatorePercentualeLibero ?? modificatore.multiplier;
-    final adjustedDamageMultiplier = oculumAddIncomingDamagePercent(
-      baseDamageMultiplier,
-      incomingDamagePercentAdjustment,
-    );
-    final usesAdjustedDamageMultiplier =
-        modificatorePercentualeLibero != null ||
-        incomingDamagePercentAdjustment != 0;
-    if (incomingDamagePercentAdjustment != 0) {
-      aggiungiLog(
-        '[MODIFICATORE IN INGRESSO] ${incomingDamagePercentAdjustment > 0 ? '+' : ''}$incomingDamagePercentAdjustment punti percentuali applicati alla percentuale già configurata (${((baseDamageMultiplier - 1) * 100).round()}% → ${((adjustedDamageMultiplier - 1) * 100).round()}%).',
-      );
-    }
-    final dannoModificatoBase = !usesAdjustedDamageMultiplier
-        ? applicaModificatoreDannoCon(dannoDopoDifesa, modificatore)
-        : applicaModificatoreDannoPercentuale(
-            dannoDopoDifesa,
-            adjustedDamageMultiplier,
+      final parryManifestationRoll = parryChanceTriggered ? tiraD20() : 0;
+      final parryManifestationTotal = parryChanceTriggered
+          ? rollTotalWithCritical(parryManifestationRoll, 20, [
+              parrySubtraitBonus,
+            ])
+          : 0;
+      final parryCheckSucceeded =
+          parryChanceTriggered &&
+          oculumParryManifestationCheckSucceeds(
+            total: parryManifestationTotal,
+            difficulty: parryDifficulty,
           );
-    final modificatoreNome = !usesAdjustedDamageMultiplier
-        ? modificatore.name
-        : '${((adjustedDamageMultiplier - 1) * 100).toStringAsFixed(0)}% danno ricevuto';
-    final elementoAttivo = selectedIncomingDamageElement();
-    final incomingElementRules = activeIncomingDamageRules(elementoAttivo);
-    final dannoDopoRegoleElementali = dannoModificatoBase > 0
-        ? applicaParserDanniSubiti(dannoModificatoBase, elementoAttivo)
-        : dannoModificatoBase;
-    var dannoModificato = resolvedResistance
-        ? 1
-        : applyConditionIncomingDamage(dannoDopoRegoleElementali);
-    final parserRulesLog = incomingElementRules.isEmpty
-        ? ''
-        : ' Parser ${incomingDamageRulesSummary(elementoAttivo)}: $dannoModificatoBase -> $dannoModificato.';
-    final dannoLog = critico
-        ? '$dannoInseritoLog + $bonusCritico critico = $dannoPrimaParataLordo${riduzioneElementale > 0 ? " - $riduzioneElementale difesa elementale = $dannoPrimaParata" : ""}'
-        : dannoInseritoLog;
-    final stadioPrimaLog = percentualeLiberaPrima == null
-        ? modificatorePrima
-        : testoPercentualeDannoLibera(percentualeLiberaPrima);
-    final criticoLogIt = critico
-        ? (stadioPrimaLog == modificatoreDopo
-              ? ' Critico nemico ${campaignDifficultyLabel(criticalDifficulty)} livello $criticalEnemyLevel: +$bonusCritico danni, stadio già a $modificatoreDopo.'
-              : ' Critico nemico ${campaignDifficultyLabel(criticalDifficulty)} livello $criticalEnemyLevel: +$bonusCritico danni, stadio $stadioPrimaLog → $modificatoreDopo (${testoPercentualeDannoLibera(modificatore.multiplier)}).')
-        : '';
-    final sfortunaCriticoLogIt = misfortuneCriticalTriggered
-        ? ' Sfortuna: il danno è diventato critico (tiro ${(misfortuneCriticalRoll / 100).toStringAsFixed(2)}%).'
-        : '';
-    final sfortunaCriticoLogEn = misfortuneCriticalTriggered
-        ? ' Misfortune: damage became critical (roll ${(misfortuneCriticalRoll / 100).toStringAsFixed(2)}%).'
-        : '';
-    final criticoLogEn = critico
-        ? (stadioPrimaLog == modificatoreDopo
-              ? ' Enemy critical ${campaignDifficultyLabel(criticalDifficulty)} level $criticalEnemyLevel: +$bonusCritico damage, stage already at $modificatoreDopo.'
-              : ' Enemy critical ${campaignDifficultyLabel(criticalDifficulty)} level $criticalEnemyLevel: +$bonusCritico damage, stage $stadioPrimaLog → $modificatoreDopo (${testoPercentualeDannoLibera(modificatore.multiplier)}).')
-        : '';
-
-    if (dannoModificato < 0) {
-      final curaDaRigenerazione = dannoModificato.abs();
-      final hpPrimaCura = hpCorrenti();
-      final hpTempPrimaCura = hpTemp();
-      final healed = healOculumHp(
-        current: hpPrimaCura,
-        maximum: maxHp(),
-        temporary: hpTempPrimaCura,
-        amount: applyConditionHealingAmount(curaDaRigenerazione),
-        temporaryLimit: thresholdTemporaryHpLimit(),
+      final parryCriticalAwardsDodge = oculumParryCriticalAwardsDodge(
+        parrySucceeded: parryCheckSucceeded,
+        naturalRoll: parryManifestationRoll,
       );
-      final hpRecuperati = healed.current - hpPrimaCura;
-      final hpTempOttenuti = healed.temporary - hpTempPrimaCura;
-
-      setState(() {
-        if (critico) {
-          incomingDamagePresets[activePercentDamageType] = modificatoreDopo;
-          if (stadioLiberoDopo != null) {
-            dannoSubitoPercentController.text = testoPercentualeDannoLibera(
-              modificatorePercentualeLibero ?? stadioLiberoDopo.multiplier,
-            );
-          }
-        }
-        schivataOculumRiduzionePronta = 0;
-        schivataOculumEtichettaPronta = '';
-
-        currentHpController.text = healed.current.toString();
-        impostaHpTempTotali(healed.temporary);
-
-        risultato = t(
-          'Rigenerazione: $dannoLog$parataOculumLogIt$schivataLogIt$difesaLogIt. $modificatoreNome: +$hpRecuperati HP${hpTempOttenuti > 0 ? ", +$hpTempOttenuti HP temporanei" : ""}.$criticoLogIt$sfortunaCriticoLogIt$opzioniImpattoIt',
-          'Regeneration: $dannoLog$parataOculumLogEn$schivataLogEn$difesaLogEn. $modificatoreNome: +$hpRecuperati HP${hpTempOttenuti > 0 ? ", +$hpTempOttenuti temporary HP" : ""}.$criticoLogEn$sfortunaCriticoLogEn$opzioniImpattoEn',
-        );
-
-        dannoSubitoController.clear();
-
-        aggiungiLog(risultato);
-      });
-
-      programmaSalvataggio();
-      sendRealtimeHpChanged();
-      oculumCombatTheme.react('heal');
-      controllaStatoForzaDopoHp();
-      if (protectedRunicDamage == 0) return;
-      dannoModificato = 0;
-    }
-
-    if (dannoModificato == 0 && protectedRunicDamage == 0) {
-      setState(() {
-        if (critico) {
-          incomingDamagePresets[activePercentDamageType] = modificatoreDopo;
-          if (stadioLiberoDopo != null) {
-            dannoSubitoPercentController.text = testoPercentualeDannoLibera(
-              modificatorePercentualeLibero ?? stadioLiberoDopo.multiplier,
-            );
-          }
-        }
-        schivataOculumRiduzionePronta = 0;
-        schivataOculumEtichettaPronta = '';
-
-        risultato = t(
-          'Danno annullato: $dannoLog$parataOculumLogIt$schivataLogIt$difesaLogIt. $modificatoreNome: nessun danno subito.$parserRulesLog$criticoLogIt$sfortunaCriticoLogIt$opzioniImpattoIt',
-          'Damage negated: $dannoLog$parataOculumLogEn$schivataLogEn$difesaLogEn. $modificatoreNome: no damage taken.$parserRulesLog$criticoLogEn$sfortunaCriticoLogEn$opzioniImpattoEn',
-        );
-
-        dannoSubitoController.clear();
-
-        aggiungiLog(risultato);
-      });
-
-      programmaSalvataggio();
-      oculumCombatTheme.react(
-        incomingElementRules.isNotEmpty &&
-                dannoDopoRegoleElementali < dannoModificatoBase
-            ? 'resisted'
-            : incomingElementRules.isNotEmpty &&
-                  dannoDopoRegoleElementali > dannoModificatoBase
-            ? 'vulnerable'
-            : 'blocked',
-        elementId: oculumCombatElementId(elementoAttivo),
-      );
-      return;
-    }
-
-    int dannoFinale = dannoModificato;
-    final scudoCriticoPrima = scudoCritico();
-    final scudoCriticoAttivo = scudoCriticoPrima > 0;
-    final scudoCriticoSpezzato = critico && scudoCriticoAttivo;
-
-    final resistenzaStatoForzaAttiva =
-        statoForzaAttivo == 'azzeramento_vulnerabilita';
-    if (resistenzaStatoForzaAttiva) {
-      dannoFinale = max(1, (dannoFinale * 0.75).ceil());
-    }
-    final resistenzaStatoForzaLogIt = resistenzaStatoForzaAttiva
-        ? ' Azzeramento delle vulnerabilita: danno ridotto a $dannoFinale.'
-        : '';
-    final resistenzaStatoForzaLogEn = resistenzaStatoForzaAttiva
-        ? ' Vulnerability Reset: damage reduced to $dannoFinale.'
-        : '';
-
-    final resistenzaAdattamentoAttiva =
-        currentSheetHasAdaptationTemporaryResistance();
-    if (resistenzaAdattamentoAttiva) {
-      dannoFinale = max(
-        1,
-        (dannoFinale * damageRuleMultiplierForCommand('Resistenza')).ceil(),
-      );
-    }
-    final resistenzaAdattamentoLogIt = resistenzaAdattamentoAttiva
-        ? ' Adattamento: Resistenza Temporanea a tutti i danni, danno ridotto a $dannoFinale.'
-        : '';
-    final resistenzaAdattamentoLogEn = resistenzaAdattamentoAttiva
-        ? ' Adaptation: Temporary Resistance to all damage, damage reduced to $dannoFinale.'
-        : '';
-
-    dannoFinale += protectedRunicDamage;
-    if (protectedRunicDamage > 0) {
-      aggiungiLog(
-        '[MITRA RUNICO] +$protectedRunicDamage danni oltre le resistenze; resto dell’attacco dopo le resistenze: ${dannoFinale - protectedRunicDamage}. Scudi applicati normalmente.',
-      );
-    }
-    if (scudoCriticoAttivo) {
-      dannoFinale = max(1, (dannoFinale / 2).ceil());
-    }
-
-    int rimanente = dannoFinale;
-    int oculumShield = scudoOculum();
-    int shield = scudo();
-    int temp = hpTemp();
-    int hp = hpCorrenti();
-    var hpPrima = hp;
-    final oculumShieldBeforeDamage = oculumShield;
-    final shieldBeforeDamage = shield;
-    var pawnDamageLog = '';
-    final safeHpPronto = hasSafeHpParserCommand();
-    final saveShieldValue = saveShieldParserValue();
-    final scudoSalvataggioPronto =
-        !ignoraScudi && scudoSalvataggioAttivo && (oculumShield + shield) > 0;
-    var scudoSalvataggioAttivato = false;
-    var safeHpAttivato = false;
-    var saveShieldAttivato = false;
-    final integrityEffectShields = inventario
-        .where(
-          (item) =>
-              item.protegge &&
-              item.equipaggiata &&
-              canEquipInventoryItem(item) &&
-              (item.craftData['clothing'] == true ||
-                  item.effettoIntegritaScudo.trim().isNotEmpty ||
-                  item.effettoRotturaScudo.isNotEmpty) &&
-              itemIntegrityShieldCurrent(item) > 0,
-        )
-        .toList(growable: false);
-    final integrityEffectOculumShields = inventario
-        .where(
-          (item) =>
-              item.protegge &&
-              item.equipaggiata &&
-              canEquipInventoryItem(item) &&
-              (item.craftData['clothing'] == true ||
-                  item.effettoIntegritaScudo.trim().isNotEmpty ||
-                  item.effettoRotturaScudo.isNotEmpty) &&
-              itemIntegrityOculumShieldCurrent(item) > 0,
-        )
-        .toList(growable: false);
-    final integrityShieldTotal = integrityEffectShields.fold<int>(
-      0,
-      (total, item) => total + itemIntegrityShieldCurrent(item),
-    );
-    final integrityOculumShieldTotal = integrityEffectOculumShields.fold<int>(
-      0,
-      (total, item) => total + itemIntegrityOculumShieldCurrent(item),
-    );
-    final hardIntegrityPriority = switch (normalizedCampaignDifficulty()) {
-      'difficile' || 'oculum' => true,
-      _ => false,
-    };
-    final integrityBroken = <String>{};
-    var combatArmorBreakLog = '';
-
-    void noteBrokenIntegrity(InventoryItem item) {
-      if (itemIntegrityShieldCurrent(item) <= 0 &&
-          itemIntegrityOculumShieldCurrent(item) <= 0) {
-        integrityBroken.add(item.nome.trim());
+      if (parryCriticalAwardsDodge) {
+        setState(() => schivateOculumBonus++);
+        programmaSalvataggio();
       }
-    }
-
-    int consumeIntegrityOculumPoints(int amount) {
-      var remainingAmount = amount;
-      for (final item in integrityEffectOculumShields) {
-        if (remainingAmount <= 0) break;
-        final before = itemIntegrityOculumShieldCurrent(item);
-        final spent = min(before, remainingAmount);
-        if (spent <= 0) continue;
-        item.scudoIntegritaOculumCorrente = before - spent;
-        remainingAmount -= spent;
-        noteBrokenIntegrity(item);
-      }
-      return remainingAmount;
-    }
-
-    int consumeIntegrityShieldPoints(int amount) {
-      var remainingAmount = amount;
-      for (final item in integrityEffectShields) {
-        if (remainingAmount <= 0) break;
-        final before = itemIntegrityShieldCurrent(item);
-        final spent = min(before, remainingAmount);
-        if (spent <= 0) continue;
-        item.scudoIntegritaCorrente = before - spent;
-        remainingAmount -= spent;
-        noteBrokenIntegrity(item);
-      }
-      return remainingAmount;
-    }
-
-    if (!ignoraScudi) {
-      final oculumShieldBefore = oculumShield;
-      final oculumResult = assorbiDannoDaScudoConBonus(
-        layer: oculumShield,
-        remaining: rimanente,
-        bonusPercent: bonusScudoOculum,
-      );
-      oculumShield = oculumResult.layer;
-      rimanente = oculumResult.remaining;
-      var oculumPointsSpent = oculumShieldBefore - oculumShield;
-      final ordinaryOculumShield = max(
-        0,
-        oculumShieldBefore - integrityOculumShieldTotal,
-      );
-      if (hardIntegrityPriority) {
-        consumeIntegrityOculumPoints(oculumPointsSpent);
-      } else {
-        oculumPointsSpent = max(0, oculumPointsSpent - ordinaryOculumShield);
-        consumeIntegrityOculumPoints(oculumPointsSpent);
-      }
-
-      final shieldBefore = shield;
-      final shieldResult = assorbiDannoDaScudoConBonus(
-        layer: shield,
-        remaining: rimanente,
-        bonusPercent: bonusScudoNormale,
-      );
-      shield = shieldResult.layer;
-      rimanente = shieldResult.remaining;
-      var shieldPointsSpent = shieldBefore - shield;
-      final ordinaryShield = max(0, shieldBefore - integrityShieldTotal);
-      if (hardIntegrityPriority) {
-        consumeIntegrityShieldPoints(shieldPointsSpent);
-      } else {
-        shieldPointsSpent = max(0, shieldPointsSpent - ordinaryShield);
-        consumeIntegrityShieldPoints(shieldPointsSpent);
-      }
-    }
-
-    if (scudoSalvataggioPronto && oculumShield <= 0 && shield <= 0) {
-      rimanente = 0;
-      scudoSalvataggioAttivato = true;
-    }
-
-    if (temp > 0 && rimanente > 0) {
-      final assorbito = min(temp, rimanente);
-      temp -= assorbito;
-      rimanente -= assorbito;
-    }
-
-    rimanente = absorbLarvalBroodDamage(rimanente);
-    if (rimanente > 0 && pawnProtects(sheetTagAt(schedaCorrente))) {
-      final beforePawn = rimanente;
-      if (pawnRemoteAuthority) {
-        // Commit the target's own shields before requesting only the HP
-        // overflow. Retries reuse one persisted ID at the Master.
-        setState(() {
-          scudoOculumController.text = '$oculumShield';
-          impostaScudoTotale(shield);
-          impostaHpTempTotali(temp);
-        });
-        try {
-          rimanente = await requestPawnHpInterception(rimanente);
-        } catch (error) {
-          if (mounted) {
-            risultato = 'Protezione Pawn in sospeso: $error';
-            notifyDiceResultChanged();
-          }
-          return;
-        }
-        if (!mounted) return;
-        // Preserve changes received while waiting for the authoritative reply.
-        hp = hpCorrenti();
-        hpPrima = hp;
-        oculumShield = scudoOculum();
-        shield = scudo();
-        temp = hpTemp();
-      } else {
-        rimanente = redirectPawnHpDamage(sheetTagAt(schedaCorrente), rimanente);
-      }
-      pawnDamageLog =
-          '\nPawn intercetta ${beforePawn - rimanente} danni destinati agli HP; $rimanente raggiungono la scheda.';
-    }
-    if (rimanente > 0) {
-      hp = max(0, hp - rimanente);
-    }
-
-    final brokenCoreActive = arti.any(
-      (art) => art.sbloccata && art.integritaCorrente == 0,
-    );
-    final brokenCoreProfile = oculumBrokenCoreDamageProfile(activeDifficulty);
-    int? brokenCoreRoll;
-    var brokenCoreExtraDamage = 0;
-    var hpBeforeBrokenCore = hp;
-    if (oculumBrokenCoreCanRoll(
-      brokenCore: brokenCoreActive,
-      hpBeforeDamage: hpPrima,
-      hpAfterDamage: hp,
-    )) {
-      brokenCoreRoll = Random.secure().nextInt(10000);
-      if (oculumPercentRollSucceeds(
-        chancePercent: brokenCoreProfile.chancePercent,
-        rollBasisPoints: brokenCoreRoll,
-      )) {
-        hpBeforeBrokenCore = hp;
-        brokenCoreExtraDamage = oculumBrokenCoreCurrentHpDamage(
-          currentHp: hp,
-          difficulty: activeDifficulty,
-        );
-        hp = max(0, hp - brokenCoreExtraDamage);
-      }
-    }
-
-    if ((sourceMonster?.stats['combatPhases'] ?? 0) > 1 && hpPrima > 0) {
-      final oldPhase = max(
-        1,
-        readIntValue(sheet['aberrationPhase'], fallback: 1),
-      );
-      if (hp <= 0 &&
-          sourceMonster?.stats['combatPhases'] == 3 &&
-          !readBoolValue(sheet['aberrationFinalPhaseTriggered'])) {
-        sheet['aberrationFinalPhaseTriggered'] = true;
-        sheet['aberrationPhase'] = 3;
-        hp = max(1, (maxHp() * .75).ceil());
-        activeStructuredEffects.add({
-          'effectId': 'aberration_final_phase',
-          'source': 'Ultima fase · Aberrazione',
-          'type': 'danno',
-          'value': 2 * activeCriticalLevel(),
-          'mode': 'finche_attivo',
-          'remaining': -1,
-          'unit': 'turni',
-          'target': '',
-        });
-        invalidateDerivedDataCaches();
-        aggiungiLog(
-          '[ABERRAZIONE · III] Recupera $hp Vita (75% del massimo); +${2 * activeCriticalLevel()} Danni fino alla fine della fase.',
-        );
-      } else if (hp > 0 && hp <= maxHp() / 2 && oldPhase < 2) {
-        sheet['aberrationPhase'] = 2;
-        aggiungiLog(
-          '[ABERRAZIONE · II] Entrata nella seconda fase al 50% della Vita.',
-        );
-      }
-    }
-    if (safeHpPronto && hp <= 0 && hpPrima > 0) {
-      hp = 1;
-      safeHpAttivato = true;
-      consumeOneShotParserCommand('safehp');
-    }
-
-    if (saveShieldValue > 0 &&
-        hp > 0 &&
-        hp <= max(1, (maxHp() * 0.25).ceil())) {
-      shield += saveShieldValue;
-      saveShieldAttivato = true;
-      consumeOneShotParserCommand('saveShield');
-    }
-
-    setState(() {
-      if (elementalAdaptation != null) {
-        sheet['combatElementalAdaptation'] = elementalAdaptation.state;
-      }
-      // Manual penetration is a per-hit choice too. Never leave it armed for
-      // the next attack, including when this hit was absorbed by shields.
-      dannoOltreDifesa = false;
-      dannoOltreScudi = false;
-      dannoBonusScudoPercentController.text = '0';
+      final activeDifficulty = normalizedCampaignDifficulty();
+      final misfortune = oculumMisfortuneProfile(activeDifficulty);
+      final misfortuneCriticalRoll = Random.secure().nextInt(10000);
+      final misfortuneCriticalTriggered =
+          !resolvedResistance &&
+          !critico &&
+          oculumPercentRollSucceeds(
+            chancePercent: misfortune.criticalChance,
+            rollBasisPoints: misfortuneCriticalRoll,
+          );
+      if (misfortuneCriticalTriggered) critico = true;
       if (critico) {
-        incomingDamagePresets[activePercentDamageType] = modificatoreDopo;
-        if (stadioLiberoDopo != null) {
-          dannoSubitoPercentController.text = testoPercentualeDannoLibera(
-            modificatorePercentualeLibero ?? stadioLiberoDopo.multiplier,
+        final ashRoll = Random.secure().nextInt(100);
+        final ashMessage = ashRoll < 30 ? modificaCenereControllata(1) : null;
+        aggiungiLog(
+          '[CRITICO RICEVUTO] Cenere: tiro ${ashRoll + 1}/100, 30% → ${ashRoll < 30 ? '+1 Cenere' : 'nessun aumento'}.${ashMessage == null ? '' : ' $ashMessage'}',
+        );
+      }
+      final misfortuneShieldRoll = Random.secure().nextInt(10000);
+      final misfortuneShieldTriggered = oculumPercentRollSucceeds(
+        chancePercent: misfortune.shieldChance,
+        rollBasisPoints: misfortuneShieldRoll,
+      );
+
+      final activePercentDamageType = selectedIncomingDamageElement()
+          .trim()
+          .toLowerCase();
+      final percentualeLiberaPrima = resistancePresetOverride != null
+          ? null
+          : oculumIncomingDamagePercentMultiplier(
+              configuredIncomingDamagePercentForType(activePercentDamageType),
+            );
+      final stadioLiberoDopo = critico && percentualeLiberaPrima != null
+          ? prossimoStadioCriticoPercentualeLibera(percentualeLiberaPrima)
+          : null;
+      final modificatorePrima =
+          resistancePresetOverride ?? configuredIncomingDamagePreset();
+      final modificatoreDopo =
+          stadioLiberoDopo?.name ??
+          (critico
+              ? prossimoStadioCriticoDanno(modificatorePrima)
+              : modificatorePrima);
+      final riduzioneSchivata = schivataOculumRiduzionePronta;
+      final schivataLabel = schivataOculumEtichettaPronta.trim();
+      final criticalDifficulty =
+          enemyDifficulty ?? normalizedCampaignDifficulty();
+      final criticalEnemyLevel = max(0, enemyLevel ?? 1);
+      final bonusCritico =
+          criticalDamageBonusOverride ??
+          oculumCriticalDamageBonusForDifficulty(
+                criticalDifficulty,
+                criticalEnemyLevel,
+              ) *
+              criticalBonusMultiplier.clamp(1, 2);
+      final dannoPrimaParataLordo =
+          dannoInserito + (critico ? bonusCritico : 0);
+      final runicBeforeDefense = min(
+        max(0, resistanceBypassDamage),
+        dannoPrimaParataLordo,
+      );
+      final dannoPrimaParata =
+          oculumReduceIncomingDamage(
+            dannoPrimaParataLordo - runicBeforeDefense,
+            incomingDamageMultiplier,
+          ) +
+          runicBeforeDefense;
+      final riduzioneElementale = dannoPrimaParataLordo - dannoPrimaParata;
+      final riduzioneParataOculum = parryCheckSucceeded
+          ? oculumParryDamageReduction(
+              currentOculum: currentOculumForParry,
+              incomingDamage: dannoPrimaParata,
+            )
+          : 0;
+      final dannoDopoParataOculum = max(
+        0,
+        dannoPrimaParata - riduzioneParataOculum,
+      );
+      final dannoPrimaSchivata = dannoDopoParataOculum;
+      final dannoDopoSchivata = applicaRiduzioneSchivataOculum(
+        dannoPrimaSchivata,
+      );
+      final dannoInArrivo = dannoDopoSchivata;
+      final dannoInseritoLog = dannoEsplicito == null
+          ? dettaglioValoreDannoCura(dannoInserito)
+          : '$dannoInserito';
+      final schivataLogIt = riduzioneSchivata > 0
+          ? ' Schivata Oculum${schivataLabel.isEmpty ? "" : " $schivataLabel"}: -$riduzioneSchivata%, danno $dannoPrimaSchivata -> $dannoDopoSchivata.'
+          : '';
+      final schivataLogEn = riduzioneSchivata > 0
+          ? ' Oculum Dodge${schivataLabel.isEmpty ? "" : " $schivataLabel"}: -$riduzioneSchivata%, damage $dannoPrimaSchivata -> $dannoDopoSchivata.'
+          : '';
+      final parataOculumLogIt = parryChanceTriggered
+          ? ' il tuo oculum si è concentrato per indebolire il colpo (probabilità $parryChanceThreshold/1000, ${campaignDifficultyLabel()}): prova $parrySubtraitLabel 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal contro DT $parryDifficulty; ${riduzioneElementale > 0 ? "difesa elementale: -$riduzioneElementale (×${incomingDamageMultiplier.toStringAsFixed(2)}). " : ""}${parryCheckSucceeded ? "danno $dannoPrimaParata → $dannoDopoParataOculum (riduzione $riduzioneParataOculum, gratuita)." : "prova fallita, il colpo non viene indebolito."}${parryCriticalAwardsDodge ? " Critico: +1 Schivata Oculum." : ""}'
+          : '';
+      final parataOculumLogEn = parryChanceTriggered
+          ? ' Your Oculum concentrated to weaken the blow (chance $parryChanceThreshold/1000, ${campaignDifficultyLabel()}): $parrySubtraitLabel check 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal against DT $parryDifficulty; ${riduzioneElementale > 0 ? "elemental defense: -$riduzioneElementale (×${incomingDamageMultiplier.toStringAsFixed(2)}). " : ""}${parryCheckSucceeded ? "damage $dannoPrimaParata → $dannoDopoParataOculum (reduction $riduzioneParataOculum, free)." : "check failed; the blow is not weakened."}${parryCriticalAwardsDodge ? " Critical: +1 Oculum Dodge." : ""}'
+          : '';
+      final difficultyBypasses = rollDifficultyIncreaseDamageBypasses();
+      final ignoraDifesa =
+          bypassDefense || dannoOltreDifesa || difficultyBypasses.beyondDefense;
+      final ignoraScudi =
+          !resolvedResistance &&
+          (bypassShields || dannoOltreScudi || difficultyBypasses.beyondShield);
+      final bonusScudiManuale =
+          bonusDannoScudiPercentuale() +
+          shieldDamageBonusPercent.clamp(0, 1000);
+      final bonusScudiCorrosione = conditionShieldDamageBonusPercent();
+      final bonusScudoNormale =
+          bonusScudiManuale +
+          bonusScudiCorrosione +
+          (misfortuneShieldTriggered ? misfortune.normalShieldBonus : 0);
+      final bonusScudoOculum =
+          bonusScudiManuale +
+          bonusScudiCorrosione +
+          (misfortuneShieldTriggered ? misfortune.oculumShieldBonus : 0);
+      final shieldDifficultyValue = switch (activeDifficulty) {
+        'facile' => '×1,5 ↓',
+        'difficile' => '×0,5 ↑',
+        'oculum' => '×0,2 ↓',
+        _ => '×1',
+      };
+      var dannoDopoDifesa = dannoInArrivo <= 0
+          ? 0
+          : ignoraDifesa
+          ? dannoInArrivo
+          : max(
+              1,
+              dannoInArrivo -
+                  ((difesa() + max(0, additionalDefense)) *
+                          defenseMultiplier.clamp(1, 1.5))
+                      .ceil(),
+            );
+      // Split once after Defense, then apply resistances only to ordinary damage.
+      final protectedRunicDamage = resolvedResistance
+          ? 0
+          : min(max(0, resistanceBypassDamage), dannoDopoDifesa);
+      dannoDopoDifesa -= protectedRunicDamage;
+      final adaptiveResistance = elementalAdaptation?.resistanceBeforeHit ?? 0;
+      final dannoPrimaAdattamento = dannoDopoDifesa;
+      if (dannoDopoDifesa > 0 && adaptiveResistance > 0) {
+        dannoDopoDifesa = oculumReduceIncomingDamage(
+          dannoDopoDifesa,
+          (100 - adaptiveResistance) / 100,
+        );
+      }
+      final elementalAdaptationLogIt = elementalAdaptation == null
+          ? ''
+          : elementalAdaptation.lockedElement.isNotEmpty &&
+                elementalAdaptation.element != elementalAdaptation.lockedElement
+          ? ' Adattamento del mini-boss bloccato su ${elementalAdaptation.lockedElement}; ${elementalAdaptation.element} non aumenta la resistenza.'
+          : ' Resistenza adattiva ${elementalAdaptation.element}: $adaptiveResistance% su questo colpo'
+                '${elementalAdaptation.changed ? ' → ${elementalAdaptation.resistanceAfterHit}% dal prossimo' : ''}; danno dopo Difesa $dannoPrimaAdattamento → $dannoDopoDifesa.';
+      var passiveReductionLogIt = '';
+      var passiveReductionLogEn = '';
+      if (dannoDopoDifesa > 0 && fortunaTotale > 0) {
+        final chance = oculumLuckMitigationChancePercent(
+          resistance: resistenzaTotale,
+          luck: fortunaTotale,
+        );
+        final chanceRoll = Random.secure().nextInt(10000);
+        if (oculumPercentRollSucceeds(
+          chancePercent: chance,
+          rollBasisPoints: chanceRoll,
+        )) {
+          final sides = oculumLuckDieSides(fortunaTotale);
+          final reduction = Random.secure().nextInt(sides) + 1;
+          dannoDopoDifesa = oculumDamageAfterPassiveReduction(
+            damage: dannoDopoDifesa,
+            reduction: reduction,
           );
+          passiveReductionLogIt +=
+              ' Fortuna: 1d$sides=$reduction, danno attenuato a $dannoDopoDifesa.';
+          passiveReductionLogEn +=
+              ' Luck: 1d$sides=$reduction, damage reduced to $dannoDopoDifesa.';
         }
       }
-      schivataOculumRiduzionePronta = 0;
-      schivataOculumEtichettaPronta = '';
-      if (scudoSalvataggioAttivato) {
-        scudoSalvataggioAttivo = false;
+      if (dannoDopoDifesa > 0 && resistenzaTotale > 0) {
+        final chance = oculumResistancePassiveChancePercent(resistenzaTotale);
+        final chanceRoll = Random.secure().nextInt(10000);
+        if (oculumPercentRollSucceeds(
+          chancePercent: chance,
+          rollBasisPoints: chanceRoll,
+        )) {
+          dannoDopoDifesa = oculumDamageAfterPassiveReduction(
+            damage: dannoDopoDifesa,
+            reduction: resistenzaTotale,
+          );
+          passiveReductionLogIt +=
+              ' Resistenza passiva: -$resistenzaTotale, minimo 1 → $dannoDopoDifesa.';
+          passiveReductionLogEn +=
+              ' Passive Resistance: -$resistenzaTotale, minimum 1 → $dannoDopoDifesa.';
+        }
+      }
+      final difesaLogIt = ignoraDifesa
+          ? ' oltre Difesa = $dannoDopoDifesa$elementalAdaptationLogIt$passiveReductionLogIt'
+          : ' - Difesa ${((difesa() + max(0, additionalDefense)) * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1,5 · attacco quasi riuscito)' : ''} = $dannoPrimaAdattamento$elementalAdaptationLogIt$passiveReductionLogIt';
+      final difesaLogEn = ignoraDifesa
+          ? ' beyond Defense = $dannoDopoDifesa$passiveReductionLogEn'
+          : ' - Defense ${((difesa() + max(0, additionalDefense)) * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1.5 · partial attack)' : ''} = $dannoPrimaAdattamento$elementalAdaptationLogIt$passiveReductionLogEn';
+      final opzioniImpattoIt =
+          '${ignoraScudi ? " Oltre Scudi: il danno salta Scudo Oculum e Scudo." : ""}'
+          '${difficultyBypasses.beyondDefense ? " Aumento difficolta: attivato Oltre Difesa." : ""}'
+          '${difficultyBypasses.beyondShield ? " Aumento difficolta: attivato Oltre Scudo." : ""}'
+          '${!ignoraScudi ? " Valore Scudo $shieldDifficultyValue." : ""}'
+          '${bonusScudiManuale > 0 && !ignoraScudi ? " Danno agli scudi +$bonusScudiManuale%." : ""}'
+          '${misfortuneShieldTriggered && !ignoraScudi
+              ? activeDifficulty == "oculum"
+                    ? " Sfortuna: +100% danni a Scudo e Scudo Oculum."
+                    : " Sfortuna: +50% danni allo Scudo."
+              : ""}';
+      final opzioniImpattoEn =
+          '${ignoraScudi ? " Beyond Shields: damage skips Oculum Shield and Shield." : ""}'
+          '${difficultyBypasses.beyondDefense ? " Difficulty increase: Beyond Defense triggered." : ""}'
+          '${difficultyBypasses.beyondShield ? " Difficulty increase: Beyond Shield triggered." : ""}'
+          '${!ignoraScudi ? " Shield value $shieldDifficultyValue." : ""}'
+          '${bonusScudiManuale > 0 && !ignoraScudi ? " Shield damage +$bonusScudiManuale%." : ""}'
+          '${misfortuneShieldTriggered && !ignoraScudi
+              ? activeDifficulty == "oculum"
+                    ? " Misfortune: +100% damage to Shield and Oculum Shield."
+                    : " Misfortune: +50% damage to Shield."
+              : ""}';
+      final modificatore = critico
+          ? modificatoreDannoDaNome(modificatoreDopo)
+          : resistancePresetOverride != null
+          ? modificatoreDannoDaNome(resistancePresetOverride)
+          : modificatoreDannoAttuale();
+      final basePercent =
+          stadioLiberoDopo?.multiplier ?? percentualeLiberaPrima;
+      final modificatorePercentualeLibero = extraFragilityPercent > 0
+          ? (basePercent ?? modificatore.multiplier) +
+                extraFragilityPercent / 100
+          : basePercent;
+      if (extraFragilityPercent > 0 && modificatorePercentualeLibero != null) {
+        final percentText = testoPercentualeDannoLibera(
+          modificatorePercentualeLibero,
+        );
+        dannoSubitoPercentPerTipo[activePercentDamageType] = percentText;
+        dannoSubitoPercentController.text = percentText;
+        aggiungiLog(
+          '[DOPPIO CRITICO] +$extraFragilityPercent punti percentuali di Fragilità per $activePercentDamageType: $percentText.',
+        );
+      }
+      final baseDamageMultiplier =
+          modificatorePercentualeLibero ?? modificatore.multiplier;
+      final adjustedDamageMultiplier = oculumAddIncomingDamagePercent(
+        baseDamageMultiplier,
+        incomingDamagePercentAdjustment,
+      );
+      final usesAdjustedDamageMultiplier =
+          modificatorePercentualeLibero != null ||
+          incomingDamagePercentAdjustment != 0;
+      if (incomingDamagePercentAdjustment != 0) {
+        aggiungiLog(
+          '[MODIFICATORE IN INGRESSO] ${incomingDamagePercentAdjustment > 0 ? '+' : ''}$incomingDamagePercentAdjustment punti percentuali applicati alla percentuale già configurata (${((baseDamageMultiplier - 1) * 100).round()}% → ${((adjustedDamageMultiplier - 1) * 100).round()}%).',
+        );
+      }
+      final dannoModificatoBase = !usesAdjustedDamageMultiplier
+          ? applicaModificatoreDannoCon(dannoDopoDifesa, modificatore)
+          : applicaModificatoreDannoPercentuale(
+              dannoDopoDifesa,
+              adjustedDamageMultiplier,
+            );
+      final modificatoreNome = !usesAdjustedDamageMultiplier
+          ? modificatore.name
+          : '${((adjustedDamageMultiplier - 1) * 100).toStringAsFixed(0)}% danno ricevuto';
+      final elementoAttivo = selectedIncomingDamageElement();
+      final incomingElementRules = activeIncomingDamageRules(elementoAttivo);
+      final dannoDopoRegoleElementali = dannoModificatoBase > 0
+          ? applicaParserDanniSubiti(dannoModificatoBase, elementoAttivo)
+          : dannoModificatoBase;
+      var dannoModificato = resolvedResistance
+          ? 1
+          : applyConditionIncomingDamage(dannoDopoRegoleElementali);
+      final parserRulesLog = incomingElementRules.isEmpty
+          ? ''
+          : ' Parser ${incomingDamageRulesSummary(elementoAttivo)}: $dannoModificatoBase -> $dannoModificato.';
+      final dannoLog = critico
+          ? '$dannoInseritoLog + $bonusCritico critico = $dannoPrimaParataLordo${riduzioneElementale > 0 ? " - $riduzioneElementale difesa elementale = $dannoPrimaParata" : ""}'
+          : dannoInseritoLog;
+      final stadioPrimaLog = percentualeLiberaPrima == null
+          ? modificatorePrima
+          : testoPercentualeDannoLibera(percentualeLiberaPrima);
+      final criticoLogIt = critico
+          ? (stadioPrimaLog == modificatoreDopo
+                ? ' Critico nemico ${campaignDifficultyLabel(criticalDifficulty)} livello $criticalEnemyLevel: +$bonusCritico danni, stadio già a $modificatoreDopo.'
+                : ' Critico nemico ${campaignDifficultyLabel(criticalDifficulty)} livello $criticalEnemyLevel: +$bonusCritico danni, stadio $stadioPrimaLog → $modificatoreDopo (${testoPercentualeDannoLibera(modificatore.multiplier)}).')
+          : '';
+      final sfortunaCriticoLogIt = misfortuneCriticalTriggered
+          ? ' Sfortuna: il danno è diventato critico (tiro ${(misfortuneCriticalRoll / 100).toStringAsFixed(2)}%).'
+          : '';
+      final sfortunaCriticoLogEn = misfortuneCriticalTriggered
+          ? ' Misfortune: damage became critical (roll ${(misfortuneCriticalRoll / 100).toStringAsFixed(2)}%).'
+          : '';
+      final criticoLogEn = critico
+          ? (stadioPrimaLog == modificatoreDopo
+                ? ' Enemy critical ${campaignDifficultyLabel(criticalDifficulty)} level $criticalEnemyLevel: +$bonusCritico damage, stage already at $modificatoreDopo.'
+                : ' Enemy critical ${campaignDifficultyLabel(criticalDifficulty)} level $criticalEnemyLevel: +$bonusCritico damage, stage $stadioPrimaLog → $modificatoreDopo (${testoPercentualeDannoLibera(modificatore.multiplier)}).')
+          : '';
+
+      if (dannoModificato < 0) {
+        final curaDaRigenerazione = dannoModificato.abs();
+        final hpPrimaCura = hpCorrenti();
+        final hpTempPrimaCura = hpTemp();
+        final healed = healOculumHp(
+          current: hpPrimaCura,
+          maximum: maxHp(),
+          temporary: hpTempPrimaCura,
+          amount: applyConditionHealingAmount(curaDaRigenerazione),
+          temporaryLimit: thresholdTemporaryHpLimit(),
+        );
+        final hpRecuperati = healed.current - hpPrimaCura;
+        final hpTempOttenuti = healed.temporary - hpTempPrimaCura;
+
+        setState(() {
+          if (critico) {
+            incomingDamagePresets[activePercentDamageType] = modificatoreDopo;
+            if (stadioLiberoDopo != null) {
+              dannoSubitoPercentController.text = testoPercentualeDannoLibera(
+                modificatorePercentualeLibero ?? stadioLiberoDopo.multiplier,
+              );
+            }
+          }
+          schivataOculumRiduzionePronta = 0;
+          schivataOculumEtichettaPronta = '';
+
+          currentHpController.text = healed.current.toString();
+          impostaHpTempTotali(healed.temporary);
+
+          risultato = t(
+            'Rigenerazione: $dannoLog$parataOculumLogIt$schivataLogIt$difesaLogIt. $modificatoreNome: +$hpRecuperati HP${hpTempOttenuti > 0 ? ", +$hpTempOttenuti HP temporanei" : ""}.$criticoLogIt$sfortunaCriticoLogIt$opzioniImpattoIt',
+            'Regeneration: $dannoLog$parataOculumLogEn$schivataLogEn$difesaLogEn. $modificatoreNome: +$hpRecuperati HP${hpTempOttenuti > 0 ? ", +$hpTempOttenuti temporary HP" : ""}.$criticoLogEn$sfortunaCriticoLogEn$opzioniImpattoEn',
+          );
+
+          dannoSubitoController.clear();
+
+          aggiungiLog(risultato);
+        });
+
+        programmaSalvataggio();
+        sendRealtimeHpChanged();
+        oculumCombatTheme.react('heal');
+        controllaStatoForzaDopoHp();
+        if (protectedRunicDamage == 0) return;
+        dannoModificato = 0;
       }
 
-      scudoOculumController.text = oculumShield.toString();
-      impostaScudoTotale(shield);
-      impostaHpTempTotali(temp);
-      currentHpController.text = hp.toString();
-      pawnPendingDamage = {};
-      if (dannoModificato > 0) interruptArtAwakening();
-      registerVitalMemoryDamage(hpPrima - hp);
-      final partialAwakeningLog = applicaRisveglioParzialeMetaHpSeServe(
-        hpBefore: hpPrima,
-        hpAfter: hp,
-        oculumDodgeUsedToday: riduzioneSchivata > 0,
-      );
-      final lowHpLog = applicaRicompensaAscensionDustRisorsaBassa(
-        before: hpPrima,
-        after: hp,
-        maximum: maxHp(),
-        resourceName: t('HP', 'HP'),
-      );
-      final brokenCoreLog = brokenCoreRoll == null
-          ? ''
-          : brokenCoreExtraDamage > 0
-          ? t(
-              '\nNucleo Rotto: tiro ${(brokenCoreRoll / 100).toStringAsFixed(2)}% su ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%. Vita attuale $hpBeforeBrokenCore, danno aggiuntivo $brokenCoreExtraDamage.',
-              '\nBroken Core: roll ${(brokenCoreRoll / 100).toStringAsFixed(2)}% against ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%. Current Life $hpBeforeBrokenCore, $brokenCoreExtraDamage additional damage.',
-            )
-          : t(
-              '\nNucleo Rotto: tiro ${(brokenCoreRoll / 100).toStringAsFixed(2)}% su ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%, nessun danno aggiuntivo.',
-              '\nBroken Core: roll ${(brokenCoreRoll / 100).toStringAsFixed(2)}% against ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%, no additional damage.',
-            );
-      if (scudoCriticoSpezzato) {
-        scudoCriticoController.text = max(0, scudoCriticoPrima - 1).toString();
-      }
-      if (integrityBroken.isNotEmpty) {
-        final brokenText = t(
-          'Scudo d\'integrità spezzato: ${integrityBroken.join(', ')}. I suoi parser/effetti non sono più attivi fino alla ricarica.',
-          'Integrity shield broken: ${integrityBroken.join(', ')}. Its parser/effects stay disabled until it is recharged.',
+      if (dannoModificato == 0 && protectedRunicDamage == 0) {
+        setState(() {
+          if (critico) {
+            incomingDamagePresets[activePercentDamageType] = modificatoreDopo;
+            if (stadioLiberoDopo != null) {
+              dannoSubitoPercentController.text = testoPercentualeDannoLibera(
+                modificatorePercentualeLibero ?? stadioLiberoDopo.multiplier,
+              );
+            }
+          }
+          schivataOculumRiduzionePronta = 0;
+          schivataOculumEtichettaPronta = '';
+
+          risultato = t(
+            'Danno annullato: $dannoLog$parataOculumLogIt$schivataLogIt$difesaLogIt. $modificatoreNome: nessun danno subito.$parserRulesLog$criticoLogIt$sfortunaCriticoLogIt$opzioniImpattoIt',
+            'Damage negated: $dannoLog$parataOculumLogEn$schivataLogEn$difesaLogEn. $modificatoreNome: no damage taken.$parserRulesLog$criticoLogEn$sfortunaCriticoLogEn$opzioniImpattoEn',
+          );
+
+          dannoSubitoController.clear();
+
+          aggiungiLog(risultato);
+        });
+
+        programmaSalvataggio();
+        oculumCombatTheme.react(
+          incomingElementRules.isNotEmpty &&
+                  dannoDopoRegoleElementali < dannoModificatoBase
+              ? 'resisted'
+              : incomingElementRules.isNotEmpty &&
+                    dannoDopoRegoleElementali > dannoModificatoBase
+              ? 'vulnerable'
+              : 'blocked',
+          elementId: oculumCombatElementId(elementoAttivo),
         );
-        combatArmorBreakLog = '\n$brokenText';
-        if (integrityBroken.contains('Armatura del Combattente') &&
-            !activeStructuredEffects.any(
-              (effect) => effect['source'] == 'Armatura del Combattente',
-            )) {
-          final surge = max(1, dannoTotale()) * 2;
-          activeStructuredEffects.add(<String, dynamic>{
-            'source': 'Armatura del Combattente',
-            'target': 'danni',
-            'value': surge,
-            'remaining': 2,
-            'unit': 'turn',
-            'frequency': '',
-            'type': 'bonus',
-            'stackable': false,
+        return;
+      }
+
+      int dannoFinale = dannoModificato;
+      final scudoCriticoPrima = scudoCritico();
+      final scudoCriticoAttivo = scudoCriticoPrima > 0;
+      final scudoCriticoSpezzato = critico && scudoCriticoAttivo;
+
+      final resistenzaStatoForzaAttiva =
+          statoForzaAttivo == 'azzeramento_vulnerabilita';
+      if (resistenzaStatoForzaAttiva) {
+        dannoFinale = max(1, (dannoFinale * 0.75).ceil());
+      }
+      final resistenzaStatoForzaLogIt = resistenzaStatoForzaAttiva
+          ? ' Azzeramento delle vulnerabilita: danno ridotto a $dannoFinale.'
+          : '';
+      final resistenzaStatoForzaLogEn = resistenzaStatoForzaAttiva
+          ? ' Vulnerability Reset: damage reduced to $dannoFinale.'
+          : '';
+
+      final resistenzaAdattamentoAttiva =
+          currentSheetHasAdaptationTemporaryResistance();
+      if (resistenzaAdattamentoAttiva) {
+        dannoFinale = max(
+          1,
+          (dannoFinale * damageRuleMultiplierForCommand('Resistenza')).ceil(),
+        );
+      }
+      final resistenzaAdattamentoLogIt = resistenzaAdattamentoAttiva
+          ? ' Adattamento: Resistenza Temporanea a tutti i danni, danno ridotto a $dannoFinale.'
+          : '';
+      final resistenzaAdattamentoLogEn = resistenzaAdattamentoAttiva
+          ? ' Adaptation: Temporary Resistance to all damage, damage reduced to $dannoFinale.'
+          : '';
+
+      dannoFinale += protectedRunicDamage;
+      if (protectedRunicDamage > 0) {
+        aggiungiLog(
+          '[MITRA RUNICO] +$protectedRunicDamage danni oltre le resistenze; resto dell’attacco dopo le resistenze: ${dannoFinale - protectedRunicDamage}. Scudi applicati normalmente.',
+        );
+      }
+      if (scudoCriticoAttivo) {
+        dannoFinale = max(1, (dannoFinale / 2).ceil());
+      }
+
+      int rimanente = dannoFinale;
+      int oculumShield = scudoOculum();
+      int shield = scudo();
+      int temp = hpTemp();
+      int hp = hpCorrenti();
+      var hpPrima = hp;
+      final oculumShieldBeforeDamage = oculumShield;
+      final shieldBeforeDamage = shield;
+      var pawnDamageLog = '';
+      final safeHpPronto = hasSafeHpParserCommand();
+      final saveShieldValue = saveShieldParserValue();
+      final scudoSalvataggioPronto =
+          !ignoraScudi && scudoSalvataggioAttivo && (oculumShield + shield) > 0;
+      var scudoSalvataggioAttivato = false;
+      var safeHpAttivato = false;
+      var saveShieldAttivato = false;
+      final integrityEffectShields = inventario
+          .where(
+            (item) =>
+                item.protegge &&
+                item.equipaggiata &&
+                canEquipInventoryItem(item) &&
+                (item.craftData['clothing'] == true ||
+                    item.effettoIntegritaScudo.trim().isNotEmpty ||
+                    item.effettoRotturaScudo.isNotEmpty) &&
+                itemIntegrityShieldCurrent(item) > 0,
+          )
+          .toList(growable: false);
+      final integrityEffectOculumShields = inventario
+          .where(
+            (item) =>
+                item.protegge &&
+                item.equipaggiata &&
+                canEquipInventoryItem(item) &&
+                (item.craftData['clothing'] == true ||
+                    item.effettoIntegritaScudo.trim().isNotEmpty ||
+                    item.effettoRotturaScudo.isNotEmpty) &&
+                itemIntegrityOculumShieldCurrent(item) > 0,
+          )
+          .toList(growable: false);
+      final integrityShieldTotal = integrityEffectShields.fold<int>(
+        0,
+        (total, item) => total + itemIntegrityShieldCurrent(item),
+      );
+      final integrityOculumShieldTotal = integrityEffectOculumShields.fold<int>(
+        0,
+        (total, item) => total + itemIntegrityOculumShieldCurrent(item),
+      );
+      final hardIntegrityPriority = switch (normalizedCampaignDifficulty()) {
+        'difficile' || 'oculum' => true,
+        _ => false,
+      };
+      final integrityBroken = <String>{};
+      var combatArmorBreakLog = '';
+
+      void noteBrokenIntegrity(InventoryItem item) {
+        if (itemIntegrityShieldCurrent(item) <= 0 &&
+            itemIntegrityOculumShieldCurrent(item) <= 0) {
+          integrityBroken.add(item.nome.trim());
+        }
+      }
+
+      int consumeIntegrityOculumPoints(int amount) {
+        var remainingAmount = amount;
+        for (final item in integrityEffectOculumShields) {
+          if (remainingAmount <= 0) break;
+          final before = itemIntegrityOculumShieldCurrent(item);
+          final spent = min(before, remainingAmount);
+          if (spent <= 0) continue;
+          item.scudoIntegritaOculumCorrente = before - spent;
+          remainingAmount -= spent;
+          noteBrokenIntegrity(item);
+        }
+        return remainingAmount;
+      }
+
+      int consumeIntegrityShieldPoints(int amount) {
+        var remainingAmount = amount;
+        for (final item in integrityEffectShields) {
+          if (remainingAmount <= 0) break;
+          final before = itemIntegrityShieldCurrent(item);
+          final spent = min(before, remainingAmount);
+          if (spent <= 0) continue;
+          item.scudoIntegritaCorrente = before - spent;
+          remainingAmount -= spent;
+          noteBrokenIntegrity(item);
+        }
+        return remainingAmount;
+      }
+
+      if (!ignoraScudi) {
+        final oculumShieldBefore = oculumShield;
+        final oculumResult = assorbiDannoDaScudoConBonus(
+          layer: oculumShield,
+          remaining: rimanente,
+          bonusPercent: bonusScudoOculum,
+        );
+        oculumShield = oculumResult.layer;
+        rimanente = oculumResult.remaining;
+        var oculumPointsSpent = oculumShieldBefore - oculumShield;
+        final ordinaryOculumShield = max(
+          0,
+          oculumShieldBefore - integrityOculumShieldTotal,
+        );
+        if (hardIntegrityPriority) {
+          consumeIntegrityOculumPoints(oculumPointsSpent);
+        } else {
+          oculumPointsSpent = max(0, oculumPointsSpent - ordinaryOculumShield);
+          consumeIntegrityOculumPoints(oculumPointsSpent);
+        }
+
+        final shieldBefore = shield;
+        final shieldResult = assorbiDannoDaScudoConBonus(
+          layer: shield,
+          remaining: rimanente,
+          bonusPercent: bonusScudoNormale,
+        );
+        shield = shieldResult.layer;
+        rimanente = shieldResult.remaining;
+        var shieldPointsSpent = shieldBefore - shield;
+        final ordinaryShield = max(0, shieldBefore - integrityShieldTotal);
+        if (hardIntegrityPriority) {
+          consumeIntegrityShieldPoints(shieldPointsSpent);
+        } else {
+          shieldPointsSpent = max(0, shieldPointsSpent - ordinaryShield);
+          consumeIntegrityShieldPoints(shieldPointsSpent);
+        }
+      }
+
+      if (scudoSalvataggioPronto && oculumShield <= 0 && shield <= 0) {
+        rimanente = 0;
+        scudoSalvataggioAttivato = true;
+      }
+
+      if (temp > 0 && rimanente > 0) {
+        final assorbito = min(temp, rimanente);
+        temp -= assorbito;
+        rimanente -= assorbito;
+      }
+
+      rimanente = absorbLarvalBroodDamage(rimanente);
+      if (rimanente > 0 && pawnProtects(sheetTagAt(schedaCorrente))) {
+        final beforePawn = rimanente;
+        if (pawnRemoteAuthority) {
+          // Commit the target's own shields before requesting only the HP
+          // overflow. Retries reuse one persisted ID at the Master.
+          setState(() {
+            scudoOculumController.text = '$oculumShield';
+            impostaScudoTotale(shield);
+            impostaHpTempTotali(temp);
           });
-          combatArmorBreakLog += t(
-            '\nArmatura del Combattente spezzata: +200% danni per 2 turni (+$surge).',
-            '\nCombatant Armor broken: +200% damage for 2 turns (+$surge).',
+          try {
+            rimanente = await requestPawnHpInterception(rimanente);
+          } catch (error) {
+            if (mounted) {
+              risultato = 'Protezione Pawn in sospeso: $error';
+              notifyDiceResultChanged();
+            }
+            return;
+          }
+          if (!mounted) return;
+          // Preserve changes received while waiting for the authoritative reply.
+          hp = hpCorrenti();
+          hpPrima = hp;
+          oculumShield = scudoOculum();
+          shield = scudo();
+          temp = hpTemp();
+        } else {
+          rimanente = redirectPawnHpDamage(
+            sheetTagAt(schedaCorrente),
+            rimanente,
           );
         }
-        for (final item in inventario.where(
-          (candidate) => integrityBroken.contains(candidate.nome.trim()),
+        pawnDamageLog =
+            '\nPawn intercetta ${beforePawn - rimanente} danni destinati agli HP; $rimanente raggiungono la scheda.';
+      }
+      if (rimanente > 0) {
+        hp = max(0, hp - rimanente);
+      }
+
+      final brokenCoreActive = arti.any(
+        (art) => art.sbloccata && art.integritaCorrente == 0,
+      );
+      final brokenCoreProfile = oculumBrokenCoreDamageProfile(activeDifficulty);
+      int? brokenCoreRoll;
+      var brokenCoreExtraDamage = 0;
+      var hpBeforeBrokenCore = hp;
+      if (oculumBrokenCoreCanRoll(
+        brokenCore: brokenCoreActive,
+        hpBeforeDamage: hpPrima,
+        hpAfterDamage: hp,
+      )) {
+        brokenCoreRoll = Random.secure().nextInt(10000);
+        if (oculumPercentRollSucceeds(
+          chancePercent: brokenCoreProfile.chancePercent,
+          rollBasisPoints: brokenCoreRoll,
         )) {
-          final effect = item.effettoRotturaScudo;
-          if (effect.isEmpty) continue;
-          final source = 'Rottura scudo: ${item.nome.trim()}';
-          if (activeStructuredEffects.any(
-            (active) => active['source'] == source,
-          )) {
-            continue;
-          }
-          final duration = max(
-            1,
-            readIntValue(effect['duration'], fallback: 2),
+          hpBeforeBrokenCore = hp;
+          brokenCoreExtraDamage = oculumBrokenCoreCurrentHpDamage(
+            currentHp: hp,
+            difficulty: activeDifficulty,
           );
-          final buffTarget = '${effect['buffTarget'] ?? ''}'.trim();
-          final buffValue = readIntValue(effect['buffValue']);
-          if (buffTarget.isNotEmpty && buffValue != 0) {
+          hp = max(0, hp - brokenCoreExtraDamage);
+        }
+      }
+
+      if ((sourceMonster?.stats['combatPhases'] ?? 0) > 1 && hpPrima > 0) {
+        final oldPhase = max(
+          1,
+          readIntValue(sheet['aberrationPhase'], fallback: 1),
+        );
+        if (hp <= 0 &&
+            sourceMonster?.stats['combatPhases'] == 3 &&
+            !readBoolValue(sheet['aberrationFinalPhaseTriggered'])) {
+          sheet['aberrationFinalPhaseTriggered'] = true;
+          sheet['aberrationPhase'] = 3;
+          hp = max(1, (maxHp() * .75).ceil());
+          activeStructuredEffects.add({
+            'effectId': 'aberration_final_phase',
+            'source': 'Ultima fase · Aberrazione',
+            'type': 'danno',
+            'value': 2 * activeCriticalLevel(),
+            'mode': 'finche_attivo',
+            'remaining': -1,
+            'unit': 'turni',
+            'target': '',
+          });
+          invalidateDerivedDataCaches();
+          aggiungiLog(
+            '[ABERRAZIONE · III] Recupera $hp Vita (75% del massimo); +${2 * activeCriticalLevel()} Danni fino alla fine della fase.',
+          );
+        } else if (hp > 0 && hp <= maxHp() / 2 && oldPhase < 2) {
+          sheet['aberrationPhase'] = 2;
+          aggiungiLog(
+            '[ABERRAZIONE · II] Entrata nella seconda fase al 50% della Vita.',
+          );
+        }
+      }
+      if (safeHpPronto && hp <= 0 && hpPrima > 0) {
+        hp = 1;
+        safeHpAttivato = true;
+        consumeOneShotParserCommand('safehp');
+      }
+
+      if (saveShieldValue > 0 &&
+          hp > 0 &&
+          hp <= max(1, (maxHp() * 0.25).ceil())) {
+        shield += saveShieldValue;
+        saveShieldAttivato = true;
+        consumeOneShotParserCommand('saveShield');
+      }
+
+      setState(() {
+        if (elementalAdaptation != null) {
+          sheet['combatElementalAdaptation'] = elementalAdaptation.state;
+        }
+        // Manual penetration is a per-hit choice too. Never leave it armed for
+        // the next attack, including when this hit was absorbed by shields.
+        dannoOltreDifesa = false;
+        dannoOltreScudi = false;
+        dannoBonusScudoPercentController.text = '0';
+        if (critico) {
+          incomingDamagePresets[activePercentDamageType] = modificatoreDopo;
+          if (stadioLiberoDopo != null) {
+            dannoSubitoPercentController.text = testoPercentualeDannoLibera(
+              modificatorePercentualeLibero ?? stadioLiberoDopo.multiplier,
+            );
+          }
+        }
+        schivataOculumRiduzionePronta = 0;
+        schivataOculumEtichettaPronta = '';
+        if (scudoSalvataggioAttivato) {
+          scudoSalvataggioAttivo = false;
+        }
+
+        scudoOculumController.text = oculumShield.toString();
+        impostaScudoTotale(shield);
+        impostaHpTempTotali(temp);
+        currentHpController.text = hp.toString();
+        pawnPendingDamage = {};
+        if (dannoModificato > 0) interruptArtAwakening();
+        registerVitalMemoryDamage(hpPrima - hp);
+        final partialAwakeningLog = applicaRisveglioParzialeMetaHpSeServe(
+          hpBefore: hpPrima,
+          hpAfter: hp,
+          oculumDodgeUsedToday: riduzioneSchivata > 0,
+        );
+        final lowHpLog = applicaRicompensaAscensionDustRisorsaBassa(
+          before: hpPrima,
+          after: hp,
+          maximum: maxHp(),
+          resourceName: t('HP', 'HP'),
+        );
+        final brokenCoreLog = brokenCoreRoll == null
+            ? ''
+            : brokenCoreExtraDamage > 0
+            ? t(
+                '\nNucleo Rotto: tiro ${(brokenCoreRoll / 100).toStringAsFixed(2)}% su ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%. Vita attuale $hpBeforeBrokenCore, danno aggiuntivo $brokenCoreExtraDamage.',
+                '\nBroken Core: roll ${(brokenCoreRoll / 100).toStringAsFixed(2)}% against ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%. Current Life $hpBeforeBrokenCore, $brokenCoreExtraDamage additional damage.',
+              )
+            : t(
+                '\nNucleo Rotto: tiro ${(brokenCoreRoll / 100).toStringAsFixed(2)}% su ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%, nessun danno aggiuntivo.',
+                '\nBroken Core: roll ${(brokenCoreRoll / 100).toStringAsFixed(2)}% against ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%, no additional damage.',
+              );
+        if (scudoCriticoSpezzato) {
+          scudoCriticoController.text = max(
+            0,
+            scudoCriticoPrima - 1,
+          ).toString();
+        }
+        if (integrityBroken.isNotEmpty) {
+          final brokenText = t(
+            'Scudo d\'integrità spezzato: ${integrityBroken.join(', ')}. I suoi parser/effetti non sono più attivi fino alla ricarica.',
+            'Integrity shield broken: ${integrityBroken.join(', ')}. Its parser/effects stay disabled until it is recharged.',
+          );
+          combatArmorBreakLog = '\n$brokenText';
+          if (integrityBroken.contains('Armatura del Combattente') &&
+              !activeStructuredEffects.any(
+                (effect) => effect['source'] == 'Armatura del Combattente',
+              )) {
+            final surge = max(1, dannoTotale()) * 2;
             activeStructuredEffects.add(<String, dynamic>{
-              'source': source,
-              'target': buffTarget,
-              'value': buffValue,
-              'remaining': duration,
+              'source': 'Armatura del Combattente',
+              'target': 'danni',
+              'value': surge,
+              'remaining': 2,
               'unit': 'turn',
               'frequency': '',
               'type': 'bonus',
               'stackable': false,
             });
+            combatArmorBreakLog += t(
+              '\nArmatura del Combattente spezzata: +200% danni per 2 turni (+$surge).',
+              '\nCombatant Armor broken: +200% damage for 2 turns (+$surge).',
+            );
           }
-          final condition = '${effect['condition'] ?? ''}'.trim();
-          if (condition.isNotEmpty) {
-            applyCondition(condition, duration: duration, source: source);
+          for (final item in inventario.where(
+            (candidate) => integrityBroken.contains(candidate.nome.trim()),
+          )) {
+            final effect = item.effettoRotturaScudo;
+            if (item.craftData['cyberPostea'] == true) {
+              if (item.craftData['cyberWorn'] == true) continue;
+              item.craftData['cyberWorn'] = true;
+              item.nome = 'Armatura logora · ${item.nome}';
+              item.note +=
+                  ' Scudo consumato: armatura logora, tutti i bonus passivi dimezzati; non si ricarica automaticamente.';
+              final chance = readIntValue(
+                effect['chancePercent'],
+                fallback: 99,
+              ).clamp(0, 100);
+              final roll = Random.secure().nextInt(100);
+              combatArmorBreakLog +=
+                  '\n[POSTEA] ${item.nome}: bonus dimezzati. Buff: ${roll + 1}/100, soglia $chance%.';
+              if (roll >= chance) continue;
+            }
+            if (effect.isEmpty) continue;
+            final source = 'Rottura scudo: ${item.nome.trim()}';
+            if (activeStructuredEffects.any(
+              (active) => active['source'] == source,
+            )) {
+              continue;
+            }
+            final duration = max(
+              1,
+              readIntValue(effect['duration'], fallback: 2),
+            );
+            final configuredTarget = '${effect['buffTarget'] ?? ''}'.trim();
+            final mostUsed = dustExperienceHighestSubtraits();
+            final buffTarget = configuredTarget == 'piu_usato'
+                ? (mostUsed.isEmpty ? 'riflessi' : mostUsed.first.id)
+                : configuredTarget;
+            final buffValue = readIntValue(effect['buffValue']);
+            if (buffTarget.isNotEmpty && buffValue != 0) {
+              activeStructuredEffects.add(<String, dynamic>{
+                'source': source,
+                'target': buffTarget,
+                'value': buffValue,
+                'remaining': duration,
+                'unit': 'turn',
+                'frequency': '',
+                'type': 'bonus',
+                'stackable': false,
+              });
+            }
+            final condition = '${effect['condition'] ?? ''}'.trim();
+            if (condition.isNotEmpty) {
+              applyCondition(condition, duration: duration, source: source);
+            }
+            final element = oculumNormalizeElementId(
+              '${effect['element'] ?? ''}',
+            );
+            final resistance = '${effect['resistance'] ?? ''}'.trim();
+            if (element.isNotEmpty && resistance.isNotEmpty) {
+              activeStructuredEffects.add(<String, dynamic>{
+                'source': source,
+                'type': 'elemental_resistance',
+                'target': 'resistenza_elementale',
+                'element': element,
+                'preset': resistance,
+                'value': 0,
+                'remaining': duration,
+                'unit': 'turn',
+                'frequency': '',
+                'stackable': false,
+              });
+            }
+            combatArmorBreakLog += t(
+              '\n${item.nome} spezzata: bonus temporaneo${buffValue == 0 ? '' : ' +$buffValue $buffTarget'}, ${condition.isEmpty ? '' : '$condition, '}${resistance.isEmpty ? '' : '$resistance a $element, '}per $duration turni.',
+              '\n${item.nome} broken: temporary bonus${buffValue == 0 ? '' : ' +$buffValue $buffTarget'}, ${condition.isEmpty ? '' : '$condition, '}${resistance.isEmpty ? '' : '$resistance to $element, '}for $duration turns.',
+            );
           }
-          final element = oculumNormalizeElementId(
-            '${effect['element'] ?? ''}',
-          );
-          final resistance = '${effect['resistance'] ?? ''}'.trim();
-          if (element.isNotEmpty && resistance.isNotEmpty) {
-            activeStructuredEffects.add(<String, dynamic>{
-              'source': source,
-              'type': 'elemental_resistance',
-              'target': 'resistenza_elementale',
-              'element': element,
-              'preset': resistance,
-              'value': 0,
-              'remaining': duration,
-              'unit': 'turn',
-              'frequency': '',
-              'stackable': false,
-            });
-          }
-          combatArmorBreakLog += t(
-            '\n${item.nome} spezzata: bonus temporaneo${buffValue == 0 ? '' : ' +$buffValue $buffTarget'}, ${condition.isEmpty ? '' : '$condition, '}${resistance.isEmpty ? '' : '$resistance a $element, '}per $duration turni.',
-            '\n${item.nome} broken: temporary bonus${buffValue == 0 ? '' : ' +$buffValue $buffTarget'}, ${condition.isEmpty ? '' : '$condition, '}${resistance.isEmpty ? '' : '$resistance to $element, '}for $duration turns.',
+        }
+
+        risultato = t(
+          'Danno subito: $dannoLog$parataOculumLogIt$schivataLogIt$difesaLogIt. $modificatoreNome: $dannoModificatoBase.$parserRulesLog$criticoLogIt$sfortunaCriticoLogIt ${scudoCriticoAttivo ? "Scudo Critico attivo: danno dimezzato a $dannoFinale. " : ""}$resistenzaStatoForzaLogIt$resistenzaAdattamentoLogIt$opzioniImpattoIt${scudoSalvataggioAttivato ? " Scudo di Salvataggio: l'overflow viene bloccato dopo l'ultimo scudo." : ""}${safeHpAttivato ? " @safehp: resti a 1 HP e il comando viene consumato." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Scudo, comando consumato." : ""} Applicato a ${ignoraScudi ? "HP Temp -> HP" : "Scudo Oculum -> Scudo -> HP Temp -> HP"}.',
+          'Damage taken: $dannoLog$parataOculumLogEn$schivataLogEn$difesaLogEn. $modificatoreNome: $dannoModificatoBase.$parserRulesLog$criticoLogEn$sfortunaCriticoLogEn ${scudoCriticoAttivo ? "Critical Shield active: damage halved to $dannoFinale. " : ""}$resistenzaStatoForzaLogEn$resistenzaAdattamentoLogEn$opzioniImpattoEn${scudoSalvataggioAttivato ? " Saving Shield: overflow is blocked after the last shield." : ""}${safeHpAttivato ? " @safehp: you stay at 1 HP and the command is consumed." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Shield, command consumed." : ""} Applied to ${ignoraScudi ? "Temp HP -> HP" : "Oculum Shield -> Shield -> Temp HP -> HP"}.',
+        );
+        risultato += partialAwakeningLog;
+        risultato += lowHpLog;
+        risultato += brokenCoreLog;
+        risultato += combatArmorBreakLog;
+        risultato += pawnDamageLog;
+
+        if (scudoCriticoSpezzato) {
+          risultato += t(
+            '\nScudo Critico spezzato dal danno critico: -1.',
+            '\nCritical Shield broken by critical damage: -1.',
           );
         }
-      }
 
-      risultato = t(
-        'Danno subito: $dannoLog$parataOculumLogIt$schivataLogIt$difesaLogIt. $modificatoreNome: $dannoModificatoBase.$parserRulesLog$criticoLogIt$sfortunaCriticoLogIt ${scudoCriticoAttivo ? "Scudo Critico attivo: danno dimezzato a $dannoFinale. " : ""}$resistenzaStatoForzaLogIt$resistenzaAdattamentoLogIt$opzioniImpattoIt${scudoSalvataggioAttivato ? " Scudo di Salvataggio: l'overflow viene bloccato dopo l'ultimo scudo." : ""}${safeHpAttivato ? " @safehp: resti a 1 HP e il comando viene consumato." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Scudo, comando consumato." : ""} Applicato a ${ignoraScudi ? "HP Temp -> HP" : "Scudo Oculum -> Scudo -> HP Temp -> HP"}.',
-        'Damage taken: $dannoLog$parataOculumLogEn$schivataLogEn$difesaLogEn. $modificatoreNome: $dannoModificatoBase.$parserRulesLog$criticoLogEn$sfortunaCriticoLogEn ${scudoCriticoAttivo ? "Critical Shield active: damage halved to $dannoFinale. " : ""}$resistenzaStatoForzaLogEn$resistenzaAdattamentoLogEn$opzioniImpattoEn${scudoSalvataggioAttivato ? " Saving Shield: overflow is blocked after the last shield." : ""}${safeHpAttivato ? " @safehp: you stay at 1 HP and the command is consumed." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Shield, command consumed." : ""} Applied to ${ignoraScudi ? "Temp HP -> HP" : "Oculum Shield -> Shield -> Temp HP -> HP"}.',
-      );
-      risultato += partialAwakeningLog;
-      risultato += lowHpLog;
-      risultato += brokenCoreLog;
-      risultato += combatArmorBreakLog;
-      risultato += pawnDamageLog;
+        dannoSubitoController.clear();
 
-      if (scudoCriticoSpezzato) {
-        risultato += t(
-          '\nScudo Critico spezzato dal danno critico: -1.',
-          '\nCritical Shield broken by critical damage: -1.',
+        aggiungiLog(risultato);
+      });
+
+      consumeDifficultyIncreaseFortunaBonus(hpLost: hp < hpPrima);
+      final elementalAdjustment = incomingElementRules.isEmpty
+          ? 0
+          : dannoDopoRegoleElementali.compareTo(dannoModificatoBase);
+      if (oculumShieldBeforeDamage > 0 && oculumShield <= 0 ||
+          shieldBeforeDamage > 0 && shield <= 0) {
+        oculumCombatTheme.react(
+          'shieldBreak',
+          elementId: oculumCombatElementId(elementoAttivo),
+        );
+      } else if (riduzioneParataOculum > 0) {
+        oculumCombatTheme.react(
+          'parry',
+          elementId: oculumCombatElementId(elementoAttivo),
+        );
+      } else if (elementalAdjustment < 0) {
+        oculumCombatTheme.react(
+          'resisted',
+          elementId: oculumCombatElementId(elementoAttivo),
+        );
+      } else if (elementalAdjustment > 0) {
+        oculumCombatTheme.react(
+          'vulnerable',
+          elementId: oculumCombatElementId(elementoAttivo),
+        );
+      } else if (hp < hpPrima && critico) {
+        oculumCombatTheme.react(
+          'critical',
+          elementId: oculumCombatElementId(elementoAttivo),
+        );
+      } else if (hp < hpPrima) {
+        oculumCombatTheme.react(
+          'hit',
+          elementId: oculumCombatElementId(elementoAttivo),
+        );
+      } else if (dannoFinale > 0) {
+        oculumCombatTheme.react(
+          'blocked',
+          elementId: oculumCombatElementId(elementoAttivo),
         );
       }
-
-      dannoSubitoController.clear();
-
-      aggiungiLog(risultato);
-    });
-
-    consumeDifficultyIncreaseFortunaBonus(hpLost: hp < hpPrima);
-    final elementalAdjustment = incomingElementRules.isEmpty
-        ? 0
-        : dannoDopoRegoleElementali.compareTo(dannoModificatoBase);
-    if (oculumShieldBeforeDamage > 0 && oculumShield <= 0 ||
-        shieldBeforeDamage > 0 && shield <= 0) {
-      oculumCombatTheme.react(
-        'shieldBreak',
-        elementId: oculumCombatElementId(elementoAttivo),
-      );
-    } else if (riduzioneParataOculum > 0) {
-      oculumCombatTheme.react(
-        'parry',
-        elementId: oculumCombatElementId(elementoAttivo),
-      );
-    } else if (elementalAdjustment < 0) {
-      oculumCombatTheme.react(
-        'resisted',
-        elementId: oculumCombatElementId(elementoAttivo),
-      );
-    } else if (elementalAdjustment > 0) {
-      oculumCombatTheme.react(
-        'vulnerable',
-        elementId: oculumCombatElementId(elementoAttivo),
-      );
-    } else if (hp < hpPrima && critico) {
-      oculumCombatTheme.react(
-        'critical',
-        elementId: oculumCombatElementId(elementoAttivo),
-      );
-    } else if (hp < hpPrima) {
-      oculumCombatTheme.react(
-        'hit',
-        elementId: oculumCombatElementId(elementoAttivo),
-      );
-    } else if (dannoFinale > 0) {
-      oculumCombatTheme.react(
-        'blocked',
-        elementId: oculumCombatElementId(elementoAttivo),
-      );
+      programmaSalvataggio();
+      sendRealtimeHpChanged();
+      checkAutomaticAshFromHpLoss(hpPrima, hp, source: t('danno', 'damage'));
+      controllaCadutaDopoDanno();
+      controllaStatoForzaDopoHp();
+    } finally {
+      if (skullFormHit) advanceSkullFormHit();
     }
-    programmaSalvataggio();
-    sendRealtimeHpChanged();
-    checkAutomaticAshFromHpLoss(hpPrima, hp, source: t('danno', 'damage'));
-    controllaCadutaDopoDanno();
-    controllaStatoForzaDopoHp();
   }
 
   void curaHp() {

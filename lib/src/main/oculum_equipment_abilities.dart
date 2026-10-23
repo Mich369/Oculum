@@ -115,7 +115,11 @@ bool oculumEquipmentSkillLevelAvailable({
     );
 
 /// Fixed-cost physical techniques never advertise a variable Oculum range.
-CharacterSkill oculumEquipmentAbility(String name, int grade) {
+CharacterSkill oculumEquipmentAbility(
+  String name,
+  int grade, {
+  String? element,
+}) {
   final lower = name.toLowerCase();
   final horn = lower.contains('forest demon') && lower.contains('corno');
   final bow = lower.contains('arco') || lower.contains('balestra');
@@ -192,7 +196,7 @@ CharacterSkill oculumEquipmentAbility(String name, int grade) {
                     : 5 + form * 5 + grade}',
             mode: horn || armor ? 'finche_attivo' : 'prossima_azione',
             duration: horn || armor ? '1' : '',
-            elementType: frost ? 'ghiaccio' : 'perforante',
+            elementType: element ?? (frost ? 'ghiaccio' : 'perforante'),
           ),
         ],
         oculumLimitiConfiguratiManualmente: true,
@@ -248,11 +252,109 @@ CharacterSkill oculumEquipmentAbilityFromArt(ArtSkill skill) => CharacterSkill(
 );
 
 extension _OculumEquipmentAbilities on _OculumHomePageState {
+  Future<void> editEquipmentTitleForms(InventoryItem item) async {
+    item.ability ??= CharacterSkill(
+      nome: item.nome,
+      tipo: 'Skill equipaggiamento',
+      costo: '',
+      cooldown: '',
+      descrizione: item.note,
+      forme: [
+        CharacterSkillForm(
+          nome: 'I',
+          tipo: 'Skill equipaggiamento',
+          descrizione: item.note,
+        ),
+      ],
+    );
+    await showDialog<void>(
+      context: context,
+      builder: (dialog) => StatefulBuilder(
+        builder: (context, update) => AlertDialog(
+          title: Text('Forme · ${item.nome}'),
+          content: SizedBox(
+            width: 620,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  for (final form in item.ability!.forme)
+                    ExpansionTile(
+                      title: Text(form.nome),
+                      children: [
+                        TextFormField(
+                          initialValue: form.nome,
+                          decoration: const InputDecoration(
+                            labelText: 'Nome forma',
+                          ),
+                          onChanged: (v) => form.nome = v,
+                        ),
+                        TextFormField(
+                          initialValue: form.livello,
+                          decoration: const InputDecoration(
+                            labelText: 'Livello richiesto',
+                          ),
+                          onChanged: (v) => form.livello = v,
+                        ),
+                        TextFormField(
+                          initialValue: form.descrizione,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: 'Descrizione',
+                          ),
+                          onChanged: (v) => form.descrizione = v,
+                        ),
+                        structuredEffectsEditor(
+                          effects: form.effettiStrutturati,
+                          onChanged: () {
+                            update(() {});
+                            programmaSalvataggio();
+                          },
+                        ),
+                      ],
+                    ),
+                  if (item.craftData['titleItem'] == true &&
+                      item.ability!.forme.length < 12)
+                    TextButton(
+                      onPressed: () => update(() {
+                        final previous = item.ability!.forme.last;
+                        item.ability!.forme.add(
+                          CharacterSkillForm.fromJson(previous.toJson())
+                            ..nome = 'Forma ${item.ability!.forme.length + 1}'
+                            ..livello = '${readIntValue(previous.livello) + 3}',
+                        );
+                      }),
+                      child: const Text(
+                        'Aggiungi evoluzione (effetti da configurare)',
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                programmaSalvataggio();
+                Navigator.pop(dialog);
+              },
+              child: const Text('Salva'),
+            ),
+          ],
+        ),
+      ),
+    );
+    programmaSalvataggio();
+  }
+
   Future<void> useEquipmentQuickAbility(
     InventoryItem item,
     CharacterSkillForm form,
     OculumCombatAbilityRole role,
   ) async {
+    if (item.craftData['necromancyKind'] != null) {
+      await useNecromancyEquipment(item);
+      return;
+    }
     if (item.craftData['posteaBoots'] == true) {
       if (!inventario.contains(item) ||
           !item.equipaggiata ||
@@ -286,7 +388,15 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       if (onlineCombatResolving.contains('${request['id']}')) return;
       request['defenseRetryUsed'] = true;
       request['defenseRetryApproved'] = true;
-      request['posteaCmBonus'] = 3;
+      request['posteaCmBonus'] = form.effettiStrutturati.isEmpty
+          ? 3
+          : max(
+              0,
+              readIntValue(
+                form.effettiStrutturati.first.valueExpression,
+                fallback: 3,
+              ),
+            );
       form.cooldownStrutturato?.activate();
       aggiungiLog(
         '[POSTEA] Reroll CM +3 gratuito: non usa Azione, Reazione o veloce. CD ${form.cooldownStrutturato?.amount ?? 5} turni.',

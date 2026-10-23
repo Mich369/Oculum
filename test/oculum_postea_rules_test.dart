@@ -1,7 +1,73 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
+import 'package:oculum/game/oculum_opposed_attack.dart';
 
 void main() {
+  test(
+    'plane pressure uses strict success, near miss, high die and negative critical',
+    () {
+      expect(
+        oculumPlanePressurePenalty(total: 22, natural: 12, areaGrade: 3),
+        0,
+      );
+      expect(
+        oculumPlanePressurePenalty(total: 21, natural: 12, areaGrade: 3),
+        5,
+      );
+      expect(
+        oculumPlanePressurePenalty(total: 18, natural: 12, areaGrade: 3),
+        5,
+      );
+      expect(
+        oculumPlanePressurePenalty(total: 17, natural: 12, areaGrade: 3),
+        10,
+      );
+      expect(
+        oculumPlanePressurePenalty(total: 10, natural: 18, areaGrade: 3),
+        5,
+      );
+      expect(
+        oculumPlanePressurePenalty(total: 30, natural: 1, areaGrade: 3),
+        20,
+      );
+    },
+  );
+  test(
+    'Diabolic is distinct and resists only incoming Demonic by 75 percent',
+    () {
+      expect(
+        oculumElementalDefenseMultiplier(
+          incomingElement: 'demoniaco',
+          defenseElement: 'diabolico',
+          currentHp: 10,
+          maximumHp: 100,
+        ),
+        .25,
+      );
+      expect(
+        oculumElementalDefenseMultiplier(
+          incomingElement: 'diabolico',
+          defenseElement: 'demoniaco',
+          currentHp: 100,
+          maximumHp: 100,
+        ),
+        1,
+      );
+      expect(oculumPlanes.where((p) => p.id == 'oblio').length, 1);
+      expect(oculumPlanes.first.id, 'mezzano');
+      expect(oculumPlanes.firstWhere((p) => p.id == 'sacro').minimumGrade, 3);
+      expect(
+        oculumPlanes.firstWhere((p) => p.id == 'vero_inferno').minimumGrade,
+        9,
+      );
+      final effect = oculumEquipmentAbility(
+        'Arma angelica',
+        3,
+        element: 'angelico',
+      ).forme.first.effettiStrutturati.first;
+      expect(effect.elementType, 'angelico');
+    },
+  );
   test(
     'Ash exhaustion starts strictly above level plus three and caps at 100%',
     () {

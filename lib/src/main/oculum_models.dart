@@ -1569,7 +1569,15 @@ class InventoryItem {
     this.monsterLoot = const {},
     this.craftData = const {},
     this.ability,
-  });
+  }) {
+    if (!peso.isFinite || peso <= 0) {
+      peso = arma
+          ? 1.5
+          : protegge
+          ? 2
+          : .1;
+    }
+  }
 
   String nome;
   double peso;

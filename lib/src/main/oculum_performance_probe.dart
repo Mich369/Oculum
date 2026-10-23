@@ -183,6 +183,12 @@ class OculumPerformanceProbe {
   Widget corruptionRequests() => _state.onlineCombatRequestsPanel();
   Future<void> resistCorruption(Map<String, dynamic> request, String choice) =>
       _state.defendCorruptionApplication(request, choice);
+  void convertItemTitle(InventoryItem item) =>
+      _state.convertInventoryItemToTitle(item);
+  int itemShield(InventoryItem item) => _state.itemShieldBonus(item);
+  String get planeId => _state.selectedPlaneId;
+  Future<void> useNecromancy(InventoryItem item) => _state.useNecromancyEquipment(item);
+  void skullHit() => _state.advanceSkullFormHit();
   Widget dicePanel() => _state.sheetDiceRollPanel(dense: true);
   Widget subtraitsPanel() => _state.referenceSubtraitsPanel();
   void resetEncounter() => _state.resetMasterInitiativeRound();

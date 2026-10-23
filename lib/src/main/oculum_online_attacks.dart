@@ -2629,6 +2629,18 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       request['defenseChoice'] = payload['defenseChoice'];
       request['defenseHelp'] = readIntValue(payload['defenseHelp']);
       request['doubleDefense'] = payload['doubleDefense'] == true;
+      if (controlsOnlineCombatSheet('${request['sourceTag']}') &&
+          sheetTagAt(schedaCorrente) == request['sourceTag'] &&
+          oculumIsDoubleCritical(
+            natural: readIntValue(request['natural']),
+            total: attack,
+            opposingTotal: defense,
+          )) {
+        recoverPlanePressureCritical(
+          doubleCritical: true,
+          receiptId: 'attack:${request['attackGroupId'] ?? request['id']}',
+        );
+      }
       final reflected = readIntValue(
         payload['runicReflectedDamage'],
       ).clamp(0, max(0, readIntValue(request['damage']))).toInt();
@@ -3011,6 +3023,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       total: defense,
       opposingTotal: attack,
     );
+    if (doubleDefense) {
+      recoverPlanePressureCritical(
+        doubleCritical: true,
+        receiptId: 'defense:${request['id']}',
+      );
+    }
     request['doubleCritical'] = doubleCritical;
     request['doubleDefense'] = doubleDefense;
     if (doubleDefense) {

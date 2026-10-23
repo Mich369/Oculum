@@ -733,6 +733,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
 
   int merchantOfferCost(Map<String, dynamic> offer) {
     final kind = '${offer['kind'] ?? ''}';
+    if (kind == 'postea_cyber_armor') return 36 + (maxHp() / 2).ceil();
     if (kind == 'black_market_ascension_dust') {
       return min(69, merchantDustPrice);
     }
@@ -840,6 +841,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool merchantOfferMatchesShop(Map<String, dynamic> offer) {
+    if (!merchantOfferMatchesPlane(offer)) return false;
     final kind = '${offer['kind']}';
     if (kind == 'technique_scroll' &&
         readIntValue(offer['scrollGrade']) !=
@@ -1223,6 +1225,16 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     spacing: 8,
     runSpacing: 6,
     children: [
+      OutlinedButton.icon(
+        onPressed: selectCurrentPlane,
+        icon: const Icon(Icons.public),
+        label: Text('Piano: ${selectedPlane.name}'),
+      ),
+      if (planeNeedsAdaptation)
+        OutlinedButton(
+          onPressed: rollPlaneAdaptation,
+          child: Text('Adattamento · pressione −$planePressurePenalty stats'),
+        ),
       DropdownButton<String>(
         value: merchantShopType,
         onChanged: (v) {
@@ -1631,7 +1643,38 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void ensureClothingOffers() {
-    if (merchantStock.any((o) => o['kind'] == 'clothing')) return;
+    const designs = [
+      (
+        'femminile',
+        'Abito della Rosa Nera',
+        'Velluto prugna scuro, corpetto a cuciture d’argento e gonna a pannelli con sottogonna leggera. Il pizzo delle maniche disegna spine; gli spacchi laterali nascosti lasciano correre e combattere.',
+      ),
+      (
+        'maschile',
+        'Redingote del Vespro',
+        'Lana antracite, spalle sagomate e falde lunghe foderate di raso color vino. Bottoni bruniti, collo alto e gilet con piccole tasche interne proteggono dal vento senza irrigidire i gomiti.',
+      ),
+      (
+        'unisex',
+        'Mantello del Pellegrino Cinereo',
+        'Tela cerata grigio cenere sopra una tunica morbida, cappuccio profondo e fibbia di ferro a luna spezzata. La mantella corta lascia libere le braccia; cuciture rinforzate e tasche piatte servono al viaggio.',
+      ),
+      (
+        'femminile',
+        'Completo della Cacciatrice d’Ombra',
+        'Giacca corta di pelle morbida, pantaloni aderenti rinforzati alle ginocchia e sciarpa color petrolio. Ricami geometrici, cintura modulare e bordi consumati danno un taglio pratico al gusto gotico.',
+      ),
+      (
+        'maschile',
+        'Farsetto del Guardiano d’Autunno',
+        'Lino color terra sotto un farsetto verde bosco trapuntato, con alamari in osso levigato. Pantaloni ampi e polsi regolabili richiamano un abito da esploratore, sobrio e comodo anche fuori battaglia.',
+      ),
+      (
+        'unisex',
+        'Soprabito della Notte Stellata',
+        'Cotone blu inchiostro, interno color rame e minuscoli punti metallici come stelle. Chiusura asimmetrica, collo ripiegabile e laccetti laterali permettono di adattare il taglio a corporature diverse.',
+      ),
+    ];
     final rng = Random();
     const growth = [
       'resilienza',
@@ -1644,6 +1687,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       'resistenza',
     ];
     for (var i = 0; i < 16; i++) {
+      final id = 'sartoria_stile_v2_$i';
+      if (merchantStock.any((o) => o['id'] == id)) continue;
+      final design = designs[i % designs.length];
       final level = i ~/ 2 + 1;
       final stat = growth[i % growth.length];
       final tempHp = i % 3 == 0 ? 5 : 0;
@@ -1653,10 +1699,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       final defense = i % 4 == 0 ? 1 : 0;
       final base = 9 + rng.nextInt(10);
       merchantStock.add({
-        'id': 'sartoria_$i',
+        'id': id,
         'kind': 'clothing',
-        'name':
-            '${i.isEven ? 'Veste' : 'Mantello'} della ${const ['Custodia', 'Quiete', 'Soglia', 'Trama'][i % 4]} $level',
+        'name': '${design.$2} · $level',
         'level': level,
         'grade': 0,
         'growthStat': stat,
@@ -1676,12 +1721,13 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             defense * 2 +
             2,
         'desc':
-            'Vestito economico: +1 $stat ogni ${i % growth.length < 4 ? 3 : 2} livelli oggetto. Bonus dimezzati per difetto quando si rompe il suo Scudo. Skill di protezione modificabile. Supplementi proposti: crescita 2 Obser, Danni/Difesa 2 Obser per punto.',
+            'Taglio ${design.$1}. ${design.$3} Vestito economico: +1 $stat ogni ${i % growth.length < 4 ? 3 : 2} livelli oggetto. Bonus dimezzati per difetto quando si rompe il suo Scudo. Skill di protezione modificabile. Supplementi proposti: crescita 2 Obser, Danni/Difesa 2 Obser per punto.',
       });
     }
   }
 
   void ensureMerchantSpecialOffers() {
+    ensurePlaneOffers();
     ensureClothingOffers();
     if (!merchantStock.any((o) => o['id'] == 'postea_runic_mitra_15')) {
       merchantStock.add({
@@ -1702,6 +1748,29 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'cost': 60,
         'desc':
             'Doppio salto gratuito fuori fight. In Difesa: un reroll CM +3, CD 5 turni. Non consuma Azioni, Reazioni o Reazioni veloci.',
+      });
+    }
+    const cyberNames = [
+      'Armatura Nervo di Neon',
+      'Corazza del Ronin Sintetico',
+      'Guscio della Cattedrale Elettrica',
+    ];
+    const cyberDescriptions = [
+      'Taglio femminile: piastre sottili color ossidiana sopra una giacca corta in fibra tecnica, vita sagomata e gambali articolati. Circuiti viola corrono tra le cuciture; il collare proietta un’aureola di interferenza quando assorbe un colpo.',
+      'Taglio maschile: corazza a lamelle di ceramica nera, spallacci bassi e soprabito sintetico con falde aperte. Fili rossi sotto vetro e un visore pieghevole richiamano un ronin delle città verticali; le giunture restano morbide.',
+      'Taglio unisex regolabile: cappotto blindato color piombo, placche pettorali modulari e cappuccio con rete luminosa turchese. Cavi intrecciati come vetrate gotiche scaricano energia lungo i bordi, mentre fibbie magnetiche adattano il guscio al corpo.',
+    ];
+    for (var i = 0; i < cyberNames.length; i++) {
+      final id = 'postea_cyber_armor_$i';
+      if (merchantStock.any((o) => o['id'] == id)) continue;
+      merchantStock.add({
+        'id': id,
+        'kind': 'postea_cyber_armor',
+        'name': cyberNames[i],
+        'variant': i,
+        'cost': 36,
+        'desc':
+            '${cyberDescriptions[i]} Scudo consumabile: metà HP massimi fissata all’acquisto (per eccesso). Prezzo 36 + Scudo. Alla rottura diventa logora: bonus dimezzati, nessuna ricarica automatica; 99% di un buff per 6 turni.',
       });
     }
     final ids = merchantStock.map((offer) => '${offer['id']}').toSet();
@@ -3709,6 +3778,45 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     Map<String, dynamic> offer, {
     String titleType = '',
   }) {
+    if (offer['kind'] == 'postea_cyber_armor') {
+      final level = max(0, leggiNumero(livelloController));
+      final grade = max(0, leggiNumero(gradoController));
+      final shield = (maxHp() / 2).ceil();
+      final variant = readIntValue(offer['variant']) % 3;
+      final primary = const ['resilienza', 'materia', 'volonta'][variant];
+      final growthBonus = (1 + grade ~/ 3).clamp(1, 4);
+      return InventoryItem(
+        nome: '${offer['name']}',
+        peso: 2,
+        quantita: 1,
+        note:
+            '${offer['desc']} Acquisto: HP massimi ${maxHp()}, Scudo $shield; livello $level. Bonus proposti: +${2 + grade} Danni e Difesa, +1 $primary ogni 3 livelli oggetto.',
+        protegge: true,
+        livelloOggetto: level,
+        statCrescita: primary,
+        bonusScudo: shield,
+        bonusScudoIncludeGrado: true,
+        buff: '@Danni+${2 + grade} @Difesa+${2 + grade}',
+        craftData: {
+          'clothing': true,
+          'cyberPostea': true,
+          'growthEvery': 3,
+          'purchaseMaxHp': maxHp(),
+          'purchaseShield': shield,
+        },
+        effettoRotturaScudo: {
+          'chancePercent': 99,
+          'duration': 6,
+          if (variant == 0) 'condition': 'nutrito_resilienza',
+          if (variant != 0) 'buffTarget': variant == 1 ? primary : 'piu_usato',
+          if (variant != 0)
+            'buffValue': variant == 1
+                ? growthBonus
+                : (3 + grade ~/ 3).clamp(3, 6),
+        },
+        ability: oculumForestDemonArmorAbility(level),
+      );
+    }
     if (offer['kind'] == 'postea_boots') {
       return InventoryItem(
         nome: '${offer['name']}',
@@ -3958,13 +4066,71 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       nome: isTitle
           ? 'Item Titolo — ${titleType.replaceAll('_', ' ')}'
           : '${offer['name']}',
-      ability: oculumEquipmentAbility(
-        isTitle
-            ? (weapon ? 'Arma del Titolo' : 'Corazza del Titolo')
-            : '${offer['name']}',
-        grade,
-      ),
-      peso: 1.2,
+      ability: offer['necromancyKind'] != null
+          ? CharacterSkill(
+              nome: '${offer['name']}',
+              tipo: 'Supporto',
+              costo: '',
+              cooldown: '',
+              descrizione: '${offer['desc']}',
+              forme: [
+                CharacterSkillForm(
+                  nome: 'I',
+                  tipo: 'Supporto',
+                  livello: '${max(0, readIntValue(offer['level']))}',
+                  descrizione: '${offer['desc']}',
+                  cooldownStrutturato: OculumAbilityCooldown(amount: 6),
+                  effettiStrutturati: [
+                    OculumStructuredEffect(
+                      type: 'evocazione',
+                      valueExpression: '1',
+                      duration: '3',
+                    ),
+                  ],
+                ),
+              ],
+            )
+          : offer['planeResistance'] != null
+          ? CharacterSkill(
+              nome: 'Sigillo contro ${offer['planeResistance']}',
+              tipo: 'Difesa',
+              costo: '',
+              cooldown: '',
+              descrizione: 'Protezione runica temporanea',
+              forme: [
+                CharacterSkillForm(
+                  nome: 'I',
+                  tipo: 'Difesa',
+                  livello: '${max(0, readIntValue(offer['level']))}',
+                  descrizione:
+                      'Resistenza a ${offer['planeResistance']} per 3 turni; CD 6 turni.',
+                  cooldownStrutturato: OculumAbilityCooldown(amount: 6),
+                  effettiStrutturati: [
+                    OculumStructuredEffect(
+                      type: 'elemental_resistance',
+                      elementType: '${offer['planeResistance']}',
+                      customDisplayText: 'Resistenza',
+                      mode: 'finche_attivo',
+                      duration: '3',
+                    ),
+                  ],
+                ),
+              ],
+            )
+          : oculumEquipmentAbility(
+              isTitle
+                  ? (weapon ? 'Arma del Titolo' : 'Corazza del Titolo')
+                  : '${offer['name']}',
+              grade,
+              element: offer['element'] as String?,
+            ),
+      peso: offer['heavyClothing'] == true ? 3 : 1.2,
+      craftData: {
+        if (offer['heavyClothing'] == true) 'heavyClothing': true,
+        if (offer['necromancyKind'] != null)
+          'necromancyKind': offer['necromancyKind'],
+        if (offer['necromancyKind'] != null) 'duration': 3,
+      },
       quantita: 1,
       note: isTitle
           ? 'Oggetto scelto dal Negoziante. Livello oggetto ${max(0, readIntValue(offer['level']))} · Grado richiesto $grade. Skill sbloccata dal livello ${max(0, readIntValue(offer['level']))}.'
@@ -4013,7 +4179,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       puntiStatPerLivello: (1 + grade ~/ 4).clamp(1, 3),
       statCrescita: weapon ? 'volonta' : 'materia',
       gradoRichiesto: grade,
-      elementoDanno: grade >= 2 ? 'Oculum' : 'Fisico',
+      elementoDanno:
+          '${offer['element'] ?? (grade >= 2 ? 'Oculum' : 'Fisico')}',
       buff: [
         '${offer['buff'] ?? ''}',
         if (offer['statBonuses'] is Map)

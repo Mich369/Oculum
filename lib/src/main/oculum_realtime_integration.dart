@@ -944,6 +944,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         if (service.isConnected &&
             (friendPresenceChanged || staffPresenceChanged)) {
           unawaited(sendRealtimeMerchantRosterSnapshot(force: true));
+          unawaited(sendPartyChestState());
         }
         if (service.isConnected &&
             !realtimeIsMasterRole &&

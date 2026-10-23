@@ -288,41 +288,44 @@ void main() {
     expect(critical.reduced, 0);
     expect(() => OculumAttackForecast.fromRolls([], [1]), throwsArgumentError);
   });
-  test(
-    'partial hit bands follow campaign difficulty including Oculum ties',
-    () {
+  test('partial bands follow difficulty but ties always favor defense', () {
+    expect(
+      oculumAttackOutcome(26, 20, difficulty: 'facile'),
+      OculumAttackOutcome.reduced,
+    );
+    expect(
+      oculumAttackOutcome(27, 20, difficulty: 'facile'),
+      OculumAttackOutcome.full,
+    );
+    expect(
+      oculumAttackOutcome(24, 20, difficulty: 'difficile'),
+      OculumAttackOutcome.full,
+    );
+    expect(
+      oculumAttackOutcome(23, 20, difficulty: 'difficile'),
+      OculumAttackOutcome.reduced,
+    );
+    for (final attack in [9]) {
       expect(
-        oculumAttackOutcome(26, 20, difficulty: 'facile'),
+        oculumAttackOutcome(attack, 10, difficulty: 'oculum'),
         OculumAttackOutcome.reduced,
       );
+      expect(oculumOpposedDamage(51, attack, 10, difficulty: 'oculum'), 51);
+    }
+    for (final difficulty in ['facile', 'normale', 'difficile', 'oculum']) {
       expect(
-        oculumAttackOutcome(27, 20, difficulty: 'facile'),
-        OculumAttackOutcome.full,
-      );
-      expect(
-        oculumAttackOutcome(24, 20, difficulty: 'difficile'),
-        OculumAttackOutcome.full,
-      );
-      expect(
-        oculumAttackOutcome(23, 20, difficulty: 'difficile'),
-        OculumAttackOutcome.reduced,
-      );
-      for (final attack in [9, 10]) {
-        expect(
-          oculumAttackOutcome(attack, 10, difficulty: 'oculum'),
-          OculumAttackOutcome.reduced,
-        );
-        expect(oculumOpposedDamage(51, attack, 10, difficulty: 'oculum'), 51);
-      }
-      expect(
-        oculumAttackOutcome(11, 10, difficulty: 'oculum'),
-        OculumAttackOutcome.full,
-      );
-      expect(
-        oculumAttackOutcome(8, 10, difficulty: 'oculum'),
+        oculumAttackOutcome(10, 10, difficulty: difficulty),
         OculumAttackOutcome.avoided,
       );
-    },
-  );
+      expect(oculumOpposedDamage(51, 10, 10, difficulty: difficulty), 0);
+    }
+    expect(
+      oculumAttackOutcome(11, 10, difficulty: 'oculum'),
+      OculumAttackOutcome.full,
+    );
+    expect(
+      oculumAttackOutcome(8, 10, difficulty: 'oculum'),
+      OculumAttackOutcome.avoided,
+    );
+  });
 }
-

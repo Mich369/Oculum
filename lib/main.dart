@@ -130,6 +130,8 @@ part 'src/main/oculum_corruption_runtime.dart';
 part 'src/main/oculum_combat_scout.dart';
 part 'src/main/oculum_master_roll_requests.dart';
 part 'src/main/oculum_encounter_rewards.dart';
+part 'src/main/oculum_party_chest.dart';
+part 'src/main/oculum_planes.dart';
 part 'src/main/oculum_alchemy_pets.dart';
 part 'src/main/oculum_humanoid_roles.dart';
 part 'src/main/oculum_global_search.dart';
@@ -2107,6 +2109,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final Set<String> appliedOnlineCombatTurnResourceSpendIds = {};
   final Map<String, Map<String, dynamic>> combatDiscoveries = {};
   final Map<String, Map<String, dynamic>> monsterBookPartyDiscoveries = {};
+  final Map<String, Map<String, dynamic>> partyChestCampaigns = {};
+  final Map<String, Map<String, dynamic>> partyChestPending = {};
   final ValueNotifier<int> combatKnowledgeRevision = ValueNotifier(0);
   final Set<String> onlineCombatResolving = {};
   final Map<String, Completer<List<String>>> corruptionTargetChoices = {};

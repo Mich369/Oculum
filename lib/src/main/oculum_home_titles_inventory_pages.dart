@@ -5082,6 +5082,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       (_) => inventoryQuickDropdownPanel(),
       (_) => merchantQuickPanel(),
       (_) => inventoryCapacityPanelEfficient(),
+      (_) => partyChestPanel(),
       (_) => inventoryAddItemPanelEfficient(),
       if (haPermessiMaster) (_) => masterItemGiftPanel(),
       (_) => pawnGuardiansPanel(),
@@ -5973,6 +5974,18 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           position.dy,
         ),
         items: <PopupMenuEntry<String>>[
+          if (item.ability != null || item.craftData['titleItem'] == true)
+            const PopupMenuItem<String>(value: 'equipment_forms', child: Text('Modifica abilità / evoluzioni oggetto')),
+          if (item.craftData['titleItem'] != true)
+            PopupMenuItem<String>(
+              value: 'convert_title',
+              enabled:
+                  leggiNumero(ascensionDustController) >=
+                  oculumItemTitleDustCost(item.livelloOggetto),
+              child: Text(
+                'Trasforma in Titolo Item · ${oculumItemTitleDustCost(item.livelloOggetto)} Dust',
+              ),
+            ),
           if (item.craftData['summoningEmblem'] is Map)
             const PopupMenuItem<String>(
               value: 'configure_emblem',
@@ -6097,6 +6110,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       );
       if (!mounted || choice == null || !inventario.contains(item)) return;
       switch (choice) {
+        case 'equipment_forms':
+          await editEquipmentTitleForms(item);
+          break;
+        case 'convert_title':
+          convertInventoryItemToTitle(item);
+          break;
         case 'configure_emblem':
           await editSummoningEmblem(item);
           break;
@@ -7053,6 +7072,46 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       programmaSalvataggio();
                     },
                   ),
+                  if (inventario[i].craftData['cyberPostea'] == true) ...[
+                    for (final field in [
+                      (
+                        'chancePercent',
+                        'Probabilità buff alla rottura (%)',
+                        '99',
+                      ),
+                      ('duration', 'Durata buff (turni)', '6'),
+                      ('buffValue', 'Valore buff alla rottura', '1'),
+                      (
+                        'buffTarget',
+                        'Destinazione buff (piu_usato = sottotratto più usato)',
+                        '',
+                      ),
+                      (
+                        'condition',
+                        'Condizione positiva alla rottura (ID)',
+                        '',
+                      ),
+                    ])
+                      campoModello(
+                        label: field.$2,
+                        initialValue:
+                            '${inventario[i].effettoRotturaScudo[field.$1] ?? field.$3}',
+                        onChanged: (v) {
+                          inventario[i].effettoRotturaScudo = {
+                            ...inventario[i].effettoRotturaScudo,
+                            field.$1:
+                                const {
+                                  'chancePercent',
+                                  'duration',
+                                  'buffValue',
+                                }.contains(field.$1)
+                                ? int.tryParse(v) ?? 0
+                                : v.trim(),
+                          };
+                          programmaSalvataggio();
+                        },
+                      ),
+                  ],
                   if (inventario[i].craftData['clothing'] == true)
                     campoModello(
                       label:

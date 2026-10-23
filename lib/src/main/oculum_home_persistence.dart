@@ -1421,6 +1421,20 @@ extension _OculumHomePersistence on _OculumHomePageState {
       if (merchantStock.isNotEmpty) 'merchantStock': merchantStock,
       'merchantStockSessionId': merchantStockSessionId,
       if (merchantProfiles.isNotEmpty) 'merchantProfiles': merchantProfiles,
+      'selectedPlaneId': selectedPlaneId,
+      for (final key in [
+        'skullFormOriginal',
+        'skullFormHitsRemaining',
+        'skullFormName',
+        'planePressurePenalty',
+        'planePressureRolled',
+        'planePressureDoubleCriticalIds',
+        'necromancyOwnerTurnExpires',
+      ])
+        if (schedaCorrente >= 0 &&
+            schedaCorrente < schedePersonaggio.length &&
+            schedePersonaggio[schedaCorrente].containsKey(key))
+          key: schedePersonaggio[schedaCorrente][key],
       'merchantActiveProfileId': merchantActiveProfileId,
       if (merchantHerbalEffects.isNotEmpty)
         'merchantHerbalEffects': merchantHerbalEffects,
@@ -5264,6 +5278,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
         for (final e in combatDiscoveries.entries)
           e.key: Map<String, dynamic>.from(e.value),
       },
+      'partyChestCampaigns': {
+        for (final e in partyChestCampaigns.entries)
+          e.key: Map<String, dynamic>.from(e.value),
+      },
+      'partyChestPending': {
+        for (final e in partyChestPending.entries)
+          e.key: Map<String, dynamic>.from(e.value),
+      },
       'monsterBookPartyDiscoveries': {
         for (final e in monsterBookPartyDiscoveries.entries)
           e.key: Map<String, dynamic>.from(e.value),
@@ -5347,6 +5369,20 @@ extension _OculumHomePersistence on _OculumHomePageState {
           combatDiscoveries['${e.key}'] = Map<String, dynamic>.from(
             e.value as Map,
           );
+        }
+      }
+    }
+    for (final pair in [
+      (partyChestCampaigns, 'partyChestCampaigns'),
+      (partyChestPending, 'partyChestPending'),
+    ]) {
+      pair.$1.clear();
+      final raw = globali[pair.$2];
+      if (raw is Map) {
+        for (final e in raw.entries) {
+          if (e.value is Map) {
+            pair.$1['${e.key}'] = Map<String, dynamic>.from(e.value as Map);
+          }
         }
       }
     }

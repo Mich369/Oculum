@@ -156,6 +156,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
   }
 
   Future<void> replayPermissionRequests() async {
+    await replayPartyChestRequests();
     final service = realtimeService;
     if (service?.isConnected != true) return;
     for (final request in currentPermissionRequests.toList()) {
@@ -227,6 +228,10 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
   }
 
   void receivePermissionEvent(String event, Map<String, dynamic> payload) {
+    if (payload['action'] == 'party_chest') {
+      unawaited(receivePartyChestEvent(event, payload));
+      return;
+    }
     if (payload['action'] == 'utility_spend') {
       receiveUtilitySpend(event, payload);
       return;
@@ -732,9 +737,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         : useAction
         ? 'azione'
         : 'reazione';
-    final allowed = await requestUtilitySpend(
-      resource,
-    );
+    final allowed = await requestUtilitySpend(resource);
     if (!allowed) {
       aggiungiLog(
         'Tiro non eseguito: non hai un’Azione o una Reazione (anche veloce o gratuita) disponibile.',

@@ -85,6 +85,53 @@ void main() {
       expect(probe.itemBonuses(restored)['materia'], 2);
       restored.scudoIntegritaCorrente = 6;
       expect(probe.itemBonuses(restored)['materia'], 4);
+      expect(probe.planeId, 'mezzano');
+      final cyber = probe.merchantItem({
+        'kind': 'postea_cyber_armor',
+        'name': 'Corazza test',
+        'variant': 2,
+        'desc': 'test',
+      });
+      expect(cyber.craftData['purchaseShield'], probe.itemShield(cyber));
+      cyber.equipaggiata = true;
+      final oldDamage = probe.itemBonuses(cyber)['danni'] ?? 0;
+      cyber.craftData['cyberWorn'] = true;
+      cyber.scudoIntegritaCorrente = 0;
+      expect(probe.itemShield(cyber), 0);
+      expect(probe.itemBonuses(cyber)['danni'], oldDamage ~/ 2);
+      final savedCyber = InventoryItem.fromJson(cyber.toJson());
+      savedCyber.scudoIntegritaCorrente = 999;
+      expect(
+        probe.itemShield(savedCyber),
+        0,
+        reason: 'worn cyber shield cannot recharge automatically',
+      );
+      state.ascensionDustController.text = '100';
+      state.inventario.add(item);
+      probe.convertItemTitle(item);
+      expect(item.craftData['titleItem'], isTrue);
+      expect(item.buff, restored.buff);
+      expect(state.ascensionDustController.text, '93');
+      final convertedJson = InventoryItem.fromJson(item.toJson());
+      expect(convertedJson.craftData['evolvable'], isTrue);
+      if (state.schedePersonaggio.isEmpty) {
+        state.schedePersonaggio.add(<String,dynamic>{'id':'AMULET_OWNER','sheetTag':'AMULET_OWNER','nome':'Prova'});
+        state.schedaCorrente = 0;
+      }
+      final amulet = InventoryItem(nome: 'Amuleto Teschio', peso: .1, quantita: 1, note: '', equipaggiata: true,
+        craftData: {'necromancyKind': 'skull_amulet'});
+      state.inventario.add(amulet);
+      final originalHp = state.currentHpController.text;
+      final originalTag = probe.ownerTag();
+      await probe.useNecromancy(amulet);
+      expect(state.schedePersonaggio[state.schedaCorrente]['skullFormOriginal'], isA<Map>());
+      expect(probe.ownerTag(), originalTag);
+      state.currentHpController.text = '0';
+      probe.skullHit();
+      expect(state.currentHpController.text, originalHp);
+      expect(probe.ownerTag(), originalTag);
+      expect(state.schedePersonaggio[state.schedaCorrente]['skullFormOriginal'], isNull);
+      expect(state.inventario.any((dynamic i) => i.craftData['usedSinceLongRest'] == true), isTrue);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
     },

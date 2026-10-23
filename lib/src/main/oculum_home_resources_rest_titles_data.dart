@@ -2058,6 +2058,11 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     var risonanzeGerinRicaricate = 0;
     final potenzaNucleoDaRimuovere = <int>[];
     setState(() {
+      for (final item in inventario) {
+        if (item.craftData['necromancyKind'] == 'skull_amulet') {
+          item.craftData = {...item.craftData, 'usedSinceLongRest': false};
+        }
+      }
       merchantDustPurchasedSinceLongRest = false;
       merchantDustPurchaseCount = 0;
       for (final art in arti) {

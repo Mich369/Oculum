@@ -9,7 +9,7 @@ bool oculumIsDoubleCritical({
 int oculumDoubleCriticalDamageBonus(int level, int grade) =>
     max(2, max(0, level) * 3 + grade.clamp(0, 12) * 6);
 
-/// Shared attack/defense rule, including the explicit Oculum tie exception.
+/// Shared attack/defense rule: ties always favor defense.
 enum OculumAttackOutcome {
   avoided('Evitato'),
   reduced('Ridotto'),
@@ -25,8 +25,9 @@ OculumAttackOutcome oculumAttackOutcome(
   String difficulty = 'normale',
 }) {
   final margin = attack - defense;
+  if (margin == 0) return OculumAttackOutcome.avoided;
   if (difficulty.trim().toLowerCase() == 'oculum') {
-    if (margin == 0 || margin == -1) return OculumAttackOutcome.reduced;
+    if (margin == -1) return OculumAttackOutcome.reduced;
     return margin > 0 ? OculumAttackOutcome.full : OculumAttackOutcome.avoided;
   }
   if (margin <= 0) return OculumAttackOutcome.avoided;
@@ -230,6 +231,8 @@ double oculumElementalDefenseMultiplier({
   final defense = _oculumCanonicalCombatElement(defenseElement);
   if (incoming.isEmpty || defense.isEmpty || maximumHp <= 0) return 1;
 
+  if (defense == 'diabolico' && incoming == 'demoniaco') return 0.25;
+
   bool isAngelic(String value) => value == 'angelico';
   bool isDemonic(String value) => value == 'demoniaco';
   final pair =
@@ -269,8 +272,7 @@ String _oculumCanonicalCombatElement(String raw) {
         'sun': 'solare',
         'angelic': 'angelico',
         'demonic': 'demoniaco',
-        'diabolico': 'demoniaco',
-        'diabolic': 'demoniaco',
+        'diabolic': 'diabolico',
         'ghiaccio': 'gelo',
         'aria': 'vento',
         'elettrico': 'fulmine',
@@ -406,4 +408,3 @@ class OculumAttackForecast {
     );
   }
 }
-

@@ -5939,7 +5939,23 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }
 
   Widget monsterBookPartyPage() {
-    final entries = monsterBookEntries;
+    final entries = monsterBookEntries.toList()
+      ..sort((a, b) {
+        bool known(String id) {
+          final k = monsterBookPartyKnowledge(id);
+          return k != null &&
+                  const [
+                    'seen',
+                    'nameKnown',
+                    'weakPoint',
+                    'pagePurchased',
+                  ].any((key) => k[key] == true) ||
+              partyHuntsForMonster(id).isNotEmpty;
+        }
+
+        final order = (known(b.id) ? 1 : 0).compareTo(known(a.id) ? 1 : 0);
+        return order != 0 ? order : a.nameIt.compareTo(b.nameIt);
+      });
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -6007,7 +6023,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    trailing: const Icon(Icons.chevron_right),
+                    trailing: partyHuntsForMonster(entry.id).isEmpty
+                        ? const Icon(Icons.chevron_right)
+                        : Tooltip(
+                            message: partyHuntProgressText(entry.id),
+                            child: Icon(
+                              Icons.monetization_on_outlined,
+                              color: tertiaryColor,
+                            ),
+                          ),
                     onTap: () => showMonsterBookPartyEntry(entry),
                   ),
                 );
@@ -6054,6 +6078,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         ),
                       ],
                     ),
+                    if (partyHuntsForMonster(entry.id).isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        partyHuntProgressText(entry.id),
+                        style: TextStyle(color: tertiaryColor),
+                      ),
+                    ],
                     const SizedBox(height: 14),
                     Text(
                       'Punto debole e Precisione',

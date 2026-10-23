@@ -1483,7 +1483,7 @@ class OculumRealtimeService {
         ? payload['payload'] as Map
         : payload;
     final id = header['serverEventId'];
-    if (id is! String) return;
+    if (id is! String || _deliveredEvents.contains(id)) return;
     final channel = _channel;
     try {
       final record = await (_client ?? Supabase.instance.client)

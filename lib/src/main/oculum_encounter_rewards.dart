@@ -658,6 +658,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         max(0, readIntValue(group['completedFightCount'])) + 1;
     group['completedFightCount'] = cooldownFightSequence;
     final cooldownFightId = '$id:$cooldownFightSequence';
+    recordPartySpeciesHunts(defeated, cooldownFightId);
     final partyTags = participants.toList()..sort();
     for (final tag in partyTags) {
       final index = localSheetIndexForOculumTag(tag);

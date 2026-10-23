@@ -221,12 +221,12 @@ void main() {
       probe.receiveCombat('combat_attack', packet);
       expect(state.onlineCombatRequests.length, 1);
       final before = (state.logEventi as List)
-          .where((e) => '$e'.contains('[DIFESA RICHIESTA ·'))
+          .where((e) => '$e'.contains('[DIFESA]'))
           .length;
       probe.receiveCombat('combat_attack', packet);
       expect(
         (state.logEventi as List)
-            .where((e) => '$e'.contains('[DIFESA RICHIESTA ·'))
+            .where((e) => '$e'.contains('[DIFESA]'))
             .length,
         before,
       );

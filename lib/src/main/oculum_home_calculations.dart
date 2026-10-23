@@ -1046,19 +1046,33 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
   }
 
-  int resilienzaTotale() =>
-      currentStatWithRuntimeBuffs('resilienza', currentResilienza());
-  int volontaTotale() =>
-      currentStatWithRuntimeBuffs('volonta', currentVolonta());
-  int materiaTotale() =>
-      currentStatWithRuntimeBuffs('materia', currentMateria());
+  int resilienzaTotale() => max(
+    0,
+    currentStatWithRuntimeBuffs('resilienza', currentResilienza()) -
+        planePressurePenalty,
+  );
+  int volontaTotale() => max(
+    0,
+    currentStatWithRuntimeBuffs('volonta', currentVolonta()) -
+        planePressurePenalty,
+  );
+  int materiaTotale() => max(
+    0,
+    currentStatWithRuntimeBuffs('materia', currentMateria()) -
+        (planeColdUnprotected ? 1 : 0) -
+        planePressurePenalty,
+  );
   // Oculum addormentato blocks the whole available pool, including temporary
   // and runtime bonuses. The raw controller value remains intact so waking
   // does not destroy recoveries or saved bonuses.
-  int oculumTotale() => oculumVisibleTotal(
-    storedCurrent: currentOculum(),
-    runtimeBonus: runtimeCurrentStatBonus('oculum'),
-    sleeping: oculumAddormentato,
+  int oculumTotale() => max(
+    0,
+    oculumVisibleTotal(
+          storedCurrent: currentOculum(),
+          runtimeBonus: runtimeCurrentStatBonus('oculum'),
+          sleeping: oculumAddormentato,
+        ) -
+        planePressurePenalty,
   );
 
   String? titleQuickCommandKey(String rawCommand) {
@@ -5217,8 +5231,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int itemDefenseBonus(InventoryItem item) =>
       item.bonusDifesa + itemGrade(item) * 2;
 
-  int itemShieldBonus(InventoryItem item) =>
-      item.bonusScudo + (item.bonusScudoIncludeGrado ? 0 : itemGrade(item) * 5);
+  int itemShieldBonus(InventoryItem item) => item.craftData['cyberWorn'] == true
+      ? 0
+      : item.bonusScudo +
+            (item.bonusScudoIncludeGrado ? 0 : itemGrade(item) * 5);
 
   int itemOculumShieldBonus(InventoryItem item) =>
       max(0, item.bonusScudoOculum);
@@ -5616,7 +5632,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           runtimeQuickBonus('iniziativa') +
           vantaggioTiroBonus() +
           malusFaticaTiri() +
-          conditionFlatModifier(OculumConditionTarget.iniziativa),
+          conditionFlatModifier(OculumConditionTarget.iniziativa) -
+          (planeColdUnprotected ? 2 : 0),
     );
   }
 
@@ -5626,7 +5643,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       30 +
           (materiaTotale() ~/ 6) +
           runtimeQuickBonus('movimento') +
-          activeStructuredEffectBonus('movimento'),
+          activeStructuredEffectBonus('movimento') -
+          (planeColdUnprotected ? 1 : 0),
     );
     return applyConditionDerivedValue(
       OculumConditionTarget.movimento,
