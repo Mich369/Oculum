@@ -2241,17 +2241,18 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   void _grantUnusedReactionRollBonus(
     Map<String, dynamic> token,
-    int unusedReactions,
-  ) {
+    int unusedReactions, {
+    bool fast = false,
+  }) {
     if (unusedReactions <= 0) return;
     final previous = readIntValue(
       token['pendingReactionRollBonus'],
     ).clamp(0, 12);
     final next = oculumReactionRefreshRollBonus(
       pendingBonus: previous,
-      normalMaximum: unusedReactions,
+      normalMaximum: fast ? 0 : unusedReactions,
       normalUsed: 0,
-      fastMaximum: 0,
+      fastMaximum: fast ? unusedReactions : 0,
       fastUsed: 0,
     );
     final added = next - previous;
@@ -2284,7 +2285,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       );
       token['reactionFastBonusConvertedTurnKey'] = turnKey;
       if (unusedFast > 0) {
-        _grantUnusedReactionRollBonus(token, unusedFast);
+        _grantUnusedReactionRollBonus(token, unusedFast, fast: true);
         changed = true;
       }
     }

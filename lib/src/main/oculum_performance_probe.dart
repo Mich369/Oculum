@@ -446,6 +446,10 @@ class OculumPerformanceProbe {
   void setTurn({required int round, int? activeIndex}) =>
       _state.setMasterInitiativeTurn(round: round, activeIndex: activeIndex);
   int masterRound() => _state.masterInitiativeRound;
+  bool canUseInitiativeAction(int index) =>
+      _state.masterInitiativeCanToggleAction(index);
+  void toggleInitiativeAction(int index) =>
+      _state.toggleMasterInitiativeActionUsed(index);
   int dodgeTotal() => _state.schivateOculumTotali();
   void quickEditDodge(int delta) => _state.modificaSchivateOculumRapide(delta);
   void activateInitiative(int index) =>

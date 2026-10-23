@@ -1972,3 +1972,5 @@ La presenza online dichiara tutte le schede possedute dalla sessione: cambiare s
 Master e Co-Master possono modificare soltanto le schede condivise e autorizzate. Le modifiche a Vita, Scudo e HP temporanei raggiungono il proprietario mantenendo il tag originale; le copie di consultazione non acquisiscono la proprietà. L'invio o la richiesta della scheda attiva funziona anche senza amicizia fra i tag. In caso di conflitto di proprietà serve l'account originale oppure una copia esplicita con un nuovo tag.
 
 Le modifiche autorizzate seguono l'ordine delle revisioni confermate dal server: un autosalvataggio locale non annulla una modifica online più recente, le revisioni già applicate non vengono ripetute e i dati privati non modificati restano conservati.
+
+Precisazione 23 ottobre 2026: tutti i partecipanti (PG, NPC, nemici e alleati del party) iniziano con una Reazione veloce. Alla scadenza del giro, ogni veloce inutilizzata assegna casualmente +6 oppure +9; ogni normale inutilizzata assegna +3. I bonus si accumulano fino a +12, si applicano al prossimo tiro e vengono consumati una sola volta.

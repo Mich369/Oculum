@@ -78,13 +78,17 @@ int oculumReactionRefreshRollBonus({
   required int fastUsed,
   int maximumBonus = 12,
   int bonusPerUnusedReaction = 3,
+  Random? random,
 }) {
-  final unused =
-      max(0, normalMaximum - normalUsed).toInt() +
-      max(0, fastMaximum - fastUsed).toInt();
-  final bonus =
+  final unusedNormal = max(0, normalMaximum - normalUsed).toInt();
+  final unusedFast = max(0, fastMaximum - fastUsed).toInt();
+  var bonus =
       max(0, pendingBonus).toInt() +
-      unused * max(0, bonusPerUnusedReaction).toInt();
+      unusedNormal * max(0, bonusPerUnusedReaction).toInt();
+  final rng = random ?? Random();
+  for (var i = 0; i < unusedFast && bonus < maximumBonus; i++) {
+    bonus += rng.nextBool() ? 6 : 9;
+  }
   return min(max(0, maximumBonus).toInt(), bonus).toInt();
 }
 

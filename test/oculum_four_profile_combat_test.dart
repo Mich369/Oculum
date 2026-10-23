@@ -240,8 +240,8 @@ void main() {
           }) ??
           false;
       final dynamic master = states[0];
-      expect(master.masterInitiativeCanToggleAction(3), isFalse);
-      master.toggleMasterInitiativeActionUsed(3);
+      expect(bus.probes[0].canUseInitiativeAction(3), isFalse);
+      bus.probes[0].toggleInitiativeAction(3);
       expect(master.masterInitiativeTokens[3]['actionUsed'], isFalse);
       expect(master.masterInitiativeActiveIndex, 1);
       // A's action advances to B; A's next attack uses its quick reaction.
