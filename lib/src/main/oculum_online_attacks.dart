@@ -1125,7 +1125,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (bonus != 0) {
       sheet['combatHelpPending'] = 0;
       aggiungiLog(
-        '[AIUTO CONSUMATO] ${bonus >= 0 ? '+' : ''}$bonus nel prossimo tiro.',
+        '[AIUTO CONSUMATO] ${bonus >= 0 ? '+' : ''}$bonus applicato a questo tiro (attacco o difesa); aiuto consumato.',
       );
       programmaSalvataggio();
     }
@@ -1501,7 +1501,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       final reactionTargetTag = '${freeReaction['sourceTag'] ?? ''}';
       if (ownIsActive &&
           reactionTargetTag.isNotEmpty &&
-          !tokens.any((token) => onlineCombatTokenTag(token) == reactionTargetTag)) {
+          !tokens.any(
+            (token) => onlineCombatTokenTag(token) == reactionTargetTag,
+          )) {
         tokens.add({
           'sheetTag': reactionTargetTag,
           'id': reactionTargetTag,
@@ -2618,6 +2620,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       request['status'] = 'resolved';
       request['defense'] = defense;
       request['defenseChoice'] = payload['defenseChoice'];
+      request['defenseHelp'] = readIntValue(payload['defenseHelp']);
       request['doubleDefense'] = payload['doubleDefense'] == true;
       final reflected = readIntValue(
         payload['runicReflectedDamage'],
@@ -2685,6 +2688,20 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         applyOnlineSchiantoActionSkip(payload);
       }
       claimOnlineVampirism(request);
+      combatLogFor(
+        source,
+        oculumCombatExchangeLog(
+          attacker: '${request['sourceName'] ?? 'Attaccante'}',
+          defender: '${request['targetName'] ?? 'bersaglio'}',
+          technique:
+              '${request['abilityName'] ?? request['choice'] ?? 'attacco'}',
+          attack: attack,
+          defenseChoice: '${request['defenseChoice'] ?? 'difesa'}',
+          defense: defense,
+          defenseHelp: readIntValue(request['defenseHelp']),
+          avoided: outcome == OculumAttackOutcome.avoided,
+        ),
+      );
       combatLogFor(
         source,
         '${oculumResolvedRollLog(label: '[ESITO ATTACCO]', total: attack, opposingTotal: defense, succeeded: outcome != OculumAttackOutcome.avoided)} ${outcome.label}.${request['damageReceipt'] is Map<String, dynamic> ? ' ${combatDamageReceiptText(request['damageReceipt'] as Map<String, dynamic>)}.' : ''}${request['freeReaction'] == true ? ' Il difensore ottiene una reazione gratuita contro di te.' : ''}',
@@ -2774,6 +2791,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       }
       int? defense;
       int defenseNatural = 0;
+      request['defenseHelp'] = readIntValue(
+        schedePersonaggio[schedaCorrente]['combatHelpPending'],
+      );
       final concentrationPending =
           schedePersonaggio[schedaCorrente]['combatConcentrationPending'] ==
           true;
@@ -3035,6 +3055,18 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     );
     aggiungiLog(
       '${oculumResolvedRollLog(label: '[ESITO DIFESA] $choice', total: defense, opposingTotal: attack, succeeded: outcome == OculumAttackOutcome.avoided)} ${outcome.label}.${request['freeReaction'] == true ? ' Reazione gratuita su chi ha provato a colpirti.${reflexBonusReaction ? ' Riflessi concede una Reazione aggiuntiva.' : ''}' : ''}',
+    );
+    aggiungiLog(
+      oculumCombatExchangeLog(
+        attacker: '${request['sourceName'] ?? 'Avversario'}',
+        technique:
+            '${request['abilityName'] ?? request['choice'] ?? 'attacco'}',
+        attack: attack,
+        defenseChoice: choice,
+        defense: defense,
+        defenseHelp: readIntValue(request['defenseHelp']),
+        avoided: outcome == OculumAttackOutcome.avoided,
+      ),
     );
     if (resisted) {
       aggiungiLog(

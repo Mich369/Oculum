@@ -7,6 +7,28 @@ double oculumAddIncomingDamagePercent(
   int additivePercent,
 ) => configuredMultiplier + additivePercent / 100;
 
+String oculumCombatExchangeLog({
+  required String attacker,
+  required String technique,
+  String defender = 'te',
+  required int attack,
+  required String defenseChoice,
+  required int defense,
+  int defenseHelp = 0,
+  required bool avoided,
+}) {
+  return [
+    '${defender == 'te' ? '$attacker ti attacca' : '$attacker attacca $defender'} con $technique: $attack.',
+    'Difesa $defenseChoice: ${defense - defenseHelp}.',
+    if (defenseHelp != 0)
+      'Aiuto compagno alla difesa: ${defenseHelp >= 0 ? '+' : ''}$defenseHelp. Totale difesa: $defense.',
+    if (attack == defense && avoided)
+      'Parità: $attack = $defense. Vince la difesa; attacco evitato.'
+    else
+      'Attacco $attack contro difesa $defense: ${avoided ? 'attacco evitato' : 'attacco riuscito'}.',
+  ].join('\n');
+}
+
 /// Receives resolved totals: sheet DT has already been subtracted by the roll.
 String oculumResolvedRollLog({
   required String label,
