@@ -58,7 +58,7 @@ if ($null -eq $matching -or @($matching.artifacts).Count -eq 0) {
   throw 'Build riuscita ma pubblicazione automatica non verificata. Controlla l azione Publish public downloads.'
 }
 foreach ($asset in $matching.artifacts) {
-  if (!$asset.url -or [long]$asset.bytes -le 0 -or $asset.sha256 -notmatch '^[0-9a-f]{64}$') {
+  if (!$asset.url -or [long]$asset.bytes -le 0 -or $asset.sha256 -notmatch '^(?:sha256:)?[0-9a-f]{64}$') {
     throw "Manifest download non valido: $($asset.name)"
   }
 }
