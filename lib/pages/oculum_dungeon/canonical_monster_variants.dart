@@ -506,6 +506,80 @@ MonsterBookEntry _canonicalCreature(
     );
 
 final _canonicalVariantTechniques = <String, MonsterConcreteTechnique>{
+  'bomber_skeleton_bone_bomb': _planarMove(
+    'Bomba d’osso',
+    'Spezza un osso carico e lo lancia nell’area scelta. La detonazione danneggia ogni avversario nell’area in base alla sua Vita attuale, ma non può portare un bersaglio sotto 1 Vita.',
+    'osso',
+    'danno_percentuale',
+    [
+      for (final percent in [35, 45, 50])
+        [
+          MonsterTechniqueEffect(
+            'danno_percentuale',
+            '$percent',
+            recipient: 'nemico',
+            mode: 'immediato',
+            duration: '0',
+          ),
+        ],
+    ],
+    minimums: [1, 2, 3],
+    maximums: [1, 2, 3],
+    cd: [3, 4, 5],
+    costResource: 'volonta',
+  ),
+  'bomber_skeleton_shrapnel_ring': _planarMove(
+    'Anello di schegge',
+    'Lancia una corona di frammenti d’osso contro gli avversari vicini. La percentuale si calcola sulla Vita attuale; le forme superiori rallentano chi resta nell’area dopo il colpo.',
+    'osso',
+    'danno_percentuale',
+    [
+      for (var form = 0; form < 3; form++)
+        [
+          MonsterTechniqueEffect(
+            'danno_percentuale',
+            '${[25, 35, 45][form]}',
+            recipient: 'nemico',
+            mode: 'immediato',
+            duration: '0',
+          ),
+          if (form > 0)
+            const MonsterTechniqueEffect(
+              'stato',
+              '1',
+              target: 'rallentato',
+              recipient: 'nemico',
+              duration: '1',
+            ),
+        ],
+    ],
+    minimums: [1, 2, 3],
+    maximums: [1, 2, 3],
+    cd: [3, 4, 5],
+    costResource: 'volonta',
+  ),
+  'bomber_skeleton_last_blast': _planarMove(
+    'Ultima esplosione',
+    'Quando è quasi distrutto, il Bombarolo concentra le ossa rimaste in un’ultima detonazione ad area. Ogni bersaglio resta almeno a 1 Vita.',
+    'osso',
+    'danno_percentuale',
+    [
+      for (final percent in [30, 40, 50])
+        [
+          MonsterTechniqueEffect(
+            'danno_percentuale',
+            '$percent',
+            recipient: 'nemico',
+            mode: 'immediato',
+            duration: '0',
+          ),
+        ],
+    ],
+    minimums: [1, 2, 3],
+    maximums: [1, 2, 3],
+    cd: [3, 4, 5],
+    costResource: 'volonta',
+  ),
   'thunder_bot_explosion': _planarMove(
     'Autodistruzione a corona',
     'Ruota nel gruppo avversario e si autodistrugge. Un unico attacco Fulmine contro tutti gli avversari, senza limite di bersagli: ciascuno riceve Vita attuale + Danni inflitti della scheda prima della propria difesa. Il bot muore dopo il lancio. Nessun costo di statistiche; consuma la normale Azione.',
@@ -525,6 +599,7 @@ final _canonicalVariantTechniques = <String, MonsterConcreteTechnique>{
     minimums: [0, 0, 0],
     maximums: [0, 0, 0],
     cd: [0, 0, 0],
+    costResource: 'nessuna',
   ),
   'canonical_assassin_stab': _canonicalAttack(
     'Affondo della manica',

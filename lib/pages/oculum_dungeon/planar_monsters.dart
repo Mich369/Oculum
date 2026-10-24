@@ -1384,7 +1384,7 @@ final _extraPlanarTechniques = <String, MonsterConcreteTechnique>{
     'danno',
     _planarDamageForms([8, 14, 22]),
     minimums: [1, 5, 11],
-    maximums: [4, 10, 20],
+    maximums: [1, 5, 11],
     cd: [2, 3, 4],
   ),
   'piranha_richiamo': _planarMove(
@@ -1425,7 +1425,7 @@ final _extraPlanarTechniques = <String, MonsterConcreteTechnique>{
         ],
     ],
     minimums: [1, 5, 11],
-    maximums: [4, 10, 20],
+    maximums: [1, 5, 11],
     cd: [3, 4, 5],
   ),
   'bringi_seeds': _planarMove(

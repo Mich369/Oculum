@@ -219,20 +219,24 @@ void main() {
       for (final skill in skills) {
         final restored = CharacterSkill.fromJson(skill.toJson());
         for (final form in restored.forme) {
-          final vitalMemory =
-              monster.id == 'costrutto_rinsecchito' &&
-              skill.nome == 'Ricordo del nucleo';
-          expect(form.usaOculumConfigurabile, vitalMemory, reason: monster.id);
+          final resource = form.costoStrutturato!.resource;
+          final usesOculum = resource == 'oculum';
           expect(
-            form.costoStrutturato!.resource,
-            vitalMemory ? 'oculum' : isNot('oculum'),
+            form.usaOculumConfigurabile,
+            usesOculum,
+            reason:
+                '${monster.id} resource $resource; '
+                '${form.descrizione}',
           );
-          expect(
-            form.effettiStrutturati.any(
-              (e) => e.valueExpression.contains('oculum_spent'),
-            ),
-            isFalse,
-          );
+          expect(resource, isNotEmpty);
+          if (resource != 'oculum') {
+            expect(
+              form.effettiStrutturati.any(
+                (e) => e.valueExpression.contains('oculum_spent'),
+              ),
+              isFalse,
+            );
+          }
         }
       }
     }
@@ -250,6 +254,23 @@ void main() {
       orc.first.forme.first.effettiStrutturati.map((e) => e.type),
       contains('danno_percentuale'),
     );
+  });
+  test('base Lupo lateral step retains its Volontà cost in the Book Art', () {
+    final technique = oculumPlanarTechnique('common_wolf_flank')!;
+    expect(technique.costResource, 'volonta');
+    final art = oculumMonsterBookArt(monsterById('lupo_base')!);
+    final skill = art.skills.singleWhere(
+      (candidate) => candidate.nome == 'Passo laterale',
+    );
+    expect(
+      skill.risorsaCostoPerLivello(1),
+      'volonta',
+      reason:
+          'ids ${monsterBookUsableSkillIds(monsterById('lupo_base')!)}; '
+          'raw ${skill.risorseCostoPerLivello}; passive ${oculumMonsterBookSkillIsPassive('common_wolf_flank')}; '
+          '${skill.evo1}',
+    );
+    expect(skill.oculumMinimoPerLivello(1), 1);
   });
   test('catalogue never exposes a thematic attack placeholder', () {
     for (final monster in defaultMonsterBookEntries) {
@@ -285,6 +306,8 @@ void main() {
         expect(
           skill.oculumMinimiPerLivello.take(3),
           passive ? [0, 0, 0] : concrete.minimums,
+          reason:
+              '${monster.id}/$id resource ${skill.risorsaCostoPerLivello(1)}',
         );
         // A selectable cost is meaningful only when spending more changes an
         // effect. Fixed techniques now retain their original minimum cost.

@@ -114,6 +114,14 @@ bool oculumMonsterHasOculumArt(MonsterBookEntry monster) {
       (monster.stats['oculum'] ?? 0) > 0;
 }
 
+String _monsterBookDefaultCostResource(MonsterBookEntry monster) {
+  if (oculumMonsterHasOculumArt(monster)) return 'oculum';
+  for (final resource in ['volonta', 'materia', 'resilienza']) {
+    if ((monster.stats[resource] ?? 0) > 0) return resource;
+  }
+  return 'nessuna';
+}
+
 String oculumMonsterBookSkillBaseId(String id) =>
     id.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
 
@@ -130,8 +138,11 @@ bool oculumMonsterBookSkillIsPassive(String id) {
 }
 
 MonsterConcreteTechnique? _activeConcreteMonsterTechnique(String id) {
-  final technique = monsterBookConcreteTechnique(id);
-  return technique != null && technique.text() == monsterBookSkillText(id)
+  final canonicalId = oculumMonsterBookSkillBaseId(id);
+  final technique = monsterBookConcreteTechnique(canonicalId);
+  return technique != null &&
+          (oculumPlanarTechnique(canonicalId) != null ||
+              technique.text() == monsterBookSkillText(canonicalId))
       ? technique
       : null;
 }
@@ -248,10 +259,7 @@ CharacterSkill _naturalMonsterSkill(
     'goblin_kamikaze_explosion',
     'thunder_bot_explosion',
   }.contains(id);
-  final fallbackResource =
-      monster.id == 'ogle' || (monster.stats['volonta'] ?? 0) <= 0
-      ? 'materia'
-      : 'volonta';
+  final fallbackResource = _monsterBookDefaultCostResource(monster);
   final forms = [
     for (var form = 0; form < 3; form++)
       _naturalMonsterSkillForm(
@@ -285,16 +293,17 @@ CharacterSkillForm _naturalMonsterSkillForm({
   required String fallbackResource,
 }) {
   final sourceText = source.testoEvoluzione(form + 1);
-  final technique = monsterBookConcreteTechnique(id);
+  final technique = _activeConcreteMonsterTechnique(id);
   final parsedCost = oculumParseAbilityCost(sourceText);
   final resource = passive || sacrificial
       ? 'nessuna'
       : technique?.costResource ?? parsedCost?.resource ?? fallbackResource;
+  final noResource = resource == 'nessuna';
   final defaultAmount = monster.id == 'mosca_campana' ? 3 : form + 1;
-  final minimum = passive || sacrificial
+  final minimum = passive || sacrificial || noResource
       ? 0
       : technique?.minimums[form] ?? parsedCost?.minimum ?? defaultAmount;
-  final maximum = passive || sacrificial
+  final maximum = passive || sacrificial || noResource
       ? 0
       : technique?.maximums[form] ?? parsedCost?.maximum ?? defaultAmount;
   final resourceLabel = oculumArtSkillCostResourceLabel(resource);
@@ -304,7 +313,7 @@ CharacterSkillForm _naturalMonsterSkillForm({
     tipo: passive ? 'Passiva mostro' : 'Skill naturale mostro',
     livello:
         '${(monsterBookConcreteTechnique(id)?.requiredLevel ?? 0) + form * 3}',
-    costo: passive || sacrificial
+    costo: passive || sacrificial || noResource
         ? 'Nessun costo'
         : '$minimum/$maximum $resourceLabel',
     costoStrutturato: OculumSkillCost(
@@ -520,8 +529,8 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
   }
   final ids = monsterBookUsableSkillIds(monster);
   for (final (skillIndex, skill) in art.skills.indexed) {
+    final id = ids[skillIndex];
     for (var form = 1; form <= 3; form++) {
-      final id = ids[skillIndex];
       if (skill.effettiPerLivello[form - 1].isEmpty &&
           !id.startsWith('pawn_guardiano') &&
           !id.startsWith('riccio_aculeo_') &&
@@ -593,6 +602,43 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
             skill.evo3 = corrected;
         }
       }
+    }
+    final authoredTechnique = oculumPlanarTechnique(
+      oculumMonsterBookSkillBaseId(id),
+    );
+    if (authoredTechnique != null && !oculumMonsterBookSkillIsPassive(id)) {
+      skill.impostaRisorsaCostoPerLivello(1, authoredTechnique.costResource);
+      skill.impostaRisorsaCostoPerLivello(2, authoredTechnique.costResource);
+      skill.impostaRisorsaCostoPerLivello(3, authoredTechnique.costResource);
+      for (var form = 0; form < 3; form++) {
+        final scalesWithSpend =
+            authoredTechnique.forms[form].any(
+              (effect) => effect.formula.contains('oculum_spent'),
+            ) ||
+            skill.effettiPerLivello[form].any(
+              (effect) => effect.valueExpression.contains('oculum_spent'),
+            );
+        skill.impostaLimitiOculumPerLivello(
+          form + 1,
+          minimo: authoredTechnique.minimums[form],
+          massimo: scalesWithSpend
+              ? authoredTechnique.maximums[form]
+              : authoredTechnique.minimums[form],
+        );
+        skill.cooldownPerLivello[form] = OculumAbilityCooldown(
+          amount: authoredTechnique.cooldowns[form],
+        );
+      }
+    }
+  }
+  if (monster.id.startsWith(oculumSpineHedgehogId)) {
+    final skill = art.skills
+        .where((candidate) => candidate.nome == 'Aculei precisi')
+        .firstOrNull;
+    if (skill != null) {
+      skill.impostaLimitiOculumPerLivello(3, minimo: 10, massimo: 11);
+      skill.oculumMassimiInizialiPerLivello[2] = 11;
+      skill.aumentoMassimoOculumAttivoPerLivello[2] = true;
     }
   }
   return art;
@@ -678,11 +724,23 @@ CharacterArt _rawMonsterBookArt(MonsterBookEntry monster) =>
                   : null,
               risorseCostoPerLivello: oculumMonsterBookSkillIsPassive(id)
                   ? const ['nessuna', 'nessuna', 'nessuna']
+                  : _activeConcreteMonsterTechnique(id) != null
+                  ? List<String>.filled(
+                      3,
+                      _activeConcreteMonsterTechnique(id)!.costResource,
+                    )
+                  : _monsterBookDefaultCostResource(monster) != 'oculum'
+                  ? List<String>.filled(
+                      3,
+                      _monsterBookDefaultCostResource(monster),
+                    )
                   : null,
               oculumMinimiPerLivello: oculumMonsterBookSkillIsPassive(id)
                   ? [0, 0, 0]
                   : _activeConcreteMonsterTechnique(id) != null
                   ? _activeConcreteMonsterTechnique(id)!.minimums
+                  : _monsterBookDefaultCostResource(monster) == 'nessuna'
+                  ? [0, 0, 0]
                   : id.startsWith('riccio_aculeo_')
                   ? oculumMonsterBookSkillBaseId(id).endsWith('_precisi')
                         ? [2, 5, 10]
@@ -700,6 +758,8 @@ CharacterArt _rawMonsterBookArt(MonsterBookEntry monster) =>
                   ? [0, 0, 0]
                   : _activeConcreteMonsterTechnique(id) != null
                   ? _activeConcreteMonsterTechnique(id)!.maximums
+                  : _monsterBookDefaultCostResource(monster) == 'nessuna'
+                  ? [0, 0, 0]
                   : id.startsWith('riccio_aculeo_')
                   ? oculumMonsterBookSkillBaseId(id).endsWith('_precisi')
                         ? [2, 5, 11]
@@ -879,7 +939,7 @@ String _monsterBookSkillEvolution(
   int form,
 ) {
   final text = monsterBookSkillForms(id)[form];
-  final concrete = monsterBookConcreteTechnique(id);
+  final concrete = _activeConcreteMonsterTechnique(id);
   if (concrete != null && monsterBookSkillText(id) == concrete.text()) {
     return text;
   }
@@ -903,20 +963,44 @@ String _monsterBookSkillEvolution(
   final requirement = text.contains(authoredRequirement)
       ? ''
       : 'Richiede livello ${baseLevel + form * 3}\n';
+  final parsedCost = oculumParseAbilityCost(text);
+  final fallbackResource = _monsterBookDefaultCostResource(monster);
+  final resource = parsedCost?.resource ?? fallbackResource;
+  final resourceLabel = oculumArtSkillCostResourceLabel(resource);
   final hasCost =
-      oculumParseAbilityCost(text) != null ||
+      parsedCost != null ||
       RegExp(
         r'(?:costo\s*[:=]?.{0,24}oculum|\d+\s*[/–-]\s*\d+\s*oculum)',
         caseSensitive: false,
       ).hasMatch(text);
+  final explicitFree = RegExp(
+    r'\b(?:nessun\s+costo|senza\s+costo|gratuit[oa])\b',
+    caseSensitive: false,
+  ).hasMatch(text);
+  final fallbackCost = resource == 'oculum'
+      ? const ['I (1/4) Oculum', 'II (5/10) Oculum', 'III (11/30) Oculum'][form]
+      : '${form + 1}/${form + 1} $resourceLabel, costo fisso';
   final cost =
       id.startsWith('hero_path:') ||
           hasCost ||
+          explicitFree ||
+          resource == 'nessuna' ||
           oculumMonsterBookSkillIsPassive(id)
       ? ''
-      : 'Costo: ${const ['I (1/4)', 'II (5/10)', 'III (11/30)'][form]} Oculum.\n';
+      : 'Costo: $fallbackCost.\n';
+  final resourceText = resource == 'oculum'
+      ? text
+      : text
+            .replaceAll('Oculum speso', '$resourceLabel spesa')
+            .replaceAll('Oculum immesso', '$resourceLabel immessa')
+            .replaceAll('Oculum ×', '$resourceLabel ×');
+  if (resource == 'nessuna') {
+    return '$requirement$resourceText Nessun costo.';
+  }
   final effects = _monsterBookGenericEffects(id);
-  if (id.startsWith('weak_horror_')) return '$cost$requirement$text';
+  if (id.startsWith('weak_horror_')) {
+    return '$cost$requirement$resourceText';
+  }
   if (effects == null) {
     if (id.startsWith('incubo_')) {
       final effect = oculumNightmareSkillEffects(id, form: form).firstOrNull;
@@ -925,19 +1009,21 @@ String _monsterBookSkillEvolution(
             .replaceAll('oculum_spent', 'Oculum speso')
             .replaceAll('danni', 'Danni')
             .replaceAll('*', ' × ');
-        return '$cost$requirement${text.replaceAll('stessa formula', 'formula della forma')}\n'
+        return '$cost$requirement${resourceText.replaceAll('stessa formula', 'formula della forma')}\n'
             'Valore ${effect.target.isEmpty ? effect.type : effect.target}: $formula.';
       }
     }
-    return '$cost$requirement$text';
+    return '$cost$requirement$resourceText';
   }
-  if (effects[form].length != 1) return '$cost$requirement$text';
+  if (effects[form].length != 1) {
+    return '$cost$requirement$resourceText';
+  }
   final effect = effects[form].single;
   final multiplier = const ['1', '1,5', '2'][form];
   final bonus = effect.type == 'danno'
-      ? 'Danni + $multiplier × Oculum speso'
-      : 'Difesa + $multiplier × Oculum speso per 1 turno';
-  return '$cost$requirement$text\n$bonus.';
+      ? 'Danni + $multiplier × $resourceLabel spesa'
+      : 'Difesa + $multiplier × $resourceLabel spesa per 1 turno';
+  return '$cost$requirement$resourceText\n$bonus.';
 }
 
 /// Only fills narrative-only techniques. Authored numeric powers and Oculus

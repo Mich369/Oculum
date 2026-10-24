@@ -64,6 +64,7 @@ class MonsterConcreteTechnique {
         }).join('; ');
         final cost = '${minimums[i]}/${maximums[i]}';
         final resourceLabel = switch (costResource) {
+          'nessuna' => 'nessun costo',
           'volonta' => 'Volontà',
           'materia' => 'Materia',
           'resilienza' => 'Resilienza',

@@ -51,6 +51,12 @@ void main() {
       ),
       (minimum: 3, maximum: 3, resource: 'oculum'),
     );
+    expect(
+      oculumParseAbilityCost(
+        'Costo: 1/1 Volontà, costo fisso. Danni + 1 × Volontà spesa.',
+      ),
+      (minimum: 1, maximum: 1, resource: 'volonta'),
+    );
   });
 
   test('bracketed Richiede markers keep a skill locked until resolved', () {

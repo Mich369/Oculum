@@ -30,18 +30,21 @@ void main() {
               reason: '${monster.id}/${skill.nome}: form $form level',
             );
             previousRequirement = requirement;
+            final resource = skill.risorsaCostoPerLivello(form);
+            final free =
+                art.tipo == 'Capacità Pawn' ||
+                monster.id == 'larva_bianca' ||
+                text.contains('Nessun costo') ||
+                skill.tipoPerLivello(form).toLowerCase().contains('passiv');
+            expect(
+              resource,
+              free ? 'nessuna' : isNot('nessuna'),
+              reason: '${monster.id}/${skill.nome}: form $form resource; $text',
+            );
             expect(
               skill.oculumMinimoPerLivello(form),
-              art.tipo == 'Capacità Pawn' ||
-                      monster.id == 'larva_bianca' ||
-                      text.contains('Nessun costo') ||
-                      skill
-                          .tipoPerLivello(form)
-                          .toLowerCase()
-                          .contains('passiv')
-                  ? equals(0)
-                  : greaterThan(0),
-              reason: '${monster.id}/${skill.nome}: form $form cost; $text',
+              free ? 0 : greaterThan(0),
+              reason: '${monster.id}/${skill.nome}: form $form amount; $text',
             );
             expect(
               skill.oculumMassimoPerLivello(form),

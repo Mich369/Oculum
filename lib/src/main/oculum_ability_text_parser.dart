@@ -60,6 +60,23 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
       resource: oculumNormalizeArtSkillCostResource(quickCost.group(1)),
     );
   }
+  // Parse an authored numeric resource range before the generic item
+  // patterns. Otherwise prose such as "Danni + 1 × Volontà spesa" can be
+  // mistaken for an inventory item and override the actual cost line.
+  final authoredRange = RegExp(
+    '(?:\\b(?:costo|spendi|consumi|costa)\\s*:?\\s*|\\()\\s*(\\d+)\\s*[/–-]\\s*(\\d+)\\s*($_oculumAbilityResourcePattern)\\s*\\)?',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (authoredRange != null) {
+    final minimum = int.parse(authoredRange.group(1)!);
+    final maximum = int.parse(authoredRange.group(2)!);
+    if (maximum < minimum) return null;
+    return (
+      minimum: minimum,
+      maximum: maximum,
+      resource: oculumNormalizeArtSkillCostResource(authoredRange.group(3)),
+    );
+  }
   final namedItem = RegExp(
     r'\b(?:costo|spendi|consumi|consuma|usa|utilizza)\s*:?\s*(\d+)\s*(?:x\s*)?(?:(item|oggetto|consumabile|materiale)\s*:\s*|["“])([^"”\n.;,]+)["”]?',
     caseSensitive: false,
