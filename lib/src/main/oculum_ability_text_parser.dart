@@ -65,7 +65,7 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
     caseSensitive: false,
   ).firstMatch(raw);
   if (namedItem != null) {
-    final category = (namedItem.group(2) ?? 'item')!.toLowerCase();
+    final category = (namedItem.group(2) ?? 'item').toLowerCase();
     final name = oculumNormalizeText(namedItem.group(3)!).replaceAll(' ', '');
     if (name.isEmpty) return null;
     final amount = int.parse(namedItem.group(1)!);
