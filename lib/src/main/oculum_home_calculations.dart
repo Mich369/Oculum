@@ -1039,6 +1039,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       0,
       current +
           runtimeCurrentStatBonus(key) +
+          meccanioStatAdjustment(key, current) +
           chaosStatBonus(key) +
           dustFusionTier +
           nourishmentStatBonus(key, current) +
@@ -1070,15 +1071,17 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   // Oculum addormentato blocks the whole available pool, including temporary
   // and runtime bonuses. The raw controller value remains intact so waking
   // does not destroy recoveries or saved bonuses.
-  int oculumTotale() => max(
-    0,
-    oculumVisibleTotal(
-          storedCurrent: currentOculum(),
-          runtimeBonus: runtimeCurrentStatBonus('oculum'),
-          sleeping: oculumAddormentato,
-        ) -
-        planePressurePenalty,
-  );
+  int oculumTotale() => isMeccanio
+      ? 0
+      : max(
+          0,
+          oculumVisibleTotal(
+                storedCurrent: currentOculum(),
+                runtimeBonus: runtimeCurrentStatBonus('oculum'),
+                sleeping: oculumAddormentato,
+              ) -
+              planePressurePenalty,
+        );
 
   String? titleQuickCommandKey(String rawCommand) {
     final command = rawCommand.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
@@ -4289,6 +4292,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int maxHp() {
+    if (isMeccanio) {
+      return max(1, readIntValue(meccanioState['maximumHp'], fallback: 20));
+    }
     if (isLarvalParasite) return 10;
     if (planarCloudForm) {
       return max(1, readIntValue(planarState['cloudLifeHp']));
@@ -5101,6 +5107,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     activateHeroicNurseBuffForCurrentBattle();
     final beforeConditions =
         spineMaterialDefense +
+        meccanioVariantValue('defenseBonus') +
         ((volontaTotale() + materiaTotale()) ~/ 2) +
         bonusLivelloGrado() +
         bonusDifesaRapido() +

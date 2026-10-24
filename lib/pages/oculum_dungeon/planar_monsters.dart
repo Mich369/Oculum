@@ -339,6 +339,93 @@ String _planarSlug(String name) => name
     .replaceAll(RegExp(r'^_|_$'), '');
 
 final List<MonsterBookEntry> oculumPlanarMonsterEntries = [
+  const MonsterBookEntry(
+    id: 'meccanio',
+    nameIt: 'Meccanio',
+    nameEn: 'Meccanio',
+    descIt:
+        'Robottino pacifico di Postea in equilibrio su una sola ruota nera scanalata, con fianchi sottili e busto tondeggiante formato da piastre consumate. La testa larga e bassa porta grandi lenti luminose verde acqua, una fessura scura simile a un sorriso e una piccola antenna scomposta. Due braccia snodate con giunti scoperti terminano in pinze e utensili ripiegabili; strisce a contrasto proteggono spalle e avambracci. La scocca può avere colori diversi a ogni acquisto. Si autoripara con Meccanica al posto di Medicina; il padrone può ripararlo con il proprio tiro di Meccanica.',
+    descEn:
+        'A small peaceful Postea robot balancing on one black wheel. Rounded worn plates cover its torso; a wide low head holds large aqua lenses, a dark smile-like opening and a crooked antenna. Jointed arms end in pincers and folding tools. Shell colours may vary between purchases. It and its owner use Mechanics instead of Medicine to repair its HP.',
+    planeIds: ['postea'],
+    elementId: 'fisico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNpc: true,
+    isNullFateless: false,
+    stats: {
+      'level': 0,
+      'resilienza': 4,
+      'volonta': 2,
+      'materia': 4,
+      'oculum': 0,
+    },
+    encounterRules: {
+      'dispositions': ['pacifico', 'neutrale'],
+      'healingSubtrait': 'meccanica',
+    },
+    weakPointIt: 'I cavi scoperti sotto la piastra del nucleo.',
+    classificationTags: ['Costrutto', 'Robot', 'Creatura Minore'],
+  ),
+  for (final spec in const [
+    (
+      'ammaccato',
+      'Malconcio',
+      'Scocca deformata, una lente incrinata e una ruota che oscilla; piccoli lampi sfuggono dai giunti scoperti.',
+      3,
+      1,
+      3,
+    ),
+    (
+      'primordiale',
+      'Primitivo',
+      'Piastre di roccia levigata invece del metallo, ruota di basalto e rune del Fulmine incise su testa, petto e pinze. Le rune si accendono a ogni movimento.',
+      4,
+      2,
+      4,
+    ),
+    (
+      'elite',
+      'Élite',
+      'Piastre rinforzate, lenti a diaframma e giunti protetti; un anello di rune precise circonda il nucleo.',
+      6,
+      4,
+      6,
+    ),
+  ])
+    MonsterBookEntry(
+      id: 'meccanio_${spec.$1}',
+      nameIt: 'Meccanio ${spec.$2}',
+      nameEn: 'Meccanio ${spec.$2}',
+      descIt:
+          '${spec.$3} Variante selvatica neutrale di Postea. ${spec.$1 == 'ammaccato'
+              ? 'Metà Scudo e skill indebolite al 75%.'
+              : spec.$1 == 'primordiale'
+              ? '+3 Difesa, meno Scudo (120% Vita) e poco Scudo Oculum (10% Vita).'
+              : 'Skill potenziate al 125%.'} Senza Oculum né Art; tre skill casuali, almeno una offensiva, Protezioni di Emergenza e una sola Open. Addestrabile con Meccanica contro DT 13 + livello + 3×Grado, se non ha già un padrone. Un solo Meccanio per padrone.',
+      descEn: spec.$3,
+      planeIds: const ['postea'],
+      elementId: spec.$1 == 'primordiale' ? 'roccia' : 'fisico',
+      spriteAssetPath: '',
+      isMiniBoss: false,
+      isBoss: false,
+      isNullFateless: false,
+      stats: {
+        'level': 0,
+        'resilienza': spec.$4,
+        'volonta': spec.$5,
+        'materia': spec.$6,
+        'oculum': 0,
+      },
+      encounterRules: {
+        'meccanioVariant': spec.$1,
+        'dispositions': ['neutrale'],
+        'tamingSubtrait': 'meccanica',
+      },
+      weakPointIt: 'Il giunto scoperto sotto il nucleo runico.',
+      classificationTags: const ['Costrutto', 'Robot', 'Creatura Minore'],
+    ),
   _authoredPlanar(
     'parassita_larvale',
     'Parassita larvale',
@@ -561,6 +648,9 @@ double oculumAngelRayMultiplier(String targetKind) {
   if (kind.contains('demon')) return 2;
   return 1;
 }
+
+bool oculumIsAngelRayEffectId(String id) =>
+    id.split('/').last.startsWith('raggio_angelico_forma_');
 
 MonsterConcreteTechnique _buildPlanarTechnique(
   MonsterBookEntry owner,

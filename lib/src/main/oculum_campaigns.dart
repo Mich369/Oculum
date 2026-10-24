@@ -801,6 +801,7 @@ extension _OculumCampaigns on _OculumHomePageState {
     if (!(modalitaMaster || isMasterHost || sonoCoMaster)) return;
     if (targetId.trim().isEmpty) return;
     if (ban && realtimeService?.isConnected != true) return;
+    if (ban && !realtimeIsMasterRole) return;
 
     if (!masterKickRequiresConfirmation) {
       await kickSheetFromCampaign(
@@ -961,7 +962,7 @@ extension _OculumCampaigns on _OculumHomePageState {
     final service = realtimeService;
     if (service == null ||
         !service.isConnected ||
-        !(modalitaMaster || isMasterHost || sonoCoMaster)) {
+        !realtimeIsMasterRole) {
       return;
     }
     List<Map<String, dynamic>> bans;

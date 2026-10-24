@@ -488,6 +488,34 @@ class OculumPerformanceProbe {
   void switchMerchantProfile(String id) => _state.switchMerchantProfile(id);
   List<String> merchantOfferIds() =>
       _state.ensureMerchantStock().map((offer) => '${offer['id']}').toList();
+  List<Map<String, dynamic>> realmOffers(String plane) {
+    _state.schedePersonaggio[_state.schedaCorrente]['selectedPlaneId'] = plane;
+    _state.ensurePlaneOffers();
+    _state.ensurePosteaOffers();
+    return _state.merchantStock
+        .where(_state.merchantOfferMatchesPlane)
+        .toList();
+  }
+
+  List<int> robotRepairTargets() => _state.meccanioRepairTargets();
+  bool get robotEmpathyAvailable => _state.canUseMeccanioEmpathy;
+  bool applyRobotEmpathy(
+    int total, {
+    bool deception = false,
+    int natural = 20,
+  }) => _state.applyMeccanioEmpathy(
+    total,
+    deception: deception,
+    natural: natural,
+  );
+  void robotOwnerRest({required bool longRest}) =>
+      _state.meccanioOwnerRest(longRest: longRest);
+  bool tameRobot(int index, int total) => _state.tameMeccanio(index, total);
+  void configureRobot(int index) => _state.configureMeccanio(index);
+  void rewardRobotProtection(Map<String, dynamic> request, {int? reduction}) =>
+      _state.rewardMeccanioProtection(request, reduction: reduction);
+  bool repairRobot(String tag, {required int natural, required int total}) =>
+      _state.applyMeccanioRepair(tag, natural: natural, total: total);
   void load(Map<String, dynamic> sheet) => _state.caricaStatoDaJson(sheet);
   Future<void> reloadSave() => _state.caricaDati();
   void saveSheet() => _state.salvaSchedaCorrenteInMemoria();

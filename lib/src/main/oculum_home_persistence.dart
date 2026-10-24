@@ -8676,6 +8676,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
       });
 
       salvaSchedaCorrenteInMemoria();
+      if (isMeccanioBookId(
+        '${schedePersonaggio[schedaCorrente]['monsterBookSourceId'] ?? ''}',
+      )) {
+        configureMeccanio(schedaCorrente);
+        salvaSchedaCorrenteInMemoria();
+      }
       createdNames.add(nome);
       if (monsterBookSource?.id.startsWith('pawn_guardiano') ?? false) {
         registerPawnCreature(pawnCreatureOwner);

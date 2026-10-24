@@ -339,6 +339,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void tickPlanarTurn() {
+    meccanioTurn();
     parasiteTurn();
     if (currentCombatIsActive()) refreshChaosStats();
     for (final key in const [
@@ -387,6 +388,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void resetPlanarFight() {
+    resetMeccanioFight();
     if (planarState['posteaImmunityWaitingFight'] != true) {
       planarState.remove('posteaImmuneCondition');
       planarState.remove('posteaImmunityWaitingFight');

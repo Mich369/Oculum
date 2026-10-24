@@ -915,9 +915,21 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (!candidates.any((t) => onlineCombatTokenTag(t) == own)) {
       return;
     }
-    final selectable = excludeSelf
-        ? candidates.where((t) => onlineCombatTokenTag(t) != own).toList()
-        : candidates;
+    final medicine = pending.any(
+      (effect) => '${effect['source'] ?? ''}'.startsWith('Medicina'),
+    );
+    final selectable = candidates.where((token) {
+      final tag = onlineCombatTokenTag(token);
+      if (excludeSelf && tag == own) return false;
+      final index = localSheetIndexForOculumTag(tag);
+      final robot =
+          isMeccanioBookId('${token['monsterBookId'] ?? ''}') ||
+          index >= 0 &&
+              isMeccanioBookId(
+                '${schedePersonaggio[index]['monsterBookSourceId'] ?? ''}',
+              );
+      return !medicine || !robot;
+    }).toList();
     if (selectable.isEmpty) return;
     final counts = <String, int>{};
     final selected =
@@ -1030,9 +1042,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         online && encounter != onlineCombatEncounterId) {
       return;
     }
-    final valid = (online ? onlineCombatTokens() : candidates)
-        .map(onlineCombatTokenTag)
-        .toSet();
+    final valid = selectable.map(onlineCombatTokenTag).toSet();
     if (selected.any(
       (tag) => !valid.contains(tag) || (excludeSelf && tag == own),
     )) {
@@ -1236,6 +1246,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final bonus = readIntValue(payload['helpBonus']).clamp(-1000000, 1000000);
     final index = localSheetIndexForOculumTag(target);
     if (index < 0) return;
+    recordMeccanioHelp(
+      target,
+      '${payload['sourceTag']}',
+      readIntValue(payload['helperHp']),
+      readIntValue(payload['helperMaxHp'], fallback: 1),
+    );
     onlineCombatRequests[id] = {
       ...payload,
       'kind': 'help',
@@ -1379,6 +1395,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final helperName = sourceName ?? realtimeDisplayName();
     final tag = onlineCombatTokenTag(target);
     final name = '${target['name'] ?? '???'}';
+    recordMeccanioHelp(tag, helperTag, hpCorrenti(), maxHp());
     aggiungiLog(
       '[AIUTA COMPAGNO] $helperName → $name: ${bonus >= 0 ? '+' : ''}$bonus al prossimo tiro.',
     );
@@ -1394,6 +1411,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         'targetTag': tag,
         'targetName': name,
         'helpBonus': bonus.clamp(-1000000, 1000000),
+        'helperHp': hpCorrenti(),
+        'helperMaxHp': maxHp(),
       };
       attachPendingCombatTurnResources(request);
       onlineCombatRequests['${request['id']}'] = request;
@@ -1439,7 +1458,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       : '${realtimeVisibleInitiativeSnapshot['encounterId'] ?? ''}';
 
   List<Map<String, dynamic>> onlineCombatTokens() {
-    if (realtimeService?.isConnected != true) return [];
+    if (realtimeService?.isConnected != true) {
+      if (!localMeccanioCombat) return [];
+      return masterInitiativeTokens
+          .map((t) => Map<String, dynamic>.from(t))
+          .toList();
+    }
     final raw = realtimeIsMasterRole
         ? masterInitiativeTokens
         : realtimeVisibleInitiativeSnapshot['tokens'];
@@ -1451,7 +1475,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   }
 
   String onlineCombatTokenTag(Map<String, dynamic> token) =>
-      realtimeIsMasterRole
+      realtimeIsMasterRole || localMeccanioCombat
       ? publicInitiativeSourceTag(token)
       : '${token['sheetTag'] ?? token['id'] ?? ''}';
 
@@ -1485,6 +1509,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     int? preparedAttackTotal,
     int? preparedAttackNatural,
   }) async {
+    final robotAttack = pendingMeccanioAttack();
+    if (!meccanioMayRelease()) return;
+    if (robotAttack.isNotEmpty) {
+      initialChoice = '${robotAttack['choice'] ?? 'precisione'}';
+      maximumTargets = max(
+        1,
+        readIntValue(robotAttack['maximumTargets'], fallback: 1),
+      );
+    }
     if (parasiteOwnerLocked || parasiteHiddenInHost) {
       aggiungiLog(
         '[PARASSITA] Attacco non disponibile: usa i comandi di liberazione.',
@@ -1516,6 +1549,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     final tokens = onlineAttackTokens();
     final freeReaction = onlineCombatRequests[freeReactionId];
+    if (robotAttack.isNotEmpty) {
+      final ownSide = combatScoutSide(sheetTagAt(schedaCorrente));
+      tokens.removeWhere(
+        (token) => combatScoutSide(onlineCombatTokenTag(token)) == ownSide,
+      );
+      if (robotAttack['allOpponents'] == true) {
+        minimumTargets = tokens.length;
+        maximumTargets = tokens.length;
+      }
+    }
     // A counterattack is authorized by the resolved attack request itself. The
     // attacker's token can arrive in the initiative snapshot later, so retain
     // the authenticated source tag/name as a temporary target for this reply.
@@ -1787,6 +1830,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     if (freeReactionId == null &&
         schiantoReactionId == null &&
+        robotAttack['free'] != true &&
         !(isLarvalParasite
             ? await requestUtilitySpend('azione')
             : await spendCombatRollResource())) {
@@ -1802,14 +1846,18 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         .join(', ');
     final label =
         'Attacco contro $target${controlledPlan.reason.isEmpty ? '' : ' · ${controlledPlan.reason}'}';
-    final preparedDamage = dannoTotale();
+    final preparedDamage = robotAttack.isEmpty
+        ? dannoTotale()
+        : readIntValue(robotAttack['damage']);
     final angelicRayPrepared = activeStructuredEffects.any(
       (effect) =>
           effect['mode'] == 'prossima_azione' &&
           effect['type'] == 'danno' &&
-          '${effect['effectId'] ?? ''}'.startsWith('raggio_angelico_forma_'),
+          oculumIsAngelRayEffectId('${effect['effectId'] ?? ''}'),
     );
-    final element = angelicRayPrepared
+    final element = robotAttack.isNotEmpty
+        ? '${robotAttack['element']}'
+        : angelicRayPrepared
         ? 'angelico'
         : oculumNormalizeElementId(controlledPlan.element);
     final sourceTag = sheetTagAt(schedaCorrente);
@@ -1923,6 +1971,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         ? 0
         : hiddenEyeTotal(precisionStat);
     final id = '$sourceTag:${DateTime.now().microsecondsSinceEpoch}';
+    if (robotAttack.isNotEmpty) {
+      robotAttack['percentile'] = Random.secure().nextInt(100);
+    }
     if (freeReaction != null) {
       freeReaction['reactionUsed'] = true;
       freeReaction['counterAttackId'] = id;
@@ -1931,6 +1982,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       '[ATTACCO] $label · ${choices.firstWhere((c) => c.id == controlledPlan.choiceId).name}.${controlledPlan.choiceId == 'vc' ? '' : ' Descrivi l’attacco al Master, anche a voce.'}',
     );
     void resolved(int natural, int total) {
+      if (robotAttack['kind'] == 'shoulder') total -= 3;
+      if (robotAttack['kind'] == 'automatic') total += 6;
       total += readIntValue(preparedSkill['rollBonus']);
       total += planarAttackRollBonus();
       planarState.remove('attackRollBonus');
@@ -2025,6 +2078,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             );
         final effectsForTarget = <Map<String, dynamic>>[
           ...targetEffects,
+          if (robotAttack['kind'] == 'rays' && natural == 20)
+            OculumStructuredEffect(
+              id: 'meccanio_beyond_defense',
+              type: 'modifica_statistica',
+              target: 'meccanio_oltre_difesa',
+              valueExpression: '1',
+              duration: '1',
+              mode: 'temporaneo',
+              recipient: 'nemico',
+            ).toJson(),
           if (eligibleCorruptionPassive)
             OculumStructuredEffect(
               id: 'corruption_mastery_on_hit',
@@ -2062,9 +2125,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             ).clamp(0, 100),
           if (isElementCollector) 'sourceMonsterBookId': sourceMonsterId,
           'sourceName': realtimeDisplayName(),
+          if (robotAttack.isNotEmpty) 'meccanioAttack': robotAttack,
           if (effectsForTarget.any(
-            (effect) =>
-                '${effect['id'] ?? ''}'.startsWith('raggio_angelico_forma_'),
+            (effect) => oculumIsAngelRayEffectId('${effect['id'] ?? ''}'),
           )) ...{
             'sourceKarma': karmaTotale(),
           },
@@ -2104,7 +2167,17 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'reason': controlledPlan.reason,
           'attack': total,
           'natural': natural,
-          'damage': isLarvalParasite
+          'damage': robotAttack['kind'] == 'missile'
+              ? readIntValue(robotAttack['damage'])
+              : robotAttack['kind'] == 'shoulder'
+              ? readIntValue(robotAttack['damage']) ~/
+                    controlledPlan.targetIds.length
+              : robotAttack['kind'] == 'lightning'
+              ? (readIntValue(robotAttack['damage']) *
+                        (1 + .35 * (controlledPlan.targetIds.length - 1)) /
+                        controlledPlan.targetIds.length)
+                    .floor()
+              : isLarvalParasite
               ? 0
               : resolvedDamagePerTarget + corruptionRevengeDamage(selectedTag),
           'damageTotal':
@@ -2197,6 +2270,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         onResolved: resolved,
       );
       if (!mounted || currentSheetScrollId() != origin) return;
+      clearMeccanioAttack();
       if (consumeNextAttackStructuredEffects()) {
         aggiungiLog(
           '$label · Danni per bersaglio $damagePerTarget, bonus del prossimo attacco consumati una sola volta.',
@@ -2230,6 +2304,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
 
   Future<void> sendOnlineCombatRequest(Map<String, dynamic> request) async {
     attachPendingCombatTurnResources(request);
+    if (realtimeService?.isConnected != true && localMeccanioCombat) {
+      request['sent'] = true;
+      programmaSalvataggio();
+      return;
+    }
     final delivered = await realtimeService?.sendCombatEvent(
       'combat_attack',
       permissionEnvelope(request),
@@ -2860,6 +2939,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       }
       claimOnlineVampirism(request);
       claimPlanarBellHealing(request);
+      claimMeccanioResults(request);
       combatLogFor(
         source,
         oculumCombatExchangeLog(
@@ -2916,6 +2996,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     try {
       if (request['firstDefense'] == null) {
+        recordMeccanioAggression(request);
         aggiungiLog(
           '[TURNISTICA] Il primo tiro di difesa non consuma Azione o Reazione.',
         );
@@ -2963,6 +3044,19 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         aggiungiLog('[DIFESA · MANIFESTAZIONE] $description');
       }
       int? defense;
+      final defenseBase = choice == 'cm'
+          ? cm()
+          : (() {
+              final stat = hiddenEyeStats
+                  .where((s) => s.id == choice)
+                  .firstOrNull;
+              return stat == null
+                  ? 0
+                  : hiddenEyeTotal(stat) +
+                        hiddenEyeStatRollQuickBonus(stat) +
+                        tiroGlobaleBonus();
+            })();
+      final emergencyBonus = meccanioEmergencyDefense(request, defenseBase);
       int defenseNatural = 0;
       request['defenseHelp'] = readIntValue(
         schedePersonaggio[schedaCorrente]['combatHelpPending'],
@@ -2978,7 +3072,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       void resolved(int natural, int total) {
         defenseNatural = natural;
         final penalized =
-            total -
+            total +
+            emergencyBonus -
             collectorDefensePenalty +
             (choice == 'cm'
                 ? max(0, readIntValue(request['posteaCmBonus'])).toInt()
@@ -3262,6 +3357,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       programmaSalvataggio();
     }
     request['outcome'] = outcome.name;
+    rewardMeccanioProtection(request);
     request['freeReaction'] =
         request['reactionOf'] == null &&
         (oculumDefenseGrantsFreeReaction(attack, defense) ||
@@ -3288,16 +3384,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       ),
     );
     if (resisted) {
+      if (isMeccanio) sendMeccanioDischarge(request, defense);
       aggiungiLog(
         '[RESISTENZA] 1 danno prima degli Scudi; reazione gratuita contro chi ha attaccato, senza concatenazione.',
       );
     }
     final rayEffects = (request['effects'] as List? ?? const [])
         .whereType<Map>()
-        .where(
-          (effect) =>
-              '${effect['id'] ?? ''}'.startsWith('raggio_angelico_forma_'),
-        )
+        .where((effect) => oculumIsAngelRayEffectId('${effect['id'] ?? ''}'))
         .toList(growable: false);
     var resolvedAttackBaseDamage = readIntValue(request['damage']);
     if (rayEffects.isNotEmpty) {
@@ -3323,7 +3417,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         '[RAGGIO ANGELICO] Danno base ${readIntValue(request['damage'])} + Karma attaccante $sourceKarma + ${max(0, -targetKarma)} dal Karma negativo del bersaglio; moltiplicatore ×${oculumAngelRayMultiplier(targetKind)} = $resolvedAttackBaseDamage prima di difesa, resistenze e Scudi.',
       );
     }
-    final damage = resisted
+    var damage = resisted && isMeccanio
+        ? 0
+        : resisted
         ? 1
         : oculumOpposedDamage(
             resolvedAttackBaseDamage,
@@ -3332,6 +3428,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             forcedCritical: request['forcedCritical'] == true,
             difficulty: '${request['difficulty'] ?? 'normale'}',
           );
+    if (request['meccanioEmergency'] == true) {
+      damage = meccanioEmergencyDamage(
+        damage,
+        avoided: outcome == OculumAttackOutcome.avoided,
+        nearMiss: attack - defense <= 5,
+      );
+    }
     final incomingElement = oculumNormalizeElementId(
       '${request['element'] ?? 'fisico'}',
     );
@@ -3472,6 +3575,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           extraFragilityPercent: doubleCritical ? 10 : 0,
           incomingDamageMultiplier: elementalDefenseMultiplier,
           bypassDefense:
+              activeStructuredEffectBonus('meccanio_oltre_difesa') > 0 ||
               (readIntValue(planarState['armorHits']) > 0 &&
                   request['choice'] == 'schianto') ||
               (request['effects'] as List? ?? const []).whereType<Map>().any(
@@ -3547,6 +3651,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     planarAfterHpDamage();
     request['damageReceipt'] = receipt;
+    if (localMeccanioCombat) claimMeccanioResults(request);
     aggiungiLog(
       '[DANNO RISOLTO] ${request['sourceName']} → ${request['targetName'] ?? nomeController.text}: ${combatDamageReceiptText(receipt)}.',
     );

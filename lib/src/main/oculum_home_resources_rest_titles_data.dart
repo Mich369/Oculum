@@ -1947,6 +1947,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       final hpPrima = hpCorrenti();
       final tiroCuraHp = Random.secure().nextInt(100) + 1;
       progressionSurge.shortRest();
+      meccanioOwnerRest(longRest: false);
       consumedFoodBonuses.clear();
       for (final effect in merchantHerbalEffects) {
         if (effect['type'] == 'smoking_herbs') continue;
@@ -2173,6 +2174,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       restDustFusion();
       longRestPlanarEffects();
       restorePosteaCores();
+      resetMeccanioAtOwnerRest();
+      meccanioOwnerRest(longRest: true);
       raccoltaResilienzaSpesa = 0;
       raccoltaVolontaSpesa = 0;
       raccoltaMateriaSpesa = 0;

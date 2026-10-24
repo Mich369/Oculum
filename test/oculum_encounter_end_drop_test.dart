@@ -156,10 +156,9 @@ void main() {
       var seed = 0;
       while (true) {
         final rolls = Random(seed);
-        // finishEncounter also consumes a percentile roll for the Dust crystal
-        // after each defeated monster's natural Drop roll.
+        // Level-zero enemies cannot drop crystals for this level-one party;
+        // no crystal percentile may shift the next monster's natural roll.
         final firstNatural = rolls.nextInt(20) + 1;
-        rolls.nextInt(100);
         final secondNatural = rolls.nextInt(20) + 1;
         if (firstNatural == 20 && secondNatural == 20) break;
         seed++;

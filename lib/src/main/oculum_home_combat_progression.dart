@@ -2393,8 +2393,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (readIntValue(token['actionTurnRound'], fallback: -1) !=
         masterInitiativeRound) {
       token['actionUsed'] =
-          token['posteaFirstRoundReactionOnly'] == true &&
-          masterInitiativeRound == 0;
+          (token['posteaFirstRoundReactionOnly'] == true &&
+              masterInitiativeRound == 0) ||
+          token['meccanioReactionsOnly'] == true;
       token['actionTurnRound'] = masterInitiativeRound;
       final tag = publicInitiativeSourceTag(token);
       final index = localSheetIndexForOculumTag(tag);
@@ -2596,6 +2597,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             : 'Partecipante';
       }
       if (sheetIndex >= 0) token['reflexes'] = sheetReflexesAt(sheetIndex);
+      if (sheetIndex >= 0 &&
+          isMeccanioBookId(
+            '${schedePersonaggio[sheetIndex]['monsterBookSourceId'] ?? ''}',
+          )) {
+        token['meccanioReactionsOnly'] = true;
+      }
       token['level'] = sheetIndex >= 0
           ? sheetCriticalLevelAt(sheetIndex)
           : max(0, readIntValue(token['level']));
@@ -5176,6 +5183,27 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     var dannoInserito = dannoEsplicito ?? leggiValoreDannoCura();
 
     if (dannoInserito == null || dannoInserito <= 0) return;
+    if (isMeccanio) {
+      final element = oculumNormalizeElementId(selectedIncomingDamageElement());
+      final percent = meccanioElementPercent(activeCriticalLevel());
+      if (element == 'fulmine') {
+        regenerateMeccanio(
+          (dannoInserito * percent / 100).ceil(),
+          form: min(3, 1 + activeCriticalLevel() ~/ 3),
+        );
+        aggiungiLog(
+          '[MECCANIO] Fulmine assorbito: rigenerazione $percent%, nessun danno.',
+        );
+        return;
+      }
+      if (element == 'taglio') {
+        dannoInserito = (dannoInserito * (100 - percent) / 100).floor();
+        if (dannoInserito <= 0) {
+          aggiungiLog('[MECCANIO] Immunità al Taglio.');
+          return;
+        }
+      }
+    }
     final damageBeforeAdaptation = dannoInserito;
     ensureHiddenEyeDefaults();
     final sheet =

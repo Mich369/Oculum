@@ -46,10 +46,10 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
     return (minimum: 0, maximum: 0, resource: 'nessuna');
   }
   // The cost editor also accepts the existing quick-command spelling
-  // (for example, @mat-1). A negative resource command unambiguously means
-  // expenditure; positive @stat commands remain effects, not costs.
+  // (for example, @mat-1). Only a standalone cost field is expenditure:
+  // a negative stat command inside prose, such as @res-30%, is an effect.
   final quickCost = RegExp(
-    r'@\s*(Scudo\s*Oculum|Oculum|OCU|Volont[aà]|VOL|Materia|MAT|Resilienza|RES|Vita|HP|Scudo)\s*-\s*(\d+)',
+    r'^\s*(?:Costo\s*:\s*)?@\s*(Scudo\s*Oculum|Oculum|OCU|Volont[aà]|VOL|Materia|MAT|Resilienza|RES|Vita|HP|Scudo)\s*-\s*(\d+)\s*$',
     caseSensitive: false,
   ).firstMatch(raw);
   if (quickCost != null) {

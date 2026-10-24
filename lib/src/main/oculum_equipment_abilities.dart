@@ -596,6 +596,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     if (skillOculumUseDialogOpen || !mounted || (valid != null && !valid())) {
       return false;
     }
+    if (!meccanioSkillAllowed(effects)) return false;
     if (planarCharging &&
         !effects.any(
           (e) => e.type == 'planar' && e.target == 'lightning_charge',
@@ -761,7 +762,9 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         (cooldown != null && !cooldown.ready)) {
       return false;
     }
-    final preparesAttack = effects.any(
+    final robotTechnique = effects.where((e) => e.type == 'meccanio').firstOrNull;
+    final preparesAttack = robotTechnique != null &&
+        !const {'drones', 'sphere'}.contains(robotTechnique.target) || effects.any(
       (e) =>
           const {'danno', 'danno_percentuale'}.contains(e.type) &&
           e.mode == 'prossima_azione',
@@ -782,7 +785,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         aggiungiLog('Preparazione: serve la tua Azione nel tuo turno.');
         return false;
       }
-      if (!await requestUtilitySpend(ownTurn ? 'azione' : 'reazione')) {
+      if (!await requestUtilitySpend(isMeccanio ? 'reazione' : ownTurn ? 'azione' : 'reazione')) {
         return false;
       }
     }

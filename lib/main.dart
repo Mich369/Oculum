@@ -7,6 +7,7 @@ import 'dart:math';
 import 'dart:ui' show FrameTiming;
 import 'package:http/http.dart' as http;
 import 'services/oculum_app_update.dart';
+import 'game/meccanio_rules.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -138,6 +139,7 @@ part 'src/main/oculum_planar_runtime.dart';
 part 'src/main/oculum_prepared_skills.dart';
 part 'src/main/oculum_fate_chaos.dart';
 part 'src/main/oculum_postea.dart';
+part 'src/main/oculum_meccanio.dart';
 part 'src/main/oculum_dust_crystals.dart';
 part 'src/main/oculum_parasites.dart';
 part 'src/main/oculum_app_update_ui.dart';

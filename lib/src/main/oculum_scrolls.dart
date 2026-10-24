@@ -419,10 +419,29 @@ class OculumTechniqueScrollProfile {
 }
 
 final List<OculumTechniqueScrollProfile> oculumTechniqueScrolls = () {
+  final realmProfiles = <OculumTechniqueScrollProfile>[
+    for (final spec in [
+      ('raggio_angelico', 'Raggio Angelico', 'araldo_raggio_angelico', 0),
+      ('richiamo_piranha', 'Richiamo dei Piranha', 'piranha_mortale', 2),
+    ])
+      OculumTechniqueScrollProfile(
+        spec.$1,
+        spec.$2,
+        monsterBookEntryById(spec.$3)!.nameIt,
+        monsterBookEntryById(spec.$3)!.elementId,
+        oculumMonsterBookArt(
+          monsterBookEntryById(spec.$3)!,
+        ).skills[spec.$4].effettiEvoluzione(1),
+      ),
+  ];
   final result = <OculumTechniqueScrollProfile>[
     ...oculumPreparedScrollProfiles(),
   ];
-  final names = result.map((p) => oculumNormalizeText(p.name)).toSet();
+  final names = {
+    ...result.map((p) => oculumNormalizeText(p.name)),
+    ...realmProfiles.map((p) => oculumNormalizeText(p.name)),
+    'richiamo dei piccoli',
+  };
   for (final monster in defaultMonsterBookEntries.where((m) => !m.isNpc)) {
     final art = oculumMonsterBookArt(monster);
     for (final (index, skill) in art.skills.indexed) {
@@ -464,7 +483,10 @@ final List<OculumTechniqueScrollProfile> oculumTechniqueScrolls = () {
       );
     }
   }
-  return List<OculumTechniqueScrollProfile>.unmodifiable(result.take(124));
+  return List<OculumTechniqueScrollProfile>.unmodifiable([
+    ...result.take(124),
+    ...realmProfiles,
+  ]);
 }();
 
 InventoryItem oculumTechniqueScrollItem(
@@ -482,7 +504,13 @@ InventoryItem oculumTechniqueScrollItem(
         'valueExpression':
             '(${original.valueExpression.replaceAll("oculum_spent", "${g + 1}")})*(1+$g/10)',
         'diceExpression': original.diceExpression,
-        'mode': const {'cura', 'scudo', 'hp_temporanei'}.contains(original.type)
+        'mode':
+            const {
+              'cura',
+              'scudo',
+              'hp_temporanei',
+              'costrutto',
+            }.contains(original.type)
             ? 'immediato'
             : const {
                 'danno',
@@ -502,7 +530,7 @@ InventoryItem oculumTechniqueScrollItem(
       }),
   ];
   final description =
-      'L’impronta di ${profile.monster} prepara ${profile.name}. Gli effetti seguenti sono applicati al lanciatore; i bonus di attacco valgono per il prossimo attacco, le cure sono immediate. La pergamena contiene ${g + 1} Oculum impresso: non richiede una spesa Oculum aggiuntiva.\n${effects.map(oculumStructuredEffectDescription).join("\n")}';
+      'L’impronta di ${profile.monster} prepara ${profile.name}. Gli effetti seguenti sono applicati al lanciatore; i bonus di attacco valgono per il prossimo attacco, le cure sono immediate. La pergamena contiene ${g + 1} Oculum impresso: non richiede una spesa Oculum aggiuntiva.\n${effects.map(oculumStructuredEffectDescription).join("\n")}${const {'raggio_angelico', 'richiamo_piranha'}.contains(profile.id) ? '\n${profile.effects.map((e) => e.narrativeText).where((s) => s.isNotEmpty).toSet().join('\n')}' : ''}';
   return InventoryItem(
     nome: '[${profile.name}] [Pergamena] [Grado $g]',
     peso: .1,

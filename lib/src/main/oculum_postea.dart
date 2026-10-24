@@ -8,6 +8,14 @@ extension _OculumPostea on _OculumHomePageState {
     final healerPercent = const [150, 100, 75, 50][random.nextInt(4)];
     final definitions = <Map<String, dynamic>>[
       {
+        'id': 'postea_meccanio',
+        'kind': 'postea_meccanio',
+        'name': 'Meccanio',
+        'cost': 120,
+        'desc':
+            'Compagno robot di Postea, livello 0: RES 4, VOL 2, MAT 4, OCU 0. Può autoripararsi usando Meccanica al posto di Medicina; il padrone può ripararlo con il proprio tiro di Meccanica. Il critico raddoppia la cura, senza superare la Vita massima. Prezzo iniziale modificabile: 120 Obser.',
+      },
+      {
         'id': 'postea_anti_malus',
         'kind': 'postea_antimalus',
         'name': 'Anti malus di Rusty',
@@ -91,6 +99,7 @@ extension _OculumPostea on _OculumHomePageState {
     final level = max(0, leggiNumero(livelloController));
     final grade = max(0, leggiNumero(gradoController));
     final data = <String, dynamic>{'postea': true};
+    if (kind == 'postea_meccanio') data['alchemyPet'] = 'meccanio';
     if (kind == 'postea_companion') {
       data.addAll({
         'pawn': true,
@@ -132,7 +141,11 @@ extension _OculumPostea on _OculumHomePageState {
     }
     return InventoryItem(
       nome: '${offer['name']}',
-      peso: kind == 'postea_katana' ? 1.5 : .5,
+      peso: kind == 'postea_meccanio'
+          ? 6
+          : kind == 'postea_katana'
+          ? 1.5
+          : .5,
       quantita: 1,
       note:
           '${offer['desc']}${data['medicine'] == null ? '' : ' Medicina propria: ${data['medicine']}.'}',
@@ -150,6 +163,115 @@ extension _OculumPostea on _OculumHomePageState {
       craftData: data,
       ability: skill,
     );
+  }
+
+  List<int> meccanioRepairTargets() {
+    final own = sheetTagAt(schedaCorrente);
+    return [
+      for (var index = 0; index < schedePersonaggio.length; index++)
+        if (isMeccanioBookId(
+              '${schedePersonaggio[index]['monsterBookSourceId'] ?? ''}',
+            ) &&
+            (sheetTagAt(index) == own ||
+                schedePersonaggio[index]['meccanioOwnerTag'] == own))
+          index,
+    ];
+  }
+
+  Future<void> repairMeccanio(HiddenEyeStat stat) async {
+    final origin = currentSheetScrollId();
+    final targets = meccanioRepairTargets();
+    if (targets.isEmpty) return;
+    final target = targets.length == 1
+        ? targets.single
+        : await showDialog<int>(
+            context: context,
+            builder: (dialog) => SimpleDialog(
+              title: const Text('Meccanica · scegli Meccanio'),
+              children: [
+                for (final index in targets)
+                  SimpleDialogOption(
+                    onPressed: () => Navigator.pop(dialog, index),
+                    child: Text(nomeSchedaPersonaggio(index)),
+                  ),
+              ],
+            ),
+          );
+    if (!mounted || target == null || currentSheetScrollId() != origin) return;
+    final targetTag = sheetTagAt(target);
+    if (currentCombatIsActive() && !await spendCombatRollResource()) return;
+    if (!mounted || currentSheetScrollId() != origin) return;
+    await tiraSottotrattoOcchio(
+      stat,
+      actionLabel: 'Meccanica · ripara Meccanio',
+      onResolved: (natural, total) {
+        if (!mounted || currentSheetScrollId() != origin) return;
+        final index = localSheetIndexForOculumTag(targetTag);
+        if (index < 0 || !meccanioRepairTargets().contains(index)) return;
+        applyMeccanioRepair(targetTag, natural: natural, total: total);
+      },
+    );
+  }
+
+  bool applyMeccanioRepair(
+    String tag, {
+    required int natural,
+    required int total,
+  }) {
+    final index = localSheetIndexForOculumTag(tag);
+    if (index < 0 || !meccanioRepairTargets().contains(index)) return false;
+    final amount = max(0, total) * (natural == 20 ? 2 : 1);
+    if (index == schedaCorrente && isMeccanio) {
+      regenerateMeccanio(amount, form: min(3, 1 + activeCriticalLevel() ~/ 3));
+      return true;
+    }
+    final robot = schedePersonaggio[index];
+    if (robot['meccanio'] is Map) {
+      applySupportToOwnedSheet(index, [
+        OculumStructuredEffect(
+          type: 'meccanio',
+          target: 'repair',
+          valueExpression: '$amount',
+        ),
+      ], 'Meccanica · riparazione di Meccanio');
+      programmaSalvataggio();
+      return true;
+    }
+    final maximum = robot['meccanio'] is Map
+        ? max(
+            1,
+            readIntValue((robot['meccanio'] as Map)['maximumHp'], fallback: 20),
+          )
+        : max(1, readIntValue(robot['derivedMaxHp'], fallback: 20));
+    if (readIntValue(robot['currentHp']) >= maximum) {
+      final repaired = meccanioRepair(
+        hp: maximum,
+        hpMaximum: maximum,
+        shield: readIntValue(robot['scudo']),
+        amount: amount,
+        form: min(3, 1 + readIntValue(robot['livello']) ~/ 3),
+      );
+      applySupportToOwnedSheet(index, [
+        OculumStructuredEffect(
+          type: 'scudo',
+          valueExpression: '${repaired.shieldAdded}',
+        ),
+      ], 'Meccanica · Scudo di Meccanio');
+      programmaSalvataggio();
+      return true;
+    }
+    applySupportToOwnedSheet(index, [
+      OculumStructuredEffect(
+        type: 'cura',
+        resource: 'vita',
+        valueExpression: '$amount',
+      ),
+    ], 'Meccanica · riparazione di ${nomeSchedaPersonaggio(index)}');
+    aggiungiLog(
+      '[MECCANIO] Meccanica $total${natural == 20 ? ' · critico' : ''}: ripara fino a $amount Vita, entro il massimo.',
+    );
+    programmaSalvataggio();
+    return true;
   }
 
   bool get hasFateKatana => inventario.any(

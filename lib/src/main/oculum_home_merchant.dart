@@ -855,7 +855,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     final kind = '${offer['kind']}';
     if (kind == 'technique_scroll' &&
         readIntValue(offer['scrollGrade']) !=
-            max(0, leggiNumero(gradoController)).clamp(0, 12)) {
+            max(
+              selectedPlane.minimumGrade,
+              leggiNumero(gradoController),
+            ).clamp(0, 12)) {
       return false;
     }
     if (kind.startsWith('postea_')) {
@@ -992,6 +995,18 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         );
         if (refill != null) reserved.add(refill);
         break;
+    }
+    if (const {'alchimista', 'tutti'}.contains(merchantShopType)) {
+      for (final offer in candidates) {
+        if (offer['planeId'] == selectedPlaneId &&
+            offer['kind'] == 'technique_scroll' &&
+            const {
+              'raggio_angelico',
+              'richiamo_piranha',
+            }.contains(offer['scrollProfileId'])) {
+          if (!reserved.contains(offer)) reserved.add(offer);
+        }
+      }
     }
     return reserved;
   }
@@ -3813,6 +3828,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       'postea_katana',
       'postea_gloves',
       'postea_runic_lens',
+      'postea_meccanio',
     }.contains(offer['kind'])) {
       return posteaItem(offer);
     }

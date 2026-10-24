@@ -320,7 +320,9 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
   }
 
   Future<bool> defendPendingCombat(String choice) async {
-    if (realtimeService?.isConnected != true) return false;
+    if (realtimeService?.isConnected != true && !localMeccanioCombat) {
+      return false;
+    }
     final tag = sheetTagAt(schedaCorrente);
     final pending = onlineCombatRequests.values
         .where(
@@ -361,6 +363,10 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     HiddenEyeStat? stat,
   }) async {
     final origin = currentSheetScrollId();
+    if (role == OculumCombatAbilityRole.support && stat?.id == 'meccanica') {
+      await repairMeccanio(stat!);
+      return;
+    }
     if (role == OculumCombatAbilityRole.support && stat?.id == 'medicina') {
       await tiraSottotrattoOcchio(
         stat!,
@@ -917,6 +923,53 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (role == OculumCombatAbilityRole.support &&
+                    ownsMeccanio(sheetTagAt(schedaCorrente)))
+                  OutlinedButton.icon(
+                    onPressed: canUseMeccanioEmpathy
+                        ? () {
+                            Navigator.pop(dialog);
+                            unawaited(useMeccanioEmpathy());
+                          }
+                        : null,
+                    icon: const Icon(Icons.favorite_outline),
+                    label: Text(
+                      canUseMeccanioEmpathy
+                          ? 'Empatia · riduci il rifiuto comandi'
+                          : 'Empatia · recupera con un riposo',
+                    ),
+                  ),
+                if (role == OculumCombatAbilityRole.support &&
+                    ownsMeccanio(sheetTagAt(schedaCorrente)))
+                  OutlinedButton.icon(
+                    onPressed: canUseMeccanioEmpathy
+                        ? () {
+                            Navigator.pop(dialog);
+                            unawaited(useMeccanioEmpathy(deception: true));
+                          }
+                        : null,
+                    icon: const Icon(Icons.theater_comedy_outlined),
+                    label: const Text(
+                      'Inganno · stesso uso di Empatia · dado <12: +10% rifiuto',
+                    ),
+                  ),
+                if (role == OculumCombatAbilityRole.support &&
+                    !ownsMeccanio(sheetTagAt(schedaCorrente)) &&
+                    schedePersonaggio.any(
+                      (s) =>
+                          isMeccanioBookId(
+                            '${s['monsterBookSourceId'] ?? ''}',
+                          ) &&
+                          '${s['meccanioOwnerTag'] ?? ''}'.isEmpty,
+                    ))
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(dialog);
+                      unawaited(tryTameMeccanio());
+                    },
+                    icon: const Icon(Icons.build_outlined),
+                    label: const Text('Meccanica · addestra Meccanio'),
+                  ),
                 if (role == OculumCombatAbilityRole.support)
                   OutlinedButton.icon(
                     onPressed: () {
@@ -1050,7 +1103,8 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         },
         OculumCombatAbilityRole.defense => combatDefenseRollIds,
         OculumCombatAbilityRole.support => {
-          'medicina',
+          if (!isMeccanio) 'medicina',
+          if (meccanioRepairTargets().isNotEmpty) 'meccanica',
           if (currentCombatIsActive())
             for (final stat in hiddenEyeStats)
               if (const {'concentrazione', 'adattamento'}.contains(stat.id) &&

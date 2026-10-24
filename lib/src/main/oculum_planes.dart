@@ -374,6 +374,35 @@ extension _OculumPlanes on _OculumHomePageState {
         : plane.elements;
     if (const {'mezzano', 'postea'}.contains(plane.id)) return;
     final level = max(0, leggiNumero(livelloController));
+    final realmScrollId = switch (plane.id) {
+      'angelico' || 'sacro' => 'raggio_angelico',
+      'affogato' => 'richiamo_piranha',
+      _ => '',
+    };
+    if (realmScrollId.isNotEmpty) {
+      final profile = oculumTechniqueScrolls.firstWhere(
+        (profile) => profile.id == realmScrollId,
+      );
+      final grade = max(
+        plane.minimumGrade,
+        leggiNumero(gradoController),
+      ).clamp(0, 12);
+      final id = 'plane_${plane.id}_scroll_${profile.id}_$grade';
+      if (!merchantStock.any((offer) => offer['id'] == id)) {
+        merchantStock.add({
+          'id': id,
+          'planeId': plane.id,
+          'kind': 'technique_scroll',
+          'name': 'Pergamena ${profile.name} · Grado $grade',
+          'grade': grade,
+          'scrollProfileId': profile.id,
+          'scrollGrade': grade,
+          'cost': (oculumScrollValue(grade) * plane.price).ceil(),
+          'desc':
+              '${profile.effects.first.narrativeText} Monouso e apprendibile con le normali regole delle pergamene. Costo ${oculumScrollWillCost(grade)} Volontà; CD ${oculumScrollCooldown(grade)} turni; DT ${oculumScrollDifficulty(grade)}.',
+        });
+      }
+    }
     if (plane.id == 'morti') {
       final grade = max(0, leggiNumero(gradoController));
       for (final kind in ['skull_amulet', 'undead_summon']) {
@@ -546,7 +575,9 @@ extension _OculumPlanes on _OculumHomePageState {
 
 extension _OculumNecromancyEquipment on _OculumHomePageState {
   Future<void> useNecromancyEquipment(InventoryItem item) async {
-    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) return;
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
     if (!inventario.contains(item) ||
         !item.equipaggiata ||
         item.quantita <= 0) {

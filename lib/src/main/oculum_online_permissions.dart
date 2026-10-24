@@ -729,6 +729,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         : readIntValue(realtimeVisibleInitiativeSnapshot['activeIndex']);
     final useAction =
         !forceReaction &&
+        (!isMeccanio || meccanioSphereReady) &&
         index >= 0 &&
         index == active &&
         !readBoolValue(tokens[index]['actionUsed']);

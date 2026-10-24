@@ -19,6 +19,13 @@ void main() {
       resource: 'volonta',
     ));
     expect(oculumParseAbilityCost('@mat+1'), isNull);
+    expect(oculumParseAbilityCost('@res-30%'), isNull);
+    expect(
+      oculumParseAbilityCost(
+        'Impone il Titolo Malanno @res-30% per tre Riposi Lunghi. (3/3 Oculum, costo fisso).',
+      ),
+      (minimum: 3, maximum: 3, resource: 'oculum'),
+    );
   });
 
   test('bracketed Richiede markers keep a skill locked until resolved', () {

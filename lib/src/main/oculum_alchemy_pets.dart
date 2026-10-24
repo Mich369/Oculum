@@ -31,7 +31,20 @@ extension _OculumAlchemyPets on _OculumHomePageState {
     final owner = sheetTagAt(schedaCorrente);
     await forzaSalvataggioImmediato(soloLocale: true);
     final id = '${item.craftData['alchemyPet']}';
-    final spec = oculumAlchemyPets.where((p) => p.$1 == id).firstOrNull;
+    final meccanio = id == 'meccanio';
+    if (meccanio && ownsMeccanio(owner)) {
+      aggiungiLog('Puoi possedere un solo Meccanio. Il compagno non viene consumato.');
+      return;
+    }
+    final spec = meccanio
+        ? (
+            'meccanio',
+            'Meccanio',
+            monsterBookEntryById('meccanio')!.descIt,
+            'cura',
+            0,
+          )
+        : oculumAlchemyPets.where((p) => p.$1 == id).firstOrNull;
     if (spec == null) return;
     final before = schedePersonaggio
         .map((s) => '${s['id'] ?? s['sheetTag']}')
@@ -50,10 +63,10 @@ extension _OculumAlchemyPets on _OculumHomePageState {
         forceEnemyProfile: false,
         livelloForzato: 0,
         statsMostroForzate: {
-          'resilienza': 2,
+          'resilienza': meccanio ? 4 : 2,
           'volonta': 2,
-          'materia': 1,
-          'oculum': 1,
+          'materia': meccanio ? 4 : 1,
+          'oculum': meccanio ? 0 : 1,
         },
       );
     } finally {
@@ -126,13 +139,28 @@ extension _OculumAlchemyPets on _OculumHomePageState {
       ],
     );
     final sheet = schedePersonaggio[index];
-    final savedSkills = (sheet['skills'] as List? ?? []).toList()
-      ..add(skill.toJson())
-      ..add(regeneration.toJson());
+    final savedSkills = meccanio
+        ? <dynamic>[]
+        : [
+            ...(sheet['skills'] as List? ?? []),
+            skill.toJson(),
+            regeneration.toJson(),
+          ];
     sheet['skills'] = savedSkills;
     sheet['inMasterParty'] = true;
     sheet['alchemyPet'] = id;
-    if (index == schedaCorrente) skills.addAll([skill, regeneration]);
+    if (meccanio) {
+      sheet['monsterBookSourceId'] = 'meccanio';
+      sheet['meccanioOwnerTag'] = owner;
+      configureMeccanio(index);
+    }
+    if (index == schedaCorrente) {
+      if (meccanio) {
+        skills..clear()..addAll(meccanioLoadoutSkills(Map<String, dynamic>.from(sheet['meccanio'] as Map)));
+      } else {
+        skills.addAll([skill, regeneration]);
+      }
+    }
     if (sheetTagAt(schedaCorrente) == owner) {
       item.quantita--;
       if (item.quantita <= 0) inventario.remove(item);
@@ -160,7 +188,9 @@ extension _OculumAlchemyPets on _OculumHomePageState {
         }
       }
     }
-    aggiungiLog('${spec.$2} entra nel Party con ${skill.nome}.');
+    aggiungiLog(
+      '${spec.$2} entra nel Party con ${meccanio ? 'autoriparazione tramite Meccanica' : skill.nome}.',
+    );
     programmaSalvataggio();
     setState(() {});
   }

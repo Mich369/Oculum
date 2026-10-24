@@ -8281,7 +8281,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  if (canKickRoomMember && realtimeService?.isConnected == true)
+                  if (realtimeIsMasterRole &&
+                      realtimeService?.isConnected == true)
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
@@ -8346,7 +8347,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                                       ),
                                     ),
                                   ),
-                                  if (realtimeService?.isConnected == true)
+                                  if (realtimeIsMasterRole &&
+                                      realtimeService?.isConnected == true)
                                     PopupMenuItem(
                                       value: 'ban',
                                       child: Text(

@@ -457,6 +457,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         }
 
         switch (effect.type) {
+          case 'meccanio':
+            activateMeccanioTechnique(effect, value);
+            break;
           case 'esperienza_dust':
             for (final key in ['resilienza', 'volonta', 'materia', 'oculum']) {
               esperienzaCriticaStatistiche[key] =

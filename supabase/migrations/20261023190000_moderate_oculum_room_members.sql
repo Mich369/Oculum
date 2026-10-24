@@ -1,5 +1,5 @@
 -- Secure, persistent room moderation. Kicks remove membership; bans also
--- prevent re-entry until a Master or Co-Master explicitly lifts the ban.
+-- prevent re-entry until the Master explicitly lifts the ban.
 create table public.oculum_room_bans (
   room_id uuid not null references public.oculum_rooms(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -52,6 +52,13 @@ begin
   end if;
   if not oculum_private.is_room_staff(p_room) then
     raise exception 'Only a Master or Co-Master may moderate room members' using errcode = '42501';
+  end if;
+  if p_action in ('ban', 'unban') and not exists (
+    select 1 from public.oculum_room_members m
+    where m.room_id = p_room and m.user_id = v_user
+      and m.status = 'approved' and m.role = 'master'
+  ) then
+    raise exception 'Only the Master may ban or unban room members' using errcode = '42501';
   end if;
   if not exists (
     select 1 from public.oculum_room_sessions s
@@ -106,8 +113,12 @@ grant execute on function public.oculum_moderate_room_sheet(uuid, text, text, te
 create function public.oculum_list_room_bans(p_room uuid)
 returns jsonb language plpgsql stable security definer set search_path = '' as $$
 begin
-  if not oculum_private.is_room_staff(p_room) then
-    raise exception 'Only a Master or Co-Master may view room bans' using errcode = '42501';
+  if auth.uid() is null or not exists (
+    select 1 from public.oculum_room_members m
+    where m.room_id = p_room and m.user_id = auth.uid()
+      and m.status = 'approved' and m.role = 'master'
+  ) then
+    raise exception 'Only the Master may view room bans' using errcode = '42501';
   end if;
   return coalesce((
     select jsonb_agg(jsonb_build_object(
