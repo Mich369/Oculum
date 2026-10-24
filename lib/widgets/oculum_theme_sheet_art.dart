@@ -15,18 +15,24 @@ class OculumThemeSheetFrame extends StatelessWidget {
     super.key,
     required this.child,
     this.role = OculumThemeFrameRole.panel,
+    this.sheetId = '',
   });
   final Widget child;
   final OculumThemeFrameRole role;
+  final String sheetId;
 
   @override
   Widget build(BuildContext context) {
     final spec = Theme.of(context).extension<OculumGothOrnaments>();
     if (spec == null || spec.themeId.isEmpty || spec.opacity <= 0) return child;
-    return ValueListenableBuilder<OculumThemePresentation>(
-      valueListenable: oculumThemePresentation,
+    return AnimatedBuilder(
+      animation: Listenable.merge([
+        oculumThemePresentation,
+        oculumSheetRelicSelections,
+      ]),
       child: child,
-      builder: (context, presentation, child) {
+      builder: (context, child) {
+        final presentation = oculumThemePresentationForSheet(sheetId);
         final pack = oculumResolveThemeArt(spec, presentation);
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -89,17 +95,22 @@ class OculumThemeSheetFrame extends StatelessWidget {
 }
 
 class OculumThemeSheetBackdrop extends StatelessWidget {
-  const OculumThemeSheetBackdrop({super.key, required this.child});
+  const OculumThemeSheetBackdrop({
+    super.key,
+    required this.child,
+    this.sheetId = '',
+  });
   final Widget child;
+  final String sheetId;
   @override
   Widget build(BuildContext context) => Stack(
     fit: StackFit.passthrough,
     children: [
-      const Positioned.fill(
+      Positioned.fill(
         child: IgnorePointer(
           child: Opacity(
             opacity: .30,
-            child: OculumThemeSheetScene(fillArea: true),
+            child: OculumThemeSheetScene(fillArea: true, sheetId: sheetId),
           ),
         ),
       ),
@@ -111,8 +122,13 @@ class OculumThemeSheetBackdrop extends StatelessWidget {
 /// A backdrop scene adds no layout space. The loop spends most of its time
 /// motionless and rebuilds only a Transform, never the functional sheet.
 class OculumThemeSheetScene extends StatefulWidget {
-  const OculumThemeSheetScene({super.key, this.fillArea = false});
+  const OculumThemeSheetScene({
+    super.key,
+    this.fillArea = false,
+    this.sheetId = '',
+  });
   final bool fillArea;
+  final String sheetId;
   @override
   State<OculumThemeSheetScene> createState() => _OculumThemeSheetSceneState();
 }
@@ -133,6 +149,7 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     oculumThemePresentation.addListener(_updateMotion);
+    oculumSheetRelicSelections.addListener(_updateMotion);
   }
 
   @override
@@ -146,8 +163,9 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
     }
     final spec = Theme.of(context).extension<OculumGothOrnaments>();
     if (spec != null && spec.themeId.isNotEmpty && spec.opacity > 0) {
-      final pack = oculumResolveThemeArt(spec, oculumThemePresentation.value);
-      final variant = oculumThemePresentation.value.variant.name;
+      final presentation = oculumThemePresentationForSheet(widget.sheetId);
+      final pack = oculumResolveThemeArt(spec, presentation);
+      final variant = presentation.variant.name;
       final preloadKey = '${pack.id}:$variant';
       if (preloadKey != preloadedPack) {
         preloadedPack = preloadKey;
@@ -182,7 +200,8 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
         visible &&
         TickerMode.valuesOf(context).enabled &&
         !MediaQuery.disableAnimationsOf(context) &&
-        oculumThemePresentation.value.motion != OculumThemeMotion.disabled;
+        oculumThemePresentationForSheet(widget.sheetId).motion !=
+            OculumThemeMotion.disabled;
     if (enabled && !clock.isAnimating) clock.repeat();
     if (!enabled && clock.isAnimating) clock.stop();
   }
@@ -205,6 +224,7 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
   void dispose() {
     scrollPosition?.removeListener(_checkVisibility);
     oculumThemePresentation.removeListener(_updateMotion);
+    oculumSheetRelicSelections.removeListener(_updateMotion);
     WidgetsBinding.instance.removeObserver(this);
     clock.dispose();
     super.dispose();
@@ -216,19 +236,25 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
     if (spec == null || spec.themeId.isEmpty || spec.opacity <= 0) {
       return const SizedBox(height: 8);
     }
-    return ValueListenableBuilder<OculumThemePresentation>(
-      valueListenable: oculumThemePresentation,
-      builder: (context, presentation, _) {
-        final pack = oculumResolveThemeArt(spec, presentation);
-        final variant = presentation.variant.name;
+    return AnimatedBuilder(
+      animation: Listenable.merge([
+        oculumThemePresentation,
+        oculumSheetRelicSelections,
+      ]),
+      builder: (context, _) {
+        final sheetPresentation = oculumThemePresentationForSheet(
+          widget.sheetId,
+        );
+        final pack = oculumResolveThemeArt(spec, sheetPresentation);
+        final variant = sheetPresentation.variant.name;
         final mobile = MediaQuery.sizeOf(context).width < 600;
         final element = oculumElementForArtPack(pack.id);
         final identity = oculumThemeIdentities[pack.id];
         final animated =
             spec.motion &&
-            presentation.motion != OculumThemeMotion.disabled &&
+            sheetPresentation.motion != OculumThemeMotion.disabled &&
             !MediaQuery.disableAnimationsOf(context);
-        final height = (mobile ? 52.0 : 96.0) * presentation.relicScale;
+        final height = (mobile ? 52.0 : 96.0) * sheetPresentation.relicScale;
         return SizedBox(
           key: ValueKey('theme-sheet-scene-${pack.id}'),
           height: widget.fillArea ? double.infinity : height,
@@ -254,7 +280,7 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
                       AnimatedBuilder(
                         animation: clock,
                         child: Opacity(
-                          opacity: presentation.relicOpacity,
+                          opacity: sheetPresentation.relicOpacity,
                           child: Image.asset(
                             pack.scene(mobile: mobile, variant: variant),
                             // Wide decorative strips must never be enlarged
@@ -273,7 +299,8 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
                               ? 0.0
                               : math.sin((clock.value - .78) / .22 * math.pi);
                           final amount =
-                              presentation.motion == OculumThemeMotion.reduced
+                              sheetPresentation.motion ==
+                                  OculumThemeMotion.reduced
                               ? .5
                               : 1.5;
                           return Transform.translate(
@@ -294,7 +321,7 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
                               motion: identity?.motion,
                               color: spec.accent,
                               reduced:
-                                  presentation.motion ==
+                                  sheetPresentation.motion ==
                                   OculumThemeMotion.reduced,
                             ),
                           ),

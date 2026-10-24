@@ -165,4 +165,59 @@ void main() {
     expect(find.byType(Image), findsNothing);
     expect(find.byIcon(Icons.shield_outlined), findsOneWidget);
   });
+
+  testWidgets('sheet background artwork follows that sheet relic', (
+    tester,
+  ) async {
+    final previousPresentation = oculumThemePresentation.value;
+    final previousSelections = Map<String, String>.of(
+      oculumSheetRelicSelections.value,
+    );
+    addTearDown(() {
+      oculumThemePresentation.value = previousPresentation;
+      oculumSheetRelicSelections.value = previousSelections;
+    });
+    oculumThemePresentation.value = const OculumThemePresentation(
+      artPackId: 'classic_reliquary',
+    );
+    oculumSheetRelicSelections.value = {
+      'sheet-a': 'moon_rot',
+      'sheet-b': 'ember_rite',
+    };
+    final theme = oculumBaseTheme.copyWith(
+      extensions: const [
+        OculumGothOrnaments(
+          family: OculumGothFamily.astral,
+          ink: Colors.white,
+          accent: Colors.amber,
+          opacity: .4,
+          themeId: 'classic_reliquary',
+        ),
+      ],
+    );
+
+    Widget page(String sheetId) => MaterialApp(
+      theme: theme,
+      home: Scaffold(
+        body: OculumThemeSheetBackdrop(
+          sheetId: sheetId,
+          child: const SizedBox(height: 240),
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(page('sheet-a'));
+    await tester.pump();
+    expect(
+      find.byKey(const ValueKey('theme-sheet-scene-moon_rot')),
+      findsOneWidget,
+    );
+    await tester.pumpWidget(page('sheet-b'));
+    await tester.pump();
+    expect(
+      find.byKey(const ValueKey('theme-sheet-scene-ember_rite')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -873,6 +873,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
             height: compact ? 72 : 104,
             child: OculumThemeSheetFrame(
               role: OculumThemeFrameRole.portrait,
+              sheetId: currentSheetScrollId(),
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   border: Border.all(
@@ -987,6 +988,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
       ),
     );
     return OculumThemeSheetBackdrop(
+      sheetId: currentSheetScrollId(),
       child: SingleChildScrollView(
         key: sheetScrollKey('sheet'),
         padding: responsivePagePadding(),
@@ -1036,7 +1038,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                   ],
                 ),
               ),
-            OculumThemeSheetFrame(child: hero),
+            OculumThemeSheetFrame(sheetId: currentSheetScrollId(), child: hero),
             OculumThemeRelicBanner(sheetId: currentSheetScrollId()),
             Align(
               alignment: Alignment.centerRight,
@@ -1392,6 +1394,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                 Expanded(
                   child: OculumThemeSheetFrame(
                     role: OculumThemeFrameRole.statistics,
+                    sheetId: currentSheetScrollId(),
                     child: Material(
                       color: backgroundBottomColor,
                       shape: RoundedRectangleBorder(
