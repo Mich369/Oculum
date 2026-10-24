@@ -312,6 +312,18 @@ void main() {
         );
         for (var form = 0; form < 3; form++) {
           final timer = skill.cooldownPerLivello[form];
+          final selfDestruct = concrete.forms[form].any(
+            (effect) =>
+                effect.type == 'danno' && effect.formula == 'hp_current',
+          );
+          if (selfDestruct) {
+            expect(
+              timer.amount,
+              0,
+              reason: '${monster.id}/$id is consumed on use',
+            );
+            continue;
+          }
           expect(timer.activate(), isTrue);
           expect(
             timer.activate(),

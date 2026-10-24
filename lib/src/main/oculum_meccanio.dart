@@ -115,6 +115,10 @@ List<CharacterSkill> meccanioLoadoutSkills(Map<String, dynamic> loadout) => [
 ];
 
 extension _OculumMeccanio on _OculumHomePageState {
+  bool get isThunderBot =>
+      schedaCorrente >= 0 &&
+      schedaCorrente < schedePersonaggio.length &&
+      schedePersonaggio[schedaCorrente]['monsterBookSourceId'] == 'thunder_bot';
   bool get localMeccanioCombat =>
       realtimeService?.isConnected != true &&
       masterInitiativeTokens.any((token) {
@@ -122,9 +126,11 @@ extension _OculumMeccanio on _OculumHomePageState {
           publicInitiativeSourceTag(token),
         );
         return index >= 0 &&
-            isMeccanioBookId(
-              '${schedePersonaggio[index]['monsterBookSourceId'] ?? ''}',
-            );
+            (isMeccanioBookId(
+                  '${schedePersonaggio[index]['monsterBookSourceId'] ?? ''}',
+                ) ||
+                schedePersonaggio[index]['monsterBookSourceId'] ==
+                    'thunder_bot');
       });
   bool get isMeccanio =>
       schedaCorrente >= 0 &&

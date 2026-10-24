@@ -12,6 +12,7 @@ part 'gold_marble_aberrations.dart';
 part 'elemental_collector.dart';
 part 'concrete_monster_techniques.dart';
 part 'planar_monsters.dart';
+part 'canonical_monster_variants.dart';
 
 bool oculumMonsterBookNameIsDiscovered(Map<String, dynamic>? knowledge) =>
     knowledge?['nameKnown'] == true || knowledge?['pagePurchased'] == true;
@@ -1048,19 +1049,36 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
   ),
   MonsterBookEntry(
     id: 'lupo_infernale_del_ghiaccio',
+    planeIds: ['demoniaco'],
     nameIt: 'Lupo Infernale del Ghiaccio',
     nameEn: 'Infernal Ice Wolf',
     descIt:
-        'Mostro di un inferno fatto insieme di ghiaccio e fiamme. Non ha Skill: con 18+ naturale congela il nemico colpito. Ruolo in scena: predatore rapido da branco.',
-    descEn: 'Infernal ice-and-flame wolf; a natural 18+ freezes its target.',
-    elementId: 'gelo',
+        'Variante del Lupo delle Nevi mutata dal calore demoniaco. Il sottopelo ghiacciato è attraversato da crepe di brace e le impronte fumano sul terreno. Ha abbandonato il soffio gelido: si avvicina con un morso rovente e usa le ceneri del Regno demoniaco per una carica breve, senza colpire più bersagli né ignorare la Difesa.',
+    descEn:
+        'Infernal mutation of the Snow Wolf: an ember bite and a short ash charge replace its frost breath.',
+    elementId: 'demoniaco',
     spriteAssetPath: '',
     isMiniBoss: false,
     isBoss: false,
     isNullFateless: false,
-    stats: {'resilienza': 6, 'volonta': 3, 'materia': 8, 'oculum': 2},
-    skillIds: [],
-    dropIds: ['zanna_ghiacciata'],
+    stats: {
+      'level': 4,
+      'resilienza': 7,
+      'volonta': 4,
+      'materia': 8,
+      'oculum': 2,
+    },
+    weakPointIt:
+        'Le crepe chiare sotto il collo, esposte quando prepara la carica.',
+    skillIds: ['infernal_wolf_ember_bite', 'infernal_wolf_ash_charge'],
+    dropIds: ['zanna_ghiacciata', 'scheggia_brace_lupo'],
+    dropChances: {'zanna_ghiacciata': 25, 'scheggia_brace_lupo': 45},
+    encounterRules: {
+      'authoredCanonical': true,
+      'canonicalVariantOf': 'lupo_delle_nevi',
+      'dispositions': ['ostile'],
+    },
+    damageResistancePresets: {'fuoco': 'resistenza', 'acqua': 'debolezza'},
   ),
   MonsterBookEntry(
     id: 'demonietto_bruciante',
@@ -5521,6 +5539,7 @@ List<MonsterBookEntry> _withMonsterVariants(
   for (final entry in entries) {
     result.add(entry);
     if (entry.id.contains('_variante_') ||
+        entry.encounterRules['authoredCanonical'] == true ||
         entry.id.startsWith(oculumSpineHedgehogId)) {
       continue;
     }

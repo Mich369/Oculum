@@ -231,6 +231,10 @@ CharacterSkill _naturalMonsterSkill(
   ArtSkill source,
 ) {
   final passive = oculumMonsterBookSkillIsPassive(id);
+  final sacrificial = const {
+    'goblin_kamikaze_explosion',
+    'thunder_bot_explosion',
+  }.contains(id);
   final resource = monster.id == 'ogle' || (monster.stats['volonta'] ?? 0) <= 0
       ? 'materia'
       : 'volonta';
@@ -241,14 +245,12 @@ CharacterSkill _naturalMonsterSkill(
         tipo: passive ? 'Passiva mostro' : 'Skill naturale mostro',
         livello:
             '${(monsterBookConcreteTechnique(id)?.requiredLevel ?? 0) + form * 3}',
-        costo: passive || id == 'goblin_kamikaze_explosion'
+        costo: passive || sacrificial
             ? 'Nessun costo'
             : '${monster.id == 'mosca_campana' ? 3 : form + 1}/${monster.id == 'mosca_campana' ? 3 : form + 1} $resource',
         costoStrutturato: OculumSkillCost(
-          resource: passive || id == 'goblin_kamikaze_explosion'
-              ? 'nessuna'
-              : resource,
-          amountExpression: passive || id == 'goblin_kamikaze_explosion'
+          resource: passive || sacrificial ? 'nessuna' : resource,
+          amountExpression: passive || sacrificial
               ? '0'
               : '${monster.id == 'mosca_campana' ? 3 : form + 1}',
         ),
@@ -268,7 +270,7 @@ CharacterSkill _naturalMonsterSkill(
             )
             .replaceAll(
               RegExp(r'\([0-9]+/[0-9]+ Oculum[^)]*\)'),
-              passive
+              passive || sacrificial
                   ? '(nessun costo)'
                   : '(${monster.id == 'mosca_campana' ? 3 : form + 1}/${monster.id == 'mosca_campana' ? 3 : form + 1} $resource)',
             ),
@@ -896,6 +898,27 @@ List<List<OculumStructuredEffect>>? _monsterBookGenericEffects(String id) {
 }
 
 List<List<OculumStructuredEffect>>? _monsterBookBaseEffects(String id) {
+  if (id == 'thunder_bot_explosion') {
+    return List.generate(
+      3,
+      (form) => [
+        OculumStructuredEffect(
+          id: 'thunder_bot_explosion_$form',
+          type: 'danno',
+          elementType: 'fulmine',
+          valueExpression: 'hp_current',
+          recipient: 'nemico',
+          minimumTargets: 1,
+          maximumTargets: 999,
+          damagePerTarget: true,
+          killSource: true,
+          allOpponents: true,
+          narrativeText:
+              'Autodistruzione: Vita attuale + Danni inflitti per ogni avversario, senza limite di bersagli.',
+        ),
+      ],
+    );
+  }
   if (id == 'goblin_kamikaze_explosion') {
     return List.generate(
       3,

@@ -1,6 +1,16 @@
 # Oculum — registro delle regole confermate
 
+## Varianti del Lupo delle Nevi — bilanciamento iniziale del 24 ottobre 2026
+
+- Aggiunta una famiglia coerente collegata alla specie esistente `lupo_di_bruma`: Lupo delle Nevi (Terre di ghiaccio), Lupo Infernale del Ghiaccio (Regno demoniaco), Lupo d’Ombra dell’Oblio (Oblio/Shadow Hell) e Lupo Runico di Postea. Le varianti condividono i progressi di specie del party, ma conservano aspetto, elementi, debolezze, skill, drop e ID distinti; i salvataggi delle voci esistenti non vengono rinominati.
+- Le skill delle nuove forme richiedono dal livello della creatura; le forme II e III richiedono rispettivamente +3 e +6 livelli e pagano Oculum con cooldown. I valori proposti si possono modificare nel Monster Book.
+- Drop: naturale 8+ materiale distintivo della variante (Zanna brinata, Scheggia di brace lupina, Filo ululante d’Oblio, Dente a circuito); naturale 18+ entrambe le scroll delle skill della forma; naturale 20 reliquia arma con una skill collegata, utilizzabile al livello richiesto. Le scroll conservano apprendimento normale. I materiali fondono con equipaggiamento compatibile e aggiungono Danni o Difesa secondo livello/Grado; l’oggetto risultante conserva i requisiti e la skill del pezzo base.
+
 ## Meccanio — conferme successive del 24 ottobre 2026
+
+- Varianti canoniche aggiuntive richieste: ruoli distinti, descrizioni proprie e skill nuove coerenti con il luogo. Sei nuove voci iniziali: Goblin Assassino, Goblin Arciere, Segugio runico Sentinella, Ragno saldatore Recuperatore, Marshmallow e Marshmallow Incenerito. Mantengono gli ID e il legame al capostipite; non generano a loro volta una variante generica ripetuta. Forme, costi, cooldown, statistiche e materiali sono bilanciamenti iniziali modificabili, non ulteriori regole imposte dal manuale.
+- Estensione successiva della famiglia: Lupo delle Nevi nelle Terre di ghiaccio, Lupo Infernale del Ghiaccio nel Regno demoniaco, Lupo d’Ombra in Oblio/Shadow Hell e Lupo Runico a Postea. Le forme discendono dal Lupo delle Nevi e i progressi di uccisione restano unici per specie. Naturalmente 8+ lascia materiale, 18+ le due scroll, 20 una reliquia arma con skill. Forme II/III richiedono +3/+6 livelli; costi, cooldown, abilità e requisiti restano modificabili.
+- Thunder Bot: sfera rotante di Postea, senza Oculum, Art o Difesa. La sola abilità è l'autodistruzione, con un attacco Fulmine contro tutti gli avversari dello schieramento, senza limite di bersagli. Danno base a ciascuno = Vita attuale + Danni inflitti della scheda, non diviso fra i bersagli. Consuma la normale Azione, nessun costo di statistiche; dopo il lancio il bot muore. Non usa la Vita massima e non somma il danno storico dello scontro. Statistiche iniziali proposte modificabili: livello 2, RES2/VOL0/MAT4/OCU0.
 
 - Queste indicazioni prevalgono sulla prima bozza di Meccanio riportata sotto. L'implementazione estesa deve ancora essere completata e verificata prima della distribuzione.
 - Aspetto: robottino su una sola ruota, busto e testa arrotondati, grandi lenti luminose, braccia snodate con pinze; colore variabile per acquisto, da conservare sulla singola creatura.

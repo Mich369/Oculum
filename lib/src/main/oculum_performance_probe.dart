@@ -384,8 +384,17 @@ class OculumPerformanceProbe {
   Future<void> helpAlly() => _state.tiraAiutaCompagno();
   Future<void> retryCombat() =>
       _state.replayOnlineCombatRequests(retryOnly: true);
-  Future<void> planAttack({int minimum = 1, int maximum = 1}) =>
-      _state.planOnlineAttack(minimumTargets: minimum, maximumTargets: maximum);
+  Future<void> planAttack({
+    int minimum = 1,
+    int maximum = 1,
+    int? total,
+    int? natural,
+  }) => _state.planOnlineAttack(
+    minimumTargets: minimum,
+    maximumTargets: maximum,
+    preparedAttackTotal: total,
+    preparedAttackNatural: natural,
+  );
   String gainCoreMastery(String key, int natural, {int faces = 20}) =>
       _state.registraEsperienzaCriticaStat(
         key: key,

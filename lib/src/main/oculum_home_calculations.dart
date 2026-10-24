@@ -1071,7 +1071,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   // Oculum addormentato blocks the whole available pool, including temporary
   // and runtime bonuses. The raw controller value remains intact so waking
   // does not destroy recoveries or saved bonuses.
-  int oculumTotale() => isMeccanio
+  int oculumTotale() => isMeccanio || isThunderBot
       ? 0
       : max(
           0,
@@ -5104,6 +5104,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int difesa() {
+    if (isThunderBot) return 0;
     activateHeroicNurseBuffForCurrentBattle();
     final beforeConditions =
         spineMaterialDefense +

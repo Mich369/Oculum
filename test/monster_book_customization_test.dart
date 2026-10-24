@@ -391,6 +391,11 @@ void main() {
         .where((entry) => !entry.id.contains('_variante_'))
         .toList(growable: false);
     for (final base in bases) {
+      if (base.encounterRules['authoredCanonical'] == true) {
+        // Hand-authored variants have their own parent link and distinct
+        // mechanics; adding a generic fourth form would duplicate them.
+        continue;
+      }
       expect(
         monsterById('${base.id}_variante_errante') ??
             monsterById('${base.id}_variante_corazzata') ??

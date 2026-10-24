@@ -476,6 +476,7 @@ final List<MonsterBookEntry> oculumPlanarMonsterEntries = [
     {},
   ),
   ..._shieldCloudMonsterEntries,
+  ..._canonicalPlanarVariants,
   for (final habitat in _planarSpeciesNames.entries)
     for (var i = 0; i < habitat.value.length; i++)
       _buildPlanarMonster(
@@ -618,6 +619,7 @@ final Map<String, MonsterConcreteTechnique> _planarTechniques = {
       monster.skillIds[slot]: _buildPlanarTechnique(monster, slot),
 };
 MonsterConcreteTechnique? oculumPlanarTechnique(String rawId) =>
+    _canonicalVariantTechniques[rawId] ??
     _extraPlanarTechniques[rawId.replaceFirst(
       RegExp(r'_variante_[a-z]+$'),
       '',

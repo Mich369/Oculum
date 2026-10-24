@@ -112,8 +112,17 @@ Map<String, dynamic> oculumApplyPartyChestOperation(Map previous, Map request) {
 
 int oculumItemTitleDustCost(int itemLevel) => (max(0, itemLevel) + 1) ~/ 2 + 1;
 
-String oculumPartyHuntSpeciesId(String bookId) =>
-    bookId.trim().replaceFirst(RegExp(r'_variante_.*$'), '');
+String oculumPartyHuntSpeciesId(String bookId) {
+  var id = bookId.trim().replaceFirst(RegExp(r'_variante_.*$'), '');
+  final visited = <String>{};
+  while (visited.add(id)) {
+    final parent =
+        '${monsterBookEntryById(id)?.encounterRules['canonicalVariantOf'] ?? ''}';
+    if (parent.isEmpty || visited.contains(parent)) break;
+    id = parent;
+  }
+  return id;
+}
 
 ({Map<String, dynamic> records, int earned}) oculumPartySpeciesRewards(
   Map previous,

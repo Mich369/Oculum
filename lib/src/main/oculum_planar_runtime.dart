@@ -623,6 +623,50 @@ List<InventoryItem>? oculumPlanarNaturalDrops(
       ],
     ];
   }
+  if (id == 'lupo_delle_nevi') {
+    final (materialId, materialName) = switch (monster.id) {
+      'lupo_delle_nevi' => ('zanna_brinata', 'Zanna brinata'),
+      'lupo_infernale_del_ghiaccio' => (
+        'scheggia_brace_lupo',
+        'Scheggia di brace lupina',
+      ),
+      'lupo_ombra_oblio' => ('filo_ululante_oblio', 'Filo ululante d’Oblio'),
+      'lupo_runico_postea' => ('dente_circuito_lupo', 'Dente a circuito'),
+      _ => ('artigli_lupo', 'Artigli di lupo'),
+    };
+    final drops = <InventoryItem>[
+      if (natural >= 8)
+        InventoryItem(
+          nome: materialName,
+          peso: .15,
+          quantita: 1,
+          gradoOggetto: grade,
+          livelloOggetto: level,
+          note:
+              'Materiale da ${monster.nameIt}. In fusione con un equipaggiamento del Monster Book aggiunge +${max(1, level)} Danni all’arma oppure +${max(1, grade)} Difesa all’armatura; richiede il Grado del nemico o il Fabbro. Non assegna statistiche permanenti.',
+          monsterLoot: {
+            'id': '$killId:$materialId',
+            'monsterId': monster.id,
+            'material': true,
+            'weaponBonus': max(1, level),
+            'armorBonus': max(1, grade),
+            'naturalDropRoll': natural,
+          },
+        ),
+      if (natural >= 18)
+        for (final skill in monster.skillIds)
+          oculumPlanarTechniqueScroll(
+            monster,
+            skill,
+            receipt: '$killId:$skill',
+            level: level,
+            grade: grade,
+          ),
+      if (natural == 20)
+        ..._wolfRelicDrop(monster, level: level, grade: grade, killId: killId),
+    ];
+    return drops;
+  }
   if (id == 'topino_avventuroso') {
     return [
       material('Fiaccola', .2),
@@ -662,6 +706,39 @@ List<InventoryItem>? oculumPlanarNaturalDrops(
     ];
   }
   return null;
+}
+
+List<InventoryItem> _wolfRelicDrop(
+  MonsterBookEntry monster, {
+  required int level,
+  required int grade,
+  required String killId,
+}) {
+  final candidates = oculumMonsterEquipmentCatalogue(
+    source: monster,
+    level: level,
+    grade: grade,
+  ).where((item) => item.craftData['itemFamily'] == 'weapon').toList();
+  if (candidates.isEmpty) return const [];
+  final item = InventoryItem.fromJson(candidates.first.toJson());
+  item
+    ..nome = 'Lama del Branco · ${monster.nameIt}'
+    ..note =
+        'Reliquia del Lupo delle Nevi e delle sue varianti. ${item.note} La skill collegata richiede livello $level e conserva costo, forme e cooldown; apprendimento ed equipaggiamento seguono i requisiti normali.'
+    ..monsterLoot = {
+      ...item.monsterLoot,
+      'id': '$killId:lupo-reliquia',
+      'monsterId': monster.id,
+      'rareMonsterEquipment': true,
+      'naturalDropRoll': 20,
+    }
+    ..craftData = {
+      ...item.craftData,
+      'wolfFamily': 'lupo_delle_nevi',
+      'naturalDropRollRequired': 20,
+      'skillLevelRequired': level,
+    };
+  return [item];
 }
 
 extension _OculumPlanarHunts on _OculumHomePageState {

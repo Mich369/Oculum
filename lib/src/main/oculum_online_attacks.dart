@@ -1511,6 +1511,24 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   }) async {
     final robotAttack = pendingMeccanioAttack();
     if (!meccanioMayRelease()) return;
+    if (isThunderBot) {
+      if (hpCorrenti() <= 0) return;
+      final prepared = activeStructuredEffects.any(
+        (e) =>
+            e['type'] == 'pending_target' &&
+            e['effect'] is Map &&
+            '${(e['effect'] as Map)['id']}'.startsWith(
+              'thunder_bot_explosion_',
+            ),
+      );
+      if (!prepared) {
+        applyStructuredEffectsOnActivation(
+          _monsterBookBaseEffects('thunder_bot_explosion')!.first,
+          source: 'Thunder Bot · Autodistruzione a corona',
+          applyFusionBonus: false,
+        );
+      }
+    }
     if (robotAttack.isNotEmpty) {
       initialChoice = '${robotAttack['choice'] ?? 'precisione'}';
       maximumTargets = max(
@@ -1662,6 +1680,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     final sourceSheet = schedePersonaggio[schedaCorrente];
     final sourceMonsterId = '${sourceSheet['monsterBookSourceId'] ?? ''}';
+    final thunderBot = sourceMonsterId == 'thunder_bot';
     final preparedIds = activeStructuredEffects
         .where((e) => e['type'] == 'pending_target' && e['effect'] is Map)
         .map((e) => '${(e['effect'] as Map)['id']}')
@@ -1703,13 +1722,17 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         .map(onlineCombatTokenTag)
         .toList();
     if (allOpponents && explosionTargets.isEmpty) return;
+    if (allOpponents) {
+      minimumTargets = explosionTargets.length;
+      maximumTargets = explosionTargets.length;
+    }
     final plan = allOpponents
         ? OculumAttackPlan(
             explosionTargets.first,
             'vc',
             'Esplosione suicida',
             additionalTargetIds: explosionTargets.skip(1).toList(),
-            element: 'fuoco',
+            element: thunderBot ? 'fulmine' : 'fuoco',
           )
         : await showDialog<OculumAttackPlan>(
             context: context,
@@ -1789,7 +1812,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (!mounted ||
         plan == null ||
         currentSheetScrollId() != origin ||
-        realtimeService?.isConnected != true ||
+        (realtimeService?.isConnected != true && !localMeccanioCombat) ||
         encounter != onlineCombatEncounterId) {
       return;
     }
@@ -2167,7 +2190,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'reason': controlledPlan.reason,
           'attack': total,
           'natural': natural,
-          'damage': robotAttack['kind'] == 'missile'
+          'damage': thunderBot
+              ? oculumThunderBotExplosionDamage(hpCorrenti(), dannoTotale())
+              : robotAttack['kind'] == 'missile'
               ? readIntValue(robotAttack['damage'])
               : robotAttack['kind'] == 'shoulder'
               ? readIntValue(robotAttack['damage']) ~/
@@ -2231,7 +2256,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         sourceSheet['currentHp'] = '0';
         sourceSheet['feriteMorte'] = _OculumHomeDeathRules.deathWoundLimit;
         aggiungiLog(
-          '[ESPLOSIONE SUICIDA] Il Goblin Kamikaze muore dopo aver lanciato l’attacco contro tutti gli avversari.',
+          '[ESPLOSIONE SUICIDA] ${thunderBot ? 'Il Thunder Bot' : 'Il Goblin Kamikaze'} muore dopo aver lanciato l’attacco contro tutti gli avversari.',
         );
         syncCurrentSheetDeathStateToInitiative();
         sendRealtimeHpChanged();
