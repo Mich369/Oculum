@@ -15,13 +15,16 @@ $commit = (& git rev-parse HEAD).Trim()
 if (!$branch -or $LASTEXITCODE -ne 0) { throw 'Serve un branch Git attivo' }
 & git push origin $branch
 if ($LASTEXITCODE -ne 0) { throw 'Push non riuscito' }
-function Start-And-WaitWorkflow([string]$Workflow,[string]$Ref,[string[]]$Inputs) {
-  $start = [DateTimeOffset]::UtcNow.AddSeconds(-2)
+function Start-And-WaitWorkflow([string]$Workflow,[string]$Ref,[string]$ExpectedCommit,[string[]]$Inputs) {
+  $before = (Invoke-Gh @('run','list','--repo',$Repository,'--workflow',$Workflow,'--event','workflow_dispatch','--branch',$Ref,'--limit','10','--json','databaseId') | Out-String) | ConvertFrom-Json
+  $knownRunIds = @($before | ForEach-Object { "$($_.databaseId)" })
   Invoke-Gh (@('workflow','run',$Workflow,'--repo',$Repository,'--ref',$Ref) + $Inputs) | Out-Host
   $run = $null
   for ($attempt=0; $attempt -lt 24; $attempt++) {
-    $runs = (Invoke-Gh @('run','list','--repo',$Repository,'--workflow',$Workflow,'--event','workflow_dispatch','--branch',$Ref,'--limit','10','--json','databaseId,createdAt,headSha') | Out-String) | ConvertFrom-Json
-    $run = @($runs | Where-Object { [DateTimeOffset]::Parse($_.createdAt) -ge $start } | Sort-Object createdAt -Descending) | Select-Object -First 1
+    $runs = (Invoke-Gh @('run','list','--repo',$Repository,'--workflow',$Workflow,'--event','workflow_dispatch','--branch',$Ref,'--limit','10','--json','databaseId,headSha') | Out-String) | ConvertFrom-Json
+    $run = @($runs | Where-Object {
+      "$($_.databaseId)" -notin $knownRunIds -and $_.headSha -eq $ExpectedCommit
+    }) | Select-Object -First 1
     if ($null -ne $run) { break }
     Start-Sleep -Seconds 5
   }
@@ -30,7 +33,7 @@ function Start-And-WaitWorkflow([string]$Workflow,[string]$Ref,[string[]]$Inputs
   Invoke-Gh @('run','watch',"$($run.databaseId)",'--repo',$Repository,'--exit-status') | Out-Host
   return $run
 }
-$build = Start-And-WaitWorkflow 'build_distribution.yml' $branch @()
+$build = Start-And-WaitWorkflow 'build_distribution.yml' $branch $commit @()
 if ($build.headSha -ne $commit) { throw 'La build non corrisponde al commit richiesto' }
 Write-Host 'La pubblicazione parte automaticamente soltanto dopo la build riuscita. Attendo il catalogo pubblico...'
 $matching = $null
