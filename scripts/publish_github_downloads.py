@@ -115,16 +115,16 @@ def read_catalog(body):
 
 
 def notes(catalog):
-    lines = ["# Oculum â€” download pubblici", "",
+    lines = ["# Oculum — download pubblici", "",
              "Artifact completi delle ultime build riuscite, scaricabili senza account.",
              "Ogni gruppo indica il commit verificato. I file ZIP conservano gli artifact originali.", ""]
     for item in sorted(catalog.values(), key=lambda item: item["workflow"]):
-        lines += [f"## {item['workflow']}", "",
-                  f"Commit `{item['commit'][:7]}` Â· [Build verificata]({item['runUrl']})", ""]
+        lines += [f"## {item.get('runName', item['workflow'])}", "",
+                  f"Commit `{item['commit'][:7]}` · [Build verificata]({item['runUrl']})", ""]
         for artifact in item["artifacts"]:
-            lines.append(f"- [{artifact['name']}]({artifact['url']}) â€” {artifact['bytes'] / 1024 ** 2:.1f} MB")
+            lines.append(f"- [{artifact['name']}]({artifact['url']}) — {artifact['bytes'] / 1024 ** 2:.1f} MB")
         if item.get("runId"):
-            lines += ["", f"[Archivio completo della build](https://github.com/{REPO}/releases/tag/oculum-build-{item['runId']}) â€” include anche Web, iOS non firmato e catture di verifica."]
+            lines += ["", f"[Archivio completo della build](https://github.com/{REPO}/releases/tag/oculum-build-{item['runId']}) — include anche Web, iOS non firmato e catture di verifica."]
         lines.append("")
     lines.append(MARKER + json.dumps(catalog, ensure_ascii=True, separators=(",", ":")) + " -->")
     return "\n".join(lines)
@@ -202,7 +202,7 @@ def publish(run_id):
         root = Path(directory)
         if not release(tag):
             gh("release", "create", tag, "--repo", REPO, "--target", run["head_sha"],
-               "--title", f"{run['name']} â€” {run['head_sha'][:7]}", "--prerelease",
+               "--title", f"{run['name']} — {run['head_sha'][:7]}", "--prerelease",
                "--latest=false", "--notes", f"Verified build: {run['html_url']}")
         entries = []
         for artifact in artifacts:
@@ -224,7 +224,8 @@ def publish(run_id):
             print("Archived verified build without rolling back the public channel")
             return
         catalog[str(workflow_id)] = {
-            "workflow": run["name"], "runId": run["id"], "commit": run["head_sha"],
+            "workflow": workflow["name"], "runName": run["name"],
+            "runId": run["id"], "commit": run["head_sha"],
             "runUrl": run["html_url"],
             "artifacts": entries,
         }
@@ -234,7 +235,7 @@ def publish(run_id):
             gh("release", "edit", CHANNEL, "--repo", REPO, "--notes-file", str(note_file))
         else:
             gh("release", "create", CHANNEL, "--repo", REPO, "--target", run["head_sha"],
-               "--title", "Oculum â€” download pubblici", "--notes-file", str(note_file),
+               "--title", "Oculum — download pubblici", "--notes-file", str(note_file),
                "--latest=false")
     print(f"Published {len(entries)} verified public artifacts for run {run_id}")
 

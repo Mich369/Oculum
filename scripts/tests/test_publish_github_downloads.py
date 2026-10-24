@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 import unittest
+import hashlib
 from unittest.mock import patch
 from io import BytesIO
 
@@ -10,6 +11,50 @@ spec.loader.exec_module(publisher)
 
 
 class DownloadPublicationTests(unittest.TestCase):
+    def test_published_catalog_preserves_updater_identity_with_dynamic_run_name(self):
+        run = dict(id=42, workflow_id=7, name="Build distribution main @ " + "a" * 40,
+                   conclusion="success", status="completed", head_branch="main",
+                   head_sha="a" * 40, html_url="https://github.com/Mich369/Oculum/actions/runs/42",
+                   repository={"full_name": publisher.REPO},
+                   head_repository={"full_name": publisher.REPO})
+        workflow = dict(name="Build distribution", path=".github/workflows/build_distribution.yml")
+        payload = b"PK\x03\x04"
+        artifacts = [dict(name=name, id=index, expired=False, size_in_bytes=len(payload),
+                          digest="sha256:" + hashlib.sha256(payload).hexdigest())
+                     for index, name in enumerate(publisher.PUBLIC_ARTIFACTS, start=1)]
+        published = []
+
+        def api(path):
+            if path == "actions/runs/42":
+                return run
+            if path == "actions/workflows/7":
+                return workflow
+            if path.startswith("actions/workflows/7/runs?"):
+                return {"workflow_runs": [run]}
+            if path.startswith("actions/runs/42/artifacts?"):
+                return {"artifacts": artifacts}
+            self.fail("Unexpected API request: " + path)
+
+        def gh(*args, **kwargs):
+            if args[0] == "api":
+                kwargs["stdout"].write(payload)
+            if "--notes-file" in args:
+                published.append(Path(args[args.index("--notes-file") + 1]).read_text(encoding="utf-8"))
+
+        with patch.object(publisher, "api", side_effect=api), \
+                patch.object(publisher, "gh", side_effect=gh), \
+                patch.object(publisher, "release", return_value=None), \
+                patch.object(publisher, "verify_anonymous_download"):
+            publisher.publish("42")
+        self.assertEqual(len(published), 1)
+        entry = publisher.read_catalog(published[0])["7"]
+        self.assertEqual(entry["workflow"], "Build distribution")
+        self.assertEqual(entry["runName"], run["name"])
+        self.assertIn("## " + run["name"], published[0])
+        self.assertIn("Oculum — download pubblici", published[0])
+        self.assertNotIn("â€", published[0])
+        self.assertNotIn("Â", published[0])
+
     def test_only_successful_trusted_repository_builds(self):
         run = dict(conclusion="success", status="completed", head_branch="main",
                    name="Build distribution main @ abc123", head_sha="a" * 40,
