@@ -137,6 +137,60 @@ jobs:
           retention-days: 30
 
   # â”€â”€ macOS (unsigned) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  package-windows-folders:
+    needs: build-windows
+    name: Package Windows folders
+    runs-on: windows-latest
+    steps:
+      - name: Download normal Windows package
+        uses: actions/download-artifact@v7
+        with:
+          name: Oculum-Windows
+          path: build/downloads/windows
+
+      - name: Download Windows Test package
+        uses: actions/download-artifact@v7
+        with:
+          name: Oculum-Test-Windows
+          path: build/downloads/windows-test
+
+      - name: Restore unpacked Windows folders
+        shell: pwsh
+        run: |
+          $normalArchive = 'build/downloads/windows/Oculum-Windows.zip'
+          $testArchive = 'build/downloads/windows-test/Oculum-Test-Windows.zip'
+          if (!(Test-Path -LiteralPath $normalArchive -PathType Leaf)) {
+            throw 'The normal Windows ZIP is missing from its successful build artifact.'
+          }
+          if (!(Test-Path -LiteralPath $testArchive -PathType Leaf)) {
+            throw 'The Windows Test ZIP is missing from its successful build artifact.'
+          }
+          $normalRoot = 'build/distribution/windows-folders/Windows'
+          $testRoot = 'build/distribution/windows-folders/Windows Test'
+          New-Item -ItemType Directory -Force -Path $normalRoot, $testRoot | Out-Null
+          Expand-Archive -LiteralPath $normalArchive -DestinationPath $normalRoot -Force
+          Expand-Archive -LiteralPath $testArchive -DestinationPath $testRoot -Force
+          foreach ($required in @(
+            "$normalRoot/oculum.exe",
+            "$normalRoot/flutter_windows.dll",
+            "$normalRoot/data/app.so",
+            "$testRoot/Oculum-Test.exe",
+            "$testRoot/flutter_windows.dll",
+            "$testRoot/data/app.so"
+          )) {
+            if (!(Test-Path -LiteralPath $required -PathType Leaf)) {
+              throw "Unpacked Windows artifact is missing: $required"
+            }
+          }
+
+      - name: Upload unpacked Windows folders
+        uses: actions/upload-artifact@v6
+        with:
+          name: Oculum-Windows-Folders
+          path: build/distribution/windows-folders/
+          if-no-files-found: error
+          retention-days: 30
+
   build-macos:
     needs: validate
     name: Build macOS
