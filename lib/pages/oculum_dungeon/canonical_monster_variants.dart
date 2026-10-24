@@ -84,6 +84,87 @@ final _canonicalPlanarVariants = <MonsterBookEntry>[
     'arco_radice_goblin',
   ),
   _canonicalCreature(
+    'lupo_base',
+    'Lupo',
+    '',
+    ['mezzano', 'sotterraneo'],
+    'fisico',
+    [5, 3, 5, 1],
+    1,
+    'Lupo comune dal manto bruno-grigio, taglia media e occhi ambrati. Caccia in coppia: un esemplare tiene occupata la preda mentre l’altro cerca il fianco. Non ha gelo, ombra o poteri soprannaturali; si ritira se resta solo e ferito.',
+    'Il fianco destro, meno protetto quando gira per seguire il branco.',
+    ['common_wolf_bite', 'common_wolf_flank'],
+    'pelliccia_lupo_comune',
+  ),
+  _canonicalCreature(
+    'coboldo_minatore',
+    'Coboldo Minatore',
+    'kobold_base',
+    ['sotterraneo', 'sotterraneo_maggiore'],
+    'roccia',
+    [3, 3, 6, 1],
+    2,
+    'Coboldo robusto con casco di cuoio, lanterna a cristallo e scalpello di pietra. Scava passaggi stretti e spinge detriti per interrompere una linea di tiro; non crea crolli letali né compare alle spalle senza un passaggio.',
+    'La cinghia della lanterna, che lascia scoperto il fianco quando scava.',
+    ['kobold_quarry_pick', 'kobold_shale_cover'],
+    'scheggia_di_scavo',
+  ),
+  _canonicalCreature(
+    'coboldo_runico_postea',
+    'Coboldo Runico di Postea',
+    'kobold_base',
+    ['postea'],
+    'fulmine',
+    [3, 4, 6, 1],
+    3,
+    'Piccolo coboldo artificiale con grembiule di rame, occhiali saldati e tre rune di Fulmine incise sullo scalpello. Alimenta un singolo colpo elettrico oppure chiude le rune in una paratia personale; non è un Thunder Bot e non si autodistrugge.',
+    'La runa di ritorno sul dorso dello scalpello: resta scoperta mentre lo carica.',
+    ['kobold_postea_spark', 'kobold_postea_plate'],
+    'runa_scheggiata_coboldo',
+  ),
+  _canonicalCreature(
+    'gnoll_delle_nevi',
+    'Gnoll delle Nevi',
+    'gnoll_base',
+    ['terre_di_ghiaccio'],
+    'ghiaccio',
+    [7, 6, 7, 2],
+    4,
+    'Iena umanoide dal pelo bianco sporco, con trecce di tendini e gambali imbottiti. Segue il sangue sulle piste gelate e usa una falce corta per costringere la preda a scegliere tra arretrare o esporsi. Il freddo non lo rende immune al Gelo.',
+    'La zampa posteriore fasciata, che cede quando pianta la falce.',
+    ['gnoll_snow_hook', 'gnoll_snow_howl'],
+    'falce_dente_di_brina',
+    resistances: {'gelo': 'resistenza', 'fuoco': 'debolezza'},
+  ),
+  _canonicalCreature(
+    'gnoll_diabolico',
+    'Gnoll Diabolico',
+    'gnoll_base',
+    ['diabolico'],
+    'diabolico',
+    [8, 7, 7, 3],
+    6,
+    'Predone dalla criniera annerita e da placche di ferro incise con sigilli diabolici. Porta una lancia corta e attacca in modo disciplinato, poi usa una spinta di brace per aprire distanza. Le rune resistono al Demoniaco ma non annullano gli altri elementi.',
+    'Il sigillo spezzato sotto la clavicola, visibile quando solleva la lancia.',
+    ['gnoll_diabolic_lance', 'gnoll_diabolic_step'],
+    'sigillo_diabolico_gnoll',
+    resistances: {'demoniaco': 'resistenza', 'acqua': 'debolezza'},
+  ),
+  _canonicalCreature(
+    'goblin_incendiario',
+    'Goblin Incendiario',
+    'goblin_base',
+    ['demoniaco', 'mezzano'],
+    'fuoco',
+    [3, 5, 6, 1],
+    3,
+    'Goblin con maschera di latta e fiaschette di pece legate alla cintura. Lancia una sola ampolla alla volta e arretra dietro il gruppo; la pece può lasciare Bruciatura lieve dopo un colpo riuscito, ma non esplode a catena.',
+    'La fiaschetta chiara sul fianco, priva di protezione quando prende la mira.',
+    ['goblin_pitch_flask', 'goblin_smoke_roll'],
+    'ampolla_di_pece_goblin',
+    resistances: {'fuoco': 'resistenza', 'acqua': 'debolezza'},
+  ),
+  _canonicalCreature(
     'segugio_runico_sentinella',
     'Segugio runico Sentinella',
     'habitat_postea_segugio_dei_circuiti_runici',
@@ -138,7 +219,250 @@ final _canonicalPlanarVariants = <MonsterBookEntry>[
     'crosta_zucchero_bruciato',
     resistances: {'fuoco': 'resistenza', 'acqua': 'debolezza'},
   ),
+  ..._canonicalBasicCreatures,
 ];
+
+final _canonicalBasicGroups = <_CanonicalBasicGroup>[
+  _CanonicalBasicGroup(
+    'mezzano',
+    'mezzano',
+    'fisico',
+    'creature dei sentieri e dei borghi',
+    [
+      'Cervo di Brumalba',
+      'Volpe dei Rovi',
+      'Corvo Campanaro',
+      'Rospo Vellutato',
+      'Talpa delle Lanterne',
+      'Lepre dei Cardini',
+      'Faina di Seta',
+      'Cinghiale Muschioso',
+      'Lucertola d’Ambra',
+      'Civetta dei Calamai',
+    ],
+  ),
+  _CanonicalBasicGroup(
+    'sotterraneo',
+    'sotterraneo',
+    'roccia',
+    'bestie adattate a gallerie, crepe e caverne',
+    [
+      'Granchio di Basalto',
+      'Pipistrello Risonante',
+      'Scarabeo Ferrigno',
+      'Serpe delle Fessure',
+      'Talpa d’Ossidiana',
+      'Ragno Campanile',
+      'Millepiedi di Quarzo',
+      'Rospo delle Caverne',
+      'Falena di Polvere',
+      'Lucertola Scavatrice',
+    ],
+  ),
+  _CanonicalBasicGroup(
+    'ghiaccio',
+    'terre_di_ghiaccio',
+    'ghiaccio',
+    'predatori e piccoli erbivori della brina',
+    [
+      'Lince della Brina',
+      'Volpe dei Cristalli',
+      'Lepre del Crepaccio',
+      'Cervo dal Fiato Bianco',
+      'Gufo di Neve Blu',
+      'Foca delle Lastre',
+      'Marmotta del Vento Freddo',
+      'Falena di Ghiaccio',
+      'Corvo delle Valanghe',
+      'Cane dei Ghiacci',
+    ],
+  ),
+  _CanonicalBasicGroup(
+    'nuvole',
+    'nuvole_rocciose',
+    'fulmine',
+    'creature sospese fra nubi, pietra e correnti elettriche',
+    [
+      'Stambecco delle Nubi',
+      'Serpe del Tuono Quieto',
+      'Rondone di Granito',
+      'Granchio del Fulmine',
+      'Medusa dei Cumulonembi',
+      'Rana delle Correnti',
+      'Ariete del Vento Alto',
+      'Falena del Temporale',
+      'Lucertola dei Pilastri',
+      'Cervo della Nuvola Rossa',
+    ],
+  ),
+  _CanonicalBasicGroup(
+    'affogato',
+    'affogato',
+    'acqua',
+    'fauna che vive nelle correnti del Regno Affogato',
+    [
+      'Anguilla delle Campane',
+      'Granchio Perlatore',
+      'Razza delle Rovine',
+      'Carpa Lanterna',
+      'Polpo delle Chiavi',
+      'Cavalluccio Corazzato',
+      'Sogliola degli Abissi',
+      'Medusa del Vetro Blu',
+      'Delfino delle Correnti Lente',
+      'Squaletto delle Anfore',
+    ],
+  ),
+  _CanonicalBasicGroup(
+    'foresta',
+    'foresta_elementale',
+    'natura',
+    'fauna elementale della foresta primordiale',
+    [
+      'Cervo di Linfa Verde',
+      'Riccio di Ambra Viva',
+      'Volpe delle Radici',
+      'Tasso Muschiofermo',
+      'Serpe dei Fiori Notturni',
+      'Coccinella di Giada',
+      'Rana dei Semi Dorati',
+      'Corvo di Corteccia',
+      'Lepre dei Germogli',
+      'Falena dei Sussurri',
+    ],
+  ),
+  _CanonicalBasicGroup(
+    'postea',
+    'postea',
+    'fulmine',
+    'piccoli automi runici costruiti per lavori ordinari',
+    [
+      'Rondella Saltapozza',
+      'Grillo a Molla',
+      'Talpa Trivella',
+      'Gecko di Rame',
+      'Civetta a Molla',
+      'Scarabeo Recuperatore',
+      'Bombo Voltaggio',
+      'Geco delle Rune',
+      'Ragnetto Portalume',
+      'Falena di Circuito',
+    ],
+  ),
+  _CanonicalBasicGroup(
+    'caramella',
+    'caramella',
+    'zucchero',
+    'creature dolci, elastiche e poco più robuste di quelle del Regno Mezzano',
+    [
+      'Lepre di Zucchero Filato',
+      'Riccio di Caramello',
+      'Volpe alla Cannella',
+      'Coccinella di Gelatina',
+      'Rospo Marshmallow',
+      'Cervo di Biscotto',
+      'Falena alla Menta',
+      'Granchio di Cioccolato',
+      'Corvo di Liquirizia',
+      'Lumaca di Miele',
+    ],
+  ),
+];
+
+class _CanonicalBasicGroup {
+  const _CanonicalBasicGroup(
+    this.id,
+    this.plane,
+    this.element,
+    this.habitat,
+    this.names,
+  );
+  final String id, plane, element, habitat;
+  final List<String> names;
+}
+
+const _canonicalBasicAttacks = [
+  'Morso del margine',
+  'Balzo del sentiero',
+  'Colpo della cresta',
+  'Dardo del richiamo',
+  'Scatto del sottobosco',
+  'Artiglio della soglia',
+  'Spinta della corrente',
+  'Becco del varco',
+  'Frustata della coda',
+  'Urto della placca',
+];
+const _canonicalBasicGuards = [
+  'Riparo delle zampe',
+  'Piume a ventaglio',
+  'Guscio raccolto',
+  'Passo a spirale',
+  'Velo del fianco',
+  'Arretramento prudente',
+  'Paratia di detriti',
+  'Sbilanciamento rapido',
+  'Chiusura delle placche',
+  'Scarto del richiamo',
+];
+
+final _canonicalBasicCreatures = [
+  for (final group in _canonicalBasicGroups)
+    for (var i = 0; i < group.names.length; i++)
+      _canonicalBasicCreature(group, i),
+];
+
+final oculumCanonicalBasicTechniqueIds = <String>{
+  for (final group in _canonicalBasicGroups)
+    for (var i = 0; i < group.names.length; i++) ...[
+      'base_${group.id}_${(i + 1).toString().padLeft(2, '0')}_colpo',
+      'base_${group.id}_${(i + 1).toString().padLeft(2, '0')}_riparo',
+    ],
+};
+
+MonsterBookEntry _canonicalBasicCreature(_CanonicalBasicGroup group, int i) {
+  final id = 'base_${group.id}_${(i + 1).toString().padLeft(2, '0')}';
+  final name = group.names[i];
+  final anatomy = const [
+    'una cresta di pelo chiaro che si rizza quando percepisce pericolo',
+    'due membrane screziate che vibrano al minimo rumore',
+    'placche opache attraversate da sottili linee naturali',
+    'un collare di filamenti luminosi che cambia intensità',
+    'zampe corte e robuste con dita adatte a stringere il terreno',
+    'una coda lunga che usa per bilanciarsi e comunicare',
+    'una corazza leggera con una striscia di colore riconoscibile',
+    'antenne sensibili che si piegano quando cambia la pressione',
+    'occhi chiari e grandi, capaci di seguire movimenti rapidi',
+    'un piccolo organo sonoro che emette richiami distinti',
+  ][i];
+  final weakPoints = const [
+    'il lato del collo, scoperto quando si volta verso un rumore',
+    'le giunture anteriori, meno protette durante uno scatto',
+    'la membrana sotto l’arto destro, visibile quando si solleva',
+    'il dorso basso, esposto quando si accuccia per difendersi',
+    'la sacca luminosa sul fianco, priva di corazza',
+    'il piede posteriore sinistro, che cede quando cambia direzione',
+    'la placca centrale, più sottile delle altre',
+    'le antenne, che perde di vista quando vengono ostacolate',
+    'la gola, scoperta nell’istante in cui emette il suo richiamo',
+    'la coda alla base, poco protetta e necessaria per l’equilibrio',
+  ][i];
+  final stats = [2 + i % 3, 1 + (i + 1) % 3, 2 + (i * 2) % 4, i % 3];
+  return _canonicalCreature(
+    id,
+    name,
+    '',
+    [group.plane],
+    group.element,
+    stats,
+    i % 4,
+    '$name è una creatura comune del piano ${group.plane}, ${group.habitat}. Presenta $anatomy. Si muove con cautela, difende il proprio territorio e usa un solo attacco alla volta; quando è ferita cerca copertura invece di inseguire il party. Non possiede immunità automatiche.',
+    'Punto debole: $weakPoints.',
+    ['${id}_colpo', '${id}_riparo'],
+    '${id}_materiale',
+    peaceful: i % 4 == 0,
+  );
+}
 
 MonsterBookEntry _canonicalCreature(
   String id,
@@ -224,6 +548,82 @@ final _canonicalVariantTechniques = <String, MonsterConcreteTechnique>{
   'canonical_archer_retreat': _canonicalProtection(
     'Passo dietro il riparo',
     'Arretra con l’arco basso e prepara la difesa per un turno. Non concede un secondo attacco.',
+    'difesa',
+    [2, 4, 6],
+  ),
+  'common_wolf_bite': _canonicalAttack(
+    'Morso del branco',
+    'Il Lupo raggiunge un solo bersaglio e tenta un morso. Il colpo usa il tiro e la difesa normali; non infligge danni aggiuntivi automatici.',
+    'fisico',
+    [4, 7, 10],
+  ),
+  'common_wolf_flank': _canonicalProtection(
+    'Passo laterale',
+    'Il Lupo cambia lato con un alleato vicino e ottiene un piccolo bonus di Difesa per un turno; non genera un attacco gratuito.',
+    'difesa',
+    [2, 3, 4],
+  ),
+  'kobold_quarry_pick': _canonicalAttack(
+    'Piccozza da cava',
+    'Il Coboldo Minatore colpisce un solo bersaglio con la piccozza di pietra. Le forme superiori aumentano il danno, senza applicare condizioni automatiche.',
+    'contundente',
+    [5, 9, 13],
+  ),
+  'kobold_shale_cover': _canonicalProtection(
+    'Riparo di scisto',
+    'Solleva una lastra bassa e ottiene Scudo personale temporaneo. La lastra non protegge gli alleati e non blocca automaticamente gli attacchi.',
+    'scudo',
+    [5, 8, 12],
+  ),
+  'kobold_postea_spark': _canonicalAttack(
+    'Scintilla di scalpello',
+    'La runa sullo scalpello scarica Fulmine contro un solo bersaglio con il normale tiro di attacco.',
+    'fulmine',
+    [5, 9, 14],
+  ),
+  'kobold_postea_plate': _canonicalProtection(
+    'Piastra a rune chiuse',
+    'Ruota lo scalpello e forma una piccola paratia di Scudo personale, senza riflettere danni.',
+    'scudo',
+    [5, 9, 13],
+  ),
+  'gnoll_snow_hook': _canonicalAttack(
+    'Falce sul ghiaccio',
+    'Tenta un colpo di falce contro un solo bersaglio. Le forme II–III applicano Rallentato per un turno solo se il colpo riesce.',
+    'ghiaccio',
+    [7, 12, 17],
+    chilled: true,
+  ),
+  'gnoll_snow_howl': _canonicalProtection(
+    'Fiato da pista',
+    'Il Gnoll inspira e si assesta sulla neve, ottenendo un piccolo bonus di Difesa per un turno; il richiamo non controlla il party.',
+    'difesa',
+    [3, 5, 7],
+  ),
+  'gnoll_diabolic_lance': _canonicalAttack(
+    'Affondo del sigillo',
+    'Tenta un affondo di lancia diabolica contro un bersaglio. Non ignora Difesa né applica condizioni automaticamente.',
+    'diabolico',
+    [9, 15, 21],
+    requiredLevel: 6,
+  ),
+  'gnoll_diabolic_step': _canonicalProtection(
+    'Passo della brace',
+    'Una breve spinta di brace gli permette di riposizionarsi e ottenere Difesa temporanea, senza danno ad area.',
+    'difesa',
+    [4, 7, 10],
+    requiredLevel: 6,
+  ),
+  'goblin_pitch_flask': _canonicalAttack(
+    'Ampolla di pece',
+    'Lancia una sola ampolla contro il bersaglio. Le forme II–III applicano Bruciatura lieve per un turno dopo un colpo riuscito.',
+    'fuoco',
+    [5, 9, 13],
+    burning: true,
+  ),
+  'goblin_smoke_roll': _canonicalProtection(
+    'Rotolata nel fumo',
+    'Sfrutta il fumo della fiaschetta per arretrare e ottenere un piccolo bonus di Difesa per un turno; non concede invisibilità.',
     'difesa',
     [2, 4, 6],
   ),
@@ -356,6 +756,7 @@ final _canonicalVariantTechniques = <String, MonsterConcreteTechnique>{
     [7, 12, 18],
     requiredLevel: 4,
   ),
+  ..._canonicalBasicTechniques,
 };
 
 int oculumThunderBotExplosionDamage(int currentHp, int damage) =>
@@ -403,6 +804,7 @@ MonsterConcreteTechnique _canonicalAttack(
       ],
   ],
   level: requiredLevel,
+  costResource: 'volonta',
   minimums: [1, 2, 3],
   maximums: [1, 2, 3],
   cd: [2, 2, 3],
@@ -433,4 +835,54 @@ MonsterConcreteTechnique _canonicalProtection(
   maximums: [1, 2, 3],
   cd: [2, 3, 3],
   level: requiredLevel,
+  costResource: 'volonta',
 );
+
+final _canonicalBasicTechniques = <String, MonsterConcreteTechnique>{
+  for (final group in _canonicalBasicGroups)
+    for (var i = 0; i < group.names.length; i++) ...{
+      'base_${group.id}_${(i + 1).toString().padLeft(2, '0')}_colpo': _planarMove(
+        '${group.names[i]}: ${_canonicalBasicAttacks[i]}',
+        '${group.names[i]} usa ${_canonicalBasicAttacks[i].toLowerCase()} contro un solo bersaglio. Il colpo usa la difesa normale; le forme superiori aggiungono solo il costo scelto ai danni, senza ignorare Scudi.',
+        group.element,
+        'danno',
+        [
+          for (var form = 0; form < 3; form++)
+            [
+              MonsterTechniqueEffect(
+                'danno',
+                '${3 + i % 4 + form * 2}+oculum_spent',
+                mode: 'prossima_azione',
+                duration: '',
+              ),
+            ],
+        ],
+        minimums: [1, 2, 3],
+        maximums: [1, 2, 3],
+        cd: [2, 2, 3],
+        level: i ~/ 4,
+        costResource: 'volonta',
+      ),
+      'base_${group.id}_${(i + 1).toString().padLeft(2, '0')}_riparo': _planarMove(
+        '${group.names[i]}: ${_canonicalBasicGuards[i]}',
+        '${group.names[i]} assume una postura difensiva coerente con il proprio corpo e ottiene Difesa personale temporanea. Non protegge automaticamente gli alleati e non concede contrattacchi.',
+        group.element,
+        'difesa',
+        [
+          for (var form = 0; form < 3; form++)
+            [
+              MonsterTechniqueEffect(
+                'difesa',
+                '${2 + i % 3 + form}+oculum_spent',
+                duration: '1',
+              ),
+            ],
+        ],
+        minimums: [1, 2, 3],
+        maximums: [1, 2, 3],
+        cd: [2, 3, 3],
+        level: i ~/ 4,
+        costResource: 'volonta',
+      ),
+    },
+};

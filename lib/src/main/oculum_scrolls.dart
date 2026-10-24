@@ -443,16 +443,16 @@ final List<OculumTechniqueScrollProfile> oculumTechniqueScrolls = () {
     'richiamo dei piccoli',
   };
   for (final monster in defaultMonsterBookEntries.where((m) => !m.isNpc)) {
-    final art = oculumMonsterBookArt(monster);
-    for (final (index, skill) in art.skills.indexed) {
+    final skills = oculumMonsterBookSkills(monster);
+    final ids = monsterBookUsableSkillIds(monster);
+    for (final (index, skill) in skills.indexed) {
       final name = skill.nome.trim();
-      if (skill.tipoPerLivello(1).toLowerCase().contains('passiv') ||
+      if (skill.tipo.toLowerCase().contains('passiv') ||
           name.isEmpty ||
           names.contains(oculumNormalizeText(name))) {
         continue;
       }
-      final effects = skill
-          .effettiEvoluzione(1)
+      final effects = skill.forme.first.effettiStrutturati
           .where(
             (effect) =>
                 effect.enabled &&
@@ -474,7 +474,7 @@ final List<OculumTechniqueScrollProfile> oculumTechniqueScrolls = () {
       names.add(oculumNormalizeText(name));
       result.add(
         OculumTechniqueScrollProfile(
-          '${monster.id}_$index',
+          '${monster.id}_${index < ids.length ? ids[index] : index}',
           name,
           monster.nameIt,
           monster.elementId,
@@ -484,7 +484,7 @@ final List<OculumTechniqueScrollProfile> oculumTechniqueScrolls = () {
     }
   }
   return List<OculumTechniqueScrollProfile>.unmodifiable([
-    ...result.take(124),
+    ...result,
     ...realmProfiles,
   ]);
 }();

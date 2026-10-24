@@ -11,11 +11,12 @@ int oculumGatherOutputGrams({
   required int baseGrams,
   required int resourceGrade,
   int? collectorGrade,
+  bool chaosIdentity = false,
 }) {
   final base = max(0, baseGrams);
+  if (chaosIdentity) return (base * 1.8).ceil();
   final eligible =
-      collectorGrade != null &&
-      max(0, resourceGrade) <= max(0, collectorGrade);
+      collectorGrade != null && max(0, resourceGrade) <= max(0, collectorGrade);
   return base * (eligible ? 2 : 1);
 }
 
@@ -254,12 +255,21 @@ extension _OculumHomeRecipes on _OculumHomePageState {
       baseGrams: requested,
       resourceGrade: resourceGrade,
       collectorGrade: collectorGrade,
+      chaosIdentity: identityIsChaos,
     );
     setState(() {
       presaMaterialiGrammi -= requested;
       risultato = t(
-        'Materiali di Grado $resourceGrade raccolti: ${formatoPesoMateriali(collected)}${collected > requested ? ' (Raccoglitore ×2)' : ''}. Presa consumata: ${formatoPesoMateriali(requested)}; rimasta: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
-        'Grade $resourceGrade materials collected: ${formatoPesoMateriali(collected)}${collected > requested ? ' (Collector ×2)' : ''}. Capacity spent: ${formatoPesoMateriali(requested)}; remaining: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+        'Materiali di Grado $resourceGrade raccolti: ${formatoPesoMateriali(collected)}${collected > requested
+            ? identityIsChaos
+                  ? ' (Chaos ×1,8)'
+                  : ' (Raccoglitore ×2)'
+            : ''}. Presa consumata: ${formatoPesoMateriali(requested)}; rimasta: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+        'Grade $resourceGrade materials collected: ${formatoPesoMateriali(collected)}${collected > requested
+            ? identityIsChaos
+                  ? ' (Chaos ×1.8)'
+                  : ' (Collector ×2)'
+            : ''}. Capacity spent: ${formatoPesoMateriali(requested)}; remaining: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
       );
       aggiungiLog(risultato);
     });
@@ -360,6 +370,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
       baseGrams: effortTotal,
       resourceGrade: resourceGrade,
       collectorGrade: collectorGrade,
+      chaosIdentity: identityIsChaos,
     );
     setState(() {
       presaMaterialiGrammi -= normale;
@@ -368,8 +379,16 @@ extension _OculumHomeRecipes on _OculumHomePageState {
         max(0, volontaTotale() - costoVolonta).toString(),
       );
       risultato = t(
-        'Oltre i limiti · Grado $resourceGrade: ${formatoPesoMateriali(normale)} normali + ${formatoPesoMateriali(sforzo)} da sforzo = ${formatoPesoMateriali(effortTotal)}${totale > effortTotal ? ' ×2 Raccoglitore' : ''} = ${formatoPesoMateriali(totale)}. Volontà -$costoVolonta. Presa rimasta: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
-        'Beyond the limit · Grade $resourceGrade: ${formatoPesoMateriali(normale)} normal + ${formatoPesoMateriali(sforzo)} effort = ${formatoPesoMateriali(effortTotal)}${totale > effortTotal ? ' ×2 Collector' : ''} = ${formatoPesoMateriali(totale)}. Will -$costoVolonta. Capacity left: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+        'Oltre i limiti · Grado $resourceGrade: ${formatoPesoMateriali(normale)} normali + ${formatoPesoMateriali(sforzo)} da sforzo = ${formatoPesoMateriali(effortTotal)}${totale > effortTotal
+            ? identityIsChaos
+                  ? ' ×1,8 Chaos'
+                  : ' ×2 Raccoglitore'
+            : ''} = ${formatoPesoMateriali(totale)}. Volontà -$costoVolonta. Presa rimasta: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
+        'Beyond the limit · Grade $resourceGrade: ${formatoPesoMateriali(normale)} normal + ${formatoPesoMateriali(sforzo)} effort = ${formatoPesoMateriali(effortTotal)}${totale > effortTotal
+            ? identityIsChaos
+                  ? ' ×1.8 Chaos'
+                  : ' ×2 Collector'
+            : ''} = ${formatoPesoMateriali(totale)}. Will -$costoVolonta. Capacity left: ${formatoPesoMateriali(presaMaterialiGrammi)}.',
       );
       aggiungiLog(risultato);
     });

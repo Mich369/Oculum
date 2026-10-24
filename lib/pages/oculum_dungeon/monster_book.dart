@@ -1209,7 +1209,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
   ),
   MonsterBookEntry(
     id: 'kobold_base',
-    nameIt: 'Kobold',
+    nameIt: 'Coboldo',
     nameEn: 'Kobold',
     descIt:
         'Trappole, 7 punti extra. RES 2 VOL 3 MAT 5 OCU 0. Filo Teso rallenta una piccola zona; Tana Conosciuta migliora il movimento in spazi stretti; Attacco di Branco +1 al tiro vicino a un alleato. Ruolo: prepara il terreno.',

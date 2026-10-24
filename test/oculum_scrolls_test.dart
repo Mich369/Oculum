@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
+import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 
 void main() {
   test(
@@ -202,6 +203,19 @@ void main() {
     'Technique scroll catalogue contains at least 100 distinct learnable skills',
     () {
       expect(oculumTechniqueScrolls.length, greaterThanOrEqualTo(100));
+      for (final monster in defaultMonsterBookEntries.where(
+        (entry) => entry.id.startsWith('base_'),
+      )) {
+        for (final id in monsterBookUsableSkillIds(monster)) {
+          expect(
+            oculumTechniqueScrolls.any(
+              (profile) => profile.id.endsWith('_$id'),
+            ),
+            isTrue,
+            reason: '${monster.nameIt}: $id must have a learnable scroll.',
+          );
+        }
+      }
       expect(
         oculumTechniqueScrolls.map((p) => p.id).toSet().length,
         oculumTechniqueScrolls.length,

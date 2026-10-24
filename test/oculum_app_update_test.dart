@@ -67,18 +67,63 @@ void main() {
       );
     });
   }
-  test('same source avoids even a comparison request', () async {
-    var calls = 0;
-    final client = MockClient((r) async {
-      calls++;
-      return http.Response(release(commit: old), 200);
-    });
-    expect(
-      await oculumCheckAppUpdate(client, 'Oculum-Windows', currentCommit: old),
-      isNull,
-    );
-    expect(calls, 1);
-  });
+  test(
+    'same published source still checks whether main has newer downloads',
+    () async {
+      var calls = 0;
+      final client = MockClient((r) async {
+        calls++;
+        return http.Response(release(commit: old), 200);
+      });
+      expect(
+        await oculumCheckAppUpdate(
+          client,
+          'Oculum-Windows',
+          currentCommit: old,
+        ),
+        isNull,
+      );
+      expect(calls, 2);
+    },
+  );
+  test(
+    'does not report latest while main is ahead of published downloads',
+    () async {
+      const main = 'dddddddddddddddddddddddddddddddddddddddd';
+      final client = MockClient((request) async {
+        if (request.url.path.endsWith('/branches/main')) {
+          return http.Response(
+            jsonEncode({
+              'commit': {'sha': main},
+            }),
+            200,
+          );
+        }
+        if (request.url.path.contains('/compare/')) {
+          return http.Response(
+            jsonEncode({
+              'status': request.url.path.endsWith('$old...$main')
+                  ? 'ahead'
+                  : 'behind',
+            }),
+            200,
+          );
+        }
+        return http.Response(release(), 200);
+      });
+
+      await expectLater(
+        oculumCheckAppUpdate(client, 'Oculum-Windows', currentCommit: old),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('download verificati non sono ancora stati aggiornati'),
+          ),
+        ),
+      );
+    },
+  );
   test('reject unknown identity and invalid hash', () async {
     final client = MockClient(
       (r) async => http.Response(

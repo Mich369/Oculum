@@ -138,7 +138,19 @@ MonsterConcreteTechnique? _activeConcreteMonsterTechnique(String id) {
 
 /// Natural techniques belong to Skills, including on creatures that also
 /// possess an Art. The original catalogue Art remains available for exports.
-const _naturalMonsterTechniqueIds = {
+final _naturalMonsterTechniqueIds = <String>{
+  'common_wolf_bite',
+  'common_wolf_flank',
+  'kobold_quarry_pick',
+  'kobold_shale_cover',
+  'kobold_postea_spark',
+  'kobold_postea_plate',
+  'gnoll_snow_hook',
+  'gnoll_snow_howl',
+  'gnoll_diabolic_lance',
+  'gnoll_diabolic_step',
+  'goblin_pitch_flask',
+  'goblin_smoke_roll',
   'inferno_in_corpo',
   'inverno_in_corpo',
   'dirty_strike',
@@ -198,6 +210,7 @@ const _naturalMonsterTechniqueIds = {
   'coordinated_heads',
   'head_fury',
   'poison_tongue',
+  ...oculumCanonicalBasicTechniqueIds,
 };
 
 bool oculumMonsterTechniqueIsNatural(MonsterBookEntry monster, String id) =>
@@ -235,59 +248,20 @@ CharacterSkill _naturalMonsterSkill(
     'goblin_kamikaze_explosion',
     'thunder_bot_explosion',
   }.contains(id);
-  final resource = monster.id == 'ogle' || (monster.stats['volonta'] ?? 0) <= 0
+  final fallbackResource =
+      monster.id == 'ogle' || (monster.stats['volonta'] ?? 0) <= 0
       ? 'materia'
       : 'volonta';
   final forms = [
     for (var form = 0; form < 3; form++)
-      CharacterSkillForm(
-        nome: const ['I', 'II', 'III'][form],
-        tipo: passive ? 'Passiva mostro' : 'Skill naturale mostro',
-        livello:
-            '${(monsterBookConcreteTechnique(id)?.requiredLevel ?? 0) + form * 3}',
-        costo: passive || sacrificial
-            ? 'Nessun costo'
-            : '${monster.id == 'mosca_campana' ? 3 : form + 1}/${monster.id == 'mosca_campana' ? 3 : form + 1} $resource',
-        costoStrutturato: OculumSkillCost(
-          resource: passive || sacrificial ? 'nessuna' : resource,
-          amountExpression: passive || sacrificial
-              ? '0'
-              : '${monster.id == 'mosca_campana' ? 3 : form + 1}',
-        ),
-        cooldown: passive
-            ? '0 turni'
-            : '${source.cooldownPerLivello[form].amount} turni',
-        cooldownStrutturato: OculumAbilityCooldown.fromJson(
-          source.cooldownPerLivello[form].toJson(),
-        ),
-        descrizione: source
-            .testoEvoluzione(form + 1)
-            .replaceAll('Oculum immesso', 'Materia')
-            .replaceAll('Oculum speso', 'Materia')
-            .replaceAll(
-              RegExp(r'Costo:[^\n]*Oculum\.?\n?', caseSensitive: false),
-              '',
-            )
-            .replaceAll(
-              RegExp(r'\([0-9]+/[0-9]+ Oculum[^)]*\)'),
-              passive || sacrificial
-                  ? '(nessun costo)'
-                  : '(${monster.id == 'mosca_campana' ? 3 : form + 1}/${monster.id == 'mosca_campana' ? 3 : form + 1} $resource)',
-            ),
-        oculumLimitiConfiguratiManualmente: true,
-        effettiStrutturati: [
-          for (final effect in source.effettiPerLivello[form])
-            oculumStatPaidEffect(
-              OculumStructuredEffect.fromJson({
-                ...effect.toJson(),
-                'valueExpression': effect.valueExpression.replaceAll(
-                  'oculum_spent',
-                  '${resource}_spent',
-                ),
-              }),
-              resource,
-            ),
-        ],
+      _naturalMonsterSkillForm(
+        monster: monster,
+        id: id,
+        source: source,
+        form: form,
+        passive: passive,
+        sacrificial: sacrificial,
+        fallbackResource: fallbackResource,
       ),
   ];
   return CharacterSkill(
@@ -298,6 +272,83 @@ CharacterSkill _naturalMonsterSkill(
     descrizione: forms.first.descrizione,
     equipaggiata: true,
     forme: forms,
+  );
+}
+
+CharacterSkillForm _naturalMonsterSkillForm({
+  required MonsterBookEntry monster,
+  required String id,
+  required ArtSkill source,
+  required int form,
+  required bool passive,
+  required bool sacrificial,
+  required String fallbackResource,
+}) {
+  final sourceText = source.testoEvoluzione(form + 1);
+  final technique = monsterBookConcreteTechnique(id);
+  final parsedCost = oculumParseAbilityCost(sourceText);
+  final resource = passive || sacrificial
+      ? 'nessuna'
+      : technique?.costResource ?? parsedCost?.resource ?? fallbackResource;
+  final defaultAmount = monster.id == 'mosca_campana' ? 3 : form + 1;
+  final minimum = passive || sacrificial
+      ? 0
+      : technique?.minimums[form] ?? parsedCost?.minimum ?? defaultAmount;
+  final maximum = passive || sacrificial
+      ? 0
+      : technique?.maximums[form] ?? parsedCost?.maximum ?? defaultAmount;
+  final resourceLabel = oculumArtSkillCostResourceLabel(resource);
+  final spendsOculum = resource == 'oculum';
+  return CharacterSkillForm(
+    nome: const ['I', 'II', 'III'][form],
+    tipo: passive ? 'Passiva mostro' : 'Skill naturale mostro',
+    livello:
+        '${(monsterBookConcreteTechnique(id)?.requiredLevel ?? 0) + form * 3}',
+    costo: passive || sacrificial
+        ? 'Nessun costo'
+        : '$minimum/$maximum $resourceLabel',
+    costoStrutturato: OculumSkillCost(
+      resource: resource,
+      amountExpression: '$minimum',
+      variable: minimum != maximum,
+      minimum: minimum,
+      maximum: maximum,
+    ),
+    cooldown: passive
+        ? '0 turni'
+        : '${source.cooldownPerLivello[form].amount} turni',
+    cooldownStrutturato: OculumAbilityCooldown.fromJson(
+      source.cooldownPerLivello[form].toJson(),
+    ),
+    descrizione: sourceText
+        .replaceAll(
+          RegExp(r'Costo:[^\n]*\.?(?:\n|$)', caseSensitive: false),
+          '',
+        )
+        .replaceAll(
+          RegExp(r'\(\s*\d+\s*/\s*\d+\s+[^)]*\)'),
+          passive || sacrificial
+              ? '(nessun costo)'
+              : '($minimum/$maximum $resourceLabel)',
+        ),
+    oculumMinimoUtilizzabile: spendsOculum ? minimum : 0,
+    oculumMassimoUtilizzabile: spendsOculum ? maximum : 0,
+    oculumLimitiConfiguratiManualmente: spendsOculum,
+    effettiStrutturati: [
+      for (final effect in source.effettiPerLivello[form])
+        oculumStatPaidEffect(
+          OculumStructuredEffect.fromJson({
+            ...effect.toJson(),
+            'valueExpression': effect.valueExpression.replaceAll(
+              'oculum_spent',
+              resource.startsWith('item:') || resource.startsWith('material:')
+                  ? '0'
+                  : '${resource}_spent',
+            ),
+          }),
+          resource,
+        ),
+    ],
   );
 }
 

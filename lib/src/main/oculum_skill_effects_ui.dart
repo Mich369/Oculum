@@ -1369,6 +1369,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     final current = cost ?? OculumSkillCost(resource: 'oculum');
     const resources = <String>[
       'oculum',
+      'obser',
+      'follia',
       'fortuna',
       'hp',
       'scudo',
@@ -1424,6 +1426,33 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
             onChanged: (value) {
               if (value == null) return;
               update(() => current.resource = value);
+            },
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            initialValue:
+                current.resource.startsWith('item:') ||
+                    current.resource.startsWith('material:')
+                ? current.resource
+                : '',
+            decoration:
+                fieldDecoration(
+                  t(
+                    'Oggetto o materiale (item:Nome / material:Nome)',
+                    'Item or material (item:Name / material:Name)',
+                  ),
+                ).copyWith(
+                  helperText: t(
+                    'Il costo verifica inventario e quantità, poi consuma l’oggetto o i grammi richiesti.',
+                    'The cost checks inventory and quantity, then consumes the required item or grams.',
+                  ),
+                ),
+            onChanged: (value) {
+              final dynamicResource = value.trim();
+              if (dynamicResource.startsWith('item:') ||
+                  dynamicResource.startsWith('material:')) {
+                update(() => current.resource = dynamicResource);
+              }
             },
           ),
           const SizedBox(height: 8),

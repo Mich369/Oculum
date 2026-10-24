@@ -1,5 +1,12 @@
 # Oculum — registro delle regole confermate
 
+## Specie base e varianti del Monster Book — 24 ottobre 2026
+
+- Quattro specie base sono disponibili come voci distinte: Lupo (`lupo_base`), Goblin (`goblin_base`), Coboldo (`kobold_base`, nome italiano visualizzato “Coboldo”) e Gnoll (`gnoll_base`). Il Lupo comune non sostituisce il Lupo Gigante né il Lupo delle Nevi.
+- Varianti aggiunte: Goblin Incendiario (Mezzano/Regno demoniaco), Coboldo Minatore (Regni sotterranei), Coboldo Runico di Postea, Gnoll delle Nevi (Terre di ghiaccio) e Gnoll Diabolico (Regno diabolico). Ogni variante mantiene un ID e un materiale distintivi, un punto debole descritto e due tecniche con nomi/ruoli propri; si collega alla specie base per i progressi del Monster Book Party.
+- Le mosse sono bilanciamenti iniziali: forme I–III, costo Oculum 1/2/3, cooldown 2/2/3 per gli attacchi e 2/3/3 per le protezioni; le tecniche di Grado più alto hanno requisiti di livello. Le skill di Gelo e Fuoco applicano la propria condizione solo nelle forme superiori e su colpo riuscito. Costi, valori, cooldown, requisiti, drop, statistiche, debolezze, resistenze, descrizioni e habitat restano modificabili nel Monster Book e salvabili nel JSON.
+- Le voci sono additive: non rinominano o sovrascrivono personalizzazioni già salvate. Le varianti non sono copie generiche: il Gnoll di Ghiaccio usa falce e rallentamento; quello Diabolico usa lancia e riposizionamento; il Coboldo di Postea usa rune di Fulmine e paratia; quello minatore usa piccozza e copertura; il Goblin Incendiario usa pece e fumo; il Lupo comune usa morso e passo laterale.
+
 ## Varianti del Lupo delle Nevi — bilanciamento iniziale del 24 ottobre 2026
 
 - Aggiunta una famiglia coerente collegata alla specie esistente `lupo_di_bruma`: Lupo delle Nevi (Terre di ghiaccio), Lupo Infernale del Ghiaccio (Regno demoniaco), Lupo d’Ombra dell’Oblio (Oblio/Shadow Hell) e Lupo Runico di Postea. Le varianti condividono i progressi di specie del party, ma conservano aspetto, elementi, debolezze, skill, drop e ID distinti; i salvataggi delle voci esistenti non vengono rinominati.
@@ -529,7 +536,11 @@ Recupero pressione in fight: ogni proprio critico positivo riduce di 3 il solo m
 ### Identità Fato / Chaos e occhi — conferme 23 ottobre 2026
 Identità Fato / Chaos: Fato è predefinito. A ogni nuovo Grado un solo tiro: 6% niente, 14% una Ispirazione normale, 30% normale e Super, 40% normale/Super/Oculum, 9% le tre più una Schivata Oculum, 1% le tre più Schivata, Scudo pari al 20% della Vita attuale e Scudo Oculum aggiuntivo pari al 25% di quello Scudo, per eccesso. Cambiare identità o abbassare il Grado non ripete i premi; nessun premio retroattivo.
 Chaos: a inizio fight e a ogni turno personale estrae indipendentemente da −3 a +3 sulle quattro statistiche; sostituisce i bonus precedenti e li rimuove a fine fight. Dopo un attacco riuscito o una difesa riuscita, 25% di infliggere −3 a tutti i tiri all’avversario per un turno, una sola estrazione per avversario nel proprio turno. I valori di base salvati non vengono alterati.
+Raccolta materiali: chi ha identità Chaos ottiene 1,8 volte i grammi estratti, arrotondati per eccesso. Il bonus sostituisce il moltiplicatore del Raccoglitore e non si cumula con esso; non modifica i materiali ricevuti come drop.
 Gli occhi seguono il mouse muovendosi leggermente. Solo il clic sul ruolo Master li fa guardare dalla parte opposta in 0,4 secondi; a 0,6 secondi dal clic riprendono a seguire. La cornice del ritratto è più larga del 20%, con bordo proporzionato.
+
+### Monster Book e costi delle skill — 24 ottobre 2026
+Il catalogo include 80 creature base distribuite in otto habitat, con statistiche iniziali basse, anatomia e punto debole descritti, drop materiale e due tecniche ciascuna. Ogni tecnica può essere appresa dal catalogo Skill o tramite pergamena secondo le normali regole di apprendimento. I costi delle forme si leggono dalla definizione concreta: Oculum, Volontà, Materia, Resilienza, Vita, Scudo, Obser, Fortuna, Follia, oggetti o materiali; non si sostituisce una risorsa dichiarata con un costo generico. I costi, i cooldown, i drop e i relativi valori restano modificabili.
 
 ### Catalogo Rusty — prezzi proposti e conferme precedenti
 Anti malus 50 Obser, prima copia in omaggio al primo acquisto Postea per personaggio: rimuove una condizione negativa scelta e la blocca fino alla fine dello scontro corrente o prossimo. Il Curatore ha 100 HP e Medicina propria fissata all’acquisto: estrazione equiprobabile 150/100/75/50% della Medicina del compratore, per eccesso. Prezzi proposti modificabili: 95/80/70/60 Obser. Cura 20 + Medicina a ogni proprio turno il proprietario.

@@ -23,11 +23,12 @@ class MonsterConcreteTechnique {
     required this.element,
     required this.kind,
     required this.requiredLevel,
+    this.costResource = 'oculum',
     this.minimums = const [1, 5, 11],
     this.maximums = const [4, 10, 30],
     this.cooldownValues,
   });
-  final String name, action, element, kind;
+  final String name, action, element, kind, costResource;
   final int requiredLevel;
   final List<int> minimums, maximums;
   final List<int>? cooldownValues;
@@ -62,7 +63,15 @@ class MonsterConcreteTechnique {
           };
         }).join('; ');
         final cost = '${minimums[i]}/${maximums[i]}';
-        return '${const ['I', 'II', 'III'][i]}/$action. $mechanics. Richiede livello ${requiredLevel + i * 3}. ($cost Oculum${minimums[i] == maximums[i] ? ', costo fisso' : ''}). CD ${cooldowns[i]} turni personali.';
+        final resourceLabel = switch (costResource) {
+          'volonta' => 'Volontà',
+          'materia' => 'Materia',
+          'resilienza' => 'Resilienza',
+          'item' => 'oggetto',
+          'material' => 'materiale',
+          _ => 'Oculum',
+        };
+        return '${const ['I', 'II', 'III'][i]}/$action. $mechanics. Richiede livello ${requiredLevel + i * 3}. ($cost $resourceLabel${minimums[i] == maximums[i] ? ', costo fisso' : ''}). CD ${cooldowns[i]} turni personali.';
       }).join(' ')} I bonus della stessa tecnica non si cumulano; Difesa e Scudi del bersaglio restano validi.';
 }
 

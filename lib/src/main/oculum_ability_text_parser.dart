@@ -1,7 +1,7 @@
 part of '../../main.dart';
 
 const _oculumAbilityResourcePattern =
-    r'(?:Scudo\s+Oculum|Oculum|OCU|Volont[aà]|VOL|Materia|MAT|Resilienza|RES|Vita|HP|Scudo|Reazioni?|Azioni?)';
+    r'(?:Scudo\s+Oculum|Oculum|OCU|Volont[aà]|VOL|Materia|MAT|Resilienza|RES|Vita|HP|Scudo|Fortuna|Obser|Follia|Reazioni?|Azioni?)';
 
 List<OculumStructuredEffect> oculumResolveAbilityEffects(
   Iterable<OculumStructuredEffect> configured,
@@ -49,7 +49,7 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
   // (for example, @mat-1). Only a standalone cost field is expenditure:
   // a negative stat command inside prose, such as @res-30%, is an effect.
   final quickCost = RegExp(
-    r'^\s*(?:Costo\s*:\s*)?@\s*(Scudo\s*Oculum|Oculum|OCU|Volont[aà]|VOL|Materia|MAT|Resilienza|RES|Vita|HP|Scudo)\s*-\s*(\d+)\s*$',
+    r'^\s*(?:Costo\s*:\s*)?@\s*(Scudo\s*Oculum|Oculum|OCU|Volont[aà]|VOL|Materia|MAT|Resilienza|RES|Vita|HP|Scudo|Fortuna|Obser|Follia)\s*-\s*(\d+)\s*$',
     caseSensitive: false,
   ).firstMatch(raw);
   if (quickCost != null) {
@@ -57,8 +57,56 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
     return (
       minimum: amount,
       maximum: amount,
-      resource: oculumNormalizeEffectResource(quickCost.group(1)),
+      resource: oculumNormalizeArtSkillCostResource(quickCost.group(1)),
     );
+  }
+  final namedItem = RegExp(
+    r'\b(?:costo|spendi|consumi|consuma|usa|utilizza)\s*:?\s*(\d+)\s*(?:x\s*)?(?:(item|oggetto|consumabile|materiale)\s*:\s*|["“])([^"”\n.;,]+)["”]?',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (namedItem != null) {
+    final category = (namedItem.group(2) ?? 'item')!.toLowerCase();
+    final name = oculumNormalizeText(namedItem.group(3)!).replaceAll(' ', '');
+    if (name.isEmpty) return null;
+    final amount = int.parse(namedItem.group(1)!);
+    return (
+      minimum: amount,
+      maximum: amount,
+      resource: category == 'materiale' ? 'material:$name' : 'item:$name',
+    );
+  }
+  // Compact single-word names are accepted as consumable items too. Use
+  // item:Name or quotes for multiword inventory names.
+  final compactItem = RegExp(
+    r'\b(?:costo|spendi|consumi|consuma|usa|utilizza)\s*:?\s*(\d+)\s*(?:x\s*)?([^\s,.;]+)',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (compactItem != null) {
+    final rawName = compactItem.group(2)!;
+    final normalizedName = oculumNormalizeText(rawName);
+    const resourcePrefixes = [
+      'ocu',
+      'vol',
+      'volont',
+      'mat',
+      'mater',
+      'res',
+      'resil',
+      'hp',
+      'vita',
+      'scudo',
+      'fortuna',
+      'obser',
+      'follia',
+      'azione',
+      'reazione',
+    ];
+    final isResource = resourcePrefixes.any(normalizedName.startsWith);
+    if (!isResource) {
+      final name = normalizedName.replaceAll(' ', '');
+      final amount = int.parse(compactItem.group(1)!);
+      return (minimum: amount, maximum: amount, resource: 'item:$name');
+    }
   }
   final range = RegExp(
     '(?:\\b(?:costo|spendi|consumi|costa)\\s*:?\\s*|\\()\\s*(\\d+)\\s*[/–-]\\s*(\\d+)\\s*($_oculumAbilityResourcePattern)?\\s*\\)?',
@@ -71,7 +119,7 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
     return (
       minimum: minimum,
       maximum: maximum,
-      resource: oculumNormalizeEffectResource(range.group(3) ?? 'oculum'),
+      resource: oculumNormalizeArtSkillCostResource(range.group(3) ?? 'oculum'),
     );
   }
   final nakedRange = RegExp(
@@ -86,7 +134,7 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
         : (
             minimum: minimum,
             maximum: maximum,
-            resource: oculumNormalizeEffectResource(nakedRange.group(3)!),
+            resource: oculumNormalizeArtSkillCostResource(nakedRange.group(3)!),
           );
   }
   final fixed = RegExp(
@@ -98,7 +146,7 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
   return (
     minimum: amount,
     maximum: amount,
-    resource: oculumNormalizeEffectResource(fixed.group(2)!),
+    resource: oculumNormalizeArtSkillCostResource(fixed.group(2)!),
   );
 }
 

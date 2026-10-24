@@ -20,6 +20,31 @@ void main() {
     ));
     expect(oculumParseAbilityCost('@mat+1'), isNull);
     expect(oculumParseAbilityCost('@res-30%'), isNull);
+    expect(oculumParseAbilityCost('@Obser-12'), (
+      minimum: 12,
+      maximum: 12,
+      resource: 'obser',
+    ));
+    expect(oculumParseAbilityCost('@Fortuna-2'), (
+      minimum: 2,
+      maximum: 2,
+      resource: 'fortuna',
+    ));
+    expect(oculumParseAbilityCost('@Follia-1'), (
+      minimum: 1,
+      maximum: 1,
+      resource: 'follia',
+    ));
+    expect(oculumParseAbilityCost('Consuma 1 Fiaccola'), (
+      minimum: 1,
+      maximum: 1,
+      resource: 'item:fiaccola',
+    ));
+    expect(oculumParseAbilityCost('Costo: 250 materiale:Polvere Runica'), (
+      minimum: 250,
+      maximum: 250,
+      resource: 'material:polvererunica',
+    ));
     expect(
       oculumParseAbilityCost(
         'Impone il Titolo Malanno @res-30% per tre Riposi Lunghi. (3/3 Oculum, costo fisso).',

@@ -2754,11 +2754,14 @@ String oculumNormalizeArtSkillCostResource(
     case 'oculumshield':
       return 'scudo_oculum';
     case 'materia':
+    case 'mat':
       return 'materia';
     case 'volonta':
     case 'volontà':
+    case 'vol':
       return 'volonta';
     case 'resilienza':
+    case 'res':
       return 'resilienza';
     case 'nessuna':
     case 'nessuno':

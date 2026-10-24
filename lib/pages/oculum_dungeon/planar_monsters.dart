@@ -1024,6 +1024,7 @@ MonsterConcreteTechnique _planarMove(
   String kind,
   List<List<MonsterTechniqueEffect>> forms, {
   int level = 0,
+  String costResource = 'oculum',
   List<int> minimums = const [1, 5, 11],
   List<int> maximums = const [4, 10, 30],
   List<int>? cd,
@@ -1034,6 +1035,7 @@ MonsterConcreteTechnique _planarMove(
   kind: kind,
   forms: forms,
   requiredLevel: level,
+  costResource: costResource,
   minimums: minimums,
   maximums: maximums,
   cooldownValues: cd,

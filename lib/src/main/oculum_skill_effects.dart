@@ -43,6 +43,12 @@ int oculumDamageWithPercentage(int damage, int percent) =>
 /// accetta mai una chiave dinamica proveniente da un sottotratto.
 const List<String> oculumEffectConsumableResourceKeys = <String>[
   'oculum',
+  'obser',
+  'follia',
+  'fortuna',
+  'hp',
+  'scudo',
+  'scudo_oculum',
   'vita',
   'azioni',
   'reazioni',
@@ -326,9 +332,11 @@ bool oculumIsConsumableEffectResource(
       return false;
     }
   }
-  return oculumEffectConsumableResourceKeys.contains(
-    oculumNormalizeEffectResource(resource),
-  );
+  final normalized = oculumNormalizeArtSkillCostResource(resource);
+  if (normalized.startsWith('item:') || normalized.startsWith('material:')) {
+    return normalized.substring(normalized.indexOf(':') + 1).isNotEmpty;
+  }
+  return oculumEffectConsumableResourceKeys.contains(normalized);
 }
 
 class OculumSkillCost {

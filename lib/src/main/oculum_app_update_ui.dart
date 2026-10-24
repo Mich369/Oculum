@@ -107,7 +107,9 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
       if (update == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('La tua versione è già aggiornata o più recente.'),
+            content: Text(
+              'Non c’è un aggiornamento verificato installabile. La pagina Download indica l’ultima build pubblicata.',
+            ),
           ),
         );
         return;

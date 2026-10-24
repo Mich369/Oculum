@@ -7,6 +7,42 @@ import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
+  test(
+    'new base roster is complete and the Monster Book has no duplicate IDs',
+    () {
+      resetMonsterBookEntries();
+      final entries = defaultMonsterBookEntries;
+      final ids = entries.map((entry) => entry.id).toList();
+      expect(ids.toSet(), hasLength(ids.length));
+      final baseCreatures = entries
+          .where((entry) => entry.id.startsWith('base_'))
+          .toList();
+      expect(baseCreatures, hasLength(80));
+      for (final creature in baseCreatures) {
+        expect(creature.nameIt, isNotEmpty);
+        expect(creature.dropIds, hasLength(1), reason: creature.id);
+        expect(creature.skillIds, hasLength(2), reason: creature.id);
+        expect(creature.stats['resilienza'] ?? 0, inInclusiveRange(1, 6));
+        expect(creature.stats['volonta'] ?? 0, inInclusiveRange(1, 3));
+        expect(creature.stats['materia'] ?? 0, inInclusiveRange(2, 6));
+        expect(creature.stats['oculum'] ?? 0, inInclusiveRange(0, 2));
+        final skills = oculumMonsterBookSkills(creature);
+        expect(skills, hasLength(2), reason: creature.id);
+        for (final skill in skills) {
+          for (final form in skill.forme) {
+            expect(form.costoStrutturato, isNotNull);
+            expect(form.costoStrutturato!.isValid(), isTrue);
+            expect(
+              form.costoStrutturato!.resource,
+              anyOf('volonta', 'materia'),
+            );
+            expect(form.cooldownStrutturato!.amount, greaterThan(0));
+          }
+        }
+      }
+    },
+  );
+
   testWidgets(
     'Thunder Bot blasts more than 100 opponents offline and dies only after dispatch',
     (tester) async {
@@ -70,6 +106,12 @@ void main() {
     'lupo_runico_postea',
     'goblin_assassino',
     'goblin_arciere',
+    'lupo_base',
+    'coboldo_minatore',
+    'coboldo_runico_postea',
+    'gnoll_delle_nevi',
+    'gnoll_diabolico',
+    'goblin_incendiario',
     'segugio_runico_sentinella',
     'ragno_saldatore_recuperatore',
     'marshmallow',
@@ -98,17 +140,38 @@ void main() {
         final restored = MonsterBookEntry.fromJson(monster.toJson());
         expect(restored.encounterRules, monster.encounterRules);
         expect(monster.skillIds, hasLength(2));
+        expect(monster.dropIds, isNotEmpty);
         final skills = oculumMonsterBookArt(monster).skills;
         expect(skills, hasLength(2));
         for (final skill in skills) {
           expect(skill.effettiPerLivello, hasLength(5));
           for (var form = 0; form < 3; form++) {
-            expect(
-              skill.risorseCostoPerLivello[form],
-              anyOf('oculum', 'volonta', 'materia'),
-            );
-            expect(skill.oculumMinimiPerLivello[form], greaterThan(0));
             expect(skill.effettiPerLivello[form], isNotEmpty);
+          }
+        }
+        if (const {
+          'lupo_base',
+          'coboldo_minatore',
+          'coboldo_runico_postea',
+          'gnoll_delle_nevi',
+          'gnoll_diabolico',
+          'goblin_incendiario',
+        }.contains(id)) {
+          final naturalSkills = oculumMonsterBookSkills(monster);
+          expect(naturalSkills, hasLength(2), reason: id);
+          for (final skill in naturalSkills) {
+            for (final form in skill.forme) {
+              expect(
+                form.costoStrutturato!.resource,
+                anyOf('volonta', 'materia'),
+                reason: '$id: ${skill.nome}, forma ${form.nome}',
+              );
+              expect(
+                int.parse(form.costoStrutturato!.amountExpression),
+                greaterThan(0),
+              );
+              expect(form.cooldownStrutturato!.amount, greaterThan(0));
+            }
           }
         }
         for (final key in monster.skillIds) {
@@ -116,6 +179,22 @@ void main() {
         }
       }
       expect(monsterById('goblin_arciere')!.planeIds, contains('mezzano'));
+      expect(monsterById('kobold_base')!.nameIt, 'Coboldo');
+      expect(monsterById('lupo_base')!.nameIt, 'Lupo');
+      expect(monsterById('gnoll_base')!.nameIt, 'Gnoll');
+      expect(monsterById('goblin_base')!.nameIt, 'Goblin');
+      expect(
+        monsterById('gnoll_delle_nevi')!.encounterRules['canonicalVariantOf'],
+        'gnoll_base',
+      );
+      expect(
+        monsterById('gnoll_diabolico')!.encounterRules['canonicalVariantOf'],
+        'gnoll_base',
+      );
+      expect(
+        monsterById('coboldo_minatore')!.encounterRules['canonicalVariantOf'],
+        'kobold_base',
+      );
       expect(monsterById('segugio_runico_sentinella')!.planeIds, ['postea']);
       expect(monsterById('marshmallow_incenerito')!.planeIds, ['caramella']);
       expect(
@@ -165,7 +244,10 @@ void main() {
         for (final id in variant.skillIds) {
           final technique = oculumPlanarTechnique(id)!;
           expect(technique.requiredLevel, greaterThan(0));
-          expect(technique.text(), contains('Oculum'));
+          expect(
+            technique.text(),
+            anyOf(contains('Volontà'), contains('Oculum')),
+          );
           expect(technique.text(), contains('CD'));
         }
       }

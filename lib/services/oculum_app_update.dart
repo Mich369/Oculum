@@ -57,14 +57,16 @@ Future<OculumAppUpdate?> oculumCheckAppUpdate(
             int.tryParse('${a['runId']}') ?? 0,
           ),
         );
+  var latestPublishedCommit = '';
   for (final group in groups) {
     final commit = '${group['commit']}';
     final run = int.tryParse('${group['runId']}') ?? 0;
     if (!RegExp(r'^[a-f0-9]{40}$').hasMatch(commit) || run <= 0) continue;
-    if (commit == currentCommit) return null;
+    latestPublishedCommit = commit;
+    if (commit == currentCommit) break;
     final comparison = await read('compare/$currentCommit...$commit');
     // Branches that diverge or are older can never overwrite the installed app.
-    if (comparison['status'] != 'ahead') return null;
+    if (comparison['status'] != 'ahead') break;
     final entries = (group['artifacts'] as List? ?? []).whereType<Map>();
     if (!const [
       'Oculum-Windows',
@@ -91,6 +93,23 @@ Future<OculumAppUpdate?> oculumCheckAppUpdate(
         sha256: hash,
         bytes: bytes,
         runId: run,
+      );
+    }
+    break;
+  }
+
+  // A successful source push can be newer than the last fully published
+  // cross-platform build. Do not tell the user they are up to date in that
+  // gap; the page remains the fallback until verified artifacts are mirrored.
+  final branch = await read('branches/main');
+  final mainCommit = '${(branch['commit'] as Map?)?['sha'] ?? ''}';
+  if (RegExp(r'^[a-f0-9]{40}$').hasMatch(mainCommit) &&
+      mainCommit != currentCommit &&
+      latestPublishedCommit != mainCommit) {
+    final mainComparison = await read('compare/$currentCommit...$mainCommit');
+    if (mainComparison['status'] == 'ahead') {
+      throw StateError(
+        'Esiste una build sorgente più recente (${mainCommit.substring(0, 7)}), ma i download verificati non sono ancora stati aggiornati. Riprova più tardi o usa la pagina Download.',
       );
     }
   }
