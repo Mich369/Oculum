@@ -1980,25 +1980,63 @@ class CharacterSkillForm {
   }
 
   factory CharacterSkillForm.fromJson(Map<String, dynamic> json) {
-    final minimum = max(
+    var minimum = max(
       0,
       readIntValue(
         json['oculumMinimoUtilizzabile'] ?? json['minimumUsableOculum'],
       ),
     );
-    final maximum = max(
+    var maximum = max(
       0,
       readIntValue(
         json['oculumMassimoUtilizzabile'] ?? json['maximumUsableOculum'],
       ),
     );
+    final costText = '${json['costo'] ?? json['cost'] ?? ''}';
+    final description = '${json['descrizione'] ?? json['description'] ?? ''}';
+    final costJson = json['costoStrutturato'] ?? json['structuredCost'];
+    final structuredCost = costJson is Map
+        ? OculumSkillCost.fromJson(Map<String, dynamic>.from(costJson))
+        : null;
+    final parsedCostLimits =
+        structuredCost != null &&
+            oculumNormalizeEffectResource(structuredCost.resource) != 'oculum'
+        ? null
+        : oculumSkillTextCostLimits(description) ??
+              oculumSkillTextCostLimits(costText);
+    final costLimits =
+        structuredCost == null ||
+            oculumNormalizeEffectResource(structuredCost.resource) != 'oculum'
+        ? parsedCostLimits
+        : structuredCost.variable
+        ? OculumSkillTextLimits(
+            minimum: max(0, structuredCost.minimum),
+            maximum: max(0, structuredCost.maximum),
+          )
+        : (() {
+            final amount = int.tryParse(structuredCost.amountExpression.trim());
+            return amount == null
+                ? parsedCostLimits
+                : OculumSkillTextLimits(minimum: amount, maximum: amount);
+          })();
+    // Recover older saves that stored manual 0/0 limits beside a real Oculum
+    // cost; the saved cost is the authoritative value in that contradiction.
+    final recoverStaleZeroLimits =
+        minimum == 0 &&
+        maximum == 0 &&
+        costLimits != null &&
+        costLimits.maximum > 0;
+    if (recoverStaleZeroLimits) {
+      minimum = costLimits.minimum;
+      maximum = costLimits.maximum;
+    }
     return CharacterSkillForm(
       nome: '${json['nome'] ?? json['name'] ?? ''}',
       tipo: '${json['tipo'] ?? json['type'] ?? ''}',
       livello: '${json['livello'] ?? json['level'] ?? ''}',
-      costo: '${json['costo'] ?? json['cost'] ?? ''}',
+      costo: costText,
       cooldown: '${json['cooldown'] ?? ''}',
-      descrizione: '${json['descrizione'] ?? json['description'] ?? ''}',
+      descrizione: description,
       effetto: '${json['effetto'] ?? json['effect'] ?? ''}',
       buff: '${json['buff'] ?? json['comando'] ?? json['command'] ?? ''}',
       danni: '${json['danni'] ?? json['damage'] ?? ''}',
@@ -2015,8 +2053,9 @@ class CharacterSkillForm {
           fallback: maximum,
         ),
       ),
-      oculumLimitiConfiguratiManualmente:
-          json.containsKey('oculumLimitiConfiguratiManualmente')
+      oculumLimitiConfiguratiManualmente: recoverStaleZeroLimits
+          ? false
+          : json.containsKey('oculumLimitiConfiguratiManualmente')
           ? readBoolValue(json['oculumLimitiConfiguratiManualmente'])
           : minimum > 0 || maximum > 0,
       aumentoMassimoOculumAttivo: readBoolValue(
@@ -2026,14 +2065,7 @@ class CharacterSkillForm {
       effettiStrutturati: oculumReadStructuredEffects(
         json['effettiStrutturati'] ?? json['structuredEffects'],
       ),
-      costoStrutturato:
-          (json['costoStrutturato'] ?? json['structuredCost']) is Map
-          ? OculumSkillCost.fromJson(
-              Map<String, dynamic>.from(
-                json['costoStrutturato'] ?? json['structuredCost'],
-              ),
-            )
-          : null,
+      costoStrutturato: structuredCost,
       cooldownStrutturato:
           (json['cooldownStrutturato'] ?? json['structuredCooldown']) is Map
           ? OculumAbilityCooldown.fromJson(

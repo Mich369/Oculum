@@ -79,6 +79,31 @@ void main() {
       );
     },
   );
+  test('Recovers stale saved 0/0 limits from an explicit Oculum cost', () {
+    final form = CharacterSkillForm.fromJson(<String, dynamic>{
+      'costo': '1/1 oculum',
+      'oculumMinimoUtilizzabile': 0,
+      'oculumMassimoUtilizzabile': 0,
+      'oculumLimitiConfiguratiManualmente': true,
+    });
+
+    expect(form.oculumMinimoUtilizzabile, 1);
+    expect(form.oculumMassimoUtilizzabile, 1);
+    expect(form.oculumLimitiConfiguratiManualmente, isFalse);
+
+    final structured = CharacterSkillForm.fromJson(<String, dynamic>{
+      'costo': '5/5 oculum',
+      'oculumMinimoUtilizzabile': 0,
+      'oculumMassimoUtilizzabile': 0,
+      'oculumLimitiConfiguratiManualmente': true,
+      'costoStrutturato': <String, dynamic>{
+        'resource': 'oculum',
+        'amountExpression': '5',
+      },
+    });
+    expect(structured.oculumMinimoUtilizzabile, 5);
+    expect(structured.oculumMassimoUtilizzabile, 5);
+  });
   test('Skill vecchia senza forme viene caricata come Forma 1', () {
     final skill = CharacterSkill.fromJson({
       'nome': 'Lama antica',
