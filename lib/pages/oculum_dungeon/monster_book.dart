@@ -13,6 +13,8 @@ part 'elemental_collector.dart';
 part 'concrete_monster_techniques.dart';
 part 'planar_monsters.dart';
 part 'canonical_monster_variants.dart';
+part 'masked_monsters.dart';
+part 'ordinary_creatures.dart';
 
 bool oculumMonsterBookNameIsDiscovered(Map<String, dynamic>? knowledge) =>
     knowledge?['nameKnown'] == true || knowledge?['pagePurchased'] == true;
@@ -5405,7 +5407,17 @@ String monsterBookSkillText(String rawId) {
 /// Il Book resta l'unica fonte del testo, così non vengono duplicati effetti.
 List<String> monsterBookSkillForms(String rawId) {
   final text = monsterBookSkillText(rawId).trim();
-  final matches = RegExp(r'\b(III|II|I)/').allMatches(text).toList();
+  final candidates = RegExp(r'\b(III|II|I)/').allMatches(text).toList();
+  // References such as "le forme II/III" inside a description are not form
+  // boundaries. Generated forms are separated by semicolons or new lines.
+  final boundaries = candidates.where((match) {
+    if (match.group(1) == 'I') {
+      return true;
+    }
+    final prefix = text.substring(0, match.start);
+    return RegExp(r'[.;\n]\s*$').hasMatch(prefix);
+  }).toList();
+  final matches = boundaries.length == 3 ? boundaries : candidates;
   if (matches.isEmpty) return <String>[text, '', ''];
   return List<String>.generate(3, (index) {
     if (index >= matches.length) return '';

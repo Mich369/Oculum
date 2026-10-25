@@ -1153,6 +1153,12 @@ String oculumStructuredEffectDescription(
   final displayedValue =
       '$value$dice$progressionText$elementText$damageBypassText';
   switch (effect.type) {
+    case 'planar':
+    case 'meccanio':
+    case 'preparazione':
+      return effect.narrativeText.trim().isNotEmpty
+          ? withPeriod(effect.narrativeText.trim())
+          : 'Effetto speciale della tecnica: segui la descrizione della forma.';
     case 'tiro_sottotratto':
       return 'Tira ${target.isEmpty ? 'un sottotratto' : target}${effect.activationOption.isEmpty ? '' : ' · ${effect.activationOption}'}';
     case 'danno':

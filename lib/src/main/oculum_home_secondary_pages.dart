@@ -6216,12 +6216,17 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         Expanded(
                           child: Text(
                             identified
-                                ? '${entry.presetType} · ${elementDisplayName(entry.elementId)}\n${entry.descIt}'
+                                ? '${entry.presetType} · ${elementDisplayName(entry.elementId)}'
                                 : 'Creatura non identificata. Combattendola o consultando una pagina del Monster Book registrerai le informazioni scoperte.',
                           ),
                         ),
                       ],
                     ),
+                    if (identified)
+                      monsterReadingOverview(
+                        entry,
+                        weakPointKnown: weakPointKnown,
+                      ),
                     if (partyHuntsForMonster(entry.id).isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Text(
@@ -6260,6 +6265,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                                   .map((e) => resistanceLabel(e.key, e.value))
                                   .join(' · '),
                       ),
+                      monsterReadingAbilities(entry),
                     ],
                   ],
                 ),
@@ -9119,6 +9125,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               (e) => const {
                 'rabbit_hat',
                 'plasma_matter_recharge',
+                'mask_serious_punch',
+                'mask_blue_volley',
+                'mask_angelic_arrows',
+                'mask_solar_arrows',
+                'mask_shadow_form',
+                'mask_shadow_teleport',
               }.contains(e.target),
             )) {
       final used = await useConfiguredAbility(

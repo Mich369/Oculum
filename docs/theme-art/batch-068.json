@@ -1,0 +1,87 @@
+{
+  "provider": "built-in imagegen",
+  "reference": "assets/oculum/home_art/amber_shore.png",
+  "images": [
+    {
+      "id": "element_pack_gravita",
+      "name": "Anelli del peso",
+      "motif": "polvere astrale",
+      "motion": "gravity",
+      "file": "assets/oculum/theme_stories/webp/element_pack_gravita.webp",
+      "prompt": "Use case: illustration-story. Create an ORIGINAL wide 16:9 full-page painterly anime fantasy Oculum background. PRIMARY SCENE: An impossible ravine where loose slate rocks hover in concentric tilted layers and a waterfall bends sideways toward a dense dark stone suspended in air. Cool plum and grey, gravity through physical motion. Composition: illustrate the whole page naturally, with a quiet darker centre for readable controls, no empty rectangular panels. Matte hand-painted gouache and restrained anime fantasy linework, attractive deliberate shapes, believable construction and materials, detailed but uncluttered, no glossy 3D. The first reference is ONLY for painterly technique; do NOT copy its objects, geography, sunset or lighting. No sun disc, no eye in the sky. No Moon body in the sky. No coins, no currency discs, no Obser, no engraved eyes as generic decorations. Any clouds present naturally in the scene mix luminous BLUE dominant, then INDIGO, VIOLET and PASTEL PINK. Do not force clouds indoors. Tell the story ONLY through image details. NO writing, text, UI, logos, watermarks. Do not repeat the previous theme's composition, relic or environment."
+    },
+    {
+      "id": "element_pack_vuoto",
+      "name": "Orbita mancante",
+      "motif": "polvere astrale",
+      "motion": "void",
+      "file": "assets/oculum/theme_stories/webp/element_pack_vuoto.webp",
+      "prompt": "Use case: illustration-story. Create an ORIGINAL wide 16:9 full-page painterly anime fantasy Oculum background. PRIMARY SCENE: A silent flat plain ending at an irregular absence in reality, torn edges reveal neither sky nor stars, just matte depth; a single untethered boat rests on dry sand. Almost-black, muted violet and pale dust. Composition: illustrate the whole page naturally, with a quiet darker centre for readable controls, no empty rectangular panels. Matte hand-painted gouache and restrained anime fantasy linework, attractive deliberate shapes, believable construction and materials, detailed but uncluttered, no glossy 3D. The first reference is ONLY for painterly technique; do NOT copy its objects, geography, sunset or lighting. No sun disc, no eye in the sky. No Moon body in the sky. No coins, no currency discs, no Obser, no engraved eyes as generic decorations. Any clouds present naturally in the scene mix luminous BLUE dominant, then INDIGO, VIOLET and PASTEL PINK. Do not force clouds indoors. Tell the story ONLY through image details. NO writing, text, UI, logos, watermarks. Do not repeat the previous theme's composition, relic or environment."
+    },
+    {
+      "id": "element_pack_sogno",
+      "name": "Nubi del sonno",
+      "motif": "veli di nubi",
+      "motion": "clouds",
+      "file": "assets/oculum/theme_stories/webp/element_pack_sogno.webp",
+      "prompt": "Use case: illustration-story. Create an ORIGINAL wide 16:9 full-page painterly anime fantasy Oculum background. PRIMARY SCENE: A sleeping child's impossible bedroom opening into softly layered floating stairs, oversized paper boats among luminous blue-indigo-violet-pastel-pink clouds. Gentle surreal forms, no castle. Composition: illustrate the whole page naturally, with a quiet darker centre for readable controls, no empty rectangular panels. Matte hand-painted gouache and restrained anime fantasy linework, attractive deliberate shapes, believable construction and materials, detailed but uncluttered, no glossy 3D. The first reference is ONLY for painterly technique; do NOT copy its objects, geography, sunset or lighting. No sun disc, no eye in the sky. No Moon body in the sky. No coins, no currency discs, no Obser, no engraved eyes as generic decorations. Any clouds present naturally in the scene mix luminous BLUE dominant, then INDIGO, VIOLET and PASTEL PINK. Do not force clouds indoors. Tell the story ONLY through image details. NO writing, text, UI, logos, watermarks. Do not repeat the previous theme's composition, relic or environment."
+    },
+    {
+      "id": "element_pack_metallo",
+      "name": "Placche del fabbro",
+      "motif": "metallo inciso",
+      "motion": "glint",
+      "file": "assets/oculum/theme_stories/webp/element_pack_metallo.webp",
+      "prompt": "Use case: illustration-story. Create an ORIGINAL wide 16:9 full-page painterly anime fantasy Oculum background. PRIMARY SCENE: An old metalworker's foundry with sheets of hammered silver, folded copper, forged iron tools and a small repaired bird automaton, cold shafts of light across scratches. Physical metal weight, no coins. Composition: illustrate the whole page naturally, with a quiet darker centre for readable controls, no empty rectangular panels. Matte hand-painted gouache and restrained anime fantasy linework, attractive deliberate shapes, believable construction and materials, detailed but uncluttered, no glossy 3D. The first reference is ONLY for painterly technique; do NOT copy its objects, geography, sunset or lighting. No sun disc, no eye in the sky. No Moon body in the sky. No coins, no currency discs, no Obser, no engraved eyes as generic decorations. Any clouds present naturally in the scene mix luminous BLUE dominant, then INDIGO, VIOLET and PASTEL PINK. Do not force clouds indoors. Tell the story ONLY through image details. NO writing, text, UI, logos, watermarks. Do not repeat the previous theme's composition, relic or environment."
+    },
+    {
+      "id": "element_pack_postea",
+      "name": "Circuiti del ritorno",
+      "motif": "metallo inciso",
+      "motion": "circuit",
+      "file": "assets/oculum/theme_stories/webp/element_pack_postea.webp",
+      "prompt": "Use case: illustration-story. Create an ORIGINAL wide 16:9 full-page painterly anime fantasy Oculum background. PRIMARY SCENE: A moving runic workshop mounted on tall wheeled legs, streets of reused machines, workers carrying rune-etched spare arms; absolutely no modern electronic displays. Patinated teal and copper. Composition: illustrate the whole page naturally, with a quiet darker centre for readable controls, no empty rectangular panels. Matte hand-painted gouache and restrained anime fantasy linework, attractive deliberate shapes, believable construction and materials, detailed but uncluttered, no glossy 3D. The first reference is ONLY for painterly technique; do NOT copy its objects, geography, sunset or lighting. No sun disc, no eye in the sky. No Moon body in the sky. No coins, no currency discs, no Obser, no engraved eyes as generic decorations. Any clouds present naturally in the scene mix luminous BLUE dominant, then INDIGO, VIOLET and PASTEL PINK. Do not force clouds indoors. Tell the story ONLY through image details. NO writing, text, UI, logos, watermarks. Do not repeat the previous theme's composition, relic or environment."
+    },
+    {
+      "id": "element_pack_radice",
+      "name": "Radici del sepolcro",
+      "motif": "legno inciso",
+      "motion": "roots",
+      "file": "assets/oculum/theme_stories/webp/element_pack_radice.webp",
+      "prompt": "Use case: illustration-story. Create an ORIGINAL wide 16:9 full-page painterly anime fantasy Oculum background. PRIMARY SCENE: A forest hollow beneath the exposed intertwined roots of a colossal fallen tree, tiny clay cups and a rope ladder woven between root arches. Amber wood and emerald shade. Composition: illustrate the whole page naturally, with a quiet darker centre for readable controls, no empty rectangular panels. Matte hand-painted gouache and restrained anime fantasy linework, attractive deliberate shapes, believable construction and materials, detailed but uncluttered, no glossy 3D. The first reference is ONLY for painterly technique; do NOT copy its objects, geography, sunset or lighting. No sun disc, no eye in the sky. No Moon body in the sky. No coins, no currency discs, no Obser, no engraved eyes as generic decorations. Any clouds present naturally in the scene mix luminous BLUE dominant, then INDIGO, VIOLET and PASTEL PINK. Do not force clouds indoors. Tell the story ONLY through image details. NO writing, text, UI, logos, watermarks. Do not repeat the previous theme's composition, relic or environment."
+    },
+    {
+      "id": "element_pack_slime",
+      "name": "Membrane del principe",
+      "motif": "vetro corroso",
+      "motion": "bubbles",
+      "file": "assets/oculum/theme_stories/webp/element_pack_slime.webp",
+      "prompt": "Use case: illustration-story. Create an ORIGINAL wide 16:9 full-page painterly anime fantasy Oculum background. PRIMARY SCENE: A luminous subterranean pool of translucent slimes of different sizes, rounded jelly ripples and floating leaves trapped softly inside them; tiny discarded boots at the edge. Mint, blue and pale pink. Composition: illustrate the whole page naturally, with a quiet darker centre for readable controls, no empty rectangular panels. Matte hand-painted gouache and restrained anime fantasy linework, attractive deliberate shapes, believable construction and materials, detailed but uncluttered, no glossy 3D. The first reference is ONLY for painterly technique; do NOT copy its objects, geography, sunset or lighting. No sun disc, no eye in the sky. No Moon body in the sky. No coins, no currency discs, no Obser, no engraved eyes as generic decorations. Any clouds present naturally in the scene mix luminous BLUE dominant, then INDIGO, VIOLET and PASTEL PINK. Do not force clouds indoors. Tell the story ONLY through image details. NO writing, text, UI, logos, watermarks. Do not repeat the previous theme's composition, relic or environment."
+    },
+    {
+      "id": "element_pack_oculum",
+      "name": "Iride cesellata",
+      "motif": "metallo inciso",
+      "motion": "iris",
+      "file": "assets/oculum/theme_stories/webp/element_pack_oculum.webp",
+      "prompt": "Use case: illustration-story. Create an ORIGINAL wide 16:9 full-page painterly anime fantasy Oculum background. PRIMARY SCENE: An intimate violet magical study with streams of purple Oculum weaving between translucent crystal rods, one living almond-shaped magical aperture hovering above an open stone cradle. NOT a coin or round currency disc. Composition: illustrate the whole page naturally, with a quiet darker centre for readable controls, no empty rectangular panels. Matte hand-painted gouache and restrained anime fantasy linework, attractive deliberate shapes, believable construction and materials, detailed but uncluttered, no glossy 3D. The first reference is ONLY for painterly technique; do NOT copy its objects, geography, sunset or lighting. No sun disc, no eye in the sky. No Moon body in the sky. No coins, no currency discs, no Obser, no engraved eyes as generic decorations. Any clouds present naturally in the scene mix luminous BLUE dominant, then INDIGO, VIOLET and PASTEL PINK. Do not force clouds indoors. Tell the story ONLY through image details. NO writing, text, UI, logos, watermarks. Do not repeat the previous theme's composition, relic or environment."
+    },
+    {
+      "id": "element_pack_stella",
+      "name": "Atlante delle stelle",
+      "motif": "polvere astrale",
+      "motion": "stars",
+      "file": "assets/oculum/theme_stories/webp/element_pack_stella.webp",
+      "prompt": "Use case: illustration-story. Create an ORIGINAL wide 16:9 full-page painterly anime fantasy Oculum background. PRIMARY SCENE: A high observatory under an elaborate protective star sky, repaired silver astrolabe and lunar-allied banners, a handwritten chart with no legible text. Deep indigo and many small cool star lights, no Moon body. Composition: illustrate the whole page naturally, with a quiet darker centre for readable controls, no empty rectangular panels. Matte hand-painted gouache and restrained anime fantasy linework, attractive deliberate shapes, believable construction and materials, detailed but uncluttered, no glossy 3D. The first reference is ONLY for painterly technique; do NOT copy its objects, geography, sunset or lighting. No sun disc, no eye in the sky. No Moon body in the sky. No coins, no currency discs, no Obser, no engraved eyes as generic decorations. Any clouds present naturally in the scene mix luminous BLUE dominant, then INDIGO, VIOLET and PASTEL PINK. Do not force clouds indoors. Tell the story ONLY through image details. NO writing, text, UI, logos, watermarks. Do not repeat the previous theme's composition, relic or environment."
+    },
+    {
+      "id": "element_pack_corrotto",
+      "name": "Membrana contaminata",
+      "motif": "corteccia",
+      "motion": "corruption",
+      "file": "assets/oculum/theme_stories/webp/element_pack_corrotto.webp",
+      "prompt": "Use case: illustration-story. Create an ORIGINAL wide 16:9 full-page painterly anime fantasy Oculum background. PRIMARY SCENE: A once beautiful orchard overtaken by black branching veins in the fruit and rust-coloured mould, a clean uninfected sapling guarded inside a cracked glass bell. Green, bruised violet and orange rot. Composition: illustrate the whole page naturally, with a quiet darker centre for readable controls, no empty rectangular panels. Matte hand-painted gouache and restrained anime fantasy linework, attractive deliberate shapes, believable construction and materials, detailed but uncluttered, no glossy 3D. The first reference is ONLY for painterly technique; do NOT copy its objects, geography, sunset or lighting. No sun disc, no eye in the sky. No Moon body in the sky. No coins, no currency discs, no Obser, no engraved eyes as generic decorations. Any clouds present naturally in the scene mix luminous BLUE dominant, then INDIGO, VIOLET and PASTEL PINK. Do not force clouds indoors. Tell the story ONLY through image details. NO writing, text, UI, logos, watermarks. Do not repeat the previous theme's composition, relic or environment."
+    }
+  ],
+  "status": "Historical generation batch. Final assets and latest prompts are indexed in catalogue.json and latest-prompts.json."
+}

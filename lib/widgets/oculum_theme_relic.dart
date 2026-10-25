@@ -3,6 +3,8 @@ import 'oculum_goth_ornaments.dart';
 import 'oculum_theme_asset_packs.dart';
 import 'oculum_theme_presentation.dart';
 import 'oculum_element_theme_registry.dart';
+import 'oculum_monster_theme.dart';
+import '../pages/oculum_dungeon/monster_book.dart';
 
 OculumThemeAssetPack oculumResolveThemeArt(
   OculumGothOrnaments spec,
@@ -94,14 +96,16 @@ class OculumThemeRelicBanner extends StatelessWidget {
       animation: Listenable.merge([
         oculumThemePresentation,
         oculumSheetRelicSelections,
+        oculumSheetMonsterThemes,
       ]),
       builder: (context, _) {
         final presentation = oculumThemePresentationForSheet(sheetId);
+        final monsterTheme = oculumMonsterThemeById(presentation.artPackId);
         final pack = oculumResolveThemeArt(spec, presentation);
         final showThemeArtwork =
             pack.id != 'classic_reliquary' && pack.id != 'classic_low_detail';
         final theme = Theme.of(context);
-        final accent = spec.accent;
+        final accent = monsterTheme?.accent ?? spec.accent;
         final iconSize = dense ? 30.0 : 42.0;
         return GestureDetector(
           onTap: () => showOculumRelicPicker(context, sheetId: sheetId),
@@ -136,7 +140,9 @@ class OculumThemeRelicBanner extends StatelessWidget {
                       ],
                     ),
                   ),
-                  child: showThemeArtwork
+                  child: monsterTheme != null
+                      ? OculumMonsterRelic(theme: monsterTheme)
+                      : showThemeArtwork
                       ? ExcludeSemantics(
                           child: Opacity(
                             opacity: presentation.relicOpacity,
@@ -174,7 +180,7 @@ class OculumThemeRelicBanner extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        pack.name,
+                        monsterTheme?.name ?? pack.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: dense
@@ -183,7 +189,7 @@ class OculumThemeRelicBanner extends StatelessWidget {
                       ),
                       if (!dense) const SizedBox(height: 3),
                       Text(
-                        pack.motif,
+                        monsterTheme?.motif ?? pack.motif,
                         maxLines: dense ? 1 : 2,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -222,6 +228,24 @@ Future<void> showOculumRelicPicker(
                     'water|tide|mare|abis|onda|ocean|acqua',
                   ).hasMatch(text));
         }).toList();
+        final own = oculumMonsterThemeById(
+          oculumSheetMonsterThemes.value[sheetId] ?? '',
+        );
+        final creatures =
+            <OculumMonsterTheme>[
+                  for (final monster in monsterBookEntries)
+                    if (oculumMonsterThemeUnlocks.value.contains(monster.id) ||
+                        own?.monster.id == monster.id)
+                      for (final color in oculumMonsterColors(monster))
+                        OculumMonsterTheme(monster, color),
+                ]
+                .where(
+                  (theme) =>
+                      '${theme.name} ${theme.monster.elementId} ${theme.motif}'
+                          .toLowerCase()
+                          .contains(query.toLowerCase().trim()),
+                )
+                .toList();
         return AlertDialog(
           title: const Text('Reliquie Oculum'),
           content: SizedBox(
@@ -239,7 +263,7 @@ Future<void> showOculumRelicPicker(
                 TextButton.icon(
                   onPressed: () => Navigator.pop(dialog, ''),
                   icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Predefinita del tema attuale'),
+                  label: const Text('Automatico · tema del mostro o del piano'),
                 ),
                 Expanded(
                   child: GridView.builder(
@@ -250,8 +274,45 @@ Future<void> showOculumRelicPicker(
                           crossAxisSpacing: 6,
                           mainAxisSpacing: 6,
                         ),
-                    itemCount: matches.length,
+                    itemCount: matches.length + creatures.length,
                     itemBuilder: (context, index) {
+                      if (index >= matches.length) {
+                        final creature = creatures[index - matches.length];
+                        return Tooltip(
+                          message:
+                              '${creature.motif}\nColore naturale: ${creature.color.weight}%',
+                          child: InkWell(
+                            onTap: () => Navigator.pop(dialog, creature.id),
+                            child: Card(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(9),
+                                side: BorderSide(
+                                  color: creature.accent.withValues(alpha: .6),
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(5),
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      child: OculumMonsterRelic(
+                                        theme: creature,
+                                      ),
+                                    ),
+                                    Text(
+                                      creature.name,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(fontSize: 10),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
                       final pack = matches[index];
                       return InkWell(
                         onTap: () => Navigator.pop(dialog, pack.id),

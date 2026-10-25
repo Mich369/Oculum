@@ -21,13 +21,17 @@ extension _OculumCombatScout on _OculumHomePageState {
       final nameKnown = knowledge['nameKnown'] == true;
       final weakPoint = knowledge['weakPoint'] == true;
       final pagePurchased = knowledge['pagePurchased'] == true;
-      if (!seen && !nameKnown && !weakPoint && !pagePurchased) continue;
+      final themeUnlocked = knowledge['themeUnlocked'] == true || pagePurchased;
+      if (!seen && !nameKnown && !weakPoint && !pagePurchased && !themeUnlocked) {
+        continue;
+      }
       entries.add({
         'monsterBookId': id,
         'seen': seen,
         'nameKnown': nameKnown || pagePurchased,
         'weakPoint': weakPoint || pagePurchased,
         'pagePurchased': pagePurchased,
+        'themeUnlocked': themeUnlocked,
       });
     }
     entries.sort(
@@ -76,6 +80,7 @@ extension _OculumCombatScout on _OculumHomePageState {
     bool seen = false,
     bool weakPoint = false,
     bool pagePurchased = false,
+    bool themeUnlocked = false,
     bool broadcast = false,
   }) {
     final id = monsterId.trim();
@@ -99,11 +104,14 @@ extension _OculumCombatScout on _OculumHomePageState {
       'nameKnown': previous['nameKnown'] == true || nameKnown || pagePurchased,
       'weakPoint': previous['weakPoint'] == true || weakPoint || pagePurchased,
       'pagePurchased': previous['pagePurchased'] == true || pagePurchased,
+      'themeUnlocked':
+          previous['themeUnlocked'] == true || themeUnlocked || pagePurchased,
       'discoveredAt':
           previous['discoveredAt'] ?? DateTime.now().toIso8601String(),
     };
     if (mapEquals(previous, next)) return;
     monsterBookPartyDiscoveries[key] = next;
+    syncMonsterThemeUnlocks();
     combatKnowledgeRevision.value++;
     programmaSalvataggio();
     if (broadcast && realtimeService?.isConnected == true) {
@@ -116,6 +124,7 @@ extension _OculumCombatScout on _OculumHomePageState {
             'seen': seen,
             'weakPoint': weakPoint || pagePurchased,
             'pagePurchased': pagePurchased,
+            'themeUnlocked': next['themeUnlocked'] == true,
           }),
         ),
       );
@@ -136,6 +145,7 @@ extension _OculumCombatScout on _OculumHomePageState {
       seen: payload['seen'] == true,
       weakPoint: payload['weakPoint'] == true,
       pagePurchased: payload['pagePurchased'] == true,
+      themeUnlocked: payload['themeUnlocked'] == true,
     );
   }
 
@@ -170,6 +180,10 @@ extension _OculumCombatScout on _OculumHomePageState {
             raw['weakPoint'] == true ||
             pagePurchased,
         'pagePurchased': pagePurchased,
+        'themeUnlocked':
+            previous['themeUnlocked'] == true ||
+            raw['themeUnlocked'] == true ||
+            pagePurchased,
         'discoveredAt':
             previous['discoveredAt'] ?? DateTime.now().toIso8601String(),
       };
@@ -178,6 +192,7 @@ extension _OculumCombatScout on _OculumHomePageState {
       changed = true;
     }
     if (!changed) return;
+    syncMonsterThemeUnlocks();
     combatKnowledgeRevision.value++;
     programmaSalvataggio();
     if (mounted) setState(() {});
@@ -361,6 +376,43 @@ extension _OculumCombatScout on _OculumHomePageState {
     };
   }
 
+  Map<String, int> scoutCoreStatsAt(int index) => {
+    for (final key in ['resilienza', 'volonta', 'materia', 'oculum'])
+      key: sheetIntValueAt(index, key),
+  };
+
+  Map<String, dynamic> scoutAdditionalReading(
+    int index,
+    int natural,
+    bool success,
+    int observerPower,
+  ) => {
+    if (!success)
+      'blockedByStat': oculumScoutDominantStat(scoutCoreStatsAt(index)),
+    if (success && natural >= 18)
+      'powerBand': oculumScoutPowerBand(
+        observerPower,
+        oculumScoutPower(
+          sheetCriticalLevelAt(index),
+          scoutCoreStatsAt(index).values,
+        ),
+      ),
+  };
+
+  String scoutLogReading(Map<String, dynamic> payload, String fallback) {
+    final power = oculumPowerReadPhrases['${payload['powerBand'] ?? ''}'];
+    if (power != null) return power;
+    final blocked = '${payload['blockedByStat'] ?? ''}';
+    return const [
+          'resilienza',
+          'volonta',
+          'materia',
+          'oculum',
+        ].contains(blocked)
+        ? oculumScoutFailurePhrase(blocked)
+        : fallback;
+  }
+
   void rememberCombatScoutRead(String key, Map<String, dynamic> read) {
     final previous = combatDiscoveries[key];
     int rank(Map<String, dynamic>? value) => switch (value?['reveal']) {
@@ -466,6 +518,12 @@ extension _OculumCombatScout on _OculumHomePageState {
           'targetName': '${target['name'] ?? '???'}',
           'scoutPhase': 'request',
           'observerGrade': activeCriticalGrade(),
+          'observerPower': oculumScoutPower(activeCriticalLevel(), [
+            resilienzaTotale(),
+            volontaTotale(),
+            materiaTotale(),
+            oculumTotale(),
+          ]),
           'natural': natural,
           'total': total,
         };
@@ -509,6 +567,18 @@ extension _OculumCombatScout on _OculumHomePageState {
             if (read.isExact) 'bodyObservers': [sheetTagAt(schedaCorrente)],
           });
           final monsterBookId = monsterBookIdForCombatToken(target);
+          if (read.isExact && monsterBookId.isNotEmpty) {
+            rememberMonsterBookPartyDiscovery(
+              monsterBookId,
+              seen: true,
+              nameKnown: true,
+              themeUnlocked: oculumScoutUnlocksTheme(
+                true,
+                Random.secure().nextInt(100),
+              ),
+              broadcast: true,
+            );
+          }
           if (read.isExact && natural == 20 && monsterBookId.isNotEmpty) {
             rememberMonsterBookPartyDiscovery(
               monsterBookId,
@@ -523,8 +593,14 @@ extension _OculumCombatScout on _OculumHomePageState {
               broadcast: true,
             );
           }
+          final extra = scoutAdditionalReading(
+            index,
+            natural,
+            read.isExact,
+            readIntValue(request['observerPower']),
+          );
           aggiungiLog(
-            '[PERCEZIONE] ${target['name']}: ${combatScoutReadText(read)}${read.showsProbabilities ? '; livello ${read.targetLevel}, grado ${read.targetGrade}' : ''}${read.isExact && sheetCombatScoutHasVeilAt(index) ? '; bonus Velo di Invisibilità/Trasparenza dimezzato per difetto per te e gli alleati fino a fine fight' : ''}${read.isExact && natural == 20 ? '; punto debole: Fragilità Semi Letale per te e gli alleati fino a fine fight' : ''}.',
+            '[PERCEZIONE] ${scoutLogReading(extra, combatScoutReadText(read))}.',
           );
           programmaSalvataggio();
         }
@@ -596,6 +672,15 @@ extension _OculumCombatScout on _OculumHomePageState {
         'scoutPhase': 'result',
         'status': 'resolved',
         'success': read.isExact,
+        ...scoutAdditionalReading(
+          targetIndex,
+          readIntValue(payload['natural']),
+          read.isExact,
+          readIntValue(payload['observerPower']),
+        ),
+        'themeUnlocked':
+            monsterBookId.isNotEmpty &&
+            oculumScoutUnlocksTheme(read.isExact, Random.secure().nextInt(100)),
         'reveal': read.reveal.name,
         if (read.showsProbabilities) 'level': read.targetLevel,
         if (read.showsProbabilities) 'cm': read.targetCm,
@@ -613,6 +698,14 @@ extension _OculumCombatScout on _OculumHomePageState {
         reply.remove(key);
       }
       onlineCombatRequests[id] = reply;
+      if (read.isExact && monsterBookId.isNotEmpty) {
+        rememberMonsterBookPartyDiscovery(
+          monsterBookId,
+          seen: true,
+          nameKnown: true,
+          themeUnlocked: reply['themeUnlocked'] == true,
+        );
+      }
       if (read.showsProbabilities) {
         rememberCombatScoutRead(
           combatDiscoveryKey(target, combatScoutSide(source)),
@@ -682,17 +775,19 @@ extension _OculumCombatScout on _OculumHomePageState {
           monsterBookId,
           seen: true,
           weakPoint: payload['weakPoint'] == true,
+          nameKnown: payload['success'] == true,
+          themeUnlocked: payload['themeUnlocked'] == true,
         );
       }
       final request = onlineCombatRequests[id];
       if (request != null && request['status'] == 'pending') {
         request['status'] = 'resolved';
         aggiungiLog(
-          '[PERCEZIONE] ${payload['targetName']}: ${reveal == OculumCombatScoutReveal.exact.name
-              ? 'lettura esatta; livello ${payload['level']}'
-              : reveal == OculumCombatScoutReveal.approximate.name
-              ? 'lettura approssimata; livello ${payload['level']}, grado ${payload['grade']}'
-              : 'non senti abbastanza'}${payload['veilBuffHalved'] == true ? '; bonus Velo di Invisibilità/Trasparenza dimezzato per difetto' : ''}${payload['weakPoint'] == true ? '; punto debole: Fragilità Semi Letale per te e gli alleati fino a fine fight' : ''}.',
+          '[PERCEZIONE] ${scoutLogReading(payload, reveal == 'exact'
+              ? 'lettura esatta'
+              : reveal == 'approximate'
+              ? 'lettura approssimata'
+              : 'non senti abbastanza')}.',
         );
       }
     } else {

@@ -1,0 +1,8 @@
+{
+  "id": "moon_iron",
+  "name": "Ferro lunare",
+  "motif": "falce lunare incastonata in ferro",
+  "file": "assets/oculum/theme_stories/webp/moon_iron.webp",
+  "prompt": "Original wide 16:9 full-bleed Oculum background. PRIMARY SCENE: A small lunar-allied smithy repairing black iron crescent buckles and star-shaped clasps by a cool forge; an apprentice has carefully wrapped an old silver banner. Graphite and blue, no Moon in the sky. Matte hand-painted anime fantasy, dark fantasy where appropriate, deliberate organic shapes, coherent construction and materials. First reference is ONLY for brush technique, do NOT copy its scenery, objects, sunset or composition. Naturally illustrate the whole page, keep a quiet darker central area for readable app controls without blank rectangular panels. NO solar disc or sky eye. The good Moon is dead and absent from the sky; lunar and star symbols are allied and protective and can appear only on earthly carvings or relics. Most devils are lunar allies. NO coins, currency discs or generic round eye medallions. Clouds only where naturally present: luminous BLUE dominant then INDIGO, VIOLET, PASTEL PINK. Vary viewpoint, architecture, scale, silhouettes, palette and lighting from other themes. Story only through visual details. No text, UI, writing, logo or watermark.",
+  "provider": "built-in imagegen"
+}

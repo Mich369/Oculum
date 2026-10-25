@@ -1,0 +1,9 @@
+{
+  "id": "obser_relic",
+  "name": "Reliquia Obser",
+  "motif": "moneta perforata e bilancia rituale",
+  "motion": "riflesso sulla moneta",
+  "file": "assets/oculum/theme_stories/webp/obser_relic.webp",
+  "prompt": "Use case: illustration-story. Original wide 16:9 full-bleed painterly anime fantasy Oculum background. PRIMARY SCENE: An intimate currency examiner's stone bench in a dark old exchange, a few canonical GRAY STONE Obser discs with engraved central ALMOND EYE and dark irregular cracks, a small mechanical balance and worn cloth pouches. Follow the supplied Obser reference exactly. No sun, no skyline, no gold coins. Keep the whole page naturally illustrated with a broad quiet darker central region for readable controls, never a blank rectangular panel. Matte hand-painted gouache, controlled anime fantasy shape design, believable organic detail and materials, no shiny 3D. First reference is ONLY brush technique: never copy its geography, composition, sunset, objects or sky. No solar disc or sky-eye. No Moon body in the sky. This specific currency scene must use the exact GREY cracked stone disc with its central engraved almond eye from the currency reference. Clouds, only where naturally present, mix luminous BLUE dominant then INDIGO then VIOLET then PASTEL PINK. Vary architecture, scale, silhouette, viewpoint and lighting from the other themes. Tell the story through details alone. NO text, UI, writing, logos, signatures or watermarks.",
+  "provider": "built-in imagegen"
+}

@@ -3702,6 +3702,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   void nextMasterInitiativeTurn({int delta = 1}) {
     if (masterInitiativeTokens.isEmpty) return;
+    if (delta > 0) maskedAnyTurnEnded();
     final group = masterInitiativeGroups
         .where((g) => g['id'] == selectedMasterInitiativeGroupId)
         .firstOrNull;
@@ -6360,6 +6361,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       });
 
       consumeDifficultyIncreaseFortunaBonus(hpLost: hp < hpPrima);
+      maskedAngelicHpHit(max(0, hpPrima - hp));
       final elementalAdjustment = incomingElementRules.isEmpty
           ? 0
           : dannoDopoRegoleElementali.compareTo(dannoModificatoBase);

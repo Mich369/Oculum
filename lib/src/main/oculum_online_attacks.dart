@@ -1620,6 +1620,28 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     bool resourceAlreadySpent = false,
     bool rabbitHat = false,
   }) async {
+    final masked = pendingMaskedAttack;
+    final shadowRollForAction = maskedShadowActive ? 5 : 0;
+    final shadowDamageForAction = maskedShadowDamage;
+    final maskedVolley = masked['kind'] == 'mask_blue_volley';
+    final maskedPunch = masked['kind'] == 'mask_serious_punch';
+    final maskedArrows = const {
+      'mask_angelic_arrows',
+      'mask_solar_arrows',
+    }.contains(masked['kind']);
+    final maskedArrowCount = masked['kind'] == 'mask_angelic_arrows' ? 3 : 2;
+    if (maskedArrows) maximumTargets = maskedArrowCount;
+    if (maskedPunch) {
+      initialChoice = 'schianto';
+      maximumTargets = 1;
+    }
+    if (maskedVolley) {
+      initialChoice = 'riflessi';
+      maximumTargets = max(
+        readIntValue(masked['reflexHits']),
+        readIntValue(masked['precisionHits']),
+      );
+    }
     final hatStage = rabbitHat
         ? readIntValue(planarState['rabbitHatStage']).clamp(1, 3)
         : 0;
@@ -1806,6 +1828,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           featured: true,
         ),
     ];
+    if (maskedPunch) choices.removeWhere((c) => c.id != 'schianto');
+    if (maskedVolley) {
+      choices.removeWhere(
+        (c) => !const {'riflessi', 'precisione_punto_debole'}.contains(c.id),
+      );
+      if (!tokens.any(combatTokenWeakPointKnown)) {
+        choices.removeWhere((c) => c.id == 'precisione_punto_debole');
+      }
+    }
     if (activeStructuredEffects.any(
       (e) => '${e['effectId']}'.startsWith('famelico_assault_'),
     )) {
@@ -2005,7 +2036,20 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       );
       return;
     }
-    if (!resourceAlreadySpent &&
+    if (maskedVolley &&
+        controlledPlan.targetIds.length >
+            readIntValue(
+              masked[controlledPlan.choiceId == 'riflessi'
+                  ? 'reflexHits'
+                  : 'precisionHits'],
+            )) {
+      aggiungiLog(
+        '[CONCATENAZIONE] Seleziona al massimo un bersaglio per colpo disponibile.',
+      );
+      return;
+    }
+    if (!maskedPunch &&
+        !resourceAlreadySpent &&
         freeReactionId == null &&
         schiantoReactionId == null &&
         robotAttack['free'] != true &&
@@ -2105,7 +2149,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       (sum, e) => sum + max(0, readIntValue(e['valueExpression'])),
     );
     final baseDamage = oculumAttackDamageWithAbilityBonus(
-      preparedDamage: preparedDamage,
+      preparedDamage:
+          preparedDamage + max(0, shadowDamageForAction - maskedShadowDamage),
       fixedBonuses: flatDamageBonus,
       abilityDamageBonus: abilityDamageBonus,
     );
@@ -2161,17 +2206,36 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     aggiungiLog(
       '[ATTACCO] $label · ${choices.firstWhere((c) => c.id == controlledPlan.choiceId).name}.${controlledPlan.choiceId == 'vc' ? '' : ' Descrivi l’attacco al Master, anche a voce.'}',
     );
-    final hatTargets = rabbitHat
+    final maskedPrecision =
+        controlledPlan.choiceId == 'precisione_punto_debole';
+    final hatTargets = maskedArrows
+        ? oculumRabbitHatHits(controlledPlan.targetIds, maskedArrowCount)
+        : maskedVolley
+        ? oculumMaskedVolleyOrder(
+            controlledPlan.targetIds,
+            readIntValue(
+              masked[maskedPrecision ? 'precisionHits' : 'reflexHits'],
+            ),
+            '${planarState['lastMaskedAttacker'] ?? ''}',
+          )
+        : rabbitHat
         ? oculumRabbitHatHits(controlledPlan.targetIds, hatStage)
         : controlledPlan.targetIds;
     void resolved(int natural, int total) {
+      final maskedPackets = <Map<String, dynamic>>[];
+      final deferredCounterHits = <Map<String, dynamic>>[];
+      Future<void>? firstCounterResolution;
       final unusedFastDamageBonus =
           consumePendingFastReactionConsequenceBonus();
       if (robotAttack['kind'] == 'shoulder') total -= 3;
       if (robotAttack['kind'] == 'automatic') total += 6;
       if (rabbitHat) total += oculumRabbitHatRollBonus(hatStage);
+      if (maskedVolley && !maskedPrecision) total += 5;
+      if (maskedArrows) total += maskedArrowCount == 3 ? 9 : 3;
       total += readIntValue(preparedSkill['rollBonus']);
       total += planarAttackRollBonus();
+      if (!maskedShadowActive) total += shadowRollForAction;
+      planarState.remove('maskedTeleport');
       total +=
           (total * activeStructuredEffectBonus('attacco_percentuale') / 100)
               .floor();
@@ -2310,6 +2374,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               );
         final request = <String, dynamic>{
           'id': requestId,
+          if (maskedVolley) ...{
+            'maskedVolley': true,
+            'maskedHitIndex': hit,
+            'maskedHitCount': hatTargets.length,
+            'maskedSelectedTargets': controlledPlan.targetIds,
+          },
           'scope': permissionScope,
           'encounterId': encounter,
           'sourceTag': sourceTag,
@@ -2319,6 +2389,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               fallback: oculumCorruptionMasteryTargetControlPercent,
             ).clamp(0, 100),
           'sourceMonsterBookId': sourceMonsterId,
+          if (maskedIsAbility('masked_angelic_memory'))
+            'angelicChaosPercent': maskedParameter('mask_angelic_memory', 25),
           'sourceName': realtimeDisplayName(),
           if (robotAttack.isNotEmpty) 'meccanioAttack': robotAttack,
           if (effectsForTarget.any(
@@ -2436,28 +2508,75 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'status': 'pending',
           'createdAt': DateTime.now().toIso8601String(),
         };
+        if (maskedArrows) {
+          request['damage'] =
+              (dannoTotale() / maskedArrowCount).floor() +
+              4 +
+              readIntValue(masked['form']) * 5;
+          request['element'] = maskedArrowCount == 3 ? 'angelico' : 'solare';
+          request['abilityName'] =
+              '${maskedArrowCount == 3 ? 'Arco angelico' : 'Arco solare'} · freccia ${hit + 1}/$maskedArrowCount';
+        } else if (maskedPunch) {
+          request['damage'] = oculumMaskedPunchDamage(
+            dannoTotale() + unusedFastDamageBonus,
+            total,
+            readIntValue(masked['form']),
+          );
+          request['abilityName'] = 'Pugno serio';
+        } else if (maskedVolley) {
+          request['damage'] = oculumMaskedVolleyDamage(
+            dannoTotale() + unusedFastDamageBonus,
+            controlledPlan.targetIds.length,
+            maskedPrecision,
+          );
+          request['abilityName'] =
+              'Concatenazione · ${maskedPrecision ? 'Precisione' : 'Riflessi'} · ${hit + 1}/${hatTargets.length}';
+        }
         if (isAutonomousMecha) {
           request['damage'] = oculumMechaSoloDamage(
             readIntValue(request['damage']),
           );
           request['mechaAutonomous'] = true;
         }
-        if (incomingAttack != null) {
+        if (incomingAttack != null && hit > 0) {
+          deferredCounterHits.add(request);
+        } else if (incomingAttack != null) {
           request['id'] = 'counter:${incomingAttack['id']}';
           incomingAttack['counterAttackResponse'] = request;
-          unawaited(
-            applyResolvedOnlineDefense(
-              incomingAttack,
-              'controattacco',
-              total,
-              defenseNatural: natural,
-            ),
+          firstCounterResolution = applyResolvedOnlineDefense(
+            incomingAttack,
+            'controattacco',
+            total,
+            defenseNatural: natural,
           );
+        } else if (maskedVolley) {
+          maskedPackets.add(request);
         } else {
           onlineCombatRequests[requestId] = request;
           receiveLocalCombatAttack(request);
           unawaited(sendOnlineCombatRequest(request));
         }
+      }
+      if (maskedVolley) startMaskedVolley(maskedPackets);
+      if (firstCounterResolution != null) {
+        unawaited(
+          firstCounterResolution.then((_) {
+            if (!mounted || encounter != onlineCombatEncounterId) return;
+            if (maskedVolley) {
+              startMaskedVolley(deferredCounterHits);
+            } else {
+              for (final request in deferredCounterHits) {
+                dispatchMaskedVolleyPacket(request);
+              }
+            }
+          }),
+        );
+      }
+      if (shadowDamageForAction > 0 || shadowRollForAction > 0) {
+        consumeMaskedShadowAction();
+      }
+      if (maskedPunch || maskedVolley || maskedArrows) {
+        planarState.remove('maskedAttack');
       }
       if (suicideExplosion) {
         currentHpController.text = '0';
@@ -2932,6 +3051,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     if (event != 'combat_attack' && event != 'combat_defense') return;
     if (!validPermissionSender(payload)) return;
+    if (event == 'combat_defense' && receiveMaskedInterrupt(payload)) return;
     final id = '${payload['id'] ?? ''}';
     if (id.isEmpty ||
         id.length > 160 ||
@@ -3095,6 +3215,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       request['status'] = 'resolved';
       request['defense'] = defense;
       request['defenseChoice'] = payload['defenseChoice'];
+      advanceMaskedVolley(
+        request,
+        readIntValue(payload['defenseNatural']),
+        defense,
+      );
       request['defenseHelp'] = readIntValue(payload['defenseHelp']);
       if (request['choice'] == 'parasite_infiltration' &&
           outcome != OculumAttackOutcome.avoided) {
@@ -3525,6 +3650,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (!isCounter) {
       defense += readIntValue(takePreparedSkill('difesa')['rollBonus']);
       defense += planarDefenseRollBonus();
+      planarState.remove('maskedTeleport');
       planarState.remove('defenseRollPenalty');
     }
     final incomingPlanar = (request['effects'] as List? ?? [])
@@ -3656,6 +3782,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     request['defense'] = defense;
     request['defenseChoice'] = choice;
     request['defenseNatural'] = defenseNatural;
+    final maskedCriticalStop =
+        request['maskedVolley'] == true &&
+        oculumMaskedVolleyStops(
+          defenseNatural,
+          defense,
+          readIntValue(request['attack']),
+          readIntValue(request['maskedHitIndex']),
+        );
     request['defenseSubtraitTotal'] = reflexesTotal;
     request['targetMovement'] = movimento();
     request['reflexBonusReaction'] = reflexBonusReaction;
@@ -3739,7 +3873,20 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         '[RAGGIO ANGELICO] Danno base ${readIntValue(request['damage'])} + Karma attaccante $sourceKarma + ${max(0, -targetKarma)} dal Karma negativo del bersaglio; moltiplicatore ×${oculumAngelRayMultiplier(targetKind)} = $resolvedAttackBaseDamage prima di difesa, resistenze e Scudi.',
       );
     }
-    var damage = isCounter
+    if (identityIsChaos &&
+        (request['angelicChaosPercent'] is num ||
+            request['sourceMonsterBookId'] == 'uomo_maschera_angelica')) {
+      final percent = max(
+        0,
+        readIntValue(request['angelicChaosPercent'], fallback: 25),
+      );
+      resolvedAttackBaseDamage =
+          (resolvedAttackBaseDamage * (1 + percent / 100)).floor();
+      aggiungiLog('[ASSASSINO ANGELICO] +$percent% Danni contro Chaos.');
+    }
+    var damage = maskedCriticalStop
+        ? 0
+        : isCounter
         ? (counterPercent > 0 ? resolvedAttackBaseDamage : 0)
         : resisted && isMeccanio
         ? 0
@@ -3963,6 +4110,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       'hpLost': min(max(0, beforeHp), max(0, beforeHp - hpCorrenti())),
       'pawnPending': pawnPendingDamage.isNotEmpty,
     };
+    if (receipt.values.whereType<int>().any((v) => v > 0)) {
+      planarState['lastMaskedAttacker'] = request['sourceTag'];
+    }
     resolveSaltalungoTail(request, readIntValue(receipt['hpLost']));
     final attackerIndex = localSheetIndexForOculumTag(
       '${request['sourceTag']}',
@@ -4192,6 +4342,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       'combat_defense',
       permissionEnvelope(reply),
     );
+    advanceMaskedVolley(request, defenseNatural, defense);
     if (mounted) setState(() {});
     programmaSalvataggio();
   }

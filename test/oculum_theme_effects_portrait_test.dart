@@ -6,7 +6,11 @@ import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Future<dynamic> mountSheet(WidgetTester tester, Size size) async {
+Future<dynamic> mountSheet(
+  WidgetTester tester,
+  Size size, {
+  Key? captureKey,
+}) async {
   SharedPreferences.setMockInitialValues({});
   final directory = Directory(
     'build/theme-effect-test-${DateTime.now().microsecondsSinceEpoch}',
@@ -32,7 +36,11 @@ Future<dynamic> mountSheet(WidgetTester tester, Size size) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: oculumBaseTheme,
-      builder: (_, child) => OculumThemeScope(child: child!),
+      builder: (_, child) => OculumThemeScope(
+        child: captureKey == null
+            ? child!
+            : RepaintBoundary(key: captureKey, child: child!),
+      ),
       home: const OculumHomePage(),
     ),
   );

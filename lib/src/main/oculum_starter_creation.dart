@@ -128,6 +128,9 @@ String oculumMonsterBookSkillBaseId(String id) =>
 bool oculumMonsterBookSkillIsPassive(String id) {
   final base = oculumMonsterBookSkillBaseId(id);
   return base == 'nuvi_flight' ||
+      base == 'masked_green_memory' ||
+      base == 'masked_violet_recovery' ||
+      base == 'masked_angelic_memory' ||
       base == 'armored_seed_shell' ||
       base == 'blade_skull_vampirism' ||
       base == 'bringi_seeds' ||
@@ -227,15 +230,19 @@ final _naturalMonsterTechniqueIds = <String>{
 };
 
 bool oculumMonsterTechniqueIsNatural(MonsterBookEntry monster, String id) =>
-    !const {
-      'fiaccolata',
-      'topino_backstep',
-      'cura_topesca',
-      'topino_poison_knife',
-    }.contains(oculumMonsterBookSkillBaseId(id)) &&
-    (id.startsWith('runic_') ||
-        !oculumMonsterHasOculumArt(monster) ||
-        _naturalMonsterTechniqueIds.contains(oculumMonsterBookSkillBaseId(id)));
+    id.startsWith('masked_')
+    ? monsterBookConcreteTechnique(id)?.costResource != 'oculum'
+    : !const {
+            'fiaccolata',
+            'topino_backstep',
+            'cura_topesca',
+            'topino_poison_knife',
+          }.contains(oculumMonsterBookSkillBaseId(id)) &&
+          (id.startsWith('runic_') ||
+              !oculumMonsterHasOculumArt(monster) ||
+              _naturalMonsterTechniqueIds.contains(
+                oculumMonsterBookSkillBaseId(id),
+              ));
 
 List<CharacterSkill> oculumMonsterBookSkills(MonsterBookEntry monster) {
   if (oculumWitheredLarvaMonster(monster)) {
@@ -525,6 +532,10 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
     );
   }
   final art = _rawMonsterBookArt(monster);
+  if (monster.id == 'ombra_ignota') {
+    art.nome = 'L’Ombra';
+    art.openName = 'Ombra senza volto';
+  }
   if (monster.id == 'golem_runico') {
     art.openName = 'Portali del nucleo';
     art.openDescription =
@@ -1172,6 +1183,7 @@ List<List<OculumStructuredEffect>>? _monsterBookBaseEffects(String id) {
               mode: concrete.forms[form][index].mode,
               duration: concrete.forms[form][index].duration,
               recipient: concrete.forms[form][index].recipient,
+              maximumTargets: concrete.forms[form][index].maximumTargets,
               appliedState: concrete.forms[form][index].type == 'stato'
                   ? concrete.forms[form][index].target
                   : '',

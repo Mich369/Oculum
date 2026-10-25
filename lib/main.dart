@@ -62,6 +62,10 @@ import 'widgets/oculum_watching_eyes.dart';
 import 'widgets/oculum_combat_theme.dart';
 import 'widgets/oculum_theme_relic.dart';
 import 'widgets/oculum_theme_sheet_art.dart';
+import 'widgets/oculum_monster_theme.dart';
+import 'widgets/oculum_narrative_background.dart';
+import 'widgets/oculum_theme_asset_packs.dart';
+import 'widgets/oculum_hex_color_field.dart';
 import 'widgets/oculum_art_button.dart';
 import 'services/oculum_encounter_visibility.dart';
 import 'widgets/oculum_quick_edit_eye.dart';
@@ -123,6 +127,7 @@ part 'src/main/oculum_online_permissions.dart';
 part 'src/main/oculum_stat_threshold_skills.dart';
 part 'src/main/oculum_diary_knowledge_integration.dart';
 part 'src/main/oculum_monster_loot.dart';
+part 'src/main/oculum_monster_dossier.dart';
 part 'src/main/oculum_equipment_abilities.dart';
 part 'src/main/oculum_enemy_ability_variants.dart';
 part 'src/main/oculum_authored_materials.dart';
@@ -138,6 +143,8 @@ part 'src/main/oculum_party_quests.dart';
 part 'src/main/oculum_planar_runtime.dart';
 part 'src/main/oculum_mecha.dart';
 part 'src/main/oculum_will_inventory.dart';
+part 'src/main/oculum_masked_men.dart';
+part 'src/main/oculum_monster_appearance.dart';
 part 'src/main/oculum_prepared_skills.dart';
 part 'src/main/oculum_fate_chaos.dart';
 part 'src/main/oculum_postea.dart';
@@ -1293,6 +1300,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool linguaInglese = false;
   bool datiCaricati = false;
   bool tutorialCompletato = false;
+  String? homeSessionArtwork;
+  bool homeArtworkFollowsTheme = false;
   String homeArtworkChoice = '';
   bool rebirthato = false;
   bool modalitaDesktop =
@@ -3851,6 +3860,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   @override
   void initState() {
     super.initState();
+    oculumSheetRelicSelections.addListener(onSheetRelicChanged);
     WidgetsBinding.instance.addObserver(this);
     assicuraArtiBase();
     ensureCoreOculumRecipes();
@@ -3938,6 +3948,7 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   @override
   void dispose() {
+    oculumSheetRelicSelections.removeListener(onSheetRelicChanged);
     oculumUpdateTimer?.cancel();
     for (final timer in pawnDamageRetryTimers.values) {
       timer.cancel();
@@ -4647,7 +4658,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     }
 
     return Theme(
-      data: _cachedAppTypographyTheme!,
+      data: currentMonsterTheme(_cachedAppTypographyTheme!),
       child: CallbackShortcuts(
         bindings: <ShortcutActivator, VoidCallback>{
           const SingleActivator(LogicalKeyboardKey.keyF, control: true):
@@ -5246,6 +5257,11 @@ class _OculumHomePageState extends State<OculumHomePage>
                                       : themeDecorationBackdrop(),
                                 )
                               : const SizedBox.shrink(),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: OculumNarrativeBackground(
+                          sheetId: currentSheetScrollId(),
                         ),
                       ),
                       desktopSideMenuShell(

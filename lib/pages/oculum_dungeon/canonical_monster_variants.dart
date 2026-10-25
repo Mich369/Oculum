@@ -2,11 +2,13 @@ part of 'monster_book.dart';
 
 // Authored roles, not a second colour or a stat multiplier of the same kit.
 final _canonicalPlanarVariants = <MonsterBookEntry>[
+  ..._maskedMonsterEntries,
+  ..._ordinaryCreatureEntries,
   _canonicalCreature(
     'nuvi',
     'Nuvì',
     '',
-    ['mezzano', 'isole_volanti', 'foresta_elementale'],
+    ['mezzano', 'isole', 'foresta_elementale'],
     'vento',
     [1, 1, 2, 0],
     0,
@@ -714,6 +716,8 @@ MonsterBookEntry _canonicalCreature(
     );
 
 final _canonicalVariantTechniques = <String, MonsterConcreteTechnique>{
+  ..._maskedTechniques,
+  ..._ordinaryCreatureTechniques,
   'nuvi_flight': _planarMove(
     'Volo naturale',
     'Passiva: vola sempre e riceve +3 Difesa e +3 Movimento. Nessun costo, nessun attacco.',

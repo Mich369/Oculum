@@ -1,0 +1,8 @@
+{
+  "id": "ivory_archive",
+  "name": "Archivio d avorio",
+  "motif": "fogli arrotolati e fermagli d'avorio",
+  "file": "assets/oculum/theme_stories/webp/ivory_archive.webp",
+  "prompt": "Original wide 16:9 full-bleed Oculum background. PRIMARY SCENE: A subterranean archive of pale bone-coloured shelves, folded cloth maps and tiny labels with no legible writing; a worn librarian's ladder leans across a warm pool of lamplight. Ivory, faded teal and walnut. Matte hand-painted anime fantasy, dark fantasy where appropriate, deliberate organic shapes, coherent construction and materials. First reference is ONLY for brush technique, do NOT copy its scenery, objects, sunset or composition. Naturally illustrate the whole page, keep a quiet darker central area for readable app controls without blank rectangular panels. NO solar disc or sky eye. No Moon body in the sky. NO coins, currency discs or generic round eye medallions. Clouds only where naturally present: luminous BLUE dominant then INDIGO, VIOLET, PASTEL PINK. Vary viewpoint, architecture, scale, silhouettes, palette and lighting from other themes. Story only through visual details. No text, UI, writing, logo or watermark. Fully enclosed UNDERGROUND with a continuous CLOSED ROCK CEILING, no sky, clouds, Sun, Moon or opening to the surface; fungi, crystals or lamps provide light.",
+  "provider": "built-in imagegen"
+}

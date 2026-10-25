@@ -4,12 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/widgets/oculum_goth_ornaments.dart';
 import 'package:oculum/widgets/oculum_theme_sheet_art.dart';
+import 'package:oculum/widgets/oculum_narrative_background.dart';
+import 'package:oculum/widgets/oculum_theme_presentation.dart';
 import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
-  testWidgets('Tall sheet backgrounds preserve decorative strip proportions', (
+  testWidgets('Tall sheets use full-page artwork without the obsolete footer', (
     tester,
   ) async {
+    final before = oculumSheetRelicSelections.value;
+    oculumSheetRelicSelections.value = {'tall-test': 'restyle_cenere'};
+    addTearDown(() => oculumSheetRelicSelections.value = before);
     await tester.pumpWidget(
       MaterialApp(
         theme: ThemeData.dark().copyWith(
@@ -27,7 +32,13 @@ void main() {
           body: SizedBox(
             width: 390,
             height: 800,
-            child: OculumThemeSheetScene(fillArea: true),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                OculumNarrativeBackground(sheetId: 'tall-test'),
+                OculumThemeSheetScene(fillArea: true),
+              ],
+            ),
           ),
         ),
       ),
@@ -40,8 +51,11 @@ void main() {
       return provider is AssetImage &&
           provider.assetName.contains('/decorations/scene');
     });
-    expect(scenes, hasLength(1));
-    expect(scenes.single.fit, BoxFit.contain);
+    expect(scenes, isEmpty);
+    final background = tester.widget<Image>(
+      find.byKey(const ValueKey('narrative-background-restyle_cenere')),
+    );
+    expect(background.fit, BoxFit.cover);
     await tester.pumpWidget(const SizedBox.shrink());
   });
 

@@ -53,6 +53,39 @@ class OculumPerformanceProbe {
   ) => _state.rechargePlasmaMatter(form, rolled: rolled);
   int spendMatter(int amount) =>
       _state.spendArtSkillCostResource('materia', amount);
+  void maskedPower(String kind, int form) =>
+      _state.activateMaskedPower(kind, form);
+  void maskedTurn(int percentile) =>
+      _state.maskedTurnStart(percentile: percentile);
+  void maskedPassives() => _state.ensureMaskedPassives();
+  int maskedAngelicHit(int lost) => _state.maskedAngelicHpHit(lost);
+  bool maskedShadow() => _state.maskedShadowActive;
+  void maskedAction() => _state.consumeMaskedShadowAction();
+  void restoreCreatureAppearance(Map<String, dynamic> sheet) =>
+      _state.restoreMonsterAppearance(sheet);
+  String homeHeroArtwork() => _state.homeHeroImagePath;
+  Widget monsterDossier(MonsterBookEntry monster) =>
+      _state.monsterReadingDossier(monster);
+  void unlockCreatureTheme(
+    String id, {
+    bool page = false,
+    bool theme = false,
+  }) => _state.rememberMonsterBookPartyDiscovery(
+    id,
+    pagePurchased: page,
+    themeUnlocked: theme,
+  );
+  Map<String, dynamic>? creatureKnowledge(String id) =>
+      _state.monsterBookPartyKnowledge(id);
+  void startMaskedVolley(List<Map<String, dynamic>> packets) =>
+      _state.startMaskedVolley(packets);
+  void advanceMaskedVolley(
+    Map<String, dynamic> request,
+    int natural,
+    int total,
+  ) => _state.advanceMaskedVolley(request, natural, total);
+  bool maskedInterrupt(Map<String, dynamic> payload) =>
+      _state.receiveMaskedInterrupt(payload);
   bool toggleWillKingdom() => _state.toggleWillKingdom();
   double willKingdomWeight() => _state.willKingdomWeight;
   int kingdomValue(int value, {bool subtrait = false}) =>

@@ -8,7 +8,29 @@ const oculumHomeArtworkChoices = <String, String>{
   'amber_shore': 'Rame fatato',
   'anime_reliquary': 'Reliquiario',
   'canva_spirit_duelist': 'Duellante spirituale',
+  'hidenas': 'Hidenas',
+  'benedict': 'Benedict · Il sole non crea solo mostri',
+  'dedicated_indigo': 'Per te · Sogno Indaco',
+  'dedicated_cloud_sea': 'Per te · Mare di Nuvole',
+  'dedicated_aurora': 'Per te · Frammenti d’Aurora',
+  'plane_demoniaco': 'Regno demoniaco',
+  'plane_diabolico': 'Regno diabolico',
+  'plane_nuvole_rocciose': 'Nuvole rocciose',
 };
+
+String oculumHomeArtworkPath(String choice) {
+  if (choice == 'amber_shore') return 'assets/oculum/home_art/amber_shore.png';
+  final id =
+      const {
+        'cathedral_eye',
+        'solar_islands',
+        'anime_reliquary',
+        'canva_spirit_duelist',
+      }.contains(choice)
+      ? 'home_$choice'
+      : choice;
+  return 'assets/oculum/theme_stories/webp/$id.webp';
+}
 
 /// Refresh an open detail after edits settle without resetting its route,
 /// text controllers, focus or scroll position.
@@ -63,6 +85,30 @@ class _OculumSettledDetailState extends State<OculumSettledDetail> {
 }
 
 extension _OculumReferenceCampaign on _OculumHomePageState {
+  String get homeHeroImagePath {
+    if (!homeArtworkFollowsTheme) {
+      return oculumHomeArtworkPath(displayedHomeArtwork);
+    }
+    final selection = oculumThemePresentationForSheet(
+      currentSheetScrollId(),
+    ).artPackId;
+    final monster = oculumMonsterThemeById(selection);
+    if (monster != null) {
+      return monster.illustration ??
+          'assets/oculum/theme_stories/webp/plane_${monster.monster.planeIds.firstOrNull ?? 'mezzano'}.webp';
+    }
+    final pack =
+        oculumThemeAssetPacks[selection] ??
+        oculumThemeAssetPacks[visualThemeDecorationPresetId()] ??
+        oculumThemeAssetPacks['classic_reliquary']!;
+    return pack.storyScene;
+  }
+
+  String get displayedHomeArtwork => homeArtworkChoice.isNotEmpty
+      ? homeArtworkChoice
+      : (homeSessionArtwork ??= oculumHomeArtworkChoices.keys.elementAt(
+          Random.secure().nextInt(oculumHomeArtworkChoices.length),
+        ));
   void selectReferenceRole(bool master) {
     setState(() {
       modalitaMaster = master;
@@ -86,21 +132,53 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
           children: [
             sectionTitle('Home'),
             Text(t('Benvenuto in Oculum', 'Welcome to Oculum')),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                ChoiceChip(
+                  label: Text(t('Immagini Home', 'Home artwork')),
+                  selected: !homeArtworkFollowsTheme,
+                  onSelected: (_) {
+                    setState(() => homeArtworkFollowsTheme = false);
+                    programmaSalvataggio();
+                  },
+                ),
+                ChoiceChip(
+                  label: Text(t('Usa il tema attuale', 'Use current theme')),
+                  selected: homeArtworkFollowsTheme,
+                  onSelected: (_) {
+                    setState(() => homeArtworkFollowsTheme = true);
+                    programmaSalvataggio();
+                  },
+                ),
+              ],
+            ),
             SizedBox(height: 12),
             LayoutBuilder(
               builder: (context, constraints) => gothicPanel(
                 padding: const EdgeInsets.all(8),
-                child: oculumHomeArtworkChoices.containsKey(homeArtworkChoice)
+                child:
+                    homeArtworkFollowsTheme ||
+                        oculumHomeArtworkChoices.containsKey(
+                          displayedHomeArtwork,
+                        )
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.asset(
-                          'assets/oculum/home_art/$homeArtworkChoice.png',
-                          key: ValueKey('home_artwork_$homeArtworkChoice'),
+                          homeHeroImagePath,
+                          key: ValueKey(
+                            homeArtworkFollowsTheme
+                                ? 'home_theme_artwork'
+                                : 'home_artwork_$displayedHomeArtwork',
+                          ),
                           height: (constraints.maxWidth * .6).clamp(200, 440),
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          semanticLabel:
-                              oculumHomeArtworkChoices[homeArtworkChoice],
+                          semanticLabel: homeArtworkFollowsTheme
+                              ? t('Tema attuale', 'Current theme')
+                              : oculumHomeArtworkChoices[displayedHomeArtwork],
                         ),
                       )
                     : OculumReferenceArt(
@@ -116,10 +194,13 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                   onPressed: homeArtworkChoice.isEmpty
                       ? null
                       : () {
-                          setState(() => homeArtworkChoice = '');
+                          setState(() {
+                            homeArtworkChoice = '';
+                            homeSessionArtwork = null;
+                          });
                           programmaSalvataggio();
                         },
-                  child: Text('Originale'),
+                  child: Text('Casuale'),
                 ),
               ],
             ),
@@ -137,7 +218,10 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                         child: InkWell(
                           key: ValueKey('choose_home_artwork_$name'),
                           onTap: () {
-                            setState(() => homeArtworkChoice = name);
+                            setState(() {
+                              homeArtworkChoice = name;
+                              homeArtworkFollowsTheme = false;
+                            });
                             programmaSalvataggio();
                           },
                           borderRadius: BorderRadius.circular(8),
@@ -156,7 +240,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(6),
                                   child: Image.asset(
-                                    'assets/oculum/home_art/$name.png',
+                                    oculumHomeArtworkPath(name),
                                     width: 280,
                                     height: 175,
                                     fit: BoxFit.cover,

@@ -1776,6 +1776,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   'speed_increase',
                   'rabbit_hat',
                   'plasma_matter_recharge',
+                  'mask_serious_punch',
+                  'mask_blue_volley',
+                  'mask_angelic_arrows',
+                  'mask_solar_arrows',
+                  'mask_shadow_form',
+                  'mask_shadow_teleport',
                 }.contains(effect.target),
           )) {
         for (final sibling in skill.forme) {

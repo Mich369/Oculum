@@ -5140,6 +5140,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     activateHeroicNurseBuffForCurrentBattle();
     final beforeConditions =
         spineMaterialDefense +
+        maskedShadowDefense +
         meccanioVariantValue('defenseBonus') +
         ((volontaTotale() + materiaTotale()) ~/ 2) +
         bonusLivelloGrado() +
@@ -5372,7 +5373,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
     return applyWillKingdomBonus(
       oculumDamageWithPercentage(
-        applicaBonusDanniPotenzaNucleo(conditioned),
+        applicaBonusDanniPotenzaNucleo(conditioned + maskedShadowDamage),
         activeStructuredEffectBonus('danni_percentuale') + (dustFusionTier * 5),
       ),
     );

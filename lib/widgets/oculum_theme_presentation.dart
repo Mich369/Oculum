@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'oculum_goth_ornaments.dart';
 import 'oculum_theme_asset_packs.dart';
 import 'oculum_combat_theme.dart';
+import 'oculum_monster_theme.dart';
 
 enum OculumThemeMotion { complete, reduced, disabled }
 
@@ -95,9 +96,10 @@ Future<void> loadOculumThemePresentation() async {
 OculumThemePresentation oculumThemePresentationForSheet(String sheetId) {
   final id = sheetId.trim();
   final selected = id.isEmpty ? null : oculumSheetRelicSelections.value[id];
-  return selected == null
+  final effective = selected ?? oculumSheetMonsterThemes.value[id];
+  return effective == null
       ? oculumThemePresentation.value
-      : oculumThemePresentation.value.copyWith(artPackId: selected);
+      : oculumThemePresentation.value.copyWith(artPackId: effective);
 }
 
 Future<void> setOculumSheetRelic(String sheetId, String artPackId) async {

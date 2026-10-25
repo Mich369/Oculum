@@ -1183,9 +1183,13 @@ const Map<String, String> oculumElementAliases = <String, String>{
   'sun': 'solare',
   'diabolico': 'diabolico',
   'diabolic': 'diabolico',
-  'demoniaco': 'diabolico',
-  'demon': 'diabolico',
-  'demonic': 'diabolico',
+  'demoniaco': 'demoniaco',
+  'demon': 'demoniaco',
+  'demonic': 'demoniaco',
+  'nuvola': 'nuvola',
+  'cloud': 'nuvola',
+  'roccia': 'roccia',
+  'rock': 'roccia',
   'angelico': 'angelico',
   'angelic': 'angelico',
   'angelo': 'angelico',
@@ -1332,6 +1336,12 @@ String oculumElementDisplayIt(String idOrName) {
       return 'Solare';
     case 'diabolico':
       return 'Diabolico';
+    case 'demoniaco':
+      return 'Demoniaco';
+    case 'nuvola':
+      return 'Nuvola';
+    case 'roccia':
+      return 'Roccia';
     case 'angelico':
       return 'Angelico';
     case 'psichico':
@@ -1510,7 +1520,13 @@ String oculumElementDisplayEn(String idOrName) {
     case 'solare':
       return 'Sun';
     case 'diabolico':
+      return 'Diabolic';
+    case 'demoniaco':
       return 'Demonic';
+    case 'nuvola':
+      return 'Cloud';
+    case 'roccia':
+      return 'Rock';
     case 'angelico':
       return 'Angelic';
     case 'psichico':
@@ -1599,6 +1615,9 @@ String oculumElementDisplayEn(String idOrName) {
 }
 
 const List<String> oculumDefaultElementIds = <String>[
+  'demoniaco',
+  'nuvola',
+  'roccia',
   'fisico',
   'taglio',
   'perforante',

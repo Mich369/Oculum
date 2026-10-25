@@ -1,0 +1,8 @@
+{
+  "id": "classic_low_detail",
+  "name": "Classic low detail",
+  "motif": "sigillo inciso compatto",
+  "file": "assets/oculum/theme_stories/webp/classic_low_detail.webp",
+  "prompt": "Original wide 16:9 full-bleed Oculum background. PRIMARY SCENE: A calm open hill with three flat silhouettes of pines, a tiny abandoned campsite and a single grey standing stone. Deliberately simple hand-painted shapes, broad muted blue-green areas, minimal detail. Matte hand-painted anime fantasy, dark fantasy where appropriate, deliberate organic shapes, coherent construction and materials. First reference is ONLY for brush technique, do NOT copy its scenery, objects, sunset or composition. Naturally illustrate the whole page, keep a quiet darker central area for readable app controls without blank rectangular panels. NO solar disc or sky eye. No Moon body in the sky. NO coins, currency discs or generic round eye medallions. Clouds only where naturally present: luminous BLUE dominant then INDIGO, VIOLET, PASTEL PINK. Vary viewpoint, architecture, scale, silhouettes, palette and lighting from other themes. Story only through visual details. No text, UI, writing, logo or watermark.",
+  "provider": "built-in imagegen"
+}

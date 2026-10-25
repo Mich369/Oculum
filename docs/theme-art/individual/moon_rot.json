@@ -1,0 +1,9 @@
+{
+  "id": "moon_rot",
+  "name": "Luna marcia",
+  "motif": "luna corrosa e funghi lunari",
+  "motion": "spore leggere",
+  "file": "assets/oculum/theme_stories/webp/moon_rot.webp",
+  "prompt": "Use case: illustration-story. Original wide 16:9 full-bleed painterly anime fantasy Oculum background. PRIMARY SCENE: A GROUNDED broken crescent-shaped memorial of weathered stone lying on a low mossy plinth, small moon fungi growing in its cracks. A quiet ruined lunar-allied garden under a star sky with NO Moon body. This is a physical earthly relic, never floating or celestial. Keep the whole page naturally illustrated with a broad quiet darker central region for readable controls, never a blank rectangular panel. Matte hand-painted gouache, controlled anime fantasy shape design, believable organic detail and materials, no shiny 3D. First reference is ONLY brush technique: never copy its geography, composition, sunset, objects or sky. No solar disc or sky-eye. The GOOD Moon has died and is absent from the sky. Lunar symbols may be physical earthly relics only; lunar and star factions are allies. Most devils are lunar allies. No coins, currency discs or round eye medallions. Clouds, only where naturally present, mix luminous BLUE dominant then INDIGO then VIOLET then PASTEL PINK. Vary architecture, scale, silhouette, viewpoint and lighting from the other themes. Tell the story through details alone. NO text, UI, writing, logos, signatures or watermarks.",
+  "provider": "built-in imagegen"
+}

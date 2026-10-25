@@ -34,7 +34,7 @@ void main() {
             final free =
                 art.tipo == 'Capacità Pawn' ||
                 monster.id == 'larva_bianca' ||
-                text.contains('Nessun costo') ||
+                text.toLowerCase().contains('nessun costo') ||
                 skill.tipoPerLivello(form).toLowerCase().contains('passiv');
             expect(
               resource,

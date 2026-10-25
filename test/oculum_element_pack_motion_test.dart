@@ -126,7 +126,7 @@ void main() {
           reason: '${entry.key} has no visible animation',
         );
       }
-      expect(oculumElementThemeMotions, hasLength(58));
+      expect(oculumElementThemeMotions, hasLength(61));
     },
   );
 }

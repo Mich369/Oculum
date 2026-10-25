@@ -152,7 +152,9 @@ void main() {
         final first = oculumEnemyAbilityVariants(monster, seed: 2419);
         final second = oculumEnemyAbilityVariants(monster, seed: 2419);
         if (const {'nuvi', 'thunder_bot'}.contains(monster.id) ||
-            monster.id.contains('larva')) {
+            monster.id.contains('larva') ||
+            monster.id.startsWith('uomo_maschera') ||
+            monster.id == 'ombra_ignota') {
           expect(first, isEmpty, reason: monster.id);
           continue;
         }

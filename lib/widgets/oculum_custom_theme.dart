@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'oculum_hex_color_field.dart';
 
 /// Portable decoration data. Positions and sizes are fractions of the viewport.
 final oculumCustomArtwork = ValueNotifier<Map<String, dynamic>>({});
@@ -450,26 +451,15 @@ class OculumStatColorPicker extends StatefulWidget {
 
 class _OculumStatColorPickerState extends State<OculumStatColorPicker> {
   late HSVColor hsv;
-  late TextEditingController hex;
-  Color get color => hsv.toColor().withValues(alpha: 1);
-  String code(Color c) =>
-      c.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase();
+  Color get color => hsv.toColor();
   @override
   void initState() {
     super.initState();
     hsv = HSVColor.fromColor(widget.initial);
-    hex = TextEditingController(text: code(color));
-  }
-
-  @override
-  void dispose() {
-    hex.dispose();
-    super.dispose();
   }
 
   void update(HSVColor next) => setState(() {
     hsv = next;
-    hex.text = code(color);
   });
   Widget channel(
     String label,
@@ -601,25 +591,9 @@ class _OculumStatColorPickerState extends State<OculumStatColorPicker> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextField(
-                  controller: hex,
-                  maxLength: 6,
-                  decoration: const InputDecoration(
-                    labelText: 'HEX',
-                    prefixText: '#',
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp('[0-9a-fA-F]')),
-                  ],
-                  onChanged: (v) {
-                    if (v.length == 6) {
-                      setState(
-                        () => hsv = HSVColor.fromColor(
-                          Color(0xff000000 | int.parse(v, radix: 16)),
-                        ),
-                      );
-                    }
-                  },
+                child: OculumHexColorField(
+                  value: color,
+                  onChanged: (next) => update(HSVColor.fromColor(next)),
                 ),
               ),
             ],

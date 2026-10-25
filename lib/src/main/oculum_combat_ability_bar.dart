@@ -132,6 +132,21 @@ Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
   Map<String, num> variables = const {},
 }) {
   final active = effects.where((effect) => effect.enabled).toList();
+  if (active.any(
+    (e) =>
+        e.type == 'planar' &&
+        const {
+          'mask_serious_punch',
+          'mask_blue_volley',
+          'mask_angelic_arrows',
+          'mask_solar_arrows',
+        }.contains(e.target),
+  )) {
+    return {OculumCombatAbilityRole.attack};
+  }
+  if (active.any((e) => e.target == 'mask_shadow_teleport')) {
+    return {OculumCombatAbilityRole.attack, OculumCombatAbilityRole.defense};
+  }
   final roles = <OculumCombatAbilityRole>{};
   final scores = <OculumCombatAbilityRole, int>{};
   for (final effect in active) {
@@ -222,6 +237,18 @@ OculumCombatAbilityRole oculumCombatAbilityRole(
   if (declared.contains('difes')) return OculumCombatAbilityRole.defense;
   if (declared.contains('attacc')) return OculumCombatAbilityRole.attack;
   final active = effects.where((e) => e.enabled).toList();
+  if (active.any(
+    (e) =>
+        e.type == 'planar' &&
+        const {
+          'mask_serious_punch',
+          'mask_blue_volley',
+          'mask_angelic_arrows',
+          'mask_solar_arrows',
+        }.contains(e.target),
+  )) {
+    return OculumCombatAbilityRole.attack;
+  }
   if (active.any((e) => e.recipient == 'alleato') &&
       active.every(
         (e) => e.recipient == 'alleato' || e.recipient == 'se_stesso',
@@ -641,6 +668,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         artSkill!.testoEvoluzione(chosen + 1);
     final oculumBefore = currentOculum();
     final beforeEffects = jsonEncode(activeStructuredEffects);
+    final beforeMasked = jsonEncode(pendingMaskedAttack);
     final declaredEffects =
         natural?.forme[chosen].effettiStrutturati ??
         artSkill!.effettiEvoluzione(chosen + 1);
@@ -670,6 +698,15 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       }
     } finally {
       combatSupportTargeting = false;
+    }
+
+    if (mounted &&
+        currentSheetScrollId() == origin &&
+        pendingMaskedAttack.isNotEmpty &&
+        beforeMasked != jsonEncode(pendingMaskedAttack) &&
+        onlineAttackTokens().isNotEmpty) {
+      await planOnlineAttack();
+      return;
     }
 
     if (!mounted ||
@@ -940,6 +977,18 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (role == OculumCombatAbilityRole.defense)
+                  for (final volley in maskedInterruptibleVolleys.toList())
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(dialog);
+                        unawaited(interruptMaskedVolley(volley));
+                      },
+                      icon: const Icon(Icons.front_hand),
+                      label: Text(
+                        'Interrompi raffica · colpo ${readIntValue(volley['maskedHitIndex']) + 1} · serve critico',
+                      ),
+                    ),
                 if (role == OculumCombatAbilityRole.support && isMountedInMecha)
                   OutlinedButton(
                     onPressed: () {

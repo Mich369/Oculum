@@ -1,0 +1,9 @@
+{
+  "id": "classic_reliquary",
+  "name": "Classic Oculum",
+  "motif": "sigillo inciso in rame, montatura d osso",
+  "motion": "riflesso lento sulle incisioni",
+  "file": "assets/oculum/theme_stories/webp/classic_reliquary.webp",
+  "prompt": "Use case: illustration-story. Original wide 16:9 full-bleed painterly anime fantasy Oculum background. PRIMARY SCENE: An antique dark fantasy cabinet with a small carved copper almond seal held in a delicate BONE MOUNT, old feather quills and a sealed travel letter with no writing. Copper, ivory and deep brown, no currency or sky. Keep the whole page naturally illustrated with a broad quiet darker central region for readable controls, never a blank rectangular panel. Matte hand-painted gouache, controlled anime fantasy shape design, believable organic detail and materials, no shiny 3D. First reference is ONLY brush technique: never copy its geography, composition, sunset, objects or sky. No solar disc or sky-eye. No Moon body in the sky. No coins, currency discs or round eye medallions. Clouds, only where naturally present, mix luminous BLUE dominant then INDIGO then VIOLET then PASTEL PINK. Vary architecture, scale, silhouette, viewpoint and lighting from the other themes. Tell the story through details alone. NO text, UI, writing, logos, signatures or watermarks.",
+  "provider": "built-in imagegen"
+}

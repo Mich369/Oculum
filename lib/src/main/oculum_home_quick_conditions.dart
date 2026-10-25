@@ -2473,6 +2473,9 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
   }
 
   void processConditionTick(OculumConditionTickTrigger trigger) {
+    if (trigger == OculumConditionTickTrigger.action) {
+      consumeMaskedShadowAction();
+    }
     if (activeConditions.isEmpty) return;
     final snapshot = List<OculumConditionInstance>.from(activeConditions);
     var mutated = false;

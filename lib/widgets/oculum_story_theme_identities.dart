@@ -1,0 +1,137 @@
+part of 'oculum_theme_identity.dart';
+
+const oculumStoryThemeIdentities = <String, OculumThemeIdentity>{
+  'benedict': OculumThemeIdentity(
+    'benedict',
+    'ivory',
+    'none',
+    'Statua protettiva di marmo e oro',
+  ),
+  'hidenas': OculumThemeIdentity(
+    'hidenas',
+    'stone',
+    'none',
+    "Torri carbonizzate e fuoco",
+  ),
+  'plane_demoniaco': OculumThemeIdentity(
+    'plane_demoniaco',
+    'stone',
+    'none',
+    "Regno demoniaco",
+  ),
+  'plane_diabolico': OculumThemeIdentity(
+    'plane_diabolico',
+    'stone',
+    'none',
+    "Regno diabolico",
+  ),
+  'dedicated_indigo': OculumThemeIdentity(
+    'dedicated_indigo',
+    'stone',
+    'none',
+    "Per te · Sogno Indaco",
+  ),
+  'dedicated_cloud_sea': OculumThemeIdentity(
+    'dedicated_cloud_sea',
+    'stone',
+    'none',
+    "Per te · Mare di Nuvole",
+  ),
+  'dedicated_aurora': OculumThemeIdentity(
+    'dedicated_aurora',
+    'stone',
+    'none',
+    "Per te · Frammenti d’Aurora",
+  ),
+  'plane_nuvole_rocciose': OculumThemeIdentity(
+    'plane_nuvole_rocciose',
+    'stone',
+    'none',
+    "Nuvole rocciose",
+  ),
+  'plane_mezzano': OculumThemeIdentity(
+    'plane_mezzano',
+    'stone',
+    'none',
+    "Regno mezzano",
+  ),
+  'plane_sacro': OculumThemeIdentity(
+    'plane_sacro',
+    'stone',
+    'none',
+    "Regno sacro",
+  ),
+  'plane_angelico': OculumThemeIdentity(
+    'plane_angelico',
+    'stone',
+    'none',
+    "Regno angelico",
+  ),
+  'plane_oblio': OculumThemeIdentity('plane_oblio', 'stone', 'none', "Oblio"),
+  'plane_isole': OculumThemeIdentity(
+    'plane_isole',
+    'stone',
+    'none',
+    "Isole volanti",
+  ),
+  'plane_affogato': OculumThemeIdentity(
+    'plane_affogato',
+    'stone',
+    'none',
+    "Regno affogato",
+  ),
+  'plane_sotterraneo': OculumThemeIdentity(
+    'plane_sotterraneo',
+    'stone',
+    'none',
+    "Regno sotterraneo",
+  ),
+  'plane_sotterraneo_maggiore': OculumThemeIdentity(
+    'plane_sotterraneo_maggiore',
+    'stone',
+    'none',
+    "Regno sotterraneo maggiore",
+  ),
+  'plane_shadow_hell': OculumThemeIdentity(
+    'plane_shadow_hell',
+    'stone',
+    'none',
+    "Shadow Hell",
+  ),
+  'plane_vero_inferno': OculumThemeIdentity(
+    'plane_vero_inferno',
+    'stone',
+    'none',
+    "Il vero inferno",
+  ),
+  'plane_postea': OculumThemeIdentity(
+    'plane_postea',
+    'stone',
+    'none',
+    "Postea",
+  ),
+  'plane_caramella': OculumThemeIdentity(
+    'plane_caramella',
+    'stone',
+    'none',
+    "Regno Caramella",
+  ),
+  'plane_foresta_elementale': OculumThemeIdentity(
+    'plane_foresta_elementale',
+    'stone',
+    'none',
+    "Foresta elementale",
+  ),
+  'plane_morti': OculumThemeIdentity(
+    'plane_morti',
+    'stone',
+    'none',
+    "Regno dei Morti",
+  ),
+  'plane_ghiaccio': OculumThemeIdentity(
+    'plane_ghiaccio',
+    'stone',
+    'none',
+    "Terre di ghiaccio",
+  ),
+};

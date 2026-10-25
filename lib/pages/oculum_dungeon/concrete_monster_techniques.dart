@@ -11,8 +11,10 @@ class MonsterTechniqueEffect {
     this.duration = '1',
     this.recipient = 'se_stesso',
     this.dice = '',
+    this.maximumTargets = 0,
   });
   final String type, formula, target, mode, duration, recipient, dice;
+  final int maximumTargets;
 }
 
 class MonsterConcreteTechnique {
@@ -50,6 +52,7 @@ class MonsterConcreteTechnique {
         final mechanics = forms[i].map((e) {
           final value = '${e.dice.isEmpty ? '' : '${e.dice} + '}${e.formula.replaceAll('oculum_spent', 'Oculum immesso')}';
           return switch (e.type) {
+            'planar' || 'meccanio' || 'preparazione' => '',
             'danno' => '+$value Danni al prossimo attacco; si consuma una sola volta',
             'danno_percentuale' => '+$value% Danni al prossimo attacco; si consuma una sola volta',
             'difesa' => '${e.mode == 'diminuzione' ? '-' : '+'}$value Difesa per ${e.duration} turno',
@@ -61,8 +64,9 @@ class MonsterConcreteTechnique {
             'stato' => '${e.target} grado $value per ${e.duration} turni sul bersaglio; una difesa riuscita evita lo stato',
             _ => '$value ${e.target}',
           };
-        }).join('; ');
+        }).where((line) => line.trim().isNotEmpty).join('; ');
         final cost = '${minimums[i]}/${maximums[i]}';
+        final actionText = action.trim().replaceAll(RegExp(r'[.;\s]+$'), '');
         final resourceLabel = switch (costResource) {
           'nessuna' => 'nessun costo',
           'volonta' => 'Volontà',
@@ -73,7 +77,8 @@ class MonsterConcreteTechnique {
           'material' => 'materiale',
           _ => 'Oculum',
         };
-        return '${const ['I', 'II', 'III'][i]}/$action. $mechanics. Richiede livello ${requiredLevel + i * 3}. ($cost $resourceLabel${minimums[i] == maximums[i] ? ', costo fisso' : ''}). CD ${cooldowns[i]} turni personali.';
+        final costText = costResource == 'nessuna' ? 'Nessun costo statistico.' : '($cost $resourceLabel${minimums[i] == maximums[i] ? ', costo fisso' : ''}).';
+        return '${const ['I', 'II', 'III'][i]}/$actionText.${mechanics.isEmpty ? '' : ' $mechanics.'} Richiede livello ${requiredLevel + i * 3}. $costText CD ${cooldowns[i]} turni personali.';
       }).join(' ')} I bonus della stessa tecnica non si cumulano; Difesa e Scudi del bersaglio restano validi.';
 }
 

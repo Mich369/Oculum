@@ -1,0 +1,8 @@
+{
+  "id": "lunar_eclipse",
+  "name": "Eclissi lunare",
+  "motif": "disco eclissato e orbite spezzate",
+  "file": "assets/oculum/theme_stories/webp/lunar_eclipse.webp",
+  "prompt": "Original wide 16:9 full-bleed Oculum background. PRIMARY SCENE: A quiet earthly memorial to the dead good Moon: a broken silver crescent sculpture rests on a low plinth under a completely empty indigo sky, tiny allied star lanterns left by visitors. No celestial Moon, no eclipse disc. Matte hand-painted anime fantasy, dark fantasy where appropriate, deliberate organic shapes, coherent construction and materials. First reference is ONLY for brush technique, do NOT copy its scenery, objects, sunset or composition. Naturally illustrate the whole page, keep a quiet darker central area for readable app controls without blank rectangular panels. NO solar disc or sky eye. The good Moon is dead and absent from the sky; lunar and star symbols are allied and protective and can appear only on earthly carvings or relics. Most devils are lunar allies. NO coins, currency discs or generic round eye medallions. Clouds only where naturally present: luminous BLUE dominant then INDIGO, VIOLET, PASTEL PINK. Vary viewpoint, architecture, scale, silhouettes, palette and lighting from other themes. Story only through visual details. No text, UI, writing, logo or watermark.",
+  "provider": "built-in imagegen"
+}

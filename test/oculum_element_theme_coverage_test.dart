@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/widgets/oculum_combat_theme.dart';
@@ -12,6 +13,23 @@ import 'package:oculum/widgets/oculum_theme_relic.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'every story theme has a distinct packaged full-page painting',
+    () async {
+      expect(oculumThemeStoryIds.toSet(), hasLength(154));
+      for (final id in oculumThemeStoryIds) {
+        final file = File('assets/oculum/theme_stories/webp/$id.webp');
+        expect(file.existsSync(), isTrue, reason: id);
+        final bytes = file.readAsBytesSync();
+        expect(bytes.length, greaterThan(10000), reason: id);
+        expect(String.fromCharCodes(bytes.take(4)), 'RIFF', reason: id);
+        expect(String.fromCharCodes(bytes.skip(8).take(4)), 'WEBP', reason: id);
+        final bundled = await rootBundle.load(file.path.replaceAll('\\', '/'));
+        expect(bundled.lengthInBytes, bytes.length, reason: id);
+      }
+    },
+    tags: 'story-assets',
+  );
   test(
     'Canva sources keep original resolution and a real transparent center',
     () async {
@@ -43,7 +61,7 @@ void main() {
       oculumDefaultElementIds.toSet(),
     );
     expect(oculumElementPresets, hasLength(oculumDefaultElementIds.length));
-    expect(oculumElementThemePackIds.values.toSet(), hasLength(58));
+    expect(oculumElementThemePackIds.values.toSet(), hasLength(61));
     for (final element in oculumDefaultElementIds) {
       final preset = oculumElementPresets.singleWhere(
         (preset) => preset.id == 'element_$element',
@@ -63,6 +81,7 @@ void main() {
       );
       expect(pack.id, oculumElementThemePackIds[element]);
       expect(oculumThemeAssetPacks.containsKey(pack.id), isTrue);
+      expect(oculumThemeStoryIds, contains(pack.id), reason: element);
       for (final state in [
         'normal',
         'hover',
@@ -82,7 +101,11 @@ void main() {
           isTrue,
         );
         expect(
-          File(pack.scene(mobile: true, variant: variant)).existsSync(),
+          File(
+            oculumStoryThemePacks.containsKey(pack.id)
+                ? pack.storyScene
+                : pack.scene(mobile: true, variant: variant),
+          ).existsSync(),
           isTrue,
         );
       }

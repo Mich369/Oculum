@@ -7,12 +7,10 @@ String? oculumElementForArtPack(String id) {
     final element = id.substring(13);
     return oculumElementThemeMotions.containsKey(element) ? element : null;
   }
-  return switch (id) {
-    'canva_ice' => 'gelo',
-    'canva_spirit' => 'spirituale',
-    'canva_physical' => 'fisico',
-    _ => null,
-  };
+  for (final entry in oculumElementThemePackIds.entries) {
+    if (entry.value == id) return entry.key;
+  }
+  return null;
 }
 
 enum OculumElementAnimationKind {

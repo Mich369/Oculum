@@ -1418,6 +1418,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
         ),
       ),
       'obser': obserController.text,
+      'relicArtPackId':
+          oculumSheetRelicSelections.value[currentSheetScrollId()] ?? '',
+      'homeArtworkFollowsTheme': homeArtworkFollowsTheme,
       if (merchantStock.isNotEmpty) 'merchantStock': merchantStock,
       'merchantStockSessionId': merchantStockSessionId,
       if (merchantProfiles.isNotEmpty) 'merchantProfiles': merchantProfiles,
@@ -1658,6 +1661,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length)
         for (final key in [
           'monsterBookSourceId',
+          'monsterAppearance',
           'monsterBookApprovalRequired',
           'monsterBookApproved',
           'monsterBookApprovedScope',
@@ -1744,6 +1748,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
     if (activeGameMod == 'oculus') paginaCorrente = 0;
     restoreMonsterBookCustomization(json);
+    homeArtworkFollowsTheme = json['homeArtworkFollowsTheme'] == true;
+    restoreMonsterAppearance(json);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) syncMonsterThemeUnlocks();
+    });
     prepareFallenEyeSheet(json);
     nomeController.text = '${json['nome'] ?? '???'}';
     tipoSchedaController.text = '${json['tipoScheda'] ?? 'Personaggio'}';
@@ -6614,17 +6623,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   String systemMonsterGeneratorDescription(MonsterBookEntry monster) {
-    final variants = monsterSpriteAssetPaths(monster).length;
     final weaponLine = monster.canWieldWeapons
         ? 'Armi: puo impugnare ${monster.weaponTags.join(', ')}. Armature: ${monster.armorTags.isEmpty ? 'nessuna preferenza' : monster.armorTags.join(', ')}.'
         : 'Armi: non impugna armi, usa corpo, forma o poteri naturali.';
     return [
-      'Descrizione del mostro: ${monster.descIt}',
+      'Aspetto e comportamento: ${oculumMonsterOverview(monster)}',
       'Elemento: ${elementDisplayName(monster.elementId)}.',
       weaponLine,
-      'Abilita: ${monster.skillIds.map(systemMonsterReadableId).join(', ')}.',
-      'Drop: ${monster.dropIds.map(systemMonsterReadableId).join(', ')}.',
-      'Token: sprite pre-caricato con $variants ${variants == 1 ? 'forma' : 'forme'} possibile${variants == 1 ? '' : 'i'}. Stats, skill, drop, HP e note restano modificabili dopo la creazione.',
+      'Abilità: ${monster.skillIds.map((id) => monsterBookSkillText(id).split('—').first.trim()).join(', ')}. Ogni tecnica è consultabile separatamente nella scheda.',
+      'Drop: ${monster.dropIds.map(oculumMonsterDropName).join(', ')}.',
+      'Ritratto, statistiche, abilità, drop, Vita e note restano modificabili dopo la creazione.',
     ].join('\n');
   }
 
@@ -7561,9 +7569,19 @@ extension _OculumHomePersistence on _OculumHomePageState {
           : baseName;
       final requestedName = count == 1 ? chosenName : '$chosenName ${i + 1}';
       final nome = nextGeneratedSheetName(requestedName);
-      final matchedMonster =
+      var matchedMonster =
           monsterBookSource ??
           monsterBookEntryForGeneratedEntity(description, nome);
+      if (matchedMonster?.id == 'uomo_maschera') {
+        matchedMonster = monsterById(
+          const [
+            'uomo_maschera_verde',
+            'uomo_maschera_rossa',
+            'uomo_maschera_blu',
+            'uomo_maschera_viola',
+          ][Random.secure().nextInt(4)],
+        );
+      }
       // I preset che dichiarano il livello 0 non sono proposte casuali del
       // generatore: il Bestiario ne conserva esattamente la base richiesta.
       final levelZeroPreset = matchedMonster?.stats['level'] == 0;
@@ -8587,6 +8605,19 @@ extension _OculumHomePersistence on _OculumHomePageState {
         );
         if (matchedMonster != null) {
           final id = matchedMonster.id;
+          if (id.startsWith('uomo_maschera') || id == 'ombra_ignota') {
+            nomeController.text = nextGeneratedSheetName(matchedMonster.nameIt);
+            for (final stat in hiddenEyeStats) {
+              if (id == 'uomo_maschera_blu' &&
+                      const {'riflessi', 'precisione'}.contains(stat.id) ||
+                  id == 'uomo_maschera_rossa' && stat.id == 'schianto' ||
+                  id == 'ombra_ignota' &&
+                      const {'riflessi', 'sussurri'}.contains(stat.id)) {
+                stat.valore += 6;
+              }
+            }
+            ensureMaskedPassives();
+          }
           if (id == 'nuvi' || id == 'pupazzo_artigliato') {
             final colors = id == 'nuvi'
                 ? const ['Avorio', 'Lavanda', 'Pesca', 'Celeste', 'Menta']
@@ -8795,6 +8826,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
         aggiungiLog(risultato);
       });
 
+      restoreMonsterAppearance(
+        schedePersonaggio[schedaCorrente],
+        newlyCreated: true,
+      );
       salvaSchedaCorrenteInMemoria();
       if (isMeccanioBookId(
         '${schedePersonaggio[schedaCorrente]['monsterBookSourceId'] ?? ''}',

@@ -1,0 +1,8 @@
+{
+  "id": "element_pack_esplosivo",
+  "name": "Esplosivo",
+  "file": "assets/oculum/theme_stories/webp/element_pack_esplosivo.webp",
+  "prompt": "Original wide 16:9 painterly anime fantasy Oculum background. Primary scene: A quarry after a controlled blast, rock chunks suspended in a forceful outward arc, dust and torn safety ribbons, an abandoned cracked blasting cage. Rust orange, dust grey, bright spark accents. Matte hand-painted gouache, believable organic detail, quiet darker central reading area within a fully illustrated landscape. Reference Rame fatato is for brush technique only, never copy composition, scenery or sunset. No sun disc, sky eye, Moon body, coins, currency or eye medallions. Any clouds mix luminous blue dominant, indigo, violet and pastel pink. No text, UI, logos or watermarks.",
+  "provider": "built-in imagegen",
+  "metadataRecovery": "Prompt reconstructed from the executed primary scene and shared constraints after interruption between image copy and journal write; not a verbatim tool-call transcript."
+}

@@ -678,7 +678,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
               ),
               const SizedBox(width: 6),
               Expanded(child: Text(name)),
-              Flexible(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [

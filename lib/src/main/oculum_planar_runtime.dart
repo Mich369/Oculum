@@ -391,9 +391,14 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   bool get planarCloudForm => planarState['cloudLifeActive'] == true;
   int planarResilienceBonus(int normal) =>
       planarState['maxPower'] == true ? normal : 0;
-  int planarAttackRollBonus() => readIntValue(planarState['attackRollBonus']);
+  int planarAttackRollBonus() =>
+      readIntValue(planarState['attackRollBonus']) +
+      (maskedShadowActive ? 5 : 0) +
+      (planarState['maskedTeleport'] == true ? 9 : 0);
   int planarDefenseRollBonus() =>
-      readIntValue(planarState['defenseRollPenalty']);
+      readIntValue(planarState['defenseRollPenalty']) +
+      (maskedShadowActive ? 5 : 0) +
+      (planarState['maskedTeleport'] == true ? 10 : 0);
   void activatePlanarEffect(
     OculumStructuredEffect effect,
     int value,
@@ -402,6 +407,19 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   ) {
     final state = planarState;
     switch (effect.target) {
+      case 'mask_serious_punch':
+      case 'mask_blue_volley':
+      case 'mask_shadow_form':
+      case 'mask_shadow_teleport':
+      case 'mask_angelic_arrows':
+      case 'mask_solar_arrows':
+        activateMaskedPower(effect.target, value);
+        break;
+      case 'mask_vital_memory':
+        if (!hasCondition('ricordo_vitale')) {
+          applyCondition('ricordo_vitale', source: 'Maschera verde');
+        }
+        break;
       case 'plasma_matter_recharge':
         rechargePlasmaMatter(value);
         break;
@@ -642,6 +660,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void tickPlanarTurn() {
+    maskedTurnStart();
     meccanioTurn();
     parasiteTurn();
     if (currentCombatIsActive()) refreshChaosStats();
@@ -691,6 +710,10 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void resetPlanarFight() {
+    planarState.remove('maskedShadow');
+    planarState.remove('maskedTeleport');
+    planarState.remove('maskedAttack');
+    planarState.remove('maskedAngelicHits');
     resetMeccanioFight();
     if (planarState.remove('saltalungoTailBroken') == true) {
       final reflex = hiddenEyeStats
@@ -774,6 +797,19 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }) {
     final state = planarState;
     if (damage <= 0) return damage;
+    if (maskedShadowActive &&
+        const {
+          'fisico',
+          'taglio',
+          'contundente',
+          'perforante',
+          'fisico_taglio',
+          'fisico_contundente',
+          'fisico_perforante',
+        }.contains(element)) {
+      aggiungiLog('[L’OMBRA] Il colpo fisico attraversa la sagoma.');
+      return 0;
+    }
     final monsterId =
         schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
         ? '${schedePersonaggio[schedaCorrente]['monsterBookSourceId'] ?? ''}'

@@ -1,5 +1,56 @@
 import 'dart:math';
 
+const oculumPowerReadPhrases = <String, String>{
+  'much_stronger': 'ho una potenza nettamente superiore',
+  'stronger': 'ho una potenza leggermente superiore',
+  'equal': 'siamo alla pari o quasi',
+  'weaker': 'è leggermente più forte di me',
+  'much_weaker': 'è nettamente più forte di me',
+  'impossible': 'impossibile da battere',
+};
+
+int oculumScoutPower(int level, Iterable<int> statistics) =>
+    max(0, level) + statistics.fold(0, (sum, stat) => sum + max(0, stat));
+
+/// Only this category crosses the network, never the target's power or stats.
+String oculumScoutPowerBand(
+  int observer,
+  int target, {
+  double equalMargin = .10,
+  double slightMargin = .35,
+  double impossibleRatio = 2,
+}) {
+  if (observer <= 0) return target <= 0 ? 'equal' : 'impossible';
+  final own = max(1, observer);
+  final other = max(0, target);
+  final ratio = other / own;
+  if (ratio >= impossibleRatio) return 'impossible';
+  if ((ratio - 1).abs() <= equalMargin + .0000001) return 'equal';
+  if (ratio < 1) {
+    return ratio >= 1 - slightMargin ? 'stronger' : 'much_stronger';
+  }
+  return ratio <= 1 + slightMargin ? 'weaker' : 'much_weaker';
+}
+
+String oculumScoutDominantStat(Map<String, int> statistics) {
+  const keys = ['resilienza', 'volonta', 'materia', 'oculum'];
+  var result = keys.first;
+  for (final key in keys.skip(1)) {
+    if ((statistics[key] ?? 0) > (statistics[result] ?? 0)) result = key;
+  }
+  return result;
+}
+
+bool oculumScoutUnlocksTheme(bool success, int percentile) =>
+    success && percentile >= 0 && percentile < 90;
+
+String oculumScoutFailurePhrase(String stat) => switch (stat) {
+  'volonta' => 'la sua volontà non mi permette di percepire',
+  'materia' => 'la sua materia non mi permette di percepire',
+  'oculum' => 'il suo oculum non mi permette di percepire',
+  _ => 'la sua resilienza non mi permette di percepire',
+};
+
 /// What a Percezione/Investigazione roll is allowed to reveal about a target.
 ///
 /// The target resolves this locally before it publishes any values, so private

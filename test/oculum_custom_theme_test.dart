@@ -81,8 +81,9 @@ void main() {
     red.onChanged!(200);
     await tester.pump();
     final field = tester.widget<TextField>(find.byType(TextField));
-    expect(field.controller!.text, 'C82233');
-    await tester.enterText(find.byType(TextField), '00FF00');
+    expect(field.controller!.text, '#C82233');
+    await tester.enterText(find.byType(TextField), '#00FF00');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
     final green = tester.widget<Slider>(find.byType(Slider).at(4));
     expect(green.value.round(), 255);

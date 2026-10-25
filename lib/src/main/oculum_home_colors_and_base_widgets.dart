@@ -415,13 +415,15 @@ ThemeData oculumBuildPaletteTheme({
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: (base.textButtonTheme.style ?? const ButtonStyle()).merge(
-        TextButton.styleFrom(
-          foregroundColor: highlight,
-          textStyle: textTheme.labelLarge,
-          shape: textControlShape,
-        ),
-      ),
+      style: (base.textButtonTheme.style ?? const ButtonStyle())
+          .merge(
+            TextButton.styleFrom(
+              foregroundColor: highlight,
+              textStyle: textTheme.labelLarge,
+              shape: textControlShape,
+            ),
+          )
+          .copyWith(textStyle: WidgetStatePropertyAll(textTheme.labelLarge)),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(

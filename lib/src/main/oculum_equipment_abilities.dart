@@ -999,7 +999,16 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
               e.mode == 'prossima_azione',
         );
     final freeSpeedIncrease = effects.any(
-      (effect) => effect.type == 'planar' && effect.target == 'speed_increase',
+      (effect) =>
+          effect.type == 'planar' &&
+          const {
+            'speed_increase',
+            'mask_serious_punch',
+            'mask_blue_volley',
+            'mask_angelic_arrows',
+            'mask_solar_arrows',
+            'mask_shadow_teleport',
+          }.contains(effect.target),
     );
     if (!paymentOnly &&
         !preparesAttack &&

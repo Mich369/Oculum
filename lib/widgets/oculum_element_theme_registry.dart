@@ -1,5 +1,8 @@
 // Generated from docs/design/element-pack-specs.json.
 const oculumElementThemePackIds = <String, String>{
+  'demoniaco': 'plane_demoniaco',
+  'nuvola': 'plane_nuvole_rocciose',
+  'roccia': 'plane_sotterraneo_maggiore',
   'fisico': 'canva_physical',
   'taglio': 'element_pack_taglio',
   'perforante': 'element_pack_perforante',
@@ -61,6 +64,9 @@ const oculumElementThemePackIds = <String, String>{
 };
 
 const oculumElementThemeStyles = <String, String>{
+  'demoniaco': 'ember',
+  'nuvola': 'dream',
+  'roccia': 'medieval',
   'taglio': 'bolted_metal',
   'perforante': 'bolted_metal',
   'contundente': 'medieval',
@@ -122,6 +128,9 @@ const oculumElementThemeStyles = <String, String>{
 };
 
 const oculumElementThemeMotions = <String, String>{
+  'demoniaco': 'sparks',
+  'nuvola': 'wind',
+  'roccia': 'dust',
   'taglio': 'glint',
   'perforante': 'glint',
   'contundente': 'dust',

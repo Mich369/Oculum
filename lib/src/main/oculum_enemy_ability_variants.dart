@@ -168,37 +168,13 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
   }
 
   Future<void> showMonsterBookMechanics(MonsterBookEntry monster) async {
-    final art = oculumMonsterBookArt(monster);
     await showDialog<void>(
       context: context,
       builder: (dialog) => AlertDialog(
         title: Text('${monster.nameIt} · abilità ed effetti'),
         content: SizedBox(
           width: 640,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Gli effetti qui mostrati sono gli stessi importati nella scheda. Costi, durata e formule vengono letti dal catalogo.',
-                ),
-                for (final skill in art.skills)
-                  ExpansionTile(
-                    title: Text(skill.nome),
-                    children: [
-                      for (var form = 1; form <= 3; form++)
-                        Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Text(
-                            '${artLevelRoman(form)} · ${skill.oculumMinimoPerLivello(form)}/${skill.oculumMassimoPerLivello(form)} ${skill.risorsaCostoPerLivello(form)}\n${skill.testoEvoluzione(form)}\n${skill.effettiEvoluzione(form).map(oculumStructuredEffectDescription).join('\n')}\n${skill.effettiEvoluzione(form).isEmpty ? 'Nessun effetto strutturato in questa forma: verifica il pannello dedicato o definisci gli effetti con il Master prima di applicarli.' : ''}',
-                          ),
-                        ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
+          child: SingleChildScrollView(child: monsterReadingDossier(monster)),
         ),
         actions: [
           TextButton(
@@ -332,7 +308,10 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
                                                     natural.forme.length - 1,
                                                   )]
                                                   .costo
-                                            : '${art.oculumMinimoPerLivello(form)}/${art.oculumMassimoPerLivello(form)} ${art.risorsaCostoPerLivello(form)}';
+                                            : oculumMonsterReadingCost(
+                                                art,
+                                                form,
+                                              );
                                         final effects = art.effettiEvoluzione(
                                           1,
                                         );
@@ -465,6 +444,8 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
 }) {
   if (monster.isNpc ||
       monster.id.startsWith('pawn_guardiano') ||
+      monster.id.startsWith('uomo_maschera') ||
+      monster.id == 'ombra_ignota' ||
       const {'nuvi', 'thunder_bot'}.contains(monster.id) ||
       monster.id.contains('larva')) {
     return [];

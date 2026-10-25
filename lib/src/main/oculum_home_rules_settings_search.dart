@@ -1673,6 +1673,9 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       aggiungiLog(risultato);
     });
 
+    if (oculumThemeAssetPacks.containsKey(id)) {
+      unawaited(setOculumSheetRelic(currentSheetScrollId(), id));
+    }
     programmaSalvataggio();
   }
 
@@ -2167,6 +2170,17 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
               'Tap the color square to open or close the advanced RGB editor.',
             ),
             color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 8),
+          OculumHexColorField(
+            value: selectedColor,
+            onChanged: (color) {
+              setState(() {
+                markCustomColorPreset();
+                onSelected(color);
+              });
+              programmaSalvataggio();
+            },
           ),
           const SizedBox(height: 12),
           colorDropdown(

@@ -5,6 +5,8 @@ import 'oculum_theme_presentation.dart';
 import 'oculum_theme_relic.dart';
 import 'oculum_element_ambient_art.dart';
 import 'oculum_theme_identity.dart';
+import 'oculum_monster_theme.dart';
+import 'oculum_theme_asset_packs.dart';
 
 enum OculumThemeFrameRole { panel, portrait, statistics }
 
@@ -29,10 +31,12 @@ class OculumThemeSheetFrame extends StatelessWidget {
       animation: Listenable.merge([
         oculumThemePresentation,
         oculumSheetRelicSelections,
+        oculumSheetMonsterThemes,
       ]),
       child: child,
       builder: (context, child) {
         final presentation = oculumThemePresentationForSheet(sheetId);
+        final monster = oculumMonsterThemeById(presentation.artPackId);
         final pack = oculumResolveThemeArt(spec, presentation);
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -65,6 +69,10 @@ class OculumThemeSheetFrame extends StatelessWidget {
                           opacity: presentation.relicOpacity,
                           child: Image.asset(
                             pack.identityFrame,
+                            color: monster?.accent,
+                            colorBlendMode: monster == null
+                                ? null
+                                : BlendMode.modulate,
                             key: ValueKey(
                               'theme-sheet-frame-${pack.id}-$name-$variant',
                             ),
@@ -150,6 +158,7 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
     WidgetsBinding.instance.addObserver(this);
     oculumThemePresentation.addListener(_updateMotion);
     oculumSheetRelicSelections.addListener(_updateMotion);
+    oculumSheetMonsterThemes.addListener(_updateMotion);
   }
 
   @override
@@ -174,7 +183,8 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
           pack.frame(mobile ? 'mobile' : 'panel', variant: variant),
           pack.frame('portrait', variant: variant),
           pack.frame('statistics', variant: variant),
-          pack.scene(mobile: mobile, variant: variant),
+          if (!oculumThemeStoryIds.contains(pack.id))
+            pack.scene(mobile: mobile, variant: variant),
         ]) {
           precacheImage(AssetImage(asset), context);
         }
@@ -192,7 +202,15 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
   void _updateMotion() {
     if (!mounted) return;
     final spec = Theme.of(context).extension<OculumGothOrnaments>();
+    final presentation = oculumThemePresentationForSheet(widget.sheetId);
+    final staticScene =
+        spec != null &&
+        (oculumThemeStoryIds.contains(
+              oculumResolveThemeArt(spec, presentation).id,
+            ) ||
+            oculumMonsterThemeById(presentation.artPackId) != null);
     final enabled =
+        !staticScene &&
         spec != null &&
         spec.motion &&
         spec.opacity > 0 &&
@@ -225,6 +243,7 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
     scrollPosition?.removeListener(_checkVisibility);
     oculumThemePresentation.removeListener(_updateMotion);
     oculumSheetRelicSelections.removeListener(_updateMotion);
+    oculumSheetMonsterThemes.removeListener(_updateMotion);
     WidgetsBinding.instance.removeObserver(this);
     clock.dispose();
     super.dispose();
@@ -240,11 +259,54 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
       animation: Listenable.merge([
         oculumThemePresentation,
         oculumSheetRelicSelections,
+        oculumSheetMonsterThemes,
       ]),
       builder: (context, _) {
         final sheetPresentation = oculumThemePresentationForSheet(
           widget.sheetId,
         );
+        final monster = oculumMonsterThemeById(sheetPresentation.artPackId);
+        final selectedPack = oculumResolveThemeArt(spec, sheetPresentation);
+        if (monster == null && oculumThemeStoryIds.contains(selectedPack.id)) {
+          return SizedBox(
+            key: ValueKey('theme-sheet-scene-${selectedPack.id}'),
+            height: widget.fillArea ? double.infinity : 8,
+          );
+        }
+        if (monster != null) {
+          if (monster.illustration != null) {
+            return SizedBox(
+              key: ValueKey('monster-scene-${monster.id}'),
+              height: widget.fillArea ? double.infinity : 112,
+              width: double.infinity,
+              child: IgnorePointer(
+                child: Image.asset(
+                  monster.illustration!,
+                  fit: widget.fillArea ? BoxFit.cover : BoxFit.contain,
+                  alignment: Alignment.bottomRight,
+                  cacheWidth: 1440,
+                ),
+              ),
+            );
+          }
+          return SizedBox(
+            key: ValueKey('monster-scene-${monster.id}'),
+            height: widget.fillArea ? double.infinity : 112,
+            child: IgnorePointer(
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: Opacity(
+                  opacity: sheetPresentation.relicOpacity,
+                  child: SizedBox(
+                    width: widget.fillArea ? 260 : 110,
+                    height: widget.fillArea ? 310 : 112,
+                    child: OculumMonsterRelic(theme: monster),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
         final pack = oculumResolveThemeArt(spec, sheetPresentation);
         final variant = sheetPresentation.variant.name;
         final mobile = MediaQuery.sizeOf(context).width < 600;

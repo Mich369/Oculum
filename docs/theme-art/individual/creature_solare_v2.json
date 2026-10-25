@@ -1,0 +1,6 @@
+{
+  "id": "creature_solare_v2",
+  "file": "assets/oculum/home_art/creature_solare_v2.png",
+  "prompt": "Edit the FIRST reference for Oculum, preserving the wide layout, dark quiet central reading area, golden solar assassin relic, bow and TWO arrows at the bottom right. Correct the GOLD MASK to have ONE SINGLE almond-shaped eye opening fitted to ONE visible eye, smooth unbroken golden mask material where the other eye socket used to be; no second hole or visible skin. The engraved sun remains on its forehead. Correct the visible Sun in the sky to the SECOND reference's exact large GOLD/ORANGE IRIS and DARK PUPIL within a fiery circular solar disc, not a blank yellow disk. Maintain matte painterly anime fantasy, weathered physical metal and rock, fewer empty orange clouds: clouds should softly mix luminous blue, indigo, violet and pastel pink against the warm solar landscape. No coins, text, UI or watermark. Do not copy Benedict's statue or city from the second reference.",
+  "provider": "built-in imagegen"
+}

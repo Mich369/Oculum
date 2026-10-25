@@ -1,0 +1,1006 @@
+{
+  "provider": "built-in imagegen",
+  "reference": "assets/oculum/home_art/amber_shore.png",
+  "canonicalLore": {
+    "moon": "Good; dead and absent from current sky. Lunar relics and symbols are allowed.",
+    "sun": "Evil; a sky-visible sun has an Oculum eye with golden-orange iris and dark pupil.",
+    "stars": "Allied with the Moon.",
+    "fairies": "Generally evil; never associate with Moon.",
+    "devils": "Mostly lunar. A minority became power-mad after the Moon's death.",
+    "castle": "Black Diabolical castle with a red moon symbol is a lunar ally.",
+    "benedict": "Solar heroine exception and former ally of Moon. Only a cracked marble-and-gold protective statue remains, looking toward lower Lost Town.",
+    "underground": "Closed continuous rock ceilings; no sky, sun, moon, clouds or surface openings.",
+    "obser": "Cracked grey stone disc with engraved central almond eye; not generic decoration.",
+    "elementalForest": "Fire trees, living green trees, frozen trees, crystals, earth and streams share a coherent forest."
+  },
+  "assets": [
+    {
+      "id": "hidenas",
+      "name": "Hidenas",
+      "motif": "HIDENAS: an original dark fantasy village/city of crooked towers shaped like GRAY CHARRED TREE TRUNKS, twisted branched roofs and long gnarled wall forms. INTENSE FIRE shines from the windows. In the CENTRAL village square an ENORMOUS BONFIRE rises, with human villagers kneeling or standing in PRAYER around it; people are worshipping the fire, not being burned. A narrow foreground lane opens into this square, crooked houses frame the scene, ash falls gently. Strong ashen gray and living orange flame; no coastline or generic castle. Use the second reference solely as loose twisted architecture inspiration, redesign it as burnt tree buildings, no copied watermark or text.",
+      "file": "assets/oculum/theme_stories/webp/hidenas.webp"
+    },
+    {
+      "id": "plane_demoniaco",
+      "name": "Regno demoniaco",
+      "motif": "An enormous bottomless infernal circular chasm. Vast broad spiral staircases wind down its walls, many large demons stand on stair platforms WATCHING the depths, red embers far below. Dramatic top-down vertical perspective into darkness. Scale must feel gigantic. At the distant open sky luminous clouds are BLUE then INDIGO then VIOLET and PASTEL PINK, contrasting with infernal heat.",
+      "file": "assets/oculum/theme_stories/webp/plane_demoniaco.webp"
+    },
+    {
+      "id": "plane_diabolico",
+      "name": "Regno diabolico",
+      "motif": "A truly infernal kingdom with jagged FROZEN regions and BURNING lava regions interlocking. An ENORMOUS BLACK CASTLE dominates the distance, clearly bearing an engraved glowing RED MOON SYMBOL over the main gate. Rich chiaroscuro, ice blue versus infernal red. Any clouds are luminous blue-indigo-violet-pastel-pink, no copper sunset.",
+      "file": "assets/oculum/theme_stories/webp/plane_diabolico.webp"
+    },
+    {
+      "id": "dedicated_indigo",
+      "name": "Per te · Sogno Indaco",
+      "motif": "ABSTRACT ANIME FANTASY painting dedicated to the owner: luminous CLOUDS flow like a vast painted ocean and curl into impossible floating arches. Palette order STRICTLY BLUE dominant 40%, INDIGO 30%, VIOLET 20%, PASTEL PINK 10%, beautifully mixed and luminous, soft edge scattering. Not a normal landscape. A small copper glass prism at lower right catches a tiny wandering light, suggesting a dream being kept safe. Deep dark blue negative space supports UI.",
+      "file": "assets/oculum/theme_stories/webp/dedicated_indigo.webp"
+    },
+    {
+      "id": "dedicated_cloud_sea",
+      "name": "Per te · Mare di Nuvole",
+      "motif": "A distinct luminous ABSTRACT dreamscape, broad layered cloud waves with stair-like negative spaces and a tiny empty boat cradled by a cloud trough, no coast, no castle. Dominant BLUE then INDIGO then VIOLET then PASTEL PINK, delicate luminous blending, blue strongest. Hand-painted anime fantasy, dramatic curved forms, quiet dark middle for UI, stars reflected in impossible cloud-water. A small ribbon tied to the boat suggests someone recently left it.",
+      "file": "assets/oculum/theme_stories/webp/dedicated_cloud_sea.webp"
+    },
+    {
+      "id": "dedicated_aurora",
+      "name": "Per te · Frammenti d’Aurora",
+      "motif": "An abstract celestial garden of floating translucent curved shards and glowing CLOUD ribbons, viewed almost from above, no conventional horizon. Dominant BLUE followed by INDIGO, VIOLET, PASTEL PINK mixed smoothly. Tiny blue-white lights thread between the shards like remembered paths. A fractured crystal is being quietly reassembled by the clouds at the lower-right. Soft painterly anime fantasy, luminosity not neon gloss; deep readable central blue.",
+      "file": "assets/oculum/theme_stories/webp/dedicated_aurora.webp"
+    },
+    {
+      "id": "plane_nuvole_rocciose",
+      "name": "Nuvole rocciose",
+      "motif": "Aerial terraces of weathered stone threaded through BRIGHT BLUE INDIGO VIOLET PASTEL-PINK CLOUDS, weighted in that order, luminous silver-blue lightning, a stone-cloud golem's old handprint on a bridge railing. A soft abstract sky with tangible rock, no warm orange sky.",
+      "file": "assets/oculum/theme_stories/webp/plane_nuvole_rocciose.webp"
+    },
+    {
+      "id": "home_cathedral_eye",
+      "name": "Occhio della cattedrale",
+      "motif": "A steep upward interior view of a vast dark cathedral, a single enormous eye-shaped stained-glass rose window with coherent stone tracery. Broken votive candles and a newly mended pilgrim ribbon tell a story of returning hope. Cold indigo and soft ivory, no sea or sunset.",
+      "file": "assets/oculum/theme_stories/webp/home_cathedral_eye.webp"
+    },
+    {
+      "id": "home_solar_islands",
+      "name": "Sole e isole volanti",
+      "motif": "A sweeping aerial view from the underside of a floating island bridge: distant golden sun and numerous floating islands, a sky gardener's forgotten watering can tied to the railing. LUMINOUS CLOUDS BLUE THEN INDIGO THEN VIOLET THEN PASTEL PINK; no orange cloud layer. Anime fantasy wonder, distinct composition.",
+      "file": "assets/oculum/theme_stories/webp/home_solar_islands.webp"
+    },
+    {
+      "id": "home_anime_reliquary",
+      "name": "Reliquiario",
+      "motif": "A close intimate old reliquary keeper's workbench, worn copper hinges, small ivory charms and a single carved Oculum eye, an unfinished repair carefully laid beside a newly lit lamp. Deep violet and quiet aged copper; the room visible through a narrow blue-lit window. No cathedral panorama or generic scenery.",
+      "file": "assets/oculum/theme_stories/webp/home_anime_reliquary.webp"
+    },
+    {
+      "id": "home_canva_spirit_duelist",
+      "name": "Duellante spirituale",
+      "motif": "An original anime fantasy spiritual swordswoman training in an abandoned misty courtyard, viewed at medium distance from behind a hanging torn banner. A discarded wooden practice sword and glowing footprints reveal earlier lessons. Anatomically correct hands and one coherent sheathed sword, pale blue spirit light, indigo dusk, not a copy of an existing character.",
+      "file": "assets/oculum/theme_stories/webp/home_canva_spirit_duelist.webp"
+    },
+    {
+      "id": "plane_mezzano",
+      "name": "Regno mezzano",
+      "motif": "A quiet medieval crossroads market after rain; a repaired merchant scale beside a stone well, bootprints leading towards a distant inn, late morning overcast light, moss and warm slate.",
+      "file": "assets/oculum/theme_stories/webp/plane_mezzano.webp"
+    },
+    {
+      "id": "plane_sacro",
+      "name": "Regno sacro",
+      "motif": "An immense pale sanctuary with high sun-carved steps, expensive votive objects left at a locked bronze gate; huge angelic statues watch distant pilgrims. Vertical radiance, ivory and solar gold, severe sacred scale.",
+      "file": "assets/oculum/theme_stories/webp/plane_sacro.webp"
+    },
+    {
+      "id": "plane_angelico",
+      "name": "Regno angelico",
+      "motif": "An airy city of white arcades and suspended gardens, angelic wing-shaped bridges, a feather caught on a repaired harp, quiet morning light. Clear pearl and restrained gold.",
+      "file": "assets/oculum/theme_stories/webp/plane_angelico.webp"
+    },
+    {
+      "id": "plane_oblio",
+      "name": "Oblio",
+      "motif": "An impossible ink-black forest whose path and abandoned footprints dissolve into absence. A nameless black merchant's stall and one broken bell; subtle violet fissures, no sunset, no generic eye.",
+      "file": "assets/oculum/theme_stories/webp/plane_oblio.webp"
+    },
+    {
+      "id": "plane_isole",
+      "name": "Isole volanti",
+      "motif": "A broad soaring aerial panorama of floating islands, rope bridges, a moored small skyship, storm collectors and luminous CLOUDS in blue, indigo, violet and pastel pink. Lightning glints at far horizon.",
+      "file": "assets/oculum/theme_stories/webp/plane_isole.webp"
+    },
+    {
+      "id": "plane_affogato",
+      "name": "Regno affogato",
+      "motif": "A walkable submerged town among enormous roots, blue-green water and luminous fish, curtains waving from an open window, ceramic cups still set on a table. A world where residents breathe naturally underwater.",
+      "file": "assets/oculum/theme_stories/webp/plane_affogato.webp"
+    },
+    {
+      "id": "plane_sotterraneo",
+      "name": "Regno sotterraneo",
+      "motif": "A low intimate underground passage, mining lamps, worn steps descending between roots, a small abandoned pickaxe with a mended handle. Earth umber and cool cave blue, close perspective.",
+      "file": "assets/oculum/theme_stories/webp/plane_sotterraneo.webp"
+    },
+    {
+      "id": "plane_sotterraneo_maggiore",
+      "name": "Regno sotterraneo maggiore",
+      "motif": "A colossal underground stone city with bridges across cavernous tiers, ancient quarried pillars dwarfing travelers and runes cut through rock. Wide deep perspective, mineral teal and black granite.",
+      "file": "assets/oculum/theme_stories/webp/plane_sotterraneo_maggiore.webp"
+    },
+    {
+      "id": "plane_shadow_hell",
+      "name": "Shadow Hell",
+      "motif": "A diabolical landscape reflected through an Oblivion infection: fractured black causeways, a half-erased watchtower, broken anti-Oblivion pendants hanging on a warning fence. Cold black violet with a thin hostile red reflected light.",
+      "file": "assets/oculum/theme_stories/webp/plane_shadow_hell.webp"
+    },
+    {
+      "id": "plane_vero_inferno",
+      "name": "Il vero inferno",
+      "motif": "An overwhelming ancient infernal abyss beyond the lesser kingdoms; black volcanic rib-like mountains, a colossal sealed gate and tiny processions carrying spent lamps. Vast oppressive scale, near-black crimson and white heat.",
+      "file": "assets/oculum/theme_stories/webp/plane_vero_inferno.webp"
+    },
+    {
+      "id": "plane_postea",
+      "name": "Postea",
+      "motif": "A wandering future CITY MOVING ON HUGE RUNE-POWERED LEGS, seen from a narrow workshop alley. All technology powered by carved runes, copper pistons, a battered robot merchant's tools and a freshly repaired chair. No normal electric LEDs. Blue rune light and rusty ochre, close urban composition.",
+      "file": "assets/oculum/theme_stories/webp/plane_postea.webp"
+    },
+    {
+      "id": "plane_caramella",
+      "name": "Regno Caramella",
+      "motif": "A lived-in fantasy village made of chocolate, candy canes and marshmallow stone, a tiny bakery where a tray of burnt sweets cools beside an intact one. Gentle whimsical textures, cocoa and cream; luminous blue-indigo-violet-pastel-pink cloud canopy. Not a generic ruined landscape.",
+      "file": "assets/oculum/theme_stories/webp/plane_caramella.webp"
+    },
+    {
+      "id": "plane_foresta_elementale",
+      "name": "Foresta elementale",
+      "motif": "An ancient elemental forest around a single broad tree whose roots reach a spring, ember grove, ice ferns and floating stones. Naturally linked biomes, not a split-screen chart. Tiny alluring fairies hiding near a discarded traveler's ribbon suggest danger: fairies are generally MALEVOLENT. Emerald shadow, cyan water, few amber leaves.",
+      "file": "assets/oculum/theme_stories/webp/plane_foresta_elementale.webp"
+    },
+    {
+      "id": "plane_morti",
+      "name": "Regno dei Morti",
+      "motif": "A silent necromantic harbor of bone-white tomb houses and spectral lanterns, a small skeletal ferryman returning a repaired paper flower to a grave. Cool green-gray, pale blue souls, no gore. A story of remembrance told only by objects.",
+      "file": "assets/oculum/theme_stories/webp/plane_morti.webp"
+    },
+    {
+      "id": "plane_ghiaccio",
+      "name": "Terre di ghiaccio",
+      "motif": "A wind-scoured frozen settlement, heavy clothing hanging beside a dark sheltered entrance, tracks partly filled with snow, one warm brazier almost spent. Vast white-blue drifts, luminous clouds blue-indigo-violet-pastel-pink. A close foreground refuge and distant ice plain.",
+      "file": "assets/oculum/theme_stories/webp/plane_ghiaccio.webp"
+    },
+    {
+      "id": "moon_rot",
+      "name": "Luna marcia",
+      "motif": "luna corrosa e funghi lunari",
+      "file": "assets/oculum/theme_stories/webp/moon_rot.webp"
+    },
+    {
+      "id": "benedict",
+      "name": "Benedict · Il sole non crea solo mostri",
+      "motif": "Statua protettiva di marmo e oro davanti a Lost Town",
+      "file": "assets/oculum/theme_stories/webp/benedict.webp"
+    },
+    {
+      "id": "witch_glass",
+      "name": "Vetro strega",
+      "motif": "ampolle sospese e vetro incrinato",
+      "file": "assets/oculum/theme_stories/webp/witch_glass.webp"
+    },
+    {
+      "id": "restyle_lume",
+      "name": "Lume",
+      "motif": "occhio di cera e candelabro antico",
+      "file": "assets/oculum/theme_stories/webp/restyle_lume.webp"
+    },
+    {
+      "id": "obser_relic",
+      "name": "Reliquia Obser",
+      "motif": "moneta perforata e bilancia rituale",
+      "file": "assets/oculum/theme_stories/webp/obser_relic.webp"
+    },
+    {
+      "id": "postea_bloom",
+      "name": "Postea errante",
+      "motif": "reliquia errante e boccioli metallici",
+      "file": "assets/oculum/theme_stories/webp/postea_bloom.webp"
+    },
+    {
+      "id": "aurora_moth",
+      "name": "Falena aurora",
+      "motif": "falena dalle ali traforate e antenna lunare",
+      "file": "assets/oculum/theme_stories/webp/aurora_moth.webp"
+    },
+    {
+      "id": "blood_court",
+      "name": "Corte di sangue",
+      "motif": "corona spinata e calice di essenza",
+      "file": "assets/oculum/theme_stories/webp/blood_court.webp"
+    },
+    {
+      "id": "abyssal_tide",
+      "name": "Marea abissale",
+      "motif": "conchiglia infranta e tentacoli perlacei",
+      "file": "assets/oculum/theme_stories/webp/abyssal_tide.webp"
+    },
+    {
+      "id": "frost_chapel",
+      "name": "Cappella di brina",
+      "motif": "occhio congelato e schegge di cappella",
+      "file": "assets/oculum/theme_stories/webp/frost_chapel.webp"
+    },
+    {
+      "id": "vervain_gothic",
+      "name": "Vervain",
+      "motif": "occhio fra radici e fiori di verbena",
+      "file": "assets/oculum/theme_stories/webp/vervain_gothic.webp"
+    },
+    {
+      "id": "classic_reliquary",
+      "name": "Classic Oculum",
+      "motif": "sigillo inciso in rame, montatura d osso",
+      "file": "assets/oculum/theme_stories/webp/classic_reliquary.webp"
+    },
+    {
+      "id": "element_pack_taglio",
+      "name": "Lame del silenzio",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_taglio.webp"
+    },
+    {
+      "id": "element_pack_perforante",
+      "name": "Spine del bastione",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_perforante.webp"
+    },
+    {
+      "id": "element_pack_contundente",
+      "name": "Forgia infranta",
+      "motif": "pietra stratificata",
+      "file": "assets/oculum/theme_stories/webp/element_pack_contundente.webp"
+    },
+    {
+      "id": "element_pack_fuoco",
+      "name": "Braci discendenti",
+      "motif": "roccia carbonizzata",
+      "file": "assets/oculum/theme_stories/webp/element_pack_fuoco.webp"
+    },
+    {
+      "id": "element_pack_vento",
+      "name": "Nastri della burrasca",
+      "motif": "polvere astrale",
+      "file": "assets/oculum/theme_stories/webp/element_pack_vento.webp"
+    },
+    {
+      "id": "element_pack_acqua",
+      "name": "Reliquia della risacca",
+      "motif": "vetro e acqua",
+      "file": "assets/oculum/theme_stories/webp/element_pack_acqua.webp"
+    },
+    {
+      "id": "element_pack_terra",
+      "name": "Strati del monolite",
+      "motif": "pietra stratificata",
+      "file": "assets/oculum/theme_stories/webp/element_pack_terra.webp"
+    },
+    {
+      "id": "element_pack_sonoro",
+      "name": "Diapason delle cripte",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_sonoro.webp"
+    },
+    {
+      "id": "element_pack_psichico",
+      "name": "Labirinto della mente",
+      "motif": "polvere astrale",
+      "file": "assets/oculum/theme_stories/webp/element_pack_psichico.webp"
+    },
+    {
+      "id": "element_pack_lava",
+      "name": "Faglia incandescente",
+      "motif": "roccia carbonizzata",
+      "file": "assets/oculum/theme_stories/webp/element_pack_lava.webp"
+    },
+    {
+      "id": "element_pack_fulmine",
+      "name": "Guglie del temporale",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_fulmine.webp"
+    },
+    {
+      "id": "element_pack_veleno",
+      "name": "Veleno del serpente",
+      "motif": "vetro corroso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_veleno.webp"
+    },
+    {
+      "id": "element_pack_cenere",
+      "name": "Polvere dei giuramenti",
+      "motif": "cenere e fuliggine",
+      "file": "assets/oculum/theme_stories/webp/element_pack_cenere.webp"
+    },
+    {
+      "id": "element_pack_sangue",
+      "name": "Vasi della corte",
+      "motif": "vetro e acqua",
+      "file": "assets/oculum/theme_stories/webp/element_pack_sangue.webp"
+    },
+    {
+      "id": "element_pack_cristallo",
+      "name": "Prisma spezzato",
+      "motif": "cristallo",
+      "file": "assets/oculum/theme_stories/webp/element_pack_cristallo.webp"
+    },
+    {
+      "id": "element_pack_oscuro",
+      "name": "Velo senza luce",
+      "motif": "polvere astrale",
+      "file": "assets/oculum/theme_stories/webp/element_pack_oscuro.webp"
+    },
+    {
+      "id": "element_pack_lunare",
+      "name": "Falci del plenilunio",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_lunare.webp"
+    },
+    {
+      "id": "element_pack_solare",
+      "name": "Disco del vespro",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_solare.webp"
+    },
+    {
+      "id": "element_pack_vapium",
+      "name": "Condotti del respiro",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_vapium.webp"
+    },
+    {
+      "id": "element_pack_osso",
+      "name": "Rosario vertebrale",
+      "motif": "osso scolpito",
+      "file": "assets/oculum/theme_stories/webp/element_pack_osso.webp"
+    },
+    {
+      "id": "element_pack_gravita",
+      "name": "Anelli del peso",
+      "motif": "polvere astrale",
+      "file": "assets/oculum/theme_stories/webp/element_pack_gravita.webp"
+    },
+    {
+      "id": "element_pack_vuoto",
+      "name": "Orbita mancante",
+      "motif": "polvere astrale",
+      "file": "assets/oculum/theme_stories/webp/element_pack_vuoto.webp"
+    },
+    {
+      "id": "element_pack_sogno",
+      "name": "Nubi del sonno",
+      "motif": "veli di nubi",
+      "file": "assets/oculum/theme_stories/webp/element_pack_sogno.webp"
+    },
+    {
+      "id": "element_pack_metallo",
+      "name": "Placche del fabbro",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_metallo.webp"
+    },
+    {
+      "id": "element_pack_postea",
+      "name": "Circuiti del ritorno",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_postea.webp"
+    },
+    {
+      "id": "element_pack_radice",
+      "name": "Radici del sepolcro",
+      "motif": "legno inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_radice.webp"
+    },
+    {
+      "id": "element_pack_slime",
+      "name": "Membrane del principe",
+      "motif": "vetro corroso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_slime.webp"
+    },
+    {
+      "id": "element_pack_oculum",
+      "name": "Iride cesellata",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_oculum.webp"
+    },
+    {
+      "id": "element_pack_stella",
+      "name": "Atlante delle stelle",
+      "motif": "polvere astrale",
+      "file": "assets/oculum/theme_stories/webp/element_pack_stella.webp"
+    },
+    {
+      "id": "element_pack_corrotto",
+      "name": "Membrana contaminata",
+      "motif": "corteccia",
+      "file": "assets/oculum/theme_stories/webp/element_pack_corrotto.webp"
+    },
+    {
+      "id": "element_pack_nonmorto",
+      "name": "Cuciture del ritorno",
+      "motif": "osso scolpito",
+      "file": "assets/oculum/theme_stories/webp/element_pack_nonmorto.webp"
+    },
+    {
+      "id": "element_pack_acido",
+      "name": "Vetro che cola",
+      "motif": "vetro corroso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_acido.webp"
+    },
+    {
+      "id": "element_pack_sacro",
+      "name": "Navata consacrata",
+      "motif": "pietra stratificata",
+      "file": "assets/oculum/theme_stories/webp/element_pack_sacro.webp"
+    },
+    {
+      "id": "element_pack_diabolico",
+      "name": "Corna del patto",
+      "motif": "roccia carbonizzata",
+      "file": "assets/oculum/theme_stories/webp/element_pack_diabolico.webp"
+    },
+    {
+      "id": "element_pack_angelico",
+      "name": "Ali del santuario",
+      "motif": "osso scolpito",
+      "file": "assets/oculum/theme_stories/webp/element_pack_angelico.webp"
+    },
+    {
+      "id": "element_pack_necrotico",
+      "name": "Spore della fine",
+      "motif": "corteccia",
+      "file": "assets/oculum/theme_stories/webp/element_pack_necrotico.webp"
+    },
+    {
+      "id": "element_pack_magia",
+      "name": "Sigilli dello stregone",
+      "motif": "polvere astrale",
+      "file": "assets/oculum/theme_stories/webp/element_pack_magia.webp"
+    },
+    {
+      "id": "element_pack_energia",
+      "name": "Nodi della sorgente",
+      "motif": "veli perlacei",
+      "file": "assets/oculum/theme_stories/webp/element_pack_energia.webp"
+    },
+    {
+      "id": "element_pack_esplosivo",
+      "name": "Raggi dello scoppio",
+      "motif": "roccia carbonizzata",
+      "file": "assets/oculum/theme_stories/webp/element_pack_esplosivo.webp"
+    },
+    {
+      "id": "element_pack_radiazione",
+      "name": "Fissione del vetro",
+      "motif": "vetro corroso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_radiazione.webp"
+    },
+    {
+      "id": "element_pack_plasma",
+      "name": "Filamenti ionici",
+      "motif": "roccia carbonizzata",
+      "file": "assets/oculum/theme_stories/webp/element_pack_plasma.webp"
+    },
+    {
+      "id": "element_pack_tecnologia",
+      "name": "Circuiti del custode",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_tecnologia.webp"
+    },
+    {
+      "id": "element_pack_proiettile",
+      "name": "Bossoli del baluardo",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_proiettile.webp"
+    },
+    {
+      "id": "element_pack_laser",
+      "name": "Lenti allineate",
+      "motif": "cristallo",
+      "file": "assets/oculum/theme_stories/webp/element_pack_laser.webp"
+    },
+    {
+      "id": "element_pack_tempo",
+      "name": "Clessidra del lutto",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_tempo.webp"
+    },
+    {
+      "id": "element_pack_spazio",
+      "name": "Portali del firmamento",
+      "motif": "polvere astrale",
+      "file": "assets/oculum/theme_stories/webp/element_pack_spazio.webp"
+    },
+    {
+      "id": "element_pack_caos",
+      "name": "Frammenti discordanti",
+      "motif": "pietra stratificata",
+      "file": "assets/oculum/theme_stories/webp/element_pack_caos.webp"
+    },
+    {
+      "id": "element_pack_natura",
+      "name": "Rami in fiore",
+      "motif": "corteccia",
+      "file": "assets/oculum/theme_stories/webp/element_pack_natura.webp"
+    },
+    {
+      "id": "element_pack_pianta",
+      "name": "Fronda del germoglio",
+      "motif": "corteccia",
+      "file": "assets/oculum/theme_stories/webp/element_pack_pianta.webp"
+    },
+    {
+      "id": "element_pack_bestiale",
+      "name": "Artigli della tana",
+      "motif": "legno inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_bestiale.webp"
+    },
+    {
+      "id": "element_pack_maledizione",
+      "name": "Sigillo incatenato",
+      "motif": "metallo inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_maledizione.webp"
+    },
+    {
+      "id": "element_pack_benedizione",
+      "name": "Nastri del voto",
+      "motif": "veli perlacei",
+      "file": "assets/oculum/theme_stories/webp/element_pack_benedizione.webp"
+    },
+    {
+      "id": "element_pack_cura",
+      "name": "Erbe del conforto",
+      "motif": "legno inciso",
+      "file": "assets/oculum/theme_stories/webp/element_pack_cura.webp"
+    },
+    {
+      "id": "element_pack_vero",
+      "name": "Specchio senza inganno",
+      "motif": "cristallo",
+      "file": "assets/oculum/theme_stories/webp/element_pack_vero.webp"
+    },
+    {
+      "id": "element_pack_sconosciuto",
+      "name": "Glifi indecifrati",
+      "motif": "pietra stratificata",
+      "file": "assets/oculum/theme_stories/webp/element_pack_sconosciuto.webp"
+    },
+    {
+      "id": "canva_ice",
+      "name": "Ghiaccio · Canva",
+      "motif": "Ghiaccio scolpito e cristalli sospesi",
+      "file": "assets/oculum/theme_stories/webp/canva_ice.webp"
+    },
+    {
+      "id": "canva_spirit",
+      "name": "Spirituale · Canva",
+      "motif": "Alabastro, argento e filamenti di anime",
+      "file": "assets/oculum/theme_stories/webp/canva_spirit.webp"
+    },
+    {
+      "id": "canva_physical",
+      "name": "Fisico · Canva",
+      "motif": "Acciaio martellato, cuoio e incisioni di battaglia",
+      "file": "assets/oculum/theme_stories/webp/canva_physical.webp"
+    },
+    {
+      "id": "classic_rpg",
+      "name": "Classic RPG",
+      "motif": "scudo araldico e fibbie di cuoio inciso",
+      "file": "assets/oculum/theme_stories/webp/classic_rpg.webp"
+    },
+    {
+      "id": "classic_low_detail",
+      "name": "Classic low detail",
+      "motif": "sigillo inciso compatto",
+      "file": "assets/oculum/theme_stories/webp/classic_low_detail.webp"
+    },
+    {
+      "id": "moon_iron",
+      "name": "Ferro lunare",
+      "motif": "falce lunare incastonata in ferro",
+      "file": "assets/oculum/theme_stories/webp/moon_iron.webp"
+    },
+    {
+      "id": "lunar_eclipse",
+      "name": "Eclissi lunare",
+      "motif": "disco eclissato e orbite spezzate",
+      "file": "assets/oculum/theme_stories/webp/lunar_eclipse.webp"
+    },
+    {
+      "id": "cathedral_rose",
+      "name": "Rosa cattedrale",
+      "motif": "rosone a petali e vetro piombato",
+      "file": "assets/oculum/theme_stories/webp/cathedral_rose.webp"
+    },
+    {
+      "id": "thorn_vigil",
+      "name": "Veglia di rovi",
+      "motif": "rovi annodati e sigillo trafitto",
+      "file": "assets/oculum/theme_stories/webp/thorn_vigil.webp"
+    },
+    {
+      "id": "obsidian_sigil",
+      "name": "Sigillo ossidiana",
+      "motif": "ossidiana fratturata e glifo sospeso",
+      "file": "assets/oculum/theme_stories/webp/obsidian_sigil.webp"
+    },
+    {
+      "id": "solar_reliquary",
+      "name": "Reliquiario solare",
+      "motif": "reliquiario radiale e raggi consumati",
+      "file": "assets/oculum/theme_stories/webp/solar_reliquary.webp"
+    },
+    {
+      "id": "storm_cathedral",
+      "name": "Cattedrale tempesta",
+      "motif": "guglie spezzate e parafulmini rituali",
+      "file": "assets/oculum/theme_stories/webp/storm_cathedral.webp"
+    },
+    {
+      "id": "ember_rite",
+      "name": "Rito di brace",
+      "motif": "pietra carbonizzata e cera rituale",
+      "file": "assets/oculum/theme_stories/webp/ember_rite.webp"
+    },
+    {
+      "id": "ivory_archive",
+      "name": "Archivio d avorio",
+      "motif": "fogli arrotolati e fermagli d'avorio",
+      "file": "assets/oculum/theme_stories/webp/ivory_archive.webp"
+    },
+    {
+      "id": "kingi_wrong_future",
+      "name": "Kingi",
+      "motif": "ingranaggi deformi e occhio meccanico",
+      "file": "assets/oculum/theme_stories/webp/kingi_wrong_future.webp"
+    },
+    {
+      "id": "blood_chapel",
+      "name": "Cappella di sangue",
+      "motif": "arco osseo e reliquia sanguigna",
+      "file": "assets/oculum/theme_stories/webp/blood_chapel.webp"
+    },
+    {
+      "id": "null_crown",
+      "name": "Corona nulla",
+      "motif": "corona incompleta sospesa nel vuoto",
+      "file": "assets/oculum/theme_stories/webp/null_crown.webp"
+    },
+    {
+      "id": "phobia_dark",
+      "name": "Phobia",
+      "motif": "iride osservatrice e fenditura oscura",
+      "file": "assets/oculum/theme_stories/webp/phobia_dark.webp"
+    },
+    {
+      "id": "whispering_reliquary",
+      "name": "Reliquiario dei sussurri",
+      "motif": "bocche sigillate e nastri reliquiario",
+      "file": "assets/oculum/theme_stories/webp/whispering_reliquary.webp"
+    },
+    {
+      "id": "black_briar_kingdom",
+      "name": "Regno del rovo nero",
+      "motif": "stemma soffocato dal rovo nero",
+      "file": "assets/oculum/theme_stories/webp/black_briar_kingdom.webp"
+    },
+    {
+      "id": "slime_prince",
+      "name": "Principe slime",
+      "motif": "corona galleggiante e gelatina regale",
+      "file": "assets/oculum/theme_stories/webp/slime_prince.webp"
+    },
+    {
+      "id": "deep_forest_demon",
+      "name": "Demone del bosco profondo",
+      "motif": "corna ramificate e corteccia demoniaca",
+      "file": "assets/oculum/theme_stories/webp/deep_forest_demon.webp"
+    },
+    {
+      "id": "astral_ink",
+      "name": "Inchiostro astrale",
+      "motif": "calamaio cosmico e scie calligrafiche",
+      "file": "assets/oculum/theme_stories/webp/astral_ink.webp"
+    },
+    {
+      "id": "bone_saint",
+      "name": "Santo d osso",
+      "motif": "aureola di vertebre e osso scolpito",
+      "file": "assets/oculum/theme_stories/webp/bone_saint.webp"
+    },
+    {
+      "id": "medieval_keep",
+      "name": "Mastio medievale",
+      "motif": "merli di pietra e stendardo logoro",
+      "file": "assets/oculum/theme_stories/webp/medieval_keep.webp"
+    },
+    {
+      "id": "fortezza_oculum",
+      "name": "Fortezza Oculum",
+      "motif": "bastione oculare e cancelli runici",
+      "file": "assets/oculum/theme_stories/webp/fortezza_oculum.webp"
+    },
+    {
+      "id": "hoshy_cosmic_cat",
+      "name": "Hoshy gatto cosmico",
+      "motif": "gatto etereo e coda di costellazioni",
+      "file": "assets/oculum/theme_stories/webp/hoshy_cosmic_cat.webp"
+    },
+    {
+      "id": "ash_oracle",
+      "name": "Oracolo di cenere",
+      "motif": "maschera profetica e cenere raccolta",
+      "file": "assets/oculum/theme_stories/webp/ash_oracle.webp"
+    },
+    {
+      "id": "void_liturgy",
+      "name": "Liturgia del vuoto",
+      "motif": "cerchio liturgico incompleto e velario",
+      "file": "assets/oculum/theme_stories/webp/void_liturgy.webp"
+    },
+    {
+      "id": "shadow_gate_rank",
+      "name": "Porta d ombra",
+      "motif": "portale a gradini e catene d'ombra",
+      "file": "assets/oculum/theme_stories/webp/shadow_gate_rank.webp"
+    },
+    {
+      "id": "karma_duality",
+      "name": "Bilancia del karma",
+      "motif": "due occhi sulla bilancia spezzata",
+      "file": "assets/oculum/theme_stories/webp/karma_duality.webp"
+    },
+    {
+      "id": "monster_lantern",
+      "name": "Lanterna dei mostri",
+      "motif": "lanterna con silhouette prigioniera",
+      "file": "assets/oculum/theme_stories/webp/monster_lantern.webp"
+    },
+    {
+      "id": "jrpg_legend",
+      "name": "Leggenda JRPG",
+      "motif": "lama cerimoniale e cristallo custodito",
+      "file": "assets/oculum/theme_stories/webp/jrpg_legend.webp"
+    },
+    {
+      "id": "rogue_mutation",
+      "name": "Mutazione Roguelike",
+      "motif": "occhio mutante e membrane irregolari",
+      "file": "assets/oculum/theme_stories/webp/rogue_mutation.webp"
+    },
+    {
+      "id": "cell_crimson_run",
+      "name": "Cella cremisi",
+      "motif": "sbarre infrante e catene cremisi",
+      "file": "assets/oculum/theme_stories/webp/cell_crimson_run.webp"
+    },
+    {
+      "id": "darkest_stagecoach",
+      "name": "Carrozza cupa",
+      "motif": "ruota scheggiata e lanterna di viaggio",
+      "file": "assets/oculum/theme_stories/webp/darkest_stagecoach.webp"
+    },
+    {
+      "id": "buried_herbarium",
+      "name": "Erbario sepolto",
+      "motif": "legno inciso, radici e fiori custoditi",
+      "file": "assets/oculum/theme_stories/webp/buried_herbarium.webp"
+    },
+    {
+      "id": "funeral_clockwork",
+      "name": "Orologeria funebre",
+      "motif": "ottone brunito, quadranti e giunture",
+      "file": "assets/oculum/theme_stories/webp/funeral_clockwork.webp"
+    },
+    {
+      "id": "tidal_stained_glass",
+      "name": "Vetrata delle maree",
+      "motif": "vetro marino piombato e madreperla",
+      "file": "assets/oculum/theme_stories/webp/tidal_stained_glass.webp"
+    },
+    {
+      "id": "ashen_covenant",
+      "name": "Patto di cenere",
+      "motif": "sigillo giurato e tessuto bruciato",
+      "file": "assets/oculum/theme_stories/webp/ashen_covenant.webp"
+    },
+    {
+      "id": "eclipse_bonfire",
+      "name": "Falò d eclissi",
+      "motif": "falò dentro una mezzaluna consumata",
+      "file": "assets/oculum/theme_stories/webp/eclipse_bonfire.webp"
+    },
+    {
+      "id": "bolted_black_iron",
+      "name": "Metallo nero bullonato",
+      "motif": "placche nere e catene bullonate",
+      "file": "assets/oculum/theme_stories/webp/bolted_black_iron.webp"
+    },
+    {
+      "id": "bolted_gold_plate",
+      "name": "Metallo oro bullonato",
+      "motif": "placche auree e sigillo regale",
+      "file": "assets/oculum/theme_stories/webp/bolted_gold_plate.webp"
+    },
+    {
+      "id": "bolted_copper_oxide",
+      "name": "Rame ossidato bullonato",
+      "motif": "rame ossidato e tubi rituali",
+      "file": "assets/oculum/theme_stories/webp/bolted_copper_oxide.webp"
+    },
+    {
+      "id": "bolted_silver_plate",
+      "name": "Metallo argento bullonato",
+      "motif": "argento martellato e lenti oculari",
+      "file": "assets/oculum/theme_stories/webp/bolted_silver_plate.webp"
+    },
+    {
+      "id": "meadow_sprite",
+      "name": "Folletto di prato",
+      "motif": "folletto nascosto e erbe intrecciate",
+      "file": "assets/oculum/theme_stories/webp/meadow_sprite.webp"
+    },
+    {
+      "id": "modern_school_day",
+      "name": "Giorno di scuola",
+      "motif": "quaderno oscuro e sigillo sulla copertina",
+      "file": "assets/oculum/theme_stories/webp/modern_school_day.webp"
+    },
+    {
+      "id": "vtt_arcane_table",
+      "name": "Tavolo arcano",
+      "motif": "tavolo rituale e pedine runiche",
+      "file": "assets/oculum/theme_stories/webp/vtt_arcane_table.webp"
+    },
+    {
+      "id": "vtt_obsidian_grid",
+      "name": "Griglia ossidiana",
+      "motif": "tessere d'ossidiana e giunture incise",
+      "file": "assets/oculum/theme_stories/webp/vtt_obsidian_grid.webp"
+    },
+    {
+      "id": "vtt_parchment_layers",
+      "name": "Strati pergamena",
+      "motif": "mappe stratificate e chiodi cartografici",
+      "file": "assets/oculum/theme_stories/webp/vtt_parchment_layers.webp"
+    },
+    {
+      "id": "vtt_master_overlay",
+      "name": "Overlay del Master",
+      "motif": "anello del Master e marcatori oculari",
+      "file": "assets/oculum/theme_stories/webp/vtt_master_overlay.webp"
+    },
+    {
+      "id": "verdigris_mourning",
+      "name": "Rame sepolto",
+      "motif": "rame sepolto e catene floreali corrose",
+      "file": "assets/oculum/theme_stories/webp/verdigris_mourning.webp"
+    },
+    {
+      "id": "restyle_legno",
+      "name": "Legno",
+      "motif": "noce antico, venature e cornici intagliate",
+      "file": "assets/oculum/theme_stories/webp/restyle_legno.webp"
+    },
+    {
+      "id": "restyle_originale",
+      "name": "Originale",
+      "motif": "occhio cesellato e pergamena annerita",
+      "file": "assets/oculum/theme_stories/webp/restyle_originale.webp"
+    },
+    {
+      "id": "restyle_cenere",
+      "name": "Cenere",
+      "motif": "occhio di pietra e strati di cenere",
+      "file": "assets/oculum/theme_stories/webp/restyle_cenere.webp"
+    },
+    {
+      "id": "restyle_sangue",
+      "name": "Sangue",
+      "motif": "occhio suturato e filo di essenza",
+      "file": "assets/oculum/theme_stories/webp/restyle_sangue.webp"
+    },
+    {
+      "id": "restyle_aurora",
+      "name": "Aurora",
+      "motif": "occhio ametista e veli aurorali",
+      "file": "assets/oculum/theme_stories/webp/restyle_aurora.webp"
+    },
+    {
+      "id": "restyle_natura",
+      "name": "Natura",
+      "motif": "occhio nel seme e radici bronzee",
+      "file": "assets/oculum/theme_stories/webp/restyle_natura.webp"
+    },
+    {
+      "id": "restyle_acido",
+      "name": "Acido",
+      "motif": "vetro tossico, colature chartreuse e schegge ametista",
+      "file": "assets/oculum/theme_stories/webp/restyle_acido.webp"
+    },
+    {
+      "id": "restyle_sogno",
+      "name": "Sogno",
+      "motif": "nuvole stratificate blu, viola e rosa pastello",
+      "file": "assets/oculum/theme_stories/webp/restyle_sogno.webp"
+    },
+    {
+      "id": "restyle_spiritualita",
+      "name": "Spiritualità",
+      "motif": "velo d anime e luce bianca",
+      "file": "assets/oculum/theme_stories/webp/restyle_spiritualita.webp"
+    }
+  ],
+  "referenceSun": "assets/oculum/theme_stories/webp/benedict.webp",
+  "elementThemes": {
+    "demoniaco": "plane_demoniaco",
+    "nuvola": "plane_nuvole_rocciose",
+    "roccia": "plane_sotterraneo_maggiore",
+    "fisico": "canva_physical",
+    "taglio": "element_pack_taglio",
+    "perforante": "element_pack_perforante",
+    "contundente": "element_pack_contundente",
+    "fuoco": "element_pack_fuoco",
+    "vento": "element_pack_vento",
+    "acqua": "element_pack_acqua",
+    "terra": "element_pack_terra",
+    "gelo": "canva_ice",
+    "sonoro": "element_pack_sonoro",
+    "psichico": "element_pack_psichico",
+    "lava": "element_pack_lava",
+    "fulmine": "element_pack_fulmine",
+    "veleno": "element_pack_veleno",
+    "cenere": "element_pack_cenere",
+    "sangue": "element_pack_sangue",
+    "cristallo": "element_pack_cristallo",
+    "oscuro": "element_pack_oscuro",
+    "lunare": "element_pack_lunare",
+    "solare": "element_pack_solare",
+    "vapium": "element_pack_vapium",
+    "osso": "element_pack_osso",
+    "gravita": "element_pack_gravita",
+    "vuoto": "element_pack_vuoto",
+    "sogno": "element_pack_sogno",
+    "metallo": "element_pack_metallo",
+    "postea": "element_pack_postea",
+    "radice": "element_pack_radice",
+    "slime": "element_pack_slime",
+    "oculum": "element_pack_oculum",
+    "stella": "element_pack_stella",
+    "corrotto": "element_pack_corrotto",
+    "nonmorto": "element_pack_nonmorto",
+    "acido": "element_pack_acido",
+    "sacro": "element_pack_sacro",
+    "diabolico": "element_pack_diabolico",
+    "angelico": "element_pack_angelico",
+    "spirituale": "canva_spirit",
+    "necrotico": "element_pack_necrotico",
+    "magia": "element_pack_magia",
+    "energia": "element_pack_energia",
+    "esplosivo": "element_pack_esplosivo",
+    "radiazione": "element_pack_radiazione",
+    "plasma": "element_pack_plasma",
+    "tecnologia": "element_pack_tecnologia",
+    "proiettile": "element_pack_proiettile",
+    "laser": "element_pack_laser",
+    "tempo": "element_pack_tempo",
+    "spazio": "element_pack_spazio",
+    "caos": "element_pack_caos",
+    "natura": "element_pack_natura",
+    "pianta": "element_pack_pianta",
+    "bestiale": "element_pack_bestiale",
+    "maledizione": "element_pack_maledizione",
+    "benedizione": "element_pack_benedizione",
+    "cura": "element_pack_cura",
+    "vero": "element_pack_vero",
+    "sconosciuto": "element_pack_sconosciuto"
+  }
+}

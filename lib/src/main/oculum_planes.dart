@@ -330,6 +330,7 @@ extension _OculumPlanes on _OculumHomePageState {
     if (selected == null || !mounted || selected == selectedPlaneId) return;
     _saveActiveMerchantProfileStock();
     schedePersonaggio[schedaCorrente]['selectedPlaneId'] = selected;
+    restoreMonsterAppearance(schedePersonaggio[schedaCorrente]);
     schedePersonaggio[schedaCorrente]['planePressurePenalty'] = 0;
     schedePersonaggio[schedaCorrente]['planePressureRolled'] = false;
     ensurePlaneOffers();

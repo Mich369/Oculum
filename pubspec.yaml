@@ -53,6 +53,53 @@ flutter:
     - assets/oculum/sprites/
     - assets/oculum/icons/
     - assets/oculum/home_art/
+    - assets/oculum/theme_stories/webp/
+    - assets/themes/benedict/frames/
+    - assets/themes/benedict/overlays/
+    - assets/themes/hidenas/frames/
+    - assets/themes/hidenas/overlays/
+    - assets/themes/plane_demoniaco/frames/
+    - assets/themes/plane_demoniaco/overlays/
+    - assets/themes/plane_diabolico/frames/
+    - assets/themes/plane_diabolico/overlays/
+    - assets/themes/dedicated_indigo/frames/
+    - assets/themes/dedicated_indigo/overlays/
+    - assets/themes/dedicated_cloud_sea/frames/
+    - assets/themes/dedicated_cloud_sea/overlays/
+    - assets/themes/dedicated_aurora/frames/
+    - assets/themes/dedicated_aurora/overlays/
+    - assets/themes/plane_nuvole_rocciose/frames/
+    - assets/themes/plane_nuvole_rocciose/overlays/
+    - assets/themes/plane_mezzano/frames/
+    - assets/themes/plane_mezzano/overlays/
+    - assets/themes/plane_sacro/frames/
+    - assets/themes/plane_sacro/overlays/
+    - assets/themes/plane_angelico/frames/
+    - assets/themes/plane_angelico/overlays/
+    - assets/themes/plane_oblio/frames/
+    - assets/themes/plane_oblio/overlays/
+    - assets/themes/plane_isole/frames/
+    - assets/themes/plane_isole/overlays/
+    - assets/themes/plane_affogato/frames/
+    - assets/themes/plane_affogato/overlays/
+    - assets/themes/plane_sotterraneo/frames/
+    - assets/themes/plane_sotterraneo/overlays/
+    - assets/themes/plane_sotterraneo_maggiore/frames/
+    - assets/themes/plane_sotterraneo_maggiore/overlays/
+    - assets/themes/plane_shadow_hell/frames/
+    - assets/themes/plane_shadow_hell/overlays/
+    - assets/themes/plane_vero_inferno/frames/
+    - assets/themes/plane_vero_inferno/overlays/
+    - assets/themes/plane_postea/frames/
+    - assets/themes/plane_postea/overlays/
+    - assets/themes/plane_caramella/frames/
+    - assets/themes/plane_caramella/overlays/
+    - assets/themes/plane_foresta_elementale/frames/
+    - assets/themes/plane_foresta_elementale/overlays/
+    - assets/themes/plane_morti/frames/
+    - assets/themes/plane_morti/overlays/
+    - assets/themes/plane_ghiaccio/frames/
+    - assets/themes/plane_ghiaccio/overlays/
     - assets/oculum/atelier/
     - assets/oculum_dungeon/generated_sprites/enemies/
     - assets/oculum_dungeon/generated_sprites/equipment/
