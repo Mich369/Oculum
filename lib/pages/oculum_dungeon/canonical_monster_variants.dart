@@ -39,7 +39,12 @@ final _canonicalPlanarVariants = <MonsterBookEntry>[
     3,
     'Variante robot di Postea: una piccola testa bianca e grigia a calotta seghettata, due orecchie metalliche lunghe e asimmetriche e sottili occhi rossi luminosi. Una corona di ottone e smalto rosso protegge il nucleo; dal collo scendono due lembi rigidi rossi e neri simili a una sciarpa. Mani e avambracci sono affiancati da catene a maglie squadrate che trattengono gli intrusi. Rune nei polsi generano raggi di plasma e una presa telecinetica meccanica; non usa Oculum, ma Materia e cooldown.',
     'Il perno rosso sotto la corona alimenta i proiettori di plasma.',
-    ['robot_rabbit_plasma', 'robot_rabbit_telekinesis', 'robot_rabbit_chains'],
+    [
+      'robot_rabbit_plasma',
+      'robot_rabbit_telekinesis',
+      'robot_rabbit_chains',
+      'robot_rabbit_recharge',
+    ],
     'bobina_plasma_coniglio',
   ),
   _canonicalCreature(

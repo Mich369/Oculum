@@ -79,7 +79,20 @@ void main() {
           expect(art.openName, isEmpty);
           expect(art.skills.single.nome, 'Volo naturale');
         }
-        if (id == 'coniglio_plasma') expect(monster.stats['oculum'], 0);
+        if (id == 'coniglio_plasma') {
+          expect(monster.stats['oculum'], 0);
+          final recharge = art.skills.singleWhere(
+            (s) => s.nome == 'Ricarica di Materia',
+          );
+          expect(
+            recharge.cooldownPerLivello.take(3).map((cd) => cd.amount),
+            everyElement(4),
+          );
+          expect(
+            recharge.effettiEvoluzione(1).single.target,
+            'plasma_matter_recharge',
+          );
+        }
       }
       expect(
         defaultMonsterBookEntries.map((m) => m.id).toSet().length,
