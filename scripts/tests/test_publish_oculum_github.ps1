@@ -25,3 +25,8 @@ try { & $publisher } catch { $failed = $true }
 if (!$failed) { throw 'Failed build must throw' }
 if (@($global:oculumPublishTestCommands | Where-Object { $_ -like 'workflow run *' }).Count -ne 1) { throw 'Failed build must not dispatch publication' }
 Write-Host 'PASS: exact build run publication, workflow verification and stop on failure. No real GitHub commands executed.'
+# The negative case intentionally leaves the mock's native exit status at 1.
+# GitHub's pwsh wrapper forwards LASTEXITCODE, so successful assertions must
+# reset that status after confirming that publication was correctly stopped.
+$global:LASTEXITCODE = 0
+exit 0

@@ -2,7 +2,7 @@
 
 ## Nuove creature
 
-Il catalogo planare iniziale di questa lavorazione conteneva 357 voci fra specie e varianti canoniche; con le aggiunte successive arriva a 380 (1.144 nell’intero Monster Book). Le nuove voci di questa parte dell'aggiornamento sono:
+Il catalogo planare iniziale di questa lavorazione conteneva 357 voci fra specie e varianti canoniche; con le aggiunte successive arriva a 380 (1.120 nell’intero Monster Book). Le nuove voci di questa parte dell'aggiornamento sono:
 
 - Uomo con la maschera: alla creazione assume una delle quattro discipline colorate.
 - Verde: maggiore Resilienza e Ricordo Vitale permanente.
@@ -107,6 +107,8 @@ Le regole confermate restano descritte nel manuale e nel registro; i nuovi prese
 - `flutter analyze --no-pub`: nessun problema rilevato.
 - `flutter test --no-pub --concurrency=2 --reporter expanded`: 1.151 test passati, 6 test condizionali saltati; inclusi test grafici desktop/tablet/telefono, navigazione, consumi, salvataggi, Fratture e Scudi critici.
 - Pubblicazione: 11 test Python; aggiornamento Windows isolato con conservazione salvataggi: 3 test Python. Comando PowerShell verificato con GitHub simulato e arresto sugli errori.
-- Catalogo misurato: 23 nuove voci, 70 tecniche dedicate, 380 voci planari e 1.144 voci complessive comprese le varianti generate; 22 ricette. Asset: 162 WebP validi, 61,8 MB, nessun file mancante.
+- Catalogo misurato: 23 nuove voci, 70 tecniche dedicate, 380 voci planari e 1.120 voci complessive comprese le varianti generate; 22 ricette. Asset: 162 WebP validi, 61,8 MB, nessun file mancante.
 
 Questa verifica locale non include i sei test online condizionali. Le verifiche autenticate, le build GitHub, la pubblicazione e i pacchetti locali sono evidenze distinte; la run collegata ai download pubblici identifica il commit realmente compilato. Nessuna build locale dell’app è stata eseguita.
+
+Conteggi riferiti al commit pubblicato: 1.120 voci complessive. Eventuali 24 creature del ciclo in una lavorazione concorrente restano separate fino al proprio commit verificato. Il test PowerShell ora azzera il codice nativo dopo il caso negativo atteso, mantenendo gli assert che vietano la pubblicazione di workflow falliti.
