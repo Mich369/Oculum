@@ -1496,7 +1496,9 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
   }
 
   bool isColorThemeUnlocked(String id) {
-    return oculumRestylePresets.any((preset) => preset.id == id) ||
+    return canManageAllThemes ||
+        masterAssignedThemeIds.contains(id) ||
+        oculumRestylePresets.any((preset) => preset.id == id) ||
         id == 'classic_reliquary' ||
         id == 'classic_rpg' ||
         oculumThemeStartsUnlocked(id) ||
@@ -1630,6 +1632,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       return;
     }
 
+    rememberAssignedTheme(id);
     final keepExplicitGui =
         isBuiltInGuiModeId(colorGuiPresetId) && colorGuiPresetId != 'gui_auto';
     setState(() {
@@ -1681,7 +1684,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
 
   void unlockColorThemeFromDungeon(String presetId) {
     final preset = colorPresetById(presetId);
-    if (preset == null || isColorThemeUnlocked(presetId)) return;
+    if (preset == null || unlockedColorThemeIds.contains(presetId)) return;
 
     setState(() {
       unlockedColorThemeIds.add(presetId);
@@ -3709,6 +3712,8 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         results.add({
           'title': funzione['title'] ?? key,
           'subtitle': t('Funzione rapida', 'Quick function'),
+          'quickFunction': true,
+          'score': oculumSearchScore(q, key),
           'page': funzione['page'],
           'anchorId': funzione['anchorId'],
           'action': funzione['action'],
@@ -3888,9 +3893,16 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       anchorId: 'story_root',
     );
 
-    results.sort(
-      (a, b) => readIntValue(b['score']).compareTo(readIntValue(a['score'])),
-    );
+    results.sort((a, b) {
+      final quick = (b['quickFunction'] == true ? 1 : 0).compareTo(
+        a['quickFunction'] == true ? 1 : 0,
+      );
+      if (quick != 0) return quick;
+      final score = readIntValue(
+        b['score'],
+      ).compareTo(readIntValue(a['score']));
+      return score != 0 ? score : '${a['title']}'.compareTo('${b['title']}');
+    });
     return results;
   }
 

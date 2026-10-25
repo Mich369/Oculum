@@ -116,6 +116,10 @@ extension _OculumMonsterDossier on _OculumHomePageState {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Text(
+          monsterKillCountLabel(monster.id),
+          style: TextStyle(color: tertiaryColor),
+        ),
         monsterReadingHeading('Abilità', Icons.auto_awesome_outlined),
         for (final indexed in art.skills.indexed)
           monsterReadingSkill(monster, indexed.$2, indexed.$1),

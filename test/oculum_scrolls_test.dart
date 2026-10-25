@@ -1,8 +1,111 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 
 void main() {
+  test(
+    'Fortuna increases learning within the character Grade cap and higher skills raise the DC',
+    () {
+      expect(
+        oculumScrollLearningChance('normale', luck: 20, characterGrade: 8),
+        35,
+      );
+      expect(
+        oculumScrollLearningChance(
+          'normale',
+          luck: 100,
+          characterGrade: 8,
+          bonusPercent: 3,
+        ),
+        75,
+      );
+      expect(
+        oculumScrollLearningChance(
+          'normale',
+          luck: 100,
+          characterGrade: 9,
+          bonusPercent: 3,
+        ),
+        90,
+      );
+      expect(oculumScrollLearningChance('normale', luck: -10), 15);
+      expect(
+        oculumScrollLearningChance('normale', luck: 10, matchingElement: true),
+        40,
+      );
+      expect(
+        oculumScrollLearningChance('normale', luck: 90, matchingElement: true),
+        75,
+      );
+      expect(oculumScrollLearningColor(15), Colors.redAccent);
+      expect(oculumScrollLearningColor(35), Colors.deepOrangeAccent);
+      expect(oculumScrollLearningColor(50), Colors.yellowAccent);
+      expect(oculumScrollLearningColor(65), const Color(0xffc6e35a));
+      expect(oculumScrollLearningColor(90), Colors.greenAccent);
+      expect(
+        oculumScrollLearningDifficulty(1, skillLevel: 10, characterLevel: 4),
+        52,
+      );
+      expect(
+        oculumScrollLearningDifficulty(1, skillLevel: 4, characterLevel: 10),
+        40,
+      );
+      expect(
+        oculumScrollCanLearn(
+          20,
+          51,
+          1,
+          0,
+          skillLevel: 10,
+          characterLevel: 4,
+          luck: 100,
+        ),
+        isFalse,
+      );
+      expect(
+        oculumScrollCanLearn(
+          20,
+          52,
+          1,
+          74,
+          skillLevel: 10,
+          characterLevel: 4,
+          luck: 100,
+        ),
+        isTrue,
+      );
+      expect(
+        oculumScrollCanLearn(
+          20,
+          52,
+          1,
+          75,
+          skillLevel: 10,
+          characterLevel: 4,
+          luck: 100,
+        ),
+        isFalse,
+      );
+      expect(
+        oculumScrollCanLearn(
+          20,
+          52,
+          1,
+          89,
+          skillLevel: 10,
+          characterLevel: 4,
+          luck: 100,
+          characterGrade: 9,
+        ),
+        isTrue,
+      );
+      expect(
+        oculumScrollCanLearn(19, 999, 0, 0, luck: 100, characterGrade: 9),
+        isFalse,
+      );
+    },
+  );
   test(
     'Corruption defense matches source roll with minus three only at equal level',
     () {

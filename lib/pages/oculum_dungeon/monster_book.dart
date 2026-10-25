@@ -15,6 +15,17 @@ part 'planar_monsters.dart';
 part 'canonical_monster_variants.dart';
 part 'masked_monsters.dart';
 part 'ordinary_creatures.dart';
+part 'bramble.dart';
+part 'storm_and_bandits.dart';
+part 'rebirth_rage_evergreen.dart';
+part 'lavastrello.dart';
+part 'bone_and_rune_creatures.dart';
+part 'laer_turret.dart';
+part 'deadly_sins.dart';
+part 'original_fauna_descriptions.dart';
+part 'fauna_variants.dart';
+part 'monster_anatomy.dart';
+part 'non_return_undead.dart';
 
 bool oculumMonsterBookNameIsDiscovered(Map<String, dynamic>? knowledge) =>
     knowledge?['nameKnown'] == true || knowledge?['pagePurchased'] == true;
@@ -267,56 +278,7 @@ String oculumMonsterBookWeakPointDescription(
   ).firstMatch(description);
   if (match != null) return match.group(1)!.trim();
 
-  final identity = '${entry.id} ${entry.nameIt} ${entry.nameEn} ${entry.descIt}'
-      .toLowerCase();
-  if (identity.contains('goblin') &&
-      (identity.contains('assassin') || identity.contains('assassino'))) {
-    return english
-        ? 'the exposed tendon at the dagger wrist, where the grip and thrust meet'
-        : 'il tendine esposto al polso del pugnale, dove presa e affondo si incontrano';
-  }
-  if (identity.contains('golem') ||
-      identity.contains('costrutto') ||
-      identity.contains('construct')) {
-    return english
-        ? 'the rune nexus where the chest grooves converge on the core beneath the plates'
-        : 'il nodo runico dove i solchi del petto convergono sul nucleo sotto le piastre';
-  }
-  if (RegExp(
-    r'incorpore|spettro|fantasma|wraith|ghost|phantom|spirit|spirito',
-  ).hasMatch(identity)) {
-    return english
-        ? 'the shadow or reflection anchoring its presence to the battlefield'
-        : 'l’ombra o il riflesso che ancora la sua presenza al campo di battaglia';
-  }
-  if (RegExp(
-    r'guscio|carapace|shell|conchiglia|corazza|corazzat|placca',
-  ).hasMatch(identity)) {
-    return english
-        ? 'the soft hinge beneath the lower rim of its shell, exposed when it turns'
-        : 'la giuntura morbida sotto il bordo inferiore del guscio, esposta quando si gira';
-  }
-  if (RegExp(
-    r'ala|alato|arpia|wing|volatile|uccello|bird',
-  ).hasMatch(identity)) {
-    return english
-        ? 'the wing root, exposed when it banks or folds its wings'
-        : 'l’attaccatura dell’ala, esposta quando piega o inclina le ali';
-  }
-  if (RegExp(r'slime|gelatina|melma').hasMatch(identity)) {
-    return english
-        ? 'the core, briefly visible when the body stretches around a blow'
-        : 'il nucleo, visibile per un istante quando il corpo si tende attorno a un colpo';
-  }
-  if (entry.elementId.trim().isNotEmpty && entry.elementId != 'fisico') {
-    final element = entry.elementId.replaceAll('_', ' ');
-    return english
-        ? 'the point where its $element gathers beneath the body or armor'
-        : 'il punto in cui $element si concentra sotto il corpo o la corazza';
-  }
-  return english
-      ? 'the exposed joint that bears its weight when it changes direction'
-      : 'l’articolazione esposta che sostiene il peso quando cambia direzione';
+  return oculumLogicalMonsterWeakPoint(entry, english: english);
 }
 
 /// Resistance values use the existing damage presets. Neutral categories are
@@ -3639,6 +3601,10 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     descIt:
         'Costrutto adulto, livello 2/40, Grado I/III. Non è solo una versione con più vita: usa la fata come scudo reattivo e il terreno come munizione. Se la Fata della Protezione viene spezzata, combatte contro il suo stesso golem e lo distrugge. Drop: 1d6+4 Roccia scadente da 500 g.',
     descEn: 'Adult fate construct.',
+    weakPointIt:
+        'Le giunture esterne del rivestimento runico. Il Nucleo con fata riflette invece il tuo danno senza tiro contrapposto: consumi comunque Azione o Reazione.',
+    weakPointEn:
+        'The outer plate joints. The fairy core reflects your damage without a contested roll, still spending your Action or Reaction.',
     elementId: 'terra',
     spriteAssetPath: '',
     isMiniBoss: true,

@@ -1420,6 +1420,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'obser': obserController.text,
       'relicArtPackId':
           oculumSheetRelicSelections.value[currentSheetScrollId()] ?? '',
+      'masterAssignedThemeIds': masterAssignedThemeIds.toList()..sort(),
+      'faunaPublic': {
+        'evergreenDisguiseProtected': evergreenDisguiseProtected,
+        'banditVendetta': planarState['banditVendetta'] == true,
+      },
+      'precisionBodyParts': publicPrecisionBodyParts,
       'homeArtworkFollowsTheme': homeArtworkFollowsTheme,
       if (merchantStock.isNotEmpty) 'merchantStock': merchantStock,
       'merchantStockSessionId': merchantStockSessionId,
@@ -1749,6 +1755,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
     if (activeGameMod == 'oculus') paginaCorrente = 0;
     restoreMonsterBookCustomization(json);
     homeArtworkFollowsTheme = json['homeArtworkFollowsTheme'] == true;
+    masterAssignedThemeIds
+      ..clear()
+      ..addAll(readStringListValue(json['masterAssignedThemeIds']));
     restoreMonsterAppearance(json);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) syncMonsterThemeUnlocks();
@@ -7473,6 +7482,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     String monsterVariant = 'base',
     MonsterBookEntry? monsterBookSource,
   }) async {
+    ensureQuickNpcSkills();
     final selectedType = forcedType ?? quickSheetType;
     final pawnCreatureOwner = pawnSenderTag;
     final createWithOculusRules = oculusModActive;
@@ -7568,10 +7578,20 @@ extension _OculumHomePersistence on _OculumHomePageState {
           ? humanoidChoice!.name
           : baseName;
       final requestedName = count == 1 ? chosenName : '$chosenName ${i + 1}';
-      final nome = nextGeneratedSheetName(requestedName);
+      var nome = nextGeneratedSheetName(requestedName);
       var matchedMonster =
           monsterBookSource ??
           monsterBookEntryForGeneratedEntity(description, nome);
+      if (const {
+            'scostubanditi',
+            'granscostumato',
+          }.contains(matchedMonster?.id) &&
+          Random.secure().nextInt(100) < 10) {
+        matchedMonster = monsterById('${matchedMonster!.id}_empatico');
+        if (matchedMonster != null) {
+          nome = nextGeneratedSheetName(matchedMonster.nameIt);
+        }
+      }
       if (matchedMonster?.id == 'uomo_maschera') {
         matchedMonster = monsterById(
           const [
@@ -7677,7 +7697,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
         _ => '',
       };
       final elements = <String>{
-        if (quickSheetElementController.text.trim().isNotEmpty)
+        if (selectedType.toLowerCase() == 'npc' && monsterBookSource == null)
+          quickNpcSkillElement
+        else if (quickSheetElementController.text.trim().isNotEmpty)
           quickSheetElementController.text.trim()
         else
           ...generatedEntityElements(description, nome),
@@ -8593,6 +8615,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
           }
         }
 
+        if (matchedMonster == null && selectedType.toLowerCase() == 'npc') {
+          skills
+            ..clear()
+            ..addAll(
+              quickNpcSkills.values.map(
+                (skill) =>
+                    CharacterSkill.fromJson(skill.toJson())
+                      ..equipaggiata = true,
+              ),
+            );
+        }
         currentResilienzaController.text = resilienzaController.text;
         currentVolontaController.text = volontaController.text;
         currentMateriaController.text = materiaController.text;
@@ -8830,6 +8863,19 @@ extension _OculumHomePersistence on _OculumHomePageState {
         schedePersonaggio[schedaCorrente],
         newlyCreated: true,
       );
+      if (matchedMonster?.id == 'deadly_sins') {
+        inventario.add(
+          oculumDeadlySinsWeapon(
+            matchedMonster!,
+            livello,
+            grado,
+            'initial:${sheetTagAt(schedaCorrente)}',
+          )..equipaggiata = true,
+        );
+      }
+      if (matchedMonster?.id == 'teschio_monaco') {
+        schivateOculumBonus = max(0, 2 - schivataOculumBase());
+      }
       salvaSchedaCorrenteInMemoria();
       if (isMeccanioBookId(
         '${schedePersonaggio[schedaCorrente]['monsterBookSourceId'] ?? ''}',

@@ -28,7 +28,7 @@ void main() {
     final use = probe.useScroll(item);
     await tester.pump();
     expect(
-      find.textContaining('Possibilità di apprendimento:'),
+      find.textContaining(RegExp(r'^Apprendimento \d+%')),
       findsOneWidget,
     );
     // A legacy identity can be normalized while the confirmation stays open.

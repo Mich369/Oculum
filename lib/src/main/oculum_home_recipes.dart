@@ -646,7 +646,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   Future<void> _applyPersonalForge(OculumRecipe recipe) async {
     final candidates = inventario
         .where((item) {
-          return item.arma || item.protegge;
+          return oculumCraftWearable(item);
         })
         .toList(growable: false);
     if (candidates.isEmpty || !mounted) {
@@ -745,6 +745,9 @@ extension _OculumHomeRecipes on _OculumHomePageState {
         selected,
         recipe,
         currentOculum: leggiNumero(currentOculumController),
+        bonusRoll: Random.secure().nextInt(100),
+        luck: rawCraftLuck,
+        rebirthed: rebirthato,
       );
       if (error == null) {
         currentOculumController.text =
@@ -1019,35 +1022,52 @@ extension _OculumHomeRecipes on _OculumHomePageState {
           ..quantita = safeQuantity;
       }
       if (succeeded) {
-        inventario.add(
-          craftedHerbal ??
-              (authoredMaterialForRecipe(recipe) != null
-                  ? authoredCraftedItem(recipe, safeQuantity)
-                  : InventoryItem(
-                      nome: recipe.resultName,
-                      peso: _finishedProductGrams(recipe) / 1000,
-                      quantita: safeQuantity,
-                      note: recipe.resultDescription,
-                      bonusDanno: oculumCraftedEquipmentBonuses(recipe).damage,
-                      bonusDifesa: oculumCraftedEquipmentBonuses(
-                        recipe,
-                      ).defense,
-                      elementoDanno: oculumCraftedEquipmentBonuses(
-                        recipe,
-                      ).element,
-                      gradoOggetto: oculumCraftedEquipmentBonuses(recipe).grade,
-                      gradoRichiesto: oculumCraftedEquipmentBonuses(
-                        recipe,
-                      ).grade,
-                      monsterLoot: oculumCraftedEquipmentSkillData(recipe),
-                      arma:
-                          recipe.forgeTarget == 'weapon' ||
-                          recipe.forgeTarget == 'arma',
-                      protegge:
-                          recipe.forgeTarget == 'armor' ||
-                          recipe.forgeTarget == 'protezione',
-                    )),
-        );
+        final crafted =
+            craftedHerbal ??
+            oculumFaunaCraftedItem(recipe) ??
+            (authoredMaterialForRecipe(recipe) != null
+                ? authoredCraftedItem(recipe, safeQuantity)
+                : InventoryItem(
+                    nome: recipe.resultName,
+                    peso: _finishedProductGrams(recipe) / 1000,
+                    quantita: safeQuantity,
+                    note: recipe.resultDescription,
+                    bonusDanno: oculumCraftedEquipmentBonuses(recipe).damage,
+                    bonusDifesa: oculumCraftedEquipmentBonuses(recipe).defense,
+                    elementoDanno: oculumCraftedEquipmentBonuses(
+                      recipe,
+                    ).element,
+                    gradoOggetto: oculumCraftedEquipmentBonuses(recipe).grade,
+                    gradoRichiesto: oculumCraftedEquipmentBonuses(recipe).grade,
+                    monsterLoot: oculumCraftedEquipmentSkillData(recipe),
+                    arma:
+                        recipe.forgeTarget == 'weapon' ||
+                        recipe.forgeTarget == 'arma',
+                    protegge:
+                        recipe.forgeTarget == 'armor' ||
+                        recipe.forgeTarget == 'protezione',
+                  ));
+        if (oculumCraftWearable(crafted)) {
+          for (var copy = 0; copy < safeQuantity; copy++) {
+            final item = InventoryItem.fromJson(crafted.toJson())..quantita = 1;
+            final rolled = Random.secure().nextInt(100);
+            final bonus = oculumCompleteEquipmentCraft(
+              item,
+              receipt:
+                  'craft:${recipe.id}:${DateTime.now().microsecondsSinceEpoch}:$copy',
+              roll: rolled,
+              luck: rawCraftLuck,
+              rebirthed: rebirthato,
+              forged: recipe.recipeKind == 'forge',
+            );
+            inventario.add(item);
+            aggiungiLog(
+              '[CREAZIONE] ${item.nome}, livello ${item.livelloOggetto}; bonus artigiano ${rolled + 1}/100 contro ${oculumCraftLuckChance(rawCraftLuck, rebirthed: rebirthato)}%: ${bonus ? 'riuscito' : 'nessun bonus'}.',
+            );
+          }
+        } else {
+          inventario.add(crafted);
+        }
       }
       final checkResult = '${check.total} vs DT ${check.difficulty}';
       risultato = succeeded

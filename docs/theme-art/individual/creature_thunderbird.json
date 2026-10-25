@@ -1,0 +1,8 @@
+{
+  "id": "creature_thunderbird",
+  "file": "assets/oculum/theme_stories/webp/creature_thunderbird.webp",
+  "provider": "built-in imagegen",
+  "role": "Theme background only; supplied reference images are not used as monster portraits.",
+  "aspectRatio": 1.7777777777777777,
+  "prompt": "Use case: illustration-story. Original wide landscape full-page background for ThunderBird in Oculum, painterly anime dark fantasy, matte gouache and assured organic brushwork, matching a lovingly painted fantasy game rather than photorealism. A colossal dark storm eagle with THREE anatomically connected pairs of wings stands on a weathered rocky outcrop at the RIGHT EDGE. Its six wings are distinguishable silhouettes, layered charcoal feathers with restrained silver-white lightning along their shafts, a sharp beak, two focused amber eyes and a vulnerable exposed head. The wings join a single strong torso; exactly two taloned legs grip the rock. Storm wind bends sparse grass, a naturally shaped lightning-scarred crag tells of repeated landings. Distant floating rocks and rolling luminous blue clouds recede behind it, clouds move blue through indigo to muted violet with very small pastel pink highlights. LEFT and CENTRAL two thirds are a spacious quiet dark storm valley with simple large cloud shapes and low contrast for real game controls. One coherent landscape, purposeful asymmetry, few meaningful light sources, no excessive lightning scribbles. No moon, sun, coins, text, logos, UI, border or watermark. Landscape wallpaper, aim 16:9."
+}

@@ -6,6 +6,24 @@ import 'oculum_element_theme_registry.dart';
 import 'oculum_monster_theme.dart';
 import '../pages/oculum_dungeon/monster_book.dart';
 
+bool oculumCanSelectRelic(
+  String artPackId, {
+  required String sheetId,
+  bool master = false,
+  Set<String> assigned = const {},
+}) {
+  if (artPackId.isEmpty) return true;
+  final creature = oculumMonsterThemeById(artPackId);
+  if (creature == null) return oculumThemeAssetPacks.containsKey(artPackId);
+  final own = oculumMonsterThemeById(
+    oculumSheetMonsterThemes.value[sheetId] ?? '',
+  );
+  return master ||
+      assigned.contains(artPackId) ||
+      oculumMonsterThemeUnlocks.value.contains(creature.monster.id) ||
+      own?.monster.id == creature.monster.id;
+}
+
 OculumThemeAssetPack oculumResolveThemeArt(
   OculumGothOrnaments spec,
   OculumThemePresentation presentation,
@@ -68,9 +86,11 @@ class OculumThemeRelicBanner extends StatelessWidget {
     super.key,
     this.dense = false,
     this.sheetId = '',
+    this.onChoose,
   });
   final bool dense;
   final String sheetId;
+  final VoidCallback? onChoose;
 
   IconData _iconFor(OculumGothFamily family) => switch (family) {
     OculumGothFamily.botanical => Icons.local_florist_outlined,
@@ -108,7 +128,9 @@ class OculumThemeRelicBanner extends StatelessWidget {
         final accent = monsterTheme?.accent ?? spec.accent;
         final iconSize = dense ? 30.0 : 42.0;
         return GestureDetector(
-          onTap: () => showOculumRelicPicker(context, sheetId: sheetId),
+          onTap:
+              onChoose ??
+              () => showOculumRelicPicker(context, sheetId: sheetId),
           child: Container(
             margin: EdgeInsets.symmetric(vertical: dense ? 4 : 10),
             padding: EdgeInsets.symmetric(
@@ -213,6 +235,10 @@ class OculumThemeRelicBanner extends StatelessWidget {
 Future<void> showOculumRelicPicker(
   BuildContext context, {
   String sheetId = '',
+  String sheetName = '',
+  bool Function()? canManageAll,
+  Set<String> Function()? assignedThemes,
+  Future<void> Function(String)? onSelected,
 }) async {
   var query = '';
   final selected = await showDialog<String>(
@@ -228,15 +254,23 @@ Future<void> showOculumRelicPicker(
                     'water|tide|mare|abis|onda|ocean|acqua',
                   ).hasMatch(text));
         }).toList();
+        final master = canManageAll?.call() ?? false;
+        final assigned = assignedThemes?.call() ?? const <String>{};
         final own = oculumMonsterThemeById(
           oculumSheetMonsterThemes.value[sheetId] ?? '',
         );
         final creatures =
             <OculumMonsterTheme>[
                   for (final monster in monsterBookEntries)
-                    if (oculumMonsterThemeUnlocks.value.contains(monster.id) ||
-                        own?.monster.id == monster.id)
-                      for (final color in oculumMonsterColors(monster))
+                    for (final color in oculumMonsterColors(monster))
+                      if (master ||
+                          oculumMonsterThemeUnlocks.value.contains(
+                            monster.id,
+                          ) ||
+                          own?.monster.id == monster.id ||
+                          assigned.contains(
+                            'monster/${monster.id}/${color.id}',
+                          ))
                         OculumMonsterTheme(monster, color),
                 ]
                 .where(
@@ -247,12 +281,24 @@ Future<void> showOculumRelicPicker(
                 )
                 .toList();
         return AlertDialog(
-          title: const Text('Reliquie Oculum'),
+          title: Text(
+            master ? 'Assegna tema e sfondo' : 'Temi e sfondi Oculum',
+          ),
           content: SizedBox(
             width: 520,
             height: MediaQuery.sizeOf(context).height * .55,
             child: Column(
               children: [
+                if (sheetName.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      master
+                          ? 'Solo per $sheetName · catalogo completo Master'
+                          : 'Tema della scheda: $sheetName',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
                 TextField(
                   decoration: const InputDecoration(
                     labelText: 'Cerca nome o elemento',
@@ -360,7 +406,26 @@ Future<void> showOculumRelicPicker(
     ),
   );
   if (selected != null) {
-    if (sheetId.isNotEmpty) {
+    // Recheck the live role after the dialog: an online role change must not
+    // let a formerly privileged catalogue grant another locked appearance.
+    if (!oculumCanSelectRelic(
+      selected,
+      sheetId: sheetId,
+      master: canManageAll?.call() ?? false,
+      assigned: assignedThemes?.call() ?? const {},
+    )) {
+      if (context.mounted) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          const SnackBar(
+            content: Text('Tema non disponibile con il ruolo attuale.'),
+          ),
+        );
+      }
+      return;
+    }
+    if (onSelected != null) {
+      await onSelected(selected);
+    } else if (sheetId.isNotEmpty) {
       await setOculumSheetRelic(sheetId, selected);
     } else {
       await setOculumThemePresentation(

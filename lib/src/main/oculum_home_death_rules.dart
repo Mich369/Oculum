@@ -118,6 +118,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
   }
 
   bool masterInitiativeTokenCanAct(Map<String, dynamic> token) {
+    if (token['lavastrelloNest'] == true) return false;
     if (token['mechaOccupied'] == true) return false;
     return !readBoolValue(token['shadowCloneExpired']) &&
         '${token['status'] ?? ''}' != 'expired' &&
@@ -189,6 +190,10 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
         : max(0, readIntValue(schedePersonaggio[index]['scudo']));
     token['will'] = sheetWillForDeathAt(index);
     token['materia'] = sheetMateriaForDeathAt(index);
+    token['faunaPublic'] =
+        schedaJsonAt(index)['faunaPublic'] ?? const <String, dynamic>{};
+    token['precisionBodyParts'] =
+        schedaJsonAt(index)['precisionBodyParts'] ?? const [];
     token['deathWounds'] = isCurrent
         ? feriteMorte
         : readIntValue(
@@ -199,7 +204,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
         : readIntValue(
             schedePersonaggio[index]['volontaVitale'],
           ).clamp(0, vitalWillLimit).toInt();
-    token['downed'] = downed;
+    token['downed'] = downed || token['scostuNonLethalDowned'] == true;
     if (oculumCombatConfirmedDeath(
       hp: readIntValue(token['currentHp']),
       deathWounds: readIntValue(token['deathWounds']),
@@ -406,6 +411,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
   }
 
   void applyMasterInitiativeTokenVitalsToSource(Map<String, dynamic> token) {
+    resolveLavastrelloNestDestroyed(token);
     final index = masterInitiativeSheetIndexForToken(token);
     if (index < 0) return;
 

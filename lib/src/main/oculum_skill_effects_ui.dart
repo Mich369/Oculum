@@ -1690,6 +1690,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     var durationUnit = seed.durationUnit;
     var diceDestination = seed.diceDestination;
     var enabled = seed.enabled;
+    var criticalOnly = seed.criticalOnly;
     var stackable = seed.stackable;
     var includeLevel = seed.includeLevel;
     var includeGrade = seed.includeGrade;
@@ -1824,6 +1825,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         damagePerTarget: damagePerTarget,
         killSource: killSource,
         allOpponents: allOpponents,
+        criticalOnly: criticalOnly,
       );
     }
 
@@ -1977,6 +1979,26 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                           ],
                         ),
                         const SizedBox(height: 8),
+                        if (!const {
+                          'danno',
+                          'danno_percentuale',
+                        }.contains(type))
+                          SwitchListTile.adaptive(
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            value: criticalOnly,
+                            title: Text(
+                              t('Solo su colpo critico', 'Critical hits only'),
+                            ),
+                            subtitle: Text(
+                              t(
+                                'Gli Scudi critici bloccano questo effetto.',
+                                'Critical Shields block this effect.',
+                              ),
+                            ),
+                            onChanged: (value) =>
+                                setDialogState(() => criticalOnly = value),
+                          ),
                         SwitchListTile.adaptive(
                           contentPadding: EdgeInsets.zero,
                           dense: true,

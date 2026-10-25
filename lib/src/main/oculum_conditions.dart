@@ -1131,9 +1131,11 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     category: OculumConditionCategory.physical,
     polarity: OculumConditionPolarity.negative,
     descriptionIt:
-        '-3 alle azioni compromesse dalla parte fratturata. Richiede cura appropriata.',
+        'I/II/III: −1/−2/−3 ai tiri degli arti fratturati, massimo tre arti distinti. Ulteriori critici aumentano il malus di 1 e, al 50%, riducono Danni o Difesa del malus totale. Richiede cura appropriata.',
     descriptionEn:
-        '-3 to actions impaired by the fractured body part. Requires proper treatment.',
+        'I/II/III: −1/−2/−3 to rolls using fractured limbs, up to three distinct limbs. Further critical hits increase the penalty by 1 and apply it to Damage or Defense at 50%. Requires proper treatment.',
+    maxStacks: 3,
+    stackMode: OculumConditionStackMode.increaseStacks,
     durationType: OculumConditionDurationType.permanent,
     removable: false,
   ),

@@ -3,6 +3,96 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 extension _OculumMonsterAppearance on _OculumHomePageState {
+  Color? get narrativeInterfaceAccent {
+    if (colorPresetSelezionato == 'custom') return null;
+    final selected = oculumThemePresentationForSheet(
+      currentSheetScrollId(),
+    ).artPackId;
+    final monster = oculumMonsterThemeById(selected);
+    return monster?.accent ??
+        (oculumStoryThemePacks.containsKey(selected)
+            ? oculumNarrativeAccent(selected)
+            : null);
+  }
+
+  Color? get narrativeInterfaceSurface => narrativeInterfaceAccent == null
+      ? null
+      : Color.lerp(const Color(0xff0d1013), narrativeInterfaceAccent, .07);
+  bool get canManageAllThemes => realtimeService?.isConnected == true
+      ? realtimeService?.authenticatedRole == 'master'
+      : realtimeIsMasterRole;
+
+  void rememberAssignedTheme(String id) {
+    if (canManageAllThemes && id.isNotEmpty) masterAssignedThemeIds.add(id);
+  }
+
+  Future<void> chooseCurrentSheetRelic() async {
+    final sheetId = currentSheetScrollId();
+    final campaign = permissionScope;
+    await showOculumRelicPicker(
+      context,
+      sheetId: sheetId,
+      sheetName: nomeController.text,
+      canManageAll: () =>
+          mounted &&
+          currentSheetScrollId() == sheetId &&
+          permissionScope == campaign &&
+          canManageAllThemes,
+      assignedThemes: () =>
+          currentSheetScrollId() == sheetId && permissionScope == campaign
+          ? masterAssignedThemeIds
+          : const {},
+      onSelected: (id) async {
+        if (!mounted ||
+            currentSheetScrollId() != sheetId ||
+            permissionScope != campaign) {
+          return;
+        }
+        await selectCurrentSheetRelic(id);
+      },
+    );
+  }
+
+  Future<bool> selectCurrentSheetRelic(String id) async {
+    if (!mounted ||
+        schedaCorrente < 0 ||
+        schedaCorrente >= schedePersonaggio.length) {
+      return false;
+    }
+    final sheet = schedePersonaggio[schedaCorrente];
+    if (activeCampaignId.isEmpty && canManageAllThemes) {
+      saveActiveCampaignInMemory();
+    }
+    if (readBoolValue(sheet['realtimeReadOnlyByMaster']) ||
+        readBoolValue(sheet['realtimeRestrictedByMaster']) ||
+        (readBoolValue(sheet['realtimeSharedSheet']) && !haPermessiMaster)) {
+      return false;
+    }
+    final tag = currentSheetScrollId();
+    if (!oculumCanSelectRelic(
+      id,
+      sheetId: tag,
+      master: canManageAllThemes,
+      assigned: masterAssignedThemeIds,
+    )) {
+      return false;
+    }
+    rememberAssignedTheme(id);
+    await setOculumSheetRelic(tag, id);
+    if (!mounted || currentSheetScrollId() != tag) return true;
+    salvaSchedaCorrenteInMemoria();
+    programmaSalvataggio(invalidateCaches: false);
+    if (realtimeService?.isConnected == true) {
+      if (readBoolValue(sheet['realtimeSharedSheet'])) {
+        await sendRealtimeEditedSharedSheetBack();
+      } else {
+        sendRealtimeCurrentSheetToStaff(immediate: true);
+        sendRealtimeCurrentPartySheet();
+      }
+    }
+    return true;
+  }
+
   void onSheetRelicChanged() {
     if (!mounted) return;
     setState(() {});
@@ -93,16 +183,13 @@ extension _OculumMonsterAppearance on _OculumHomePageState {
     if (monster == null && !oculumStoryThemePacks.containsKey(selected)) {
       return base;
     }
-    final themedAccent =
-        monster?.accent ??
-        (selected == 'hidenas' || selected == 'plane_demoniaco'
-            ? const Color(0xffcb9575)
-            : const Color(0xffa3b6e5));
+    final themedAccent = monster?.accent ?? oculumNarrativeAccent(selected);
     final custom = colorPresetSelezionato == 'custom';
     final accent = custom ? tertiaryColor : themedAccent;
     final surface = custom
         ? backgroundMidColor
-        : (monster?.surface ?? const Color(0xff10131d));
+        : (monster?.surface ??
+              Color.lerp(const Color(0xff0d1013), themedAccent, .07)!);
     final ornaments = base.extension<OculumGothOrnaments>();
     return oculumBuildPaletteTheme(
       base: base,

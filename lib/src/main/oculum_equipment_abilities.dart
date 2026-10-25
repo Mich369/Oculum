@@ -282,7 +282,9 @@ String oculumArtSkillCostText(ArtSkill skill, int form) {
 
 CharacterSkill oculumEquipmentAbilityFromArt(ArtSkill skill) => CharacterSkill(
   nome: skill.nome,
-  tipo: 'Skill equipaggiamento',
+  tipo: skill.tipoPerLivello(1).toLowerCase().contains('passiv')
+      ? 'Passiva'
+      : 'Skill equipaggiamento',
   costo: oculumArtSkillCostText(skill, 1),
   cooldown: '',
   descrizione: skill.evo1,
@@ -621,6 +623,56 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       return false;
     }
     if (!meccanioSkillAllowed(effects)) return false;
+    if (wingsGrounded && wingFlightSource(source)) {
+      aggiungiLog(
+        '[ALI] Volo indisponibile fino al Riposo Lungo o alla riparazione del Master.',
+      );
+      return false;
+    }
+    if (effects.any((e) => e.target == 'deadly_regen') &&
+        (planarState['deadlyLastHpDamage'] is! Map ||
+            (planarState['deadlyLastHpDamage'] as Map)['claimed'] == true ||
+            hpCorrenti() <= 0)) {
+      return false;
+    }
+    if (source.contains('Raggio di Oculum') &&
+        readIntValue(planarState['ogorCoreHits']) >= 3) {
+      aggiungiLog(
+        '[NUCLEO ROTTO] Ripara il nucleo prima di usare Raggio Oculum.',
+      );
+      return false;
+    }
+    if (effects.any((e) => e.target == 'ogor_restore') &&
+        planarState['ogorRestoreUsed'] == true) {
+      return false;
+    }
+    if (isScostubanditi &&
+        hasCondition('disarmato') &&
+        source.toLowerCase().contains('fucile')) {
+      aggiungiLog(
+        '[DISARMATO] Riprendi il fucile prima di sparare; i colpi senza arma infliggono metà Danni.',
+      );
+      return false;
+    }
+    if (effects.any((e) => e.target == 'feralis_fury') &&
+        (hpCorrenti() <= 0 ||
+            hpCorrenti() * 2 > maxHp() ||
+            feralisFuryActive)) {
+      aggiungiLog(
+        '[FURIA] Richiede metà Vita o meno e nessuna trasformazione già attiva.',
+      );
+      return false;
+    }
+    if (readIntValue(planarState['fuocherelliWaterSuppressedActions']) > 0 &&
+        effects.any((e) => e.elementType == 'fuoco')) {
+      aggiungiLog('[ACQUA] Skill Fuoco bloccate per una propria Azione.');
+      return false;
+    }
+    if (effects.any((e) => e.target == 'fuocherelli_reanimate')) {
+      if (cooldown?.ready == false || !await prepareFaunaReanimation()) {
+        return false;
+      }
+    }
     if (rabbitHatReady && effects.any((e) => e.target == 'rabbit_hat')) {
       aggiungiLog(
         '[CAPPELLO] Una carica è già pronta: continua o lancia prima di riattivare.',
@@ -667,6 +719,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       aggiungiLog('$source: cooldown ${cooldown.remaining} ${cooldown.unit}.');
       return false;
     }
+    if (!mounted) return false;
     final options = effects
         .where(
           (e) =>
@@ -738,11 +791,13 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         resource == 'obser' && effects.any((e) => e.id.startsWith('tear_'));
     final oculumInput = TextEditingController(text: '0');
     var oculumPaid = 0;
+    var useMortalKi = false;
     final splitTieToObser = Random.secure().nextBool();
     final input = TextEditingController(text: '$minimum');
     final origin = currentSheetScrollId();
     skillOculumUseDialogOpen = true;
     int? paid;
+    if (!mounted) return false;
     try {
       paid = await showDialog<int>(
         context: context,
@@ -751,13 +806,16 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
             final selected = int.tryParse(input.text);
             final available = resource == 'nessuna'
                 ? 1 << 30
-                : artSkillCostResourceAvailable(resource);
+                : artSkillCostResourceAvailable(
+                    useMortalKi ? 'ki_mortale' : resource,
+                  );
             final oculumPart = mixedPayment
                 ? int.tryParse(oculumInput.text)
                 : 0;
             final total = (selected ?? -1000000) + (oculumPart ?? -1000000);
             final payments = <String, int>{
-              if (resource != 'nessuna') resource: selected ?? 0,
+              if (resource != 'nessuna')
+                (useMortalKi ? 'ki_mortale' : resource): selected ?? 0,
             };
             if (mixedPayment) {
               payments['oculum'] =
@@ -817,6 +875,14 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                     Text(
                       'Costo ${resolved.variable ? "$minimum/$maximum" : "$fixed/$fixed"} $resource · disponibili ${resource == "nessuna" ? "—" : available}',
                     ),
+                    if (resource == 'oculum' && mortalKi > 0)
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text('Usa Ki Mortale ($mortalKi disponibili)'),
+                        value: useMortalKi,
+                        onChanged: (v) =>
+                            refresh(() => useMortalKi = v == true),
+                      ),
                     if (resolved.variable || mixedPayment)
                       TextField(
                         controller: input,
@@ -991,6 +1057,19 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         .where((e) => e.type == 'meccanio')
         .firstOrNull;
     final preparesAttack =
+        effects.any(
+          (e) =>
+              e.type == 'planar' &&
+              const {
+                'bone_four_slash',
+                'gran_leave',
+                'gran_cannon',
+                'evergreen_leaves',
+                'evergreen_dodge',
+                'laer_sword',
+                'laer_twist',
+              }.contains(e.target),
+        ) ||
         robotTechnique != null &&
             !const {'drones', 'sphere'}.contains(robotTechnique.target) ||
         effects.any(
@@ -1008,6 +1087,8 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
             'mask_angelic_arrows',
             'mask_solar_arrows',
             'mask_shadow_teleport',
+            'gran_unstun',
+            'monk_ki',
           }.contains(effect.target),
     );
     if (!paymentOnly &&
@@ -1027,7 +1108,9 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                       realtimeVisibleInitiativeSnapshot['activeIndex'],
                     ));
       if (effects.any(
-            (e) => e.type == 'preparazione' || e.target == 'rabbit_hat',
+            (e) =>
+                e.type == 'preparazione' ||
+                const {'rabbit_hat', 'deadly_regen'}.contains(e.target),
           ) &&
           !ownTurn) {
         aggiungiLog('Preparazione: serve la tua Azione nel tuo turno.');
@@ -1069,9 +1152,13 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     final messages = applyStructuredEffectsOnActivation(
       effects,
       source: source,
-      spentResources: selectedPayments,
+      spentResources: {
+        ...selectedPayments,
+        if (useMortalKi) 'oculum': selectedPayments['ki_mortale'] ?? 0,
+      },
     );
     cooldown?.activate();
+    activateSharedFaunaCooldown(effects, cooldown);
     if (effects.any((e) => e.id.startsWith('planar:party_heal:'))) {
       final ownSide = combatScoutSide(sheetTagAt(schedaCorrente));
       final targets = realtimeService?.isConnected == true
@@ -1107,6 +1194,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
           .firstOrNull;
       if (stat != null) await tiraSottotrattoOcchio(stat, actionLabel: source);
     }
+    if (!preparesAttack) finishArtWeakPointAction();
     return true;
   }
 

@@ -11,7 +11,7 @@ const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&qu
   const file=path.join(root,a.file);
   if(!fs.existsSync(file)){missing.push(a.id);continue;}
   const data=fs.readFileSync(file),m=await sharp(data).metadata(),digest=crypto.createHash('sha256').update(data).digest('hex');
-  if(m.format!=='webp'||m.width<1280||m.height<700||Math.abs(m.width/m.height-16/9)>.04)throw Error('Invalid story artwork '+a.id);
+  if(m.format!=='webp'||m.width<1280||m.height<700||Math.abs(m.width/m.height-(a.aspectRatio??16/9))>.04)throw Error('Invalid story artwork '+a.id);
   if(seen.has(digest))duplicates.push([seen.get(digest),a.id]);seen.set(digest,a.id);
   records.push({...a,width:m.width,height:m.height,bytes:data.length,sha256:digest});
  }

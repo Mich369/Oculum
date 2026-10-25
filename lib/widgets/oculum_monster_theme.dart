@@ -18,6 +18,18 @@ List<OculumCreatureColor> oculumMonsterColors(MonsterBookEntry monster) {
   const violet = Color(0xffab91cf);
   const gold = Color(0xffc4a365);
   final id = monster.id;
+  if (id == 'bramble') {
+    return const [
+      OculumCreatureColor('muschio', 'Muschio', Color(0xffa8b86a), 65),
+      OculumCreatureColor('sottobosco', 'Sottobosco', Color(0xff7e9a7b), 25),
+      OculumCreatureColor(
+        'corteccia',
+        'Corteccia ambrata',
+        Color(0xffb9a177),
+        10,
+      ),
+    ];
+  }
   if (id == 'ombra_ignota') {
     return const [OculumCreatureColor('ossidiana', 'Ossidiana', violet, 100)];
   }
@@ -68,14 +80,28 @@ List<OculumCreatureColor> oculumMonsterColors(MonsterBookEntry monster) {
     ];
   }
   final (name, color) = switch (element) {
-    'fuoco' || 'lava' || 'demoniaco' => ('Ruggine', const Color(0xffce9677)),
-    'solare' || 'luce' || 'angelico' => ('Oro', gold),
-    'acqua' || 'gelo' => ('Acquamarina', const Color(0xff8bbcc5)),
-    'fulmine' || 'energia' => ('Ambra', const Color(0xffcbb779)),
-    'buio' || 'oblio' || 'vuoto' => ('Indaco', const Color(0xffa397bb)),
-    'psichico' || 'sogno' || 'oculum' => ('Malva', violet),
-    'vento' || 'nuvola' => ('Perla', const Color(0xffb5c6cb)),
-    'veleno' || 'natura' || 'terra' => ('Muschio', const Color(0xff9eb28a)),
+    'fuoco' => ('Brace', const Color(0xffe89770)),
+    'lava' => ('Lava', const Color(0xffedaa60)),
+    'demoniaco' => ('Cinabro', const Color(0xffdf8077)),
+    'diabolico' => ('Rubino lunare', const Color(0xffcd849f)),
+    'solare' => ('Oro solare', const Color(0xffdfb85e)),
+    'luce' => ('Champagne', const Color(0xffddd1a0)),
+    'angelico' => ('Avorio dorato', const Color(0xffd8d7b1)),
+    'acqua' => ('Azzurro profondo', const Color(0xff79b7d3)),
+    'gelo' => ('Cristallo di brina', const Color(0xffacd8e5)),
+    'fulmine' => ('Ambra elettrica', const Color(0xffddc46e)),
+    'energia' => ('Ciano', const Color(0xff87d2de)),
+    'buio' => ('Viola notte', const Color(0xffaa9ac9)),
+    'oblio' || 'vuoto' => ('Ametista scura', const Color(0xffbc94ce)),
+    'psichico' => ('Orchidea', const Color(0xffce96c9)),
+    'sogno' => ('Lavanda', const Color(0xffb5b5e4)),
+    'oculum' => ('Viola Oculum', violet),
+    'vento' => ('Verde aria', const Color(0xff98cbb9)),
+    'nuvola' => ('Perla azzurra', const Color(0xffbecae3)),
+    'veleno' => ('Chartreuse', const Color(0xffb2c771)),
+    'natura' => ('Muschio', const Color(0xff97bb82)),
+    'terra' => ('Ocra', const Color(0xffc2a074)),
+    'roccia' => ('Ardesia', const Color(0xffaeb2ad)),
     _ => ('Bruno', const Color(0xffb7a38a)),
   };
   return [
@@ -121,6 +147,21 @@ class OculumMonsterTheme {
   Color get accent => color.color;
   Color get surface => Color.lerp(const Color(0xff0d1013), accent, .055)!;
   String? get illustration => switch (monster.id) {
+    'fuocherelli' =>
+      'assets/oculum/theme_stories/webp/creature_fuocherelli.webp',
+    'feralis_ancestrale' =>
+      'assets/oculum/theme_stories/webp/creature_feralis.webp',
+    'granscostumato' =>
+      'assets/oculum/theme_stories/webp/creature_granscostumato.webp',
+    'sempre_verde' =>
+      'assets/oculum/theme_stories/webp/creature_sempre_verde.webp',
+    'lavastrello' =>
+      'assets/oculum/theme_stories/webp/creature_lavastrello.webp',
+    'thunderbird' =>
+      'assets/oculum/theme_stories/webp/creature_thunderbird.webp',
+    'scostubanditi' =>
+      'assets/oculum/theme_stories/webp/creature_scostubanditi.webp',
+    'bramble' => 'assets/oculum/theme_stories/webp/creature_bramble.webp',
     'ombra_ignota' => 'assets/oculum/home_art/creature_ombra_v2.png',
     'uomo_maschera_solare' => 'assets/oculum/home_art/creature_solare_v2.png',
     'uomo_maschera_angelica' => 'assets/oculum/home_art/creature_angelico.png',
@@ -137,7 +178,7 @@ class OculumMonsterTheme {
     if (RegExp('observer|obser|denero').hasMatch(text)) return 'tear';
     if (RegExp('meccan|robot|bot|runic').hasMatch(text)) return 'core';
     if (RegExp(
-      'farfall|falena|nuvi|brumilio|uccell|mosca|navigatore|ala',
+      'farfall|falena|nuvi|brumilio|uccell|mosca|navigatore|ala|thunderbird',
     ).hasMatch(text)) {
       return 'wing';
     }
@@ -146,10 +187,14 @@ class OculumMonsterTheme {
     if (RegExp('golem|scudo|tartarug|roc|guravo|corazz').hasMatch(text)) {
       return 'plate';
     }
-    if (RegExp('coniglio|lepre|top|ogle|rascalume').hasMatch(text)) {
+    if (RegExp(
+      'coniglio|lepre|top|ogle|rascalume|scostubanditi',
+    ).hasMatch(text)) {
       return 'ears';
     }
-    if (RegExp('albero|radic|legno|fung|vendulo').hasMatch(text)) return 'root';
+    if (RegExp('albero|radic|legno|fung|vendulo|bramble').hasMatch(text)) {
+      return 'root';
+    }
     if (RegExp('medusa|slime|acqua|pesce|mirula').hasMatch(text)) return 'drop';
     return 'fang';
   }

@@ -53,10 +53,11 @@ bool oculumParryChanceRollSucceeds({
 }) =>
     roll >= 0 &&
     roll < 1000 &&
-    roll < oculumParryChanceThresholdPerThousand(
-      currentOculum,
-      difficulty: difficulty,
-    );
+    roll <
+        oculumParryChanceThresholdPerThousand(
+          currentOculum,
+          difficulty: difficulty,
+        );
 
 int oculumParryDamageReduction({
   required int currentOculum,
@@ -80,8 +81,7 @@ bool oculumParryManifestationCheckSucceeds({
 bool oculumParryCriticalAwardsDodge({
   required bool parrySucceeded,
   required int naturalRoll,
-}) =>
-    parrySucceeded && naturalRoll == 20;
+}) => parrySucceeded && naturalRoll == 20;
 
 int oculumFortuneDodgeResourceReward(int dieRoll) =>
     dieRoll.clamp(0, 2).toInt() + 1;

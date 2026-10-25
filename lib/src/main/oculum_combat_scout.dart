@@ -22,7 +22,11 @@ extension _OculumCombatScout on _OculumHomePageState {
       final weakPoint = knowledge['weakPoint'] == true;
       final pagePurchased = knowledge['pagePurchased'] == true;
       final themeUnlocked = knowledge['themeUnlocked'] == true || pagePurchased;
-      if (!seen && !nameKnown && !weakPoint && !pagePurchased && !themeUnlocked) {
+      if (!seen &&
+          !nameKnown &&
+          !weakPoint &&
+          !pagePurchased &&
+          !themeUnlocked) {
         continue;
       }
       entries.add({
@@ -494,6 +498,7 @@ extension _OculumCombatScout on _OculumHomePageState {
         stat,
         actionLabel: '${stat.nome} · lettura generale',
         onResolved: (natural, total) {
+          discoverLavastrelloNest(total);
           aggiungiLog(
             '[PERCEZIONE] Lettura generale $total: nessun bersaglio scelto, quindi nessuna probabilità individuale rivelata.',
           );
@@ -781,6 +786,9 @@ extension _OculumCombatScout on _OculumHomePageState {
       }
       final request = onlineCombatRequests[id];
       if (request != null && request['status'] == 'pending') {
+        if (reveal == 'exact') {
+          faunaForOwnedSheet(source, () => ogorCoreSuccessfulRoll('scout:$id'));
+        }
         request['status'] = 'resolved';
         aggiungiLog(
           '[PERCEZIONE] ${scoutLogReading(payload, reveal == 'exact'

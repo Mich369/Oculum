@@ -307,8 +307,9 @@ class OculumAuthService extends ChangeNotifier {
     );
   }
 
-  static final _guestModePrefsKey =
-      oculumProfiledStorageKey('oculum.auth.guest_mode');
+  static final _guestModePrefsKey = oculumProfiledStorageKey(
+    'oculum.auth.guest_mode',
+  );
   static final _userIdPrefsKey = oculumProfiledStorageKey(
     'oculum.auth.user_id',
   );

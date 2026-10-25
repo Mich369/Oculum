@@ -41,7 +41,12 @@ void main() {
   testWidgets(
     'capture real narrative character sheets at desktop and phone sizes',
     (tester) async {
-      for (final size in [const Size(1440, 1000), const Size(390, 844)]) {
+      for (final size in [
+        const Size(1440, 1000),
+        const Size(834, 1112),
+        const Size(390, 844),
+        const Size(320, 740),
+      ]) {
         const capture = ValueKey('narrative-sheet-preview');
         final dynamic state = await fixtures.mountSheet(
           tester,
@@ -50,6 +55,15 @@ void main() {
         );
         final p = OculumPerformanceProbe(state);
         p.applyTheme('black_briar_kingdom');
+        state.datiCaricati = false;
+        if (state.schedePersonaggio.isEmpty) {
+          final sheet = p.snapshot()
+            ..['id'] = 'ElaraOcu:3690AAAA'
+            ..['sheetTag'] = 'ElaraOcu:3690AAAA';
+          state.schedePersonaggio.add(sheet);
+          state.schedaCorrente = 0;
+          p.load(sheet);
+        }
         state.updateOculumHomeUi(() {
           state.modalitaDesktop = size.width > 600;
           state.desktopSideMenuOpen = size.width > 600;
@@ -71,6 +85,9 @@ void main() {
           state.currentOculumController.text = '10';
           state.currentHpController.text = '180';
         });
+        p.saveSheet();
+        state.datiCaricati = true;
+        await tester.pump();
         final tag = tester
             .widget<OculumNarrativeBackground>(
               find.byType(OculumNarrativeBackground),
@@ -79,9 +96,20 @@ void main() {
         for (final theme in [
           'hidenas',
           'dedicated_indigo',
+          'restyle_sogno',
           'plane_foresta_elementale',
           'plane_sotterraneo',
+          'monster/fuocherelli/naturale',
+          'monster/scostubanditi/rame',
+          'monster/feralis_ancestrale/naturale',
         ]) {
+          oculumThemePresentation.value = oculumThemePresentation.value
+              .copyWith(
+                artPackId: theme,
+                variant: theme.contains('fuocherelli')
+                    ? OculumThemeVariant.alive
+                    : OculumThemeVariant.still,
+              );
           oculumSheetRelicSelections.value = {tag: theme};
           await tester.pump();
           await tester.runAsync(
@@ -111,10 +139,28 @@ void main() {
             file.writeAsBytesSync(bytes!.buffer.asUint8List());
             image.dispose();
           });
+          if (size.width > 600 && theme.contains('fuocherelli')) {
+            for (var frame = 0; frame < 10; frame++) {
+              await tester.pump(const Duration(milliseconds: 600));
+              await tester.runAsync(() async {
+                final image = await boundary.toImage(pixelRatio: 1);
+                final bytes = await image.toByteData(
+                  format: ui.ImageByteFormat.png,
+                );
+                final file = File(
+                  'build/theme-previews/motion/frame-${frame.toString().padLeft(2, '0')}.png',
+                );
+                file.parent.createSync(recursive: true);
+                file.writeAsBytesSync(bytes!.buffer.asUint8List());
+                image.dispose();
+              });
+            }
+          }
         }
         await tester.pumpWidget(const SizedBox.shrink());
         await tester.pump(const Duration(seconds: 2));
         oculumSheetRelicSelections.value = {};
+        oculumThemePresentation.value = const OculumThemePresentation();
       }
     },
   );

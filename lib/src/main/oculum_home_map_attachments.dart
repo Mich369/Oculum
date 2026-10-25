@@ -3017,6 +3017,18 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     Color borderColor, {
     bool compact = false,
   }) {
+    final narrative = narrativeInterfaceAccent;
+    if (narrative != null) {
+      return LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color.lerp(const Color(0xff101319), narrative, .10)!,
+          narrativeInterfaceSurface!,
+          const Color(0xff090b0f),
+        ],
+      );
+    }
     final spec = currentThemeDecorationSpec();
     final gui = currentThemeVisualIdentity().mainSheetGuiStyle;
     final guiStyle = gui.id;

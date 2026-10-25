@@ -69,19 +69,22 @@ void main() {
       state.activeCostume = null;
       expect(state.posteaLowFlight, false);
       state.equipRunCostume(armor);
-    state.inCombat = true;
-    state.enemyTurnPending = false;
-    state.spawnEnemy();
-    final dynamic target = state.firstAliveEnemy();
-    target.hp = 1000;
-    target.shield = 12;
-    state.posteaArmedChain();
-    final match = RegExp(r'1d6 = (\d)').firstMatch(state.textIt as String);
-    expect(match, isNotNull);
-    final shots = int.parse(match!.group(1)!);
-    expect(shots, inInclusiveRange(1, 6));
-    expect(1000 - (target.hp as int) + 12 - (target.shield as int), shots * 5);
-    await tester.pumpWidget(const SizedBox.shrink());
+      state.inCombat = true;
+      state.enemyTurnPending = false;
+      state.spawnEnemy();
+      final dynamic target = state.firstAliveEnemy();
+      target.hp = 1000;
+      target.shield = 12;
+      state.posteaArmedChain();
+      final match = RegExp(r'1d6 = (\d)').firstMatch(state.textIt as String);
+      expect(match, isNotNull);
+      final shots = int.parse(match!.group(1)!);
+      expect(shots, inInclusiveRange(1, 6));
+      expect(
+        1000 - (target.hp as int) + 12 - (target.shield as int),
+        shots * 5,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 2));
     },
   );

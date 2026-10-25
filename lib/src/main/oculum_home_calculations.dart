@@ -2952,6 +2952,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int spendOculum(int amount, {bool scheduleSave = true}) {
+    if (readIntValue(planarState['mortalKiLock']) > 0) return 0;
     if (amount <= 0) return 0;
     if (hasCondition('oculum_sigillato')) {
       aggiungiLog(
@@ -3126,6 +3127,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   void registerValidRoll({String consumoStatKey = ''}) {
+    finishArtWeakPointAction();
+    activeStructuredEffects.removeWhere(
+      (e) => e['effectId'] == 'thunder_tp_roll',
+    );
+    invalidateDerivedDataCaches();
     lastValidRollSnapshot = dadoMostrato.trim().isEmpty
         ? risultato.trim()
         : dadoMostrato.trim();
@@ -3838,6 +3844,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int artSkillCostResourceAvailable(String resource) {
     final normalized = oculumNormalizeArtSkillCostResource(resource);
+    if (normalized == 'ki_mortale') return mortalKiLocked ? 0 : mortalKi;
+    if (normalized == 'oculum' && mortalKiLocked) return 0;
     if (normalized.startsWith('item:')) {
       final name = normalized.substring(5);
       return inventario
@@ -3895,6 +3903,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int spendArtSkillCostResource(String resource, int amount) {
     final normalized = oculumNormalizeArtSkillCostResource(resource);
+    if (normalized == 'ki_mortale') return spendMortalKi(amount);
     if (amount <= 0 || normalized == 'nessuna') return 0;
     if (normalized.startsWith('item:')) {
       if (artSkillCostResourceAvailable(normalized) < amount) return 0;
@@ -4317,6 +4326,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int maxHp() {
+    if (readIntValue(planarState['lavastrelloNestMaxHp']) > 0) {
+      return readIntValue(planarState['lavastrelloNestMaxHp']);
+    }
     if (mechaBodyMaximum > 0) return mechaBodyMaximum;
     if (isMeccanio) {
       return max(1, readIntValue(meccanioState['maximumHp'], fallback: 20));
@@ -4866,6 +4878,14 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     // diventano parte del totale effettivamente tirato e mostrato.
     final quickBonus = directSubtraitQuickBonus(stat);
     final structuredBonus =
+        (stat.id == 'riflessi' && faunaCurrentMonsterId == 'laer' ? 15 : 0) +
+        (stat.id == 'empatia'
+            ? readIntValue(
+                monsterBookEntryById(
+                  faunaCurrentMonsterId,
+                )?.encounterRules['empathyBonus'],
+              )
+            : 0) +
         activeStructuredEffectBonus(stat.id) +
         roleSubtraitBonus(stat.id) +
         summoningEmblemBonus(stat.id, subtrait: true) +
@@ -5156,7 +5176,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
             parasiteHostBonus('defenseBonus'));
     final conditioned = applyConditionDerivedValue(
       OculumConditionTarget.difesa,
-      beforeConditions,
+      beforeConditions + feralisFuryDefense,
     );
     return applyWillKingdomBonus(
       oculumDamageWithPercentage(
@@ -5371,11 +5391,18 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       OculumConditionTarget.danno,
       beforeConditions,
     );
-    return applyWillKingdomBonus(
-      oculumDamageWithPercentage(
-        applicaBonusDanniPotenzaNucleo(conditioned + maskedShadowDamage),
-        activeStructuredEffectBonus('danni_percentuale') + (dustFusionTier * 5),
+    return oculumFeralisDamage(
+      scostuWeaponDamage(
+        applyWillKingdomBonus(
+          oculumDamageWithPercentage(
+            applicaBonusDanniPotenzaNucleo(conditioned + maskedShadowDamage),
+            activeStructuredEffectBonus('danni_percentuale') +
+                (dustFusionTier * 5),
+          ),
+        ),
       ),
+      readIntValue(planarState['feralisFuryPaidTurns']),
+      feralisFuryActive,
     );
   }
 
@@ -5727,7 +5754,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int cm() {
-    return (coreMasteryPoints['cm'] ?? 0) +
+    return (faunaCurrentMonsterId == 'torretta_oculum' ? -9 : 0) +
+        (coreMasteryPoints['cm'] ?? 0) +
         bonusLivelloGrado() +
         (materiaTotale() ~/ 2) +
         activeStructuredEffectBonus('cm') +

@@ -131,7 +131,10 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           normalized) {
         continue;
       }
-      total += readIntValue(effect['value']);
+      total += wingAdjustedFlightBonus(
+        readIntValue(effect['value']),
+        '${effect['source']} ${effect['effectId']}',
+      );
     }
     for (final effect in automaticMonsterPassiveEffects()) {
       if (!const {
@@ -149,17 +152,20 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           normalized) {
         continue;
       }
-      total += oculumEvaluateStructuredEffectValue(
-        effect,
-        variables: {
-          'resilienza': currentResilienza(),
-          'volonta': currentVolonta(),
-          'materia': currentMateria(),
-          'oculum': currentOculum(),
-          'livello': leggiNumero(livelloController),
-          'grado': leggiNumero(gradoController),
-        },
-        subtraits: hiddenEyeStats,
+      total += wingAdjustedFlightBonus(
+        oculumEvaluateStructuredEffectValue(
+          effect,
+          variables: {
+            'resilienza': currentResilienza(),
+            'volonta': currentVolonta(),
+            'materia': currentMateria(),
+            'oculum': currentOculum(),
+            'livello': leggiNumero(livelloController),
+            'grado': leggiNumero(gradoController),
+          },
+          subtraits: hiddenEyeStats,
+        ),
+        effect.id,
       );
     }
     return total;

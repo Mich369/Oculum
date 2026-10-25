@@ -258,13 +258,16 @@ extension _OculumMaskedMen on _OculumHomePageState {
     int natural,
     int total,
   ) {
-    if (request['maskedVolley'] != true) return;
-    if (oculumMaskedVolleyStops(
-      natural,
-      total,
-      readIntValue(request['attack']),
-      readIntValue(request['maskedHitIndex']),
-    )) {
+    if (request['maskedVolley'] != true && request['boneVolley'] != true) {
+      return;
+    }
+    if (request['boneVolley'] != true &&
+        oculumMaskedVolleyStops(
+          natural,
+          total,
+          readIntValue(request['attack']),
+          readIntValue(request['maskedHitIndex']),
+        )) {
       stopMaskedVolley(request);
       return;
     }
@@ -275,6 +278,11 @@ extension _OculumMaskedMen on _OculumHomePageState {
         .toSet();
     if (!processed.add('${request['id']}')) return;
     record['processed'] = processed.toList();
+    if (request['boneVolley'] == true &&
+        readIntValue(request['attack']) > total) {
+      record['boneSuccessfulHits'] =
+          readIntValue(record['boneSuccessfulHits']) + 1;
+    }
     final packets = (record['packets'] as List).whereType<Map>().toList();
     final next = readIntValue(record['next']);
     if (next >= packets.length) {
@@ -282,7 +290,15 @@ extension _OculumMaskedMen on _OculumHomePageState {
       return;
     }
     record['next'] = next + 1;
-    dispatchMaskedVolleyPacket(Map<String, dynamic>.from(packets[next]));
+    final packet = Map<String, dynamic>.from(packets[next]);
+    if (packet['boneVolley'] == true) {
+      packet['damage'] = oculumBoneSlashDamage(
+        readIntValue(packet['boneSlashBase']),
+        readIntValue(record['boneSuccessfulHits']),
+        readIntValue(packet['boneSlashPercent']),
+      );
+    }
+    dispatchMaskedVolleyPacket(packet);
   }
 
   bool receiveMaskedInterrupt(Map<String, dynamic> payload) {

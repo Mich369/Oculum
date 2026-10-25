@@ -647,14 +647,42 @@ InventoryItem oculumMonsterEchoScrollItem(String id, int grade) {
   );
 }
 
-int oculumScrollLearningChance(String difficulty, {int bonusPercent = 0}) {
+int oculumScrollLearningDifficulty(
+  int scrollGrade, {
+  int skillLevel = 0,
+  int characterLevel = 0,
+}) =>
+    30 +
+    10 * scrollGrade.clamp(0, 12) +
+    2 * max(0, skillLevel - characterLevel);
+
+Color oculumScrollLearningColor(int chance) => switch (chance) {
+  <= 20 => Colors.redAccent,
+  <= 40 => Colors.deepOrangeAccent,
+  <= 55 => Colors.yellowAccent,
+  <= 74 => const Color(0xffc6e35a),
+  _ => Colors.greenAccent,
+};
+
+int oculumScrollLearningChance(
+  String difficulty, {
+  int bonusPercent = 0,
+  int luck = 0,
+  int characterGrade = 0,
+  bool matchingElement = false,
+}) {
   final base = switch (difficulty) {
     'facile' => 20,
     'difficile' => 10,
     'oculum' => 5,
     _ => 15,
   };
-  return (base + bonusPercent.clamp(0, 3)).clamp(0, 100).toInt();
+  return (base +
+          bonusPercent.clamp(0, 3) +
+          max(0, luck) +
+          (matchingElement ? 15 : 0))
+      .clamp(0, characterGrade >= 9 ? 90 : 75)
+      .toInt();
 }
 
 bool oculumScrollCanLearn(
@@ -664,12 +692,28 @@ bool oculumScrollCanLearn(
   int percentile, {
   String difficulty = 'normale',
   int bonusPercent = 0,
+  int luck = 0,
+  int characterGrade = 0,
+  int skillLevel = 0,
+  int characterLevel = 0,
+  bool matchingElement = false,
 }) =>
     natural == 20 &&
-    total >= 30 + 10 * grade.clamp(0, 12) &&
+    total >=
+        oculumScrollLearningDifficulty(
+          grade,
+          skillLevel: skillLevel,
+          characterLevel: characterLevel,
+        ) &&
     percentile >= 0 &&
     percentile <
-        oculumScrollLearningChance(difficulty, bonusPercent: bonusPercent);
+        oculumScrollLearningChance(
+          difficulty,
+          bonusPercent: bonusPercent,
+          luck: luck,
+          characterGrade: characterGrade,
+          matchingElement: matchingElement,
+        );
 
 InventoryItem oculumScrollItem(
   String element,
@@ -737,6 +781,67 @@ InventoryItem oculumScrollItem(
 }
 
 extension _OculumScrolls on _OculumHomePageState {
+  int get scrollLearningLuck {
+    final stat = hiddenEyeStats.where((s) => s.id == 'fortuna').firstOrNull;
+    return oculumScrollLuck(
+      stat == null ? 0 : hiddenEyeTotal(stat),
+      rebirthed: rebirthato,
+    );
+  }
+
+  bool scrollMatchesUsableElement(Map<String, dynamic> data) {
+    final wanted = oculumNormalizeElementId('${data['element'] ?? ''}');
+    if (wanted.isEmpty) return false;
+    final elements = <String>{
+      oculumNormalizeElementId(elementoDannoDominante()),
+    };
+    void addEffects(Iterable<OculumStructuredEffect> effects) {
+      for (final effect in effects.where(
+        (e) => e.enabled && e.elementType.trim().isNotEmpty,
+      )) {
+        elements.add(oculumNormalizeElementId(effect.elementType));
+      }
+    }
+
+    final level = leggiNumero(livelloController);
+    for (final item in inventario.where(
+      (i) => i.equipaggiata && canEquipInventoryItem(i),
+    )) {
+      if (item.arma) {
+        elements.add(oculumNormalizeElementId(item.elementoDanno));
+      }
+      for (final form in item.ability?.forme ?? <CharacterSkillForm>[]) {
+        if (readIntValue(form.livello) <= level) {
+          addEffects(form.effettiStrutturati);
+        }
+      }
+    }
+    for (final skill in skills.where((s) => s.equipaggiata)) {
+      for (final form in skill.forme) {
+        if (readIntValue(form.livello) <= level) {
+          addEffects(form.effettiStrutturati);
+        }
+      }
+    }
+    for (final art in arti.where((a) => a.sbloccata)) {
+      for (final skill in art.skills) {
+        for (var form = 1; form <= artMaxLevel(art); form++) {
+          final required =
+              int.tryParse(
+                RegExp(
+                      r'Richiede livello\s+(\d+)',
+                      caseSensitive: false,
+                    ).firstMatch(skill.testoEvoluzione(form))?.group(1) ??
+                    '',
+              ) ??
+              0;
+          if (required <= level) addEffects(skill.effettiEvoluzione(form));
+        }
+      }
+    }
+    return elements.contains(wanted);
+  }
+
   void showMonsterScrollEcho(String monster, String asset) {
     final assetText = asset.trim().isEmpty ? '' : ' ($asset)';
     aggiungiLog(
@@ -801,6 +906,24 @@ extension _OculumScrolls on _OculumHomePageState {
       return;
     }
     final g = readIntValue(data['grade']).clamp(0, 12);
+    final learningDifficulty = oculumScrollLearningDifficulty(
+      g,
+      skillLevel: readIntValue(data['skillLevel']),
+      characterLevel: leggiNumero(livelloController),
+    );
+    final learningBonus = currentCombatIsActive()
+        ? Random.secure().nextInt(3) + 1
+        : 0;
+    final learningLuck = scrollLearningLuck;
+    final learningGrade = activeCriticalGrade();
+    final elementAffinity = scrollMatchesUsableElement(data);
+    final previewChance = oculumScrollLearningChance(
+      normalizedCampaignDifficulty(),
+      bonusPercent: learningBonus,
+      luck: learningLuck,
+      characterGrade: learningGrade,
+      matchingElement: elementAffinity,
+    );
     final kind = '${data['kind']}';
     if (kind == 'corruption' && !currentCombatIsActive()) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -900,8 +1023,28 @@ extension _OculumScrolls on _OculumHomePageState {
       builder: (ctx) => AlertDialog(
         title: Text('${data['name']} · Grado ${data['grade']}'),
         content: SingleChildScrollView(
-          child: Text(
-            '${data['description']}\n\n${kind == 'corruption' ? 'La pergamena non richiede una prova di attivazione né Volontà. La possibilità indicata dipende solo dal Grado del bersaglio e dalla sua eventuale resistenza alla Corruzione.' : 'Consuma una pergamena. Possibilità di apprendimento: ${oculumScrollLearningChance(normalizedCampaignDifficulty())}%${currentCombatIsActive() ? ' (+1–3% in battaglia)' : ''} con 20 naturale e totale ≥ ${30 + 10 * readIntValue(data['grade'])}.\nCosto: $cost Volontà · DT ${oculumScrollDifficulty(g)} · ricarica $cooldown turni. Il tiro usa Volontà, bonus e Oculum preparato.'} Il Master vede il risultato e i bersagli.',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (item != null && kind != 'corruption') ...[
+                Text(
+                  'Apprendimento $previewChance%',
+                  style: TextStyle(
+                    color: oculumScrollLearningColor(previewChance),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  'Fortuna +$learningLuck${elementAffinity ? ' · Elemento utilizzabile +15' : ''}${learningBonus > 0 ? ' · Battaglia +$learningBonus' : ''} · Limite ${learningGrade >= 9 ? 90 : 75}%',
+                ),
+                const SizedBox(height: 10),
+              ],
+              Text(
+                '${data['description']}\n\n${kind == 'corruption' ? 'La pergamena non richiede una prova di attivazione né Volontà. La possibilità indicata dipende solo dal Grado del bersaglio e dalla sua eventuale resistenza alla Corruzione.' : 'Consuma una pergamena. Per apprendere serve 20 naturale e totale ≥ $learningDifficulty: +2 DT per ogni livello richiesto dalla skill sopra il tuo.\nCosto: $cost Volontà · DT attivazione ${oculumScrollDifficulty(g)} · ricarica $cooldown turni. Il tiro usa Volontà, bonus e Oculum preparato.'} Il Master vede il risultato e i bersagli.',
+              ),
+            ],
           ),
         ),
         actions: [
@@ -1050,14 +1193,14 @@ extension _OculumScrolls on _OculumHomePageState {
           'stackable': false,
         });
       }
-      if (item != null && natural == 20 && total >= 30 + 10 * g) {
+      if (item != null && natural == 20 && total >= learningDifficulty) {
         final percentile = Random.secure().nextInt(100);
-        final learningBonus = currentCombatIsActive()
-            ? Random.secure().nextInt(3) + 1
-            : 0;
         final chance = oculumScrollLearningChance(
           normalizedCampaignDifficulty(),
           bonusPercent: learningBonus,
+          luck: learningLuck,
+          characterGrade: learningGrade,
+          matchingElement: elementAffinity,
         );
         if (oculumScrollCanLearn(
           natural,
@@ -1066,35 +1209,60 @@ extension _OculumScrolls on _OculumHomePageState {
           percentile,
           difficulty: normalizedCampaignDifficulty(),
           bonusPercent: learningBonus,
+          luck: learningLuck,
+          characterGrade: learningGrade,
+          matchingElement: elementAffinity,
+          skillLevel: readIntValue(data['skillLevel']),
+          characterLevel: leggiNumero(livelloController),
         )) {
           if (!skills.any((skill) => skill.scrollData['id'] == data['id'])) {
             skills.add(
-              CharacterSkill(
-                nome: '${data['name']} [Grado $g]',
-                tipo: kind == 'corruption' ? 'Passiva' : 'Attiva',
-                costo:
-                    oculumScrollCombatEffects(
-                      data,
-                    ).any((e) => e.type == 'preparazione')
-                    ? '2/2 Oculum'
-                    : kind == 'corruption'
-                    ? '0'
-                    : kind == 'gratitudine'
-                    ? '1 Reazione / Azione'
-                    : '$cost VOL',
-                cooldown: kind == 'corruption'
-                    ? '2 turni dallo scontro'
-                    : '$cooldown',
-                descrizione:
-                    '${data['description']}\nAppresa da pergamena: non evolvibile.${kind == 'corruption' ? '\nPassiva: resistenza alla Corruzione; al colpo pieno infetta i mostri di livello superiore. Ricarica iniziale: 2 turni dallo scontro (12 secondi a 6 secondi per turno). Il proprietario sceglie il bersaglio nel 90% degli attacchi del mostro corrotto.' : ''}',
-                scrollData: {
-                  ...Map<String, dynamic>.from(data),
-                  'learned': true,
-                },
-              ),
+              data['authoredSkill'] is Map
+                  ? CharacterSkill.fromJson({
+                      ...Map<String, dynamic>.from(
+                        data['authoredSkill'] as Map,
+                      ),
+                      'scrollData': {
+                        ...Map<String, dynamic>.from(data),
+                        'learned': true,
+                      },
+                      'equipaggiata': true,
+                    })
+                  : CharacterSkill(
+                      nome: '${data['name']} [Grado $g]',
+                      tipo: kind == 'corruption' ? 'Passiva' : 'Attiva',
+                      costo:
+                          oculumScrollCombatEffects(
+                            data,
+                          ).any((e) => e.type == 'preparazione')
+                          ? '2/2 Oculum'
+                          : kind == 'corruption'
+                          ? '0'
+                          : kind == 'gratitudine'
+                          ? '1 Reazione / Azione'
+                          : '$cost VOL',
+                      cooldown: kind == 'corruption'
+                          ? '2 turni dallo scontro'
+                          : '$cooldown',
+                      descrizione:
+                          '${data['description']}\nAppresa da pergamena: non evolvibile.${kind == 'corruption' ? '\nPassiva: resistenza alla Corruzione; al colpo pieno infetta i mostri di livello superiore. Ricarica iniziale: 2 turni dallo scontro (12 secondi a 6 secondi per turno). Il proprietario sceglie il bersaglio nel 90% degli attacchi del mostro corrotto.' : ''}',
+                      scrollData: {
+                        ...Map<String, dynamic>.from(data),
+                        'learned': true,
+                      },
+                    ),
             );
             learned =
                 '\nSkill appresa (d100 ${percentile + 1} ≤ $chance), non evolvibile.';
+            if (data['authoredOpen'] is Map) {
+              final open = CharacterArt.fromJson(
+                Map<String, dynamic>.from(data['authoredOpen'] as Map),
+              );
+              if (!arti.any((a) => a.openName == open.openName)) {
+                open.nome = 'Open appresa · ${open.openName}';
+                arti.add(open);
+              }
+            }
           } else {
             learned = '\nSkill già appresa: nessun duplicato.';
           }

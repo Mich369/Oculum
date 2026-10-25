@@ -207,7 +207,9 @@ extension _OculumFriends on _OculumHomePageState {
   void blockOculumFriendTag({required String tag, required String name}) {
     final clean = normalizeOculumFriendTag(tag);
     if (clean.isEmpty) return;
-    unawaited(realtimeService?.revokeSheetEditor(clean).catchError((Object _) {}));
+    unawaited(
+      realtimeService?.revokeSheetEditor(clean).catchError((Object _) {}),
+    );
 
     amiciOculum.removeWhere(
       (friend) =>
@@ -677,7 +679,9 @@ extension _OculumFriends on _OculumHomePageState {
       final removed = amiciOculum.removeAt(index);
       final removedTag = normalizeOculumFriendTag('${removed['tag'] ?? ''}');
       for (var i = 0; i < schedePersonaggio.length; i++) {
-        if (readBoolValue(schedePersonaggio[i]['realtimeSharedSheet'])) continue;
+        if (readBoolValue(schedePersonaggio[i]['realtimeSharedSheet'])) {
+          continue;
+        }
         final revoked = sheetRevokedAccessTagsAt(i);
         if (!revoked.contains(removedTag)) revoked.add(removedTag);
         schedePersonaggio[i]['realtimeRevokedAccessTags'] = revoked;
@@ -784,7 +788,13 @@ extension _OculumFriends on _OculumHomePageState {
       if (revoked) tags.add(tag);
 
       schedePersonaggio[schedaCorrente]['realtimeRevokedAccessTags'] = tags;
-      if (revoked) unawaited(realtimeService?.revokeSheetEditor(tag, sheetTag: sheetTagAt(schedaCorrente)).catchError((Object _) {}));
+      if (revoked) {
+        unawaited(
+          realtimeService
+              ?.revokeSheetEditor(tag, sheetTag: sheetTagAt(schedaCorrente))
+              .catchError((Object _) {}),
+        );
+      }
       risultato = revoked
           ? t(
               'Permesso sulla scheda revocato a ${name.isEmpty ? tag : name}.',

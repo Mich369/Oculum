@@ -1258,6 +1258,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         ),
       );
 
+    if (mortalKi > 0) lines.add(mortalKiBar());
     final shell = Container(
       constraints: BoxConstraints(minWidth: dense ? 230 : 280),
       padding: EdgeInsets.fromLTRB(

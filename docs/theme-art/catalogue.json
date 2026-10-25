@@ -937,6 +937,63 @@
       "name": "Spiritualità",
       "motif": "velo d anime e luce bianca",
       "file": "assets/oculum/theme_stories/webp/restyle_spiritualita.webp"
+    },
+    {
+      "id": "creature_bramble",
+      "name": "Bramble",
+      "file": "assets/oculum/theme_stories/webp/creature_bramble.webp",
+      "provider": "imagegen",
+      "motif": "Habitat e comportamento di Bramble",
+      "aspectRatio": 1.5
+    },
+    {
+      "id": "creature_thunderbird",
+      "name": "ThunderBird",
+      "file": "assets/oculum/theme_stories/webp/creature_thunderbird.webp",
+      "provider": "imagegen",
+      "motif": "Habitat e comportamento di ThunderBird"
+    },
+    {
+      "id": "creature_scostubanditi",
+      "name": "Scostubanditi",
+      "file": "assets/oculum/theme_stories/webp/creature_scostubanditi.webp",
+      "provider": "imagegen",
+      "motif": "Habitat e comportamento di Scostubanditi"
+    },
+    {
+      "id": "creature_fuocherelli",
+      "name": "Fuocherelli",
+      "file": "assets/oculum/theme_stories/webp/creature_fuocherelli.webp",
+      "provider": "imagegen",
+      "motif": "Habitat e comportamento di Fuocherelli"
+    },
+    {
+      "id": "creature_feralis",
+      "name": "Feralis",
+      "file": "assets/oculum/theme_stories/webp/creature_feralis.webp",
+      "provider": "imagegen",
+      "motif": "Habitat e comportamento di Feralis"
+    },
+    {
+      "id": "creature_granscostumato",
+      "name": "GranScostumato",
+      "file": "assets/oculum/theme_stories/webp/creature_granscostumato.webp",
+      "provider": "imagegen",
+      "motif": "Habitat e comportamento di GranScostumato"
+    },
+    {
+      "id": "creature_sempre_verde",
+      "name": "Sempre verde",
+      "file": "assets/oculum/theme_stories/webp/creature_sempre_verde.webp",
+      "provider": "imagegen",
+      "motif": "Habitat e comportamento di Sempre verde"
+    },
+    {
+      "id": "creature_lavastrello",
+      "name": "Lavastrello",
+      "file": "assets/oculum/theme_stories/webp/creature_lavastrello.webp",
+      "provider": "imagegen",
+      "motif": "Habitat e comportamento di Lavastrello"
     }
   ],
   "referenceSun": "assets/oculum/theme_stories/webp/benedict.webp",

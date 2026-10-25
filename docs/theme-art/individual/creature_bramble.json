@@ -1,0 +1,8 @@
+{
+  "id": "creature_bramble",
+  "file": "assets/oculum/theme_stories/webp/creature_bramble.webp",
+  "provider": "built-in imagegen",
+  "role": "Theme background only; supplied reference images are not used as monster portraits.",
+  "aspectRatio": 1.5,
+  "prompt": "Create an original wide landscape illustration for the full-page theme of Bramble in the Oculum fantasy RPG, painterly anime dark fantasy, hand-painted brushwork and clean organic silhouettes, not photorealistic. A deep green woodland sanctuary has been slowly reclaimed by living thorn vines. At the RIGHT EDGE, Bramble is an unsettling humanoid plant creature hanging upside-down by thick twisted thorn tendrils: angular bark face, narrow pale green eyes, a woody ribcage enclosing a small amber-green heart, long slender branch fingers. Distinct interconnected vines visibly attach to the creature, no extra limbs, no arbitrary spikes detached in mid-air. Its thorns form a broken protective crescent around a mossy abandoned forest threshold; a shallow ribbon of water at the lower edge reflects quiet green light, hinting at its weakness. Asymmetrical composition: dark still forest and softly painted roots occupy the left and central TWO THIRDS, deliberately low detail and low contrast for game controls, while the right edge tells the creature's story. Olive, moss, dark umber, muted emerald, tiny warm heart glow. Magical and eerie without gore; no sun, moon, fairies, coins, writing, logos, frames, borders, user interface, watermarks. Desktop wallpaper composition, 1536x1024 or wider landscape. The image must read as one coherent place, with purposeful negative space, not a collection of effects, no generic AI shine."
+}

@@ -231,6 +231,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
 
   void resolveSaltalungoTail(Map<String, dynamic> request, int hpLost) {
     if (hpLost <= 0 ||
+        criticalShieldBlocksDebuffs(request) ||
         readIntValue(request['natural']) < 20 ||
         request['targetWeakPointPrecision'] != true ||
         monsterLootSourceForSheet(schedePersonaggio[schedaCorrente])?.id !=
@@ -392,10 +393,13 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   int planarResilienceBonus(int normal) =>
       planarState['maxPower'] == true ? normal : 0;
   int planarAttackRollBonus() =>
+      deadlySwordHitBonus +
+      (faunaCurrentMonsterId == 'torretta_oculum' ? 9 : 0) +
       readIntValue(planarState['attackRollBonus']) +
       (maskedShadowActive ? 5 : 0) +
       (planarState['maskedTeleport'] == true ? 9 : 0);
   int planarDefenseRollBonus() =>
+      readIntValue(planarState.remove('defenseRollBonus')) +
       readIntValue(planarState['defenseRollPenalty']) +
       (maskedShadowActive ? 5 : 0) +
       (planarState['maskedTeleport'] == true ? 10 : 0);
@@ -406,7 +410,124 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     String source,
   ) {
     final state = planarState;
+    if (effect.target == 'deadly_empowered') {
+      state['deadlyEmpoweredTurns'] = max(1, duration);
+      state['deadlyEmpoweredForm'] = value;
+      return;
+    }
+    if (effect.target == 'deadly_regen') {
+      unawaited(deadlyRegenerate());
+      return;
+    }
+    if (effect.target == 'deadly_weapon') {
+      changeDeadlyWeaponForm(value);
+      return;
+    }
+    if (effect.target == 'puppet_attack_bonus') {
+      state['attackRollBonus'] = readIntValue(state['attackRollBonus']) + value;
+      return;
+    }
+    if (effect.target == 'laer_sword') {
+      state['laerSword'] = true;
+      return;
+    }
+    if (effect.target == 'laer_twist' || effect.target == 'next_defense_roll') {
+      state['defenseRollBonus'] =
+          readIntValue(state['defenseRollBonus']) + value;
+      return;
+    }
+    if (effect.target == 'monk_ki') {
+      unawaited(activateMortalKi());
+      return;
+    }
+    if (effect.target == 'monk_seal') {
+      state['mortalKiLock'] = max(1, duration);
+      aggiungiLog(
+        '[È GIUNTA LA TUA ORA] Ki Mortale e Oculum non utilizzabili per un turno; le risorse restano conservate.',
+      );
+      return;
+    }
+    if (effect.target == 'bone_four_slash') {
+      state['boneFourSlash'] = max(0, value);
+      return;
+    }
+    if (effect.target == 'ogor_restore') {
+      restoreOgorEnergy();
+      return;
+    }
+    if (effect.target == 'teirak_aphonia') {
+      applyCondition('vita_afona', duration: 3, source: 'Rune di Teirak');
+      aggiungiLog('Le rune velano la tua Vitalità: non riesci a percepirla.');
+      return;
+    }
     switch (effect.target) {
+      case 'feralis_fury':
+        startFeralisFury();
+        break;
+      case 'fuocherelli_reanimate':
+        unawaited(commitFaunaReanimation());
+        break;
+      case 'fuocherelli_critical_fire':
+        applyCondition(
+          'bruciatura',
+          duration: Random.secure().nextInt(4) + 1,
+          source: 'Dardo di fuoco',
+        );
+        break;
+      case 'lavastrello_critical_fire':
+        applyCondition('bruciatura', duration: 1, source: 'Attacco di Fuoco');
+        break;
+      case 'gran_leave':
+        state['granLeave'] = true;
+        state['attackRollBonus'] = readIntValue(state['attackRollBonus']) + 5;
+        break;
+      case 'gran_cannon':
+        state['granCannon'] = true;
+        break;
+      case 'gran_unstun':
+        granRemoveStun();
+        break;
+      case 'evergreen_leaves':
+        activateEvergreenLeaves(value);
+        break;
+      case 'evergreen_dodge':
+        state['evergreenDodge'] = max(1, value);
+        break;
+      case 'thunderbird_teleport':
+        unawaited(useThunderTeleport());
+        break;
+      case 'thunderbird_claw':
+        applyCondition(
+          'paralisi_fato',
+          duration: 1,
+          durationType: OculumConditionDurationType.actions,
+          source: 'Artiglio di Fulmine',
+        );
+        break;
+      case 'scostu_punch':
+        state['scostuPunch'] = true;
+        break;
+      case 'scostu_rifle_ammo':
+        state['scostuRifleAmmo'] = max(0, value);
+        state['scostuRifleHolstered'] = false;
+        final disarmed = getCondition('disarmato');
+        if (disarmed != null) removeCondition(disarmed, force: true);
+        break;
+      case 'scostu_rifle_form':
+        state['scostuRifleForm'] = value.clamp(1, 3);
+        break;
+      case 'scostu_breath':
+      case 'scostu_recover':
+        break;
+      case 'bramble_thorn_shield':
+        state['brambleShield'] = max(0, value);
+        state['brambleShieldTurns'] = max(1, duration);
+        break;
+      case 'bramble_thorn_retaliation':
+        state['brambleRetaliation'] = max(0, value);
+        break;
+      case 'bramble_arduous_challenge':
+        break; // Passive is resolved from the confirmed critical's target.
       case 'mask_serious_punch':
       case 'mask_blue_volley':
       case 'mask_shadow_form':
@@ -497,6 +618,10 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
         state['defenseRollPenalty'] = -2;
         break;
       case 'flight':
+        if (wingsGrounded) {
+          aggiungiLog('[ALI] Due ali danneggiate: il volo non è disponibile.');
+          break;
+        }
         state['flightTurns'] = max(1, duration);
         activeStructuredEffects.removeWhere(
           (e) => '${e['effectId']}'.startsWith('planar_flight_'),
@@ -660,6 +785,12 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void tickPlanarTurn() {
+    if (readIntValue(planarState['deadlyEmpoweredTurns']) > 0) {
+      planarState['deadlyEmpoweredTurns'] =
+          readIntValue(planarState['deadlyEmpoweredTurns']) - 1;
+    }
+    tickBoneRuneTurn();
+    tickFeralisFury();
     maskedTurnStart();
     meccanioTurn();
     parasiteTurn();
@@ -671,6 +802,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
       'illusionTurns',
       'rocketFlightTurns',
       'barrierTurns',
+      'brambleShieldTurns',
     ]) {
       if (readIntValue(planarState[key]) > 0) {
         planarState[key] = readIntValue(planarState[key]) - 1;
@@ -710,6 +842,18 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void resetPlanarFight() {
+    planarState.remove('deadlyEmpoweredTurns');
+    planarState.remove('artWeakPointPenalties');
+    planarState.remove('artWeakPointAction');
+    resetBoneRuneFight();
+    resetCannonEvergreenFight();
+    planarState.remove('feralisFury');
+    planarState.remove('feralisFuryPaidTurns');
+    planarState.remove('feralisFurySkipTick');
+    planarState.remove('feralisElementResistance');
+    planarState.remove('fuocherelliWaterSuppressedActions');
+    resetStormBanditFight();
+    resetBrambleFight();
     planarState.remove('maskedShadow');
     planarState.remove('maskedTeleport');
     planarState.remove('maskedAttack');
@@ -765,6 +909,19 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void longRestPlanarEffects() {
+    restoreDamagedWings();
+    planarState.remove('banditVendetta');
+    for (final token in _writableOnlineCombatTokens().where(
+      (t) => onlineCombatTokenTag(t) == sheetTagAt(schedaCorrente),
+    )) {
+      token['faunaPublic'] = {
+        ...Map<String, dynamic>.from(token['faunaPublic'] as Map? ?? {}),
+        'banditVendetta': false,
+      };
+    }
+    deadlyLongRest();
+    resetOgorCoreRest(long: true);
+    planarState.remove('fuocherelliSecondLifeUsed');
     planarState.remove('oblivionMemoryStage');
     planarState.remove('oblivionMemoryDifficulty');
     planarState.remove('oblivionMemoryReactionLost');
@@ -794,9 +951,14 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     required String element,
     String attackKind = '',
     bool magical = false,
+    bool bypassShields = false,
   }) {
     final state = planarState;
+    damage = (damage * silkResistanceMultiplier(element)).round();
+    damage = feralisAdaptDamage(damage, element);
+    if (feralisFuryActive) damage = (damage / 2).ceil();
     if (damage <= 0) return damage;
+    damage = brambleAbsorbDamage(damage, element, bypassShields: bypassShields);
     if (maskedShadowActive &&
         const {
           'fisico',
@@ -879,6 +1041,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void planarAfterHpDamage() {
+    boneRuneAfterHpDamage();
     if (hpCorrenti() > 0 ||
         planarCloudForm ||
         planarState['cloudLifeUsed'] == true ||
@@ -899,16 +1062,33 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     Map request,
     OculumStructuredEffect effect,
   ) {
-    if (!const {
+    if (!oculumEffectRequiresCritical(effect)) {
+      return true;
+    }
+    if (criticalShieldBlocksDebuffs(request)) return false;
+    return readIntValue(request['natural']) >= 20 ||
+        request['forcedCritical'] == true ||
+        oculumScostuPacketCritical(request) ||
+        oculumAttackIsCritical(
+          readIntValue(request['attack']),
+          readIntValue(request['defense']),
+        );
+  }
+}
+
+bool oculumEffectRequiresCritical(OculumStructuredEffect effect) =>
+    effect.criticalOnly ||
+    const {
       'critical_stun',
       'critical_aphonia',
       'annihilation',
-    }.contains(effect.target)) {
-      return true;
-    }
-    return readIntValue(request['natural']) >= 20;
-  }
-}
+      'thunderbird_claw',
+      'fuocherelli_critical_fire',
+      'lavastrello_critical_fire',
+      'teirak_aphonia',
+      'meccanio_oltre_difesa',
+    }.contains(effect.target) ||
+    effect.id == 'meccanio_beyond_defense';
 
 InventoryItem oculumPlanarTechniqueScroll(
   MonsterBookEntry monster,
@@ -938,7 +1118,11 @@ InventoryItem oculumPlanarTechniqueScroll(
         'id': 'planar-scroll:$id:$receipt',
         'name': technique?.name ?? skill.nome,
         'kind': 'technique',
+        'authoredSkill': oculumEquipmentAbilityFromArt(skill).toJson(),
+        if (technique?.name.contains('· Open') == true)
+          'authoredOpen': art.toJson(),
         'grade': grade,
+        'skillLevel': (technique?.requiredLevel ?? 0) + form * 3,
         'element': monster.elementId,
         'description': technique?.text() ?? skill.evo1,
         'willCost': max(1, grade + 1),
@@ -962,8 +1146,12 @@ List<InventoryItem>? oculumPlanarNaturalDrops(
   int level,
   int grade,
   int natural,
-  String killId,
-) {
+  String killId, {
+  String finishingElement = '',
+  String finishingSkillId = '',
+  Map combatHistory = const {},
+  int dropTotal = 0,
+}) {
   final id = oculumPartyHuntSpeciesId(monster.id);
   InventoryItem material(String name, double weight) => InventoryItem(
     nome: name,
@@ -979,6 +1167,188 @@ List<InventoryItem>? oculumPlanarNaturalDrops(
       'naturalDropRoll': natural,
     },
   );
+  if (const {
+    'fuocherelli',
+    'feralis',
+    'granscostumato',
+    'sempre_verde',
+    'lavastrello',
+    'teschio_monaco',
+    'teschio_quattro_lame',
+    'ogor',
+    'teirak',
+    'teschio_mostruoso',
+    'adoratore_bestia',
+    'laer',
+    'torretta_oculum',
+    'manichino_spada',
+    'deadly_sins',
+    'zombie_acido',
+    'cavaliere_non_ritorno',
+  }.contains(monster.id)) {
+    final rules = monster.encounterRules['naturalScrollDrops'] as Map? ?? {};
+    InventoryItem scroll(String skill) => oculumPlanarTechniqueScroll(
+      monster,
+      skill,
+      receipt: '$killId:$skill',
+      level: level,
+      grade: grade,
+    );
+    return [
+      if (monster.id == 'deadly_sins' && natural == 20)
+        oculumDeadlySinsWeapon(monster, level, grade, killId),
+      if (natural >= 8)
+        material(
+          oculumMonsterDropName(
+            monster.dropChances.keys.firstOrNull ?? 'frammento_${monster.id}',
+          ),
+          .15,
+        ),
+      for (final entry in rules.entries)
+        if (entry.value is Map &&
+            natural >= readIntValue(entry.value['minimum']) &&
+            natural <= readIntValue(entry.value['maximum']))
+          scroll('${entry.key}'),
+      if (monster.id == 'sempre_verde' && dropTotal >= 36)
+        scroll('evergreen_leaves'),
+      if (monster.id == 'teschio_monaco' && dropTotal >= 39)
+        scroll('monk_dragon'),
+      if (monster.id == 'teschio_quattro_lame' && dropTotal >= 40)
+        scroll('bone_four_slash'),
+      if (monster.id == 'ogor' && dropTotal >= 46) scroll('ogor_ray'),
+      if (monster.id == 'sempre_verde' && combatHistory['soulOnly'] == true)
+        InventoryItem(
+          nome: 'Costume dei Sempre Verde',
+          peso: .8,
+          quantita: 1,
+          note: 'Costume intatto: i mostri esitano finché non li attacchi.',
+          livelloOggetto: level,
+          gradoOggetto: grade,
+          ability: oculumEquipmentAbilityFromArt(
+            oculumMonsterBookArt(
+              monster.copyWith(skillIds: ['evergreen_disguise']),
+            ).skills.first,
+          ),
+          monsterLoot: {'id': '$killId:costume', 'monsterId': monster.id},
+        ),
+      if (monster.id == 'teschio_quattro_lame' &&
+          readIntValue(combatHistory['boneBrokenArms']) >= 4)
+        InventoryItem(
+          nome: 'Spada Osso',
+          peso: 1.4,
+          quantita: 1,
+          note:
+              'Lama d’osso pallido con denti minuti sul filo e guardia di vertebre. Piantandola nel terreno evoca spuntoni, fino a quattro nemici.',
+          buff: '@vol+2 @res+1',
+          arma: true,
+          livelloOggetto: level,
+          gradoOggetto: grade,
+          ability: oculumEquipmentAbilityFromArt(
+            oculumMonsterBookArt(
+              monster.copyWith(skillIds: ['bone_ground_spikes']),
+            ).skills.first,
+          ),
+          monsterLoot: {'id': '$killId:bone-sword', 'monsterId': monster.id},
+        ),
+      if (monster.id == 'ogor' &&
+          readIntValue(combatHistory['ogorCoreHits']) == 0)
+        InventoryItem(
+          nome: 'Nucleo di Oculum',
+          peso: .35,
+          quantita: 1,
+          note:
+              'Nucleo viola integro di Grado I. Cinque recuperi di 1 Oculum su tiri riusciti per riposo. Si rompe dopo tre colpi al punto debole del portatore.',
+          gradoOggetto: 1,
+          gradoRichiesto: 1,
+          livelloOggetto: level,
+          craftData: {
+            'ogorCore': true,
+            'weakPointHits': 0,
+            'successfulRolls': 0,
+            'broken': false,
+          },
+          ability: oculumEquipmentAbilityFromArt(
+            oculumMonsterBookArt(
+              monster.copyWith(skillIds: ['ogor_core']),
+            ).skills.first,
+          ),
+          monsterLoot: {'id': '$killId:core', 'monsterId': monster.id},
+        ),
+    ];
+  }
+  if (monster.id == 'bramble') {
+    final rules = monster.encounterRules['naturalScrollDrops'] as Map? ?? {};
+    return [
+      if (natural >= 8) material('Fibra spinosa di Bramble', .15),
+      for (final entry in rules.entries)
+        if (entry.value is Map &&
+            natural >= readIntValue(entry.value['minimum'], fallback: 20) &&
+            natural <= readIntValue(entry.value['maximum'], fallback: 20) &&
+            ('${entry.value['finishingElement'] ?? ''}'.isEmpty ||
+                oculumNormalizeElementId(finishingElement) ==
+                    entry.value['finishingElement']))
+          oculumPlanarTechniqueScroll(
+            monster,
+            '${entry.key}',
+            receipt: '$killId:${entry.key}',
+            level: level,
+            grade: grade,
+          ),
+    ];
+  }
+  if (const {'thunderbird', 'scostubanditi'}.contains(monster.id)) {
+    final rules = monster.encounterRules['naturalScrollDrops'] as Map? ?? {};
+    return [
+      if (natural >= 8)
+        material(
+          monster.id == 'thunderbird'
+              ? 'Piuma conduttrice di ThunderBird'
+              : 'Ottone del fucile Scostubanditi',
+          .15,
+        ),
+      for (final entry in rules.entries)
+        if (entry.value is Map &&
+            natural >= readIntValue(entry.value['minimum']) &&
+            natural <= readIntValue(entry.value['maximum']) &&
+            ('${entry.value['finishingElement'] ?? ''}'.isEmpty ||
+                oculumNormalizeElementId(finishingElement) ==
+                    entry.value['finishingElement']) &&
+            ('${entry.value['finishingSkillId'] ?? ''}'.isEmpty ||
+                finishingSkillId == entry.value['finishingSkillId']))
+          oculumPlanarTechniqueScroll(
+            monster,
+            '${entry.key}',
+            receipt: '$killId:${entry.key}',
+            level: level,
+            grade: grade,
+          ),
+      if (monster.id == 'scostubanditi' &&
+          dropTotal >=
+              readIntValue(
+                monster.encounterRules['rifleDropTotal'],
+                fallback: 30,
+              ))
+        InventoryItem(
+          nome: 'Fucile schivata',
+          peso: 2.2,
+          quantita: 1,
+          livelloOggetto: level,
+          gradoOggetto: grade,
+          note:
+              'Fucile di legno e ottone. Puoi evocarlo con la Skill collegata: costo e munizioni dipendono dalla forma e dall’Oculum immesso. Totale Drop almeno 30.',
+          ability: oculumEquipmentAbilityFromArt(
+            oculumMonsterBookArt(
+              monster.copyWith(skillIds: ['scostu_rifle']),
+            ).skills.first,
+          ),
+          monsterLoot: {
+            'id': '$killId:rifle',
+            'monsterId': monster.id,
+            'dropTotal': dropTotal,
+          },
+        ),
+    ];
+  }
   if (const {
     'observers_tear',
     'obser_sunshine',
@@ -1311,6 +1681,12 @@ extension _OculumPlanarHunts on _OculumHomePageState {
         final matched = switch (condition) {
           'weak_point' => finisher['weakPoint'] == true,
           'base_attack' => finisher['baseAttack'] == true,
+          'stunning_attack' => finisher['stun'] == true,
+          'active_mortal_ki' => readIntValue(finisher['sourceMortalKi']) > 0,
+          'common_natural_element' => oculumFeralisCommonElements.contains(
+            finisher['element'],
+          ),
+          'element:acqua' => finisher['element'] == 'acqua',
           'ability' => '${finisher['abilityName'] ?? ''}'.isNotEmpty,
           'nonmagical_blunt' =>
             finisher['baseAttack'] == true &&

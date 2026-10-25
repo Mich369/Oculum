@@ -21,23 +21,30 @@ class OculumThemePresentation {
     this.variant = OculumThemeVariant.still,
     this.relicScale = 1,
     this.relicOpacity = .8,
+    this.surfaceTransparency = .18,
     this.artPackId = '',
   });
   final OculumThemeMotion motion;
   final OculumThemeVariant variant;
   final double relicScale, relicOpacity;
+
+  /// Only the backing surfaces fade; labels and input stay fully visible.
+  final double surfaceTransparency;
   final String artPackId;
   OculumThemePresentation copyWith({
     OculumThemeMotion? motion,
     OculumThemeVariant? variant,
     double? relicScale,
     double? relicOpacity,
+    double? surfaceTransparency,
     String? artPackId,
   }) => OculumThemePresentation(
     motion: motion ?? this.motion,
     variant: variant ?? this.variant,
     relicScale: (relicScale ?? this.relicScale).clamp(.7, 1.3),
     relicOpacity: (relicOpacity ?? this.relicOpacity).clamp(.25, 1),
+    surfaceTransparency: (surfaceTransparency ?? this.surfaceTransparency)
+        .clamp(0, .4),
     artPackId: artPackId ?? this.artPackId,
   );
 }
@@ -81,6 +88,8 @@ Future<void> loadOculumThemePresentation() async {
       .25,
       1,
     ),
+    surfaceTransparency: (prefs.getDouble('oculum.surfaceTransparency') ?? .18)
+        .clamp(0, .4),
     // An empty preference means that the player has never selected the Home
     // artwork. Choose an image pack for this launch, but do not persist it:
     // the next launch can choose again, while an explicit selection remains
@@ -123,6 +132,10 @@ Future<void> setOculumThemePresentation(OculumThemePresentation value) async {
   await prefs.setString('oculum.themeVariant', value.variant.name);
   await prefs.setDouble('oculum.themeRelicScale', value.relicScale);
   await prefs.setDouble('oculum.themeRelicOpacity', value.relicOpacity);
+  await prefs.setDouble(
+    'oculum.surfaceTransparency',
+    value.surfaceTransparency,
+  );
   await prefs.setString('oculum.themeArtPack', value.artPackId);
 }
 
@@ -168,6 +181,55 @@ class OculumThemePresentationControls extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ListTile(
+            leading: const Icon(Icons.layers_outlined),
+            title: Text(
+              english
+                  ? 'Panel and button transparency'
+                  : 'Trasparenza pannelli e pulsanti',
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  english
+                      ? 'Only the backing fades. Text and icons stay visible; hover or keyboard focus restores the surface.'
+                      : 'Schiarisce solo le superfici: testi e icone restano visibili. Mouse e focus ripristinano la superficie.',
+                ),
+                Slider(
+                  key: const ValueKey('surface-transparency'),
+                  value: value.surfaceTransparency,
+                  min: 0,
+                  max: .4,
+                  divisions: 20,
+                  label: '${(value.surfaceTransparency * 100).round()}%',
+                  semanticFormatterCallback: (v) => '${(v * 100).round()}%',
+                  onChanged: (v) => oculumThemePresentation.value = value
+                      .copyWith(surfaceTransparency: v),
+                  onChangeEnd: (_) =>
+                      setOculumThemePresentation(oculumThemePresentation.value),
+                ),
+                Wrap(
+                  spacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text('${(value.surfaceTransparency * 100).round()}%'),
+                    TextButton(
+                      key: const ValueKey('surface-transparency-reset'),
+                      onPressed: () => setOculumThemePresentation(
+                        value.copyWith(surfaceTransparency: .18),
+                      ),
+                      child: Text(
+                        english
+                            ? 'Restore recommended · 18%'
+                            : 'Ripristina consigliato · 18%',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          ListTile(
             leading: const Icon(Icons.auto_awesome_outlined),
             title: Text(english ? 'Theme animations' : 'Animazioni tema'),
             subtitle: Text(
@@ -207,17 +269,18 @@ class OculumThemePresentationControls extends StatelessWidget {
             child: DropdownButtonFormField<OculumThemeVariant>(
               key: ValueKey('theme-variant-${value.variant.name}'),
               initialValue: value.variant,
+              isExpanded: true,
               decoration: InputDecoration(
                 labelText: english ? 'Artwork variant' : 'Variante illustrata',
               ),
               items: [
                 DropdownMenuItem(
                   value: OculumThemeVariant.still,
-                  child: Text(stillLabel),
+                  child: Text(stillLabel, overflow: TextOverflow.ellipsis),
                 ),
                 DropdownMenuItem(
                   value: OculumThemeVariant.alive,
-                  child: Text(aliveLabel),
+                  child: Text(aliveLabel, overflow: TextOverflow.ellipsis),
                 ),
               ],
               onChanged: (variant) {

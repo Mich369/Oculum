@@ -135,7 +135,8 @@ class DiaryRoleLedger {
       Map<String, dynamic>.from(change),
   ];
   bool changeStatus(DiaryEntity entity, String status, DateTime now) {
-    if (!diaryProgressStates.containsKey(status) || statusOf(entity) == status) {
+    if (!diaryProgressStates.containsKey(status) ||
+        statusOf(entity) == status) {
       return false;
     }
     final record = _record(entity);

@@ -115,23 +115,44 @@ void main() {
       final convertedJson = InventoryItem.fromJson(item.toJson());
       expect(convertedJson.craftData['evolvable'], isTrue);
       if (state.schedePersonaggio.isEmpty) {
-        state.schedePersonaggio.add(<String,dynamic>{'id':'AMULET_OWNER','sheetTag':'AMULET_OWNER','nome':'Prova'});
+        state.schedePersonaggio.add(<String, dynamic>{
+          'id': 'AMULET_OWNER',
+          'sheetTag': 'AMULET_OWNER',
+          'nome': 'Prova',
+        });
         state.schedaCorrente = 0;
       }
-      final amulet = InventoryItem(nome: 'Amuleto Teschio', peso: .1, quantita: 1, note: '', equipaggiata: true,
-        craftData: {'necromancyKind': 'skull_amulet'});
+      final amulet = InventoryItem(
+        nome: 'Amuleto Teschio',
+        peso: .1,
+        quantita: 1,
+        note: '',
+        equipaggiata: true,
+        craftData: {'necromancyKind': 'skull_amulet'},
+      );
       state.inventario.add(amulet);
       final originalHp = state.currentHpController.text;
       final originalTag = probe.ownerTag();
       await probe.useNecromancy(amulet);
-      expect(state.schedePersonaggio[state.schedaCorrente]['skullFormOriginal'], isA<Map>());
+      expect(
+        state.schedePersonaggio[state.schedaCorrente]['skullFormOriginal'],
+        isA<Map>(),
+      );
       expect(probe.ownerTag(), originalTag);
       state.currentHpController.text = '0';
       probe.skullHit();
       expect(state.currentHpController.text, originalHp);
       expect(probe.ownerTag(), originalTag);
-      expect(state.schedePersonaggio[state.schedaCorrente]['skullFormOriginal'], isNull);
-      expect(state.inventario.any((dynamic i) => i.craftData['usedSinceLongRest'] == true), isTrue);
+      expect(
+        state.schedePersonaggio[state.schedaCorrente]['skullFormOriginal'],
+        isNull,
+      );
+      expect(
+        state.inventario.any(
+          (dynamic i) => i.craftData['usedSinceLongRest'] == true,
+        ),
+        isTrue,
+      );
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
     },

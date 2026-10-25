@@ -6,6 +6,57 @@ part of '../../main.dart';
 class OculumPerformanceProbe {
   OculumPerformanceProbe(State state) : _state = state as _OculumHomePageState;
   final _OculumHomePageState _state;
+  Future<void> revealWeakPoint(String id) => _state.masterDiscoverWeakPoint(id);
+  List<Map<String, dynamic>> precisionParts() =>
+      _state.currentPrecisionBodyParts;
+  void hitBodyPart(Map<String, dynamic> request) =>
+      _state.resolvePrecisionBodyHit(request);
+  int weakArtPenalty(String source) => _state.artWeakPointRollPenalty(source);
+  void weakArtAction() {
+    _state.markArtWeakPointAction();
+    _state.finishArtWeakPointAction();
+  }
+
+  double silkMultiplier(String element) =>
+      _state.silkResistanceMultiplier(element);
+  Future<void> reflectFairyCore(Map<String, dynamic> request) =>
+      _state.applyFateCoreReflection(request);
+  bool monsterWeakPointKnown(String id) =>
+      _state.monsterBookPartyDiscoveries[_state.monsterBookPartyDiscoveryKey(
+        id,
+      )]?['weakPoint'] ==
+      true;
+  Future<Map<String, dynamic>?> selectPrecisionPart(
+    Map<String, dynamic> token,
+  ) => _state.selectPrecisionBodyPart(token);
+  Future<void> wingHit(
+    Map<String, dynamic> request, {
+    int hpLost = 1,
+    bool critical = true,
+    int fallRoll = 1,
+  }) => _state.resolveWingCriticalDamage(
+    request,
+    hpLost: hpLost,
+    critical: critical,
+    fallRoll: fallRoll,
+  );
+  int flightBonus(int value) =>
+      _state.wingAdjustedFlightBonus(value, 'Fluttuare');
+  bool get grounded => _state.wingsGrounded;
+  void fractureHit(Map<String, dynamic> request, {int? percentile}) =>
+      _state.resolveLimbCriticalDamage(
+        request,
+        hpLost: 1,
+        critical: true,
+        percentile: percentile,
+      );
+  int fracturePenalty(String roll) => _state.fractureRollPenalty(roll);
+  bool criticalEffectAllowed(Map request, OculumStructuredEffect effect) =>
+      _state.planarIsCriticalEffectAllowed(request, effect);
+  int fractureDamagePenalty() =>
+      _state.conditionFlatModifier(OculumConditionTarget.danno);
+  int fractureDefensePenalty() =>
+      _state.conditionFlatModifier(OculumConditionTarget.difesa);
 
   void collectObserverCurrency(Map enemy, String encounter) =>
       _state.collectObserverTearCurrency(enemy, encounter);
@@ -63,7 +114,34 @@ class OculumPerformanceProbe {
   void maskedAction() => _state.consumeMaskedShadowAction();
   void restoreCreatureAppearance(Map<String, dynamic> sheet) =>
       _state.restoreMonsterAppearance(sheet);
+  bool get masterThemeAccess => _state.canManageAllThemes;
+  bool colorThemeAvailable(String id) => _state.isColorThemeUnlocked(id);
+  Future<bool> selectSheetRelic(String id) =>
+      _state.selectCurrentSheetRelic(id);
+  Future<void> chooseSheetRelic() => _state.chooseCurrentSheetRelic();
+  bool brambleCritical(Map<String, dynamic> request) =>
+      _state.claimBrambleChallenge(request);
+  int brambleAbsorb(int damage, String element, {bool bypassShields = false}) =>
+      _state.brambleAbsorbDamage(damage, element, bypassShields: bypassShields);
   String homeHeroArtwork() => _state.homeHeroImagePath;
+  Future<void> activateKi(int natural) =>
+      _state.activateMortalKi(natural: natural);
+  int kiAmount() => _state.mortalKi;
+  int spendKi(int value) => _state.spendMortalKi(value);
+  void confirmFaunaKills(Iterable<Map> enemies) =>
+      _state.faunaConfirmedKills(enemies, 'test');
+  void faunaLongRest() => _state.longRestPlanarEffects();
+  void deadlyWeaponAttack(String receipt) => _state.deadlyRecordAttack(receipt);
+  void deadlySessionEnd() => _state.deadlyNewSession();
+  void startFury() => _state.startFeralisFury();
+  void stopFury() => _state.stopFeralisFury();
+  int secondLife(int hp, String element, int roll) =>
+      _state.tryFuocherelliSecondLife(hp, element, shieldRoll: roll);
+  void coreRoll(String receipt) => _state.ogorCoreSuccessfulRoll(receipt);
+  void coreRest() => _state.resetOgorCoreRest();
+  void recordKills(Iterable<Map> enemies, String encounter) =>
+      _state.recordAllMonsterKills(enemies, encounter);
+  String killLabel(String id) => _state.monsterKillCountLabel(id);
   Widget monsterDossier(MonsterBookEntry monster) =>
       _state.monsterReadingDossier(monster);
   void unlockCreatureTheme(

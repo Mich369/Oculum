@@ -612,6 +612,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     final countedEnemies = <String>{};
     for (final token in masterInitiativeTokens) {
       if (masterInitiativeTokenIsTemporary(token)) continue;
+      if (token['encounterObject'] == true) continue;
       if (token['side'] != 'enemy') {
         participants.add(publicInitiativeSourceTag(token));
         continue;
@@ -717,6 +718,8 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     for (final enemy in defeated) {
       await resolveMartyrDeath(enemy, '$cooldownFightId:${enemy['id']}');
     }
+    recordAllMonsterKills(defeated, cooldownFightId);
+    faunaConfirmedKills(defeated, cooldownFightId);
     recordPlanarMonsterRewards(defeated, cooldownFightId);
     advancePartyQuestKills(defeated, cooldownFightId);
     recordPartySpeciesHunts(defeated, cooldownFightId);
@@ -821,6 +824,9 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         killId: killId,
         naturalDropRoll: natural,
         dropTotal: total,
+        finishingElement: '${(enemy['finisher'] as Map?)?['element'] ?? ''}',
+        finishingSkillId: '${(enemy['finisher'] as Map?)?['skillId'] ?? ''}',
+        combatHistory: enemy['finisher'] as Map? ?? const {},
       );
       final rollerLevel = participantLevels[rollerTag] ?? 0;
       // Do not consume a percentile roll when a crystal cannot drop. Besides

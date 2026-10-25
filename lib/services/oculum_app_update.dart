@@ -10,9 +10,11 @@ class OculumAppUpdate {
     required this.sha256,
     required this.bytes,
     required this.runId,
+    this.changes = const [],
   });
   final String commit, url, sha256;
   final int bytes, runId;
+  final List<String> changes;
 }
 
 Future<OculumAppUpdate?> oculumCheckAppUpdate(
@@ -93,6 +95,12 @@ Future<OculumAppUpdate?> oculumCheckAppUpdate(
         sha256: hash,
         bytes: bytes,
         runId: run,
+        changes: (group['changes'] as List? ?? [])
+            .whereType<String>()
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .take(8)
+            .toList(),
       );
     }
     break;

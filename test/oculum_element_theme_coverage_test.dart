@@ -16,7 +16,7 @@ void main() {
   test(
     'every story theme has a distinct packaged full-page painting',
     () async {
-      expect(oculumThemeStoryIds.toSet(), hasLength(154));
+      expect(oculumThemeStoryIds.toSet(), hasLength(162));
       for (final id in oculumThemeStoryIds) {
         final file = File('assets/oculum/theme_stories/webp/$id.webp');
         expect(file.existsSync(), isTrue, reason: id);

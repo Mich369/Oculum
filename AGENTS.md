@@ -1,5 +1,7 @@
 # Oculum
 
+- A ogni aggiornamento mantieni `docs/ULTIMO_AGGIORNAMENTO.md` breve e fedele ai conteggi verificati; la pubblicazione legge il log dal commit realmente compilato.
+
 - Lavora in questo repository preservando salvataggi, immagini, funzionalità online e compatibilità desktop, tablet e telefono.
 - Prima di modificare regole, consulta `docs/OCULUM_REGOLE_CONFERMATE.md` e il manuale completo `docs/manuale-consultazione.md`. Il registro distingue conferme dell'utente, regole del manuale e punti da chiarire: non trasformare una supposizione in una regola. Chiedi all'utente quando manca una regola o c'è una contraddizione non risolta.
 - Le correzioni esplicite più recenti dell'utente prevalgono sul manuale precedente; aggiorna registro, manuale e test pertinenti insieme.

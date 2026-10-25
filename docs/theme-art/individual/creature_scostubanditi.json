@@ -1,0 +1,8 @@
+{
+  "id": "creature_scostubanditi",
+  "file": "assets/oculum/theme_stories/webp/creature_scostubanditi.webp",
+  "provider": "built-in imagegen",
+  "role": "Theme background only; supplied reference images are not used as monster portraits.",
+  "aspectRatio": 1.7777777777777777,
+  "prompt": "Use case: illustration-story. Create an original full-page landscape theme illustration for Scostubanditi in Oculum, hand-painted anime fantasy with matte brushwork and a slightly rough adventurous tone, not glossy or photorealistic. At the RIGHT EDGE a small gray-furred rabbit bandit with oversized upright ears, dark brown expressive eyes, cream muzzle, worn slate-blue neck scarf and patched dark leather brigandine holds a single believable short brass-and-dark-wood blunderbuss in both paws, angled safely toward the empty ground. The two hands clearly grip stock and barrel, no extra fingers or disconnected weapons. He looks cocky and sarcastic rather than evil. A dry woodland roadside hideout has a broken cart, carelessly stacked stolen purses and a rope fence, hinting at bandits who rob travellers rather than murder them. A second small rabbit silhouette keeps watch far behind him, not an exact duplicate. Charcoal gray, dusty denim blue, warm old brass, muted ochre daylight. LEFT and CENTRAL two thirds show a spacious dark low-contrast woodland track, clear negative space for a game's controls, scenery still fills the entire frame. Strong narrative composition, believable perspective and cloth, no generic AI ornamental clutter. No coins with eyes, moon, sun, written signs, text, logos, UI, frame or watermark. Aim wide 16:9 landscape."
+}

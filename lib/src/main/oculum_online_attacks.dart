@@ -967,7 +967,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                                   title: Text(
                                     tag == own
                                         ? 'Se stessi'
-                                        : '${token['name'] ?? '???'}',
+                                        : faunaTargetName(token),
                                   ),
                                   subtitle: n > 0
                                       ? Text('Applicazioni: $n')
@@ -1495,14 +1495,23 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     )) {
       return [];
     }
-    return tokens
+    final eligible = tokens
         .where(
           (t) =>
               onlineCombatTokenTag(t).isNotEmpty &&
               onlineCombatTokenTag(t) != own &&
-              !const {'dead', 'fled', 'expired'}.contains(t['status']),
+              !const {'dead', 'fled', 'expired'}.contains(t['status']) &&
+              evergreenTargetAllowed(t),
         )
         .toList();
+    if (isBanditFamily) {
+      eligible.sort(
+        (a, b) => (banditTargetMarked(b) ? 1 : 0).compareTo(
+          banditTargetMarked(a) ? 1 : 0,
+        ),
+      );
+    }
+    return eligible;
   }
 
   Map<String, dynamic>? counterAttackResponse(Map<String, dynamic> original) {
@@ -1621,6 +1630,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     bool rabbitHat = false,
   }) async {
     final masked = pendingMaskedAttack;
+    final scostuPunch = planarState['scostuPunch'] == true;
+    final scostuCriticalRoll = scostuPunch ? Random.secure().nextInt(100) : 100;
+    final scostuRifle =
+        readIntValue(planarState['scostuRifleAmmo']) > 0 &&
+        planarState['scostuRifleHolstered'] != true &&
+        !hasCondition('disarmato');
+    final scostuRifleForm = readIntValue(planarState['scostuRifleForm']);
     final shadowRollForAction = maskedShadowActive ? 5 : 0;
     final shadowDamageForAction = maskedShadowDamage;
     final maskedVolley = masked['kind'] == 'mask_blue_volley';
@@ -1829,6 +1845,19 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         ),
     ];
     if (maskedPunch) choices.removeWhere((c) => c.id != 'schianto');
+    if (planarState['granLeave'] == true) {
+      choices.removeWhere((c) => c.id != 'schianto');
+    }
+    if (scostuRifle && !scostuPunch) {
+      choices.removeWhere(
+        (c) => !const {'precisione', 'fermezza'}.contains(c.id),
+      );
+    }
+    if (scostuPunch) {
+      choices.removeWhere(
+        (c) => !const {'vc', 'schianto', 'forza'}.contains(c.id),
+      );
+    }
     if (maskedVolley) {
       choices.removeWhere(
         (c) => !const {'riflessi', 'precisione_punto_debole'}.contains(c.id),
@@ -1917,8 +1946,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             context: context,
             builder: (_) => OculumAttackPlanner(
               targets: {
-                for (final e in byId.entries)
-                  e.key: '${e.value['name'] ?? '???'}',
+                for (final e in byId.entries) e.key: faunaTargetName(e.value),
               },
               elements: [
                 for (final element in attackElements)
@@ -1931,7 +1959,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               initialElement: replayElement.isNotEmpty
                   ? replayElement
                   : elementoDannoDominante(),
-              initialTarget: targetId,
+              initialTarget:
+                  targetId ??
+                  (isBanditFamily
+                      ? tokens
+                            .where(banditTargetMarked)
+                            .map(onlineCombatTokenTag)
+                            .firstOrNull
+                      : null),
               initialChoice: initialChoice,
               availableForTarget: (targetTag, option) =>
                   option.id != 'precisione_punto_debole' ||
@@ -2048,6 +2083,23 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       );
       return;
     }
+    final chosenBodyParts = <String, Map<String, dynamic>>{};
+    if (const {
+      'precisione',
+      'precisione_punto_debole',
+    }.contains(controlledPlan.choiceId)) {
+      for (final target in controlledPlan.targetIds.toSet()) {
+        final point = await selectPrecisionBodyPart(
+          byId[target]!,
+          weakOnly: controlledPlan.choiceId == 'precisione_punto_debole',
+        );
+        if (point == null || !mounted || currentSheetScrollId() != origin) {
+          return;
+        }
+        chosenBodyParts[target] = point;
+      }
+    }
+    final artWeakPenalty = preparedArtWeakPointPenalty;
     if (!maskedPunch &&
         !resourceAlreadySpent &&
         freeReactionId == null &&
@@ -2196,6 +2248,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         ? 0
         : hiddenEyeTotal(precisionStat);
     final id = '$sourceTag:${DateTime.now().microsecondsSinceEpoch}';
+    evergreenNoteAggression(controlledPlan.targetIds);
+    deadlyRecordAttack(id);
     if (robotAttack.isNotEmpty) {
       robotAttack['percentile'] = Random.secure().nextInt(100);
     }
@@ -2208,7 +2262,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     );
     final maskedPrecision =
         controlledPlan.choiceId == 'precisione_punto_debole';
-    final hatTargets = maskedArrows
+    final boneVolley = readIntValue(planarState['boneFourSlash']) > 0;
+    final laerSword =
+        planarState['laerSword'] == true ||
+        sourceMonsterId == 'laer' && controlledPlan.choiceId == 'vc';
+    final hatTargets = boneVolley
+        ? List<String>.filled(4, controlledPlan.targetIds.first)
+        : maskedArrows
         ? oculumRabbitHatHits(controlledPlan.targetIds, maskedArrowCount)
         : maskedVolley
         ? oculumMaskedVolleyOrder(
@@ -2234,6 +2294,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       if (maskedArrows) total += maskedArrowCount == 3 ? 9 : 3;
       total += readIntValue(preparedSkill['rollBonus']);
       total += planarAttackRollBonus();
+      total -= artWeakPenalty;
       if (!maskedShadowActive) total += shadowRollForAction;
       planarState.remove('maskedTeleport');
       total +=
@@ -2342,6 +2403,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           if (robotAttack['kind'] == 'rays' && natural == 20)
             OculumStructuredEffect(
               id: 'meccanio_beyond_defense',
+              criticalOnly: true,
               type: 'modifica_statistica',
               target: 'meccanio_oltre_difesa',
               valueExpression: '1',
@@ -2374,6 +2436,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               );
         final request = <String, dynamic>{
           'id': requestId,
+          if (boneVolley) ...{
+            'boneVolley': true,
+            'boneSlashPercent': readIntValue(planarState['boneFourSlash']),
+            'boneSlashBase': dannoTotale(),
+            'boneHitIndex': hit,
+          },
           if (maskedVolley) ...{
             'maskedVolley': true,
             'maskedHitIndex': hit,
@@ -2389,6 +2457,33 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               fallback: oculumCorruptionMasteryTargetControlPercent,
             ).clamp(0, 100),
           'sourceMonsterBookId': sourceMonsterId,
+          'faunaNonLethal':
+              monsterBookEntryById(
+                sourceMonsterId,
+              )?.encounterRules['nonLethal'] ==
+              true,
+          'faunaRobberyPercent': readIntValue(
+            monsterBookEntryById(
+              sourceMonsterId,
+            )?.encounterRules['robberyPercent'],
+            fallback: 75,
+          ),
+          'sourceMortalKi': mortalKi,
+          'scostuPunch': scostuPunch,
+          if (scostuPunch) 'scostuCriticalRoll': scostuCriticalRoll,
+          'scostuRifle': scostuRifle && !scostuPunch,
+          'scostuRifleForm': scostuRifleForm,
+          'granLeave': planarState['granLeave'] == true,
+          'granCannon': planarState['granCannon'] == true,
+          'sourceFirearm':
+              faunaFirearmEquipped ||
+              scostuRifle ||
+              const {
+                'scostubanditi',
+                'granscostumato',
+              }.contains(sourceMonsterId),
+          'thunderTeleportFragility':
+              planarState['thunderTeleportTarget'] == selectedTag,
           if (maskedIsAbility('masked_angelic_memory'))
             'angelicChaosPercent': maskedParameter('mask_angelic_memory', 25),
           'sourceName': realtimeDisplayName(),
@@ -2419,6 +2514,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             (c) => c.conditionType == 'invisibile',
           ),
           'targetTag': selectedTag,
+          if (chosenBodyParts.containsKey(selectedTag))
+            'targetBodyPart': chosenBodyParts[selectedTag]!['id'],
           'targetName': '${byId[selectedTag]!['name'] ?? '???'}',
           'attackGroupId': id,
           'choice': controlledPlan.choiceId,
@@ -2432,7 +2529,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 .toSet()
                 .join(' + '),
           'reason': controlledPlan.reason,
-          'attack': total,
+          'attack':
+              total - readIntValue(chosenBodyParts[selectedTag]?['penalty']),
           'natural': natural,
           if (rabbitHat) 'rabbitHatAdaptRoll': Random.secure().nextInt(100),
           'damage':
@@ -2532,11 +2630,62 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           request['abilityName'] =
               'Concatenazione · ${maskedPrecision ? 'Precisione' : 'Riflessi'} · ${hit + 1}/${hatTargets.length}';
         }
+        if (scostuPunch) request['abilityName'] = 'Prendi questo, stronzo!';
+        if (boneVolley) {
+          request['damage'] = oculumBoneSlashDamage(
+            dannoTotale(),
+            0,
+            readIntValue(planarState['boneFourSlash']),
+          );
+          request['abilityName'] = 'Quattro Slash · ${hit + 1}/4';
+        }
+        if (laerSword) {
+          request['damage'] = readIntValue(request['damage']) + total;
+          request['abilityName'] = 'Spada · Laer';
+        }
+        if (request['baseAttack'] == true) {
+          faunaRecordBaseAttack(id);
+          request['damage'] =
+              readIntValue(request['damage']) + deadlyBaseAttackBonus();
+        }
+        if (isBanditFamily && banditTargetMarked(byId[selectedTag]!)) {
+          request['banditVendetta'] = true;
+        }
+        if (planarState['granLeave'] == true) {
+          request['damage'] = readIntValue(request['damage']) + total;
+          request['abilityName'] = 'Levati dal cazzo!';
+        }
+        if (planarState['granCannon'] == true) {
+          request['abilityName'] = 'Vaffanculo!';
+        }
+        if (scostuRifle && !scostuPunch) {
+          request['abilityName'] = 'Fucile schivata';
+          if (scostuRifleForm == 1 && faunaReceipt('rifle:$id')) {
+            planarState['scostuRifleAmmo'] = max(
+              0,
+              readIntValue(planarState['scostuRifleAmmo']) - 1,
+            );
+          }
+        }
         if (isAutonomousMecha) {
           request['damage'] = oculumMechaSoloDamage(
             readIntValue(request['damage']),
           );
           request['mechaAutonomous'] = true;
+        }
+        if (request['banditVendetta'] == true) {
+          request['damage'] = (readIntValue(request['damage']) * 1.25).floor();
+        }
+        if (oculumFateCoreReflects(
+          monsterBookEntryById(monsterBookIdForCombatToken(byId[selectedTag]!)),
+          '${request['targetBodyPart']}',
+        )) {
+          request['kind'] = 'fate_core_reflection';
+          request['status'] = 'resolved';
+          onlineCombatRequests[requestId] = request;
+          unawaited(applyFateCoreReflection(request));
+          unawaited(sendOnlineCombatRequest(request));
+          continue;
         }
         if (incomingAttack != null && hit > 0) {
           deferredCounterHits.add(request);
@@ -2549,7 +2698,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             total,
             defenseNatural: natural,
           );
-        } else if (maskedVolley) {
+        } else if (maskedVolley || boneVolley) {
           maskedPackets.add(request);
         } else {
           onlineCombatRequests[requestId] = request;
@@ -2557,7 +2706,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           unawaited(sendOnlineCombatRequest(request));
         }
       }
-      if (maskedVolley) startMaskedVolley(maskedPackets);
+      if (maskedVolley || boneVolley) startMaskedVolley(maskedPackets);
+      planarState.remove('boneFourSlash');
+      planarState.remove('laerSword');
       if (firstCounterResolution != null) {
         unawaited(
           firstCounterResolution.then((_) {
@@ -2577,6 +2728,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       }
       if (maskedPunch || maskedVolley || maskedArrows) {
         planarState.remove('maskedAttack');
+        planarState.remove('scostuPunch');
+        planarState.remove('granLeave');
+        planarState.remove('granCannon');
       }
       if (suicideExplosion) {
         currentHpController.text = '0';
@@ -2596,12 +2750,23 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       planarState.remove('rabbitHatStage');
       planarState.remove('rabbitHatPaidTurn');
     }
-    if (preparedAttackTotal != null) {
+    final allFateCores = controlledPlan.targetIds.every(
+      (tag) => oculumFateCoreReflects(
+        monsterBookEntryById(monsterBookIdForCombatToken(byId[tag]!)),
+        '${chosenBodyParts[tag]?['id']}',
+      ),
+    );
+    if (allFateCores) {
+      resolved(0, 0);
+      finishArtWeakPointAction();
+    } else if (preparedAttackTotal != null) {
       resolved(preparedAttackNatural ?? 0, preparedAttackTotal);
     } else if (controlledPlan.choiceId == 'vc') {
       await tiraValoreSpeciale(
-        'VC',
-        vc(),
+        laerSword ? 'Spada' : 'VC',
+        laerSword
+            ? volontaTotale() ~/ 2 + (sourceMonsterId == 'laer' ? 10 : 0)
+            : vc(),
         applyGlobalRollModifier: false,
         actionLabel: label,
         onOculumDamageBonus: (bonus) => attackOculumDamageBonus = bonus,
@@ -2938,6 +3103,23 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       return;
     }
     request['received'] = true;
+    if (request['kind'] == 'fate_core_reflection') {
+      final target = onlineCombatTokens()
+          .where((token) => onlineCombatTokenTag(token) == request['targetTag'])
+          .firstOrNull;
+      if (target != null &&
+          oculumFateCoreReflects(
+            monsterBookEntryById(monsterBookIdForCombatToken(target)),
+            '${request['targetBodyPart']}',
+          )) {
+        request['status'] = 'resolved';
+        combatLogFor(
+          '${request['targetTag']}',
+          '[NUCLEO CON FATA] Il colpo di ${request['sourceName']} torna all’attaccante: nessun tiro contrapposto, nessun danno al golem.',
+        );
+        return;
+      }
+    }
     combatLogFor(
       '${request['targetTag']}',
       '[DIFESA] ${request['sourceName']} → ${request['targetName'] ?? 'bersaglio'} · ${request['abilityName'] ?? request['choice']} ${request['attack']}. ${request['targetName'] ?? 'Il bersaglio'} deve difendersi · danni ${request['damage']}. Aiuto disponibile per attaccante o difensore.',
@@ -3141,6 +3323,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         original['schiantoReactionUsed'] = true;
       }
       receiveLocalCombatAttack(request);
+      if (request['kind'] == 'fauna_revive') {
+        unawaited(receiveFaunaReanimation(request));
+        return;
+      }
+      if (request['faunaBurst'] == true &&
+          request['kind'] == 'fauna_burst' &&
+          controlsOnlineCombatSheet(target)) {
+        unawaited(resolveAutomaticFaunaDamage(request));
+      }
       unawaited(sendCombatAcknowledgement(request, 'attack'));
       if (request['status'] == 'resolved' &&
           controlsOnlineCombatSheet(target) &&
@@ -3163,6 +3354,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         return;
       }
       unawaited(sendCombatAcknowledgement(request, 'defense'));
+      if (request['kind'] == 'fauna_revive') {
+        if (request['status'] == 'pending') {
+          request['status'] = 'resolved';
+          finishFaunaReanimation(payload);
+        }
+        return;
+      }
       if (request['status'] != 'pending') {
         return;
       }
@@ -3215,6 +3413,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       request['status'] = 'resolved';
       request['defense'] = defense;
       request['defenseChoice'] = payload['defenseChoice'];
+      if (payload['bodyPointDiscovery'] is Map) {
+        request['bodyPointDiscovery'] = payload['bodyPointDiscovery'];
+        rememberPrecisionBodyDiscovery(request);
+      }
       advanceMaskedVolley(
         request,
         readIntValue(payload['defenseNatural']),
@@ -3290,6 +3492,24 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'pawnPending': rawReceipt['pawnPending'] == true,
         };
       }
+      if (payload['brambleTargetMultiplier'] is num) {
+        request['brambleTargetMultiplier'] = payload['brambleTargetMultiplier'];
+        claimBrambleChallengeForSource(request);
+      }
+      final thornDamage = readIntValue(
+        payload['brambleRetaliation'],
+      ).clamp(0, 100000);
+      if (thornDamage > 0 &&
+          controlsOnlineCombatSheet('${request['sourceTag']}')) {
+        unawaited(
+          applyRunicReflectedDamage(
+            '${request['sourceTag']}',
+            thornDamage,
+            element: 'natura',
+            source: 'Scudo di rovi',
+          ),
+        );
+      }
       final reflexBonusReaction =
           payload['defenseChoice'] == 'riflessi' &&
           oculumReflexGrantsCounterReaction(
@@ -3319,6 +3539,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       claimOnlineVampirism(request);
       claimPlanarBellHealing(request);
       claimMeccanioResults(request);
+      claimStormBanditAttack(request);
       if (isCounter) unawaited(applyCounterAttackReplyDamage(request));
       combatLogFor(
         source,
@@ -3648,6 +3869,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             ),
           );
     if (!isCounter) {
+      defense -= preparedArtWeakPointPenalty;
+      if (choice == 'riflessi' &&
+          readIntValue(planarState['evergreenDodge']) > 0) {
+        defense += max(
+          0,
+          readIntValue(planarState.remove('evergreenDodge')) -
+              max(0, vantaggioTiroBonus()),
+        );
+      }
       defense += readIntValue(takePreparedSkill('difesa')['rollBonus']);
       defense += planarDefenseRollBonus();
       planarState.remove('maskedTeleport');
@@ -3731,6 +3961,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     final critical =
         request['forcedCritical'] == true ||
+        oculumScostuPacketCritical(request) ||
         oculumAttackIsCritical(attack, defense);
     final doubleCritical = oculumIsDoubleCritical(
       natural: readIntValue(request['natural']),
@@ -3896,7 +4127,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             resolvedAttackBaseDamage,
             attack,
             defense,
-            forcedCritical: request['forcedCritical'] == true,
+            forcedCritical:
+                request['forcedCritical'] == true ||
+                oculumScostuPacketCritical(request),
             difficulty: '${request['difficulty'] ?? 'normale'}',
           );
     if (request['meccanioEmergency'] == true) {
@@ -3912,6 +4145,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final defenseElement = oculumNormalizeElementId(
       '${request['defenseElement'] ?? elementoDannoDominante()}',
     );
+    if (outcome != OculumAttackOutcome.avoided &&
+        request['targetBodyPart'] != null) {
+      final point = currentPrecisionBodyParts
+          .where((p) => p['id'] == request['targetBodyPart'])
+          .firstOrNull;
+      if (point?['weak'] == true) request['targetWeakPointPrecision'] = true;
+    }
     final elementalDefenseMultiplier = oculumElementalDefenseMultiplier(
       incomingElement: incomingElement,
       defenseElement: defenseElement,
@@ -3920,19 +4160,35 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     );
     request['defenseElement'] = defenseElement;
     request['elementalDefenseMultiplier'] = elementalDefenseMultiplier;
+    // Read the configured stage before Precision or the critical advances it.
+    request['brambleTargetMultiplier'] =
+        (oculumIncomingDamagePercentMultiplier(
+              configuredIncomingDamagePercentForType(incomingElement),
+            ) ??
+            modificatoreDannoDaNome(
+              configuredIncomingDamagePreset(incomingElement),
+            ).multiplier) *
+        elementalDefenseMultiplier;
+    final brambleShieldBefore = readIntValue(planarState['brambleShield']);
     if (damage > 0 && elementalDefenseMultiplier < 1) {
       aggiungiLog(
         '[DIFESA ELEMENTALE] ${elementDisplayName(defenseElement)} protegge da ${elementDisplayName(incomingElement)}: -25% danni in ingresso${defenseElement == 'angelico' || defenseElement == 'diabolico' ? ', finché la Vita resta almeno al 30% del massimo' : ''}.',
       );
     }
     final precisionStages =
-        const {
-              'precisione',
-              'precisione_punto_debole',
-            }.contains(request['choice']) &&
+        (request['thunderTeleportFragility'] == true ||
+                const {
+                  'precisione',
+                  'precisione_punto_debole',
+                }.contains(request['choice'])) &&
             !resisted &&
             outcome != OculumAttackOutcome.avoided
-        ? readIntValue(request['precisionFragilityStages']).clamp(0, 3).toInt()
+        ? max(
+            request['thunderTeleportFragility'] == true ? 1 : 0,
+            readIntValue(
+              request['precisionFragilityStages'],
+            ).clamp(0, 3).toInt(),
+          )
         : 0;
     final precisionDamagePercent =
         const {
@@ -3945,15 +4201,19 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             request['precisionDamagePercent'],
           ).clamp(100, 350).toInt()
         : 100;
-    // Persist the decision before applying damage: duplicate broadcasts cannot
-    // replay the mutation, including while a Pawn interception is pending.
+    // Persist before damage so duplicate broadcasts cannot replay it.
     await salvaDatiSoloLocale();
     if (!mounted || sheetTagAt(schedaCorrente) != tag) return;
     final beforeOculumShield = scudoOculum();
     final beforeShield = scudo();
     final beforeTemporaryHp = hpTemp();
     final beforeHp = hpCorrenti();
+    // Snapshot before this hit consumes a shield, including its last charge.
+    request['criticalShieldProtected'] = scudoCritico() > 0;
     if (damage > 0) {
+      if (request['granCannon'] == true) {
+        request['granCriticalShieldBroken'] = granBreakShields(request);
+      }
       final previousElement = incomingDamageElement;
       incomingDamageElement = '${request['element'] ?? 'fisico'}';
       final discoveredWeakPoint =
@@ -4036,6 +4296,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           enemyGrade: readIntValue(request['grade']),
           attackKind: '${request['choice'] ?? ''}',
           magicalAttack: (request['effects'] as List? ?? []).isNotEmpty,
+          nonLethal:
+              request['sourceMonsterBookId'] == 'scostubanditi' ||
+              request['faunaNonLethal'] == true,
+          nonLethalRobberyPercent: readIntValue(
+            request['faunaRobberyPercent'],
+            fallback: 75,
+          ),
+          criticalShieldAlreadyBroken:
+              request['granCriticalShieldBroken'] == true,
           additionalDefense: transparencyDefense + unusedFastDefenseBonus,
           dannoEsplicito: precisionAdjustedDamage,
           critico: critical,
@@ -4047,7 +4316,19 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 )
               : null,
           extraFragilityPercent: doubleCritical ? 10 : 0,
-          incomingDamageMultiplier: elementalDefenseMultiplier,
+          incomingDamageMultiplier:
+              elementalDefenseMultiplier *
+              (defenderMonster?.id == 'ogor' &&
+                      !(request['targetWeakPointPrecision'] == true &&
+                          discoveredWeakPoint)
+                  ? .5
+                  : 1) *
+              (faunaPassive('lavastrello_hunter') != null &&
+                      '${request['sourceMonsterBookId']}'.startsWith(
+                        'lavastrello',
+                      )
+                  ? .5
+                  : 1),
           incomingPacketPercent: packetPercent,
           bypassDefense:
               activeStructuredEffectBonus('meccanio_oltre_difesa') > 0 ||
@@ -4069,7 +4350,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               .whereType<Map>()
               .where((effect) => effect['type'] == 'danno')
               .fold<int>(
-                0,
+                request['granCannon'] == true ? 50 : 0,
                 (total, effect) => max(
                   total,
                   readIntValue(
@@ -4094,7 +4375,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               ? 'Normale'
               : precisionPreset,
           incomingDamagePercentAdjustment:
-              anatomyResistanceAdjustment + weakPointFragilityAdjustment,
+              anatomyResistanceAdjustment +
+              weakPointFragilityAdjustment +
+              (defenderMonster?.id == 'granscostumato' &&
+                      request['sourceFirearm'] == true
+                  ? 50
+                  : 0),
         );
       } finally {
         if (mounted && sheetTagAt(schedaCorrente) == tag) {
@@ -4114,6 +4400,18 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       planarState['lastMaskedAttacker'] = request['sourceTag'];
     }
     resolveSaltalungoTail(request, readIntValue(receipt['hpLost']));
+    resolveBoneRuneWeakPoint(
+      request,
+      receipt.values.whereType<int>().fold<int>(0, (a, b) => a + b),
+    );
+    if (outcome == OculumAttackOutcome.avoided) {
+      ogorCoreSuccessfulRoll('defense:${request['id']}');
+    }
+    if (defenderMonster?.id == 'fuocherelli' &&
+        incomingElement == 'acqua' &&
+        receipt.values.whereType<int>().any((v) => v > 0)) {
+      planarState['fuocherelliWaterSuppressedActions'] = 1;
+    }
     final attackerIndex = localSheetIndexForOculumTag(
       '${request['sourceTag']}',
     );
@@ -4155,6 +4453,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           request['sourceTag'];
     }
     if (readIntValue(receipt['hpLost']) > 0) {
+      planarState['deadlyLastHpDamage'] = {
+        'id': request['id'],
+        'hpLost': readIntValue(receipt['hpLost']),
+        'claimed': false,
+      };
       schedePersonaggio[schedaCorrente]['lastPlanarFinisher'] = {
         'sourceTag': request['sourceTag'],
         'choice': request['choice'],
@@ -4162,10 +4465,58 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         'abilityName': request['abilityName'] ?? '',
         'element': request['element'],
         'baseAttack': request['baseAttack'] == true,
+        'skillId': request['faunaSkillId'] ?? '',
+        'helpers': request['sourceHelpers'] ?? const [],
+        'boneBrokenArms': readIntValue(planarState['boneBrokenArms']),
+        'ogorCoreHits': readIntValue(planarState['ogorCoreHits']),
+        'sourceMortalKi': readIntValue(request['sourceMortalKi']),
+        'stun': (request['effects'] as List? ?? []).whereType<Map>().any(
+          (e) =>
+              e['appliedState'] == 'stordito' ||
+              critical &&
+                  const {
+                    'critical_stun',
+                    'thunderbird_claw',
+                  }.contains(e['target']),
+        ),
+        'soulOnly': const {'anima', 'danno_anima'}.contains(request['element']),
       };
     }
     planarAfterHpDamage();
+    boneRuneAfterHpDamage();
     request['damageReceipt'] = receipt;
+    if (outcome != OculumAttackOutcome.avoided &&
+        const [
+              'hpLost',
+              'shieldLost',
+              'oculumShieldLost',
+              'temporaryHpLost',
+            ].fold<int>(0, (n, k) => n + readIntValue(receipt[k])) >
+            0) {
+      resolvePrecisionBodyHit(request);
+      rememberPrecisionBodyDiscovery(request);
+      resolveLimbCriticalDamage(
+        request,
+        hpLost: readIntValue(receipt['hpLost']),
+        critical: critical,
+      );
+      await resolveWingCriticalDamage(
+        request,
+        hpLost: readIntValue(receipt['hpLost']),
+        critical: critical,
+      );
+    }
+    if (outcome != OculumAttackOutcome.avoided) {
+      faunaForOwnedSheet(
+        '${request['sourceTag']}',
+        () => ogorCoreSuccessfulRoll(
+          'attack:${request['attackGroupId'] ?? request['id']}',
+        ),
+      );
+    }
+    claimBrambleChallengeForSource(request);
+    scostuShieldResponse(request, receipt);
+    claimStormBanditAttack(request);
     if (localMeccanioCombat) claimMeccanioResults(request);
     aggiungiLog(
       '[DANNO RISOLTO] ${request['sourceName']} → ${request['targetName'] ?? nomeController.text}: ${combatDamageReceiptText(receipt)}.',
@@ -4200,8 +4551,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           if (effect.type == 'danno') {
             continue; // Included in the single damage packet.
           }
-          if (effect.type == 'planar' &&
-              !planarIsCriticalEffectAllowed(request, effect)) {
+          if (criticalShieldBlocksDebuffs(request) &&
+              (raw['criticalOnly'] == true ||
+                  oculumEffectRequiresCritical(effect))) {
+            continue;
+          }
+          if (!planarIsCriticalEffectAllowed(request, effect)) {
             continue;
           }
           if (effect.type == 'stato' &&
@@ -4273,6 +4628,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           }
           if (effect.type == 'planar' &&
               effect.target == 'bell_paralysis' &&
+              !criticalShieldBlocksDebuffs(request) &&
               readIntValue(request['natural']) == 20) {
             applyCondition('stordito', duration: 1, source: 'Rintocco critico');
           }
@@ -4315,6 +4671,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final reply = {
       ...request,
       'bringiRetaliation': bringiRetaliation,
+      'brambleRetaliation':
+          brambleShieldBefore > readIntValue(planarState['brambleShield']) &&
+              oculumBrambleMelee(request)
+          ? max(0, readIntValue(planarState['brambleRetaliation']))
+          : 0,
       'runicReflectedDamage': isCounter
           ? 0
           : readIntValue(planarState['barrierTurns']) > 0
@@ -4330,6 +4691,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       'defenseElement': defenseElement,
       'elementalDefenseMultiplier': elementalDefenseMultiplier,
     };
+    if (readIntValue(reply['brambleRetaliation']) > 0 &&
+        controlsOnlineCombatSheet('${request['sourceTag']}')) {
+      await applyRunicReflectedDamage(
+        '${request['sourceTag']}',
+        readIntValue(reply['brambleRetaliation']),
+        element: 'natura',
+        source: 'Scudo di rovi',
+      );
+    }
     if (readIntValue(reply['runicReflectedDamage']) > 0 &&
         controlsOnlineCombatSheet('${request['sourceTag']}')) {
       await applyRunicReflectedDamage(
@@ -4396,7 +4766,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     programmaSalvataggio();
   }
 
-  Future<void> applyRunicReflectedDamage(String target, int damage) async {
+  Future<void> applyRunicReflectedDamage(
+    String target,
+    int damage, {
+    String element = '',
+    String source = 'Specchio runico',
+  }) async {
     final index = localSheetIndexForOculumTag(target);
     if (index < 0) return;
     final original = schedaCorrente;
@@ -4409,9 +4784,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         ripristinaImpostazioniGlobali(global);
       }
       aggiungiLog(
-        '[SPECCHIO RUNICO] $damage danni riflessi; si applicano Difesa e Scudi.',
+        '[$source] $damage danni di risposta; si applicano Difesa e Scudi.',
       );
-      await applicaDannoSubito(dannoEsplicito: damage);
+      final previousElement = incomingDamageElement;
+      if (element.isNotEmpty) incomingDamageElement = element;
+      try {
+        await applicaDannoSubito(dannoEsplicito: damage);
+      } finally {
+        incomingDamageElement = previousElement;
+      }
       salvaSchedaCorrenteInMemoria();
     } finally {
       if (index != original && mounted) {

@@ -2,7 +2,7 @@
 
 ## Nuove creature
 
-Il catalogo planare contiene 357 voci fra specie e varianti canoniche. Le nuove voci di questa parte dell'aggiornamento sono:
+Il catalogo planare iniziale di questa lavorazione conteneva 357 voci fra specie e varianti canoniche; con le aggiunte successive arriva a 380 (1.144 nell’intero Monster Book). Le nuove voci di questa parte dell'aggiornamento sono:
 
 - Uomo con la maschera: alla creazione assume una delle quattro discipline colorate.
 - Verde: maggiore Resilienza e Ricordo Vitale permanente.
@@ -22,7 +22,9 @@ Le cinque creature comuni partono dal livello 1 con 1 Resilienza, 1 Volontà, 1 
 
 ## Temi e Home
 
-Il nuovo insieme illustrato comprende 154 immagini: i 150 temi del registro e quattro nuove versioni delle immagini Home. L'originale Rame fatato resta intatto. Tutti i 61 elementi disponibili hanno un tema: ai 58 precedenti si aggiungono Demoniaco, Nuvola e Roccia, con scenari coerenti e distinti. Sono inclusi piani, micro realtà, Hidenas, Benedict e tre temi dedicati.
+Il Master vede tutti i temi e tutte le reliquie finché mantiene il ruolo. Aprendo la scheda destinataria e cliccando la sua reliquia può assegnare l’aspetto scelto soltanto a quella scheda. Il nome del destinatario compare nel selettore. Tema, reliquia e colore restano disponibili nel JSON della scheda anche quando il Master torna giocatore; il resto del catalogo rimane soggetto agli sblocchi normali. Nessuna scoperta o pagina Monster Book viene assegnata al party con questa operazione. Online l’assegnazione segue il percorso autenticato delle modifiche Master alle schede.
+
+Il nuovo insieme illustrato comprende 162 immagini: i 150 temi del registro, quattro nuove versioni delle immagini Home e otto scene per le nuove creature. L'originale Rame fatato resta intatto. Tutti i 61 elementi disponibili hanno un tema: ai 58 precedenti si aggiungono Demoniaco, Nuvola e Roccia, con scenari coerenti e distinti. Sono inclusi piani, micro realtà, Hidenas, Benedict e tre temi dedicati.
 
 Corretto il vecchio alias che confondeva Demoniaco con Diabolico: restano distinti anche dopo la normalizzazione dei nomi inglesi. La difesa Diabolica applica il −75% ai danni Demoniaci confermato. Le chiavi delle resistenze già salvate non vengono rinominate o sovrascritte.
 
@@ -66,9 +68,9 @@ Da PowerShell, dopo il commit e push verificati:
 powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Oculum App\oculum\scripts\publish_oculum_github.ps1"
 ```
 
-Il comando verifica il commit di origine, avvia la build di distribuzione, attende il successo, pubblica i download pubblici della stessa run e aggiorna GitHub Pages. Si ferma sugli errori. Nessuna build viene avviata dal commit con [skip ci].
+Il comando verifica il commit di origine, avvia la build di distribuzione, attende il successo, pubblica i download pubblici della stessa run e aggiorna GitHub Pages. Si ferma sugli errori. Il push ordinario avvia le Actions previste: non aggiungere marcatori per saltare la CI. Le build sono eseguite su GitHub, senza build locali.
 
-## Verifiche completate
+## Verifiche della prima fase (storico, precedenti alle ultime modifiche)
 
 - Suite Flutter completa: 1.113 test passati, 6 saltati (`flutter test --no-pub --concurrency=2`).
 - Integrità delle immagini: 154 WebP presenti, dimensioni valide, nessun duplicato identico; 58,9 MB complessivi. Rame fatato identico all'originale Git. I test verificano anche l'inclusione delle immagini nel bundle.
@@ -77,3 +79,34 @@ Il comando verifica il commit di origine, avvia la build di distribuzione, atten
 - Pubblicazione e aggiornamento Windows: 9 + 3 test Python passati; script PowerShell verificato con GitHub simulato, senza avviare workflow reali.
 
 CI GitHub, nuovi pacchetti e download pubblici aggiornati saranno verificati con i workflow successivi. Le prove online con applicazioni reali restano una verifica separata e non sono state eseguite in questa fase. I sei test condizionali saltati non costituiscono una verifica online reale.
+
+## Ultime aggiunte del 25 ottobre
+
+Precisione con anatomia specifica per ogni creatura e scelta lato/numero delle appendici. Rivelazione Master della voce esatta, Fratture progressive sugli arti, ali danneggiabili e caduta. Il Nucleo con fata del Fate Golem riflette senza tiro contrapposto, consumando la risorsa del turno.
+
+NPC rapidi con elemento e tre skill distinte per Attacco, Supporto e Difesa. Catalogo grande delle singole skill, ordinamento per livello richiesto, prossima forma e anteprima delle evoluzioni dopo 0,9 secondi.
+
+Ventidue ricette dai nuovi drop, comprese tre sete magiche resistenti. Creazione/forgiatura con chance 10 + Fortuna, limite 90% (100% Rebirth), bonus dal livello oggetto e +1 livello a ogni forgiatura riuscita. Fortuna Rebirth ×1,5 per le scroll, senza cambiare i tetti di apprendimento.
+
+Trasparenza regolabile 0–40% con valore consigliato 18%, etichette opache e hover dei gruppi di azioni. Interfaccia telefono con accessi rapidi e azioni su due colonne; palette dei temi coerenti e distinte. I dettagli restano nel registro confermato e nel manuale.
+
+Le verifiche della versione finale, la CI e la pubblicazione sono registrate separatamente quando completate; i numeri storici sopra non certificano le modifiche successive.
+
+## Cosa puoi personalizzare
+
+- Skill e Art: singole forme I/II/III, livello richiesto, risorse e limiti minimi/massimi, consumi aggiuntivi, formule, elementi, bersagli, durata, cooldown e attivazione. Il nuovo interruttore «Solo su colpo critico» è salvato nell’effetto JSON e rispetta la protezione degli Scudi critici.
+- Monster Book: statistiche, livello, punto debole, habitat, resistenze, descrizione, skill, materiali e probabilità dei drop. Le quantità iniziali di Scudi critici e Schivate Oculum del Cavaliere sono dati del catalogo; le anatomie personalizzate possono definire `encounterRules.precisionBodyParts`, senza modificare il catalogo globale.
+- Equipaggiamento e ricette: livello, peso, ingredienti/grammi, Danni, Difesa, Scudo, resistenze delle sete e abilità incorporate. Gli esiti di creazione restano nel JSON del singolo oggetto.
+- NPC rapidi: elemento e tre tecniche suggerite, sostituibili prima della creazione; dopo la creazione gli editor ordinari conservano le personalizzazioni della scheda.
+- Aspetto: tema e sfondo della singola scheda, colore HEX, modalità Statica/Viva/Ridotta, immagini Home e trasparenza delle superfici (preferenza locale 0–40%, consigliata 18%). Testi e icone mantengono la propria leggibilità.
+
+Le regole confermate restano descritte nel manuale e nel registro; i nuovi preset non sostituiscono le definizioni personalizzate delle schede già salvate.
+
+## Verifica finale del sorgente
+
+- `flutter analyze --no-pub`: nessun problema rilevato.
+- `flutter test --no-pub --concurrency=2 --reporter expanded`: 1.151 test passati, 6 test condizionali saltati; inclusi test grafici desktop/tablet/telefono, navigazione, consumi, salvataggi, Fratture e Scudi critici.
+- Pubblicazione: 11 test Python; aggiornamento Windows isolato con conservazione salvataggi: 3 test Python. Comando PowerShell verificato con GitHub simulato e arresto sugli errori.
+- Catalogo misurato: 23 nuove voci, 70 tecniche dedicate, 380 voci planari e 1.144 voci complessive comprese le varianti generate; 22 ricette. Asset: 162 WebP validi, 61,8 MB, nessun file mancante.
+
+Questa verifica locale non include i sei test online condizionali. Le verifiche autenticate, le build GitHub, la pubblicazione e i pacchetti locali sono evidenze distinte; la run collegata ai download pubblici identifica il commit realmente compilato. Nessuna build locale dell’app è stata eseguita.

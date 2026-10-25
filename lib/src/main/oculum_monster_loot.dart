@@ -40,6 +40,15 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
   for (final monster in entries) {
     if (monster.isNpc || monster.id.startsWith('pawn_guardiano')) continue;
     final art = oculumMonsterBookArt(monster);
+    final postea = monster.planeIds.contains('postea');
+    final sweet = monster.planeIds.contains('caramella');
+    final style = postea
+        ? 'Tecnologia runica: piastre composite, circuiti incisi e innesti riparabili.'
+        : sweet
+        ? 'Manifattura dolciaria: caramello temprato, zucchero cristallino e cacao compatto.'
+        : monster.planeIds.contains('morti')
+        ? 'Manifattura antica: osso inciso, cuoio rituale e metallo funerario.'
+        : 'Manifattura del suo habitat: materiali e segni riconoscibili della creatura.';
     final skills = art.skills
         .where(
           (skill) =>
@@ -60,7 +69,36 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
         final damage = max(1, 2 + itemLevel + itemGrade * 2);
         final defense = max(1, 1 + itemLevel ~/ 2 + itemGrade);
         final itemId = 'monster-relic:${monster.id}:$skillIndex:$type';
-        final name = '${equipment[type]} di ${monster.nameIt} · ${skill.nome}';
+        final weapons = postea
+            ? [
+                'Lama al plasma',
+                'Fucile runico',
+                'Mazza a impulso',
+                'Lancia elettrica',
+              ]
+            : sweet
+            ? [
+                'Lancia di candy cane',
+                'Lama di zucchero',
+                'Martello di caramello',
+                'Arco di liquirizia',
+              ]
+            : ['Spada', 'Lancia', 'Ascia', 'Arco', 'Pugnale', 'Mazza'];
+        final familyName = weapon
+            ? weapons[(oculumMonsterArtSeed(monster.id) + skillIndex) %
+                  weapons.length]
+            : armor
+            ? (postea
+                  ? 'Armatura cyberpunk'
+                  : sweet
+                  ? 'Corazza di cacao'
+                  : 'Armatura antica')
+            : postea
+            ? 'Scudo a piastre runiche'
+            : sweet
+            ? 'Scudo di caramello'
+            : equipment[type];
+        final name = '$familyName di ${monster.nameIt} · ${skill.nome}';
         result.add(
           InventoryItem(
             nome: name,
@@ -71,7 +109,7 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
                 : 1.0,
             quantita: 1,
             note:
-                'Reliquia rara di ${monster.nameIt}. Riprende la Skill ${skill.nome} e il suo elemento ${monster.elementId}; non copia le statistiche base della creatura. Grado $itemGrade, livello $itemLevel. Richiede il livello $itemLevel per usare la Skill.',
+                'Reliquia rara di ${monster.nameIt}. $style Riprende la Skill ${skill.nome} e il suo elemento ${monster.elementId}; non copia le statistiche base della creatura. Grado $itemGrade, livello $itemLevel. Richiede il livello $itemLevel per usare la Skill.',
             arma: weapon,
             protegge: !weapon,
             bonusDanno: weapon ? damage : 0,
@@ -219,6 +257,9 @@ List<InventoryItem> oculumGenerateMonsterLoot({
   required String killId,
   int? naturalDropRoll,
   int? dropTotal,
+  String finishingElement = '',
+  String finishingSkillId = '',
+  Map combatHistory = const {},
 }) {
   final safeGrade = grade.clamp(0, 12).toInt();
   final safeLevel = max(0, level);
@@ -240,11 +281,23 @@ List<InventoryItem> oculumGenerateMonsterLoot({
     safeGrade,
     natural,
     killId,
+    finishingElement: finishingElement,
+    finishingSkillId: finishingSkillId,
+    combatHistory: combatHistory,
+    dropTotal: resolvedDropTotal,
   );
   if (planarDrops != null) {
     return _withManualDropPrices(
       [
         ...planarDrops,
+        if (!planarDrops.any((i) => i.arma || i.protegge) &&
+            resolvedDropTotal >= oculumMonsterRelicDropThreshold(safeGrade) &&
+            random.nextInt(100) < 10)
+          ...((oculumMonsterEquipmentCatalogue(
+            source: monster,
+            level: safeLevel,
+            grade: safeGrade,
+          )..shuffle(random)).take(1)),
         if (monster.id == 'pupazzo_artigliato' && resolvedDropTotal >= 43)
           oculumDollCostume(monster, safeLevel, safeGrade, killId, random),
       ],
@@ -841,6 +894,20 @@ extension _OculumMonsterLoot on _OculumHomePageState {
     sheet['monsterLootPending'] = true;
     sheet['monsterLootDefeatedLevel'] = readIntValue(sheet['livello']);
     sheet['monsterLootDefeatedGrade'] = readIntValue(sheet['grado']);
+    faunaConfirmedKills([
+      {
+        'id': sheetTagAt(index),
+        'monsterSheetTag': sheetTagAt(index),
+        'killerTag': sheet['lastDamageSourceTag'],
+        'monsterBookId': monster.id,
+        'level': readIntValue(sheet['livello']),
+        'finisher': sheet['lastPlanarFinisher'] ?? const {},
+      },
+    ], onlineCombatEncounterId);
+    if (canManagePartyQuests) {
+      partyChest['revision'] = readIntValue(partyChest['revision']) + 1;
+      unawaited(sendPartyChestState());
+    }
     aggiungiLog('Morte confermata di ${monster.nameIt}: tiro Drop in attesa.');
   }
 

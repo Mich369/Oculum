@@ -808,6 +808,7 @@ extension _OculumMeccanio on _OculumHomePageState {
           ].fold<int>(0, (n, k) => n + readIntValue(sheet[k]));
         }
 
+        hit.removeWhere((r) => r['criticalShieldProtected'] == true);
         hit.sort((a, b) => strength(a).compareTo(strength(b)));
         final count = meccanioElectrocutionCount(
           readIntValue(data['percentile']),

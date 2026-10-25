@@ -104,14 +104,14 @@ class OculumBottomNav extends StatelessWidget {
       pageIndex: 0,
     ),
     OculumBottomNavItem(
-      label: 'Riposo',
-      icon: Icons.nightlight_round,
-      pageIndex: 1,
+      label: 'Art',
+      icon: Icons.auto_fix_high_outlined,
+      pageIndex: 3,
     ),
     OculumBottomNavItem(
-      label: 'Storia',
-      icon: Icons.menu_book_outlined,
-      pageIndex: 5,
+      label: 'Skill',
+      icon: Icons.blur_circular_outlined,
+      pageIndex: 4,
     ),
     OculumBottomNavItem(
       label: 'Borsa',
@@ -291,7 +291,7 @@ class OculumBottomNav extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2),
                   child: _BottomNavButton(
-                    label: 'Codice',
+                    label: 'Menu',
                     icon: Icons.grid_view_rounded,
                     selected: !primaryIndexes.contains(currentIndex),
                     compact: true,

@@ -2721,6 +2721,7 @@ class ArtSkill {
 }
 
 const List<String> oculumArtSkillCostResourceKeys = <String>[
+  'ki_mortale',
   'obser',
   'follia',
   'oculum',
@@ -2759,6 +2760,9 @@ String oculumNormalizeArtSkillCostResource(
   switch (normalized) {
     case 'obser':
       return 'obser';
+    case 'kimortale':
+    case 'ki_mortale':
+      return 'ki_mortale';
     case 'follia':
     case 'madness':
       return 'follia';
@@ -2818,6 +2822,8 @@ String oculumArtSkillCostResourceLabel(
   switch (normalized) {
     case 'obser':
       return 'Obser';
+    case 'ki_mortale':
+      return 'Ki Mortale';
     case 'follia':
       return english ? 'Madness' : 'Follia';
     case 'fortuna':
@@ -3399,6 +3405,7 @@ class CharacterArt {
     this.incorporata = false,
     this.switchPhase = '',
     this.occhiCoinvolti = '',
+    this.weakPointLocation = '',
   }) : runeWordsKnown = List<String>.from(runeWordsKnown ?? const <String>[]),
        runeQuickWordIds = List<String>.from(
          runeQuickWordIds ?? const <String>[],
@@ -3455,6 +3462,7 @@ class CharacterArt {
   bool incorporata;
   String switchPhase;
   String occhiCoinvolti;
+  String weakPointLocation;
   bool get inUso => !incorporata && switchPhase != 'visione';
 
   Map<String, dynamic> toJson() {
@@ -3505,6 +3513,7 @@ class CharacterArt {
       'incorporata': incorporata,
       'switchPhase': switchPhase,
       'occhiCoinvolti': occhiCoinvolti,
+      'weakPointLocation': weakPointLocation,
       if (bonusIntegritaNucleoTemporaneo > 0)
         'bonusIntegritaNucleoTemporaneo': bonusIntegritaNucleoTemporaneo,
     };
@@ -3575,6 +3584,7 @@ class CharacterArt {
       incorporata: readBoolValue(json['incorporata']),
       switchPhase: '${json['switchPhase'] ?? ''}',
       occhiCoinvolti: '${json['occhiCoinvolti'] ?? ''}',
+      weakPointLocation: '${json['weakPointLocation'] ?? ''}',
     );
   }
 }

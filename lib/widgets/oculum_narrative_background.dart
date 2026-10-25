@@ -3,6 +3,7 @@ import 'oculum_goth_ornaments.dart';
 import 'oculum_monster_theme.dart';
 import 'oculum_theme_presentation.dart';
 import 'oculum_theme_relic.dart';
+import 'oculum_narrative_atmosphere.dart';
 
 /// The entire decorative layer is excluded from input and accessibility.
 /// Controls remain ordinary Flutter widgets above it on readable surfaces.
@@ -63,6 +64,13 @@ class OculumNarrativeBackground extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (presentation.variant == OculumThemeVariant.alive &&
+                    presentation.motion != OculumThemeMotion.disabled)
+                  OculumNarrativeAtmosphere(
+                    themeId: monster?.monster.id ?? pack.id,
+                    accent: monster?.accent ?? spec.accent,
+                    presentation: presentation,
+                  ),
                 if (monster != null && monster.illustration == null)
                   Align(
                     alignment: Alignment.bottomRight,

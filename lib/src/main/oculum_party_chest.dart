@@ -358,6 +358,10 @@ extension _OculumPartyChest on _OculumHomePageState {
     }
     settlePartyQuestRewards();
     final receipt = payload['receipt'];
+    faunaConfirmedKills(
+      (partyChest['confirmedFaunaKills'] as Map? ?? {}).values.whereType<Map>(),
+      'confirmed',
+    );
     if (receipt is Map) settlePartyChestReceipt(receipt);
     programmaSalvataggio();
     combatKnowledgeRevision.value++;

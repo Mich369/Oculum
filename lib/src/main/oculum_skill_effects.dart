@@ -57,6 +57,7 @@ int oculumDamageWithPercentage(int damage, int percent) =>
 /// I sottotratti non sono inclusi e [oculumIsConsumableEffectResource] non
 /// accetta mai una chiave dinamica proveniente da un sottotratto.
 const List<String> oculumEffectConsumableResourceKeys = <String>[
+  'ki_mortale',
   'oculum',
   'obser',
   'follia',
@@ -331,6 +332,10 @@ String oculumNormalizeEffectResource(dynamic raw) {
       return 'nessuna';
     case 'oculum':
     case 'ocu':
+      return 'oculum';
+    case 'ki_mortale':
+    case 'kimortale':
+      return 'ki_mortale';
     default:
       return 'oculum';
   }
@@ -501,6 +506,7 @@ class OculumStructuredEffect {
     this.damagePerTarget = false,
     this.killSource = false,
     this.allOpponents = false,
+    this.criticalOnly = false,
   }) : id = id?.trim().isNotEmpty == true
            ? id!.trim()
            : 'effect_${DateTime.now().microsecondsSinceEpoch}';
@@ -509,6 +515,7 @@ class OculumStructuredEffect {
   bool damagePerTarget;
   bool killSource;
   bool allOpponents;
+  bool criticalOnly;
   String type;
   int sourceScrollGrade;
   int chargeOculumPerTurn;
@@ -590,6 +597,7 @@ class OculumStructuredEffect {
     'bypassDefense': bypassDefense,
     'bypassShields': bypassShields,
     'bypassResistance': bypassResistance,
+    if (criticalOnly) 'criticalOnly': true,
     'shieldDamageBonusPercent': shieldDamageBonusPercent,
     'damagePerTarget': damagePerTarget,
     'killSource': killSource,
@@ -659,6 +667,7 @@ class OculumStructuredEffect {
       damagePerTarget: readBoolValue(json['damagePerTarget']),
       killSource: readBoolValue(json['killSource']),
       allOpponents: readBoolValue(json['allOpponents']),
+      criticalOnly: readBoolValue(json['criticalOnly']),
     );
   }
 }
@@ -1138,6 +1147,7 @@ String oculumStructuredEffectDescription(
       ? ''
       : ' ${effect.elementType.trim()}';
   final bypassText = <String>[
+    if (effect.criticalOnly) 'solo su critico',
     if (effect.bypassDefense) 'oltre Difesa',
     if (effect.bypassShields) 'oltre Scudi',
     if (effect.bypassResistance) 'ignora le resistenze solo per questo danno',

@@ -26,7 +26,10 @@ void main() {
 
     expect(find.text('Bosco Nero'), findsOneWidget);
     expect(find.textContaining('4 pagine'), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('Bosco Nero · Hoshy · Diario')), findsWidgets);
+    expect(
+      find.bySemanticsLabel(RegExp('Bosco Nero · Hoshy · Diario')),
+      findsWidgets,
+    );
     await tester.tap(find.text('Bosco Nero'));
     expect(opened, isTrue);
     semantics.dispose();

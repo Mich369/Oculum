@@ -469,7 +469,13 @@ class _OculumHomeGallery extends StatefulWidget {
 }
 
 class _OculumHomeGalleryState extends State<_OculumHomeGallery> {
-  static const scenes = ['cathedral_eye', 'solar_islands', 'amber_shore', 'anime_reliquary', 'canva_spirit_duelist'];
+  static const scenes = [
+    'cathedral_eye',
+    'solar_islands',
+    'amber_shore',
+    'anime_reliquary',
+    'canva_spirit_duelist',
+  ];
   int scene = 0;
   void updateScene() {
     final next = (widget.animation.value * scenes.length).floor().clamp(

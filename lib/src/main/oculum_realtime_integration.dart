@@ -2235,6 +2235,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'publicInitiativeBase': base,
       'publicInitiativeTotal': readIntValue(token['initiativeTotal']),
       'publicInitiativeRollHidden': token.isNotEmpty,
+      'faunaPublic':
+          schedaJsonAt(index)['faunaPublic'] ?? const <String, dynamic>{},
+      'precisionBodyParts':
+          schedaJsonAt(index)['precisionBodyParts'] ?? const [],
       'publicVisibleTitleName': title?.nome ?? '',
       'publicVisibleTitleLegend': title?.leggenda ?? '',
     };
@@ -4327,7 +4331,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
     final sent = await service!.sendSharedSheetConfirmed(
       sheet: patch,
-      campaignId: '${current['realtimeCampaignId'] ?? activeCampaignId}',
+      campaignId: '${current['realtimeCampaignId'] ?? ''}'.trim().isNotEmpty
+          ? '${current['realtimeCampaignId']}'
+          : activeCampaignId,
       campaignName:
           '${current['realtimeCampaignName'] ?? activeCampaignName()}',
       sheetId: sourceTag,

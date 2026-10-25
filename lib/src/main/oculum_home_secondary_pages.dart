@@ -4307,6 +4307,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       : t('Inizia fight', 'Start fight'),
                 ),
               ),
+              if (canManageAllThemes)
+                OutlinedButton.icon(
+                  onPressed: () => masterDiscoverWeakPoint(),
+                  icon: const Icon(Icons.visibility_outlined),
+                  label: const Text('Punto debole scoperto'),
+                ),
               ElevatedButton.icon(
                 onPressed: () => rollMasterInitiativeTokens(npcOnly: true),
                 icon: const Icon(Icons.smart_toy),
@@ -6227,6 +6233,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         entry,
                         weakPointKnown: weakPointKnown,
                       ),
+                    Text(
+                      monsterKillCountLabel(entry.id),
+                      style: TextStyle(color: tertiaryColor),
+                    ),
                     if (partyHuntsForMonster(entry.id).isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Text(
@@ -6958,14 +6968,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             numero: false,
           ),
           const SizedBox(height: 10),
-          campoTesto(
-            label: t(
-              'Elemento (vuoto: dalla creatura)',
-              'Element (empty: from creature)',
-            ),
-            controller: quickSheetElementController,
-            numero: false,
-          ),
+          quickNpcSkillPanel(),
           const SizedBox(height: 10),
           campoTesto(
             label: t(
@@ -9131,6 +9134,22 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 'mask_solar_arrows',
                 'mask_shadow_form',
                 'mask_shadow_teleport',
+                'feralis_fury',
+                'monk_ki',
+                'monk_seal',
+                'bone_four_slash',
+                'ogor_restore',
+                'deadly_empowered',
+                'deadly_regen',
+                'deadly_weapon',
+                'evergreen_leaves',
+                'evergreen_dodge',
+                'gran_leave',
+                'gran_cannon',
+                'gran_unstun',
+                'laer_sword',
+                'laer_twist',
+                'puppet_attack_bonus',
               }.contains(e.target),
             )) {
       final used = await useConfiguredAbility(

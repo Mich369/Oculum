@@ -4,6 +4,15 @@ part of '../../main.dart';
 const oculumAdditionalCraftingMaterials = <OculumAuthoredMaterial>[
   ...oculumFantasyCraftingMaterials,
   OculumAuthoredMaterial(
+    'seta_magica',
+    'Seta magica',
+    0,
+    .1,
+    1,
+    25,
+    'Filo incantato per abiti e imbottiture resistenti agli urti. Disponibile fra i materiali dei mercanti.',
+  ),
+  OculumAuthoredMaterial(
     'zanne_goblin',
     'Zanne di goblin',
     0,
@@ -713,6 +722,7 @@ List<OculumRecipe> oculumAdditionalCraftingRecipes(String now) {
     forgeEffectText: effect,
   );
   return [
+    ...oculumFaunaCraftingRecipes(now),
     make(
       'guanto_goblin',
       'Guanto a lame di goblin',
@@ -1101,10 +1111,13 @@ String? oculumApplyForgeToItem(
   InventoryItem target,
   OculumRecipe recipe, {
   required int currentOculum,
+  int? bonusRoll,
+  int luck = 0,
+  bool rebirthed = false,
 }) {
   if (!inventory.contains(target) ||
       target.quantita <= 0 ||
-      !(target.arma || target.protegge)) {
+      !oculumCraftWearable(target)) {
     return 'Seleziona un’arma, armatura o scudo presente nell’inventario.';
   }
   if (recipe.recipeKind != 'forge' || recipe.ingredients.isEmpty) {
@@ -1198,6 +1211,14 @@ String? oculumApplyForgeToItem(
     'forgedRecipes': [...applied, key],
     ...oculumGerinResonanceData(recipe),
   };
+  oculumCompleteEquipmentCraft(
+    forged,
+    receipt: 'forge:$key',
+    roll: bonusRoll ?? 100,
+    luck: luck,
+    rebirthed: rebirthed,
+    forged: true,
+  );
   return null;
 }
 

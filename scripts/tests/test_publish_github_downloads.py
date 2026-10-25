@@ -2,6 +2,7 @@ import importlib.util
 from pathlib import Path
 import unittest
 import hashlib
+import base64
 from unittest.mock import patch
 from io import BytesIO
 
@@ -11,6 +12,17 @@ spec.loader.exec_module(publisher)
 
 
 class DownloadPublicationTests(unittest.TestCase):
+    def test_update_log_uses_the_exact_built_commit(self):
+        content = base64.b64encode("# Log\n\n- Bug fix\n- Nuovi mostri\n".encode()).decode()
+        with patch.object(publisher, "api", return_value={"content": content}) as fetch:
+            self.assertEqual(publisher.read_update_notes("a" * 40), ["Bug fix", "Nuovi mostri"])
+            self.assertIn("ref=" + "a" * 40, fetch.call_args.args[0])
+
+    def test_update_log_is_short_and_ignores_non_list_content(self):
+        result = publisher.parse_update_notes("# Title\nprivate prose\n" + "\n".join("- Item " + str(i) for i in range(12)))
+        self.assertEqual(len(result), 8)
+        self.assertNotIn("private prose", result)
+
     def test_published_catalog_preserves_updater_identity_with_dynamic_run_name(self):
         run = dict(id=42, workflow_id=7, name="Build distribution main @ " + "a" * 40,
                    conclusion="success", status="completed", head_branch="main",
@@ -44,6 +56,7 @@ class DownloadPublicationTests(unittest.TestCase):
         with patch.object(publisher, "api", side_effect=api), \
                 patch.object(publisher, "gh", side_effect=gh), \
                 patch.object(publisher, "release", return_value=None), \
+                patch.object(publisher, "read_update_notes", return_value=["Bug fix", "Nuovi mostri"]), \
                 patch.object(publisher, "verify_anonymous_download"):
             publisher.publish("42")
         self.assertEqual(len(published), 1)
@@ -52,6 +65,8 @@ class DownloadPublicationTests(unittest.TestCase):
         self.assertEqual(entry["runName"], run["name"])
         self.assertIn("## " + run["name"], published[0])
         self.assertIn("Oculum — download pubblici", published[0])
+        self.assertIn("Log aggiornamento:",published[0])
+        self.assertEqual(entry["changes"],["Bug fix","Nuovi mostri"])
         self.assertNotIn("â€", published[0])
         self.assertNotIn("Â", published[0])
 

@@ -960,9 +960,7 @@ extension _OculumCampaigns on _OculumHomePageState {
 
   Future<void> manageRoomBans() async {
     final service = realtimeService;
-    if (service == null ||
-        !service.isConnected ||
-        !realtimeIsMasterRole) {
+    if (service == null || !service.isConnected || !realtimeIsMasterRole) {
       return;
     }
     List<Map<String, dynamic>> bans;

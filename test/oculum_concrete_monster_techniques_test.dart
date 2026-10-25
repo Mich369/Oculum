@@ -194,9 +194,24 @@ void main() {
   test('monster relic catalogue contains 500 plus skill-linked equipment', () {
     final items = oculumMonsterEquipmentCatalogue();
     expect(items.length, greaterThanOrEqualTo(500));
-    expect(items.any((item) => item.nome.startsWith('Spada di ')), isTrue);
-    expect(items.any((item) => item.nome.startsWith('Armatura di ')), isTrue);
-    expect(items.any((item) => item.nome.startsWith('Scudo di ')), isTrue);
+    expect(
+      items.any(
+        (item) => item.craftData['itemFamily'] == 'weapon' && item.arma,
+      ),
+      isTrue,
+    );
+    expect(
+      items.any(
+        (item) => item.craftData['itemFamily'] == 'armor' && item.protegge,
+      ),
+      isTrue,
+    );
+    expect(
+      items.any(
+        (item) => item.craftData['itemFamily'] == 'shield' && item.protegge,
+      ),
+      isTrue,
+    );
     expect(items.every((item) => item.ability != null), isTrue);
     expect(items.every((item) => item.craftData['sourceSkill'] is Map), isTrue);
     expect(items.every((item) => item.puntiStatPerLivello >= 1), isTrue);
@@ -357,7 +372,7 @@ void main() {
             reason: '${monster.id}/$id form $form cooldown ${timer.amount}',
           );
           for (var turn = 0; turn < concrete.cooldowns[form]; turn++) {
-            timer.tick('turni');
+            timer.tick(timer.unit);
           }
           expect(timer.ready, isTrue);
           if (oculumPlanarTechnique(id) != null) {

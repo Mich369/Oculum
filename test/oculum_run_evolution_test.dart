@@ -13,17 +13,23 @@ void main() {
         final offered = List<String>.of(progress.offers);
         expect(offered.length, 3);
         expect(offered.toSet().length, 3);
-        progress = DungeonEvolutionProgress.fromJson(jsonDecode(jsonEncode(progress.toJson())));
+        progress = DungeonEvolutionProgress.fromJson(
+          jsonDecode(jsonEncode(progress.toJson())),
+        );
         progress.prepare(room, Random(999));
         expect(progress.offers, offered);
         expect(progress.choose('not-an-offer'), false);
         expect(progress.choose(offered.first), true);
         expect(progress.choose(offered.first), false);
         expect(progress.due(room), false);
-      } else { expect(progress.due(room), false); }
+      } else {
+        expect(progress.due(room), false);
+      }
     }
     expect(progress.history.length, 23);
-    for (final choice in dungeonEvolutions) { expect(progress.rank(choice.id), lessThanOrEqualTo(3)); }
+    for (final choice in dungeonEvolutions) {
+      expect(progress.rank(choice.id), lessThanOrEqualTo(3));
+    }
   });
   test('legacy checkpoints continue without granting missed upgrades', () {
     final progress = DungeonEvolutionProgress.fromJson(null, legacyRoom: 34);

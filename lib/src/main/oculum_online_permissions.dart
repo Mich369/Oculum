@@ -483,7 +483,9 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     final round = _onlineCombatRound();
     final turnKey = _onlineCombatTurnKey(tokens, activeIndex, round);
     var usedFastReaction = false;
-    if (resource == 'speed_grant_fast') {
+    if (resource == 'ki_grant_action') {
+      token['kiExtraActions'] = readIntValue(token['kiExtraActions']) + 1;
+    } else if (resource == 'speed_grant_fast') {
       token['extraFastReactionCurrent'] =
           readIntValue(token['extraFastReactionCurrent']) + 1;
     } else if (resource == 'speed_queue_normal') {
@@ -505,9 +507,16 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       token['actionAnticipatedRound'] = expectedRound;
     } else if (resource == 'azione') {
       if (index != activeIndex ||
-          readBoolValue(token['actionUsed']) ||
+          (readBoolValue(token['actionUsed']) &&
+              readIntValue(token['kiExtraActions']) <= 0) ||
           artDebtForToken(token, 'action') > 0) {
         return false;
+      }
+      if (readBoolValue(token['actionUsed'])) {
+        token['kiExtraActions'] = max(
+          0,
+          readIntValue(token['kiExtraActions']) - 1,
+        );
       }
       token['actionUsed'] = true;
     } else if (resource == 'reazione' || resource == 'reazione_veloce') {
@@ -590,6 +599,11 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       );
     } else if (resource == 'azione') {
       aggiungiLog('[TURNISTICA] Azione usata da $tokenName.');
+      faunaForOwnedSheet(tag, () {
+        markArtWeakPointAction();
+        tickStructuredAbilityCooldowns('azioni');
+        planarState.remove('fuocherelliWaterSuppressedActions');
+      });
     } else if (resource == 'reaction_roll_bonus' ||
         resource == 'fast_reaction_roll_bonus') {
       aggiungiLog(

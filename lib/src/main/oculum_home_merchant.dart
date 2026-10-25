@@ -1668,6 +1668,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void ensureClothingOffers() {
+    ensureMagicSilkOffers();
     const designs = [
       (
         'femminile',
@@ -3895,6 +3896,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         craftData: {'postea': true},
       );
     }
+    final silk = oculumMagicSilkItem('${offer['silkId'] ?? ''}');
+    if (silk != null) return silk;
     if (offer['kind'] == 'clothing') {
       return InventoryItem(
         nome: '${offer['name']}',

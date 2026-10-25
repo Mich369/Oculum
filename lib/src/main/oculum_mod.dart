@@ -1685,7 +1685,8 @@ extension _OculumGameModUi on _OculumHomePageState {
                           final index = OculusRules.dice.indexOf(
                             oculusInt('${key}Die', fallback: 4),
                           );
-                          if (index < 0 || index == OculusRules.dice.length - 1) {
+                          if (index < 0 ||
+                              index == OculusRules.dice.length - 1) {
                             break;
                           }
                           oculusModData['${key}Die'] =

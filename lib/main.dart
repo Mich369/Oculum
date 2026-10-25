@@ -67,6 +67,8 @@ import 'widgets/oculum_narrative_background.dart';
 import 'widgets/oculum_theme_asset_packs.dart';
 import 'widgets/oculum_hex_color_field.dart';
 import 'widgets/oculum_art_button.dart';
+import 'widgets/oculum_hover_surface.dart';
+import 'widgets/oculum_narrative_palette.dart';
 import 'services/oculum_encounter_visibility.dart';
 import 'widgets/oculum_quick_edit_eye.dart';
 import 'widgets/oculum_monster_picker.dart';
@@ -144,6 +146,19 @@ part 'src/main/oculum_planar_runtime.dart';
 part 'src/main/oculum_mecha.dart';
 part 'src/main/oculum_will_inventory.dart';
 part 'src/main/oculum_masked_men.dart';
+part 'src/main/oculum_bramble.dart';
+part 'src/main/oculum_storm_bandits.dart';
+part 'src/main/oculum_monster_kill_counts.dart';
+part 'src/main/oculum_rebirth_rage.dart';
+part 'src/main/oculum_cannon_evergreen.dart';
+part 'src/main/oculum_lavastrello.dart';
+part 'src/main/oculum_bone_runes.dart';
+part 'src/main/oculum_deadly_sins.dart';
+part 'src/main/oculum_weak_points.dart';
+part 'src/main/oculum_wing_damage.dart';
+part 'src/main/oculum_quick_npc_skills.dart';
+part 'src/main/oculum_mobile_sheet.dart';
+part 'src/main/oculum_fauna_crafting.dart';
 part 'src/main/oculum_monster_appearance.dart';
 part 'src/main/oculum_prepared_skills.dart';
 part 'src/main/oculum_fate_chaos.dart';
@@ -677,6 +692,16 @@ class OculumHomePage extends StatefulWidget {
 
 class _OculumHomePageState extends State<OculumHomePage>
     with WidgetsBindingObserver {
+  Size layoutViewport = const Size(900, 900);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Deferred panel builders may outlive this route during a transition.
+    // Cache inherited layout data while the State's context is active.
+    layoutViewport = MediaQuery.maybeSizeOf(context) ?? layoutViewport;
+  }
+
   static final String saveKey = oculumProfiledStorageKey(
     'oculum_save_v9_manual_rgb_opacity_clean',
   );
@@ -1312,6 +1337,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
   bool manuscriptEditing = false;
   bool modalitaMaster = false;
+  final Set<String> masterAssignedThemeIds = {};
   bool sceltaRuoloSessioneMostrata = false;
   bool tutorialDialogPending = false;
 
@@ -1586,6 +1612,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   final quickSheetCountController = TextEditingController(text: '1');
   final quickSheetDescriptionController = TextEditingController();
   String quickSheetArtMode = 'random';
+  String quickNpcSkillElement = '';
+  Map<OculumCombatAbilityRole, CharacterSkill> quickNpcSkills = {};
   bool quickSheetAddToInitiative = true;
   String selectedSystemMonsterPresetId = '';
   // Forma specifica del preset Monster Book nel generatore del Master.
@@ -5297,6 +5325,7 @@ class _OculumHomePageState extends State<OculumHomePage>
                                           OculumThemeRelicBanner(
                                             dense: true,
                                             sheetId: currentSheetScrollId(),
+                                            onChoose: chooseCurrentSheetRelic,
                                           ),
                                           Expanded(child: page),
                                         ],

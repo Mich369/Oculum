@@ -1325,7 +1325,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final oculumSpend = consumaOculumTiro(forAttack: attack);
     final reactionRollBonus = consumePendingReactionRollBonus();
     final bonusTotale =
-        bonus +
+        bonus -
+        fractureRollPenalty(nome) +
         consumeCombatHelp() +
         (applyGlobalRollModifier ? tiroGlobaleBonus() : 0) +
         oculumSpend.bonus +
@@ -1502,7 +1503,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final oculumSpend = consumaOculumTiro(forAttack: appliesAttackDamageBonus);
     final reactionRollBonus = consumePendingReactionRollBonus();
     final bonus =
-        hiddenEyeTotal(stat) +
+        hiddenEyeTotal(stat) -
+        artWeakPointRollPenalty(actionLabel ?? '') -
+        fractureRollPenalty(stat.id) +
         consumeCombatHelp() +
         hiddenEyeStatRollQuickBonus(stat) +
         tiroGlobaleBonus() +
@@ -1723,6 +1726,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
     registerValidRoll(consumoStatKey: statConsumata);
     notifyDiceResultChanged();
+    if (onResolved == null &&
+        dado != 1 &&
+        totale - logPenalty >= (opposingTotal ?? 20)) {
+      ogorCoreSuccessfulRoll(
+        'utility:${stat.id}:${DateTime.now().microsecondsSinceEpoch}',
+      );
+    }
     notifyDiceOverlayChanged();
     _scheduleDadoCentraleOverlayTimers(reduceEffects: reduceDiceEffects);
 
@@ -2475,6 +2485,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     restoreMasterInitiativeTokenReactions(token);
     if (readIntValue(token['actionTurnRound'], fallback: -1) !=
         masterInitiativeRound) {
+      token['kiExtraActions'] = 0;
       if (readIntValue(token['extraNormalReactionQueued']) > 0) {
         token['extraNormalReactionCurrent'] =
             readIntValue(token['extraNormalReactionCurrent']) +
@@ -2516,7 +2527,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   bool masterInitiativeActionUsed(Map<String, dynamic> token) {
-    return readBoolValue(token['actionUsed']);
+    return readBoolValue(token['actionUsed']) &&
+        readIntValue(token['kiExtraActions']) <= 0;
   }
 
   bool masterInitiativeCanToggleAction(int index) {
@@ -2955,8 +2967,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final token = <String, dynamic>{
       'id': tag,
       'sheetTag': tag,
-      'name': nomeSchedaPersonaggio(index),
+      'name':
+          monsterBookEntryById(
+            '${schedePersonaggio[index]['monsterBookSourceId'] ?? ''}',
+          )?.encounterRules['initiativeName'] ??
+          nomeSchedaPersonaggio(index),
       'type': tipoSchedaPersonaggio(index),
+      'precisionBodyParts':
+          schedaJsonAt(index)['precisionBodyParts'] ?? const [],
       'isSummon':
           readBoolValue(schedePersonaggio[index]['isSummon']) ||
           oculumNormalizeText(
@@ -3744,6 +3762,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
       if (delta > 0 && next <= current) {
         masterInitiativeRound++;
+        unawaited(Future<void>.microtask(tickLavastrelloNests));
         removeExpiredTemporaryInitiativeTurns();
         for (final token in masterInitiativeTokens) {
           if (masterInitiativeTokenCanAct(token)) token['status'] = 'ready';
@@ -3957,6 +3976,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       advanceTurn = next && index == masterInitiativeActiveIndex;
       if (next &&
           '${token['sheetTag'] ?? token['id']}' == sheetTagAt(schedaCorrente)) {
+        planarState.remove('fuocherelliWaterSuppressedActions');
+        tickStructuredAbilityCooldowns('azioni');
+        planarState.remove('artWeakPointPenalties');
         processConditionTick(OculumConditionTickTrigger.action);
       }
       token['updatedAt'] = DateTime.now().toIso8601String();
@@ -5294,6 +5316,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int? enemyGrade,
     String attackKind = '',
     bool magicalAttack = false,
+    bool nonLethal = false,
+    int nonLethalRobberyPercent = 75,
+    bool criticalShieldAlreadyBroken = false,
   }) async {
     if (parasiteHiddenInHost) {
       aggiungiLog(
@@ -5352,7 +5377,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         (sheetKind.contains('boss') && !isMiniBoss);
     final incomingElement = selectedIncomingDamageElement();
     final previousElementalAdaptation = sheet['combatElementalAdaptation'];
-    final elementalAdaptation = (isMiniBoss || isBoss)
+    final elementalAdaptation =
+        (isMiniBoss || isBoss) &&
+            !(sourceMonster?.id == 'feralis' &&
+                incomingElement == sourceMonster?.elementId)
         ? oculumPrepareMonsterElementalAdaptation(
             isMiniBoss: isMiniBoss,
             isBoss: isBoss,
@@ -5497,7 +5525,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             rollBasisPoints: misfortuneCriticalRoll,
           );
       if (misfortuneCriticalTriggered) critico = true;
-      if (critico) {
+      final criticalDebuffsBlocked =
+          scudoCritico() > 0 || criticalShieldAlreadyBroken;
+      final criticalTriggers = critico && !criticalDebuffsBlocked;
+      if (critico && criticalDebuffsBlocked) {
+        aggiungiLog(
+          '[SCUDO CRITICO] Blocca i debuff del critico, anche se questo colpo ne spezza l’ultima carica.',
+        );
+      }
+      if (criticalTriggers) {
         final ashRoll = Random.secure().nextInt(100);
         final ashMessage = ashRoll < 30 ? modificaCenereControllata(1) : null;
         aggiungiLog(
@@ -5518,14 +5554,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           : oculumIncomingDamagePercentMultiplier(
               configuredIncomingDamagePercentForType(activePercentDamageType),
             );
-      final stadioLiberoDopo = critico && percentualeLiberaPrima != null
+      final stadioLiberoDopo =
+          criticalTriggers && percentualeLiberaPrima != null
           ? prossimoStadioCriticoPercentualeLibera(percentualeLiberaPrima)
           : null;
       final modificatorePrima =
           resistancePresetOverride ?? configuredIncomingDamagePreset();
       final modificatoreDopo =
           stadioLiberoDopo?.name ??
-          (critico
+          (criticalTriggers
               ? prossimoStadioCriticoDanno(modificatorePrima)
               : modificatorePrima);
       final riduzioneSchivata = schivataOculumRiduzionePronta;
@@ -5880,7 +5917,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       int dannoFinale = dannoModificato;
       final scudoCriticoPrima = scudoCritico();
       final scudoCriticoAttivo = scudoCriticoPrima > 0;
-      final scudoCriticoSpezzato = critico && scudoCriticoAttivo;
+      final scudoCriticoSpezzato =
+          critico && scudoCriticoAttivo && !criticalShieldAlreadyBroken;
 
       final resistenzaStatoForzaAttiva =
           statoForzaAttivo == 'azzeramento_vulnerabilita';
@@ -5914,6 +5952,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         element: incomingElement,
         attackKind: attackKind,
         magical: magicalAttack,
+        bypassShields: ignoraScudi,
       );
       dannoFinale += protectedRunicDamage;
       if (protectedRunicDamage > 0) {
@@ -6161,6 +6200,23 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           aggiungiLog(
             '[ABERRAZIONE · II] Entrata nella seconda fase al 50% della Vita.',
           );
+        }
+      }
+      if (nonLethal && hp <= 0 && hpPrima > 0) {
+        hp = 1;
+        scostuNonLethalDefeat(robberyPercent: nonLethalRobberyPercent);
+      }
+      if (hp <= 0 && hpPrima > 0 && !nonLethal) {
+        final revived = tryFuocherelliSecondLife(
+          hp,
+          incomingElement,
+          existingShield: shield,
+        );
+        if (revived > 0) {
+          hp = revived;
+          shield = scudo();
+        } else {
+          recordFaunaFallenTurn();
         }
       }
       if (safeHpPronto && hp <= 0 && hpPrima > 0) {

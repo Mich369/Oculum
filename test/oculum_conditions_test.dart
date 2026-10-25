@@ -506,20 +506,17 @@ void main() {
       expect(rot.rollModifierForStage(99), -6);
     });
 
-    test(
-      'Rinsecchito e una condizione fisica a tre stadi',
-      () {
-        final desiccated = oculumConditionDefinition('rinsecchito')!;
-        expect(desiccated.category, OculumConditionCategory.physical);
-        expect(desiccated.polarity, OculumConditionPolarity.negative);
-        expect(desiccated.maxStage, 3);
-        expect(desiccated.basePercentByStage, <double>[25, 50, 75]);
-        expect(
-          desiccated.affectedTargets,
-          contains(OculumConditionTarget.difesa),
-        );
-      },
-    );
+    test('Rinsecchito e una condizione fisica a tre stadi', () {
+      final desiccated = oculumConditionDefinition('rinsecchito')!;
+      expect(desiccated.category, OculumConditionCategory.physical);
+      expect(desiccated.polarity, OculumConditionPolarity.negative);
+      expect(desiccated.maxStage, 3);
+      expect(desiccated.basePercentByStage, <double>[25, 50, 75]);
+      expect(
+        desiccated.affectedTargets,
+        contains(OculumConditionTarget.difesa),
+      );
+    });
 
     test('Gelo richiede quattro applicazioni fino a Ibernato', () {
       final frost = oculumConditionDefinition('gelo')!;
@@ -611,12 +608,13 @@ void main() {
       }
     });
 
-    test('nessuna condizione del catalogo usa più stack numerici', () {
+    test('solo Frattura usa stack numerici per tre arti distinti', () {
       final stacked = oculumConditionCatalog.where(
         (condition) =>
             condition.stackMode == OculumConditionStackMode.increaseStacks,
       );
-      expect(stacked, isEmpty);
+      expect(stacked.map((c) => c.id), ['frattura']);
+      expect(stacked.single.maxStacks, 3);
     });
 
     test('i numeri romani arrivano fino a IX', () {

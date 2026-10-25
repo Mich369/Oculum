@@ -4,6 +4,7 @@ Only metadata is merged into the central download page; old releases survive.
 Never execute or extract downloaded artifacts. Tokens stay in GH_TOKEN.
 """
 import hashlib
+import base64
 import json
 import os
 from pathlib import Path
@@ -115,6 +116,22 @@ def read_catalog(body):
     return result
 
 
+def parse_update_notes(text):
+    """Keep the human-written summary short; never render arbitrary HTML."""
+    return [re.sub(r"[<>]", "", line.strip()[2:]).strip()[:160]
+            for line in text.splitlines() if line.strip().startswith("- ")][:8]
+
+
+def read_update_notes(commit):
+    try:
+        data = api("contents/docs/ULTIMO_AGGIORNAMENTO.md?" + urlencode({"ref": commit}))
+    except subprocess.CalledProcessError as error:
+        if b"404" in (error.stderr or b""):
+            return []  # Earlier commits predate the concise update log.
+        raise
+    return parse_update_notes(base64.b64decode(data["content"]).decode("utf-8"))
+
+
 def notes(catalog):
     lines = ["# Oculum — download pubblici", "",
              "Artifact completi delle ultime build riuscite, scaricabili senza account.",
@@ -122,6 +139,10 @@ def notes(catalog):
     for item in sorted(catalog.values(), key=lambda item: item["workflow"]):
         lines += [f"## {item.get('runName', item['workflow'])}", "",
                   f"Commit `{item['commit'][:7]}` · [Build verificata]({item['runUrl']})", ""]
+        if item.get("changes"):
+            lines += ["Log aggiornamento:", ""]
+            lines += ["- " + change for change in item["changes"]]
+            lines.append("")
         for artifact in item["artifacts"]:
             lines.append(f"- [{artifact['name']}]({artifact['url']}) — {artifact['bytes'] / 1024 ** 2:.1f} MB")
         if item.get("runId"):
@@ -229,6 +250,7 @@ def publish(run_id):
             "workflow": workflow["name"], "runName": run["name"],
             "runId": run["id"], "commit": run["head_sha"],
             "runUrl": run["html_url"],
+            "changes": read_update_notes(run["head_sha"]),
             "artifacts": entries,
         }
         note_file = root / "downloads.md"

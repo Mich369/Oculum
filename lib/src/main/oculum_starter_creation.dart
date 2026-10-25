@@ -128,6 +128,19 @@ String oculumMonsterBookSkillBaseId(String id) =>
 bool oculumMonsterBookSkillIsPassive(String id) {
   final base = oculumMonsterBookSkillBaseId(id);
   return base == 'nuvi_flight' ||
+      base == 'bone_kill_regen' ||
+      base == 'ogor_core' ||
+      base == 'monk_ki_hunt' ||
+      base == 'lavastrello_hunter' ||
+      base == 'lavastrello_nest_intuition' ||
+      base == 'bramble_arduous_challenge' ||
+      base == 'scostu_breath' ||
+      base == 'scostu_recover' ||
+      base == 'fuocherelli_second_life' ||
+      base == 'feralis_kill_rebirth' ||
+      base == 'feralis_elemental_resistance' ||
+      base == 'gran_base_counter' ||
+      base == 'evergreen_disguise' ||
       base == 'masked_green_memory' ||
       base == 'masked_violet_recovery' ||
       base == 'masked_angelic_memory' ||
@@ -239,6 +252,23 @@ bool oculumMonsterTechniqueIsNatural(MonsterBookEntry monster, String id) =>
             'topino_poison_knife',
           }.contains(oculumMonsterBookSkillBaseId(id)) &&
           (id.startsWith('runic_') ||
+              id.startsWith('bramble_') ||
+              id.startsWith('thunderbird_') ||
+              id.startsWith('scostu_') ||
+              id.startsWith('fuocherelli_') ||
+              id.startsWith('feralis_') ||
+              id.startsWith('gran_') ||
+              id.startsWith('evergreen_') ||
+              id.startsWith('lavastrello_') ||
+              id.startsWith('monk_') ||
+              id.startsWith('bone_') ||
+              id.startsWith('ogor_') ||
+              id.startsWith('cult_') ||
+              id.startsWith('teirak_') ||
+              id.startsWith('laer_') ||
+              id.startsWith('turret_') ||
+              id.startsWith('sword_puppet_') ||
+              id.startsWith('deadly_') ||
               !oculumMonsterHasOculumArt(monster) ||
               _naturalMonsterTechniqueIds.contains(
                 oculumMonsterBookSkillBaseId(id),
@@ -532,6 +562,166 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
     );
   }
   final art = _rawMonsterBookArt(monster);
+  if (const {'zombie_acido', 'cavaliere_non_ritorno'}.contains(monster.id)) {
+    final knight = monster.id == 'cavaliere_non_ritorno';
+    art.openName = knight ? 'Il varco non si chiude' : 'Gola corrosiva';
+    art.openDescription = knight
+        ? 'L’occhio del petto apre un varco viola fra le piastre nere; il cavaliere raccoglie lo spadone per un solo fendente.'
+        : 'La sacca sotto la mandibola si tende e le fasce del torso si irrigidiscono attorno al getto.';
+    art.openBuff = knight
+        ? '+2 Materia e +6 Difesa mentre attiva; il Buff aumenta realmente il Fendente del varco.'
+        : '+1 Materia e +3 Difesa mentre attiva; il Buff aumenta realmente il Rigurgito profondo.';
+    art.openBuffEffects = [
+      OculumStructuredEffect(
+        type: 'modifica_statistica',
+        target: 'materia',
+        valueExpression: knight ? '2' : '1',
+        mode: 'finche_attivo',
+      ),
+      OculumStructuredEffect(
+        type: 'difesa',
+        valueExpression: knight ? '6' : '3',
+        mode: 'finche_attivo',
+      ),
+    ];
+    art.openSkill = knight
+        ? 'Fendente del varco: +20 + bonus Open Danni Taglio al prossimo attacco, normali protezioni. CD 4 turni.'
+        : 'Rigurgito profondo: +9 + bonus Open Danni Acido al prossimo attacco, normali protezioni. CD 4 turni.';
+    art.openSkillEffects = [
+      OculumStructuredEffect(
+        type: 'danno',
+        valueExpression: '${knight ? 20 : 9}+monster_open_bonus',
+        elementType: knight ? 'taglio' : 'acido',
+        mode: 'prossima_azione',
+      ),
+    ];
+    art.openSkillCooldown = OculumAbilityCooldown(amount: 4, unit: 'turni');
+  }
+  if (const {'teschio_monaco', 'ogor'}.contains(monster.id)) {
+    final monk = monster.id == 'teschio_monaco';
+    art.openName = monk ? 'Colpo del drago non morto' : 'Raggio di Oculum';
+    art.openDescription = monk
+        ? 'Il Ki verde attraversa le ossa e prepara un colpo che scuote il terreno.'
+        : 'Il nucleo VIOLA nel petto si apre per liberare il suo raggio.';
+    art.openBuff =
+        '+2 Materia e +6 Difesa; il bonus Open potenzia la sua Skill.';
+    art.openBuffEffects = [
+      OculumStructuredEffect(
+        type: 'modifica_statistica',
+        target: 'materia',
+        valueExpression: '2',
+        mode: 'finche_attivo',
+      ),
+      OculumStructuredEffect(
+        type: 'difesa',
+        valueExpression: '6',
+        mode: 'finche_attivo',
+      ),
+    ];
+    art.openSkill = monk
+        ? 'Colpo del drago: +30 + bonus Open Danni Non morto. Costo 4 Oculum, CD 5 turni. Eventuali crolli sono decisi dal Master.'
+        : 'Raggio di Oculum: Danni normali +1d90+50 + bonus Open. Costo 5 Oculum, CD 5 turni. Nucleo rotto: non utilizzabile.';
+    art.openSkillEffects = [
+      OculumStructuredEffect(
+        type: 'danno',
+        valueExpression: monk
+            ? '30+monster_open_bonus'
+            : '1d90+50+monster_open_bonus',
+        elementType: monk ? 'nonmorto' : 'oculum',
+        mode: 'prossima_azione',
+      ),
+    ];
+    art.openSkillCooldown = OculumAbilityCooldown(amount: 5, unit: 'turni');
+  }
+  if (monster.id == 'feralis' ||
+      monster.encounterRules['canonicalVariantOf'] == 'feralis') {
+    art.openName = 'Furia Primordiale';
+    art.openDescription =
+        'A metà Vita o meno risvegli la furia. Puoi terminarla gratuitamente in qualunque momento.';
+    art.openBuff =
+        'Danni ×2 e danni ricevuti dimezzati. Recupera ¼ Oculum massimo all’attivazione; dal secondo turno paga 3 Oculum e aggiunge +5 Danni/+2 Difesa per turno pagato.';
+    art.openBuffEffects = [
+      OculumStructuredEffect(
+        type: 'planar',
+        target: 'feralis_fury',
+        valueExpression: '1',
+        mode: 'immediato',
+      ),
+    ];
+    art.openSkill =
+        'Ruggito e artigli: +12 + Livello ×2 + bonus Open Danni Natura. I Danni del mostro sono già potenziati dalla furia; non raddoppiare di nuovo il pacchetto.';
+    art.openSkillEffects = [
+      OculumStructuredEffect(
+        type: 'danno',
+        valueExpression: '12+livello*2+monster_open_bonus',
+        elementType: 'natura',
+        mode: 'prossima_azione',
+      ),
+    ];
+    art.openSkillCooldown = OculumAbilityCooldown(amount: 3, unit: 'turni');
+  }
+  if (monster.id == 'fuocherelli') {
+    art.openName = 'Seconda Vita';
+    art.openDescription =
+        'La passiva Seconda Vita esplode e rianima una volta per Riposo Lungo, salvo morte da Acqua. L’Open attiva alimenta le braci della creatura.';
+    art.openBuff =
+        '+2 Resilienza e +8 Scudo; il bonus Open potenzia Ultimo guizzo.';
+    art.openBuffEffects = [
+      OculumStructuredEffect(
+        type: 'modifica_statistica',
+        target: 'resilienza',
+        valueExpression: '2',
+        mode: 'finche_attivo',
+      ),
+      OculumStructuredEffect(
+        type: 'scudo',
+        valueExpression: '8',
+        mode: 'immediato',
+      ),
+    ];
+    art.openSkill =
+        'Ultimo guizzo: al prossimo attacco +10 + Livello ×2 + bonus Open Danni Fuoco.';
+    art.openSkillEffects = [
+      OculumStructuredEffect(
+        type: 'danno',
+        valueExpression: '10+livello*2+monster_open_bonus',
+        elementType: 'fuoco',
+        mode: 'prossima_azione',
+      ),
+    ];
+    art.openSkillCooldown = OculumAbilityCooldown(amount: 3, unit: 'turni');
+  }
+  if (monster.id == 'bramble') {
+    art.openName = 'Cuore del roveto';
+    art.openDescription =
+        'Il cuore accende le venature del legno: i rovi proteggono il custode e preparano la sua fioritura di spine.';
+    art.openBuff =
+        '+2 Resilienza e +3 Difesa mentre l’Open è attiva. La Skill Open riceve il bonus del Buff.';
+    art.openBuffEffects = [
+      OculumStructuredEffect(
+        type: 'modifica_statistica',
+        target: 'resilienza',
+        valueExpression: '2',
+        mode: 'finche_attivo',
+      ),
+      OculumStructuredEffect(
+        type: 'difesa',
+        valueExpression: '3',
+        mode: 'finche_attivo',
+      ),
+    ];
+    art.openSkill =
+        'Fioritura di spine: al prossimo attacco +12 + Livello ×2 + bonus Open Danni Natura; un bersaglio, normale Difesa e Scudi.';
+    art.openSkillEffects = [
+      OculumStructuredEffect(
+        type: 'danno',
+        valueExpression: '12+livello*2+monster_open_bonus',
+        elementType: 'natura',
+        mode: 'prossima_azione',
+      ),
+    ];
+    art.openSkillCooldown = OculumAbilityCooldown(amount: 3, unit: 'turni');
+  }
   if (monster.id == 'ombra_ignota') {
     art.nome = 'L’Ombra';
     art.openName = 'Ombra senza volto';
@@ -670,6 +860,14 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
       skill.impostaLimitiOculumPerLivello(3, minimo: 10, massimo: 11);
       skill.oculumMassimiInizialiPerLivello[2] = 11;
       skill.aumentoMassimoOculumAttivoPerLivello[2] = true;
+    }
+  }
+  for (final (index, skill) in art.skills.indexed) {
+    final id = ids[index];
+    if (id == 'monk_ki' || id == 'monk_seal') {
+      for (final cd in skill.cooldownPerLivello) {
+        cd.unit = id == 'monk_ki' ? 'sessioni' : 'azioni';
+      }
     }
   }
   return oculumCompleteMonsterOpen(

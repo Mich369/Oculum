@@ -151,10 +151,18 @@ Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
   final scores = <OculumCombatAbilityRole, int>{};
   for (final effect in active) {
     final target = oculumNormalizeText(effect.target);
-    final score = max(
-      1,
-      oculumEvaluateStructuredEffectValue(effect, variables: variables).abs(),
-    );
+    // Classification also runs before a target or spend amount exists. A
+    // dynamic formula must not break the catalogue; execution still uses the
+    // complete value context and validates its real result separately.
+    var score = 1;
+    try {
+      score = max(
+        1,
+        oculumEvaluateStructuredEffectValue(effect, variables: variables).abs(),
+      );
+    } on FormatException {
+      score = 1;
+    }
     OculumCombatAbilityRole? role;
     if (const {'danno', 'danno_percentuale'}.contains(effect.type) ||
         const {'vc', 'attacco', 'danni'}.contains(target)) {
@@ -534,6 +542,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
   }
 
   bool combatNaturalFormAvailable(CharacterSkillForm form) =>
+      leggiNumero(livelloController) >= (int.tryParse(form.livello) ?? 0) &&
       !form.tipo.toLowerCase().contains('passiv') &&
       (form.cooldownStrutturato?.ready ?? true) &&
       !oculumCombatTextHasUnresolvedRequirement(
@@ -1006,6 +1015,21 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                     },
                     child: const Text('Fuga dall’esplosione del mecha'),
                   ),
+                if (readIntValue(planarState['scostuRifleAmmo']) > 0)
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.gps_fixed),
+                    label: Text(
+                      '${planarState['scostuRifleHolstered'] == true ? 'Impugna' : 'Riponi'} fucile · ${planarState['scostuRifleAmmo']} colpi',
+                    ),
+                    onPressed: () {
+                      setState(
+                        () => planarState['scostuRifleHolstered'] =
+                            planarState['scostuRifleHolstered'] != true,
+                      );
+                      Navigator.pop(dialog);
+                      programmaSalvataggio();
+                    },
+                  ),
                 if (rabbitHatReady &&
                     (role == OculumCombatAbilityRole.attack ||
                         role == OculumCombatAbilityRole.support)) ...[
@@ -1122,6 +1146,34 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                     },
                     icon: const Icon(Icons.healing),
                     label: const Text('Medicina · cura infestazione'),
+                  ),
+                if (feralisFuryActive)
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(dialog);
+                      stopFeralisFury();
+                    },
+                    icon: const Icon(Icons.close),
+                    label: const Text('Termina Furia · gratuito'),
+                  ),
+                if (role == OculumCombatAbilityRole.support && haPermessiMaster)
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(dialog);
+                      unawaited(createLavastrelloNest());
+                    },
+                    icon: const Icon(Icons.volcano_outlined),
+                    label: const Text('Crea tana Lavastrello · 5 uscite'),
+                  ),
+                if (role == OculumCombatAbilityRole.support &&
+                    knowsLavastrelloNest)
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(dialog);
+                      unawaited(searchLavastrelloNest());
+                    },
+                    icon: const Icon(Icons.search),
+                    label: const Text('Cerca tana · Percezione con Vantaggio'),
                   ),
                 combatAbilityQuickBar(
                   onlyRole: role,
@@ -1290,6 +1342,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         final cost = extra?.cost ?? title.skillCost;
         final cooldown =
             extra?.cooldown ?? (extra == null ? title.skillCooldown : null);
+        if (onlyRole != null && cooldown?.ready == false) return;
         final name = extra == null
             ? title.nome
             : '${extra.nome.trim().isEmpty ? 'Skill extra' : extra.nome} · ${title.nome}';
@@ -1399,6 +1452,18 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           .where((f) => !f.tipo.toLowerCase().contains('passiv'))
           .toList();
       if (forms.isEmpty) continue;
+      final levelForms = forms
+          .where(
+            (f) =>
+                (int.tryParse(f.livello) ?? 0) <=
+                leggiNumero(livelloController),
+          )
+          .toList();
+      if (onlyRole != null &&
+          levelForms.isNotEmpty &&
+          levelForms.every((f) => f.cooldownStrutturato?.ready == false)) {
+        continue;
+      }
       final allFormsLocked = forms.every(
         (form) => oculumCombatTextHasUnresolvedRequirement(
           '${form.descrizione}\n${form.effetto}\n${form.buff}\n${form.danni}\n${form.cura}\n${form.difesa}',
@@ -1455,6 +1520,26 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     }
     for (final art in arti) {
       for (final skill in art.skills) {
+        final eligibleForms = [
+          for (var f = 1; f <= artMaxLevel(art); f++)
+            if (leggiNumero(livelloController) >=
+                (int.tryParse(
+                      RegExp(
+                            r'Richiede livello\s+(\d+)',
+                            caseSensitive: false,
+                          ).firstMatch(skill.testoEvoluzione(f))?.group(1) ??
+                          '',
+                    ) ??
+                    0))
+              f,
+        ];
+        if (onlyRole != null &&
+            eligibleForms.isNotEmpty &&
+            eligibleForms.every(
+              (f) => !skill.cooldownPerLivello[f - 1].ready,
+            )) {
+          continue;
+        }
         if (skill.tipiPerLivello
             .take(3)
             .every((t) => t.toLowerCase().contains('passiv'))) {
@@ -1538,7 +1623,13 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             subtraits: hiddenEyeStats,
           ),
         ], explicitType: art.openSkillType);
-        if (!art.openUsedSinceLongRest) {
+        if (!art.openUsedSinceLongRest &&
+            (onlyRole == null ||
+                art.openAttiva ||
+                ((art.openDescriptionCooldown?.ready ?? true) &&
+                    (art.openBuffCooldown?.ready ?? true) &&
+                    (art.monsterOpenSkill ||
+                        (art.openSkillCooldown?.ready ?? true))))) {
           entries.add((
             name: '${art.openAttiva ? 'Chiudi' : 'Apri'} ${art.openName}',
             roles: roles,
@@ -1561,7 +1652,9 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             details: null,
           ));
         }
-        if (art.monsterOpenSkill && art.openAttiva) {
+        if (art.monsterOpenSkill &&
+            art.openAttiva &&
+            (onlyRole == null || (art.openSkillCooldown?.ready ?? true))) {
           entries.add((
             name: '${art.openName} · Skill Open',
             roles: roles,
@@ -1628,6 +1721,9 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       final ability = item.ability!;
       ability.ensureForms();
       for (final (index, form) in ability.forme.indexed) {
+        if (onlyRole != null && form.cooldownStrutturato?.ready == false) {
+          continue;
+        }
         if (form.tipo.toLowerCase().contains('passiv')) continue;
         final effects = form.effettiStrutturati.isNotEmpty
             ? form.effettiStrutturati

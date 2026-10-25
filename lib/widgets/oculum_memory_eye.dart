@@ -40,7 +40,9 @@ class _OculumMemoryEyeState extends State<OculumMemoryEye> {
               )
             : MouseRegion(
                 onHover: (event) {
-                  if (MediaQuery.disableAnimationsOf(context)) { return; }
+                  if (MediaQuery.disableAnimationsOf(context)) {
+                    return;
+                  }
                   final half = widget.size / 2;
                   final next = Offset(
                     ((event.localPosition.dx - half) / half).clamp(-1.0, 1.0),

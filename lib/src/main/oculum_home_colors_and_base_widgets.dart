@@ -1354,12 +1354,10 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
   // WIDGET BASE / STILE
   // =====================================================
 
-  bool get phoneCompactUi =>
-      (MediaQuery.maybeOf(context)?.size.shortestSide ?? 900) < 600;
+  bool get phoneCompactUi => layoutViewport.shortestSide < 600;
 
   bool get tabletCompactUi {
-    final size = MediaQuery.maybeOf(context)?.size;
-    if (size == null) return false;
+    final size = layoutViewport;
     return size.shortestSide >= 600 && size.width < 1100;
   }
 
@@ -1368,8 +1366,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
   bool get lightweightUi => playDenseUi || modalitaVeloce || modalitaLeggera;
 
   bool get lowCostVisuals {
-    final size = MediaQuery.maybeOf(context)?.size;
-    final wideDesktopSurface = (size?.width ?? 0) >= 1000;
+    final wideDesktopSurface = layoutViewport.width >= 1000;
     return !oculumGraphicsEnabled.value ||
         modalitaVeloce ||
         modalitaLeggera ||
@@ -1868,6 +1865,28 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     required Widget child,
     EdgeInsets padding = const EdgeInsets.all(14),
     Color? borderColor,
+    bool actionGroup = false,
+  }) => OculumHoverSurface(
+    actionGroup: actionGroup,
+    builder: (context, opacity) => Theme(
+      data: oculumWithArtButtons(
+        Theme.of(context),
+        highlightAll: OculumSurfaceScope.maybeOf(context)?.highlightAll == true,
+      ),
+      child: _gothicPanelBody(
+        child: child,
+        padding: padding,
+        borderColor: borderColor,
+        surfaceOpacity: opacity,
+      ),
+    ),
+  );
+
+  Widget _gothicPanelBody({
+    required Widget child,
+    required EdgeInsets padding,
+    Color? borderColor,
+    required double surfaceOpacity,
   }) {
     if (!temiOldSchool) {
       final reference = referenceCampaignStyle;
@@ -1877,21 +1896,24 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                   borderColor == primaryColor ||
                   borderColor == tertiaryColor)
           ? readableOnTheme(
-              tertiaryColor,
-              background: backgroundMidColor,
+              narrativeInterfaceAccent ?? tertiaryColor,
+              background: narrativeInterfaceSurface ?? backgroundMidColor,
               minRatio: 3,
             )
           : borderColor ?? primaryColor;
-      final surface = backgroundMidColor;
+      final surface = narrativeInterfaceSurface ?? backgroundMidColor;
       final panel = Container(
         margin: const EdgeInsets.symmetric(vertical: OculumDesignTokens.space4),
         padding: scaledInsets(padding),
-        decoration: OculumDesignTokens.panelDecoration(
-          accent: accent,
-          background: surface,
-          elevated: !modalitaLeggera,
-          decorationIntensity: modalitaLeggera ? 0 : 0.75,
-          style: nuovoDesignOculum,
+        decoration: oculumSurfaceDecoration(
+          OculumDesignTokens.panelDecoration(
+            accent: accent,
+            background: surface,
+            elevated: !modalitaLeggera,
+            decorationIntensity: modalitaLeggera ? 0 : 0.75,
+            style: nuovoDesignOculum,
+          ),
+          surfaceOpacity,
         ),
         child: OculumThemePanelArtwork(
           child: CustomPaint(
@@ -1927,7 +1949,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       0.42,
     )!;
     final color = readableOnTheme(
-      borderColor ?? primaryColor,
+      borderColor ?? narrativeInterfaceAccent ?? primaryColor,
       background: panelSurface,
       minRatio: 2.6,
     );
@@ -1960,7 +1982,12 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 2),
           decoration: BoxDecoration(
-            gradient: themePanelSurfaceGradient(color, compact: true),
+            gradient: oculumSurfaceDecoration(
+              BoxDecoration(
+                gradient: themePanelSurfaceGradient(color, compact: true),
+              ),
+              surfaceOpacity,
+            ).gradient,
             borderRadius: radius,
             border: Border.all(
               color: color.withValues(alpha: 0.50),
@@ -2034,7 +2061,15 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
             ),
             child: Container(
               decoration: BoxDecoration(
-                gradient: themePanelSurfaceGradient(color, compact: compact),
+                gradient: oculumSurfaceDecoration(
+                  BoxDecoration(
+                    gradient: themePanelSurfaceGradient(
+                      color,
+                      compact: compact,
+                    ),
+                  ),
+                  surfaceOpacity,
+                ).gradient,
               ),
               child: panelStack,
             ),
@@ -2047,7 +2082,12 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       child: Container(
         margin: EdgeInsets.symmetric(vertical: compact ? 2 : 4),
         decoration: BoxDecoration(
-          gradient: themePanelSurfaceGradient(color, compact: compact),
+          gradient: oculumSurfaceDecoration(
+            BoxDecoration(
+              gradient: themePanelSurfaceGradient(color, compact: compact),
+            ),
+            surfaceOpacity,
+          ).gradient,
           borderRadius: radius,
           border: Border.all(
             color: color.withValues(alpha: compact ? 0.60 : 0.78),
@@ -3685,6 +3725,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              sheetWeakPointSummary(),
             ],
           ),
         );

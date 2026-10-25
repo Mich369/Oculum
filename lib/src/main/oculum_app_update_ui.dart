@@ -119,12 +119,14 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
         context: context,
         builder: (d) => AlertDialog(
           title: const Text('Aggiorna Oculum'),
-          content: Text(
-            'Nuova versione ${update.commit.substring(0, 7)}. ${kIsWeb
-                ? 'Salva e ricarica il sito.'
-                : Platform.isAndroid
-                ? 'Scarica il pacchetto verificato e apre la conferma Android.'
-                : 'Scarica e verifica i file, conserva un backup del runtime e riavvia Oculum.'} I salvataggi vengono conservati.',
+          content: SingleChildScrollView(
+            child: Text(
+              'Nuova versione ${update.commit.substring(0, 7)}. ${kIsWeb
+                  ? 'Salva e ricarica il sito.'
+                  : Platform.isAndroid
+                  ? 'Scarica il pacchetto verificato e apre la conferma Android.'
+                  : 'Scarica e verifica i file, conserva un backup del runtime e riavvia Oculum.'} I salvataggi vengono conservati.${update.changes.isEmpty ? '' : '\n\nLog aggiornamento:\n${update.changes.map((s) => '• $s').join('\n')}'}',
+            ),
           ),
           actions: [
             TextButton(

@@ -2,8 +2,17 @@ part of 'monster_book.dart';
 
 // Authored roles, not a second colour or a stat multiplier of the same kit.
 final _canonicalPlanarVariants = <MonsterBookEntry>[
+  ..._faunaVariantEntries,
   ..._maskedMonsterEntries,
   ..._ordinaryCreatureEntries,
+  _brambleEntry,
+  _lavastrelloEntry,
+  ..._boneRuneEntries,
+  ..._laerTurretEntries,
+  _deadlySinsEntry,
+  ..._stormAndBanditEntries,
+  ..._rebirthRageEvergreenEntries,
+  ..._nonReturnUndeadEntries,
   _canonicalCreature(
     'nuvi',
     'Nuvì',
@@ -429,7 +438,7 @@ final _canonicalPlanarVariants = <MonsterBookEntry>[
     resistances: {'fuoco': 'resistenza', 'acqua': 'debolezza'},
   ),
   ..._canonicalBasicCreatures,
-];
+].map(_originalFaunaEntry).toList(growable: false);
 
 final _canonicalBasicGroups = <_CanonicalBasicGroup>[
   _CanonicalBasicGroup(
@@ -716,8 +725,17 @@ MonsterBookEntry _canonicalCreature(
     );
 
 final _canonicalVariantTechniques = <String, MonsterConcreteTechnique>{
+  ..._faunaVariantTechniques,
   ..._maskedTechniques,
   ..._ordinaryCreatureTechniques,
+  ..._brambleTechniques,
+  ..._lavastrelloTechniques,
+  ..._boneRuneTechniques,
+  ..._laerTurretTechniques,
+  ..._deadlySinsTechniques,
+  ..._stormAndBanditTechniques,
+  ..._rebirthRageEvergreenTechniques,
+  ..._nonReturnUndeadTechniques,
   'nuvi_flight': _planarMove(
     'Volo naturale',
     'Passiva: vola sempre e riceve +3 Difesa e +3 Movimento. Nessun costo, nessun attacco.',

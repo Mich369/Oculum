@@ -143,6 +143,14 @@ const oculumStoryThemePacks = <String, OculumThemeAssetPack>{
 };
 
 const oculumThemeStoryIds = <String>{
+  'creature_bramble',
+  'creature_thunderbird',
+  'creature_scostubanditi',
+  'creature_fuocherelli',
+  'creature_feralis',
+  'creature_granscostumato',
+  'creature_sempre_verde',
+  'creature_lavastrello',
   'benedict',
   'hidenas',
   'plane_demoniaco',

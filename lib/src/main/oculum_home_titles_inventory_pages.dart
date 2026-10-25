@@ -1737,7 +1737,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       return;
     }
     skill.ensureForms();
-    if (skill.nonEvolvibile) {
+    if (skill.nonEvolvibile && skill.scrollData['authoredSkill'] is! Map) {
       await useScrollAbility(skill.scrollData);
       return;
     }
@@ -7189,6 +7189,30 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                         },
                       ),
                   ],
+                  if (inventario[i].craftData['silkResistances'] is Map)
+                    for (final element
+                        in (inventario[i].craftData['silkResistances'] as Map)
+                            .keys
+                            .toList())
+                      campoModello(
+                        label: 'Resistenza tessuto · $element (%)',
+                        initialValue:
+                            '${(inventario[i].craftData['silkResistances'] as Map)[element]}',
+                        onChanged: (v) {
+                          final amount = int.tryParse(v);
+                          if (amount == null) return;
+                          inventario[i].craftData = {
+                            ...inventario[i].craftData,
+                            'silkResistances': {
+                              ...inventario[i].craftData['silkResistances']
+                                  as Map,
+                              element: amount.clamp(0, 90),
+                            },
+                          };
+                          invalidateDerivedDataCaches();
+                          programmaSalvataggio();
+                        },
+                      ),
                   if (inventario[i].craftData['clothing'] == true)
                     campoModello(
                       label:

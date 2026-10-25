@@ -33,7 +33,9 @@ extension _OculumAlchemyPets on _OculumHomePageState {
     final id = '${item.craftData['alchemyPet']}';
     final meccanio = id == 'meccanio';
     if (meccanio && ownsMeccanio(owner)) {
-      aggiungiLog('Puoi possedere un solo Meccanio. Il compagno non viene consumato.');
+      aggiungiLog(
+        'Puoi possedere un solo Meccanio. Il compagno non viene consumato.',
+      );
       return;
     }
     final spec = meccanio
@@ -156,7 +158,13 @@ extension _OculumAlchemyPets on _OculumHomePageState {
     }
     if (index == schedaCorrente) {
       if (meccanio) {
-        skills..clear()..addAll(meccanioLoadoutSkills(Map<String, dynamic>.from(sheet['meccanio'] as Map)));
+        skills
+          ..clear()
+          ..addAll(
+            meccanioLoadoutSkills(
+              Map<String, dynamic>.from(sheet['meccanio'] as Map),
+            ),
+          );
       } else {
         skills.addAll([skill, regeneration]);
       }

@@ -50,6 +50,117 @@ ArtSkill oculumAbilityWithEvolutions(ArtSkill original, int count) {
   return skill;
 }
 
+typedef OculumCatalogueEntry = ({
+  String id,
+  String label,
+  ArtSkill art,
+  CharacterSkill? natural,
+});
+
+int oculumCatalogueRequiredLevel(OculumCatalogueEntry entry, [int form = 1]) {
+  if (entry.natural != null && entry.natural!.forme.length >= form) {
+    return int.tryParse(entry.natural!.forme[form - 1].livello) ?? 0;
+  }
+  final text = entry.art.testoEvoluzione(form);
+  return int.tryParse(
+        RegExp(
+              r'(?:richiede|richiesto|requires?)\s+(?:livello|level|lvl)\s*(\d+)',
+              caseSensitive: false,
+            ).firstMatch(text)?[1] ??
+            '',
+      ) ??
+      (form - 1) * 3;
+}
+
+String oculumCatalogueElement(OculumCatalogueEntry entry) {
+  final monster = monsterBookEntryById(entry.id.split(':').first);
+  if (monster != null) return oculumNormalizeElementId(monster.elementId);
+  return entry.art
+      .effettiEvoluzione(1)
+      .map((e) => oculumNormalizeElementId(e.elementType))
+      .firstWhere((e) => e.isNotEmpty, orElse: () => 'oculum');
+}
+
+String oculumCatalogueProgressLabel(
+  OculumCatalogueEntry entry,
+  int characterLevel,
+) {
+  var usable = 0;
+  for (var form = 1; form <= 3; form++) {
+    if (oculumCatalogueRequiredLevel(entry, form) <= characterLevel) {
+      usable = form;
+    }
+  }
+  final next = min(3, usable + 1);
+  return usable == 0
+      ? 'Livello richiesto ${oculumCatalogueRequiredLevel(entry)}'
+      : '${const ['I', 'II', 'III'][usable - 1]}${usable < 3 ? ' · prossima ${const ['I', 'II', 'III'][next - 1]}, lvl ${oculumCatalogueRequiredLevel(entry, next)}' : ''}';
+}
+
+List<OculumCatalogueEntry> oculumAbilityCatalogueEntries({
+  List<CharacterArt> arts = const [],
+  String? elementFilter,
+}) {
+  final entries =
+      <({String id, String label, ArtSkill art, CharacterSkill? natural})>[];
+  for (final monster in monsterBookEntries) {
+    if (elementFilter != null &&
+        oculumNormalizeElementId(monster.elementId) != elementFilter) {
+      continue;
+    }
+    final natural = {
+      for (final skill in oculumMonsterBookSkills(monster)) skill.nome: skill,
+    };
+    for (final (index, skill) in oculumMonsterBookArt(monster).skills.indexed) {
+      entries.add((
+        id: '${monster.id}:$index',
+        label: '${skill.nome} · ${monster.nameIt}',
+        art: skill,
+        natural: natural[skill.nome],
+      ));
+    }
+  }
+  // Include Art techniques alongside creature skills. Saved definitions are
+  // read only; catalogue selections clone them before importing.
+  final known = <String>{};
+  for (final art in [...oculumStarterArtChoices(), ...arts]) {
+    for (final (index, skill) in art.skills.indexed) {
+      if (skill.nome.trim().isEmpty ||
+          skill.testoEvoluzione(1).trim().isEmpty ||
+          skill.testoEvoluzione(1).trim() == '???') {
+        continue;
+      }
+      final signature = jsonEncode([
+        skill.nome,
+        for (var form = 1; form <= 3; form++)
+          [
+            skill.testoEvoluzione(form),
+            skill.risorsaCostoPerLivello(form),
+            skill.oculumMinimoPerLivello(form),
+            skill.oculumMassimoPerLivello(form),
+            skill.cooldownPerLivello[form - 1].amount,
+            skill.effettiEvoluzione(form).map((e) => e.toJson()).toList(),
+          ],
+      ]);
+      if (!known.add(signature)) continue;
+      entries.add((
+        id: 'catalogue_art:${entries.length}:$index',
+        label: '${skill.nome} · ${art.nome} · Art',
+        art: skill,
+        natural: null,
+      ));
+    }
+  }
+
+  entries.sort((a, b) {
+    final level = oculumCatalogueRequiredLevel(
+      a,
+    ).compareTo(oculumCatalogueRequiredLevel(b));
+    return level != 0 ? level : a.label.compareTo(b.label);
+  });
+  return entries;
+}
+
 extension _OculumAbilityCatalogue on _OculumHomePageState {
   List<Color> abilityCostColors(String cost) {
     final text = oculumNormalizeText(cost);
@@ -186,58 +297,22 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
     );
   }
 
-  Future<void> showAbilityCatalogue({CharacterArt? destination}) async {
+  Future<void> showAbilityCatalogue({
+    CharacterArt? destination,
+    List<OculumCatalogueEntry>? choices,
+    void Function(CharacterSkill)? onPicked,
+    OculumCombatAbilityRole? initialRole,
+    String initialElement = '',
+    int? catalogueLevel,
+    Set<String> excludedNames = const {},
+  }) async {
     final originSheet = currentSheetScrollId();
-    final entries =
-        <({String id, String label, ArtSkill art, CharacterSkill? natural})>[];
-    for (final monster in monsterBookEntries) {
-      final natural = {
-        for (final skill in oculumMonsterBookSkills(monster)) skill.nome: skill,
-      };
-      for (final (index, skill) in oculumMonsterBookArt(
-        monster,
-      ).skills.indexed) {
-        entries.add((
-          id: '${monster.id}:$index',
-          label: '${skill.nome} · ${monster.nameIt}',
-          art: skill,
-          natural: natural[skill.nome],
-        ));
-      }
-    }
-    // Include Art techniques alongside creature skills. Saved definitions are
-    // read only; catalogue selections clone them before importing.
-    final known = <String>{};
-    for (final art in [...oculumStarterArtChoices(), ...arti]) {
-      for (final (index, skill) in art.skills.indexed) {
-        if (skill.nome.trim().isEmpty ||
-            skill.testoEvoluzione(1).trim().isEmpty ||
-            skill.testoEvoluzione(1).trim() == '???') {
-          continue;
-        }
-        final signature = jsonEncode([
-          skill.nome,
-          for (var form = 1; form <= 3; form++)
-            [
-              skill.testoEvoluzione(form),
-              skill.risorsaCostoPerLivello(form),
-              skill.oculumMinimoPerLivello(form),
-              skill.oculumMassimoPerLivello(form),
-              skill.cooldownPerLivello[form - 1].amount,
-              skill.effettiEvoluzione(form).map((e) => e.toJson()).toList(),
-            ],
-        ]);
-        if (!known.add(signature)) continue;
-        entries.add((
-          id: 'catalogue_art:${entries.length}:$index',
-          label: '${skill.nome} · ${art.nome} · Art',
-          art: skill,
-          natural: null,
-        ));
-      }
-    }
+    catalogueLevel ??= leggiNumero(livelloController);
+    final entries = choices ?? oculumAbilityCatalogueEntries(arts: arti);
     final selected = <String>{};
     var query = '';
+    var role = initialRole;
+    var element = initialElement;
     final five =
         destination != null &&
         oculumRecognizedArtKind(destination) == 'defiled';
@@ -250,6 +325,20 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
                 (e) => oculumNormalizeText(
                   e.label,
                 ).contains(oculumNormalizeText(query)),
+              )
+              .where(
+                (e) => !excludedNames.contains(oculumNormalizeText(e.art.nome)),
+              )
+              .where(
+                (e) => element.isEmpty || oculumCatalogueElement(e) == element,
+              )
+              .where(
+                (e) =>
+                    role == null ||
+                    oculumCombatAbilityRoles(
+                      e.art.effettiEvoluzione(1),
+                      explicitType: e.art.tipoPerLivello(1),
+                    ).contains(role),
               )
               .toList();
           return AlertDialog(
@@ -265,6 +354,54 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
                       prefixIcon: Icon(Icons.search),
                     ),
                     onChanged: (v) => refresh(() => query = v),
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      DropdownButton<OculumCombatAbilityRole>(
+                        hint: const Text('Tutti i ruoli'),
+                        value: role,
+                        items: [
+                          for (final r in OculumCombatAbilityRole.values)
+                            DropdownMenuItem(
+                              value: r,
+                              child: Text(
+                                r == OculumCombatAbilityRole.attack
+                                    ? 'Attacco'
+                                    : r == OculumCombatAbilityRole.defense
+                                    ? 'Difesa'
+                                    : 'Supporto',
+                              ),
+                            ),
+                        ],
+                        onChanged: (v) => refresh(() => role = v),
+                      ),
+                      DropdownButton<String>(
+                        hint: const Text('Tutti gli elementi'),
+                        value: element.isEmpty ? null : element,
+                        items: [
+                          for (final e
+                              in (entries
+                                  .map(oculumCatalogueElement)
+                                  .toSet()
+                                  .toList()
+                                ..sort()))
+                            DropdownMenuItem(
+                              value: e,
+                              child: Text(elementDisplayName(e)),
+                            ),
+                        ],
+                        onChanged: (v) => refresh(() => element = v ?? ''),
+                      ),
+                      TextButton(
+                        onPressed: () => refresh(() {
+                          role = null;
+                          element = '';
+                        }),
+                        child: const Text('Azzera filtri'),
+                      ),
+                    ],
                   ),
                   Expanded(
                     child: LayoutBuilder(
@@ -319,57 +456,88 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
                                           cost: cost(1),
                                           effects: effects,
                                           padding: EdgeInsets.zero,
-                                          child: ExpansionTile(
-                                            key: ValueKey(entry.id),
-                                            tilePadding:
-                                                const EdgeInsets.symmetric(
-                                                  horizontal: 8,
-                                                ),
-                                            leading: Checkbox(
-                                              value: selected.contains(
-                                                entry.id,
-                                              ),
-                                              onChanged: (value) => refresh(() {
-                                                if (value == true) {
-                                                  selected.add(entry.id);
-                                                } else {
-                                                  selected.remove(entry.id);
-                                                }
-                                              }),
+                                          child: Tooltip(
+                                            waitDuration: const Duration(
+                                              milliseconds: 900,
                                             ),
-                                            title: Text(
-                                              entry.label,
-                                              style: TextStyle(
-                                                color: abilityBenefitColor(
-                                                  effects,
-                                                ),
-                                                fontWeight: FontWeight.w700,
+                                            showDuration: const Duration(
+                                              seconds: 12,
+                                            ),
+                                            constraints: BoxConstraints(
+                                              maxWidth: min(
+                                                480,
+                                                MediaQuery.sizeOf(
+                                                      dialog,
+                                                    ).width -
+                                                    32,
                                               ),
                                             ),
-                                            subtitle: Text(
-                                              '${natural == null ? 'Art' : 'Skill'} · ${cost(1)}',
-                                              style: TextStyle(
-                                                color: abilityCostColors(
-                                                  cost(1),
-                                                ).first,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                            children: [
+                                            message: [
                                               for (
                                                 var form = 1;
-                                                form <= (five ? 5 : 3);
+                                                form <= 3;
                                                 form++
                                               )
-                                                Padding(
-                                                  padding: const EdgeInsets.all(
-                                                    10,
+                                                '${artLevelRoman(form)} · Livello ${oculumCatalogueRequiredLevel(entry, form)} · ${cost(form)} · CD ${art.cooldownPerLivello[form - 1].amount}\n${natural != null && natural.forme.length >= form ? natural.forme[form - 1].descrizione : art.testoEvoluzione(form)}\n${art.effettiEvoluzione(form).map(oculumStructuredEffectDescription).join(' · ')}',
+                                            ].join('\n\n'),
+                                            child: ExpansionTile(
+                                              key: ValueKey(entry.id),
+                                              tilePadding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
                                                   ),
-                                                  child: Text(
-                                                    '${artLevelRoman(form)} · ${cost(form)}\n${natural != null && !five && natural.forme.isNotEmpty ? natural.forme[min(form - 1, natural.forme.length - 1)].descrizione : art.testoEvoluzione(form)}\n${(natural != null && !five && natural.forme.isNotEmpty ? natural.forme[min(form - 1, natural.forme.length - 1)].effettiStrutturati : art.effettiEvoluzione(form)).map(oculumStructuredEffectDescription).join('\n')}',
-                                                  ),
+                                              leading: Checkbox(
+                                                value: selected.contains(
+                                                  entry.id,
                                                 ),
-                                            ],
+                                                onChanged: (value) => refresh(
+                                                  () {
+                                                    if (value == true) {
+                                                      if (onPicked != null) {
+                                                        selected.clear();
+                                                      }
+                                                      selected.add(entry.id);
+                                                    } else {
+                                                      selected.remove(entry.id);
+                                                    }
+                                                  },
+                                                ),
+                                              ),
+                                              title: Text(
+                                                entry.label,
+                                                style: TextStyle(
+                                                  color: abilityBenefitColor(
+                                                    effects,
+                                                  ),
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                              subtitle: Text(
+                                                'Livello richiesto ${oculumCatalogueRequiredLevel(entry)} · ${cost(1)}${catalogueLevel == null ? '' : ' · ${oculumCatalogueProgressLabel(entry, catalogueLevel)}'}',
+                                                style: TextStyle(
+                                                  color: abilityCostColors(
+                                                    cost(1),
+                                                  ).first,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              children: [
+                                                for (
+                                                  var form = 1;
+                                                  form <= (five ? 5 : 3);
+                                                  form++
+                                                )
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                          10,
+                                                        ),
+                                                    child: Text(
+                                                      '${artLevelRoman(form)} · ${cost(form)}\n${natural != null && !five && natural.forme.isNotEmpty ? natural.forme[min(form - 1, natural.forme.length - 1)].descrizione : art.testoEvoluzione(form)}\n${(natural != null && !five && natural.forme.isNotEmpty ? natural.forme[min(form - 1, natural.forme.length - 1)].effettiStrutturati : art.effettiEvoluzione(form)).map(oculumStructuredEffectDescription).join('\n')}',
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
                                           ),
                                         );
                                       },
@@ -394,7 +562,11 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
                 onPressed: selected.isEmpty
                     ? null
                     : () => Navigator.pop(dialog, true),
-                child: Text('Aggiungi ${selected.length} abilità'),
+                child: Text(
+                  onPicked == null
+                      ? 'Aggiungi ${selected.length} abilità'
+                      : 'Scegli skill',
+                ),
               ),
             ],
           );
@@ -405,6 +577,15 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
         approved != true ||
         originSheet != currentSheetScrollId() ||
         destination != null && !arti.contains(destination)) {
+      return;
+    }
+    if (onPicked != null) {
+      final entry = entries.firstWhere((e) => selected.contains(e.id));
+      onPicked(
+        entry.natural != null
+            ? CharacterSkill.fromJson(entry.natural!.toJson())
+            : oculumEquipmentAbilityFromArt(entry.art),
+      );
       return;
     }
     setState(() {

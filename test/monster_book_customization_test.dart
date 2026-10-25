@@ -109,7 +109,8 @@ void main() {
       classificationTags: ['Aberrazione'],
     );
 
-    expect(golem.weakPointDescriptionIt, contains('runico'));
+    expect(golem.weakPointDescriptionIt, contains('giunture esterne'));
+    expect(golem.weakPointDescriptionIt, contains('Nucleo con fata riflette'));
     expect(runicGolem.weakPointDescriptionIt, contains('nucleo runico'));
     expect(kamikaze.weakPointDescriptionIt, contains('innesco centrale'));
     expect(acidSpitter.weakPointDescriptionIt, contains('ghiandole acide'));
@@ -117,8 +118,8 @@ void main() {
       runicGolem.incomingDamageResistancePresets['contundente'],
       'Fragilità Bassa',
     );
-    expect(assassin.weakPointDescriptionIt, contains('polso'));
-    expect(incorporeal.weakPointDescriptionIt, contains('ombra'));
+    expect(assassin.weakPointDescriptionIt, contains('gomito'));
+    expect(incorporeal.weakPointDescriptionIt, contains('contorno'));
     expect(
       shell.incomingDamageResistancePresets['taglio'],
       'Resistenza Leggera',

@@ -1706,6 +1706,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     setState(() {
       planarState['cloudLifeUsed'] = false;
       posteaNewSession();
+      deadlyNewSession();
+      tickStructuredAbilityCooldowns('sessioni');
       ascensionDustCombat.newSession();
       aggiungiLog(
         'Nuova sessione: potenziamento combattimento Ascension Dust 0/3.',
@@ -1932,6 +1934,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void riposoBreve() {
+    resetOgorCoreRest();
     final activeSheet =
         schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
         ? schedePersonaggio[schedaCorrente]
