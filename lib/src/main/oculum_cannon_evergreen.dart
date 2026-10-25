@@ -37,11 +37,11 @@ extension _OculumCannonEvergreen on _OculumHomePageState {
         type.contains('boss');
   }
 
-  bool evergreenTargetAllowed(Map<String, dynamic> target) {
-    final own = onlineCombatTokens()
-        .where((t) => onlineCombatTokenTag(t) == sheetTagAt(schedaCorrente))
-        .firstOrNull;
-    if (own == null || !faunaTokenIsMonster(own)) return true;
+  bool evergreenTargetAllowed(
+    Map<String, dynamic> target, {
+    required Map<String, dynamic> actingToken,
+  }) {
+    if (!faunaTokenIsMonster(actingToken)) return true;
     final tag = onlineCombatTokenTag(target),
         index = localSheetIndexForOculumTag(onlineCombatTokenTag(target));
     final json = index >= 0 ? schedaJsonAt(index) : target;

@@ -1458,10 +1458,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       : '${realtimeVisibleInitiativeSnapshot['encounterId'] ?? ''}';
 
   bool get localTurnCombat =>
-      localMeccanioCombat ||
       (realtimeService?.isConnected != true &&
           _usesLocalMasterInitiative &&
-          masterInitiativeTokens.isNotEmpty);
+          masterInitiativeTokens.isNotEmpty) ||
+      localMeccanioCombat;
 
   List<Map<String, dynamic>> onlineCombatTokens() {
     if (realtimeService?.isConnected != true) {
@@ -1488,11 +1488,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   List<Map<String, dynamic>> onlineAttackTokens() {
     final tokens = onlineCombatTokens();
     final own = sheetTagAt(schedaCorrente);
-    if (!tokens.any(
-      (t) =>
-          onlineCombatTokenTag(t) == own &&
-          !const {'dead', 'fled', 'expired'}.contains(t['status']),
-    )) {
+    final actingToken = tokens
+        .where(
+          (t) =>
+              onlineCombatTokenTag(t) == own &&
+              !const {'dead', 'fled', 'expired'}.contains(t['status']),
+        )
+        .firstOrNull;
+    if (actingToken == null) {
       return [];
     }
     final eligible = tokens
@@ -1501,7 +1504,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               onlineCombatTokenTag(t).isNotEmpty &&
               onlineCombatTokenTag(t) != own &&
               !const {'dead', 'fled', 'expired'}.contains(t['status']) &&
-              evergreenTargetAllowed(t),
+              evergreenTargetAllowed(t, actingToken: actingToken),
         )
         .toList();
     if (isBanditFamily) {
