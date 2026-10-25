@@ -41,6 +41,18 @@ void main() {
       expect(knight.stats['oculumDodge'], 2);
       expect(knight.encounterRules['criticalShields'], 3);
       expect(knight.weaponTags, contains('spadone'));
+      for (final m in [zombie, knight]) {
+        final anatomy = oculumMonsterPrecisionAnatomy(m);
+        expect(anatomy.where((p) => p['group'] == 'arms'), hasLength(2));
+        expect(anatomy.where((p) => p['group'] == 'legs'), hasLength(2));
+        expect(anatomy.where((p) => p['weak'] == true), hasLength(1));
+      }
+      final knightAnatomy = oculumMonsterPrecisionAnatomy(knight);
+      expect(knightAnatomy.where((p) => p['group'] == 'eyes'), isEmpty);
+      expect(
+        knightAnatomy.singleWhere((p) => p['weak'] == true)['id'],
+        'chest_eye',
+      );
       final acid = oculumPlanarTechnique('zombie_acid_vomit')!;
       expect(acid.costResource, 'materia');
       expect(acid.forms.first.any((e) => e.target == 'corrosione_acida'), true);

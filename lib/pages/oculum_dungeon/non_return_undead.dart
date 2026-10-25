@@ -1,5 +1,42 @@
 part of 'monster_book.dart';
 
+List<Map<String, dynamic>> _nonReturnUndeadAnatomy({required bool knight}) => [
+  for (final part in [
+    ('body', 'Corpo'),
+    ('head', 'Testa'),
+    ('torso', 'Torace'),
+  ])
+    {
+      'id': part.$1,
+      'label': part.$2,
+      'group': part.$1,
+      'weak': false,
+      'penalty': 0,
+    },
+  for (final group in ['arms', 'legs'])
+    for (var i = 0; i < 2; i++)
+      {
+        'id': '${group}_${i + 1}',
+        'label': group == 'arms'
+            ? 'Braccio ${i == 0 ? 'destro' : 'sinistro'}'
+            : 'Gamba ${i == 0 ? 'destra' : 'sinistra'}',
+        'group': group,
+        'side': i == 0 ? 'right' : 'left',
+        'sideIndex': 1,
+        'weak': false,
+        'penalty': 0,
+      },
+  {
+    'id': knight ? 'chest_eye' : 'sac',
+    'label': knight
+        ? 'Occhio del vortice nel petto'
+        : 'Sacca acida sotto la gola',
+    'group': knight ? 'core' : 'sac',
+    'weak': true,
+    'penalty': 0,
+  },
+];
+
 final _nonReturnUndeadEntries = <MonsterBookEntry>[
   _canonicalCreature(
     'zombie_acido',
@@ -17,6 +54,7 @@ final _nonReturnUndeadEntries = <MonsterBookEntry>[
   ).copyWith(
     classificationTags: ['Non morto', 'Umanoide'],
     encounterRules: {
+      'precisionBodyParts': _nonReturnUndeadAnatomy(knight: false),
       'authoredCanonical': true,
       'dispositions': ['ostile'],
       'naturalScrollDrops': {
@@ -58,6 +96,7 @@ final _nonReturnUndeadEntries = <MonsterBookEntry>[
       'authoredCanonical': true,
       'dispositions': ['ostile'],
       'criticalShields': 3,
+      'precisionBodyParts': _nonReturnUndeadAnatomy(knight: true),
       'oculumDodges': 2,
       'naturalScrollDrops': {
         'non_return_step': {'minimum': 20, 'maximum': 20},
