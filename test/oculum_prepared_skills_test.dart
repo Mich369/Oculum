@@ -3,10 +3,25 @@ import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 
 void main() {
-  test('Parasite medicine thresholds and accumulating penalties match confirmed rules', () {
-    expect([for (var reflex=9; reflex<=15; reflex++) oculumParasiteMedicineThreshold(reflex)], [14,14,15,15,16,17,18]);
-    expect([for (var turn=0; turn<5; turn++) oculumParasiteEscapePenalty(turn)], [0,3,6,9,9]);
-  });
+  test(
+    'Parasite medicine thresholds and accumulating penalties match confirmed rules',
+    () {
+      expect(
+        [
+          for (var reflex = 9; reflex <= 15; reflex++)
+            oculumParasiteMedicineThreshold(reflex),
+        ],
+        [14, 14, 15, 15, 16, 17, 18],
+      );
+      expect(
+        [
+          for (var turn = 0; turn < 5; turn++)
+            oculumParasiteEscapePenalty(turn),
+        ],
+        [0, 3, 6, 9, 9],
+      );
+    },
+  );
 
   test('Dust crystals gate drop, exact single draw and independent loot', () {
     final counts = <String, int>{};
@@ -164,7 +179,9 @@ void main() {
             );
             expect(
               form.costoStrutturato!.resource,
-              skill.risorsaCostoPerLivello(i + 1),
+              oculumNormalizeEffectResource(
+                skill.risorsaCostoPerLivello(i + 1),
+              ),
             );
             final restored = CharacterSkillForm.fromJson({
               ...form.toJson(),

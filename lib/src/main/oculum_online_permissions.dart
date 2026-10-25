@@ -344,14 +344,18 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     refreshPermissionUi();
   }
 
-  Future<bool> requestUtilitySpend(String resource) async {
+  Future<bool> requestUtilitySpend(
+    String resource, {
+    bool preferFreeReaction = true,
+  }) async {
     if (hasCondition('paralisi_fato')) {
       aggiungiLog('Paralisi dal Fato: Azioni e Reazioni bloccate.');
       return false;
     }
-    if (!currentCombatIsActive()) return true;
+    if (!currentTurnTrackerIsActive()) return true;
     final tag = sheetTagAt(schedaCorrente);
-    final freeReaction = const {'azione', 'reazione'}.contains(resource)
+    final freeReaction =
+        preferFreeReaction && const {'azione', 'reazione'}.contains(resource)
         ? onlineCombatRequests.entries
               .where(
                 (entry) =>
@@ -479,7 +483,27 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     final round = _onlineCombatRound();
     final turnKey = _onlineCombatTurnKey(tokens, activeIndex, round);
     var usedFastReaction = false;
-    if (resource == 'azione') {
+    if (resource == 'speed_grant_fast') {
+      token['extraFastReactionCurrent'] =
+          readIntValue(token['extraFastReactionCurrent']) + 1;
+    } else if (resource == 'speed_queue_normal') {
+      token['extraNormalReactionQueued'] =
+          readIntValue(token['extraNormalReactionQueued']) + 1;
+    } else if (resource == 'azione_anticipata') {
+      final next = nextCounterAttackActionIndex(tokens, activeIndex);
+      final expectedRound = round + (index <= activeIndex ? 1 : 0);
+      if (index != next ||
+          token['meccanioReactionsOnly'] == true ||
+          (readIntValue(token['actionAnticipatedRound'], fallback: -1) ==
+              expectedRound) ||
+          (readIntValue(token['actionTurnRound'], fallback: -1) ==
+                  expectedRound &&
+              readBoolValue(token['actionUsed'])) ||
+          artDebtForToken(token, 'action') > 0) {
+        return false;
+      }
+      token['actionAnticipatedRound'] = expectedRound;
+    } else if (resource == 'azione') {
       if (index != activeIndex ||
           readBoolValue(token['actionUsed']) ||
           artDebtForToken(token, 'action') > 0) {
@@ -504,7 +528,10 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
           (resource == 'reazione' && !canUseNormal && canUseFast)) {
         if (canUseNormal) {
           token['reactionUsed'] = normalUsed + 1;
-          token['reactionUsedRound'] = round;
+          token['reactionUsedRound'] = readIntValue(
+            token['reactionPoolRound'],
+            fallback: round,
+          );
         } else {
           token['reactionFastUsed'] = fastUsed + 1;
           token['reactionFastTurnKey'] = turnKey;
@@ -517,6 +544,20 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       } else {
         return false;
       }
+    } else if (resource == 'fast_reaction_consequence_bonus') {
+      final currentBonus = readIntValue(
+        token['pendingFastReactionConsequenceBonus'],
+      );
+      final consumed = min(max(0, amount), currentBonus);
+      if (consumed <= 0) return false;
+      token['pendingFastReactionConsequenceBonus'] = currentBonus - consumed;
+    } else if (resource == 'fast_reaction_roll_bonus') {
+      final currentBonus = readIntValue(
+        token['pendingFastReactionRollBonus'],
+      ).clamp(0, 6);
+      final consumed = min(max(0, amount), currentBonus);
+      if (consumed <= 0) return false;
+      token['pendingFastReactionRollBonus'] = currentBonus - consumed;
     } else if (resource == 'reaction_roll_bonus') {
       final currentBonus = readIntValue(
         token['pendingReactionRollBonus'],
@@ -528,11 +569,29 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     } else {
       return false;
     }
+    if (usedFastReaction) {
+      final fastBonus = oculumFastReactionRollBonus(
+        initiativeIndex: index,
+        round: round,
+      );
+      token['pendingFastReactionRollBonus'] = max(
+        readIntValue(token['pendingFastReactionRollBonus']),
+        fastBonus,
+      );
+      aggiungiLog(
+        '[REAZIONE VELOCE] +$fastBonus al tiro di attacco, difesa, utilità o percezione per cui viene spesa.',
+      );
+    }
     token['updatedAt'] = DateTime.now().toIso8601String();
     final tokenName = oculumReferenceEncounterTokenName(token);
-    if (resource == 'azione') {
+    if (resource == 'azione_anticipata') {
+      aggiungiLog(
+        '[CONTROATTACCO] $tokenName anticipa la propria prossima Azione; al suo turno risulterà già consumata.',
+      );
+    } else if (resource == 'azione') {
       aggiungiLog('[TURNISTICA] Azione usata da $tokenName.');
-    } else if (resource == 'reaction_roll_bonus') {
+    } else if (resource == 'reaction_roll_bonus' ||
+        resource == 'fast_reaction_roll_bonus') {
       aggiungiLog(
         '[TURNISTICA] Bonus di reazioni inutilizzate consumato da $tokenName.',
       );
@@ -581,9 +640,16 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     );
     if (index < 0) return 0;
     final token = tokens[index];
-    final bonus = readIntValue(token['pendingReactionRollBonus']).clamp(0, 12);
+    final unusedBonus = readIntValue(
+      token['pendingReactionRollBonus'],
+    ).clamp(0, 12);
+    final fastBonus = readIntValue(
+      token['pendingFastReactionRollBonus'],
+    ).clamp(0, 6);
+    final bonus = unusedBonus + fastBonus;
     if (bonus <= 0) return 0;
     token['pendingReactionRollBonus'] = 0;
+    token['pendingFastReactionRollBonus'] = 0;
     token['reactionRollBonusUpdatedAt'] = DateTime.now().toIso8601String();
     token['updatedAt'] = DateTime.now().toIso8601String();
     if (_usesLocalMasterInitiative) {
@@ -593,22 +659,72 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       final spendId =
           '$tag:reaction-roll-bonus:${DateTime.now().microsecondsSinceEpoch}';
       appliedOnlineCombatTurnResourceSpendIds.add(spendId);
-      pendingOnlineCombatTurnResourceSpends.add({
-        'id': spendId,
-        'sheetTag': tag,
-        'resource': 'reaction_roll_bonus',
-        'amount': bonus,
-      });
+      if (unusedBonus > 0) {
+        pendingOnlineCombatTurnResourceSpends.add({
+          'id': spendId,
+          'sheetTag': tag,
+          'resource': 'reaction_roll_bonus',
+          'amount': unusedBonus,
+        });
+      }
+      if (fastBonus > 0) {
+        pendingOnlineCombatTurnResourceSpends.add({
+          'id': '$spendId:fast',
+          'sheetTag': tag,
+          'resource': 'fast_reaction_roll_bonus',
+          'amount': fastBonus,
+        });
+        appliedOnlineCombatTurnResourceSpendIds.add('$spendId:fast');
+      }
       if (pendingOnlineCombatTurnResourceSpends.length > 16) {
         pendingOnlineCombatTurnResourceSpends.removeAt(0);
       }
       unawaited(flushPendingCombatTurnResources().catchError((Object _) {}));
     }
     aggiungiLog(
-      '[TURNISTICA] Bonus di reazioni inutilizzate +$bonus applicato a questo tiro; bonus in attesa azzerato.',
+      '[TURNISTICA] Bonus al tiro +$bonus${fastBonus > 0 ? ' · Reazione veloce +$fastBonus' : ''}${unusedBonus > 0 ? ' · reazioni inutilizzate +$unusedBonus' : ''}; consumato una volta.',
     );
     programmaSalvataggio();
     notifyActiveSheetSummaryChanged();
+    return bonus;
+  }
+
+  int consumePendingFastReactionConsequenceBonus() {
+    final tag = sheetTagAt(schedaCorrente);
+    final token = _writableOnlineCombatTokens()
+        .where(
+          (token) =>
+              (_usesLocalMasterInitiative
+                  ? publicInitiativeSourceTag(token)
+                  : onlineCombatTokenTag(token)) ==
+              tag,
+        )
+        .firstOrNull;
+    if (token == null) return 0;
+    final bonus = max(
+      0,
+      readIntValue(token['pendingFastReactionConsequenceBonus']),
+    );
+    if (bonus == 0) return 0;
+    token['pendingFastReactionConsequenceBonus'] = 0;
+    if (_usesLocalMasterInitiative) {
+      captureActiveMasterInitiativeGroup();
+      sendRealtimeInitiativeSnapshotIfPublished();
+    } else if (realtimeService?.isConnected == true) {
+      final id =
+          '$tag:fast-consequence:${DateTime.now().microsecondsSinceEpoch}';
+      appliedOnlineCombatTurnResourceSpendIds.add(id);
+      pendingOnlineCombatTurnResourceSpends.add({
+        'id': id,
+        'sheetTag': tag,
+        'resource': 'fast_reaction_consequence_bonus',
+        'amount': bonus,
+      });
+    }
+    aggiungiLog(
+      '[REAZIONE CONSERVATA] +$bonus Danni o Difesa applicati a questo confronto e consumati una sola volta.',
+    );
+    programmaSalvataggio();
     return bonus;
   }
 
@@ -712,7 +828,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
   }
 
   Future<bool> spendCombatRollResource({bool forceReaction = false}) async {
-    if (!currentCombatIsActive()) return true;
+    if (!currentTurnTrackerIsActive()) return true;
     if (realtimeService?.isConnected != true && !_usesLocalMasterInitiative) {
       return true;
     }
@@ -753,6 +869,88 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       );
     }
     return allowed;
+  }
+
+  int nextCounterAttackActionIndex(
+    List<Map<String, dynamic>> tokens,
+    int active,
+  ) {
+    if (active < 0 || active >= tokens.length) return -1;
+    for (var step = 1; step < tokens.length; step++) {
+      final next = (active + step) % tokens.length;
+      if (masterInitiativeTokenCanAct(tokens[next]) &&
+          !masterInitiativeTokenIsTemporary(tokens[next])) {
+        return next;
+      }
+    }
+    return -1;
+  }
+
+  Future<bool> spendCounterAttackResource() async {
+    if (!currentTurnTrackerIsActive()) return true;
+    final tokens = _writableOnlineCombatTokens();
+    final index = tokens.indexWhere(
+      (token) =>
+          (_usesLocalMasterInitiative
+              ? publicInitiativeSourceTag(token)
+              : onlineCombatTokenTag(token)) ==
+          sheetTagAt(schedaCorrente),
+    );
+    if (index < 0) return false;
+    final active = _usesLocalMasterInitiative
+        ? masterInitiativeActiveIndex
+        : readIntValue(realtimeVisibleInitiativeSnapshot['activeIndex']);
+    final token = tokens[index];
+    if (token['meccanioReactionsOnly'] != true) {
+      if (index == active && !readBoolValue(token['actionUsed'])) {
+        return requestUtilitySpend('azione', preferFreeReaction: false);
+      }
+      if (index == nextCounterAttackActionIndex(tokens, active) &&
+          await requestUtilitySpend('azione_anticipata')) {
+        return true;
+      }
+    }
+    if (!mounted) return false;
+    final resource = await showDialog<String>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('Controattacco · una sola risorsa'),
+        content: const Text(
+          'Scegli la Reazione da spendere. La veloce aggiunge +3 al tiro (+6 per il primo in turnistica, soltanto nel primo giro).',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('Annulla'),
+          ),
+          if (masterInitiativeNormalReactionRemaining(
+                token,
+                round: _onlineCombatRound(),
+              ) >
+              0)
+            TextButton(
+              onPressed: () => Navigator.pop(dialog, 'reazione'),
+              child: const Text('Reazione normale'),
+            ),
+          if (masterInitiativeFastReactionUsedThisTurn(
+                token,
+                turnKey: _onlineCombatTurnKey(
+                  tokens,
+                  active,
+                  _onlineCombatRound(),
+                ),
+              ) <
+              masterInitiativeFastReactionMax(token))
+            FilledButton(
+              onPressed: () => Navigator.pop(dialog, 'reazione_veloce'),
+              child: const Text('Reazione veloce'),
+            ),
+        ],
+      ),
+    );
+    return resource != null &&
+        mounted &&
+        await requestUtilitySpend(resource, preferFreeReaction: false);
   }
 
   void receiveUtilitySpend(
@@ -837,6 +1035,11 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
                 'reactionNormalFirstRoundLocked',
                 'actionTurnRound',
                 'pendingReactionRollBonus',
+                'pendingFastReactionRollBonus',
+                'pendingFastReactionConsequenceBonus',
+                'fastReactionPersonalTurnRound',
+                'initialFastReactionExpired',
+                'actionAnticipatedRound',
               ])
                 key: masterInitiativeTokens[index][key],
             },
@@ -889,6 +1092,11 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
               'reactionNormalFirstRoundLocked',
               'actionTurnRound',
               'pendingReactionRollBonus',
+              'pendingFastReactionRollBonus',
+              'pendingFastReactionConsequenceBonus',
+              'fastReactionPersonalTurnRound',
+              'initialFastReactionExpired',
+              'actionAnticipatedRound',
             ]) {
               if (turnState.containsKey(key)) token[key] = turnState[key];
             }

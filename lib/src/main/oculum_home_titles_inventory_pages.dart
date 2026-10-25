@@ -1755,7 +1755,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         aggiungiLog('${skill.nome}: richiede livello ${form.livello}.');
         return;
       }
-      await useConfiguredAbility(
+      final used = await useConfiguredAbility(
         source: '${skill.nome} / ${form.nome}',
         effects: oculumResolveAbilityEffects(
           form.effettiStrutturati,
@@ -1768,6 +1768,25 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         cooldown: structuredCooldown,
         valid: () => skills.contains(skill) && skill.forme.contains(form),
       );
+      if (used &&
+          form.effettiStrutturati.any(
+            (effect) =>
+                effect.type == 'planar' &&
+                const {
+                  'speed_increase',
+                  'rabbit_hat',
+                  'plasma_matter_recharge',
+                }.contains(effect.target),
+          )) {
+        for (final sibling in skill.forme) {
+          if (sibling.cooldownStrutturato != null &&
+              structuredCooldown != null) {
+            sibling.cooldownStrutturato!.remaining =
+                structuredCooldown.remaining;
+          }
+        }
+        programmaSalvataggio();
+      }
       return;
     }
     if (structuredCooldown != null && !structuredCooldown.ready) {
@@ -2133,13 +2152,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       if (form.buff.trim().isNotEmpty) '@',
     ].join(' - ');
 
-    return Container(
+    return abilityColorFrame(
+      cost: form.costo,
+      benefitText: form.buff,
+      effects: form.effettiStrutturati,
+      padding: EdgeInsets.zero,
       margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.22),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
-      ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
@@ -2168,7 +2186,13 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: abilityBenefitColor(
+                form.effettiStrutturati,
+                fallback: form.buff,
+              ),
+            ),
           ),
           subtitle: summary.isEmpty
               ? null
@@ -2747,10 +2771,13 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     width: itemWidth,
                     child: functionAnchor(
                       'free_skill_$i',
-                      gothicPanel(
-                        borderColor: skills[i].equipaggiata
-                            ? tertiaryColor
-                            : primaryColor.withValues(alpha: 0.7),
+                      abilityColorFrame(
+                        cost: skills[i].forme
+                            .map((form) => form.costo)
+                            .join(' '),
+                        effects: skills[i].forme.expand(
+                          (form) => form.effettiStrutturati,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -5974,8 +6001,36 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           position.dy,
         ),
         items: <PopupMenuEntry<String>>[
+          if (item.craftData['dollCostume'] == true)
+            const PopupMenuItem<String>(
+              value: 'costume_jump',
+              child: Text('Scatto a molla del costume'),
+            ),
+          if (item.craftData['mechaScraps'] == true) ...[
+            const PopupMenuItem<String>(
+              value: 'mecha_mechanics',
+              child: Text('Costruisci mecha · Meccanica'),
+            ),
+            const PopupMenuItem<String>(
+              value: 'mecha_crafting',
+              child: Text('Costruisci mecha · Crafting −2'),
+            ),
+          ],
+          if (item.craftData['mechaWreck'] == true)
+            const PopupMenuItem<String>(
+              value: 'mecha_core',
+              child: Text('Distruggi rottami · 65% nucleo rotto'),
+            ),
+          if (item.craftData['mechaItem'] == true)
+            const PopupMenuItem<String>(
+              value: 'mecha_enter',
+              child: Text('Entra nel mecha · Azione'),
+            ),
           if (item.ability != null || item.craftData['titleItem'] == true)
-            const PopupMenuItem<String>(value: 'equipment_forms', child: Text('Modifica abilità / evoluzioni oggetto')),
+            const PopupMenuItem<String>(
+              value: 'equipment_forms',
+              child: Text('Modifica abilità / evoluzioni oggetto'),
+            ),
           if (item.craftData['titleItem'] != true)
             PopupMenuItem<String>(
               value: 'convert_title',
@@ -6110,6 +6165,21 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       );
       if (!mounted || choice == null || !inventario.contains(item)) return;
       switch (choice) {
+        case 'costume_jump':
+          await useDollCostumeJump(item);
+          break;
+        case 'mecha_mechanics':
+          await craftMecha(item);
+          break;
+        case 'mecha_crafting':
+          await craftMecha(item, crafting: true);
+          break;
+        case 'mecha_core':
+          destroyMechaWreck(item);
+          break;
+        case 'mecha_enter':
+          await enterMecha(item);
+          break;
         case 'equipment_forms':
           await editEquipmentTitleForms(item);
           break;
@@ -6676,6 +6746,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   'Capacity: Total Will × 3 kg',
                 ),
               ),
+              willKingdomPanel(),
               const SizedBox(height: 8),
               smallInfoText(
                 t(

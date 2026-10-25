@@ -103,6 +103,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         'manualOrder': masterInitiativeManualOrder,
         'published': masterInitiativePublished,
         'manualCounter': masterInitiativeManualCounter,
+        'fightStarted': false,
       });
     }
     while (masterInitiativeGroups.length < 5) {
@@ -120,6 +121,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         'manualOrder': false,
         'published': false,
         'manualCounter': 0,
+        'fightStarted': false,
       });
     }
   }
@@ -590,9 +592,50 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     await salvaDati();
   }
 
+  bool currentTurnTrackerIsActive() => onlineCombatTokens().isNotEmpty;
+
+  bool encounterFightStarted(String id) =>
+      masterInitiativeGroups
+          .where((g) => g['id'] == id)
+          .firstOrNull?['fightStarted'] ==
+      true;
+
+  void startEncounterFight(String id) {
+    if (realtimeService?.isConnected == true && !realtimeIsMasterRole) return;
+    selectMasterInitiativeGroup(id);
+    final group = masterInitiativeGroups
+        .where((g) => g['id'] == id)
+        .firstOrNull;
+    if (group == null || masterInitiativeTokens.isEmpty) return;
+    group['fightStarted'] = true;
+    group['combatEnded'] = false;
+    for (final token in masterInitiativeTokens) {
+      for (final key in [
+        'extraNormalReactionCurrent',
+        'extraNormalReactionQueued',
+        'extraFastReactionCurrent',
+        'pendingReactionCarryBonus',
+      ]) {
+        token[key] = 0;
+      }
+    }
+    rollMasterInitiativeTokens();
+    captureActiveMasterInitiativeGroup();
+    sendRealtimeInitiativeSnapshotIfPublished();
+    aggiungiLog(
+      '[INIZIA FIGHT] Iniziative ritirate per tutti. La turnistica resta disponibile anche nel roleplay.',
+    );
+    programmaSalvataggio();
+  }
+
   bool currentCombatIsActive() {
     final realtimeTokens = realtimeVisibleInitiativeSnapshot['tokens'];
     if (realtimeService?.isConnected == true && !realtimeIsMasterRole) {
+      if (realtimeVisibleInitiativeSnapshot.containsKey('fightStarted')) {
+        return realtimeVisibleInitiativeSnapshot['fightStarted'] == true &&
+            realtimeTokens is List &&
+            realtimeTokens.isNotEmpty;
+      }
       return realtimeVisibleInitiativeSnapshot['combatEnded'] != true &&
           realtimeTokens is List &&
           realtimeTokens.isNotEmpty;
@@ -600,6 +643,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final group = masterInitiativeGroups
         .where((g) => g['id'] == selectedMasterInitiativeGroupId)
         .firstOrNull;
+    if (group != null && group.containsKey('fightStarted')) {
+      return group['fightStarted'] == true && masterInitiativeTokens.isNotEmpty;
+    }
     if (group?['combatEnded'] == true &&
         !masterInitiativeTokens.any(
           (token) =>
@@ -1248,11 +1294,21 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     String nome,
     int bonus, {
     bool applyGlobalRollModifier = true,
+    bool resourceAlreadySpent = false,
     String? actionLabel,
     void Function(int damageBonus)? onOculumDamageBonus,
     void Function(int naturalRoll, int total)? onResolved,
   }) async {
     oculumProfileMark('roll_special');
+    if (!resourceAlreadySpent &&
+        actionLabel == null &&
+        onResolved == null &&
+        nome.trim().toLowerCase() != 'iniziativa' &&
+        nome.trim().toLowerCase() != 'initiative' &&
+        !await spendCombatRollResource()) {
+      return;
+    }
+    if (!mounted) return;
     final attack = {
       'vc',
       'danno',
@@ -1396,6 +1452,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   Future<void> tiraSottotrattoOcchio(
     HiddenEyeStat stat, {
     String? actionLabel,
+    bool resourceAlreadySpent = false,
     int? opposingTotal,
     int logPenalty = 0,
     bool appliesAttackDamageBonus = false,
@@ -1407,6 +1464,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       await scoutCombatTarget(requestedStat: stat);
       return;
     }
+    if (!resourceAlreadySpent &&
+        actionLabel == null &&
+        onResolved == null &&
+        stat.id != 'iniziativa' &&
+        !await spendCombatRollResource()) {
+      return;
+    }
+    if (!mounted) return;
     if (stat.id == 'manifestazione_potere') {
       final consumptionRoll = Random.secure().nextInt(100);
       final consumed = oculumManifestationConsumesOculum(consumptionRoll)
@@ -1757,7 +1822,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final bonusGlobale =
         tiroGlobaleBonus() +
         (coreMasteryPoints['aiuta_compagno'] ?? 0) +
-        consumeCombatHelp();
+        consumeCombatHelp() +
+        consumePendingReactionRollBonus();
     final bonus = livello + grado * 6 + bonusGlobale;
     final totale = rollTotalWithCritical(dado, 10, [
       livello,
@@ -2201,14 +2267,21 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   int masterInitiativeReactionMax(Map<String, dynamic> token) {
-    if (token['ashReactionExhausted'] == true) return 0;
-    return max(1, readIntValue(token['reactionMax'], fallback: 1));
+    if (token['mechaCriticalOnly'] == true) return 0;
+    if (token['ashReactionExhausted'] == true ||
+        token['oblivionMemoryReactionLost'] == true) {
+      return 0;
+    }
+    return max(1, readIntValue(token['reactionMax'], fallback: 1)) +
+        max(0, readIntValue(token['extraNormalReactionCurrent']));
   }
 
   int masterInitiativeFastReactionMax(Map<String, dynamic> token) {
-    // The baseline fast reaction belongs to every participant at the start
-    // of a round; sheet effects can add more, but cannot remove that base.
-    return max(1, readIntValue(token['reactionFastMax'], fallback: 1));
+    final extra = max(0, readIntValue(token['extraFastReactionCurrent']));
+    if (token['mechaCriticalOnly'] == true) return 1 + extra;
+    if (token['mechaReactionOnly'] == true) return extra;
+    if (token['initialFastReactionExpired'] == true) return extra;
+    return max(1, readIntValue(token['reactionFastMax'], fallback: 1)) + extra;
   }
 
   String masterInitiativeTurnKey() {
@@ -2216,7 +2289,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   int masterInitiativeReactionUsed(Map<String, dynamic> token, {int? round}) {
-    final currentRound = round ?? masterInitiativeRound;
+    final currentRound = readIntValue(
+      token['reactionPoolRound'],
+      fallback: round ?? masterInitiativeRound,
+    );
     final maxReactions = masterInitiativeReactionMax(token);
     final usedRound = readIntValue(
       token['reactionUsedRound'],
@@ -2233,14 +2309,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     String? turnKey,
   }) {
     final maxFast = masterInitiativeFastReactionMax(token);
-    final expectedKey = turnKey ?? masterInitiativeTurnKey();
-    final storedKey = '${token['reactionFastTurnKey'] ?? ''}';
-    final sameRound =
-        storedKey == expectedKey ||
-        (storedKey.startsWith('$expectedKey:') && expectedKey.isNotEmpty);
-    if (!sameRound) {
-      return 0;
-    }
     return readIntValue(token['reactionFastUsed']).clamp(0, maxFast).toInt();
   }
 
@@ -2256,10 +2324,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final currentRound = round ?? masterInitiativeRound;
     final poolInitialized = readBoolValue(token['reactionPoolInitialized']);
     final poolRound = readIntValue(token['reactionPoolRound']);
-    if (!poolInitialized || poolRound != currentRound) return 0;
-    if (currentRound == 0 &&
+    if (!poolInitialized) return 0;
+    if (poolRound == 0 &&
+        token['mechaReactionOnly'] != true &&
         readBoolValue(token['reactionNormalFirstRoundLocked'])) {
-      return 0;
+      return max(
+        0,
+        readIntValue(token['extraNormalReactionCurrent']) -
+            readIntValue(token['reactionUsed']),
+      );
     }
     final used = masterInitiativeReactionUsed(token, round: currentRound);
     return max(0, masterInitiativeReactionMax(token) - used);
@@ -2320,42 +2393,47 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
   }
 
-  void convertUnusedFastReactionsForTurn(String turnKey) {
-    if (!realtimeIsMasterRole || turnKey.isEmpty) return;
-    var changed = false;
-    for (final token in masterInitiativeTokens) {
-      if (!masterInitiativeTokenCanAct(token) ||
-          masterInitiativeTokenIsTemporary(token) ||
-          masterInitiativeFastReactionMax(token) <= 0 ||
-          '${token['reactionFastBonusConvertedTurnKey'] ?? ''}' == turnKey) {
-        continue;
-      }
-      final fastMaximum = masterInitiativeFastReactionMax(token);
-      final fastUsed = masterInitiativeFastReactionUsedThisTurn(
-        token,
-        turnKey: turnKey,
+  void restoreMasterInitiativeFastReactionsForToken(
+    Map<String, dynamic> token,
+  ) {
+    final previous = readIntValue(
+      token['fastReactionPersonalTurnRound'],
+      fallback: -1,
+    );
+    if (previous == masterInitiativeRound) return;
+    if (masterInitiativeRound > 0 &&
+        token['initialFastReactionExpired'] != true &&
+        masterInitiativeFastReactionMax(token) > 0) {
+      final fastMaximum = max(
+        1,
+        readIntValue(token['reactionFastMax'], fallback: 1),
       );
+      final fastUsed = masterInitiativeFastReactionUsedThisTurn(token);
       final unusedFast = max(
         0,
         fastMaximum - fastUsed - artDebtForToken(token, 'reaction'),
       );
-      token['reactionFastBonusConvertedTurnKey'] = turnKey;
       if (unusedFast > 0) {
         _grantUnusedReactionRollBonus(token, unusedFast, fast: true);
-        changed = true;
+        token['pendingFastReactionConsequenceBonus'] =
+            readIntValue(token['pendingFastReactionConsequenceBonus']) +
+            5 * unusedFast;
+        aggiungiLog(
+          '[REAZIONE VELOCE INUTILIZZATA] +${5 * unusedFast} ai Danni o alla Difesa del prossimo tiro pertinente; resta disponibile dopo Utility o Percezione.',
+        );
       }
     }
-    if (changed) captureActiveMasterInitiativeGroup();
-  }
-
-  void restoreMasterInitiativeFastReactionsForRound() {
-    final turnKey = masterInitiativeTurnKey();
-    for (final token in masterInitiativeTokens) {
+    if (masterInitiativeRound > 0) {
+      token['initialFastReactionExpired'] = true;
       token['reactionFastUsed'] = 0;
-      token['reactionFastTurnKey'] = turnKey;
-      token['reactionFastBonusConvertedTurnKey'] = '';
-      token['updatedAt'] = DateTime.now().toIso8601String();
     }
+    token['reactionFastTurnKey'] = '$masterInitiativeRound';
+    token['fastReactionPersonalTurnRound'] = masterInitiativeRound;
+    token['pendingFastReactionRollBonus'] = 0;
+    if (previous >= 0 || masterInitiativeRound > 0) {
+      token['extraFastReactionCurrent'] = 0;
+    }
+    token['updatedAt'] = DateTime.now().toIso8601String();
   }
 
   void convertUnusedNormalReactionForToken(Map<String, dynamic> token) {
@@ -2379,6 +2457,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final poolRound = readIntValue(token['reactionPoolRound']);
     if (poolInitialized && poolRound == masterInitiativeRound) return;
     convertUnusedNormalReactionForToken(token);
+    token['extraNormalReactionCurrent'] = readIntValue(
+      token['extraNormalReactionQueued'],
+    );
+    token['extraNormalReactionQueued'] = 0;
     token['reactionUsed'] = 0;
     token['reactionUsedRound'] = 0;
     token['reactionPoolInitialized'] = true;
@@ -2389,16 +2471,32 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   void restoreMasterInitiativeTurnResources(Map<String, dynamic> token) {
+    restoreMasterInitiativeFastReactionsForToken(token);
     restoreMasterInitiativeTokenReactions(token);
     if (readIntValue(token['actionTurnRound'], fallback: -1) !=
         masterInitiativeRound) {
+      if (readIntValue(token['extraNormalReactionQueued']) > 0) {
+        token['extraNormalReactionCurrent'] =
+            readIntValue(token['extraNormalReactionCurrent']) +
+            readIntValue(token['extraNormalReactionQueued']);
+        token['extraNormalReactionQueued'] = 0;
+      }
       token['actionUsed'] =
+          readIntValue(token['actionAnticipatedRound'], fallback: -1) ==
+              masterInitiativeRound ||
           (token['posteaFirstRoundReactionOnly'] == true &&
               masterInitiativeRound == 0) ||
           token['meccanioReactionsOnly'] == true;
+      if (token['mechaPilotExtra'] == true) {
+        final field = token['mechaPilotCritical'] == true
+            ? 'extraFastReactionCurrent'
+            : 'extraNormalReactionCurrent';
+        token[field] = readIntValue(token[field]) + 1;
+      }
       token['actionTurnRound'] = masterInitiativeRound;
       final tag = publicInitiativeSourceTag(token);
       final index = localSheetIndexForOculumTag(tag);
+      resolveOblivionMemoryTurn(token);
       final ash = index < 0
           ? readIntValue(token['ash'])
           : index == schedaCorrente
@@ -2664,6 +2762,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       token['pendingReactionRollBonus'] = readIntValue(
         token['pendingReactionRollBonus'],
       ).clamp(0, 12);
+      token['pendingFastReactionRollBonus'] = readIntValue(
+        token['pendingFastReactionRollBonus'],
+      ).clamp(0, 6);
       token['actionTurnRound'] = readIntValue(
         token['actionTurnRound'],
         fallback: -1,
@@ -2901,6 +3002,28 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'notes': sheetNotes,
       'visibleTitleName': titoloPubblico?.nome ?? '',
       'visibleTitleLegend': titoloPubblico?.leggenda ?? '',
+      if (schedePersonaggio[index]['planarRuntime'] is Map &&
+          (schedePersonaggio[index]['planarRuntime'] as Map)['mechaFrame']
+              is Map) ...{
+        'meccanioReactionsOnly': true,
+        'mechaReactionOnly': true,
+        'mechaCriticalOnly':
+            ((schedePersonaggio[index]['planarRuntime'] as Map)['mechaFrame']
+                as Map)['critical'] ==
+            true,
+        'mechaOccupied':
+            '${((schedePersonaggio[index]['planarRuntime'] as Map)['mechaFrame'] as Map)['occupiedBy'] ?? ''}'
+                .isNotEmpty,
+      },
+      if (schedePersonaggio[index]['planarRuntime'] is Map &&
+          (schedePersonaggio[index]['planarRuntime'] as Map)['mountedMecha']
+              is Map) ...{
+        'mechaPilotExtra': true,
+        'mechaPilotCritical':
+            ((schedePersonaggio[index]['planarRuntime'] as Map)['mountedMecha']
+                as Map)['critical'] ==
+            true,
+      },
       'reactionMax': sheetReazioniAt(index),
       'reactionFastMax': sheetReazioniVelociAt(index),
       'reactionUsed': 0,
@@ -3165,6 +3288,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         'reactionNormalFirstRoundLocked': false,
         'reactionFastBonusConvertedTurnKey': '',
         'pendingReactionRollBonus': 0,
+        'pendingFastReactionRollBonus': 0,
+        'pendingFastReactionConsequenceBonus': 0,
+        'fastReactionPersonalTurnRound': -1,
+        'initialFastReactionExpired': false,
+        'actionAnticipatedRound': -1,
         'actionTurnRound': -1,
         'actionUsed': false,
         'currentHp': 1,
@@ -3217,7 +3345,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     setState(() {
       normalizeMasterInitiativeTokens();
       removeExpiredTemporaryInitiativeTurns(all: true);
-      convertUnusedFastReactionsForTurn(masterInitiativeTurnKey());
       for (final token in masterInitiativeTokens) {
         convertUnusedNormalReactionForToken(token);
       }
@@ -3250,6 +3377,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         token['reactionUsedRound'] = 0;
         token['reactionFastUsed'] = 0;
         token['reactionFastTurnKey'] = '0';
+        token['pendingFastReactionRollBonus'] = 0;
+        token['pendingFastReactionConsequenceBonus'] = 0;
+        token['fastReactionPersonalTurnRound'] = -1;
+        token['initialFastReactionExpired'] = false;
+        token['actionAnticipatedRound'] = -1;
         token['reactionFastBonusConvertedTurnKey'] = '';
         token['reactionPoolInitialized'] = true;
         token['reactionPoolRound'] = 0;
@@ -3409,18 +3541,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (masterInitiativeTokens.isEmpty) return;
     setState(() {
       normalizeMasterInitiativeTokens();
-      final previousRound = masterInitiativeRound;
       final requestedIndex = activeIndex ?? masterInitiativeActiveIndex;
       final requestedSafeIndex = requestedIndex
           .clamp(0, masterInitiativeTokens.length - 1)
           .toInt();
-      if (round != previousRound) {
-        convertUnusedFastReactionsForTurn(previousRound.toString());
-      }
       masterInitiativeRound = max(0, round);
-      if (round != previousRound) {
-        restoreMasterInitiativeFastReactionsForRound();
-      }
       final safeIndex = requestedSafeIndex;
       if (masterInitiativeTokenCanAct(masterInitiativeTokens[safeIndex])) {
         for (final token in masterInitiativeTokens) {
@@ -3617,9 +3742,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
 
       if (delta > 0 && next <= current) {
-        convertUnusedFastReactionsForTurn(masterInitiativeTurnKey());
         masterInitiativeRound++;
-        restoreMasterInitiativeFastReactionsForRound();
         removeExpiredTemporaryInitiativeTurns();
         for (final token in masterInitiativeTokens) {
           if (masterInitiativeTokenCanAct(token)) token['status'] = 'ready';
@@ -3665,19 +3788,21 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     setState(() {
       normalizeMasterInitiativeTokens();
       if (increment) {
-        convertUnusedFastReactionsForTurn(masterInitiativeTurnKey());
         masterInitiativeRound++;
-        restoreMasterInitiativeFastReactionsForRound();
       } else {
-        convertUnusedFastReactionsForTurn(masterInitiativeTurnKey());
         for (final token in masterInitiativeTokens) {
           convertUnusedNormalReactionForToken(token);
         }
         masterInitiativeRound = 0;
-        restoreMasterInitiativeFastReactionsForRound();
         for (final token in masterInitiativeTokens) {
           token['reactionUsed'] = 0;
           token['reactionUsedRound'] = 0;
+          token['reactionFastUsed'] = 0;
+          token['reactionFastTurnKey'] = '0';
+          token['fastReactionPersonalTurnRound'] = -1;
+          token['initialFastReactionExpired'] = false;
+          token['pendingFastReactionRollBonus'] = 0;
+          token['pendingFastReactionConsequenceBonus'] = 0;
           token['reactionPoolInitialized'] = true;
           token['reactionPoolRound'] = 0;
           token['reactionNormalFirstRoundLocked'] = true;
@@ -5155,6 +5280,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int? criticalDamageBonusOverride,
     int extraFragilityPercent = 0,
     double incomingDamageMultiplier = 1,
+    int incomingPacketPercent = 100,
     bool bypassDefense = false,
     bool bypassShields = false,
     int shieldDamageBonusPercent = 0,
@@ -5413,8 +5539,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                 criticalEnemyLevel,
               ) *
               criticalBonusMultiplier.clamp(1, 2);
-      final dannoPrimaParataLordo =
-          dannoInserito + (critico ? bonusCritico : 0);
+      final dannoPrimaParataLordo = oculumCounterAttackDamage(
+        oculumCounterAttackDamage(
+          dannoInserito + (critico ? bonusCritico : 0),
+          incomingPacketPercent,
+        ),
+        100 -
+            activeStructuredEffectBonus(
+              'incoming_reduction_percent',
+            ).clamp(0, 100),
+      );
       final runicBeforeDefense = min(
         max(0, resistanceBypassDamage),
         dannoPrimaParataLordo,
@@ -6278,6 +6412,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         interruptPreparedSkill(
           attackerGrade: enemyGrade ?? oculumGradeForLevel(enemyLevel ?? 0),
         );
+      }
+      if (isMountedInMecha) {
+        syncMountedMechaBody();
+        if (hpCorrenti() <= 0) await exitMecha(destroyed: true);
+        return;
       }
       checkAutomaticAshFromHpLoss(hpPrima, hp, source: t('danno', 'damage'));
       planarAfterHpDamage();

@@ -215,7 +215,10 @@ void main() {
         monsterBookUsableSkillIds(monster).length,
         reason: monster.id,
       );
-      if (!oculumMonsterHasOculumArt(monster)) expect(art, isNull);
+      if (!oculumMonsterHasOculumArt(monster)) {
+        expect(art?.skills ?? <ArtSkill>[], isEmpty, reason: monster.id);
+        if (art != null) expect(art.openName, isNotEmpty, reason: monster.id);
+      }
       for (final skill in skills) {
         final restored = CharacterSkill.fromJson(skill.toJson());
         for (final form in restored.forme) {
@@ -229,7 +232,7 @@ void main() {
                 '${form.descrizione}',
           );
           expect(resource, isNotEmpty);
-          if (resource != 'oculum') {
+          if (resource != 'oculum' && monster.id != 'observers_tear') {
             expect(
               form.effettiStrutturati.any(
                 (e) => e.valueExpression.contains('oculum_spent'),

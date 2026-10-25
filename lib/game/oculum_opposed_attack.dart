@@ -1,5 +1,26 @@
 import 'dart:math';
 
+/// Attacking an incoming attacker replaces the ordinary defense comparison.
+/// Percentages are applied to each declared packet before its protections.
+({int incomingPercent, int outgoingPercent}) oculumCounterAttackPercentages(
+  int incomingAttack,
+  int counterAttack,
+) {
+  final margin = counterAttack - incomingAttack;
+  if (margin > 0) return (incomingPercent: 0, outgoingPercent: 100);
+  if (margin == 0) return (incomingPercent: 50, outgoingPercent: 50);
+  if (margin >= -3) return (incomingPercent: 75, outgoingPercent: 25);
+  return (incomingPercent: 100, outgoingPercent: 0);
+}
+
+int oculumCounterAttackDamage(int damage, int percent) =>
+    max(0, damage) * percent.clamp(0, 1000) ~/ 100;
+
+int oculumFastReactionRollBonus({
+  required int initiativeIndex,
+  required int round,
+}) => initiativeIndex == 0 && round == 0 ? 6 : 3;
+
 bool oculumIsDoubleCritical({
   required int natural,
   required int total,

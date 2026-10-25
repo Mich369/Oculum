@@ -4296,10 +4296,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             runSpacing: compact ? 6 : 8,
             children: [
               ElevatedButton.icon(
-                onPressed: () => rollMasterInitiativeTokens(),
+                onPressed: () =>
+                    encounterFightStarted(selectedMasterInitiativeGroupId)
+                    ? finishEncounter(selectedMasterInitiativeGroupId)
+                    : startEncounterFight(selectedMasterInitiativeGroupId),
                 icon: const Icon(Icons.casino),
                 label: Text(
-                  compact ? t('Tutti', 'All') : t('Rolla tutti', 'Roll all'),
+                  encounterFightStarted(selectedMasterInitiativeGroupId)
+                      ? t('Fine combattimento', 'End fight')
+                      : t('Inizia fight', 'Start fight'),
                 ),
               ),
               ElevatedButton.icon(
@@ -9107,6 +9112,50 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       }
     }
 
+    if (activating &&
+        skill
+            .effettiEvoluzione(livelloNuovo)
+            .any(
+              (e) => const {
+                'rabbit_hat',
+                'plasma_matter_recharge',
+              }.contains(e.target),
+            )) {
+      final used = await useConfiguredAbility(
+        source: '${art.nome} / ${skill.nome}',
+        effects: skill.effettiEvoluzione(livelloNuovo),
+        cost: OculumSkillCost(
+          resource: costResource,
+          amountExpression: '${skill.oculumMinimoPerLivello(livelloNuovo)}',
+          minimum: skill.oculumMinimoPerLivello(livelloNuovo),
+          maximum: skill.oculumMassimoPerLivello(livelloNuovo),
+          variable:
+              skill.oculumMinimoPerLivello(livelloNuovo) !=
+              skill.oculumMassimoPerLivello(livelloNuovo),
+          additionalCosts: skill.additionalCostsPerLevel[livelloNuovo - 1],
+        ),
+        cooldown: structuredCooldown,
+        valid: () =>
+            arti.contains(art) &&
+            art.inUso &&
+            skill.livello == livelloPrecedente,
+      );
+      if (!used || !mounted) return;
+      skill.livello = livelloNuovo;
+      for (final cd in skill.cooldownPerLivello) {
+        cd.remaining = structuredCooldown?.remaining ?? 4;
+      }
+      if (art.hasIntegrity && art.sbloccata) {
+        consumeArtIntegrityAndResolveDebuff(
+          artIndex,
+          activationCost,
+          skillLevel: livelloNuovo.clamp(1, 3),
+        );
+      }
+      programmaSalvataggio();
+      setState(() {});
+      return;
+    }
     var rockSlimeBlock = false;
     if (activating &&
         skill.nome == 'Palla di Roccia Slime' &&
@@ -9143,6 +9192,50 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       rockSlimeBlock = selectedBlock;
     }
     OculumSkillUseDialogResult? resourceUse;
+    Map<String, int>? tearPayment;
+    if (activating &&
+        (skill.additionalCostsPerLevel[livelloNuovo - 1].isNotEmpty ||
+            costResource == 'obser' &&
+                skill
+                    .effettiEvoluzione(livelloNuovo)
+                    .any((e) => e.id.startsWith('tear_')))) {
+      final minimum = skill.oculumMinimoPerLivello(livelloNuovo);
+      final maximum = skill.oculumMassimoPerLivello(livelloNuovo);
+      final paid = await useConfiguredAbility(
+        source: '${art.nome} / ${skill.nome}',
+        effects: skill.effettiEvoluzione(livelloNuovo),
+        cost: OculumSkillCost(
+          resource: costResource,
+          additionalCosts: skill.additionalCostsPerLevel[livelloNuovo - 1],
+          amountExpression: '$minimum',
+          minimum: minimum,
+          maximum: maximum,
+          variable: minimum != maximum,
+        ),
+        cooldown: structuredCooldown,
+        paymentOnly: true,
+        onPaid: (resources) => tearPayment = resources,
+        valid: () =>
+            arti.contains(art) &&
+            art.skills.contains(skill) &&
+            skill.livello == livelloPrecedente &&
+            art.inUso &&
+            (!art.hasIntegrity ||
+                !art.sbloccata ||
+                oculumArtCanActivate(
+                  art.integritaCorrente,
+                  cost: activationCost,
+                )),
+      );
+      if (!paid || !mounted) return;
+      resourceUse = OculumSkillUseDialogResult(
+        selected: tearPayment!.values.fold(0, (a, b) => a + b),
+        minimum: minimum,
+        maximum: maximum,
+        limitsChanged: false,
+      );
+    }
+
     OculumSkillMasteryPreview? masteryPreview;
     var masteryLimit = 0;
     var learningTitleCreated = false;
@@ -9204,7 +9297,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         return;
       }
     }
-    if (activationCost > 0 && hasStatCost) {
+    if (activationCost > 0 && hasStatCost && tearPayment == null) {
       resourceUse = await mostraDialogUsoOculumSkillArt(
         art: art,
         skill: skill,
@@ -9275,7 +9368,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
     final availableBefore = artSkillCostResourceAvailable(costResource);
     final requestedResourceSpend = resourceUse?.selected ?? 0;
-    var resourceSpent = 0;
+    var resourceSpent = tearPayment?.values.fold<int>(0, (a, b) => a + b) ?? 0;
     String? fatigueMessage;
     if (resourceUse != null) {
       if (resourceUse.limitsChanged) {
@@ -9307,7 +9400,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               '${skill.nome.trim().isEmpty ? t('Skill', 'Skill') : skill.nome.trim()} ${artLevelRoman(nextLearningLevel)}',
         );
       }
-      if (requestedResourceSpend > 0) {
+      if (requestedResourceSpend > 0 && tearPayment == null) {
         resourceSpent = spendArtSkillCostResource(
           costResource,
           requestedResourceSpend,
@@ -9448,7 +9541,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     if (activating && livelloNuovo > 0) {
       recordSkillActivationSpent(
         artSkillActivationKey(art, skill),
-        <String, num>{costResource: resourceSpent},
+        <String, num>{
+          ...?tearPayment,
+          if (tearPayment == null) costResource: resourceSpent,
+        },
       );
       final structuredMessages = applyStructuredEffectsOnActivation(
         rockSlimeBlock
@@ -9466,7 +9562,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               ),
         source: '${art.nome} / ${skill.nome} ${artLevelRoman(livelloNuovo)}',
         level: livelloNuovo,
-        spentResources: <String, num>{costResource: resourceSpent},
+        spentResources: <String, num>{
+          ...?tearPayment,
+          if (tearPayment == null) costResource: resourceSpent,
+        },
       );
       structuredMessages.addAll(
         applyAutomaticStatTheft(
@@ -11586,18 +11685,20 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
     return functionAnchor(
       'art_${artIndex}_skill_$skillIndex',
-      Container(
+      abilityColorFrame(
+        cost: displayedCostResource,
+        benefitText: skill.resilienza > 0
+            ? 'resilienza'
+            : skill.volonta > 0
+            ? 'volonta'
+            : skill.materia > 0
+            ? 'materia'
+            : skill.oculum > 0
+            ? 'oculum'
+            : '',
+        effects: skill.effettiEvoluzione(displayedOculumLevel),
+        padding: EdgeInsets.zero,
         margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.24),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: level > 0
-                ? tertiaryColor.withValues(alpha: 0.72)
-                : color.withValues(alpha: 0.42),
-            width: level > 0 ? 1.25 : 1.0,
-          ),
-        ),
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
@@ -11640,13 +11741,33 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: level > 0 ? tertiaryColor : Colors.white,
+                color: abilityBenefitColor(
+                  skill.effettiEvoluzione(displayedOculumLevel),
+                  fallback: skill.resilienza > 0
+                      ? 'resilienza'
+                      : skill.volonta > 0
+                      ? 'volonta'
+                      : skill.materia > 0
+                      ? 'materia'
+                      : skill.oculum > 0
+                      ? 'oculum'
+                      : '',
+                ),
                 fontWeight: FontWeight.w900,
               ),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                additionalCostsEditor(
+                  costs:
+                      skill.additionalCostsPerLevel[displayedOculumLevel - 1],
+                  storageId:
+                      'art_${artIndex}_${skillIndex}_$displayedOculumLevel',
+                  primaryResource: displayedCostResource,
+                  onChanged: () {},
+                ),
+
                 const SizedBox(height: 4),
                 Wrap(
                   spacing: 6,

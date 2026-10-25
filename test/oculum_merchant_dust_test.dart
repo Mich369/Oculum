@@ -797,6 +797,17 @@ void main() {
       'side': 'ally',
     };
     state.masterInitiativeTokens.add(nurseTestToken);
+    expect(
+      probe.activateNurseBuff(),
+      isFalse,
+      reason: 'Roleplay does not activate fight-only effects',
+    );
+    probe.ensureEncounters();
+    final fightGroup = (state.masterInitiativeGroups as List)
+        .cast<Map>()
+        .firstWhere((g) => g['id'] == state.selectedMasterInitiativeGroupId);
+    fightGroup['fightStarted'] = true;
+    fightGroup['combatEnded'] = false;
     expect(probe.activateNurseBuff(), isTrue);
     expect(state.heroicNursePendingBattleBuff, isNull);
     final activatedEffects = probe

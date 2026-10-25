@@ -231,6 +231,9 @@ List<InventoryItem> oculumGenerateMonsterLoot({
     level: safeLevel,
     grade: safeGrade,
   );
+  if (monster.id == 'pupazzo_robotico_postea') {
+    return [oculumDollRobotScraps(monster, safeLevel, safeGrade, killId)];
+  }
   final planarDrops = oculumPlanarNaturalDrops(
     monster,
     safeLevel,
@@ -240,7 +243,11 @@ List<InventoryItem> oculumGenerateMonsterLoot({
   );
   if (planarDrops != null) {
     return _withManualDropPrices(
-      planarDrops,
+      [
+        ...planarDrops,
+        if (monster.id == 'pupazzo_artigliato' && resolvedDropTotal >= 43)
+          oculumDollCostume(monster, safeLevel, safeGrade, killId, random),
+      ],
       level: safeLevel,
       grade: safeGrade,
     );

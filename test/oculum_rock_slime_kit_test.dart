@@ -45,7 +45,14 @@ void main() {
         }
       }
       expect(art.openDescription, contains('Richiede livello 15'));
-      expect(art.openBuffEffects, hasLength(5));
+      expect(
+        art.openBuffEffects.where((e) => e.target != 'monster_open_power'),
+        hasLength(5),
+      );
+      expect(
+        art.openBuffEffects.where((e) => e.target == 'monster_open_power'),
+        hasLength(1),
+      );
       expect(art.openBuff, isNot(contains('@')));
       expect(
         art.skills.first.effettiPerLivello[0].single.mode,

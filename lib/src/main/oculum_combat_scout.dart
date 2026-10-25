@@ -434,6 +434,9 @@ extension _OculumCombatScout on _OculumHomePageState {
         online && encounter != onlineCombatEncounterId) {
       return;
     }
+    if (currentTurnTrackerIsActive() && !await spendCombatRollResource()) {
+      return;
+    }
     if (target['general'] == true) {
       await tiraSottotrattoOcchio(
         stat,

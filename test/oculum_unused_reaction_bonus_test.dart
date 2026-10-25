@@ -4,7 +4,7 @@ import 'package:oculum/main.dart';
 
 void main() {
   test(
-    'unused fast reactions give only six or nine and normal gives three',
+    'unused fast reaction gives nine and normal gives three, capped at twelve',
     () {
       final outcomes = <int>{};
       for (var seed = 0; seed < 100; seed++) {
@@ -16,10 +16,10 @@ void main() {
           fastUsed: 0,
           random: Random(seed),
         );
-        expect(bonus, anyOf(6, 9));
+        expect(bonus, 9);
         outcomes.add(bonus);
       }
-      expect(outcomes, {6, 9});
+      expect(outcomes, {9});
       expect(
         oculumReactionRefreshRollBonus(
           pendingBonus: 0,

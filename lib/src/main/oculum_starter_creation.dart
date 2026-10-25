@@ -127,7 +127,9 @@ String oculumMonsterBookSkillBaseId(String id) =>
 
 bool oculumMonsterBookSkillIsPassive(String id) {
   final base = oculumMonsterBookSkillBaseId(id);
-  return base == 'blade_skull_vampirism' ||
+  return base == 'nuvi_flight' ||
+      base == 'armored_seed_shell' ||
+      base == 'blade_skull_vampirism' ||
       base == 'bringi_seeds' ||
       base == 'blade_skull_critical' ||
       base == 'inferno_in_corpo' ||
@@ -348,14 +350,23 @@ CharacterSkillForm _naturalMonsterSkillForm({
         oculumStatPaidEffect(
           OculumStructuredEffect.fromJson({
             ...effect.toJson(),
-            'valueExpression': effect.valueExpression.replaceAll(
-              'oculum_spent',
-              resource.startsWith('item:') || resource.startsWith('material:')
-                  ? '0'
-                  : '${resource}_spent',
-            ),
+            'valueExpression': effect.valueExpression.contains('obser_spent')
+                ? effect.valueExpression
+                : effect.valueExpression.replaceAll(
+                    'oculum_spent',
+                    resource.startsWith('item:') ||
+                            resource.startsWith('material:')
+                        ? '0'
+                        : '${resource}_spent',
+                  ),
           }),
-          resource,
+          source.effettiPerLivello[form].any(
+                (effect) =>
+                    effect.type == 'planar' &&
+                    effect.target == 'speed_increase',
+              )
+              ? 'nessuna'
+              : resource,
         ),
     ],
   );
@@ -371,7 +382,11 @@ CharacterArt? oculumMonsterBookImportArt(MonsterBookEntry monster) {
       if (!oculumMonsterTechniqueIsNatural(monster, ids[index]))
         art.skills[index],
   ];
-  return art.skills.isEmpty && monster.id != 'golem_runico' ? null : art;
+  return art.openName.isNotEmpty ||
+          art.skills.isNotEmpty ||
+          monster.id == 'golem_runico'
+      ? art
+      : null;
 }
 
 /// An assortment, not three simultaneous bonuses. Existing/custom titles are
@@ -502,7 +517,12 @@ List<OculumTitle> oculumMonsterBookTitles(MonsterBookEntry monster) {
 
 CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
   if (oculumWitheredLarvaMonster(monster)) {
-    return oculumWitheredLarvaArt(monster);
+    return oculumCompleteMonsterOpen(
+      oculumWitheredLarvaArt(monster),
+      name: monster.nameIt,
+      level: monster.stats['level'] ?? 0,
+      grade: oculumGradeForLevel(monster.stats['level'] ?? 0),
+    );
   }
   final art = _rawMonsterBookArt(monster);
   if (monster.id == 'golem_runico') {
@@ -641,7 +661,12 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
       skill.aumentoMassimoOculumAttivoPerLivello[2] = true;
     }
   }
-  return art;
+  return oculumCompleteMonsterOpen(
+    art,
+    name: monster.nameIt,
+    level: monster.stats['level'] ?? 0,
+    grade: oculumGradeForLevel(monster.stats['level'] ?? 0),
+  );
 }
 
 CharacterArt _rawMonsterBookArt(MonsterBookEntry monster) =>
@@ -1386,68 +1411,118 @@ CharacterArt oculumCompleteMonsterOpen(
   required int level,
   required int grade,
 }) {
-  if (!oculumArtHasUsableSkills(art)) return art;
+  if (name.startsWith('Nuvì') ||
+      name == 'Thunder Bot' ||
+      art.skills.any((s) => s.nome == 'Volo naturale')) {
+    return art;
+  }
   art.monsterOpenSkill = true;
-  final defensive = RegExp(
-    'guard|protett|golem|corazz',
+  final power = max(2, 2 + level ~/ 3 + grade * 2);
+  final source = art.skills.expand((s) => s.effettiEvoluzione(3)).toList();
+  final attack = source.where((e) => e.type == 'danno').firstOrNull;
+  final guard = RegExp(
+    'golem|scudo|guard|corazz|tartarug|rockshield',
     caseSensitive: false,
   ).hasMatch(name);
-  final power = max(3, level ~/ 2 + grade * 3);
-  final tier = grade.clamp(0, 9);
-  final ultimateBonus = tier < 3
-      ? '1d50+25'
-      : tier < 5
-      ? '1d90+60'
-      : tier < 7
-      ? '1d120+150'
-      : tier < 9
-      ? '1d180+260'
-      : '1d250+400';
-  final requiredLevel = art.skills
-      .expand((skill) => [skill.evo1, skill.evo2, skill.evo3])
-      .expand(
-        (text) => RegExp(
-          r'Richiede livello\s+(\d+)',
-          caseSensitive: false,
-        ).allMatches(text),
-      )
-      .map((match) => int.parse(match.group(1)!))
-      .fold<int>(0, max);
-  if (art.openName.trim().isEmpty) art.openName = 'Open — $name';
-  if (art.openDescription.trim().isEmpty &&
-      art.openDescriptionEffects.isEmpty) {
+  final utility = attack == null && !guard;
+  final generated = art.openName.isEmpty || art.openName == 'Open — $name';
+  if (generated) {
+    art.openName = guard
+        ? 'Difesa totale · $name'
+        : utility
+        ? 'Istinto vigile · $name'
+        : 'Assalto finale · $name';
+  }
+  if (art.openDescription.isEmpty || generated) {
     art.openDescription =
-        'Richiede livello $requiredLevel. Esplosione di $name: danni inflitti di base +$ultimateBonus a un bersaglio. Il Buff Open si attiva subito; la Skill Open si usa separatamente.';
+        'Richiede livello $level. Risveglia le capacità di $name. Il Buff potenzia la creatura e la Skill Open; attivazione e Skill hanno cooldown separati.';
     art.openDescriptionEffects = [
       OculumStructuredEffect(
         id: 'monster_open_ultimate_${art.nome}',
-        type: 'danno',
-        target: 'danni',
-        valueExpression: ultimateBonus,
-        recipient: 'bersaglio',
+        type: 'modifica_statistica',
+        target: 'monster_open_marker',
+        valueExpression: '0',
+        mode: 'finche_attivo',
       ),
     ];
   }
-  if (art.openBuff.trim().isEmpty && art.openBuffEffects.isEmpty) {
-    art.openBuff = '@Stats+${max(4, grade)}';
+  if (art.openBuff.isEmpty && art.openBuffEffects.isEmpty) {
+    art.openBuff = guard
+        ? 'Scudo 50 + Livello ×3; Materia +${max(1, power ~/ 2)} mentre attiva. Skill Open +$power.'
+        : '${utility ? 'Riflessi' : 'Volontà'} +${max(1, power ~/ 2)} mentre attiva. Skill Open +$power.';
+    art.openBuffEffects = [
+      if (guard)
+        OculumStructuredEffect(type: 'scudo', valueExpression: '50+livello*3'),
+      OculumStructuredEffect(
+        type: utility ? 'modifica_sottotratto' : 'modifica_statistica',
+        target: guard
+            ? 'materia'
+            : utility
+            ? 'riflessi'
+            : 'volonta',
+        valueExpression: '${max(1, power ~/ 2)}',
+        mode: 'finche_attivo',
+      ),
+    ];
   }
-  if (art.openSkillEffects.isEmpty &&
-      (art.openSkill.trim().isEmpty ||
-          art.openSkill == 'Combo naturale fra skill generate.')) {
-    art.openSkill = defensive
-        ? 'Guardia di $name: rinforzi la tua difesa di $power per 1 turno. Cooldown: 3 turni.'
-        : 'Affondo di $name: i tuoi colpi ottengono +${power * 2} danni per 1 turno. Cooldown: 3 turni.';
+  if (!art.openBuffEffects.any((e) => e.target == 'monster_open_power')) {
+    art.openBuffEffects.add(
+      OculumStructuredEffect(
+        id: 'monster_open_power_${art.nome}',
+        type: 'modifica_statistica',
+        target: 'monster_open_power',
+        valueExpression: '$power',
+        mode: 'finche_attivo',
+      ),
+    );
+  }
+  if (art.openSkill.isEmpty ||
+      art.openSkill == 'Combo naturale fra skill generate.') {
+    art.openSkill = guard
+        ? 'Riparo rinforzato: Difesa extra per un turno, potenziata dal Buff Open.'
+        : utility
+        ? 'Scatto di fuga: Movimento extra per un turno, potenziato dal Buff Open.'
+        : '${art.skills.firstOrNull?.nome ?? 'Colpo finale'}: versione più forte della tecnica naturale, nello stesso elemento; il Buff Open aumenta realmente i danni.';
     art.openSkillEffects = [
       OculumStructuredEffect(
         id: 'monster_open_skill_${art.nome}',
-        type: defensive ? 'difesa' : 'danno',
-        target: defensive ? 'difesa' : 'danni',
-        valueExpression: '${defensive ? power : power * 2}',
-        duration: '1',
+        type: guard
+            ? 'difesa'
+            : utility
+            ? 'modifica_sottotratto'
+            : 'danno',
+        target: guard
+            ? 'difesa'
+            : utility
+            ? 'movimento'
+            : 'danni',
+        valueExpression:
+            '${guard
+                ? 5 + level
+                : utility
+                ? 5
+                : 8 + level * 2}+monster_open_bonus',
+        elementType: attack?.elementType ?? '',
+        mode: utility || guard ? 'aumento' : 'prossima_azione',
+        duration: utility || guard ? '1' : '',
         recipient: 'se_stesso',
       ),
     ];
+  } else {
+    for (final effect in art.openSkillEffects.where(
+      (e) => const {'danno', 'difesa', 'cura'}.contains(e.type),
+    )) {
+      if (!effect.valueExpression.contains('monster_open_bonus')) {
+        effect.valueExpression =
+            '(${effect.valueExpression})+monster_open_bonus';
+      }
+    }
   }
+  art.openDescriptionCooldown ??= OculumAbilityCooldown(
+    amount: 6,
+    unit: 'turni',
+  );
+  art.openBuffCooldown ??= OculumAbilityCooldown(amount: 6, unit: 'turni');
   art.openSkillCooldown ??= OculumAbilityCooldown(amount: 3, unit: 'turni');
   return art;
 }

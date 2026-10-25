@@ -151,6 +151,11 @@ void main() {
       )) {
         final first = oculumEnemyAbilityVariants(monster, seed: 2419);
         final second = oculumEnemyAbilityVariants(monster, seed: 2419);
+        if (const {'nuvi', 'thunder_bot'}.contains(monster.id) ||
+            monster.id.contains('larva')) {
+          expect(first, isEmpty, reason: monster.id);
+          continue;
+        }
         final area = first
             .where(
               (skill) =>
@@ -227,9 +232,13 @@ void main() {
       );
       oculumCompleteMonsterOpen(art, name: 'Guardiano', level: 30, grade: 2);
       expect(art.openAttiva, isFalse);
-      expect(art.openBuff, '@Stats+4');
-      expect(art.openDescriptionEffects.single.valueExpression, '1d50+25');
-      expect(art.openDescription, contains('danni inflitti di base'));
+      expect(art.openBuff, contains('Scudo 50 + Livello ×3'));
+      expect(
+        art.openBuffEffects.any((e) => e.target == 'monster_open_power'),
+        isTrue,
+      );
+      expect(art.openDescriptionEffects.single.target, 'monster_open_marker');
+      expect(art.openDescription, contains('Buff potenzia'));
       expect(art.openSkillEffects.single.duration, '1');
       expect(art.openSkillCooldown!.ready, isTrue);
       art.openSkillCooldown!.activate();

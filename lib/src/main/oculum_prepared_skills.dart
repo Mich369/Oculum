@@ -250,7 +250,9 @@ extension _OculumPreparedSkills on _OculumHomePageState {
       return;
     }
     final origin = currentSheetScrollId();
-    if (currentCombatIsActive() && !await requestUtilitySpend('azione')) return;
+    if (currentTurnTrackerIsActive() && !await requestUtilitySpend('azione')) {
+      return;
+    }
     if (!mounted ||
         currentSheetScrollId() != origin ||
         !hasGrowingPreparedSkill) {

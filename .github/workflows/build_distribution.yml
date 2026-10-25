@@ -39,6 +39,9 @@ jobs:
           python -m unittest discover -s scripts/tests -p test_windows_update.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - run: flutter analyze --no-pub
+      - name: Verify manual build and publication command
+        shell: pwsh
+        run: ./scripts/tests/test_publish_oculum_github.ps1
       # Keep image-heavy widget suites within the Windows runner's memory budget.
       - run: flutter test --no-pub --concurrency=2
       - name: Verify authenticated online transport and combat

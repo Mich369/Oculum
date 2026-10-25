@@ -560,6 +560,44 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     }
   }
 
+  void collectObserverTearCurrency(Map enemy, String cooldownFightId) {
+    if (const {
+          'observers_tear',
+          'obser_sunshine',
+        }.contains('${enemy['monsterBookId']}') &&
+        !oculumEncounterEnemyIsSummon(enemy)) {
+      final receipts = (partyChest['observerTearLootReceipts'] as List? ?? [])
+          .map((e) => '$e')
+          .toSet();
+      final receipt = '$cooldownFightId:${enemy['id']}';
+      if (receipts.add(receipt)) {
+        final sourceIndex = localSheetIndexForOculumTag(
+          '${enemy['monsterSheetTag'] ?? ''}',
+        );
+        final remaining = sourceIndex < 0
+            ? 0
+            : max(
+                0,
+                sourceIndex == schedaCorrente
+                    ? leggiNumero(obserController)
+                    : sheetIntValueAt(sourceIndex, 'obser'),
+              );
+        if (sourceIndex >= 0) {
+          schedePersonaggio[sourceIndex]['obser'] = '0';
+          if (sourceIndex == schedaCorrente) obserController.text = '0';
+        }
+        partyChest['observerTearLootReceipts'] = receipts.toList();
+        partyChest['obser'] =
+            max(0, readIntValue(partyChest['obser'])) + remaining;
+        partyChest['revision'] = readIntValue(partyChest['revision']) + 1;
+        aggiungiLog(
+          '[DROP] ${enemy['name']}: +$remaining Obser non spesi nella cassa comune.',
+        );
+        unawaited(sendPartyChestState());
+      }
+    }
+  }
+
   Future<void> finishEncounter(String id, {Random? random}) async {
     if (realtimeService?.isConnected == true && !realtimeIsMasterRole) return;
     selectMasterInitiativeGroup(id);
@@ -741,6 +779,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     final candidateEyeKillIds = <String>{};
     var rollerCursor = 0;
     for (final enemy in defeated) {
+      collectObserverTearCurrency(enemy, cooldownFightId);
       final monsterId = '${enemy['monsterBookId'] ?? ''}';
       final monster = monsterId.isEmpty
           ? null
@@ -801,6 +840,27 @@ extension _OculumEncounterRewards on _OculumHomePageState {
           : null;
       if (crystal != null && !oculumEncounterEnemyIsSummon(enemy)) {
         dropped.add(crystal);
+      }
+      if (monster.id == 'pupazzo_robotico_postea') {
+        final sourceIndex = localSheetIndexForOculumTag(
+          '${enemy['monsterSheetTag'] ?? ''}',
+        );
+        if (sourceIndex >= 0) {
+          final body = schedePersonaggio[sourceIndex];
+          for (final item in dropped.where(
+            (i) => i.craftData['mechaScraps'] == true,
+          )) {
+            final source = Map<String, dynamic>.from(
+              item.craftData['robotSource'] as Map,
+            );
+            for (final key in _mechaBodyFields) {
+              if (body.containsKey(key)) source[key] = body[key];
+            }
+            source['mechaMaxHp'] = sheetMaxHpForDeathAt(sourceIndex);
+            source['currentHp'] = '${source['mechaMaxHp']}';
+            item.craftData['robotSource'] = source;
+          }
+        }
       }
       pooledLoot.addAll(dropped);
       if (oculumFallenEyeDropCreatesOnNaturalTwenty(
@@ -931,6 +991,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       ..clear()
       ..addAll(allies);
     group['combatEnded'] = true;
+    group['fightStarted'] = false;
     reindexMasterInitiativeTokens();
     masterInitiativeRound = 0;
     masterInitiativeActiveIndex = 0;

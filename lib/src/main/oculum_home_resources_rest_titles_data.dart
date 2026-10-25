@@ -1440,7 +1440,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       ),
     );
     if (!mounted || ok != true || currentSheetScrollId() != origin) return;
-    if (currentCombatIsActive() && !await requestUtilitySpend(spend)) {
+    if (currentTurnTrackerIsActive() && !await requestUtilitySpend(spend)) {
       aggiungiLog(
         'Dust non consumata: risorsa del turno non confermata dal Master. Puoi ritentare la richiesta.',
       );

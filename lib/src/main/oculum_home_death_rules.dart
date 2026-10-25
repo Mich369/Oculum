@@ -26,6 +26,10 @@ int oculumHpMultiplierForGrade(int grade) =>
     10 + 5 * grade.clamp(0, 12).toInt();
 
 int oculumSheetHpMaximum(Map<String, dynamic> sheet) {
+  final runtime = sheet['planarRuntime'];
+  if (runtime is Map && readIntValue(runtime['mechaBodyMaxHp']) > 0) {
+    return readIntValue(runtime['mechaBodyMaxHp']);
+  }
   final resilience = max(
     1,
     readIntValue(
@@ -114,6 +118,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
   }
 
   bool masterInitiativeTokenCanAct(Map<String, dynamic> token) {
+    if (token['mechaOccupied'] == true) return false;
     return !readBoolValue(token['shadowCloneExpired']) &&
         '${token['status'] ?? ''}' != 'expired' &&
         '${token['status'] ?? ''}' != 'fled' &&

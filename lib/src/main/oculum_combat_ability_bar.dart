@@ -368,6 +368,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       return;
     }
     if (role == OculumCombatAbilityRole.support && stat?.id == 'medicina') {
+      if (!await spendCombatRollResource()) return;
       await tiraSottotrattoOcchio(
         stat!,
         actionLabel: 'Medicina · cura',
@@ -400,9 +401,11 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       return;
     }
     if (!mounted || currentSheetScrollId() != origin) return;
+    if (!await spendCombatRollResource()) return;
     if (stat != null) {
       await tiraSottotrattoOcchio(
         stat,
+        resourceAlreadySpent: true,
         appliesAttackDamageBonus: role == OculumCombatAbilityRole.attack,
       );
     } else {
@@ -410,6 +413,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         role == OculumCombatAbilityRole.attack ? 'VC' : 'CM',
         role == OculumCombatAbilityRole.attack ? vc() : cm(),
         applyGlobalRollModifier: false,
+        resourceAlreadySpent: true,
       );
     }
   }
@@ -508,7 +512,14 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       !oculumCombatTextHasUnresolvedRequirement(
         '${form.descrizione}\n${form.effetto}\n${form.buff}\n${form.danni}\n${form.cura}\n${form.difesa}',
       ) &&
-      combatAbilityCostAvailable(form.costoStrutturato, form.costo) &&
+      (form.effettiStrutturati.any((e) => e.id.startsWith('tear_')) &&
+              oculumNormalizeEffectResource(form.costoStrutturato?.resource) ==
+                  'obser'
+          ? artSkillCostResourceAvailable('obser') + currentOculum() >=
+                (form.costoStrutturato!.variable
+                    ? form.costoStrutturato!.minimum
+                    : readIntValue(form.costoStrutturato!.amountExpression))
+          : combatAbilityCostAvailable(form.costoStrutturato, form.costo)) &&
       (form.oculumMinimoUtilizzabile <= 0 ||
           currentOculum() >= form.oculumMinimoUtilizzabile);
 
@@ -525,9 +536,15 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                     '',
               ) ??
               0) &&
-      artSkillCostResourceAvailable(
-            effectiveArtCostResource(art, skill, form),
-          ) >=
+      (artSkillCostResourceAvailable(
+                effectiveArtCostResource(art, skill, form),
+              ) +
+              (skill
+                          .effettiEvoluzione(form)
+                          .any((e) => e.id.startsWith('tear_')) &&
+                      effectiveArtCostResource(art, skill, form) == 'obser'
+                  ? currentOculum()
+                  : 0)) >=
           skill.oculumMinimoPerLivello(form);
 
   Future<void> chooseCombatAbilityForm({
@@ -923,6 +940,84 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (role == OculumCombatAbilityRole.support && isMountedInMecha)
+                  OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(dialog);
+                      unawaited(exitMecha());
+                    },
+                    child: const Text('Esci dal mecha · Azione'),
+                  ),
+                if (role == OculumCombatAbilityRole.support &&
+                    planarState['mechaExplosion'] is Map)
+                  OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(dialog);
+                      unawaited(showMechaExplosionEscape());
+                    },
+                    child: const Text('Fuga dall’esplosione del mecha'),
+                  ),
+                if (rabbitHatReady &&
+                    (role == OculumCombatAbilityRole.attack ||
+                        role == OculumCombatAbilityRole.support)) ...[
+                  Text(
+                    'Cappello · ${const ['Instabile', 'Stabile', 'Perfetto'][readIntValue(planarState['rabbitHatStage']) - 1]}',
+                  ),
+                  OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(dialog);
+                      unawaited(useRabbitHat(release: true));
+                    },
+                    child: const Text('Lancia · incluso nell’Azione'),
+                  ),
+                  if (readIntValue(planarState['rabbitHatStage']) < 3) ...[
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(dialog);
+                        unawaited(useRabbitHat(charge: true));
+                      },
+                      child: const Text('Carica ancora · una Azione'),
+                    ),
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(dialog);
+                        unawaited(useRabbitHat(charge: true, release: true));
+                      },
+                      child: const Text('Carica e lancia · una sola Azione'),
+                    ),
+                  ],
+                ],
+                if (planarState['rabbitChains'] == true &&
+                    role == OculumCombatAbilityRole.support)
+                  for (final id in ['forza', 'riflessi'])
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(dialog);
+                        unawaited(escapeRabbitChains(id));
+                      },
+                      child: Text('Liberati dalle catene · $id'),
+                    ),
+                if (role == OculumCombatAbilityRole.support &&
+                    readIntValue(planarState['oblivionMemoryStage']) > 0)
+                  for (final stat in hiddenEyeStats.where(
+                    (s) => const {
+                      'resistenza',
+                      'canalizzazione',
+                      'memoria',
+                      'controllo_corporeo',
+                      'crepa',
+                    }.contains(s.id),
+                  ))
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(dialog);
+                        unawaited(controlOblivionMemory(stat.id));
+                      },
+                      icon: const Icon(Icons.psychology),
+                      label: Text(
+                        'Controlla Oblio · ${stat.nome} · stadio ${planarState['oblivionMemoryStage']}/5',
+                      ),
+                    ),
                 if (role == OculumCombatAbilityRole.support &&
                     ownsMeccanio(sheetTagAt(schedaCorrente)))
                   OutlinedButton.icon(
@@ -1125,14 +1220,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
               ? 'Utility di combattimento: attiva il beneficio al prossimo momento utile.'
               : 'Tiro alternativo: descrivi e motiva come lo usi.',
           details: () => showCombatSubtraitDetails(stat, onlyRole),
-          use: () => unawaited(
-            const {'concentrazione', 'adattamento'}.contains(stat.id)
-                ? tiraSottotrattoOcchio(
-                    stat,
-                    actionLabel: '${stat.nome} · utility',
-                  )
-                : useCombatRoll(onlyRole, stat: stat),
-          ),
+          use: () => unawaited(useCombatRoll(onlyRole, stat: stat)),
         ));
       }
     }

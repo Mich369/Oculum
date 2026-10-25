@@ -190,7 +190,9 @@ extension _OculumDustFusion on _OculumHomePageState {
         item.quantita <= 0) {
       return;
     }
-    if (currentCombatIsActive() && !await requestUtilitySpend('azione')) return;
+    if (currentTurnTrackerIsActive() && !await requestUtilitySpend('azione')) {
+      return;
+    }
     if (!mounted || origin != currentSheetScrollId()) return;
     final die =
         Random.secure().nextInt(

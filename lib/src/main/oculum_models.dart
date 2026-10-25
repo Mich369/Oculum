@@ -2387,10 +2387,17 @@ class ArtSkill {
     List<bool>? aumentoMassimoOculumAttivoPerLivello,
     List<bool>? costoOculumDisabilitatoPerLivello,
     List<String>? risorseCostoPerLivello,
+    List<List<OculumSkillCost>>? additionalCostsPerLevel,
     Iterable<Iterable<OculumStructuredEffect>>? effettiPerLivello,
     Iterable<OculumAbilityCooldown>? cooldownPerLivello,
     List<String>? tipiPerLivello,
-  }) : oculumMinimiPerLivello = _normalizeArtSkillOculumLevels(
+  }) : additionalCostsPerLevel = List.generate(
+         5,
+         (i) => i < (additionalCostsPerLevel?.length ?? 0)
+             ? List<OculumSkillCost>.of(additionalCostsPerLevel![i])
+             : <OculumSkillCost>[],
+       ),
+       oculumMinimiPerLivello = _normalizeArtSkillOculumLevels(
          oculumMinimiPerLivello,
        ),
        oculumMassimiPerLivello = _normalizeArtSkillOculumLevels(
@@ -2431,6 +2438,7 @@ class ArtSkill {
     }
   }
 
+  final List<List<OculumSkillCost>> additionalCostsPerLevel;
   String nome;
 
   /// Livello della singola Skill dell’Art.
@@ -2617,6 +2625,11 @@ class ArtSkill {
       'costoOculumDisabilitatoPerLivello': List<bool>.from(
         costoOculumDisabilitatoPerLivello,
       ),
+      if (additionalCostsPerLevel.any((costs) => costs.isNotEmpty))
+        'additionalCostsPerLevel': [
+          for (final costs in additionalCostsPerLevel)
+            costs.map((cost) => cost.toJson()).toList(),
+        ],
       'risorseCostoPerLivello': List<String>.from(risorseCostoPerLivello),
       if (effettiPerLivello.any((effects) => effects.isNotEmpty))
         'effettiPerLivello': <List<Map<String, dynamic>>>[
@@ -2682,6 +2695,15 @@ class ArtSkill {
         json['costoOculumDisabilitatoPerLivello'] ??
             json['oculumCostDisabledPerLevel'],
       ),
+      additionalCostsPerLevel: [
+        for (final costs
+            in (json['additionalCostsPerLevel'] as List? ?? const []))
+          [
+            for (final cost
+                in (costs is List ? costs : const []).whereType<Map>())
+              OculumSkillCost.fromJson(Map<String, dynamic>.from(cost)),
+          ],
+      ],
       risorseCostoPerLivello: _readArtSkillCostResourceLevels(
         json['risorseCostoPerLivello'] ?? json['costResourcesPerLevel'],
       ),

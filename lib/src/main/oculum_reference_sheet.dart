@@ -85,10 +85,7 @@ int oculumReactionRefreshRollBonus({
   var bonus =
       max(0, pendingBonus).toInt() +
       unusedNormal * max(0, bonusPerUnusedReaction).toInt();
-  final rng = random ?? Random();
-  for (var i = 0; i < unusedFast && bonus < maximumBonus; i++) {
-    bonus += rng.nextBool() ? 6 : 9;
-  }
+  bonus += unusedFast * 9;
   return min(max(0, maximumBonus).toInt(), bonus).toInt();
 }
 
@@ -1083,6 +1080,13 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                         ),
                         referenceTurnControls(),
                         onlineAttackButton(),
+                        if (isMountedInMecha)
+                          OutlinedButton.icon(
+                            key: const ValueKey('exit_mecha'),
+                            onPressed: () => unawaited(exitMecha()),
+                            icon: const Icon(Icons.logout),
+                            label: const Text('Esci dal mecha · Azione'),
+                          ),
                       ],
                     ),
                     SizedBox(height: 10),
@@ -1756,9 +1760,15 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                       ),
                     if (local)
                       TextButton.icon(
-                        onPressed: () => finishEncounter(id),
+                        onPressed: () => encounterFightStarted(id)
+                            ? finishEncounter(id)
+                            : startEncounterFight(id),
                         icon: const Icon(Icons.flag_outlined),
-                        label: const Text('Termina scontro'),
+                        label: Text(
+                          encounterFightStarted(id)
+                              ? 'Fine combattimento'
+                              : 'Inizia fight',
+                        ),
                       ),
                     if (local)
                       TextButton.icon(

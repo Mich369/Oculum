@@ -2726,6 +2726,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'encounterId': group['id'],
       'completedFightCount': readIntValue(group['completedFightCount']),
       'combatEnded': group['combatEnded'] == true,
+      if (group.containsKey('fightStarted'))
+        'fightStarted': group['fightStarted'] == true,
       'mergedEncounterIds': group['mergedEncounterIds'] ?? const <String>[],
       if (group['chainedFate'] is Map) 'chainedFate': group['chainedFate'],
       if (group['rollRequests'] is List) 'rollRequests': group['rollRequests'],
@@ -2773,8 +2775,23 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             },
             'reportedTurn': max(0, readIntValue(tokens[i]['reportedTurn'])),
             'actionUsed': readBoolValue(tokens[i]['actionUsed']),
-            'reactionMax': masterInitiativeReactionMax(tokens[i]),
-            'reactionFastMax': masterInitiativeFastReactionMax(tokens[i]),
+            'reactionMax': max(
+              1,
+              readIntValue(tokens[i]['reactionMax'], fallback: 1),
+            ),
+            'reactionFastMax': max(
+              1,
+              readIntValue(tokens[i]['reactionFastMax'], fallback: 1),
+            ),
+            'extraFastReactionCurrent': readIntValue(
+              tokens[i]['extraFastReactionCurrent'],
+            ),
+            'extraNormalReactionCurrent': readIntValue(
+              tokens[i]['extraNormalReactionCurrent'],
+            ),
+            'extraNormalReactionQueued': readIntValue(
+              tokens[i]['extraNormalReactionQueued'],
+            ),
             'reactionUsed': masterInitiativeReactionUsed(
               tokens[i],
               round: round,
@@ -2802,6 +2819,32 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'pendingReactionRollBonus': readIntValue(
               tokens[i]['pendingReactionRollBonus'],
             ).clamp(0, 12),
+            'pendingFastReactionRollBonus': readIntValue(
+              tokens[i]['pendingFastReactionRollBonus'],
+            ).clamp(0, 6),
+            'pendingFastReactionConsequenceBonus': readIntValue(
+              tokens[i]['pendingFastReactionConsequenceBonus'],
+            ),
+            'oblivionMemoryReactionLost':
+                tokens[i]['oblivionMemoryReactionLost'] == true,
+            for (final key in [
+              'mechaReactionOnly',
+              'mechaCriticalOnly',
+              'mechaOccupied',
+              'mechaPilotExtra',
+              'mechaPilotCritical',
+            ])
+              if (tokens[i].containsKey(key)) key: tokens[i][key],
+            'initialFastReactionExpired':
+                tokens[i]['initialFastReactionExpired'] == true,
+            'fastReactionPersonalTurnRound': readIntValue(
+              tokens[i]['fastReactionPersonalTurnRound'],
+              fallback: -1,
+            ),
+            'actionAnticipatedRound': readIntValue(
+              tokens[i]['actionAnticipatedRound'],
+              fallback: -1,
+            ),
             'freeReactionUsed': readBoolValue(tokens[i]['freeReactionUsed']),
             'reactionAvailable': masterInitiativeReactionAvailable(
               tokens[i],

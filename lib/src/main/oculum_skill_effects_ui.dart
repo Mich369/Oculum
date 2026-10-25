@@ -203,6 +203,15 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       for (final form in item.ability?.forme ?? <CharacterSkillForm>[]) {
         changed = (form.cooldownStrutturato?.tick(unit) ?? false) || changed;
       }
+      if (item.craftData['jumpAbility'] is Map) {
+        final jump = CharacterSkill.fromJson(
+          Map<String, dynamic>.from(item.craftData['jumpAbility'] as Map),
+        );
+        for (final form in jump.forme) {
+          changed = (form.cooldownStrutturato?.tick(unit) ?? false) || changed;
+        }
+        item.craftData['jumpAbility'] = jump.toJson();
+      }
     }
     for (final art in arti) {
       for (final skill in art.skills) {
@@ -1360,6 +1369,155 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     );
   }
 
+  Widget additionalCostsEditor({
+    required List<OculumSkillCost> costs,
+    required String storageId,
+    required String primaryResource,
+    required VoidCallback onChanged,
+  }) {
+    final maximum = primaryResource == 'nessuna' ? 4 : 3;
+    void update(VoidCallback mutate) {
+      setState(() {
+        mutate();
+        onChanged();
+      });
+      programmaSalvataggio();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < costs.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        key: ValueKey(
+                          '$storageId-resource-$i-${costs[i].resource}',
+                        ),
+                        initialValue: costs[i].resource.startsWith('item:')
+                            ? 'item:'
+                            : costs[i].resource,
+                        isExpanded: true,
+                        decoration: fieldDecoration(
+                          'Risorsa aggiuntiva ${i + 1}',
+                        ),
+                        items: [
+                          for (final resource in {
+                            ...oculumEffectConsumableResourceKeys.where(
+                              (r) => r != 'nessuna' && r != 'hp',
+                            ),
+                            'item:',
+                            costs[i].resource,
+                          })
+                            if (!resource.startsWith('item:') ||
+                                resource == 'item:')
+                              DropdownMenuItem(
+                                value: resource,
+                                child: Text(
+                                  resource == 'item:'
+                                      ? 'Oggetto / materiale'
+                                      : structuredEffectResourceLabel(resource),
+                                ),
+                              ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            update(() => costs[i].resource = value);
+                          }
+                        },
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Rimuovi costo',
+                      icon: const Icon(Icons.close),
+                      onPressed: () => update(() => costs.removeAt(i)),
+                    ),
+                  ],
+                ),
+                if (costs[i].resource.startsWith('item:'))
+                  campoModello(
+                    label: 'Oggetto / materiale (nome o ID)',
+                    initialValue: costs[i].resource.substring(5),
+                    onChanged: (value) =>
+                        update(() => costs[i].resource = 'item:$value'),
+                  ),
+                Row(
+                  children: [
+                    for (final isMaximum in [false, true])
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            left: isMaximum ? 6 : 0,
+                            right: isMaximum ? 0 : 6,
+                          ),
+                          child: TextFormField(
+                            key: ValueKey('$storageId-$i-$isMaximum'),
+                            initialValue:
+                                '${isMaximum ? costs[i].maximum : costs[i].minimum}',
+                            keyboardType: TextInputType.number,
+                            inputFormatters: oculumNonNegativeIntegerFormatters,
+                            decoration: fieldDecoration(
+                              isMaximum ? 'Massimo' : 'Minimo',
+                            ),
+                            onChanged: (text) => update(() {
+                              final value = max(0, readIntValue(text));
+                              if (isMaximum) {
+                                costs[i].maximum = value;
+                              } else {
+                                costs[i].minimum = value;
+                              }
+                              costs[i].variable = true;
+                              costs[i].amountExpression = '${costs[i].minimum}';
+                            }),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        if (costs.length < maximum)
+          TextButton.icon(
+            icon: const Icon(Icons.add, size: 16),
+            label: Text('Aggiungi risorsa · massimo 4'),
+            onPressed: () => update(() {
+              final used = {
+                oculumNormalizeEffectResource(primaryResource),
+                ...costs.map((c) => oculumNormalizeEffectResource(c.resource)),
+              };
+              final next = [
+                'obser',
+                'oculum',
+                'volonta',
+                'materia',
+                'fortuna',
+                'vita',
+              ].firstWhere((r) => !used.contains(r), orElse: () => 'item:');
+              costs.add(
+                OculumSkillCost(
+                  resource: next,
+                  variable: true,
+                  minimum: 1,
+                  maximum: 1,
+                  amountExpression: '1',
+                ),
+              );
+            }),
+          ),
+        if (costs.isNotEmpty)
+          smallInfoText(
+            'Tutti i costi selezionati si pagano insieme. Ogni Minimo deve essere ≤ Massimo; non ripetere la stessa risorsa.',
+          ),
+      ],
+    );
+  }
+
   Widget structuredCostEditor({
     required OculumSkillCost? cost,
     required String storageId,
@@ -1498,6 +1656,12 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                 ),
               ],
             ),
+          additionalCostsEditor(
+            costs: current.additionalCosts,
+            storageId: storageId,
+            primaryResource: current.resource,
+            onChanged: () => onChanged(current),
+          ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             value: current.perTurn,

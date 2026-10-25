@@ -63,7 +63,8 @@ class DownloadPublicationTests(unittest.TestCase):
         workflow = dict(name="Build distribution",
                         path=".github/workflows/build_distribution.yml")
         publisher.validate_run(run, workflow)
-        for key, value in [("conclusion", "failure"), ("head_branch", ""), ("head_branch", "feature"),
+        publisher.validate_run({**run, "head_branch": "codex/new-version", "event": "push"}, workflow)
+        for key, value in [("conclusion", "failure"), ("head_branch", ""), ("event", "pull_request"),
                            ("head_repository", {"full_name": "outsider/fork"})]:
             with self.assertRaises(ValueError):
                 publisher.validate_run({**run, key: value}, workflow)
@@ -119,12 +120,12 @@ class DownloadPublicationTests(unittest.TestCase):
 
 
 class DownloadRecoveryTests(unittest.TestCase):
-    def test_resolve_latest_successful_main_distribution(self):
+    def test_resolve_latest_successful_trusted_distribution_from_any_branch(self):
         builds = {"workflow_runs": [
             {"id": 25, "status": "completed", "conclusion": "success",
              "head_branch": "main", "head_repository": {"full_name": "other/fork"}},
             {"id": 24, "status": "completed", "conclusion": "success",
-             "head_branch": "main", "head_repository": {"full_name": publisher.REPO}},
+             "head_branch": "codex/new-version", "head_repository": {"full_name": publisher.REPO}},
         ]}
         with patch.object(publisher, "api", return_value=builds):
             self.assertEqual(publisher.resolve_run_id(""), "24")

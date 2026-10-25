@@ -385,7 +385,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             : oculumStructuredEffectFrequency(effect.frequency);
         final isPeriodic = frequency > 0;
         final preparedAttackBonus =
-            const {'danno', 'danno_percentuale'}.contains(effect.type) &&
+            (effect.type == 'danno' ||
+                effect.type == 'danno_percentuale' &&
+                    effect.recipient == 'se_stesso') &&
             effect.mode == 'prossima_azione' &&
             !effect.bypassDefense &&
             !effect.bypassShields &&
@@ -1416,9 +1418,19 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
       ripristinaImpostazioniGlobali(global);
     });
     try {
-      if (effect.type == 'danno') {
+      if (effect.type == 'danno' || effect.type == 'danno_percentuale') {
+        final amount = effect.type == 'danno_percentuale'
+            ? oculumTargetPercentageDamage(
+                percent: readIntValue(effect.valueExpression),
+                hp: hpCorrenti(),
+                temporaryHp: hpTemp(),
+                shield: scudo(),
+                oculumShield: scudoOculum(),
+                bypassShields: effect.bypassShields,
+              )
+            : max(0, readIntValue(effect.valueExpression));
         await applicaDannoSubito(
-          dannoEsplicito: max(0, readIntValue(effect.valueExpression)),
+          dannoEsplicito: amount,
           bypassDefense: effect.bypassDefense,
           bypassShields: effect.bypassShields,
           resistanceBypassDamage: effect.bypassResistance

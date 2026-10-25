@@ -68,6 +68,7 @@ class MonsterConcreteTechnique {
           'volonta' => 'Volontà',
           'materia' => 'Materia',
           'resilienza' => 'Resilienza',
+          'vita' => 'Vita',
           'item' => 'oggetto',
           'material' => 'materiale',
           _ => 'Oculum',

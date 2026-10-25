@@ -4954,6 +4954,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   String nomeSchedaPersonaggio(int index) {
+    if (index >= 0 &&
+        index < schedePersonaggio.length &&
+        (partyChest['forgottenCharacterTags'] as List? ?? const []).contains(
+          '${schedePersonaggio[index]['sheetTag'] ?? schedePersonaggio[index]['id'] ?? ''}',
+        )) {
+      return 'Identità dimenticata';
+    }
     if (index < 0 || index >= schedePersonaggio.length) {
       return '???';
     }
@@ -8578,6 +8585,119 @@ extension _OculumHomePersistence on _OculumHomePageState {
             rollsRemaining: 0,
           ),
         );
+        if (matchedMonster != null) {
+          final id = matchedMonster.id;
+          if (id == 'nuvi' || id == 'pupazzo_artigliato') {
+            final colors = id == 'nuvi'
+                ? const ['Avorio', 'Lavanda', 'Pesca', 'Celeste', 'Menta']
+                : const ['Ardesia', 'Prugna', 'Muschio', 'Blu notte'];
+            final color = colors[Random.secure().nextInt(colors.length)];
+            planarState['creatureColor'] = color;
+            nomeController.text = '${matchedMonster.nameIt} $color';
+          }
+          if (id == 'coniglio_prestigiatore') {
+            final colors = [
+              'fuoco',
+              'acqua',
+              'gelo',
+              'vento',
+              'fulmine',
+              'luce',
+              'buio',
+            ]..shuffle(Random.secure());
+            planarState['rabbitElements'] = colors.take(3).toList();
+            final template = monsterBookConcreteTechnique(
+              'rabbit_elemental_trick',
+            );
+            final original = skills
+                .where((s) => s.nome == 'Trucco elementale')
+                .firstOrNull;
+            if (original != null && template != null) {
+              skills.remove(original);
+              for (final element in colors.take(3)) {
+                final copy = CharacterSkill.fromJson(original.toJson());
+                copy.nome = 'Trucco di ${elementDisplayName(element)}';
+                for (final form in copy.forme) {
+                  for (final effect in form.effettiStrutturati.where(
+                    (e) => e.type == 'danno',
+                  )) {
+                    effect.elementType = element;
+                  }
+                }
+                skills.add(copy);
+              }
+            }
+            for (final art in arti) {
+              final trick = art.skills
+                  .where((s) => s.nome == 'Trucco elementale')
+                  .firstOrNull;
+              if (trick != null) {
+                art.skills.remove(trick);
+                for (final element in colors.take(3)) {
+                  final copy = ArtSkill.fromJson(trick.toJson());
+                  copy.nome = 'Trucco di ${elementDisplayName(element)}';
+                  for (var f = 0; f < 3; f++) {
+                    for (final effect
+                        in copy
+                            .effettiEvoluzione(f + 1)
+                            .where((e) => e.type == 'danno')) {
+                      effect.elementType = element;
+                    }
+                  }
+                  art.skills.add(copy);
+                }
+              }
+            }
+          }
+          if (id == 'coniglio_plasma') {
+            inventario.add(
+              InventoryItem(
+                nome: 'Catene runiche d’intrappolamento',
+                peso: 1.2,
+                quantita: 1,
+                livelloOggetto: livello,
+                note:
+                    'Oggetto di Postea: immobilizza fino alla liberazione con Forza o Riflessi contro il tiro originale. Costo Materia e CD modificabili.',
+                ability: oculumEquipmentAbilityFromArt(
+                  oculumMonsterBookArt(matchedMonster).skills.firstWhere(
+                    (s) => s.nome == 'Catene d’intrappolamento',
+                  ),
+                ),
+              ),
+            );
+          }
+          if (id == 'observers_tear' || id == 'obser_sunshine') {
+            final solar = id == 'obser_sunshine';
+            oculumController.text = solar ? '0' : '6';
+            applyTemporaryOculumState(
+              TemporaryOculumState(
+                normalCurrent: solar ? 0 : 6,
+                temporary: 0,
+                rollsRemaining: 0,
+              ),
+            );
+            obserController.text =
+                '${solar ? 20 + Random.secure().nextInt(81) : 80 + Random.secure().nextInt(121)}';
+            final manifestation = hiddenEyeStats
+                .where((s) => s.id == 'manifestazione_potere')
+                .firstOrNull;
+            if (manifestation != null) manifestation.valore = solar ? 10 : 18;
+            planarState['oculumColor'] = solar ? 'oro' : 'viola';
+          }
+          if (id == 'saltalungo_maculato') {
+            final reflex = hiddenEyeStats
+                .where((s) => s.id == 'riflessi')
+                .firstOrNull;
+            if (reflex != null) reflex.valore += 6;
+          }
+          if (id == 'famelico_oblio') {
+            for (final stat in hiddenEyeStats.where(
+              (s) => s.id == 'riflessi' || s.id == 'forza',
+            )) {
+              stat.valore = 6;
+            }
+          }
+        }
         currentHpController.text = maxHp().toString();
         // Una scheda mostro nasce pronta allo scontro: come per una nuova
         // scheda personaggio, le risorse correnti coincidono con i massimali.

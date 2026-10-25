@@ -50,7 +50,8 @@ def release(tag):
 
 def validate_run(run, workflow):
     if (run.get("conclusion") != "success" or run.get("status") != "completed"
-            or run.get("head_branch") != "main"
+            or not isinstance(run.get("head_branch"), str) or not run["head_branch"]
+            or run.get("event") in {"pull_request", "pull_request_target"}
             or workflow.get("name") not in WORKFLOWS
             or workflow.get("path") not in WORKFLOW_PATHS
             or run.get("repository", {}).get("full_name") != REPO
@@ -155,15 +156,16 @@ def resolve_run_id(run_id):
         if not re.fullmatch(r"[1-9][0-9]*", candidate):
             raise ValueError("Invalid run id: enter a positive number or leave blank")
         return candidate
-    query = urlencode({"branch": "main", "status": "success", "per_page": 20})
+    query = urlencode({"status": "success", "per_page": 20})
     runs = api(f"actions/workflows/build_distribution.yml/runs?{query}").get("workflow_runs", [])
     for run in runs:
         if (run.get("status") == "completed" and run.get("conclusion") == "success"
-                and run.get("head_branch") == "main"
+                and run.get("head_branch")
+                and run.get("event") not in {"pull_request", "pull_request_target"}
                 and run.get("head_repository", {}).get("full_name") == REPO
                 and type(run.get("id")) is int and run["id"] > 0):
             return str(run["id"])
-    raise ValueError("No successful Build distribution on main available to publish")
+    raise ValueError("No successful trusted Build distribution available to publish")
 
 
 def publish(run_id):

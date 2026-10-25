@@ -199,7 +199,9 @@ extension _OculumPostea on _OculumHomePageState {
           );
     if (!mounted || target == null || currentSheetScrollId() != origin) return;
     final targetTag = sheetTagAt(target);
-    if (currentCombatIsActive() && !await spendCombatRollResource()) return;
+    if (currentTurnTrackerIsActive() && !await spendCombatRollResource()) {
+      return;
+    }
     if (!mounted || currentSheetScrollId() != origin) return;
     await tiraSottotrattoOcchio(
       stat,

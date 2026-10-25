@@ -521,7 +521,9 @@ extension _OculumMeccanio on _OculumHomePageState {
         .where((s) => s.id == (deception ? 'inganno' : 'empatia'))
         .firstOrNull;
     if (stat == null) return;
-    if (currentCombatIsActive() && !await spendCombatRollResource()) return;
+    if (currentTurnTrackerIsActive() && !await spendCombatRollResource()) {
+      return;
+    }
     if (!mounted ||
         currentSheetScrollId() != origin ||
         !canUseMeccanioEmpathy) {
@@ -719,7 +721,9 @@ extension _OculumMeccanio on _OculumHomePageState {
     if (!mounted || index == null || currentSheetScrollId() != origin) return;
     final stat = hiddenEyeStats.where((s) => s.id == 'meccanica').firstOrNull;
     if (stat == null) return;
-    if (currentCombatIsActive() && !await spendCombatRollResource()) return;
+    if (currentTurnTrackerIsActive() && !await spendCombatRollResource()) {
+      return;
+    }
     if (!mounted || currentSheetScrollId() != origin) return;
     await tiraSottotrattoOcchio(
       stat,

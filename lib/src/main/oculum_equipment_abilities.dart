@@ -261,6 +261,25 @@ String oculumArtSkillCostText(ArtSkill skill, int form) {
   return '$minimum/$maximum $resource';
 }
 
+/// Whole units only; the majority currency receives rounding remainders.
+({int obser, int oculum}) oculumMixedCurrencySplit(
+  int total,
+  int obserQuarter, {
+  bool? tieToObser,
+}) {
+  final safe = max(0, total);
+  final share = obserQuarter.clamp(0, 4);
+  var obser = safe * share ~/ 4;
+  var oculum = safe * (4 - share) ~/ 4;
+  final remainder = safe - obser - oculum;
+  if (share > 2 || share == 2 && (tieToObser ?? Random.secure().nextBool())) {
+    obser += remainder;
+  } else {
+    oculum += remainder;
+  }
+  return (obser: obser, oculum: oculum);
+}
+
 CharacterSkill oculumEquipmentAbilityFromArt(ArtSkill skill) => CharacterSkill(
   nome: skill.nome,
   tipo: 'Skill equipaggiamento',
@@ -283,6 +302,9 @@ CharacterSkill oculumEquipmentAbilityFromArt(ArtSkill skill) => CharacterSkill(
             '0',
         costoStrutturato: OculumSkillCost(
           resource: skill.risorsaCostoPerLivello(i + 1),
+          additionalCosts: skill.additionalCostsPerLevel[i]
+              .map((cost) => OculumSkillCost.fromJson(cost.toJson()))
+              .toList(),
           variable:
               skill.oculumMinimoPerLivello(i + 1) !=
               skill.oculumMassimoPerLivello(i + 1),
@@ -592,11 +614,20 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     OculumSkillCost? cost,
     OculumAbilityCooldown? cooldown,
     bool Function()? valid,
+    bool paymentOnly = false,
+    void Function(Map<String, int>)? onPaid,
   }) async {
     if (skillOculumUseDialogOpen || !mounted || (valid != null && !valid())) {
       return false;
     }
     if (!meccanioSkillAllowed(effects)) return false;
+    if (rabbitHatReady && effects.any((e) => e.target == 'rabbit_hat')) {
+      aggiungiLog(
+        '[CAPPELLO] Una carica è già pronta: continua o lancia prima di riattivare.',
+      );
+      return false;
+    }
+
     if (planarCharging &&
         !effects.any(
           (e) => e.type == 'planar' && e.target == 'lightning_charge',
@@ -690,6 +721,24 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
           );
     final minimum = resolved.variable ? max(0, resolved.minimum) : fixed;
     final maximum = resolved.variable ? max(minimum, resolved.maximum) : fixed;
+    final extraCosts = resolved.additionalCosts;
+    final extraInputs = [
+      for (final extra in extraCosts)
+        TextEditingController(
+          text:
+              '${extra.variable ? extra.minimum : max(0, oculumEvaluateStructuredEffectValue(
+                      OculumStructuredEffect(valueExpression: extra.amountExpression),
+                      variables: formulaValueContext(),
+                      subtraits: hiddenEyeStats,
+                    ))}',
+        ),
+    ];
+    Map<String, int> selectedPayments = {};
+    final mixedPayment =
+        resource == 'obser' && effects.any((e) => e.id.startsWith('tear_'));
+    final oculumInput = TextEditingController(text: '0');
+    var oculumPaid = 0;
+    final splitTieToObser = Random.secure().nextBool();
     final input = TextEditingController(text: '$minimum');
     final origin = currentSheetScrollId();
     skillOculumUseDialogOpen = true;
@@ -703,11 +752,61 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
             final available = resource == 'nessuna'
                 ? 1 << 30
                 : artSkillCostResourceAvailable(resource);
+            final oculumPart = mixedPayment
+                ? int.tryParse(oculumInput.text)
+                : 0;
+            final total = (selected ?? -1000000) + (oculumPart ?? -1000000);
+            final payments = <String, int>{
+              if (resource != 'nessuna') resource: selected ?? 0,
+            };
+            if (mixedPayment) {
+              payments['oculum'] =
+                  (payments['oculum'] ?? 0) + (oculumPart ?? 0);
+            }
+            var extrasValid = true;
+            for (var i = 0; i < extraCosts.length; i++) {
+              final extra = extraCosts[i];
+              final value = int.tryParse(extraInputs[i].text);
+              final minimum = extra.variable
+                  ? extra.minimum
+                  : max(
+                      0,
+                      oculumEvaluateStructuredEffectValue(
+                        OculumStructuredEffect(
+                          valueExpression: extra.amountExpression,
+                        ),
+                        variables: formulaValueContext(),
+                        subtraits: hiddenEyeStats,
+                      ),
+                    );
+              final maximum = extra.variable ? extra.maximum : minimum;
+              extrasValid &=
+                  value != null && value >= max(0, minimum) && value <= maximum;
+              payments[oculumNormalizeEffectResource(extra.resource)] =
+                  (payments[oculumNormalizeEffectResource(extra.resource)] ??
+                      0) +
+                  (value ?? 0);
+            }
+            final allAvailable =
+                extrasValid &&
+                payments.entries.every(
+                  (entry) =>
+                      entry.value >= 0 &&
+                      artSkillCostResourceAvailable(entry.key) >= entry.value,
+                );
             final accepted =
+                allAvailable &&
                 selected != null &&
-                selected >= minimum &&
-                selected <= maximum &&
-                selected <= available;
+                selected >= 0 &&
+                oculumPart != null &&
+                oculumPart >= 0 &&
+                total >= minimum &&
+                total <= maximum &&
+                selected <= available &&
+                oculumPart <=
+                    (mixedPayment
+                        ? artSkillCostResourceAvailable('oculum')
+                        : 0);
             return AlertDialog(
               title: Text(source),
               content: SingleChildScrollView(
@@ -718,14 +817,130 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                     Text(
                       'Costo ${resolved.variable ? "$minimum/$maximum" : "$fixed/$fixed"} $resource · disponibili ${resource == "nessuna" ? "—" : available}',
                     ),
-                    if (resolved.variable)
+                    if (resolved.variable || mixedPayment)
                       TextField(
                         controller: input,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Quantità da spendere',
+                        decoration: InputDecoration(
+                          labelText: mixedPayment
+                              ? 'Obser da spendere'
+                              : 'Quantità da spendere',
                         ),
                         onChanged: (_) => refresh(() {}),
+                      ),
+                    if (mixedPayment)
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (var share = 0; share <= 4; share++)
+                              Builder(
+                                builder: (context) {
+                                  final split = oculumMixedCurrencySplit(
+                                    total.clamp(minimum, maximum),
+                                    share,
+                                    tieToObser: splitTieToObser,
+                                  );
+                                  final enough =
+                                      split.obser <= available &&
+                                      split.oculum <=
+                                          artSkillCostResourceAvailable(
+                                            'oculum',
+                                          );
+                                  final tooltipKey = GlobalKey<TooltipState>();
+                                  return RawGestureDetector(
+                                    gestures: {
+                                      LongPressGestureRecognizer:
+                                          GestureRecognizerFactoryWithHandlers<
+                                            LongPressGestureRecognizer
+                                          >(
+                                            () => LongPressGestureRecognizer(
+                                              duration: const Duration(
+                                                milliseconds: 800,
+                                              ),
+                                            ),
+                                            (
+                                              recognizer,
+                                            ) => recognizer.onLongPress = () =>
+                                                tooltipKey.currentState
+                                                    ?.ensureTooltipVisible(),
+                                          ),
+                                    },
+                                    child: Tooltip(
+                                      key: tooltipKey,
+                                      triggerMode: TooltipTriggerMode.manual,
+                                      waitDuration: const Duration(
+                                        milliseconds: 800,
+                                      ),
+                                      message:
+                                          '${split.obser} Obser · ${split.oculum} Oculum${enough ? '' : ' · risorse insufficienti'}',
+                                      child: TextButton(
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 5,
+                                          ),
+                                          minimumSize: const Size(0, 32),
+                                          visualDensity: VisualDensity.compact,
+                                          textStyle: const TextStyle(
+                                            fontSize: 11,
+                                          ),
+                                          foregroundColor: share == 0
+                                              ? const Color(0xFFB68CFF)
+                                              : const Color(0xFFADB1BA),
+                                        ),
+                                        onPressed: enough
+                                            ? () => refresh(() {
+                                                input.text = '${split.obser}';
+                                                oculumInput.text =
+                                                    '${split.oculum}';
+                                              })
+                                            : null,
+                                        child: Text(
+                                          const [
+                                            'Oculum',
+                                            '¼ Obser',
+                                            '½ Obser',
+                                            '¾ Obser',
+                                            'Obser',
+                                          ][share],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    if (mixedPayment) ...[
+                      Text(
+                        'Pagamento libero: Obser + Oculum = $minimum${minimum == maximum ? '' : '–$maximum'}. Oculum disponibili: ${artSkillCostResourceAvailable('oculum')}.',
+                      ),
+                      TextField(
+                        controller: oculumInput,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Oculum da spendere',
+                        ),
+                        onChanged: (_) => refresh(() {}),
+                      ),
+                    ],
+                    for (var i = 0; i < extraCosts.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: TextField(
+                          controller: extraInputs[i],
+                          keyboardType: TextInputType.number,
+                          readOnly: !extraCosts[i].variable,
+                          decoration: InputDecoration(
+                            labelText: structuredEffectResourceLabel(
+                              extraCosts[i].resource,
+                            ),
+                            helperText:
+                                'Min ${extraCosts[i].variable ? extraCosts[i].minimum : extraInputs[i].text} · Max ${extraCosts[i].variable ? extraCosts[i].maximum : extraInputs[i].text} · disponibili ${artSkillCostResourceAvailable(extraCosts[i].resource)}',
+                          ),
+                          onChanged: (_) => refresh(() {}),
+                        ),
                       ),
                     for (final effect in effects.where((e) => e.enabled))
                       Text(oculumStructuredEffectDescription(effect)),
@@ -742,7 +957,13 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                 ),
                 FilledButton(
                   onPressed: accepted
-                      ? () => Navigator.pop(dialog, selected)
+                      ? () {
+                          selectedPayments = Map.of(payments);
+                          oculumPaid = mixedPayment
+                              ? int.parse(oculumInput.text)
+                              : 0;
+                          Navigator.pop(dialog, selected + oculumPaid);
+                        }
                       : null,
                   child: const Text('Conferma'),
                 ),
@@ -754,6 +975,10 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     } finally {
       skillOculumUseDialogOpen = false;
       input.dispose();
+      oculumInput.dispose();
+      for (final controller in extraInputs) {
+        controller.dispose();
+      }
     }
     if (!mounted ||
         paid == null ||
@@ -762,45 +987,80 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         (cooldown != null && !cooldown.ready)) {
       return false;
     }
-    final robotTechnique = effects.where((e) => e.type == 'meccanio').firstOrNull;
-    final preparesAttack = robotTechnique != null &&
-        !const {'drones', 'sphere'}.contains(robotTechnique.target) || effects.any(
-      (e) =>
-          const {'danno', 'danno_percentuale'}.contains(e.type) &&
-          e.mode == 'prossima_azione',
+    final robotTechnique = effects
+        .where((e) => e.type == 'meccanio')
+        .firstOrNull;
+    final preparesAttack =
+        robotTechnique != null &&
+            !const {'drones', 'sphere'}.contains(robotTechnique.target) ||
+        effects.any(
+          (e) =>
+              const {'danno', 'danno_percentuale'}.contains(e.type) &&
+              e.mode == 'prossima_azione',
+        );
+    final freeSpeedIncrease = effects.any(
+      (effect) => effect.type == 'planar' && effect.target == 'speed_increase',
     );
-    if (!preparesAttack && currentCombatIsActive()) {
-      final token = onlineCombatTokens()
+    if (!paymentOnly &&
+        !preparesAttack &&
+        !freeSpeedIncrease &&
+        currentTurnTrackerIsActive()) {
+      final combatTokens = onlineCombatTokens();
+      final token = combatTokens
           .where((t) => onlineCombatTokenTag(t) == sheetTagAt(schedaCorrente))
           .firstOrNull;
       final ownTurn =
           token != null &&
-          onlineCombatTokens().indexOf(token) ==
+          combatTokens.indexOf(token) ==
               (_usesLocalMasterInitiative
                   ? masterInitiativeActiveIndex
                   : readIntValue(
                       realtimeVisibleInitiativeSnapshot['activeIndex'],
                     ));
-      if (effects.any((e) => e.type == 'preparazione') && !ownTurn) {
+      if (effects.any(
+            (e) => e.type == 'preparazione' || e.target == 'rabbit_hat',
+          ) &&
+          !ownTurn) {
         aggiungiLog('Preparazione: serve la tua Azione nel tuo turno.');
         return false;
       }
-      if (!await requestUtilitySpend(isMeccanio ? 'reazione' : ownTurn ? 'azione' : 'reazione')) {
+      if (!await requestUtilitySpend(
+        isMeccanio
+            ? 'reazione'
+            : ownTurn
+            ? 'azione'
+            : 'reazione',
+        preferFreeReaction: !effects.any((e) => e.target == 'rabbit_hat'),
+      )) {
         return false;
       }
     }
-    if (resource != 'nessuna' &&
-        (artSkillCostResourceAvailable(resource) < paid ||
-            spendArtSkillCostResource(resource, paid) != paid)) {
+    if (selectedPayments.isEmpty && resource != 'nessuna') {
+      selectedPayments = {
+        resource: paid - oculumPaid,
+        if (oculumPaid > 0) 'oculum': oculumPaid,
+      };
+    }
+    if (!selectedPayments.entries.every(
+      (entry) => artSkillCostResourceAvailable(entry.key) >= entry.value,
+    )) {
       return false;
     }
+    // Synchronous preflight above makes this one transaction on the UI isolate.
+    for (final entry in selectedPayments.entries) {
+      if (spendArtSkillCostResource(entry.key, entry.value) != entry.value) {
+        return false;
+      }
+    }
+    onPaid?.call(selectedPayments);
+    if (paymentOnly) return true;
     // Consume existing one-action conditions before adding new self effects.
     // A condition just granted by this ability starts with its full duration.
     processConditionTick(OculumConditionTickTrigger.action);
     final messages = applyStructuredEffectsOnActivation(
       effects,
       source: source,
-      spentResources: {resource: paid},
+      spentResources: selectedPayments,
     );
     cooldown?.activate();
     if (effects.any((e) => e.id.startsWith('planar:party_heal:'))) {

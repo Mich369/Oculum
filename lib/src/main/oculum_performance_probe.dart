@@ -7,6 +7,63 @@ class OculumPerformanceProbe {
   OculumPerformanceProbe(State state) : _state = state as _OculumHomePageState;
   final _OculumHomePageState _state;
 
+  void collectObserverCurrency(Map enemy, String encounter) =>
+      _state.collectObserverTearCurrency(enemy, encounter);
+  Future<bool> useConfiguredForTest(CharacterSkillForm form) =>
+      _state.useConfiguredAbility(
+        source: 'Test pagamento',
+        effects: form.effettiStrutturati,
+        cost: form.costoStrutturato,
+        cooldown: form.cooldownStrutturato,
+      );
+  void controlOblivion(int total) => _state.applyOblivionMemoryControl(total);
+  void oblivionTurn(Map<String, dynamic> token, int percentile) =>
+      _state.resolveOblivionMemoryTurn(token, percentile: percentile);
+  void damageSaltalungoTail(Map<String, dynamic> request, int hpLost) =>
+      _state.resolveSaltalungoTail(request, hpLost);
+  Future<void> chargeRabbitHat() => _state.useRabbitHat(charge: true);
+  bool dollSpring(int percentile) =>
+      _state.grantDollSpringReaction(90, percentile: percentile);
+  int activeEffectBonus(String target) =>
+      _state.activeStructuredEffectBonus(target);
+  String buildMecha(
+    InventoryItem item,
+    int natural,
+    int total, {
+    bool crafting = false,
+  }) => _state.resolveMechaConstruction(
+    item,
+    natural: natural,
+    total: total,
+    crafting: crafting,
+  );
+  Future<void> enterMecha(InventoryItem item) => _state.enterMecha(item);
+  Future<void> exitMecha({bool destroyed = false, int? explosionPercentile}) =>
+      _state.exitMecha(
+        destroyed: destroyed,
+        explosionPercentile: explosionPercentile,
+      );
+  Future<bool?> escapeMecha(String resource, int natural) =>
+      _state.resolveMechaEscape(resource, natural: natural);
+  bool destroyMechaWreck(InventoryItem item, int percentile) =>
+      _state.destroyMechaWreck(item, percentile: percentile);
+  ({int rolled, int restored, int temporary}) rechargeMatter(
+    int form,
+    int rolled,
+  ) => _state.rechargePlasmaMatter(form, rolled: rolled);
+  int spendMatter(int amount) =>
+      _state.spendArtSkillCostResource('materia', amount);
+  bool toggleWillKingdom() => _state.toggleWillKingdom();
+  double willKingdomWeight() => _state.willKingdomWeight;
+  int kingdomValue(int value, {bool subtrait = false}) =>
+      _state.applyWillKingdomBonus(value, subtrait: subtrait);
+  void startFight(String id) => _state.startEncounterFight(id);
+  bool fightActive() => _state.currentCombatIsActive();
+  bool trackerActive() => _state.currentTurnTrackerIsActive();
+  Future<void> abilityCatalogue() => _state.showAbilityCatalogue();
+  List<Color> abilityCostColors(String cost) => _state.abilityCostColors(cost);
+  Color abilityBenefitColor(List<OculumStructuredEffect> effects) =>
+      _state.abilityBenefitColor(effects);
   Map<String, dynamic> planarStateSnapshot() =>
       Map<String, dynamic>.from(_state.planarState);
   int planarIncoming(
@@ -66,6 +123,10 @@ class OculumPerformanceProbe {
   Future<bool> utilitySpend(String resource) =>
       _state.requestUtilitySpend(resource);
   Future<bool> spendCombatRoll() => _state.spendCombatRollResource();
+  Future<bool> spendCounterAttack() => _state.spendCounterAttackResource();
+  int takeReactionRollBonus() => _state.consumePendingReactionRollBonus();
+  int takeReactionConsequenceBonus() =>
+      _state.consumePendingFastReactionConsequenceBonus();
   Map<String, dynamic> turnResourceTestPacket(String id) {
     final tag = currentTag();
     final packet = <String, dynamic>{

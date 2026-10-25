@@ -51,6 +51,122 @@ ArtSkill oculumAbilityWithEvolutions(ArtSkill original, int count) {
 }
 
 extension _OculumAbilityCatalogue on _OculumHomePageState {
+  List<Color> abilityCostColors(String cost) {
+    final text = oculumNormalizeText(cost);
+    final colors = <Color>[];
+    if (text.contains('oculum') || text.contains('@ocu')) {
+      colors.add(const Color(0xFFB68CFF));
+    }
+    if (text.contains('vol')) colors.add(statFormulaColor('volonta'));
+    if (RegExp(r'(^|[^a-z])mat(eria)?([^a-z]|$)').hasMatch(text)) {
+      colors.add(statFormulaColor('materia'));
+    }
+    if (text.contains('res') || text.contains('vita') || text.contains('hp')) {
+      colors.add(statFormulaColor('resilienza'));
+    }
+    if (text.contains('fortuna') || text.contains('@fort')) {
+      colors.add(const Color(0xFFD4AF37));
+    }
+    if (text.contains('obser')) {
+      colors.addAll(const [Color(0xFFADB1BA), Color(0xFF8B76B4)]);
+    }
+    if (text.contains('material') ||
+        text.contains('@item') ||
+        text.contains('oggett')) {
+      colors.add(const Color(0xFF48484B));
+    }
+    return colors.isEmpty ? [primaryColor] : colors;
+  }
+
+  Color abilityBenefitColor(
+    Iterable<OculumStructuredEffect> effects, {
+    String fallback = '',
+  }) {
+    final targets = effects
+        .where(
+          (e) =>
+              e.type == 'modifica_statistica' ||
+              e.type == 'modifica_sottotratto',
+        )
+        .map((e) => oculumNormalizeText(e.target))
+        .toList();
+    if (targets.isEmpty && fallback.isNotEmpty) {
+      targets.add(oculumNormalizeText(fallback));
+    }
+    if (fallback.isNotEmpty) {
+      for (final match in RegExp(
+        r'@([a-z_]+)\s*\+',
+      ).allMatches(oculumNormalizeText(fallback))) {
+        final key = match.group(1)!;
+        targets.add(
+          const {
+                'res': 'resilienza',
+                'vol': 'volonta',
+                'mat': 'materia',
+                'ocu': 'oculum',
+              }[key] ??
+              key,
+        );
+      }
+    }
+    for (final target in targets) {
+      for (final stat in hiddenEyeStats) {
+        if (target == oculumNormalizeText(stat.id) ||
+            target == oculumNormalizeText(stat.nome)) {
+          return hiddenEyeStatIdentityColor(stat);
+        }
+      }
+      for (final key in const ['resilienza', 'volonta', 'materia', 'oculum']) {
+        if (target == key) return statFormulaColor(key);
+      }
+    }
+    return primaryColor;
+  }
+
+  Widget abilityColorFrame({
+    required String cost,
+    required Iterable<OculumStructuredEffect> effects,
+    required Widget child,
+    String benefitText = '',
+    EdgeInsetsGeometry? margin,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(10),
+  }) {
+    final colors = abilityCostColors(cost);
+    final benefit = abilityBenefitColor(effects, fallback: benefitText);
+    return Container(
+      margin: margin,
+      padding: const EdgeInsets.all(1.2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [...colors, Color.lerp(colors.last, benefit, 0.38)!],
+        ),
+      ),
+      child: Container(
+        padding: padding,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(11),
+          color: const Color(0xFF14110F),
+          gradient: LinearGradient(
+            colors: [
+              Color.alphaBlend(
+                colors.first.withValues(alpha: .07),
+                const Color(0xFF14110F),
+              ),
+              Color.alphaBlend(
+                benefit.withValues(alpha: .035),
+                const Color(0xFF14110F),
+              ),
+            ],
+          ),
+        ),
+        child: Material(type: MaterialType.transparency, child: child),
+      ),
+    );
+  }
+
   Future<void> showMonsterBookMechanics(MonsterBookEntry monster) async {
     final art = oculumMonsterBookArt(monster);
     await showDialog<void>(
@@ -113,6 +229,37 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
         ));
       }
     }
+    // Include Art techniques alongside creature skills. Saved definitions are
+    // read only; catalogue selections clone them before importing.
+    final known = <String>{};
+    for (final art in [...oculumStarterArtChoices(), ...arti]) {
+      for (final (index, skill) in art.skills.indexed) {
+        if (skill.nome.trim().isEmpty ||
+            skill.testoEvoluzione(1).trim().isEmpty ||
+            skill.testoEvoluzione(1).trim() == '???') {
+          continue;
+        }
+        final signature = jsonEncode([
+          skill.nome,
+          for (var form = 1; form <= 3; form++)
+            [
+              skill.testoEvoluzione(form),
+              skill.risorsaCostoPerLivello(form),
+              skill.oculumMinimoPerLivello(form),
+              skill.oculumMassimoPerLivello(form),
+              skill.cooldownPerLivello[form - 1].amount,
+              skill.effettiEvoluzione(form).map((e) => e.toJson()).toList(),
+            ],
+        ]);
+        if (!known.add(signature)) continue;
+        entries.add((
+          id: 'catalogue_art:${entries.length}:$index',
+          label: '${skill.nome} · ${art.nome} · Art',
+          art: skill,
+          natural: null,
+        ));
+      }
+    }
     final selected = <String>{};
     var query = '';
     final five =
@@ -132,48 +279,126 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
           return AlertDialog(
             title: Text('Catalogo abilità · ${five ? 5 : 3} evoluzioni'),
             content: SizedBox(
-              width: 660,
-              height: 440,
+              width: 1000,
+              height: min(620.0, MediaQuery.sizeOf(dialog).height * .72),
               child: Column(
                 children: [
                   TextField(
                     decoration: const InputDecoration(
-                      labelText: 'Cerca abilità o creatura',
+                      labelText: 'Cerca abilità, creatura o Art',
                       prefixIcon: Icon(Icons.search),
                     ),
                     onChanged: (v) => refresh(() => query = v),
                   ),
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: visible.length,
-                      itemBuilder: (context, index) {
-                        final entry = visible[index];
-                        final art = oculumAbilityWithEvolutions(
-                          entry.art,
-                          five ? 5 : 3,
-                        );
-                        return ExpansionTile(
-                          key: ValueKey(entry.id),
-                          leading: Checkbox(
-                            value: selected.contains(entry.id),
-                            onChanged: (v) => refresh(() {
-                              if (v == true) {
-                                selected.add(entry.id);
-                              } else {
-                                selected.remove(entry.id);
-                              }
-                            }),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final columns = constraints.maxWidth >= 900
+                            ? 3
+                            : constraints.maxWidth >= 580
+                            ? 2
+                            : 1;
+                        final width =
+                            (constraints.maxWidth - 10 * (columns - 1)) /
+                            columns;
+                        return ListView.builder(
+                          itemCount: (visible.length / columns).ceil(),
+                          itemBuilder: (context, row) => Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                for (final entry
+                                    in visible
+                                        .skip(row * columns)
+                                        .take(columns))
+                                  SizedBox(
+                                    width: width,
+                                    child: Builder(
+                                      builder: (context) {
+                                        final art = oculumAbilityWithEvolutions(
+                                          entry.art,
+                                          five ? 5 : 3,
+                                        );
+                                        final natural = entry.natural;
+                                        String cost(int form) =>
+                                            natural != null &&
+                                                !five &&
+                                                natural.forme.isNotEmpty
+                                            ? natural
+                                                  .forme[min(
+                                                    form - 1,
+                                                    natural.forme.length - 1,
+                                                  )]
+                                                  .costo
+                                            : '${art.oculumMinimoPerLivello(form)}/${art.oculumMassimoPerLivello(form)} ${art.risorsaCostoPerLivello(form)}';
+                                        final effects = art.effettiEvoluzione(
+                                          1,
+                                        );
+                                        return abilityColorFrame(
+                                          cost: cost(1),
+                                          effects: effects,
+                                          padding: EdgeInsets.zero,
+                                          child: ExpansionTile(
+                                            key: ValueKey(entry.id),
+                                            tilePadding:
+                                                const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                ),
+                                            leading: Checkbox(
+                                              value: selected.contains(
+                                                entry.id,
+                                              ),
+                                              onChanged: (value) => refresh(() {
+                                                if (value == true) {
+                                                  selected.add(entry.id);
+                                                } else {
+                                                  selected.remove(entry.id);
+                                                }
+                                              }),
+                                            ),
+                                            title: Text(
+                                              entry.label,
+                                              style: TextStyle(
+                                                color: abilityBenefitColor(
+                                                  effects,
+                                                ),
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            subtitle: Text(
+                                              '${natural == null ? 'Art' : 'Skill'} · ${cost(1)}',
+                                              style: TextStyle(
+                                                color: abilityCostColors(
+                                                  cost(1),
+                                                ).first,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            children: [
+                                              for (
+                                                var form = 1;
+                                                form <= (five ? 5 : 3);
+                                                form++
+                                              )
+                                                Padding(
+                                                  padding: const EdgeInsets.all(
+                                                    10,
+                                                  ),
+                                                  child: Text(
+                                                    '${artLevelRoman(form)} · ${cost(form)}\n${natural != null && !five && natural.forme.isNotEmpty ? natural.forme[min(form - 1, natural.forme.length - 1)].descrizione : art.testoEvoluzione(form)}\n${(natural != null && !five && natural.forme.isNotEmpty ? natural.forme[min(form - 1, natural.forme.length - 1)].effettiStrutturati : art.effettiEvoluzione(form)).map(oculumStructuredEffectDescription).join('\n')}',
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
-                          title: Text(entry.label),
-                          children: [
-                            for (var form = 1; form <= (five ? 5 : 3); form++)
-                              Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: Text(
-                                  '${artLevelRoman(form)} · ${entry.natural != null && !five ? entry.natural!.forme[min(form - 1, entry.natural!.forme.length - 1)].costo : "${art.oculumMinimoPerLivello(form)}/${art.oculumMassimoPerLivello(form)} ${art.risorsaCostoPerLivello(form)}"}\n${entry.natural != null && !five ? entry.natural!.forme[min(form - 1, entry.natural!.forme.length - 1)].descrizione : art.testoEvoluzione(form)}\n${(entry.natural != null && !five ? entry.natural!.forme[min(form - 1, entry.natural!.forme.length - 1)].effettiStrutturati : art.effettiEvoluzione(form)).map(oculumStructuredEffectDescription).join('\n')}',
-                                ),
-                              ),
-                          ],
                         );
                       },
                     ),
@@ -238,7 +463,10 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
   MonsterBookEntry monster, {
   required int seed,
 }) {
-  if (monster.isNpc || monster.id.startsWith('pawn_guardiano')) {
+  if (monster.isNpc ||
+      monster.id.startsWith('pawn_guardiano') ||
+      const {'nuvi', 'thunder_bot'}.contains(monster.id) ||
+      monster.id.contains('larva')) {
     return [];
   }
   final body = oculumNormalizeText(

@@ -34,10 +34,19 @@ void main() {
           : 'output/pdf/${captureLabel.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_')}',
     );
     await output.create(recursive: true);
-    final dated = File(
+    var dated = File(
       '${output.path}${Platform.pathSeparator}Oculum_Manuale_Regole_2026-09-05.pdf',
     );
-    await dated.writeAsBytes(bytes, flush: true);
+    try {
+      await dated.writeAsBytes(bytes, flush: true);
+    } on FileSystemException catch (error) {
+      if (![32, 1224].contains(error.osError?.errorCode)) rethrow;
+      dated = File(
+        '${output.path}${Platform.pathSeparator}Oculum_Manuale_Regole_${DateTime.now().microsecondsSinceEpoch}.pdf',
+      );
+      await dated.writeAsBytes(bytes, flush: true);
+    }
+    expect(await dated.length(), bytes.length);
     try {
       await File(
         '${output.path}${Platform.pathSeparator}Oculum_Manuale_Regole.pdf',

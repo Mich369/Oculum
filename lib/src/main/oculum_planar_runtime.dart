@@ -117,6 +117,40 @@ List<List<OculumStructuredEffect>>? oculumPlanarSkillEffects(
   );
 }
 
+List<String> oculumRabbitHatHits(List<String> selected, int stage) {
+  final targets = selected.toSet().take(3).toList();
+  if (targets.isEmpty) return [];
+  return [
+    for (var hit = 0; hit < stage.clamp(1, 3); hit++)
+      targets[hit % targets.length],
+  ];
+}
+
+int oculumRabbitHatDamage(int base, int distinctBefore, int repeatBefore) =>
+    (max(0, base) *
+            (1 + .25 * max(0, distinctBefore) + .30 * max(0, repeatBefore)))
+        .floor();
+int oculumRabbitHatRollBonus(int stage) =>
+    const [-2, 1, 5][stage.clamp(1, 3) - 1];
+bool oculumRabbitHatAdapts(int percentile) =>
+    percentile >= 0 && percentile < 60;
+String oculumRabbitHatElement(
+  Map<String, double> multipliers,
+  String fallback,
+  int percentile, {
+  Random? random,
+}) {
+  if (!oculumRabbitHatAdapts(percentile) || multipliers.isEmpty) {
+    return fallback;
+  }
+  final highest = multipliers.values.reduce(max);
+  if (highest <= 1) return fallback;
+  final choices = multipliers.keys
+      .where((key) => multipliers[key] == highest)
+      .toList();
+  return choices[(random ?? Random.secure()).nextInt(choices.length)];
+}
+
 extension _OculumPlanarRuntime on _OculumHomePageState {
   Map<String, dynamic> get planarState {
     if (schedePersonaggio.isEmpty ||
@@ -131,6 +165,217 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
       );
     }
     return sheet['planarRuntime'] as Map<String, dynamic>;
+  }
+
+  Future<void> controlOblivionMemory(String statId) async {
+    const allowed = {
+      'resistenza',
+      'canalizzazione',
+      'memoria',
+      'controllo_corporeo',
+      'crepa',
+    };
+    if (!allowed.contains(statId) ||
+        readIntValue(planarState['oblivionMemoryStage']) <= 0) {
+      return;
+    }
+    final stat = hiddenEyeStats.where((s) => s.id == statId).firstOrNull;
+    if (stat == null || !await spendCombatRollResource() || !mounted) return;
+    await tiraSottotrattoOcchio(
+      stat,
+      resourceAlreadySpent: true,
+      actionLabel: 'Controllo Oblio',
+      onResolved: (natural, total) {
+        if (!mounted) return;
+        applyOblivionMemoryControl(total);
+        programmaSalvataggio();
+      },
+    );
+  }
+
+  void applyOblivionMemoryControl(int total) {
+    final difficulty = max(
+      1,
+      readIntValue(planarState['oblivionMemoryDifficulty']),
+    );
+    final before = readIntValue(planarState['oblivionMemoryStage']);
+    planarState['oblivionMemoryStage'] =
+        (before + (total >= difficulty ? -1 : 1)).clamp(0, 5);
+    aggiungiLog(
+      '[OBLIO] Controllo $total / DT $difficulty: ${total >= difficulty ? 'resisti' : 'cedi'}, stadio ${planarState['oblivionMemoryStage']}/5.',
+    );
+  }
+
+  void resolveOblivionMemoryTurn(
+    Map<String, dynamic> token, {
+    int? percentile,
+  }) {
+    final index = localSheetIndexForOculumTag(publicInitiativeSourceTag(token));
+    final runtime = index == schedaCorrente
+        ? planarState
+        : index < 0
+        ? const {}
+        : schedePersonaggio[index]['planarRuntime'] as Map? ?? const {};
+    final stage = readIntValue(runtime['oblivionMemoryStage']);
+    final lost =
+        stage >= 5 && (percentile ?? Random.secure().nextInt(100)) < 50;
+    token['oblivionMemoryReactionLost'] = lost;
+    if (stage >= 5) {
+      aggiungiLog(
+        lost
+            ? 'cosa stavo facendo?'
+            : '[OBLIO] ${token['name']}: Reazione mantenuta.',
+      );
+    }
+  }
+
+  void resolveSaltalungoTail(Map<String, dynamic> request, int hpLost) {
+    if (hpLost <= 0 ||
+        readIntValue(request['natural']) < 20 ||
+        request['targetWeakPointPrecision'] != true ||
+        monsterLootSourceForSheet(schedePersonaggio[schedaCorrente])?.id !=
+            'saltalungo_maculato' ||
+        planarState['saltalungoTailBroken'] == true) {
+      return;
+    }
+    planarState['saltalungoTailBroken'] = true;
+    final reflex = hiddenEyeStats.where((s) => s.id == 'riflessi').firstOrNull;
+    if (reflex != null) reflex.valore -= 6;
+    activeStructuredEffects.add({
+      'effectId': 'saltalungo_tail_initiative',
+      'source': 'Coda distrutta',
+      'type': 'modifica_sottotratto',
+      'mode': 'aumento',
+      'target': 'iniziativa',
+      'value': -3,
+      'remaining': -1,
+      'unit': 'turni',
+    });
+    for (final token in _writableOnlineCombatTokens().where(
+      (t) => onlineCombatTokenTag(t) == sheetTagAt(schedaCorrente),
+    )) {
+      token['reflexes'] = max(0, readIntValue(token['reflexes']) - 6);
+      token['initiativeBase'] = readIntValue(token['initiativeBase']) - 3;
+      token['initiativeTotal'] = readIntValue(token['initiativeTotal']) - 3;
+    }
+    invalidateDerivedDataCaches();
+    sendRealtimeInitiativeSnapshotIfPublished();
+    aggiungiLog(
+      '[CODA] Saltalungo: Riflessi −6, Iniziativa −3 fino a fine scontro.',
+    );
+  }
+
+  ({int rolled, int restored, int temporary}) rechargePlasmaMatter(
+    int form, {
+    int? rolled,
+  }) {
+    final index = form.clamp(1, 3) - 1;
+    final amount =
+        rolled ??
+        (Random.secure().nextInt(const [4, 8, 12][index]) +
+            1 +
+            const [0, 3, 6][index]);
+    final before = max(0, leggiNumero(currentMateriaController));
+    final maximum = max(0, materiaMassimoNaturale());
+    final restored = min(max(0, maximum - before), amount);
+    final temporary = max(0, amount - restored) ~/ 2;
+    currentMateriaController.text = '${before + restored}';
+    planarState['plasmaTemporaryMatter'] =
+        readIntValue(planarState['plasmaTemporaryMatter']) + temporary;
+    invalidateDerivedDataCaches();
+    aggiungiLog(
+      '[RICARICA] +$restored Materia, +$temporary temporanea (eccesso dimezzato per difetto), tiro $amount. La temporanea si spende prima e scade a fine scontro.',
+    );
+    programmaSalvataggio();
+    return (rolled: amount, restored: restored, temporary: temporary);
+  }
+
+  bool grantDollSpringReaction(int chance, {int? percentile}) {
+    final success =
+        (percentile ?? Random.secure().nextInt(100)) < chance.clamp(0, 100);
+    if (success) {
+      unawaited(
+        requestUtilitySpend(
+          'speed_grant_fast',
+          preferFreeReaction: false,
+        ).then((_) => flushPendingCombatTurnResources()),
+      );
+    }
+    aggiungiLog(
+      '[MOLLA] ${success ? 'Reazione veloce extra ottenuta' : 'Nessuna Reazione veloce extra'} · probabilità $chance%.',
+    );
+    return success;
+  }
+
+  bool get rabbitHatReady => readIntValue(planarState['rabbitHatStage']) > 0;
+  Future<void> useRabbitHat({bool charge = false, bool release = false}) async {
+    if (!rabbitHatReady) return;
+    final tag = sheetTagAt(schedaCorrente);
+    final tokens = onlineCombatTokens();
+    final active = _usesLocalMasterInitiative
+        ? masterInitiativeActiveIndex
+        : readIntValue(realtimeVisibleInitiativeSnapshot['activeIndex']);
+    final ownTurn =
+        !currentTurnTrackerIsActive() ||
+        active >= 0 &&
+            active < tokens.length &&
+            onlineCombatTokenTag(tokens[active]) == tag;
+    final origin = currentSheetScrollId();
+    final sameAction =
+        readIntValue(planarState['rabbitHatPaidTurn'], fallback: -1) ==
+        playerReportedTurn;
+    if (!ownTurn && !(release && !charge && sameAction)) {
+      aggiungiLog('[CAPPELLO] Caricare richiede la tua Azione nel tuo turno.');
+      return;
+    }
+    if ((charge || !sameAction) &&
+        !await requestUtilitySpend('azione', preferFreeReaction: false)) {
+      return;
+    }
+    if (!mounted || currentSheetScrollId() != origin) return;
+    if (charge) {
+      planarState['rabbitHatStage'] = min(
+        3,
+        readIntValue(planarState['rabbitHatStage']) + 1,
+      );
+    }
+    planarState['rabbitHatPaidTurn'] = playerReportedTurn;
+    final stage = readIntValue(planarState['rabbitHatStage']);
+    aggiungiLog(
+      '[CAPPELLO] ${const ['Instabile', 'Stabile', 'Perfetto'][stage - 1]}: ${oculumRabbitHatRollBonus(stage)} al tiro. Lancio incluso nell’Azione.',
+    );
+    if (release) {
+      await planOnlineAttack(
+        resourceAlreadySpent: true,
+        rabbitHat: true,
+        maximumTargets: 3,
+      );
+    }
+    programmaSalvataggio();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> escapeRabbitChains(String statId) async {
+    if (planarState['rabbitChains'] != true) return;
+    final stat = hiddenEyeStats.where((s) => s.id == statId).firstOrNull;
+    if (stat == null || !await spendCombatRollResource() || !mounted) return;
+    await tiraSottotrattoOcchio(
+      stat,
+      resourceAlreadySpent: true,
+      actionLabel: 'Liberati dalle catene',
+      onResolved: (natural, total) {
+        final difficulty = readIntValue(planarState['rabbitChainsDifficulty']);
+        if (total >= difficulty) {
+          planarState.remove('rabbitChains');
+          final condition = getCondition('immobilizzato');
+          if (condition != null) removeCondition(condition, force: true);
+          aggiungiLog('[CATENE] $total / DT $difficulty: libero.');
+        } else {
+          aggiungiLog('[CATENE] $total / DT $difficulty: ancora intrappolato.');
+        }
+        programmaSalvataggio();
+      },
+    );
   }
 
   bool hasPlanarTechnique(String id) {
@@ -157,6 +402,64 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   ) {
     final state = planarState;
     switch (effect.target) {
+      case 'plasma_matter_recharge':
+        rechargePlasmaMatter(value);
+        break;
+      case 'rabbit_hat':
+        state['rabbitHatStage'] = 1;
+        state['rabbitHatForm'] = value.clamp(1, 3);
+        state['rabbitHatPaidTurn'] = playerReportedTurn;
+        aggiungiLog(
+          '[CAPPELLO] Instabile pronto (−2). Lancia incluso nell’Azione o conserva la carica per il prossimo turno.',
+        );
+        break;
+      case 'rabbit_chains':
+        state['rabbitChains'] = true;
+        applyCondition(
+          'immobilizzato',
+          durationType: OculumConditionDurationType.permanent,
+          source: 'Catene runiche: fino a liberazione',
+        );
+        break;
+      case 'doll_spring':
+        grantDollSpringReaction(value);
+        break;
+      case 'oblivion_memory':
+        state['oblivionMemoryStage'] = min(
+          5,
+          readIntValue(state['oblivionMemoryStage']) + max(1, value),
+        );
+        aggiungiLog(
+          '[OBLIO] Memoria incrinata: stadio ${state['oblivionMemoryStage']}/5. Utility: Resistenza, Canalizzazione, Memoria, Controllo corporeo o Crepa.',
+        );
+        break;
+      case 'speed_increase':
+        final tag = sheetTagAt(schedaCorrente);
+        final token = _writableOnlineCombatTokens()
+            .where(
+              (token) =>
+                  (_usesLocalMasterInitiative
+                      ? publicInitiativeSourceTag(token)
+                      : onlineCombatTokenTag(token)) ==
+                  tag,
+            )
+            .firstOrNull;
+        if (token != null) {
+          unawaited(
+            requestUtilitySpend(
+              value >= 3 ? 'speed_grant_fast' : 'speed_queue_normal',
+              preferFreeReaction: false,
+            ).then((_) => flushPendingCombatTurnResources()),
+          );
+          if (_usesLocalMasterInitiative) {
+            captureActiveMasterInitiativeGroup();
+            sendRealtimeInitiativeSnapshotIfPublished();
+          }
+          aggiungiLog(
+            '[AUMENTO DI VELOCITÀ] ${value >= 3 ? 'Una Reazione veloce disponibile subito' : 'Una Reazione normale extra al prossimo turno personale'}; nessuna Azione o Reazione consumata.',
+          );
+        }
+        break;
       case 'parasite_medicine':
         applyParasiteMedicine(value);
         break;
@@ -389,6 +692,15 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
 
   void resetPlanarFight() {
     resetMeccanioFight();
+    if (planarState.remove('saltalungoTailBroken') == true) {
+      final reflex = hiddenEyeStats
+          .where((s) => s.id == 'riflessi')
+          .firstOrNull;
+      if (reflex != null) reflex.valore += 6;
+      activeStructuredEffects.removeWhere(
+        (e) => e['effectId'] == 'saltalungo_tail_initiative',
+      );
+    }
     if (planarState['posteaImmunityWaitingFight'] != true) {
       planarState.remove('posteaImmuneCondition');
       planarState.remove('posteaImmunityWaitingFight');
@@ -403,6 +715,10 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
       'chaosPenaltyReceipts',
       'chaosAttackAttempts',
       'preparedSkill',
+      'rabbitHatStage',
+      'rabbitHatForm',
+      'rabbitHatPaidTurn',
+      'plasmaTemporaryMatter',
       'bringiFirstResponse',
       'bringiHits',
       'maxPower',
@@ -426,6 +742,9 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void longRestPlanarEffects() {
+    planarState.remove('oblivionMemoryStage');
+    planarState.remove('oblivionMemoryDifficulty');
+    planarState.remove('oblivionMemoryReactionLost');
     final rests = readIntValue(planarState['annihilationRests']);
     if (rests > 0) {
       planarState['annihilationRests'] = rests - 1;
@@ -455,6 +774,23 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }) {
     final state = planarState;
     if (damage <= 0) return damage;
+    final monsterId =
+        schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
+        ? '${schedePersonaggio[schedaCorrente]['monsterBookSourceId'] ?? ''}'
+        : '';
+    if (monsterId == 'pupazzo_artigliato' &&
+        const {
+          'spirituale',
+          'anima',
+          'danno_anima',
+          'spirito',
+        }.contains(element)) {
+      aggiungiLog(
+        '[PUPAZZO VUOTO] Nessuna anima o corpo interno: danno spirituale ignorato.',
+      );
+      return 0;
+    }
+
     if (readIntValue(state['illusionCopies']) > 0) {
       final n = readIntValue(state['illusionCopies']);
       if (Random.secure().nextInt(n + 1) > 0) {
@@ -607,6 +943,97 @@ List<InventoryItem>? oculumPlanarNaturalDrops(
       'naturalDropRoll': natural,
     },
   );
+  if (const {
+    'observers_tear',
+    'obser_sunshine',
+    'saltalungo_maculato',
+    'famelico_oblio',
+  }.contains(monster.id)) {
+    final (name, weight) = switch (monster.id) {
+      'observers_tear' => ('Scheggia dell’occhio viola', .12),
+      'obser_sunshine' => ('Frammento dell’occhio solare', .12),
+      'saltalungo_maculato' => ('Tendine elastico maculato', .2),
+      _ => ('Zanna del ricordo vuoto', .15),
+    };
+    return [
+      if (natural >= 8) material(name, weight),
+      if (natural >= 18)
+        for (final skill in monster.skillIds)
+          oculumPlanarTechniqueScroll(
+            monster,
+            skill,
+            receipt: '$killId:$skill',
+            level: level,
+            grade: grade,
+          ),
+      if (natural == 20)
+        InventoryItem(
+          nome: 'Reliquia · ${monster.nameIt}',
+          peso: .35,
+          quantita: 1,
+          livelloOggetto: level,
+          gradoOggetto: grade,
+          note:
+              'Reliquia di ${monster.nameIt}: conserva una tecnica della creatura con costo e cooldown. Richiede livello $level e Grado $grade; valori modificabili.',
+          ability: oculumEquipmentAbilityFromArt(
+            oculumMonsterBookArt(monster).skills.first,
+          ),
+          monsterLoot: {
+            'id': '$killId:relic',
+            'monsterId': monster.id,
+            'rareMonsterEquipment': true,
+            'naturalDropRoll': natural,
+          },
+        ),
+    ];
+  }
+  if (const {
+    'nuvi',
+    'coniglio_prestigiatore',
+    'coniglio_plasma',
+    'pupazzo_artigliato',
+    'medusa_vetro',
+    'nocciolo_corazzato',
+  }.contains(monster.id)) {
+    final materialName = switch (monster.id) {
+      'nuvi' => 'Piuma soffice di Nuvì',
+      'coniglio_prestigiatore' => 'Fodera incantata del cappello',
+      'coniglio_plasma' => 'Bobina al plasma',
+      'pupazzo_artigliato' => 'Molla di pupazzo',
+      'medusa_vetro' => 'Filamento di vetro',
+      _ => 'Guscio elastico di nocciolo',
+    };
+    return [
+      if (natural >= 8)
+        material(materialName, monster.id == 'nuvi' ? 0.02 : 0.2),
+      if (natural >= 18 && monster.id != 'nuvi')
+        for (final skill in monster.skillIds)
+          if (skill != 'robot_rabbit_chains')
+            oculumPlanarTechniqueScroll(
+              monster,
+              skill,
+              receipt: '$killId:$skill',
+              level: level,
+              grade: grade,
+            ),
+      if (natural >= 18 && monster.id == 'coniglio_plasma')
+        InventoryItem(
+          nome: 'Catene runiche d’intrappolamento',
+          peso: 1.2,
+          quantita: 1,
+          livelloOggetto: level,
+          gradoOggetto: grade,
+          note:
+              'Immobilizzato fino alla liberazione con Forza o Riflessi contro il tiro originale. Costo e CD modificabili.',
+          ability: oculumEquipmentAbilityFromArt(
+            oculumMonsterBookArt(
+              monster,
+            ).skills.firstWhere((s) => s.nome == 'Catene d’intrappolamento'),
+          ),
+          monsterLoot: {'id': '$killId:catene', 'monsterId': monster.id},
+        ),
+    ];
+  }
   if (id == 'sharp') {
     return [
       if (natural >= 8) material('Scarti metallici', .25),

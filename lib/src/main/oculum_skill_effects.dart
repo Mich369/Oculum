@@ -34,6 +34,21 @@ const List<String> oculumStructuredEffectTypes = <String>[
   'preparazione',
 ];
 
+int oculumTargetPercentageDamage({
+  required int percent,
+  required int hp,
+  required int temporaryHp,
+  required int shield,
+  required int oculumShield,
+  bool bypassShields = false,
+}) =>
+    ((max(0, hp) +
+                max(0, temporaryHp) +
+                (bypassShields ? 0 : max(0, shield) + max(0, oculumShield))) *
+            percent.abs() /
+            100)
+        .floor();
+
 int oculumDamageWithPercentage(int damage, int percent) =>
     max(0, (max(0, damage) * (100 + max(-100, percent)) / 100).round());
 
@@ -347,10 +362,13 @@ class OculumSkillCost {
     this.minimum = 0,
     this.maximum = 0,
     this.perTurn = false,
-  }) : resource = _oculumKnownConsumableResource(resource)
+    List<OculumSkillCost>? additionalCosts,
+  }) : additionalCosts = List.of(additionalCosts ?? const []),
+       resource = _oculumKnownConsumableResource(resource)
            ? oculumNormalizeEffectResource(resource)
            : resource.trim();
 
+  final List<OculumSkillCost> additionalCosts;
   String resource;
   String amountExpression;
   bool variable;
@@ -362,6 +380,21 @@ class OculumSkillCost {
     if (!oculumIsConsumableEffectResource(resource, subtraits: subtraits)) {
       return false;
     }
+    if (additionalCosts.length > (resource == 'nessuna' ? 4 : 3) ||
+        additionalCosts.any(
+          (cost) =>
+              cost.additionalCosts.isNotEmpty ||
+              !cost.isValid(subtraits: subtraits),
+        )) {
+      return false;
+    }
+    final resources = [
+      if (resource != 'nessuna') oculumNormalizeEffectResource(resource),
+      ...additionalCosts
+          .where((cost) => cost.resource != 'nessuna')
+          .map((cost) => oculumNormalizeEffectResource(cost.resource)),
+    ];
+    if (resources.toSet().length != resources.length) return false;
     if (resource == 'nessuna') return true;
     if (variable && maximum > 0 && maximum < max(0, minimum)) return false;
     return amountExpression.trim().isNotEmpty || variable;
@@ -374,6 +407,8 @@ class OculumSkillCost {
     'minimum': minimum,
     'maximum': maximum,
     'perTurn': perTurn,
+    if (additionalCosts.isNotEmpty)
+      'additionalCosts': additionalCosts.map((cost) => cost.toJson()).toList(),
   };
 
   factory OculumSkillCost.fromJson(Map<String, dynamic> json) {
@@ -384,6 +419,14 @@ class OculumSkillCost {
       minimum: max(0, readIntValue(json['minimum'] ?? json['minimo'])),
       maximum: max(0, readIntValue(json['maximum'] ?? json['massimo'])),
       perTurn: readBoolValue(json['perTurn'] ?? json['perTurno']),
+      additionalCosts: [
+        for (final cost
+            in (json['additionalCosts'] as List? ?? const []).whereType<Map>())
+          OculumSkillCost.fromJson({
+            ...Map<String, dynamic>.from(cost),
+            'additionalCosts': const [],
+          }),
+      ],
     );
   }
 }

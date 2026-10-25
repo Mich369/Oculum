@@ -136,6 +136,8 @@ part 'src/main/oculum_encounter_rewards.dart';
 part 'src/main/oculum_party_chest.dart';
 part 'src/main/oculum_party_quests.dart';
 part 'src/main/oculum_planar_runtime.dart';
+part 'src/main/oculum_mecha.dart';
+part 'src/main/oculum_will_inventory.dart';
 part 'src/main/oculum_prepared_skills.dart';
 part 'src/main/oculum_fate_chaos.dart';
 part 'src/main/oculum_postea.dart';

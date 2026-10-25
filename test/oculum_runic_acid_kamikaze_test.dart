@@ -84,7 +84,10 @@ void main() {
       expect(skills, hasLength(3));
       expect(skills.every((s) => s.passiva), isTrue);
       final art = oculumMonsterBookArt(monster);
-      expect(art.openSkillEffects.single.valueExpression, 'hp_current');
+      expect(
+        art.openSkillEffects.single.valueExpression,
+        '(hp_current)+monster_open_bonus',
+      );
     },
   );
   testWidgets(

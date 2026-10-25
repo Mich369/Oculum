@@ -989,7 +989,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int runtimeCurrentStatBonus(String key) {
-    return visibleTitleStatBonus(key) +
+    return (key == 'materia'
+            ? readIntValue(planarState['plasmaTemporaryMatter'])
+            : 0) +
+        visibleTitleStatBonus(key) +
         titleQuickBonus(key) +
         artQuickBonus(key) +
         itemQuickBonus(key) +
@@ -1401,6 +1404,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final statRollBaseBonus = livelloGrado + malusFatica;
 
     final context = Map<String, num>.unmodifiable(<String, num>{
+      'monster_open_bonus': activeStructuredEffectBonus('monster_open_power'),
       'resilienza': res,
       'volonta': vol,
       'materia': mat,
@@ -3824,7 +3828,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       case 'volonta':
         return max(0, currentVolonta());
       case 'materia':
-        return max(0, currentMateria());
+        return max(0, currentMateria()) +
+            max(0, readIntValue(planarState['plasmaTemporaryMatter']));
       case 'oculum':
       default:
         return oculumTotale();
@@ -3983,6 +3988,19 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       return spent;
     }
 
+    if (normalized == 'materia' &&
+        readIntValue(planarState['plasmaTemporaryMatter']) > 0) {
+      final temporary = readIntValue(planarState['plasmaTemporaryMatter']);
+      if (currentSpendableStatValue('materia') < amount) return 0;
+      final fromTemporary = min(temporary, amount);
+      planarState['plasmaTemporaryMatter'] = temporary - fromTemporary;
+      currentMateriaController.text =
+          '${max(0, leggiNumero(currentMateriaController) - (amount - fromTemporary))}';
+      invalidateDerivedDataCaches();
+      notifyActiveSheetSummaryChanged();
+      adjustRecordedStatSpentFromDelta('materia', -(amount - fromTemporary));
+      return amount;
+    }
     final before = currentSpendableStatValue(normalized);
     if (before < amount) return 0;
     currentStatController(normalized).text = (before - amount).toString();
@@ -4010,7 +4028,14 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int currentStatNaturalControllerMax(String key) {
     final visibleMax = statMassimoNaturale(key);
     final runtimeBonus = runtimeCurrentStatBonus(key);
-    return max(0, visibleMax - runtimeBonus);
+    return max(
+      0,
+      visibleMax -
+          runtimeBonus +
+          (key == 'materia'
+              ? readIntValue(planarState['plasmaTemporaryMatter'])
+              : 0),
+    );
   }
 
   int statMassimo(String key) {
@@ -4292,6 +4317,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int maxHp() {
+    if (mechaBodyMaximum > 0) return mechaBodyMaximum;
     if (isMeccanio) {
       return max(1, readIntValue(meccanioState['maximumHp'], fallback: 20));
     }
@@ -4869,9 +4895,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final cachedBase = hiddenEyeTotalBaseCache[stat.id];
     final cachedValue = hiddenEyeTotalValueCache[stat.id];
     if (cachedBase == cacheBase && cachedValue != null) {
-      return stat.id == 'fortuna'
-          ? cachedValue + difficultyIncreaseFortunaBonus(cachedValue)
-          : cachedValue;
+      return applyWillKingdomBonus(
+        stat.id == 'fortuna'
+            ? cachedValue + difficultyIncreaseFortunaBonus(cachedValue)
+            : cachedValue,
+        subtrait: true,
+      );
     }
 
     final total =
@@ -4883,9 +4912,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         structuredBonus;
     hiddenEyeTotalBaseCache[stat.id] = cacheBase;
     hiddenEyeTotalValueCache[stat.id] = total;
-    return stat.id == 'fortuna'
-        ? total + difficultyIncreaseFortunaBonus(total)
-        : total;
+    return applyWillKingdomBonus(
+      stat.id == 'fortuna'
+          ? total + difficultyIncreaseFortunaBonus(total)
+          : total,
+      subtrait: true,
+    );
   }
 
   int directSubtraitQuickBonus(HiddenEyeStat stat) {
@@ -5125,9 +5157,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       OculumConditionTarget.difesa,
       beforeConditions,
     );
-    return oculumDamageWithPercentage(
-      conditioned,
-      activeStructuredEffectBonus('difesa_percentuale') + (dustFusionTier * 5),
+    return applyWillKingdomBonus(
+      oculumDamageWithPercentage(
+        conditioned,
+        activeStructuredEffectBonus('difesa_percentuale') +
+            (dustFusionTier * 5),
+      ),
     );
   }
 
@@ -5335,9 +5370,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       OculumConditionTarget.danno,
       beforeConditions,
     );
-    return oculumDamageWithPercentage(
-      applicaBonusDanniPotenzaNucleo(conditioned),
-      activeStructuredEffectBonus('danni_percentuale') + (dustFusionTier * 5),
+    return applyWillKingdomBonus(
+      oculumDamageWithPercentage(
+        applicaBonusDanniPotenzaNucleo(conditioned),
+        activeStructuredEffectBonus('danni_percentuale') + (dustFusionTier * 5),
+      ),
     );
   }
 
@@ -5709,10 +5746,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   double pesoUsato() {
-    return inventario.fold(
-      0.0,
-      (somma, item) => somma + (item.peso * item.quantita),
-    );
+    return willKingdomWeight +
+        inventario.fold(
+          0.0,
+          (somma, item) => somma + (item.peso * item.quantita),
+        );
   }
 
   double pesoRimanente() {
