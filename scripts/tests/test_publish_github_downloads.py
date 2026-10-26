@@ -18,6 +18,14 @@ class DownloadPublicationTests(unittest.TestCase):
             self.assertEqual(publisher.read_update_notes("a" * 40), ["Bug fix", "Nuovi mostri"])
             self.assertIn("ref=" + "a" * 40, fetch.call_args.args[0])
 
+    def test_cumulative_log_links_to_built_commit_and_fixed_player_baseline(self):
+        commit = "b" * 40
+        text = publisher.notes({"one": dict(workflow="Build distribution", commit=commit,
+            runUrl="https://github.com/Mich369/Oculum/actions/runs/42", artifacts=[],
+            changelogPath="docs/REGISTRO_AGGIORNAMENTI.md")})
+        self.assertIn("/blob/" + commit + "/docs/REGISTRO_AGGIORNAMENTI.md", text)
+        self.assertIn("/actions/runs/40242640717", text)
+
     def test_update_log_is_short_and_ignores_non_list_content(self):
         result = publisher.parse_update_notes("# Title\nprivate prose\n" + "\n".join("- Item " + str(i) for i in range(12)))
         self.assertEqual(len(result), 8)
@@ -120,7 +128,7 @@ class DownloadPublicationTests(unittest.TestCase):
         names = publisher.PUBLIC_ARTIFACTS + publisher.EXTRA_ARCHIVES
         artifacts = [dict(name=name, id=index, expired=False, size_in_bytes=4)
                      for index, name in enumerate(names, start=1)]
-        self.assertEqual(len(publisher.select_release_archives(artifacts)), 9)
+        self.assertEqual(len(publisher.select_release_archives(artifacts)), len(names))
         self.assertEqual(len(publisher.select_public_artifacts(artifacts)), 5)
         with self.assertRaisesRegex(ValueError, "Unreviewed"):
             publisher.select_release_archives(artifacts + [dict(name="private-saves")])

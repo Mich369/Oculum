@@ -355,7 +355,9 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     if (!currentTurnTrackerIsActive()) return true;
     final tag = sheetTagAt(schedaCorrente);
     final freeReaction =
-        preferFreeReaction && const {'azione', 'reazione'}.contains(resource)
+        !totalPowerExhausted &&
+            preferFreeReaction &&
+            const {'azione', 'reazione'}.contains(resource)
         ? onlineCombatRequests.entries
               .where(
                 (entry) =>
@@ -425,6 +427,16 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     String? requestId,
     int amount = 0,
   }) {
+    if (totalPowerExhaustedForTag(tag) &&
+        (const {
+              'reazione',
+              'reazione_veloce',
+              'speed_grant_fast',
+              'speed_queue_normal',
+            }.contains(resource) ||
+            onlineCombatRequests[resource]?['freeReaction'] == true)) {
+      return false;
+    }
     final freeReaction = onlineCombatRequests[resource];
     if (freeReaction != null &&
         freeReaction['targetTag'] == tag &&

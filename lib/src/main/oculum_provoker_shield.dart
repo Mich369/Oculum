@@ -156,6 +156,10 @@ extension _OculumProvokerShield on _OculumHomePageState {
           : 0,
       'turns': provokerActive ? readIntValue(planarState['provokerTurns']) : 0,
       'cloudLifeActive': planarCloudForm,
+      'totalPowerExhaustionTurns': max(
+        0,
+        readIntValue(planarState['totalPowerExhaustionTurns']),
+      ),
     });
     receiveProvokerState(payload);
     await realtimeService?.sendCombatEvent('combat_scout', payload);
@@ -181,6 +185,13 @@ extension _OculumProvokerShield on _OculumHomePageState {
     token['provokerShield'] = max(0, readIntValue(payload['shield']));
     token['provokerTurns'] = max(0, readIntValue(payload['turns']));
     token['cloudLifeActive'] = payload['cloudLifeActive'] == true;
+    token['totalPowerExhaustionTurns'] = max(
+      0,
+      readIntValue(payload['totalPowerExhaustionTurns']),
+    );
+    if (readIntValue(token['totalPowerExhaustionTurns']) > 0) {
+      clearExhaustedTokenReactions(token);
+    }
     if (escapeAuthority) {
       captureActiveMasterInitiativeGroup();
       sendRealtimeInitiativeSnapshotIfPublished();

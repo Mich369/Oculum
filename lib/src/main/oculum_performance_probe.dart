@@ -216,6 +216,19 @@ class OculumPerformanceProbe {
   int chaosBonus(String stat) => _state.chaosStatBonus(stat);
   bool chaosProc(String opponent, int percentile) =>
       _state.rollChaosProc(opponent, percentile: percentile);
+  void totalPowerBurst(int power, int die) =>
+      _state.activateTotalPowerBurst(power, die);
+  void burstAttack(Map<String, dynamic> packet) =>
+      _state.applyTotalPowerBurstAttack(packet);
+  void burstExposure(Map<String, dynamic> packet) =>
+      _state.applyTotalPowerExposure(packet);
+  int availableReactions(Map<String, dynamic> token) =>
+      _state.masterInitiativeReactionAvailable(token);
+  void refreshTurnResources(Map<String, dynamic> token) =>
+      _state.restoreMasterInitiativeTurnResources(token);
+  bool exhausted() => _state.totalPowerExhausted;
+  int normalReactions() => _state.reazioniTotali();
+  int fastReactions() => _state.reazioniVelociTotali();
   void tickPlanar() => _state.tickPlanarTurn();
   bool cycleGift(String donor, int percentile) =>
       _state.grantCycleFateGift(donor, percentile: percentile);

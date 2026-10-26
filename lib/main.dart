@@ -167,6 +167,7 @@ part 'src/main/oculum_fate_chaos.dart';
 part 'src/main/oculum_cycle_expansion.dart';
 part 'src/main/oculum_escape.dart';
 part 'src/main/oculum_provoker_shield.dart';
+part 'src/main/oculum_total_power_burst.dart';
 part 'src/main/oculum_cloud_barrier.dart';
 part 'src/main/oculum_postea.dart';
 part 'src/main/oculum_power_scanner.dart';
@@ -1668,7 +1669,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final difficoltaTiroController = TextEditingController(text: '0');
   final relayServerController = TextEditingController(text: '');
   final relayRoomController = TextEditingController(text: '');
-  final realtimeRoomController = TextEditingController(text: 'test');
+  final realtimeRoomController = TextEditingController();
   final realtimeNameController = TextEditingController();
   // Session-only: room secrets must not enter local saves or sheet JSON.
   final realtimeRoomPasswordController = TextEditingController();

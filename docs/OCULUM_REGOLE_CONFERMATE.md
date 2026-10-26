@@ -737,3 +737,17 @@ I rilevatori funzionano anche sugli altri personaggi. Gli alchimisti vendono amu
 - Nome, note, livello e utilizzi residui sono modificabili nell’editor oggetto e conservati nel JSON. Portata ricalcolata dal livello modificato, quantità degli acquisti separate. Costi/offerte restano modificabili dal mercante.
 
 Lo Slime Roccioso e le sue varianti seguono le soglie specifiche confermate: Roccia Slime materiale, Indurimento al totale 15 e Rimbalzo al naturale 20, senza imporre la DT generica 20 + livello + Grado ×3. Gli altri mostri conservano la propria DT.
+
+## Potenza totale nei mercanti e colpo potenziato — 26 ottobre 2026
+
+Conferme esplicite: i mercanti considerano anche la Potenza totale per proporre oggetti adatti. Il valore usa Resilienza + Volontà + Materia + Oculum + Livello + Grado ×3. La selezione aggiunge la compatibilità con la potenza a livello, disponibilità e preferenze; prezzi e acquisti conservati non cambiano.
+
+Scarica totale e Impeto totale aggiungono la propria Potenza totale ai Danni di un singolo attacco, una sola volta anche con raffiche e più bersagli. Il prossimo tiro per colpire e il primo tiro nemico per colpirti ricevono +max(2, 10 − Adattamento). Il bonus si consuma quando il singolo attacco viene dichiarato, anche se manca il bersaglio.
+
+Sfinimento: azzera immediatamente tutte le Reazioni disponibili, normali, veloci, gratuite e supplementari; blocca ogni nuovo guadagno, anche da skill, critici, rimbalzi, mecha, Fuga o altre fonti. Durata = 1d3 turni personali + un turno ogni 160 Potenza totale per difetto. Non viene annullato da Stato di Forza. Le Azioni continuano a funzionare. Nuova attivazione sostituisce il colpo in attesa e non accorcia lo Sfinimento. Le Reazioni eliminate non vengono restituite alla scadenza; riprendono i normali nuovi recuperi.
+
+Impostazioni iniziali scelte sulla delega al bilanciamento: costo 5 Oculum per Scarica, 5 Volontà per Impeto; CD tre turni. Nomi, descrizioni, costi, cooldown, formula del bonus, dadi e durata base sono modificabili tramite editor e JSON; le definizioni salvate non vengono sovrascritte.
+
+Online: nessuna nuova connessione usa implicitamente la stanza «test». Il giocatore inserisce il codice del Master; un Master senza codice riceve un codice nuovo. Le stanze già salvate conservano il codice esplicito. Stanze private e approvazione del Master restano operative.
+
+Distribuzione GitHub: Windows normale e Windows Test in ZIP e artifact di cartella separati. Le versioni precedenti restano conservate.

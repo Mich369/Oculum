@@ -120,6 +120,11 @@ class _OculumWebDownloadsState extends State<OculumWebDownloads> {
           ),
         const Divider(),
         MenuItemButton(
+          onPressed: () => _open(Uri.parse(oculumCumulativeUpdateLogUrl)),
+          leadingIcon: const Icon(Icons.history),
+          child: const Text('Log completo dalla build b917217'),
+        ),
+        MenuItemButton(
           onPressed: () => _open(Uri.parse(oculumBuildDownloadsUrl)),
           child: const Text('Apri tutti i download su GitHub'),
         ),

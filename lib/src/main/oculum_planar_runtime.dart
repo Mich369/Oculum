@@ -294,6 +294,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   bool grantDollSpringReaction(int chance, {int? percentile}) {
+    if (totalPowerExhausted) return false;
     final success =
         (percentile ?? Random.secure().nextInt(100)) < chance.clamp(0, 100);
     if (success) {
@@ -413,6 +414,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     String source,
   ) {
     final state = planarState;
+    if (activateTotalPowerEffect(effect, value, duration)) return;
     if (activateProvokerEffect(effect, value, duration)) return;
     if (activateCycleEffect(effect, value)) return;
     if (effect.target == 'deadly_empowered') {
@@ -793,6 +795,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void tickPlanarTurn() {
+    tickTotalPowerExhaustion();
     tickProvokerShield();
     if (readIntValue(planarState['deadlyEmpoweredTurns']) > 0) {
       planarState['deadlyEmpoweredTurns'] =

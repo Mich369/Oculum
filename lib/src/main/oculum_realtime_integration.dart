@@ -433,6 +433,9 @@ String oculumRealtimeSheetContentSignature(Map<String, dynamic> sheet) {
       .join();
 }
 
+String oculumFreshRoomCode(Random random) =>
+    'oculum_${List.generate(2, (_) => random.nextInt(0x100000000).toRadixString(16).padLeft(8, '0')).join()}';
+
 bool oculumRealtimePresenceOwnsSheet(
   Iterable<Map<String, dynamic>> users,
   Map<String, dynamic> payload,
@@ -807,6 +810,19 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
   Future<void> connectRealtimeOculum() async {
     if (realtimeConnecting) return;
+    if (realtimeRoomController.text.trim().isEmpty) {
+      if (!modalitaMaster && !isMasterHost) {
+        setState(() {
+          realtimeStatus = t(
+            'Inserisci il codice stanza del Master: schede e turni si condividono dopo l’ammissione.',
+            'Enter the Master room code: sheets and turns are shared after approval.',
+          );
+          realtimeAutoReconnectEnabled = false;
+        });
+        return;
+      }
+      realtimeRoomController.text = oculumFreshRoomCode(Random.secure());
+    }
 
     realtimeAutoReconnectEnabled = true;
     realtimeReconnectAttempt = 0;
@@ -828,9 +844,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       return;
     }
 
-    final room = realtimeRoomController.text.trim().isEmpty
-        ? 'test'
-        : realtimeRoomController.text.trim();
+    final room = realtimeRoomController.text.trim();
     realtimeRoomController.text = room;
     realtimeMasterClaimId =
         'master_${DateTime.now().microsecondsSinceEpoch}_${Random().nextInt(999999)}';
@@ -1126,14 +1140,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   Future<void> createRealtimeMasterRoom() async {
     await disconnectRealtimeOculum();
     if (!mounted) return;
-    final random = Random.secure();
-    final code = List.generate(
-      2,
-      (_) => random.nextInt(0x100000000).toRadixString(16).padLeft(8, '0'),
-    ).join();
+    final code = oculumFreshRoomCode(Random.secure());
     setState(() {
       modalitaMaster = true;
-      realtimeRoomController.text = 'oculum_$code';
+      realtimeRoomController.text = code;
     });
     programmaSalvataggio();
     await connectRealtimeOculum();
@@ -2807,6 +2817,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
               'cloudLifeActive',
               'provokerShield',
               'provokerTurns',
+              'totalPowerExhaustionTurns',
             ])
               if (tokens[i].containsKey(key)) key: tokens[i][key],
             for (final key in [
@@ -5344,7 +5355,11 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             children: [
               Expanded(
                 child: campoTesto(
-                  label: 'Room ID',
+                  label: t('Codice stanza', 'Room code'),
+                  helper: t(
+                    'Lo stesso codice su tutti i dispositivi. Il Master ammette i giocatori.',
+                    'Use the same code on all devices. The Master approves players.',
+                  ),
                   controller: realtimeRoomController,
                   numero: false,
                 ),

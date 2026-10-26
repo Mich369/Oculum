@@ -1406,6 +1406,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final statRollBaseBonus = livelloGrado + malusFatica;
 
     final context = Map<String, num>.unmodifiable(<String, num>{
+      'potenza_totale':
+          res +
+          vol +
+          mat +
+          ocu +
+          max(0, leggiNumero(livelloController)) +
+          grado * 3,
       'monster_open_bonus': activeStructuredEffectBonus('monster_open_power'),
       'resilienza': res,
       'volonta': vol,
@@ -4286,6 +4293,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int reazioniTotali() {
+    if (totalPowerExhausted) return 0;
     if (!statoForzaRimuoveMalus() && hasCondition('privo_reazioni')) return 0;
     return max(
       0,
@@ -4298,6 +4306,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int reazioniVelociTotali() {
+    if (totalPowerExhausted) return 0;
     return max(
       0,
       max(0, leggiNumero(reazioniVelociController)) +

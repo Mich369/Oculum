@@ -2,6 +2,22 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Potenza totale, Sfinimento e connessione alla stanza
+
+## Potenza totale nei mercanti e colpo potenziato — 26 ottobre 2026
+
+Conferme esplicite: i mercanti considerano anche la Potenza totale per proporre oggetti adatti. Il valore usa Resilienza + Volontà + Materia + Oculum + Livello + Grado ×3. La selezione aggiunge la compatibilità con la potenza a livello, disponibilità e preferenze; prezzi e acquisti conservati non cambiano.
+
+Scarica totale e Impeto totale aggiungono la propria Potenza totale ai Danni di un singolo attacco, una sola volta anche con raffiche e più bersagli. Il prossimo tiro per colpire e il primo tiro nemico per colpirti ricevono +max(2, 10 − Adattamento). Il bonus si consuma quando il singolo attacco viene dichiarato, anche se manca il bersaglio.
+
+Sfinimento: azzera immediatamente tutte le Reazioni disponibili, normali, veloci, gratuite e supplementari; blocca ogni nuovo guadagno, anche da skill, critici, rimbalzi, mecha, Fuga o altre fonti. Durata = 1d3 turni personali + un turno ogni 160 Potenza totale per difetto. Non viene annullato da Stato di Forza. Le Azioni continuano a funzionare. Nuova attivazione sostituisce il colpo in attesa e non accorcia lo Sfinimento. Le Reazioni eliminate non vengono restituite alla scadenza; riprendono i normali nuovi recuperi.
+
+Impostazioni iniziali scelte sulla delega al bilanciamento: costo 5 Oculum per Scarica, 5 Volontà per Impeto; CD tre turni. Nomi, descrizioni, costi, cooldown, formula del bonus, dadi e durata base sono modificabili tramite editor e JSON; le definizioni salvate non vengono sovrascritte.
+
+Online: nessuna nuova connessione usa implicitamente la stanza «test». Il giocatore inserisce il codice del Master; un Master senza codice riceve un codice nuovo. Le stanze già salvate conservano il codice esplicito. Stanze private e approvazione del Master restano operative.
+
+Distribuzione GitHub: Windows normale e Windows Test in ZIP e artifact di cartella separati. Le versioni precedenti restano conservate.
+
 ## Fuga, Role, creature del ciclo e Scudo del provocatore
 
 Modifiche successive alla build `b917217d98d16861a5bbaf1706d78825d883c970`, run `40242640717`, incluse quelle del commit `12cbe566`. Il codice presente non certifica la pubblicazione: verifiche e pacchetti sono riportati separatamente nel resoconto finale.
@@ -2173,5 +2189,3 @@ La presenza online dichiara tutte le schede possedute dalla sessione: cambiare s
 Master e Co-Master possono modificare soltanto le schede condivise e autorizzate. Le modifiche a Vita, Scudo e HP temporanei raggiungono il proprietario mantenendo il tag originale; le copie di consultazione non acquisiscono la proprietà. L'invio o la richiesta della scheda attiva funziona anche senza amicizia fra i tag. In caso di conflitto di proprietà serve l'account originale oppure una copia esplicita con un nuovo tag.
 
 Le modifiche autorizzate seguono l'ordine delle revisioni confermate dal server: un autosalvataggio locale non annulla una modifica online più recente, le revisioni già applicate non vengono ripetute e i dati privati non modificati restano conservati.
-
-Lo Slime Roccioso e le sue varianti seguono le soglie specifiche confermate: Roccia Slime materiale, Indurimento al totale 15 e Rimbalzo al naturale 20, senza imporre la DT generica 20 + livello + Grado ×3. Gli altri mostri conservano la propria DT.

@@ -33,6 +33,16 @@ void main() {
             'url':
                 'https://github.com/Mich369/Oculum/releases/download/oculum-build-123/Oculum-iOS-unsigned.zip',
           },
+          for (final name in [
+            'Oculum-Windows-Folder',
+            'Oculum-Test-Windows-Folder',
+          ])
+            {
+              'name': name,
+              'bytes': 200,
+              'url':
+                  'https://github.com/Mich369/Oculum/releases/download/oculum-build-123/$name.zip',
+            },
           {
             'name': 'Oculum-Android',
             'bytes': 200,
@@ -56,10 +66,12 @@ void main() {
       addTearDown(client.close);
       final result = await oculumFetchDownloadArtifacts(client);
       expect(calls, 1);
-      expect(result, hasLength(6));
+      expect(result, hasLength(8));
       expect(result.map((item) => item.name), [
         ...names,
         'Oculum-iOS-unsigned',
+        'Oculum-Windows-Folder',
+        'Oculum-Test-Windows-Folder',
       ]);
       expect(result.first.url.path, contains('/releases/download/'));
       expect(result.every((item) => item.bytes == 200), isTrue);

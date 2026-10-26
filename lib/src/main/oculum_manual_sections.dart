@@ -5,6 +5,27 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Potenza totale, Sfinimento e connessione alla stanza',
+    titleEn: 'Total power, exhaustion and room connection',
+    contentIt: r'''
+## Potenza totale nei mercanti e colpo potenziato — 26 ottobre 2026
+
+Conferme esplicite: i mercanti considerano anche la Potenza totale per proporre oggetti adatti. Il valore usa Resilienza + Volontà + Materia + Oculum + Livello + Grado ×3. La selezione aggiunge la compatibilità con la potenza a livello, disponibilità e preferenze; prezzi e acquisti conservati non cambiano.
+
+Scarica totale e Impeto totale aggiungono la propria Potenza totale ai Danni di un singolo attacco, una sola volta anche con raffiche e più bersagli. Il prossimo tiro per colpire e il primo tiro nemico per colpirti ricevono +max(2, 10 − Adattamento). Il bonus si consuma quando il singolo attacco viene dichiarato, anche se manca il bersaglio.
+
+Sfinimento: azzera immediatamente tutte le Reazioni disponibili, normali, veloci, gratuite e supplementari; blocca ogni nuovo guadagno, anche da skill, critici, rimbalzi, mecha, Fuga o altre fonti. Durata = 1d3 turni personali + un turno ogni 160 Potenza totale per difetto. Non viene annullato da Stato di Forza. Le Azioni continuano a funzionare. Nuova attivazione sostituisce il colpo in attesa e non accorcia lo Sfinimento. Le Reazioni eliminate non vengono restituite alla scadenza; riprendono i normali nuovi recuperi.
+
+Impostazioni iniziali scelte sulla delega al bilanciamento: costo 5 Oculum per Scarica, 5 Volontà per Impeto; CD tre turni. Nomi, descrizioni, costi, cooldown, formula del bonus, dadi e durata base sono modificabili tramite editor e JSON; le definizioni salvate non vengono sovrascritte.
+
+Online: nessuna nuova connessione usa implicitamente la stanza «test». Il giocatore inserisce il codice del Master; un Master senza codice riceve un codice nuovo. Le stanze già salvate conservano il codice esplicito. Stanze private e approvazione del Master restano operative.
+
+Distribuzione GitHub: Windows normale e Windows Test in ZIP e artifact di cartella separati. Le versioni precedenti restano conservate.
+''',
+    contentEn: r'''Merchants also use total power for suitable offers. Total Discharge (5 Oculum) and Total Impetus (5 Will), cooldown three turns, add total power to ONE attack's damage. Your next to-hit roll and the first enemy to-hit roll against you gain max(2, 10 - Adaptation). Exhaustion immediately clears ALL normal, fast, free and extra reactions and blocks every new reaction, including skills and other sources, for 1d3 + floor(total power/160) personal turns. Actions remain usable. Saved customization is preserved. New players must enter the Master's room code; a Master without a code gets a fresh one. Windows and Windows Test downloads remain separate.''',
+  ),
+
+  ManualSection(
     titleIt: 'Fuga, Role, creature del ciclo e Scudo del provocatore',
     titleEn: 'Escape, Role, cycle creatures and Provoker Shield',
     contentIt: r'''

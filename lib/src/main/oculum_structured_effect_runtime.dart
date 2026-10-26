@@ -350,6 +350,14 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             : normalizedStructuredTarget(
                 effectTarget.isNotEmpty ? effectTarget : effect.target,
               );
+        if (totalPowerExhausted &&
+            value > 0 &&
+            const {'reazione', 'reazione_veloce'}.contains(target)) {
+          messages.add(
+            'Sfinimento: nessuna nuova Reazione ricevuta da $source.',
+          );
+          continue;
+        }
         final corruptionOwnerTag =
             effect.resource.startsWith('corruption_mastery:')
             ? effect.resource.substring('corruption_mastery:'.length)

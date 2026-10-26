@@ -16,7 +16,12 @@ const _extraArtifactNames = <String>[
   'Oculum-iOS-unsigned',
   'Oculum-UI-Catture',
   'Oculum-Windows-Folders',
+  'Oculum-Windows-Folder',
+  'Oculum-Test-Windows-Folder',
 ];
+
+const oculumCumulativeUpdateLogUrl =
+    'https://github.com/Mich369/Oculum/blob/main/docs/REGISTRO_AGGIORNAMENTI.md';
 
 class OculumDownloadArtifact {
   const OculumDownloadArtifact(this.name, this.bytes, this.url);

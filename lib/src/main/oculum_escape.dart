@@ -478,9 +478,11 @@ extension _OculumEscape on _OculumHomePageState {
       return;
     }
     final friendly = combatScoutSide(tag) == record['sourceSide'];
-    final free = friendly
-        ? record['freeHelper'] == tag
-        : record['lastAggressor'] == tag;
+    final free =
+        !totalPowerExhausted &&
+        (friendly
+            ? record['freeHelper'] == tag
+            : record['lastAggressor'] == tag);
     if (kind == 'attack') {
       if (!free || friendly) return;
       await planOnlineAttack(

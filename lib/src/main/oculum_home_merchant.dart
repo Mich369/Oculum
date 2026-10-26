@@ -325,6 +325,25 @@ List<Map<String, dynamic>> oculumMerchantUniqueOffers(
   return unique;
 }
 
+double oculumMerchantPowerFit(Map<String, dynamic> offer, int totalPower) {
+  final stats = offer['stats'];
+  final explicit = offer['recommendedPower'] ?? offer['totalPower'];
+  final strength = explicit is num
+      ? explicit.toDouble()
+      : max(0, readIntValue(offer['damage'])).toDouble() +
+            max(0, readIntValue(offer['defence'] ?? offer['defense'])) +
+            max(0, readIntValue(offer['shield'])) / 10 +
+            (stats is Map
+                ? stats.values.whereType<num>().fold<double>(
+                    0,
+                    (n, v) => n + max(0, v) * 3,
+                  )
+                : 0);
+  if (strength <= 0) return 1;
+  final power = max(1, totalPower);
+  return (2.5 / (1 + (strength - power).abs() / power * 4)).clamp(.4, 2.5);
+}
+
 List<Map<String, dynamic>> oculumSelectMerchantOffers(
   List<Map<String, dynamic>> offers, {
   required int characterLevel,
@@ -332,6 +351,7 @@ List<Map<String, dynamic>> oculumSelectMerchantOffers(
   required int count,
   required Random random,
   int Function(Map<String, dynamic> offer)? priceOf,
+  int? characterTotalPower,
 }) {
   final remaining = oculumMerchantUniqueOffers(offers).toList();
   final selected = <Map<String, dynamic>>[];
@@ -369,7 +389,10 @@ List<Map<String, dynamic>> oculumSelectMerchantOffers(
               : price <= budget + budget ~/ 4
               ? 1.0
               : .88;
-          return levelWeight * budgetWeight;
+          final powerWeight = characterTotalPower == null
+              ? 1.0
+              : oculumMerchantPowerFit(offer, characterTotalPower);
+          return levelWeight * budgetWeight * powerWeight;
         })
         .toList(growable: false);
     final totalWeight = weights.fold<double>(0, (sum, value) => sum + value);
@@ -1042,8 +1065,13 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         .where((id) => id.isNotEmpty)
         .toSet();
     final levelChanged = readIntValue(saved['level'], fallback: -1) != level;
+    final totalPower = scoutTotalPowerAt(schedaCorrente);
+    final powerChanged =
+        saved.containsKey('totalPower') &&
+        readIntValue(saved['totalPower']) != totalPower;
+    final refreshSelection = levelChanged || powerChanged;
     final wasSaved = savedIds != null && savedValue is Map;
-    final targetCount = wasSaved && !levelChanged
+    final targetCount = wasSaved && !refreshSelection
         ? readIntValue(saved['count'], fallback: 0).clamp(6, 12).toInt()
         : oculumMerchantOfferCount(random);
     final candidateIds = candidates
@@ -1053,7 +1081,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     for (final id in reservedIds) {
       if (candidateIds.contains(id)) selectedIds.add(id);
     }
-    if (wasSaved && !levelChanged) {
+    if (wasSaved && !refreshSelection) {
       for (final id in savedIds) {
         if (candidateIds.contains(id) && !selectedIds.contains(id)) {
           selectedIds.add(id);
@@ -1071,6 +1099,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             .where((offer) => !selectedSet.contains('${offer['id'] ?? ''}'))
             .toList(),
         characterLevel: level,
+        characterTotalPower: totalPower,
         budget: max(0, leggiNumero(obserController)),
         count: missing,
         random: random,
@@ -1080,10 +1109,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     final next = <String, dynamic>{
       'level': level,
+      'totalPower': totalPower,
       'count': targetCount,
       'ids': selectedIds,
     };
     if (saved['level'] == next['level'] &&
+        saved['totalPower'] == next['totalPower'] &&
         saved['count'] == next['count'] &&
         (saved['ids'] as List?)?.map((id) => '$id').join('|') ==
             selectedIds.join('|')) {
@@ -3055,8 +3086,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           ),
           subtitle: Text(
             t(
-              'Bancarella personale · 6–9 offerte, 16% di probabilità di trovarne 12.',
-              'Personal stall · 6–9 offers, with a 16% chance of 12.',
+              'Potenza totale ${scoutTotalPowerAt(schedaCorrente)} · 6–9 offerte adatte a te, 16% di probabilità di trovarne 12.',
+              'Total power ${scoutTotalPowerAt(schedaCorrente)} · 6–9 suitable offers, with a 16% chance of 12.',
             ),
             style: const TextStyle(color: Colors.white70, fontSize: 11),
           ),

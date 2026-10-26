@@ -1,5 +1,6 @@
 # Oculum
 
+- Il log per i giocatori deve essere sempre cumulativo dalla build `b917217d98d16861a5bbaf1706d78825d883c970`, run `40242640717`: mantieni `docs/REGISTRO_AGGIORNAMENTI.md` completo di tutti gli aggiornamenti successivi e collegalo da GitHub e dal menu download web. Non spostare la base alla patch precedente.
 - A ogni aggiornamento mantieni `docs/ULTIMO_AGGIORNAMENTO.md` breve e fedele ai conteggi verificati; la pubblicazione legge il log dal commit realmente compilato.
 
 - Lavora in questo repository preservando salvataggi, immagini, funzionalità online e compatibilità desktop, tablet e telefono.
@@ -9,3 +10,5 @@
 - Quando lavori ad Oculum prepara sempre `C:\Oculum App\oculum\build\distribution` con EXE completo del runtime, ZIP e APK. Mantieni Windows e Windows Test anche in cartelle normali. Sostituisci i vecchi pacchetti solo dopo aver verificato quelli nuovi. Riporta cosa è stato modificato e cosa può essere personalizzato.
 - Test locali, CI GitHub, pacchetti copiati, sito pubblicato e prove online reali sono verifiche distinte: riferisci solo quelle completate.
 - A ogni aggiornamento e distribuzione verifica che tutti gli artifact prodotti dalle build GitHub riuscite siano disponibili anche come download pubblici senza login, attraverso la pagina download e il menu a tendina della versione web. Preferisci la pubblicazione automatica; se non riesce, completa manualmente pubblicazione e verifica prima di dichiarare la distribuzione conclusa. Controlla commit di origine, integrità dei pacchetti e accessibilità senza autenticazione; conserva le versioni precedenti e non pubblicare build fallite o file privati. Il menu download deve comparire solo sul web e non usare traffico Supabase.
+
+- Su GitHub Windows normale e Windows Test devono restare download e artifact separati, comprese le cartelle con runtime. Non inserire Windows Test nella cartella o nello ZIP Windows normale.

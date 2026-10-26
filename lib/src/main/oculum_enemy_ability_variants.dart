@@ -104,7 +104,20 @@ List<OculumCatalogueEntry> oculumAbilityCatalogueEntries({
   final entries =
       <({String id, String label, ArtSkill art, CharacterSkill? natural})>[];
   if (elementFilter == null || elementFilter == 'oculum') {
-    entries.add((id: 'provoker_shield', label: 'Scudo del provocatore · Difesa', art: oculumProvokerShieldSkill(), natural: null));
+    for (final will in [false, true]) {
+      entries.add((
+        id: will ? 'total_power_will' : 'total_power_oculum',
+        label: '${will ? 'Impeto totale' : 'Scarica totale'} · Attacco',
+        art: oculumTotalPowerBurstSkill(will: will),
+        natural: null,
+      ));
+    }
+    entries.add((
+      id: 'provoker_shield',
+      label: 'Scudo del provocatore · Difesa',
+      art: oculumProvokerShieldSkill(),
+      natural: null,
+    ));
   }
   for (final monster in monsterBookEntries) {
     if (elementFilter != null &&

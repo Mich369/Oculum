@@ -2297,6 +2297,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   int masterInitiativeReactionMax(Map<String, dynamic> token) {
+    if (totalPowerTokenExhausted(token)) return 0;
     if (token['outsideFight'] == true) {
       return max(0, readIntValue(token['outsideNormal']));
     }
@@ -2310,6 +2311,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   int masterInitiativeFastReactionMax(Map<String, dynamic> token) {
+    if (totalPowerTokenExhausted(token)) return 0;
     if (token['outsideFight'] == true) {
       return max(0, readIntValue(token['outsideFast']));
     }
@@ -2357,6 +2359,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     Map<String, dynamic> token, {
     int? round,
   }) {
+    if (totalPowerTokenExhausted(token)) return 0;
     final currentRound = round ?? masterInitiativeRound;
     final poolInitialized = readBoolValue(token['reactionPoolInitialized']);
     final poolRound = readIntValue(token['reactionPoolRound']);
@@ -2409,7 +2412,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int unusedReactions, {
     bool fast = false,
   }) {
-    if (unusedReactions <= 0) return;
+    if (totalPowerTokenExhausted(token) || unusedReactions <= 0) return;
     final previous = readIntValue(
       token['pendingReactionRollBonus'],
     ).clamp(0, 12);
@@ -2432,6 +2435,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   void restoreMasterInitiativeFastReactionsForToken(
     Map<String, dynamic> token,
   ) {
+    if (totalPowerTokenExhausted(token)) {
+      clearExhaustedTokenReactions(token);
+      return;
+    }
     final previous = readIntValue(
       token['fastReactionPersonalTurnRound'],
       fallback: -1,
@@ -2489,6 +2496,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   void restoreMasterInitiativeTokenReactions(Map<String, dynamic> token) {
+    if (totalPowerTokenExhausted(token)) {
+      clearExhaustedTokenReactions(token);
+      return;
+    }
     final poolInitialized = readBoolValue(token['reactionPoolInitialized']);
     final poolRound = readIntValue(token['reactionPoolRound']);
     if (poolInitialized && poolRound == masterInitiativeRound) return;
@@ -2533,6 +2544,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       token['actionTurnRound'] = masterInitiativeRound;
       cycleTurnReactions(token);
       refreshEscapeTurn(token);
+      if (totalPowerTokenExhausted(token)) clearExhaustedTokenReactions(token);
       final tag = publicInitiativeSourceTag(token);
       final index = localSheetIndexForOculumTag(tag);
       resolveOblivionMemoryTurn(token);

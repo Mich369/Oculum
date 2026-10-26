@@ -26,7 +26,7 @@ PUBLIC_ARTIFACTS = (
 )
 EXTRA_ARCHIVES = (
     "Oculum-Web", "Oculum-iOS-unsigned", "Oculum-UI-Catture",
-    "Oculum-Windows-Folders",
+    "Oculum-Windows-Folders", "Oculum-Windows-Folder", "Oculum-Test-Windows-Folder",
 )
 
 
@@ -139,6 +139,8 @@ def notes(catalog):
     for item in sorted(catalog.values(), key=lambda item: item["workflow"]):
         lines += [f"## {item.get('runName', item['workflow'])}", "",
                   f"Commit `{item['commit'][:7]}` · [Build verificata]({item['runUrl']})", ""]
+        if item.get("changelogPath") == "docs/REGISTRO_AGGIORNAMENTI.md":
+            lines += [f"[Registro completo dalla build b917217](https://github.com/{REPO}/blob/{item['commit']}/docs/REGISTRO_AGGIORNAMENTI.md) · [Versione di partenza](https://github.com/{REPO}/actions/runs/40242640717)", ""]
         if item.get("changes"):
             lines += ["Log aggiornamento:", ""]
             lines += ["- " + change for change in item["changes"]]
@@ -251,6 +253,8 @@ def publish(run_id):
             "runId": run["id"], "commit": run["head_sha"],
             "runUrl": run["html_url"],
             "changes": read_update_notes(run["head_sha"]),
+            "changelogPath": "docs/REGISTRO_AGGIORNAMENTI.md",
+            "changelogBaseline": "b917217d98d16861a5bbaf1706d78825d883c970",
             "artifacts": entries,
         }
         note_file = root / "downloads.md"

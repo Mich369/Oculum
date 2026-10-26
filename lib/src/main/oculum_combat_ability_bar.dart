@@ -991,6 +991,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (role == OculumCombatAbilityRole.support) ...[
+                  totalPowerBurstStatus(),
                   provokerShieldStatus(),
                   escapeUtilityControls(),
                   escapeRequestsPanel(),

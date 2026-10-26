@@ -129,6 +129,9 @@ jobs:
           if ('${{ matrix.edition }}' -eq 'test') {
             Rename-Item -LiteralPath "$dist/oculum.exe" -NewName 'Oculum-Test.exe'
           }
+          if ('${{ matrix.edition }}' -eq 'normal' -and (Get-ChildItem -LiteralPath $dist -Recurse | Where-Object { $_.Name -match '(?i)oculum-test|windows[ -]test|windows-test' })) {
+            throw 'Windows normal must not contain Windows Test.'
+          }
           Compress-Archive -Path "$dist/*" -DestinationPath "build/distribution/${{ matrix.artifact }}.zip" -Force
 
       - name: Upload Windows artifact
@@ -186,11 +189,19 @@ jobs:
             }
           }
 
-      - name: Upload unpacked Windows folders
+      - name: Upload unpacked normal Windows folder
         uses: actions/upload-artifact@v6
         with:
-          name: Oculum-Windows-Folders
-          path: build/distribution/windows-folders/
+          name: Oculum-Windows-Folder
+          path: build/distribution/windows-folders/Windows/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload unpacked Windows Test folder
+        uses: actions/upload-artifact@v6
+        with:
+          name: Oculum-Test-Windows-Folder
+          path: build/distribution/windows-folders/Windows Test/
           if-no-files-found: error
           retention-days: 30
 

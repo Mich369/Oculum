@@ -1646,6 +1646,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     bool resourceAlreadySpent = false,
     bool rabbitHat = false,
   }) async {
+    if (totalPowerExhausted &&
+        (freeReactionId != null ||
+            schiantoReactionId != null ||
+            escapeReactionOf != null)) {
+      aggiungiLog(
+        '[SFINIMENTO] Tutte le Reazioni, anche gratuite, sono bloccate.',
+      );
+      return;
+    }
     final masked = pendingMaskedAttack;
     if (outsideFight) {
       aggiungiLog('[FUORI FIGHT] Rientra prima di attaccare.');
@@ -2777,6 +2786,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         if (request['banditVendetta'] == true) {
           request['damage'] = (readIntValue(request['damage']) * 1.25).floor();
         }
+        applyTotalPowerBurstAttack(request);
         if (oculumFateCoreReflects(
           monsterBookEntryById(monsterBookIdForCombatToken(byId[selectedTag]!)),
           '${request['targetBodyPart']}',
@@ -2796,7 +2806,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           firstCounterResolution = applyResolvedOnlineDefense(
             incomingAttack,
             'controattacco',
-            total,
+            total + readIntValue(request['totalPowerBurstAccuracy']),
             defenseNatural: natural,
           );
         } else if (maskedVolley || boneVolley || cycleSpines > 0) {
@@ -3220,6 +3230,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         !controlsOnlineCombatSheet('${request['targetTag']}')) {
       return;
     }
+    applyTotalPowerExposure(request);
     request['received'] = true;
     if (request['kind'] == 'fate_core_reflection') {
       final target = onlineCombatTokens()
@@ -3492,6 +3503,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       }
       final defense = readIntValue(payload['defense']);
       acceptEscapeReturnReply(request, payload);
+      if (!request.containsKey('totalPowerExposureAccuracy') &&
+          payload.containsKey('totalPowerExposureAccuracy')) {
+        final exposure = max(
+          0,
+          readIntValue(payload['totalPowerExposureAccuracy']),
+        );
+        request['totalPowerExposureAccuracy'] = exposure;
+        request['attack'] = readIntValue(request['attack']) + exposure;
+      }
       final attack = readIntValue(request['attack']);
       if (payload['counterAttackResponse'] is Map) {
         final candidate = {
@@ -3668,13 +3688,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           );
       request['reflexBonusReaction'] = reflexBonusReaction;
       request['freeReaction'] =
+          !totalPowerExhaustedForTag('${request['targetTag']}') &&
           !isCounter &&
           request['reactionOf'] == null &&
           (oculumDefenseGrantsFreeReaction(attack, defense) ||
               payload['defenseChoice'] == 'resistenza' && defense >= attack ||
               reflexBonusReaction);
       request['criticalReaction'] =
-          !isCounter && oculumDefenseGrantsFreeReaction(attack, defense);
+          !totalPowerExhaustedForTag('${request['targetTag']}') &&
+          !isCounter &&
+          oculumDefenseGrantsFreeReaction(attack, defense);
       if (realtimeIsMasterRole || realtimeIsCoMasterRole) {
         applyOnlineSchiantoActionSkip(payload);
       }
@@ -4204,7 +4227,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           attackAvoided: outcome == OculumAttackOutcome.avoided,
           resisted: resisted,
         );
-    if (schiantoActionSkipped) {
+    if (schiantoActionSkipped && !totalPowerExhausted) {
       request['schiantoActionSkipped'] = true;
       request['schiantoReactionBonus'] = 10;
       request['schiantoReactionAvailable'] = true;
@@ -4218,13 +4241,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     request['outcome'] = outcome.name;
     rewardMeccanioProtection(request);
     request['freeReaction'] =
+        !totalPowerExhausted &&
         !isCounter &&
         request['reactionOf'] == null &&
         (oculumDefenseGrantsFreeReaction(attack, defense) ||
             resisted ||
             reflexBonusReaction);
     request['criticalReaction'] =
-        !isCounter && oculumDefenseGrantsFreeReaction(attack, defense);
+        !totalPowerExhausted &&
+        !isCounter &&
+        oculumDefenseGrantsFreeReaction(attack, defense);
     aggiungiLog(
       isCounter
           ? '[CONTROATTACCO] ${request['sourceName']} $attack contro ${request['targetName'] ?? nomeController.text} $defense: $counterPercent% del danno in ingresso, poi Difesa, resistenze e Scudi.'

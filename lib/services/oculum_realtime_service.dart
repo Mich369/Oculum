@@ -178,7 +178,7 @@ class OculumRealtimeService {
 
   String get normalizedRoomId {
     final clean = roomId.trim().replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
-    if (clean.isEmpty) return 'test';
+    if (clean.isEmpty) return '';
     return clean.length > 64 ? clean.substring(0, 64) : clean;
   }
 
@@ -193,6 +193,11 @@ class OculumRealtimeService {
 
   Future<void> _connect() async {
     if (_disposed) return;
+    if (normalizedRoomId.isEmpty) {
+      _requiresUserAction = true;
+      _safeStatus('Inserisci il codice stanza del Master.');
+      return;
+    }
 
     if (!supabaseAvailable) {
       _safeStatus(startupStatus);
