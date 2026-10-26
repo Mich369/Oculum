@@ -10,3 +10,9 @@ Tutte le modifiche successive alla build `b917217d98d16861a5bbaf1706d78825d883c9
 - 61 temi elemento, 162 scene e Impostazioni riordinate con ricerca; trasparenza separata per statistiche e comandi, personalizzazioni e JSON conservati.
 - Log completo soltanto al primo avvio di ogni nuova versione, chiudibile con clic fuori dalla finestra. Avvio web e build Windows più robusti, menu download pubblico aggiornato dal commit compilato. Windows normale e Windows Test separati anche negli artifact delle cartelle.
 - Nomi, costi, cooldown, formule, effetti, bersagli, oggetti, mercanti, temi e impostazioni restano modificabili negli editor esistenti. Verifiche e pacchetti effettivamente consegnati sono indicati separatamente nel resoconto.
+
+## Consegna online con tag salvati
+
+Corretto il confronto tra il tag autenticato restituito in maiuscolo dal server e i tag salvati con maiuscole/minuscole: attacchi, difese, aiuti, risposte Aura e conferme di consegna mantengono la stessa identità. Anche i frammenti delle schede confrontano l’identità senza cambiare il tag salvato. Ruoli, sessioni, proprietari, approvazione del Master e controlli contro mittenti falsificati restano verificati. La prova con quattro profili e il test Supabase autenticato includono ora tag con maiuscole/minuscole.
+
+Le schede ricevute mantengono il tag originale anche oltre il terzo posto nell’archivio del Master. L’installazione locale riutilizza gli artifact di cartella verificati per evitare copie temporanee dei runtime, preservando la distribuzione precedente fino alla verifica finale.

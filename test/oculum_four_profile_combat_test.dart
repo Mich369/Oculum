@@ -52,10 +52,15 @@ class _ProfileTransport extends OculumRealtimeService {
     for (var copy = 0; copy < 2; copy++) {
       for (var index = 0; index < bus.probes.length; index++) {
         if (index == profile) continue;
-        bus.probes[index].receiveCombat(event, {
-          ...payload,
-          'sessionId': 'profile-$profile',
-        });
+        bus.probes[index].receiveCombat(
+          event,
+          oculumVerifiedPacketIdentity({
+            ...payload,
+            // Exercise the real server boundary with mixed-case saved tags.
+            'senderTag': '${payload['senderTag'] ?? ''}'.toUpperCase(),
+            'sessionId': 'profile-$profile',
+          }),
+        );
       }
     }
     return true;
@@ -332,6 +337,17 @@ void main() {
       // B's action advances to C; C can use an action after its quick reaction.
       expect(await spend(3), isTrue);
       expect(master.masterInitiativeTokens[3]['actionUsed'], isTrue);
+      // Received player sheets must not be renamed after the Master's third slot.
+      const receivedTag = 'RemoteOcu:3690ZZZZ';
+      master.schedePersonaggio.add({
+        'id': receivedTag,
+        'sheetTag': receivedTag,
+        'nome': 'Received player',
+        'realtimeSharedSheet': true,
+      });
+      bus.probes[0].ensureSheetTags();
+      expect(master.schedePersonaggio.last['id'], receivedTag);
+      expect(master.schedePersonaggio.last['sheetTag'], receivedTag);
       for (var i = 0; i < 4; i++) {
         expect(states[i].schedePersonaggio[i]['realtimeSharedSheet'], isFalse);
         bus.probes[i].cancelPendingSave();

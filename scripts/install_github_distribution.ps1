@@ -121,14 +121,33 @@ if ($UseRangeDownload -or $LASTEXITCODE -ne 0) {
     $taskToken = $null
   }
 }
+function Assert-DownloadedItem([string]$Path) {
+  $resolved = [IO.Path]::GetFullPath($Path)
+  if (!$resolved.StartsWith($downloadRoot + '\', [StringComparison]::OrdinalIgnoreCase) -or
+      ((Get-Item -LiteralPath $resolved -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+    throw "Unsafe downloaded artifact path: $Path"
+  }
+}
+
 $packages = @('Oculum-Windows.zip', 'Oculum-Test-Windows.zip', 'Oculum-Android-release.apk', 'Oculum-Android-release.aab', 'Oculum-macOS.zip', 'Oculum-iOS-unsigned.ipa', 'Oculum-Linux-x64.tar.gz', 'Oculum-Web.zip')
 foreach ($package in $packages) {
   $matches = @(Get-ChildItem -LiteralPath $downloadRoot -Recurse -File | Where-Object Name -eq $package)
   if ($matches.Count -ne 1 -or $matches[0].Length -eq 0) { throw "Missing/ambiguous package: $package" }
-  Copy-Item -LiteralPath $matches[0].FullName -Destination (Join-Path $stagingRoot $package)
+  Assert-DownloadedItem $matches[0].FullName
+  Move-Item -LiteralPath $matches[0].FullName -Destination (Join-Path $stagingRoot $package)
 }
-Expand-Archive -LiteralPath (Join-Path $stagingRoot 'Oculum-Windows.zip') -DestinationPath (Join-Path $stagingRoot 'windows')
-Expand-Archive -LiteralPath (Join-Path $stagingRoot 'Oculum-Test-Windows.zip') -DestinationPath (Join-Path $stagingRoot 'windows-test')
+# Reuse the verified folder artifacts rather than storing duplicate runtimes.
+foreach ($edition in @('windows', 'windows-test')) {
+  $artifact = if ($edition -eq 'windows') { 'Oculum-Windows-Folder' } else { 'Oculum-Test-Windows-Folder' }
+  $folder = Join-Path $downloadRoot $artifact
+  if (Test-Path -LiteralPath $folder -PathType Container) {
+    Assert-DownloadedItem $folder
+    Move-Item -LiteralPath $folder -Destination (Join-Path $stagingRoot $edition)
+  } else {
+    $archive = if ($edition -eq 'windows') { 'Oculum-Windows.zip' } else { 'Oculum-Test-Windows.zip' }
+    Expand-Archive -LiteralPath (Join-Path $stagingRoot $archive) -DestinationPath (Join-Path $stagingRoot $edition)
+  }
+}
 foreach ($edition in @('windows', 'windows-test')) {
   $folder = Join-Path $stagingRoot $edition
   $exe = if ($edition -eq 'windows') { 'oculum.exe' } else { 'Oculum-Test.exe' }
@@ -143,7 +162,8 @@ if ((Get-FileHash (Join-Path $stagingRoot 'windows/data/app.so')).Hash -eq
 # The standalone EXE needs the full Flutter runtime alongside it.
 Get-ChildItem -LiteralPath (Join-Path $stagingRoot 'windows') | Copy-Item -Destination $stagingRoot -Recurse
 Get-ChildItem -LiteralPath $downloadRoot -Directory | Where-Object Name -NotIn @('Oculum-Windows', 'Oculum-Test-Windows', 'Oculum-Android', 'Oculum-macOS', 'Oculum-iOS-unsigned', 'Oculum-Linux', 'Oculum-Web') | ForEach-Object {
-  Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $stagingRoot $_.Name) -Recurse
+  Assert-DownloadedItem $_.FullName
+  Move-Item -LiteralPath $_.FullName -Destination (Join-Path $stagingRoot $_.Name)
 }
 Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/titoli-statistiche-critici.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-MODIFICHE.md')
 Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/temi-oculum.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-TEMI.md')

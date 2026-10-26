@@ -9,6 +9,35 @@ import 'oculum_room_activity.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// Supabase owns senderTag and canonicalizes it to uppercase. Match only the
+// same authenticated identity back to an existing packet reference; saved tags
+// and the server-owned role, session and user fields remain unchanged.
+Map<String, dynamic> oculumVerifiedPacketIdentity(
+  Map<String, dynamic> payload,
+) {
+  final result = Map<String, dynamic>.from(payload);
+  for (final key in const [
+    'sourceTag',
+    'targetTag',
+    'ownerTag',
+    'requesterTag',
+    'receiverTag',
+  ]) {
+    if (oculumSameSheetIdentity(payload['senderTag'], payload[key])) {
+      result['senderTag'] = payload[key];
+      break;
+    }
+  }
+  return result;
+}
+
+bool oculumSameSheetIdentity(dynamic left, dynamic right) {
+  String canonical(dynamic value) =>
+      '${value ?? ''}'.replaceAll(RegExp(r'\s+'), '').toUpperCase();
+  final identity = canonical(left);
+  return identity.isNotEmpty && identity == canonical(right);
+}
+
 class OculumRealtimeService {
   /// Keep presence and durable-event reconciliation responsive without
   /// continuously querying PostgREST when Realtime is already connected.
@@ -1672,7 +1701,7 @@ class OculumRealtimeService {
 
     // The database already supplied the verified body. Unwrapping a user
     // supplied nested `payload` here would discard authenticated sender fields.
-    final normalized = Map<String, dynamic>.from(payload);
+    final normalized = oculumVerifiedPacketIdentity(payload);
     if (event == 'initiative_control' &&
         normalized['roomIdleClose'] == true &&
         normalized['senderRole'] == 'master') {
@@ -1718,7 +1747,10 @@ class OculumRealtimeService {
     if (event == 'sheet_shared_chunk') {
       final assembled = _sheetTransfers.accept(normalized, DateTime.now());
       if (assembled != null &&
-          assembled['sheetId'] == normalized['authenticatedSheetId']) {
+          oculumSameSheetIdentity(
+            assembled['sheetId'],
+            normalized['authenticatedSheetId'],
+          )) {
         onEvent('sheet_shared', {
           ...assembled,
           if (normalized['authenticatedRole'] == 'player') 'fromMaster': false,

@@ -101,7 +101,7 @@ void main() {
         'tokens': [
           {'id': playerTag},
           {'id': 'LIVE_MASTER'},
-          {'id': 'LIVE_ATTACKER'},
+          {'id': 'Live_Attacker'},
         ],
       };
       final room = 'combat_${DateTime.now().microsecondsSinceEpoch}';
@@ -166,8 +166,8 @@ void main() {
         playerName: 'Synthetic Companion',
         presenceDataProvider: () => {
           'role': 'player',
-          'activeSheetTag': 'LIVE_HELPER',
-          'localSheetTags': ['LIVE_HELPER'],
+          'activeSheetTag': 'Live_Helper',
+          'localSheetTags': ['Live_Helper'],
           'campaignId': state.activeCampaignId,
         },
         onPresenceChanged: (_) {},
@@ -183,8 +183,8 @@ void main() {
         httpPollingOnly: true,
         presenceDataProvider: () => {
           'role': 'player',
-          'activeSheetTag': 'LIVE_ATTACKER',
-          'localSheetTags': ['LIVE_ATTACKER'],
+          'activeSheetTag': 'Live_Attacker',
+          'localSheetTags': ['Live_Attacker'],
           'campaignId': state.activeCampaignId,
         },
         onPresenceChanged: (_) {},
@@ -317,8 +317,8 @@ void main() {
             'tokens': [
               {'id': playerTag},
               {'id': 'LIVE_MASTER'},
-              {'id': 'LIVE_ATTACKER'},
-              {'id': 'LIVE_HELPER'},
+              {'id': 'Live_Attacker'},
+              {'id': 'Live_Helper'},
             ],
           };
           await master.sendInitiativeSnapshot(
@@ -340,8 +340,8 @@ void main() {
             'scope': probe.permissionScope,
             'campaignId': state.activeCampaignId,
             'encounterId': 'live-fight',
-            'senderTag': 'LIVE_ATTACKER',
-            'sourceTag': 'LIVE_ATTACKER',
+            'senderTag': 'Live_Attacker',
+            'sourceTag': 'Live_Attacker',
             'sourceName': 'Attacker',
             'targetTag': playerTag,
             'choice': 'vc',
@@ -366,8 +366,8 @@ void main() {
             await helper.sendCombatEvent('combat_help', {
               ...packet,
               'id': 'live-defense-help',
-              'senderTag': 'LIVE_HELPER',
-              'sourceTag': 'LIVE_HELPER',
+              'senderTag': 'Live_Helper',
+              'sourceTag': 'Live_Helper',
               'sourceName': 'Companion',
               'kind': 'help',
               'helpBonus': 4,

@@ -91,12 +91,19 @@ extension _OculumFriends on _OculumHomePageState {
     }
   }
 
-  bool shouldReplaceSheetTag(String tag, int index, Set<String> used) {
+  bool shouldReplaceSheetTag(
+    String tag,
+    int index,
+    Set<String> used, {
+    bool preserveAssignedPrefix = false,
+  }) {
     final clean = normalizeOculumFriendTag(tag);
     if (clean.isEmpty) return true;
     if (used.contains(clean.toUpperCase())) return true;
     if (isLegacyOculumTag(clean)) return false;
     if (!isNamedOculumTag(clean)) return true;
+    // A received sheet keeps its owner's identity wherever the Master stores it.
+    if (preserveAssignedPrefix) return false;
 
     final firstPrefix = RegExp(
       r':3690[A-Z0-9]{2,}$',

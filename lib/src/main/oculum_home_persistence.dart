@@ -5085,7 +5085,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
       final scheda = schedePersonaggio[i];
       var tag = normalizeOculumFriendTag('${scheda['sheetTag'] ?? ''}');
 
-      final nonValido = shouldReplaceSheetTag(tag, i, usati);
+      final nonValido = shouldReplaceSheetTag(
+        tag,
+        i,
+        usati,
+        preserveAssignedPrefix: readBoolValue(scheda['realtimeSharedSheet']),
+      );
 
       if (nonValido) {
         tag = generaTagUnicoScheda(i, usati);
@@ -5149,7 +5154,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
     final tag = '${sheet['sheetTag'] ?? ''}';
     if (tag.isEmpty ||
         '${sheet['id'] ?? ''}' != tag ||
-        shouldReplaceSheetTag(tag, index, const <String>{})) {
+        shouldReplaceSheetTag(
+          tag,
+          index,
+          const <String>{},
+          preserveAssignedPrefix: readBoolValue(sheet['realtimeSharedSheet']),
+        )) {
       assicuraTagSchede();
     }
     return '${schedePersonaggio[index]['sheetTag'] ?? '---'}';

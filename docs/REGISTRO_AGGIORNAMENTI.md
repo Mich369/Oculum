@@ -122,3 +122,9 @@ Il Monster Book del Master mostra prima i più deboli e poi i più forti, varian
 - I rilevatori conservano la propria lettura stimata ±10% e la portata: la stima è indicata con ≈ e non sostituisce un precedente numero esatto. Il confronto qualitativo e una lettura fallita non eliminano numeri conosciuti.
 - Un’osservazione mirata eseguibile ha probabilità pari al valore del sottotratto usato, massimo 95%, di non consumare Azione/Reazione. Esempi: +32 → 32%, +110 → 95%. Fuori combattimento non c’è costo di turnistica. Lo Sfinimento continua a bloccare le Reazioni.
 - Le conoscenze sono memorizzate nella scheda e nel JSON per osservatore, campagna e identità del bersaglio. L’Aura usa confronti autenticati e aggiornamenti su variazione della Potenza; nessuna interrogazione continua. La snapshot pubblica contiene solo una revisione, mai le statistiche o la Potenza interna nascosta.
+
+## Consegna online con tag salvati
+
+Corretto il confronto tra il tag autenticato restituito in maiuscolo dal server e i tag salvati con maiuscole/minuscole: attacchi, difese, aiuti, risposte Aura e conferme di consegna mantengono la stessa identità. Anche i frammenti delle schede confrontano l’identità senza cambiare il tag salvato. Ruoli, sessioni, proprietari, approvazione del Master e controlli contro mittenti falsificati restano verificati. La prova con quattro profili e il test Supabase autenticato includono ora tag con maiuscole/minuscole.
+
+Le schede ricevute mantengono il tag originale anche oltre il terzo posto nell’archivio del Master. L’installazione locale riutilizza gli artifact di cartella verificati per evitare copie temporanee dei runtime, preservando la distribuzione precedente fino alla verifica finale.
