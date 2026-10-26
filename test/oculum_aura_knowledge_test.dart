@@ -157,6 +157,40 @@ void main() {
     },
   );
 
+  testWidgets(
+    'saved Master edits refresh power revision only when power changes',
+    (tester) async {
+      final (state, p) = await fixtures.mountFight(tester);
+      void saveAndPublish() {
+        p.saveSheet();
+        p.syncSavedAura();
+      }
+
+      saveAndPublish();
+      final token = state.masterInitiativeTokens.first as Map<String, dynamic>;
+      final revision = token['auraPowerRevision'] as int;
+      final power = token['auraPowerInternal'] as int;
+      saveAndPublish();
+      expect(token['auraPowerRevision'], revision);
+      state.livelloController.text =
+          '${int.parse(state.livelloController.text) + 1}';
+      p.invalidateDerivedCaches();
+      saveAndPublish();
+      expect(token['auraPowerRevision'], revision + 1);
+      expect(token['auraPowerInternal'], power + 1);
+      state.currentHpController.text = '1';
+      saveAndPublish();
+      expect(token['auraPowerRevision'], revision + 1);
+      final public = p.publicEncounter(
+        Map<String, dynamic>.from(state.masterInitiativeGroups.first as Map),
+      );
+      expect(jsonEncode(public), isNot(contains('auraPowerInternal')));
+      p.cancelPendingSave();
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    },
+  );
+
   for (final width in [320.0, 1440.0]) {
     testWidgets(
       'small power badges fit and distinguish exact numbers from estimates at $width',

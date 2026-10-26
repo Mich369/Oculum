@@ -220,6 +220,7 @@ class OculumPerformanceProbe {
   Future<bool> spendScout(int subtrait, {int? percentile}) =>
       _state.spendScoutObservationResource(subtrait, percentile: percentile);
   void observeAura() => _state.scheduleAuraObservations();
+  void syncSavedAura() => _state.syncSavedAuraPowerToMasterEncounters();
   bool auraReadsPower() => _state.auraCanReadPower;
   Map<String, dynamic> knownPower(String tag) => _state.knownPowerFor(tag);
   bool learnPower(String tag, Map<String, dynamic> read, {int? order}) =>

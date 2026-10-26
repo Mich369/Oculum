@@ -128,3 +128,5 @@ Il Monster Book del Master mostra prima i più deboli e poi i più forti, varian
 Corretto il confronto tra il tag autenticato restituito in maiuscolo dal server e i tag salvati con maiuscole/minuscole: attacchi, difese, aiuti, risposte Aura e conferme di consegna mantengono la stessa identità. Anche i frammenti delle schede confrontano l’identità senza cambiare il tag salvato. Ruoli, sessioni, proprietari, approvazione del Master e controlli contro mittenti falsificati restano verificati. La prova con quattro profili e il test Supabase autenticato includono ora tag con maiuscole/minuscole.
 
 Le schede ricevute mantengono il tag originale anche oltre il terzo posto nell’archivio del Master. L’installazione locale riutilizza gli artifact di cartella verificati per evitare copie temporanee dei runtime, preservando la distribuzione precedente fino alla verifica finale.
+
+Aura: anche una modifica salvata dal Master aggiorna la revisione pubblica della Potenza; chi aveva già scoperto il numero lo riceve automaticamente con Aura +20. Salvataggi senza variazioni di Potenza non inviano nuove snapshot. Il numero nascosto resta escluso dalla turnistica pubblica.

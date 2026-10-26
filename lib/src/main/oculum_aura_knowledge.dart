@@ -37,6 +37,24 @@ extension _OculumAuraKnowledge on _OculumHomePageState {
     }
   }
 
+  void syncSavedAuraPowerToMasterEncounters() {
+    if (!realtimeIsMasterRole || schedePersonaggio.isEmpty) return;
+    final index = schedaCorrente;
+    final tag = sheetTagAt(index);
+    final power = scoutTotalPowerAt(index);
+    bool changed(Map token) =>
+        '${token['sheetTag'] ?? token['id'] ?? ''}' == tag &&
+        token['auraPowerInternal'] != power;
+    final changedHere = masterInitiativeTokens.any(changed);
+    final changedElsewhere = masterInitiativeGroups.any(
+      (group) =>
+          (group['tokens'] as List? ?? const []).whereType<Map>().any(changed),
+    );
+    if (changedHere || changedElsewhere) {
+      syncSharedSheetToMasterEncounters(index);
+    }
+  }
+
   int get auraReadingTotal {
     final aura = hiddenEyeStats
         .where((s) => s.id == 'lettura_aura' && s.unlocked)

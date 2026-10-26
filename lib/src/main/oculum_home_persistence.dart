@@ -4521,7 +4521,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
     if (saveResult.saved) {
       await _clearProgressJournalIfCurrent(progressRevisionAtSnapshot);
     }
-    if (!saveResult.saved || soloLocale) return;
+    if (!saveResult.saved) return;
+    // A staff edit must refresh the same public revision as an owner update.
+    // Unchanged saves (notes, HP, knowledge) do not publish another snapshot.
+    syncSavedAuraPowerToMasterEncounters();
+    if (soloLocale) return;
 
     // Commit locally before any peer/network operation can stall or fail.
     unawaited(
