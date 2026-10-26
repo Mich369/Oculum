@@ -1,5 +1,7 @@
 # Aggiornamento cumulativo dal 25–26 ottobre 2026
 
+- Stabilizzati cambio turno e menu durante le animazioni: le decorazioni sfumano senza ricostruire continuamente i controlli; feedback al tocco dopo il tap e compatibile con le finestre aperte.
+
 - Corrette richieste d'ingresso, tiri richiesti dal Master, Azioni supplementari e rientro dopo la fuga. Trasparenze evidenziate progressivamente in tre secondi; EXP personale della fuga assegnata senza duplicati e conservata nel JSON. Dettagli in `docs/VERIFICA_BUG_2026-10-26.md`.
 
 Tutte le modifiche successive alla build `b917217d98d16861a5bbaf1706d78825d883c970` (run `40242640717`), incluse quelle di `12cbe566` e `73cce878`.

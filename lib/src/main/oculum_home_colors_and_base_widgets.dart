@@ -1882,6 +1882,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         padding: padding,
         borderColor: borderColor,
         surfaceOpacity: opacity,
+        animationDuration: oculumSurfaceAnimationDurationOf(context),
       ),
     ),
   );
@@ -1891,6 +1892,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     required EdgeInsets padding,
     Color? borderColor,
     required double surfaceOpacity,
+    required Duration animationDuration,
   }) {
     if (!temiOldSchool) {
       final reference = referenceCampaignStyle;
@@ -1906,7 +1908,9 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
             )
           : borderColor ?? primaryColor;
       final surface = narrativeInterfaceSurface ?? backgroundMidColor;
-      final panel = Container(
+      final panel = AnimatedContainer(
+        duration: animationDuration,
+        curve: Curves.easeInOut,
         margin: const EdgeInsets.symmetric(vertical: OculumDesignTokens.space4),
         padding: scaledInsets(padding),
         decoration: oculumSurfaceDecoration(
@@ -1983,7 +1987,9 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     );
     if (modalitaLeggera || modalitaVeloce) {
       return RepaintBoundary(
-        child: Container(
+        child: AnimatedContainer(
+          duration: animationDuration,
+          curve: Curves.easeInOut,
           margin: const EdgeInsets.symmetric(vertical: 2),
           decoration: BoxDecoration(
             gradient: oculumSurfaceDecoration(
@@ -2063,7 +2069,9 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
               guiStyle: guiStyle,
               compact: compact,
             ),
-            child: Container(
+            child: AnimatedContainer(
+              duration: animationDuration,
+              curve: Curves.easeInOut,
               decoration: BoxDecoration(
                 gradient: oculumSurfaceDecoration(
                   BoxDecoration(
@@ -2083,7 +2091,9 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     }
 
     return RepaintBoundary(
-      child: Container(
+      child: AnimatedContainer(
+        duration: animationDuration,
+        curve: Curves.easeInOut,
         margin: EdgeInsets.symmetric(vertical: compact ? 2 : 4),
         decoration: BoxDecoration(
           gradient: oculumSurfaceDecoration(

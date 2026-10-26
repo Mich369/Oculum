@@ -35,20 +35,27 @@ class OculumSurfaceScope extends InheritedWidget {
     required this.highlightAll,
     required this.setButtonHover,
     this.secondaryControls = false,
+    this.animationDuration = Duration.zero,
     required super.child,
   });
   final bool highlightAll;
   final bool secondaryControls;
+  final Duration animationDuration;
   final void Function(Object, bool) setButtonHover;
   static OculumSurfaceScope? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<OculumSurfaceScope>();
   @override
   bool updateShouldNotify(OculumSurfaceScope oldWidget) =>
       highlightAll != oldWidget.highlightAll ||
-      secondaryControls != oldWidget.secondaryControls;
+      secondaryControls != oldWidget.secondaryControls ||
+      animationDuration != oldWidget.animationDuration;
 }
 
-/// Fades only decorations supplied to the builder, never text or hit targets.
+Duration oculumSurfaceAnimationDurationOf(BuildContext context) =>
+    OculumSurfaceScope.maybeOf(context)?.animationDuration ?? Duration.zero;
+
+/// Supplies opacity and duration for decoration-only animations. Keep the
+/// interactive child stable while AnimatedContainer/Material paints the fade.
 class OculumHoverSurface extends StatefulWidget {
   const OculumHoverSurface({
     super.key,
@@ -74,13 +81,24 @@ class _OculumHoverSurfaceState extends State<OculumHoverSurface> {
     super.dispose();
   }
 
-  void revealOnTouch(PointerDownEvent event) {
+  void revealOnTouch(PointerUpEvent event) {
     if (event.kind == PointerDeviceKind.mouse) return;
-    touchReveal?.cancel();
-    setState(() => touched = true);
-    touchReveal = Timer(oculumSurfaceRevealDuration, () {
-      if (mounted) setState(() => touched = false);
+    // A tap may open a popup. Wait until its route is installed, so decorative
+    // feedback cannot rebuild the panel while the popup blocks its semantics.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || ModalRoute.of(context)?.isCurrent == false) return;
+      touchReveal?.cancel();
+      setState(() => touched = true);
+      touchReveal = Timer(oculumSurfaceRevealDuration, () {
+        if (!mounted) return;
+        if (ModalRoute.of(context)?.isCurrent == false) {
+          touched = false;
+        } else {
+          setState(() => touched = false);
+        }
+      });
     });
+    WidgetsBinding.instance.scheduleFrame();
   }
 
   void buttonHover(Object key, bool value) {
@@ -99,29 +117,27 @@ class _OculumHoverSurfaceState extends State<OculumHoverSurface> {
             buttons.clear();
           }),
           child: Listener(
-            onPointerDown: revealOnTouch,
+            onPointerUp: revealOnTouch,
             child: OculumSurfaceScope(
               secondaryControls: widget.secondaryControls,
+              animationDuration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : hovered || touched
+                  ? oculumSurfaceRevealDuration
+                  : const Duration(milliseconds: 200),
               highlightAll:
                   widget.actionGroup && (hovered || touched) && buttons.isEmpty,
               setButtonHover: buttonHover,
-              child: TweenAnimationBuilder<double>(
-                duration: MediaQuery.disableAnimationsOf(context)
-                    ? Duration.zero
-                    : hovered || touched
-                    ? oculumSurfaceRevealDuration
-                    : const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                tween: Tween<double>(
-                  end: hovered || touched
+              child: Builder(
+                builder: (context) => widget.builder(
+                  context,
+                  hovered || touched
                       ? 1
                       : 1 -
                             (widget.secondaryControls
                                 ? value.controlTransparency
                                 : value.surfaceTransparency),
                 ),
-                builder: (context, opacity, _) =>
-                    widget.builder(context, opacity),
               ),
             ),
           ),

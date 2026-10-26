@@ -77,14 +77,14 @@ class OculumArtButtonLayer extends StatelessWidget {
                 fit: StackFit.passthrough,
                 children: [
                   Positioned.fill(
-                    child: IgnorePointer(
+                    child: ExcludeSemantics(
                       child: AnimatedOpacity(
                         duration: MediaQuery.disableAnimationsOf(context)
                             ? Duration.zero
                             : oculumSurfaceRevealDuration,
                         curve: Curves.easeInOut,
                         opacity: surfaceOpacity,
-                        child: ExcludeSemantics(
+                        child: IgnorePointer(
                           child: RepaintBoundary(
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),

@@ -1414,6 +1414,9 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                       role: OculumThemeFrameRole.statistics,
                       sheetId: currentSheetScrollId(),
                       child: Material(
+                        animationDuration: oculumSurfaceAnimationDurationOf(
+                          context,
+                        ),
                         color: oculumSurfaceColor(
                           backgroundBottomColor,
                           opacity,

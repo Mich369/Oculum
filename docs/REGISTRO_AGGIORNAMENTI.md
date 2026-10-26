@@ -2,6 +2,8 @@
 
 ## Correzioni delle segnalazioni del 26 ottobre 2026
 
+- Stabilità durante il cambio turno e l'apertura dei menu: animazioni limitate alle decorazioni, con controlli stabili e accessibili. Il feedback al tocco parte dopo il tap e rispetta le finestre aperte.
+
 - Trasparenze evidenziate progressivamente fino alla piena visibilità in tre secondi, con mouse e tocco; testi, icone e controlli cliccabili conservati.
 - Richieste d'ingresso al Master controllate anche durante il recupero lento di presenza/eventi; nessuna nuova interrogazione continua.
 - Tiri di sottotratto e richieste Master: completamento dopo il dado reale, riprova se mancano risorse, Percezione richiesta senza scelta di un nuovo bersaglio; Azioni supplementari e Azioni sotto Sfinimento riconosciute.

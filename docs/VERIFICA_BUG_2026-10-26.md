@@ -1,6 +1,7 @@
 # Correzioni: trasparenza, ingressi online, tiri e fuga
 
 - Trasparenza: aumento progressivo dell'opacità fino alla piena visibilità in tre secondi; supporto a mouse, tocco e riduzione delle animazioni. Testi e bersagli cliccabili conservati.
+- Menu e cambio turno: le animazioni modificano solo le decorazioni; il feedback al tocco si avvia dopo il tap e non ricostruisce i pannelli coperti da popup. Conservati pulsanti e informazioni per l'accessibilità.
 - Ingressi: il controllo delle richieste al Master prosegue indipendentemente da letture lente della presenza o dal recupero degli eventi; una richiesta non blocca la sincronizzazione della stanza. La conferma del Master rimane obbligatoria.
 - Tiri richiesti: completamento solo dopo il dado effettivo, registrazione di naturale e totale, richiesta ancora disponibile se mancano risorse. Percezione richiesta dal Master non apre la scelta di un altro bersaglio.
 - Risorse: i tiri usano anche Azioni supplementari; una Reazione gratuita non utilizzabile per Sfinimento non nasconde un'Azione disponibile. I blocchi di turnistica sono mostrati anche con un avviso visibile.

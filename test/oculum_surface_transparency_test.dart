@@ -148,8 +148,10 @@ void main() {
         MaterialApp(
           home: Center(
             child: OculumHoverSurface(
-              builder: (_, opacity) => Container(
+              builder: (context, opacity) => AnimatedContainer(
                 key: const Key('progressive-surface'),
+                duration: oculumSurfaceAnimationDurationOf(context),
+                curve: Curves.easeInOut,
                 width: 100,
                 height: 100,
                 color: oculumSurfaceColor(Colors.black, opacity),
@@ -158,10 +160,18 @@ void main() {
           ),
         ),
       );
-      double opacity() => tester
-          .widget<Container>(find.byKey(const Key('progressive-surface')))
-          .color!
-          .a;
+      double opacity() =>
+          (tester
+                      .widget<DecoratedBox>(
+                        find.descendant(
+                          of: find.byKey(const Key('progressive-surface')),
+                          matching: find.byType(DecoratedBox),
+                        ),
+                      )
+                      .decoration
+                  as BoxDecoration)
+              .color!
+              .a;
       final initial = opacity();
       final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
       await mouse.addPointer(location: Offset.zero);
@@ -176,6 +186,59 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1500));
       expect(opacity(), 1);
       await mouse.removePointer();
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'touch reveals a static panel without rebuilding its child each frame',
+    (tester) async {
+      var childBuilds = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Center(
+            child: OculumHoverSurface(
+              builder: (context, opacity) => AnimatedContainer(
+                key: const Key('touch-surface'),
+                width: 100,
+                height: 100,
+                duration: oculumSurfaceAnimationDurationOf(context),
+                curve: Curves.easeInOut,
+                color: oculumSurfaceColor(Colors.black, opacity),
+                child: Builder(
+                  builder: (_) {
+                    childBuilds++;
+                    return const Text('Visibile');
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      double opacity() =>
+          (tester
+                      .widget<DecoratedBox>(
+                        find.descendant(
+                          of: find.byKey(const Key('touch-surface')),
+                          matching: find.byType(DecoratedBox),
+                        ),
+                      )
+                      .decoration
+                  as BoxDecoration)
+              .color!
+              .a;
+      final initial = opacity();
+      await tester.tap(find.byKey(const Key('touch-surface')));
+      await tester.pump();
+      await tester.pump();
+      final builds = childBuilds;
+      await tester.pump(const Duration(milliseconds: 1500));
+      expect(opacity(), greaterThan(initial));
+      expect(opacity(), lessThan(1));
+      expect(childBuilds, builds);
+      await tester.pump(const Duration(milliseconds: 1500));
+      expect(opacity(), 1);
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );

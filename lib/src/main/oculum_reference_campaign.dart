@@ -594,6 +594,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
       builder: (context, opacity) => SizedBox(
         width: min(270.0, MediaQuery.sizeOf(context).width - 32),
         child: Material(
+          animationDuration: oculumSurfaceAnimationDurationOf(context),
           color: oculumSurfaceColor(
             Theme.of(context).colorScheme.surfaceContainerLow,
             opacity,
