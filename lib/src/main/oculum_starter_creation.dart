@@ -562,6 +562,48 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
     );
   }
   final art = _rawMonsterBookArt(monster);
+  if (oculumMonsterCyclePhase(monster).isNotEmpty) {
+    final phase = oculumMonsterCyclePhaseName(monster);
+    final kind = '${monster.encounterRules['cycleOpenKind'] ?? 'danno'}';
+    art.openName = '${monster.encounterRules['cycleOpenName']}';
+    art.openDescription =
+        '${monster.nameIt} raccoglie il proprio potere di $phase. Il Buff rafforza la creatura e la sua Skill Open.';
+    art.openBuff =
+        '+1 Volontà e +3 Difesa mentre attiva; potenzia anche la Skill Open.';
+    art.openBuffEffects = [
+      OculumStructuredEffect(
+        type: 'modifica_statistica',
+        target: 'volonta',
+        valueExpression: '1',
+        mode: 'finche_attivo',
+      ),
+      OculumStructuredEffect(
+        type: 'difesa',
+        valueExpression: '3',
+        mode: 'finche_attivo',
+      ),
+    ];
+    art.openSkill = switch (kind) {
+      'cura' =>
+        'Dono di ${monster.nameIt}: cura 12 + Livello ×2 + bonus Open Vita a un alleato, entro il massimo. CD 4 turni.',
+      'scudo' =>
+        'Riparo di ${monster.nameIt}: ottieni 16 + Livello ×2 + bonus Open Scudo normale. CD 4 turni.',
+      _ =>
+        'Tecnica culminante di ${monster.nameIt}: +12 + Livello ×2 + bonus Open Danni ${monster.elementId} al prossimo attacco. CD 4 turni.',
+    };
+    art.openSkillEffects = [
+      OculumStructuredEffect(
+        type: kind,
+        valueExpression:
+            '${kind == 'scudo' ? 16 : 12}+livello*2+monster_open_bonus',
+        elementType: kind == 'danno' ? monster.elementId : '',
+        recipient: kind == 'cura' ? 'alleato' : 'se_stesso',
+        mode: kind == 'danno' ? 'prossima_azione' : 'immediato',
+        duration: '',
+      ),
+    ];
+    art.openSkillCooldown = OculumAbilityCooldown(amount: 4);
+  }
   if (const {'zombie_acido', 'cavaliere_non_ritorno'}.contains(monster.id)) {
     final knight = monster.id == 'cavaliere_non_ritorno';
     art.openName = knight ? 'Il varco non si chiude' : 'Gola corrosiva';

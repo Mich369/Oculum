@@ -107,6 +107,13 @@ extension _OculumMonsterDossier on _OculumHomePageState {
             ],
           ),
         ],
+        if (oculumMonsterCyclePhaseName(monster).isNotEmpty) ...[
+          monsterReadingHeading(
+            'Fase del ciclo',
+            Icons.calendar_month_outlined,
+          ),
+          Text(oculumMonsterCyclePhaseName(monster)),
+        ],
       ],
     );
   }

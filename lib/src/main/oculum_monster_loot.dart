@@ -305,7 +305,37 @@ List<InventoryItem> oculumGenerateMonsterLoot({
       grade: safeGrade,
     );
   }
-  if (resolvedDropTotal < dropDifficulty) return <InventoryItem>[];
+  final cycleScrollDrops = <InventoryItem>[];
+  if (oculumMonsterCyclePhase(monster).isNotEmpty &&
+      monster.skillIds.isNotEmpty) {
+    final minimum = readIntValue(
+      monster.encounterRules['cycleScrollNaturalMinimum'],
+      fallback: 18,
+    ).clamp(1, 20);
+    if (natural >= minimum) {
+      final skillIds = natural == 20
+          ? monster.skillIds
+          : [monster.skillIds[(natural - minimum) % monster.skillIds.length]];
+      for (final id in skillIds) {
+        cycleScrollDrops.add(
+          oculumPlanarTechniqueScroll(
+            monster,
+            id,
+            receipt: '$killId:$id',
+            level: safeLevel,
+            grade: safeGrade,
+          ),
+        );
+      }
+    }
+  }
+  if (resolvedDropTotal < dropDifficulty) {
+    return _withManualDropPrices(
+      cycleScrollDrops,
+      level: safeLevel,
+      grade: safeGrade,
+    );
+  }
   final art = oculumMonsterBookArt(monster);
   if (monster.id == 'costrutto_rinsecchito') {
     final core = oculumCreatureCore(0, broken: true, maximumGrade: 3)
@@ -488,7 +518,7 @@ List<InventoryItem> oculumGenerateMonsterLoot({
         if (forEquipment(type) != null) type: forEquipment(type)!.toJson(),
     },
   };
-  final specialDrops = <InventoryItem>[];
+  final specialDrops = <InventoryItem>[...cycleScrollDrops];
   if (monster.id == 'fata_cacciatrice') {
     final natural = naturalDropRoll ?? random.nextInt(20) + 1;
     if (natural < 1 || natural > 20) {
@@ -625,7 +655,7 @@ List<InventoryItem> oculumGenerateMonsterLoot({
     for (var i = 0; i < dropNames.length; i++)
       InventoryItem(
         nome: dropNames[i],
-        peso: 0,
+        peso: oculumMonsterCyclePhase(monster).isNotEmpty ? .15 : 0,
         quantita: 1,
         gradoOggetto: safeGrade,
         gradoRichiesto: safeGrade,

@@ -619,6 +619,7 @@ final Map<String, MonsterConcreteTechnique> _planarTechniques = {
       monster.skillIds[slot]: _buildPlanarTechnique(monster, slot),
 };
 MonsterConcreteTechnique? oculumPlanarTechnique(String rawId) =>
+    _cycleMonsterTechniques[rawId] ??
     _canonicalVariantTechniques[rawId] ??
     _extraPlanarTechniques[rawId.replaceFirst(
       RegExp(r'_variante_[a-z]+$'),

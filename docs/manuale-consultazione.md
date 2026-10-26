@@ -2,6 +2,23 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Creature delle dodici fasi del ciclo
+
+Il Monster Book include due specie per ciascuna delle dodici fasi del ciclo: 24 creature, 48 tecniche con forme I/II/III, materiali e Open propri. Nel selettore puoi combinare fase, luogo e nome; il dossier mostra l’affinità della creatura. Il Master può usarla anche fuori dalla fase: l’affinità non cambia le regole del calendario.
+Safe Monster: Lepre del Guscio Quieto e Cervo delle Radure Miti, pacifici con ripari e cure.
+Illness: Falena del Delirio e Scrutatore delle Febbri, pulviscolo e impulsi psichici.
+Little Breath: Rondine del Respiro Lieve e Custode dei Nastri Sospesi, cure, mobilità e protezioni.
+Piogge Fertilizzanti: Porcello del Fango Grasso e Rospo delle Gronde Marce, fango e secrezioni.
+The Sun: Scarabeo del Sigillo Ardente e Araldo delle Sei Albe, ostili e legati al Sole.
+Mezzo Ciclo: Airone del Guado Quieto e Tartaruga della Pioggia Chiara, abitanti delle acque tornate miti.
+The Moon: Cerbiatto dei Voti Lunari e Gufo delle Stelle Alleate, reliquie della Luna scomparsa e protezione degli ospiti.
+The Fate: Ragno dei Fili Giurati e Cavaliere del Filo d’Oro, nodi magici e guardie guidate dai fili.
+Caldo Infernale: Scorpione delle Cisterne Secche e Mantide della Vampa, predatori di luoghi aridi.
+The Null: Larva del Nome Vuoto e Viandante dei Ricordi Spenti, Vuoto e Oblio.
+Ghiaccio Imponente: Lepre del Fiato di Vetro e Golem della Brina Profonda, schegge e ripari di ghiaccio.
+Ultimo Ciclo: Volpe delle Lanterne Spente e Guardiano dei Dodici Rintocchi, raccolta delle lanterne e protezione dei cortei.
+Valori iniziali modificabili: tecniche 1/2/3 Oculum, requisiti al livello base della creatura e poi +3/+6, recupero 2/2/3 turni personali oppure 3/3/4 per le cure. Drop naturale 18/19: una delle due scroll; naturale 20: entrambe, con normale apprendimento. La soglia delle scroll è modificabile nei dati della creatura; i materiali mantengono la propria probabilità e le normali regole Drop. Buff e Skill Open sono separati; il Buff aumenta realmente la Skill. Statistiche, nomi, descrizioni, anatomia, resistenze, materiali, costi, livelli, durata e cooldown restano negli editor e nel JSON. Le voci personalizzate già salvate non vengono riscritte.
+
 ## Precisione, catalogo NPC e creazione — 25 ottobre 2026
 
 Precisione sceglie prima la parte del corpo e poi il singolo arto, solo se esistono più parti dello stesso tipo: Braccia → Destra 1, Sinistra 1, Destra 2, Sinistra 2. L'anatomia deriva dalla descrizione fisica, non dalle appendici evocate da una skill; conserva quantità diverse di braccia, ali, code, teste e zampe. I punti deboli già definiti nel Monster Book prevalgono sulle deduzioni. Colpire un punto debole lo rivela. Il Master può usare Punto debole scoperto per rivelarlo per tutti gli esemplari della stessa voce, senza sbloccare le varianti.

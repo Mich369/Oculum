@@ -1,5 +1,11 @@
 # Oculum — registro delle regole confermate
 
+## Creature delle dodici fasi — 25 ottobre 2026
+
+Richiesta esplicita: aggiungere mostri tematici per ogni fase del Ciclo Oculum. Introdotte due specie distinte per fase (24), con due tecniche ciascuna (48), Open, anatomia e materiale proprio. Livelli, statistiche, costi fissi 1/2/3 Oculum, cooldown e valori degli effetti sono bilanciamenti iniziali modificabili, non nuove soglie confermate dall’utente.
+L’affinità di fase è conservata nei dati del Monster Book e consultabile nel dossier; il selettore consente di filtrarla insieme al piano e al nome. Non modifica date, durata o effetti globali del calendario e non impedisce al Master di scegliere manualmente una creatura. Safe Monster ha specie pacifiche con tecniche protettive e curative; The Moon richiama reliquie lunari e stelle alleate, senza Luna nel cielo. Le capacità di The Null non cancellano i dati della scheda né attribuiscono automaticamente un nuovo Fato alle vittime.
+Le personalizzazioni delle voci già salvate conservano precedenza. La prima lavorazione separata non includeva APK; il 26 ottobre l’utente ha richiesto di includere queste creature nell’aggiornamento completo, con pacchetti GitHub per tutte le piattaforme, APK compreso.
+
 ## Ultime creature e Scudi critici — 25 ottobre 2026
 
 Zombie con sbocco d’acido e Cavaliere del Non Ritorno aggiunti. Il Cavaliere ha spadone, armatura nera opaca con punte e vortice sul petto che termina in un occhio. Bilanciamento iniziale modificabile: tre Scudi critici e due Schivate Oculum; valori e ricompense sono dati di catalogo.

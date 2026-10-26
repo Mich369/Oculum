@@ -49,14 +49,18 @@ class _MonsterSearchDialog extends StatefulWidget {
 class _MonsterSearchDialogState extends State<_MonsterSearchDialog> {
   String query = '';
   String habitat = '';
+  String cyclePhase = '';
 
   @override
   Widget build(BuildContext context) {
     final terms = query.trim().toLowerCase().split(RegExp(r'\s+'));
     final matches = widget.entries.where((entry) {
-      final text = '${entry.nameIt} ${entry.nameEn} ${entry.id}'.toLowerCase();
+      final text =
+          '${entry.nameIt} ${entry.nameEn} ${entry.id} ${oculumMonsterCyclePhaseName(entry)}'
+              .toLowerCase();
       return terms.every(text.contains) &&
-          (habitat.isEmpty || entry.planeIds.contains(habitat));
+          (habitat.isEmpty || entry.planeIds.contains(habitat)) &&
+          (cyclePhase.isEmpty || oculumMonsterCyclePhase(entry) == cyclePhase);
     }).toList();
     return AlertDialog(
       title: const Text('Cerca un mostro'),
@@ -90,6 +94,18 @@ class _MonsterSearchDialogState extends State<_MonsterSearchDialog> {
               ],
               onChanged: (value) => setState(() => habitat = value ?? ''),
             ),
+            DropdownButtonFormField<String>(
+              key: const ValueKey('monster_cycle_phase_filter'),
+              initialValue: cyclePhase,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Fase del ciclo'),
+              items: [
+                const DropdownMenuItem(value: '', child: Text('Tutte le fasi')),
+                for (final phase in oculumCycleMonsterPhaseNames.entries)
+                  DropdownMenuItem(value: phase.key, child: Text(phase.value)),
+              ],
+              onChanged: (value) => setState(() => cyclePhase = value ?? ''),
+            ),
             ListTile(
               title: const Text('Crea una creatura libera'),
               onTap: () => Navigator.pop(context, ''),
@@ -103,6 +119,9 @@ class _MonsterSearchDialogState extends State<_MonsterSearchDialog> {
                         final entry = matches[index];
                         return ListTile(
                           title: Text(entry.nameIt),
+                          subtitle: oculumMonsterCyclePhaseName(entry).isEmpty
+                              ? null
+                              : Text(oculumMonsterCyclePhaseName(entry)),
                           onTap: () => Navigator.pop(context, entry.id),
                         );
                       },

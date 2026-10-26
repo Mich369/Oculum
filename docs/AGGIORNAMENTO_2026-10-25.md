@@ -2,7 +2,7 @@
 
 ## Nuove creature
 
-Il catalogo planare iniziale di questa lavorazione conteneva 357 voci fra specie e varianti canoniche; con le aggiunte successive arriva a 380 (1.120 nell’intero Monster Book). Le nuove voci di questa parte dell'aggiornamento sono:
+Il catalogo planare iniziale di questa lavorazione conteneva 357 voci fra specie e varianti canoniche; con le aggiunte successive arriva a 380. Con le 24 creature del ciclo, elencate separatamente dal catalogo planare, l’intero Monster Book raggiunge 1.144 voci. Le nuove voci della prima parte dell'aggiornamento sono:
 
 - Uomo con la maschera: alla creazione assume una delle quattro discipline colorate.
 - Verde: maggiore Resilienza e Ricordo Vitale permanente.
@@ -102,7 +102,7 @@ Le verifiche della versione finale, la CI e la pubblicazione sono registrate sep
 
 Le regole confermate restano descritte nel manuale e nel registro; i nuovi preset non sostituiscono le definizioni personalizzate delle schede già salvate.
 
-## Verifica finale del sorgente
+## Verifica del sorgente precedente all’integrazione del ciclo
 
 - `flutter analyze --no-pub`: nessun problema rilevato.
 - `flutter test --no-pub --concurrency=2 --reporter expanded`: 1.151 test passati, 6 test condizionali saltati; inclusi test grafici desktop/tablet/telefono, navigazione, consumi, salvataggi, Fratture e Scudi critici.
@@ -111,6 +111,14 @@ Le regole confermate restano descritte nel manuale e nel registro; i nuovi prese
 
 Questa verifica locale non include i sei test online condizionali. Le verifiche autenticate, le build GitHub, la pubblicazione e i pacchetti locali sono evidenze distinte; la run collegata ai download pubblici identifica il commit realmente compilato. Nessuna build locale dell’app è stata eseguita.
 
-Conteggi riferiti al commit pubblicato: 1.120 voci complessive. Eventuali 24 creature del ciclo in una lavorazione concorrente restano separate fino al proprio commit verificato. Il test PowerShell ora azzera il codice nativo dopo il caso negativo atteso, mantenendo gli assert che vietano la pubblicazione di workflow falliti.
+Questi conteggi e test si riferiscono alla versione `b917217d`, prima dell’integrazione del ciclo: 1.120 voci complessive. Il test PowerShell azzera il codice nativo dopo il caso negativo atteso, mantenendo gli assert che vietano la pubblicazione di workflow falliti.
 
 Il controllo da 300 schede ha individuato ricerche annidate durante la selezione dei bersagli: la modalità Master locale ora viene riconosciuta prima della ricerca di Meccanio e il controllo del Costume dei Sempre Verde riusa il partecipante già individuato. Nessuna modifica ai bersagli ammessi, al rifiuto dei mostri o ai dati salvati. Il benchmark locale completo da 300 schede è passato, compresa la conservazione delle immagini e del salvataggio; le dieci modifiche di Vita e i dieci cambi turno hanno richiesto rispettivamente 10,96 e 10,35 secondi nel test debug locale. La verifica GitHub resta separata.
+
+## Integrazione delle creature del ciclo — 26 ottobre
+
+Incluse le 24 specie delle dodici fasi, con 48 tecniche aggiuntive, materiali propri e Open. Il totale delle aggiunte di questa patch diventa 47 voci e 118 tecniche; il Monster Book completo raggiunge 1.144 voci, mentre il catalogo planare resta a 380 perché le creature del ciclo sono una raccolta distinta. Il dossier mostra la fase e la ricerca combina nome, luogo e fase senza vincolare le scelte del Master al calendario.
+
+Le scroll del ciclo si ottengono con naturale 18–19 (una tecnica) o 20 (entrambe), conservando costi ed effetti originali e il normale apprendimento. I materiali conservano la propria prova Drop. Valori, costi 1/2/3 Oculum, livelli delle forme, cooldown, anatomia, descrizioni e probabilità delle scroll sono modificabili nei dati esistenti e nel JSON. Le personalizzazioni salvate non vengono sovrascritte. Questa integrazione viene verificata e distribuita separatamente dalla precedente build; i download ne indicano il commit effettivamente compilato.
+
+Verifica locale dell’integrazione: 71 test mirati passati e analisi statica senza problemi. Le prove delle scroll coprono sia il totale basso sia un bonus Drop elevato, con assenza di duplicati e soglie personalizzate rispettate. CI completa, nuovi pacchetti e pubblicazione vengono verificati sul commit successivo che contiene anche queste creature.

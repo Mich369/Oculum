@@ -26,6 +26,7 @@ part 'original_fauna_descriptions.dart';
 part 'fauna_variants.dart';
 part 'monster_anatomy.dart';
 part 'non_return_undead.dart';
+part 'cycle_monsters.dart';
 
 bool oculumMonsterBookNameIsDiscovered(Map<String, dynamic>? knowledge) =>
     knowledge?['nameKnown'] == true || knowledge?['pagePurchased'] == true;
@@ -5450,6 +5451,7 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
             ..._necromancerMonsterEntries,
             ..._runicAcidMonsterEntries,
             ...oculumPlanarMonsterEntries,
+            ...oculumCycleMonsterEntries,
             ..._witheredConstructWhiteLarvaEntries,
             ..._goldMarbleAberrationEntries,
             ..._elementalCollectorEntries,
@@ -5696,6 +5698,7 @@ Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
   yield* _necromancerMonsterEntries;
   yield* _runicAcidMonsterEntries;
   yield* oculumPlanarMonsterEntries;
+  yield* oculumCycleMonsterEntries;
   yield* _witheredConstructWhiteLarvaEntries;
   yield* _manualMonsterBookEntries;
 }
