@@ -4644,7 +4644,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         id: 'lettura_aura',
         nome: 'Lettura dell Aura',
         descrizione:
-            'Percepire potere, condizioni e alterazioni soprannaturali senza identificarle automaticamente. Bonus: Oculum/2.',
+            'Percepire potere, condizioni e alterazioni soprannaturali. Bonus: Oculum/2. Da +20 conosci la tua Potenza totale esatta, confronti automaticamente gli altri e aggiorni i numeri già scoperti; la prima scoperta degli altri richiede una lettura riuscita.',
       ),
       HiddenEyeStat(
         id: 'sincronia',

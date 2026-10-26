@@ -3,6 +3,37 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 extension _OculumAppUpdateUi on _OculumHomePageState {
+  void scheduleOculumStartupLog() {
+    if (oculumStartupLogPending || oculumStartupLogChecked) return;
+    oculumStartupLogPending = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final prefs = await _prefs().timeout(const Duration(seconds: 3));
+        if (!mounted ||
+            !oculumShouldShowVersionLog(prefs, oculumSourceCommit)) {
+          return;
+        }
+        final text = await rootBundle
+            .loadString(oculumCumulativeLogAsset)
+            .timeout(const Duration(seconds: 3));
+        if (!mounted) return;
+        await oculumRememberVersionLog(prefs, oculumSourceCommit);
+        if (!mounted) return;
+        await oculumShowVersionLogDialog(context, text, oculumSourceCommit);
+      } catch (_) {
+        // Offline local startup must remain usable even if preferences or an
+        // optional notice asset cannot be read. Saves are never modified here.
+      } finally {
+        if (mounted) {
+          setState(() {
+            oculumStartupLogChecked = true;
+            oculumStartupLogPending = false;
+          });
+        }
+      }
+    });
+  }
+
   List<Widget> additionalOculumToolbarActions() => [
     if (readIntValue(planarState['chargePower']) > 0)
       IconButton(
@@ -125,7 +156,7 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
                   ? 'Salva e ricarica il sito.'
                   : Platform.isAndroid
                   ? 'Scarica il pacchetto verificato e apre la conferma Android.'
-                  : 'Scarica e verifica i file, conserva un backup del runtime e riavvia Oculum.'} I salvataggi vengono conservati.${update.changes.isEmpty ? '' : '\n\nLog aggiornamento:\n${update.changes.map((s) => '• $s').join('\n')}'}',
+                  : 'Scarica e verifica i file, conserva un backup del runtime e riavvia Oculum.'} I salvataggi vengono conservati.',
             ),
           ),
           actions: [

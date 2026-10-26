@@ -261,12 +261,9 @@ extension _OculumCombatScout on _OculumHomePageState {
   HiddenEyeStat? bestCombatScoutStat() {
     final candidates = hiddenEyeStats
         .where(
-          (s) => const {
-            'percezione',
-            'investigazione',
-            'furbizia',
-            'valutazione',
-          }.contains(s.id),
+          (s) =>
+              oculumScoutReadingStatIds.contains(s.id) &&
+              (s.id != 'lettura_aura' || s.unlocked),
         )
         .toList();
     candidates.sort((a, b) => hiddenEyeTotal(b).compareTo(hiddenEyeTotal(a)));
@@ -401,9 +398,12 @@ extension _OculumCombatScout on _OculumHomePageState {
         scoutTotalPowerAt(index),
       ),
     if (perception &&
-        oculumExactPowerChance(total, success: success) >
-            Random.secure().nextInt(100) &&
-        tipoSchedaPersonaggio(index) != 'Personaggio')
+        oculumExactPowerChance(
+              total,
+              success: success,
+              targetPower: scoutTotalPowerAt(index),
+            ) >
+            Random.secure().nextInt(100))
       'exactPower': scoutTotalPowerAt(index),
   };
 
@@ -501,7 +501,10 @@ extension _OculumCombatScout on _OculumHomePageState {
         online && encounter != onlineCombatEncounterId) {
       return;
     }
-    if (currentTurnTrackerIsActive() && !await spendCombatRollResource()) {
+    if (currentTurnTrackerIsActive() &&
+        !(target['general'] == true
+            ? await spendCombatRollResource()
+            : await spendScoutObservationResource(hiddenEyeTotal(stat)))) {
       return;
     }
     if (target['general'] == true) {
@@ -616,8 +619,14 @@ extension _OculumCombatScout on _OculumHomePageState {
             read.isExact,
             readIntValue(request['observerPower']),
             total: total,
-            perception: stat.id == 'percezione',
+            perception: oculumScoutReadingStatIds.contains(stat.id),
           );
+          rememberKnownPower(
+            targetTag,
+            extra,
+            order: int.tryParse('${request['id']}'.split(':').last),
+          );
+          if (extra['exactPower'] is num) allowAuraExactObserver(index, own);
           aggiungiLog(
             '[PERCEZIONE] ${scoutLogReading(extra, combatScoutReadText(read))}.',
           );
@@ -657,6 +666,22 @@ extension _OculumCombatScout on _OculumHomePageState {
       }
       final targetIndex = localSheetIndexForOculumTag(target);
       if (targetIndex < 0) return;
+      if (payload['kind'] == 'aura_compare') {
+        final previous = onlineCombatRequests[id];
+        final reply = previous?['scoutPhase'] == 'result'
+            ? previous!
+            : passiveAuraReply(targetIndex, payload);
+        if (reply.isEmpty) return;
+        trimPassiveAuraHistory();
+        onlineCombatRequests[id] = reply;
+        unawaited(
+          realtimeService?.sendCombatEvent('combat_scout', {
+            ...permissionEnvelope(reply),
+            'senderTag': target,
+          }),
+        );
+        return;
+      }
       if (payload['kind'] == 'power_scanner') {
         receivePowerScanner(payload, targetIndex);
         return;
@@ -701,7 +726,7 @@ extension _OculumCombatScout on _OculumHomePageState {
           read.isExact,
           readIntValue(payload['observerPower']),
           total: readIntValue(payload['total']),
-          perception: payload['scoutStat'] == 'percezione',
+          perception: oculumScoutReadingStatIds.contains(payload['scoutStat']),
         ),
         'themeUnlocked':
             monsterBookId.isNotEmpty &&
@@ -723,6 +748,9 @@ extension _OculumCombatScout on _OculumHomePageState {
         reply.remove(key);
       }
       onlineCombatRequests[id] = reply;
+      if (reply['exactPower'] is num) {
+        allowAuraExactObserver(targetIndex, source);
+      }
       if (read.isExact && monsterBookId.isNotEmpty) {
         rememberMonsterBookPartyDiscovery(
           monsterBookId,
@@ -765,6 +793,23 @@ extension _OculumCombatScout on _OculumHomePageState {
         }),
       );
     } else if (payload['scoutPhase'] == 'result') {
+      if (payload['kind'] == 'aura_compare') {
+        final request = onlineCombatRequests[id];
+        if (payload['senderTag'] != target ||
+            request == null ||
+            request['kind'] != 'aura_compare' ||
+            request['targetTag'] != target ||
+            request['sourceTag'] != source ||
+            !controlsOnlineCombatSheet(source)) {
+          return;
+        }
+        request['status'] = 'resolved';
+        faunaForOwnedSheet(source, () {
+          rememberAuraBand(target, '${payload['powerBand'] ?? ''}');
+          rememberKnownPower(target, payload);
+        });
+        return;
+      }
       if (payload['kind'] == 'power_scanner') {
         receivePowerScanner(payload, -1);
         return;
@@ -810,6 +855,7 @@ extension _OculumCombatScout on _OculumHomePageState {
       }
       final request = onlineCombatRequests[id];
       if (request != null && request['status'] == 'pending') {
+        faunaForOwnedSheet(source, () => rememberKnownPower(target, payload));
         if (reveal == 'exact') {
           faunaForOwnedSheet(source, () => ogorCoreSuccessfulRoll('scout:$id'));
         }

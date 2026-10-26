@@ -705,12 +705,18 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (!realtimeIsMasterRole) return;
     syncMasterInitiativeTokenDeathFromSheet(index);
     final tag = sheetTagAt(index);
+    for (final token in masterInitiativeTokens) {
+      if (publicInitiativeSourceTag(token) == tag) {
+        refreshAuraPowerRevision(token, index);
+      }
+    }
     captureActiveMasterInitiativeGroup();
     for (final group in masterInitiativeGroups) {
       for (final token
           in (group['tokens'] as List? ?? const [])
               .whereType<Map<String, dynamic>>()) {
         if ('${token['sheetTag'] ?? token['id'] ?? ''}' == tag) {
+          refreshAuraPowerRevision(token, index);
           syncMasterInitiativeTokenDeathFromSheet(index, participant: token);
         }
       }
@@ -2818,6 +2824,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
               'provokerShield',
               'provokerTurns',
               'totalPowerExhaustionTurns',
+              'auraPowerRevision',
             ])
               if (tokens[i].containsKey(key)) key: tokens[i][key],
             for (final key in [

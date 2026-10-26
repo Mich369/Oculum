@@ -7,6 +7,8 @@ import 'dart:math';
 import 'dart:ui' show FrameTiming;
 import 'package:http/http.dart' as http;
 import 'services/oculum_app_update.dart';
+import 'services/oculum_update_log.dart';
+import 'widgets/oculum_update_log_dialog.dart';
 import 'game/meccanio_rules.dart';
 
 import 'package:flutter/foundation.dart';
@@ -171,6 +173,7 @@ part 'src/main/oculum_total_power_burst.dart';
 part 'src/main/oculum_cloud_barrier.dart';
 part 'src/main/oculum_postea.dart';
 part 'src/main/oculum_power_scanner.dart';
+part 'src/main/oculum_aura_knowledge.dart';
 part 'src/main/oculum_meccanio.dart';
 part 'src/main/oculum_dust_crystals.dart';
 part 'src/main/oculum_parasites.dart';
@@ -1618,6 +1621,11 @@ class _OculumHomePageState extends State<OculumHomePage>
   DateTime? oculumUpdateLastCheck;
   bool oculumUpdateChecking = false;
   String? oculumUpdateNotifiedCommit;
+  bool oculumStartupLogChecked = false;
+  bool oculumStartupLogPending = false;
+  bool auraObservationPending = false;
+  String auraObservationSignature = '';
+  final Set<String> auraObservedTargets = <String>{};
   String monsterBookTierFilter = 'Tutti';
   String monsterBookHabitatFilter = '';
   String partyBookHabitatFilter = '';
@@ -4587,8 +4595,13 @@ class _OculumHomePageState extends State<OculumHomePage>
   Widget build(BuildContext context) {
     if (kIsWeb) modalitaDesktop = OculumWebLayoutScope.desktopOf(context);
     if (datiCaricati) {
-      mostraTutorialSeNecessario();
-      mostraSceltaRuoloSeNecessaria();
+      scheduleAuraObservations();
+      if (oculumSourceCommit.isNotEmpty && !oculumStartupLogChecked) {
+        scheduleOculumStartupLog();
+      } else {
+        mostraTutorialSeNecessario();
+        mostraSceltaRuoloSeNecessaria();
+      }
     }
 
     final titles = [

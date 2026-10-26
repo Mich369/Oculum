@@ -12,3 +12,5 @@
 - A ogni aggiornamento e distribuzione verifica che tutti gli artifact prodotti dalle build GitHub riuscite siano disponibili anche come download pubblici senza login, attraverso la pagina download e il menu a tendina della versione web. Preferisci la pubblicazione automatica; se non riesce, completa manualmente pubblicazione e verifica prima di dichiarare la distribuzione conclusa. Controlla commit di origine, integrità dei pacchetti e accessibilità senza autenticazione; conserva le versioni precedenti e non pubblicare build fallite o file privati. Il menu download deve comparire solo sul web e non usare traffico Supabase.
 
 - Su GitHub Windows normale e Windows Test devono restare download e artifact separati, comprese le cartelle con runtime. Non inserire Windows Test nella cartella o nello ZIP Windows normale.
+
+- Il log automatico appare solo al primo avvio di ogni nuova versione ed è chiudibile con clic fuori. Quando aggiorni il registro cumulativo esegui `python scripts/sync_cumulative_update_log.py` e commetti anche l’asset offline; il test impedisce di distribuire un log diverso dal registro.

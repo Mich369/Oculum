@@ -162,6 +162,7 @@ class OculumPerformanceProbe {
   void recordKills(Iterable<Map> enemies, String encounter) =>
       _state.recordAllMonsterKills(enemies, encounter);
   String killLabel(String id) => _state.monsterKillCountLabel(id);
+  Widget masterMonsterBook() => _state.masterDashboardMonsterBookPanel();
   Widget monsterDossier(MonsterBookEntry monster) =>
       _state.monsterReadingDossier(monster);
   void unlockCreatureTheme(
@@ -216,6 +217,19 @@ class OculumPerformanceProbe {
   int chaosBonus(String stat) => _state.chaosStatBonus(stat);
   bool chaosProc(String opponent, int percentile) =>
       _state.rollChaosProc(opponent, percentile: percentile);
+  Future<bool> spendScout(int subtrait, {int? percentile}) =>
+      _state.spendScoutObservationResource(subtrait, percentile: percentile);
+  void observeAura() => _state.scheduleAuraObservations();
+  bool auraReadsPower() => _state.auraCanReadPower;
+  Map<String, dynamic> knownPower(String tag) => _state.knownPowerFor(tag);
+  bool learnPower(String tag, Map<String, dynamic> read, {int? order}) =>
+      _state.rememberKnownPower(tag, read, order: order);
+  void auraBand(String tag, String band) => _state.rememberAuraBand(tag, band);
+  void auraPermit(int index, String observer) =>
+      _state.allowAuraExactObserver(index, observer);
+  Map<String, dynamic> auraReply(int index, Map<String, dynamic> request) =>
+      _state.passiveAuraReply(index, request);
+  Widget powerBadge(String tag) => _state.knownPowerBadge(tag);
   void totalPowerBurst(int power, int die) =>
       _state.activateTotalPowerBurst(power, die);
   void burstAttack(Map<String, dynamic> packet) =>

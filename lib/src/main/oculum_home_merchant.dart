@@ -3086,8 +3086,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           ),
           subtitle: Text(
             t(
-              'Potenza totale ${scoutTotalPowerAt(schedaCorrente)} · 6–9 offerte adatte a te, 16% di probabilità di trovarne 12.',
-              'Total power ${scoutTotalPowerAt(schedaCorrente)} · 6–9 suitable offers, with a 16% chance of 12.',
+              'Offerte secondo la tua Potenza totale · 6–9 scelte adatte a te, 16% di probabilità di trovarne 12.',
+              'Offers suited to your total power · 6–9 choices, with a 16% chance of 12.',
             ),
             style: const TextStyle(color: Colors.white70, fontSize: 11),
           ),

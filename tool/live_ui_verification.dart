@@ -104,6 +104,12 @@ class _LiveUiAppState extends State<_LiveUiApp> {
       ..add(json);
     s.schedaCorrente = 0;
     p.load(json);
+    final aura = s.hiddenEyeStats.firstWhere(
+      (dynamic stat) => stat.id == 'lettura_aura',
+    );
+    aura.unlocked = true;
+    aura.valore = 20;
+    p.invalidateDerivedCaches();
     s.currentHpController.text = '1000';
     s.currentOculumController.text = '20';
     s.tutorialCompletato = true;

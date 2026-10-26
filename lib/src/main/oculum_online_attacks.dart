@@ -3168,7 +3168,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             request['encounterId'] != onlineCombatEncounterId) {
           continue;
         }
-        if (request['kind'] == 'scout') {
+        if (oculumCombatRequestIsObservation(request)) {
           if (request['sourceTag'] == tag && request['status'] == 'pending') {
             await realtimeService?.sendCombatEvent(
               'combat_scout',
@@ -5139,7 +5139,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               r['sourceTag'] == tag &&
               r['status'] == 'pending' &&
               r['kind'] != 'help' &&
-              r['kind'] != 'scout',
+              !oculumCombatRequestIsObservation(r),
         )
         .toList();
     final requests = onlineCombatRequests.values
@@ -5149,7 +5149,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               r['encounterId'] == onlineCombatEncounterId &&
               r['targetTag'] == tag &&
               r['kind'] != 'help' &&
-              r['kind'] != 'scout' &&
+              !oculumCombatRequestIsObservation(r) &&
               (r['status'] == 'pending' ||
                   (r['freeReaction'] == true && r['reactionUsed'] != true) ||
                   (r['schiantoReactionAvailable'] == true &&
@@ -5163,7 +5163,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             request['status'] == 'pending' &&
             request['targetTag'] != tag &&
             request['kind'] != 'help' &&
-            request['kind'] != 'scout' &&
+            !oculumCombatRequestIsObservation(request) &&
             controlsOnlineCombatSheet('${request['targetTag']}'))
           '${request['targetTag']}': request,
     };

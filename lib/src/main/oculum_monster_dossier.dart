@@ -1,5 +1,29 @@
 part of '../../main.dart';
 
+int oculumMonsterBookPower(MonsterBookEntry entry) => oculumScoutPower(
+  entry.stats['level'] ?? 0,
+  [
+    for (final key in const ['resilienza', 'volonta', 'materia', 'oculum'])
+      entry.stats[key] ?? 0,
+  ],
+  grade: entry.stats['grade'] ?? oculumGradeForLevel(entry.stats['level'] ?? 0),
+);
+
+int oculumCompareMonsterBookPower(MonsterBookEntry a, MonsterBookEntry b) {
+  for (final difference in [
+    oculumMonsterBookPower(a).compareTo(oculumMonsterBookPower(b)),
+    (a.stats['level'] ?? 0).compareTo(b.stats['level'] ?? 0),
+    (a.stats['grade'] ?? oculumGradeForLevel(a.stats['level'] ?? 0)).compareTo(
+      b.stats['grade'] ?? oculumGradeForLevel(b.stats['level'] ?? 0),
+    ),
+    a.nameIt.toLowerCase().compareTo(b.nameIt.toLowerCase()),
+    a.id.compareTo(b.id),
+  ]) {
+    if (difference != 0) return difference;
+  }
+  return 0;
+}
+
 /// Presentation only: authored prose, formula values and saved JSON stay intact.
 String oculumMonsterReadableProse(String raw) => raw
     .replaceAll('oculum_spent', 'Oculum investito')

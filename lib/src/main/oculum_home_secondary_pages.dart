@@ -3664,6 +3664,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    knownPowerBadge(
+                      publicInitiativeSourceTag(masterInitiativeTokens[i]),
+                    ),
                     smallInfoText(
                       '${masterInitiativeSideLabel('${masterInitiativeTokens[i]['side'] ?? 'ally'}')} - ${masterInitiativeTokens[i]['type'] ?? '???'} - Base ${masterInitiativeTokens[i]['initiativeBase'] ?? 0}',
                     ),
@@ -5785,7 +5788,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     // Il Book può contenere centinaia di mostri e varianti: la scansione è
     // riusata finché non cambiano query, filtro o la lista configurata.
     final filterCacheKey =
-        '${identityHashCode(monsterBookEntries)}|$query|$monsterBookTierFilter|$monsterBookHabitatFilter';
+        'power-asc|${identityHashCode(monsterBookEntries)}|$query|$monsterBookTierFilter|$monsterBookHabitatFilter';
     final filtered = monsterBookFilterCacheKey == filterCacheKey
         ? monsterBookFilterCache
         : monsterBookEntries
@@ -5807,6 +5810,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               })
               .toList(growable: false);
     if (monsterBookFilterCacheKey != filterCacheKey) {
+      filtered.sort(oculumCompareMonsterBookPower);
       monsterBookFilterCacheKey = filterCacheKey;
       monsterBookFilterCache = filtered;
     }
@@ -5977,7 +5981,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             ),
           ),
           smallInfoText(
-            '${filtered.length} creature — scorri l’elenco o cerca forma, nome, elemento, Skill e drop.',
+            '${filtered.length} creature · Potenza totale crescente, dal più debole al più forte. Cerca forma, nome, elemento, Skill e drop.',
           ),
           if (filtered.isEmpty)
             smallInfoText(t('Nessun preset trovato.', 'No presets found.'))
@@ -6010,52 +6014,58 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                                   .withValues(alpha: 0.28),
                         ),
                       ),
-                      child: ListTile(
-                        dense: true,
-                        leading: monsterBookEntryPreview(entry),
-                        onTap: () => showMonsterBookMechanics(entry),
-                        title: Text(
-                          entry.nameIt,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: ListTile(
+                          dense: true,
+                          leading: monsterBookEntryPreview(entry),
+                          onTap: () => showMonsterBookMechanics(entry),
+                          title: Text(
+                            entry.nameIt,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                        ),
-                        subtitle: Text(
-                          '${entry.formTags.join(' / ')} • ${entry.presetType} • ${elementDisplayName(entry.elementId)} • ${monsterBookQuickStatsLabel(entry)}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: tertiaryColor, fontSize: 11),
-                        ),
-                        trailing: Wrap(
-                          spacing: 2,
-                          children: [
-                            IconButton(
-                              tooltip: t('Genera', 'Generate'),
-                              onPressed: () =>
-                                  showMonsterBookQuickSpawnDialog(entry),
-                              icon: const Icon(
-                                Icons.add_circle_outline,
-                                size: 19,
+                          subtitle: Text(
+                            'Potenza ${oculumMonsterBookPower(entry)} • ${entry.formTags.join(' / ')} • ${entry.presetType} • ${elementDisplayName(entry.elementId)} • ${monsterBookQuickStatsLabel(entry)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: tertiaryColor,
+                              fontSize: 11,
+                            ),
+                          ),
+                          trailing: Wrap(
+                            spacing: 2,
+                            children: [
+                              IconButton(
+                                tooltip: t('Genera', 'Generate'),
+                                onPressed: () =>
+                                    showMonsterBookQuickSpawnDialog(entry),
+                                icon: const Icon(
+                                  Icons.add_circle_outline,
+                                  size: 19,
+                                ),
                               ),
-                            ),
-                            IconButton(
-                              tooltip: t('Modifica', 'Edit'),
-                              onPressed: () => showMonsterBookEditor(entry),
-                              icon: const Icon(Icons.edit, size: 19),
-                            ),
-                            IconButton(
-                              tooltip: t('Rimuovi', 'Remove'),
-                              onPressed: () => removeMonsterBookEntry(entry),
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.redAccent,
-                                size: 19,
+                              IconButton(
+                                tooltip: t('Modifica', 'Edit'),
+                                onPressed: () => showMonsterBookEditor(entry),
+                                icon: const Icon(Icons.edit, size: 19),
                               ),
-                            ),
-                          ],
+                              IconButton(
+                                tooltip: t('Rimuovi', 'Remove'),
+                                onPressed: () => removeMonsterBookEntry(entry),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.redAccent,
+                                  size: 19,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

@@ -63,7 +63,7 @@ Inattività: 30 minuti senza input di alcun partecipante, poi avviso al Master d
 
 ## Potere totale e rilevatori
 
-Conferme dell’utente: Potere totale = Resilienza + Volontà + Materia + Oculum + Livello + Grado ×3. La scheda mostra il proprio valore. Una Percezione riuscita con totale oltre 40 ha probabilità (totale −40) ×5%, massimo 100%, di leggere il potere totale esatto di NPC e nemici. Questa verifica è distinta dalla lettura ordinaria di livello, probabilità e punto debole.
+Conferme dell’utente: Potere totale = Resilienza + Volontà + Materia + Oculum + Livello + Grado ×3. Da Lettura dell’aura +20 la tua Potenza esatta e i numeri già scoperti si aggiornano automaticamente; gli altri rimangono un confronto qualitativo fino alla scoperta. Una lettura mirata riuscita di Percezione o del migliore sottotratto di osservazione ha probabilità 5% per ogni punto oltre 20 se il bersaglio ha Potenza inferiore a 100, oppure oltre 40 da 100 in su; massimo 100%. La lettura del numero è distinta da livello, probabilità e punto debole.
 
 I rilevatori funzionano anche sugli altri personaggi. Gli alchimisti vendono amuleti, bracciali e cavigliere in legno magico con cristalli che riflettono il cielo anche senza vederlo. A Postea sono gadget cyberpunk. Portata = 50 + livello oggetto ×30. La lettura è una stima entro ±10%; oltre portata mostra solo «oltre la portata» senza il valore reale. Il destinatario online calcola il risultato senza trasmettere le proprie statistiche.
 

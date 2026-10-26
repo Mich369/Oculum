@@ -43,6 +43,10 @@ String _combatEffectPreview(
   required int level,
   required int grade,
 }) {
+  if (effect.target == 'total_power_burst' &&
+      (variables['lettura_aura'] ?? 0) < 20) {
+    return 'Potenza totale ai Danni di un solo colpo · Sfinimento 1d3 + Potenza/160';
+  }
   final normalized = OculumStructuredEffect.fromJson(effect.toJson());
   final valueDice = _combatFormulaDiceBounds(
     oculumEffectFormulaExpression(effect.valueExpression, subtraits),

@@ -154,7 +154,7 @@ extension _OculumTotalPowerBurst on _OculumHomePageState {
     clearTotalPowerReactions();
     invalidateDerivedDataCaches();
     aggiungiLog(
-      '[POTENZA TOTALE] +$value Danni per un colpo; +$accuracy al prossimo tiro per colpire e al primo tiro nemico contro di te. Sfinimento: ${planarState['totalPowerExhaustionTurns']} turni personali, nessuna Reazione.',
+      '[POTENZA TOTALE] Bonus pari alla Potenza totale per un colpo; +$accuracy al prossimo tiro per colpire e al primo tiro nemico contro di te. Sfinimento: ${planarState['totalPowerExhaustionTurns']} turni personali, nessuna Reazione.',
     );
     unawaited(publishProvokerState());
     programmaSalvataggio();
@@ -238,7 +238,7 @@ extension _OculumTotalPowerBurst on _OculumHomePageState {
           if (totalPowerExhausted)
             'Tutte le Reazioni azzerate e bloccate, anche da skill.',
           if (pending)
-            'Prossimo colpo: +${planarState['totalPowerBurstDamage']} Danni, +${planarState['totalPowerBurstAccuracy']} per colpire.',
+            'Prossimo colpo: ${auraCanReadPower ? '+${planarState['totalPowerBurstDamage']}' : '+Potenza totale'} Danni, +${planarState['totalPowerBurstAccuracy']} per colpire.',
           if (exposed)
             'Primo tiro nemico contro di te: +${planarState['totalPowerExposureAccuracy']}.',
         ].join('\n'),

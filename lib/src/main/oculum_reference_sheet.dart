@@ -951,8 +951,9 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                         ),
                       ],
                     ),
+                    knownPowerBadge(sheetTagAt(schedaCorrente)),
                     Text(
-                      '${tipoSchedaPersonaggio(schedaCorrente)} · ${t('Livello', 'Level')} ${leggiNumero(livelloController)} · ${t('Grado', 'Grade')} ${leggiNumero(gradoController)} · Potere totale ${scoutTotalPowerAt(schedaCorrente)}',
+                      '${tipoSchedaPersonaggio(schedaCorrente)} · ${t('Livello', 'Level')} ${leggiNumero(livelloController)} · ${t('Grado', 'Grade')} ${leggiNumero(gradoController)}',
                       style: TextStyle(
                         color: primaryColor.withValues(alpha: .72),
                         fontSize: 12,
@@ -1722,6 +1723,9 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                                 runSpacing: 3,
                                 crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
+                                  knownPowerBadge(
+                                    '${token['sheetTag'] ?? token['id'] ?? ''}',
+                                  ),
                                   Text(
                                     [
                                       '${token['type'] ?? "Partecipante"}',

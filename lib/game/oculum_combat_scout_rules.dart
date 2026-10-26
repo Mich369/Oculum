@@ -1,5 +1,14 @@
 import 'dart:math';
 
+const oculumScoutReadingStatIds = <String>{
+  'percezione',
+  'investigazione',
+  'furbizia',
+  'valutazione',
+  'lettura_aura',
+};
+int oculumScoutNoSpendChance(int subtrait) => subtrait.clamp(0, 95);
+
 const oculumPowerReadPhrases = <String, String>{
   'much_stronger': 'ho una potenza nettamente superiore',
   'stronger': 'ho una potenza leggermente superiore',
@@ -14,8 +23,14 @@ int oculumScoutPower(int level, Iterable<int> statistics, {int grade = 0}) =>
     max(0, grade) * 3 +
     statistics.fold(0, (sum, stat) => sum + max(0, stat));
 
-int oculumExactPowerChance(int rollTotal, {required bool success}) =>
-    success ? ((rollTotal - 40) * 5).clamp(0, 100) : 0;
+int oculumExactPowerChance(
+  int rollTotal, {
+  required bool success,
+  int? targetPower,
+}) => success
+    ? ((rollTotal - (targetPower != null && targetPower < 100 ? 20 : 40)) * 5)
+          .clamp(0, 100)
+    : 0;
 
 int oculumPowerScannerLimit(int level) => 50 + max(0, level) * 30;
 

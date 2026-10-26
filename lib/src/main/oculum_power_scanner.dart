@@ -150,6 +150,7 @@ extension _OculumPowerScanner on _OculumHomePageState {
         item.livelloOggetto,
         Random.secure(),
       );
+      rememberKnownPower(tag, result);
       aggiungiLog(
         '[RILEVATORE] ${target['name']}: ${scoutLogReading(result, 'lettura non disponibile')}. Utilizzi: ${item.craftData['scannerUses']}.',
       );
@@ -206,6 +207,7 @@ extension _OculumPowerScanner on _OculumHomePageState {
         return;
       }
       request['status'] = 'resolved';
+      faunaForOwnedSheet(source, () => rememberKnownPower(target, payload));
       aggiungiLog(
         '[RILEVATORE] ${request['targetName']}: ${scoutLogReading(payload, 'lettura non disponibile')}.',
       );

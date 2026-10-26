@@ -2,6 +2,17 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Aura e Potenza conosciuta
+
+## Aura, numeri scoperti e osservazione mirata
+
+- Con Lettura dell’aura almeno +20 conosci la tua Potenza totale esatta e confronti automaticamente la tua forza con quella dei bersagli osservati, senza ricevere il loro numero se non lo hai ancora scoperto.
+- Il valore esatto degli altri si scopre con una lettura mirata riuscita di Percezione o del migliore sottotratto di osservazione disponibile: Percezione, Investigazione, Furbizia, Valutazione o Lettura dell’aura. Bersaglio sotto 100 Potenza: soglia oltre 20; da 100 in su: oltre 40. Probabilità = 5% per ogni punto oltre la soglia, massimo 100%.
+- L’ultima Potenza esatta scoperta resta in piccolo accanto al nome del PG e nella turnistica di nemici e compagni, anche dagli incontri precedenti. Con Aura +20 i numeri già scoperti si aggiornano automaticamente quando cambiano; sotto +20 rimane l’ultimo valore conosciuto fino a una nuova lettura. Le risposte vecchie non sovrascrivono scoperte più recenti.
+- I rilevatori conservano la propria lettura stimata ±10% e la portata: la stima è indicata con ≈ e non sostituisce un precedente numero esatto. Il confronto qualitativo e una lettura fallita non eliminano numeri conosciuti.
+- Un’osservazione mirata eseguibile ha probabilità pari al valore del sottotratto usato, massimo 95%, di non consumare Azione/Reazione. Esempi: +32 → 32%, +110 → 95%. Fuori combattimento non c’è costo di turnistica. Lo Sfinimento continua a bloccare le Reazioni.
+- Le conoscenze sono memorizzate nella scheda e nel JSON per osservatore, campagna e identità del bersaglio. L’Aura usa confronti autenticati e aggiornamenti su variazione della Potenza; nessuna interrogazione continua. La snapshot pubblica contiene solo una revisione, mai le statistiche o la Potenza interna nascosta.
+
 ## Potenza totale, Sfinimento e connessione alla stanza
 
 ## Potenza totale nei mercanti e colpo potenziato — 26 ottobre 2026
@@ -81,7 +92,7 @@ Inattività: 30 minuti senza input di alcun partecipante, poi avviso al Master d
 
 ## Potere totale e rilevatori
 
-Conferme dell’utente: Potere totale = Resilienza + Volontà + Materia + Oculum + Livello + Grado ×3. La scheda mostra il proprio valore. Una Percezione riuscita con totale oltre 40 ha probabilità (totale −40) ×5%, massimo 100%, di leggere il potere totale esatto di NPC e nemici. Questa verifica è distinta dalla lettura ordinaria di livello, probabilità e punto debole.
+Conferme dell’utente: Potere totale = Resilienza + Volontà + Materia + Oculum + Livello + Grado ×3. Da Lettura dell’aura +20 la tua Potenza esatta e i numeri già scoperti si aggiornano automaticamente; gli altri rimangono un confronto qualitativo fino alla scoperta. Una lettura mirata riuscita di Percezione o del migliore sottotratto di osservazione ha probabilità 5% per ogni punto oltre 20 se il bersaglio ha Potenza inferiore a 100, oppure oltre 40 da 100 in su; massimo 100%. La lettura del numero è distinta da livello, probabilità e punto debole.
 
 I rilevatori funzionano anche sugli altri personaggi. Gli alchimisti vendono amuleti, bracciali e cavigliere in legno magico con cristalli che riflettono il cielo anche senza vederlo. A Postea sono gadget cyberpunk. Portata = 50 + livello oggetto ×30. La lettura è una stima entro ±10%; oltre portata mostra solo «oltre la portata» senza il valore reale. Il destinatario online calcola il risultato senza trasmettere le proprie statistiche.
 

@@ -2746,6 +2746,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             ? tipoSchedaPersonaggio(sheetIndex)
             : 'Partecipante';
       }
+      refreshAuraPowerRevision(token, sheetIndex);
       if (sheetIndex >= 0) token['reflexes'] = sheetReflexesAt(sheetIndex);
       if (sheetIndex >= 0 &&
           isMeccanioBookId(
