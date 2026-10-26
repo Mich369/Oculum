@@ -101,3 +101,7 @@ Distribuzione GitHub: Windows normale e Windows Test in ZIP e artifact di cartel
 ## Per recuperare dalla vostra versione
 
 Scaricate la nuova edizione dalla pagina download. Windows normale e Windows Test hanno archivi distinti. Conservate la vostra edizione e i vostri salvataggi; i valori personalizzati restano rispettati. Il codice stanza deve essere identico su tutti i dispositivi e il Master deve ammettere i giocatori prima della condivisione. Una stanza privata non elimina i personaggi.
+
+## Equipaggiamenti e verifica delle 37 specie aggiunte
+
+Tutte le 37 specie hanno armi, armature e scudi derivati dalle proprie 77 tecniche: 231 oggetti e 693 forme delle skill sugli oggetti. Le 231 forme originali sono verificate con applicazione effettiva degli effetti, compresi i supporti. Tecniche speciali del ciclo e Potenza totale compaiono in Attacco e preparano il colpo senza spendere due volte la risorsa di turno. Resta il supporto ai vecchi effetti del Morso Lunare senza marcatore, senza sovrascrivere le personalizzazioni. [Tabella per specie e metodo di verifica](VERIFICA_MOSTRI_AGGIUNTI.md).

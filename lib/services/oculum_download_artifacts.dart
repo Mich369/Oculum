@@ -18,6 +18,7 @@ const _extraArtifactNames = <String>[
   'Oculum-Windows-Folders',
   'Oculum-Windows-Folder',
   'Oculum-Test-Windows-Folder',
+  'Oculum-Verifica-Mostri',
 ];
 
 const oculumCumulativeUpdateLogUrl =

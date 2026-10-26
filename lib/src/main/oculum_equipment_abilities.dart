@@ -513,6 +513,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
             subtraits: hiddenEyeStats,
           ).effects;
     final previousSupport = combatSupportTargeting;
+    final beforeCycleAttack = cyclePreparedAttackSignature;
     final before = activeStructuredEffects
         .where((e) => e['type'] == 'pending_target')
         .toSet();
@@ -552,6 +553,13 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     final pending = activeStructuredEffects
         .where((e) => e['type'] == 'pending_target' && !before.contains(e))
         .toList();
+    if (role == OculumCombatAbilityRole.attack &&
+        beforeCycleAttack != cyclePreparedAttackSignature &&
+        cycleHasPreparedAttack &&
+        onlineAttackTokens().isNotEmpty) {
+      await planOnlineAttack();
+      return;
+    }
     if (pending.isEmpty) return;
     if (role == OculumCombatAbilityRole.support) {
       await deliverPendingSupport();
@@ -1080,6 +1088,12 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                 'evergreen_dodge',
                 'laer_sword',
                 'laer_twist',
+                'cycle_bear_spines',
+                'cycle_lunar_stomp',
+                'cycle_lunar_bite',
+                'skeleton_giant_throw',
+                'total_power_burst',
+                'total_power_accuracy',
               }.contains(e.target),
         ) ||
         robotTechnique != null &&

@@ -408,6 +408,12 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             !effect.bypassResistance &&
             effect.shieldDamageBonusPercent == 0 &&
             !(isAreaDamage && effect.recipient == 'nemico');
+        // Existing saved Arts, scrolls and relics already carry this authored
+        // effect ID. Keep their customized damage/cost while enabling its bite rule.
+        if (effect.type == 'danno' &&
+            effect.id.split('/').last.startsWith('cycle_lunar_bite_forma_')) {
+          planarState['cycleLunarBite'] = true;
+        }
         final effectiveRecipient =
             combatSupportTargeting && effect.recipient == 'se_stesso'
             ? 'alleato'
@@ -462,7 +468,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             'effect': frozen.toJson(),
           });
           messages.add(
-            '${oculumStructuredEffectDescription(effect, subtraits: hiddenEyeStats)} = $value · pronto sul bersaglio del prossimo attacco, dopo la difesa.',
+            '${oculumStructuredEffectDescription(effect, subtraits: hiddenEyeStats)} = $value · ${effectiveRecipient == 'alleato' ? 'pronto per il destinatario del supporto, senza attacco' : 'pronto sul bersaglio del prossimo attacco, dopo la difesa'}.',
           );
           continue;
         }

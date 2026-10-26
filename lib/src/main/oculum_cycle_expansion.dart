@@ -162,6 +162,21 @@ extension _OculumCycleExpansion on _OculumHomePageState {
     invalidateDerivedDataCaches();
   }
 
+  String get cyclePreparedAttackSignature => jsonEncode([
+    for (final key in const [
+      'cycleSpines',
+      'cycleLunarStomp',
+      'cycleLunarBite',
+      'cycleSkeletonThrow',
+    ])
+      planarState[key],
+  ]);
+  bool get cycleHasPreparedAttack =>
+      readIntValue(planarState['cycleSpines']) > 0 ||
+      readIntValue(planarState['cycleLunarStomp']) > 0 ||
+      planarState['cycleLunarBite'] == true ||
+      planarState['cycleSkeletonThrow'] == true;
+
   bool activateCycleEffect(OculumStructuredEffect effect, int value) {
     switch (effect.target) {
       case 'cycle_fate_gift':

@@ -140,6 +140,12 @@ Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
           'mask_blue_volley',
           'mask_angelic_arrows',
           'mask_solar_arrows',
+          'cycle_bear_spines',
+          'cycle_lunar_stomp',
+          'cycle_lunar_bite',
+          'skeleton_giant_throw',
+          'total_power_burst',
+          'total_power_accuracy',
         }.contains(e.target),
   )) {
     return {OculumCombatAbilityRole.attack};
@@ -253,6 +259,12 @@ OculumCombatAbilityRole oculumCombatAbilityRole(
           'mask_blue_volley',
           'mask_angelic_arrows',
           'mask_solar_arrows',
+          'cycle_bear_spines',
+          'cycle_lunar_stomp',
+          'cycle_lunar_bite',
+          'skeleton_giant_throw',
+          'total_power_burst',
+          'total_power_accuracy',
         }.contains(e.target),
   )) {
     return OculumCombatAbilityRole.attack;
@@ -682,6 +694,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     final oculumBefore = currentOculum();
     final beforeEffects = jsonEncode(activeStructuredEffects);
     final beforeMasked = jsonEncode(pendingMaskedAttack);
+    final beforeCycleAttack = cyclePreparedAttackSignature;
     final declaredEffects =
         natural?.forme[chosen].effettiStrutturati ??
         artSkill!.effettiEvoluzione(chosen + 1);
@@ -717,6 +730,15 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         currentSheetScrollId() == origin &&
         pendingMaskedAttack.isNotEmpty &&
         beforeMasked != jsonEncode(pendingMaskedAttack) &&
+        onlineAttackTokens().isNotEmpty) {
+      await planOnlineAttack();
+      return;
+    }
+
+    if (mounted &&
+        currentSheetScrollId() == origin &&
+        beforeCycleAttack != cyclePreparedAttackSignature &&
+        cycleHasPreparedAttack &&
         onlineAttackTokens().isNotEmpty) {
       await planOnlineAttack();
       return;

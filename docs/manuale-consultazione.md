@@ -55,7 +55,7 @@ Solo il colpo che rompe la barriera riflette il 50%/75%/100% dei danni da essa a
 
 ## Interfaccia, editor e compatibilità
 
-Statistiche e pulsanti inferiori: trasparenza indipendente 0–40%, inizialmente due terzi della generale (12% rispetto al 18% consigliato). Controllo sotto quello generale e ripristino del rapporto; testi/icone pieni, hover sul controllo.
+Statistiche e pulsanti inferiori: trasparenza indipendente 0–40%, consigliata 24%; GUI generale 34%. Controlli affiancati su desktop e impilati sul telefono; testi/icone pieni, hover sul controllo. Valori personalizzati conservati; precedenti valori di default aggiornati una sola volta.
 
 Modificabili: nomi, descrizioni, statistiche, anatomia, punti deboli, resistenze, materiali/drop, skill/Open, forme, costi, risorse, livelli, bersagli, quantità, durata, cooldown, formule, dadi e percentuali della nuova skill. Persistono identità, trasparenza e nome Role. Nuove definizioni senza sovrascrivere personalizzazioni JSON. Nessun nuovo tipo generale di parser: effetti strutturati esistenti con nuovi bersagli specifici; condizione dedicata Pressione del Lupo Lunare.
 

@@ -149,7 +149,7 @@ Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/titoli-statistiche-critici.
 Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/temi-oculum.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-TEMI.md')
 Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/pawn-catalogo-permessi.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-PAWN-CATALOGO.md')
 Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/skill-art-dadi-turni.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-SKILL-ART.md')
-foreach ($reference in @('OCULUM_REGOLE_CONFERMATE.md', 'manuale-consultazione.md', 'combattimento-parser-2026-10-18.md')) {
+foreach ($reference in @('OCULUM_REGOLE_CONFERMATE.md', 'manuale-consultazione.md', 'combattimento-parser-2026-10-18.md', 'REGISTRO_AGGIORNAMENTI.md', 'VERIFICA_MOSTRI_AGGIUNTI.md', 'ULTIMO_AGGIORNAMENTO.md')) {
   Copy-Item -LiteralPath (Join-Path $projectRoot ('docs/' + $reference)) -Destination (Join-Path $stagingRoot $reference)
 }
 $manifest = [ordered]@{

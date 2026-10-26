@@ -641,6 +641,8 @@ class OculumPerformanceProbe {
       _state.applyChainedFateCompletion(group);
   int fateExperienceMultiplier() => _state.chainedFateExperienceMultiplier();
   void openReputations() => _state.openReputationManagerSheet();
+  Future<void> deliverSupport(List<String> tags) =>
+      _state.deliverPendingSupport(selectedTags: tags);
   Future<void> helpAlly() => _state.tiraAiutaCompagno();
   Future<void> retryCombat() =>
       _state.replayOnlineCombatRequests(retryOnly: true);

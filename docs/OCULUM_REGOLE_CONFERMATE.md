@@ -20,7 +20,7 @@ Conferma generale: lo Scudo critico impedisce Frattura e ogni debuff che richied
 - Creazione rapida NPC: scelta elemento, una skill di Attacco, una di Supporto e una di Difesa senza ripetizioni, sostituibili nel catalogo grande con filtri. Le carte selezionano singole skill delle Art, ordinate dal livello richiesto più basso. «Livello richiesto X» e, ad esempio, «Nome I · prossima II, lvl 6»; II rimane bloccata finché non si raggiunge 6. Hover di 0,9 secondi o pressione prolungata mostra evoluzioni, costi, effetti, CD e livelli. I costi sono pagamenti reali e restano editabili/serializzati.
 - Crafting/forgiatura degli indossabili: chance `min(90, 10 + Fortuna)%`, tetto 100% per Rebirthati. Una sola estrazione alla creazione riuscita; bonus pari al livello dell'oggetto a Danni se offensivo, Difesa se difensivo, entrambi se ibrido. Una forgiatura riuscita aggiunge un livello all'oggetto. Esito salvato, senza nuove estrazioni ricaricando. Aggiunte ricette dai nuovi drop e sete magiche antiurto con resistenze editabili.
 - Scroll dei Rebirthati: Fortuna ×1,5 arrotondata per eccesso; restano tetti 75% prima del Grado IX del personaggio e 90% dal IX. Affinità +15 punti include gli elementi delle armi equipaggiate.
-- Trasparenza regolabile: superfici 0–40%, impostazione iniziale 18%; testi/icone restano sempre visibili. Hover ripristina le superfici; entrando in Tiri e azioni si evidenziano i tasti del gruppo, poi soltanto quello sotto il mouse. Layout telefono con azioni principali in due colonne e altri tiri espandibili. Colori coerenti con elemento e ambiente, distinti dalle risorse.
+- Trasparenza regolabile: superfici 0–40%, impostazione corrente consigliata 34% (aggiornamento 26 ottobre); testi/icone restano sempre visibili. Hover ripristina le superfici; entrando in Tiri e azioni si evidenziano i tasti del gruppo, poi soltanto quello sotto il mouse. Layout telefono con azioni principali in due colonne e altri tiri espandibili. Colori coerenti con elemento e ambiente, distinti dalle risorse.
 
 ## Creature, scroll e animazioni — conferme 25 ottobre 2026
 
@@ -700,7 +700,7 @@ Solo il colpo che rompe la barriera riflette il 50%/75%/100% dei danni da essa a
 
 ## Interfaccia, editor e compatibilità
 
-Statistiche e pulsanti inferiori: trasparenza indipendente 0–40%, inizialmente due terzi della generale (12% rispetto al 18% consigliato). Controllo sotto quello generale e ripristino del rapporto; testi/icone pieni, hover sul controllo.
+Statistiche e pulsanti inferiori: trasparenza indipendente 0–40%, consigliata 24%; GUI generale 34%. Controlli affiancati su desktop e impilati sul telefono; testi/icone pieni, hover sul controllo. Valori personalizzati conservati; precedenti valori di default aggiornati una sola volta.
 
 Modificabili: nomi, descrizioni, statistiche, anatomia, punti deboli, resistenze, materiali/drop, skill/Open, forme, costi, risorse, livelli, bersagli, quantità, durata, cooldown, formule, dadi e percentuali della nuova skill. Persistono identità, trasparenza e nome Role. Nuove definizioni senza sovrascrivere personalizzazioni JSON. Nessun nuovo tipo generale di parser: effetti strutturati esistenti con nuovi bersagli specifici; condizione dedicata Pressione del Lupo Lunare.
 
@@ -751,3 +751,7 @@ Impostazioni iniziali scelte sulla delega al bilanciamento: costo 5 Oculum per S
 Online: nessuna nuova connessione usa implicitamente la stanza «test». Il giocatore inserisce il codice del Master; un Master senza codice riceve un codice nuovo. Le stanze già salvate conservano il codice esplicito. Stanze private e approvazione del Master restano operative.
 
 Distribuzione GitHub: Windows normale e Windows Test in ZIP e artifact di cartella separati. Le versioni precedenti restano conservate.
+
+## Equipaggiamenti e verifica delle 37 specie aggiunte
+
+Tutte le 37 specie hanno armi, armature e scudi derivati dalle proprie 77 tecniche: 231 oggetti e 693 forme delle skill sugli oggetti. Le 231 forme originali sono verificate con applicazione effettiva degli effetti, compresi i supporti. Tecniche speciali del ciclo e Potenza totale compaiono in Attacco e preparano il colpo senza spendere due volte la risorsa di turno. Resta il supporto ai vecchi effetti del Morso Lunare senza marcatore, senza sovrascrivere le personalizzazioni. [Tabella per specie e metodo di verifica](VERIFICA_MOSTRI_AGGIUNTI.md).

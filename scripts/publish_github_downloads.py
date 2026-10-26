@@ -27,6 +27,7 @@ PUBLIC_ARTIFACTS = (
 EXTRA_ARCHIVES = (
     "Oculum-Web", "Oculum-iOS-unsigned", "Oculum-UI-Catture",
     "Oculum-Windows-Folders", "Oculum-Windows-Folder", "Oculum-Test-Windows-Folder",
+    "Oculum-Verifica-Mostri",
 )
 
 

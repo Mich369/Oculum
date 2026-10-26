@@ -18,6 +18,9 @@ void main() {
       expect(oculumPowerBurstAccuracy(25), 2);
       for (final will in [false, true]) {
         final skill = oculumTotalPowerBurstSkill(will: will);
+        expect(oculumCombatAbilityRoles(skill.effettiEvoluzione(1)), {
+          OculumCombatAbilityRole.attack,
+        });
         expect(skill.oculumMinimoPerLivello(1), 5);
         expect(skill.cooldownPerLivello.first.amount, 3);
         final copy = ArtSkill.fromJson(jsonDecode(jsonEncode(skill.toJson())));
