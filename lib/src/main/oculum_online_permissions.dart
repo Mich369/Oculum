@@ -485,7 +485,8 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     );
     if (index < 0) return false;
     final token = tokens[index];
-    if (const {'dead', 'fled', 'expired'}.contains(token['status']) ||
+    if (const {'dead', 'expired'}.contains(token['status']) ||
+        token['status'] == 'fled' && token['outsideFight'] != true ||
         masterInitiativeTokenIsTemporary(token)) {
       return false;
     }
@@ -874,10 +875,12 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         (!isMeccanio || meccanioSphereReady) &&
         index >= 0 &&
         index == active &&
-        !readBoolValue(tokens[index]['actionUsed']);
+        (!readBoolValue(tokens[index]['actionUsed']) ||
+            readIntValue(tokens[index]['kiExtraActions']) > 0);
     final freeReaction = onlineCombatRequests.entries
         .where(
           (entry) =>
+              !totalPowerExhausted &&
               entry.value['targetTag'] == sheetTagAt(schedaCorrente) &&
               entry.value['freeReaction'] == true &&
               entry.value['reactionUsed'] != true,
@@ -890,9 +893,14 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         : 'reazione';
     final allowed = await requestUtilitySpend(resource);
     if (!allowed) {
-      aggiungiLog(
-        'Tiro non eseguito: non hai un’Azione o una Reazione (anche veloce o gratuita) disponibile.',
-      );
+      const message =
+          'Tiro non eseguito: controlla la partecipazione alla turnistica e le Azioni/Reazioni disponibili.';
+      aggiungiLog(message);
+      if (mounted) {
+        ScaffoldMessenger.maybeOf(
+          context,
+        )?.showSnackBar(const SnackBar(content: Text(message)));
+      }
     }
     return allowed;
   }

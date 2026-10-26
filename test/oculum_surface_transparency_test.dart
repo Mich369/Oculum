@@ -142,6 +142,45 @@ void main() {
   );
 
   testWidgets(
+    'hover reveals surfaces progressively over exactly three seconds',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Center(
+            child: OculumHoverSurface(
+              builder: (_, opacity) => Container(
+                key: const Key('progressive-surface'),
+                width: 100,
+                height: 100,
+                color: oculumSurfaceColor(Colors.black, opacity),
+              ),
+            ),
+          ),
+        ),
+      );
+      double opacity() => tester
+          .widget<Container>(find.byKey(const Key('progressive-surface')))
+          .color!
+          .a;
+      final initial = opacity();
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(
+        tester.getCenter(find.byKey(const Key('progressive-surface'))),
+      );
+      await tester.pump();
+      expect(opacity(), closeTo(initial, .001));
+      await tester.pump(const Duration(milliseconds: 1500));
+      expect(opacity(), greaterThan(initial));
+      expect(opacity(), lessThan(1));
+      await tester.pump(const Duration(milliseconds: 1500));
+      expect(opacity(), 1);
+      await mouse.removePointer();
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
     'transparency slider and recommended reset remain usable on phone',
     (tester) async {
       tester.view.physicalSize = const Size(390, 844);

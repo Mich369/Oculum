@@ -1,5 +1,11 @@
 # Oculum — registro delle regole confermate
 
+## Trasparenze e correzioni — 26 ottobre 2026, segnalazioni 16:22–18:27
+
+Conferma esplicita: «rendi le cose trasparenti visibili in tre secondi con aumento dinamico». L'opacità delle superfici evidenziate cresce progressivamente fino al 100% in tre secondi; mouse e tocco, testi e icone pieni, riduzione animazioni rispettata. Le due trasparenze di base restano personalizzabili e conservate.
+
+Correzioni di implementazione, senza nuove formule: tiri richiesti dal Master completati solo dopo il dado effettivo; Azioni supplementari disponibili anche ai sottotratti; rientro e utilità consentite dopo la fuga; spese di fuga/rientro replicate una volta al Master; vecchie richieste di fuga chiuse al nuovo fight. Il controllo degli ingressi non dipende dal recupero degli eventi. Richiamo dell'utente: assegnare l'EXP; conservata e verificata la ricompensa personale della fuga, persistente e senza duplicati.
+
 ## Creature delle dodici fasi — 25 ottobre 2026
 
 Richiesta esplicita: aggiungere mostri tematici per ogni fase del Ciclo Oculum. Introdotte due specie distinte per fase (24), con due tecniche ciascuna (48), Open, anatomia e materiale proprio. Livelli, statistiche, costi fissi 1/2/3 Oculum, cooldown e valori degli effetti sono bilanciamenti iniziali modificabili, non nuove soglie confermate dall’utente.

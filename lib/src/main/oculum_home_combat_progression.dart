@@ -611,6 +611,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     group['escapeLedger'] = <String, dynamic>{};
     group.remove('escapeExperience');
     group.remove('escapeFinishing');
+    for (final request in onlineCombatRequests.values) {
+      if (request['encounterId'] == id && request['kind'] == 'escape') {
+        request['status'] = 'closed';
+      }
+    }
     final fightInstanceId = DateTime.now().microsecondsSinceEpoch.toString();
     group['combatEnded'] = false;
     for (final token in masterInitiativeTokens) {
@@ -1233,7 +1238,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
   }
 
-  Future<void> tiraStat(String nome, int valore) async {
+  Future<void> tiraStat(
+    String nome,
+    int valore, {
+    void Function(int naturalRoll, int total)? onResolved,
+  }) async {
     oculumProfileMark('roll_stat');
     final dado = tiraD20();
     final oculumSpend = consumaOculumTiro();
@@ -1308,6 +1317,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           bonus + criticalDieModifier(dado, 20) + modificatoreDifficoltaTiro(),
       total: totale,
     );
+    onResolved?.call(dado, totale);
   }
 
   Future<void> tiraValoreSpeciale(

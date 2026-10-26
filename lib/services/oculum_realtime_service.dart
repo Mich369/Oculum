@@ -532,6 +532,7 @@ class OculumRealtimeService {
     _nextRoomRefresh = null;
     _roomRefreshFailures = 0;
     _roomRefresh = null;
+    _accessRefresh = null;
     _presenceRead = null;
     _sheetTransfers.clear();
     _sessionNoteTransfers.clear();
@@ -1432,9 +1433,55 @@ class OculumRealtimeService {
 
   Future<void> _trackPresence() {
     final generation = _generation;
+    // Admission must remain available even while event replay or presence reads
+    // are stalled. It has its own in-flight guard and uses the same heartbeat.
+    unawaited(_refreshPendingRoomAccess());
     return _roomRefresh ??= _refreshRoom().whenComplete(() {
       if (_generation == generation) _roomRefresh = null;
     });
+  }
+
+  Future<void>? _accessRefresh;
+  Future<void> _refreshPendingRoomAccess() {
+    if (!_transportActive ||
+        authenticatedRole != 'master' ||
+        onAccessRequested == null ||
+        _secureRoomId == null) {
+      return Future<void>.value();
+    }
+    final generation = _generation;
+    return _accessRefresh ??= _readPendingRoomAccess(generation).whenComplete(
+      () {
+        if (generation == _generation) _accessRefresh = null;
+      },
+    );
+  }
+
+  Future<void> _readPendingRoomAccess(int generation) async {
+    try {
+      final pending = await (_client ?? Supabase.instance.client)
+          .from('oculum_room_members')
+          .select('user_id,display_name')
+          .eq('room_id', _secureRoomId!)
+          .eq('status', 'pending')
+          .timeout(const Duration(seconds: 10));
+      if (_disposed || generation != _generation) return;
+      for (final request in pending) {
+        unawaited(
+          _reviewRoomAccess(
+            '${request['user_id']}',
+            '${request['display_name']}',
+            generation,
+          ),
+        );
+      }
+    } catch (error) {
+      if (!_disposed && generation == _generation) {
+        _safeStatus(
+          'Controllo ingressi temporaneamente non disponibile: $error',
+        );
+      }
+    }
   }
 
   static String _normalizedTag(dynamic tag) =>
@@ -1535,23 +1582,6 @@ class OculumRealtimeService {
       if (_presenceRegistered) _notifyConnectedOnce();
       _roomRefreshFailures = 0;
       _nextRoomRefresh = null;
-      if (authenticatedRole == 'master' && onAccessRequested != null) {
-        final pending = await client
-            .from('oculum_room_members')
-            .select('user_id,display_name')
-            .eq('room_id', _secureRoomId!)
-            .eq('status', 'pending')
-            .timeout(const Duration(seconds: 10));
-        if (stale()) return;
-        for (final request in pending) {
-          final userId = '${request['user_id']}';
-          // Waiting for the Master must not block sheet registration, ACKs,
-          // initiative replay or the room heartbeat.
-          unawaited(
-            _reviewRoomAccess(userId, '${request['display_name']}', generation),
-          );
-        }
-      }
     } catch (error) {
       if (stale()) return;
       _roomRefreshFailures = min(5, _roomRefreshFailures + 1);

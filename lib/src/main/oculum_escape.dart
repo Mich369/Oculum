@@ -116,6 +116,13 @@ extension _OculumEscape on _OculumHomePageState {
   bool escapeTokenIsOut(String tag) =>
       escapeToken(tag)?['outsideFight'] == true;
 
+  bool escapeRequestIsCurrent(Map<String, dynamic> record) {
+    final current =
+        '${escapeToken('${record['sourceTag']}')?['fightInstanceId'] ?? ''}';
+    final recorded = '${record['fightInstanceId'] ?? ''}';
+    return current.isEmpty || recorded.isEmpty || current == recorded;
+  }
+
   int escapeDamageStat(String tag) {
     final index = localSheetIndexForOculumTag(tag);
     return index == schedaCorrente
@@ -429,6 +436,7 @@ extension _OculumEscape on _OculumHomePageState {
           r['kind'] == 'escape' &&
           r['status'] == 'pending' &&
           r['sourceTag'] == tag &&
+          escapeRequestIsCurrent(r) &&
           r['encounterId'] == onlineCombatEncounterId,
     )) {
       return;
@@ -450,6 +458,7 @@ extension _OculumEscape on _OculumHomePageState {
           'stage': 'offer',
           'status': 'pending',
           'sourceTag': tag,
+          'fightInstanceId': escapeToken(tag)?['fightInstanceId'],
           'targetTag': tag,
           'sourceName': realtimeDisplayName(),
           'sourceSide': combatScoutSide(tag),
@@ -592,9 +601,11 @@ extension _OculumEscape on _OculumHomePageState {
       return;
     }
     if (stage == 'offer') {
+      if (!escapeRequestIsCurrent(payload)) return;
       final id = '${payload['id']}';
       if (onlineCombatRequests[id]?['escapePrepared'] == true) return;
       final record = <String, dynamic>{
+        ...?onlineCombatRequests[id],
         ...payload,
         'kind': 'escape',
         'status': 'pending',
@@ -724,7 +735,7 @@ extension _OculumEscape on _OculumHomePageState {
   }
 
   Future<void> returnToFight(String mode) async {
-    if (!outsideFight) return;
+    if (!outsideFight || !const {'velo', 'riflessi'}.contains(mode)) return;
     if (!await requestUtilitySpend('azione', preferFreeReaction: false)) return;
     final tag = sheetTagAt(schedaCorrente),
         bonus = escapeSubtraitAt(schedaCorrente, mode);
@@ -735,7 +746,7 @@ extension _OculumEscape on _OculumHomePageState {
       resourceAlreadySpent: true,
       onResolved: (_, value) => total = value,
     );
-    await emitEscape({
+    final payload = <String, dynamic>{
       'id': 'return:$tag:${DateTime.now().microsecondsSinceEpoch}',
       'stage': 'return',
       'sourceTag': tag,
@@ -743,7 +754,9 @@ extension _OculumEscape on _OculumHomePageState {
       'mode': mode,
       'total': total,
       'veil': mode == 'velo' ? bonus : 0,
-    });
+    };
+    attachPendingCombatTurnResources(payload);
+    await emitEscape(payload);
   }
 
   Widget escapeUtilityControls() => Wrap(
@@ -778,6 +791,7 @@ extension _OculumEscape on _OculumHomePageState {
           (r) =>
               r['kind'] == 'escape' &&
               r['status'] == 'pending' &&
+              escapeRequestIsCurrent(r) &&
               r['scope'] == permissionScope &&
               r['encounterId'] == onlineCombatEncounterId,
         )

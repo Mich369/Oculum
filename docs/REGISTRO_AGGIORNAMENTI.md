@@ -1,5 +1,14 @@
 # Registro cumulativo per i giocatori
 
+## Correzioni delle segnalazioni del 26 ottobre 2026
+
+- Trasparenze evidenziate progressivamente fino alla piena visibilità in tre secondi, con mouse e tocco; testi, icone e controlli cliccabili conservati.
+- Richieste d'ingresso al Master controllate anche durante il recupero lento di presenza/eventi; nessuna nuova interrogazione continua.
+- Tiri di sottotratto e richieste Master: completamento dopo il dado reale, riprova se mancano risorse, Percezione richiesta senza scelta di un nuovo bersaglio; Azioni supplementari e Azioni sotto Sfinimento riconosciute.
+- Fuga e rientro: risorse consentite anche fuori fight, consumo sincronizzato una volta al Master, vecchie richieste chiuse al nuovo fight.
+- EXP personale della fuga verificata nell'assegnazione effettiva e dopo il caricamento JSON, senza doppioni. Formule confermate di fuga e ricompense ordinarie per Grado conservate.
+- Trasparenze di base e parametri di schede, abilità, oggetti e Role restano modificabili negli editor e conservati nel JSON. Dettagli in [Verifica bug del 26 ottobre](VERIFICA_BUG_2026-10-26.md).
+
 Modifiche successive alla build `b917217d98d16861a5bbaf1706d78825d883c970`, run `40242640717`, incluse quelle del commit `12cbe566`. Questo registro conserva tutte le novità dalla versione di partenza. Per la build distribuita fare riferimento al commit e ai download della release GitHub.
 
 ## Creature e tecniche

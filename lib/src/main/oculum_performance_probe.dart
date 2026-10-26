@@ -282,6 +282,8 @@ class OculumPerformanceProbe {
   Map<String, dynamic> escapeLedger() => _state.escapeLedger;
   void escapeEvent(Map<String, dynamic> payload) =>
       _state.receiveEscapeEvent(payload);
+  Future<void> attemptEscape() => _state.attemptEscape();
+  Future<void> returnToFight(String mode) => _state.returnToFight(mode);
   void escapeDamage(Map<String, dynamic> request) =>
       _state.recordEscapeDamage(request);
   void escapeReturnBonus(Map<String, dynamic> request) =>
@@ -388,6 +390,8 @@ class OculumPerformanceProbe {
       _state.dustExperienceHighestSubtraits().map((stat) => stat.id).toList();
   void masterRollRequests(Map<String, dynamic> group) =>
       _state.receiveMasterRollRequests(group);
+  Future<void> requestedRoll(Map<String, dynamic> request) =>
+      _state.performMasterRequestedRoll(request);
   void shopType(String type) => _state.selectMerchantShop(type);
   Future<void> buyShopOffer(Map<String, dynamic> offer) =>
       _state.buyMerchantOffer(offer);

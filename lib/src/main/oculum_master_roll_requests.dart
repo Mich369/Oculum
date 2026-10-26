@@ -164,16 +164,37 @@ extension _OculumMasterRollRequests on _OculumHomePageState {
     }
     final oldDt = difficoltaTiroController.text;
     request['status'] = 'rolling';
+    final needsResource = stat != null
+        ? stat.id != 'iniziativa'
+        : key == 'vc' || key == 'cm';
+    void resolved(int natural, int total) {
+      request['natural'] = natural;
+      request['total'] = total;
+      request['status'] = 'completed';
+    }
+
     difficoltaTiroController.text =
         '${(int.tryParse(oldDt) ?? 0) + readIntValue(request['dt'])}';
     try {
+      if (needsResource && !await spendCombatRollResource()) return;
+      if (!mounted || currentSheetScrollId() != origin) return;
       aggiungiLog(
         '[RISPOSTA AL MASTER] ${request['rollName']} · DT aggiuntiva ${request['dt']}.',
       );
       if (stat != null) {
-        await tiraSottotrattoOcchio(stat);
+        await tiraSottotrattoOcchio(
+          stat,
+          actionLabel: '${request['rollName']}',
+          resourceAlreadySpent: true,
+          onResolved: resolved,
+        );
       } else if (key == 'vc' || key == 'cm') {
-        await tiraValoreSpeciale(key.toUpperCase(), key == 'vc' ? vc() : cm());
+        await tiraValoreSpeciale(
+          key.toUpperCase(),
+          key == 'vc' ? vc() : cm(),
+          resourceAlreadySpent: true,
+          onResolved: resolved,
+        );
       } else {
         final value = switch (key) {
           'resilienza' => resilienzaTotale(),
@@ -181,9 +202,8 @@ extension _OculumMasterRollRequests on _OculumHomePageState {
           'materia' => materiaTotale(),
           _ => oculumTotale(),
         };
-        await tiraStat('${request['rollName']}', value);
+        await tiraStat('${request['rollName']}', value, onResolved: resolved);
       }
-      request['status'] = 'completed';
     } finally {
       if (currentSheetScrollId() == origin) {
         difficoltaTiroController.text = oldDt;

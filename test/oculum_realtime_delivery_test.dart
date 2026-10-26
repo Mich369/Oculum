@@ -566,6 +566,50 @@ void main() {
   );
 
   test(
+    'Master receives admission requests even while presence recovery stalls',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+      final stalled = Completer<void>();
+      final received = Completer<String>();
+      final backend = _Backend()
+        ..stalledPresenceRead = stalled
+        ..pendingAccess.add({'user_id': 'new-player', 'display_name': 'Rose'});
+      final client = _Client(backend);
+      final service = OculumRealtimeService(
+        client: client,
+        roomId: 'master',
+        playerName: 'Master',
+        presenceDataProvider: () => {'role': 'master'},
+        onAccessRequested: (id, name) async {
+          if (!received.isCompleted) received.complete(id);
+          return null;
+        },
+        onEvent: (_, _) {},
+        onPresenceChanged: (_) {},
+        onStatusChanged: (_) {},
+      );
+      addTearDown(() async {
+        if (!stalled.isCompleted) stalled.complete();
+        await service.dispose();
+        await client.dispose();
+      });
+      final connecting = service.connect();
+      try {
+        expect(
+          await received.future.timeout(const Duration(seconds: 2)),
+          'new-player',
+        );
+      } finally {
+        if (!stalled.isCompleted) stalled.complete();
+        await connecting;
+      }
+      expect(service.isConnected, isTrue);
+    },
+  );
+
+  test(
     'foreign active sheet is explained and cannot be sent as an owned sheet',
     () async {
       final previous = OculumRealtimeService.supabaseAvailable;

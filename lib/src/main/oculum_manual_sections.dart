@@ -5,6 +5,19 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Trasparenza e correzioni dei tiri del 26 ottobre 2026',
+    titleEn: 'Transparency and roll fixes of October 26, 2026',
+    contentIt: r'''
+Le superfici trasparenti aumentano gradualmente di opacità fino alla piena visibilità in tre secondi quando il puntatore le evidenzia. Il tocco evidenzia il pannello per la stessa durata; le preferenze di accessibilità per ridurre le animazioni sono rispettate. Testi, icone e bersagli cliccabili restano visibili. Le due trasparenze di base rimangono regolabili separatamente da 0 a 40%.
+
+Un tiro richiesto dal Master è completato soltanto dopo il lancio effettivo. Se mancano le risorse previste, la richiesta resta disponibile per riprovare. Una richiesta di Percezione del Master effettua direttamente il tiro richiesto. Le Azioni supplementari possono pagare i tiri; Sfinimento continua a bloccare le Reazioni, conservando le Azioni.
+
+Chi è fuori fight può utilizzare le risorse già previste per le utilità consentite e per rientrare. Fuga e rientro sincronizzano la spesa con il Master senza ripeterla sui reinvii; iniziare un nuovo fight chiude le precedenti richieste di fuga. L'EXP della fuga resta personale, calcolata sulla Vita reale secondo la regola confermata, assegnata una sola volta e conservata nel JSON. Le formule dell'EXP ordinaria restano basate sul Grado di ciascun destinatario e su tutti i nemici sconfitti.
+''',
+    contentEn:
+        r'''Transparent surfaces progressively become fully visible over three seconds on hover. Touch highlights the panel for the same duration; reduced motion is respected. Base panel and control transparency remain independently editable. Master roll requests complete only after a real roll, remain retryable when resources are unavailable, and requested Perception rolls directly. Extra actions pay for rolls; Exhaustion still permits actions. Fled participants retain the confirmed utility and return resources. Escape and return synchronize resource spending without duplicate consumption. Starting a new fight closes old escape requests. Escape experience uses actual HP loss and persists exactly once in JSON; normal encounter rewards still compare each defeated enemy against each recipient's Grade.''',
+  ),
+  ManualSection(
     titleIt: 'Aura e Potenza conosciuta',
     titleEn: 'Aura and known power',
     contentIt: r'''
@@ -17,7 +30,8 @@ const List<ManualSection> oculumManualSections = [
 - Un’osservazione mirata eseguibile ha probabilità pari al valore del sottotratto usato, massimo 95%, di non consumare Azione/Reazione. Esempi: +32 → 32%, +110 → 95%. Fuori combattimento non c’è costo di turnistica. Lo Sfinimento continua a bloccare le Reazioni.
 - Le conoscenze sono memorizzate nella scheda e nel JSON per osservatore, campagna e identità del bersaglio. L’Aura usa confronti autenticati e aggiornamenti su variazione della Potenza; nessuna interrogazione continua. La snapshot pubblica contiene solo una revisione, mai le statistiche o la Potenza interna nascosta.
 ''',
-    contentEn: r'''Aura Reading +20 reveals your own total power and automatically compares observed targets qualitatively. Previously discovered exact numbers remain beside character names and in initiative and refresh automatically with Aura +20. Exact first discovery requires a successful targeted observation: each point over 20 gives 5 percent when target power is below 100; the threshold is 40 otherwise, capped at 100 percent. Observation uses Perception or the best available reading subtrait. Each targeted observation has a chance equal to the used subtrait, capped at 95 percent, to preserve its action/reaction. Scanner estimates remain marked approximately and never replace exact knowledge. Saved knowledge persists; stale responses cannot roll it back.''',
+    contentEn:
+        r'''Aura Reading +20 reveals your own total power and automatically compares observed targets qualitatively. Previously discovered exact numbers remain beside character names and in initiative and refresh automatically with Aura +20. Exact first discovery requires a successful targeted observation: each point over 20 gives 5 percent when target power is below 100; the threshold is 40 otherwise, capped at 100 percent. Observation uses Perception or the best available reading subtrait. Each targeted observation has a chance equal to the used subtrait, capped at 95 percent, to preserve its action/reaction. Scanner estimates remain marked approximately and never replace exact knowledge. Saved knowledge persists; stale responses cannot roll it back.''',
   ),
   ManualSection(
     titleIt: 'Potenza totale, Sfinimento e connessione alla stanza',
@@ -37,7 +51,8 @@ Online: nessuna nuova connessione usa implicitamente la stanza «test». Il gioc
 
 Distribuzione GitHub: Windows normale e Windows Test in ZIP e artifact di cartella separati. Le versioni precedenti restano conservate.
 ''',
-    contentEn: r'''Merchants also use total power for suitable offers. Total Discharge (5 Oculum) and Total Impetus (5 Will), cooldown three turns, add total power to ONE attack's damage. Your next to-hit roll and the first enemy to-hit roll against you gain max(2, 10 - Adaptation). Exhaustion immediately clears ALL normal, fast, free and extra reactions and blocks every new reaction, including skills and other sources, for 1d3 + floor(total power/160) personal turns. Actions remain usable. Saved customization is preserved. New players must enter the Master's room code; a Master without a code gets a fresh one. Windows and Windows Test downloads remain separate.''',
+    contentEn:
+        r'''Merchants also use total power for suitable offers. Total Discharge (5 Oculum) and Total Impetus (5 Will), cooldown three turns, add total power to ONE attack's damage. Your next to-hit roll and the first enemy to-hit roll against you gain max(2, 10 - Adaptation). Exhaustion immediately clears ALL normal, fast, free and extra reactions and blocks every new reaction, including skills and other sources, for 1d3 + floor(total power/160) personal turns. Actions remain usable. Saved customization is preserved. New players must enter the Master's room code; a Master without a code gets a fresh one. Windows and Windows Test downloads remain separate.''',
   ),
 
   ManualSection(

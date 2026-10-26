@@ -3333,6 +3333,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'combat_help',
           'combat_attack',
           'combat_defense',
+          'combat_scout',
         }.contains(event) &&
         payload['turnResourceSpends'] is List) {
       if (!validPermissionSender(payload) ||

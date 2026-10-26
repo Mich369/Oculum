@@ -78,7 +78,11 @@ class OculumArtButtonLayer extends StatelessWidget {
                 children: [
                   Positioned.fill(
                     child: IgnorePointer(
-                      child: Opacity(
+                      child: AnimatedOpacity(
+                        duration: MediaQuery.disableAnimationsOf(context)
+                            ? Duration.zero
+                            : oculumSurfaceRevealDuration,
+                        curve: Curves.easeInOut,
                         opacity: surfaceOpacity,
                         child: ExcludeSemantics(
                           child: RepaintBoundary(
@@ -183,6 +187,7 @@ ThemeData oculumWithArtButtons(
     final color = base.backgroundColor;
     final source = color is _OculumButtonSurfaceColor ? color.source : color;
     return base.copyWith(
+      animationDuration: oculumSurfaceRevealDuration,
       backgroundBuilder: oculumButtonArtwork,
       backgroundColor: _OculumButtonSurfaceColor(
         source,

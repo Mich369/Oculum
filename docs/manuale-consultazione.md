@@ -2,6 +2,14 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Trasparenza e correzioni dei tiri del 26 ottobre 2026
+
+Le superfici trasparenti aumentano gradualmente di opacità fino alla piena visibilità in tre secondi quando il puntatore le evidenzia. Il tocco evidenzia il pannello per la stessa durata; le preferenze di accessibilità per ridurre le animazioni sono rispettate. Testi, icone e bersagli cliccabili restano visibili. Le due trasparenze di base rimangono regolabili separatamente da 0 a 40%.
+
+Un tiro richiesto dal Master è completato soltanto dopo il lancio effettivo. Se mancano le risorse previste, la richiesta resta disponibile per riprovare. Una richiesta di Percezione del Master effettua direttamente il tiro richiesto. Le Azioni supplementari possono pagare i tiri; Sfinimento continua a bloccare le Reazioni, conservando le Azioni.
+
+Chi è fuori fight può utilizzare le risorse già previste per le utilità consentite e per rientrare. Fuga e rientro sincronizzano la spesa con il Master senza ripeterla sui reinvii; iniziare un nuovo fight chiude le precedenti richieste di fuga. L'EXP della fuga resta personale, calcolata sulla Vita reale secondo la regola confermata, assegnata una sola volta e conservata nel JSON. Le formule dell'EXP ordinaria restano basate sul Grado di ciascun destinatario e su tutti i nemici sconfitti.
+
 ## Aura e Potenza conosciuta
 
 ## Aura, numeri scoperti e osservazione mirata

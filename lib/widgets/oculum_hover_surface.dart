@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'oculum_theme_presentation.dart';
+
+const oculumSurfaceRevealDuration = Duration(seconds: 3);
 
 Color oculumSurfaceColor(Color color, double opacity) =>
     color.withValues(alpha: color.a * opacity.clamp(0, 1));
@@ -61,7 +65,24 @@ class OculumHoverSurface extends StatefulWidget {
 
 class _OculumHoverSurfaceState extends State<OculumHoverSurface> {
   bool hovered = false;
+  bool touched = false;
+  Timer? touchReveal;
   final buttons = <Object>{};
+  @override
+  void dispose() {
+    touchReveal?.cancel();
+    super.dispose();
+  }
+
+  void revealOnTouch(PointerDownEvent event) {
+    if (event.kind == PointerDeviceKind.mouse) return;
+    touchReveal?.cancel();
+    setState(() => touched = true);
+    touchReveal = Timer(oculumSurfaceRevealDuration, () {
+      if (mounted) setState(() => touched = false);
+    });
+  }
+
   void buttonHover(Object key, bool value) {
     final changed = value ? buttons.add(key) : buttons.remove(key);
     if (changed && mounted) setState(() {});
@@ -77,19 +98,30 @@ class _OculumHoverSurfaceState extends State<OculumHoverSurface> {
             hovered = false;
             buttons.clear();
           }),
-          child: OculumSurfaceScope(
-            secondaryControls: widget.secondaryControls,
-            highlightAll: widget.actionGroup && hovered && buttons.isEmpty,
-            setButtonHover: buttonHover,
-            child: Builder(
-              builder: (context) => widget.builder(
-                context,
-                hovered
-                    ? 1
-                    : 1 -
-                          (widget.secondaryControls
-                              ? value.controlTransparency
-                              : value.surfaceTransparency),
+          child: Listener(
+            onPointerDown: revealOnTouch,
+            child: OculumSurfaceScope(
+              secondaryControls: widget.secondaryControls,
+              highlightAll:
+                  widget.actionGroup && (hovered || touched) && buttons.isEmpty,
+              setButtonHover: buttonHover,
+              child: TweenAnimationBuilder<double>(
+                duration: MediaQuery.disableAnimationsOf(context)
+                    ? Duration.zero
+                    : hovered || touched
+                    ? oculumSurfaceRevealDuration
+                    : const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                tween: Tween<double>(
+                  end: hovered || touched
+                      ? 1
+                      : 1 -
+                            (widget.secondaryControls
+                                ? value.controlTransparency
+                                : value.surfaceTransparency),
+                ),
+                builder: (context, opacity, _) =>
+                    widget.builder(context, opacity),
               ),
             ),
           ),
@@ -114,6 +146,9 @@ class _OculumSurfaceButtonState extends State<OculumSurfaceButton> {
     final scope = OculumSurfaceScope.maybeOf(context);
     final base = button.style ?? const ButtonStyle();
     final style = base.copyWith(
+      animationDuration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : oculumSurfaceRevealDuration,
       backgroundColor: WidgetStateProperty.resolveWith((states) {
         final color = base.backgroundColor?.resolve(states);
         if (color == null) return null;

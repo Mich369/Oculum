@@ -1,5 +1,7 @@
 # Aggiornamento cumulativo dal 25–26 ottobre 2026
 
+- Corrette richieste d'ingresso, tiri richiesti dal Master, Azioni supplementari e rientro dopo la fuga. Trasparenze evidenziate progressivamente in tre secondi; EXP personale della fuga assegnata senza duplicati e conservata nel JSON. Dettagli in `docs/VERIFICA_BUG_2026-10-26.md`.
+
 Tutte le modifiche successive alla build `b917217d98d16861a5bbaf1706d78825d883c970` (run `40242640717`), incluse quelle di `12cbe566` e `73cce878`.
 
 - 37 specie e 77 tecniche dopo la build di riferimento; 231 equipaggiamenti derivati (77 armi, 77 armature, 77 scudi), 693 forme delle skill sugli oggetti. Monster Book 1.157 voci, ordinate per Potenza crescente nella vista Master. Fasi, luoghi, anatomie, drop, scroll e Open; regole Slime Roccioso, Nuvola, Golem, Fuga e Role aggiornate.
